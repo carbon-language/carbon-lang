@@ -221,18 +221,8 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  // ANDS WZR, Wn, #imm ==> TST Wn, #imm
-  // ANDS XZR, Xn, #imm ==> TST Xn, #imm
-  if (Opcode == ARM64::ANDSWri && MI->getOperand(0).getReg() == ARM64::WZR) {
-    O << "\ttst\t" << getRegisterName(MI->getOperand(1).getReg()) << ", ";
-    printLogicalImm32(MI, 2, O);
-    return;
-  }
-  if (Opcode == ARM64::ANDSXri && MI->getOperand(0).getReg() == ARM64::XZR) {
-    O << "\ttst\t" << getRegisterName(MI->getOperand(1).getReg()) << ", ";
-    printLogicalImm64(MI, 2, O);
-    return;
-  }
+  // FIXME: TableGen should be able to do all of these now.
+
   // ANDS WZR, Wn, Wm{, lshift #imm} ==> TST Wn{, lshift #imm}
   // ANDS XZR, Xn, Xm{, lshift #imm} ==> TST Xn{, lshift #imm}
   if ((Opcode == ARM64::ANDSWrs && MI->getOperand(0).getReg() == ARM64::WZR) ||
@@ -1164,6 +1154,12 @@ void ARM64InstPrinter::printCondCode(const MCInst *MI, unsigned OpNum,
                                      raw_ostream &O) {
   ARM64CC::CondCode CC = (ARM64CC::CondCode)MI->getOperand(OpNum).getImm();
   O << ARM64CC::getCondCodeName(CC);
+}
+
+void ARM64InstPrinter::printInverseCondCode(const MCInst *MI, unsigned OpNum,
+                                            raw_ostream &O) {
+  ARM64CC::CondCode CC = (ARM64CC::CondCode)MI->getOperand(OpNum).getImm();
+  O << ARM64CC::getCondCodeName(ARM64CC::getInvertedCondCode(CC));
 }
 
 void ARM64InstPrinter::printAMNoIndex(const MCInst *MI, unsigned OpNum,

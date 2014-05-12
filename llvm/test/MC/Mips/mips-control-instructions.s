@@ -4,7 +4,7 @@
 # RUN: | FileCheck -check-prefix=CHECK64  %s
 
 # CHECK32:    break                      # encoding: [0x00,0x00,0x00,0x0d]
-# CHECK32:    break   7, 0               # encoding: [0x00,0x07,0x00,0x0d]
+# CHECK32:    break   7                  # encoding: [0x00,0x07,0x00,0x0d]
 # CHECK32:    break   7, 5               # encoding: [0x00,0x07,0x01,0x4d]
 # CHECK32:    syscall                    # encoding: [0x00,0x00,0x00,0x0c]
 # CHECK32:    syscall 13396              # encoding: [0x00,0x0d,0x15,0x0c]
@@ -37,7 +37,7 @@
 # CHECK32:    tnei    $3, 1023           # encoding: [0x04,0x6e,0x03,0xff]
 
 # CHECK64:    break                      # encoding: [0x00,0x00,0x00,0x0d]
-# CHECK64:    break   7, 0               # encoding: [0x00,0x07,0x00,0x0d]
+# CHECK64:    break   7                  # encoding: [0x00,0x07,0x00,0x0d]
 # CHECK64:    break   7, 5               # encoding: [0x00,0x07,0x01,0x4d]
 # CHECK64:    syscall                    # encoding: [0x00,0x00,0x00,0x0c]
 # CHECK64:    syscall 13396              # encoding: [0x00,0x0d,0x15,0x0c]

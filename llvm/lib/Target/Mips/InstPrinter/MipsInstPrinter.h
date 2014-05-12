@@ -89,6 +89,8 @@ public:
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
 
   bool printAliasInstr(const MCInst *MI, raw_ostream &OS);
+  void printCustomAliasOperand(const MCInst *MI, unsigned OpIdx,
+                               unsigned PrintMethodIdx, raw_ostream &O);
 
 private:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);

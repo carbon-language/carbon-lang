@@ -4,7 +4,7 @@ define <8x i8> @test_select_cc_v8i8_i8(i8 %a, i8 %b, <8x i8> %c, <8x i8> %d ) {
 ; CHECK-LABEL: test_select_cc_v8i8_i8:
 ; CHECK: and	w0, w0, #0xff
 ; CHECK-NEXT: cmp	w0, w1, uxtb
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.8b, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
   %cmp31 = icmp eq i8 %a, %b
@@ -35,7 +35,7 @@ define <16x i8> @test_select_cc_v16i8_i8(i8 %a, i8 %b, <16x i8> %c, <16x i8> %d 
 ; CHECK-LABEL: test_select_cc_v16i8_i8:
 ; CHECK: and	w0, w0, #0xff
 ; CHECK-NEXT: cmp	w0, w1, uxtb
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.16b, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
   %cmp31 = icmp eq i8 %a, %b
@@ -67,7 +67,7 @@ define <4x i16> @test_select_cc_v4i16(i16 %a, i16 %b, <4x i16> %c, <4x i16> %d )
 ; CHECK-LABEL: test_select_cc_v4i16:
 ; CHECK: and	w0, w0, #0xffff
 ; CHECK-NEXT: cmp	w0, w1, uxth
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.4h, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
   %cmp31 = icmp eq i16 %a, %b
@@ -79,7 +79,7 @@ define <8x i16> @test_select_cc_v8i16(i16 %a, i16 %b, <8x i16> %c, <8x i16> %d )
 ; CHECK-LABEL: test_select_cc_v8i16:
 ; CHECK: and	w0, w0, #0xffff
 ; CHECK-NEXT: cmp	w0, w1, uxth
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.8h, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
   %cmp31 = icmp eq i16 %a, %b
@@ -90,7 +90,7 @@ define <8x i16> @test_select_cc_v8i16(i16 %a, i16 %b, <8x i16> %c, <8x i16> %d )
 define <2x i32> @test_select_cc_v2i32(i32 %a, i32 %b, <2x i32> %c, <2x i32> %d ) {
 ; CHECK-LABEL: test_select_cc_v2i32:
 ; CHECK: cmp	w0, w1, uxtw
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.2s, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
   %cmp31 = icmp eq i32 %a, %b
@@ -101,7 +101,7 @@ define <2x i32> @test_select_cc_v2i32(i32 %a, i32 %b, <2x i32> %c, <2x i32> %d )
 define <4x i32> @test_select_cc_v4i32(i32 %a, i32 %b, <4x i32> %c, <4x i32> %d ) {
 ; CHECK-LABEL: test_select_cc_v4i32:
 ; CHECK: cmp	w0, w1, uxtw
-; CHECK-NEXT: csinv	w0, wzr, wzr, ne
+; CHECK-NEXT: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.4s, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
   %cmp31 = icmp eq i32 %a, %b
@@ -112,7 +112,7 @@ define <4x i32> @test_select_cc_v4i32(i32 %a, i32 %b, <4x i32> %c, <4x i32> %d )
 define <1x i64> @test_select_cc_v1i64(i64 %a, i64 %b, <1x i64> %c, <1x i64> %d ) {
 ; CHECK-LABEL: test_select_cc_v1i64:
 ; CHECK: cmp	x0, x1
-; CHECK-NEXT: csinv	x0, xzr, xzr, ne
+; CHECK-NEXT: csetm	x0, eq
 ; CHECK-NEXT: fmov	d{{[0-9]+}}, x0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
   %cmp31 = icmp eq i64 %a, %b
@@ -123,7 +123,7 @@ define <1x i64> @test_select_cc_v1i64(i64 %a, i64 %b, <1x i64> %c, <1x i64> %d )
 define <2x i64> @test_select_cc_v2i64(i64 %a, i64 %b, <2x i64> %c, <2x i64> %d ) {
 ; CHECK-LABEL: test_select_cc_v2i64:
 ; CHECK: cmp	x0, x1
-; CHECK-NEXT: csinv	x0, xzr, xzr, ne
+; CHECK-NEXT: csetm	x0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.2d, x0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
   %cmp31 = icmp eq i64 %a, %b
@@ -163,7 +163,7 @@ define <4x float> @test_select_cc_v4f32(float %a, float %b, <4x float> %c, <4x f
 define <4x float> @test_select_cc_v4f32_icmp(i32 %a, i32 %b, <4x float> %c, <4x float> %d ) {
 ; CHECK-LABEL: test_select_cc_v4f32_icmp:
 ; CHECK: cmp	w0, w1, uxtw
-; CHECK: csinv	w0, wzr, wzr, ne
+; CHECK: csetm	w0, eq
 ; CHECK-NEXT: dup	v{{[0-9]+}}.4s, w0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.16b, v0.16b, v1.16b
   %cmp31 = icmp eq i32 %a, %b
@@ -183,7 +183,7 @@ define <1 x double> @test_select_cc_v1f64(double %a, double %b, <1 x double> %c,
 define <1 x double> @test_select_cc_v1f64_icmp(i64 %a, i64 %b, <1 x double> %c, <1 x double> %d ) {
 ; CHECK-LABEL: test_select_cc_v1f64_icmp:
 ; CHECK: cmp	 x0, x1
-; CHECK-NEXT: csinv	x0, xzr, xzr, ne
+; CHECK-NEXT: csetm	x0, eq
 ; CHECK-NEXT: fmov	d{{[0-9]+}}, x0
 ; CHECK-NEXT:	bsl	v{{[0-9]+}}.8b, v0.8b, v1.8b
   %cmp31 = icmp eq i64 %a, %b

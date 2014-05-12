@@ -63,7 +63,7 @@ define i1 @test_setcc_float(float %lhs, float %rhs) {
 ; CHECK: test_setcc_float
   %val = fcmp oeq float %lhs, %rhs
 ; CHECK: fcmp s0, s1
-; CHECK: csinc w0, wzr, wzr, ne
+; CHECK: cset w0, eq
 ; CHECK-NOFP-NOT: fcmp
   ret i1 %val
 }
@@ -72,7 +72,7 @@ define i1 @test_setcc_double(double %lhs, double %rhs) {
 ; CHECK: test_setcc_double
   %val = fcmp oeq double %lhs, %rhs
 ; CHECK: fcmp d0, d1
-; CHECK: csinc w0, wzr, wzr, ne
+; CHECK: cset w0, eq
 ; CHECK-NOFP-NOT: fcmp
   ret i1 %val
 }
@@ -81,7 +81,7 @@ define i1 @test_setcc_i32(i32 %lhs, i32 %rhs) {
 ; CHECK: test_setcc_i32
   %val = icmp ugt i32 %lhs, %rhs
 ; CHECK: cmp w0, w1
-; CHECK: csinc w0, wzr, wzr, ls
+; CHECK: cset w0, hi
   ret i1 %val
 }
 
@@ -89,6 +89,6 @@ define i1 @test_setcc_i64(i64 %lhs, i64 %rhs) {
 ; CHECK: test_setcc_i64
   %val = icmp ne i64 %lhs, %rhs
 ; CHECK: cmp x0, x1
-; CHECK: csinc w0, wzr, wzr, eq
+; CHECK: cset w0, ne
   ret i1 %val
 }

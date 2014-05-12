@@ -218,8 +218,8 @@ foo:
    ubfm x0, x0, #63, #62
    ubfm w0, w0, #4, #31
    ubfm x0, x0, #4, #63
-; CHECK: extr w1, w3, w3, #5
-; CHECK: extr x1, x3, x3, #5
+; CHECK: ror w1, w3, #5
+; CHECK: ror x1, x3, #5
    ror w1, w3, #5
    ror x1, x3, #5
 ; CHECK: lsl w1, wzr, #3
@@ -302,14 +302,14 @@ foo:
   cinv   w1, w2, mi
   cinv   x1, x2, mi
 
-; CHECK: csinc  w1, wzr, wzr, ne
-; CHECK: csinc  x1, xzr, xzr, ne
-; CHECK: csinv  w1, wzr, wzr, eq
-; CHECK: csinv  x1, xzr, xzr, eq
-; CHECK: csinc  w1, w2, w2, ge
-; CHECK: csinc  x1, x2, x2, ge
-; CHECK: csinv  w1, w2, w2, pl
-; CHECK: csinv  x1, x2, x2, pl
+; CHECK: cset  w1, eq
+; CHECK: cset  x1, eq
+; CHECK: csetm  w1, ne
+; CHECK: csetm  x1, ne
+; CHECK: cinc  w1, w2, lt
+; CHECK: cinc  x1, x2, lt
+; CHECK: cinv  w1, w2, mi
+; CHECK: cinv  x1, x2, mi
 
 ;-----------------------------------------------------------------------------
 ; SYS aliases

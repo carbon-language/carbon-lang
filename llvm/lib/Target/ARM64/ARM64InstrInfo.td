@@ -554,6 +554,8 @@ def : Pat<(sub GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
           (ADDXri GPR64:$Rn, neg_addsub_shifted_imm64:$imm)>;
 }
 
+// FIXME: TableGen can very nearly handle printing all of these, we should make
+// it work properly.
 def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
 def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
 def : InstAlias<"neg $dst, $src, $shift",
@@ -673,10 +675,13 @@ defm AND  : LogicalImm<0b00, "and", and>;
 defm EOR  : LogicalImm<0b10, "eor", xor>;
 defm ORR  : LogicalImm<0b01, "orr", or>;
 
+// FIXME: these aliases *are* canonical sometimes (when movz can't be
+// used). Actually, it seems to be working right now, but putting logical_immXX
+// here is a bit dodgy on the AsmParser side too.
 def : InstAlias<"mov $dst, $imm", (ORRWri GPR32sp:$dst, WZR,
-                                          logical_imm32:$imm)>;
+                                          logical_imm32:$imm), 0>;
 def : InstAlias<"mov $dst, $imm", (ORRXri GPR64sp:$dst, XZR,
-                                          logical_imm64:$imm)>;
+                                          logical_imm64:$imm), 0>;
 
 
 // (register)
@@ -922,27 +927,30 @@ def : Pat<(ARM64csel (i64 0), (i64 -1), (i32 imm:$cc), NZCV),
 // The inverse of the condition code from the alias instruction is what is used
 // in the aliased instruction. The parser all ready inverts the condition code
 // for these aliases.
-// FIXME: Is this the correct way to handle these aliases?
-def : InstAlias<"cset $dst, $cc", (CSINCWr GPR32:$dst, WZR, WZR, ccode:$cc)>;
-def : InstAlias<"cset $dst, $cc", (CSINCXr GPR64:$dst, XZR, XZR, ccode:$cc)>;
+def : InstAlias<"cset $dst, $cc",
+                (CSINCWr GPR32:$dst, WZR, WZR, inv_ccode:$cc)>;
+def : InstAlias<"cset $dst, $cc",
+                (CSINCXr GPR64:$dst, XZR, XZR, inv_ccode:$cc)>;
 
-def : InstAlias<"csetm $dst, $cc", (CSINVWr GPR32:$dst, WZR, WZR, ccode:$cc)>;
-def : InstAlias<"csetm $dst, $cc", (CSINVXr GPR64:$dst, XZR, XZR, ccode:$cc)>;
+def : InstAlias<"csetm $dst, $cc",
+                (CSINVWr GPR32:$dst, WZR, WZR, inv_ccode:$cc)>;
+def : InstAlias<"csetm $dst, $cc",
+                (CSINVXr GPR64:$dst, XZR, XZR, inv_ccode:$cc)>;
 
 def : InstAlias<"cinc $dst, $src, $cc",
-                (CSINCWr GPR32:$dst, GPR32:$src, GPR32:$src, ccode:$cc)>;
+                (CSINCWr GPR32:$dst, GPR32:$src, GPR32:$src, inv_ccode:$cc)>;
 def : InstAlias<"cinc $dst, $src, $cc",
-                (CSINCXr GPR64:$dst, GPR64:$src, GPR64:$src, ccode:$cc)>;
+                (CSINCXr GPR64:$dst, GPR64:$src, GPR64:$src, inv_ccode:$cc)>;
 
 def : InstAlias<"cinv $dst, $src, $cc",
-                (CSINVWr GPR32:$dst, GPR32:$src, GPR32:$src, ccode:$cc)>;
+                (CSINVWr GPR32:$dst, GPR32:$src, GPR32:$src, inv_ccode:$cc)>;
 def : InstAlias<"cinv $dst, $src, $cc",
-                (CSINVXr GPR64:$dst, GPR64:$src, GPR64:$src, ccode:$cc)>;
+                (CSINVXr GPR64:$dst, GPR64:$src, GPR64:$src, inv_ccode:$cc)>;
 
 def : InstAlias<"cneg $dst, $src, $cc",
-                (CSNEGWr GPR32:$dst, GPR32:$src, GPR32:$src, ccode:$cc)>;
+                (CSNEGWr GPR32:$dst, GPR32:$src, GPR32:$src, inv_ccode:$cc)>;
 def : InstAlias<"cneg $dst, $src, $cc",
-                (CSNEGXr GPR64:$dst, GPR64:$src, GPR64:$src, ccode:$cc)>;
+                (CSNEGXr GPR64:$dst, GPR64:$src, GPR64:$src, inv_ccode:$cc)>;
 
 //===----------------------------------------------------------------------===//
 // PC-relative instructions.
@@ -3728,10 +3736,12 @@ def : Pat<(v4f32 (ARM64dup (f32 fpimm0))), (MOVIv2d_ns (i32 0))>;
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 defm MOVI      : SIMDModifiedImmVectorShift<0, 0b10, 0b00, "movi">;
 
-def : InstAlias<"movi $Vd.4h, $imm", (MOVIv4i16 V64:$Vd,  imm0_255:$imm, 0)>;
-def : InstAlias<"movi $Vd.8h, $imm", (MOVIv8i16 V128:$Vd, imm0_255:$imm, 0)>;
-def : InstAlias<"movi $Vd.2s, $imm", (MOVIv2i32 V64:$Vd,  imm0_255:$imm, 0)>;
-def : InstAlias<"movi $Vd.4s, $imm", (MOVIv4i32 V128:$Vd, imm0_255:$imm, 0)>;
+// FIXME: these should be canonical but the TableGen alias printer can't cope
+// with syntax variants.
+def : InstAlias<"movi $Vd.4h, $imm", (MOVIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
+def : InstAlias<"movi $Vd.8h, $imm", (MOVIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;
+def : InstAlias<"movi $Vd.2s, $imm", (MOVIv2i32 V64:$Vd,  imm0_255:$imm, 0), 0>;
+def : InstAlias<"movi $Vd.4s, $imm", (MOVIv4i32 V128:$Vd, imm0_255:$imm, 0), 0>;
 
 def : InstAlias<"movi.4h $Vd, $imm", (MOVIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
 def : InstAlias<"movi.8h $Vd, $imm", (MOVIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;
@@ -3768,10 +3778,12 @@ def MOVIv16b_ns  : SIMDModifiedImmVectorNoShift<1, 0, 0b1110, V128, imm0_255,
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 defm MVNI      : SIMDModifiedImmVectorShift<1, 0b10, 0b00, "mvni">;
 
-def : InstAlias<"mvni $Vd.4h, $imm", (MVNIv4i16 V64:$Vd,  imm0_255:$imm, 0)>;
-def : InstAlias<"mvni $Vd.8h, $imm", (MVNIv8i16 V128:$Vd, imm0_255:$imm, 0)>;
-def : InstAlias<"mvni $Vd.2s, $imm", (MVNIv2i32 V64:$Vd,  imm0_255:$imm, 0)>;
-def : InstAlias<"mvni $Vd.4s, $imm", (MVNIv4i32 V128:$Vd, imm0_255:$imm, 0)>;
+// FIXME: these should be canonical, but TableGen can't do aliases & syntax
+// variants together.
+def : InstAlias<"mvni $Vd.4h, $imm", (MVNIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
+def : InstAlias<"mvni $Vd.8h, $imm", (MVNIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;
+def : InstAlias<"mvni $Vd.2s, $imm", (MVNIv2i32 V64:$Vd,  imm0_255:$imm, 0), 0>;
+def : InstAlias<"mvni $Vd.4s, $imm", (MVNIv4i32 V128:$Vd, imm0_255:$imm, 0), 0>;
 
 def : InstAlias<"mvni.4h $Vd, $imm", (MVNIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
 def : InstAlias<"mvni.8h $Vd, $imm", (MVNIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;

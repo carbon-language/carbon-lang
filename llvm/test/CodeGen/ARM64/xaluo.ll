@@ -7,7 +7,7 @@ define i1 @saddo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; CHECK-LABEL:  saddo.i32
 ; CHECK:        adds w8, w0, w1
-; CHECK-NEXT:   csinc w0, wzr, wzr, vc
+; CHECK-NEXT:   cset w0, vs
   %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -19,7 +19,7 @@ define i1 @saddo.i64(i64 %v1, i64 %v2, i64* %res) {
 entry:
 ; CHECK-LABEL:  saddo.i64
 ; CHECK:        adds x8, x0, x1
-; CHECK-NEXT:   csinc w0, wzr, wzr, vc
+; CHECK-NEXT:   cset w0, vs
   %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -31,7 +31,7 @@ define i1 @uaddo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; CHECK-LABEL:  uaddo.i32
 ; CHECK:        adds w8, w0, w1
-; CHECK-NEXT:   csinc w0, wzr, wzr, lo
+; CHECK-NEXT:   cset w0, hs
   %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -43,7 +43,7 @@ define i1 @uaddo.i64(i64 %v1, i64 %v2, i64* %res) {
 entry:
 ; CHECK-LABEL:  uaddo.i64
 ; CHECK:        adds x8, x0, x1
-; CHECK-NEXT:   csinc w0, wzr, wzr, lo
+; CHECK-NEXT:   cset w0, hs
   %t = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -55,7 +55,7 @@ define i1 @ssubo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; CHECK-LABEL:  ssubo.i32
 ; CHECK:        subs w8, w0, w1
-; CHECK-NEXT:   csinc w0, wzr, wzr, vc
+; CHECK-NEXT:   cset w0, vs
   %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -67,7 +67,7 @@ define i1 @ssubo.i64(i64 %v1, i64 %v2, i64* %res) {
 entry:
 ; CHECK-LABEL:  ssubo.i64
 ; CHECK:        subs x8, x0, x1
-; CHECK-NEXT:   csinc w0, wzr, wzr, vc
+; CHECK-NEXT:   cset w0, vs
   %t = call {i64, i1} @llvm.ssub.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -79,7 +79,7 @@ define i1 @usubo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; CHECK-LABEL:  usubo.i32
 ; CHECK:        subs w8, w0, w1
-; CHECK-NEXT:   csinc w0, wzr, wzr, hs
+; CHECK-NEXT:   cset w0, lo
   %t = call {i32, i1} @llvm.usub.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -91,7 +91,7 @@ define i1 @usubo.i64(i64 %v1, i64 %v2, i64* %res) {
 entry:
 ; CHECK-LABEL:  usubo.i64
 ; CHECK:        subs x8, x0, x1
-; CHECK-NEXT:   csinc w0, wzr, wzr, hs
+; CHECK-NEXT:   cset w0, lo
   %t = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -105,7 +105,7 @@ entry:
 ; CHECK:        smull x8, w0, w1
 ; CHECK-NEXT:   lsr x9, x8, #32
 ; CHECK-NEXT:   cmp w9, w8, asr #31
-; CHECK-NEXT:   csinc w0, wzr, wzr, eq
+; CHECK-NEXT:   cset w0, ne
   %t = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -119,7 +119,7 @@ entry:
 ; CHECK:        mul x8, x0, x1
 ; CHECK-NEXT:   smulh x9, x0, x1
 ; CHECK-NEXT:   cmp x9, x8, asr #63
-; CHECK-NEXT:   csinc w0, wzr, wzr, eq
+; CHECK-NEXT:   cset w0, ne
   %t = call {i64, i1} @llvm.smul.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -132,7 +132,7 @@ entry:
 ; CHECK-LABEL:  umulo.i32
 ; CHECK:        umull x8, w0, w1
 ; CHECK-NEXT:   cmp xzr, x8, lsr #32
-; CHECK-NEXT:   csinc w0, wzr, wzr, eq
+; CHECK-NEXT:   cset w0, ne
   %t = call {i32, i1} @llvm.umul.with.overflow.i32(i32 %v1, i32 %v2)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
@@ -145,7 +145,7 @@ entry:
 ; CHECK-LABEL:  umulo.i64
 ; CHECK:        umulh x8, x0, x1
 ; CHECK-NEXT:   cmp xzr, x8
-; CHECK-NEXT:   csinc w8, wzr, wzr, eq
+; CHECK-NEXT:   cset w8, ne
 ; CHECK-NEXT:   mul x9, x0, x1
   %t = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %v1, i64 %v2)
   %val = extractvalue {i64, i1} %t, 0

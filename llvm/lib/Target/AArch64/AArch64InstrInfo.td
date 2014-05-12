@@ -1587,6 +1587,7 @@ def inv_cond_code_op_asmoperand : AsmOperandClass {
 
 def inv_cond_code_op : Operand<i32> {
   let ParserMatchClass = inv_cond_code_op_asmoperand;
+  let PrintMethod = "printInverseCondCodeOperand";
 }
 
 // Having a separate operand for the selectable use-case is debatable, but gives
@@ -3864,15 +3865,15 @@ let Defs = [NZCV] in {
                 Sched<[WriteALU, ReadALU]>;
 }
 
-
 def : InstAlias<"tst $Rn, $Imm",
                 (ANDSwwi WZR, GPR32:$Rn, logical_imm32_operand:$Imm)>;
 def : InstAlias<"tst $Rn, $Imm",
                 (ANDSxxi XZR, GPR64:$Rn, logical_imm64_operand:$Imm)>;
+// FIXME: these sometimes are canonical.
 def : InstAlias<"mov $Rd, $Imm",
-                (ORRwwi GPR32wsp:$Rd, WZR, logical_imm32_mov_operand:$Imm)>;
+                (ORRwwi GPR32wsp:$Rd, WZR, logical_imm32_mov_operand:$Imm), 0>;
 def : InstAlias<"mov $Rd, $Imm",
-                (ORRxxi GPR64xsp:$Rd, XZR, logical_imm64_mov_operand:$Imm)>;
+                (ORRxxi GPR64xsp:$Rd, XZR, logical_imm64_mov_operand:$Imm), 0>;
 
 //===----------------------------------------------------------------------===//
 // Logical (shifted register) instructions

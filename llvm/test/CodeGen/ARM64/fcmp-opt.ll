@@ -5,7 +5,7 @@ define i1 @fcmp_float1(float %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: @fcmp_float1
 ; CHECK: fcmp s0, #0.0
-; CHECK: csinc w0, wzr, wzr, eq
+; CHECK: cset w0, ne
   %cmp = fcmp une float %a, 0.000000e+00
   ret i1 %cmp
 }
@@ -14,7 +14,7 @@ define i1 @fcmp_float2(float %a, float %b) nounwind ssp {
 entry:
 ; CHECK-LABEL: @fcmp_float2
 ; CHECK: fcmp s0, s1
-; CHECK: csinc w0, wzr, wzr, eq
+; CHECK: cset w0, ne
   %cmp = fcmp une float %a, %b
   ret i1 %cmp
 }
@@ -23,7 +23,7 @@ define i1 @fcmp_double1(double %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: @fcmp_double1
 ; CHECK: fcmp d0, #0.0
-; CHECK: csinc w0, wzr, wzr, eq
+; CHECK: cset w0, ne
   %cmp = fcmp une double %a, 0.000000e+00
   ret i1 %cmp
 }
@@ -32,7 +32,7 @@ define i1 @fcmp_double2(double %a, double %b) nounwind ssp {
 entry:
 ; CHECK-LABEL: @fcmp_double2
 ; CHECK: fcmp d0, d1
-; CHECK: csinc w0, wzr, wzr, eq
+; CHECK: cset w0, ne
   %cmp = fcmp une double %a, %b
   ret i1 %cmp
 }

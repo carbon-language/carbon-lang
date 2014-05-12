@@ -10,7 +10,7 @@ entry:
 ; CHECK-LABEL: t1:
 ; CHECK-NOT: movn
 ; CHECK: cmp  x0, #0
-; CHECK: csinc w0, wzr, wzr, lt
+; CHECK: cset w0, ge
   %cmp = icmp sgt i64 %a, -1
   %conv = zext i1 %cmp to i32
   ret i32 %conv

@@ -941,21 +941,21 @@
 0xe5 0x27 0x86 0xda
 0x7 0x35 0x9f 0xda
 
-# CHECK: csinc    w3, wzr, wzr, ne
-# CHECK: csinc    x9, xzr, xzr, mi
-# CHECK: csinv    w20, wzr, wzr, eq
-# CHECK: csinv    x30, xzr, xzr, lt
+# CHECK: cset    w3, eq
+# CHECK: cset    x9, pl
+# CHECK: csetm    w20, ne
+# CHECK: csetm    x30, ge
 0xe3 0x17 0x9f 0x1a
 0xe9 0x47 0x9f 0x9a
 0xf4 0x3 0x9f 0x5a
 0xfe 0xb3 0x9f 0xda
 
-# CHECK: csinc    w3, w5, w5, le
-# CHECK: csinc    wzr, w4, w4, gt
-# CHECK: csinc    w9, wzr, wzr, ge
-# CHECK: csinc    x3, x5, x5, le
-# CHECK: csinc    xzr, x4, x4, gt
-# CHECK: csinc    x9, xzr, xzr, ge
+# CHECK: cinc    w3, w5, gt
+# CHECK: cinc    wzr, w4, le
+# CHECK: cset    w9, lt
+# CHECK: cinc    x3, x5, gt
+# CHECK: cinc    xzr, x4, le
+# CHECK: cset    x9, lt
 0xa3 0xd4 0x85 0x1a
 0x9f 0xc4 0x84 0x1a
 0xe9 0xa7 0x9f 0x1a
@@ -963,12 +963,12 @@
 0x9f 0xc4 0x84 0x9a
 0xe9 0xa7 0x9f 0x9a
 
-# CHECK: csinv    w3, w5, w5, le
-# CHECK: csinv    wzr, w4, w4, gt
-# CHECK: csinv    w9, wzr, wzr, ge
-# CHECK: csinv    x3, x5, x5, le
-# CHECK: csinv    xzr, x4, x4, gt
-# CHECK: csinv    x9, xzr, xzr, ge
+# CHECK: cinv    w3, w5, gt
+# CHECK: cinv    wzr, w4, le
+# CHECK: csetm    w9, lt
+# CHECK: cinv    x3, x5, gt
+# CHECK: cinv    xzr, x4, le
+# CHECK: csetm    x9, lt
 0xa3 0xd0 0x85 0x5a
 0x9f 0xc0 0x84 0x5a
 0xe9 0xa3 0x9f 0x5a
@@ -976,12 +976,12 @@
 0x9f 0xc0 0x84 0xda
 0xe9 0xa3 0x9f 0xda
 
-# CHECK: csneg     w3, w5, w5, le
-# CHECK: csneg     wzr, w4, w4, gt
-# CHECK: csneg     w9, wzr, wzr, ge
-# CHECK: csneg     x3, x5, x5, le
-# CHECK: csneg     xzr, x4, x4, gt
-# CHECK: csneg     x9, xzr, xzr, ge
+# CHECK: cneg     w3, w5, gt
+# CHECK: cneg     wzr, w4, le
+# CHECK: cneg     w9, wzr, lt
+# CHECK: cneg     x3, x5, gt
+# CHECK: cneg     xzr, x4, le
+# CHECK: cneg     x9, xzr, lt
 0xa3 0xd4 0x85 0x5a
 0x9f 0xc4 0x84 0x5a
 0xe9 0xa7 0x9f 0x5a
@@ -1285,9 +1285,9 @@
 0xa3 0x3c 0xc7 0x93
 0xab 0xfd 0xd1 0x93
 
-# CHECK: extr     x19, x23, x23, #24
-# CHECK: extr     x29, xzr, xzr, #63
-# CHECK: extr     w9, w13, w13, #31
+# CHECK: ror     x19, x23, #24
+# CHECK: ror     x29, xzr, #63
+# CHECK: ror     w9, w13, #31
 0xf3 0x62 0xd7 0x93
 0xfd 0xff 0xdf 0x93
 0xa9 0x7d 0x8d 0x13
@@ -3015,15 +3015,15 @@
 0xe9 0x59 0x2f 0xd5
 0x41 0xff 0x28 0xd5
 
-# CHECK: {{sys     #0, c7, c1, #0, xzr|ic ialluis}}
-# CHECK: {{sys     #0, c7, c5, #0, xzr|ic iallu}}
+# CHECK: {{sys     #0, c7, c1, #0|ic ialluis}}
+# CHECK: {{sys     #0, c7, c5, #0|ic iallu}}
 # CHECK: {{sys     #3, c7, c5, #1|ic ivau}}, x9
 0x1f 0x71 0x8 0xd5
 0x1f 0x75 0x8 0xd5
 0x29 0x75 0xb 0xd5
 
 # CHECK: {{sys     #3, c7, c4, #1|dc zva}}, x12
-# CHECK: {{sys     #0, c7, c6, #1|dc ivac}}, xzr
+# CHECK: {{sys     #0, c7, c6, #1|dc ivac}}
 # CHECK: {{sys     #0, c7, c6, #2|dc isw}}, x2
 # CHECK: {{sys     #3, c7, c10, #1|dc cvac}}, x9
 # CHECK: {{sys     #0, c7, c10, #2|dc csw}}, x10

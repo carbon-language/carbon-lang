@@ -170,6 +170,10 @@ def tcGPR64 : RegisterClass<"ARM64", [i64], 64, (sub GPR64common, X19, X20, X21,
 // GPR register classes for post increment amount of vector load/store that
 // has alternate printing when Rm=31 and prints a constant immediate value
 // equal to the total number of bytes transferred.
+
+// FIXME: TableGen *should* be able to do these itself now. There appears to be
+// a bug in counting how many operands a Post-indexed MCInst should have which
+// means the aliases don't trigger.
 def GPR64pi1  : RegisterOperand<GPR64, "printPostIncOperand<1>">;
 def GPR64pi2  : RegisterOperand<GPR64, "printPostIncOperand<2>">;
 def GPR64pi3  : RegisterOperand<GPR64, "printPostIncOperand<3>">;

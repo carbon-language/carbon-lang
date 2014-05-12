@@ -133,7 +133,7 @@ define i1 @test_setcc1() {
   %val = fcmp ole fp128 %lhs, %rhs
 ; CHECK: bl __letf2
 ; CHECK: cmp w0, #0
-; CHECK: csinc w0, wzr, wzr, gt
+; CHECK: cset w0, le
 
   ret i1 %val
 ; CHECK: ret
@@ -152,11 +152,11 @@ define i1 @test_setcc2() {
   %val = fcmp ugt fp128 %lhs, %rhs
 ; CHECK: bl      __gttf2
 ; CHECK: cmp w0, #0
-; CHECK: csinc   [[GT:w[0-9]+]], wzr, wzr, le
+; CHECK: cset   [[GT:w[0-9]+]], gt
 
 ; CHECK: bl      __unordtf2
 ; CHECK: cmp w0, #0
-; CHECK: csinc   [[UNORDERED:w[0-9]+]], wzr, wzr, eq
+; CHECK: cset   [[UNORDERED:w[0-9]+]], ne
 
 ; CHECK: orr     w0, [[UNORDERED]], [[GT]]
 
@@ -176,11 +176,11 @@ define i32 @test_br_cc() {
   %cond = fcmp olt fp128 %lhs, %rhs
 ; CHECK: bl      __getf2
 ; CHECK: cmp w0, #0
-; CHECK: csinc   [[OGE:w[0-9]+]], wzr, wzr, lt
+; CHECK: cset   [[OGE:w[0-9]+]], ge
 
 ; CHECK: bl      __unordtf2
 ; CHECK: cmp w0, #0
-; CHECK: csinc   [[UNORDERED:w[0-9]+]], wzr, wzr, eq
+; CHECK: cset   [[UNORDERED:w[0-9]+]], ne
 
 ; CHECK: orr     [[UGE:w[0-9]+]], [[UNORDERED]], [[OGE]]
 ; CHECK: cbnz [[UGE]], [[RET29:.LBB[0-9]+_[0-9]+]]

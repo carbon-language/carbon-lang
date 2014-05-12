@@ -10,7 +10,7 @@
 # Little endian
 #------------------------------------------------------------------------------
 # CHECK-EL:    break                      # encoding: [0x00,0x00,0x07,0x00]
-# CHECK-EL:    break 7, 0                 # encoding: [0x07,0x00,0x07,0x00]
+# CHECK-EL:    break 7                    # encoding: [0x07,0x00,0x07,0x00]
 # CHECK-EL:    break 7, 5                 # encoding: [0x07,0x00,0x47,0x01]
 # CHECK-EL:    syscall                    # encoding: [0x00,0x00,0x7c,0x8b]
 # CHECK-EL:    syscall 396                # encoding: [0x8c,0x01,0x7c,0x8b]
@@ -28,7 +28,7 @@
 # Big endian
 #------------------------------------------------------------------------------
 # CHECK-EB:   break                       # encoding: [0x00,0x00,0x00,0x07]
-# CHECK-EB:   break 7, 0                  # encoding: [0x00,0x07,0x00,0x07]
+# CHECK-EB:   break 7                     # encoding: [0x00,0x07,0x00,0x07]
 # CHECK-EB:   break 7, 5                  # encoding: [0x00,0x07,0x01,0x47]
 # CHECK-EB:   syscall                     # encoding: [0x00,0x00,0x8b,0x7c]
 # CHECK-EB:   syscall 396                 # encoding: [0x01,0x8c,0x8b,0x7c]

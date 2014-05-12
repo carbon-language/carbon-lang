@@ -39,6 +39,7 @@ class AsmWriterEmitter {
   std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
   const std::vector<const CodeGenInstruction*> *NumberedInstructions;
   std::vector<AsmWriterInst> Instructions;
+  std::vector<std::string> PrintMethods;
 public:
   AsmWriterEmitter(RecordKeeper &R);
 
@@ -629,22 +630,25 @@ namespace {
 // alias for that pattern.
 class IAPrinter {
   std::vector<std::string> Conds;
-  std::map<StringRef, unsigned> OpMap;
+  std::map<StringRef, std::pair<int, int>> OpMap;
+  SmallVector<Record*, 4> ReqFeatures;
+
   std::string Result;
   std::string AsmString;
-  SmallVector<Record*, 4> ReqFeatures;
 public:
-  IAPrinter(std::string R, std::string AS)
-    : Result(R), AsmString(AS) {}
+  IAPrinter(std::string R, std::string AS) : Result(R), AsmString(AS) {}
 
   void addCond(const std::string &C) { Conds.push_back(C); }
 
-  void addOperand(StringRef Op, unsigned Idx) {
-    assert(Idx < 0xFF && "Index too large!");
-    OpMap[Op] = Idx;
+  void addOperand(StringRef Op, int OpIdx, int PrintMethodIdx = -1) {
+    assert(OpIdx >= 0 && OpIdx < 0xFE && "Idx out of range");
+    assert(PrintMethodIdx == -1 || PrintMethodIdx < 0xFF && "Idx out of range");
+    OpMap[Op] = std::make_pair(OpIdx, PrintMethodIdx);
   }
-  unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
+
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
+  int getOpIndex(StringRef Op) { return OpMap[Op].first; }
+  std::pair<int, int> &getOpData(StringRef Op) { return OpMap[Op]; }
 
   void print(raw_ostream &O) {
     if (Conds.empty() && ReqFeatures.empty()) {
@@ -686,7 +690,16 @@ public:
             ++I;
           StringRef Name(Start, I - Start);
           assert(isOpMapped(Name) && "Unmapped operand!");
-          OS << format("\\x%02X", (unsigned char)getOpIndex(Name) + 1);
+
+          int OpIndex, PrintIndex;
+          std::tie(OpIndex, PrintIndex) = getOpData(Name);
+          if (PrintIndex == -1) {
+            // Can use the default printOperand route.
+            OS << format("\\x%02X", (unsigned char)OpIndex + 1);
+          } else
+            // 3 bytes if a PrintMethod is needed: 0xFF, the MCInst operand
+            // number, and which of our pre-detected Methods to call.
+            OS << format("\\xFF\\x%02X\\x%02X", OpIndex + 1, PrintIndex + 1);
         } else {
           ++I;
         }
@@ -755,6 +768,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "\n#ifdef PRINT_ALIAS_INSTR\n";
   O << "#undef PRINT_ALIAS_INSTR\n\n";
 
+  //////////////////////////////
+  // Gather information about aliases we need to print
+  //////////////////////////////
+
   // Emit the method that prints the alias instruction.
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
 
@@ -809,7 +826,22 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
         case CodeGenInstAlias::ResultOperand::K_Record: {
           const Record *Rec = RO.getRecord();
           StringRef ROName = RO.getName();
+          int PrintMethodIdx = -1;
 
+          // These two may have a PrintMethod, which we want to record (if it's
+          // the first time we've seen it) and provide an index for the aliasing
+          // code to use.
+          if (Rec->isSubClassOf("RegisterOperand") ||
+              Rec->isSubClassOf("Operand")) {
+            std::string PrintMethod = Rec->getValueAsString("PrintMethod");
+            if (PrintMethod != "" && PrintMethod != "printOperand") {
+              PrintMethodIdx = std::find(PrintMethods.begin(),
+                                         PrintMethods.end(), PrintMethod) -
+                               PrintMethods.begin();
+              if (static_cast<unsigned>(PrintMethodIdx) == PrintMethods.size())
+                PrintMethods.push_back(PrintMethod);
+            }
+          }
 
           if (Rec->isSubClassOf("RegisterOperand"))
             Rec = Rec->getValueAsDef("RegClass");
@@ -818,7 +850,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
             IAP->addCond(Cond);
 
             if (!IAP->isOpMapped(ROName)) {
-              IAP->addOperand(ROName, i);
+              IAP->addOperand(ROName, i, PrintMethodIdx);
               Record *R = CGA->ResultOperands[i].getRecord();
               if (R->isSubClassOf("RegisterOperand"))
                 R = R->getValueAsDef("RegClass");
@@ -833,12 +865,9 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
               IAP->addCond(Cond);
             }
           } else {
-            assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
-            // FIXME: We may need to handle these situations.
-            delete IAP;
-            IAP = nullptr;
-            CantHandle = true;
-            break;
+            // Assume all printable operands are desired for now. This can be
+            // overridden in the InstAlias instantiation if neccessary.
+            IAP->addOperand(ROName, i, PrintMethodIdx);
           }
 
           break;
@@ -877,6 +906,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       IAPrinterMap[I->first].push_back(IAP);
     }
   }
+
+  //////////////////////////////
+  // Write out the printAliasInstr function
+  //////////////////////////////
 
   std::string Header;
   raw_string_ostream HeaderO(Header);
@@ -951,7 +984,13 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "    do {\n";
   O << "      if (AsmString[I] == '$') {\n";
   O << "        ++I;\n";
-  O << "        printOperand(MI, unsigned(AsmString[I++]) - 1, OS);\n";
+  O << "        if (AsmString[I] == (char)0xff) {\n";
+  O << "          ++I;\n";
+  O << "          int OpIdx = AsmString[I++] - 1;\n";
+  O << "          int PrintMethodIdx = AsmString[I++] - 1;\n";
+  O << "          printCustomAliasOperand(MI, OpIdx, PrintMethodIdx, OS);\n";
+  O << "        } else\n";
+  O << "          printOperand(MI, unsigned(AsmString[I++]) - 1, OS);\n";
   O << "      } else {\n";
   O << "        OS << AsmString[I++];\n";
   O << "      }\n";
@@ -960,6 +999,28 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   O << "  return true;\n";
   O << "}\n\n";
+
+  //////////////////////////////
+  // Write out the printCustomAliasOperand function
+  //////////////////////////////
+
+  O << "void " << Target.getName() << ClassName << "::"
+    << "printCustomAliasOperand(\n"
+    << "         const MCInst *MI, unsigned OpIdx,\n"
+    << "         unsigned PrintMethodIdx, raw_ostream &OS) {\n"
+    << "  switch (PrintMethodIdx) {\n"
+    << "  default:\n"
+    << "    llvm_unreachable(\"Unknown PrintMethod kind\");\n"
+    << "    break;\n";
+
+  for (unsigned i = 0; i < PrintMethods.size(); ++i) {
+    O << "  case " << i << ":\n"
+      << "    " << PrintMethods[i] << "(MI, OpIdx, OS);\n"
+      << "    break;\n";
+  }
+
+  O << "  }\n"
+    << "}\n\n";
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
 }

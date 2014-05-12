@@ -210,6 +210,15 @@ AArch64InstPrinter::printCondCodeOperand(const MCInst *MI, unsigned OpNum,
   O << A64CondCodeToString(static_cast<A64CC::CondCodes>(MO.getImm()));
 }
 
+void
+AArch64InstPrinter::printInverseCondCodeOperand(const MCInst *MI,
+                                                unsigned OpNum,
+                                                raw_ostream &O) {
+  A64CC::CondCodes CC =
+      static_cast<A64CC::CondCodes>(MI->getOperand(OpNum).getImm());
+  O << A64CondCodeToString(A64InvertCondCode(CC));
+}
+
 template <unsigned field_width, unsigned scale> void
 AArch64InstPrinter::printLabelOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {

@@ -7,7 +7,7 @@ entry:
 	%div = udiv i16 %x, 33
 	ret i16 %div
 ; CHECK-LABEL: test1:
-; CHECK: imull	$63551, %eax, %eax
+; CHECK: imull	$63551, %eax
 ; CHECK-NEXT: shrl	$21, %eax
 ; CHECK-NEXT: ret
 }
@@ -18,7 +18,7 @@ entry:
   ret i16 %div
 
 ; CHECK-LABEL: test2:
-; CHECK: imull	$43691, %eax, %eax
+; CHECK: imull	$43691, %eax
 ; CHECK-NEXT: shrl	$17, %eax
 ; CHECK-NEXT: ret
 }
@@ -30,7 +30,7 @@ entry:
 
 ; CHECK-LABEL: test3:
 ; CHECK: movzbl  8(%esp), %eax
-; CHECK-NEXT: imull	$171, %eax, %eax
+; CHECK-NEXT: imull	$171, %eax
 ; CHECK-NEXT: shrl	$9, %eax
 ; CHECK-NEXT: ret
 }
@@ -40,7 +40,7 @@ entry:
 	%div = sdiv i16 %x, 33		; <i32> [#uses=1]
 	ret i16 %div
 ; CHECK-LABEL: test4:
-; CHECK: imull	$1986, %eax, %
+; CHECK: imull	$1986, %eax
 }
 
 define i32 @test5(i32 %A) nounwind {

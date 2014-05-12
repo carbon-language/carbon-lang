@@ -1284,8 +1284,8 @@ def : MipsInstAlias<"beqz $rs,$offset",
                     (BEQ GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
 def : MipsInstAlias<"syscall", (SYSCALL 0), 1>;
     
-def : MipsInstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
 def : MipsInstAlias<"break", (BREAK 0, 0), 1>;
+def : MipsInstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
 def : MipsInstAlias<"ei", (EI ZERO), 1>;
 def : MipsInstAlias<"di", (DI ZERO), 1>;
 

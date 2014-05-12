@@ -7,7 +7,7 @@
 define i64 @test_sext_extr_cmp_0(<1 x i64> %v1, <1 x i64> %v2) {
 ; CHECK-LABEL: test_sext_extr_cmp_0:
 ; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}
-; CHECK: csinc
+; CHECK: cset
   %1 = icmp sge <1 x i64> %v1, %v2
   %2 = extractelement <1 x i1> %1, i32 0
   %vget_lane = sext i1 %2 to i64

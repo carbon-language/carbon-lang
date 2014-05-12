@@ -203,7 +203,7 @@ int	$3
 // CHECK-STDERR: warning: scale factor without index register is ignored
 movaps %xmm3, (%esi, 2)
 
-// CHECK: imull $12, %eax, %eax
+// CHECK: imull $12, %eax
 imul $12, %eax
 
 // CHECK: imull %ecx, %eax

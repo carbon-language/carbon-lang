@@ -187,13 +187,13 @@ define void @test_cset(i32 %lhs, i32 %rhs, i64 %lhs64) {
   %val1 = zext i1 %tst1 to i32
   store i32 %val1, i32* @var32
 ; CHECK: cmp {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: csinc {{w[0-9]+}}, wzr, wzr, ne
+; CHECK: cset {{w[0-9]+}}, eq
 
   %rhs64 = sext i32 %rhs to i64
   %tst2 = icmp ule i64 %lhs64, %rhs64
   %val2 = zext i1 %tst2 to i64
   store i64 %val2, i64* @var64
-; CHECK: csinc {{w[0-9]+}}, wzr, wzr, hi
+; CHECK: cset {{w[0-9]+}}, ls
 
   ret void
 ; CHECK: ret
@@ -206,13 +206,13 @@ define void @test_csetm(i32 %lhs, i32 %rhs, i64 %lhs64) {
   %val1 = sext i1 %tst1 to i32
   store i32 %val1, i32* @var32
 ; CHECK: cmp {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: csinv {{w[0-9]+}}, wzr, wzr, ne
+; CHECK: csetm {{w[0-9]+}}, eq
 
   %rhs64 = sext i32 %rhs to i64
   %tst2 = icmp ule i64 %lhs64, %rhs64
   %val2 = sext i1 %tst2 to i64
   store i64 %val2, i64* @var64
-; CHECK: csinv {{x[0-9]+}}, xzr, xzr, hi
+; CHECK: csetm {{x[0-9]+}}, ls
 
   ret void
 ; CHECK: ret

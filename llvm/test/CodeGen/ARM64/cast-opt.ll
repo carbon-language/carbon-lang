@@ -7,7 +7,7 @@
 
 define zeroext i8 @foo(i32 %i1, i32 %i2) {
 ; CHECK-LABEL: foo:
-; CHECK: csinc
+; CHECK: cset
 ; CHECK-NOT: and
 entry:
   %idxprom = sext i32 %i1 to i64

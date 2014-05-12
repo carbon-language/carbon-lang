@@ -86,9 +86,9 @@ define void @fetch_and_min(i128* %p, i128 %bits) {
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldaxp   [[DEST_REGLO:x[0-9]+]], [[DEST_REGHI:x[0-9]+]], [x0]
 ; CHECK: cmp     [[DEST_REGLO]], x2
-; CHECK: csinc   [[LOCMP:w[0-9]+]], wzr, wzr, hi
+; CHECK: cset    [[LOCMP:w[0-9]+]], ls
 ; CHECK: cmp     [[DEST_REGHI:x[0-9]+]], x3
-; CHECK: csinc   [[HICMP:w[0-9]+]], wzr, wzr, gt
+; CHECK: cset    [[HICMP:w[0-9]+]], le
 ; CHECK: csel    [[CMP:w[0-9]+]], [[LOCMP]], [[HICMP]], eq
 ; CHECK: cmp     [[CMP]], #0
 ; CHECK-DAG: csel    [[SCRATCH_REGHI:x[0-9]+]], [[DEST_REGHI]], x3, ne
@@ -108,9 +108,9 @@ define void @fetch_and_max(i128* %p, i128 %bits) {
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldaxp  [[DEST_REGLO:x[0-9]+]], [[DEST_REGHI:x[0-9]+]], [x0]
 ; CHECK: cmp     [[DEST_REGLO]], x2
-; CHECK: csinc   [[LOCMP:w[0-9]+]], wzr, wzr, ls
+; CHECK: cset    [[LOCMP:w[0-9]+]], hi
 ; CHECK: cmp     [[DEST_REGHI:x[0-9]+]], x3
-; CHECK: csinc   [[HICMP:w[0-9]+]], wzr, wzr, le
+; CHECK: cset    [[HICMP:w[0-9]+]], gt
 ; CHECK: csel    [[CMP:w[0-9]+]], [[LOCMP]], [[HICMP]], eq
 ; CHECK: cmp     [[CMP]], #0
 ; CHECK-DAG: csel    [[SCRATCH_REGHI:x[0-9]+]], [[DEST_REGHI]], x3, ne
@@ -130,9 +130,9 @@ define void @fetch_and_umin(i128* %p, i128 %bits) {
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldaxp  [[DEST_REGLO:x[0-9]+]], [[DEST_REGHI:x[0-9]+]], [x0]
 ; CHECK: cmp     [[DEST_REGLO]], x2
-; CHECK: csinc   [[LOCMP:w[0-9]+]], wzr, wzr, hi
+; CHECK: cset    [[LOCMP:w[0-9]+]], ls
 ; CHECK: cmp     [[DEST_REGHI:x[0-9]+]], x3
-; CHECK: csinc   [[HICMP:w[0-9]+]], wzr, wzr, hi
+; CHECK: cset    [[HICMP:w[0-9]+]], ls
 ; CHECK: csel    [[CMP:w[0-9]+]], [[LOCMP]], [[HICMP]], eq
 ; CHECK: cmp     [[CMP]], #0
 ; CHECK-DAG: csel    [[SCRATCH_REGHI:x[0-9]+]], [[DEST_REGHI]], x3, ne
@@ -152,9 +152,9 @@ define void @fetch_and_umax(i128* %p, i128 %bits) {
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldaxp  [[DEST_REGLO:x[0-9]+]], [[DEST_REGHI:x[0-9]+]], [x0]
 ; CHECK: cmp     [[DEST_REGLO]], x2
-; CHECK: csinc   [[LOCMP:w[0-9]+]], wzr, wzr, ls
+; CHECK: cset    [[LOCMP:w[0-9]+]], hi
 ; CHECK: cmp     [[DEST_REGHI:x[0-9]+]], x3
-; CHECK: csinc   [[HICMP:w[0-9]+]], wzr, wzr, ls
+; CHECK: cset    [[HICMP:w[0-9]+]], hi
 ; CHECK: csel    [[CMP:w[0-9]+]], [[LOCMP]], [[HICMP]], eq
 ; CHECK: cmp     [[CMP]], #0
 ; CHECK-DAG: csel    [[SCRATCH_REGHI:x[0-9]+]], [[DEST_REGHI]], x3, ne

@@ -731,23 +731,34 @@ _func:
         neg w26, w25, lsl #29
         neg w24, w23, lsl #31
 // CHECK-AARCH64: sub      w28, wzr, w27              // encoding: [0xfc,0x03,0x1b,0x4b]
+// CHECK-AARCH64: neg     w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x4b]
+// CHECK-AARCH64: neg      w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x4b]
+
 // CHECK-ARM64: neg      w28, w27              // encoding: [0xfc,0x03,0x1b,0x4b]
-// CHECK: sub      w26, wzr, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x4b]
-// CHECK: sub      w24, wzr, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x4b]
+// CHECK-ARM64: sub      w26, wzr, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x4b]
+// CHECK-ARM64: sub      w24, wzr, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x4b]
 
         neg w22, w21, lsr #0
         neg w20, w19, lsr #1
         neg w18, w17, lsr #31
-// CHECK: sub      w22, wzr, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x4b]
-// CHECK: sub      w20, wzr, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x4b]
-// CHECK: sub      w18, wzr, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x4b]
+// CHECK-AARCH64: neg      w22, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x4b]
+// CHECK-AARCH64: neg      w20, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x4b]
+// CHECK-AARCH64: neg      w18, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x4b]
+
+// CHECK-ARM64: sub      w22, wzr, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x4b]
+// CHECK-ARM64: sub      w20, wzr, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x4b]
+// CHECK-ARM64: sub      w18, wzr, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x4b]
 
         neg w16, w15, asr #0
         neg w14, w13, asr #12
         neg w12, w11, asr #31
-// CHECK: sub      w16, wzr, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x4b]
-// CHECK: sub      w14, wzr, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x4b]
-// CHECK: sub      w12, wzr, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x4b]
+// CHECK-AARCH64: neg      w16, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x4b]
+// CHECK-AARCH64: neg      w14, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x4b]
+// CHECK-AARCH64: neg      w12, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x4b]
+
+// CHECK-ARM64: sub      w16, wzr, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x4b]
+// CHECK-ARM64: sub      w14, wzr, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x4b]
+// CHECK-ARM64: sub      w12, wzr, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x4b]
 
         neg x29, x30
         neg x30, xzr
@@ -763,23 +774,34 @@ _func:
         neg x26, x25, lsl #29
         neg x24, x23, lsl #31
 // CHECK-AARCH64: sub      x28, xzr, x27              // encoding: [0xfc,0x03,0x1b,0xcb]
+// CHECK-AARCH64: neg      x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xcb]
+// CHECK-AARCH64: neg      x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xcb]
+
 // CHECK-ARM64: neg      x28, x27              // encoding: [0xfc,0x03,0x1b,0xcb]
-// CHECK: sub      x26, xzr, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xcb]
-// CHECK: sub      x24, xzr, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xcb]
+// CHECK-ARM64: sub      x26, xzr, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xcb]
+// CHECK-ARM64: sub      x24, xzr, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xcb]
 
         neg x22, x21, lsr #0
         neg x20, x19, lsr #1
         neg x18, x17, lsr #31
-// CHECK: sub      x22, xzr, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xcb]
-// CHECK: sub      x20, xzr, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xcb]
-// CHECK: sub      x18, xzr, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xcb]
+// CHECK-AARCH64: neg      x22, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xcb]
+// CHECK-AARCH64: neg      x20, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xcb]
+// CHECK-AARCH64: neg      x18, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xcb]
+
+// CHECK-ARM64: sub      x22, xzr, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xcb]
+// CHECK-ARM64: sub      x20, xzr, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xcb]
+// CHECK-ARM64: sub      x18, xzr, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xcb]
 
         neg x16, x15, asr #0
         neg x14, x13, asr #12
         neg x12, x11, asr #31
-// CHECK: sub      x16, xzr, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xcb]
-// CHECK: sub      x14, xzr, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xcb]
-// CHECK: sub      x12, xzr, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xcb]
+// CHECK-AARCH64: neg      x16, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xcb]
+// CHECK-AARCH64: neg      x14, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xcb]
+// CHECK-AARCH64: neg      x12, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xcb]
+
+// CHECK-ARM64: sub      x16, xzr, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xcb]
+// CHECK-ARM64: sub      x14, xzr, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xcb]
+// CHECK-ARM64: sub      x12, xzr, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xcb]
 
         negs w29, w30
         negs w30, wzr
@@ -795,23 +817,34 @@ _func:
         negs w26, w25, lsl #29
         negs w24, w23, lsl #31
 // CHECK-AARCH64: subs     w28, wzr, w27      // encoding: [0xfc,0x03,0x1b,0x6b]
+// CHECK-AARCH64: negs     w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x6b]
+// CHECK-AARCH64: negs     w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x6b]
+
 // CHECK-ARM64: negs     w28, w27             // encoding: [0xfc,0x03,0x1b,0x6b]
-// CHECK: subs     w26, wzr, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x6b]
-// CHECK: subs     w24, wzr, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x6b]
+// CHECK-ARM64: subs     w26, wzr, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x6b]
+// CHECK-ARM64: subs     w24, wzr, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x6b]
 
         negs w22, w21, lsr #0
         negs w20, w19, lsr #1
         negs w18, w17, lsr #31
-// CHECK: subs     w22, wzr, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x6b]
-// CHECK: subs     w20, wzr, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x6b]
-// CHECK: subs     w18, wzr, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x6b]
+// CHECK-AARCH64: negs     w22, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x6b]
+// CHECK-AARCH64: negs     w20, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x6b]
+// CHECK-AARCH64: negs     w18, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x6b]
+
+// CHECK-ARM64: subs     w22, wzr, w21, lsr #0      // encoding: [0xf6,0x03,0x55,0x6b]
+// CHECK-ARM64: subs     w20, wzr, w19, lsr #1      // encoding: [0xf4,0x07,0x53,0x6b]
+// CHECK-ARM64: subs     w18, wzr, w17, lsr #31     // encoding: [0xf2,0x7f,0x51,0x6b]
 
         negs w16, w15, asr #0
         negs w14, w13, asr #12
         negs w12, w11, asr #31
-// CHECK: subs     w16, wzr, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x6b]
-// CHECK: subs     w14, wzr, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x6b]
-// CHECK: subs     w12, wzr, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x6b]
+// CHECK-AARCH64: negs     w16, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x6b]
+// CHECK-AARCH64: negs     w14, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x6b]
+// CHECK-AARCH64: negs     w12, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x6b]
+
+// CHECK-ARM64: subs     w16, wzr, w15, asr #0      // encoding: [0xf0,0x03,0x8f,0x6b]
+// CHECK-ARM64: subs     w14, wzr, w13, asr #12     // encoding: [0xee,0x33,0x8d,0x6b]
+// CHECK-ARM64: subs     w12, wzr, w11, asr #31     // encoding: [0xec,0x7f,0x8b,0x6b]
 
         negs x29, x30
         negs x30, xzr
@@ -827,23 +860,34 @@ _func:
         negs x26, x25, lsl #29
         negs x24, x23, lsl #31
 // CHECK-AARCH64: subs     x28, xzr, x27              // encoding: [0xfc,0x03,0x1b,0xeb]
+// CHECK-AARCH64: negs     x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xeb]
+// CHECK-AARCH64: negs     x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xeb]
+
 // CHECK-ARM64: negs     x28, x27              // encoding: [0xfc,0x03,0x1b,0xeb]
-// CHECK: subs     x26, xzr, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xeb]
-// CHECK: subs     x24, xzr, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xeb]
+// CHECK-ARM64: subs     x26, xzr, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xeb]
+// CHECK-ARM64: subs     x24, xzr, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xeb]
 
         negs x22, x21, lsr #0
         negs x20, x19, lsr #1
         negs x18, x17, lsr #31
-// CHECK: subs     x22, xzr, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xeb]
-// CHECK: subs     x20, xzr, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xeb]
-// CHECK: subs     x18, xzr, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xeb]
+// CHECK-AARCH64: negs     x22, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xeb]
+// CHECK-AARCH64: negs     x20, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xeb]
+// CHECK-AARCH64: negs     x18, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xeb]
+
+// CHECK-ARM64: subs     x22, xzr, x21, lsr #0      // encoding: [0xf6,0x03,0x55,0xeb]
+// CHECK-ARM64: subs     x20, xzr, x19, lsr #1      // encoding: [0xf4,0x07,0x53,0xeb]
+// CHECK-ARM64: subs     x18, xzr, x17, lsr #31     // encoding: [0xf2,0x7f,0x51,0xeb]
 
         negs x16, x15, asr #0
         negs x14, x13, asr #12
         negs x12, x11, asr #31
-// CHECK: subs     x16, xzr, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xeb]
-// CHECK: subs     x14, xzr, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xeb]
-// CHECK: subs     x12, xzr, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xeb]
+// CHECK-AARCH64: negs     x16, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xeb]
+// CHECK-AARCH64: negs     x14, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xeb]
+// CHECK-AARCH64: negs     x12, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xeb]
+
+// CHECK-ARM64: subs     x16, xzr, x15, asr #0      // encoding: [0xf0,0x03,0x8f,0xeb]
+// CHECK-ARM64: subs     x14, xzr, x13, asr #12     // encoding: [0xee,0x33,0x8d,0xeb]
+// CHECK-ARM64: subs     x12, xzr, x11, asr #31     // encoding: [0xec,0x7f,0x8b,0xeb]
 
 //------------------------------------------------------------------------------
 // Add-sub (shifted register)
@@ -1513,55 +1557,55 @@ _func:
 
         cset w3, eq
         cset x9, pl
-// CHECK: csinc    w3, wzr, wzr, ne           // encoding: [0xe3,0x17,0x9f,0x1a]
-// CHECK: csinc    x9, xzr, xzr, mi           // encoding: [0xe9,0x47,0x9f,0x9a]
+// CHECK: cset    w3, eq           // encoding: [0xe3,0x17,0x9f,0x1a]
+// CHECK: cset    x9, pl           // encoding: [0xe9,0x47,0x9f,0x9a]
 
         csetm w20, ne
         csetm x30, ge
-// CHECK: csinv    w20, wzr, wzr, eq          // encoding: [0xf4,0x03,0x9f,0x5a]
-// CHECK: csinv    x30, xzr, xzr, lt          // encoding: [0xfe,0xb3,0x9f,0xda]
+// CHECK: csetm    w20, ne          // encoding: [0xf4,0x03,0x9f,0x5a]
+// CHECK: csetm    x30, ge          // encoding: [0xfe,0xb3,0x9f,0xda]
 
         cinc w3, w5, gt
         cinc wzr, w4, le
         cinc w9, wzr, lt
-// CHECK: csinc    w3, w5, w5, le             // encoding: [0xa3,0xd4,0x85,0x1a]
-// CHECK: csinc    wzr, w4, w4, gt            // encoding: [0x9f,0xc4,0x84,0x1a]
-// CHECK: csinc    w9, wzr, wzr, ge           // encoding: [0xe9,0xa7,0x9f,0x1a]
+// CHECK: cinc    w3, w5, gt             // encoding: [0xa3,0xd4,0x85,0x1a]
+// CHECK: cinc    wzr, w4, le            // encoding: [0x9f,0xc4,0x84,0x1a]
+// CHECK: cset    w9, lt           // encoding: [0xe9,0xa7,0x9f,0x1a]
 
         cinc x3, x5, gt
         cinc xzr, x4, le
         cinc x9, xzr, lt
-// CHECK: csinc     x3, x5, x5, le             // encoding: [0xa3,0xd4,0x85,0x9a]
-// CHECK: csinc     xzr, x4, x4, gt            // encoding: [0x9f,0xc4,0x84,0x9a]
-// CHECK: csinc     x9, xzr, xzr, ge           // encoding: [0xe9,0xa7,0x9f,0x9a]
+// CHECK: cinc     x3, x5, gt             // encoding: [0xa3,0xd4,0x85,0x9a]
+// CHECK: cinc     xzr, x4, le            // encoding: [0x9f,0xc4,0x84,0x9a]
+// CHECK: cset     x9, lt           // encoding: [0xe9,0xa7,0x9f,0x9a]
 
         cinv w3, w5, gt
         cinv wzr, w4, le
         cinv w9, wzr, lt
-// CHECK: csinv    w3, w5, w5, le             // encoding: [0xa3,0xd0,0x85,0x5a]
-// CHECK: csinv    wzr, w4, w4, gt            // encoding: [0x9f,0xc0,0x84,0x5a]
-// CHECK: csinv    w9, wzr, wzr, ge           // encoding: [0xe9,0xa3,0x9f,0x5a]
+// CHECK: cinv    w3, w5, gt             // encoding: [0xa3,0xd0,0x85,0x5a]
+// CHECK: cinv    wzr, w4, le            // encoding: [0x9f,0xc0,0x84,0x5a]
+// CHECK: csetm    w9, lt           // encoding: [0xe9,0xa3,0x9f,0x5a]
 
         cinv x3, x5, gt
         cinv xzr, x4, le
         cinv x9, xzr, lt
-// CHECK: csinv    x3, x5, x5, le             // encoding: [0xa3,0xd0,0x85,0xda]
-// CHECK: csinv    xzr, x4, x4, gt            // encoding: [0x9f,0xc0,0x84,0xda]
-// CHECK: csinv    x9, xzr, xzr, ge           // encoding: [0xe9,0xa3,0x9f,0xda]
+// CHECK: cinv    x3, x5, gt             // encoding: [0xa3,0xd0,0x85,0xda]
+// CHECK: cinv    xzr, x4, le            // encoding: [0x9f,0xc0,0x84,0xda]
+// CHECK: csetm    x9, lt           // encoding: [0xe9,0xa3,0x9f,0xda]
 
         cneg w3, w5, gt
         cneg wzr, w4, le
         cneg w9, wzr, lt
-// CHECK: csneg    w3, w5, w5, le             // encoding: [0xa3,0xd4,0x85,0x5a]
-// CHECK: csneg    wzr, w4, w4, gt            // encoding: [0x9f,0xc4,0x84,0x5a]
-// CHECK: csneg    w9, wzr, wzr, ge           // encoding: [0xe9,0xa7,0x9f,0x5a]
+// CHECK: cneg    w3, w5, gt            // encoding: [0xa3,0xd4,0x85,0x5a]
+// CHECK: cneg    wzr, w4, le            // encoding: [0x9f,0xc4,0x84,0x5a]
+// CHECK: cneg    w9, wzr, lt           // encoding: [0xe9,0xa7,0x9f,0x5a]
 
         cneg x3, x5, gt
         cneg xzr, x4, le
         cneg x9, xzr, lt
-// CHECK: csneg    x3, x5, x5, le             // encoding: [0xa3,0xd4,0x85,0xda]
-// CHECK: csneg    xzr, x4, x4, gt            // encoding: [0x9f,0xc4,0x84,0xda]
-// CHECK: csneg    x9, xzr, xzr, ge           // encoding: [0xe9,0xa7,0x9f,0xda]
+// CHECK: cneg    x3, x5, gt             // encoding: [0xa3,0xd4,0x85,0xda]
+// CHECK: cneg    xzr, x4, le            // encoding: [0x9f,0xc4,0x84,0xda]
+// CHECK: cneg    x9, xzr, lt           // encoding: [0xe9,0xa7,0x9f,0xda]
 
 //------------------------------------------------------------------------------
 // Data-processing (1 source)
@@ -1859,11 +1903,11 @@ _func:
 
         ror x19, x23, #24
         ror x29, xzr, #63
-// CHECK: extr     x19, x23, x23, #24         // encoding: [0xf3,0x62,0xd7,0x93]
-// CHECK: extr     x29, xzr, xzr, #63         // encoding: [0xfd,0xff,0xdf,0x93]
+// CHECK: ror     x19, x23, #24         // encoding: [0xf3,0x62,0xd7,0x93]
+// CHECK: ror     x29, xzr, #63         // encoding: [0xfd,0xff,0xdf,0x93]
 
         ror w9, w13, #31
-// CHECK: extr     w9, w13, w13, #31          // encoding: [0xa9,0x7d,0x8d,0x13]
+// CHECK: ror     w9, w13, #31          // encoding: [0xa9,0x7d,0x8d,0x13]
 
 //------------------------------------------------------------------------------
 // Floating-point compare
@@ -3406,7 +3450,7 @@ _func:
         mov w3, #0xf000f
         mov x10, #0xaaaaaaaaaaaaaaaa
 // CHECK: orr      w3, wzr, #0xf000f          // encoding: [0xe3,0x8f,0x00,0x32]
-// CHECK: orr      x10, xzr, #0xaaaaaaaaaaaaaaaa // encoding: [0xea,0xf3,0x01,0xb2]
+// CHECK: orr x10, xzr, #0xaaaaaaaaaaaaaaaa // encoding: [0xea,0xf3,0x01,0xb2]
 
 //------------------------------------------------------------------------------
 // Logical (shifted register)
@@ -3747,7 +3791,7 @@ _func:
         sys #7, c5, c9, #7, x5
         sys #0, c15, c15, #2
 // CHECK: sys     #7, c5, c9, #7, x5      // encoding: [0xe5,0x59,0x0f,0xd5]
-// CHECK: sys     #0, c15, c15, #2, xzr   // encoding: [0x5f,0xff,0x08,0xd5]
+// CHECK: sys     #0, c15, c15, #2   // encoding: [0x5f,0xff,0x08,0xd5]
 
         sysl x9, #7, c5, c9, #7
         sysl x1, #0, c15, c15, #2
