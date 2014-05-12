@@ -65,6 +65,20 @@
 // || `[0x0bffd000, 0x0fffcfff]` || ShadowGap  ||
 // || `[0x0aaa8000, 0x0bffcfff]` || LowShadow  ||
 // || `[0x00000000, 0x0aaa7fff]` || LowMem     ||
+//
+// Shadow mapping on FreeBSD/x86-64 with SHADOW_OFFSET == 0x400000000000:
+// || `[0x500000000000, 0x7fffffffffff]` || HighMem    ||
+// || `[0x4a0000000000, 0x4fffffffffff]` || HighShadow ||
+// || `[0x480000000000, 0x49ffffffffff]` || ShadowGap  ||
+// || `[0x400000000000, 0x47ffffffffff]` || LowShadow  ||
+// || `[0x000000000000, 0x3fffffffffff]` || LowMem     ||
+//
+// Shadow mapping on FreeBSD/i386 with SHADOW_OFFSET == 0x40000000:
+// || `[0x60000000, 0xffffffff]` || HighMem    ||
+// || `[0x4c000000, 0x5fffffff]` || HighShadow ||
+// || `[0x48000000, 0x4bffffff]` || ShadowGap  ||
+// || `[0x40000000, 0x47ffffff]` || LowShadow  ||
+// || `[0x00000000, 0x3fffffff]` || LowMem     ||
 
 static const u64 kDefaultShadowScale = 3;
 static const u64 kDefaultShadowOffset32 = 1ULL << 29;  // 0x20000000
@@ -73,6 +87,8 @@ static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
+static const u64 kFreeBSD_ShadowOffset32 = 1ULL << 30;  // 0x40000000
+static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 
 #define SHADOW_SCALE kDefaultShadowScale
 #if SANITIZER_ANDROID
@@ -81,6 +97,8 @@ static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
 # if SANITIZER_WORDSIZE == 32
 #  if defined(__mips__)
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
+#  elif SANITIZER_FREEBSD
+#    define SHADOW_OFFSET kFreeBSD_ShadowOffset32
 #  else
 #    if SANITIZER_IOS
 #      define SHADOW_OFFSET kIosShadowOffset32
@@ -91,6 +109,8 @@ static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
 # else
 #  if defined(__aarch64__)
 #    define SHADOW_OFFSET kAArch64_ShadowOffset64
+#  elif SANITIZER_FREEBSD
+#    define SHADOW_OFFSET kFreeBSD_ShadowOffset64
 #  elif SANITIZER_MAC
 #   define SHADOW_OFFSET kDefaultShadowOffset64
 #  else
