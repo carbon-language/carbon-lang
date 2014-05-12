@@ -25,6 +25,7 @@
 #if defined(__APPLE__)
 #define HIDDEN_DIRECTIVE .private_extern
 #define LOCAL_LABEL(name) L_##name
+// tell linker it can break up file at label boundaries
 #define FILE_LEVEL_DIRECTIVE  .subsections_via_symbols
 #define SYMBOL_IS_FUNC(name)
 #else
@@ -103,6 +104,7 @@
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)           \
+  FILE_LEVEL_DIRECTIVE     SEPARATOR                       \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR              \
   HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR             \

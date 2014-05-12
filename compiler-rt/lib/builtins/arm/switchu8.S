@@ -40,6 +40,3 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switchu8)
 	bx      ip                      // jump to computed label
 END_COMPILERRT_FUNCTION(__switchu8)
 
-	// tell linker it can break up file at label boundaries
-	.subsections_via_symbols
-

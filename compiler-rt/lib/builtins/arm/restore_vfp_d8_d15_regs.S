@@ -31,5 +31,3 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(__restore_vfp_d8_d15_regs)
 	bx      lr                      // return to prolog
 END_COMPILERRT_FUNCTION(__restore_vfp_d8_d15_regs)
 
-	// tell linker it can break up file at label boundaries
-	.subsections_via_symbols
