@@ -90,10 +90,12 @@ def ShifterOperand : AsmOperandClass {
 def MovImm32ShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "MovImm32Shifter";
+  let RenderMethod = "addShifterOperands";
 }
 def MovImm64ShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "MovImm64Shifter";
+  let RenderMethod = "addShifterOperands";
 }
 
 // Shifter operand for arithmetic register shifted encodings.
@@ -101,7 +103,7 @@ class ArithmeticShifterOperand<int width> : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "ArithmeticShifter" # width;
   let PredicateMethod = "isArithmeticShifter<" # width # ">";
-  let RenderMethod = "addArithmeticShifterOperands";
+  let RenderMethod = "addShifterOperands";
   let DiagnosticType = "AddSubRegShift" # width;
 }
 
@@ -113,7 +115,7 @@ class LogicalShifterOperand<int width> : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "LogicalShifter" # width;
   let PredicateMethod = "isLogicalShifter<" # width # ">";
-  let RenderMethod = "addLogicalShifterOperands";
+  let RenderMethod = "addShifterOperands";
   let DiagnosticType = "AddSubRegShift" # width;
 }
 
@@ -124,16 +126,19 @@ def LogicalShifterOperand64 : LogicalShifterOperand<64>;
 def LogicalVecShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "LogicalVecShifter";
+  let RenderMethod = "addShifterOperands";
 }
 def LogicalVecHalfWordShifterOperand : AsmOperandClass {
   let SuperClasses = [LogicalVecShifterOperand];
   let Name = "LogicalVecHalfWordShifter";
+  let RenderMethod = "addShifterOperands";
 }
 
 // The "MSL" shifter on the vector MOVI instruction.
 def MoveVecShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "MoveVecShifter";
+  let RenderMethod = "addShifterOperands";
 }
 
 // Extend operand for arithmetic encodings.
@@ -150,6 +155,7 @@ def ExtendOperand64 : AsmOperandClass {
 def ExtendOperandLSL64 : AsmOperandClass {
   let SuperClasses = [ExtendOperand];
   let Name = "ExtendLSL64";
+  let RenderMethod = "addExtend64Operands";
   let DiagnosticType = "AddSubRegExtendLarge";
 }
 

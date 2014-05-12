@@ -1112,7 +1112,7 @@ void ARM64InstPrinter::printShifter(const MCInst *MI, unsigned OpNum,
   if (ARM64_AM::getShiftType(Val) == ARM64_AM::LSL &&
       ARM64_AM::getShiftValue(Val) == 0)
     return;
-  O << ", " << ARM64_AM::getShiftName(ARM64_AM::getShiftType(Val)) << " #"
+  O << ", " << ARM64_AM::getShiftExtendName(ARM64_AM::getShiftType(Val)) << " #"
     << ARM64_AM::getShiftValue(Val);
 }
 
@@ -1131,7 +1131,7 @@ void ARM64InstPrinter::printExtendedRegister(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNum).getImm();
-  ARM64_AM::ExtendType ExtType = ARM64_AM::getArithExtendType(Val);
+  ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getArithExtendType(Val);
   unsigned ShiftVal = ARM64_AM::getArithShiftValue(Val);
 
   // If the destination or first source register operand is [W]SP, print
@@ -1149,7 +1149,7 @@ void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
       return;
     }
   }
-  O << ", " << ARM64_AM::getExtendName(ExtType);
+  O << ", " << ARM64_AM::getShiftExtendName(ExtType);
   if (ShiftVal != 0)
     O << " #" << ShiftVal;
 }
@@ -1224,7 +1224,7 @@ void ARM64InstPrinter::printMemoryPostIndexed(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O, int Scale) {
   unsigned Val = MI->getOperand(OpNum + 2).getImm();
-  ARM64_AM::ExtendType ExtType = ARM64_AM::getMemExtendType(Val);
+  ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getMemExtendType(Val);
 
   O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ", ";
   if (ExtType == ARM64_AM::UXTW || ExtType == ARM64_AM::SXTW)
@@ -1238,7 +1238,7 @@ void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
     if (DoShift)
       O << ", lsl";
   } else
-    O << ", " << ARM64_AM::getExtendName(ExtType);
+    O << ", " << ARM64_AM::getShiftExtendName(ExtType);
 
   if (DoShift)
     O << " #" << Log2_32(Scale);

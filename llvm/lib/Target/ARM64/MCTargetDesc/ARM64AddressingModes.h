@@ -29,17 +29,27 @@ namespace ARM64_AM {
 // Shifts
 //
 
-enum ShiftType {
-  InvalidShift = -1,
+enum ShiftExtendType {
+  InvalidShiftExtend = -1,
   LSL = 0,
-  LSR = 1,
-  ASR = 2,
-  ROR = 3,
-  MSL = 4
+  LSR,
+  ASR,
+  ROR,
+  MSL,
+
+  UXTB,
+  UXTH,
+  UXTW,
+  UXTX,
+
+  SXTB,
+  SXTH,
+  SXTW,
+  SXTX,
 };
 
 /// getShiftName - Get the string encoding for the shift type.
-static inline const char *getShiftName(ARM64_AM::ShiftType ST) {
+static inline const char *getShiftExtendName(ARM64_AM::ShiftExtendType ST) {
   switch (ST) {
   default: assert(false && "unhandled shift type!");
   case ARM64_AM::LSL: return "lsl";
@@ -47,13 +57,28 @@ static inline const char *getShiftName(ARM64_AM::ShiftType ST) {
   case ARM64_AM::ASR: return "asr";
   case ARM64_AM::ROR: return "ror";
   case ARM64_AM::MSL: return "msl";
+  case ARM64_AM::UXTB: return "uxtb";
+  case ARM64_AM::UXTH: return "uxth";
+  case ARM64_AM::UXTW: return "uxtw";
+  case ARM64_AM::UXTX: return "uxtx";
+  case ARM64_AM::SXTB: return "sxtb";
+  case ARM64_AM::SXTH: return "sxth";
+  case ARM64_AM::SXTW: return "sxtw";
+  case ARM64_AM::SXTX: return "sxtx";
   }
   return nullptr;
 }
 
 /// getShiftType - Extract the shift type.
-static inline ARM64_AM::ShiftType getShiftType(unsigned Imm) {
-  return ARM64_AM::ShiftType((Imm >> 6) & 0x7);
+static inline ARM64_AM::ShiftExtendType getShiftType(unsigned Imm) {
+  switch ((Imm >> 6) & 0x7) {
+  default: return ARM64_AM::InvalidShiftExtend;
+  case 0: return ARM64_AM::LSL;
+  case 1: return ARM64_AM::LSR;
+  case 2: return ARM64_AM::ASR;
+  case 3: return ARM64_AM::ROR;
+  case 4: return ARM64_AM::MSL;
+  }
 }
 
 /// getShiftValue - Extract the shift value.
@@ -70,42 +95,24 @@ static inline unsigned getShiftValue(unsigned Imm) {
 ///            100 ==> msl
 ///   {8-6}  = shifter
 ///   {5-0}  = imm
-static inline unsigned getShifterImm(ARM64_AM::ShiftType ST, unsigned Imm) {
+static inline unsigned getShifterImm(ARM64_AM::ShiftExtendType ST,
+                                     unsigned Imm) {
   assert((Imm & 0x3f) == Imm && "Illegal shifted immedate value!");
-  return (unsigned(ST) << 6) | (Imm & 0x3f);
+  unsigned STEnc = 0;
+  switch (ST) {
+  default:  llvm_unreachable("Invalid shift requested");
+  case ARM64_AM::LSL: STEnc = 0; break;
+  case ARM64_AM::LSR: STEnc = 1; break;
+  case ARM64_AM::ASR: STEnc = 2; break;
+  case ARM64_AM::ROR: STEnc = 3; break;
+  case ARM64_AM::MSL: STEnc = 4; break;
+  }
+  return (STEnc << 6) | (Imm & 0x3f);
 }
 
 //===----------------------------------------------------------------------===//
 // Extends
 //
-
-enum ExtendType {
-  InvalidExtend = -1,
-  UXTB = 0,
-  UXTH = 1,
-  UXTW = 2,
-  UXTX = 3,
-  SXTB = 4,
-  SXTH = 5,
-  SXTW = 6,
-  SXTX = 7
-};
-
-/// getExtendName - Get the string encoding for the extend type.
-static inline const char *getExtendName(ARM64_AM::ExtendType ET) {
-  switch (ET) {
-  default: assert(false && "unhandled extend type!");
-  case ARM64_AM::UXTB: return "uxtb";
-  case ARM64_AM::UXTH: return "uxth";
-  case ARM64_AM::UXTW: return "uxtw";
-  case ARM64_AM::UXTX: return "uxtx";
-  case ARM64_AM::SXTB: return "sxtb";
-  case ARM64_AM::SXTH: return "sxth";
-  case ARM64_AM::SXTW: return "sxtw";
-  case ARM64_AM::SXTX: return "sxtx";
-  }
-  return nullptr;
-}
 
 /// getArithShiftValue - get the arithmetic shift value.
 static inline unsigned getArithShiftValue(unsigned Imm) {
@@ -113,13 +120,26 @@ static inline unsigned getArithShiftValue(unsigned Imm) {
 }
 
 /// getExtendType - Extract the extend type for operands of arithmetic ops.
-static inline ARM64_AM::ExtendType getArithExtendType(unsigned Imm) {
-  return ARM64_AM::ExtendType((Imm >> 3) & 0x7);
+static inline ARM64_AM::ShiftExtendType getExtendType(unsigned Imm) {
+  assert((Imm & 0x7) == Imm && "invalid immediate!");
+  switch (Imm) {
+  default: llvm_unreachable("Compiler bug!");
+  case 0: return ARM64_AM::UXTB;
+  case 1: return ARM64_AM::UXTH;
+  case 2: return ARM64_AM::UXTW;
+  case 3: return ARM64_AM::UXTX;
+  case 4: return ARM64_AM::SXTB;
+  case 5: return ARM64_AM::SXTH;
+  case 6: return ARM64_AM::SXTW;
+  case 7: return ARM64_AM::SXTX;
+  }
 }
 
-/// getArithExtendImm - Encode the extend type and shift amount for an
-///                     arithmetic instruction:
-///   imm:     3-bit extend amount
+static inline ARM64_AM::ShiftExtendType getArithExtendType(unsigned Imm) {
+  return getExtendType((Imm >> 3) & 0x7);
+}
+
+/// Mapping from extend bits to required operation:
 ///   shifter: 000 ==> uxtb
 ///            001 ==> uxth
 ///            010 ==> uxtw
@@ -128,12 +148,29 @@ static inline ARM64_AM::ExtendType getArithExtendType(unsigned Imm) {
 ///            101 ==> sxth
 ///            110 ==> sxtw
 ///            111 ==> sxtx
+inline unsigned getExtendEncoding(ARM64_AM::ShiftExtendType ET) {
+  switch (ET) {
+  default: llvm_unreachable("Invalid extend type requested");
+  case ARM64_AM::UXTB: return 0; break;
+  case ARM64_AM::UXTH: return 1; break;
+  case ARM64_AM::UXTW: return 2; break;
+  case ARM64_AM::UXTX: return 3; break;
+  case ARM64_AM::SXTB: return 4; break;
+  case ARM64_AM::SXTH: return 5; break;
+  case ARM64_AM::SXTW: return 6; break;
+  case ARM64_AM::SXTX: return 7; break;
+  }
+}
+
+/// getArithExtendImm - Encode the extend type and shift amount for an
+///                     arithmetic instruction:
+///   imm:     3-bit extend amount
 ///   {5-3}  = shifter
 ///   {2-0}  = imm3
-static inline unsigned getArithExtendImm(ARM64_AM::ExtendType ET,
+static inline unsigned getArithExtendImm(ARM64_AM::ShiftExtendType ET,
                                          unsigned Imm) {
   assert((Imm & 0x7) == Imm && "Illegal shifted immedate value!");
-  return (unsigned(ET) << 3) | (Imm & 0x7);
+  return (getExtendEncoding(ET) << 3) | (Imm & 0x7);
 }
 
 /// getMemDoShift - Extract the "do shift" flag value for load/store
@@ -144,8 +181,8 @@ static inline bool getMemDoShift(unsigned Imm) {
 
 /// getExtendType - Extract the extend type for the offset operand of
 /// loads/stores.
-static inline ARM64_AM::ExtendType getMemExtendType(unsigned Imm) {
-  return ARM64_AM::ExtendType((Imm >> 1) & 0x7);
+static inline ARM64_AM::ShiftExtendType getMemExtendType(unsigned Imm) {
+  return getExtendType((Imm >> 1) & 0x7);
 }
 
 /// getExtendImm - Encode the extend type and amount for a load/store inst:
@@ -160,8 +197,9 @@ static inline ARM64_AM::ExtendType getMemExtendType(unsigned Imm) {
 ///            111 ==> sxtx
 ///   {3-1}  = shifter
 ///   {0}  = doshift
-static inline unsigned getMemExtendImm(ARM64_AM::ExtendType ET, bool DoShift) {
-  return (unsigned(ET) << 1) | unsigned(DoShift);
+static inline unsigned getMemExtendImm(ARM64_AM::ShiftExtendType ET,
+                                       bool DoShift) {
+  return (getExtendEncoding(ET) << 1) | unsigned(DoShift);
 }
 
 static inline uint64_t ror(uint64_t elt, unsigned size) {

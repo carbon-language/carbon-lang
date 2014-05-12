@@ -975,7 +975,7 @@ bool ARM64InstrInfo::isScaledAddr(const MachineInstr *MI) const {
   case ARM64::STRWro:
   case ARM64::STRXro:
     unsigned Val = MI->getOperand(3).getImm();
-    ARM64_AM::ExtendType ExtType = ARM64_AM::getMemExtendType(Val);
+    ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getMemExtendType(Val);
     return (ExtType != ARM64_AM::UXTX) || ARM64_AM::getMemDoShift(Val);
   }
   return false;

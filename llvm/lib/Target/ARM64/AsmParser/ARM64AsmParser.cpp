@@ -85,8 +85,7 @@ private:
 
   /// }
 
-  OperandMatchResultTy tryParseOptionalShift(OperandVector &Operands);
-  OperandMatchResultTy tryParseOptionalExtend(OperandVector &Operands);
+  OperandMatchResultTy tryParseOptionalShiftExtend(OperandVector &Operands);
   OperandMatchResultTy tryParseNoIndexMemory(OperandVector &Operands);
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
   OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
@@ -152,8 +151,7 @@ private:
     k_SysReg,
     k_SysCR,
     k_Prefetch,
-    k_Shifter,
-    k_Extend,
+    k_ShiftExtend,
     k_FPImm,
     k_Barrier
   } Kind;
@@ -215,8 +213,9 @@ private:
     unsigned Val;
   };
 
-  struct ShifterOp {
-    unsigned Val;
+  struct ShiftExtendOp {
+    ARM64_AM::ShiftExtendType Type;
+    unsigned Amount;
   };
 
   struct ExtendOp {
@@ -226,7 +225,7 @@ private:
   // This is for all forms of ARM64 address expressions
   struct MemOp {
     unsigned BaseRegNum, OffsetRegNum;
-    ARM64_AM::ExtendType ExtType;
+    ARM64_AM::ShiftExtendType ExtType;
     unsigned ShiftVal;
     bool ExplicitShift;
     const MCExpr *OffsetImm;
@@ -245,8 +244,7 @@ private:
     struct SysRegOp SysReg;
     struct SysCRImmOp SysCRImm;
     struct PrefetchOp Prefetch;
-    struct ShifterOp Shifter;
-    struct ExtendOp Extend;
+    struct ShiftExtendOp ShiftExtend;
     struct MemOp Mem;
   };
 
@@ -299,11 +297,8 @@ public:
     case k_Memory:
       Mem = o.Mem;
       break;
-    case k_Shifter:
-      Shifter = o.Shifter;
-      break;
-    case k_Extend:
-      Extend = o.Extend;
+    case k_ShiftExtend:
+      ShiftExtend = o.ShiftExtend;
       break;
     }
   }
@@ -390,14 +385,14 @@ public:
     return Prefetch.Val;
   }
 
-  unsigned getShifter() const {
-    assert(Kind == k_Shifter && "Invalid access!");
-    return Shifter.Val;
+  ARM64_AM::ShiftExtendType getShiftExtendType() const {
+    assert(Kind == k_ShiftExtend && "Invalid access!");
+    return ShiftExtend.Type;
   }
 
-  unsigned getExtend() const {
-    assert(Kind == k_Extend && "Invalid access!");
-    return Extend.Val;
+  unsigned getShiftExtendAmount() const {
+    assert(Kind == k_ShiftExtend && "Invalid access!");
+    return ShiftExtend.Amount;
   }
 
   bool isImm() const override { return Kind == k_Immediate; }
@@ -802,36 +797,41 @@ public:
   bool isMem() const override { return Kind == k_Memory; }
   bool isSysCR() const { return Kind == k_SysCR; }
   bool isPrefetch() const { return Kind == k_Prefetch; }
-  bool isShifter() const { return Kind == k_Shifter; }
-  bool isExtend() const {
-    // lsl is an alias for UXTW but will be a parsed as a k_Shifter operand.
-    if (isShifter()) {
-      ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-      return ST == ARM64_AM::LSL &&
-             ARM64_AM::getShiftValue(Shifter.Val) <= 4;
-    }
-    return Kind == k_Extend && ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
+  bool isShiftExtend() const { return Kind == k_ShiftExtend; }
+  bool isShifter() const {
+    if (!isShiftExtend())
+      return false;
+
+    ARM64_AM::ShiftExtendType ST = getShiftExtendType();
+    return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR || ST == ARM64_AM::ASR ||
+            ST == ARM64_AM::ROR || ST == ARM64_AM::MSL);
   }
+  bool isExtend() const {
+    if (!isShiftExtend())
+      return false;
+
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    return (ET == ARM64_AM::UXTB || ET == ARM64_AM::SXTB ||
+            ET == ARM64_AM::UXTH || ET == ARM64_AM::SXTH ||
+            ET == ARM64_AM::UXTW || ET == ARM64_AM::SXTW ||
+            ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX ||
+            ET == ARM64_AM::LSL) &&
+           getShiftExtendAmount() <= 4;
+  }
+
   bool isExtend64() const {
-    if (Kind != k_Extend)
+    if (!isExtend())
       return false;
     // UXTX and SXTX require a 64-bit source register (the ExtendLSL64 class).
-    ARM64_AM::ExtendType ET = ARM64_AM::getArithExtendType(Extend.Val);
-    return ET != ARM64_AM::UXTX && ET != ARM64_AM::SXTX &&
-           ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    return ET != ARM64_AM::UXTX && ET != ARM64_AM::SXTX;
   }
   bool isExtendLSL64() const {
-    // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
-    if (isShifter()) {
-      ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-      return ST == ARM64_AM::LSL &&
-             ARM64_AM::getShiftValue(Shifter.Val) <= 4;
-    }
-    if (Kind != k_Extend)
+    if (!isExtend())
       return false;
-    ARM64_AM::ExtendType ET = ARM64_AM::getArithExtendType(Extend.Val);
-    return (ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX) &&
-           ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    return (ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX || ET == ARM64_AM::LSL) &&
+      getShiftExtendAmount() <= 4;
   }
 
   template <unsigned width>
@@ -840,9 +840,9 @@ public:
       return false;
 
     // An arithmetic shifter is LSL, LSR, or ASR.
-    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
+    ARM64_AM::ShiftExtendType ST = getShiftExtendType();
     return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR ||
-           ST == ARM64_AM::ASR) && ARM64_AM::getShiftValue(Shifter.Val) < width;
+            ST == ARM64_AM::ASR) && getShiftExtendAmount() < width;
   }
 
   template <unsigned width>
@@ -851,10 +851,10 @@ public:
       return false;
 
     // A logical shifter is LSL, LSR, ASR or ROR.
-    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-    return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR ||
-           ST == ARM64_AM::ASR || ST == ARM64_AM::ROR) &&
-           ARM64_AM::getShiftValue(Shifter.Val) < width;
+    ARM64_AM::ShiftExtendType ST = getShiftExtendType();
+    return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR || ST == ARM64_AM::ASR ||
+            ST == ARM64_AM::ROR) &&
+           getShiftExtendAmount() < width;
   }
 
   bool isMovImm32Shifter() const {
@@ -862,10 +862,10 @@ public:
       return false;
 
     // A MOVi shifter is LSL of 0, 16, 32, or 48.
-    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
+    ARM64_AM::ShiftExtendType ST = getShiftExtendType();
     if (ST != ARM64_AM::LSL)
       return false;
-    uint64_t Val = ARM64_AM::getShiftValue(Shifter.Val);
+    uint64_t Val = getShiftExtendAmount();
     return (Val == 0 || Val == 16);
   }
 
@@ -874,10 +874,10 @@ public:
       return false;
 
     // A MOVi shifter is LSL of 0 or 16.
-    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
+    ARM64_AM::ShiftExtendType ST = getShiftExtendType();
     if (ST != ARM64_AM::LSL)
       return false;
-    uint64_t Val = ARM64_AM::getShiftValue(Shifter.Val);
+    uint64_t Val = getShiftExtendAmount();
     return (Val == 0 || Val == 16 || Val == 32 || Val == 48);
   }
 
@@ -886,9 +886,8 @@ public:
       return false;
 
     // A logical vector shifter is a left shift by 0, 8, 16, or 24.
-    unsigned Val = Shifter.Val;
-    unsigned Shift = ARM64_AM::getShiftValue(Val);
-    return ARM64_AM::getShiftType(Val) == ARM64_AM::LSL &&
+    unsigned Shift = getShiftExtendAmount();
+    return getShiftExtendType() == ARM64_AM::LSL &&
            (Shift == 0 || Shift == 8 || Shift == 16 || Shift == 24);
   }
 
@@ -897,21 +896,17 @@ public:
       return false;
 
     // A logical vector shifter is a left shift by 0 or 8.
-    unsigned Val = Shifter.Val;
-    unsigned Shift = ARM64_AM::getShiftValue(Val);
-    return ARM64_AM::getShiftType(Val) == ARM64_AM::LSL &&
-           (Shift == 0 || Shift == 8);
+    unsigned Shift = getShiftExtendAmount();
+    return getShiftExtendType() == ARM64_AM::LSL && (Shift == 0 || Shift == 8);
   }
 
   bool isMoveVecShifter() const {
-    if (!isShifter())
+    if (!isShiftExtend())
       return false;
 
     // A logical vector shifter is a left shift by 8 or 16.
-    unsigned Val = Shifter.Val;
-    unsigned Shift = ARM64_AM::getShiftValue(Val);
-    return ARM64_AM::getShiftType(Val) == ARM64_AM::MSL &&
-           (Shift == 8 || Shift == 16);
+    unsigned Shift = getShiftExtendAmount();
+    return getShiftExtendType() == ARM64_AM::MSL && (Shift == 8 || Shift == 16);
   }
 
   bool isMemoryRegisterOffset8() const {
@@ -1457,71 +1452,25 @@ public:
 
   void addShifterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addArithmeticShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addLogicalShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addMovImm32ShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addMovImm64ShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addLogicalVecShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addLogicalVecHalfWordShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
-  }
-
-  void addMoveVecShifterOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getShifter()));
+    unsigned Imm =
+        ARM64_AM::getShifterImm(getShiftExtendType(), getShiftExtendAmount());
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
   void addExtendOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    // lsl is an alias for UXTW but will be a parsed as a k_Shifter operand.
-    if (isShifter()) {
-      assert(ARM64_AM::getShiftType(getShifter()) == ARM64_AM::LSL);
-      unsigned imm = getArithExtendImm(ARM64_AM::UXTW,
-                                       ARM64_AM::getShiftValue(getShifter()));
-      Inst.addOperand(MCOperand::CreateImm(imm));
-    } else
-      Inst.addOperand(MCOperand::CreateImm(getExtend()));
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    if (ET == ARM64_AM::LSL) ET = ARM64_AM::UXTW;
+    unsigned Imm = ARM64_AM::getArithExtendImm(ET, getShiftExtendAmount());
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
   void addExtend64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getExtend()));
-  }
-
-  void addExtendLSL64Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
-    if (isShifter()) {
-      assert(ARM64_AM::getShiftType(getShifter()) == ARM64_AM::LSL);
-      unsigned imm = getArithExtendImm(ARM64_AM::UXTX,
-                                       ARM64_AM::getShiftValue(getShifter()));
-      Inst.addOperand(MCOperand::CreateImm(imm));
-    } else
-      Inst.addOperand(MCOperand::CreateImm(getExtend()));
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    if (ET == ARM64_AM::LSL) ET = ARM64_AM::UXTX;
+    unsigned Imm = ARM64_AM::getArithExtendImm(ET, getShiftExtendAmount());
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
   void addMemoryRegisterOffsetOperands(MCInst &Inst, unsigned N, bool DoShift) {
@@ -1795,7 +1744,7 @@ public:
   }
 
   static ARM64Operand *CreateRegOffsetMem(unsigned BaseReg, unsigned OffsetReg,
-                                          ARM64_AM::ExtendType ExtType,
+                                          ARM64_AM::ShiftExtendType ExtType,
                                           unsigned ShiftVal, bool ExplicitShift,
                                           SMLoc S, SMLoc E, MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_Memory, Ctx);
@@ -1828,19 +1777,11 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateShifter(ARM64_AM::ShiftType ShOp, unsigned Val,
-                                     SMLoc S, SMLoc E, MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_Shifter, Ctx);
-    Op->Shifter.Val = ARM64_AM::getShifterImm(ShOp, Val);
-    Op->StartLoc = S;
-    Op->EndLoc = E;
-    return Op;
-  }
-
-  static ARM64Operand *CreateExtend(ARM64_AM::ExtendType ExtOp, unsigned Val,
-                                    SMLoc S, SMLoc E, MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_Extend, Ctx);
-    Op->Extend.Val = ARM64_AM::getArithExtendImm(ExtOp, Val);
+  static ARM64Operand *CreateShiftExtend(ARM64_AM::ShiftExtendType ShOp, unsigned Val,
+                                         SMLoc S, SMLoc E, MCContext &Ctx) {
+    ARM64Operand *Op = new ARM64Operand(k_ShiftExtend, Ctx);
+    Op->ShiftExtend.Type = ShOp;
+    Op->ShiftExtend.Amount = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1871,8 +1812,7 @@ void ARM64Operand::print(raw_ostream &OS) const {
     unsigned Shift = getShiftedImmShift();
     OS << "<shiftedimm ";
     getShiftedImmVal()->print(OS);
-    OS << ", " << ARM64_AM::getShiftName(ARM64_AM::getShiftType(Shift)) << " #"
-       << ARM64_AM::getShiftValue(Shift) << ">";
+    OS << ", lsl #" << ARM64_AM::getShiftValue(Shift) << ">";
     break;
   }
   case k_Memory:
@@ -1910,16 +1850,9 @@ void ARM64Operand::print(raw_ostream &OS) const {
       OS << "<prfop invalid #" << getPrefetch() << ">";
     break;
   }
-  case k_Shifter: {
-    unsigned Val = getShifter();
-    OS << "<" << ARM64_AM::getShiftName(ARM64_AM::getShiftType(Val)) << " #"
-       << ARM64_AM::getShiftValue(Val) << ">";
-    break;
-  }
-  case k_Extend: {
-    unsigned Val = getExtend();
-    OS << "<" << ARM64_AM::getExtendName(ARM64_AM::getArithExtendType(Val))
-       << " #" << ARM64_AM::getArithShiftValue(Val) << ">";
+  case k_ShiftExtend: {
+    OS << "<" << ARM64_AM::getShiftExtendName(getShiftExtendType()) << " #"
+       << getShiftExtendAmount() << ">";
     break;
   }
   }
@@ -2442,102 +2375,46 @@ bool ARM64AsmParser::parseCondCode(OperandVector &Operands,
 /// tryParseOptionalShift - Some operands take an optional shift argument. Parse
 /// them if present.
 ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseOptionalShift(OperandVector &Operands) {
+ARM64AsmParser::tryParseOptionalShiftExtend(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
   std::string LowerID = Tok.getString().lower();
-  ARM64_AM::ShiftType ShOp = StringSwitch<ARM64_AM::ShiftType>(LowerID)
-                                 .Case("lsl", ARM64_AM::LSL)
-                                 .Case("lsr", ARM64_AM::LSR)
-                                 .Case("asr", ARM64_AM::ASR)
-                                 .Case("ror", ARM64_AM::ROR)
-                                 .Case("msl", ARM64_AM::MSL)
-                                 .Default(ARM64_AM::InvalidShift);
-  if (ShOp == ARM64_AM::InvalidShift)
-    return MatchOperand_NoMatch;
-
-  SMLoc S = Tok.getLoc();
-  Parser.Lex();
-
-  // We expect a number here.
-  bool Hash = getLexer().is(AsmToken::Hash);
-  if (!Hash && getLexer().isNot(AsmToken::Integer)) {
-    TokError("expected #imm after shift specifier");
-    return MatchOperand_ParseFail;
-  }
-
-  if (Hash)
-    Parser.Lex(); // Eat the '#'.
-
-  // Make sure we do actually have a number
-  if (!Parser.getTok().is(AsmToken::Integer)) {
-    Error(Parser.getTok().getLoc(),
-          "expected integer shift amount");
-    return MatchOperand_ParseFail;
-  }
-
-  const MCExpr *ImmVal;
-  if (getParser().parseExpression(ImmVal))
-    return MatchOperand_ParseFail;
-
-  const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-  if (!MCE) {
-    TokError("expected #imm after shift specifier");
-    return MatchOperand_ParseFail;
-  }
-
-  SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
-
-  // If we have an shift that is too large to encode then crudely pass it
-  // through as an invalid shift that is encodable so that we get consistant
-  // diagnostics rather than ones different from out of range 32-bit shifts.
-  if ((MCE->getValue() & 0x3f) != MCE->getValue()) {
-    Operands.push_back(ARM64Operand::CreateShifter(ARM64_AM::InvalidShift, 0, S,
-                                                   E, getContext()));
-  } else {
-    Operands.push_back(ARM64Operand::CreateShifter(ShOp, MCE->getValue(), S,
-                                                   E, getContext()));
-  }
-
-  return MatchOperand_Success;
-}
-
-/// tryParseOptionalExtend - Some operands take an optional extend argument. Parse
-/// them if present.
-ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseOptionalExtend(OperandVector &Operands) {
-  const AsmToken &Tok = Parser.getTok();
-  std::string LowerID = Tok.getString().lower();
-  ARM64_AM::ExtendType ExtOp =
-      StringSwitch<ARM64_AM::ExtendType>(LowerID)
+  ARM64_AM::ShiftExtendType ShOp =
+      StringSwitch<ARM64_AM::ShiftExtendType>(LowerID)
+          .Case("lsl", ARM64_AM::LSL)
+          .Case("lsr", ARM64_AM::LSR)
+          .Case("asr", ARM64_AM::ASR)
+          .Case("ror", ARM64_AM::ROR)
+          .Case("msl", ARM64_AM::MSL)
           .Case("uxtb", ARM64_AM::UXTB)
           .Case("uxth", ARM64_AM::UXTH)
           .Case("uxtw", ARM64_AM::UXTW)
           .Case("uxtx", ARM64_AM::UXTX)
-          .Case("lsl", ARM64_AM::UXTX) // Alias for UXTX
           .Case("sxtb", ARM64_AM::SXTB)
           .Case("sxth", ARM64_AM::SXTH)
           .Case("sxtw", ARM64_AM::SXTW)
           .Case("sxtx", ARM64_AM::SXTX)
-          .Default(ARM64_AM::InvalidExtend);
-  if (ExtOp == ARM64_AM::InvalidExtend)
+          .Default(ARM64_AM::InvalidShiftExtend);
+
+  if (ShOp == ARM64_AM::InvalidShiftExtend)
     return MatchOperand_NoMatch;
 
   SMLoc S = Tok.getLoc();
   Parser.Lex();
 
-  if (getLexer().is(AsmToken::EndOfStatement) ||
-      getLexer().is(AsmToken::Comma)) {
-    SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
-    Operands.push_back(
-        ARM64Operand::CreateExtend(ExtOp, 0, S, E, getContext()));
-    return MatchOperand_Success;
-  }
-
   bool Hash = getLexer().is(AsmToken::Hash);
   if (!Hash && getLexer().isNot(AsmToken::Integer)) {
+    if (ShOp == ARM64_AM::LSL || ShOp == ARM64_AM::LSR ||
+        ShOp == ARM64_AM::ASR || ShOp == ARM64_AM::ROR ||
+        ShOp == ARM64_AM::MSL) {
+      // We expect a number here.
+      TokError("expected #imm after shift specifier");
+      return MatchOperand_ParseFail;
+    }
+
+    // "extend" type operatoins don't need an immediate, #0 is implicit.
     SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
     Operands.push_back(
-        ARM64Operand::CreateExtend(ExtOp, 0, S, E, getContext()));
+        ARM64Operand::CreateShiftExtend(ShOp, 0, S, E, getContext()));
     return MatchOperand_Success;
   }
 
@@ -2557,13 +2434,13 @@ ARM64AsmParser::tryParseOptionalExtend(OperandVector &Operands) {
 
   const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
   if (!MCE) {
-    TokError("immediate value expected for extend operand");
+    TokError("expected #imm after shift specifier");
     return MatchOperand_ParseFail;
   }
 
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
-  Operands.push_back(
-      ARM64Operand::CreateExtend(ExtOp, MCE->getValue(), S, E, getContext()));
+  Operands.push_back(ARM64Operand::CreateShiftExtend(ShOp, MCE->getValue(), S,
+                                                     E, getContext()));
   return MatchOperand_Success;
 }
 
@@ -3033,7 +2910,7 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
     if (Reg2 != -1) {
       // Default shift is LSL, with an omitted shift.  We use the third bit of
       // the extend value to indicate presence/omission of the immediate offset.
-      ARM64_AM::ExtendType ExtOp = ARM64_AM::UXTX;
+      ARM64_AM::ShiftExtendType ExtOp = ARM64_AM::UXTX;
       int64_t ShiftVal = 0;
       bool ExplicitShift = false;
 
@@ -3043,17 +2920,13 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
 
         SMLoc ExtLoc = getLoc();
         const AsmToken &Tok = Parser.getTok();
-        ExtOp = StringSwitch<ARM64_AM::ExtendType>(Tok.getString())
+        ExtOp = StringSwitch<ARM64_AM::ShiftExtendType>(Tok.getString().lower())
                     .Case("uxtw", ARM64_AM::UXTW)
                     .Case("lsl", ARM64_AM::UXTX) // Alias for UXTX
                     .Case("sxtw", ARM64_AM::SXTW)
                     .Case("sxtx", ARM64_AM::SXTX)
-                    .Case("UXTW", ARM64_AM::UXTW)
-                    .Case("LSL", ARM64_AM::UXTX) // Alias for UXTX
-                    .Case("SXTW", ARM64_AM::SXTW)
-                    .Case("SXTX", ARM64_AM::SXTX)
-                    .Default(ARM64_AM::InvalidExtend);
-        if (ExtOp == ARM64_AM::InvalidExtend)
+                    .Default(ARM64_AM::InvalidShiftExtend);
+        if (ExtOp == ARM64_AM::InvalidShiftExtend)
           return Error(ExtLoc, "expected valid extend operation");
 
         Parser.Lex(); // Eat the extend op.
@@ -3393,17 +3266,11 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     if (!parseRegister(Operands))
       return false;
 
-    // This could be an optional "shift" operand.
-    OperandMatchResultTy GotShift = tryParseOptionalShift(Operands);
+    // This could be an optional "shift" or "extend" operand.
+    OperandMatchResultTy GotShift = tryParseOptionalShiftExtend(Operands);
     // We can only continue if no tokens were eaten.
     if (GotShift != MatchOperand_NoMatch)
       return GotShift;
-
-    // Or maybe it could be an optional "extend" operand.
-    OperandMatchResultTy GotExtend = tryParseOptionalExtend(Operands);
-    // We can only continue if no tokens were eaten.
-    if (GotExtend != MatchOperand_NoMatch)
-      return GotExtend;
 
     // This was not a register so parse other operands that start with an
     // identifier (like labels) as expressions and create them as immediates.
@@ -3825,7 +3692,7 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
     if (!Inst.getOperand(3).isImm())
       return Error(Loc[1], "immediate value expected");
     int64_t shift = Inst.getOperand(3).getImm();
-    ARM64_AM::ExtendType type = ARM64_AM::getMemExtendType(shift);
+    ARM64_AM::ShiftExtendType type = ARM64_AM::getMemExtendType(shift);
     if (type != ARM64_AM::UXTW && type != ARM64_AM::UXTX &&
         type != ARM64_AM::SXTW && type != ARM64_AM::SXTX)
       return Error(Loc[1], "shift type invalid");
@@ -3843,7 +3710,7 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
     if (!Inst.getOperand(3).isImm())
       return Error(Loc[1], "immediate value expected");
     int64_t shift = Inst.getOperand(3).getImm();
-    ARM64_AM::ExtendType type = ARM64_AM::getMemExtendType(shift);
+    ARM64_AM::ShiftExtendType type = ARM64_AM::getMemExtendType(shift);
     if (type != ARM64_AM::UXTW && type != ARM64_AM::UXTX &&
         type != ARM64_AM::SXTW && type != ARM64_AM::SXTX)
       return Error(Loc[1], "shift type invalid");
@@ -3860,7 +3727,7 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
     if (!Inst.getOperand(3).isImm())
       return Error(Loc[1], "immediate value expected");
     int64_t shift = Inst.getOperand(3).getImm();
-    ARM64_AM::ExtendType type = ARM64_AM::getMemExtendType(shift);
+    ARM64_AM::ShiftExtendType type = ARM64_AM::getMemExtendType(shift);
     if (type != ARM64_AM::UXTW && type != ARM64_AM::UXTX &&
         type != ARM64_AM::SXTW && type != ARM64_AM::SXTX)
       return Error(Loc[1], "shift type invalid");
@@ -3877,7 +3744,7 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
     if (!Inst.getOperand(3).isImm())
       return Error(Loc[1], "immediate value expected");
     int64_t shift = Inst.getOperand(3).getImm();
-    ARM64_AM::ExtendType type = ARM64_AM::getMemExtendType(shift);
+    ARM64_AM::ShiftExtendType type = ARM64_AM::getMemExtendType(shift);
     if (type != ARM64_AM::UXTW && type != ARM64_AM::UXTX &&
         type != ARM64_AM::SXTW && type != ARM64_AM::SXTX)
       return Error(Loc[1], "shift type invalid");
@@ -3952,7 +3819,7 @@ static void rewriteMOVI(ARM64AsmParser::OperandVector &Operands,
   Operands[2] = ARM64Operand::CreateImm(NewImm, Op2->getStartLoc(),
                                         Op2->getEndLoc(), Context);
 
-  Operands.push_back(ARM64Operand::CreateShifter(
+  Operands.push_back(ARM64Operand::CreateShiftExtend(
       ARM64_AM::LSL, shift, Op2->getStartLoc(), Op2->getEndLoc(), Context));
   delete Op2;
   delete Op;
@@ -4152,8 +4019,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
       if ((Op1->isToken() && Op2->isVectorReg() && Op3->isImm()) ||
           (Op1->isVectorReg() && Op2->isToken() && Op3->isImm()))
-        Operands.push_back(ARM64Operand::CreateShifter(ARM64_AM::LSL, 0, IDLoc,
-                                                       IDLoc, getContext()));
+        Operands.push_back(ARM64Operand::CreateShiftExtend(
+            ARM64_AM::LSL, 0, IDLoc, IDLoc, getContext()));
     } else if (NumOperands == 4 && (Tok == "movi" || Tok == "mvni")) {
       ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
       ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
@@ -4166,7 +4033,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         if (Tok != "movi" ||
             (CanonicalSuffix != ".1d" && CanonicalSuffix != ".2d" &&
              CanonicalSuffix != ".8b" && CanonicalSuffix != ".16b"))
-          Operands.push_back(ARM64Operand::CreateShifter(
+          Operands.push_back(ARM64Operand::CreateShiftExtend(
               ARM64_AM::LSL, 0, IDLoc, IDLoc, getContext()));
       }
     }
