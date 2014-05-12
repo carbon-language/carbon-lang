@@ -1646,9 +1646,21 @@ static bool isMipsNan2008(const ArgList &Args) {
   return A && A->getValue() == StringRef("2008");
 }
 
-bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
-    const llvm::Triple &TargetTriple, StringRef Path,
-    const llvm::opt::ArgList &Args) {
+struct DetectedMultilibs {
+  /// The set of multilibs that the detected installation supports.
+  MultilibSet Multilibs;
+
+  /// The primary multilib appropriate for the given flags.
+  Multilib SelectedMultilib;
+
+  /// On Biarch systems, this corresponds to the default multilib when
+  /// targeting the non-default multilib. Otherwise, it is empty.
+  llvm::Optional<Multilib> BiarchSibling;
+};
+
+static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
+                              const llvm::opt::ArgList &Args,
+                              DetectedMultilibs &Result) {
   // Some MIPS toolchains put libraries and object files compiled
   // using different options in to the sub-directoris which names
   // reflects the flags used for compilation. For example sysroot
@@ -1877,9 +1889,11 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
 
   if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
     // Select Android toolchain. It's the only choice in that case.
-    Multilibs.clear();
-    Multilibs.combineWith(AndroidMipsMultilibs);
-    return Multilibs.select(Flags, SelectedMultilib);
+    if (AndroidMipsMultilibs.select(Flags, Result.SelectedMultilib)) {
+      Result.Multilibs = AndroidMipsMultilibs;
+      return true;
+    }
+    return false;
   }
 
   // Sort candidates. Toolchain that best meets the directories goes first.
@@ -1890,11 +1904,10 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
       std::begin(candidates), std::end(candidates),
       [](MultilibSet *a, MultilibSet *b) { return a->size() > b->size(); });
   for (const auto &candidate : candidates) {
-    Multilibs.clear();
-    Multilibs.combineWith(*candidate);
-    if (Multilibs.select(Flags, SelectedMultilib)) {
+    if (candidate->select(Flags, Result.SelectedMultilib)) {
       if (candidate == &DebianMipsMultilibs)
-        BiarchSibling = Multilib();
+        Result.BiarchSibling = Multilib();
+      Result.Multilibs = *candidate;
       return true;
     }
   }
@@ -1902,9 +1915,10 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
   return false;
 }
 
-bool Generic_GCC::GCCInstallationDetector::findBiarchMultilibs(
-    const llvm::Triple &TargetTriple, StringRef Path, const ArgList &Args,
-    bool NeedsBiarchSuffix) {
+static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
+                                StringRef Path, const ArgList &Args,
+                                bool NeedsBiarchSuffix,
+                                DetectedMultilibs &Result) {
 
   // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
   // in what would normally be GCCInstallPath and put the 64-bit
@@ -1944,22 +1958,21 @@ bool Generic_GCC::GCCInstallationDetector::findBiarchMultilibs(
   else
     Default.flag("-m32").flag("+m64");
 
-  Multilibs.push_back(Default);
-  Multilibs.push_back(Alt64);
-  Multilibs.push_back(Alt32);
+  Result.Multilibs.push_back(Default);
+  Result.Multilibs.push_back(Alt64);
+  Result.Multilibs.push_back(Alt32);
 
-  Multilibs.FilterOut(NonExistent);
+  Result.Multilibs.FilterOut(NonExistent);
 
   Multilib::flags_list Flags;
   addMultilibFlag(TargetTriple.isArch64Bit(), "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
 
-  if (!Multilibs.select(Flags, SelectedMultilib))
+  if (!Result.Multilibs.select(Flags, Result.SelectedMultilib))
     return false;
 
-  if (SelectedMultilib == Alt64 || SelectedMultilib == Alt32) {
-    BiarchSibling = Default;
-  }
+  if (Result.SelectedMultilib == Alt64 || Result.SelectedMultilib == Alt32)
+    Result.BiarchSibling = Default;
 
   return true;
 }
@@ -2013,19 +2026,21 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       if (CandidateVersion <= Version)
         continue;
 
-      Multilibs.clear();
-      SelectedMultilib = Multilib();
-      BiarchSibling.reset();
+      DetectedMultilibs Detected;
 
       // Debian mips multilibs behave more like the rest of the biarch ones,
       // so handle them there
       if (isMipsArch(TargetArch)) {
-        if (!findMIPSMultilibs(TargetTriple, LI->path(), Args))
+        if (!findMIPSMultilibs(TargetTriple, LI->path(), Args, Detected))
           continue;
       } else if (!findBiarchMultilibs(TargetTriple, LI->path(), Args,
-                                      NeedsBiarchSuffix))
+                                      NeedsBiarchSuffix, Detected)) {
         continue;
+      }
 
+      Multilibs = Detected.Multilibs;
+      SelectedMultilib = Detected.SelectedMultilib;
+      BiarchSibling = Detected.BiarchSibling;
       Version = CandidateVersion;
       GCCTriple.setTriple(CandidateTriple);
       // FIXME: We hack together the directory name here instead of
