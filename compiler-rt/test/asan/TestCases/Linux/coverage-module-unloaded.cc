@@ -4,8 +4,8 @@
 // RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_2.so -fPIC
 // RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSO_DIR=\"%T\" %s -o %t
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
-// RUN: %t 2>&1         | FileCheck %s
-// RUN: %t foo 2>&1         | FileCheck %s
+// RUN: %run %t 2>&1         | FileCheck %s
+// RUN: %run %t foo 2>&1         | FileCheck %s
 //
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android
