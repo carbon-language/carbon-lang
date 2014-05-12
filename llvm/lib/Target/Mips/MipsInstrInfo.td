@@ -150,8 +150,6 @@ def HasSEInReg  :     Predicate<"Subtarget.hasSEInReg()">,
                       AssemblerPredicate<"FeatureSEInReg">;
 def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
                       AssemblerPredicate<"FeatureBitCount">;
-def HasSwap     :     Predicate<"Subtarget.hasSwap()">,
-                      AssemblerPredicate<"FeatureSwap">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
 def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
@@ -226,7 +224,6 @@ class INSN_MIPS4_32 { list<Predicate> InsnPredicates = [HasMips4_32]; }
 // The portions of MIPS-IV that were also added to MIPS32R2
 class INSN_MIPS4_32R2 { list<Predicate> InsnPredicates = [HasMips4_32r2]; }
 
-class INSN_SWAP { list<Predicate> InsnPredicates = [HasSwap]; }
 class INSN_SEINREG { list<Predicate> InsnPredicates = [HasSEInReg]; }
 
 //===----------------------------------------------------------------------===//
@@ -848,7 +845,7 @@ class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
 // Subword Swap
 class SubwordSwap<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
-         NoItinerary, FrmR, opstr>, INSN_SWAP {
+         NoItinerary, FrmR, opstr> {
   let neverHasSideEffects = 1;
 }
 
@@ -1176,7 +1173,7 @@ def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;
 def CLO : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>;
 
 /// Word Swap Bytes Within Halfwords
-def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM<2, 0x20>;
+def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM<2, 0x20>, ISA_MIPS32R2;
 
 /// No operation.
 def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;

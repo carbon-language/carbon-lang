@@ -362,10 +362,10 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::CTLZ, MVT::i64, Expand);
   }
 
-  if (!Subtarget->hasSwap()) {
+  if (!Subtarget->hasMips32r2())
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  if (!Subtarget->hasMips64r2())
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
-  }
 
   if (isGP64bit()) {
     setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Custom);

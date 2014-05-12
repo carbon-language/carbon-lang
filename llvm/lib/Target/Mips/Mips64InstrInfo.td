@@ -218,8 +218,8 @@ def DCLZ : CountLeading0<"dclz", GPR64Opnd>, CLO_FM<0x24>;
 def DCLO : CountLeading1<"dclo", GPR64Opnd>, CLO_FM<0x25>;
 
 /// Double Word Swap Bytes/HalfWords
-def DSBH : SubwordSwap<"dsbh", GPR64Opnd>, SEB_FM<2, 0x24>;
-def DSHD : SubwordSwap<"dshd", GPR64Opnd>, SEB_FM<5, 0x24>;
+def DSBH : SubwordSwap<"dsbh", GPR64Opnd>, SEB_FM<2, 0x24>, ISA_MIPS64R2;
+def DSHD : SubwordSwap<"dshd", GPR64Opnd>, SEB_FM<5, 0x24>, ISA_MIPS64R2;
 
 def LEA_ADDiu64 : EffectiveAddress<"daddiu", GPR64Opnd>, LW_FM<0x19>;
 

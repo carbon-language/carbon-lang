@@ -226,7 +226,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>, SEB_FM_MM<0x0ec>;
 
   /// Word Swap Bytes Within Halfwords
-  def WSBH_MM : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM_MM<0x1ec>;
+  def WSBH_MM : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM_MM<0x1ec>,
+                ISA_MIPS32R2;
 
   def EXT_MM : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>,
                EXT_FM_MM<0x2c>;

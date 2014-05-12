@@ -91,9 +91,6 @@ protected:
   // HasSEInReg - SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
 
-  // HasSwap - Byte and half swap instructions.
-  bool HasSwap;
-
   // HasBitCount - Count leading '1' and '0' bits.
   bool HasBitCount;
 
@@ -215,7 +212,6 @@ public:
 
   /// Features related to the presence of specific instructions.
   bool hasSEInReg()   const { return HasSEInReg; }
-  bool hasSwap()      const { return HasSwap; }
   bool hasBitCount()  const { return HasBitCount; }
   bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
 

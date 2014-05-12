@@ -77,8 +77,6 @@ def FeatureVFPU        : SubtargetFeature<"vfpu", "HasVFPU",
                                 "true", "Enable vector FPU instructions.">;
 def FeatureSEInReg     : SubtargetFeature<"seinreg", "HasSEInReg", "true",
                                 "Enable 'signext in register' instructions.">;
-def FeatureSwap        : SubtargetFeature<"swap", "HasSwap", "true",
-                                "Enable 'byte/half swap' instructions.">;
 def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
                                 "Enable 'count leading bits' instructions.">;
 def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
@@ -113,7 +111,7 @@ def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips4_32r2, FeatureMips32,
-                                 FeatureSEInReg, FeatureSwap]>;
+                                 FeatureSEInReg]>;
 def FeatureMips32r6    : SubtargetFeature<"mips32r6", "MipsArchVersion",
                                 "Mips32r6",
                                 "Mips32r6 ISA Support [experimental]",
