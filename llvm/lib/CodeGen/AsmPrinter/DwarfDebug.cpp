@@ -495,6 +495,7 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   }
 
   InlinedSubprogramDIEs.insert(OriginDIE);
+  TheCU.addUInt(*OriginDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
@@ -857,10 +858,6 @@ void DwarfDebug::beginModule() {
 
 // Attach DW_AT_inline attribute with inlined subprogram DIEs.
 void DwarfDebug::computeInlinedDIEs() {
-  // Attach DW_AT_inline attribute with inlined subprogram DIEs.
-  for (DIE *ISP : InlinedSubprogramDIEs)
-    FirstCU->addUInt(*ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-
   for (const auto &AI : AbstractSPDies) {
     DIE &ISP = *AI.second;
     if (InlinedSubprogramDIEs.count(&ISP))
