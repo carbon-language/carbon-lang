@@ -168,19 +168,8 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 }
 
 void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
-  OS << "[[";
-  bool first = true;
-  for (ArrayRef<const Attr*>::iterator it = Node->getAttrs().begin(),
-                                       end = Node->getAttrs().end();
-                                       it != end; ++it) {
-    if (!first) {
-      OS << ", ";
-      first = false;
-    }
-    // TODO: check this
-    (*it)->printPretty(OS, Policy);
-  }
-  OS << "]] ";
+  for (const auto *Attr : Node->getAttrs())
+    Attr->printPretty(OS, Policy);
   PrintStmt(Node->getSubStmt(), 0);
 }
 
