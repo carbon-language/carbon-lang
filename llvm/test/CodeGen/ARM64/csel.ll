@@ -217,3 +217,14 @@ entry:
   %. = select i1 %cmp, i64 1, i64 2
   ret i64 %.
 }
+
+define i64 @foo19(i64 %a, i64 %b, i64 %c) {
+entry:
+; CHECK-LABEL: foo19:
+; CHECK: cinc x0, x2
+; CHECK-NOT: add
+  %cmp = icmp ult i64 %a, %b
+  %inc = zext i1 %cmp to i64
+  %inc.c = add i64 %inc, %c
+  ret i64 %inc.c
+}

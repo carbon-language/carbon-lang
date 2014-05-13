@@ -6600,8 +6600,16 @@ static bool isSetCC(SDValue Op, SetCCInfoAndKind &SetCCInfo) {
   return TValue->isOne() && FValue->isNullValue();
 }
 
+// Returns true if Op is setcc or zext of setcc.
+static bool isSetCCOrZExtSetCC(const SDValue& Op, SetCCInfoAndKind &Info) {
+  if (isSetCC(Op, Info))
+    return true;
+  return ((Op.getOpcode() == ISD::ZERO_EXTEND) &&
+    isSetCC(Op->getOperand(0), Info));
+}
+
 // The folding we want to perform is:
-// (add x, (setcc cc ...) )
+// (add x, [zext] (setcc cc ...) )
 //   -->
 // (csel x, (add x, 1), !cc ...)
 //
@@ -6613,9 +6621,9 @@ static SDValue performSetccAddFolding(SDNode *Op, SelectionDAG &DAG) {
   SetCCInfoAndKind InfoAndKind;
 
   // If neither operand is a SET_CC, give up.
-  if (!isSetCC(LHS, InfoAndKind)) {
+  if (!isSetCCOrZExtSetCC(LHS, InfoAndKind)) {
     std::swap(LHS, RHS);
-    if (!isSetCC(LHS, InfoAndKind))
+    if (!isSetCCOrZExtSetCC(LHS, InfoAndKind))
       return SDValue();
   }
 
