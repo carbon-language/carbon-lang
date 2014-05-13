@@ -1,0 +1,47 @@
+# Check that if a dynamic relocation modify a read-only section,
+# .dynamic section contains the DT_TEXTREL tag.
+
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj %t-so
+# RUN: llvm-readobj -dynamic-table %t-exe | FileCheck %s
+
+# CHECK: 0x{{[0-9A-F]+}} TEXTREL
+
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Content:         '00000000'
+
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    Info:            .text
+    AddressAlign:    0x04
+    Relocations:
+      - Offset:      0
+        Symbol:      T1
+        Type:        R_MIPS_32
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+
+  Global:
+    - Name:            T0
+      Type:            STT_FUNC
+      Section:         .text
+      Size:            0x04
+    - Name:            T1

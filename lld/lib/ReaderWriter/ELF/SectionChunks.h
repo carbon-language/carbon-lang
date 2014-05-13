@@ -954,6 +954,16 @@ public:
     _symbolTable = symbolTable;
   }
 
+  /// \brief Check if any relocation modifies a read-only section.
+  bool canModifyReadonlySection() const {
+    for (const auto &rel : _relocs) {
+      const DefinedAtom *atom = rel.first;
+      if ((atom->permissions() & DefinedAtom::permRW_) != DefinedAtom::permRW_)
+        return true;
+    }
+    return false;
+  }
+
   virtual void finalize() {
     this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
     if (this->_parent)
@@ -1080,6 +1090,11 @@ public:
       _dt_relasz = addEntry(dyn);
       dyn.d_tag = isRela ? DT_RELAENT : DT_RELENT;
       _dt_relaent = addEntry(dyn);
+
+      if (_layout.getDynamicRelocationTable()->canModifyReadonlySection()) {
+        dyn.d_tag = DT_TEXTREL;
+        _dt_textrel = addEntry(dyn);
+      }
     }
     if (_layout.hasPLTRelocationTable()) {
       dyn.d_tag = DT_PLTRELSZ;
@@ -1165,6 +1180,7 @@ private:
   std::size_t _dt_jmprel;
   std::size_t _dt_fini_array;
   std::size_t _dt_fini_arraysz;
+  std::size_t _dt_textrel;
   TargetLayout<ELFT> &_layout;
   DynamicSymbolTable<ELFT> *_dynamicSymbolTable;
   HashSection<ELFT> *_hashTable;
