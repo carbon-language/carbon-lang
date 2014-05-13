@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang -target i386-unknown-linux -masm=intel %s -S -o - | FileCheck --check-prefix=CHECK-INTEL %s
 // RUN: %clang -target i386-unknown-linux -masm=att %s -S -o - | FileCheck --check-prefix=CHECK-ATT %s
 // RUN: not %clang -target i386-unknown-linux -masm=somerequired %s -S -o - 2>&1 | FileCheck --check-prefix=CHECK-SOMEREQUIRED %s
