@@ -42,8 +42,7 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -Werror=sign-compare
   -Wno-non-virtual-dtor)
 
-set(SANITIZER_TEST_LINK_FLAGS_COMMON
-  -lstdc++)
+append_if(COMPILER_RT_HAS_LIBSTDCXX -lstdc++ SANITIZER_TEST_LINK_FLAGS_COMMON)
 append_if(COMPILER_RT_HAS_LIBDL -ldl SANITIZER_TEST_LINK_FLAGS_COMMON)
 append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread SANITIZER_TEST_LINK_FLAGS_COMMON)
 # x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.

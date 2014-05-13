@@ -63,8 +63,10 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
 )
 
 # Unit tests require libstdc++ on POSIX.
+append_if(COMPILER_RT_HAS_LIBSTDCXX -lstdc++ ASAN_UNITTEST_COMMON_LINKFLAGS)
+
 if(NOT MSVC)
-  list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++ -lstdc++)
+  list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++)
 endif()
 
 # x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.
