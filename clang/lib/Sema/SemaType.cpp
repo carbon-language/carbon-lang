@@ -5214,39 +5214,36 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
     return false;
   }
 
-  // FIXME: If there's an unimported definition of this type in a module (for
+  const TagType *Tag = T->getAs<TagType>();
+  const ObjCInterfaceType *IFace = T->getAs<ObjCInterfaceType>();
+
+  // If there's an unimported definition of this type in a module (for
   // instance, because we forward declared it, then imported the definition),
   // import that definition now.
+  //
   // FIXME: What about other cases where an import extends a redeclaration
   // chain for a declaration that can be accessed through a mechanism other
   // than name lookup (eg, referenced in a template, or a variable whose type
   // could be completed by the module)?
+  if (Tag || IFace) {
+    NamedDecl *D =
+        Tag ? static_cast<NamedDecl *>(Tag->getDecl()) : IFace->getDecl();
 
-  const TagType *Tag = T->getAs<TagType>();
-  const ObjCInterfaceType *IFace = 0;
-
-  if (Tag) {
     // Avoid diagnosing invalid decls as incomplete.
-    if (Tag->getDecl()->isInvalidDecl())
+    if (D->isInvalidDecl())
       return true;
 
     // Give the external AST source a chance to complete the type.
-    if (Tag->getDecl()->hasExternalLexicalStorage()) {
-      Context.getExternalSource()->CompleteType(Tag->getDecl());
-      if (!Tag->isIncompleteType())
-        return false;
-    }
-  }
-  else if ((IFace = T->getAs<ObjCInterfaceType>())) {
-    // Avoid diagnosing invalid decls as incomplete.
-    if (IFace->getDecl()->isInvalidDecl())
-      return true;
+    if (auto *Source = Context.getExternalSource()) {
+      if (Tag)
+        Source->CompleteType(Tag->getDecl());
+      else
+        Source->CompleteType(IFace->getDecl());
 
-    // Give the external AST source a chance to complete the type.
-    if (IFace->getDecl()->hasExternalLexicalStorage()) {
-      Context.getExternalSource()->CompleteType(IFace->getDecl());
-      if (!IFace->isIncompleteType())
-        return false;
+      // If the external source completed the type, go through the motions
+      // again to ensure we're allowed to use the completed type.
+      if (!T->isIncompleteType())
+        return RequireCompleteTypeImpl(Loc, T, Diagnoser);
     }
   }
 
