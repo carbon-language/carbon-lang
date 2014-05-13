@@ -237,3 +237,21 @@ void test_insert_epi32(__m128i __a, int b) {
   // CHECK: insertelement <4 x i32> %{{.*}}, i32 %{{.*}}, i32 0
    _mm_insert_epi32(__a, b, 4);
 }
+
+__m128d test_blend_pd(__m128d V1, __m128d V2) {
+  // CHECK-LABEL: @test_blend_pd
+  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> %{{.*}}, <2 x i32> <i32 2, i32 1>
+  return _mm_blend_pd(V1, V2, 1);
+}
+
+__m128 test_blend_ps(__m128 V1, __m128 V2) {
+  // CHECK-LABEL: @test_blend_ps
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
+  return _mm_blend_ps(V1, V2, 5);
+}
+
+__m128i test_blend_epi16(__m128i V1, __m128i V2) {
+  // CHECK-LABEL: @test_blend_epi16
+  // CHECK: shufflevector <8 x i16> %{{.*}}, <8 x i16> %{{.*}}, <8 x i32> <i32 0, i32 9, i32 2, i32 11, i32 4, i32 13, i32 6, i32 7>
+  return _mm_blend_epi16(V1, V2, 42);
+}

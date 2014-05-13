@@ -111,3 +111,15 @@ int test_extract_epi8(__m256i __a) {
   // CHECK: extractelement <32 x i8> %{{.*}}, i32 0
   return _mm256_extract_epi8(__a, 32);
 }
+
+__m256d test_256_blend_pd(__m256d __a, __m256d __b) {
+  // CHECK-LABEL: @test_256_blend_pd
+  // CHECK: shufflevector <4 x double> %{{.*}}, <4 x double> %{{.*}}, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
+  return _mm256_blend_pd(__a, __b, 0x35);
+}
+
+__m256 test_256_blend_ps(__m256 __a, __m256 __b) {
+  // CHECK-LABEL: @test_256_blend_ps
+  // CHECK: shufflevector <8 x float> %{{.*}}, <8 x float> %{{.*}}, <8 x i32> <i32 8, i32 1, i32 10, i32 3, i32 12, i32 13, i32 6, i32 7>
+  return _mm256_blend_ps(__a, __b, 0x35);
+}
