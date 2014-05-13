@@ -27,6 +27,9 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 
+// this needs to be outside of the namespace, to avoid conflict with llvm-c decl
+typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
+
 namespace llvm {
 
 class Value;
@@ -444,8 +447,6 @@ public:
     return (Val + (Alignment-1)) & ~UIntTy(Alignment-1);
   }
 };
-
-typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
 
 inline DataLayout *unwrap(LLVMTargetDataRef P) {
    return reinterpret_cast<DataLayout*>(P);
