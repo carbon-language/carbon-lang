@@ -17,11 +17,11 @@
 #include "sanitizer_common/sanitizer_flags.h"
 
 #include "sanitizer_test_utils.h"
+#include "sanitizer_pthread_wrappers.h"
 
 #include "gtest/gtest.h"
 
 #include <stdlib.h>
-#include <pthread.h>
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -553,8 +553,8 @@ TEST(SanitizerCommon, AllocatorLeakTest) {
   uptr total_used_memory = 0;
   for (int i = 0; i < 100; i++) {
     pthread_t t;
-    EXPECT_EQ(0, pthread_create(&t, 0, AllocatorLeakTestWorker, &a));
-    EXPECT_EQ(0, pthread_join(t, 0));
+    PTHREAD_CREATE(&t, 0, AllocatorLeakTestWorker, &a);
+    PTHREAD_JOIN(t, 0);
     if (i == 0)
       total_used_memory = a.TotalMemoryUsed();
     EXPECT_EQ(a.TotalMemoryUsed(), total_used_memory);
@@ -595,8 +595,8 @@ TEST(Allocator, AllocatorCacheDeallocNewThread) {
   params->allocator = &allocator;
   params->class_id = class_id;
   pthread_t t;
-  EXPECT_EQ(0, pthread_create(&t, 0, DeallocNewThreadWorker, params));
-  EXPECT_EQ(0, pthread_join(t, 0));
+  PTHREAD_CREATE(&t, 0, DeallocNewThreadWorker, params);
+  PTHREAD_JOIN(t, 0);
 }
 #endif
 
@@ -843,10 +843,10 @@ TEST(SanitizerCommon, ThreadedTwoLevelByteMap) {
     p[i].m = &m;
     p[i].shard = i;
     p[i].num_shards = kNumThreads;
-    EXPECT_EQ(0, pthread_create(&t[i], 0, TwoLevelByteMapUserThread, &p[i]));
+    PTHREAD_CREATE(&t[i], 0, TwoLevelByteMapUserThread, &p[i]);
   }
   for (int i = 0; i < kNumThreads; i++) {
-    EXPECT_EQ(0, pthread_join(t[i], 0));
+    PTHREAD_JOIN(t[i], 0);
   }
   EXPECT_EQ((uptr)TestMapUnmapCallback::map_count, m.size1());
   EXPECT_EQ((uptr)TestMapUnmapCallback::unmap_count, 0UL);

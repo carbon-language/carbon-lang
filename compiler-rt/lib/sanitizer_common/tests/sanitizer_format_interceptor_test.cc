@@ -10,6 +10,7 @@
 // Tests for *scanf interceptors implementation in sanitizer_common.
 //
 //===----------------------------------------------------------------------===//
+#include <algorithm>
 #include <vector>
 
 #include "interception/interception.h"

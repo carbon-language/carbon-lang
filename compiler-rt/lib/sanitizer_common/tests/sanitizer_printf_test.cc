@@ -103,6 +103,11 @@ TEST(Printf, OverflowPtr) {
   EXPECT_EQ(buf[9], 0);
 }
 
+#if defined(_WIN32)
+// Oh well, MSVS headers don't define snprintf.
+# define snprintf _snprintf
+#endif
+
 template<typename T>
 static void TestAgainstLibc(const char *fmt, T arg1, T arg2) {
   char buf[1024];
@@ -115,11 +120,14 @@ static void TestAgainstLibc(const char *fmt, T arg1, T arg2) {
 
 TEST(Printf, MinMax) {
   TestAgainstLibc<int>("%d-%d", INT_MIN, INT_MAX);  // NOLINT
-  TestAgainstLibc<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
   TestAgainstLibc<unsigned>("%u-%u", 0, UINT_MAX);  // NOLINT
-  TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
   TestAgainstLibc<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
+#if !defined(_WIN32)
+  // %z* format doesn't seem to be supported by MSVS.
+  TestAgainstLibc<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
+  TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
   TestAgainstLibc<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
+#endif
 }
 
 TEST(Printf, Padding) {

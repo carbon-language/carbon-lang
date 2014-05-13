@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_thread_registry.h"
+
+#include "sanitizer_pthread_wrappers.h"
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -203,10 +206,10 @@ static void ThreadedTestRegistry(ThreadRegistry *registry) {
   for (int i = 0; i < kNumShards; i++) {
     args[i].registry = registry;
     args[i].shard = i + 1;
-    pthread_create(&threads[i], 0, RunThread, &args[i]);
+    PTHREAD_CREATE(&threads[i], 0, RunThread, &args[i]);
   }
   for (int i = 0; i < kNumShards; i++) {
-    pthread_join(threads[i], 0);
+    PTHREAD_JOIN(threads[i], 0);
   }
   // Check that each thread created/started/joined correct amount
   // of "threads" in thread_registry.

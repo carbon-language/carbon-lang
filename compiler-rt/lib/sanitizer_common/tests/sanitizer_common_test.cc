@@ -15,6 +15,9 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_platform.h"
+
+#include "sanitizer_pthread_wrappers.h"
+
 #include "gtest/gtest.h"
 
 namespace __sanitizer {
@@ -159,8 +162,8 @@ TEST(SanitizerCommon, ThreadStackTlsMain) {
 TEST(SanitizerCommon, ThreadStackTlsWorker) {
   InitTlsSize();
   pthread_t t;
-  pthread_create(&t, 0, WorkerThread, 0);
-  pthread_join(t, 0);
+  PTHREAD_CREATE(&t, 0, WorkerThread, 0);
+  PTHREAD_JOIN(t, 0);
 }
 
 bool UptrLess(uptr a, uptr b) {

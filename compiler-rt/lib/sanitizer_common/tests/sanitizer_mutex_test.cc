@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_common.h"
+
+#include "sanitizer_pthread_wrappers.h"
+
 #include "gtest/gtest.h"
 
 #include <string.h>
@@ -103,9 +106,9 @@ TEST(SanitizerCommon, SpinMutex) {
   TestData<SpinMutex> data(&mtx);
   pthread_t threads[kThreads];
   for (int i = 0; i < kThreads; i++)
-    pthread_create(&threads[i], 0, lock_thread<SpinMutex>, &data);
+    PTHREAD_CREATE(&threads[i], 0, lock_thread<SpinMutex>, &data);
   for (int i = 0; i < kThreads; i++)
-    pthread_join(threads[i], 0);
+    PTHREAD_JOIN(threads[i], 0);
 }
 
 TEST(SanitizerCommon, SpinMutexTry) {
@@ -114,9 +117,9 @@ TEST(SanitizerCommon, SpinMutexTry) {
   TestData<SpinMutex> data(&mtx);
   pthread_t threads[kThreads];
   for (int i = 0; i < kThreads; i++)
-    pthread_create(&threads[i], 0, try_thread<SpinMutex>, &data);
+    PTHREAD_CREATE(&threads[i], 0, try_thread<SpinMutex>, &data);
   for (int i = 0; i < kThreads; i++)
-    pthread_join(threads[i], 0);
+    PTHREAD_JOIN(threads[i], 0);
 }
 
 TEST(SanitizerCommon, BlockingMutex) {
@@ -125,9 +128,9 @@ TEST(SanitizerCommon, BlockingMutex) {
   TestData<BlockingMutex> data(mtx);
   pthread_t threads[kThreads];
   for (int i = 0; i < kThreads; i++)
-    pthread_create(&threads[i], 0, lock_thread<BlockingMutex>, &data);
+    PTHREAD_CREATE(&threads[i], 0, lock_thread<BlockingMutex>, &data);
   for (int i = 0; i < kThreads; i++)
-    pthread_join(threads[i], 0);
+    PTHREAD_JOIN(threads[i], 0);
   check_locked(mtx);
 }
 
