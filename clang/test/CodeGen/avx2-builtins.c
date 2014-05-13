@@ -5,11 +5,6 @@
 
 #include <immintrin.h>
 
-// FIXME: We should lower as many of these as possible to LLVM IR without
-// intrinsics which will allow us to remove redundant intrinsics in the
-// future. Taking care that we manage to optimize them afterwards and emit
-// the actual instruction (or better code).
-
 __m256i test_mm256_mpsadbw_epu8(__m256i x, __m256i y) {
   // CHECK: @llvm.x86.avx2.mpsadbw({{.*}}, {{.*}}, i32 3)
   return _mm256_mpsadbw_epu8(x, y, 3);
@@ -181,8 +176,12 @@ __m256i test_mm256_blendv_epi8(__m256i a, __m256i b, __m256i m) {
   return _mm256_blendv_epi8(a, b, m);
 }
 
+// FIXME: We should also lower the __builtin_ia32_pblendw128 (and similar)
+// functions to this IR. In the future we could delete the corresponding
+// intrinsic in LLVM if it's not being used anymore.
 __m256i test_mm256_blend_epi16(__m256i a, __m256i b) {
   // CHECK-LABEL: test_mm256_blend_epi16
+  // CHECK-NOT: @llvm.x86.avx2.pblendw
   // CHECK: shufflevector <16 x i16> %{{.*}}, <16 x i16> %{{.*}}, <16 x i32> <i32 0, i32 17, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 25, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   return _mm256_blend_epi16(a, b, 2);
 }
@@ -618,11 +617,15 @@ __m256i test_mm256_broadcastsi128_si256(__m128i a) {
 }
 
 __m128i test_mm_blend_epi32(__m128i a, __m128i b) {
+  // CHECK-LABEL: test_mm_blend_epi32
+  // CHECK-NOT: @llvm.x86.avx2.pblendd.128
   // CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
   return _mm_blend_epi32(a, b, 0x35);
 }
 
 __m256i test_mm256_blend_epi32(__m256i a, __m256i b) {
+  // CHECK-LABEL: test_mm256_blend_epi32
+  // CHECK-NOT: @llvm.x86.avx2.pblendd.256
   // CHECK: shufflevector <8 x i32> %{{.*}}, <8 x i32> %{{.*}}, <8 x i32> <i32 8, i32 1, i32 10, i32 3, i32 12, i32 13, i32 6, i32 7>
   return _mm256_blend_epi32(a, b, 0x35);
 }
