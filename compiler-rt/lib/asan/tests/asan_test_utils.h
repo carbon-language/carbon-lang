@@ -14,7 +14,7 @@
 #ifndef ASAN_TEST_UTILS_H
 #define ASAN_TEST_UTILS_H
 
-#if !defined(ASAN_EXTERNAL_TEST_CONFIG)
+#if !defined(SANITIZER_EXTERNAL_TEST_CONFIG)
 # define INCLUDED_FROM_ASAN_TEST_UTILS_H
 # include "asan_test_config.h"
 # undef INCLUDED_FROM_ASAN_TEST_UTILS_H

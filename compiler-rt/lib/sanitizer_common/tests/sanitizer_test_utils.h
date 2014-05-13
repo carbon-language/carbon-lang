@@ -23,6 +23,12 @@
 # undef min
 #endif
 
+#if !defined(SANITIZER_EXTERNAL_TEST_CONFIG)
+# define INCLUDED_FROM_SANITIZER_TEST_UTILS_H
+# include "sanitizer_test_config.h"
+# undef INCLUDED_FROM_SANITIZER_TEST_UTILS_H
+#endif
+
 #include <stdint.h>
 
 #if defined(_MSC_VER)

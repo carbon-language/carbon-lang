@@ -20,8 +20,6 @@
 
 #include "sanitizer_test_utils.h"
 
-#include "gtest/gtest.h"
-
 #if !defined(_WIN32)
 # include <pthread.h>
 // Simply forward the arguments and check that the pthread functions succeed.
