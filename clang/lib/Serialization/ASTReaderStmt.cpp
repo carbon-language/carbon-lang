@@ -176,7 +176,7 @@ void ASTStmtReader::VisitAttributedStmt(AttributedStmt *S) {
   (void)NumAttrs;
   assert(NumAttrs == S->NumAttrs);
   assert(NumAttrs == Attrs.size());
-  std::copy(Attrs.begin(), Attrs.end(), S->Attrs);
+  std::copy(Attrs.begin(), Attrs.end(), S->getAttrArrayPtr());
   S->SubStmt = Reader.ReadSubStmt();
   S->AttrLoc = ReadSourceLocation(Record, Idx);
 }

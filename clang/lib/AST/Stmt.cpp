@@ -285,8 +285,8 @@ const char *LabelStmt::getName() const {
 AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
                                        ArrayRef<const Attr*> Attrs,
                                        Stmt *SubStmt) {
-  void *Mem = C.Allocate(sizeof(AttributedStmt) +
-                         sizeof(Attr*) * (Attrs.size() - 1),
+  assert(!Attrs.empty() && "Attrs should not be empty");
+  void *Mem = C.Allocate(sizeof(AttributedStmt) + sizeof(Attr *) * Attrs.size(),
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(Loc, Attrs, SubStmt);
 }
@@ -294,8 +294,7 @@ AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
 AttributedStmt *AttributedStmt::CreateEmpty(const ASTContext &C,
                                             unsigned NumAttrs) {
   assert(NumAttrs > 0 && "NumAttrs should be greater than zero");
-  void *Mem = C.Allocate(sizeof(AttributedStmt) +
-                         sizeof(Attr*) * (NumAttrs - 1),
+  void *Mem = C.Allocate(sizeof(AttributedStmt) + sizeof(Attr *) * NumAttrs,
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }

@@ -819,20 +819,24 @@ class AttributedStmt : public Stmt {
   Stmt *SubStmt;
   SourceLocation AttrLoc;
   unsigned NumAttrs;
-  const Attr *Attrs[1];
 
   friend class ASTStmtReader;
 
   AttributedStmt(SourceLocation Loc, ArrayRef<const Attr*> Attrs, Stmt *SubStmt)
     : Stmt(AttributedStmtClass), SubStmt(SubStmt), AttrLoc(Loc),
       NumAttrs(Attrs.size()) {
-    memcpy(this->Attrs, Attrs.data(), Attrs.size() * sizeof(Attr*));
+    memcpy(getAttrArrayPtr(), Attrs.data(), Attrs.size() * sizeof(Attr *));
   }
 
   explicit AttributedStmt(EmptyShell Empty, unsigned NumAttrs)
     : Stmt(AttributedStmtClass, Empty), NumAttrs(NumAttrs) {
-    memset(Attrs, 0, NumAttrs * sizeof(Attr*));
+    memset(getAttrArrayPtr(), 0, NumAttrs * sizeof(Attr *));
   }
+
+  Attr *const *getAttrArrayPtr() const {
+    return reinterpret_cast<Attr *const *>(this + 1);
+  }
+  Attr **getAttrArrayPtr() { return reinterpret_cast<Attr **>(this + 1); }
 
 public:
   static AttributedStmt *Create(const ASTContext &C, SourceLocation Loc,
@@ -842,7 +846,7 @@ public:
 
   SourceLocation getAttrLoc() const { return AttrLoc; }
   ArrayRef<const Attr*> getAttrs() const {
-    return ArrayRef<const Attr*>(Attrs, NumAttrs);
+    return ArrayRef<const Attr*>(getAttrArrayPtr(), NumAttrs);
   }
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
