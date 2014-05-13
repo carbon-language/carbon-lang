@@ -1486,6 +1486,17 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
   if (NoImplicitFloat)
     CmdArgs.push_back("-no-implicit-float");
+
+  if (Arg *A = Args.getLastArg(options::OPT_masm_EQ)) {
+    StringRef Value = A->getValue();
+    if (Value == "intel" || Value == "att") {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back(Args.MakeArgString("-x86-asm-syntax=" + Value));
+    } else {
+      getToolChain().getDriver().Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << Value;
+    }
+  }
 }
 
 static inline bool HasPICArg(const ArgList &Args) {
