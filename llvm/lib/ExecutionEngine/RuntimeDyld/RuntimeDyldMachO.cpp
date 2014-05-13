@@ -546,6 +546,17 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
         Value.Addend = Addend;
       }
     }
+
+    // Addends for external, PC-rel relocations on i386 point back to the zero
+    // offset. Calculate the final offset from the relocation target instead.
+    // This allows us to use the same logic for both external and internal
+    // relocations in resolveI386RelocationRef.
+    if (Arch == Triple::x86 && IsPCRel) {
+      uint64_t RelocAddr = 0;
+      RelI->getAddress(RelocAddr);
+      Value.Addend += RelocAddr + 4;
+    }
+
   } else {
     SectionRef Sec = MachO->getRelocationSection(RE);
     bool IsCode = false;
