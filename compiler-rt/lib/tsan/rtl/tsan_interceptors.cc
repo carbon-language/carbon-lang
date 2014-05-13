@@ -53,6 +53,7 @@ extern "C" int pthread_sigmask(int how, const __sanitizer_sigset_t *set,
                                __sanitizer_sigset_t *oldset);
 // REAL(sigfillset) defined in common interceptors.
 DECLARE_REAL(int, sigfillset, __sanitizer_sigset_t *set)
+DECLARE_REAL(int, fflush, __sanitizer_FILE *fp)
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
@@ -62,7 +63,7 @@ extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
 extern "C" void __libc_free(void *ptr);
 extern "C" int mallopt(int param, int value);
-extern void *stdout, *stderr;
+extern __sanitizer_FILE *stdout, *stderr;
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int EINVAL = 22;
@@ -1621,19 +1622,6 @@ TSAN_INTERCEPTOR(void*, tmpfile64, int fake) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, fclose, void *stream) {
-  // libc file streams can call user-supplied functions, see fopencookie.
-  {
-    SCOPED_TSAN_INTERCEPTOR(fclose, stream);
-    if (stream) {
-      int fd = fileno_unlocked(stream);
-      if (fd >= 0)
-        FdClose(thr, pc, fd);
-    }
-  }
-  return REAL(fclose)(stream);
-}
-
 TSAN_INTERCEPTOR(uptr, fread, void *ptr, uptr size, uptr nmemb, void *f) {
   // libc file streams can call user-supplied functions, see fopencookie.
   {
@@ -1650,14 +1638,6 @@ TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
     MemoryAccessRange(thr, pc, (uptr)p, size * nmemb, false);
   }
   return REAL(fwrite)(p, size, nmemb, f);
-}
-
-TSAN_INTERCEPTOR(int, fflush, void *stream) {
-  // libc file streams can call user-supplied functions, see fopencookie.
-  {
-    SCOPED_TSAN_INTERCEPTOR(fflush, stream);
-  }
-  return REAL(fflush)(stream);
 }
 
 TSAN_INTERCEPTOR(void, abort, int fake) {
@@ -2367,10 +2347,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(unlink);
   TSAN_INTERCEPT(tmpfile);
   TSAN_INTERCEPT(tmpfile64);
-  TSAN_INTERCEPT(fclose);
   TSAN_INTERCEPT(fread);
   TSAN_INTERCEPT(fwrite);
-  TSAN_INTERCEPT(fflush);
   TSAN_INTERCEPT(abort);
   TSAN_INTERCEPT(puts);
   TSAN_INTERCEPT(rmdir);

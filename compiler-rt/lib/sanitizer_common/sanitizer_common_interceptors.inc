@@ -28,6 +28,8 @@
 //   COMMON_INTERCEPTOR_HANDLE_RECVMSG
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
+#include "sanitizer_addrhashmap.h"
+#include "sanitizer_placement_new.h"
 #include "sanitizer_platform_interceptors.h"
 #include "sanitizer_tls_get_addr.h"
 
@@ -72,6 +74,52 @@
 #ifndef COMMON_INTERCEPTOR_FILE_CLOSE
 #define COMMON_INTERCEPTOR_FILE_CLOSE(ctx, file) {}
 #endif
+
+struct FileMetadata {
+  // For open_memstream().
+  char **addr;
+  SIZE_T *size;
+};
+
+struct CommonInterceptorMetadata {
+  enum {
+    CIMT_INVALID = 0,
+    CIMT_FILE
+  } type;
+  union {
+    FileMetadata file;
+  };
+};
+
+typedef AddrHashMap<CommonInterceptorMetadata, 31051> MetadataHashMap;
+
+static MetadataHashMap *interceptor_metadata_map;
+
+static void SetInterceptorMetadata(__sanitizer_FILE *addr,
+                                   const FileMetadata &file) {
+  MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr);
+  CHECK(h.created());
+  h->type = CommonInterceptorMetadata::CIMT_FILE;
+  h->file = file;
+}
+
+static const FileMetadata *GetInterceptorMetadata(__sanitizer_FILE *addr) {
+  MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr,
+                            /* remove */ false,
+                            /* create */ false);
+  if (h.exists()) {
+    CHECK(!h.created());
+    CHECK(h->type == CommonInterceptorMetadata::CIMT_FILE);
+    return &h->file;
+  } else {
+    return 0;
+  }
+}
+
+static void DeleteInterceptorMetadata(void *addr) {
+  MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr, true);
+  CHECK(h.exists());
+}
 
 #if SANITIZER_INTERCEPT_TEXTDOMAIN
 INTERCEPTOR(char*, textdomain, const char *domainname) {
@@ -624,6 +672,14 @@ INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
 #define INIT_STRPTIME
 #endif
 
+void update_FILE(__sanitizer_FILE *fp) {
+#if SANITIZER_HAS_STRUCT_FILE
+  const FileMetadata *m = GetInterceptorMetadata(fp);
+  if (m)
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(*m->addr, *m->size);
+#endif  // SANITIZER_HAS_STRUCT_FILE
+}
+
 #if SANITIZER_INTERCEPT_SCANF || SANITIZER_INTERCEPT_PRINTF
 #include "sanitizer_common_interceptors_format.inc"
 
@@ -789,7 +845,8 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 INTERCEPTOR(int, vprintf, const char *format, va_list ap)
 VPRINTF_INTERCEPTOR_IMPL(vprintf, format, ap)
 
-INTERCEPTOR(int, vfprintf, void *stream, const char *format, va_list ap)
+INTERCEPTOR(int, vfprintf, __sanitizer_FILE *stream, const char *format,
+            va_list ap)
 VPRINTF_INTERCEPTOR_IMPL(vfprintf, stream, format, ap)
 
 INTERCEPTOR(int, vsnprintf, char *str, SIZE_T size, const char *format,
@@ -806,8 +863,8 @@ VASPRINTF_INTERCEPTOR_IMPL(vasprintf, strp, format, ap)
 INTERCEPTOR(int, __isoc99_vprintf, const char *format, va_list ap)
 VPRINTF_INTERCEPTOR_IMPL(__isoc99_vprintf, format, ap)
 
-INTERCEPTOR(int, __isoc99_vfprintf, void *stream, const char *format,
-            va_list ap)
+INTERCEPTOR(int, __isoc99_vfprintf, __sanitizer_FILE *stream,
+            const char *format, va_list ap)
 VPRINTF_INTERCEPTOR_IMPL(__isoc99_vfprintf, stream, format, ap)
 
 INTERCEPTOR(int, __isoc99_vsnprintf, char *str, SIZE_T size, const char *format,
@@ -824,7 +881,7 @@ VSPRINTF_INTERCEPTOR_IMPL(__isoc99_vsprintf, str, format,
 INTERCEPTOR(int, printf, const char *format, ...)
 FORMAT_INTERCEPTOR_IMPL(printf, vprintf, format)
 
-INTERCEPTOR(int, fprintf, void *stream, const char *format, ...)
+INTERCEPTOR(int, fprintf, __sanitizer_FILE *stream, const char *format, ...)
 FORMAT_INTERCEPTOR_IMPL(fprintf, vfprintf, stream, format)
 
 INTERCEPTOR(int, sprintf, char *str, const char *format, ...) // NOLINT
@@ -840,7 +897,8 @@ FORMAT_INTERCEPTOR_IMPL(asprintf, vasprintf, strp, format)
 INTERCEPTOR(int, __isoc99_printf, const char *format, ...)
 FORMAT_INTERCEPTOR_IMPL(__isoc99_printf, __isoc99_vprintf, format)
 
-INTERCEPTOR(int, __isoc99_fprintf, void *stream, const char *format, ...)
+INTERCEPTOR(int, __isoc99_fprintf, __sanitizer_FILE *stream, const char *format,
+            ...)
 FORMAT_INTERCEPTOR_IMPL(__isoc99_fprintf, __isoc99_vfprintf, stream, format)
 
 INTERCEPTOR(int, __isoc99_sprintf, char *str, const char *format, ...)
@@ -3729,10 +3787,12 @@ INTERCEPTOR(void *, tsearch, void *key, void **rootp,
 #if SANITIZER_INTERCEPT_LIBIO_INTERNALS || SANITIZER_INTERCEPT_FOPEN || \
     SANITIZER_INTERCEPT_OPEN_MEMSTREAM
 void unpoison_file(__sanitizer_FILE *fp) {
+#if SANITIZER_HAS_STRUCT_FILE
   COMMON_INTERCEPTOR_INITIALIZE_RANGE(fp, sizeof(*fp));
   if (fp->_IO_read_base && fp->_IO_read_base < fp->_IO_read_end)
     COMMON_INTERCEPTOR_INITIALIZE_RANGE(fp->_IO_read_base,
                                         fp->_IO_read_end - fp->_IO_read_base);
+#endif  // SANITIZER_HAS_STRUCT_FILE
 }
 #endif
 
@@ -3863,6 +3923,8 @@ INTERCEPTOR(__sanitizer_FILE *, open_memstream, char **ptr, SIZE_T *sizeloc) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, sizeof(*ptr));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sizeloc, sizeof(*sizeloc));
     unpoison_file(res);
+    FileMetadata file = {ptr, sizeloc};
+    SetInterceptorMetadata(res, file);
   }
   return res;
 }
@@ -3875,6 +3937,8 @@ INTERCEPTOR(__sanitizer_FILE *, open_wmemstream, wchar_t **ptr,
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, sizeof(*ptr));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sizeloc, sizeof(*sizeloc));
     unpoison_file(res);
+    FileMetadata file = {(char **)ptr, sizeloc};
+    SetInterceptorMetadata(res, file);
   }
   return res;
 }
@@ -3937,7 +4001,47 @@ INTERCEPTOR(void, _obstack_newchunk, __sanitizer_obstack *obstack, int length) {
 #define INIT_OBSTACK
 #endif
 
+#if SANITIZER_INTERCEPT_FFLUSH
+INTERCEPTOR(int, fflush, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fflush, fp);
+  int res = REAL(fflush)(fp);
+  // FIXME: handle fp == NULL
+  if (fp) {
+    const FileMetadata *m = GetInterceptorMetadata(fp);
+    if (m) COMMON_INTERCEPTOR_INITIALIZE_RANGE(*m->addr, *m->size);
+  }
+  return res;
+}
+#define INIT_FFLUSH COMMON_INTERCEPT_FUNCTION(fflush);
+#else
+#define INIT_FFLUSH
+#endif
+
+#if SANITIZER_INTERCEPT_FCLOSE
+INTERCEPTOR(int, fclose, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fclose, fp);
+  int res = REAL(fclose)(fp);
+  if (fp) {
+    COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
+    const FileMetadata *m = GetInterceptorMetadata(fp);
+    if (m) {
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(*m->addr, *m->size);
+      DeleteInterceptorMetadata(fp);
+    }
+  }
+  return res;
+}
+#define INIT_FCLOSE COMMON_INTERCEPT_FUNCTION(fclose);
+#else
+#define INIT_FCLOSE
+#endif
+
 static void InitializeCommonInterceptors() {
+  static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
+  interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
+
   INIT_TEXTDOMAIN;
   INIT_STRCMP;
   INIT_STRNCMP;
@@ -4072,4 +4176,6 @@ static void InitializeCommonInterceptors() {
   INIT_FOPEN;
   INIT_OPEN_MEMSTREAM;
   INIT_OBSTACK;
+  INIT_FFLUSH;
+  INIT_FCLOSE;
 }

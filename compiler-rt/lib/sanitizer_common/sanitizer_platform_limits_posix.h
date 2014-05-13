@@ -661,6 +661,10 @@ namespace __sanitizer {
     __sanitizer_FILE *_chain;
     int _fileno;
   };
+# define SANITIZER_HAS_STRUCT_FILE 1
+#else
+  typedef void __sanitizer_FILE;
+# define SANITIZER_HAS_STRUCT_FILE 0
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
