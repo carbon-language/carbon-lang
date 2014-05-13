@@ -33,10 +33,10 @@ foo:
 
         ldur x0, [x1, #-257]
 
-; CHECK-ERRORS: error: index must be a multiple of 8 in range [0, 32760].
+; CHECK-ERRORS: error: invalid offset in memory address.
 ; CHECK-ERRORS:         ldr x0, [x0, #804]
 ; CHECK-ERRORS:                 ^
-; CHECK-ERRORS: error: index must be a multiple of 4 in range [0, 16380].
+; CHECK-ERRORS: error: invalid offset in memory address.
 ; CHECK-ERRORS:         ldr w0, [x0, #802]
 ; CHECK-ERRORS:                 ^
 ; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
@@ -73,6 +73,44 @@ foo:
 ; CHECK-ERRORS:         ldur x0, [x1, #-257]
 ; CHECK-ERRORS:                   ^
 
+
+ldrb   w1, [x3, w3, sxtw #4]
+ldrh   w1, [x3, w3, sxtw #4]
+ldr    w1, [x3, w3, sxtw #4]
+ldr    x1, [x3, w3, sxtw #4]
+ldr    b1, [x3, w3, sxtw #4]
+ldr    h1, [x3, w3, sxtw #4]
+ldr    s1, [x3, w3, sxtw #4]
+ldr    d1, [x3, w3, sxtw #4]
+ldr    q1, [x3, w3, sxtw #1]
+
+; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS:ldrb   w1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS:ldrh   w1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS:ldr    w1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS:ldr    x1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS:ldr    b1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS:ldr    h1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS:ldr    s1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS:ldr    d1, [x3, w3, sxtw #4]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS:ldr    q1, [x3, w3, sxtw #1]
+; CHECK-ERRORS:           ^
 
 ; Check that register offset addressing modes only accept 32-bit offset
 ; registers when using uxtw/sxtw extends. Everything else requires a 64-bit

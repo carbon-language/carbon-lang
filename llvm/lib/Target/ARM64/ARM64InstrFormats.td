@@ -2251,6 +2251,7 @@ class PrefetchLiteral<bits<2> opc, bit V, string asm, list<dag> pat>
 
 class MemROAsmOperand<int sz> : AsmOperandClass {
   let Name = "MemoryRegisterOffset"#sz;
+  let DiagnosticType = "InvalidMemoryIndexed";
 }
 
 def MemROAsmOperand8 : MemROAsmOperand<8>;

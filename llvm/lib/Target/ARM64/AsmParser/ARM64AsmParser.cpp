@@ -3699,6 +3699,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "index must be a multiple of 8 in range [-512, 504].");
   case Match_InvalidMemoryIndexed128SImm7:
     return Error(Loc, "index must be a multiple of 16 in range [-1024, 1008].");
+  case Match_InvalidMemoryIndexed:
+    return Error(Loc, "invalid offset in memory address.");
   case Match_InvalidMemoryIndexed8:
     return Error(Loc, "index must be an integer in range [0, 4095].");
   case Match_InvalidMemoryIndexed16:
@@ -4114,17 +4116,11 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     if (Operands.size() == ErrorInfo + 1 &&
         !((ARM64Operand *)Operands[ErrorInfo])->isImm() &&
         !Tok.startswith("stur") && !Tok.startswith("ldur")) {
-      // whether we want an Indexed64 or Indexed32 diagnostic depends on
-      // the register class of the previous operand. Default to 64 in case
-      // we see something unexpected.
-      MatchResult = Match_InvalidMemoryIndexed64;
-      if (ErrorInfo) {
-        ARM64Operand *PrevOp = (ARM64Operand *)Operands[ErrorInfo - 1];
-        if (PrevOp->isReg() &&
-            ARM64MCRegisterClasses[ARM64::GPR32RegClassID].contains(
-                PrevOp->getReg()))
-          MatchResult = Match_InvalidMemoryIndexed32;
-      }
+      // FIXME: Here we use a vague diagnostic for memory operand in many
+      // instructions of various formats. This diagnostic can be more accurate
+      // if splitting memory operand into many smaller operands to help
+      // diagnose.
+      MatchResult = Match_InvalidMemoryIndexed;
     }
     SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();
     if (ErrorLoc == SMLoc())
