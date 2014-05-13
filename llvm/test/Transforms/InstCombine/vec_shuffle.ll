@@ -386,3 +386,11 @@ define <4 x i16> @pr19717a(<8 x i16> %in0, <8 x i16> %in1) {
   %mul = mul <4 x i16> %shuffle, %shuffle1
   ret <4 x i16> %mul
 }
+
+define <8 x i8> @pr19730(<16 x i8> %in0) {
+; CHECK-LABEL: @pr19730(
+; CHECK: shufflevector
+  %shuffle = shufflevector <16 x i8> %in0, <16 x i8> undef, <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+  %shuffle1 = shufflevector <8 x i8> %shuffle, <8 x i8> undef, <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+  ret <8 x i8> %shuffle1
+}

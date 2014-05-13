@@ -1114,12 +1114,10 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
   // If the result mask is an identity, replace uses of this instruction with
   // corresponding argument.
-  if (VWidth == LHSWidth) {
-    bool isLHSID, isRHSID;
-    RecognizeIdentityMask(newMask, isLHSID, isRHSID);
-    if (isLHSID) return ReplaceInstUsesWith(SVI, newLHS);
-    if (isRHSID) return ReplaceInstUsesWith(SVI, newRHS);
-  }
+  bool isLHSID, isRHSID;
+  RecognizeIdentityMask(newMask, isLHSID, isRHSID);
+  if (isLHSID && VWidth == LHSOp0Width) return ReplaceInstUsesWith(SVI, newLHS);
+  if (isRHSID && VWidth == RHSOp0Width) return ReplaceInstUsesWith(SVI, newRHS);
 
   return MadeChange ? &SVI : nullptr;
 }
