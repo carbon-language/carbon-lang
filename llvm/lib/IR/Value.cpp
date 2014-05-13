@@ -301,10 +301,45 @@ void Value::takeName(Value *V) {
     ST->reinsertValue(this);
 }
 
+#ifndef NDEBUG
+static bool contains(SmallPtrSet<ConstantExpr *, 4> &Cache, ConstantExpr *Expr,
+                     Constant *C) {
+  if (!Cache.insert(Expr))
+    return false;
+
+  for (auto &O : Expr->operands()) {
+    if (O == C)
+      return true;
+    auto *CE = dyn_cast<ConstantExpr>(O);
+    if (!CE)
+      continue;
+    if (contains(Cache, CE, C))
+      return true;
+  }
+  return false;
+}
+
+static bool contains(Value *Expr, Value *V) {
+  if (Expr == V)
+    return true;
+
+  auto *C = dyn_cast<Constant>(V);
+  if (!C)
+    return false;
+
+  auto *CE = dyn_cast<ConstantExpr>(Expr);
+  if (!CE)
+    return false;
+
+  SmallPtrSet<ConstantExpr *, 4> Cache;
+  return contains(Cache, CE, C);
+}
+#endif
 
 void Value::replaceAllUsesWith(Value *New) {
   assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
-  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
+  assert(!contains(New, this) &&
+         "this->replaceAllUsesWith(expr(this)) is NOT valid!");
   assert(New->getType() == getType() &&
          "replaceAllUses of value with new value of different type!");
 

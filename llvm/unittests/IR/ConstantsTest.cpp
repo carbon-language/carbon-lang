@@ -254,6 +254,23 @@ TEST(ConstantsTest, AsInstructionsTest) {
         P6STR ", i32 1");
 }
 
+#ifdef GTEST_HAS_DEATH_TEST
+#ifndef NDEBUG
+TEST(ConstantsTest, ReplaceWithConstantTest) {
+  std::unique_ptr<Module> M(new Module("MyModule", getGlobalContext()));
+
+  Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
+  Constant *One = ConstantInt::get(Int32Ty, 1);
+
+  Constant *Global =
+      M->getOrInsertGlobal("dummy", PointerType::getUnqual(Int32Ty));
+  Constant *GEP = ConstantExpr::getGetElementPtr(Global, One);
+  EXPECT_DEATH(Global->replaceAllUsesWith(GEP),
+               "this->replaceAllUsesWith\\(expr\\(this\\)\\) is NOT valid!");
+}
+#endif
+#endif
+
 #undef CHECK
 
 }  // end anonymous namespace
