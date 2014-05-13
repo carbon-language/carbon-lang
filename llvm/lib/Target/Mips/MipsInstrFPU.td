@@ -298,9 +298,9 @@ let DecoderNamespace = "Mips64" in {
 def CVT_S_W : MMRel, ABSS_FT<"cvt.s.w", FGR32Opnd, FGR32Opnd, II_CVT>,
               ABSS_FM<0x20, 20>;
 def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
-              ABSS_FM<0x25, 16>, INSN_MIPS3_32;
+              ABSS_FM<0x25, 16>, INSN_MIPS3_32R2;
 def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
-               ABSS_FM<0x25, 17>, INSN_MIPS3_32;
+               ABSS_FM<0x25, 17>, INSN_MIPS3_32R2;
 
 def CVT_S_D32 : MMRel, ABSS_FT<"cvt.s.d", FGR32Opnd, AFGR64Opnd, II_CVT>,
                 ABSS_FM<0x20, 17>, FGR_32;
@@ -354,9 +354,9 @@ def MFC1 : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, II_MFC1,
 def MTC1 : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, II_MTC1,
                           bitconvert>, MFC1_FM<4>;
 def MFHC1 : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, II_MFHC1>,
-            MFC1_FM<3>;
+            MFC1_FM<3>, ISA_MIPS32R2;
 def MTHC1 : MMRel, MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, II_MTHC1>,
-            MFC1_FM<7>;
+            MFC1_FM<7>, ISA_MIPS32R2;
 def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, II_DMFC1,
             bitconvert>, MFC1_FM<1>, ISA_MIPS3;
 def DMTC1 : MTC1_FT<"dmtc1", FGR64Opnd, GPR64Opnd, II_DMTC1,

@@ -273,8 +273,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def WAIT_MM    : WaitMM<"wait">, WAIT_FM_MM;
   def ERET_MM    : MMRel, ER_FT<"eret">, ER_FM_MM<0x3cd>;
   def DERET_MM   : MMRel, ER_FT<"deret">, ER_FM_MM<0x38d>;
-  def EI_MM      : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM_MM<0x15d>;
-  def DI_MM      : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM_MM<0x11d>;
+  def EI_MM      : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM_MM<0x15d>,
+                   ISA_MIPS32R2;
+  def DI_MM      : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM_MM<0x11d>,
+                   ISA_MIPS32R2;
 
   /// Trap Instructions
   def TEQ_MM  : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM_MM<0x0>;

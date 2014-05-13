@@ -82,6 +82,9 @@ protected:
   // HasMips3_32 - The subset of MIPS-III instructions added to MIPS32
   bool HasMips3_32;
 
+  // HasMips3_32r2 - The subset of MIPS-III instructions added to MIPS32r2
+  bool HasMips3_32r2;
+
   // HasMips4_32 - Has the subset of MIPS-IV present in MIPS32
   bool HasMips4_32;
 

@@ -80,12 +80,12 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(Mips32),
       MipsABI(UnknownABI), IsLittle(little), IsSingleFloat(false),
       IsFP64bit(false), IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false),
-      HasCnMips(false), IsLinux(true), HasMips3_32(false), HasMips4_32(false),
-      HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
-      InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
-      HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
-      HasMSA(false), RM(_RM), OverrideMode(NoOverride), TM(_TM),
-      TargetTriple(TT) {
+      HasCnMips(false), IsLinux(true), HasMips3_32(false), HasMips3_32r2(false),
+      HasMips4_32(false), HasMips4_32r2(false), HasMips5_32r2(false),
+      InMips16Mode(false), InMips16HardFloat(Mips16HardFloat),
+      InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
+      AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16), HasMSA(false),
+      RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT) {
   std::string CPUName = CPU;
   CPUName = selectMipsCPU(TT, CPUName);
 

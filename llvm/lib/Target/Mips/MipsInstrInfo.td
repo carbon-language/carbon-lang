@@ -150,6 +150,8 @@ def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
 def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
                       AssemblerPredicate<"FeatureMips3_32">;
+def HasMips3_32r2 :   Predicate<"Subtarget.hasMips3_32r2()">,
+                      AssemblerPredicate<"FeatureMips3_32r2">;
 def HasMips3     :    Predicate<"Subtarget.hasMips3()">,
                       AssemblerPredicate<"FeatureMips3">;
 def HasMips4_32  :    Predicate<"Subtarget.hasMips4_32()">,
@@ -220,6 +222,9 @@ class ISA_MIPS64R6 { list<Predicate> InsnPredicates = [HasMips64r6]; }
 
 // The portions of MIPS-III that were also added to MIPS32
 class INSN_MIPS3_32 { list<Predicate> InsnPredicates = [HasMips3_32]; }
+
+// The portions of MIPS-III that were also added to MIPS32
+class INSN_MIPS3_32R2 { list<Predicate> InsnPredicates = [HasMips3_32r2]; }
 
 // The portions of MIPS-IV that were also added to MIPS32
 class INSN_MIPS4_32 { list<Predicate> InsnPredicates = [HasMips4_32]; }
@@ -1084,8 +1089,8 @@ def TRAP : TrapBase<BREAK>;
 def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>, INSN_MIPS3_32;
 def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>, ISA_MIPS32;
 
-def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
-def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
+def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>, ISA_MIPS32R2;
+def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>, ISA_MIPS32R2;
 
 let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably a bug
     AdditionalPredicates = [NotInMicroMips] in {

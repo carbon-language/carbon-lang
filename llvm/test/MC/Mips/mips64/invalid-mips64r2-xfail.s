@@ -8,8 +8,4 @@
 
 # CHECK-NOT: error
         .set noat
-	di	$s8
-	ei	$t6
-	mfhc1	$s8,$f24
-	mthc1	$zero,$f16
 	rdhwr	$sp,$11

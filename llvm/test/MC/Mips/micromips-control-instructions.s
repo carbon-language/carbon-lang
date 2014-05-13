@@ -1,6 +1,6 @@
-# RUN: llvm-mc %s -triple=mipsel -show-encoding -mattr=micromips \
+# RUN: llvm-mc %s -triple=mipsel -show-encoding -mcpu=mips32r2 -mattr=micromips \
 # RUN: | FileCheck -check-prefix=CHECK-EL %s
-# RUN: llvm-mc %s -triple=mips -show-encoding -mattr=micromips \
+# RUN: llvm-mc %s -triple=mips -show-encoding -mcpu=mips32r2 -mattr=micromips \
 # RUN: | FileCheck -check-prefix=CHECK-EB %s
 # Check that the assembler can handle the documented syntax
 # for control instructions.
