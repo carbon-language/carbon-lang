@@ -91,6 +91,8 @@ uptr internal_waitpid(int pid, int *status, int options);
 uptr internal_getpid();
 uptr internal_getppid();
 
+uptr internal_fork();
+
 // Threading
 uptr internal_sched_yield();
 

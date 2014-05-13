@@ -234,7 +234,8 @@ class SymbolizerProcess : public ExternalSymbolizerInterface {
     CHECK(infd);
     CHECK(outfd);
 
-    int pid = fork();
+    // Real fork() may call user callbacks registered with pthread_atfork().
+    int pid = internal_fork();
     if (pid == -1) {
       // Fork() failed.
       internal_close(infd[0]);

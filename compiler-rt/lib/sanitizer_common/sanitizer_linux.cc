@@ -501,6 +501,10 @@ uptr internal_sigaltstack(const struct sigaltstack *ss,
   return internal_syscall(SYSCALL(sigaltstack), (uptr)ss, (uptr)oss);
 }
 
+uptr internal_fork() {
+  return internal_syscall(SYSCALL(fork));
+}
+
 #if SANITIZER_LINUX
 // Doesn't set sa_restorer, use with caution (see below).
 int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
