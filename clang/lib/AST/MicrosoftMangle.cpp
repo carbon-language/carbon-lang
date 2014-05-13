@@ -112,19 +112,18 @@ public:
                         raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
-  void mangleCXXRTTIBaseClassDescriptor(
-      const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
-      uint32_t NVOffset, uint32_t VBPtrOffset, uint32_t VBTableOffset,
-      uint32_t Flags, raw_ostream &Out) override;
+  void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
+                                        uint32_t NVOffset, uint32_t VBPtrOffset,
+                                        uint32_t VBTableOffset, uint32_t Flags,
+                                        raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassArray(const CXXRecordDecl *Derived,
                                    raw_ostream &Out) override;
   void mangleCXXRTTIClassHierarchyDescriptor(const CXXRecordDecl *Derived,
                                              raw_ostream &Out) override;
-  void mangleCXXRTTICompleteObjectLocator(const CXXRecordDecl *Derived,
-                                          uint32_t OffsetFromTop,
-                                          uint32_t VFPtrToVtordispDelta,
-                                          uint32_t Flags,
-                                          raw_ostream &Out) override;
+  void
+  mangleCXXRTTICompleteObjectLocator(const CXXRecordDecl *Derived,
+                                     ArrayRef<const CXXRecordDecl *> BasePath,
+                                     raw_ostream &Out) override;
   void mangleTypeName(QualType T, raw_ostream &) override;
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                      raw_ostream &) override;
@@ -2259,18 +2258,15 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T,
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassDescriptor(
-    const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
-    uint32_t NVOffset, uint32_t VBPtrOffset, uint32_t VBTableOffset,
-    uint32_t Flags, raw_ostream &Out) {
+    const CXXRecordDecl *Derived, uint32_t NVOffset, uint32_t VBPtrOffset,
+    uint32_t VBTableOffset, uint32_t Flags, raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_R1";
-  Mangler.mangleName(Derived);
-  for (const CXXRecordDecl *RD : BasePath)
-    Mangler.mangleName(RD);
   Mangler.mangleNumber(NVOffset);
   Mangler.mangleNumber(VBPtrOffset);
   Mangler.mangleNumber(VBTableOffset);
   Mangler.mangleNumber(Flags);
+  Mangler.mangleName(Derived);
   Mangler.getStream() << "@8";
 }
 
@@ -2291,15 +2287,19 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIClassHierarchyDescriptor(
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTICompleteObjectLocator(
-    const CXXRecordDecl *Derived, uint32_t OffsetFromTop,
-    uint32_t VFPtrToVtordispDelta, uint32_t Flags, raw_ostream &Out) {
+    const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
+    raw_ostream &Out) {
+  // <mangled-name> ::= ?_R4 <class-name> <storage-class>
+  //                    <cvr-qualifiers> [<name>] @
+  // NOTE: <cvr-qualifiers> here is always 'B' (const). <storage-class>
+  // is always '6' for vftables.
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_R4";
   Mangler.mangleName(Derived);
-  Mangler.mangleNumber(Flags);
-  Mangler.mangleNumber(OffsetFromTop);
-  Mangler.mangleNumber(VFPtrToVtordispDelta);
-  Mangler.getStream() << "@8";
+  Mangler.getStream() << "6B"; // '6' for vftable, 'B' for const.
+  for (const CXXRecordDecl *RD : BasePath)
+    Mangler.mangleName(RD);
+  Mangler.getStream() << '@';
 }
 
 void MicrosoftMangleContextImpl::mangleTypeName(QualType T, raw_ostream &Out) {
