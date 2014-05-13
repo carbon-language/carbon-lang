@@ -1020,7 +1020,7 @@ private:
   /// NOTE: This should only be called for definitions.
   void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
 
-  void setNonAliasAttributes(const Decl *D, llvm::GlobalValue *GV);
+  void setNonAliasAttributes(const Decl *D, llvm::GlobalObject *GO);
 
   /// Set attributes for a global definition.
   void setFunctionDefinitionAttributes(const FunctionDecl *D,

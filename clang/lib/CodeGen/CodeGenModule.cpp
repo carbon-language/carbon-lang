@@ -725,14 +725,13 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
 }
 
 void CodeGenModule::setNonAliasAttributes(const Decl *D,
-                                          llvm::GlobalValue *GV) {
-  assert(!isa<llvm::GlobalAlias>(GV));
-  SetCommonAttributes(D, GV);
+                                          llvm::GlobalObject *GO) {
+  SetCommonAttributes(D, GO);
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
-    GV->setSection(SA->getName());
+    GO->setSection(SA->getName());
 
-  getTargetCodeGenInfo().SetTargetAttributes(D, GV, *this);
+  getTargetCodeGenInfo().SetTargetAttributes(D, GO, *this);
 }
 
 void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
