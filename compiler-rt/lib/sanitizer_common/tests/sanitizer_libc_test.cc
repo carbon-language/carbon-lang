@@ -55,6 +55,8 @@ struct stat_and_more {
   unsigned char z;
 };
 
+// FIXME: File manipulations are not yet supported on Windows
+#if !defined(_WIN32)
 TEST(SanitizerCommon, FileOps) {
   const char *str1 = "qwerty";
   uptr len1 = internal_strlen(str1);
@@ -114,6 +116,7 @@ TEST(SanitizerCommon, FileOps) {
   EXPECT_EQ(0, internal_memcmp(buf, str2, len2));
   internal_close(fd);
 }
+#endif
 
 TEST(SanitizerCommon, InternalStrFunctions) {
   const char *haystack = "haystack";
