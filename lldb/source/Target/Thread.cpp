@@ -26,6 +26,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -1951,6 +1952,21 @@ Thread::GetThreadLocalData (const ModuleSP module)
         return loader->GetThreadLocalData (module, shared_from_this());
     else
         return LLDB_INVALID_ADDRESS;
+}
+
+bool
+Thread::SafeToCallFunctions ()
+{
+    Process *process = GetProcess().get();
+    if (process)
+    {
+        SystemRuntime *runtime = process->GetSystemRuntime ();
+        if (runtime)
+        {
+            return runtime->SafeToCallFunctionsOnThisThread (shared_from_this());
+        }
+    }
+    return true;
 }
 
 lldb::StackFrameSP

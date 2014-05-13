@@ -214,6 +214,21 @@ SystemRuntimeMacOSX::GetQueueKind (addr_t dispatch_queue_addr)
     return kind;
 }
 
+bool
+SystemRuntimeMacOSX::SafeToCallFunctionsOnThisThread (ThreadSP thread_sp)
+{
+    if (thread_sp && thread_sp->GetStackFrameCount() > 0 && thread_sp->GetFrameWithConcreteFrameIndex(0))
+    {
+        const SymbolContext sym_ctx (thread_sp->GetFrameWithConcreteFrameIndex(0)->GetSymbolContext (eSymbolContextSymbol));
+        static ConstString g_select_symbol ("__select");
+        if (sym_ctx.GetFunctionName() == g_select_symbol)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 lldb::queue_id_t
 SystemRuntimeMacOSX::GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr)
 {

@@ -1437,3 +1437,12 @@ SBThread::GetExtendedBacktraceOriginatingIndexID ()
         return thread_sp->GetExtendedBacktraceOriginatingIndexID();
     return LLDB_INVALID_INDEX32;
 }
+
+bool
+SBThread::SafeToCallFunctions ()
+{
+    ThreadSP thread_sp(m_opaque_sp->GetThreadSP());
+    if (thread_sp)
+        return thread_sp->SafeToCallFunctions();
+    return true;
+}

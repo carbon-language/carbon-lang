@@ -282,6 +282,14 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
 
     error.Clear();
 
+    if (thread.SafeToCallFunctions() == false)
+    {
+        if (log)
+            log->Printf ("Not safe to call functions on thread 0x%" PRIx64, thread.GetID());
+        error.SetErrorString ("Not safe to call functions on this thread.");
+        return return_value;
+    }
+
     // Set up the arguments for a call to
 
     // struct get_current_queues_return_values

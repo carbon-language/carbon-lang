@@ -269,6 +269,14 @@ AppleGetItemInfoHandler::GetItemInfo (Thread &thread, uint64_t item, addr_t page
 
     error.Clear();
 
+    if (thread.SafeToCallFunctions() == false)
+    {
+        if (log)
+            log->Printf ("Not safe to call functions on thread 0x%" PRIx64, thread.GetID());
+        error.SetErrorString ("Not safe to call functions on this thread.");
+        return return_value;
+    }
+
     // Set up the arguments for a call to
 
     // struct get_item_info_return_values

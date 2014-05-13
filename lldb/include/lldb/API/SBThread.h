@@ -210,6 +210,9 @@ public:
     uint32_t
     GetExtendedBacktraceOriginatingIndexID ();
 
+    bool
+    SafeToCallFunctions ();
+
 protected:
     friend class SBBreakpoint;
     friend class SBBreakpointLocation;

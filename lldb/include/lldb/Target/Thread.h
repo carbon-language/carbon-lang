@@ -592,6 +592,19 @@ public:
     virtual lldb::addr_t
     GetThreadLocalData (const lldb::ModuleSP module);
 
+    //------------------------------------------------------------------
+    /// Check whether this thread is safe to run functions
+    ///
+    /// The SystemRuntime may know of certain thread states (functions in 
+    /// process of execution, for instance) which can make it unsafe for 
+    /// functions to be called.
+    ///
+    /// @return
+    ///     True if it is safe to call functions on this thread.
+    ///     False if function calls should be avoided on this thread.
+    //------------------------------------------------------------------
+    virtual bool
+    SafeToCallFunctions ();
 
     //------------------------------------------------------------------
     // Thread Plan Providers:

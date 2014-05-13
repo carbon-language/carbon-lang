@@ -108,6 +108,9 @@ public:
     virtual lldb::QueueKind
     GetQueueKind (lldb::addr_t dispatch_queue_addr);
 
+    virtual bool
+    SafeToCallFunctionsOnThisThread (lldb::ThreadSP thread_sp);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------

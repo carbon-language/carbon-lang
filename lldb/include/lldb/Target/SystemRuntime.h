@@ -309,6 +309,27 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Determine whether it is safe to run an expression on a given thread
+    ///
+    /// If a system must not run functions on a thread in some particular state,
+    /// this method gives a way for it to flag that the expression should not be
+    /// run.
+    ///
+    /// @param [in] thread_sp
+    ///     The thread we want to run the expression on.
+    ///
+    /// @return
+    ///     True will be returned if there are no known problems with running an
+    ///     expression on this thread.  False means that the inferior function
+    ///     call should not be made on this thread.
+    //------------------------------------------------------------------
+    virtual bool
+    SafeToCallFunctionsOnThisThread (lldb::ThreadSP thread_sp)
+    {
+        return true;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Member variables.

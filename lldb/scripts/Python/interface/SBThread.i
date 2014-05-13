@@ -297,6 +297,16 @@ public:
     uint32_t
     GetExtendedBacktraceOriginatingIndexID();
 
+    %feature("autodoc","
+    Takes no arguments, returns a bool.
+    lldb may be able to detect that function calls should not be executed
+    on a given thread at a particular point in time.  It is recommended that
+    this is checked before performing an inferior function call on a given
+    thread.
+    ") SafeToCallFunctions;
+    bool
+    SafeToCallFunctions ();
+
     %pythoncode %{
         class frames_access(object):
             '''A helper object that will lazily hand out frames for a thread when supplied an index.'''
