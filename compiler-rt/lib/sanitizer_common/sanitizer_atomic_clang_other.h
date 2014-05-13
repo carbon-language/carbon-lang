@@ -53,7 +53,8 @@ INLINE typename T::Type atomic_load(
     // 64-bit load on 32-bit platform.
     // Gross, but simple and reliable.
     // Assume that it is not in read-only memory.
-    v = __sync_fetch_and_add((typename T::Type volatile*)&a->val_dont_use, 0);
+    v = __sync_fetch_and_add(
+        const_cast<typename T::Type volatile *>(&a->val_dont_use), 0);
   }
   return v;
 }

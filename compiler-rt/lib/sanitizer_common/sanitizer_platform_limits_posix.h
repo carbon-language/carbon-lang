@@ -275,10 +275,17 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+
+#if defined(__arm__)
+  const unsigned kXDROpsNumFuns = 9;
+#else
+  const unsigned kXDROpsNumFuns = 10;
+#endif
+
   struct __sanitizer_XDR {
     int x_op;
     struct xdr_ops {
-      uptr fns[10];
+      uptr fns[kXDROpsNumFuns];
     } *x_ops;
     uptr x_public;
     uptr x_private;
