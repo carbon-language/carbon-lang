@@ -170,10 +170,6 @@ def IsGP32bit    :    Predicate<"!Subtarget.isGP64bit()">,
                       AssemblerPredicate<"!FeatureGP64Bit">;
 def HasMips64    :    Predicate<"Subtarget.hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
-def IsGP32       :    Predicate<"!Subtarget.isGP64()">,
-                      AssemblerPredicate<"!FeatureGP64Bit">;
-def IsGP64       :    Predicate<"Subtarget.isGP64()">,
-                      AssemblerPredicate<"FeatureGP64Bit">;
 def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
 def HasMips64r6  :    Predicate<"Subtarget.hasMips64r6()">,
@@ -205,6 +201,7 @@ def IsNotNaCl    :    Predicate<"!Subtarget.isTargetNaCl()">;
 // They are mutually exclusive.
 //===----------------------------------------------------------------------===//
 
+class GPR_32 { list<Predicate> GPRPredicates = [IsGP32bit]; }
 class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
 
 //===----------------------------------------------------------------------===//
@@ -1242,7 +1239,9 @@ def TLBWR : TLB<"tlbwr">, COP0_TLB_FM<0x06>;
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"move $dst, $src",
                     (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
-      Requires<[IsGP32, NotInMicroMips]>;
+      GPR_32 {
+  let AdditionalPredicates = [NotInMicroMips];
+}
 def : MipsInstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
 def : MipsInstAlias<"addu $rs, $rt, $imm",
                     (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;

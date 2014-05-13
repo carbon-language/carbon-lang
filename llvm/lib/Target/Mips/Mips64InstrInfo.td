@@ -429,7 +429,7 @@ def : MipsPat<(bswap GPR64:$rt), (DSHD (DSBH GPR64:$rt))>;
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"move $dst, $src",
                     (DADDu GPR64Opnd:$dst,  GPR64Opnd:$src, ZERO_64), 1>,
-      Requires<[IsGP64]>;
+      GPR_64;
 def : MipsInstAlias<"daddu $rs, $rt, $imm",
                     (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
                     0>;
