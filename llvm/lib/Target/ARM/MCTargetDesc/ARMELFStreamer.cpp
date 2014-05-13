@@ -1137,11 +1137,8 @@ void ARMELFStreamer::emitFnEnd() {
            "Compact model must use __aeabi_cpp_unwind_pr0 as personality");
     assert(Opcodes.size() == 4u &&
            "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
-    uint64_t Intval = Opcodes[0] |
-                      Opcodes[1] << 8 |
-                      Opcodes[2] << 16 |
-                      Opcodes[3] << 24;
-    EmitIntValue(Intval, Opcodes.size());
+    EmitBytes(StringRef(reinterpret_cast<const char*>(Opcodes.data()),
+                        Opcodes.size()));
   }
 
   // Switch to the section containing FnStart
@@ -1213,15 +1210,8 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
   }
 
   // Emit unwind opcodes
-  assert((Opcodes.size() % 4) == 0 &&
-         "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be multiple of 4");
-  for (unsigned I = 0; I != Opcodes.size(); I += 4) {
-    uint64_t Intval = Opcodes[I] |
-                      Opcodes[I + 1] << 8 |
-                      Opcodes[I + 2] << 16 |
-                      Opcodes[I + 3] << 24;
-    EmitIntValue(Intval, 4);
-  }
+  EmitBytes(StringRef(reinterpret_cast<const char *>(Opcodes.data()),
+                      Opcodes.size()));
 
   // According to ARM EHABI section 9.2, if the __aeabi_unwind_cpp_pr1() or
   // __aeabi_unwind_cpp_pr2() is used, then the handler data must be emitted
