@@ -26,6 +26,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_thread_registry_test.cc)
 
 set(SANITIZER_TEST_HEADERS
+  sanitizer_pthread_wrappers.h
   sanitizer_test_utils.h)
 foreach(header ${SANITIZER_HEADERS})
   list(APPEND SANITIZER_TEST_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../${header})

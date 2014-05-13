@@ -21,6 +21,8 @@
 #endif
 
 #include "sanitizer_test_utils.h"
+#include "sanitizer_pthread_wrappers.h"
+
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -30,10 +32,9 @@
 #include <algorithm>
 
 #if !defined(_WIN32)
-#include <strings.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <setjmp.h>
+# include <strings.h>
+# include <sys/mman.h>
+# include <setjmp.h>
 #endif
 
 #ifdef __linux__
@@ -47,10 +48,6 @@
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
-
-// Check that pthread_create/pthread_join return success.
-#define PTHREAD_CREATE(a, b, c, d) ASSERT_EQ(0, pthread_create(a, b, c, d))
-#define PTHREAD_JOIN(a, b) ASSERT_EQ(0, pthread_join(a, b))
 
 #if ASAN_HAS_EXCEPTIONS
 # define ASAN_THROW(x) throw (x)
