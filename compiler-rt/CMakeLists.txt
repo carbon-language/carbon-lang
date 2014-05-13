@@ -218,10 +218,10 @@ else()
   endif()
 endif()
 
-# We only support running instrumented tests when we're not cross compiling
-# and target a unix-like system. We can run tests on Android even when we are
-# cross-compiling.
-if(("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX) OR ANDROID)
+# We support running instrumented tests when we're not cross compiling
+# and target a UNIX-like system or Windows.
+# We can run tests on Android even when we are cross-compiling.
+if(("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND (UNIX OR MSVC)) OR ANDROID)
   option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" ON)
 else()
   option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" OFF)
