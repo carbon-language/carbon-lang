@@ -946,6 +946,7 @@
 // ARM-NETBSD-NOT:#define __ARMEB__ 1
 // ARM-NETBSD:#define __ARMEL__ 1
 // ARM-NETBSD:#define __ARM_ARCH_6J__ 1
+// ARM-NETBSD:#define __ARM_DWARF_EH__ 1
 // ARM-NETBSD:#define __ARM_EABI__ 1
 // ARM-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
 // ARM-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
