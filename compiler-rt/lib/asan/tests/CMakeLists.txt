@@ -28,9 +28,26 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common/tests
   -Wno-format
   -Werror=sign-compare
-  -g
   -O2)
+append_if(COMPILER_RT_HAS_G_FLAG -g ASAN_UNITTEST_COMMON_CFLAGS)
+append_if(COMPILER_RT_HAS_Zi_FLAG -Zi ASAN_UNITTEST_COMMON_CFLAGS)
 append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
+
+if(MSVC)
+  # MSVC system headers and gtest use a lot of deprecated stuff.
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+       -Wno-deprecated-declarations)
+
+  # clang-cl doesn't support exceptions yet.
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+       /fallback
+       -D_HAS_EXCEPTIONS=0)
+
+  # We should teach clang-cl to understand more pragmas.
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+       -Wno-unknown-pragmas
+       -Wno-undefined-inline)
+endif()
 
 # Use -D instead of definitions to please custom compile command.
 list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
@@ -43,12 +60,13 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   -fsanitize=address
   "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
-  -mllvm -asan-stack=1
-  -mllvm -asan-globals=1
 )
 
-# Unit tests require libstdc++.
-set(ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++ -lstdc++)
+# Unit tests require libstdc++ on POSIX.
+if(NOT MSVC)
+  list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++ -lstdc++)
+endif()
+
 # x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.
 if(CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE")
   list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS "-lc++")
@@ -74,8 +92,8 @@ set(ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINKFLAGS
   ${ASAN_UNITTEST_INSTRUMENTED_LINKFLAGS}
   -shared-libasan)
 
-set(ASAN_UNITTEST_NOINST_LINKFLAGS
-  ${ASAN_UNITTEST_COMMON_LINKFLAGS} -lm)
+set(ASAN_UNITTEST_NOINST_LINKFLAGS ${ASAN_UNITTEST_COMMON_LINKFLAGS})
+append_if(COMPILER_RT_HAS_LIBM -lm ASAN_UNITTEST_NOINST_LINKFLAGS)
 append_if(COMPILER_RT_HAS_LIBDL -ldl ASAN_UNITTEST_NOINST_LINKFLAGS)
 append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread ASAN_UNITTEST_NOINST_LINKFLAGS)
 append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread
@@ -108,7 +126,11 @@ macro(add_asan_test test_suite test_name arch kind)
   endif()
   if(TEST_WITH_TEST_RUNTIME)
     list(APPEND TEST_DEPS ${ASAN_TEST_RUNTIME})
-    list(APPEND TEST_OBJECTS lib${ASAN_TEST_RUNTIME}.a)
+    if(NOT MSVC)
+      list(APPEND TEST_OBJECTS lib${ASAN_TEST_RUNTIME}.a)
+    else()
+      list(APPEND TEST_OBJECTS ${ASAN_TEST_RUNTIME}.lib)
+    endif()
   endif()
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${TEST_OBJECTS}
@@ -183,9 +205,12 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
       $<TARGET_OBJECTS:RTAsan.${arch}>
       $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
       $<TARGET_OBJECTS:RTInterception.${arch}>
-      $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+    if(NOT MSVC)
+      list(APPEND ASAN_TEST_RUNTIME_OBJECTS
+           $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
+    endif()
   endif()
   add_library(${ASAN_TEST_RUNTIME} STATIC ${ASAN_TEST_RUNTIME_OBJECTS})
   set_target_properties(${ASAN_TEST_RUNTIME} PROPERTIES
