@@ -39,10 +39,7 @@ public:
 
   bool HasThisReturn(GlobalDecl GD) const override;
 
-  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const override {
-    // Structures that are not C++03 PODs are always indirect.
-    return !RD->isPOD();
-  }
+  bool classifyReturnType(CGFunctionInfo &FI) const override;
 
   RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const override;
 
@@ -457,6 +454,27 @@ MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
 
 bool MicrosoftCXXABI::HasThisReturn(GlobalDecl GD) const {
   return isa<CXXConstructorDecl>(GD.getDecl());
+}
+
+bool MicrosoftCXXABI::classifyReturnType(CGFunctionInfo &FI) const {
+  const CXXRecordDecl *RD = FI.getReturnType()->getAsCXXRecordDecl();
+  if (!RD)
+    return false;
+
+  if (FI.isInstanceMethod()) {
+    // If it's an instance method, aggregates are always returned indirectly via
+    // the second parameter.
+    FI.getReturnInfo() = ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+    FI.getReturnInfo().setSRetAfterThis(FI.isInstanceMethod());
+    return true;
+  } else if (!RD->isPOD()) {
+    // If it's a free function, non-POD types are returned indirectly.
+    FI.getReturnInfo() = ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+    return true;
+  }
+
+  // Otherwise, use the C ABI rules.
+  return false;
 }
 
 void MicrosoftCXXABI::BuildConstructorSignature(

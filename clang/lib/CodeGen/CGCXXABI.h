@@ -93,8 +93,9 @@ public:
   /// when called virtually, and code generation does not support the case.
   virtual bool HasThisReturn(GlobalDecl GD) const { return false; }
 
-  /// Returns true if the given record type should be returned indirectly.
-  virtual bool isReturnTypeIndirect(const CXXRecordDecl *RD) const = 0;
+  /// If the C++ ABI requires the given type be returned in a particular way,
+  /// this method sets RetAI and returns true.
+  virtual bool classifyReturnType(CGFunctionInfo &FI) const = 0;
 
   /// Specify how one should pass an argument of a record type.
   enum RecordArgABI {

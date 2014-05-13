@@ -196,44 +196,52 @@ void big_arg(Big s) {}
 // WIN32: define void @"\01?big_arg@@YAXUBig@@@Z"(%struct.Big* byval align 4 %s)
 // WIN64: define void @"\01?big_arg@@YAXUBig@@@Z"(%struct.Big* %s)
 
-// FIXME: Add WIN64 tests. Currently, even the method manglings are wrong (sic!).
 class Class {
  public:
   Small thiscall_method_small() { return Small(); }
   // LINUX: define {{.*}} void @_ZN5Class21thiscall_method_smallEv(%struct.Small* noalias sret %agg.result, %class.Class* %this)
   // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small@Class@@QAE?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_small@Class@@QEAA?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
 
   SmallWithCtor thiscall_method_small_with_ctor() { return SmallWithCtor(); }
   // LINUX: define {{.*}} void @_ZN5Class31thiscall_method_small_with_ctorEv(%struct.SmallWithCtor* noalias sret %agg.result, %class.Class* %this)
   // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small_with_ctor@Class@@QAE?AUSmallWithCtor@@XZ"(%class.Class* %this, %struct.SmallWithCtor* noalias sret %agg.result)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_small_with_ctor@Class@@QEAA?AUSmallWithCtor@@XZ"(%class.Class* %this, %struct.SmallWithCtor* noalias sret %agg.result)
 
   Small __cdecl cdecl_method_small() { return Small(); }
   // LINUX: define {{.*}} void @_ZN5Class18cdecl_method_smallEv(%struct.Small* noalias sret %agg.result, %class.Class* %this)
   // WIN32: define {{.*}} void @"\01?cdecl_method_small@Class@@QAA?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
+  // WIN64: define linkonce_odr void @"\01?cdecl_method_small@Class@@QEAA?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
 
   Big __cdecl cdecl_method_big() { return Big(); }
   // LINUX: define {{.*}} void @_ZN5Class16cdecl_method_bigEv(%struct.Big* noalias sret %agg.result, %class.Class* %this)
   // WIN32: define {{.*}} void @"\01?cdecl_method_big@Class@@QAA?AUBig@@XZ"(%class.Class* %this, %struct.Big* noalias sret %agg.result)
+  // WIN64: define linkonce_odr void @"\01?cdecl_method_big@Class@@QEAA?AUBig@@XZ"(%class.Class* %this, %struct.Big* noalias sret %agg.result)
 
   void thiscall_method_arg(Empty s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE5Empty(%class.Class* %this)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUEmpty@@@Z"(%class.Class* %this, %struct.Empty* byval align 4 %s)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUEmpty@@@Z"(%class.Class* %this, i8 %s.coerce)
 
   void thiscall_method_arg(EmptyWithCtor s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE13EmptyWithCtor(%class.Class* %this)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUEmptyWithCtor@@@Z"(%class.Class* %this, %struct.EmptyWithCtor* byval align 4 %s)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUEmptyWithCtor@@@Z"(%class.Class* %this, i8 %s.coerce)
 
   void thiscall_method_arg(Small s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE5Small(%class.Class* %this, %struct.Small* byval align 4 %s)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUSmall@@@Z"(%class.Class* %this, %struct.Small* byval align 4 %s)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUSmall@@@Z"(%class.Class* %this, i32 %s.coerce)
 
   void thiscall_method_arg(SmallWithCtor s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE13SmallWithCtor(%class.Class* %this, %struct.SmallWithCtor* byval align 4 %s)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUSmallWithCtor@@@Z"(%class.Class* %this, %struct.SmallWithCtor* byval align 4 %s)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUSmallWithCtor@@@Z"(%class.Class* %this, i32 %s.coerce)
 
   void thiscall_method_arg(Big s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE3Big(%class.Class* %this, %struct.Big* byval align 4 %s)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUBig@@@Z"(%class.Class* %this, %struct.Big* byval align 4 %s)
+  // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUBig@@@Z"(%class.Class* %this, %struct.Big* %s)
 };
 
 void use_class() {
