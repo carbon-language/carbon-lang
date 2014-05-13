@@ -320,8 +320,14 @@ namespace __sanitizer {
     char **gr_mem;
   };
 
+#if defined(__x86_64__) && !defined(_LP64)
+  typedef long long __sanitizer_time_t;
+#else
+  typedef long __sanitizer_time_t;
+#endif
+
   struct __sanitizer_timeb {
-    long time;
+    __sanitizer_time_t time;
     unsigned short millitm;
     short timezone;
     short dstflag;
