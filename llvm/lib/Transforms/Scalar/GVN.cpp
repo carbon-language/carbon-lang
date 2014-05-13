@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -1539,7 +1540,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
 
   // Check to see how many predecessors have the loaded value fully
   // available.
-  DenseMap<BasicBlock*, Value*> PredLoads;
+  MapVector<BasicBlock *, Value *> PredLoads;
   DenseMap<BasicBlock*, char> FullyAvailableBlocks;
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
     FullyAvailableBlocks[ValuesPerBlock[i].BB] = true;
@@ -1553,7 +1554,6 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
     if (IsValueFullyAvailableInBlock(Pred, FullyAvailableBlocks, 0)) {
       continue;
     }
-    PredLoads[Pred] = nullptr;
 
     if (Pred->getTerminator()->getNumSuccessors() != 1) {
       if (isa<IndirectBrInst>(Pred->getTerminator())) {
@@ -1570,11 +1570,14 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
       }
 
       CriticalEdgePred.push_back(Pred);
+    } else {
+      // Only add the predecessors that will not be split for now.
+      PredLoads[Pred] = nullptr;
     }
   }
 
   // Decide whether PRE is profitable for this load.
-  unsigned NumUnavailablePreds = PredLoads.size();
+  unsigned NumUnavailablePreds = PredLoads.size() + CriticalEdgePred.size();
   assert(NumUnavailablePreds != 0 &&
          "Fully available value should already be eliminated!");
 
@@ -1588,7 +1591,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   // Split critical edges, and update the unavailable predecessors accordingly.
   for (BasicBlock *OrigPred : CriticalEdgePred) {
     BasicBlock *NewPred = splitCriticalEdges(OrigPred, LoadBB);
-    PredLoads.erase(OrigPred);
+    assert(!PredLoads.count(OrigPred) && "Split edges shouldn't be in map!");
     PredLoads[NewPred] = nullptr;
     DEBUG(dbgs() << "Split critical edge " << OrigPred->getName() << "->"
                  << LoadBB->getName() << '\n');
