@@ -24,6 +24,15 @@ extern "C" void _mm_pause();
 extern "C" long _InterlockedExchangeAdd(  // NOLINT
     long volatile * Addend, long Value);  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
+extern "C" short _InterlockedCompareExchange16(  // NOLINT
+    short volatile *Destination,                 // NOLINT
+    short Exchange, short Comparand);            // NOLINT
+#pragma intrinsic(_InterlockedCompareExchange16)
+extern "C"
+long long _InterlockedCompareExchange64(  // NOLINT
+    long long volatile *Destination,              // NOLINT
+    long long Exchange, long long Comparand);     // NOLINT
+#pragma intrinsic(_InterlockedCompareExchange64)
 
 #ifdef _WIN64
 extern "C" long long _InterlockedExchangeAdd64(     // NOLINT
@@ -205,6 +214,19 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uintptr_t *a,
   return false;
 }
 
+INLINE bool atomic_compare_exchange_strong(volatile atomic_uint16_t *a,
+                                           u16 *cmp,
+                                           u16 xchg,
+                                           memory_order mo) {
+  u16 cmpv = *cmp;
+  u16 prev = (u16)_InterlockedCompareExchange16(
+      (volatile short*)&a->val_dont_use, (short)xchg, (short)cmpv);
+  if (prev == cmpv)
+    return true;
+  *cmp = prev;
+  return false;
+}
+
 INLINE bool atomic_compare_exchange_strong(volatile atomic_uint32_t *a,
                                            u32 *cmp,
                                            u32 xchg,
@@ -212,6 +234,19 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uint32_t *a,
   u32 cmpv = *cmp;
   u32 prev = (u32)_InterlockedCompareExchange(
       (volatile long*)&a->val_dont_use, (long)xchg, (long)cmpv);
+  if (prev == cmpv)
+    return true;
+  *cmp = prev;
+  return false;
+}
+
+INLINE bool atomic_compare_exchange_strong(volatile atomic_uint64_t *a,
+                                           u64 *cmp,
+                                           u64 xchg,
+                                           memory_order mo) {
+  u64 cmpv = *cmp;
+  u64 prev = (u64)_InterlockedCompareExchange64(
+      (volatile long long*)&a->val_dont_use, (long long)xchg, (long long)cmpv);
   if (prev == cmpv)
     return true;
   *cmp = prev;
