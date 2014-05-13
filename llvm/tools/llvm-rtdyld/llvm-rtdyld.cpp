@@ -18,6 +18,7 @@
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -50,6 +51,11 @@ static cl::opt<std::string>
 EntryPoint("entry",
            cl::desc("Function to call as entry point."),
            cl::init("_main"));
+
+static cl::list<std::string>
+Dylibs("dylib",
+       cl::desc("Add library."),
+       cl::ZeroOrMore);
 
 /* *** */
 
@@ -121,9 +127,25 @@ static int Error(const Twine &Msg) {
   return 1;
 }
 
+static void loadDylibs() {
+  for (const std::string &Dylib : Dylibs) {
+    if (sys::fs::is_regular_file(Dylib)) {
+      std::string ErrMsg;
+      if (sys::DynamicLibrary::LoadLibraryPermanently(Dylib.c_str(), &ErrMsg))
+        llvm::errs() << "Error loading '" << Dylib << "': "
+                     << ErrMsg << "\n";
+    } else
+      llvm::errs() << "Dylib not found: '" << Dylib << "'.\n";
+  }
+}
+
+
 /* *** */
 
 static int printLineInfoForInput() {
+  // Load any dylibs requested on the command line.
+  loadDylibs();
+
   // If we don't have any input files, read from stdin.
   if (!InputFileList.size())
     InputFileList.push_back("-");
@@ -182,6 +204,9 @@ static int printLineInfoForInput() {
 }
 
 static int executeInput() {
+  // Load any dylibs requested on the command line.
+  loadDylibs();
+
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
   RuntimeDyld Dyld(&MemMgr);
