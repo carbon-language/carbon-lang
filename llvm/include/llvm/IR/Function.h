@@ -23,7 +23,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallingConv.h"
-#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/GlobalObject.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -68,7 +68,7 @@ private:
   mutable ilist_half_node<Argument> Sentinel;
 };
 
-class Function : public GlobalValue, public ilist_node<Function> {
+class Function : public GlobalObject, public ilist_node<Function> {
 public:
   typedef iplist<Argument> ArgumentListType;
   typedef iplist<BasicBlock> BasicBlockListType;

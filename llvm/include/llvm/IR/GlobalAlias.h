@@ -68,8 +68,8 @@ public:
   /// This method tries to ultimately resolve the alias by going through the
   /// aliasing chain and trying to find the very last global. Returns NULL if a
   /// cycle was found.
-  GlobalValue *getAliasedGlobal();
-  const GlobalValue *getAliasedGlobal() const {
+  GlobalObject *getAliasedGlobal();
+  const GlobalObject *getAliasedGlobal() const {
     return const_cast<GlobalAlias *>(this)->getAliasedGlobal();
   }
 

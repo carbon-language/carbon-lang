@@ -896,26 +896,26 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
     return PrefAlign;
   }
 
-  if (auto *GV = dyn_cast<GlobalValue>(V)) {
+  if (auto *GO = dyn_cast<GlobalObject>(V)) {
     // If there is a large requested alignment and we can, bump up the alignment
     // of the global.
-    if (GV->isDeclaration())
+    if (GO->isDeclaration())
       return Align;
     // If the memory we set aside for the global may not be the memory used by
     // the final program then it is impossible for us to reliably enforce the
     // preferred alignment.
-    if (GV->isWeakForLinker())
+    if (GO->isWeakForLinker())
       return Align;
 
-    if (GV->getAlignment() >= PrefAlign)
-      return GV->getAlignment();
+    if (GO->getAlignment() >= PrefAlign)
+      return GO->getAlignment();
     // We can only increase the alignment of the global if it has no alignment
     // specified or if it is not assigned a section.  If it is assigned a
     // section, the global could be densely packed with other objects in the
     // section, increasing the alignment could cause padding issues.
-    if (!GV->hasSection() || GV->getAlignment() == 0)
-      GV->setAlignment(PrefAlign);
-    return GV->getAlignment();
+    if (!GO->hasSection() || GO->getAlignment() == 0)
+      GO->setAlignment(PrefAlign);
+    return GO->getAlignment();
   }
 
   return Align;

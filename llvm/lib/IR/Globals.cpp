@@ -53,11 +53,6 @@ void GlobalValue::destroyConstant() {
 /// copyAttributesFrom - copy all additional attributes (those not needed to
 /// create a GlobalValue) from the GlobalValue Src to this one.
 void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
-  if (!isa<GlobalAlias>(this)) {
-    setAlignment(Src->getAlignment());
-    setSection(Src->getSection());
-  }
-
   setVisibility(Src->getVisibility());
   setUnnamedAddr(Src->hasUnnamedAddr());
   setDLLStorageClass(Src->getDLLStorageClass());
@@ -67,29 +62,31 @@ unsigned GlobalValue::getAlignment() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this))
     return GA->getAliasedGlobal()->getAlignment();
 
-  return (1u << Alignment) >> 1;
+  return cast<GlobalObject>(this)->getAlignment();
 }
 
-void GlobalValue::setAlignment(unsigned Align) {
-  assert((!isa<GlobalAlias>(this)) &&
-         "GlobalAlias should not have an alignment!");
+void GlobalObject::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
          "Alignment is greater than MaximumAlignment!");
-  Alignment = Log2_32(Align) + 1;
+  setGlobalValueSubClassData(Log2_32(Align) + 1);
   assert(getAlignment() == Align && "Alignment representation error!");
+}
+
+void GlobalObject::copyAttributesFrom(const GlobalValue *Src) {
+  const auto *GV = cast<GlobalObject>(Src);
+  GlobalValue::copyAttributesFrom(GV);
+  setAlignment(GV->getAlignment());
+  setSection(GV->getSection());
 }
 
 const std::string &GlobalValue::getSection() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this))
     return GA->getAliasedGlobal()->getSection();
-  return Section;
+  return cast<GlobalObject>(this)->getSection();
 }
 
-void GlobalValue::setSection(StringRef S) {
-  assert(!isa<GlobalAlias>(this) && "GlobalAlias should not have a section!");
-  Section = S;
-}
+void GlobalObject::setSection(StringRef S) { Section = S; }
 
 bool GlobalValue::isDeclaration() const {
   // Globals are definitions if they have an initializer.
@@ -113,9 +110,9 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const Twine &Name,
                                ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
-                  OperandTraits<GlobalVariable>::op_begin(this),
-                  InitVal != nullptr, Link, Name),
+    : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+                   OperandTraits<GlobalVariable>::op_begin(this),
+                   InitVal != nullptr, Link, Name),
       isConstantGlobal(constant), threadLocalMode(TLMode),
       isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
@@ -132,9 +129,9 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                const Twine &Name, GlobalVariable *Before,
                                ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
-                  OperandTraits<GlobalVariable>::op_begin(this),
-                  InitVal != nullptr, Link, Name),
+    : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+                   OperandTraits<GlobalVariable>::op_begin(this),
+                   InitVal != nullptr, Link, Name),
       isConstantGlobal(constant), threadLocalMode(TLMode),
       isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
@@ -206,7 +203,7 @@ void GlobalVariable::setInitializer(Constant *InitVal) {
 /// create a GlobalVariable) from the GlobalVariable Src to this one.
 void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
   assert(isa<GlobalVariable>(Src) && "Expected a GlobalVariable!");
-  GlobalValue::copyAttributesFrom(Src);
+  GlobalObject::copyAttributesFrom(Src);
   const GlobalVariable *SrcVar = cast<GlobalVariable>(Src);
   setThreadLocalMode(SrcVar->getThreadLocalMode());
 }
@@ -269,7 +266,7 @@ static GlobalValue *getAliaseeGV(GlobalAlias *GA) {
   return cast<GlobalValue>(CE->getOperand(0));
 }
 
-GlobalValue *GlobalAlias::getAliasedGlobal() {
+GlobalObject *GlobalAlias::getAliasedGlobal() {
   SmallPtrSet<GlobalValue*, 3> Visited;
 
   GlobalAlias *GA = this;
@@ -282,6 +279,6 @@ GlobalValue *GlobalAlias::getAliasedGlobal() {
     // Iterate over aliasing chain.
     GA = dyn_cast<GlobalAlias>(GV);
     if (!GA)
-      return GV;
+      return cast<GlobalObject>(GV);
   }
 }

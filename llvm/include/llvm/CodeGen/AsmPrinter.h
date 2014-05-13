@@ -233,7 +233,7 @@ public:
   /// requested, it will override the alignment request if required for
   /// correctness.
   ///
-  void EmitAlignment(unsigned NumBits, const GlobalValue *GV = nullptr) const;
+  void EmitAlignment(unsigned NumBits, const GlobalObject *GO = nullptr) const;
 
   /// This method prints the label for the specified MachineBasicBlock, an
   /// alignment (if present) and a comment describing it if appropriate.

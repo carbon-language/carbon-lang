@@ -62,7 +62,7 @@ protected:
   GlobalValue(Type *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
               LinkageTypes Linkage, const Twine &Name)
       : Constant(Ty, VTy, Ops, NumOps), Linkage(Linkage),
-        Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
+        Visibility(DefaultVisibility), UnnamedAddr(0),
         DllStorageClass(DefaultStorageClass), Parent(nullptr) {
     setName(Name);
   }
@@ -71,18 +71,29 @@ protected:
   // Linkage and Visibility from turning into negative values.
   LinkageTypes Linkage : 5;   // The linkage of this global
   unsigned Visibility : 2;    // The visibility style of this global
-  unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   unsigned UnnamedAddr : 1;   // This value's address is not significant
   unsigned DllStorageClass : 2; // DLL storage class
+
+private:
+  // Give subclasses access to what otherwise would be wasted padding.
+  // (22 + 2 + 1 + 2 + 5) == 32.
+  unsigned SubClassData : 22;
+protected:
+  unsigned getGlobalValueSubClassData() const {
+    return SubClassData;
+  }
+  void setGlobalValueSubClassData(unsigned V) {
+    assert(V < (1 << 22) && "It will not fit");
+    SubClassData = V;
+  }
+
   Module *Parent;             // The containing module.
-  std::string Section;        // Section to emit this into, empty mean default
 public:
   ~GlobalValue() {
     removeDeadConstantUsers();   // remove any dead constants using this.
   }
 
   unsigned getAlignment() const;
-  void setAlignment(unsigned Align);
 
   bool hasUnnamedAddr() const { return UnnamedAddr; }
   void setUnnamedAddr(bool Val) { UnnamedAddr = Val; }
@@ -112,7 +123,6 @@ public:
 
   bool hasSection() const { return !getSection().empty(); }
   const std::string &getSection() const;
-  void setSection(StringRef S);
 
   /// Global values are always pointers.
   inline PointerType *getType() const {

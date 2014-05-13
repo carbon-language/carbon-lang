@@ -31,6 +31,7 @@ class Constant;
 class DataLayout;
 class Function;
 class GlobalAlias;
+class GlobalObject;
 class GlobalValue;
 class GlobalVariable;
 class InlineAsm;
@@ -526,8 +527,13 @@ template <> struct isa_impl<GlobalAlias, Value> {
 
 template <> struct isa_impl<GlobalValue, Value> {
   static inline bool doit(const Value &Val) {
-    return isa<GlobalVariable>(Val) || isa<Function>(Val) ||
-      isa<GlobalAlias>(Val);
+    return isa<GlobalObject>(Val) || isa<GlobalAlias>(Val);
+  }
+};
+
+template <> struct isa_impl<GlobalObject, Value> {
+  static inline bool doit(const Value &Val) {
+    return isa<GlobalVariable>(Val) || isa<Function>(Val);
   }
 };
 

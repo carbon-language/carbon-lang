@@ -22,7 +22,7 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/GlobalObject.h"
 #include "llvm/IR/OperandTraits.h"
 
 namespace llvm {
@@ -32,7 +32,7 @@ class Constant;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
-class GlobalVariable : public GlobalValue, public ilist_node<GlobalVariable> {
+class GlobalVariable : public GlobalObject, public ilist_node<GlobalVariable> {
   friend class SymbolTableListTraits<GlobalVariable, Module>;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void operator=(const GlobalVariable &) LLVM_DELETED_FUNCTION;
