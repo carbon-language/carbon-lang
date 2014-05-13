@@ -59,9 +59,9 @@ public:
   };
 
 protected:
-  GlobalValue(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
-              LinkageTypes linkage, const Twine &Name)
-      : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
+  GlobalValue(Type *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
+              LinkageTypes Linkage, const Twine &Name)
+      : Constant(Ty, VTy, Ops, NumOps), Linkage(Linkage),
         Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
         DllStorageClass(DefaultStorageClass), Parent(nullptr) {
     setName(Name);
