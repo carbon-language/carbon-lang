@@ -96,15 +96,16 @@ typedef AddrHashMap<CommonInterceptorMetadata, 31051> MetadataHashMap;
 static MetadataHashMap *interceptor_metadata_map;
 
 #if SI_NOT_WINDOWS
-static void SetInterceptorMetadata(__sanitizer_FILE *addr,
-                                   const FileMetadata &file) {
+UNUSED static void SetInterceptorMetadata(__sanitizer_FILE *addr,
+                                          const FileMetadata &file) {
   MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr);
   CHECK(h.created());
   h->type = CommonInterceptorMetadata::CIMT_FILE;
   h->file = file;
 }
 
-static const FileMetadata *GetInterceptorMetadata(__sanitizer_FILE *addr) {
+UNUSED static const FileMetadata *GetInterceptorMetadata(
+    __sanitizer_FILE *addr) {
   MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr,
                             /* remove */ false,
                             /* create */ false);
@@ -117,7 +118,7 @@ static const FileMetadata *GetInterceptorMetadata(__sanitizer_FILE *addr) {
   }
 }
 
-static void DeleteInterceptorMetadata(void *addr) {
+UNUSED static void DeleteInterceptorMetadata(void *addr) {
   MetadataHashMap::Handle h(interceptor_metadata_map, (uptr)addr, true);
   CHECK(h.exists());
 }
