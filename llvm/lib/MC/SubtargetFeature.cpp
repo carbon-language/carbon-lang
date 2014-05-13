@@ -54,25 +54,9 @@ static inline bool isEnabled(const StringRef Feature) {
 /// Split - Splits a string of comma separated items in to a vector of strings.
 ///
 static void Split(std::vector<std::string> &V, const StringRef S) {
-  if (S.empty())
-    return;
-
-  // Start at beginning of string.
-  size_t Pos = 0;
-  while (true) {
-    // Find the next comma
-    size_t Comma = S.find(',', Pos);
-    // If no comma found then the rest of the string is used
-    if (Comma == std::string::npos) {
-      // Add string to vector
-      V.push_back(S.substr(Pos));
-      break;
-    }
-    // Otherwise add substring to vector
-    V.push_back(S.substr(Pos, Comma - Pos));
-    // Advance to next item
-    Pos = Comma + 1;
-  }
+  SmallVector<StringRef, 2> Tmp;
+  S.split(Tmp, ",", -1, false /* KeepEmpty */);
+  V.assign(Tmp.begin(), Tmp.end());
 }
 
 /// Join a vector of strings to a string with a comma separating each element.
