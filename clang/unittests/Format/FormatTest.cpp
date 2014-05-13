@@ -3083,6 +3083,12 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
   verifyFormat("return boost::fusion::at_c<0>(iiii).second\n"
                "       == boost::fusion::at_c<1>(iiii).second;",
                Style);
+
+  Style.ColumnLimit = 60;
+  verifyFormat("zzzzzzzzzz\n"
+               "    = bbbbbbbbbbbbbbbbb\n"
+               "      >> aaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaa);",
+               Style);
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {

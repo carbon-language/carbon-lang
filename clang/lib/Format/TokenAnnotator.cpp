@@ -1702,11 +1702,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.Type == TT_CtorInitializerComma &&
       Style.BreakConstructorInitializersBeforeComma)
     return true;
-  if (Right.Type == TT_BinaryOperator && Style.BreakBeforeBinaryOperators)
-    return true;
   if (Left.is(tok::greater) && Right.is(tok::greater) &&
       Left.Type != TT_TemplateCloser)
     return false;
+  if (Right.Type == TT_BinaryOperator && Style.BreakBeforeBinaryOperators)
+    return true;
   if (Left.Type == TT_ArrayInitializerLSquare)
     return true;
   return (Left.isBinaryOperator() && Left.isNot(tok::lessless) &&
