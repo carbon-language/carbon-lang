@@ -39,3 +39,12 @@ define void @bfe_i32_imm_arg_arg(i32 addrspace(1)* %out, i32 %src1, i32 %src2) n
   store i32 %bfe_i32, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; FUNC-LABEL: @v_bfe_print_arg
+; SI: V_BFE_I32 v{{[0-9]+}}, v{{[0-9]+}}, 2, 8
+define void @v_bfe_print_arg(i32 addrspace(1)* %out, i32 addrspace(1)* %src0) nounwind {
+  %load = load i32 addrspace(1)* %src0, align 4
+  %bfe_i32 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 2, i32 8) nounwind readnone
+  store i32 %bfe_i32, i32 addrspace(1)* %out, align 4
+  ret void
+}

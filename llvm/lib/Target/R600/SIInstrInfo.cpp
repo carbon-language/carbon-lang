@@ -1217,10 +1217,10 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       Inst->RemoveOperand(2); // Remove old immediate.
       Inst->addOperand(Inst->getOperand(1));
       Inst->getOperand(1).ChangeToImmediate(0);
+      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(Offset));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(BitWidth));
-      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
     }
