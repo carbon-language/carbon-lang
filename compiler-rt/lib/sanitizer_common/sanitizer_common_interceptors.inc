@@ -674,14 +674,6 @@ INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
 #define INIT_STRPTIME
 #endif
 
-void update_FILE(__sanitizer_FILE *fp) {
-#if SANITIZER_HAS_STRUCT_FILE
-  const FileMetadata *m = GetInterceptorMetadata(fp);
-  if (m)
-    COMMON_INTERCEPTOR_INITIALIZE_RANGE(*m->addr, *m->size);
-#endif  // SANITIZER_HAS_STRUCT_FILE
-}
-
 #if SANITIZER_INTERCEPT_SCANF || SANITIZER_INTERCEPT_PRINTF
 #include "sanitizer_common_interceptors_format.inc"
 
