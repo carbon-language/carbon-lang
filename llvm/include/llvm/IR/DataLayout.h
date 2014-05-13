@@ -445,6 +445,16 @@ public:
   }
 };
 
+typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
+
+inline DataLayout *unwrap(LLVMTargetDataRef P) {
+   return reinterpret_cast<DataLayout*>(P);
+}
+
+inline LLVMTargetDataRef wrap(const DataLayout *P) {
+   return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout*>(P));
+}
+
 class DataLayoutPass : public ImmutablePass {
   DataLayout DL;
 
