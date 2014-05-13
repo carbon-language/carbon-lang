@@ -3857,16 +3857,6 @@ INTERCEPTOR(__sanitizer_FILE *, fopen, const char *path, const char *mode) {
   if (res) unpoison_file(res);
   return res;
 }
-INTERCEPTOR(__sanitizer_FILE *, fopen64, const char *path, const char *mode) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, fopen64, path, mode);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
-  __sanitizer_FILE *res = REAL(fopen64)(path, mode);
-  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
-  if (res) unpoison_file(res);
-  return res;
-}
 INTERCEPTOR(__sanitizer_FILE *, fdopen, int fd, const char *mode) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fdopen, fd, mode);
@@ -3887,6 +3877,25 @@ INTERCEPTOR(__sanitizer_FILE *, freopen, const char *path, const char *mode,
   if (res) unpoison_file(res);
   return res;
 }
+#define INIT_FOPEN                   \
+  COMMON_INTERCEPT_FUNCTION(fopen);  \
+  COMMON_INTERCEPT_FUNCTION(fdopen); \
+  COMMON_INTERCEPT_FUNCTION(freopen);
+#else
+#define INIT_FOPEN
+#endif
+
+#if SANITIZER_INTERCEPT_FOPEN64
+INTERCEPTOR(__sanitizer_FILE *, fopen64, const char *path, const char *mode) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fopen64, path, mode);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  __sanitizer_FILE *res = REAL(fopen64)(path, mode);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
+  if (res) unpoison_file(res);
+  return res;
+}
 INTERCEPTOR(__sanitizer_FILE *, freopen64, const char *path, const char *mode,
             __sanitizer_FILE *fp) {
   void *ctx;
@@ -3899,14 +3908,11 @@ INTERCEPTOR(__sanitizer_FILE *, freopen64, const char *path, const char *mode,
   if (res) unpoison_file(res);
   return res;
 }
-#define INIT_FOPEN                    \
-  COMMON_INTERCEPT_FUNCTION(fopen);   \
+#define INIT_FOPEN64                  \
   COMMON_INTERCEPT_FUNCTION(fopen64); \
-  COMMON_INTERCEPT_FUNCTION(fdopen);  \
-  COMMON_INTERCEPT_FUNCTION(freopen); \
   COMMON_INTERCEPT_FUNCTION(freopen64);
 #else
-#define INIT_FOPEN
+#define INIT_FOPEN64
 #endif
 
 #if SANITIZER_INTERCEPT_OPEN_MEMSTREAM
@@ -4169,6 +4175,7 @@ static void InitializeCommonInterceptors() {
   INIT_TSEARCH;
   INIT_LIBIO_INTERNALS;
   INIT_FOPEN;
+  INIT_FOPEN64;
   INIT_OPEN_MEMSTREAM;
   INIT_OBSTACK;
   INIT_FFLUSH;
