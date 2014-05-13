@@ -198,7 +198,14 @@ namespace clang {
         RawLocation(RawLocation), Record(Record), Idx(Idx),
         TypeIDForTypeDecl(0), HasPendingBody(false) { }
 
+    template <typename DeclT>
+    static void attachPreviousDeclImpl(Redeclarable<DeclT> *D, Decl *Previous);
+    static void attachPreviousDeclImpl(...);
     static void attachPreviousDecl(Decl *D, Decl *previous);
+
+    template <typename DeclT>
+    static void attachLatestDeclImpl(Redeclarable<DeclT> *D, Decl *Latest);
+    static void attachLatestDeclImpl(...);
     static void attachLatestDecl(Decl *D, Decl *latest);
 
     /// \brief Determine whether this declaration has a pending body.
@@ -2449,27 +2456,25 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   return FindExistingResult(Reader, D, /*Existing=*/0);
 }
 
-void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
-  assert(D && previous);
-  if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-    TD->RedeclLink.setNext(cast<TagDecl>(previous));
-  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    FD->RedeclLink.setNext(cast<FunctionDecl>(previous));
-  } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    VD->RedeclLink.setNext(cast<VarDecl>(previous));
-  } else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
-    TD->RedeclLink.setNext(cast<TypedefNameDecl>(previous));
-  } else if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D)) {
-    USD->RedeclLink.setNext(cast<UsingShadowDecl>(previous));
-  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
-    ID->RedeclLink.setNext(cast<ObjCInterfaceDecl>(previous));
-  } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
-    PD->RedeclLink.setNext(cast<ObjCProtocolDecl>(previous));
-  } else if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D)) {
-    ND->RedeclLink.setNext(cast<NamespaceDecl>(previous));
-  } else {
-    RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
-    TD->RedeclLink.setNext(cast<RedeclarableTemplateDecl>(previous));
+template<typename DeclT>
+void ASTDeclReader::attachPreviousDeclImpl(Redeclarable<DeclT> *D,
+                                           Decl *Previous) {
+  D->RedeclLink.setNext(cast<DeclT>(Previous));
+}
+void ASTDeclReader::attachPreviousDeclImpl(...) {
+  llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
+}
+
+void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
+  assert(D && Previous);
+
+  switch (D->getKind()) {
+#define ABSTRACT_DECL(TYPE)
+#define DECL(TYPE, BASE)                                   \
+  case Decl::TYPE:                                         \
+    attachPreviousDeclImpl(cast<TYPE##Decl>(D), Previous); \
+    break;
+#include "clang/AST/DeclNodes.inc"
   }
 
   // If the declaration was visible in one module, a redeclaration of it in
@@ -2478,46 +2483,28 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
   // FIXME: In this case, the declaration should only be visible if a module
   //        that makes it visible has been imported.
   D->IdentifierNamespace |=
-      previous->IdentifierNamespace &
+      Previous->IdentifierNamespace &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
+}
+
+template<typename DeclT>
+void ASTDeclReader::attachLatestDeclImpl(Redeclarable<DeclT> *D, Decl *Latest) {
+  D->RedeclLink = Redeclarable<DeclT>::LatestDeclLink(cast<DeclT>(Latest));
+}
+void ASTDeclReader::attachLatestDeclImpl(...) {
+  llvm_unreachable("attachLatestDecl on non-redeclarable declaration");
 }
 
 void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
   assert(D && Latest);
-  if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-    TD->RedeclLink
-      = Redeclarable<TagDecl>::LatestDeclLink(cast<TagDecl>(Latest));
-  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    FD->RedeclLink
-      = Redeclarable<FunctionDecl>::LatestDeclLink(cast<FunctionDecl>(Latest));
-  } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    VD->RedeclLink
-      = Redeclarable<VarDecl>::LatestDeclLink(cast<VarDecl>(Latest));
-  } else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
-    TD->RedeclLink
-      = Redeclarable<TypedefNameDecl>::LatestDeclLink(
-                                                cast<TypedefNameDecl>(Latest));
-  } else if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D)) {
-    USD->RedeclLink
-      = Redeclarable<UsingShadowDecl>::LatestDeclLink(
-                                             cast<UsingShadowDecl>(Latest));
-  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
-    ID->RedeclLink
-      = Redeclarable<ObjCInterfaceDecl>::LatestDeclLink(
-                                              cast<ObjCInterfaceDecl>(Latest));
-  } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
-    PD->RedeclLink
-      = Redeclarable<ObjCProtocolDecl>::LatestDeclLink(
-                                                cast<ObjCProtocolDecl>(Latest));
-  } else if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D)) {
-    ND->RedeclLink
-      = Redeclarable<NamespaceDecl>::LatestDeclLink(
-                                                   cast<NamespaceDecl>(Latest));
-  } else {
-    RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
-    TD->RedeclLink
-      = Redeclarable<RedeclarableTemplateDecl>::LatestDeclLink(
-                                        cast<RedeclarableTemplateDecl>(Latest));
+
+  switch (D->getKind()) {
+#define ABSTRACT_DECL(TYPE)
+#define DECL(TYPE, BASE)                               \
+  case Decl::TYPE:                                     \
+    attachLatestDeclImpl(cast<TYPE##Decl>(D), Latest); \
+    break;
+#include "clang/AST/DeclNodes.inc"
   }
 }
 
