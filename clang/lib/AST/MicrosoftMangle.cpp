@@ -110,8 +110,21 @@ public:
   void mangleCXXVBTable(const CXXRecordDecl *Derived,
                         ArrayRef<const CXXRecordDecl *> BasePath,
                         raw_ostream &Out) override;
-  void mangleCXXRTTI(QualType T, raw_ostream &) override;
-  void mangleCXXRTTIName(QualType T, raw_ostream &) override;
+  void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
+  void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
+  void mangleCXXRTTIBaseClassDescriptor(
+      const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
+      uint32_t NVOffset, uint32_t VBPtrOffset, uint32_t VBTableOffset,
+      uint32_t Flags, raw_ostream &Out) override;
+  void mangleCXXRTTIBaseClassArray(const CXXRecordDecl *Derived,
+                                   raw_ostream &Out) override;
+  void mangleCXXRTTIClassHierarchyDescriptor(const CXXRecordDecl *Derived,
+                                             raw_ostream &Out) override;
+  void mangleCXXRTTICompleteObjectLocator(const CXXRecordDecl *Derived,
+                                          uint32_t OffsetFromTop,
+                                          uint32_t VFPtrToVtordispDelta,
+                                          uint32_t Flags,
+                                          raw_ostream &Out) override;
   void mangleTypeName(QualType T, raw_ostream &) override;
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                      raw_ostream &) override;
@@ -2231,20 +2244,62 @@ void MicrosoftMangleContextImpl::mangleCXXVBTable(
   Mangler.getStream() << '@';
 }
 
-void MicrosoftMangleContextImpl::mangleCXXRTTI(QualType T, raw_ostream &) {
-  // FIXME: Give a location...
-  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle RTTI descriptors for type %0 yet");
-  getDiags().Report(DiagID)
-    << T.getBaseTypeIdentifier();
+void MicrosoftMangleContextImpl::mangleCXXRTTI(QualType T, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_R0";
+  Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
+  Mangler.getStream() << "@8";
 }
 
-void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T, raw_ostream &) {
-  // FIXME: Give a location...
-  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle the name of type %0 into RTTI descriptors yet");
-  getDiags().Report(DiagID)
-    << T.getBaseTypeIdentifier();
+void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T,
+                                                   raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << '.';
+  Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
+}
+
+void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassDescriptor(
+    const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
+    uint32_t NVOffset, uint32_t VBPtrOffset, uint32_t VBTableOffset,
+    uint32_t Flags, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_R1";
+  Mangler.mangleName(Derived);
+  for (const CXXRecordDecl *RD : BasePath)
+    Mangler.mangleName(RD);
+  Mangler.mangleNumber(NVOffset);
+  Mangler.mangleNumber(VBPtrOffset);
+  Mangler.mangleNumber(VBTableOffset);
+  Mangler.mangleNumber(Flags);
+  Mangler.getStream() << "@8";
+}
+
+void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassArray(
+    const CXXRecordDecl *Derived, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_R2";
+  Mangler.mangleName(Derived);
+  Mangler.getStream() << "@8";
+}
+
+void MicrosoftMangleContextImpl::mangleCXXRTTIClassHierarchyDescriptor(
+    const CXXRecordDecl *Derived, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_R3";
+  Mangler.mangleName(Derived);
+  Mangler.getStream() << "@8";
+}
+
+void MicrosoftMangleContextImpl::mangleCXXRTTICompleteObjectLocator(
+    const CXXRecordDecl *Derived, uint32_t OffsetFromTop,
+    uint32_t VFPtrToVtordispDelta, uint32_t Flags, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_R4";
+  Mangler.mangleName(Derived);
+  Mangler.mangleNumber(Flags);
+  Mangler.mangleNumber(OffsetFromTop);
+  Mangler.mangleNumber(VFPtrToVtordispDelta);
+  Mangler.getStream() << "@8";
 }
 
 void MicrosoftMangleContextImpl::mangleTypeName(QualType T, raw_ostream &Out) {
