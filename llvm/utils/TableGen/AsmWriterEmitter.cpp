@@ -1008,20 +1008,23 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "void " << Target.getName() << ClassName << "::"
     << "printCustomAliasOperand(\n"
     << "         const MCInst *MI, unsigned OpIdx,\n"
-    << "         unsigned PrintMethodIdx, raw_ostream &OS) {\n"
-    << "  switch (PrintMethodIdx) {\n"
-    << "  default:\n"
-    << "    llvm_unreachable(\"Unknown PrintMethod kind\");\n"
-    << "    break;\n";
-
-  for (unsigned i = 0; i < PrintMethods.size(); ++i) {
-    O << "  case " << i << ":\n"
-      << "    " << PrintMethods[i] << "(MI, OpIdx, OS);\n"
+    << "         unsigned PrintMethodIdx, raw_ostream &OS) {\n";
+  if (PrintMethods.empty())
+    O << "  llvm_unreachable(\"Unknown PrintMethod kind\");\n";
+  else {
+    O << "  switch (PrintMethodIdx) {\n"
+      << "  default:\n"
+      << "    llvm_unreachable(\"Unknown PrintMethod kind\");\n"
       << "    break;\n";
-  }
 
-  O << "  }\n"
-    << "}\n\n";
+    for (unsigned i = 0; i < PrintMethods.size(); ++i) {
+      O << "  case " << i << ":\n"
+        << "    " << PrintMethods[i] << "(MI, OpIdx, OS);\n"
+        << "    break;\n";
+    }
+    O << "  }\n";
+  }    
+  O << "}\n\n";
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
 }
