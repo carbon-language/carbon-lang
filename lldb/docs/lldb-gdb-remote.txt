@@ -837,7 +837,7 @@ The lack of 'permissions:' indicates that none of read/write/execute are valid
 for this region.
 
 //----------------------------------------------------------------------
-// 'x' - Binary memory read
+// "x" - Binary memory read
 //
 // Like the 'm' (read) and 'M' (write) packets, this is a partner to the
 // 'X' (write binary data) packet, 'x'.
