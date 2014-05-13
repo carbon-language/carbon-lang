@@ -501,7 +501,7 @@ uptr internal_sigaltstack(const struct sigaltstack *ss,
   return internal_syscall(SYSCALL(sigaltstack), (uptr)ss, (uptr)oss);
 }
 
-uptr internal_fork() {
+int internal_fork() {
   return internal_syscall(SYSCALL(fork));
 }
 
