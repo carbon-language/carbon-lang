@@ -4164,18 +4164,14 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
                                   VariadicCallType CallType, bool AllowExplicit,
                                   bool IsListInitialization) {
   unsigned NumParams = Proto->getNumParams();
-  unsigned NumArgsToCheck = Args.size();
   bool Invalid = false;
-  if (Args.size() != NumParams)
-    // Use default arguments for missing arguments
-    NumArgsToCheck = NumParams;
   unsigned ArgIx = 0;
   // Continue to check argument types (even if we have too few/many args).
-  for (unsigned i = FirstParam; i != NumArgsToCheck; i++) {
+  for (unsigned i = FirstParam; i < NumParams; i++) {
     QualType ProtoArgType = Proto->getParamType(i);
 
     Expr *Arg;
-    ParmVarDecl *Param;
+    ParmVarDecl *Param = FDecl ? FDecl->getParamDecl(i) : nullptr;
     if (ArgIx < Args.size()) {
       Arg = Args[ArgIx++];
 
@@ -4183,11 +4179,6 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
                               ProtoArgType,
                               diag::err_call_incomplete_argument, Arg))
         return true;
-
-      // Pass the argument
-      Param = 0;
-      if (FDecl && i < FDecl->getNumParams())
-        Param = FDecl->getParamDecl(i);
 
       // Strip the unbridged-cast placeholder expression off, if applicable.
       bool CFAudited = false;
@@ -4209,7 +4200,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
       // Remember that parameter belongs to a CF audited API.
       if (CFAudited)
         Entity.setParameterCFAudited();
-      
+
       ExprResult ArgE = PerformCopyInitialization(Entity,
                                                   SourceLocation(),
                                                   Owned(Arg),
@@ -4220,8 +4211,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
 
       Arg = ArgE.takeAs<Expr>();
     } else {
-      assert(FDecl && "can't use default arguments without a known callee");
-      Param = FDecl->getParamDecl(i);
+      assert(Param && "can't use default arguments without a known callee");
 
       ExprResult ArgExpr =
         BuildCXXDefaultArgExpr(CallLoc, FDecl, Param);

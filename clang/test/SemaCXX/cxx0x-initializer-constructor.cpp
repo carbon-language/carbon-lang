@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fexceptions -verify %s
 
 struct one { char c[1]; };
 struct two { char c[2]; };
@@ -304,7 +304,6 @@ namespace init_list_default {
   B b {}; // calls default constructor
 }
 
-
 // PR13470, <rdar://problem/11974632>
 namespace PR13470 {
   struct W {
@@ -364,4 +363,15 @@ namespace PR13470 {
     yi.f();
     yi.h(); // ok, all diagnostics produced in template definition
   }
+}
+
+namespace PR19729 {
+  struct A {
+    A(int);
+    A(const A&) = delete;
+  };
+  struct B {
+    void *operator new(std::size_t, A);
+  };
+  B *p = new ({123}) B;
 }

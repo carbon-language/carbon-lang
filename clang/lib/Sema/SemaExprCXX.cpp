@@ -1414,12 +1414,14 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 
   SmallVector<Expr *, 8> AllPlaceArgs;
   if (OperatorNew) {
-    // Add default arguments, if any.
     const FunctionProtoType *Proto =
-      OperatorNew->getType()->getAs<FunctionProtoType>();
-    VariadicCallType CallType =
-      Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
+        OperatorNew->getType()->getAs<FunctionProtoType>();
+    VariadicCallType CallType = Proto->isVariadic() ? VariadicFunction
+                                                    : VariadicDoesNotApply;
 
+    // We've already converted the placement args, just fill in any default
+    // arguments. Skip the first parameter because we don't have a corresponding
+    // argument.
     if (GatherArgumentsForCall(PlacementLParen, OperatorNew, Proto, 1,
                                PlacementArgs, AllPlaceArgs, CallType))
       return ExprError();
@@ -1427,6 +1429,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     if (!AllPlaceArgs.empty())
       PlacementArgs = AllPlaceArgs;
 
+    // FIXME: This is wrong: PlacementArgs misses out the first (size) argument.
     DiagnoseSentinelCalls(OperatorNew, PlacementLParen, PlacementArgs);
 
     // FIXME: Missing call to CheckFunctionCall or equivalent
@@ -1684,11 +1687,6 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
     return false;
   }
 
-  // FindAllocationOverload can change the passed in arguments, so we need to
-  // copy them back.
-  if (!PlaceArgs.empty())
-    std::copy(AllocArgs.begin() + 1, AllocArgs.end(), PlaceArgs.data());
-
   // C++ [expr.new]p19:
   //
   //   If the new-expression begins with a unary :: operator, the
@@ -1832,8 +1830,22 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   return false;
 }
 
-/// FindAllocationOverload - Find an fitting overload for the allocation
-/// function in the specified scope.
+/// \brief Find an fitting overload for the allocation function
+/// in the specified scope.
+///
+/// \param StartLoc The location of the 'new' token.
+/// \param SourceRange The range of the placement arguments.
+/// \param Name The name of the function ('operator new' or 'operator new[]').
+/// \param Args The placement arguments specified.
+/// \param Ctx The scope in which we should search; either a class scope or the
+///        translation unit.
+/// \param AllowMissing If \c true, report an error if we can't find any
+///        allocation functions. Otherwise, succeed but don't fill in \p
+///        Operator.
+/// \param Operator Filled in with the found allocation function. Unchanged if
+///        no allocation function was found.
+/// \param Diagnose If \c true, issue errors if the allocation function is not
+///        usable.
 bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   DeclarationName Name, MultiExprArg Args,
                                   DeclContext *Ctx,
@@ -1879,33 +1891,11 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_Success: {
     // Got one!
     FunctionDecl *FnDecl = Best->Function;
-    MarkFunctionReferenced(StartLoc, FnDecl);
-    // The first argument is size_t, and the first parameter must be size_t,
-    // too. This is checked on declaration and can be assumed. (It can't be
-    // asserted on, though, since invalid decls are left in there.)
-    // Watch out for variadic allocator function.
-    unsigned NumArgsInFnDecl = FnDecl->getNumParams();
-    for (unsigned i = 0; (i < Args.size() && i < NumArgsInFnDecl); ++i) {
-      InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
-                                                       FnDecl->getParamDecl(i));
-
-      if (!Diagnose && !CanPerformCopyInitialization(Entity, Owned(Args[i])))
-        return true;
-
-      ExprResult Result
-        = PerformCopyInitialization(Entity, SourceLocation(), Owned(Args[i]));
-      if (Result.isInvalid())
-        return true;
-
-      Args[i] = Result.takeAs<Expr>();
-    }
-
-    Operator = FnDecl;
-
     if (CheckAllocationAccess(StartLoc, Range, R.getNamingClass(),
                               Best->FoundDecl, Diagnose) == AR_inaccessible)
       return true;
 
+    Operator = FnDecl;
     return false;
   }
 
