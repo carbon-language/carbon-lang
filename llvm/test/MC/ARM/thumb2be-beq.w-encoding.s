@@ -1,12 +1,9 @@
-// RUN: llvm-mc -triple=thumbv7-none-linux-gnueabi -mcpu=cortex-a8 -filetype=obj < %s | llvm-objdump -arch=thumb -s - | FileCheck %s --check-prefix=CHECK-LE
-// RUN: llvm-mc -triple=thumbebv7-none-linux-gnueabi -mcpu=cortex-a8 -filetype=obj < %s | llvm-objdump -arch=thumbeb -s - | FileCheck %s --check-prefix=CHECK-BE
-  .syntax unified
-  .code 16
-  .thumb_func
-foo:
-  beq.w   bar
+@ RUN: llvm-mc -triple=thumbv7-none-linux-gnueabi -show-encoding < %s | FileCheck %s --check-prefix=CHECK-LE
+@ RUN: llvm-mc -triple=thumbebv7-none-linux-gnueabi -show-encoding < %s | FileCheck %s --check-prefix=CHECK-BE
 
-// CHECK-LE: Contents of section .text:
-// CHECK-LE-NEXT: 0000 3ff4feaf
-// CHECK-BE: Contents of section .text:
-// CHECK-BE-NEXT: 0000 f43faffe
+beq.w   bar
+@ CHECK-LE: beq.w	bar                     @ encoding: [A,0xf0'A',A,0x80'A']
+@ CHECK-LE-NEXT:                                @   fixup A - offset: 0, value: bar, kind: fixup_t2_condbranch
+@ CHECK-BE: beq.w	bar                     @ encoding: [0xf0'A',A,0x80'A',A]
+@ CHECK-BE-NEXT:                                @   fixup A - offset: 0, value: bar, kind: fixup_t2_condbranch
+
