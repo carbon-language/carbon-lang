@@ -1586,9 +1586,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
       return false;
 
   // Split critical edges, and update the unavailable predecessors accordingly.
-  for (SmallVectorImpl<BasicBlock *>::iterator I = CriticalEdgePred.begin(),
-         E = CriticalEdgePred.end(); I != E; I++) {
-    BasicBlock *OrigPred = *I;
+  for (BasicBlock *OrigPred : CriticalEdgePred) {
     BasicBlock *NewPred = splitCriticalEdges(OrigPred, LoadBB);
     PredLoads.erase(OrigPred);
     PredLoads[NewPred] = nullptr;
@@ -1599,9 +1597,8 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   // Check if the load can safely be moved to all the unavailable predecessors.
   bool CanDoPRE = true;
   SmallVector<Instruction*, 8> NewInsts;
-  for (DenseMap<BasicBlock*, Value*>::iterator I = PredLoads.begin(),
-         E = PredLoads.end(); I != E; ++I) {
-    BasicBlock *UnavailablePred = I->first;
+  for (auto &PredLoad : PredLoads) {
+    BasicBlock *UnavailablePred = PredLoad.first;
 
     // Do PHI translation to get its value in the predecessor if necessary.  The
     // returned pointer (if non-null) is guaranteed to dominate UnavailablePred.
@@ -1623,7 +1620,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
       break;
     }
 
-    I->second = LoadPtr;
+    PredLoad.second = LoadPtr;
   }
 
   if (!CanDoPRE) {
@@ -1632,8 +1629,8 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
       if (MD) MD->removeInstruction(I);
       I->eraseFromParent();
     }
-    // HINT:Don't revert the edge-splitting as following transformation may 
-    // also need to split these critial edges.
+    // HINT: Don't revert the edge-splitting as following transformation may
+    // also need to split these critical edges.
     return !CriticalEdgePred.empty();
   }
 
@@ -1654,10 +1651,9 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
     VN.lookup_or_add(NewInsts[i]);
   }
 
-  for (DenseMap<BasicBlock*, Value*>::iterator I = PredLoads.begin(),
-         E = PredLoads.end(); I != E; ++I) {
-    BasicBlock *UnavailablePred = I->first;
-    Value *LoadPtr = I->second;
+  for (const auto &PredLoad : PredLoads) {
+    BasicBlock *UnavailablePred = PredLoad.first;
+    Value *LoadPtr = PredLoad.second;
 
     Instruction *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
                                         LI->getAlignment(),
