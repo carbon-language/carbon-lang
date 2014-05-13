@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -std=c++11 -emit-pch -o %t.a %s
-// RUN: %clang_cc1 -std=c++11 -include-pch %t.a %s -ast-print -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -include-pch %t.a %s
+// expected-no-diagnostics
 
 #ifndef HEADER
 #define HEADER
