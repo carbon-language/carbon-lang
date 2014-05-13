@@ -642,7 +642,8 @@ public:
 
   void addOperand(StringRef Op, int OpIdx, int PrintMethodIdx = -1) {
     assert(OpIdx >= 0 && OpIdx < 0xFE && "Idx out of range");
-    assert(PrintMethodIdx == -1 || PrintMethodIdx < 0xFF && "Idx out of range");
+    assert((PrintMethodIdx == -1 || PrintMethodIdx < 0xFF) &&
+           "Idx out of range");
     OpMap[Op] = std::make_pair(OpIdx, PrintMethodIdx);
   }
 
