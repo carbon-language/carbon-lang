@@ -678,11 +678,10 @@ CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
   if (!LangOpts.CPlusPlus) return nullptr;
 
   switch (T.getCXXABI().getKind()) {
-  case TargetCXXABI::GenericARM:
+  case TargetCXXABI::GenericARM: // Same as Itanium at this level
   case TargetCXXABI::iOS:
   case TargetCXXABI::iOS64:
-    return CreateARMCXXABI(*this);
-  case TargetCXXABI::GenericAArch64: // Same as Itanium at this level
+  case TargetCXXABI::GenericAArch64:
   case TargetCXXABI::GenericItanium:
     return CreateItaniumCXXABI(*this);
   case TargetCXXABI::Microsoft:

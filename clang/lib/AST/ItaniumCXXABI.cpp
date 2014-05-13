@@ -89,17 +89,8 @@ public:
     return new ItaniumNumberingContext();
   }
 };
-
-class ARMCXXABI : public ItaniumCXXABI {
-public:
-  ARMCXXABI(ASTContext &Ctx) : ItaniumCXXABI(Ctx) { }
-};
 }
 
 CXXABI *clang::CreateItaniumCXXABI(ASTContext &Ctx) {
   return new ItaniumCXXABI(Ctx);
-}
-
-CXXABI *clang::CreateARMCXXABI(ASTContext &Ctx) {
-  return new ARMCXXABI(Ctx);
 }
