@@ -8572,9 +8572,22 @@ int64x1_t test_vshr_n_s64(int64x1_t a) {
 }
 
 uint64_t test_vshrd_n_u64(uint64_t a) {
-// CHECK-LABEL: test_vshrd_n_u64
-// CHECK: {{ushr d[0-9]+, d[0-9]+, #64|lsr x0, x0, #63}}
+// CHECK-AARCH64-LABEL: test_vshrd_n_u64
+// CHECK-AARCH64: {{ushr d[0-9]+, d[0-9]+, #64}}
+
+// CHECK-ARM64-LABEL: test_vshrd_n_u64
+// CHECK-ARM64: mov x0, xzr
   return (uint64_t)vshrd_n_u64(a, 64);
+}
+
+uint64_t test_vshrd_n_u64_2() {
+// CHECK-AARCH64-LABEL: test_vshrd_n_u64_2
+// CHECK-AARCH64: {{ushr d[0-9]+, d[0-9]+, #64}}
+
+// CHECK-ARM64-LABEL: test_vshrd_n_u64_2
+// CHECK-ARM64: mov x0, xzr
+  uint64_t a = UINT64_C(0xf000000000000000);
+  return vshrd_n_u64(a, 64);
 }
 
 uint64x1_t test_vshr_n_u64(uint64x1_t a) {
@@ -8623,6 +8636,15 @@ uint64_t test_vsrad_n_u64(uint64_t a, uint64_t b) {
 // CHECK-LABEL: test_vsrad_n_u64
 // CHECK: {{usra d[0-9]+, d[0-9]+, #63|add x0, x0, x1, lsr #63}}
   return (uint64_t)vsrad_n_u64(a, b, 63);
+}
+
+uint64_t test_vsrad_n_u64_2(uint64_t a, uint64_t b) {
+// CHECK-AARCH64-LABEL: test_vsrad_n_u64_2
+// CHECK-AARCH64: {{usra d[0-9]+, d[0-9]+, #64}}
+
+// CHECK-ARM64-LABEL: test_vsrad_n_u64_2
+// CHECK-ARM64-NOT: add
+  return (uint64_t)vsrad_n_u64(a, b, 64);
 }
 
 uint64x1_t test_vsra_n_u64(uint64x1_t a, uint64x1_t b) {

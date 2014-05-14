@@ -5580,38 +5580,41 @@ Value *CodeGenFunction::EmitARM64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vshld_n_u64: {
     llvm::ConstantInt *Amt = cast<ConstantInt>(EmitScalarExpr(E->getArg(1)));
     return Builder.CreateShl(
-        Ops[0], ConstantInt::get(Int64Ty, std::min(static_cast<uint64_t>(63),
-                                                   Amt->getZExtValue())),
-        "vshr_n");
+        Ops[0], ConstantInt::get(Int64Ty, Amt->getZExtValue()), "shld_n");
   }
   case NEON::BI__builtin_neon_vshrd_n_s64: {
     llvm::ConstantInt *Amt = cast<ConstantInt>(EmitScalarExpr(E->getArg(1)));
     return Builder.CreateAShr(
         Ops[0], ConstantInt::get(Int64Ty, std::min(static_cast<uint64_t>(63),
                                                    Amt->getZExtValue())),
-        "vshr_n");
+        "shrd_n");
   }
   case NEON::BI__builtin_neon_vshrd_n_u64: {
     llvm::ConstantInt *Amt = cast<ConstantInt>(EmitScalarExpr(E->getArg(1)));
-    return Builder.CreateLShr(
-        Ops[0], ConstantInt::get(Int64Ty, std::min(static_cast<uint64_t>(63),
-                                                   Amt->getZExtValue())),
-        "vshr_n");
+    uint64_t ShiftAmt = Amt->getZExtValue();
+    // Right-shifting an unsigned value by its size yields 0.
+    if (ShiftAmt == 64)
+      return ConstantInt::get(Int64Ty, 0);
+    return Builder.CreateLShr(Ops[0], ConstantInt::get(Int64Ty, ShiftAmt),
+                              "shrd_n");
   }
   case NEON::BI__builtin_neon_vsrad_n_s64: {
     llvm::ConstantInt *Amt = cast<ConstantInt>(EmitScalarExpr(E->getArg(2)));
     Ops[1] = Builder.CreateAShr(
         Ops[1], ConstantInt::get(Int64Ty, std::min(static_cast<uint64_t>(63),
                                                    Amt->getZExtValue())),
-        "vshr_n");
+        "shrd_n");
     return Builder.CreateAdd(Ops[0], Ops[1]);
   }
   case NEON::BI__builtin_neon_vsrad_n_u64: {
     llvm::ConstantInt *Amt = cast<ConstantInt>(EmitScalarExpr(E->getArg(2)));
-    Ops[1] = Builder.CreateLShr(
-        Ops[1], ConstantInt::get(Int64Ty, std::min(static_cast<uint64_t>(63),
-                                                   Amt->getZExtValue())),
-        "vshr_n");
+    uint64_t ShiftAmt = Amt->getZExtValue();
+    // Right-shifting an unsigned value by its size yields 0.
+    // As Op + 0 = Op, return Ops[0] directly.
+    if (ShiftAmt == 64)
+      return Ops[0];
+    Ops[1] = Builder.CreateLShr(Ops[1], ConstantInt::get(Int64Ty, ShiftAmt),
+                                "shrd_n");
     return Builder.CreateAdd(Ops[0], Ops[1]);
   }
   case NEON::BI__builtin_neon_vqdmlalh_lane_s16:
