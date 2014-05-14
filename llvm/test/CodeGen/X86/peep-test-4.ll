@@ -1,5 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+bmi,+bmi2,+popcnt | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+bmi,+bmi2,+popcnt,+lzcnt | FileCheck %s
 declare void @foo(i32)
+declare void @foo32(i32)
 declare void @foo64(i64)
 
 ; CHECK-LABEL: neg:
@@ -188,4 +189,77 @@ bb:
 ;
 return:
   ret void
+}
+
+; CHECK-LABEL: testCTZ
+; CHECK: tzcntq
+; CHECK-NOT: test
+; CHECK: cmovaeq
+declare i64 @llvm.cttz.i64(i64, i1)
+define i64 @testCTZ(i64 %v) nounwind {
+  %cnt = tail call i64 @llvm.cttz.i64(i64 %v, i1 true)
+  %tobool = icmp eq i64 %v, 0
+  %cond = select i1 %tobool, i64 255, i64 %cnt
+  ret i64 %cond
+}
+
+; CHECK-LABEL: testCTZ2
+; CHECK: tzcntl
+; CHECK-NEXT: jb
+; CHECK: jmp foo
+declare i32 @llvm.cttz.i32(i32, i1)
+define void @testCTZ2(i32 %v) nounwind {
+  %cnt = tail call i32 @llvm.cttz.i32(i32 %v, i1 true)
+  %cmp = icmp eq i32 %v, 0
+  br i1 %cmp, label %return, label %bb
+
+bb:
+  tail call void @foo(i32 %cnt)
+  br label %return
+
+return:
+  tail call void @foo32(i32 %cnt)
+  ret void
+}
+
+; CHECK-LABEL: testCTZ3
+; CHECK: tzcntl
+; CHECK-NEXT: jae
+; CHECK: jmp foo
+define void @testCTZ3(i32 %v) nounwind {
+  %cnt = tail call i32 @llvm.cttz.i32(i32 %v, i1 true)
+  %cmp = icmp ne i32 %v, 0
+  br i1 %cmp, label %return, label %bb
+
+bb:
+  tail call void @foo(i32 %cnt)
+  br label %return
+
+return:
+  tail call void @foo32(i32 %cnt)
+  ret void
+}
+
+; CHECK-LABEL: testCLZ
+; CHECK: lzcntq
+; CHECK-NOT: test
+; CHECK: cmovaeq
+declare i64 @llvm.ctlz.i64(i64, i1)
+define i64 @testCLZ(i64 %v) nounwind {
+  %cnt = tail call i64 @llvm.ctlz.i64(i64 %v, i1 true)
+  %tobool = icmp ne i64 %v, 0
+  %cond = select i1 %tobool, i64 %cnt, i64 255
+  ret i64 %cond
+}
+
+; CHECK-LABEL: testPOPCNT
+; CHECK: popcntq
+; CHECK-NOT: test
+; CHECK: cmovneq
+declare i64 @llvm.ctpop.i64(i64)
+define i64 @testPOPCNT(i64 %v) nounwind {
+  %cnt = tail call i64 @llvm.ctpop.i64(i64 %v)
+  %tobool = icmp ne i64 %v, 0
+  %cond = select i1 %tobool, i64 %cnt, i64 255
+  ret i64 %cond
 }

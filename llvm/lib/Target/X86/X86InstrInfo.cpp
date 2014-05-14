@@ -3559,6 +3559,26 @@ inline static bool isDefConvertible(MachineInstr *MI) {
   }
 }
 
+/// isUseDefConvertible - check whether the use can be converted
+/// to remove a comparison against zero.
+static X86::CondCode isUseDefConvertible(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  default: return X86::COND_INVALID;
+  case X86::LZCNT16rr: case X86::LZCNT16rm:
+  case X86::LZCNT32rr: case X86::LZCNT32rm:
+  case X86::LZCNT64rr: case X86::LZCNT64rm:
+    return X86::COND_B;
+  case X86::POPCNT16rr:case X86::POPCNT16rm:
+  case X86::POPCNT32rr:case X86::POPCNT32rm:
+  case X86::POPCNT64rr:case X86::POPCNT64rm:
+    return X86::COND_E;
+  case X86::TZCNT16rr: case X86::TZCNT16rm:
+  case X86::TZCNT32rr: case X86::TZCNT32rm:
+  case X86::TZCNT64rr: case X86::TZCNT64rm:
+    return X86::COND_B;
+  }
+}
+
 /// optimizeCompareInstr - Check if there exists an earlier instruction that
 /// operates on the same source operands and sets flags in the same way as
 /// Compare; remove Compare if possible.
@@ -3625,9 +3645,34 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   // If we are comparing against zero, check whether we can use MI to update
   // EFLAGS. If MI is not in the same BB as CmpInstr, do not optimize.
   bool IsCmpZero = (SrcReg2 == 0 && CmpValue == 0);
-  if (IsCmpZero && (MI->getParent() != CmpInstr->getParent() ||
-      !isDefConvertible(MI)))
+  if (IsCmpZero && MI->getParent() != CmpInstr->getParent())
     return false;
+
+  // If we have a use of the source register between the def and our compare
+  // instruction we can eliminate the compare iff the use sets EFLAGS in the
+  // right way.
+  bool ShouldUpdateCC = false;
+  X86::CondCode NewCC = X86::COND_INVALID;
+  if (IsCmpZero && !isDefConvertible(MI)) {
+    // Scan forward from the use until we hit the use we're looking for or the
+    // compare instruction.
+    for (MachineBasicBlock::iterator J = MI;; ++J) {
+      // Do we have a convertible instruction?
+      NewCC = isUseDefConvertible(J);
+      if (NewCC != X86::COND_INVALID && J->getOperand(1).isReg() &&
+          J->getOperand(1).getReg() == SrcReg) {
+        assert(J->definesRegister(X86::EFLAGS) && "Must be an EFLAGS def!");
+        ShouldUpdateCC = true; // Update CC later on.
+        // This is not a def of SrcReg, but still a def of EFLAGS. Keep going
+        // with the new def.
+        MI = Def = J;
+        break;
+      }
+
+      if (J == I)
+        return false;
+    }
+  }
 
   // We are searching for an earlier instruction that can make CmpInstr
   // redundant and that instruction will be saved in Sub.
@@ -3726,13 +3771,28 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
         // CF and OF are used, we can't perform this optimization.
         return false;
       }
+
+      // If we're updating the condition code check if we have to reverse the
+      // condition.
+      if (ShouldUpdateCC)
+        switch (OldCC) {
+        default:
+          return false;
+        case X86::COND_E:
+          break;
+        case X86::COND_NE:
+          NewCC = GetOppositeBranchCondition(NewCC);
+          break;
+        }
     } else if (IsSwapped) {
       // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
       // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
       // We swap the condition code and synthesize the new opcode.
-      X86::CondCode NewCC = getSwappedCondition(OldCC);
+      NewCC = getSwappedCondition(OldCC);
       if (NewCC == X86::COND_INVALID) return false;
+    }
 
+    if ((ShouldUpdateCC || IsSwapped) && NewCC != OldCC) {
       // Synthesize the new opcode.
       bool HasMemoryOperand = Instr.hasOneMemOperand();
       unsigned NewOpc;
