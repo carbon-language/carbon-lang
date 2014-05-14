@@ -385,9 +385,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Compute the size and offset of all the DIEs.
   void computeSizeAndOffsets();
 
-  /// \brief Attach DW_AT_inline attribute with inlined subprogram DIEs.
-  void computeInlinedDIEs();
-
   /// \brief Collect info for variables that were optimized out.
   void collectDeadVariables();
 

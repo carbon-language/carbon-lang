@@ -463,11 +463,13 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   assert(!ScopeRanges.empty() &&
          "LexicalScope does not have instruction markers!");
 
-  if (!Scope->getScopeNode())
-    return nullptr;
+  assert(Scope->getScopeNode());
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
   DIE *OriginDIE = TheCU.getDIE(InlinedSP);
+  // FIXME: This should be an assert (or possibly a
+  // getOrCreateSubprogram(InlinedSP)) otherwise we're just failing to emit
+  // inlining information.
   if (!OriginDIE) {
     DEBUG(dbgs() << "Unable to find original DIE for an inlined subprogram.");
     return nullptr;
@@ -582,6 +584,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
     AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
+    TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
     createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
   }
 }
@@ -856,16 +859,6 @@ void DwarfDebug::beginModule() {
   SectionMap[Asm->getObjFileLowering().getTextSection()];
 }
 
-// Attach DW_AT_inline attribute with inlined subprogram DIEs.
-void DwarfDebug::computeInlinedDIEs() {
-  for (const auto &AI : AbstractSPDies) {
-    DIE &ISP = *AI.second;
-    if (InlinedSubprogramDIEs.count(&ISP))
-      continue;
-    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  }
-}
-
 // Collect info for variables that were optimized out.
 void DwarfDebug::collectDeadVariables() {
   const Module *M = MMI->getModule();
@@ -909,9 +902,6 @@ void DwarfDebug::collectDeadVariables() {
 void DwarfDebug::finalizeModuleInfo() {
   // Collect info for variables that were optimized out.
   collectDeadVariables();
-
-  // Attach DW_AT_inline attribute with inlined subprogram DIEs.
-  computeInlinedDIEs();
 
   // Handle anything that needs to be done on a per-unit basis after
   // all other generation.
