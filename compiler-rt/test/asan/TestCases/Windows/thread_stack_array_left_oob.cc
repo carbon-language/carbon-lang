@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan -O0 %s -Fe%t 2>&1
 // 'cat' is used below to work around FileCheck buffering bug which makes this
 // test flaky.  FIXME: file an issue.
-// RUN: not %run %t 2>&1 | cat | FileCheck %s --check-prefix=CHECK
+// RUN: not %run %t 2>&1 | cat | FileCheck %s
 
 #include <windows.h>
 
