@@ -87,13 +87,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !24 = metadata !{i32 786470, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from D]
 !25 = metadata !{metadata !26}
 !26 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ] [line 0, size 0, align 0, offset 0]
-!27 = metadata !{metadata !28}
-!28 = metadata !{metadata !29}
+!27 = metadata !{metadata !29}
 !29 = metadata !{i32 786689, metadata !5, metadata !"this", metadata !6, i32 16777228, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 12]
 !30 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from D]
 !31 = metadata !{i32 786478, metadata !6, null, metadata !"D", metadata !"D", metadata !"_ZN1DC2ERKS_", i32 19, metadata !21, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (%class.D*, %class.D*)* @_ZN1DC2ERKS_, null, metadata !20, metadata !32, i32 19} ; [ DW_TAG_subprogram ] [line 19] [def] [D]
-!32 = metadata !{metadata !33}
-!33 = metadata !{metadata !34, metadata !35}
+!32 = metadata !{metadata !34, metadata !35}
 !34 = metadata !{i32 786689, metadata !31, metadata !"this", metadata !6, i32 16777235, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 19]
 !35 = metadata !{i32 786689, metadata !31, metadata !"d", metadata !6, i32 33554451, metadata !23, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [d] [line 19]
 !36 = metadata !{i32 12, i32 0, metadata !5, null}

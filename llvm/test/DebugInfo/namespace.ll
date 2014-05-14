@@ -199,7 +199,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !19, metadata !21, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug//usr/local/google/home/blaikie/dev/llvm/src/tools/clang/test/CodeGenCXX/debug-info-namespace.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"/usr/local/google/home/blaikie/dev/llvm/src/tools/clang/test/CodeGenCXX/debug-info-namespace.cpp", metadata !"/usr/local/google/home/blaikie/dev/llvm/build/clang/debug"}
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !10, metadata !14}
 !4 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"f1", metadata !"f1", metadata !"_ZN1A1B2f1Ev", i32 3, metadata !8, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_ZN1A1B2f1Ev, null, null, metadata !2, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [f1]
 !5 = metadata !{metadata !"foo.cpp", metadata !"/usr/local/google/home/blaikie/dev/llvm/build/clang/debug"}

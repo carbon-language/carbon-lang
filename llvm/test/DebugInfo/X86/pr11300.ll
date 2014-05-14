@@ -38,7 +38,7 @@ entry:
 !0 = metadata !{i32 786449, metadata !32, i32 4, metadata !"clang version 3.0 ()", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !20}
-!5 = metadata !{i32 720942, metadata !6, metadata !6, metadata !"zed", metadata !"zed", metadata !"_Z3zedP3foo", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.foo*)* @_Z3zedP3foo, null, null, metadata !21, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [zed]
+!5 = metadata !{i32 720942, metadata !6, metadata !6, metadata !"zed", metadata !"zed", metadata !"_Z3zedP3foo", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.foo*)* @_Z3zedP3foo, null, null, null, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [zed]
 !6 = metadata !{i32 720937, metadata !32} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, null, i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9}
@@ -53,9 +53,7 @@ entry:
 !17 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
 !18 = metadata !{metadata !19}
 !19 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!20 = metadata !{i32 720942, metadata !6, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", i32 2, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.foo*)* @_ZN3foo3barEv, null, metadata !12, metadata !21, i32 2} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
-!21 = metadata !{metadata !22}
-!22 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
+!20 = metadata !{i32 720942, metadata !6, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", i32 2, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.foo*)* @_ZN3foo3barEv, null, metadata !12, null, i32 2} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
 !23 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !6, i32 16777220, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !24 = metadata !{i32 4, i32 15, metadata !5, null}
 !25 = metadata !{i32 4, i32 20, metadata !26, null}

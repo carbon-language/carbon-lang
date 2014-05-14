@@ -18,12 +18,10 @@ entry:
 !0 = metadata !{i32 786449, metadata !21, i32 12, metadata !"clang version 3.1 (trunk 144833)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !11,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720942, metadata !21, metadata !6, metadata !"bar", metadata !"bar", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @bar, null, null, metadata !9, i32 0} ; [ DW_TAG_subprogram ] [line 4] [def] [scope 0] [bar]
+!5 = metadata !{i32 720942, metadata !21, metadata !6, metadata !"bar", metadata !"bar", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @bar, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 4] [def] [scope 0] [bar]
 !6 = metadata !{i32 720937, metadata !21} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, null, i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null}
-!9 = metadata !{metadata !10}
-!10 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
 !11 = metadata !{metadata !13}
 !13 = metadata !{i32 720948, i32 0, null, metadata !"s", metadata !"s", metadata !"", metadata !6, i32 2, metadata !14, i32 0, i32 1, [4294967296 x i8]* @s, null} ; [ DW_TAG_variable ]
 !14 = metadata !{i32 720897, null, null, null, i32 0, i64 34359738368, i64 8, i32 0, i32 0, metadata !15, metadata !16, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 34359738368, align 8, offset 0] [from char]

@@ -72,7 +72,7 @@ declare i32 @__objc_personality_v0(...)
 !0 = metadata !{i32 786449, metadata !63, i32 16, metadata !"clang version 3.1 (trunk 151227)", i1 false, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !28, metadata !31, metadata !34}
-!5 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"foo", metadata !"foo", metadata !"", i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !26, i32 5} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"foo", metadata !"foo", metadata !"", i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, null, i32 5} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !63} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9}
@@ -93,15 +93,13 @@ declare i32 @__objc_personality_v0(...)
 !23 = metadata !{i32 786445, metadata !63, metadata !6, metadata !"reserved", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !24} ; [ DW_TAG_member ]
 !24 = metadata !{i32 786468, null, null, metadata !"long unsigned int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !25 = metadata !{i32 786445, metadata !63, metadata !6, metadata !"Size", i32 0, i64 64, i64 64, i64 64, i32 0, metadata !24} ; [ DW_TAG_member ]
-!26 = metadata !{metadata !27}
-!27 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
-!28 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__foo_block_invoke_0", metadata !"__foo_block_invoke_0", metadata !"", i32 7, metadata !29, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*)* @__foo_block_invoke_0, null, null, metadata !26, i32 7} ; [ DW_TAG_subprogram ]
+!28 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__foo_block_invoke_0", metadata !"__foo_block_invoke_0", metadata !"", i32 7, metadata !29, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*)* @__foo_block_invoke_0, null, null, null, i32 7} ; [ DW_TAG_subprogram ]
 !29 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !30, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !30 = metadata !{null, metadata !14}
-!31 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__copy_helper_block_", metadata !"__copy_helper_block_", metadata !"", i32 10, metadata !32, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !26, i32 10} ; [ DW_TAG_subprogram ]
+!31 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__copy_helper_block_", metadata !"__copy_helper_block_", metadata !"", i32 10, metadata !32, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, null, i32 10} ; [ DW_TAG_subprogram ]
 !32 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !33, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !33 = metadata !{null, metadata !14, metadata !14}
-!34 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__destroy_helper_block_", metadata !"__destroy_helper_block_", metadata !"", i32 10, metadata !29, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !26, i32 10} ; [ DW_TAG_subprogram ]
+!34 = metadata !{i32 786478, metadata !6, metadata !6, metadata !"__destroy_helper_block_", metadata !"__destroy_helper_block_", metadata !"", i32 10, metadata !29, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, null, i32 10} ; [ DW_TAG_subprogram ]
 !35 = metadata !{i32 1, metadata !"Objective-C Version", i32 2}
 !36 = metadata !{i32 1, metadata !"Objective-C Image Info Version", i32 0}
 !37 = metadata !{i32 1, metadata !"Objective-C Image Info Section", metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip"}

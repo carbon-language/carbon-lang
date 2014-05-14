@@ -33,15 +33,13 @@ declare void @llvm.stackrestore(i8*) nounwind
 !0 = metadata !{i32 786449, metadata !26, i32 12, metadata !"clang version 3.1 (trunk 153698)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !26, metadata !0, metadata !"foo", metadata !"foo", metadata !"", i32 6, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*)* @foo, null, null, metadata !12, i32 0} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, metadata !26, metadata !0, metadata !"foo", metadata !"foo", metadata !"", i32 6, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*)* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !26} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !10}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 786447, null, null, null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]
 !11 = metadata !{i32 786470, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !9} ; [ DW_TAG_const_type ]
-!12 = metadata !{metadata !13}
-!13 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
 !14 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !6, i32 16777221, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !15 = metadata !{i32 5, i32 21, metadata !5, null}
 !16 = metadata !{i32 7, i32 13, metadata !17, null}

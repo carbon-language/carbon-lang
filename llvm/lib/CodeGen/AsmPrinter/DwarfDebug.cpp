@@ -325,30 +325,27 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
     // Pick up abstract subprogram DIE.
     SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
-  } else {
-    DISubprogram SPDecl = SP.getFunctionDeclaration();
-    if (!SPDecl.isSubprogram()) {
-      // There is not any need to generate specification DIE for a function
-      // defined at compile unit level. If a function is defined inside another
-      // function then gdb prefers the definition at top level and but does not
-      // expect specification DIE in parent function. So avoid creating
-      // specification DIE for a function defined inside a function.
-      DIScope SPContext = resolve(SP.getContext());
-      if (SP.isDefinition() && !SPContext.isCompileUnit() &&
-          !SPContext.isFile() && !isSubprogramContext(SPContext)) {
-        SPCU.addFlag(*SPDie, dwarf::DW_AT_declaration);
+  } else if (!SP.getFunctionDeclaration()) {
+    // There is not any need to generate specification DIE for a function
+    // defined at compile unit level. If a function is defined inside another
+    // function then gdb prefers the definition at top level and but does not
+    // expect specification DIE in parent function. So avoid creating
+    // specification DIE for a function defined inside a function.
+    DIScope SPContext = resolve(SP.getContext());
+    if (SP.isDefinition() && !SPContext.isCompileUnit() &&
+        !SPContext.isFile() && !isSubprogramContext(SPContext)) {
+      SPCU.addFlag(*SPDie, dwarf::DW_AT_declaration);
 
-        // Add arguments.
-        DICompositeType SPTy = SP.getType();
-        DIArray Args = SPTy.getTypeArray();
-        uint16_t SPTag = SPTy.getTag();
-        if (SPTag == dwarf::DW_TAG_subroutine_type)
-          SPCU.constructSubprogramArguments(*SPDie, Args);
-        DIE *SPDeclDie = SPDie;
-        SPDie =
-            &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
-        SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, *SPDeclDie);
-      }
+      // Add arguments.
+      DICompositeType SPTy = SP.getType();
+      DIArray Args = SPTy.getTypeArray();
+      uint16_t SPTag = SPTy.getTag();
+      if (SPTag == dwarf::DW_TAG_subroutine_type)
+        SPCU.constructSubprogramArguments(*SPDie, Args);
+      DIE *SPDeclDie = SPDie;
+      SPDie =
+          &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
+      SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, *SPDeclDie);
     }
   }
 
@@ -594,9 +591,9 @@ DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   assert(Scope && Scope->getScopeNode());
   assert(!Scope->getInlinedAt());
   assert(!Scope->isAbstractScope());
-  assert(DIScope(Scope->getScopeNode()).isSubprogram());
-
   DISubprogram Sub(Scope->getScopeNode());
+
+  assert(Sub.isSubprogram());
 
   ProcessedSPNodes.insert(Sub);
 
@@ -747,6 +744,7 @@ void DwarfDebug::constructSubprogramDIE(DwarfCompileUnit &TheCU,
   CURef = &TheCU;
 
   DISubprogram SP(N);
+  assert(SP.isSubprogram());
   if (!SP.isDefinition())
     // This is a method declaration which will be handled while constructing
     // class type.
@@ -866,6 +864,10 @@ void DwarfDebug::collectDeadVariables() {
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
     for (MDNode *N : CU_Nodes->operands()) {
       DICompileUnit TheCU(N);
+      // Construct subprogram DIE and add variables DIEs.
+      DwarfCompileUnit *SPCU =
+          static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
+      assert(SPCU && "Unable to find Compile Unit!");
       DIArray Subprograms = TheCU.getSubprograms();
       for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
         DISubprogram SP(Subprograms.getElement(i));
@@ -879,18 +881,13 @@ void DwarfDebug::collectDeadVariables() {
         if (Variables.getNumElements() == 0)
           continue;
 
-        // Construct subprogram DIE and add variables DIEs.
-        DwarfCompileUnit *SPCU =
-            static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
-        assert(SPCU && "Unable to find Compile Unit!");
         // FIXME: See the comment in constructSubprogramDIE about duplicate
         // subprogram DIEs.
         constructSubprogramDIE(*SPCU, SP);
         DIE *SPDIE = SPCU->getDIE(SP);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
-          if (!DV.isVariable())
-            continue;
+          assert(DV.isVariable());
           DbgVariable NewVar(DV, nullptr, this);
           SPDIE->addChild(SPCU->constructVariableDIE(NewVar));
         }
@@ -1279,7 +1276,8 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
   DIArray Variables = DISubprogram(FnScope->getScopeNode()).getVariables();
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
     DIVariable DV(Variables.getElement(i));
-    if (!DV || !DV.isVariable() || !Processed.insert(DV))
+    assert(DV.isVariable());
+    if (!Processed.insert(DV))
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
       addScopeVariable(Scope, new DbgVariable(DV, nullptr, this));

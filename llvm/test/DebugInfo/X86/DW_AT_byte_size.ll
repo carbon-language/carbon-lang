@@ -29,7 +29,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !0 = metadata !{i32 786449, metadata !20, i32 4, metadata !"clang version 3.1 (trunk 150996)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !20, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooP1A", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%struct.A*)* @_Z3fooP1A, null, null, metadata !14, i32 3} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, metadata !20, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooP1A", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%struct.A*)* @_Z3fooP1A, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !10}
@@ -38,8 +38,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !11 = metadata !{i32 786434, metadata !20, null, metadata !"A", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [def] [from ]
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 786445, metadata !20, metadata !11, metadata !"b", i32 1, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ]
-!14 = metadata !{metadata !15}
-!15 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
 !16 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777219, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !17 = metadata !{i32 3, i32 13, metadata !5, null}
 !18 = metadata !{i32 4, i32 3, metadata !19, null}

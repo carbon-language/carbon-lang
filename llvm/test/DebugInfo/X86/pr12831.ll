@@ -79,7 +79,7 @@ entry:
 !llvm.module.flags = !{!162}
 
 !0 = metadata !{i32 786449, metadata !161, i32 4, metadata !"clang version 3.2 ", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !128, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 0}
+!1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !106, metadata !107, metadata !126, metadata !127}
 !5 = metadata !{i32 786478, metadata !6, null, metadata !"writeExpr", metadata !"writeExpr", metadata !"_ZN17BPLFunctionWriter9writeExprEv", i32 19, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.BPLFunctionWriter*)* @_ZN17BPLFunctionWriter9writeExprEv, null, metadata !103, metadata !1, i32 19} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !160} ; [ DW_TAG_file_type ]
