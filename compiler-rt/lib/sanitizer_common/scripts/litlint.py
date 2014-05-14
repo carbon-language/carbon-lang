@@ -5,14 +5,13 @@
 # Check that the RUN commands in lit tests can be executed with an emulator.
 #
 
-import argparse
+import optparse
 import re
 import sys
 
-parser = argparse.ArgumentParser(description='lint lit tests')
-parser.add_argument('filenames', nargs='+')
-parser.add_argument('--filter')  # ignored
-args = parser.parse_args()
+parser = optparse.OptionParser()
+parser.add_option('--filter')  # ignored
+(options, filenames) = parser.parse_args()
 
 runRegex = re.compile(r'(?<!-o)(?<!%run) %t\s')
 errorMsg = "litlint: {}:{}: error: missing %run before %t.\n\t{}"
@@ -23,5 +22,5 @@ def LintFile(p):
             if runRegex.search(s):
                sys.stderr.write(errorMsg.format(p, i, s))
 
-for p in args.filenames:
+for p in filenames:
     LintFile(p)
