@@ -590,7 +590,7 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
       getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
                                          GD.getDtorType());
 
-  return getLLVMLinkageforDeclarator(D, Linkage, /*isConstantVariable=*/false,
+  return getLLVMLinkageForDeclarator(D, Linkage, /*isConstantVariable=*/false,
                                      UseThunkForDtorVariant);
 }
 
@@ -1942,7 +1942,7 @@ static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
   return false;
 }
 
-llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageforDeclarator(
+llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
     const DeclaratorDecl *D, GVALinkage Linkage, bool IsConstantVariable,
     bool UseThunkForDtorVariant) {
   if (Linkage == GVA_Internal)
@@ -2025,7 +2025,7 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageforDeclarator(
 llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageVarDefinition(
     const VarDecl *VD, bool IsConstant) {
   GVALinkage Linkage = getContext().GetGVALinkageForVariable(VD);
-  return getLLVMLinkageforDeclarator(VD, Linkage, IsConstant,
+  return getLLVMLinkageForDeclarator(VD, Linkage, IsConstant,
                                      /*UseThunkForDtorVariant=*/false);
 }
 
