@@ -16,6 +16,7 @@
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
 using namespace llvm;
@@ -500,6 +501,9 @@ public:
                          const MCFixup &Fixup, const MCFragment *DF,
                          const MCValue &Target, uint64_t &Value,
                          bool &IsResolved) override;
+
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                  uint64_t Value, bool IsPCRel) const override;
 };
 
 void ELFARM64AsmBackend::processFixupValue(const MCAssembler &Asm,
@@ -522,6 +526,19 @@ void ELFARM64AsmBackend::processFixupValue(const MCAssembler &Asm,
   // to the linker -- a relocation!
   if ((uint32_t)Fixup.getKind() == ARM64::fixup_arm64_pcrel_adrp_imm21)
     IsResolved = false;
+}
+
+void ELFARM64AsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
+                                    unsigned DataSize, uint64_t Value,
+                                    bool IsPCRel) const {
+  // store fixups in .eh_frame section in big endian order
+  if (!IsLittleEndian && Fixup.getKind() == FK_Data_4) {
+    const MCSection *Sec = Fixup.getValue()->FindAssociatedSection();
+    const MCSectionELF *SecELF = static_cast<const MCSectionELF *>(Sec);
+    if (SecELF->getSectionName() == ".eh_frame")
+      Value = ByteSwap_32(unsigned(Value));
+  }
+  ARM64AsmBackend::applyFixup (Fixup, Data, DataSize, Value, IsPCRel);
 }
 }
 
