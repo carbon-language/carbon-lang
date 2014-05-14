@@ -3,7 +3,6 @@ lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configu
 
 # Tool-specific config options.
 config.ubsan_lit_test_mode = "@UBSAN_LIT_TEST_MODE@"
-config.target_cflags = "@COMPILER_RT_TEST_COMPILER_CFLAGS@"
 
 # Load tool-specific config that would do the real work.
 lit_config.load_config(config, "@UBSAN_LIT_TESTS_DIR@/lit.common.cfg")
