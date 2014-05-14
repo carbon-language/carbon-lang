@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 26
+#define CINDEX_VERSION_MINOR 27
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -3585,6 +3585,12 @@ typedef void *CXModule;
  * \brief Given a CXCursor_ModuleImportDecl cursor, return the associated module.
  */
 CINDEX_LINKAGE CXModule clang_Cursor_getModule(CXCursor C);
+
+/**
+ * \brief Given a CXFile header file, return the module that contains it, if one
+ * exists.
+ */
+CINDEX_LINKAGE CXModule clang_getModuleForFile(CXTranslationUnit, CXFile);
 
 /**
  * \param Module a module object.

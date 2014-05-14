@@ -6329,6 +6329,26 @@ CXModule clang_Cursor_getModule(CXCursor C) {
   return 0;
 }
 
+CXModule clang_getModuleForFile(CXTranslationUnit TU, CXFile File) {
+  if (isNotUsableTU(TU)) {
+    LOG_BAD_TU(TU);
+    return nullptr;
+  }
+  if (!File)
+    return nullptr;
+  FileEntry *FE = static_cast<FileEntry *>(File);
+  
+  ASTUnit &Unit = *cxtu::getASTUnit(TU);
+  HeaderSearch &HS = Unit.getPreprocessor().getHeaderSearchInfo();
+  ModuleMap::KnownHeader Header = HS.findModuleForHeader(FE);
+  
+  if (Module *Mod = Header.getModule()) {
+    if (Header.getRole() != ModuleMap::ExcludedHeader)
+      return Mod;
+  }
+  return nullptr;
+}
+
 CXFile clang_Module_getASTFile(CXModule CXMod) {
   if (!CXMod)
     return 0;

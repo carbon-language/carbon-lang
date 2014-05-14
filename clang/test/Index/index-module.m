@@ -18,13 +18,13 @@ int glob;
 // RUN: c-index-test -index-tu %t.cache/DependsOnModule.pcm | FileCheck %s -check-prefix=CHECK-DMOD
 
 // CHECK-DMOD:      [startedTranslationUnit]
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_MODULE_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]DependsOnModule\.h]] | {{.*}} | hash loc: <invalid>
-// CHECK-DMOD-NEXT: [ppIncludedFile]: {{.*}}/Modules/Inputs/Module.framework{{[/\\]}}Headers{{[/\\]}}Module.h | name: "Module/Module.h" | hash loc: {{.*}}/Modules/Inputs/DependsOnModule.framework{{[/\\]}}Headers{{[/\\]}}DependsOnModule.h:1:1 | isImport: 0 | isAngled: 1 | isModule: 1
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_OTHER_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]other\.h]] | {{.*}} | hash loc: <invalid>
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_NOT_CXX_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]not_cxx\.h]] | {{.*}} | hash loc: <invalid>
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_SUB_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Frameworks[/\\]SubFramework\.framework[/\\]Headers[/\\]SubFramework\.h]] | {{.*}} | hash loc: <invalid>
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_SUB_OTHER_H:.*/Modules/Inputs/DependsOnModule.framework[/\\]Frameworks/SubFramework\.framework/Headers/Other\.h]] | name: "SubFramework/Other.h" | hash loc: [[DMOD_SUB_H]]:1:1 | isImport: 0 | isAngled: 0
-// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_PRIVATE_H:.*/Modules/Inputs/DependsOnModule.framework[/\\]PrivateHeaders[/\\]DependsOnModulePrivate.h]] | {{.*}} | hash loc: <invalid>
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_MODULE_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]DependsOnModule\.h]] | {{.*}} | hash loc: <invalid> | {{.*}} | module: DependsOnModule
+// CHECK-DMOD-NEXT: [ppIncludedFile]: {{.*}}/Modules/Inputs/Module.framework{{[/\\]}}Headers{{[/\\]}}Module.h | name: "Module/Module.h" | hash loc: {{.*}}/Modules/Inputs/DependsOnModule.framework{{[/\\]}}Headers{{[/\\]}}DependsOnModule.h:1:1 | isImport: 0 | isAngled: 1 | isModule: 1 | module: Module
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_OTHER_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]other\.h]] | {{.*}} | hash loc: <invalid> | {{.*}} | module: DependsOnModule
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_NOT_CXX_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Headers[/\\]not_cxx\.h]] | {{.*}} | hash loc: <invalid> | {{.*}} | module: DependsOnModule.NotCXX
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_SUB_H:.*/Modules/Inputs/DependsOnModule\.framework[/\\]Frameworks[/\\]SubFramework\.framework[/\\]Headers[/\\]SubFramework\.h]] | {{.*}} | hash loc: <invalid> | {{.*}} | module: DependsOnModule.SubFramework
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_SUB_OTHER_H:.*/Modules/Inputs/DependsOnModule.framework[/\\]Frameworks/SubFramework\.framework/Headers/Other\.h]] | name: "SubFramework/Other.h" | hash loc: [[DMOD_SUB_H]]:1:1 | isImport: 0 | isAngled: 0 | isModule: 0 | module: DependsOnModule.SubFramework.Other
+// CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_PRIVATE_H:.*/Modules/Inputs/DependsOnModule.framework[/\\]PrivateHeaders[/\\]DependsOnModulePrivate.h]] | {{.*}} | hash loc: <invalid> | {{.*}} | module: DependsOnModule.Private.DependsOnModule
 // CHECK-DMOD-NEXT: [importedASTFile]: {{.*}}.cache{{[/\\]}}Module.pcm | loc: [[DMOD_MODULE_H]]:1:2 | name: "Module" | isImplicit: 1
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: depends_on_module_other | {{.*}} | loc: [[DMOD_OTHER_H]]:1:5
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: template | {{.*}} | loc: [[DMOD_NOT_CXX_H]]:1:12

@@ -2544,6 +2544,7 @@ typedef struct {
   const char *main_filename;
   ImportedASTFilesData *importedASTs;
   IndexDataStringList *strings;
+  CXTranslationUnit TU;
 } IndexData;
 
 static void free_client_data(IndexData *index_data) {
@@ -2813,6 +2814,7 @@ static CXIdxClientFile index_enteredMainFile(CXClientData client_data,
 static CXIdxClientFile index_ppIncludedFile(CXClientData client_data,
                                             const CXIdxIncludedFileInfo *info) {
   IndexData *index_data;
+  CXModule Mod;
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
@@ -2821,8 +2823,18 @@ static CXIdxClientFile index_ppIncludedFile(CXClientData client_data,
   printf(" | name: \"%s\"", info->filename);
   printf(" | hash loc: ");
   printCXIndexLoc(info->hashLoc, client_data);
-  printf(" | isImport: %d | isAngled: %d | isModule: %d\n",
+  printf(" | isImport: %d | isAngled: %d | isModule: %d",
          info->isImport, info->isAngled, info->isModuleImport);
+  
+  Mod = clang_getModuleForFile(index_data->TU, (CXFile)info->file);
+  if (Mod) {
+    CXString str = clang_Module_getFullName(Mod);
+    const char *cstr = clang_getCString(str);
+    printf(" | module: %s", cstr);
+    clang_disposeString(str);
+  }
+
+  printf("\n");
 
   return (CXIdxClientFile)info->file;
 }
@@ -3032,6 +3044,7 @@ static int index_compile_args(int num_args, const char **args,
   index_data.main_filename = "";
   index_data.importedASTs = importedASTs;
   index_data.strings = NULL;
+  index_data.TU = NULL;
 
   index_opts = getIndexOptions();
   result = clang_indexSourceFile(idxAction, &index_data,
@@ -3068,6 +3081,7 @@ static int index_ast_file(const char *ast_file,
   index_data.main_filename = "";
   index_data.importedASTs = importedASTs;
   index_data.strings = NULL;
+  index_data.TU = TU;
 
   index_opts = getIndexOptions();
   result = clang_indexTranslationUnit(idxAction, &index_data,
