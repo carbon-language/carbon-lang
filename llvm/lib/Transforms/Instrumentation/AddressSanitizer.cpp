@@ -606,15 +606,14 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
 // Instrument memset/memmove/memcpy
 void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   IRBuilder<> IRB(MI);
-  Instruction *Call = nullptr;
   if (isa<MemTransferInst>(MI)) {
-    Call = IRB.CreateCall3(
+    IRB.CreateCall3(
         isa<MemMoveInst>(MI) ? AsanMemmove : AsanMemcpy,
         IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
         IRB.CreatePointerCast(MI->getOperand(1), IRB.getInt8PtrTy()),
         IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false));
   } else if (isa<MemSetInst>(MI)) {
-    Call = IRB.CreateCall3(
+    IRB.CreateCall3(
         AsanMemset,
         IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
         IRB.CreateIntCast(MI->getOperand(1), IRB.getInt32Ty(), false),
@@ -740,8 +739,7 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   Value *Size = ConstantInt::get(IntptrTy, TypeSize / 8);
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
   if (UseCalls) {
-    CallInst *Check =
-        IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite], AddrLong, Size);
+    IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite], AddrLong, Size);
   } else {
     Value *LastByte = IRB.CreateIntToPtr(
         IRB.CreateAdd(AddrLong, ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
