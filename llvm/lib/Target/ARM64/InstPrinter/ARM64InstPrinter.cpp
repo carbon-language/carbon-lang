@@ -301,38 +301,6 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     printExtend(MI, 3, O);
     return;
   }
-  // ADD WSP, Wn, #0 ==> MOV WSP, Wn
-  if (Opcode == ARM64::ADDWri && (MI->getOperand(0).getReg() == ARM64::WSP ||
-                                  MI->getOperand(1).getReg() == ARM64::WSP) &&
-      MI->getOperand(2).getImm() == 0 &&
-      ARM64_AM::getShiftValue(MI->getOperand(3).getImm()) == 0) {
-    O << "\tmov\t" << getRegisterName(MI->getOperand(0).getReg())
-      << ", " << getRegisterName(MI->getOperand(1).getReg());
-    return;
-  }
-  // ADD XSP, Wn, #0 ==> MOV XSP, Wn
-  if (Opcode == ARM64::ADDXri && (MI->getOperand(0).getReg() == ARM64::SP ||
-                                  MI->getOperand(1).getReg() == ARM64::SP) &&
-      MI->getOperand(2).getImm() == 0 &&
-      ARM64_AM::getShiftValue(MI->getOperand(3).getImm()) == 0) {
-    O << "\tmov\t" << getRegisterName(MI->getOperand(0).getReg())
-      << ", " << getRegisterName(MI->getOperand(1).getReg());
-    return;
-  }
-  // ORR Wn, WZR, Wm ==> MOV Wn, Wm
-  if (Opcode == ARM64::ORRWrs && MI->getOperand(1).getReg() == ARM64::WZR &&
-      MI->getOperand(3).getImm() == 0) {
-    O << "\tmov\t" << getRegisterName(MI->getOperand(0).getReg())
-      << ", " << getRegisterName(MI->getOperand(2).getReg());
-    return;
-  }
-  // ORR Xn, XZR, Xm ==> MOV Xn, Xm
-  if (Opcode == ARM64::ORRXrs && MI->getOperand(1).getReg() == ARM64::XZR &&
-      MI->getOperand(3).getImm() == 0) {
-    O << "\tmov\t" << getRegisterName(MI->getOperand(0).getReg())
-      << ", " << getRegisterName(MI->getOperand(2).getReg());
-    return;
-  }
 
   if (!printAliasInstr(MI, O))
     printInstruction(MI, O);
