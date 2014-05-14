@@ -50,7 +50,8 @@ run_lint() {
   if [[ "${SILENT}" != "1" ]]; then
     cat $TASK_LOG
   fi
-  ${LITLINT} "$@" 2>>$ERROR_LOG
+# litlint disabled because it requires Python 2.7 or later
+#  ${LITLINT} "$@" 2>>$ERROR_LOG
 }
 
 run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
