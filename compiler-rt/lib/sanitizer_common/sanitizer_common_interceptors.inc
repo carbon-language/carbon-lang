@@ -4023,7 +4023,6 @@ INTERCEPTOR(int, fflush, __sanitizer_FILE *fp) {
 INTERCEPTOR(int, fclose, __sanitizer_FILE *fp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fclose, fp);
-  int res = REAL(fclose)(fp);
   if (fp) {
     COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
     const FileMetadata *m = GetInterceptorMetadata(fp);
@@ -4032,7 +4031,7 @@ INTERCEPTOR(int, fclose, __sanitizer_FILE *fp) {
       DeleteInterceptorMetadata(fp);
     }
   }
-  return res;
+  return REAL(fclose)(fp);
 }
 #define INIT_FCLOSE COMMON_INTERCEPT_FUNCTION(fclose);
 #else
