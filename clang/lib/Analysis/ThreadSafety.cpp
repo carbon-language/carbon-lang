@@ -849,44 +849,37 @@ public:
     return false;
   }
 
-  // Returns an iterator
   iterator findLockIter(FactManager &FM, const SExpr &M) {
-    for (iterator I = begin(), E = end(); I != E; ++I) {
-      const SExpr &Exp = FM[*I].MutID;
-      if (Exp.matches(M))
-        return I;
-    }
-    return end();
+    return std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+      return FM[ID].MutID.matches(M);
+    });
   }
 
-  LockData* findLock(FactManager &FM, const SExpr &M) const {
-    for (const_iterator I = begin(), E = end(); I != E; ++I) {
-      const SExpr &Exp = FM[*I].MutID;
-      if (Exp.matches(M))
-        return &FM[*I].LDat;
-    }
-    return 0;
+  LockData *findLock(FactManager &FM, const SExpr &M) const {
+    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+      return FM[ID].MutID.matches(M);
+    });
+
+    return I != end() ? &FM[*I].LDat : nullptr;
   }
 
-  LockData* findLockUniv(FactManager &FM, const SExpr &M) const {
-    for (const_iterator I = begin(), E = end(); I != E; ++I) {
-      const SExpr &Exp = FM[*I].MutID;
-      if (Exp.matches(M) || Exp.isUniversal())
-        return &FM[*I].LDat;
-    }
-    return 0;
+  LockData *findLockUniv(FactManager &FM, const SExpr &M) const {
+    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) -> bool {
+      const SExpr &Expr = FM[ID].MutID;
+      return Expr.isUniversal() || Expr.matches(M);
+    });
+
+    return I != end() ? &FM[*I].LDat : nullptr;
   }
 
-  FactEntry* findPartialMatch(FactManager &FM, const SExpr &M) const {
-    for (const_iterator I=begin(), E=end(); I != E; ++I) {
-      const SExpr& Exp = FM[*I].MutID;
-      if (Exp.partiallyMatches(M)) return &FM[*I];
-    }
-    return 0;
+  FactEntry *findPartialMatch(FactManager &FM, const SExpr &M) const {
+    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+      return FM[ID].MutID.partiallyMatches(M);
+    });
+
+    return I != end() ? &FM[*I] : nullptr;
   }
 };
-
-
 
 /// A Lockset maps each SExpr (defined above) to information about how it has
 /// been locked.
