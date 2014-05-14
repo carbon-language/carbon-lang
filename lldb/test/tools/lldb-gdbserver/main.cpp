@@ -26,9 +26,15 @@ int main (int argc, char **argv)
         else if (std::strstr (argv[i], SLEEP_PREFIX))
         {
             // Treat as the amount of time to have this process sleep (in seconds).
-            const int sleep_seconds = std::atoi (argv[i] + strlen (SLEEP_PREFIX));
-			const int sleep_result = sleep(sleep_seconds);
-			std::cout << "sleep result: " << sleep_result << std::endl;
+            int sleep_seconds_remaining = std::atoi (argv[i] + strlen (SLEEP_PREFIX));
+			
+			// Loop around, sleeping until all sleep time is used up.  Note that
+			// signals will cause sleep to end early with the number of seconds remaining.
+			for (int i = 0; sleep_seconds_remaining > 0; ++i)
+			{
+				sleep_seconds_remaining = sleep (sleep_seconds_remaining);
+				std::cout << "sleep result (call " << i << "): " << sleep_seconds_remaining << std::endl;
+			}
         }
         else
         {

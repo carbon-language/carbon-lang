@@ -7,6 +7,7 @@ import pexpect
 import socket
 import subprocess
 import sys
+import time
 from lldbtest import *
 from lldbgdbserverutils import *
 import logging
@@ -96,15 +97,15 @@ class LldbGdbServerTestCase(TestBase):
 
         return server
 
-    def launch_process_for_attach(self):
+    def launch_process_for_attach(self,sleep_seconds=3):
         # We're going to start a child process that the debug monitor stub can later attach to.
         # This process needs to be started so that it just hangs around for a while.  We'll
         # have it sleep.
         exe_path = os.path.abspath("a.out")
-        print("using exe for attach: %s" % exe_path)
-        print("exists? {}".format(os.path.exists(exe_path)))
-        
-        args = [exe_path, "sleep:5"]
+        args = [exe_path]
+        if sleep_seconds:
+            args.append("sleep:%d" % sleep_seconds)
+            
         return subprocess.Popen(args)
 
     def add_no_ack_remote_stream(self):
@@ -122,6 +123,12 @@ class LldbGdbServerTestCase(TestBase):
              "send packet: $OK#00",
              "read packet: $qLaunchSuccess#a5",
              "send packet: $OK#00"],
+            True)
+
+    def add_get_pid(self):
+        self.test_sequence.add_log_lines(
+            ["read packet: $qProcessInfo#00",
+              { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
             True)
 
     def expect_gdbremote_sequence(self):
@@ -409,10 +416,7 @@ class LldbGdbServerTestCase(TestBase):
 
         # Check that the stub reports attachment to the inferior.
         self.add_no_ack_remote_stream()
-        self.test_sequence.add_log_lines(
-            ["read packet: $qProcessInfo#00",
-              { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
-            True)
+        self.add_get_pid()
         context = self.expect_gdbremote_sequence()
 
         # Ensure the process id matches what we expected.
@@ -435,6 +439,88 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.attach_commandline_qProcessInfo_reports_pid()
+
+    def attach_commandline_continue_app_exits(self):
+        # Launch the process that we'll use as the inferior.
+        inferior = self.launch_process_for_attach(sleep_seconds=1)
+        self.assertIsNotNone(inferior)
+        self.assertTrue(inferior.pid > 0)
+
+        # Launch the debug monitor stub, attaching to the inferior.
+        server = self.start_server(attach_pid=inferior.pid)
+        self.assertIsNotNone(server)
+
+        # Check that the stub reports attachment to the inferior.
+        self.add_no_ack_remote_stream()
+        self.add_get_pid()
+        self.test_sequence.add_log_lines(
+            ["read packet: $vCont;c#00",
+             "send packet: $W00#00"],
+            True)
+        self.expect_gdbremote_sequence()
+
+        # Process should be dead now.  Reap results.
+        poll_result = inferior.poll()
+        self.assertIsNotNone(poll_result)
+
+        # Where possible, verify at the system level that the process is not running.
+        self.assertFalse(process_is_running(inferior.pid, False))
+
+    @debugserver_test
+    @dsym_test
+    def test_attach_commandline_continue_app_exits_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.attach_commandline_continue_app_exits()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_attach_commandline_continue_app_exits_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.attach_commandline_continue_app_exits()
+
+    def attach_commandline_kill_after_initial_stop(self):
+        # Launch the process that we'll use as the inferior.
+        inferior = self.launch_process_for_attach(sleep_seconds=10)
+        self.assertIsNotNone(inferior)
+        self.assertTrue(inferior.pid > 0)
+
+        # Launch the debug monitor stub, attaching to the inferior.
+        server = self.start_server(attach_pid=inferior.pid)
+        self.assertIsNotNone(server)
+
+        # Check that the stub reports attachment to the inferior.
+        self.add_no_ack_remote_stream()
+        self.add_get_pid()
+        self.test_sequence.add_log_lines(
+            ["read packet: $k#6b",
+             "send packet: $W09#00"],
+            True)
+        self.expect_gdbremote_sequence()
+
+        # Process should be dead now.  Reap results.
+        poll_result = inferior.poll()
+        self.assertIsNotNone(poll_result)
+
+        # Where possible, verify at the system level that the process is not running.
+        self.assertFalse(process_is_running(inferior.pid, False))
+
+    @debugserver_test
+    @dsym_test
+    def test_attach_commandline_kill_after_initial_stop_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.attach_commandline_kill_after_initial_stop()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_attach_commandline_kill_after_initial_stop_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.attach_commandline_kill_after_initial_stop()
 
 if __name__ == '__main__':
     unittest2.main()
