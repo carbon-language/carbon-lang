@@ -3,9 +3,9 @@
 
 // Assume we're on Darwin and try to pass -U to the linker. If this flag is
 // unsupported, don't use it.
-// RUN: %clangxx_asan -O0 %p/SharedLibs/init-order-dlopen-so.cc \
+// RUN: %clangxx_asan -O0 %p/../SharedLibs/init-order-dlopen-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so -Wl,-U,_inc_global || \
-// RUN:     %clangxx_asan -O0 %p/SharedLibs/init-order-dlopen-so.cc \
+// RUN:     %clangxx_asan -O0 %p/../SharedLibs/init-order-dlopen-so.cc \
 // RUN:         -fPIC -shared -o %t-so.so
 // If the linker doesn't support --export-dynamic (which is ELF-specific),
 // try to link without that option.

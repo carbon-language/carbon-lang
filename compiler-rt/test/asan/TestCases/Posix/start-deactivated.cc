@@ -2,7 +2,7 @@
 // Main executable is uninstrumented, but linked to ASan runtime. The shared
 // library is instrumented. Memory errors before dlopen are not detected.
 
-// RUN: %clangxx_asan -O0 %p/SharedLibs/start-deactivated-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O0 %p/../SharedLibs/start-deactivated-so.cc -fPIC -shared -o %t-so.so
 // RUN: %clangxx -O0 %s -c -o %t.o
 // RUN: %clangxx_asan -O0 %t.o -ldl -o %t
 // RUN: ASAN_OPTIONS=start_deactivated=1 not %run %t 2>&1 | FileCheck %s
