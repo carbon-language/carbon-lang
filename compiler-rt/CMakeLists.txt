@@ -131,6 +131,8 @@ endif()
 
 if("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang[+]*$")
   set(COMPILER_RT_TEST_COMPILER_ID Clang)
+elseif("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang-cl.exe$")
+  set(COMPILER_RT_TEST_COMPILER_ID Clang)
 else()
   set(COMPILER_RT_TEST_COMPILER_ID GNU)
 endif()
