@@ -177,5 +177,11 @@ So to reformat all the lines in the latest :program:`git` commit, just do:
 
   git diff -U0 HEAD^ | clang-format-diff.py -i -p1
 
+In an SVN client, you can do:
+
+.. code-block:: console
+
+  svn diff --diff-cmd=diff -x-U0 | clang-format-diff.py -i
+
 The :option:`-U0` will create a diff without context lines (the script would format
 those as well).
