@@ -54,6 +54,16 @@
 // RUN:     FileCheck -check-prefix=ErrWarn %s
 // ErrWarn: warning: falling back to {{.*}}cl.exe
 
+// Don't attempt to run clang -cc1 with /fallback and /GR.  It isn't ready yet.
+// RUN: %clang_cl /fallback /c /GR -### -- %s 2>&1 | \
+// RUN:     FileCheck -check-prefix=RTTI %s
+// RTTI: warning: cannot compile RTTI yet, falling back to {{.*}}cl.exe
+// RUN: %clang_cl /fallback /c /GR /GR- -### -- %s 2>&1 | \
+// RUN:     FileCheck -check-prefix=NO_RTTI %s
+// NO_RTTI: "-cc1"
+// NO_RTTI: ||
+// NO_RTTI: cl.exe
+
 // Don't fall back on non-C or C++ files.
 // RUN: %clang_cl /fallback -### -- %S/Inputs/file.ll 2>&1 | FileCheck -check-prefix=LL %s
 // LL: file.ll
