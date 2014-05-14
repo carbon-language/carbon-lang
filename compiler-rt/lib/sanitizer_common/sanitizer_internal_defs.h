@@ -199,7 +199,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 
 // Check macro
 #define RAW_CHECK_MSG(expr, msg) do { \
-  if (!(expr)) { \
+  if (UNLIKELY(!(expr))) { \
     RawWrite(msg); \
     Die(); \
   } \
@@ -211,7 +211,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   do { \
     __sanitizer::u64 v1 = (u64)(c1); \
     __sanitizer::u64 v2 = (u64)(c2); \
-    if (!(v1 op v2)) \
+    if (UNLIKELY(!(v1 op v2))) \
       __sanitizer::CheckFailed(__FILE__, __LINE__, \
         "(" #c1 ") " #op " (" #c2 ")", v1, v2); \
   } while (false) \

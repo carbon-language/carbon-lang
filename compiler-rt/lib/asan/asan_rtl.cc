@@ -552,7 +552,7 @@ static void PrintAddressSpaceLayout() {
 }
 
 static void AsanInitInternal() {
-  if (asan_inited) return;
+  if (LIKELY(asan_inited)) return;
   SanitizerToolName = "AddressSanitizer";
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
@@ -708,7 +708,7 @@ public:  // NOLINT
   AsanInitializer() {
     AsanCheckIncompatibleRT();
     AsanCheckDynamicRTPrereqs();
-    if (!asan_inited)
+    if (UNLIKELY(!asan_inited))
       __asan_init();
   }
 };

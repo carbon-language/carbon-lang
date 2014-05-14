@@ -77,7 +77,7 @@ INTERCEPTOR(void*, malloc, uptr size) {
 }
 
 INTERCEPTOR(void*, calloc, uptr nmemb, uptr size) {
-  if (!asan_inited) {
+  if (UNLIKELY(!asan_inited)) {
     // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
     const uptr kCallocPoolSize = 1024;
     static uptr calloc_memory_for_dlsym[kCallocPoolSize];

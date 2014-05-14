@@ -96,7 +96,7 @@ void InitializeAsanInterceptors();
 
 #define ENSURE_ASAN_INITED() do { \
   CHECK(!asan_init_is_running); \
-  if (!asan_inited) { \
+  if (UNLIKELY(!asan_inited)) { \
     AsanInitFromRtl(); \
   } \
 } while (0)

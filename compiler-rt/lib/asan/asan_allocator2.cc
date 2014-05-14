@@ -281,7 +281,7 @@ void ReInitializeAllocator() {
 
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
                       AllocType alloc_type, bool can_fill) {
-  if (!asan_inited)
+  if (UNLIKELY(!asan_inited))
     AsanInitFromRtl();
   Flags &fl = *flags();
   CHECK(stack);

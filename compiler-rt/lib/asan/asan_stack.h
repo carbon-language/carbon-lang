@@ -32,7 +32,7 @@ void GetStackTraceWithPcBpAndContext(StackTrace *stack, uptr max_depth, uptr pc,
 #else
   AsanThread *t;
   stack->size = 0;
-  if (asan_inited) {
+  if (LIKELY(asan_inited)) {
     if ((t = GetCurrentThread()) && !t->isUnwinding()) {
       uptr stack_top = t->stack_top();
       uptr stack_bottom = t->stack_bottom();
