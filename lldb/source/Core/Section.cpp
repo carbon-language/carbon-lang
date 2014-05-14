@@ -331,10 +331,13 @@ SectionList::operator = (const SectionList& rhs)
 size_t
 SectionList::AddSection (const lldb::SectionSP& section_sp)
 {
-    assert (section_sp.get());
-    size_t section_index = m_sections.size();
-    m_sections.push_back(section_sp);
-    return section_index;
+    if (section_sp)
+    {
+        size_t section_index = m_sections.size();
+        m_sections.push_back(section_sp);
+        return section_index;
+    }
+    return SIZE_T_MAX;
 }
 
 // Warning, this can be slow as it's removing items from a std::vector.
@@ -433,14 +436,16 @@ SectionList::FindSectionByName (const ConstString &section_dstr) const
         for (sect_iter = m_sections.begin(); sect_iter != end && sect_sp.get() == NULL; ++sect_iter)
         {
             Section *child_section = sect_iter->get();
-            assert (child_section);
-            if (child_section->GetName() == section_dstr)
+            if (child_section)
             {
-                sect_sp = *sect_iter;
-            }
-            else
-            {
-                sect_sp = child_section->GetChildren().FindSectionByName(section_dstr);
+                if (child_section->GetName() == section_dstr)
+                {
+                    sect_sp = *sect_iter;
+                }
+                else
+                {
+                    sect_sp = child_section->GetChildren().FindSectionByName(section_dstr);
+                }
             }
         }
     }
