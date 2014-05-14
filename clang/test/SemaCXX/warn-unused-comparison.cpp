@@ -106,3 +106,16 @@ namespace PR10291 {
 
   X<int> x;
 }
+
+namespace PR19724 {
+class stream {
+} cout, cin;
+
+stream &operator<(stream &s, int);
+bool operator<(stream &s, stream &s2);
+
+void test() {
+  cout < 5;    // no waring, operator returns a reference
+  cout < cin;  // expected-warning {{relational comparison result unused}}
+}
+}

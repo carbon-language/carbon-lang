@@ -2094,6 +2094,8 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     case OO_Greater:
     case OO_GreaterEqual:
     case OO_LessEqual:
+      if (Op->getCallReturnType()->isReferenceType())
+        break;
       WarnE = this;
       Loc = Op->getOperatorLoc();
       R1 = Op->getSourceRange();
