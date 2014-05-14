@@ -39,8 +39,11 @@ public:
     if (error_code ec = nFile.getError())
       return ec;
 
-    // For debugging, write out yaml form of normalized file.
-    //writeYaml(*nFile->get(), llvm::errs());
+    // For testing, write out yaml form of normalized file.
+    if (_context.printAtoms()) {
+      std::unique_ptr<Writer> yamlWriter = createWriterYAML(_context);
+      yamlWriter->writeFile(file, "-");
+    }
 
     // Write normalized file as mach-o binary.
     return writeBinary(*nFile->get(), path);

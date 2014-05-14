@@ -70,6 +70,9 @@ def all_load : Flag<["-"], "all_load">,
         HelpText<"Forces all members of all static libraries to be loaded">,
         Group<grp_libs>;
 
+// test case options
+def print_atoms : Flag<["-"], "print_atoms">, 
+        HelpText<"Emit output as yaml atoms">;
 
 // general options
 def output : Separate<["-"], "o">, HelpText<"Output file path">;

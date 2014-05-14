@@ -258,6 +258,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.appendLLVMOption((*it)->getValue());
   }
 
+  // Handle -print_atoms a
+  if (parsedArgs->getLastArg(OPT_print_atoms))
+    ctx.setPrintAtoms();
+
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
 
   // Handle input files

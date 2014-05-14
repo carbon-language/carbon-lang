@@ -77,6 +77,7 @@ public:
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
+  bool printAtoms() const { return _printAtoms; }
 
   /// \brief The dylib's binary compatibility version, in the raw uint32 format.
   ///
@@ -123,6 +124,7 @@ public:
     _deadStrippableDylib = deadStrippable;
   }
   void setBundleLoader(StringRef loader) { _bundleLoader = loader; }
+  void setPrintAtoms(bool value=true) { _printAtoms = value; }
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
@@ -163,6 +165,7 @@ private:
   uint32_t _currentVersion;
   StringRef _installName;
   bool _deadStrippableDylib;
+  bool _printAtoms;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
   mutable std::unique_ptr<Writer> _writer;

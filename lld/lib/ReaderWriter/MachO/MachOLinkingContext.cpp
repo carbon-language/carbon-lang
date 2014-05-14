@@ -122,7 +122,8 @@ MachOLinkingContext::MachOLinkingContext()
     : _outputFileType(MH_EXECUTE), _outputFileTypeStatic(false),
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
-      _currentVersion(0), _deadStrippableDylib(false), _kindHandler(nullptr) {}
+      _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
+      _kindHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
