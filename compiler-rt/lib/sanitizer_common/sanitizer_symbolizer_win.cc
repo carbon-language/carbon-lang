@@ -78,6 +78,17 @@ class WinSymbolizer : public Symbolizer {
     return true;
   }
 
+  const char *Demangle(const char *name) {
+    CHECK(initialized_);
+    static char demangle_buffer[1000];
+    if (name[0] == '\01' &&
+        UnDecorateSymbolName(name + 1, demangle_buffer, sizeof(demangle_buffer),
+                             UNDNAME_NAME_ONLY))
+      return demangle_buffer;
+    else
+      return name;
+  }
+
   // FIXME: Implement GetModuleNameAndOffsetForPC().
 
  private:
