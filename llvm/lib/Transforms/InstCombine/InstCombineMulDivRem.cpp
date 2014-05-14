@@ -727,7 +727,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
         if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
           if (MultiplyOverflows(RHS, LHSRHS,
-                                I.getOpcode()==Instruction::SDiv))
+                                I.getOpcode() == Instruction::SDiv))
             return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
           return BinaryOperator::Create(I.getOpcode(), LHS->getOperand(0),
                                         ConstantExpr::getMul(RHS, LHSRHS));
@@ -740,6 +740,25 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       if (isa<PHINode>(Op0))
         if (Instruction *NV = FoldOpIntoPhi(I))
           return NV;
+    }
+  }
+
+  if (ConstantInt *One = dyn_cast<ConstantInt>(Op0)) {
+    if (One->isOne() && !I.getType()->isIntegerTy(1)) {
+      bool isSigned = I.getOpcode() == Instruction::SDiv;
+      if (isSigned) {
+        // If Op1 is 0 then it's undefined behaviour, if Op1 is 1 then the
+        // result is one, if Op1 is -1 then the result is minus one, otherwise
+        // it's zero.
+        Value *Inc = Builder->CreateAdd(Op1, One);
+        Value *Cmp = Builder->CreateICmpULT(
+                         Inc, ConstantInt::get(I.getType(), 3));
+        return SelectInst::Create(Cmp, Op1, ConstantInt::get(I.getType(), 0));
+      } else {
+        // If Op1 is 0 then it's undefined behaviour. If Op1 is 1 then the
+        // result is one, otherwise it's zero.
+        return new ZExtInst(Builder->CreateICmpEQ(Op1, One), I.getType());
+      }
     }
   }
 

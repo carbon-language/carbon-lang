@@ -156,3 +156,22 @@ define <2 x i64> @test18(<2 x i64> %x) nounwind {
 ; CHECK-NEXT: sub <2 x i64> zeroinitializer, %x
 ; CHECK-NEXT: ret <2 x i64>
 }
+
+define i32 @test19(i32 %x) {
+  %A = udiv i32 1, %x
+  ret i32 %A
+; CHECK-LABEL: @test19(
+; CHECK-NEXT: icmp eq i32 %x, 1
+; CHECK-NEXT: zext i1 %{{.*}} to i32
+; CHECK-NEXT ret i32
+}
+
+define i32 @test20(i32 %x) {
+  %A = sdiv i32 1, %x
+  ret i32 %A
+; CHECK-LABEL: @test20(
+; CHECK-NEXT: add i32 %x, 1
+; CHECK-NEXT: icmp ult i32 %{{.*}}, 3
+; CHECK-NEXT: select i1 %{{.*}}, i32 %x, i32 {{.*}}
+; CHECK-NEXT: ret i32
+}
