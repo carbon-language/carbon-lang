@@ -394,3 +394,14 @@ define <8 x i8> @pr19730(<16 x i8> %in0) {
   %shuffle1 = shufflevector <8 x i8> %shuffle, <8 x i8> undef, <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
   ret <8 x i8> %shuffle1
 }
+
+define i32 @pr19737(<4 x i32> %in0) {
+; CHECK-LABEL: @pr19737(
+; CHECK: [[VAR:%[a-zA-Z0-9.]+]] = extractelement <4 x i32> %in0, i32 0
+; CHECK: ret i32 [[VAR]]
+  %shuffle.i = shufflevector <4 x i32> zeroinitializer, <4 x i32> %in0, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  %neg.i = xor <4 x i32> %shuffle.i, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %and.i = and <4 x i32> %in0, %neg.i
+  %rv = extractelement <4 x i32> %and.i, i32 0
+  ret i32 %rv
+}

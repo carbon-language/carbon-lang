@@ -1085,18 +1085,18 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
 
 /// \brief Creates node of binary operation with the same attributes as the
 /// specified one but with other operands.
-static BinaryOperator *CreateBinOpAsGiven(BinaryOperator &Inst, Value *LHS,
-                                          Value *RHS,
-                                          InstCombiner::BuilderTy *B) {
-  BinaryOperator *NewBO = cast<BinaryOperator>(B->CreateBinOp(Inst.getOpcode(),
-                                                              LHS, RHS));
-  if (isa<OverflowingBinaryOperator>(NewBO)) {
-    NewBO->setHasNoSignedWrap(Inst.hasNoSignedWrap());
-    NewBO->setHasNoUnsignedWrap(Inst.hasNoUnsignedWrap());
+static Value *CreateBinOpAsGiven(BinaryOperator &Inst, Value *LHS, Value *RHS,
+                                 InstCombiner::BuilderTy *B) {
+  Value *BORes = B->CreateBinOp(Inst.getOpcode(), LHS, RHS);
+  if (BinaryOperator *NewBO = dyn_cast<BinaryOperator>(BORes)) {
+    if (isa<OverflowingBinaryOperator>(NewBO)) {
+      NewBO->setHasNoSignedWrap(Inst.hasNoSignedWrap());
+      NewBO->setHasNoUnsignedWrap(Inst.hasNoUnsignedWrap());
+    }
+    if (isa<PossiblyExactOperator>(NewBO))
+      NewBO->setIsExact(Inst.isExact());
   }
-  if (isa<PossiblyExactOperator>(NewBO))
-    NewBO->setIsExact(Inst.isExact());
-  return NewBO;
+  return BORes;
 }
 
 /// \brief Makes transformation of binary operation specific for vector types.
@@ -1122,7 +1122,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
         isa<UndefValue>(RShuf->getOperand(1)) &&
         LShuf->getOperand(0)->getType() == RShuf->getOperand(0)->getType() &&
         LShuf->getMask() == RShuf->getMask()) {
-      BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, LShuf->getOperand(0),
+      Value *NewBO = CreateBinOpAsGiven(Inst, LShuf->getOperand(0),
           RShuf->getOperand(0), Builder);
       Value *Res = Builder->CreateShuffleVector(NewBO,
           UndefValue::get(NewBO->getType()), LShuf->getMask());
@@ -1168,7 +1168,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
         NewLHS = Shuffle->getOperand(0);
         NewRHS = C2;
       }
-      BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, NewLHS, NewRHS, Builder);
+      Value *NewBO = CreateBinOpAsGiven(Inst, NewLHS, NewRHS, Builder);
       Value *Res = Builder->CreateShuffleVector(NewBO,
           UndefValue::get(Inst.getType()), Shuffle->getMask());
       return Res;
