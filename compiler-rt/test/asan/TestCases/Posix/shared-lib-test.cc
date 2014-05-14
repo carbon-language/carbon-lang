@@ -1,12 +1,13 @@
-// RUN: %clangxx_asan -O0 %p/../SharedLibs/shared-lib-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O0 %s -ldl -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 %p/../SharedLibs/shared-lib-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O1 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O1 %s -ldl -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %p/../SharedLibs/shared-lib-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O2 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O2 %s -ldl -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %p/../SharedLibs/shared-lib-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O3 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O3 %s -ldl -o %t && not %run %t 2>&1 | FileCheck %s
 
+#if !defined(SHARED_LIB)
 #include <dlfcn.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,3 +37,20 @@ int main(int argc, char *argv[]) {
   // CHECK: {{    #1 0x.* in main .*shared-lib-test.cc:}}[[@LINE-4]]
   return 0;
 }
+#else  // SHARED_LIBS
+#include <stdio.h>
+#include <string.h>
+
+int pad[10];
+int GLOB[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+extern "C"
+void inc(int index) {
+  GLOB[index]++;
+}
+
+extern "C"
+void inc2(int *a, int index) {
+  a[index]++;
+}
+#endif  // SHARED_LIBS

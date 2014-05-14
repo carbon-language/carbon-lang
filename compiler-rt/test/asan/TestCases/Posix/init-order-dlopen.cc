@@ -3,9 +3,9 @@
 
 // Assume we're on Darwin and try to pass -U to the linker. If this flag is
 // unsupported, don't use it.
-// RUN: %clangxx_asan -O0 %p/../SharedLibs/init-order-dlopen-so.cc \
+// RUN: %clangxx_asan -O0 -DSHARED_LIB %s \
 // RUN:     -fPIC -shared -o %t-so.so -Wl,-U,_inc_global || \
-// RUN:     %clangxx_asan -O0 %p/../SharedLibs/init-order-dlopen-so.cc \
+// RUN:     %clangxx_asan -O0 -DSHARED_LIB %s \
 // RUN:         -fPIC -shared -o %t-so.so
 // If the linker doesn't support --export-dynamic (which is ELF-specific),
 // try to link without that option.
@@ -13,6 +13,7 @@
 // RUN: %clangxx_asan -O0 %s -lpthread -ldl -o %t -Wl,--export-dynamic || \
 // RUN:     %clangxx_asan -O0 %s -lpthread -ldl -o %t
 // RUN: ASAN_OPTIONS=strict_init_order=true %run %t 2>&1 | FileCheck %s
+#if !defined(SHARED_LIB)
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -55,3 +56,17 @@ int main(int argc, char *argv[]) {
   // CHECK: PASSED
   return 0;
 }
+#else  // SHARED_LIB
+#include <stdio.h>
+#include <unistd.h>
+
+extern "C" void inc_global();
+
+int slow_init() {
+  sleep(1);
+  inc_global();
+  return 42;
+}
+
+int slowly_init_glob = slow_init();
+#endif  // SHARED_LIB

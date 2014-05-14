@@ -14,15 +14,16 @@
 // It works on i368/x86_64 Linux, but not necessary anywhere else.
 // REQUIRES: x86_64-supported-target,i386-supported-target
 
-// RUN: %clangxx_asan -O0 %p/SharedLibs/dlclose-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O0 %s -ldl -o %t && %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 %p/SharedLibs/dlclose-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O1 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O1 %s -ldl -o %t && %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %p/SharedLibs/dlclose-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O2 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O2 %s -ldl -o %t && %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %p/SharedLibs/dlclose-test-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O3 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O3 %s -ldl -o %t && %run %t 2>&1 | FileCheck %s
 
+#if !defined(SHARED_LIB)
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -75,3 +76,24 @@ int main(int argc, char *argv[]) {
   // CHECK: PASS
   return 0;
 }
+#else  // SHARED_LIB
+#include <stdio.h>
+
+static int pad1;
+static int static_var;
+static int pad2;
+
+extern "C"
+int *get_address_of_static_var() {
+  return &static_var;
+}
+
+__attribute__((constructor))
+void at_dlopen() {
+  printf("%s: I am being dlopened\n", __FILE__);
+}
+__attribute__((destructor))
+void at_dlclose() {
+  printf("%s: I am being dlclosed\n", __FILE__);
+}
+#endif  // SHARED_LIB

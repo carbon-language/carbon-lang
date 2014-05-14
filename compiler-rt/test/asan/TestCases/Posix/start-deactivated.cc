@@ -2,11 +2,12 @@
 // Main executable is uninstrumented, but linked to ASan runtime. The shared
 // library is instrumented. Memory errors before dlopen are not detected.
 
-// RUN: %clangxx_asan -O0 %p/../SharedLibs/start-deactivated-so.cc -fPIC -shared -o %t-so.so
+// RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx -O0 %s -c -o %t.o
 // RUN: %clangxx_asan -O0 %t.o -ldl -o %t
 // RUN: ASAN_OPTIONS=start_deactivated=1 not %run %t 2>&1 | FileCheck %s
 
+#if !defined(SHARED_LIB)
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,3 +56,12 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+#else  // SHARED_LIB
+#include <stdio.h>
+#include <stdlib.h>
+
+extern "C" void do_another_bad_thing() {
+  char *volatile p = (char *)malloc(100);
+  printf("%hhx\n", p[105]);
+}
+#endif  // SHARED_LIB

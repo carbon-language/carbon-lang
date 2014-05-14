@@ -3,12 +3,14 @@
 // https://code.google.com/p/address-sanitizer/issues/detail?id=159
 
 // RUN: %clangxx_asan %s -o %t
-// RUN: %clangxx %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
+// RUN: %clangxx -DSHARED_LIB %s \
 // RUN:     -dynamiclib -o darwin-dummy-shared-lib-so.dylib
 
 // FIXME: the following command line may hang in the case of a regression.
 // RUN: DYLD_INSERT_LIBRARIES=darwin-dummy-shared-lib-so.dylib \
 // RUN:     %run %t 2>&1 | FileCheck %s || exit 1
+
+#if !defined(SHARED_LIB)
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,3 +20,6 @@ int main() {
   // CHECK: {{DYLD_INSERT_LIBRARIES=.*darwin-dummy-shared-lib-so.dylib.*}}
   return 0;
 }
+#else  // SHARED_LIB
+void foo() {}
+#endif  // SHARED_LIB
