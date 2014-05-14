@@ -757,3 +757,63 @@ define <4 x i8> @vectorselectfold2(<4 x i8> %a, <4 x i8> %b) {
 ; CHECK-LABEL: @vectorselectfold
 ; CHECK-NEXT: ret <4 x i8> %a
 }
+
+define i1 @compare_always_true_slt(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp slt i32 %2, 1
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_true_slt
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @compare_always_true_sle(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp sle i32 %2, 0
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_true_sle
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @compare_always_false_sgt(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp sgt i32 %2, 0
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_false_sgt
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @compare_always_false_sge(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp sge i32 %2, 1
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_false_sge
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @compare_always_false_eq(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp eq i32 %2, 1
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_false_eq
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @compare_always_false_ne(i16 %a) {
+  %1 = zext i16 %a to i32
+  %2 = sub nsw i32 0, %1
+  %3 = icmp ne i32 %2, 1
+  ret i1 %3
+
+; CHECK-LABEL: @compare_always_false_ne
+; CHECK-NEXT: ret i1 true
+}

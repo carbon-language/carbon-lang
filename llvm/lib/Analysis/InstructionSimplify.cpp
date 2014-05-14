@@ -2280,6 +2280,28 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
+  // 0 - (zext X) pred C
+  if (!CmpInst::isUnsigned(Pred) && match(LHS, m_Neg(m_ZExt(m_Value())))) {
+    if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS)) {
+      if (RHSC->getValue().isStrictlyPositive()) {
+        if (Pred == ICmpInst::ICMP_SLT)
+          return ConstantInt::getTrue(RHSC->getContext());
+        if (Pred == ICmpInst::ICMP_SGE)
+          return ConstantInt::getFalse(RHSC->getContext());
+        if (Pred == ICmpInst::ICMP_EQ)
+          return ConstantInt::getFalse(RHSC->getContext());
+        if (Pred == ICmpInst::ICMP_NE)
+          return ConstantInt::getTrue(RHSC->getContext());
+      }
+      if (RHSC->getValue().isNonNegative()) {
+        if (Pred == ICmpInst::ICMP_SLE)
+          return ConstantInt::getTrue(RHSC->getContext());
+        if (Pred == ICmpInst::ICMP_SGT)
+          return ConstantInt::getFalse(RHSC->getContext());
+      }
+    }
+  }
+
   // icmp pred (urem X, Y), Y
   if (LBO && match(LBO, m_URem(m_Value(), m_Specific(RHS)))) {
     bool KnownNonNegative, KnownNegative;
