@@ -202,19 +202,13 @@ public:
     if (_seen.count(file) > 0)
       return;
     _seen.insert(file);
-    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
-      for (const std::string &sym : archive->getDefinedSymbols())
-        _defined.insert(sym);
-      return;
-    }
-    for (const DefinedAtom *atom : file->defined())
-      if (!atom->name().empty())
-        _defined.insert(atom->name());
+    _queue.insert(file);
   }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (_exportedSyms.count(sym) == 0)
       return nullptr;
+    readAllSymbols();
     std::string replace;
     if (!findSymbolWithAtsignSuffix(sym.str(), replace))
       return nullptr;
@@ -222,6 +216,22 @@ public:
   }
 
 private:
+  // Files are read lazily, so that it has no runtime overhead if
+  // there's no dllexported stdcall functions.
+  void readAllSymbols() const {
+    for (File *file : _queue) {
+      if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
+        for (const std::string &sym : archive->getDefinedSymbols())
+          _defined.insert(sym);
+        continue;
+      }
+      for (const DefinedAtom *atom : file->defined())
+        if (!atom->name().empty())
+          _defined.insert(atom->name());
+    }
+    _queue.clear();
+  }
+
   // Find a symbol that starts with a given symbol name followed
   // by @number suffix.
   bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
@@ -242,8 +252,9 @@ private:
   }
 
   std::set<std::string> _exportedSyms;
-  std::set<std::string> _defined;
   std::set<File *> _seen;
+  mutable std::set<std::string> _defined;
+  mutable std::set<File *> _queue;
   mutable std::mutex _mutex;
   mutable llvm::BumpPtrAllocator _alloc;
 };
