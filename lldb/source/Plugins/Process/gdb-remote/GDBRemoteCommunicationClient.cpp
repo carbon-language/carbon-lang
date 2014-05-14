@@ -1193,25 +1193,22 @@ GDBRemoteCommunicationClient::GetCurrentProcessID ()
     }
     else
     {
-        // For Apple iOS targets, go back and ask the qC packet for its result.  In earlier iterations of debugserver, $qC returned
-        // the process id of the current process.
-        const llvm::Triple &triple = GetProcessArchitecture().GetTriple();
-        if ((triple.getVendor() == llvm::Triple::Apple) &&
-            (triple.getOS() == llvm::Triple::IOS))
+        // If we don't get a response for qProcessInfo, check if $qC gives us a result.
+        // $qC only returns a real process id on older debugserver and lldb-platform stubs.
+        // The gdb remote protocol documents $qC as returning the thread id, which newer
+        // debugserver and lldb-gdbserver stubs return correctly.
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, false) == PacketResult::Success)
         {
-            StringExtractorGDBRemote response;
-            if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, false) == PacketResult::Success)
+            if (response.GetChar() == 'Q')
             {
-                if (response.GetChar() == 'Q')
+                if (response.GetChar() == 'C')
                 {
-                    if (response.GetChar() == 'C')
+                    m_curr_pid = response.GetHexMaxU32 (false, LLDB_INVALID_PROCESS_ID);
+                    if (m_curr_pid != LLDB_INVALID_PROCESS_ID)
                     {
-                        m_curr_pid = response.GetHexMaxU32 (false, LLDB_INVALID_PROCESS_ID);
-                        if (m_curr_pid != LLDB_INVALID_PROCESS_ID)
-                        {
-                            m_curr_pid_is_valid = eLazyBoolYes;
-                            return m_curr_pid;
-                        }
+                        m_curr_pid_is_valid = eLazyBoolYes;
+                        return m_curr_pid;
                     }
                 }
             }
