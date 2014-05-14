@@ -66,3 +66,6 @@ void test_hiding() {
   struct hiding_1 *p = hiding_1();
   struct hiding_2 *q = hiding_2;
 }
+
+struct PreserveAttributes {};
+typedef struct __attribute__((noreturn)) PreserveAttributes PreserveAttributes_t; // expected-warning {{'noreturn' attribute only applies to functions and methods}}
