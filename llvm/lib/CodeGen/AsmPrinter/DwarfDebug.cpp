@@ -1142,8 +1142,6 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     RegVar->setFrameIndex(VI.Slot);
     if (!addCurrentFnArgument(RegVar, Scope))
       addScopeVariable(Scope, RegVar);
-    if (AbsDbgVariable)
-      AbsDbgVariable->setFrameIndex(VI.Slot);
   }
 }
 
