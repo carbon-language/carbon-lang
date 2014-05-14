@@ -1993,7 +1993,7 @@ Tail Calls
 
 This box indicates whether the target supports guaranteed tail calls.  These are
 calls marked "`tail <LangRef.html#i_call>`_" and use the fastcc calling
-convention.  Please see the `tail call section more more details`_.
+convention.  Please see the `tail call section`_ for more details.
 
 .. _feat_segstacks:
 
@@ -2011,7 +2011,7 @@ Basic support exists on the X86 backend. Currently vararg doesn't work and the
 object files are not marked the way the gold linker expects, but simple Go
 programs can be built by dragonegg.
 
-.. _tail call section more more details:
+.. _tail call section:
 
 Tail call optimization
 ----------------------
