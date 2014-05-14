@@ -1,7 +1,7 @@
 # RUN: not lld -core %s 2>&1 | FileCheck %s
 
 #
-# Test that section groups/gnu linkonce sections are parsed and a merge error 
+# Test that section groups/gnu linkonce sections are parsed and a merge error
 # is displayed at the time of symbol resolution.
 #
 
