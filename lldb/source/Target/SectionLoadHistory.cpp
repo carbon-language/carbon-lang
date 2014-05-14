@@ -47,15 +47,7 @@ SectionLoadHistory::GetLastStopID() const
 SectionLoadList *
 SectionLoadHistory::GetSectionLoadListForStopID (uint32_t stop_id, bool read_only)
 {
-    if (m_stop_id_to_section_load_list.empty())
-    {
-        SectionLoadListSP section_load_list_sp(new SectionLoadList());
-        if (stop_id == eStopIDNow)
-            stop_id = 0;
-        m_stop_id_to_section_load_list[stop_id] = section_load_list_sp;
-        return section_load_list_sp.get();
-    }
-    else
+    if (!m_stop_id_to_section_load_list.empty())
     {
         if (read_only)
         {
@@ -105,7 +97,11 @@ SectionLoadHistory::GetSectionLoadListForStopID (uint32_t stop_id, bool read_onl
             return section_load_list_sp.get();
         }
     }
-    return NULL;
+    SectionLoadListSP section_load_list_sp(new SectionLoadList());
+    if (stop_id == eStopIDNow)
+        stop_id = 0;
+    m_stop_id_to_section_load_list[stop_id] = section_load_list_sp;
+    return section_load_list_sp.get();
 }
 
 SectionLoadList &
