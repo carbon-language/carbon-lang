@@ -28,6 +28,37 @@ void CGCXXABI::ErrorUnsupportedABI(CodeGenFunction &CGF, StringRef S) {
     << S;
 }
 
+bool CGCXXABI::canCopyArgument(const CXXRecordDecl *RD) const {
+  // If RD has a non-trivial move or copy constructor, we cannot copy the
+  // argument.
+  if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialMoveConstructor())
+    return false;
+
+  // If RD has a non-trivial destructor, we cannot copy the argument.
+  if (RD->hasNonTrivialDestructor())
+    return false;
+
+  // We can only copy the argument if there exists at least one trivial,
+  // non-deleted copy or move constructor.
+  // FIXME: This assumes that all lazily declared copy and move constructors are
+  // not deleted.  This assumption might not be true in some corner cases.
+  bool CopyOrMoveDeleted = false;
+  for (const CXXConstructorDecl *CD : RD->ctors()) {
+    if (CD->isCopyConstructor() || CD->isMoveConstructor()) {
+      assert(CD->isTrivial());
+      // We had at least one undeleted trivial copy or move ctor.  Return
+      // directly.
+      if (!CD->isDeleted())
+        return true;
+      CopyOrMoveDeleted = true;
+    }
+  }
+
+  // If all trivial copy and move constructors are deleted, we cannot copy the
+  // argument.
+  return !CopyOrMoveDeleted;
+}
+
 llvm::Constant *CGCXXABI::GetBogusMemberPointer(QualType T) {
   return llvm::Constant::getNullValue(CGM.getTypes().ConvertType(T));
 }

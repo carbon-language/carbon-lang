@@ -404,19 +404,46 @@ MicrosoftCXXABI::getRecordArgABI(const CXXRecordDecl *RD) const {
     return RAA_Default;
 
   case llvm::Triple::x86:
-    // 32-bit x86 constructs non-trivial objects directly in outgoing argument
-    // slots.  LLVM uses the inalloca attribute to implement this.
-    if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialDestructor())
+    // All record arguments are passed in memory on x86.  Decide whether to
+    // construct the object directly in argument memory, or to construct the
+    // argument elsewhere and copy the bytes during the call.
+
+    // If C++ prohibits us from making a copy, construct the arguments directly
+    // into argument memory.
+    if (!canCopyArgument(RD))
       return RAA_DirectInMemory;
+
+    // Otherwise, construct the argument into a temporary and copy the bytes
+    // into the outgoing argument memory.
     return RAA_Default;
 
   case llvm::Triple::x86_64:
     // Win64 passes objects with non-trivial copy ctors indirectly.
     if (RD->hasNonTrivialCopyConstructor())
       return RAA_Indirect;
+
     // Win64 passes objects larger than 8 bytes indirectly.
     if (getContext().getTypeSize(RD->getTypeForDecl()) > 64)
       return RAA_Indirect;
+
+    // We have a trivial copy constructor or no copy constructors, but we have
+    // to make sure it isn't deleted.
+    bool CopyDeleted = false;
+    for (const CXXConstructorDecl *CD : RD->ctors()) {
+      if (CD->isCopyConstructor()) {
+        assert(CD->isTrivial());
+        // We had at least one undeleted trivial copy ctor.  Return directly.
+        if (!CD->isDeleted())
+          return RAA_Default;
+        CopyDeleted = true;
+      }
+    }
+
+    // The trivial copy constructor was deleted.  Return indirectly.
+    if (CopyDeleted)
+      return RAA_Indirect;
+
+    // There were no copy ctors.  Return in RAX.
     return RAA_Default;
   }
 
