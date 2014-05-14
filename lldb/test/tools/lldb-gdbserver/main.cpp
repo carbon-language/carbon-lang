@@ -1,9 +1,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 
-static const char *const STDERR_PREFIX = "stderr:";
 static const char *const RETVAL_PREFIX = "retval:";
+static const char *const SLEEP_PREFIX  = "sleep:";
+static const char *const STDERR_PREFIX = "stderr:";
 
 int main (int argc, char **argv)
 {
@@ -20,6 +22,13 @@ int main (int argc, char **argv)
         {
             // Treat as the return value for the program.
             return_value = std::atoi (argv[i] + strlen (RETVAL_PREFIX));
+        }
+        else if (std::strstr (argv[i], SLEEP_PREFIX))
+        {
+            // Treat as the amount of time to have this process sleep (in seconds).
+            const int sleep_seconds = std::atoi (argv[i] + strlen (SLEEP_PREFIX));
+			const int sleep_result = sleep(sleep_seconds);
+			printf("sleep result: %d\n", sleep_result);
         }
         else
         {
