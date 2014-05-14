@@ -18,3 +18,16 @@ struct Y {
   friend void X::f() const;
   friend void ::f() const; // expected-error {{non-member function cannot have 'const' qualifier}}
 };
+
+template<typename T> struct S {
+  typedef T F;
+  typedef T *P; // expected-error {{pointer to function type 'void () const' cannot have 'const' qualifier}}
+  typedef T &R; // expected-error {{reference to function type 'void () const' cannot have 'const' qualifier}}
+};
+S<F> s; // expected-note {{in instantiation of}}
+
+// FIXME: This is ill-formed.
+template<typename T> struct U {
+  void f(T);
+};
+U<F> u;

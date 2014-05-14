@@ -22,13 +22,13 @@ typedef func_type_rvalue &func_type_rvalue_ref; // expected-error{{reference to 
 
 template<typename T = func_type_lvalue> struct wrap {
   typedef T val;
-  typedef T *ptr;
-  typedef T &ref;
+  typedef T *ptr; // expected-error-re 2{{pointer to function type '{{.*}}' cannot have '{{&|&&}}' qualifier}}
+  typedef T &ref; // expected-error-re 2{{reference to function type '{{.*}}' cannot have '{{&|&&}}' qualifier}}
 };
 
-using func_type_lvalue = wrap<>::val;
+using func_type_lvalue = wrap<>::val; // expected-note{{in instantiation of}}
 using func_type_lvalue = wrap<func_type_lvalue>::val;
-using func_type_rvalue = wrap<func_type_rvalue>::val;
+using func_type_rvalue = wrap<func_type_rvalue>::val; // expected-note{{in instantiation of}}
 
 using func_type_lvalue_ptr = wrap<>::ptr;
 using func_type_lvalue_ptr = wrap<func_type_lvalue>::ptr;
@@ -51,3 +51,10 @@ void (X::*mpf2)() && = &X::f1;
 
 
 void (f() &&); // expected-error{{non-member function cannot have '&&' qualifier}}
+
+// FIXME: These are ill-formed.
+template<typename T> struct pass {
+  void f(T);
+};
+pass<func_type_lvalue> pass0;
+pass<func_type_lvalue> pass1;
