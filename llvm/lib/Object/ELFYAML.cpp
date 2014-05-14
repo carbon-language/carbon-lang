@@ -670,7 +670,8 @@ void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
   ELFYAML::ELF_SHT sectionType;
   if (IO.outputting())
     sectionType = Section->Type;
-  IO.mapRequired("Type", sectionType);
+  else
+    IO.mapRequired("Type", sectionType);
 
   switch (sectionType) {
   case ELF::SHT_REL:

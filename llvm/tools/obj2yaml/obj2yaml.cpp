@@ -22,6 +22,8 @@ using namespace llvm::object;
 static error_code dumpObject(const ObjectFile &Obj) {
   if (Obj.isCOFF())
     return coff2yaml(outs(), cast<COFFObjectFile>(Obj));
+  if (Obj.isELF())
+    return elf2yaml(outs(), Obj);
 
   return obj2yaml_error::unsupported_obj_file_format;
 }

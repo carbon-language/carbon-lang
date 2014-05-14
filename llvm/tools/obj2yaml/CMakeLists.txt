@@ -4,5 +4,5 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_llvm_utility(obj2yaml
-  obj2yaml.cpp coff2yaml.cpp Error.cpp
+  obj2yaml.cpp coff2yaml.cpp elf2yaml.cpp Error.cpp
   )

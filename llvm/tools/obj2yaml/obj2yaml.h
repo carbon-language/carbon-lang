@@ -19,5 +19,7 @@
 
 llvm::error_code coff2yaml(llvm::raw_ostream &Out,
                            const llvm::object::COFFObjectFile &Obj);
+llvm::error_code elf2yaml(llvm::raw_ostream &Out,
+                          const llvm::object::ObjectFile &Obj);
 
 #endif
