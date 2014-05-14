@@ -1812,10 +1812,9 @@ bool SelectionDAG::MaskedValueIsZero(SDValue Op, const APInt &Mask,
   return (KnownZero & Mask) == Mask;
 }
 
-/// ComputeMaskedBits - Determine which of the bits specified in Mask are
+/// ComputeMaskedBits - Determine which bits of Op are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
-/// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
-/// processing.
+/// bitsets.
 void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
                                      APInt &KnownOne, unsigned Depth) const {
   const TargetLowering *TLI = TM.getTargetLowering();

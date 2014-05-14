@@ -1079,10 +1079,9 @@ public:
   bool MaskedValueIsZero(SDValue Op, const APInt &Mask, unsigned Depth = 0)
     const;
 
-  /// ComputeMaskedBits - Determine which of the bits specified in Mask are
+  /// ComputeMaskedBits - Determine which bits of Op are
   /// known to be either zero or one and return them in the KnownZero/KnownOne
-  /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
-  /// processing.  Targets can implement the computeMaskedBitsForTargetNode
+  /// bitsets.  Targets can implement the computeMaskedBitsForTargetNode
   /// method in the TargetLowering class to allow target nodes to be understood.
   void ComputeMaskedBits(SDValue Op, APInt &KnownZero, APInt &KnownOne,
                          unsigned Depth = 0) const;

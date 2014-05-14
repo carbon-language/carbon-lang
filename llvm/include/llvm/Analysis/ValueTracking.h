@@ -27,14 +27,13 @@ namespace llvm {
   class MDNode;
   class TargetLibraryInfo;
 
-  /// ComputeMaskedBits - Determine which of the bits specified in Mask are
+  /// ComputeMaskedBits - Determine which bits of V are
   /// known to be either zero or one and return them in the KnownZero/KnownOne
-  /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
-  /// processing.
+  /// bit sets.
   ///
   /// This function is defined on values with integer type, values with pointer
   /// type (but only if TD is non-null), and vectors of integers.  In the case
-  /// where V is a vector, the mask, known zero, and known one values are the
+  /// where V is a vector, the known zero and known one values are the
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
   void ComputeMaskedBits(Value *V,  APInt &KnownZero, APInt &KnownOne,

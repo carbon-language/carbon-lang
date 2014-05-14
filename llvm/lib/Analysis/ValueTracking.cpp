@@ -211,7 +211,7 @@ void llvm::computeMaskedBitsLoad(const MDNode &Ranges, APInt &KnownZero) {
 
   KnownZero = APInt::getHighBitsSet(BitWidth, MinLeadingZeros);
 }
-/// ComputeMaskedBits - Determine which of the bits are known to be either zero
+/// ComputeMaskedBits - Determine which bits of V are known to be either zero
 /// or one and return them in the KnownZero/KnownOne bit sets.
 ///
 /// NOTE: we cannot consider 'undef' to be "IsZero" here.  The problem is that
@@ -241,7 +241,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
           V->getType()->getScalarSizeInBits() == BitWidth) &&
          KnownZero.getBitWidth() == BitWidth &&
          KnownOne.getBitWidth() == BitWidth &&
-         "V, Mask, KnownOne and KnownZero should have same BitWidth");
+         "V, KnownOne and KnownZero should have same BitWidth");
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     // We know all of the bits for a constant!
