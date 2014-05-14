@@ -183,11 +183,11 @@ namespace llvm {
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
-    void computeMaskedBitsForTargetNode(const SDValue Op,
-                                        APInt &KnownZero,
-                                        APInt &KnownOne,
-                                        const SelectionDAG &DAG,
-                                        unsigned Depth = 0) const override;
+    void computeKnownBitsForTargetNode(const SDValue Op,
+                                       APInt &KnownZero,
+                                       APInt &KnownOne,
+                                       const SelectionDAG &DAG,
+                                       unsigned Depth = 0) const override;
 
     SDValue
       LowerFormalArguments(SDValue Chain,

@@ -3362,7 +3362,7 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
     // For a SCEVUnknown, ask ValueTracking.
     unsigned BitWidth = getTypeSizeInBits(U->getType());
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    ComputeMaskedBits(U->getValue(), Zeros, Ones);
+    computeKnownBits(U->getValue(), Zeros, Ones);
     return Zeros.countTrailingOnes();
   }
 
@@ -3501,7 +3501,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    ComputeMaskedBits(U->getValue(), Zeros, Ones, DL);
+    computeKnownBits(U->getValue(), Zeros, Ones, DL);
     if (Ones == ~Zeros + 1)
       return setUnsignedRange(U, ConservativeResult);
     return setUnsignedRange(U,
@@ -3754,13 +3754,13 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
       // Instcombine's ShrinkDemandedConstant may strip bits out of
       // constants, obscuring what would otherwise be a low-bits mask.
-      // Use ComputeMaskedBits to compute what ShrinkDemandedConstant
+      // Use computeKnownBits to compute what ShrinkDemandedConstant
       // knew about to reconstruct a low-bits mask value.
       unsigned LZ = A.countLeadingZeros();
       unsigned TZ = A.countTrailingZeros();
       unsigned BitWidth = A.getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      ComputeMaskedBits(U->getOperand(0), KnownZero, KnownOne, DL);
+      computeKnownBits(U->getOperand(0), KnownZero, KnownOne, DL);
 
       APInt EffectiveMask =
           APInt::getLowBitsSet(BitWidth, BitWidth - LZ - TZ).shl(TZ);

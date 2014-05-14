@@ -1564,10 +1564,10 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   if (VT.isInteger() && !VT.isVector()) {
     APInt LHSZero, LHSOne;
     APInt RHSZero, RHSOne;
-    DAG.ComputeMaskedBits(N0, LHSZero, LHSOne);
+    DAG.computeKnownBits(N0, LHSZero, LHSOne);
 
     if (LHSZero.getBoolValue()) {
-      DAG.ComputeMaskedBits(N1, RHSZero, RHSOne);
+      DAG.computeKnownBits(N1, RHSZero, RHSOne);
 
       // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
       // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
@@ -1659,10 +1659,10 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
-  DAG.ComputeMaskedBits(N0, LHSZero, LHSOne);
+  DAG.computeKnownBits(N0, LHSZero, LHSOne);
 
   if (LHSZero.getBoolValue()) {
-    DAG.ComputeMaskedBits(N1, RHSZero, RHSOne);
+    DAG.computeKnownBits(N1, RHSZero, RHSOne);
 
     // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
     // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
@@ -4348,7 +4348,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::CTLZ &&
       N1C->getAPIntValue() == Log2_32(OpSizeInBits)) {
     APInt KnownZero, KnownOne;
-    DAG.ComputeMaskedBits(N0.getOperand(0), KnownZero, KnownOne);
+    DAG.computeKnownBits(N0.getOperand(0), KnownZero, KnownOne);
 
     // If any of the input bits are KnownOne, then the input couldn't be all
     // zeros, thus the result of the srl will always be zero.
@@ -5074,13 +5074,13 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 // isTruncateOf - If N is a truncate of some other value, return true, record
 // the value being truncated in Op and which of Op's bits are zero in KnownZero.
 // This function computes KnownZero to avoid a duplicated call to
-// ComputeMaskedBits in the caller.
+// computeKnownBits in the caller.
 static bool isTruncateOf(SelectionDAG &DAG, SDValue N, SDValue &Op,
                          APInt &KnownZero) {
   APInt KnownOne;
   if (N->getOpcode() == ISD::TRUNCATE) {
     Op = N->getOperand(0);
-    DAG.ComputeMaskedBits(Op, KnownZero, KnownOne);
+    DAG.computeKnownBits(Op, KnownZero, KnownOne);
     return true;
   }
 
@@ -5101,7 +5101,7 @@ static bool isTruncateOf(SelectionDAG &DAG, SDValue N, SDValue &Op,
   else
     return false;
 
-  DAG.ComputeMaskedBits(Op, KnownZero, KnownOne);
+  DAG.computeKnownBits(Op, KnownZero, KnownOne);
 
   if (!(KnownZero | APInt(Op.getValueSizeInBits(), 1)).isAllOnesValue())
     return false;

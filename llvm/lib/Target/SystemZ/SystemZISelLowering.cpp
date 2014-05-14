@@ -2125,8 +2125,8 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
   // Get the known-zero masks for each operand.
   SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1) };
   APInt KnownZero[2], KnownOne[2];
-  DAG.ComputeMaskedBits(Ops[0], KnownZero[0], KnownOne[0]);
-  DAG.ComputeMaskedBits(Ops[1], KnownZero[1], KnownOne[1]);
+  DAG.computeKnownBits(Ops[0], KnownZero[0], KnownOne[0]);
+  DAG.computeKnownBits(Ops[1], KnownZero[1], KnownOne[1]);
 
   // See if the upper 32 bits of one operand and the lower 32 bits of the
   // other are known zero.  They are the low and high operands respectively.

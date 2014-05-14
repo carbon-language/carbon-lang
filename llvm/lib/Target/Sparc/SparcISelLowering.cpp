@@ -1708,7 +1708,7 @@ EVT SparcTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
 /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
 /// be zero. Op is expected to be a target specific node. Used by DAG
 /// combiner.
-void SparcTargetLowering::computeMaskedBitsForTargetNode
+void SparcTargetLowering::computeKnownBitsForTargetNode
                                 (const SDValue Op,
                                  APInt &KnownZero,
                                  APInt &KnownOne,
@@ -1722,8 +1722,8 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode
   case SPISD::SELECT_ICC:
   case SPISD::SELECT_XCC:
   case SPISD::SELECT_FCC:
-    DAG.ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    DAG.computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    DAG.computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 

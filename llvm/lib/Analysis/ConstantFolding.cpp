@@ -571,8 +571,8 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
     unsigned BitWidth = DL->getTypeSizeInBits(Op0->getType()->getScalarType());
     APInt KnownZero0(BitWidth, 0), KnownOne0(BitWidth, 0);
     APInt KnownZero1(BitWidth, 0), KnownOne1(BitWidth, 0);
-    ComputeMaskedBits(Op0, KnownZero0, KnownOne0, DL);
-    ComputeMaskedBits(Op1, KnownZero1, KnownOne1, DL);
+    computeKnownBits(Op0, KnownZero0, KnownOne0, DL);
+    computeKnownBits(Op1, KnownZero1, KnownOne1, DL);
     if ((KnownOne1 | KnownZero0).isAllOnesValue()) {
       // All the bits of Op0 that the 'and' could be masking are already zero.
       return Op0;

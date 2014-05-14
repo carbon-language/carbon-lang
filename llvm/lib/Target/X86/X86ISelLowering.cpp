@@ -10217,7 +10217,7 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
         unsigned AndBitWidth = And.getValueSizeInBits();
         if (BitWidth > AndBitWidth) {
           APInt Zeros, Ones;
-          DAG.ComputeMaskedBits(Op0, Zeros, Ones);
+          DAG.computeKnownBits(Op0, Zeros, Ones);
           if (Zeros.countLeadingOnes() < BitWidth - AndBitWidth)
             return SDValue();
         }
@@ -17103,11 +17103,11 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //                           X86 Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                       APInt &KnownZero,
-                                                       APInt &KnownOne,
-                                                       const SelectionDAG &DAG,
-                                                       unsigned Depth) const {
+void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
+                                                      APInt &KnownZero,
+                                                      APInt &KnownOne,
+                                                      const SelectionDAG &DAG,
+                                                      unsigned Depth) const {
   unsigned BitWidth = KnownZero.getBitWidth();
   unsigned Opc = Op.getOpcode();
   assert((Opc >= ISD::BUILTIN_OP_END ||
@@ -17973,7 +17973,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
       // Another special case: If C was a sign bit, the sub has been
       // canonicalized into a xor.
-      // FIXME: Would it be better to use ComputeMaskedBits to determine whether
+      // FIXME: Would it be better to use computeKnownBits to determine whether
       //        it's safe to decanonicalize the xor?
       // x s< 0 ? x^C : 0 --> subus x, C
       if (CC == ISD::SETLT && Other->getOpcode() == ISD::XOR &&

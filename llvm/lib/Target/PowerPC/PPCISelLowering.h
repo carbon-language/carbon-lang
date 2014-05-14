@@ -400,11 +400,11 @@ namespace llvm {
 
     unsigned getRegisterByName(const char* RegName, EVT VT) const override;
 
-    void computeMaskedBitsForTargetNode(const SDValue Op,
-                                        APInt &KnownZero,
-                                        APInt &KnownOne,
-                                        const SelectionDAG &DAG,
-                                        unsigned Depth = 0) const override;
+    void computeKnownBitsForTargetNode(const SDValue Op,
+                                       APInt &KnownZero,
+                                       APInt &KnownOne,
+                                       const SelectionDAG &DAG,
+                                       unsigned Depth = 0) const override;
 
     MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,

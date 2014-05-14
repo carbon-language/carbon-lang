@@ -1807,16 +1807,15 @@ bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
 bool SelectionDAG::MaskedValueIsZero(SDValue Op, const APInt &Mask,
                                      unsigned Depth) const {
   APInt KnownZero, KnownOne;
-  ComputeMaskedBits(Op, KnownZero, KnownOne, Depth);
+  computeKnownBits(Op, KnownZero, KnownOne, Depth);
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
   return (KnownZero & Mask) == Mask;
 }
 
-/// ComputeMaskedBits - Determine which bits of Op are
-/// known to be either zero or one and return them in the KnownZero/KnownOne
-/// bitsets.
-void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
-                                     APInt &KnownOne, unsigned Depth) const {
+/// Determine which bits of Op are known to be either zero or one and return
+/// them in the KnownZero/KnownOne bitsets.
+void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
+                                    APInt &KnownOne, unsigned Depth) const {
   const TargetLowering *TLI = TM.getTargetLowering();
   unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
 
@@ -1834,8 +1833,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     return;
   case ISD::AND:
     // If either the LHS or the RHS are Zero, the result is zero.
-    ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1845,8 +1844,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     KnownZero |= KnownZero2;
     return;
   case ISD::OR:
-    ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1856,8 +1855,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     KnownOne |= KnownOne2;
     return;
   case ISD::XOR: {
-    ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1869,8 +1868,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     return;
   }
   case ISD::MUL: {
-    ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1895,12 +1894,12 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     // For the purposes of computing leading zeros we can conservatively
     // treat a udiv as a logical right shift by the power of 2 known to
     // be less than the denominator.
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     unsigned LeadZ = KnownZero2.countLeadingOnes();
 
     KnownOne2.clearAllBits();
     KnownZero2.clearAllBits();
-    ComputeMaskedBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
     unsigned RHSUnknownLeadingOnes = KnownOne2.countLeadingZeros();
     if (RHSUnknownLeadingOnes != BitWidth)
       LeadZ = std::min(BitWidth,
@@ -1910,8 +1909,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     return;
   }
   case ISD::SELECT:
-    ComputeMaskedBits(Op.getOperand(2), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(2), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1920,8 +1919,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     KnownZero &= KnownZero2;
     return;
   case ISD::SELECT_CC:
-    ComputeMaskedBits(Op.getOperand(3), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(2), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(3), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(2), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
@@ -1953,7 +1952,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       if (ShAmt >= BitWidth)
         return;
 
-      ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+      computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
       KnownZero <<= ShAmt;
       KnownOne  <<= ShAmt;
@@ -1970,7 +1969,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       if (ShAmt >= BitWidth)
         return;
 
-      ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+      computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
       KnownZero = KnownZero.lshr(ShAmt);
       KnownOne  = KnownOne.lshr(ShAmt);
@@ -1991,7 +1990,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       // demand the input sign bit.
       APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
 
-      ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+      computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
       KnownZero = KnownZero.lshr(ShAmt);
       KnownOne  = KnownOne.lshr(ShAmt);
@@ -2024,7 +2023,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     if (NewBits.getBoolValue())
       InputDemandedBits |= InSignBit;
 
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     KnownOne &= InputDemandedBits;
     KnownZero &= InputDemandedBits;
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
@@ -2061,7 +2060,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       unsigned MemBits = VT.getScalarType().getSizeInBits();
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
     } else if (const MDNode *Ranges = LD->getRanges()) {
-      computeMaskedBitsLoad(*Ranges, KnownZero);
+      computeKnownBitsLoad(*Ranges, KnownZero);
     }
     return;
   }
@@ -2071,7 +2070,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits);
     KnownZero = KnownZero.trunc(InBits);
     KnownOne = KnownOne.trunc(InBits);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     KnownZero = KnownZero.zext(BitWidth);
     KnownOne = KnownOne.zext(BitWidth);
     KnownZero |= NewBits;
@@ -2084,7 +2083,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
 
     KnownZero = KnownZero.trunc(InBits);
     KnownOne = KnownOne.trunc(InBits);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
 
     // Note if the sign bit is known to be zero or one.
     bool SignBitKnownZero = KnownZero.isNegative();
@@ -2107,7 +2106,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     unsigned InBits = InVT.getScalarType().getSizeInBits();
     KnownZero = KnownZero.trunc(InBits);
     KnownOne = KnownOne.trunc(InBits);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     KnownZero = KnownZero.zext(BitWidth);
     KnownOne = KnownOne.zext(BitWidth);
     return;
@@ -2117,7 +2116,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     unsigned InBits = InVT.getScalarType().getSizeInBits();
     KnownZero = KnownZero.zext(InBits);
     KnownOne = KnownOne.zext(InBits);
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     KnownZero = KnownZero.trunc(BitWidth);
     KnownOne = KnownOne.trunc(BitWidth);
@@ -2126,7 +2125,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
   case ISD::AssertZext: {
     EVT VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
     APInt InMask = APInt::getLowBitsSet(BitWidth, VT.getSizeInBits());
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
     KnownZero |= (~InMask);
     KnownOne  &= (~KnownZero);
     return;
@@ -2145,7 +2144,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
         unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
         // NLZ can't be BitWidth with no sign bit
         APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
-        ComputeMaskedBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+        computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
 
         // If all of the MaskV bits are known to be zero, then we know the
         // output top bits are zero, because we now know that the output is
@@ -2164,11 +2163,11 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
-    ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
     unsigned KnownZeroOut = KnownZero2.countTrailingOnes();
 
-    ComputeMaskedBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
     KnownZeroOut = std::min(KnownZeroOut,
                             KnownZero2.countTrailingOnes());
@@ -2191,7 +2190,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       const APInt &RA = Rem->getAPIntValue().abs();
       if (RA.isPowerOf2()) {
         APInt LowBits = RA - 1;
-        ComputeMaskedBits(Op.getOperand(0), KnownZero2,KnownOne2,Depth+1);
+        computeKnownBits(Op.getOperand(0), KnownZero2,KnownOne2,Depth+1);
 
         // The low bits of the first operand are unchanged by the srem.
         KnownZero = KnownZero2 & LowBits;
@@ -2216,7 +2215,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       if (RA.isPowerOf2()) {
         APInt LowBits = (RA - 1);
         KnownZero |= ~LowBits;
-        ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne,Depth+1);
+        computeKnownBits(Op.getOperand(0), KnownZero, KnownOne,Depth+1);
         assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
         break;
       }
@@ -2224,8 +2223,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
 
     // Since the result is less than or equal to either operand, any leading
     // zero bits in either operand must also exist in the result.
-    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
 
     uint32_t Leaders = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
@@ -2250,7 +2249,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_VOID:
     // Allow the target to implement this method for its nodes.
-    TLI->computeMaskedBitsForTargetNode(Op, KnownZero, KnownOne, *this, Depth);
+    TLI->computeKnownBitsForTargetNode(Op, KnownZero, KnownOne, *this, Depth);
     return;
   }
 }
@@ -2326,7 +2325,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
       FirstAnswer = std::min(Tmp, Tmp2);
       // We computed what we know about the sign bits as our first
       // answer. Now proceed to the generic code that uses
-      // ComputeMaskedBits, and pick whichever answer is better.
+      // computeKnownBits, and pick whichever answer is better.
     }
     break;
 
@@ -2376,7 +2375,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     if (ConstantSDNode *CRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
       if (CRHS->isAllOnesValue()) {
         APInt KnownZero, KnownOne;
-        ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+        computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
 
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
@@ -2401,7 +2400,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
       if (CLHS->isNullValue()) {
         APInt KnownZero, KnownOne;
-        ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+        computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
         if ((KnownZero | APInt(VTBits, 1)).isAllOnesValue())
@@ -2455,7 +2454,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   // Finally, if we can prove that the top bits of the result are 0's or 1's,
   // use this information.
   APInt KnownZero, KnownOne;
-  ComputeMaskedBits(Op, KnownZero, KnownOne, Depth);
+  computeKnownBits(Op, KnownZero, KnownOne, Depth);
 
   APInt Mask;
   if (KnownZero.isNegative()) {        // sign bit is 0
@@ -6424,8 +6423,8 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   if (TLI->isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
     unsigned PtrWidth = TLI->getPointerTypeSizeInBits(GV->getType());
     APInt KnownZero(PtrWidth, 0), KnownOne(PtrWidth, 0);
-    llvm::ComputeMaskedBits(const_cast<GlobalValue*>(GV), KnownZero, KnownOne,
-                            TLI->getDataLayout());
+    llvm::computeKnownBits(const_cast<GlobalValue*>(GV), KnownZero, KnownOne,
+                           TLI->getDataLayout());
     unsigned AlignBits = KnownZero.countTrailingOnes();
     unsigned Align = AlignBits ? 1 << std::min(31U, AlignBits) : 0;
     if (Align)

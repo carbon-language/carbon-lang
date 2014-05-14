@@ -393,7 +393,7 @@ void ConstantOffsetExtractor::ComputeKnownBits(Value *V, APInt &KnownOne,
   IntegerType *IT = cast<IntegerType>(V->getType());
   KnownOne = APInt(IT->getBitWidth(), 0);
   KnownZero = APInt(IT->getBitWidth(), 0);
-  llvm::ComputeMaskedBits(V, KnownZero, KnownOne, DL, 0);
+  llvm::computeKnownBits(V, KnownZero, KnownOne, DL, 0);
 }
 
 bool ConstantOffsetExtractor::NoCommonBits(Value *LHS, Value *RHS) const {

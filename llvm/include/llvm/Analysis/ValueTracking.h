@@ -27,21 +27,20 @@ namespace llvm {
   class MDNode;
   class TargetLibraryInfo;
 
-  /// ComputeMaskedBits - Determine which bits of V are
-  /// known to be either zero or one and return them in the KnownZero/KnownOne
-  /// bit sets.
+  /// Determine which bits of V are known to be either zero or one and return
+  /// them in the KnownZero/KnownOne bit sets.
   ///
   /// This function is defined on values with integer type, values with pointer
   /// type (but only if TD is non-null), and vectors of integers.  In the case
   /// where V is a vector, the known zero and known one values are the
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
-  void ComputeMaskedBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
-                         const DataLayout *TD = nullptr, unsigned Depth = 0);
-  void computeMaskedBitsLoad(const MDNode &Ranges, APInt &KnownZero);
+  void computeKnownBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
+                        const DataLayout *TD = nullptr, unsigned Depth = 0);
+  void computeKnownBitsLoad(const MDNode &Ranges, APInt &KnownZero);
 
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
-  /// one.  Convenience wrapper around ComputeMaskedBits.
+  /// one.  Convenience wrapper around computeKnownBits.
   void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                       const DataLayout *TD = nullptr, unsigned Depth = 0);
 

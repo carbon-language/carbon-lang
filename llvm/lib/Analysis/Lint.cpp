@@ -513,7 +513,7 @@ static bool isZero(Value *V, const DataLayout *DL) {
   if (!VecTy) {
     unsigned BitWidth = V->getType()->getIntegerBitWidth();
     APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-    ComputeMaskedBits(V, KnownZero, KnownOne, DL);
+    computeKnownBits(V, KnownZero, KnownOne, DL);
     return KnownZero.isAllOnesValue();
   }
 
@@ -534,7 +534,7 @@ static bool isZero(Value *V, const DataLayout *DL) {
       return true;
 
     APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-    ComputeMaskedBits(Elem, KnownZero, KnownOne, DL);
+    computeKnownBits(Elem, KnownZero, KnownOne, DL);
     if (KnownZero.isAllOnesValue())
       return true;
   }

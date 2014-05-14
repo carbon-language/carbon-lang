@@ -1079,12 +1079,12 @@ public:
   bool MaskedValueIsZero(SDValue Op, const APInt &Mask, unsigned Depth = 0)
     const;
 
-  /// ComputeMaskedBits - Determine which bits of Op are
-  /// known to be either zero or one and return them in the KnownZero/KnownOne
-  /// bitsets.  Targets can implement the computeMaskedBitsForTargetNode
-  /// method in the TargetLowering class to allow target nodes to be understood.
-  void ComputeMaskedBits(SDValue Op, APInt &KnownZero, APInt &KnownOne,
-                         unsigned Depth = 0) const;
+  /// Determine which bits of Op are known to be either zero or one and return
+  /// them in the KnownZero/KnownOne bitsets.  Targets can implement the
+  /// computeKnownBitsForTargetNode method in the TargetLowering class to allow
+  /// target nodes to be understood.
+  void computeKnownBits(SDValue Op, APInt &KnownZero, APInt &KnownOne,
+                        unsigned Depth = 0) const;
 
   /// ComputeNumSignBits - Return the number of times the sign bit of the
   /// register is replicated into the other bits.  We know that at least 1 bit

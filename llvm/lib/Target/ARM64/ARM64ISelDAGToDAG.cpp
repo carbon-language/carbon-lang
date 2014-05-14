@@ -1731,14 +1731,14 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
   assert(BitWidth == 32 || BitWidth == 64);
 
   APInt KnownZero, KnownOne;
-  CurDAG->ComputeMaskedBits(Op, KnownZero, KnownOne);
+  CurDAG->computeKnownBits(Op, KnownZero, KnownOne);
 
   // Non-zero in the sense that they're not provably zero, which is the key
   // point if we want to use this value
   uint64_t NonZeroBits = (~KnownZero).getZExtValue();
 
   // Discard a constant AND mask if present. It's safe because the node will
-  // already have been factored into the ComputeMaskedBits calculation above.
+  // already have been factored into the computeKnownBits calculation above.
   uint64_t AndImm;
   if (isOpcWithIntImmediate(Op.getNode(), ISD::AND, AndImm)) {
     assert((~APInt(BitWidth, AndImm) & ~KnownZero) == 0);
@@ -1839,7 +1839,7 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
     // AND with imm. Indeed, simplify-demanded-bits may have removed
     // the AND instruction because it proves it was useless.
     APInt KnownZero, KnownOne;
-    CurDAG->ComputeMaskedBits(OrOpd1Val, KnownZero, KnownOne);
+    CurDAG->computeKnownBits(OrOpd1Val, KnownZero, KnownOne);
 
     // Check if there is enough room for the second operand to appear
     // in the first one

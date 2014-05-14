@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 | grep testb
 
 ; Make sure dagcombine doesn't eliminate the comparison due
-; to an off-by-one bug with ComputeMaskedBits information.
+; to an off-by-one bug with computeKnownBits information.
 
 declare void @qux()
 

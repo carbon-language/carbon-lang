@@ -363,7 +363,7 @@ define void @vgpr_sext_in_reg_v4i16_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x 
 }
 
 ; FIXME: The BFE should really be eliminated. I think it should happen
-; when computeMaskedBitsForTargetNode is implemented for imax.
+; when computeKnownBitsForTargetNode is implemented for imax.
 
 ; FUNC-LABEL: @sext_in_reg_to_illegal_type
 ; SI: BUFFER_LOAD_SBYTE

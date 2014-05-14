@@ -6,7 +6,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 %struct.spam = type { [3 x i32] }
 %struct.barney = type { [2 x i32], [2 x i32] }
 
-; Make sure that the sext op does not get lost due to ComputeMaskedBits.
+; Make sure that the sext op does not get lost due to computeKnownBits.
 ; CHECK: quux
 ; CHECK: lsl
 ; CHECK: asr

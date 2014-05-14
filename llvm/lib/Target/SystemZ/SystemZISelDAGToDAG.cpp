@@ -665,7 +665,7 @@ bool SystemZDAGToDAGISel::detectOrAndInsertion(SDValue &Op,
   uint64_t Used = allOnes(Op.getValueType().getSizeInBits());
   if (Used != (AndMask | InsertMask)) {
     APInt KnownZero, KnownOne;
-    CurDAG->ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne);
+    CurDAG->computeKnownBits(Op.getOperand(0), KnownZero, KnownOne);
     if (Used != (AndMask | InsertMask | KnownZero.getZExtValue()))
       return false;
   }
@@ -714,7 +714,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
       // been removed from the mask.  See if adding them back in makes the
       // mask suitable.
       APInt KnownZero, KnownOne;
-      CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
+      CurDAG->computeKnownBits(Input, KnownZero, KnownOne);
       Mask |= KnownZero.getZExtValue();
       if (!refineRxSBGMask(RxSBG, Mask))
         return false;
@@ -738,7 +738,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
       // been removed from the mask.  See if adding them back in makes the
       // mask suitable.
       APInt KnownZero, KnownOne;
-      CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
+      CurDAG->computeKnownBits(Input, KnownZero, KnownOne);
       Mask &= ~KnownOne.getZExtValue();
       if (!refineRxSBGMask(RxSBG, Mask))
         return false;

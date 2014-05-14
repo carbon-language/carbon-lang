@@ -415,8 +415,8 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   SDLoc dl(N);
 
   APInt LKZ, LKO, RKZ, RKO;
-  CurDAG->ComputeMaskedBits(Op0, LKZ, LKO);
-  CurDAG->ComputeMaskedBits(Op1, RKZ, RKO);
+  CurDAG->computeKnownBits(Op0, LKZ, LKO);
+  CurDAG->computeKnownBits(Op1, RKZ, RKO);
 
   unsigned TargetMask = LKZ.getZExtValue();
   unsigned InsertMask = RKZ.getZExtValue();
@@ -463,7 +463,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
        // if we're going to fold the masking with the insert, all bits not
        // know to be zero in the mask are known to be one.
         APInt MKZ, MKO;
-        CurDAG->ComputeMaskedBits(Op1.getOperand(1), MKZ, MKO);
+        CurDAG->computeKnownBits(Op1.getOperand(1), MKZ, MKO);
         bool CanFoldMask = InsertMask == MKO.getZExtValue();
 
         unsigned SHOpc = Op1.getOperand(0).getOpcode();

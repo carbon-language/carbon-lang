@@ -3190,7 +3190,7 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
   Value *Cond = SI->getCondition();
   unsigned Bits = Cond->getType()->getIntegerBitWidth();
   APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
-  ComputeMaskedBits(Cond, KnownZero, KnownOne);
+  computeKnownBits(Cond, KnownZero, KnownOne);
 
   // Gather dead cases.
   SmallVector<ConstantInt*, 8> DeadCases;

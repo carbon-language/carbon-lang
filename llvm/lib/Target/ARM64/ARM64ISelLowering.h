@@ -201,12 +201,12 @@ public:
   /// value.
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg) const;
 
-  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
+  /// computeKnownBitsForTargetNode - Determine which of the bits specified in
   /// Mask are known to be either zero or one and return them in the
   /// KnownZero/KnownOne bitsets.
-  void computeMaskedBitsForTargetNode(const SDValue Op, APInt &KnownZero,
-                                      APInt &KnownOne, const SelectionDAG &DAG,
-                                      unsigned Depth = 0) const override;
+  void computeKnownBitsForTargetNode(const SDValue Op, APInt &KnownZero,
+                                     APInt &KnownOne, const SelectionDAG &DAG,
+                                     unsigned Depth = 0) const override;
 
   MVT getScalarShiftAmountTy(EVT LHSTy) const override;
 

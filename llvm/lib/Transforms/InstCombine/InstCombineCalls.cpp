@@ -322,7 +322,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
-    ComputeMaskedBits(II->getArgOperand(0), KnownZero, KnownOne);
+    computeKnownBits(II->getArgOperand(0), KnownZero, KnownOne);
     unsigned TrailingZeros = KnownOne.countTrailingZeros();
     APInt Mask(APInt::getLowBitsSet(BitWidth, TrailingZeros));
     if ((Mask & KnownZero) == Mask)
@@ -340,7 +340,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
-    ComputeMaskedBits(II->getArgOperand(0), KnownZero, KnownOne);
+    computeKnownBits(II->getArgOperand(0), KnownZero, KnownOne);
     unsigned LeadingZeros = KnownOne.countLeadingZeros();
     APInt Mask(APInt::getHighBitsSet(BitWidth, LeadingZeros));
     if ((Mask & KnownZero) == Mask)
@@ -355,14 +355,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     uint32_t BitWidth = IT->getBitWidth();
     APInt LHSKnownZero(BitWidth, 0);
     APInt LHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
+    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
     bool LHSKnownNegative = LHSKnownOne[BitWidth - 1];
     bool LHSKnownPositive = LHSKnownZero[BitWidth - 1];
 
     if (LHSKnownNegative || LHSKnownPositive) {
       APInt RHSKnownZero(BitWidth, 0);
       APInt RHSKnownOne(BitWidth, 0);
-      ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
+      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
       bool RHSKnownNegative = RHSKnownOne[BitWidth - 1];
       bool RHSKnownPositive = RHSKnownZero[BitWidth - 1];
       if (LHSKnownNegative && RHSKnownNegative) {
@@ -449,10 +449,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     APInt LHSKnownZero(BitWidth, 0);
     APInt LHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
+    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
     APInt RHSKnownZero(BitWidth, 0);
     APInt RHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
+    computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
 
     // Get the largest possible values for each operand.
     APInt LHSMax = ~LHSKnownZero;

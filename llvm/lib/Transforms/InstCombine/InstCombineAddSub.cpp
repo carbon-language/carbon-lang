@@ -979,7 +979,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         IntegerType *IT = cast<IntegerType>(I.getType());
         APInt LHSKnownOne(IT->getBitWidth(), 0);
         APInt LHSKnownZero(IT->getBitWidth(), 0);
-        ComputeMaskedBits(XorLHS, LHSKnownZero, LHSKnownOne);
+        computeKnownBits(XorLHS, LHSKnownZero, LHSKnownOne);
         if ((XorRHS->getValue() | LHSKnownZero).isAllOnesValue())
           return BinaryOperator::CreateSub(ConstantExpr::getAdd(XorRHS, CI),
                                            XorLHS);
@@ -1047,11 +1047,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
     APInt LHSKnownOne(IT->getBitWidth(), 0);
     APInt LHSKnownZero(IT->getBitWidth(), 0);
-    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
+    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
     if (LHSKnownZero != 0) {
       APInt RHSKnownOne(IT->getBitWidth(), 0);
       APInt RHSKnownZero(IT->getBitWidth(), 0);
-      ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
+      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
 
       // No bits in common -> bitwise or.
       if ((LHSKnownZero|RHSKnownZero).isAllOnesValue())

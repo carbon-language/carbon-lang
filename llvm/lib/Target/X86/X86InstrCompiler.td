@@ -1187,9 +1187,9 @@ def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
     return CurDAG->MaskedValueIsZero(N->getOperand(0), CN->getAPIntValue());
 
   APInt KnownZero0, KnownOne0;
-  CurDAG->ComputeMaskedBits(N->getOperand(0), KnownZero0, KnownOne0, 0);
+  CurDAG->computeKnownBits(N->getOperand(0), KnownZero0, KnownOne0, 0);
   APInt KnownZero1, KnownOne1;
-  CurDAG->ComputeMaskedBits(N->getOperand(1), KnownZero1, KnownOne1, 0);
+  CurDAG->computeKnownBits(N->getOperand(1), KnownZero1, KnownOne1, 0);
   return (~KnownZero0 & ~KnownZero1) == 0;
 }]>;
 

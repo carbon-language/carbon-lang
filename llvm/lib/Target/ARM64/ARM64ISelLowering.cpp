@@ -562,10 +562,10 @@ EVT ARM64TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   return VT.changeVectorElementTypeToInteger();
 }
 
-/// computeMaskedBitsForTargetNode - Determine which of the bits specified in
+/// computeKnownBitsForTargetNode - Determine which of the bits specified in
 /// Mask are known to be either zero or one and return them in the
 /// KnownZero/KnownOne bitsets.
-void ARM64TargetLowering::computeMaskedBitsForTargetNode(
+void ARM64TargetLowering::computeKnownBitsForTargetNode(
     const SDValue Op, APInt &KnownZero, APInt &KnownOne,
     const SelectionDAG &DAG, unsigned Depth) const {
   switch (Op.getOpcode()) {
@@ -573,8 +573,8 @@ void ARM64TargetLowering::computeMaskedBitsForTargetNode(
     break;
   case ARM64ISD::CSEL: {
     APInt KnownZero2, KnownOne2;
-    DAG.ComputeMaskedBits(Op->getOperand(0), KnownZero, KnownOne, Depth + 1);
-    DAG.ComputeMaskedBits(Op->getOperand(1), KnownZero2, KnownOne2, Depth + 1);
+    DAG.computeKnownBits(Op->getOperand(0), KnownZero, KnownOne, Depth + 1);
+    DAG.computeKnownBits(Op->getOperand(1), KnownZero2, KnownOne2, Depth + 1);
     KnownZero &= KnownZero2;
     KnownOne &= KnownOne2;
     break;
