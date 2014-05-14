@@ -1,3 +1,4 @@
+; REQUIRES: nvptx-registered-target
 ; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+gpu -enable-polly-gpgpu -polly-gpgpu-triple=nvptx64-unknown-unknown -polly-codegen < %s -S | FileCheck %s
 
 ;int A[128][128];
