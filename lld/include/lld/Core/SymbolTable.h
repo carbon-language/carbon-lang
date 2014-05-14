@@ -39,16 +39,16 @@ public:
   explicit SymbolTable(const LinkingContext &);
 
   /// @brief add atom to symbol table
-  void add(const DefinedAtom &);
+  bool add(const DefinedAtom &);
 
   /// @brief add atom to symbol table
-  void add(const UndefinedAtom &);
+  bool add(const UndefinedAtom &);
 
   /// @brief add atom to symbol table
-  void add(const SharedLibraryAtom &);
+  bool add(const SharedLibraryAtom &);
 
   /// @brief add atom to symbol table
-  void add(const AbsoluteAtom &);
+  bool add(const AbsoluteAtom &);
 
   /// @brief checks if name is in symbol table and if so atom is not
   ///        UndefinedAtom
@@ -102,8 +102,8 @@ private:
   };
   typedef llvm::DenseSet<const DefinedAtom*, AtomMappingInfo> AtomContentSet;
 
-  void addByName(const Atom &);
-  void addByContent(const DefinedAtom &);
+  bool addByName(const Atom &);
+  bool addByContent(const DefinedAtom &);
 
   const LinkingContext &_context;
   AtomToAtom _replacedAtoms;

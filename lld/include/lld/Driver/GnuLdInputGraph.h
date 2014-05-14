@@ -80,8 +80,9 @@ public:
   /// to start processing files as part of the input element from beginning.
   /// Reset the next file index to 0 only if the node is an archive library.
   void resetNextIndex() override {
-    if (_files[0]->kind() == File::kindArchiveLibrary &&
-        !_attributes._isWholeArchive) {
+    auto kind = _files[0]->kind();
+    if (kind == File::kindSharedLibrary ||
+        (kind == File::kindArchiveLibrary && !_attributes._isWholeArchive)) {
       _nextFileIndex = 0;
     }
   }

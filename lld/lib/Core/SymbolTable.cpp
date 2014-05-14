@@ -32,26 +32,26 @@
 namespace lld {
 SymbolTable::SymbolTable(const LinkingContext &context) : _context(context) {}
 
-void SymbolTable::add(const UndefinedAtom &atom) { addByName(atom); }
+bool SymbolTable::add(const UndefinedAtom &atom) { return addByName(atom); }
 
-void SymbolTable::add(const SharedLibraryAtom &atom) { addByName(atom); }
+bool SymbolTable::add(const SharedLibraryAtom &atom) { return addByName(atom); }
 
-void SymbolTable::add(const AbsoluteAtom &atom) { addByName(atom); }
+bool SymbolTable::add(const AbsoluteAtom &atom) { return addByName(atom); }
 
-void SymbolTable::add(const DefinedAtom &atom) {
+bool SymbolTable::add(const DefinedAtom &atom) {
   if (!atom.name().empty() &&
       atom.scope() != DefinedAtom::scopeTranslationUnit) {
     // Named atoms cannot be merged by content.
     assert(atom.merge() != DefinedAtom::mergeByContent);
     // Track named atoms that are not scoped to file (static).
-    addByName(atom);
-    return;
+    return addByName(atom);
   }
   if (atom.merge() == DefinedAtom::mergeByContent) {
     // Named atoms cannot be merged by content.
     assert(atom.name().empty());
-    addByContent(atom);
+    return addByContent(atom);
   }
+  return false;
 }
 
 const Atom *SymbolTable::findGroup(StringRef sym) {
@@ -162,15 +162,19 @@ static uint64_t sectionSize(const DefinedAtom *atom) {
       + getSizeFollowReferences(atom, lld::Reference::kindLayoutAfter);
 }
 
-void SymbolTable::addByName(const Atom &newAtom) {
+bool SymbolTable::addByName(const Atom &newAtom) {
   StringRef name = newAtom.name();
   assert(!name.empty());
   const Atom *existing = findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
     _nameTable[name] = &newAtom;
-    return;
+    return true;
   }
+
+  // Do nothing if the same object is added more than once.
+  if (existing == &newAtom)
+    return false;
 
   // Name is already in symbol table and associated with another atom.
   bool useNew = true;
@@ -301,6 +305,7 @@ void SymbolTable::addByName(const Atom &newAtom) {
     // New atom is not being used.  Add it to replacement table.
     _replacedAtoms[&newAtom] = existing;
   }
+  return false;
 }
 
 unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom *atom) {
@@ -332,17 +337,18 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
   return memcmp(lc.data(), rc.data(), lc.size()) == 0;
 }
 
-void SymbolTable::addByContent(const DefinedAtom & newAtom) {
+bool SymbolTable::addByContent(const DefinedAtom &newAtom) {
   // Currently only read-only constants can be merged.
   assert(newAtom.permissions() == DefinedAtom::permR__);
   AtomContentSet::iterator pos = _contentTable.find(&newAtom);
   if (pos == _contentTable.end()) {
     _contentTable.insert(&newAtom);
-    return;
+    return true;
   }
   const Atom* existing = *pos;
   // New atom is not being used.  Add it to replacement table.
   _replacedAtoms[&newAtom] = existing;
+  return false;
 }
 
 const Atom *SymbolTable::findByName(StringRef sym) {

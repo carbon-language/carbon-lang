@@ -18,6 +18,11 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/group/1.o --start-group \
 RUN:   --whole-archive %p/Inputs/group/libfn.a --no-whole-archive \
 RUN:   %p/Inputs/group/libfn1.a --end-group -o %t3
 
+# Defined symbols in a shared library.
+RUN: lld -flavor gnu -target x86_64 %p/Inputs/group/1.o --start-group \
+RUN:   %p/Inputs/group/libfn2.so %p/Inputs/group/fn1.o %p/Inputs/group/fn.o \
+RUN:   --end-group -o %t4
+
 # Test alias options too, as they are more widely used
 # Test group
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/group/1.o '-(' \

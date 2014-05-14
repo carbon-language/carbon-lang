@@ -48,15 +48,12 @@ private:
 } // namespace
 
 void Resolver::handleFile(const File &file) {
-  bool isEmpty = file.defined().empty() && file.undefined().empty() &&
-                 file.sharedLibrary().empty() && file.absolute().empty();
-  if (isEmpty)
-    return;
-
+  bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
   for (const UndefinedAtom *atom : file.undefined())
-    doUndefinedAtom(*atom);
+    if (doUndefinedAtom(*atom))
+      undefAdded = true;
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
     doSharedLibraryAtom(*atom);
   for (const AbsoluteAtom *atom : file.absolute())
@@ -65,7 +62,9 @@ void Resolver::handleFile(const File &file) {
   // Notify the input file manager of the fact that we have made some progress
   // on linking using the current input file. It may want to know the fact for
   // --start-group/--end-group.
-  _context.getInputGraph().notifyProgress();
+  if (undefAdded) {
+    _context.getInputGraph().notifyProgress();
+  }
 }
 
 void Resolver::forEachUndefines(bool searchForOverrides,
@@ -124,7 +123,7 @@ void Resolver::handleSharedLibrary(const File &file) {
   });
 }
 
-void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
+bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "       UndefinedAtom: "
                     << llvm::format("0x%09lX", &atom)
@@ -134,7 +133,7 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   _atoms.push_back(&atom);
 
   // tell symbol table
-  _symbolTable.add(atom);
+  bool newUndefAdded = _symbolTable.add(atom);
 
   // If the undefined symbol has an alternative name, try to resolve the
   // symbol with the name to give it a second chance. This feature is used
@@ -145,6 +144,7 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
       _symbolTable.addReplacement(&atom, fallbackAtom);
     }
   }
+  return newUndefAdded;
 }
 
 /// \brief Add the section group and the group-child reference members.
@@ -178,7 +178,8 @@ bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
   return true;
 }
 
-// called on each atom when a file is added
+// Called on each atom when a file is added. Returns true if a given
+// atom is added to the symbol table.
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "         DefinedAtom: "

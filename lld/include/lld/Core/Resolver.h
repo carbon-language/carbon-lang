@@ -33,7 +33,7 @@ public:
 
   // InputFiles::Handler methods
   void doDefinedAtom(const DefinedAtom&);
-  void doUndefinedAtom(const UndefinedAtom&);
+  bool doUndefinedAtom(const UndefinedAtom &);
   void doSharedLibraryAtom(const SharedLibraryAtom &);
   void doAbsoluteAtom(const AbsoluteAtom &);
 

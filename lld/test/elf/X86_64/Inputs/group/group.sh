@@ -31,6 +31,7 @@ fn2();
 gcc -c 1.c fn.c fn2.c fn1.c
 ar cr libfn.a fn.o fn2.o
 ar cr libfn1.a fn1.o
+lld -flavor gnu -target x86_64 -shared -o libfn2.so fn2.o
 lld -flavor gnu -target x86_64 1.o libfn.a libfn1.a -o x
 lld -flavor gnu -target x86_64 1.o --start-group libfn.a libfn1.a --end-group -o x
 lld -flavor gnu -target x86_64 1.o --start-group fn.o fn2.o fn1.o --end-group -o x
