@@ -3965,7 +3965,8 @@ static SDValue ExpandBITCAST(SDNode *N, SelectionDAG &DAG) {
   // Turn f64->i64 into VMOVRRD.
   if (DstVT == MVT::i64 && TLI.isTypeLegal(SrcVT)) {
     SDValue Cvt;
-    if (TLI.isBigEndian() && SrcVT.isVector())
+    if (TLI.isBigEndian() && SrcVT.isVector() &&
+        SrcVT.getVectorNumElements() > 1)
       Cvt = DAG.getNode(ARMISD::VMOVRRD, dl,
                         DAG.getVTList(MVT::i32, MVT::i32),
                         DAG.getNode(ARMISD::VREV64, dl, SrcVT, Op));
