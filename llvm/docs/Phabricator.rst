@@ -110,8 +110,7 @@ review, and add a link from the review to the commit.
 Status
 ------
 
-Currently, we're testing Phabricator for use with Clang/LLVM. Please let us
-know whether you like it and what could be improved!
+Please let us know whether you like it and what could be improved!
 
 .. _LLVM's Phabricator: http://reviews.llvm.org
 .. _Code Repository Browser: http://reviews.llvm.org/diffusion/
