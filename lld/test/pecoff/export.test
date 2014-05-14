@@ -41,3 +41,12 @@ CHECK4-NEXT:        5   0x2008  exportfn1
 CHECK4-NEXT:        6   0x2010  exportfn2
 CHECK4-NEXT:        7   0x2010  exportfn5
 CHECK4-NEXT:        8   0x2010  exportfn3@256
+
+# RUN: lld -flavor link /out:%t5.dll /dll /entry:init \
+# RUN:   /export:exportfn7 -- %t.obj
+# RUN: llvm-objdump -p %t5.dll | FileCheck -check-prefix=CHECK5 %s
+
+CHECK5:      Export Table:
+CHECK5:      DLL name: export.test.tmp5.dll
+CHECK5:       Ordinal      RVA  Name
+CHECK5-NEXT:        1   0x2010  exportfn7

@@ -101,8 +101,23 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
       "<command line option /include>");
 }
 
+namespace {
+// As per policy, we cannot use std::function.
+class ObserverCallback {
+public:
+  explicit ObserverCallback(pecoff::ExportedSymbolRenameFile *f)
+      : _renameFile(f) {}
+
+  void operator()(File *file) { _renameFile->addResolvableSymbols(file); }
+
+private:
+  pecoff::ExportedSymbolRenameFile *_renameFile;
+};
+} // end anonymous namespace
+
 bool PECOFFLinkingContext::createImplicitFiles(
-    std::vector<std::unique_ptr<File> > &) const {
+    std::vector<std::unique_ptr<File>> &) const {
+  // Create a file for __ImageBase.
   std::unique_ptr<SimpleFileNode> fileNode(
       new SimpleFileNode("Implicit Files"));
   std::unique_ptr<File> linkerGeneratedSymFile(
@@ -111,11 +126,21 @@ bool PECOFFLinkingContext::createImplicitFiles(
   getInputGraph().insertElementAt(std::move(fileNode),
                                   InputGraph::Position::END);
 
+  // Create a file for _imp_ symbols.
   std::unique_ptr<SimpleFileNode> impFileNode(new SimpleFileNode("imp"));
   impFileNode->appendInputFile(
       std::unique_ptr<File>(new pecoff::LocallyImportedSymbolFile(*this)));
   getInputGraph().insertElementAt(std::move(impFileNode),
                                   InputGraph::Position::END);
+
+  // Create a file for dllexported symbols.
+  std::unique_ptr<SimpleFileNode> exportNode(new SimpleFileNode("<export>"));
+  pecoff::ExportedSymbolRenameFile *renameFile =
+      new pecoff::ExportedSymbolRenameFile(*this);
+  exportNode->appendInputFile(std::unique_ptr<File>(renameFile));
+  getLibraryGroup()->addFile(std::move(exportNode));
+  getInputGraph().registerObserver(
+      *(new (_allocator) ObserverCallback(renameFile)));
   return true;
 }
 

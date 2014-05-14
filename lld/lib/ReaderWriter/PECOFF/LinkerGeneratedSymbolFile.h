@@ -14,6 +14,8 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "llvm/Support/Allocator.h"
 
+#include <mutex>
+
 namespace lld {
 namespace pecoff {
 
@@ -86,6 +88,22 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
+// A file to make Resolver to resolve a symbol TO instead of a symbol FROM,
+// using fallback mechanism for an undefined symbol. One can virtually rename an
+// undefined symbol using this file.
+class SymbolRenameFile : public SimpleFile {
+public:
+  SymbolRenameFile(StringRef from, StringRef to)
+      : SimpleFile("<symbol-rename>"), _to(*this, to),
+        _from(*this, from, &_to) {
+    addAtom(_from);
+  };
+
+private:
+  COFFUndefinedAtom _to;
+  COFFUndefinedAtom _from;
+};
+
 } // anonymous namespace
 
 // A virtual file containing absolute symbol __ImageBase. __ImageBase (or
@@ -138,6 +156,95 @@ public:
 private:
   std::string _prefix;
   mutable uint64_t _ordinal;
+  mutable llvm::BumpPtrAllocator _alloc;
+};
+
+// A ExportedSymbolRenameFile is a virtual archive file for dllexported symbols.
+//
+// One usually has to specify the exact symbol name to resolve it. That's true
+// in most cases for PE/COFF, except the one described below.
+//
+// DLLExported symbols can be specified using a module definition file. In a
+// file, one can write an EXPORT directive followed by symbol names. Such
+// symbols may not be fully decorated -- one can omit "@" and the following
+// number suffix for the stdcall function.
+//
+// If a symbol FOO is specified to be dllexported by a module definition file,
+// linker has to search not only for FOO but also for FOO@[0-9]+. This ambiguous
+// matching semantics does not fit well with Resolver.
+//
+// We could probably modify Resolver to resolve ambiguous symbols, but I think
+// we don't want to do that because it'd be rarely used, and only this Windows
+// specific feature would use it. It's probably not a good idea to make the core
+// linker to be able to deal with it.
+//
+// So, instead of tweaking Resolver, we chose to do some hack here. An
+// ExportedSymbolRenameFile maintains a set containing all possibly defined
+// symbol names. That set would be a union of (1) all the defined symbols that
+// are already parsed and read and (2) all the defined symbols in archive files
+// that are not yet be parsed.
+//
+// If Resolver asks this file to return an atom for a dllexported symbol, find()
+// looks up the set, doing ambiguous matching. If there's a symbol with @
+// prefix, it returns an atom to rename the dllexported symbol, hoping that
+// Resolver will find the new symbol with atsign from an archive file at the
+// next visit.
+class ExportedSymbolRenameFile : public VirtualArchiveLibraryFile {
+public:
+  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx)
+      : VirtualArchiveLibraryFile("<export>") {
+    for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+      _exportedSyms.insert(desc.name);
+  }
+
+  void addResolvableSymbols(File *file) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_seen.count(file) > 0)
+      return;
+    _seen.insert(file);
+    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
+      for (const std::string &sym : archive->getDefinedSymbols())
+        _defined.insert(sym);
+      return;
+    }
+    for (const DefinedAtom *atom : file->defined())
+      if (!atom->name().empty())
+        _defined.insert(atom->name());
+  }
+
+  const File *find(StringRef sym, bool dataSymbolOnly) const override {
+    if (_exportedSyms.count(sym) == 0)
+      return nullptr;
+    std::string replace;
+    if (!findSymbolWithAtsignSuffix(sym.str(), replace))
+      return nullptr;
+    return new (_alloc) SymbolRenameFile(sym, replace);
+  }
+
+private:
+  // Find a symbol that starts with a given symbol name followed
+  // by @number suffix.
+  bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
+    sym.append("@");
+    auto it = _defined.lower_bound(sym);
+    for (auto e = _defined.end(); it != e; ++it) {
+      if (!StringRef(*it).startswith(sym))
+        return false;
+      if (it->size() == sym.size())
+        continue;
+      StringRef suffix = it->substr(sym.size());
+      if (suffix.find_first_not_of("0123456789") != StringRef::npos)
+        continue;
+      res = *it;
+      return true;
+    }
+    return false;
+  }
+
+  std::set<std::string> _exportedSyms;
+  std::set<std::string> _defined;
+  std::set<File *> _seen;
+  mutable std::mutex _mutex;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
