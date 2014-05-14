@@ -9,7 +9,7 @@
 !llvm.module.flags = !{!12}
 
 !0 = metadata !{i32 720913, metadata !11, i32 12, metadata !"clang version 3.0 (trunk 140253)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, null, i32 0} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{i32 0}
+!2 = metadata !{}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720948, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, [10 x i32]* @a, null} ; [ DW_TAG_variable ]
 !6 = metadata !{i32 720937, metadata !11} ; [ DW_TAG_file_type ]
