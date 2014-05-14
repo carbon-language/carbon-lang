@@ -850,13 +850,13 @@ public:
   }
 
   iterator findLockIter(FactManager &FM, const SExpr &M) {
-    return std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+    return std::find_if(begin(), end(), [&](FactID ID) {
       return FM[ID].MutID.matches(M);
     });
   }
 
   LockData *findLock(FactManager &FM, const SExpr &M) const {
-    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+    auto I = std::find_if(begin(), end(), [&](FactID ID) {
       return FM[ID].MutID.matches(M);
     });
 
@@ -864,7 +864,7 @@ public:
   }
 
   LockData *findLockUniv(FactManager &FM, const SExpr &M) const {
-    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) -> bool {
+    auto I = std::find_if(begin(), end(), [&](FactID ID) -> bool {
       const SExpr &Expr = FM[ID].MutID;
       return Expr.isUniversal() || Expr.matches(M);
     });
@@ -873,7 +873,7 @@ public:
   }
 
   FactEntry *findPartialMatch(FactManager &FM, const SExpr &M) const {
-    auto I = std::find_if(begin(), end(), [&FM, &M](FactID ID) {
+    auto I = std::find_if(begin(), end(), [&](FactID ID) {
       return FM[ID].MutID.partiallyMatches(M);
     });
 
@@ -2261,10 +2261,9 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
   FactSet FSet1Orig = FSet1;
 
   // Find locks in FSet2 that conflict or are not in FSet1, and warn.
-  for (FactSet::const_iterator I = FSet2.begin(), E = FSet2.end();
-       I != E; ++I) {
-    const SExpr &FSet2Mutex = FactMan[*I].MutID;
-    const LockData &LDat2 = FactMan[*I].LDat;
+  for (const auto &Fact : FSet2) {
+    const SExpr &FSet2Mutex = FactMan[Fact].MutID;
+    const LockData &LDat2 = FactMan[Fact].LDat;
     FactSet::iterator I1 = FSet1.findLockIter(FactMan, FSet2Mutex);
 
     if (I1 != FSet1.end()) {
@@ -2274,12 +2273,12 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
                                          LDat2.AcquireLoc, LDat1->AcquireLoc);
         if (Modify && LDat1->LKind != LK_Exclusive) {
           // Take the exclusive lock, which is the one in FSet2.
-          *I1 = *I;
+          *I1 = Fact;
         }
       }
       else if (LDat1->Asserted && !LDat2.Asserted) {
         // The non-asserted lock in FSet2 is the one we want to track.
-        *I1 = *I;
+        *I1 = Fact;
       }
     } else {
       if (LDat2.UnderlyingMutex.isValid()) {
@@ -2299,10 +2298,9 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
   }
 
   // Find locks in FSet1 that are not in FSet2, and remove them.
-  for (FactSet::const_iterator I = FSet1Orig.begin(), E = FSet1Orig.end();
-       I != E; ++I) {
-    const SExpr &FSet1Mutex = FactMan[*I].MutID;
-    const LockData &LDat1 = FactMan[*I].LDat;
+  for (const auto &Fact : FSet1Orig) {
+    const SExpr &FSet1Mutex = FactMan[Fact].MutID;
+    const LockData &LDat1 = FactMan[Fact].LDat;
 
     if (!FSet2.findLock(FactMan, FSet1Mutex)) {
       if (LDat1.UnderlyingMutex.isValid()) {
