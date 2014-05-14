@@ -43,3 +43,12 @@ int test_funcparam_scope(struct S5 * s5) {
   if (s5 == s5_2) return 1; // expected-error {{comparison of distinct pointer types ('struct S5 *' and 'struct S5 *')}}
   return 0;
 }
+
+namespace test5 {
+  struct A {
+    class __attribute__((visibility("hidden"))) B {};
+
+    void test(class __attribute__((visibility("hidden"), noreturn)) B b) { // expected-warning {{'noreturn' attribute only applies to functions and methods}}
+    }
+  };
+}

@@ -10981,7 +10981,15 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             }
 
             // Okay, this is definition of a previously declared or referenced
-            // tag PrevDecl. We're going to create a new Decl for it.
+            // tag. We're going to create a new Decl for it.
+          }
+
+          // Okay, we're going to make a redeclaration.  If this is some kind
+          // of reference, make sure we build the redeclaration in the same DC
+          // as the original, and ignore the current access specifier.
+          if (TUK == TUK_Friend || TUK == TUK_Reference) {
+            SearchDC = PrevTagDecl->getDeclContext();
+            AS = AS_none;
           }
         }
         // If we get here we have (another) forward declaration or we

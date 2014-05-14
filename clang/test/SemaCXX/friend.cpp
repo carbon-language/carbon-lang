@@ -288,3 +288,11 @@ namespace test10 {
     ::test10::f10_d(z);
   }
 }
+
+namespace test11 {
+  class __attribute__((visibility("hidden"))) B;
+
+  class A {
+    friend class __attribute__((visibility("hidden"), noreturn)) B; // expected-warning {{'noreturn' attribute only applies to functions and methods}}
+  };
+}
