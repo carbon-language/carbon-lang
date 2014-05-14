@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 %s -Fe%t 2>&1
+// RUN: %clangxx_asan -O0 %s -Fe%t
 // 'cat' is used below to work around FileCheck buffering bug which makes this
 // test flaky.  FIXME: file an issue.
 // RUN: not %run %t 2>&1 | cat | FileCheck %s
