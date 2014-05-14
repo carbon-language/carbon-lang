@@ -28,7 +28,7 @@ int main (int argc, char **argv)
             // Treat as the amount of time to have this process sleep (in seconds).
             const int sleep_seconds = std::atoi (argv[i] + strlen (SLEEP_PREFIX));
 			const int sleep_result = sleep(sleep_seconds);
-			printf("sleep result: %d\n", sleep_result);
+			std::cout << "sleep result: " << sleep_result << std::endl;
         }
         else
         {
