@@ -158,6 +158,11 @@ struct FormatStyle {
   /// the commas with the colon.
   bool BreakConstructorInitializersBeforeComma;
 
+  /// \brief Allows contracting simple braced statements to a single line.
+  ///
+  /// E.g., this allows <tt>if (a) { return; }</tt> to be put on a single line.
+  bool AllowShortBlocksOnASingleLine;
+
   /// \brief If \c true, <tt>if (a) return;</tt> can be put on a single
   /// line.
   bool AllowShortIfStatementsOnASingleLine;
@@ -338,6 +343,7 @@ struct FormatStyle {
                R.AllowAllParametersOfDeclarationOnNextLine &&
            AllowShortFunctionsOnASingleLine ==
                R.AllowShortFunctionsOnASingleLine &&
+           AllowShortBlocksOnASingleLine == R.AllowShortBlocksOnASingleLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&

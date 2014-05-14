@@ -106,6 +106,11 @@ the configuration (without a prefix: ``Auto``).
   Allow putting all parameters of a function declaration onto
   the next line even if ``BinPackParameters`` is ``false``.
 
+**AllowShortBlocksOnASingleLine** (``bool``)
+  Allows contracting simple braced statements to a single line.
+
+  E.g., this allows ``if (a) { return; }`` to be put on a single line.
+
 **AllowShortFunctionsOnASingleLine** (``ShortFunctionStyle``)
   Dependent on the value, ``int f() { return 0; }`` can be put
   on a single line.
@@ -284,7 +289,7 @@ the configuration (without a prefix: ``Auto``).
 
 **ObjCSpaceAfterProperty** (``bool``)
   Add a space after ``@property`` in Objective-C, i.e. use
-  ``@property (readonly)`` instead of ``@property(readonly)``.
+  ``\@property (readonly)`` instead of ``\@property(readonly)``.
 
 **ObjCSpaceBeforeProtocolList** (``bool``)
   Add a space in front of an Objective-C protocol list, i.e. use
@@ -338,7 +343,7 @@ the configuration (without a prefix: ``Auto``).
 **SpacesBeforeTrailingComments** (``unsigned``)
   The number of spaces before trailing line comments (//-comments).
 
-  This does not affect trailing block comments (/\*\*/-comments) as those
+  This does not affect trailing block comments (/**/-comments) as those
   commonly have different usage patterns and a number of special cases.
 
 **SpacesInAngles** (``bool``)
