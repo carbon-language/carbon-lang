@@ -112,17 +112,14 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
   if (LexicalBlockStack.empty()) return;
 
   SourceManager &SM = CGM.getContext().getSourceManager();
+  llvm::DIScope Scope(LexicalBlockStack.back());
   PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
-  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
 
-  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
-      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
+  if (PCLoc.isInvalid() || Scope.getFilename() == PCLoc.getFilename())
     return;
 
-  llvm::MDNode *LB = LexicalBlockStack.back();
-  llvm::DIScope Scope = llvm::DIScope(LB);
   if (Scope.isLexicalBlockFile()) {
-    llvm::DILexicalBlockFile LBF = llvm::DILexicalBlockFile(LB);
+    llvm::DILexicalBlockFile LBF = llvm::DILexicalBlockFile(Scope);
     llvm::DIDescriptor D
       = DBuilder.createLexicalBlockFile(LBF.getScope(),
                                         getOrCreateFile(CurLoc));
@@ -317,11 +314,18 @@ StringRef CGDebugInfo::getCurrentDirname() {
 /// CreateCompileUnit - Create new compile unit.
 void CGDebugInfo::CreateCompileUnit() {
 
+  // Should we be asking the SourceManager for the main file name, instead of
+  // accepting it as an argument? This just causes the main file name to
+  // mismatch with source locations and create extra lexical scopes or
+  // mismatched debug info (a CU with a DW_AT_file of "-", because that's what
+  // the driver passed, but functions/other things have DW_AT_file of "<stdin>"
+  // because that's what the SourceManager says)
+
   // Get absolute path name.
   SourceManager &SM = CGM.getContext().getSourceManager();
   std::string MainFileName = CGM.getCodeGenOpts().MainFileName;
   if (MainFileName.empty())
-    MainFileName = "<unknown>";
+    MainFileName = "<stdin>";
 
   // The main file name provided via the "-main-file-name" option contains just
   // the file name itself with no path information. This file name may have had
