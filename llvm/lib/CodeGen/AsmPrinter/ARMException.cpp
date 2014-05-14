@@ -59,9 +59,8 @@ void ARMException::endModule() {
 void ARMException::beginFunction(const MachineFunction *MF) {
   if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
     getTargetStreamer().emitFnStart();
-  if (Asm->MF->getFunction()->needsUnwindTableEntry())
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
-                                                  Asm->getFunctionNumber()));
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
+                                                Asm->getFunctionNumber()));
   // See if we need call frame info.
   AsmPrinter::CFIMoveType MoveType = Asm->needsCFIMoves();
   assert(MoveType != AsmPrinter::CFI_M_EH &&
@@ -78,16 +77,16 @@ void ARMException::endFunction(const MachineFunction *) {
   if (shouldEmitCFI)
     Asm->OutStreamer.EmitCFIEndProc();
 
+  // Map all labels and get rid of any dead landing pads.
+  MMI->TidyLandingPads();
+
   ARMTargetStreamer &ATS = getTargetStreamer();
-  if (!Asm->MF->getFunction()->needsUnwindTableEntry())
+  if (!Asm->MF->getFunction()->needsUnwindTableEntry() &&
+      MMI->getLandingPads().empty())
     ATS.emitCantUnwind();
   else {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
                                                   Asm->getFunctionNumber()));
-
-    // Map all labels and get rid of any dead landing pads.
-    MMI->TidyLandingPads();
-
     if (!MMI->getLandingPads().empty()) {
       // Emit references to personality.
       if (const Function * Personality =
