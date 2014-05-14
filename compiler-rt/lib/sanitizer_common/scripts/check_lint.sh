@@ -7,10 +7,12 @@ if [ "${LLVM_CHECKOUT}" == "" ]; then
   LLVM_CHECKOUT="${SCRIPT_DIR}/../../../../../"
 fi
 
-# Cpplint setup
+# python tools setup
 CPPLINT=${SCRIPT_DIR}/cpplint.py
+LITLINT=${SCRIPT_DIR}/litlint.py
 if [ "${PYTHON_EXECUTABLE}" != "" ]; then
   CPPLINT="${PYTHON_EXECUTABLE} ${CPPLINT}"
+  LITLINT="${PYTHON_EXECUTABLE} ${LITLINT}"
 fi
 
 # Filters
@@ -48,6 +50,7 @@ run_lint() {
   if [[ "${SILENT}" != "1" ]]; then
     cat $TASK_LOG
   fi
+  ${LITLINT} "$@" 2>>$ERROR_LOG
 }
 
 run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
