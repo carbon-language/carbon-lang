@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Binary.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MachO.h"
 
@@ -53,6 +54,8 @@ public:
     uint32_t getCPUType() const { return Header.cputype; }
 
     error_code getAsObjectFile(std::unique_ptr<ObjectFile> &Result) const;
+
+    error_code getAsArchive(std::unique_ptr<Archive> &Result) const;
   };
 
   class object_iterator {

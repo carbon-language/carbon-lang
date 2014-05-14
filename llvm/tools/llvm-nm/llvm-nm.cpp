@@ -595,9 +595,23 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                                                E = UB->end_objects();
          I != E; ++I) {
       std::unique_ptr<ObjectFile> Obj;
+      std::unique_ptr<Archive> A;
       if (!I->getAsObjectFile(Obj)) {
         outs() << Obj->getFileName() << ":\n";
         dumpSymbolNamesFromObject(Obj.get());
+      }
+      else if (!I->getAsArchive(A)) {
+        for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
+             AI != AE; ++AI) {
+          std::unique_ptr<Binary> Child;
+          if (AI->getAsBinary(Child, &Context))
+            continue;
+          if (SymbolicFile *O = dyn_cast<SymbolicFile>(Child.get())) {
+            outs() << A->getFileName() << ":";
+            outs() << O->getFileName() << ":\n";
+            dumpSymbolNamesFromObject(O);
+          }
+        }
       }
     }
     return;

@@ -14,6 +14,7 @@
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -82,6 +83,25 @@ error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
     MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
         ObjectData, ObjectName, false);
     ErrorOr<ObjectFile *> Obj = ObjectFile::createMachOObjectFile(ObjBuffer);
+    if (error_code EC = Obj.getError())
+      return EC;
+    Result.reset(Obj.get());
+    return object_error::success;
+  }
+  return object_error::parse_failed;
+}
+
+error_code MachOUniversalBinary::ObjectForArch::getAsArchive(
+    std::unique_ptr<Archive> &Result) const {
+  if (Parent) {
+    StringRef ParentData = Parent->getData();
+    StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
+    std::string ObjectName =
+        Parent->getFileName().str() + ":" +
+        Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+    MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
+        ObjectData, ObjectName, false);
+    ErrorOr<Archive *> Obj = Archive::create(ObjBuffer);
     if (error_code EC = Obj.getError())
       return EC;
     Result.reset(Obj.get());
