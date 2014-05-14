@@ -1834,7 +1834,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 /// in the specified scope.
 ///
 /// \param StartLoc The location of the 'new' token.
-/// \param SourceRange The range of the placement arguments.
+/// \param Range The range of the placement arguments.
 /// \param Name The name of the function ('operator new' or 'operator new[]').
 /// \param Args The placement arguments specified.
 /// \param Ctx The scope in which we should search; either a class scope or the
