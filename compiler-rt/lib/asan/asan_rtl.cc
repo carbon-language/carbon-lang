@@ -556,6 +556,12 @@ static void AsanInitInternal() {
   SanitizerToolName = "AddressSanitizer";
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
+
+  // Initialize flags. This must be done early, because most of the
+  // initialization steps look at flags().
+  const char *options = GetEnv("ASAN_OPTIONS");
+  InitializeFlags(flags(), options);
+
   InitializeHighMemEnd();
 
   // Make sure we are not statically linked.
@@ -565,11 +571,6 @@ static void AsanInitInternal() {
   SetDieCallback(AsanDie);
   SetCheckFailedCallback(AsanCheckFailed);
   SetPrintfAndReportCallback(AppendToErrorMessageBuffer);
-
-  // Initialize flags. This must be done early, because most of the
-  // initialization steps look at flags().
-  const char *options = GetEnv("ASAN_OPTIONS");
-  InitializeFlags(flags(), options);
 
   if (!flags()->start_deactivated)
     ParseExtraActivationFlags();

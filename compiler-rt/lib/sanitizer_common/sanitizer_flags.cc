@@ -55,6 +55,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->legacy_pthread_cond = false;
   f->intercept_tls_get_addr = false;
   f->coverage = false;
+  f->full_address_space = false;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -126,6 +127,9 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->coverage, "coverage",
       "If set, coverage information will be dumped at program shutdown (if the "
       "coverage instrumentation was enabled at compile time).");
+  ParseFlag(str, &f->full_address_space, "full_address_space",
+            "Sanitize complete address space; "
+            "by default kernel area on 32-bit platforms will not be sanitized");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
