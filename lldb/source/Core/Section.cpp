@@ -13,6 +13,8 @@
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 
+#include <limits>
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -337,7 +339,8 @@ SectionList::AddSection (const lldb::SectionSP& section_sp)
         m_sections.push_back(section_sp);
         return section_index;
     }
-    return SIZE_T_MAX;
+
+    return std::numeric_limits<size_t>::max ();
 }
 
 // Warning, this can be slow as it's removing items from a std::vector.
