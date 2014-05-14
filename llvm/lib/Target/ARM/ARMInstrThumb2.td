@@ -2407,6 +2407,19 @@ def t2UBFX: T2TwoRegBitFI<
   let Inst{15} = 0;
 }
 
+// A8.8.247  UDF - Undefined (Encoding T2)
+def t2UDF
+    : T2XI<(outs), (ins imm0_65535:$imm16), IIC_Br, "udf.w\t$imm16", []> {
+  bits<16> imm16;
+  let Inst{31-29} = 0b111;
+  let Inst{28-27} = 0b10;
+  let Inst{26-20} = 0b1111111;
+  let Inst{19-16} = imm16{15-12};
+  let Inst{15} = 0b1;
+  let Inst{14-12} = 0b010;
+  let Inst{11-0} = imm16{11-0};
+}
+
 // A8.6.18  BFI - Bitfield insert (Encoding T1)
 let Constraints = "$src = $Rd" in {
   def t2BFI : T2TwoRegBitFI<(outs rGPR:$Rd),

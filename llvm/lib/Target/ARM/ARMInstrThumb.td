@@ -1193,6 +1193,15 @@ def tTST :                      // A8.6.230
                [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>,
                Sched<[WriteALU]>;
 
+// A8.8.247  UDF - Undefined (Encoding T1)
+def tUDF : TI<(outs), (ins imm0_255:$imm8), IIC_Br, "udf\t$imm8", []>,
+           Encoding16 {
+  bits<8> imm8;
+  let Inst{15-12} = 0b1101;
+  let Inst{11-8} = 0b1110;
+  let Inst{7-0} = imm8;
+}
+
 // Zero-extend byte
 def tUXTB :                     // A8.6.262
   T1pIMiscEncode<{0,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
