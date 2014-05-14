@@ -1643,23 +1643,22 @@ void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
                                        const CFGBlock *CurrBlock,
                                        Expr *BrE, bool Neg) {
   // Find out which branch has the lock
-  bool branch = 0;
-  if (CXXBoolLiteralExpr *BLE = dyn_cast_or_null<CXXBoolLiteralExpr>(BrE)) {
+  bool branch = false;
+  if (CXXBoolLiteralExpr *BLE = dyn_cast_or_null<CXXBoolLiteralExpr>(BrE))
     branch = BLE->getValue();
-  }
-  else if (IntegerLiteral *ILE = dyn_cast_or_null<IntegerLiteral>(BrE)) {
+  else if (IntegerLiteral *ILE = dyn_cast_or_null<IntegerLiteral>(BrE))
     branch = ILE->getValue().getBoolValue();
-  }
+
   int branchnum = branch ? 0 : 1;
-  if (Neg) branchnum = !branchnum;
+  if (Neg)
+    branchnum = !branchnum;
 
   // If we've taken the trylock branch, then add the lock
   int i = 0;
   for (CFGBlock::const_succ_iterator SI = PredBlock->succ_begin(),
        SE = PredBlock->succ_end(); SI != SE && i < 2; ++SI, ++i) {
-    if (*SI == CurrBlock && i == branchnum) {
+    if (*SI == CurrBlock && i == branchnum)
       getMutexIDs(Mtxs, Attr, Exp, D);
-    }
   }
 }
 
