@@ -24,6 +24,9 @@
 
 #if SANITIZER_LINUX
 #include <sys/utsname.h>
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 #include <sys/personality.h>
 #endif
 
@@ -52,6 +55,7 @@ static uptr GetKernelAreaSize() {
       return 0;
   }
 
+#if !SANITIZER_ANDROID
   // Even if nothing is mapped, top Gb may still be accessible
   // if we are running on 64-bit kernel.
   // Uname may report misleading results if personality type
@@ -62,6 +66,7 @@ static uptr GetKernelAreaSize() {
       && uname(&uname_info) == 0
       && internal_strstr(uname_info.machine, "64"))
     return 0;
+#endif  // SANITIZER_ANDROID
 
   // Top gigabyte is reserved for kernel.
   return gbyte;
