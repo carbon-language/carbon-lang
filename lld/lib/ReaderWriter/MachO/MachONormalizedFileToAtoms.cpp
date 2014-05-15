@@ -85,6 +85,19 @@ static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
   file.addDefinedAtom(sym.name, atomContent, atomScope(sym.scope), copyRefs);
 }
 
+
+static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
+                                  bool copyRefs) {
+  // Undefinded symbols with n_value!=0 are actually tentative definitions.
+  if (sym.value == Hex64(0)) {
+    file.addUndefinedAtom(sym.name, copyRefs);
+  } else {
+    file.addTentativeDefAtom(sym.name, atomScope(sym.scope), sym.value,
+                              DefinedAtom::Alignment(sym.desc >> 8), copyRefs);
+  }
+}
+
+
 static ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
@@ -99,7 +112,7 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   }
 
   for (auto &sym : normalizedFile.undefinedSymbols) {
-    file->addUndefinedAtom(sym.name, copyRefs);
+    processUndefindeSymbol(*file, sym, copyRefs);
   }
 
   return std::unique_ptr<File>(std::move(file));

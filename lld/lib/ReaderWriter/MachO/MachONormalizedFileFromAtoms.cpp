@@ -176,6 +176,9 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   case DefinedAtom::typeGOT:
      return new (_allocator) SectionInfo("__DATA", "__got",
                             S_NON_LAZY_SYMBOL_POINTERS);
+  case DefinedAtom::typeZeroFill:
+     return new (_allocator) SectionInfo("__DATA", "__bss",
+                            S_ZEROFILL);
   default:
     llvm_unreachable("TO DO: add support for more sections");
     break;
@@ -420,7 +423,8 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   // Record where normalized section is.
   si->normalizedSectionIndex = file.sections.size()-1;
   // Copy content from atoms to content buffer for section.
-  // FIXME: zerofill atoms/sections should not take up content space.
+  if (si->type == llvm::MachO::S_ZEROFILL)
+    return;
   uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
   normSect->content = llvm::makeArrayRef(sectionContent, si->size);
   for (AtomInfo &ai : si->atomsAndOffsets) {

@@ -43,6 +43,18 @@ public:
     addAtom(*atom);
   }
 
+  void addTentativeDefAtom(StringRef name, Atom::Scope scope, uint64_t size,
+                           DefinedAtom::Alignment align, bool copyRefs) {
+    if (copyRefs) {
+      // Make a copy of the atom's name that is owned by this file.
+      name = name.copy(_allocator);
+    }
+    MachOTentativeDefAtom *atom =
+        new (_allocator) MachOTentativeDefAtom(*this, name, scope, size, align);
+    addAtom(*atom);
+  }
+
+
 private:
   llvm::BumpPtrAllocator _allocator;
 };

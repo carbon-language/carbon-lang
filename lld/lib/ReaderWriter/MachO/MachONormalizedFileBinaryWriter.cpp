@@ -726,6 +726,8 @@ error_code MachOFileLayout::writeLoadCommands() {
 void MachOFileLayout::writeSectionContent() {
   for (const Section &s : _file.sections) {
     // Copy all section content to output buffer.
+    if (s.type == llvm::MachO::S_ZEROFILL)
+      continue;
     uint32_t offset = _sectInfo[&s].fileOffset;
     uint8_t *p = &_buffer[offset];
     memcpy(p, &s.content[0], s.content.size());

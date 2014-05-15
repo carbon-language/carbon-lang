@@ -36,6 +36,37 @@ private:
   const ArrayRef<uint8_t> _content;
   const Scope _scope;
 };
+
+
+class MachOTentativeDefAtom : public SimpleDefinedAtom {
+public:
+  MachOTentativeDefAtom(const File &f, const StringRef name, Scope scope,
+                        uint64_t size, DefinedAtom::Alignment align)
+      : SimpleDefinedAtom(f), _name(name), _scope(scope), _size(size),
+        _align(align) {}
+
+  uint64_t size() const override { return _size; }
+
+  Merge merge() const override { return DefinedAtom::mergeAsTentative; }
+
+  ContentType contentType() const override { return DefinedAtom::typeZeroFill; }
+
+  Alignment alignment() const override { return _align; }
+
+  StringRef name() const override { return _name; }
+
+  Scope scope() const override { return _scope; }
+
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
+
+private:
+  const StringRef _name;
+  const Scope _scope;
+  const uint64_t _size;
+  const DefinedAtom::Alignment _align;
+};
+
+
 } // mach_o
 } // lld
 

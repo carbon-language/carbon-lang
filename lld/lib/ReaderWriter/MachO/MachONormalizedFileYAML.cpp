@@ -406,8 +406,18 @@ struct MappingTraits<Symbol> {
     io.mapRequired("type",    sym.type);
     io.mapOptional("scope",   sym.scope, SymbolScope(0));
     io.mapOptional("sect",    sym.sect, (uint8_t)0);
-    io.mapOptional("desc",    sym.desc, SymbolDesc(0));
-    io.mapRequired("value",   sym.value);
+    if (sym.type == llvm::MachO::N_UNDF) {
+      // In undef symbols, desc field contains alignment/ordinal info
+      // which is better represented as a hex vaule.
+      uint16_t t1 = sym.desc;
+      Hex16 t2 = t1;
+      io.mapOptional("desc",  t2, Hex16(0));
+      sym.desc = t2;
+    } else {
+      // In defined symbols, desc fit is a set of option bits.
+      io.mapOptional("desc",    sym.desc, SymbolDesc(0));
+    }
+    io.mapRequired("value",  sym.value);
   }
 };
 
