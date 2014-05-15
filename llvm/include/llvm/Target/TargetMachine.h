@@ -166,31 +166,16 @@ public:
   /// relaxed.
   bool hasMCRelaxAll() const { return Options.MCOptions.MCRelaxAll; }
 
-  /// setMCRelaxAll - Set whether all machine code instructions should be
-  /// relaxed.
-  void setMCRelaxAll(bool Value) { Options.MCOptions.MCRelaxAll = Value; }
-
   /// hasMCSaveTempLabels - Check whether temporary labels will be preserved
   /// (i.e., not treated as temporary).
   bool hasMCSaveTempLabels() const { return Options.MCOptions.MCSaveTempLabels; }
 
-  /// setMCSaveTempLabels - Set whether temporary labels will be preserved
-  /// (i.e., not treated as temporary).
-  void setMCSaveTempLabels(bool Value) { Options.MCOptions.MCSaveTempLabels = Value; }
-
   /// hasMCNoExecStack - Check whether an executable stack is not needed.
   bool hasMCNoExecStack() const { return Options.MCOptions.MCNoExecStack; }
-
-  /// setMCNoExecStack - Set whether an executabel stack is not needed.
-  void setMCNoExecStack(bool Value) { Options.MCOptions.MCNoExecStack = Value; }
 
   /// hasMCUseDwarfDirectory - Check whether we should use .file directives with
   /// explicit directories.
   bool hasMCUseDwarfDirectory() const { return Options.MCOptions.MCUseDwarfDirectory; }
-
-  /// setMCUseDwarfDirectory - Set whether all we should use .file directives
-  /// with explicit directories.
-  void setMCUseDwarfDirectory(bool Value) { Options.MCOptions.MCUseDwarfDirectory = Value; }
 
   /// getRelocationModel - Returns the code generation relocation model. The
   /// choices are static, PIC, and dynamic-no-pic, and target default.
