@@ -1206,85 +1206,85 @@ poly8x16_t test_vcntq_p8(poly8x16_t a) {
 int8x8_t test_vmvn_s8(int8x8_t a) {
   // CHECK-LABEL: test_vmvn_s8
   return vmvn_s8(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 int8x16_t test_vmvnq_s8(int8x16_t a) {
   // CHECK-LABEL: test_vmvnq_s8
   return vmvnq_s8(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 int16x4_t test_vmvn_s16(int16x4_t a) {
   // CHECK-LABEL: test_vmvn_s16
   return vmvn_s16(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 int16x8_t test_vmvnq_s16(int16x8_t a) {
   // CHECK-LABEL: test_vmvnq_s16
   return vmvnq_s16(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 int32x2_t test_vmvn_s32(int32x2_t a) {
   // CHECK-LABEL: test_vmvn_s32
   return vmvn_s32(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 int32x4_t test_vmvnq_s32(int32x4_t a) {
   // CHECK-LABEL: test_vmvnq_s32
   return vmvnq_s32(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 uint8x8_t test_vmvn_u8(uint8x8_t a) {
   // CHECK-LABEL: test_vmvn_u8
   return vmvn_u8(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 uint8x16_t test_vmvnq_u8(uint8x16_t a) {
   // CHECK-LABEL: test_vmvnq_u8
   return vmvnq_u8(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 uint16x4_t test_vmvn_u16(uint16x4_t a) {
   // CHECK-LABEL: test_vmvn_u16
   return vmvn_u16(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 uint16x8_t test_vmvnq_u16(uint16x8_t a) {
   // CHECK-LABEL: test_vmvnq_u16
   return vmvnq_u16(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 uint32x2_t test_vmvn_u32(uint32x2_t a) {
   // CHECK-LABEL: test_vmvn_u32
   return vmvn_u32(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 uint32x4_t test_vmvnq_u32(uint32x4_t a) {
   // CHECK-LABEL: test_vmvnq_u32
   return vmvnq_u32(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 poly8x8_t test_vmvn_p8(poly8x8_t a) {
   // CHECK-LABEL: test_vmvn_p8
   return vmvn_p8(a);
-  // CHECK: not v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
 }
 
 poly8x16_t test_vmvnq_p8(poly8x16_t a) {
   // CHECK-LABEL: test_vmvnq_p8
   return vmvnq_p8(a);
-  // CHECK: not v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
+  // CHECK: {{mvn|not}} v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 }
 
 int8x8_t test_vrbit_s8(int8x8_t a) {

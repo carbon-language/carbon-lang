@@ -56,7 +56,7 @@ poly64_t test_vget_lane_p64(poly64x1_t v) {
 poly64_t test_vgetq_lane_p64(poly64x2_t v) {
   // CHECK-LABEL: test_vgetq_lane_p64
   return vgetq_lane_p64(v, 1);
-  // CHECK: umov  {{x[0-9]+}}, {{v[0-9]+}}.d[1]
+  // CHECK: {{mov|umov}}  {{x[0-9]+}}, {{v[0-9]+}}.d[1]
 }
 
 poly64x1_t test_vset_lane_p64(poly64_t a, poly64x1_t v) {
