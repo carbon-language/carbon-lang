@@ -76,7 +76,7 @@ poly64x1_t test_vcopy_lane_p64(poly64x1_t a, poly64x1_t b) {
   return vcopy_lane_p64(a, 0, b, 0);
   // CHECK-AARCH64: fmov  {{d[0-9]+}}, {{d[0-9]+}}
 
-  // CHECK-ARM64: orr v0.16b, v1.16b, v1.16b
+  // CHECK-ARM64: mov v0.16b, v1.16b
 }
 
 poly64x2_t test_vcopyq_lane_p64(poly64x2_t a, poly64x1_t b) {
