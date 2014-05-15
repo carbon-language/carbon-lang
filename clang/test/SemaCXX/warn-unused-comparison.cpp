@@ -115,7 +115,7 @@ stream &operator<(stream &s, int);
 bool operator<(stream &s, stream &s2);
 
 void test() {
-  cout < 5;    // no waring, operator returns a reference
+  cout < 5;    // no warning, operator returns a reference
   cout < cin;  // expected-warning {{relational comparison result unused}}
 }
 }

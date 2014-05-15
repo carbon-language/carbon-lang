@@ -404,7 +404,7 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
     return;
 
-  // Issue a waring.
+  // Issue a warning.
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport(AC->getDecl(), filter.checkName_mktemp,

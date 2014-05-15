@@ -1278,7 +1278,7 @@ private:
   }
 
   // Tries to merge an escape sequence, i.e. a "\\" and the following
-  // charachter. Use e.g. inside JavaScript regex literals.
+  // character. Use e.g. inside JavaScript regex literals.
   bool tryMergeEscapeSequence() {
     if (Tokens.size() < 2)
       return false;

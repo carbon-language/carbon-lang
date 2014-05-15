@@ -46,7 +46,7 @@ TIL_OPCODE_DEF(Phi)
 TIL_OPCODE_DEF(Goto)
 TIL_OPCODE_DEF(Branch)
 
-// psuedo-terms
+// pseudo-terms
 TIL_OPCODE_DEF(Identifier)
 TIL_OPCODE_DEF(IfThenElse)
 TIL_OPCODE_DEF(Let)
