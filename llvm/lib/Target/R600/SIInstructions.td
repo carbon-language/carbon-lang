@@ -1408,6 +1408,16 @@ def V_MOV_I1 : InstSI <
   "", [(set i1:$dst, (imm:$src))]
 >;
 
+def V_AND_I1 : InstSI <
+   (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
+   [(set i1:$dst, (and i1:$src0, i1:$src1))]
+>;
+
+def V_OR_I1 : InstSI <
+   (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
+   [(set i1:$dst, (or i1:$src0, i1:$src1))]
+>;
+
 def LOAD_CONST : AMDGPUShaderInst <
   (outs GPRF32:$dst),
   (ins i32imm:$src),
@@ -1679,16 +1689,6 @@ def : Pat <
 //===----------------------------------------------------------------------===//
 // SOP2 Patterns
 //===----------------------------------------------------------------------===//
-
-def : Pat <
-  (i1 (and i1:$src0, i1:$src1)),
-  (S_AND_B64 $src0, $src1)
->;
-
-def : Pat <
-  (i1 (or i1:$src0, i1:$src1)),
-  (S_OR_B64 $src0, $src1)
->;
 
 def : Pat <
   (i1 (xor i1:$src0, i1:$src1)),

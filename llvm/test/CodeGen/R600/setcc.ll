@@ -96,7 +96,9 @@ entry:
 ; R600-DAG: SETNE_INT
 ; SI: V_CMP_O_F32
 ; SI: V_CMP_NEQ_F32
-; SI: S_AND_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_AND_B32_e32
 define void @f32_one(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp one float %a, %b
@@ -128,7 +130,9 @@ entry:
 ; R600-DAG: SETNE_INT
 ; SI: V_CMP_U_F32
 ; SI: V_CMP_EQ_F32
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f32_ueq(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ueq float %a, %b
@@ -142,7 +146,9 @@ entry:
 ; R600: SETE_DX10
 ; SI: V_CMP_U_F32
 ; SI: V_CMP_GT_F32
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f32_ugt(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ugt float %a, %b
@@ -156,7 +162,9 @@ entry:
 ; R600: SETE_DX10
 ; SI: V_CMP_U_F32
 ; SI: V_CMP_GE_F32
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f32_uge(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp uge float %a, %b
@@ -170,7 +178,9 @@ entry:
 ; R600: SETE_DX10
 ; SI: V_CMP_U_F32
 ; SI: V_CMP_LT_F32
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f32_ult(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ult float %a, %b
@@ -184,7 +194,9 @@ entry:
 ; R600: SETE_DX10
 ; SI: V_CMP_U_F32
 ; SI: V_CMP_LE_F32
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f32_ule(i32 addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = fcmp ule float %a, %b

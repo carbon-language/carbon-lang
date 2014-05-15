@@ -59,7 +59,9 @@ entry:
 ; FUNC-LABEL: @f64_one
 ; SI: V_CMP_O_F64
 ; SI: V_CMP_NEQ_F64
-; SI: S_AND_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_AND_B32_e32
 define void @f64_one(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp one double %a, %b
@@ -81,7 +83,9 @@ entry:
 ; FUNC-LABEL: @f64_ueq
 ; SI: V_CMP_U_F64
 ; SI: V_CMP_EQ_F64
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f64_ueq(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp ueq double %a, %b
@@ -93,7 +97,9 @@ entry:
 ; FUNC-LABEL: @f64_ugt
 ; SI: V_CMP_U_F64
 ; SI: V_CMP_GT_F64
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f64_ugt(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp ugt double %a, %b
@@ -105,7 +111,9 @@ entry:
 ; FUNC-LABEL: @f64_uge
 ; SI: V_CMP_U_F64
 ; SI: V_CMP_GE_F64
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f64_uge(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp uge double %a, %b
@@ -117,7 +125,9 @@ entry:
 ; FUNC-LABEL: @f64_ult
 ; SI: V_CMP_U_F64
 ; SI: V_CMP_LT_F64
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f64_ult(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp ult double %a, %b
@@ -129,7 +139,9 @@ entry:
 ; FUNC-LABEL: @f64_ule
 ; SI: V_CMP_U_F64
 ; SI: V_CMP_LE_F64
-; SI: S_OR_B64
+; SI: V_CNDMASK_B32_e64
+; SI: V_CNDMASK_B32_e64
+; SI: V_OR_B32_e32
 define void @f64_ule(i32 addrspace(1)* %out, double %a, double %b) {
 entry:
   %0 = fcmp ule double %a, %b
