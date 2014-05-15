@@ -193,7 +193,6 @@ private:
 public:
   Driver(StringRef _ClangExecutable,
          StringRef _DefaultTargetTriple,
-         StringRef _DefaultImageName,
          DiagnosticsEngine &_Diags);
   ~Driver();
 

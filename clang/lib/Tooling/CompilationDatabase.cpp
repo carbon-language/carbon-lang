@@ -212,11 +212,11 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
       IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
       &*DiagOpts, &DiagClient, false);
 
-  // Neither clang executable nor default image name are required since the
-  // jobs the driver builds will not be executed.
+  // The clang executable path isn't required since the jobs the driver builds
+  // will not be executed.
   std::unique_ptr<driver::Driver> NewDriver(new driver::Driver(
       /* ClangExecutable= */ "", llvm::sys::getDefaultTargetTriple(),
-      /* DefaultImageName= */ "", Diagnostics));
+      Diagnostics));
   NewDriver->setCheckInputsExist(false);
 
   // This becomes the new argv[0]. The value is actually not important as it

@@ -47,7 +47,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
 
   // FIXME: We shouldn't have to pass in the path info.
   driver::Driver TheDriver("clang", llvm::sys::getDefaultTargetTriple(),
-                           "a.out", *Diags);
+                           *Diags);
 
   // Don't check that inputs exist, they may have been remapped.
   TheDriver.setCheckInputsExist(false);
