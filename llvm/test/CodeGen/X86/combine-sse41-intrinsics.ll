@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown -mcpu=corei7 | FileCheck %s
 
 
 define <2 x double> @test_x86_sse41_blend_pd(<2 x double> %a0, <2 x double> %a1) {
