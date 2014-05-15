@@ -18,6 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace dwarf;
+typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
 
 void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, const DWARFUnit *u,
                                       unsigned recurseDepth,
@@ -272,8 +273,9 @@ bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
 }
 
 const char *
-DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
-  if (!isSubroutineDIE())
+DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
+                                              FunctionNameKind Kind) const {
+  if (!isSubroutineDIE() || Kind == FunctionNameKind::None)
     return nullptr;
   // Try to get mangled name if possible.
   if (const char *name =
@@ -290,7 +292,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
   if (spec_ref != -1U) {
     DWARFDebugInfoEntryMinimal spec_die;
     if (spec_die.extractFast(U, &spec_ref)) {
-      if (const char *name = spec_die.getSubroutineName(U))
+      if (const char *name = spec_die.getSubroutineName(U, Kind))
         return name;
     }
   }
@@ -300,7 +302,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
   if (abs_origin_ref != -1U) {
     DWARFDebugInfoEntryMinimal abs_origin_die;
     if (abs_origin_die.extractFast(U, &abs_origin_ref)) {
-      if (const char *name = abs_origin_die.getSubroutineName(U))
+      if (const char *name = abs_origin_die.getSubroutineName(U, Kind))
         return name;
     }
   }

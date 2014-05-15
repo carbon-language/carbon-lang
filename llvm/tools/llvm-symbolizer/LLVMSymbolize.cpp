@@ -35,13 +35,12 @@ static bool error(error_code ec) {
   return true;
 }
 
-static uint32_t
-getDILineInfoSpecifierFlags(const LLVMSymbolizer::Options &Opts) {
-  uint32_t Flags = llvm::DILineInfoSpecifier::FileLineInfo |
-                   llvm::DILineInfoSpecifier::AbsoluteFilePath;
-  if (Opts.PrintFunctions)
-    Flags |= llvm::DILineInfoSpecifier::FunctionName;
-  return Flags;
+static DILineInfoSpecifier
+getDILineInfoSpecifier(const LLVMSymbolizer::Options &Opts) {
+  return DILineInfoSpecifier(
+      DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
+      Opts.PrintFunctions ? DILineInfoSpecifier::FunctionNameKind::LinkageName
+                          : DILineInfoSpecifier::FunctionNameKind::None);
 }
 
 ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
@@ -115,7 +114,7 @@ DILineInfo ModuleInfo::symbolizeCode(
   DILineInfo LineInfo;
   if (DebugInfoContext) {
     LineInfo = DebugInfoContext->getLineInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifierFlags(Opts));
+        ModuleOffset, getDILineInfoSpecifier(Opts));
   }
   // Override function name from symbol table if necessary.
   if (Opts.PrintFunctions && Opts.UseSymbolTable) {
@@ -134,7 +133,7 @@ DIInliningInfo ModuleInfo::symbolizeInlinedCode(
   DIInliningInfo InlinedContext;
   if (DebugInfoContext) {
     InlinedContext = DebugInfoContext->getInliningInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifierFlags(Opts));
+        ModuleOffset, getDILineInfoSpecifier(Opts));
   }
   // Make sure there is at least one frame in context.
   if (InlinedContext.getNumberOfFrames() == 0) {

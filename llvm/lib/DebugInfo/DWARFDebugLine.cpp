@@ -15,6 +15,7 @@
 #include <algorithm>
 using namespace llvm;
 using namespace dwarf;
+typedef DILineInfoSpecifier::FileLineInfoKind FileLineInfoKind;
 
 DWARFDebugLine::Prologue::Prologue() {
   clear();
@@ -643,13 +644,14 @@ bool DWARFDebugLine::LineTable::lookupAddressRange(
 
 bool
 DWARFDebugLine::LineTable::getFileNameByIndex(uint64_t FileIndex,
-                                              bool NeedsAbsoluteFilePath,
+                                              FileLineInfoKind Kind,
                                               std::string &Result) const {
-  if (FileIndex == 0 || FileIndex > Prologue.FileNames.size())
+  if (FileIndex == 0 || FileIndex > Prologue.FileNames.size() ||
+      Kind == FileLineInfoKind::None)
     return false;
   const FileNameEntry &Entry = Prologue.FileNames[FileIndex - 1];
   const char *FileName = Entry.Name;
-  if (!NeedsAbsoluteFilePath ||
+  if (Kind != FileLineInfoKind::AbsoluteFilePath ||
       sys::path::is_absolute(FileName)) {
     Result = FileName;
     return true;

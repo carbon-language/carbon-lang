@@ -68,19 +68,16 @@ class DIInliningInfo {
 
 /// DILineInfoSpecifier - controls which fields of DILineInfo container
 /// should be filled with data.
-class DILineInfoSpecifier {
-  const uint32_t Flags;  // Or'ed flags that set the info we want to fetch.
-public:
-  enum Specification {
-    FileLineInfo = 1 << 0,
-    AbsoluteFilePath = 1 << 1,
-    FunctionName = 1 << 2
-  };
-  // Use file/line info by default.
-  DILineInfoSpecifier(uint32_t flags = FileLineInfo) : Flags(flags) {}
-  bool needs(Specification spec) const {
-    return (Flags & spec) > 0;
-  }
+struct DILineInfoSpecifier {
+  enum class FileLineInfoKind { None, Default, AbsoluteFilePath };
+  enum class FunctionNameKind { None, LinkageName };
+
+  FileLineInfoKind FLIKind;
+  FunctionNameKind FNKind;
+
+  DILineInfoSpecifier(FileLineInfoKind FLIKind = FileLineInfoKind::Default,
+                      FunctionNameKind FNKind = FunctionNameKind::None)
+      : FLIKind(FLIKind), FNKind(FNKind) {}
 };
 
 /// Selects which debug sections get dumped.

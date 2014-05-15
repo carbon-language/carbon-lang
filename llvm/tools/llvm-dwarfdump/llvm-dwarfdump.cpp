@@ -108,13 +108,13 @@ static void DumpInput(const StringRef &Filename) {
     DICtx->dump(outs(), DumpType);
   } else {
     // Print line info for the specified address.
-    int SpecFlags = DILineInfoSpecifier::FileLineInfo |
-                    DILineInfoSpecifier::AbsoluteFilePath;
-    if (PrintFunctions)
-      SpecFlags |= DILineInfoSpecifier::FunctionName;
+    DILineInfoSpecifier Spec(
+        DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
+        PrintFunctions ? DILineInfoSpecifier::FunctionNameKind::LinkageName
+                       : DILineInfoSpecifier::FunctionNameKind::None);
     if (PrintInlining) {
       DIInliningInfo InliningInfo =
-        DICtx->getInliningInfoForAddress(Address, SpecFlags);
+        DICtx->getInliningInfoForAddress(Address, Spec);
       uint32_t n = InliningInfo.getNumberOfFrames();
       if (n == 0) {
         // Print one empty debug line info in any case.
@@ -126,7 +126,7 @@ static void DumpInput(const StringRef &Filename) {
         }
       }
     } else {
-      DILineInfo dli = DICtx->getLineInfoForAddress(Address, SpecFlags);
+      DILineInfo dli = DICtx->getLineInfoForAddress(Address, Spec);
       PrintDILineInfo(dli);
     }
   }
