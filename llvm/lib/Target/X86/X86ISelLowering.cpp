@@ -7410,7 +7410,7 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
   // v4f32 or when copying a member from one v4f32 to another.
   // We also use it for transferring i32 from one register to another,
   // since it simply copies the same bits.
-  // If we're transfering an i32 from memory to a specific element in a
+  // If we're transferring an i32 from memory to a specific element in a
   // register, we output a generic DAG that will match the PINSRD
   // instruction.
   // TODO: Optimize for AVX cases too (VINSERTPS)

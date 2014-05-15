@@ -423,7 +423,7 @@ void LazyCallGraph::SCC::internalDFS(
         continue;
       }
 
-      // Track the lowest link of the childen, if any are still in the stack.
+      // Track the lowest link of the children, if any are still in the stack.
       // Any child not on the stack will have a LowLink of -1.
       assert(ChildN.LowLink != 0 &&
              "Low-link must not be zero with a non-zero DFS number.");
@@ -654,7 +654,7 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
         continue;
       }
 
-      // Track the lowest link of the childen, if any are still in the stack.
+      // Track the lowest link of the children, if any are still in the stack.
       assert(ChildN.LowLink != 0 &&
              "Low-link must not be zero with a non-zero DFS number.");
       if (ChildN.LowLink >= 0 && ChildN.LowLink < N->LowLink)

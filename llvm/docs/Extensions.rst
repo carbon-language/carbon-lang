@@ -178,7 +178,7 @@ in the following fashion:
   bl __chkstk
   sub.w sp, sp, r4
 
-However, this has the limitation of 32 MiB (±16MiB).  In order to accomodate
+However, this has the limitation of 32 MiB (±16MiB).  In order to accommodate
 larger binaries, LLVM supports the use of ``-mcode-model=large`` to allow a 4GiB
 range via a slight deviation.  It will generate an indirect jump as follows:
 

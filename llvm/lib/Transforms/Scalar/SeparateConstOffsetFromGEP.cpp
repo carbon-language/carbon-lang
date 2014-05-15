@@ -107,7 +107,7 @@ namespace {
 /// In real programs, a GEP index may be more complicated than a simple addition
 /// of something and a constant integer which can be trivially splitted. For
 /// example, to split ((a << 3) | 5) + b, we need to search deeper for the
-/// constant offset, so that we can seperate the index to (a << 3) + b and 5.
+/// constant offset, so that we can separate the index to (a << 3) + b and 5.
 ///
 /// Therefore, this class looks into the expression that computes a given GEP
 /// index, and tries to find a constant integer that can be hoisted to the
@@ -179,7 +179,7 @@ class ConstantOffsetExtractor {
 };
 
 /// \brief A pass that tries to split every GEP in the function into a variadic
-/// base and a constant offset. It is a FuntionPass because searching for the
+/// base and a constant offset. It is a FunctionPass because searching for the
 /// constant offset may inspect other basic blocks.
 class SeparateConstOffsetFromGEP : public FunctionPass {
  public:

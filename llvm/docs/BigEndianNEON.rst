@@ -58,7 +58,7 @@ A "little endian" layout has the least significant byte first (lowest in memory 
     Big endian vector load using ``LDR``.
 
 
-A vector is a consecutive sequence of items that are operated on simultaneously. To load a 64-bit vector, 64 bits need to be read from memory. In little endian mode, we can do this by just performing a 64-bit load - ``LDR q0, [foo]``. However if we try this in big endian mode, because of the byte swapping the lane indices end up being swapped! The zero'th item as layed out in memory becomes the n'th lane in the vector.
+A vector is a consecutive sequence of items that are operated on simultaneously. To load a 64-bit vector, 64 bits need to be read from memory. In little endian mode, we can do this by just performing a 64-bit load - ``LDR q0, [foo]``. However if we try this in big endian mode, because of the byte swapping the lane indices end up being swapped! The zero'th item as laid out in memory becomes the n'th lane in the vector.
 
 .. figure:: ARM-BE-ld1.png
     :align: right

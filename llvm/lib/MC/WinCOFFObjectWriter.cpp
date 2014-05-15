@@ -789,7 +789,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     case COFF::IMAGE_REL_ARM_MOV32A:
       // IMAGE_REL_ARM_BRANCH24, IMAGE_REL_ARM_BLX24, IMAGE_REL_ARM_MOV32A are
       // only used for ARM mode code, which is documented as being unsupported
-      // by Windows on ARM.  Emperical proof indicates that masm is able to
+      // by Windows on ARM.  Empirical proof indicates that masm is able to
       // generate the relocations however the rest of the MSVC toolchain is
       // unable to handle it.
       llvm_unreachable("unsupported relocation");

@@ -702,10 +702,10 @@ void ScheduleDAGInstrs::initSUnits() {
 
     // If this SUnit uses a reserved or unbuffered resource, mark it as such.
     //
-    // Reserved resources block an instruction from issueing and stall the
+    // Reserved resources block an instruction from issuing and stall the
     // entire pipeline. These are identified by BufferSize=0.
     //
-    // Unbuffered resources prevent execution of subsequeny instructions that
+    // Unbuffered resources prevent execution of subsequent instructions that
     // require the same resources. This is used for in-order execution pipelines
     // within an out-of-order core. These are identified by BufferSize=1.
     if (SchedModel.hasInstrSchedModel()) {

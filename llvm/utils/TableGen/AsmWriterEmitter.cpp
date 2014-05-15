@@ -867,7 +867,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
             }
           } else {
             // Assume all printable operands are desired for now. This can be
-            // overridden in the InstAlias instantiation if neccessary.
+            // overridden in the InstAlias instantiation if necessary.
             IAP->addOperand(ROName, i, PrintMethodIdx);
           }
 

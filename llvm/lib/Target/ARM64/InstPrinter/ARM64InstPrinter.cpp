@@ -163,7 +163,7 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       return;
     }
 
-    // Otherwise SBFX/UBFX is the prefered form
+    // Otherwise SBFX/UBFX is the preferred form
     O << '\t' << (IsSigned ? "sbfx" : "ubfx") << '\t'
       << getRegisterName(Op0.getReg()) << ", " << getRegisterName(Op1.getReg())
       << ", #" << Op2.getImm() << ", #" << Op3.getImm() - Op2.getImm() + 1;
@@ -190,7 +190,7 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
     int LSB = ImmR;
     int Width = ImmS - ImmR + 1;
-    // Otherwise BFXIL the prefered form
+    // Otherwise BFXIL the preferred form
     O << "\tbfxil\t"
       << getRegisterName(Op0.getReg()) << ", " << getRegisterName(Op2.getReg())
       << ", #" << LSB << ", #" << Width;

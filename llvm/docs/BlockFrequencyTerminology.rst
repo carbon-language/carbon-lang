@@ -97,7 +97,7 @@ Implementation: Getting from mass and scale to frequency
 ========================================================
 
 After analysing the complete series of DAGs, each block has a mass (local to
-its containing loop, if any), and each loop psuedo-node has a loop scale and
+its containing loop, if any), and each loop pseudo-node has a loop scale and
 its own mass (from its parent's DAG).
 
 We can get an initial frequency assignment (with entry frequency of 1.0) by
