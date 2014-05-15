@@ -35,16 +35,16 @@ char *strncpy(char *, const char *, size_t);
 #  elif defined(__x86_64__) || defined(__arm)
 #    define __STRERROR_NAME  "_strerror"
 #  else
-#    error "unrecognized architecture for targetting OS X"
+#    error "unrecognized architecture for targeting OS X"
 #  endif
 #elif defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__)
 #  if defined(__i386) || defined (__x86_64) || defined(__arm)
 #    define __STRERROR_NAME  "_strerror"
 #  else
-#    error "unrecognized architecture for targetting iOS"
+#    error "unrecognized architecture for targeting iOS"
 #  endif
 #else
-#  error "unrecognized architecture for targetting Darwin"
+#  error "unrecognized architecture for targeting Darwin"
 #endif
 
 char *strerror(int) __asm(__STRERROR_NAME);

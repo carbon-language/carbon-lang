@@ -1,4 +1,4 @@
-# These are the functions which clang needs when it is targetting a previous
+# These are the functions which clang needs when it is targeting a previous
 # version of the OS. The issue is that the backend may use functions which were
 # not present in the libgcc that shipped on the platform. In such cases, we link
 # with a version of the library which contains private_extern definitions of all

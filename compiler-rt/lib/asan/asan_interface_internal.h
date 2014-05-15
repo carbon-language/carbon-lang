@@ -22,7 +22,7 @@ using __sanitizer::uptr;
 extern "C" {
   // This function should be called at the very beginning of the process,
   // before any instrumented code is executed and before any call to malloc.
-  // Everytime the asan ABI changes we also change the version number in this
+  // Every time the asan ABI changes we also change the version number in this
   // name. Objects build with incompatible asan ABI version
   // will not link with run-time.
   // Changes between ABI versions:

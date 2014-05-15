@@ -59,7 +59,7 @@
 
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
-// Seperate namespace also makes it simpler to distinguish the asan run-time
+// Separate namespace also makes it simpler to distinguish the asan run-time
 // functions from the instrumented user code in a profile.
 namespace __asan {
 
@@ -98,7 +98,7 @@ void AppendToErrorMessageBuffer(const char *buffer);
 
 void ParseExtraActivationFlags();
 
-// Platfrom-specific options.
+// Platform-specific options.
 #if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE \

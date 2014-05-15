@@ -1,4 +1,4 @@
-// Check the presense of interface symbols in the ASan runtime dylib.
+// Check the presence of interface symbols in the ASan runtime dylib.
 // If you're changing this file, please also change
 // ../Linux/interface_symbols.c
 

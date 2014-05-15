@@ -22,10 +22,10 @@ namespace __tsan {
 struct Flags : CommonFlags, DDFlags {
   // Enable dynamic annotations, otherwise they are no-ops.
   bool enable_annotations;
-  // Supress a race report if we've already output another race report
+  // Suppress a race report if we've already output another race report
   // with the same stack.
   bool suppress_equal_stacks;
-  // Supress a race report if we've already output another race report
+  // Suppress a race report if we've already output another race report
   // on the same address.
   bool suppress_equal_addresses;
   // Suppress weird race reports that can be seen if JVM is embed

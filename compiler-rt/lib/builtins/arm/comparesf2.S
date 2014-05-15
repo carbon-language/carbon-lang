@@ -107,7 +107,7 @@ DEFINE_COMPILERRT_FUNCTION_ALIAS(__nesf2, __eqsf2)
 
 .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__gtsf2)
-    // Identical to the preceeding except in that we return -1 for NaN values.
+    // Identical to the preceding except in that we return -1 for NaN values.
     // Given that the two paths share so much code, one might be tempted to 
     // unify them; however, the extra code needed to do so makes the code size
     // to performance tradeoff very hard to justify for such small functions.

@@ -1,4 +1,4 @@
-/*===- InstrProfilingPlatformOther.c - Profile data default platfrom ------===*\
+/*===- InstrProfilingPlatformOther.c - Profile data default platform ------===*\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*

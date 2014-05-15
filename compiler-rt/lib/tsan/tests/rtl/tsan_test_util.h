@@ -37,7 +37,7 @@ class Mutex {
   ~Mutex();
 
   void Init();
-  void StaticInit();  // Emulates static initalization (tsan invisible).
+  void StaticInit();  // Emulates static initialization (tsan invisible).
   void Destroy();
   void Lock();
   bool TryLock();

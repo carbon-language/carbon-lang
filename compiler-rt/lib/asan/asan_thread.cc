@@ -123,7 +123,7 @@ FakeStack *AsanThread::AsyncSignalSafeLazyInitFakeStack() {
   // 1   -- being initialized
   // ptr -- initialized
   // This CAS checks if the state was 0 and if so changes it to state 1,
-  // if that was successfull, it initilizes the pointer.
+  // if that was successful, it initializes the pointer.
   if (atomic_compare_exchange_strong(
       reinterpret_cast<atomic_uintptr_t *>(&fake_stack_), &old_val, 1UL,
       memory_order_relaxed)) {

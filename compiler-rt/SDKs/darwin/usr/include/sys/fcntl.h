@@ -26,7 +26,7 @@
 #  elif defined(__arm)
 #    define __OPEN_NAME  "_open"
 #  else
-#    error "unrecognized architecture for targetting OS X"
+#    error "unrecognized architecture for targeting OS X"
 #  endif
 #elif defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__)
 #  if defined(__i386) || defined (__x86_64)
@@ -34,10 +34,10 @@
 #  elif defined(__arm)
 #    define __OPEN_NAME  "_open"
 #  else
-#    error "unrecognized architecture for targetting iOS"
+#    error "unrecognized architecture for targeting iOS"
 #  endif
 #else
-#  error "unrecognized architecture for targetting Darwin"
+#  error "unrecognized architecture for targeting Darwin"
 #endif
 
 #define O_RDONLY   0x0000    /* open for reading only */
@@ -45,7 +45,7 @@
 #define O_RDWR     0x0002    /* open for reading and writing */
 #define O_ACCMODE  0x0003    /* mask for above modes */
 
-#define O_CREAT    0x0200    /* create if nonexistant */
+#define O_CREAT    0x0200    /* create if nonexistent */
 
 int open(const char *, int, ...) __asm(__OPEN_NAME);
 

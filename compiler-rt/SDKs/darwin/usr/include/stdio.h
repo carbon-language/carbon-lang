@@ -39,7 +39,7 @@ typedef __SIZE_TYPE__ size_t;
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"
 #  else
-#    error "unrecognized architecture for targetting OS X"
+#    error "unrecognized architecture for targeting OS X"
 #  endif
 #elif defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__)
 #  if defined(__i386) || defined (__x86_64)
@@ -51,10 +51,10 @@ typedef __SIZE_TYPE__ size_t;
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"
 #  else
-#    error "unrecognized architecture for targetting iOS"
+#    error "unrecognized architecture for targeting iOS"
 #  endif
 #else
-#  error "unrecognized architecture for targetting Darwin"
+#  error "unrecognized architecture for targeting Darwin"
 #endif
 
 #    define stderr __stderrp

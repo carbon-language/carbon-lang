@@ -1,4 +1,4 @@
-// Check the presense of interface symbols in compiled file.
+// Check the presence of interface symbols in compiled file.
 
 // RUN: %clang_asan -O2 %s -o %t.exe
 // RUN: nm -D %t.exe | grep " T " | sed "s/.* T //" \

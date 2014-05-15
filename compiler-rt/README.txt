@@ -198,7 +198,7 @@ long double _Complex __divtc3(long double a, long double b,
 
 // __clear_cache() is used to tell process that new instructions have been
 // written to an address range.  Necessary on processors that do not have
-// a unified instuction and data cache.
+// a unified instruction and data cache.
 void __clear_cache(void* start, void* end);
 
 // __enable_execute_stack() is used with nested functions when a trampoline

@@ -6,7 +6,7 @@
 // (i.e. if we can unwind through a function compiled w/o frame pointers).
 // https://code.google.com/p/address-sanitizer/issues/detail?id=137
 
-// Fast unwinder is only avaliable on x86_64 and i386.
+// Fast unwinder is only available on x86_64 and i386.
 // REQUIRES: x86_64-supported-target
 
 #include <stdlib.h>

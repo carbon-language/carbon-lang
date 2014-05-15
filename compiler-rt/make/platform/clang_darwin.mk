@@ -1,4 +1,4 @@
-# These are the functions which clang needs when it is targetting a previous
+# These are the functions which clang needs when it is targeting a previous
 # version of the OS. The issue is that the backend may use functions which were
 # not present in the libgcc that shipped on the platform. In such cases, we link
 # with a version of the library which contains private_extern definitions of all
@@ -62,18 +62,18 @@ UniversalArchs :=
 Configs += eprintf
 UniversalArchs.eprintf := $(call CheckArches,i386,eprintf)
 
-# Configuration for targetting 10.4. We need a few functions missing from
+# Configuration for targeting 10.4. We need a few functions missing from
 # libgcc_s.10.4.dylib. We only build x86 slices since clang doesn't really
-# support targetting PowerPC.
+# support targeting PowerPC.
 Configs += 10.4
 UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
 
-# Configuration for targetting iOS for a couple of functions that didn't
+# Configuration for targeting iOS for a couple of functions that didn't
 # make it into libSystem.
 Configs += ios
 UniversalArchs.ios := $(call CheckArches,i386 x86_64 x86_64h armv7,ios)
 
-# Configuration for targetting OSX. These functions may not be in libSystem
+# Configuration for targeting OSX. These functions may not be in libSystem
 # so we should provide our own.
 Configs += osx
 UniversalArchs.osx := $(call CheckArches,i386 x86_64 x86_64h,osx)

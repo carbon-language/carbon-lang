@@ -8,7 +8,7 @@
 #             software floating point).
 #
 # This section must define one of:
-#   UniveralArchs - A list of architectures to build for, when using universal build
+#   UniversalArchs - A list of architectures to build for, when using universal build
 #           support (e.g., on Darwin). This should only be used to build fat
 #           libraries, simply building multiple libraries for different
 #           architectures should do so using distinct configs, with the

@@ -80,7 +80,7 @@ static const char *MaybeCallAsanDefaultOptions() {
   return (&__asan_default_options) ? __asan_default_options() : "";
 }
 
-static const char *MaybeUseAsanDefaultOptionsCompileDefiniton() {
+static const char *MaybeUseAsanDefaultOptionsCompileDefinition() {
 #ifdef ASAN_DEFAULT_OPTIONS
 // Stringize the macro value.
 # define ASAN_STRINGIZE(x) #x
@@ -281,7 +281,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->detect_container_overflow = true;
 
   // Override from compile definition.
-  ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefiniton());
+  ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefinition());
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());

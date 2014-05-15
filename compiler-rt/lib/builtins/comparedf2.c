@@ -117,7 +117,7 @@ __unorddf2(fp_t a, fp_t b) {
     return aAbs > infRep || bAbs > infRep;
 }
 
-// The following are alternative names for the preceeding routines.
+// The following are alternative names for the preceding routines.
 
 COMPILER_RT_ABI enum LE_RESULT
 __eqdf2(fp_t a, fp_t b) {

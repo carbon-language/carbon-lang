@@ -22,7 +22,7 @@
 namespace __sanitizer {
 
 // Concurrent uptr->T hashmap.
-// T must be a POD type, kSize is preferrably a prime but can be any number.
+// T must be a POD type, kSize is preferably a prime but can be any number.
 // Usage example:
 //
 // typedef AddrHashMap<uptr, 11> Map;

@@ -98,7 +98,7 @@ __divdf3(fp_t a, fp_t b) {
     correction32 = -((uint64_t)recip32 * q31b >> 32);
     recip32 = (uint64_t)recip32 * correction32 >> 31;
     
-    // recip32 might have overflowed to exactly zero in the preceeding
+    // recip32 might have overflowed to exactly zero in the preceding
     // computation if the high word of b is exactly 1.0.  This would sabotage
     // the full-width final stage of the computation that follows, so we adjust
     // recip32 downward by one bit.

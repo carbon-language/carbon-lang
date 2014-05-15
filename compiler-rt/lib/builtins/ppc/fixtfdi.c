@@ -25,7 +25,7 @@ uint64_t __fixtfdi(long double input)
 		
 		int64_t result = hibits.x & INT64_C(0x000fffffffffffff); /* mantissa(hi) */
 		result |= INT64_C(0x0010000000000000); /* matissa(hi) with implicit bit */
-		result <<= 10; /* mantissa(hi) with one zero preceeding bit. */
+		result <<= 10; /* mantissa(hi) with one zero preceding bit. */
 		
 		const int64_t hiNegationMask = ((int64_t)(hibits.x)) >> 63;
 		

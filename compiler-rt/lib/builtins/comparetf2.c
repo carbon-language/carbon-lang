@@ -112,7 +112,7 @@ COMPILER_RT_ABI int __unordtf2(fp_t a, fp_t b) {
     return aAbs > infRep || bAbs > infRep;
 }
 
-// The following are alternative names for the preceeding routines.
+// The following are alternative names for the preceding routines.
 
 COMPILER_RT_ABI enum LE_RESULT __eqtf2(fp_t a, fp_t b) {
     return __letf2(a, b);

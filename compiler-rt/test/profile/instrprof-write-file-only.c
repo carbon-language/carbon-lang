@@ -21,7 +21,7 @@ int main(int argc, const char *argv[]) {
 }
 int foo(int X) {
   // There should be no profiling information for @foo, since it was called
-  // after the profile was written (and the atexit was supressed by defining
+  // after the profile was written (and the atexit was suppressed by defining
   // profile_runtime).
   // CHECK-LABEL: define i32 @foo
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{[^,]+$}}
