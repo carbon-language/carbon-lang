@@ -25,6 +25,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+class DALIGN_ENC  : SPECIAL3_DALIGN_FM<OPCODE6_DALIGN>;
 class DAUI_ENC    : DAUI_FM;
 class DAHI_ENC    : REGIMM_FM<OPCODE5_DAHI>;
 class DATI_ENC    : REGIMM_FM<OPCODE5_DATI>;
@@ -43,6 +44,7 @@ class DMULU_ENC   : SPECIAL_3R_FM<0b00010, 0b111001>;
 //
 //===----------------------------------------------------------------------===//
 
+class DALIGN_DESC  : ALIGN_DESC_BASE<"dalign", GPR64Opnd, uimm3>;
 class DAHI_DESC    : AUI_DESC_BASE<"dahi", GPR64Opnd>;
 class DATI_DESC    : AUI_DESC_BASE<"dati", GPR64Opnd>;
 class DAUI_DESC    : AUI_DESC_BASE<"daui", GPR64Opnd>;
@@ -62,7 +64,7 @@ class DMULU_DESC   : MUL_R6_DESC_BASE<"dmulu", GPR64Opnd>;
 //===----------------------------------------------------------------------===//
 
 def DAHI : DAHI_ENC, DAHI_DESC, ISA_MIPS64R6;
-def DALIGN;
+def DALIGN : DALIGN_ENC, DALIGN_DESC, ISA_MIPS64R6;
 def DATI : DATI_ENC, DATI_DESC, ISA_MIPS64R6;
 def DAUI : DAUI_ENC, DAUI_DESC, ISA_MIPS64R6;
 def DBITSWAP;

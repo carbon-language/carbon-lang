@@ -29,6 +29,7 @@ def OPGROUP_DAUI    { bits<6> Value = 0b011101; }
 def OPGROUP_PCREL   { bits<6> Value = 0b111011; }
 def OPGROUP_REGIMM  { bits<6> Value = 0b000001; }
 def OPGROUP_SPECIAL { bits<6> Value = 0b000000; }
+def OPGROUP_SPECIAL3 { bits<6> Value = 0b011111; }
 
 class OPCODE2<bits<2> Val> {
   bits<2> Value = Val;
@@ -42,6 +43,12 @@ def OPCODE5_ALUIPC : OPCODE5<0b11111>;
 def OPCODE5_AUIPC  : OPCODE5<0b11110>;
 def OPCODE5_DAHI : OPCODE5<0b00110>;
 def OPCODE5_DATI : OPCODE5<0b11110>;
+
+class OPCODE6<bits<6> Val> {
+  bits<6> Value = Val;
+}
+def OPCODE6_ALIGN  : OPCODE6<0b100000>;
+def OPCODE6_DALIGN : OPCODE6<0b100100>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -124,6 +131,40 @@ class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {
   let Inst{15-11} = rd;
   let Inst{10-6}  = mulop;
   let Inst{5-0}   = funct;
+}
+
+class SPECIAL3_ALIGN_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+  bits<2> bp;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL3.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-8}  = 0b010;
+  let Inst{7-6}   = bp;
+  let Inst{5-0}   = Operation.Value;
+}
+
+class SPECIAL3_DALIGN_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+  bits<3> bp;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL3.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-9}  = 0b01;
+  let Inst{8-6}   = bp;
+  let Inst{5-0}   = Operation.Value;
 }
 
 class REGIMM_FM<OPCODE5 Operation> : MipsR6Inst {

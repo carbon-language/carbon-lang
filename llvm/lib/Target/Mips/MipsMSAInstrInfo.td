@@ -65,10 +65,6 @@ def MipsVExtractZExt : SDNode<"MipsISD::VEXTRACT_ZEXT_ELT",
 
 // Operands
 
-def uimm2 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
-}
-
 // The immediate of an LSA instruction needs special handling
 // as the encoded value should be subtracted by one.
 def uimm2LSAAsmOperand : AsmOperandClass {
@@ -82,10 +78,6 @@ def LSAImm : Operand<i32> {
   let EncoderMethod = "getLSAImmEncoding";
   let DecoderMethod = "DecodeLSAImm";
   let ParserMatchClass = uimm2LSAAsmOperand;
-}
-
-def uimm3 : Operand<i32> {
-  let PrintMethod = "printUnsignedImm8";
 }
 
 def uimm4 : Operand<i32> {

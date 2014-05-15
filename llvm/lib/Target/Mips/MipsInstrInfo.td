@@ -340,6 +340,14 @@ def uimmz       : Operand<i32> {
 }
 
 // Unsigned Operand
+def uimm2 : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
+
+def uimm3 : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
+
 def uimm5       : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }

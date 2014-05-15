@@ -59,6 +59,7 @@ include "Mips32r6InstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 class ADDIUPC_ENC : PCREL19_FM<OPCODE2_ADDIUPC>;
+class ALIGN_ENC  : SPECIAL3_ALIGN_FM<OPCODE6_ALIGN>;
 class ALUIPC_ENC : PCREL16_FM<OPCODE5_ALUIPC>;
 class AUI_ENC    : AUI_FM;
 class AUIPC_ENC  : PCREL16_FM<OPCODE5_AUIPC>;
@@ -87,6 +88,16 @@ class ADDIUPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 }
 
 class ADDIUPC_DESC : ADDIUPC_DESC_BASE<"addiupc", GPR32Opnd>;
+
+class ALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                      Operand ImmOpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$bp);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $bp");
+  list<dag> Pattern = [];
+}
+
+class ALIGN_DESC : ALIGN_DESC_BASE<"align", GPR32Opnd, uimm2>;
 
 class ALUIPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rs);
@@ -149,7 +160,7 @@ class SEL_S_DESC : SEL_DESC_BASE<"sel.s", FGR32Opnd>;
 //===----------------------------------------------------------------------===//
 
 def ADDIUPC : ADDIUPC_ENC, ADDIUPC_DESC, ISA_MIPS32R6;
-def ALIGN; // Known as as BALIGN in DSP ASE
+def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
 def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
 def AUIPC : AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
