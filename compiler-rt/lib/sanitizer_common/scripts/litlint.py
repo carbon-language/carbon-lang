@@ -1,26 +1,72 @@
 #!/usr/bin/python
 #
-# lit-lint
+# litlint
 #
-# Check that the RUN commands in lit tests can be executed with an emulator.
+# Ensure RUN commands in lit tests are free of common errors.
+#
+# If any errors are detected, litlint returns a nonzero exit code.
 #
 
 import optparse
 import re
 import sys
 
-parser = optparse.OptionParser()
-parser.add_option('--filter')  # ignored
-(options, filenames) = parser.parse_args()
-
+# Compile regex once for all files
 runRegex = re.compile(r'(?<!-o)(?<!%run) %t\s')
-errorMsg = "litlint: {}:{}: error: missing %run before %t.\n\t{}"
+
+def LintLine(s):
+  """ Validate a line
+
+  Args:
+    s: str, the line to validate
+
+  Returns:
+    Returns an error message and a 1-based column number if an error was
+    detected, otherwise (None, None).
+  """
+
+  # Check that RUN command can be executed with an emulator
+  m = runRegex.search(s)
+  if m:
+    start, end = m.span()
+    return ('missing %run before %t', start + 2)
+
+  # No errors
+  return (None, None)
+
 
 def LintFile(p):
-    with open(p, 'r') as f:
-        for i, s in enumerate(f.readlines()):
-            if runRegex.search(s):
-               sys.stderr.write(errorMsg.format(p, i, s))
+  """ Check that each RUN command can be executed with an emulator
 
-for p in filenames:
-    LintFile(p)
+  Args:
+    p: str, valid path to a file
+
+  Returns:
+    The number of errors detected.
+  """
+  errs = 0
+  with open(p, 'r') as f:
+    for i, s in enumerate(f.readlines(), start=1):
+      msg, col = LintLine(s)
+      if msg != None:
+        errs += 1
+        errorMsg = 'litlint: {}:{}:{}: error: {}.\n{}{}\n'
+        arrow = (col-1) * ' ' + '^'
+        sys.stderr.write(errorMsg.format(p, i, col, msg, s, arrow))
+  return errs
+
+
+if __name__ == "__main__":
+  # Parse args
+  parser = optparse.OptionParser()
+  parser.add_option('--filter')  # ignored
+  (options, filenames) = parser.parse_args()
+
+  # Lint each file
+  errs = 0
+  for p in filenames:
+    errs += LintFile(p)
+
+  # If errors, return nonzero
+  if errs > 0:
+    sys.exit(1)
