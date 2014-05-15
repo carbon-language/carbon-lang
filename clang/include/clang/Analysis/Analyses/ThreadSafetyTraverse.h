@@ -546,8 +546,89 @@ protected:
     SS << "_";
   }
 
+  template<class T>
+  void printLiteralT(LiteralT<T> *E, StreamType &SS) {
+    SS << E->value();
+  }
+
   void printLiteral(Literal *E, StreamType &SS) {
-    SS << getSourceLiteralString(E->clangExpr());
+    if (E->clangExpr())
+      SS << getSourceLiteralString(E->clangExpr());
+    else {
+      ValueType VT = E->valueType();
+      switch (VT.Base) {
+      case ValueType::BT_Void: {
+        SS << "void";
+        return;
+      }
+      case ValueType::BT_Bool: {
+        if (reinterpret_cast<LiteralT<bool>*>(E)->value())
+          SS << "true";
+        else
+          SS << "false";
+        return;
+      }
+      case ValueType::BT_Int: {
+        switch (VT.Size) {
+        case ValueType::ST_8:
+          if (VT.Signed)
+            printLiteralT(reinterpret_cast<LiteralT<int8_t>*>(E), SS);
+          else
+            printLiteralT(reinterpret_cast<LiteralT<uint8_t>*>(E), SS);
+          return;
+        case ValueType::ST_16:
+          if (VT.Signed)
+            printLiteralT(reinterpret_cast<LiteralT<int16_t>*>(E), SS);
+          else
+            printLiteralT(reinterpret_cast<LiteralT<uint16_t>*>(E), SS);
+          return;
+        case ValueType::ST_32:
+          if (VT.Signed)
+            printLiteralT(reinterpret_cast<LiteralT<int32_t>*>(E), SS);
+          else
+            printLiteralT(reinterpret_cast<LiteralT<uint32_t>*>(E), SS);
+          return;
+        case ValueType::ST_64:
+          if (VT.Signed)
+            printLiteralT(reinterpret_cast<LiteralT<int64_t>*>(E), SS);
+          else
+            printLiteralT(reinterpret_cast<LiteralT<uint64_t>*>(E), SS);
+          return;
+        default:
+          break;
+        }
+        break;
+      }
+      case ValueType::BT_Float: {
+        switch (VT.Size) {
+        case ValueType::ST_32:
+          printLiteralT(reinterpret_cast<LiteralT<float>*>(E), SS);
+          return;
+        case ValueType::ST_64:
+          printLiteralT(reinterpret_cast<LiteralT<double>*>(E), SS);
+          return;
+        default:
+          break;
+        }
+        break;
+      }
+      case ValueType::BT_String: {
+        SS << "\"";
+        printLiteralT(reinterpret_cast<LiteralT<bool>*>(E), SS);
+        SS << "\"";
+        return;
+      }
+      case ValueType::BT_Pointer: {
+        SS << "#ptr";
+        return;
+      }
+      case ValueType::BT_ValueRef: {
+        SS << "#vref";
+        return;
+      }
+      }
+    }
+    SS << "#lit";
   }
 
   void printLiteralPtr(LiteralPtr *E, StreamType &SS) {
@@ -575,6 +656,7 @@ protected:
     switch (sugared) {
       default:
         SS << "\\(";   // Lambda
+        break;
       case 1:
         SS << "(";     // Slot declarations
         break;
@@ -589,8 +671,10 @@ protected:
     SExpr *B = E->body();
     if (B && B->opcode() == COP_Function)
       self()->printFunction(cast<Function>(B), SS, 2);
-    else
+    else {
+      SS << ")";
       self()->printSExpr(B, SS, Prec_Decl);
+    }
   }
 
   void printSFunction(SFunction *E, StreamType &SS) {
@@ -769,7 +853,7 @@ protected:
   }
 
   void printIdentifier(Identifier *E, StreamType &SS) {
-    SS << "$" << E->name();
+    SS << E->name();
   }
 
   void printIfThenElse(IfThenElse *E, StreamType &SS) {
@@ -786,7 +870,7 @@ protected:
     printVariable(E->variableDecl(), SS, true);
     SS << " = ";
     printSExpr(E->variableDecl()->definition(), SS, Prec_Decl-1);
-    SS << ";";
+    SS << "; ";
     printSExpr(E->body(), SS, Prec_Decl-1);
   }
 };

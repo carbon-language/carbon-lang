@@ -613,6 +613,8 @@ public:
   // The clang expression for this literal.
   const clang::Expr *clangExpr() const { return Cexpr; }
 
+  ValueType valueType() const { return ValType; }
+
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     return Visitor.reduceLiteral(*this);
   }
@@ -623,7 +625,7 @@ public:
   }
 
 private:
-  ValueType ValType;
+  const ValueType ValType;
   const clang::Expr *Cexpr;
 };
 
@@ -926,7 +928,12 @@ public:
 
   const clang::ValueDecl *clangValueDecl() const { return Cvdecl; }
 
-  StringRef slotName() const { return Cvdecl->getName(); }
+  StringRef slotName() const {
+    if (Cvdecl)
+      return Cvdecl->getName();
+    else
+      return SlotName;
+  }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nr = Visitor.traverse(Rec);
