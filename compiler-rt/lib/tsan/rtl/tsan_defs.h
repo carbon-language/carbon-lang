@@ -66,6 +66,12 @@ const uptr kShadowSize = 8;
 // Shadow memory is kShadowMultiplier times larger than user memory.
 const uptr kShadowMultiplier = kShadowSize * kShadowCnt / kShadowCell;
 
+#if defined(TSAN_NO_HISTORY) && TSAN_NO_HISTORY
+const bool kCollectHistory = false;
+#else
+const bool kCollectHistory = true;
+#endif
+
 #if defined(TSAN_COLLECT_STATS) && TSAN_COLLECT_STATS
 const bool kCollectStats = true;
 #else

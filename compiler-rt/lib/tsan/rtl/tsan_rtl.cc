@@ -594,16 +594,18 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   FastState fast_state = thr->fast_state;
   if (fast_state.GetIgnoreBit())
     return;
-  fast_state.IncrementEpoch();
-  thr->fast_state = fast_state;
+  if (kCollectHistory) {
+    fast_state.IncrementEpoch();
+    thr->fast_state = fast_state;
+    // We must not store to the trace if we do not store to the shadow.
+    // That is, this call must be moved somewhere below.
+    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
+  }
+
   Shadow cur(fast_state);
   cur.SetAddr0AndSizeLog(addr & 7, kAccessSizeLog);
   cur.SetWrite(kAccessIsWrite);
   cur.SetAtomic(kIsAtomic);
-
-  // We must not store to the trace if we do not store to the shadow.
-  // That is, this call must be moved somewhere below.
-  TraceAddEvent(thr, fast_state, EventTypeMop, pc);
 
   MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
       shadow_mem, cur);
@@ -684,8 +686,10 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   thr->is_freeing = true;
   MemoryAccessRange(thr, pc, addr, size, true);
   thr->is_freeing = false;
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  }
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.MarkAsFreed();
@@ -695,8 +699,10 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size) {
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeMop, pc);
+  }
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.SetWrite(true);
@@ -708,8 +714,10 @@ ALWAYS_INLINE USED
 void FuncEntry(ThreadState *thr, uptr pc) {
   StatInc(thr, StatFuncEnter);
   DPrintf2("#%d: FuncEntry %p\n", (int)thr->fast_state.tid(), (void*)pc);
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeFuncEnter, pc);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeFuncEnter, pc);
+  }
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
@@ -737,8 +745,10 @@ ALWAYS_INLINE USED
 void FuncExit(ThreadState *thr) {
   StatInc(thr, StatFuncExit);
   DPrintf2("#%d: FuncExit\n", (int)thr->fast_state.tid());
-  thr->fast_state.IncrementEpoch();
-  TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
+  if (kCollectHistory) {
+    thr->fast_state.IncrementEpoch();
+    TraceAddEvent(thr, thr->fast_state, EventTypeFuncExit, 0);
+  }
 
   DCHECK_GT(thr->shadow_stack_pos, thr->shadow_stack);
 #ifndef TSAN_GO

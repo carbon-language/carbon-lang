@@ -776,6 +776,8 @@ Trace *ThreadTrace(int tid);
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE TraceAddEvent(ThreadState *thr, FastState fs,
                                         EventType typ, u64 addr) {
+  if (!kCollectHistory)
+    return;
   DCHECK_GE((int)typ, 0);
   DCHECK_LE((int)typ, 7);
   DCHECK_EQ(GetLsb(addr, 61), addr);
