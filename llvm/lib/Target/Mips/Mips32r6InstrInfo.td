@@ -90,6 +90,9 @@ class SELEQZ_D_ENC : COP1_3R_FM<0b010100, FIELD_FMT_D>;
 class SELNEZ_S_ENC : COP1_3R_FM<0b010111, FIELD_FMT_S>;
 class SELNEZ_D_ENC : COP1_3R_FM<0b010111, FIELD_FMT_D>;
 
+class RINT_S_ENC : COP1_2R_FM<0b011010, FIELD_FMT_S>;
+class RINT_D_ENC : COP1_2R_FM<0b011010, FIELD_FMT_D>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Descriptions
@@ -207,6 +210,16 @@ class SELEQZ_D_DESC : SELEQNEZ_DESC_BASE<"seleqz.d", FGR64Opnd>;
 class SELNEZ_S_DESC : SELEQNEZ_DESC_BASE<"selnez.s", FGR32Opnd>;
 class SELNEZ_D_DESC : SELEQNEZ_DESC_BASE<"selnez.d", FGR64Opnd>;
 
+class RINT_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
+  dag OutOperandList = (outs FGROpnd:$fd);
+  dag InOperandList = (ins FGROpnd:$fs);
+  string AsmString = !strconcat(instr_asm, "\t$fd, $fs");
+  list<dag> Pattern = [];
+}
+
+class RINT_S_DESC : RINT_DESC_BASE<"rint.s", FGR32Opnd>;
+class RINT_D_DESC : RINT_DESC_BASE<"rint.d", FGR64Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -273,8 +286,8 @@ def MUHU   : MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
 def MUL_R6 : MUL_R6_ENC, MUL_R6_DESC, ISA_MIPS32R6;
 def MULU   : MULU_ENC, MULU_DESC, ISA_MIPS32R6;
 def NAL; // BAL with rd=0
-def RINT_D;
-def RINT_S;
+def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
+def RINT_S : RINT_S_ENC, RINT_S_DESC, ISA_MIPS32R6;
 def SELEQZ;
 def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;
 def SELEQZ_S : SELEQZ_S_ENC, SELEQZ_S_DESC, ISA_MIPS32R6;

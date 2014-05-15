@@ -81,6 +81,20 @@ class DAUI_FM : AUI_FM {
   let Inst{31-26} = OPGROUP_DAUI.Value;
 }
 
+class COP1_2R_FM<bits<6> funct, FIELD_FMT Format> : MipsR6Inst {
+  bits<5> fs;
+  bits<5> fd;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_COP1.Value;
+  let Inst{25-21} = Format.Value;
+  let Inst{20-16} = 0b00000;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5-0}   = funct;
+}
+
 class COP1_3R_FM<bits<6> funct, FIELD_FMT Format> : MipsR6Inst {
   bits<5> ft;
   bits<5> fs;
