@@ -14,7 +14,7 @@ macro(add_compiler_rt_object_library name arch)
     parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
     add_library(${name}.${arch} OBJECT ${LIB_SOURCES})
     set_target_compile_flags(${name}.${arch}
-      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+      ${CMAKE_CXX_FLAGS} ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
     set_property(TARGET ${name}.${arch} APPEND PROPERTY
       COMPILE_DEFINITIONS ${LIB_DEFS})
   else()
@@ -136,6 +136,8 @@ macro(add_compiler_rt_test test_suite test_name)
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     list(APPEND TEST_DEPS clang)
   endif()
+  set(TEST_LINK_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TEST_LINK_FLAGS}")
+  separate_arguments(TEST_LINK_FLAGS)
   add_custom_target(${test_name}
     # MSVS CL doesn't allow a space between -Fe and the output file name.
     COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS}
