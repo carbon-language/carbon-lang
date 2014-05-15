@@ -492,18 +492,14 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
 
+  Options.MCOptions.MCRelaxAll = CodeGenOpts.RelaxAll;
+  Options.MCOptions.MCSaveTempLabels = CodeGenOpts.SaveTempLabels;
+  Options.MCOptions.MCUseDwarfDirectory = CodeGenOpts.NoDwarfDirectoryAsm;
+  Options.MCOptions.MCNoExecStack = CodeGenOpts.NoExecStack;
+
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,
                                                      RM, CM, OptLevel);
-
-  if (CodeGenOpts.RelaxAll)
-    TM->setMCRelaxAll(true);
-  if (CodeGenOpts.SaveTempLabels)
-    TM->setMCSaveTempLabels(true);
-  if (!CodeGenOpts.NoDwarfDirectoryAsm)
-    TM->setMCUseDwarfDirectory(true);
-  if (CodeGenOpts.NoExecStack)
-    TM->setMCNoExecStack(true);
 
   return TM;
 }
