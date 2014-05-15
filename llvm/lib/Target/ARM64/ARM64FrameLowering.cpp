@@ -107,32 +107,44 @@ bool ARM64FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 void ARM64FrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   const ARM64InstrInfo *TII =
       static_cast<const ARM64InstrInfo *>(MF.getTarget().getInstrInfo());
-  if (!TFI->hasReservedCallFrame(MF)) {
-    // If we have alloca, convert as follows:
-    // ADJCALLSTACKDOWN -> sub, sp, sp, amount
-    // ADJCALLSTACKUP   -> add, sp, sp, amount
-    MachineInstr *Old = I;
-    DebugLoc DL = Old->getDebugLoc();
-    unsigned Amount = Old->getOperand(0).getImm();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = TFI->getStackAlignment();
-      Amount = (Amount + Align - 1) / Align * Align;
+  DebugLoc DL = I->getDebugLoc();
+  int Opc = I->getOpcode();
+  bool IsDestroy = Opc == TII->getCallFrameDestroyOpcode();
+  uint64_t CalleePopAmount = IsDestroy ? I->getOperand(1).getImm() : 0;
 
-      // Replace the pseudo instruction with a new instruction...
-      unsigned Opc = Old->getOpcode();
-      if (Opc == ARM64::ADJCALLSTACKDOWN) {
-        emitFrameOffset(MBB, I, DL, ARM64::SP, ARM64::SP, -Amount, TII);
-      } else {
-        assert(Opc == ARM64::ADJCALLSTACKUP && "expected ADJCALLSTACKUP");
-        emitFrameOffset(MBB, I, DL, ARM64::SP, ARM64::SP, Amount, TII);
-      }
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  if (!TFI->hasReservedCallFrame(MF)) {
+    unsigned Align = getStackAlignment();
+
+    int64_t Amount = I->getOperand(0).getImm();
+    Amount = RoundUpToAlignment(Amount, Align);
+    if (!IsDestroy)
+      Amount = -Amount;
+
+    // N.b. if CalleePopAmount is valid but zero (i.e. callee would pop, but it
+    // doesn't have to pop anything), then the first operand will be zero too so
+    // this adjustment is a no-op.
+    if (CalleePopAmount == 0) {
+      // FIXME: in-function stack adjustment for calls is limited to 24-bits
+      // because there's no guaranteed temporary register available.
+      //
+      // ADD/SUB (immediate) has only LSL #0 and LSL #12 avaiable.
+      // 1) For offset <= 12-bit, we use LSL #0
+      // 2) For 12-bit <= offset <= 24-bit, we use two instructions. One uses
+      // LSL #0, and the other uses LSL #12.
+      //
+      // Mostly call frames will be allocated at the start of a function so
+      // this is OK, but it is a limitation that needs dealing with.
+      assert(Amount > -0xffffff && Amount < 0xffffff && "call frame too large");
+      emitFrameOffset(MBB, I, DL, ARM64::SP, ARM64::SP, Amount, TII);
     }
+  } else if (CalleePopAmount != 0) {
+    // If the calling convention demands that the callee pops arguments from the
+    // stack, we want to add it back if we have a reserved call frame.
+    assert(CalleePopAmount < 0xffffff && "call frame too large");
+    emitFrameOffset(MBB, I, DL, ARM64::SP, ARM64::SP, -CalleePopAmount, TII);
   }
   MBB.erase(I);
 }
@@ -420,8 +432,57 @@ void ARM64FrameLowering::emitEpilogue(MachineFunction &MF,
   const ARM64RegisterInfo *RegInfo =
       static_cast<const ARM64RegisterInfo *>(MF.getTarget().getRegisterInfo());
   DebugLoc DL = MBBI->getDebugLoc();
+  unsigned RetOpcode = MBBI->getOpcode();
 
   int NumBytes = MFI->getStackSize();
+  const ARM64FunctionInfo *AFI = MF.getInfo<ARM64FunctionInfo>();
+
+  // Initial and residual are named for consitency with the prologue. Note that
+  // in the epilogue, the residual adjustment is executed first.
+  uint64_t ArgumentPopSize = 0;
+  if (RetOpcode == ARM64::TCRETURNdi || RetOpcode == ARM64::TCRETURNri) {
+    MachineOperand &StackAdjust = MBBI->getOperand(1);
+
+    // For a tail-call in a callee-pops-arguments environment, some or all of
+    // the stack may actually be in use for the call's arguments, this is
+    // calculated during LowerCall and consumed here...
+    ArgumentPopSize = StackAdjust.getImm();
+  } else {
+    // ... otherwise the amount to pop is *all* of the argument space,
+    // conveniently stored in the MachineFunctionInfo by
+    // LowerFormalArguments. This will, of course, be zero for the C calling
+    // convention.
+    ArgumentPopSize = AFI->getArgumentStackToRestore();
+  }
+
+  // The stack frame should be like below,
+  //
+  //      ----------------------                     ---
+  //      |                    |                      |
+  //      | BytesInStackArgArea|              CalleeArgStackSize
+  //      | (NumReusableBytes) |                (of tail call)
+  //      |                    |                     ---
+  //      |                    |                      |
+  //      ---------------------|        ---           |
+  //      |                    |         |            |
+  //      |   CalleeSavedReg   |         |            |
+  //      | (NumRestores * 16) |         |            |
+  //      |                    |         |            |
+  //      ---------------------|         |         NumBytes
+  //      |                    |     StackSize  (StackAdjustUp)
+  //      |   LocalStackSize   |         |            |
+  //      | (covering callee   |         |            |
+  //      |       args)        |         |            |
+  //      |                    |         |            |
+  //      ----------------------        ---          ---
+  //
+  // So NumBytes = StackSize + BytesInStackArgArea - CalleeArgStackSize
+  //             = StackSize + ArgumentPopSize
+  //
+  // ARM64TargetLowering::LowerCall figures out ArgumentPopSize and keeps
+  // it as the 2nd argument of ARM64ISD::TC_RETURN.
+  NumBytes += ArgumentPopSize;
+
   unsigned NumRestores = 0;
   // Move past the restores of the callee-saved registers.
   MachineBasicBlock::iterator LastPopI = MBBI;

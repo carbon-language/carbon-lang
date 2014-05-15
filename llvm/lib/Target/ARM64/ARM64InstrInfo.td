@@ -88,7 +88,7 @@ def SDT_ARM64binvec : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
 def SDT_ARM64trivec : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                            SDTCisSameAs<0,2>,
                                            SDTCisSameAs<0,3>]>;
-def SDT_ARM64TCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+def SDT_ARM64TCRET : SDTypeProfile<0, 2, [SDTCisPtrTy<0>]>;
 def SDT_ARM64PREFETCH : SDTypeProfile<0, 2, [SDTCisVT<0, i32>, SDTCisPtrTy<1>]>;
 
 def SDT_ARM64ITOF  : SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisSameAs<0,1>]>;
@@ -5163,12 +5163,15 @@ def : Pat<(i64 (int_arm64_neon_urshl (i64 FPR64:$Rn), (i64 FPR64:$Rm))),
 // Tail call return handling. These are all compiler pseudo-instructions,
 // so no encoding information or anything like that.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [SP] in {
-  def TCRETURNdi : Pseudo<(outs), (ins i64imm:$dst), []>;
-  def TCRETURNri : Pseudo<(outs), (ins tcGPR64:$dst), []>;
+  def TCRETURNdi : Pseudo<(outs), (ins i64imm:$dst, i32imm:$FPDiff),[]>;
+  def TCRETURNri : Pseudo<(outs), (ins tcGPR64:$dst, i32imm:$FPDiff), []>;
 }
 
-def : Pat<(ARM64tcret tcGPR64:$dst), (TCRETURNri tcGPR64:$dst)>;
-def : Pat<(ARM64tcret (i64 tglobaladdr:$dst)), (TCRETURNdi texternalsym:$dst)>;
-def : Pat<(ARM64tcret (i64 texternalsym:$dst)), (TCRETURNdi texternalsym:$dst)>;
+def : Pat<(ARM64tcret tcGPR64:$dst, (i32 timm:$FPDiff)),
+          (TCRETURNri tcGPR64:$dst, imm:$FPDiff)>;
+def : Pat<(ARM64tcret tglobaladdr:$dst, (i32 timm:$FPDiff)),
+          (TCRETURNdi texternalsym:$dst, imm:$FPDiff)>;
+def : Pat<(ARM64tcret texternalsym:$dst, (i32 timm:$FPDiff)),
+          (TCRETURNdi texternalsym:$dst, imm:$FPDiff)>;
 
 include "ARM64InstrAtomics.td"

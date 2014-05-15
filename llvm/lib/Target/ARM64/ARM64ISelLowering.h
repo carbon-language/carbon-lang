@@ -353,6 +353,16 @@ private:
       const SmallVectorImpl<SDValue> &OutVals,
       const SmallVectorImpl<ISD::InputArg> &Ins, SelectionDAG &DAG) const;
 
+  /// Finds the incoming stack arguments which overlap the given fixed stack
+  /// object and incorporates their load into the current chain. This prevents
+  /// an upcoming store from clobbering the stack argument before it's used.
+  SDValue addTokenForArgument(SDValue Chain, SelectionDAG &DAG,
+                              MachineFrameInfo *MFI, int ClobberedFI) const;
+
+  bool DoesCalleeRestoreStack(CallingConv::ID CallCC, bool TailCallOpt) const;
+
+  bool IsTailCallConvention(CallingConv::ID CallCC) const;
+
   void saveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG, SDLoc DL,
                            SDValue &Chain) const;
 

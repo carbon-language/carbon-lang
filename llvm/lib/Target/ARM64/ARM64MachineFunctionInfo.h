@@ -25,6 +25,22 @@ namespace llvm {
 /// contains private ARM64-specific information for each MachineFunction.
 class ARM64FunctionInfo : public MachineFunctionInfo {
 
+  /// Number of bytes of arguments this function has on the stack. If the callee
+  /// is expected to restore the argument stack this should be a multiple of 16,
+  /// all usable during a tail call.
+  ///
+  /// The alternative would forbid tail call optimisation in some cases: if we
+  /// want to transfer control from a function with 8-bytes of stack-argument
+  /// space to a function with 16-bytes then misalignment of this value would
+  /// make a stack adjustment necessary, which could not be undone by the
+  /// callee.
+  unsigned BytesInStackArgArea;
+
+  /// The number of bytes to restore to deallocate space for incoming
+  /// arguments. Canonically 0 in the C calling convention, but non-zero when
+  /// callee is expected to pop the args.
+  unsigned ArgumentStackToRestore;
+
   /// HasStackFrame - True if this function has a stack frame. Set by
   /// processFunctionBeforeCalleeSavedScan().
   bool HasStackFrame;
@@ -58,15 +74,23 @@ class ARM64FunctionInfo : public MachineFunctionInfo {
 
 public:
   ARM64FunctionInfo()
-      : HasStackFrame(false), NumLocalDynamicTLSAccesses(0),
-        VarArgsStackIndex(0), VarArgsGPRIndex(0), VarArgsGPRSize(0),
-        VarArgsFPRIndex(0), VarArgsFPRSize(0) {}
+      : BytesInStackArgArea(0), ArgumentStackToRestore(0), HasStackFrame(false),
+        NumLocalDynamicTLSAccesses(0), VarArgsStackIndex(0), VarArgsGPRIndex(0),
+        VarArgsGPRSize(0), VarArgsFPRIndex(0), VarArgsFPRSize(0) {}
 
   explicit ARM64FunctionInfo(MachineFunction &MF)
-      : HasStackFrame(false), NumLocalDynamicTLSAccesses(0),
-        VarArgsStackIndex(0), VarArgsGPRIndex(0), VarArgsGPRSize(0),
-        VarArgsFPRIndex(0), VarArgsFPRSize(0) {
+      : BytesInStackArgArea(0), ArgumentStackToRestore(0), HasStackFrame(false),
+        NumLocalDynamicTLSAccesses(0), VarArgsStackIndex(0), VarArgsGPRIndex(0),
+        VarArgsGPRSize(0), VarArgsFPRIndex(0), VarArgsFPRSize(0) {
     (void)MF;
+  }
+
+  unsigned getBytesInStackArgArea() const { return BytesInStackArgArea; }
+  void setBytesInStackArgArea(unsigned bytes) { BytesInStackArgArea = bytes; }
+
+  unsigned getArgumentStackToRestore() const { return ArgumentStackToRestore; }
+  void setArgumentStackToRestore(unsigned bytes) {
+    ArgumentStackToRestore = bytes;
   }
 
   bool hasStackFrame() const { return HasStackFrame; }
