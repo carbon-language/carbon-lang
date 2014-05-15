@@ -42,7 +42,8 @@ bool CGCXXABI::canCopyArgument(const CXXRecordDecl *RD) const {
   // non-deleted copy or move constructor.
   // FIXME: This assumes that all lazily declared copy and move constructors are
   // not deleted.  This assumption might not be true in some corner cases.
-  bool CopyOrMoveDeleted = false;
+  bool CopyDeleted = false;
+  bool MoveDeleted = false;
   for (const CXXConstructorDecl *CD : RD->ctors()) {
     if (CD->isCopyConstructor() || CD->isMoveConstructor()) {
       assert(CD->isTrivial());
@@ -50,13 +51,16 @@ bool CGCXXABI::canCopyArgument(const CXXRecordDecl *RD) const {
       // directly.
       if (!CD->isDeleted())
         return true;
-      CopyOrMoveDeleted = true;
+      if (CD->isCopyConstructor())
+        CopyDeleted = true;
+      else
+        MoveDeleted = true;
     }
   }
 
   // If all trivial copy and move constructors are deleted, we cannot copy the
   // argument.
-  return !CopyOrMoveDeleted;
+  return !(CopyDeleted && MoveDeleted);
 }
 
 llvm::Constant *CGCXXABI::GetBogusMemberPointer(QualType T) {
