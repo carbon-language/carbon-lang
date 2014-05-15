@@ -1,4 +1,7 @@
 RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-readobj -file-headers -relocations -expand-relocs - | FileCheck %s --check-prefix COFF-I386
+RUN: yaml2obj -o %t %p/Inputs/COFF/i386.yaml
+RUN: llvm-readobj -file-headers -relocations -expand-relocs %t \
+RUN:   | FileCheck %s --check-prefix COFF-I386
 
 // COFF-I386:  Characteristics [ (0x200)
 // COFF-I386-NEXT:    IMAGE_FILE_DEBUG_STRIPPED (0x200)

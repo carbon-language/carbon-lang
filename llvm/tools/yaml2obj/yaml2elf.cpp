@@ -477,13 +477,13 @@ int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
   typedef ELFType<support::big, 4, false> BE32;
   if (is64Bit(Doc)) {
     if (isLittleEndian(Doc))
-      return ELFState<LE64>::writeELF(outs(), Doc);
+      return ELFState<LE64>::writeELF(Out, Doc);
     else
-      return ELFState<BE64>::writeELF(outs(), Doc);
+      return ELFState<BE64>::writeELF(Out, Doc);
   } else {
     if (isLittleEndian(Doc))
-      return ELFState<LE32>::writeELF(outs(), Doc);
+      return ELFState<LE32>::writeELF(Out, Doc);
     else
-      return ELFState<BE32>::writeELF(outs(), Doc);
+      return ELFState<BE32>::writeELF(Out, Doc);
   }
 }

@@ -1,4 +1,7 @@
 # RUN: yaml2obj -format=elf %s | llvm-readobj -sections -section-data - | FileCheck %s
+# RUN: yaml2obj -format=elf -o %t %s
+# RUN: llvm-readobj -sections -section-data %t | FileCheck %s
+
 !ELF
 FileHeader:
   Class: ELFCLASS64
