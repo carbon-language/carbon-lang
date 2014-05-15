@@ -181,11 +181,11 @@ static void checkForFunctionCall(Sema &S, const FunctionDecl *FD,
     // If the current state is FoundPathWithNoRecursiveCall, the successors
     // will be either FoundPathWithNoRecursiveCall or FoundPath.  To determine
     // which, process all the Stmt's in this block to find any recursive calls.
-    for (CFGBlock::iterator I = Block.begin(), E = Block.end(); I != E; ++I) {
-      if (I->getKind() != CFGElement::Statement)
+    for (const auto &B : Block) {
+      if (B.getKind() != CFGElement::Statement)
         continue;
 
-      const CallExpr *CE = dyn_cast<CallExpr>(I->getAs<CFGStmt>()->getStmt());
+      const CallExpr *CE = dyn_cast<CallExpr>(B.getAs<CFGStmt>()->getStmt());
       if (CE && CE->getCalleeDecl() &&
           CE->getCalleeDecl()->getCanonicalDecl() == FD) {
 
@@ -286,14 +286,13 @@ static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
     // When there are things remaining dead, and we didn't add EH edges
     // from CallExprs to the catch clauses, we have to go back and
     // mark them as live.
-    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
-      CFGBlock &b = **I;
-      if (!live[b.getBlockID()]) {
-        if (b.pred_begin() == b.pred_end()) {
-          if (b.getTerminator() && isa<CXXTryStmt>(b.getTerminator()))
+    for (const auto *B : *cfg) {
+      if (!live[B->getBlockID()]) {
+        if (B->pred_begin() == B->pred_end()) {
+          if (B->getTerminator() && isa<CXXTryStmt>(B->getTerminator()))
             // When not adding EH edges from calls, catch clauses
             // can otherwise seem dead.  Avoid noting them as dead.
-            count += reachable_code::ScanReachableFromBlock(&b, live);
+            count += reachable_code::ScanReachableFromBlock(B, live);
           continue;
         }
       }
@@ -913,8 +912,7 @@ namespace {
       // constants, covered enums, etc.
       // These blocks can contain fall-through annotations, and we don't want to
       // issue a warn_fallthrough_attr_unreachable for them.
-      for (CFG::iterator I = Cfg->begin(), E = Cfg->end(); I != E; ++I) {
-        const CFGBlock *B = *I;
+      for (const auto *B : *Cfg) {
         const Stmt *L = B->getLabel();
         if (L && isa<SwitchCase>(L) && ReachableBlocks.insert(B))
           BlockQueue.push_back(B);
@@ -938,10 +936,7 @@ namespace {
       int UnannotatedCnt = 0;
       AnnotatedCnt = 0;
 
-      std::deque<const CFGBlock*> BlockQueue;
-
-      std::copy(B.pred_begin(), B.pred_end(), std::back_inserter(BlockQueue));
-
+      std::deque<const CFGBlock*> BlockQueue(B.pred_begin(), B.pred_end());
       while (!BlockQueue.empty()) {
         const CFGBlock *P = BlockQueue.front();
         BlockQueue.pop_front();
@@ -1138,13 +1133,8 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
     }
   }
 
-  const FallthroughMapper::AttrStmts &Fallthroughs = FM.getFallthroughStmts();
-  for (FallthroughMapper::AttrStmts::const_iterator I = Fallthroughs.begin(),
-                                                    E = Fallthroughs.end();
-                                                    I != E; ++I) {
-    S.Diag((*I)->getLocStart(), diag::warn_fallthrough_attr_invalid_placement);
-  }
-
+  for (const auto *F : FM.getFallthroughStmts())
+    S.Diag(F->getLocStart(), diag::warn_fallthrough_attr_invalid_placement);
 }
 
 static bool isInLoop(const ASTContext &Ctx, const ParentMap &PM,
@@ -1270,12 +1260,10 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
     FunctionKind = Function;
 
   // Iterate through the sorted problems and emit warnings for each.
-  for (SmallVectorImpl<StmtUsesPair>::const_iterator I = UsesByStmt.begin(),
-                                                     E = UsesByStmt.end();
-       I != E; ++I) {
-    const Stmt *FirstRead = I->first;
-    const WeakObjectProfileTy &Key = I->second->first;
-    const WeakUseVector &Uses = I->second->second;
+  for (const auto &P : UsesByStmt) {
+    const Stmt *FirstRead = P.first;
+    const WeakObjectProfileTy &Key = P.second->first;
+    const WeakUseVector &Uses = P.second->second;
 
     // For complicated expressions like 'a.b.c' and 'x.b.c', WeakObjectProfileTy
     // may not contain enough information to determine that these are different
@@ -1316,13 +1304,12 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
       << FirstRead->getSourceRange();
 
     // Print all the other accesses as notes.
-    for (WeakUseVector::const_iterator UI = Uses.begin(), UE = Uses.end();
-         UI != UE; ++UI) {
-      if (UI->getUseExpr() == FirstRead)
+    for (const auto &Use : Uses) {
+      if (Use.getUseExpr() == FirstRead)
         continue;
-      S.Diag(UI->getUseExpr()->getLocStart(),
+      S.Diag(Use.getUseExpr()->getLocStart(),
              diag::note_arc_weak_also_accessed_here)
-        << UI->getUseExpr()->getSourceRange();
+          << Use.getUseExpr()->getSourceRange();
     }
   }
 }
@@ -1368,9 +1355,9 @@ public:
     if (!uses)
       return;
 
-    for (UsesMap::iterator i = uses->begin(), e = uses->end(); i != e; ++i) {
-      const VarDecl *vd = i->first;
-      const MappedType &V = i->second;
+    for (const auto &P : *uses) {
+      const VarDecl *vd = P.first;
+      const MappedType &V = P.second;
 
       UsesVec *vec = V.getPointer();
       bool hasSelfInit = V.getInt();
@@ -1395,10 +1382,9 @@ public:
           return a.getUser()->getLocStart() < b.getUser()->getLocStart();
         });
 
-        for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
-             ++vi) {
+        for (const auto &U : *vec) {
           // If we have self-init, downgrade all uses to 'may be uninitialized'.
-          UninitUse Use = hasSelfInit ? UninitUse(vi->getUser(), false) : *vi;
+          UninitUse Use = hasSelfInit ? UninitUse(U.getUser(), false) : U;
 
           if (DiagnoseUninitializedUse(S, vd, Use))
             // Skip further diagnostics for this variable. We try to warn only
@@ -1415,15 +1401,12 @@ public:
 
 private:
   static bool hasAlwaysUninitializedUse(const UsesVec* vec) {
-  for (UsesVec::const_iterator i = vec->begin(), e = vec->end(); i != e; ++i) {
-    if (i->getKind() == UninitUse::Always ||
-        i->getKind() == UninitUse::AfterCall ||
-        i->getKind() == UninitUse::AfterDecl) {
-      return true;
-    }
+    return std::any_of(vec->begin(), vec->end(), [](const UninitUse &U) {
+      return U.getKind() == UninitUse::Always ||
+             U.getKind() == UninitUse::AfterCall ||
+             U.getKind() == UninitUse::AfterDecl;
+    });
   }
-  return false;
-}
 };
 }
 
@@ -1477,12 +1460,10 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   /// and outputs them.
   void emitDiagnostics() {
     Warnings.sort(SortDiagBySourceLocation(S.getSourceManager()));
-    for (DiagList::iterator I = Warnings.begin(), E = Warnings.end();
-         I != E; ++I) {
-      S.Diag(I->first.first, I->first.second);
-      const OptionalNotes &Notes = I->second;
-      for (unsigned NoteI = 0, NoteN = Notes.size(); NoteI != NoteN; ++NoteI)
-        S.Diag(Notes[NoteI].first, Notes[NoteI].second);
+    for (const auto &Diag : Warnings) {
+      S.Diag(Diag.first.first, Diag.first.second);
+      for (const auto &Note : Diag.second)
+        S.Diag(Note.first, Note.second);
     }
   }
 
@@ -1637,16 +1618,10 @@ public:
 
   void emitDiagnostics() override {
     Warnings.sort(SortDiagBySourceLocation(S.getSourceManager()));
-    
-    for (DiagList::iterator I = Warnings.begin(), E = Warnings.end();
-         I != E; ++I) {
-      
-      const OptionalNotes &Notes = I->second;
-      S.Diag(I->first.first, I->first.second);
-      
-      for (unsigned NoteI = 0, NoteN = Notes.size(); NoteI != NoteN; ++NoteI) {
-        S.Diag(Notes[NoteI].first, Notes[NoteI].second);
-      }
+    for (const auto &Diag : Warnings) {
+      S.Diag(Diag.first.first, Diag.first.second);
+      for (const auto &Note : Diag.second)
+        S.Diag(Note.first, Note.second);
     }
   }
 
@@ -1761,14 +1736,9 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
     isEnabled(D, warn_use_in_invalid_state);
 }
 
-static void flushDiagnostics(Sema &S, sema::FunctionScopeInfo *fscope) {
-  for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
-       i = fscope->PossiblyUnreachableDiags.begin(),
-       e = fscope->PossiblyUnreachableDiags.end();
-       i != e; ++i) {
-    const sema::PossiblyUnreachableDiag &D = *i;
+static void flushDiagnostics(Sema &S, const sema::FunctionScopeInfo *fscope) {
+  for (const auto &D : fscope->PossiblyUnreachableDiags)
     S.Diag(D.Loc, D.PD);
-  }
 }
 
 void clang::sema::
@@ -1851,25 +1821,17 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     bool analyzed = false;
 
     // Register the expressions with the CFGBuilder.
-    for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
-         i = fscope->PossiblyUnreachableDiags.begin(),
-         e = fscope->PossiblyUnreachableDiags.end();
-         i != e; ++i) {
-      if (const Stmt *stmt = i->stmt)
-        AC.registerForcedBlockExpression(stmt);
+    for (const auto &D : fscope->PossiblyUnreachableDiags) {
+      if (D.stmt)
+        AC.registerForcedBlockExpression(D.stmt);
     }
 
     if (AC.getCFG()) {
       analyzed = true;
-      for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
-            i = fscope->PossiblyUnreachableDiags.begin(),
-            e = fscope->PossiblyUnreachableDiags.end();
-            i != e; ++i)
-      {
-        const sema::PossiblyUnreachableDiag &D = *i;
+      for (const auto &D : fscope->PossiblyUnreachableDiags) {
         bool processed = false;
-        if (const Stmt *stmt = i->stmt) {
-          const CFGBlock *block = AC.getBlockForRegisteredExpression(stmt);
+        if (D.stmt) {
+          const CFGBlock *block = AC.getBlockForRegisteredExpression(D.stmt);
           CFGReverseBlockReachabilityAnalysis *cra =
               AC.getCFGReachablityAnalysis();
           // FIXME: We should be able to assert that block is non-null, but
