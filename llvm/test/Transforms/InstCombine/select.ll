@@ -1085,3 +1085,51 @@ define i32 @test67(i16 %x) {
 ; CHECK: lshr exact i32 %2, 1
 ; CHECK: xor i32 %3, 42
 }
+
+; SMIN(SMIN(X, 11), 92) -> SMIN(X, 11)
+define i32 @test68(i32 %x) {
+entry:
+  %cmp = icmp slt i32 11, %x
+  %cond = select i1 %cmp, i32 11, i32 %x
+  %cmp3 = icmp slt i32 92, %cond
+  %retval = select i1 %cmp3, i32 92, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test68(
+; CHECK: ret i32 %cond
+}
+
+; MIN(MIN(X, 24), 83) -> MIN(X, 24)
+define i32 @test69(i32 %x) {
+entry:
+  %cmp = icmp ult i32 24, %x
+  %cond = select i1 %cmp, i32 24, i32 %x
+  %cmp3 = icmp ult i32 83, %cond
+  %retval = select i1 %cmp3, i32 83, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test69(
+; CHECK: ret i32 %cond
+}
+
+; SMAX(SMAX(X, 75), 36) -> SMAX(X, 75)
+define i32 @test70(i32 %x) {
+entry:
+  %cmp = icmp slt i32 %x, 75
+  %cond = select i1 %cmp, i32 75, i32 %x
+  %cmp3 = icmp slt i32 %cond, 36
+  %retval = select i1 %cmp3, i32 36, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test70(
+; CHECK: ret i32 %cond
+}
+
+; MAX(MAX(X, 68), 47) -> MAX(X, 68)
+define i32 @test71(i32 %x) {
+entry:
+  %cmp = icmp ult i32 %x, 68
+  %cond = select i1 %cmp, i32 68, i32 %x
+  %cmp3 = icmp ult i32 %cond, 47
+  %retval = select i1 %cmp3, i32 47, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test71(
+; CHECK: ret i32 %cond
+}

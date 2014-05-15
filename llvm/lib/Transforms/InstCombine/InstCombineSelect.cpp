@@ -683,10 +683,26 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
       return ReplaceInstUsesWith(Outer, C);
   }
 
-  // TODO: MIN(MIN(A, 23), 97)
+  // MIN(MIN(A, 23), 97) -> MIN(A, 23)
+  // MAX(MAX(A, 97), 23) -> MAX(A, 97)
+  if (SPF1 == SPF2) {
+    if (ConstantInt *CB = dyn_cast<ConstantInt>(B)) {
+      if (ConstantInt *CC = dyn_cast<ConstantInt>(C)) {
+        APInt ACB = CB->getValue();
+        APInt ACC = CC->getValue();
+        if ((SPF1 == SPF_UMIN && ACB.ule(ACC)) ||
+            (SPF1 == SPF_SMIN && ACB.sle(ACC)) ||
+            (SPF1 == SPF_UMAX && ACB.uge(ACC)) ||
+            (SPF1 == SPF_SMAX && ACB.sge(ACC)))
+          return ReplaceInstUsesWith(Outer, Inner);
+      }
+    }
+  }
+
+  // TODO: MIN(MIN(A, 97), 23) -> MIN(A, 23)
+  // TODO: MAX(MAX(A, 23), 97) -> MAX(A, 97)
   return nullptr;
 }
-
 
 /// foldSelectICmpAnd - If one of the constants is zero (we know they can't
 /// both be) and we have an icmp instruction with zero, and we have an 'and'
