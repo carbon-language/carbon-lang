@@ -365,15 +365,7 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
 /// 1. The icmp predicate is inverted
 /// 2. The select operands are reversed
 /// 3. The magnitude of C2 and C1 are flipped
-///
-/// This also tries to turn
-/// --- Single bit tests:
-/// if ((x & C) == 0) x |= C	to  x |= C
-/// if ((x & C) != 0) x ^= C	to  x &= ~C
-/// if ((x & C) == 0) x ^= C	to  x |= C
-/// if ((x & C) != 0) x &= ~C	to  x &= ~C
-/// if ((x & C) == 0) x &= ~C	to  nothing
-static Value *foldSelectICmpAndOr(SelectInst &SI, Value *TrueVal,
+static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
                                   Value *FalseVal,
                                   InstCombiner::BuilderTy *Builder) {
   const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
@@ -392,34 +384,10 @@ static Value *foldSelectICmpAndOr(SelectInst &SI, Value *TrueVal,
     return nullptr;
 
   const APInt *C2;
-
-  // if ((x & C) != 0) x ^= C becomes x &= ~C
-  if (match(FalseVal, m_Xor(m_Specific(TrueVal), m_APInt(C2))) && C1 == C2) {
-    return Builder->CreateAnd(TrueVal, ~(*C1));
-  }
-
-  // if ((x & C) == 0) x ^= C becomes x |= C
-  if (match(TrueVal, m_Xor(m_Specific(FalseVal), m_APInt(C2))) && C1 == C2) {
-    return Builder->CreateOr(FalseVal, *C1);
-  }
-
-  // if ((x & C) != 0) x &= ~C	becomes x &= ~C
-  // if ((x & C) == 0) x &= ~C	becomes	nothing
-  if ((match(FalseVal, m_And(m_Specific(TrueVal), m_APInt(C2))) ||
-       match(TrueVal, m_And(m_Specific(FalseVal), m_APInt(C2)))) &&
-      *C1 == ~(*C2)) {
-    return FalseVal;
-  }
-
-  bool OrOnFalseVal = false;
-  bool OrOnTrueVal = match(TrueVal, m_Or(m_Specific(FalseVal), m_Power2(C2)));
-
-  // if ((x & C) == 0) x |= C becomes x |= C
-  if (OrOnTrueVal && C1 == C2)
-    return TrueVal;
-
-  if (!OrOnTrueVal)
-    OrOnFalseVal = match(FalseVal, m_Or(m_Specific(TrueVal), m_Power2(C2)));
+  bool OrOnTrueVal = false;
+  bool OrOnFalseVal = match(FalseVal, m_Or(m_Specific(TrueVal), m_Power2(C2)));
+  if (!OrOnFalseVal)
+    OrOnTrueVal = match(TrueVal, m_Or(m_Specific(FalseVal), m_Power2(C2)));
 
   if (!OrOnFalseVal && !OrOnTrueVal)
     return nullptr;
