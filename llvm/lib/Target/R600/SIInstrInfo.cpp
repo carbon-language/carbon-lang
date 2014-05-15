@@ -691,6 +691,7 @@ bool SIInstrInfo::canReadVGPR(const MachineInstr &MI, unsigned OpNo) const {
   case AMDGPU::COPY:
   case AMDGPU::REG_SEQUENCE:
   case AMDGPU::PHI:
+  case AMDGPU::INSERT_SUBREG:
     return RI.hasVGPRs(getOpRegClass(MI, 0));
   default:
     return RI.hasVGPRs(getOpRegClass(MI, OpNo));
@@ -922,6 +923,23 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
               .addOperand(MI->getOperand(i));
       MI->getOperand(i).setReg(DstReg);
     }
+  }
+
+  // Legalize INSERT_SUBREG
+  // src0 must have the same register class as dst
+  if (MI->getOpcode() == AMDGPU::INSERT_SUBREG) {
+    unsigned Dst = MI->getOperand(0).getReg();
+    unsigned Src0 = MI->getOperand(1).getReg();
+    const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
+    const TargetRegisterClass *Src0RC = MRI.getRegClass(Src0);
+    if (DstRC != Src0RC) {
+      MachineBasicBlock &MBB = *MI->getParent();
+      unsigned NewSrc0 = MRI.createVirtualRegister(DstRC);
+      BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::COPY), NewSrc0)
+              .addReg(Src0);
+      MI->getOperand(1).setReg(NewSrc0);
+    }
+    return;
   }
 
   // Legalize MUBUF* instructions
