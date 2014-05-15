@@ -466,6 +466,52 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   return ConstantInt::get(IntType->getContext(), ResultVal);
 }
 
+static Constant *ConstantFoldLoadThroughBitcast(ConstantExpr *CE,
+                                                const DataLayout *DL) {
+  if (!DL)
+    return nullptr;
+  auto *DestPtrTy = dyn_cast<PointerType>(CE->getType());
+  if (!DestPtrTy)
+    return nullptr;
+  Type *DestTy = DestPtrTy->getElementType();
+
+  Constant *C = ConstantFoldLoadFromConstPtr(CE->getOperand(0), DL);
+  if (!C)
+    return nullptr;
+
+  do {
+    Type *SrcTy = C->getType();
+
+    // If the type sizes are the same and a cast is legal, just directly
+    // cast the constant.
+    if (DL->getTypeSizeInBits(DestTy) == DL->getTypeSizeInBits(SrcTy)) {
+      Instruction::CastOps Cast = Instruction::BitCast;
+      // If we are going from a pointer to int or vice versa, we spell the cast
+      // differently.
+      if (SrcTy->isIntegerTy() && DestTy->isPointerTy())
+        Cast = Instruction::IntToPtr;
+      else if (SrcTy->isPointerTy() && DestTy->isIntegerTy())
+        Cast = Instruction::PtrToInt;
+
+      if (CastInst::castIsValid(Cast, C, DestTy))
+        return ConstantExpr::getCast(Cast, C, DestTy);
+    }
+
+    // If this isn't an aggregate type, there is nothing we can do to drill down
+    // and find a bitcastable constant.
+    if (!SrcTy->isAggregateType())
+      return nullptr;
+
+    // We're simulating a load through a pointer that was bitcast to point to
+    // a different type, so we can try to walk down through the initial
+    // elements of an aggregate to see if some part of th e aggregate is
+    // castable to implement the "load" semantic model.
+    C = C->getAggregateElement(0u);
+  } while (C);
+
+  return nullptr;
+}
+
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
@@ -490,6 +536,10 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
       }
     }
   }
+
+  if (CE->getOpcode() == Instruction::BitCast)
+    if (Constant *LoadedC = ConstantFoldLoadThroughBitcast(CE, TD))
+      return LoadedC;
 
   // Instead of loading constant c string, use corresponding integer value
   // directly if string length is small enough.

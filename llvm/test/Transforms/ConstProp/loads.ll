@@ -219,3 +219,37 @@ entry:
 ; BE-LABEL: @test15(
 ; BE: ret i64 2
 }
+
+@gv7 = constant [4 x i8*] [i8* null, i8* inttoptr (i64 -14 to i8*), i8* null, i8* null]
+define i64 @test16.1() {
+  %v = load i64* bitcast ([4 x i8*]* @gv7 to i64*), align 8
+  ret i64 %v
+
+; LE-LABEL: @test16.1(
+; LE: ret i64 0
+
+; BE-LABEL: @test16.1(
+; BE: ret i64 0
+}
+
+define i64 @test16.2() {
+  %v = load i64* bitcast (i8** getelementptr inbounds ([4 x i8*]* @gv7, i64 0, i64 1) to i64*), align 8
+  ret i64 %v
+
+; LE-LABEL: @test16.2(
+; LE: ret i64 -14
+
+; BE-LABEL: @test16.2(
+; BE: ret i64 -14
+}
+
+define i64 @test16.3() {
+  %v = load i64* bitcast (i8** getelementptr inbounds ([4 x i8*]* @gv7, i64 0, i64 2) to i64*), align 8
+  ret i64 %v
+
+; LE-LABEL: @test16.3(
+; LE: ret i64 0
+
+; BE-LABEL: @test16.3(
+; BE: ret i64 0
+}
