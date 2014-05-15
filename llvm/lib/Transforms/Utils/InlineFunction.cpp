@@ -19,6 +19,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
@@ -478,6 +479,33 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
   }
 }
 
+/// Returns a musttail call instruction if one immediately precedes the given
+/// return instruction with an optional bitcast instruction between them.
+static CallInst *getPrecedingMustTailCall(ReturnInst *RI) {
+  Instruction *Prev = RI->getPrevNode();
+  if (!Prev)
+    return nullptr;
+
+  if (Value *RV = RI->getReturnValue()) {
+    if (RV != Prev)
+      return nullptr;
+
+    // Look through the optional bitcast.
+    if (auto *BI = dyn_cast<BitCastInst>(Prev)) {
+      RV = BI->getOperand(0);
+      Prev = BI->getPrevNode();
+      if (!Prev || RV != Prev)
+        return nullptr;
+    }
+  }
+
+  if (auto *CI = dyn_cast<CallInst>(Prev)) {
+    if (CI->isMustTailCall())
+      return CI;
+  }
+  return nullptr;
+}
+
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
 /// this call.  The program is still in a well defined state if this occurs
@@ -503,8 +531,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
   // If the call to the callee is not a tail call, we must clear the 'tail'
   // flags on any calls that we inline.
-  bool MustClearTailCallFlags =
-    !(isa<CallInst>(TheCall) && cast<CallInst>(TheCall)->isTailCall());
+  CallInst::TailCallKind CallSiteTailKind = CallInst::TCK_None;
+  if (CallInst *CI = dyn_cast<CallInst>(TheCall))
+    CallSiteTailKind = CI->getTailCallKind();
+  bool MustClearTailCallFlags = false;
 
   // If the call to the callee cannot throw, set the 'nounwind' flag on any
   // calls that we inline.
@@ -661,6 +691,41 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     }
   }
 
+  bool InlinedMustTailCalls = false;
+  if (InlinedFunctionInfo.ContainsCalls) {
+    for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E;
+         ++BB) {
+      for (Instruction &I : *BB) {
+        CallInst *CI = dyn_cast<CallInst>(&I);
+        if (!CI)
+          continue;
+
+        // We need to reduce the strength of any inlined tail calls.  For
+        // musttail, we have to avoid introducing potential unbounded stack
+        // growth.  For example, if functions 'f' and 'g' are mutually recursive
+        // with musttail, we can inline 'g' into 'f' so long as we preserve
+        // musttail on the cloned call to 'f'.  If either the inlined call site
+        // or the cloned call site is *not* musttail, the program already has
+        // one frame of stack growth, so it's safe to remove musttail.  Here is
+        // a table of example transformations:
+        //
+        //    f -> musttail g -> musttail f  ==>  f -> musttail f
+        //    f -> musttail g ->     tail f  ==>  f ->     tail f
+        //    f ->          g -> musttail f  ==>  f ->          f
+        //    f ->          g ->     tail f  ==>  f ->          f
+        CallInst::TailCallKind ChildTCK = CI->getTailCallKind();
+        ChildTCK = std::min(CallSiteTailKind, ChildTCK);
+        CI->setTailCallKind(ChildTCK);
+        InlinedMustTailCalls |= CI->isMustTailCall();
+
+        // Calls inlined through a 'nounwind' call site should be marked
+        // 'nounwind'.
+        if (MarkNoUnwind)
+          CI->setDoesNotThrow();
+      }
+    }
+  }
+
   // Leave lifetime markers for the static alloca's, scoping them to the
   // function we just inlined.
   if (InsertLifetime && !IFI.StaticAllocas.empty()) {
@@ -693,10 +758,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       }
 
       builder.CreateLifetimeStart(AI, AllocaSize);
-      for (unsigned ri = 0, re = Returns.size(); ri != re; ++ri) {
-        IRBuilder<> builder(Returns[ri]);
-        builder.CreateLifetimeEnd(AI, AllocaSize);
-      }
+      for (ReturnInst *RI : Returns)
+        IRBuilder<>(RI).CreateLifetimeEnd(AI, AllocaSize);
     }
   }
 
@@ -714,32 +777,50 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
-    for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
-      IRBuilder<>(Returns[i]).CreateCall(StackRestore, SavedPtr);
-    }
-  }
-
-  // If we are inlining tail call instruction through a call site that isn't
-  // marked 'tail', we must remove the tail marker for any calls in the inlined
-  // code.  Also, calls inlined through a 'nounwind' call site should be marked
-  // 'nounwind'.
-  if (InlinedFunctionInfo.ContainsCalls &&
-      (MustClearTailCallFlags || MarkNoUnwind)) {
-    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
-         BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          if (MustClearTailCallFlags)
-            CI->setTailCall(false);
-          if (MarkNoUnwind)
-            CI->setDoesNotThrow();
-        }
+    for (ReturnInst *RI : Returns)
+      IRBuilder<>(RI).CreateCall(StackRestore, SavedPtr);
   }
 
   // If we are inlining for an invoke instruction, we must make sure to rewrite
   // any call instructions into invoke instructions.
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
     HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo);
+
+  // Handle any inlined musttail call sites.  In order for a new call site to be
+  // musttail, the source of the clone and the inlined call site must have been
+  // musttail.  Therefore it's safe to return without merging control into the
+  // phi below.
+  if (InlinedMustTailCalls) {
+    // Check if we need to bitcast the result of any musttail calls.
+    Type *NewRetTy = Caller->getReturnType();
+    bool NeedBitCast = !TheCall->use_empty() && TheCall->getType() != NewRetTy;
+
+    // Handle the returns preceded by musttail calls separately.
+    SmallVector<ReturnInst *, 8> NormalReturns;
+    for (ReturnInst *RI : Returns) {
+      CallInst *ReturnedMustTail = getPrecedingMustTailCall(RI);
+      if (!ReturnedMustTail) {
+        NormalReturns.push_back(RI);
+        continue;
+      }
+      if (!NeedBitCast)
+        continue;
+
+      // Delete the old return and any preceding bitcast.
+      BasicBlock *CurBB = RI->getParent();
+      auto *OldCast = dyn_cast_or_null<BitCastInst>(RI->getReturnValue());
+      RI->eraseFromParent();
+      if (OldCast)
+        OldCast->eraseFromParent();
+
+      // Insert a new bitcast and return with the right type.
+      IRBuilder<> Builder(CurBB);
+      Builder.CreateRet(Builder.CreateBitCast(ReturnedMustTail, NewRetTy));
+    }
+
+    // Leave behind the normal returns so we can merge control flow.
+    std::swap(Returns, NormalReturns);
+  }
 
   // If we cloned in _exactly one_ basic block, and if that block ends in a
   // return instruction, we splice the body of the inlined callee directly into
@@ -895,6 +976,11 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
   // Since we are now done with the Call/Invoke, we can delete it.
   TheCall->eraseFromParent();
+
+  // If we inlined any musttail calls and the original return is now
+  // unreachable, delete it.  It can only contain a bitcast and ret.
+  if (InlinedMustTailCalls && pred_begin(AfterCallBB) == pred_end(AfterCallBB))
+    AfterCallBB->eraseFromParent();
 
   // We should always be able to fold the entry block of the function into the
   // single predecessor of the block...
