@@ -239,12 +239,13 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     AddLoArgs.push_back(SDValue(Lo0, 0));
     AddLoArgs.push_back(SDValue(Lo1, 0));
 
-    SDNode *AddLo = CurDAG->getMachineNode(AMDGPU::S_ADD_I32, DL,
-                                           VTList, AddLoArgs);
+    SDNode *AddLo = CurDAG->getMachineNode(
+        isCFDepth0() ? AMDGPU::S_ADD_I32 : AMDGPU::V_ADD_I32_e32,
+        DL, VTList, AddLoArgs);
     SDValue Carry = SDValue(AddLo, 1);
-    SDNode *AddHi = CurDAG->getMachineNode(AMDGPU::S_ADDC_U32, DL,
-                                           MVT::i32, SDValue(Hi0, 0),
-                                           SDValue(Hi1, 0), Carry);
+    SDNode *AddHi = CurDAG->getMachineNode(
+        isCFDepth0() ? AMDGPU::S_ADDC_U32 : AMDGPU::V_ADDC_U32_e32,
+        DL, MVT::i32, SDValue(Hi0, 0), SDValue(Hi1, 0), Carry);
 
     SDValue Args[5] = {
       CurDAG->getTargetConstant(AMDGPU::SReg_64RegClassID, MVT::i32),
