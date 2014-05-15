@@ -136,8 +136,16 @@ macro(add_compiler_rt_test test_suite test_name)
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     list(APPEND TEST_DEPS clang)
   endif()
-  set(TEST_LINK_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TEST_LINK_FLAGS}")
-  separate_arguments(TEST_LINK_FLAGS)
+  # If we're not on MSVC, include the linker flags from CMAKE but override them
+  # with the provided link flags. This ensures that flags which are required to
+  # link programs at all are included, but the changes needed for the test
+  # trump. With MSVC we can't do that because CMake is set up to run link.exe
+  # when linking, not the compiler. Here, we hack it to use the compiler
+  # because we want to use -fsanitize flags.
+  if(NOT MSVC)
+    set(TEST_LINK_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TEST_LINK_FLAGS}")
+    separate_arguments(TEST_LINK_FLAGS)
+  endif()
   add_custom_target(${test_name}
     # MSVS CL doesn't allow a space between -Fe and the output file name.
     COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS}
