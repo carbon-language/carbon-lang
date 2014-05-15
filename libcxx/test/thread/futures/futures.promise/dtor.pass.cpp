@@ -100,7 +100,15 @@ int main()
         }
         catch (const std::future_error& e)
         {
-            assert(e.code() == make_error_code(std::future_errc::broken_promise));
+            // LWG 2056 changed the values of future_errc, so if we're using new
+            // headers with an old library the error codes won't line up.
+            //
+            // Note that this particular check only applies to promise<void>
+            // since the other specializations happen to be implemented in the
+            // header rather than the library.
+            assert(
+                e.code() == make_error_code(std::future_errc::broken_promise) ||
+                e.code() == std::error_code(0, std::future_category()));
         }
     }
 }
