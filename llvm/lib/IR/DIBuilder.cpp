@@ -1226,6 +1226,13 @@ DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
 DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
                                              unsigned Line, unsigned Col,
                                              unsigned Discriminator) {
+  // FIXME: This isn't thread safe nor the right way to defeat MDNode uniquing.
+  // I believe the right way is to have a self-referential element in the node.
+  // Also: why do we bother with line/column - they're not used and the
+  // documentation (SourceLevelDebugging.rst) claims the line/col are necessary
+  // for uniquing, yet then we have this other solution (because line/col were
+  // inadequate) anyway. Remove all 3 and replace them with a self-reference.
+
   // Defeat MDNode uniquing for lexical blocks by using unique id.
   static unsigned int unique_id = 0;
   Value *Elts[] = {
