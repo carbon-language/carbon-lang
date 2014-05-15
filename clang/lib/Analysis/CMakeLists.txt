@@ -25,6 +25,7 @@ add_clang_library(clangAnalysis
   ThreadSafety.cpp
   ThreadSafetyCommon.cpp
   ThreadSafetyLogical.cpp
+  ThreadSafetyTIL.cpp
   UninitializedValues.cpp
 
   LINK_LIBS

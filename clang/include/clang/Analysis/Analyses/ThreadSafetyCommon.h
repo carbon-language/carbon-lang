@@ -238,7 +238,8 @@ public:
       : Arena(A), SelfVar(nullptr), Scfg(nullptr), CurrentBB(nullptr),
         CurrentBlockInfo(nullptr) {
     // FIXME: we don't always have a self-variable.
-    SelfVar = new (Arena) til::Variable(til::Variable::VK_SFun);
+    SelfVar = new (Arena) til::Variable();
+    SelfVar->setKind(til::Variable::VK_SFun);
   }
 
   // Translate a clang statement or expression to a TIL expression.
@@ -268,9 +269,12 @@ private:
                                            CallingContext *Ctx);
   til::SExpr *translateUnaryOperator(const UnaryOperator *UO,
                                      CallingContext *Ctx);
+  til::SExpr *translateBinOp(til::TIL_BinaryOpcode Op,
+                             const BinaryOperator *BO,
+                             CallingContext *Ctx, bool Reverse = false);
   til::SExpr *translateBinAssign(til::TIL_BinaryOpcode Op,
                                  const BinaryOperator *BO,
-                                 CallingContext *Ctx);
+                                 CallingContext *Ctx, bool Assign = false);
   til::SExpr *translateBinaryOperator(const BinaryOperator *BO,
                                       CallingContext *Ctx);
   til::SExpr *translateCastExpr(const CastExpr *CE, CallingContext *Ctx);

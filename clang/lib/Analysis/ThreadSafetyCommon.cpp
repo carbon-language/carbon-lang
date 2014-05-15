@@ -37,65 +37,30 @@
 namespace clang {
 namespace threadSafety {
 
+// From ThreadSafetyUtil.h
+std::string getSourceLiteralString(const clang::Expr *CE) {
+  switch (CE->getStmtClass()) {
+    case Stmt::IntegerLiteralClass:
+      return cast<IntegerLiteral>(CE)->getValue().toString(10, true);
+    case Stmt::StringLiteralClass: {
+      std::string ret("\"");
+      ret += cast<StringLiteral>(CE)->getString();
+      ret += "\"";
+      return ret;
+    }
+    case Stmt::CharacterLiteralClass:
+    case Stmt::CXXNullPtrLiteralExprClass:
+    case Stmt::GNUNullExprClass:
+    case Stmt::CXXBoolLiteralExprClass:
+    case Stmt::FloatingLiteralClass:
+    case Stmt::ImaginaryLiteralClass:
+    case Stmt::ObjCStringLiteralClass:
+    default:
+      return "#lit";
+  }
+}
+
 namespace til {
-
-// If E is a variable, then trace back through any aliases or redundant
-// Phi nodes to find the canonical definition.
-SExpr *getCanonicalVal(SExpr *E) {
-  while (auto *V = dyn_cast<Variable>(E)) {
-    SExpr *D;
-    do {
-      if (V->kind() != Variable::VK_Let)
-        return V;
-      D = V->definition();
-      auto *V2 = dyn_cast<Variable>(D);
-      if (V2)
-        V = V2;
-      else
-        break;
-    } while (true);
-
-    if (ThreadSafetyTIL::isTrivial(D))
-      return D;
-
-    if (Phi *Ph = dyn_cast<Phi>(D)) {
-      if (Ph->status() == Phi::PH_Incomplete)
-        simplifyIncompleteArg(V, Ph);
-
-      if (Ph->status() == Phi::PH_SingleVal) {
-        E = Ph->values()[0];
-        continue;
-      }
-    }
-    return V;
-  }
-  return E;
-}
-
-
-// Trace the arguments of an incomplete Phi node to see if they have the same
-// canonical definition.  If so, mark the Phi node as redundant.
-// getCanonicalVal() will recursively call simplifyIncompletePhi().
-void simplifyIncompleteArg(Variable *V, til::Phi *Ph) {
-  assert(Ph && Ph->status() == Phi::PH_Incomplete);
-
-  // eliminate infinite recursion -- assume that this node is not redundant.
-  Ph->setStatus(Phi::PH_MultiVal);
-
-  SExpr *E0 = getCanonicalVal(Ph->values()[0]);
-  for (unsigned i=1, n=Ph->values().size(); i<n; ++i) {
-    SExpr *Ei = getCanonicalVal(Ph->values()[i]);
-    if (Ei == V)
-      continue;  // Recursive reference to itself.  Don't count.
-    if (Ei != E0) {
-      return;    // Status is already set to MultiVal.
-    }
-  }
-  Ph->setStatus(Phi::PH_SingleVal);
-  // Eliminate Redundant Phi node.
-  V->setDefinition(Ph->values()[0]);
-}
-
 
 // Return true if E is a variable that points to an incomplete Phi node.
 static bool isIncompleteVar(const SExpr *E) {
@@ -105,7 +70,6 @@ static bool isIncompleteVar(const SExpr *E) {
   }
   return false;
 }
-
 
 }  // end namespace til
 
@@ -281,21 +245,41 @@ til::SExpr *SExprBuilder::translateUnaryOperator(const UnaryOperator *UO,
     return translate(UO->getSubExpr(), Ctx);
 
   case UO_Minus:
+    return new (Arena)
+      til::UnaryOp(til::UOP_Minus, translate(UO->getSubExpr(), Ctx));
   case UO_Not:
+    return new (Arena)
+      til::UnaryOp(til::UOP_BitNot, translate(UO->getSubExpr(), Ctx));
   case UO_LNot:
+    return new (Arena)
+      til::UnaryOp(til::UOP_LogicNot, translate(UO->getSubExpr(), Ctx));
+
+  // Currently unsupported
   case UO_Real:
   case UO_Imag:
   case UO_Extension:
-    return new (Arena)
-        til::UnaryOp(UO->getOpcode(), translate(UO->getSubExpr(), Ctx));
+    return new (Arena) til::Undefined(UO);
   }
   return new (Arena) til::Undefined(UO);
 }
 
 
+til::SExpr *SExprBuilder::translateBinOp(til::TIL_BinaryOpcode Op,
+                                         const BinaryOperator *BO,
+                                         CallingContext *Ctx, bool Reverse) {
+   til::SExpr *E0 = translate(BO->getLHS(), Ctx);
+   til::SExpr *E1 = translate(BO->getRHS(), Ctx);
+   if (Reverse)
+     return new (Arena) til::BinaryOp(Op, E1, E0);
+   else
+     return new (Arena) til::BinaryOp(Op, E0, E1);
+}
+
+
 til::SExpr *SExprBuilder::translateBinAssign(til::TIL_BinaryOpcode Op,
                                              const BinaryOperator *BO,
-                                             CallingContext *Ctx) {
+                                             CallingContext *Ctx,
+                                             bool Assign) {
   const Expr *LHS = BO->getLHS();
   const Expr *RHS = BO->getRHS();
   til::SExpr *E0 = translate(LHS, Ctx);
@@ -308,7 +292,7 @@ til::SExpr *SExprBuilder::translateBinAssign(til::TIL_BinaryOpcode Op,
     CV = lookupVarDecl(VD);
   }
 
-  if (Op != BO_Assign) {
+  if (!Assign) {
     til::SExpr *Arg = CV ? CV : new (Arena) til::Load(E0);
     E1 = new (Arena) til::BinaryOp(Op, Arg, E1);
     E1 = addStatement(E1, nullptr, VD);
@@ -326,39 +310,36 @@ til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
   case BO_PtrMemI:
     return new (Arena) til::Undefined(BO);
 
-  case BO_Mul:
-  case BO_Div:
-  case BO_Rem:
-  case BO_Add:
-  case BO_Sub:
-  case BO_Shl:
-  case BO_Shr:
-  case BO_LT:
-  case BO_GT:
-  case BO_LE:
-  case BO_GE:
-  case BO_EQ:
-  case BO_NE:
-  case BO_And:
-  case BO_Xor:
-  case BO_Or:
-  case BO_LAnd:
-  case BO_LOr:
-    return new (Arena)
-        til::BinaryOp(BO->getOpcode(), translate(BO->getLHS(), Ctx),
-                      translate(BO->getRHS(), Ctx));
+  case BO_Mul:  return translateBinOp(til::BOP_Mul, BO, Ctx);
+  case BO_Div:  return translateBinOp(til::BOP_Div, BO, Ctx);
+  case BO_Rem:  return translateBinOp(til::BOP_Rem, BO, Ctx);
+  case BO_Add:  return translateBinOp(til::BOP_Add, BO, Ctx);
+  case BO_Sub:  return translateBinOp(til::BOP_Sub, BO, Ctx);
+  case BO_Shl:  return translateBinOp(til::BOP_Shl, BO, Ctx);
+  case BO_Shr:  return translateBinOp(til::BOP_Shr, BO, Ctx);
+  case BO_LT:   return translateBinOp(til::BOP_Lt,  BO, Ctx);
+  case BO_GT:   return translateBinOp(til::BOP_Lt,  BO, Ctx, true);
+  case BO_LE:   return translateBinOp(til::BOP_Leq, BO, Ctx);
+  case BO_GE:   return translateBinOp(til::BOP_Leq, BO, Ctx, true);
+  case BO_EQ:   return translateBinOp(til::BOP_Eq,  BO, Ctx);
+  case BO_NE:   return translateBinOp(til::BOP_Neq, BO, Ctx);
+  case BO_And:  return translateBinOp(til::BOP_BitAnd,   BO, Ctx);
+  case BO_Xor:  return translateBinOp(til::BOP_BitXor,   BO, Ctx);
+  case BO_Or:   return translateBinOp(til::BOP_BitOr,    BO, Ctx);
+  case BO_LAnd: return translateBinOp(til::BOP_LogicAnd, BO, Ctx);
+  case BO_LOr:  return translateBinOp(til::BOP_LogicOr,  BO, Ctx);
 
-  case BO_Assign:    return translateBinAssign(BO_Assign, BO, Ctx);
-  case BO_MulAssign: return translateBinAssign(BO_Mul, BO, Ctx);
-  case BO_DivAssign: return translateBinAssign(BO_Div, BO, Ctx);
-  case BO_RemAssign: return translateBinAssign(BO_Rem, BO, Ctx);
-  case BO_AddAssign: return translateBinAssign(BO_Add, BO, Ctx);
-  case BO_SubAssign: return translateBinAssign(BO_Sub, BO, Ctx);
-  case BO_ShlAssign: return translateBinAssign(BO_Shl, BO, Ctx);
-  case BO_ShrAssign: return translateBinAssign(BO_Shr, BO, Ctx);
-  case BO_AndAssign: return translateBinAssign(BO_And, BO, Ctx);
-  case BO_XorAssign: return translateBinAssign(BO_Xor, BO, Ctx);
-  case BO_OrAssign:  return translateBinAssign(BO_Or,  BO, Ctx);
+  case BO_Assign:    return translateBinAssign(til::BOP_Eq,  BO, Ctx, true);
+  case BO_MulAssign: return translateBinAssign(til::BOP_Mul, BO, Ctx);
+  case BO_DivAssign: return translateBinAssign(til::BOP_Div, BO, Ctx);
+  case BO_RemAssign: return translateBinAssign(til::BOP_Rem, BO, Ctx);
+  case BO_AddAssign: return translateBinAssign(til::BOP_Add, BO, Ctx);
+  case BO_SubAssign: return translateBinAssign(til::BOP_Sub, BO, Ctx);
+  case BO_ShlAssign: return translateBinAssign(til::BOP_Shl, BO, Ctx);
+  case BO_ShrAssign: return translateBinAssign(til::BOP_Shr, BO, Ctx);
+  case BO_AndAssign: return translateBinAssign(til::BOP_BitAnd, BO, Ctx);
+  case BO_XorAssign: return translateBinAssign(til::BOP_BitXor, BO, Ctx);
+  case BO_OrAssign:  return translateBinAssign(til::BOP_BitOr,  BO, Ctx);
 
   case BO_Comma:
     // The clang CFG should have already processed both sides.
@@ -390,8 +371,9 @@ til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
     return E0;
   }
   default: {
+    // FIXME: handle different kinds of casts.
     til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
-    return new (Arena) til::Cast(K, E0);
+    return new (Arena) til::Cast(til::CAST_none, E0);
   }
   }
 }
@@ -791,8 +773,7 @@ void SExprBuilder::exitCFG(const CFGBlock *Last) {
 
 
 
-class LLVMPrinter : public til::PrettyPrinter<LLVMPrinter, llvm::raw_ostream> {
-};
+class TILPrinter : public til::PrettyPrinter<TILPrinter, llvm::raw_ostream> {};
 
 
 void printSCFG(CFGWalker &Walker) {
@@ -800,7 +781,7 @@ void printSCFG(CFGWalker &Walker) {
   til::MemRegionRef Arena(&Bpa);
   SExprBuilder builder(Arena);
   til::SCFG *Cfg = builder.buildCFG(Walker);
-  LLVMPrinter::print(Cfg, llvm::errs());
+  TILPrinter::print(Cfg, llvm::errs());
 }
 
 

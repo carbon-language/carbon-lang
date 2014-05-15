@@ -3,13 +3,17 @@
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// License. See LICENSE.TXT in the llvm repository for details.
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a simple intermediate language that is used by the
-// thread safety analysis (See ThreadSafety.cpp).  The thread safety analysis
-// works by comparing mutex expressions, e.g.
+// This file defines a simple Typed Intermediate Language, or TIL, that is used
+// by the thread safety analysis (See ThreadSafety.cpp).  The TIL is intended
+// to be largely independent of clang, in the hope that the analysis can be
+// reused for other non-C++ languages.  All dependencies on clang/llvm should
+// go in ThreadSafetyUtil.h.
+//
+// Thread safety analysis works by comparing mutex expressions, e.g.
 //
 // class A { Mutex mu; int dat GUARDED_BY(this->mu); }
 // class B { A a; }
@@ -31,7 +35,7 @@
 // (3) wildcards and pattern matching over expressions
 // (4) hash-based expression lookup
 //
-// The IL is currently very experimental, is intended only for use within
+// The TIL is currently very experimental, is intended only for use within
 // the thread safety analysis, and is subject to change without notice.
 // After the API stabilizes and matures, it may be appropriate to make this
 // more generally available to other analyses.
@@ -43,11 +47,11 @@
 #ifndef LLVM_CLANG_THREAD_SAFETY_TIL_H
 #define LLVM_CLANG_THREAD_SAFETY_TIL_H
 
-#include "clang/Analysis/Analyses/ThreadSafetyUtil.h"
-#include "clang/AST/ExprCXX.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Compiler.h"
+// All clang include dependencies for this file must be put in
+// ThreadSafetyUtil.h.
+#include "ThreadSafetyUtil.h"
 
+#include <stdint.h>
 #include <cassert>
 #include <cstddef>
 #include <utility>
@@ -57,21 +61,189 @@ namespace clang {
 namespace threadSafety {
 namespace til {
 
-using llvm::StringRef;
-using clang::SourceLocation;
-
 
 enum TIL_Opcode {
 #define TIL_OPCODE_DEF(X) COP_##X,
-#include "clang/Analysis/Analyses/ThreadSafetyOps.def"
+#include "ThreadSafetyOps.def"
 #undef TIL_OPCODE_DEF
-  COP_MAX
+};
+
+enum TIL_UnaryOpcode : unsigned char {
+  UOP_Minus,        //  -
+  UOP_BitNot,       //  ~
+  UOP_LogicNot      //  !
+};
+
+enum TIL_BinaryOpcode : unsigned char {
+  BOP_Mul,          //  *
+  BOP_Div,          //  /
+  BOP_Rem,          //  %
+  BOP_Add,          //  +
+  BOP_Sub,          //  -
+  BOP_Shl,          //  <<
+  BOP_Shr,          //  >>
+  BOP_BitAnd,       //  &
+  BOP_BitXor,       //  ^
+  BOP_BitOr,        //  |
+  BOP_Eq,           //  ==
+  BOP_Neq,          //  !=
+  BOP_Lt,           //  <
+  BOP_Leq,          //  <=
+  BOP_LogicAnd,     //  &&
+  BOP_LogicOr       //  ||
+};
+
+enum TIL_CastOpcode : unsigned char {
+  CAST_none = 0,
+  CAST_extendNum,   // extend precision of numeric type
+  CAST_truncNum,    // truncate precision of numeric type
+  CAST_toFloat,     // convert to floating point type
+  CAST_toInt,       // convert to integer type
+};
+
+const TIL_Opcode       COP_Min  = COP_Future;
+const TIL_Opcode       COP_Max  = COP_Branch;
+const TIL_UnaryOpcode  UOP_Min  = UOP_Minus;
+const TIL_UnaryOpcode  UOP_Max  = UOP_LogicNot;
+const TIL_BinaryOpcode BOP_Min  = BOP_Mul;
+const TIL_BinaryOpcode BOP_Max  = BOP_LogicOr;
+const TIL_CastOpcode   CAST_Min = CAST_none;
+const TIL_CastOpcode   CAST_Max = CAST_toInt;
+
+StringRef getUnaryOpcodeString(TIL_UnaryOpcode Op);
+StringRef getBinaryOpcodeString(TIL_BinaryOpcode Op);
+
+
+// ValueTypes are data types that can actually be held in registers.
+// All variables and expressions must have a vBNF_Nonealue type.
+// Pointer types are further subdivided into the various heap-allocated
+// types, such as functions, records, etc.
+// Structured types that are passed by value (e.g. complex numbers)
+// require special handling; they use BT_ValueRef, and size ST_0.
+struct ValueType {
+  enum BaseType : unsigned char {
+    BT_Void = 0,
+    BT_Bool,
+    BT_Int,
+    BT_Float,
+    BT_String,    // String literals
+    BT_Pointer,
+    BT_ValueRef
+  };
+
+  enum SizeType : unsigned char {
+    ST_0 = 0,
+    ST_1,
+    ST_8,
+    ST_16,
+    ST_32,
+    ST_64,
+    ST_128
+  };
+
+  inline static SizeType getSizeType(unsigned nbytes);
+
+  template <class T>
+  inline static ValueType getValueType();
+
+  ValueType(BaseType B, SizeType Sz, bool S, unsigned char VS)
+      : Base(B), Size(Sz), Signed(S), VectSize(VS)
+  { }
+
+  BaseType      Base;
+  SizeType      Size;
+  bool          Signed;
+  unsigned char VectSize;  // 0 for scalar, otherwise num elements in vector
 };
 
 
-typedef clang::BinaryOperatorKind TIL_BinaryOpcode;
-typedef clang::UnaryOperatorKind TIL_UnaryOpcode;
-typedef clang::CastKind TIL_CastOpcode;
+inline ValueType::SizeType ValueType::getSizeType(unsigned nbytes) {
+  switch (nbytes) {
+    case 1: return ST_8;
+    case 2: return ST_16;
+    case 4: return ST_32;
+    case 8: return ST_64;
+    case 16: return ST_128;
+    default: return ST_0;
+  }
+}
+
+
+template<>
+inline ValueType ValueType::getValueType<void>() {
+  return ValueType(BT_Void, ST_0, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<bool>() {
+  return ValueType(BT_Bool, ST_1, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<int8_t>() {
+  return ValueType(BT_Int, ST_8, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<uint8_t>() {
+  return ValueType(BT_Int, ST_8, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<int16_t>() {
+  return ValueType(BT_Int, ST_16, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<uint16_t>() {
+  return ValueType(BT_Int, ST_16, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<int32_t>() {
+  return ValueType(BT_Int, ST_32, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<uint32_t>() {
+  return ValueType(BT_Int, ST_32, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<int64_t>() {
+  return ValueType(BT_Int, ST_64, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<uint64_t>() {
+  return ValueType(BT_Int, ST_64, false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<float>() {
+  return ValueType(BT_Float, ST_32, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<double>() {
+  return ValueType(BT_Float, ST_64, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<long double>() {
+  return ValueType(BT_Float, ST_128, true, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<StringRef>() {
+  return ValueType(BT_Pointer, getSizeType(sizeof(StringRef)), false, 0);
+}
+
+template<>
+inline ValueType ValueType::getValueType<void*>() {
+  return ValueType(BT_Pointer, getSizeType(sizeof(void*)), false, 0);
+}
+
 
 
 enum TraversalKind {
@@ -100,7 +272,7 @@ public:
   //   compare all subexpressions, following the comparator interface
   // }
 
-  void *operator new(size_t S, clang::threadSafety::til::MemRegionRef &R) {
+  void *operator new(size_t S, MemRegionRef &R) {
     return ::operator new(S, R);
   }
 
@@ -149,10 +321,10 @@ public:
 
   bool operator==(const SExprRef &R) const { return Ptr == R.Ptr; }
   bool operator!=(const SExprRef &R) const { return !operator==(R); }
-  bool operator==(const SExpr *P) const { return Ptr == P; }
-  bool operator!=(const SExpr *P) const { return !operator==(P); }
-  bool operator==(std::nullptr_t) const { return Ptr == nullptr; }
-  bool operator!=(std::nullptr_t) const { return Ptr != nullptr; }
+  bool operator==(const SExpr *P)    const { return Ptr == P; }
+  bool operator!=(const SExpr *P)    const { return !operator==(P); }
+  bool operator==(std::nullptr_t)    const { return Ptr == nullptr; }
+  bool operator!=(std::nullptr_t)    const { return Ptr != nullptr; }
 
   inline void reset(SExpr *E);
 
@@ -172,9 +344,11 @@ namespace ThreadSafetyTIL {
   }
 }
 
+// Nodes which declare variables
 class Function;
 class SFunction;
 class BasicBlock;
+class Let;
 
 
 // A named variable, e.g. "x".
@@ -201,14 +375,13 @@ public:
   };
 
   // These are defined after SExprRef contructor, below
-  inline Variable(VariableKind K, SExpr *D = nullptr,
-                  const clang::ValueDecl *Cvd = nullptr);
+  inline Variable(StringRef s, SExpr *D = nullptr);
   inline Variable(SExpr *D = nullptr, const clang::ValueDecl *Cvd = nullptr);
   inline Variable(const Variable &Vd, SExpr *D);
 
   VariableKind kind() const { return static_cast<VariableKind>(Flags); }
 
-  const StringRef name() const { return Cvdecl ? Cvdecl->getName() : "_x"; }
+  const StringRef name() const { return Name; }
   const clang::ValueDecl *clangDecl() const { return Cvdecl; }
 
   // Returns the definition (for let vars) or type (for parameter & self vars)
@@ -227,6 +400,7 @@ public:
   }
   void setClangDecl(const clang::ValueDecl *VD) { Cvdecl = VD; }
   void setDefinition(SExpr *E);
+  void setKind(VariableKind K) { Flags = K; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     // This routine is only called for variable references.
@@ -241,11 +415,10 @@ private:
   friend class Function;
   friend class SFunction;
   friend class BasicBlock;
+  friend class Let;
 
-  // Function, SFunction, and BasicBlock will reset the kind.
-  void setKind(VariableKind K) { Flags = K; }
-
-  SExprRef Definition;             // The TIL type or definition
+  StringRef Name;                  // The name of the variable.
+  SExprRef  Definition;            // The TIL type or definition
   const clang::ValueDecl *Cvdecl;  // The clang declaration for this variable.
 
   unsigned short BlockID;
@@ -355,20 +528,20 @@ inline void SExprRef::reset(SExpr *P) {
 }
 
 
-inline Variable::Variable(VariableKind K, SExpr *D, const clang::ValueDecl *Cvd)
-    : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
-      BlockID(0), Id(0),  NumUses(0) {
-  Flags = K;
+inline Variable::Variable(StringRef s, SExpr *D)
+    : SExpr(COP_Variable), Name(s), Definition(D), Cvdecl(nullptr),
+      BlockID(0), Id(0), NumUses(0) {
+  Flags = VK_Let;
 }
 
 inline Variable::Variable(SExpr *D, const clang::ValueDecl *Cvd)
-    : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
-      BlockID(0), Id(0),  NumUses(0) {
+    : SExpr(COP_Variable), Name(Cvd ? Cvd->getName() : "_x"),
+      Definition(D), Cvdecl(Cvd), BlockID(0), Id(0), NumUses(0) {
   Flags = VK_Let;
 }
 
 inline Variable::Variable(const Variable &Vd, SExpr *D) // rewrite constructor
-    : SExpr(Vd), Definition(D), Cvdecl(Vd.Cvdecl),
+    : SExpr(Vd), Name(Vd.Name), Definition(D), Cvdecl(Vd.Cvdecl),
       BlockID(0), Id(0), NumUses(0) {
   Flags = Vd.kind();
 }
@@ -431,8 +604,11 @@ class Literal : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Literal; }
 
-  Literal(const clang::Expr *C) : SExpr(COP_Literal), Cexpr(C) {}
-  Literal(const Literal &L) : SExpr(L), Cexpr(L.Cexpr) {}
+  Literal(const clang::Expr *C)
+     : SExpr(COP_Literal), ValType(ValueType::getValueType<void>())
+  { }
+  Literal(ValueType VT) : SExpr(COP_Literal), ValType(VT) {}
+  Literal(const Literal &L) : SExpr(L), ValType(L.ValType), Cexpr(L.Cexpr) {}
 
   // The clang expression for this literal.
   const clang::Expr *clangExpr() const { return Cexpr; }
@@ -447,8 +623,25 @@ public:
   }
 
 private:
+  ValueType ValType;
   const clang::Expr *Cexpr;
 };
+
+
+// Derived class for literal values, which stores the actual value.
+template<class T>
+class LiteralT : public Literal {
+public:
+  LiteralT(T Dat) : Literal(ValueType::getValueType<T>()), Val(Dat) { }
+  LiteralT(const LiteralT<T> &L) : Literal(L), Val(L.Val) { }
+
+  T  value() const { return Val;}
+  T& value() { return Val; }
+
+private:
+  T Val;
+};
+
 
 // Literal pointer to an object allocated in memory.
 // At compile time, pointer literals are represented by symbolic names.
@@ -473,6 +666,7 @@ public:
 private:
   const clang::ValueDecl *Cvdecl;
 };
+
 
 // A function -- a.k.a. lambda abstraction.
 // Functions with multiple arguments are created by currying,
@@ -607,6 +801,40 @@ private:
 };
 
 
+// A typed, writable location in memory
+class Field : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Field; }
+
+  Field(SExpr *R, SExpr *B) : SExpr(COP_Field), Range(R), Body(B) {}
+  Field(const Field &C, SExpr *R, SExpr *B) // rewrite constructor
+      : SExpr(C), Range(R), Body(B) {}
+
+  SExpr *range() { return Range.get(); }
+  const SExpr *range() const { return Range.get(); }
+
+  SExpr *body() { return Body.get(); }
+  const SExpr *body() const { return Body.get(); }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    typename V::R_SExpr Nr = Visitor.traverse(Range, TRV_Lazy);
+    typename V::R_SExpr Nb = Visitor.traverse(Body,  TRV_Lazy);
+    return Visitor.reduceField(*this, Nr, Nb);
+  }
+
+  template <class C> typename C::CType compare(Field* E, C& Cmp) {
+    typename C::CType Ct = Cmp.compare(range(), E->range());
+    if (Cmp.notTrue(Ct))
+      return Ct;
+    return Cmp.compare(body(), E->body());
+  }
+
+private:
+  SExprRef Range;
+  SExprRef Body;
+};
+
+
 // Apply an argument to a function
 class Apply : public SExpr {
 public:
@@ -683,9 +911,15 @@ class Project : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Project; }
 
+  Project(SExpr *R, StringRef SName)
+      : SExpr(COP_Project), Rec(R), SlotName(SName), Cvdecl(nullptr)
+  { }
   Project(SExpr *R, clang::ValueDecl *Cvd)
-      : SExpr(COP_Project), Rec(R), Cvdecl(Cvd) {}
-  Project(const Project &P, SExpr *R) : SExpr(P), Rec(R), Cvdecl(P.Cvdecl) {}
+      : SExpr(COP_Project), Rec(R), SlotName(Cvd->getName()), Cvdecl(Cvd)
+  { }
+  Project(const Project &P, SExpr *R)
+      : SExpr(P), Rec(R), SlotName(P.SlotName), Cvdecl(P.Cvdecl)
+  { }
 
   SExpr *record() { return Rec.get(); }
   const SExpr *record() const { return Rec.get(); }
@@ -708,6 +942,7 @@ public:
 
 private:
   SExprRef Rec;
+  StringRef SlotName;
   clang::ValueDecl *Cvdecl;
 };
 
@@ -1300,10 +1535,125 @@ private:
 };
 
 
+// An identifier, e.g. 'foo' or 'x'.
+// This is a pseduo-term; it will be lowered to a variable or projection.
+class Identifier : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Identifier; }
+
+  Identifier(StringRef Id): SExpr(COP_Identifier), Name(Id) { }
+  Identifier(const Identifier& I) : SExpr(I), Name(I.Name)  { }
+
+  StringRef name() const { return Name; }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    return Visitor.reduceIdentifier(*this);
+  }
+
+  template <class C> typename C::CType compare(Identifier* E, C& Cmp) {
+    return Cmp.compareStrings(name(), E->name());
+  }
+
+private:
+  StringRef Name;
+};
+
+
+// An if-then-else expression.
+// This is a pseduo-term; it will be lowered to a CFG.
+class IfThenElse : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_IfThenElse; }
+
+  IfThenElse(SExpr *C, SExpr *T, SExpr *E)
+    : SExpr(COP_IfThenElse), Condition(C), ThenExpr(T), ElseExpr(E)
+  { }
+  IfThenElse(const IfThenElse &I, SExpr *C, SExpr *T, SExpr *E)
+    : SExpr(I), Condition(C), ThenExpr(T), ElseExpr(E)
+  { }
+
+  SExpr *condition() { return Condition.get(); }   // Address to store to
+  const SExpr *condition() const { return Condition.get(); }
+
+  SExpr *thenExpr() { return ThenExpr.get(); }     // Value to store
+  const SExpr *thenExpr() const { return ThenExpr.get(); }
+
+  SExpr *elseExpr() { return ElseExpr.get(); }     // Value to store
+  const SExpr *elseExpr() const { return ElseExpr.get(); }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    typename V::R_SExpr Nc = Visitor.traverse(Condition);
+    typename V::R_SExpr Nt = Visitor.traverse(ThenExpr);
+    typename V::R_SExpr Ne = Visitor.traverse(ElseExpr);
+    return Visitor.reduceIfThenElse(*this, Nc, Nt, Ne);
+  }
+
+  template <class C> typename C::CType compare(IfThenElse* E, C& Cmp) {
+    typename C::CType Ct = Cmp.compare(condition(), E->condition());
+    if (Cmp.notTrue(Ct))
+      return Ct;
+    Ct = Cmp.compare(thenExpr(), E->thenExpr());
+    if (Cmp.notTrue(Ct))
+      return Ct;
+    return Cmp.compare(elseExpr(), E->elseExpr());
+  }
+
+private:
+  SExprRef Condition;
+  SExprRef ThenExpr;
+  SExprRef ElseExpr;
+};
+
+
+// A let-expression,  e.g.  let x=t; u.
+// This is a pseduo-term; it will be lowered to a CFG.
+class Let : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Let; }
+
+  Let(Variable *Vd, SExpr *Bd) : SExpr(COP_Let), VarDecl(Vd), Body(Bd) {
+    Vd->setKind(Variable::VK_Let);
+  }
+  Let(const Let &L, Variable *Vd, SExpr *Bd) : SExpr(L), VarDecl(Vd), Body(Bd) {
+    Vd->setKind(Variable::VK_Let);
+  }
+
+  Variable *variableDecl()  { return VarDecl; }
+  const Variable *variableDecl() const { return VarDecl; }
+
+  SExpr *body() { return Body.get(); }
+  const SExpr *body() const { return Body.get(); }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    // This is a variable declaration, so traverse the definition.
+    typename V::R_SExpr E0 = Visitor.traverse(VarDecl->Definition, TRV_Lazy);
+    // Tell the rewriter to enter the scope of the let variable.
+    Variable *Nvd = Visitor.enterScope(*VarDecl, E0);
+    typename V::R_SExpr E1 = Visitor.traverse(Body);
+    Visitor.exitScope(*VarDecl);
+    return Visitor.reduceLet(*this, Nvd, E1);
+  }
+
+  template <class C> typename C::CType compare(Let* E, C& Cmp) {
+    typename C::CType Ct =
+      Cmp.compare(VarDecl->definition(), E->VarDecl->definition());
+    if (Cmp.notTrue(Ct))
+      return Ct;
+    Cmp.enterScope(variableDecl(), E->variableDecl());
+    Ct = Cmp.compare(body(), E->body());
+    Cmp.leaveScope();
+    return Ct;
+  }
+
+private:
+  Variable *VarDecl;
+  SExprRef Body;
+};
+
+
+
 SExpr *getCanonicalVal(SExpr *E);
 void simplifyIncompleteArg(Variable *V, til::Phi *Ph);
-
-
 
 
 } // end namespace til
