@@ -92,6 +92,8 @@ class SELNEZ_D_ENC : COP1_3R_FM<0b010111, FIELD_FMT_D>;
 
 class RINT_S_ENC : COP1_2R_FM<0b011010, FIELD_FMT_S>;
 class RINT_D_ENC : COP1_2R_FM<0b011010, FIELD_FMT_D>;
+class CLASS_S_ENC : COP1_2R_FM<0b011011, FIELD_FMT_S>;
+class CLASS_D_ENC : COP1_2R_FM<0b011011, FIELD_FMT_D>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -210,15 +212,17 @@ class SELEQZ_D_DESC : SELEQNEZ_DESC_BASE<"seleqz.d", FGR64Opnd>;
 class SELNEZ_S_DESC : SELEQNEZ_DESC_BASE<"selnez.s", FGR32Opnd>;
 class SELNEZ_D_DESC : SELEQNEZ_DESC_BASE<"selnez.d", FGR64Opnd>;
 
-class RINT_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
+class CLASS_RINT_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
   dag OutOperandList = (outs FGROpnd:$fd);
   dag InOperandList = (ins FGROpnd:$fs);
   string AsmString = !strconcat(instr_asm, "\t$fd, $fs");
   list<dag> Pattern = [];
 }
 
-class RINT_S_DESC : RINT_DESC_BASE<"rint.s", FGR32Opnd>;
-class RINT_D_DESC : RINT_DESC_BASE<"rint.d", FGR64Opnd>;
+class RINT_S_DESC : CLASS_RINT_DESC_BASE<"rint.s", FGR32Opnd>;
+class RINT_D_DESC : CLASS_RINT_DESC_BASE<"rint.d", FGR64Opnd>;
+class CLASS_S_DESC : CLASS_RINT_DESC_BASE<"class.s", FGR32Opnd>;
+class CLASS_D_DESC : CLASS_RINT_DESC_BASE<"class.d", FGR64Opnd>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -258,8 +262,8 @@ def BNEZALC;
 def BNEZC;
 def BNVC;
 def BOVC;
-def CLASS_D;
-def CLASS_S;
+def CLASS_D : CLASS_D_ENC, CLASS_D_DESC, ISA_MIPS32R6;
+def CLASS_S : CLASS_S_ENC, CLASS_S_DESC, ISA_MIPS32R6;
 def CMP_CC_D;
 def CMP_CC_S;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
