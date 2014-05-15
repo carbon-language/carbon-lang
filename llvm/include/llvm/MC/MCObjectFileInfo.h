@@ -122,6 +122,7 @@ protected:
 
   /// These are used for the Fission separate debug information files.
   const MCSection *DwarfInfoDWOSection;
+  const MCSection *DwarfTypesDWOSection;
   const MCSection *DwarfAbbrevDWOSection;
   const MCSection *DwarfStrDWOSection;
   const MCSection *DwarfLineDWOSection;
@@ -270,7 +271,9 @@ public:
     return DwarfInfoDWOSection;
   }
   const MCSection *getDwarfTypesSection(uint64_t Hash) const;
-  const MCSection *getDwarfTypesDWOSection(uint64_t Hash) const;
+  const MCSection *getDwarfTypesDWOSection() const {
+    return DwarfTypesDWOSection;
+  }
   const MCSection *getDwarfAbbrevDWOSection() const {
     return DwarfAbbrevDWOSection;
   }

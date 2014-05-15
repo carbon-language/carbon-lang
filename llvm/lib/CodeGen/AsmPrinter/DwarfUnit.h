@@ -577,6 +577,7 @@ public:
            sizeof(uint32_t);                               // Type DIE Offset
   }
   void initSection(const MCSection *Section);
+  using DwarfUnit::initSection;
   DwarfCompileUnit &getCU() override { return CU; }
 
 protected:
