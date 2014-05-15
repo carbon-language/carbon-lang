@@ -1724,8 +1724,6 @@ void SparcTargetLowering::computeKnownBitsForTargetNode
   case SPISD::SELECT_FCC:
     DAG.computeKnownBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
     DAG.computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
-    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 
     // Only known if known in both the LHS and RHS.
     KnownOne &= KnownOne2;
