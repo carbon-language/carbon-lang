@@ -758,8 +758,13 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       }
 
       builder.CreateLifetimeStart(AI, AllocaSize);
-      for (ReturnInst *RI : Returns)
+      for (ReturnInst *RI : Returns) {
+        // Don't insert llvm.lifetime.end calls between a musttail call and a
+        // return.  The return kills all local allocas.
+        if (InlinedMustTailCalls && getPrecedingMustTailCall(RI))
+          continue;
         IRBuilder<>(RI).CreateLifetimeEnd(AI, AllocaSize);
+      }
     }
   }
 
@@ -777,8 +782,13 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
-    for (ReturnInst *RI : Returns)
+    for (ReturnInst *RI : Returns) {
+      // Don't insert llvm.stackrestore calls between a musttail call and a
+      // return.  The return will restore the stack pointer.
+      if (InlinedMustTailCalls && getPrecedingMustTailCall(RI))
+        continue;
       IRBuilder<>(RI).CreateCall(StackRestore, SavedPtr);
+    }
   }
 
   // If we are inlining for an invoke instruction, we must make sure to rewrite
