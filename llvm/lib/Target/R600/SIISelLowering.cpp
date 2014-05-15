@@ -30,20 +30,20 @@ using namespace llvm;
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM) {
   addRegisterClass(MVT::i1, &AMDGPU::VReg_1RegClass);
-  addRegisterClass(MVT::i64, &AMDGPU::VSrc_64RegClass);
+  addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
 
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
 
   addRegisterClass(MVT::i32, &AMDGPU::SReg_32RegClass);
-  addRegisterClass(MVT::f32, &AMDGPU::VSrc_32RegClass);
+  addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
 
-  addRegisterClass(MVT::f64, &AMDGPU::VSrc_64RegClass);
-  addRegisterClass(MVT::v2i32, &AMDGPU::VSrc_64RegClass);
-  addRegisterClass(MVT::v2f32, &AMDGPU::VSrc_64RegClass);
+  addRegisterClass(MVT::f64, &AMDGPU::VReg_64RegClass);
+  addRegisterClass(MVT::v2i32, &AMDGPU::SReg_64RegClass);
+  addRegisterClass(MVT::v2f32, &AMDGPU::VReg_64RegClass);
 
-  addRegisterClass(MVT::v4i32, &AMDGPU::VSrc_128RegClass);
-  addRegisterClass(MVT::v4f32, &AMDGPU::VSrc_128RegClass);
+  addRegisterClass(MVT::v4i32, &AMDGPU::SReg_128RegClass);
+  addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
 
   addRegisterClass(MVT::v8i32, &AMDGPU::VReg_256RegClass);
   addRegisterClass(MVT::v8f32, &AMDGPU::VReg_256RegClass);
@@ -444,35 +444,6 @@ SDValue SITargetLowering::LowerFormalArguments(
   return Chain;
 }
 
-/// Usually ISel will insert a copy between terminator insturction that output
-/// a value and the S_BRANCH* at the end of the block.  This causes
-/// MachineBasicBlock::getFirstTerminator() to return the incorrect value,
-/// so we want to make sure there are no copies between terminators at the
-/// end of blocks.
-static void LowerTerminatorWithOutput(unsigned Opcode, MachineBasicBlock *BB,
-                                      MachineInstr *MI,
-                                      const TargetInstrInfo *TII,
-                                      MachineRegisterInfo &MRI) {
-  unsigned DstReg = MI->getOperand(0).getReg();
-  // Usually ISel will insert a copy between the SI_IF_NON_TERM instruction
-  // and the S_BRANCH* terminator.  We want to replace SI_IF_NO_TERM with
-  // SI_IF and we can't have any instructions between S_BRANCH* and SI_IF,
-  // since they are both terminators
-  assert(MRI.hasOneUse(DstReg));
-  MachineOperand &Use = *MRI.use_begin(DstReg);
-  MachineInstr *UseMI = Use.getParent();
-  assert(UseMI->getOpcode() == AMDGPU::COPY);
-
-  MRI.replaceRegWith(UseMI->getOperand(0).getReg(), DstReg);
-  UseMI->eraseFromParent();
-  BuildMI(*BB, BB->getFirstTerminator(), MI->getDebugLoc(),
-          TII->get(Opcode))
-          .addOperand(MI->getOperand(0))
-          .addOperand(MI->getOperand(1))
-          .addOperand(MI->getOperand(2));
-  MI->eraseFromParent();
-}
-
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
 
@@ -510,12 +481,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
   }
-  case AMDGPU::SI_IF_NON_TERM:
-    LowerTerminatorWithOutput(AMDGPU::SI_IF, BB, MI, TII, MRI);
-    break;
-  case AMDGPU::SI_ELSE_NON_TERM:
-    LowerTerminatorWithOutput(AMDGPU::SI_ELSE, BB, MI, TII, MRI);
-    break;
   case AMDGPU::V_SUB_F64:
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64),
             MI->getOperand(0).getReg())
