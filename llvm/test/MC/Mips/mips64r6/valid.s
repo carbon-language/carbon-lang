@@ -4,6 +4,10 @@
 
         .set noat
         # FIXME: Add the instructions carried forward from older ISA's
+        aui     $3,$2,-23        # CHECK: aui $3, $2, -23    # encoding: [0x3c,0x62,0xff,0xe9]
+        daui    $3,$2,0x1234     # CHECK: daui $3, $2, 4660  # encoding: [0x74,0x62,0x12,0x34]
+        dahi    $3,$3,0x5678     # CHECK: dahi $3, $3, 22136 # encoding: [0x04,0x66,0x56,0x78]
+        dati    $3,$3,0xabcd     # CHECK: dati $3, $3, 43981 # encoding: [0x04,0x7e,0xab,0xcd]
         div     $2,$3,$4         # CHECK: div $2, $3, $4   # encoding: [0x00,0x64,0x10,0x9a]
         divu    $2,$3,$4         # CHECK: divu $2, $3, $4  # encoding: [0x00,0x64,0x10,0x9b]
         mod     $2,$3,$4         # CHECK: mod $2, $3, $4   # encoding: [0x00,0x64,0x10,0xda]

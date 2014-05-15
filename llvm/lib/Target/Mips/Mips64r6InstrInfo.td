@@ -25,6 +25,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+class DAUI_ENC    : DAUI_FM;
+class DAHI_ENC    : REGIMM_FM<OPCODE5_DAHI>;
+class DATI_ENC    : REGIMM_FM<OPCODE5_DATI>;
 class DDIV_ENC    : SPECIAL_3R_FM<0b00010, 0b011110>;
 class DDIVU_ENC   : SPECIAL_3R_FM<0b00010, 0b011111>;
 class DMOD_ENC    : SPECIAL_3R_FM<0b00011, 0b011110>;
@@ -40,6 +43,9 @@ class DMULU_ENC   : SPECIAL_3R_FM<0b00010, 0b111001>;
 //
 //===----------------------------------------------------------------------===//
 
+class DAHI_DESC    : AUI_DESC_BASE<"dahi", GPR64Opnd>;
+class DATI_DESC    : AUI_DESC_BASE<"dati", GPR64Opnd>;
+class DAUI_DESC    : AUI_DESC_BASE<"daui", GPR64Opnd>;
 class DDIV_DESC    : DIVMOD_DESC_BASE<"ddiv", GPR64Opnd>;
 class DDIVU_DESC   : DIVMOD_DESC_BASE<"ddivu", GPR64Opnd>;
 class DMOD_DESC    : DIVMOD_DESC_BASE<"dmod", GPR64Opnd>;
@@ -55,10 +61,10 @@ class DMULU_DESC   : MUL_R6_DESC_BASE<"dmulu", GPR64Opnd>;
 //
 //===----------------------------------------------------------------------===//
 
-def DAHI;
+def DAHI : DAHI_ENC, DAHI_DESC, ISA_MIPS64R6;
 def DALIGN;
-def DATI;
-def DAUI;
+def DATI : DATI_ENC, DATI_DESC, ISA_MIPS64R6;
+def DAUI : DAUI_ENC, DAUI_DESC, ISA_MIPS64R6;
 def DBITSWAP;
 def DDIV : DDIV_ENC, DDIV_DESC, ISA_MIPS64R6;
 def DDIVU : DDIVU_ENC, DDIVU_DESC, ISA_MIPS64R6;

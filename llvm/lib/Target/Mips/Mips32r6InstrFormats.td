@@ -23,8 +23,17 @@ class MipsR6Inst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther>,
 //
 //===----------------------------------------------------------------------===//
 
-def OPGROUP_COP1 { bits<6> Value = 0b010001; }
+def OPGROUP_COP1    { bits<6> Value = 0b010001; }
+def OPGROUP_AUI     { bits<6> Value = 0b001111; }
+def OPGROUP_DAUI    { bits<6> Value = 0b011101; }
+def OPGROUP_REGIMM  { bits<6> Value = 0b000001; }
 def OPGROUP_SPECIAL { bits<6> Value = 0b000000; }
+
+class OPCODE5<bits<5> Val> {
+  bits<5> Value = Val;
+}
+def OPCODE5_DAHI : OPCODE5<0b00110>;
+def OPCODE5_DATI : OPCODE5<0b11110>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -37,6 +46,23 @@ def FIELD_FMT_D : FIELD_FMT<0b10001>;
 // Encoding Formats
 //
 //===----------------------------------------------------------------------===//
+
+class AUI_FM : MipsR6Inst {
+  bits<5> rs;
+  bits<5> rt;
+  bits<16> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_AUI.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-0} = imm;
+}
+
+class DAUI_FM : AUI_FM {
+  let Inst{31-26} = OPGROUP_DAUI.Value;
+}
 
 class COP1_3R_FM<bits<6> funct, FIELD_FMT Format> : MipsR6Inst {
   bits<5> ft;
@@ -66,4 +92,16 @@ class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {
   let Inst{15-11} = rd;
   let Inst{10-6}  = mulop;
   let Inst{5-0}   = funct;
+}
+
+class REGIMM_FM<OPCODE5 Operation> : MipsR6Inst {
+  bits<5> rs;
+  bits<16> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_REGIMM.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = Operation.Value;
+  let Inst{15-0} = imm;
 }
