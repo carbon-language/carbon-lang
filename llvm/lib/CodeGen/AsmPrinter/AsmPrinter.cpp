@@ -946,8 +946,11 @@ bool AsmPrinter::doFinalization(Module &M) {
       EmitVisibility(Name, Alias.getVisibility());
 
       // Emit the directives as assignments aka .set:
-      OutStreamer.EmitAssignment(Name,
-                                 MCSymbolRefExpr::Create(Target, OutContext));
+      const MCExpr *Expr = MCSymbolRefExpr::Create(Target, OutContext);
+      if (uint64_t Offset = Alias.calculateOffset(*TM.getDataLayout()))
+        Expr = MCBinaryExpr::CreateAdd(Expr,
+                 MCConstantExpr::Create(Offset, OutContext), OutContext);
+      OutStreamer.EmitAssignment(Name, Expr);
     }
   }
 

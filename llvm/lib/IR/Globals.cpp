@@ -15,6 +15,7 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -281,4 +282,28 @@ GlobalObject *GlobalAlias::getAliasedGlobal() {
     if (!GA)
       return cast<GlobalObject>(GV);
   }
+}
+
+uint64_t GlobalAlias::calculateOffset(const DataLayout &DL) const {
+  uint64_t Offset = 0;
+  const Constant *C = this;
+  while (C) {
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(C)) {
+      C = GA->getAliasee();
+    } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        std::vector<Value*> Args;
+        for (unsigned I = 1; I < CE->getNumOperands(); ++I)
+          Args.push_back(CE->getOperand(I));
+        Offset += DL.getIndexedOffset(CE->getOperand(0)->getType(), Args);
+      }
+      C = CE->getOperand(0);
+    } else if (isa<GlobalValue>(C)) {
+      return Offset;
+    } else {
+      assert(0 && "Unexpected type in alias chain!");
+      return 0;
+    }
+  }
+  return Offset;
 }

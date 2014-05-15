@@ -630,6 +630,20 @@ unsigned ARM64TargetLowering::getMaximalGlobalOffset() const {
   return 4095;
 }
 
+/// getGlobalMergeAlignment - Set alignment to be the max size of merged
+/// global variable data structure, and make it aligned up to power of 2.
+/// This way, we could guarantee the merged global variable data structure
+/// doesn't cross page boundary, because usually OS always allocates page at
+/// 4096-byte aligned boundary.
+unsigned ARM64TargetLowering::getGlobalMergeAlignment(
+                                StructType *MergedTy) const {
+  unsigned Align = getDataLayout()->getTypeAllocSize(MergedTy);
+  if (Align & (Align - 1))
+    Align = llvm::NextPowerOf2(Align);
+
+  return Align;
+}
+
 FastISel *
 ARM64TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
                                     const TargetLibraryInfo *libInfo) const {

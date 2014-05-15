@@ -32,6 +32,7 @@
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"
@@ -881,6 +882,12 @@ public:
   /// from the global.
   virtual unsigned getMaximalGlobalOffset() const {
     return 0;
+  }
+
+  /// Returns the alignment required by global merge on external symbols.
+  /// By default, returns the natural alignment of merged data structure.
+  virtual unsigned getGlobalMergeAlignment(StructType *MergedTy) const {
+    return getDataLayout()->getABITypeAlignment(MergedTy);
   }
 
   /// Returns true if a cast between SrcAS and DestAS is a noop.

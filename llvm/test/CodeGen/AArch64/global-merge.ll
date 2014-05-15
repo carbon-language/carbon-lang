@@ -1,0 +1,34 @@
+; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -O0 | FileCheck --check-prefix=NO-MERGE %s
+; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -O0 -global-merge-on-external=true -global-merge-aligned=true | FileCheck --check-prefix=NO-MERGE %s
+
+; RUN: llc < %s -mtriple=arm64-apple-ios -O0 | FileCheck %s --check-prefix=CHECK-APPLE-IOS-NO-MERGE
+; RUN: llc < %s -mtriple=arm64-apple-ios -O0 -global-merge-on-external=true -global-merge-aligned=false | FileCheck %s --check-prefix=CHECK-APPLE-IOS-NO-MERGE
+
+; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -O1 | FileCheck %s
+; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -O1 -global-merge-on-external=true -global-merge-aligned=true | FileCheck %s
+
+; RUN: llc < %s -mtriple=arm64-apple-ios -O1 | FileCheck %s --check-prefix=CHECK-APPLE-IOS
+; RUN: llc < %s -mtriple=arm64-apple-ios -O1 -global-merge-on-external=true -global-merge-aligned=false | FileCheck %s --check-prefix=CHECK-APPLE-IOS
+
+@m = internal global i32 0, align 4
+@n = internal global i32 0, align 4
+
+define void @f1(i32 %a1, i32 %a2) {
+; CHECK-LABEL: f1:
+; CHECK: adrp x{{[0-9]+}}, _MergedGlobals
+; CHECK-NOT: adrp
+
+; CHECK-APPLE-IOS-LABEL: f1:
+; CHECK-APPLE-IOS: adrp x{{[0-9]+}}, __MergedGlobals
+; CHECK-APPLE-IOS-NOT: adrp
+  store i32 %a1, i32* @m, align 4
+  store i32 %a2, i32* @n, align 4
+  ret void
+}
+
+; CHECK:        .local _MergedGlobals
+; CHECK:        .comm  _MergedGlobals,8,8
+; NO-MERGE-NOT: .local _MergedGlobals
+
+; CHECK-APPLE-IOS: .zerofill __DATA,__bss,__MergedGlobals,8,3
+; CHECK-APPLE-IOS-NO-MERGE-NOT: .zerofill __DATA,__bss,__MergedGlobals,8,3

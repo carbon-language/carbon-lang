@@ -72,7 +72,7 @@ using namespace llvm;
 #define DEBUG_TYPE "global-merge"
 
 static cl::opt<bool>
-EnableGlobalMerge("global-merge", cl::Hidden,
+EnableGlobalMerge("enable-global-merge", cl::NotHidden,
                   cl::desc("Enable global merge pass"),
                   cl::init(true));
 
@@ -80,6 +80,16 @@ static cl::opt<bool>
 EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
                          cl::desc("Enable global merge pass on constants"),
                          cl::init(false));
+
+static cl::opt<bool>
+EnableGlobalMergeOnExternal("global-merge-on-external", cl::Hidden,
+                   cl::desc("Enable global merge pass on external linkage"),
+                   cl::init(false));
+
+static cl::opt<bool>
+EnableGlobalMergeAligned("global-merge-aligned", cl::Hidden,
+                   cl::desc("Set target specific alignment for global merge pass"),
+                   cl::init(false));
 
 STATISTIC(NumMerged      , "Number of globals merged");
 namespace {
@@ -129,9 +139,21 @@ namespace {
 } // end anonymous namespace
 
 char GlobalMerge::ID = 0;
-INITIALIZE_PASS(GlobalMerge, "global-merge",
-                "Global Merge", false, false)
 
+static void *initializeGlobalMergePassOnce(PassRegistry &Registry) {
+  PassInfo *PI = new PassInfo(
+      "Merge global variables",
+      "global-merge", &GlobalMerge::ID,
+      PassInfo::NormalCtor_t(callDefaultCtor<GlobalMerge>), false,
+      false, PassInfo::TargetMachineCtor_t(
+                 callTargetMachineCtor<GlobalMerge>));
+  Registry.registerPass(*PI, true);
+  return PI;
+}
+
+void llvm::initializeGlobalMergePass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializeGlobalMergePassOnce)
+}
 
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
@@ -154,11 +176,16 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 
   Type *Int32Ty = Type::getInt32Ty(M.getContext());
 
+  assert (Globals.size() > 1);
+  
   for (size_t i = 0, e = Globals.size(); i != e; ) {
     size_t j = 0;
     uint64_t MergedSize = 0;
     std::vector<Type*> Tys;
     std::vector<Constant*> Inits;
+
+    bool HasExternal = false;
+    GlobalVariable *TheFirstExternal = 0;
     for (j = i; j != e; ++j) {
       Type *Ty = Globals[j]->getType()->getElementType();
       MergedSize += DL->getTypeAllocSize(Ty);
@@ -167,17 +194,45 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
       }
       Tys.push_back(Ty);
       Inits.push_back(Globals[j]->getInitializer());
+
+      if (Globals[j]->hasExternalLinkage() && !HasExternal) {
+        HasExternal = true;
+        TheFirstExternal = Globals[j];
+      }
     }
+
+    // If merged variables doesn't have external linkage, we needn't to expose
+    // the symbol after merging.
+    GlobalValue::LinkageTypes Linkage = HasExternal ?
+                                          GlobalValue::ExternalLinkage :
+                                          GlobalValue::InternalLinkage ;
+
+    // If merged variables have external linkage, we use symbol name of the
+    // first variable merged as the suffix of global symbol name. This would
+    // be able to avoid the link-time naming conflict for globalm symbols.
+    Twine MergedGVName = HasExternal ?
+                           "_MergedGlobals_" + TheFirstExternal->getName() :
+                           "_MergedGlobals" ;
 
     StructType *MergedTy = StructType::get(M.getContext(), Tys);
     Constant *MergedInit = ConstantStruct::get(MergedTy, Inits);
+
     GlobalVariable *MergedGV = new GlobalVariable(M, MergedTy, isConst,
-                                                  GlobalValue::InternalLinkage,
-                                                  MergedInit, "_MergedGlobals",
-                                                  nullptr,
-                                                  GlobalVariable::NotThreadLocal,
-                                                  AddrSpace);
+                                     Linkage, MergedInit, MergedGVName,
+                                     nullptr, GlobalVariable::NotThreadLocal,
+                                     AddrSpace);
+
+    if (EnableGlobalMergeAligned) {
+      unsigned Align = TLI->getGlobalMergeAlignment(MergedTy);
+      assert(((Align % DL->getABITypeAlignment(MergedTy)) == 0) &&
+        "Specified alignment doesn't meet natural alignment requirement.");
+      MergedGV->setAlignment(Align);
+    }
+
     for (size_t k = i; k < j; ++k) {
+      GlobalValue::LinkageTypes Linkage = Globals[k]->getLinkage();
+      std::string Name = Globals[k]->getName();
+
       Constant *Idx[2] = {
         ConstantInt::get(Int32Ty, 0),
         ConstantInt::get(Int32Ty, k-i)
@@ -185,6 +240,12 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
       Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(MergedGV, Idx);
       Globals[k]->replaceAllUsesWith(GEP);
       Globals[k]->eraseFromParent();
+
+      if (Linkage != GlobalValue::InternalLinkage) {
+        // Generate a new alias...
+        new GlobalAlias(GEP->getType(), Linkage, Name, GEP, &M);
+      }
+
       NumMerged++;
     }
     i = j;
@@ -245,8 +306,12 @@ bool GlobalMerge::doInitialization(Module &M) {
   // Grab all non-const globals.
   for (Module::global_iterator I = M.global_begin(),
          E = M.global_end(); I != E; ++I) {
-    // Merge is safe for "normal" internal globals only
-    if (!I->hasLocalLinkage() || I->isThreadLocal() || I->hasSection())
+    // Merge is safe for "normal" internal or external globals only
+    if (I->isDeclaration() || I->isThreadLocal() || I->hasSection())
+      continue;
+
+    if (!(EnableGlobalMergeOnExternal && I->hasExternalLinkage())
+          && !I->hasInternalLinkage())
       continue;
 
     PointerType *PT = dyn_cast<PointerType>(I->getType());
