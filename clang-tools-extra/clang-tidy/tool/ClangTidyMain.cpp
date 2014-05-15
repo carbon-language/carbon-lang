@@ -27,18 +27,17 @@ static cl::OptionCategory ClangTidyCategory("clang-tidy options");
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
-static cl::opt<std::string> Checks(
-    "checks",
-    cl::desc("Regular expression matching the names of the checks to be run."),
-    cl::init(".*"), cl::cat(ClangTidyCategory));
-static cl::opt<std::string> DisableChecks(
-    "disable-checks",
-    cl::desc("Regular expression matching the names of the checks to disable."),
-    cl::init("(clang-analyzer-alpha.*" // Too many false positives.
-             "|llvm-include-order"     // Not implemented yet.
-             "|llvm-namespace-comment" // Not complete.
-             "|google-.*)"),           // Doesn't apply to LLVM.
-    cl::cat(ClangTidyCategory));
+const char DefaultChecks[] =
+    "*,"                       // Enable all checks, except these:
+    "-clang-analyzer-alpha*,"  // Too many false positives.
+    "-llvm-include-order,"     // Not implemented yet.
+    "-llvm-namespace-comment," // Not complete.
+    "-google-*,";              // Doesn't apply to LLVM.
+static cl::opt<std::string>
+Checks("checks",
+       cl::desc("Comma-separated list of positive and negative globs matching\n"
+                "the names of the checks to be run."),
+       cl::init(""), cl::cat(ClangTidyCategory));
 static cl::opt<std::string> HeaderFilter(
     "header-filter",
     cl::desc("Regular expression matching the names of the headers to output\n"
@@ -88,8 +87,7 @@ int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
   clang::tidy::ClangTidyOptions Options;
-  Options.EnableChecksRegex = Checks;
-  Options.DisableChecksRegex = DisableChecks;
+  Options.Checks = DefaultChecks + Checks;
   Options.HeaderFilterRegex = HeaderFilter;
   Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 

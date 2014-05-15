@@ -1,6 +1,6 @@
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck %s
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='.*' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK2 %s
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='header2\.h' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK3 %s
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck %s
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='.*' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK2 %s
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='header2\.h' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK3 %s
 
 #include "header1.h"
 // CHECK-NOT: warning:

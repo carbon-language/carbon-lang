@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks=clang-analyzer-core.NullDereference -disable-checks='' -analyze-temporary-dtors %s -- | FileCheck %s
+// RUN: clang-tidy -checks='-*,clang-analyzer-core.NullDereference' -analyze-temporary-dtors %s -- | FileCheck %s
 
 struct NoReturnDtor {
   ~NoReturnDtor() __attribute__((noreturn));

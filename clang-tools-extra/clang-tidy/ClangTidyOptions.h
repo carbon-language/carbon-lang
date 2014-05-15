@@ -17,9 +17,8 @@ namespace tidy {
 
 /// \brief Contains options for clang-tidy.
 struct ClangTidyOptions {
-  ClangTidyOptions() : EnableChecksRegex(".*"), AnalyzeTemporaryDtors(false) {}
-  std::string EnableChecksRegex;
-  std::string DisableChecksRegex;
+  ClangTidyOptions() : Checks("*"), AnalyzeTemporaryDtors(false) {}
+  std::string Checks;
   // Output warnings from headers matching this filter. Warnings from main files
   // will always be displayed.
   std::string HeaderFilterRegex;

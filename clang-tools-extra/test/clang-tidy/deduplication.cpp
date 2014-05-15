@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' %s -- | FileCheck %s
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' %s -- | FileCheck %s
 
 template<typename T>
 class A { A(T); };

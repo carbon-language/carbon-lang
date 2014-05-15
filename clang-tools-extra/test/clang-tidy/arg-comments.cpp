@@ -1,4 +1,4 @@
-// RUN: clang-tidy --checks=misc-argument-comment %s -- | FileCheck %s
+// RUN: clang-tidy --checks='-*,misc-argument-comment' %s -- | FileCheck %s
 
 // FIXME: clang-tidy should provide a -verify mode to make writing these checks
 // easier and more accurate.

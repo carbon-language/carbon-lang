@@ -60,12 +60,20 @@ struct ClangTidyError {
 /// \brief Filters checks by name.
 class ChecksFilter {
 public:
-  ChecksFilter(const ClangTidyOptions& Options);
-  bool isCheckEnabled(StringRef Name);
+  // GlobList is a comma-separated list of globs (only '*' metacharacter is
+  // supported) with optional '-' prefix to denote exclusion.
+  ChecksFilter(StringRef GlobList);
+  // Returns true if the check with the specified Name should be enabled.
+  // The result is the last matching glob's Positive flag. If Name is not
+  // matched by any globs, the check is not enabled.
+  bool isCheckEnabled(StringRef Name) { return isCheckEnabled(Name, false); }
 
 private:
-  llvm::Regex EnableChecks;
-  llvm::Regex DisableChecks;
+  bool isCheckEnabled(StringRef Name, bool Enabled);
+
+  bool Positive;
+  llvm::Regex Regex;
+  std::unique_ptr<ChecksFilter> NextFilter;
 };
 
 struct ClangTidyStats {
