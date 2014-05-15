@@ -52,7 +52,7 @@ private:
   SMLoc getLoc() const { return Parser.getTok().getLoc(); }
 
   bool parseSysAlias(StringRef Name, SMLoc NameLoc, OperandVector &Operands);
-  unsigned parseCondCodeString(StringRef Cond);
+  ARM64CC::CondCode parseCondCodeString(StringRef Cond);
   bool parseCondCode(OperandVector &Operands, bool invertCondCode);
   int tryParseRegister();
   int tryMatchVectorRegister(StringRef &Kind, bool expected);
@@ -143,6 +143,7 @@ private:
   enum KindTy {
     k_Immediate,
     k_ShiftedImm,
+    k_CondCode,
     k_Memory,
     k_Register,
     k_VectorList,
@@ -187,6 +188,10 @@ private:
   struct ShiftedImmOp {
     const MCExpr *Val;
     unsigned ShiftAmount;
+  };
+
+  struct CondCodeOp {
+    ARM64CC::CondCode Code;
   };
 
   struct FPImmOp {
@@ -239,6 +244,7 @@ private:
     struct VectorIndexOp VectorIndex;
     struct ImmOp Imm;
     struct ShiftedImmOp ShiftedImm;
+    struct CondCodeOp CondCode;
     struct FPImmOp FPImm;
     struct BarrierOp Barrier;
     struct SysRegOp SysReg;
@@ -269,6 +275,9 @@ public:
       break;
     case k_ShiftedImm:
       ShiftedImm = o.ShiftedImm;
+      break;
+    case k_CondCode:
+      CondCode = o.CondCode;
       break;
     case k_FPImm:
       FPImm = o.FPImm;
@@ -333,6 +342,11 @@ public:
   unsigned getShiftedImmShift() const {
     assert(Kind == k_ShiftedImm && "Invalid access!");
     return ShiftedImm.ShiftAmount;
+  }
+
+  ARM64CC::CondCode getCondCode() const {
+    assert(Kind == k_CondCode && "Invalid access!");
+    return CondCode.Code;
   }
 
   unsigned getFPImm() const {
@@ -604,6 +618,7 @@ public:
     const MCConstantExpr *CE = cast<MCConstantExpr>(Expr);
     return CE->getValue() >= 0 && CE->getValue() <= 0xfff;
   }
+  bool isCondCode() const { return Kind == k_CondCode; }
   bool isSIMDImmType10() const {
     if (!isImm())
       return false;
@@ -1241,6 +1256,11 @@ public:
     }
   }
 
+  void addCondCodeOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getCondCode()));
+  }
+
   void addAdrpLabelOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
@@ -1755,6 +1775,15 @@ public:
     return Op;
   }
 
+  static ARM64Operand *CreateCondCode(ARM64CC::CondCode Code, SMLoc S, SMLoc E,
+                                      MCContext &Ctx) {
+    ARM64Operand *Op = new ARM64Operand(k_CondCode, Ctx);
+    Op->CondCode.Code = Code;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARM64Operand *CreateFPImm(unsigned Val, SMLoc S, MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_FPImm, Ctx);
     Op->FPImm.Val = Val;
@@ -1871,6 +1900,9 @@ void ARM64Operand::print(raw_ostream &OS) const {
     OS << ", lsl #" << ARM64_AM::getShiftValue(Shift) << ">";
     break;
   }
+  case k_CondCode:
+    OS << "<condcode " << getCondCode() << ">";
+    break;
   case k_Memory:
     OS << "<memory>";
     break;
@@ -2382,8 +2414,8 @@ ARM64AsmParser::tryParseAddSubImm(OperandVector &Operands) {
 }
 
 /// parseCondCodeString - Parse a Condition Code string.
-unsigned ARM64AsmParser::parseCondCodeString(StringRef Cond) {
-  unsigned CC = StringSwitch<unsigned>(Cond.lower())
+ARM64CC::CondCode ARM64AsmParser::parseCondCodeString(StringRef Cond) {
+  ARM64CC::CondCode CC = StringSwitch<ARM64CC::CondCode>(Cond.lower())
                     .Case("eq", ARM64CC::EQ)
                     .Case("ne", ARM64CC::NE)
                     .Case("cs", ARM64CC::HS)
@@ -2414,7 +2446,7 @@ bool ARM64AsmParser::parseCondCode(OperandVector &Operands,
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
   StringRef Cond = Tok.getString();
-  unsigned CC = parseCondCodeString(Cond);
+  ARM64CC::CondCode CC = parseCondCodeString(Cond);
   if (CC == ARM64CC::Invalid)
     return TokError("invalid condition code");
   Parser.Lex(); // Eat identifier token.
@@ -2422,9 +2454,8 @@ bool ARM64AsmParser::parseCondCode(OperandVector &Operands,
   if (invertCondCode)
     CC = ARM64CC::getInvertedCondCode(ARM64CC::CondCode(CC));
 
-  const MCExpr *CCExpr = MCConstantExpr::Create(CC, getContext());
   Operands.push_back(
-      ARM64Operand::CreateImm(CCExpr, S, getLoc(), getContext()));
+      ARM64Operand::CreateCondCode(CC, S, getLoc(), getContext()));
   return false;
 }
 
@@ -3426,12 +3457,13 @@ bool ARM64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
 
     SMLoc SuffixLoc = SMLoc::getFromPointer(NameLoc.getPointer() +
                                             (Head.data() - Name.data()));
-    unsigned CC = parseCondCodeString(Head);
+    ARM64CC::CondCode CC = parseCondCodeString(Head);
     if (CC == ARM64CC::Invalid)
       return Error(SuffixLoc, "invalid condition code");
-    const MCExpr *CCExpr = MCConstantExpr::Create(CC, getContext());
     Operands.push_back(
-        ARM64Operand::CreateImm(CCExpr, NameLoc, NameLoc, getContext()));
+        ARM64Operand::CreateToken(".", true, SuffixLoc, getContext()));
+    Operands.push_back(
+        ARM64Operand::CreateCondCode(CC, NameLoc, NameLoc, getContext()));
   }
 
   // Add the remaining tokens in the mnemonic.
@@ -3674,6 +3706,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "invalid operand for instruction");
   case Match_InvalidSuffix:
     return Error(Loc, "invalid type suffix for instruction");
+  case Match_InvalidCondCode:
+    return Error(Loc, "expected AArch64 condition code");
   case Match_AddSubRegExtendSmall:
     return Error(Loc,
       "expected '[su]xt[bhw]' or 'lsl' with optional integer in range [0, 4]");
@@ -4144,6 +4178,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         ((ARM64Operand *)Operands[ErrorInfo + 1])->isTokenEqual("!"))
       MatchResult = Match_InvalidMemoryIndexedSImm9;
   // FALL THROUGH
+  case Match_InvalidCondCode:
   case Match_AddSubRegExtendSmall:
   case Match_AddSubRegExtendLarge:
   case Match_AddSubSecondSource:

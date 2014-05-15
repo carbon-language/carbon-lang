@@ -167,6 +167,11 @@ def FPImmOperand : AsmOperandClass {
   let ParserMethod = "tryParseFPImm";
 }
 
+def CondCode : AsmOperandClass {
+  let Name = "CondCode";
+  let DiagnosticType = "InvalidCondCode";
+}
+
 // 8-bit immediate for AdvSIMD where 64-bit values of the form:
 // aaaaaaaa bbbbbbbb cccccccc dddddddd eeeeeeee ffffffff gggggggg hhhhhhhh
 // are encoded as the eight bit value 'abcdefgh'.
@@ -901,10 +906,16 @@ class SpecialReturn<bits<4> opc, string asm>
 //---
 // Conditional branch instruction.
 //---
-// Branch condition code.
-// 4-bit immediate. Pretty-printed as .<cc>
-def dotCcode : Operand<i32> {
-  let PrintMethod = "printDotCondCode";
+
+// Condition code.
+// 4-bit immediate. Pretty-printed as <cc>
+def ccode : Operand<i32> {
+  let PrintMethod = "printCondCode";
+  let ParserMatchClass = CondCode;
+}
+def inv_ccode : Operand<i32> {
+  let PrintMethod = "printInverseCondCode";
+  let ParserMatchClass = CondCode;
 }
 
 // Conditional branch target. 19-bit immediate. The low two bits of the target
@@ -920,8 +931,8 @@ def am_brcond : Operand<OtherVT> {
   let ParserMatchClass = PCRelLabel19Operand;
 }
 
-class BranchCond : I<(outs), (ins dotCcode:$cond, am_brcond:$target),
-                     "b", "$cond\t$target", "",
+class BranchCond : I<(outs), (ins ccode:$cond, am_brcond:$target),
+                     "b", ".$cond\t$target", "",
                      [(ARM64brcond bb:$target, imm:$cond, NZCV)]>,
                    Sched<[WriteBr]> {
   let isBranch = 1;
@@ -1005,6 +1016,7 @@ class TestBranch<bit op, string asm, SDNode node>
 //---
 def BranchTarget26Operand : AsmOperandClass {
   let Name = "BranchTarget26";
+  let DiagnosticType = "InvalidLabel";
 }
 def am_b_target : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
@@ -1900,16 +1912,6 @@ multiclass LogicalRegS<bits<2> opc, bit N, string mnemonic,
 //---
 // Conditionally set flags
 //---
-
-// Condition code.
-// 4-bit immediate. Pretty-printed as <cc>
-def ccode : Operand<i32> {
-  let PrintMethod = "printCondCode";
-}
-
-def inv_ccode : Operand<i32> {
-  let PrintMethod = "printInverseCondCode";
-}
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseCondSetFlagsImm<bit op, RegisterClass regtype, string asm>
