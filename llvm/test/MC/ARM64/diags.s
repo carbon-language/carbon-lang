@@ -42,15 +42,15 @@ foo:
 ; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
 ; CHECK-ERRORS:         ldr x0, [x0, #804]!
 ; CHECK-ERRORS:                 ^
-; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
+; CHECK-ERRORS: error: invalid operand for instruction
 ; CHECK-ERRORS:         ldr w0, [w0, #301]!
-; CHECK-ERRORS:                 ^
+; CHECK-ERRORS:                  ^
 ; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
 ; CHECK-ERRORS:         ldr x0, [x0], #804
 ; CHECK-ERRORS:                       ^
-; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
+; CHECK-ERRORS: error: invalid operand for instruction
 ; CHECK-ERRORS:         ldr w0, [w0], #301
-; CHECK-ERRORS:                       ^
+; CHECK-ERRORS:                  ^
 ; CHECK-ERRORS: error: index must be a multiple of 4 in range [-256, 252].
 ; CHECK-ERRORS:         ldp w3, w4, [x5, #11]!
 ; CHECK-ERRORS:                     ^

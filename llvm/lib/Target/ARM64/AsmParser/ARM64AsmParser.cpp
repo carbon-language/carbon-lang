@@ -2985,12 +2985,16 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
   Parser.Lex(); // Eat left bracket token.
 
   const AsmToken &BaseRegTok = Parser.getTok();
+  SMLoc BaseRegLoc = BaseRegTok.getLoc();
   if (BaseRegTok.isNot(AsmToken::Identifier))
-    return Error(BaseRegTok.getLoc(), "register expected");
+    return Error(BaseRegLoc, "register expected");
 
   int64_t Reg = tryParseRegister();
   if (Reg == -1)
-    return Error(BaseRegTok.getLoc(), "register expected");
+    return Error(BaseRegLoc, "register expected");
+
+  if (!ARM64MCRegisterClasses[ARM64::GPR64spRegClassID].contains(Reg))
+    return Error(BaseRegLoc, "invalid operand for instruction");
 
   // If there is an offset expression, parse it.
   const MCExpr *OffsetExpr = nullptr;
@@ -4148,6 +4152,10 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       // diagnose.
       MatchResult = Match_InvalidMemoryIndexed;
     }
+    else if(Operands.size() == 3 && Operands.size() == ErrorInfo + 1 &&
+            ((ARM64Operand *)Operands[ErrorInfo])->isImm()) {
+      MatchResult = Match_InvalidLabel;
+    }
     SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();
     if (ErrorLoc == SMLoc())
       ErrorLoc = IDLoc;
@@ -4172,6 +4180,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMovImm32Shift:
   case Match_InvalidMovImm64Shift:
   case Match_InvalidFPImm:
+  case Match_InvalidMemoryIndexed:
   case Match_InvalidMemoryIndexed8:
   case Match_InvalidMemoryIndexed16:
   case Match_InvalidMemoryIndexed32SImm7:
