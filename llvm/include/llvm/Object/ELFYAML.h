@@ -89,8 +89,8 @@ struct RawContentSection : Section {
   }
 };
 struct Relocation {
-  uint32_t Offset;
-  uint32_t Addend;
+  llvm::yaml::Hex64 Offset;
+  int64_t Addend;
   ELF_REL Type;
   StringRef Symbol;
 };

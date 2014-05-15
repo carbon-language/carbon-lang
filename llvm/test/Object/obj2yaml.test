@@ -208,23 +208,23 @@ ELF-MIPSEL-NEXT:       - Offset:          0
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_HI16
 ELF-MIPSEL-NEXT:         Addend:          0
-ELF-MIPSEL-NEXT:       - Offset:          4
+ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000004
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_LO16
 ELF-MIPSEL-NEXT:         Addend:          0
-ELF-MIPSEL-NEXT:       - Offset:          24
+ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000018
 ELF-MIPSEL-NEXT:         Symbol:          '$.str'
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_GOT16
 ELF-MIPSEL-NEXT:         Addend:          0
-ELF-MIPSEL-NEXT:       - Offset:          28
+ELF-MIPSEL-NEXT:       - Offset:          0x000000000000001C
 ELF-MIPSEL-NEXT:         Symbol:          '$.str'
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_LO16
 ELF-MIPSEL-NEXT:         Addend:          0
-ELF-MIPSEL-NEXT:       - Offset:          32
+ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000020
 ELF-MIPSEL-NEXT:         Symbol:          puts
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_CALL16
 ELF-MIPSEL-NEXT:         Addend:          0
-ELF-MIPSEL-NEXT:       - Offset:          44
+ELF-MIPSEL-NEXT:       - Offset:          0x000000000000002C
 ELF-MIPSEL-NEXT:         Symbol:          SomeOtherFunction
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_CALL16
 ELF-MIPSEL-NEXT:         Addend:          0
@@ -373,18 +373,18 @@ ELF-X86-64-NEXT:     Link:            .symtab
 ELF-X86-64-NEXT:     Info:            .text
 ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000008
 ELF-X86-64-NEXT:     Relocations:
-ELF-X86-64-NEXT:       - Offset:          13
+ELF-X86-64-NEXT:       - Offset:          0x000000000000000D
 ELF-X86-64-NEXT:         Symbol:          .rodata.str1.1
 ELF-X86-64-NEXT:         Type:            R_X86_64_32S
 ELF-X86-64-NEXT:         Addend:          0
-ELF-X86-64-NEXT:       - Offset:          18
+ELF-X86-64-NEXT:       - Offset:          0x0000000000000012
 ELF-X86-64-NEXT:         Symbol:          puts
 ELF-X86-64-NEXT:         Type:            R_X86_64_PC32
-ELF-X86-64-NEXT:         Addend:          4294967292
-ELF-X86-64-NEXT:       - Offset:          25
+ELF-X86-64-NEXT:         Addend:          -4
+ELF-X86-64-NEXT:       - Offset:          0x0000000000000019
 ELF-X86-64-NEXT:         Symbol:          SomeOtherFunction
 ELF-X86-64-NEXT:         Type:            R_X86_64_PC32
-ELF-X86-64-NEXT:         Addend:          4294967292
+ELF-X86-64-NEXT:         Addend:          -4
 ELF-X86-64-NEXT: Symbols:
 ELF-X86-64-NEXT:   Local:
 ELF-X86-64-NEXT:     - Name:            trivial-object-test.s
