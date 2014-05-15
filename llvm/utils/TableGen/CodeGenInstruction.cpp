@@ -536,9 +536,13 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
   return false;
 }
 
-CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
-  AsmString = R->getValueAsString("AsmString");
+CodeGenInstAlias::CodeGenInstAlias(Record *R, unsigned Variant,
+                                   CodeGenTarget &T)
+    : TheDef(R) {
   Result = R->getValueAsDag("ResultInst");
+  AsmString = R->getValueAsString("AsmString");
+  AsmString = CodeGenInstruction::FlattenAsmStringVariants(AsmString, Variant);
+
 
   // Verify that the root of the result is an instruction.
   DefInit *DI = dyn_cast<DefInit>(Result->getOperator());

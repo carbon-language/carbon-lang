@@ -133,10 +133,8 @@
 # Vector Move - register
 #------------------------------------------------------------------------------
 
-# FIXME: these should print as "mov", but TableGen can't handle it.
-
-# CHECK: orr v1.16b, v15.16b, v15.16b
-# CHECK: orr v25.8b, v4.8b, v4.8b
+# CHECK: mov v1.16b, v15.16b
+# CHECK: mov v25.8b, v4.8b
 0xe1 0x1d 0xaf 0x4e
 0x99 0x1c 0xa4 0x0e
 

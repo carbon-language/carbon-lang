@@ -445,14 +445,14 @@ foo:
   bsl.8b v0, v0, v0
   eor.8b v0, v0, v0
   orn.8b v0, v0, v0
-  orr.8b v0, v0, v0
+  orr.8b v0, v0, v1
 
 ; CHECK: bif.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0xe0,0x2e]
 ; CHECK: bit.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0xa0,0x2e]
 ; CHECK: bsl.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0x60,0x2e]
 ; CHECK: eor.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0x20,0x2e]
 ; CHECK: orn.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0xe0,0x0e]
-; CHECK: orr.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0xa0,0x0e]
+; CHECK: orr.8b v0, v0, v1              ; encoding: [0x00,0x1c,0xa1,0x0e]
 
   sadalp.4h   v0, v0
   sadalp.8h  v0, v0
@@ -1843,8 +1843,8 @@ foo:
 
   mov.16b v0, v0
   mov.2s v0, v0
-; CHECK: orr.16b	v0, v0, v0              ; encoding: [0x00,0x1c,0xa0,0x4e]
-; CHECK: orr.8b	v0, v0, v0              ; encoding: [0x00,0x1c,0xa0,0x0e]
+; CHECK: mov.16b v0, v0              ; encoding: [0x00,0x1c,0xa0,0x4e]
+; CHECK: mov.8b v0, v0              ; encoding: [0x00,0x1c,0xa0,0x0e]
 
 
 ; uadalp/sadalp verbose mode aliases.

@@ -205,7 +205,7 @@ define void @test_select(i1 %cond, fp128 %lhs, fp128 %rhs) {
 ; CHECK: tst w0, #0x1
 ; CHECK-NEXT: b.eq [[IFFALSE:.LBB[0-9]+_[0-9]+]]
 ; CHECK-NEXT: BB#
-; CHECK-NEXT: orr v[[VAL:[0-9]+]].16b, v0.16b, v0.16b
+; CHECK-NEXT: mov v[[VAL:[0-9]+]].16b, v0.16b
 ; CHECK-NEXT: [[IFFALSE]]:
 ; CHECK: str q[[VAL]], [{{x[0-9]+}}, :lo12:lhs]
   ret void
@@ -264,7 +264,7 @@ define fp128 @test_neg(fp128 %in) {
   ; Could in principle be optimized to fneg which we can't select, this makes
   ; sure that doesn't happen.
   %ret = fsub fp128 0xL00000000000000008000000000000000, %in
-; CHECK: orr v1.16b, v0.16b, v0.16b
+; CHECK: mov v1.16b, v0.16b
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:[[MINUS0]]]
 ; CHECK: bl __subtf3
 

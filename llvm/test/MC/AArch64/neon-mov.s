@@ -197,14 +197,13 @@
 // Vector Move -  register
 //----------------------------------------------------------------------
 
-      // FIXME: these should all print with the "mov" syntax.
       mov v0.8b, v31.8b
       mov v15.16b, v16.16b
       orr v0.8b, v31.8b, v31.8b
       orr v15.16b, v16.16b, v16.16b
 
-// CHECK:   orr v0.8b, v31.8b, v31.8b      // encoding: [0xe0,0x1f,0xbf,0x0e]
-// CHECK:   orr v15.16b, v16.16b, v16.16b  // encoding: [0x0f,0x1e,0xb0,0x4e]
-// CHECK:   orr v0.8b, v31.8b, v31.8b      // encoding: [0xe0,0x1f,0xbf,0x0e]
-// CHECK:   orr v15.16b, v16.16b, v16.16b  // encoding: [0x0f,0x1e,0xb0,0x4e]
+// CHECK:   mov v0.8b, v31.8b      // encoding: [0xe0,0x1f,0xbf,0x0e]
+// CHECK:   mov v15.16b, v16.16b  // encoding: [0x0f,0x1e,0xb0,0x4e]
+// CHECK:   mov v0.8b, v31.8b      // encoding: [0xe0,0x1f,0xbf,0x0e]
+// CHECK:   mov v15.16b, v16.16b  // encoding: [0x0f,0x1e,0xb0,0x4e]
 

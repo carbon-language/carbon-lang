@@ -651,6 +651,25 @@ public:
   int getOpIndex(StringRef Op) { return OpMap[Op].first; }
   std::pair<int, int> &getOpData(StringRef Op) { return OpMap[Op]; }
 
+  std::pair<StringRef, StringRef::iterator> parseName(StringRef::iterator Start,
+                                                      StringRef::iterator End) {
+    StringRef::iterator I = Start;
+    if (*I == '{') {
+      // ${some_name}
+      Start = ++I;
+      while (I != End && *I != '}')
+        ++I;
+    } else {
+      // $name, just eat the usual suspects.
+      while (I != End &&
+             ((*I >= 'a' && *I <= 'z') || (*I >= 'A' && *I <= 'Z') ||
+              (*I >= '0' && *I <= '9') || *I == '_'))
+        ++I;
+    }
+
+    return std::make_pair(StringRef(Start, I - Start), I);
+  }
+
   void print(raw_ostream &O) {
     if (Conds.empty() && ReqFeatures.empty()) {
       O.indent(6) << "return true;\n";
@@ -675,37 +694,30 @@ public:
     // Directly mangle mapped operands into the string. Each operand is
     // identified by a '$' sign followed by a byte identifying the number of the
     // operand. We add one to the index to avoid zero bytes.
-    std::pair<StringRef, StringRef> ASM = StringRef(AsmString).split(' ');
-    SmallString<128> OutString = ASM.first;
-    if (!ASM.second.empty()) {
-      raw_svector_ostream OS(OutString);
-      OS << ' ';
-      for (StringRef::iterator I = ASM.second.begin(), E = ASM.second.end();
-           I != E;) {
-        OS << *I;
-        if (*I == '$') {
-          StringRef::iterator Start = ++I;
-          while (I != E &&
-                 ((*I >= 'a' && *I <= 'z') || (*I >= 'A' && *I <= 'Z') ||
-                  (*I >= '0' && *I <= '9') || *I == '_'))
-            ++I;
-          StringRef Name(Start, I - Start);
-          assert(isOpMapped(Name) && "Unmapped operand!");
+    StringRef ASM(AsmString);
+    SmallString<128> OutString;
+    raw_svector_ostream OS(OutString);
+    for (StringRef::iterator I = ASM.begin(), E = ASM.end(); I != E;) {
+      OS << *I;
+      if (*I == '$') {
+        StringRef Name;
+        std::tie(Name, I) = parseName(++I, E);
+        assert(isOpMapped(Name) && "Unmapped operand!");
 
-          int OpIndex, PrintIndex;
-          std::tie(OpIndex, PrintIndex) = getOpData(Name);
-          if (PrintIndex == -1) {
-            // Can use the default printOperand route.
-            OS << format("\\x%02X", (unsigned char)OpIndex + 1);
-          } else
-            // 3 bytes if a PrintMethod is needed: 0xFF, the MCInst operand
-            // number, and which of our pre-detected Methods to call.
-            OS << format("\\xFF\\x%02X\\x%02X", OpIndex + 1, PrintIndex + 1);
-        } else {
-          ++I;
-        }
+        int OpIndex, PrintIndex;
+        std::tie(OpIndex, PrintIndex) = getOpData(Name);
+        if (PrintIndex == -1) {
+          // Can use the default printOperand route.
+          OS << format("\\x%02X", (unsigned char)OpIndex + 1);
+        } else
+          // 3 bytes if a PrintMethod is needed: 0xFF, the MCInst operand
+          // number, and which of our pre-detected Methods to call.
+          OS << format("\\xFF\\x%02X\\x%02X", OpIndex + 1, PrintIndex + 1);
+      } else {
+        ++I;
       }
     }
+    OS.flush();
 
     // Emit the string.
     O.indent(6) << "AsmString = \"" << OutString.str() << "\";\n";
@@ -781,9 +793,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   // Create a map from the qualified name to a list of potential matches.
   std::map<std::string, std::vector<CodeGenInstAlias*> > AliasMap;
+  unsigned Variant = AsmWriter->getValueAsInt("Variant");
   for (std::vector<Record*>::iterator
          I = AllInstAliases.begin(), E = AllInstAliases.end(); I != E; ++I) {
-    CodeGenInstAlias *Alias = new CodeGenInstAlias(*I, Target);
+    CodeGenInstAlias *Alias = new CodeGenInstAlias(*I, Variant, Target);
     const Record *R = *I;
     if (!R->getValueAsBit("EmitAlias"))
       continue; // We were told not to emit the alias, but to emit the aliasee.
@@ -976,7 +989,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   // Code that prints the alias, replacing the operands with the ones from the
   // MCInst.
   O << "  unsigned I = 0;\n";
-  O << "  while (AsmString[I] != ' ' && AsmString[I] != '\\0')\n";
+  O << "  while (AsmString[I] != ' ' && AsmString[I] != '\t' &&\n";
+  O << "         AsmString[I] != '\\0')\n";
   O << "    ++I;\n";
   O << "  OS << '\\t' << StringRef(AsmString, I);\n";
 

@@ -2518,25 +2518,22 @@ def : Pat<(ARM64bsl (v4i32 V128:$Rd), V128:$Rn, V128:$Rm),
 def : Pat<(ARM64bsl (v2i64 V128:$Rd), V128:$Rn, V128:$Rm),
           (BSLv16i8 V128:$Rd, V128:$Rn, V128:$Rm)>;
 
-// FIXME: the .16b and .8b variantes should be emitted by the
-// AsmWriter. TableGen's AsmWriter-generator doesn't deal with variant syntaxes
-// in aliases yet though.
 def : InstAlias<"mov{\t$dst.16b, $src.16b|.16b\t$dst, $src}",
+                (ORRv16i8 V128:$dst, V128:$src, V128:$src), 1>;
+def : InstAlias<"mov{\t$dst.8h, $src.8h|.8h\t$dst, $src}",
                 (ORRv16i8 V128:$dst, V128:$src, V128:$src), 0>;
-def : InstAlias<"{mov\t$dst.8h, $src.8h|mov.8h\t$dst, $src}",
+def : InstAlias<"mov{\t$dst.4s, $src.4s|.4s\t$dst, $src}",
                 (ORRv16i8 V128:$dst, V128:$src, V128:$src), 0>;
-def : InstAlias<"{mov\t$dst.4s, $src.4s|mov.4s\t$dst, $src}",
-                (ORRv16i8 V128:$dst, V128:$src, V128:$src), 0>;
-def : InstAlias<"{mov\t$dst.2d, $src.2d|mov.2d\t$dst, $src}",
+def : InstAlias<"mov{\t$dst.2d, $src.2d|.2d\t$dst, $src}",
                 (ORRv16i8 V128:$dst, V128:$src, V128:$src), 0>;
 
-def : InstAlias<"{mov\t$dst.8b, $src.8b|mov.8b\t$dst, $src}",
+def : InstAlias<"mov{\t$dst.8b, $src.8b|.8b\t$dst, $src}",
+                (ORRv8i8 V64:$dst, V64:$src, V64:$src), 1>;
+def : InstAlias<"mov{\t$dst.4h, $src.4h|.4h\t$dst, $src}",
                 (ORRv8i8 V64:$dst, V64:$src, V64:$src), 0>;
-def : InstAlias<"{mov\t$dst.4h, $src.4h|mov.4h\t$dst, $src}",
+def : InstAlias<"mov{\t$dst.2s, $src.2s|.2s\t$dst, $src}",
                 (ORRv8i8 V64:$dst, V64:$src, V64:$src), 0>;
-def : InstAlias<"{mov\t$dst.2s, $src.2s|mov.2s\t$dst, $src}",
-                (ORRv8i8 V64:$dst, V64:$src, V64:$src), 0>;
-def : InstAlias<"{mov\t$dst.1d, $src.1d|mov.1d\t$dst, $src}",
+def : InstAlias<"mov{\t$dst.1d, $src.1d|.1d\t$dst, $src}",
                 (ORRv8i8 V64:$dst, V64:$src, V64:$src), 0>;
 
 def : InstAlias<"{cmls\t$dst.8b, $src1.8b, $src2.8b" #

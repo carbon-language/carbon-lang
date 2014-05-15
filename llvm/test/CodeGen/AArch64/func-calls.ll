@@ -100,7 +100,7 @@ define void @check_stack_args() {
 
 ; CHECK-ARM64-DAG: str {{q[0-9]+}}, [sp]
 ; CHECK-ARM64-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0
-; CHECK-ARM64: orr v0.16b, v[[FINAL_DOUBLE]].16b, v[[FINAL_DOUBLE]].16b
+; CHECK-ARM64: mov v0.16b, v[[FINAL_DOUBLE]].16b
 
 ; CHECK-ARM64-NONEON-DAG: str {{q[0-9]+}}, [sp]
 ; CHECK-ARM64-NONEON-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0

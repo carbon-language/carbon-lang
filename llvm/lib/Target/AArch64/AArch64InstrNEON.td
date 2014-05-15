@@ -446,12 +446,10 @@ defm ORRvvv : NeonI_3VSame_B_sizes<0b0, 0b10, 0b00011, "orr", or, or, 1>;
 
 // Vector Move - register
 // Alias for ORR if Vn=Vm.
-// FIXME: This is actually the preferred syntax but TableGen can't deal with
-// custom printing of aliases.
 def : NeonInstAlias<"mov $Rd.8b, $Rn.8b",
-                    (ORRvvv_8B VPR64:$Rd, VPR64:$Rn, VPR64:$Rn), 0>;
+                    (ORRvvv_8B VPR64:$Rd, VPR64:$Rn, VPR64:$Rn)>;
 def : NeonInstAlias<"mov $Rd.16b, $Rn.16b",
-                    (ORRvvv_16B VPR128:$Rd, VPR128:$Rn, VPR128:$Rn), 0>;
+                    (ORRvvv_16B VPR128:$Rd, VPR128:$Rn, VPR128:$Rn)>;
 
 // The MOVI instruction takes two immediate operands.  The first is the
 // immediate encoding, while the second is the cmode.  A cmode of 14, or

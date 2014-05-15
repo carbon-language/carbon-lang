@@ -2772,19 +2772,29 @@ defm : ShiftRotateByOneAlias<"ror", "ROR">;
 FIXME */
 
 // test: We accept "testX <reg>, <mem>" and "testX <mem>, <reg>" as synonyms.
-def : InstAlias<"test{b}\t{$val, $mem|$mem, $val}", (TEST8rm  GR8 :$val, i8mem :$mem)>;
-def : InstAlias<"test{w}\t{$val, $mem|$mem, $val}", (TEST16rm GR16:$val, i16mem:$mem)>;
-def : InstAlias<"test{l}\t{$val, $mem|$mem, $val}", (TEST32rm GR32:$val, i32mem:$mem)>;
-def : InstAlias<"test{q}\t{$val, $mem|$mem, $val}", (TEST64rm GR64:$val, i64mem:$mem)>;
+def : InstAlias<"test{b}\t{$val, $mem|$mem, $val}",
+                (TEST8rm  GR8 :$val, i8mem :$mem), 0>;
+def : InstAlias<"test{w}\t{$val, $mem|$mem, $val}",
+                (TEST16rm GR16:$val, i16mem:$mem), 0>;
+def : InstAlias<"test{l}\t{$val, $mem|$mem, $val}",
+                (TEST32rm GR32:$val, i32mem:$mem), 0>;
+def : InstAlias<"test{q}\t{$val, $mem|$mem, $val}",
+                (TEST64rm GR64:$val, i64mem:$mem), 0>;
 
 // xchg: We accept "xchgX <reg>, <mem>" and "xchgX <mem>, <reg>" as synonyms.
-def : InstAlias<"xchg{b}\t{$mem, $val|$val, $mem}", (XCHG8rm  GR8 :$val, i8mem :$mem)>;
-def : InstAlias<"xchg{w}\t{$mem, $val|$val, $mem}", (XCHG16rm GR16:$val, i16mem:$mem)>;
-def : InstAlias<"xchg{l}\t{$mem, $val|$val, $mem}", (XCHG32rm GR32:$val, i32mem:$mem)>;
-def : InstAlias<"xchg{q}\t{$mem, $val|$val, $mem}", (XCHG64rm GR64:$val, i64mem:$mem)>;
+def : InstAlias<"xchg{b}\t{$mem, $val|$val, $mem}",
+                (XCHG8rm  GR8 :$val, i8mem :$mem), 0>;
+def : InstAlias<"xchg{w}\t{$mem, $val|$val, $mem}",
+                (XCHG16rm GR16:$val, i16mem:$mem), 0>;
+def : InstAlias<"xchg{l}\t{$mem, $val|$val, $mem}",
+                (XCHG32rm GR32:$val, i32mem:$mem), 0>;
+def : InstAlias<"xchg{q}\t{$mem, $val|$val, $mem}",
+                (XCHG64rm GR64:$val, i64mem:$mem), 0>;
 
 // xchg: We accept "xchgX <reg>, %eax" and "xchgX %eax, <reg>" as synonyms.
-def : InstAlias<"xchg{w}\t{%ax, $src|$src, ax}", (XCHG16ar GR16:$src)>;
-def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar GR32:$src)>, Requires<[Not64BitMode]>;
-def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar64 GR32_NOAX:$src)>, Requires<[In64BitMode]>;
-def : InstAlias<"xchg{q}\t{%rax, $src|$src, rax}", (XCHG64ar GR64:$src)>;
+def : InstAlias<"xchg{w}\t{%ax, $src|$src, ax}", (XCHG16ar GR16:$src), 0>;
+def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}",
+                (XCHG32ar GR32:$src), 0>, Requires<[Not64BitMode]>;
+def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}",
+                (XCHG32ar64 GR32_NOAX:$src), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"xchg{q}\t{%rax, $src|$src, rax}", (XCHG64ar GR64:$src), 0>;
