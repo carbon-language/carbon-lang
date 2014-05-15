@@ -2251,9 +2251,9 @@ static int inspect_cursor_at(int argc, const char **argv) {
             astFilename = clang_getFileName(astFile);
             name = clang_Module_getFullName(mod);
             numHeaders = clang_Module_getNumTopLevelHeaders(TU, mod);
-            printf(" ModuleName=%s (%s) Headers(%d):",
+            printf(" ModuleName=%s (%s) system=%d Headers(%d):",
                    clang_getCString(name), clang_getCString(astFilename),
-                   numHeaders);
+                   clang_Module_isSystem(mod), numHeaders);
             clang_disposeString(name);
             clang_disposeString(astFilename);
             for (i = 0; i < numHeaders; ++i) {

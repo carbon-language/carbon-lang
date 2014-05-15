@@ -3625,6 +3625,13 @@ CINDEX_LINKAGE CXString clang_Module_getFullName(CXModule Module);
 /**
  * \param Module a module object.
  *
+ * \returns non-zero if the module is a system one.
+ */
+CINDEX_LINKAGE int clang_Module_isSystem(CXModule Module);
+
+/**
+ * \param Module a module object.
+ *
  * \returns the number of top level headers associated with this module.
  */
 CINDEX_LINKAGE unsigned clang_Module_getNumTopLevelHeaders(CXTranslationUnit,

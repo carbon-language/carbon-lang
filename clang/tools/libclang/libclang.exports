@@ -30,6 +30,7 @@ clang_Module_getName
 clang_Module_getFullName
 clang_Module_getNumTopLevelHeaders
 clang_Module_getTopLevelHeader
+clang_Module_isSystem
 clang_IndexAction_create
 clang_IndexAction_dispose
 clang_Range_isNull

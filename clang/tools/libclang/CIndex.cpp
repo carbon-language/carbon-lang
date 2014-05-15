@@ -6377,6 +6377,13 @@ CXString clang_Module_getFullName(CXModule CXMod) {
   return cxstring::createDup(Mod->getFullModuleName());
 }
 
+int clang_Module_isSystem(CXModule CXMod) {
+  if (!CXMod)
+    return 0;
+  Module *Mod = static_cast<Module*>(CXMod);
+  return Mod->IsSystem;
+}
+
 unsigned clang_Module_getNumTopLevelHeaders(CXTranslationUnit TU,
                                             CXModule CXMod) {
   if (isNotUsableTU(TU)) {
