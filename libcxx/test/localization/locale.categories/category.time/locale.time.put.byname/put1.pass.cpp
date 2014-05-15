@@ -54,19 +54,19 @@ int main()
     std::ios ios(0);
     {
         const my_facet f(LOCALE_en_US_UTF_8, 1);
-        std::string pat("Today is %A which is abreviated %a.");
+        std::string pat("Today is %A which is abbreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
         std::string ex(str, iter.base());
-        assert(ex == "Today is Saturday which is abreviated Sat.");
+        assert(ex == "Today is Saturday which is abbreviated Sat.");
     }
     {
         const my_facet f(LOCALE_fr_FR_UTF_8, 1);
-        std::string pat("Today is %A which is abreviated %a.");
+        std::string pat("Today is %A which is abbreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
         std::string ex(str, iter.base());
-        assert((ex == "Today is Samedi which is abreviated Sam.")||
-               (ex == "Today is samedi which is abreviated sam." ));
+        assert((ex == "Today is Samedi which is abbreviated Sam.")||
+               (ex == "Today is samedi which is abbreviated sam." ));
     }
 }

@@ -136,7 +136,7 @@ const unsigned indices[] =
 // The algorithm creates a list of small primes, plus an open-ended list of
 // potential primes.  All prime numbers are potential prime numbers.  However
 // some potential prime numbers are not prime.  In an ideal world, all potential
-// prime numbers would be prime.  Candiate prime numbers are chosen as the next
+// prime numbers would be prime.  Candidate prime numbers are chosen as the next
 // highest potential prime.  Then this number is tested for prime by dividing it
 // by all potential prime numbers less than the sqrt of the candidate.
 //

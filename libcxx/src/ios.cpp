@@ -303,7 +303,7 @@ void
 ios_base::copyfmt(const ios_base& rhs)
 {
     // If we can't acquire the needed resources, throw bad_alloc (can't set badbit)
-    // Don't alter *this until all needed resources are aquired
+    // Don't alter *this until all needed resources are acquired
     unique_ptr<event_callback, void (*)(void*)> new_callbacks(0, free);
     unique_ptr<int, void (*)(void*)> new_ints(0, free);
     unique_ptr<long, void (*)(void*)> new_longs(0, free);

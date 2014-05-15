@@ -107,8 +107,8 @@ size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
 // Converts max_source_chars from the wide character buffer pointer to by *src,
 // into the multi byte character sequence buffer stored at dst which must be
 // dst_size_bytes bytes in size.
-// Returns >= 0: the number of bytes in the sequence sequence 
-// converted frome *src, excluding the null terminator.
+// Returns >= 0: the number of bytes in the sequence
+// converted from *src, excluding the null terminator.
 // Returns size_t(-1) if an error occurs, also sets errno.
 // If dst is NULL dst_size_bytes is ignored and no bytes are copied to dst 
 // and no "out" parameters are updated.

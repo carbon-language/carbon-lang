@@ -417,7 +417,7 @@ int __sscanf_l(const char *__s, locale_t __l, const char *__format, ...) {
 //  and failbit is set in __err.
 //  Else an iterator pointing to the matching keyword is found.  If more than
 //  one keyword matches, an iterator to the first matching keyword is returned.
-//  If on exit __b == __e, eofbit is set in __err.  If __case_senstive is false,
+//  If on exit __b == __e, eofbit is set in __err.  If __case_sensitive is false,
 //  __ct is used to force to lower case before comparing characters.
 //  Examples:
 //  Keywords:  "a", "abb"
@@ -2038,7 +2038,7 @@ template <class _CharT, class _InputIterator>
 locale::id
 time_get<_CharT, _InputIterator>::id;
 
-// time_get primatives
+// time_get primitives
 
 template <class _CharT, class _InputIterator>
 void
@@ -2259,7 +2259,7 @@ time_get<_CharT, _InputIterator>::__get_percent(iter_type& __b, iter_type __e,
         __err |= ios_base::eofbit;
 }
 
-// time_get end primatives
+// time_get end primitives
 
 template <class _CharT, class _InputIterator>
 _InputIterator

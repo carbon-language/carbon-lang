@@ -45,11 +45,11 @@ int main()
     t.tm_isdst = 1;
     std::ios ios(0);
     {
-        std::string pat("Today is %A which is abreviated %a.");
+        std::string pat("Today is %A which is abbreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
         std::string ex(str, iter.base());
-        assert(ex == "Today is Saturday which is abreviated Sat.");
+        assert(ex == "Today is Saturday which is abbreviated Sat.");
     }
     {
         std::string pat("The number of the month is %Om.");
