@@ -85,6 +85,11 @@ class MAXA_D_ENC : COP1_3R_FM<0b011111, FIELD_FMT_D>;
 class MINA_S_ENC : COP1_3R_FM<0b011110, FIELD_FMT_S>;
 class MINA_D_ENC : COP1_3R_FM<0b011110, FIELD_FMT_D>;
 
+class SELEQZ_S_ENC : COP1_3R_FM<0b010100, FIELD_FMT_S>;
+class SELEQZ_D_ENC : COP1_3R_FM<0b010100, FIELD_FMT_D>;
+class SELNEZ_S_ENC : COP1_3R_FM<0b010111, FIELD_FMT_S>;
+class SELNEZ_D_ENC : COP1_3R_FM<0b010111, FIELD_FMT_D>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Descriptions
@@ -190,6 +195,18 @@ class MAXA_D_DESC : MAX_MIN_DESC_BASE<"maxa.d", FGR64Opnd>;
 class MINA_S_DESC : MAX_MIN_DESC_BASE<"mina.s", FGR32Opnd>;
 class MINA_D_DESC : MAX_MIN_DESC_BASE<"mina.d", FGR64Opnd>;
 
+class SELEQNEZ_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
+  dag OutOperandList = (outs FGROpnd:$fd);
+  dag InOperandList = (ins FGROpnd:$fs, FGROpnd:$ft);
+  string AsmString = !strconcat(instr_asm, "\t$fd, $fs, $ft");
+  list<dag> Pattern = [];
+}
+
+class SELEQZ_S_DESC : SELEQNEZ_DESC_BASE<"seleqz.s", FGR32Opnd>;
+class SELEQZ_D_DESC : SELEQNEZ_DESC_BASE<"seleqz.d", FGR64Opnd>;
+class SELNEZ_S_DESC : SELEQNEZ_DESC_BASE<"selnez.s", FGR32Opnd>;
+class SELNEZ_D_DESC : SELEQNEZ_DESC_BASE<"selnez.d", FGR64Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -259,10 +276,10 @@ def NAL; // BAL with rd=0
 def RINT_D;
 def RINT_S;
 def SELEQZ;
-def SELEQZ_D;
-def SELEQZ_S;
+def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;
+def SELEQZ_S : SELEQZ_S_ENC, SELEQZ_S_DESC, ISA_MIPS32R6;
 def SELNEZ;
-def SELNEZ_D;
-def SELNEZ_S;
+def SELNEZ_D : SELNEZ_D_ENC, SELNEZ_D_DESC, ISA_MIPS32R6;
+def SELNEZ_S : SELNEZ_S_ENC, SELNEZ_S_DESC, ISA_MIPS32R6;
 def SEL_D : SEL_D_ENC, SEL_D_DESC, ISA_MIPS32R6;
 def SEL_S : SEL_S_ENC, SEL_S_DESC, ISA_MIPS32R6;
