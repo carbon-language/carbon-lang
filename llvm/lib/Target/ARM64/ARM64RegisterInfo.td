@@ -434,10 +434,21 @@ def QQQQ : RegisterClass<"ARM64", [untyped], 128, (add QSeqQuads)> {
 
 // Vector operand versions of the FP registers. Alternate name printing and
 // assmebler matching.
-def VectorRegAsmOperand : AsmOperandClass { let Name = "VectorReg"; }
-let ParserMatchClass = VectorRegAsmOperand in {
-def V64  : RegisterOperand<FPR64, "printVRegOperand">;
-def V128 : RegisterOperand<FPR128, "printVRegOperand">;
+def VectorReg64AsmOperand : AsmOperandClass {
+  let Name = "VectorReg64";
+  let PredicateMethod = "isVectorReg";
+}
+def VectorReg128AsmOperand : AsmOperandClass {
+  let Name = "VectorReg128";
+  let PredicateMethod = "isVectorReg";
+}
+
+def V64  : RegisterOperand<FPR64, "printVRegOperand"> {
+  let ParserMatchClass = VectorReg64AsmOperand;
+}
+
+def V128 : RegisterOperand<FPR128, "printVRegOperand"> {
+  let ParserMatchClass = VectorReg128AsmOperand;
 }
 
 def VectorRegLoAsmOperand : AsmOperandClass { let Name = "VectorRegLo"; }

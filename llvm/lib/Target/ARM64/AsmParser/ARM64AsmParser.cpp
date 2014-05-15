@@ -1188,8 +1188,15 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
-  void addVectorRegOperands(MCInst &Inst, unsigned N) const {
+  void addVectorReg64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
+    assert(ARM64MCRegisterClasses[ARM64::FPR128RegClassID].contains(getReg()));
+    Inst.addOperand(MCOperand::CreateReg(ARM64::D0 + getReg() - ARM64::Q0));
+  }
+
+  void addVectorReg128Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    assert(ARM64MCRegisterClasses[ARM64::FPR128RegClassID].contains(getReg()));
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
