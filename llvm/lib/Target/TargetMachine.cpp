@@ -33,7 +33,6 @@ using namespace llvm;
 //
 
 namespace llvm {
-  bool HasDivModLibcall;
   bool AsmVerbosityDefault(false);
 }
 
