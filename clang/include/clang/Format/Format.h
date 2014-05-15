@@ -120,9 +120,10 @@ struct FormatStyle {
   /// \brief The indentation used for namespaces.
   NamespaceIndentationKind NamespaceIndentation;
 
-  /// \brief The number of spaces before trailing line comments (//-comments).
+  /// \brief The number of spaces before trailing line comments
+  /// (\c // - comments).
   ///
-  /// This does not affect trailing block comments (/**/-comments) as those
+  /// This does not affect trailing block comments (\c /**/ - comments) as those
   /// commonly have different usage patterns and a number of special cases.
   unsigned SpacesBeforeTrailingComments;
 
