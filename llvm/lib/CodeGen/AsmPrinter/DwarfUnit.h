@@ -577,6 +577,9 @@ public:
            sizeof(uint32_t);                               // Type DIE Offset
   }
   void initSection(const MCSection *Section);
+  // Bring in the base function (taking two args, including the section symbol)
+  // for use when building DWO type units (they don't go in unique comdat
+  // sections)
   using DwarfUnit::initSection;
   DwarfCompileUnit &getCU() override { return CU; }
 
