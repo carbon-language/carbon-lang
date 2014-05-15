@@ -66,7 +66,7 @@ TEST(ChecksFilter, Simple) {
 }
 
 TEST(ChecksFilter, Complex) {
-  ChecksFilter Filter("*,-a.*,-b.*,a.a.*,-a.a.a.*,-..,-...,-..+,-*$,-*qwe*");
+  ChecksFilter Filter("*,-a.*,-b.*,a.1.*,-a.1.A.*,-..,-...,-..+,-*$,-*qwe*");
 
   EXPECT_TRUE(Filter.isCheckEnabled("aaa"));
   EXPECT_TRUE(Filter.isCheckEnabled("qqq"));
@@ -74,8 +74,8 @@ TEST(ChecksFilter, Complex) {
   EXPECT_FALSE(Filter.isCheckEnabled("a.b"));
   EXPECT_FALSE(Filter.isCheckEnabled("b."));
   EXPECT_FALSE(Filter.isCheckEnabled("b.b"));
-  EXPECT_TRUE(Filter.isCheckEnabled("a.a.b"));
-  EXPECT_FALSE(Filter.isCheckEnabled("a.a.a.a"));
+  EXPECT_TRUE(Filter.isCheckEnabled("a.1.b"));
+  EXPECT_FALSE(Filter.isCheckEnabled("a.1.A.a"));
   EXPECT_FALSE(Filter.isCheckEnabled("qwe"));
   EXPECT_FALSE(Filter.isCheckEnabled("asdfqweasdf"));
   EXPECT_TRUE(Filter.isCheckEnabled("asdfqwEasdf"));

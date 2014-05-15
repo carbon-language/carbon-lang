@@ -130,7 +130,7 @@ static llvm::Regex ConsumeGlob(StringRef &GlobList) {
   for (char C : Glob) {
     if (C == '*')
       RegexText.push_back('.');
-    else if (MetaChars.find(C))
+    else if (MetaChars.find(C) != StringRef::npos)
       RegexText.push_back('\\');
     RegexText.push_back(C);
   }
