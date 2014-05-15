@@ -7756,6 +7756,12 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) const {
   case TSK_ExplicitInstantiationDefinition:
     return GVA_StrongODR;
 
+  // C++11 [temp.explicit]p10:
+  //   [ Note: The intent is that an inline function that is the subject of
+  //   an explicit instantiation declaration will still be implicitly
+  //   instantiated when used so that the body can be considered for
+  //   inlining, but that no out-of-line copy of the inline function would be
+  //   generated in the translation unit. -- end note ]
   case TSK_ExplicitInstantiationDeclaration:
     return GVA_AvailableExternally;
 
@@ -7777,16 +7783,6 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) const {
     // C99 inline semantics, where the symbol is not externally visible.
     return GVA_AvailableExternally;
   }
-
-  // C++0x [temp.explicit]p9:
-  //   [ Note: The intent is that an inline function that is the subject of 
-  //   an explicit instantiation declaration will still be implicitly 
-  //   instantiated when used so that the body can be considered for 
-  //   inlining, but that no out-of-line copy of the inline function would be
-  //   generated in the translation unit. -- end note ]
-  if (FD->getTemplateSpecializationKind() 
-                                       == TSK_ExplicitInstantiationDeclaration)
-    return GVA_AvailableExternally;
 
   // Functions specified with extern and inline in -fms-compatibility mode
   // forcibly get emitted.  While the body of the function cannot be later
@@ -7910,7 +7906,8 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
 
   // Variables that can be needed in other TUs are required.
   GVALinkage L = GetGVALinkageForVariable(VD);
-  if (L != GVA_Internal && L != GVA_DiscardableODR)
+  if (L != GVA_Internal && L != GVA_AvailableExternally &&
+      L != GVA_DiscardableODR)
     return true;
 
   // Variables that have destruction with side-effects are required.
