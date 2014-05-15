@@ -30,8 +30,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: bc1any2, bc1any4
 // Removed: bc2[ft]
 // Removed: bc2f, bc2t
-// Removed: bc[12][ft]l, bgezl, bgtzl, bgtzl, blezl, bltzall, bltzl, bnel, bgezall,
-// Removed: beql
 // Removed: bgezal
 // Removed: bltzal
 // Removed: c.cond.fmt, bc1[ft]
