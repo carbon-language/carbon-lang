@@ -79,6 +79,7 @@ private:
   unsigned MaterializeFP(const ConstantFP *CFP, MVT VT);
   unsigned MaterializeGV(const GlobalValue *GV, MVT VT);
   unsigned MaterializeInt(const Constant *C, MVT VT);
+  unsigned Materialize32BitInt(int64_t Imm, const TargetRegisterClass *RC);
 };
 
 bool MipsFastISel::isTypeLegal(Type *Ty, MVT &VT) {
@@ -226,20 +227,52 @@ unsigned MipsFastISel::MaterializeGV(const GlobalValue *GV, MVT VT) {
   return DestReg;
 }
 unsigned MipsFastISel::MaterializeInt(const Constant *C, MVT VT) {
-  if (VT != MVT::i32)
+  if (VT != MVT::i32 && VT != MVT::i16 && VT != MVT::i8 && VT != MVT::i1)
     return 0;
   const TargetRegisterClass *RC = &Mips::GPR32RegClass;
-  // If the constant is in range, use a load-immediate.
   const ConstantInt *CI = cast<ConstantInt>(C);
-  if (isInt<16>(CI->getSExtValue())) {
+  int64_t Imm;
+  if (CI->isNegative())
+    Imm = CI->getSExtValue();
+  else
+    Imm = CI->getZExtValue();
+  return Materialize32BitInt(Imm, RC);
+}
+
+unsigned MipsFastISel::Materialize32BitInt(int64_t Imm,
+                                           const TargetRegisterClass *RC) {
+  unsigned ResultReg = createResultReg(RC);
+
+  if (isInt<16>(Imm)) {
     unsigned Opc = Mips::ADDiu;
-    unsigned ImmReg = createResultReg(RC);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ImmReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
         .addReg(Mips::ZERO)
-        .addImm(CI->getSExtValue());
-    return ImmReg;
+        .addImm(Imm);
+    return ResultReg;
+  } else if (isUInt<16>(Imm)) {
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::ORi),
+            ResultReg)
+        .addReg(Mips::ZERO)
+        .addImm(Imm);
+    return ResultReg;
   }
-  return 0;
+  unsigned Lo = Imm & 0xFFFF;
+  unsigned Hi = (Imm >> 16) & 0xFFFF;
+  if (Lo) {
+    // Both Lo and Hi have nonzero bits.
+    unsigned TmpReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::LUi),
+            TmpReg).addImm(Hi);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::ORi),
+            ResultReg)
+        .addReg(TmpReg)
+        .addImm(Lo);
+
+  } else {
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::LUi),
+            ResultReg).addImm(Hi);
+  }
+  return ResultReg;
 }
 
 namespace llvm {
