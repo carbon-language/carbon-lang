@@ -1567,6 +1567,20 @@ static bool isTypeCongruent(Type *L, Type *R) {
   return PL->getAddressSpace() == PR->getAddressSpace();
 }
 
+static AttrBuilder getParameterABIAttributes(int I, AttributeSet Attrs) {
+  static const Attribute::AttrKind ABIAttrs[] = {
+      Attribute::StructRet, Attribute::ByVal, Attribute::InAlloca,
+      Attribute::InReg, Attribute::Returned};
+  AttrBuilder Copy;
+  for (auto AK : ABIAttrs) {
+    if (Attrs.hasAttribute(I + 1, AK))
+      Copy.addAttribute(AK);
+  }
+  if (Attrs.hasAttribute(I + 1, Attribute::Alignment))
+    Copy.addAlignmentAttr(Attrs.getParamAlignment(I + 1));
+  return Copy;
+}
+
 void Verifier::verifyMustTailCall(CallInst &CI) {
   Assert1(!CI.isInlineAsm(), "cannot use musttail call with inline asm", &CI);
 
@@ -1598,20 +1612,11 @@ void Verifier::verifyMustTailCall(CallInst &CI) {
 
   // - All ABI-impacting function attributes, such as sret, byval, inreg,
   //   returned, and inalloca, must match.
-  static const Attribute::AttrKind ABIAttrs[] = {
-      Attribute::Alignment, Attribute::StructRet, Attribute::ByVal,
-      Attribute::InAlloca,  Attribute::InReg,     Attribute::Returned};
   AttributeSet CallerAttrs = F->getAttributes();
   AttributeSet CalleeAttrs = CI.getAttributes();
   for (int I = 0, E = CallerTy->getNumParams(); I != E; ++I) {
-    AttrBuilder CallerABIAttrs;
-    AttrBuilder CalleeABIAttrs;
-    for (auto AK : ABIAttrs) {
-      if (CallerAttrs.hasAttribute(I + 1, AK))
-        CallerABIAttrs.addAttribute(AK);
-      if (CalleeAttrs.hasAttribute(I + 1, AK))
-        CalleeABIAttrs.addAttribute(AK);
-    }
+    AttrBuilder CallerABIAttrs = getParameterABIAttributes(I, CallerAttrs);
+    AttrBuilder CalleeABIAttrs = getParameterABIAttributes(I, CalleeAttrs);
     Assert2(CallerABIAttrs == CalleeABIAttrs,
             "cannot guarantee tail call due to mismatched ABI impacting "
             "function attributes", &CI, CI.getOperand(I));
