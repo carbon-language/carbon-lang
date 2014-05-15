@@ -282,8 +282,8 @@
          not v0.16b, v31.16b
          not v1.8b, v9.8b
 
-// CHECK:	not	v0.16b, v31.16b         // encoding: [0xe0,0x5b,0x20,0x6e]
-// CHECK:	not	v1.8b, v9.8b            // encoding: [0x21,0x59,0x20,0x2e]
+// CHECK: {{mvn|not}} v0.16b, v31.16b         // encoding: [0xe0,0x5b,0x20,0x6e]
+// CHECK: {{mvn|not}} v1.8b, v9.8b            // encoding: [0x21,0x59,0x20,0x2e]
 
 //------------------------------------------------------------------------------
 // Bitwise reverse

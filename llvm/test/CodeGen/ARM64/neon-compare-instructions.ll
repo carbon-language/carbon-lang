@@ -51,7 +51,7 @@ define <2 x i64> @cmeq2xi64(<2 x i64> %A, <2 x i64> %B) {
 
 define <8 x i8> @cmne8xi8(<8 x i8> %A, <8 x i8> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <8 x i8> %A, %B;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
 	ret <8 x i8> %tmp4
@@ -59,7 +59,7 @@ define <8 x i8> @cmne8xi8(<8 x i8> %A, <8 x i8> %B) {
 
 define <16 x i8> @cmne16xi8(<16 x i8> %A, <16 x i8> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <16 x i8> %A, %B;
    %tmp4 = sext <16 x i1> %tmp3 to <16 x i8>
 	ret <16 x i8> %tmp4
@@ -67,7 +67,7 @@ define <16 x i8> @cmne16xi8(<16 x i8> %A, <16 x i8> %B) {
 
 define <4 x i16> @cmne4xi16(<4 x i16> %A, <4 x i16> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <4 x i16> %A, %B;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i16>
 	ret <4 x i16> %tmp4
@@ -75,7 +75,7 @@ define <4 x i16> @cmne4xi16(<4 x i16> %A, <4 x i16> %B) {
 
 define <8 x i16> @cmne8xi16(<8 x i16> %A, <8 x i16> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <8 x i16> %A, %B;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i16>
 	ret <8 x i16> %tmp4
@@ -83,7 +83,7 @@ define <8 x i16> @cmne8xi16(<8 x i16> %A, <8 x i16> %B) {
 
 define <2 x i32> @cmne2xi32(<2 x i32> %A, <2 x i32> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <2 x i32> %A, %B;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -91,7 +91,7 @@ define <2 x i32> @cmne2xi32(<2 x i32> %A, <2 x i32> %B) {
 
 define <4 x i32> @cmne4xi32(<4 x i32> %A, <4 x i32> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <4 x i32> %A, %B;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -99,7 +99,7 @@ define <4 x i32> @cmne4xi32(<4 x i32> %A, <4 x i32> %B) {
 
 define <2 x i64> @cmne2xi64(<2 x i64> %A, <2 x i64> %B) {
 ;CHECK: cmeq {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <2 x i64> %A, %B;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -803,7 +803,7 @@ define <2 x i64> @cmltz2xi64(<2 x i64> %A) {
 
 define <8 x i8> @cmneqz8xi8(<8 x i8> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <8 x i8> %A, zeroinitializer;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
 	ret <8 x i8> %tmp4
@@ -811,7 +811,7 @@ define <8 x i8> @cmneqz8xi8(<8 x i8> %A) {
 
 define <16 x i8> @cmneqz16xi8(<16 x i8> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #0
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <16 x i8> %A, zeroinitializer;
    %tmp4 = sext <16 x i1> %tmp3 to <16 x i8>
 	ret <16 x i8> %tmp4
@@ -819,7 +819,7 @@ define <16 x i8> @cmneqz16xi8(<16 x i8> %A) {
 
 define <4 x i16> @cmneqz4xi16(<4 x i16> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #0
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <4 x i16> %A, zeroinitializer;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i16>
 	ret <4 x i16> %tmp4
@@ -827,7 +827,7 @@ define <4 x i16> @cmneqz4xi16(<4 x i16> %A) {
 
 define <8 x i16> @cmneqz8xi16(<8 x i16> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #0
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <8 x i16> %A, zeroinitializer;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i16>
 	ret <8 x i16> %tmp4
@@ -835,7 +835,7 @@ define <8 x i16> @cmneqz8xi16(<8 x i16> %A) {
 
 define <2 x i32> @cmneqz2xi32(<2 x i32> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #0
-;CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT: mvn {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <2 x i32> %A, zeroinitializer;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -843,7 +843,7 @@ define <2 x i32> @cmneqz2xi32(<2 x i32> %A) {
 
 define <4 x i32> @cmneqz4xi32(<4 x i32> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #0
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <4 x i32> %A, zeroinitializer;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -851,7 +851,7 @@ define <4 x i32> @cmneqz4xi32(<4 x i32> %A) {
 
 define <2 x i64> @cmneqz2xi64(<2 x i64> %A) {
 ;CHECK: cmeq {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #0
-;CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+;CHECK-NEXT: mvn {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <2 x i64> %A, zeroinitializer;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4

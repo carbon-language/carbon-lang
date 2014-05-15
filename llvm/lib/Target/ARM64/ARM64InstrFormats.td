@@ -5595,13 +5595,11 @@ class SIMDUMov<bit Q, string size, ValueType vectype, RegisterClass regtype,
   : BaseSIMDMov<Q, size, 0b0111, regtype, idxtype, "umov",
       [(set regtype:$Rd, (vector_extract (vectype V128:$Rn), idxtype:$idx))]>;
 
-// FIXME: these aliases should be canonical, but TableGen can't handle the
-// alternate syntaxes.
 class SIMDMovAlias<string asm, string size, Instruction inst,
                    RegisterClass regtype, Operand idxtype>
     : InstAlias<asm#"{\t$dst, $src"#size#"$idx" #
                     "|" # size # "\t$dst, $src$idx}",
-                (inst regtype:$dst, V128:$src, idxtype:$idx), 0>;
+                (inst regtype:$dst, V128:$src, idxtype:$idx)>;
 
 multiclass SMov {
   def vi8to32 : SIMDSMov<0, ".b", GPR32, VectorIndexB> {
@@ -5685,18 +5683,16 @@ class SIMDInsFromElement<string size, ValueType vectype,
                  (elttype (vector_extract (vectype V128:$Rn), idxtype:$idx2)),
                  idxtype:$idx))]>;
 
-// FIXME: the MOVs should be canonical, but TableGen's alias printing can't cope
-// with syntax variants.
 class SIMDInsMainMovAlias<string size, Instruction inst,
                           RegisterClass regtype, Operand idxtype>
     : InstAlias<"mov" # "{\t$dst" # size # "$idx, $src" #
                         "|" # size #"\t$dst$idx, $src}",
-                (inst V128:$dst, idxtype:$idx, regtype:$src), 0>;
+                (inst V128:$dst, idxtype:$idx, regtype:$src)>;
 class SIMDInsElementMovAlias<string size, Instruction inst,
                              Operand idxtype>
     : InstAlias<"mov" # "{\t$dst" # size # "$idx, $src" # size # "$idx2" #
                       # "|" # size #" $dst$idx, $src$idx2}",
-                (inst V128:$dst, idxtype:$idx, V128:$src, idxtype:$idx2), 0>;
+                (inst V128:$dst, idxtype:$idx, V128:$src, idxtype:$idx2)>;
 
 
 multiclass SIMDIns {

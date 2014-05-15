@@ -229,7 +229,7 @@ define <1 x i64> @fcmlt_d(<1 x double> %A, <1 x double> %B) nounwind {
 define <1 x i64> @cmnez_d(<1 x i64> %A) nounwind {
 ; CHECK-LABEL: cmnez_d:
 ; CHECK: cmeq d[[EQ:[0-9]+]], d0, #0
-; CHECK: not.8b v0, v[[EQ]]
+; CHECK: mvn.8b v0, v[[EQ]]
   %tst = icmp ne <1 x i64> %A, zeroinitializer
   %mask = sext <1 x i1> %tst to <1 x i64>
   ret <1 x i64> %mask

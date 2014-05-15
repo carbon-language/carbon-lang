@@ -60,7 +60,7 @@ define <2 x i64> @cmeq2xi64(<2 x i64> %A, <2 x i64> %B) {
 define <8 x i8> @cmne8xi8(<8 x i8> %A, <8 x i8> %B) {
 ; CHECK-LABEL: cmne8xi8:
 ; CHECK: cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <8 x i8> %A, %B;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
 	ret <8 x i8> %tmp4
@@ -69,7 +69,7 @@ define <8 x i8> @cmne8xi8(<8 x i8> %A, <8 x i8> %B) {
 define <16 x i8> @cmne16xi8(<16 x i8> %A, <16 x i8> %B) {
 ; CHECK-LABEL: cmne16xi8:
 ; CHECK: cmeq {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <16 x i8> %A, %B;
    %tmp4 = sext <16 x i1> %tmp3 to <16 x i8>
 	ret <16 x i8> %tmp4
@@ -78,7 +78,7 @@ define <16 x i8> @cmne16xi8(<16 x i8> %A, <16 x i8> %B) {
 define <4 x i16> @cmne4xi16(<4 x i16> %A, <4 x i16> %B) {
 ; CHECK-LABEL: cmne4xi16:
 ; CHECK: cmeq {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <4 x i16> %A, %B;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i16>
 	ret <4 x i16> %tmp4
@@ -87,7 +87,7 @@ define <4 x i16> @cmne4xi16(<4 x i16> %A, <4 x i16> %B) {
 define <8 x i16> @cmne8xi16(<8 x i16> %A, <8 x i16> %B) {
 ; CHECK-LABEL: cmne8xi16:
 ; CHECK: cmeq {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <8 x i16> %A, %B;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i16>
 	ret <8 x i16> %tmp4
@@ -96,7 +96,7 @@ define <8 x i16> @cmne8xi16(<8 x i16> %A, <8 x i16> %B) {
 define <2 x i32> @cmne2xi32(<2 x i32> %A, <2 x i32> %B) {
 ; CHECK-LABEL: cmne2xi32:
 ; CHECK: cmeq {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <2 x i32> %A, %B;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -105,7 +105,7 @@ define <2 x i32> @cmne2xi32(<2 x i32> %A, <2 x i32> %B) {
 define <4 x i32> @cmne4xi32(<4 x i32> %A, <4 x i32> %B) {
 ; CHECK-LABEL: cmne4xi32:
 ; CHECK: cmeq {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <4 x i32> %A, %B;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -114,7 +114,7 @@ define <4 x i32> @cmne4xi32(<4 x i32> %A, <4 x i32> %B) {
 define <2 x i64> @cmne2xi64(<2 x i64> %A, <2 x i64> %B) {
 ; CHECK-LABEL: cmne2xi64:
 ; CHECK: cmeq {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <2 x i64> %A, %B;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -974,7 +974,7 @@ define <2 x i64> @cmltz2xi64(<2 x i64> %A) {
 define <8 x i8> @cmneqz8xi8(<8 x i8> %A) {
 ; CHECK-LABEL: cmneqz8xi8:
 ; CHECK: cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <8 x i8> %A, zeroinitializer;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
 	ret <8 x i8> %tmp4
@@ -983,7 +983,7 @@ define <8 x i8> @cmneqz8xi8(<8 x i8> %A) {
 define <16 x i8> @cmneqz16xi8(<16 x i8> %A) {
 ; CHECK-LABEL: cmneqz16xi8:
 ; CHECK: cmeq {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <16 x i8> %A, zeroinitializer;
    %tmp4 = sext <16 x i1> %tmp3 to <16 x i8>
 	ret <16 x i8> %tmp4
@@ -992,7 +992,7 @@ define <16 x i8> @cmneqz16xi8(<16 x i8> %A) {
 define <4 x i16> @cmneqz4xi16(<4 x i16> %A) {
 ; CHECK-LABEL: cmneqz4xi16:
 ; CHECK: cmeq {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <4 x i16> %A, zeroinitializer;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i16>
 	ret <4 x i16> %tmp4
@@ -1001,7 +1001,7 @@ define <4 x i16> @cmneqz4xi16(<4 x i16> %A) {
 define <8 x i16> @cmneqz8xi16(<8 x i16> %A) {
 ; CHECK-LABEL: cmneqz8xi16:
 ; CHECK: cmeq {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <8 x i16> %A, zeroinitializer;
    %tmp4 = sext <8 x i1> %tmp3 to <8 x i16>
 	ret <8 x i16> %tmp4
@@ -1010,7 +1010,7 @@ define <8 x i16> @cmneqz8xi16(<8 x i16> %A) {
 define <2 x i32> @cmneqz2xi32(<2 x i32> %A) {
 ; CHECK-LABEL: cmneqz2xi32:
 ; CHECK: cmeq {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp3 = icmp ne <2 x i32> %A, zeroinitializer;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1019,7 +1019,7 @@ define <2 x i32> @cmneqz2xi32(<2 x i32> %A) {
 define <4 x i32> @cmneqz4xi32(<4 x i32> %A) {
 ; CHECK-LABEL: cmneqz4xi32:
 ; CHECK: cmeq {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <4 x i32> %A, zeroinitializer;
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1028,7 +1028,7 @@ define <4 x i32> @cmneqz4xi32(<4 x i32> %A) {
 define <2 x i64> @cmneqz2xi64(<2 x i64> %A) {
 ; CHECK-LABEL: cmneqz2xi64:
 ; CHECK: cmeq {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0x0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
 	%tmp3 = icmp ne <2 x i64> %A, zeroinitializer;
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1525,7 +1525,7 @@ define <2 x i32> @fcmuno2xfloat(<2 x float> %A, <2 x float> %B) {
 ; CHECK: fcmge {{v[0-9]+}}.2s, v0.2s, v1.2s
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.2s, v1.2s, v0.2s
 ; CHECK-NEXT: orr {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp uno <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1538,7 +1538,7 @@ define <4 x i32> @fcmuno4xfloat(<4 x float> %A, <4 x float> %B) {
 ; CHECK: fcmge {{v[0-9]+}}.4s, v0.4s, v1.4s
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.4s, v1.4s, v0.4s
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uno <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1551,7 +1551,7 @@ define <2 x i64> @fcmuno2xdouble(<2 x double> %A, <2 x double> %B) {
 ; CHECK: fcmge {{v[0-9]+}}.2d, v0.2d, v1.2d
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.2d, v1.2d, v0.2d
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uno <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1564,7 +1564,7 @@ define <2 x i32> @fcmueq2xfloat(<2 x float> %A, <2 x float> %B) {
 ; CHECK: fcmgt {{v[0-9]+}}.2s, v0.2s, v1.2s
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.2s, v1.2s, v0.2s
 ; CHECK-NEXT: orr {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ueq <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1577,7 +1577,7 @@ define <4 x i32> @fcmueq4xfloat(<4 x float> %A, <4 x float> %B) {
 ; CHECK: fcmgt {{v[0-9]+}}.4s, v0.4s, v1.4s
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.4s, v1.4s, v0.4s
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ueq <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1590,7 +1590,7 @@ define <2 x i64> @fcmueq2xdouble(<2 x double> %A, <2 x double> %B) {
 ; CHECK: fcmgt {{v[0-9]+}}.2d, v0.2d, v1.2d
 ; CHECK-NEXT: fcmgt {{v[0-9]+}}.2d, v1.2d, v0.2d
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ueq <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1601,7 +1601,7 @@ define <2 x i32> @fcmuge2xfloat(<2 x float> %A, <2 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UGE = ULE with swapped operands, ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.2s, v1.2s, v0.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp uge <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1612,7 +1612,7 @@ define <4 x i32> @fcmuge4xfloat(<4 x float> %A, <4 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UGE = ULE with swapped operands, ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.4s, v1.4s, v0.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uge <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1623,7 +1623,7 @@ define <2 x i64> @fcmuge2xdouble(<2 x double> %A, <2 x double> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UGE = ULE with swapped operands, ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.2d, v1.2d, v0.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uge <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1634,7 +1634,7 @@ define <2 x i32> @fcmugt2xfloat(<2 x float> %A, <2 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UGT = ULT with swapped operands, ULT implemented as !OGE.
 ; CHECK: fcmge {{v[0-9]+}}.2s, v1.2s, v0.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ugt <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1645,7 +1645,7 @@ define <4 x i32> @fcmugt4xfloat(<4 x float> %A, <4 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UGT = ULT with swapped operands, ULT implemented as !OGE.
 ; CHECK: fcmge {{v[0-9]+}}.4s, v1.4s, v0.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ugt <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1653,7 +1653,7 @@ define <4 x i32> @fcmugt4xfloat(<4 x float> %A, <4 x float> %B) {
 define <2 x i64> @fcmugt2xdouble(<2 x double> %A, <2 x double> %B) {
 ; CHECK-LABEL: fcmugt2xdouble:
 ; CHECK: fcmge {{v[0-9]+}}.2d, v1.2d, v0.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ugt <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1664,7 +1664,7 @@ define <2 x i32> @fcmule2xfloat(<2 x float> %A, <2 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.2s, v0.2s, v1.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ule <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1675,7 +1675,7 @@ define <4 x i32> @fcmule4xfloat(<4 x float> %A, <4 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.4s, v0.4s, v1.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ule <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1685,7 +1685,7 @@ define <2 x i64> @fcmule2xdouble(<2 x double> %A, <2 x double> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULE implemented as !OGT.
 ; CHECK: fcmgt {{v[0-9]+}}.2d, v0.2d, v1.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ule <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1696,7 +1696,7 @@ define <2 x i32> @fcmult2xfloat(<2 x float> %A, <2 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULT implemented as !OGE.
 ; CHECK: fcmge {{v[0-9]+}}.2s, v0.2s, v1.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ult <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1707,7 +1707,7 @@ define <4 x i32> @fcmult4xfloat(<4 x float> %A, <4 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULT implemented as !OGE.
 ; CHECK: fcmge {{v[0-9]+}}.4s, v0.4s, v1.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ult <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1717,7 +1717,7 @@ define <2 x i64> @fcmult2xdouble(<2 x double> %A, <2 x double> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; ULT implemented as !OGE.
 ; CHECK: fcmge {{v[0-9]+}}.2d, v0.2d, v1.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ult <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1728,7 +1728,7 @@ define <2 x i32> @fcmune2xfloat(<2 x float> %A, <2 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UNE = !OEQ.
 ; CHECK: fcmeq {{v[0-9]+}}.2s, v0.2s, v1.2s
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp une <2 x float> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1739,7 +1739,7 @@ define <4 x i32> @fcmune4xfloat(<4 x float> %A, <4 x float> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UNE = !OEQ.
 ; CHECK: fcmeq {{v[0-9]+}}.4s, v0.4s, v1.4s
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp une <4 x float> %A, %B
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1749,7 +1749,7 @@ define <2 x i64> @fcmune2xdouble(<2 x double> %A, <2 x double> %B) {
 ; Using registers other than v0, v1 are possible, but would be odd.
 ; UNE = !OEQ.
 ; CHECK: fcmeq {{v[0-9]+}}.2d, v0.2d, v1.2d
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp une <2 x double> %A, %B
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1943,7 +1943,7 @@ define <2 x i32> @fcmueqz2xfloat(<2 x float> %A) {
 ; CHECK: fcmgt {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ueq <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1955,7 +1955,7 @@ define <4 x i32> @fcmueqz4xfloat(<4 x float> %A) {
 ; CHECK: fcmgt {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ueq <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1967,7 +1967,7 @@ define <2 x i64> @fcmueqz2xdouble(<2 x double> %A) {
 ; CHECK: fcmgt {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ueq <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -1977,7 +1977,7 @@ define <2 x i32> @fcmugez2xfloat(<2 x float> %A) {
 ; CHECK-LABEL: fcmugez2xfloat:
 ; UGE with zero = !OLT
 ; CHECK: fcmlt {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp uge <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -1987,7 +1987,7 @@ define <4 x i32> @fcmugez4xfloat(<4 x float> %A) {
 ; CHECK-LABEL: fcmugez4xfloat:
 ; UGE with zero = !OLT
 ; CHECK: fcmlt {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uge <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -1996,7 +1996,7 @@ define <2 x i64> @fcmugez2xdouble(<2 x double> %A) {
 ; CHECK-LABEL: fcmugez2xdouble:
 ; UGE with zero = !OLT
 ; CHECK: fcmlt {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uge <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -2006,7 +2006,7 @@ define <2 x i32> @fcmugtz2xfloat(<2 x float> %A) {
 ; CHECK-LABEL: fcmugtz2xfloat:
 ; UGT with zero = !OLE
 ; CHECK: fcmle {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ugt <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -2016,7 +2016,7 @@ define <4 x i32> @fcmugtz4xfloat(<4 x float> %A) {
 ; CHECK-LABEL: fcmugtz4xfloat:
 ; UGT with zero = !OLE
 ; CHECK: fcmle {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ugt <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -2025,7 +2025,7 @@ define <2 x i64> @fcmugtz2xdouble(<2 x double> %A) {
 ; CHECK-LABEL: fcmugtz2xdouble:
 ; UGT with zero = !OLE
 ; CHECK: fcmle {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ugt <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -2035,7 +2035,7 @@ define <2 x i32> @fcmultz2xfloat(<2 x float> %A) {
 ; CHECK-LABEL: fcmultz2xfloat:
 ; ULT with zero = !OGE
 ; CHECK: fcmge {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ult <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -2044,7 +2044,7 @@ define <2 x i32> @fcmultz2xfloat(<2 x float> %A) {
 define <4 x i32> @fcmultz4xfloat(<4 x float> %A) {
 ; CHECK-LABEL: fcmultz4xfloat:
 ; CHECK: fcmge {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ult <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -2053,7 +2053,7 @@ define <4 x i32> @fcmultz4xfloat(<4 x float> %A) {
 define <2 x i64> @fcmultz2xdouble(<2 x double> %A) {
 ; CHECK-LABEL: fcmultz2xdouble:
 ; CHECK: fcmge {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ult <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -2064,7 +2064,7 @@ define <2 x i32> @fcmulez2xfloat(<2 x float> %A) {
 ; CHECK-LABEL: fcmulez2xfloat:
 ; ULE with zero = !OGT
 ; CHECK: fcmgt {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp ule <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -2074,7 +2074,7 @@ define <4 x i32> @fcmulez4xfloat(<4 x float> %A) {
 ; CHECK-LABEL: fcmulez4xfloat:
 ; ULE with zero = !OGT
 ; CHECK: fcmgt {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ule <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -2084,7 +2084,7 @@ define <2 x i64> @fcmulez2xdouble(<2 x double> %A) {
 ; CHECK-LABEL: fcmulez2xdouble:
 ; ULE with zero = !OGT
 ; CHECK: fcmgt {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp ule <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -2094,7 +2094,7 @@ define <2 x i32> @fcmunez2xfloat(<2 x float> %A) {
 ; CHECK-LABEL: fcmunez2xfloat:
 ; UNE with zero = !OEQ with zero
 ; CHECK: fcmeq {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp une <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -2104,7 +2104,7 @@ define <4 x i32> @fcmunez4xfloat(<4 x float> %A) {
 ; CHECK-LABEL: fcmunez4xfloat:
 ; UNE with zero = !OEQ with zero
 ; CHECK: fcmeq {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp une <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -2113,7 +2113,7 @@ define <2 x i64> @fcmunez2xdouble(<2 x double> %A) {
 ; CHECK-LABEL: fcmunez2xdouble:
 ; UNE with zero = !OEQ with zero
 ; CHECK: fcmeq {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp une <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4
@@ -2126,7 +2126,7 @@ define <2 x i32> @fcmunoz2xfloat(<2 x float> %A) {
 ; CHECK: fcmge {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-; CHECK-NEXT: not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
    %tmp3 = fcmp uno <2 x float> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i32>
 	ret <2 x i32> %tmp4
@@ -2138,7 +2138,7 @@ define <4 x i32> @fcmunoz4xfloat(<4 x float> %A) {
 ; CHECK: fcmge {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uno <4 x float> %A, zeroinitializer
    %tmp4 = sext <4 x i1> %tmp3 to <4 x i32>
 	ret <4 x i32> %tmp4
@@ -2150,7 +2150,7 @@ define <2 x i64> @fcmunoz2xdouble(<2 x double> %A) {
 ; CHECK: fcmge {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
 ; CHECK-NEXT: fcmlt {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #{{0.0|0}}
 ; CHECK-NEXT: orr {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-; CHECK-NEXT: not {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+; CHECK-NEXT: {{mvn|not}} {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
    %tmp3 = fcmp uno <2 x double> %A, zeroinitializer
    %tmp4 = sext <2 x i1> %tmp3 to <2 x i64>
 	ret <2 x i64> %tmp4

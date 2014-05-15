@@ -124,10 +124,10 @@
 
 # CHECK: smov.s  x3, v2[2]
 # CHECK: smov.s  x3, v2[2]
-# CHECK: umov.s  w3, v2[2]
-# CHECK: umov.s  w3, v2[2]
-# CHECK: umov.d  x3, v2[1]
-# CHECK: umov.d  x3, v2[1]
+# CHECK: mov.s  w3, v2[2]
+# CHECK: mov.s  w3, v2[2]
+# CHECK: mov.d  x3, v2[1]
+# CHECK: mov.d  x3, v2[1]
 
 0xa2 0x1c 0x18 0x4e
 0xa2 0x1c 0x0c 0x4e
@@ -445,7 +445,7 @@
 # CHECK: frsqrte.2s	v0, v0
 # CHECK: fsqrt.2s	v0, v0
 # CHECK: neg.8b	v0, v0
-# CHECK: not.8b	v0, v0
+# CHECK: mvn.8b	v0, v0
 # CHECK: rbit.8b	v0, v0
 # CHECK: rev16.8b	v0, v0
 # CHECK: rev32.8b	v0, v0

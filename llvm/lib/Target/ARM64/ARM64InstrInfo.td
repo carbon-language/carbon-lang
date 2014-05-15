@@ -2315,10 +2315,10 @@ defm NEG    : SIMDTwoVectorBHSD<1, 0b01011, "neg",
                                UnOpFrag<(sub immAllZerosV, node:$LHS)> >;
 defm NOT    : SIMDTwoVectorB<1, 0b00, 0b00101, "not", vnot>;
 // Aliases for MVN -> NOT.
-def : InstAlias<"mvn.8b $Vd, $Vn", (NOTv8i8 V64:$Vd, V64:$Vn)>;
-def : InstAlias<"mvn.16b $Vd, $Vn", (NOTv16i8 V128:$Vd, V128:$Vn)>;
-def : InstAlias<"mvn $Vd.8b, $Vn.8b", (NOTv8i8 V64:$Vd, V64:$Vn)>;
-def : InstAlias<"mvn $Vd.16b, $Vn.16b", (NOTv16i8 V128:$Vd, V128:$Vn)>;
+def : InstAlias<"mvn{ $Vd.8b, $Vn.8b|.8b $Vd, $Vn}",
+                (NOTv8i8 V64:$Vd, V64:$Vn)>;
+def : InstAlias<"mvn{ $Vd.16b, $Vn.16b|.16b $Vd, $Vn}",
+                (NOTv16i8 V128:$Vd, V128:$Vn)>;
 
 def : Pat<(ARM64neg (v8i8  V64:$Rn)),  (NEGv8i8  V64:$Rn)>;
 def : Pat<(ARM64neg (v16i8 V128:$Rn)), (NEGv16i8 V128:$Rn)>;
@@ -3733,8 +3733,6 @@ def : Pat<(v4f32 (ARM64dup (f32 fpimm0))), (MOVIv2d_ns (i32 0))>;
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 defm MOVI      : SIMDModifiedImmVectorShift<0, 0b10, 0b00, "movi">;
 
-// FIXME: these should be canonical but the TableGen alias printer can't cope
-// with syntax variants.
 def : InstAlias<"movi $Vd.4h, $imm", (MOVIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
 def : InstAlias<"movi $Vd.8h, $imm", (MOVIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;
 def : InstAlias<"movi $Vd.2s, $imm", (MOVIv2i32 V64:$Vd,  imm0_255:$imm, 0), 0>;
@@ -3775,8 +3773,6 @@ def MOVIv16b_ns  : SIMDModifiedImmVectorNoShift<1, 0, 0b1110, V128, imm0_255,
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 defm MVNI      : SIMDModifiedImmVectorShift<1, 0b10, 0b00, "mvni">;
 
-// FIXME: these should be canonical, but TableGen can't do aliases & syntax
-// variants together.
 def : InstAlias<"mvni $Vd.4h, $imm", (MVNIv4i16 V64:$Vd,  imm0_255:$imm, 0), 0>;
 def : InstAlias<"mvni $Vd.8h, $imm", (MVNIv8i16 V128:$Vd, imm0_255:$imm, 0), 0>;
 def : InstAlias<"mvni $Vd.2s, $imm", (MVNIv2i32 V64:$Vd,  imm0_255:$imm, 0), 0>;

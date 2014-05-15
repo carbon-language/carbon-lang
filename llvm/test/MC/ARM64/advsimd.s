@@ -193,10 +193,10 @@ foo:
 
 ; CHECK: smov.s  x3, v2[2]           ; encoding: [0x43,0x2c,0x14,0x4e]
 ; CHECK: smov.s  x3, v2[2]           ; encoding: [0x43,0x2c,0x14,0x4e]
-; CHECK: umov.s  w3, v2[2]           ; encoding: [0x43,0x3c,0x14,0x0e]
-; CHECK: umov.s  w3, v2[2]           ; encoding: [0x43,0x3c,0x14,0x0e]
-; CHECK: umov.d  x3, v2[1]           ; encoding: [0x43,0x3c,0x18,0x4e]
-; CHECK: umov.d  x3, v2[1]           ; encoding: [0x43,0x3c,0x18,0x4e]
+; CHECK: mov.s  w3, v2[2]           ; encoding: [0x43,0x3c,0x14,0x0e]
+; CHECK: mov.s  w3, v2[2]           ; encoding: [0x43,0x3c,0x14,0x0e]
+; CHECK: mov.d  x3, v2[1]           ; encoding: [0x43,0x3c,0x18,0x4e]
+; CHECK: mov.d  x3, v2[1]           ; encoding: [0x43,0x3c,0x18,0x4e]
 
   ; MOV aliases for UMOV instructions above
 
@@ -205,10 +205,10 @@ foo:
   mov.d x11, v13[1]
   mov   x17, v19.d[0]
 
-; CHECK: umov.s  w2, v3[3]               ; encoding: [0x62,0x3c,0x1c,0x0e]
-; CHECK: umov.s  w5, v7[2]               ; encoding: [0xe5,0x3c,0x14,0x0e]
-; CHECK: umov.d  x11, v13[1]             ; encoding: [0xab,0x3d,0x18,0x4e]
-; CHECK: umov.d  x17, v19[0]             ; encoding: [0x71,0x3e,0x08,0x4e]
+; CHECK: mov.s  w2, v3[3]               ; encoding: [0x62,0x3c,0x1c,0x0e]
+; CHECK: mov.s  w5, v7[2]               ; encoding: [0xe5,0x3c,0x14,0x0e]
+; CHECK: mov.d  x11, v13[1]             ; encoding: [0xab,0x3d,0x18,0x4e]
+; CHECK: mov.d  x17, v19[0]             ; encoding: [0x71,0x3e,0x08,0x4e]
 
   ins.d v2[1], x5
   ins.s v2[1], w5
@@ -534,7 +534,7 @@ foo:
 ; CHECK: frsqrte.2s	v0, v0          ; encoding: [0x00,0xd8,0xa1,0x2e]
 ; CHECK: fsqrt.2s	v0, v0          ; encoding: [0x00,0xf8,0xa1,0x2e]
 ; CHECK: neg.8b	v0, v0                  ; encoding: [0x00,0xb8,0x20,0x2e]
-; CHECK: not.8b	v0, v0                  ; encoding: [0x00,0x58,0x20,0x2e]
+; CHECK: mvn.8b	v0, v0                  ; encoding: [0x00,0x58,0x20,0x2e]
 ; CHECK: rbit.8b	v0, v0                  ; encoding: [0x00,0x58,0x60,0x2e]
 ; CHECK: rev16.8b	v0, v0          ; encoding: [0x00,0x18,0x20,0x0e]
 ; CHECK: rev32.8b	v0, v0          ; encoding: [0x00,0x08,0x20,0x2e]
@@ -1881,10 +1881,10 @@ foo:
   mvn.8b v10, v6
   mvn.16b v11, v7
 
-; CHECK: not.8b	v1, v4                  ; encoding: [0x81,0x58,0x20,0x2e]
-; CHECK: not.16b	v19, v17                ; encoding: [0x33,0x5a,0x20,0x6e]
-; CHECK: not.8b	v10, v6                 ; encoding: [0xca,0x58,0x20,0x2e]
-; CHECK: not.16b	v11, v7                 ; encoding: [0xeb,0x58,0x20,0x6e]
+; CHECK: mvn.8b	v1, v4                  ; encoding: [0x81,0x58,0x20,0x2e]
+; CHECK: mvn.16b	v19, v17                ; encoding: [0x33,0x5a,0x20,0x6e]
+; CHECK: mvn.8b	v10, v6                 ; encoding: [0xca,0x58,0x20,0x2e]
+; CHECK: mvn.16b	v11, v7                 ; encoding: [0xeb,0x58,0x20,0x6e]
 
 ; sqdmull verbose mode aliases
  sqdmull v10.4s, v12.4h, v12.4h

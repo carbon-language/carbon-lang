@@ -260,21 +260,21 @@ define i32 @umovw8h(<8 x i16> %tmp1) {
 
 define i32 @umovw4s(<4 x i32> %tmp1) {
 ; CHECK-LABEL: umovw4s:
-; CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.s[2]
+; CHECK: mov {{w[0-9]+}}, {{v[0-9]+}}.s[2]
   %tmp3 = extractelement <4 x i32> %tmp1, i32 2
   ret i32 %tmp3
 }
 
 define i64 @umovx2d(<2 x i64> %tmp1) {
 ; CHECK-LABEL: umovx2d:
-; CHECK: umov {{x[0-9]+}}, {{v[0-9]+}}.d[1]
+; CHECK: mov {{x[0-9]+}}, {{v[0-9]+}}.d[1]
   %tmp3 = extractelement <2 x i64> %tmp1, i32 1
   ret i64 %tmp3
 }
 
 define i32 @umovw8b(<8 x i8> %tmp1) {
 ; CHECK-LABEL: umovw8b:
-; CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.b[7]
+; CHECK: mov {{w[0-9]+}}, {{v[0-9]+}}.b[7]
   %tmp3 = extractelement <8 x i8> %tmp1, i32 7
   %tmp4 = zext i8 %tmp3 to i32
   ret i32 %tmp4
@@ -282,7 +282,7 @@ define i32 @umovw8b(<8 x i8> %tmp1) {
 
 define i32 @umovw4h(<4 x i16> %tmp1) {
 ; CHECK-LABEL: umovw4h:
-; CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.h[2]
+; CHECK: mov {{w[0-9]+}}, {{v[0-9]+}}.h[2]
   %tmp3 = extractelement <4 x i16> %tmp1, i32 2
   %tmp4 = zext i16 %tmp3 to i32
   ret i32 %tmp4
@@ -290,7 +290,7 @@ define i32 @umovw4h(<4 x i16> %tmp1) {
 
 define i32 @umovw2s(<2 x i32> %tmp1) {
 ; CHECK-LABEL: umovw2s:
-; CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.s[1]
+; CHECK: mov {{w[0-9]+}}, {{v[0-9]+}}.s[1]
   %tmp3 = extractelement <2 x i32> %tmp1, i32 1
   ret i32 %tmp3
 }
