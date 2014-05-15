@@ -116,14 +116,14 @@ void __attribute__((dllimport)) decl2A();
 void __declspec(dllimport)      decl2B();
 
 // Not allowed on function definitions.
-__declspec(dllimport) void def() {} // expected-error{{'dllimport' attribute can be applied only to symbol declaration}}
+__declspec(dllimport) void def() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
 
 // extern  "C"
 extern "C" __declspec(dllexport) void externC();
 
 // Import inline function.
-__declspec(dllimport) inline void inlineFunc1() {} // expected-warning{{'dllimport' attribute ignored}}
-inline void __attribute__((dllimport)) inlineFunc2() {} // expected-warning{{'dllimport' attribute ignored}}
+__declspec(dllimport) inline void inlineFunc1() {}
+inline void __attribute__((dllimport)) inlineFunc2() {}
 
 // Redeclarations
 __declspec(dllimport) void redecl1();
@@ -209,8 +209,8 @@ template<typename T> __declspec(dllimport) void importedFuncTmpl();
 // Import specialization of an imported function template. A definition must be
 // declared inline.
 template<> __declspec(dllimport) void importedFuncTmpl<ExplicitSpec_Imported>();
-template<> __declspec(dllimport) void importedFuncTmpl<ExplicitSpec_Def_Imported>() {} // expected-error{{'dllimport' attribute can be applied only to symbol declaration}}
-template<> __declspec(dllimport) inline void importedFuncTmpl<ExplicitSpec_InlineDef_Imported>() {} // expected-warning{{'dllimport' attribute ignored}}
+template<> __declspec(dllimport) void importedFuncTmpl<ExplicitSpec_Def_Imported>() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
+template<> __declspec(dllimport) inline void importedFuncTmpl<ExplicitSpec_InlineDef_Imported>() {}
 
 // Not importing specialization of an imported function template without
 // explicit dllimport.
@@ -223,5 +223,5 @@ extern template __declspec(dllimport) void funcTmpl<ExplicitDecl_Imported>();
 // Import specialization of a non-imported function template. A definition must
 // be declared inline.
 template<> __declspec(dllimport) void funcTmpl<ExplicitSpec_Imported>();
-template<> __declspec(dllimport) void funcTmpl<ExplicitSpec_Def_Imported>() {} // expected-error{{'dllimport' attribute can be applied only to symbol declaration}}
-template<> __declspec(dllimport) inline void funcTmpl<ExplicitSpec_InlineDef_Imported>() {} // expected-warning{{'dllimport' attribute ignored}}
+template<> __declspec(dllimport) void funcTmpl<ExplicitSpec_Def_Imported>() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
+template<> __declspec(dllimport) inline void funcTmpl<ExplicitSpec_InlineDef_Imported>() {}

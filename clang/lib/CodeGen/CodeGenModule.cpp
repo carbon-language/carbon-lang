@@ -1960,15 +1960,6 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
   if (Linkage == GVA_AvailableExternally)
     return llvm::Function::AvailableExternallyLinkage;
 
-  // LinkOnceODRLinkage is insufficient if the symbol is required to exist in
-  // the symbol table.  Promote the linkage to WeakODRLinkage to preserve the
-  // semantics of LinkOnceODRLinkage while providing visibility in the symbol
-  // table.
-  llvm::GlobalValue::LinkageTypes OnceLinkage =
-      llvm::GlobalValue::LinkOnceODRLinkage;
-  if (D->hasAttr<DLLExportAttr>() || D->hasAttr<DLLImportAttr>())
-    OnceLinkage = llvm::GlobalVariable::WeakODRLinkage;
-
   // Note that Apple's kernel linker doesn't support symbol
   // coalescing, so we need to avoid linkonce and weak linkages there.
   // Normally, this means we just map to internal, but for explicit
@@ -1981,7 +1972,7 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
   // merged with other definitions. c) C++ has the ODR, so we know the
   // definition is dependable.
   if (Linkage == GVA_DiscardableODR)
-    return !Context.getLangOpts().AppleKext ? OnceLinkage
+    return !Context.getLangOpts().AppleKext ? llvm::Function::LinkOnceODRLinkage
                                             : llvm::Function::InternalLinkage;
 
   // An explicit instantiation of a template has weak linkage, since
@@ -1995,14 +1986,14 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
   // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
   // emitted on an as-needed basis.
   if (UseThunkForDtorVariant)
-    return OnceLinkage;
+    return llvm::GlobalValue::LinkOnceODRLinkage;
 
   // If required by the ABI, give definitions of static data members with inline
   // initializers at least linkonce_odr linkage.
   if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
       isa<VarDecl>(D) &&
       isVarDeclInlineInitializedStaticDataMember(cast<VarDecl>(D)))
-    return OnceLinkage;
+    return llvm::GlobalValue::LinkOnceODRLinkage;
 
   // C++ doesn't have tentative definitions and thus cannot have common
   // linkage.

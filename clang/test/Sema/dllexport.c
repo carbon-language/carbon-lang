@@ -69,10 +69,10 @@ void __declspec(dllexport)      decl2B();
 __declspec(dllexport) void def() {}
 
 // Export inline function.
-__declspec(dllexport) inline void inlineFunc1() {} // expected-warning{{'dllexport' attribute ignored}}
+__declspec(dllexport) inline void inlineFunc1() {}
 extern void inlineFunc1();
 
-inline void __attribute__((dllexport)) inlineFunc2() {} // expected-warning{{'dllexport' attribute ignored}}
+inline void __attribute__((dllexport)) inlineFunc2() {}
 extern void inlineFunc2();
 
 // Redeclarations

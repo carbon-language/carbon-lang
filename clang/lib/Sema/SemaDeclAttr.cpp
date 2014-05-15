@@ -3841,13 +3841,6 @@ static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  // Currently, the dllimport attribute is ignored for inlined functions.
-  // Warning is emitted.
-  if (FD && FD->isInlineSpecified()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-    return;
-  }
-
   unsigned Index = Attr.getAttributeSpellingListIndex();
   DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange(), Index);
   if (NewAttr)
@@ -3868,14 +3861,6 @@ DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
 }
 
 static void handleDLLExportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // Currently, the dllexport attribute is ignored for inlined functions, unless
-  // the -fkeep-inline-functions flag has been used. Warning is emitted.
-  if (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isInlineSpecified()) {
-    // FIXME: ... unless the -fkeep-inline-functions flag has been used.
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
-    return;
-  }
-
   unsigned Index = Attr.getAttributeSpellingListIndex();
   DLLExportAttr *NewAttr = S.mergeDLLExportAttr(D, Attr.getRange(), Index);
   if (NewAttr)

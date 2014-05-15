@@ -92,10 +92,10 @@ __declspec(dllexport) void def() {}
 extern "C" __declspec(dllexport) void externC() {}
 
 // Export inline function.
-__declspec(dllexport) inline void inlineFunc1() {} // expected-warning{{'dllexport' attribute ignored}}
-inline void __attribute__((dllexport)) inlineFunc2() {} // expected-warning{{'dllexport' attribute ignored}}
+__declspec(dllexport) inline void inlineFunc1() {}
+inline void __attribute__((dllexport)) inlineFunc2() {}
 
-__declspec(dllexport) inline void inlineDecl(); // expected-warning{{'dllexport' attribute ignored}}
+__declspec(dllexport) inline void inlineDecl();
                              void inlineDecl() {}
 
 __declspec(dllexport) void inlineDef();
@@ -188,7 +188,7 @@ template void exportedFuncTmpl<ExplicitInst_Exported>();
 // Export specialization of an exported function template.
 template<> __declspec(dllexport) void exportedFuncTmpl<ExplicitSpec_Exported>();
 template<> __declspec(dllexport) void exportedFuncTmpl<ExplicitSpec_Def_Exported>() {}
-template<> __declspec(dllexport) inline void exportedFuncTmpl<ExplicitSpec_InlineDef_Exported>() {} // expected-warning{{'dllexport' attribute ignored}}
+template<> __declspec(dllexport) inline void exportedFuncTmpl<ExplicitSpec_InlineDef_Exported>() {}
 
 // Not exporting specialization of an exported function template without
 // explicit dllexport.
@@ -205,7 +205,7 @@ template __declspec(dllexport) void funcTmpl<ExplicitInst_Exported>();
 // Export specialization of a non-exported function template.
 template<> __declspec(dllexport) void funcTmpl<ExplicitSpec_Exported>();
 template<> __declspec(dllexport) void funcTmpl<ExplicitSpec_Def_Exported>() {}
-template<> __declspec(dllexport) inline void funcTmpl<ExplicitSpec_InlineDef_Exported>() {} // expected-warning{{'dllexport' attribute ignored}}
+template<> __declspec(dllexport) inline void funcTmpl<ExplicitSpec_InlineDef_Exported>() {}
 
 
 

@@ -2091,6 +2091,8 @@ def warn_attribute_invalid_on_definition : Warning<
   InGroup<IgnoredAttributes>;
 def err_attribute_dll_redeclaration : Error<
   "redeclaration of %q0 cannot add %q1 attribute">;
+def err_attribute_dllimport_function_definition : Error<
+  "dllimport cannot be applied to non-inline function definition">;
 def err_attribute_dllimport_data_definition : Error<
   "definition of dllimport data">;
 def err_attribute_weakref_not_static : Error<

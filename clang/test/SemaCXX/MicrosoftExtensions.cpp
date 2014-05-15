@@ -122,7 +122,7 @@ __declspec(dllimport) void f(void) { }
 void f2(void); // expected-note{{previous declaration is here}}
 };
 
-__declspec(dllimport) void AAA::f2(void) { // expected-error{{'dllimport' attribute can be applied only to symbol}}
+__declspec(dllimport) void AAA::f2(void) { // expected-error{{dllimport cannot be applied to non-inline function definition}}
                                            // expected-error@-1{{redeclaration of 'AAA::f2' cannot add 'dllimport' attribute}}
 
 }

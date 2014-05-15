@@ -97,11 +97,11 @@ void __attribute__((dllimport)) decl2A();
 void __declspec(dllimport)      decl2B();
 
 // Not allowed on function definitions.
-__declspec(dllimport) void def() {} // expected-error{{'dllimport' attribute can be applied only to symbol declaration}}
+__declspec(dllimport) void def() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
 
 // Import inline function.
-__declspec(dllimport) inline void inlineFunc1() {} // expected-warning{{'dllimport' attribute ignored}}
-inline void __attribute__((dllimport)) inlineFunc2() {} // expected-warning{{'dllimport' attribute ignored}}
+__declspec(dllimport) inline void inlineFunc1() {}
+inline void __attribute__((dllimport)) inlineFunc2() {}
 
 // Redeclarations
 __declspec(dllimport) void redecl1();
