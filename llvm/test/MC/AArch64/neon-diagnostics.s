@@ -698,7 +698,7 @@
 // CHECK-AARCH64-ERROR:        fcmeq v0.8b, v1.4h, #1
 // CHECK-AARCH64-ERROR:                             ^
 
-// CHECK-ARM64-ERROR: error: only valid floating-point immediate is #0.0
+// CHECK-ARM64-ERROR: error: expected floating-point constant #0.0
 // CHECK-ARM64-ERROR:        fcmeq v0.8b, v1.4h, #1.0
 // CHECK-ARM64-ERROR:                             ^
 // CHECK-ARM64-ERROR: error: invalid operand for instruction
@@ -729,7 +729,7 @@
 // CHECK-AARCH64-ERROR:        fcmle v17.8h, v15.2d, #2
 // CHECK-AARCH64-ERROR:                               ^
 
-// CHECK-ARM64-ERROR: error: invalid operand for instruction
+// CHECK-ARM64-ERROR: error: expected floating-point constant #0.0
 // CHECK-ARM64-ERROR:        fcmle v17.8h, v15.2d, #-1.0
 // CHECK-ARM64-ERROR:                               ^
 // CHECK-ARM64-ERROR: error: invalid operand for instruction
@@ -759,7 +759,7 @@
 // CHECK-AARCH64-ERROR:        fcmlt v29.2d, v5.2d, #255
 // CHECK-AARCH64-ERROR:                              ^
 
-// CHECK-ARM64-ERROR: error: only valid floating-point immediate is #0.0
+// CHECK-ARM64-ERROR: error: expected floating-point constant #0.0
 // CHECK-ARM64-ERROR:        fcmlt v29.2d, v5.2d, #255.0
 // CHECK-ARM64-ERROR:                              ^
 // CHECK-ARM64-ERROR: error: invalid operand for instruction
@@ -789,7 +789,7 @@
 // CHECK-AARCH64-ERROR:        fcmle v17.2d, v15.2d, #15
 // CHECK-AARCH64-ERROR:                              ^
 
-// CHECK-ARM64-ERROR: error: only valid floating-point immediate is #0.0
+// CHECK-ARM64-ERROR: error: expected floating-point constant #0.0
 // CHECK-ARM64-ERROR:        fcmle v17.2d, v15.2d, #15.0
 // CHECK-ARM64-ERROR:                               ^
 // CHECK-ARM64-ERROR: error: invalid operand for instruction
@@ -819,7 +819,7 @@
 // CHECK-AARCH64-ERROR:        fcmlt v29.2d, v5.2d, #2
 // CHECK-AARCH64-ERROR:                              ^
 
-// CHECK-ARM64-ERROR: error: only valid floating-point immediate is #0.0
+// CHECK-ARM64-ERROR: error: expected floating-point constant #0.0
 // CHECK-ARM64-ERROR:        fcmlt v29.2d, v5.2d, #16.0
 // CHECK-ARM64-ERROR:                              ^
 // CHECK-ARM64-ERROR: error: invalid operand for instruction

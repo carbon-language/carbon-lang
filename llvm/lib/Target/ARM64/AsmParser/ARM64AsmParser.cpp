@@ -2314,7 +2314,7 @@ ARM64AsmParser::tryParseFPImm(OperandVector &Operands) {
     // as we handle that special case in post-processing before matching in
     // order to use the zero register for it.
     if (Val == -1 && !RealVal.isZero()) {
-      TokError("floating point value out of range");
+      TokError("expected compatible register or floating-point constant");
       return MatchOperand_ParseFail;
     }
     Operands.push_back(ARM64Operand::CreateFPImm(Val, S, getContext()));
@@ -3378,6 +3378,16 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     if (getLexer().is(AsmToken::Hash))
       Parser.Lex();
 
+    // Parse a negative sign
+    bool isNegative = false;
+    if (Parser.getTok().is(AsmToken::Minus)) {
+      isNegative = true;
+      // We need to consume this token only when we have a Real, otherwise
+      // we let parseSymbolicImmVal take care of it
+      if (Parser.getLexer().peekTok().is(AsmToken::Real))
+        Parser.Lex();
+    }
+
     // The only Real that should come through here is a literal #0.0 for
     // the fcmp[e] r, #0.0 instructions. They expect raw token operands,
     // so convert the value.
@@ -3389,8 +3399,8 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
           Mnemonic != "fcmge" && Mnemonic != "fcmgt" && Mnemonic != "fcmle" &&
           Mnemonic != "fcmlt")
         return TokError("unexpected floating point literal");
-      else if (IntVal != 0)
-        return TokError("only valid floating-point immediate is #0.0");
+      else if (IntVal != 0 || isNegative)
+        return TokError("expected floating-point constant #0.0");
       Parser.Lex(); // Eat the token.
 
       Operands.push_back(
@@ -3729,6 +3739,9 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   case Match_AddSubRegShift64:
     return Error(Loc,
        "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]");
+  case Match_InvalidFPImm:
+    return Error(Loc,
+                 "expected compatible register or floating-point constant");
   case Match_InvalidMemoryIndexedSImm9:
     return Error(Loc, "index must be an integer in range [-256, 255].");
   case Match_InvalidMemoryIndexed32SImm7:
@@ -4187,6 +4200,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_AddSubRegShift64:
   case Match_InvalidMovImm32Shift:
   case Match_InvalidMovImm64Shift:
+  case Match_InvalidFPImm:
   case Match_InvalidMemoryIndexed8:
   case Match_InvalidMemoryIndexed16:
   case Match_InvalidMemoryIndexed32SImm7:

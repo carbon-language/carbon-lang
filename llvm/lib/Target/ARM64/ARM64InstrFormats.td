@@ -165,6 +165,7 @@ def ExtendOperandLSL64 : AsmOperandClass {
 def FPImmOperand : AsmOperandClass {
   let Name = "FPImm";
   let ParserMethod = "tryParseFPImm";
+  let DiagnosticType = "InvalidFPImm";
 }
 
 def CondCode : AsmOperandClass {
