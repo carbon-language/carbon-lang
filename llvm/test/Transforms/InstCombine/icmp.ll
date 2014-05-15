@@ -1356,3 +1356,12 @@ define i1 @icmp_ashr_ashr_ne(i32 %a, i32 %b) nounwind {
  %z = icmp ne i32 %x, %y
  ret i1 %z
 }
+
+; CHECK-LABEL: @icmp_neg_cst_slt
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp sgt i32 %a, 10
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_neg_cst_slt(i32 %a) {
+  %1 = sub nsw i32 0, %a
+  %2 = icmp slt i32 %1, -10
+  ret i1 %2
+}

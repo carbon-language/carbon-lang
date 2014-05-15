@@ -2971,6 +2971,16 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         BO0->hasOneUse() && BO1->hasOneUse())
       return new ICmpInst(Pred, D, B);
 
+    // icmp (0-X) < cst --> x > -cst
+    if (NoOp0WrapProblem && ICmpInst::isSigned(Pred)) {
+      Value *X;
+      if (match(BO0, m_Neg(m_Value(X))))
+        if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1))
+          if (!RHSC->isMinValue(/*isSigned=*/true))
+            return new ICmpInst(I.getSwappedPredicate(), X,
+                                ConstantExpr::getNeg(RHSC));
+    }
+
     BinaryOperator *SRem = nullptr;
     // icmp (srem X, Y), Y
     if (BO0 && BO0->getOpcode() == Instruction::SRem &&
