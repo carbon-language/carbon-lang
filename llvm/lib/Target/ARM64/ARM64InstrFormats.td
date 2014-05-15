@@ -690,6 +690,53 @@ def fpimm0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
 
+// Vector lane operands
+class AsmVectorIndex<string Suffix> : AsmOperandClass {
+  let Name = "VectorIndex" # Suffix;
+  let DiagnosticType = "InvalidIndex" # Suffix;
+}
+def VectorIndex1Operand : AsmVectorIndex<"1">;
+def VectorIndexBOperand : AsmVectorIndex<"B">;
+def VectorIndexHOperand : AsmVectorIndex<"H">;
+def VectorIndexSOperand : AsmVectorIndex<"S">;
+def VectorIndexDOperand : AsmVectorIndex<"D">;
+
+def VectorIndex1 : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) == 1;
+}]> {
+  let ParserMatchClass = VectorIndex1Operand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i64imm);
+}
+def VectorIndexB : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 16;
+}]> {
+  let ParserMatchClass = VectorIndexBOperand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i64imm);
+}
+def VectorIndexH : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 8;
+}]> {
+  let ParserMatchClass = VectorIndexHOperand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i64imm);
+}
+def VectorIndexS : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 4;
+}]> {
+  let ParserMatchClass = VectorIndexSOperand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i64imm);
+}
+def VectorIndexD : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 2;
+}]> {
+  let ParserMatchClass = VectorIndexDOperand;
+  let PrintMethod = "printVectorIndex";
+  let MIOperandInfo = (ops i64imm);
+}
+
 // 8-bit immediate for AdvSIMD where 64-bit values of the form:
 // aaaaaaaa bbbbbbbb cccccccc dddddddd eeeeeeee ffffffff gggggggg hhhhhhhh
 // are encoded as the eight bit value 'abcdefgh'.
@@ -3409,8 +3456,8 @@ let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseUnscaledConversionToHigh<bits<2> rmode, bits<3> opcode,
                      RegisterClass srcType, RegisterOperand dstType, string asm,
                      string kind>
-    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm,
-        "{\t$Rd"#kind#"[1], $Rn|"#kind#"\t$Rd[1], $Rn}", "", []>,
+    : I<(outs dstType:$Rd), (ins srcType:$Rn, VectorIndex1:$idx), asm,
+        "{\t$Rd"#kind#"$idx, $Rn|"#kind#"\t$Rd$idx, $Rn}", "", []>,
       Sched<[WriteFCopy]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -3421,14 +3468,16 @@ class BaseUnscaledConversionToHigh<bits<2> rmode, bits<3> opcode,
   let Inst{15-10} = 0b000000;
   let Inst{9-5}   = Rn;
   let Inst{4-0}   = Rd;
+
+  let DecoderMethod =  "DecodeFMOVLaneInstruction";
 }
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseUnscaledConversionFromHigh<bits<2> rmode, bits<3> opcode,
                      RegisterOperand srcType, RegisterClass dstType, string asm,
                      string kind>
-    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm,
-        "{\t$Rd, $Rn"#kind#"[1]|"#kind#"\t$Rd, $Rn[1]}", "", []>,
+    : I<(outs dstType:$Rd), (ins srcType:$Rn, VectorIndex1:$idx), asm,
+        "{\t$Rd, $Rn"#kind#"$idx|"#kind#"\t$Rd, $Rn$idx}", "", []>,
       Sched<[WriteFCopy]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -3439,6 +3488,8 @@ class BaseUnscaledConversionFromHigh<bits<2> rmode, bits<3> opcode,
   let Inst{15-10} = 0b000000;
   let Inst{9-5}   = Rn;
   let Inst{4-0}   = Rd;
+
+  let DecoderMethod =  "DecodeFMOVLaneInstruction";
 }
 
 
@@ -3809,44 +3860,6 @@ multiclass FPMoveImmediate<string asm> {
 //----------------------------------------------------------------------------
 // AdvSIMD
 //----------------------------------------------------------------------------
-
-class AsmVectorIndex<string Suffix> : AsmOperandClass {
-  let Name = "VectorIndex" # Suffix;
-  let DiagnosticType = "InvalidIndex" # Suffix;
-}
-def VectorIndexBOperand : AsmVectorIndex<"B">;
-def VectorIndexHOperand : AsmVectorIndex<"H">;
-def VectorIndexSOperand : AsmVectorIndex<"S">;
-def VectorIndexDOperand : AsmVectorIndex<"D">;
-
-def VectorIndexB : Operand<i64>, ImmLeaf<i64, [{
-  return ((uint64_t)Imm) < 16;
-}]> {
-  let ParserMatchClass = VectorIndexBOperand;
-  let PrintMethod = "printVectorIndex";
-  let MIOperandInfo = (ops i64imm);
-}
-def VectorIndexH : Operand<i64>, ImmLeaf<i64, [{
-  return ((uint64_t)Imm) < 8;
-}]> {
-  let ParserMatchClass = VectorIndexHOperand;
-  let PrintMethod = "printVectorIndex";
-  let MIOperandInfo = (ops i64imm);
-}
-def VectorIndexS : Operand<i64>, ImmLeaf<i64, [{
-  return ((uint64_t)Imm) < 4;
-}]> {
-  let ParserMatchClass = VectorIndexSOperand;
-  let PrintMethod = "printVectorIndex";
-  let MIOperandInfo = (ops i64imm);
-}
-def VectorIndexD : Operand<i64>, ImmLeaf<i64, [{
-  return ((uint64_t)Imm) < 2;
-}]> {
-  let ParserMatchClass = VectorIndexDOperand;
-  let PrintMethod = "printVectorIndex";
-  let MIOperandInfo = (ops i64imm);
-}
 
 def MemorySIMDNoIndexOperand : AsmOperandClass {
   let Name = "MemorySIMDNoIndex";

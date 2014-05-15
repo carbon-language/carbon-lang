@@ -831,6 +831,9 @@ public:
     return VectorList.NumElements == NumElements;
   }
 
+  bool isVectorIndex1() const {
+    return Kind == k_VectorIndex && VectorIndex.Val == 1;
+  }
   bool isVectorIndexB() const {
     return Kind == k_VectorIndex && VectorIndex.Val < 16;
   }
@@ -1215,6 +1218,11 @@ public:
 
     Inst.addOperand(
         MCOperand::CreateReg(FirstReg + getVectorListStart() - ARM64::Q0));
+  }
+
+  void addVectorIndex1Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
   }
 
   void addVectorIndexBOperands(MCInst &Inst, unsigned N) const {
@@ -3782,6 +3790,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "immediate must be an integer in range [1, 32].");
   case Match_InvalidImm1_64:
     return Error(Loc, "immediate must be an integer in range [1, 64].");
+  case Match_InvalidIndex1:
+    return Error(Loc, "expected lane specifier '[1]'");
   case Match_InvalidIndexB:
     return Error(Loc, "vector lane must be an integer in range [0, 15].");
   case Match_InvalidIndexH:
@@ -4062,45 +4072,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     }
   }
 
-  // FIXME: Horrible hack to handle the literal .d[1] vector index on
-  // FMOV instructions. The index isn't an actual instruction operand
-  // but rather syntactic sugar. It really should be part of the mnemonic,
-  // not the operand, but whatever.
-  if ((NumOperands == 5) && Tok == "fmov") {
-    // If the last operand is a vectorindex of '1', then replace it with
-    // a '[' '1' ']' token sequence, which is what the matcher
-    // (annoyingly) expects for a literal vector index operand.
-    ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[NumOperands - 1]);
-    if (Op->isVectorIndexD() && Op->getVectorIndex() == 1) {
-      SMLoc Loc = Op->getStartLoc();
-      Operands.pop_back();
-      delete Op;
-      Operands.push_back(
-          ARM64Operand::CreateToken("[", false, Loc, getContext()));
-      Operands.push_back(
-          ARM64Operand::CreateToken("1", false, Loc, getContext()));
-      Operands.push_back(
-          ARM64Operand::CreateToken("]", false, Loc, getContext()));
-    } else if (Op->isReg()) {
-      // Similarly, check the destination operand for the GPR->High-lane
-      // variant.
-      unsigned OpNo = NumOperands - 2;
-      ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[OpNo]);
-      if (Op->isVectorIndexD() && Op->getVectorIndex() == 1) {
-        SMLoc Loc = Op->getStartLoc();
-        Operands[OpNo] =
-            ARM64Operand::CreateToken("[", false, Loc, getContext());
-        Operands.insert(
-            Operands.begin() + OpNo + 1,
-            ARM64Operand::CreateToken("1", false, Loc, getContext()));
-        Operands.insert(
-            Operands.begin() + OpNo + 2,
-            ARM64Operand::CreateToken("]", false, Loc, getContext()));
-        delete Op;
-      }
-    }
-  }
-
   MCInst Inst;
   // First try to match against the secondary set of tables containing the
   // short-form NEON instructions (e.g. "fadd.2s v0, v1, v2").
@@ -4216,6 +4187,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:
   case Match_InvalidImm1_64:
+  case Match_InvalidIndex1:
   case Match_InvalidIndexB:
   case Match_InvalidIndexH:
   case Match_InvalidIndexS:

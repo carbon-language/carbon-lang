@@ -144,6 +144,9 @@ static DecodeStatus DecodeSystemPStateInstruction(llvm::MCInst &Inst,
 static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
                                         uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeFMOVLaneInstruction(llvm::MCInst &Inst, unsigned Insn,
+                                              uint64_t Address,
+                                              const void *Decoder);
 static DecodeStatus DecodeVecShiftR64Imm(llvm::MCInst &Inst, unsigned Imm,
                                          uint64_t Addr, const void *Decoder);
 static DecodeStatus DecodeVecShiftR64ImmNarrow(llvm::MCInst &Inst, unsigned Imm,
@@ -632,6 +635,29 @@ static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
   (void)ARM64SysReg::MSRMapper(STI.getFeatureBits()).toString(Imm, ValidNamed);
 
   return ValidNamed ? Success : Fail;
+}
+
+static DecodeStatus DecodeFMOVLaneInstruction(llvm::MCInst &Inst, unsigned Insn,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  // This decoder exists to add the dummy Lane operand to the MCInst, which must
+  // be 1 in assembly but has no other real manifestation.
+  unsigned Rd = fieldFromInstruction(Insn, 0, 5);
+  unsigned Rn = fieldFromInstruction(Insn, 5, 5);
+  unsigned IsToVec = fieldFromInstruction(Insn, 16, 1);
+
+  if (IsToVec) {
+    DecodeFPR128RegisterClass(Inst, Rd, Address, Decoder);
+    DecodeGPR64RegisterClass(Inst, Rn, Address, Decoder);
+  } else {
+    DecodeGPR64RegisterClass(Inst, Rd, Address, Decoder);
+    DecodeFPR128RegisterClass(Inst, Rn, Address, Decoder);
+  }
+
+  // Add the lane
+  Inst.addOperand(MCOperand::CreateImm(1));
+
+  return Success;
 }
 
 static DecodeStatus DecodeVecShiftRImm(llvm::MCInst &Inst, unsigned Imm,
