@@ -40,8 +40,7 @@ cl::opt<bool> EnableDwarfDirectory(
 cl::opt<bool> NoExecStack("mc-no-exec-stack",
                           cl::desc("File doesn't need an exec stack"));
 
-static cl::opt<bool>
-SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
+cl::opt<bool> SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
 
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
