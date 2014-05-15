@@ -43,11 +43,6 @@ static cl::opt<cl::boolOrDefault>
 EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
-static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
-    cl::desc("Show encoding in .s output"));
-static cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
-    cl::desc("Show instruction structure in .s output"));
-
 static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
@@ -186,17 +181,14 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = nullptr;
-    if (ShowMCEncoding)
+    if (Options.MCOptions.ShowMCEncoding)
       MCE = getTarget().createMCCodeEmitter(MII, MRI, STI, *Context);
 
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                        TargetCPU);
-    MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
-                                                  getVerboseAsm(),
-                                                  hasMCUseDwarfDirectory(),
-                                                  InstPrinter,
-                                                  MCE, MAB,
-                                                  ShowMCInst);
+    MCStreamer *S = getTarget().createAsmStreamer(
+        *Context, Out, getVerboseAsm(), hasMCUseDwarfDirectory(), InstPrinter,
+        MCE, MAB, Options.MCOptions.ShowMCInst);
     AsmStreamer.reset(S);
     break;
   }

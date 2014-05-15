@@ -42,6 +42,11 @@ cl::opt<bool> NoExecStack("mc-no-exec-stack",
 
 cl::opt<bool> SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
 
+cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
+                             cl::desc("Show encoding in .s output"));
+cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
+                         cl::desc("Show instruction structure in .s output"));
+
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
@@ -50,6 +55,8 @@ static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   Options.MCUseDwarfDirectory = EnableDwarfDirectory;
   Options.MCNoExecStack = NoExecStack;
   Options.MCSaveTempLabels = SaveTempLabels;
+  Options.ShowMCEncoding = ShowMCEncoding;
+  Options.ShowMCInst = ShowMCInst;
   return Options;
 }
 

@@ -26,7 +26,8 @@ public:
   unsigned MCNoExecStack : 1;
   unsigned MCSaveTempLabels : 1;
   unsigned MCUseDwarfDirectory : 1;
-
+  unsigned ShowMCEncoding : 1;
+  unsigned ShowMCInst : 1;
   MCTargetOptions();
 };
 
@@ -36,7 +37,9 @@ inline bool operator==(const MCTargetOptions &LHS, const MCTargetOptions &RHS) {
           ARE_EQUAL(MCRelaxAll) &&
           ARE_EQUAL(MCNoExecStack) &&
           ARE_EQUAL(MCSaveTempLabels) &&
-          ARE_EQUAL(MCUseDwarfDirectory));
+          ARE_EQUAL(MCUseDwarfDirectory) &&
+          ARE_EQUAL(ShowMCEncoding) &&
+          ARE_EQUAL(ShowMCInst));
 #undef ARE_EQUAL
 }
 
