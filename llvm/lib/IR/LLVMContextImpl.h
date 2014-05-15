@@ -40,7 +40,6 @@ class ConstantFP;
 class LLVMContext;
 class Type;
 class Value;
-struct PassRunListener;
 
 struct DenseMapAPIntKeyInfo {
   struct KeyTy {
@@ -369,26 +368,13 @@ public:
   typedef DenseMap<const Function *, ReturnInst *> PrefixDataMapTy;
   PrefixDataMapTy PrefixDataMap;
 
-  /// \brief List of listeners to notify about a pass run.
-  SmallVector<PassRunListener *, 4> RunListeners;
-
   /// \brief Return true if the given pass name should emit optimization
   /// remarks.
   bool optimizationRemarksEnabledFor(const char *PassName) const;
 
   int getOrAddScopeRecordIdxEntry(MDNode *N, int ExistingIdx);
   int getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,int ExistingIdx);
-
-  /// \brief Notify that we finished running a pass.
-  void notifyPassRun(LLVMContext *, Pass *, Module *, Function *, BasicBlock *);
-  /// \brief Register the given PassRunListener to receive notifyPassRun()
-  /// callbacks whenever a pass ran. The context will take ownership of the
-  /// listener and free it when the context is destroyed.
-  void addRunListener(PassRunListener *);
-  /// \brief Unregister a PassRunListener so that it no longer receives
-  /// notifyPassRun() callbacks. Remove and free the listener from the context.
-  void removeRunListener(PassRunListener *);
-
+  
   LLVMContextImpl(LLVMContext &C);
   ~LLVMContextImpl();
 };
