@@ -641,15 +641,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                         : CastExpr;
     ParsedType CastTy;
     SourceLocation RParenLoc;
-    
-    {
-      // The inside of the parens don't need to be a colon protected scope, and
-      // isn't immediately a message send.
-      ColonProtectionRAIIObject X(*this, false);
-
-      Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
-                                 isTypeCast == IsTypeCast, CastTy, RParenLoc);
-    }
+    Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
+                               isTypeCast == IsTypeCast, CastTy, RParenLoc);
 
     switch (ParenExprType) {
     case SimpleExpr:   break;    // Nothing else to do.
@@ -1928,6 +1921,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                              bool isTypeCast, ParsedType &CastTy,
                              SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
+  ColonProtectionRAIIObject ColonProtection(*this, false);
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen())
     return ExprError();
@@ -2003,6 +1997,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
              
     TypeResult Ty = ParseTypeName();
     T.consumeClose();
+    ColonProtection.restore();
     RParenLoc = T.getCloseLocation();
     ExprResult SubExpr = ParseCastExpression(/*isUnaryExpression=*/false);
     
@@ -2023,7 +2018,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     // if stopIfCastExpr is false, we need to determine the context past the
     // parens, so we defer to ParseCXXAmbiguousParenExpression for that.
     if (isAmbiguousTypeId && !stopIfCastExpr) {
-      ExprResult res = ParseCXXAmbiguousParenExpression(ExprType, CastTy, T);
+      ExprResult res = ParseCXXAmbiguousParenExpression(ExprType, CastTy, T,
+                                                        ColonProtection);
       RParenLoc = T.getCloseLocation();
       return res;
     }
@@ -2051,6 +2047,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     } else {          
       // Match the ')'.
       T.consumeClose();
+      ColonProtection.restore();
       RParenLoc = T.getCloseLocation();
       if (Tok.is(tok::l_brace)) {
         ExprType = CompoundLiteral;

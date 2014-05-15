@@ -90,5 +90,16 @@ void test3() {
               // expected-error {{expected unqualified-id}}
 }
 
+// Ensure that a C-style cast doesn't turn off colon protection.
+void PR19748() {
+  struct A {};
+  int A = 0, b;
+  int test1 = true ? (int)A : b;
+
+  struct f {};
+  extern B f(), (*p)();
+  (true ? (B(*)())f : p)();
+}
+
 // PR13619. Must be at end of file.
 int n = reinterpret_cast // expected-error {{expected '<'}} expected-error {{expected ';'}}
