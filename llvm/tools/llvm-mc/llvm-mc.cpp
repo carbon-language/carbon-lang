@@ -65,12 +65,6 @@ static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
 
-static cl::opt<bool>
-RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
-
-static cl::opt<bool>
-NoExecStack("mc-no-exec-stack", cl::desc("File doesn't need an exec stack"));
-
 enum OutputFileType {
   OFT_Null,
   OFT_AssemblyFile,
@@ -146,9 +140,6 @@ CMModel("code-model",
 static cl::opt<bool>
 NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
                                    "in the text section"));
-
-static cl::opt<bool>
-SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
 
 static cl::opt<bool>
 GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "

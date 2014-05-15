@@ -287,9 +287,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
   assert(mod && "Should have exited if we didn't have a module!");
   TargetMachine &Target = *target.get();
 
-  if (EnableDwarfDirectory)
-    Target.setMCUseDwarfDirectory(true);
-
   if (GenerateSoftFloatCalls)
     FloatABIForCalls = FloatABI::Soft;
 
@@ -315,13 +312,10 @@ static int compileModule(char **argv, LLVMContext &Context) {
   // Override default to generate verbose assembly.
   Target.setAsmVerbosityDefault(true);
 
-  if (RelaxAll) {
-    if (FileType != TargetMachine::CGFT_ObjectFile)
-      errs() << argv[0]
+  if (RelaxAll.getNumOccurrences() > 0 &&
+      FileType != TargetMachine::CGFT_ObjectFile)
+    errs() << argv[0]
              << ": warning: ignoring -mc-relax-all because filetype != obj";
-    else
-      Target.setMCRelaxAll(true);
-  }
 
   {
     formatted_raw_ostream FOS(Out->os());

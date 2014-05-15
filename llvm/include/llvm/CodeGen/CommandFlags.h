@@ -70,11 +70,6 @@ CMModel("code-model",
                               "Large code model"),
                    clEnumValEnd));
 
-cl::opt<bool>
-RelaxAll("mc-relax-all",
-         cl::desc("When used with filetype=obj, "
-                  "relax all fixups in the emitted object file"));
-
 cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
   cl::desc("Choose a file type (not all types are supported by all targets):"),
@@ -86,9 +81,6 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
              clEnumValN(TargetMachine::CGFT_Null, "null",
                         "Emit nothing, for performance testing"),
              clEnumValEnd));
-
-cl::opt<bool> EnableDwarfDirectory("enable-dwarf-directory", cl::Hidden,
-                  cl::desc("Use .file directives with an explicit directory."));
 
 cl::opt<bool>
 DisableRedZone("disable-red-zone",
