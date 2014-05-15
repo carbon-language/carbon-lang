@@ -48,7 +48,7 @@ public:
     OpenMPDirectiveKind DKind;
     OpenMPClauseKind CKind;
     DeclRefExpr *RefExpr;
-    DSAVarData() : DKind(OMPD_unknown), CKind(OMPC_unknown), RefExpr(0) { }
+    DSAVarData() : DKind(OMPD_unknown), CKind(OMPC_unknown), RefExpr(nullptr) {}
   };
 private:
   struct DSAInfo {
@@ -63,15 +63,13 @@ private:
     OpenMPDirectiveKind Directive;
     DeclarationNameInfo DirectiveName;
     Scope *CurScope;
-    SharingMapTy(OpenMPDirectiveKind DKind,
-                 const DeclarationNameInfo &Name,
+    SharingMapTy(OpenMPDirectiveKind DKind, const DeclarationNameInfo &Name,
                  Scope *CurScope)
-      : SharingMap(), DefaultAttr(DSA_unspecified), Directive(DKind),
-        DirectiveName(Name), CurScope(CurScope) { }
+        : SharingMap(), DefaultAttr(DSA_unspecified), Directive(DKind),
+          DirectiveName(Name), CurScope(CurScope) {}
     SharingMapTy()
-      : SharingMap(), DefaultAttr(DSA_unspecified),
-        Directive(OMPD_unknown), DirectiveName(),
-        CurScope(0) { }
+        : SharingMap(), DefaultAttr(DSA_unspecified), Directive(OMPD_unknown),
+          DirectiveName(), CurScope(nullptr) {}
   };
 
   typedef SmallVector<SharingMapTy, 64> StackTy;
@@ -220,7 +218,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
         //  firstprivate.
         DVarTemp = getDSA(I, D);
         if (DVarTemp.CKind != OMPC_shared) {
-          DVar.RefExpr = 0;
+          DVar.RefExpr = nullptr;
           DVar.DKind = OMPD_task;
           DVar.CKind = OMPC_firstprivate;
           return DVar;
@@ -256,12 +254,12 @@ bool
 DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
   if (Stack.size() > 2) {
     reverse_iterator I = Iter, E = Stack.rend() - 1;
-    Scope *TopScope = 0;
+    Scope *TopScope = nullptr;
     while (I != E && I->Directive != OMPD_parallel) {
       ++I;
     }
     if (I == E) return false;
-    TopScope = I->CurScope ? I->CurScope->getParent() : 0;
+    TopScope = I->CurScope ? I->CurScope->getParent() : nullptr;
     Scope *CurScope = getCurScope();
     while (CurScope != TopScope && !CurScope->isDeclScope(D)) {
       CurScope = CurScope->getParent();
@@ -325,8 +323,8 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
   // in a Construct, C/C++, predetermined, p.6]
   //  Variables with const qualified type having no mutable member are
   //  shared.
-  CXXRecordDecl *RD = Actions.getLangOpts().CPlusPlus ?
-                                Type->getAsCXXRecordDecl() : 0;
+  CXXRecordDecl *RD =
+      Actions.getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
   if (IsConstant &&
       !(Actions.getLangOpts().CPlusPlus && RD && RD->hasMutableFields())) {
     // Variables with const-qualified type having no mutable member may be
@@ -429,12 +427,14 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
   VarDecl *VD;
   if (!Lookup.isSingleResult()) {
     VarDeclFilterCCC Validator(*this);
-    if (TypoCorrection Corrected = CorrectTypo(Id, LookupOrdinaryName, CurScope,
-                                               0, Validator, CTK_ErrorRecovery)) {
+    if (TypoCorrection Corrected =
+            CorrectTypo(Id, LookupOrdinaryName, CurScope, nullptr, Validator,
+                        CTK_ErrorRecovery)) {
       diagnoseTypo(Corrected,
-                   PDiag(Lookup.empty()? diag::err_undeclared_var_use_suggest
-                                       : diag::err_omp_expected_var_arg_suggest)
-                     << Id.getName());
+                   PDiag(Lookup.empty()
+                             ? diag::err_undeclared_var_use_suggest
+                             : diag::err_omp_expected_var_arg_suggest)
+                       << Id.getName());
       VD = Corrected.getCorrectionDeclAs<VarDecl>();
     } else {
       Diag(Id.getLoc(), Lookup.empty() ? diag::err_undeclared_var_use
@@ -591,7 +591,7 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
     Vars.push_back(*I);
     DSAStack->addDSA(VD, DE, OMPC_threadprivate);
   }
-  OMPThreadPrivateDecl *D = 0;
+  OMPThreadPrivateDecl *D = nullptr;
   if (!Vars.empty()) {
     D = OMPThreadPrivateDecl::Create(Context, getCurLexicalContext(), Loc,
                                      Vars);
@@ -798,7 +798,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                              SourceLocation StartLoc,
                                              SourceLocation LParenLoc,
                                              SourceLocation EndLoc) {
-  OMPClause *Res = 0;
+  OMPClause *Res = nullptr;
   switch (Kind) {
   case OMPC_if:
     Res = ActOnOpenMPIfClause(Expr, StartLoc, LParenLoc, EndLoc);
@@ -835,7 +835,7 @@ OMPClause *Sema::ActOnOpenMPIfClause(Expr *Condition,
                                            Condition->getExprLoc(),
                                            Condition);
     if (Val.isInvalid())
-      return 0;
+      return nullptr;
 
     ValExpr = Val.take();
   }
@@ -899,7 +899,7 @@ OMPClause *Sema::ActOnOpenMPNumThreadsClause(Expr *NumThreads,
     ExprResult Val =
         PerformImplicitIntegerConversion(NumThreadsLoc, NumThreads);
     if (Val.isInvalid())
-      return 0;
+      return nullptr;
 
     ValExpr = Val.take();
 
@@ -910,7 +910,7 @@ OMPClause *Sema::ActOnOpenMPNumThreadsClause(Expr *NumThreads,
         Result.isSigned() && !Result.isStrictlyPositive()) {
       Diag(NumThreadsLoc, diag::err_omp_negative_expression_in_clause)
           << "num_threads" << NumThreads->getSourceRange();
-      return 0;
+      return nullptr;
     }
   }
 
@@ -945,7 +945,7 @@ OMPClause *Sema::ActOnOpenMPSafelenClause(Expr *Len, SourceLocation StartLoc,
   // positive integer expression.
   ExprResult Safelen = VerifyPositiveIntegerConstantInClause(Len, OMPC_safelen);
   if (Safelen.isInvalid())
-    return 0;
+    return nullptr;
   return new (Context)
       OMPSafelenClause(Safelen.take(), StartLoc, LParenLoc, EndLoc);
 }
@@ -956,7 +956,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
                                          SourceLocation StartLoc,
                                          SourceLocation LParenLoc,
                                          SourceLocation EndLoc) {
-  OMPClause *Res = 0;
+  OMPClause *Res = nullptr;
   switch (Kind) {
   case OMPC_default:
     Res =
@@ -1010,7 +1010,7 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
     }
     Diag(KindKwLoc, diag::err_omp_unexpected_clause_value)
       << Values << getOpenMPClauseName(OMPC_default);
-    return 0;
+    return nullptr;
   }
   switch (Kind) {
   case OMPC_DEFAULT_none:
@@ -1052,7 +1052,7 @@ OMPClause *Sema::ActOnOpenMPProcBindClause(OpenMPProcBindClauseKind Kind,
     }
     Diag(KindKwLoc, diag::err_omp_unexpected_clause_value)
       << Values << getOpenMPClauseName(OMPC_proc_bind);
-    return 0;
+    return nullptr;
   }
   return new (Context) OMPProcBindClause(Kind, KindKwLoc, StartLoc, LParenLoc,
                                          EndLoc);
@@ -1065,7 +1065,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
                                           SourceLocation LParenLoc,
                                           SourceLocation ColonLoc,
                                           SourceLocation EndLoc) {
-  OMPClause *Res = 0;
+  OMPClause *Res = nullptr;
   switch (Kind) {
   case OMPC_private:
     Res = ActOnOpenMPPrivateClause(VarList, StartLoc, LParenLoc, EndLoc);
@@ -1156,8 +1156,9 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
       Type = cast<ArrayType>(
                  Type.getNonReferenceType().getTypePtr())->getElementType();
     }
-    CXXRecordDecl *RD = getLangOpts().CPlusPlus ?
-                          Type.getNonReferenceType()->getAsCXXRecordDecl() : 0;
+    CXXRecordDecl *RD = getLangOpts().CPlusPlus
+                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
+                            : nullptr;
     if (RD) {
       CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
       PartialDiagnostic PD =
@@ -1223,7 +1224,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     Vars.push_back(DE);
   }
 
-  if (Vars.empty()) return 0;
+  if (Vars.empty()) return nullptr;
 
   return OMPPrivateClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
@@ -1286,8 +1287,9 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     //  clause requires an accesible, unambiguous copy constructor for the
     //  class type.
     Type = Context.getBaseElementType(Type);
-    CXXRecordDecl *RD = getLangOpts().CPlusPlus ?
-                          Type.getNonReferenceType()->getAsCXXRecordDecl() : 0;
+    CXXRecordDecl *RD = getLangOpts().CPlusPlus
+                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
+                            : nullptr;
     if (RD) {
       CXXConstructorDecl *CD = LookupCopyingConstructor(RD, 0);
       PartialDiagnostic PD =
@@ -1393,7 +1395,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     Vars.push_back(DE);
   }
 
-  if (Vars.empty()) return 0;
+  if (Vars.empty()) return nullptr;
 
   return OMPFirstprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
                                        Vars);
@@ -1457,7 +1459,7 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
     Vars.push_back(DE);
   }
 
-  if (Vars.empty()) return 0;
+  if (Vars.empty()) return nullptr;
 
   return OMPSharedClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
@@ -1566,7 +1568,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
   }
 
   if (Vars.empty())
-    return 0;
+    return nullptr;
 
   Expr *StepExpr = Step;
   if (Step && !Step->isValueDependent() && !Step->isTypeDependent() &&
@@ -1575,7 +1577,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
     SourceLocation StepLoc = Step->getLocStart();
     ExprResult Val = PerformImplicitIntegerConversion(StepLoc, Step);
     if (Val.isInvalid())
-      return 0;
+      return nullptr;
     StepExpr = Val.take();
 
     // Warn about zero linear step (it would be probably better specified as
@@ -1641,8 +1643,8 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
     //  copyin clause requires an accesible, unambiguous copy assignment
     //  operator for the class type.
     Type = Context.getBaseElementType(Type);
-    CXXRecordDecl *RD = getLangOpts().CPlusPlus ?
-                          Type->getAsCXXRecordDecl() : 0;
+    CXXRecordDecl *RD =
+        getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
     if (RD) {
       CXXMethodDecl *MD = LookupCopyingAssignment(RD, 0, false, 0);
       DeclAccessPair FoundDecl = DeclAccessPair::make(MD, MD->getAccess());
@@ -1666,7 +1668,7 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
     Vars.push_back(DE);
   }
 
-  if (Vars.empty()) return 0;
+  if (Vars.empty()) return nullptr;
 
   return OMPCopyinClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
