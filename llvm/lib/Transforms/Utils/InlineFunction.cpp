@@ -529,13 +529,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       CalledFunc->isDeclaration() || // call, or call to a vararg function!
       CalledFunc->getFunctionType()->isVarArg()) return false;
 
-  // If the call to the callee is not a tail call, we must clear the 'tail'
-  // flags on any calls that we inline.
-  CallInst::TailCallKind CallSiteTailKind = CallInst::TCK_None;
-  if (CallInst *CI = dyn_cast<CallInst>(TheCall))
-    CallSiteTailKind = CI->getTailCallKind();
-  bool MustClearTailCallFlags = false;
-
   // If the call to the callee cannot throw, set the 'nounwind' flag on any
   // calls that we inline.
   bool MarkNoUnwind = CS.doesNotThrow();
@@ -693,6 +686,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
   bool InlinedMustTailCalls = false;
   if (InlinedFunctionInfo.ContainsCalls) {
+    CallInst::TailCallKind CallSiteTailKind = CallInst::TCK_None;
+    if (CallInst *CI = dyn_cast<CallInst>(TheCall))
+      CallSiteTailKind = CI->getTailCallKind();
+
     for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E;
          ++BB) {
       for (Instruction &I : *BB) {
