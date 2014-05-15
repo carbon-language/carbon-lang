@@ -2616,7 +2616,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       IP = IP->getNextNode();
       AI = new llvm::AllocaInst(ArgStruct, "argmem", IP);
     } else {
-      AI = Builder.CreateAlloca(ArgStruct, nullptr, "argmem");
+      AI = CreateTempAlloca(ArgStruct, "argmem");
     }
     AI->setUsedWithInAlloca(true);
     assert(AI->isUsedWithInAlloca() && !AI->isStaticAlloca());
