@@ -1134,9 +1134,9 @@ void ARMELFStreamer::emitFnEnd() {
     // the second word of exception index table entry.  The size of the unwind
     // opcodes should always be 4 bytes.
     assert(PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0 &&
-           "Compact model must use __aeabi_cpp_unwind_pr0 as personality");
+           "Compact model must use __aeabi_unwind_cpp_pr0 as personality");
     assert(Opcodes.size() == 4u &&
-           "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
+           "Unwind opcode size for __aeabi_unwind_cpp_pr0 must be equal to 4");
     uint64_t Intval = Opcodes[0] |
                       Opcodes[1] << 8 |
                       Opcodes[2] << 16 |
