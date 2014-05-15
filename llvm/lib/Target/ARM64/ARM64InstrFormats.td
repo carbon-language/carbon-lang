@@ -91,11 +91,13 @@ def MovImm32ShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "MovImm32Shifter";
   let RenderMethod = "addShifterOperands";
+  let DiagnosticType = "InvalidMovImm32Shift";
 }
 def MovImm64ShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "MovImm64Shifter";
   let RenderMethod = "addShifterOperands";
+  let DiagnosticType = "InvalidMovImm64Shift";
 }
 
 // Shifter operand for arithmetic register shifted encodings.
@@ -237,15 +239,6 @@ def SImm7s16Operand : AsmOperandClass {
 def simm7s16 : Operand<i32> {
   let ParserMatchClass = SImm7s16Operand;
   let PrintMethod = "printImmScale<16>";
-}
-
-// imm0_65535 predicate - True if the immediate is in the range [0,65535].
-def Imm0_65535Operand : AsmOperandClass { let Name = "Imm0_65535"; }
-def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
-  return ((uint32_t)Imm) < 65536;
-}]> {
-  let ParserMatchClass = Imm0_65535Operand;
-  let PrintMethod = "printHexImm";
 }
 
 class AsmImmRange<int Low, int High> : AsmOperandClass {
@@ -469,6 +462,15 @@ def logical_imm64 : Operand<i64>, PatLeaf<(imm), [{
   let ParserMatchClass = LogicalImm64Operand;
 }
 
+// imm0_65535 predicate - True if the immediate is in the range [0,65535].
+def Imm0_65535Operand : AsmImmRange<0, 65535>;
+def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
+  return ((uint32_t)Imm) < 65536;
+}]> {
+  let ParserMatchClass = Imm0_65535Operand;
+  let PrintMethod = "printHexImm";
+}
+
 // imm0_255 predicate - True if the immediate is in the range [0,255].
 def Imm0_255Operand : AsmOperandClass { let Name = "Imm0_255"; }
 def imm0_255 : Operand<i32>, ImmLeaf<i32, [{
@@ -479,7 +481,7 @@ def imm0_255 : Operand<i32>, ImmLeaf<i32, [{
 }
 
 // imm0_127 predicate - True if the immediate is in the range [0,127]
-def Imm0_127Operand : AsmOperandClass { let Name = "Imm0_127"; }
+def Imm0_127Operand : AsmImmRange<0, 127>;
 def imm0_127 : Operand<i32>, ImmLeaf<i32, [{
   return ((uint32_t)Imm) < 128;
 }]> {
@@ -909,6 +911,7 @@ def dotCcode : Operand<i32> {
 // offset are implied zero and so are not part of the immediate.
 def PCRelLabel19Operand : AsmOperandClass {
   let Name = "PCRelLabel19";
+  let DiagnosticType = "InvalidLabel";
 }
 def am_brcond : Operand<OtherVT> {
   let EncoderMethod = "getCondBranchTargetOpValue";

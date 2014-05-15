@@ -3685,6 +3685,10 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
       "expected compatible register, symbol or integer in range [0, 4095]");
   case Match_LogicalSecondSource:
     return Error(Loc, "expected compatible register or logical immediate");
+  case Match_InvalidMovImm32Shift:
+    return Error(Loc, "expected 'lsl' with optional integer 0 or 16");
+  case Match_InvalidMovImm64Shift:
+    return Error(Loc, "expected 'lsl' with optional integer 0, 16, 32 or 48");
   case Match_AddSubRegShift32:
     return Error(Loc,
        "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]");
@@ -3719,6 +3723,10 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "immediate must be an integer in range [0, 31].");
   case Match_InvalidImm0_63:
     return Error(Loc, "immediate must be an integer in range [0, 63].");
+  case Match_InvalidImm0_127:
+    return Error(Loc, "immediate must be an integer in range [0, 127].");
+  case Match_InvalidImm0_65535:
+    return Error(Loc, "immediate must be an integer in range [0, 65535].");
   case Match_InvalidImm1_8:
     return Error(Loc, "immediate must be an integer in range [1, 8].");
   case Match_InvalidImm1_16:
@@ -4142,6 +4150,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_LogicalSecondSource:
   case Match_AddSubRegShift32:
   case Match_AddSubRegShift64:
+  case Match_InvalidMovImm32Shift:
+  case Match_InvalidMovImm64Shift:
   case Match_InvalidMemoryIndexed8:
   case Match_InvalidMemoryIndexed16:
   case Match_InvalidMemoryIndexed32SImm7:
@@ -4151,6 +4161,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm0_15:
   case Match_InvalidImm0_31:
   case Match_InvalidImm0_63:
+  case Match_InvalidImm0_127:
+  case Match_InvalidImm0_65535:
   case Match_InvalidImm1_8:
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:
