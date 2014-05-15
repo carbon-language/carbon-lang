@@ -536,6 +536,23 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
   return false;
 }
 
+unsigned CodeGenInstAlias::ResultOperand::getMINumOperands() const {
+  if (!isRecord())
+    return 1;
+
+  Record *Rec = getRecord();
+  if (!Rec->isSubClassOf("Operand"))
+    return 1;
+
+  DagInit *MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
+  if (MIOpInfo->getNumArgs() == 0) {
+    // Unspecified, so it defaults to 1
+    return 1;
+  }
+
+  return MIOpInfo->getNumArgs();
+}
+
 CodeGenInstAlias::CodeGenInstAlias(Record *R, unsigned Variant,
                                    CodeGenTarget &T)
     : TheDef(R) {

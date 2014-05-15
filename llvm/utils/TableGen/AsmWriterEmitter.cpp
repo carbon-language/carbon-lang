@@ -827,12 +827,17 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       IAPrinter *IAP = new IAPrinter(CGA->Result->getAsString(),
                                      CGA->AsmString);
 
+      unsigned NumMIOps = 0;
+      for (auto &Operand : CGA->ResultOperands)
+        NumMIOps += Operand.getMINumOperands();
+
       std::string Cond;
-      Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(LastOpNo);
+      Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(NumMIOps);
       IAP->addCond(Cond);
 
       bool CantHandle = false;
 
+      unsigned MIOpNum = 0;
       for (unsigned i = 0, e = LastOpNo; i != e; ++i) {
         const CodeGenInstAlias::ResultOperand &RO = CGA->ResultOperands[i];
 
@@ -860,34 +865,36 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
           if (Rec->isSubClassOf("RegisterOperand"))
             Rec = Rec->getValueAsDef("RegClass");
           if (Rec->isSubClassOf("RegisterClass")) {
-            Cond = std::string("MI->getOperand(")+llvm::utostr(i)+").isReg()";
+            Cond = std::string("MI->getOperand(") + llvm::utostr(MIOpNum) +
+                   ").isReg()";
             IAP->addCond(Cond);
 
             if (!IAP->isOpMapped(ROName)) {
-              IAP->addOperand(ROName, i, PrintMethodIdx);
+              IAP->addOperand(ROName, MIOpNum, PrintMethodIdx);
               Record *R = CGA->ResultOperands[i].getRecord();
               if (R->isSubClassOf("RegisterOperand"))
                 R = R->getValueAsDef("RegClass");
               Cond = std::string("MRI.getRegClass(") + Target.getName() + "::" +
-                R->getName() + "RegClassID)"
-                ".contains(MI->getOperand(" + llvm::utostr(i) + ").getReg())";
+                     R->getName() + "RegClassID)"
+                                    ".contains(MI->getOperand(" +
+                     llvm::utostr(MIOpNum) + ").getReg())";
               IAP->addCond(Cond);
             } else {
               Cond = std::string("MI->getOperand(") +
-                llvm::utostr(i) + ").getReg() == MI->getOperand(" +
+                llvm::utostr(MIOpNum) + ").getReg() == MI->getOperand(" +
                 llvm::utostr(IAP->getOpIndex(ROName)) + ").getReg()";
               IAP->addCond(Cond);
             }
           } else {
             // Assume all printable operands are desired for now. This can be
             // overridden in the InstAlias instantiation if necessary.
-            IAP->addOperand(ROName, i, PrintMethodIdx);
+            IAP->addOperand(ROName, MIOpNum, PrintMethodIdx);
           }
 
           break;
         }
         case CodeGenInstAlias::ResultOperand::K_Imm: {
-          std::string Op = "MI->getOperand(" + llvm::utostr(i) + ")";
+          std::string Op = "MI->getOperand(" + llvm::utostr(MIOpNum) + ")";
 
           // Just because the alias has an immediate result, doesn't mean the
           // MCInst will. An MCExpr could be present, for example.
@@ -907,13 +914,14 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
           }
 
           Cond = std::string("MI->getOperand(") +
-            llvm::utostr(i) + ").getReg() == " + Target.getName() +
+            llvm::utostr(MIOpNum) + ").getReg() == " + Target.getName() +
             "::" + CGA->ResultOperands[i].getRegister()->getName();
           IAP->addCond(Cond);
           break;
         }
 
         if (!IAP) break;
+        MIOpNum += RO.getMINumOperands();
       }
 
       if (CantHandle) continue;

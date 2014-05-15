@@ -240,14 +240,6 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     printShiftedRegister(MI, 2, O);
     return;
   }
-  // SUBS WZR, Wn, #imm ==> CMP Wn, #imm
-  // SUBS XZR, Xn, #imm ==> CMP Xn, #imm
-  if ((Opcode == ARM64::SUBSWri && MI->getOperand(0).getReg() == ARM64::WZR) ||
-      (Opcode == ARM64::SUBSXri && MI->getOperand(0).getReg() == ARM64::XZR)) {
-    O << "\tcmp\t" << getRegisterName(MI->getOperand(1).getReg()) << ", ";
-    printAddSubImm(MI, 2, O);
-    return;
-  }
   // SUBS WZR, Wn, Wm{, lshift #imm} ==> CMP Wn, Wm{, lshift #imm}
   // SUBS XZR, Xn, Xm{, lshift #imm} ==> CMP Xn, Xm{, lshift #imm}
   if ((Opcode == ARM64::SUBSWrs && MI->getOperand(0).getReg() == ARM64::WZR) ||
@@ -272,14 +264,6 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  // ADDS WZR, Wn, #imm ==> CMN Wn, #imm
-  // ADDS XZR, Xn, #imm ==> CMN Xn, #imm
-  if ((Opcode == ARM64::ADDSWri && MI->getOperand(0).getReg() == ARM64::WZR) ||
-      (Opcode == ARM64::ADDSXri && MI->getOperand(0).getReg() == ARM64::XZR)) {
-    O << "\tcmn\t" << getRegisterName(MI->getOperand(1).getReg()) << ", ";
-    printAddSubImm(MI, 2, O);
-    return;
-  }
   // ADDS WZR, Wn, Wm{, lshift #imm} ==> CMN Wn, Wm{, lshift #imm}
   // ADDS XZR, Xn, Xm{, lshift #imm} ==> CMN Xn, Xm{, lshift #imm}
   if ((Opcode == ARM64::ADDSWrs && MI->getOperand(0).getReg() == ARM64::WZR) ||

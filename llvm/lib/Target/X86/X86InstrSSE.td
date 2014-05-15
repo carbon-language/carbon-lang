@@ -1561,9 +1561,9 @@ defm VCVTSI2SD64 : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sd{q}">,
 
 let Predicates = [UseAVX] in {
   def : InstAlias<"vcvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}",
-                (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src)>;
+                (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src), 0>;
   def : InstAlias<"vcvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src)>;
+                (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src), 0>;
 
   def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
             (VCVTSI2SSrm (f32 (IMPLICIT_DEF)), addr:$src)>;
@@ -1627,9 +1627,9 @@ def : InstAlias<"cvttsd2si{q}\t{$src, $dst|$dst, $src}",
                 (CVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
 
 def : InstAlias<"cvtsi2ss\t{$src, $dst|$dst, $src}",
-                (CVTSI2SSrm FR64:$dst, i32mem:$src)>;
+                (CVTSI2SSrm FR64:$dst, i32mem:$src), 0>;
 def : InstAlias<"cvtsi2sd\t{$src, $dst|$dst, $src}",
-                (CVTSI2SDrm FR64:$dst, i32mem:$src)>;
+                (CVTSI2SDrm FR64:$dst, i32mem:$src), 0>;
 
 // Conversion Instructions Intrinsics - Match intrinsics which expect MM
 // and/or XMM operand(s).

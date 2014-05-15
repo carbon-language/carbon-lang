@@ -324,6 +324,8 @@ namespace llvm {
       Record *getRecord() const { assert(isRecord()); return R; }
       int64_t getImm() const { assert(isImm()); return Imm; }
       Record *getRegister() const { assert(isReg()); return R; }
+
+      unsigned getMINumOperands() const;
     };
 
     /// ResultOperands - The decoded operands for the result instruction.

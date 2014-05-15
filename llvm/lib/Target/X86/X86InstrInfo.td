@@ -2638,21 +2638,21 @@ def : InstAlias<"fnstsw"     , (FNSTSW16r)>;
 
 // lcall and ljmp aliases.  This seems to be an odd mapping in 64-bit mode, but
 // this is compatible with what GAS does.
-def : InstAlias<"lcall $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg)>, Requires<[Not16BitMode]>;
-def : InstAlias<"ljmp $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg)>, Requires<[Not16BitMode]>;
-def : InstAlias<"lcall *$dst",      (FARCALL32m opaque48mem:$dst)>, Requires<[Not16BitMode]>;
-def : InstAlias<"ljmp *$dst",       (FARJMP32m  opaque48mem:$dst)>, Requires<[Not16BitMode]>;
-def : InstAlias<"lcall $seg, $off", (FARCALL16i i16imm:$off, i16imm:$seg)>, Requires<[In16BitMode]>;
-def : InstAlias<"ljmp $seg, $off",  (FARJMP16i  i16imm:$off, i16imm:$seg)>, Requires<[In16BitMode]>;
-def : InstAlias<"lcall *$dst",      (FARCALL16m opaque32mem:$dst)>, Requires<[In16BitMode]>;
-def : InstAlias<"ljmp *$dst",       (FARJMP16m  opaque32mem:$dst)>, Requires<[In16BitMode]>;
+def : InstAlias<"lcall $seg, $off", (FARCALL32i i32imm:$off, i16imm:$seg), 0>, Requires<[Not16BitMode]>;
+def : InstAlias<"ljmp $seg, $off",  (FARJMP32i  i32imm:$off, i16imm:$seg), 0>, Requires<[Not16BitMode]>;
+def : InstAlias<"lcall *$dst",      (FARCALL32m opaque48mem:$dst), 0>, Requires<[Not16BitMode]>;
+def : InstAlias<"ljmp *$dst",       (FARJMP32m  opaque48mem:$dst), 0>, Requires<[Not16BitMode]>;
+def : InstAlias<"lcall $seg, $off", (FARCALL16i i16imm:$off, i16imm:$seg), 0>, Requires<[In16BitMode]>;
+def : InstAlias<"ljmp $seg, $off",  (FARJMP16i  i16imm:$off, i16imm:$seg), 0>, Requires<[In16BitMode]>;
+def : InstAlias<"lcall *$dst",      (FARCALL16m opaque32mem:$dst), 0>, Requires<[In16BitMode]>;
+def : InstAlias<"ljmp *$dst",       (FARJMP16m  opaque32mem:$dst), 0>, Requires<[In16BitMode]>;
 
-def : InstAlias<"call *$dst",       (CALL64m i16mem:$dst)>, Requires<[In64BitMode]>;
-def : InstAlias<"jmp *$dst",        (JMP64m  i16mem:$dst)>, Requires<[In64BitMode]>;
-def : InstAlias<"call *$dst",       (CALL32m i16mem:$dst)>, Requires<[In32BitMode]>;
-def : InstAlias<"jmp *$dst",        (JMP32m  i16mem:$dst)>, Requires<[In32BitMode]>;
-def : InstAlias<"call *$dst",       (CALL16m i16mem:$dst)>, Requires<[In16BitMode]>;
-def : InstAlias<"jmp *$dst",        (JMP16m  i16mem:$dst)>, Requires<[In16BitMode]>;
+def : InstAlias<"call *$dst",       (CALL64m i16mem:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"jmp *$dst",        (JMP64m  i16mem:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"call *$dst",       (CALL32m i16mem:$dst), 0>, Requires<[In32BitMode]>;
+def : InstAlias<"jmp *$dst",        (JMP32m  i16mem:$dst), 0>, Requires<[In32BitMode]>;
+def : InstAlias<"call *$dst",       (CALL16m i16mem:$dst), 0>, Requires<[In16BitMode]>;
+def : InstAlias<"jmp *$dst",        (JMP16m  i16mem:$dst), 0>, Requires<[In16BitMode]>;
 
 
 // "imul <imm>, B" is an alias for "imul <imm>, B, B".
@@ -2726,7 +2726,7 @@ def : InstAlias<"outl\t$port", (OUT32ir i8imm:$port), 0>;
 // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
 // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
 // errors, since its encoding is the most compact.
-def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem)>;
+def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem), 0>;
 
 // shld/shrd op,op -> shld op, op, CL
 def : InstAlias<"shld{w}\t{$r2, $r1|$r1, $r2}", (SHLD16rrCL GR16:$r1, GR16:$r2), 0>;
