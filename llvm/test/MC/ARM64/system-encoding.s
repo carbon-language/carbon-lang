@@ -52,7 +52,7 @@ foo:
 
 ; Check for error on invalid 'C' operand value.
   sys #2, c16, c5, #7
-; CHECK-ERRORS: invalid operand for instruction
+; CHECK-ERRORS: error: Expected cN operand where 0 <= N <= 15
 
 ;-----------------------------------------------------------------------------
 ; MSR/MRS instructions

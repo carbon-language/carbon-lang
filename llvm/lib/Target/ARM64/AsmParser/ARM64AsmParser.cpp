@@ -2108,80 +2108,31 @@ int ARM64AsmParser::tryMatchVectorRegister(StringRef &Kind, bool expected) {
   return -1;
 }
 
-static int MatchSysCRName(StringRef Name) {
-  // Use the same layout as the tablegen'erated register name matcher. Ugly,
-  // but efficient.
-  switch (Name.size()) {
-  default:
-    break;
-  case 2:
-    if (Name[0] != 'c' && Name[0] != 'C')
-      return -1;
-    switch (Name[1]) {
-    default:
-      return -1;
-    case '0':
-      return 0;
-    case '1':
-      return 1;
-    case '2':
-      return 2;
-    case '3':
-      return 3;
-    case '4':
-      return 4;
-    case '5':
-      return 5;
-    case '6':
-      return 6;
-    case '7':
-      return 7;
-    case '8':
-      return 8;
-    case '9':
-      return 9;
-    }
-    break;
-  case 3:
-    if ((Name[0] != 'c' && Name[0] != 'C') || Name[1] != '1')
-      return -1;
-    switch (Name[2]) {
-    default:
-      return -1;
-    case '0':
-      return 10;
-    case '1':
-      return 11;
-    case '2':
-      return 12;
-    case '3':
-      return 13;
-    case '4':
-      return 14;
-    case '5':
-      return 15;
-    }
-    break;
-  }
-
-  llvm_unreachable("Unhandled SysCR operand string!");
-  return -1;
-}
-
 /// tryParseSysCROperand - Try to parse a system instruction CR operand name.
 ARM64AsmParser::OperandMatchResultTy
 ARM64AsmParser::tryParseSysCROperand(OperandVector &Operands) {
   SMLoc S = getLoc();
-  const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
 
-  int Num = MatchSysCRName(Tok.getString());
-  if (Num == -1)
-    return MatchOperand_NoMatch;
+  if (Parser.getTok().isNot(AsmToken::Identifier)) {
+    Error(S, "Expected cN operand where 0 <= N <= 15");
+    return MatchOperand_ParseFail;
+  }
+
+  StringRef Tok = Parser.getTok().getIdentifier();
+  if (Tok[0] != 'c' && Tok[0] != 'C') {
+    Error(S, "Expected cN operand where 0 <= N <= 15");
+    return MatchOperand_ParseFail;
+  }
+
+  uint32_t CRNum;
+  bool BadNum = Tok.drop_front().getAsInteger(10, CRNum);
+  if (BadNum || CRNum > 15) {
+    Error(S, "Expected cN operand where 0 <= N <= 15");
+    return MatchOperand_ParseFail;
+  }
 
   Parser.Lex(); // Eat identifier token.
-  Operands.push_back(ARM64Operand::CreateSysCR(Num, S, getLoc(), getContext()));
+  Operands.push_back(ARM64Operand::CreateSysCR(CRNum, S, getLoc(), getContext()));
   return MatchOperand_Success;
 }
 
@@ -3471,8 +3422,12 @@ bool ARM64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
   StringRef Head = Name.slice(Start, Next);
 
   // IC, DC, AT, and TLBI instructions are aliases for the SYS instruction.
-  if (Head == "ic" || Head == "dc" || Head == "at" || Head == "tlbi")
-    return parseSysAlias(Head, NameLoc, Operands);
+  if (Head == "ic" || Head == "dc" || Head == "at" || Head == "tlbi") {
+    bool IsError = parseSysAlias(Head, NameLoc, Operands);
+    if (IsError && getLexer().isNot(AsmToken::EndOfStatement))
+      Parser.eatToEndOfStatement();
+    return IsError;
+  }
 
   Operands.push_back(
       ARM64Operand::CreateToken(Head, false, NameLoc, getContext()));
