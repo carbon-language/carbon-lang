@@ -16,24 +16,36 @@ namespace lld {
 namespace mach_o {
 class MachODefinedAtom : public SimpleDefinedAtom {
 public:
-  // FIXME: This constructor should also take the ContentType.
-  MachODefinedAtom(const File &f, const StringRef name,
-                   const ArrayRef<uint8_t> content, Scope scope)
-      : SimpleDefinedAtom(f), _name(name), _content(content), _scope(scope) {}
+  MachODefinedAtom(const File &f, const StringRef name, Scope scope,
+                   ContentType type, const ArrayRef<uint8_t> content)
+      : SimpleDefinedAtom(f), _name(name), _content(content),
+        _contentType(type), _scope(scope) {}
 
-  uint64_t size() const override { return rawContent().size(); }
+  // Constructor for zero-fill content
+  MachODefinedAtom(const File &f, const StringRef name, Scope scope,
+                   uint64_t size)
+      : SimpleDefinedAtom(f), _name(name),
+        _content(ArrayRef<uint8_t>(nullptr, size)),
+        _contentType(DefinedAtom::typeZeroFill), _scope(scope) {}
 
-  ContentType contentType() const override { return DefinedAtom::typeCode; }
+  uint64_t size() const override { return _content.size(); }
+
+  ContentType contentType() const override { return _contentType; }
 
   StringRef name() const override { return _name; }
 
   Scope scope() const override { return _scope; }
 
-  ArrayRef<uint8_t> rawContent() const override { return _content; }
+  ArrayRef<uint8_t> rawContent() const override {
+    // Zerofill atoms have a content pointer which is null.
+    assert(_content.data() != nullptr);
+    return _content;
+  }
 
 private:
   const StringRef _name;
   const ArrayRef<uint8_t> _content;
+  const ContentType _contentType;
   const Scope _scope;
 };
 

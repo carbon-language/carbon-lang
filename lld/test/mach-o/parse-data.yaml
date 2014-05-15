@@ -33,7 +33,7 @@ sections:
     attributes:      [  ]
     alignment:       2
     address:         0x0000000000000014
-    content:         [ 0x00, 0x00, 0x00, 0x00 ]
+    size:            4
 local-symbols:
   - name:            _s1
     type:            N_SECT
@@ -62,6 +62,11 @@ global-symbols:
 ...
 
 # CHECK: defined-atoms:
+
+# CHECK:   - name:            _s1
+# CHECK:     type:            zero-fill
+# CHECK:     size:            4
+
 # CHECK:   - name:            _a
 # CHECK:     scope:           global
 # CHECK:     content:         [ 01, 02, 03, 04, 05, 06, 07, 08 ]
@@ -73,9 +78,6 @@ global-symbols:
 # CHECK:   - name:            _c
 # CHECK:     scope:           global
 # CHECK:     content:         [ 21, 22, 23, 24 ]
-
-# CHECK:   - name:            _s1
-# CHECK:     content:         [ 00, 00, 00, 00 ]
 
 # CHECK:   - name:            _s2
 # CHECK:     content:         [ 31, 32, 33, 34 ]

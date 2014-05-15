@@ -21,15 +21,27 @@ class MachOFile : public SimpleFile {
 public:
   MachOFile(StringRef path) : SimpleFile(path) {}
 
-  void addDefinedAtom(StringRef name, ArrayRef<uint8_t> content,
-                      Atom::Scope scope, bool copyRefs) {
+  void addDefinedAtom(StringRef name, Atom::Scope scope,
+                      DefinedAtom::ContentType type,
+                      ArrayRef<uint8_t> content, bool copyRefs) {
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
       content = content.copy(_allocator);
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, content, scope);
+        new (_allocator) MachODefinedAtom(*this, name, scope, type, content);
+    addAtom(*atom);
+  }
+
+  void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope, uint64_t size,
+                              bool copyRefs) {
+    if (copyRefs) {
+      // Make a copy of the atom's name and content that is owned by this file.
+      name = name.copy(_allocator);
+    }
+    MachODefinedAtom *atom =
+        new (_allocator) MachODefinedAtom(*this, name, scope, size);
     addAtom(*atom);
   }
 

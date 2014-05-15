@@ -278,9 +278,19 @@ struct MappingTraits<Section> {
     io.mapOptional("attributes",      sect.attributes);
     io.mapOptional("alignment",       sect.alignment, 0U);
     io.mapRequired("address",         sect.address);
-    MappingNormalization<NormalizedContent, ArrayRef<uint8_t>> content(
+    if (sect.type == llvm::MachO::S_ZEROFILL) {
+      // S_ZEROFILL sections use "size:" instead of "content:"
+      uint64_t size = sect.content.size();
+      io.mapOptional("size",          size);
+      if (!io.outputting()) {
+        uint8_t *bytes = nullptr;
+        sect.content = makeArrayRef(bytes, size);
+      }
+    } else {
+      MappingNormalization<NormalizedContent, ArrayRef<uint8_t>> content(
         io, sect.content);
-    io.mapOptional("content",         content->_normalizedContent);
+      io.mapOptional("content",         content->_normalizedContent);
+    }
     io.mapOptional("relocations",     sect.relocations);
     io.mapOptional("indirect-syms",   sect.indirectSymbols);
   }
