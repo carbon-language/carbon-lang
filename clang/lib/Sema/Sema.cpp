@@ -1086,19 +1086,12 @@ void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
   // Issue any analysis-based warnings.
   if (WP && D)
     AnalysisWarnings.IssueWarnings(*WP, Scope, D, blkExpr);
-  else {
-    for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
-         i = Scope->PossiblyUnreachableDiags.begin(),
-         e = Scope->PossiblyUnreachableDiags.end();
-         i != e; ++i) {
-      const sema::PossiblyUnreachableDiag &D = *i;
-      Diag(D.Loc, D.PD);
-    }
-  }
+  else
+    for (const auto &PUD : Scope->PossiblyUnreachableDiags)
+      Diag(PUD.Loc, PUD.PD);
 
-  if (FunctionScopes.back() != Scope) {
+  if (FunctionScopes.back() != Scope)
     delete Scope;
-  }
 }
 
 void Sema::PushCompoundScope() {
