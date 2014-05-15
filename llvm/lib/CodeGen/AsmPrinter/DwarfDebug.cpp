@@ -1611,32 +1611,12 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   StringRef Dir;
   unsigned Src = 1;
   unsigned Discriminator = 0;
-  if (S) {
-    DIDescriptor Scope(S);
-
-    if (Scope.isCompileUnit()) {
-      DICompileUnit CU(S);
-      Fn = CU.getFilename();
-      Dir = CU.getDirectory();
-    } else if (Scope.isFile()) {
-      DIFile F(S);
-      Fn = F.getFilename();
-      Dir = F.getDirectory();
-    } else if (Scope.isSubprogram()) {
-      DISubprogram SP(S);
-      Fn = SP.getFilename();
-      Dir = SP.getDirectory();
-    } else if (Scope.isLexicalBlockFile()) {
-      DILexicalBlockFile DBF(S);
-      Fn = DBF.getFilename();
-      Dir = DBF.getDirectory();
-    } else if (Scope.isLexicalBlock()) {
-      DILexicalBlock DB(S);
-      Fn = DB.getFilename();
-      Dir = DB.getDirectory();
-      Discriminator = DB.getDiscriminator();
-    } else
-      llvm_unreachable("Unexpected scope info");
+  if (DIScope Scope = DIScope(S)) {
+    assert(Scope.isScope());
+    Fn = Scope.getFilename();
+    Dir = Scope.getDirectory();
+    if (Scope.isLexicalBlock())
+      Discriminator = DILexicalBlock(S).getDiscriminator();
 
     unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
     Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])
