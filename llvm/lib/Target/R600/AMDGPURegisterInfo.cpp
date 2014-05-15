@@ -54,7 +54,7 @@ unsigned AMDGPURegisterInfo::getSubRegFromChannel(unsigned Channel) const {
     AMDGPU::sub15
   };
 
-  assert (Channel < array_lengthof(SubRegs));
+  assert(Channel < array_lengthof(SubRegs));
   return SubRegs[Channel];
 }
 

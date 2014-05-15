@@ -179,8 +179,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     MVT::v8i32, MVT::v8f32, MVT::v16i32, MVT::v16f32
   };
 
-  const size_t NumVecTypes = array_lengthof(VecTypes);
-  for (unsigned Type = 0; Type < NumVecTypes; ++Type) {
+  for (MVT VT : VecTypes) {
     for (unsigned Op = 0; Op < ISD::BUILTIN_OP_END; ++Op) {
       switch(Op) {
       case ISD::LOAD:
@@ -194,7 +193,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
       case ISD::EXTRACT_SUBVECTOR:
         break;
       default:
-        setOperationAction(Op, VecTypes[Type], Expand);
+        setOperationAction(Op, VT, Expand);
         break;
       }
     }

@@ -39,61 +39,55 @@ using namespace llvm;
 // TargetLowering Class Implementation Begins
 //===----------------------------------------------------------------------===//
 void AMDGPUTargetLowering::InitAMDILLowering() {
-  static const int types[] = {
-    (int)MVT::i8,
-    (int)MVT::i16,
-    (int)MVT::i32,
-    (int)MVT::f32,
-    (int)MVT::f64,
-    (int)MVT::i64,
-    (int)MVT::v2i8,
-    (int)MVT::v4i8,
-    (int)MVT::v2i16,
-    (int)MVT::v4i16,
-    (int)MVT::v4f32,
-    (int)MVT::v4i32,
-    (int)MVT::v2f32,
-    (int)MVT::v2i32,
-    (int)MVT::v2f64,
-    (int)MVT::v2i64
+  static const MVT::SimpleValueType types[] = {
+    MVT::i8,
+    MVT::i16,
+    MVT::i32,
+    MVT::f32,
+    MVT::f64,
+    MVT::i64,
+    MVT::v2i8,
+    MVT::v4i8,
+    MVT::v2i16,
+    MVT::v4i16,
+    MVT::v4f32,
+    MVT::v4i32,
+    MVT::v2f32,
+    MVT::v2i32,
+    MVT::v2f64,
+    MVT::v2i64
   };
 
-  static const int IntTypes[] = {
-    (int)MVT::i8,
-    (int)MVT::i16,
-    (int)MVT::i32,
-    (int)MVT::i64
+  static const MVT::SimpleValueType IntTypes[] = {
+    MVT::i8,
+    MVT::i16,
+    MVT::i32,
+    MVT::i64
   };
 
-  static const int FloatTypes[] = {
-    (int)MVT::f32,
-    (int)MVT::f64
+  static const MVT::SimpleValueType FloatTypes[] = {
+    MVT::f32,
+    MVT::f64
   };
 
-  static const int VectorTypes[] = {
-    (int)MVT::v2i8,
-    (int)MVT::v4i8,
-    (int)MVT::v2i16,
-    (int)MVT::v4i16,
-    (int)MVT::v4f32,
-    (int)MVT::v4i32,
-    (int)MVT::v2f32,
-    (int)MVT::v2i32,
-    (int)MVT::v2f64,
-    (int)MVT::v2i64
+  static const MVT::SimpleValueType VectorTypes[] = {
+    MVT::v2i8,
+    MVT::v4i8,
+    MVT::v2i16,
+    MVT::v4i16,
+    MVT::v4f32,
+    MVT::v4i32,
+    MVT::v2f32,
+    MVT::v2i32,
+    MVT::v2f64,
+    MVT::v2i64
   };
-  const size_t NumTypes = array_lengthof(types);
-  const size_t NumFloatTypes = array_lengthof(FloatTypes);
-  const size_t NumIntTypes = array_lengthof(IntTypes);
-  const size_t NumVectorTypes = array_lengthof(VectorTypes);
 
   const AMDGPUSubtarget &STM = getTargetMachine().getSubtarget<AMDGPUSubtarget>();
   // These are the current register classes that are
   // supported
 
-  for (unsigned int x  = 0; x < NumTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)types[x];
-
+  for (MVT VT : types) {
     setOperationAction(ISD::SUBE, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADDE, VT, Expand);
@@ -109,9 +103,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
       setOperationAction(ISD::SDIV, VT, Custom);
     }
   }
-  for (unsigned int x = 0; x < NumFloatTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)FloatTypes[x];
-
+  for (MVT VT : FloatTypes) {
     // IL does not have these operations for floating point types
     setOperationAction(ISD::FP_ROUND_INREG, VT, Expand);
     setOperationAction(ISD::SETOLT, VT, Expand);
@@ -124,9 +116,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::SETULE, VT, Expand);
   }
 
-  for (unsigned int x = 0; x < NumIntTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)IntTypes[x];
-
+  for (MVT VT : IntTypes) {
     // GPU also does not have divrem function for signed or unsigned
     setOperationAction(ISD::SDIVREM, VT, Expand);
 
@@ -142,9 +132,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::CTLZ, VT, Expand);
   }
 
-  for (unsigned int ii = 0; ii < NumVectorTypes; ++ii) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)VectorTypes[ii];
-
+  for (MVT VT : VectorTypes) {
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);

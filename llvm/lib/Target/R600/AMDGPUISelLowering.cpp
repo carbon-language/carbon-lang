@@ -222,10 +222,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   static const MVT::SimpleValueType IntTypes[] = {
     MVT::v2i32, MVT::v4i32
   };
-  const size_t NumIntTypes = array_lengthof(IntTypes);
 
-  for (unsigned int x  = 0; x < NumIntTypes; ++x) {
-    MVT::SimpleValueType VT = IntTypes[x];
+  for (MVT VT : IntTypes) {
     //Expand the following operations for the current type by default
     setOperationAction(ISD::ADD,  VT, Expand);
     setOperationAction(ISD::AND,  VT, Expand);
@@ -249,10 +247,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   static const MVT::SimpleValueType FloatTypes[] = {
     MVT::v2f32, MVT::v4f32
   };
-  const size_t NumFloatTypes = array_lengthof(FloatTypes);
 
-  for (unsigned int x = 0; x < NumFloatTypes; ++x) {
-    MVT::SimpleValueType VT = FloatTypes[x];
+  for (MVT VT : FloatTypes) {
     setOperationAction(ISD::FABS, VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FCOS, VT, Expand);
