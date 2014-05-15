@@ -47,8 +47,10 @@ def OPCODE5_DATI : OPCODE5<0b11110>;
 class OPCODE6<bits<6> Val> {
   bits<6> Value = Val;
 }
-def OPCODE6_ALIGN  : OPCODE6<0b100000>;
-def OPCODE6_DALIGN : OPCODE6<0b100100>;
+def OPCODE6_ALIGN    : OPCODE6<0b100000>;
+def OPCODE6_DALIGN   : OPCODE6<0b100100>;
+def OPCODE6_BITSWAP  : OPCODE6<0b100000>;
+def OPCODE6_DBITSWAP : OPCODE6<0b100100>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -116,6 +118,20 @@ class PCREL19_FM<OPCODE2 Operation> : MipsR6Inst {
   let Inst{25-21} = rs;
   let Inst{20-19} = Operation.Value;
   let Inst{18-0} = imm;
+}
+
+class SPECIAL3_2R_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL3.Value;
+  let Inst{25-21} = 0b00000;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0b00000;
+  let Inst{5-0}   = Operation.Value;
 }
 
 class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {

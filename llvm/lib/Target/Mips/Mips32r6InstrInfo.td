@@ -63,6 +63,7 @@ class ALIGN_ENC  : SPECIAL3_ALIGN_FM<OPCODE6_ALIGN>;
 class ALUIPC_ENC : PCREL16_FM<OPCODE5_ALUIPC>;
 class AUI_ENC    : AUI_FM;
 class AUIPC_ENC  : PCREL16_FM<OPCODE5_AUIPC>;
+class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
 class DIV_ENC    : SPECIAL_3R_FM<0b00010, 0b011010>;
 class DIVU_ENC   : SPECIAL_3R_FM<0b00010, 0b011011>;
 class MOD_ENC    : SPECIAL_3R_FM<0b00011, 0b011010>;
@@ -117,6 +118,15 @@ class AUI_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 }
 
 class AUI_DESC : AUI_DESC_BASE<"aui", GPR32Opnd>;
+
+class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rt");
+  list<dag> Pattern = [];
+}
+
+class BITSWAP_DESC : BITSWAP_DESC_BASE<"bitswap", GPR32Opnd>;
 
 class DIVMOD_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
@@ -179,7 +189,7 @@ def BGEZALC;
 def BGEZC;
 def BGTZALC;
 def BGTZC;
-def BITSWAP; // Known as BITREV in DSP ASE
+def BITSWAP : BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
 def BLEZALC;
 def BLEZC;
 def BLTC; // Also aliased to bgtc with operands swapped
