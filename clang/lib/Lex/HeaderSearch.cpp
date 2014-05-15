@@ -483,14 +483,9 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   // If we found the header and are allowed to suggest a module, do so now.
   if (FE && SuggestedModule) {
     // Find the framework in which this header occurs.
-    StringRef FrameworkPath = FE->getName();
+    StringRef FrameworkPath = FE->getDir()->getName();
     bool FoundFramework = false;
     do {
-      // Get the parent directory name.
-      FrameworkPath = llvm::sys::path::parent_path(FrameworkPath);
-      if (FrameworkPath.empty())
-        break;
-
       // Determine whether this directory exists.
       const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkPath);
       if (!Dir)
@@ -502,6 +497,11 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
         FoundFramework = true;
         break;
       }
+
+      // Get the parent directory name.
+      FrameworkPath = llvm::sys::path::parent_path(FrameworkPath);
+      if (FrameworkPath.empty())
+        break;
     } while (true);
 
     if (FoundFramework) {
