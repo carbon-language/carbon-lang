@@ -548,5 +548,15 @@ MipsMCCodeEmitter::getLSAImmEncoding(const MCInst &MI, unsigned OpNo,
   return getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI) - 1;
 }
 
-#include "MipsGenMCCodeEmitter.inc"
+unsigned
+MipsMCCodeEmitter::getSimm19Lsl2Encoding(const MCInst &MI, unsigned OpNo,
+                                         SmallVectorImpl<MCFixup> &Fixups,
+                                         const MCSubtargetInfo &STI) const {
+  assert(MI.getOperand(OpNo).isImm());
+  // The immediate is encoded as 'immediate << 2'.
+  unsigned Res = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
+  assert((Res & 3) == 0);
+  return Res >> 2;
+}
 
+#include "MipsGenMCCodeEmitter.inc"

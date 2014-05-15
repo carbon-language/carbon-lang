@@ -117,6 +117,7 @@ private:
   unsigned getSizeExtEncoding(const MachineInstr &MI, unsigned OpNo) const;
   unsigned getSizeInsEncoding(const MachineInstr &MI, unsigned OpNo) const;
   unsigned getLSAImmEncoding(const MachineInstr &MI, unsigned OpNo) const;
+  unsigned getSimm19Lsl2Encoding(const MachineInstr &MI, unsigned OpNo) const;
 
   /// Expand pseudo instructions with accumulator register operands.
   void expandACCInstr(MachineBasicBlock::instr_iterator MI,
@@ -244,6 +245,12 @@ unsigned MipsCodeEmitter::getSizeInsEncoding(const MachineInstr &MI,
 
 unsigned MipsCodeEmitter::getLSAImmEncoding(const MachineInstr &MI,
                                             unsigned OpNo) const {
+  llvm_unreachable("Unimplemented function.");
+  return 0;
+}
+
+unsigned MipsCodeEmitter::getSimm19Lsl2Encoding(const MachineInstr &MI,
+                                                unsigned OpNo) const {
   llvm_unreachable("Unimplemented function.");
   return 0;
 }

@@ -316,6 +316,11 @@ def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
 }
 
+def simm19_lsl2 : Operand<i32> {
+  let EncoderMethod = "getSimm19Lsl2Encoding";
+  let DecoderMethod = "DecodeSimm19Lsl2";
+}
+
 def simm20      : Operand<i32> {
 }
 

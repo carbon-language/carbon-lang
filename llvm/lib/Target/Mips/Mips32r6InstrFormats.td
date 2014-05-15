@@ -26,12 +26,20 @@ class MipsR6Inst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther>,
 def OPGROUP_COP1    { bits<6> Value = 0b010001; }
 def OPGROUP_AUI     { bits<6> Value = 0b001111; }
 def OPGROUP_DAUI    { bits<6> Value = 0b011101; }
+def OPGROUP_PCREL   { bits<6> Value = 0b111011; }
 def OPGROUP_REGIMM  { bits<6> Value = 0b000001; }
 def OPGROUP_SPECIAL { bits<6> Value = 0b000000; }
+
+class OPCODE2<bits<2> Val> {
+  bits<2> Value = Val;
+}
+def OPCODE2_ADDIUPC : OPCODE2<0b00>;
 
 class OPCODE5<bits<5> Val> {
   bits<5> Value = Val;
 }
+def OPCODE5_ALUIPC : OPCODE5<0b11111>;
+def OPCODE5_AUIPC  : OPCODE5<0b11110>;
 def OPCODE5_DAHI : OPCODE5<0b00110>;
 def OPCODE5_DATI : OPCODE5<0b11110>;
 
@@ -77,6 +85,30 @@ class COP1_3R_FM<bits<6> funct, FIELD_FMT Format> : MipsR6Inst {
   let Inst{15-11} = fs;
   let Inst{10-6} = fd;
   let Inst{5-0} = funct;
+}
+
+class PCREL16_FM<OPCODE5 Operation> : MipsR6Inst {
+  bits<5> rs;
+  bits<16> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_PCREL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = Operation.Value;
+  let Inst{15-0} = imm;
+}
+
+class PCREL19_FM<OPCODE2 Operation> : MipsR6Inst {
+  bits<5> rs;
+  bits<19> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_PCREL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-19} = Operation.Value;
+  let Inst{18-0} = imm;
 }
 
 class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {
