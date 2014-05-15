@@ -67,7 +67,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -83,7 +83,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
@@ -168,7 +168,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -184,7 +184,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
@@ -252,7 +252,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -268,7 +268,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
@@ -353,7 +353,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -369,7 +369,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
@@ -437,7 +437,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -453,7 +453,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
@@ -538,7 +538,7 @@ int main()
             P(10, "ten"),
             P(20, "twenty"),
             P(30, "thirty"),
-            P(40, "fourty"),
+            P(40, "forty"),
             P(50, "fifty"),
             P(60, "sixty"),
             P(70, "seventy"),
@@ -554,7 +554,7 @@ int main()
         assert(c1.find(10)->second == "ten");
         assert(c1.find(20)->second == "twenty");
         assert(c1.find(30)->second == "thirty");
-        assert(c1.find(40)->second == "fourty");
+        assert(c1.find(40)->second == "forty");
         assert(c1.find(50)->second == "fifty");
         assert(c1.find(60)->second == "sixty");
         assert(c1.find(70)->second == "seventy");
