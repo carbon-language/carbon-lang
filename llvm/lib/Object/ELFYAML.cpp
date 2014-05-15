@@ -650,8 +650,8 @@ static void commonSectionMapping(IO &IO, ELFYAML::Section &Section) {
   IO.mapRequired("Type", Section.Type);
   IO.mapOptional("Flags", Section.Flags, ELFYAML::ELF_SHF(0));
   IO.mapOptional("Address", Section.Address, Hex64(0));
-  IO.mapOptional("Link", Section.Link);
-  IO.mapOptional("Info", Section.Info);
+  IO.mapOptional("Link", Section.Link, StringRef());
+  IO.mapOptional("Info", Section.Info, StringRef());
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
 }
 

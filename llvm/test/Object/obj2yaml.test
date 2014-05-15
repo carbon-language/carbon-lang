@@ -196,8 +196,6 @@ ELF-MIPSEL-NEXT: Sections:
 ELF-MIPSEL-NEXT:   - Name:            .text
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
-ELF-MIPSEL-NEXT:     Link:            ''
-ELF-MIPSEL-NEXT:     Info:            ''
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPSEL-NEXT:     Content:         0000023C00004224E8FFBD271400BFAF1000B0AF218059000000018E000024240000198E09F8200321E000020000198E09F8200321E00002000002241000B08F1400BF8F0800E0031800BD27
 ELF-MIPSEL-NEXT:   - Name:            .rel.text
@@ -233,29 +231,21 @@ ELF-MIPSEL-NEXT:         Addend:          0
 ELF-MIPSEL-NEXT:   - Name:            .data
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
-ELF-MIPSEL-NEXT:     Link:            ''
-ELF-MIPSEL-NEXT:     Info:            ''
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPSEL-NEXT:     Content:         ''
 ELF-MIPSEL-NEXT:   - Name:            .bss
 ELF-MIPSEL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
-ELF-MIPSEL-NEXT:     Link:            ''
-ELF-MIPSEL-NEXT:     Info:            ''
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPSEL-NEXT:     Content:         ''
 ELF-MIPSEL-NEXT:   - Name:            .rodata.str1.1
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC, SHF_MERGE, SHF_STRINGS ]
-ELF-MIPSEL-NEXT:     Link:            ''
-ELF-MIPSEL-NEXT:     Info:            ''
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000001
 ELF-MIPSEL-NEXT:     Content:         48656C6C6F20576F726C640A00
 ELF-MIPSEL-NEXT:   - Name:            .reginfo
 ELF-MIPSEL-NEXT:     Type:            SHT_MIPS_REGINFO
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC ]
-ELF-MIPSEL-NEXT:     Link:            ''
-ELF-MIPSEL-NEXT:     Info:            ''
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000001
 ELF-MIPSEL-NEXT:     Content:         '000000000000000000000000000000000000000000000000'
 ELF-MIPSEL-NEXT: Symbols:
@@ -300,15 +290,11 @@ ELF-MIPS64EL-NEXT: Sections:
 ELF-MIPS64EL-NEXT:   - Name:            .text
 ELF-MIPS64EL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
-ELF-MIPS64EL-NEXT:     Link:            ''
-ELF-MIPS64EL-NEXT:     Info:            ''
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000010
 ELF-MIPS64EL-NEXT:     Content:         ''
 ELF-MIPS64EL-NEXT:   - Name:            .data
 ELF-MIPS64EL-NEXT:     Type:            SHT_PROGBITS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
-ELF-MIPS64EL-NEXT:     Link:            ''
-ELF-MIPS64EL-NEXT:     Info:            ''
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000010
 ELF-MIPS64EL-NEXT:     Content:         '00000000000000000000000000000000'
 ELF-MIPS64EL-NEXT:   - Name:            .rela.data
@@ -324,21 +310,15 @@ ELF-MIPS64EL-NEXT:         Addend:          0
 ELF-MIPS64EL-NEXT:   - Name:            .bss
 ELF-MIPS64EL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
-ELF-MIPS64EL-NEXT:     Link:            ''
-ELF-MIPS64EL-NEXT:     Info:            ''
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000010
 ELF-MIPS64EL-NEXT:     Content:         ''
 ELF-MIPS64EL-NEXT:   - Name:            .MIPS.options
 ELF-MIPS64EL-NEXT:     Type:            SHT_MIPS_OPTIONS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_ALLOC ]
-ELF-MIPS64EL-NEXT:     Link:            ''
-ELF-MIPS64EL-NEXT:     Info:            ''
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000008
 ELF-MIPS64EL-NEXT:     Content:         '01280000000000000000000000000000000000000000000000000000000000000000000000000000'
 ELF-MIPS64EL-NEXT:   - Name:            .pdr
 ELF-MIPS64EL-NEXT:     Type:            SHT_PROGBITS
-ELF-MIPS64EL-NEXT:     Link:            ''
-ELF-MIPS64EL-NEXT:     Info:            ''
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPS64EL-NEXT:     Content:         ''
 ELF-MIPS64EL-NEXT: Symbols:
@@ -373,23 +353,17 @@ ELF-X86-64-NEXT: Sections:
 ELF-X86-64-NEXT:   - Name:            .text
 ELF-X86-64-NEXT:     Type:            SHT_PROGBITS
 ELF-X86-64-NEXT:     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
-ELF-X86-64-NEXT:     Link:            ''
-ELF-X86-64-NEXT:     Info:            ''
 ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000010
 ELF-X86-64-NEXT:     Content:         4883EC08C744240400000000BF00000000E80000000030C0E8000000008B4424044883C408C3
 ELF-X86-64-NEXT:   - Name:            .rodata.str1.1
 ELF-X86-64-NEXT:     Type:            SHT_PROGBITS
 ELF-X86-64-NEXT:     Flags:           [ SHF_ALLOC, SHF_MERGE, SHF_STRINGS ]
 ELF-X86-64-NEXT:     Address:         0x0000000000000026
-ELF-X86-64-NEXT:     Link:            ''
-ELF-X86-64-NEXT:     Info:            ''
 ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000001
 ELF-X86-64-NEXT:     Content:         48656C6C6F20576F726C642100
 ELF-X86-64-NEXT:   - Name:            .note.GNU-stack
 ELF-X86-64-NEXT:     Type:            SHT_PROGBITS
 ELF-X86-64-NEXT:     Address:         0x0000000000000033
-ELF-X86-64-NEXT:     Link:            ''
-ELF-X86-64-NEXT:     Info:            ''
 ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000001
 ELF-X86-64-NEXT:     Content:         ''
 ELF-X86-64-NEXT:   - Name:            .rela.text
