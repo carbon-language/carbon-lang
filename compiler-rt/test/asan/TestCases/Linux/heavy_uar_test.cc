@@ -4,6 +4,9 @@
 // RUN: %clangxx_asan -O2 %s -o %t && \
 // RUN:   not %run %t 2>&1 | FileCheck %s
 
+// FIXME: Fix this test under GCC.
+// REQUIRES: Clang
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

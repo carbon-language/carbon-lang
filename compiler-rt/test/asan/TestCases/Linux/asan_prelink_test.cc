@@ -9,7 +9,8 @@
 // RUN: %clangxx_asan %t.o %t.so -Wl,-R. -o %t
 // RUN: ASAN_OPTIONS=verbosity=1 %run %t 2>&1 | FileCheck %s
 
-// REQUIRES: x86_64-supported-target, asan-64-bits
+// GNU driver doesn't handle .so files properly.
+// REQUIRES: x86_64-supported-target, asan-64-bits, Clang
 #if BUILD_SO
 int G;
 int *getG() {

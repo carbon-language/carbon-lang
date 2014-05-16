@@ -11,6 +11,9 @@
 // RUN: ASAN_OPTIONS=detect_odr_violation=1     %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
 // RUN: ASAN_OPTIONS=detect_odr_violation=2 not %run %t 2>&1 | FileCheck %s
 
+// GNU driver doesn't handle .so files properly.
+// REQUIRES: Clang
+
 #ifndef SZ
 # define SZ 4
 #endif

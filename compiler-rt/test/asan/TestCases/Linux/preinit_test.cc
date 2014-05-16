@@ -2,6 +2,9 @@
 // RUN: %clangxx_asan -DFUNC=main %s         -o %t    -Wl,-R. %t.so
 // RUN: %run %t
 
+// GNU driver doesn't handle .so files properly.
+// REQUIRES: Clang
+
 // This test ensures that we call __asan_init early enough.
 // We build a shared library w/o asan instrumentation
 // and the binary with asan instrumentation.
