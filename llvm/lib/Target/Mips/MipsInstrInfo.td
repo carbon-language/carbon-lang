@@ -1318,13 +1318,13 @@ def  : MipsInstAlias<"sll $rd, $rt, $rs",
                      (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
 def : MipsInstAlias<"sub, $rd, $rs, $imm",
                     (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs,
-                          InvertedImOperand:$imm)>;
+                          InvertedImOperand:$imm), 0>;
 def : MipsInstAlias<"sub $rs, $imm",
                     (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
                     0>;
 def : MipsInstAlias<"subu, $rd, $rs, $imm",
                     (ADDiu GPR32Opnd:$rd, GPR32Opnd:$rs,
-                           InvertedImOperand:$imm)>;
+                           InvertedImOperand:$imm), 0>;
 def : MipsInstAlias<"subu $rs, $imm", (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs,
                                              InvertedImOperand:$imm), 0>;
 def : MipsInstAlias<"sra $rd, $rt, $rs",
