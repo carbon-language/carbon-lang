@@ -81,6 +81,9 @@ class MSUBF_D_ENC  : COP1_3R_FM<0b011001, FIELD_FMT_D>;
 class SEL_D_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_D>;
 class SEL_S_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_S>;
 
+class LWPC_ENC   : PCREL19_FM<OPCODE2_LWPC>;
+class LWUPC_ENC  : PCREL19_FM<OPCODE2_LWUPC>;
+
 class MAX_S_ENC : COP1_3R_FM<0b011101, FIELD_FMT_S>;
 class MAX_D_ENC : COP1_3R_FM<0b011101, FIELD_FMT_D>;
 class MIN_S_ENC : COP1_3R_FM<0b011100, FIELD_FMT_S>;
@@ -172,14 +175,16 @@ multiclass CMP_CC_M <FIELD_CMP_FORMAT Format, string Typestr,
 //
 //===----------------------------------------------------------------------===//
 
-class ADDIUPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class PCREL19_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rs);
   dag InOperandList = (ins simm19_lsl2:$imm);
   string AsmString = !strconcat(instr_asm, "\t$rs, $imm");
   list<dag> Pattern = [];
 }
 
-class ADDIUPC_DESC : ADDIUPC_DESC_BASE<"addiupc", GPR32Opnd>;
+class ADDIUPC_DESC : PCREL19_DESC_BASE<"addiupc", GPR32Opnd>;
+class LWPC_DESC: PCREL19_DESC_BASE<"lwpc", GPR32Opnd>;
+class LWUPC_DESC: PCREL19_DESC_BASE<"lwupc", GPR32Opnd>;
 
 class ALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
                       Operand ImmOpnd> {
@@ -347,8 +352,8 @@ def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
 def JIALC;
 def JIC;
 // def LSA; // See MSA
-def LWPC;
-def LWUPC;
+def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
+def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;
 def MADDF_S : MADDF_S_ENC, MADDF_S_DESC, ISA_MIPS32R6;
 def MADDF_D : MADDF_D_ENC, MADDF_D_DESC, ISA_MIPS32R6;
 def MAXA_D : MAXA_D_ENC, MAXA_D_DESC, ISA_MIPS32R6;

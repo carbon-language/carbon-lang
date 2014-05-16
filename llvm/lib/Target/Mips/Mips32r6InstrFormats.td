@@ -35,6 +35,8 @@ class OPCODE2<bits<2> Val> {
   bits<2> Value = Val;
 }
 def OPCODE2_ADDIUPC : OPCODE2<0b00>;
+def OPCODE2_LWPC    : OPCODE2<0b01>;
+def OPCODE2_LWUPC   : OPCODE2<0b10>;
 
 class OPCODE5<bits<5> Val> {
   bits<5> Value = Val;
