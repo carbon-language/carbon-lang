@@ -91,7 +91,7 @@ TEST(libclang, VirtualFileOverlay) {
     "  'roots': [\n"
     "    {\n"
     "      'type': 'directory',\n"
-    "      'name': \"/path/virtual\",\n"
+    "      'name': \"/path/\\u266B\",\n"
     "      'contents': [\n"
     "        {\n"
     "          'type': 'file',\n"
@@ -103,7 +103,7 @@ TEST(libclang, VirtualFileOverlay) {
     "  ]\n"
     "}\n";
     TestVFO T(contents);
-    T.map("/path/virtual/☂.h", "/real/☂.h");
+    T.map("/path/♫/☂.h", "/real/☂.h");
   }
   {
     TestVFO T(NULL);

@@ -115,10 +115,10 @@ private:
       OS.indent(Indent) << "{\n";
       Indent += 2;
       OS.indent(Indent) << "'type': 'directory',\n";
-      OS.indent(Indent) << "'name': \"";
       StringRef DirName = containedPart(ParentPath,
                                         path::parent_path(Entry.VPath));
-      OS.write_escaped(DirName) << "\",\n";
+      OS.indent(Indent)
+          << "'name': \"" << llvm::yaml::escape(DirName) << "\",\n";
       OS.indent(Indent) << "'contents': [\n";
       Entries = printContents(Entries, Indent + 2);
       OS.indent(Indent) << "]\n";
