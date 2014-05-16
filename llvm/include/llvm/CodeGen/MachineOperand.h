@@ -42,7 +42,7 @@ class MCSymbol;
 ///
 class MachineOperand {
 public:
-  enum MachineOperandType {
+  enum MachineOperandType : unsigned char {
     MO_Register,          ///< Register operand.
     MO_Immediate,         ///< Immediate operand
     MO_CImmediate,        ///< Immediate >64bit operand
@@ -65,7 +65,7 @@ public:
 private:
   /// OpKind - Specify what kind of operand this is.  This discriminates the
   /// union.
-  unsigned char OpKind; // MachineOperandType
+  MachineOperandType OpKind;
 
   /// Subregister number for MO_Register.  A value of 0 indicates the
   /// MO_Register has no subReg.

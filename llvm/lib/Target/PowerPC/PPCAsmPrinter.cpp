@@ -208,7 +208,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 
   default:
-    O << "<unknown operand type: " << MO.getType() << ">";
+    O << "<unknown operand type: " << (unsigned)MO.getType() << ">";
     return;
   }
 }
