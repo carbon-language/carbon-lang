@@ -11,17 +11,20 @@ extern "C" {
 
 #include "InstrProfiling.h"
 
-int __llvm_profile_runtime;
+__attribute__((visibility("hidden"))) int __llvm_profile_runtime;
 
 }
 
 namespace {
 
-class RegisterAtExit {
+class RegisterRuntime {
 public:
-  RegisterAtExit() { __llvm_profile_register_write_file_atexit(); }
+  RegisterRuntime() {
+    __llvm_profile_register_write_file_atexit();
+    __llvm_profile_register_write_file();
+  }
 };
 
-RegisterAtExit Registration;
+RegisterRuntime Registration;
 
 }

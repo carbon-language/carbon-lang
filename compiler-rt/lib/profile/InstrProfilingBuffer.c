@@ -10,14 +10,18 @@
 #include "InstrProfiling.h"
 #include <string.h>
 
+__attribute__((visibility("hidden")))
 uint64_t __llvm_profile_get_size_for_buffer(void) {
   /* Match logic in __llvm_profile_write_buffer(). */
+  const uint64_t NamesSize = PROFILE_RANGE_SIZE(names) * sizeof(char);
+  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
   return sizeof(uint64_t) * PROFILE_HEADER_SIZE +
      PROFILE_RANGE_SIZE(data) * sizeof(__llvm_profile_data) +
      PROFILE_RANGE_SIZE(counters) * sizeof(uint64_t) +
-     PROFILE_RANGE_SIZE(names) * sizeof(char);
+     NamesSize + Padding;
 }
 
+__attribute__((visibility("hidden")))
 int __llvm_profile_write_buffer(char *Buffer) {
   /* Match logic in __llvm_profile_get_size_for_buffer().
    * Match logic in __llvm_profile_write_file().
@@ -33,6 +37,10 @@ int __llvm_profile_write_buffer(char *Buffer) {
   const uint64_t DataSize = DataEnd - DataBegin;
   const uint64_t CountersSize = CountersEnd - CountersBegin;
   const uint64_t NamesSize = NamesEnd - NamesBegin;
+  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
+
+  /* Enough zeroes for padding. */
+  const char Zeroes[sizeof(uint64_t)] = {0};
 
   /* Create the header. */
   uint64_t Header[PROFILE_HEADER_SIZE];
@@ -54,6 +62,7 @@ int __llvm_profile_write_buffer(char *Buffer) {
   UPDATE_memcpy(DataBegin,     DataSize      * sizeof(__llvm_profile_data));
   UPDATE_memcpy(CountersBegin, CountersSize  * sizeof(uint64_t));
   UPDATE_memcpy(NamesBegin,    NamesSize     * sizeof(char));
+  UPDATE_memcpy(Zeroes,        Padding       * sizeof(char));
 #undef UPDATE_memcpy
 
   return 0;

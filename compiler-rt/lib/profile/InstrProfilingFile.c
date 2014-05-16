@@ -25,6 +25,10 @@ static int writeFile(FILE *File) {
   const uint64_t DataSize = DataEnd - DataBegin;
   const uint64_t CountersSize = CountersEnd - CountersBegin;
   const uint64_t NamesSize = NamesEnd - NamesBegin;
+  const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
+
+  /* Enough zeroes for padding. */
+  const char Zeroes[sizeof(uint64_t)] = {0};
 
   /* Create the header. */
   uint64_t Header[PROFILE_HEADER_SIZE];
@@ -43,9 +47,30 @@ static int writeFile(FILE *File) {
   CHECK_fwrite(DataBegin,     sizeof(__llvm_profile_data), DataSize, File);
   CHECK_fwrite(CountersBegin, sizeof(uint64_t), CountersSize, File);
   CHECK_fwrite(NamesBegin,    sizeof(char), NamesSize, File);
+  CHECK_fwrite(Zeroes,        sizeof(char), Padding, File);
 #undef CHECK_fwrite
 
-   return 0;
+  return 0;
+}
+
+typedef struct __llvm_profile_writer {
+  struct __llvm_profile_writer *Next;
+  int (*Data)(FILE *);
+} __llvm_profile_writer;
+
+__attribute__((weak)) __llvm_profile_writer *__llvm_profile_HeadWriter = NULL;
+static __llvm_profile_writer Writer = {NULL, writeFile};
+
+__attribute__((visibility("hidden")))
+void __llvm_profile_register_write_file(void) {
+  static int HasBeenRegistered = 0;
+
+  if (HasBeenRegistered)
+    return;
+
+  HasBeenRegistered = 1;
+  Writer.Next = __llvm_profile_HeadWriter;
+  __llvm_profile_HeadWriter = &Writer;
 }
 
 static int writeFileWithName(const char *OutputName) {
@@ -57,19 +82,28 @@ static int writeFileWithName(const char *OutputName) {
   if (!OutputFile)
     return -1;
 
-  RetVal = writeFile(OutputFile);
+  __llvm_profile_writer *Writer = __llvm_profile_HeadWriter;
+  if (Writer)
+    for (; Writer; Writer = Writer->Next) {
+      RetVal = Writer->Data(OutputFile);
+      if (RetVal != 0)
+        break;
+    }
+  else
+    // Default to calling this executable's writeFile.
+    RetVal = writeFile(OutputFile);
 
   fclose(OutputFile);
   return RetVal;
 }
 
-static const char *CurrentFilename = NULL;
-void __llvm_profile_set_filename(const char *Filename) {
-  CurrentFilename = Filename;
+__attribute__((weak)) const char *__llvm_profile_CurrentFilename = NULL;
+__attribute__((weak)) void __llvm_profile_set_filename(const char *Filename) {
+  __llvm_profile_CurrentFilename = Filename;
 }
 
 int getpid(void);
-int __llvm_profile_write_file(void) {
+__attribute__((weak)) int __llvm_profile_write_file(void) {
   char *AllocatedFilename = NULL;
   int I, J;
   int RetVal;
@@ -80,7 +114,7 @@ int __llvm_profile_write_file(void) {
   int NumPids = 0;
 
   /* Get the filename. */
-  const char *Filename = CurrentFilename;
+  const char *Filename = __llvm_profile_CurrentFilename;
 #define UPDATE_FILENAME(NextFilename) \
   if (!Filename || !Filename[0]) Filename = NextFilename
   UPDATE_FILENAME(getenv("LLVM_PROFILE_FILE"));
@@ -131,7 +165,7 @@ static void writeFileWithoutReturn(void) {
   __llvm_profile_write_file();
 }
 
-int __llvm_profile_register_write_file_atexit(void) {
+__attribute__((weak)) int __llvm_profile_register_write_file_atexit(void) {
   static int HasBeenRegistered = 0;
 
   if (HasBeenRegistered)

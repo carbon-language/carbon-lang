@@ -26,6 +26,7 @@ static uint64_t *CountersLast = NULL;
  * calls are only required (and only emitted) on targets where we haven't
  * implemented linker magic to find the bounds of the sections.
  */
+__attribute__((visibility("hidden")))
 void __llvm_profile_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
   const __llvm_profile_data *Data = (__llvm_profile_data*)Data_;
@@ -54,14 +55,20 @@ void __llvm_profile_register_function(void *Data_) {
 #undef UPDATE_LAST
 }
 
+__attribute__((visibility("hidden")))
 const __llvm_profile_data *__llvm_profile_data_begin(void) {
   return DataFirst;
 }
+__attribute__((visibility("hidden")))
 const __llvm_profile_data *__llvm_profile_data_end(void) {
   return DataLast;
 }
+__attribute__((visibility("hidden")))
 const char *__llvm_profile_names_begin(void) { return NamesFirst; }
+__attribute__((visibility("hidden")))
 const char *__llvm_profile_names_end(void) { return NamesLast; }
+__attribute__((visibility("hidden")))
 uint64_t *__llvm_profile_counters_begin(void) { return CountersFirst; }
+__attribute__((visibility("hidden")))
 uint64_t *__llvm_profile_counters_end(void) { return CountersLast; }
 #endif
