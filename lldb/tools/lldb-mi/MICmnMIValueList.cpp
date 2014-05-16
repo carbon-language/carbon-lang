@@ -1,0 +1,191 @@
+//===-- Platform.cpp --------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+//++
+// File:		MICmnMIValueList.h
+//
+// Overview:	CMICmnMIValueList implementation.
+//
+// Environment:	Compilers:	Visual C++ 12.
+//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//				Libraries:	See MIReadmetxt. 
+//
+// Copyright:	None.
+//--
+
+// In-house headers:
+#include "MICmnMIValueList.h"
+#include "MICmnResources.h"
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnMIValueList constructor.
+// Type:	Method.
+// Args:	vbValueTypeList	- (R) True = yes value type list, false = result type list.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnMIValueList::CMICmnMIValueList( const bool vbValueTypeList )
+{
+	m_strValue = "[]";
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnMIValueList constructor.
+//			Construct a results only list.
+//			return MIstatus::failure.
+// Type:	Method.
+// Args:	vResult	- (R) MI result object.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnMIValueList::CMICmnMIValueList( const CMICmnMIValueResult & vResult )
+{
+	m_strValue = vResult.GetString();
+	BuildList();
+	m_bJustConstructed = false;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnMIValueList constructor.
+//			Construct a value only list.
+// Type:	Method.
+// Args:	vValue	- (R) MI value object.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnMIValueList::CMICmnMIValueList( const CMICmnMIValue & vValue )
+{
+	m_strValue = vValue.GetString();
+	BuildList();
+	m_bJustConstructed = false;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnMIValueList destructor.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnMIValueList::~CMICmnMIValueList( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Build the result value's mandatory data part, one tuple
+// Type:	Method.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueList::BuildList( void )
+{
+	const char * pFormat = "[%s]";
+	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str() );
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add another MI result object to  the value list's of list is results. 
+//			Only result obejcts can be added to a list of result otherwise this function 
+//			will return MIstatus::failure.
+// Type:	Method.
+// Args:	vResult	- (R) The MI result object.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueList::Add( const CMICmnMIValueResult & vResult )
+{
+	return BuildList( vResult );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add another MI value object to  the value list's of list is values.
+//			Only values objects can be added to a list of values otherwise this function 
+//			will return MIstatus::failure.
+// Type:	Method.
+// Args:	vValue	- (R) The MI value object.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueList::Add( const CMICmnMIValue & vValue )
+{
+	return BuildList( vValue );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add another MI result object to  the value list's of list is results. 
+//			Only result obejcts can be added to a list of result otherwise this function 
+//			will return MIstatus::failure.
+// Type:	Method.
+// Args:	vResult	- (R) The MI result object.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueList::BuildList( const CMICmnMIValueResult & vResult )
+{
+	// Clear out the default "<Invalid>" text
+	if( m_bJustConstructed )
+	{
+		m_bJustConstructed = false;
+		m_strValue = vResult.GetString();
+		return BuildList();
+	}
+
+	// ToDo: Fix this fudge with std::string cause CMIUtilString does not have a copy constructor
+	std::string str = m_strValue;
+	if( str[ 0 ] == '[' )
+	{
+		str = str.substr( 1, m_strValue.size() - 1 );
+	}
+	if( str[ str.size() - 1 ] == ']' )
+	{
+		str = str.substr( 0, m_strValue.size() - 2 );
+	}
+	m_strValue = str.c_str();
+
+	const char * pFormat = "[%s,%s]";
+	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str(), vResult.GetString().c_str() );
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add another MI value object to  the value list's of list is values.
+//			Only values objects can be added to a list of values otherwise this function 
+//			will return MIstatus::failure.
+// Type:	Method.
+// Args:	vValue	- (R) The MI value object.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueList::BuildList( const CMICmnMIValue & vValue )
+{
+	// Clear out the default "<Invalid>" text
+	if( m_bJustConstructed )
+	{
+		m_bJustConstructed = false;
+		m_strValue = vValue.GetString();
+		return BuildList();
+	}
+
+	const char * pFormat = "[%s,%s]";
+	m_strValue = m_strValue.FindAndReplace( "[", "" );
+	m_strValue = m_strValue.FindAndReplace( "]", "" );	
+	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str(), vValue.GetString().c_str() );
+
+	return MIstatus::success;
+}
+

@@ -1,0 +1,96 @@
+//===-- MICmdArgValListOfN.h ------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+//++
+// File:		MICmdArgValListOfN.h
+//
+// Overview:	CMICmdArgValListOfN interface.
+//
+// Environment:	Compilers:	Visual C++ 12.
+//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//				Libraries:	See MIReadmetxt. 
+//
+// Copyright:	None.
+//--
+
+#pragma once
+
+// Third party headers:
+#include <vector>
+
+// In-house headers:
+#include "MICmdArgValListBase.h"
+
+// Declarations:
+class CMICmdArgContext;
+
+//++ ============================================================================
+// Details:	MI common code class. Command argument class. Arguments object
+//			needing specialization derived from the CMICmdArgValBase class. 
+//			An argument knows what type of argument it is and how it is to 
+//			interpret the options (context) string to find and validate a matching 
+//			argument and so extract a value from it .
+//			The CMICmdArgValBase objects added to *this ListOfN container belong
+//			to this container and will be deleted when *this object goes out of
+//			scope.
+//			To parse arguments like 'thread-id ...' i.e. 1 10 12 13 ...
+//			If vbMandatory argument is true it takes on the (...)+ specfication
+//			otherwise assumed to be (...)* specification.
+//			Based on the Interpreter pattern.
+// Gotchas:	None.
+// Authors:	Illya Rudkin 16/04/2014.
+// Changes:	None.
+//--
+class CMICmdArgValListOfN : public CMICmdArgValListBase
+{
+// Methods:
+public:
+	/* ctor */	CMICmdArgValListOfN( void );
+	/* ctor */	CMICmdArgValListOfN( const CMIUtilString & vrArgName, const bool vbMandatory, const bool vbHandleByCmd, const ArgValType_e veType );
+	//
+	const VecArgObjPtr_t &	GetExpectedOptions( void ) const;
+	template< class T1, typename T2 >
+		bool				GetExpectedOption( T2 & vrwValue ) const;
+
+// Overridden:
+public:
+	// From CMICmdArgValBase
+	/* dtor */ virtual ~CMICmdArgValListOfN( void );
+	// From CMICmdArgSet::IArg
+	virtual bool	Validate( CMICmdArgContext & vArgContext );
+
+// Methods:
+private:
+	bool	IsListOfN( const CMIUtilString & vrTxt ) const;
+	bool	CreateList( const CMIUtilString & vrTxt );
+};
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Retrieve the first argument or option value from the list of 1 or more options
+//			parsed from the command's options string.
+// Type:	Template method.
+// Args:	vrwValue	- (W) Templated type return value.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed. List of object was empty.
+// Throws:	None.
+//--
+template< class T1, typename T2 >
+bool CMICmdArgValListOfN::GetExpectedOption( T2 & vrwValue ) const
+{
+	const VecArgObjPtr_t & rVecOptions( GetExpectedOptions() );
+	VecArgObjPtr_t::const_iterator it2 = rVecOptions.begin();
+	if( it2 != rVecOptions.end() )
+	{
+		const T1 * pOption = static_cast< T1 * >( *it2 );
+		vrwValue = pOption->GetValue();
+		return MIstatus::success;
+	}
+
+	return MIstatus::failure;
+}

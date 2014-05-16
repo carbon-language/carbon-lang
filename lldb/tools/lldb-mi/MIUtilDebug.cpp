@@ -1,0 +1,128 @@
+//===-- MIUtilDebug.cpp -----------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+//++
+// File:		MIUtilDebug.h
+//
+// Overview:	Terminal setting termios functions.
+//
+// Environment:	Compilers:	Visual C++ 12.
+//							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
+//				Libraries:	See MIReadmetxt. 
+//
+// Copyright:	None.
+//--
+
+// Third party headers:
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
+// In-house headers:
+#include "MIUtilDebug.h"
+#include "MIDriver.h"
+#include "MICmnLog.h"
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilDebug constructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilDebug::CMIUtilDebug( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilDebug destructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilDebug::~CMIUtilDebug( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Show a dialog to the process/application halts. It gives the opportunity to
+//			attach a debugger.
+// Type:	Static method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+void CMIUtilDebug::ShowDlgWaitForDbgAttach( void )
+{
+	const CMIUtilString strCaption( CMIDriver::Instance().GetAppNameShort() );
+#ifdef _WIN32
+	::MessageBoxA( NULL, "Attach your debugger now", strCaption.c_str(), MB_OK );
+#else
+	// ToDo: Implement other platform version of an Ok to continue dialog box
+#endif // _WIN32
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Temporarily stall the process/application to give the programmer the 
+//			opportunity to attach a debugger. How to use: Put a break in the programmer
+//			where you want to visit, run the application then attach your debugger to the
+//			application. Hit the debugger's pause button and the debugger should should 
+//			show this loop. Change the i variable value to break out of the loop and 
+//			visit your break point.
+// Type:	Static method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+void CMIUtilDebug::WaitForDbgAttachInfinteLoop( void )
+{
+	MIuint i = 0;
+	while( i == 0 )
+	{
+		const std::chrono::milliseconds time( 100 );
+		std::this_thread::sleep_for( time );
+	}
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+// Instantiations:
+CMICmnLog &	CMIUtilDebugFnTrace::ms_rLog = CMICmnLog::Instance();
+MIuint			CMIUtilDebugFnTrace::ms_fnDepthCnt = 0;
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilDebugFnTrace constructor.
+// Type:	Method.
+// Args:	vFnName	- (R) The text to insert into the log.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilDebugFnTrace::CMIUtilDebugFnTrace( const CMIUtilString & vFnName )
+:	m_strFnName( vFnName )
+{
+	const CMIUtilString txt( CMIUtilString::Format( "%d>%s", ++ms_fnDepthCnt, m_strFnName.c_str() ) );
+	ms_rLog.Write( txt, CMICmnLog::eLogVerbosity_FnTrace ); 
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilDebugFnTrace destructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilDebugFnTrace::~CMIUtilDebugFnTrace( void )
+{
+	const CMIUtilString txt( CMIUtilString::Format( "%d<%s", ms_fnDepthCnt--, m_strFnName.c_str() ) );
+	ms_rLog.Write( txt, CMICmnLog::eLogVerbosity_FnTrace ); 
+}
+
