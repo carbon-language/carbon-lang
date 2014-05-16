@@ -44,8 +44,9 @@ static SmallVector<Token, 16> ParseTokens(CharSourceRange Range,
   return Tokens;
 }
 
-static StringRef GetText(const Token& Tok, const SourceManager &Sources) {
-  return {Sources.getCharacterData(Tok.getLocation()), Tok.getLength()};
+static StringRef GetText(const Token &Tok, const SourceManager &Sources) {
+  return StringRef(Sources.getCharacterData(Tok.getLocation()),
+                   Tok.getLength());
 }
 
 void UseOverride::check(const MatchFinder::MatchResult &Result) {
