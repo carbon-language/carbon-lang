@@ -219,6 +219,18 @@ class CMP_BRANCH_OFF21_FM<bits<6> funct> : MipsR6Inst {
   let Inst{20-0} = offset;
 }
 
+class JMP_IDX_COMPACT_FM<bits<6> funct> : MipsR6Inst {
+  bits<5> rt;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = funct;
+  let Inst{25-21} = 0b000000;
+  let Inst{20-16} = rt;
+  let Inst{15-0} = offset;
+}
+
 class BRANCH_OFF26_FM<bits<6> funct> : MipsR6Inst {
   bits<32> Inst;
   bits<26> offset;

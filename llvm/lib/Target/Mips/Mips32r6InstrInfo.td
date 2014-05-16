@@ -66,6 +66,16 @@ def brtarget26 : Operand<OtherVT> {
   let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
+def jmpoffset16 : Operand<OtherVT> {
+  let EncoderMethod = "getJumpOffset16OpValue";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
+def calloffset16 : Operand<iPTR> {
+  let EncoderMethod = "getJumpOffset16OpValue";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Encodings
@@ -96,6 +106,9 @@ class BGTZC_ENC : CMP_BRANCH_RT_OFF16_FM<0b010111>;
 class BEQZC_ENC : CMP_BRANCH_OFF21_FM<0b110110>;
 class BGEZALC_ENC : CMP_BRANCH_OFF16_FM<0b000110>;
 class BNEZC_ENC : CMP_BRANCH_OFF21_FM<0b111110>;
+
+class JIALC_ENC : JMP_IDX_COMPACT_FM<0b111110>;
+class JIC_ENC   : JMP_IDX_COMPACT_FM<0b110110>;
 
 class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
 class BLEZALC_ENC : CMP_BRANCH_RT_OFF16_FM<0b000110>;
@@ -310,6 +323,27 @@ class BGTZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgtzc", brtarget, GPR32Opnd>;
 class BEQZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"beqzc", brtarget21, GPR32Opnd>;
 class BNEZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"bnezc", brtarget21, GPR32Opnd>;
 
+class JMP_IDX_COMPACT_DESC_BASE<string opstr, DAGOperand opnd,
+                                RegisterOperand GPROpnd> {
+  dag InOperandList = (ins GPROpnd:$rt, opnd:$offset);
+  string AsmString = !strconcat(opstr, "\t$rt, $offset");
+  list<dag> Pattern = [];
+  bit isTerminator = 1;
+  bit hasDelaySlot = 0;
+  string DecoderMethod = "DecodeSimm16";
+}
+
+class JIALC_DESC : JMP_IDX_COMPACT_DESC_BASE<"jialc", calloffset16,
+                                             GPR32Opnd> {
+  bit isCall = 1;
+  list<Register> Defs = [RA];
+}
+
+class JIC_DESC : JMP_IDX_COMPACT_DESC_BASE<"jic", jmpoffset16, GPR32Opnd> {
+  bit isBarrier = 1;
+  list<Register> Defs = [AT];
+}
+
 class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rt);
@@ -469,8 +503,8 @@ defm S : CMP_CC_M<FIELD_CMP_FORMAT_S, "s", FGR32Opnd>;
 defm D : CMP_CC_M<FIELD_CMP_FORMAT_D, "d", FGR64Opnd>;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
 def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
-def JIALC;
-def JIC;
+def JIALC : JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
+def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 // def LSA; // See MSA
 def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;

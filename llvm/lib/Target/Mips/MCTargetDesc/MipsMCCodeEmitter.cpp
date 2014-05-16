@@ -282,6 +282,25 @@ getBranchTarget26OpValue(const MCInst &MI, unsigned OpNo,
   return 0;
 }
 
+/// getJumpOffset16OpValue - Return binary encoding of the jump
+/// target operand. If the machine operand requires relocation,
+/// record the relocation and return zero.
+unsigned MipsMCCodeEmitter::
+getJumpOffset16OpValue(const MCInst &MI, unsigned OpNo,
+                       SmallVectorImpl<MCFixup> &Fixups,
+                       const MCSubtargetInfo &STI) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  if (MO.isImm()) return MO.getImm();
+
+  assert(MO.isExpr() &&
+         "getJumpOffset16OpValue expects only expressions or an immediate");
+
+   // TODO: Push fixup.
+   return 0;
+}
+
 /// getJumpTargetOpValue - Return binary encoding of the jump
 /// target operand. If the machine operand requires relocation,
 /// record the relocation and return zero.
