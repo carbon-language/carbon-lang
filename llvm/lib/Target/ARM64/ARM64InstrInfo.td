@@ -554,15 +554,6 @@ def : Pat<(sub GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
           (ADDXri GPR64:$Rn, neg_addsub_shifted_imm64:$imm)>;
 }
 
-// FIXME: TableGen can very nearly handle printing all of these, we should make
-// it work properly.
-def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
-def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
-def : InstAlias<"neg $dst, $src, $shift",
-                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
-def : InstAlias<"neg $dst, $src, $shift",
-                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
-
 // Because of the immediate format for add/sub-imm instructions, the
 // expression (add x, -1) must be transformed to (SUB{W,X}ri x, 1).
 //  These patterns capture that transformation.
@@ -577,12 +568,31 @@ def : Pat<(ARM64sub_flag GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
           (ADDSXri GPR64:$Rn, neg_addsub_shifted_imm64:$imm)>;
 }
 
+def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
+def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+def : InstAlias<"neg $dst, $src$shift",
+                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
+def : InstAlias<"neg $dst, $src$shift",
+                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
+
 def : InstAlias<"negs $dst, $src", (SUBSWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
 def : InstAlias<"negs $dst, $src", (SUBSXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
-def : InstAlias<"negs $dst, $src, $shift",
+def : InstAlias<"negs $dst, $src$shift",
                 (SUBSWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
-def : InstAlias<"negs $dst, $src, $shift",
+def : InstAlias<"negs $dst, $src$shift",
                 (SUBSXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
+
+
+// Register/register aliases with no shift when SP is not used.
+def : AddSubRegAlias<"add",  ADDWrs,  GPR32, GPR32, GPR32, 0>;
+def : AddSubRegAlias<"add",  ADDXrs,  GPR64, GPR64, GPR64, 0>;
+def : AddSubRegAlias<"sub",  SUBWrs,  GPR32, GPR32, GPR32, 0>;
+def : AddSubRegAlias<"sub",  SUBXrs,  GPR64, GPR64, GPR64, 0>;
+def : AddSubRegAlias<"adds", ADDSWrs, GPR32, GPR32, GPR32, 0>;
+def : AddSubRegAlias<"adds", ADDSXrs, GPR64, GPR64, GPR64, 0>;
+def : AddSubRegAlias<"subs", SUBSWrs, GPR32, GPR32, GPR32, 0>;
+def : AddSubRegAlias<"subs", SUBSXrs, GPR64, GPR64, GPR64, 0>;
+
 
 // Unsigned/Signed divide
 defm UDIV : Div<0, "udiv", udiv>;

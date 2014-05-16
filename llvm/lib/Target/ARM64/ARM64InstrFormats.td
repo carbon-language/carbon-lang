@@ -1606,12 +1606,6 @@ multiclass AddSub<bit isSub, string mnemonic,
     let Inst{31} = 1;
   }
 
-  // Register/register aliases with no shift when SP is not used.
-  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
-                       GPR32, GPR32, GPR32, 0>;
-  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Xrs"),
-                       GPR64, GPR64, GPR64, 0>;
-
   // Register/register aliases with no shift when either the destination or
   // first source register is SP.  This relies on the shifted register aliases
   // above matching first in the case when SP is not used.
@@ -1689,12 +1683,6 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
                   WZR, GPR32:$src1, GPR32:$src2, 0)>;
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Xrs")
                   XZR, GPR64:$src1, GPR64:$src2, 0)>;
-
-  // Register/register aliases with no shift when SP is not used.
-  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
-                       GPR32, GPR32, GPR32, 0>;
-  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Xrs"),
-                       GPR64, GPR64, GPR64, 0>;
 
   // Register/register aliases with no shift when the first source register
   // is SP.  This relies on the shifted register aliases above matching first
