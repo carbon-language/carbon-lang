@@ -18,6 +18,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Locale.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -60,7 +61,7 @@ size_t SourceMgr::AddIncludeFile(const std::string &Filename,
 
   // If the file didn't exist directly, see if it's in an include path.
   for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
-    IncludedFile = IncludeDirectories[i] + "/" + Filename;
+    IncludedFile = IncludeDirectories[i] + sys::path::get_separator().data() + Filename;
     MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
   }
 

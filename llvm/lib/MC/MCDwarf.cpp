@@ -689,7 +689,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   const SmallVectorImpl<std::string> &MCDwarfDirs = context.getMCDwarfDirs();
   if (MCDwarfDirs.size() > 0) {
     MCOS->EmitBytes(MCDwarfDirs[0]);
-    MCOS->EmitBytes("/");
+    MCOS->EmitBytes(sys::path::get_separator());
   }
   const SmallVectorImpl<MCDwarfFile> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();

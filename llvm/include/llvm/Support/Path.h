@@ -295,6 +295,11 @@ const StringRef extension(StringRef path);
 /// @result true if \a value is a path separator character on the host OS
 bool is_separator(char value);
 
+/// @brief Return the preferred separator for this platform.
+///
+/// @result StringRef of the preferred separator, null-terminated.
+const StringRef get_separator();
+
 /// @brief Get the typical temporary directory for the system, e.g., 
 /// "/var/tmp" or "C:/TEMP"
 ///

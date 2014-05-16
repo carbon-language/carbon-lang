@@ -569,6 +569,12 @@ bool is_separator(char value) {
   }
 }
 
+static const char preferred_separator_string[] = { preferred_separator, '\0' };
+
+const StringRef get_separator() {
+  return preferred_separator_string;
+}
+
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   result.clear();
 
