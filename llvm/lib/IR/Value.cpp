@@ -317,8 +317,7 @@ static GlobalObject &findReplacementForAliasUse(Value &C) {
 
 static void replaceAliasUseWith(Use &U, Value *New) {
   GlobalObject &Replacement = findReplacementForAliasUse(*New);
-  auto *Old = &cast<GlobalObject>(*U);
-  assert(Old != &Replacement &&
+  assert(&cast<GlobalObject>(*U) != &Replacement &&
          "replaceAliasUseWith cannot form an alias cycle");
   U.set(&Replacement);
 }
