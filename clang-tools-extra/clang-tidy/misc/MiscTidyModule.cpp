@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
 #include "RedundantSmartptrGet.h"
+#include "UseOverride.h"
 
 namespace clang {
 namespace tidy {
@@ -25,6 +26,9 @@ public:
     CheckFactories.addCheckFactory(
         "misc-redundant-smartptr-get",
         new ClangTidyCheckFactory<RedundantSmartptrGet>());
+    CheckFactories.addCheckFactory(
+        "misc-use-override",
+        new ClangTidyCheckFactory<UseOverride>());
   }
 };
 
