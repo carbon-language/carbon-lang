@@ -365,6 +365,7 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
 
   setTargetDAGCombine(ISD::INTRINSIC_VOID);
   setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
+  setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
 
   MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 8;
   MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 4;
@@ -752,9 +753,11 @@ const char *ARM64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARM64ISD::ST1x2post:         return "ARM64ISD::ST1x2post";
   case ARM64ISD::ST1x3post:         return "ARM64ISD::ST1x3post";
   case ARM64ISD::ST1x4post:         return "ARM64ISD::ST1x4post";
+  case ARM64ISD::LD1DUPpost:        return "ARM64ISD::LD1DUPpost";
   case ARM64ISD::LD2DUPpost:        return "ARM64ISD::LD2DUPpost";
   case ARM64ISD::LD3DUPpost:        return "ARM64ISD::LD3DUPpost";
   case ARM64ISD::LD4DUPpost:        return "ARM64ISD::LD4DUPpost";
+  case ARM64ISD::LD1LANEpost:       return "ARM64ISD::LD1LANEpost";
   case ARM64ISD::LD2LANEpost:       return "ARM64ISD::LD2LANEpost";
   case ARM64ISD::LD3LANEpost:       return "ARM64ISD::LD3LANEpost";
   case ARM64ISD::LD4LANEpost:       return "ARM64ISD::LD4LANEpost";
@@ -7273,6 +7276,92 @@ static SDValue performSTORECombine(SDNode *N,
                       S->getAlignment());
 }
 
+/// Target-specific DAG combine function for post-increment LD1 (lane) and
+/// post-increment LD1R.
+static SDValue performPostLD1Combine(SDNode *N,
+                                     TargetLowering::DAGCombinerInfo &DCI,
+                                     bool IsLaneOp) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = N->getValueType(0);
+
+  unsigned LoadIdx = IsLaneOp ? 1 : 0;
+  SDNode *LD = N->getOperand(LoadIdx).getNode();
+  // If it is not LOAD, can not do such combine.
+  if (LD->getOpcode() != ISD::LOAD)
+    return SDValue();
+
+  LoadSDNode *LoadSDN = cast<LoadSDNode>(LD);
+  EVT MemVT = LoadSDN->getMemoryVT();
+  // Check if memory operand is the same type as the vector element.
+  if (MemVT != VT.getVectorElementType())
+    return SDValue();
+
+  // Check if there are other uses. If so, do not combine as it will introduce
+  // an extra load.
+  for (SDNode::use_iterator UI = LD->use_begin(), UE = LD->use_end(); UI != UE;
+       ++UI) {
+    if (UI.getUse().getResNo() == 1) // Ignore uses of the chain result.
+      continue;
+    if (*UI != N)
+      return SDValue();
+  }
+
+  SDValue Addr = LD->getOperand(1);
+  // Search for a use of the address operand that is an increment.
+  for (SDNode::use_iterator UI = Addr.getNode()->use_begin(), UE =
+       Addr.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User->getOpcode() != ISD::ADD
+        || UI.getUse().getResNo() != Addr.getResNo())
+      continue;
+
+    // Check that the add is independent of the load.  Otherwise, folding it
+    // would create a cycle.
+    if (User->isPredecessorOf(LD) || LD->isPredecessorOf(User))
+      continue;
+
+    // If the increment is a constant, it must match the memory ref size.
+    SDValue Inc = User->getOperand(User->getOperand(0) == Addr ? 1 : 0);
+    if (ConstantSDNode *CInc = dyn_cast<ConstantSDNode>(Inc.getNode())) {
+      uint32_t IncVal = CInc->getZExtValue();
+      unsigned NumBytes = VT.getScalarSizeInBits() / 8;
+      if (IncVal != NumBytes)
+        continue;
+      Inc = DAG.getRegister(ARM64::XZR, MVT::i64);
+    }
+
+    SmallVector<SDValue, 8> Ops;
+    Ops.push_back(LD->getOperand(0));  // Chain
+    if (IsLaneOp) {
+      Ops.push_back(N->getOperand(0)); // The vector to be inserted
+      Ops.push_back(N->getOperand(2)); // The lane to be inserted in the vector
+    }
+    Ops.push_back(Addr);
+    Ops.push_back(Inc);
+
+    EVT Tys[3] = { VT, MVT::i64, MVT::Other };
+    SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, 3));
+    unsigned NewOp = IsLaneOp ? ARM64ISD::LD1LANEpost : ARM64ISD::LD1DUPpost;
+    SDValue UpdN = DAG.getMemIntrinsicNode(NewOp, SDLoc(N), SDTys, Ops,
+                                           MemVT,
+                                           LoadSDN->getMemOperand());
+
+    // Update the uses.
+    std::vector<SDValue> NewResults;
+    NewResults.push_back(SDValue(LD, 0));             // The result of load
+    NewResults.push_back(SDValue(UpdN.getNode(), 2)); // Chain
+    DCI.CombineTo(LD, NewResults);
+    DCI.CombineTo(N, SDValue(UpdN.getNode(), 0));     // Dup/Inserted Result
+    DCI.CombineTo(User, SDValue(UpdN.getNode(), 1));  // Write back register
+
+    break;
+  }
+  return SDValue();
+}
+
 /// Target-specific DAG combine function for NEON load/store intrinsics
 /// to merge base address updates.
 static SDValue performNEONPostLDSTCombine(SDNode *N,
@@ -7373,7 +7462,7 @@ static SDValue performNEONPostLDSTCombine(SDNode *N,
     if (IsLaneOp || IsStore)
       for (unsigned i = 2; i < AddrOpIdx; ++i)
         Ops.push_back(N->getOperand(i));
-    Ops.push_back(N->getOperand(AddrOpIdx)); // Base register
+    Ops.push_back(Addr); // Base register
     Ops.push_back(Inc);
 
     // Return Types.
@@ -7563,6 +7652,10 @@ SDValue ARM64TargetLowering::PerformDAGCombine(SDNode *N,
     return performSTORECombine(N, DCI, DAG, Subtarget);
   case ARM64ISD::BRCOND:
     return performBRCONDCombine(N, DCI, DAG);
+  case ARM64ISD::DUP:
+    return performPostLD1Combine(N, DCI, false);
+  case ISD::INSERT_VECTOR_ELT:
+    return performPostLD1Combine(N, DCI, true);
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:
     switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
