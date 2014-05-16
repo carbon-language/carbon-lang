@@ -322,6 +322,7 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   // object pointer later on. But what we don't want to do is process the
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
+    assert(SPDie == AbsSPDIE);
     // Pick up abstract subprogram DIE.
     SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
