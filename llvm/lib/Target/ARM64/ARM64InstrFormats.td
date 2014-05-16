@@ -1255,7 +1255,7 @@ multiclass Shift<bits<2> shift_type, string asm, SDNode OpNode> {
 
 class ShiftAlias<string asm, Instruction inst, RegisterClass regtype>
     : InstAlias<asm#" $dst, $src1, $src2",
-                (inst regtype:$dst, regtype:$src1, regtype:$src2)>;
+                (inst regtype:$dst, regtype:$src1, regtype:$src2), 0>;
 
 class BaseMulAccum<bit isSub, bits<3> opc, RegisterClass multype,
                        RegisterClass addtype, string asm,
