@@ -101,6 +101,71 @@ class RINT_D_ENC : COP1_2R_FM<0b011010, FIELD_FMT_D>;
 class CLASS_S_ENC : COP1_2R_FM<0b011011, FIELD_FMT_S>;
 class CLASS_D_ENC : COP1_2R_FM<0b011011, FIELD_FMT_D>;
 
+class CMP_CONDN_DESC_BASE<string CondStr, string Typestr, RegisterOperand FGROpnd> {
+  dag OutOperandList = (outs FGROpnd:$fd);
+  dag InOperandList = (ins FGROpnd:$fs, FGROpnd:$ft);
+  string AsmString = !strconcat("cmp.", CondStr, ".", Typestr, "\t$fd, $fs, $ft");
+  list<dag> Pattern = [];
+}
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Multiclasses
+//
+//===----------------------------------------------------------------------===//
+
+multiclass CMP_CC_M <FIELD_CMP_FORMAT Format, string Typestr,
+                     RegisterOperand FGROpnd>{
+  def CMP_F_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_F>,
+                    CMP_CONDN_DESC_BASE<"f", Typestr, FGROpnd>,
+                    ISA_MIPS32R6;
+  def CMP_UN_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_UN>,
+                     CMP_CONDN_DESC_BASE<"un", Typestr, FGROpnd>,
+                     ISA_MIPS32R6;
+  def CMP_EQ_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_EQ>,
+                     CMP_CONDN_DESC_BASE<"eq", Typestr, FGROpnd>,
+                     ISA_MIPS32R6;
+  def CMP_UEQ_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_UEQ>,
+                      CMP_CONDN_DESC_BASE<"ueq", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_OLT_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_OLT>,
+                      CMP_CONDN_DESC_BASE<"olt", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_ULT_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_ULT>,
+                      CMP_CONDN_DESC_BASE<"ult", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_OLE_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_OLE>,
+                      CMP_CONDN_DESC_BASE<"ole", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_ULE_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_ULE>,
+                      CMP_CONDN_DESC_BASE<"ule", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_SF_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_SF>,
+                     CMP_CONDN_DESC_BASE<"sf", Typestr, FGROpnd>,
+                     ISA_MIPS32R6;
+  def CMP_NGLE_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_NGLE>,
+                       CMP_CONDN_DESC_BASE<"ngle", Typestr, FGROpnd>,
+                       ISA_MIPS32R6;
+  def CMP_SEQ_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_SEQ>,
+                      CMP_CONDN_DESC_BASE<"seq", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_NGL_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_NGL>,
+                      CMP_CONDN_DESC_BASE<"ngl", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_LT_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_LT>,
+                     CMP_CONDN_DESC_BASE<"lt", Typestr, FGROpnd>,
+                     ISA_MIPS32R6;
+  def CMP_NGE_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_NGE>,
+                      CMP_CONDN_DESC_BASE<"nge", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+  def CMP_LE_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_LE>,
+                     CMP_CONDN_DESC_BASE<"le", Typestr, FGROpnd>,
+                     ISA_MIPS32R6;
+  def CMP_NGT_#NAME : COP1_CMP_CONDN_FM<Format, FIELD_CMP_COND_NGT>,
+                      CMP_CONDN_DESC_BASE<"ngt", Typestr, FGROpnd>,
+                      ISA_MIPS32R6;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Descriptions
@@ -275,8 +340,8 @@ def BNVC;
 def BOVC;
 def CLASS_D : CLASS_D_ENC, CLASS_D_DESC, ISA_MIPS32R6;
 def CLASS_S : CLASS_S_ENC, CLASS_S_DESC, ISA_MIPS32R6;
-def CMP_CC_D;
-def CMP_CC_S;
+defm S : CMP_CC_M<FIELD_CMP_FORMAT_S, "s", FGR32Opnd>;
+defm D : CMP_CC_M<FIELD_CMP_FORMAT_D, "d", FGR64Opnd>;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
 def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
 def JIALC;

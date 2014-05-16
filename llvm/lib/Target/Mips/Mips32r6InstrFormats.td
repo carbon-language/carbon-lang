@@ -58,6 +58,32 @@ class FIELD_FMT<bits<5> Val> {
 def FIELD_FMT_S : FIELD_FMT<0b10000>;
 def FIELD_FMT_D : FIELD_FMT<0b10001>;
 
+class FIELD_CMP_COND<bits<5> Val> {
+  bits<5> Value = Val;
+}
+def FIELD_CMP_COND_F    : FIELD_CMP_COND<0b00000>;
+def FIELD_CMP_COND_UN   : FIELD_CMP_COND<0b00001>;
+def FIELD_CMP_COND_EQ   : FIELD_CMP_COND<0b00010>;
+def FIELD_CMP_COND_UEQ  : FIELD_CMP_COND<0b00011>;
+def FIELD_CMP_COND_OLT  : FIELD_CMP_COND<0b00100>;
+def FIELD_CMP_COND_ULT  : FIELD_CMP_COND<0b00101>;
+def FIELD_CMP_COND_OLE  : FIELD_CMP_COND<0b00110>;
+def FIELD_CMP_COND_ULE  : FIELD_CMP_COND<0b00111>;
+def FIELD_CMP_COND_SF   : FIELD_CMP_COND<0b01000>;
+def FIELD_CMP_COND_NGLE : FIELD_CMP_COND<0b01001>;
+def FIELD_CMP_COND_SEQ  : FIELD_CMP_COND<0b01010>;
+def FIELD_CMP_COND_NGL  : FIELD_CMP_COND<0b01011>;
+def FIELD_CMP_COND_LT   : FIELD_CMP_COND<0b01100>;
+def FIELD_CMP_COND_NGE  : FIELD_CMP_COND<0b01101>;
+def FIELD_CMP_COND_LE   : FIELD_CMP_COND<0b01110>;
+def FIELD_CMP_COND_NGT  : FIELD_CMP_COND<0b01111>;
+
+class FIELD_CMP_FORMAT<bits<5> Val> {
+  bits<5> Value = Val;
+}
+def FIELD_CMP_FORMAT_S : FIELD_CMP_FORMAT<0b10100>;
+def FIELD_CMP_FORMAT_D : FIELD_CMP_FORMAT<0b10101>;
+
 //===----------------------------------------------------------------------===//
 //
 // Encoding Formats
@@ -208,3 +234,21 @@ class REGIMM_FM<OPCODE5 Operation> : MipsR6Inst {
   let Inst{20-16} = Operation.Value;
   let Inst{15-0} = imm;
 }
+
+class COP1_CMP_CONDN_FM<FIELD_CMP_FORMAT Format,
+                        FIELD_CMP_COND Cond> : MipsR6Inst {
+  bits<5> fd;
+  bits<5> fs;
+  bits<5> ft;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_COP1.Value;
+  let Inst{25-21} = Format.Value;
+  let Inst{20-16} = ft;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5}     = 0;
+  let Inst{4-0}   = Cond.Value;
+}
+
