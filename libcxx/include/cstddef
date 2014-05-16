@@ -35,12 +35,6 @@ Types:
 
 #include <__config>
 
-#ifdef __GLIBC__
-#define __need_NULL
-#define __need_ptrdiff_t
-#define __need_size_t
-#endif  // __GLIBC__
-
 #include <stddef.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
