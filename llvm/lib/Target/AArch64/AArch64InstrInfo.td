@@ -519,7 +519,8 @@ multiclass lsl_aliases<string asmop, Instruction inst, RegisterClass GPR_Rd,
                     (inst GPR_Rd:$Rd, GPR_Rn:$Rn, GPR_Rm:$Rm, 0)>;
 
     def : InstAlias<!strconcat(asmop, " $Rd, $Rn, $Rm, $LSL"),
-                (inst GPR_Rd:$Rd, GPR_Rn:$Rn, GPR_Rm:$Rm, LSL_extoperand:$LSL)>;
+                (inst GPR_Rd:$Rd, GPR_Rn:$Rn, GPR_Rm:$Rm, LSL_extoperand:$LSL),
+                0>;
 
 }
 
