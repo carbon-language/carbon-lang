@@ -3,7 +3,7 @@
 ; AVX128 tests:
 
 ;CHECK-LABEL: vsel_float:
-;CHECK: vblendvps
+;CHECK: vblendps    $5
 ;CHECK: ret
 define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x float> %v1, <4 x float> %v2
@@ -12,7 +12,7 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 
 
 ;CHECK-LABEL: vsel_i32:
-;CHECK: vblendvps
+;CHECK: vblendps   $5
 ;CHECK: ret
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x i32> %v1, <4 x i32> %v2
@@ -52,7 +52,7 @@ define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 
 ;CHECK-LABEL: vsel_float8:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendvps
+;CHECK: vblendps    $17
 ;CHECK: ret
 define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x float> %v1, <8 x float> %v2
@@ -61,7 +61,7 @@ define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
 
 ;CHECK-LABEL: vsel_i328:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendvps
+;CHECK: vblendps    $17
 ;CHECK-NEXT: ret
 define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i32> %v1, <8 x i32> %v2
@@ -86,7 +86,7 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 
 ;CHECK-LABEL: vsel_double4:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendvpd
+;CHECK: vblendpd    $5
 ;CHECK-NEXT: ret
 define <4 x double> @vsel_double4(<4 x double> %v1, <4 x double> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x double> %v1, <4 x double> %v2

@@ -7971,7 +7971,87 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
+// This function assumes its argument is a BUILD_VECTOR of constand or
+// undef SDNodes. i.e: ISD::isBuildVectorOfConstantSDNodes(BuildVector) is
+// true.
+static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
+                                    unsigned &MaskValue) {
+  MaskValue = 0;
+  unsigned NumElems = BuildVector->getNumOperands();
+  // There are 2 lanes if (NumElems > 8), and 1 lane otherwise.
+  unsigned NumLanes = (NumElems - 1) / 8 + 1;
+  unsigned NumElemsInLane = NumElems / NumLanes;
+
+  // Blend for v16i16 should be symetric for the both lanes.
+  for (unsigned i = 0; i < NumElemsInLane; ++i) {
+    SDValue EltCond = BuildVector->getOperand(i);
+    SDValue SndLaneEltCond =
+        (NumLanes == 2) ? BuildVector->getOperand(i + NumElemsInLane) : EltCond;
+
+    int Lane1Cond = -1, Lane2Cond = -1;
+    if (isa<ConstantSDNode>(EltCond))
+      Lane1Cond = !isZero(EltCond);
+    if (isa<ConstantSDNode>(SndLaneEltCond))
+      Lane2Cond = !isZero(SndLaneEltCond);
+
+    if (Lane1Cond == Lane2Cond || Lane2Cond < 0)
+      MaskValue |= !!Lane1Cond << i;
+    else if (Lane1Cond < 0)
+      MaskValue |= !!Lane2Cond << i;
+    else
+      return false;
+  }
+  return true;
+}
+
+// Try to lower a vselect node into a simple blend instruction.
+static SDValue LowerVSELECTtoBlend(SDValue Op, const X86Subtarget *Subtarget,
+                                   SelectionDAG &DAG) {
+  SDValue Cond = Op.getOperand(0);
+  SDValue LHS = Op.getOperand(1);
+  SDValue RHS = Op.getOperand(2);
+  SDLoc dl(Op);
+  MVT VT = Op.getSimpleValueType();
+  MVT EltVT = VT.getVectorElementType();
+  unsigned NumElems = VT.getVectorNumElements();
+
+  // There is no blend with immediate in AVX-512.
+  if (VT.is512BitVector())
+    return SDValue();
+
+  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
+    return SDValue();
+  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
+    return SDValue();
+
+  if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
+    return SDValue();
+
+  // Check the mask for BLEND and build the value.
+  unsigned MaskValue = 0;
+  if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
+    return SDValue();
+
+  // Convert i32 vectors to floating point if it is not AVX2.
+  // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
+  MVT BlendVT = VT;
+  if (EltVT == MVT::i64 || (EltVT == MVT::i32 && !Subtarget->hasInt256())) {
+    BlendVT = MVT::getVectorVT(MVT::getFloatingPointVT(EltVT.getSizeInBits()),
+                               NumElems);
+    LHS = DAG.getNode(ISD::BITCAST, dl, VT, LHS);
+    RHS = DAG.getNode(ISD::BITCAST, dl, VT, RHS);
+  }
+
+  SDValue Ret = DAG.getNode(X86ISD::BLENDI, dl, BlendVT, LHS, RHS,
+                            DAG.getConstant(MaskValue, MVT::i32));
+  return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
+}
+
 SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDValue BlendOp = LowerVSELECTtoBlend(Op, Subtarget, DAG);
+  if (BlendOp.getNode())
+    return BlendOp;
+
   // Some types for vselect were previously set to Expand, not Legal or
   // Custom. Return an empty SDValue so we fall-through to Expand, after
   // the Custom lowering phase.
@@ -7984,7 +8064,9 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
   }
 
-  // This node is Legal.
+  // We couldn't create a "Blend with immediate" node.
+  // This node should still be legal, but we'll have to emit a blendv*
+  // instruction.
   return Op;
 }
 

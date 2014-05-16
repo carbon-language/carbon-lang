@@ -576,3 +576,11 @@ define < 4 x float> @test_insertps_no_undef(<4 x float> %x) {
   %res = select  <4 x i1> %mask, <4 x float> %x, <4 x float>%vecinit5
   ret <4 x float> %res
 }
+
+define <8 x i16> @blendvb_fallback(<8 x i1> %mask, <8 x i16> %x, <8 x i16> %y) {
+; CHECK-LABEL: blendvb_fallback
+; CHECK: blendvb
+; CHECK: ret
+  %ret = select <8 x i1> %mask, <8 x i16> %x, <8 x i16> %y
+  ret <8 x i16> %ret
+}
