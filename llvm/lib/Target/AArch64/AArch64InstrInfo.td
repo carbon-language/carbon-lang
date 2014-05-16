@@ -4210,7 +4210,7 @@ defm movn64 : movalias_operand<"movn64", "MOVN", "isOnlyMOVNImm", 64>;
 // will need to be implemented. to allow it, as well as the more generally
 // useful handling of non-register, non-constant operands.
 class movalias<Instruction INST, RegisterClass GPR, Operand operand>
-  : InstAlias<"mov $Rd, $FullImm", (INST GPR:$Rd, operand:$FullImm)>;
+  : InstAlias<"mov $Rd, $FullImm", (INST GPR:$Rd, operand:$FullImm), 0>;
 
 def : movalias<MOVZwii, GPR32, movz32_movimm>;
 def : movalias<MOVZxii, GPR64, movz64_movimm>;
