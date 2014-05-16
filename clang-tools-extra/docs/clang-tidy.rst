@@ -23,12 +23,21 @@ compilation options on the command line after ``--``:
 
 :program:`clang-tidy` has its own checks and can also run Clang static analyzer
 checks. Each check has a name and the checks to run can be chosen using the
-``-checks=`` and ``-disable-checks=`` options. :program:`clang-tidy` selects the
-checks with names matching the regular expression specified by the ``-checks=``
-option and not matching the one specified by the ``-disable-checks=`` option.
+``-checks=`` option, which specifies a comma-separated list of positive and
+negative (prefixed with ``-``) globs. Positive globs add subsets of checks,
+negative globs remove them. For example,
 
-The ``-list-checks`` option lists all the enabled checks. It can be used with or
-without ``-checks=`` and/or ``-disable-checks=``.
+.. code-block:: bash
+
+  $ clang-tidy test.cpp -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*'
+
+will disable all default checks (``-*``) and enable all ``clang-analyzer-*``
+checks except for ``clang-analyzer-alpha*`` ones.
+
+The ``-list-checks`` option lists all the enabled checks. When used without
+``-checks=``, it shows checks enabled by default. Use ``-checks='*'`` to see all
+available checks or with any other value of ``-checks=`` to see which checks are
+enabled by this value.
 
 There are currently three groups of checks:
 
@@ -37,6 +46,9 @@ There are currently three groups of checks:
 
 * Checks related to the Google coding conventions have names starting with
   ``google-``.
+
+* Checks with names starting with ``misc-`` don't relate to any particular
+  coding style.
 
 * Clang static analyzer checks are named starting with ``clang-analyzer-``.
 
@@ -63,12 +75,21 @@ An overview of all the command-line options:
 
   clang-tidy options:
 
-    -checks=<string>         - Regular expression matching the names of
-                               the checks to be run.
-    -disable-checks=<string> - Regular expression matching the names of
-                               the checks to disable.
+    -analyze-temporary-dtors - Enable temporary destructor-aware analysis in
+                               clang-analyzer- checks.
+    -checks=<string>         - Comma-separated list of globs with optional '-'
+                               prefix. Globs are processed in order of appearance
+                               in the list. Globs without '-' prefix add checks
+                               with matching names to the set, globs with the '-'
+                               prefix remove checks with matching names from the
+                               set of enabled checks.
     -fix                     - Fix detected errors if possible.
-    -list-checks             - List all enabled checks and exit.
+    -header-filter=<string>  - Regular expression matching the names of the
+                               headers to output diagnostics from.
+                               Diagnostics from the main file of each
+                               translation unit are always displayed.
+    -list-checks             - List all enabled checks and exit. Use with
+                               -checks='*' to list all available checks.
     -p=<string>              - Build path
 
   -p <build-path> is used to read a compile command database.
