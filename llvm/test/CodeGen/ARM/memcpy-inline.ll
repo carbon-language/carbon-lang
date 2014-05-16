@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 -pre-RA-sched=source -disable-post-ra | FileCheck %s
-
+; RUN: llc < %s -mtriple=thumbv6m-apple-ios -mcpu=cortex-m0 -pre-RA-sched=source -disable-post-ra | FileCheck %s -check-prefix=CHECK-T1
 %struct.x = type { i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8 }
 
 @src = external global %struct.x
@@ -17,7 +17,12 @@ define i32 @t0() {
 entry:
 ; CHECK-LABEL: t0:
 ; CHECK: vldr [[REG1:d[0-9]+]],
-; CHECK: vstr [[REG1]], 
+; CHECK: vstr [[REG1]],
+; CHECK-T1-LABEL: t0:
+; CHECK-T1: ldrb [[TREG1:r[0-9]]],
+; CHECK-T1: strb [[TREG1]],
+; CHECK-T1: ldrh [[TREG2:r[0-9]]],
+; CHECK-T1: strh [[TREG2]]
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds (%struct.x* @dst, i32 0, i32 0), i8* getelementptr inbounds (%struct.x* @src, i32 0, i32 0), i32 11, i32 8, i1 false)
   ret i32 0
 }
@@ -83,6 +88,11 @@ entry:
 ; CHECK: movw [[REG7:r[0-9]+]], #18500
 ; CHECK: movt [[REG7:r[0-9]+]], #22866
 ; CHECK: str [[REG7]]
+; CHECK-T1-LABEL: t5:
+; CHECK-T1: movs [[TREG3:r[0-9]]],
+; CHECK-T1: strb [[TREG3]],
+; CHECK-T1: movs [[TREG4:r[0-9]]],
+; CHECK-T1: strb [[TREG4]],
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([7 x i8]* @.str5, i64 0, i64 0), i64 7, i32 1, i1 false)
   ret void
 }
@@ -90,12 +100,17 @@ entry:
 define void @t6() nounwind {
 entry:
 ; CHECK-LABEL: t6:
-; CHECK: vld1.8 {[[REG8:d[0-9]+]]}, [r0]
-; CHECK: vstr [[REG8]], [r1]
+; CHECK: vld1.8 {[[REG9:d[0-9]+]]}, [r0]
+; CHECK: vstr [[REG9]], [r1]
 ; CHECK: adds r1, #6
 ; CHECK: adds r0, #6
 ; CHECK: vld1.8
 ; CHECK: vst1.16
+; CHECK-T1-LABEL: t6:
+; CHECK-T1: movs [[TREG5:r[0-9]]],
+; CHECK-T1: strh [[TREG5]],
+; CHECK-T1: ldr [[TREG6:r[0-9]]],
+; CHECK-T1: str [[TREG6]]
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([512 x i8]* @spool.splbuf, i64 0, i64 0), i8* getelementptr inbounds ([14 x i8]* @.str6, i64 0, i64 0), i64 14, i32 1, i1 false)
   ret void
 }
@@ -104,9 +119,12 @@ entry:
 
 define void @t7(%struct.Foo* nocapture %a, %struct.Foo* nocapture %b) nounwind {
 entry:
-; CHECK: t7
+; CHECK-LABEL: t7:
 ; CHECK: vld1.32
 ; CHECK: vst1.32
+; CHECK-T1-LABEL: t7:
+; CHECK-T1: ldr
+; CHECK-T1: str
   %0 = bitcast %struct.Foo* %a to i8*
   %1 = bitcast %struct.Foo* %b to i8*
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 16, i32 4, i1 false)
