@@ -1291,7 +1291,6 @@ def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
 
 def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32",
   [(set i32:$dst, (AMDGPUbfi i32:$src0, i32:$src1, i32:$src2))]>;
-defm : BFIPatterns <V_BFI_B32>;
 def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",
   [(set f32:$dst, (fma f32:$src0, f32:$src1, f32:$src2))]
 >;
@@ -1300,7 +1299,6 @@ def V_FMA_F64 : VOP3_64 <0x0000014c, "V_FMA_F64",
 >;
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "V_LERP_U8", []>;
 def V_ALIGNBIT_B32 : VOP3_32 <0x0000014e, "V_ALIGNBIT_B32", []>;
-def : ROTRPattern <V_ALIGNBIT_B32>;
 
 def V_ALIGNBYTE_B32 : VOP3_32 <0x0000014f, "V_ALIGNBYTE_B32", []>;
 def V_MULLIT_F32 : VOP3_32 <0x00000150, "V_MULLIT_F32", []>;
@@ -1340,16 +1338,6 @@ def V_MAX_F64 : VOP3_64 <0x00000167, "V_MAX_F64", []>;
 
 } // isCommutable = 1
 
-def : Pat <
-  (fadd f64:$src0, f64:$src1),
-  (V_ADD_F64 $src0, $src1, (i64 0))
->;
-
-def : Pat <
-  (fmul f64:$src0, f64:$src1),
-  (V_MUL_F64 $src0, $src1, (i64 0))
->;
-
 def V_LDEXP_F64 : VOP3_64 <0x00000168, "V_LDEXP_F64", []>;
 
 let isCommutable = 1 in {
@@ -1360,21 +1348,6 @@ def V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
 def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 
 } // isCommutable = 1
-
-def : Pat <
-  (mul i32:$src0, i32:$src1),
-  (V_MUL_LO_I32 $src0, $src1, (i32 0))
->;
-
-def : Pat <
-  (mulhu i32:$src0, i32:$src1),
-  (V_MUL_HI_U32 $src0, $src1, (i32 0))
->;
-
-def : Pat <
-  (mulhs i32:$src0, i32:$src1),
-  (V_MUL_HI_I32 $src0, $src1, (i32 0))
->;
 
 def V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
 def V_DIV_SCALE_F64 : VOP3_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
@@ -2110,14 +2083,42 @@ def : Pat <
                           (V_MBCNT_LO_U32_B32_e64 0xffffffff, 0, 0, 0))
 >;
 
-/********** ================== **********/
-/**********   VOP3 Patterns    **********/
-/********** ================== **********/
+//===----------------------------------------------------------------------===//
+// VOP3 Patterns
+//===----------------------------------------------------------------------===//
 
 def : Pat <
   (f32 (fadd (fmul f32:$src0, f32:$src1), f32:$src2)),
   (V_MAD_F32 $src0, $src1, $src2)
 >;
+
+def : Pat <
+  (fadd f64:$src0, f64:$src1),
+  (V_ADD_F64 $src0, $src1, (i64 0))
+>;
+
+def : Pat <
+  (fmul f64:$src0, f64:$src1),
+  (V_MUL_F64 $src0, $src1, (i64 0))
+>;
+
+def : Pat <
+  (mul i32:$src0, i32:$src1),
+  (V_MUL_LO_I32 $src0, $src1, (i32 0))
+>;
+
+def : Pat <
+  (mulhu i32:$src0, i32:$src1),
+  (V_MUL_HI_U32 $src0, $src1, (i32 0))
+>;
+
+def : Pat <
+  (mulhs i32:$src0, i32:$src1),
+  (V_MUL_HI_I32 $src0, $src1, (i32 0))
+>;
+
+defm : BFIPatterns <V_BFI_B32>;
+def : ROTRPattern <V_ALIGNBIT_B32>;
 
 /********** ======================= **********/
 /**********   Load/Store Patterns   **********/
