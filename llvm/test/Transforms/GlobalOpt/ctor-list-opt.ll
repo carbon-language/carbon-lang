@@ -1,5 +1,20 @@
-; RUN: opt < %s -globalopt -S | not grep CTOR
-@llvm.global_ctors = appending global [11 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR2 }, { i32, void ()* } { i32 65535, void ()* @CTOR3 }, { i32, void ()* } { i32 65535, void ()* @CTOR4 }, { i32, void ()* } { i32 65535, void ()* @CTOR5 }, { i32, void ()* } { i32 65535, void ()* @CTOR6 }, { i32, void ()* } { i32 65535, void ()* @CTOR7 }, { i32, void ()* } { i32 65535, void ()* @CTOR8 }, { i32, void ()* } { i32 65535, void ()* @CTOR9 }, { i32, void ()* } { i32 2147483647, void ()* null } ]		; <[10 x { i32, void ()* }]*> [#uses=0]
+; RUN: opt < %s -globalopt -S | FileCheck %s
+; CHECK-NOT: CTOR
+%ini = type { i32, void()*, i8* }
+@llvm.global_ctors = appending global [11 x %ini] [
+	%ini { i32 65535, void ()* @CTOR1, i8* null },
+	%ini { i32 65535, void ()* @CTOR1, i8* null },
+	%ini { i32 65535, void ()* @CTOR2, i8* null },
+	%ini { i32 65535, void ()* @CTOR3, i8* null },
+	%ini { i32 65535, void ()* @CTOR4, i8* null },
+	%ini { i32 65535, void ()* @CTOR5, i8* null },
+	%ini { i32 65535, void ()* @CTOR6, i8* null },
+	%ini { i32 65535, void ()* @CTOR7, i8* null },
+	%ini { i32 65535, void ()* @CTOR8, i8* null },
+	%ini { i32 65535, void ()* @CTOR9, i8* null },
+	%ini { i32 2147483647, void ()* null, i8* null }
+]
+
 @G = global i32 0		; <i32*> [#uses=1]
 @G2 = global i32 0		; <i32*> [#uses=1]
 @G3 = global i32 -123		; <i32*> [#uses=2]

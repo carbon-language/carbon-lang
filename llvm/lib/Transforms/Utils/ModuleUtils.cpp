@@ -24,16 +24,16 @@ static void appendToGlobalArray(const char *Array,
                                 Module &M, Function *F, int Priority) {
   IRBuilder<> IRB(M.getContext());
   FunctionType *FnTy = FunctionType::get(IRB.getVoidTy(), false);
-  StructType *Ty = StructType::get(
-      IRB.getInt32Ty(), PointerType::getUnqual(FnTy), NULL);
-
-  Constant *RuntimeCtorInit = ConstantStruct::get(
-      Ty, IRB.getInt32(Priority), F, NULL);
 
   // Get the current set of static global constructors and add the new ctor
   // to the list.
   SmallVector<Constant *, 16> CurrentCtors;
-  if (GlobalVariable * GVCtor = M.getNamedGlobal(Array)) {
+  StructType *EltTy;
+  if (GlobalVariable *GVCtor = M.getNamedGlobal(Array)) {
+    // If there is a global_ctors array, use the existing struct type, which can
+    // have 2 or 3 fields.
+    ArrayType *ATy = cast<ArrayType>(GVCtor->getType()->getElementType());
+    EltTy = cast<StructType>(ATy->getElementType());
     if (Constant *Init = GVCtor->getInitializer()) {
       unsigned n = Init->getNumOperands();
       CurrentCtors.reserve(n + 1);
@@ -41,13 +41,26 @@ static void appendToGlobalArray(const char *Array,
         CurrentCtors.push_back(cast<Constant>(Init->getOperand(i)));
     }
     GVCtor->eraseFromParent();
+  } else {
+    // Use a simple two-field struct if there isn't one already.
+    EltTy = StructType::get(IRB.getInt32Ty(), PointerType::getUnqual(FnTy),
+                            nullptr);
   }
+
+  // Build a 2 or 3 field global_ctor entry.  We don't take a comdat key.
+  Constant *CSVals[3];
+  CSVals[0] = IRB.getInt32(Priority);
+  CSVals[1] = F;
+  // FIXME: Drop support for the two element form in LLVM 4.0.
+  if (EltTy->getNumElements() >= 3)
+    CSVals[2] = llvm::Constant::getNullValue(IRB.getInt8PtrTy());
+  Constant *RuntimeCtorInit =
+      ConstantStruct::get(EltTy, makeArrayRef(CSVals, EltTy->getNumElements()));
 
   CurrentCtors.push_back(RuntimeCtorInit);
 
   // Create a new initializer.
-  ArrayType *AT = ArrayType::get(RuntimeCtorInit->getType(),
-                                 CurrentCtors.size());
+  ArrayType *AT = ArrayType::get(EltTy, CurrentCtors.size());
   Constant *NewInit = ConstantArray::get(AT, CurrentCtors);
 
   // Create the new global variable and replace all uses of

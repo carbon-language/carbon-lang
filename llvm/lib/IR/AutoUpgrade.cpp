@@ -170,7 +170,59 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
   return Upgraded;
 }
 
+static bool UpgradeGlobalStructors(GlobalVariable *GV) {
+  ArrayType *ATy = dyn_cast<ArrayType>(GV->getType()->getElementType());
+  StructType *OldTy =
+      ATy ? dyn_cast<StructType>(ATy->getElementType()) : nullptr;
+
+  // Only upgrade an array of a two field struct with the appropriate field
+  // types.
+  if (!OldTy || OldTy->getNumElements() != 2)
+    return false;
+
+  // Get the upgraded 3 element type.
+  PointerType *VoidPtrTy = Type::getInt8Ty(GV->getContext())->getPointerTo();
+  Type *Tys[3] = {
+    OldTy->getElementType(0),
+    OldTy->getElementType(1),
+    VoidPtrTy
+  };
+  StructType *NewTy =
+      StructType::get(GV->getContext(), Tys, /*isPacked=*/false);
+
+  // Build new constants with a null third field filled in.
+  ConstantArray *OldInit = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!OldInit)
+    return false;
+  std::vector<Constant *> Initializers;
+  for (Use &U : OldInit->operands()) {
+    ConstantStruct *Init = cast<ConstantStruct>(&U);
+    Constant *NewInit =
+        ConstantStruct::get(NewTy, Init->getOperand(0), Init->getOperand(1),
+                            Constant::getNullValue(VoidPtrTy), nullptr);
+    Initializers.push_back(NewInit);
+  }
+  assert(Initializers.size() == ATy->getNumElements());
+
+  // Replace the old GV with a new one.
+  ATy = ArrayType::get(NewTy, Initializers.size());
+  Constant *NewInit = ConstantArray::get(ATy, Initializers);
+  GlobalVariable *NewGV = new GlobalVariable(
+      *GV->getParent(), ATy, GV->isConstant(), GV->getLinkage(), NewInit, "",
+      GV, GV->getThreadLocalMode(), GV->getType()->getAddressSpace(),
+      GV->isExternallyInitialized());
+  NewGV->copyAttributesFrom(GV);
+  NewGV->takeName(GV);
+  assert(GV->use_empty() && "program cannot use initializer list");
+  GV->eraseFromParent();
+  return true;
+}
+
 bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
+  if (GV->getName() == "llvm.global_ctors" ||
+      GV->getName() == "llvm.global_dtors")
+    return UpgradeGlobalStructors(GV);
+
   // Nothing to do yet.
   return false;
 }

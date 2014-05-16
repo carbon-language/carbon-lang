@@ -29,26 +29,28 @@ namespace {
 void installGlobalCtors(GlobalVariable *GCL,
                         const std::vector<Function *> &Ctors) {
   // If we made a change, reassemble the initializer list.
-  Constant *CSVals[2];
-  CSVals[0] = ConstantInt::get(Type::getInt32Ty(GCL->getContext()), 65535);
-  CSVals[1] = nullptr;
+  Constant *CSVals[3];
 
   StructType *StructTy =
       cast<StructType>(GCL->getType()->getElementType()->getArrayElementType());
 
   // Create the new init list.
   std::vector<Constant *> CAList;
-  for (unsigned i = 0, e = Ctors.size(); i != e; ++i) {
-    if (Ctors[i]) {
-      CSVals[1] = Ctors[i];
+  for (Function *F : Ctors) {
+    Type *Int32Ty = Type::getInt32Ty(GCL->getContext());
+    if (F) {
+      CSVals[0] = ConstantInt::get(Int32Ty, 65535);
+      CSVals[1] = F;
     } else {
-      Type *FTy = FunctionType::get(Type::getVoidTy(GCL->getContext()), false);
-      PointerType *PFTy = PointerType::getUnqual(FTy);
-      CSVals[1] = Constant::getNullValue(PFTy);
-      CSVals[0] =
-          ConstantInt::get(Type::getInt32Ty(GCL->getContext()), 0x7fffffff);
+      CSVals[0] = ConstantInt::get(Int32Ty, 0x7fffffff);
+      CSVals[1] = Constant::getNullValue(StructTy->getElementType(1));
     }
-    CAList.push_back(ConstantStruct::get(StructTy, CSVals));
+    // FIXME: Only allow the 3-field form in LLVM 4.0.
+    size_t NumElts = StructTy->getNumElements();
+    if (NumElts > 2)
+      CSVals[2] = Constant::getNullValue(StructTy->getElementType(2));
+    CAList.push_back(
+        ConstantStruct::get(StructTy, makeArrayRef(CSVals, NumElts)));
   }
 
   // Create the array initializer.

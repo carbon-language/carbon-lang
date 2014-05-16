@@ -1296,6 +1296,15 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
   }
 }
 
+namespace {
+struct Structor {
+  Structor() : Priority(0), Func(nullptr), ComdatKey(nullptr) {}
+  int Priority;
+  llvm::Constant *Func;
+  llvm::GlobalValue *ComdatKey;
+};
+} // end namespace
+
 /// EmitXXStructorList - Emit the ctor or dtor list taking into account the init
 /// priority.
 void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
@@ -1307,37 +1316,52 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
   const ConstantArray *InitList = dyn_cast<ConstantArray>(List);
   if (!InitList) return; // Not an array!
   StructType *ETy = dyn_cast<StructType>(InitList->getType()->getElementType());
-  if (!ETy || ETy->getNumElements() != 2) return; // Not an array of pairs!
+  // FIXME: Only allow the 3-field form in LLVM 4.0.
+  if (!ETy || ETy->getNumElements() < 2 || ETy->getNumElements() > 3)
+    return; // Not an array of two or three elements!
   if (!isa<IntegerType>(ETy->getTypeAtIndex(0U)) ||
       !isa<PointerType>(ETy->getTypeAtIndex(1U))) return; // Not (int, ptr).
+  if (ETy->getNumElements() == 3 && !isa<PointerType>(ETy->getTypeAtIndex(2U)))
+    return; // Not (int, ptr, ptr).
 
   // Gather the structors in a form that's convenient for sorting by priority.
-  typedef std::pair<unsigned, Constant *> Structor;
   SmallVector<Structor, 8> Structors;
-  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-    ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i));
+  for (Value *O : InitList->operands()) {
+    ConstantStruct *CS = dyn_cast<ConstantStruct>(O);
     if (!CS) continue; // Malformed.
     if (CS->getOperand(1)->isNullValue())
       break;  // Found a null terminator, skip the rest.
     ConstantInt *Priority = dyn_cast<ConstantInt>(CS->getOperand(0));
     if (!Priority) continue; // Malformed.
-    Structors.push_back(std::make_pair(Priority->getLimitedValue(65535),
-                                       CS->getOperand(1)));
+    Structors.push_back(Structor());
+    Structor &S = Structors.back();
+    S.Priority = Priority->getLimitedValue(65535);
+    S.Func = CS->getOperand(1);
+    if (ETy->getNumElements() == 3 && !CS->getOperand(2)->isNullValue())
+      S.ComdatKey = dyn_cast<GlobalValue>(CS->getOperand(2)->stripPointerCasts());
   }
 
   // Emit the function pointers in the target-specific order
   const DataLayout *DL = TM.getDataLayout();
   unsigned Align = Log2_32(DL->getPointerPrefAlignment());
-  std::stable_sort(Structors.begin(), Structors.end(), less_first());
-  for (unsigned i = 0, e = Structors.size(); i != e; ++i) {
+  std::stable_sort(Structors.begin(), Structors.end(),
+                   [](const Structor &L,
+                      const Structor &R) { return L.Priority < R.Priority; });
+  for (Structor &S : Structors) {
+    const TargetLoweringObjectFile &Obj = getObjFileLowering();
+    const MCSymbol *KeySym = nullptr;
+    const MCSection *KeySec = nullptr;
+    if (S.ComdatKey) {
+      KeySym = getSymbol(S.ComdatKey);
+      KeySec = getObjFileLowering().SectionForGlobal(S.ComdatKey, *Mang, TM);
+    }
     const MCSection *OutputSection =
-      (isCtor ?
-       getObjFileLowering().getStaticCtorSection(Structors[i].first) :
-       getObjFileLowering().getStaticDtorSection(Structors[i].first));
+        (isCtor ? Obj.getStaticCtorSection(S.Priority, KeySym, KeySec)
+                : Obj.getStaticDtorSection(S.Priority, KeySym, KeySec));
     OutStreamer.SwitchSection(OutputSection);
     if (OutStreamer.getCurrentSection() != OutStreamer.getPreviousSection())
       EmitAlignment(Align);
-    EmitXXStructor(Structors[i].second);
+    EmitXXStructor(S.Func);
   }
 }
 

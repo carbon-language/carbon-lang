@@ -130,14 +130,15 @@ public:
   getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
                     MCStreamer &Streamer) const;
 
-  virtual const MCSection *
-  getStaticCtorSection(unsigned Priority = 65535) const {
-    (void)Priority;
+  virtual const MCSection *getStaticCtorSection(unsigned Priority,
+                                                const MCSymbol *KeySym,
+                                                const MCSection *KeySec) const {
     return StaticCtorSection;
   }
-  virtual const MCSection *
-  getStaticDtorSection(unsigned Priority = 65535) const {
-    (void)Priority;
+
+  virtual const MCSection *getStaticDtorSection(unsigned Priority,
+                                                const MCSymbol *KeySym,
+                                                const MCSection *KeySec) const {
     return StaticDtorSection;
   }
 
