@@ -311,6 +311,12 @@ AST_MATCHER(Decl, isPrivate) {
   return Node.getAccess() == AS_private;
 }
 
+/// \brief Matches a declaration that has been implicitly added
+/// by the compiler (eg. implicit default/copy constructors).
+AST_MATCHER(Decl, isImplicit) {
+  return Node.isImplicit();
+}
+
 /// \brief Matches classTemplateSpecializations that have at least one
 /// TemplateArgument matching the given InnerMatcher.
 ///
@@ -2185,12 +2191,6 @@ AST_MATCHER_P(CXXCtorInitializer, withInitializer,
 ///   will match Foo(int), but not Foo()
 AST_MATCHER(CXXCtorInitializer, isWritten) {
   return Node.isWritten();
-}
-
-/// \brief Matches a constructor declaration that has been implicitly added
-/// by the compiler (eg. implicit default/copy constructors).
-AST_MATCHER(CXXConstructorDecl, isImplicit) {
-  return Node.isImplicit();
 }
 
 /// \brief Matches any argument of a call expression or a constructor call

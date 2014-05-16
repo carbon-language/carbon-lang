@@ -1773,6 +1773,9 @@ TEST(ConstructorDeclaration, IsImplicit) {
                       constructorDecl(isImplicit())));
   EXPECT_TRUE(matches("class Foo { Foo(){} };",
                       constructorDecl(unless(isImplicit()))));
+  // The compiler added an implicit assignment operator.
+  EXPECT_TRUE(matches("struct A { int x; } a = {0}, b = a; void f() { a = b; }",
+                      methodDecl(isImplicit(), hasName("operator="))));
 }
 
 TEST(DestructorDeclaration, MatchesVirtualDestructor) {
