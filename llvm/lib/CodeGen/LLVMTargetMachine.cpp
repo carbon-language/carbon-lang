@@ -164,7 +164,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     return false;
   }
 
-  if (hasMCSaveTempLabels())
+  if (Options.MCOptions.MCSaveTempLabels)
     Context->setAllowTemporaryLabels(false);
 
   const MCAsmInfo &MAI = *getMCAsmInfo();
@@ -187,8 +187,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                        TargetCPU);
     MCStreamer *S = getTarget().createAsmStreamer(
-        *Context, Out, getVerboseAsm(), hasMCUseDwarfDirectory(), InstPrinter,
-        MCE, MAB, Options.MCOptions.ShowMCInst);
+        *Context, Out, getVerboseAsm(), Options.MCOptions.MCUseDwarfDirectory,
+        InstPrinter, MCE, MAB, Options.MCOptions.ShowMCInst);
     AsmStreamer.reset(S);
     break;
   }
@@ -203,8 +203,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
       return true;
 
     AsmStreamer.reset(getTarget().createMCObjectStreamer(
-        getTargetTriple(), *Context, *MAB, Out, MCE, STI, hasMCRelaxAll(),
-        hasMCNoExecStack()));
+        getTargetTriple(), *Context, *MAB, Out, MCE, STI,
+        Options.MCOptions.MCRelaxAll, Options.MCOptions.MCNoExecStack));
     break;
   }
   case CGFT_Null:
@@ -261,7 +261,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   if (!Ctx)
     return true;
 
-  if (hasMCSaveTempLabels())
+  if (Options.MCOptions.MCSaveTempLabels)
     Ctx->setAllowTemporaryLabels(false);
 
   // Create the code emitter for the target if it exists.  If not, .o file
@@ -277,8 +277,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   std::unique_ptr<MCStreamer> AsmStreamer;
   AsmStreamer.reset(getTarget().createMCObjectStreamer(
-      getTargetTriple(), *Ctx, *MAB, Out, MCE, STI, hasMCRelaxAll(),
-      hasMCNoExecStack()));
+      getTargetTriple(), *Ctx, *MAB, Out, MCE, STI,
+      Options.MCOptions.MCRelaxAll, Options.MCOptions.MCNoExecStack));
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);

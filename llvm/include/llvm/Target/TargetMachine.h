@@ -162,21 +162,6 @@ public:
   bool requiresStructuredCFG() const { return RequireStructuredCFG; }
   void setRequiresStructuredCFG(bool Value) { RequireStructuredCFG = Value; }
 
-  /// hasMCRelaxAll - Check whether all machine code instructions should be
-  /// relaxed.
-  bool hasMCRelaxAll() const { return Options.MCOptions.MCRelaxAll; }
-
-  /// hasMCSaveTempLabels - Check whether temporary labels will be preserved
-  /// (i.e., not treated as temporary).
-  bool hasMCSaveTempLabels() const { return Options.MCOptions.MCSaveTempLabels; }
-
-  /// hasMCNoExecStack - Check whether an executable stack is not needed.
-  bool hasMCNoExecStack() const { return Options.MCOptions.MCNoExecStack; }
-
-  /// hasMCUseDwarfDirectory - Check whether we should use .file directives with
-  /// explicit directories.
-  bool hasMCUseDwarfDirectory() const { return Options.MCOptions.MCUseDwarfDirectory; }
-
   /// getRelocationModel - Returns the code generation relocation model. The
   /// choices are static, PIC, and dynamic-no-pic, and target default.
   Reloc::Model getRelocationModel() const;
