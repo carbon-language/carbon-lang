@@ -417,6 +417,16 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
   TheCU.addRangeList(std::move(List));
 }
 
+void DwarfDebug::attachRangesOrLowHighPC(DwarfCompileUnit &TheCU, DIE &Die,
+                                    const SmallVectorImpl<InsnRange> &Ranges) {
+  assert(!Ranges.empty());
+  if (Ranges.size() == 1)
+    attachLowHighPC(TheCU, Die, getLabelBeforeInsn(Ranges.front().first),
+                    getLabelAfterInsn(Ranges.front().second));
+  else
+    addScopeRangeList(TheCU, Die, Ranges);
+}
+
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
 std::unique_ptr<DIE>
@@ -429,24 +439,7 @@ DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
-  const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
-
-  // If we have multiple ranges, emit them into the range section.
-  if (ScopeRanges.size() > 1) {
-    addScopeRangeList(TheCU, *ScopeDIE, ScopeRanges);
-    return ScopeDIE;
-  }
-
-  // Construct the address range for this DIE.
-  SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
-  MCSymbol *Start = getLabelBeforeInsn(RI->first);
-  MCSymbol *End = getLabelAfterInsn(RI->second);
-  assert(End && "End label should not be null!");
-
-  assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
-  assert(End->isDefined() && "Invalid end label for an inlined scope!");
-
-  attachLowHighPC(TheCU, *ScopeDIE, Start, End);
+  attachRangesOrLowHighPC(TheCU, *ScopeDIE, Scope->getRanges());
 
   return ScopeDIE;
 }
@@ -456,10 +449,6 @@ DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
 std::unique_ptr<DIE>
 DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
                                      LexicalScope *Scope) {
-  const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
-  assert(!ScopeRanges.empty() &&
-         "LexicalScope does not have instruction markers!");
-
   assert(Scope->getScopeNode());
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
@@ -475,23 +464,7 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
   TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
 
-  // If we have multiple ranges, emit them into the range section.
-  if (ScopeRanges.size() > 1)
-    addScopeRangeList(TheCU, *ScopeDIE, ScopeRanges);
-  else {
-    SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
-    MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
-    MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
-
-    if (!StartLabel || !EndLabel)
-      llvm_unreachable("Unexpected Start and End labels for an inlined scope!");
-
-    assert(StartLabel->isDefined() &&
-           "Invalid starting label for an inlined scope!");
-    assert(EndLabel->isDefined() && "Invalid end label for an inlined scope!");
-
-    attachLowHighPC(TheCU, *ScopeDIE, StartLabel, EndLabel);
-  }
+  attachRangesOrLowHighPC(TheCU, *ScopeDIE, Scope->getRanges());
 
   InlinedSubprogramDIEs.insert(OriginDIE);
   TheCU.addUInt(*OriginDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
@@ -2467,6 +2440,11 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
 
 void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
                                  MCSymbol *Begin, MCSymbol *End) {
+  assert(Begin && "Begin label should not be null!");
+  assert(End && "End label should not be null!");
+  assert(Begin->isDefined() && "Invalid starting label");
+  assert(End->isDefined() && "Invalid end label");
+
   Unit.addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
   if (DwarfVersion < 4)
     Unit.addLabelAddress(D, dwarf::DW_AT_high_pc, End);

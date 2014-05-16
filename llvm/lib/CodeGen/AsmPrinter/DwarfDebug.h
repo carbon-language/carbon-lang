@@ -540,6 +540,8 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Return Label immediately following the instruction.
   MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
+  void attachRangesOrLowHighPC(DwarfCompileUnit &Unit, DIE &D,
+                               const SmallVectorImpl<InsnRange> &Ranges);
   void attachLowHighPC(DwarfCompileUnit &Unit, DIE &D, MCSymbol *Begin,
                        MCSymbol *End);
 
