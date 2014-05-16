@@ -1963,11 +1963,11 @@ error_code BitcodeReader::ParseModule(bool Resume) {
       Type *Ty = getTypeByID(Record[0]);
       if (!Ty)
         return Error(InvalidRecord);
-      if (!Ty->isPointerTy())
+      auto *PTy = dyn_cast<PointerType>(Ty);
+      if (!PTy)
         return Error(InvalidTypeForValue);
 
-      auto *PTy = cast<PointerType>(Ty);
-      GlobalAlias *NewGA =
+      auto *NewGA =
           new GlobalAlias(PTy->getElementType(), GetDecodedLinkage(Record[2]),
                           "", nullptr, TheModule, PTy->getAddressSpace());
       // Old bitcode files didn't have visibility field.
