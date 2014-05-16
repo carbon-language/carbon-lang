@@ -129,6 +129,9 @@ class MSUBF_D_ENC  : COP1_3R_FM<0b011001, FIELD_FMT_D>;
 class SEL_D_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_D>;
 class SEL_S_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_S>;
 
+class SELEQZ_ENC : SPECIAL_3R_FM<0b00000, 0b110101>;
+class SELNEZ_ENC : SPECIAL_3R_FM<0b00000, 0b110111>;
+
 class LWPC_ENC   : PCREL19_FM<OPCODE2_LWPC>;
 class LWUPC_ENC  : PCREL19_FM<OPCODE2_LWUPC>;
 
@@ -413,6 +416,16 @@ class COP1_4R_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
 class SEL_D_DESC : COP1_4R_DESC_BASE<"sel.d", FGR64Opnd>;
 class SEL_S_DESC : COP1_4R_DESC_BASE<"sel.s", FGR32Opnd>;
 
+class SELEQNE_Z_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
+  list<dag> Pattern = [];
+}
+
+class SELEQZ_DESC : SELEQNE_Z_DESC_BASE<"seleqz", GPR32Opnd>;
+class SELNEZ_DESC : SELEQNE_Z_DESC_BASE<"selnez", GPR32Opnd>;
+
 class MADDF_S_DESC  : COP1_4R_DESC_BASE<"maddf.s", FGR32Opnd>;
 class MADDF_D_DESC  : COP1_4R_DESC_BASE<"maddf.d", FGR64Opnd>;
 class MSUBF_S_DESC  : COP1_4R_DESC_BASE<"msubf.s", FGR32Opnd>;
@@ -529,10 +542,10 @@ def MULU   : MULU_ENC, MULU_DESC, ISA_MIPS32R6;
 def NAL; // BAL with rd=0
 def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
 def RINT_S : RINT_S_ENC, RINT_S_DESC, ISA_MIPS32R6;
-def SELEQZ;
+def SELEQZ : SELEQZ_ENC, SELEQZ_DESC, ISA_MIPS32R6;
 def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;
 def SELEQZ_S : SELEQZ_S_ENC, SELEQZ_S_DESC, ISA_MIPS32R6;
-def SELNEZ;
+def SELNEZ : SELNEZ_ENC, SELNEZ_DESC, ISA_MIPS32R6;
 def SELNEZ_D : SELNEZ_D_ENC, SELNEZ_D_DESC, ISA_MIPS32R6;
 def SELNEZ_S : SELNEZ_S_ENC, SELNEZ_S_DESC, ISA_MIPS32R6;
 def SEL_D : SEL_D_ENC, SEL_D_DESC, ISA_MIPS32R6;
