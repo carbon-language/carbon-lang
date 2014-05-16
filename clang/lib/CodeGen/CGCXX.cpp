@@ -172,8 +172,8 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return true;
 
   // Create the alias with no name.
-  llvm::GlobalAlias *Alias = 
-    new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
+  auto *Alias = new llvm::GlobalAlias(
+      AliasType->getElementType(), Linkage, "", Aliasee, &getModule());
 
   // Switch any previous uses to the alias.
   if (Entry) {
