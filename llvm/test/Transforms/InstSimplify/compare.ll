@@ -817,3 +817,12 @@ define i1 @compare_always_false_ne(i16 %a) {
 ; CHECK-LABEL: @compare_always_false_ne
 ; CHECK-NEXT: ret i1 true
 }
+
+define i1 @compare_dividend(i32 %a) {
+  %div = sdiv i32 2, %a
+  %cmp = icmp eq i32 %div, 3
+  ret i1 %cmp
+
+; CHECK-LABEL: @compare_dividend
+; CHECK-NEXT: ret i1 false
+}

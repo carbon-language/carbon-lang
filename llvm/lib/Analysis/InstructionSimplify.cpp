@@ -2020,6 +2020,10 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       APInt NegOne = APInt::getAllOnesValue(Width);
       if (!CI2->isZero())
         Upper = NegOne.udiv(CI2->getValue()) + 1;
+    } else if (match(LHS, m_SDiv(m_ConstantInt(CI2), m_Value()))) {
+      // 'sdiv CI2, x' produces [-|CI2|, |CI2|].
+      Upper = CI2->getValue().abs() + 1;
+      Lower = (-Upper) + 1;
     } else if (match(LHS, m_SDiv(m_Value(), m_ConstantInt(CI2)))) {
       // 'sdiv x, CI2' produces [INT_MIN / CI2, INT_MAX / CI2].
       APInt IntMin = APInt::getSignedMinValue(Width);
