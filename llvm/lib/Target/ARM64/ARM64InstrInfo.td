@@ -726,19 +726,19 @@ def AA_MVNWrs : InstAlias<"mvn $Wd, $Wm$sh",
 def AA_MVNXrs : InstAlias<"mvn $Xd, $Xm$sh",
                 (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh)>;
 
-def : InstAlias<"tst $src1, $src2",
-                (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2)>;
-def : InstAlias<"tst $src1, $src2",
-                (ANDSXri XZR, GPR64:$src1, logical_imm64:$src2)>;
+def AA_TSTWri : InstAlias<"tst $src1, $src2",
+                         (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2)>;
+def AA_TSTXri : InstAlias<"tst $src1, $src2",
+                         (ANDSXri XZR, GPR64:$src1, logical_imm64:$src2)>;
 
-def : InstAlias<"tst $src1, $src2",
-                (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, 0)>;
-def : InstAlias<"tst $src1, $src2",
-                (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, 0)>;
+def AA_TSTWr: InstAlias<"tst $src1, $src2",
+                       (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, 0)>;
+def AA_TSTXr: InstAlias<"tst $src1, $src2",
+                       (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, 0)>;
 
-def : InstAlias<"tst $src1, $src2, $sh",
+def AB_TSTWrs : InstAlias<"tst $src1, $src2$sh",
                 (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, logical_shift32:$sh)>;
-def : InstAlias<"tst $src1, $src2, $sh",
+def AB_TSTXrs : InstAlias<"tst $src1, $src2$sh",
                 (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift64:$sh)>;
 
 
