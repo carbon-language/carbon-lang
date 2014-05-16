@@ -122,6 +122,6 @@ entry:
 !47 = metadata !{i32 2, i32 47, metadata !25, null}
 !48 = metadata !{i32 2, i32 54, metadata !49, null}
 !49 = metadata !{i32 786443, metadata !51, metadata !25, i32 2, i32 52, i32 2} ; [ DW_TAG_lexical_block ]
-!50 = metadata !{metadata !0, metadata !10, metadata !14, metadata !19, metadata !22, metadata !25}
+!50 = metadata !{metadata !19, metadata !22, metadata !25}
 !51 = metadata !{metadata !"a.cc", metadata !"/private/tmp"}
 !52 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

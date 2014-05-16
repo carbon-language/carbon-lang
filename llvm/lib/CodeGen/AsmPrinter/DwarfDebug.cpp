@@ -718,10 +718,7 @@ void DwarfDebug::constructSubprogramDIE(DwarfCompileUnit &TheCU,
 
   DISubprogram SP(N);
   assert(SP.isSubprogram());
-  if (!SP.isDefinition())
-    // This is a method declaration which will be handled while constructing
-    // class type.
-    return;
+  assert(SP.isDefinition());
 
   DIE &SubprogramDie = *TheCU.getOrCreateSubprogramDIE(SP);
 

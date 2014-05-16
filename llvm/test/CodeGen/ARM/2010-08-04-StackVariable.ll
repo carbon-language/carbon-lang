@@ -123,7 +123,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !43 = metadata !{i32 26, i32 0, metadata !39, null}
 !44 = metadata !{i32 786688, metadata !39, metadata !"k", metadata !2, i32 26, metadata !13, i32 0, i32 0} ; [ DW_TAG_auto_variable ]
 !45 = metadata !{i32 27, i32 0, metadata !39, null}
-!46 = metadata !{metadata !0, metadata !9, metadata !16, metadata !17, metadata !20}
+!46 = metadata !{metadata !16, metadata !17, metadata !20}
 !47 = metadata !{}
 !48 = metadata !{metadata !"small.cc", metadata !"/Users/manav/R8248330"}
 !49 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

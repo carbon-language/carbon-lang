@@ -25,6 +25,6 @@ entry:
 !10 = metadata !{i32 524299, metadata !12, metadata !0, i32 3, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
 !11 = metadata !{i32 524334, metadata !12, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", i32 7, metadata !3, i1 true, i1 false, i32 0, i32 0, null, i1 false, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !12 = metadata !{metadata !"one.c", metadata !"/private/tmp"}
-!13 = metadata !{metadata !0, metadata !6, metadata !11}
+!13 = metadata !{metadata !0}
 !14 = metadata !{i32 0}
 !15 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
