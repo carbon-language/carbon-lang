@@ -68,7 +68,7 @@ namespace {
     const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
     RegScavenger *RS;
-    bool isThumb2;
+    bool isThumb1, isThumb2;
 
     bool runOnMachineFunction(MachineFunction &Fn) override;
 
@@ -1520,6 +1520,10 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   STI = &TM.getSubtarget<ARMSubtarget>();
   RS = new RegScavenger();
   isThumb2 = AFI->isThumb2Function();
+  isThumb1 = AFI->isThumbFunction() && !isThumb2;
+
+  // Don't do anything in this pass with Thumb1 for now.
+  if (isThumb1) return false;
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
@@ -1580,6 +1584,11 @@ bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
   MRI = &Fn.getRegInfo();
   MF  = &Fn;
+
+  ARMFunctionInfo *AFI = Fn.getInfo<ARMFunctionInfo>();
+  bool isThumb1 = AFI->isThumbFunction() && !AFI->isThumb2Function();
+  // Don't do anything in this pass with Thumb1 for now.
+  if (isThumb1) return false;
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
