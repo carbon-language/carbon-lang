@@ -4839,15 +4839,13 @@ struct PPEntityComp {
 
 }
 
-/// \brief Returns the first preprocessed entity ID that ends after \arg BLoc.
-PreprocessedEntityID
-ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
-  if (SourceMgr.isLocalSourceLocation(BLoc))
+PreprocessedEntityID ASTReader::findPreprocessedEntity(SourceLocation Loc,
+                                                       bool EndsAfter) const {
+  if (SourceMgr.isLocalSourceLocation(Loc))
     return getTotalNumPreprocessedEntities();
 
-  GlobalSLocOffsetMapType::const_iterator
-    SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
-                                        BLoc.getOffset() - 1);
+  GlobalSLocOffsetMapType::const_iterator SLocMapI = GlobalSLocOffsetMap.find(
+      SourceManager::MaxLoadedOffset - Loc.getOffset() - 1);
   assert(SLocMapI != GlobalSLocOffsetMap.end() &&
          "Corrupted global sloc offset map");
 
@@ -4864,51 +4862,27 @@ ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
   pp_iterator First = pp_begin;
   pp_iterator PPI;
 
-  // Do a binary search manually instead of using std::lower_bound because
-  // The end locations of entities may be unordered (when a macro expansion
-  // is inside another macro argument), but for this case it is not important
-  // whether we get the first macro expansion or its containing macro.
-  while (Count > 0) {
-    Half = Count/2;
-    PPI = First;
-    std::advance(PPI, Half);
-    if (SourceMgr.isBeforeInTranslationUnit(ReadSourceLocation(M, PPI->End),
-                                            BLoc)){
-      First = PPI;
-      ++First;
-      Count = Count - Half - 1;
-    } else
-      Count = Half;
+  if (EndsAfter) {
+    PPI = std::upper_bound(pp_begin, pp_end, Loc,
+                           PPEntityComp<&PPEntityOffset::Begin>(*this, M));
+  } else {
+    // Do a binary search manually instead of using std::lower_bound because
+    // The end locations of entities may be unordered (when a macro expansion
+    // is inside another macro argument), but for this case it is not important
+    // whether we get the first macro expansion or its containing macro.
+    while (Count > 0) {
+      Half = Count / 2;
+      PPI = First;
+      std::advance(PPI, Half);
+      if (SourceMgr.isBeforeInTranslationUnit(ReadSourceLocation(M, PPI->End),
+                                              Loc)) {
+        First = PPI;
+        ++First;
+        Count = Count - Half - 1;
+      } else
+        Count = Half;
+    }
   }
-
-  if (PPI == pp_end)
-    return findNextPreprocessedEntity(SLocMapI);
-
-  return M.BasePreprocessedEntityID + (PPI - pp_begin);
-}
-
-/// \brief Returns the first preprocessed entity ID that begins after \arg ELoc.
-PreprocessedEntityID
-ASTReader::findEndPreprocessedEntity(SourceLocation ELoc) const {
-  if (SourceMgr.isLocalSourceLocation(ELoc))
-    return getTotalNumPreprocessedEntities();
-
-  GlobalSLocOffsetMapType::const_iterator
-    SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
-                                        ELoc.getOffset() - 1);
-  assert(SLocMapI != GlobalSLocOffsetMap.end() &&
-         "Corrupted global sloc offset map");
-
-  if (SLocMapI->second->NumPreprocessedEntities == 0)
-    return findNextPreprocessedEntity(SLocMapI);
-
-  ModuleFile &M = *SLocMapI->second;
-  typedef const PPEntityOffset *pp_iterator;
-  pp_iterator pp_begin = M.PreprocessedEntityOffsets;
-  pp_iterator pp_end = pp_begin + M.NumPreprocessedEntities;
-  pp_iterator PPI =
-      std::upper_bound(pp_begin, pp_end, ELoc,
-                       PPEntityComp<&PPEntityOffset::Begin>(*this, M));
 
   if (PPI == pp_end)
     return findNextPreprocessedEntity(SLocMapI);
@@ -4924,8 +4898,9 @@ std::pair<unsigned, unsigned>
     return std::make_pair(0,0);
   assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
 
-  PreprocessedEntityID BeginID = findBeginPreprocessedEntity(Range.getBegin());
-  PreprocessedEntityID EndID = findEndPreprocessedEntity(Range.getEnd());
+  PreprocessedEntityID BeginID =
+      findPreprocessedEntity(Range.getBegin(), false);
+  PreprocessedEntityID EndID = findPreprocessedEntity(Range.getEnd(), true);
   return std::make_pair(BeginID, EndID);
 }
 

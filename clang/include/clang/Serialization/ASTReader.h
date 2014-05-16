@@ -1155,13 +1155,10 @@ private:
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
   uint64_t getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset);
 
-  /// \brief Returns the first preprocessed entity ID that ends after BLoc.
+  /// \brief Returns the first preprocessed entity ID that begins or ends after
+  /// \arg Loc.
   serialization::PreprocessedEntityID
-    findBeginPreprocessedEntity(SourceLocation BLoc) const;
-
-  /// \brief Returns the first preprocessed entity ID that begins after ELoc.
-  serialization::PreprocessedEntityID
-    findEndPreprocessedEntity(SourceLocation ELoc) const;
+  findPreprocessedEntity(SourceLocation Loc, bool EndsAfter) const;
 
   /// \brief Find the next module that contains entities and return the ID
   /// of the first entry.
