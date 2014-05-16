@@ -38,10 +38,11 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
-  /// GlobalAlias ctor - If a parent module is specified, the alias is
-  /// automatically inserted into the end of the specified module's alias list.
+  /// If a parent module is specified, the alias is automatically inserted into
+  /// the end of the specified module's alias list.
   GlobalAlias(Type *Ty, LinkageTypes Linkage, const Twine &Name = "",
-              Constant* Aliasee = nullptr, Module *Parent = nullptr);
+              Constant* Aliasee = nullptr, Module *Parent = nullptr,
+              unsigned AddressSpace = 0);
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

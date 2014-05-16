@@ -67,8 +67,10 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
   // Loop over the aliases in the module
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I) {
-    GlobalAlias *GA = new GlobalAlias(I->getType(), I->getLinkage(),
-                                      I->getName(), nullptr, New);
+    auto *PTy = cast<PointerType>(I->getType());
+    auto *GA =
+        new GlobalAlias(PTy->getElementType(), I->getLinkage(), I->getName(),
+                        nullptr, New, PTy->getAddressSpace());
     GA->copyAttributesFrom(I);
     VMap[I] = GA;
   }

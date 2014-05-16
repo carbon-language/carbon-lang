@@ -919,9 +919,10 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
 
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
-  GlobalAlias *NewDA = new GlobalAlias(TypeMap.get(SGA->getType()),
-                                       SGA->getLinkage(), SGA->getName(),
-                                       /*aliasee*/nullptr, DstM);
+  auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
+  GlobalAlias *NewDA =
+      new GlobalAlias(PTy->getElementType(), SGA->getLinkage(), SGA->getName(),
+                      /*aliasee*/ nullptr, DstM, PTy->getAddressSpace());
   copyGVAttributes(NewDA, SGA);
   if (NewVisibility)
     NewDA->setVisibility(*NewVisibility);

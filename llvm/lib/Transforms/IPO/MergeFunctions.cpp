@@ -1328,8 +1328,10 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
 // Replace G with an alias to F and delete G.
 void MergeFunctions::writeAlias(Function *F, Function *G) {
   Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
-  GlobalAlias *GA = new GlobalAlias(G->getType(), G->getLinkage(), "",
-                                    BitcastF, G->getParent());
+  PointerType *PTy = G->getType();
+  GlobalAlias *GA =
+      new GlobalAlias(PTy->getElementType(), G->getLinkage(), "", BitcastF,
+                      G->getParent(), PTy->getAddressSpace());
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());

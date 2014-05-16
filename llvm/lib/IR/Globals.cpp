@@ -213,15 +213,17 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 // GlobalAlias Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link,
-                         const Twine &Name, Constant* aliasee,
-                         Module *ParentModule)
-  : GlobalValue(Ty, Value::GlobalAliasVal, &Op<0>(), 1, Link, Name) {
+GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link, const Twine &Name,
+                         Constant *Aliasee, Module *ParentModule,
+                         unsigned AddressSpace)
+    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalAliasVal,
+                  &Op<0>(), 1, Link, Name) {
   LeakDetector::addGarbageObject(this);
 
-  if (aliasee)
-    assert(aliasee->getType() == Ty && "Alias and aliasee types should match!");
-  Op<0>() = aliasee;
+  if (Aliasee)
+    assert(Aliasee->getType() == getType() &&
+           "Alias and aliasee types should match!");
+  Op<0>() = Aliasee;
 
   if (ParentModule)
     ParentModule->getAliasList().push_back(this);
