@@ -4923,8 +4923,7 @@ FileID ASTImporter::Import(FileID FromID) {
     llvm::MemoryBuffer *ToBuf
       = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());
-    ToID = ToSM.createFileIDForMemBuffer(ToBuf,
-                                    FromSLoc.getFile().getFileCharacteristic());
+    ToID = ToSM.createFileID(ToBuf, FromSLoc.getFile().getFileCharacteristic());
   }
   
   

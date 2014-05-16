@@ -754,7 +754,7 @@ public:
   FileID createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
                              SrcMgr::CharacteristicKind Kind = SrcMgr::C_User) {
     assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileIDForMemBuffer(Buffer, Kind);
+    MainFileID = createFileID(Buffer, Kind);
     return MainFileID;
   }
 
@@ -810,10 +810,10 @@ public:
   ///
   /// This does no caching of the buffer and takes ownership of the
   /// MemoryBuffer, so only pass a MemoryBuffer to this once.
-  FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
+  FileID createFileID(const llvm::MemoryBuffer *Buffer,
                       SrcMgr::CharacteristicKind FileCharacter = SrcMgr::C_User,
-                                  int LoadedID = 0, unsigned LoadedOffset = 0,
-                                 SourceLocation IncludeLoc = SourceLocation()) {
+                      int LoadedID = 0, unsigned LoadedOffset = 0,
+                      SourceLocation IncludeLoc = SourceLocation()) {
     return createFileID(createMemBufferContentCache(Buffer), IncludeLoc,
                         FileCharacter, LoadedID, LoadedOffset);
   }

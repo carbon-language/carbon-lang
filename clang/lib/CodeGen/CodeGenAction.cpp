@@ -249,7 +249,7 @@ static FullSourceLoc ConvertBackendLocation(const llvm::SMDiagnostic &D,
   llvm::MemoryBuffer *CBuf =
   llvm::MemoryBuffer::getMemBufferCopy(LBuf->getBuffer(),
                                        LBuf->getBufferIdentifier());
-  FileID FID = CSM.createFileIDForMemBuffer(CBuf);
+  FileID FID = CSM.createFileID(CBuf);
 
   // Translate the offset into the file.
   unsigned Offset = D.getLoc().getPointer()  - LBuf->getBufferStart();

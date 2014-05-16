@@ -1249,8 +1249,8 @@ bool ASTReader::ReadSLocEntry(int ID) {
 
     llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBuffer(Blob.drop_back(1), Name);
-    SourceMgr.createFileIDForMemBuffer(Buffer, FileCharacter, ID,
-                                       BaseOffset + Offset, IncludeLoc);
+    SourceMgr.createFileID(Buffer, FileCharacter, ID, BaseOffset + Offset,
+                           IncludeLoc);
     break;
   }
 
