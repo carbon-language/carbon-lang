@@ -314,9 +314,14 @@ void
 ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                     const ELFYAML::RawContentSection &Section,
                                     ContiguousBlobAccumulator &CBA) {
-  Section.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
+  assert(Section.Size >= Section.Content.binary_size() &&
+         "Section size and section content are inconsistent");
+  raw_ostream &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  Section.Content.writeAsBinary(OS);
+  for (auto i = Section.Content.binary_size(); i < Section.Size; ++i)
+    OS.write(0);
   SHeader.sh_entsize = 0;
-  SHeader.sh_size = Section.Content.binary_size();
+  SHeader.sh_size = Section.Size;
 }
 
 template <class ELFT>

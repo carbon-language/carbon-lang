@@ -17,6 +17,14 @@ Sections:
     Content: EBFE
     AddressAlign: 2
 
+  - Name: .data
+    Type: SHT_PROGBITS
+    Flags: [ SHF_ALLOC ]
+    Address: 0xCAFECAFE
+    Content: FEBF
+    Size: 8
+    AddressAlign: 2
+
 # CHECK:        Section {
 # CHECK:          Index: 0
 # CHECK:          Type: SHT_NULL (0x0)
@@ -35,6 +43,23 @@ Sections:
 # CHECK:          AddressAlignment: 2
 # CHECK:          SectionData (
 # CHECK-NEXT:       0000: EBFE
+# CHECK-NEXT:     )
+#
+# CHECK:        Section {
+# CHECK:          Name: .data
+# CHECK-NEXT:     Type: SHT_PROGBITS (0x1)
+# CHECK-NEXT:     Flags [ (0x2)
+# CHECK-NEXT:       SHF_ALLOC (0x2)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0xCAFECAFE
+# CHECK-NEXT:     Offset: 0x1D0
+# CHECK-NEXT:     Size: 8
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 2
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:       0000: FEBF0000 00000000 |........|
 # CHECK-NEXT:     )
 #
 # CHECK:        Section {

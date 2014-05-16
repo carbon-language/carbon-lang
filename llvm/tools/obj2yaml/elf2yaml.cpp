@@ -254,6 +254,7 @@ ELFDumper<ELFT>::dumpContentSection(const Elf_Shdr *Shdr) {
   if (error_code EC = ContentOrErr.getError())
     return EC;
   S->Content = object::yaml::BinaryRef(ContentOrErr.get());
+  S->Size = S->Content.binary_size();
 
   return S.release();
 }

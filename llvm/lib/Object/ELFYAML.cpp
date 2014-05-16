@@ -658,6 +658,7 @@ static void commonSectionMapping(IO &IO, ELFYAML::Section &Section) {
 static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
   commonSectionMapping(IO, Section);
   IO.mapOptional("Content", Section.Content);
+  IO.mapOptional("Size", Section.Size, Hex64(Section.Content.binary_size()));
 }
 
 static void sectionMapping(IO &IO, ELFYAML::RelocationSection &Section) {
@@ -685,6 +686,14 @@ void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
       Section.reset(new ELFYAML::RawContentSection());
     sectionMapping(IO, *cast<ELFYAML::RawContentSection>(Section.get()));
   }
+}
+
+StringRef MappingTraits<std::unique_ptr<ELFYAML::Section>>::validate(
+    IO &io, std::unique_ptr<ELFYAML::Section> &Section) {
+  const auto *RawSection = dyn_cast<ELFYAML::RawContentSection>(Section.get());
+  if (!RawSection || RawSection->Size >= RawSection->Content.binary_size())
+    return StringRef();
+  return "Section size must be greater or equal to the content size";
 }
 
 void MappingTraits<ELFYAML::Relocation>::mapping(IO &IO,
