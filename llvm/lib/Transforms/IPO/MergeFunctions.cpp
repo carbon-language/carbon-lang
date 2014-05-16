@@ -335,7 +335,22 @@ private:
   }
 
   /// Compare two GEPs for equivalent pointer arithmetic.
-  bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2);
+  /// Parts to be compared for each comparison stage,
+  /// most significant stage first:
+  /// 1. Address space. As numbers.
+  /// 2. Constant offset, (if "DataLayout *DL" field is not NULL,
+  /// using GEPOperator::accumulateConstantOffset method).
+  /// 3. Pointer operand type (using cmpType method).
+  /// 4. Number of operands.
+  /// 5. Compare operands, using cmpValues method.
+  int cmpGEP(const GEPOperator *GEPL, const GEPOperator *GEPR);
+  int cmpGEP(const GetElementPtrInst *GEPL, const GetElementPtrInst *GEPR) {
+    return cmpGEP(cast<GEPOperator>(GEPL), cast<GEPOperator>(GEPR));
+  }
+
+  bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2) {
+    return cmpGEP(GEP1, GEP2) == 0;
+  }
   bool isEquivalentGEP(const GetElementPtrInst *GEP1,
                        const GetElementPtrInst *GEP2) {
     return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
@@ -858,36 +873,39 @@ int FunctionComparator::cmpOperation(const Instruction *L,
 }
 
 // Determine whether two GEP operations perform the same underlying arithmetic.
-bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
-                                         const GEPOperator *GEP2) {
-  unsigned AS = GEP1->getPointerAddressSpace();
-  if (AS != GEP2->getPointerAddressSpace())
-    return false;
+// Read method declaration comments for more details.
+int FunctionComparator::cmpGEP(const GEPOperator *GEPL,
+                               const GEPOperator *GEPR) {
 
+  unsigned int ASL = GEPL->getPointerAddressSpace();
+  unsigned int ASR = GEPR->getPointerAddressSpace();
+
+  if (int Res = cmpNumbers(ASL, ASR))
+    return Res;
+
+  // When we have target data, we can reduce the GEP down to the value in bytes
+  // added to the address.
   if (DL) {
-    // When we have target data, we can reduce the GEP down to the value in bytes
-    // added to the address.
-    unsigned BitWidth = DL ? DL->getPointerSizeInBits(AS) : 1;
-    APInt Offset1(BitWidth, 0), Offset2(BitWidth, 0);
-    if (GEP1->accumulateConstantOffset(*DL, Offset1) &&
-        GEP2->accumulateConstantOffset(*DL, Offset2)) {
-      return Offset1 == Offset2;
-    }
+    unsigned BitWidth = DL->getPointerSizeInBits(ASL);
+    APInt OffsetL(BitWidth, 0), OffsetR(BitWidth, 0);
+    if (GEPL->accumulateConstantOffset(*DL, OffsetL) &&
+        GEPR->accumulateConstantOffset(*DL, OffsetR))
+      return cmpAPInt(OffsetL, OffsetR);
   }
 
-  if (GEP1->getPointerOperand()->getType() !=
-      GEP2->getPointerOperand()->getType())
-    return false;
+  if (int Res = cmpNumbers((uint64_t)GEPL->getPointerOperand()->getType(),
+                           (uint64_t)GEPR->getPointerOperand()->getType()))
+    return Res;
 
-  if (GEP1->getNumOperands() != GEP2->getNumOperands())
-    return false;
+  if (int Res = cmpNumbers(GEPL->getNumOperands(), GEPR->getNumOperands()))
+    return Res;
 
-  for (unsigned i = 0, e = GEP1->getNumOperands(); i != e; ++i) {
-    if (!enumerate(GEP1->getOperand(i), GEP2->getOperand(i)))
-      return false;
+  for (unsigned i = 0, e = GEPL->getNumOperands(); i != e; ++i) {
+    if (int Res = cmpValues(GEPL->getOperand(i), GEPR->getOperand(i)))
+      return Res;
   }
 
-  return true;
+  return 0;
 }
 
 /// Compare two values used by the two functions under pair-wise comparison. If
