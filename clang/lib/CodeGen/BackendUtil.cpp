@@ -494,7 +494,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
 
   Options.MCOptions.MCRelaxAll = CodeGenOpts.RelaxAll;
   Options.MCOptions.MCSaveTempLabels = CodeGenOpts.SaveTempLabels;
-  Options.MCOptions.MCUseDwarfDirectory = CodeGenOpts.NoDwarfDirectoryAsm;
+  Options.MCOptions.MCUseDwarfDirectory = !CodeGenOpts.NoDwarfDirectoryAsm;
   Options.MCOptions.MCNoExecStack = CodeGenOpts.NoExecStack;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
