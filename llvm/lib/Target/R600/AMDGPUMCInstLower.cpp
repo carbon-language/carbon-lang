@@ -17,6 +17,7 @@
 #include "AMDGPUAsmPrinter.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "R600InstrInfo.h"
+#include "SIInstrInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Constants.h"
@@ -31,12 +32,30 @@
 
 using namespace llvm;
 
-AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx):
-  Ctx(ctx)
+AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &st):
+  Ctx(ctx), ST(st)
 { }
 
+enum AMDGPUMCInstLower::SISubtarget
+AMDGPUMCInstLower::AMDGPUSubtargetToSISubtarget(unsigned Gen) const {
+  switch (Gen) {
+  default: return AMDGPUMCInstLower::SI;
+  }
+}
+
+unsigned AMDGPUMCInstLower::getMCOpcode(unsigned MIOpcode) const {
+
+  int MCOpcode = AMDGPU::getMCOpcode(MIOpcode,
+                              AMDGPUSubtargetToSISubtarget(ST.getGeneration()));
+  if (MCOpcode == -1)
+    MCOpcode = MIOpcode;
+
+  return MCOpcode;
+}
+
 void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
-  OutMI.setOpcode(MI->getOpcode());
+
+  OutMI.setOpcode(getMCOpcode(MI->getOpcode()));
 
   for (const MachineOperand &MO : MI->explicit_operands()) {
     MCOperand MCOp;
@@ -65,7 +84,8 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
 }
 
 void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  AMDGPUMCInstLower MCInstLowering(OutContext);
+  AMDGPUMCInstLower MCInstLowering(OutContext,
+                               MF->getTarget().getSubtarget<AMDGPUSubtarget>());
 
 #ifdef _DEBUG
   StringRef Err;

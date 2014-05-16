@@ -7,6 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Execpt for the NONE field, this must be kept in sync with the SISubtarget enum
+// in AMDGPUMCInstLower.h
+def SISubtarget {
+  int NONE = -1;
+  int SI = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // SI DAG Nodes
 //===----------------------------------------------------------------------===//
@@ -245,6 +252,23 @@ class VOP2_REV <string revOp, bit isOrig> {
   bit IsOrig = isOrig;
 }
 
+class SIMCInstr <string pseudo, int subtarget> {
+  string PseudoInstr = pseudo;
+  int Subtarget = subtarget;
+}
+
+multiclass VOP3_m <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern,
+                   string opName> {
+
+  def "" : InstSI <outs, ins, "", pattern>, VOP <opName>,
+           SIMCInstr<OpName, SISubtarget.NONE> {
+    let isPseudo = 1;
+  }
+
+  def _si : VOP3 <op, outs, ins, asm, []>, SIMCInstr<opName, SISubtarget.SI>;
+
+}
+
 // This must always be right before the operand being input modified.
 def InputMods : OperandWithDefaultOps <i32, (ops (i32 0))> {
   let PrintMethod = "printOperandAndMods";
@@ -364,13 +388,13 @@ multiclass VOPC_64 <bits<8> op, string opName,
   ValueType vt = untyped, PatLeaf cond = COND_NULL>
   : VOPC_Helper <op, VReg_64, VSrc_64, opName, vt, cond>;
 
-class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
+multiclass VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3_m <
   op, (outs VReg_32:$dst),
   (ins InputMods: $src0_modifiers, VSrc_32:$src0, InputMods:$src1_modifiers,
    VSrc_32:$src1, InputMods:$src2_modifiers, VSrc_32:$src2,
    InstFlag:$clamp, InstFlag:$omod),
-  opName#" $dst, $src0_modifiers, $src1, $src2, $clamp, $omod", pattern
->, VOP <opName>;
+  opName#" $dst, $src0_modifiers, $src1, $src2, $clamp, $omod", pattern, opName
+>;
 
 class VOP3_64_Shift <bits <9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
@@ -679,6 +703,14 @@ def isDS : InstrMapping {
   let ColFields = ["Size"];
   let KeyCol = ["8"];
   let ValueCols = [["8"]];
+}
+
+def getMCOpcode : InstrMapping {
+  let FilterClass = "SIMCInstr";
+  let RowFields = ["PseudoInstr"];
+  let ColFields = ["Subtarget"];
+  let KeyCol = [!cast<string>(SISubtarget.NONE)];
+  let ValueCols = [[!cast<string>(SISubtarget.SI)]];
 }
 
 include "SIInstructions.td"

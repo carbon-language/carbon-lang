@@ -355,3 +355,14 @@ int AMDGPUInstrInfo::getMaskedMIMGOp(uint16_t Opcode, unsigned Channels) const {
   case 3: return AMDGPU::getMaskedMIMGOp(Opcode, AMDGPU::Channels_3);
   }
 }
+
+// Wrapper for Tablegen'd function.  enum Subtarget is not defined in any
+// header files, so we need to wrap it in a function that takes unsigned 
+// instead.
+namespace llvm {
+namespace AMDGPU {
+int getMCOpcode(uint16_t Opcode, unsigned Gen) {
+  return getMCOpcode(Opcode);
+}
+}
+}

@@ -13,16 +13,30 @@
 
 namespace llvm {
 
+class AMDGPUSubtarget;
 class MCInst;
 class MCContext;
 class MachineInstr;
 
 class AMDGPUMCInstLower {
 
+  // This must be kept in sync with the SISubtarget class in SIInstrInfo.td
+  enum SISubtarget {
+    SI = 0
+  };
+
   MCContext &Ctx;
+  const AMDGPUSubtarget &ST;
+
+  /// Convert a member of the AMDGPUSubtarget::Generation enum to the
+  /// SISubtarget enum.
+  enum SISubtarget AMDGPUSubtargetToSISubtarget(unsigned Gen) const;
+
+  /// Get the MC opcode for this MachineInstr.
+  unsigned getMCOpcode(unsigned MIOpcode) const;
 
 public:
-  AMDGPUMCInstLower(MCContext &ctx);
+  AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &ST);
 
   /// \brief Lower a MachineInstr to an MCInst
   void lower(const MachineInstr *MI, MCInst &OutMI) const;

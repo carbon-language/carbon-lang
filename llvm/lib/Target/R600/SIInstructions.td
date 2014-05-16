@@ -1246,41 +1246,41 @@ defm V_CVT_PKRTZ_F16_F32 : VOP2_32 <0x0000002f, "V_CVT_PKRTZ_F16_F32",
 
 let neverHasSideEffects = 1 in {
 
-def V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
-def V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32", []>;
-def V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
+defm V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
+defm V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32", []>;
+defm V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
   [(set i32:$dst, (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2))]
 >;
-def V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
+defm V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
   [(set i32:$dst, (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2))]
 >;
 
 } // End neverHasSideEffects
-def V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;
-def V_CUBESC_F32 : VOP3_32 <0x00000145, "V_CUBESC_F32", []>;
-def V_CUBETC_F32 : VOP3_32 <0x00000146, "V_CUBETC_F32", []>;
-def V_CUBEMA_F32 : VOP3_32 <0x00000147, "V_CUBEMA_F32", []>;
+defm V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;
+defm V_CUBESC_F32 : VOP3_32 <0x00000145, "V_CUBESC_F32", []>;
+defm V_CUBETC_F32 : VOP3_32 <0x00000146, "V_CUBETC_F32", []>;
+defm V_CUBEMA_F32 : VOP3_32 <0x00000147, "V_CUBEMA_F32", []>;
 
 let neverHasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
-def V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32",
+defm V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32",
   [(set i32:$dst, (AMDGPUbfe_u32 i32:$src0, i32:$src1, i32:$src2))]>;
-def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
+defm V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
   [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))]>;
 }
 
-def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32",
+defm V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32",
   [(set i32:$dst, (AMDGPUbfi i32:$src0, i32:$src1, i32:$src2))]>;
-def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",
+defm V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",
   [(set f32:$dst, (fma f32:$src0, f32:$src1, f32:$src2))]
 >;
 def V_FMA_F64 : VOP3_64 <0x0000014c, "V_FMA_F64",
   [(set f64:$dst, (fma f64:$src0, f64:$src1, f64:$src2))]
 >;
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "V_LERP_U8", []>;
-def V_ALIGNBIT_B32 : VOP3_32 <0x0000014e, "V_ALIGNBIT_B32", []>;
+defm V_ALIGNBIT_B32 : VOP3_32 <0x0000014e, "V_ALIGNBIT_B32", []>;
 
-def V_ALIGNBYTE_B32 : VOP3_32 <0x0000014f, "V_ALIGNBYTE_B32", []>;
-def V_MULLIT_F32 : VOP3_32 <0x00000150, "V_MULLIT_F32", []>;
+defm V_ALIGNBYTE_B32 : VOP3_32 <0x0000014f, "V_ALIGNBYTE_B32", []>;
+defm V_MULLIT_F32 : VOP3_32 <0x00000150, "V_MULLIT_F32", []>;
 ////def V_MIN3_F32 : VOP3_MIN3 <0x00000151, "V_MIN3_F32", []>;
 ////def V_MIN3_I32 : VOP3_MIN3 <0x00000152, "V_MIN3_I32", []>;
 ////def V_MIN3_U32 : VOP3_MIN3 <0x00000153, "V_MIN3_U32", []>;
@@ -1293,9 +1293,9 @@ def V_MULLIT_F32 : VOP3_32 <0x00000150, "V_MULLIT_F32", []>;
 //def V_SAD_U8 : VOP3_U8 <0x0000015a, "V_SAD_U8", []>;
 //def V_SAD_HI_U8 : VOP3_U8 <0x0000015b, "V_SAD_HI_U8", []>;
 //def V_SAD_U16 : VOP3_U16 <0x0000015c, "V_SAD_U16", []>;
-def V_SAD_U32 : VOP3_32 <0x0000015d, "V_SAD_U32", []>;
+defm V_SAD_U32 : VOP3_32 <0x0000015d, "V_SAD_U32", []>;
 ////def V_CVT_PK_U8_F32 : VOP3_U8 <0x0000015e, "V_CVT_PK_U8_F32", []>;
-def V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32", []>;
+defm V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32", []>;
 def V_DIV_FIXUP_F64 : VOP3_64 <0x00000160, "V_DIV_FIXUP_F64", []>;
 
 def V_LSHL_B64 : VOP3_64_Shift <0x00000161, "V_LSHL_B64",
@@ -1321,16 +1321,16 @@ def V_LDEXP_F64 : VOP3_64 <0x00000168, "V_LDEXP_F64", []>;
 
 let isCommutable = 1 in {
 
-def V_MUL_LO_U32 : VOP3_32 <0x00000169, "V_MUL_LO_U32", []>;
-def V_MUL_HI_U32 : VOP3_32 <0x0000016a, "V_MUL_HI_U32", []>;
-def V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
-def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
+defm V_MUL_LO_U32 : VOP3_32 <0x00000169, "V_MUL_LO_U32", []>;
+defm V_MUL_HI_U32 : VOP3_32 <0x0000016a, "V_MUL_HI_U32", []>;
+defm V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
+defm V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 
 } // isCommutable = 1
 
-def V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
+defm V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
 def V_DIV_SCALE_F64 : VOP3_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
-def V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32", []>;
+defm V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32", []>;
 def V_DIV_FMAS_F64 : VOP3_64 <0x00000170, "V_DIV_FMAS_F64", []>;
 //def V_MSAD_U8 : VOP3_U8 <0x00000171, "V_MSAD_U8", []>;
 //def V_QSAD_U8 : VOP3_U8 <0x00000172, "V_QSAD_U8", []>;
@@ -2312,9 +2312,9 @@ defm V_RNDNE_F64 : VOP1_64 <0x00000019, "V_RNDNE_F64",
   [(set f64:$dst, (frint f64:$src0))]
 >;
 
-def V_QSAD_PK_U16_U8 : VOP3_32 <0x00000173, "V_QSAD_PK_U16_U8", []>;
-def V_MQSAD_U16_U8 : VOP3_32 <0x000000172, "V_MQSAD_U16_U8", []>;
-def V_MQSAD_U32_U8 : VOP3_32 <0x00000175, "V_MQSAD_U32_U8", []>;
+defm V_QSAD_PK_U16_U8 : VOP3_32 <0x00000173, "V_QSAD_PK_U16_U8", []>;
+defm V_MQSAD_U16_U8 : VOP3_32 <0x000000172, "V_MQSAD_U16_U8", []>;
+defm V_MQSAD_U32_U8 : VOP3_32 <0x00000175, "V_MQSAD_U32_U8", []>;
 def V_MAD_U64_U32 : VOP3_64 <0x00000176, "V_MAD_U64_U32", []>;
 
 // XXX - Does this set VCC?
