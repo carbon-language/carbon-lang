@@ -52,6 +52,20 @@ include "Mips32r6InstrFormats.td"
 // Removed: teqi, tgei, tgeiu, tlti, tltiu, tnei
 // Rencoded: [ls][wd]c2
 
+def brtarget21 : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTarget21OpValue";
+  let OperandType = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeBranchTarget21";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
+def brtarget26 : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTarget26OpValue";
+  let OperandType = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeBranchTarget26";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Encodings
@@ -63,6 +77,21 @@ class ALIGN_ENC  : SPECIAL3_ALIGN_FM<OPCODE6_ALIGN>;
 class ALUIPC_ENC : PCREL16_FM<OPCODE5_ALUIPC>;
 class AUI_ENC    : AUI_FM;
 class AUIPC_ENC  : PCREL16_FM<OPCODE5_AUIPC>;
+
+class BALC_ENC  : BRANCH_OFF26_FM<0b111010>;
+class BC_ENC    : BRANCH_OFF26_FM<0b110010>;
+class BEQC_ENC  : CMP_BRANCH_OFF16_FM<0b001000>;
+class BNEC_ENC  : CMP_BRANCH_OFF16_FM<0b011000>;
+
+class BLTZC_ENC : CMP_BRANCH_OFF16_FM<0b010111>;
+class BGEZC_ENC : CMP_BRANCH_OFF16_FM<0b010110>;
+
+class BLEZC_ENC : CMP_BRANCH_RT_OFF16_FM<0b010110>;
+class BGTZC_ENC : CMP_BRANCH_RT_OFF16_FM<0b010111>;
+
+class BEQZC_ENC : CMP_BRANCH_OFF21_FM<0b110110>;
+class BNEZC_ENC : CMP_BRANCH_OFF21_FM<0b111110>;
+
 class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
 class DIV_ENC    : SPECIAL_3R_FM<0b00010, 0b011010>;
 class DIVU_ENC   : SPECIAL_3R_FM<0b00010, 0b011011>;
@@ -215,6 +244,66 @@ class AUI_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 
 class AUI_DESC : AUI_DESC_BASE<"aui", GPR32Opnd>;
 
+class BRANCH_DESC_BASE {
+  bit isBranch = 1;
+  bit isTerminator = 1;
+  bit hasDelaySlot = 0;
+}
+
+class BC_DESC_BASE<string instr_asm, DAGOperand opnd> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins opnd:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = !strconcat(instr_asm, "\t$offset");
+  bit isBarrier = 1;
+}
+
+class CMP_BC_DESC_BASE<string instr_asm, DAGOperand opnd,
+                       RegisterOperand GPROpnd> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, opnd:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = !strconcat(instr_asm, "\t$rs, $rt, $offset");
+  list<Register> Defs = [AT];
+}
+
+class CMP_CBR_EQNE_Z_DESC_BASE<string instr_asm, DAGOperand opnd,
+                               RegisterOperand GPROpnd> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins GPROpnd:$rs, opnd:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = !strconcat(instr_asm, "\t$rs, $offset");
+  list<Register> Defs = [AT];
+}
+
+class CMP_CBR_RT_Z_DESC_BASE<string instr_asm, DAGOperand opnd,
+                             RegisterOperand GPROpnd> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, opnd:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $offset");
+  list<Register> Defs = [AT];
+}
+
+class BALC_DESC : BC_DESC_BASE<"balc", brtarget26> {
+  bit isCall = 1;
+  list<Register> Defs = [RA];
+}
+
+class BC_DESC : BC_DESC_BASE<"bc", brtarget26>;
+class BEQC_DESC : CMP_BC_DESC_BASE<"beqc", brtarget, GPR32Opnd>;
+class BNEC_DESC : CMP_BC_DESC_BASE<"bnec", brtarget, GPR32Opnd>;
+
+class BLTZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bltzc", brtarget, GPR32Opnd> {
+  string Constraints = "$rs = $rt";
+}
+
+class BGEZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgezc", brtarget, GPR32Opnd> {
+  string Constraints = "$rs = $rt";
+}
+
+class BLEZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"blezc", brtarget, GPR32Opnd>;
+class BGTZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgtzc", brtarget, GPR32Opnd>;
+
+class BEQZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"beqzc", brtarget21, GPR32Opnd>;
+class BNEZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"bnezc", brtarget21, GPR32Opnd>;
+
 class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rt);
@@ -316,31 +405,31 @@ def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
 def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
 def AUIPC : AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
-def BALC;
+def BALC : BALC_ENC, BALC_DESC, ISA_MIPS32R6;
 def BC1EQZ;
 def BC1NEZ;
 def BC2EQZ;
 def BC2NEZ;
-def BC;
-def BEQC;
+def BC : BC_ENC, BC_DESC, ISA_MIPS32R6;
+def BEQC : BEQC_ENC, BEQC_DESC, ISA_MIPS32R6;
 def BEQZALC;
-def BEQZC;
+def BEQZC : BEQZC_ENC, BEQZC_DESC, ISA_MIPS32R6;
 def BGEC;  // Also aliased to blec with operands swapped
 def BGEUC; // Also aliased to bleuc with operands swapped
 def BGEZALC;
-def BGEZC;
+def BGEZC : BGEZC_ENC, BGEZC_DESC, ISA_MIPS32R6;
 def BGTZALC;
-def BGTZC;
+def BGTZC : BGTZC_ENC, BGTZC_DESC, ISA_MIPS32R6;
 def BITSWAP : BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
 def BLEZALC;
-def BLEZC;
+def BLEZC : BLEZC_ENC, BLEZC_DESC, ISA_MIPS32R6;
 def BLTC; // Also aliased to bgtc with operands swapped
 def BLTUC; // Also aliased to bgtuc with operands swapped
 def BLTZALC;
-def BLTZC;
-def BNEC;
+def BLTZC : BLTZC_ENC, BLTZC_DESC, ISA_MIPS32R6;
+def BNEC : BNEC_ENC, BNEC_DESC, ISA_MIPS32R6;
 def BNEZALC;
-def BNEZC;
+def BNEZC : BNEZC_ENC, BNEZC_DESC, ISA_MIPS32R6;
 def BNVC;
 def BOVC;
 def CLASS_D : CLASS_D_ENC, CLASS_D_DESC, ISA_MIPS32R6;

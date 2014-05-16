@@ -191,6 +191,42 @@ class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {
   let Inst{5-0}   = funct;
 }
 
+class CMP_BRANCH_OFF16_FM<bits<6> funct> : MipsR6Inst {
+  bits<5> rs;
+  bits<5> rt;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = funct;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-0} = offset;
+}
+
+class CMP_BRANCH_RT_OFF16_FM<bits<6> funct> : CMP_BRANCH_OFF16_FM<funct> {
+  let Inst{25-21} = 0b00000;
+}
+
+class CMP_BRANCH_OFF21_FM<bits<6> funct> : MipsR6Inst {
+  bits<5> rs;
+  bits<21> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = funct;
+  let Inst{25-21} = rs;
+  let Inst{20-0} = offset;
+}
+
+class BRANCH_OFF26_FM<bits<6> funct> : MipsR6Inst {
+  bits<32> Inst;
+  bits<26> offset;
+
+  let Inst{31-26} = funct;
+  let Inst{25-0} = offset;
+}
+
 class SPECIAL3_ALIGN_FM<OPCODE6 Operation> : MipsR6Inst {
   bits<5> rd;
   bits<5> rs;

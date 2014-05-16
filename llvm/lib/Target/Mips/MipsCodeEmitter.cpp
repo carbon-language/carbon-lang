@@ -110,6 +110,11 @@ private:
   unsigned getBranchTargetOpValueMM(const MachineInstr &MI,
                                     unsigned OpNo) const;
 
+  unsigned getBranchTarget21OpValue(const MachineInstr &MI,
+                                    unsigned OpNo) const;
+  unsigned getBranchTarget26OpValue(const MachineInstr &MI,
+                                    unsigned OpNo) const;
+
   unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
   unsigned getMemEncoding(const MachineInstr &MI, unsigned OpNo) const;
   unsigned getMemEncodingMMImm12(const MachineInstr &MI, unsigned OpNo) const;
@@ -198,6 +203,18 @@ unsigned MipsCodeEmitter::getJumpTargetOpValueMM(const MachineInstr &MI,
 }
 
 unsigned MipsCodeEmitter::getBranchTargetOpValueMM(const MachineInstr &MI,
+                                                   unsigned OpNo) const {
+  llvm_unreachable("Unimplemented function.");
+  return 0;
+}
+
+unsigned MipsCodeEmitter::getBranchTarget21OpValue(const MachineInstr &MI,
+                                                   unsigned OpNo) const {
+  llvm_unreachable("Unimplemented function.");
+  return 0;
+}
+
+unsigned MipsCodeEmitter::getBranchTarget26OpValue(const MachineInstr &MI,
                                                    unsigned OpNo) const {
   llvm_unreachable("Unimplemented function.");
   return 0;
