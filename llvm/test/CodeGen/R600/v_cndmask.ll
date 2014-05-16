@@ -3,7 +3,8 @@
 ; SI: @v_cnd_nan
 ; SI: V_CNDMASK_B32_e64 v{{[0-9]}},
 ; SI-DAG: v{{[0-9]}}
-; SI-DAG: {{nan|#QNAN}}
+; All nan values are converted to 0xffffffff
+; SI-DAG: -1
 define void @v_cnd_nan(float addrspace(1)* %out, i32 %c, float %f) {
 entry:
   %0 = icmp ne i32 %c, 0

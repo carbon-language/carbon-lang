@@ -1121,12 +1121,6 @@ def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
   let src2_modifiers = 0;
 }
 
-//f32 pattern for V_CNDMASK_B32_e64
-def : Pat <
-  (f32 (select i1:$src2, f32:$src1, f32:$src0)),
-  (V_CNDMASK_B32_e64 $src0, $src1, $src2)
->;
-
 def V_READLANE_B32 : VOP2 <
   0x00000001,
   (outs SReg_32:$vdst),
