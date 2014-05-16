@@ -18,8 +18,7 @@ struct S {
 };
 
 void user() {
-  // FIXME: dllexported functions must be emitted even if they're not referenced in this TU.
   a();
-  b();
+  // FIXME: dllexported methods must be emitted even if they're not referenced in this TU.
   &S::a;
 }
