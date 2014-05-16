@@ -846,8 +846,8 @@ void DwarfDebug::collectDeadVariables() {
           continue;
         assert(SP.isSubprogram() &&
                "CU's subprogram list contains a non-subprogram");
-        if (!SP.isDefinition())
-          continue;
+        assert(SP.isDefinition() &&
+               "CU's subprogram list contains a subprogram declaration");
         DIArray Variables = SP.getVariables();
         if (Variables.getNumElements() == 0)
           continue;
