@@ -359,9 +359,9 @@ multiclass BranchOnReg<bits<3> cond, string OpcStr> {
 
 multiclass bpr_alias<string OpcStr, Instruction NAPT, Instruction APT> {
   def : InstAlias<!strconcat(OpcStr, ",pt $rs1, $imm16"),
-                  (NAPT I64Regs:$rs1, bprtarget16:$imm16)>;
+                  (NAPT I64Regs:$rs1, bprtarget16:$imm16), 0>;
   def : InstAlias<!strconcat(OpcStr, ",a,pt $rs1, $imm16"),
-                  (APT I64Regs:$rs1, bprtarget16:$imm16)>;
+                  (APT I64Regs:$rs1, bprtarget16:$imm16), 0>;
 }
 
 defm BPZ   : BranchOnReg<0b001, "brz">;
