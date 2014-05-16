@@ -35,13 +35,6 @@ void h9() __attribute__((alias("f9")));
 void f9() __attribute__((alias("g9")));
 void g9() {}
 
-void f10() __attribute__((alias("g10"))); // expected-error {{alias definition is part of a cycle}}
-void g10() __attribute__((alias("f10"))); // expected-error {{alias definition is part of a cycle}}
-
-// FIXME: This could be a bit better, h10 is not part of the cycle, it points
-// to it.
-void h10() __attribute__((alias("g10"))); // expected-error {{alias definition is part of a cycle}}
-
 extern int a1 __attribute__((alias("b1")));
 int b1 = 42;
 

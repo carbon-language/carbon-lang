@@ -5213,7 +5213,7 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       unsigned Num = attr->getNumber() / 2;
       new llvm::GlobalAlias(GV->getType()->getElementType(),
                             llvm::Function::ExternalLinkage,
-                            "__isr_" + Twine(Num), GV, &M.getModule());
+                            "__isr_" + Twine(Num), F, &M.getModule());
     }
   }
 }

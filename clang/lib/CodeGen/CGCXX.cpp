@@ -138,12 +138,12 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   // which case the caller is responsible for ensuring the soundness
   // of these semantics.
   auto *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
-  llvm::Constant *Aliasee = Ref;
-  if (Ref->getType() != AliasType)
-    Aliasee = llvm::ConstantExpr::getBitCast(Ref, AliasType);
+  auto *Aliasee = dyn_cast<llvm::GlobalObject>(Ref);
+  if (!Aliasee)
+    Aliasee = cast<llvm::GlobalAlias>(Ref)->getAliasee();
 
   // Instead of creating as alias to a linkonce_odr, replace all of the uses
-  // of the aliassee.
+  // of the aliasee.
   if (llvm::GlobalValue::isDiscardableIfUnused(Linkage) &&
      (TargetLinkage != llvm::GlobalValue::AvailableExternallyLinkage ||
       !TargetDecl.getDecl()->hasAttr<AlwaysInlineAttr>())) {
@@ -152,7 +152,10 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     // members with attribute "AlwaysInline" and expect no reference to
     // be generated. It is desirable to reenable this optimisation after
     // corresponding LLVM changes.
-    Replacements[MangledName] = Aliasee;
+    llvm::Constant *Replacement = Aliasee;
+    if (Aliasee->getType() != AliasType)
+      Replacement = llvm::ConstantExpr::getBitCast(Aliasee, AliasType);
+    Replacements[MangledName] = Replacement;
     return false;
   }
 
@@ -160,7 +163,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     /// If we don't have a definition for the destructor yet, don't
     /// emit.  We can't emit aliases to declarations; that's just not
     /// how aliases work.
-    if (Ref->isDeclaration())
+    if (Aliasee->isDeclaration())
       return true;
   }
 
