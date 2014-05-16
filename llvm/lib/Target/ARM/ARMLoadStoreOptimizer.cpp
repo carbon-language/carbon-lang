@@ -300,15 +300,15 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   // VFP and Thumb2 do not support IB or DA modes.
   bool isNotVFP = isi32Load(Opcode) || isi32Store(Opcode);
   bool haveIBAndDA = isNotVFP && !isThumb2;
-  if (Offset == 4 && haveIBAndDA)
+  if (Offset == 4 && haveIBAndDA) {
     Mode = ARM_AM::ib;
-  else if (Offset == -4 * (int)NumRegs + 4 && haveIBAndDA)
+  } else if (Offset == -4 * (int)NumRegs + 4 && haveIBAndDA) {
     Mode = ARM_AM::da;
-  else if (Offset == -4 * (int)NumRegs && isNotVFP)
+  } else if (Offset == -4 * (int)NumRegs && isNotVFP) {
     // VLDM/VSTM do not support DB mode without also updating the base reg.
     Mode = ARM_AM::db;
-  else if (Offset != 0) {
-    // Check if this is a supported opcode before we insert instructions to
+  } else if (Offset != 0) {
+    // Check if this is a supported opcode before inserting instructions to
     // calculate a new base register.
     if (!getLoadStoreMultipleOpcode(Opcode, Mode)) return false;
 
@@ -319,11 +319,11 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       return false;
 
     unsigned NewBase;
-    if (isi32Load(Opcode))
+    if (isi32Load(Opcode)) {
       // If it is a load, then just use one of the destination register to
       // use as the new base.
       NewBase = Regs[NumRegs-1].first;
-    else {
+    } else {
       // Use the scratch register to use as a new base.
       NewBase = Scratch;
       if (NewBase == 0)
@@ -344,7 +344,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       .addReg(Base, getKillRegState(BaseKill)).addImm(Offset)
       .addImm(Pred).addReg(PredReg).addReg(0);
     Base = NewBase;
-    BaseKill = true;  // New base is always killed right its use.
+    BaseKill = true; // New base is always killed straight away.
   }
 
   bool isDef = (isi32Load(Opcode) || Opcode == ARM::VLDRS ||
@@ -493,7 +493,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   // affected uses.
   for (SmallVectorImpl<MachineOperand *>::iterator I = UsesOfImpDefs.begin(),
                                                    E = UsesOfImpDefs.end();
-       I != E; ++I)
+                                                   I != E; ++I)
     (*I)->setIsUndef();
 
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
@@ -590,7 +590,6 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
   MergeOpsUpdate(MBB, MemOps, SIndex, MemOps.size(), insertAfter, SOffset,
                  Base, BaseKill, Opcode, Pred, PredReg, Scratch, dl, Merges);
-  return;
 }
 
 static bool definesCPSR(MachineInstr *MI) {
@@ -1003,7 +1002,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   if (isAM5) {
-    // VLDM[SD}_UPD, VSTM[SD]_UPD
+    // VLDM[SD]_UPD, VSTM[SD]_UPD
     // (There are no base-updating versions of VLDR/VSTR instructions, but the
     // updating load/store-multiple instructions can be used with only one
     // register.)
@@ -1409,8 +1408,9 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       if (MBBI == E)
         // Reach the end of the block, try merging the memory instructions.
         TryMerge = true;
-    } else
+    } else {
       TryMerge = true;
+    }
 
     if (TryMerge) {
       if (NumMemOps > 1) {
@@ -1667,11 +1667,11 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   // FIXME: VLDRS / VSTRS -> VLDRD / VSTRD
   unsigned Scale = 1;
   unsigned Opcode = Op0->getOpcode();
-  if (Opcode == ARM::LDRi12)
+  if (Opcode == ARM::LDRi12) {
     NewOpc = ARM::LDRD;
-  else if (Opcode == ARM::STRi12)
+  } else if (Opcode == ARM::STRi12) {
     NewOpc = ARM::STRD;
-  else if (Opcode == ARM::t2LDRi8 || Opcode == ARM::t2LDRi12) {
+  } else if (Opcode == ARM::t2LDRi8 || Opcode == ARM::t2LDRi12) {
     NewOpc = ARM::t2LDRDi8;
     Scale = 4;
     isT2 = true;
@@ -1679,8 +1679,9 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     NewOpc = ARM::t2STRDi8;
     Scale = 4;
     isT2 = true;
-  } else
+  } else {
     return false;
+  }
 
   // Make sure the base address satisfies i64 ld / st alignment requirement.
   // At the moment, we ignore the memoryoperand's value.
