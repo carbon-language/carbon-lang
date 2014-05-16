@@ -140,6 +140,15 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
   Data->setSection(getDataSection(CGM));
   Data->setAlignment(8);
 
+  // Hide all these symbols so that we correctly get a copy for each
+  // executable.  The profile format expects names and counters to be
+  // contiguous, so references into shared objects would be invalid.
+  if (!llvm::GlobalValue::isLocalLinkage(VarLinkage)) {
+    Name->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    Data->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    RegionCounters->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  }
+
   // Make sure the data doesn't get deleted.
   CGM.addUsedGlobal(Data);
   return Data;
