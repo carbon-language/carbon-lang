@@ -13,7 +13,7 @@
 #include "RegisterContextPOSIX.h"
 
 class RegisterContextFreeBSD_x86_64:
-    public RegisterInfoInterface
+    public lldb_private::RegisterInfoInterface
 {
 public:
     RegisterContextFreeBSD_x86_64(const lldb_private::ArchSpec &target_arch);

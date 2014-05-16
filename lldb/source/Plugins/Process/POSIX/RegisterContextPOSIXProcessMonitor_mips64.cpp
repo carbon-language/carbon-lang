@@ -22,7 +22,7 @@ using namespace lldb;
 
 RegisterContextPOSIXProcessMonitor_mips64::RegisterContextPOSIXProcessMonitor_mips64(Thread &thread,
                                                                                      uint32_t concrete_frame_idx,
-                                                                                     RegisterInfoInterface *register_info)
+                                                                                     lldb_private::RegisterInfoInterface *register_info)
     : RegisterContextPOSIX_mips64(thread, concrete_frame_idx, register_info)
 {
 }

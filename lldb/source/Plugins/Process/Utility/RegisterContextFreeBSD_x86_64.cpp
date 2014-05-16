@@ -93,7 +93,7 @@ GetRegisterInfo_i386(const lldb_private::ArchSpec& arch)
 }
 
 RegisterContextFreeBSD_x86_64::RegisterContextFreeBSD_x86_64(const ArchSpec &target_arch) :
-    RegisterInfoInterface(target_arch)
+    lldb_private::RegisterInfoInterface(target_arch)
 {
 }
 

@@ -53,7 +53,7 @@ size_and_rw_bits(size_t size, bool read, bool write)
 
 RegisterContextPOSIXProcessMonitor_x86_64::RegisterContextPOSIXProcessMonitor_x86_64(Thread &thread,
                                                                                      uint32_t concrete_frame_idx,
-                                                                                     RegisterInfoInterface *register_info)
+                                                                                     lldb_private::RegisterInfoInterface *register_info)
     : RegisterContextPOSIX_x86(thread, concrete_frame_idx, register_info)
 {
 }

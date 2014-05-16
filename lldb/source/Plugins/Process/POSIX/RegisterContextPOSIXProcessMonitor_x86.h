@@ -19,7 +19,7 @@ class RegisterContextPOSIXProcessMonitor_x86_64:
 public:
     RegisterContextPOSIXProcessMonitor_x86_64(lldb_private::Thread &thread,
                                               uint32_t concrete_frame_idx,
-                                              RegisterInfoInterface *register_info);
+                                              lldb_private::RegisterInfoInterface *register_info);
 
 protected:
     bool

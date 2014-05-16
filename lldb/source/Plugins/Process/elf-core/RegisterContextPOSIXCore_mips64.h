@@ -18,7 +18,7 @@ class RegisterContextCorePOSIX_mips64 :
 {
 public:
     RegisterContextCorePOSIX_mips64 (lldb_private::Thread &thread,
-                                     RegisterInfoInterface *register_info,
+                                     lldb_private::RegisterInfoInterface *register_info,
                                      const lldb_private::DataExtractor &gpregset,
                                      const lldb_private::DataExtractor &fpregset);
 

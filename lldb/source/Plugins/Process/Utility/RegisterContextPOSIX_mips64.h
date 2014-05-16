@@ -73,7 +73,7 @@ class RegisterContextPOSIX_mips64
 public:
     RegisterContextPOSIX_mips64 (lldb_private::Thread &thread,
                             uint32_t concrete_frame_idx,
-                            RegisterInfoInterface *register_info);
+                            lldb_private::RegisterInfoInterface *register_info);
 
     ~RegisterContextPOSIX_mips64();
 
@@ -112,7 +112,7 @@ public:
 
 protected:
     uint64_t m_gpr_mips64[k_num_gpr_registers_mips64];         // general purpose registers.
-    std::unique_ptr<RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
+    std::unique_ptr<lldb_private::RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
 
     // Determines if an extended register set is supported on the processor running the inferior process.
     virtual bool
