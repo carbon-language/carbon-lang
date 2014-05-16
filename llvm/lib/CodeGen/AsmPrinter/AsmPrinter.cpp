@@ -932,7 +932,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (const auto &Alias : M.aliases()) {
       MCSymbol *Name = getSymbol(&Alias);
 
-      const GlobalValue *GV = Alias.getAliasedGlobal();
+      const GlobalValue *GV = Alias.getAliasee();
       assert(!GV->isDeclaration());
       MCSymbol *Target = getSymbol(GV);
 

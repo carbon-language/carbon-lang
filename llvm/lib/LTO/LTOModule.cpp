@@ -802,7 +802,7 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   // add aliases
   for (Module::alias_iterator a = _module->alias_begin(),
          e = _module->alias_end(); a != e; ++a) {
-    if (isDeclaration(*a->getAliasedGlobal()))
+    if (isDeclaration(*a->getAliasee()))
       // Is an alias to a declaration.
       addPotentialUndefinedSymbol(a, false);
     else

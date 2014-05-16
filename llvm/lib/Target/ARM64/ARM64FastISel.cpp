@@ -245,7 +245,7 @@ unsigned ARM64FastISel::ARM64MaterializeGV(const GlobalValue *GV) {
   // to peer through any aliases to find out if that rule applies.
   const GlobalValue *TLSGV = GV;
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    TLSGV = GA->getAliasedGlobal();
+    TLSGV = GA->getAliasee();
 
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(TLSGV))
     if (GVar->isThreadLocal())

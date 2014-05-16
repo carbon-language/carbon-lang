@@ -60,7 +60,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
 
 unsigned GlobalValue::getAlignment() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this))
-    return GA->getAliasedGlobal()->getAlignment();
+    return GA->getAliasee()->getAlignment();
 
   return cast<GlobalObject>(this)->getAlignment();
 }
@@ -82,7 +82,7 @@ void GlobalObject::copyAttributesFrom(const GlobalValue *Src) {
 
 const std::string &GlobalValue::getSection() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this))
-    return GA->getAliasedGlobal()->getSection();
+    return GA->getAliasee()->getSection();
   return cast<GlobalObject>(this)->getSection();
 }
 

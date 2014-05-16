@@ -67,14 +67,6 @@ public:
     return cast_or_null<GlobalObject>(getOperand(0));
   }
 
-  GlobalObject *getAliasedGlobal() {
-    return getAliasee();
-  }
-
-  const GlobalObject *getAliasedGlobal() const {
-    return const_cast<GlobalAlias *>(this)->getAliasedGlobal();
-  }
-
   static bool isValidLinkage(LinkageTypes L) {
     return isExternalLinkage(L) || isLocalLinkage(L) ||
       isWeakLinkage(L) || isLinkOnceLinkage(L);

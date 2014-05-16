@@ -420,7 +420,7 @@ static char getSymbolNMTypeChar(const GlobalValue &GV) {
   if (isa<GlobalVariable>(GV))
     return 'd';
   const GlobalAlias *GA = cast<GlobalAlias>(&GV);
-  const GlobalValue *AliasedGV = GA->getAliasedGlobal();
+  const GlobalValue *AliasedGV = GA->getAliasee();
   return getSymbolNMTypeChar(*AliasedGV);
 }
 

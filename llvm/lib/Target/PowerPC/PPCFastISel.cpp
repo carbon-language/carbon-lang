@@ -1864,7 +1864,7 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
   if (!GVar) {
     // If GV is an alias, use the aliasee for determining thread-locality.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GVar = dyn_cast_or_null<GlobalVariable>(GA->getAliasedGlobal());
+      GVar = dyn_cast_or_null<GlobalVariable>(GA->getAliasee());
   }
 
   // FIXME: We don't yet handle the complexity of TLS.

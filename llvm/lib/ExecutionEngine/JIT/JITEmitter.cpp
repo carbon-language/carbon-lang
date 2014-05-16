@@ -690,7 +690,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     return TheJIT->getOrEmitGlobalVariable(GV);
 
   if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
-    return TheJIT->getPointerToGlobal(GA->getAliasedGlobal());
+    return TheJIT->getPointerToGlobal(GA->getAliasee());
 
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);

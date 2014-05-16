@@ -675,7 +675,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         continue;
 
       while (const GlobalAlias *A = dyn_cast<GlobalAlias>(GV))
-        GV = A->getAliasedGlobal();
+        GV = A->getAliasee();
 
       if (isa<Function>(GV))
         DLLExportedFns.push_back(getSymbol(&Alias));
