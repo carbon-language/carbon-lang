@@ -72,6 +72,12 @@ class MUH_ENC    : SPECIAL_3R_FM<0b00011, 0b011000>;
 class MUHU_ENC   : SPECIAL_3R_FM<0b00011, 0b011001>;
 class MUL_R6_ENC : SPECIAL_3R_FM<0b00010, 0b011000>;
 class MULU_ENC   : SPECIAL_3R_FM<0b00010, 0b011001>;
+
+class MADDF_S_ENC  : COP1_3R_FM<0b011000, FIELD_FMT_S>;
+class MADDF_D_ENC  : COP1_3R_FM<0b011000, FIELD_FMT_D>;
+class MSUBF_S_ENC  : COP1_3R_FM<0b011001, FIELD_FMT_S>;
+class MSUBF_D_ENC  : COP1_3R_FM<0b011001, FIELD_FMT_D>;
+
 class SEL_D_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_D>;
 class SEL_S_ENC  : COP1_3R_FM<0b010000, FIELD_FMT_S>;
 
@@ -172,7 +178,7 @@ class MUHU_DESC   : MUL_R6_DESC_BASE<"muhu", GPR32Opnd>;
 class MUL_R6_DESC : MUL_R6_DESC_BASE<"mul", GPR32Opnd>;
 class MULU_DESC   : MUL_R6_DESC_BASE<"mulu", GPR32Opnd>;
 
-class SEL_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
+class COP1_4R_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
   dag OutOperandList = (outs FGROpnd:$fd);
   dag InOperandList = (ins FGROpnd:$fd_in, FGROpnd:$fs, FGROpnd:$ft);
   string AsmString = !strconcat(instr_asm, "\t$fd, $fs, $ft");
@@ -180,8 +186,13 @@ class SEL_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
   string Constraints = "$fd_in = $fd";
 }
 
-class SEL_D_DESC : SEL_DESC_BASE<"sel.d", FGR64Opnd>;
-class SEL_S_DESC : SEL_DESC_BASE<"sel.s", FGR32Opnd>;
+class SEL_D_DESC : COP1_4R_DESC_BASE<"sel.d", FGR64Opnd>;
+class SEL_S_DESC : COP1_4R_DESC_BASE<"sel.s", FGR32Opnd>;
+
+class MADDF_S_DESC  : COP1_4R_DESC_BASE<"maddf.s", FGR32Opnd>;
+class MADDF_D_DESC  : COP1_4R_DESC_BASE<"maddf.d", FGR64Opnd>;
+class MSUBF_S_DESC  : COP1_4R_DESC_BASE<"msubf.s", FGR32Opnd>;
+class MSUBF_D_DESC  : COP1_4R_DESC_BASE<"msubf.d", FGR64Opnd>;
 
 class MAX_MIN_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
   dag OutOperandList = (outs FGROpnd:$fd);
@@ -273,7 +284,8 @@ def JIC;
 // def LSA; // See MSA
 def LWPC;
 def LWUPC;
-def MADDF;
+def MADDF_S : MADDF_S_ENC, MADDF_S_DESC, ISA_MIPS32R6;
+def MADDF_D : MADDF_D_ENC, MADDF_D_DESC, ISA_MIPS32R6;
 def MAXA_D : MAXA_D_ENC, MAXA_D_DESC, ISA_MIPS32R6;
 def MAXA_S : MAXA_S_ENC, MAXA_S_DESC, ISA_MIPS32R6;
 def MAX_D : MAX_D_ENC, MAX_D_DESC, ISA_MIPS32R6;
@@ -284,7 +296,8 @@ def MIN_D : MIN_D_ENC, MIN_D_DESC, ISA_MIPS32R6;
 def MIN_S : MIN_S_ENC, MIN_S_DESC, ISA_MIPS32R6;
 def MOD : MOD_ENC, MOD_DESC, ISA_MIPS32R6;
 def MODU : MODU_ENC, MODU_DESC, ISA_MIPS32R6;
-def MSUBF;
+def MSUBF_S : MSUBF_S_ENC, MSUBF_S_DESC, ISA_MIPS32R6;
+def MSUBF_D : MSUBF_D_ENC, MSUBF_D_DESC, ISA_MIPS32R6;
 def MUH    : MUH_ENC, MUH_DESC, ISA_MIPS32R6;
 def MUHU   : MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
 def MUL_R6 : MUL_R6_ENC, MUL_R6_DESC, ISA_MIPS32R6;
