@@ -204,7 +204,7 @@ void CodeGenModule::applyReplacements() {
     auto *NewF = dyn_cast<llvm::Function>(Replacement);
     if (!NewF) {
       if (auto *Alias = dyn_cast<llvm::GlobalAlias>(Replacement)) {
-        NewF = dyn_cast<llvm::Function>(Alias->getAliasedGlobal());
+        NewF = dyn_cast<llvm::Function>(Alias->getAliasee());
       } else {
         auto *CE = cast<llvm::ConstantExpr>(Replacement);
         assert(CE->getOpcode() == llvm::Instruction::BitCast ||
@@ -237,7 +237,7 @@ void CodeGenModule::checkAliases() {
     StringRef MangledName = getMangledName(GD);
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     auto *Alias = cast<llvm::GlobalAlias>(Entry);
-    llvm::GlobalValue *GV = Alias->getAliasedGlobal();
+    llvm::GlobalValue *GV = Alias->getAliasee();
     if (GV->isDeclaration()) {
       Error = true;
       Diags.Report(AA->getLocation(), diag::err_alias_to_undefined);
