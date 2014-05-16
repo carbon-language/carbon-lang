@@ -109,10 +109,9 @@ bool CMICmdCmdFileExecAndSymbols::Execute( void )
 	const CMIUtilString & strExeFilePath( pArgFile->GetValue() );
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
 	lldb::SBDebugger & rDbgr = rSessionInfo.m_rLldbDebugger;
-														// Developer note:
-	lldb::SBError error;								// Arg options may need to be available here for the CreateTarget()
-	const char * pTargetTriple = MICONFIG_TRIPLE;		// Match the Arm executeable built for the target platform i.e. hello.elf
-	const char * pTargetPlatformName = "";				// This works for connecting to an Android development board
+	lldb::SBError error;                                                            
+	const char * pTargetTriple = nullptr;           // Let LLDB discover the triple required
+	const char * pTargetPlatformName = "";
 	const bool bAddDepModules = false;
 	lldb::SBTarget target = rDbgr.CreateTarget( strExeFilePath.c_str(), pTargetTriple, pTargetPlatformName, bAddDepModules, error );
 	CMIUtilString strWkDir;
@@ -128,6 +127,7 @@ bool CMICmdCmdFileExecAndSymbols::Execute( void )
 	}
 	if( !rDbgr.SetCurrentPlatformSDKRoot( strWkDir.c_str() ) )
 	{
+
 		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_FNFAILED ), m_cmdData.strMiCmd.c_str(), "SetCurrentPlatformSDKRoot()" ) );
 		return MIstatus::failure;
 	}

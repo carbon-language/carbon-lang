@@ -28,6 +28,7 @@
 #define MICONFIG_DEBUG_SHOW_ATTACH_DBG_DLG 0
 
 // 1 = Compile in and init LLDB driver code alongside MI version, 0 = do not use
+// ToDo: This has not been fully implemented as may not be required in the future
 #define MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER 0
 
 // 1 = Give runtime our own custom buffer, 0 = Use runtime managed buffer
@@ -40,8 +41,8 @@
 #define MICONFIG_POLL_FOR_STD_IN 1
 
 // Temp workaround while needing different triples
-// ToDo: This should be fixed to be figured out automatically
-#define MICONFIG_TRIPLE "arm"
+// ToDo: Temp workaround while needing different triples - not used ATM, may not be required anymore
+//#define MICONFIG_TRIPLE "arm"
 
 // 1 = Write to MI's Log file warnings about commands that did not handle arguments or
 // options present to them by the driver's client, 0 = no warnings given

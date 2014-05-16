@@ -84,7 +84,8 @@ CMICmdCmdVarUpdate
 =========================================================================
 MI build configuration:
 MICmnConfig.h defines various preprocessor build options i.e. enable
-LLDB fall through should MI interpretor not recognise a command.
+LLDB fall through should MI interpretor not recognise a command (option
+not fully implemented - may be removed in the future).
 
 =========================================================================
 MI uses the following libraries:
