@@ -120,6 +120,17 @@ def AMDGPU : Target {
   let InstructionSet = AMDGPUInstrInfo;
 }
 
+//===----------------------------------------------------------------------===//
+// Predicate helper class
+//===----------------------------------------------------------------------===//
+
+class PredicateControl {
+  Predicate SubtargetPredicate;
+  list<Predicate> OtherPredicates = [];
+  list<Predicate> Predicates = !listconcat([SubtargetPredicate],
+                                            OtherPredicates);
+}
+
 // Include AMDGPU TD files
 include "R600Schedule.td"
 include "SISchedule.td"

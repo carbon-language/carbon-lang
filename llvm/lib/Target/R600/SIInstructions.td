@@ -36,11 +36,12 @@ def isCFDepth0 : Predicate<"isCFDepth0()">;
 
 def WAIT_FLAG : InstFlag<"printWaitFlag">;
 
+let SubtargetPredicate = isSI in {
+let OtherPredicates  = [isCFDepth0] in {
+
 //===----------------------------------------------------------------------===//
 // SMRD Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI, isCFDepth0] in {
 
 let mayLoad = 1 in {
 
@@ -78,13 +79,9 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 //def S_MEMTIME : SMRD_ <0x0000001e, "S_MEMTIME", []>;
 //def S_DCACHE_INV : SMRD_ <0x0000001f, "S_DCACHE_INV", []>;
 
-} // let Predicates = [isSI, isCFDepth0]
-
 //===----------------------------------------------------------------------===//
 // SOP1 Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI, isCFDepth0] in {
 
 let neverHasSideEffects = 1 in {
 
@@ -158,13 +155,9 @@ def S_MOV_REGRD_B32 : SOP1_32 <0x00000033, "S_MOV_REGRD_B32", []>;
 def S_ABS_I32 : SOP1_32 <0x00000034, "S_ABS_I32", []>;
 def S_MOV_FED_B32 : SOP1_32 <0x00000035, "S_MOV_FED_B32", []>;
 
-} // let Predicates = [isSI, isCFDepth0]
-
 //===----------------------------------------------------------------------===//
 // SOP2 Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI, isCFDepth0] in {
 
 let Defs = [SCC] in { // Carry out goes to SCC
 let isCommutable = 1 in {
@@ -279,13 +272,9 @@ def S_BFE_I64 : SOP2_64 <0x0000002a, "S_BFE_I64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "S_CBRANCH_G_FORK", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
-} // let Predicates = [isSI, isCFDepth0]
-
 //===----------------------------------------------------------------------===//
 // SOPC Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI, isCFDepth0] in {
 
 def S_CMP_EQ_I32 : SOPC_32 <0x00000000, "S_CMP_EQ_I32">;
 def S_CMP_LG_I32 : SOPC_32 <0x00000001, "S_CMP_LG_I32">;
@@ -305,13 +294,9 @@ def S_CMP_LE_U32 : SOPC_32 <0x0000000b, "S_CMP_LE_U32">;
 ////def S_BITCMP1_B64 : SOPC_BITCMP1 <0x0000000f, "S_BITCMP1_B64", []>;
 //def S_SETVSKIP : SOPC_ <0x00000010, "S_SETVSKIP", []>;
 
-} // let Predicates = [isSI, isCFDepth0]
-
 //===----------------------------------------------------------------------===//
 // SOPK Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI, isCFDepth0] in {
 
 def S_MOVK_I32 : SOPK_32 <0x00000000, "S_MOVK_I32", []>;
 def S_CMOVK_I32 : SOPK_32 <0x00000002, "S_CMOVK_I32", []>;
@@ -361,13 +346,11 @@ def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "S_GETREG_REGRD_B32", []>;
 //def S_SETREG_IMM32_B32 : SOPK_32 <0x00000015, "S_SETREG_IMM32_B32", []>;
 //def EXP : EXP_ <0x00000000, "EXP", []>;
 
-} // let Predicates = [isSI, isCFDepth0]
+} // End let OtherPredicates = [isCFDepth0]
 
 //===----------------------------------------------------------------------===//
 // SOPP Instructions
 //===----------------------------------------------------------------------===//
-
-let Predicates = [isSI] in {
 
 def S_NOP : SOPP <0x00000000, (ins i16imm:$SIMM16), "S_NOP $SIMM16", []>;
 
@@ -460,10 +443,6 @@ let Uses = [EXEC] in {
 //def S_DECPERFLEVEL : SOPP_ <0x00000015, "S_DECPERFLEVEL", []>;
 //def S_TTRACEDATA : SOPP_ <0x00000016, "S_TTRACEDATA", []>;
 } // End hasSideEffects
-
-} // let Predicates = [isSI, isCFDepth0]
-
-let Predicates = [isSI] in {
 
 //===----------------------------------------------------------------------===//
 // VOPC Instructions
@@ -1457,7 +1436,7 @@ let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
 
 let UseNamedOperandTable = 1 in {
 
-def SI_RegisterLoad : AMDGPUShaderInst <
+def SI_RegisterLoad : InstSI <
   (outs VReg_32:$dst, SReg_64:$temp),
   (ins FRAMEri32:$addr, i32imm:$chan),
   "", []
@@ -1466,7 +1445,7 @@ def SI_RegisterLoad : AMDGPUShaderInst <
   let mayLoad = 1;
 }
 
-class SIRegStore<dag outs> : AMDGPUShaderInst <
+class SIRegStore<dag outs> : InstSI <
   outs,
   (ins VReg_32:$val, FRAMEri32:$addr, i32imm:$chan),
   "", []
@@ -1548,6 +1527,10 @@ defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
 defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
 
 } // end IsCodeGenOnly, isPseudo
+
+} // end SubtargetPredicate = SI
+
+let Predicates = [isSI] in {
 
 def : Pat<
   (int_AMDGPU_cndlt f32:$src0, f32:$src1, f32:$src2),

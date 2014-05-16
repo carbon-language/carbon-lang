@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
-    AMDGPUInst<outs, ins, asm, pattern> {
+    AMDGPUInst<outs, ins, asm, pattern>, PredicateControl {
 
   field bits<1> VM_CNT = 0;
   field bits<1> EXP_CNT = 0;
