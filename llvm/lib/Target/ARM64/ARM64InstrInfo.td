@@ -708,8 +708,23 @@ defm ORN  : LogicalReg<0b01, 1, "orn",
                        BinOpFrag<(or node:$LHS, (not node:$RHS))>>;
 defm ORR  : LogicalReg<0b01, 0, "orr", or>;
 
-def : InstAlias<"mov $dst, $src", (ORRWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
-def : InstAlias<"mov $dst, $src", (ORRXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+// FIXME: these aliases are named so that they get considered by TableGen before
+// the already instantiated anonymous_ABC ones. Some kind of explicit priority
+// system would be better.
+def AA_MOVWr : InstAlias<"mov $dst, $src",
+                         (ORRWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
+def AA_MOVXr : InstAlias<"mov $dst, $src",
+                         (ORRXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+
+def AA_MVNWr : InstAlias<"mvn $Wd, $Wm",
+                         (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, 0)>;
+def AA_MVNXr : InstAlias<"mvn $Xd, $Xm",
+                         (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0)>;
+
+def AA_MVNWrs : InstAlias<"mvn $Wd, $Wm$sh",
+                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift32:$sh)>;
+def AA_MVNXrs : InstAlias<"mvn $Xd, $Xm$sh",
+                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh)>;
 
 def : InstAlias<"tst $src1, $src2",
                 (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2)>;
@@ -726,15 +741,6 @@ def : InstAlias<"tst $src1, $src2, $sh",
 def : InstAlias<"tst $src1, $src2, $sh",
                 (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift64:$sh)>;
 
-def : InstAlias<"mvn $Wd, $Wm",
-                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, 0)>;
-def : InstAlias<"mvn $Xd, $Xm",
-                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0)>;
-
-def : InstAlias<"mvn $Wd, $Wm, $sh",
-                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift32:$sh)>;
-def : InstAlias<"mvn $Xd, $Xm, $sh",
-                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh)>;
 
 def : Pat<(not GPR32:$Wm), (ORNWrr WZR, GPR32:$Wm)>;
 def : Pat<(not GPR64:$Xm), (ORNXrr XZR, GPR64:$Xm)>;
