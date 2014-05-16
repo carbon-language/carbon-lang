@@ -1127,11 +1127,6 @@ def : Pat <
   (V_CNDMASK_B32_e64 $src0, $src1, $src2)
 >;
 
-def : Pat <
-  (i32 (trunc i64:$val)),
-  (EXTRACT_SUBREG $val, sub0)
->;
-
 def V_READLANE_B32 : VOP2 <
   0x00000001,
   (outs SReg_32:$vdst),
