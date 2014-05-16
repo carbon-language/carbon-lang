@@ -2737,29 +2737,29 @@ defm URSHL    : SIMDThreeScalarD<   1, 0b01010, "urshl", int_arm64_neon_urshl>;
 defm USHL     : SIMDThreeScalarD<   1, 0b01000, "ushl", int_arm64_neon_ushl>;
 
 def : InstAlias<"cmls $dst, $src1, $src2",
-                (CMHSv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (CMHSv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"cmle $dst, $src1, $src2",
-                (CMGEv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (CMGEv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"cmlo $dst, $src1, $src2",
-                (CMHIv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (CMHIv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"cmlt $dst, $src1, $src2",
-                (CMGTv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (CMGTv1i64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"fcmle $dst, $src1, $src2",
-                (FCMGE32 FPR32:$dst, FPR32:$src2, FPR32:$src1)>;
+                (FCMGE32 FPR32:$dst, FPR32:$src2, FPR32:$src1), 0>;
 def : InstAlias<"fcmle $dst, $src1, $src2",
-                (FCMGE64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (FCMGE64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"fcmlt $dst, $src1, $src2",
-                (FCMGT32 FPR32:$dst, FPR32:$src2, FPR32:$src1)>;
+                (FCMGT32 FPR32:$dst, FPR32:$src2, FPR32:$src1), 0>;
 def : InstAlias<"fcmlt $dst, $src1, $src2",
-                (FCMGT64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (FCMGT64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"facle $dst, $src1, $src2",
-                (FACGE32 FPR32:$dst, FPR32:$src2, FPR32:$src1)>;
+                (FACGE32 FPR32:$dst, FPR32:$src2, FPR32:$src1), 0>;
 def : InstAlias<"facle $dst, $src1, $src2",
-                (FACGE64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (FACGE64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 def : InstAlias<"faclt $dst, $src1, $src2",
-                (FACGT32 FPR32:$dst, FPR32:$src2, FPR32:$src1)>;
+                (FACGT32 FPR32:$dst, FPR32:$src2, FPR32:$src1), 0>;
 def : InstAlias<"faclt $dst, $src1, $src2",
-                (FACGT64 FPR64:$dst, FPR64:$src2, FPR64:$src1)>;
+                (FACGT64 FPR64:$dst, FPR64:$src2, FPR64:$src1), 0>;
 
 //===----------------------------------------------------------------------===//
 // Advanced SIMD three scalar instructions (mixed operands).
