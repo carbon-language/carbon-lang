@@ -238,10 +238,6 @@ public:
   /// be used for loads / stores from the global.
   unsigned getMaximalGlobalOffset() const override;
 
-  /// getGlobalMergeAlignment - Set alignment to be the max size of merged
-  /// global variable data structure, and make it aligned up to power of 2.
-  unsigned getGlobalMergeAlignment(StructType *MergedTy) const override;
-
   /// Returns true if a cast between SrcAS and DestAS is a noop.
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override {
     // Addrspacecasts are always noops.

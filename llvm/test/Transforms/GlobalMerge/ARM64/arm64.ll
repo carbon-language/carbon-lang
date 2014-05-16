@@ -1,6 +1,23 @@
-; RUN: opt %s -mtriple=arm64-linux-gnuabi -global-merge -S -o - | FileCheck %s
+; RUN: llc %s -O0 -o - | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O0 -o - -global-merge=false | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O0 -o - -global-merge=true | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O1 -o - | FileCheck -check-prefix=MERGE %s
+; RUN: llc %s -O1 -o - -global-merge=false | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O1 -o - -global-merge=true | FileCheck -check-prefix=MERGE %s
 
-; CHECK: @_MergedGlobals = internal global { [5 x i32], [5 x i32], [5 x i32] } zeroinitializer
+; MERGE-NOT: .zerofill __DATA,__bss,_bar,20,2
+; MERGE-NOT: .zerofill __DATA,__bss,_baz,20,2
+; MERGE-NOT: .zerofill __DATA,__bss,_foo,20,2
+; MERGE: .zerofill __DATA,__bss,__MergedGlobals,60,4
+; MERGE-NOT: .zerofill __DATA,__bss,_bar,20,2
+; MERGE-NOT: .zerofill __DATA,__bss,_baz,20,2
+; MERGE-NOT: .zerofill __DATA,__bss,_foo,20,2
+
+; NO-MERGE-NOT: .zerofill __DATA,__bss,__MergedGlobals,60,4
+; NO-MERGE: .zerofill __DATA,__bss,_bar,20,2
+; NO-MERGE: .zerofill __DATA,__bss,_baz,20,2
+; NO-MERGE: .zerofill __DATA,__bss,_foo,20,2
+; NO-MERGE-NOT: .zerofill __DATA,__bss,__MergedGlobals,60,4
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32:64-S128"
 target triple = "arm64-apple-ios7.0.0"

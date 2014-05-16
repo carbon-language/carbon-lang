@@ -386,10 +386,6 @@ public:
   /// be used for loads / stores from the global.
   unsigned getMaximalGlobalOffset() const override;
 
-  /// getGlobalMergeAlignment - Set alignment to be the max size of merged
-  /// global variable data structure, and make it aligned up to power of 2.
-  unsigned getGlobalMergeAlignment(StructType *MergedTy) const override;
-
 protected:
   std::pair<const TargetRegisterClass*, uint8_t>
   findRepresentativeClass(MVT VT) const override;

@@ -82,10 +82,6 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::GlobalAliasVal;
   }
-
-  // return the constant offset of an expression, with which this global var
-  // has alias.
-  uint64_t calculateOffset(const DataLayout &DL) const;
 };
 
 template <>
