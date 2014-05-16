@@ -19,6 +19,11 @@ else()
     add_compiler_rt_runtime(clang_rt.profile-${arch} ${arch} STATIC
       SOURCES ${PROFILE_SOURCES})
     add_dependencies(profile clang_rt.profile-${arch})
+
+    add_compiler_rt_runtime(clang_rt.profile-pic-${arch} ${arch} STATIC
+      CFLAGS -fPIC
+      SOURCES ${PROFILE_SOURCES})
+    add_dependencies(profile clang_rt.profile-pic-${arch})
   endforeach()
 endif()
 
