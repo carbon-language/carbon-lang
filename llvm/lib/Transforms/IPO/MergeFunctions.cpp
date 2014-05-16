@@ -367,6 +367,8 @@ private:
 
   int cmpAPInt(const APInt &L, const APInt &R) const;
   int cmpAPFloat(const APFloat &L, const APFloat &R) const;
+  int cmpStrings(StringRef L, StringRef R) const;
+  int cmpAttrs(const AttributeSet L, const AttributeSet R) const;
 
   // The two functions undergoing comparison.
   const Function *F1, *F2;
@@ -430,6 +432,40 @@ int FunctionComparator::cmpAPFloat(const APFloat &L, const APFloat &R) const {
                            (uint64_t)&R.getSemantics()))
     return Res;
   return cmpAPInt(L.bitcastToAPInt(), R.bitcastToAPInt());
+}
+
+int FunctionComparator::cmpStrings(StringRef L, StringRef R) const {
+  // Prevent heavy comparison, compare sizes first.
+  if (int Res = cmpNumbers(L.size(), R.size()))
+    return Res;
+
+  // Compare strings lexicographically only when it is necessary: only when
+  // strings are equal in size.
+  return L.compare(R);
+}
+
+int FunctionComparator::cmpAttrs(const AttributeSet L,
+                                 const AttributeSet R) const {
+  if (int Res = cmpNumbers(L.getNumSlots(), R.getNumSlots()))
+    return Res;
+
+  for (unsigned i = 0, e = L.getNumSlots(); i != e; ++i) {
+    AttributeSet::iterator LI = L.begin(i), LE = L.end(i), RI = R.begin(i),
+                           RE = R.end(i);
+    for (; LI != LE && RI != RE; ++LI, ++RI) {
+      Attribute LA = *LI;
+      Attribute RA = *RI;
+      if (LA < RA)
+        return -1;
+      if (RA < LA)
+        return 1;
+    }
+    if (LI != LE)
+      return 1;
+    if (RI != RE)
+      return -1;
+  }
+  return 0;
 }
 
 /// Constants comparison:
