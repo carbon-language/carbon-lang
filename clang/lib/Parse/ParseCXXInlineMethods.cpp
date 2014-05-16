@@ -923,15 +923,15 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
                                                ? tok::semi : tok::r_paren);
         Sema::TentativeAnalysisScope Scope(Actions);
 
-        TPResult Result = TPResult::Error();
+        TPResult Result = TPResult::Error;
         ConsumeToken();
         switch (CIK) {
         case CIK_DefaultInitializer:
           Result = TryParseInitDeclaratorList();
           // If we parsed a complete, ambiguous init-declarator-list, this
           // is only syntactically-valid if it's followed by a semicolon.
-          if (Result == TPResult::Ambiguous() && Tok.isNot(tok::semi))
-            Result = TPResult::False();
+          if (Result == TPResult::Ambiguous && Tok.isNot(tok::semi))
+            Result = TPResult::False;
           break;
 
         case CIK_DefaultArgument:
@@ -940,13 +940,13 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
               &InvalidAsDeclaration, /*VersusTemplateArgument*/true);
           // If this is an expression or a declaration with a missing
           // 'typename', assume it's not a declaration.
-          if (Result == TPResult::Ambiguous() && InvalidAsDeclaration)
-            Result = TPResult::False();
+          if (Result == TPResult::Ambiguous && InvalidAsDeclaration)
+            Result = TPResult::False;
           break;
         }
 
         // If what follows could be a declaration, it is a declaration.
-        if (Result != TPResult::False() && Result != TPResult::Error()) {
+        if (Result != TPResult::False && Result != TPResult::Error) {
           PA.Revert();
           return true;
         }

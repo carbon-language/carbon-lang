@@ -2129,7 +2129,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       TPResult TPR = TryParseDeclarator(/*mayBeAbstract*/false);
       PA.Revert();
 
-      if (TPR != TPResult::False()) {
+      if (TPR != TPResult::False) {
         // The identifier is followed by a parenthesized declarator.
         // It's supposed to be a type.
         break;
@@ -3563,13 +3563,13 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       TPResult TPR = isExpressionOrTypeSpecifierSimple(NextToken().getKind());
       // If the next token starts an expression, we know we're parsing a
       // bit-field. This is the common case.
-      if (TPR == TPResult::True())
+      if (TPR == TPResult::True)
         PossibleBitfield = true;
       // If the next token starts a type-specifier-seq, it may be either a
       // a fixed underlying type or the start of a function-style cast in C++;
       // lookahead one more token to see if it's obvious that we have a
       // fixed underlying type.
-      else if (TPR == TPResult::False() &&
+      else if (TPR == TPResult::False &&
                GetLookAheadToken(2).getKind() == tok::semi) {
         // Consume the ':'.
         ConsumeToken();
@@ -3589,7 +3589,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
         // FIXME: The standard is not entirely clear on how to disambiguate in
         // this case.
         if ((getLangOpts().CPlusPlus &&
-             isCXXDeclarationSpecifier(TPResult::True()) != TPResult::True()) ||
+             isCXXDeclarationSpecifier(TPResult::True) != TPResult::True) ||
             (!getLangOpts().CPlusPlus && !isDeclarationSpecifier(true))) {
           // We'll parse this as a bitfield later.
           PossibleBitfield = true;

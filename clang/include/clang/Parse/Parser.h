@@ -1792,7 +1792,7 @@ private:
   /// cast. Return false if it's no a decl-specifier, or we're not sure.
   bool isKnownToBeDeclarationSpecifier() {
     if (getLangOpts().CPlusPlus)
-      return isCXXDeclarationSpecifier() == TPResult::True();
+      return isCXXDeclarationSpecifier() == TPResult::True;
     return isDeclarationSpecifier(true);
   }
 
@@ -1892,25 +1892,8 @@ private:
 
   /// TPResult - Used as the result value for functions whose purpose is to
   /// disambiguate C++ constructs by "tentatively parsing" them.
-  /// This is a class instead of a simple enum because the implicit enum-to-bool
-  /// conversions may cause subtle bugs.
-  class TPResult {
-    enum Result {
-      TPR_true,
-      TPR_false,
-      TPR_ambiguous,
-      TPR_error
-    };
-    Result Res;
-    TPResult(Result result) : Res(result) {}
-  public:
-    static TPResult True() { return TPR_true; }
-    static TPResult False() { return TPR_false; }
-    static TPResult Ambiguous() { return TPR_ambiguous; }
-    static TPResult Error() { return TPR_error; }
-
-    bool operator==(const TPResult &RHS) const { return Res == RHS.Res; }
-    bool operator!=(const TPResult &RHS) const { return Res != RHS.Res; }
+  enum class TPResult {
+    True, False, Ambiguous, Error
   };
 
   /// \brief Based only on the given token kind, determine whether we know that
@@ -1925,15 +1908,15 @@ private:
   /// tell.
   TPResult isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind);
 
-  /// isCXXDeclarationSpecifier - Returns TPResult::True() if it is a
-  /// declaration specifier, TPResult::False() if it is not,
-  /// TPResult::Ambiguous() if it could be either a decl-specifier or a
-  /// function-style cast, and TPResult::Error() if a parsing error was
+  /// isCXXDeclarationSpecifier - Returns TPResult::True if it is a
+  /// declaration specifier, TPResult::False if it is not,
+  /// TPResult::Ambiguous if it could be either a decl-specifier or a
+  /// function-style cast, and TPResult::Error if a parsing error was
   /// encountered. If it could be a braced C++11 function-style cast, returns
   /// BracedCastResult.
   /// Doesn't consume tokens.
   TPResult
-  isCXXDeclarationSpecifier(TPResult BracedCastResult = TPResult::False(),
+  isCXXDeclarationSpecifier(TPResult BracedCastResult = TPResult::False,
                             bool *HasMissingTypename = nullptr);
 
   /// Given that isCXXDeclarationSpecifier returns \c TPResult::True or
@@ -1947,9 +1930,9 @@ private:
   bool isTentativelyDeclared(IdentifierInfo *II);
 
   // "Tentative parsing" functions, used for disambiguation. If a parsing error
-  // is encountered they will return TPResult::Error().
-  // Returning TPResult::True()/False() indicates that the ambiguity was
-  // resolved and tentative parsing may stop. TPResult::Ambiguous() indicates
+  // is encountered they will return TPResult::Error.
+  // Returning TPResult::True/False indicates that the ambiguity was
+  // resolved and tentative parsing may stop. TPResult::Ambiguous indicates
   // that more tentative parsing is necessary for disambiguation.
   // They all consume tokens, so backtracking should be used after calling them.
 

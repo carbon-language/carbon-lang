@@ -1144,7 +1144,7 @@ bool Parser::IsTemplateArgumentList(unsigned Skip) {
     return true;
   
   // See whether we have declaration specifiers, which indicate a type.
-  while (isCXXDeclarationSpecifier() == TPResult::True())
+  while (isCXXDeclarationSpecifier() == TPResult::True)
     ConsumeToken();
   
   // If we have a '>' or a ',' then this is a template argument list.
