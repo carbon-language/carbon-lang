@@ -17736,6 +17736,51 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
   return std::make_pair(Opc, NeedSplit);
 }
 
+static SDValue
+TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
+                                      const X86Subtarget *Subtarget) {
+  SDLoc dl(N);
+  SDValue Cond = N->getOperand(0);
+  SDValue LHS = N->getOperand(1);
+  SDValue RHS = N->getOperand(2);
+
+  if (Cond.getOpcode() == ISD::SIGN_EXTEND) {
+    SDValue CondSrc = Cond->getOperand(0);
+    if (CondSrc->getOpcode() == ISD::SIGN_EXTEND_INREG)
+      Cond = CondSrc->getOperand(0);
+  }
+
+  MVT VT = N->getSimpleValueType(0);
+  MVT EltVT = VT.getVectorElementType();
+  unsigned NumElems = VT.getVectorNumElements();
+  // There is no blend with immediate in AVX-512.
+  if (VT.is512BitVector())
+    return SDValue();
+
+  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
+    return SDValue();
+  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
+    return SDValue();
+
+  if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
+    return SDValue();
+
+  unsigned MaskValue = 0;
+  if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
+    return SDValue();
+
+  SmallVector<int, 8> ShuffleMask(NumElems, -1);
+  for (unsigned i = 0; i < NumElems; ++i) {
+    // Be sure we emit undef where we can.
+    if (Cond.getOperand(i)->getOpcode() == ISD::UNDEF)
+      ShuffleMask[i] = -1;
+    else
+      ShuffleMask[i] = i + NumElems * ((MaskValue >> i) & 1);
+  }
+
+  return DAG.getVectorShuffle(VT, dl, LHS, RHS, &ShuffleMask[0]);
+}
+
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
 /// nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
@@ -18275,6 +18320,23 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     if (TLO.ShrinkDemandedConstant(Cond, DemandedMask) ||
         TLI.SimplifyDemandedBits(Cond, DemandedMask, KnownZero, KnownOne, TLO))
       DCI.CommitTargetLoweringOpt(TLO);
+  }
+
+  // We should generate an X86ISD::BLENDI from a vselect if its argument
+  // is a sign_extend_inreg of an any_extend of a BUILD_VECTOR of
+  // constants. This specific pattern gets generated when we split a
+  // selector for a 512 bit vector in a machine without AVX512 (but with
+  // 256-bit vectors), during legalization:
+  //
+  // (vselect (sign_extend (any_extend (BUILD_VECTOR)) i1) LHS RHS)
+  //
+  // Iff we find this pattern and the build_vectors are built from
+  // constants, we translate the vselect into a shuffle_vector that we
+  // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
+  if (N->getOpcode() == ISD::VSELECT && !DCI.isBeforeLegalize()) {
+    SDValue Shuffle = TransformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
+    if (Shuffle.getNode())
+      return Shuffle;
   }
 
   return SDValue();

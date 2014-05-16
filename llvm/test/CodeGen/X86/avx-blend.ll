@@ -69,7 +69,8 @@ define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
 }
 
 ;CHECK-LABEL: vsel_double8:
-;CHECK: vblendvpd
+;CHECK: vblendpd    $1
+;CHECK: vblendpd    $1
 ;CHECK: ret
 define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x double> %v1, <8 x double> %v2
@@ -77,7 +78,8 @@ define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
 }
 
 ;CHECK-LABEL: vsel_i648:
-;CHECK: vblendvpd
+;CHECK: vblendpd    $1
+;CHECK: vblendpd    $1
 ;CHECK: ret
 define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i64> %v1, <8 x i64> %v2
@@ -86,7 +88,7 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 
 ;CHECK-LABEL: vsel_double4:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendpd    $5
+;CHECK: vshufpd $10
 ;CHECK-NEXT: ret
 define <4 x double> @vsel_double4(<4 x double> %v1, <4 x double> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x double> %v1, <4 x double> %v2
@@ -111,5 +113,3 @@ define <2 x double> @testb(<2 x double> %x, <2 x double> %y) {
   %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
   ret <2 x double> %min
 }
-
-
