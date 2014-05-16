@@ -165,6 +165,7 @@ private:
   const ProfileData *DataEnd;
   const uint64_t *CountersStart;
   const char *NamesStart;
+  const char *ProfileEnd;
 
   RawInstrProfReader(const TextInstrProfReader &) LLVM_DELETED_FUNCTION;
   RawInstrProfReader &operator=(const TextInstrProfReader &)
@@ -178,6 +179,7 @@ public:
   error_code readNextRecord(InstrProfRecord &Record) override;
 
 private:
+  error_code readNextHeader(const char *CurrentPos);
   error_code readHeader(const RawHeader &Header);
   template <class IntT>
   IntT swap(IntT Int) const {
