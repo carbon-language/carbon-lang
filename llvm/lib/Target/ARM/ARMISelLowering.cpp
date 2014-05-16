@@ -418,6 +418,28 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallCallingConv(RTLIB::MEMSET, CallingConv::ARM_AAPCS);
   }
 
+  if (Subtarget->isTargetWindows()) {
+    static const struct {
+      const RTLIB::Libcall Op;
+      const char * const Name;
+      const CallingConv::ID CC;
+    } LibraryCalls[] = {
+      { RTLIB::FPTOSINT_F32_I64, "__stoi64", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::FPTOSINT_F64_I64, "__dtoi64", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::FPTOUINT_F32_I64, "__stou64", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::FPTOUINT_F64_I64, "__dtou64", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::SINTTOFP_I64_F32, "__i64tos", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::SINTTOFP_I64_F64, "__i64tod", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::UINTTOFP_I64_F32, "__u64tos", CallingConv::ARM_AAPCS_VFP },
+      { RTLIB::UINTTOFP_I64_F64, "__u64tod", CallingConv::ARM_AAPCS_VFP },
+    };
+
+    for (const auto &LC : LibraryCalls) {
+      setLibcallName(LC.Op, LC.Name);
+      setLibcallCallingConv(LC.Op, LC.CC);
+    }
+  }
+
   // Use divmod compiler-rt calls for iOS 5.0 and later.
   if (Subtarget->getTargetTriple().isiOS() &&
       !Subtarget->getTargetTriple().isOSVersionLT(5, 0)) {
