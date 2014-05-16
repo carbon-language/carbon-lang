@@ -281,12 +281,12 @@ defm : fp_cond_alias<"o",     0b1111>;
 // Instruction aliases for JMPL.
 
 // jmp addr -> jmpl addr, %g0
-def : InstAlias<"jmp $addr", (JMPLrr G0, MEMrr:$addr)>;
-def : InstAlias<"jmp $addr", (JMPLri G0, MEMri:$addr)>;
+def : InstAlias<"jmp $addr", (JMPLrr G0, MEMrr:$addr), 0>;
+def : InstAlias<"jmp $addr", (JMPLri G0, MEMri:$addr), 0>;
 
 // call addr -> jmpl addr, %o7
-def : InstAlias<"call $addr", (JMPLrr O7, MEMrr:$addr)>;
-def : InstAlias<"call $addr", (JMPLri O7, MEMri:$addr)>;
+def : InstAlias<"call $addr", (JMPLrr O7, MEMrr:$addr), 0>;
+def : InstAlias<"call $addr", (JMPLri O7, MEMri:$addr), 0>;
 
 // retl -> RETL 8
 def : InstAlias<"retl", (RETL 8)>;
