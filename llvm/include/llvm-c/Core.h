@@ -467,6 +467,7 @@ void LLVMEnablePrettyStackTrace(void);
  */
 
 typedef void (*LLVMDiagnosticHandler)(LLVMDiagnosticInfoRef, void *);
+typedef void (*LLVMYieldCallback)(LLVMContextRef, void *);
 
 /**
  * Create a new context.
@@ -487,6 +488,14 @@ LLVMContextRef LLVMGetGlobalContext(void);
 void LLVMContextSetDiagnosticHandler(LLVMContextRef C,
                                      LLVMDiagnosticHandler Handler,
                                      void *DiagnosticContext);
+
+/**
+ * Set the yield callback function for this context.
+ *
+ * @see LLVMContext::setYieldCallback()
+ */
+void LLVMContextSetYieldCallback(LLVMContextRef C, LLVMYieldCallback Callback,
+                                 void *OpaqueHandle);
 
 /**
  * Destroy a context instance.

@@ -28,6 +28,7 @@ using namespace llvm;
 
 static bool didCallAllocateCodeSection;
 static bool didAllocateCompactUnwindSection;
+static bool didCallYield;
 
 static uint8_t *roundTripAllocateCodeSection(void *object, uintptr_t size,
                                              unsigned alignment,
@@ -62,6 +63,10 @@ static LLVMBool roundTripFinalizeMemory(void *object, char **errMsg) {
 
 static void roundTripDestroy(void *object) {
   delete static_cast<SectionMemoryManager*>(object);
+}
+
+static void yield(LLVMContextRef, void *) {
+  didCallYield = true;
 }
 
 namespace {
@@ -142,6 +147,7 @@ protected:
   virtual void SetUp() {
     didCallAllocateCodeSection = false;
     didAllocateCompactUnwindSection = false;
+    didCallYield = false;
     Module = 0;
     Function = 0;
     Engine = 0;
@@ -429,3 +435,24 @@ TEST_F(MCJITCAPITest, reserve_allocation_space) {
   EXPECT_TRUE(MM->UsedCodeSize > 0); 
   EXPECT_TRUE(MM->UsedDataSizeRW > 0);
 }
+
+TEST_F(MCJITCAPITest, yield) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  buildSimpleFunction();
+  buildMCJITOptions();
+  buildMCJITEngine();
+  LLVMContextRef C = LLVMGetGlobalContext();
+  LLVMContextSetYieldCallback(C, yield, NULL);
+  buildAndRunPasses();
+
+  union {
+    void *raw;
+    int (*usable)();
+  } functionPointer;
+  functionPointer.raw = LLVMGetPointerToGlobal(Engine, Function);
+
+  EXPECT_EQ(42, functionPointer.usable());
+  EXPECT_TRUE(didCallYield);
+}
+

@@ -242,6 +242,9 @@ public:
   LLVMContext::DiagnosticHandlerTy DiagnosticHandler;
   void *DiagnosticContext;
 
+  LLVMContext::YieldCallbackTy YieldCallback;
+  void *YieldOpaqueHandle;
+
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt *,
                    DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;

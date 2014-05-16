@@ -22,6 +22,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LegacyPassManagers.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
@@ -145,8 +146,11 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
        I != E; ++I) {
     if (Function *F = (*I)->getFunction()) {
       dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
-      TimeRegion PassTimer(getPassTimer(FPP));
-      Changed |= FPP->runOnFunction(*F);
+      {
+        TimeRegion PassTimer(getPassTimer(FPP));
+        Changed |= FPP->runOnFunction(*F);
+      }
+      F->getContext().yield();
     }
   }
   

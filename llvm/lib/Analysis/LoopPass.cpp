@@ -15,6 +15,7 @@
 
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 using namespace llvm;
@@ -253,6 +254,8 @@ bool LPPassManager::runOnFunction(Function &F) {
 
         // Then call the regular verifyAnalysis functions.
         verifyPreservedAnalysis(P);
+
+        F.getContext().yield();
       }
 
       removeNotPreservedAnalysis(P);

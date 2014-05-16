@@ -72,6 +72,10 @@ public:
   /// \see LLVMContext::diagnose.
   typedef void (*DiagnosticHandlerTy)(const DiagnosticInfo &DI, void *Context);
 
+  /// Defines the type of a yield callback.
+  /// \see LLVMContext::setYieldCallback.
+  typedef void (*YieldCallbackTy)(LLVMContext *Context, void *OpaqueHandle);
+
   /// setInlineAsmDiagnosticHandler - This method sets a handler that is invoked
   /// when problems with inline asm are detected by the backend.  The first
   /// argument is a function pointer and the second is a context pointer that
@@ -117,6 +121,32 @@ public:
   /// keyword according to \p DI.getSeverity(), i.e., "error: "
   /// for RS_Error, "warning: " for RS_Warning, and "note: " for RS_Note.
   void diagnose(const DiagnosticInfo &DI);
+
+  /// \brief Registers a yield callback with the given context.
+  ///
+  /// The yield callback function may be called by LLVM to transfer control back
+  /// to the client that invoked the LLVM compilation. This can be used to yield
+  /// control of the thread, or perform periodic work needed by the client.
+  /// There is no guaranteed frequency at which callbacks must occur; in fact,
+  /// the client is not guaranteed to ever receive this callback. It is at the
+  /// sole discretion of LLVM to do so and only if it can guarantee that
+  /// suspending the thread won't block any forward progress in other LLVM
+  /// contexts in the same process.
+  ///
+  /// At a suspend point, the state of the current LLVM context is intentionally
+  /// undefined. No assumptions about it can or should be made. Only LLVM
+  /// context API calls that explicitly state that they can be used during a
+  /// yield callback are allowed to be used. Any other API calls into the
+  /// context are not supported until the yield callback function returns
+  /// control to LLVM. Other LLVM contexts are unaffected by this restriction.
+  void setYieldCallback(YieldCallbackTy Callback, void *OpaqueHandle);
+
+  /// \brief Calls the yield callback (if applicable).
+  ///
+  /// This transfers control of the current thread back to the client, which may
+  /// suspend the current thread. Only call this method when LLVM doesn't hold
+  /// any global mutex or cannot block the execution in another LLVM context.
+  void yield();
 
   /// emitError - Emit an error message to the currently installed error handler
   /// with optional location information.  This function returns, so code should

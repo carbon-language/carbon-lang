@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -32,6 +33,8 @@ PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
     if (AM)
       AM->invalidate(M, PassPA);
     PA.intersect(std::move(PassPA));
+
+    M->getContext().yield();
   }
 
   if (DebugPM)
@@ -92,6 +95,8 @@ PreservedAnalyses FunctionPassManager::run(Function *F,
     if (AM)
       AM->invalidate(F, PassPA);
     PA.intersect(std::move(PassPA));
+
+    F->getContext().yield();
   }
 
   if (DebugPM)
