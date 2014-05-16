@@ -307,8 +307,32 @@ private:
   /// Compare two Instructions for equivalence, similar to
   /// Instruction::isSameOperationAs but with modifications to the type
   /// comparison.
+  /// Stages are listed in "most significant stage first" order:
+  /// On each stage below, we do comparison between some left and right
+  /// operation parts. If parts are non-equal, we assign parts comparison
+  /// result to the operation comparison result and exit from method.
+  /// Otherwise we proceed to the next stage.
+  /// Stages:
+  /// 1. Operations opcodes. Compared as numbers.
+  /// 2. Number of operands.
+  /// 3. Operation types. Compared with cmpType method.
+  /// 4. Compare operation subclass optional data as stream of bytes:
+  /// just convert it to integers and call cmpNumbers.
+  /// 5. Compare in operation operand types with cmpType in
+  /// most significant operand first order.
+  /// 6. Last stage. Check operations for some specific attributes.
+  /// For example, for Load it would be:
+  /// 6.1.Load: volatile (as boolean flag)
+  /// 6.2.Load: alignment (as integer numbers)
+  /// 6.3.Load: synch-scope (as integer numbers)
+  /// On this stage its better to see the code, since its not more than 10-15
+  /// strings for particular instruction, and could change sometimes.
+  int cmpOperation(const Instruction *L, const Instruction *R) const;
+
   bool isEquivalentOperation(const Instruction *I1,
-                             const Instruction *I2) const;
+                             const Instruction *I2) const {
+    return cmpOperation(I1, I2) == 0;
+  }
 
   /// Compare two GEPs for equivalent pointer arithmetic.
   bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2);
@@ -711,65 +735,126 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
 // Determine whether the two operations are the same except that pointer-to-A
 // and pointer-to-B are equivalent. This should be kept in sync with
 // Instruction::isSameOperationAs.
-bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
-                                               const Instruction *I2) const {
+// Read method declaration comments for more details.
+int FunctionComparator::cmpOperation(const Instruction *L,
+                                     const Instruction *R) const {
   // Differences from Instruction::isSameOperationAs:
   //  * replace type comparison with calls to isEquivalentType.
   //  * we test for I->hasSameSubclassOptionalData (nuw/nsw/tail) at the top
   //  * because of the above, we don't test for the tail bit on calls later on
-  if (I1->getOpcode() != I2->getOpcode() ||
-      I1->getNumOperands() != I2->getNumOperands() ||
-      !isEquivalentType(I1->getType(), I2->getType()) ||
-      !I1->hasSameSubclassOptionalData(I2))
-    return false;
+  if (int Res = cmpNumbers(L->getOpcode(), R->getOpcode()))
+    return Res;
+
+  if (int Res = cmpNumbers(L->getNumOperands(), R->getNumOperands()))
+    return Res;
+
+  if (int Res = cmpType(L->getType(), R->getType()))
+    return Res;
+
+  if (int Res = cmpNumbers(L->getRawSubclassOptionalData(),
+                           R->getRawSubclassOptionalData()))
+    return Res;
 
   // We have two instructions of identical opcode and #operands.  Check to see
   // if all operands are the same type
-  for (unsigned i = 0, e = I1->getNumOperands(); i != e; ++i)
-    if (!isEquivalentType(I1->getOperand(i)->getType(),
-                          I2->getOperand(i)->getType()))
-      return false;
+  for (unsigned i = 0, e = L->getNumOperands(); i != e; ++i) {
+    if (int Res =
+            cmpType(L->getOperand(i)->getType(), R->getOperand(i)->getType()))
+      return Res;
+  }
 
   // Check special state that is a part of some instructions.
-  if (const LoadInst *LI = dyn_cast<LoadInst>(I1))
-    return LI->isVolatile() == cast<LoadInst>(I2)->isVolatile() &&
-           LI->getAlignment() == cast<LoadInst>(I2)->getAlignment() &&
-           LI->getOrdering() == cast<LoadInst>(I2)->getOrdering() &&
-           LI->getSynchScope() == cast<LoadInst>(I2)->getSynchScope();
-  if (const StoreInst *SI = dyn_cast<StoreInst>(I1))
-    return SI->isVolatile() == cast<StoreInst>(I2)->isVolatile() &&
-           SI->getAlignment() == cast<StoreInst>(I2)->getAlignment() &&
-           SI->getOrdering() == cast<StoreInst>(I2)->getOrdering() &&
-           SI->getSynchScope() == cast<StoreInst>(I2)->getSynchScope();
-  if (const CmpInst *CI = dyn_cast<CmpInst>(I1))
-    return CI->getPredicate() == cast<CmpInst>(I2)->getPredicate();
-  if (const CallInst *CI = dyn_cast<CallInst>(I1))
-    return CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
-           CI->getAttributes() == cast<CallInst>(I2)->getAttributes();
-  if (const InvokeInst *CI = dyn_cast<InvokeInst>(I1))
-    return CI->getCallingConv() == cast<InvokeInst>(I2)->getCallingConv() &&
-           CI->getAttributes() == cast<InvokeInst>(I2)->getAttributes();
-  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(I1))
-    return IVI->getIndices() == cast<InsertValueInst>(I2)->getIndices();
-  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I1))
-    return EVI->getIndices() == cast<ExtractValueInst>(I2)->getIndices();
-  if (const FenceInst *FI = dyn_cast<FenceInst>(I1))
-    return FI->getOrdering() == cast<FenceInst>(I2)->getOrdering() &&
-           FI->getSynchScope() == cast<FenceInst>(I2)->getSynchScope();
-  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(I1))
-    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I2)->isVolatile() &&
-           CXI->getSuccessOrdering() ==
-               cast<AtomicCmpXchgInst>(I2)->getSuccessOrdering() &&
-           CXI->getFailureOrdering() ==
-               cast<AtomicCmpXchgInst>(I2)->getFailureOrdering() &&
-           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I2)->getSynchScope();
-  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I1))
-    return RMWI->getOperation() == cast<AtomicRMWInst>(I2)->getOperation() &&
-           RMWI->isVolatile() == cast<AtomicRMWInst>(I2)->isVolatile() &&
-           RMWI->getOrdering() == cast<AtomicRMWInst>(I2)->getOrdering() &&
-           RMWI->getSynchScope() == cast<AtomicRMWInst>(I2)->getSynchScope();
+  if (const LoadInst *LI = dyn_cast<LoadInst>(L)) {
+    if (int Res = cmpNumbers(LI->isVolatile(), cast<LoadInst>(R)->isVolatile()))
+      return Res;
+    if (int Res =
+            cmpNumbers(LI->getAlignment(), cast<LoadInst>(R)->getAlignment()))
+      return Res;
+    if (int Res =
+            cmpNumbers(LI->getOrdering(), cast<LoadInst>(R)->getOrdering()))
+      return Res;
+    return cmpNumbers(LI->getSynchScope(), cast<LoadInst>(R)->getSynchScope());
+  }
+  if (const StoreInst *SI = dyn_cast<StoreInst>(L)) {
+    if (int Res =
+            cmpNumbers(SI->isVolatile(), cast<StoreInst>(R)->isVolatile()))
+      return Res;
+    if (int Res =
+            cmpNumbers(SI->getAlignment(), cast<StoreInst>(R)->getAlignment()))
+      return Res;
+    if (int Res =
+            cmpNumbers(SI->getOrdering(), cast<StoreInst>(R)->getOrdering()))
+      return Res;
+    return cmpNumbers(SI->getSynchScope(), cast<StoreInst>(R)->getSynchScope());
+  }
+  if (const CmpInst *CI = dyn_cast<CmpInst>(L))
+    return cmpNumbers(CI->getPredicate(), cast<CmpInst>(R)->getPredicate());
+  if (const CallInst *CI = dyn_cast<CallInst>(L)) {
+    if (int Res = cmpNumbers(CI->getCallingConv(),
+                             cast<CallInst>(R)->getCallingConv()))
+      return Res;
+    return cmpAttrs(CI->getAttributes(), cast<CallInst>(R)->getAttributes());
+  }
+  if (const InvokeInst *CI = dyn_cast<InvokeInst>(L)) {
+    if (int Res = cmpNumbers(CI->getCallingConv(),
+                             cast<InvokeInst>(R)->getCallingConv()))
+      return Res;
+    return cmpAttrs(CI->getAttributes(), cast<InvokeInst>(R)->getAttributes());
+  }
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(L)) {
+    ArrayRef<unsigned> LIndices = IVI->getIndices();
+    ArrayRef<unsigned> RIndices = cast<InsertValueInst>(R)->getIndices();
+    if (int Res = cmpNumbers(LIndices.size(), RIndices.size()))
+      return Res;
+    for (size_t i = 0, e = LIndices.size(); i != e; ++i) {
+      if (int Res = cmpNumbers(LIndices[i], RIndices[i]))
+        return Res;
+    }
+  }
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(L)) {
+    ArrayRef<unsigned> LIndices = EVI->getIndices();
+    ArrayRef<unsigned> RIndices = cast<ExtractValueInst>(R)->getIndices();
+    if (int Res = cmpNumbers(LIndices.size(), RIndices.size()))
+      return Res;
+    for (size_t i = 0, e = LIndices.size(); i != e; ++i) {
+      if (int Res = cmpNumbers(LIndices[i], RIndices[i]))
+        return Res;
+    }
+  }
+  if (const FenceInst *FI = dyn_cast<FenceInst>(L)) {
+    if (int Res =
+            cmpNumbers(FI->getOrdering(), cast<FenceInst>(R)->getOrdering()))
+      return Res;
+    return cmpNumbers(FI->getSynchScope(), cast<FenceInst>(R)->getSynchScope());
+  }
 
-  return true;
+  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(L)) {
+    if (int Res = cmpNumbers(CXI->isVolatile(),
+                             cast<AtomicCmpXchgInst>(R)->isVolatile()))
+      return Res;
+    if (int Res = cmpNumbers(CXI->getSuccessOrdering(),
+                             cast<AtomicCmpXchgInst>(R)->getSuccessOrdering()))
+      return Res;
+    if (int Res = cmpNumbers(CXI->getFailureOrdering(),
+                             cast<AtomicCmpXchgInst>(R)->getFailureOrdering()))
+      return Res;
+    return cmpNumbers(CXI->getSynchScope(),
+                      cast<AtomicCmpXchgInst>(R)->getSynchScope());
+  }
+  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(L)) {
+    if (int Res = cmpNumbers(RMWI->getOperation(),
+                             cast<AtomicRMWInst>(R)->getOperation()))
+      return Res;
+    if (int Res = cmpNumbers(RMWI->isVolatile(),
+                             cast<AtomicRMWInst>(R)->isVolatile()))
+      return Res;
+    if (int Res = cmpNumbers(RMWI->getOrdering(),
+                             cast<AtomicRMWInst>(R)->getOrdering()))
+      return Res;
+    return cmpNumbers(RMWI->getSynchScope(),
+                      cast<AtomicRMWInst>(R)->getSynchScope());
+  }
+  return 0;
 }
 
 // Determine whether two GEP operations perform the same underlying arithmetic.
