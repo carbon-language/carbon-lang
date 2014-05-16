@@ -1500,13 +1500,13 @@ def am_unscaled_fb128 : Operand<i64> {
   let ParserMatchClass = MemoryUnscaledFB128Operand;
   let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
 }
-def : InstAlias<"ldr $Rt, $addr", (LDURXi GPR64:$Rt, am_unscaled_fb64:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURWi GPR32:$Rt, am_unscaled_fb32:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURBi FPR8:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURHi FPR16:$Rt, am_unscaled_fb16:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURSi FPR32:$Rt, am_unscaled_fb32:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURDi FPR64:$Rt, am_unscaled_fb64:$addr)>;
-def : InstAlias<"ldr $Rt, $addr", (LDURQi FPR128:$Rt, am_unscaled_fb128:$addr)>;
+def : InstAlias<"ldr $Rt, $addr", (LDURXi GPR64:$Rt, am_unscaled_fb64:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURWi GPR32:$Rt, am_unscaled_fb32:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURBi FPR8:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURHi FPR16:$Rt, am_unscaled_fb16:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURSi FPR32:$Rt, am_unscaled_fb32:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURDi FPR64:$Rt, am_unscaled_fb64:$addr), 0>;
+def : InstAlias<"ldr $Rt, $addr", (LDURQi FPR128:$Rt, am_unscaled_fb128:$addr), 0>;
 
 // zextload -> i64
 def : Pat<(i64 (zextloadi8 am_unscaled8:$addr)),
@@ -1536,13 +1536,20 @@ def LDURSWi
                    [(set GPR64:$Rt, (sextloadi32 am_unscaled32:$addr))]>;
 
 // zero and sign extending aliases from generic LDR* mnemonics to LDUR*.
-def : InstAlias<"ldrb $Rt, $addr", (LDURBBi GPR32:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"ldrh $Rt, $addr", (LDURHHi GPR32:$Rt, am_unscaled_fb16:$addr)>;
-def : InstAlias<"ldrsb $Rt, $addr", (LDURSBWi GPR32:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"ldrsb $Rt, $addr", (LDURSBXi GPR64:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"ldrsh $Rt, $addr", (LDURSHWi GPR32:$Rt, am_unscaled_fb16:$addr)>;
-def : InstAlias<"ldrsh $Rt, $addr", (LDURSHXi GPR64:$Rt, am_unscaled_fb16:$addr)>;
-def : InstAlias<"ldrsw $Rt, $addr", (LDURSWi GPR64:$Rt, am_unscaled_fb32:$addr)>;
+def : InstAlias<"ldrb $Rt, $addr",
+                (LDURBBi GPR32:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"ldrh $Rt, $addr",
+                (LDURHHi GPR32:$Rt, am_unscaled_fb16:$addr), 0>;
+def : InstAlias<"ldrsb $Rt, $addr",
+                (LDURSBWi GPR32:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"ldrsb $Rt, $addr",
+                (LDURSBXi GPR64:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"ldrsh $Rt, $addr",
+                (LDURSHWi GPR32:$Rt, am_unscaled_fb16:$addr), 0>;
+def : InstAlias<"ldrsh $Rt, $addr",
+                (LDURSHXi GPR64:$Rt, am_unscaled_fb16:$addr), 0>;
+def : InstAlias<"ldrsw $Rt, $addr",
+                (LDURSWi GPR64:$Rt, am_unscaled_fb32:$addr), 0>;
 
 // Pre-fetch.
 def PRFUMi : PrefetchUnscaled<0b11, 0, 0b10, "prfum",
@@ -1889,16 +1896,25 @@ def : Pat<(truncstorei8 GPR64:$Rt, am_unscaled8:$addr),
 
 //---
 // STR mnemonics fall back to STUR for negative or unaligned offsets.
-def : InstAlias<"str $Rt, $addr", (STURXi GPR64:$Rt, am_unscaled_fb64:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURWi GPR32:$Rt, am_unscaled_fb32:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURBi FPR8:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURHi FPR16:$Rt, am_unscaled_fb16:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURSi FPR32:$Rt, am_unscaled_fb32:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURDi FPR64:$Rt, am_unscaled_fb64:$addr)>;
-def : InstAlias<"str $Rt, $addr", (STURQi FPR128:$Rt, am_unscaled_fb128:$addr)>;
+def : InstAlias<"str $Rt, $addr",
+                (STURXi GPR64:$Rt, am_unscaled_fb64:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURWi GPR32:$Rt, am_unscaled_fb32:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURBi FPR8:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURHi FPR16:$Rt, am_unscaled_fb16:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURSi FPR32:$Rt, am_unscaled_fb32:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURDi FPR64:$Rt, am_unscaled_fb64:$addr), 0>;
+def : InstAlias<"str $Rt, $addr",
+                (STURQi FPR128:$Rt, am_unscaled_fb128:$addr), 0>;
 
-def : InstAlias<"strb $Rt, $addr", (STURBBi GPR32:$Rt, am_unscaled_fb8:$addr)>;
-def : InstAlias<"strh $Rt, $addr", (STURHHi GPR32:$Rt, am_unscaled_fb16:$addr)>;
+def : InstAlias<"strb $Rt, $addr",
+                (STURBBi GPR32:$Rt, am_unscaled_fb8:$addr), 0>;
+def : InstAlias<"strh $Rt, $addr",
+                (STURHHi GPR32:$Rt, am_unscaled_fb16:$addr), 0>;
 
 //---
 // (unscaled immediate, unprivileged)
