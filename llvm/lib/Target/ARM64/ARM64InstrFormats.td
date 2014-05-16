@@ -1101,7 +1101,7 @@ class BaseOneOperandData<bits<3> opc, RegisterClass regtype, string asm,
                          SDPatternOperator node>
   : I<(outs regtype:$Rd), (ins regtype:$Rn), asm, "\t$Rd, $Rn", "",
       [(set regtype:$Rd, (node regtype:$Rn))]>,
-    Sched<[WriteI]> {
+    Sched<[WriteI, ReadI]> {
   bits<5> Rd;
   bits<5> Rn;
 
@@ -1140,7 +1140,7 @@ class BaseBaseAddSubCarry<bit isSub, RegisterClass regtype, string asm,
                           list<dag> pattern>
     : I<(outs regtype:$Rd), (ins regtype:$Rn, regtype:$Rm),
         asm, "\t$Rd, $Rn, $Rm", "", pattern>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI, ReadI]> {
   let Uses = [NZCV];
   bits<5> Rd;
   bits<5> Rn;
@@ -1214,11 +1214,11 @@ class BaseDiv<bit isSigned, RegisterClass regtype, string asm,
 
 multiclass Div<bit isSigned, string asm, SDPatternOperator OpNode> {
   def Wr : BaseDiv<isSigned, GPR32, asm, OpNode>,
-           Sched<[WriteID32]> {
+           Sched<[WriteID32, ReadID, ReadID]> {
     let Inst{31} = 0;
   }
   def Xr : BaseDiv<isSigned, GPR64, asm, OpNode>,
-           Sched<[WriteID64]> {
+           Sched<[WriteID64, ReadID, ReadID]> {
     let Inst{31} = 1;
   }
 }
@@ -1226,7 +1226,7 @@ multiclass Div<bit isSigned, string asm, SDPatternOperator OpNode> {
 class BaseShift<bits<2> shift_type, RegisterClass regtype, string asm,
                 SDPatternOperator OpNode = null_frag>
   : BaseTwoOperand<{1,0,?,?}, regtype, asm, OpNode>,
-    Sched<[WriteIS]> {
+    Sched<[WriteIS, ReadI]> {
   let Inst{11-10} = shift_type;
 }
 
@@ -1278,13 +1278,13 @@ class BaseMulAccum<bit isSub, bits<3> opc, RegisterClass multype,
 multiclass MulAccum<bit isSub, string asm, SDNode AccNode> {
   def Wrrr : BaseMulAccum<isSub, 0b000, GPR32, GPR32, asm,
       [(set GPR32:$Rd, (AccNode GPR32:$Ra, (mul GPR32:$Rn, GPR32:$Rm)))]>,
-      Sched<[WriteIM32]> {
+      Sched<[WriteIM32, ReadIMA, ReadIM, ReadIM]> {
     let Inst{31} = 0;
   }
 
   def Xrrr : BaseMulAccum<isSub, 0b000, GPR64, GPR64, asm,
       [(set GPR64:$Rd, (AccNode GPR64:$Ra, (mul GPR64:$Rn, GPR64:$Rm)))]>,
-      Sched<[WriteIM64]> {
+      Sched<[WriteIM64, ReadIMA, ReadIM, ReadIM]> {
     let Inst{31} = 1;
   }
 }
@@ -1294,7 +1294,7 @@ class WideMulAccum<bit isSub, bits<3> opc, string asm,
   : BaseMulAccum<isSub, opc, GPR32, GPR64, asm,
     [(set GPR64:$Rd, (AccNode GPR64:$Ra,
                             (mul (ExtNode GPR32:$Rn), (ExtNode GPR32:$Rm))))]>,
-    Sched<[WriteIM32]> {
+    Sched<[WriteIM32, ReadIMA, ReadIM, ReadIM]> {
   let Inst{31} = 1;
 }
 
@@ -1302,7 +1302,7 @@ class MulHi<bits<3> opc, string asm, SDNode OpNode>
   : I<(outs GPR64:$Rd), (ins GPR64:$Rn, GPR64:$Rm),
       asm, "\t$Rd, $Rn, $Rm", "",
       [(set GPR64:$Rd, (OpNode GPR64:$Rn, GPR64:$Rm))]>,
-    Sched<[WriteIM64]> {
+    Sched<[WriteIM64, ReadIM, ReadIM]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<5> Rm;
@@ -1333,7 +1333,7 @@ class BaseCRC32<bit sf, bits<2> sz, bit C, RegisterClass StreamReg,
   : I<(outs GPR32:$Rd), (ins GPR32:$Rn, StreamReg:$Rm),
       asm, "\t$Rd, $Rn, $Rm", "",
       [(set GPR32:$Rd, (OpNode GPR32:$Rn, StreamReg:$Rm))]>,
-    Sched<[WriteISReg]> {
+    Sched<[WriteISReg, ReadI, ReadISReg]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<5> Rm;
@@ -1420,7 +1420,7 @@ class BaseInsertImmediate<bits<2> opc, RegisterClass regtype, Operand shifter,
   : I<(outs regtype:$Rd),
       (ins regtype:$src, movimm32_imm:$imm, shifter:$shift),
        asm, "\t$Rd, $imm$shift", "$src = $Rd", []>,
-    Sched<[WriteI]> {
+    Sched<[WriteI, ReadI]> {
   bits<5> Rd;
   bits<16> imm;
   bits<6> shift;
@@ -1453,7 +1453,7 @@ class BaseAddSubImm<bit isSub, bit setFlags, RegisterClass dstRegtype,
     : I<(outs dstRegtype:$Rd), (ins srcRegtype:$Rn, immtype:$imm),
         asm, "\t$Rd, $Rn, $imm", "",
         [(set dstRegtype:$Rd, (OpNode srcRegtype:$Rn, immtype:$imm))]>,
-      Sched<[WriteI]>  {
+      Sched<[WriteI, ReadI]>  {
   bits<5>  Rd;
   bits<5>  Rn;
   bits<14> imm;
@@ -1471,7 +1471,7 @@ class BaseAddSubRegPseudo<RegisterClass regtype,
                           SDPatternOperator OpNode>
     : Pseudo<(outs regtype:$Rd), (ins regtype:$Rn, regtype:$Rm),
              [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm))]>,
-      Sched<[WriteI]>;
+      Sched<[WriteI, ReadI, ReadI]>;
 
 class BaseAddSubSReg<bit isSub, bit setFlags, RegisterClass regtype,
                      arith_shifted_reg shifted_regtype, string asm,
@@ -1479,7 +1479,7 @@ class BaseAddSubSReg<bit isSub, bit setFlags, RegisterClass regtype,
     : I<(outs regtype:$Rd), (ins regtype:$Rn, shifted_regtype:$Rm),
         asm, "\t$Rd, $Rn, $Rm", "",
         [(set regtype:$Rd, (OpNode regtype:$Rn, shifted_regtype:$Rm))]>,
-      Sched<[WriteISReg]> {
+      Sched<[WriteISReg, ReadI, ReadISReg]> {
   // The operands are in order to match the 'addr' MI operands, so we
   // don't need an encoder method and by-name matching. Just use the default
   // in-order handling. Since we're using by-order, make sure the names
@@ -1508,7 +1508,7 @@ class BaseAddSubEReg<bit isSub, bit setFlags, RegisterClass dstRegtype,
         (ins src1Regtype:$R2, src2Regtype:$R3),
         asm, "\t$R1, $R2, $R3", "",
         [(set dstRegtype:$R1, (OpNode src1Regtype:$R2, src2Regtype:$R3))]>,
-      Sched<[WriteIEReg]> {
+      Sched<[WriteIEReg, ReadI, ReadIEReg]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<5> Rm;
@@ -1533,7 +1533,7 @@ class BaseAddSubEReg64<bit isSub, bit setFlags, RegisterClass dstRegtype,
     : I<(outs dstRegtype:$Rd),
         (ins src1Regtype:$Rn, src2Regtype:$Rm, ext_op:$ext),
         asm, "\t$Rd, $Rn, $Rm$ext", "", []>,
-      Sched<[WriteIEReg]> {
+      Sched<[WriteIEReg, ReadI, ReadIEReg]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<5> Rm;
@@ -1746,7 +1746,7 @@ class BaseBitfieldImm<bits<2> opc,
                       RegisterClass regtype, Operand imm_type, string asm>
     : I<(outs regtype:$Rd), (ins regtype:$Rn, imm_type:$immr, imm_type:$imms),
          asm, "\t$Rd, $Rn, $immr, $imms", "", []>,
-      Sched<[WriteIS]> {
+      Sched<[WriteIS, ReadI]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<6> immr;
@@ -1780,7 +1780,7 @@ class BaseBitfieldImmWith2RegArgs<bits<2> opc,
     : I<(outs regtype:$Rd), (ins regtype:$src, regtype:$Rn, imm_type:$immr,
                              imm_type:$imms),
          asm, "\t$Rd, $Rn, $immr, $imms", "$src = $Rd", []>,
-      Sched<[WriteIS]> {
+      Sched<[WriteIS, ReadI]> {
   bits<5> Rd;
   bits<5> Rn;
   bits<6> immr;
@@ -1818,7 +1818,7 @@ class BaseLogicalImm<bits<2> opc, RegisterClass dregtype,
                      list<dag> pattern>
     : I<(outs dregtype:$Rd), (ins sregtype:$Rn, imm_type:$imm),
          asm, "\t$Rd, $Rn, $imm", "", pattern>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI]> {
   bits<5>  Rd;
   bits<5>  Rn;
   bits<13> imm;
@@ -1839,7 +1839,7 @@ class BaseLogicalSReg<bits<2> opc, bit N, RegisterClass regtype,
                       list<dag> pattern>
     : I<(outs regtype:$Rd), (ins regtype:$Rn, shifted_regtype:$Rm),
         asm, "\t$Rd, $Rn, $Rm", "", pattern>,
-      Sched<[WriteISReg]> {
+      Sched<[WriteISReg, ReadI, ReadISReg]> {
   // The operands are in order to match the 'addr' MI operands, so we
   // don't need an encoder method and by-name matching. Just use the default
   // in-order handling. Since we're using by-order, make sure the names
@@ -1897,7 +1897,7 @@ multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode> {
 class BaseLogicalRegPseudo<RegisterClass regtype, SDPatternOperator OpNode>
     : Pseudo<(outs regtype:$Rd), (ins regtype:$Rn, regtype:$Rm),
              [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm))]>,
-      Sched<[WriteI]>;
+      Sched<[WriteI, ReadI, ReadI]>;
 
 // Split from LogicalImm as not all instructions have both.
 multiclass LogicalReg<bits<2> opc, bit N, string mnemonic,
@@ -1953,7 +1953,7 @@ let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseCondSetFlagsImm<bit op, RegisterClass regtype, string asm>
     : I<(outs), (ins regtype:$Rn, imm0_31:$imm, imm0_15:$nzcv, ccode:$cond),
          asm, "\t$Rn, $imm, $nzcv, $cond", "", []>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI]> {
   let Uses = [NZCV];
   let Defs = [NZCV];
 
@@ -1985,7 +1985,7 @@ let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseCondSetFlagsReg<bit op, RegisterClass regtype, string asm>
     : I<(outs), (ins regtype:$Rn, regtype:$Rm, imm0_15:$nzcv, ccode:$cond),
          asm, "\t$Rn, $Rm, $nzcv, $cond", "", []>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI, ReadI]> {
   let Uses = [NZCV];
   let Defs = [NZCV];
 
@@ -2022,7 +2022,7 @@ class BaseCondSelect<bit op, bits<2> op2, RegisterClass regtype, string asm>
          asm, "\t$Rd, $Rn, $Rm, $cond", "",
          [(set regtype:$Rd,
                (ARM64csel regtype:$Rn, regtype:$Rm, (i32 imm:$cond), NZCV))]>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI, ReadI]> {
   let Uses = [NZCV];
 
   bits<5> Rd;
@@ -2055,7 +2055,7 @@ class BaseCondSelectOp<bit op, bits<2> op2, RegisterClass regtype, string asm,
          [(set regtype:$Rd,
                (ARM64csel regtype:$Rn, (frag regtype:$Rm),
                (i32 imm:$cond), NZCV))]>,
-      Sched<[WriteI]> {
+      Sched<[WriteI, ReadI, ReadI]> {
   let Uses = [NZCV];
 
   bits<5> Rd;

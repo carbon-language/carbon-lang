@@ -56,6 +56,9 @@ public:
   unsigned isStoreToStackSlot(const MachineInstr *MI,
                               int &FrameIndex) const override;
 
+  /// \brief Is there a non-zero immediate?
+  bool hasNonZeroImm(const MachineInstr *MI) const;
+
   /// \brief Does this instruction set its full destination register to zero?
   bool isGPRZero(const MachineInstr *MI) const;
 

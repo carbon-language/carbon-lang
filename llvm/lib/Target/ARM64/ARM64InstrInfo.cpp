@@ -825,6 +825,19 @@ bool ARM64InstrInfo::optimizeCompareInstr(
   return true;
 }
 
+/// Return true if this is this instruction has a non-zero immediate
+bool ARM64InstrInfo::hasNonZeroImm(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default:
+    if (MI->getOperand(3).isImm()) {
+      unsigned val = MI->getOperand(3).getImm();
+      return (val != 0);
+    }
+    break;
+  }
+  return false;
+}
+
 // Return true if this instruction simply sets its single destination register
 // to zero. This is equivalent to a register rename of the zero-register.
 bool ARM64InstrInfo::isGPRZero(const MachineInstr *MI) const {

@@ -851,4 +851,15 @@ def : InstRW<[WriteAdr, WriteVSTPairShuffle], (instregex "ST4i(8|16|32)_POST")>;
 def : InstRW<[WriteVSTShuffle, WriteVSTShuffle],          (instrs ST4i64)>;
 def : InstRW<[WriteAdr, WriteVSTShuffle, WriteVSTShuffle],(instrs ST4i64_POST)>;
 
+//---
+// Unused SchedRead types
+//---
+
+def : ReadAdvance<ReadI, 0>;
+def : ReadAdvance<ReadISReg, 0>;
+def : ReadAdvance<ReadIEReg, 0>;
+def : ReadAdvance<ReadIM, 0>;
+def : ReadAdvance<ReadIMA, 0>;
+def : ReadAdvance<ReadID, 0>;
+
 } // SchedModel = CycloneModel

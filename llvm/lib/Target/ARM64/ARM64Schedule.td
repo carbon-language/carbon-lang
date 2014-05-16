@@ -25,13 +25,19 @@ def WriteImm       : SchedWrite; // MOVN, MOVZ
 def WriteI         : SchedWrite; // ALU
 def WriteISReg     : SchedWrite; // ALU of Shifted-Reg
 def WriteIEReg     : SchedWrite; // ALU of Extended-Reg
+def ReadI          : SchedRead;  // ALU
+def ReadISReg      : SchedRead;  // ALU of Shifted-Reg
+def ReadIEReg      : SchedRead;  // ALU of Extended-Reg
 def WriteExtr      : SchedWrite; // EXTR shifts a reg pair
 def ReadExtrHi     : SchedRead;  // Read the high reg of the EXTR pair
 def WriteIS        : SchedWrite; // Shift/Scale
 def WriteID32      : SchedWrite; // 32-bit Divide
 def WriteID64      : SchedWrite; // 64-bit Divide
+def ReadID         : SchedRead;  // 32/64-bit Divide
 def WriteIM32      : SchedWrite; // 32-bit Multiply
 def WriteIM64      : SchedWrite; // 64-bit Multiply
+def ReadIM         : SchedRead;  // 32/64-bit Multiply
+def ReadIMA        : SchedRead;  // 32/64-bit Multiply Accumulate
 def WriteBr        : SchedWrite; // Branch
 def WriteBrReg     : SchedWrite; // Indirect Branch
 
@@ -43,6 +49,9 @@ def WriteAdr       : SchedWrite; // Address pre/post increment.
 def WriteLDIdx : SchedWrite; // Load from a register index (maybe scaled).
 def WriteSTIdx : SchedWrite; // Store to a register index (maybe scaled).
 def ReadAdrBase : SchedRead; // Read the base resister of a reg-offset LD/ST.
+
+// Predicate for determining when a shiftable register is shifted.
+def RegShiftedPred : SchedPredicate<[{TII->hasNonZeroImm(MI)}]>;
 
 // ScaledIdxPred is true if a WriteLDIdx operand will be
 // scaled. Subtargets can use this to dynamically select resources and

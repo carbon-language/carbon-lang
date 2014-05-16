@@ -8,9 +8,7 @@
 ; CHECK: ********** MI Scheduling **********
 ; CHECK: main
 ; CHECK: *** Final schedule for BB#2 ***
-; CHECK: SU(13)
 ; CHECK: MADDWrrr
-; CHECK: SU(4)
 ; CHECK: ADDWri
 ; CHECK: ********** INTERVALS **********
 @main.x = private unnamed_addr constant [8 x i32] [i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1], align 4

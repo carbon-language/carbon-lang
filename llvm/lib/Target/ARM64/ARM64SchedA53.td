@@ -20,7 +20,7 @@ def CortexA53Model : SchedMachineModel {
   let MicroOpBufferSize = 0; // Explicitly set to zero since A53 is in-order.
   let IssueWidth = 2;        // 2 micro-ops are dispatched per cycle.
   let MinLatency = 1 ;       // OperandCycles are interpreted as MinLatency.
-  let LoadLatency = 2;       // Optimistic load latency assuming bypass.
+  let LoadLatency = 3;       // Optimistic load latency assuming bypass.
                              // This is overriden by OperandCycles if the
                              // Itineraries are queried instead.
   let MispredictPenalty = 9; // Based on "Cortex-A53 Software Optimisation
@@ -32,7 +32,7 @@ def CortexA53Model : SchedMachineModel {
 //===----------------------------------------------------------------------===//
 // Define each kind of processor resource and number available.
 
-// Modeling each pipeline as a ProcResource using the BufferSize = 0 since 
+// Modeling each pipeline as a ProcResource using the BufferSize = 0 since
 // Cortex-A53 is in-order.
 
 def A53UnitALU    : ProcResource<2> { let BufferSize = 0; } // Int ALU
@@ -50,16 +50,16 @@ def A53UnitFPMDS  : ProcResource<1> { let BufferSize = 0; } // FP Mult/Div/Sqrt
 
 let SchedModel = CortexA53Model in {
 
-// ALU - These are reduced to 1 despite a true latency of 4 in order to easily
-//       model forwarding logic. Once forwarding is properly modelled, then
-//       they'll be corrected.
-def : WriteRes<WriteImm, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteI, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteISReg, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteIEReg, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteExtr, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteIS, [A53UnitALU]> { let Latency = 1; }
-def : WriteRes<WriteAdr, [A53UnitALU]> { let Latency = 1; }
+// ALU - Despite having a full latency of 4, most of the ALU instructions can
+//       forward a cycle earlier and then two cycles earlier in the case of a
+//       shift-only instruction. These latencies will be incorrect when the
+//       result cannot be forwarded, but modeling isn't rocket surgery.
+def : WriteRes<WriteImm, [A53UnitALU]> { let Latency = 3; }
+def : WriteRes<WriteI, [A53UnitALU]> { let Latency = 3; }
+def : WriteRes<WriteISReg, [A53UnitALU]> { let Latency = 3; }
+def : WriteRes<WriteIEReg, [A53UnitALU]> { let Latency = 3; }
+def : WriteRes<WriteIS, [A53UnitALU]> { let Latency = 2; }
+def : WriteRes<WriteExtr, [A53UnitALU]> { let Latency = 3; }
 
 // MAC
 def : WriteRes<WriteIM32, [A53UnitMAC]> { let Latency = 4; }
@@ -73,14 +73,41 @@ def : WriteRes<WriteID64, [A53UnitDiv]> { let Latency = 4; }
 def : WriteRes<WriteLD, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WriteLDIdx, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WriteLDHi, [A53UnitLdSt]> { let Latency = 4; }
-def : WriteRes<WriteVLD, [A53UnitLdSt]> { let Latency = 4; }
+
+// Vector Load - Vector loads take 1-5 cycles to issue. For the WriteVecLd
+//               below, choosing the median of 3 which makes the latency 6.
+//               May model this more carefully in the future. The remaining
+//               A53WriteVLD# types represent the 1-5 cycle issues explicitly.
+def : WriteRes<WriteVLD, [A53UnitLdSt]> { let Latency = 6;
+                                          let ResourceCycles = [3]; }
+def A53WriteVLD1 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 4; }
+def A53WriteVLD2 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 5;
+                                                  let ResourceCycles = [2]; }
+def A53WriteVLD3 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 6;
+                                                  let ResourceCycles = [3]; }
+def A53WriteVLD4 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 7;
+                                                  let ResourceCycles = [4]; }
+def A53WriteVLD5 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 8;
+                                                  let ResourceCycles = [5]; }
+
+// Pre/Post Indexing - Performed as part of address generation which is already
+//                     accounted for in the WriteST* latencies below
+def : WriteRes<WriteAdr, []> { let Latency = 0; }
 
 // Store
 def : WriteRes<WriteST, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WriteSTP, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WriteSTIdx, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WriteSTX, [A53UnitLdSt]> { let Latency = 4; }
-def : WriteRes<WriteVST, [A53UnitLdSt]> { let Latency = 4; }
+
+// Vector Store - Similar to vector loads, can take 1-3 cycles to issue.
+def : WriteRes<WriteVST, [A53UnitLdSt]> { let Latency = 5;
+                                          let ResourceCycles = [2];}
+def A53WriteVST1 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 4; }
+def A53WriteVST2 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 5;
+                                                  let ResourceCycles = [2]; }
+def A53WriteVST3 : SchedWriteRes<[A53UnitLdSt]> { let Latency = 6;
+                                                  let ResourceCycles = [3]; }
 
 // Branch
 def : WriteRes<WriteBr, [A53UnitB]>;
@@ -101,29 +128,143 @@ def : WriteRes<WriteV, [A53UnitFPALU]> { let Latency = 6; }
 def : WriteRes<WriteFMul, [A53UnitFPMDS]> { let Latency = 6; }
 def : WriteRes<WriteFDiv, [A53UnitFPMDS]> { let Latency = 33;
                                             let ResourceCycles = [29]; }
-def A53WriteFDiv : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 33;
-                                                   let ResourceCycles = [29]; }
-def A53WriteFSqrt : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 32;
-                                                    let ResourceCycles = [28]; }
+def A53WriteFMAC : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 10; }
+def A53WriteFDivSP : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 18;
+                                                     let ResourceCycles = [14]; }
+def A53WriteFDivDP : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 33;
+                                                     let ResourceCycles = [29]; }
+def A53WriteFSqrtSP : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 17;
+                                                      let ResourceCycles = [13]; }
+def A53WriteFSqrtDP : SchedWriteRes<[A53UnitFPMDS]> { let Latency = 32;
+                                                      let ResourceCycles = [28]; }
 
 //===----------------------------------------------------------------------===//
 // Subtarget-specific SchedRead types.
 
-// While there is no forwarding information defined for these SchedRead types,
-// they are still used by some instruction via a SchedRW list and so these zero
-// SchedReadAdvances are required.
-
+// No forwarding for these reads.
 def : ReadAdvance<ReadExtrHi, 0>;
 def : ReadAdvance<ReadAdrBase, 0>;
 def : ReadAdvance<ReadVLD, 0>;
 
+// ALU - Most operands in the ALU pipes are not needed for two cycles. Shiftable
+//       operands are needed one cycle later if and only if they are to be
+//       shifted. Otherwise, they too are needed two cycle later.
+def : ReadAdvance<ReadI, 2, [WriteImm,WriteI,
+                             WriteISReg, WriteIEReg,WriteIS,
+                             WriteID32,WriteID64,
+                             WriteIM32,WriteIM64]>;
+def A53ReadShifted : SchedReadAdvance<1, [WriteImm,WriteI,
+                                          WriteISReg, WriteIEReg,WriteIS,
+                                          WriteID32,WriteID64,
+                                          WriteIM32,WriteIM64]>;
+def A53ReadNotShifted : SchedReadAdvance<2, [WriteImm,WriteI,
+                                             WriteISReg, WriteIEReg,WriteIS,
+                                             WriteID32,WriteID64,
+                                             WriteIM32,WriteIM64]>;
+def A53ReadISReg : SchedReadVariant<[
+	SchedVar<RegShiftedPred, [A53ReadShifted]>,
+	SchedVar<NoSchedPred, [A53ReadNotShifted]>]>;
+def : SchedAlias<ReadISReg, A53ReadISReg>;
+
+def A53ReadIEReg : SchedReadVariant<[
+	SchedVar<RegShiftedPred, [A53ReadShifted]>,
+	SchedVar<NoSchedPred, [A53ReadNotShifted]>]>;
+def : SchedAlias<ReadIEReg, A53ReadIEReg>;
+
+// MAC - Operands are generally needed one cycle later in the MAC pipe.
+//       Accumulator operands are needed two cycles later.
+def : ReadAdvance<ReadIM, 1, [WriteImm,WriteI,
+                              WriteISReg, WriteIEReg,WriteIS,
+                              WriteID32,WriteID64,
+                              WriteIM32,WriteIM64]>;
+def : ReadAdvance<ReadIMA, 2, [WriteImm,WriteI,
+                               WriteISReg, WriteIEReg,WriteIS,
+                               WriteID32,WriteID64,
+                               WriteIM32,WriteIM64]>;
+
+// Div
+def : ReadAdvance<ReadID, 1, [WriteImm,WriteI,
+                              WriteISReg, WriteIEReg,WriteIS,
+                              WriteID32,WriteID64,
+                              WriteIM32,WriteIM64]>;
+
 //===----------------------------------------------------------------------===//
 // Subtarget-specific InstRWs.
 
+//---
+// Miscellaneous
+//---
 def : InstRW<[WriteI], (instrs COPY)>;
-def : InstRW<[WriteLD], (instregex "LD[1-4]")>;
-def : InstRW<[WriteST], (instregex "ST[1-4]")>;
-def : InstRW<[A53WriteFDiv], (instregex "^FDIV")>;
-def : InstRW<[A53WriteFSqrt], (instregex ".*SQRT.*")>;
+
+//---
+// Vector Mul with Accumulate
+//---
+//def : InstRW<[WriteIM32, A53ReadIMA], (instregex "^M(ADD|SUB)W.*")>;
+//def : InstRW<[WriteIM64, A53ReadIMA], (instregex "^M(ADD|SUB)X.*")>;
+
+//---
+// Vector Loads
+//---
+def : InstRW<[A53WriteVLD1], (instregex "LD1i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD1Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD1Onev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD1Twov(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD3], (instregex "LD1Threev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVLD1], (instregex "LD2i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD2Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD2Twov(8b|4h|2s)(_POST)?$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD2Twov(16b|8h|4s|2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVLD2], (instregex "LD3i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD3Rv(8b|4h|2s|1d|16b|8h|4s|2dq)(_POST)?$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD3Threev(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
+def : InstRW<[A53WriteVLD3], (instregex "LD3Threev(2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVLD2], (instregex "LD4i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD4Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD5], (instregex "LD4Fourv(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD4Fourv(2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVLD1, A53WriteVLD1], (instregex "LDN?PS.*$")>;
+def : InstRW<[A53WriteVLD2, A53WriteVLD2], (instregex "LDN?PD.*$")>;
+def : InstRW<[A53WriteVLD4, A53WriteVLD4], (instregex "LDN?PQ.*$")>;
+
+//---
+// Vector Stores
+//---
+def : InstRW<[A53WriteVST1], (instregex "ST1i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST1Onev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST1Twov(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST1Threev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVST1], (instregex "ST2i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST2Twov(8b|4h|2s)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST2Twov(16b|8h|4s|2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVST2], (instregex "ST3i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVST3], (instregex "ST3Threev(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST3Threev(2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVST2], (instregex "ST4i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVST3], (instregex "ST4Fourv(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST4Fourv(2d)(_POST)?$")>;
+
+def : InstRW<[A53WriteVST1], (instregex "STN?P(S|D).*$")>;
+def : InstRW<[A53WriteVST2], (instregex "STN?PQ.*$")>;
+
+//---
+// Floating Point MAC, DIV, SQRT
+//---
+def : InstRW<[A53WriteFMAC], (instregex "^FN?M(ADD|SUB).*")>;
+def : InstRW<[A53WriteFMAC], (instregex "^FML(A|S).*")>;
+def : InstRW<[A53WriteFDivSP], (instrs FDIVSrr)>;
+def : InstRW<[A53WriteFDivDP], (instrs FDIVDrr)>;
+def : InstRW<[A53WriteFDivSP], (instregex "^FDIVv.*32$")>;
+def : InstRW<[A53WriteFDivDP], (instregex "^FDIVv.*64$")>;
+def : InstRW<[A53WriteFSqrtSP], (instregex "^.*SQRT.*32$")>;
+def : InstRW<[A53WriteFSqrtDP], (instregex "^.*SQRT.*64$")>;
 
 }
