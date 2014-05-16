@@ -13,6 +13,8 @@
 #include "lldb/Utility/SharingPtr.h"
 #include "lldb/Host/Mutex.h"
 
+#include "llvm/ADT/SmallPtrSet.h"
+
 namespace lldb_private {
 
 namespace imp
@@ -50,11 +52,12 @@ public:
     
     ~ClusterManager ()
     {
-        size_t n_items = m_objects.size();
-        for (size_t i = 0; i < n_items; i++)
+        for (typename llvm::SmallPtrSet<T *, 16>::iterator pos = m_objects.begin(), end = m_objects.end(); pos != end; ++pos)
         {
-            delete m_objects[i];
+            T *object = *pos;
+            delete object;
         }
+
         // Decrement refcount should have been called on this ClusterManager,
         // and it should have locked the mutex, now we will unlock it before
         // we destroy it...
@@ -64,8 +67,7 @@ public:
     void ManageObject (T *new_object)
     {
         Mutex::Locker locker (m_mutex);
-        if (!ContainsObject(new_object))
-            m_objects.push_back (new_object);
+        m_objects.insert (new_object);
     }
     
     typename lldb_private::SharingPtr<T> GetSharedPointer(T *desired_object)
@@ -73,19 +75,12 @@ public:
         {
             Mutex::Locker locker (m_mutex);
             m_external_ref++;
-            assert (ContainsObject(desired_object));
+            assert (m_objects.count(desired_object));
         }
         return typename lldb_private::SharingPtr<T> (desired_object, new imp::shared_ptr_refcount<ClusterManager> (this));
     }
     
 private:
-    
-    bool ContainsObject (const T *desired_object)
-    {
-        typename std::vector<T *>::iterator pos, end = m_objects.end();
-        pos = std::find(m_objects.begin(), end, desired_object);
-        return pos != end;
-    }
     
     void DecrementRefCount () 
     {
@@ -99,7 +94,7 @@ private:
     
     friend class imp::shared_ptr_refcount<ClusterManager>;
     
-    std::vector<T *> m_objects;
+    llvm::SmallPtrSet<T *, 16> m_objects;
     int m_external_ref;
     Mutex m_mutex;
 };
