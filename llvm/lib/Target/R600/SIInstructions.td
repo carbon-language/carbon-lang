@@ -1407,13 +1407,6 @@ def V_OR_I1 : InstSI <
    [(set i1:$dst, (or i1:$src0, i1:$src1))]
 >;
 
-def LOAD_CONST : AMDGPUShaderInst <
-  (outs GPRF32:$dst),
-  (ins i32imm:$src),
-  "LOAD_CONST $dst, $src",
-  [(set GPRF32:$dst, (int_AMDGPU_load_const imm:$src))]
->;
-
 // SI pseudo instructions. These are used by the CFG structurizer pass
 // and should be lowered to ISA instructions prior to codegen.
 
