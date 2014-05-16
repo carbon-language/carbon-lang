@@ -884,6 +884,7 @@ namespace llvm {
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVSELECT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) const;
     SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG) const;

@@ -1068,11 +1068,14 @@ void X86TargetLowering::resetOperationActions() {
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
 
-    setOperationAction(ISD::VSELECT,            MVT::v2f64, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v2i64, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4i32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v8i16, Custom);
+    // There is no BLENDI for byte vectors. We don't need to custom lower
+    // some vselects for now.
     setOperationAction(ISD::VSELECT,            MVT::v16i8, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v4i32, Legal);
-    setOperationAction(ISD::VSELECT,            MVT::v4f32, Legal);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
@@ -1188,10 +1191,10 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
 
-    setOperationAction(ISD::VSELECT,           MVT::v4f64, Legal);
-    setOperationAction(ISD::VSELECT,           MVT::v4i64, Legal);
-    setOperationAction(ISD::VSELECT,           MVT::v8i32, Legal);
-    setOperationAction(ISD::VSELECT,           MVT::v8f32, Legal);
+    setOperationAction(ISD::VSELECT,           MVT::v4f64, Custom);
+    setOperationAction(ISD::VSELECT,           MVT::v4i64, Custom);
+    setOperationAction(ISD::VSELECT,           MVT::v8i32, Custom);
+    setOperationAction(ISD::VSELECT,           MVT::v8f32, Custom);
 
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v4i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v8i32, Custom);
@@ -1236,6 +1239,7 @@ void X86TargetLowering::resetOperationActions() {
       setOperationAction(ISD::MULHU,           MVT::v16i16, Legal);
       setOperationAction(ISD::MULHS,           MVT::v16i16, Legal);
 
+      setOperationAction(ISD::VSELECT,         MVT::v16i16, Custom);
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
@@ -4694,11 +4698,17 @@ unsigned X86::getInsertVINSERT256Immediate(SDNode *N) {
   return getInsertVINSERTImmediate(N, 256);
 }
 
+/// isZero - Returns true if Elt is a constant integer zero
+static bool isZero(SDValue V) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
+  return C && C->isNullValue();
+}
+
 /// isZeroNode - Returns true if Elt is a constant zero or a floating point
 /// constant +0.0.
 bool X86::isZeroNode(SDValue Elt) {
-  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Elt))
-    return CN->isNullValue();
+  if (isZero(Elt))
+    return true;
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Elt))
     return CFP->getValueAPF().isPosZero();
   return false;
@@ -7961,6 +7971,23 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
+SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
+  // Some types for vselect were previously set to Expand, not Legal or
+  // Custom. Return an empty SDValue so we fall-through to Expand, after
+  // the Custom lowering phase.
+  MVT VT = Op.getSimpleValueType();
+  switch (VT.SimpleTy) {
+  default:
+    break;
+  case MVT::v8i16:
+  case MVT::v16i16:
+    return SDValue();
+  }
+
+  // This node is Legal.
+  return Op;
+}
+
 static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   SDLoc dl(Op);
@@ -10744,11 +10771,6 @@ static bool isX86LogicalCmp(SDValue Op) {
     return true;
 
   return false;
-}
-
-static bool isZero(SDValue V) {
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
-  return C && C->isNullValue();
 }
 
 static bool isTruncWithZeroHighBitsInput(SDValue V, SelectionDAG &DAG) {
@@ -14326,6 +14348,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::CONCAT_VECTORS:     return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
+  case ISD::VSELECT:            return LowerVSELECT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::INSERT_VECTOR_ELT:  return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::EXTRACT_SUBVECTOR:  return LowerEXTRACT_SUBVECTOR(Op,Subtarget,DAG);
@@ -18139,7 +18162,13 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // depend on the highest bit in each word. Try to use SimplifyDemandedBits
   // to simplify previous instructions.
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
-      !DCI.isBeforeLegalize() && TLI.isOperationLegal(ISD::VSELECT, VT)) {
+      !DCI.isBeforeLegalize() &&
+      // We explicitly check against v8i16 and v16i16 because, although
+      // they're marked as Custom, they might only be legal when Cond is a
+      // build_vector of constants. This will be taken care in a later
+      // condition.
+      (TLI.isOperationLegalOrCustom(ISD::VSELECT, VT) && VT != MVT::v16i16 &&
+       VT != MVT::v8i16)) {
     unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
 
     // Don't optimize vector selects that map to mask-registers.
