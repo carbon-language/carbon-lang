@@ -77,7 +77,8 @@ Value::Value(const Value &v) :
     m_context_type (v.m_context_type),
     m_data_buffer ()
 {
-    if ((uintptr_t)v.m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)v.m_data_buffer.GetBytes())
+    const uintptr_t rhs_value = (uintptr_t)v.m_value.ULongLong(LLDB_INVALID_ADDRESS);
+    if ((rhs_value != 0) && (rhs_value == (uintptr_t)v.m_data_buffer.GetBytes()))
     {
         m_data_buffer.CopyData(v.m_data_buffer.GetBytes(),
                                v.m_data_buffer.GetByteSize());
@@ -97,7 +98,8 @@ Value::operator=(const Value &rhs)
         m_context = rhs.m_context;
         m_value_type = rhs.m_value_type;
         m_context_type = rhs.m_context_type;
-        if ((uintptr_t)rhs.m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)rhs.m_data_buffer.GetBytes())
+        const uintptr_t rhs_value = (uintptr_t)rhs.m_value.ULongLong(LLDB_INVALID_ADDRESS);
+        if ((rhs_value != 0) && (rhs_value == (uintptr_t)rhs.m_data_buffer.GetBytes()))
         {
             m_data_buffer.CopyData(rhs.m_data_buffer.GetBytes(),
                                    rhs.m_data_buffer.GetByteSize());
