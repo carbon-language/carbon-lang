@@ -22,7 +22,7 @@ define i32 @foo_f() {
 @bar_i = alias internal i32* @bar
 
 ; CHECK-DAG: .globl	A
-@A = alias bitcast (i32* @bar to i64*)
+@A = alias i64, i32* @bar
 
 ; CHECK-DAG: .globl	bar_h
 ; CHECK-DAG: .hidden	bar_h

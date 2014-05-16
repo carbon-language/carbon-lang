@@ -473,8 +473,6 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
           "Alias should have external or external weak linkage!", &GA);
   Assert1(GA.getAliasee(),
           "Aliasee cannot be NULL!", &GA);
-  Assert1(GA.getType() == GA.getAliasee()->getType(),
-          "Alias and aliasee types should match!", &GA);
   Assert1(!GA.hasUnnamedAddr(), "Alias cannot have unnamed_addr!", &GA);
 
   const Constant *Aliasee = GA.getAliasee();
@@ -505,10 +503,6 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
     Assert1(!GAAliasee->mayBeOverridden(), "Alias cannot point to a weak alias",
             &GA);
   }
-
-  const GlobalValue *AG = GA.getAliasedGlobal();
-  Assert1(AG, "Aliasing chain should end with function or global variable",
-          &GA);
 
   visitGlobalValue(GA);
 }

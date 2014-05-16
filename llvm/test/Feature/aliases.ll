@@ -7,7 +7,6 @@
 @bar = global i32 0
 @foo1 = alias i32* @bar
 @foo2 = alias i32* @bar
-@foo3 = alias i32* @foo2
 
 %FunTy = type i32()
 
@@ -15,11 +14,10 @@ define i32 @foo_f() {
   ret i32 0
 }
 @bar_f = alias weak_odr %FunTy* @foo_f
-@bar_ff = alias i32()* @bar_f
 
 @bar_i = alias internal i32* @bar
 
-@A = alias bitcast (i32* @bar to i64*)
+@A = alias i64, i32* @bar
 
 define i32 @test() {
 entry:

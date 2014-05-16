@@ -301,6 +301,28 @@ void Value::takeName(Value *V) {
     ST->reinsertValue(this);
 }
 
+static GlobalObject &findReplacementForAliasUse(Value &C) {
+  if (auto *GO = dyn_cast<GlobalObject>(&C))
+    return *GO;
+  if (auto *GA = dyn_cast<GlobalAlias>(&C))
+    return *GA->getAliasee();
+  auto *CE = cast<ConstantExpr>(&C);
+  assert(CE->getOpcode() == Instruction::BitCast ||
+         CE->getOpcode() == Instruction::GetElementPtr ||
+         CE->getOpcode() == Instruction::AddrSpaceCast);
+  if (CE->getOpcode() == Instruction::GetElementPtr)
+    assert(cast<GEPOperator>(CE)->hasAllZeroIndices());
+  return findReplacementForAliasUse(*CE->getOperand(0));
+}
+
+static void replaceAliasUseWith(Use &U, Value *New) {
+  GlobalObject &Replacement = findReplacementForAliasUse(*New);
+  auto *Old = &cast<GlobalObject>(*U);
+  assert(Old != &Replacement &&
+         "replaceAliasUseWith cannot form an alias cycle");
+  U.set(&Replacement);
+}
+
 #ifndef NDEBUG
 static bool contains(SmallPtrSet<ConstantExpr *, 4> &Cache, ConstantExpr *Expr,
                      Constant *C) {
@@ -351,7 +373,11 @@ void Value::replaceAllUsesWith(Value *New) {
     Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant because they are uniqued.
-    if (Constant *C = dyn_cast<Constant>(U.getUser())) {
+    if (auto *C = dyn_cast<Constant>(U.getUser())) {
+      if (isa<GlobalAlias>(C)) {
+        replaceAliasUseWith(U, New);
+        continue;
+      }
       if (!isa<GlobalValue>(C)) {
         C->replaceUsesOfWithOnConstant(this, New, &U);
         continue;

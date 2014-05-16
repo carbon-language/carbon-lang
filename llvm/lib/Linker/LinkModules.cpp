@@ -389,6 +389,8 @@ namespace {
     /// actually need, but this allows us to reuse the ValueMapper code.
     ValueToValueMapTy ValueMap;
 
+    std::vector<std::pair<GlobalValue *, GlobalAlias *>> ReplaceWithAlias;
+
     struct AppendingVarInfo {
       GlobalVariable *NewGV;  // New aggregate global in dest module.
       Constant *DstInit;      // Old initializer from dest module.
@@ -920,18 +922,15 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
   auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
-  GlobalAlias *NewDA =
+  auto *NewDA =
       new GlobalAlias(PTy->getElementType(), SGA->getLinkage(), SGA->getName(),
                       /*aliasee*/ nullptr, DstM, PTy->getAddressSpace());
   copyGVAttributes(NewDA, SGA);
   if (NewVisibility)
     NewDA->setVisibility(*NewVisibility);
 
-  if (DGV) {
-    // Any uses of DGV need to change to NewDA, with cast.
-    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDA, DGV->getType()));
-    DGV->eraseFromParent();
-  }
+  if (DGV)
+    ReplaceWithAlias.push_back(std::make_pair(DGV, NewDA));
 
   ValueMap[SGA] = NewDA;
   return false;
@@ -1017,6 +1016,19 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
 
 }
 
+static GlobalObject &getGlobalObjectInExpr(Constant &C) {
+  auto *GO = dyn_cast<GlobalObject>(&C);
+  if (GO)
+    return *GO;
+  auto *GA = dyn_cast<GlobalAlias>(&C);
+  if (GA)
+    return *GA->getAliasee();
+  auto &CE = cast<ConstantExpr>(C);
+  assert(CE.getOpcode() == Instruction::BitCast ||
+         CE.getOpcode() == Instruction::AddrSpaceCast);
+  return getGlobalObjectInExpr(*CE.getOperand(0));
+}
+
 /// linkAliasBodies - Insert all of the aliases in Src into the Dest module.
 void ModuleLinker::linkAliasBodies() {
   for (Module::alias_iterator I = SrcM->alias_begin(), E = SrcM->alias_end();
@@ -1025,9 +1037,26 @@ void ModuleLinker::linkAliasBodies() {
       continue;
     if (Constant *Aliasee = I->getAliasee()) {
       GlobalAlias *DA = cast<GlobalAlias>(ValueMap[I]);
-      DA->setAliasee(MapValue(Aliasee, ValueMap, RF_None,
-                              &TypeMap, &ValMaterializer));
+      Constant *Val =
+          MapValue(Aliasee, ValueMap, RF_None, &TypeMap, &ValMaterializer);
+      DA->setAliasee(&getGlobalObjectInExpr(*Val));
     }
+  }
+
+  // Any uses of DGV need to change to NewDA, with cast.
+  for (auto &Pair : ReplaceWithAlias) {
+    GlobalValue *DGV = Pair.first;
+    GlobalAlias *NewDA = Pair.second;
+
+    for (auto *User : DGV->users()) {
+      if (auto *GA = dyn_cast<GlobalAlias>(User)) {
+        if (GA == NewDA)
+          report_fatal_error("Linking these modules creates an alias cycle.");
+      }
+    }
+
+    DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDA, DGV->getType()));
+    DGV->eraseFromParent();
   }
 }
 

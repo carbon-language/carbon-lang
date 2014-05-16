@@ -2861,7 +2861,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
     if (!hasUsesToReplace(*J, Used, RenameTarget))
       continue;
 
-    J->replaceAllUsesWith(Aliasee);
+    J->replaceAllUsesWith(ConstantExpr::getBitCast(Aliasee, J->getType()));
     ++NumAliasesResolved;
     Changed = true;
 

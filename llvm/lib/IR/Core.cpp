@@ -1491,7 +1491,7 @@ LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee,
   auto *PTy = cast<PointerType>(unwrap(Ty));
   return wrap(new GlobalAlias(
       PTy->getElementType(), GlobalValue::ExternalLinkage, Name,
-      unwrap<Constant>(Aliasee), unwrap(M), PTy->getAddressSpace()));
+      unwrap<GlobalObject>(Aliasee), unwrap(M), PTy->getAddressSpace()));
 }
 
 /*--.. Operations on functions .............................................--*/

@@ -214,15 +214,11 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 //===----------------------------------------------------------------------===//
 
 GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link, const Twine &Name,
-                         Constant *Aliasee, Module *ParentModule,
+                         GlobalObject *Aliasee, Module *ParentModule,
                          unsigned AddressSpace)
     : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalAliasVal,
                   &Op<0>(), 1, Link, Name) {
   LeakDetector::addGarbageObject(this);
-
-  if (Aliasee)
-    assert(Aliasee->getType() == getType() &&
-           "Alias and aliasee types should match!");
   Op<0>() = Aliasee;
 
   if (ParentModule)
@@ -245,42 +241,4 @@ void GlobalAlias::eraseFromParent() {
   getParent()->getAliasList().erase(this);
 }
 
-void GlobalAlias::setAliasee(Constant *Aliasee) {
-  assert((!Aliasee || Aliasee->getType() == getType()) &&
-         "Alias and aliasee types should match!");
-
-  setOperand(0, Aliasee);
-}
-
-static GlobalValue *getAliaseeGV(GlobalAlias *GA) {
-  Constant *C = GA->getAliasee();
-  assert(C && "Must alias something");
-
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    return GV;
-
-  ConstantExpr *CE = cast<ConstantExpr>(C);
-  assert((CE->getOpcode() == Instruction::BitCast ||
-          CE->getOpcode() == Instruction::AddrSpaceCast ||
-          CE->getOpcode() == Instruction::GetElementPtr) &&
-         "Unsupported aliasee");
-
-  return cast<GlobalValue>(CE->getOperand(0));
-}
-
-GlobalObject *GlobalAlias::getAliasedGlobal() {
-  SmallPtrSet<GlobalValue*, 3> Visited;
-
-  GlobalAlias *GA = this;
-
-  for (;;) {
-    GlobalValue *GV = getAliaseeGV(GA);
-    if (!Visited.insert(GV))
-      return nullptr;
-
-    // Iterate over aliasing chain.
-    GA = dyn_cast<GlobalAlias>(GV);
-    if (!GA)
-      return cast<GlobalObject>(GV);
-  }
-}
+void GlobalAlias::setAliasee(GlobalObject *Aliasee) { setOperand(0, Aliasee); }

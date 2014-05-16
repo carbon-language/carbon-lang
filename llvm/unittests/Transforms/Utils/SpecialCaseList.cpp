@@ -34,7 +34,7 @@ protected:
         M, ST, false, GlobalValue::ExternalLinkage, 0, Name);
   }
 
-  GlobalAlias *makeAlias(StringRef Name, GlobalValue *Aliasee) {
+  GlobalAlias *makeAlias(StringRef Name, GlobalObject *Aliasee) {
     return new GlobalAlias(Aliasee->getType()->getElementType(),
                            GlobalValue::ExternalLinkage, Name, Aliasee,
                            Aliasee->getParent());

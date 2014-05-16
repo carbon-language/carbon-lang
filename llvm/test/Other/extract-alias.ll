@@ -14,7 +14,7 @@
 ; DELETE:      @zed = global i32 0
 ; DELETE:      @zeda0 = alias i32* @zed
 ; DELETE-NEXT: @a0foo = alias i32* ()* @foo
-; DELETE-NEXT: @a0a0bar = alias void ()* @a0bar
+; DELETE-NEXT: @a0a0bar = alias void ()* @bar
 ; DELETE-NEXT: @a0bar = alias void ()* @bar
 ; DELETE:      declare i32* @foo()
 ; DELETE:      define void @bar() {
@@ -25,7 +25,7 @@
 ; ALIAS: @zed = external global i32
 ; ALIAS: @zeda0 = alias i32* @zed
 
-; ALIASRE: @a0a0bar = alias void ()* @a0bar
+; ALIASRE: @a0a0bar = alias void ()* @bar
 ; ALIASRE: @a0bar = alias void ()* @bar
 ; ALIASRE: declare void @bar()
 
@@ -39,7 +39,7 @@ define i32* @foo() {
   ret i32* @zeda0
 }
 
-@a0a0bar = alias void ()* @a0bar
+@a0a0bar = alias void ()* @bar
 
 @a0bar = alias void ()* @bar
 

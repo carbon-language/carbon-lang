@@ -6,8 +6,8 @@
 @B = alias i32* @A
 ; CHECK: @B = alias internal i32* @A
 
-@C = alias i32* @B
-; CHECK: @C = alias internal i32* @B
+@C = alias i32* @A
+; CHECK: @C = alias internal i32* @A
 
 define i32 @main() {
 	%tmp = load i32* @C

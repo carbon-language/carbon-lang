@@ -1,9 +1,9 @@
 ; RUN: opt < %s -globalopt -S | FileCheck %s
 
-@foo1 = alias void ()* @foo2
+@foo1 = alias void ()* @bar2
 ; CHECK: @foo1 = alias void ()* @bar2
 
-@foo2 = alias void()* @bar1
+@foo2 = alias void()* @bar2
 ; CHECK: @foo2 = alias void ()* @bar2
 
 @bar1  = alias void ()* @bar2
