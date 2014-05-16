@@ -95,7 +95,7 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
       }
     }
 
-    if (InsertLoc.isInvalid() && Method->doesThisDeclarationHaveABody()) {
+    if (InsertLoc.isInvalid() && Method->getBody()) {
       InsertLoc = Method->getBody()->getLocStart();
     }
 
