@@ -851,7 +851,11 @@ ENDTEXT
   print CalcStats(\@Stats) if $AnalyzerStats;
 
   my $Num = scalar(@Index);
-  Diag("$Num bugs found.\n");
+  if ($Num == 1) {
+    Diag("$Num bug found.\n");
+  } else {
+    Diag("$Num bugs found.\n");
+  }
   if ($Num > 0 && -r "$Dir/index.html") {
     Diag("Run 'scan-view $Dir' to examine bug reports.\n");
   }
