@@ -892,7 +892,7 @@ bool ARM64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       // ldr x1, [x0, #64]
       // add x0, x0, #64
       //   merged into:
-      // ldr x1, [x0], #64
+      // ldr x1, [x0, #64]!
 
       // The immediate in the load/store is scaled by the size of the register
       // being loaded. The immediate in the add we're looking for,
