@@ -1289,8 +1289,9 @@ void ASTDeclReader::ReadCXXDefinitionData(
 
 void ASTDeclReader::MergeDefinitionData(
     CXXRecordDecl *D, struct CXXRecordDecl::DefinitionData &MergeDD) {
-  assert(D->DefinitionData && "merging class definition into non-definition");
-  auto &DD = *D->DefinitionData;
+  assert(D->DefinitionData.getNotUpdated() &&
+         "merging class definition into non-definition");
+  auto &DD = *D->DefinitionData.getNotUpdated();
 
   // If the new definition has new special members, let the name lookup
   // code know that it needs to look in the new definition too.
@@ -1390,7 +1391,7 @@ void ASTDeclReader::ReadCXXRecordDefinition(CXXRecordDecl *D) {
 
   // If we're reading an update record, we might already have a definition for
   // this record. If so, just merge into it.
-  if (D->DefinitionData) {
+  if (D->DefinitionData.getNotUpdated()) {
     MergeDefinitionData(D, *DD);
     return;
   }
@@ -1399,25 +1400,26 @@ void ASTDeclReader::ReadCXXRecordDefinition(CXXRecordDecl *D) {
   // that all other deserialized declarations will see it.
   CXXRecordDecl *Canon = D->getCanonicalDecl();
   if (Canon == D) {
-    D->DefinitionData = DD;
+    D->DefinitionData.setNotUpdated(DD);
     D->IsCompleteDefinition = true;
-  } else if (!Canon->DefinitionData) {
-    Canon->DefinitionData = D->DefinitionData = DD;
+  } else if (auto *CanonDD = Canon->DefinitionData.getNotUpdated()) {
+    // We have already deserialized a definition of this record. This
+    // definition is no longer really a definition. Note that the pre-existing
+    // definition is the *real* definition.
+    Reader.MergedDeclContexts.insert(
+        std::make_pair(D, CanonDD->Definition));
+    D->DefinitionData = Canon->DefinitionData;
+    D->IsCompleteDefinition = false;
+    MergeDefinitionData(D, *DD);
+  } else {
+    Canon->DefinitionData.setNotUpdated(DD);
+    D->DefinitionData = Canon->DefinitionData;
     D->IsCompleteDefinition = true;
 
     // Note that we have deserialized a definition. Any declarations
     // deserialized before this one will be be given the DefinitionData
     // pointer at the end.
     Reader.PendingDefinitions.insert(D);
-  } else {
-    // We have already deserialized a definition of this record. This
-    // definition is no longer really a definition. Note that the pre-existing
-    // definition is the *real* definition.
-    Reader.MergedDeclContexts.insert(
-        std::make_pair(D, Canon->DefinitionData->Definition));
-    D->DefinitionData = D->getCanonicalDecl()->DefinitionData;
-    D->IsCompleteDefinition = false;
-    MergeDefinitionData(D, *DD);
   }
 }
 
@@ -1741,16 +1743,16 @@ ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
 
         // This declaration might be a definition. Merge with any existing
         // definition.
-        if (D->DefinitionData) {
-          if (!CanonSpec->DefinitionData) {
-            CanonSpec->DefinitionData = D->DefinitionData;
-          } else {
-            MergeDefinitionData(CanonSpec, *D->DefinitionData);
+        if (auto *DDD = D->DefinitionData.getNotUpdated()) {
+          if (auto *CanonDD = CanonSpec->DefinitionData.getNotUpdated()) {
+            MergeDefinitionData(CanonSpec, *DDD);
             Reader.PendingDefinitions.erase(D);
             Reader.MergedDeclContexts.insert(
-                std::make_pair(D, CanonSpec->DefinitionData->Definition));
+                std::make_pair(D, CanonDD->Definition));
             D->IsCompleteDefinition = false;
             D->DefinitionData = CanonSpec->DefinitionData;
+          } else {
+            CanonSpec->DefinitionData = D->DefinitionData;
           }
         }
       }
@@ -2459,7 +2461,7 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
 template<typename DeclT>
 void ASTDeclReader::attachPreviousDeclImpl(Redeclarable<DeclT> *D,
                                            Decl *Previous) {
-  D->RedeclLink.setNext(cast<DeclT>(Previous));
+  D->RedeclLink.setPrevious(cast<DeclT>(Previous));
 }
 void ASTDeclReader::attachPreviousDeclImpl(...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
@@ -2489,7 +2491,7 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
 
 template<typename DeclT>
 void ASTDeclReader::attachLatestDeclImpl(Redeclarable<DeclT> *D, Decl *Latest) {
-  D->RedeclLink = Redeclarable<DeclT>::LatestDeclLink(cast<DeclT>(Latest));
+  D->RedeclLink.setLatest(cast<DeclT>(Latest));
 }
 void ASTDeclReader::attachLatestDeclImpl(...) {
   llvm_unreachable("attachLatestDecl on non-redeclarable declaration");
@@ -2500,8 +2502,8 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
 
   switch (D->getKind()) {
 #define ABSTRACT_DECL(TYPE)
-#define DECL(TYPE, BASE)                               \
-  case Decl::TYPE:                                     \
+#define DECL(TYPE, BASE)                                  \
+  case Decl::TYPE:                                        \
     attachLatestDeclImpl(cast<TYPE##Decl>(D), Latest); \
     break;
 #include "clang/AST/DeclNodes.inc"

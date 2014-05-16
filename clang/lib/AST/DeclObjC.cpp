@@ -1134,15 +1134,15 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(const ASTContext &C,
                                              SourceLocation ClassLoc,
                                              bool isInternal){
   ObjCInterfaceDecl *Result = new (C, DC)
-      ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, PrevDecl, isInternal);
+      ObjCInterfaceDecl(C, DC, atLoc, Id, ClassLoc, PrevDecl, isInternal);
   Result->Data.setInt(!C.getLangOpts().Modules);
   C.getObjCInterfaceType(Result, PrevDecl);
   return Result;
 }
 
-ObjCInterfaceDecl *ObjCInterfaceDecl::CreateDeserialized(ASTContext &C,
+ObjCInterfaceDecl *ObjCInterfaceDecl::CreateDeserialized(const ASTContext &C,
                                                          unsigned ID) {
-  ObjCInterfaceDecl *Result = new (C, ID) ObjCInterfaceDecl(nullptr,
+  ObjCInterfaceDecl *Result = new (C, ID) ObjCInterfaceDecl(C, nullptr,
                                                             SourceLocation(),
                                                             nullptr,
                                                             SourceLocation(),
@@ -1151,20 +1151,20 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::CreateDeserialized(ASTContext &C,
   return Result;
 }
 
-ObjCInterfaceDecl::
-ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                  SourceLocation CLoc, ObjCInterfaceDecl *PrevDecl,
-                  bool isInternal)
-  : ObjCContainerDecl(ObjCInterface, DC, Id, CLoc, atLoc),
-    TypeForDecl(nullptr), Data()
-{
+ObjCInterfaceDecl::ObjCInterfaceDecl(const ASTContext &C, DeclContext *DC,
+                                     SourceLocation AtLoc, IdentifierInfo *Id,
+                                     SourceLocation CLoc,
+                                     ObjCInterfaceDecl *PrevDecl,
+                                     bool IsInternal)
+    : ObjCContainerDecl(ObjCInterface, DC, Id, CLoc, AtLoc),
+      redeclarable_base(C), TypeForDecl(nullptr), Data() {
   setPreviousDecl(PrevDecl);
   
   // Copy the 'data' pointer over.
   if (PrevDecl)
     Data = PrevDecl->Data;
   
-  setImplicit(isInternal);
+  setImplicit(IsInternal);
 }
 
 void ObjCInterfaceDecl::LoadExternalDefinition() const {
@@ -1487,12 +1487,12 @@ ObjCAtDefsFieldDecl *ObjCAtDefsFieldDecl::CreateDeserialized(ASTContext &C,
 
 void ObjCProtocolDecl::anchor() { }
 
-ObjCProtocolDecl::ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
-                                   SourceLocation nameLoc, 
+ObjCProtocolDecl::ObjCProtocolDecl(ASTContext &C, DeclContext *DC,
+                                   IdentifierInfo *Id, SourceLocation nameLoc,
                                    SourceLocation atStartLoc,
                                    ObjCProtocolDecl *PrevDecl)
-  : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc), Data()
-{
+    : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
+      redeclarable_base(C), Data() {
   setPreviousDecl(PrevDecl);
   if (PrevDecl)
     Data = PrevDecl->Data;
@@ -1504,7 +1504,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation atStartLoc,
                                            ObjCProtocolDecl *PrevDecl) {
   ObjCProtocolDecl *Result =
-      new (C, DC) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl);
+      new (C, DC) ObjCProtocolDecl(C, DC, Id, nameLoc, atStartLoc, PrevDecl);
   Result->Data.setInt(!C.getLangOpts().Modules);
   return Result;
 }
@@ -1512,7 +1512,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 ObjCProtocolDecl *ObjCProtocolDecl::CreateDeserialized(ASTContext &C,
                                                        unsigned ID) {
   ObjCProtocolDecl *Result =
-      new (C, ID) ObjCProtocolDecl(nullptr, nullptr, SourceLocation(),
+      new (C, ID) ObjCProtocolDecl(C, nullptr, nullptr, SourceLocation(),
                                    SourceLocation(), nullptr);
   Result->Data.setInt(!C.getLangOpts().Modules);
   return Result;

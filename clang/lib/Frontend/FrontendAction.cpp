@@ -358,8 +358,21 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // source.
   if (!CI.hasASTContext() || !CI.getASTContext().getExternalSource()) {
     Preprocessor &PP = CI.getPreprocessor();
+
+    // If modules are enabled, create the module manager before creating
+    // any builtins, so that all declarations know that they might be
+    // extended by an external source.
+    if (CI.getLangOpts().Modules)
+      CI.createModuleManager();
+
     PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
                                            PP.getLangOpts());
+  } else {
+    // FIXME: If this is a problem, recover from it by creating a multiplex
+    // source.
+    assert((!CI.getLangOpts().Modules || CI.getModuleManager()) &&
+           "modules enabled but created an external source that "
+           "doesn't support modules");
   }
 
   // If there is a layout overrides file, attach an external AST source that
@@ -371,7 +384,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                      CI.getFrontendOpts().OverrideRecordLayoutsFile));
     CI.getASTContext().setExternalSource(Override);
   }
-  
+
   return true;
 
   // If we failed, reset state since the client will not end up calling the

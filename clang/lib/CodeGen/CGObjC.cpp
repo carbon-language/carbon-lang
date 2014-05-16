@@ -2901,9 +2901,9 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
   SrcTy = C.getPointerType(SrcTy);
   
   FunctionArgList args;
-  ImplicitParamDecl dstDecl(FD, SourceLocation(), 0, DestTy);
+  ImplicitParamDecl dstDecl(getContext(), FD, SourceLocation(), 0, DestTy);
   args.push_back(&dstDecl);
-  ImplicitParamDecl srcDecl(FD, SourceLocation(), 0, SrcTy);
+  ImplicitParamDecl srcDecl(getContext(), FD, SourceLocation(), 0, SrcTy);
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
@@ -2980,9 +2980,9 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   SrcTy = C.getPointerType(SrcTy);
   
   FunctionArgList args;
-  ImplicitParamDecl dstDecl(FD, SourceLocation(), 0, DestTy);
+  ImplicitParamDecl dstDecl(getContext(), FD, SourceLocation(), 0, DestTy);
   args.push_back(&dstDecl);
-  ImplicitParamDecl srcDecl(FD, SourceLocation(), 0, SrcTy);
+  ImplicitParamDecl srcDecl(getContext(), FD, SourceLocation(), 0, SrcTy);
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(

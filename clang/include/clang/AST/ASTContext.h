@@ -19,6 +19,7 @@
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/RawCommentList.h"
@@ -51,7 +52,6 @@ namespace clang {
   class CharUnits;
   class DiagnosticsEngine;
   class Expr;
-  class ExternalASTSource;
   class ASTMutationListener;
   class IdentifierTable;
   class MaterializeTemporaryExpr;
@@ -849,7 +849,7 @@ public:
 
   /// \brief Retrieve the declaration for a 128-bit float stub type.
   TypeDecl *getFloat128StubType() const;
-  
+
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
   //===--------------------------------------------------------------------===//
@@ -2393,6 +2393,20 @@ inline void *operator new[](size_t Bytes, const clang::ASTContext& C,
 /// the ASTContext throws in the object constructor.
 inline void operator delete[](void *Ptr, const clang::ASTContext &C, size_t) {
   C.Deallocate(Ptr);
+}
+
+/// \brief Create the representation of a LazyGenerationalUpdatePtr.
+template <typename Owner, typename T,
+          void (clang::ExternalASTSource::*Update)(Owner)>
+typename clang::LazyGenerationalUpdatePtr<Owner, T, Update>::ValueType
+    clang::LazyGenerationalUpdatePtr<Owner, T, Update>::makeValue(
+        const clang::ASTContext &Ctx, T Value) {
+  // Note, this is implemented here so that ExternalASTSource.h doesn't need to
+  // include ASTContext.h. We explicitly instantiate it for all relevant types
+  // in ASTContext.cpp.
+  if (auto *Source = Ctx.getExternalSource())
+    return new (Ctx) LazyData(Source, Value);
+  return Value;
 }
 
 #endif

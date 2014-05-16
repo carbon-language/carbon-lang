@@ -1616,10 +1616,12 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   llvm_unreachable("Invalid storage class");
 }
 
-VarDecl::VarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
-                 SourceLocation IdLoc, IdentifierInfo *Id, QualType T,
-                 TypeSourceInfo *TInfo, StorageClass SC)
-    : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init() {
+VarDecl::VarDecl(Kind DK, ASTContext &C, DeclContext *DC,
+                 SourceLocation StartLoc, SourceLocation IdLoc,
+                 IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
+                 StorageClass SC)
+    : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc),
+      redeclarable_base(C), Init() {
   static_assert(sizeof(VarDeclBitfields) <= sizeof(unsigned),
                 "VarDeclBitfields too large!");
   static_assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned),
@@ -1633,12 +1635,13 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartL, SourceLocation IdL,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S) {
-  return new (C, DC) VarDecl(Var, DC, StartL, IdL, Id, T, TInfo, S);
+  return new (C, DC) VarDecl(Var, C, DC, StartL, IdL, Id, T, TInfo, S);
 }
 
 VarDecl *VarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) VarDecl(Var, nullptr, SourceLocation(), SourceLocation(),
-                             nullptr, QualType(), nullptr, SC_None);
+  return new (C, ID)
+      VarDecl(Var, C, nullptr, SourceLocation(), SourceLocation(), nullptr,
+              QualType(), nullptr, SC_None);
 }
 
 void VarDecl::setStorageClass(StorageClass SC) {
@@ -2114,7 +2117,7 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation IdLoc, IdentifierInfo *Id,
                                  QualType T, TypeSourceInfo *TInfo,
                                  StorageClass S, Expr *DefArg) {
-  return new (C, DC) ParmVarDecl(ParmVar, DC, StartLoc, IdLoc, Id, T, TInfo,
+  return new (C, DC) ParmVarDecl(ParmVar, C, DC, StartLoc, IdLoc, Id, T, TInfo,
                                  S, DefArg);
 }
 
@@ -2127,9 +2130,9 @@ QualType ParmVarDecl::getOriginalType() const {
 }
 
 ParmVarDecl *ParmVarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) ParmVarDecl(ParmVar, nullptr, SourceLocation(),
-                                 SourceLocation(), nullptr, QualType(),
-                                 nullptr, SC_None, nullptr);
+  return new (C, ID)
+      ParmVarDecl(ParmVar, C, nullptr, SourceLocation(), SourceLocation(),
+                  nullptr, QualType(), nullptr, SC_None, nullptr);
 }
 
 SourceRange ParmVarDecl::getSourceRange() const {
@@ -3234,10 +3237,10 @@ void TagDecl::startDefinition() {
   IsBeingDefined = true;
 
   if (CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(this)) {
-    struct CXXRecordDecl::DefinitionData *Data = 
+    struct CXXRecordDecl::DefinitionData *Data =
       new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
     for (auto I : redecls())
-      cast<CXXRecordDecl>(I)->DefinitionData = Data;
+      cast<CXXRecordDecl>(I)->DefinitionData.setNotUpdated(Data);
   }
 }
 
@@ -3319,7 +3322,7 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
                            IdentifierInfo *Id,
                            EnumDecl *PrevDecl, bool IsScoped,
                            bool IsScopedUsingClassTag, bool IsFixed) {
-  EnumDecl *Enum = new (C, DC) EnumDecl(DC, StartLoc, IdLoc, Id, PrevDecl,
+  EnumDecl *Enum = new (C, DC) EnumDecl(C, DC, StartLoc, IdLoc, Id, PrevDecl,
                                         IsScoped, IsScopedUsingClassTag,
                                         IsFixed);
   Enum->MayHaveOutOfDateDef = C.getLangOpts().Modules;
@@ -3328,9 +3331,9 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 EnumDecl *EnumDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  EnumDecl *Enum = new (C, ID) EnumDecl(nullptr, SourceLocation(),
-                                        SourceLocation(), nullptr, nullptr,
-                                        false, false, false);
+  EnumDecl *Enum =
+      new (C, ID) EnumDecl(C, nullptr, SourceLocation(), SourceLocation(),
+                           nullptr, nullptr, false, false, false);
   Enum->MayHaveOutOfDateDef = C.getLangOpts().Modules;
   return Enum;
 }
@@ -3389,10 +3392,11 @@ void EnumDecl::setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
 
-RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
-                       SourceLocation StartLoc, SourceLocation IdLoc,
-                       IdentifierInfo *Id, RecordDecl *PrevDecl)
-  : TagDecl(DK, TK, DC, IdLoc, Id, PrevDecl, StartLoc) {
+RecordDecl::RecordDecl(Kind DK, TagKind TK, const ASTContext &C,
+                       DeclContext *DC, SourceLocation StartLoc,
+                       SourceLocation IdLoc, IdentifierInfo *Id,
+                       RecordDecl *PrevDecl)
+    : TagDecl(DK, TK, C, DC, IdLoc, Id, PrevDecl, StartLoc) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
@@ -3404,8 +3408,8 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
 RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation StartLoc, SourceLocation IdLoc,
                                IdentifierInfo *Id, RecordDecl* PrevDecl) {
-  RecordDecl* R = new (C, DC) RecordDecl(Record, TK, DC, StartLoc, IdLoc, Id,
-                                         PrevDecl);
+  RecordDecl *R = new (C, DC) RecordDecl(Record, TK, C, DC,
+                                         StartLoc, IdLoc, Id, PrevDecl);
   R->MayHaveOutOfDateDef = C.getLangOpts().Modules;
 
   C.getTypeDeclType(R, PrevDecl);
@@ -3413,9 +3417,9 @@ RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
 }
 
 RecordDecl *RecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
-  RecordDecl *R = new (C, ID) RecordDecl(Record, TTK_Struct, nullptr,
-                                         SourceLocation(), SourceLocation(),
-                                         nullptr, nullptr);
+  RecordDecl *R =
+      new (C, ID) RecordDecl(Record, TTK_Struct, C, nullptr, SourceLocation(),
+                             SourceLocation(), nullptr, nullptr);
   R->MayHaveOutOfDateDef = C.getLangOpts().Modules;
   return R;
 }
@@ -3577,12 +3581,12 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
                                              SourceLocation IdLoc,
                                              IdentifierInfo *Id,
                                              QualType Type) {
-  return new (C, DC) ImplicitParamDecl(DC, IdLoc, Id, Type);
+  return new (C, DC) ImplicitParamDecl(C, DC, IdLoc, Id, Type);
 }
 
 ImplicitParamDecl *ImplicitParamDecl::CreateDeserialized(ASTContext &C,
                                                          unsigned ID) {
-  return new (C, ID) ImplicitParamDecl(nullptr, SourceLocation(), nullptr,
+  return new (C, ID) ImplicitParamDecl(C, nullptr, SourceLocation(), nullptr,
                                        QualType());
 }
 
@@ -3595,14 +3599,14 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    bool hasWrittenPrototype,
                                    bool isConstexprSpecified) {
   FunctionDecl *New =
-      new (C, DC) FunctionDecl(Function, DC, StartLoc, NameInfo, T, TInfo, SC,
-                               isInlineSpecified, isConstexprSpecified);
+      new (C, DC) FunctionDecl(Function, C, DC, StartLoc, NameInfo, T, TInfo,
+                               SC, isInlineSpecified, isConstexprSpecified);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }
 
 FunctionDecl *FunctionDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) FunctionDecl(Function, nullptr, SourceLocation(),
+  return new (C, ID) FunctionDecl(Function, C, nullptr, SourceLocation(),
                                   DeclarationNameInfo(), QualType(), nullptr,
                                   SC_None, false, false);
 }
@@ -3668,13 +3672,13 @@ void TypeDecl::anchor() { }
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation StartLoc, SourceLocation IdLoc,
                                  IdentifierInfo *Id, TypeSourceInfo *TInfo) {
-  return new (C, DC) TypedefDecl(DC, StartLoc, IdLoc, Id, TInfo);
+  return new (C, DC) TypedefDecl(C, DC, StartLoc, IdLoc, Id, TInfo);
 }
 
 void TypedefNameDecl::anchor() { }
 
 TypedefDecl *TypedefDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) TypedefDecl(nullptr, SourceLocation(), SourceLocation(),
+  return new (C, ID) TypedefDecl(C, nullptr, SourceLocation(), SourceLocation(),
                                  nullptr, nullptr);
 }
 
@@ -3682,12 +3686,12 @@ TypeAliasDecl *TypeAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation StartLoc,
                                      SourceLocation IdLoc, IdentifierInfo *Id,
                                      TypeSourceInfo *TInfo) {
-  return new (C, DC) TypeAliasDecl(DC, StartLoc, IdLoc, Id, TInfo);
+  return new (C, DC) TypeAliasDecl(C, DC, StartLoc, IdLoc, Id, TInfo);
 }
 
 TypeAliasDecl *TypeAliasDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  return new (C, ID) TypeAliasDecl(nullptr, SourceLocation(), SourceLocation(),
-                                   nullptr, nullptr);
+  return new (C, ID) TypeAliasDecl(C, nullptr, SourceLocation(),
+                                   SourceLocation(), nullptr, nullptr);
 }
 
 SourceRange TypedefDecl::getSourceRange() const {

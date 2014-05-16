@@ -841,8 +841,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     } else {
       // Fake up a new variable so that EmitScalarInit doesn't think
       // we're referring to the variable in its own initializer.
-      ImplicitParamDecl blockFieldPseudoVar(/*DC*/ 0, SourceLocation(),
-                                            /*name*/ 0, type);
+      ImplicitParamDecl blockFieldPseudoVar(getContext(), /*DC*/ 0,
+                                            SourceLocation(), /*name*/ 0, type);
 
       // We use one of these or the other depending on whether the
       // reference is nested.
@@ -1108,7 +1108,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   QualType selfTy = getContext().VoidPtrTy;
   IdentifierInfo *II = &CGM.getContext().Idents.get(".block_descriptor");
 
-  ImplicitParamDecl selfDecl(const_cast<BlockDecl*>(blockDecl),
+  ImplicitParamDecl selfDecl(getContext(), const_cast<BlockDecl*>(blockDecl),
                              SourceLocation(), II, selfTy);
   args.push_back(&selfDecl);
 
@@ -1279,9 +1279,9 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
   ASTContext &C = getContext();
 
   FunctionArgList args;
-  ImplicitParamDecl dstDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  ImplicitParamDecl dstDecl(getContext(), 0, SourceLocation(), 0, C.VoidPtrTy);
   args.push_back(&dstDecl);
-  ImplicitParamDecl srcDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  ImplicitParamDecl srcDecl(getContext(), 0, SourceLocation(), 0, C.VoidPtrTy);
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
@@ -1453,7 +1453,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
   ASTContext &C = getContext();
 
   FunctionArgList args;
-  ImplicitParamDecl srcDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  ImplicitParamDecl srcDecl(getContext(), 0, SourceLocation(), 0, C.VoidPtrTy);
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
@@ -1738,10 +1738,12 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
   QualType R = Context.VoidTy;
 
   FunctionArgList args;
-  ImplicitParamDecl dst(0, SourceLocation(), 0, Context.VoidPtrTy);
+  ImplicitParamDecl dst(CGF.getContext(), 0, SourceLocation(), 0,
+                        Context.VoidPtrTy);
   args.push_back(&dst);
 
-  ImplicitParamDecl src(0, SourceLocation(), 0, Context.VoidPtrTy);
+  ImplicitParamDecl src(CGF.getContext(), 0, SourceLocation(), 0,
+                        Context.VoidPtrTy);
   args.push_back(&src);
 
   const CGFunctionInfo &FI = CGF.CGM.getTypes().arrangeFreeFunctionDeclaration(
@@ -1810,7 +1812,8 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
   QualType R = Context.VoidTy;
 
   FunctionArgList args;
-  ImplicitParamDecl src(0, SourceLocation(), 0, Context.VoidPtrTy);
+  ImplicitParamDecl src(CGF.getContext(), 0, SourceLocation(), 0,
+                        Context.VoidPtrTy);
   args.push_back(&src);
 
   const CGFunctionInfo &FI = CGF.CGM.getTypes().arrangeFreeFunctionDeclaration(

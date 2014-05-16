@@ -67,6 +67,10 @@ public:
   /// building a new declaration.
   Decl *GetExternalDecl(uint32_t ID) override;
 
+  /// \brief Complete the redeclaration chain if it's been extended since the
+  /// previous generation of the AST source.
+  void CompleteRedeclChain(const Decl *D) override;
+
   /// \brief Resolve a selector ID into a selector.
   Selector GetExternalSelector(uint32_t ID) override;
 

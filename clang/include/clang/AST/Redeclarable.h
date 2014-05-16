@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_REDECLARABLE_H
 #define LLVM_CLANG_AST_REDECLARABLE_H
 
+#include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Casting.h"
 #include <iterator>
@@ -25,23 +26,78 @@ template<typename decl_type>
 class Redeclarable {
 protected:
   class DeclLink {
-    llvm::PointerIntPair<decl_type *, 1, bool> NextAndIsPrevious;
-  public:
-    DeclLink(decl_type *D, bool isLatest)
-      : NextAndIsPrevious(D, isLatest) { }
+    /// A pointer to a known latest declaration, either statically known or
+    /// generationally updated as decls are added by an external source.
+    typedef LazyGenerationalUpdatePtr<const Decl*, Decl*,
+                                      &ExternalASTSource::CompleteRedeclChain>
+                                          KnownLatest;
 
-    bool NextIsPrevious() const { return !NextAndIsPrevious.getInt(); }
-    bool NextIsLatest() const { return NextAndIsPrevious.getInt(); }
-    decl_type *getNext() const { return NextAndIsPrevious.getPointer(); }
-    void setNext(decl_type *D) { NextAndIsPrevious.setPointer(D); }
+    typedef const ASTContext *UninitializedLatest;
+    typedef Decl *Previous;
+
+    /// A pointer to either an uninitialized latest declaration (where either
+    /// we've not yet set the previous decl or there isn't one), or to a known
+    /// previous declaration.
+    typedef llvm::PointerUnion<Previous, UninitializedLatest> NotKnownLatest;
+
+    mutable llvm::PointerUnion<NotKnownLatest, KnownLatest> Next;
+
+  public:
+    enum PreviousTag { PreviousLink };
+    enum LatestTag { LatestLink };
+
+    DeclLink(LatestTag, const ASTContext &Ctx)
+        : Next(NotKnownLatest(&Ctx)) {}
+    DeclLink(PreviousTag, decl_type *D)
+        : Next(NotKnownLatest(Previous(D))) {}
+
+    bool NextIsPrevious() const {
+      return Next.is<NotKnownLatest>() &&
+             // FIXME: 'template' is required on the next line due to an
+             // apparent clang bug.
+             Next.get<NotKnownLatest>().template is<Previous>();
+    }
+
+    bool NextIsLatest() const { return !NextIsPrevious(); }
+
+    decl_type *getNext(const decl_type *D) const {
+      if (Next.is<NotKnownLatest>()) {
+        NotKnownLatest NKL = Next.get<NotKnownLatest>();
+        if (NKL.is<Previous>())
+          return static_cast<decl_type*>(NKL.get<Previous>());
+
+        // Allocate the generational 'most recent' cache now, if needed.
+        Next = KnownLatest(*NKL.get<UninitializedLatest>(),
+                           const_cast<decl_type *>(D));
+      }
+
+      return static_cast<decl_type*>(Next.get<KnownLatest>().get(D));
+    }
+
+    void setPrevious(decl_type *D) {
+      assert(NextIsPrevious() && "decl became non-canonical unexpectedly");
+      Next = Previous(D);
+    }
+
+    void setLatest(decl_type *D) {
+      assert(NextIsLatest() && "decl became canonical unexpectedly");
+      if (Next.is<NotKnownLatest>()) {
+        NotKnownLatest NKL = Next.get<NotKnownLatest>();
+        Next = KnownLatest(*NKL.get<UninitializedLatest>(), D);
+      } else {
+        auto Latest = Next.get<KnownLatest>();
+        Latest.set(D);
+        Next = Latest;
+      }
+    }
   };
 
   static DeclLink PreviousDeclLink(decl_type *D) {
-    return DeclLink(D, false);
+    return DeclLink(DeclLink::PreviousLink, D);
   }
 
-  static DeclLink LatestDeclLink(decl_type *D) {
-    return DeclLink(D, true);
+  static DeclLink LatestDeclLink(const ASTContext &Ctx) {
+    return DeclLink(DeclLink::LatestLink, Ctx);
   }
 
   /// \brief Points to the next redeclaration in the chain.
@@ -58,11 +114,12 @@ protected:
   DeclLink RedeclLink;
 
   decl_type *getNextRedeclaration() const {
-    return RedeclLink.getNext();
+    return RedeclLink.getNext(static_cast<const decl_type *>(this));
   }
 
 public:
-  Redeclarable() : RedeclLink(LatestDeclLink(static_cast<decl_type*>(this))) { }
+  Redeclarable(const ASTContext &Ctx)
+      : RedeclLink(LatestDeclLink(Ctx)) {}
 
   /// \brief Return the previous declaration of this declaration or NULL if this
   /// is the first declaration.
@@ -106,7 +163,7 @@ public:
   const decl_type *getMostRecentDecl() const {
     return getFirstDecl()->getNextRedeclaration();
   }
-  
+
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
   /// first and only declaration.
   void setPreviousDecl(decl_type *PrevDecl);

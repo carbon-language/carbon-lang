@@ -522,7 +522,8 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
     llvm::Constant *addr, QualType type, Destroyer *destroyer,
     bool useEHCleanupForArray, const VarDecl *VD) {
   FunctionArgList args;
-  ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);
+  ImplicitParamDecl dst(getContext(), 0, SourceLocation(), 0,
+                        getContext().VoidPtrTy);
   args.push_back(&dst);
 
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(

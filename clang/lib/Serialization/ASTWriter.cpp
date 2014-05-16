@@ -5301,8 +5301,7 @@ void ASTWriter::AddCXXCtorInitializers(
 }
 
 void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record) {
-  assert(D->DefinitionData);
-  struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+  auto &Data = D->data();
   Record.push_back(Data.IsLambda);
   Record.push_back(Data.UserDeclaredConstructor);
   Record.push_back(Data.UserDeclaredSpecialMembers);
@@ -5361,7 +5360,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   
   // Add lambda-specific data.
   if (Data.IsLambda) {
-    CXXRecordDecl::LambdaDefinitionData &Lambda = D->getLambdaData();
+    auto &Lambda = D->getLambdaData();
     Record.push_back(Lambda.Dependent);
     Record.push_back(Lambda.IsGenericLambda);
     Record.push_back(Lambda.CaptureDefault);

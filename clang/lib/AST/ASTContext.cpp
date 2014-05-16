@@ -8239,3 +8239,12 @@ ASTContext::ObjCMethodsAreEqual(const ObjCMethodDecl *MethodDecl,
   return (MethodDecl->isVariadic() == MethodImpl->isVariadic());
   
 }
+
+// Explicitly instantiate this in case a Redeclarable<T> is used from a TU that
+// doesn't include ASTContext.h
+template
+clang::LazyGenerationalUpdatePtr<
+    const Decl *, Decl *, &ExternalASTSource::CompleteRedeclChain>::ValueType
+clang::LazyGenerationalUpdatePtr<
+    const Decl *, Decl *, &ExternalASTSource::CompleteRedeclChain>::makeValue(
+        const clang::ASTContext &Ctx, Decl *Value);

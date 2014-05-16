@@ -624,10 +624,11 @@ protected:
   virtual CommonBase *newCommon(ASTContext &C) const = 0;
 
   // Construct a template decl with name, parameters, and templated element.
-  RedeclarableTemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
-                           DeclarationName Name, TemplateParameterList *Params,
-                           NamedDecl *Decl)
-    : TemplateDecl(DK, DC, L, Name, Params, Decl), Common() { }
+  RedeclarableTemplateDecl(Kind DK, ASTContext &C, DeclContext *DC,
+                           SourceLocation L, DeclarationName Name,
+                           TemplateParameterList *Params, NamedDecl *Decl)
+      : TemplateDecl(DK, DC, L, Name, Params, Decl), redeclarable_base(C),
+        Common() {}
 
 public:
   template <class decl_type> friend class RedeclarableTemplate;
@@ -775,9 +776,11 @@ protected:
     uint32_t *LazySpecializations;
   };
 
-  FunctionTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                       TemplateParameterList *Params, NamedDecl *Decl)
-    : RedeclarableTemplateDecl(FunctionTemplate, DC, L, Name, Params, Decl) { }
+  FunctionTemplateDecl(ASTContext &C, DeclContext *DC, SourceLocation L,
+                       DeclarationName Name, TemplateParameterList *Params,
+                       NamedDecl *Decl)
+      : RedeclarableTemplateDecl(FunctionTemplate, C, DC, L, Name, Params,
+                                 Decl) {}
 
   CommonBase *newCommon(ASTContext &C) const override;
 
@@ -1438,7 +1441,7 @@ protected:
                                   unsigned NumArgs,
                                   ClassTemplateSpecializationDecl *PrevDecl);
 
-  explicit ClassTemplateSpecializationDecl(Kind DK);
+  explicit ClassTemplateSpecializationDecl(ASTContext &C, Kind DK);
 
 public:
   static ClassTemplateSpecializationDecl *
@@ -1676,8 +1679,8 @@ class ClassTemplatePartialSpecializationDecl
                                const ASTTemplateArgumentListInfo *ArgsAsWritten,
                                ClassTemplatePartialSpecializationDecl *PrevDecl);
 
-  ClassTemplatePartialSpecializationDecl()
-    : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
+  ClassTemplatePartialSpecializationDecl(ASTContext &C)
+    : ClassTemplateSpecializationDecl(C, ClassTemplatePartialSpecialization),
       TemplateParams(nullptr), ArgsAsWritten(nullptr),
       InstantiatedFromMember(nullptr, false) {}
 
@@ -1838,13 +1841,10 @@ protected:
   llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl> &
   getPartialSpecializations();
 
-  ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                    TemplateParameterList *Params, NamedDecl *Decl)
-    : RedeclarableTemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
-
-  ClassTemplateDecl(EmptyShell Empty)
-    : RedeclarableTemplateDecl(ClassTemplate, nullptr, SourceLocation(),
-                               DeclarationName(), nullptr, nullptr) { }
+  ClassTemplateDecl(ASTContext &C, DeclContext *DC, SourceLocation L,
+                    DeclarationName Name, TemplateParameterList *Params,
+                    NamedDecl *Decl)
+      : RedeclarableTemplateDecl(ClassTemplate, C, DC, L, Name, Params, Decl) {}
 
   CommonBase *newCommon(ASTContext &C) const override;
 
@@ -2105,9 +2105,11 @@ class TypeAliasTemplateDecl : public RedeclarableTemplateDecl {
 protected:
   typedef CommonBase Common;
 
-  TypeAliasTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                        TemplateParameterList *Params, NamedDecl *Decl)
-    : RedeclarableTemplateDecl(TypeAliasTemplate, DC, L, Name, Params, Decl) { }
+  TypeAliasTemplateDecl(ASTContext &C, DeclContext *DC, SourceLocation L,
+                        DeclarationName Name, TemplateParameterList *Params,
+                        NamedDecl *Decl)
+      : RedeclarableTemplateDecl(TypeAliasTemplate, C, DC, L, Name, Params,
+                                 Decl) {}
 
   CommonBase *newCommon(ASTContext &C) const override;
 
@@ -2297,14 +2299,14 @@ class VarTemplateSpecializationDecl : public VarDecl,
   unsigned SpecializationKind : 3;
 
 protected:
-  VarTemplateSpecializationDecl(ASTContext &Context, Kind DK, DeclContext *DC,
+  VarTemplateSpecializationDecl(Kind DK, ASTContext &Context, DeclContext *DC,
                                 SourceLocation StartLoc, SourceLocation IdLoc,
                                 VarTemplateDecl *SpecializedTemplate,
                                 QualType T, TypeSourceInfo *TInfo,
                                 StorageClass S, const TemplateArgument *Args,
                                 unsigned NumArgs);
 
-  explicit VarTemplateSpecializationDecl(Kind DK);
+  explicit VarTemplateSpecializationDecl(Kind DK, ASTContext &Context);
 
 public:
   static VarTemplateSpecializationDecl *
@@ -2532,8 +2534,8 @@ class VarTemplatePartialSpecializationDecl
       StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
       const ASTTemplateArgumentListInfo *ArgInfos);
 
-  VarTemplatePartialSpecializationDecl()
-    : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
+  VarTemplatePartialSpecializationDecl(ASTContext &Context)
+    : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization, Context),
       TemplateParams(nullptr), ArgsAsWritten(nullptr),
       InstantiatedFromMember(nullptr, false) {}
 
@@ -2676,13 +2678,10 @@ protected:
   llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl> &
   getPartialSpecializations();
 
-  VarTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                  TemplateParameterList *Params, NamedDecl *Decl)
-      : RedeclarableTemplateDecl(VarTemplate, DC, L, Name, Params, Decl) {}
-
-  VarTemplateDecl(EmptyShell Empty)
-      : RedeclarableTemplateDecl(VarTemplate, nullptr, SourceLocation(),
-                                 DeclarationName(), nullptr, nullptr) {}
+  VarTemplateDecl(ASTContext &C, DeclContext *DC, SourceLocation L,
+                  DeclarationName Name, TemplateParameterList *Params,
+                  NamedDecl *Decl)
+      : RedeclarableTemplateDecl(VarTemplate, C, DC, L, Name, Params, Decl) {}
 
   CommonBase *newCommon(ASTContext &C) const override;
 

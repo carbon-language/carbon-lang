@@ -1707,7 +1707,7 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
 
   // Update the generation for this identifier.
   if (getContext().getLangOpts().Modules)
-    IdentifierGeneration[II] = CurrentGeneration;
+    IdentifierGeneration[II] = getGeneration();
 }
 
 struct ASTReader::ModuleMacroInfo {
@@ -3435,7 +3435,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   Deserializing AnASTFile(this);
 
   // Bump the generation number.
-  unsigned PreviousGeneration = CurrentGeneration++;
+  unsigned PreviousGeneration = incrementGeneration(Context);
 
   unsigned NumModules = ModuleMgr.size();
   SmallVector<ImportedModule, 4> Loaded;
@@ -3615,7 +3615,7 @@ ASTReader::ReadASTCore(StringRef FileName,
   std::string ErrorStr;
   ModuleManager::AddModuleResult AddResult
     = ModuleMgr.addModule(FileName, Type, ImportLoc, ImportedBy,
-                          CurrentGeneration, ExpectedSize, ExpectedModTime,
+                          getGeneration(), ExpectedSize, ExpectedModTime,
                           M, ErrorStr);
 
   switch (AddResult) {
@@ -5939,6 +5939,37 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
+void ASTReader::CompleteRedeclChain(const Decl *D) {
+  const DeclContext *DC = D->getDeclContext()->getRedeclContext();
+
+  // Recursively ensure that the decl context itself is complete
+  // (in particular, this matters if the decl context is a namespace).
+  //
+  // FIXME: This should be performed by lookup instead of here.
+  cast<Decl>(DC)->getMostRecentDecl();
+
+  // If this is a named declaration, complete it by looking it up
+  // within its context.
+  //
+  // FIXME: We don't currently handle the cases where we can't do this;
+  // merging a class definition that contains unnamed entities should merge
+  // those entities. Likewise, merging a function definition should merge
+  // all mergeable entities within it.
+  if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC) ||
+      isa<CXXRecordDecl>(DC) || isa<EnumDecl>(DC)) {
+    if (DeclarationName Name = cast<NamedDecl>(D)->getDeclName()) {
+      auto *II = Name.getAsIdentifierInfo();
+      if (isa<TranslationUnitDecl>(DC) && II) {
+        // Outside of C++, we don't have a lookup table for the TU, so update
+        // the identifier instead. In C++, either way should work fine.
+        if (II->isOutOfDate())
+          updateOutOfDateIdentifier(*II);
+      } else
+        DC->lookup(Name);
+    }
+  }
+}
+
 uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M,
                                           const RecordData &Record,
                                           unsigned &Idx) {
@@ -6926,7 +6957,7 @@ void ASTReader::ReadMethodPool(Selector Sel) {
   // Get the selector generation and update it to the current generation.
   unsigned &Generation = SelectorGeneration[Sel];
   unsigned PriorGeneration = Generation;
-  Generation = CurrentGeneration;
+  Generation = getGeneration();
   
   // Search for methods defined with this selector.
   ++NumMethodPoolLookups;
@@ -8114,7 +8145,6 @@ void ASTReader::finishPendingActions() {
       if (auto RD = dyn_cast<CXXRecordDecl>(*D)) {
         for (auto R : RD->redecls())
           cast<CXXRecordDecl>(R)->DefinitionData = RD->DefinitionData;
-        
       }
 
       continue;
@@ -8250,7 +8280,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot,
       AllowConfigurationMismatch(AllowConfigurationMismatch),
       ValidateSystemInputs(ValidateSystemInputs),
       UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
-      CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
+      CurrSwitchCaseStmts(&SwitchCaseStmts),
       NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
       TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0),
       NumIdentifierLookups(0), NumIdentifierLookupHits(0), NumSelectorsRead(0),

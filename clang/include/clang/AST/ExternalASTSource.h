@@ -45,7 +45,7 @@ enum ExternalLoadResult {
   /// no additional processing is required.
   ELR_AlreadyLoaded
 };
-  
+
 /// \brief Abstract interface for external sources of AST nodes.
 ///
 /// External AST sources provide AST nodes constructed from some
@@ -54,6 +54,10 @@ enum ExternalLoadResult {
 /// actual type and declaration nodes, and read parts of declaration
 /// contexts.
 class ExternalASTSource : public RefCountedBase<ExternalASTSource> {
+  /// Generation number for this external AST source. Must be increased
+  /// whenever we might have added new redeclarations for existing decls.
+  uint32_t CurrentGeneration;
+
   /// \brief Whether this AST source also provides information for
   /// semantic analysis.
   bool SemaSource;
@@ -61,7 +65,7 @@ class ExternalASTSource : public RefCountedBase<ExternalASTSource> {
   friend class ExternalSemaSource;
 
 public:
-  ExternalASTSource() : SemaSource(false) { }
+  ExternalASTSource() : CurrentGeneration(0), SemaSource(false) { }
 
   virtual ~ExternalASTSource();
 
@@ -78,6 +82,11 @@ public:
       Source->FinishedDeserializing();
     }
   };
+
+  /// \brief Get the current generation of this AST source. This number
+  /// is incremented each time the AST source lazily extends an existing
+  /// entity.
+  uint32_t getGeneration() const { return CurrentGeneration; }
 
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
@@ -174,6 +183,12 @@ public:
   /// a range. 
   virtual void FindFileRegionDecls(FileID File, unsigned Offset,unsigned Length,
                                    SmallVectorImpl<Decl *> &Decls) {}
+
+  /// \brief Gives the external AST source an opportunity to complete
+  /// the redeclaration chain for a declaration. Called each time we
+  /// need the most recent declaration of a declaration after the
+  /// generation count is incremented.
+  virtual void CompleteRedeclChain(const Decl *D) {}
 
   /// \brief Gives the external AST source an opportunity to complete
   /// an incomplete type.
@@ -284,6 +299,9 @@ protected:
   static DeclContextLookupResult
   SetNoExternalVisibleDeclsForName(const DeclContext *DC,
                                    DeclarationName Name);
+
+  /// \brief Increment the current generation.
+  uint32_t incrementGeneration(ASTContext &C);
 };
 
 /// \brief A lazy pointer to an AST node (of base type T) that resides
@@ -354,6 +372,97 @@ public:
   }
 };
 
+/// \brief A lazy value (of type T) that is within an AST node of type Owner,
+/// where the value might change in later generations of the external AST
+/// source.
+template<typename Owner, typename T, void (ExternalASTSource::*Update)(Owner)>
+struct LazyGenerationalUpdatePtr {
+  /// A cache of the value of this pointer, in the most recent generation in
+  /// which we queried it.
+  struct LazyData {
+    LazyData(ExternalASTSource *Source, T Value)
+        : ExternalSource(Source), LastGeneration(Source->getGeneration()),
+          LastValue(Value) {}
+    ExternalASTSource *ExternalSource;
+    uint32_t LastGeneration;
+    T LastValue;
+  };
+
+  // Our value is represented as simply T if there is no external AST source.
+  typedef llvm::PointerUnion<T, LazyData*> ValueType;
+  ValueType Value;
+
+  LazyGenerationalUpdatePtr(ValueType V) : Value(V) {}
+
+  // Defined in ASTContext.h
+  static ValueType makeValue(const ASTContext &Ctx, T Value);
+
+public:
+  explicit LazyGenerationalUpdatePtr(const ASTContext &Ctx, T Value = T())
+      : Value(makeValue(Ctx, Value)) {}
+
+  /// Create a pointer that is not potentially updated by later generations of
+  /// the external AST source.
+  enum NotUpdatedTag { NotUpdated };
+  LazyGenerationalUpdatePtr(NotUpdatedTag, T Value = T())
+      : Value(Value) {}
+
+  /// Set the value of this pointer, in the current generation.
+  void set(T NewValue) {
+    if (LazyData *LazyVal = Value.template dyn_cast<LazyData*>()) {
+      LazyVal->LastValue = NewValue;
+      LazyVal->LastGeneration = LazyVal->ExternalSource->getGeneration();
+      return;
+    }
+    Value = NewValue;
+  }
+
+  /// Set the value of this pointer, for this and all future generations.
+  void setNotUpdated(T NewValue) { Value = NewValue; }
+
+  /// Get the value of this pointer, updating its owner if necessary.
+  T get(Owner O) {
+    if (LazyData *LazyVal = Value.template dyn_cast<LazyData*>()) {
+      if (LazyVal->LastGeneration != LazyVal->ExternalSource->getGeneration()) {
+        LazyVal->LastGeneration = LazyVal->ExternalSource->getGeneration();
+        (LazyVal->ExternalSource->*Update)(O);
+      }
+      return LazyVal->LastValue;
+    }
+    return Value.template get<T>();
+  }
+
+  /// Get the most recently computed value of this pointer without updating it.
+  T getNotUpdated() const {
+    if (LazyData *LazyVal = Value.template dyn_cast<LazyData*>())
+      return LazyVal->LastValue;
+    return Value.template get<T>();
+  }
+
+  void *getOpaqueValue() { return Value.getOpaqueValue(); }
+  static LazyGenerationalUpdatePtr getFromOpaqueValue(void *Ptr) {
+    return LazyGenerationalUpdatePtr(ValueType::getFromOpaqueValue(Ptr));
+  }
+};
+} // end namespace clang
+
+/// Specialize PointerLikeTypeTraits to allow LazyGenerationalUpdatePtr to be
+/// placed into a PointerUnion.
+namespace llvm {
+template<typename Owner, typename T,
+         void (clang::ExternalASTSource::*Update)(Owner)>
+struct PointerLikeTypeTraits<
+    clang::LazyGenerationalUpdatePtr<Owner, T, Update>> {
+  typedef clang::LazyGenerationalUpdatePtr<Owner, T, Update> Ptr;
+  static void *getAsVoidPointer(Ptr P) { return P.getOpaqueValue(); }
+  static Ptr getFromVoidPointer(void *P) { return Ptr::getFromOpaqueValue(P); }
+  enum {
+    NumLowBitsAvailable = PointerLikeTypeTraits<T>::NumLowBitsAvailable - 1
+  };
+};
+}
+
+namespace clang {
 /// \brief Represents a lazily-loaded vector of data.
 ///
 /// The lazily-loaded vector of data contains data that is partially loaded
