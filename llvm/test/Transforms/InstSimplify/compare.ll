@@ -826,3 +826,43 @@ define i1 @compare_dividend(i32 %a) {
 ; CHECK-LABEL: @compare_dividend
 ; CHECK-NEXT: ret i1 false
 }
+
+define i1 @lshr_ugt_false(i32 %a) {
+  %shr = lshr i32 1, %a
+  %cmp = icmp ugt i32 %shr, 1
+  ret i1 %cmp
+; CHECK-LABEL: @lshr_ugt_false
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @exact_lshr_ugt_false(i32 %a) {
+  %shr = lshr exact i32 30, %a
+  %cmp = icmp ult i32 %shr, 15
+  ret i1 %cmp
+; CHECK-LABEL: @exact_lshr_ugt_false
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @lshr_sgt_false(i32 %a) {
+  %shr = lshr i32 1, %a
+  %cmp = icmp sgt i32 %shr, 1
+  ret i1 %cmp
+; CHECK-LABEL: @lshr_sgt_false
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @ashr_sgt_false(i32 %a) {
+  %shr = ashr i32 -30, %a
+  %cmp = icmp sgt i32 %shr, -1
+  ret i1 %cmp
+; CHECK-LABEL: @ashr_sgt_false
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @exact_ashr_sgt_false(i32 %a) {
+  %shr = ashr exact i32 -30, %a
+  %cmp = icmp sgt i32 %shr, -15
+  ret i1 %cmp
+; CHECK-LABEL: @exact_ashr_sgt_false
+; CHECK-NEXT: ret i1 false
+}

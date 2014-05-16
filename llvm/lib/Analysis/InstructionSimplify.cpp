@@ -2001,7 +2001,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
     // Many binary operators with constant RHS have easy to compute constant
     // range.  Use them to check whether the comparison is a tautology.
-    uint32_t Width = CI->getBitWidth();
+    unsigned Width = CI->getBitWidth();
     APInt Lower = APInt(Width, 0);
     APInt Upper = APInt(Width, 0);
     ConstantInt *CI2;
@@ -2038,6 +2038,13 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       APInt NegOne = APInt::getAllOnesValue(Width);
       if (CI2->getValue().ult(Width))
         Upper = NegOne.lshr(CI2->getValue()) + 1;
+    } else if (match(LHS, m_LShr(m_ConstantInt(CI2), m_Value()))) {
+      // 'lshr CI2, x' produces [CI2 >> (Width-1), CI2].
+      unsigned ShiftAmount = Width - 1;
+      if (!CI2->isZero() && cast<BinaryOperator>(LHS)->isExact())
+        ShiftAmount = CI2->getValue().countTrailingZeros();
+      Lower = CI2->getValue().lshr(ShiftAmount);
+      Upper = CI2->getValue() + 1;
     } else if (match(LHS, m_AShr(m_Value(), m_ConstantInt(CI2)))) {
       // 'ashr x, CI2' produces [INT_MIN >> CI2, INT_MAX >> CI2].
       APInt IntMin = APInt::getSignedMinValue(Width);
@@ -2045,6 +2052,19 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       if (CI2->getValue().ult(Width)) {
         Lower = IntMin.ashr(CI2->getValue());
         Upper = IntMax.ashr(CI2->getValue()) + 1;
+      }
+    } else if (match(LHS, m_AShr(m_ConstantInt(CI2), m_Value()))) {
+      unsigned ShiftAmount = Width - 1;
+      if (!CI2->isZero() && cast<BinaryOperator>(LHS)->isExact())
+        ShiftAmount = CI2->getValue().countTrailingZeros();
+      if (CI2->isNegative()) {
+        // 'ashr CI2, x' produces [CI2, CI2 >> (Width-1)]
+        Lower = CI2->getValue();
+        Upper = CI2->getValue().ashr(ShiftAmount) + 1;
+      } else {
+        // 'ashr CI2, x' produces [CI2 >> (Width-1), CI2]
+        Lower = CI2->getValue().ashr(ShiftAmount);
+        Upper = CI2->getValue() + 1;
       }
     } else if (match(LHS, m_Or(m_Value(), m_ConstantInt(CI2)))) {
       // 'or x, CI2' produces [CI2, UINT_MAX].
