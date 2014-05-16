@@ -11,7 +11,7 @@ entry:
 
 ; CHECK-LABEL:      return_int_const:
 ; CHECK:      retl
-; CHECK-NEXT: or %g0, 1729, %o0
+; CHECK-NEXT: mov 1729, %o0
 define i32 @return_int_const() {
 entry:
   ret i32 1729
@@ -58,9 +58,9 @@ entry:
 
 ; CHECK-LABEL:      leaf_proc_with_local_array:
 ; CHECK:      add %sp, -104, %sp
-; CHECK:      or %g0, 1, [[R1:%[go][0-7]]]
+; CHECK:      mov 1, [[R1:%[go][0-7]]]
 ; CHECK:      st [[R1]], [%sp+96]
-; CHECK:      or %g0, 2, [[R2:%[go][0-7]]]
+; CHECK:      mov 2, [[R2:%[go][0-7]]]
 ; CHECK:      st [[R2]], [%sp+100]
 ; CHECK:      ld {{.+}}, %o0
 ; CHECK:      retl

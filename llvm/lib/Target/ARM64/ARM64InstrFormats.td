@@ -1667,15 +1667,15 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
                   WZR, GPR32sp:$src, addsub_shifted_imm32:$imm)>;
   def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Xri")
                   XZR, GPR64sp:$src, addsub_shifted_imm64:$imm)>;
-  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Wrx")
+  def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Wrx")
                   WZR, GPR32sp:$src1, GPR32:$src2, arith_extend:$sh)>;
-  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrx")
+  def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrx")
                   XZR, GPR64sp:$src1, GPR32:$src2, arith_extend:$sh)>;
-  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrx64")
+  def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrx64")
                   XZR, GPR64sp:$src1, GPR64:$src2, arith_extendlsl64:$sh)>;
-  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Wrs")
+  def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Wrs")
                   WZR, GPR32:$src1, GPR32:$src2, arith_shift32:$sh)>;
-  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrs")
+  def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrs")
                   XZR, GPR64:$src1, GPR64:$src2, arith_shift64:$sh)>;
 
   // Compare shorthands

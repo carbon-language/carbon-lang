@@ -156,7 +156,7 @@ define i64 @t17(i16 %a, i64 %x) nounwind ssp {
 entry:
 ; CHECK-LABEL: t17:
 ; CHECK: sxth [[REG:x[0-9]+]], w0
-; CHECK: sub x0, xzr, [[REG]], lsl #32
+; CHECK: neg x0, [[REG]], lsl #32
 ; CHECK: ret
   %tmp16 = sext i16 %a to i64
   %tmp17 = mul i64 %tmp16, -4294967296

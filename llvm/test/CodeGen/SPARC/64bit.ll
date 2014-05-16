@@ -2,11 +2,11 @@
 ; RUN: llc < %s -march=sparcv9 -mattr=+popc | FileCheck %s -check-prefix=OPT
 
 ; CHECK-LABEL: ret2:
-; CHECK: or %g0, %i1, %i0
+; CHECK: mov %i1, %i0
 
 ; OPT-LABEL: ret2:
 ; OPT: retl
-; OPT: or %g0, %o1, %o0
+; OPT: mov %o1, %o0
 define i64 @ret2(i64 %a, i64 %b) {
   ret i64 %b
 }
@@ -39,21 +39,21 @@ define i64 @sra_reg(i64 %a, i64 %b) {
 ;     restore %g0, %g0, %o0
 ;
 ; CHECK: ret_imm0
-; CHECK: or %g0, 0, %i0
+; CHECK: mov 0, %i0
 
 ; OPT: ret_imm0
 ; OPT: retl
-; OPT: or %g0, 0, %o0
+; OPT: mov 0, %o0
 define i64 @ret_imm0() {
   ret i64 0
 }
 
 ; CHECK: ret_simm13
-; CHECK: or %g0, -4096, %i0
+; CHECK: mov -4096, %i0
 
 ; OPT:   ret_simm13
 ; OPT:   retl
-; OPT:   or %g0, -4096, %o0
+; OPT:   mov -4096, %o0
 define i64 @ret_simm13() {
   ret i64 -4096
 }

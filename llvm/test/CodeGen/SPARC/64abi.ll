@@ -44,7 +44,7 @@ define void @intarg(i8  %a0,   ; %i0
 ; CHECK: sra %i0, 0, [[R:%[gilo][0-7]]]
 ; CHECK: stx [[R]], [%sp+2223]
 ; Use %o0-%o5 for outgoing arguments
-; CHECK: or %g0, 5, %o5
+; CHECK: mov 5, %o5
 ; CHECK: call intarg
 ; CHECK-NOT: add %sp
 ; CHECK: restore
@@ -208,7 +208,7 @@ define i32 @inreg_if(float inreg %a0, ; %f0
 
 ; CHECK: call_inreg_if
 ; CHECK: fmovs %f3, %f0
-; CHECK: or %g0, %i2, %o0
+; CHECK: mov %i2, %o0
 ; CHECK: call inreg_if
 define void @call_inreg_if(i32* %p, float %f3, i32 %i2) {
   %x = call i32 @inreg_if(float %f3, i32 %i2)

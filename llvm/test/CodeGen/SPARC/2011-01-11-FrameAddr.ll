@@ -60,13 +60,13 @@ declare i8* @llvm.frameaddress(i32) nounwind readnone
 define i8* @retaddr() nounwind readnone {
 entry:
 ;V8-LABEL: retaddr:
-;V8: or %g0, %o7, {{.+}}
+;V8: mov %o7, {{.+}}
 
 ;V9-LABEL: retaddr:
-;V9: or %g0, %o7, {{.+}}
+;V9: mov %o7, {{.+}}
 
 ;SPARC64-LABEL: retaddr
-;SPARC64:       or %g0, %o7, {{.+}}
+;SPARC64:       mov %o7, {{.+}}
 
   %0 = tail call i8* @llvm.returnaddress(i32 0)
   ret i8* %0

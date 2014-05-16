@@ -2,10 +2,10 @@
   
 ; CHECK-LABEL: test
 ; CHECK:        srl %i1, 0, %o2
-; CHECK-NEXT:   or %g0, %i2, %o0
+; CHECK-NEXT:   mov %i2, %o0
 ; CHECK-NEXT:   call __ashlti3
-; CHECK-NEXT:   or %g0, %i3, %o1
-; CHECK-NEXT:   or %g0, %o0, %i0
+; CHECK-NEXT:   mov %i3, %o1
+; CHECK-NEXT:   mov %o0, %i0
   
 define i128 @test(i128 %a, i128 %b) {
 entry:

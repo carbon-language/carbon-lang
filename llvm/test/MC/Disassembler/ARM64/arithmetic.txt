@@ -172,7 +172,7 @@
 
 # CHECK: add w1, w2, w3, uxtb
 # CHECK: add w1, w2, w3, uxth
-# CHECK: add w1, w2, w3, uxtw
+# CHECK: add w1, w2, w3
 # CHECK: add w1, w2, w3, uxtx
 # CHECK: add w1, w2, w3, sxtb
 # CHECK: add w1, w2, w3, sxth
@@ -214,7 +214,7 @@
 
 # CHECK: sub w1, w2, w3, uxtb
 # CHECK: sub w1, w2, w3, uxth
-# CHECK: sub w1, w2, w3, uxtw
+# CHECK: sub w1, w2, w3
 # CHECK: sub w1, w2, w3, uxtx
 # CHECK: sub w1, w2, w3, sxtb
 # CHECK: sub w1, w2, w3, sxth
@@ -256,7 +256,7 @@
 
 # CHECK: adds w1, w2, w3, uxtb
 # CHECK: adds w1, w2, w3, uxth
-# CHECK: adds w1, w2, w3, uxtw
+# CHECK: adds w1, w2, w3
 # CHECK: adds w1, w2, w3, uxtx
 # CHECK: adds w1, w2, w3, sxtb
 # CHECK: adds w1, w2, w3, sxth
@@ -294,7 +294,7 @@
 
 # CHECK: subs w1, w2, w3, uxtb
 # CHECK: subs w1, w2, w3, uxth
-# CHECK: subs w1, w2, w3, uxtw
+# CHECK: subs w1, w2, w3
 # CHECK: subs w1, w2, w3, uxtx
 # CHECK: subs w1, w2, w3, sxtb
 # CHECK: subs w1, w2, w3, sxth

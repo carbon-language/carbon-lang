@@ -113,19 +113,19 @@ foo:
   neg w0, w1
 ; CHECK: neg w0, w1
   neg w0, w1, lsl #1
-; CHECK: sub w0, wzr, w1, lsl #1
+; CHECK: neg w0, w1, lsl #1
   neg x0, x1
 ; CHECK: neg x0, x1
   neg x0, x1, asr #1
-; CHECK: sub x0, xzr, x1, asr #1
+; CHECK: neg x0, x1, asr #1
   negs w0, w1
 ; CHECK: negs w0, w1
   negs w0, w1, lsl #1
-; CHECK: subs w0, wzr, w1, lsl #1
+; CHECK: negs w0, w1, lsl #1
   negs x0, x1
 ; CHECK: negs x0, x1
   negs x0, x1, asr #1
-; CHECK: subs x0, xzr, x1, asr #1
+; CHECK: negs x0, x1, asr #1
 
 ;-----------------------------------------------------------------------------
 ; MOV aliases

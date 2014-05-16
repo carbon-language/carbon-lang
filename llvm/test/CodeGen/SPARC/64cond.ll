@@ -112,9 +112,9 @@ entry:
 
 ; CHECK-LABEL: setcc_resultty
 ; CHECK-DAG:       srax %i0, 63, %o0
-; CHECK-DAG:       or %g0, %i0, %o1
-; CHECK-DAG:       or %g0, 0, %o2
-; CHECK-DAG:       or %g0, 32, %o3
+; CHECK-DAG:       mov %i0, %o1
+; CHECK-DAG:       mov 0, %o2
+; CHECK-DAG:       mov 32, %o3
 ; CHECK-DAG:       call __multi3
 ; CHECK:       cmp
 ; CHECK:       movne %xcc, 1, [[R:%[gilo][0-7]]]

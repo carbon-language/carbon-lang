@@ -742,37 +742,12 @@ public:
 
 } // end anonymous namespace
 
-static unsigned CountNumOperands(StringRef AsmString) {
-  unsigned NumOps = 0;
-  std::pair<StringRef, StringRef> ASM = AsmString.split(' ');
+static unsigned CountNumOperands(StringRef AsmString, unsigned Variant) {
+  std::string FlatAsmString =
+      CodeGenInstruction::FlattenAsmStringVariants(AsmString, Variant);
+  AsmString = FlatAsmString;
 
-  while (!ASM.second.empty()) {
-    ++NumOps;
-    ASM = ASM.second.split(' ');
-  }
-
-  return NumOps;
-}
-
-static unsigned CountResultNumOperands(StringRef AsmString) {
-  unsigned NumOps = 0;
-  std::pair<StringRef, StringRef> ASM = AsmString.split('\t');
-
-  if (!ASM.second.empty()) {
-    size_t I = ASM.second.find('{');
-    StringRef Str = ASM.second;
-    if (I != StringRef::npos)
-      Str = ASM.second.substr(I, ASM.second.find('|', I));
-
-    ASM = Str.split(' ');
-
-    do {
-      ++NumOps;
-      ASM = ASM.second.split(' ');
-    } while (!ASM.second.empty());
-  }
-
-  return NumOps;
+  return AsmString.count(' ') + AsmString.count('\t');
 }
 
 void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
@@ -818,10 +793,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       const CodeGenInstAlias *CGA = *II;
       unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
       unsigned NumResultOps =
-        CountResultNumOperands(CGA->ResultInst->AsmString);
+        CountNumOperands(CGA->ResultInst->AsmString, Variant);
 
       // Don't emit the alias if it has more operands than what it's aliasing.
-      if (NumResultOps < CountNumOperands(CGA->AsmString))
+      if (NumResultOps < CountNumOperands(CGA->AsmString, Variant))
         continue;
 
       IAPrinter *IAP = new IAPrinter(CGA->Result->getAsString(),
