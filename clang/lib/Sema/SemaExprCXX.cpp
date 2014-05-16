@@ -2109,10 +2109,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   }
   Alloc->setParams(ArrayRef<ParmVarDecl*>(ParamDecls, NumParams));
 
-  // FIXME: Also add this declaration to the IdentifierResolver, but
-  // make sure it is at the end of the chain to coincide with the
-  // global scope.
   Context.getTranslationUnitDecl()->addDecl(Alloc);
+  IdResolver.tryAddTopLevelDecl(Alloc, Name);
 }
 
 FunctionDecl *Sema::FindUsualDeallocationFunction(SourceLocation StartLoc,
