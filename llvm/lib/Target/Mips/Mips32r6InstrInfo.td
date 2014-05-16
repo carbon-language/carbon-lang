@@ -81,18 +81,24 @@ class AUIPC_ENC  : PCREL16_FM<OPCODE5_AUIPC>;
 class BALC_ENC  : BRANCH_OFF26_FM<0b111010>;
 class BC_ENC    : BRANCH_OFF26_FM<0b110010>;
 class BEQC_ENC  : CMP_BRANCH_OFF16_FM<0b001000>;
+class BEQZALC_ENC : CMP_BRANCH_RT_OFF16_FM<0b001000>;
 class BNEC_ENC  : CMP_BRANCH_OFF16_FM<0b011000>;
+class BNEZALC_ENC : CMP_BRANCH_RT_OFF16_FM<0b011000>;
 
 class BLTZC_ENC : CMP_BRANCH_OFF16_FM<0b010111>;
 class BGEZC_ENC : CMP_BRANCH_OFF16_FM<0b010110>;
+class BGTZALC_ENC : CMP_BRANCH_RT_OFF16_FM<0b000111>;
 
 class BLEZC_ENC : CMP_BRANCH_RT_OFF16_FM<0b010110>;
+class BLTZALC_ENC : CMP_BRANCH_OFF16_FM<0b000111>;
 class BGTZC_ENC : CMP_BRANCH_RT_OFF16_FM<0b010111>;
 
 class BEQZC_ENC : CMP_BRANCH_OFF21_FM<0b110110>;
+class BGEZALC_ENC : CMP_BRANCH_OFF16_FM<0b000110>;
 class BNEZC_ENC : CMP_BRANCH_OFF21_FM<0b111110>;
 
 class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
+class BLEZALC_ENC : CMP_BRANCH_RT_OFF16_FM<0b000110>;
 class DIV_ENC    : SPECIAL_3R_FM<0b00010, 0b011010>;
 class DIVU_ENC   : SPECIAL_3R_FM<0b00010, 0b011011>;
 class MOD_ENC    : SPECIAL_3R_FM<0b00011, 0b011010>;
@@ -325,6 +331,31 @@ class DIVU_DESC : DIVMOD_DESC_BASE<"divu", GPR32Opnd>;
 class MOD_DESC  : DIVMOD_DESC_BASE<"mod", GPR32Opnd>;
 class MODU_DESC : DIVMOD_DESC_BASE<"modu", GPR32Opnd>;
 
+class BEQZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"beqzalc", brtarget, GPR32Opnd> {
+  list<Register> Defs = [RA];
+}
+
+class BGEZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgezalc", brtarget, GPR32Opnd> {
+  string Constraints = "$rs = $rt";
+  list<Register> Defs = [RA];
+}
+
+class BGTZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgtzalc", brtarget, GPR32Opnd> {
+  list<Register> Defs = [RA];
+}
+
+class BLEZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"blezalc", brtarget, GPR32Opnd> {
+  list<Register> Defs = [RA];
+}
+
+class BLTZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bltzalc", brtarget, GPR32Opnd> {
+  string Constraints = "$rs = $rt";
+  list<Register> Defs = [RA];
+}
+
+class BNEZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bnezalc", brtarget, GPR32Opnd> {
+  list<Register> Defs = [RA];
+}
 class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
@@ -412,23 +443,23 @@ def BC2EQZ;
 def BC2NEZ;
 def BC : BC_ENC, BC_DESC, ISA_MIPS32R6;
 def BEQC : BEQC_ENC, BEQC_DESC, ISA_MIPS32R6;
-def BEQZALC;
+def BEQZALC : BEQZALC_ENC, BEQZALC_DESC, ISA_MIPS32R6;
 def BEQZC : BEQZC_ENC, BEQZC_DESC, ISA_MIPS32R6;
 def BGEC;  // Also aliased to blec with operands swapped
 def BGEUC; // Also aliased to bleuc with operands swapped
-def BGEZALC;
+def BGEZALC : BGEZALC_ENC, BGEZALC_DESC, ISA_MIPS32R6;
 def BGEZC : BGEZC_ENC, BGEZC_DESC, ISA_MIPS32R6;
-def BGTZALC;
+def BGTZALC : BGTZALC_ENC, BGTZALC_DESC, ISA_MIPS32R6;
 def BGTZC : BGTZC_ENC, BGTZC_DESC, ISA_MIPS32R6;
 def BITSWAP : BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
-def BLEZALC;
+def BLEZALC : BLEZALC_ENC, BLEZALC_DESC, ISA_MIPS32R6;
 def BLEZC : BLEZC_ENC, BLEZC_DESC, ISA_MIPS32R6;
 def BLTC; // Also aliased to bgtc with operands swapped
 def BLTUC; // Also aliased to bgtuc with operands swapped
-def BLTZALC;
+def BLTZALC : BLTZALC_ENC, BLTZALC_DESC, ISA_MIPS32R6;
 def BLTZC : BLTZC_ENC, BLTZC_DESC, ISA_MIPS32R6;
 def BNEC : BNEC_ENC, BNEC_DESC, ISA_MIPS32R6;
-def BNEZALC;
+def BNEZALC : BNEZALC_ENC, BNEZALC_DESC, ISA_MIPS32R6;
 def BNEZC : BNEZC_ENC, BNEZC_DESC, ISA_MIPS32R6;
 def BNVC;
 def BOVC;
