@@ -1,3 +1,5 @@
+XFAIL: linux, android
+
 RUN: mkdir -p %t.d
 RUN: %clang_profgen -o %t.d/a.shared -fPIC -shared %S/Inputs/instrprof-dynamic-a.cpp
 RUN: %clang_profgen -o %t-shared -fPIC -rpath %t.d %t.d/a.shared %S/Inputs/instrprof-dynamic-b.cpp %S/Inputs/instrprof-dynamic-main.cpp
