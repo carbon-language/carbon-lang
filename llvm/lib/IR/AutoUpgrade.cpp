@@ -191,16 +191,19 @@ static bool UpgradeGlobalStructors(GlobalVariable *GV) {
       StructType::get(GV->getContext(), Tys, /*isPacked=*/false);
 
   // Build new constants with a null third field filled in.
-  ConstantArray *OldInit = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (!OldInit)
+  Constant *OldInitC = GV->getInitializer();
+  ConstantArray *OldInit = dyn_cast<ConstantArray>(OldInitC);
+  if (!OldInit && !isa<ConstantAggregateZero>(OldInitC))
     return false;
   std::vector<Constant *> Initializers;
-  for (Use &U : OldInit->operands()) {
-    ConstantStruct *Init = cast<ConstantStruct>(&U);
-    Constant *NewInit =
+  if (OldInit) {
+    for (Use &U : OldInit->operands()) {
+      ConstantStruct *Init = cast<ConstantStruct>(&U);
+      Constant *NewInit =
         ConstantStruct::get(NewTy, Init->getOperand(0), Init->getOperand(1),
                             Constant::getNullValue(VoidPtrTy), nullptr);
-    Initializers.push_back(NewInit);
+      Initializers.push_back(NewInit);
+    }
   }
   assert(Initializers.size() == ATy->getNumElements());
 
