@@ -111,7 +111,7 @@ static void relocGPRel32(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
 
 /// \brief LLD_R_MIPS_32_HI16
 static void reloc32hi16(uint8_t *location, uint64_t S, int64_t A) {
-  applyReloc(location, (S + A) & 0xffff0000, 0xffffffff);
+  applyReloc(location, (S + A + 0x8000) & 0xffff0000, 0xffffffff);
 }
 
 /// \brief LLD_R_MIPS_HI16
