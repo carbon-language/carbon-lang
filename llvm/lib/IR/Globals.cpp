@@ -225,22 +225,34 @@ GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Link,
     ParentModule->getAliasList().push_back(this);
 }
 
-GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
-                         const Twine &Name, Module *Parent)
-    : GlobalAlias(Ty, AddressSpace, Linkage, Name, nullptr, Parent) {}
+GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
+                                 LinkageTypes Link, const Twine &Name,
+                                 GlobalObject *Aliasee, Module *ParentModule) {
+  return new GlobalAlias(Ty, AddressSpace, Link, Name, Aliasee, ParentModule);
+}
 
-GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
-                         const Twine &Name, GlobalObject *Aliasee)
-    : GlobalAlias(Ty, AddressSpace, Linkage, Name, Aliasee,
-                  Aliasee->getParent()) {}
+GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
+                                 LinkageTypes Linkage, const Twine &Name,
+                                 Module *Parent) {
+  return create(Ty, AddressSpace, Linkage, Name, nullptr, Parent);
+}
 
-GlobalAlias::GlobalAlias(LinkageTypes Link, const Twine &Name,
-                         GlobalObject *Aliasee)
-    : GlobalAlias(Aliasee->getType()->getElementType(),
-                  Aliasee->getType()->getAddressSpace(), Link, Name, Aliasee) {}
+GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
+                                 LinkageTypes Linkage, const Twine &Name,
+                                 GlobalObject *Aliasee) {
+  return create(Ty, AddressSpace, Linkage, Name, Aliasee, Aliasee->getParent());
+}
 
-GlobalAlias::GlobalAlias(const Twine &Name, GlobalObject *Aliasee)
-    : GlobalAlias(Aliasee->getLinkage(), Name, Aliasee) {}
+GlobalAlias *GlobalAlias::create(LinkageTypes Link, const Twine &Name,
+                                 GlobalObject *Aliasee) {
+  PointerType *PTy = Aliasee->getType();
+  return create(PTy->getElementType(), PTy->getAddressSpace(), Link, Name,
+                Aliasee);
+}
+
+GlobalAlias *GlobalAlias::create(const Twine &Name, GlobalObject *Aliasee) {
+  return create(Aliasee->getLinkage(), Name, Aliasee);
+}
 
 void GlobalAlias::setParent(Module *parent) {
   if (getParent())

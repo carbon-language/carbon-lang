@@ -1328,8 +1328,8 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
 // Replace G with an alias to F and delete G.
 void MergeFunctions::writeAlias(Function *F, Function *G) {
   PointerType *PTy = G->getType();
-  auto *GA = new GlobalAlias(PTy->getElementType(), PTy->getAddressSpace(),
-                             G->getLinkage(), "", F);
+  auto *GA = GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
+                                 G->getLinkage(), "", F);
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());
