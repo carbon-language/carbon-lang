@@ -158,7 +158,8 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
 static TargetLoweringObjectFile *createTLOF(TargetMachine &TM) {
   if (TM.getSubtarget<ARMSubtarget>().isTargetMachO())
     return new TargetLoweringObjectFileMachO();
-
+  if (TM.getSubtarget<ARMSubtarget>().isTargetWindows())
+    return new TargetLoweringObjectFileCOFF();
   return new ARMElfTargetObjectFile();
 }
 
