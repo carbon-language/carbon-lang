@@ -53,8 +53,8 @@ Driver::Driver(StringRef ClangExecutable,
     UseStdLib(true), DefaultTargetTriple(DefaultTargetTriple),
     DefaultImageName("a.out"),
     DriverTitle("clang LLVM compiler"),
-    CCPrintOptionsFilename(0), CCPrintHeadersFilename(0),
-    CCLogDiagnosticsFilename(0),
+    CCPrintOptionsFilename(nullptr), CCPrintHeadersFilename(nullptr),
+    CCLogDiagnosticsFilename(nullptr),
     CCCPrintBindings(false),
     CCPrintHeaders(false), CCLogDiagnostics(false),
     CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
@@ -152,7 +152,7 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
 // option we used to determine the final phase.
 phases::ID Driver::getFinalPhase(const DerivedArgList &DAL, Arg **FinalPhaseArg)
 const {
-  Arg *PhaseArg = 0;
+  Arg *PhaseArg = nullptr;
   phases::ID FinalPhase;
 
   // -{E,M,MM} and /P only run the preprocessor.
@@ -419,7 +419,8 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Suppress driver output and emit preprocessor output to temp file.
   Mode = CPPMode;
   CCGenDiagnostics = true;
-  C.getArgs().AddFlagArg(0, Opts->getOption(options::OPT_frewrite_includes));
+  C.getArgs().AddFlagArg(nullptr,
+                         Opts->getOption(options::OPT_frewrite_includes));
 
   // Save the original job command(s).
   std::string Cmd;
@@ -962,7 +963,7 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
   // argument used to set the type; we only want to claim the type when we
   // actually use it, so we warn about unused -x arguments.
   types::ID InputType = types::TY_Nothing;
-  Arg *InputTypeArg = 0;
+  Arg *InputTypeArg = nullptr;
 
   // The last /TC or /TP option sets the input type to C or C++ globally.
   if (Arg *TCTP = Args.getLastArg(options::OPT__SLASH_TC,
@@ -1341,7 +1342,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
     if (NumOutputs > 1) {
       Diag(clang::diag::err_drv_output_argument_with_multiple_files);
-      FinalOutput = 0;
+      FinalOutput = nullptr;
     }
   }
 
@@ -1366,7 +1367,7 @@ void Driver::BuildJobs(Compilation &C) const {
     //
     // FIXME: This is a hack; find a cleaner way to integrate this into the
     // process.
-    const char *LinkingOutput = 0;
+    const char *LinkingOutput = nullptr;
     if (isa<LipoJobAction>(A)) {
       if (FinalOutput)
         LinkingOutput = FinalOutput->getValue();
@@ -1376,7 +1377,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
     InputInfo II;
     BuildJobsForAction(C, A, &C.getDefaultToolChain(),
-                       /*BoundArch*/0,
+                       /*BoundArch*/nullptr,
                        /*AtTopLevel*/ true,
                        /*MultipleArchs*/ ArchNames.size() > 1,
                        /*LinkingOutput*/ LinkingOutput,
@@ -1433,7 +1434,7 @@ void Driver::BuildJobs(Compilation &C) const {
 static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
                                     const JobAction *JA,
                                     const ActionList *&Inputs) {
-  const Tool *ToolForJob = 0;
+  const Tool *ToolForJob = nullptr;
 
   // See if we should look for a compiler with an integrated assembler. We match
   // bottom up, so what we are actually looking for is an assembler job with a
@@ -1449,7 +1450,7 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
     const Tool *Compiler =
       TC->SelectTool(cast<JobAction>(**Inputs->begin()));
     if (!Compiler)
-      return NULL;
+      return nullptr;
     if (Compiler->hasIntegratedAssembler()) {
       Inputs = &(*Inputs)[0]->getInputs();
       ToolForJob = Compiler;

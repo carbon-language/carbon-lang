@@ -27,7 +27,7 @@ using namespace llvm::opt;
 Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
                          InputArgList *_Args, DerivedArgList *_TranslatedArgs)
   : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
-    TranslatedArgs(_TranslatedArgs), Redirects(0) {
+    TranslatedArgs(_TranslatedArgs), Redirects(nullptr) {
 }
 
 Compilation::~Compilation() {
@@ -199,7 +199,7 @@ void Compilation::ExecuteJob(const Job &J,
   if (const Command *C = dyn_cast<Command>(&J)) {
     if (!InputsOk(*C, FailingCommands))
       return;
-    const Command *FailingCommand = 0;
+    const Command *FailingCommand = nullptr;
     if (int Res = ExecuteCommand(*C, FailingCommand))
       FailingCommands.push_back(std::make_pair(Res, FailingCommand));
   } else {
@@ -232,7 +232,7 @@ void Compilation::initCompilationForDiagnostics() {
 
   // Redirect stdout/stderr to /dev/null.
   Redirects = new const StringRef*[3]();
-  Redirects[0] = 0;
+  Redirects[0] = nullptr;
   Redirects[1] = new const StringRef();
   Redirects[2] = new const StringRef();
 }

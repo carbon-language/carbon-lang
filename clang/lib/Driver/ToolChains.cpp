@@ -118,7 +118,7 @@ static const char *GetArmArchForMArch(StringRef Value) {
     .Cases("armv7k", "armv7-k", "armv7k")
     .Cases("armv7m", "armv7-m", "armv7m")
     .Cases("armv7s", "armv7-s", "armv7s")
-    .Default(0);
+    .Default(nullptr);
 }
 
 static const char *GetArmArchForMCpu(StringRef Value) {
@@ -135,7 +135,7 @@ static const char *GetArmArchForMCpu(StringRef Value) {
     .Case("cortex-m3", "armv7m")
     .Case("cortex-m4", "armv7em")
     .Case("swift", "armv7s")
-    .Default(0);
+    .Default(nullptr);
 }
 
 static bool isSoftFloatABI(const ArgList &Args) {
@@ -449,7 +449,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
       if (llvm::sys::path::is_absolute(env) && llvm::sys::fs::exists(env) &&
           StringRef(env) != "/") {
         Args.append(Args.MakeSeparateArg(
-                      0, Opts.getOption(options::OPT_isysroot), env));
+                      nullptr, Opts.getOption(options::OPT_isysroot), env));
       }
     }
   }
@@ -463,12 +463,12 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
           << (iOSVersion ? iOSVersion : iOSSimVersion)->getAsString(Args);
-    iOSVersion = iOSSimVersion = 0;
+    iOSVersion = iOSSimVersion = nullptr;
   } else if (iOSVersion && iOSSimVersion) {
     getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << iOSVersion->getAsString(Args)
           << iOSSimVersion->getAsString(Args);
-    iOSSimVersion = 0;
+    iOSSimVersion = nullptr;
   } else if (!OSXVersion && !iOSVersion && !iOSSimVersion) {
     // If no deployment target was specified on the command line, check for
     // environment defines.
@@ -528,22 +528,22 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
 
     if (!OSXTarget.empty()) {
       const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      OSXVersion = Args.MakeJoinedArg(0, O, OSXTarget);
+      OSXVersion = Args.MakeJoinedArg(nullptr, O, OSXTarget);
       Args.append(OSXVersion);
     } else if (!iOSTarget.empty()) {
       const Option O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-      iOSVersion = Args.MakeJoinedArg(0, O, iOSTarget);
+      iOSVersion = Args.MakeJoinedArg(nullptr, O, iOSTarget);
       Args.append(iOSVersion);
     } else if (!iOSSimTarget.empty()) {
       const Option O = Opts.getOption(
         options::OPT_mios_simulator_version_min_EQ);
-      iOSSimVersion = Args.MakeJoinedArg(0, O, iOSSimTarget);
+      iOSSimVersion = Args.MakeJoinedArg(nullptr, O, iOSSimTarget);
       Args.append(iOSSimVersion);
     } else if (MachOArchName != "armv6m" && MachOArchName != "armv7m" &&
                MachOArchName != "armv7em") {
       // Otherwise, assume we are targeting OS X.
       const Option O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      OSXVersion = Args.MakeJoinedArg(0, O, MacosxVersionMin);
+      OSXVersion = Args.MakeJoinedArg(nullptr, O, MacosxVersionMin);
       Args.append(OSXVersion);
     }
   }
@@ -800,7 +800,8 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
   if (getTriple().getArch() == llvm::Triple::x86 ||
       getTriple().getArch() == llvm::Triple::x86_64)
     if (!Args.hasArgNoClaim(options::OPT_mtune_EQ))
-      DAL->AddJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ), "core2");
+      DAL->AddJoinedArg(nullptr, Opts.getOption(options::OPT_mtune_EQ),
+                        "core2");
 
   // Add the arch options based on the particular spelling of -arch, to match
   // how the driver driver works.
@@ -814,76 +815,76 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
     if (Name == "ppc")
       ;
     else if (Name == "ppc601")
-      DAL->AddJoinedArg(0, MCpu, "601");
+      DAL->AddJoinedArg(nullptr, MCpu, "601");
     else if (Name == "ppc603")
-      DAL->AddJoinedArg(0, MCpu, "603");
+      DAL->AddJoinedArg(nullptr, MCpu, "603");
     else if (Name == "ppc604")
-      DAL->AddJoinedArg(0, MCpu, "604");
+      DAL->AddJoinedArg(nullptr, MCpu, "604");
     else if (Name == "ppc604e")
-      DAL->AddJoinedArg(0, MCpu, "604e");
+      DAL->AddJoinedArg(nullptr, MCpu, "604e");
     else if (Name == "ppc750")
-      DAL->AddJoinedArg(0, MCpu, "750");
+      DAL->AddJoinedArg(nullptr, MCpu, "750");
     else if (Name == "ppc7400")
-      DAL->AddJoinedArg(0, MCpu, "7400");
+      DAL->AddJoinedArg(nullptr, MCpu, "7400");
     else if (Name == "ppc7450")
-      DAL->AddJoinedArg(0, MCpu, "7450");
+      DAL->AddJoinedArg(nullptr, MCpu, "7450");
     else if (Name == "ppc970")
-      DAL->AddJoinedArg(0, MCpu, "970");
+      DAL->AddJoinedArg(nullptr, MCpu, "970");
 
     else if (Name == "ppc64" || Name == "ppc64le")
-      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
+      DAL->AddFlagArg(nullptr, Opts.getOption(options::OPT_m64));
 
     else if (Name == "i386")
       ;
     else if (Name == "i486")
-      DAL->AddJoinedArg(0, MArch, "i486");
+      DAL->AddJoinedArg(nullptr, MArch, "i486");
     else if (Name == "i586")
-      DAL->AddJoinedArg(0, MArch, "i586");
+      DAL->AddJoinedArg(nullptr, MArch, "i586");
     else if (Name == "i686")
-      DAL->AddJoinedArg(0, MArch, "i686");
+      DAL->AddJoinedArg(nullptr, MArch, "i686");
     else if (Name == "pentium")
-      DAL->AddJoinedArg(0, MArch, "pentium");
+      DAL->AddJoinedArg(nullptr, MArch, "pentium");
     else if (Name == "pentium2")
-      DAL->AddJoinedArg(0, MArch, "pentium2");
+      DAL->AddJoinedArg(nullptr, MArch, "pentium2");
     else if (Name == "pentpro")
-      DAL->AddJoinedArg(0, MArch, "pentiumpro");
+      DAL->AddJoinedArg(nullptr, MArch, "pentiumpro");
     else if (Name == "pentIIm3")
-      DAL->AddJoinedArg(0, MArch, "pentium2");
+      DAL->AddJoinedArg(nullptr, MArch, "pentium2");
 
     else if (Name == "x86_64")
-      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
+      DAL->AddFlagArg(nullptr, Opts.getOption(options::OPT_m64));
     else if (Name == "x86_64h") {
-      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
-      DAL->AddJoinedArg(0, MArch, "x86_64h");
+      DAL->AddFlagArg(nullptr, Opts.getOption(options::OPT_m64));
+      DAL->AddJoinedArg(nullptr, MArch, "x86_64h");
     }
 
     else if (Name == "arm")
-      DAL->AddJoinedArg(0, MArch, "armv4t");
+      DAL->AddJoinedArg(nullptr, MArch, "armv4t");
     else if (Name == "armv4t")
-      DAL->AddJoinedArg(0, MArch, "armv4t");
+      DAL->AddJoinedArg(nullptr, MArch, "armv4t");
     else if (Name == "armv5")
-      DAL->AddJoinedArg(0, MArch, "armv5tej");
+      DAL->AddJoinedArg(nullptr, MArch, "armv5tej");
     else if (Name == "xscale")
-      DAL->AddJoinedArg(0, MArch, "xscale");
+      DAL->AddJoinedArg(nullptr, MArch, "xscale");
     else if (Name == "armv6")
-      DAL->AddJoinedArg(0, MArch, "armv6k");
+      DAL->AddJoinedArg(nullptr, MArch, "armv6k");
     else if (Name == "armv6m")
-      DAL->AddJoinedArg(0, MArch, "armv6m");
+      DAL->AddJoinedArg(nullptr, MArch, "armv6m");
     else if (Name == "armv7")
-      DAL->AddJoinedArg(0, MArch, "armv7a");
+      DAL->AddJoinedArg(nullptr, MArch, "armv7a");
     else if (Name == "armv7em")
-      DAL->AddJoinedArg(0, MArch, "armv7em");
+      DAL->AddJoinedArg(nullptr, MArch, "armv7em");
     else if (Name == "armv7k")
-      DAL->AddJoinedArg(0, MArch, "armv7k");
+      DAL->AddJoinedArg(nullptr, MArch, "armv7k");
     else if (Name == "armv7m")
-      DAL->AddJoinedArg(0, MArch, "armv7m");
+      DAL->AddJoinedArg(nullptr, MArch, "armv7m");
     else if (Name == "armv7s")
-      DAL->AddJoinedArg(0, MArch, "armv7s");
+      DAL->AddJoinedArg(nullptr, MArch, "armv7s");
 
     else if (Name == "arm64")
-      DAL->AddJoinedArg(0, MArch, "arm64");
+      DAL->AddJoinedArg(nullptr, MArch, "arm64");
     else if (Name == "armv8")
-      DAL->AddJoinedArg(0, MArch, "arm64");
+      DAL->AddJoinedArg(nullptr, MArch, "arm64");
   }
 
   return DAL;
@@ -944,7 +945,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   if (((isTargetMacOS() && !isMacosxVersionLT(10, 9)) ||
        (isTargetIOSBased() && !isIPhoneOSVersionLT(7, 0))) &&
       !Args.getLastArg(options::OPT_stdlib_EQ))
-    DAL->AddJoinedArg(0, Opts.getOption(options::OPT_stdlib_EQ), "libc++");
+    DAL->AddJoinedArg(nullptr, Opts.getOption(options::OPT_stdlib_EQ),
+                      "libc++");
 
   // Validate the C++ standard library choice.
   CXXStdlibType Type = GetCXXStdlibType(*DAL);

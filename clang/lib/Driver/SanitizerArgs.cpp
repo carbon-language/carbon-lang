@@ -331,7 +331,7 @@ std::string SanitizerArgs::describeSanitizeArg(const llvm::opt::ArgList &Args,
 
 bool SanitizerArgs::getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
                                                std::string &BLPath) {
-  const char *BlacklistFile = 0;
+  const char *BlacklistFile = nullptr;
   if (Kind & NeedsAsanRt)
     BlacklistFile = "asan_blacklist.txt";
   else if (Kind & NeedsMsanRt)

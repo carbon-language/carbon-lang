@@ -124,9 +124,9 @@ int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
   Argv.push_back(Executable);
   for (size_t i = 0, e = Arguments.size(); i != e; ++i)
     Argv.push_back(Arguments[i]);
-  Argv.push_back(0);
+  Argv.push_back(nullptr);
 
-  return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ 0,
+  return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ nullptr,
                                    Redirects, /*secondsToWait*/ 0,
                                    /*memoryLimit*/ 0, ErrMsg, ExecutionFailed);
 }
