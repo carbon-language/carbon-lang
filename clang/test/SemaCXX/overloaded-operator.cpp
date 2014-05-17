@@ -507,3 +507,15 @@ namespace PR14995 {
   // expected-note@-12 {{candidate template ignored: substitution failure}}
 } // namespace PR14995
 
+namespace ConversionVersusTemplateOrdering {
+  struct A {
+    operator short() = delete;
+    template <typename T> operator T();
+  } a;
+  struct B {
+    template <typename T> operator T();
+    operator short() = delete;
+  } b;
+  int x = a;
+  int y = b;
+}

@@ -1165,7 +1165,7 @@ namespace dr494 { // dr494: dup 372
   };
 }
 
-namespace dr495 { // dr495: yes
+namespace dr495 { // dr495: 3.5
   template<typename T>
   struct S {
     operator int() { return T::error; }
@@ -1173,6 +1173,14 @@ namespace dr495 { // dr495: yes
   };
   S<int> s;
   long n = s;
+
+  template<typename T>
+  struct S2 {
+    template<typename U> operator U();
+    operator int() { return T::error; }
+  };
+  S2<int> s2;
+  long n2 = s2;
 }
 
 namespace dr496 { // dr496: no

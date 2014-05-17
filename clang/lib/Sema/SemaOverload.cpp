@@ -8237,29 +8237,6 @@ isBetterOverloadCandidate(Sema &S,
   if (HasBetterConversion)
     return true;
 
-  //     - F1 is a non-template function and F2 is a function template
-  //       specialization, or, if not that,
-  if ((!Cand1.Function || !Cand1.Function->getPrimaryTemplate()) &&
-      Cand2.Function && Cand2.Function->getPrimaryTemplate())
-    return true;
-
-  //   -- F1 and F2 are function template specializations, and the function
-  //      template for F1 is more specialized than the template for F2
-  //      according to the partial ordering rules described in 14.5.5.2, or,
-  //      if not that,
-  if (Cand1.Function && Cand1.Function->getPrimaryTemplate() &&
-      Cand2.Function && Cand2.Function->getPrimaryTemplate()) {
-    if (FunctionTemplateDecl *BetterTemplate
-          = S.getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
-                                         Cand2.Function->getPrimaryTemplate(),
-                                         Loc,
-                       isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion
-                                                             : TPOC_Call,
-                                         Cand1.ExplicitCallArguments,
-                                         Cand2.ExplicitCallArguments))
-      return BetterTemplate == Cand1.Function->getPrimaryTemplate();
-  }
-
   //   -- the context is an initialization by user-defined conversion
   //      (see 8.5, 13.3.1.5) and the standard conversion sequence
   //      from the return type of F1 to the destination type (i.e.,
@@ -8277,7 +8254,7 @@ isBetterOverloadCandidate(Sema &S,
       = compareConversionFunctions(S, Cand1.Function, Cand2.Function);
     if (FuncResult != ImplicitConversionSequence::Indistinguishable)
       return FuncResult;
-          
+
     switch (CompareStandardConversionSequences(S,
                                                Cand1.FinalConversion,
                                                Cand2.FinalConversion)) {
@@ -8293,6 +8270,35 @@ isBetterOverloadCandidate(Sema &S,
       // Do nothing
       break;
     }
+
+    // FIXME: Compare kind of reference binding if conversion functions
+    // convert to a reference type used in direct reference binding, per
+    // C++14 [over.match.best]p1 section 2 bullet 3.
+  }
+
+  //    -- F1 is a non-template function and F2 is a function template
+  //       specialization, or, if not that,
+  bool Cand1IsSpecialization = Cand1.Function &&
+                               Cand1.Function->getPrimaryTemplate();
+  bool Cand2IsSpecialization = Cand2.Function &&
+                               Cand2.Function->getPrimaryTemplate();
+  if (Cand1IsSpecialization != Cand2IsSpecialization)
+    return Cand2IsSpecialization;
+
+  //   -- F1 and F2 are function template specializations, and the function
+  //      template for F1 is more specialized than the template for F2
+  //      according to the partial ordering rules described in 14.5.5.2, or,
+  //      if not that,
+  if (Cand1IsSpecialization && Cand2IsSpecialization) {
+    if (FunctionTemplateDecl *BetterTemplate
+          = S.getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
+                                         Cand2.Function->getPrimaryTemplate(),
+                                         Loc,
+                       isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion
+                                                             : TPOC_Call,
+                                         Cand1.ExplicitCallArguments,
+                                         Cand2.ExplicitCallArguments))
+      return BetterTemplate == Cand1.Function->getPrimaryTemplate();
   }
 
   // Check for enable_if value-based overload resolution.
