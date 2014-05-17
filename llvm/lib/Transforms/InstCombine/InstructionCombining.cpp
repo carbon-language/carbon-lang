@@ -1230,10 +1230,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
     for (auto I = PN->op_begin()+1, E = PN->op_end(); I !=E; ++I) {
       GetElementPtrInst *Op2 = dyn_cast<GetElementPtrInst>(*I);
-      if (!Op2 || Op1->getNumOperands() != Op1->getNumOperands())
+      if (!Op2 || Op1->getNumOperands() != Op2->getNumOperands())
         return nullptr;
 
       for (unsigned J = 0, F = Op1->getNumOperands(); J != F; ++J) {
+        if (Op1->getOperand(J)->getType() != Op2->getOperand(J)->getType())
+          return nullptr;
+
         if (Op1->getOperand(J) != Op2->getOperand(J)) {
           if (DI == -1) {
             // We have not seen any differences yet in the GEPs feeding the
@@ -1263,8 +1266,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // All the GEPs feeding the PHI differ at a single offset. Clone a GEP
       // into the current block so it can be merged, and create a new PHI to
       // set that index.
+      Instruction *InsertPt = Builder->GetInsertPoint();
+      Builder->SetInsertPoint(PN);
       PHINode *NewPN = Builder->CreatePHI(Op1->getOperand(DI)->getType(),
                                           PN->getNumOperands());
+      Builder->SetInsertPoint(InsertPt);
+
       for (auto &I : PN->operands())
         NewPN->addIncoming(dyn_cast<GEPOperator>(I)->getOperand(DI),
                            PN->getIncomingBlock(I));
