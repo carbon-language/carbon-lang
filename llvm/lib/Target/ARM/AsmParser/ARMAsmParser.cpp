@@ -3021,12 +3021,12 @@ int ARMAsmParser::tryParseShiftRegister(
       EndLoc = Parser.getTok().getEndLoc();
       ShiftReg = tryParseRegister();
       if (ShiftReg == -1) {
-        Error (L, "expected immediate or register in shift operand");
+        Error(L, "expected immediate or register in shift operand");
         return -1;
       }
     } else {
-      Error (Parser.getTok().getLoc(),
-                    "expected immediate or register in shift operand");
+      Error(Parser.getTok().getLoc(),
+            "expected immediate or register in shift operand");
       return -1;
     }
   }
