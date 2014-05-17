@@ -2270,9 +2270,9 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
 
   // Create the new alias itself, but don't set a name yet.
   auto *GA = new llvm::GlobalAlias(
-      cast<llvm::PointerType>(Aliasee->getType())->getElementType(),
+      cast<llvm::PointerType>(Aliasee->getType())->getElementType(), 0,
       llvm::Function::ExternalLinkage, "",
-      &getGlobalObjectInExpr(Diags, AA, Aliasee), &getModule());
+      &getGlobalObjectInExpr(Diags, AA, Aliasee));
 
   if (Entry) {
     if (GA->getAliasee() == Entry) {
@@ -3197,9 +3197,8 @@ void CodeGenModule::EmitStaticExternCAliases() {
     IdentifierInfo *Name = I->first;
     llvm::GlobalValue *Val = I->second;
     if (Val && !getModule().getNamedValue(Name->getName()))
-      addUsedGlobal(new llvm::GlobalAlias(
-          Val->getType()->getElementType(), Val->getLinkage(), Name->getName(),
-          cast<llvm::GlobalObject>(Val), &getModule()));
+      addUsedGlobal(new llvm::GlobalAlias(Name->getName(),
+                                          cast<llvm::GlobalObject>(Val)));
   }
 }
 
