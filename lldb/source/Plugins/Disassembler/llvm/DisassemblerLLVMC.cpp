@@ -455,7 +455,11 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
             m_is_valid = false;
             return;
         }
-        m_disasm_ap->setSymbolizer(std::unique_ptr<llvm::MCSymbolizer>(new llvm::MCExternalSymbolizer(*m_context_ap.get(),std::move(RelInfo),NULL,DisassemblerLLVMC::SymbolLookupCallback,(void *) &owner)));
+        std::unique_ptr<llvm::MCSymbolizer> symbolizer_up(curr_target->createMCSymbolizer(triple, NULL,
+                       DisassemblerLLVMC::SymbolLookupCallback,
+                       (void *) &owner,
+                       m_context_ap.get(), RelInfo.release()));
+        m_disasm_ap->setSymbolizer(std::move(symbolizer_up));
 
 
         unsigned asm_printer_variant;
