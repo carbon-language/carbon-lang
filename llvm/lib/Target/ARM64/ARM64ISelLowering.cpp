@@ -1510,10 +1510,10 @@ SDValue ARM64TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy());
 
   StructType *RetTy = StructType::get(ArgTy, ArgTy, NULL);
-  TargetLowering::CallLoweringInfo CLI(
-      DAG.getEntryNode(), RetTy, false, false, false, false, 0,
-      CallingConv::Fast, /*isTaillCall=*/false,
-      /*doesNotRet=*/false, /*isReturnValueUsed*/ true, Callee, Args, DAG, dl);
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(DAG.getEntryNode())
+    .setCallee(CallingConv::Fast, RetTy, Callee, &Args, 0);
+
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.first;
 }

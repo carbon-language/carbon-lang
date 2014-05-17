@@ -2028,13 +2028,10 @@ SparcTargetLowering::LowerF128Op(SDValue Op, SelectionDAG &DAG,
   for (unsigned i = 0, e = numArgs; i != e; ++i) {
     Chain = LowerF128_LibCallArg(Chain, Args, Op.getOperand(i), SDLoc(Op), DAG);
   }
-  TargetLowering::
-    CallLoweringInfo CLI(Chain,
-                         RetTyABI,
-                         false, false, false, false,
-                         0, CallingConv::C,
-                         false, false, true,
-                         Callee, Args, DAG, SDLoc(Op));
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(SDLoc(Op)).setChain(Chain)
+    .setCallee(CallingConv::C, RetTyABI, Callee, &Args, 0);
+
   std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
 
   // chain is in second result.
@@ -2087,13 +2084,9 @@ SparcTargetLowering::LowerF128Compare(SDValue LHS, SDValue RHS,
   Chain = LowerF128_LibCallArg(Chain, Args, LHS, DL, DAG);
   Chain = LowerF128_LibCallArg(Chain, Args, RHS, DL, DAG);
 
-  TargetLowering::
-    CallLoweringInfo CLI(Chain,
-                         RetTy,
-                         false, false, false, false,
-                         0, CallingConv::C,
-                         false, false, true,
-                         Callee, Args, DAG, DL);
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(DL).setChain(Chain)
+    .setCallee(CallingConv::C, RetTy, Callee, &Args, 0);
 
   std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
 

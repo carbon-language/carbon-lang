@@ -46,11 +46,11 @@ SDValue ARM64SelectionDAGInfo::EmitTargetCodeForMemset(
     Args.push_back(Entry);
     Entry.Node = Size;
     Args.push_back(Entry);
-    TargetLowering::CallLoweringInfo CLI(
-        Chain, Type::getVoidTy(*DAG.getContext()), false, false, false, false,
-        0, CallingConv::C, /*isTailCall=*/false,
-        /*doesNotRet=*/false, /*isReturnValueUsed=*/false,
-        DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl);
+    TargetLowering::CallLoweringInfo CLI(DAG);
+    CLI.setDebugLoc(dl).setChain(Chain)
+      .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
+                 DAG.getExternalSymbol(bzeroEntry, IntPtr), &Args, 0)
+      .setDiscardResult();
     std::pair<SDValue, SDValue> CallResult = TLI.LowerCallTo(CLI);
     return CallResult.second;
   }

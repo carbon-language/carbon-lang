@@ -4105,15 +4105,13 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME: pass in SDLoc
-  TargetLowering::
-  CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0,
-                    TLI->getLibcallCallingConv(RTLIB::MEMCPY),
-                    /*isTailCall=*/false,
-                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
-                                      TLI->getPointerTy()),
-                    Args, *this, dl);
+  TargetLowering::CallLoweringInfo CLI(*this);
+  CLI.setDebugLoc(dl).setChain(Chain)
+    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMCPY),
+               Type::getVoidTy(*getContext()),
+               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
+                                 TLI->getPointerTy()), &Args, 0)
+    .setDiscardResult();
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
   return CallResult.second;
@@ -4163,15 +4161,13 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME:  pass in SDLoc
-  TargetLowering::
-  CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0,
-                    TLI->getLibcallCallingConv(RTLIB::MEMMOVE),
-                    /*isTailCall=*/false,
-                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
-                                      TLI->getPointerTy()),
-                    Args, *this, dl);
+  TargetLowering::CallLoweringInfo CLI(*this);
+  CLI.setDebugLoc(dl).setChain(Chain)
+    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMMOVE),
+               Type::getVoidTy(*getContext()),
+               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
+                                 TLI->getPointerTy()), &Args, 0)
+    .setDiscardResult();
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
   return CallResult.second;
@@ -4227,18 +4223,17 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
   Entry.Ty = IntPtrTy;
   Entry.isSExt = false;
   Args.push_back(Entry);
-  // FIXME: pass in SDLoc
-  TargetLowering::
-  CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0,
-                    TLI->getLibcallCallingConv(RTLIB::MEMSET),
-                    /*isTailCall=*/false,
-                    /*doesNotReturn*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
-                                      TLI->getPointerTy()),
-                    Args, *this, dl);
-  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
+  // FIXME: pass in SDLoc
+  TargetLowering::CallLoweringInfo CLI(*this);
+  CLI.setDebugLoc(dl).setChain(Chain)
+    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMSET),
+               Type::getVoidTy(*getContext()),
+               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
+                                 TLI->getPointerTy()), &Args, 0)
+    .setDiscardResult();
+
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
 }
 

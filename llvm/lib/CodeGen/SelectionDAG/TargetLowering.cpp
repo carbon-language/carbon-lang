@@ -103,12 +103,11 @@ TargetLowering::makeLibCall(SelectionDAG &DAG,
   SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC), getPointerTy());
 
   Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
-  TargetLowering::
-  CallLoweringInfo CLI(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, 0, getLibcallCallingConv(LC),
-                    /*isTailCall=*/false,
-                    doesNotReturn, isReturnValueUsed, Callee, Args,
-                    DAG, dl);
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(DAG.getEntryNode())
+    .setCallee(getLibcallCallingConv(LC), RetTy, Callee, &Args, 0)
+    .setNoReturn(doesNotReturn).setDiscardResult(!isReturnValueUsed)
+    .setSExtResult(isSigned).setZExtResult(!isSigned);
   return LowerCallTo(CLI);
 }
 

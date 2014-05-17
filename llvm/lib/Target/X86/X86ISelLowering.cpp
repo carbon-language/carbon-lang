@@ -13416,14 +13416,14 @@ SDValue X86TargetLowering::LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) cons
   SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
                                          getPointerTy());
 
-  TargetLowering::CallLoweringInfo CLI(
-      InChain, static_cast<EVT>(MVT::v2i64).getTypeForEVT(*DAG.getContext()),
-      isSigned, !isSigned, false, true, 0, getLibcallCallingConv(LC),
-      /*isTailCall=*/false,
-      /*doesNotReturn=*/false, /*isReturnValueUsed=*/true, Callee, Args, DAG,
-      dl);
-  std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(InChain)
+    .setCallee(getLibcallCallingConv(LC),
+               static_cast<EVT>(MVT::v2i64).getTypeForEVT(*DAG.getContext()),
+               Callee, &Args, 0)
+    .setInRegister().setSExtResult(isSigned).setZExtResult(!isSigned);
 
+  std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
   return DAG.getNode(ISD::BITCAST, dl, VT, CallInfo.first);
 }
 
@@ -14396,12 +14396,11 @@ static SDValue LowerFSINCOS(SDValue Op, const X86Subtarget *Subtarget,
   Type *RetTy = isF64
     ? (Type*)StructType::get(ArgTy, ArgTy, NULL)
     : (Type*)VectorType::get(ArgTy, 4);
-  TargetLowering::
-    CallLoweringInfo CLI(DAG.getEntryNode(), RetTy,
-                         false, false, false, false, 0,
-                         CallingConv::C, /*isTaillCall=*/false,
-                         /*doesNotRet=*/false, /*isReturnValueUsed*/true,
-                         Callee, Args, DAG, dl);
+
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(DAG.getEntryNode())
+    .setCallee(CallingConv::C, RetTy, Callee, &Args, 0);
+
   std::pair<SDValue, SDValue> CallResult = TLI.LowerCallTo(CLI);
 
   if (isF64)

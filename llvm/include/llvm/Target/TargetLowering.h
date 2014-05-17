@@ -2119,34 +2119,6 @@ public:
     SmallVector<SDValue, 32> OutVals;
     SmallVector<ISD::InputArg, 32> Ins;
 
-
-    /// Constructs a call lowering context based on the ImmutableCallSite \p cs.
-    CallLoweringInfo(SDValue chain, Type *retTy,
-                     FunctionType *FTy, bool isTailCall, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, SDLoc dl,
-                     ImmutableCallSite &cs)
-    : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasAttr(0, Attribute::SExt)),
-      RetZExt(cs.paramHasAttr(0, Attribute::ZExt)), IsVarArg(FTy->isVarArg()),
-      IsInReg(cs.paramHasAttr(0, Attribute::InReg)),
-      DoesNotReturn(cs.doesNotReturn()),
-      IsReturnValueUsed(!cs.getInstruction()->use_empty()),
-      IsTailCall(isTailCall), NumFixedArgs(FTy->getNumParams()),
-      CallConv(cs.getCallingConv()), Callee(callee), Args(&args), DAG(dag),
-      DL(dl), CS(&cs) {}
-
-    /// Constructs a call lowering context based on the provided call
-    /// information.
-    CallLoweringInfo(SDValue chain, Type *retTy, bool retSExt, bool retZExt,
-                     bool isVarArg, bool isInReg, unsigned numFixedArgs,
-                     CallingConv::ID callConv, bool isTailCall,
-                     bool doesNotReturn, bool isReturnValueUsed, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, SDLoc dl)
-    : Chain(chain), RetTy(retTy), RetSExt(retSExt), RetZExt(retZExt),
-      IsVarArg(isVarArg), IsInReg(isInReg), DoesNotReturn(doesNotReturn),
-      IsReturnValueUsed(isReturnValueUsed), IsTailCall(isTailCall),
-      NumFixedArgs(numFixedArgs), CallConv(callConv), Callee(callee),
-      Args(&args), DAG(dag), DL(dl), CS(nullptr) {}
-
     CallLoweringInfo(SelectionDAG &DAG)
       : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
         IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),

@@ -1887,17 +1887,12 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   Entry.Node = Nest; Args.push_back(Entry);
 
   // Lower to a call to __trampoline_setup(Trmp, TrampSize, FPtr, ctx_reg)
-  TargetLowering::CallLoweringInfo CLI(Chain,
-                                       Type::getVoidTy(*DAG.getContext()),
-                                       false, false, false, false, 0,
-                                       CallingConv::C,
-                /*isTailCall=*/false,
-                                       /*doesNotRet=*/false,
-                                       /*isReturnValueUsed=*/true,
-                DAG.getExternalSymbol("__trampoline_setup", PtrVT),
-                Args, DAG, dl);
-  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(Chain)
+    .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
+               DAG.getExternalSymbol("__trampoline_setup", PtrVT), &Args, 0);
 
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.second;
 }
 

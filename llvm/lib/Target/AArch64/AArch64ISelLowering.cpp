@@ -2229,11 +2229,11 @@ AArch64TargetLowering::LowerF128ToCall(SDValue Op, SelectionDAG &DAG,
   if (isTailCall)
     InChain = TCChain;
 
-  TargetLowering::
-  CallLoweringInfo CLI(InChain, RetTy, false, false, false, false,
-                    0, getLibcallCallingConv(Call), isTailCall,
-                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
-                    Callee, Args, DAG, SDLoc(Op));
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(SDLoc(Op)).setChain(InChain)
+    .setCallee(getLibcallCallingConv(Call), RetTy, Callee, &Args, 0)
+    .setTailCall(isTailCall);
+
   std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
 
   if (!CallInfo.second.getNode())
