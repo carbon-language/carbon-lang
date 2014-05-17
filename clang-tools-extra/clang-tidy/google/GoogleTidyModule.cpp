@@ -65,8 +65,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   if (Ctor->isExplicit() && Ctor->isCopyOrMoveConstructor()) {
     auto isKWExplicit = [](const Token &Tok) {
       return Tok.is(tok::raw_identifier) &&
-             StringRef(Tok.getRawIdentifierData(), Tok.getLength()) ==
-                 "explicit";
+             Tok.getRawIdentifier() == "explicit";
     };
     SourceRange ExplicitTokenRange =
         FindToken(*Result.SourceManager, Result.Context->getLangOpts(),
