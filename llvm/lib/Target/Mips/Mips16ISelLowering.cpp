@@ -492,9 +492,9 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
                              std::end(HardFloatLibCalls), Find))
         LookupHelper = false;
     }
-    if (LookupHelper) Mips16HelperFunction =
-      getMips16HelperFunction(CLI.RetTy, CLI.Args, NeedMips16Helper);
-
+    if (LookupHelper)
+      Mips16HelperFunction =
+        getMips16HelperFunction(CLI.RetTy, CLI.getArgs(), NeedMips16Helper);
   }
 
   SDValue JumpTarget = Callee;

@@ -2329,7 +2329,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   MipsCCInfo.analyzeCallOperands(Outs, IsVarArg,
                                  Subtarget->mipsSEUsesSoftFloat(),
-                                 Callee.getNode(), CLI.Args);
+                                 Callee.getNode(), CLI.getArgs());
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();

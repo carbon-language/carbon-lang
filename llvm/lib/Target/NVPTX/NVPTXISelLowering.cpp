@@ -636,7 +636,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue Chain = CLI.Chain;
   SDValue Callee = CLI.Callee;
   bool &isTailCall = CLI.IsTailCall;
-  ArgListTy &Args = CLI.Args;
+  ArgListTy &Args = CLI.getArgs();
   Type *retTy = CLI.RetTy;
   ImmutableCallSite *CS = CLI.CS;
 

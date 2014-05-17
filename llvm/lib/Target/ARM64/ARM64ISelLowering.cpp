@@ -2172,7 +2172,7 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     for (unsigned i = 0; i != NumArgs; ++i) {
       MVT ValVT = Outs[i].VT;
       // Get type of the original argument.
-      EVT ActualVT = getValueType(CLI.Args[Outs[i].OrigArgIndex].Ty,
+      EVT ActualVT = getValueType(CLI.getArgs()[Outs[i].OrigArgIndex].Ty,
                                   /*AllowUnknown*/ true);
       MVT ActualMVT = ActualVT.isSimple() ? ActualVT.getSimpleVT() : ValVT;
       ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;

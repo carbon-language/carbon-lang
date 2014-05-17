@@ -2111,7 +2111,7 @@ public:
     unsigned NumFixedArgs;
     CallingConv::ID CallConv;
     SDValue Callee;
-    ArgListTy &Args;
+    ArgListTy *Args;
     SelectionDAG &DAG;
     SDLoc DL;
     ImmutableCallSite *CS;
@@ -2131,7 +2131,7 @@ public:
       DoesNotReturn(cs.doesNotReturn()),
       IsReturnValueUsed(!cs.getInstruction()->use_empty()),
       IsTailCall(isTailCall), NumFixedArgs(FTy->getNumParams()),
-      CallConv(cs.getCallingConv()), Callee(callee), Args(args), DAG(dag),
+      CallConv(cs.getCallingConv()), Callee(callee), Args(&args), DAG(dag),
       DL(dl), CS(&cs) {}
 
     /// Constructs a call lowering context based on the provided call
@@ -2145,7 +2145,12 @@ public:
       IsVarArg(isVarArg), IsInReg(isInReg), DoesNotReturn(doesNotReturn),
       IsReturnValueUsed(isReturnValueUsed), IsTailCall(isTailCall),
       NumFixedArgs(numFixedArgs), CallConv(callConv), Callee(callee),
-      Args(args), DAG(dag), DL(dl), CS(nullptr) {}
+      Args(&args), DAG(dag), DL(dl), CS(nullptr) {}
+
+    ArgListTy &getArgs() {
+      assert(Args && "Arguments must be set before accessing them");
+      return *Args;
+    }
   };
 
   /// This function lowers an abstract call to a function into an actual call.
