@@ -83,8 +83,8 @@ void __llvm_profile_set_filename(const char *Name);
 /*! \brief Register to write instrumentation data to file at exit. */
 int __llvm_profile_register_write_file_atexit(void);
 
-/*! \brief Register the write file function for this executable. */
-void __llvm_profile_register_write_file(void);
+/*! \brief Initialize file handling. */
+void __llvm_profile_initialize_file(void);
 
 /*! \brief Get the magic token for the file format. */
 uint64_t __llvm_profile_get_magic(void);

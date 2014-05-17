@@ -21,7 +21,7 @@ class RegisterRuntime {
 public:
   RegisterRuntime() {
     __llvm_profile_register_write_file_atexit();
-    __llvm_profile_register_write_file();
+    __llvm_profile_initialize_file();
   }
 };
 
