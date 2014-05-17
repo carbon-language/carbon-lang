@@ -153,27 +153,59 @@ namespace llvm {
     enum SectionType : uint32_t {
       // Constant masks for the "flags[7:0]" field in llvm::MachO::section and
       // llvm::MachO::section_64 (mask "flags" with SECTION_TYPE)
+
+      /// S_REGULAR - Regular section.
       S_REGULAR                             = 0x00u,
+      /// S_ZEROFILL - Zero fill on demand section.
       S_ZEROFILL                            = 0x01u,
+      /// S_CSTRING_LITERALS - Section with literal C strings.
       S_CSTRING_LITERALS                    = 0x02u,
+      /// S_4BYTE_LITERALS - Section with 4 byte literals.
       S_4BYTE_LITERALS                      = 0x03u,
+      /// S_8BYTE_LITERALS - Section with 8 byte literals.
       S_8BYTE_LITERALS                      = 0x04u,
+      /// S_LITERAL_POINTERS - Section with pointers to literals.
       S_LITERAL_POINTERS                    = 0x05u,
+      /// S_NON_LAZY_SYMBOL_POINTERS - Section with non-lazy symbol pointers.
       S_NON_LAZY_SYMBOL_POINTERS            = 0x06u,
+      /// S_LAZY_SYMBOL_POINTERS - Section with lazy symbol pointers.
       S_LAZY_SYMBOL_POINTERS                = 0x07u,
+      /// S_SYMBOL_STUBS - Section with symbol stubs, byte size of stub in
+      /// the Reserved2 field.
       S_SYMBOL_STUBS                        = 0x08u,
+      /// S_MOD_INIT_FUNC_POINTERS - Section with only function pointers for
+      /// initialization.
       S_MOD_INIT_FUNC_POINTERS              = 0x09u,
+      /// S_MOD_TERM_FUNC_POINTERS - Section with only function pointers for
+      /// termination.
       S_MOD_TERM_FUNC_POINTERS              = 0x0au,
+      /// S_COALESCED - Section contains symbols that are to be coalesced.
       S_COALESCED                           = 0x0bu,
+      /// S_GB_ZEROFILL - Zero fill on demand section (that can be larger than 4
+      /// gigabytes).
       S_GB_ZEROFILL                         = 0x0cu,
+      /// S_INTERPOSING - Section with only pairs of function pointers for
+      /// interposing.
       S_INTERPOSING                         = 0x0du,
+      /// S_16BYTE_LITERALS - Section with only 16 byte literals.
       S_16BYTE_LITERALS                     = 0x0eu,
+      /// S_DTRACE_DOF - Section contains DTrace Object Format.
       S_DTRACE_DOF                          = 0x0fu,
+      /// S_LAZY_DYLIB_SYMBOL_POINTERS - Section with lazy symbol pointers to
+      /// lazy loaded dylibs.
       S_LAZY_DYLIB_SYMBOL_POINTERS          = 0x10u,
+      /// S_THREAD_LOCAL_REGULAR - Thread local data section.
       S_THREAD_LOCAL_REGULAR                = 0x11u,
+      /// S_THREAD_LOCAL_ZEROFILL - Thread local zerofill section.
       S_THREAD_LOCAL_ZEROFILL               = 0x12u,
+      /// S_THREAD_LOCAL_VARIABLES - Section with thread local variable
+      /// structure data.
       S_THREAD_LOCAL_VARIABLES              = 0x13u,
+      /// S_THREAD_LOCAL_VARIABLE_POINTERS - Section with pointers to thread
+      /// local structures.
       S_THREAD_LOCAL_VARIABLE_POINTERS      = 0x14u,
+      /// S_THREAD_LOCAL_INIT_FUNCTION_POINTERS - Section with thread local
+      /// variable initialization pointers to functions.
       S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15u,
 
       LAST_KNOWN_SECTION_TYPE = S_THREAD_LOCAL_INIT_FUNCTION_POINTERS
@@ -182,18 +214,34 @@ namespace llvm {
     enum : uint32_t {
       // Constant masks for the "flags[31:24]" field in llvm::MachO::section and
       // llvm::MachO::section_64 (mask "flags" with SECTION_ATTRIBUTES_USR)
+
+      /// S_ATTR_PURE_INSTRUCTIONS - Section contains only true machine
+      /// instructions.
       S_ATTR_PURE_INSTRUCTIONS   = 0x80000000u,
+      /// S_ATTR_NO_TOC - Section contains coalesced symbols that are not to be
+      /// in a ranlib table of contents.
       S_ATTR_NO_TOC              = 0x40000000u,
+      /// S_ATTR_STRIP_STATIC_SYMS - Ok to strip static symbols in this section
+      /// in files with the MY_DYLDLINK flag.
       S_ATTR_STRIP_STATIC_SYMS   = 0x20000000u,
+      /// S_ATTR_NO_DEAD_STRIP - No dead stripping.
       S_ATTR_NO_DEAD_STRIP       = 0x10000000u,
+      /// S_ATTR_LIVE_SUPPORT - Blocks are live if they reference live blocks.
       S_ATTR_LIVE_SUPPORT        = 0x08000000u,
+      /// S_ATTR_SELF_MODIFYING_CODE - Used with i386 code stubs written on by
+      /// dyld.
       S_ATTR_SELF_MODIFYING_CODE = 0x04000000u,
+      /// S_ATTR_DEBUG - A debug section.
       S_ATTR_DEBUG               = 0x02000000u,
 
       // Constant masks for the "flags[23:8]" field in llvm::MachO::section and
       // llvm::MachO::section_64 (mask "flags" with SECTION_ATTRIBUTES_SYS)
+
+      /// S_ATTR_SOME_INSTRUCTIONS - Section contains some machine instructions.
       S_ATTR_SOME_INSTRUCTIONS   = 0x00000400u,
+      /// S_ATTR_EXT_RELOC - Section has external relocation entries.
       S_ATTR_EXT_RELOC           = 0x00000200u,
+      /// S_ATTR_LOC_RELOC - Section has local relocation entries.
       S_ATTR_LOC_RELOC           = 0x00000100u,
 
       // Constant masks for the value of an indirect symbol in an indirect
