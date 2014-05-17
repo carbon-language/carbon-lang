@@ -58,7 +58,7 @@ class Parser::CodeTokenizer {
 public:
   explicit CodeTokenizer(StringRef MatcherCode, Diagnostics *Error)
       : Code(MatcherCode), StartOfLine(MatcherCode), Line(1), Error(Error),
-        CodeCompletionLocation(0) {
+        CodeCompletionLocation(nullptr) {
     NextToken = getNextToken();
   }
 
@@ -90,7 +90,7 @@ private:
     if (CodeCompletionLocation && CodeCompletionLocation <= Code.data()) {
       Result.Kind = TokenInfo::TK_CodeCompletion;
       Result.Text = StringRef(CodeCompletionLocation, 0);
-      CodeCompletionLocation = 0;
+      CodeCompletionLocation = nullptr;
       return Result;
     }
 
@@ -143,7 +143,7 @@ private:
           // cause the portion of the identifier before the code completion
           // location to become a code completion token.
           if (CodeCompletionLocation == Code.data() + TokenLength) {
-            CodeCompletionLocation = 0;
+            CodeCompletionLocation = nullptr;
             Result.Kind = TokenInfo::TK_CodeCompletion;
             Result.Text = Code.substr(0, TokenLength);
             Code = Code.drop_front(TokenLength);
@@ -335,7 +335,7 @@ bool Parser::parseMatcherExpressionImpl(const TokenInfo &NameToken,
   TokenInfo EndToken;
 
   {
-    ScopedContextEntry SCE(this, Ctor ? *Ctor : 0);
+    ScopedContextEntry SCE(this, Ctor ? *Ctor : nullptr);
 
     while (Tokenizer->nextTokenKind() != TokenInfo::TK_Eof) {
       if (Tokenizer->nextTokenKind() == TokenInfo::TK_CloseParen) {

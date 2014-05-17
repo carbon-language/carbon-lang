@@ -149,8 +149,8 @@ public:
   /// would produce a trivial matcher that will either always or never match.
   /// Such matchers are excluded from code completion results.
   virtual bool isConvertibleTo(
-      ast_type_traits::ASTNodeKind Kind, unsigned *Specificity = 0,
-      ast_type_traits::ASTNodeKind *LeastDerivedKind = 0) const = 0;
+      ast_type_traits::ASTNodeKind Kind, unsigned *Specificity = nullptr,
+      ast_type_traits::ASTNodeKind *LeastDerivedKind = nullptr) const = 0;
 
   /// Returns whether the matcher will, given a matcher of any type T, yield a
   /// matcher of type T.

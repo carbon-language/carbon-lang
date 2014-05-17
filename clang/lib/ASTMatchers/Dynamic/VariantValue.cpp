@@ -71,7 +71,7 @@ public:
 
   virtual void makeTypedMatcher(MatcherOps &Ops) const {
     bool FoundIsExact = false;
-    const DynTypedMatcher *Found = NULL;
+    const DynTypedMatcher *Found = nullptr;
     int NumFound = 0;
     for (size_t i = 0, e = Matchers.size(); i != e; ++i) {
       bool IsExactMatch;
