@@ -8309,37 +8309,41 @@ isBetterOverloadCandidate(Sema &S,
     // specific_attr_iterator<EnableIfAttr> but going in declaration order,
     // instead of reverse order which is how they're stored in the AST.
     AttrVec Cand1Attrs;
-    AttrVec::iterator Cand1E = Cand1Attrs.end();
     if (Cand1.Function->hasAttrs()) {
       Cand1Attrs = Cand1.Function->getAttrs();
-      Cand1E = std::remove_if(Cand1Attrs.begin(), Cand1Attrs.end(),
-                              IsNotEnableIfAttr);
-      std::reverse(Cand1Attrs.begin(), Cand1E);
+      Cand1Attrs.erase(std::remove_if(Cand1Attrs.begin(), Cand1Attrs.end(),
+                                      IsNotEnableIfAttr),
+                       Cand1Attrs.end());
+      std::reverse(Cand1Attrs.begin(), Cand1Attrs.end());
     }
 
     AttrVec Cand2Attrs;
-    AttrVec::iterator Cand2E = Cand2Attrs.end();
     if (Cand2.Function->hasAttrs()) {
       Cand2Attrs = Cand2.Function->getAttrs();
-      Cand2E = std::remove_if(Cand2Attrs.begin(), Cand2Attrs.end(),
-                              IsNotEnableIfAttr);
-      std::reverse(Cand2Attrs.begin(), Cand2E);
+      Cand2Attrs.erase(std::remove_if(Cand2Attrs.begin(), Cand2Attrs.end(),
+                                      IsNotEnableIfAttr),
+                       Cand2Attrs.end());
+      std::reverse(Cand2Attrs.begin(), Cand2Attrs.end());
     }
-    for (AttrVec::iterator
-         Cand1I = Cand1Attrs.begin(), Cand2I = Cand2Attrs.begin();
-         Cand1I != Cand1E || Cand2I != Cand2E; ++Cand1I, ++Cand2I) {
-      if (Cand1I == Cand1E)
-        return false;
-      if (Cand2I == Cand2E)
-        return true;
+
+    // Candidate 1 is better if it has strictly more attributes and
+    // the common sequence is identical.
+    if (Cand1Attrs.size() <= Cand2Attrs.size())
+      return false;
+
+    auto Cand1I = Cand1Attrs.begin();
+    for (auto &Cand2A : Cand2Attrs) {
+      auto &Cand1A = *Cand1I++;
       llvm::FoldingSetNodeID Cand1ID, Cand2ID;
-      cast<EnableIfAttr>(*Cand1I)->getCond()->Profile(Cand1ID,
-                                                      S.getASTContext(), true);
-      cast<EnableIfAttr>(*Cand2I)->getCond()->Profile(Cand2ID,
-                                                      S.getASTContext(), true);
+      cast<EnableIfAttr>(Cand1A)->getCond()->Profile(Cand1ID,
+                                                     S.getASTContext(), true);
+      cast<EnableIfAttr>(Cand2A)->getCond()->Profile(Cand2ID,
+                                                     S.getASTContext(), true);
       if (Cand1ID != Cand2ID)
         return false;
     }
+
+    return true;
   }
 
   return false;
