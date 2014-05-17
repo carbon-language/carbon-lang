@@ -209,7 +209,7 @@ entry:
 ; X64-LABEL: t13:
 ; X64: 	punpcklqdq	%xmm0, %xmm1
 ; X64: 	pextrw	$3, %xmm1, %eax
-; X64: 	pshufd	$52, %xmm1, %xmm0
+; X64: 	pshufhw	$12, %xmm1, %xmm0
 ; X64: 	pinsrw	$4, %eax, %xmm0
 ; X64: 	ret
 }
