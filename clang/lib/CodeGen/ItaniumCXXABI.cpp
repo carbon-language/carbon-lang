@@ -1627,8 +1627,8 @@ void ItaniumCXXABI::EmitThreadLocalInitFuncs(
     if (VD->hasDefinition()) {
       InitIsInitFunc = true;
       if (InitFunc)
-        Init = new llvm::GlobalAlias(Var->getLinkage(), InitFnName.str(),
-                                     InitFunc);
+        Init = llvm::GlobalAlias::create(Var->getLinkage(), InitFnName.str(),
+                                         InitFunc);
     } else {
       // Emit a weak global function referring to the initialization function.
       // This function will not exist if the TU defining the thread_local
