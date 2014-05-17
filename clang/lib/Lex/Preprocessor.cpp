@@ -501,14 +501,13 @@ void Preprocessor::EndSourceFile() {
 /// identifier information for the token and install it into the token,
 /// updating the token kind accordingly.
 IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
-  assert(Identifier.getRawIdentifierData() != 0 && "No raw identifier data!");
+  assert(!Identifier.getRawIdentifier().empty() && "No raw identifier data!");
 
   // Look up this token, see if it is a macro, or if it is a language keyword.
   IdentifierInfo *II;
   if (!Identifier.needsCleaning() && !Identifier.hasUCN()) {
     // No cleaning needed, just use the characters from the lexed buffer.
-    II = getIdentifierInfo(StringRef(Identifier.getRawIdentifierData(),
-                                     Identifier.getLength()));
+    II = getIdentifierInfo(Identifier.getRawIdentifier());
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
     SmallString<64> IdentifierBuffer;

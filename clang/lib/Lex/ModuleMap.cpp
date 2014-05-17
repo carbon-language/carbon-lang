@@ -1055,10 +1055,11 @@ retry:
   L.LexFromRawLexer(LToken);
   Tok.Location = LToken.getLocation().getRawEncoding();
   switch (LToken.getKind()) {
-  case tok::raw_identifier:
-    Tok.StringData = LToken.getRawIdentifierData();
-    Tok.StringLength = LToken.getLength();
-    Tok.Kind = llvm::StringSwitch<MMToken::TokenKind>(Tok.getString())
+  case tok::raw_identifier: {
+    StringRef RI = LToken.getRawIdentifier();
+    Tok.StringData = RI.data();
+    Tok.StringLength = RI.size();
+    Tok.Kind = llvm::StringSwitch<MMToken::TokenKind>(RI)
                  .Case("config_macros", MMToken::ConfigMacros)
                  .Case("conflict", MMToken::Conflict)
                  .Case("exclude", MMToken::ExcludeKeyword)
@@ -1075,6 +1076,7 @@ retry:
                  .Case("use", MMToken::UseKeyword)
                  .Default(MMToken::Identifier);
     break;
+  }
 
   case tok::comma:
     Tok.Kind = MMToken::Comma;

@@ -5694,14 +5694,13 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
         break;
 
       MacroInfo *MI = 0;
-      if (Tok.is(tok::raw_identifier) &&
-          StringRef(Tok.getRawIdentifierData(), Tok.getLength()) == "define") {
+      if (Tok.is(tok::raw_identifier) && Tok.getRawIdentifier() == "define") {
         if (lexNext(Lex, Tok, NextIdx, NumTokens))
           break;
 
         if (Tok.is(tok::raw_identifier)) {
-          StringRef Name(Tok.getRawIdentifierData(), Tok.getLength());
-          IdentifierInfo &II = PP.getIdentifierTable().get(Name);
+          IdentifierInfo &II =
+              PP.getIdentifierTable().get(Tok.getRawIdentifier());
           SourceLocation MappedTokLoc =
               CXXUnit->mapLocationToPreamble(Tok.getLocation());
           MI = getMacroInfo(II, MappedTokLoc, TU);
@@ -6819,8 +6818,7 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
   if (!PPRec)
     return 0;
 
-  StringRef Name(Tok.getRawIdentifierData(), Tok.getLength());
-  IdentifierInfo &II = PP.getIdentifierTable().get(Name);
+  IdentifierInfo &II = PP.getIdentifierTable().get(Tok.getRawIdentifier());
   if (!II.hadMacroDefinition())
     return 0;
 

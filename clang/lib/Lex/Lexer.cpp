@@ -382,7 +382,7 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
   const char *TokStart = 0;
   // NOTE: this has to be checked *before* testing for an IdentifierInfo.
   if (Tok.is(tok::raw_identifier))
-    TokStart = Tok.getRawIdentifierData();
+    TokStart = Tok.getRawIdentifier().data();
   else if (!Tok.hasUCN()) {
     if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
       // Just return the string from the identifier table, which is very quick.
@@ -637,8 +637,7 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
       // the raw identifier to recognize and categorize preprocessor directives.
       TheLexer.LexFromRawLexer(TheTok);
       if (TheTok.getKind() == tok::raw_identifier && !TheTok.needsCleaning()) {
-        StringRef Keyword(TheTok.getRawIdentifierData(),
-                                TheTok.getLength());
+        StringRef Keyword = TheTok.getRawIdentifier();
         PreambleDirectiveKind PDK
           = llvm::StringSwitch<PreambleDirectiveKind>(Keyword)
               .Case("include", PDK_Skipped)

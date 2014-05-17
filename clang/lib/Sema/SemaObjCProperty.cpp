@@ -292,8 +292,7 @@ static bool LocPropertyAttribute( ASTContext &Context, const char *attrName,
   Token Tok;
   do {
     lexer.LexFromRawLexer(Tok);
-    if (Tok.is(tok::raw_identifier) &&
-        StringRef(Tok.getRawIdentifierData(), Tok.getLength()) == attrName) {
+    if (Tok.is(tok::raw_identifier) && Tok.getRawIdentifier() == attrName) {
       Loc = Tok.getLocation();
       return true;
     }

@@ -310,9 +310,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // to spell an i/e in a strange way that is another letter.  Skipping this
     // allows us to avoid looking up the identifier info for #define/#undef and
     // other common directives.
-    const char *RawCharData = Tok.getRawIdentifierData();
+    StringRef RI = Tok.getRawIdentifier();
 
-    char FirstChar = RawCharData[0];
+    char FirstChar = RI[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' &&
         FirstChar != 'i' && FirstChar != 'e') {
       CurPPLexer->ParsingPreprocessorDirective = false;
@@ -326,8 +326,8 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // when skipping.
     char DirectiveBuf[20];
     StringRef Directive;
-    if (!Tok.needsCleaning() && Tok.getLength() < 20) {
-      Directive = StringRef(RawCharData, Tok.getLength());
+    if (!Tok.needsCleaning() && RI.size() < 20) {
+      Directive = RI;
     } else {
       std::string DirectiveStr = getSpelling(Tok);
       unsigned IdLen = DirectiveStr.size();
