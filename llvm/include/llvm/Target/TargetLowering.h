@@ -2147,6 +2147,92 @@ public:
       NumFixedArgs(numFixedArgs), CallConv(callConv), Callee(callee),
       Args(&args), DAG(dag), DL(dl), CS(nullptr) {}
 
+    CallLoweringInfo(SelectionDAG &DAG)
+      : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
+        IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),
+        IsTailCall(false), NumFixedArgs(-1), CallConv(CallingConv::C),
+        Args(nullptr), DAG(DAG), CS(nullptr) {}
+
+    CallLoweringInfo &setDebugLoc(SDLoc dl) {
+      DL = dl;
+      return *this;
+    }
+
+    CallLoweringInfo &setChain(SDValue InChain) {
+      Chain = InChain;
+      return *this;
+    }
+
+    CallLoweringInfo &setCallee(CallingConv::ID CC, Type *ResultType,
+                                SDValue Target, ArgListTy *ArgsList,
+                                unsigned FixedArgs = -1) {
+      RetTy = ResultType;
+      Callee = Target;
+      CallConv = CC;
+      NumFixedArgs =
+        (FixedArgs == static_cast<unsigned>(-1) ? Args->size() : FixedArgs);
+      Args = ArgsList;
+      return *this;
+    }
+
+    CallLoweringInfo &setCallee(Type *ResultType, FunctionType *FTy,
+                                SDValue Target, ArgListTy *ArgsList,
+                                ImmutableCallSite &Call) {
+      RetTy = ResultType;
+
+      IsInReg = Call.paramHasAttr(0, Attribute::InReg);
+      DoesNotReturn = Call.doesNotReturn();
+      IsVarArg = FTy->isVarArg();
+      IsReturnValueUsed = !Call.getInstruction()->use_empty();
+      RetSExt = Call.paramHasAttr(0, Attribute::SExt);
+      RetZExt = Call.paramHasAttr(0, Attribute::ZExt);
+
+      Callee = Target;
+
+      CallConv = Call.getCallingConv();
+      NumFixedArgs = FTy->getNumParams();
+      Args = ArgsList;
+
+      CS = &Call;
+
+      return *this;
+    }
+
+    CallLoweringInfo &setInRegister(bool Value = true) {
+      IsInReg = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setNoReturn(bool Value = true) {
+      DoesNotReturn = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setVarArg(bool Value = true) {
+      IsVarArg = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setTailCall(bool Value = true) {
+      IsTailCall = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setDiscardResult(bool Value = true) {
+      IsReturnValueUsed = !Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setSExtResult(bool Value = true) {
+      RetSExt = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setZExtResult(bool Value = true) {
+      RetZExt = Value;
+      return *this;
+    }
+
     ArgListTy &getArgs() {
       assert(Args && "Arguments must be set before accessing them");
       return *Args;
