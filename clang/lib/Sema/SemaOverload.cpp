@@ -8250,26 +8250,15 @@ isBetterOverloadCandidate(Sema &S,
     // other. This only distinguishes the results in non-standard, extension
     // cases such as the conversion from a lambda closure type to a function
     // pointer or block.
-    ImplicitConversionSequence::CompareKind FuncResult
-      = compareConversionFunctions(S, Cand1.Function, Cand2.Function);
-    if (FuncResult != ImplicitConversionSequence::Indistinguishable)
-      return FuncResult;
+    ImplicitConversionSequence::CompareKind Result =
+        compareConversionFunctions(S, Cand1.Function, Cand2.Function);
+    if (Result == ImplicitConversionSequence::Indistinguishable)
+      Result = CompareStandardConversionSequences(S,
+                                                  Cand1.FinalConversion,
+                                                  Cand2.FinalConversion);
 
-    switch (CompareStandardConversionSequences(S,
-                                               Cand1.FinalConversion,
-                                               Cand2.FinalConversion)) {
-    case ImplicitConversionSequence::Better:
-      // Cand1 has a better conversion sequence.
-      return true;
-
-    case ImplicitConversionSequence::Worse:
-      // Cand1 can't be better than Cand2.
-      return false;
-
-    case ImplicitConversionSequence::Indistinguishable:
-      // Do nothing
-      break;
-    }
+    if (Result != ImplicitConversionSequence::Indistinguishable)
+      return Result == ImplicitConversionSequence::Better;
 
     // FIXME: Compare kind of reference binding if conversion functions
     // convert to a reference type used in direct reference binding, per

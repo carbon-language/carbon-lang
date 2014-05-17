@@ -85,6 +85,24 @@ namespace overloading {
   void call_with_lambda() {
     int &ir = accept_lambda_conv([](int x) { return x + 1; });
   }
+
+  template<typename T> using id = T;
+
+  auto a = [](){};
+  struct C : decltype(a) {
+    using decltype(a)::operator id<void(*)()>;
+  private:
+    using decltype(a)::operator id<void(^)()>;
+  } extern c;
+
+  struct D : decltype(a) {
+    using decltype(a)::operator id<void(^)()>;
+  private:
+    using decltype(a)::operator id<void(*)()>; // expected-note {{here}}
+  } extern d;
+
+  bool r1 = c;
+  bool r2 = d; // expected-error {{private}}
 }
 
 namespace PR13117 {
