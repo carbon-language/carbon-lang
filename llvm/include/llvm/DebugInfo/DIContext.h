@@ -70,7 +70,7 @@ class DIInliningInfo {
 /// should be filled with data.
 struct DILineInfoSpecifier {
   enum class FileLineInfoKind { None, Default, AbsoluteFilePath };
-  enum class FunctionNameKind { None, LinkageName };
+  enum class FunctionNameKind { None, ShortName, LinkageName };
 
   FileLineInfoKind FLIKind;
   FunctionNameKind FNKind;

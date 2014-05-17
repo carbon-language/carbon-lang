@@ -35,10 +35,15 @@ ClUseSymbolTable("use-symbol-table", cl::init(true),
                  cl::desc("Prefer names in symbol table to names "
                           "in debug info"));
 
-static cl::opt<bool>
-ClPrintFunctions("functions", cl::init(true),
-                 cl::desc("Print function names as well as line "
-                          "information for a given address"));
+static cl::opt<FunctionNameKind> ClPrintFunctions(
+    "functions", cl::init(FunctionNameKind::LinkageName),
+    cl::desc("Print function name for a given address:"),
+    cl::values(clEnumValN(FunctionNameKind::None, "none", "omit function name"),
+               clEnumValN(FunctionNameKind::ShortName, "short",
+                          "print short function name"),
+               clEnumValN(FunctionNameKind::LinkageName, "linkage",
+                          "print function linkage name"),
+               clEnumValEnd));
 
 static cl::opt<bool>
 ClPrintInlining("inlining", cl::init(true),

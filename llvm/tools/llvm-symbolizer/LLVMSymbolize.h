@@ -24,6 +24,7 @@
 
 namespace llvm {
 
+typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
 using namespace object;
 
 namespace symbolize {
@@ -34,17 +35,17 @@ class LLVMSymbolizer {
 public:
   struct Options {
     bool UseSymbolTable : 1;
-    bool PrintFunctions : 1;
+    FunctionNameKind PrintFunctions;
     bool PrintInlining : 1;
     bool Demangle : 1;
     std::string DefaultArch;
-    Options(bool UseSymbolTable = true, bool PrintFunctions = true,
+    Options(bool UseSymbolTable = true,
+            FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
             bool PrintInlining = true, bool Demangle = true,
             std::string DefaultArch = "")
         : UseSymbolTable(UseSymbolTable), PrintFunctions(PrintFunctions),
           PrintInlining(PrintInlining), Demangle(Demangle),
-          DefaultArch(DefaultArch) {
-    }
+          DefaultArch(DefaultArch) {}
   };
 
   LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}

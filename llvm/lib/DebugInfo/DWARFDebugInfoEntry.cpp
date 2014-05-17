@@ -277,13 +277,15 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
                                               FunctionNameKind Kind) const {
   if (!isSubroutineDIE() || Kind == FunctionNameKind::None)
     return nullptr;
-  // Try to get mangled name if possible.
-  if (const char *name =
-      getAttributeValueAsString(U, DW_AT_MIPS_linkage_name, nullptr))
-    return name;
-  if (const char *name = getAttributeValueAsString(U, DW_AT_linkage_name,
-                                                   nullptr))
-    return name;
+  // Try to get mangled name only if it was asked for.
+  if (Kind == FunctionNameKind::LinkageName) {
+    if (const char *name =
+            getAttributeValueAsString(U, DW_AT_MIPS_linkage_name, nullptr))
+      return name;
+    if (const char *name =
+            getAttributeValueAsString(U, DW_AT_linkage_name, nullptr))
+      return name;
+  }
   if (const char *name = getAttributeValueAsString(U, DW_AT_name, nullptr))
     return name;
   // Try to get name from specification DIE.

@@ -10,7 +10,7 @@ RUN: echo "%p/Inputs/macho-universal:i386 0x1f67" >> %t.input
 RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 RUN: echo "%p/Inputs/llvm-symbolizer-dwo-test 0x400514" >> %t.input
 
-RUN: llvm-symbolizer --functions --inlining --demangle=false \
+RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
 
 CHECK:       main
@@ -87,3 +87,9 @@ RUN: llvm-symbolizer --obj %p/Inputs/shared-object-stripped.elf-i386 < %t.input6
 RUN:   | FileCheck %s --check-prefix=STRIPPED
 
 STRIPPED:  global_func
+
+RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" > %t.input7
+RUN: llvm-symbolizer --functions=short --use-symbol-table=false --demangle=false < %t.input7 \
+RUN:    | FileCheck %s --check-prefix=SHORT_FUNCTION_NAME
+
+SHORT_FUNCTION_NAME-NOT: _Z1cv

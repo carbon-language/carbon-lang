@@ -61,11 +61,14 @@ OPTIONS
 -------
 
 .. option:: -obj
+
   Path to object file to be symbolized.
 
-.. option:: -functions
+.. option:: -functions=[none|short|linkage]
 
-  Print function names as well as source file/line locations. Defaults to true.
+  Specify the way function names are printed (omit function name,
+  print short function name, or print full linkage name, respectively).
+  Defaults to ``linkage``.
 
 .. option:: -use-symbol-table
 
