@@ -697,8 +697,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
   // Okay, create the alias but do not insert it into the module yet.
   std::unique_ptr<GlobalAlias> GA(
-      new GlobalAlias(Ty, (GlobalValue::LinkageTypes)Linkage, Name, Aliasee,
-                      /*Parent*/ nullptr, AddrSpace));
+      new GlobalAlias(Ty, AddrSpace, (GlobalValue::LinkageTypes)Linkage, Name,
+                      Aliasee, /*Parent*/ nullptr));
   GA->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GA->setDLLStorageClass((GlobalValue::DLLStorageClassTypes)DLLStorageClass);
 

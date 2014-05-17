@@ -213,9 +213,9 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 // GlobalAlias Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link, const Twine &Name,
-                         GlobalObject *Aliasee, Module *ParentModule,
-                         unsigned AddressSpace)
+GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Link,
+                         const Twine &Name, GlobalObject *Aliasee,
+                         Module *ParentModule)
     : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalAliasVal,
                   &Op<0>(), 1, Link, Name) {
   LeakDetector::addGarbageObject(this);
@@ -224,6 +224,23 @@ GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link, const Twine &Name,
   if (ParentModule)
     ParentModule->getAliasList().push_back(this);
 }
+
+GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
+                         const Twine &Name, Module *Parent)
+    : GlobalAlias(Ty, AddressSpace, Linkage, Name, nullptr, Parent) {}
+
+GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
+                         const Twine &Name, GlobalObject *Aliasee)
+    : GlobalAlias(Ty, AddressSpace, Linkage, Name, Aliasee,
+                  Aliasee->getParent()) {}
+
+GlobalAlias::GlobalAlias(LinkageTypes Link, const Twine &Name,
+                         GlobalObject *Aliasee)
+    : GlobalAlias(Aliasee->getType()->getElementType(),
+                  Aliasee->getType()->getAddressSpace(), Link, Name, Aliasee) {}
+
+GlobalAlias::GlobalAlias(const Twine &Name, GlobalObject *Aliasee)
+    : GlobalAlias(Aliasee->getLinkage(), Name, Aliasee) {}
 
 void GlobalAlias::setParent(Module *parent) {
   if (getParent())

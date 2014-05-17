@@ -274,8 +274,7 @@ TEST(ConstantsTest, ReplaceInAliasTest) {
 
   Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
   auto *Global = cast<GlobalObject>(M->getOrInsertGlobal("dummy", Int32Ty));
-  auto *GA = new GlobalAlias(Int32Ty, GlobalValue::ExternalLinkage, "alias",
-                             Global, M.get());
+  auto *GA = new GlobalAlias(GlobalValue::ExternalLinkage, "alias", Global);
   EXPECT_DEATH(Global->replaceAllUsesWith(GA),
                "replaceAliasUseWith cannot form an alias cycle");
 }

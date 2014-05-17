@@ -40,9 +40,22 @@ public:
   }
   /// If a parent module is specified, the alias is automatically inserted into
   /// the end of the specified module's alias list.
-  GlobalAlias(Type *Ty, LinkageTypes Linkage, const Twine &Name = "",
-              GlobalObject *Aliasee = nullptr, Module *Parent = nullptr,
-              unsigned AddressSpace = 0);
+  GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
+              const Twine &Name, GlobalObject *Aliasee, Module *Parent);
+
+  // Without the Aliasee.
+  GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
+              const Twine &Name, Module *Parent);
+
+  // The module is taken from the Aliasee.
+  GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
+              const Twine &Name, GlobalObject *Aliasee);
+
+  // Type, Parent and AddressSpace taken from the Aliasee.
+  GlobalAlias(LinkageTypes Linkage, const Twine &Name, GlobalObject *Aliasee);
+
+  // Linkage, Type, Parent and AddressSpace taken from the Aliasee.
+  GlobalAlias(const Twine &Name, GlobalObject *Aliasee);
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

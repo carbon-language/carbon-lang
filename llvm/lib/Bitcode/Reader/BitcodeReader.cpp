@@ -2004,8 +2004,8 @@ error_code BitcodeReader::ParseModule(bool Resume) {
         return Error(InvalidTypeForValue);
 
       auto *NewGA =
-          new GlobalAlias(PTy->getElementType(), GetDecodedLinkage(Record[2]),
-                          "", nullptr, TheModule, PTy->getAddressSpace());
+          new GlobalAlias(PTy->getElementType(), PTy->getAddressSpace(),
+                          GetDecodedLinkage(Record[2]), "", TheModule);
       // Old bitcode files didn't have visibility field.
       // Local linkage must have default visibility.
       if (Record.size() > 3 && !NewGA->hasLocalLinkage())
