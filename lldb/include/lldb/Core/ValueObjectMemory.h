@@ -47,6 +47,9 @@ public:
     virtual ConstString
     GetTypeName();
 
+    virtual ConstString
+    GetDisplayTypeName();
+    
     virtual size_t
     CalculateNumChildren();
 

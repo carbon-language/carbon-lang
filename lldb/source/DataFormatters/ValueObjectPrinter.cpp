@@ -222,7 +222,11 @@ ValueObjectPrinter::PrintTypeIfNeeded ()
     {
         // Some ValueObjects don't have types (like registers sets). Only print
         // the type if there is one to print
-        ConstString qualified_type_name(m_valobj->GetQualifiedTypeName());
+        ConstString qualified_type_name;
+        if (options.m_be_raw)
+            qualified_type_name = m_valobj->GetQualifiedTypeName();
+        else
+            qualified_type_name = m_valobj->GetDisplayTypeName();
         if (qualified_type_name)
             m_stream->Printf("(%s) ", qualified_type_name.GetCString());
         else

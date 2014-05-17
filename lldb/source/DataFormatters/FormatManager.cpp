@@ -185,7 +185,11 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
         reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
     }
     entries.push_back({type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
-    
+
+    ConstString display_type_name(clang_type.GetDisplayTypeName());
+    if (display_type_name != type_name)
+        entries.push_back({display_type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
+
     for (bool is_rvalue_ref = true, j = true; j && clang_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false)
     {
         ClangASTType non_ref_type = clang_type.GetNonReferenceType();

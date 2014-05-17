@@ -71,8 +71,6 @@ ValueObjectDynamicValue::GetTypeName()
     {
         if (m_dynamic_type_info.HasName())
             return m_dynamic_type_info.GetName();
-        if (m_dynamic_type_info.HasType())
-            return GetClangType().GetConstTypeName();
     }
     return m_parent->GetTypeName();
 }
@@ -96,10 +94,22 @@ ValueObjectDynamicValue::GetQualifiedTypeName()
     {
         if (m_dynamic_type_info.HasName())
             return m_dynamic_type_info.GetName();
-        if (m_dynamic_type_info.HasType())
-            return GetClangType().GetConstQualifiedTypeName ();
     }
-    return m_parent->GetTypeName();
+    return m_parent->GetQualifiedTypeName();
+}
+
+ConstString
+ValueObjectDynamicValue::GetDisplayTypeName()
+{
+    const bool success = UpdateValueIfNeeded(false);
+    if (success)
+    {
+        if (m_dynamic_type_info.HasType())
+            return GetClangType().GetDisplayTypeName();
+        if (m_dynamic_type_info.HasName())
+            return m_dynamic_type_info.GetName();
+    }
+    return m_parent->GetDisplayTypeName();
 }
 
 size_t

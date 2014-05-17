@@ -378,6 +378,31 @@ SBValue::GetTypeName ()
     return name;
 }
 
+const char *
+SBValue::GetDisplayTypeName ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    const char *name = NULL;
+    ValueLocker locker;
+    lldb::ValueObjectSP value_sp(GetSP(locker));
+    if (value_sp)
+    {
+        name = value_sp->GetDisplayTypeName().GetCString();
+    }
+    
+    if (log)
+    {
+        if (name)
+            log->Printf ("SBValue(%p)::GetTypeName () => \"%s\"",
+                         static_cast<void*>(value_sp.get()), name);
+        else
+            log->Printf ("SBValue(%p)::GetTypeName () => NULL",
+                         static_cast<void*>(value_sp.get()));
+    }
+    
+    return name;
+}
+
 size_t
 SBValue::GetByteSize ()
 {

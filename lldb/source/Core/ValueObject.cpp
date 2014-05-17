@@ -1953,6 +1953,12 @@ ValueObject::GetTypeName()
 }
 
 ConstString
+ValueObject::GetDisplayTypeName()
+{
+    return GetTypeName();
+}
+
+ConstString
 ValueObject::GetQualifiedTypeName()
 {
     return GetClangType().GetConstQualifiedTypeName();

@@ -1053,6 +1053,14 @@ TypeImpl::GetName ()  const
     return m_static_type.GetName ();
 }
 
+ConstString
+TypeImpl::GetDisplayTypeName ()  const
+{
+    if (m_dynamic_type)
+        return m_dynamic_type.GetDisplayTypeName();
+    return m_static_type.GetDisplayTypeName();
+}
+
 TypeImpl
 TypeImpl::GetPointerType () const
 {

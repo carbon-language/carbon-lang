@@ -161,6 +161,9 @@ public:
     const char*
     GetName();
     
+    const char *
+    GetDisplayTypeName ();
+    
     lldb::TypeClass
     GetTypeClass ();
     

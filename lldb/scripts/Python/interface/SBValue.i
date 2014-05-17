@@ -81,6 +81,9 @@ public:
 
     const char *
     GetTypeName ();
+    
+    const char *
+    GetDisplayTypeName ();
 
     size_t
     GetByteSize ();

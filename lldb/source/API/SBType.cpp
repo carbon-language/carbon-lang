@@ -414,6 +414,14 @@ SBType::GetName()
     return m_opaque_sp->GetName().GetCString();
 }
 
+const char *
+SBType::GetDisplayTypeName ()
+{
+    if (!IsValid())
+        return "";
+    return m_opaque_sp->GetDisplayTypeName().GetCString();
+}
+
 lldb::TypeClass
 SBType::GetTypeClass ()
 {

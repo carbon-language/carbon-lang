@@ -101,6 +101,12 @@ ValueObjectSynthetic::GetQualifiedTypeName()
     return m_parent->GetQualifiedTypeName();
 }
 
+ConstString
+ValueObjectSynthetic::GetDisplayTypeName()
+{
+    return m_parent->GetDisplayTypeName();
+}
+
 size_t
 ValueObjectSynthetic::CalculateNumChildren()
 {

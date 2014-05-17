@@ -1243,6 +1243,11 @@ ClangASTType::GetTypeName () const
     return ConstString(type_name);
 }
 
+ConstString
+ClangASTType::GetDisplayTypeName () const
+{
+    return GetTypeName();
+}
 
 uint32_t
 ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const

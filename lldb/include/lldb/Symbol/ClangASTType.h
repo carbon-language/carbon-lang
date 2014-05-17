@@ -264,6 +264,9 @@ public:
     ConstString
     GetTypeName () const;
 
+    ConstString
+    GetDisplayTypeName () const;
+
     uint32_t
     GetTypeInfo (ClangASTType *pointee_or_element_clang_type = NULL) const;
     

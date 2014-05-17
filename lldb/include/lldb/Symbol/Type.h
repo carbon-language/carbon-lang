@@ -368,6 +368,16 @@ public:
         return ConstString ();
     }
     
+    ConstString
+    GetDisplayTypeName () const
+    {
+        if (type_sp)
+            return type_sp->GetClangForwardType().GetDisplayTypeName();
+        if (clang_type)
+            return clang_type.GetDisplayTypeName();
+        return ConstString();
+    }
+    
     void
     SetType (ClangASTType type)
     {
@@ -510,6 +520,9 @@ public:
     
     ConstString
     GetName ()  const;
+    
+    ConstString
+    GetDisplayTypeName ()  const;
     
     TypeImpl
     GetPointerType () const;

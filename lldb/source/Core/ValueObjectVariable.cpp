@@ -73,6 +73,15 @@ ValueObjectVariable::GetTypeName()
 }
 
 ConstString
+ValueObjectVariable::GetDisplayTypeName()
+{
+    Type * var_type = m_variable_sp->GetType();
+    if (var_type)
+        return var_type->GetClangForwardType().GetDisplayTypeName();
+    return ConstString();
+}
+
+ConstString
 ValueObjectVariable::GetQualifiedTypeName()
 {
     Type * var_type = m_variable_sp->GetType();

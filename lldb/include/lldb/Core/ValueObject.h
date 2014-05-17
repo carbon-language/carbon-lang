@@ -395,6 +395,9 @@ public:
     GetTypeName();
     
     virtual ConstString
+    GetDisplayTypeName();
+    
+    virtual ConstString
     GetQualifiedTypeName();
 
     virtual lldb::LanguageType

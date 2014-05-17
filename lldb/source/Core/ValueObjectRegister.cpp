@@ -55,6 +55,12 @@ ValueObjectRegisterContext::GetTypeName()
 }
 
 ConstString
+ValueObjectRegisterContext::GetDisplayTypeName()
+{
+    return ConstString();
+}
+
+ConstString
 ValueObjectRegisterContext::GetQualifiedTypeName()
 {
     return ConstString();

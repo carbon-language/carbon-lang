@@ -66,25 +66,29 @@ ValueObjectChild::CalculateNumChildren()
     return GetClangType().GetNumChildren (true);
 }
 
+static void
+AdjustForBitfieldness(ConstString& name,
+                      uint8_t bitfield_bit_size)
+{
+    if (name && bitfield_bit_size)
+    {
+        const char *clang_type_name = name.AsCString();
+        if (clang_type_name)
+        {
+            std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
+            ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, bitfield_bit_size);
+            name.SetCString(&bitfield_type_name.front());
+        }
+    }
+}
+
 ConstString
 ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
         m_type_name = GetClangType().GetConstTypeName ();
-        if (m_type_name)
-        {
-            if (m_bitfield_bit_size > 0)
-            {
-                const char *clang_type_name = m_type_name.AsCString();
-                if (clang_type_name)
-                {
-                    std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
-                    ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, m_bitfield_bit_size);
-                    m_type_name.SetCString(&bitfield_type_name.front());
-                }
-            }
-        }
+        AdjustForBitfieldness(m_type_name, m_bitfield_bit_size);
     }
     return m_type_name;
 }
@@ -93,20 +97,16 @@ ConstString
 ValueObjectChild::GetQualifiedTypeName()
 {
     ConstString qualified_name = GetClangType().GetConstTypeName();
-    if (qualified_name)
-    {
-        if (m_bitfield_bit_size > 0)
-        {
-            const char *clang_type_name = qualified_name.AsCString();
-            if (clang_type_name)
-            {
-                std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
-                ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, m_bitfield_bit_size);
-                qualified_name.SetCString(&bitfield_type_name.front());
-            }
-        }
-    }
+    AdjustForBitfieldness(qualified_name, m_bitfield_bit_size);
     return qualified_name;
+}
+
+ConstString
+ValueObjectChild::GetDisplayTypeName()
+{
+    ConstString display_name = GetClangType().GetDisplayTypeName();
+    AdjustForBitfieldness(display_name, m_bitfield_bit_size);
+    return display_name;
 }
 
 bool
