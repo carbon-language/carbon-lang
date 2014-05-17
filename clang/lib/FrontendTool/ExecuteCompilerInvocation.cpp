@@ -144,7 +144,8 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 #endif
   
 #ifdef CLANG_ENABLE_ARCMT
-  if (CI.getFrontendOpts().ProgramAction != frontend::MigrateSource) {
+  if (CI.getFrontendOpts().ProgramAction != frontend::MigrateSource &&
+      CI.getFrontendOpts().ProgramAction != frontend::GeneratePCH) {
     // Potentially wrap the base FE action in an ARC Migrate Tool action.
     switch (FEOpts.ARCMTAction) {
     case FrontendOptions::ARCMT_None:
