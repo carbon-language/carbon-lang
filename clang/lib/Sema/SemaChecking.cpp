@@ -3961,11 +3961,11 @@ static bool CheckMemorySizeofForComparison(Sema &S, const Expr *E,
   SourceRange SizeRange = Size->getSourceRange();
   S.Diag(Size->getOperatorLoc(), diag::warn_memsize_comparison)
       << SizeRange << FnName;
-  S.Diag(FnLoc, diag::warn_memsize_comparison_paren_note)
+  S.Diag(FnLoc, diag::note_memsize_comparison_paren)
       << FnName << FixItHint::CreateInsertion(
                        S.getLocForEndOfToken(Size->getLHS()->getLocEnd()), ")")
       << FixItHint::CreateRemoval(RParenLoc);
-  S.Diag(SizeRange.getBegin(), diag::warn_memsize_comparison_cast_note)
+  S.Diag(SizeRange.getBegin(), diag::note_memsize_comparison_cast_silence)
       << FixItHint::CreateInsertion(SizeRange.getBegin(), "(size_t)(")
       << FixItHint::CreateInsertion(S.getLocForEndOfToken(SizeRange.getEnd()),
                                     ")");

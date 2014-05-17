@@ -324,7 +324,7 @@ namespace narrowing {
   template<typename T> T v = {1234};  // expected-warning {{implicit conversion from 'int' to 'char' changes value from 1234 to}}
 #ifndef PRECXX11
   // expected-error@-2 {{constant expression evaluates to 1234 which cannot be narrowed to type 'char'}}\
-  // expected-note@-2 {{override this message by inserting an explicit cast}}
+  // expected-note@-2 {{insert an explicit cast to silence this issue}}
 #endif
   int k = v<char>;        // expected-note {{in instantiation of variable template specialization 'narrowing::v<char>' requested here}}
 }

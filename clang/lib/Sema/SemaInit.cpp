@@ -7054,7 +7054,7 @@ static void DiagnoseNarrowingInInitList(Sema &S,
     return;
   }
   OS << ">(";
-  S.Diag(PostInit->getLocStart(), diag::note_init_list_narrowing_override)
+  S.Diag(PostInit->getLocStart(), diag::note_init_list_narrowing_silence)
       << PostInit->getSourceRange()
       << FixItHint::CreateInsertion(PostInit->getLocStart(), OS.str())
       << FixItHint::CreateInsertion(

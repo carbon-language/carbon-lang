@@ -8,16 +8,16 @@ void std_example() {
   const int y = 999;
   const int z = 99;
   char c1 = x;  // OK, though it might narrow (in this case, it does narrow)
-  char c2{x};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  char c3{y};  // expected-error {{ cannot be narrowed }} expected-note {{override}} expected-warning {{changes value}}
+  char c2{x};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  char c3{y};  // expected-error {{ cannot be narrowed }} expected-note {{silence}} expected-warning {{changes value}}
   char c4{z};  // OK: no narrowing needed
   unsigned char uc1 = {5};  // OK: no narrowing needed
-  unsigned char uc2 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  unsigned int ui1 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  unsigned char uc2 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  unsigned int ui1 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   signed int si1 =
-    { (unsigned int)-1 };  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  int ii = {2.0};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  float f1 { x };  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+    { (unsigned int)-1 };  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  int ii = {2.0};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  float f1 { x };  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   float f2 { 7 };  // OK: 7 can be exactly represented as a float
   int f(int);
   int a[] =
@@ -44,19 +44,19 @@ template<typename T> Convert<T> ConvertVar();
 // * from a floating-point type to an integer type, or
 
 void float_to_int() {
-  Agg<char> a1 = {1.0F};  // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{override}}
-  Agg<char> a2 = {1.0};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<char> a3 = {1.0L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<char> a1 = {1.0F};  // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{silence}}
+  Agg<char> a2 = {1.0};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<char> a3 = {1.0L};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
   float f = 1.0;
   double d = 1.0;
   long double ld = 1.0;
-  Agg<char> a4 = {f};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<char> a5 = {d};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<char> a6 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<char> a4 = {f};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<char> a5 = {d};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<char> a6 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
-  Agg<char> ce1 = { Convert<float>(1.0) }; // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{override}}
-  Agg<char> ce2 = { ConvertVar<double>() }; // expected-error {{type 'double' cannot be narrowed to 'char'}} expected-note {{override}}
+  Agg<char> ce1 = { Convert<float>(1.0) }; // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{silence}}
+  Agg<char> ce2 = { ConvertVar<double>() }; // expected-error {{type 'double' cannot be narrowed to 'char'}} expected-note {{silence}}
 }
 
 // * from long double to double or float, or from double to float, except where
@@ -72,8 +72,8 @@ void shrink_float() {
 
   // Variables.
   Agg<float> f1 = {f};  // OK  (no-op)
-  Agg<float> f2 = {d};  // expected-error {{non-constant-expression cannot be narrowed from type 'double' to 'float'}} expected-note {{override}}
-  Agg<float> f3 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f2 = {d};  // expected-error {{non-constant-expression cannot be narrowed from type 'double' to 'float'}} expected-note {{silence}}
+  Agg<float> f3 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   // Exact constants.
   Agg<float> f4 = {1.0};  // OK  (double constant represented exactly)
   Agg<float> f5 = {1.0L};  // OK  (long double constant represented exactly)
@@ -81,8 +81,8 @@ void shrink_float() {
   Agg<float> f6 = {0.1};  // OK (double constant in range but rounded)
   Agg<float> f7 = {0.1L};  // OK (long double constant in range but rounded)
   // Out of range constants.
-  Agg<float> f8 = {1E50};  // expected-error {{constant expression evaluates to 1.000000e+50 which cannot be narrowed to type 'float'}} expected-note {{override}}
-  Agg<float> f9 = {1E50L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f8 = {1E50};  // expected-error {{constant expression evaluates to 1.000000e+50 which cannot be narrowed to type 'float'}} expected-note {{silence}}
+  Agg<float> f9 = {1E50L};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   // More complex constant expression.
   constexpr long double e40 = 1E40L, e30 = 1E30L, e39 = 1E39L;
   Agg<float> f10 = {e40 - 5 * e39 + e30 - 5 * e39};  // OK
@@ -90,19 +90,19 @@ void shrink_float() {
   // Variables.
   Agg<double> d1 = {f};  // OK  (widening)
   Agg<double> d2 = {d};  // OK  (no-op)
-  Agg<double> d3 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<double> d3 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   // Exact constant.
   Agg<double> d4 = {1.0L};  // OK  (long double constant represented exactly)
   // Inexact but in-range constant.
   Agg<double> d5 = {0.1L};  // OK (long double constant in range but rounded)
   // Out of range constant.
-  Agg<double> d6 = {1E315L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<double> d6 = {1E315L};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   // More complex constant expression.
   constexpr long double e315 = 1E315L, e305 = 1E305L, e314 = 1E314L;
   Agg<double> d7 = {e315 - 5 * e314 + e305 - 5 * e314};  // OK
 
-  Agg<float> ce1 = { Convert<double>(1e300) }; // expected-error {{constant expression evaluates to 1.000000e+300 which cannot be narrowed to type 'float'}} expected-note {{override}}
-  Agg<double> ce2 = { ConvertVar<long double>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long double' to 'double'}} expected-note {{override}}
+  Agg<float> ce1 = { Convert<double>(1e300) }; // expected-error {{constant expression evaluates to 1.000000e+300 which cannot be narrowed to type 'float'}} expected-note {{silence}}
+  Agg<double> ce2 = { ConvertVar<long double>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long double' to 'double'}} expected-note {{silence}}
 }
 
 // * from an integer type or unscoped enumeration type to a floating-point type,
@@ -114,16 +114,16 @@ void int_to_float() {
   char c = 1;
 
   // Variables.  Yes, even though all char's will fit into any floating type.
-  Agg<float> f1 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<double> f2 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<long double> f3 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f1 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<double> f2 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<long double> f3 = {c};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
   // Constants.
   Agg<float> f4 = {12345678};  // OK (exactly fits in a float)
-  Agg<float> f5 = {123456789};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f5 = {123456789};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
-  Agg<float> ce1 = { Convert<int>(123456789) }; // expected-error {{constant expression evaluates to 123456789 which cannot be narrowed to type 'float'}} expected-note {{override}}
-  Agg<double> ce2 = { ConvertVar<long long>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long long' to 'double'}} expected-note {{override}}
+  Agg<float> ce1 = { Convert<int>(123456789) }; // expected-error {{constant expression evaluates to 123456789 which cannot be narrowed to type 'float'}} expected-note {{silence}}
+  Agg<double> ce2 = { ConvertVar<long long>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long long' to 'double'}} expected-note {{silence}}
 }
 
 // * from an integer type or unscoped enumeration type to an integer type that
@@ -135,53 +135,53 @@ void shrink_int() {
   // Not a constant expression.
   short s = 1;
   unsigned short us = 1;
-  Agg<char> c1 = {s};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<unsigned short> s1 = {s};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<short> s2 = {us};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<char> c1 = {s};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<unsigned short> s1 = {s};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<short> s2 = {us};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
   // "that cannot represent all the values of the original type" means that the
   // validity of the program depends on the relative sizes of integral types.
   // This test compiles with -m64, so sizeof(int)<sizeof(long)==sizeof(long
   // long).
   long l1 = 1;
-  Agg<int> i1 = {l1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<int> i1 = {l1};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
   long long ll = 1;
   Agg<long> l2 = {ll};  // OK
 
   // Constants.
   Agg<char> c2 = {127};  // OK
-  Agg<char> c3 = {300};  // expected-error {{ cannot be narrowed }} expected-note {{override}} expected-warning {{changes value}}
+  Agg<char> c3 = {300};  // expected-error {{ cannot be narrowed }} expected-note {{silence}} expected-warning {{changes value}}
 
   Agg<int> i2 = {0x7FFFFFFFU};  // OK
-  Agg<int> i3 = {0x80000000U};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<unsigned int> i4 = {-0x80000000L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<int> i3 = {0x80000000U};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<unsigned int> i4 = {-0x80000000L};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
   // Bool is also an integer type, but conversions to it are a different AST
   // node.
   Agg<bool> b1 = {0};  // OK
   Agg<bool> b2 = {1};  // OK
-  Agg<bool> b3 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<bool> b3 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
 
   // Conversions from pointers to booleans aren't narrowing conversions.
   Agg<bool>* ptr = &b1;
   Agg<bool> b = {ptr};  // OK
 
-  Agg<short> ce1 = { Convert<int>(100000) }; // expected-error {{constant expression evaluates to 100000 which cannot be narrowed to type 'short'}} expected-note {{override}} expected-warning {{changes value from 100000 to -31072}}
-  Agg<char> ce2 = { ConvertVar<short>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'short' to 'char'}} expected-note {{override}}
+  Agg<short> ce1 = { Convert<int>(100000) }; // expected-error {{constant expression evaluates to 100000 which cannot be narrowed to type 'short'}} expected-note {{silence}} expected-warning {{changes value from 100000 to -31072}}
+  Agg<char> ce2 = { ConvertVar<short>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'short' to 'char'}} expected-note {{silence}}
 
   // Negative -> larger unsigned type.
-  unsigned long long ll1 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
+  unsigned long long ll1 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{silence}}
   unsigned long long ll2 = { 1 }; // OK
-  unsigned long long ll3 = { s }; // expected-error {{cannot be narrowed from type 'short'}} expected-note {{override}}
+  unsigned long long ll3 = { s }; // expected-error {{cannot be narrowed from type 'short'}} expected-note {{silence}}
   unsigned long long ll4 = { us }; // OK
-  unsigned long long ll5 = { ll }; // expected-error {{cannot be narrowed from type 'long long'}} expected-note {{override}}
-  Agg<unsigned long long> ll6 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
+  unsigned long long ll5 = { ll }; // expected-error {{cannot be narrowed from type 'long long'}} expected-note {{silence}}
+  Agg<unsigned long long> ll6 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{silence}}
   Agg<unsigned long long> ll7 = { 18446744073709551615ULL }; // OK
-  Agg<unsigned long long> ll8 = { __int128(18446744073709551615ULL) + 1 }; // expected-error {{ 18446744073709551616 which cannot be narrowed}} expected-note {{override}} expected-warning {{changes value}}
+  Agg<unsigned long long> ll8 = { __int128(18446744073709551615ULL) + 1 }; // expected-error {{ 18446744073709551616 which cannot be narrowed}} expected-note {{silence}} expected-warning {{changes value}}
   signed char c = 'x';
-  unsigned short usc1 = { c }; // expected-error {{non-constant-expression cannot be narrowed from type 'signed char'}} expected-note {{override}}
+  unsigned short usc1 = { c }; // expected-error {{non-constant-expression cannot be narrowed from type 'signed char'}} expected-note {{silence}}
   unsigned short usc2 = { (signed char)'x' }; // OK
-  unsigned short usc3 = { (signed char)-1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
+  unsigned short usc3 = { (signed char)-1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{silence}}
 }
 
 // Be sure that type- and value-dependent expressions in templates get the error
@@ -189,9 +189,9 @@ void shrink_int() {
 
 template<int I, typename T>
 void maybe_shrink_int(T t) {
-  Agg<short> s1 = {t};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
-  Agg<short> s2 = {I};  // expected-error {{ cannot be narrowed }} expected-note {{override}} expected-warning {{changes value}}
-  Agg<T> t2 = {700};  // expected-error {{ cannot be narrowed }} expected-note {{override}} expected-warning {{changes value}}
+  Agg<short> s1 = {t};  // expected-error {{ cannot be narrowed }} expected-note {{silence}}
+  Agg<short> s2 = {I};  // expected-error {{ cannot be narrowed }} expected-note {{silence}} expected-warning {{changes value}}
+  Agg<T> t2 = {700};  // expected-error {{ cannot be narrowed }} expected-note {{silence}} expected-warning {{changes value}}
 }
 
 void test_template() {
@@ -204,9 +204,9 @@ void test_template() {
 
 void test_qualifiers(int i) {
   const int j = i;
-  struct {const unsigned char c;} c1 = {j};  // expected-error {{from type 'int' to 'unsigned char' in}} expected-note {{override}}
+  struct {const unsigned char c;} c1 = {j};  // expected-error {{from type 'int' to 'unsigned char' in}} expected-note {{silence}}
   // Template arguments make it harder to avoid printing qualifiers:
-  Agg<const unsigned char> c2 = {j};  // expected-error {{from type 'int' to 'const unsigned char' in}} expected-note {{override}}
+  Agg<const unsigned char> c2 = {j};  // expected-error {{from type 'int' to 'const unsigned char' in}} expected-note {{silence}}
 }
 
 // Test SFINAE checks.

@@ -75,8 +75,8 @@ namespace objects {
     { F<0> f = {}; }
     // Narrowing conversions don't affect viability. The next two choose
     // the initializer_list constructor.
-    { F<3> f{1, 1.0}; } // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
-    { F<3> f = {1, 1.0}; } // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
+    { F<3> f{1, 1.0}; } // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{silence}}
+    { F<3> f = {1, 1.0}; } // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{silence}}
     { F<3> f{1, 2, 3, 4, 5, 6, 7, 8}; }
     { F<3> f = {1, 2, 3, 4, 5, 6, 7, 8}; }
     { F<3> f{1, 2, 3, 4, 5, 6, 7, 8}; }

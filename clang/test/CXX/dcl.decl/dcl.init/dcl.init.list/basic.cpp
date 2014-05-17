@@ -8,9 +8,9 @@ namespace PR12453 {
   template<typename T>
   void f(int i) {
     T x{i}; // expected-error{{non-constant-expression cannot be narrowed from type 'int' to 'float' in initializer list}} \
-    // expected-note{{override this message by inserting an explicit cast}}
+    // expected-note{{insert an explicit cast to silence this issue}}
     T y{i}; // expected-error{{non-constant-expression cannot be narrowed from type 'int' to 'float' in initializer list}} \
-    // expected-note{{override this message by inserting an explicit cast}}
+    // expected-note{{insert an explicit cast to silence this issue}}
   }
 
   template void f<float>(int); // expected-note{{in instantiation of function template specialization 'PR12453::f<float>' requested here}}

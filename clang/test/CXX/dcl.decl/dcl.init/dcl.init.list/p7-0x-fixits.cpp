@@ -26,7 +26,7 @@ void test_template() {
   maybe_shrink_int((char)3);
   // CHECK: warning:{{.*}} cannot be narrowed
   // CHECK: note:{{.*}} in instantiation
-  // CHECK: note:{{.*}} override
+  // CHECK: note:{{.*}} silence
   // FIXME: This should be static_cast<T>.
   // CHECK: fix-it:{{.*}}"static_cast<char>("
   // CHECK: fix-it:{{.*}}")"
