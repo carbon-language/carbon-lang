@@ -62,14 +62,15 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            TranslationUnitKind TUKind)
     : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(0),
       FileMgr(Headers.getFileMgr()), SourceMgr(SM), HeaderInfo(Headers),
-      TheModuleLoader(TheModuleLoader), ExternalSource(0),
+      TheModuleLoader(TheModuleLoader), ExternalSource(nullptr),
       Identifiers(opts, IILookup), IncrementalProcessing(false), TUKind(TUKind),
-      CodeComplete(0), CodeCompletionFile(0), CodeCompletionOffset(0),
-      LastTokenWasAt(false), ModuleImportExpectsIdentifier(false),
-      CodeCompletionReached(0), SkipMainFilePreamble(0, true), CurPPLexer(0),
-      CurDirLookup(0), CurLexerKind(CLK_Lexer), CurSubmodule(0), Callbacks(0),
-      MacroArgCache(0), Record(0), MIChainHead(0), MICache(0),
-      DeserialMIChainHead(0) {
+      CodeComplete(nullptr), CodeCompletionFile(nullptr),
+      CodeCompletionOffset(0), LastTokenWasAt(false),
+      ModuleImportExpectsIdentifier(false), CodeCompletionReached(0),
+      SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
+      CurDirLookup(nullptr), CurLexerKind(CLK_Lexer), CurSubmodule(nullptr),
+      Callbacks(nullptr), MacroArgCache(nullptr), Record(nullptr),
+      MIChainHead(nullptr), MICache(nullptr), DeserialMIChainHead(0) {
   OwnsHeaderSearch = OwnsHeaders;
   
   ScratchBuf = new ScratchBuffer(SourceMgr);
@@ -127,9 +128,11 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
     Ident___abnormal_termination = getIdentifierInfo("__abnormal_termination");
     Ident_AbnormalTermination    = getIdentifierInfo("AbnormalTermination");
   } else {
-    Ident__exception_info = Ident__exception_code = Ident__abnormal_termination = 0;
-    Ident___exception_info = Ident___exception_code = Ident___abnormal_termination = 0;
-    Ident_GetExceptionInfo = Ident_GetExceptionCode = Ident_AbnormalTermination = 0;
+    Ident__exception_info = Ident__exception_code = nullptr;
+    Ident__abnormal_termination = Ident___exception_info = nullptr;
+    Ident___exception_code = Ident___abnormal_termination = nullptr;
+    Ident_GetExceptionInfo = Ident_GetExceptionCode = nullptr;
+    Ident_AbnormalTermination = nullptr;
   }
 }
 
@@ -438,8 +441,8 @@ void Preprocessor::CreateString(StringRef Str, Token &Tok,
 
 Module *Preprocessor::getCurrentModule() {
   if (getLangOpts().CurrentModule.empty())
-    return 0;
-  
+    return nullptr;
+
   return getHeaderSearchInfo().lookupModule(getLangOpts().CurrentModule);
 }
 
@@ -461,8 +464,8 @@ void Preprocessor::EnterMainSourceFile() {
   // a main file.
   if (!SourceMgr.isLoadedFileID(MainFileID)) {
     // Enter the main file source buffer.
-    EnterSourceFile(MainFileID, 0, SourceLocation());
-  
+    EnterSourceFile(MainFileID, nullptr, SourceLocation());
+
     // If we've been asked to skip bytes in the main file (e.g., as part of a
     // precompiled preamble), do so now.
     if (SkipMainFilePreamble.first > 0)
@@ -484,7 +487,7 @@ void Preprocessor::EnterMainSourceFile() {
   setPredefinesFileID(FID);
 
   // Start parsing the predefines.
-  EnterSourceFile(FID, 0, SourceLocation());
+  EnterSourceFile(FID, nullptr, SourceLocation());
 }
 
 void Preprocessor::EndSourceFile() {
@@ -630,7 +633,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
   // then we act as if it is the actual operator and not the textual
   // representation of it.
   if (II.isCPlusPlusOperatorKeyword())
-    Identifier.setIdentifierInfo(0);
+    Identifier.setIdentifierInfo(nullptr);
 
   // If this is an extension token, diagnose its use.
   // We avoid diagnosing tokens that originate from macro definitions.

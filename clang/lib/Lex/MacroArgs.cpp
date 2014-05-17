@@ -27,7 +27,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              bool VarargsElided, Preprocessor &PP) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-  MacroArgs **ResultEnt = 0;
+  MacroArgs **ResultEnt = nullptr;
   unsigned ClosestMatch = ~0U;
   
   // See if we have an entry with a big enough argument list to reuse on the
@@ -46,7 +46,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
     }
   
   MacroArgs *Result;
-  if (ResultEnt == 0) {
+  if (!ResultEnt) {
     // Allocate memory for a MacroArgs object with the lexer tokens at the end.
     Result = (MacroArgs*)malloc(sizeof(MacroArgs) + 
                                 UnexpArgTokens.size() * sizeof(Token));

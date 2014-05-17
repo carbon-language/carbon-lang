@@ -379,7 +379,7 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
                             const LangOptions &LangOpts, bool *Invalid) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
 
-  const char *TokStart = 0;
+  const char *TokStart = nullptr;
   // NOTE: this has to be checked *before* testing for an IdentifierInfo.
   if (Tok.is(tok::raw_identifier))
     TokStart = Tok.getRawIdentifier().data();
@@ -395,7 +395,7 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
   if (Tok.isLiteral())
     TokStart = Tok.getLiteralData();
 
-  if (TokStart == 0) {
+  if (!TokStart) {
     // Compute the start of the token in the input lexer buffer.
     bool CharDataInvalid = false;
     TokStart = SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
@@ -1286,7 +1286,7 @@ Slash:
   if (Ptr[0] == '?' && Ptr[1] == '?') {
     // If this is actually a legal trigraph (not something like "??x"), emit
     // a trigraph warning.  If so, and if trigraphs are enabled, return it.
-    if (char C = DecodeTrigraphChar(Ptr+2, Tok ? this : 0)) {
+    if (char C = DecodeTrigraphChar(Ptr+2, Tok ? this : nullptr)) {
       // Remember that this token needs to be cleaned.
       if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
@@ -1449,7 +1449,7 @@ static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
 bool Lexer::tryConsumeIdentifierUCN(const char *&CurPtr, unsigned Size,
                                     Token &Result) {
   const char *UCNPtr = CurPtr + Size;
-  uint32_t CodePoint = tryReadUCN(UCNPtr, CurPtr, /*Token=*/0);
+  uint32_t CodePoint = tryReadUCN(UCNPtr, CurPtr, /*Token=*/nullptr);
   if (CodePoint == 0 || !isAllowedIDChar(CodePoint, LangOpts))
     return false;
 
@@ -1732,7 +1732,8 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr,
 /// either " or L" or u8" or u" or U".
 bool Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
                              tok::TokenKind Kind) {
-  const char *NulCharacter = 0; // Does this string contain the \0 character?
+  // Does this string contain the \0 character?
+  const char *NulCharacter = nullptr;
 
   if (!isLexingRawMode() &&
       (Kind == tok::utf8_string_literal ||
@@ -1868,7 +1869,8 @@ bool Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
 /// LexAngledStringLiteral - Lex the remainder of an angled string literal,
 /// after having lexed the '<' character.  This is used for #include filenames.
 bool Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
-  const char *NulCharacter = 0; // Does this string contain the \0 character?
+  // Does this string contain the \0 character?
+  const char *NulCharacter = nullptr;
   const char *AfterLessPos = CurPtr;
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '>') {
@@ -1905,7 +1907,8 @@ bool Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
 /// lexed either ' or L' or u' or U'.
 bool Lexer::LexCharConstant(Token &Result, const char *CurPtr,
                             tok::TokenKind Kind) {
-  const char *NulCharacter = 0; // Does this character contain the \0 character?
+  // Does this character contain the \0 character?
+  const char *NulCharacter = nullptr;
 
   if (!isLexingRawMode() &&
       (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant))
@@ -2606,7 +2609,7 @@ static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd,
     }
     return RestOfBuffer.data()+Pos;
   }
-  return 0;
+  return nullptr;
 }
 
 /// IsStartOfConflictMarker - If the specified pointer is the start of a version
@@ -2916,7 +2919,7 @@ bool Lexer::LexTokenInternal(Token &Result, bool TokAtPhysicalStartOfLine) {
 LexNextToken:
   // New token, can't need cleaning yet.
   Result.clearFlag(Token::NeedsCleaning);
-  Result.setIdentifierInfo(0);
+  Result.setIdentifierInfo(nullptr);
 
   // CurPtr - Cache BufferPtr in an automatic variable.
   const char *CurPtr = BufferPtr;

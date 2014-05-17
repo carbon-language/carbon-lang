@@ -79,10 +79,10 @@ static inline unsigned HashHMapKey(StringRef Str) {
 const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
   // If the file is too small to be a header map, ignore it.
   unsigned FileSize = FE->getSize();
-  if (FileSize <= sizeof(HMapHeader)) return 0;
+  if (FileSize <= sizeof(HMapHeader)) return nullptr;
 
   std::unique_ptr<const llvm::MemoryBuffer> FileBuffer(FM.getBufferForFile(FE));
-  if (!FileBuffer) return 0;  // Unreadable file?
+  if (!FileBuffer) return nullptr;  // Unreadable file?
   const char *FileStart = FileBuffer->getBufferStart();
 
   // We know the file is at least as big as the header, check it now.
@@ -98,9 +98,9 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
            Header->Version == llvm::ByteSwap_16(HMAP_HeaderVersion))
     NeedsByteSwap = true;  // Mixed endianness headermap.
   else
-    return 0;  // Not a header map.
+    return nullptr;  // Not a header map.
 
-  if (Header->Reserved != 0) return 0;
+  if (Header->Reserved != 0) return nullptr;
 
   // Okay, everything looks good, create the header map.
   return new HeaderMap(FileBuffer.release(), NeedsByteSwap);
@@ -165,7 +165,7 @@ const char *HeaderMap::getString(unsigned StrTabIdx) const {
 
   // Check for invalid index.
   if (StrTabIdx >= FileBuffer->getBufferSize())
-    return 0;
+    return nullptr;
 
   // Otherwise, we have a valid pointer into the file.  Just return it.  We know
   // that the "string" can not overrun the end of the file, because the buffer
@@ -205,7 +205,7 @@ const FileEntry *HeaderMap::LookupFile(
   SmallString<1024> Path;
   StringRef Dest = lookupFilename(Filename, Path);
   if (Dest.empty())
-    return 0;
+    return nullptr;
 
   return FM.getFile(Dest);
 }

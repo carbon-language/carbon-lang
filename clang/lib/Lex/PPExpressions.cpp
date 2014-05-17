@@ -104,7 +104,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   }
   
   // If we don't have a pp-identifier now, this is an error.
-  if ((II = PeekTok.getIdentifierInfo()) == 0) {
+  if ((II = PeekTok.getIdentifierInfo()) == nullptr) {
     PP.Diag(PeekTok, diag::err_pp_defined_requires_identifier);
     return true;
   }
@@ -113,7 +113,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   Result.Val = II->hasMacroDefinition();
   Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
 
-  MacroDirective *Macro = 0;
+  MacroDirective *Macro = nullptr;
   // If there is a macro, mark it used.
   if (Result.Val != 0 && ValueLive) {
     Macro = PP.getMacroDirective(II);

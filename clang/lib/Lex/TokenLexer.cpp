@@ -86,8 +86,8 @@ void TokenLexer::Init(const Token *TokArray, unsigned NumToks,
   // associated with it.
   destroy();
 
-  Macro = 0;
-  ActualArgs = 0;
+  Macro = nullptr;
+  ActualArgs = nullptr;
   Tokens = TokArray;
   OwnsTokens = ownsTokens;
   DisableMacroExpansion = disableMacroExpansion;
@@ -113,7 +113,7 @@ void TokenLexer::destroy() {
   // the expanded tokens.
   if (OwnsTokens) {
     delete [] Tokens;
-    Tokens = 0;
+    Tokens = nullptr;
     OwnsTokens = false;
   }
 
@@ -480,7 +480,7 @@ bool TokenLexer::Lex(Token &Tok) {
   HasLeadingSpace = false;
 
   // Handle recursive expansion!
-  if (!Tok.isAnnotation() && Tok.getIdentifierInfo() != 0) {
+  if (!Tok.isAnnotation() && Tok.getIdentifierInfo() != nullptr) {
     // Change the kind of this identifier to the appropriate token kind, e.g.
     // turning "for" into a keyword.
     IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -507,7 +507,7 @@ bool TokenLexer::Lex(Token &Tok) {
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
   SmallString<128> Buffer;
-  const char *ResultTokStrPtr = 0;
+  const char *ResultTokStrPtr = nullptr;
   SourceLocation StartLoc = Tok.getLocation();
   SourceLocation PasteOpLoc;
   do {

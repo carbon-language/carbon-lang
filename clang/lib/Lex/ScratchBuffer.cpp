@@ -21,7 +21,8 @@ using namespace clang;
 //than a page, almost certainly enough for anything. :)
 static const unsigned ScratchBufSize = 4060;
 
-ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
+ScratchBuffer::ScratchBuffer(SourceManager &SM)
+    : SourceMgr(SM), CurBuffer(nullptr) {
   // Set BytesUsed so that the first call to getToken will require an alloc.
   BytesUsed = ScratchBufSize;
 }

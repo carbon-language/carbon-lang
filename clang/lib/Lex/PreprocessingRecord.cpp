@@ -40,7 +40,7 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
 
 PreprocessingRecord::PreprocessingRecord(SourceManager &SM)
   : SourceMgr(SM),
-    ExternalSource(0) {
+    ExternalSource(nullptr) {
 }
 
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
@@ -334,7 +334,7 @@ PreprocessedEntity *PreprocessingRecord::getPreprocessedEntity(PPEntityID PPID){
   }
 
   if (PPID.ID == 0)
-    return 0;
+    return nullptr;
   unsigned Index = PPID.ID - 1;
   assert(Index < PreprocessedEntities.size() &&
          "Out-of bounds local preprocessed entity");
@@ -361,7 +361,7 @@ MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
   llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
     = MacroDefinitions.find(MI);
   if (Pos == MacroDefinitions.end())
-    return 0;
+    return nullptr;
 
   return Pos->second;
 }

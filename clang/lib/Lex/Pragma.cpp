@@ -59,7 +59,7 @@ PragmaHandler *PragmaNamespace::FindHandler(StringRef Name,
                                             bool IgnoreNull) const {
   if (PragmaHandler *Handler = Handlers.lookup(Name))
     return Handler;
-  return IgnoreNull ? 0 : Handlers.lookup(StringRef());
+  return IgnoreNull ? nullptr : Handlers.lookup(StringRef());
 }
 
 void PragmaNamespace::AddPragma(PragmaHandler *Handler) {
@@ -88,7 +88,7 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
     = FindHandler(Tok.getIdentifierInfo() ? Tok.getIdentifierInfo()->getName()
                                           : StringRef(),
                   /*IgnoreNull=*/false);
-  if (Handler == 0) {
+  if (!Handler) {
     PP.Diag(Tok, diag::warn_pragma_ignored);
     return;
   }
@@ -290,7 +290,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, PragmaLoc, RParenLoc,
                                         StrVal.size(), *this);
 
-  EnterSourceFileWithLexer(TL, 0);
+  EnterSourceFileWithLexer(TL, nullptr);
 
   // With everything set up, lex this as a #pragma directive.
   HandlePragmaDirective(PragmaLoc, PIK__Pragma);
@@ -473,8 +473,9 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   // Search include directories for this file.
   const DirectoryLookup *CurDir;
   const FileEntry *File = LookupFile(FilenameTok.getLocation(), Filename,
-                                     isAngled, 0, CurDir, NULL, NULL, NULL);
-  if (File == 0) {
+                                     isAngled, nullptr, CurDir, nullptr,
+                                     nullptr, nullptr);
+  if (!File) {
     if (!SuppressIncludeNotFoundError)
       Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
@@ -510,7 +511,7 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   if (Tok.isNot(tok::l_paren)) {
     Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
       << getSpelling(PragmaTok);
-    return 0;
+    return nullptr;
   }
 
   // Read the macro name string.
@@ -518,12 +519,12 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   if (Tok.isNot(tok::string_literal)) {
     Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
       << getSpelling(PragmaTok);
-    return 0;
+    return nullptr;
   }
 
   if (Tok.hasUDSuffix()) {
     Diag(Tok, diag::err_invalid_string_udl);
-    return 0;
+    return nullptr;
   }
 
   // Remember the macro string.
@@ -534,7 +535,7 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   if (Tok.isNot(tok::r_paren)) {
     Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
       << getSpelling(PragmaTok);
-    return 0;
+    return nullptr;
   }
 
   assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
@@ -736,7 +737,7 @@ void Preprocessor::AddPragmaHandler(StringRef Namespace,
     // we already have the namespace to insert into.
     if (PragmaHandler *Existing = PragmaHandlers->FindHandler(Namespace)) {
       InsertNS = Existing->getIfNamespace();
-      assert(InsertNS != 0 && "Cannot have a pragma namespace and pragma"
+      assert(InsertNS != nullptr && "Cannot have a pragma namespace and pragma"
              " handler with the same name!");
     } else {
       // Otherwise, this namespace doesn't exist yet, create and insert the
