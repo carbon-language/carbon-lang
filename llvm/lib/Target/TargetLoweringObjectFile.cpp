@@ -62,7 +62,7 @@ static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
     return false;
 
   // If the global has an explicit section specified, don't put it in BSS.
-  if (!GV->getSection().empty())
+  if (GV->hasSection())
     return false;
 
   // If -nozero-initialized-in-bss is specified, don't ever use BSS.
