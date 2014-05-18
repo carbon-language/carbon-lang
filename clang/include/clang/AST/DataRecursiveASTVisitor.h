@@ -2129,7 +2129,9 @@ DEF_TRAVERSE_STMT(BlockExpr, {
   return true; // no child statements to loop through.
 })
 DEF_TRAVERSE_STMT(ChooseExpr, {})
-DEF_TRAVERSE_STMT(CompoundLiteralExpr, {})
+DEF_TRAVERSE_STMT(CompoundLiteralExpr, {
+  TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
+})
 DEF_TRAVERSE_STMT(CXXBindTemporaryExpr, {})
 DEF_TRAVERSE_STMT(CXXBoolLiteralExpr, {})
 DEF_TRAVERSE_STMT(CXXDefaultArgExpr, {})
