@@ -89,13 +89,9 @@ public:
       return StringRef(Data.data() + StartOfFile, getSize());
     }
 
-    error_code getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
-                               bool FullPath = false) const;
     error_code getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
                                bool FullPath = false) const;
 
-    error_code getAsBinary(OwningPtr<Binary> &Result,
-                           LLVMContext *Context = nullptr) const;
     error_code getAsBinary(std::unique_ptr<Binary> &Result,
                            LLVMContext *Context = nullptr) const;
   };

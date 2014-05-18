@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileOutputBuffer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -83,16 +82,6 @@ error_code FileOutputBuffer::create(StringRef FilePath,
     MappedFile.release();
 
   return error_code::success();
-}
-
-error_code FileOutputBuffer::create(StringRef FilePath,
-                                    size_t Size,
-                                    OwningPtr<FileOutputBuffer> &Result,
-                                    unsigned Flags) {
-  std::unique_ptr<FileOutputBuffer> FOB;
-  error_code ec = create(FilePath, Size, FOB, Flags);
-  Result = std::move(FOB);
-  return ec;
 }
 
 error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {

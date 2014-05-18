@@ -24,7 +24,6 @@
 namespace llvm {
 
 class error_code;
-template<class T> class OwningPtr;
 
 /// MemoryBuffer - This interface provides simple read-only access to a block
 /// of memory, and provides simple methods for reading files and standard input
@@ -71,10 +70,6 @@ public:
   /// \param IsVolatileSize Set to true to indicate that the file size may be
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
-  static error_code getFile(Twine Filename, OwningPtr<MemoryBuffer> &Result,
-                            int64_t FileSize = -1,
-                            bool RequiresNullTerminator = true,
-                            bool IsVolatileSize = false);
   static error_code getFile(Twine Filename,
                             std::unique_ptr<MemoryBuffer> &Result,
                             int64_t FileSize = -1,
@@ -89,10 +84,6 @@ public:
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
   static error_code getOpenFileSlice(int FD, const char *Filename,
-                                     OwningPtr<MemoryBuffer> &Result,
-                                     uint64_t MapSize, int64_t Offset,
-                                     bool IsVolatileSize = false);
-  static error_code getOpenFileSlice(int FD, const char *Filename,
                                      std::unique_ptr<MemoryBuffer> &Result,
                                      uint64_t MapSize, int64_t Offset,
                                      bool IsVolatileSize = false);
@@ -103,11 +94,6 @@ public:
   /// \param IsVolatileSize Set to true to indicate that the file size may be
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
-  static error_code getOpenFile(int FD, const char *Filename,
-                                OwningPtr<MemoryBuffer> &Result,
-                                uint64_t FileSize,
-                                bool RequiresNullTerminator = true,
-                                bool IsVolatileSize = false);
   static error_code getOpenFile(int FD, const char *Filename,
                                 std::unique_ptr<MemoryBuffer> &Result,
                                 uint64_t FileSize,
@@ -141,16 +127,12 @@ public:
 
   /// getSTDIN - Read all of stdin into a file buffer, and return it.
   /// If an error occurs, this returns null and sets ec.
-  static error_code getSTDIN(OwningPtr<MemoryBuffer> &Result);
   static error_code getSTDIN(std::unique_ptr<MemoryBuffer> &Result);
 
 
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and sets
   /// ec.
-  static error_code getFileOrSTDIN(StringRef Filename,
-                                   OwningPtr<MemoryBuffer> &Result,
-                                   int64_t FileSize = -1);
   static error_code getFileOrSTDIN(StringRef Filename,
                                    std::unique_ptr<MemoryBuffer> &Result,
                                    int64_t FileSize = -1);

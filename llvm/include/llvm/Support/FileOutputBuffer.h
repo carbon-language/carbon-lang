@@ -14,7 +14,6 @@
 #ifndef LLVM_SUPPORT_FILEOUTPUTBUFFER_H
 #define LLVM_SUPPORT_FILEOUTPUTBUFFER_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
@@ -40,9 +39,6 @@ public:
   /// Factory method to create an OutputBuffer object which manages a read/write
   /// buffer of the specified size. When committed, the buffer will be written
   /// to the file at the specified path.
-  static error_code create(StringRef FilePath, size_t Size,
-                           OwningPtr<FileOutputBuffer> &Result,
-                           unsigned Flags = 0);
   static error_code create(StringRef FilePath, size_t Size,
                            std::unique_ptr<FileOutputBuffer> &Result,
                            unsigned Flags = 0);

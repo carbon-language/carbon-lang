@@ -13,7 +13,6 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Endian.h"
@@ -183,14 +182,6 @@ error_code Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result
   return error_code::success();
 }
 
-error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
-                                           bool FullPath) const {
-  std::unique_ptr<MemoryBuffer> MB;
-  error_code ec = getMemoryBuffer(MB, FullPath);
-  Result = std::move(MB);
-  return ec;
-}
-
 error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
                                        LLVMContext *Context) const {
   std::unique_ptr<Binary> ret;
@@ -202,14 +193,6 @@ error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
     return EC;
   Result.reset(BinaryOrErr.get());
   return object_error::success;
-}
-
-error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result,
-                                       LLVMContext *Context) const {
-  std::unique_ptr<Binary> B;
-  error_code ec = getAsBinary(B, Context);
-  Result = std::move(B);
-  return ec;
 }
 
 ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {
