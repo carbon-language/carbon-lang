@@ -107,7 +107,7 @@ namespace clang {
 /// Note that since WalkUpFromFoo() calls WalkUpFromBar() (where Bar
 /// is Foo's super class) before calling VisitFoo(), the result is
 /// that the Visit*() methods for a given node are called in the
-/// top-down order (e.g. for a node of type NamedDecl, the order will
+/// top-down order (e.g. for a node of type NamespaceDecl, the order will
 /// be VisitDecl(), VisitNamedDecl(), and then VisitNamespaceDecl()).
 ///
 /// This scheme guarantees that all Visit*() calls for the same AST
@@ -462,16 +462,16 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   if (!S)
     return true;
 
-  StmtsTy Queue, StmtsToEnqueu;
+  StmtsTy Queue, StmtsToEnqueue;
   Queue.push_back(S);
-  NewQueueRAII NQ(StmtsToEnqueu, *this);
+  NewQueueRAII NQ(StmtsToEnqueue, *this);
 
   while (!Queue.empty()) {
     S = Queue.pop_back_val();
     if (!S)
       continue;
 
-    StmtsToEnqueu.clear();
+    StmtsToEnqueue.clear();
 
 #define DISPATCH_STMT(NAME, CLASS, VAR)                                        \
   TRY_TO(Traverse##NAME(static_cast<CLASS *>(VAR)));                           \
@@ -522,8 +522,8 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
       }
     }
 
-    for (SmallVectorImpl<Stmt *>::reverse_iterator RI = StmtsToEnqueu.rbegin(),
-                                                   RE = StmtsToEnqueu.rend();
+    for (SmallVectorImpl<Stmt *>::reverse_iterator RI = StmtsToEnqueue.rbegin(),
+                                                   RE = StmtsToEnqueue.rend();
          RI != RE; ++RI)
       Queue.push_back(*RI);
   }
@@ -810,9 +810,9 @@ DEF_TRAVERSE_TYPE(MemberPointerType, {
   TRY_TO(TraverseType(T->getPointeeType()));
 })
 
-DEF_TRAVERSE_TYPE(DecayedType, { TRY_TO(TraverseType(T->getOriginalType())); })
-
 DEF_TRAVERSE_TYPE(AdjustedType, { TRY_TO(TraverseType(T->getOriginalType())); })
+
+DEF_TRAVERSE_TYPE(DecayedType, { TRY_TO(TraverseType(T->getOriginalType())); })
 
 DEF_TRAVERSE_TYPE(ConstantArrayType,
                   { TRY_TO(TraverseType(T->getElementType())); })
@@ -1637,6 +1637,8 @@ bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
   return true;
 }
 
+DEF_TRAVERSE_DECL(MSPropertyDecl, { TRY_TO(TraverseDeclaratorHelper(D)); })
+
 DEF_TRAVERSE_DECL(FieldDecl, {
   TRY_TO(TraverseDeclaratorHelper(D));
   if (D->isBitField())
@@ -1644,8 +1646,6 @@ DEF_TRAVERSE_DECL(FieldDecl, {
   else if (D->hasInClassInitializer())
     TRY_TO(TraverseStmt(D->getInClassInitializer()));
 })
-
-DEF_TRAVERSE_DECL(MSPropertyDecl, { TRY_TO(TraverseDeclaratorHelper(D)); })
 
 DEF_TRAVERSE_DECL(ObjCAtDefsFieldDecl, {
   TRY_TO(TraverseDeclaratorHelper(D));
