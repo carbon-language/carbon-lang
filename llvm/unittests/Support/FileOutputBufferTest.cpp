@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileOutputBuffer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -38,7 +37,7 @@ TEST(FileOutputBuffer, Test) {
   SmallString<128> File1(TestDirectory);
 	File1.append("/file1");
   {
-    OwningPtr<FileOutputBuffer> Buffer;
+    std::unique_ptr<FileOutputBuffer> Buffer;
     ASSERT_NO_ERROR(FileOutputBuffer::create(File1, 8192, Buffer));
     // Start buffer with special header.
     memcpy(Buffer->getBufferStart(), "AABBCCDDEEFFGGHHIIJJ", 20);
@@ -62,7 +61,7 @@ TEST(FileOutputBuffer, Test) {
   SmallString<128> File2(TestDirectory);
 	File2.append("/file2");
   {
-    OwningPtr<FileOutputBuffer> Buffer2;
+    std::unique_ptr<FileOutputBuffer> Buffer2;
     ASSERT_NO_ERROR(FileOutputBuffer::create(File2, 8192, Buffer2));
     // Fill buffer with special header.
     memcpy(Buffer2->getBufferStart(), "AABBCCDDEEFFGGHHIIJJ", 20);
@@ -78,7 +77,7 @@ TEST(FileOutputBuffer, Test) {
   SmallString<128> File3(TestDirectory);
 	File3.append("/file3");
   {
-    OwningPtr<FileOutputBuffer> Buffer;
+    std::unique_ptr<FileOutputBuffer> Buffer;
     ASSERT_NO_ERROR(FileOutputBuffer::create(File3, 8192000, Buffer));
     // Start buffer with special header.
     memcpy(Buffer->getBufferStart(), "AABBCCDDEEFFGGHHIIJJ", 20);
@@ -102,7 +101,7 @@ TEST(FileOutputBuffer, Test) {
   SmallString<128> File4(TestDirectory);
 	File4.append("/file4");
   {
-    OwningPtr<FileOutputBuffer> Buffer;
+    std::unique_ptr<FileOutputBuffer> Buffer;
     ASSERT_NO_ERROR(FileOutputBuffer::create(File4, 8192, Buffer,
                                               FileOutputBuffer::F_executable));
     // Start buffer with special header.

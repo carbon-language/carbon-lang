@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileSystem.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
@@ -36,7 +35,7 @@ protected:
   /// anew before using MemoryBuffer.
   void testGetOpenFileSlice(bool Reopen);
 
-  typedef OwningPtr<MemoryBuffer> OwningBuffer;
+  typedef std::unique_ptr<MemoryBuffer> OwningBuffer;
 
   std::string data;
 };
