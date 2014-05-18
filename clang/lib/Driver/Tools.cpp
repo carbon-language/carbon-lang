@@ -3451,6 +3451,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-no-restrict-it");
     }
+  } else if (TT.isOSWindows() && (TT.getArch() == llvm::Triple::arm ||
+                                  TT.getArch() == llvm::Triple::thumb)) {
+    // Windows on ARM expects restricted IT blocks
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-arm-restrict-it");
   }
 
   // Forward -f options with positive and negative forms; we translate
