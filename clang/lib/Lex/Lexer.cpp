@@ -10,19 +10,6 @@
 //  This file implements the Lexer and Token interfaces.
 //
 //===----------------------------------------------------------------------===//
-//
-// TODO: GCC Diagnostics emitted by the lexer:
-// PEDWARN: (form feed|vertical tab) in preprocessing directive
-//
-// Universal characters, unicode, char mapping:
-// WARNING: `%.*s' is not in NFKC
-// WARNING: `%.*s' is not in NFC
-//
-// Other:
-// TODO: Options to support:
-//    -fexec-charset,-fwide-exec-charset
-//
-//===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Lexer.h"
 #include "UnicodeCharSets.h"
@@ -174,7 +161,7 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
 /// expansion location that indicates where all lexed tokens should be
 /// "expanded from".
 ///
-/// FIXME: It would really be nice to make _Pragma just be a wrapper around a
+/// TODO: It would really be nice to make _Pragma just be a wrapper around a
 /// normal lexer that remaps tokens as they fly by.  This would require making
 /// Preprocessor::Lex virtual.  Given that, we could just dump in a magic lexer
 /// interface that could handle this stuff.  This would pull GetMappedTokenLoc
@@ -3385,7 +3372,7 @@ LexNextToken:
         // We parsed a # character.  If this occurs at the start of the line,
         // it's actually the start of a preprocessing directive.  Callback to
         // the preprocessor to handle it.
-        // FIXME: -fpreprocessed mode??
+        // TODO: -fpreprocessed mode??
         if (TokAtPhysicalStartOfLine && !LexingRawMode && !Is_PragmaLexer)
           goto HandleDirective;
 
@@ -3551,7 +3538,7 @@ LexNextToken:
       // We parsed a # character.  If this occurs at the start of the line,
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
-      // FIXME: -fpreprocessed mode??
+      // TODO: -fpreprocessed mode??
       if (TokAtPhysicalStartOfLine && !LexingRawMode && !Is_PragmaLexer)
         goto HandleDirective;
 
