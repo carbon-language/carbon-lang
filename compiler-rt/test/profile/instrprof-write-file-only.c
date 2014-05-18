@@ -4,6 +4,7 @@
 // RUN: %clang_profuse=%t.profdata -o - -S -emit-llvm %s | FileCheck %s
 
 int __llvm_profile_runtime = 0;
+void __llvm_profile_initialize_file(void);
 int __llvm_profile_write_file(void);
 void __llvm_profile_set_filename(const char *);
 int foo(int);
@@ -12,6 +13,10 @@ int main(int argc, const char *argv[]) {
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
   if (argc > 1)
     return 1;
+
+  // Since the runtime has been suppressed, initialize the file name, as the
+  // writing will fail below as the file name has not been specified.
+  __llvm_profile_initialize_file();
 
   // Write out the profile.
   __llvm_profile_write_file();
