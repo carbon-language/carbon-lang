@@ -990,10 +990,10 @@ DEF_TRAVERSE_TYPELOC(MemberPointerType, {
   TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
 })
 
-DEF_TRAVERSE_TYPELOC(DecayedType,
+DEF_TRAVERSE_TYPELOC(AdjustedType,
                      { TRY_TO(TraverseTypeLoc(TL.getOriginalLoc())); })
 
-DEF_TRAVERSE_TYPELOC(AdjustedType,
+DEF_TRAVERSE_TYPELOC(DecayedType,
                      { TRY_TO(TraverseTypeLoc(TL.getOriginalLoc())); })
 
 template <typename Derived>
@@ -2047,6 +2047,10 @@ DEF_TRAVERSE_STMT(CXXTypeidExpr, {
     TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
 })
 
+DEF_TRAVERSE_STMT(MSPropertyRefExpr, {
+  TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
+})
+
 DEF_TRAVERSE_STMT(CXXUuidofExpr, {
   // The child-iterator will pick up the arg if it's an expression,
   // but not if it's a type.
@@ -2195,7 +2199,6 @@ DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
   }
 })
 
-DEF_TRAVERSE_STMT(MSPropertyRefExpr, {})
 DEF_TRAVERSE_STMT(SEHTryStmt, {})
 DEF_TRAVERSE_STMT(SEHExceptStmt, {})
 DEF_TRAVERSE_STMT(SEHFinallyStmt, {})
