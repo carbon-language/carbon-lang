@@ -44,9 +44,13 @@
 using namespace llvm;
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMSubtarget &sti)
-  : ARMGenRegisterInfo(ARM::LR, 0, 0, ARM::PC), STI(sti),
-    FramePtr((STI.isTargetMachO() || STI.isThumb()) ? ARM::R7 : ARM::R11),
-    BasePtr(ARM::R6) {
+    : ARMGenRegisterInfo(ARM::LR, 0, 0, ARM::PC), STI(sti), BasePtr(ARM::R6) {
+  if (STI.isTargetMachO())
+    FramePtr = ARM::R7;
+  else if (STI.isTargetWindows())
+    FramePtr = ARM::R11;
+  else // ARM EABI
+    FramePtr = STI.isThumb() ? ARM::R7 : ARM::R11;
 }
 
 const MCPhysReg*
