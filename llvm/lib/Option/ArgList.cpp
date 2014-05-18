@@ -41,14 +41,9 @@ void ArgList::append(Arg *A) {
 }
 
 void ArgList::eraseArg(OptSpecifier Id) {
-  for (iterator it = begin(), ie = end(); it != ie; ) {
-    if ((*it)->getOption().matches(Id)) {
-      it = Args.erase(it);
-      ie = end();
-    } else {
-      ++it;
-    }
-  }
+  Args.erase(std::remove_if(begin(), end(),
+                            [=](Arg *A) { return A->getOption().matches(Id); }),
+             end());
 }
 
 Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
