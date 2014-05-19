@@ -496,7 +496,7 @@ class LldbGdbServerTestCase(TestBase):
         self.add_get_pid()
         self.test_sequence.add_log_lines(
             ["read packet: $k#6b",
-             "send packet: $W09#00"],
+             "send packet: $X09#00"],
             True)
         self.expect_gdbremote_sequence()
 

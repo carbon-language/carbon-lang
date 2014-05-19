@@ -1799,6 +1799,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
         break;
 
     case 'W':
+    case 'X':
         // process exited
         return eStateExited;
 
