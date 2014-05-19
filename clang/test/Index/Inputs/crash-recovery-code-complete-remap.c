@@ -4,8 +4,6 @@
 // RUN:   %s 2> %t.err
 // RUN: FileCheck < %t.err -check-prefix=CHECK-CODE-COMPLETE-CRASH %s
 // CHECK-CODE-COMPLETE-CRASH: Unable to reparse translation unit
-//
-// XFAIL: win32
 
 #warning parsing original file
 
