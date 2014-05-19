@@ -131,6 +131,21 @@ class LldbGdbServerTestCase(TestBase):
               { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
             True)
 
+    def add_register_info_collection_packets(self):
+        self.test_sequence.add_log_lines(
+            [ { "type":"multi_response", "query":"qRegisterInfo", "append_iteration_suffix":True,
+              "end_regex":re.compile(r"^\$(E\d+)?#[0-9a-fA-F]{2}$"),
+              "save_key":"reg_info_responses" } ],
+            True)
+
+    def parse_register_info_packets(self, context):
+        """Return an array of register info dictionaries, one per register info."""
+        reg_info_responses = context.get("reg_info_responses")
+        self.assertIsNotNone(reg_info_responses)
+
+        # Parse register infos.
+        return [parse_reg_info_response(reg_info_response) for reg_info_response in reg_info_responses]
+
     def expect_gdbremote_sequence(self):
         return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
 
@@ -149,24 +164,18 @@ class LldbGdbServerTestCase(TestBase):
         "invalidate-regs"
     ]
 
-    def assert_valid_reg_info_packet(self, reginfo_packet):
-        keyval_pairs = reginfo_packet.split(";")
-        self.assertTrue(len(keyval_pairs) >= 5)
-        
-        values = {}
-        for kv in keyval_pairs:
-            (key, val) = kv.split(':')
-            values[key] = val
-            # Ensure key is something we expect.
+    def assert_valid_reg_info(self, reg_info):
+        # Assert we know about all the reginfo keys parsed.
+        for key in reg_info:
             self.assertTrue(key in self._KNOWN_REGINFO_KEYS)
         
         # Check the bare-minimum expected set of register info keys.
-        self.assertTrue("name" in values)
-        self.assertTrue("bitsize" in values)
-        self.assertTrue("offset" in values)
-        self.assertTrue("encoding" in values)
-        self.assertTrue("format" in values)
-        
+        self.assertTrue("name" in reg_info)
+        self.assertTrue("bitsize" in reg_info)
+        self.assertTrue("offset" in reg_info)
+        self.assertTrue("encoding" in reg_info)
+        self.assertTrue("format" in reg_info)
+
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
@@ -574,8 +583,10 @@ class LldbGdbServerTestCase(TestBase):
         # Run the stream
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
-        self.assertIsNotNone(context.get("reginfo_0"))
-        self.assert_valid_reg_info_packet(context.get("reginfo_0"))
+
+        reg_info_packet = context.get("reginfo_0")
+        self.assertIsNotNone(reg_info_packet)
+        self.assert_valid_reg_info(parse_reg_info_response(reg_info_packet))
 
     @debugserver_test
     @dsym_test
@@ -591,6 +602,133 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qRegisterInfo_returns_one_valid_result()
+
+    def qRegisterInfo_returns_all_valid_results(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args.
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream.
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_register_info_collection_packets()
+
+        # Run the stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Validate that each register info returned validates.
+        for reg_info in self.parse_register_info_packets(context):
+            self.assert_valid_reg_info(reg_info)
+
+    @debugserver_test
+    @dsym_test
+    def test_qRegisterInfo_returns_all_valid_results_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qRegisterInfo_returns_all_valid_results()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qRegisterInfo_returns_all_valid_results_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qRegisterInfo_returns_all_valid_results()
+
+    def qRegisterInfo_contains_required_generics(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_register_info_collection_packets()
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather register info entries.
+        reg_infos = self.parse_register_info_packets(context)
+
+        # Collect all generics found.
+        generic_regs = { reg_info['generic']:1 for reg_info in reg_infos if 'generic' in reg_info }
+
+        # Ensure we have a program counter register.
+        self.assertTrue('pc' in generic_regs)
+
+        # Ensure we have a frame pointer register.
+        self.assertTrue('fp' in generic_regs)
+
+        # Ensure we have a stack pointer register.
+        self.assertTrue('sp' in generic_regs)
+
+        # Ensure we have a flags register.
+        self.assertTrue('flags' in generic_regs)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qRegisterInfo_contains_required_generics_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qRegisterInfo_contains_required_generics()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qRegisterInfo_contains_required_generics_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qRegisterInfo_contains_required_generics()
+
+
+    def qRegisterInfo_contains_at_least_one_register_set(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_register_info_collection_packets()
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather register info entries.
+        reg_infos = self.parse_register_info_packets(context)
+
+        # Collect all generics found.
+        register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
+        self.assertTrue(len(register_sets) >= 1)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qRegisterInfo_contains_at_least_one_register_set_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qRegisterInfo_contains_at_least_one_register_set()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qRegisterInfo_contains_at_least_one_register_set_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qRegisterInfo_contains_at_least_one_register_set()
+
 
 if __name__ == '__main__':
     unittest2.main()

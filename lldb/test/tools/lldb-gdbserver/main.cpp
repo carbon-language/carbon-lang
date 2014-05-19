@@ -33,7 +33,7 @@ int main (int argc, char **argv)
 			for (int i = 0; sleep_seconds_remaining > 0; ++i)
 			{
 				sleep_seconds_remaining = sleep (sleep_seconds_remaining);
-				std::cout << "sleep result (call " << i << "): " << sleep_seconds_remaining << std::endl;
+				// std::cout << "sleep result (call " << i << "): " << sleep_seconds_remaining << std::endl;
 			}
         }
         else
