@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-pc-win32 -x c++ -O2 -disable-llvm-optzns -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -triple i686-pc-win32 -x c++ -emit-llvm < %s | FileCheck %s
 
 #define DLLEXPORT __declspec(dllexport)
 
