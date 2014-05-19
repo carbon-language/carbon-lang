@@ -38,7 +38,7 @@ public:
     TransformActions &TA = MigrateCtx.Pass.TA;
 
     if (MigrateCtx.isGCOwnedNonObjC(E->getType())) {
-      TA.report(E->getLocStart(), diag::err_arcmt_nsalloc_realloc,
+      TA.report(E->getLocStart(), diag::warn_arcmt_nsalloc_realloc,
                 E->getSourceRange());
       return true;
     }

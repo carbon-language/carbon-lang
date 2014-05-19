@@ -143,7 +143,7 @@ def warn_mt_message : Warning<"[rewriter] %0">;
 def note_mt_message : Note<"[rewriter] %0">;
 
 // ARCMigrate
-def err_arcmt_nsalloc_realloc : Error<"[rewriter] call returns pointer to GC managed memory; it will become unmanaged in ARC">;
+def warn_arcmt_nsalloc_realloc : Warning<"[rewriter] call returns pointer to GC managed memory; it will become unmanaged in ARC">, InGroup<DiagGroup<"arcmt-ns-alloc">>, DefaultError;
 def err_arcmt_nsinvocation_ownership : Error<"NSInvocation's %0 is not safe to be used with an object with ownership other than __unsafe_unretained">;
 
 }
