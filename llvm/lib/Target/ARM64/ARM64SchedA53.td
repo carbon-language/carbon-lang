@@ -148,7 +148,9 @@ def : ReadAdvance<ReadVLD, 0>;
 
 // ALU - Most operands in the ALU pipes are not needed for two cycles. Shiftable
 //       operands are needed one cycle later if and only if they are to be
-//       shifted. Otherwise, they too are needed two cycle later.
+//       shifted. Otherwise, they too are needed two cycle later. This same
+//       ReadAdvance applies to Extended registers as well, even though there is
+//       a seperate SchedPredicate for them.
 def : ReadAdvance<ReadI, 2, [WriteImm,WriteI,
                              WriteISReg, WriteIEReg,WriteIS,
                              WriteID32,WriteID64,
@@ -167,7 +169,7 @@ def A53ReadISReg : SchedReadVariant<[
 def : SchedAlias<ReadISReg, A53ReadISReg>;
 
 def A53ReadIEReg : SchedReadVariant<[
-	SchedVar<RegShiftedPred, [A53ReadShifted]>,
+	SchedVar<RegExtendedPred, [A53ReadShifted]>,
 	SchedVar<NoSchedPred, [A53ReadNotShifted]>]>;
 def : SchedAlias<ReadIEReg, A53ReadIEReg>;
 
@@ -197,63 +199,82 @@ def : ReadAdvance<ReadID, 1, [WriteImm,WriteI,
 def : InstRW<[WriteI], (instrs COPY)>;
 
 //---
-// Vector Mul with Accumulate
-//---
-//def : InstRW<[WriteIM32, A53ReadIMA], (instregex "^M(ADD|SUB)W.*")>;
-//def : InstRW<[WriteIM64, A53ReadIMA], (instregex "^M(ADD|SUB)X.*")>;
-
-//---
 // Vector Loads
 //---
-def : InstRW<[A53WriteVLD1], (instregex "LD1i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVLD1], (instregex "LD1Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD1], (instregex "LD1Onev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD2], (instregex "LD1Twov(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD3], (instregex "LD1Threev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD4], (instregex "LD1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD1i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD1Rv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD1Onev(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD1Twov(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD3], (instregex "LD1Threev(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD1, WriteAdr], (instregex "LD1i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVLD1, WriteAdr], (instregex "LD1Rv(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD1, WriteAdr], (instregex "LD1Onev(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD1Twov(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD3, WriteAdr], (instregex "LD1Threev(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD4, WriteAdr], (instregex "LD1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
 
-def : InstRW<[A53WriteVLD1], (instregex "LD2i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVLD1], (instregex "LD2Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD2], (instregex "LD2Twov(8b|4h|2s)(_POST)?$")>;
-def : InstRW<[A53WriteVLD4], (instregex "LD2Twov(16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD2i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVLD1], (instregex "LD2Rv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD2Twov(8b|4h|2s)$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD2Twov(16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD1, WriteAdr], (instregex "LD2i(8|16|32|64)(_POST)?$")>;
+def : InstRW<[A53WriteVLD1, WriteAdr], (instregex "LD2Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD2Twov(8b|4h|2s)(_POST)?$")>;
+def : InstRW<[A53WriteVLD4, WriteAdr], (instregex "LD2Twov(16b|8h|4s|2d)(_POST)?$")>;
 
-def : InstRW<[A53WriteVLD2], (instregex "LD3i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVLD2], (instregex "LD3Rv(8b|4h|2s|1d|16b|8h|4s|2dq)(_POST)?$")>;
-def : InstRW<[A53WriteVLD4], (instregex "LD3Threev(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
-def : InstRW<[A53WriteVLD3], (instregex "LD3Threev(2d)(_POST)?$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD3i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD3Rv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD3Threev(8b|4h|2s|1d|16b|8h|4s)$")>;
+def : InstRW<[A53WriteVLD3], (instregex "LD3Threev(2d)$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD3i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD3Rv(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD4, WriteAdr], (instregex "LD3Threev(8b|4h|2s|1d|16b|8h|4s)_POST$")>;
+def : InstRW<[A53WriteVLD3, WriteAdr], (instregex "LD3Threev(2d)_POST$")>;
 
-def : InstRW<[A53WriteVLD2], (instregex "LD4i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVLD2], (instregex "LD4Rv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVLD5], (instregex "LD4Fourv(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
-def : InstRW<[A53WriteVLD4], (instregex "LD4Fourv(2d)(_POST)?$")>;
-
-def : InstRW<[A53WriteVLD1, A53WriteVLD1], (instregex "LDN?PS.*$")>;
-def : InstRW<[A53WriteVLD2, A53WriteVLD2], (instregex "LDN?PD.*$")>;
-def : InstRW<[A53WriteVLD4, A53WriteVLD4], (instregex "LDN?PQ.*$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD4i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVLD2], (instregex "LD4Rv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVLD5], (instregex "LD4Fourv(8b|4h|2s|1d|16b|8h|4s)$")>;
+def : InstRW<[A53WriteVLD4], (instregex "LD4Fourv(2d)$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD4i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVLD2, WriteAdr], (instregex "LD4Rv(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVLD5, WriteAdr], (instregex "LD4Fourv(8b|4h|2s|1d|16b|8h|4s)_POST$")>;
+def : InstRW<[A53WriteVLD4, WriteAdr], (instregex "LD4Fourv(2d)_POST$")>;
 
 //---
 // Vector Stores
 //---
-def : InstRW<[A53WriteVST1], (instregex "ST1i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVST1], (instregex "ST1Onev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVST1], (instregex "ST1Twov(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVST2], (instregex "ST1Threev(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
-def : InstRW<[A53WriteVST2], (instregex "ST1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST1i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST1Onev(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST1Twov(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST1Threev(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVST1, WriteAdr], (instregex "ST1i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVST1, WriteAdr], (instregex "ST1Onev(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVST1, WriteAdr], (instregex "ST1Twov(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST1Threev(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST1Fourv(8b|4h|2s|1d|16b|8h|4s|2d)_POST$")>;
 
-def : InstRW<[A53WriteVST1], (instregex "ST2i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVST1], (instregex "ST2Twov(8b|4h|2s)(_POST)?$")>;
-def : InstRW<[A53WriteVST2], (instregex "ST2Twov(16b|8h|4s|2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST2i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVST1], (instregex "ST2Twov(8b|4h|2s)$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST2Twov(16b|8h|4s|2d)$")>;
+def : InstRW<[A53WriteVST1, WriteAdr], (instregex "ST2i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVST1, WriteAdr], (instregex "ST2Twov(8b|4h|2s)_POST$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST2Twov(16b|8h|4s|2d)_POST$")>;
 
-def : InstRW<[A53WriteVST2], (instregex "ST3i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVST3], (instregex "ST3Threev(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
-def : InstRW<[A53WriteVST2], (instregex "ST3Threev(2d)(_POST)?$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST3i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVST3], (instregex "ST3Threev(8b|4h|2s|1d|16b|8h|4s)$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST3Threev(2d)$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST3i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVST3, WriteAdr], (instregex "ST3Threev(8b|4h|2s|1d|16b|8h|4s)_POST$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST3Threev(2d)_POST$")>;
 
-def : InstRW<[A53WriteVST2], (instregex "ST4i(8|16|32|64)(_POST)?$")>;
-def : InstRW<[A53WriteVST3], (instregex "ST4Fourv(8b|4h|2s|1d|16b|8h|4s)(_POST)?$")>;
-def : InstRW<[A53WriteVST2], (instregex "ST4Fourv(2d)(_POST)?$")>;
-
-def : InstRW<[A53WriteVST1], (instregex "STN?P(S|D).*$")>;
-def : InstRW<[A53WriteVST2], (instregex "STN?PQ.*$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST4i(8|16|32|64)$")>;
+def : InstRW<[A53WriteVST3], (instregex "ST4Fourv(8b|4h|2s|1d|16b|8h|4s)$")>;
+def : InstRW<[A53WriteVST2], (instregex "ST4Fourv(2d)$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST4i(8|16|32|64)_POST$")>;
+def : InstRW<[A53WriteVST3, WriteAdr], (instregex "ST4Fourv(8b|4h|2s|1d|16b|8h|4s)_POST$")>;
+def : InstRW<[A53WriteVST2, WriteAdr], (instregex "ST4Fourv(2d)_POST$")>;
 
 //---
 // Floating Point MAC, DIV, SQRT

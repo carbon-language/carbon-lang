@@ -108,3 +108,18 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind }
+
+
+; Regression Test for Bug 19761
+; - [ARM64] Cortex-a53 schedule mode can't handle NEON post-increment load
+; - http://llvm.org/bugs/show_bug.cgi?id=19761
+;
+; Nothing explicit to check other than llc not crashing.
+define { <16 x i8>, <16 x i8> } @test_v16i8_post_imm_ld2(i8* %A, i8** %ptr) {
+  %ld2 = tail call { <16 x i8>, <16 x i8> } @llvm.arm64.neon.ld2.v16i8.p0i8(i8* %A)
+  %tmp = getelementptr i8* %A, i32 32
+  store i8* %tmp, i8** %ptr
+  ret { <16 x i8>, <16 x i8> } %ld2
+}
+
+declare { <16 x i8>, <16 x i8> } @llvm.arm64.neon.ld2.v16i8.p0i8(i8*)

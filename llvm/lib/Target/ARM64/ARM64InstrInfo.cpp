@@ -841,10 +841,73 @@ bool ARM64InstrInfo::optimizeCompareInstr(
 }
 
 /// Return true if this is this instruction has a non-zero immediate
-bool ARM64InstrInfo::hasNonZeroImm(const MachineInstr *MI) const {
-  if (MI->getOperand(3).isImm()) {
-    unsigned val = MI->getOperand(3).getImm();
-    return (val != 0);
+bool ARM64InstrInfo::hasShiftedReg(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default:
+    break;
+  case ARM64::ADDSWrs:
+  case ARM64::ADDSXrs:
+  case ARM64::ADDWrs:
+  case ARM64::ADDXrs:
+  case ARM64::ANDSWrs:
+  case ARM64::ANDSXrs:
+  case ARM64::ANDWrs:
+  case ARM64::ANDXrs:
+  case ARM64::BICSWrs:
+  case ARM64::BICSXrs:
+  case ARM64::BICWrs:
+  case ARM64::BICXrs:
+  case ARM64::CRC32Brr:
+  case ARM64::CRC32CBrr:
+  case ARM64::CRC32CHrr:
+  case ARM64::CRC32CWrr:
+  case ARM64::CRC32CXrr:
+  case ARM64::CRC32Hrr:
+  case ARM64::CRC32Wrr:
+  case ARM64::CRC32Xrr:
+  case ARM64::EONWrs:
+  case ARM64::EONXrs:
+  case ARM64::EORWrs:
+  case ARM64::EORXrs:
+  case ARM64::ORNWrs:
+  case ARM64::ORNXrs:
+  case ARM64::ORRWrs:
+  case ARM64::ORRXrs:
+  case ARM64::SUBSWrs:
+  case ARM64::SUBSXrs:
+  case ARM64::SUBWrs:
+  case ARM64::SUBXrs:
+    if (MI->getOperand(3).isImm()) {
+      unsigned val = MI->getOperand(3).getImm();
+      return (val != 0);
+    }
+    break;
+  }
+  return false;
+}
+
+/// Return true if this is this instruction has a non-zero immediate
+bool ARM64InstrInfo::hasExtendedReg(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default:
+    break;
+  case ARM64::ADDSWrx:
+  case ARM64::ADDSXrx:
+  case ARM64::ADDSXrx64:
+  case ARM64::ADDWrx:
+  case ARM64::ADDXrx:
+  case ARM64::ADDXrx64:
+  case ARM64::SUBSWrx:
+  case ARM64::SUBSXrx:
+  case ARM64::SUBSXrx64:
+  case ARM64::SUBWrx:
+  case ARM64::SUBXrx:
+  case ARM64::SUBXrx64:
+    if (MI->getOperand(3).isImm()) {
+      unsigned val = MI->getOperand(3).getImm();
+      return (val != 0);
+    }
+    break;
   }
 
   return false;
