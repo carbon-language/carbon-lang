@@ -67,7 +67,7 @@ class LLVMSymbolizer(Symbolizer):
     cmd = [self.symbolizer_path,
            '--use-symbol-table=true',
            '--demangle=%s' % demangle,
-           '--functions=true',
+           '--functions=short',
            '--inlining=true',
            '--default-arch=%s' % self.default_arch]
     if DEBUG:
