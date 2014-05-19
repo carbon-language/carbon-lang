@@ -30,12 +30,13 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 
 #include "isl/space.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
+
+#include <memory>
 
 using namespace llvm;
 using namespace polly;
@@ -239,8 +240,8 @@ bool Pocc::runOnScop(Scop &S) {
 }
 
 void Pocc::printScop(raw_ostream &OS) const {
-  OwningPtr<MemoryBuffer> stdoutBuffer;
-  OwningPtr<MemoryBuffer> stderrBuffer;
+  std::unique_ptr<MemoryBuffer> stdoutBuffer;
+  std::unique_ptr<MemoryBuffer> stderrBuffer;
 
   OS << "Command line: ";
 
