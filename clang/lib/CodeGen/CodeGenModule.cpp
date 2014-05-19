@@ -301,12 +301,10 @@ void CodeGenModule::Release() {
     getModule().addModuleFlag(llvm::Module::Warning, "Dwarf Version",
                               CodeGenOpts.DwarfVersion);
   if (DebugInfo)
-    // We support a single version in the linked module: error out when
-    // modules do not have the same version. We are going to implement dropping
-    // debug info when the version number is not up-to-date. Once that is
-    // done, the bitcode linker is not going to see modules with different
-    // version numbers.
-    getModule().addModuleFlag(llvm::Module::Error, "Debug Info Version",
+    // We support a single version in the linked module. The LLVM
+    // parser will drop debug info with a different version number
+    // (and warn about it, too).
+    getModule().addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                               llvm::DEBUG_METADATA_VERSION);
 
   SimplifyPersonality();

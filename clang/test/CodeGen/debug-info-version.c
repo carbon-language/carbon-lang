@@ -4,5 +4,5 @@ int main (void) {
   return 0;
 }
 
-// CHECK: metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+// CHECK: metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 // NO_DEBUG-NOT: metadata !"Debug Info Version"
