@@ -7412,6 +7412,23 @@ SDValue getMOVLP(SDValue &Op, SDLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
                               getShuffleSHUFImmediate(SVOp), DAG);
 }
 
+static SDValue NarrowVectorLoadToElement(LoadSDNode *Load, unsigned Index,
+                                         SelectionDAG &DAG) {
+  SDLoc dl(Load);
+  MVT VT = Load->getSimpleValueType(0);
+  MVT EVT = VT.getVectorElementType();
+  SDValue Addr = Load->getOperand(1);
+  SDValue NewAddr = DAG.getNode(
+      ISD::ADD, dl, Addr.getSimpleValueType(), Addr,
+      DAG.getConstant(Index * EVT.getStoreSize(), Addr.getSimpleValueType()));
+
+  SDValue NewLoad =
+      DAG.getLoad(EVT, dl, Load->getChain(), NewAddr,
+                  DAG.getMachineFunction().getMachineMemOperand(
+                      Load->getMemOperand(), 0, EVT.getStoreSize()));
+  return NewLoad;
+}
+
 // It is only safe to call this function if isINSERTPSMask is true for
 // this shufflevector mask.
 static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
@@ -7423,7 +7440,6 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
   // If we're transferring an i32 from memory to a specific element in a
   // register, we output a generic DAG that will match the PINSRD
   // instruction.
-  // TODO: Optimize for AVX cases too (VINSERTPS)
   MVT VT = SVOp->getSimpleValueType(0);
   MVT EVT = VT.getVectorElementType();
   SDValue V1 = SVOp->getOperand(0);
@@ -7456,17 +7472,10 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
     // Trivial case, when From comes from a load and is only used by the
     // shuffle. Make it use insertps from the vector that we need from that
     // load.
-    SDValue Addr = From.getOperand(1);
-    SDValue NewAddr =
-        DAG.getNode(ISD::ADD, dl, Addr.getSimpleValueType(), Addr,
-                    DAG.getConstant(DestIndex * EVT.getStoreSize(),
-                                    Addr.getSimpleValueType()));
-
-    LoadSDNode *Load = cast<LoadSDNode>(From);
     SDValue NewLoad =
-        DAG.getLoad(EVT, dl, Load->getChain(), NewAddr,
-                    DAG.getMachineFunction().getMachineMemOperand(
-                        Load->getMemOperand(), 0, EVT.getStoreSize()));
+        NarrowVectorLoadToElement(cast<LoadSDNode>(From), DestIndex, DAG);
+    if (!NewLoad.getNode())
+      return SDValue();
 
     if (EVT == MVT::f32) {
       // Create this as a scalar to vector to match the instruction pattern.
@@ -20281,6 +20290,33 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue PerformINSERTPSCombine(SDNode *N, SelectionDAG &DAG,
+                                      const X86Subtarget *Subtarget) {
+  SDLoc dl(N);
+  MVT VT = N->getOperand(1)->getSimpleValueType(0);
+  assert(VT == MVT::v4f32 ||
+         VT == MVT::v4i32 && "X86insertps is only defined for v4x32");
+
+  SDValue Ld = N->getOperand(1);
+  if (MayFoldLoad(Ld)) {
+    // Extract the countS bits from the immediate so we can get the proper
+    // address when narrowing the vector load to a specific element.
+    // When the second source op is a memory address, interps doesn't use
+    // countS and just gets an f32 from that address.
+    unsigned DestIndex =
+        cast<ConstantSDNode>(N->getOperand(2))->getZExtValue() >> 6;
+    Ld = NarrowVectorLoadToElement(cast<LoadSDNode>(Ld), DestIndex, DAG);
+  } else
+    return SDValue();
+
+  // Create this as a scalar to vector to match the instruction pattern.
+  SDValue LoadScalarToVector = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Ld);
+  // countS bits are ignored when loading from memory on insertps, which
+  // means we don't need to explicitly set them to 0.
+  return DAG.getNode(X86ISD::INSERTPS, dl, VT, N->getOperand(0),
+                     LoadScalarToVector, N->getOperand(2));
+}
+
 // Helper function of PerformSETCCCombine. It is to materialize "setb reg"
 // as "sbb reg,reg", since it can be extended without zext and produces
 // an all-ones bit which is more useful than 0/1 in some cases.
@@ -20584,6 +20620,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformINTRINSIC_WO_CHAINCombine(N, DAG, Subtarget);
+  case X86ISD::INSERTPS:
+    return PerformINSERTPSCombine(N, DAG, Subtarget);
   }
 
   return SDValue();

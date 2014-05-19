@@ -584,3 +584,111 @@ define <8 x i16> @blendvb_fallback(<8 x i1> %mask, <8 x i16> %x, <8 x i16> %y) {
   %ret = select <8 x i1> %mask, <8 x i16> %x, <8 x i16> %y
   ret <8 x i16> %ret
 }
+
+define <4 x float> @insertps_from_vector_load(<4 x float> %a, <4 x float>* nocapture readonly %pb) {
+; CHECK-LABEL: insertps_from_vector_load:
+; On X32, account for the argument's move to registers
+; X32: movl    4(%esp), %eax
+; CHECK-NOT: mov
+; CHECK: insertps    $48
+; CHECK-NEXT: ret
+  %1 = load <4 x float>* %pb, align 16
+  %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 48)
+  ret <4 x float> %2
+}
+
+;; Use a non-zero CountS for insertps
+define <4 x float> @insertps_from_vector_load_offset(<4 x float> %a, <4 x float>* nocapture readonly %pb) {
+; CHECK-LABEL: insertps_from_vector_load_offset:
+; On X32, account for the argument's move to registers
+; X32: movl    4(%esp), %eax
+; CHECK-NOT: mov
+;; Try to match a bit more of the instr, since we need the load's offset.
+; CHECK: insertps    $96, 4(%{{...}}), %
+; CHECK-NEXT: ret
+  %1 = load <4 x float>* %pb, align 16
+  %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 96)
+  ret <4 x float> %2
+}
+
+define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x float>* nocapture readonly %pb, i64 %index) {
+; CHECK-LABEL: insertps_from_vector_load_offset_2:
+; On X32, account for the argument's move to registers
+; X32: movl    4(%esp), %eax
+; X32: movl    8(%esp), %ecx
+; CHECK-NOT: mov
+;; Try to match a bit more of the instr, since we need the load's offset.
+; CHECK: insertps    $192, 12(%{{...}},%{{...}}), %
+; CHECK-NEXT: ret
+  %1 = getelementptr inbounds <4 x float>* %pb, i64 %index
+  %2 = load <4 x float>* %1, align 16
+  %3 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %2, i32 192)
+  ret <4 x float> %3
+}
+
+define <4 x float> @insertps_from_broadcast_loadf32(<4 x float> %a, float* nocapture readonly %fb, i64 %index) {
+; CHECK-LABEL: insertps_from_broadcast_loadf32:
+; On X32, account for the arguments' move to registers
+; X32: movl    8(%esp), %eax
+; X32: movl    4(%esp), %ecx
+; CHECK-NOT: mov
+; CHECK: insertps    $48
+; CHECK-NEXT: ret
+  %1 = getelementptr inbounds float* %fb, i64 %index
+  %2 = load float* %1, align 4
+  %3 = insertelement <4 x float> undef, float %2, i32 0
+  %4 = insertelement <4 x float> %3, float %2, i32 1
+  %5 = insertelement <4 x float> %4, float %2, i32 2
+  %6 = insertelement <4 x float> %5, float %2, i32 3
+  %7 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %6, i32 48)
+  ret <4 x float> %7
+}
+
+define <4 x float> @insertps_from_broadcast_loadv4f32(<4 x float> %a, <4 x float>* nocapture readonly %b) {
+; CHECK-LABEL: insertps_from_broadcast_loadv4f32:
+; On X32, account for the arguments' move to registers
+; X32: movl    4(%esp), %{{...}}
+; CHECK-NOT: mov
+; CHECK: insertps    $48
+; CHECK-NEXT: ret
+  %1 = load <4 x float>* %b, align 4
+  %2 = extractelement <4 x float> %1, i32 0
+  %3 = insertelement <4 x float> undef, float %2, i32 0
+  %4 = insertelement <4 x float> %3, float %2, i32 1
+  %5 = insertelement <4 x float> %4, float %2, i32 2
+  %6 = insertelement <4 x float> %5, float %2, i32 3
+  %7 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %6, i32 48)
+  ret <4 x float> %7
+}
+
+;; FIXME: We're emitting an extraneous pshufd/vbroadcast.
+define <4 x float> @insertps_from_broadcast_multiple_use(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d, float* nocapture readonly %fb, i64 %index) {
+; CHECK-LABEL: insertps_from_broadcast_multiple_use:
+; On X32, account for the arguments' move to registers
+; X32: movl    8(%esp), %eax
+; X32: movl    4(%esp), %ecx
+; CHECK: movss
+; CHECK-NOT: mov
+; CHECK: insertps    $48
+; CHECK: insertps    $48
+; CHECK: insertps    $48
+; CHECK: insertps    $48
+; CHECK: addps
+; CHECK: addps
+; CHECK: addps
+; CHECK-NEXT: ret
+  %1 = getelementptr inbounds float* %fb, i64 %index
+  %2 = load float* %1, align 4
+  %3 = insertelement <4 x float> undef, float %2, i32 0
+  %4 = insertelement <4 x float> %3, float %2, i32 1
+  %5 = insertelement <4 x float> %4, float %2, i32 2
+  %6 = insertelement <4 x float> %5, float %2, i32 3
+  %7 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %6, i32 48)
+  %8 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %b, <4 x float> %6, i32 48)
+  %9 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %c, <4 x float> %6, i32 48)
+  %10 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %d, <4 x float> %6, i32 48)
+  %11 = fadd <4 x float> %7, %8
+  %12 = fadd <4 x float> %9, %10
+  %13 = fadd <4 x float> %11, %12
+  ret <4 x float> %13
+}

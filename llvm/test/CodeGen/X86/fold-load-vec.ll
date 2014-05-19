@@ -5,7 +5,7 @@
 ; loads from m32.
 define void @sample_test(<4 x float>* %source, <2 x float>* %dest) nounwind {
 ; CHECK: sample_test
-; CHECK: movaps
+; CHECK-NOT: movaps
 ; CHECK: insertps
 entry:
   %source.addr = alloca <4 x float>*, align 8
