@@ -29,3 +29,17 @@
 // XA_INCLUDE2: cc1as
 // XA_INCLUDE2: "-Ifoo_dir"
 
+// RUN: %clang -### -c -integrated-as %s -gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2 %s
+// DWARF2: "-g" "-gdwarf-2"
+
+// RUN: %clang -### -c -integrated-as %s -gdwarf-3 2>&1 | FileCheck --check-prefix=DWARF3 %s
+// DWARF3: "-g" "-gdwarf-3"
+
+// RUN: %clang -### -c -integrated-as %s -gdwarf-4 2>&1 | FileCheck --check-prefix=DWARF4 %s
+// DWARF4: "-g" "-gdwarf-4"
+
+// RUN: %clang -### -c -integrated-as %s -Xassembler -gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2XASSEMBLER %s
+// DWARF2XASSEMBLER: "-gdwarf-2"
+
+// RUN: %clang -### -c -integrated-as %s -Wa,-gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2WA %s
+// DWARF2WA: "-gdwarf-2"

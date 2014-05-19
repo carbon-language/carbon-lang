@@ -1855,6 +1855,8 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           // -I. The next arg will be the include directory.
           if (Value == "-I")
             TakeNextArg = true;
+        } else if (Value.startswith("-gdwarf-")) {
+          CmdArgs.push_back(Value.data());
         } else {
           D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
@@ -4441,6 +4443,13 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     if (Arg *A = Args.getLastArg(options::OPT_g_Group))
       if (!A->getOption().matches(options::OPT_g0))
         CmdArgs.push_back("-g");
+
+    if (Args.hasArg(options::OPT_gdwarf_2))
+      CmdArgs.push_back("-gdwarf-2");
+    if (Args.hasArg(options::OPT_gdwarf_3))
+      CmdArgs.push_back("-gdwarf-3");
+    if (Args.hasArg(options::OPT_gdwarf_4))
+      CmdArgs.push_back("-gdwarf-4");
 
     // Add the -fdebug-compilation-dir flag if needed.
     addDebugCompDirArg(Args, CmdArgs);
