@@ -1780,7 +1780,9 @@ static LValue EmitGlobalNamedRegister(const VarDecl *VD,
                                       CharUnits Alignment) {
   AsmLabelAttr *Asm = VD->getAttr<AsmLabelAttr>();
   llvm::Twine Name("llvm.named.register."+Asm->getLabel());
-  llvm::NamedMDNode *M = CGM.getModule().getOrInsertNamedMetadata(Name.str());
+  SmallString<256> DummyVec;
+  llvm::NamedMDNode *M =
+    CGM.getModule().getOrInsertNamedMetadata(Name.toStringRef(DummyVec));
   if (M->getNumOperands() == 0) {
     llvm::MDString *Str = llvm::MDString::get(CGM.getLLVMContext(),
                                               Asm->getLabel());
