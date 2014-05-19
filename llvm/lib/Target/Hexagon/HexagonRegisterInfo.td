@@ -134,8 +134,9 @@ let Namespace = "Hexagon" in {
   def M0 : Rc<6, "m0">, DwarfRegNum<[71]>;
   def M1 : Rc<7, "m1">, DwarfRegNum<[72]>;
 
-  def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
-  def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
+  def USR : Rc<8, "usr">, DwarfRegNum<[34]>;
+  def PC : Rc<9,  "pc">, DwarfRegNum<[32]>;
+  def GP : Rc<11, "gp">, DwarfRegNum<[33]>;
 }
 
 // Register classes.
@@ -162,6 +163,6 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
 def CRRegs : RegisterClass<"Hexagon", [i32], 32,
                            (add (sequence "LC%u", 0, 1),
                                 (sequence "SA%u", 0, 1),
-                                (sequence "M%u", 0, 1), PC, GP)> {
+                                (sequence "M%u", 0, 1), PC, GP, USR)> {
   let Size = 32;
 }
