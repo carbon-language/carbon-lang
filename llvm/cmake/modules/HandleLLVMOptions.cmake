@@ -56,13 +56,16 @@ if( LLVM_ENABLE_ASSERTIONS )
   if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
     add_definitions( -UNDEBUG )
     # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
-    set(REGEXP_NDEBUG "(^| )[/-]D *NDEBUG($| )")
-    string (REGEX REPLACE "${REGEXP_NDEBUG}" " "
-      CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    string (REGEX REPLACE "${REGEXP_NDEBUG}" " "
-      CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-    string (REGEX REPLACE "${REGEXP_NDEBUG}" " "
-      CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}")
+    foreach (flags_var_to_scrub
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_MINSIZEREL
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_C_FLAGS_MINSIZEREL)
+      string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+        "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+    endforeach()
   endif()
 else()
   if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
