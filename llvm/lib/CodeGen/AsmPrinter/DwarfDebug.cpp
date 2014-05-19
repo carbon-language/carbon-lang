@@ -468,7 +468,6 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   attachRangesOrLowHighPC(TheCU, *ScopeDIE, Scope->getRanges());
 
   InlinedSubprogramDIEs.insert(OriginDIE);
-  TheCU.addUInt(*OriginDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
