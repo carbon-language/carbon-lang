@@ -62,9 +62,6 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
 )
 
-# Unit tests require libstdc++ on POSIX.
-append_if(COMPILER_RT_HAS_LIBSTDCXX -lstdc++ ASAN_UNITTEST_COMMON_LINKFLAGS)
-
 if(NOT MSVC)
   list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++)
 endif()
