@@ -454,10 +454,7 @@ void StructurizeCFG::insertConditions(bool Loops) {
   Value *Default = Loops ? BoolTrue : BoolFalse;
   SSAUpdater PhiInserter;
 
-  for (BranchVector::iterator I = Conds.begin(),
-       E = Conds.end(); I != E; ++I) {
-
-    BranchInst *Term = *I;
+  for (BranchInst *Term : Conds) {
     assert(Term->isConditional());
 
     BasicBlock *Parent = Term->getParent();
