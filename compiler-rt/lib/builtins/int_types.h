@@ -56,7 +56,7 @@ typedef union
     }s;
 } udwords;
 
-#if __LP64__ || defined(__ppc__) || defined(__powerpc__)
+#if __LP64__
 #define CRT_HAS_128BIT
 #endif
 
