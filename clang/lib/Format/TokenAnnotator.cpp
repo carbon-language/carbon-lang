@@ -1381,6 +1381,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     if (Right.is(tok::l_paren) &&
         (Left.TokenText == "returns" || Left.TokenText == "option"))
       return true;
+  } else if (Style.Language == FormatStyle::LK_JavaScript) {
+    if (Left.TokenText == "var")
+      return true;
   }
   if (Left.is(tok::kw_return) && Right.isNot(tok::semi))
     return true;
