@@ -310,15 +310,6 @@ static bool shouldUseMmap(int FD,
   if (End != FileSize)
     return false;
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-  // Don't peek the next page if file is multiple of *physical* pagesize(4k)
-  // but is not multiple of AllocationGranularity(64k),
-  // when a null terminator is required.
-  // FIXME: It's not good to hardcode 4096 here. dwPageSize shows 4096.
-  if ((FileSize & (4096 - 1)) == 0)
-    return false;
-#endif
-
   // Don't try to map files that are exactly a multiple of the system page size
   // if we need a null terminator.
   if ((FileSize & (PageSize -1)) == 0)

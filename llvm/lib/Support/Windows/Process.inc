@@ -82,16 +82,14 @@ TimeValue self_process::get_system_time() const {
   return getTimeValueFromFILETIME(KernelTime);
 }
 
-// This function retrieves the page size using GetSystemInfo and is present
-// solely so it can be called once to initialize the self_process member below.
+// This function retrieves the page size using GetNativeSystemInfo() and is
+// present solely so it can be called once to initialize the self_process member
+// below.
 static unsigned getPageSize() {
-  // NOTE: A 32-bit application running under WOW64 is supposed to use
-  // GetNativeSystemInfo.  However, this interface is not present prior
-  // to Windows XP so to use it requires dynamic linking.  It is not clear
-  // how this affects the reported page size, if at all.  One could argue
-  // that LLVM ought to run as 64-bits on a 64-bit system, anyway.
+  // GetNativeSystemInfo() provides the physical page size which may differ
+  // from GetSystemInfo() in 32-bit applications running under WOW64.
   SYSTEM_INFO info;
-  GetSystemInfo(&info);
+  GetNativeSystemInfo(&info);
   // FIXME: FileOffset in MapViewOfFile() should be aligned to not dwPageSize,
   // but dwAllocationGranularity.
   return static_cast<unsigned>(info.dwPageSize);
