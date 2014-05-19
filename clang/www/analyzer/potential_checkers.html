@@ -5,9 +5,10 @@
   <title>List of potential checkers</title>
   <link type="text/css" rel="stylesheet" href="content.css">
   <link type="text/css" rel="stylesheet" href="menu.css">
+  <script type="text/javascript" src="scripts/expandcollapse.js"></script>
   <script type="text/javascript" src="scripts/menu.js"></script>
 </head>
-<body>
+<body onload="initExpandCollapse()">
 
 <div id="page">
 
@@ -470,11 +471,22 @@ int i = *p; // warn
 <td class="aligned"></td></tr>
 
 
-<!--<tr><td><div class="namedescr expandable"><span class="name">
+<tr><td><div class="namedescr expandable"><span class="name">
 undefbehavior.DeadReferenced</span><span class="lang">
 (C++)</span><div class="descr">
-Undefined behavior: the following usage of the pointer to the object whose 
-lifetime has ended can result in undefined behavior.
+Undefined behavior: the following usage of the pointer to the object whose
+lifetime has ended can result in undefined behavior:<br>
+The object will be or was of a class type with a non-trivial destructor and
+<ul><li>the pointer is used as the operand of a delete-expression</li></ul>
+The object will be or was of a non-POD class type (C++11: any class type) and
+<ul><li>the pointer is used to access a non-static data member or call a
+non-static member function of the object</li>
+<li>the pointer is implicitly converted to a pointer to a base class
+type</li>
+<li>the pointer is used as the operand of a <code>static_cast</code> (except
+when the conversion is to <code>void*</code>, or to <code>void*</code> and 
+subsequently to <code>char*</code>, or <code>unsigned char*</code>)</li>
+<li>the pointer is used as the operand of a <code>dynamic_cast</code></li></ul>
 <p>Source: C++03 3.8p5, p7; C++11 3.8p5, p7.</p></div></div></td>
 <td><div class="exampleContainer expandable">
 <div class="example"><pre>
@@ -482,106 +494,90 @@ lifetime has ended can result in undefined behavior.
 
 class A {
 public:
-  int i;
-};
-
-class B : public A {};
-
-int test() {
-  B *b = new B;
-  new(b) A;
-  return b-&gt;i; // warn
-}
-</pre></div>
-<div class="example"><pre>
-#include &lt;new&gt;
-
-class A {
-public:
-  void f() {};
+  ~A();
 };
 
 class B : public A {};
 
 void test() {
-  B *b = new B;
-  new(b) A;
-  b-&gt;f(); // warn
-}
-</pre></div>
-<div class="example"><pre>
-#include &lt;new&gt;
-
-class A {};
-
-class B : public A {};
-
-A* test() {
-  B *b = new B;
-  new(b) A;
-  static_cast&lt;A*&gt;(b); // warn
-}
-</pre></div>
-<div class="example"><pre>
-#include &lt;new&gt;
-
-class A {};
-
-class B : public A {};
-
-A* test() {
-  B *b = new B;
-  new(b) A;
-  dynamic_cast&lt;A*&gt;(b); // warn
-}
-</pre></div>
-<div class="example"><pre>
-#include &lt;new&gt;
-
-class A {};
-
-class B : public A {};
-
-A* test() {
-  B *b = new B;
-  new(b) A;
-  dynamic_cast&lt;A*&gt;(b); // warn
-}
-</pre></div>
-<div class="example"><pre>
-#include &lt;new&gt;
-
-class A {};
-
-class B : public A {};
-
-void test() {
-  B *b = new B;
-  new(b) A;
-  delete b; // warn
-}
-</pre></div>
-<div class="example"><pre>
-// C++11
-#include &lt;new&gt;
-
-class A {
-public:
-  int i;
-};
-
-class B : public A {
-public:
-  ~B() {};
-};
-
-int test() {
   A *a = new A;
   new(a) B;
-  return a-&gt;i; // warn
+  delete a; // warn
+}
+</pre></div>
+<div class="example"><pre>
+#include &lt;new&gt;
+
+class A {
+public:
+  ~A();
+};
+
+class B {};
+
+void test() {
+  A *a = new A;
+  new(a) B;
+  a->~A();
+}
+</pre></div>
+<div class="example"><pre>
+#include &lt;new&gt;
+
+class A {
+public:
+  ~A();
+};
+
+class B : public A {};
+
+class C {};
+
+void f(A*);
+
+void test() {
+  B *b = new B;
+  new(b) C;
+  f(b); // warn
+}
+</pre></div>
+<div class="example"><pre>
+#include &lt;new&gt;
+
+class A {
+public:
+  ~A();
+};
+
+class B : public A {};
+
+class C {};
+
+A* test() {
+  B *b = new B;
+  new(b) C;
+  return static_cast&lt;A*&gt;(b); // warn
+}
+</pre></div>
+<div class="example"><pre>
+#include &lt;new&gt;
+
+class A {
+public:
+  ~A();
+};
+
+class B : public A {};
+
+class C {};
+
+A* test() {
+  B *b = new B;
+  new(b) C;
+  return dynamic_cast&lt;A*&gt;(b); // warn
 }
 </pre></div></div></td>
-<td class="aligned"></td></tr>-->
+<td class="aligned"></td></tr>
 
 
 <tr><td><div class="namedescr expandable"><span class="name">

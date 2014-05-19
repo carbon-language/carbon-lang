@@ -84,16 +84,17 @@ table.checkers td.aligned { text-align: center; vertical-align: middle; }
 table.checkers col.namedescr { width: 45% }
 table.checkers col.example { width: 55% }
 table.checkers col.progress { width: 84px }
-table.checkers thead div.example,
+table.checkers thead td,
 table.checkers div.namedescr,
 table.checkers div.exampleContainer { overflow: hidden; padding: 5px 8px 10px 8px }
 /* table.checkers tbody div.example { font-family: monospace; white-space: pre } */
 table.checkers div.example { border-top:1px #cccccc dashed; width:100%; padding-top: 5px; margin-top: 5px }
-table.checkers tbody div.example:first-child { border-top:none; padding-top: 0px; margin-top: 0px }
+table.checkers div.example:first-child { border-top:none; padding-top: 0px; margin-top: 0px }
 table.checkers span.name { font-weight: bold }
 table.checkers span.lang { font-weight: bold; padding-left: 7px; /* display:block; */ }
 table.checkers div.descr { margin-top:7px }
 table.checkers div.functions { margin-top: 2px; font-style: italic; font-size: 90%; color:#00B }
 table.checkers pre { margin: 1px; font-size: 100%; word-wrap: break-word }
 table.checkers p { margin: 10px 0px 0px 0px; }
+table.checkers ul, li { margin: 0 }
 
