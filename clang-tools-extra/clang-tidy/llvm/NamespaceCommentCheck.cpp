@@ -71,6 +71,8 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   bool NextTokenIsOnSameLine = Sources.getSpellingLineNumber(Loc) == EndLine;
+  // If we insert a line comment before the token in the same line, we need
+  // to insert a line break.
   bool NeedLineBreak = NextTokenIsOnSameLine && Tok.isNot(tok::eof);
 
   // Try to find existing namespace closing comment on the same line.
