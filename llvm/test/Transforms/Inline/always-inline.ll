@@ -122,3 +122,14 @@ entry:
   ret void
 }
 
+define i32 @inner7() {
+  ret i32 1
+}
+define i32 @outer7() {
+; CHECK-LABEL: @outer7(
+; CHECK-NOT: call
+; CHECK: ret
+
+   %r = call i32 @inner7() alwaysinline
+   ret i32 %r
+}
