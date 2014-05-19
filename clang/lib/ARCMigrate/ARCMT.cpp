@@ -311,9 +311,9 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   MigrationPass pass(Ctx, OrigGCMode, Unit->getSema(), testAct, capturedDiags,
                      ARCMTMacroLocs);
   pass.setNoFinalizeRemoval(NoFinalizeRemoval);
-  if (NoNSAllocReallocError)
+  if (!NoNSAllocReallocError)
     Diags->setDiagnosticMapping(diag::warn_arcmt_nsalloc_realloc,
-                                diag::MAP_IGNORE, SourceLocation());
+                                diag::MAP_ERROR, SourceLocation());
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i)
     transforms[i](pass);

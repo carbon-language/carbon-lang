@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (105):
+CHECK: Warnings without flags (106):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
@@ -45,6 +45,7 @@ CHECK-NEXT:   pp_pragma_sysheader_in_main_file
 CHECK-NEXT:   w_asm_qualifier_ignored
 CHECK-NEXT:   warn_accessor_property_type_mismatch
 CHECK-NEXT:   warn_anon_bitfield_width_exceeds_type_size
+CHECK-NEXT:   warn_arcmt_nsalloc_realloc
 CHECK-NEXT:   warn_asm_label_on_auto_decl
 CHECK-NEXT:   warn_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_braces_around_scalar_init
