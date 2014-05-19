@@ -4180,6 +4180,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_NoCommon:
     handleSimpleAttribute<NoCommonAttr>(S, D, Attr);
     break;
+  case AttributeList::AT_NoSplitStack:
+    handleSimpleAttribute<NoSplitStackAttr>(S, D, Attr);
+    break;
   case AttributeList::AT_NonNull:
     if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(D))
       handleNonNullAttrParameter(S, PVD, Attr);

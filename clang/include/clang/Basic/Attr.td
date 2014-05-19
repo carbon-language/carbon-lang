@@ -823,6 +823,12 @@ def NoMips16 : InheritableAttr, TargetSpecificAttr<TargetMips> {
   let Documentation = [Undocumented];
 }
 
+def NoSplitStack : InheritableAttr {
+  let Spellings = [GCC<"no_split_stack">];
+  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let Documentation = [NoSplitStackDocs];
+}
+
 def NonNull : InheritableAttr {
   let Spellings = [GCC<"nonnull">];
   let Subjects = SubjectList<[ObjCMethod, HasFunctionProto, ParmVar], WarnDiag,

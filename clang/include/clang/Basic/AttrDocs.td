@@ -371,6 +371,15 @@ of the condition.
   }];
 }
 
+def NoSplitStackDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``no_split_stack`` attribute disables the emission of the split stack
+preamble for a particular function. It has no effect if ``-fsplit-stack``
+is not specified.
+  }];
+}
+
 def ObjCRequiresSuperDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
