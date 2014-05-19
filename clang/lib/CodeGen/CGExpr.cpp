@@ -21,6 +21,7 @@
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Attr.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/IR/DataLayout.h"
@@ -1276,6 +1277,10 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, SourceLocation Loc) {
   if (LV.isExtVectorElt())
     return EmitLoadOfExtVectorElementLValue(LV);
 
+  // Global Register variables always invoke intrinsics
+  if (LV.isGlobalReg())
+    return EmitLoadOfGlobalRegLValue(LV);
+
   assert(LV.isBitField() && "Unknown LValue type!");
   return EmitLoadOfBitfieldLValue(LV);
 }
@@ -1343,6 +1348,16 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
   return RValue::get(Vec);
 }
 
+/// @brief Load of global gamed gegisters are always calls to intrinsics.
+RValue CodeGenFunction::EmitLoadOfGlobalRegLValue(LValue LV) {
+  assert(LV.getType()->isIntegerType() && "Bad type for register variable");
+  llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(LV.getGlobalReg());
+  assert(RegName && "Register LValue is not metadata");
+  llvm::Type *Types[] = { CGM.getTypes().ConvertType(LV.getType()) };
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::read_register, Types);
+  llvm::Value* Call = Builder.CreateCall(F, RegName);
+  return RValue::get(Call);
+}
 
 
 /// EmitStoreThroughLValue - Store the specified rvalue into the specified
@@ -1369,6 +1384,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // appropriate.
     if (Dst.isExtVectorElt())
       return EmitStoreThroughExtVectorComponentLValue(Src, Dst);
+
+    if (Dst.isGlobalReg())
+      return EmitStoreThroughGlobalRegLValue(Src, Dst);
 
     assert(Dst.isBitField() && "Unknown LValue type");
     return EmitStoreThroughBitfieldLValue(Src, Dst);
@@ -1581,6 +1599,17 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   Store->setAlignment(Dst.getAlignment().getQuantity());
 }
 
+/// @brief Store of global named registers are always calls to intrinsics.
+void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
+  assert(Dst.getType()->isIntegerType() && "Bad type for register variable");
+  llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(Dst.getGlobalReg());
+  assert(RegName && "Register LValue is not metadata");
+  llvm::Type *Types[] = { CGM.getTypes().ConvertType(Dst.getType()) };
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::write_register, Types);
+  llvm::Value *Value = Src.getScalarVal();
+  Builder.CreateCall2(F, RegName, Value);
+}
+
 // setObjCGCLValueClass - sets class of he lvalue for the purpose of
 // generating write-barries API. It is currently a global, ivar,
 // or neither.
@@ -1740,14 +1769,41 @@ static LValue EmitCapturedFieldLValue(CodeGenFunction &CGF, const FieldDecl *FD,
   return CGF.EmitLValueForField(LV, FD);
 }
 
+/// Named Registers are named metadata pointing to the register name
+/// which will be read from/written to as an argument to the intrinsic
+/// @llvm.read/write_register.
+/// So far, only the name is being passed down, but other options such as
+/// register type, allocation type or even optimization options could be
+/// passed down via the metadata node.
+static LValue EmitGlobalNamedRegister(const VarDecl *VD,
+                                      CodeGenModule &CGM,
+                                      CharUnits Alignment) {
+  AsmLabelAttr *Asm = VD->getAttr<AsmLabelAttr>();
+  llvm::Twine Name("llvm.named.register."+Asm->getLabel());
+  llvm::NamedMDNode *M = CGM.getModule().getOrInsertNamedMetadata(Name.str());
+  if (M->getNumOperands() == 0) {
+    llvm::MDString *Str = llvm::MDString::get(CGM.getLLVMContext(),
+                                              Asm->getLabel());
+    llvm::Value *Ops[] = { Str };
+    M->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops));
+  }
+  return LValue::MakeGlobalReg(M->getOperand(0), VD->getType(), Alignment);
+}
+
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
   CharUnits Alignment = getContext().getDeclAlign(ND);
   QualType T = E->getType();
+  const auto *VD = dyn_cast<VarDecl>(ND);
+
+  // Global Named registers access via intrinsics only
+  if (VD && VD->getStorageClass() == SC_Register &&
+       VD->hasAttr<AsmLabelAttr>() && !VD->isLocalVarDecl())
+    return EmitGlobalNamedRegister(VD, CGM, Alignment);
 
   // A DeclRefExpr for a reference initialized by a constant expression can
   // appear without being odr-used. Directly emit the constant initializer.
-  if (const auto *VD = dyn_cast<VarDecl>(ND)) {
+  if (VD) {
     const Expr *Init = VD->getAnyInitializer(VD);
     if (Init && !isa<ParmVarDecl>(VD) && VD->getType()->isReferenceType() &&
         VD->isUsableInConstantExpressions(getContext()) &&
@@ -1773,7 +1829,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return MakeAddrLValue(Aliasee, T, Alignment);
   }
 
-  if (const auto *VD = dyn_cast<VarDecl>(ND)) {
+  if (VD) {
     // Check if this is a global variable.
     if (VD->hasLinkage() || VD->isStaticDataMember())
       return EmitGlobalVarDeclLValue(*this, E, VD);

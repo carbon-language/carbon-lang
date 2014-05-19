@@ -826,6 +826,10 @@ public:
       // Second check is for C++11 [dcl.stc]p4.
       return !isFileVarDecl() && getTSCSpec() == TSCS_unspecified;
 
+    // Global Named Register (GNU extension)
+    if (getStorageClass() == SC_Register && !isLocalVarDecl())
+      return false;
+
     // Return true for:  Auto, Register.
     // Return false for: Extern, Static, PrivateExtern, OpenCLWorkGroupLocal.
 

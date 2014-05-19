@@ -110,7 +110,8 @@ class LValue {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
-    ExtVectorElt  // This is an extended vector subset, use getExtVectorComp
+    ExtVectorElt, // This is an extended vector subset, use getExtVectorComp
+    GlobalReg     // This is a register l-value, use getGlobalReg()
   } LVType;
 
   llvm::Value *V;
@@ -192,6 +193,7 @@ public:
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitField() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
+  bool isGlobalReg() const { return LVType == GlobalReg; }
 
   bool isVolatileQualified() const { return Quals.hasVolatile(); }
   bool isRestrictQualified() const { return Quals.hasRestrict(); }
@@ -286,6 +288,9 @@ public:
     return *BitFieldInfo;
   }
 
+  // global register lvalue
+  llvm::Value *getGlobalReg() const { assert(isGlobalReg()); return V; }
+
   static LValue MakeAddr(llvm::Value *address, QualType type,
                          CharUnits alignment, ASTContext &Context,
                          llvm::MDNode *TBAAInfo = 0) {
@@ -332,6 +337,16 @@ public:
     R.LVType = BitField;
     R.V = Addr;
     R.BitFieldInfo = &Info;
+    R.Initialize(type, type.getQualifiers(), Alignment);
+    return R;
+  }
+
+  static LValue MakeGlobalReg(llvm::Value *Reg,
+                              QualType type,
+                              CharUnits Alignment) {
+    LValue R;
+    R.LVType = GlobalReg;
+    R.V = Reg;
     R.Initialize(type, type.getQualifiers(), Alignment);
     return R;
   }

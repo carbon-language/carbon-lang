@@ -95,8 +95,6 @@ void test9(int i) {
   asm("" : [foo] "=r" (i), "=r"(i) : "[foo]1"(i)); // expected-error{{invalid input constraint '[foo]1' in asm}}
 }
 
-register int g asm("dx"); // expected-error{{global register variables are not supported}}
-
 void test10(void){
   static int g asm ("g_asm") = 0;
   extern int gg asm ("gg_asm");
