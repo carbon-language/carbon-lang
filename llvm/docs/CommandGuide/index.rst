@@ -28,6 +28,7 @@ Basic Commands
    llvm-profdata
    llvm-stress
    llvm-symbolizer
+   llvm-dwarfdump
 
 Debugging Tools
 ~~~~~~~~~~~~~~~
