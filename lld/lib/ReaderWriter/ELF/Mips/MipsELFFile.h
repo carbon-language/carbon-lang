@@ -170,11 +170,13 @@ private:
 
       auto addend = readAddend(*rit, secContent);
       if (needsMatchingRelocation(*rit)) {
+        addend <<= 16;
         auto mit = findMatchingRelocation(rit, eit);
-        // FIXME (simon): Handle this condition in a more user friendly way.
-        assert(mit != eit && "There is no paired R_MIPS_LO16 relocation");
-        auto matchingAddend = readAddend(*mit, secContent);
-        addend = (addend << 16) + int16_t(matchingAddend);
+        if (mit != eit)
+          addend += int16_t(readAddend(*mit, secContent));
+        else
+          // FIXME (simon): Show detailed warning.
+          llvm::errs() << "lld warning: cannot matching LO16 relocation\n";
       }
       this->_references.back()->setAddend(addend);
     }

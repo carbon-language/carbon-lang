@@ -1,0 +1,69 @@
+# RUN: yaml2obj -format=elf -o %t1.o %s
+# RUN: yaml2obj -format=elf -o %t2.o %S/Inputs/pic-obj.yaml
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t2.o
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t1.o %t.so 2>&1 \
+# RUN:   | FileCheck -check-prefix=DIAG %s
+# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=DATA %s
+
+# DIAG: lld warning: cannot matching LO16 relocation
+# DIAG: lld warning: cannot matching LO16 relocation
+
+# DATA:      Contents of section .data:
+# DATA-NEXT:  402000 40000000 10200000 40000000  @.... ..@...
+
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+  Flags: [EF_MIPS_CPIC]
+
+Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+  Content:  "00000000"
+  AddressAlign: 16
+  Flags: [SHF_EXECINSTR, SHF_ALLOC]
+
+- Name: .data
+  Type: SHT_PROGBITS
+  Content:  "000000000000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_WRITE, SHF_ALLOC]
+
+- Name: .rel.data
+  Type: SHT_REL
+  Info: .data
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x00
+      Symbol: D1
+      Type: R_MIPS_HI16
+    - Offset: 0x08
+      Symbol: D2
+      Type: R_MIPS_HI16
+    - Offset: 0x04
+      Symbol: D1
+      Type: R_MIPS_LO16
+    - Offset: 0x08
+      Symbol: .text
+      Type: R_MIPS_HI16
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .data
+      Type:            STT_SECTION
+      Section:         .data
+
+  Global:
+    - Name: T0
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+    - Name: D1
+    - Name: D2
