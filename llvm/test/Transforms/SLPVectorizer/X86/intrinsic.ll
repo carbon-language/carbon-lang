@@ -71,5 +71,49 @@ entry:
   ret void
 }
 
+declare i32 @llvm.bswap.i32(i32) nounwind readnone
 
+define void @vec_bswap_i32(i32* %a, i32* %b, i32* %c) {
+entry:
+  %i0 = load i32* %a, align 4
+  %i1 = load i32* %b, align 4
+  %add1 = add i32 %i0, %i1
+  %call1 = tail call i32 @llvm.bswap.i32(i32 %add1) nounwind readnone
 
+  %arrayidx2 = getelementptr inbounds i32* %a, i32 1
+  %i2 = load i32* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i32 1
+  %i3 = load i32* %arrayidx3, align 4
+  %add2 = add i32 %i2, %i3
+  %call2 = tail call i32 @llvm.bswap.i32(i32 %add2) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds i32* %a, i32 2
+  %i4 = load i32* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds i32* %b, i32 2
+  %i5 = load i32* %arrayidx5, align 4
+  %add3 = add i32 %i4, %i5
+  %call3 = tail call i32 @llvm.bswap.i32(i32 %add3) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds i32* %a, i32 3
+  %i6 = load i32* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds i32* %b, i32 3
+  %i7 = load i32* %arrayidx7, align 4
+  %add4 = add i32 %i6, %i7
+  %call4 = tail call i32 @llvm.bswap.i32(i32 %add4) nounwind readnone
+
+  store i32 %call1, i32* %c, align 4
+  %arrayidx8 = getelementptr inbounds i32* %c, i32 1
+  store i32 %call2, i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %c, i32 2
+  store i32 %call3, i32* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds i32* %c, i32 3
+  store i32 %call4, i32* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_bswap_i32(
+; CHECK: load <4 x i32>
+; CHECK: load <4 x i32>
+; CHECK: call <4 x i32> @llvm.bswap.v4i32
+; CHECK: store <4 x i32>
+; CHECK: ret
+}

@@ -43,6 +43,7 @@ static inline bool isTriviallyVectorizable(Intrinsic::ID ID) {
   case Intrinsic::rint:
   case Intrinsic::nearbyint:
   case Intrinsic::round:
+  case Intrinsic::bswap:
   case Intrinsic::ctpop:
   case Intrinsic::pow:
   case Intrinsic::fma:
