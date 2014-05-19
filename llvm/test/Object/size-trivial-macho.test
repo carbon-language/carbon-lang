@@ -1,0 +1,15 @@
+RUN: llvm-size -A %p/Inputs/macho-text-data-bss.macho-x86_64 \
+RUN:         | FileCheck %s -check-prefix A
+RUN: llvm-size -B %p/Inputs/macho-text-data-bss.macho-x86_64 \
+RUN:         | FileCheck %s -check-prefix B
+
+A: section              size   addr
+A: __text                 12      0
+A: __data                  4     12
+A: __bss                   4    112
+A: __compact_unwind       32     16
+A: __eh_frame             64     48
+A: Total                 116
+
+B:   text    data     bss     dec     hex filename
+B:     12     100       4     116      74 

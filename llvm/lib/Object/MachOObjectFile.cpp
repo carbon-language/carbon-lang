@@ -686,15 +686,21 @@ MachOObjectFile::isSectionText(DataRefImpl Sec, bool &Res) const {
   return object_error::success;
 }
 
-error_code MachOObjectFile::isSectionData(DataRefImpl DRI, bool &Result) const {
-  // FIXME: Unimplemented.
-  Result = false;
+error_code MachOObjectFile::isSectionData(DataRefImpl Sec, bool &Result) const {
+  uint32_t Flags = getSectionFlags(this, Sec);
+  unsigned SectionType = Flags & MachO::SECTION_TYPE;
+  Result = !(Flags & MachO::S_ATTR_PURE_INSTRUCTIONS) &&
+           !(SectionType == MachO::S_ZEROFILL ||
+             SectionType == MachO::S_GB_ZEROFILL);
   return object_error::success;
 }
 
-error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI, bool &Result) const {
-  // FIXME: Unimplemented.
-  Result = false;
+error_code MachOObjectFile::isSectionBSS(DataRefImpl Sec, bool &Result) const {
+  uint32_t Flags = getSectionFlags(this, Sec);
+  unsigned SectionType = Flags & MachO::SECTION_TYPE;
+  Result = !(Flags & MachO::S_ATTR_PURE_INSTRUCTIONS) &&
+           (SectionType == MachO::S_ZEROFILL ||
+            SectionType == MachO::S_GB_ZEROFILL);
   return object_error::success;
 }
 
