@@ -71,7 +71,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !18 = metadata !{i32 786443, metadata !26, metadata !0, i32 19510, i32 1, i32 99} ; [ DW_TAG_lexical_block ]
 !22 = metadata !{i32 18094, i32 2, metadata !15, metadata !17}
 !23 = metadata !{i32 19524, i32 1, metadata !18, null}
-!24 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8}
+!24 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8, metadata !16}
 !25 = metadata !{i32 786473, metadata !27} ; [ DW_TAG_file_type ]
 !26 = metadata !{metadata !"/tmp/f.c", metadata !"/tmp"}
 !27 = metadata !{metadata !"f.i", metadata !"/tmp"}
