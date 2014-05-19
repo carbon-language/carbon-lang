@@ -155,7 +155,6 @@ private:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   EVT genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const;
 };
 
 namespace AMDGPUISD {
