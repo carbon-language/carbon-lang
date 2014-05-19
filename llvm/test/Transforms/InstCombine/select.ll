@@ -1079,3 +1079,55 @@ entry:
 ; CHECK-LABEL: @test71(
 ; CHECK: ret i32 %cond
 }
+
+; SMIN(SMIN(X, 92), 11) -> SMIN(X, 11)
+define i32 @test72(i32 %x) {
+  %cmp = icmp sgt i32 %x, 92
+  %cond = select i1 %cmp, i32 92, i32 %x
+  %cmp3 = icmp sgt i32 %cond, 11
+  %retval = select i1 %cmp3, i32 11, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test72(
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp sgt i32 %x, 11
+; CHECK-NEXT: [[SEL:%[a-z0-9]+]] = select i1 [[CMP]], i32 11, i32 %x
+; CHECK-NEXT: ret i32 [[SEL]]
+}
+
+; MIN(MIN(X, 83), 24) -> MIN(X, 24)
+define i32 @test73(i32 %x) {
+  %cmp = icmp ugt i32 %x, 83
+  %cond = select i1 %cmp, i32 83, i32 %x
+  %cmp3 = icmp ugt i32 %cond, 24
+  %retval = select i1 %cmp3, i32 24, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test73(
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %x, 24
+; CHECK-NEXT: [[SEL:%[a-z0-9]+]] = select i1 [[CMP]], i32 24, i32 %x
+; CHECK-NEXT: ret i32 [[SEL]]
+}
+
+; SMAX(SMAX(X, 36), 75) -> SMAX(X, 75)
+define i32 @test74(i32 %x) {
+  %cmp = icmp slt i32 %x, 36
+  %cond = select i1 %cmp, i32 36, i32 %x
+  %cmp3 = icmp slt i32 %cond, 75
+  %retval = select i1 %cmp3, i32 75, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test74(
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp slt i32 %x, 75
+; CHECK-NEXT: [[SEL:%[a-z0-9]+]] = select i1 [[CMP]], i32 75, i32 %x
+; CHECK-NEXT: ret i32 [[SEL]]
+}
+
+; MAX(MAX(X, 47), 68) -> MAX(X, 68)
+define i32 @test75(i32 %x) {
+  %cmp = icmp ult i32 %x, 47
+  %cond = select i1 %cmp, i32 47, i32 %x
+  %cmp3 = icmp ult i32 %cond, 68
+  %retval = select i1 %cmp3, i32 68, i32 %cond
+  ret i32 %retval
+; CHECK-LABEL: @test75(
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %x, 68
+; CHECK-NEXT: [[SEL:%[a-z0-9]+]] = select i1 [[CMP]], i32 68, i32 %x
+; CHECK-NEXT: ret i32 [[SEL]]
+}

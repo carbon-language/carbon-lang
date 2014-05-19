@@ -651,24 +651,32 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
       return ReplaceInstUsesWith(Outer, C);
   }
 
-  // MIN(MIN(A, 23), 97) -> MIN(A, 23)
-  // MAX(MAX(A, 97), 23) -> MAX(A, 97)
   if (SPF1 == SPF2) {
     if (ConstantInt *CB = dyn_cast<ConstantInt>(B)) {
       if (ConstantInt *CC = dyn_cast<ConstantInt>(C)) {
         APInt ACB = CB->getValue();
         APInt ACC = CC->getValue();
+
+        // MIN(MIN(A, 23), 97) -> MIN(A, 23)
+        // MAX(MAX(A, 97), 23) -> MAX(A, 97)
         if ((SPF1 == SPF_UMIN && ACB.ule(ACC)) ||
             (SPF1 == SPF_SMIN && ACB.sle(ACC)) ||
             (SPF1 == SPF_UMAX && ACB.uge(ACC)) ||
             (SPF1 == SPF_SMAX && ACB.sge(ACC)))
           return ReplaceInstUsesWith(Outer, Inner);
+
+        // MIN(MIN(A, 97), 23) -> MIN(A, 23)
+        // MAX(MAX(A, 23), 97) -> MAX(A, 97)
+        if ((SPF1 == SPF_UMIN && ACB.ugt(ACC)) ||
+            (SPF1 == SPF_SMIN && ACB.sgt(ACC)) ||
+            (SPF1 == SPF_UMAX && ACB.ult(ACC)) ||
+            (SPF1 == SPF_SMAX && ACB.slt(ACC))) {
+          Outer.replaceUsesOfWith(Inner, A);
+          return &Outer;
+        }
       }
     }
   }
-
-  // TODO: MIN(MIN(A, 97), 23) -> MIN(A, 23)
-  // TODO: MAX(MAX(A, 23), 97) -> MAX(A, 97)
   return nullptr;
 }
 
