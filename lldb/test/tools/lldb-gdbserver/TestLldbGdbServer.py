@@ -134,6 +134,40 @@ class LldbGdbServerTestCase(TestBase):
     def expect_gdbremote_sequence(self):
         return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
 
+    _KNOWN_REGINFO_KEYS = [
+        "name",
+        "alt-name",
+        "bitsize",
+        "offset",
+        "encoding",
+        "format",
+        "set",
+        "gcc",
+        "dwarf",
+        "generic",
+        "container-regs",
+        "invalidate-regs"
+    ]
+
+    def assert_valid_reg_info_packet(self, reginfo_packet):
+        keyval_pairs = reginfo_packet.split(";")
+        self.assertTrue(len(keyval_pairs) >= 5)
+        
+        values = {}
+        for kv in keyval_pairs:
+            (key, val) = kv.split(':')
+            values[key] = val
+            # Ensure key is something we expect.
+            self.assertTrue(key in self._KNOWN_REGINFO_KEYS)
+        
+        # Check the bare-minimum expected set of register info keys.
+        self.assertTrue("name" in values)
+        self.assertTrue("bitsize" in values)
+        self.assertTrue("offset" in values)
+        self.assertTrue("encoding" in values)
+        self.assertTrue("format" in values)
+        
+
     @debugserver_test
     def test_exe_starts_debugserver(self):
         self.init_debugserver_test()
@@ -521,6 +555,42 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.attach_commandline_kill_after_initial_stop()
+
+    def qRegisterInfo_returns_one_valid_result(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.test_sequence.add_log_lines(
+            ["read packet: $qRegisterInfo0#00",
+             { "direction":"send", "regex":r"^\$(.+);#\d{2}", "capture":{1:"reginfo_0"} }],
+            True)
+
+        # Run the stream
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        self.assertIsNotNone(context.get("reginfo_0"))
+        self.assert_valid_reg_info_packet(context.get("reginfo_0"))
+
+    @debugserver_test
+    @dsym_test
+    def test_qRegisterInfo_returns_one_valid_result_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qRegisterInfo_returns_one_valid_result()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qRegisterInfo_returns_one_valid_result_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qRegisterInfo_returns_one_valid_result()
 
 if __name__ == '__main__':
     unittest2.main()
