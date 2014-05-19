@@ -159,6 +159,15 @@ SBDebugger::Create(bool source_init_files, lldb::LogOutputCallback callback, voi
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBDebugger debugger;
+    
+    // Currently we have issues if this function is called simultaneously on two different
+    // threads. The issues mainly revolve around the fact that the lldb_private::FormatManager
+    // uses global collections and having two threads parsing the .lldbinit files can cause
+    // mayhem. So to get around this for now we need to use a mutex to prevent bad things
+    // from happening.
+    static Mutex g_mutex(Mutex::eMutexTypeRecursive);
+    Mutex::Locker locker(g_mutex);
+
     debugger.reset(Debugger::CreateInstance(callback, baton));
 
     if (log)
