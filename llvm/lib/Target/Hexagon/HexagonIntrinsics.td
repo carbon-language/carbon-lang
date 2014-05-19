@@ -13,123 +13,6 @@
 // March 4, 2008
 //===----------------------------------------------------------------------===//
 
-// MTYPE / MPYS / Scalar 16x16 multiply signed/unsigned.
-//Rd=mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]
-
-// M2_mpyu_lh_s1:
-let hasNewValue = 1, opNewValue = 0 in
-class T_M2_mpy < bits<2> LHbits, bit isSat, bit isRnd,
-                 bit hasShift, bit isUnsigned, Intrinsic IntID >
-  : MInst < (outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
-  "$Rd = "#!if(isUnsigned,"mpyu","mpy")#"($Rs."#!if(LHbits{1},"h","l")
-                                       #", $Rt."#!if(LHbits{0},"h)","l)")
-                                       #!if(hasShift,":<<1","")
-                                       #!if(isRnd,":rnd","")
-                                       #!if(isSat,":sat",""),
-  [(set IntRegs:$Rd, (IntID IntRegs:$Rs, IntRegs:$Rt))], "", M_tc_3x_SLOT23 > {
-    bits<5> Rd;
-    bits<5> Rs;
-    bits<5> Rt;
-
-    let IClass = 0b1110;
-
-    let Inst{27-24} = 0b1100;
-    let Inst{23} = hasShift;
-    let Inst{22} = isUnsigned;
-    let Inst{21} = isRnd;
-    let Inst{7} = isSat;
-    let Inst{6-5} = LHbits;
-    let Inst{4-0} = Rd;
-    let Inst{20-16} = Rs;
-    let Inst{12-8} = Rt;
-  }
-
-//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1]
-def HEXAGON_M2_mpy_ll_s1: T_M2_mpy<0b00, 0, 0, 1, 0, int_hexagon_M2_mpy_ll_s1>;
-def HEXAGON_M2_mpy_ll_s0: T_M2_mpy<0b00, 0, 0, 0, 0, int_hexagon_M2_mpy_ll_s0>;
-def HEXAGON_M2_mpy_lh_s1: T_M2_mpy<0b01, 0, 0, 1, 0, int_hexagon_M2_mpy_lh_s1>;
-def HEXAGON_M2_mpy_lh_s0: T_M2_mpy<0b01, 0, 0, 0, 0, int_hexagon_M2_mpy_lh_s0>;
-def HEXAGON_M2_mpy_hl_s1: T_M2_mpy<0b10, 0, 0, 1, 0, int_hexagon_M2_mpy_hl_s1>;
-def HEXAGON_M2_mpy_hl_s0: T_M2_mpy<0b10, 0, 0, 0, 0, int_hexagon_M2_mpy_hl_s0>;
-def HEXAGON_M2_mpy_hh_s1: T_M2_mpy<0b11, 0, 0, 1, 0, int_hexagon_M2_mpy_hh_s1>;
-def HEXAGON_M2_mpy_hh_s0: T_M2_mpy<0b11, 0, 0, 0, 0, int_hexagon_M2_mpy_hh_s0>;
-
-//Rd=mpyu(Rs.[H|L],Rt.[H|L])[:<<1]
-def HEXAGON_M2_mpyu_ll_s1:
-                        T_M2_mpy<0b00, 0, 0, 1, 1, int_hexagon_M2_mpyu_ll_s1>;
-def HEXAGON_M2_mpyu_ll_s0:
-                        T_M2_mpy<0b00, 0, 0, 0, 1, int_hexagon_M2_mpyu_ll_s0>;
-def HEXAGON_M2_mpyu_lh_s1:
-                        T_M2_mpy<0b01, 0, 0, 1, 1, int_hexagon_M2_mpyu_lh_s1>;
-def HEXAGON_M2_mpyu_lh_s0:
-                        T_M2_mpy<0b01, 0, 0, 0, 1, int_hexagon_M2_mpyu_lh_s0>;
-def HEXAGON_M2_mpyu_hl_s1:
-                        T_M2_mpy<0b10, 0, 0, 1, 1, int_hexagon_M2_mpyu_hl_s1>;
-def HEXAGON_M2_mpyu_hl_s0:
-                        T_M2_mpy<0b10, 0, 0, 0, 1, int_hexagon_M2_mpyu_hl_s0>;
-def HEXAGON_M2_mpyu_hh_s1:
-                        T_M2_mpy<0b11, 0, 0, 1, 1, int_hexagon_M2_mpyu_hh_s1>;
-def HEXAGON_M2_mpyu_hh_s0:
-                        T_M2_mpy<0b11, 0, 0, 0, 1, int_hexagon_M2_mpyu_hh_s0>;
-
-//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1][:sat]
-let Defs = [USR] in {
-def HEXAGON_M2_mpy_sat_ll_s1 :
-                    T_M2_mpy <0b00, 1, 0, 1, 0, int_hexagon_M2_mpy_sat_ll_s1>;
-def HEXAGON_M2_mpy_sat_ll_s0 :
-                    T_M2_mpy <0b00, 1, 0, 0, 0, int_hexagon_M2_mpy_sat_ll_s0>;
-def HEXAGON_M2_mpy_sat_lh_s1 :
-                    T_M2_mpy <0b01, 1, 0, 1, 0, int_hexagon_M2_mpy_sat_lh_s1>;
-def HEXAGON_M2_mpy_sat_lh_s0 :
-                    T_M2_mpy <0b01, 1, 0, 0, 0, int_hexagon_M2_mpy_sat_lh_s0>;
-def HEXAGON_M2_mpy_sat_hl_s1 :
-                    T_M2_mpy <0b10, 1, 0, 1, 0, int_hexagon_M2_mpy_sat_hl_s1>;
-def HEXAGON_M2_mpy_sat_hl_s0 :
-                    T_M2_mpy <0b10, 1, 0, 0, 0, int_hexagon_M2_mpy_sat_hl_s0>;
-def HEXAGON_M2_mpy_sat_hh_s1 :
-                    T_M2_mpy <0b11, 1, 0, 1, 0, int_hexagon_M2_mpy_sat_hh_s1>;
-def HEXAGON_M2_mpy_sat_hh_s0 :
-                    T_M2_mpy <0b11, 1, 0, 0, 0, int_hexagon_M2_mpy_sat_hh_s0>;
-}
-
-//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1][:rnd]
-def HEXAGON_M2_mpy_rnd_ll_s1 :
-                    T_M2_mpy <0b00, 0, 1, 1, 0, int_hexagon_M2_mpy_rnd_ll_s1>;
-def HEXAGON_M2_mpy_rnd_ll_s0 :
-                    T_M2_mpy <0b00, 0, 1, 0, 0, int_hexagon_M2_mpy_rnd_ll_s0>;
-def HEXAGON_M2_mpy_rnd_lh_s1 :
-                    T_M2_mpy <0b01, 0, 1, 1, 0, int_hexagon_M2_mpy_rnd_lh_s1>;
-def HEXAGON_M2_mpy_rnd_lh_s0 :
-                    T_M2_mpy <0b01, 0, 1, 0, 0, int_hexagon_M2_mpy_rnd_lh_s0>;
-def HEXAGON_M2_mpy_rnd_hl_s1 :
-                    T_M2_mpy <0b10, 0, 1, 1, 0, int_hexagon_M2_mpy_rnd_hl_s1>;
-def HEXAGON_M2_mpy_rnd_hl_s0 :
-                    T_M2_mpy <0b10, 0, 1, 0, 0, int_hexagon_M2_mpy_rnd_hl_s0>;
-def HEXAGON_M2_mpy_rnd_hh_s1 :
-                    T_M2_mpy <0b11, 0, 1, 1, 0, int_hexagon_M2_mpy_rnd_hh_s1>;
-def HEXAGON_M2_mpy_rnd_hh_s0 :
-                    T_M2_mpy <0b11, 0, 1, 0, 0, int_hexagon_M2_mpy_rnd_hh_s0>;
-
-//Rd=mpy(Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]
-let Defs = [USR] in {
-def HEXAGON_M2_mpy_sat_rnd_ll_s1 :
-                  T_M2_mpy <0b00, 1, 1, 1, 0, int_hexagon_M2_mpy_sat_rnd_ll_s1>;
-def HEXAGON_M2_mpy_sat_rnd_ll_s0 :
-                  T_M2_mpy <0b00, 1, 1, 0, 0, int_hexagon_M2_mpy_sat_rnd_ll_s0>;
-def HEXAGON_M2_mpy_sat_rnd_lh_s1 :
-                  T_M2_mpy <0b01, 1, 1, 1, 0, int_hexagon_M2_mpy_sat_rnd_lh_s1>;
-def HEXAGON_M2_mpy_sat_rnd_lh_s0 :
-                  T_M2_mpy <0b01, 1, 1, 0, 0, int_hexagon_M2_mpy_sat_rnd_lh_s0>;
-def HEXAGON_M2_mpy_sat_rnd_hl_s1 :
-                  T_M2_mpy <0b10, 1, 1, 1, 0, int_hexagon_M2_mpy_sat_rnd_hl_s1>;
-def HEXAGON_M2_mpy_sat_rnd_hl_s0 :
-                  T_M2_mpy <0b10, 1, 1, 0, 0, int_hexagon_M2_mpy_sat_rnd_hl_s0>;
-def HEXAGON_M2_mpy_sat_rnd_hh_s1 :
-                  T_M2_mpy <0b11, 1, 1, 1, 0, int_hexagon_M2_mpy_sat_rnd_hh_s1>;
-def HEXAGON_M2_mpy_sat_rnd_hh_s0 :
-                  T_M2_mpy <0b11, 1, 1, 0, 0, int_hexagon_M2_mpy_sat_rnd_hh_s0>;
-}
-
 //
 // ALU 32 types.
 //
@@ -984,9 +867,19 @@ class si_MInst_sisi_hh<string opc, Intrinsic IntID>
              !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.H)")),
              [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
 
+class si_MInst_sisi_hh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.H):<<1")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
 class si_MInst_sisi_lh<string opc, Intrinsic IntID>
   : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
              !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.H)")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_lh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.H):<<1")),
              [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
 
 class si_MInst_sisi_hl<string opc, Intrinsic IntID>
@@ -994,9 +887,19 @@ class si_MInst_sisi_hl<string opc, Intrinsic IntID>
              !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.L)")),
              [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
 
+class si_MInst_sisi_hl_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.L):<<1")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
 class si_MInst_sisi_ll<string opc, Intrinsic IntID>
   : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
              !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.L)")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_ll_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.L):<<1")),
              [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
 
 class si_MInst_sisi_up<string opc, Intrinsic IntID>
@@ -1557,6 +1460,147 @@ class si_MInst_didi_rnd_sat<string opc, Intrinsic IntID>
   : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
              !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):rnd:sat")),
              [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
+
+class si_MInst_sisi_sat_hh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.H):sat")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_hh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.H, $src2.H):<<1:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_hl<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.H, $src2.L):sat")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_hl_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.H, $src2.L):<<1:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_lh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.H):sat")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_lh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.L, $src2.H):<<1:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_ll<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+             !strconcat("$dst = ", !strconcat(opc , "($src1.L, $src2.L):sat")),
+             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_ll_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.L, $src2.L):<<1:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_hh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.H, $src2.H):rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_hh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.H, $src2.H):rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_hh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ", !strconcat(opc ,
+                                                "($src1.H, $src2.H):<<1:rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_hh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc ,
+                                     "($src1.H, $src2.H):<<1:rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_hl<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.H, $src2.L):rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_hl_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.H, $src2.L):<<1:rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_hl<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.H, $src2.L):rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_hl_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.H, $src2.L):<<1:rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_lh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.H):rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_lh<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.H):rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_lh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.H):<<1:rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_lh_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.H):<<1:rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_ll<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.L):rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_sat_rnd_ll_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.L):<<1:rnd:sat")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_ll<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.L):rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
+
+class si_MInst_sisi_rnd_ll_s1<string opc, Intrinsic IntID>
+  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+               !strconcat("$dst = ",
+                          !strconcat(opc , "($src1.L, $src2.L):<<1:rnd")),
+               [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
 
 class di_MInst_dididi_acc_sat<string opc, Intrinsic IntID>
   : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2,
@@ -2520,6 +2564,74 @@ def HEXAGON_M2_dpmpyss_nac_s0:
 // MTYPE / MPYS / Scalar 16x16 multiply signed.
 //Rd=mpy(Rs.[H|L],Rt.[H|L:<<0|:<<1]|
 //          [:<<0[:rnd|:sat|:rnd:sat]|:<<1[:rnd|:sat|:rnd:sat]]]
+def HEXAGON_M2_mpy_hh_s0:
+  si_MInst_sisi_hh                <"mpy",     int_hexagon_M2_mpy_hh_s0>;
+def HEXAGON_M2_mpy_hh_s1:
+  si_MInst_sisi_hh_s1             <"mpy",     int_hexagon_M2_mpy_hh_s1>;
+def HEXAGON_M2_mpy_rnd_hh_s1:
+  si_MInst_sisi_rnd_hh_s1         <"mpy",     int_hexagon_M2_mpy_rnd_hh_s1>;
+def HEXAGON_M2_mpy_sat_rnd_hh_s1:
+  si_MInst_sisi_sat_rnd_hh_s1     <"mpy",     int_hexagon_M2_mpy_sat_rnd_hh_s1>;
+def HEXAGON_M2_mpy_sat_hh_s1:
+  si_MInst_sisi_sat_hh_s1         <"mpy",     int_hexagon_M2_mpy_sat_hh_s1>;
+def HEXAGON_M2_mpy_rnd_hh_s0:
+  si_MInst_sisi_rnd_hh            <"mpy",     int_hexagon_M2_mpy_rnd_hh_s0>;
+def HEXAGON_M2_mpy_sat_rnd_hh_s0:
+  si_MInst_sisi_sat_rnd_hh        <"mpy",     int_hexagon_M2_mpy_sat_rnd_hh_s0>;
+def HEXAGON_M2_mpy_sat_hh_s0:
+  si_MInst_sisi_sat_hh            <"mpy",     int_hexagon_M2_mpy_sat_hh_s0>;
+
+def HEXAGON_M2_mpy_hl_s0:
+  si_MInst_sisi_hl                <"mpy",     int_hexagon_M2_mpy_hl_s0>;
+def HEXAGON_M2_mpy_hl_s1:
+  si_MInst_sisi_hl_s1             <"mpy",     int_hexagon_M2_mpy_hl_s1>;
+def HEXAGON_M2_mpy_rnd_hl_s1:
+  si_MInst_sisi_rnd_hl_s1         <"mpy",     int_hexagon_M2_mpy_rnd_hl_s1>;
+def HEXAGON_M2_mpy_sat_rnd_hl_s1:
+  si_MInst_sisi_sat_rnd_hl_s1     <"mpy",     int_hexagon_M2_mpy_sat_rnd_hl_s1>;
+def HEXAGON_M2_mpy_sat_hl_s1:
+  si_MInst_sisi_sat_hl_s1         <"mpy",     int_hexagon_M2_mpy_sat_hl_s1>;
+def HEXAGON_M2_mpy_rnd_hl_s0:
+  si_MInst_sisi_rnd_hl            <"mpy",     int_hexagon_M2_mpy_rnd_hl_s0>;
+def HEXAGON_M2_mpy_sat_rnd_hl_s0:
+  si_MInst_sisi_sat_rnd_hl        <"mpy",     int_hexagon_M2_mpy_sat_rnd_hl_s0>;
+def HEXAGON_M2_mpy_sat_hl_s0:
+  si_MInst_sisi_sat_hl            <"mpy",     int_hexagon_M2_mpy_sat_hl_s0>;
+
+def HEXAGON_M2_mpy_lh_s0:
+  si_MInst_sisi_lh                <"mpy",     int_hexagon_M2_mpy_lh_s0>;
+def HEXAGON_M2_mpy_lh_s1:
+  si_MInst_sisi_lh_s1             <"mpy",     int_hexagon_M2_mpy_lh_s1>;
+def HEXAGON_M2_mpy_rnd_lh_s1:
+  si_MInst_sisi_rnd_lh_s1         <"mpy",     int_hexagon_M2_mpy_rnd_lh_s1>;
+def HEXAGON_M2_mpy_sat_rnd_lh_s1:
+  si_MInst_sisi_sat_rnd_lh_s1     <"mpy",     int_hexagon_M2_mpy_sat_rnd_lh_s1>;
+def HEXAGON_M2_mpy_sat_lh_s1:
+  si_MInst_sisi_sat_lh_s1         <"mpy",     int_hexagon_M2_mpy_sat_lh_s1>;
+def HEXAGON_M2_mpy_rnd_lh_s0:
+  si_MInst_sisi_rnd_lh            <"mpy",     int_hexagon_M2_mpy_rnd_lh_s0>;
+def HEXAGON_M2_mpy_sat_rnd_lh_s0:
+  si_MInst_sisi_sat_rnd_lh        <"mpy",     int_hexagon_M2_mpy_sat_rnd_lh_s0>;
+def HEXAGON_M2_mpy_sat_lh_s0:
+  si_MInst_sisi_sat_lh            <"mpy",     int_hexagon_M2_mpy_sat_lh_s0>;
+
+def HEXAGON_M2_mpy_ll_s0:
+  si_MInst_sisi_ll                <"mpy",     int_hexagon_M2_mpy_ll_s0>;
+def HEXAGON_M2_mpy_ll_s1:
+  si_MInst_sisi_ll_s1             <"mpy",     int_hexagon_M2_mpy_ll_s1>;
+def HEXAGON_M2_mpy_rnd_ll_s1:
+  si_MInst_sisi_rnd_ll_s1         <"mpy",     int_hexagon_M2_mpy_rnd_ll_s1>;
+def HEXAGON_M2_mpy_sat_rnd_ll_s1:
+  si_MInst_sisi_sat_rnd_ll_s1     <"mpy",     int_hexagon_M2_mpy_sat_rnd_ll_s1>;
+def HEXAGON_M2_mpy_sat_ll_s1:
+  si_MInst_sisi_sat_ll_s1         <"mpy",     int_hexagon_M2_mpy_sat_ll_s1>;
+def HEXAGON_M2_mpy_rnd_ll_s0:
+  si_MInst_sisi_rnd_ll            <"mpy",     int_hexagon_M2_mpy_rnd_ll_s0>;
+def HEXAGON_M2_mpy_sat_rnd_ll_s0:
+  si_MInst_sisi_sat_rnd_ll        <"mpy",     int_hexagon_M2_mpy_sat_rnd_ll_s0>;
+def HEXAGON_M2_mpy_sat_ll_s0:
+  si_MInst_sisi_sat_ll            <"mpy",     int_hexagon_M2_mpy_sat_ll_s0>;
+
 //Rdd=mpy(Rs.[H|L],Rt.[H|L])[[:<<0|:<<1]|[:<<0:rnd|:<<1:rnd]]
 def HEXAGON_M2_mpyd_hh_s0:
   di_MInst_sisi_hh                <"mpy",     int_hexagon_M2_mpyd_hh_s0>;
@@ -2673,6 +2785,24 @@ def HEXAGON_M2_mpyd_nac_ll_s0:
 def HEXAGON_M2_mpyd_nac_ll_s1:
   di_MInst_disisi_nac_ll_s1       <"mpy",    int_hexagon_M2_mpyd_nac_ll_s1>;
 
+// MTYPE / MPYS / Scalar 16x16 multiply unsigned.
+//Rd=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
+def HEXAGON_M2_mpyu_hh_s0:
+  si_MInst_sisi_hh                <"mpyu",    int_hexagon_M2_mpyu_hh_s0>;
+def HEXAGON_M2_mpyu_hh_s1:
+  si_MInst_sisi_hh_s1             <"mpyu",    int_hexagon_M2_mpyu_hh_s1>;
+def HEXAGON_M2_mpyu_hl_s0:
+  si_MInst_sisi_hl                <"mpyu",    int_hexagon_M2_mpyu_hl_s0>;
+def HEXAGON_M2_mpyu_hl_s1:
+  si_MInst_sisi_hl_s1             <"mpyu",    int_hexagon_M2_mpyu_hl_s1>;
+def HEXAGON_M2_mpyu_lh_s0:
+  si_MInst_sisi_lh                <"mpyu",    int_hexagon_M2_mpyu_lh_s0>;
+def HEXAGON_M2_mpyu_lh_s1:
+  si_MInst_sisi_lh_s1             <"mpyu",    int_hexagon_M2_mpyu_lh_s1>;
+def HEXAGON_M2_mpyu_ll_s0:
+  si_MInst_sisi_ll                <"mpyu",    int_hexagon_M2_mpyu_ll_s0>;
+def HEXAGON_M2_mpyu_ll_s1:
+  si_MInst_sisi_ll_s1             <"mpyu",    int_hexagon_M2_mpyu_ll_s1>;
 
 //Rdd=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
 def HEXAGON_M2_mpyud_hh_s0:
