@@ -300,9 +300,9 @@ void __sanitizer_set_report_path(const char *path) {
   }
 }
 
-void NOINLINE __sanitizer_sandbox_on_notify(void *reserved) {
-  (void)reserved;
-  PrepareForSandboxing();
+void NOINLINE
+__sanitizer_sandbox_on_notify(__sanitizer_sandbox_arguments *args) {
+  PrepareForSandboxing(args);
   if (sandboxing_callback)
     sandboxing_callback();
 }

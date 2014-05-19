@@ -390,7 +390,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 }
 #endif  // SANITIZER_GO
 
-void PrepareForSandboxing() {
+void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   // Some kinds of sandboxes may forbid filesystem access, so we won't be able
   // to read the file mappings from /proc/self/maps. Luckily, neither the
   // process will be able to load additional libraries, so it's fine to use the
@@ -401,6 +401,7 @@ void PrepareForSandboxing() {
   if (Symbolizer *sym = Symbolizer::GetOrNull())
     sym->PrepareForSandboxing();
 #endif
+  CovPrepareForSandboxing(args);
 }
 
 enum MutexState {

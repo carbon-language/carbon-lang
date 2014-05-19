@@ -91,11 +91,15 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE
   void __sanitizer_set_report_path(const char *path);
 
-  // Notify the tools that the sandbox is going to be turned on. The reserved
-  // parameter will be used in the future to hold a structure with functions
-  // that the tools may call to bypass the sandbox.
-  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-  void __sanitizer_sandbox_on_notify(void *reserved);
+  typedef struct {
+      int coverage_sandboxed;
+      __sanitizer::sptr coverage_fd;
+      unsigned int coverage_max_block_size;
+  } __sanitizer_sandbox_arguments;
+
+  // Notify the tools that the sandbox is going to be turned on.
+  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE void
+      __sanitizer_sandbox_on_notify(__sanitizer_sandbox_arguments *args);
 
   // This function is called by the tool when it has just finished reporting
   // an error. 'error_summary' is a one-line string that summarizes
