@@ -152,9 +152,20 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
 
   // Delete the modules and erase them from the various structures.
   for (ModuleIterator victim = first; victim != last; ++victim) {
-    Modules.erase((*victim)->File);
+    const FileEntry *F = (*victim)->File;
+    Modules.erase(F);
 
-    FileMgr.invalidateCache((*victim)->File);
+    // Refresh the stat() information for the module file so stale information
+    // doesn't get stored accidentally.
+    vfs::Status UpdatedStat;
+    if (FileMgr.getNoncachedStatValue(F->getName(), UpdatedStat)) {
+      llvm::report_fatal_error(Twine("module file '") + F->getName() +
+                               "' removed after it has been used");
+    } else {
+      FileMgr.modifyFileEntry(const_cast<FileEntry *>(F), UpdatedStat.getSize(),
+          UpdatedStat.getLastModificationTime().toEpochTime());
+    }
+
     if (modMap) {
       StringRef ModuleName = (*victim)->ModuleName;
       if (Module *mod = modMap->findModule(ModuleName)) {
