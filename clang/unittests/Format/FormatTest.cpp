@@ -8547,12 +8547,16 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                    Style));
 
   // Keep empty and one-element array literals on a single line.
-  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[]\n"
-               "                                  copyItems:YES];",
-               Style);
-  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\" ]\n"
-               "                                  copyItems:YES];",
-               Style);
+  EXPECT_EQ("NSArray* a = [[NSArray alloc] initWithArray:@[]\n"
+            "                                  copyItems:YES];",
+            format("NSArray*a=[[NSArray alloc] initWithArray:@[]\n"
+                   "copyItems:YES];",
+                   Style));
+  EXPECT_EQ("NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\" ]\n"
+            "                                  copyItems:YES];",
+            format("NSArray*a=[[NSArray alloc]initWithArray:@[ @\"a\" ]\n"
+                   "             copyItems:YES];",
+                   Style));
   EXPECT_EQ("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
             "                                               @\"a\",\n"
             "                                               @\"a\"\n"
@@ -8564,10 +8568,19 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                    "     ]\n"
                    "       copyItems:YES];",
                    Style));
-  verifyFormat(
+  EXPECT_EQ(
       "NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\", @\"a\" ]\n"
       "                                  copyItems:YES];",
-      Style);
+      format("NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\", @\"a\" ]\n"
+             "   copyItems:YES];",
+             Style));
+
+  verifyFormat("[self.a b:c c:d];", Style);
+  EXPECT_EQ("[self.a b:c\n"
+            "        c:d];",
+            format("[self.a b:c\n"
+                   "c:d];",
+                   Style));
 }
 
 TEST_F(FormatTest, FormatsLambdas) {

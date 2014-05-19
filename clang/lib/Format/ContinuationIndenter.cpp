@@ -739,7 +739,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
                            Current.PackingKind == PPK_Inconclusive)));
       // If this '[' opens an ObjC call, determine whether all parameters fit
       // into one line and put one per line if they don't.
-      if (Current.Type == TT_ObjCMethodExpr &&
+      if (Current.Type == TT_ObjCMethodExpr && Style.ColumnLimit != 0 &&
           getLengthToMatchingParen(Current) + State.Column >
               getColumnLimit(State))
         BreakBeforeParameter = true;
