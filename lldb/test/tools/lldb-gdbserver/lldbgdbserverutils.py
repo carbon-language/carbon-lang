@@ -149,16 +149,22 @@ def expect_lldb_gdbserver_replay(
         elements specified to any GdbRemoteEntry instances in
         test_sequence.
     """
+    
+    # Ensure we have some work to do.
+    if len(sequence_entry) < 1:
+        return {}
+    
     received_lines = []
     receive_buffer = ''
     context = {}
 
-    for sequence_entry in test_sequence.entries:
-        if sequence_entry.is_send_to_remote:
+    sequence_entry = test_sequence.entries.pop(0)
+    while sequence_entry:
+        if sequence_entry.is_send_to_remote():
             # This is an entry to send to the remote debug monitor.
             if logger:
                 logger.info("sending packet to remote: {}".format(sequence_entry.exact_payload))
-            sock.sendall(sequence_entry.exact_payload)
+            sock.sendall(sequence_entry.get_send_packet())
         else:
             # This is an entry to expect to receive from the remote debug monitor.
             if logger:
@@ -208,6 +214,14 @@ def expect_lldb_gdbserver_replay(
             if len(received_lines) > 0:
                 received_packet = received_lines.pop(0)
                 context = sequence_entry.assert_match(asserter, received_packet, context=context)
+                
+        # Move on to next sequence entry as needed.  Some sequence entries support executing multiple
+        # times in different states (for looping over query/response packets).
+        if sequence_entry.is_consumed():
+            if len(test_sequence.entries) > 0:
+                sequence_entry = test_sequence.entries.pop(0)
+            else:
+                sequence_entry = None
     return context
 
 
