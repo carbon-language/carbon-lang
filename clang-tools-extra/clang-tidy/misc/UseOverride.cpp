@@ -88,9 +88,9 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
     StringRef ReplacementText = "override ";
 
     if (Method->hasAttrs()) {
-      for (const clang::Attr *attr : Method->getAttrs()) {
-        if (!attr->isImplicit()) {
-          InsertLoc = Sources.getExpansionLoc(attr->getLocation());
+      for (const clang::Attr *A : Method->getAttrs()) {
+        if (!A->isImplicit()) {
+          InsertLoc = Sources.getExpansionLoc(A->getLocation());
           break;
         }
       }
@@ -117,11 +117,10 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (Method->isVirtualAsWritten()) {
-    for (unsigned i = 0, e = Tokens.size(); i != e; ++i) {
-      if (Tokens[i].is(tok::raw_identifier) &&
-          GetText(Tokens[i], Sources) == "virtual") {
+    for (Token Tok : Tokens) {
+      if (Tok.is(tok::raw_identifier) && GetText(Tok, Sources) == "virtual") {
         Diag << FixItHint::CreateRemoval(CharSourceRange::getTokenRange(
-            Tokens[i].getLocation(), Tokens[i].getLocation()));
+            Tok.getLocation(), Tok.getLocation()));
         break;
       }
     }
