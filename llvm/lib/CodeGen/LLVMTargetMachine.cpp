@@ -98,7 +98,8 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
   // Add internal analysis passes from the target machine.
   TM->addAnalysisPasses(PM);
 
-  // Targets may override createPassConfig to provide a target-specific sublass.
+  // Targets may override createPassConfig to provide a target-specific
+  // subclass.
   TargetPassConfig *PassConfig = TM->createPassConfig(PM);
   PassConfig->setStartStopPasses(StartAfter, StopAfter);
 
