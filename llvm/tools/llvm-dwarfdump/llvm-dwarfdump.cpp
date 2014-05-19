@@ -38,19 +38,6 @@ static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),
                cl::ZeroOrMore);
 
-static cl::opt<unsigned long long>
-Address("address", cl::init(-1ULL),
-        cl::desc("Print line information for a given address"));
-
-static cl::opt<bool>
-PrintFunctions("functions", cl::init(false),
-               cl::desc("Print function names as well as line information "
-                        "for a given address"));
-
-static cl::opt<bool>
-PrintInlining("inlining", cl::init(false),
-              cl::desc("Print all inlined frames for a given address"));
-
 static cl::opt<DIDumpType>
 DumpType("debug-dump", cl::init(DIDT_All),
   cl::desc("Dump of debug sections:"),
@@ -78,12 +65,6 @@ DumpType("debug-dump", cl::init(DIDT_All),
         clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo", ".debug_str_offsets.dwo"),
         clEnumValEnd));
 
-static void PrintDILineInfo(DILineInfo dli) {
-  if (PrintFunctions)
-    outs() << dli.FunctionName << "\n";
-  outs() << dli.FileName << ':' << dli.Line << ':' << dli.Column << '\n';
-}
-
 static void DumpInput(const StringRef &Filename) {
   std::unique_ptr<MemoryBuffer> Buff;
 
@@ -101,35 +82,10 @@ static void DumpInput(const StringRef &Filename) {
 
   std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
 
-  if (Address == -1ULL) {
-    outs() << Filename
-           << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
-    // Dump the complete DWARF structure.
-    DICtx->dump(outs(), DumpType);
-  } else {
-    // Print line info for the specified address.
-    DILineInfoSpecifier Spec(
-        DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
-        PrintFunctions ? DILineInfoSpecifier::FunctionNameKind::LinkageName
-                       : DILineInfoSpecifier::FunctionNameKind::None);
-    if (PrintInlining) {
-      DIInliningInfo InliningInfo =
-        DICtx->getInliningInfoForAddress(Address, Spec);
-      uint32_t n = InliningInfo.getNumberOfFrames();
-      if (n == 0) {
-        // Print one empty debug line info in any case.
-        PrintDILineInfo(DILineInfo());
-      } else {
-        for (uint32_t i = 0; i < n; i++) {
-          DILineInfo dli = InliningInfo.getFrame(i);
-          PrintDILineInfo(dli);
-        }
-      }
-    } else {
-      DILineInfo dli = DICtx->getLineInfoForAddress(Address, Spec);
-      PrintDILineInfo(dli);
-    }
-  }
+  outs() << Filename
+         << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
+  // Dump the complete DWARF structure.
+  DICtx->dump(outs(), DumpType);
 }
 
 int main(int argc, char **argv) {

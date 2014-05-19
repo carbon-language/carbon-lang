@@ -1,12 +1,6 @@
 REQUIRES: zlib
 
-RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test-zlib.elf-x86-64  \
-RUN:   | FileCheck %s -check-prefix FULLDUMP
-RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test-zlib.elf-x86-64  \
-RUN:   --address=0x400559 --functions | FileCheck %s -check-prefix MAIN
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test-zlib.elf-x86-64 | FileCheck %s
 
-FULLDUMP: .debug_abbrev contents
-FULLDUMP: .debug_info contents
-
-MAIN: main
-MAIN-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test-zlib.cc:16
+CHECK: .debug_abbrev contents
+CHECK: .debug_info contents
