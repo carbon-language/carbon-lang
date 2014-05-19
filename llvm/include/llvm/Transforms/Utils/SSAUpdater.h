@@ -137,27 +137,27 @@ public:
   LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
                        SSAUpdater &S, StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
-  
+
   /// \brief This does the promotion.
   ///
   /// Insts is a list of loads and stores to promote, and Name is the basename
   /// for the PHIs to insert. After this is complete, the loads and stores are
   /// removed from the code.
   void run(const SmallVectorImpl<Instruction*> &Insts) const;
-  
-  
+
+
   /// \brief Return true if the specified instruction is in the Inst list.
   ///
   /// The Insts list is the one passed into the constructor. Clients should
   /// implement this with a more efficient version if possible.
   virtual bool isInstInList(Instruction *I,
                             const SmallVectorImpl<Instruction*> &Insts) const;
-  
+
   /// \brief This hook is invoked after all the stores are found and inserted as
   /// available values.
   virtual void doExtraRewritesBeforeFinalDeletion() const {
   }
-  
+
   /// \brief Clients can choose to implement this to get notified right before
   /// a load is RAUW'd another value.
   virtual void replaceLoadWithValue(LoadInst *LI, Value *V) const {

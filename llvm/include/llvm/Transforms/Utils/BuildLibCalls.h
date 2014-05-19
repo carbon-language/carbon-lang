@@ -21,7 +21,7 @@ namespace llvm {
   class Value;
   class DataLayout;
   class TargetLibraryInfo;
-  
+
   /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
   Value *CastToCStr(Value *V, IRBuilder<> &B);
 

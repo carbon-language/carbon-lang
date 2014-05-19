@@ -55,13 +55,13 @@ struct ClonedCodeInfo {
   /// ContainsCalls - This is set to true if the cloned code contains a normal
   /// call instruction.
   bool ContainsCalls;
-  
+
   /// ContainsDynamicAllocas - This is set to true if the cloned code contains
   /// a 'dynamic' alloca.  Dynamic allocas are allocas that are either not in
   /// the entry block or they are in the entry block but are not a constant
   /// size.
   bool ContainsDynamicAllocas;
-  
+
   ClonedCodeInfo() : ContainsCalls(false), ContainsDynamicAllocas(false) {}
 };
 
@@ -129,7 +129,7 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        ValueToValueMapTy &VMap,
                        bool ModuleLevelChanges,
                        SmallVectorImpl<ReturnInst*> &Returns,
-                       const char *NameSuffix = "", 
+                       const char *NameSuffix = "",
                        ClonedCodeInfo *CodeInfo = nullptr,
                        ValueMapTypeRemapper *TypeMapper = nullptr,
                        ValueMaterializer *Materializer = nullptr);
@@ -149,19 +149,19 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                ValueToValueMapTy &VMap,
                                bool ModuleLevelChanges,
                                SmallVectorImpl<ReturnInst*> &Returns,
-                               const char *NameSuffix = "", 
+                               const char *NameSuffix = "",
                                ClonedCodeInfo *CodeInfo = nullptr,
                                const DataLayout *DL = nullptr,
                                Instruction *TheCall = nullptr);
 
-  
+
 /// InlineFunctionInfo - This class captures the data input to the
-/// InlineFunction call, and records the auxiliary results produced by it. 
+/// InlineFunction call, and records the auxiliary results produced by it.
 class InlineFunctionInfo {
 public:
   explicit InlineFunctionInfo(CallGraph *cg = nullptr, const DataLayout *DL = nullptr)
     : CG(cg), DL(DL) {}
-  
+
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
@@ -174,13 +174,13 @@ public:
   /// InlinedCalls - InlineFunction fills this in with callsites that were
   /// inlined from the callee.  This is only filled in if CG is non-null.
   SmallVector<WeakVH, 8> InlinedCalls;
-  
+
   void reset() {
     StaticAllocas.clear();
     InlinedCalls.clear();
   }
 };
-  
+
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
 /// this call.  The program is still in a well defined state if this occurs

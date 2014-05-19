@@ -55,16 +55,16 @@ namespace llvm {
   /// @brief Replace Rem with generated code.
   bool expandRemainderUpTo64Bits(BinaryOperator *Rem);
 
-  /// Generate code to divide two integers, replacing Div with the generated 
+  /// Generate code to divide two integers, replacing Div with the generated
   /// code. Uses ExpandDivision with a 32bit Div which makes it useful for
   /// targets with little or no support for less than 32 bit arithmetic.
-  /// 
+  ///
   /// @brief Replace Rem with generated code.
   bool expandDivisionUpTo32Bits(BinaryOperator *Div);
 
-  /// Generate code to divide two integers, replacing Div with the generated 
+  /// Generate code to divide two integers, replacing Div with the generated
   /// code. Uses ExpandDivision with a 64bit Div.
-  /// 
+  ///
   /// @brief Replace Rem with generated code.
   bool expandDivisionUpTo64Bits(BinaryOperator *Div);
 
