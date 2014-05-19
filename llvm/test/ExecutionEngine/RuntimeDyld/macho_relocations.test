@@ -1,1 +1,2 @@
 RUN: llvm-rtdyld -printline %p/Inputs/arm_secdiff_reloc.o
+RUN: llvm-rtdyld %p/Inputs/x86_64_macho_pic_globals_GOT.o

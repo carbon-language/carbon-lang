@@ -573,6 +573,10 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
                                  RelType == MachO::X86_64_RELOC_GOT_LOAD)) {
     assert(IsPCRel);
     assert(Size == 2);
+
+    // FIXME: Teach the generic code above not to prematurely conflate
+    //        relocation addends and symbol offsets.
+    Value.Addend -= Addend;
     StubMap::const_iterator i = Stubs.find(Value);
     uint8_t *Addr;
     if (i != Stubs.end()) {
@@ -581,7 +585,8 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
       Stubs[Value] = Section.StubOffset;
       uint8_t *GOTEntry = Section.Address + Section.StubOffset;
       RelocationEntry GOTRE(SectionID, Section.StubOffset,
-                            MachO::X86_64_RELOC_UNSIGNED, 0, false, 3);
+                            MachO::X86_64_RELOC_UNSIGNED, Value.Addend, false,
+                            3);
       if (Value.SymbolName)
         addRelocationForSymbol(GOTRE, Value.SymbolName);
       else
@@ -590,7 +595,7 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
       Addr = GOTEntry;
     }
     RelocationEntry TargetRE(SectionID, Offset,
-                             MachO::X86_64_RELOC_UNSIGNED, Value.Addend, true,
+                             MachO::X86_64_RELOC_UNSIGNED, Addend, true,
                              2);
     resolveRelocation(TargetRE, (uint64_t)Addr);
   } else if (Arch == Triple::arm && (RelType & 0xf) == MachO::ARM_RELOC_BR24) {
