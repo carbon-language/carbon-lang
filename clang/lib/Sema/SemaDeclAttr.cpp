@@ -2180,9 +2180,16 @@ template <typename WorkGroupAttr>
 static void handleWorkGroupSize(Sema &S, Decl *D,
                                 const AttributeList &Attr) {
   uint32_t WGSize[3];
-  for (unsigned i = 0; i < 3; ++i)
-    if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(i), WGSize[i], i))
+  for (unsigned i = 0; i < 3; ++i) {
+    const Expr *E = Attr.getArgAsExpr(i);
+    if (!checkUInt32Argument(S, Attr, E, WGSize[i], i))
       return;
+    if (WGSize[i] == 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_is_zero)
+        << Attr.getName() << E->getSourceRange();
+      return;
+    }
+  }
 
   WorkGroupAttr *Existing = D->getAttr<WorkGroupAttr>();
   if (Existing && !(Existing->getXDim() == WGSize[0] &&

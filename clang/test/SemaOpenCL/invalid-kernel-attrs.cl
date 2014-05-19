@@ -31,3 +31,7 @@ void f_kernel_image2d_t( kernel image2d_t image ) { // expected-error {{'kernel'
   read_only int i; // expected-error {{'read_only' attribute only applies to parameters}}
   __write_only int j; // expected-error {{'__write_only' attribute only applies to parameters}}
 }
+
+kernel __attribute__((reqd_work_group_size(1,2,0))) void kernel11(){} // expected-error {{'reqd_work_group_size' attribute must be greater than 0}}
+kernel __attribute__((reqd_work_group_size(1,0,2))) void kernel12(){} // expected-error {{'reqd_work_group_size' attribute must be greater than 0}}
+kernel __attribute__((reqd_work_group_size(0,1,2))) void kernel13(){} // expected-error {{'reqd_work_group_size' attribute must be greater than 0}}

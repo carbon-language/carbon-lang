@@ -2002,6 +2002,8 @@ def warn_concatenated_nsarray_literal : Warning<
   InGroup<ObjCStringConcatenation>;
 def note_objc_literal_comparison_isequal : Note<
   "use 'isEqual:' instead">;
+def err_attribute_argument_is_zero : Error<
+  "%0 attribute must be greater than 0">;
 
 let CategoryName = "Cocoa API Issue" in {
 def warn_objc_redundant_literal_use : Warning<
