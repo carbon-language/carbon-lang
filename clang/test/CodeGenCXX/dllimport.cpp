@@ -8,7 +8,7 @@ void DLLIMPORT a();
 inline void DLLIMPORT b() {}
 // CHECK-DAG: define available_externally dllimport void @"\01?b@@YAXXZ"()
 
-template <typename T> inline void c() {} // FIXME: MSVC accepts this without 'inline' too.
+template <typename T> void c() {}
 template void DLLIMPORT c<int>();
 // CHECK-DAG: define available_externally dllimport void @"\01??$c@H@@YAXXZ"()
 

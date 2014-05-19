@@ -9766,7 +9766,8 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     ResolveExceptionSpec(D->getLocation(), FPT);
 
   // dllimport cannot be applied to non-inline function definitions.
-  if (FD->hasAttr<DLLImportAttr>() && !FD->isInlined()) {
+  if (FD->hasAttr<DLLImportAttr>() && !FD->isInlined() &&
+      !FD->isTemplateInstantiation()) {
     assert(!FD->hasAttr<DLLExportAttr>());
     Diag(FD->getLocation(), diag::err_attribute_dllimport_function_definition);
     FD->setInvalidDecl();
