@@ -65,7 +65,6 @@ struct ClonedCodeInfo {
   ClonedCodeInfo() : ContainsCalls(false), ContainsDynamicAllocas(false) {}
 };
 
-
 /// CloneBasicBlock - Return a copy of the specified basic block, but without
 /// embedding the block into a particular function.  The block returned is an
 /// exact copy of the specified basic block, without any remapping having been
@@ -153,7 +152,6 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                ClonedCodeInfo *CodeInfo = nullptr,
                                const DataLayout *DL = nullptr,
                                Instruction *TheCall = nullptr);
-
 
 /// InlineFunctionInfo - This class captures the data input to the
 /// InlineFunction call, and records the auxiliary results produced by it.

@@ -82,7 +82,6 @@ bool RecursivelyDeleteTriviallyDeadInstructions(Value *V,
 bool RecursivelyDeleteDeadPHINode(PHINode *PN,
                                   const TargetLibraryInfo *TLI = nullptr);
 
-
 /// SimplifyInstructionsInBlock - Scan the specified basic block and try to
 /// simplify any instructions in it and recursively delete dead instructions.
 ///
@@ -109,14 +108,12 @@ bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = nullptr,
 void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
                                   DataLayout *TD = nullptr);
 
-
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
 /// predecessor is known to have one successor (BB!).  Eliminate the edge
 /// between them, moving the instructions in the predecessor into BB.  This
 /// deletes the predecessor block.
 ///
 void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = nullptr);
-
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
 /// unconditional branch, and contains no instructions other than PHI nodes,

@@ -34,7 +34,6 @@ class TerminatorInst;
 /// predecessors.
 void DeleteDeadBlock(BasicBlock *BB);
 
-
 /// FoldSingleEntryPHINodes - We know that BB has one predecessor.  If there are
 /// any single-entry PHI nodes in it, fold them away.  This handles the case
 /// when all entries to the PHI nodes in a block are guaranteed equal, such as
@@ -206,7 +205,6 @@ ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
 TerminatorInst *SplitBlockAndInsertIfThen(Value *Cond, Instruction *SplitBefore,
                                           bool Unreachable,
                                           MDNode *BranchWeights = nullptr);
-
 
 /// SplitBlockAndInsertIfThenElse is similar to SplitBlockAndInsertIfThen,
 /// but also creates the ElseBlock.

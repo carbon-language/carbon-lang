@@ -133,6 +133,7 @@ private:
 class LoadAndStorePromoter {
 protected:
   SSAUpdater &SSA;
+
 public:
   LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
                        SSAUpdater &S, StringRef Name = StringRef());
@@ -144,7 +145,6 @@ public:
   /// for the PHIs to insert. After this is complete, the loads and stores are
   /// removed from the code.
   void run(const SmallVectorImpl<Instruction*> &Insts) const;
-
 
   /// \brief Return true if the specified instruction is in the Inst list.
   ///

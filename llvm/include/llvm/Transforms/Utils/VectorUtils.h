@@ -53,7 +53,6 @@ static inline bool isTriviallyVectorizable(Intrinsic::ID ID) {
   }
 }
 
-
 static Intrinsic::ID checkUnaryFloatSignature(const CallInst &I,
                                               Intrinsic::ID ValidIntrinsicID) {
   if (I.getNumArgOperands() != 1 ||
@@ -174,7 +173,6 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
 
   return Intrinsic::not_intrinsic;
 }
-
 
 } // llvm namespace
 

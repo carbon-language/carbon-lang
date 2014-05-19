@@ -37,6 +37,7 @@ protected:
   bool ShouldSplitOverflowIntrinsics;
 
   virtual void anchor();
+
 public:
   IVVisitor(): DT(nullptr), ShouldSplitOverflowIntrinsics(false) {}
   virtual ~IVVisitor() {}

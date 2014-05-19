@@ -120,7 +120,6 @@ namespace llvm {
                                     BasicBlock *newHeader,
                                     ValueSet &inputs,
                                     ValueSet &outputs);
-
   };
 }
 

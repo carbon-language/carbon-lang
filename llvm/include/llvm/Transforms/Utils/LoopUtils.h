@@ -58,7 +58,6 @@ bool formLCSSA(Loop &L, DominatorTree &DT, ScalarEvolution *SE = nullptr);
 /// Returns true if any modifications are made to the loop.
 bool formLCSSARecursively(Loop &L, DominatorTree &DT,
                           ScalarEvolution *SE = nullptr);
-
 }
 
 #endif

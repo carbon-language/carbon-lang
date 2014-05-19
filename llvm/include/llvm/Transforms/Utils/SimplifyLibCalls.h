@@ -30,6 +30,7 @@ namespace llvm {
     /// Impl - A pointer to the actual implementation of the library call
     /// simplifier.
     LibCallSimplifierImpl *Impl;
+
   public:
     LibCallSimplifier(const DataLayout *TD, const TargetLibraryInfo *TLI,
                       bool UnsafeFPShrink);
