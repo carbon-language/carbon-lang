@@ -2,12 +2,6 @@
 // RUN: echo > %t.empty.c
 // RUN: %clang -include %t -x c %t.empty.c -emit-llvm -S -o -
 
-// FIXME: This test is forcibly disabled, it is flaky on the clang-i686-xp-msvc9
-// buildbot.
-//
-// RUN: false
-// XFAIL: *
-
 // PR 4489: Crash with PCH
 // PR 4492: Crash with PCH (round two)
 // PR 4509: Crash with PCH (round three)
