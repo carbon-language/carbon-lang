@@ -1512,7 +1512,10 @@ static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
   if (dst & (1 << (14 - 1)))
     dst |= ~((1LL << 14) - 1);
 
-  DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
+  if (fieldFromInstruction(insn, 31, 1) == 0)
+    DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
+  else
+    DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
   Inst.addOperand(MCOperand::CreateImm(bit));
   if (!Dis->tryAddingSymbolicOperand(Inst, dst << 2, Addr, true, 0, 4))
     Inst.addOperand(MCOperand::CreateImm(dst));

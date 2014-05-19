@@ -563,6 +563,15 @@ public:
     int64_t Val = MCE->getValue();
     return (Val >= 0 && Val < 65536);
   }
+  bool isImm32_63() const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return false;
+    int64_t Val = MCE->getValue();
+    return (Val >= 32 && Val < 64);
+  }
   bool isLogicalImm32() const {
     if (!isImm())
       return false;
@@ -811,6 +820,10 @@ public:
   bool isVectorRegLo() const {
     return Kind == k_Register && Reg.isVector &&
       ARM64MCRegisterClasses[ARM64::FPR128_loRegClassID].contains(Reg.RegNum);
+  }
+  bool isGPR32as64() const {
+    return Kind == k_Register && !Reg.isVector &&
+      ARM64MCRegisterClasses[ARM64::GPR64RegClassID].contains(Reg.RegNum);
   }
 
   /// Is this a vector list with the type implicit (presumably attached to the
@@ -1188,6 +1201,17 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
+  void addGPR32as64Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    assert(ARM64MCRegisterClasses[ARM64::GPR64RegClassID].contains(getReg()));
+
+    const MCRegisterInfo *RI = Ctx.getRegisterInfo();
+    uint32_t Reg = RI->getRegClass(ARM64::GPR32RegClassID).getRegister(
+        RI->getEncodingValue(getReg()));
+
+    Inst.addOperand(MCOperand::CreateReg(Reg));
+  }
+
   void addVectorReg64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     assert(ARM64MCRegisterClasses[ARM64::FPR128RegClassID].contains(getReg()));
@@ -1402,6 +1426,13 @@ public:
   }
 
   void addImm0_65535Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    assert(MCE && "Invalid constant immediate operand!");
+    Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
+  }
+
+  void addImm32_63Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
     assert(MCE && "Invalid constant immediate operand!");
@@ -3948,27 +3979,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
           delete Op;
           delete Op4;
-        }
-      }
-    }
-  }
-  // FIXME: Horrible hack for tbz and tbnz with Wn register operand.
-  //        InstAlias can't quite handle this since the reg classes aren't
-  //        subclasses.
-  if (NumOperands == 4 && (Tok == "tbz" || Tok == "tbnz")) {
-    ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[2]);
-    if (Op->isImm()) {
-      if (const MCConstantExpr *OpCE = dyn_cast<MCConstantExpr>(Op->getImm())) {
-        if (OpCE->getValue() < 32) {
-          // The source register can be Wn here, but the matcher expects a
-          // GPR64. Twiddle it here if necessary.
-          ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[1]);
-          if (Op->isReg()) {
-            unsigned Reg = getXRegFromWReg(Op->getReg());
-            Operands[1] = ARM64Operand::CreateReg(
-                Reg, false, Op->getStartLoc(), Op->getEndLoc(), getContext());
-            delete Op;
-          }
         }
       }
     }

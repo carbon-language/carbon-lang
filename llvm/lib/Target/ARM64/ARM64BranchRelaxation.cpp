@@ -275,8 +275,10 @@ static bool isConditionalBranch(unsigned Opc) {
   switch (Opc) {
   default:
     return false;
-  case ARM64::TBZ:
-  case ARM64::TBNZ:
+  case ARM64::TBZW:
+  case ARM64::TBNZW:
+  case ARM64::TBZX:
+  case ARM64::TBNZX:
   case ARM64::CBZW:
   case ARM64::CBNZW:
   case ARM64::CBZX:
@@ -290,8 +292,10 @@ static MachineBasicBlock *getDestBlock(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default:
     assert(0 && "unexpected opcode!");
-  case ARM64::TBZ:
-  case ARM64::TBNZ:
+  case ARM64::TBZW:
+  case ARM64::TBNZW:
+  case ARM64::TBZX:
+  case ARM64::TBNZX:
     return MI->getOperand(2).getMBB();
   case ARM64::CBZW:
   case ARM64::CBNZW:
@@ -306,8 +310,10 @@ static unsigned getOppositeConditionOpcode(unsigned Opc) {
   switch (Opc) {
   default:
     assert(0 && "unexpected opcode!");
-  case ARM64::TBNZ:    return ARM64::TBZ;
-  case ARM64::TBZ:     return ARM64::TBNZ;
+  case ARM64::TBNZW:   return ARM64::TBZW;
+  case ARM64::TBNZX:   return ARM64::TBZX;
+  case ARM64::TBZW:    return ARM64::TBNZW;
+  case ARM64::TBZX:    return ARM64::TBNZX;
   case ARM64::CBNZW:   return ARM64::CBZW;
   case ARM64::CBNZX:   return ARM64::CBZX;
   case ARM64::CBZW:    return ARM64::CBNZW;
@@ -320,8 +326,10 @@ static unsigned getBranchDisplacementBits(unsigned Opc) {
   switch (Opc) {
   default:
     assert(0 && "unexpected opcode!");
-  case ARM64::TBNZ:
-  case ARM64::TBZ:
+  case ARM64::TBNZW:
+  case ARM64::TBZW:
+  case ARM64::TBNZX:
+  case ARM64::TBZX:
     return TBZDisplacementBits;
   case ARM64::CBNZW:
   case ARM64::CBZW:
@@ -379,7 +387,8 @@ bool ARM64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
                      << *BMI);
         BMI->getOperand(0).setMBB(DestBB);
         unsigned OpNum =
-            (MI->getOpcode() == ARM64::TBZ || MI->getOpcode() == ARM64::TBNZ)
+            (MI->getOpcode() == ARM64::TBZW || MI->getOpcode() == ARM64::TBNZW ||
+             MI->getOpcode() == ARM64::TBZX || MI->getOpcode() == ARM64::TBNZX)
                 ? 2
                 : 1;
         MI->getOperand(OpNum).setMBB(NewDest);
@@ -420,7 +429,8 @@ bool ARM64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
   MachineInstrBuilder MIB = BuildMI(
       MBB, DebugLoc(), TII->get(getOppositeConditionOpcode(MI->getOpcode())))
                                 .addOperand(MI->getOperand(0));
-  if (MI->getOpcode() == ARM64::TBZ || MI->getOpcode() == ARM64::TBNZ)
+  if (MI->getOpcode() == ARM64::TBZW || MI->getOpcode() == ARM64::TBNZW ||
+      MI->getOpcode() == ARM64::TBZX || MI->getOpcode() == ARM64::TBNZX)
     MIB.addOperand(MI->getOperand(1));
   if (MI->getOpcode() == ARM64::Bcc)
     invertBccCondition(MIB);

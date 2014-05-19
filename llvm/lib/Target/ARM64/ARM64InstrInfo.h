@@ -209,8 +209,10 @@ static inline bool isCondBranchOpcode(int Opc) {
   case ARM64::CBZX:
   case ARM64::CBNZW:
   case ARM64::CBNZX:
-  case ARM64::TBZ:
-  case ARM64::TBNZ:
+  case ARM64::TBZW:
+  case ARM64::TBZX:
+  case ARM64::TBNZW:
+  case ARM64::TBNZX:
     return true;
   default:
     return false;

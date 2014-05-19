@@ -63,18 +63,6 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       return;
     }
 
-  // TBZ/TBNZ should print the register operand as a Wreg if the bit
-  // number is < 32.
-  if ((Opcode == ARM64::TBNZ || Opcode == ARM64::TBZ) &&
-      MI->getOperand(1).getImm() < 32) {
-    MCInst newMI = *MI;
-    unsigned Reg = MI->getOperand(0).getReg();
-    newMI.getOperand(0).setReg(getWRegFromXReg(Reg));
-    printInstruction(&newMI, O);
-    printAnnotation(O, Annot);
-    return;
-  }
-
   // SBFM/UBFM should print to a nicer aliased form if possible.
   if (Opcode == ARM64::SBFMXri || Opcode == ARM64::SBFMWri ||
       Opcode == ARM64::UBFMXri || Opcode == ARM64::UBFMWri) {

@@ -322,7 +322,7 @@ done:
 }
 
 ; CHECK: tbnz_32
-; CHECK: {{ands.*xzr,|tst}} x2, #0x80
+; CHECK: {{ands.*xzr,|tst}} w2, #0x80
 ; CHECK-NEXT: csel w0, w1, w0, ne
 ; CHECK-NEXT: ret
 define i32 @tbnz_32(i32 %x, i32 %y, i32 %c) nounwind ssp {
@@ -358,7 +358,7 @@ done:
 }
 
 ; CHECK: tbz_32
-; CHECK: {{ands.*xzr,|tst}} x2, #0x80
+; CHECK: {{ands.*xzr,|tst}} w2, #0x80
 ; CHECK-NEXT: csel w0, w1, w0, eq
 ; CHECK-NEXT: ret
 define i32 @tbz_32(i32 %x, i32 %y, i32 %c) nounwind ssp {

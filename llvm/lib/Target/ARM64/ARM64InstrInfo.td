@@ -54,7 +54,7 @@ def SDT_ARM64Brcond  : SDTypeProfile<0, 3,
                                      [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>,
                                       SDTCisVT<2, i32>]>;
 def SDT_ARM64cbz : SDTypeProfile<0, 2, [SDTCisInt<0>, SDTCisVT<1, OtherVT>]>;
-def SDT_ARM64tbz : SDTypeProfile<0, 3, [SDTCisVT<0, i64>, SDTCisVT<1, i64>,
+def SDT_ARM64tbz : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>,
                                         SDTCisVT<2, OtherVT>]>;
 
 
@@ -1045,8 +1045,8 @@ defm CBNZ : CmpBranch<1, "cbnz", ARM64cbnz>;
 //===----------------------------------------------------------------------===//
 // Test-bit-and-branch instructions.
 //===----------------------------------------------------------------------===//
-def TBZ  : TestBranch<0, "tbz", ARM64tbz>;
-def TBNZ : TestBranch<1, "tbnz", ARM64tbnz>;
+defm TBZ  : TestBranch<0, "tbz", ARM64tbz>;
+defm TBNZ : TestBranch<1, "tbnz", ARM64tbnz>;
 
 //===----------------------------------------------------------------------===//
 // Unconditional branch (immediate) instructions.

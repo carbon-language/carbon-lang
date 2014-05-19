@@ -70,8 +70,10 @@ static void parseCondBranch(MachineInstr *LastInst, MachineBasicBlock *&Target,
     Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
     Cond.push_back(LastInst->getOperand(0));
     break;
-  case ARM64::TBZ:
-  case ARM64::TBNZ:
+  case ARM64::TBZW:
+  case ARM64::TBZX:
+  case ARM64::TBNZW:
+  case ARM64::TBNZX:
     Target = LastInst->getOperand(2).getMBB();
     Cond.push_back(MachineOperand::CreateImm(-1));
     Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
@@ -196,11 +198,17 @@ bool ARM64InstrInfo::ReverseBranchCondition(
     case ARM64::CBNZX:
       Cond[1].setImm(ARM64::CBZX);
       break;
-    case ARM64::TBZ:
-      Cond[1].setImm(ARM64::TBNZ);
+    case ARM64::TBZW:
+      Cond[1].setImm(ARM64::TBNZW);
       break;
-    case ARM64::TBNZ:
-      Cond[1].setImm(ARM64::TBZ);
+    case ARM64::TBNZW:
+      Cond[1].setImm(ARM64::TBZW);
+      break;
+    case ARM64::TBZX:
+      Cond[1].setImm(ARM64::TBNZX);
+      break;
+    case ARM64::TBNZX:
+      Cond[1].setImm(ARM64::TBZX);
       break;
     }
   }
@@ -453,17 +461,24 @@ void ARM64InstrInfo::insertSelect(MachineBasicBlock &MBB,
     switch (Cond[1].getImm()) {
     default:
       llvm_unreachable("Unknown branch opcode in Cond");
-    case ARM64::TBZ:
+    case ARM64::TBZW:
+    case ARM64::TBZX:
       CC = ARM64CC::EQ;
       break;
-    case ARM64::TBNZ:
+    case ARM64::TBNZW:
+    case ARM64::TBNZX:
       CC = ARM64CC::NE;
       break;
     }
     // cmp reg, #foo is actually ands xzr, reg, #1<<foo.
-    BuildMI(MBB, I, DL, get(ARM64::ANDSXri), ARM64::XZR)
-        .addReg(Cond[2].getReg())
-        .addImm(ARM64_AM::encodeLogicalImmediate(1ull << Cond[3].getImm(), 64));
+    if (Cond[1].getImm() == ARM64::TBZW || Cond[1].getImm() == ARM64::TBNZW)
+      BuildMI(MBB, I, DL, get(ARM64::ANDSWri), ARM64::WZR)
+          .addReg(Cond[2].getReg())
+          .addImm(ARM64_AM::encodeLogicalImmediate(1ull << Cond[3].getImm(), 32));
+    else
+      BuildMI(MBB, I, DL, get(ARM64::ANDSXri), ARM64::XZR)
+          .addReg(Cond[2].getReg())
+          .addImm(ARM64_AM::encodeLogicalImmediate(1ull << Cond[3].getImm(), 64));
     break;
   }
   }

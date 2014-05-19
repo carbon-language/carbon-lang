@@ -173,6 +173,14 @@ def CondCode : AsmOperandClass {
   let DiagnosticType = "InvalidCondCode";
 }
 
+// A 32-bit register pasrsed as 64-bit
+def GPR32as64Operand : AsmOperandClass {
+  let Name = "GPR32as64";
+}
+def GPR32as64 : RegisterOperand<GPR32> {
+  let ParserMatchClass = GPR32as64Operand;
+}
+
 // 8-bit immediate for AdvSIMD where 64-bit values of the form:
 // aaaaaaaa bbbbbbbb cccccccc dddddddd eeeeeeee ffffffff gggggggg hhhhhhhh
 // are encoded as the eight bit value 'abcdefgh'.
@@ -1037,10 +1045,37 @@ def am_tbrcond : Operand<OtherVT> {
   let ParserMatchClass = BranchTarget14Operand;
 }
 
-class TestBranch<bit op, string asm, SDNode node>
-    : I<(outs), (ins GPR64:$Rt, imm0_63:$bit_off, am_tbrcond:$target),
+// AsmOperand classes to emit (or not) special diagnostics
+def TBZImm0_31Operand : AsmOperandClass {
+  let Name = "TBZImm0_31";
+  let PredicateMethod = "isImm0_31";
+  let RenderMethod = "addImm0_31Operands";
+}
+def TBZImm32_63Operand : AsmOperandClass {
+  let Name = "Imm32_63";
+  let DiagnosticType = "InvalidImm0_63";
+}
+
+class tbz_imm0_31<AsmOperandClass matcher> : Operand<i64>, ImmLeaf<i64, [{
+  return (((uint32_t)Imm) < 32);
+}]> {
+  let ParserMatchClass = matcher;
+}
+
+def tbz_imm0_31_diag : tbz_imm0_31<Imm0_31Operand>;
+def tbz_imm0_31_nodiag : tbz_imm0_31<TBZImm0_31Operand>;
+
+def tbz_imm32_63 : Operand<i64>, ImmLeaf<i64, [{
+  return (((uint32_t)Imm) > 31) && (((uint32_t)Imm) < 64);
+}]> {
+  let ParserMatchClass = TBZImm32_63Operand;
+}
+
+class BaseTestBranch<RegisterClass regtype, Operand immtype,
+                     bit op, string asm, SDNode node>
+    : I<(outs), (ins regtype:$Rt, immtype:$bit_off, am_tbrcond:$target),
        asm, "\t$Rt, $bit_off, $target", "",
-       [(node GPR64:$Rt, imm0_63:$bit_off, bb:$target)]>,
+       [(node regtype:$Rt, immtype:$bit_off, bb:$target)]>,
       Sched<[WriteBr]> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -1049,7 +1084,6 @@ class TestBranch<bit op, string asm, SDNode node>
   bits<6> bit_off;
   bits<14> target;
 
-  let Inst{31}    = bit_off{5};
   let Inst{30-25} = 0b011011;
   let Inst{24}    = op;
   let Inst{23-19} = bit_off{4-0};
@@ -1057,6 +1091,24 @@ class TestBranch<bit op, string asm, SDNode node>
   let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeTestAndBranch";
+}
+
+multiclass TestBranch<bit op, string asm, SDNode node> {
+  def W : BaseTestBranch<GPR32, tbz_imm0_31_diag, op, asm, node> {
+    let Inst{31} = 0;
+  }
+
+  def X : BaseTestBranch<GPR64, tbz_imm32_63, op, asm, node> {
+    let Inst{31} = 1;
+  }
+
+  // Alias X-reg with 0-31 imm to W-Reg.
+  def : InstAlias<asm # "\t$Rd, $imm, $target",
+                  (!cast<Instruction>(NAME#"W") GPR32as64:$Rd,
+                  tbz_imm0_31_nodiag:$imm, am_tbrcond:$target), 0>;
+  def : Pat<(node GPR64:$Rn, tbz_imm0_31_diag:$imm, bb:$target),
+            (!cast<Instruction>(NAME#"W") (EXTRACT_SUBREG GPR64:$Rn, sub_32),
+            tbz_imm0_31_diag:$imm, bb:$target)>;
 }
 
 //---
