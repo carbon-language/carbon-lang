@@ -6,10 +6,10 @@
 // CHECK: #include "Inputs\success.h"
 // CHECK:          ^
 
-// expected to fail on windows as the inclusion would success and the
-// compilation will fail due to the '#error success'
+// expected to fail on windows as the inclusion would succeed and the
+// compilation will fail due to the '#error success'.
 // XFAIL: win32
 
 // This test may or may not fail since 'Inputs\success.h' is passed
-// to Win32 API on win32.
+// to Win32 APIs on Windows.
 // REQUIRES: disabled
