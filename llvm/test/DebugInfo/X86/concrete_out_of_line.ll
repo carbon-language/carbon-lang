@@ -8,22 +8,51 @@
 ; AT_inline.
 
 ; CHECK: DW_TAG_class_type
-; CHECK: DW_TAG_class_type
 ; CHECK:   DW_TAG_subprogram
+; CHECK: [[ASSIGN_DECL:0x........]]:  DW_TAG_subprogram
+
+; CHECK: [[RELEASE:0x........]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_specification {{.*}} {[[RELEASE_DECL:0x........]]}
+; CHECK: DW_TAG_formal_parameter
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_lexical_block
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_inlined_subroutine
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[ASSIGN:0x........]]}
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_inlined_subroutine
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS:0x........]]}
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_inlined_subroutine
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS:0x........]]}
+
+; CHECK: DW_TAG_class_type
+; CHECK: [[RELEASE_DECL]]:  DW_TAG_subprogram
 ; CHECK: [[DTOR_DECL:0x........]]:  DW_TAG_subprogram
 
-; CHECK: [[DTOR_OOL:0x........]]: DW_TAG_subprogram
-; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]})
+
+; CHECK: [[D1_ABS]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
 ; CHECK-NEXT:     DW_AT_inline
-
+; CHECK: [[D2_ABS]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
+; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
+; CHECK-NEXT:     DW_AT_inline
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_subprogram
-; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[DTOR_OOL]]})
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
+; CHECK: DW_TAG_formal_parameter
+; CHECK: DW_TAG_inlined_subroutine
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS]]}
+
 
 define i32 @_ZN17nsAutoRefCnt7ReleaseEv() {
 entry:
