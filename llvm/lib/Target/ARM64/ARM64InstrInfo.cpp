@@ -827,14 +827,11 @@ bool ARM64InstrInfo::optimizeCompareInstr(
 
 /// Return true if this is this instruction has a non-zero immediate
 bool ARM64InstrInfo::hasNonZeroImm(const MachineInstr *MI) const {
-  switch (MI->getOpcode()) {
-  default:
-    if (MI->getOperand(3).isImm()) {
-      unsigned val = MI->getOperand(3).getImm();
-      return (val != 0);
-    }
-    break;
+  if (MI->getOperand(3).isImm()) {
+    unsigned val = MI->getOperand(3).getImm();
+    return (val != 0);
   }
+
   return false;
 }
 

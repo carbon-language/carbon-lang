@@ -37,10 +37,8 @@ AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx, const AMDGPUSubtarget &st):
 { }
 
 enum AMDGPUMCInstLower::SISubtarget
-AMDGPUMCInstLower::AMDGPUSubtargetToSISubtarget(unsigned Gen) const {
-  switch (Gen) {
-  default: return AMDGPUMCInstLower::SI;
-  }
+AMDGPUMCInstLower::AMDGPUSubtargetToSISubtarget(unsigned) const {
+  return AMDGPUMCInstLower::SI;
 }
 
 unsigned AMDGPUMCInstLower::getMCOpcode(unsigned MIOpcode) const {
