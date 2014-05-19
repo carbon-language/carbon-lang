@@ -3869,16 +3869,20 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
     // If we have allocated some arguments onto the stack (due to running
     // out of VFP registers), we cannot split an argument between GPRs and
     // the stack. If this situation occurs, we add padding to prevent the
-    // GPRs from being used. In this situiation, the current argument could
+    // GPRs from being used. In this situation, the current argument could
     // only be allocated by rule C.8, so rule C.6 would mark these GPRs as
     // unusable anyway.
     const bool StackUsed = PreAllocationGPRs > NumGPRs || PreAllocationVFPs > NumVFPs;
     if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs && StackUsed) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
           llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
-      I.info = ABIArgInfo::getDirect(nullptr /* type */, 0 /* offset */,
-                                     PaddingTy);
-
+      if (I.info.canHaveCoerceToType()) {
+        I.info = ABIArgInfo::getDirect(I.info.getCoerceToType() /* type */, 0 /* offset */,
+                                       PaddingTy);
+      } else {
+        I.info = ABIArgInfo::getDirect(nullptr /* type */, 0 /* offset */,
+                                       PaddingTy);
+      }
     }
   }
 
