@@ -1778,11 +1778,13 @@ static LValue EmitCapturedFieldLValue(CodeGenFunction &CGF, const FieldDecl *FD,
 static LValue EmitGlobalNamedRegister(const VarDecl *VD,
                                       CodeGenModule &CGM,
                                       CharUnits Alignment) {
+  SmallString<64> Name("llvm.named.register.");
   AsmLabelAttr *Asm = VD->getAttr<AsmLabelAttr>();
-  llvm::Twine Name("llvm.named.register."+Asm->getLabel());
-  SmallString<256> DummyVec;
+  assert(Asm->getLabel().size() < 64-Name.size() &&
+      "Register name too big");
+  Name.append(Asm->getLabel());
   llvm::NamedMDNode *M =
-    CGM.getModule().getOrInsertNamedMetadata(Name.toStringRef(DummyVec));
+    CGM.getModule().getOrInsertNamedMetadata(Name);
   if (M->getNumOperands() == 0) {
     llvm::MDString *Str = llvm::MDString::get(CGM.getLLVMContext(),
                                               Asm->getLabel());
