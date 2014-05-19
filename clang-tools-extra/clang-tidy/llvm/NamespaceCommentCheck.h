@@ -1,4 +1,4 @@
-//===--- LLVMTidyModule.h - clang-tidy --------------------------*- C++ -*-===//
+//===--- NamespaceCommentCheck.h - clang-tidy -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,32 +7,30 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_LLVM_TIDY_MODULE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_LLVM_TIDY_MODULE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_NAMESPACE_COMMENT_CHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_NAMESPACE_COMMENT_CHECK_H
 
 #include "../ClangTidy.h"
+#include "llvm/Support/Regex.h"
 
 namespace clang {
 namespace tidy {
-
-/// \brief Checks the correct order of \c #includes.
-///
-/// see: http://llvm.org/docs/CodingStandards.html#include-style
-class IncludeOrderCheck : public ClangTidyCheck {
-public:
-  void registerPPCallbacks(CompilerInstance &Compiler) override;
-};
 
 /// \brief Checks that long namespaces have a closing comment.
 ///
 /// see: http://llvm.org/docs/CodingStandards.html#namespace-indentation
 class NamespaceCommentCheck : public ClangTidyCheck {
 public:
+  NamespaceCommentCheck();
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  llvm::Regex NamespaceCommentPattern;
+  const unsigned ShortNamespaceLines;
 };
 
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_TIDY_LLVM_MODULE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_NAMESPACE_COMMENT_CHECK_H

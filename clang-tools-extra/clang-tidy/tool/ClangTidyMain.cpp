@@ -31,7 +31,6 @@ const char DefaultChecks[] =
     "*,"                       // Enable all checks, except these:
     "-clang-analyzer-alpha*,"  // Too many false positives.
     "-llvm-include-order,"     // Not implemented yet.
-    "-llvm-namespace-comment," // Not complete.
     "-google-*,";              // Doesn't apply to LLVM.
 static cl::opt<std::string>
 Checks("checks", cl::desc("Comma-separated list of globs with optional '-'\n"
