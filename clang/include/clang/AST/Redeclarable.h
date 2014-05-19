@@ -90,6 +90,8 @@ protected:
         Next = Latest;
       }
     }
+
+    void markIncomplete() { Next.get<KnownLatest>().markIncomplete(); }
   };
 
   static DeclLink PreviousDeclLink(decl_type *D) {

@@ -1,6 +1,11 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DIMPORT_DECLS
 
+#ifdef IMPORT_DECLS
+// expected-no-diagnostics
+@import redecl_add_after_load_decls;
+#else
 typedef struct A B;
 extern const int variable;
 extern constexpr int function();
@@ -25,6 +30,7 @@ struct D {
 };
 typedef D::A DB;
 constexpr int D_test(bool b) { return b ? D::variable : D::function(); } // expected-note {{subexpression}} expected-note {{undefined}}
+#endif
 
 @import redecl_add_after_load;
 
@@ -43,6 +49,11 @@ constexpr int struct_function_test = C_test(false);
 // FIXME: We should accept this, but we're currently too lazy when merging class
 // definitions to determine that the definitions in redecl_add_after_load are
 // definitions of these entities.
-DB merged_struct_struct_test; // expected-error {{incomplete}}
-constexpr int merged_struct_variable_test = D_test(true); // expected-error {{constant}} expected-note {{in call to}}
-constexpr int merged_struct_function_test = D_test(false); // expected-error {{constant}} expected-note {{in call to}}
+DB merged_struct_struct_test;
+constexpr int merged_struct_variable_test = D_test(true);
+constexpr int merged_struct_function_test = D_test(false);
+#ifndef IMPORT_DECLS
+// expected-error@-4 {{incomplete}}
+// expected-error@-4 {{constant}} expected-note@-4 {{in call to}}
+// expected-error@-4 {{constant}} expected-note@-4 {{in call to}}
+#endif

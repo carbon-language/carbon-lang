@@ -564,11 +564,13 @@ class CXXRecordDecl : public RecordDecl {
   }
 
   struct LambdaDefinitionData &getLambdaData() const {
-    auto &DD = data();
-    assert(DD.IsLambda && "queried lambda property of non-lambda class");
-    return static_cast<LambdaDefinitionData&>(DD);
+    // No update required: a merged definition cannot change any lambda
+    // properties.
+    auto *DD = DefinitionData.getNotUpdated();
+    assert(DD && DD->IsLambda && "queried lambda property of non-lambda class");
+    return static_cast<LambdaDefinitionData&>(*DD);
   }
-  
+
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
   ///
@@ -977,7 +979,11 @@ public:
   }
 
   /// \brief Determine whether this class describes a lambda function object.
-  bool isLambda() const { return hasDefinition() && data().IsLambda; }
+  bool isLambda() const {
+    // An update record can't turn a non-lambda into a lambda.
+    auto *DD = DefinitionData.getNotUpdated();
+    return DD && DD->IsLambda;
+  }
 
   /// \brief Determine whether this class describes a generic 
   /// lambda function object (i.e. function call operator is

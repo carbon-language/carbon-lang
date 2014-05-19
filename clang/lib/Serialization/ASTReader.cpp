@@ -5940,6 +5940,15 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
 }
 
 void ASTReader::CompleteRedeclChain(const Decl *D) {
+  if (NumCurrentElementsDeserializing) {
+    // We arrange to not care about the complete redeclaration chain while we're
+    // deserializing. Just remember that the AST has marked this one as complete
+    // but that it's not actually complete yet, so we know we still need to
+    // complete it later.
+    PendingIncompleteDeclChains.push_back(const_cast<Decl*>(D));
+    return;
+  }
+
   const DeclContext *DC = D->getDeclContext()->getRedeclContext();
 
   // Recursively ensure that the decl context itself is complete
@@ -7983,7 +7992,8 @@ std::string ASTReader::getOwningModuleNameForDiagnostic(const Decl *D) {
 }
 
 void ASTReader::finishPendingActions() {
-  while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty() ||
+  while (!PendingIdentifierInfos.empty() ||
+         !PendingIncompleteDeclChains.empty() || !PendingDeclChains.empty() ||
          !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty() ||
          !PendingUpdateRecords.empty() || !PendingOdrMergeChecks.empty()) {
     // If any identifiers with corresponding top-level declarations have
@@ -8000,6 +8010,13 @@ void ASTReader::finishPendingActions() {
 
       SetGloballyVisibleDecls(II, DeclIDs, &TopLevelDecls[II]);
     }
+
+    // For each decl chain that we wanted to complete while deserializing, mark
+    // it as "still needs to be completed".
+    for (unsigned I = 0; I != PendingIncompleteDeclChains.size(); ++I) {
+      markIncompleteDeclChain(PendingIncompleteDeclChains[I]);
+    }
+    PendingIncompleteDeclChains.clear();
 
     // Load pending declaration chains.
     for (unsigned I = 0; I != PendingDeclChains.size(); ++I) {

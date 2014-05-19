@@ -208,6 +208,10 @@ namespace clang {
     static void attachLatestDeclImpl(...);
     static void attachLatestDecl(Decl *D, Decl *latest);
 
+    template <typename DeclT>
+    static void markIncompleteDeclChainImpl(Redeclarable<DeclT> *D);
+    static void markIncompleteDeclChainImpl(...);
+
     /// \brief Determine whether this declaration has a pending body.
     bool hasPendingBody() const { return HasPendingBody; }
 
@@ -2505,6 +2509,25 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
 #define DECL(TYPE, BASE)                                  \
   case Decl::TYPE:                                        \
     attachLatestDeclImpl(cast<TYPE##Decl>(D), Latest); \
+    break;
+#include "clang/AST/DeclNodes.inc"
+  }
+}
+
+template<typename DeclT>
+void ASTDeclReader::markIncompleteDeclChainImpl(Redeclarable<DeclT> *D) {
+  D->RedeclLink.markIncomplete();
+}
+void ASTDeclReader::markIncompleteDeclChainImpl(...) {
+  llvm_unreachable("markIncompleteDeclChain on non-redeclarable declaration");
+}
+
+void ASTReader::markIncompleteDeclChain(Decl *D) {
+  switch (D->getKind()) {
+#define ABSTRACT_DECL(TYPE)
+#define DECL(TYPE, BASE)                                             \
+  case Decl::TYPE:                                                   \
+    ASTDeclReader::markIncompleteDeclChainImpl(cast<TYPE##Decl>(D)); \
     break;
 #include "clang/AST/DeclNodes.inc"
   }

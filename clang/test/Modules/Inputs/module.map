@@ -70,6 +70,7 @@ module redeclarations_right { header "redeclarations_right.h" }
 module redecl_namespaces_left { header "redecl_namespaces_left.h" }
 module redecl_namespaces_right { header "redecl_namespaces_right.h" }
 module redecl_add_after_load_top { header "redecl-add-after-load-top.h" }
+module redecl_add_after_load_decls { header "redecl-add-after-load-decls.h" }
 module redecl_add_after_load { header "redecl-add-after-load.h" }
 module load_failure { header "load_failure.h" }
 

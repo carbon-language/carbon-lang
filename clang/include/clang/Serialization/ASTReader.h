@@ -938,6 +938,10 @@ private:
   /// \brief Keeps track of the elements added to PendingDeclChains.
   llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
 
+  /// \brief The list of canonical declarations whose redeclaration chains
+  /// need to be marked as incomplete once we're done deserializing things.
+  SmallVector<Decl *, 16> PendingIncompleteDeclChains;
+
   /// \brief The Decl IDs for the Sema/Lexical DeclContext of a Decl that has
   /// been loaded but its DeclContext was not set yet.
   struct PendingDeclContextInfo {
@@ -1141,6 +1145,7 @@ private:
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(serialization::DeclID ID);
+  void markIncompleteDeclChain(Decl *Canon);
   RecordLocation DeclCursorForID(serialization::DeclID ID,
                                  unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);

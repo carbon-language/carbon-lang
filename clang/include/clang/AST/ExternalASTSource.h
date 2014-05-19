@@ -381,8 +381,7 @@ struct LazyGenerationalUpdatePtr {
   /// which we queried it.
   struct LazyData {
     LazyData(ExternalASTSource *Source, T Value)
-        : ExternalSource(Source), LastGeneration(Source->getGeneration()),
-          LastValue(Value) {}
+        : ExternalSource(Source), LastGeneration(0), LastValue(Value) {}
     ExternalASTSource *ExternalSource;
     uint32_t LastGeneration;
     T LastValue;
@@ -407,11 +406,15 @@ public:
   LazyGenerationalUpdatePtr(NotUpdatedTag, T Value = T())
       : Value(Value) {}
 
+  /// Forcibly set this pointer (which must be lazy) as needing updates.
+  void markIncomplete() {
+    Value.template get<LazyData *>()->LastGeneration = 0;
+  }
+
   /// Set the value of this pointer, in the current generation.
   void set(T NewValue) {
     if (LazyData *LazyVal = Value.template dyn_cast<LazyData*>()) {
       LazyVal->LastValue = NewValue;
-      LazyVal->LastGeneration = LazyVal->ExternalSource->getGeneration();
       return;
     }
     Value = NewValue;
