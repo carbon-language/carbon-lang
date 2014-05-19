@@ -42,7 +42,6 @@ set(LLVM_TEST_DEPENDS
           llvm-profdata
           llvm-readobj
           llvm-rtdyld
-          llvm-size
           llvm-symbolizer
           llvm-tblgen
           macho-dump
