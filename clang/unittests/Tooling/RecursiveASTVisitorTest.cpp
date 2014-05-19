@@ -10,7 +10,9 @@
 #include "TestVisitor.h"
 #include <stack>
 
-namespace clang {
+using namespace clang;
+
+namespace {
 
 class TypeLocVisitor : public ExpectedLocationVisitor<TypeLocVisitor> {
 public:
@@ -614,5 +616,4 @@ TEST(RecursiveASTVisitor, AttributesAreVisited) {
     "};\n"));
 }
 
-
-} // end namespace clang
+} // end anonymous namespace
