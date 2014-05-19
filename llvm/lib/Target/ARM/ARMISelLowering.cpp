@@ -414,6 +414,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::MULHU, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+
+    setOperationAction(ISD::BSWAP, (MVT::SimpleValueType)VT, Expand);
   }
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Custom);

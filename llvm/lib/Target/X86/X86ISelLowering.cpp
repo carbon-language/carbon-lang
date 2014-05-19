@@ -15116,7 +15116,23 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   if (VT.getSizeInBits() == 64)
     return false;
 
-  // FIXME: pshufb, blends, shifts.
+  // If this is a single-input shuffle with no 128 bit lane crossings we can
+  // lower it into pshufb.
+  if ((SVT.is128BitVector() && Subtarget->hasSSSE3()) ||
+      (SVT.is256BitVector() && Subtarget->hasInt256())) {
+    bool isLegal = true;
+    for (unsigned I = 0, E = M.size(); I != E; ++I) {
+      if (M[I] >= (int)SVT.getVectorNumElements() ||
+          ShuffleCrosses128bitLane(SVT, I, M[I])) {
+        isLegal = false;
+        break;
+      }
+    }
+    if (isLegal)
+      return true;
+  }
+
+  // FIXME: blends, shifts.
   return (SVT.getVectorNumElements() == 2 ||
           ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
           isMOVLMask(M, SVT) ||

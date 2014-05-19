@@ -63,6 +63,8 @@ class VectorLegalizer {
   SDValue ExpandUINT_TO_FLOAT(SDValue Op);
   // Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
   SDValue ExpandSEXTINREG(SDValue Op);
+  // Expand bswap of vectors into a shuffle if legal.
+  SDValue ExpandBSWAP(SDValue Op);
   // Implement vselect in terms of XOR, AND, OR when blend is not supported
   // by the target.
   SDValue ExpandVSELECT(SDValue Op);
@@ -297,6 +299,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case TargetLowering::Expand:
     if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG)
       Result = ExpandSEXTINREG(Op);
+    else if (Node->getOpcode() == ISD::BSWAP)
+      Result = ExpandBSWAP(Op);
     else if (Node->getOpcode() == ISD::VSELECT)
       Result = ExpandVSELECT(Op);
     else if (Node->getOpcode() == ISD::SELECT)
@@ -680,6 +684,29 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   Op = Op.getOperand(0);
   Op =   DAG.getNode(ISD::SHL, DL, VT, Op, ShiftSz);
   return DAG.getNode(ISD::SRA, DL, VT, Op, ShiftSz);
+}
+
+SDValue VectorLegalizer::ExpandBSWAP(SDValue Op) {
+  EVT VT = Op.getValueType();
+
+  // Generate a byte wise shuffle mask for the BSWAP.
+  SmallVector<int, 16> ShuffleMask;
+  int ScalarSizeInBytes = VT.getScalarSizeInBits() / 8;
+  for (int I = 0, E = VT.getVectorNumElements(); I != E; ++I)
+    for (int J = ScalarSizeInBytes - 1; J >= 0; --J)
+      ShuffleMask.push_back((I * ScalarSizeInBytes) + J);
+
+  EVT ByteVT = EVT::getVectorVT(*DAG.getContext(), MVT::i8, ShuffleMask.size());
+
+  // Only emit a shuffle if the mask is legal.
+  if (!TLI.isShuffleMaskLegal(ShuffleMask, ByteVT))
+    return DAG.UnrollVectorOp(Op.getNode());
+
+  SDLoc DL(Op);
+  Op = DAG.getNode(ISD::BITCAST, DL, ByteVT, Op.getOperand(0));
+  Op = DAG.getVectorShuffle(ByteVT, DL, Op, DAG.getUNDEF(ByteVT),
+                            ShuffleMask.data());
+  return DAG.getNode(ISD::BITCAST, DL, VT, Op);
 }
 
 SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {

@@ -520,6 +520,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
       setOperationAction(ISD::SMUL_LOHI, VT, Expand);
       setOperationAction(ISD::MULHU, VT, Expand);
       setOperationAction(ISD::UMUL_LOHI, VT, Expand);
+
+      setOperationAction(ISD::BSWAP, VT, Expand);
     }
 
     // There is no v1i64/v2i64 multiply, expand v1i64/v2i64 to GPR i64 multiply.

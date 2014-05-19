@@ -222,3 +222,14 @@ entry:
   ret void
 }
 
+
+define <4 x i32> @test_vrev32_bswap(<4 x i32> %source) nounwind {
+; CHECK-LABEL: test_vrev32_bswap:
+; CHECK: rev32.16b
+; CHECK-NOT: rev
+; CHECK: ret
+  %bswap = call <4 x i32> @llvm.bswap.v4i32(<4 x i32> %source)
+  ret <4 x i32> %bswap
+}
+
+declare <4 x i32> @llvm.bswap.v4i32(<4 x i32>) nounwind readnone

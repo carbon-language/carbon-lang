@@ -460,6 +460,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::SDIVREM, VT, Expand);
       setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Expand);
       setOperationAction(ISD::FPOW, VT, Expand);
+      setOperationAction(ISD::BSWAP, VT, Expand);
       setOperationAction(ISD::CTPOP, VT, Expand);
       setOperationAction(ISD::CTLZ, VT, Expand);
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
