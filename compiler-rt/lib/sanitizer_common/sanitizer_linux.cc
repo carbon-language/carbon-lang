@@ -400,8 +400,8 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
 #if !SANITIZER_GO
   if (Symbolizer *sym = Symbolizer::GetOrNull())
     sym->PrepareForSandboxing();
-#endif
   CovPrepareForSandboxing(args);
+#endif
 }
 
 enum MutexState {
