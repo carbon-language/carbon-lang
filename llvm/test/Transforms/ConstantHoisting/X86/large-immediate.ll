@@ -16,3 +16,12 @@ define i512 @test2(i512 %a) nounwind {
   %2 = ashr i512 %1, 504
   ret i512 %2
 }
+
+; Check that we don't hoist constants with a type larger than i128.
+define i196 @test3(i196 %a) nounwind {
+; CHECK-LABEL: test3
+; CHECK-NOT: %const = bitcast i196 2 to i196
+  %1 = mul i196 %a, 2
+  %2 = mul i196 %1, 2
+  ret i196 %2
+}
