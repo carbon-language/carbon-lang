@@ -477,18 +477,17 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
 }
 
 #ifndef NDEBUG
-/// \return string containing a file name and a line # for the given
-/// instruction.
-static std::string getDebugLocString(const Instruction *I) {
+/// \return string containing a file name and a line # for the given loop.
+static std::string getDebugLocString(const Loop *L) {
   std::string Result;
-  if (I) {
+  if (L) {
     raw_string_ostream OS(Result);
-    const DebugLoc &InstrDebugLoc = I->getDebugLoc();
-    if (!InstrDebugLoc.isUnknown())
-      InstrDebugLoc.print(I->getContext(), OS);
+    const DebugLoc LoopDbgLoc = L->getStartLoc();
+    if (!LoopDbgLoc.isUnknown())
+      LoopDbgLoc.print(L->getHeader()->getContext(), OS);
     else
       // Just print the module name.
-      OS << I->getParent()->getParent()->getParent()->getModuleIdentifier();
+      OS << L->getHeader()->getParent()->getParent()->getModuleIdentifier();
     OS.flush();
   }
   return Result;
@@ -1107,8 +1106,7 @@ struct LoopVectorize : public FunctionPass {
     assert(L->empty() && "Only process inner loops.");
 
 #ifndef NDEBUG
-    const std::string DebugLocStr =
-        getDebugLocString(L->getHeader()->getFirstNonPHIOrDbgOrLifetime());
+    const std::string DebugLocStr = getDebugLocString(L);
 #endif /* NDEBUG */
 
     DEBUG(dbgs() << "\nLV: Checking a loop in \""
