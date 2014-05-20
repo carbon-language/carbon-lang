@@ -866,3 +866,20 @@ define i1 @exact_ashr_sgt_false(i32 %a) {
 ; CHECK-LABEL: @exact_ashr_sgt_false
 ; CHECK-NEXT: ret i1 false
 }
+
+define i1 @nonnull_arg(i32* nonnull %i) {
+  %cmp = icmp eq i32* %i, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_arg
+; CHECK: ret i1 false
+}
+
+declare nonnull i32* @returns_nonnull_helper()
+define i1 @returns_nonnull() {
+  %call = call nonnull i32* @returns_nonnull_helper()
+  %cmp = icmp eq i32* %call, null
+  ret i1 %cmp
+; CHECK-LABEL: @returns_nonnull
+; CHECK: ret i1 false
+}
+
