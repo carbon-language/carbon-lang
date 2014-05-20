@@ -119,3 +119,17 @@ void test() {
   cout < cin;  // expected-warning {{relational comparison result unused}}
 }
 }
+
+namespace PR19791 {
+struct S {
+  void operator!=(int);
+  int operator==(int);
+};
+
+void test() {
+  S s;
+  s != 1;
+  s == 1;  // expected-warning{{equality comparison result unused}}
+           // expected-note@-1{{use '=' to turn this equality comparison into an assignment}}
+}
+}
