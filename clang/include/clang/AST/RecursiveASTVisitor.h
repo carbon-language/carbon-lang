@@ -554,6 +554,8 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   if (!S)
     return true;
 
+#define DISPATCH_STMT(NAME, CLASS, VAR) DISPATCH(NAME, CLASS, VAR)
+
   if (getDerived().shouldUseDataRecursionFor(S))
     return dataTraverse(S);
 
@@ -564,7 +566,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
     switch (BinOp->getOpcode()) {
 #define OPERATOR(NAME)                                                         \
   case BO_##NAME:                                                              \
-    DISPATCH(Bin##NAME, BinaryOperator, S);
+    DISPATCH_STMT(Bin##NAME, BinaryOperator, S);
 
       BINOP_LIST()
 #undef OPERATOR
@@ -572,7 +574,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
 
 #define OPERATOR(NAME)                                                         \
   case BO_##NAME##Assign:                                                      \
-    DISPATCH(Bin##NAME##Assign, CompoundAssignOperator, S);
+    DISPATCH_STMT(Bin##NAME##Assign, CompoundAssignOperator, S);
 
       CAO_LIST()
 #undef OPERATOR
@@ -582,7 +584,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
     switch (UnOp->getOpcode()) {
 #define OPERATOR(NAME)                                                         \
   case UO_##NAME:                                                              \
-    DISPATCH(Unary##NAME, UnaryOperator, S);
+    DISPATCH_STMT(Unary##NAME, UnaryOperator, S);
 
       UNARYOP_LIST()
 #undef OPERATOR
@@ -597,12 +599,14 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
 #define ABSTRACT_STMT(STMT)
 #define STMT(CLASS, PARENT)                                                    \
   case Stmt::CLASS##Class:                                                     \
-    DISPATCH(CLASS, CLASS, S);
+    DISPATCH_STMT(CLASS, CLASS, S);
 #include "clang/AST/StmtNodes.inc"
   }
 
   return true;
 }
+
+#undef DISPATCH_STMT
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseType(QualType T) {

@@ -531,6 +531,8 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   return true;
 }
 
+#undef DISPATCH_STMT
+
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseType(QualType T) {
   if (T.isNull())
