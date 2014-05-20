@@ -1,4 +1,4 @@
-; RUN: llc %s
+; RUN: llc < %s
 
 ; This used to assert with "Overran sorted position" in AssignTopologicalOrder
 ; due to a cycle created in performPostLD1Combine.
