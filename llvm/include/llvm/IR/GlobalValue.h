@@ -222,8 +222,8 @@ public:
   bool hasCommonLinkage() const { return isCommonLinkage(Linkage); }
 
   void setLinkage(LinkageTypes LT) {
-    assert((!isLocalLinkage(LT) || hasDefaultVisibility()) &&
-           "local linkage requires default visibility");
+    if (isLocalLinkage(LT))
+      Visibility = DefaultVisibility;
     Linkage = LT;
   }
   LinkageTypes getLinkage() const { return Linkage; }
