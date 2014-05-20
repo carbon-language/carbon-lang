@@ -18,8 +18,9 @@ int test_function() {
   *x = 42;
 // CHECK: AddressSanitizer: stack-use-after-return
 // CHECK: WRITE of size 1 at [[ADDR:.*]] thread T0
-// CHECK:       test_function {{.*}}dll_stack_use_after_return.cc:[[@LINE-3]]
+// CHECK-NEXT:  test_function {{.*}}dll_stack_use_after_return.cc:[[@LINE-3]]
 // CHECK-NEXT:  main
+//
 // CHECK: Address [[ADDR]] is located in stack of thread T0 at offset [[OFFSET:.*]] in frame
 // CHECK-NEXT: #0 {{.*}} foo {{.*}}dll_stack_use_after_return.cc
 // CHECK: 'stack_buffer' <== Memory access at offset [[OFFSET]] is inside this variable

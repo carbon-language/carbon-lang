@@ -12,9 +12,11 @@ DWORD WINAPI thread_proc(void *context) {
   stack_buffer[subscript] = 42;
 // CHECK: AddressSanitizer: stack-buffer-overflow on address [[ADDR:0x[0-9a-f]+]]
 // CHECK: WRITE of size 1 at [[ADDR]] thread T1
-// CHECK:   thread_proc {{.*}}dll_thread_stack_array_left_oob.cc:[[@LINE-3]]
+// CHECK-NEXT:  thread_proc {{.*}}dll_thread_stack_array_left_oob.cc:[[@LINE-3]]
+//
 // CHECK: Address [[ADDR]] is located in stack of thread T1 at offset [[OFFSET:.*]] in frame
-// CHECK:   thread_proc {{.*}}dll_thread_stack_array_left_oob.cc
+// CHECK-NEXT:  thread_proc {{.*}}dll_thread_stack_array_left_oob.cc
+//
 // CHECK: 'stack_buffer' <== Memory access at offset [[OFFSET]] underflows this variable
 
   return 0;
