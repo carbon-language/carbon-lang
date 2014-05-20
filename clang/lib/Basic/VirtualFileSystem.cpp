@@ -928,7 +928,16 @@ YAMLVFSWriter::printContents(llvm::raw_ostream &OS, ArrayRef<MapEntry> Entries,
 }
 
 bool YAMLVFSWriter::containedIn(StringRef Parent, StringRef Path) {
-  return Path.startswith(Parent);
+  using namespace llvm::sys;
+  // Compare each path component.
+  auto IParent = path::begin(Parent), EParent = path::end(Parent);
+  for (auto IChild = path::begin(Path), EChild = path::end(Path);
+       IParent != EParent && IChild != EChild; ++IParent, ++IChild) {
+    if (*IParent != *IChild)
+      return false;
+  }
+  // Have we exhausted the parent path?
+  return IParent == EParent;
 }
 
 StringRef YAMLVFSWriter::containedPart(StringRef Parent, StringRef Path) {

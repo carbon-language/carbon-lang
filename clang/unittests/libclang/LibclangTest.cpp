@@ -184,6 +184,57 @@ TEST(libclang, VirtualFileOverlay) {
     T.map("/path/virtual/foo.h", "/real/foo.h");
     clang_VirtualFileOverlay_setCaseSensitivity(T.VFO, false);
   }
+  {
+    const char *contents =
+    "{\n"
+    "  'version': 0,\n"
+    "  'roots': [\n"
+    "    {\n"
+    "      'type': 'directory',\n"
+    "      'name': \"/path/foo\",\n"
+    "      'contents': [\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"bar\",\n"
+    "          'external-contents': \"/real/bar\"\n"
+    "        },\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"bar.h\",\n"
+    "          'external-contents': \"/real/bar.h\"\n"
+    "        }\n"
+    "      ]\n"
+    "    },\n"
+    "    {\n"
+    "      'type': 'directory',\n"
+    "      'name': \"/path/foobar\",\n"
+    "      'contents': [\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"baz.h\",\n"
+    "          'external-contents': \"/real/baz.h\"\n"
+    "        }\n"
+    "      ]\n"
+    "    },\n"
+    "    {\n"
+    "      'type': 'directory',\n"
+    "      'name': \"/path\",\n"
+    "      'contents': [\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"foobarbaz.h\",\n"
+    "          'external-contents': \"/real/foobarbaz.h\"\n"
+    "        }\n"
+    "      ]\n"
+    "    }\n"
+    "  ]\n"
+    "}\n";
+    TestVFO T(contents);
+    T.map("/path/foo/bar.h", "/real/bar.h");
+    T.map("/path/foo/bar", "/real/bar");
+    T.map("/path/foobar/baz.h", "/real/baz.h");
+    T.map("/path/foobarbaz.h", "/real/foobarbaz.h");
+  }
 }
 
 TEST(libclang, ModuleMapDescriptor) {
