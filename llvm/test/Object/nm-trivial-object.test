@@ -55,14 +55,14 @@ WEAK-ELF64: 0000000000000000 V x2
 ABSOLUTE-ELF64: 0000000000000123 a a1
 ABSOLUTE-ELF64: 0000000000000123 A a2
 
-macho:          U _SomeOtherFunction
+macho: 00000000 U _SomeOtherFunction
 macho: 00000000 T _main
-macho:          U _puts
+macho: 00000000 U _puts
 
 macho64: 0000000000000028 s L_.str
-macho64:                  U _SomeOtherFunction
+macho64: 0000000000000000 U _SomeOtherFunction
 macho64: 0000000000000000 T _main
-macho64:                  U _puts
+macho64: 0000000000000000 U _puts
 
 
 Test that nm uses addresses even with ELF .o files.

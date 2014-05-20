@@ -472,18 +472,10 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
                                              uint64_t &Res) const {
   if (is64Bit()) {
     MachO::nlist_64 Entry = getSymbol64TableEntry(Symb);
-    if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
-        Entry.n_value == 0)
-      Res = UnknownAddressOrSize;
-    else
-      Res = Entry.n_value;
+    Res = Entry.n_value;
   } else {
     MachO::nlist Entry = getSymbolTableEntry(Symb);
-    if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
-        Entry.n_value == 0)
-      Res = UnknownAddressOrSize;
-    else
-      Res = Entry.n_value;
+    Res = Entry.n_value;
   }
   return object_error::success;
 }
