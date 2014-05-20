@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// This file is reponsible for creating the Import Library file.
+/// This file is responsible for creating the Import Library file.
 ///
 //===----------------------------------------------------------------------===//
 

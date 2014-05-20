@@ -43,7 +43,7 @@ private:
 
 // An AliasAtom is a zero-size atom representing an alias for other atom. It has
 // a LayoutAfter reference to the target atom, so that this atom and the target
-// atom will be layed out at the same location in the final result. Initially
+// atom will be laid out at the same location in the final result. Initially
 // the target atom is an undefined atom. Resolver will replace it with a defined
 // one.
 //
