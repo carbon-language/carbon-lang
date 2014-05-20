@@ -43,3 +43,19 @@ void test14(const float2 in, const float2 out) {
   const float4 V = (float4){ in, out };
   // expected-error@-1{{cannot initialize a compound literal initializer}}
 }
+
+namespace template_test {
+class S {
+public:
+   void foo(int);
+};
+
+template <class P> struct S2 {
+  void (P::*a)(const int &);
+};
+
+void test_15() {
+  S2<S> X = {&S::foo};
+  // expected-error@-1{{cannot initialize a member subobject of type 'void (template_test::S::*)(const int &)' with an rvalue of type 'void (template_test::S::*)(int)': type mismatch at 1st parameter ('const int &' vs 'int')}}
+}
+}
