@@ -326,28 +326,6 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
     // Pick up abstract subprogram DIE.
     SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
-  } else if (!SP.getFunctionDeclaration()) {
-    // There is not any need to generate specification DIE for a function
-    // defined at compile unit level. If a function is defined inside another
-    // function then gdb prefers the definition at top level and but does not
-    // expect specification DIE in parent function. So avoid creating
-    // specification DIE for a function defined inside a function.
-    DIScope SPContext = resolve(SP.getContext());
-    if (SP.isDefinition() && !SPContext.isCompileUnit() &&
-        !SPContext.isFile() && !isSubprogramContext(SPContext)) {
-      SPCU.addFlag(*SPDie, dwarf::DW_AT_declaration);
-
-      // Add arguments.
-      DICompositeType SPTy = SP.getType();
-      DIArray Args = SPTy.getTypeArray();
-      uint16_t SPTag = SPTy.getTag();
-      if (SPTag == dwarf::DW_TAG_subroutine_type)
-        SPCU.constructSubprogramArguments(*SPDie, Args);
-      DIE *SPDeclDie = SPDie;
-      SPDie =
-          &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
-      SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, *SPDeclDie);
-    }
   }
 
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
