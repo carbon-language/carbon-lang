@@ -336,7 +336,7 @@ Making a Major Change
 ---------------------
 
 When a developer begins a major new project with the aim of contributing it back
-to LLVM, s/he should inform the community with an email to the `llvmdev
+to LLVM, they should inform the community with an email to the `llvmdev
 <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_ email list, to the extent
 possible. The reason for this is to:
 

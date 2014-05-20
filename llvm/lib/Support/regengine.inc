@@ -205,7 +205,7 @@ matcher(struct re_guts *g, const char *string, size_t nmatch,
 		if (nmatch == 1 && !g->backrefs)
 			break;		/* no further info needed */
 
-		/* oh my, he wants the subexpressions... */
+		/* oh my, they want the subexpressions... */
 		if (m->pmatch == NULL)
 			m->pmatch = (llvm_regmatch_t *)malloc((m->g->nsub + 1) *
 							sizeof(llvm_regmatch_t));

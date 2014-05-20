@@ -377,7 +377,7 @@ public:
   SlotIndex enterIntvAfter(SlotIndex Idx);
 
   /// enterIntvAtEnd - Enter the open interval at the end of MBB.
-  /// Use the open interval from he inserted copy to the MBB end.
+  /// Use the open interval from the inserted copy to the MBB end.
   /// Return the beginning of the new live range.
   SlotIndex enterIntvAtEnd(MachineBasicBlock &MBB);
 

@@ -516,7 +516,7 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //
 //   Binary:
 //     One register output operand and two input operands.  The first
-//     input operand is always a register and he second may be a register,
+//     input operand is always a register and the second may be a register,
 //     immediate or memory.
 //
 //   Shift:

@@ -193,10 +193,10 @@ struct ClassInfo {
   /// parsing on the operand.
   std::string ParserMethod;
 
-  /// For register classes, the records for all the registers in this class.
+  /// For register classes: the records for all the registers in this class.
   RegisterSet Registers;
 
-  /// For custom match classes, he diagnostic kind for when the predicate fails.
+  /// For custom match classes: the diagnostic kind for when the predicate fails.
   std::string DiagnosticType;
 public:
   /// isRegisterClass() - Check if this is a register class.

@@ -58,7 +58,7 @@ extern "C" {
         stricmp(ModuleName, "msvcr70") != 0 &&
 #ifndef __MINGW32__
         // Mingw32 uses msvcrt.dll by default. Don't ignore it.
-        // Otherwise, user should be aware, what he's doing :)
+        // Otherwise the user should be aware what they are doing.
         stricmp(ModuleName, "msvcrt") != 0 &&
 #endif
         stricmp(ModuleName, "msvcrt20") != 0 &&
