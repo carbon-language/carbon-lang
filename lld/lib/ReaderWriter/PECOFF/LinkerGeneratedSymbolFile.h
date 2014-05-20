@@ -19,7 +19,7 @@
 namespace lld {
 namespace pecoff {
 
-namespace {
+namespace impl {
 
 /// The defined atom for dllexported symbols with __imp_ prefix.
 class ImpPointerAtom : public COFFLinkerInternalAtom {
@@ -104,7 +104,7 @@ private:
   COFFUndefinedAtom _from;
 };
 
-} // anonymous namespace
+} // namespace impl
 
 // A virtual file containing absolute symbol __ImageBase. __ImageBase (or
 // ___ImageBase on x86) is a linker-generated symbol whose address is the same
@@ -140,7 +140,7 @@ private:
 //   }
 //
 // This odd feature is for the compatibility with MSVC link.exe.
-class LocallyImportedSymbolFile : public VirtualArchiveLibraryFile {
+class LocallyImportedSymbolFile : public impl::VirtualArchiveLibraryFile {
 public:
   LocallyImportedSymbolFile(const PECOFFLinkingContext &ctx)
       : VirtualArchiveLibraryFile("__imp_"),
@@ -150,7 +150,7 @@ public:
     if (!sym.startswith(_prefix))
       return nullptr;
     StringRef undef = sym.substr(_prefix.size());
-    return new (_alloc) ImpSymbolFile(sym, undef, _ordinal++);
+    return new (_alloc) impl::ImpSymbolFile(sym, undef, _ordinal++);
   }
 
 private:
@@ -189,7 +189,7 @@ private:
 // prefix, it returns an atom to rename the dllexported symbol, hoping that
 // Resolver will find the new symbol with atsign from an archive file at the
 // next visit.
-class ExportedSymbolRenameFile : public VirtualArchiveLibraryFile {
+class ExportedSymbolRenameFile : public impl::VirtualArchiveLibraryFile {
 public:
   ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx)
       : VirtualArchiveLibraryFile("<export>") {
@@ -212,7 +212,7 @@ public:
     std::string replace;
     if (!findSymbolWithAtsignSuffix(sym.str(), replace))
       return nullptr;
-    return new (_alloc) SymbolRenameFile(sym, replace);
+    return new (_alloc) impl::SymbolRenameFile(sym, replace);
   }
 
 private:
