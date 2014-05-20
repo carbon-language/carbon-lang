@@ -15,23 +15,23 @@ int noanal_testfn(int y) NO_SANITIZE_THREAD;
 
 int noanal_testfn(int y) {
   int x NO_SANITIZE_THREAD = y; // \
-    // expected-error {{'no_sanitize_thread' attribute only applies to functions and methods}}
+    // expected-error {{'no_sanitize_thread' attribute only applies to functions}}
   return x;
 }
 
 int noanal_test_var NO_SANITIZE_THREAD; // \
-  // expected-error {{'no_sanitize_thread' attribute only applies to functions and methods}}
+  // expected-error {{'no_sanitize_thread' attribute only applies to functions}}
 
 class NoanalFoo {
  private:
   int test_field NO_SANITIZE_THREAD; // \
-    // expected-error {{'no_sanitize_thread' attribute only applies to functions and methods}}
+    // expected-error {{'no_sanitize_thread' attribute only applies to functions}}
   void test_method() NO_SANITIZE_THREAD;
 };
 
 class NO_SANITIZE_THREAD NoanalTestClass { // \
-  // expected-error {{'no_sanitize_thread' attribute only applies to functions and methods}}
+  // expected-error {{'no_sanitize_thread' attribute only applies to functions}}
 };
 
 void noanal_fun_params(int lvar NO_SANITIZE_THREAD); // \
-  // expected-error {{'no_sanitize_thread' attribute only applies to functions and methods}}
+  // expected-error {{'no_sanitize_thread' attribute only applies to functions}}

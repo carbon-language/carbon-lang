@@ -2047,10 +2047,9 @@ static std::string CalculateDiagnostic(const Record &S) {
     ObjCInterface = 1U << 9,
     Block = 1U << 10,
     Namespace = 1U << 11,
-    FuncTemplate = 1U << 12,
-    Field = 1U << 13,
-    CXXMethod = 1U << 14,
-    ObjCProtocol = 1U << 15
+    Field = 1U << 12,
+    CXXMethod = 1U << 13,
+    ObjCProtocol = 1U << 14
   };
   uint32_t SubMask = 0;
 
@@ -2082,7 +2081,6 @@ static std::string CalculateDiagnostic(const Record &S) {
                    .Case("Block", Block)
                    .Case("CXXRecord", Class)
                    .Case("Namespace", Namespace)
-                   .Case("FunctionTemplate", FuncTemplate)
                    .Case("Field", Field)
                    .Case("CXXMethod", CXXMethod)
                    .Default(0);
@@ -2121,7 +2119,6 @@ static std::string CalculateDiagnostic(const Record &S) {
     case Func | ObjCMethod | Class: return "ExpectedFunctionMethodOrClass";
     case Func | Param:
     case Func | ObjCMethod | Param: return "ExpectedFunctionMethodOrParameter";
-    case Func | FuncTemplate:
     case Func | ObjCMethod: return "ExpectedFunctionOrMethod";
     case Func | Var: return "ExpectedVariableOrFunction";
 

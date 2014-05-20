@@ -109,26 +109,26 @@ int noanal_testfn(int y) NO_THREAD_SAFETY_ANALYSIS;
 
 int noanal_testfn(int y) {
   int x NO_THREAD_SAFETY_ANALYSIS = y; // \
-    // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+    // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
   return x;
 };
 
 int noanal_test_var NO_THREAD_SAFETY_ANALYSIS; // \
-  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
 
 class NoanalFoo {
  private:
   int test_field NO_THREAD_SAFETY_ANALYSIS; // \
-    // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+    // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
   void test_method() NO_THREAD_SAFETY_ANALYSIS;
 };
 
 class NO_THREAD_SAFETY_ANALYSIS NoanalTestClass { // \
-  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
 };
 
 void noanal_fun_params(int lvar NO_THREAD_SAFETY_ANALYSIS); // \
-  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
 
 
 //-----------------------------------------//
@@ -577,26 +577,26 @@ int elf_testfn(int y) EXCLUSIVE_LOCK_FUNCTION();
 
 int elf_testfn(int y) {
   int x EXCLUSIVE_LOCK_FUNCTION() = y; // \
-    // expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_lock_function' attribute only applies to functions}}
   return x;
 };
 
 int elf_test_var EXCLUSIVE_LOCK_FUNCTION(); // \
-  // expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_lock_function' attribute only applies to functions}}
 
 class ElfFoo {
  private:
   int test_field EXCLUSIVE_LOCK_FUNCTION(); // \
-    // expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_lock_function' attribute only applies to functions}}
   void test_method() EXCLUSIVE_LOCK_FUNCTION();
 };
 
 class EXCLUSIVE_LOCK_FUNCTION() ElfTestClass { // \
-  // expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_lock_function' attribute only applies to functions}}
 };
 
 void elf_fun_params(int lvar EXCLUSIVE_LOCK_FUNCTION()); // \
-  // expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_lock_function' attribute only applies to functions}}
 
 // Check argument parsing.
 
@@ -649,25 +649,25 @@ int slf_testfn(int y) SHARED_LOCK_FUNCTION();
 
 int slf_testfn(int y) {
   int x SHARED_LOCK_FUNCTION() = y; // \
-    // expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_lock_function' attribute only applies to functions}}
   return x;
 };
 
 int slf_test_var SHARED_LOCK_FUNCTION(); // \
-  // expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_lock_function' attribute only applies to functions}}
 
 void slf_fun_params(int lvar SHARED_LOCK_FUNCTION()); // \
-  // expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_lock_function' attribute only applies to functions}}
 
 class SlfFoo {
  private:
   int test_field SHARED_LOCK_FUNCTION(); // \
-    // expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_lock_function' attribute only applies to functions}}
   void test_method() SHARED_LOCK_FUNCTION();
 };
 
 class SHARED_LOCK_FUNCTION() SlfTestClass { // \
-  // expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_lock_function' attribute only applies to functions}}
 };
 
 // Check argument parsing.
@@ -725,26 +725,26 @@ int etf_testfn(int y) EXCLUSIVE_TRYLOCK_FUNCTION(1);
 
 int etf_testfn(int y) {
   int x EXCLUSIVE_TRYLOCK_FUNCTION(1) = y; // \
-    // expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_trylock_function' attribute only applies to functions}}
   return x;
 };
 
 int etf_test_var EXCLUSIVE_TRYLOCK_FUNCTION(1); // \
-  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions}}
 
 class EtfFoo {
  private:
   int test_field EXCLUSIVE_TRYLOCK_FUNCTION(1); // \
-    // expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_trylock_function' attribute only applies to functions}}
   void test_method() EXCLUSIVE_TRYLOCK_FUNCTION(1);
 };
 
 class EXCLUSIVE_TRYLOCK_FUNCTION(1) EtfTestClass { // \
-  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions}}
 };
 
 void etf_fun_params(int lvar EXCLUSIVE_TRYLOCK_FUNCTION(1)); // \
-  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_trylock_function' attribute only applies to functions}}
 
 // Check argument parsing.
 
@@ -798,26 +798,26 @@ int stf_testfn(int y) SHARED_TRYLOCK_FUNCTION(1);
 
 int stf_testfn(int y) {
   int x SHARED_TRYLOCK_FUNCTION(1) = y; // \
-    // expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_trylock_function' attribute only applies to functions}}
   return x;
 };
 
 int stf_test_var SHARED_TRYLOCK_FUNCTION(1); // \
-  // expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_trylock_function' attribute only applies to functions}}
 
 void stf_fun_params(int lvar SHARED_TRYLOCK_FUNCTION(1)); // \
-  // expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_trylock_function' attribute only applies to functions}}
 
 
 class StfFoo {
  private:
   int test_field SHARED_TRYLOCK_FUNCTION(1); // \
-    // expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_trylock_function' attribute only applies to functions}}
   void test_method() SHARED_TRYLOCK_FUNCTION(1);
 };
 
 class SHARED_TRYLOCK_FUNCTION(1) StfTestClass { // \
-    // expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_trylock_function' attribute only applies to functions}}
 };
 
 // Check argument parsing.
@@ -868,26 +868,26 @@ int uf_testfn(int y) UNLOCK_FUNCTION();
 
 int uf_testfn(int y) {
   int x UNLOCK_FUNCTION() = y; // \
-    // expected-warning {{'unlock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'unlock_function' attribute only applies to functions}}
   return x;
 };
 
 int uf_test_var UNLOCK_FUNCTION(); // \
-  // expected-warning {{'unlock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'unlock_function' attribute only applies to functions}}
 
 class UfFoo {
  private:
   int test_field UNLOCK_FUNCTION(); // \
-    // expected-warning {{'unlock_function' attribute only applies to functions and methods}}
+    // expected-warning {{'unlock_function' attribute only applies to functions}}
   void test_method() UNLOCK_FUNCTION();
 };
 
 class NO_THREAD_SAFETY_ANALYSIS UfTestClass { // \
-  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
+  // expected-warning {{'no_thread_safety_analysis' attribute only applies to functions}}
 };
 
 void uf_fun_params(int lvar UNLOCK_FUNCTION()); // \
-  // expected-warning {{'unlock_function' attribute only applies to functions and methods}}
+  // expected-warning {{'unlock_function' attribute only applies to functions}}
 
 // Check argument parsing.
 
@@ -944,25 +944,25 @@ int lr_testfn(int y) LOCK_RETURNED(mu1);
 
 int lr_testfn(int y) {
   int x LOCK_RETURNED(mu1) = y; // \
-    // expected-warning {{'lock_returned' attribute only applies to functions and methods}}
+    // expected-warning {{'lock_returned' attribute only applies to functions}}
   return x;
 };
 
 int lr_test_var LOCK_RETURNED(mu1); // \
-  // expected-warning {{'lock_returned' attribute only applies to functions and methods}}
+  // expected-warning {{'lock_returned' attribute only applies to functions}}
 
 void lr_fun_params(int lvar LOCK_RETURNED(mu1)); // \
-  // expected-warning {{'lock_returned' attribute only applies to functions and methods}}
+  // expected-warning {{'lock_returned' attribute only applies to functions}}
 
 class LrFoo {
  private:
   int test_field LOCK_RETURNED(mu1); // \
-    // expected-warning {{'lock_returned' attribute only applies to functions and methods}}
+    // expected-warning {{'lock_returned' attribute only applies to functions}}
   void test_method() LOCK_RETURNED(mu1);
 };
 
 class LOCK_RETURNED(mu1) LrTestClass { // \
-    // expected-warning {{'lock_returned' attribute only applies to functions and methods}}
+    // expected-warning {{'lock_returned' attribute only applies to functions}}
 };
 
 // Check argument parsing.
@@ -1011,25 +1011,25 @@ int le_testfn(int y) LOCKS_EXCLUDED(mu1);
 
 int le_testfn(int y) {
   int x LOCKS_EXCLUDED(mu1) = y; // \
-    // expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
+    // expected-warning {{'locks_excluded' attribute only applies to functions}}
   return x;
 };
 
 int le_test_var LOCKS_EXCLUDED(mu1); // \
-  // expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
+  // expected-warning {{'locks_excluded' attribute only applies to functions}}
 
 void le_fun_params(int lvar LOCKS_EXCLUDED(mu1)); // \
-  // expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
+  // expected-warning {{'locks_excluded' attribute only applies to functions}}
 
 class LeFoo {
  private:
   int test_field LOCKS_EXCLUDED(mu1); // \
-    // expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
+    // expected-warning {{'locks_excluded' attribute only applies to functions}}
   void test_method() LOCKS_EXCLUDED(mu1);
 };
 
 class LOCKS_EXCLUDED(mu1) LeTestClass { // \
-  // expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
+  // expected-warning {{'locks_excluded' attribute only applies to functions}}
 };
 
 // Check argument parsing.
@@ -1078,25 +1078,25 @@ int elr_testfn(int y) EXCLUSIVE_LOCKS_REQUIRED(mu1);
 
 int elr_testfn(int y) {
   int x EXCLUSIVE_LOCKS_REQUIRED(mu1) = y; // \
-    // expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_locks_required' attribute only applies to functions}}
   return x;
 };
 
 int elr_test_var EXCLUSIVE_LOCKS_REQUIRED(mu1); // \
-  // expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_locks_required' attribute only applies to functions}}
 
 void elr_fun_params(int lvar EXCLUSIVE_LOCKS_REQUIRED(mu1)); // \
-  // expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_locks_required' attribute only applies to functions}}
 
 class ElrFoo {
  private:
   int test_field EXCLUSIVE_LOCKS_REQUIRED(mu1); // \
-    // expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
+    // expected-warning {{'exclusive_locks_required' attribute only applies to functions}}
   void test_method() EXCLUSIVE_LOCKS_REQUIRED(mu1);
 };
 
 class EXCLUSIVE_LOCKS_REQUIRED(mu1) ElrTestClass { // \
-  // expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'exclusive_locks_required' attribute only applies to functions}}
 };
 
 // Check argument parsing.
@@ -1146,25 +1146,25 @@ int slr_testfn(int y) SHARED_LOCKS_REQUIRED(mu1);
 
 int slr_testfn(int y) {
   int x SHARED_LOCKS_REQUIRED(mu1) = y; // \
-    // expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_locks_required' attribute only applies to functions}}
   return x;
 };
 
 int slr_test_var SHARED_LOCKS_REQUIRED(mu1); // \
-  // expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_locks_required' attribute only applies to functions}}
 
 void slr_fun_params(int lvar SHARED_LOCKS_REQUIRED(mu1)); // \
-  // expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_locks_required' attribute only applies to functions}}
 
 class SlrFoo {
  private:
   int test_field SHARED_LOCKS_REQUIRED(mu1); // \
-    // expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
+    // expected-warning {{'shared_locks_required' attribute only applies to functions}}
   void test_method() SHARED_LOCKS_REQUIRED(mu1);
 };
 
 class SHARED_LOCKS_REQUIRED(mu1) SlrTestClass { // \
-  // expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
+  // expected-warning {{'shared_locks_required' attribute only applies to functions}}
 };
 
 // Check argument parsing.
