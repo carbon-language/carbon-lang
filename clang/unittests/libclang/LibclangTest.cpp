@@ -62,179 +62,182 @@ struct TestVFO {
 };
 }
 
-TEST(libclang, VirtualFileOverlay) {
-  {
-    const char *contents =
-    "{\n"
-    "  'version': 0,\n"
-    "  'roots': [\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/virtual\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foo.h\",\n"
-    "          'external-contents': \"/real/foo.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    }\n"
-    "  ]\n"
-    "}\n";
-    TestVFO T(contents);
-    T.map("/path/virtual/foo.h", "/real/foo.h");
-  }
-  {
-    const char *contents =
-    "{\n"
-    "  'version': 0,\n"
-    "  'roots': [\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/\\u266B\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"\\u2602.h\",\n"
-    "          'external-contents': \"/real/\\u2602.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    }\n"
-    "  ]\n"
-    "}\n";
-    TestVFO T(contents);
-    T.map("/path/♫/☂.h", "/real/☂.h");
-  }
-  {
-    TestVFO T(NULL);
-    T.mapError("/path/./virtual/../foo.h", "/real/foo.h",
-               CXError_InvalidArguments);
-  }
-  {
-    const char *contents =
-    "{\n"
-    "  'version': 0,\n"
-    "  'roots': [\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/another/dir\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foo2.h\",\n"
-    "          'external-contents': \"/real/foo2.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    },\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/virtual/dir\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foo1.h\",\n"
-    "          'external-contents': \"/real/foo1.h\"\n"
-    "        },\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foo3.h\",\n"
-    "          'external-contents': \"/real/foo3.h\"\n"
-    "        },\n"
-    "        {\n"
-    "          'type': 'directory',\n"
-    "          'name': \"in/subdir\",\n"
-    "          'contents': [\n"
-    "            {\n"
-    "              'type': 'file',\n"
-    "              'name': \"foo4.h\",\n"
-    "              'external-contents': \"/real/foo4.h\"\n"
-    "            }\n"
-    "          ]\n"
-    "        }\n"
-    "      ]\n"
-    "    }\n"
-    "  ]\n"
-    "}\n";
-    TestVFO T(contents);
-    T.map("/path/virtual/dir/foo1.h", "/real/foo1.h");
-    T.map("/another/dir/foo2.h", "/real/foo2.h");
-    T.map("/path/virtual/dir/foo3.h", "/real/foo3.h");
-    T.map("/path/virtual/dir/in/subdir/foo4.h", "/real/foo4.h");
-  }
-  {
-    const char *contents =
-    "{\n"
-    "  'version': 0,\n"
-    "  'case-sensitive': 'false',\n"
-    "  'roots': [\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/virtual\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foo.h\",\n"
-    "          'external-contents': \"/real/foo.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    }\n"
-    "  ]\n"
-    "}\n";
-    TestVFO T(contents);
-    T.map("/path/virtual/foo.h", "/real/foo.h");
-    clang_VirtualFileOverlay_setCaseSensitivity(T.VFO, false);
-  }
-  {
-    const char *contents =
-    "{\n"
-    "  'version': 0,\n"
-    "  'roots': [\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/foo\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"bar\",\n"
-    "          'external-contents': \"/real/bar\"\n"
-    "        },\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"bar.h\",\n"
-    "          'external-contents': \"/real/bar.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    },\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path/foobar\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"baz.h\",\n"
-    "          'external-contents': \"/real/baz.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    },\n"
-    "    {\n"
-    "      'type': 'directory',\n"
-    "      'name': \"/path\",\n"
-    "      'contents': [\n"
-    "        {\n"
-    "          'type': 'file',\n"
-    "          'name': \"foobarbaz.h\",\n"
-    "          'external-contents': \"/real/foobarbaz.h\"\n"
-    "        }\n"
-    "      ]\n"
-    "    }\n"
-    "  ]\n"
-    "}\n";
-    TestVFO T(contents);
-    T.map("/path/foo/bar.h", "/real/bar.h");
-    T.map("/path/foo/bar", "/real/bar");
-    T.map("/path/foobar/baz.h", "/real/baz.h");
-    T.map("/path/foobarbaz.h", "/real/foobarbaz.h");
-  }
+TEST(libclang, VirtualFileOverlay_Basic) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/virtual\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo.h\",\n"
+      "          'external-contents': \"/real/foo.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/virtual/foo.h", "/real/foo.h");
+}
+
+TEST(libclang, VirtualFileOverlay_Unicode) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/\\u266B\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"\\u2602.h\",\n"
+      "          'external-contents': \"/real/\\u2602.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/♫/☂.h", "/real/☂.h");
+}
+
+TEST(libclang, VirtualFileOverlay_InvalidArgs) {
+  TestVFO T(NULL);
+  T.mapError("/path/./virtual/../foo.h", "/real/foo.h",
+             CXError_InvalidArguments);
+}
+
+TEST(libclang, VirtualFileOverlay_RemapDirectories) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/another/dir\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo2.h\",\n"
+      "          'external-contents': \"/real/foo2.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    },\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/virtual/dir\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo1.h\",\n"
+      "          'external-contents': \"/real/foo1.h\"\n"
+      "        },\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo3.h\",\n"
+      "          'external-contents': \"/real/foo3.h\"\n"
+      "        },\n"
+      "        {\n"
+      "          'type': 'directory',\n"
+      "          'name': \"in/subdir\",\n"
+      "          'contents': [\n"
+      "            {\n"
+      "              'type': 'file',\n"
+      "              'name': \"foo4.h\",\n"
+      "              'external-contents': \"/real/foo4.h\"\n"
+      "            }\n"
+      "          ]\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/virtual/dir/foo1.h", "/real/foo1.h");
+  T.map("/another/dir/foo2.h", "/real/foo2.h");
+  T.map("/path/virtual/dir/foo3.h", "/real/foo3.h");
+  T.map("/path/virtual/dir/in/subdir/foo4.h", "/real/foo4.h");
+}
+
+TEST(libclang, VirtualFileOverlay_CaseInsensitive) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'case-sensitive': 'false',\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/virtual\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo.h\",\n"
+      "          'external-contents': \"/real/foo.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/virtual/foo.h", "/real/foo.h");
+  clang_VirtualFileOverlay_setCaseSensitivity(T.VFO, false);
+}
+
+TEST(libclang, VirtualFileOverlay_SharedPrefix) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/foo\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"bar\",\n"
+      "          'external-contents': \"/real/bar\"\n"
+      "        },\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"bar.h\",\n"
+      "          'external-contents': \"/real/bar.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    },\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/foobar\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"baz.h\",\n"
+      "          'external-contents': \"/real/baz.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    },\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foobarbaz.h\",\n"
+      "          'external-contents': \"/real/foobarbaz.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/foo/bar.h", "/real/bar.h");
+  T.map("/path/foo/bar", "/real/bar");
+  T.map("/path/foobar/baz.h", "/real/baz.h");
+  T.map("/path/foobarbaz.h", "/real/foobarbaz.h");
 }
 
 TEST(libclang, ModuleMapDescriptor) {
