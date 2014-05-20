@@ -749,8 +749,19 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
   DIDerivedType DTy(Ty);
   if (DTy.isDerivedType()) {
-    if (DIType Deriv = DD->resolve(DTy.getTypeDerivedFrom()))
-      return isUnsignedDIType(DD, Deriv);
+    dwarf::Tag T = (dwarf::Tag)Ty.getTag();
+    // Encode pointer constants as unsigned bytes. This is used at least for
+    // null pointer constant emission. Maybe DW_TAG_reference_type should be
+    // accepted here too, if there are ways to produce compile-time constant
+    // references.
+    if (T == dwarf::DW_TAG_pointer_type ||
+        T == dwarf::DW_TAG_ptr_to_member_type)
+      return true;
+    assert(T == dwarf::DW_TAG_typedef || T == dwarf::DW_TAG_const_type ||
+           T == dwarf::DW_TAG_volatile_type ||
+           T == dwarf::DW_TAG_restrict_type);
+    if (DITypeRef Deriv = DTy.getTypeDerivedFrom())
+      return isUnsignedDIType(DD, DD->resolve(Deriv));
     // FIXME: Enums without a fixed underlying type have unknown signedness
     // here, leading to incorrectly emitted constants.
     assert(DTy.getTag() == dwarf::DW_TAG_enumeration_type);
