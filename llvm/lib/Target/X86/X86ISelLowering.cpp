@@ -20294,8 +20294,8 @@ static SDValue PerformINSERTPSCombine(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget *Subtarget) {
   SDLoc dl(N);
   MVT VT = N->getOperand(1)->getSimpleValueType(0);
-  assert(VT == MVT::v4f32 ||
-         VT == MVT::v4i32 && "X86insertps is only defined for v4x32");
+  assert((VT == MVT::v4f32 || VT == MVT::v4i32) &&
+         "X86insertps is only defined for v4x32");
 
   SDValue Ld = N->getOperand(1);
   if (MayFoldLoad(Ld)) {
