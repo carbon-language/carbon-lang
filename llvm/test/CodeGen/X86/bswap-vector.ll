@@ -122,6 +122,23 @@ entry:
 ; CHECK-AVX2-NEXT: retq
 }
 
+declare <4 x i16> @llvm.bswap.v4i16(<4 x i16>)
+
+define <4 x i16> @test7(<4 x i16> %v) #0 {
+entry:
+  %r = call <4 x i16> @llvm.bswap.v4i16(<4 x i16> %v)
+  ret <4 x i16> %r
+
+; CHECK-SSSE3-LABEL: @test7
+; CHECK-SSSE3: pshufb
+; CHECK-SSSE3: psrld $16
+; CHECK-SSSE3-NEXT: retq
+
+; CHECK-AVX2-LABEL: @test7
+; CHECK-AVX2: vpshufb
+; CHECK-AVX2: vpsrld $16
+; CHECK-AVX2-NEXT: retq
+}
 
 attributes #0 = { nounwind uwtable }
 
