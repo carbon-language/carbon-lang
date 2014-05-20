@@ -273,6 +273,10 @@ static int compileModule(char **argv, LLVMContext &Context) {
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.DisableIntegratedAS = NoIntegratedAssembler;
 
+  // Override default to generate verbose assembly unless we've seen the flag.
+  if (AsmVerbose.getNumOccurrences() == 0)
+    Options.MCOptions.AsmVerbose = true;
+
   std::unique_ptr<TargetMachine> target(
       TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr,
                                      Options, RelocModel, CMModel, OLvl));
@@ -308,9 +312,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
   if (const DataLayout *DL = Target.getDataLayout())
     mod->setDataLayout(DL);
   PM.add(new DataLayoutPass(mod));
-
-  // Override default to generate verbose assembly.
-  Target.setAsmVerbosityDefault(true);
 
   if (RelaxAll.getNumOccurrences() > 0 &&
       FileType != TargetMachine::CGFT_ObjectFile)

@@ -43,19 +43,6 @@ static cl::opt<cl::boolOrDefault>
 EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
-static cl::opt<cl::boolOrDefault>
-AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
-           cl::init(cl::BOU_UNSET));
-
-static bool getVerboseAsm() {
-  switch (AsmVerbose) {
-  case cl::BOU_UNSET: return TargetMachine::getAsmVerbosityDefault();
-  case cl::BOU_TRUE:  return true;
-  case cl::BOU_FALSE: return false;
-  }
-  llvm_unreachable("Invalid verbose asm state");
-}
-
 void LLVMTargetMachine::initAsmInfo() {
   MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(*getRegisterInfo(),
                                                     TargetTriple);
@@ -188,8 +175,9 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                        TargetCPU);
     MCStreamer *S = getTarget().createAsmStreamer(
-        *Context, Out, getVerboseAsm(), Options.MCOptions.MCUseDwarfDirectory,
-        InstPrinter, MCE, MAB, Options.MCOptions.ShowMCInst);
+        *Context, Out, Options.MCOptions.AsmVerbose,
+        Options.MCOptions.MCUseDwarfDirectory, InstPrinter, MCE, MAB,
+        Options.MCOptions.ShowMCInst);
     AsmStreamer.reset(S);
     break;
   }

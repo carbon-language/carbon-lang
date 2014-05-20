@@ -47,6 +47,9 @@ cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
 cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
                          cl::desc("Show instruction structure in .s output"));
 
+cl::opt<bool> AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
+                         cl::init(false));
+
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
@@ -57,6 +60,7 @@ static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   Options.MCSaveTempLabels = SaveTempLabels;
   Options.ShowMCEncoding = ShowMCEncoding;
   Options.ShowMCInst = ShowMCInst;
+  Options.AsmVerbose = AsmVerbose;
   return Options;
 }
 

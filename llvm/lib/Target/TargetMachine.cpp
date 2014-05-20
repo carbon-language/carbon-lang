@@ -29,14 +29,6 @@
 using namespace llvm;
 
 //---------------------------------------------------------------------------
-// Command-line options that tend to be useful on more than one back-end.
-//
-
-namespace llvm {
-  bool AsmVerbosityDefault(false);
-}
-
-//---------------------------------------------------------------------------
 // TargetMachine Class
 //
 
@@ -162,12 +154,12 @@ void TargetMachine::setOptLevel(CodeGenOpt::Level Level) const {
     CodeGenInfo->setOptLevel(Level);
 }
 
-bool TargetMachine::getAsmVerbosityDefault() {
-  return AsmVerbosityDefault;
+bool TargetMachine::getAsmVerbosityDefault() const {
+  return Options.MCOptions.AsmVerbose;
 }
 
 void TargetMachine::setAsmVerbosityDefault(bool V) {
-  AsmVerbosityDefault = V;
+  Options.MCOptions.AsmVerbose = V;
 }
 
 bool TargetMachine::getFunctionSections() const {

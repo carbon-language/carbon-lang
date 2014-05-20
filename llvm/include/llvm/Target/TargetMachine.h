@@ -187,11 +187,11 @@ public:
 
   /// getAsmVerbosityDefault - Returns the default value of asm verbosity.
   ///
-  static bool getAsmVerbosityDefault();
+  bool getAsmVerbosityDefault() const ;
 
   /// setAsmVerbosityDefault - Set the default value of asm verbosity. Default
   /// is false.
-  static void setAsmVerbosityDefault(bool);
+  void setAsmVerbosityDefault(bool);
 
   /// getDataSections - Return true if data objects should be emitted into their
   /// own section, corresponds to -fdata-sections.
