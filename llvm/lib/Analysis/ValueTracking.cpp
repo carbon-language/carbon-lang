@@ -2065,9 +2065,9 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   // Alloca never returns null, malloc might.
   if (isa<AllocaInst>(V)) return true;
 
-  // A byval or inalloca argument is never null.
+  // A byval, inalloca, or nonnull argument is never null.
   if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValOrInAllocaAttr();
+    return A->hasByValOrInAllocaAttr() || A->hasNonNullAttr();
 
   // Global values are not null unless extern weak.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))

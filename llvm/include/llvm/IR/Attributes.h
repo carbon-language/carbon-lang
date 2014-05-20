@@ -86,6 +86,7 @@ public:
     NoInline,              ///< inline=never
     NonLazyBind,           ///< Function is called early and/or
                            ///< often, so lazy binding isn't worthwhile
+    NonNull,               ///< Pointer is known to be not null
     NoRedZone,             ///< Disable redzone
     NoReturn,              ///< Mark the function as not returning
     NoUnwind,              ///< Function doesn't unwind stack

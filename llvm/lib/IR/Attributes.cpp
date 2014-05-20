@@ -193,6 +193,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "noinline";
   if (hasAttribute(Attribute::NonLazyBind))
     return "nonlazybind";
+  if (hasAttribute(Attribute::NonNull))
+    return "nonnull";
   if (hasAttribute(Attribute::NoRedZone))
     return "noredzone";
   if (hasAttribute(Attribute::NoReturn))
@@ -392,6 +394,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::Builtin:         return 1ULL << 41;
   case Attribute::OptimizeNone:    return 1ULL << 42;
   case Attribute::InAlloca:        return 1ULL << 43;
+  case Attribute::NonNull:         return 1ULL << 44;
   }
   llvm_unreachable("Unsupported attribute type");
 }
@@ -1177,6 +1180,7 @@ AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
       .addAttribute(Attribute::Nest)
       .addAttribute(Attribute::NoAlias)
       .addAttribute(Attribute::NoCapture)
+      .addAttribute(Attribute::NonNull)
       .addAttribute(Attribute::ReadNone)
       .addAttribute(Attribute::ReadOnly)
       .addAttribute(Attribute::StructRet)

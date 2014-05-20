@@ -218,6 +218,11 @@ define void @f36(i8* inalloca) {
         ret void
 }
 
+define nonnull i8* @f37(i8* nonnull %a) {
+; CHECK: define nonnull i8* @f37(i8* nonnull %a) {
+        ret i8* %a
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

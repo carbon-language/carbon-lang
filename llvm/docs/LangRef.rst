@@ -847,6 +847,13 @@ Currently, only the following parameter attributes are defined:
     operands for the :ref:`bitcast instruction <i_bitcast>`. This is not a
     valid attribute for return values and can only be applied to one parameter.
 
+``nonnull``
+    This indicates that the parameter or return pointer is not null. This
+    attribute may only be applied to pointer typed parameters. This is not
+    checked or enforced by LLVM, the caller must ensure that the pointer
+    passed in is non-null, or the callee must ensure that the returned pointer 
+    is non-null.
+
 .. _gc:
 
 Garbage Collector Names

@@ -165,7 +165,8 @@ typedef enum {
     LLVMStackProtectStrongAttribute = 1ULL<<33,
     LLVMCold = 1ULL << 34,
     LLVMOptimizeNone = 1ULL << 35,
-    LLVMInAllocaAttribute = 1ULL << 36
+    LLVMInAllocaAttribute = 1ULL << 36,
+    LLVMNonNullAttribute = 1ULL << 37
     */
 } LLVMAttribute;
 

@@ -569,6 +569,8 @@ static Attribute::AttrKind GetAttrFromCode(uint64_t Code) {
     return Attribute::NoInline;
   case bitc::ATTR_KIND_NON_LAZY_BIND:
     return Attribute::NonLazyBind;
+  case bitc::ATTR_KIND_NON_NULL:
+    return Attribute::NonNull;
   case bitc::ATTR_KIND_NO_RED_ZONE:
     return Attribute::NoRedZone;
   case bitc::ATTR_KIND_NO_RETURN:

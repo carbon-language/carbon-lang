@@ -55,6 +55,10 @@ public:
   /// For example in "void foo(int a, float b)" a is 0 and b is 1.
   unsigned getArgNo() const;
 
+  /// \brief Return true if this argument has the nonnull attribute on it in
+  /// its containing function.
+  bool hasNonNullAttr() const;
+
   /// \brief Return true if this argument has the byval attribute on it in its
   /// containing function.
   bool hasByValAttr() const;
