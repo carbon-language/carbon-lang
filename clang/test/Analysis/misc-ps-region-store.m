@@ -1362,5 +1362,5 @@ int rdar11125868() {
 int rdar11125868_positive() {
   int integersStackArray[1];
   int *integers = integersStackArray;
-  return integers[0] == 0; // expected-warning {{he left operand of '==' is a}}
+  return integers[0] == 0; // expected-warning {{the left operand of '==' is a}}
 }

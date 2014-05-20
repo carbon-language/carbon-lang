@@ -3404,8 +3404,8 @@ class Config:
         python bindings can disable the compatibility check. This will cause
         the python bindings to load, even though they are written for a newer
         version of libclang. Failures now arise if unsupported or incompatible
-        features are accessed. The user is required to test himself if the
-        features he is using are available and compatible between different
+        features are accessed. The user is required to test themselves if the
+        features they are using are available and compatible between different
         libclang versions.
         """
         if Config.loaded:

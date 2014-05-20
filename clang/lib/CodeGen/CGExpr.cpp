@@ -1610,7 +1610,7 @@ void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
   Builder.CreateCall2(F, RegName, Value);
 }
 
-// setObjCGCLValueClass - sets class of he lvalue for the purpose of
+// setObjCGCLValueClass - sets class of the lvalue for the purpose of
 // generating write-barries API. It is currently a global, ivar,
 // or neither.
 static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,

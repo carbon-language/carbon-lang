@@ -47,7 +47,7 @@ void WalkAST::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
   if (E->getKind() != UETT_SizeOf)
     return;
 
-  // If an explicit type is used in the code, usually the coder knows what he is
+  // If an explicit type is used in the code, usually the coder knows what they are
   // doing.
   if (E->isArgumentType())
     return;

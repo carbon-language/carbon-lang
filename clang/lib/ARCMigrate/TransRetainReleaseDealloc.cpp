@@ -70,7 +70,7 @@ public:
           // An unused autorelease is badness. If we remove it the receiver
           // will likely die immediately while previously it was kept alive
           // by the autorelease pool. This is bad practice in general, leave it
-          // and emit an error to force the user to restructure his code.
+          // and emit an error to force the user to restructure their code.
           Pass.TA.reportError("it is not safe to remove an unused 'autorelease' "
               "message; its receiver may be destroyed immediately",
               E->getLocStart(), E->getSourceRange());

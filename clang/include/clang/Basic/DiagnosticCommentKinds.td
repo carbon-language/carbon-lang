@@ -11,7 +11,7 @@ let Component = "Comment" in {
 let CategoryName = "Documentation Issue" in {
 
 // HTML parsing errors.  These are under -Wdocumentation to make sure the user
-// knows that we didn't parse something as he might expect.
+// knows that we didn't parse something as they might expect.
 
 def warn_doc_html_start_tag_expected_quoted_string : Warning<
   "expected quoted string after equals sign">,

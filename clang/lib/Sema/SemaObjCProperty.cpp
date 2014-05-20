@@ -1677,7 +1677,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
       // Lazily construct a set of all the properties in the @interface
       // of the class, without looking at the superclass.  We cannot
       // use the call to CollectImmediateProperties() above as that
-      // utilizes information fromt he super class's properties as well
+      // utilizes information from the super class's properties as well
       // as scans the adopted protocols.  This work only triggers for protocols
       // with the attribute, which is very rare, and only occurs when
       // analyzing the @implementation.

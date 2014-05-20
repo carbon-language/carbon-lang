@@ -24,7 +24,7 @@ certain source-level entities to:
   thread stack, bypassing the frame boundaries);
 * ignore a known problem.
 
-To achieve this, user may create a file listing the entities he wants to
+To achieve this, user may create a file listing the entities they want to
 ignore, and pass it to clang at compile-time using
 ``-fsanitize-blacklist`` flag. See :doc:`UsersManual` for details.
 
