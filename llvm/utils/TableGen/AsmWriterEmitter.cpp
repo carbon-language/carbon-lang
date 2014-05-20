@@ -750,6 +750,23 @@ static unsigned CountNumOperands(StringRef AsmString, unsigned Variant) {
   return AsmString.count(' ') + AsmString.count('\t');
 }
 
+namespace {
+struct AliasPriorityComparator {
+  typedef std::pair<CodeGenInstAlias *, int> ValueType;
+  bool operator()(const ValueType &LHS, const ValueType &RHS) {
+    if (LHS.second ==  RHS.second) {
+      // We don't actually care about the order, but for consistency it
+      // shouldn't depend on pointer comparisons.
+      return LHS.first->TheDef->getName() < RHS.first->TheDef->getName();
+    }
+
+    // Aliases with larger priorities should be considered first.
+    return LHS.second > RHS.second;
+  }
+};
+}
+
+
 void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   Record *AsmWriter = Target.getAsmWriter();
 
@@ -762,35 +779,36 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   // Emit the method that prints the alias instruction.
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
+  unsigned Variant = AsmWriter->getValueAsInt("Variant");
 
   std::vector<Record*> AllInstAliases =
     Records.getAllDerivedDefinitions("InstAlias");
 
   // Create a map from the qualified name to a list of potential matches.
-  std::map<std::string, std::vector<CodeGenInstAlias*> > AliasMap;
-  unsigned Variant = AsmWriter->getValueAsInt("Variant");
+  typedef std::set<std::pair<CodeGenInstAlias*, int>, AliasPriorityComparator>
+      AliasWithPriority;
+  std::map<std::string, AliasWithPriority> AliasMap;
   for (std::vector<Record*>::iterator
          I = AllInstAliases.begin(), E = AllInstAliases.end(); I != E; ++I) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(*I, Variant, Target);
     const Record *R = *I;
-    if (!R->getValueAsBit("EmitAlias"))
-      continue; // We were told not to emit the alias, but to emit the aliasee.
+    int Priority = R->getValueAsInt("EmitPriority");
+    if (Priority < 1)
+      continue; // Aliases with priority 0 are never emitted.
+
     const DagInit *DI = R->getValueAsDag("ResultInst");
     const DefInit *Op = cast<DefInit>(DI->getOperator());
-    AliasMap[getQualifiedName(Op->getDef())].push_back(Alias);
+    AliasMap[getQualifiedName(Op->getDef())].insert(std::make_pair(Alias,
+                                                                   Priority));
   }
 
   // A map of which conditions need to be met for each instruction operand
   // before it can be matched to the mnemonic.
   std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
 
-  for (std::map<std::string, std::vector<CodeGenInstAlias*> >::iterator
-         I = AliasMap.begin(), E = AliasMap.end(); I != E; ++I) {
-    std::vector<CodeGenInstAlias*> &Aliases = I->second;
-
-    for (std::vector<CodeGenInstAlias*>::iterator
-           II = Aliases.begin(), IE = Aliases.end(); II != IE; ++II) {
-      const CodeGenInstAlias *CGA = *II;
+  for (auto &Aliases : AliasMap) {
+    for (auto &Alias : Aliases.second) {
+      const CodeGenInstAlias *CGA = Alias.first;
       unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
       unsigned NumResultOps =
         CountNumOperands(CGA->ResultInst->AsmString, Variant);
@@ -900,7 +918,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       }
 
       if (CantHandle) continue;
-      IAPrinterMap[I->first].push_back(IAP);
+      IAPrinterMap[Aliases.first].push_back(IAP);
     }
   }
 

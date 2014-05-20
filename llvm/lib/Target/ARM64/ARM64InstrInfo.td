@@ -568,30 +568,19 @@ def : Pat<(ARM64sub_flag GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
           (ADDSXri GPR64:$Rn, neg_addsub_shifted_imm64:$imm)>;
 }
 
-def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
-def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0), 3>;
+def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0), 3>;
 def : InstAlias<"neg $dst, $src$shift",
-                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
+                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift), 2>;
 def : InstAlias<"neg $dst, $src$shift",
-                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
+                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift), 2>;
 
-def : InstAlias<"negs $dst, $src", (SUBSWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
-def : InstAlias<"negs $dst, $src", (SUBSXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+def : InstAlias<"negs $dst, $src", (SUBSWrs GPR32:$dst, WZR, GPR32:$src, 0), 3>;
+def : InstAlias<"negs $dst, $src", (SUBSXrs GPR64:$dst, XZR, GPR64:$src, 0), 3>;
 def : InstAlias<"negs $dst, $src$shift",
-                (SUBSWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
+                (SUBSWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift), 2>;
 def : InstAlias<"negs $dst, $src$shift",
-                (SUBSXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
-
-
-// Register/register aliases with no shift when SP is not used.
-def : AddSubRegAlias<"add",  ADDWrs,  GPR32, GPR32, GPR32, 0>;
-def : AddSubRegAlias<"add",  ADDXrs,  GPR64, GPR64, GPR64, 0>;
-def : AddSubRegAlias<"sub",  SUBWrs,  GPR32, GPR32, GPR32, 0>;
-def : AddSubRegAlias<"sub",  SUBXrs,  GPR64, GPR64, GPR64, 0>;
-def : AddSubRegAlias<"adds", ADDSWrs, GPR32, GPR32, GPR32, 0>;
-def : AddSubRegAlias<"adds", ADDSXrs, GPR64, GPR64, GPR64, 0>;
-def : AddSubRegAlias<"subs", SUBSWrs, GPR32, GPR32, GPR32, 0>;
-def : AddSubRegAlias<"subs", SUBSXrs, GPR64, GPR64, GPR64, 0>;
+                (SUBSXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift), 2>;
 
 
 // Unsigned/Signed divide
@@ -708,38 +697,31 @@ defm ORN  : LogicalReg<0b01, 1, "orn",
                        BinOpFrag<(or node:$LHS, (not node:$RHS))>>;
 defm ORR  : LogicalReg<0b01, 0, "orr", or>;
 
-// FIXME: these aliases are named so that they get considered by TableGen before
-// the already instantiated anonymous_ABC ones. Some kind of explicit priority
-// system would be better.
-def AA_MOVWr : InstAlias<"mov $dst, $src",
-                         (ORRWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
-def AA_MOVXr : InstAlias<"mov $dst, $src",
-                         (ORRXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
+def : InstAlias<"mov $dst, $src", (ORRWrs GPR32:$dst, WZR, GPR32:$src, 0), 2>;
+def : InstAlias<"mov $dst, $src", (ORRXrs GPR64:$dst, XZR, GPR64:$src, 0), 2>;
 
-def AA_MVNWr : InstAlias<"mvn $Wd, $Wm",
-                         (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, 0)>;
-def AA_MVNXr : InstAlias<"mvn $Xd, $Xm",
-                         (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0)>;
+def : InstAlias<"mvn $Wd, $Wm", (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, 0), 3>;
+def : InstAlias<"mvn $Xd, $Xm", (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0), 3>;
 
-def AA_MVNWrs : InstAlias<"mvn $Wd, $Wm$sh",
-                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift32:$sh)>;
-def AA_MVNXrs : InstAlias<"mvn $Xd, $Xm$sh",
-                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh)>;
+def : InstAlias<"mvn $Wd, $Wm$sh",
+                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift32:$sh), 2>;
+def : InstAlias<"mvn $Xd, $Xm$sh",
+                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh), 2>;
 
-def AA_TSTWri : InstAlias<"tst $src1, $src2",
-                         (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2)>;
-def AA_TSTXri : InstAlias<"tst $src1, $src2",
-                         (ANDSXri XZR, GPR64:$src1, logical_imm64:$src2)>;
+def : InstAlias<"tst $src1, $src2",
+                (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2), 2>;
+def : InstAlias<"tst $src1, $src2",
+                (ANDSXri XZR, GPR64:$src1, logical_imm64:$src2), 2>;
 
-def AA_TSTWr: InstAlias<"tst $src1, $src2",
-                       (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, 0)>;
-def AA_TSTXr: InstAlias<"tst $src1, $src2",
-                       (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, 0)>;
+def : InstAlias<"tst $src1, $src2",
+                        (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, 0), 3>;
+def : InstAlias<"tst $src1, $src2",
+                        (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, 0), 3>;
 
-def AB_TSTWrs : InstAlias<"tst $src1, $src2$sh",
-                (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, logical_shift32:$sh)>;
-def AB_TSTXrs : InstAlias<"tst $src1, $src2$sh",
-                (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift64:$sh)>;
+def : InstAlias<"tst $src1, $src2$sh",
+               (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, logical_shift32:$sh), 2>;
+def : InstAlias<"tst $src1, $src2$sh",
+               (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift64:$sh), 2>;
 
 
 def : Pat<(not GPR32:$Wm), (ORNWrr WZR, GPR32:$Wm)>;

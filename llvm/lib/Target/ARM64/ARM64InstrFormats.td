@@ -1658,14 +1658,24 @@ multiclass AddSub<bit isSub, string mnemonic,
     let Inst{31} = 1;
   }
 
+  // Register/register aliases with no shift when SP is not used.
+  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
+                       GPR32, GPR32, GPR32, 0>;
+  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Xrs"),
+                       GPR64, GPR64, GPR64, 0>;
+
   // Register/register aliases with no shift when either the destination or
-  // first source register is SP.  This relies on the shifted register aliases
-  // above matching first in the case when SP is not used.
+  // first source register is SP.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrx"),
-                       GPR32sp, GPR32sp, GPR32, 16>; // UXTW #0
+                       GPR32sponly, GPR32sp, GPR32, 16>; // UXTW #0
+  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrx"),
+                       GPR32sp, GPR32sponly, GPR32, 16>; // UXTW #0
   def : AddSubRegAlias<mnemonic,
                        !cast<Instruction>(NAME#"Xrx64"),
-                       GPR64sp, GPR64sp, GPR64, 24>; // UXTX #0
+                       GPR64sponly, GPR64sp, GPR64, 24>; // UXTX #0
+  def : AddSubRegAlias<mnemonic,
+                       !cast<Instruction>(NAME#"Xrx64"),
+                       GPR64sp, GPR64sponly, GPR64, 24>; // UXTX #0
 }
 
 multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
@@ -1716,34 +1726,39 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
 
   // Compare aliases
   def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Wri")
-                  WZR, GPR32sp:$src, addsub_shifted_imm32:$imm)>;
+                  WZR, GPR32sp:$src, addsub_shifted_imm32:$imm), 5>;
   def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Xri")
-                  XZR, GPR64sp:$src, addsub_shifted_imm64:$imm)>;
+                  XZR, GPR64sp:$src, addsub_shifted_imm64:$imm), 5>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Wrx")
-                  WZR, GPR32sp:$src1, GPR32:$src2, arith_extend:$sh)>;
+                  WZR, GPR32sp:$src1, GPR32:$src2, arith_extend:$sh), 4>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrx")
-                  XZR, GPR64sp:$src1, GPR32:$src2, arith_extend:$sh)>;
+                  XZR, GPR64sp:$src1, GPR32:$src2, arith_extend:$sh), 4>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrx64")
-                  XZR, GPR64sp:$src1, GPR64:$src2, arith_extendlsl64:$sh)>;
+                  XZR, GPR64sp:$src1, GPR64:$src2, arith_extendlsl64:$sh), 4>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Wrs")
-                  WZR, GPR32:$src1, GPR32:$src2, arith_shift32:$sh)>;
+                  WZR, GPR32:$src1, GPR32:$src2, arith_shift32:$sh), 4>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrs")
-                  XZR, GPR64:$src1, GPR64:$src2, arith_shift64:$sh)>;
+                  XZR, GPR64:$src1, GPR64:$src2, arith_shift64:$sh), 4>;
 
   // Compare shorthands
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Wrs")
-                  WZR, GPR32:$src1, GPR32:$src2, 0)>;
+                  WZR, GPR32:$src1, GPR32:$src2, 0), 5>;
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Xrs")
-                  XZR, GPR64:$src1, GPR64:$src2, 0)>;
+                  XZR, GPR64:$src1, GPR64:$src2, 0), 5>;
+
+  // Register/register aliases with no shift when SP is not used.
+  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
+                       GPR32, GPR32, GPR32, 0>;
+  def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Xrs"),
+                       GPR64, GPR64, GPR64, 0>;
 
   // Register/register aliases with no shift when the first source register
-  // is SP.  This relies on the shifted register aliases above matching first
-  // in the case when SP is not used.
+  // is SP.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrx"),
-                       GPR32, GPR32sp, GPR32, 16>; // UXTW #0
+                       GPR32, GPR32sponly, GPR32, 16>; // UXTW #0
   def : AddSubRegAlias<mnemonic,
                        !cast<Instruction>(NAME#"Xrx64"),
-                       GPR64, GPR64sp, GPR64, 24>; // UXTX #0
+                       GPR64, GPR64sponly, GPR64, 24>; // UXTX #0
 }
 
 //---
