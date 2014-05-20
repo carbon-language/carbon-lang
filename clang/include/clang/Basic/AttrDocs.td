@@ -880,8 +880,9 @@ expression is compared to the type tag.  There are two supported flags:
 def FlattenDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
-The ``flatten`` attribute causes calls within the attributed function to be
-inlined if possible.
+The ``flatten`` attribute causes calls within the attributed function to
+be inlined unless it is impossible to do so, for example if the body of the
+callee is unavailable or if the callee has the ``noinline`` attribute.
   }];
 }
 
