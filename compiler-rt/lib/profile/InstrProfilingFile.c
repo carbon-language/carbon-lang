@@ -8,9 +8,12 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
 static int writeFile(FILE *File) {
   /* Match logic in __llvm_profile_write_buffer(). */
@@ -75,7 +78,7 @@ __attribute__((weak)) const char *__llvm_profile_CurrentFilename = NULL;
 
 static void setFilename(const char *Filename, int OwnsFilename) {
   if (__llvm_profile_OwnsFilename)
-    free((char *)__llvm_profile_CurrentFilename);
+    free(UNCONST(__llvm_profile_CurrentFilename));
 
   __llvm_profile_CurrentFilename = Filename;
   __llvm_profile_OwnsFilename = OwnsFilename;
