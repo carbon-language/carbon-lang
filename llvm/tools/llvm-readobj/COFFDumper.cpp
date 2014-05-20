@@ -196,15 +196,13 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
 // the function returns the symbol used for the relocation at the offset.
 static error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
                                 uint64_t Offset, SymbolRef &Sym) {
-  for (std::vector<RelocationRef>::const_iterator RelI = Rels.begin(),
-                                                  RelE = Rels.end();
-                                                  RelI != RelE; ++RelI) {
+  for (const auto &Relocation : Rels) {
     uint64_t Ofs;
-    if (error_code EC = RelI->getOffset(Ofs))
+    if (error_code EC = Relocation.getOffset(Ofs))
       return EC;
 
     if (Ofs == Offset) {
-      Sym = *RelI->getSymbol();
+      Sym = *Relocation.getSymbol();
       return readobj_error::success;
     }
   }
