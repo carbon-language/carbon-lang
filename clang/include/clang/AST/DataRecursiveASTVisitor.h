@@ -349,7 +349,7 @@ public:
 // ---- Methods on TypeLocs ----
 // FIXME: this currently just calls the matching Type methods
 
-// Declare Traverse*() for all concrete Type classes.
+// Declare Traverse*() for all concrete TypeLoc classes.
 #define ABSTRACT_TYPELOC(CLASS, BASE)
 #define TYPELOC(CLASS, BASE) bool Traverse##CLASS##TypeLoc(CLASS##TypeLoc TL);
 #include "clang/AST/TypeLocNodes.def"
