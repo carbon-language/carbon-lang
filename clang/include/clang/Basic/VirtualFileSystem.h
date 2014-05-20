@@ -15,8 +15,10 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 
 namespace llvm {
@@ -165,6 +167,34 @@ getVFSFromYAML(llvm::MemoryBuffer *Buffer,
                llvm::SourceMgr::DiagHandlerTy DiagHandler,
                void *DiagContext = nullptr,
                IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
+
+class YAMLVFSWriter {
+  struct MapEntry {
+    template <typename T1, typename T2> MapEntry(T1 &&VPath, T2 &&RPath)
+        : VPath(std::forward<T1>(VPath)), RPath(std::forward<T2>(RPath)) {}
+    std::string VPath;
+    std::string RPath;
+  };
+  std::vector<MapEntry> Mappings;
+  Optional<bool> IsCaseSensitive;
+
+  llvm::ArrayRef<MapEntry> printDirNodes(llvm::raw_ostream &OS,
+                                         llvm::ArrayRef<MapEntry> Entries,
+                                         StringRef ParentPath, unsigned Indent);
+  llvm::ArrayRef<MapEntry> printContents(llvm::raw_ostream &OS,
+                                         llvm::ArrayRef<MapEntry> Entries,
+                                         unsigned Indent);
+  bool containedIn(StringRef Parent, StringRef Path);
+  StringRef containedPart(StringRef Parent, StringRef Path);
+
+public:
+  YAMLVFSWriter() {}
+  void addFileMapping(StringRef VirtualPath, StringRef RealPath);
+  void setCaseSensitivity(bool CaseSensitive) {
+    IsCaseSensitive = CaseSensitive;
+  }
+  void write(llvm::raw_ostream &OS);
+};
 
 } // end namespace vfs
 } // end namespace clang

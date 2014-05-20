@@ -11,6 +11,7 @@
 
 #include "clang/Basic/VirtualFileSystem.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -842,4 +843,119 @@ UniqueID vfs::getNextVirtualUniqueID() {
   // The following assumes that uint64_t max will never collide with a real
   // dev_t value from the OS.
   return UniqueID(std::numeric_limits<uint64_t>::max(), ID);
+}
+
+#ifndef NDEBUG
+static bool pathHasTraversal(StringRef Path) {
+  using namespace llvm::sys;
+  for (StringRef Comp : llvm::make_range(path::begin(Path), path::end(Path)))
+    if (Comp == "." || Comp == "..")
+      return true;
+  return false;
+}
+#endif
+
+void YAMLVFSWriter::addFileMapping(StringRef VirtualPath, StringRef RealPath) {
+  assert(sys::path::is_absolute(VirtualPath) && "virtual path not absolute");
+  assert(sys::path::is_absolute(RealPath) && "real path not absolute");
+  assert(!pathHasTraversal(VirtualPath) && "path traversal is not supported");
+  Mappings.emplace_back(VirtualPath, RealPath);
+}
+
+ArrayRef<YAMLVFSWriter::MapEntry>
+YAMLVFSWriter::printDirNodes(llvm::raw_ostream &OS, ArrayRef<MapEntry> Entries,
+                             StringRef ParentPath, unsigned Indent) {
+  while (!Entries.empty()) {
+    const MapEntry &Entry = Entries.front();
+    OS.indent(Indent) << "{\n";
+    Indent += 2;
+    OS.indent(Indent) << "'type': 'directory',\n";
+    StringRef DirName =
+        containedPart(ParentPath, sys::path::parent_path(Entry.VPath));
+    OS.indent(Indent)
+        << "'name': \"" << llvm::yaml::escape(DirName) << "\",\n";
+    OS.indent(Indent) << "'contents': [\n";
+    Entries = printContents(OS, Entries, Indent + 2);
+    OS.indent(Indent) << "]\n";
+    Indent -= 2;
+    OS.indent(Indent) << '}';
+    if (Entries.empty()) {
+      OS << '\n';
+      break;
+    }
+    StringRef NextVPath = Entries.front().VPath;
+    if (!containedIn(ParentPath, NextVPath)) {
+      OS << '\n';
+      break;
+    }
+    OS << ",\n";
+  }
+  return Entries;
+}
+
+ArrayRef<YAMLVFSWriter::MapEntry>
+YAMLVFSWriter::printContents(llvm::raw_ostream &OS, ArrayRef<MapEntry> Entries,
+                             unsigned Indent) {
+  using namespace llvm::sys;
+  while (!Entries.empty()) {
+    const MapEntry &Entry = Entries.front();
+    Entries = Entries.slice(1);
+    StringRef ParentPath = path::parent_path(Entry.VPath);
+    StringRef VName = path::filename(Entry.VPath);
+    OS.indent(Indent) << "{\n";
+    Indent += 2;
+    OS.indent(Indent) << "'type': 'file',\n";
+    OS.indent(Indent) << "'name': \"" << llvm::yaml::escape(VName) << "\",\n";
+    OS.indent(Indent) << "'external-contents': \""
+                      << llvm::yaml::escape(Entry.RPath) << "\"\n";
+    Indent -= 2;
+    OS.indent(Indent) << '}';
+    if (Entries.empty()) {
+      OS << '\n';
+      break;
+    }
+    StringRef NextVPath = Entries.front().VPath;
+    if (!containedIn(ParentPath, NextVPath)) {
+      OS << '\n';
+      break;
+    }
+    OS << ",\n";
+    if (path::parent_path(NextVPath) != ParentPath) {
+      Entries = printDirNodes(OS, Entries, ParentPath, Indent);
+    }
+  }
+  return Entries;
+}
+
+bool YAMLVFSWriter::containedIn(StringRef Parent, StringRef Path) {
+  return Path.startswith(Parent);
+}
+
+StringRef YAMLVFSWriter::containedPart(StringRef Parent, StringRef Path) {
+  assert(containedIn(Parent, Path));
+  if (Parent.empty())
+    return Path;
+  return Path.slice(Parent.size() + 1, StringRef::npos);
+}
+
+void YAMLVFSWriter::write(llvm::raw_ostream &OS) {
+  std::sort(Mappings.begin(), Mappings.end(),
+            [](const MapEntry &LHS, const MapEntry &RHS) {
+    return LHS.VPath < RHS.VPath;
+  });
+
+  OS << "{\n"
+        "  'version': 0,\n";
+  if (IsCaseSensitive.hasValue()) {
+    OS << "  'case-sensitive': '";
+    if (IsCaseSensitive.getValue())
+      OS << "true";
+    else
+      OS << "false";
+    OS << "',\n";
+  }
+  OS << "  'roots': [\n";
+  printDirNodes(OS, Mappings, "", 4);
+  OS << "  ]\n"
+     << "}\n";
 }
