@@ -20,9 +20,10 @@ class MachineInstr;
 class MDNode;
 class TargetRegisterInfo;
 
-// For each user variable, keep a list of DBG_VALUE instructions in order.
-// The list can also contain normal instructions that clobber the previous
-// DBG_VALUE. The variables are listed in order of appearance.
+// For each user variable, keep a list of DBG_VALUE instructions for it
+// in the order of appearance. The list can also contain another
+// instructions, which are assumed to clobber the previous DBG_VALUE.
+// The variables are listed in order of appearance.
 typedef MapVector<const MDNode *, SmallVector<const MachineInstr *, 4>>
 DbgValueHistoryMap;
 

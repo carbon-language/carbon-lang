@@ -1201,10 +1201,10 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
         const MachineInstr *End = HI[1];
         DEBUG(dbgs() << "DotDebugLoc Pair:\n"
                      << "\t" << *Begin << "\t" << *End << "\n");
-        if (End->isDebugValue())
+        if (End->isDebugValue() && End->getDebugVariable() == DV)
           SLabel = getLabelBeforeInsn(End);
         else {
-          // End is a normal instruction clobbering the range.
+          // End is clobbering the range.
           SLabel = getLabelAfterInsn(End);
           assert(SLabel && "Forgot label after clobber instruction");
           ++HI;
@@ -1415,7 +1415,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       LabelsBeforeInsn[History.front()] = FunctionBeginSym;
 
     for (const MachineInstr *MI : History) {
-      if (MI->isDebugValue())
+      if (MI->isDebugValue() && MI->getDebugVariable() == DV)
         requestLabelBeforeInsn(MI);
       else
         requestLabelAfterInsn(MI);
