@@ -1,6 +1,21 @@
-; RUN: llvm-as < %s | %llc_dwarf -asm-verbose -O0 | grep AT_specification | count 2
+; REQUIRES: object-emission
+
+; RUN: %llc_dwarf -O0 -filetype=obj -o - < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 ; Radar 7833483
-; Do not emit AT_specification for nested function foo.
+; Do not emit a separate out-of-line definition DIE for the function-local 'foo'
+; function (member of the function local 'A' type)
+; CHECK: DW_TAG_class
+; CHECK-NEXT: DW_AT_name {{.*}} "A"
+; Check that the subprogram inside the class definition has low_pc, only
+; attached to the definition.
+; CHECK: [[FOO_INL:0x........]]: DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZZN1B2fnEvEN1A3fooEv"
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_low_pc
+; And just double check that there's no out of line definition that references
+; this subprogram.
+; CHECK-NOT: DW_AT_specification {{.*}} {[[FOO_INL]]}
 
 %class.A = type { i8 }
 %class.B = type { i8 }
