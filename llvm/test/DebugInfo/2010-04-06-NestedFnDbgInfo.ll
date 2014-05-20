@@ -4,7 +4,8 @@
 ; Radar 7833483
 ; Do not emit a separate out-of-line definition DIE for the function-local 'foo'
 ; function (member of the function local 'A' type)
-; CHECK: DW_TAG_class
+; CHECK: DW_TAG_class_type
+; CHECK: DW_TAG_class_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "A"
 ; Check that the subprogram inside the class definition has low_pc, only
 ; attached to the definition.
