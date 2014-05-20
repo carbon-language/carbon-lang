@@ -376,9 +376,6 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
 
   TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
 
-  TargetMachine::setFunctionSections(CodeGenOpts.FunctionSections);
-  TargetMachine::setDataSections    (CodeGenOpts.DataSections);
-
   unsigned CodeModel =
     llvm::StringSwitch<unsigned>(CodeGenOpts.CodeModel)
       .Case("small", llvm::CodeModel::Small)
@@ -491,6 +488,8 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
+  Options.FunctionSections = CodeGenOpts.FunctionSections;
+  Options.DataSections = CodeGenOpts.DataSections;
 
   Options.MCOptions.MCRelaxAll = CodeGenOpts.RelaxAll;
   Options.MCOptions.MCSaveTempLabels = CodeGenOpts.SaveTempLabels;
