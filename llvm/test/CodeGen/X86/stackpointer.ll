@@ -1,11 +1,13 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin  | FileCheck %s
 ; RUN: llc < %s -mtriple=x86_64-linux-gnueabi | FileCheck %s
+; RUN: opt < %s -O3 -S -mtriple=x86_64-linux-gnueabi | FileCheck %s --check-prefix=OPT
 
 define i64 @get_stack() nounwind {
 entry:
 ; CHECK-LABEL: get_stack:
 ; CHECK: movq	%rsp, %rax
 	%sp = call i64 @llvm.read_register.i64(metadata !0)
+; OPT: @llvm.read_register.i64
   ret i64 %sp
 }
 
@@ -14,6 +16,7 @@ entry:
 ; CHECK-LABEL: set_stack:
 ; CHECK: movq	%rdi, %rsp
   call void @llvm.write_register.i64(metadata !0, i64 %val)
+; OPT: @llvm.write_register.i64
   ret void
 }
 
