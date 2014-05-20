@@ -140,6 +140,11 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
   if (first == last)
     return;
 
+  // The first file entry is about to be rebuilt (or there was an error), so
+  // there should be no references to it. Remove it from the cache to close it,
+  // as Windows doesn't seem to allow renaming over an open file.
+  FileMgr.invalidateCache((*first)->File);
+
   // Collect the set of module file pointers that we'll be removing.
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
 
