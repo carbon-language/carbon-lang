@@ -668,6 +668,12 @@ def MinSize : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def Flatten : InheritableAttr {
+  let Spellings = [GCC<"flatten">];
+  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let Documentation = [FlattenDocs];
+}
+
 def Format : InheritableAttr {
   let Spellings = [GCC<"format">];
   let Args = [IdentifierArgument<"Type">, IntArgument<"FormatIdx">,

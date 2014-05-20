@@ -877,6 +877,14 @@ expression is compared to the type tag.  There are two supported flags:
   }];
 }
 
+def FlattenDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``flatten`` attribute causes calls within the attributed function to be
+inlined if possible.
+  }];
+}
+
 def FormatDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
