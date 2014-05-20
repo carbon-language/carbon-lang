@@ -149,13 +149,13 @@ public:
     return true;
   }
 
-  bool TraverseLambdaCapture(LambdaCapture C) {
-    if (C.capturesThis())
+  bool TraverseLambdaCapture(LambdaExpr *LE, const LambdaCapture *C) {
+    if (C->capturesThis())
       return true;
 
-    if (C.capturesVariable() && IndexCtx.shouldIndexFunctionLocalSymbols())
-      IndexCtx.handleReference(C.getCapturedVar(), C.getLocation(),
-                               Parent, ParentDC);
+    if (C->capturesVariable() && IndexCtx.shouldIndexFunctionLocalSymbols())
+      IndexCtx.handleReference(C->getCapturedVar(), C->getLocation(), Parent,
+                               ParentDC);
 
     // FIXME: Lambda init-captures.
     return true;
