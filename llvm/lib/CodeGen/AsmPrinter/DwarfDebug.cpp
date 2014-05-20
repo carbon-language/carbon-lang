@@ -530,11 +530,11 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   if (!ProcessedSPNodes.insert(Sub))
     return;
 
-  DIE *ScopeDIE = TheCU.getDIE(Sub);
-  assert(ScopeDIE);
-  AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
-  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
+  if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
+    AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
+    TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+    createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
+  }
 }
 
 DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
