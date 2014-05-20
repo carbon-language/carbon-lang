@@ -50,10 +50,10 @@ namespace llvm {
           JITEmitDebugInfoToDisk(false), GuaranteedTailCallOpt(false),
           DisableTailCalls(false), StackAlignmentOverride(0),
           EnableFastISel(false), PositionIndependentExecutable(false),
-          UseInitArray(false),
-          DisableIntegratedAS(false), CompressDebugSections(false),
-          TrapUnreachable(false),
-          TrapFuncName(""), FloatABIType(FloatABI::Default),
+          UseInitArray(false), DisableIntegratedAS(false),
+          CompressDebugSections(false), FunctionSections(false),
+          DataSections(false), TrapUnreachable(false), TrapFuncName(""),
+          FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -163,6 +163,12 @@ namespace llvm {
 
     /// Compress DWARF debug sections.
     unsigned CompressDebugSections : 1;
+
+    /// Emit functions into separate sections.
+    unsigned FunctionSections : 1;
+
+    /// Emit data into separate sections.
+    unsigned DataSections : 1;
 
     /// Emit target-specific trap instruction for 'unreachable' IR instructions.
     unsigned TrapUnreachable : 1;

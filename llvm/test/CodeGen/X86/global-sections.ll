@@ -2,8 +2,8 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin9.7 | FileCheck %s -check-prefix=DARWIN
 ; RUN: llc < %s -mtriple=i386-apple-darwin10 -relocation-model=static | FileCheck %s -check-prefix=DARWIN-STATIC
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
-; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -fdata-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
-; RUN: llc < %s -mtriple=i686-pc-win32 -fdata-sections -ffunction-sections | FileCheck %s -check-prefix=WIN32-SECTIONS
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -data-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
+; RUN: llc < %s -mtriple=i686-pc-win32 -data-sections -function-sections | FileCheck %s -check-prefix=WIN32-SECTIONS
 
 define void @F1() {
   ret void
@@ -18,13 +18,13 @@ define void @F1() {
 ; LINUX: .type   G1,@object
 ; LINUX: .comm  G1,4,4
 
-; DARWIN: .comm	_G1,4,2
+; DARWIN: .comm _G1,4,2
 
 
 
 
 ; const int G2 __attribute__((weak)) = 42;
-@G2 = weak_odr unnamed_addr constant i32 42	
+@G2 = weak_odr unnamed_addr constant i32 42     
 
 
 ; TODO: linux drops this into .rodata, we drop it into ".gnu.linkonce.r.G2"
@@ -85,25 +85,25 @@ define void @F1() {
 ; PR4584
 @"foo bar" = linkonce global i32 42
 
-; LINUX: .type	"foo bar",@object
+; LINUX: .type  "foo bar",@object
 ; LINUX: .section ".data.foo bar","aGw",@progbits,"foo bar",comdat
-; LINUX: .weak	"foo bar"
+; LINUX: .weak  "foo bar"
 ; LINUX: "foo bar":
 
-; DARWIN: .section		__DATA,__datacoal_nt,coalesced
-; DARWIN: .globl	"_foo bar"
-; DARWIN:	.weak_definition "_foo bar"
+; DARWIN: .section              __DATA,__datacoal_nt,coalesced
+; DARWIN: .globl        "_foo bar"
+; DARWIN:       .weak_definition "_foo bar"
 ; DARWIN: "_foo bar":
 
 ; PR4650
 @G6 = weak_odr unnamed_addr constant [1 x i8] c"\01"
 
-; LINUX:   .type	G6,@object
-; LINUX:   .section	.rodata.G6,"aG",@progbits,G6,comdat
-; LINUX:   .weak	G6
+; LINUX:   .type        G6,@object
+; LINUX:   .section     .rodata.G6,"aG",@progbits,G6,comdat
+; LINUX:   .weak        G6
 ; LINUX: G6:
-; LINUX:   .byte	1
-; LINUX:   .size	G6, 1
+; LINUX:   .byte        1
+; LINUX:   .size        G6, 1
 
 ; DARWIN:  .section __TEXT,__const_coal,coalesced
 ; DARWIN:  .globl _G6
@@ -114,58 +114,58 @@ define void @F1() {
 
 @G7 = unnamed_addr constant [10 x i8] c"abcdefghi\00"
 
-; DARWIN:	__TEXT,__cstring,cstring_literals
-; DARWIN:	.globl _G7
+; DARWIN:       __TEXT,__cstring,cstring_literals
+; DARWIN:       .globl _G7
 ; DARWIN: _G7:
-; DARWIN:	.asciz	"abcdefghi"
+; DARWIN:       .asciz  "abcdefghi"
 
-; LINUX:	.section	.rodata.str1.1,"aMS",@progbits,1
-; LINUX:	.globl G7
+; LINUX:        .section        .rodata.str1.1,"aMS",@progbits,1
+; LINUX:        .globl G7
 ; LINUX: G7:
-; LINUX:	.asciz	"abcdefghi"
+; LINUX:        .asciz  "abcdefghi"
 
 ; LINUX-SECTIONS: .section        .rodata.G7,"aMS",@progbits,1
-; LINUX-SECTIONS:	.globl G7
+; LINUX-SECTIONS:       .globl G7
 
 ; WIN32-SECTIONS: .section        .rdata,"rd",one_only,_G7
-; WIN32-SECTIONS:	.globl _G7
+; WIN32-SECTIONS:       .globl _G7
 
 
 @G8 = unnamed_addr constant [4 x i16] [ i16 1, i16 2, i16 3, i16 0 ]
 
-; DARWIN:	.section	__TEXT,__const
-; DARWIN:	.globl _G8
+; DARWIN:       .section        __TEXT,__const
+; DARWIN:       .globl _G8
 ; DARWIN: _G8:
 
-; LINUX:	.section	.rodata.str2.2,"aMS",@progbits,2
-; LINUX:	.globl G8
+; LINUX:        .section        .rodata.str2.2,"aMS",@progbits,2
+; LINUX:        .globl G8
 ; LINUX:G8:
 
 @G9 = unnamed_addr constant [4 x i32] [ i32 1, i32 2, i32 3, i32 0 ]
 
-; DARWIN:	.globl _G9
+; DARWIN:       .globl _G9
 ; DARWIN: _G9:
 
-; LINUX:	.section	.rodata.str4.4,"aMS",@progbits,4
-; LINUX:	.globl G9
+; LINUX:        .section        .rodata.str4.4,"aMS",@progbits,4
+; LINUX:        .globl G9
 ; LINUX:G9
 
 
 @G10 = weak global [100 x i32] zeroinitializer, align 32 ; <[100 x i32]*> [#uses=0]
 
 
-; DARWIN: 	.section	__DATA,__datacoal_nt,coalesced
+; DARWIN:       .section        __DATA,__datacoal_nt,coalesced
 ; DARWIN: .globl _G10
-; DARWIN:	.weak_definition _G10
-; DARWIN:	.align	5
+; DARWIN:       .weak_definition _G10
+; DARWIN:       .align  5
 ; DARWIN: _G10:
-; DARWIN:	.space	400
+; DARWIN:       .space  400
 
-; LINUX:	.bss
-; LINUX:	.weak	G10
-; LINUX:	.align	32
+; LINUX:        .bss
+; LINUX:        .weak   G10
+; LINUX:        .align  32
 ; LINUX: G10:
-; LINUX:	.zero	400
+; LINUX:        .zero   400
 
 
 

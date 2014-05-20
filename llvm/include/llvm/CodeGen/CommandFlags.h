@@ -193,6 +193,15 @@ cl::opt<std::string> StartAfter("start-after",
                           cl::value_desc("pass-name"),
                           cl::init(""));
 
+cl::opt<bool> DataSections("data-sections",
+                           cl::desc("Emit data into separate sections"),
+                           cl::init(false));
+
+cl::opt<bool>
+FunctionSections("function-sections",
+                 cl::desc("Emit functions into separate sections"),
+                 cl::init(false));
+
 // Common utility function tightly tied to the options listed here. Initializes
 // a TargetOptions object with CodeGen flags and returns it.
 static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
@@ -215,6 +224,8 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.TrapFuncName = TrapFuncName;
   Options.PositionIndependentExecutable = EnablePIE;
   Options.UseInitArray = UseInitArray;
+  Options.DataSections = DataSections;
+  Options.FunctionSections = FunctionSections;
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
 
