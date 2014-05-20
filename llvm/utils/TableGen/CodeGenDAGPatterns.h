@@ -409,6 +409,12 @@ public:
   const ComplexPattern *
   getComplexPatternInfo(const CodeGenDAGPatterns &CGP) const;
 
+  /// Returns the number of MachineInstr operands that would be produced by this
+  /// node if it mapped directly to an output Instruction's
+  /// operand. ComplexPattern specifies this explicitly; MIOperandInfo gives it
+  /// for Operands; otherwise 1.
+  unsigned getNumMIResults(const CodeGenDAGPatterns &CGP) const;
+
   /// NodeHasProperty - Return true if this node has the specified property.
   bool NodeHasProperty(SDNP Property, const CodeGenDAGPatterns &CGP) const;
 
@@ -527,6 +533,13 @@ class TreePattern {
   /// hasError - True if the currently processed nodes have unresolvable types
   /// or other non-fatal errors
   bool HasError;
+
+  /// It's important that the usage of operands in ComplexPatterns is
+  /// consistent: each named operand can be defined by at most one
+  /// ComplexPattern. This records the ComplexPattern instance and the operand
+  /// number for each operand encountered in a ComplexPattern to aid in that
+  /// check.
+  StringMap<std::pair<Record *, unsigned>> ComplexPatternOperands;
 public:
 
   /// TreePattern constructor - Parse the specified DagInits into the

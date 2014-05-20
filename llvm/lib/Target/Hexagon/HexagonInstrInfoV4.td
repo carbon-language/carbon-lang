@@ -2022,9 +2022,10 @@ multiclass MemOpi_bitPats <PatFrag ldOp, PatFrag stOp, PatLeaf immPred,
 
   // mem[bhw](Rs+#0) = [clrbit|setbit](#U5)
   let AddedComplexity = 225 in
-  def : Pat <(stOp (OpNode (ldOp addrPred:$addr), immPred:$bitend),
-                   addrPred:$addr),
-             (MI IntRegs:$addr, #0, (xformFunc immPred:$bitend))>;
+  def : Pat <(stOp (OpNode (ldOp (addrPred IntRegs:$addr, extPred:$offset)),
+                           immPred:$bitend),
+                   (addrPred (i32 IntRegs:$addr), extPred:$offset)),
+             (MI IntRegs:$addr, extPred:$offset, (xformFunc immPred:$bitend))>;
 }
 
 multiclass MemOpi_bitExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
@@ -2068,9 +2069,10 @@ multiclass MemOpr_Pats <PatFrag ldOp, PatFrag stOp, ComplexPattern addrPred,
                      PatLeaf extPred, InstHexagon MI, SDNode OpNode> {
   let AddedComplexity = 141 in
   // mem[bhw](Rs+#0) [+-&|]= Rt
-  def : Pat <(stOp (OpNode (ldOp addrPred:$addr), (i32 IntRegs:$addend)),
-                   addrPred:$addr),
-             (MI IntRegs:$addr, #0, (i32 IntRegs:$addend) )>;
+  def : Pat <(stOp (OpNode (ldOp (addrPred IntRegs:$addr, extPred:$offset)),
+                           (i32 IntRegs:$addend)),
+                   (addrPred (i32 IntRegs:$addr), extPred:$offset)),
+             (MI IntRegs:$addr, extPred:$offset, (i32 IntRegs:$addend) )>;
 
   // mem[bhw](Rs+#U6:[012]) [+-&|]= Rt
   let AddedComplexity = 150 in

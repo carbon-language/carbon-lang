@@ -62,6 +62,13 @@ namespace {
     /// insertion easier.
     StringMap<unsigned> VariableMap;
 
+    /// This maintains the recorded operand number that OPC_CheckComplexPattern
+    /// drops each sub-operand into. We don't want to insert these into
+    /// VariableMap because that leads to identity checking if they are
+    /// encountered multiple times. Biased by 1 like VariableMap for
+    /// consistency.
+    StringMap<unsigned> NamedComplexPatternOperands;
+
     /// NextRecordedOperandNo - As we emit opcodes to record matched values in
     /// the RecordedNodes array, this keeps track of which slot will be next to
     /// record into.
@@ -76,10 +83,8 @@ namespace {
     SmallVector<unsigned, 2> MatchedGlueResultNodes;
 
     /// MatchedComplexPatterns - This maintains a list of all of the
-    /// ComplexPatterns that we need to check.  The patterns are known to have
-    /// names which were recorded.  The second element of each pair is the first
-    /// slot number that the OPC_CheckComplexPat opcode drops the matched
-    /// results into.
+    /// ComplexPatterns that we need to check. The second element of each pair
+    /// is the recorded operand number of the input node.
     SmallVector<std::pair<const TreePatternNode*,
                           unsigned>, 2> MatchedComplexPatterns;
 
@@ -114,6 +119,11 @@ namespace {
     void EmitLeafMatchCode(const TreePatternNode *N);
     void EmitOperatorMatchCode(const TreePatternNode *N,
                                TreePatternNode *NodeNoTypes);
+
+    /// If this is the first time a node with unique identifier Name has been
+    /// seen, record it. Otherwise, emit a check to make sure this is the same
+    /// node. Returns true if this is the first encounter.
+    bool recordUniqueNode(std::string Name);
 
     // Result Code Generation.
     unsigned getNamedArgumentSlot(StringRef Name) {
@@ -266,7 +276,8 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
 
     // Remember this ComplexPattern so that we can emit it after all the other
     // structural matches are done.
-    MatchedComplexPatterns.push_back(std::make_pair(N, 0));
+    unsigned InputOperand = VariableMap[N->getName()] - 1;
+    MatchedComplexPatterns.push_back(std::make_pair(N, InputOperand));
     return;
   }
 
@@ -277,6 +288,25 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
 void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
                                        TreePatternNode *NodeNoTypes) {
   assert(!N->isLeaf() && "Not an operator?");
+
+  if (N->getOperator()->isSubClassOf("ComplexPattern")) {
+    // The "name" of a non-leaf complex pattern (MY_PAT $op1, $op2) is
+    // "MY_PAT:op1:op2". We should already have validated that the uses are
+    // consistent.
+    std::string PatternName = N->getOperator()->getName();
+    for (unsigned i = 0; i < N->getNumChildren(); ++i) {
+      PatternName += ":";
+      PatternName += N->getChild(i)->getName();
+    }
+
+    if (recordUniqueNode(PatternName)) {
+      auto NodeAndOpNum = std::make_pair(N, NextRecordedOperandNo - 1);
+      MatchedComplexPatterns.push_back(NodeAndOpNum);
+    }
+
+    return;
+  }
+
   const SDNodeInfo &CInfo = CGP.getSDNodeInfo(N->getOperator());
 
   // If this is an 'and R, 1234' where the operation is AND/OR and the RHS is
@@ -415,6 +445,22 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   }
 }
 
+bool MatcherGen::recordUniqueNode(std::string Name) {
+  unsigned &VarMapEntry = VariableMap[Name];
+  if (VarMapEntry == 0) {
+    // If it is a named node, we must emit a 'Record' opcode.
+    AddMatcher(new RecordMatcher("$" + Name, NextRecordedOperandNo));
+    VarMapEntry = ++NextRecordedOperandNo;
+    return true;
+  }
+
+  // If we get here, this is a second reference to a specific name.  Since
+  // we already have checked that the first reference is valid, we don't
+  // have to recursively match it, just check that it's the same as the
+  // previously named thing.
+  AddMatcher(new CheckSameMatcher(VarMapEntry-1));
+  return false;
+}
 
 void MatcherGen::EmitMatchCode(const TreePatternNode *N,
                                TreePatternNode *NodeNoTypes) {
@@ -432,21 +478,9 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
 
   // If this node has a name associated with it, capture it in VariableMap. If
   // we already saw this in the pattern, emit code to verify dagness.
-  if (!N->getName().empty()) {
-    unsigned &VarMapEntry = VariableMap[N->getName()];
-    if (VarMapEntry == 0) {
-      // If it is a named node, we must emit a 'Record' opcode.
-      AddMatcher(new RecordMatcher("$" + N->getName(), NextRecordedOperandNo));
-      VarMapEntry = ++NextRecordedOperandNo;
-    } else {
-      // If we get here, this is a second reference to a specific name.  Since
-      // we already have checked that the first reference is valid, we don't
-      // have to recursively match it, just check that it's the same as the
-      // previously named thing.
-      AddMatcher(new CheckSameMatcher(VarMapEntry-1));
+  if (!N->getName().empty())
+    if (!recordUniqueNode(N->getName()))
       return;
-    }
-  }
 
   if (N->isLeaf())
     EmitLeafMatchCode(N);
@@ -497,16 +531,20 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
     const TreePatternNode *N = MatchedComplexPatterns[i].first;
 
     // Remember where the results of this match get stuck.
-    MatchedComplexPatterns[i].second = NextRecordedOperandNo;
+    if (N->isLeaf()) {
+      NamedComplexPatternOperands[N->getName()] = NextRecordedOperandNo + 1;
+    } else {
+      unsigned CurOp = NextRecordedOperandNo;
+      for (unsigned i = 0; i < N->getNumChildren(); ++i) {
+        NamedComplexPatternOperands[N->getChild(i)->getName()] = CurOp + 1;
+        CurOp += N->getChild(i)->getNumMIResults(CGP);
+      }
+    }
 
     // Get the slot we recorded the value in from the name on the node.
-    unsigned RecNodeEntry = VariableMap[N->getName()];
-    assert(!N->getName().empty() && RecNodeEntry &&
-           "Complex pattern should have a name and slot");
-    --RecNodeEntry;  // Entries in VariableMap are biased.
+    unsigned RecNodeEntry = MatchedComplexPatterns[i].second;
 
-    const ComplexPattern &CP =
-      CGP.getComplexPattern(((DefInit*)N->getLeafValue())->getDef());
+    const ComplexPattern &CP = *N->getComplexPatternInfo(CGP);
 
     // Emit a CheckComplexPat operation, which does the match (aborting if it
     // fails) and pushes the matched operands onto the recorded nodes list.
@@ -543,21 +581,12 @@ void MatcherGen::EmitResultOfNamedOperand(const TreePatternNode *N,
                                           SmallVectorImpl<unsigned> &ResultOps){
   assert(!N->getName().empty() && "Operand not named!");
 
-  // A reference to a complex pattern gets all of the results of the complex
-  // pattern's match.
-  if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
-    unsigned SlotNo = 0;
-    for (unsigned i = 0, e = MatchedComplexPatterns.size(); i != e; ++i)
-      if (MatchedComplexPatterns[i].first->getName() == N->getName()) {
-        SlotNo = MatchedComplexPatterns[i].second;
-        break;
-      }
-    assert(SlotNo != 0 && "Didn't get a slot number assigned?");
+  if (unsigned SlotNo = NamedComplexPatternOperands[N->getName()]) {
+    // Complex operands have already been completely selected, just find the
+    // right slot ant add the arguments directly.
+    for (unsigned i = 0; i < N->getNumMIResults(CGP); ++i)
+      ResultOps.push_back(SlotNo - 1 + i);
 
-    // The first slot entry is the node itself, the subsequent entries are the
-    // matched values.
-    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-      ResultOps.push_back(SlotNo+i);
     return;
   }
 
@@ -575,7 +604,8 @@ void MatcherGen::EmitResultOfNamedOperand(const TreePatternNode *N,
     }
   }
 
-  ResultOps.push_back(SlotNo);
+  for (unsigned i = 0; i < N->getNumMIResults(CGP); ++i)
+    ResultOps.push_back(SlotNo + i);
 }
 
 void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
