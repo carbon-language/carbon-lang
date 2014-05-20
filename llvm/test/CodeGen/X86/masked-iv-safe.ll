@@ -5,7 +5,7 @@
 
 ; CHECK-LABEL: count_up
 ; CHECK-NOT: {{and|movz|sar|shl}}
-; CHECK: addq $8,
+; CHECK: incq
 ; CHECK-NOT: {{and|movz|sar|shl}}
 ; CHECK: jne
 define void @count_up(double* %d, i64 %n) nounwind {
@@ -71,7 +71,7 @@ return:
 
 ; CHECK-LABEL: count_up_signed
 ; CHECK-NOT: {{and|movz|sar|shl}}
-; CHECK: addq $8,
+; CHECK: incq
 ; CHECK-NOT: {{and|movz|sar|shl}}
 ; CHECK: jne
 define void @count_up_signed(double* %d, i64 %n) nounwind {
@@ -242,7 +242,7 @@ return:
 
 ; CHECK-LABEL: another_count_down_signed
 ; CHECK-NOT: {{and|movz|sar|shl}}
-; CHECK: addq $-8,
+; CHECK: decq
 ; CHECK-NOT: {{and|movz|sar|shl}}
 ; CHECK: jne
 define void @another_count_down_signed(double* %d, i64 %n) nounwind {
