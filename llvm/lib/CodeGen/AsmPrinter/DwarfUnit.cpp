@@ -759,7 +759,8 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
       return true;
     assert(T == dwarf::DW_TAG_typedef || T == dwarf::DW_TAG_const_type ||
            T == dwarf::DW_TAG_volatile_type ||
-           T == dwarf::DW_TAG_restrict_type);
+           T == dwarf::DW_TAG_restrict_type ||
+           T == dwarf::DW_TAG_enumeration_type);
     if (DITypeRef Deriv = DTy.getTypeDerivedFrom())
       return isUnsignedDIType(DD, DD->resolve(Deriv));
     // FIXME: Enums without a fixed underlying type have unknown signedness
