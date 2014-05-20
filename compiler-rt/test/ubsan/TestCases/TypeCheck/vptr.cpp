@@ -86,7 +86,7 @@ int main(int, char **argv) {
 
     // CHECK-NULL-MEMBER: vptr.cpp:[[@LINE-2]]:15: runtime error: member access within address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
     // CHECK-NULL-MEMBER-NEXT: [[PTR]]: note: object has invalid vptr
-    // CHECK-NULL-MEMBER-NEXT: {{^ .. .. .. ..  00 00 00 00 00 00 00 00  }}
+    // CHECK-NULL-MEMBER-NEXT: {{^  ?.. .. .. ..  ?00 00 00 00  ?00 00 00 00  ?}}
     // CHECK-NULL-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-NULL-MEMBER-NEXT: {{^              invalid vptr}}
 
