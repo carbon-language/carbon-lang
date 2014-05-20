@@ -6131,7 +6131,7 @@ public:
   StringRef lookupStr(const IdentifierInfo *ID);
 };
 
-/// TypeString encodings for union fields must be order.
+/// TypeString encodings for enum & union fields must be order.
 /// FieldEncoding is a helper for this ordering process.
 class FieldEncoding {
   bool HasName;
@@ -6390,12 +6390,12 @@ static bool appendRecordType(SmallStringEnc &Enc, const RecordType *RT,
 
   // We collect all encoded fields and order as necessary.
   bool IsRecursive = false;
-  SmallVector<FieldEncoding, 16> FE;
   const RecordDecl *RD = RT->getDecl()->getDefinition();
   if (RD && !RD->field_empty()) {
     // An incomplete TypeString stub is placed in the cache for this RecordType
     // so that recursive calls to this RecordType will use it whilst building a
     // complete TypeString for this RecordType.
+    SmallVector<FieldEncoding, 16> FE;
     std::string StubEnc(Enc.substr(Start).str());
     StubEnc += '}';  // StubEnc now holds a valid incomplete TypeString.
     TSC.addIncomplete(ID, std::move(StubEnc));
@@ -6408,15 +6408,14 @@ static bool appendRecordType(SmallStringEnc &Enc, const RecordType *RT,
     // See FieldEncoding::operator< for sort algorithm.
     if (RT->isUnionType())
       std::sort(FE.begin(), FE.end());
-  }
-
-  // We can now complete the TypeString.
-  if (unsigned E = FE.size())
+    // We can now complete the TypeString.
+    unsigned E = FE.size();
     for (unsigned I = 0; I != E; ++I) {
       if (I)
         Enc += ',';
       Enc += FE[I].str();
     }
+  }
   Enc += '}';
   TSC.addIfComplete(ID, Enc.substr(Start), IsRecursive);
   return true;
@@ -6438,18 +6437,26 @@ static bool appendEnumType(SmallStringEnc &Enc, const EnumType *ET,
   if (ID)
     Enc += ID->getName();
   Enc += "){";
+
+  // We collect all encoded enumerations and order them alphanumerically.
   if (const EnumDecl *ED = ET->getDecl()->getDefinition()) {
-    auto I = ED->enumerator_begin();
-    auto E = ED->enumerator_end();
-    while (I != E) {
-      Enc += "m(";
-      Enc += I->getName();
-      Enc += "){";
-      I->getInitVal().toString(Enc);
-      Enc += '}';
-      ++I;
-      if (I != E)
+    SmallVector<FieldEncoding, 16> FE;
+    for (auto I = ED->enumerator_begin(), E = ED->enumerator_end(); I != E;
+         ++I) {
+      SmallStringEnc EnumEnc;
+      EnumEnc += "m(";
+      EnumEnc += I->getName();
+      EnumEnc += "){";
+      I->getInitVal().toString(EnumEnc);
+      EnumEnc += '}';
+      FE.push_back(FieldEncoding(!I->getName().empty(), EnumEnc));
+    }
+    std::sort(FE.begin(), FE.end());
+    unsigned E = FE.size();
+    for (unsigned I = 0; I != E; ++I) {
+      if (I)
         Enc += ',';
+      Enc += FE[I].str();
     }
   }
   Enc += '}';

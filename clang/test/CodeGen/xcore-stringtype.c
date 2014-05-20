@@ -163,7 +163,7 @@ int unionTypeB(union UB ub) {return UnionAnon.A;}
 // test EnumType
 // CHECK: !33 = metadata !{i32* @EnumAnon, metadata !"e(){m(EA){3}}"}
 // CHECK: !34 = metadata !{i32 (i32)* @enumType, metadata
-// CHECK:       !"f{si}(e(E){m(A){0},m(B){1},m(C){5},m(D){6}})"}
-enum E {A, B, C=5, D};
+// CHECK:       !"f{si}(e(E){m(A){7},m(B){6},m(C){5},m(D){0}})"}
+enum E {D, C=5, B, A};
 enum {EA=3} EnumAnon = EA;
 int enumType(enum E e) {return EnumAnon;}
