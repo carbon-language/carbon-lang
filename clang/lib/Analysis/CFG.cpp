@@ -534,9 +534,10 @@ private:
     }
   }
 
-  /// Find a equality comparison with an expression evaluating to a boolean and
-  /// a constant other than 0 and 1.
-  /// e.g. if (!x == 10)
+  /// Find an incorrect equality comparison. Either with an expression
+  /// evaluating to a boolean and a constant other than 0 and 1.
+  /// e.g. if (!x == 10) or a bitwise and/or operation that always evaluates to
+  /// true/false e.q. (x & 8) == 4.
   TryResult checkIncorrectEqualityOperator(const BinaryOperator *B) {
     const Expr *LHSExpr = B->getLHS()->IgnoreParens();
     const Expr *RHSExpr = B->getRHS()->IgnoreParens();
@@ -549,15 +550,41 @@ private:
       BoolExpr = LHSExpr;
     }
 
-    if (!IntLiteral || !BoolExpr->isKnownToHaveBooleanValue())
+    if (!IntLiteral)
       return TryResult();
 
-    llvm::APInt IntValue = IntLiteral->getValue();
-    if ((IntValue == 1) || (IntValue == 0)) {
-      return TryResult();
+    const BinaryOperator *BitOp = dyn_cast<BinaryOperator>(BoolExpr);
+    if (BitOp && (BitOp->getOpcode() == BO_And ||
+                  BitOp->getOpcode() == BO_Or)) {
+      const Expr *LHSExpr2 = BitOp->getLHS()->IgnoreParens();
+      const Expr *RHSExpr2 = BitOp->getRHS()->IgnoreParens();
+
+      const IntegerLiteral *IntLiteral2 = dyn_cast<IntegerLiteral>(LHSExpr2);
+
+      if (!IntLiteral2)
+        IntLiteral2 = dyn_cast<IntegerLiteral>(RHSExpr2);
+
+      if (!IntLiteral2)
+        return TryResult();
+
+      llvm::APInt L1 = IntLiteral->getValue();
+      llvm::APInt L2 = IntLiteral2->getValue();
+      if ((BitOp->getOpcode() == BO_And && (L2 & L1) != L1) ||
+          (BitOp->getOpcode() == BO_Or  && (L2 | L1) != L1)) {
+        if (BuildOpts.Observer)
+          BuildOpts.Observer->compareBitwiseEquality(B,
+                                                     B->getOpcode() != BO_EQ);
+        TryResult(B->getOpcode() != BO_EQ);
+      }
+    } else if (BoolExpr->isKnownToHaveBooleanValue()) {
+      llvm::APInt IntValue = IntLiteral->getValue();
+      if ((IntValue == 1) || (IntValue == 0)) {
+        return TryResult();
+      }
+      return TryResult(B->getOpcode() != BO_EQ);
     }
 
-    return TryResult(B->getOpcode() != BO_EQ);
+    return TryResult();
   }
 
   TryResult analyzeLogicOperatorCondition(BinaryOperatorKind Relation,

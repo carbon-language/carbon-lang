@@ -146,6 +146,15 @@ public:
     S.Diag(B->getExprLoc(), diag::warn_tautological_overlap_comparison)
         << DiagRange << isAlwaysTrue;
   }
+
+  void compareBitwiseEquality(const BinaryOperator *B, bool isAlwaysTrue) {
+    if (HasMacroID(B))
+      return;
+
+    SourceRange DiagRange = B->getSourceRange();
+    S.Diag(B->getExprLoc(), diag::warn_comparison_bitwise_always)
+        << DiagRange << isAlwaysTrue;
+  }
 };
 
 
