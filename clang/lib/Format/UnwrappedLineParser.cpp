@@ -763,6 +763,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     case tok::identifier: {
       StringRef Text = FormatTok->TokenText;
+      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function") {
+        tryToParseJSFunction();
+        break;
+      }
       nextToken();
       if (Line->Tokens.size() == 1) {
         if (FormatTok->Tok.is(tok::colon)) {

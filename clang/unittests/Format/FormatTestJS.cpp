@@ -31,7 +31,9 @@ protected:
     return Result;
   }
 
-  static std::string format(llvm::StringRef Code, const FormatStyle &Style) {
+  static std::string format(
+      llvm::StringRef Code,
+      const FormatStyle &Style = getGoogleStyle(FormatStyle::LK_JavaScript)) {
     return format(Code, 0, Code.size(), Style);
   }
 
@@ -116,6 +118,8 @@ TEST_F(FormatTestJS, Closures) {
                "    style: {direction: ''}\n"
                "  }\n"
                "};");
+  EXPECT_EQ("abc = xyz ? function() { return 1; } : function() { return -1; };",
+            format("abc=xyz?function(){return 1;}:function(){return -1;};"));
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {
