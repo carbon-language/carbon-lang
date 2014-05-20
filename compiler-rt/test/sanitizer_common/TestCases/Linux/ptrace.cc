@@ -1,4 +1,5 @@
 // RUN: %clangxx -O0 %s -o %t && %run %t
+// XFAIL: arm
 
 #include <assert.h>
 #include <signal.h>
