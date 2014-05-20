@@ -178,6 +178,9 @@ protected:
   ///             address generation (AG) time.
   bool LEAUsesAG;
 
+  /// SlowLEA - True if the LEA instruction with certain arguments is slow
+  bool SlowLEA;
+
   /// Processor has AVX-512 PreFetch Instructions
   bool HasPFI;
   
@@ -315,11 +318,13 @@ public:
   bool padShortFunctions() const { return PadShortFunctions; }
   bool callRegIndirect() const { return CallRegIndirect; }
   bool LEAusesAG() const { return LEAUsesAG; }
+  bool slowLEA() const { return SlowLEA; }
   bool hasCDI() const { return HasCDI; }
   bool hasPFI() const { return HasPFI; }
   bool hasERI() const { return HasERI; }
 
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
+  bool isSLM() const { return X86ProcFamily == IntelSLM; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 

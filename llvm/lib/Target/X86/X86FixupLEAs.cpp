@@ -57,6 +57,11 @@ namespace {
     void processInstruction(MachineBasicBlock::iterator& I,
                             MachineFunction::iterator MFI);
 
+    /// \brief Given a LEA instruction which is unprofitable
+    /// on Silvermont try to replace it with an equivalent ADD instruction
+    void processInstructionForSLM(MachineBasicBlock::iterator& I,
+                                  MachineFunction::iterator MFI);
+
     /// \brief Determine if an instruction references a machine register
     /// and, if so, whether it reads or writes the register.
     RegUsageState usesRegister(MachineOperand& p,
@@ -86,7 +91,7 @@ namespace {
   private:
     MachineFunction *MF;
     const TargetMachine *TM;
-    const TargetInstrInfo *TII; // Machine instruction info.
+    const X86InstrInfo *TII; // Machine instruction info.
 
   };
   char FixupLEAPass::ID = 0;
@@ -98,7 +103,7 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
   MachineInstr* MI = MBBI;
   MachineInstr* NewMI;
   switch (MI->getOpcode()) {
-  case X86::MOV32rr: 
+  case X86::MOV32rr:
   case X86::MOV64rr: {
     const MachineOperand& Src = MI->getOperand(1);
     const MachineOperand& Dest = MI->getOperand(0);
@@ -146,7 +151,7 @@ FunctionPass *llvm::createX86FixupLEAs() {
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
   TM = &MF->getTarget();
-  TII = TM->getInstrInfo();
+  TII = static_cast<const X86InstrInfo*>(TM->getInstrInfo());
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);
   // Process all basic blocks.
@@ -243,9 +248,9 @@ void FixupLEAPass::seekLEAFixup(MachineOperand& p,
     MachineInstr* NewMI = postRAConvertToLEA(MFI, MBI);
     if (NewMI) {
       ++NumLEAs;
-      DEBUG(dbgs() << "Candidate to replace:"; MBI->dump(););
+      DEBUG(dbgs() << "FixLEA: Candidate to replace:"; MBI->dump(););
       // now to replace with an equivalent LEA...
-      DEBUG(dbgs() << "Replaced by: "; NewMI->dump(););
+      DEBUG(dbgs() << "FixLEA: Replaced by: "; NewMI->dump(););
       MFI->erase(MBI);
       MachineBasicBlock::iterator J =
                              static_cast<MachineBasicBlock::iterator> (NewMI);
@@ -254,10 +259,80 @@ void FixupLEAPass::seekLEAFixup(MachineOperand& p,
   }
 }
 
+void FixupLEAPass::processInstructionForSLM(MachineBasicBlock::iterator &I,
+                                            MachineFunction::iterator MFI) {
+  MachineInstr *MI = I;
+  const int opcode = MI->getOpcode();
+  if (opcode != X86::LEA16r && opcode != X86::LEA32r && opcode != X86::LEA64r &&
+      opcode != X86::LEA64_32r)
+    return;
+  if (MI->getOperand(5).getReg() != 0 || !MI->getOperand(4).isImm() ||
+      !TII->isSafeToClobberEFLAGS(*MFI, I))
+    return;
+  const unsigned DstR = MI->getOperand(0).getReg();
+  const unsigned SrcR1 = MI->getOperand(1).getReg();
+  const unsigned SrcR2 = MI->getOperand(3).getReg();
+  if ((SrcR1 == 0 || SrcR1 != DstR) && (SrcR2 == 0 || SrcR2 != DstR))
+    return;
+  if (MI->getOperand(2).getImm() > 1)
+    return;
+  int addrr_opcode, addri_opcode;
+  switch (opcode) {
+  case X86::LEA16r:
+    addrr_opcode = X86::ADD16rr;
+    addri_opcode = X86::ADD16ri;
+    break;
+  case X86::LEA32r:
+    addrr_opcode = X86::ADD32rr;
+    addri_opcode = X86::ADD32ri;
+    break;
+  case X86::LEA64_32r:
+  case X86::LEA64r:
+    addrr_opcode = X86::ADD64rr;
+    addri_opcode = X86::ADD64ri32;
+    break;
+  default:
+    assert(false && "Unexpected LEA instruction");
+  }
+  DEBUG(dbgs() << "FixLEA: Candidate to replace:"; I->dump(););
+  DEBUG(dbgs() << "FixLEA: Replaced by: ";);
+  MachineInstr *NewMI = 0;
+  const MachineOperand &Dst = MI->getOperand(0);
+  // Make ADD instruction for two registers writing to LEA's destination
+  if (SrcR1 != 0 && SrcR2 != 0) {
+    const MachineOperand &Src1 = MI->getOperand(SrcR1 == DstR ? 1 : 3);
+    const MachineOperand &Src2 = MI->getOperand(SrcR1 == DstR ? 3 : 1);
+    NewMI = BuildMI(*MF, MI->getDebugLoc(), TII->get(addrr_opcode))
+                .addOperand(Dst)
+                .addOperand(Src1)
+                .addOperand(Src2);
+    MFI->insert(I, NewMI);
+    DEBUG(NewMI->dump(););
+  }
+  // Make ADD instruction for immediate
+  if (MI->getOperand(4).getImm() != 0) {
+    const MachineOperand &SrcR = MI->getOperand(SrcR1 == DstR ? 1 : 3);
+    NewMI = BuildMI(*MF, MI->getDebugLoc(), TII->get(addri_opcode))
+                .addOperand(Dst)
+                .addOperand(SrcR)
+                .addImm(MI->getOperand(4).getImm());
+    MFI->insert(I, NewMI);
+    DEBUG(NewMI->dump(););
+  }
+  if (NewMI) {
+    MFI->erase(I);
+    I = static_cast<MachineBasicBlock::iterator>(NewMI);
+  }
+}
+
 bool FixupLEAPass::processBasicBlock(MachineFunction &MF,
                                      MachineFunction::iterator MFI) {
 
-  for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I)
-    processInstruction(I, MFI);
+  for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I) {
+    if (TM->getSubtarget<X86Subtarget>().isSLM())
+      processInstructionForSLM(I, MFI);
+    else
+      processInstruction(I, MFI);
+  }
   return false;
 }

@@ -1728,12 +1728,8 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
   return true;
 }
 
-/// isSafeToClobberEFLAGS - Return true if it's safe insert an instruction that
-/// would clobber the EFLAGS condition register. Note the result may be
-/// conservative. If it cannot definitely determine the safety after visiting
-/// a few instructions in each direction it assumes it's not safe.
-static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I) {
+bool X86InstrInfo::isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator I) const {
   MachineBasicBlock::iterator E = MBB.end();
 
   // For compile time consideration, if we are not able to determine the

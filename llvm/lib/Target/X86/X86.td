@@ -166,6 +166,8 @@ def FeatureCallRegIndirect : SubtargetFeature<"call-reg-indirect",
                                      "Call register indirect">;
 def FeatureLEAUsesAG : SubtargetFeature<"lea-uses-ag", "LEAUsesAG", "true",
                                    "LEA instruction needs inputs at AG stage">;
+def FeatureSlowLEA : SubtargetFeature<"slow-lea", "SlowLEA", "true",
+                                   "LEA instruction with certain arguments is slow">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -226,6 +228,7 @@ def : ProcessorModel<"slm",  SLMModel, [ProcIntelSLM,
                                FeaturePCLMUL, FeatureAES,
                                FeatureCallRegIndirect,
                                FeaturePRFCHW,
+                               FeatureSlowLEA,
                                FeatureSlowBTMem, FeatureFastUAMem]>;
 // "Arrandale" along with corei3 and corei5
 def : ProcessorModel<"corei7", SandyBridgeModel,

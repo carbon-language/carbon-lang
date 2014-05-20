@@ -226,7 +226,8 @@ bool X86PassConfig::addPreEmitPass() {
     ShouldPrint = true;
   }
   if (getOptLevel() != CodeGenOpt::None &&
-      getX86Subtarget().LEAusesAG()){
+      (getX86Subtarget().LEAusesAG() ||
+       getX86Subtarget().slowLEA())){
     addPass(createX86FixupLEAs());
     ShouldPrint = true;
   }
