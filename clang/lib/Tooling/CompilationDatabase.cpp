@@ -52,7 +52,7 @@ CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
       ErrorStream << It->getName() << ": " << DatabaseErrorMessage << "\n";
   }
   ErrorMessage = ErrorStream.str();
-  return NULL;
+  return nullptr;
 }
 
 static CompilationDatabase *
@@ -76,7 +76,7 @@ findCompilationDatabaseFromDirectory(StringRef Directory,
     Directory = llvm::sys::path::parent_path(Directory);
   }
   ErrorMessage = ErrorStream.str();
-  return NULL;
+  return nullptr;
 }
 
 CompilationDatabase *
@@ -151,7 +151,7 @@ private:
 // options.
 class UnusedInputDiagConsumer : public DiagnosticConsumer {
 public:
-  UnusedInputDiagConsumer() : Other(0) {}
+  UnusedInputDiagConsumer() : Other(nullptr) {}
 
   // Useful for debugging, chain diagnostics to another consumer after
   // recording for our own purposes.
@@ -290,13 +290,13 @@ FixedCompilationDatabase::loadFromCommandLine(int &Argc,
                                               Twine Directory) {
   const char **DoubleDash = std::find(Argv, Argv + Argc, StringRef("--"));
   if (DoubleDash == Argv + Argc)
-    return NULL;
+    return nullptr;
   std::vector<const char *> CommandLine(DoubleDash + 1, Argv + Argc);
   Argc = DoubleDash - Argv;
 
   std::vector<std::string> StrippedArgs;
   if (!stripPositionalArgs(CommandLine, StrippedArgs))
-    return 0;
+    return nullptr;
   return new FixedCompilationDatabase(Directory, StrippedArgs);
 }
 

@@ -125,7 +125,7 @@ class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
     std::unique_ptr<CompilationDatabase> Database(
         JSONCompilationDatabase::loadFromFile(JSONDatabasePath, ErrorMessage));
     if (!Database)
-      return NULL;
+      return nullptr;
     return Database.release();
   }
 };
@@ -147,14 +147,14 @@ JSONCompilationDatabase::loadFromFile(StringRef FilePath,
   std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer;
   llvm::error_code Result =
     llvm::MemoryBuffer::getFile(FilePath, DatabaseBuffer);
-  if (Result != 0) {
+  if (Result != nullptr) {
     ErrorMessage = "Error while opening JSON database: " + Result.message();
-    return NULL;
+    return nullptr;
   }
   std::unique_ptr<JSONCompilationDatabase> Database(
       new JSONCompilationDatabase(DatabaseBuffer.release()));
   if (!Database->parse(ErrorMessage))
-    return NULL;
+    return nullptr;
   return Database.release();
 }
 
@@ -166,7 +166,7 @@ JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
   std::unique_ptr<JSONCompilationDatabase> Database(
       new JSONCompilationDatabase(DatabaseBuffer.release()));
   if (!Database->parse(ErrorMessage))
-    return NULL;
+    return nullptr;
   return Database.release();
 }
 
@@ -235,12 +235,12 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
     return false;
   }
   llvm::yaml::Node *Root = I->getRoot();
-  if (Root == NULL) {
+  if (!Root) {
     ErrorMessage = "Error while parsing YAML.";
     return false;
   }
   llvm::yaml::SequenceNode *Array = dyn_cast<llvm::yaml::SequenceNode>(Root);
-  if (Array == NULL) {
+  if (!Array) {
     ErrorMessage = "Expected array.";
     return false;
   }
@@ -248,30 +248,30 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
                                           AE = Array->end();
        AI != AE; ++AI) {
     llvm::yaml::MappingNode *Object = dyn_cast<llvm::yaml::MappingNode>(&*AI);
-    if (Object == NULL) {
+    if (!Object) {
       ErrorMessage = "Expected object.";
       return false;
     }
-    llvm::yaml::ScalarNode *Directory = NULL;
-    llvm::yaml::ScalarNode *Command = NULL;
-    llvm::yaml::ScalarNode *File = NULL;
+    llvm::yaml::ScalarNode *Directory = nullptr;
+    llvm::yaml::ScalarNode *Command = nullptr;
+    llvm::yaml::ScalarNode *File = nullptr;
     for (llvm::yaml::MappingNode::iterator KVI = Object->begin(),
                                            KVE = Object->end();
          KVI != KVE; ++KVI) {
       llvm::yaml::Node *Value = (*KVI).getValue();
-      if (Value == NULL) {
+      if (!Value) {
         ErrorMessage = "Expected value.";
         return false;
       }
       llvm::yaml::ScalarNode *ValueString =
           dyn_cast<llvm::yaml::ScalarNode>(Value);
-      if (ValueString == NULL) {
+      if (!ValueString) {
         ErrorMessage = "Expected string as value.";
         return false;
       }
       llvm::yaml::ScalarNode *KeyString =
           dyn_cast<llvm::yaml::ScalarNode>((*KVI).getKey());
-      if (KeyString == NULL) {
+      if (!KeyString) {
         ErrorMessage = "Expected strings as key.";
         return false;
       }

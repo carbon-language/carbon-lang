@@ -53,7 +53,7 @@ bool Replacement::isApplicable() const {
 bool Replacement::apply(Rewriter &Rewrite) const {
   SourceManager &SM = Rewrite.getSourceMgr();
   const FileEntry *Entry = SM.getFileManager().getFile(FilePath);
-  if (Entry == NULL)
+  if (!Entry)
     return false;
   FileID ID;
   // FIXME: Use SM.translateFile directly.
@@ -106,7 +106,7 @@ void Replacement::setFromSourceLocation(const SourceManager &Sources,
   const std::pair<FileID, unsigned> DecomposedLocation =
       Sources.getDecomposedLoc(Start);
   const FileEntry *Entry = Sources.getFileEntryForID(DecomposedLocation.first);
-  if (Entry != NULL) {
+  if (Entry) {
     // Make FilePath absolute so replacements can be applied correctly when
     // relative paths for files are used.
     llvm::SmallString<256> FilePath(Entry->getName());
