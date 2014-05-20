@@ -465,7 +465,7 @@ class MultiResponseGdbRemoteEntry(object):
 
         # Append the suffix as needed.
         if self._append_iteration_suffix:
-            payload += "%d" % self._iteration
+            payload += "%x" % self._iteration
 
         # Keep track of the iteration.
         self._iteration += 1
