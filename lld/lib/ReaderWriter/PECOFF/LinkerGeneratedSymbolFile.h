@@ -219,6 +219,7 @@ private:
   // Files are read lazily, so that it has no runtime overhead if
   // there's no dllexported stdcall functions.
   void readAllSymbols() const {
+    std::lock_guard<std::mutex> lock(_mutex);
     for (File *file : _queue) {
       if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
         for (const std::string &sym : archive->getDefinedSymbols())
