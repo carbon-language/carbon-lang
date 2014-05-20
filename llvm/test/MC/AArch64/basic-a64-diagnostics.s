@@ -1,5 +1,7 @@
 // RUN: not llvm-mc -triple aarch64-none-linux-gnu < %s 2> %t
-// RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
+// RUN: FileCheck --check-prefix=CHECK-ERROR --check-prefix=CHECK-ERROR-AARCH64 < %t %s
+// RUN: not llvm-mc -triple arm64-none-linux-gnu < %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ERROR --check-prefix=CHECK-ERROR-ARM64 < %t %s
 
 //------------------------------------------------------------------------------
 // Add/sub (extended register)
@@ -83,9 +85,9 @@
 // CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w4, w5, #-1
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
-// CHECK-ERROR-NEXT:         add w5, w6, #0x1000
-// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-AARCH64-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
+// CHECK-ERROR-AARCH64-NEXT:         add w5, w6, #0x1000
+// CHECK-ERROR-AARCH64-NEXT:                     ^
 // CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w4, w5, #-1, lsl #12
 // CHECK-ERROR-NEXT:                     ^
@@ -141,9 +143,9 @@
 
 // Out of range immediate
         adds w0, w5, #0x10000
-// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
-// CHECK-ERROR-NEXT:         adds w0, w5, #0x10000
-// CHECK-ERROR-NEXT:                      ^
+// CHECK-ERROR-AARCH64: error: expected compatible register, symbol or integer in range [0, 4095]
+// CHECK-ERROR-AARCH64-NEXT:         adds w0, w5, #0x10000
+// CHECK-ERROR-AARCH64-NEXT:                      ^
 
 // Wn|WSP should be in second place
         adds w4, wzr, #0x123
@@ -750,10 +752,10 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfm w3, wsp, #1, #9
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x9, x5, #-1, #0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x9, x5, #0, #-1
 // CHECK-ERROR-NEXT:                          ^
 
@@ -761,16 +763,16 @@
         sbfm w7, w11, #19, #32
         sbfm x29, x30, #64, #0
         sbfm x10, x20, #63, #64
-// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
@@ -778,16 +780,16 @@
         ubfm w7, w11, #19, #32
         ubfm x29, x30, #64, #0
         ubfm x10, x20, #63, #64
-// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ubfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ubfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
@@ -795,31 +797,31 @@
         bfm w7, w11, #19, #32
         bfm x29, x30, #64, #0
         bfm x10, x20, #63, #64
-// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         bfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         bfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
         sxtb x3, x2
         sxth xzr, xzr
         sxtw x3, x5
-// CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sxtb x3, x2
-// CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sxth xzr, xzr
-// CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sxtw x3, x5
-// CHECK-ERROR-NEXT:                  ^
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT:         sxtb x3, x2
+// CHECK-ERROR-AARCH64-NEXT:                  ^
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT:         sxth xzr, xzr
+// CHECK-ERROR-AARCH64-NEXT:                   ^
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT:         sxtw x3, x5
+// CHECK-ERROR-AARCH64-NEXT:                  ^
 
         uxtb x3, x12
         uxth x5, x9
@@ -832,9 +834,9 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         uxth x5, x9
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid instruction
-// CHECK-ERROR-NEXT:         uxtw x3, x5
-// CHECK-ERROR-NEXT:         ^
+// CHECK-ERROR-AARCH64-NEXT: error: invalid instruction
+// CHECK-ERROR-AARCH64-NEXT:         uxtw x3, x5
+// CHECK-ERROR-AARCH64-NEXT:         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         uxtb x2, sp
 // CHECK-ERROR-NEXT:                  ^
@@ -853,13 +855,13 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         asr sp, x2, #1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         asr x25, x26, #-1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         asr x25, x26, #64
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         asr w9, w8, #32
 // CHECK-ERROR-NEXT:                     ^
 
@@ -869,18 +871,19 @@
         sbfiz w11, w12, #32, #0
         sbfiz w9, w10, #10, #23
         sbfiz x3, x5, #12, #53
-        sbfiz sp, x3, #5, #6
-        sbfiz w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        sbfiz sp, x3, #7, #6
+        sbfiz w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         sbfiz w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfiz wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfiz w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfiz w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -890,10 +893,10 @@
 // CHECK-ERROR-NEXT:         sbfiz x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                            ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sbfiz sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         sbfiz sp, x3, #7, #6
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sbfiz w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         sbfiz w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                   ^
 
         sbfx w1, w2, #0, #0
@@ -902,18 +905,19 @@
         sbfx w11, w12, #32, #0
         sbfx w9, w10, #10, #23
         sbfx x3, x5, #12, #53
-        sbfx sp, x3, #5, #6
-        sbfx w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        sbfx sp, x3, #7, #6
+        sbfx w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         sbfx w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfx wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfx w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfx w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -923,10 +927,10 @@
 // CHECK-ERROR-NEXT:         sbfx x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sbfx sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         sbfx sp, x3, #7, #6
 // CHECK-ERROR-NEXT:              ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         sbfx w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         sbfx w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                  ^
 
         bfi w1, w2, #0, #0
@@ -935,18 +939,19 @@
         bfi w11, w12, #32, #0
         bfi w9, w10, #10, #23
         bfi x3, x5, #12, #53
-        bfi sp, x3, #5, #6
-        bfi w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        bfi sp, x3, #7, #6
+        bfi w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         bfi w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         bfi wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfi w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfi w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -956,10 +961,10 @@
 // CHECK-ERROR-NEXT:         bfi x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         bfi sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         bfi sp, x3, #7, #6
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         bfi w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         bfi w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                 ^
 
         bfxil w1, w2, #0, #0
@@ -968,18 +973,19 @@
         bfxil w11, w12, #32, #0
         bfxil w9, w10, #10, #23
         bfxil x3, x5, #12, #53
-        bfxil sp, x3, #5, #6
-        bfxil w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        bfxil sp, x3, #7, #6
+        bfxil w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         bfxil w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         bfxil wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfxil w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfxil w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -989,10 +995,10 @@
 // CHECK-ERROR-NEXT:         bfxil x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                            ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         bfxil sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         bfxil sp, x3, #7, #6
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         bfxil w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         bfxil w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                   ^
 
         ubfiz w1, w2, #0, #0
@@ -1001,18 +1007,19 @@
         ubfiz w11, w12, #32, #0
         ubfiz w9, w10, #10, #23
         ubfiz x3, x5, #12, #53
-        ubfiz sp, x3, #5, #6
-        ubfiz w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        ubfiz sp, x3, #7, #6
+        ubfiz w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         ubfiz w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ubfiz wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfiz w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfiz w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -1022,10 +1029,10 @@
 // CHECK-ERROR-NEXT:         ubfiz x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                            ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         ubfiz sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         ubfiz sp, x3, #7, #6
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         ubfiz w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         ubfiz w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                   ^
 
         ubfx w1, w2, #0, #0
@@ -1034,18 +1041,19 @@
         ubfx w11, w12, #32, #0
         ubfx w9, w10, #10, #23
         ubfx x3, x5, #12, #53
-        ubfx sp, x3, #5, #6
-        ubfx w3, wsp, #7, #8
-// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
+        ubfx sp, x3, #7, #6
+        ubfx w3, wsp, #10, #8
+// CHECK-ERROR-AARCH64: error: expected integer in range [<lsb>, 31]
+// CHECK-ERROR-ARM64: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:         ubfx w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ubfx wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfx w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfx w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -1055,10 +1063,10 @@
 // CHECK-ERROR-NEXT:         ubfx x3, x5, #12, #53
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         ubfx sp, x3, #5, #6
+// CHECK-ERROR-NEXT:         ubfx sp, x3, #7, #6
 // CHECK-ERROR-NEXT:              ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         ubfx w3, wsp, #7, #8
+// CHECK-ERROR-NEXT:         ubfx w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                  ^
 
 //------------------------------------------------------------------------------
@@ -1125,16 +1133,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp wsp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1146,16 +1154,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp sp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1167,16 +1175,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn wsp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1188,16 +1196,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn sp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1212,13 +1220,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp wsp, w4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w3, wsp, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w19, w5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w20, w7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1229,13 +1237,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp sp, x4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x25, sp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x19, x5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x20, x7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1246,13 +1254,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn wsp, w4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w25, wsp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w19, w5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w20, w7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1263,13 +1271,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn sp, x4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x25, sp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x19, x5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x20, x7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1418,16 +1426,16 @@
         hlt #65536
         dcps4 #43
         dcps4
-// CHECK-ERROR: error: expected integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         svc #-1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         hlt #65536
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid instruction
+// CHECK-ERROR-NEXT: error: {{invalid instruction|unrecognized instruction mnemonic}}
 // CHECK-ERROR-NEXT:         dcps4 #43
 // CHECK-ERROR-NEXT:         ^
-// CHECK-ERROR-NEXT: error: invalid instruction
+// CHECK-ERROR-NEXT: error: {{invalid instruction|unrecognized instruction mnemonic}}
 // CHECK-ERROR-NEXT:         dcps4
 // CHECK-ERROR-NEXT:         ^
 
@@ -1437,28 +1445,28 @@
 
         extr w2, w20, w30, #-1
         extr w9, w19, w20, #32
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         extr w2, w20, w30, #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         extr w9, w19, w20, #32
 // CHECK-ERROR-NEXT:                            ^
 
         extr x10, x15, x20, #-1
         extr x20, x25, x30, #64
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         extr x10, x15, x20, #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         extr x20, x25, x30, #64
 // CHECK-ERROR-NEXT:                             ^
 
         ror w9, w10, #32
         ror x10, x11, #64
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ror w9, w10, #32
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ror x10, x11, #64
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1467,7 +1475,8 @@
 //------------------------------------------------------------------------------
 
         fcmp s3, d2
-// CHECK-ERROR: error: expected floating-point constant #0.0
+// CHECK-ERROR-AARCH64: error: expected floating-point constant #0.0
+// CHECK-ERROR-ARM64: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         fcmp s3, d2
 // CHECK-ERROR-NEXT:                  ^
 
@@ -1494,37 +1503,37 @@
 
         fccmp s19, s5, #-1, lt
         fccmp s20, s7, #16, hs
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp s19, s5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp s20, s7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmp d19, d5, #-1, lt
         fccmp d20, d7, #16, hs
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp d19, d5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp d20, d7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmpe s19, s5, #-1, lt
         fccmpe s20, s7, #16, hs
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe s19, s5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe s20, s7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmpe d19, d5, #-1, lt
         fccmpe d20, d7, #16, hs
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe d19, d5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe d20, d7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1604,10 +1613,10 @@
         fcvtzs w13, s31, #0
         fcvtzs w19, s20, #33
         fcvtzs wsp, s19, #14
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzs w13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzs w19, s20, #33
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1617,10 +1626,10 @@
         fcvtzs x13, s31, #0
         fcvtzs x19, s20, #65
         fcvtzs sp, s19, #14
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzs x13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzs x19, s20, #65
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1630,10 +1639,10 @@
         fcvtzu w13, s31, #0
         fcvtzu w19, s20, #33
         fcvtzu wsp, s19, #14
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzu w13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzu w19, s20, #33
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1643,10 +1652,10 @@
         fcvtzu x13, s31, #0
         fcvtzu x19, s20, #65
         fcvtzu sp, s19, #14
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzu x13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzu x19, s20, #65
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1730,9 +1739,9 @@
 
         ;; No particular reason, but a striking omission
         fmov d0, #0.0
-// CHECK-ERROR: error: expected compatible register or floating-point constant
-// CHECK-ERROR-NEXT:           fmov d0, #0.0
-// CHECK-ERROR-NEXT:                    ^
+// CHECK-ERROR-AARCH64: error: expected compatible register or floating-point constant
+// CHECK-ERROR-AARCH64-NEXT:           fmov d0, #0.0
+// CHECK-ERROR-AARCH64-NEXT:                    ^
 
 //------------------------------------------------------------------------------
 // Floating-point <-> integer conversion
@@ -1746,10 +1755,12 @@
 // CHECK-ERROR: error: expected lane specifier '[1]'
 // CHECK-ERROR-NEXT:         fmov x3, v0.d[0]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: lane number incompatible with layout
+// CHECK-ERROR-AARCH64-NEXT: error: lane number incompatible with layout
+// CHECK-ERROR-ARM64-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT: fmov v29.1d[1], x2
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: lane number incompatible with layout
+// CHECK-ERROR-AARCH64-NEXT: error: lane number incompatible with layout
+// CHECK-ERROR-ARM64-NEXT: error: expected lane specifier '[1]'
 // CHECK-ERROR-NEXT: fmov x7, v0.d[2]
 // CHECK-ERROR-NEXT:               ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1789,10 +1800,11 @@
 // Load/store exclusive
 //------------------------------------------------------------------------------
 
-       stxrb w2, x3, [x4, #20]
+       stxrb w2, w3, [x4, #20]
        stlxrh w10, w11, [w2]
-// CHECK-ERROR: error: expected '#0'
-// CHECK-ERROR-NEXT:         stxrb w2, x3, [x4, #20]
+// CHECK-ERROR-AARCH64: error: expected '#0'
+// CHECK-ERROR-ARM64: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:         stxrb w2, w3, [x4, #20]
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         stlxrh w10, w11, [w2]
@@ -1831,16 +1843,16 @@
         sturh w17, [x1, #256]
         ldursw x20, [x1, #256]
         ldur x12, [sp, #256]
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:        ldurb w2, [sp, #256]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         sturh w17, [x1, #256]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldursw x20, [x1, #256]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldur x12, [sp, #256]
 // CHECK-ERROR-NEXT:                   ^
 
@@ -1849,19 +1861,19 @@
         ldursb x9, [sp, #-257]
         ldur w2, [x30, #-257]
         stur q9, [x20, #-257]
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur h2, [x2, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur b2, [x2, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldursb x9, [sp, #-257]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldur w2, [x30, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur q9, [x20, #-257]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -1875,12 +1887,12 @@
 //------------------------------------------------------------------------------
         ldr x3, [x4, #25], #0
         ldr x4, [x9, #0], #4
-// CHECK-ERROR: error: expected symbolic reference or integer in range [0, 32760]
+// CHECK-ERROR: error: {{expected symbolic reference or integer|index must be a multiple of 8}} in range [0, 32760]
 // CHECK-ERROR-NEXT:         ldr x3, [x4, #25], #0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         ldr x4, [x9, #0], #4
-// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT:         ldr x4, [x9, #0], #4
+// CHECK-ERROR-AARCH64-NEXT:                           ^
 
         strb w1, [x19], #256
         strb w9, [sp], #-257
@@ -1888,22 +1900,22 @@
         strh w9, [sp], #-257
         str w1, [x19], #256
         str w9, [sp], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w1, [x19], #256
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w9, [sp], #-257
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1913,22 +1925,22 @@
         ldrh w9, [sp], #-257
         ldr w1, [x19], #256
         ldr w9, [sp], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w1, [x19], #256
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w9, [sp], #-257
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1938,22 +1950,22 @@
         ldrsh x22, [x13], #-257
         ldrsw x2, [x3], #256
         ldrsw x22, [x13], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
 
@@ -1961,16 +1973,16 @@
         ldrsb w22, [x13], #-257
         ldrsh w2, [x3], #256
         ldrsh w22, [x13], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
 
@@ -1984,34 +1996,34 @@
         str d3, [x13], #-257
         str q3, [x3], #256
         str q3, [x13], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str q3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str q3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
 
@@ -2025,34 +2037,34 @@
         ldr d3, [x13], #-257
         ldr q3, [x3], #256
         ldr q3, [x13], #-257
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
 
@@ -2071,22 +2083,25 @@
         strh w9, [sp, #-257]!
         str w1, [x19, #256]!
         str w9, [sp, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         strb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         strh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2096,22 +2111,25 @@
         ldrh w9, [sp, #-257]!
         ldr w1, [x19, #256]!
         ldr w9, [sp, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2121,22 +2139,25 @@
         ldrsh x22, [x13, #-257]!
         ldrsw x2, [x3, #256]!
         ldrsw x22, [x13, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsb x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsh x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsw x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 
@@ -2144,16 +2165,18 @@
         ldrsb w22, [x13, #-257]!
         ldrsh w2, [x3, #256]!
         ldrsh w22, [x13, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsb w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsh w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 
@@ -2165,28 +2188,32 @@
         str s3, [x13, #-257]!
         str d3, [x3, #256]!
         str d3, [x13, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2198,28 +2225,32 @@
         ldr s3, [x13, #-257]!
         ldr d3, [x3, #256]!
         ldr d3, [x13, #-257]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2231,16 +2262,20 @@
         sttrh w17, [x1, #256]
         ldtrsw x20, [x1, #256]
         ldtr x12, [sp, #256]
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64: error: expected integer in range [-256, 255]
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:        ldtrb w2, [sp, #256]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         sttrh w17, [x1, #256]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldtrsw x20, [x1, #256]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldtr x12, [sp, #256]
 // CHECK-ERROR-NEXT:                   ^
 
@@ -2255,10 +2290,12 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sttr b2, [x2, #-257]
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldtrsb x9, [sp, #-257]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldtr w2, [x30, #-257]
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2276,19 +2313,24 @@
         ldr w0, [x4, #16384]
         ldrh w2, [x21, #8192]
         ldrb w3, [x12, #4096]
-// CHECK-ERROR: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr q0, [x11, #65536]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr x0, [sp, #32768]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr w0, [x4, #16384]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrh w2, [x21, #8192]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrb w3, [x12, #4096]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2296,15 +2338,15 @@
         ldr w0, [x0, #2]
         ldrsh w2, [x0, #123]
         str q0, [x0, #8]
-// CHECK-ERROR: error: too few operands for instruction
-// CHECK-ERROR-NEXT:         ldr w0, [x0, #2]
-// CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: too few operands for instruction
-// CHECK-ERROR-NEXT:         ldrsh w2, [x0, #123]
-// CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: too few operands for instruction
-// CHECK-ERROR-NEXT:         str q0, [x0, #8]
-// CHECK-ERROR-NEXT:                 ^
+// CHECK-ERROR-AARCH64: error: too few operands for instruction
+// CHECK-ERROR-AARCH64-NEXT:         ldr w0, [x0, #2]
+// CHECK-ERROR-AARCH64-NEXT:                 ^
+// CHECK-ERROR-AARCH64-NEXT: error: too few operands for instruction
+// CHECK-ERROR-AARCH64-NEXT:         ldrsh w2, [x0, #123]
+// CHECK-ERROR-AARCH64-NEXT:                   ^
+// CHECK-ERROR-AARCH64-NEXT: error: too few operands for instruction
+// CHECK-ERROR-AARCH64-NEXT:         str q0, [x0, #8]
+// CHECK-ERROR-AARCH64-NEXT:                 ^
 
 //// 32-bit addresses
         ldr w0, [w20]
@@ -2324,13 +2366,14 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT: strb w0, [wsp]
 // CHECK-ERROR-NEXT:           ^
-// CHECK-ERROR: error: invalid operand for instruction
-// CHECK-ERROR-NEXT:         strh w31, [x23, #1]
-// CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: too few operands for instruction
-// CHECK-ERROR-NEXT:         str x5, [x22, #12]
-// CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
+// CHECK-ERROR-AARCH64: error: invalid operand for instruction
+// CHECK-ERROR-AARCH64-NEXT:         strh w31, [x23, #1]
+// CHECK-ERROR-AARCH64-NEXT:              ^
+// CHECK-ERROR-AARCH64-NEXT: error: too few operands for instruction
+// CHECK-ERROR-AARCH64-NEXT:         str x5, [x22, #12]
+// CHECK-ERROR-AARCH64-NEXT:                 ^
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str w7, [x12, #16384]
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2339,16 +2382,19 @@
         prfm #32, [sp, #8]
         prfm pldl1strm, [w3, #8]
         prfm wibble, [sp]
-// CHECK-ERROR: error: Invalid immediate for instruction
+// CHECK-ERROR-AARCH64: error: Invalid immediate for instruction
+// CHECK-ERROR-ARM64: error: prefetch operand out of range, [0,31] expected
 // CHECK-ERROR-NEXT:        prfm #-1, [sp]
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-AARCH64-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-ARM64-NEXT: error: prefetch operand out of range, [0,31] expected
 // CHECK-ERROR-NEXT:        prfm #32, [sp, #8]
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        prfm pldl1strm, [w3, #8]
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: operand specifier not recognised
+// CHECK-ERROR-AARCH64-NEXT: error: operand specifier not recognised
+// CHECK-ERROR-ARM64-NEXT: error: pre-fetch hint expected
 // CHECK-ERROR-NEXT:        prfm wibble, [sp]
 // CHECK-ERROR-NEXT:             ^
 
@@ -2365,76 +2411,92 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ldr w3, [xzr, x3]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected #imm after shift specifier
+// CHECK-ERROR-AARCH64-NEXT: error: expected #imm after shift specifier
+// CHECK-ERROR-ARM64-NEXT: error: LSL extend requires immediate operand
 // CHECK-ERROR-NEXT:         ldr w4, [x0, x4, lsl]
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
-// CHECK-ERROR-NEXT:         ldr w9, [x5, x5, uxtw]
-// CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
-// CHECK-ERROR-NEXT:         ldr w10, [x6, x9, sxtw #2]
-// CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT:         ldr w9, [x5, x5, uxtw]
+// CHECK-ERROR-AARCH64-NEXT:                          ^
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT:         ldr w10, [x6, x9, sxtw #2]
+// CHECK-ERROR-AARCH64-NEXT:                           ^
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-ARM64-NEXT: error: 32-bit general purpose offset register requires sxtw or uxtw extend
 // CHECK-ERROR-NEXT:         ldr w11, [x7, w2, lsl #2]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-ARM64-NEXT: error: 32-bit general purpose offset register requires sxtw or uxtw extend
 // CHECK-ERROR-NEXT:         ldr w12, [x8, w1, sxtx]
 // CHECK-ERROR-NEXT:                           ^
 
         ldrsb w9, [x4, x2, lsl #-1]
         strb w9, [x4, x2, lsl #1]
-// CHECK-ERROR-NEXT: error: expected integer shift amount
+// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         ldrsb w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         strb w9, [x4, x2, lsl #1]
 // CHECK-ERROR-NEXT:                  ^
 
         ldrsh w9, [x4, x2, lsl #-1]
         ldr h13, [x4, w2, uxtw #2]
-// CHECK-ERROR-NEXT: error: expected integer shift amount
+// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         ldrsh w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr h13, [x4, w2, uxtw #2]
 // CHECK-ERROR-NEXT:                           ^
 
         str w9, [x5, w9, sxtw #-1]
         str s3, [sp, w9, uxtw #1]
         ldrsw x9, [x15, x4, sxtx #3]
-// CHECK-ERROR-NEXT: error: expected integer shift amount
+// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         str w9, [x5, w9, sxtw #-1]
 // CHECK-ERROR-NEXT:                                ^
-// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         str s3, [sp, w9, uxtw #1]
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldrsw x9, [x15, x4, sxtx #3]
 // CHECK-ERROR-NEXT:                             ^
 
         str xzr, [x5, x9, sxtx #-1]
         prfm pldl3keep, [sp, x20, lsl #2]
         ldr d3, [x20, wzr, uxtw #4]
-// CHECK-ERROR-NEXT: error: expected integer shift amount
+// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         str xzr, [x5, x9, sxtx #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #3
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #3
+// CHECK-ERROR-ARM64-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         prfm pldl3keep, [sp, x20, lsl #2]
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr d3, [x20, wzr, uxtw #4]
 // CHECK-ERROR-NEXT:                 ^
 
         ldr q5, [sp, x2, lsl #-1]
         ldr q10, [x20, w4, uxtw #2]
         str q21, [x20, w4, uxtw #5]
-// CHECK-ERROR-NEXT: error: expected integer shift amount
+// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         ldr q5, [sp, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
+// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
 // CHECK-ERROR-NEXT:         ldr q10, [x20, w4, uxtw #2]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
+// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
+// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
 // CHECK-ERROR-NEXT:         str q21, [x20, w4, uxtw #5]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2446,16 +2508,16 @@
         stp w9, w10, [x5, #256]
         ldp w11, w12, [x9, #-260]
         stp wsp, w9, [sp]
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4, #1]
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3, #253]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5, #256]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9, #-260]
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2465,26 +2527,26 @@
         ldpsw x9, x2, [sp, #2]
         ldpsw x1, x2, [x10, #256]
         ldpsw x3, x4, [x11, #-260]
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp, #2]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10, #256]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11, #-260]
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp, #4]
         ldp x5, x6, [x9, #512]
         stp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2500,13 +2562,13 @@
         stp s3, s5, [sp, #-2]
         ldp s6, s26, [x4, #-260]
         stp s13, s19, [x5, #256]
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp, #-2]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4, #-260]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5, #256]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2516,10 +2578,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2530,13 +2592,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2549,16 +2611,16 @@
         stp w9, w10, [x5], #256
         ldp w11, w12, [x9], #-260
         stp wsp, w9, [sp], #0
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4], #1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3], #253
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5], #256
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9], #-260
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2568,26 +2630,26 @@
         ldpsw x9, x2, [sp], #2
         ldpsw x1, x2, [x10], #256
         ldpsw x3, x4, [x11], #-260
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp], #2
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11], #-260
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp], #4
         ldp x5, x6, [x9], #512
         stp x7, x8, [x10], #-520
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp], #4
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9], #512
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10], #-520
 // CHECK-ERROR-NEXT:                            ^
 
@@ -2603,13 +2665,13 @@
         stp s3, s5, [sp], #-2
         ldp s6, s26, [x4], #-260
         stp s13, s19, [x5], #256
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp], #-2
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4], #-260
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5], #256
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2619,10 +2681,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr], #0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0], #512
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0], #-520
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2633,13 +2695,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp], #0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp], #8
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5], #1024
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23], #-1040
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2652,16 +2717,16 @@
         stp w9, w10, [x5, #256]!
         ldp w11, w12, [x9, #-260]!
         stp wsp, w9, [sp, #0]!
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4, #1]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3, #253]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5, #256]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9, #-260]!
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2671,26 +2736,26 @@
         ldpsw x9, x2, [sp, #2]!
         ldpsw x1, x2, [x10, #256]!
         ldpsw x3, x4, [x11, #-260]!
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp, #2]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10, #256]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11, #-260]!
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp, #4]!
         ldp x5, x6, [x9, #512]!
         stp x7, x8, [x10, #-520]!
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2706,13 +2771,13 @@
         stp s3, s5, [sp, #-2]!
         ldp s6, s26, [x4, #-260]!
         stp s13, s19, [x5, #256]!
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp, #-2]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4, #-260]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5, #256]!
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2722,10 +2787,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr, #0]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2736,13 +2801,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp, #0]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]!
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2754,16 +2819,16 @@
         stnp w9, w10, [x5, #256]
         ldnp w11, w12, [x9, #-260]
         stnp wsp, w9, [sp]
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp w3, w2, [x4, #1]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp w1, w2, [x3, #253]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp w9, w10, [x5, #256]
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp w11, w12, [x9, #-260]
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2773,13 +2838,13 @@
         ldnp x2, x5, [sp, #4]
         ldnp x5, x6, [x9, #512]
         stnp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp x2, x5, [sp, #4]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp x5, x6, [x9, #512]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stnp x7, x8, [x10, #-520]
 // CHECK-ERROR-NEXT:                            ^
 
@@ -2795,13 +2860,13 @@
         stnp s3, s5, [sp, #-2]
         ldnp s6, s26, [x4, #-260]
         stnp s13, s19, [x5, #256]
-// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp s3, s5, [sp, #-2]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp s6, s26, [x4, #-260]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp s13, s19, [x5, #256]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2811,10 +2876,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stnp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2825,13 +2890,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldnp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stnp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldnp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2974,28 +3039,32 @@
         movz x3, #-1
         movk w3, #1, lsl #32
         movn x2, #12, lsl #64
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w3, #65536, lsl #0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w4, #65536
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-ARM64-NEXT: error: expected 'lsl' with optional integer 0 or 16
 // CHECK-ERROR-NEXT:         movn w1, #2, lsl #1
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: only 'lsl #+N' valid after immediate
+// CHECK-ERROR-AARCH64-NEXT: error: only 'lsl #+N' valid after immediate
+// CHECK-ERROR-ARM64-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         movk w3, #0, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn w2, #-1, lsl #0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #-1
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-ARM64-NEXT: error: expected 'lsl' with optional integer 0 or 16
 // CHECK-ERROR-NEXT:         movk w3, #1, lsl #32
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-ARM64-NEXT: error: expected 'lsl' with optional integer 0, 16, 32 or 48
 // CHECK-ERROR-NEXT:         movn x2, #12, lsl #64
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3005,22 +3074,22 @@
         movk w3, #:abs_g0:sym
         movz x3, #:abs_g0_nc:sym
         movn x4, #:abs_g0_nc:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x12, #:abs_g0:sym, lsl #16
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x12, #:abs_g0:sym, lsl #0
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
-// CHECK-ERROR-NEXT:         movn x2, #:abs_g0:sym
-// CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT:         movn x2, #:abs_g0:sym
+// CHECK-ERROR-AARCH64-NEXT:                  ^
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g0:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #:abs_g0_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x4, #:abs_g0_nc:sym
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3028,16 +3097,16 @@
         movk w3, #:abs_g1:sym
         movz x3, #:abs_g1_nc:sym
         movn x4, #:abs_g1_nc:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
-// CHECK-ERROR-NEXT:         movn x2, #:abs_g1:sym
-// CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT:         movn x2, #:abs_g1:sym
+// CHECK-ERROR-AARCH64-NEXT:                  ^
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g1:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #:abs_g1_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x4, #:abs_g1_nc:sym
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3047,53 +3116,53 @@
         movk w3, #:abs_g2_nc:sym
         movz x13, #:abs_g2_nc:sym
         movn x24, #:abs_g2_nc:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w12, #:abs_g2:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
-// CHECK-ERROR-NEXT:         movn x12, #:abs_g2:sym
-// CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT:         movn x12, #:abs_g2:sym
+// CHECK-ERROR-AARCH64-NEXT:                   ^
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x13, #:abs_g2:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x13, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x24, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movn x19, #:abs_g3:sym
         movz w20, #:abs_g3:sym
         movk w21, #:abs_g3:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
-// CHECK-ERROR-NEXT:         movn x19, #:abs_g3:sym
-// CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-AARCH64: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
+// CHECK-ERROR-AARCH64-NEXT:         movn x19, #:abs_g3:sym
+// CHECK-ERROR-AARCH64-NEXT:                   ^
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w20, #:abs_g3:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w21, #:abs_g3:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movk x19, #:abs_g0_s:sym
         movk w23, #:abs_g0_s:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g0_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g0_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movk x19, #:abs_g1_s:sym
         movk w23, #:abs_g1_s:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g1_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g1_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
@@ -3101,16 +3170,16 @@
         movn w29, #:abs_g2_s:sym
         movk x19, #:abs_g2_s:sym
         movk w23, #:abs_g2_s:sym
-// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w2, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn w29, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
+// CHECK-ERROR-NEXT: error: {{expected relocated symbol or|immediate must be an}} integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
@@ -3154,19 +3223,19 @@
 
         hint #-1
         hint #128
-// CHECK-ERROR: error: expected integer in range [0, 127]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 127]
 // CHECK-ERROR-NEXT:         hint #-1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 127]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 127]
 // CHECK-ERROR-NEXT:         hint #128
 // CHECK-ERROR-NEXT:              ^
 
         clrex #-1
         clrex #16
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:         clrex #-1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:         clrex #16
 // CHECK-ERROR-NEXT:               ^
 
@@ -3174,25 +3243,25 @@
         dsb #16
         dmb #-1
         dmb #16
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         dsb #-1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         dsb #16
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         dmb #-1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         dmb #16
 // CHECK-ERROR-NEXT:             ^
 
         isb #-1
         isb #16
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         isb #-1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: Invalid immediate for instruction
+// CHECK-ERROR-NEXT: error: {{Invalid immediate for instruction|barrier operand out of range}}
 // CHECK-ERROR-NEXT:         isb #16
 // CHECK-ERROR-NEXT:             ^
 
@@ -3200,16 +3269,16 @@
         msr spsel, #-1
         msr spsel #-1
         msr daifclr, #16
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:         msr daifset, x4
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:         msr spsel, #-1
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: expected comma before next operand
+// CHECK-ERROR-NEXT: error: {{expected comma before next operand|unexpected token in argument list}}
 // CHECK-ERROR-NEXT:         msr spsel #-1
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 15]
 // CHECK-ERROR-NEXT:         msr daifclr, #16
 // CHECK-ERROR-NEXT:                      ^
 
@@ -3221,7 +3290,7 @@
         sysl x13, #3, c16, c2, #3
         sysl x9, #2, c11, c16, #5
         sysl x4, #4, c9, c8, #8
-// CHECK-ERROR-NEXT: error:  expected integer in range [0, 7]
+// CHECK-ERROR-NEXT: error:  {{expected|immediate must be an}} integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sys #8, c1, c2, #7, x9
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
@@ -3230,10 +3299,10 @@
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
 // CHECK-ERROR-NEXT:         sys #2, c11, c16, #5
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sys #4, c9, c8, #8, xzr
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sysl x11, #8, c1, c2, #7
 // CHECK-ERROR-NEXT:                   ^
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
@@ -3242,20 +3311,21 @@
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
 // CHECK-ERROR-NEXT:         sysl x9, #2, c11, c16, #5
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sysl x4, #4, c9, c8, #8
 // CHECK-ERROR-NEXT:                              ^
 
         ic ialluis, x2
         ic allu, x7
         ic ivau
-// CHECK-ERROR-NEXT: error: specified IC op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{IC|ic}} op does not use a register
 // CHECK-ERROR-NEXT:         ic ialluis, x2
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: operand specifier not recognised
+// CHECK-ERROR-AARCH64-NEXT: error: operand specifier not recognised
+// CHECK-ERROR-ARM64-NEXT: error: invalid operand for IC instruction
 // CHECK-ERROR-NEXT:         ic allu, x7
 // CHECK-ERROR-NEXT:            ^
-// CHECK-ERROR-NEXT: error: specified IC op requires a register
+// CHECK-ERROR-NEXT: error: specified {{IC|ic}} op requires a register
 // CHECK-ERROR-NEXT:         ic ivau
 // CHECK-ERROR-NEXT:            ^
 
@@ -3291,100 +3361,100 @@
         tlbi VALE3
         tlbi VMALLS12E1, x15
         tlbi VAALE1
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi IPAS2E1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi IPAS2LE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi VMALLE1IS, x12
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE2IS, x11
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE3IS, x20
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE2IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE3IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi ASIDE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAAE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE1IS, x0
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE2IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE3IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi VMALLS12E1IS, xzr
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAALE1IS
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi IPAS2E1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi IPAS2LE1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi VMALLE1, x9
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE2, x10
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE3, x11
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE2
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAE3
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi ASIDE1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAAE1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi ALLE1, x25
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE2
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VALE3
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: specified TLBI op does not use a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op does not use a register
 // CHECK-ERROR-NEXT:         tlbi VMALLS12E1, x15
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: specified TLBI op requires a register
+// CHECK-ERROR-NEXT: error: specified {{TLBI|tlbi}} op requires a register
 // CHECK-ERROR-NEXT:         tlbi VAALE1
 // CHECK-ERROR-NEXT:              ^
 
@@ -3642,16 +3712,16 @@
         tbz w3, #32, nowhere
         tbz x9, #-1, there
         tbz x20, #64, dont
-// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:     tbz w3, #-1, addr
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbz w3, #32, nowhere
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbz x9, #-1, there
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbz x20, #64, dont
 // CHECK-ERROR-NEXT:                 ^
 
@@ -3659,16 +3729,16 @@
         tbnz w3, #32, nowhere
         tbnz x9, #-1, there
         tbnz x20, #64, dont
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbnz w3, #-1, addr
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbnz w3, #32, nowhere
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbnz x9, #-1, there
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
+// CHECK-ERROR-NEXT: error: {{expected|immediate must be an}} integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbnz x20, #64, dont
 
 //------------------------------------------------------------------------------
