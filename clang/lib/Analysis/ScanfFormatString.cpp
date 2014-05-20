@@ -82,7 +82,7 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   
   using namespace clang::analyze_scanf;
   const char *I = Beg;
-  const char *Start = 0;
+  const char *Start = nullptr;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
     // Look for a '%' character that indicates the start of a format specifier.

@@ -49,7 +49,7 @@ public:
       return Block->getBlockDecl();
     }
 
-    return 0;
+    return nullptr;
   }
 
   void addCalledDecl(Decl *D) {
@@ -70,7 +70,7 @@ public:
       Selector Sel = ME->getSelector();
       
       // Find the callee definition within the same translation unit.
-      Decl *D = 0;
+      Decl *D = nullptr;
       if (ME->isInstanceMessage())
         D = IDecl->lookupPrivateMethod(Sel);
       else
@@ -101,7 +101,7 @@ void CallGraph::addNodesForBlocks(DeclContext *D) {
 }
 
 CallGraph::CallGraph() {
-  Root = getOrInsertNode(0);
+  Root = getOrInsertNode(nullptr);
 }
 
 CallGraph::~CallGraph() {
@@ -147,7 +147,7 @@ void CallGraph::addNodeForDecl(Decl* D, bool IsGlobal) {
 
 CallGraphNode *CallGraph::getNode(const Decl *F) const {
   FunctionMapTy::const_iterator I = FunctionMap.find(F);
-  if (I == FunctionMap.end()) return 0;
+  if (I == FunctionMap.end()) return nullptr;
   return I->second;
 }
 
@@ -158,7 +158,7 @@ CallGraphNode *CallGraph::getOrInsertNode(Decl *F) {
 
   Node = new CallGraphNode(F);
   // Make Root node a parent of all functions to make sure all are reachable.
-  if (F != 0)
+  if (F)
     Root->addCallee(Node, this);
   return Node;
 }

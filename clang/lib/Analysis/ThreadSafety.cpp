@@ -177,8 +177,8 @@ private:
     CallingContext*    PrevCtx;    // The previous context; or 0 if none.
 
     CallingContext(const NamedDecl *D)
-        : AttrDecl(D), SelfArg(0), SelfArrow(false), NumArgs(0), FunArgs(0),
-          PrevCtx(0) {}
+        : AttrDecl(D), SelfArg(nullptr), SelfArrow(false), NumArgs(0),
+          FunArgs(nullptr), PrevCtx(nullptr) {}
   };
 
   typedef SmallVector<SExprNode, 4> NodeVector;
@@ -189,7 +189,7 @@ private:
   NodeVector NodeVec;
 
 private:
-  unsigned make(ExprOp O, unsigned F = 0, const void *D = 0) {
+  unsigned make(ExprOp O, unsigned F = 0, const void *D = nullptr) {
     NodeVec.push_back(SExprNode(O, F, D));
     return NodeVec.size() - 1;
   }
@@ -236,7 +236,7 @@ private:
         return D;  // Method does not override anything
       D = *I;      // FIXME: this does not work with multiple inheritance.
     }
-    return 0;
+    return nullptr;
   }
 
   unsigned makeMCall(unsigned NumArgs, const CXXMethodDecl *D) {
@@ -272,8 +272,8 @@ private:
   /// NDeref returns the number of Derefence and AddressOf operations
   /// preceding the Expr; this is used to decide whether to pretty-print
   /// SExprs with . or ->.
-  unsigned buildSExpr(const Expr *Exp, CallingContext* CallCtx,
-                      int* NDeref = 0) {
+  unsigned buildSExpr(const Expr *Exp, CallingContext *CallCtx,
+                      int *NDeref = nullptr) {
     if (!Exp)
       return 0;
 
@@ -370,7 +370,7 @@ private:
         }
       }
       unsigned NumCallArgs = CE->getNumArgs();
-      unsigned Root = makeCall(NumCallArgs, 0);
+      unsigned Root = makeCall(NumCallArgs, nullptr);
       unsigned Sz = buildSExpr(CE->getCallee(), CallCtx);
       const Expr* const* CallArgs = CE->getArgs();
       for (unsigned i = 0; i < NumCallArgs; ++i) {
@@ -463,7 +463,7 @@ private:
   ///        occurs.
   /// \param D  The declaration to which the lock/unlock attribute is attached.
   void buildSExprFromExpr(const Expr *MutexExp, const Expr *DeclExp,
-                          const NamedDecl *D, VarDecl *SelfDecl = 0) {
+                          const NamedDecl *D, VarDecl *SelfDecl = nullptr) {
     CallingContext CallCtx(D);
 
     if (MutexExp) {
@@ -480,8 +480,8 @@ private:
     }
 
     // If we are processing a raw attribute expression, with no substitutions.
-    if (DeclExp == 0) {
-      buildSExpr(MutexExp, 0);
+    if (!DeclExp) {
+      buildSExpr(MutexExp, nullptr);
       return;
     }
 
@@ -501,7 +501,7 @@ private:
       CallCtx.FunArgs = CE->getArgs();
     } else if (const CXXConstructExpr *CE =
                dyn_cast<CXXConstructExpr>(DeclExp)) {
-      CallCtx.SelfArg = 0;  // Will be set below
+      CallCtx.SelfArg = nullptr;  // Will be set below
       CallCtx.NumArgs = CE->getNumArgs();
       CallCtx.FunArgs = CE->getArgs();
     } else if (D && isa<CXXDestructorDecl>(D)) {
@@ -517,16 +517,16 @@ private:
       CallCtx.SelfArg = &SelfDRE;
 
       // If the attribute has no arguments, then assume the argument is "this".
-      if (MutexExp == 0)
-        buildSExpr(CallCtx.SelfArg, 0);
+      if (!MutexExp)
+        buildSExpr(CallCtx.SelfArg, nullptr);
       else  // For most attributes.
         buildSExpr(MutexExp, &CallCtx);
       return;
     }
 
     // If the attribute has no arguments, then assume the argument is "this".
-    if (MutexExp == 0)
-      buildSExpr(CallCtx.SelfArg, 0);
+    if (!MutexExp)
+      buildSExpr(CallCtx.SelfArg, nullptr);
     else  // For most attributes.
       buildSExpr(MutexExp, &CallCtx);
   }
@@ -544,8 +544,8 @@ public:
   ///        occurs.
   /// \param D  The declaration to which the lock/unlock attribute is attached.
   /// Caller must check isValid() after construction.
-  SExpr(const Expr* MutexExp, const Expr *DeclExp, const NamedDecl* D,
-        VarDecl *SelfDecl=0) {
+  SExpr(const Expr *MutexExp, const Expr *DeclExp, const NamedDecl *D,
+        VarDecl *SelfDecl = nullptr) {
     buildSExprFromExpr(MutexExp, DeclExp, D, SelfDecl);
   }
 
@@ -962,7 +962,7 @@ public:
 
     // Create reference to previous definition
     VarDefinition(const NamedDecl *D, unsigned R, Context C)
-      : Dec(D), Exp(0), Ref(R), Ctx(C)
+      : Dec(D), Exp(nullptr), Ref(R), Ctx(C)
     { }
   };
 
@@ -975,14 +975,14 @@ private:
 public:
   LocalVariableMap() {
     // index 0 is a placeholder for undefined variables (aka phi-nodes).
-    VarDefinitions.push_back(VarDefinition(0, 0u, getEmptyContext()));
+    VarDefinitions.push_back(VarDefinition(nullptr, 0u, getEmptyContext()));
   }
 
   /// Look up a definition, within the given context.
   const VarDefinition* lookup(const NamedDecl *D, Context Ctx) {
     const unsigned *i = Ctx.lookup(D);
     if (!i)
-      return 0;
+      return nullptr;
     assert(*i < VarDefinitions.size());
     return &VarDefinitions[*i];
   }
@@ -993,7 +993,7 @@ public:
   const Expr* lookupExpr(const NamedDecl *D, Context &Ctx) {
     const unsigned *P = Ctx.lookup(D);
     if (!P)
-      return 0;
+      return nullptr;
 
     unsigned i = *P;
     while (i > 0) {
@@ -1003,7 +1003,7 @@ public:
       }
       i = VarDefinitions[i].Ref;
     }
-    return 0;
+    return nullptr;
   }
 
   Context getEmptyContext() { return ContextFactory.getEmptyMap(); }
@@ -1296,7 +1296,7 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
     for (CFGBlock::const_pred_iterator PI = CurrBlock->pred_begin(),
          PE  = CurrBlock->pred_end(); PI != PE; ++PI) {
       // if *PI -> CurrBlock is a back edge, so skip it
-      if (*PI == 0 || !VisitedBlocks.alreadySet(*PI)) {
+      if (*PI == nullptr || !VisitedBlocks.alreadySet(*PI)) {
         HasBackEdges = true;
         continue;
       }
@@ -1322,7 +1322,7 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
         createReferenceContext(CurrBlockInfo->EntryContext);
 
     // Create a starting context index for the current block
-    saveContext(0, CurrBlockInfo->EntryContext);
+    saveContext(nullptr, CurrBlockInfo->EntryContext);
     CurrBlockInfo->EntryIndex = getContextIndex();
 
     // Visit all the statements in the basic block.
@@ -1345,7 +1345,7 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
     for (CFGBlock::const_succ_iterator SI = CurrBlock->succ_begin(),
          SE  = CurrBlock->succ_end(); SI != SE; ++SI) {
       // if CurrBlock -> *SI is *not* a back edge
-      if (*SI == 0 || !VisitedBlocks.alreadySet(*SI))
+      if (*SI == nullptr || !VisitedBlocks.alreadySet(*SI))
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;
@@ -1357,7 +1357,7 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
 
   // Put an extra entry at the end of the indexed context array
   unsigned exitID = CFGraph->getExit().getBlockID();
-  saveContext(0, BlockInfo[exitID].ExitContext);
+  saveContext(nullptr, BlockInfo[exitID].ExitContext);
 }
 
 /// Find the appropriate source locations to use when producing diagnostics for
@@ -1423,7 +1423,7 @@ public:
 
   template <typename AttrType>
   void getMutexIDs(MutexIDList &Mtxs, AttrType *Attr, Expr *Exp,
-                   const NamedDecl *D, VarDecl *SelfDecl=0);
+                   const NamedDecl *D, VarDecl *SelfDecl = nullptr);
 
   template <class AttrType>
   void getMutexIDs(MutexIDList &Mtxs, AttrType *Attr, Expr *Exp,
@@ -1603,9 +1603,10 @@ void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
                                        VarDecl *SelfDecl) {
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
-    SExpr Mu(0, Exp, D, SelfDecl);
+    SExpr Mu(nullptr, Exp, D, SelfDecl);
     if (!Mu.isValid())
-      SExpr::warnInvalidLock(Handler, 0, Exp, D, ClassifyDiagnostic(Attr));
+      SExpr::warnInvalidLock(Handler, nullptr, Exp, D,
+                             ClassifyDiagnostic(Attr));
     else
       Mtxs.push_back_nodup(Mu);
     return;
@@ -1675,7 +1676,7 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
                                                          LocalVarContext C,
                                                          bool &Negate) {
   if (!Cond)
-    return 0;
+    return nullptr;
 
   if (const CallExpr *CallExp = dyn_cast<CallExpr>(Cond)) {
     return CallExp;
@@ -1698,7 +1699,7 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
       Negate = !Negate;
       return getTrylockCallExpr(UOP->getSubExpr(), C, Negate);
     }
-    return 0;
+    return nullptr;
   }
   else if (const BinaryOperator *BOP = dyn_cast<BinaryOperator>(Cond)) {
     if (BOP->getOpcode() == BO_EQ || BOP->getOpcode() == BO_NE) {
@@ -1715,7 +1716,7 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
         if (!TCond) Negate = !Negate;
         return getTrylockCallExpr(BOP->getRHS(), C, Negate);
       }
-      return 0;
+      return nullptr;
     }
     if (BOP->getOpcode() == BO_LAnd) {
       // LHS must have been evaluated in a different block.
@@ -1724,9 +1725,9 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
     if (BOP->getOpcode() == BO_LOr) {
       return getTrylockCallExpr(BOP->getRHS(), C, Negate);
     }
-    return 0;
+    return nullptr;
   }
-  return 0;
+  return nullptr;
 }
 
 
@@ -1817,7 +1818,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   void checkAccess(const Expr *Exp, AccessKind AK);
   void checkPtAccess(const Expr *Exp, AccessKind AK);
 
-  void handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD = 0);
+  void handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD = nullptr);
 
 public:
   BuildLockset(ThreadSafetyAnalyzer *Anlzr, CFGBlockInfo &Info)
@@ -2084,7 +2085,7 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   if (isScopedVar) {
     SourceLocation MLoc = VD->getLocation();
     DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue, VD->getLocation());
-    SExpr SMutex(&DRE, 0, 0);
+    SExpr SMutex(&DRE, nullptr, nullptr);
 
     for (const auto &M : ExclusiveLocksToAdd)
       Analyzer->addLock(FSet, SMutex, LockData(MLoc, LK_Exclusive, M),
@@ -2399,7 +2400,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       Loc = Attr->getLocation();
       if (const auto *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
         getMutexIDs(A->isShared() ? SharedLocksToAdd : ExclusiveLocksToAdd, A,
-                    0, D);
+                    nullptr, D);
         CapDiagKind = ClassifyDiagnostic(A);
       } else if (const auto *A = dyn_cast<ReleaseCapabilityAttr>(Attr)) {
         // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
@@ -2573,7 +2574,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
          SE  = CurrBlock->succ_end(); SI != SE; ++SI) {
 
       // if CurrBlock -> *SI is *not* a back edge
-      if (*SI == 0 || !VisitedBlocks.alreadySet(*SI))
+      if (*SI == nullptr || !VisitedBlocks.alreadySet(*SI))
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;

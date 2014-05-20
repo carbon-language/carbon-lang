@@ -402,7 +402,7 @@ const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 static int SrcCmp(const std::pair<const CFGBlock *, const Stmt *> *p1,
@@ -606,7 +606,7 @@ void Callback::anchor() { }
 
 unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable) {
-  return scanFromBlock(Start, Reachable, /* SourceManager* */ 0, false);
+  return scanFromBlock(Start, Reachable, /* SourceManager* */ nullptr, false);
 }
 
 void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,

@@ -42,8 +42,8 @@ CFGBlock *CFGStmtMap::getBlock(Stmt *S) {
 
     X = PM->getParentIgnoreParens(X);
   }
-  
-  return 0;
+
+  return nullptr;
 }
 
 static void Accumulate(SMap &SM, CFGBlock *B) {
@@ -77,7 +77,7 @@ static void Accumulate(SMap &SM, CFGBlock *B) {
 
 CFGStmtMap *CFGStmtMap::Build(CFG *C, ParentMap *PM) {
   if (!C || !PM)
-    return 0;
+    return nullptr;
 
   SMap *SM = new SMap();
 

@@ -60,7 +60,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
   using namespace clang::analyze_printf;
 
   const char *I = Beg;
-  const char *Start = 0;
+  const char *Start = nullptr;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
   // Look for a '%' character that indicates the start of a format specifier.
@@ -124,7 +124,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
 
   // Look for the field width (if any).
   if (ParseFieldWidth(H, FS, Start, I, E,
-                      FS.usesPositionalArg() ? 0 : &argIndex))
+                      FS.usesPositionalArg() ? nullptr : &argIndex))
     return true;
 
   if (I == E) {
@@ -142,7 +142,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     }
 
     if (ParsePrecision(H, FS, Start, I, E,
-                       FS.usesPositionalArg() ? 0 : &argIndex))
+                       FS.usesPositionalArg() ? nullptr : &argIndex))
       return true;
 
     if (I == E) {

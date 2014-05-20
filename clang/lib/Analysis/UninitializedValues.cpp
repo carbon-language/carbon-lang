@@ -236,7 +236,7 @@ void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
 }
 
 const CFGBlock *DataflowWorklist::dequeue() {
-  const CFGBlock *B = 0;
+  const CFGBlock *B = nullptr;
 
   // First dequeue from the worklist.  This can represent
   // updates along backedges that we want propagated as quickly as possible.
@@ -250,7 +250,7 @@ const CFGBlock *DataflowWorklist::dequeue() {
     ++PO_I;
   }
   else {
-    return 0;
+    return nullptr;
   }
 
   assert(enqueuedBlocks[B->getBlockID()] == true);
@@ -295,7 +295,7 @@ static FindVarResult findVar(const Expr *E, const DeclContext *DC) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
       if (isTrackedVar(VD, DC))
         return FindVarResult(VD, DRE);
-  return FindVarResult(0, 0);
+  return FindVarResult(nullptr, nullptr);
 }
 
 /// \brief Classify each DeclRefExpr as an initialization or a use. Any
@@ -353,7 +353,7 @@ static const DeclRefExpr *getSelfInitExpr(VarDecl *VD) {
     if (DRE && DRE->getDecl() == VD)
       return DRE;
   }
-  return 0;
+  return nullptr;
 }
 
 void ClassifyRefs::classify(const Expr *E, Class C) {
@@ -542,7 +542,7 @@ public:
           // This block initializes the variable.
           continue;
         if (AtPredExit == MayUninitialized &&
-            vals.getValue(B, 0, vd) == Uninitialized) {
+            vals.getValue(B, nullptr, vd) == Uninitialized) {
           // This block declares the variable (uninitialized), and is reachable
           // from a block that initializes the variable. We can't guarantee to
           // give an earlier location for the diagnostic (and it appears that

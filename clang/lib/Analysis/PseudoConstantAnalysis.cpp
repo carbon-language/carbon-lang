@@ -70,7 +70,7 @@ const Decl *PseudoConstantAnalysis::getDecl(const Expr *E) {
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
     return DR->getDecl();
   else
-    return 0;
+    return nullptr;
 }
 
 void PseudoConstantAnalysis::RunAnalysis() {
