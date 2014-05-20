@@ -7298,6 +7298,7 @@ static SDValue performPostLD1Combine(SDNode *N,
   }
 
   SDValue Addr = LD->getOperand(1);
+  SDValue Vector = N->getOperand(0);
   // Search for a use of the address operand that is an increment.
   for (SDNode::use_iterator UI = Addr.getNode()->use_begin(), UE =
        Addr.getNode()->use_end(); UI != UE; ++UI) {
@@ -7309,6 +7310,10 @@ static SDValue performPostLD1Combine(SDNode *N,
     // Check that the add is independent of the load.  Otherwise, folding it
     // would create a cycle.
     if (User->isPredecessorOf(LD) || LD->isPredecessorOf(User))
+      continue;
+    // Also check that add is not used in the vector operand.  This would also
+    // create a cycle.
+    if (User->isPredecessorOf(Vector.getNode()))
       continue;
 
     // If the increment is a constant, it must match the memory ref size.
@@ -7324,7 +7329,7 @@ static SDValue performPostLD1Combine(SDNode *N,
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(LD->getOperand(0));  // Chain
     if (IsLaneOp) {
-      Ops.push_back(N->getOperand(0)); // The vector to be inserted
+      Ops.push_back(Vector);           // The vector to be inserted
       Ops.push_back(N->getOperand(2)); // The lane to be inserted in the vector
     }
     Ops.push_back(Addr);
