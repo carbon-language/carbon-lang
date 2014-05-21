@@ -746,32 +746,12 @@ public:
     StoredModuleBuildStack.push_back(std::make_pair(moduleName.str(),importLoc));
   }
 
-  /// \brief Create the FileID for a memory buffer that will represent the
-  /// FileID for the main source.
-  ///
-  /// One example of when this would be used is when the main source is read
-  /// from STDIN.
-  FileID createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
-                             SrcMgr::CharacteristicKind Kind = SrcMgr::C_User) {
-    assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileID(Buffer, Kind);
-    return MainFileID;
-  }
-
   //===--------------------------------------------------------------------===//
   // MainFileID creation and querying methods.
   //===--------------------------------------------------------------------===//
 
   /// \brief Returns the FileID of the main source file.
   FileID getMainFileID() const { return MainFileID; }
-
-  /// \brief Create the FileID for the main source file.
-  FileID createMainFileID(const FileEntry *SourceFile, 
-                          SrcMgr::CharacteristicKind Kind = SrcMgr::C_User) {
-    assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileID(SourceFile, SourceLocation(), Kind);
-    return MainFileID;
-  }
 
   /// \brief Set the file ID for the main source file.
   void setMainFileID(FileID FID) {

@@ -92,7 +92,7 @@ TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {
       "9\n";
 
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
-  SourceMgr.createMainFileIDForMemBuffer(buf);
+  SourceMgr.setMainFileID(SourceMgr.createFileID(buf));
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 

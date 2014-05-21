@@ -75,7 +75,8 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
     "#define M(x) [x]\n"
     "M(foo)";
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
-  FileID mainFileID = SourceMgr.createMainFileIDForMemBuffer(buf);
+  FileID mainFileID = SourceMgr.createFileID(buf);
+  SourceMgr.setMainFileID(mainFileID);
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
@@ -127,7 +128,8 @@ TEST_F(SourceManagerTest, getColumnNumber) {
     "int y;";
 
   MemoryBuffer *Buf = MemoryBuffer::getMemBuffer(Source);
-  FileID MainFileID = SourceMgr.createMainFileIDForMemBuffer(Buf);
+  FileID MainFileID = SourceMgr.createFileID(Buf);
+  SourceMgr.setMainFileID(MainFileID);
 
   bool Invalid;
 
@@ -186,7 +188,8 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
 
   MemoryBuffer *headerBuf = MemoryBuffer::getMemBuffer(header);
   MemoryBuffer *mainBuf = MemoryBuffer::getMemBuffer(main);
-  FileID mainFileID = SourceMgr.createMainFileIDForMemBuffer(mainBuf);
+  FileID mainFileID = SourceMgr.createFileID(mainBuf);
+  SourceMgr.setMainFileID(mainFileID);
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
                                                  headerBuf->getBufferSize(), 0);
@@ -284,7 +287,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
 
   MemoryBuffer *headerBuf = MemoryBuffer::getMemBuffer(header);
   MemoryBuffer *mainBuf = MemoryBuffer::getMemBuffer(main);
-  SourceMgr.createMainFileIDForMemBuffer(mainBuf);
+  SourceMgr.setMainFileID(SourceMgr.createFileID(mainBuf));
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
                                                  headerBuf->getBufferSize(), 0);
