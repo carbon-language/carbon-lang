@@ -121,31 +121,26 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 
     bool AlreadySearched = false;
     bool LookAtPrefix = true;
-    // C++ [basic.lookup.qual]p6:
+    // C++11 [basic.lookup.qual]p6:
     //   If a pseudo-destructor-name (5.2.4) contains a nested-name-specifier,
     //   the type-names are looked up as types in the scope designated by the
-    //   nested-name-specifier. In a qualified-id of the form:
+    //   nested-name-specifier. Similarly, in a qualified-id of the form:
     //
-    //     ::[opt] nested-name-specifier  ~ class-name
+    //     nested-name-specifier[opt] class-name :: ~ class-name
     //
-    //   where the nested-name-specifier designates a namespace scope, and in
-    //   a qualified-id of the form:
+    //   the second class-name is looked up in the same scope as the first.
     //
-    //     ::opt nested-name-specifier class-name ::  ~ class-name
-    //
-    //   the class-names are looked up as types in the scope designated by
-    //   the nested-name-specifier.
-    //
-    // Here, we check the first case (completely) and determine whether the
-    // code below is permitted to look at the prefix of the
-    // nested-name-specifier.
+    // Here, we determine whether the code below is permitted to look at the
+    // prefix of the nested-name-specifier.
     DeclContext *DC = computeDeclContext(SS, EnteringContext);
     if (DC && DC->isFileContext()) {
       AlreadySearched = true;
       LookupCtx = DC;
       isDependent = false;
-    } else if (DC && isa<CXXRecordDecl>(DC))
+    } else if (DC && isa<CXXRecordDecl>(DC)) {
       LookAtPrefix = false;
+      LookInScope = true;
+    }
 
     // The second case from the C++03 rules quoted further above.
     NestedNameSpecifier *Prefix = 0;
@@ -163,8 +158,6 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
       LookupCtx = computeDeclContext(SS, EnteringContext);
       isDependent = LookupCtx && LookupCtx->isDependentContext();
     }
-
-    LookInScope = false;
   } else if (ObjectTypePtr) {
     // C++ [basic.lookup.classref]p3:
     //   If the unqualified-id is ~type-name, the type-name is looked up
