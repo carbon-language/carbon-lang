@@ -777,7 +777,9 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** EARLY IF-CONVERSION **********\n"
                << "********** Function: " << MF.getName() << '\n');
   // Only run if conversion if the target wants it.
-  if (!MF.getTarget().getSubtarget().enableEarlyIfConversion())
+  if (!MF.getTarget()
+           .getSubtarget<TargetSubtargetInfo>()
+           .enableEarlyIfConversion())
     return true;
 
   TII = MF.getTarget().getInstrInfo();

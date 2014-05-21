@@ -16,6 +16,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
@@ -319,6 +320,6 @@ X86Subtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
 }
 
 bool
-X86Subtarget::enableEarlyIfConversion() const override {
-  return hasCMOV() && X86EarlyIfConv;
+X86Subtarget::enableEarlyIfConversion() const {
+  return hasCMov() && X86EarlyIfConv;
 }

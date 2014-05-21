@@ -110,6 +110,6 @@ void ARM64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
   Policy.OnlyBottomUp = false;
 }
 
-bool ARM64Subtarget::enableEarlyIfConversion() const override {
+bool ARM64Subtarget::enableEarlyIfConversion() const {
   return EnableEarlyIfConvert;
 }
