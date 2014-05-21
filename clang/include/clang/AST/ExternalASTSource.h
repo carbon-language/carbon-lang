@@ -180,49 +180,50 @@ public:
 
   /// \brief Get the decls that are contained in a file in the Offset/Length
   /// range. \p Length can be 0 to indicate a point at \p Offset instead of
-  /// a range. 
-  virtual void FindFileRegionDecls(FileID File, unsigned Offset,unsigned Length,
-                                   SmallVectorImpl<Decl *> &Decls) {}
+  /// a range.
+  virtual void FindFileRegionDecls(FileID File, unsigned Offset,
+                                   unsigned Length,
+                                   SmallVectorImpl<Decl *> &Decls);
 
   /// \brief Gives the external AST source an opportunity to complete
   /// the redeclaration chain for a declaration. Called each time we
   /// need the most recent declaration of a declaration after the
   /// generation count is incremented.
-  virtual void CompleteRedeclChain(const Decl *D) {}
+  virtual void CompleteRedeclChain(const Decl *D);
 
   /// \brief Gives the external AST source an opportunity to complete
   /// an incomplete type.
-  virtual void CompleteType(TagDecl *Tag) {}
+  virtual void CompleteType(TagDecl *Tag);
 
   /// \brief Gives the external AST source an opportunity to complete an
   /// incomplete Objective-C class.
   ///
   /// This routine will only be invoked if the "externally completed" bit is
-  /// set on the ObjCInterfaceDecl via the function 
+  /// set on the ObjCInterfaceDecl via the function
   /// \c ObjCInterfaceDecl::setExternallyCompleted().
-  virtual void CompleteType(ObjCInterfaceDecl *Class) { }
+  virtual void CompleteType(ObjCInterfaceDecl *Class);
 
   /// \brief Loads comment ranges.
-  virtual void ReadComments() { }
+  virtual void ReadComments();
 
   /// \brief Notify ExternalASTSource that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
   /// decls that are initializing. Must be paired with FinishedDeserializing.
   ///
   /// The default implementation of this method is a no-op.
-  virtual void StartedDeserializing() { }
+  virtual void StartedDeserializing();
 
   /// \brief Notify ExternalASTSource that we finished the deserialization of
   /// a decl or type. Must be paired with StartedDeserializing.
   ///
   /// The default implementation of this method is a no-op.
-  virtual void FinishedDeserializing() { }
+  virtual void FinishedDeserializing();
 
   /// \brief Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.
   ///
   /// The default implementation of this method is a no-op.
-  virtual void StartTranslationUnit(ASTConsumer *Consumer) { }
+  virtual void StartTranslationUnit(ASTConsumer *Consumer);
 
   /// \brief Print any statistics that have been gathered regarding
   /// the external AST source.
@@ -258,16 +259,12 @@ public:
   /// out according to the ABI.
   /// 
   /// \returns true if the record layout was provided, false otherwise.
-  virtual bool 
-  layoutRecordType(const RecordDecl *Record,
-                   uint64_t &Size, uint64_t &Alignment,
-                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
-                 llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
-          llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets)
-  { 
-    return false;
-  }
-  
+  virtual bool layoutRecordType(
+      const RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+      llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+      llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
+      llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets);
+
   //===--------------------------------------------------------------------===//
   // Queries for performance analysis.
   //===--------------------------------------------------------------------===//

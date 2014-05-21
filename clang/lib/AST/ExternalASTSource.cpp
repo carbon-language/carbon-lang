@@ -22,7 +22,33 @@ using namespace clang;
 
 ExternalASTSource::~ExternalASTSource() { }
 
+void ExternalASTSource::FindFileRegionDecls(FileID File, unsigned Offset,
+                                            unsigned Length,
+                                            SmallVectorImpl<Decl *> &Decls) {}
+
+void ExternalASTSource::CompleteRedeclChain(const Decl *D) {}
+
+void ExternalASTSource::CompleteType(TagDecl *Tag) {}
+
+void ExternalASTSource::CompleteType(ObjCInterfaceDecl *Class) {}
+
+void ExternalASTSource::ReadComments() {}
+
+void ExternalASTSource::StartedDeserializing() {}
+
+void ExternalASTSource::FinishedDeserializing() {}
+
+void ExternalASTSource::StartTranslationUnit(ASTConsumer *Consumer) {}
+
 void ExternalASTSource::PrintStats() { }
+
+bool ExternalASTSource::layoutRecordType(
+    const RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+    llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+    llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
+    llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets) {
+  return false;
+}
 
 Decl *ExternalASTSource::GetExternalDecl(uint32_t ID) {
   return nullptr;
