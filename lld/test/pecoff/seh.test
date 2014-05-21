@@ -20,7 +20,7 @@ CHECK:   Process Affinity Mask: 0
 CHECK:   Process Heap Flags: 0
 CHECK:   CSD Version: 0
 CHECK:   Security Cookie: 0
-CHECK:   SEH Table: 4210688
+CHECK:   SEH Table: 4206592
 CHECK:   SEH Count: 2
 CHECK: SEH Table: 0x{{[0-9a-f]+}} 0x{{[0-9a-f]+}}
 

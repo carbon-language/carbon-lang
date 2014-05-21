@@ -615,6 +615,13 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
       section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
     return error_code::success();
 
+  // Supporting debug info needs more work than just linking and combining
+  // .debug sections. We don't support it yet. Let's discard .debug sections at
+  // the very beginning of the process so that we don't spend time on linking
+  // blobs that nobody would understand.
+  if (sectionName == ".debug" || sectionName.startswith(".debug$"))
+    return error_code::success();
+
   DefinedAtom::ContentType type = getContentType(section);
   DefinedAtom::ContentPermissions perms = getPermissions(section);
   bool isComdat = (_comdatSections.count(section) == 1);

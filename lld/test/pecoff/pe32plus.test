@@ -9,7 +9,7 @@ CHECK-NEXT: Arch: x86_64
 CHECK-NEXT: AddressSize: 64bit
 CHECK-NEXT: ImageFileHeader {
 CHECK-NEXT:   Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)
-CHECK-NEXT:   SectionCount: 2
+CHECK-NEXT:   SectionCount: 1
 CHECK-NEXT:   TimeDateStamp:
 CHECK-NEXT:   PointerToSymbolTable: 0x0
 CHECK-NEXT:   SymbolCount: 0
@@ -23,10 +23,10 @@ CHECK-NEXT: ImageOptionalHeader {
 CHECK-NEXT:   MajorLinkerVersion: 0
 CHECK-NEXT:   MinorLinkerVersion: 0
 CHECK-NEXT:   SizeOfCode: 1
-CHECK-NEXT:   SizeOfInitializedData: 108
+CHECK-NEXT:   SizeOfInitializedData: 0
 CHECK-NEXT:   SizeOfUninitializedData: 0
-CHECK-NEXT:   AddressOfEntryPoint: 0x2000
-CHECK-NEXT:   BaseOfCode: 0x2000
+CHECK-NEXT:   AddressOfEntryPoint: 0x1000
+CHECK-NEXT:   BaseOfCode: 0x1000
 CHECK-NEXT:   ImageBase: 0x140000000
 CHECK-NEXT:   SectionAlignment: 4096
 CHECK-NEXT:   FileAlignment: 512
@@ -36,7 +36,7 @@ CHECK-NEXT:   MajorImageVersion: 0
 CHECK-NEXT:   MinorImageVersion: 0
 CHECK-NEXT:   MajorSubsystemVersion: 6
 CHECK-NEXT:   MinorSubsystemVersion: 0
-CHECK-NEXT:   SizeOfImage: 12288
+CHECK-NEXT:   SizeOfImage: 8192
 CHECK-NEXT:   SizeOfHeaders: 512
 CHECK-NEXT:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
 CHECK-NEXT:   Subsystem [ (0x8140)
