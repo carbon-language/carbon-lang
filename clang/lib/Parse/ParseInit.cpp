@@ -219,7 +219,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                            ConsumeToken(),
                                                            ParsedType(), 
-                                                           0);
+                                                           nullptr);
       }
 
       // Parse the receiver, which is either a type or an expression.
@@ -237,7 +237,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
                                    ParsedType::getFromOpaquePtr(TypeOrExpr),
-                                                           0);
+                                                           nullptr);
       }
 
       // If the receiver was an expression, we still don't know
@@ -264,7 +264,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
           return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                              ConsumeToken(),
                                                              ParsedType(),
-                                                             0);
+                                                             nullptr);
         ConsumeToken(); // the identifier
         if (!ReceiverType) {
           SkipUntil(tok::r_square, StopAtSemi);
@@ -274,7 +274,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 
                                                            SourceLocation(), 
                                                            ReceiverType, 
-                                                           0);
+                                                           nullptr);
 
       case Sema::ObjCInstanceMessage:
         // Fall through; we'll just parse the expression and

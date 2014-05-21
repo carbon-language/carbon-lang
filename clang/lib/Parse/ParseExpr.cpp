@@ -261,12 +261,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         TernaryMiddle = ParseExpression();
         if (TernaryMiddle.isInvalid()) {
           LHS = ExprError();
-          TernaryMiddle = 0;
+          TernaryMiddle = nullptr;
         }
       } else {
         // Special case handling of "X ? Y : Z" where Y is empty:
         //   logical-OR-expression '?' ':' conditional-expression   [GNU]
-        TernaryMiddle = 0;
+        TernaryMiddle = nullptr;
         Diag(Tok, diag::ext_gnu_conditional_expr);
       }
 
@@ -682,7 +682,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return Actions.ActOnCXXNullPtrLiteral(ConsumeToken());
 
   case tok::annot_primary_expr:
-    assert(Res.get() == 0 && "Stray primary-expression annotation?");
+    assert(Res.get() == nullptr && "Stray primary-expression annotation?");
     Res = getExprAnnotation(Tok);
     ConsumeToken();
     break;
@@ -761,8 +761,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         ((Tok.is(tok::identifier) &&
          (NextToken().is(tok::colon) || NextToken().is(tok::r_square))) ||
          Tok.is(tok::code_completion))) {
-      Res = ParseObjCMessageExpressionBody(SourceLocation(), ILoc, ParsedType(), 
-                                           0);
+      Res = ParseObjCMessageExpressionBody(SourceLocation(), ILoc, ParsedType(),
+                                           nullptr);
       break;
     }
     
@@ -783,7 +783,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
             DeclSpec DS(AttrFactory);
             DS.SetRangeStart(ILoc);
             DS.SetRangeEnd(ILoc);
-            const char *PrevSpec = 0;
+            const char *PrevSpec = nullptr;
             unsigned DiagID;
             DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ,
                                Actions.getASTContext().getPrintingPolicy());
@@ -793,10 +793,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                   DeclaratorInfo);
             if (Ty.isInvalid())
               break;
-            
+
             Res = ParseObjCMessageExpressionBody(SourceLocation(), 
                                                  SourceLocation(), 
-                                                 Ty.get(), 0);
+                                                 Ty.get(), nullptr);
             break;
           }
     }
@@ -914,7 +914,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     if (Tok.isNot(tok::identifier))
       return ExprError(Diag(Tok, diag::err_expected) << tok::identifier);
 
-    if (getCurScope()->getFnParent() == 0)
+    if (getCurScope()->getFnParent() == nullptr)
       return ExprError(Diag(Tok, diag::err_address_of_label_outside_fn));
     
     Diag(AmpAmpLoc, diag::ext_gnu_address_of_label);
@@ -949,7 +949,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       DS.SetRangeStart(Tok.getLocation());
       DS.SetRangeEnd(Tok.getLastLoc());
 
-      const char *PrevSpec = 0;
+      const char *PrevSpec = nullptr;
       unsigned DiagID;
       DS.SetTypeSpecType(TST_typename, Tok.getAnnotationEndLoc(),
                          PrevSpec, DiagID, Type,
@@ -962,7 +962,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
       ConsumeToken();
       Res = ParseObjCMessageExpressionBody(SourceLocation(), SourceLocation(),
-                                           Ty.get(), 0);
+                                           Ty.get(), nullptr);
       break;
     }
     // Fall through
@@ -1267,8 +1267,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                                //   '(' argument-expression-list[opt] ')'
       tok::TokenKind OpKind = Tok.getKind();
       InMessageExpressionRAIIObject InMessage(*this, false);
-      
-      Expr *ExecConfig = 0;
+
+      Expr *ExecConfig = nullptr;
 
       BalancedDelimiterTracker PT(*this, tok::l_paren);
 
@@ -1432,7 +1432,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (!LHS.isInvalid())
         LHS = Actions.ActOnMemberAccessExpr(getCurScope(), LHS.take(), OpLoc, 
                                             OpKind, SS, TemplateKWLoc, Name,
-                                 CurParsedObjCImpl ? CurParsedObjCImpl->Dcl : 0,
+                                 CurParsedObjCImpl ? CurParsedObjCImpl->Dcl
+                                                   : nullptr,
                                             Tok.is(tok::l_paren));
       break;
     }
@@ -1574,7 +1575,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
   if (Tok.is(tok::ellipsis) && OpTok.is(tok::kw_sizeof)) {
     SourceLocation EllipsisLoc = ConsumeToken();
     SourceLocation LParenLoc, RParenLoc;
-    IdentifierInfo *Name = 0;
+    IdentifierInfo *Name = nullptr;
     SourceLocation NameLoc;
     if (Tok.is(tok::l_paren)) {
       BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -2043,7 +2044,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       }
       Result = ParseObjCMessageExpressionBody(SourceLocation(), 
                                               SourceLocation(), 
-                                              Ty.get(), 0);
+                                              Ty.get(), nullptr);
     } else {          
       // Match the ')'.
       T.consumeClose();
@@ -2181,7 +2182,8 @@ ExprResult Parser::ParseStringLiteralExpression(bool AllowUserDefinedLiteral) {
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size(),
-                                   AllowUserDefinedLiteral ? getCurScope() : 0);
+                                    AllowUserDefinedLiteral ? getCurScope()
+                                                            : nullptr);
 }
 
 /// ParseGenericSelectionExpression - Parse a C11 generic-selection
@@ -2433,7 +2435,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     // SetIdentifier sets the source range end, but in this case we're past
     // that location.
     SourceLocation Tmp = ParamInfo.getSourceRange().getEnd();
-    ParamInfo.SetIdentifier(0, CaretLoc);
+    ParamInfo.SetIdentifier(nullptr, CaretLoc);
     ParamInfo.SetRangeEnd(Tmp);
     if (ParamInfo.isInvalidType()) {
       // If there was an error parsing the arguments, they may have
@@ -2456,7 +2458,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(/*HasProto=*/true,
                                              /*IsAmbiguous=*/false,
                                              /*RParenLoc=*/NoLoc,
-                                             /*ArgInfo=*/0,
+                                             /*ArgInfo=*/nullptr,
                                              /*NumArgs=*/0,
                                              /*EllipsisLoc=*/NoLoc,
                                              /*RParenLoc=*/NoLoc,
@@ -2468,10 +2470,10 @@ ExprResult Parser::ParseBlockLiteralExpression() {
                                              /*MutableLoc=*/NoLoc,
                                              EST_None,
                                              /*ESpecLoc=*/NoLoc,
-                                             /*Exceptions=*/0,
-                                             /*ExceptionRanges=*/0,
+                                             /*Exceptions=*/nullptr,
+                                             /*ExceptionRanges=*/nullptr,
                                              /*NumExceptions=*/0,
-                                             /*NoexceptExpr=*/0,
+                                             /*NoexceptExpr=*/nullptr,
                                              CaretLoc, CaretLoc,
                                              ParamInfo),
                           attrs, CaretLoc);

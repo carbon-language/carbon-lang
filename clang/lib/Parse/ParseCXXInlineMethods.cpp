@@ -35,7 +35,8 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
          "Current token not a '{', ':', '=', or 'try'!");
 
   MultiTemplateParamsArg TemplateParams(
-      TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
+      TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data()
+                                  : nullptr,
       TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 
   NamedDecl *FnD;
@@ -45,7 +46,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
                                           TemplateParams);
   else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
-                                           TemplateParams, 0,
+                                           TemplateParams, nullptr,
                                            VS, ICIS_NoInit);
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs);
@@ -65,7 +66,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   if (TryConsumeToken(tok::equal)) {
     if (!FnD) {
       SkipUntil(tok::semi);
-      return 0;
+      return nullptr;
     }
 
     bool Delete = false;
@@ -360,7 +361,7 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         ConsumeAnyToken();
 
       delete Toks;
-      LM.DefaultArgs[I].Toks = 0;
+      LM.DefaultArgs[I].Toks = nullptr;
     }
   }
 
@@ -434,7 +435,7 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
     // Error recovery.
     if (!Tok.is(tok::l_brace)) {
       FnScope.Exit();
-      Actions.ActOnFinishFunctionBody(LM.D, 0);
+      Actions.ActOnFinishFunctionBody(LM.D, nullptr);
       while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
         ConsumeAnyToken();
       return;

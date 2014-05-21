@@ -585,7 +585,7 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
 
   const IdentifierInfo *VisType;
   if (PushPop && PushPop->isStr("pop")) {
-    VisType = 0;
+    VisType = nullptr;
   } else if (PushPop && PushPop->isStr("push")) {
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::l_paren)) {
@@ -645,7 +645,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
   }
 
   Sema::PragmaPackKind Kind = Sema::PPK_Default;
-  IdentifierInfo *Name = 0;
+  IdentifierInfo *Name = nullptr;
   Token Alignment;
   Alignment.startToken();
   SourceLocation LParenLoc = Tok.getLocation();
@@ -1233,7 +1233,7 @@ void PragmaMSPointersToMembers::HandlePragma(Preprocessor &PP,
       } else if (Tok.is(tok::r_paren)) {
         // #pragma pointers_to_members(full_generality) implicitly specifies
         // virtual_inheritance.
-        Arg = 0;
+        Arg = nullptr;
         RepresentationMethod = LangOptions::PPTMK_FullGeneralityVirtualInheritance;
       } else {
         PP.Diag(Tok.getLocation(), diag::err_expected_punc)

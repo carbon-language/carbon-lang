@@ -261,7 +261,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
-  OMPClause *Clause = 0;
+  OMPClause *Clause = nullptr;
   bool ErrorFound = false;
   // Check if clause is allowed for the given directive.
   if (CKind != OMPC_unknown && !isAllowedClauseForDirective(DKind, CKind)) {
@@ -318,7 +318,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     SkipUntil(tok::comma, tok::annot_pragma_openmp_end, StopBeforeMatch);
     break;
   }
-  return ErrorFound ? 0 : Clause;
+  return ErrorFound ? nullptr : Clause;
 }
 
 /// \brief Parsing of OpenMP clauses with single expressions like 'if',
@@ -340,7 +340,7 @@ OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
   if (T.expectAndConsume(diag::err_expected_lparen_after,
                          getOpenMPClauseName(Kind)))
-    return 0;
+    return nullptr;
 
   ExprResult LHS(ParseCastExpression(false, false, NotTypeCast));
   ExprResult Val(ParseRHSOfBinaryExpression(LHS, prec::Conditional));
@@ -349,7 +349,7 @@ OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
   T.consumeClose();
 
   if (Val.isInvalid())
-    return 0;
+    return nullptr;
 
   return Actions.ActOnOpenMPSingleExprClause(Kind, Val.take(), Loc,
                                              T.getOpenLocation(),
@@ -371,7 +371,7 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
   if (T.expectAndConsume(diag::err_expected_lparen_after,
                          getOpenMPClauseName(Kind)))
-    return 0;
+    return nullptr;
 
   unsigned Type =
       getOpenMPSimpleClauseType(Kind,
@@ -408,7 +408,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
   if (T.expectAndConsume(diag::err_expected_lparen_after,
                          getOpenMPClauseName(Kind)))
-    return 0;
+    return nullptr;
 
   SmallVector<Expr *, 5> Vars;
   bool IsComma = true;
@@ -435,7 +435,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   }
 
   // Parse ':' linear-step
-  Expr *TailExpr = 0;
+  Expr *TailExpr = nullptr;
   const bool MustHaveTail = MayHaveTail && Tok.is(tok::colon);
   if (MustHaveTail) {
     ColonLoc = Tok.getLocation();
@@ -451,7 +451,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   // Parse ')'.
   T.consumeClose();
   if (Vars.empty() || (MustHaveTail && !TailExpr))
-    return 0;
+    return nullptr;
 
   return Actions.ActOnOpenMPVarListClause(Kind, Vars, TailExpr, Loc, LOpen,
                                           ColonLoc, Tok.getLocation());
