@@ -528,7 +528,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
 }
 
 AsmParser::~AsmParser() {
-  assert(ActiveMacros.empty() && "Unexpected active macro instantiation!");
+  assert((HadError || ActiveMacros.empty()) &&
+         "Unexpected active macro instantiation!");
 
   // Destroy any macros.
   for (StringMap<MCAsmMacro *>::iterator it = MacroMap.begin(),
