@@ -830,8 +830,12 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   return Res;
 }
 
-static void ReplaceWithInstancetype(const ObjCMigrateASTConsumer &ASTC,
+static void ReplaceWithInstancetype(ASTContext &Ctx,
+                                    const ObjCMigrateASTConsumer &ASTC,
                                     ObjCMethodDecl *OM) {
+  if (OM->getReturnType() == Ctx.getObjCInstanceType())
+    return; // already has instancetype.
+
   SourceRange R;
   std::string ClassString;
   if (TypeSourceInfo *TSInfo = OM->getReturnTypeSourceInfo()) {
@@ -893,7 +897,7 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
       return;
     case OIT_Init:
       if (OM->getReturnType()->isObjCIdType())
-        ReplaceWithInstancetype(*this, OM);
+        ReplaceWithInstancetype(Ctx, *this, OM);
       return;
     case OIT_ReturnsSelf:
       migrateFactoryMethod(Ctx, CDecl, OM, OIT_ReturnsSelf);
@@ -914,7 +918,7 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     migrateFactoryMethod(Ctx, CDecl, OM);
     return;
   }
-  ReplaceWithInstancetype(*this, OM);
+  ReplaceWithInstancetype(Ctx, *this, OM);
 }
 
 static bool TypeIsInnerPointer(QualType T) {
@@ -1224,7 +1228,7 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   if (OIT_Family == OIT_ReturnsSelf)
     ReplaceWithClasstype(*this, OM);
   else
-    ReplaceWithInstancetype(*this, OM);
+    ReplaceWithInstancetype(Ctx, *this, OM);
 }
 
 static bool IsVoidStarType(QualType Ty) {
