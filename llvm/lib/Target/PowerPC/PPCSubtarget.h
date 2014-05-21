@@ -205,6 +205,8 @@ public:
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
                              RegClassVector& CriticalPathRCs) const override;
 
+  bool enableEarlyIfConversion() const override { return hasISEL(); }
+
   // Scheduling customization.
   bool enableMachineScheduler() const override;
   void overrideSchedPolicy(MachineSchedPolicy &Policy,

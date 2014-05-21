@@ -776,6 +776,10 @@ bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
 bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** EARLY IF-CONVERSION **********\n"
                << "********** Function: " << MF.getName() << '\n');
+  // Only run if conversion if the target wants it.
+  if (!MF.getTarget().getSubtarget().enableEarlyIfConversion())
+    return true;
+
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
   SchedModel =

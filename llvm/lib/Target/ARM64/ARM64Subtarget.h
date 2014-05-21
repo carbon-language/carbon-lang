@@ -102,6 +102,8 @@ public:
   void overrideSchedPolicy(MachineSchedPolicy &Policy, MachineInstr *begin,
                            MachineInstr *end,
                            unsigned NumRegionInstrs) const override;
+
+  bool enableEarlyIfConversion() const override;
 };
 } // End llvm namespace
 

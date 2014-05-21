@@ -430,6 +430,8 @@ public:
 
   bool postRAScheduler() const { return PostRAScheduler; }
 
+  bool enableEarlyIfConversion() const override;
+
   /// getInstrItins = Return the instruction itineraries based on the
   /// subtarget selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }

@@ -25,10 +25,6 @@ EnableCCMP("arm64-ccmp", cl::desc("Enable the CCMP formation pass"),
            cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
-EnableEarlyIfConvert("arm64-early-ifcvt", cl::desc("Enable the early if "
-                     "converter pass"), cl::init(true), cl::Hidden);
-
-static cl::opt<bool>
 EnableStPairSuppress("arm64-stp-suppress", cl::desc("Suppress STP for ARM64"),
                      cl::init(true), cl::Hidden);
 
@@ -169,8 +165,7 @@ bool ARM64PassConfig::addInstSelector() {
 bool ARM64PassConfig::addILPOpts() {
   if (EnableCCMP)
     addPass(createARM64ConditionalCompares());
-  if (EnableEarlyIfConvert)
-    addPass(&EarlyIfConverterID);
+  addPass(&EarlyIfConverterID);
   if (EnableStPairSuppress)
     addPass(createARM64StorePairSuppressPass());
   return true;

@@ -35,6 +35,13 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_CTOR
 #include "X86GenSubtargetInfo.inc"
 
+// Temporary option to control early if-conversion for x86 while adding machine
+// models.
+static cl::opt<bool>
+X86EarlyIfConv("x86-early-ifcvt", cl::Hidden,
+               cl::desc("Enable early if-conversion on X86"));
+
+
 /// ClassifyBlockAddressReference - Classify a blockaddress reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
 /// context.
@@ -309,4 +316,9 @@ X86Subtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
   Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
+}
+
+bool
+X86Subtarget::enableEarlyIfConversion() const override {
+  return hasCMOV() && X86EarlyIfConv;
 }

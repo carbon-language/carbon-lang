@@ -148,12 +148,8 @@ bool PPCPassConfig::addPreISel() {
 }
 
 bool PPCPassConfig::addILPOpts() {
-  if (getPPCSubtarget().hasISEL()) {
-    addPass(&EarlyIfConverterID);
-    return true;
-  }
-
-  return false;
+  addPass(&EarlyIfConverterID);
+  return true;
 }
 
 bool PPCPassConfig::addInstSelector() {

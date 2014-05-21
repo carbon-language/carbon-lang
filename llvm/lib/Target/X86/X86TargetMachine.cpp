@@ -126,12 +126,6 @@ UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
   cl::desc("Minimize AVX to SSE transition penalty"),
   cl::init(true));
 
-// Temporary option to control early if-conversion for x86 while adding machine
-// models.
-static cl::opt<bool>
-X86EarlyIfConv("x86-early-ifcvt", cl::Hidden,
-	       cl::desc("Enable early if-conversion on X86"));
-
 //===----------------------------------------------------------------------===//
 // X86 Analysis Pass Setup
 //===----------------------------------------------------------------------===//
@@ -192,11 +186,8 @@ bool X86PassConfig::addInstSelector() {
 }
 
 bool X86PassConfig::addILPOpts() {
-  if (X86EarlyIfConv && getX86Subtarget().hasCMov()) {
-    addPass(&EarlyIfConverterID);
-    return true;
-  }
-  return false;
+  addPass(&EarlyIfConverterID);
+  return true;
 }
 
 bool X86PassConfig::addPreRegAlloc() {

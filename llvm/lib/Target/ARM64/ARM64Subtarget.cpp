@@ -26,6 +26,10 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "ARM64GenSubtargetInfo.inc"
 
+static cl::opt<bool>
+EnableEarlyIfConvert("arm64-early-ifcvt", cl::desc("Enable the early if "
+                     "converter pass"), cl::init(true), cl::Hidden);
+
 ARM64Subtarget::ARM64Subtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, bool LittleEndian)
     : ARM64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
@@ -104,4 +108,8 @@ void ARM64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
   // bi-directional scheduling. 253.perlbmk.
   Policy.OnlyTopDown = false;
   Policy.OnlyBottomUp = false;
+}
+
+bool ARM64Subtarget::enableEarlyIfConversion() const override {
+  return EnableEarlyIfConvert;
 }
