@@ -1180,11 +1180,11 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
             break;
     }
     // Stage 3
-    __a[sizeof(__a)-1] = 0;
+    __buf.resize(__a_end - __a);
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    if (sscanf_l(__a, _LIBCPP_GET_C_LOCALE, "%p", &__v) != 1)
+    if (sscanf_l(__buf.c_str(), _LIBCPP_GET_C_LOCALE, "%p", &__v) != 1)
 #else
-    if (__sscanf_l(__a, __cloc(), "%p", &__v) != 1)
+    if (__sscanf_l(__buf.c_str(), __cloc(), "%p", &__v) != 1)
 #endif
         __err = ios_base::failbit;
     // EOF checked

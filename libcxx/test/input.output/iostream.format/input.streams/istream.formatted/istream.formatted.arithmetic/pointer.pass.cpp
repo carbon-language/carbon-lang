@@ -76,4 +76,22 @@ int main()
         assert(!is.eof());
         assert(!is.fail());
     }
+    {
+        testbuf<char> sb("12345678");
+        std::istream is(&sb);
+        void* n = 0;
+        is >> n;
+        assert(n == (void*)0x12345678);
+        assert( is.eof());
+        assert(!is.fail());
+    }
+    {
+        testbuf<wchar_t> sb(L"12345678");
+        std::wistream is(&sb);
+        void* n = 0;
+        is >> n;
+        assert(n == (void*)0x12345678);
+        assert( is.eof());
+        assert(!is.fail());
+    }
 }
