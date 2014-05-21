@@ -76,6 +76,11 @@ public:
                                    MachineInstr *end,
                                    unsigned NumRegionInstrs) const {}
 
+  // \brief Perform target specific adjustments to the latency of a schedule
+  // dependency.
+  virtual void adjustSchedDependency(SUnit *def, SUnit *use,
+                                     SDep& dep) const { }
+
   // enablePostRAScheduler - If the target can benefit from post-regalloc
   // scheduling and the specified optimization level meets the requirement
   // return true to enable post-register-allocation scheduling. In
@@ -84,10 +89,6 @@ public:
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
                                      RegClassVector& CriticalPathRCs) const;
-  // adjustSchedDependency - Perform target specific adjustments to
-  // the latency of a schedule dependency.
-  virtual void adjustSchedDependency(SUnit *def, SUnit *use,
-                                     SDep& dep) const { }
 
   /// \brief Enable use of alias analysis during code generation (during MI
   /// scheduling, DAGCombine, etc.).
