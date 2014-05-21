@@ -514,6 +514,16 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
   }
 }
 
+// FIXME: This implements accesses to initialized globals in the constant
+// address space by copying them to private and accessing that. It does not
+// properly handle illegal types or vectors. The private vector loads are not
+// scalarized, and the illegal scalars hit an assertion. This technique will not
+// work well with large initializers, and this should eventually be
+// removed. Initialized globals should be placed into a data section that the
+// runtime will load into a buffer before the kernel is executed. Uses of the
+// global need to be replaced with a pointer loaded from an implicit kernel
+// argument into this buffer holding the copy of the data, which will remove the
+// need for any of this.
 SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                                                        const GlobalValue *GV,
                                                        const SDValue &InitPtr,
