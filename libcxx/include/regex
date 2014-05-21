@@ -4541,6 +4541,13 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
                 __push_char(_CharT(__sum));
             ++__first;
             break;
+        case '0':
+            if (__str)
+                *__str = _CharT(0);
+            else
+                __push_char(_CharT(0));
+            ++__first;
+            break;
         default:
             if (*__first != '_' && !__traits_.isctype(*__first, ctype_base::alnum))
             {
