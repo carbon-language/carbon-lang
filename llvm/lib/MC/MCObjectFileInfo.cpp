@@ -739,7 +739,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
 
   DrectveSection =
     Ctx->getCOFFSection(".drectve",
-                        COFF::IMAGE_SCN_LNK_INFO,
+                        COFF::IMAGE_SCN_LNK_INFO | COFF::IMAGE_SCN_LNK_REMOVE,
                         SectionKind::getMetadata());
 
   PDataSection =
