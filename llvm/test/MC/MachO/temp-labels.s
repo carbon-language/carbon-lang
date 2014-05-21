@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -L -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -save-temp-labels -o - | macho-dump --dump-section-data | FileCheck %s
 
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)

@@ -40,8 +40,6 @@ cl::opt<bool> EnableDwarfDirectory(
 cl::opt<bool> NoExecStack("mc-no-exec-stack",
                           cl::desc("File doesn't need an exec stack"));
 
-cl::opt<bool> SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
-
 cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
                              cl::desc("Show encoding in .s output"));
 cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
@@ -57,7 +55,6 @@ static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   Options.MCRelaxAll = RelaxAll;
   Options.MCUseDwarfDirectory = EnableDwarfDirectory;
   Options.MCNoExecStack = NoExecStack;
-  Options.MCSaveTempLabels = SaveTempLabels;
   Options.ShowMCEncoding = ShowMCEncoding;
   Options.ShowMCInst = ShowMCInst;
   Options.AsmVerbose = AsmVerbose;
