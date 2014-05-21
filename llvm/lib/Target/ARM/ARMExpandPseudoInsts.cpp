@@ -22,6 +22,7 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
@@ -697,9 +698,6 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
     HI16Opc = ARM::MOVTi16;
   }
 
-  if (RequiresBundling)
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(TargetOpcode::BUNDLE));
-
   LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(LO16Opc), DstReg);
   HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc))
     .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
@@ -735,10 +733,8 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
   LO16.addImm(Pred).addReg(PredReg);
   HI16.addImm(Pred).addReg(PredReg);
 
-  if (RequiresBundling) {
-    LO16->bundleWithPred();
-    HI16->bundleWithPred();
-  }
+  if (RequiresBundling)
+    finalizeBundle(MBB, &*LO16, &*MBBI);
 
   TransferImpOps(MI, LO16, HI16);
   MI.eraseFromParent();
