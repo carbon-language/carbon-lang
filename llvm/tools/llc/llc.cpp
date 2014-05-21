@@ -75,13 +75,11 @@ OptLevel("O",
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
-cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
-                       cl::desc("Do not verify input module"));
+static cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
+                              cl::desc("Do not verify input module"));
 
-cl::opt<bool>
-DisableSimplifyLibCalls("disable-simplify-libcalls",
-                        cl::desc("Disable simplify-libcalls"),
-                        cl::init(false));
+static cl::opt<bool> DisableSimplifyLibCalls("disable-simplify-libcalls",
+                                             cl::desc("Disable simplify-libcalls"));
 
 static int compileModule(char**, LLVMContext&);
 
