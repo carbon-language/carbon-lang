@@ -159,6 +159,9 @@ MainFileName("main-file-name",
 static cl::opt<bool> SaveTempLabels("save-temp-labels",
                                     cl::desc("Don't discard temporary labels"));
 
+static cl::opt<bool> NoExecStack("no-exec-stack",
+                                 cl::desc("File doesn't need an exec stack"));
+
 enum ActionType {
   AC_AsLex,
   AC_Assemble,

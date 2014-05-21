@@ -81,7 +81,18 @@ static cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
 static cl::opt<bool> DisableSimplifyLibCalls("disable-simplify-libcalls",
                                              cl::desc("Disable simplify-libcalls"));
 
-static int compileModule(char**, LLVMContext&);
+static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
+                                    cl::desc("Show encoding in .s output"));
+
+static cl::opt<bool> EnableDwarfDirectory(
+    "enable-dwarf-directory", cl::Hidden,
+    cl::desc("Use .file directives with an explicit directory."));
+
+static cl::opt<bool> AsmVerbose("asm-verbose",
+                                cl::desc("Add comments to directives."),
+                                cl::init(true));
+
+static int compileModule(char **, LLVMContext &);
 
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
@@ -270,10 +281,9 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.DisableIntegratedAS = NoIntegratedAssembler;
-
-  // Override default to generate verbose assembly unless we've seen the flag.
-  if (AsmVerbose.getNumOccurrences() == 0)
-    Options.MCOptions.AsmVerbose = true;
+  Options.MCOptions.ShowMCEncoding = ShowMCEncoding;
+  Options.MCOptions.MCUseDwarfDirectory = EnableDwarfDirectory;
+  Options.MCOptions.AsmVerbose = AsmVerbose;
 
   std::unique_ptr<TargetMachine> target(
       TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr,

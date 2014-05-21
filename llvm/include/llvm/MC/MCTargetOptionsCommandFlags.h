@@ -33,31 +33,11 @@ cl::opt<bool> RelaxAll("mc-relax-all",
                        cl::desc("When used with filetype=obj, "
                                 "relax all fixups in the emitted object file"));
 
-cl::opt<bool> EnableDwarfDirectory(
-    "enable-dwarf-directory", cl::Hidden,
-    cl::desc("Use .file directives with an explicit directory."));
-
-cl::opt<bool> NoExecStack("mc-no-exec-stack",
-                          cl::desc("File doesn't need an exec stack"));
-
-cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
-                             cl::desc("Show encoding in .s output"));
-cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
-                         cl::desc("Show instruction structure in .s output"));
-
-cl::opt<bool> AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
-                         cl::init(false));
-
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
       (AsmInstrumentation == MCTargetOptions::AsmInstrumentationAddress);
   Options.MCRelaxAll = RelaxAll;
-  Options.MCUseDwarfDirectory = EnableDwarfDirectory;
-  Options.MCNoExecStack = NoExecStack;
-  Options.ShowMCEncoding = ShowMCEncoding;
-  Options.ShowMCInst = ShowMCInst;
-  Options.AsmVerbose = AsmVerbose;
   return Options;
 }
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -verify -S -asm-verbose | FileCheck %s
+; RUN: llvm-as < %s | opt -verify -S | FileCheck %s
 
 ; CHECK: lang 0x8001
 

@@ -1,4 +1,4 @@
-// RUN: llvm-mc -mc-no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck  %s
+// RUN: llvm-mc -no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck  %s
 
 // CHECK:        Section {
 // CHECK:          Index: 4
