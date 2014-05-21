@@ -60,6 +60,7 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   -fsanitize=address
   "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
+  -mllvm -asan-instrument-assembly
 )
 
 if(NOT MSVC)

@@ -197,7 +197,24 @@ template<> void TestAsmRead<__m128i>(const char *DeathPattern) {
   delete [] buf;
 }
 
+U4 AsmLoad(U4 *a) {
+  U4 r;
+  __asm__("movl (%[a]), %[r]  \n\t" : [r] "=r" (r) : [a] "r" (a) : "memory");
+  return r;
+}
+
+void AsmStore(U4 r, U4 *a) {
+  __asm__("movl %[r], (%[a])  \n\t" : : [a] "r" (a), [r] "r" (r) : "memory");
+}
+
 } // End of anonymous namespace
+
+TEST(AddressSanitizer, asm_load_store) {
+  U4* buf = new U4[2];
+  EXPECT_DEATH(AsmLoad(&buf[3]), "READ of size 4");
+  EXPECT_DEATH(AsmStore(0x1234, &buf[3]), "WRITE of size 4");
+  delete [] buf;
+}
 
 TEST(AddressSanitizer, asm_rw) {
   TestAsmWrite<U1>("WRITE of size 1");
@@ -211,6 +228,31 @@ TEST(AddressSanitizer, asm_rw) {
   TestAsmRead<U4>("READ of size 4");
   TestAsmRead<U8>("READ of size 8");
   TestAsmRead<__m128i>("READ of size 16");
+}
+
+TEST(AddressSanitizer, asm_flags) {
+  long magic = 0x1234;
+  long r = 0x0;
+
+#if defined(__x86_64__)
+  __asm__("xorq %%rax, %%rax  \n\t"
+          "movq (%[p]), %%rax \n\t"
+          "sete %%al          \n\t"
+          "movzbq %%al, %[r]  \n\t"
+          : [r] "=r"(r)
+          : [p] "r"(&magic)
+          : "rax", "memory");
+#else
+  __asm__("xorl %%eax, %%eax  \n\t"
+          "movl (%[p]), %%eax \n\t"
+          "sete %%al          \n\t"
+          "movzbl %%al, %[r]  \n\t"
+          : [r] "=r"(r)
+          : [p] "r"(&magic)
+          : "eax", "memory");
+#endif // defined(__x86_64__)
+
+  ASSERT_EQ(0x1, r);
 }
 
 #endif // defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__))

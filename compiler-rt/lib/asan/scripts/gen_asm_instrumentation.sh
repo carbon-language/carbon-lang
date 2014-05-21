@@ -181,7 +181,7 @@ cat <<EOF
 .globl $(func_name $at $as)
 .type $(func_name $at $as), @function
 $(func_name $at $as):
-  subq \$128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -211,7 +211,7 @@ $(func_label $at $as):
   popfq
   popq %rcx
   popq %rax
-  addq \$128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 EOF
   done
@@ -228,7 +228,7 @@ cat <<EOF
 .globl $(func_name $at $as)
 .type $(func_name $at $as), @function
 $(func_name $at $as):
-  subq \$128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushfq
   movq %rdi, %rax
@@ -248,7 +248,7 @@ $(emit_call_report $at $as)
 $(func_label $at $as):
   popfq
   popq %rax
-  addq \$128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 EOF
   done

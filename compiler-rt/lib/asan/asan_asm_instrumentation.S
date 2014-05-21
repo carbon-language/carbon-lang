@@ -324,7 +324,7 @@ __sanitizer_sanitize_load16:
 .globl __sanitizer_sanitize_store1
 .type __sanitizer_sanitize_store1, @function
 __sanitizer_sanitize_store1:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -347,14 +347,14 @@ __sanitizer_sanitize_store1:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 1-byte load. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_load1
 .type __sanitizer_sanitize_load1, @function
 __sanitizer_sanitize_load1:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -377,14 +377,14 @@ __sanitizer_sanitize_load1:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 2-byte store. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_store2
 .type __sanitizer_sanitize_store2, @function
 __sanitizer_sanitize_store2:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -408,14 +408,14 @@ __sanitizer_sanitize_store2:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 2-byte load. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_load2
 .type __sanitizer_sanitize_load2, @function
 __sanitizer_sanitize_load2:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -439,14 +439,14 @@ __sanitizer_sanitize_load2:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 4-byte store. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_store4
 .type __sanitizer_sanitize_store4, @function
 __sanitizer_sanitize_store4:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -470,14 +470,14 @@ __sanitizer_sanitize_store4:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 4-byte load. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_load4
 .type __sanitizer_sanitize_load4, @function
 __sanitizer_sanitize_load4:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushq %rcx
   pushfq
@@ -501,14 +501,14 @@ __sanitizer_sanitize_load4:
   popfq
   popq %rcx
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 8-byte store. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_store8
 .type __sanitizer_sanitize_store8, @function
 __sanitizer_sanitize_store8:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushfq
   movq %rdi, %rax
@@ -523,14 +523,14 @@ __sanitizer_sanitize_store8:
 .sanitize_store8_done:
   popfq
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 8-byte load. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_load8
 .type __sanitizer_sanitize_load8, @function
 __sanitizer_sanitize_load8:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushfq
   movq %rdi, %rax
@@ -545,14 +545,14 @@ __sanitizer_sanitize_load8:
 .sanitize_load8_done:
   popfq
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 16-byte store. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_store16
 .type __sanitizer_sanitize_store16, @function
 __sanitizer_sanitize_store16:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushfq
   movq %rdi, %rax
@@ -567,14 +567,14 @@ __sanitizer_sanitize_store16:
 .sanitize_store16_done:
   popfq
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 // Sanitize 16-byte load. Takes one 8-byte address as an argument in %rdi,
 // nothing is returned.
 .globl __sanitizer_sanitize_load16
 .type __sanitizer_sanitize_load16, @function
 __sanitizer_sanitize_load16:
-  subq $128, %rsp
+  leaq -128(%rsp), %rsp
   pushq %rax
   pushfq
   movq %rdi, %rax
@@ -589,7 +589,7 @@ __sanitizer_sanitize_load16:
 .sanitize_load16_done:
   popfq
   popq %rax
-  addq $128, %rsp
+  leaq 128(%rsp), %rsp
   ret
 #endif // defined(__x86_64__)
 /* We do not need executable stack. */
