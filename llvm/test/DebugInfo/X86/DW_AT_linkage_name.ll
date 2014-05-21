@@ -18,12 +18,12 @@
 ; Test that we do emit a linkage name for a specific instance of it.
 
 ; CHECK: DW_TAG_subprogram
-; CHECK: [[A:.*]]:     DW_TAG_subprogram
+; CHECK: [[A_DTOR:.*]]:     DW_TAG_subprogram
 ; CHECK: DW_AT_name {{.*}} "~A"
 ; CHECK-NOT: DW_AT_MIPS_linkage_name
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT:  DW_AT_specification {{.*}}[[A]]
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1AD2Ev"
+; CHECK-NEXT: DW_AT_specification {{.*}}[[A_DTOR]]
 
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"

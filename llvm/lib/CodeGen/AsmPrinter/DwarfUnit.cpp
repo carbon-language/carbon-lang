@@ -1384,40 +1384,37 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (DIE *SPDie = getDIE(SP))
     return SPDie;
 
-  DISubprogram SPDecl = SP.getFunctionDeclaration();
-  if (SPDecl.isSubprogram())
+  DIE *DeclDie = nullptr;
+  StringRef DeclLinkageName;
+  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     // Add subprogram definitions to the CU die directly.
     ContextDIE = &getUnitDie();
+    DeclDie = getOrCreateSubprogramDIE(SPDecl);
+    DeclLinkageName = SPDecl.getLinkageName();
+  }
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   DIE &SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
-  DIE *DeclDie = nullptr;
-  if (SPDecl.isSubprogram())
-    DeclDie = getOrCreateSubprogramDIE(SPDecl);
 
   // Add function template parameters.
   addTemplateParams(SPDie, SP.getTemplateParams());
 
-  if (DeclDie)
-    // Refer function declaration directly.
-    addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
-
   // Add the linkage name if we have one and it isn't in the Decl.
   StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty()) {
-    if (SPDecl.isSubprogram() && !SPDecl.getLinkageName().empty())
-      assert(SPDecl.getLinkageName() == SP.getLinkageName() &&
-             "decl has a linkage name and it is different");
-    else
-      addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-                GlobalValue::getRealLinkageName(LinkageName));
-  }
+  assert(((LinkageName.empty() || DeclLinkageName.empty()) ||
+          LinkageName == DeclLinkageName) &&
+         "decl has a linkage name and it is different");
+  if (!LinkageName.empty() && DeclLinkageName.empty())
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+              GlobalValue::getRealLinkageName(LinkageName));
 
-  // If this DIE is going to refer declaration info using AT_specification
-  // then there is no need to add other attributes.
-  if (DeclDie)
+  if (DeclDie) {
+    // Refer to the function declaration where all the other attributes will be
+    // found.
+    addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
     return &SPDie;
+  }
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())

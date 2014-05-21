@@ -3,11 +3,13 @@
 
 ; test that the DW_AT_specification is a back edge in the file.
 
+; Skip the definition of zed(foo*)
 ; CHECK: DW_TAG_subprogram
-; CHECK: DW_AT_name [DW_FORM_strp]	( .debug_str[0x{{[0-9a-f]*}}] = "zed")
+; CHECK: DW_TAG_class_type
+; CHECK: [[BAR_DECL:0x[0-9a-f]*]]:     DW_TAG_subprogram
+; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification [DW_FORM_ref4]      (cu + {{.*}} => {[[BACK:0x[0-9a-f]*]]})
-; CHECK: [[BACK]]:     DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_specification {{.*}} {[[BAR_DECL]]}
 
 %struct.foo = type { i8 }
 
