@@ -47,13 +47,12 @@ using namespace llvm;
 namespace {
 
 class HexagonSplitConst32AndConst64 : public MachineFunctionPass {
-    const HexagonTargetMachine& QTM;
-    const HexagonSubtarget &QST;
+  const HexagonTargetMachine &QTM;
 
  public:
     static char ID;
-    HexagonSplitConst32AndConst64(const HexagonTargetMachine& TM)
-      : MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {}
+    HexagonSplitConst32AndConst64(const HexagonTargetMachine &TM)
+        : MachineFunctionPass(ID), QTM(TM) {}
 
     const char *getPassName() const override {
       return "Hexagon Split Const32s and Const64s";
