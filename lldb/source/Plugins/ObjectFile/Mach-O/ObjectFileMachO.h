@@ -13,6 +13,7 @@
 #include "lldb/Utility/SafeMachO.h"
 
 #include "lldb/Core/Address.h"
+#include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/RangeMap.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
@@ -127,6 +128,11 @@ public:
     virtual uint32_t
     GetDependentModules (lldb_private::FileSpecList& files);
 
+    virtual lldb_private::FileSpecList
+    GetReExportedLibraries ()
+    {
+        return m_reexported_dylibs;
+    }
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -208,6 +214,7 @@ protected:
     lldb_private::Address  m_entry_point_address;
     FileRangeArray m_thread_context_offsets;
     bool m_thread_context_offsets_valid;
+    lldb_private::FileSpecList m_reexported_dylibs;
 
     size_t
     ParseSymtab ();

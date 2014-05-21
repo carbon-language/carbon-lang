@@ -1838,6 +1838,11 @@ ObjectFileMachO::ParseSymtab ()
                     // Strip the path if there is @rpath, @executanble, etc so we just use the basename
                     if (path[0] == '@')
                         file_spec.GetDirectory().Clear();
+                    
+                    if (lc.cmd == LC_REEXPORT_DYLIB)
+                    {
+                        m_reexported_dylibs.AppendIfUnique(file_spec);
+                    }
 
                     dylib_files.Append(file_spec);
                 }

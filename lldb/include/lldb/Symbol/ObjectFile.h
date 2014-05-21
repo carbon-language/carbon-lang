@@ -471,7 +471,7 @@ public:
     /// Gets the symbol file spec list for this object file.
     ///
     /// If the object file format contains a debug symbol file link,
-    /// the values will be return in the FileSpecList.
+    /// the values will be returned in the FileSpecList.
     ///
     /// @return
     ///     Returns filespeclist.
@@ -482,6 +482,21 @@ public:
         return FileSpecList();
     }
 
+    //------------------------------------------------------------------
+    /// Gets the file spec list of libraries re-exported by this object file.
+    ///
+    /// If the object file format has the notion of one library re-exporting the symbols from another,
+    /// the re-exported libraries will be returned in the FileSpecList.
+    ///
+    /// @return
+    ///     Returns filespeclist.
+    //------------------------------------------------------------------
+    virtual lldb_private::FileSpecList
+    GetReExportedLibraries ()
+    {
+        return FileSpecList();
+    }
+    
     //------------------------------------------------------------------
     /// Sets the load address for an entire module, assuming a rigid
     /// slide of sections, if possible in the implementation.
