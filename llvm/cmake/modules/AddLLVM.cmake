@@ -632,11 +632,12 @@ function(add_lit_target target comment)
   if (NOT CMAKE_CFG_INTDIR STREQUAL ".")
     list(APPEND LIT_ARGS --param build_mode=${CMAKE_CFG_INTDIR})
   endif ()
-  set(LIT_COMMAND
-    ${PYTHON_EXECUTABLE}
-    ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
-    ${LIT_ARGS}
-    )
+  if (LLVM_MAIN_SRC_DIR)
+    set (LIT_COMMAND ${PYTHON_EXECUTABLE} ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+  else()
+    find_program(LIT_COMMAND llvm-lit)
+  endif ()
+  list(APPEND LIT_COMMAND ${LIT_ARGS})
   foreach(param ${ARG_PARAMS})
     list(APPEND LIT_COMMAND --param ${param})
   endforeach()
