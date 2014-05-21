@@ -110,9 +110,8 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 attributes #1 = { nounwind }
 
 
-; Regression Test for Bug 19761
-; - [ARM64] Cortex-a53 schedule mode can't handle NEON post-increment load
-; - http://llvm.org/bugs/show_bug.cgi?id=19761
+; Regression Test for PR19761
+;   [ARM64] Cortex-a53 schedule mode can't handle NEON post-increment load
 ;
 ; Nothing explicit to check other than llc not crashing.
 define { <16 x i8>, <16 x i8> } @test_v16i8_post_imm_ld2(i8* %A, i8** %ptr) {
