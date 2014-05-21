@@ -105,20 +105,6 @@ static bool TrackingOrigins() {
         EXPECT_EQ(origin, __msan_get_umr_origin()); \
     } while (0)
 
-#define EXPECT_UMR_S(action, stack_origin) \
-    do {                                            \
-      __msan_set_expect_umr(1);                     \
-      action;                                       \
-      __msan_set_expect_umr(0);                     \
-      U4 id = __msan_get_umr_origin();             \
-      const char *str = __msan_get_origin_descr_if_stack(id); \
-      if (!str || strcmp(str, stack_origin)) {      \
-        fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s", \
-                id, stack_origin, str);  \
-        EXPECT_EQ(1, 0);                            \
-      }                                             \
-    } while (0)
-
 #define EXPECT_POISONED(x) ExpectPoisoned(x)
 
 template<typename T>
@@ -134,21 +120,6 @@ void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
   EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
   if (TrackingOrigins())
     EXPECT_EQ(origin, __msan_get_origin((void*)&t));
-}
-
-#define EXPECT_POISONED_S(x, stack_origin) \
-  ExpectPoisonedWithStackOrigin(x, stack_origin)
-
-template<typename T>
-void ExpectPoisonedWithStackOrigin(const T& t, const char *stack_origin) {
-  EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
-  U4 id = __msan_get_origin((void*)&t);
-  const char *str = __msan_get_origin_descr_if_stack(id);
-  if (!str || strcmp(str, stack_origin)) {
-    fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s",
-        id, stack_origin, str);
-    EXPECT_EQ(1, 0);
-  }
 }
 
 #define EXPECT_NOT_POISONED(x) ExpectNotPoisoned(x)
@@ -3883,29 +3854,6 @@ TEST(MemorySanitizerOrigins, Select) {
 
   EXPECT_POISONED_O(g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 1, __LINE__);
   EXPECT_POISONED_O(g_0 ? 1 : *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-}
-
-extern "C"
-NOINLINE char AllocaTO() {
-  int ar[100];
-  break_optimization(ar);
-  return ar[10];
-  // fprintf(stderr, "Descr: %s\n",
-  //        __msan_get_origin_descr_if_stack(__msan_get_origin_tls()));
-}
-
-TEST(MemorySanitizerOrigins, Alloca) {
-  if (!TrackingOrigins()) return;
-  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
-  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
-  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
-  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
-}
-
-// FIXME: replace with a lit-like test.
-TEST(MemorySanitizerOrigins, DISABLED_AllocaDeath) {
-  if (!TrackingOrigins()) return;
-  EXPECT_DEATH(AllocaTO(), "ORIGIN: stack allocation: ar@AllocaTO");
 }
 
 NOINLINE int RetvalOriginTest(U4 origin) {

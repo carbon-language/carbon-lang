@@ -16,6 +16,8 @@
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "msan.h"
 #include "msan_allocator.h"
+#include "msan_chained_origin_depot.h"
+#include "msan_origin.h"
 #include "msan_thread.h"
 
 namespace __msan {
@@ -101,9 +103,9 @@ static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
     if (__msan_get_track_origins()) {
       u32 stack_id = StackDepotPut(stack->trace, stack->size);
       CHECK(stack_id);
-      CHECK_EQ((stack_id >> 31),
-               0);  // Higher bit is occupied by stack origins.
-      __msan_set_origin(allocated, size, stack_id);
+      u32 id;
+      ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);
+      __msan_set_origin(allocated, size, Origin(id, 1).raw_id());
     }
   }
   MSAN_MALLOC_HOOK(allocated, size);
@@ -124,9 +126,9 @@ void MsanDeallocate(StackTrace *stack, void *p) {
     if (__msan_get_track_origins()) {
       u32 stack_id = StackDepotPut(stack->trace, stack->size);
       CHECK(stack_id);
-      CHECK_EQ((stack_id >> 31),
-               0);  // Higher bit is occupied by stack origins.
-      __msan_set_origin(p, size, stack_id);
+      u32 id;
+      ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);
+      __msan_set_origin(p, size,  Origin(id, 1).raw_id());
     }
   }
   MsanThread *t = GetCurrentThread();

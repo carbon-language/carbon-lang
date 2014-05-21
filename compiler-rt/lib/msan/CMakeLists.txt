@@ -4,6 +4,7 @@ include_directories(..)
 set(MSAN_RTL_SOURCES
   msan.cc
   msan_allocator.cc
+  msan_chained_origin_depot.cc
   msan_interceptors.cc
   msan_linux.cc
   msan_new_delete.cc

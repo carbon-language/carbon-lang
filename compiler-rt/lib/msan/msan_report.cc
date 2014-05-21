@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+#include "msan_chained_origin_depot.h"
+#include "msan_origin.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
@@ -56,30 +58,36 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
   }
 }
 
-static void DescribeOrigin(u32 origin) {
-  VPrintf(1, "  raw origin id: %d\n", origin);
-  uptr pc;
+static void DescribeOrigin(u32 id) {
+  VPrintf(1, "  raw origin id: %d\n", id);
+  Decorator d;
   while (true) {
-    if (const char *so = GetOriginDescrIfStack(origin, &pc)) {
+    Origin o(id);
+    u32 prev_id;
+    u32 stack_id = ChainedOriginDepotGet(o.id(), &prev_id);
+    Origin prev_o(prev_id);
+
+    if (prev_o.isStackRoot()) {
+      uptr pc;
+      const char *so = GetStackOriginDescr(stack_id, &pc);
       DescribeStackOrigin(so, pc);
       break;
-    }
-    Decorator d;
-    uptr size = 0;
-    const uptr *trace = StackDepotGet(origin, &size);
-    CHECK_GT(size, 0);
-    if (TRACE_IS_CHAINED(trace[size - 1])) {
-      // Linked origin.
-      // FIXME: copied? modified? passed through? observed?
-      Printf("  %sUninitialized value was stored to memory at%s\n", d.Origin(),
-             d.End());
-      StackTrace::PrintStack(trace, size - 1);
-      origin = TRACE_TO_CHAINED_ID(trace[size - 1]);
-    } else {
+    } else if (prev_o.isHeapRoot()) {
+      uptr size = 0;
+      const uptr *trace = StackDepotGet(stack_id, &size);
       Printf("  %sUninitialized value was created by a heap allocation%s\n",
              d.Origin(), d.End());
       StackTrace::PrintStack(trace, size);
       break;
+    } else {
+      // chained origin
+      uptr size = 0;
+      const uptr *trace = StackDepotGet(stack_id, &size);
+      // FIXME: copied? modified? passed through? observed?
+      Printf("  %sUninitialized value was stored to memory at%s\n", d.Origin(),
+             d.End());
+      StackTrace::PrintStack(trace, size - 1);
+      id = prev_id;
     }
   }
 }
@@ -121,7 +129,13 @@ void ReportAtExitStatistics() {
   // FIXME: we want this at normal exit, too!
   // FIXME: but only with verbosity=1 or something
   Printf("Unique heap origins: %zu\n", stack_depot_stats->n_uniq_ids);
-  Printf("Stack depot mapped bytes: %zu\n", stack_depot_stats->mapped);
+  Printf("Stack depot allocated bytes: %zu\n", stack_depot_stats->allocated);
+
+  StackDepotStats *chained_origin_depot_stats = ChainedOriginDepotGetStats();
+  Printf("Unique origin histories: %zu\n",
+         chained_origin_depot_stats->n_uniq_ids);
+  Printf("History depot allocated bytes: %zu\n",
+         chained_origin_depot_stats->allocated);
 }
 
 class OriginSet {

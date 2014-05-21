@@ -12,6 +12,7 @@ set(SANITIZER_SOURCES
   sanitizer_libignore.cc
   sanitizer_linux.cc
   sanitizer_mac.cc
+  sanitizer_persistent_allocator.cc
   sanitizer_platform_limits_linux.cc
   sanitizer_platform_limits_posix.cc
   sanitizer_posix.cc
@@ -65,6 +66,7 @@ set(SANITIZER_HEADERS
   sanitizer_list.h
   sanitizer_mac.h
   sanitizer_mutex.h
+  sanitizer_persistent_allocator.h
   sanitizer_placement_new.h
   sanitizer_platform.h
   sanitizer_platform_interceptors.h
@@ -73,6 +75,7 @@ set(SANITIZER_HEADERS
   sanitizer_quarantine.h
   sanitizer_report_decorator.h
   sanitizer_stackdepot.h
+  sanitizer_stackdepotbase.h
   sanitizer_stacktrace.h
   sanitizer_stoptheworld.h
   sanitizer_suppressions.h

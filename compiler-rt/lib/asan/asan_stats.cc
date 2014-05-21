@@ -129,8 +129,8 @@ static void PrintAccumulatedStats() {
   BlockingMutexLock lock(&print_lock);
   stats.Print();
   StackDepotStats *stack_depot_stats = StackDepotGetStats();
-  Printf("Stats: StackDepot: %zd ids; %zdM mapped\n",
-         stack_depot_stats->n_uniq_ids, stack_depot_stats->mapped >> 20);
+  Printf("Stats: StackDepot: %zd ids; %zdM allocated\n",
+         stack_depot_stats->n_uniq_ids, stack_depot_stats->allocated >> 20);
   PrintInternalAllocatorStats();
 }
 

@@ -19,6 +19,8 @@ namespace __msan {
 // Flags.
 struct Flags {
   int exit_code;
+  int origin_history_size;
+  int origin_history_per_stack_limit;
   bool poison_heap_with_zeroes;  // default: false
   bool poison_stack_with_zeroes;  // default: false
   bool poison_in_malloc;  // default: true

@@ -542,4 +542,9 @@ inline void *operator new(__sanitizer::operator_new_size_type size,
   return alloc.Allocate(size);
 }
 
+struct StackDepotStats {
+  uptr n_uniq_ids;
+  uptr allocated;
+};
+
 #endif  // SANITIZER_COMMON_H

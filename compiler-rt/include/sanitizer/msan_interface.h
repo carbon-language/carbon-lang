@@ -19,10 +19,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  /* Returns a string describing a stack origin.
-     Return NULL if the origin is invalid, or is not a stack origin. */
-  const char *__msan_get_origin_descr_if_stack(uint32_t id);
-
   /* Set raw origin for the memory range. */
   void __msan_set_origin(const volatile void *a, size_t size, uint32_t origin);
 

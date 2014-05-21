@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+#include "msan_chained_origin_depot.h"
+#include "msan_origin.h"
 #include "msan_thread.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
@@ -117,6 +119,28 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
     Printf("Exit code not in [0, 128) range: %d\n", f->exit_code);
     Die();
   }
+  ParseFlag(str, &f->origin_history_size, "origin_history_size", "");
+  if (f->origin_history_size < 0 ||
+      f->origin_history_size > Origin::kMaxDepth) {
+    Printf(
+        "Origin history size invalid: %d. Must be 0 (unlimited) or in [1, %d] "
+        "range.\n",
+        f->origin_history_size, Origin::kMaxDepth);
+    Die();
+  }
+  ParseFlag(str, &f->origin_history_per_stack_limit,
+            "origin_history_per_stack_limit", "");
+  // Limiting to kStackDepotMaxUseCount / 2 to avoid overflow in
+  // StackDepotHandle::inc_use_count_unsafe.
+  if (f->origin_history_per_stack_limit < 0 ||
+      f->origin_history_per_stack_limit > kStackDepotMaxUseCount / 2) {
+    Printf(
+        "Origin per-stack limit invalid: %d. Must be 0 (unlimited) or in [1, "
+        "%d] range.\n",
+        f->origin_history_per_stack_limit, kStackDepotMaxUseCount / 2);
+    Die();
+  }
+
   ParseFlag(str, &f->report_umrs, "report_umrs", "");
   ParseFlag(str, &f->wrap_signals, "wrap_signals", "");
 
@@ -143,6 +167,8 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->poison_in_malloc = true;
   f->poison_in_free = true;
   f->exit_code = 77;
+  f->origin_history_size = Origin::kMaxDepth;
+  f->origin_history_per_stack_limit = 20000;
   f->report_umrs = true;
   f->wrap_signals = true;
   f->halt_on_error = !&__msan_keep_going;
@@ -230,9 +256,7 @@ void ScopedThreadLocalStateBackup::Restore() {
 void UnpoisonThreadLocalState() {
 }
 
-const char *GetOriginDescrIfStack(u32 id, uptr *pc) {
-  if ((id >> 31) == 0) return 0;
-  id &= (1U << 31) - 1;
+const char *GetStackOriginDescr(u32 id, uptr *pc) {
   CHECK_LT(id, kNumStackOriginDescrs);
   if (pc) *pc = StackOriginPC[id];
   return StackOriginDescr[id];
@@ -242,10 +266,30 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
   MsanThread *t = GetCurrentThread();
   if (t && t->InSignalHandler())
     return id;
-  uptr idx = Min(stack->size, kStackTraceMax - 1);
-  stack->trace[idx] = TRACE_MAKE_CHAINED(id);
-  u32 new_id = StackDepotPut(stack->trace, idx + 1);
-  return new_id;
+
+  Origin o(id);
+  int depth = o.depth();
+  // 0 means unlimited depth.
+  if (flags()->origin_history_size > 0 && depth > 0) {
+    if (depth >= flags()->origin_history_size) {
+      return id;
+    } else {
+      ++depth;
+    }
+  }
+
+  StackDepotHandle h = StackDepotPut_WithHandle(stack->trace, stack->size);
+  if (!h.valid()) return id;
+  int use_count = h.use_count();
+  if (use_count > flags()->origin_history_per_stack_limit)
+    return id;
+
+  u32 chained_id;
+  bool inserted = ChainedOriginDepotPut(h.id(), o.id(), &chained_id);
+
+  if (inserted) h.inc_use_count_unsafe();
+
+  return Origin(chained_id, depth).raw_id();
 }
 
 }  // namespace __msan
@@ -514,16 +558,15 @@ void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
   bool print = false;  // internal_strstr(descr + 4, "AllocaTOTest") != 0;
   u32 id = *id_ptr;
   if (id == first_timer) {
-    id = atomic_fetch_add(&NumStackOriginDescrs,
-                          1, memory_order_relaxed);
+    u32 idx = atomic_fetch_add(&NumStackOriginDescrs, 1, memory_order_relaxed);
+    CHECK_LT(idx, kNumStackOriginDescrs);
+    StackOriginDescr[idx] = descr + 4;
+    StackOriginPC[idx] = pc;
+    ChainedOriginDepotPut(idx, Origin::kStackRoot, &id);
     *id_ptr = id;
-    CHECK_LT(id, kNumStackOriginDescrs);
-    StackOriginDescr[id] = descr + 4;
-    StackOriginPC[id] = pc;
     if (print)
-      Printf("First time: id=%d %s %p \n", id, descr + 4, pc);
+      Printf("First time: idx=%d id=%d %s %p \n", idx, id, descr + 4, pc);
   }
-  id |= 1U << 31;
   if (print)
     Printf("__msan_set_alloca_origin: descr=%s id=%x\n", descr + 4, id);
   __msan_set_origin(a, size, id);
@@ -534,10 +577,6 @@ u32 __msan_chain_origin(u32 id) {
   (void)sp;
   GET_STORE_STACK_TRACE_PC_BP(pc, bp);
   return ChainOrigin(id, &stack);
-}
-
-const char *__msan_get_origin_descr_if_stack(u32 id) {
-  return GetOriginDescrIfStack(id, 0);
 }
 
 u32 __msan_get_origin(const void *a) {

@@ -32,12 +32,6 @@
 #define MEM_IS_SHADOW(mem) \
   ((uptr)mem >= 0x200000000000ULL && (uptr)mem <= 0x400000000000ULL)
 
-// Chained stack trace format.
-#define TRACE_MAGIC_MASK 0xFFFFFFFF00000000LLU
-#define TRACE_MAKE_CHAINED(id) ((uptr)id | TRACE_MAGIC_MASK)
-#define TRACE_TO_CHAINED_ID(u) ((uptr)u & (~TRACE_MAGIC_MASK))
-#define TRACE_IS_CHAINED(u) ((((uptr)u) & TRACE_MAGIC_MASK) == TRACE_MAGIC_MASK)
-
 const int kMsanParamTlsSizeInWords = 100;
 const int kMsanRetvalTlsSizeInWords = 100;
 
@@ -59,7 +53,7 @@ void InstallTrapHandler();
 void InstallAtExitHandler();
 void ReplaceOperatorsNewAndDelete();
 
-const char *GetOriginDescrIfStack(u32 id, uptr *pc);
+const char *GetStackOriginDescr(u32 id, uptr *pc);
 
 void EnterSymbolizer();
 void ExitSymbolizer();
