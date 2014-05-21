@@ -808,7 +808,8 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     }
   }
 
-  coff_section->Relocations.push_back(Reloc);
+  if (TargetObjectWriter->recordRelocation(Fixup))
+    coff_section->Relocations.push_back(Reloc);
 }
 
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
