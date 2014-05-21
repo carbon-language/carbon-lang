@@ -1,4 +1,4 @@
-//===- lld/Core/Simple.h - Simple implementations of Atom and File --------===//
+//===- lld/ReaderWriter/Simple.h - Simple implementations of Atom and File ===//
 //
 //                             The LLVM Linker
 //
