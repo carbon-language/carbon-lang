@@ -199,7 +199,7 @@ class DwarfDebug : public AsmPrinterHandler {
   ScopeVariablesMap ScopeVariables;
 
   // Collection of abstract variables.
-  DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
+  DenseMap<const MDNode *, std::unique_ptr<DbgVariable>> AbstractVariables;
 
   // Collection of DebugLocEntry. Stored in a linked list so that DIELocLists
   // can refer to them in spite of insertions into this list.
@@ -336,6 +336,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
+  DbgVariable *findAbstractVariable(DIVariable &Var, const MDNode *Scope);
 
   /// \brief Find DIE for the given subprogram and attach appropriate
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global

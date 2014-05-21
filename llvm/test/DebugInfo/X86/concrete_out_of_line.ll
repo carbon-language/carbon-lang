@@ -39,6 +39,8 @@
 ; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
 ; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NOT:     DW_AT_inline
+; CHECK-NOT: DW_TAG
+; CHECK: [[D1_THIS_ABS:0x........]]: DW_TAG_formal_parameter
 ; CHECK: [[D2_ABS]]: DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
 ; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
@@ -52,6 +54,7 @@
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
 ; CHECK: DW_TAG_formal_parameter
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
 ; CHECK: DW_TAG_inlined_subroutine
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS]]}
 
