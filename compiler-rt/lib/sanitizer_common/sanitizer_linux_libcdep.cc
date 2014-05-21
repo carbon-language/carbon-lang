@@ -312,7 +312,9 @@ uptr ThreadDescriptorSize() {
     int minor = internal_simple_strtoll(buf + 8, &end, 10);
     if (end != buf + 8 && (*end == '\0' || *end == '.')) {
       /* sizeof(struct thread) values from various glibc versions.  */
-      if (minor <= 3)
+      if (SANITIZER_X32)
+        val = 1728;  // Assume only one particular version for x32.
+      else if (minor <= 3)
         val = FIRST_32_SECOND_64(1104, 1696);
       else if (minor == 4)
         val = FIRST_32_SECOND_64(1120, 1728);

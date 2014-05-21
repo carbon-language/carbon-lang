@@ -69,6 +69,12 @@
 # define FIRST_32_SECOND_64(a, b) (a)
 #endif
 
+#if defined(__x86_64__) && !defined(_LP64)
+# define SANITIZER_X32 1
+#else
+# define SANITIZER_X32 0
+#endif
+
 // By default we allow to use SizeClassAllocator64 on 64-bit platform.
 // But in some cases (e.g. AArch64's 39-bit address space) SizeClassAllocator64
 // does not work well and we need to fallback to SizeClassAllocator32.
