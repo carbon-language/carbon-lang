@@ -4,7 +4,6 @@
 // RUN: ASAN_OPTIONS=coverage=1 %run %t | FileCheck %s --check-prefix=CHECK-success
 // RUN: ASAN_OPTIONS=coverage=0 %run %t | FileCheck %s --check-prefix=CHECK-fail
 // RUN: [ "$(cat test.sancov.packed)" == "test" ]
-// RUN: [ "$(stat -c %a test.sancov.packed)" == "640" ]
 // RUN: cd .. && rm -rf %T/coverage-maybe-open-file
 
 #include <stdio.h>
