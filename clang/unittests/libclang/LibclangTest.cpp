@@ -240,6 +240,74 @@ TEST(libclang, VirtualFileOverlay_SharedPrefix) {
   T.map("/path/foobarbaz.h", "/real/foobarbaz.h");
 }
 
+TEST(libclang, VirtualFileOverlay_AdjacentDirectory) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/dir1\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo.h\",\n"
+      "          'external-contents': \"/real/foo.h\"\n"
+      "        },\n"
+      "        {\n"
+      "          'type': 'directory',\n"
+      "          'name': \"subdir\",\n"
+      "          'contents': [\n"
+      "            {\n"
+      "              'type': 'file',\n"
+      "              'name': \"bar.h\",\n"
+      "              'external-contents': \"/real/bar.h\"\n"
+      "            }\n"
+      "          ]\n"
+      "        }\n"
+      "      ]\n"
+      "    },\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/path/dir2\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"baz.h\",\n"
+      "          'external-contents': \"/real/baz.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/path/dir1/foo.h", "/real/foo.h");
+  T.map("/path/dir1/subdir/bar.h", "/real/bar.h");
+  T.map("/path/dir2/baz.h", "/real/baz.h");
+}
+
+TEST(libclang, VirtualFileOverlay_TopLevel) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "    {\n"
+      "      'type': 'directory',\n"
+      "      'name': \"/\",\n"
+      "      'contents': [\n"
+      "        {\n"
+      "          'type': 'file',\n"
+      "          'name': \"foo.h\",\n"
+      "          'external-contents': \"/real/foo.h\"\n"
+      "        }\n"
+      "      ]\n"
+      "    }\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+  T.map("/foo.h", "/real/foo.h");
+}
+
 TEST(libclang, ModuleMapDescriptor) {
   const char *Contents =
     "framework module TestFrame {\n"

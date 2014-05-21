@@ -862,72 +862,25 @@ void YAMLVFSWriter::addFileMapping(StringRef VirtualPath, StringRef RealPath) {
   Mappings.emplace_back(VirtualPath, RealPath);
 }
 
-ArrayRef<YAMLVFSWriter::MapEntry>
-YAMLVFSWriter::printDirNodes(llvm::raw_ostream &OS, ArrayRef<MapEntry> Entries,
-                             StringRef ParentPath, unsigned Indent) {
-  while (!Entries.empty()) {
-    const MapEntry &Entry = Entries.front();
-    OS.indent(Indent) << "{\n";
-    Indent += 2;
-    OS.indent(Indent) << "'type': 'directory',\n";
-    StringRef DirName =
-        containedPart(ParentPath, sys::path::parent_path(Entry.VPath));
-    OS.indent(Indent)
-        << "'name': \"" << llvm::yaml::escape(DirName) << "\",\n";
-    OS.indent(Indent) << "'contents': [\n";
-    Entries = printContents(OS, Entries, Indent + 2);
-    OS.indent(Indent) << "]\n";
-    Indent -= 2;
-    OS.indent(Indent) << '}';
-    if (Entries.empty()) {
-      OS << '\n';
-      break;
-    }
-    StringRef NextVPath = Entries.front().VPath;
-    if (!containedIn(ParentPath, NextVPath)) {
-      OS << '\n';
-      break;
-    }
-    OS << ",\n";
-  }
-  return Entries;
+namespace {
+class JSONWriter {
+  llvm::raw_ostream &OS;
+  SmallVector<StringRef, 16> DirStack;
+  inline unsigned getDirIndent() { return 4 * DirStack.size(); }
+  inline unsigned getFileIndent() { return 4 * (DirStack.size() + 1); }
+  bool containedIn(StringRef Parent, StringRef Path);
+  StringRef containedPart(StringRef Parent, StringRef Path);
+  void startDirectory(StringRef Path);
+  void endDirectory();
+  void writeEntry(StringRef VPath, StringRef RPath);
+
+public:
+  JSONWriter(llvm::raw_ostream &OS) : OS(OS) {}
+  void write(ArrayRef<YAMLVFSEntry> Entries, Optional<bool> IsCaseSensitive);
+};
 }
 
-ArrayRef<YAMLVFSWriter::MapEntry>
-YAMLVFSWriter::printContents(llvm::raw_ostream &OS, ArrayRef<MapEntry> Entries,
-                             unsigned Indent) {
-  using namespace llvm::sys;
-  while (!Entries.empty()) {
-    const MapEntry &Entry = Entries.front();
-    Entries = Entries.slice(1);
-    StringRef ParentPath = path::parent_path(Entry.VPath);
-    StringRef VName = path::filename(Entry.VPath);
-    OS.indent(Indent) << "{\n";
-    Indent += 2;
-    OS.indent(Indent) << "'type': 'file',\n";
-    OS.indent(Indent) << "'name': \"" << llvm::yaml::escape(VName) << "\",\n";
-    OS.indent(Indent) << "'external-contents': \""
-                      << llvm::yaml::escape(Entry.RPath) << "\"\n";
-    Indent -= 2;
-    OS.indent(Indent) << '}';
-    if (Entries.empty()) {
-      OS << '\n';
-      break;
-    }
-    StringRef NextVPath = Entries.front().VPath;
-    if (!containedIn(ParentPath, NextVPath)) {
-      OS << '\n';
-      break;
-    }
-    OS << ",\n";
-    if (path::parent_path(NextVPath) != ParentPath) {
-      Entries = printDirNodes(OS, Entries, ParentPath, Indent);
-    }
-  }
-  return Entries;
-}
-
-bool YAMLVFSWriter::containedIn(StringRef Parent, StringRef Path) {
+bool JSONWriter::containedIn(StringRef Parent, StringRef Path) {
   using namespace llvm::sys;
   // Compare each path component.
   auto IParent = path::begin(Parent), EParent = path::end(Parent);
@@ -940,31 +893,89 @@ bool YAMLVFSWriter::containedIn(StringRef Parent, StringRef Path) {
   return IParent == EParent;
 }
 
-StringRef YAMLVFSWriter::containedPart(StringRef Parent, StringRef Path) {
+StringRef JSONWriter::containedPart(StringRef Parent, StringRef Path) {
+  assert(!Parent.empty());
   assert(containedIn(Parent, Path));
-  if (Parent.empty())
-    return Path;
   return Path.slice(Parent.size() + 1, StringRef::npos);
+}
+
+void JSONWriter::startDirectory(StringRef Path) {
+  StringRef Name =
+      DirStack.empty() ? Path : containedPart(DirStack.back(), Path);
+  DirStack.push_back(Path);
+  unsigned Indent = getDirIndent();
+  OS.indent(Indent) << "{\n";
+  OS.indent(Indent + 2) << "'type': 'directory',\n";
+  OS.indent(Indent + 2) << "'name': \"" << llvm::yaml::escape(Name) << "\",\n";
+  OS.indent(Indent + 2) << "'contents': [\n";
+}
+
+void JSONWriter::endDirectory() {
+  unsigned Indent = getDirIndent();
+  OS.indent(Indent + 2) << "]\n";
+  OS.indent(Indent) << "}";
+
+  DirStack.pop_back();
+}
+
+void JSONWriter::writeEntry(StringRef VPath, StringRef RPath) {
+  unsigned Indent = getFileIndent();
+  OS.indent(Indent) << "{\n";
+  OS.indent(Indent + 2) << "'type': 'file',\n";
+  OS.indent(Indent + 2) << "'name': \"" << llvm::yaml::escape(VPath) << "\",\n";
+  OS.indent(Indent + 2) << "'external-contents': \""
+                        << llvm::yaml::escape(RPath) << "\"\n";
+  OS.indent(Indent) << "}";
+}
+
+void JSONWriter::write(ArrayRef<YAMLVFSEntry> Entries,
+                       Optional<bool> IsCaseSensitive) {
+  using namespace llvm::sys;
+
+  OS << "{\n"
+        "  'version': 0,\n";
+  if (IsCaseSensitive.hasValue())
+    OS << "  'case-sensitive': '"
+       << (IsCaseSensitive.getValue() ? "true" : "false") << "',\n";
+  OS << "  'roots': [\n";
+
+  if (Entries.empty())
+    return;
+
+  const YAMLVFSEntry &Entry = Entries.front();
+  startDirectory(path::parent_path(Entry.VPath));
+  writeEntry(path::filename(Entry.VPath), Entry.RPath);
+
+  for (const auto &Entry : Entries.slice(1)) {
+    StringRef Dir = path::parent_path(Entry.VPath);
+    if (Dir == DirStack.back())
+      OS << ",\n";
+    else {
+      while (!DirStack.empty() && !containedIn(DirStack.back(), Dir)) {
+        OS << "\n";
+        endDirectory();
+      }
+      OS << ",\n";
+      startDirectory(Dir);
+    }
+    writeEntry(path::filename(Entry.VPath), Entry.RPath);
+  }
+
+  while (!DirStack.empty()) {
+    OS << "\n";
+    endDirectory();
+  }
+
+  OS << "\n"
+     << "  ]\n"
+     << "}\n";
 }
 
 void YAMLVFSWriter::write(llvm::raw_ostream &OS) {
   std::sort(Mappings.begin(), Mappings.end(),
-            [](const MapEntry &LHS, const MapEntry &RHS) {
+            [](const YAMLVFSEntry &LHS, const YAMLVFSEntry &RHS) {
     return LHS.VPath < RHS.VPath;
   });
 
-  OS << "{\n"
-        "  'version': 0,\n";
-  if (IsCaseSensitive.hasValue()) {
-    OS << "  'case-sensitive': '";
-    if (IsCaseSensitive.getValue())
-      OS << "true";
-    else
-      OS << "false";
-    OS << "',\n";
-  }
-  OS << "  'roots': [\n";
-  printDirNodes(OS, Mappings, "", 4);
-  OS << "  ]\n"
-     << "}\n";
+  JSONWriter(OS).write(Mappings, IsCaseSensitive);
 }
