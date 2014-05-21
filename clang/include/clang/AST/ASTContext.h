@@ -424,7 +424,9 @@ public:
   typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 1> ParentVector;
 
   /// \brief Maps from a node to its parents.
-  typedef llvm::DenseMap<const void *, ParentVector> ParentMap;
+  typedef llvm::DenseMap<const void *,
+                         llvm::PointerUnion<ast_type_traits::DynTypedNode *,
+                                            ParentVector *>> ParentMap;
 
   /// \brief Returns the parents of the given node.
   ///
@@ -2293,6 +2295,7 @@ private:
   friend class DeclContext;
   friend class DeclarationNameTable;
   void ReleaseDeclContextMaps();
+  void ReleaseParentMapEntries();
 
   std::unique_ptr<ParentMap> AllParents;
 

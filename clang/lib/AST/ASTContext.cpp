@@ -755,6 +755,8 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
 }
 
 ASTContext::~ASTContext() {
+  ReleaseParentMapEntries();
+
   // Release the DenseMaps associated with DeclContext objects.
   // FIXME: Is this the ideal solution?
   ReleaseDeclContextMaps();
@@ -787,6 +789,18 @@ ASTContext::~ASTContext() {
     A->second->~AttrVec();
 
   llvm::DeleteContainerSeconds(MangleNumberingContexts);
+}
+
+void ASTContext::ReleaseParentMapEntries() {
+  if (!AllParents) return;
+  for (const auto &Entry : *AllParents) {
+    if (Entry.second.is<ast_type_traits::DynTypedNode *>()) {
+      delete Entry.second.get<ast_type_traits::DynTypedNode *>();
+    } else {
+      assert(Entry.second.is<ParentVector *>());
+      delete Entry.second.get<ParentVector *>();
+    }
+  }
 }
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
@@ -8162,7 +8176,7 @@ namespace {
     bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
       if (!Node)
         return true;
-      if (ParentStack.size() > 0)
+      if (ParentStack.size() > 0) {
         // FIXME: Currently we add the same parent multiple times, for example
         // when we visit all subexpressions of template instantiations; this is
         // suboptimal, bug benign: the only way to visit those is with
@@ -8171,7 +8185,23 @@ namespace {
         // map. The main problem there is to implement hash functions /
         // comparison operators for all types that DynTypedNode supports that
         // do not have pointer identity.
-        (*Parents)[Node].push_back(ParentStack.back());
+        auto &NodeOrVector = (*Parents)[Node];
+        if (NodeOrVector.isNull()) {
+          NodeOrVector = new ast_type_traits::DynTypedNode(ParentStack.back());
+        } else if (NodeOrVector
+                       .template is<ast_type_traits::DynTypedNode *>()) {
+          auto *Node =
+              NodeOrVector.template get<ast_type_traits::DynTypedNode *>();
+          auto *Vector = new ASTContext::ParentVector(1, *Node);
+          Vector->push_back(ParentStack.back());
+          NodeOrVector = Vector;
+          delete Node;
+        } else {
+          assert(NodeOrVector.template is<ASTContext::ParentVector *>());
+          NodeOrVector.template get<ASTContext::ParentVector *>()->push_back(
+              ParentStack.back());
+        }
+      }
       ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
       bool Result = (this ->* traverse) (Node);
       ParentStack.pop_back();
@@ -8209,7 +8239,11 @@ ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
   if (I == AllParents->end()) {
     return ParentVector();
   }
-  return I->second;
+  if (I->second.is<ast_type_traits::DynTypedNode *>()) {
+    return ParentVector(1, *I->second.get<ast_type_traits::DynTypedNode *>());
+  }
+  const auto &Parents = *I->second.get<ParentVector *>();
+  return ParentVector(Parents.begin(), Parents.end());
 }
 
 bool
