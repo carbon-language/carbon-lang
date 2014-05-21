@@ -86,7 +86,36 @@ Host::ThreadCreated (const char *thread_name)
 std::string
 Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 {
+    struct kinfo_proc *kp = nullptr;
+    size_t len = 0;
+    int error;
+    int name[4] = {
+        CTL_KERN, KERN_PROC, KERN_PROC_PID | KERN_PROC_INC_THREAD, (int)pid
+    };
+
+    while (1) {
+        error = sysctl(name, 4, kp, &len, nullptr, 0);
+        if (kp == nullptr || (error != 0 && errno == ENOMEM)) {
+            // Add extra space in case threads are added before next call.
+            len += sizeof(*kp) + len / 10;
+            kp = (struct kinfo_proc *)reallocf(kp, len);
+            if (kp == nullptr)
+                return std::string();
+            continue;
+        }
+        if (error != 0)
+            len = 0;
+        break;
+    }
+
     std::string thread_name;
+    for (size_t i = 0; i < len / sizeof(*kp); i++) {
+        if (kp[i].ki_tid == (int)tid) {
+            thread_name = kp[i].ki_tdname;
+            break;
+        }
+    }
+    free(kp);
     return thread_name;
 }
 
