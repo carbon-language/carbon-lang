@@ -125,6 +125,7 @@ int main(int argc, const char **argv) {
     while (llvm::Optional<std::string> Line = LE.readLine()) {
       QueryRef Q = QueryParser::parse(*Line, QS);
       Q->run(llvm::outs(), QS);
+      llvm::outs().flush();
     }
   }
 
