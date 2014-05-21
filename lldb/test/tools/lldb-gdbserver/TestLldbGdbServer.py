@@ -26,6 +26,9 @@ class LldbGdbServerTestCase(TestBase):
     _LOGGING_LEVEL = logging.WARNING
     # _LOGGING_LEVEL = logging.DEBUG
 
+    _STARTUP_ATTACH = "attach"
+    _STARTUP_LAUNCH = "launch"
+
     def setUp(self):
         TestBase.setUp(self)
         FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -33,6 +36,7 @@ class LldbGdbServerTestCase(TestBase):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self._LOGGING_LEVEL)
         self.test_sequence = GdbRemoteTestSequence(self.logger)
+        self.set_inferior_startup_launch()
 
     def init_llgs_test(self):
         self.debug_monitor_exe = get_lldb_gdbserver_exe()
@@ -66,6 +70,12 @@ class LldbGdbServerTestCase(TestBase):
         sock.connect(('localhost', self.port))
         return sock
 
+    def set_inferior_startup_launch(self):
+        self._inferior_startup = self._STARTUP_LAUNCH
+
+    def set_inferior_startup_attach(self):
+        self._inferior_startup = self._STARTUP_ATTACH
+
     def start_server(self, attach_pid=None):
         # Create the command line
         commandline = "{} localhost:{}".format(self.debug_monitor_exe, self.port)
@@ -97,16 +107,66 @@ class LldbGdbServerTestCase(TestBase):
 
         return server
 
-    def launch_process_for_attach(self,sleep_seconds=3):
+    def launch_process_for_attach(self,inferior_args=None, sleep_seconds=3):
         # We're going to start a child process that the debug monitor stub can later attach to.
         # This process needs to be started so that it just hangs around for a while.  We'll
         # have it sleep.
         exe_path = os.path.abspath("a.out")
+
         args = [exe_path]
+        if inferior_args:
+            args.extend(inferior_args)
         if sleep_seconds:
             args.append("sleep:%d" % sleep_seconds)
-            
+
         return subprocess.Popen(args)
+
+    def prep_debug_monitor_and_inferior(self, inferior_args=None, inferior_sleep_seconds=3):
+        """Prep the debug monitor, the inferior, and the expected packet stream.
+
+        Handle the separate cases of using the debug monitor in attach-to-inferior mode
+        and in launch-inferior mode.
+
+        For attach-to-inferior mode, the inferior process is first started, then
+        the debug monitor is started in attach to pid mode (using --attach on the
+        stub command line), and the no-ack-mode setup is appended to the packet
+        stream.  The packet stream is not yet executed, ready to have more expected
+        packet entries added to it.
+
+        For launch-inferior mode, the stub is first started, then no ack mode is
+        setup on the expected packet stream, then the verified launch packets are added
+        to the expected socket stream.  The packet stream is not yet executed, ready
+        to have more expected packet entries added to it.
+
+        The return value is:
+        {inferior:<inferior>, server:<server>}
+        """
+        if self._inferior_startup == self._STARTUP_ATTACH:
+            # Launch the process that we'll use as the inferior.
+            inferior = self.launch_process_for_attach(inferior_args=inferior_args, sleep_seconds=inferior_sleep_seconds)
+            self.assertIsNotNone(inferior)
+            self.assertTrue(inferior.pid > 0)
+            attach_pid = inferior.pid
+        else:
+            attach_pid = None
+            inferior = None
+
+        # Launch the debug monitor stub, attaching to the inferior.
+        server = self.start_server(attach_pid=attach_pid)
+        self.assertIsNotNone(server)
+
+        if self._inferior_startup == self._STARTUP_LAUNCH:
+            # Build launch args
+            launch_args = [os.path.abspath('a.out')]
+            if inferior_args:
+                launch_args.extend(inferior_args)
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        if self._inferior_startup == self._STARTUP_LAUNCH:
+            self.add_verified_launch_packets(launch_args)
+
+        return {"inferior":inferior, "server":server}
 
     def add_no_ack_remote_stream(self):
         self.test_sequence.add_log_lines(
@@ -750,16 +810,8 @@ class LldbGdbServerTestCase(TestBase):
         self.qRegisterInfo_contains_at_least_one_register_set()
 
 
-    def qThreadInfo_contains_thread_after_launch(self):
-        server = self.start_server()
-        self.assertIsNotNone(server)
-
-        # Build launch args
-        launch_args = [os.path.abspath('a.out')]
-
-        # Build the expected protocol stream
-        self.add_no_ack_remote_stream()
-        self.add_verified_launch_packets(launch_args)
+    def qThreadInfo_contains_thread(self):
+        procs = self.prep_debug_monitor_and_inferior()
         self.add_threadinfo_collection_packets()
 
         # Run the packet stream.
@@ -776,31 +828,45 @@ class LldbGdbServerTestCase(TestBase):
 
     @debugserver_test
     @dsym_test
-    def test_qThreadInfo_contains_thread_after_launch_debugserver_dsym(self):
+    def test_qThreadInfo_contains_thread_launch_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
-        self.qThreadInfo_contains_thread_after_launch()
+        self.set_inferior_startup_launch()
+        self.qThreadInfo_contains_thread()
 
 
     @llgs_test
     @dwarf_test
     @unittest2.expectedFailure()
-    def test_qThreadInfo_contains_thread_after_launch_llgs_dwarf(self):
+    def test_qThreadInfo_contains_thread_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
-        self.qThreadInfo_contains_thread_after_launch()
+        self.set_inferior_startup_launch()
+        self.qThreadInfo_contains_thread()
 
 
-    def qThreadInfo_matches_qC_after_launch(self):
-        server = self.start_server()
-        self.assertIsNotNone(server)
+    @debugserver_test
+    @dsym_test
+    def test_qThreadInfo_contains_thread_attach_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_attach()
+        self.qThreadInfo_contains_thread()
 
-        # Build launch args
-        launch_args = [os.path.abspath('a.out')]
 
-        # Build the expected protocol stream
-        self.add_no_ack_remote_stream()
-        self.add_verified_launch_packets(launch_args)
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qThreadInfo_contains_thread_attach_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_attach()
+        self.qThreadInfo_contains_thread()
+
+
+    def qThreadInfo_matches_qC(self):
+        procs = self.prep_debug_monitor_and_inferior()
+
         self.add_threadinfo_collection_packets()
         self.test_sequence.add_log_lines(
             ["read packet: $qC#00",
@@ -829,19 +895,40 @@ class LldbGdbServerTestCase(TestBase):
 
     @debugserver_test
     @dsym_test
-    def test_qThreadInfo_matches_qC_after_launch_debugserver_dsym(self):
+    def test_qThreadInfo_matches_qC_launch_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
-        self.qThreadInfo_matches_qC_after_launch()
+        self.set_inferior_startup_launch()
+        self.qThreadInfo_matches_qC()
 
 
     @llgs_test
     @dwarf_test
     @unittest2.expectedFailure()
-    def test_qThreadInfo_matches_qC_after_launch_llgs_dwarf(self):
+    def test_qThreadInfo_matches_qC_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
-        self.qThreadInfo_matches_qC_after_launch()
+        self.set_inferior_startup_launch()
+        self.qThreadInfo_matches_qC()
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qThreadInfo_matches_qC_attach_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_attach()
+        self.qThreadInfo_matches_qC()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qThreadInfo_matches_qC_attach_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_attach()
+        self.qThreadInfo_matches_qC()
 
 
 if __name__ == '__main__':
