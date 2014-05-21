@@ -6,7 +6,8 @@
 // RUN: %run %t foo 2>&1     | FileCheck %s --check-prefix=CHECK-foo
 // RUN: %run %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
 // RUN: %run %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
-// RUN: not %run %t foo bar 1 2  2>&1 | FileCheck %s --check-prefix=CHECK-report
+// RUN: not %run %t foo bar 4    2>&1 | FileCheck %s --check-prefix=CHECK-report
+// RUN: not %run %t foo bar 4 5  2>&1 | FileCheck %s --check-prefix=CHECK-segv
 // RUN: cd .. && rm coverage -r
 //
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
@@ -33,6 +34,10 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[i], "bar"))
       bar();
   }
+  if (argc == 5) {
+    static volatile char *zero = 0;
+    *zero = 0;  // SEGV if argc == 5.
+  }
   return G[argc];  // Buffer overflow if argc >= 4.
 }
 #endif
@@ -55,3 +60,6 @@ int main(int argc, char **argv) {
 //
 // CHECK-report: AddressSanitizer: global-buffer-overflow
 // CHECK-report: PCs written
+//
+// CHECK-segv: AddressSanitizer: SEGV
+// CHECK-segv: PCs written
