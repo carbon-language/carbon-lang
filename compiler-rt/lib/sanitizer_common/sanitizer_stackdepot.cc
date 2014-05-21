@@ -83,7 +83,7 @@ struct StackDepotNode {
   typedef StackDepotHandle handle_type;
 };
 
-COMPILER_CHECK(StackDepotNode::kMaxUseCount == kStackDepotMaxUseCount);
+COMPILER_CHECK(StackDepotNode::kMaxUseCount == (u32)kStackDepotMaxUseCount);
 
 u32 StackDepotHandle::id() { return node_->id; }
 int StackDepotHandle::use_count() {

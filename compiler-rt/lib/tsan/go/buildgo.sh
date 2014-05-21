@@ -20,6 +20,7 @@ SRCS="
 	../../sanitizer_common/sanitizer_deadlock_detector2.cc
 	../../sanitizer_common/sanitizer_flags.cc
 	../../sanitizer_common/sanitizer_libc.cc
+	../../sanitizer_common/sanitizer_persistent_allocator.cc
 	../../sanitizer_common/sanitizer_printf.cc
 	../../sanitizer_common/sanitizer_suppressions.cc
 	../../sanitizer_common/sanitizer_thread_registry.cc
