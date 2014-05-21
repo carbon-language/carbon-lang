@@ -1,12 +1,10 @@
 ; REQUIRES: object-emission
 
-; RUN: llc < %s -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc %s -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=SINGLE %s
-; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_COMMON %s
 
-; RUN: llc < %s -split-dwarf=Enable -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc %s -split-dwarf=Enable -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
-; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_COMMON --check-prefix=OBJ_FISSION %s
 
 ; Generated from bar.cpp:
 
@@ -162,20 +160,6 @@
 ; CHECK-NEXT: [[WOMBAT]] "wombat"
 ; CHECK-NEXT: [[FLUFFY]] "echidna::capybara::mongoose::fluffy"
 ; CHECK-NEXT: [[WALRUS]] "walrus"
-
-; Make sure debug_types are in comdat groups. This could be more rigid to check
-; that they're the right comdat groups (each type in a separate comdat group,
-; etc)
-; OBJ_COMMON: Name: .debug_types (
-; OBJ_COMMON-NOT: }
-; OBJ_COMMON: SHF_GROUP
-
-; Fission type units don't go in comdat groups, since their linker is debug
-; aware it's handled using the debug info semantics rather than raw ELF object
-; semantics.
-; OBJ_FISSION: Name: .debug_types.dwo (
-; OBJ_FISSION-NOT: SHF_GROUP
-; OBJ_FISSION: }
 
 %struct.bar = type { i8 }
 %"class.echidna::capybara::mongoose::fluffy" = type { i32, i32 }
