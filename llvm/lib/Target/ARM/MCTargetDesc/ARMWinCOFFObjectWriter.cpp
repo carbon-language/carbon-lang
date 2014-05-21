@@ -27,6 +27,8 @@ public:
 
   unsigned getRelocType(const MCValue &Target, const MCFixup &Fixup,
                         bool IsCrossSection) const override;
+
+  bool recordRelocation(const MCFixup &) const override;
 };
 
 unsigned ARMWinCOFFObjectWriter::getRelocType(const MCValue &Target,
@@ -61,11 +63,13 @@ unsigned ARMWinCOFFObjectWriter::getRelocType(const MCValue &Target,
   case ARM::fixup_arm_thumb_blx:
     return COFF::IMAGE_REL_ARM_BLX23T;
   case ARM::fixup_t2_movw_lo16:
-    return COFF::IMAGE_REL_ARM_MOV32T;
   case ARM::fixup_t2_movt_hi16:
-    llvm_unreachable("High-word for pair-wise relocations are contiguously "
-                     "addressed as an IMAGE_REL_ARM_MOV32T relocation");
+    return COFF::IMAGE_REL_ARM_MOV32T;
   }
+}
+
+bool ARMWinCOFFObjectWriter::recordRelocation(const MCFixup &Fixup) const {
+  return static_cast<unsigned>(Fixup.getKind()) != ARM::fixup_t2_movt_hi16;
 }
 }
 
