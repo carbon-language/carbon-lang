@@ -1,4 +1,8 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600 --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+
+
+@b = internal addrspace(2) constant [1 x i16] [ i16 7 ], align 2
 
 ; XXX: Test on SI once 64-bit adds are supportes.
 
@@ -6,12 +10,12 @@
 
 ; FUNC-LABEL: @float
 
-; R600-DAG: MOV {{\** *}}T2.X
-; R600-DAG: MOV {{\** *}}T3.X
-; R600-DAG: MOV {{\** *}}T4.X
-; R600-DAG: MOV {{\** *}}T5.X
-; R600-DAG: MOV {{\** *}}T6.X
-; R600: MOVA_INT
+; EG-DAG: MOV {{\** *}}T2.X
+; EG-DAG: MOV {{\** *}}T3.X
+; EG-DAG: MOV {{\** *}}T4.X
+; EG-DAG: MOV {{\** *}}T5.X
+; EG-DAG: MOV {{\** *}}T6.X
+; EG: MOVA_INT
 
 define void @float(float addrspace(1)* %out, i32 %index) {
 entry:
@@ -25,12 +29,12 @@ entry:
 
 ; FUNC-LABEL: @i32
 
-; R600-DAG: MOV {{\** *}}T2.X
-; R600-DAG: MOV {{\** *}}T3.X
-; R600-DAG: MOV {{\** *}}T4.X
-; R600-DAG: MOV {{\** *}}T5.X
-; R600-DAG: MOV {{\** *}}T6.X
-; R600: MOVA_INT
+; EG-DAG: MOV {{\** *}}T2.X
+; EG-DAG: MOV {{\** *}}T3.X
+; EG-DAG: MOV {{\** *}}T4.X
+; EG-DAG: MOV {{\** *}}T5.X
+; EG-DAG: MOV {{\** *}}T6.X
+; EG: MOVA_INT
 
 define void @i32(i32 addrspace(1)* %out, i32 %index) {
 entry:
