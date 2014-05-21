@@ -107,6 +107,11 @@ class BEQZC_ENC : CMP_BRANCH_OFF21_FM<0b110110>;
 class BGEZALC_ENC : CMP_BRANCH_OFF16_FM<0b000110>;
 class BNEZC_ENC : CMP_BRANCH_OFF21_FM<0b111110>;
 
+class BC1EQZ_ENC : COP1_BCCZ_FM<OPCODE5_BC1EQZ>;
+class BC1NEZ_ENC : COP1_BCCZ_FM<OPCODE5_BC1NEZ>;
+class BC2EQZ_ENC : COP2_BCCZ_FM<OPCODE5_BC2EQZ>;
+class BC2NEZ_ENC : COP2_BCCZ_FM<OPCODE5_BC2NEZ>;
+
 class JIALC_ENC : JMP_IDX_COMPACT_FM<0b111110>;
 class JIC_ENC   : JMP_IDX_COMPACT_FM<0b110110>;
 
@@ -326,6 +331,26 @@ class BGTZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgtzc", brtarget, GPR32Opnd>;
 class BEQZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"beqzc", brtarget21, GPR32Opnd>;
 class BNEZC_DESC : CMP_CBR_EQNE_Z_DESC_BASE<"bnezc", brtarget21, GPR32Opnd>;
 
+class COP1_BCCZ_DESC_BASE<string instr_asm> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins FGR64Opnd:$ft, brtarget:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = instr_asm;
+  bit hasDelaySlot = 1;
+}
+
+class BC1EQZ_DESC : COP1_BCCZ_DESC_BASE<"bc1eqz $ft, $offset">;
+class BC1NEZ_DESC : COP1_BCCZ_DESC_BASE<"bc1nez $ft, $offset">;
+
+class COP2_BCCZ_DESC_BASE<string instr_asm> : BRANCH_DESC_BASE {
+  dag InOperandList = (ins COP2Opnd:$ct, brtarget:$offset);
+  dag OutOperandList = (outs);
+  string AsmString = instr_asm;
+  bit hasDelaySlot = 1;
+}
+
+class BC2EQZ_DESC : COP2_BCCZ_DESC_BASE<"bc2eqz $ct, $offset">;
+class BC2NEZ_DESC : COP2_BCCZ_DESC_BASE<"bc2nez $ct, $offset">;
+
 class JMP_IDX_COMPACT_DESC_BASE<string opstr, DAGOperand opnd,
                                 RegisterOperand GPROpnd> {
   dag InOperandList = (ins GPROpnd:$rt, opnd:$offset);
@@ -484,10 +509,10 @@ def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
 def AUIPC : AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
 def BALC : BALC_ENC, BALC_DESC, ISA_MIPS32R6;
-def BC1EQZ;
-def BC1NEZ;
-def BC2EQZ;
-def BC2NEZ;
+def BC1EQZ : BC1EQZ_ENC, BC1EQZ_DESC, ISA_MIPS32R6;
+def BC1NEZ : BC1NEZ_ENC, BC1NEZ_DESC, ISA_MIPS32R6;
+def BC2EQZ : BC2EQZ_ENC, BC2EQZ_DESC, ISA_MIPS32R6;
+def BC2NEZ : BC2NEZ_ENC, BC2NEZ_DESC, ISA_MIPS32R6;
 def BC : BC_ENC, BC_DESC, ISA_MIPS32R6;
 def BEQC : BEQC_ENC, BEQC_DESC, ISA_MIPS32R6;
 def BEQZALC : BEQZALC_ENC, BEQZALC_DESC, ISA_MIPS32R6;
