@@ -537,16 +537,43 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                  TD->getPrefTypeAlignment(CFP->getType()));
   }
 
-  if (Init->getType()->isAggregateType()) {
+  Type *InitTy = Init->getType();
+  if (StructType *ST = dyn_cast<StructType>(InitTy)) {
+    const StructLayout *SL = TD->getStructLayout(ST);
+
     EVT PtrVT = InitPtr.getValueType();
-    unsigned NumElements = Init->getType()->getArrayNumElements();
+    SmallVector<SDValue, 8> Chains;
+
+    for (unsigned I = 0, N = ST->getNumElements(); I != N; ++I) {
+      SDValue Offset = DAG.getConstant(SL->getElementOffset(I), PtrVT);
+      SDValue Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, InitPtr, Offset);
+
+      Constant *Elt = Init->getAggregateElement(I);
+      Chains.push_back(LowerConstantInitializer(Elt, GV, Ptr, Chain, DAG));
+    }
+
+    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
+  }
+
+  if (SequentialType *SeqTy = dyn_cast<SequentialType>(InitTy)) {
+    EVT PtrVT = InitPtr.getValueType();
+
+    unsigned NumElements;
+    if (ArrayType *AT = dyn_cast<ArrayType>(SeqTy))
+      NumElements = AT->getNumElements();
+    else if (VectorType *VT = dyn_cast<VectorType>(SeqTy))
+      NumElements = VT->getNumElements();
+    else
+      llvm_unreachable("Unexpected type");
+
+    unsigned EltSize = TD->getTypeAllocSize(SeqTy->getElementType());
     SmallVector<SDValue, 8> Chains;
     for (unsigned i = 0; i < NumElements; ++i) {
-      SDValue Offset = DAG.getConstant(i * TD->getTypeAllocSize(
-          Init->getType()->getArrayElementType()), PtrVT);
+      SDValue Offset = DAG.getConstant(i * EltSize, PtrVT);
       SDValue Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, InitPtr, Offset);
-      Chains.push_back(LowerConstantInitializer(Init->getAggregateElement(i),
-                       GV, Ptr, Chain, DAG));
+
+      Constant *Elt = Init->getAggregateElement(i);
+      Chains.push_back(LowerConstantInitializer(Elt, GV, Ptr, Chain, DAG));
     }
 
     return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);

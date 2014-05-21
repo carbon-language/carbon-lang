@@ -43,3 +43,30 @@ entry:
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
+
+
+%struct.foo = type { float, [5 x i32] }
+
+@struct_foo_gv = internal addrspace(2) unnamed_addr constant [1 x %struct.foo] [ %struct.foo { float 16.0, [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4] } ]
+
+; FUNC-LABEL: @struct_foo_gv_load
+
+define void @struct_foo_gv_load(i32 addrspace(1)* %out, i32 %index) {
+  %gep = getelementptr inbounds [1 x %struct.foo] addrspace(2)* @struct_foo_gv, i32 0, i32 0, i32 1, i32 %index
+  %load = load i32 addrspace(2)* %gep, align 4
+  store i32 %load, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+@array_v1_gv = internal addrspace(2) constant [4 x <1 x i32>] [ <1 x i32> <i32 1>,
+                                                                <1 x i32> <i32 2>,
+                                                                <1 x i32> <i32 3>,
+                                                                <1 x i32> <i32 4> ]
+
+; FUNC-LABEL: @array_v1_gv_load
+define void @array_v1_gv_load(<1 x i32> addrspace(1)* %out, i32 %index) {
+  %gep = getelementptr inbounds [4 x <1 x i32>] addrspace(2)* @array_v1_gv, i32 0, i32 %index
+  %load = load <1 x i32> addrspace(2)* %gep, align 4
+  store <1 x i32> %load, <1 x i32> addrspace(1)* %out, align 4
+  ret void
+}
