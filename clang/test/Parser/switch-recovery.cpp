@@ -170,3 +170,53 @@ void missing_statement_default(int x) {
     default: // expected-error {{label at end of compound statement: expected statement}}
   }
 }
+
+void pr19022_1() {
+  switch (int x)  // expected-error {{variable declaration in condition must have an initializer}}
+  case v: ;  // expected-error {{use of undeclared identifier 'v'}}
+}
+
+void pr19022_1a(int x) {
+  switch(x) {
+  case 1  // expected-error{{expected ':' after 'case'}} \
+          // expected-error{{label at end of compound statement: expected statement}}
+  }
+}
+
+void pr19022_1b(int x) {
+  switch(x) {
+  case v  // expected-error{{use of undeclared identifier 'v'}}
+  }
+ }
+
+void pr19022_2() {
+  switch (int x)  // expected-error {{variable declaration in condition must have an initializer}}
+  case v1: case v2: ;  // expected-error {{use of undeclared identifier 'v1'}} \
+                       // expected-error {{use of undeclared identifier 'v2'}}
+}
+
+void pr19022_3(int x) {
+  switch (x)
+  case 1: case v2: ;  // expected-error {{use of undeclared identifier 'v2'}}
+}
+
+int pr19022_4(int x) {
+  switch(x) {
+  case 1  // expected-error{{expected ':' after 'case'}} expected-note{{previous case defined here}}
+  case 1 : return x;  // expected-error{{duplicate case value '1'}}
+  }
+}
+
+void pr19022_5(int x) {
+  switch(x) {
+  case 1: case
+  }  // expected-error{{expected expression}}
+}
+
+namespace pr19022 {
+int baz5() {}
+bool bar0() {
+  switch (int foo0)  //expected-error{{variable declaration in condition must have an initializer}}
+  case bar5: ;  // expected-error{{use of undeclared identifier 'bar5'}}
+}
+}

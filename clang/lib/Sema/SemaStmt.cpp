@@ -702,6 +702,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   assert(SS == getCurFunction()->SwitchStack.back() &&
          "switch stack missing push/pop!");
 
+  if (!BodyStmt) return StmtError();
   SS->setBody(BodyStmt, SwitchLoc);
   getCurFunction()->SwitchStack.pop_back();
 
@@ -1141,8 +1142,9 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     }
   }
 
-  DiagnoseEmptyStmtBody(CondExpr->getLocEnd(), BodyStmt,
-                        diag::warn_empty_switch_body);
+  if (BodyStmt)
+    DiagnoseEmptyStmtBody(CondExpr->getLocEnd(), BodyStmt,
+                          diag::warn_empty_switch_body);
 
   // FIXME: If the case list was broken is some way, we don't have a good system
   // to patch it up.  Instead, just return the whole substmt as broken.

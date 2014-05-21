@@ -612,6 +612,7 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
   do {
     SourceLocation CaseLoc = MissingCase ? Expr.get()->getExprLoc() :
                                            ConsumeToken();  // eat the 'case'.
+    ColonLoc = SourceLocation();
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteCase(getCurScope());
@@ -624,11 +625,21 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
     /// expression.
     ColonProtectionRAIIObject ColonProtection(*this);
 
-    ExprResult LHS(MissingCase ? Expr : ParseConstantExpression());
-    MissingCase = false;
-    if (LHS.isInvalid()) {
-      SkipUntil(tok::colon, StopAtSemi);
-      return StmtError();
+    ExprResult LHS;
+    if (!MissingCase) {
+      LHS = ParseConstantExpression();
+      if (LHS.isInvalid()) {
+        // If constant-expression is parsed unsuccessfully, recover by skipping
+        // current case statement (moving to the colon that ends it).
+        if (SkipUntil(tok::colon, tok::r_brace, StopAtSemi | StopBeforeMatch)) {
+          TryConsumeToken(tok::colon, ColonLoc);
+          continue;
+        }
+        return StmtError();
+      }
+    } else {
+      LHS = Expr;
+      MissingCase = false;
     }
 
     // GNU case range extension.
@@ -638,7 +649,10 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
       Diag(DotDotDotLoc, diag::ext_gnu_case_range);
       RHS = ParseConstantExpression();
       if (RHS.isInvalid()) {
-        SkipUntil(tok::colon, StopAtSemi);
+        if (SkipUntil(tok::colon, tok::r_brace, StopAtSemi | StopBeforeMatch)) {
+          TryConsumeToken(tok::colon, ColonLoc);
+          continue;
+        }
         return StmtError();
       }
     }
@@ -684,8 +698,6 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
     // Handle all case statements.
   } while (Tok.is(tok::kw_case));
 
-  assert(!TopLevelCase.isInvalid() && "Should have parsed at least one case!");
-
   // If we found a non-case statement, start by parsing it.
   StmtResult SubStmt;
 
@@ -693,19 +705,23 @@ StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
     SubStmt = ParseStatement();
   } else {
     // Nicely diagnose the common error "switch (X) { case 4: }", which is
-    // not valid.
-    SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
-    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement)
-      << FixItHint::CreateInsertion(AfterColonLoc, " ;");
-    SubStmt = true;
+    // not valid.  If ColonLoc doesn't point to a valid text location, there was
+    // another parsing error, so avoid producing extra diagnostics.
+    if (ColonLoc.isValid()) {
+      SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
+      Diag(AfterColonLoc, diag::err_label_end_of_compound_statement)
+        << FixItHint::CreateInsertion(AfterColonLoc, " ;");
+    }
+    SubStmt = StmtError();
   }
 
-  // Broken sub-stmt shouldn't prevent forming the case statement properly.
-  if (SubStmt.isInvalid())
-    SubStmt = Actions.ActOnNullStmt(SourceLocation());
-
   // Install the body into the most deeply-nested case.
-  Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, SubStmt.get());
+  if (DeepestParsedCaseStmt) {
+    // Broken sub-stmt shouldn't prevent forming the case statement properly.
+    if (SubStmt.isInvalid())
+      SubStmt = Actions.ActOnNullStmt(SourceLocation());
+    Actions.ActOnCaseStmtBody(DeepestParsedCaseStmt, SubStmt.get());
+  }
 
   // Return the top level parsed statement tree.
   return TopLevelCase;
@@ -1233,15 +1249,6 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   // Pop the scopes.
   InnerScope.Exit();
   SwitchScope.Exit();
-
-  if (Body.isInvalid()) {
-    // FIXME: Remove the case statement list from the Switch statement.
-
-    // Put the synthesized null statement on the same line as the end of switch
-    // condition.
-    SourceLocation SynthesizedNullStmtLocation = Cond.get()->getLocEnd();
-    Body = Actions.ActOnNullStmt(SynthesizedNullStmtLocation);
-  }
 
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.get(), Body.get());
 }
