@@ -6,10 +6,12 @@
 // in a deadlock.
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int glob = 0;
 
 void *worker(void *unused) {
+  sleep(1);
   glob++;
   return NULL;
 }
