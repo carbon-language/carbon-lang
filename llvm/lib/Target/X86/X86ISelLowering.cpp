@@ -7980,7 +7980,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-// This function assumes its argument is a BUILD_VECTOR of constand or
+// This function assumes its argument is a BUILD_VECTOR of constants or
 // undef SDNodes. i.e: ISD::isBuildVectorOfConstantSDNodes(BuildVector) is
 // true.
 static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
@@ -8004,9 +8004,13 @@ static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
       Lane2Cond = !isZero(SndLaneEltCond);
 
     if (Lane1Cond == Lane2Cond || Lane2Cond < 0)
-      MaskValue |= !!Lane1Cond << i;
+      // Lane1Cond != 0, means we want the first argument.
+      // Lane1Cond == 0, means we want the second argument.
+      // The encoding of this argument is 0 for the first argument, 1
+      // for the second. Therefore, invert the condition.
+      MaskValue |= !Lane1Cond << i;
     else if (Lane1Cond < 0)
-      MaskValue |= !!Lane2Cond << i;
+      MaskValue |= !Lane2Cond << i;
     else
       return false;
   }
