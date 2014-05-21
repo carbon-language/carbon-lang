@@ -2557,6 +2557,7 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "}\n"));
   EXPECT_EQ("class A {\n"
             "  A() : t(0) {}\n"
+            "  A(int i) noexcept() : {}\n"
             "  A(X x)\n" // FIXME: function-level try blocks are broken.
             "  try : t(0) {\n"
             "  } catch (...) {\n"
@@ -2564,6 +2565,7 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
             "};",
             format("class A {\n"
                    "  A()\n : t(0) {}\n"
+                   "  A(int i)\n noexcept() : {}\n"
                    "  A(X x)\n"
                    "  try : t(0) {} catch (...) {}\n"
                    "};"));
