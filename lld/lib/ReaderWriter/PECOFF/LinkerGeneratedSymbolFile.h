@@ -94,14 +94,16 @@ private:
 class SymbolRenameFile : public SimpleFile {
 public:
   SymbolRenameFile(StringRef from, StringRef to)
-      : SimpleFile("<symbol-rename>"), _to(*this, to),
-        _from(*this, from, &_to) {
+      : SimpleFile("<symbol-rename>"), _fromSym(from), _toSym(to),
+        _from(*this, _fromSym, &_to), _to(*this, _toSym) {
     addAtom(_from);
   };
 
 private:
-  COFFUndefinedAtom _to;
+  std::string _fromSym;
+  std::string _toSym;
   COFFUndefinedAtom _from;
+  COFFUndefinedAtom _to;
 };
 
 } // namespace impl
