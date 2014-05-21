@@ -444,11 +444,13 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   if (State.Stack.back().AvoidBinPacking) {
     // If we are breaking after '(', '{', '<', this is not bin packing
-    // unless AllowAllParametersOfDeclarationOnNextLine is false.
+    // unless AllowAllParametersOfDeclarationOnNextLine is false or this is a
+    // dict/object literal.
     if (!(Previous.isOneOf(tok::l_paren, tok::l_brace) ||
           Previous.Type == TT_BinaryOperator) ||
         (!Style.AllowAllParametersOfDeclarationOnNextLine &&
-         State.Line->MustBeDeclaration))
+         State.Line->MustBeDeclaration) ||
+        Previous.Type == TT_DictLiteral)
       State.Stack.back().BreakBeforeParameter = true;
   }
 

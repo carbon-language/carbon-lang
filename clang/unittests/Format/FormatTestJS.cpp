@@ -92,6 +92,11 @@ TEST_F(FormatTestJS, SpacesInContainerLiterals) {
   verifyFormat("var arr = [1, 2, 3];");
   verifyFormat("var obj = {a: 1, b: 2, c: 3};");
 
+  verifyFormat("var object_literal_with_long_name = {\n"
+               "  a: 'aaaaaaaaaaaaaaaaaa',\n"
+               "  b: 'bbbbbbbbbbbbbbbbbb'\n"
+               "};");
+
   verifyFormat("var obj = {a: 1, b: 2, c: 3};",
                getChromiumStyle(FormatStyle::LK_JavaScript));
   verifyFormat("someVariable = {'a': [{}]};");
