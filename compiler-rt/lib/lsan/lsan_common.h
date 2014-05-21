@@ -21,7 +21,7 @@
 #include "sanitizer_common/sanitizer_platform.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-#if SANITIZER_LINUX && defined(__x86_64__)
+#if SANITIZER_LINUX && defined(__x86_64__) && (SANITIZER_WORDSIZE == 64)
 #define CAN_SANITIZE_LEAKS 1
 #else
 #define CAN_SANITIZE_LEAKS 0
