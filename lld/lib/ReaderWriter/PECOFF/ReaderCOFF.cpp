@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <set>
 #include <vector>
 
@@ -179,6 +180,7 @@ class BumpPtrStringSaver : public llvm::cl::StringSaver {
 public:
   const char *SaveString(const char *str) override {
     size_t len = strlen(str);
+    std::lock_guard<std::mutex> lock(_allocMutex);
     char *copy = _alloc.Allocate<char>(len + 1);
     memcpy(copy, str, len + 1);
     return copy;
@@ -186,6 +188,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator _alloc;
+  std::mutex _allocMutex;
 };
 
 // Converts the COFF symbol attribute to the LLD's atom attribute.
