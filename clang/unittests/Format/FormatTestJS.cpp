@@ -120,6 +120,18 @@ TEST_F(FormatTestJS, Closures) {
                "};");
   EXPECT_EQ("abc = xyz ? function() { return 1; } : function() { return -1; };",
             format("abc=xyz?function(){return 1;}:function(){return -1;};"));
+
+  verifyFormat("var closure = goog.bind(\n"
+               "    function() {  // comment\n"
+               "      foo();\n"
+               "      bar();\n"
+               "    },\n"
+               "    this, arg1IsReallyLongAndNeeedsLineBreaks,\n"
+               "    arg3IsReallyLongAndNeeedsLineBreaks);");
+  verifyFormat("var closure = goog.bind(function() {  // comment\n"
+               "  foo();\n"
+               "  bar();\n"
+               "}, this);");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

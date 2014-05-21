@@ -420,9 +420,16 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   // Any break on this level means that the parent level has been broken
   // and we need to avoid bin packing there.
-  for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
-    State.Stack[i].BreakBeforeParameter = true;
+  bool JavaScriptFormat = Style.Language == FormatStyle::LK_JavaScript &&
+                          Current.is(tok::r_brace) &&
+                          State.Stack.size() > 1 &&
+                          State.Stack[State.Stack.size() - 2].JSFunctionInlined;
+  if (!JavaScriptFormat) {
+    for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+      State.Stack[i].BreakBeforeParameter = true;
+    }
   }
+
   if (PreviousNonComment &&
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
       PreviousNonComment->Type != TT_TemplateCloser &&
@@ -465,6 +472,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return Current.NestingLevel == 0 ? State.FirstIndent
                                      : State.Stack.back().Indent;
   if (Current.isOneOf(tok::r_brace, tok::r_square)) {
+    if (State.Stack.size() > 1 &&
+        State.Stack[State.Stack.size() - 2].JSFunctionInlined)
+      return State.FirstIndent;
     if (Current.closesBlockTypeList(Style) ||
         (Current.MatchingParen &&
          Current.MatchingParen->BlockKind == BK_BracedInit))
@@ -600,6 +610,27 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
+
+  // Add special behavior to support a format commonly used for JavaScript
+  // closures:
+  //   SomeFunction(function() {
+  //     foo();
+  //     bar();
+  //   }, a, b, c);
+  if (Style.Language == FormatStyle::LK_JavaScript) {
+    if (Current.isNot(tok::comment) && Previous && Previous->is(tok::l_brace) &&
+        State.Stack.size() > 1) {
+      if (State.Stack[State.Stack.size() - 2].JSFunctionInlined && Newline) {
+        for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+          State.Stack[i].NoLineBreak = true;
+        }
+      }
+      State.Stack[State.Stack.size() - 2].JSFunctionInlined = false;
+    }
+    if (Current.TokenText == "function")
+      State.Stack.back().JSFunctionInlined = !Newline;
+  }
+
   // Don't add extra indentation for the first fake parenthesis after
   // 'return', assignments or opening <({[. The indentation for these cases
   // is special cased.

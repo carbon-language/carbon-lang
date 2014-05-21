@@ -139,7 +139,8 @@ struct ParenState {
         StartOfFunctionCall(0), StartOfArraySubscripts(0),
         NestedNameSpecifierContinuation(0), CallContinuation(0), VariablePos(0),
         ContainsLineBreak(false), ContainsUnwrappedBuilder(0),
-        AlignColons(true), ObjCSelectorNameFound(false), LambdasFound(0) {}
+        AlignColons(true), ObjCSelectorNameFound(false), LambdasFound(0),
+        JSFunctionInlined(false) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -240,6 +241,10 @@ struct ParenState {
   /// the same token.
   unsigned LambdasFound;
 
+  // \brief The previous JavaScript 'function' keyword is not wrapped to a new
+  // line.
+  bool JSFunctionInlined;
+
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)
       return Indent < Other.Indent;
@@ -273,6 +278,8 @@ struct ParenState {
       return ContainsLineBreak < Other.ContainsLineBreak;
     if (ContainsUnwrappedBuilder != Other.ContainsUnwrappedBuilder)
       return ContainsUnwrappedBuilder < Other.ContainsUnwrappedBuilder;
+    if (JSFunctionInlined != Other.JSFunctionInlined)
+      return JSFunctionInlined < Other.JSFunctionInlined;
     return false;
   }
 };

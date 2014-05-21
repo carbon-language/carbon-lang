@@ -1146,8 +1146,13 @@ private:
       return true;
 
     if (NewLine) {
-      int AdditionalIndent = State.Stack.back().Indent -
-                             Previous.Children[0]->Level * Style.IndentWidth;
+      int AdditionalIndent = 0;
+      if (State.Stack.size() < 2 ||
+          !State.Stack[State.Stack.size() - 2].JSFunctionInlined) {
+        AdditionalIndent = State.Stack.back().Indent -
+                           Previous.Children[0]->Level * Style.IndentWidth;
+      }
+
       Penalty += format(Previous.Children, DryRun, AdditionalIndent,
                         /*FixBadIndentation=*/true);
       return true;
