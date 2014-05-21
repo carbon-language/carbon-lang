@@ -85,7 +85,7 @@ struct CovHeader {
 
 static void CovWritePacked(int pid, const char *module, const void *blob,
                            unsigned int blob_size) {
-  CHECK_GE(cov_fd, 0);
+  if (cov_fd < 0) return;
   unsigned module_name_length = internal_strlen(module);
   CovHeader header = {pid, module_name_length, blob_size};
 
@@ -122,6 +122,32 @@ static void CovWritePacked(int pid, const char *module, const void *blob,
   }
 }
 
+// If packed = false: <name>.<pid>.<sancov> (name = module name).
+// If packed = true and name == 0: <pid>.<sancov>.<packed>.
+// If packed = true and name != 0: <name>.<sancov>.<packed> (name is
+// user-supplied).
+static int CovOpenFile(bool packed, const char* name) {
+  InternalScopedBuffer<char> path(1024);
+  if (!packed) {
+    CHECK(name);
+    internal_snprintf((char *)path.data(), path.size(), "%s.%zd.sancov",
+                      name, internal_getpid());
+  } else {
+    if (!name)
+      internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.packed",
+                        internal_getpid());
+    else
+      internal_snprintf((char *)path.data(), path.size(), "%s.sancov.packed",
+                        name);
+  }
+  uptr fd = OpenFile(path.data(), true);
+  if (internal_iserror(fd)) {
+    Report(" SanitizerCoverage: failed to open %s for writing\n", path.data());
+    return -1;
+  }
+  return fd;
+}
+
 // Dump the coverage on disk.
 static void CovDump() {
   if (!common_flags()->coverage) return;
@@ -155,17 +181,17 @@ static void CovDump() {
       }
       char *module_name = StripModuleName(module.data());
       if (cov_sandboxed) {
-        CovWritePacked(internal_getpid(), module_name, offsets.data(),
-                       offsets.size() * sizeof(u32));
-        VReport(1, " CovDump: %zd PCs written to packed file\n", vb - old_vb);
+        if (cov_fd >= 0) {
+          CovWritePacked(internal_getpid(), module_name, offsets.data(),
+                         offsets.size() * sizeof(u32));
+          VReport(1, " CovDump: %zd PCs written to packed file\n", vb - old_vb);
+        }
       } else {
         // One file per module per process.
         internal_snprintf((char *)path.data(), path.size(), "%s.%zd.sancov",
                           module_name, internal_getpid());
-        uptr fd = OpenFile(path.data(), true);
-        if (internal_iserror(fd)) {
-          Report(" CovDump: failed to open %s for writing\n", path.data());
-        } else {
+        int fd = CovOpenFile(false /* packed */, module_name);
+        if (fd > 0) {
           internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
           internal_close(fd);
           VReport(1, " CovDump: %s: %zd PCs written\n", path.data(),
@@ -180,19 +206,6 @@ static void CovDump() {
 #endif  // !SANITIZER_WINDOWS
 }
 
-static void OpenPackedFileForWriting() {
-  CHECK(cov_fd == kInvalidFd);
-  InternalScopedBuffer<char> path(1024);
-  internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.packed",
-                    internal_getpid());
-  uptr fd = OpenFile(path.data(), true);
-  if (internal_iserror(fd)) {
-    Report(" Coverage: failed to open %s for writing\n", path.data());
-    Die();
-  }
-  cov_fd = fd;
-}
-
 void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   if (!args) return;
   if (!common_flags()->coverage) return;
@@ -202,9 +215,14 @@ void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   cov_max_block_size = args->coverage_max_block_size;
   if (cov_fd < 0)
     // Pre-open the file now. The sandbox won't allow us to do it later.
-    OpenPackedFileForWriting();
+    cov_fd = CovOpenFile(true /* packed */, 0);
 }
 
+int MaybeOpenCovFile(const char *name) {
+  CHECK(name);
+  if (!common_flags()->coverage) return -1;
+  return CovOpenFile(true /* packed */, name);
+}
 }  // namespace __sanitizer
 
 extern "C" {
@@ -213,4 +231,8 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov() {
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() { CovInit(); }
+SANITIZER_INTERFACE_ATTRIBUTE
+sptr __sanitizer_maybe_open_cov_file(const char *name) {
+  return MaybeOpenCovFile(name);
+}
 }  // extern "C"
