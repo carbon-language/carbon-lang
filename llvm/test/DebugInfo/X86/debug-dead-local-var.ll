@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=x86_64-linux-gnu %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
+; Reconstruct this via clang and -O2.
 ; static void foo() {
 ;   struct X { int a; int b; } xyz;
 ; }
