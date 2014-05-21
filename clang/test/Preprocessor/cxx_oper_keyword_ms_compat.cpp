@@ -7,6 +7,13 @@ bool f() {
 #endif
 }
 
+#ifdef and
+#endif
+
+// The second 'and' is a valid C++ operator name for '&&'.
+#if defined and and defined(and)
+#endif
+
 // All c++ keywords should be #define-able in ms mode.
 // (operators like "and" aren't normally, the rest always is.)
 #define and

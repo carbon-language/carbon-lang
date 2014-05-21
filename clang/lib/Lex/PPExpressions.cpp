@@ -81,7 +81,6 @@ struct DefinedTracker {
 /// EvaluateDefined - Process a 'defined(sym)' expression.
 static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
                             bool ValueLive, Preprocessor &PP) {
-  IdentifierInfo *II;
   SourceLocation beginLoc(PeekTok.getLocation());
   Result.setBegin(beginLoc);
 
@@ -102,14 +101,13 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.setCodeCompletionReached();
     PP.LexUnexpandedNonComment(PeekTok);
   }
-  
+
   // If we don't have a pp-identifier now, this is an error.
-  if ((II = PeekTok.getIdentifierInfo()) == nullptr) {
-    PP.Diag(PeekTok, diag::err_pp_defined_requires_identifier);
+  if (PP.CheckMacroName(PeekTok, 0))
     return true;
-  }
 
   // Otherwise, we got an identifier, is it defined to something?
+  IdentifierInfo *II = PeekTok.getIdentifierInfo();
   Result.Val = II->hasMacroDefinition();
   Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
 

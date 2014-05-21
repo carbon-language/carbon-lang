@@ -1343,6 +1343,8 @@ public:
   /// followed by EOD.  Return true if the token is not a valid on-off-switch.
   bool LexOnOffSwitch(tok::OnOffSwitch &OOS);
 
+  bool CheckMacroName(Token &MacroNameTok, char isDefineUndef);
+
 private:
 
   void PushIncludeMacroStack() {

@@ -139,7 +139,7 @@ void operator""_\u212e""_\u212f(unsigned long long) {} // expected-error {{diffe
 void operator""_℮""_℮(unsigned long long) {} // expected-note {{previous}}
 void operator""_\u212e""_\u212e(unsigned long long) {} // expected-error {{redefinition}}
 
-#define ¢ *0.01 // expected-error {{macro names must be identifiers}}
+#define ¢ *0.01 // expected-error {{macro name must be an identifier}}
 constexpr int operator""_¢(long double d) { return d * 100; } // expected-error {{non-ASCII}}
 constexpr int operator""_¢(unsigned long long n) { return n; } // expected-error {{non-ASCII}}
 static_assert(0.02_¢ == 2_¢, ""); // expected-error 2{{non-ASCII}}

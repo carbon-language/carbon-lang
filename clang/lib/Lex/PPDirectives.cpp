@@ -129,6 +129,51 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   } while (Tmp.isNot(tok::eod));
 }
 
+bool Preprocessor::CheckMacroName(Token &MacroNameTok, char isDefineUndef) {
+  // Missing macro name?
+  if (MacroNameTok.is(tok::eod))
+    return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
+
+  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
+  if (!II) {
+    bool Invalid = false;
+    std::string Spelling = getSpelling(MacroNameTok, &Invalid);
+    if (Invalid)
+      return Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
+
+    const IdentifierInfo &Info = Identifiers.get(Spelling);
+
+    // Allow #defining |and| and friends in microsoft mode.
+    if (Info.isCPlusPlusOperatorKeyword() && getLangOpts().MSVCCompat) {
+      MacroNameTok.setIdentifierInfo(getIdentifierInfo(Spelling));
+      return false;
+    }
+
+    if (Info.isCPlusPlusOperatorKeyword())
+      // C++ 2.5p2: Alternative tokens behave the same as its primary token
+      // except for their spellings.
+      return Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name)
+             << Spelling;
+
+    return Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
+  }
+
+  if (isDefineUndef && II->getPPKeywordID() == tok::pp_defined) {
+    // Error if defining "defined": C99 6.10.8/4, C++ [cpp.predefined]p4.
+    return Diag(MacroNameTok, diag::err_defined_macro_name);
+  }
+
+  if (isDefineUndef == 2 && II->hasMacroDefinition() &&
+      getMacroInfo(II)->isBuiltinMacro()) {
+    // Warn if undefining "__LINE__" and other builtins, per C99 6.10.8/4
+    // and C++ [cpp.predefined]p4], but allow it as an extension.
+    Diag(MacroNameTok, diag::ext_pp_undef_builtin_macro);
+  }
+
+  // Okay, we got a good identifier.
+  return false;
+}
+
 /// \brief Lex and validate a macro name, which occurs after a
 /// \#define or \#undef.
 ///
@@ -146,53 +191,16 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
     setCodeCompletionReached();
     LexUnexpandedToken(MacroNameTok);
   }
-  
-  // Missing macro name?
-  if (MacroNameTok.is(tok::eod)) {
-    Diag(MacroNameTok, diag::err_pp_missing_macro_name);
+
+  if (!CheckMacroName(MacroNameTok, isDefineUndef))
     return;
+
+  // Invalid macro name, read and discard the rest of the line and set the
+  // token kind to tok::eod if necessary.
+  if (MacroNameTok.isNot(tok::eod)) {
+    MacroNameTok.setKind(tok::eod);
+    DiscardUntilEndOfDirective();
   }
-
-  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
-  if (!II) {
-    bool Invalid = false;
-    std::string Spelling = getSpelling(MacroNameTok, &Invalid);
-    if (Invalid)
-      return;
-
-    const IdentifierInfo &Info = Identifiers.get(Spelling);
-
-    // Allow #defining |and| and friends in microsoft mode.
-    if (Info.isCPlusPlusOperatorKeyword() && getLangOpts().MSVCCompat) {
-      MacroNameTok.setIdentifierInfo(getIdentifierInfo(Spelling));
-      return;
-    }
-
-    if (Info.isCPlusPlusOperatorKeyword())
-      // C++ 2.5p2: Alternative tokens behave the same as its primary token
-      // except for their spellings.
-      Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name) << Spelling;
-    else
-      Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
-    // Fall through on error.
-  } else if (isDefineUndef && II->getPPKeywordID() == tok::pp_defined) {
-    // Error if defining "defined": C99 6.10.8/4, C++ [cpp.predefined]p4.
-    Diag(MacroNameTok, diag::err_defined_macro_name);
-  } else if (isDefineUndef == 2 && II->hasMacroDefinition() &&
-             getMacroInfo(II)->isBuiltinMacro()) {
-    // Warn if undefining "__LINE__" and other builtins, per C99 6.10.8/4
-    // and C++ [cpp.predefined]p4], but allow it as an extension.
-    Diag(MacroNameTok, diag::ext_pp_undef_builtin_macro);
-    return;
-  } else {
-    // Okay, we got a good identifier node.  Return it.
-    return;
-  }
-
-  // Invalid macro name, read and discard the rest of the line.  Then set the
-  // token kind to tok::eod.
-  MacroNameTok.setKind(tok::eod);
-  return DiscardUntilEndOfDirective();
 }
 
 /// \brief Ensure that the next token is a tok::eod token.
