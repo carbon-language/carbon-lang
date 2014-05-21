@@ -454,8 +454,13 @@ void BlockingMutex::CheckLocked() {
 // Note that getdents64 uses a different structure format. We only provide the
 // 32-bit syscall here.
 struct linux_dirent {
+#if SANITIZER_X32
+  u64 d_ino;
+  u64 d_off;
+#else
   unsigned long      d_ino;
   unsigned long      d_off;
+#endif
   unsigned short     d_reclen;
   char               d_name[256];
 };
