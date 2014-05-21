@@ -573,6 +573,11 @@ struct SubtargetFeatureInfo {
   std::string getEnumName() const {
     return "Feature_" + TheDef->getName();
   }
+
+  void dump() {
+    errs() << getEnumName() << " " << Index << "\n";
+    TheDef->dump();
+  }
 };
 
 struct OperandMatchEntry {
@@ -1324,6 +1329,7 @@ void AsmMatcherInfo::buildInfo() {
 
     unsigned FeatureNo = SubtargetFeatures.size();
     SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
+    DEBUG(SubtargetFeatures[Pred]->dump());
     assert(FeatureNo < 32 && "Too many subtarget features!");
   }
 
@@ -2199,18 +2205,35 @@ static void emitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
   OS << "}\n\n";
 }
 
+static const char *getMinimalTypeForRange(uint64_t Range) {
+  assert(Range <= 0xFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFF)
+    return "uint32_t";
+  if (Range > 0xFF)
+    return "uint16_t";
+  return "uint8_t";
+}
+
+static const char *getMinimalRequiredFeaturesType(const AsmMatcherInfo &Info) {
+  uint64_t MaxIndex = Info.SubtargetFeatures.size();
+  if (MaxIndex > 0)
+    MaxIndex--;
+  return getMinimalTypeForRange(1ULL << MaxIndex);
+}
+
 /// emitSubtargetFeatureFlagEnumeration - Emit the subtarget feature flag
 /// definitions.
 static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
                                                 raw_ostream &OS) {
   OS << "// Flags for subtarget features that participate in "
      << "instruction matching.\n";
-  OS << "enum SubtargetFeatureFlag {\n";
+  OS << "enum SubtargetFeatureFlag : " << getMinimalRequiredFeaturesType(Info)
+     << " {\n";
   for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
-    OS << "  " << SFI.getEnumName() << " = (1 << " << SFI.Index << "),\n";
+    OS << "  " << SFI.getEnumName() << " = (1U << " << SFI.Index << "),\n";
   }
   OS << "  Feature_None = 0\n";
   OS << "};\n\n";
@@ -2446,15 +2469,6 @@ static bool emitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info,
   return true;
 }
 
-static const char *getMinimalTypeForRange(uint64_t Range) {
-  assert(Range < 0xFFFFFFFFULL && "Enum too large");
-  if (Range > 0xFFFF)
-    return "uint32_t";
-  if (Range > 0xFF)
-    return "uint16_t";
-  return "uint8_t";
-}
-
 static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
                               const AsmMatcherInfo &Info, StringRef ClassName,
                               StringToOffsetTable &StringTable,
@@ -2469,7 +2483,7 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the static custom operand parsing table;
   OS << "namespace {\n";
   OS << "  struct OperandMatchEntry {\n";
-  OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
+  OS << "    " << getMinimalRequiredFeaturesType(Info)
                << " RequiredFeatures;\n";
   OS << "    " << getMinimalTypeForRange(MaxMnemonicIndex)
                << " Mnemonic;\n";
@@ -2805,7 +2819,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    uint16_t Opcode;\n";
   OS << "    " << getMinimalTypeForRange(Info.Matchables.size())
                << " ConvertFn;\n";
-  OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
+  OS << "    " << getMinimalRequiredFeaturesType(Info)
                << " RequiredFeatures;\n";
   OS << "    " << getMinimalTypeForRange(Info.Classes.size())
                << " Classes[" << MaxNumOperands << "];\n";
