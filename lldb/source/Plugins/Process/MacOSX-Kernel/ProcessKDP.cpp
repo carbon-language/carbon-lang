@@ -647,8 +647,32 @@ ProcessKDP::IsAlive ()
 size_t
 ProcessKDP::DoReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 {
+    uint8_t *data_buffer = (uint8_t *) buf;
     if (m_comm.IsConnected())
-        return m_comm.SendRequestReadMemory (addr, buf, size, error);
+    {
+        const size_t max_read_size = 512;
+        size_t total_bytes_read = 0;
+
+        // Read the requested amount of memory in 512 byte chunks
+        while (total_bytes_read < size)
+        {
+            size_t bytes_to_read_this_request = size - total_bytes_read;
+            if (bytes_to_read_this_request > max_read_size)
+            {
+                bytes_to_read_this_request = max_read_size;
+            }
+            size_t bytes_read = m_comm.SendRequestReadMemory (addr + total_bytes_read, 
+                                                              data_buffer + total_bytes_read, 
+                                                              bytes_to_read_this_request, error);
+            total_bytes_read += bytes_read;
+            if (error.Fail() || bytes_read == 0)
+            {
+                return total_bytes_read;
+            }
+        }
+
+        return total_bytes_read;
+    }
     error.SetErrorString ("not connected");
     return 0;
 }
