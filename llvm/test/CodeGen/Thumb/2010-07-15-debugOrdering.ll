@@ -151,5 +151,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !98 = metadata !{i32 52, i32 0, metadata !1, null}
 !101 = metadata !{metadata !"ggEdgeDiscrepancy.cc", metadata !"/Volumes/Home/grosbaj/sources/llvm-externals/speccpu2000/benchspec/CINT2000/252.eon/src"}
 !102 = metadata !{i32 0}
-!103 = metadata !{metadata !3}
+!103 = metadata !{metadata !3, metadata !77}
 !104 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

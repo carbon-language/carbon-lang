@@ -431,14 +431,10 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   assert(Scope->getScopeNode());
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
-  DIE *OriginDIE = TheCU.getDIE(InlinedSP);
-  // FIXME: This should be an assert (or possibly a
-  // getOrCreateSubprogram(InlinedSP)) otherwise we're just failing to emit
-  // inlining information.
-  if (!OriginDIE) {
-    DEBUG(dbgs() << "Unable to find original DIE for an inlined subprogram.");
-    return nullptr;
-  }
+  // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
+  // was inlined from another compile unit.
+  DIE *OriginDIE = SPMap[InlinedSP]->getDIE(InlinedSP);
+  assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
 
   auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
   TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
@@ -530,11 +526,13 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   if (!ProcessedSPNodes.insert(Sub))
     return;
 
-  if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
-    AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
-    TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-    createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
-  }
+  // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
+  // was inlined from another compile unit.
+  DIE *ScopeDIE = SPMap[Sub]->getDIE(Sub);
+  assert(ScopeDIE);
+  AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
+  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
 }
 
 DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
