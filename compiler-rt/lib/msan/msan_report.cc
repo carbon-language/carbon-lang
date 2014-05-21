@@ -115,6 +115,24 @@ void ReportExpectedUMRNotFound(StackTrace *stack) {
   stack->Print();
 }
 
+void ReportStats() {
+  SpinMutexLock l(&CommonSanitizerReportMutex);
+
+  if (__msan_get_track_origins() > 0) {
+    StackDepotStats *stack_depot_stats = StackDepotGetStats();
+    // FIXME: we want this at normal exit, too!
+    // FIXME: but only with verbosity=1 or something
+    Printf("Unique heap origins: %zu\n", stack_depot_stats->n_uniq_ids);
+    Printf("Stack depot allocated bytes: %zu\n", stack_depot_stats->allocated);
+
+    StackDepotStats *chained_origin_depot_stats = ChainedOriginDepotGetStats();
+    Printf("Unique origin histories: %zu\n",
+           chained_origin_depot_stats->n_uniq_ids);
+    Printf("History depot allocated bytes: %zu\n",
+           chained_origin_depot_stats->allocated);
+  }
+}
+
 void ReportAtExitStatistics() {
   SpinMutexLock l(&CommonSanitizerReportMutex);
 
@@ -124,18 +142,6 @@ void ReportAtExitStatistics() {
     Printf("MemorySanitizer: %d warnings reported.\n", msan_report_count);
     Printf("%s", d.End());
   }
-
-  StackDepotStats *stack_depot_stats = StackDepotGetStats();
-  // FIXME: we want this at normal exit, too!
-  // FIXME: but only with verbosity=1 or something
-  Printf("Unique heap origins: %zu\n", stack_depot_stats->n_uniq_ids);
-  Printf("Stack depot allocated bytes: %zu\n", stack_depot_stats->allocated);
-
-  StackDepotStats *chained_origin_depot_stats = ChainedOriginDepotGetStats();
-  Printf("Unique origin histories: %zu\n",
-         chained_origin_depot_stats->n_uniq_ids);
-  Printf("History depot allocated bytes: %zu\n",
-         chained_origin_depot_stats->allocated);
 }
 
 class OriginSet {

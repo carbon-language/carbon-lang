@@ -143,6 +143,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->report_umrs, "report_umrs", "");
   ParseFlag(str, &f->wrap_signals, "wrap_signals", "");
+  ParseFlag(str, &f->print_stats, "print_stats", "");
 
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
@@ -171,6 +172,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->origin_history_per_stack_limit = 20000;
   f->report_umrs = true;
   f->wrap_signals = true;
+  f->print_stats = false;
   f->halt_on_error = !&__msan_keep_going;
 
   // Override from user-specified string.
@@ -331,6 +333,8 @@ void __msan_warning() {
   (void)sp;
   PrintWarning(pc, bp);
   if (__msan::flags()->halt_on_error) {
+    if (__msan::flags()->print_stats)
+      ReportStats();
     Printf("Exiting\n");
     Die();
   }
@@ -340,6 +344,8 @@ void __msan_warning_noreturn() {
   GET_CALLER_PC_BP_SP;
   (void)sp;
   PrintWarning(pc, bp);
+  if (__msan::flags()->print_stats)
+    ReportStats();
   Printf("Exiting\n");
   Die();
 }

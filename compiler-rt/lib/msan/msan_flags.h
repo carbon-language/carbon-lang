@@ -27,6 +27,7 @@ struct Flags {
   bool poison_in_free;  // default: true
   bool report_umrs;
   bool wrap_signals;
+  bool print_stats;
   bool halt_on_error;
 };
 
