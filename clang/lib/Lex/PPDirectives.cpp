@@ -153,7 +153,7 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, char isDefineUndef) {
       // C++ 2.5p2: Alternative tokens behave the same as its primary token
       // except for their spellings.
       return Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name)
-             << Spelling;
+             << Spelling << MacroNameTok.getKind();
 
     return Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
   }

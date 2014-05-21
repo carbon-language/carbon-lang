@@ -500,7 +500,7 @@ def ext_pp_bad_paste_ms : ExtWarn<
   "pasting formed '%0', an invalid preprocessing token">, DefaultError,
   InGroup<DiagGroup<"invalid-token-paste">>;
 def err_pp_operator_used_as_macro_name : Error<
-  "C++ operator '%0' cannot be used as a macro name">;
+  "C++ operator '%0' (aka %1) cannot be used as a macro name">;
 def err_pp_illegal_floating_literal : Error<
   "floating point literal in preprocessor expression">;
 def err_pp_line_requires_integer : Error<

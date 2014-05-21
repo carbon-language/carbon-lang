@@ -11,12 +11,12 @@
 // Not valid in C++ unless -fno-operator-names is passed:
 
 #ifdef OPERATOR_NAMES
-//expected-error@+2 {{C++ operator 'and' cannot be used as a macro name}}
+//expected-error@+2 {{C++ operator 'and' (aka '&&') cannot be used as a macro name}}
 #endif
 #define and foo
 
 #ifdef OPERATOR_NAMES
-//expected-error@+2 {{C++ operator 'and' cannot be used as a macro name}}
+//expected-error@+2 {{C++ operator 'xor' (aka '^') cannot be used as a macro name}}
 #endif
-#if defined and
+#if defined xor
 #endif
