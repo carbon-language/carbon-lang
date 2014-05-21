@@ -177,6 +177,26 @@ class LldbGdbServerTestCase(TestBase):
         self.assertTrue("format" in reg_info)
 
 
+    def add_threadinfo_collection_packets(self):
+        self.test_sequence.add_log_lines(
+            [ { "type":"multi_response", "first_query":"qfThreadInfo", "next_query":"qsThreadInfo",
+                "append_iteration_suffix":False, "end_regex":re.compile(r"^\$(l)?#[0-9a-fA-F]{2}$"),
+              "save_key":"threadinfo_responses" } ],
+            True)
+
+
+    def parse_threadinfo_packets(self, context):
+        """Return an array of thread ids (decimal ints), one per thread."""
+        threadinfo_responses = context.get("threadinfo_responses")
+        self.assertIsNotNone(threadinfo_responses)
+
+        thread_ids = []
+        for threadinfo_response in threadinfo_responses:
+            new_thread_infos = parse_threadinfo_response(threadinfo_response)
+            thread_ids.extend(new_thread_infos)
+        return thread_ids
+
+
     @debugserver_test
     def test_exe_starts_debugserver(self):
         self.init_debugserver_test()
@@ -657,7 +677,7 @@ class LldbGdbServerTestCase(TestBase):
         # Gather register info entries.
         reg_infos = self.parse_register_info_packets(context)
 
-        # Collect all generics found.
+        # Collect all generic registers found.
         generic_regs = { reg_info['generic']:1 for reg_info in reg_infos if 'generic' in reg_info }
 
         # Ensure we have a program counter register.
@@ -708,7 +728,7 @@ class LldbGdbServerTestCase(TestBase):
         # Gather register info entries.
         reg_infos = self.parse_register_info_packets(context)
 
-        # Collect all generics found.
+        # Collect all register sets found.
         register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
         self.assertTrue(len(register_sets) >= 1)
 
@@ -728,6 +748,100 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qRegisterInfo_contains_at_least_one_register_set()
+
+
+    def qThreadInfo_contains_thread_after_launch(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_threadinfo_collection_packets()
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather threadinfo entries.
+        threads = self.parse_threadinfo_packets(context)
+        self.assertIsNotNone(threads)
+
+        # We should have exactly one thread.
+        self.assertEqual(len(threads), 1)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qThreadInfo_contains_thread_after_launch_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qThreadInfo_contains_thread_after_launch()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qThreadInfo_contains_thread_after_launch_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qThreadInfo_contains_thread_after_launch()
+
+
+    def qThreadInfo_matches_qC_after_launch(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_threadinfo_collection_packets()
+        self.test_sequence.add_log_lines(
+            ["read packet: $qC#00",
+             { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather threadinfo entries.
+        threads = self.parse_threadinfo_packets(context)
+        self.assertIsNotNone(threads)
+
+        # We should have exactly one thread from threadinfo.
+        self.assertEqual(len(threads), 1)
+
+        # We should have a valid thread_id from $QC.
+        QC_thread_id_hex = context.get("thread_id")
+        self.assertIsNotNone(QC_thread_id_hex)
+        QC_thread_id = int(QC_thread_id_hex, 16)
+
+        # Those two should be the same.
+        self.assertEquals(threads[0], QC_thread_id)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qThreadInfo_matches_qC_after_launch_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qThreadInfo_matches_qC_after_launch()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qThreadInfo_matches_qC_after_launch_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qThreadInfo_matches_qC_after_launch()
 
 
 if __name__ == '__main__':

@@ -110,6 +110,7 @@ def _is_packet_lldb_gdbserver_input(packet_type, llgs_input_is_read):
 
 _STRIP_CHECKSUM_REGEX = re.compile(r'#[0-9a-fA-F]{2}$')
 _STRIP_COMMAND_PREFIX_REGEX = re.compile(r"^\$")
+_STRIP_COMMAND_PREFIX_M_REGEX = re.compile(r"^\$m")
 
 
 def assert_packets_equal(asserter, actual_packet, expected_packet):
@@ -285,6 +286,19 @@ def parse_reg_info_response(response_packet):
 
     return values
 
+
+def parse_threadinfo_response(response_packet):
+    if not response_packet:
+        raise Exception("response_packet cannot be None")
+
+    # Strip off prefix $ and suffix #xx if present.
+    response_packet = _STRIP_COMMAND_PREFIX_M_REGEX.sub("", response_packet)
+    response_packet = _STRIP_CHECKSUM_REGEX.sub("", response_packet)
+
+    # Return list of thread ids
+    return [int(thread_id_hex,16) for thread_id_hex in response_packet.split(",") if len(thread_id_hex) > 0]
+
+
 class GdbRemoteEntry(object):
 
     def __init__(self, is_send_to_remote=True, exact_payload=None, regex=None, capture=None, expect_captures=None):
@@ -438,7 +452,10 @@ class MultiResponseGdbRemoteEntry(object):
             detection regex and throw an exception.
     """
     def __init__(self, params):
-        self._next_query = params.get("next_query", params["query"])
+        self._next_query = params.get("next_query", params.get("query"))
+        if not self._next_query:
+            raise "either next_query or query key must be specified for MultiResponseGdbRemoteEntry"
+            
         self._first_query = params.get("first_query", self._next_query)
         self._append_iteration_suffix = params.get("append_iteration_suffix", False)
         self._iteration = 0
