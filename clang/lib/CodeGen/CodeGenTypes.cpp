@@ -189,15 +189,15 @@ static bool isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT) {
 bool CodeGenTypes::isFuncParamTypeConvertible(QualType Ty) {
   // If this isn't a tagged type, we can convert it!
   const TagType *TT = Ty->getAs<TagType>();
-  if (TT == 0) return true;
-    
+  if (!TT) return true;
+
   // Incomplete types cannot be converted.
   if (TT->isIncompleteType())
     return false;
   
   // If this is an enum, then it is always safe to convert.
   const RecordType *RT = dyn_cast<RecordType>(TT);
-  if (RT == 0) return true;
+  if (!RT) return true;
 
   // Otherwise, we have to be careful.  If it is a struct that we're in the
   // process of expanding, then we can't convert the function type.  That's ok
@@ -304,7 +304,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     return TCI->second;
 
   // If we don't have it in the cache, convert it now.
-  llvm::Type *ResultType = 0;
+  llvm::Type *ResultType = nullptr;
   switch (Ty->getTypeClass()) {
   case Type::Record: // Handled above.
 #define TYPE(Class, Base)
@@ -629,7 +629,7 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   llvm::StructType *&Entry = RecordDeclTypes[Key];
 
   // If we don't have a StructType at all yet, create the forward declaration.
-  if (Entry == 0) {
+  if (!Entry) {
     Entry = llvm::StructType::create(getLLVMContext());
     addRecordTypeName(RD, Entry, "");
   }
@@ -638,7 +638,7 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   // If this is still a forward declaration, or the LLVM type is already
   // complete, there's nothing more to do.
   RD = RD->getDefinition();
-  if (RD == 0 || !RD->isCompleteDefinition() || !Ty->isOpaque())
+  if (!RD || !RD->isCompleteDefinition() || !Ty->isOpaque())
     return Ty;
   
   // If converting this type would cause us to infinitely loop, don't do it!

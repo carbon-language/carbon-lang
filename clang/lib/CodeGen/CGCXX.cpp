@@ -61,7 +61,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
       return true;
 
   // Try to find a unique base class with a non-trivial destructor.
-  const CXXRecordDecl *UniqueBase = 0;
+  const CXXRecordDecl *UniqueBase = nullptr;
   for (const auto &I : Class->bases()) {
 
     // We're in the base destructor, so skip virtual bases.
@@ -272,7 +272,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
     getTypes().arrangeCXXDestructor(dtor, dtorType);
 
   auto *fn = cast<llvm::Function>(
-      GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo, 0, true));
+      GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo, nullptr, true));
   setFunctionLinkage(GlobalDecl(dtor, dtorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(dtor, dtorType), fn, fnInfo);
@@ -364,5 +364,5 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
     llvm::Type *Ty = CGM.getTypes().GetFunctionType(FInfo);
     return ::BuildAppleKextVirtualCall(*this, GlobalDecl(DD, Type), Ty, RD);
   }
-  return 0;
+  return nullptr;
 }

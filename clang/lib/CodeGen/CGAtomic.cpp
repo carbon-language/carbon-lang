@@ -255,7 +255,8 @@ static void emitAtomicCmpXchgFailureSet(CodeGenFunction &CGF, AtomicExpr *E,
   }
 
   // Create all the relevant BB's
-  llvm::BasicBlock *MonotonicBB = 0, *AcquireBB = 0, *SeqCstBB = 0;
+  llvm::BasicBlock *MonotonicBB = nullptr, *AcquireBB = nullptr,
+                   *SeqCstBB = nullptr;
   MonotonicBB = CGF.createBasicBlock("monotonic_fail", CGF.CurFn);
   if (SuccessOrder != llvm::Monotonic && SuccessOrder != llvm::Release)
     AcquireBB = CGF.createBasicBlock("acquire_fail", CGF.CurFn);
@@ -452,17 +453,17 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   bool UseLibcall = (Size != Align ||
                      getContext().toBits(sizeChars) > MaxInlineWidthInBits);
 
-  llvm::Value *Ptr, *Order, *OrderFail = 0, *Val1 = 0, *Val2 = 0;
-  Ptr = EmitScalarExpr(E->getPtr());
+  llvm::Value *OrderFail = nullptr, *Val1 = nullptr, *Val2 = nullptr;
+  llvm::Value *Ptr = EmitScalarExpr(E->getPtr());
 
   if (E->getOp() == AtomicExpr::AO__c11_atomic_init) {
     assert(!Dest && "Init does not return a value");
     LValue lvalue = LValue::MakeAddr(Ptr, AtomicTy, alignChars, getContext());
     EmitAtomicInit(E->getVal1(), lvalue);
-    return RValue::get(0);
+    return RValue::get(nullptr);
   }
 
-  Order = EmitScalarExpr(E->getOrder());
+  llvm::Value *Order = EmitScalarExpr(E->getOrder());
 
   switch (E->getOp()) {
   case AtomicExpr::AO__c11_atomic_init:
@@ -696,7 +697,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     if (!RetTy->isVoidType())
       return Res;
     if (E->getType()->isVoidType())
-      return RValue::get(0);
+      return RValue::get(nullptr);
     return convertTempToRValue(Dest, E->getType(), E->getExprLoc());
   }
 
@@ -751,15 +752,16 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       break;
     }
     if (E->getType()->isVoidType())
-      return RValue::get(0);
+      return RValue::get(nullptr);
     return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
   }
 
   // Long case, when Order isn't obviously constant.
 
   // Create all the relevant BB's
-  llvm::BasicBlock *MonotonicBB = 0, *AcquireBB = 0, *ReleaseBB = 0,
-                   *AcqRelBB = 0, *SeqCstBB = 0;
+  llvm::BasicBlock *MonotonicBB = nullptr, *AcquireBB = nullptr,
+                   *ReleaseBB = nullptr, *AcqRelBB = nullptr,
+                   *SeqCstBB = nullptr;
   MonotonicBB = createBasicBlock("monotonic", CurFn);
   if (!IsStore)
     AcquireBB = createBasicBlock("acquire", CurFn);
@@ -818,7 +820,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   // Cleanup and return
   Builder.SetInsertPoint(ContBB);
   if (E->getType()->isVoidType())
-    return RValue::get(0);
+    return RValue::get(nullptr);
   return convertTempToRValue(OrigDest, E->getType(), E->getExprLoc());
 }
 
@@ -896,7 +898,7 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
 
   // If we're ignoring an aggregate return, don't do anything.
   if (atomics.getEvaluationKind() == TEK_Aggregate && resultSlot.isIgnored())
-    return RValue::getAggregate(0, false);
+    return RValue::getAggregate(nullptr, false);
 
   // The easiest way to do this this is to go through memory, but we
   // try not to in some easy cases.

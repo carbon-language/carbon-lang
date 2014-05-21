@@ -491,7 +491,7 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
   CGFunctionInfo::Profile(ID, IsInstanceMethod, info, required, resultType,
                           argTypes);
 
-  void *insertPos = 0;
+  void *insertPos = nullptr;
   CGFunctionInfo *FI = FunctionInfos.FindNodeOrInsertPos(ID, insertPos);
   if (FI)
     return *FI;
@@ -511,11 +511,11 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
   // them are direct or extend without a specified coerce type, specify the
   // default now.
   ABIArgInfo &retInfo = FI->getReturnInfo();
-  if (retInfo.canHaveCoerceToType() && retInfo.getCoerceToType() == 0)
+  if (retInfo.canHaveCoerceToType() && retInfo.getCoerceToType() == nullptr)
     retInfo.setCoerceToType(ConvertType(FI->getReturnType()));
 
   for (auto &I : FI->arguments())
-    if (I.info.canHaveCoerceToType() && I.info.getCoerceToType() == 0)
+    if (I.info.canHaveCoerceToType() && I.info.getCoerceToType() == nullptr)
       I.info.setCoerceToType(ConvertType(I.type));
 
   bool erased = FunctionsBeingProcessed.erase(FI); (void)erased;
@@ -542,7 +542,7 @@ CGFunctionInfo *CGFunctionInfo::create(unsigned llvmCC,
   FI->Required = required;
   FI->HasRegParm = info.getHasRegParm();
   FI->RegParm = info.getRegParm();
-  FI->ArgStruct = 0;
+  FI->ArgStruct = nullptr;
   FI->NumArgs = argTypes.size();
   FI->getArgsBuffer()[0].type = resultType;
   for (unsigned i = 0, e = argTypes.size(); i != e; ++i)
@@ -565,7 +565,7 @@ void CodeGenTypes::GetExpandedTypes(QualType type,
     if (RD->isUnion()) {
       // Unions can be here only in degenerative cases - all the fields are same
       // after flattening. Thus we have to use the "largest" field.
-      const FieldDecl *LargestFD = 0;
+      const FieldDecl *LargestFD = nullptr;
       CharUnits UnionSize = CharUnits::Zero();
 
       for (const auto *FD : RD->fields()) {
@@ -613,7 +613,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     if (RD->isUnion()) {
       // Unions can be here only in degenerative cases - all the fields are same
       // after flattening. Thus we have to use the "largest" field.
-      const FieldDecl *LargestFD = 0;
+      const FieldDecl *LargestFD = nullptr;
       CharUnits UnionSize = CharUnits::Zero();
 
       for (const auto *FD : RD->fields()) {
@@ -942,7 +942,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
   
   bool SwapThisWithSRet = false;
   SmallVector<llvm::Type*, 8> argTypes;
-  llvm::Type *resultType = 0;
+  llvm::Type *resultType = nullptr;
 
   const ABIArgInfo &retAI = FI.getReturnInfo();
   switch (retAI.getKind()) {
@@ -1351,7 +1351,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
   // If we're using inalloca, all the memory arguments are GEPs off of the last
   // parameter, which is a pointer to the complete memory area.
-  llvm::Value *ArgStruct = 0;
+  llvm::Value *ArgStruct = nullptr;
   if (FI.usesInAlloca()) {
     llvm::Function::arg_iterator EI = Fn->arg_end();
     --EI;
@@ -1638,8 +1638,8 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
                                                     llvm::Value *result) {
   // We must be immediately followed the cast.
   llvm::BasicBlock *BB = CGF.Builder.GetInsertBlock();
-  if (BB->empty()) return 0;
-  if (&BB->back() != result) return 0;
+  if (BB->empty()) return nullptr;
+  if (&BB->back() != result) return nullptr;
 
   llvm::Type *resultType = result->getType();
 
@@ -1657,7 +1657,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
 
     // Require the generator to be immediately followed by the cast.
     if (generator->getNextNode() != bitcast)
-      return 0;
+      return nullptr;
 
     insnsToKill.push_back(bitcast);
   }
@@ -1667,7 +1667,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   // or
   //   %generator = call i8* @objc_retainAutoreleasedReturnValue(i8* %originalResult)
   llvm::CallInst *call = dyn_cast<llvm::CallInst>(generator);
-  if (!call) return 0;
+  if (!call) return nullptr;
 
   bool doRetainAutorelease;
 
@@ -1695,7 +1695,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
       insnsToKill.push_back(prev);
     }
   } else {
-    return 0;
+    return nullptr;
   }
 
   result = call->getArgOperand(0);
@@ -1728,16 +1728,16 @@ static llvm::Value *tryRemoveRetainOfSelf(CodeGenFunction &CGF,
   // This is only applicable to a method with an immutable 'self'.
   const ObjCMethodDecl *method =
     dyn_cast_or_null<ObjCMethodDecl>(CGF.CurCodeDecl);
-  if (!method) return 0;
+  if (!method) return nullptr;
   const VarDecl *self = method->getSelfDecl();
-  if (!self->getType().isConstQualified()) return 0;
+  if (!self->getType().isConstQualified()) return nullptr;
 
   // Look for a retain call.
   llvm::CallInst *retainCall =
     dyn_cast<llvm::CallInst>(result->stripPointerCasts());
   if (!retainCall ||
       retainCall->getCalledValue() != CGF.CGM.getARCEntrypoints().objc_retain)
-    return 0;
+    return nullptr;
 
   // Look for an ordinary load of 'self'.
   llvm::Value *retainedValue = retainCall->getArgOperand(0);
@@ -1745,7 +1745,7 @@ static llvm::Value *tryRemoveRetainOfSelf(CodeGenFunction &CGF,
     dyn_cast<llvm::LoadInst>(retainedValue->stripPointerCasts());
   if (!load || load->isAtomic() || load->isVolatile() || 
       load->getPointerOperand() != CGF.GetAddrOfLocalVar(self))
-    return 0;
+    return nullptr;
 
   // Okay!  Burn it all down.  This relies for correctness on the
   // assumption that the retain is emitted as part of the return and
@@ -1787,17 +1787,17 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
   // with noreturn cleanups.
   if (!CGF.ReturnValue->hasOneUse()) {
     llvm::BasicBlock *IP = CGF.Builder.GetInsertBlock();
-    if (IP->empty()) return 0;
+    if (IP->empty()) return nullptr;
     llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(&IP->back());
-    if (!store) return 0;
-    if (store->getPointerOperand() != CGF.ReturnValue) return 0;
+    if (!store) return nullptr;
+    if (store->getPointerOperand() != CGF.ReturnValue) return nullptr;
     assert(!store->isAtomic() && !store->isVolatile()); // see below
     return store;
   }
 
   llvm::StoreInst *store =
     dyn_cast<llvm::StoreInst>(CGF.ReturnValue->user_back());
-  if (!store) return 0;
+  if (!store) return nullptr;
 
   // These aren't actually possible for non-coerced returns, and we
   // only care about non-coerced returns on this code path.
@@ -1809,7 +1809,7 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
   llvm::BasicBlock *IP = CGF.Builder.GetInsertBlock();
   while (IP != StoreBB) {
     if (!(IP = IP->getSinglePredecessor()))
-      return 0;
+      return nullptr;
   }
 
   // Okay, the store's basic block dominates the insertion point; we
@@ -1821,13 +1821,13 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
                                          bool EmitRetDbgLoc,
                                          SourceLocation EndLoc) {
   // Functions with no result always return void.
-  if (ReturnValue == 0) {
+  if (!ReturnValue) {
     Builder.CreateRetVoid();
     return;
   }
 
   llvm::DebugLoc RetDbgLoc;
-  llvm::Value *RV = 0;
+  llvm::Value *RV = nullptr;
   QualType RetTy = FI.getReturnType();
   const ABIArgInfo &RetAI = FI.getReturnInfo();
 
@@ -1893,7 +1893,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
         // If that was the only use of the return value, nuke it as well now.
         if (ReturnValue->use_empty() && isa<llvm::AllocaInst>(ReturnValue)) {
           cast<llvm::AllocaInst>(ReturnValue)->eraseFromParent();
-          ReturnValue = 0;
+          ReturnValue = nullptr;
         }
 
       // Otherwise, we have to do a simple load.
@@ -2011,7 +2011,7 @@ static void emitWriteback(CodeGenFunction &CGF,
   assert(!isProvablyNull(srcAddr) &&
          "shouldn't have writeback for provably null argument");
 
-  llvm::BasicBlock *contBB = 0;
+  llvm::BasicBlock *contBB = nullptr;
 
   // If the argument wasn't provably non-null, we need to null check
   // before doing the store.
@@ -2092,7 +2092,7 @@ static const Expr *maybeGetUnaryAddrOfOperand(const Expr *E) {
   if (const UnaryOperator *uop = dyn_cast<UnaryOperator>(E->IgnoreParens()))
     if (uop->getOpcode() == UO_AddrOf)
       return uop->getSubExpr();
-  return 0;
+  return nullptr;
 }
 
 /// Emit an argument that's being passed call-by-writeback.  That is,
@@ -2146,9 +2146,9 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
         cast<llvm::PointerType>(destType->getElementType()));
     CGF.Builder.CreateStore(null, temp);
   }
-  
-  llvm::BasicBlock *contBB = 0;
-  llvm::BasicBlock *originBB = 0;
+
+  llvm::BasicBlock *contBB = nullptr;
+  llvm::BasicBlock *originBB = nullptr;
 
   // If the address is *not* known to be non-null, we need to switch.
   llvm::Value *finalArgument;
@@ -2175,7 +2175,7 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
     }
   }
 
-  llvm::Value *valueToUse = 0;
+  llvm::Value *valueToUse = nullptr;
 
   // Perform a copy if necessary.
   if (shouldCopy) {
@@ -2532,7 +2532,7 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
     LValue LV = MakeAddrLValue(RV.getAggregateAddr(), Ty);
 
     if (RD->isUnion()) {
-      const FieldDecl *LargestFD = 0;
+      const FieldDecl *LargestFD = nullptr;
       CharUnits UnionSize = CharUnits::Zero();
 
       for (const auto *FD : RD->fields()) {
@@ -2609,7 +2609,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // If we're using inalloca, insert the allocation after the stack save.
   // FIXME: Do this earlier rather than hacking it in here!
-  llvm::Value *ArgMemory = 0;
+  llvm::Value *ArgMemory = nullptr;
   if (llvm::StructType *ArgStruct = CallInfo.getArgStruct()) {
     llvm::Instruction *IP = CallArgs.getStackBase();
     llvm::AllocaInst *AI;
@@ -2626,7 +2626,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // If the call returns a temporary with struct return, create a temporary
   // alloca to hold the result, unless one is given to us.
-  llvm::Value *SRetPtr = 0;
+  llvm::Value *SRetPtr = nullptr;
   bool SwapThisWithSRet = false;
   if (RetAI.isIndirect() || RetAI.isInAlloca()) {
     SRetPtr = ReturnValue.getValue();
@@ -2919,7 +2919,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   llvm::AttributeSet Attrs = llvm::AttributeSet::get(getLLVMContext(),
                                                      AttributeList);
 
-  llvm::BasicBlock *InvokeDest = 0;
+  llvm::BasicBlock *InvokeDest = nullptr;
   if (!Attrs.hasAttribute(llvm::AttributeSet::FunctionIndex,
                           llvm::Attribute::NoUnwind))
     InvokeDest = getInvokeDest();

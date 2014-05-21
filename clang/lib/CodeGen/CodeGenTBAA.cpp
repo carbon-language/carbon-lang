@@ -33,7 +33,7 @@ CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
                          const CodeGenOptions &CGO,
                          const LangOptions &Features, MangleContext &MContext)
   : Context(Ctx), CodeGenOpts(CGO), Features(Features), MContext(MContext),
-    MDHelper(VMContext), Root(0), Char(0) {
+    MDHelper(VMContext), Root(nullptr), Char(nullptr) {
 }
 
 CodeGenTBAA::~CodeGenTBAA() {
@@ -88,7 +88,7 @@ llvm::MDNode *
 CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // At -O0 or relaxed aliasing, TBAA is not emitted for regular types.
   if (CodeGenOpts.OptimizationLevel == 0 || CodeGenOpts.RelaxedAliasing)
-    return NULL;
+    return nullptr;
 
   // If the type has the may_alias attribute (even on a typedef), it is
   // effectively in the general char alias class.
@@ -221,7 +221,7 @@ CodeGenTBAA::getTBAAStructInfo(QualType QTy) {
     return MDHelper.createTBAAStructNode(Fields);
 
   // For now, handle any other kind of type conservatively.
-  return StructMetadataCache[Ty] = NULL;
+  return StructMetadataCache[Ty] = nullptr;
 }
 
 /// Check if the given type can be handled by path-aware TBAA.
@@ -261,7 +261,7 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
       else
         FieldNode = getTBAAInfo(FieldQTy);
       if (!FieldNode)
-        return StructTypeMetadataCache[Ty] = NULL;
+        return StructTypeMetadataCache[Ty] = nullptr;
       Fields.push_back(std::make_pair(
           FieldNode, Layout.getFieldOffset(idx) / Context.getCharWidth()));
     }
@@ -280,7 +280,7 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
       MDHelper.createTBAAStructTypeNode(OutName, Fields);
   }
 
-  return StructMetadataCache[Ty] = NULL;
+  return StructMetadataCache[Ty] = nullptr;
 }
 
 /// Return a TBAA tag node for both scalar TBAA and struct-path aware TBAA.
@@ -288,7 +288,7 @@ llvm::MDNode *
 CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
                                   uint64_t Offset) {
   if (!AccessNode)
-    return NULL;
+    return nullptr;
 
   if (!CodeGenOpts.StructPathTBAA)
     return getTBAAScalarTagInfo(AccessNode);
@@ -298,7 +298,7 @@ CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
   if (llvm::MDNode *N = StructTagMetadataCache[PathTag])
     return N;
 
-  llvm::MDNode *BNode = 0;
+  llvm::MDNode *BNode = nullptr;
   if (isTBAAPathStruct(BaseQTy))
     BNode  = getTBAAStructTypeInfo(BaseQTy);
   if (!BNode)
@@ -312,7 +312,7 @@ CodeGenTBAA::getTBAAStructTagInfo(QualType BaseQTy, llvm::MDNode *AccessNode,
 llvm::MDNode *
 CodeGenTBAA::getTBAAScalarTagInfo(llvm::MDNode *AccessNode) {
   if (!AccessNode)
-    return NULL;
+    return nullptr;
   if (llvm::MDNode *N = ScalarTagMetadataCache[AccessNode])
     return N;
 

@@ -197,7 +197,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
-                             CGM.EmitNullConstant(D.getType()), Name, 0,
+                             CGM.EmitNullConstant(D.getType()), Name, nullptr,
                              llvm::GlobalVariable::NotThreadLocal,
                              AddrSpace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
@@ -291,7 +291,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
 void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  assert(!DMEntry && "Decl already exists in localdeclmap!");
 
   // Check to see if we already have a global variable for this
   // declaration.  This can happen when double-emitting function
@@ -388,7 +388,7 @@ namespace {
       // Along the exceptions path we always execute the dtor.
       bool NRVO = flags.isForNormalCleanup() && NRVOFlag;
 
-      llvm::BasicBlock *SkipDtorBB = 0;
+      llvm::BasicBlock *SkipDtorBB = nullptr;
       if (NRVO) {
         // If we exited via NRVO, we skip the destructor call.
         llvm::BasicBlock *RunDtorBB = CGF.createBasicBlock("nrvo.unused");
@@ -615,7 +615,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
   }
 
   // Emit the initializer.
-  llvm::Value *value = 0;
+  llvm::Value *value = nullptr;
 
   switch (lifetime) {
   case Qualifiers::OCL_None:
@@ -868,7 +868,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
           CGM.isTypeConstant(Ty, true)) {
         EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
 
-        emission.Address = 0; // signal this condition to later callbacks
+        emission.Address = nullptr; // signal this condition to later callbacks
         assert(emission.wasEmittedAsGlobal());
         return emission;
       }
@@ -963,7 +963,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  assert(!DMEntry && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;
   emission.Address = DeclPtr;
 
@@ -1083,7 +1083,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   llvm::Value *Loc =
     capturedByInit ? emission.Address : emission.getObjectAddress(*this);
 
-  llvm::Constant *constant = 0;
+  llvm::Constant *constant = nullptr;
   if (emission.IsConstantAggregate || D.isConstexpr()) {
     assert(!capturedByInit && "constant init contains a capturing block?");
     constant = CGM.EmitConstantInit(D, this);
@@ -1210,7 +1210,7 @@ void CodeGenFunction::emitAutoVarTypeCleanup(
   QualType type = var->getType();
 
   CleanupKind cleanupKind = NormalAndEHCleanup;
-  CodeGenFunction::Destroyer *destroyer = 0;
+  CodeGenFunction::Destroyer *destroyer = nullptr;
 
   switch (dtorKind) {
   case QualType::DK_none:
@@ -1620,7 +1620,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     // The only implicit argument a block has is its literal.
     if (BlockInfo) {
       LocalDeclMap[&D] = Arg;
-      llvm::Value *LocalAddr = 0;
+      llvm::Value *LocalAddr = nullptr;
       if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
         // Allocate a stack slot to let the debug info survive the RA.
         llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty),
@@ -1734,7 +1734,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     EmitStoreOfScalar(Arg, lv, /* isInitialization */ true);
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  assert(!DMEntry && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;
 
   // Emit debug info for param declaration.

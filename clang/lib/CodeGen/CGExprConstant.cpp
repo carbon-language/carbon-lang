@@ -530,7 +530,7 @@ llvm::Constant *ConstStructBuilder::BuildStruct(CodeGenModule &CGM,
   ConstStructBuilder Builder(CGM, CGF);
 
   if (!Builder.Build(ILE))
-    return 0;
+    return nullptr;
 
   return Builder.Finalize(ILE->getType());
 }
@@ -572,7 +572,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   llvm::Constant *VisitStmt(Stmt *S) {
-    return 0;
+    return nullptr;
   }
 
   llvm::Constant *VisitParenExpr(ParenExpr *PE) {
@@ -599,7 +599,7 @@ public:
   llvm::Constant *VisitCastExpr(CastExpr* E) {
     Expr *subExpr = E->getSubExpr();
     llvm::Constant *C = CGM.EmitConstantExpr(subExpr, subExpr->getType(), CGF);
-    if (!C) return 0;
+    if (!C) return nullptr;
 
     llvm::Type *destType = ConvertType(E->getType());
 
@@ -660,7 +660,7 @@ public:
     case CK_ARCReclaimReturnedObject:
     case CK_ARCExtendBlockObject:
     case CK_CopyAndAutoreleaseBlockObject:
-      return 0;
+      return nullptr;
 
     // These don't need to be handled here because Evaluate knows how to
     // evaluate them in the cases where they can be folded.
@@ -701,7 +701,7 @@ public:
     case CK_FloatingToBoolean:
     case CK_FloatingCast:
     case CK_ZeroToOCLEvent:
-      return 0;
+      return nullptr;
     }
     llvm_unreachable("Invalid CastKind");
   }
@@ -743,7 +743,7 @@ public:
       Expr *Init = ILE->getInit(i);
       llvm::Constant *C = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
       if (!C)
-        return 0;
+        return nullptr;
       RewriteType |= (C->getType() != ElemTy);
       Elts.push_back(C);
     }
@@ -756,7 +756,7 @@ public:
     else
       fillC = llvm::Constant::getNullValue(ElemTy);
     if (!fillC)
-      return 0;
+      return nullptr;
     RewriteType |= (fillC->getType() != ElemTy);
     Elts.resize(NumElements, fillC);
 
@@ -789,12 +789,12 @@ public:
     if (ILE->getType()->isRecordType())
       return EmitRecordInitialization(ILE);
 
-    return 0;
+    return nullptr;
   }
 
   llvm::Constant *VisitCXXConstructExpr(CXXConstructExpr *E) {
     if (!E->getConstructor()->isTrivial())
-      return 0;
+      return nullptr;
 
     QualType Ty = E->getType();
 
@@ -806,8 +806,8 @@ public:
     // If the class doesn't have a trivial destructor, we can't emit it as a
     // constant expr.
     if (!RD->hasTrivialDestructor())
-      return 0;
-    
+      return nullptr;
+
     // Only copy and default constructors can be trivial.
 
 
@@ -872,7 +872,7 @@ public:
             return CGM.getStaticLocalDeclAddress(VD);
         }
       }
-      return 0;
+      return nullptr;
     }
 
     Expr *E = const_cast<Expr*>(LVBase.get<const Expr*>());
@@ -889,7 +889,7 @@ public:
         C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
                                      E->getType().isConstant(CGM.getContext()),
                                      llvm::GlobalValue::InternalLinkage,
-                                     C, ".compoundliteral", 0,
+                                     C, ".compoundliteral", nullptr,
                                      llvm::GlobalVariable::NotThreadLocal,
                           CGM.getContext().getTargetAddressSpace(E->getType()));
       return C;
@@ -970,7 +970,7 @@ public:
     }
     }
 
-    return 0;
+    return nullptr;
   }
 };
 
@@ -1004,7 +1004,7 @@ llvm::Constant *CodeGenModule::EmitConstantInit(const VarDecl &D,
   // interprets that as the (pointer) value of the reference, rather than the
   // desired value of the referee.
   if (D.getType()->isReferenceType())
-    return 0;
+    return nullptr;
 
   const Expr *E = D.getInit();
   assert(E && "No initializer to emit");
@@ -1029,7 +1029,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   else
     Success = E->EvaluateAsRValue(Result, Context);
 
-  llvm::Constant *C = 0;
+  llvm::Constant *C = nullptr;
   if (Success && !Result.HasSideEffects)
     C = EmitConstantValue(Result.Val, DestType, CGF);
   else
@@ -1174,13 +1174,13 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     Elts.reserve(NumElements);
 
     // Emit array filler, if there is one.
-    llvm::Constant *Filler = 0;
+    llvm::Constant *Filler = nullptr;
     if (Value.hasArrayFiller())
       Filler = EmitConstantValueForMemory(Value.getArrayFiller(),
                                           CAT->getElementType(), CGF);
 
     // Emit initializer elements.
-    llvm::Type *CommonElementType = 0;
+    llvm::Type *CommonElementType = nullptr;
     for (unsigned I = 0; I < NumElements; ++I) {
       llvm::Constant *C = Filler;
       if (I < NumInitElts)
@@ -1191,7 +1191,7 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
       if (I == 0)
         CommonElementType = C->getType();
       else if (C->getType() != CommonElementType)
-        CommonElementType = 0;
+        CommonElementType = nullptr;
       Elts.push_back(C);
     }
 
@@ -1230,7 +1230,7 @@ CodeGenModule::EmitConstantValueForMemory(const APValue &Value,
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr *E) {
   assert(E->isFileScope() && "not a file-scope compound literal expr");
-  return ConstExprEmitter(*this, 0).EmitLValue(E);
+  return ConstExprEmitter(*this, nullptr).EmitLValue(E);
 }
 
 llvm::Constant *

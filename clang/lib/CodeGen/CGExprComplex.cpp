@@ -306,7 +306,7 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue,
   unsigned ComplexAlign = C.getTypeAlignInChars(ComplexTy).getQuantity();
   unsigned AlignI = std::min(AlignR, ComplexAlign);
 
-  llvm::Value *Real=0, *Imag=0;
+  llvm::Value *Real=nullptr, *Imag=nullptr;
 
   if (!IgnoreReal || isVolatile) {
     llvm::Value *RealP = Builder.CreateStructGEP(SrcPtr, 0,

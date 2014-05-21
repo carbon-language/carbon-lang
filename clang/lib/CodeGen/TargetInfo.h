@@ -151,7 +151,7 @@ public:
   /// possessing type information, or 0 if the platform is unsupported.
   virtual llvm::Constant *
   getUBSanFunctionSignature(CodeGen::CodeGenModule &CGM) const {
-    return 0;
+    return nullptr;
   }
 
   /// Determine whether a call to an unprototyped functions under

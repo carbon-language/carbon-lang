@@ -156,8 +156,8 @@ public:
                       Selector Sel,
                       llvm::Value *Receiver,
                       const CallArgList &CallArgs,
-                      const ObjCInterfaceDecl *Class = 0,
-                      const ObjCMethodDecl *Method = 0) = 0;
+                      const ObjCInterfaceDecl *Class = nullptr,
+                      const ObjCMethodDecl *Method = nullptr) = 0;
 
   /// Generate an Objective-C message send operation to the super
   /// class initiated in a method for Class and with the given Self
@@ -175,7 +175,7 @@ public:
                            llvm::Value *Self,
                            bool IsClassMessage,
                            const CallArgList &CallArgs,
-                           const ObjCMethodDecl *Method = 0) = 0;
+                           const ObjCMethodDecl *Method = nullptr) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// \@protocol expression.

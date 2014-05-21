@@ -164,18 +164,21 @@ namespace {
   };
 }
 
-const EHPersonality EHPersonality::GNU_C = { "__gcc_personality_v0", 0 };
-const EHPersonality EHPersonality::GNU_C_SJLJ = { "__gcc_personality_sj0", 0 };
-const EHPersonality EHPersonality::NeXT_ObjC = { "__objc_personality_v0", 0 };
-const EHPersonality EHPersonality::GNU_CPlusPlus = { "__gxx_personality_v0", 0};
+const EHPersonality EHPersonality::GNU_C = { "__gcc_personality_v0", nullptr };
 const EHPersonality
-EHPersonality::GNU_CPlusPlus_SJLJ = { "__gxx_personality_sj0", 0 };
+EHPersonality::GNU_C_SJLJ = { "__gcc_personality_sj0", nullptr };
+const EHPersonality
+EHPersonality::NeXT_ObjC = { "__objc_personality_v0", nullptr };
+const EHPersonality
+EHPersonality::GNU_CPlusPlus = { "__gxx_personality_v0", nullptr };
+const EHPersonality
+EHPersonality::GNU_CPlusPlus_SJLJ = { "__gxx_personality_sj0", nullptr };
 const EHPersonality
 EHPersonality::GNU_ObjC = {"__gnu_objc_personality_v0", "objc_exception_throw"};
 const EHPersonality
-EHPersonality::GNU_ObjCXX = { "__gnustep_objcxx_personality_v0", 0 };
+EHPersonality::GNU_ObjCXX = { "__gnustep_objcxx_personality_v0", nullptr };
 const EHPersonality
-EHPersonality::GNUstep_ObjC = { "__gnustep_objc_personality_v0", 0 };
+EHPersonality::GNUstep_ObjC = { "__gnustep_objc_personality_v0", nullptr };
 
 static const EHPersonality &getCPersonality(const LangOptions &L) {
   if (L.SjLjExceptions)
@@ -467,7 +470,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
 
   // The address of the destructor.  If the exception type has a
   // trivial destructor (or isn't a record), we just pass null.
-  llvm::Constant *Dtor = 0;
+  llvm::Constant *Dtor = nullptr;
   if (const RecordType *RecordTy = ThrowType->getAs<RecordType>()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
     if (!Record->hasTrivialDestructor()) {
@@ -492,7 +495,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
-  if (FD == 0) {
+  if (!FD) {
     // Check if CapturedDecl is nothrow and create terminate scope for it.
     if (const CapturedDecl* CD = dyn_cast_or_null<CapturedDecl>(D)) {
       if (CD->isNothrow())
@@ -501,7 +504,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
     return;
   }
   const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
-  if (Proto == 0)
+  if (!Proto)
     return;
 
   ExceptionSpecificationType EST = Proto->getExceptionSpecType();
@@ -566,7 +569,7 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
-  if (FD == 0) {
+  if (!FD) {
     // Check if CapturedDecl is nothrow and pop terminate scope for it.
     if (const CapturedDecl* CD = dyn_cast_or_null<CapturedDecl>(D)) {
       if (CD->isNothrow())
@@ -575,7 +578,7 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
     return;
   }
   const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
-  if (Proto == 0)
+  if (!Proto)
     return;
 
   ExceptionSpecificationType EST = Proto->getExceptionSpecType();
@@ -619,7 +622,7 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       QualType CaughtType = C->getCaughtType();
       CaughtType = CaughtType.getNonReferenceType().getUnqualifiedType();
 
-      llvm::Value *TypeInfo = 0;
+      llvm::Value *TypeInfo = nullptr;
       if (CaughtType->isObjCObjectPointerType())
         TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
       else
@@ -697,7 +700,7 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   assert(!EHStack.empty());
 
   if (!CGM.getLangOpts().Exceptions)
-    return 0;
+    return nullptr;
 
   // Check the innermost scope for a cached landing pad.  If this is
   // a non-EH cleanup, we'll check enclosing scopes in EmitLandingPad.
@@ -1444,7 +1447,7 @@ void CodeGenFunction::FinallyInfo::enter(CodeGenFunction &CGF,
                                          llvm::Constant *beginCatchFn,
                                          llvm::Constant *endCatchFn,
                                          llvm::Constant *rethrowFn) {
-  assert((beginCatchFn != 0) == (endCatchFn != 0) &&
+  assert((beginCatchFn != nullptr) == (endCatchFn != nullptr) &&
          "begin/end catch functions not paired");
   assert(rethrowFn && "rethrow function is required");
 
@@ -1459,7 +1462,7 @@ void CodeGenFunction::FinallyInfo::enter(CodeGenFunction &CGF,
   llvm::FunctionType *rethrowFnTy =
     cast<llvm::FunctionType>(
       cast<llvm::PointerType>(rethrowFn->getType())->getElementType());
-  SavedExnVar = 0;
+  SavedExnVar = nullptr;
   if (rethrowFnTy->getNumParams())
     SavedExnVar = CGF.CreateTempAlloca(CGF.Int8PtrTy, "finally.exn");
 
@@ -1509,7 +1512,7 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
     CGBuilderTy::InsertPoint savedIP = CGF.Builder.saveAndClearIP();
     CGF.EmitBlock(catchBB);
 
-    llvm::Value *exn = 0;
+    llvm::Value *exn = nullptr;
 
     // If there's a begin-catch function, call it.
     if (BeginCatchFn) {
@@ -1673,7 +1676,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.
   const char *RethrowName = Personality.CatchallRethrowFn;
-  if (RethrowName != 0 && !isCleanup) {
+  if (RethrowName != nullptr && !isCleanup) {
     EmitRuntimeCall(getCatchallRethrowFn(CGM, RethrowName),
                       getExceptionFromSlot())
       ->setDoesNotReturn();

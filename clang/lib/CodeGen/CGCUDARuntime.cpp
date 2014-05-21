@@ -37,7 +37,7 @@ RValue CGCUDARuntime::EmitCUDAKernelCallExpr(CodeGenFunction &CGF,
   eval.begin(CGF);
   CGF.EmitBlock(ConfigOKBlock);
 
-  const Decl *TargetDecl = 0;
+  const Decl *TargetDecl = nullptr;
   if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E->getCallee())) {
     if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
       TargetDecl = DRE->getDecl();
@@ -52,5 +52,5 @@ RValue CGCUDARuntime::EmitCUDAKernelCallExpr(CodeGenFunction &CGF,
   CGF.EmitBlock(ContBlock);
   eval.end(CGF);
 
-  return RValue::get(0);
+  return RValue::get(nullptr);
 }

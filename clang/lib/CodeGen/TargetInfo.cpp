@@ -217,13 +217,13 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
 static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
   const RecordType *RT = T->getAsStructureType();
   if (!RT)
-    return 0;
+    return nullptr;
 
   const RecordDecl *RD = RT->getDecl();
   if (RD->hasFlexibleArrayMember())
-    return 0;
+    return nullptr;
 
-  const Type *Found = 0;
+  const Type *Found = nullptr;
 
   // If this is a C++ record, check the bases first.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
@@ -234,13 +234,13 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 
       // If we already found an element then this isn't a single-element struct.
       if (Found)
-        return 0;
+        return nullptr;
 
       // If this is non-empty and not a single element struct, the composite
       // cannot be a single element struct.
       Found = isSingleElementStruct(I.getType(), Context);
       if (!Found)
-        return 0;
+        return nullptr;
     }
   }
 
@@ -255,7 +255,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     // If we already found an element then this isn't a single-element
     // struct.
     if (Found)
-      return 0;
+      return nullptr;
 
     // Treat single element arrays as the element.
     while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT)) {
@@ -269,14 +269,14 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     } else {
       Found = isSingleElementStruct(FT, Context);
       if (!Found)
-        return 0;
+        return nullptr;
     }
   }
 
   // We don't consider a struct a single-element struct if it has
   // padding beyond the element type.
   if (Found && Context.getTypeSize(Found) != Context.getTypeSize(T))
-    return 0;
+    return nullptr;
 
   return Found;
 }
@@ -372,7 +372,7 @@ public:
 
 llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                        CodeGenFunction &CGF) const {
-  return 0;
+  return nullptr;
 }
 
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty) const {
@@ -437,7 +437,7 @@ void PNaClABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
 llvm::Value *PNaClABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                        CodeGenFunction &CGF) const {
-  return 0;
+  return nullptr;
 }
 
 /// \brief Classify argument of given type \p Ty.
@@ -488,7 +488,7 @@ static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
   if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy()) {
     if (cast<llvm::VectorType>(Ty)->getBitWidth() != 64) {
       // Invalid MMX constraint
-      return 0;
+      return nullptr;
     }
 
     return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
@@ -900,7 +900,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
       llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
       return ABIArgInfo::getDirectInReg(Result);
     }
-    llvm::IntegerType *PaddingType = NeedsPadding ? Int32 : 0;
+    llvm::IntegerType *PaddingType = NeedsPadding ? Int32 : nullptr;
 
     // Expand small (<= 128-bit) record types when we know that the stack layout
     // of those arguments will match the struct. This is important because the
@@ -2164,7 +2164,7 @@ classifyReturnType(QualType RetTy) const {
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
-  llvm::Type *ResType = 0;
+  llvm::Type *ResType = nullptr;
   switch (Lo) {
   case NoClass:
     if (Hi == NoClass)
@@ -2225,7 +2225,7 @@ classifyReturnType(QualType RetTy) const {
     break;
   }
 
-  llvm::Type *HighPart = 0;
+  llvm::Type *HighPart = nullptr;
   switch (Hi) {
     // Memory was handled previously and X87 should
     // never occur as a hi class.
@@ -2297,7 +2297,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(
 
   neededInt = 0;
   neededSSE = 0;
-  llvm::Type *ResType = 0;
+  llvm::Type *ResType = nullptr;
   switch (Lo) {
   case NoClass:
     if (Hi == NoClass)
@@ -2358,7 +2358,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(
   }
   }
 
-  llvm::Type *HighPart = 0;
+  llvm::Type *HighPart = nullptr;
   switch (Hi) {
     // Memory was handled previously, ComplexX87 and X87 should
     // never occur as hi classes, and X87Up must be preceded by X87,
@@ -2533,9 +2533,9 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // NOTE: 304 is a typo, there are (6 * 8 + 8 * 16) = 176 bytes of
   // register save space).
 
-  llvm::Value *InRegs = 0;
-  llvm::Value *gp_offset_p = 0, *gp_offset = 0;
-  llvm::Value *fp_offset_p = 0, *fp_offset = 0;
+  llvm::Value *InRegs = nullptr;
+  llvm::Value *gp_offset_p = nullptr, *gp_offset = nullptr;
+  llvm::Value *fp_offset_p = nullptr, *fp_offset = nullptr;
   if (neededInt) {
     gp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "gp_offset_p");
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
@@ -3229,7 +3229,7 @@ public:
 
 static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
                                    ASTContext &Context,
-                                   uint64_t *HAMembers = 0);
+                                   uint64_t *HAMembers = nullptr);
 
 ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
                                               unsigned &AllocatedVFP,
@@ -3308,7 +3308,7 @@ ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
   }
 
   // Homogeneous Floating-point Aggregates (HFAs) need to be expanded.
-  const Type *Base = 0;
+  const Type *Base = nullptr;
   uint64_t Members = 0;
   if (isHomogeneousAggregate(Ty, Base, getContext(), &Members)) {
     IsHA = true;
@@ -3367,7 +3367,7 @@ ABIArgInfo ARM64ABIInfo::classifyReturnType(QualType RetTy) const {
   if (isEmptyRecord(getContext(), RetTy, true))
     return ABIArgInfo::getIgnore();
 
-  const Type *Base = 0;
+  const Type *Base = nullptr;
   if (isHomogeneousAggregate(RetTy, Base, getContext()))
     // Homogeneous Floating-point Aggregates (HFAs) are returned directly.
     return ABIArgInfo::getDirect();
@@ -3416,7 +3416,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("vaarg.end");
   auto &Ctx = CGF.getContext();
 
-  llvm::Value *reg_offs_p = 0, *reg_offs = 0;
+  llvm::Value *reg_offs_p = nullptr, *reg_offs = nullptr;
   int reg_top_index;
   int RegSize;
   if (AllocatedGPR) {
@@ -3443,7 +3443,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   // argument. We don't want to keep updating reg_offs (in case it overflows,
   // though anyone passing 2GB of arguments, each at most 16 bytes, deserves
   // whatever they get).
-  llvm::Value *UsingStack = 0;
+  llvm::Value *UsingStack = nullptr;
   UsingStack = CGF.Builder.CreateICmpSGE(
       reg_offs, llvm::ConstantInt::get(CGF.Int32Ty, 0));
 
@@ -3468,14 +3468,14 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   }
 
   // Update the gr_offs/vr_offs pointer for next call to va_arg on this va_list.
-  llvm::Value *NewOffset = 0;
+  llvm::Value *NewOffset = nullptr;
   NewOffset = CGF.Builder.CreateAdd(
       reg_offs, llvm::ConstantInt::get(CGF.Int32Ty, RegSize), "new_reg_offs");
   CGF.Builder.CreateStore(NewOffset, reg_offs_p);
 
   // Now we're in a position to decide whether this argument really was in
   // registers or not.
-  llvm::Value *InRegs = 0;
+  llvm::Value *InRegs = nullptr;
   InRegs = CGF.Builder.CreateICmpSLE(
       NewOffset, llvm::ConstantInt::get(CGF.Int32Ty, 0), "inreg");
 
@@ -3489,12 +3489,12 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   // registers. First start the appropriate block:
   CGF.EmitBlock(InRegBlock);
 
-  llvm::Value *reg_top_p = 0, *reg_top = 0;
+  llvm::Value *reg_top_p = nullptr, *reg_top = nullptr;
   reg_top_p =
       CGF.Builder.CreateStructGEP(VAListAddr, reg_top_index, "reg_top_p");
   reg_top = CGF.Builder.CreateLoad(reg_top_p, "reg_top");
   llvm::Value *BaseAddr = CGF.Builder.CreateGEP(reg_top, reg_offs);
-  llvm::Value *RegAddr = 0;
+  llvm::Value *RegAddr = nullptr;
   llvm::Type *MemTy = llvm::PointerType::getUnqual(CGF.ConvertTypeForMem(Ty));
 
   if (IsIndirect) {
@@ -3503,7 +3503,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
     MemTy = llvm::PointerType::getUnqual(MemTy);
   }
 
-  const Type *Base = 0;
+  const Type *Base = nullptr;
   uint64_t NumMembers;
   bool IsHFA = isHomogeneousAggregate(Ty, Base, Ctx, &NumMembers);
   if (IsHFA && NumMembers > 1) {
@@ -3557,7 +3557,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   //=======================================
   CGF.EmitBlock(OnStackBlock);
 
-  llvm::Value *stack_p = 0, *OnStackAddr = 0;
+  llvm::Value *stack_p = nullptr, *OnStackAddr = nullptr;
   stack_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "stack_p");
   OnStackAddr = CGF.Builder.CreateLoad(stack_p, "stack");
 
@@ -3642,12 +3642,12 @@ llvm::Value *ARM64ABIInfo::EmitDarwinVAArg(llvm::Value *VAListAddr, QualType Ty,
   // Lower VAArg here for these cases and use the LLVM va_arg instruction for
   // other cases.
   if (!isAggregateTypeForABI(Ty) && !isIllegalVectorType(Ty))
-    return 0;
+    return nullptr;
 
   uint64_t Size = CGF.getContext().getTypeSize(Ty) / 8;
   uint64_t Align = CGF.getContext().getTypeAlign(Ty) / 8;
 
-  const Type *Base = 0;
+  const Type *Base = nullptr;
   bool isHA = isHomogeneousAggregate(Ty, Base, getContext());
 
   bool isIndirect = false;
@@ -4161,7 +4161,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
   if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
     // Homogeneous Aggregates need to be expanded when we can fit the aggregate
     // into VFP registers.
-    const Type *Base = 0;
+    const Type *Base = nullptr;
     uint64_t Members = 0;
     if (isHomogeneousAggregate(Ty, Base, getContext(), &Members)) {
       assert(Base && "Base class should be set for homogeneous aggregate");
@@ -4360,7 +4360,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 
   // Check for homogeneous aggregates with AAPCS-VFP.
   if (getABIKind() == AAPCS_VFP && !isVariadic) {
-    const Type *Base = 0;
+    const Type *Base = nullptr;
     if (isHomogeneousAggregate(RetTy, Base, getContext())) {
       assert(Base && "Base class should be set for homogeneous aggregate");
       // Homogeneous Aggregates are returned directly.
@@ -4529,7 +4529,7 @@ private:
                                  int &FreeVFPRegs) const;
 
   ABIArgInfo tryUseRegs(QualType Ty, int &FreeRegs, int RegsNeeded, bool IsInt,
-                        llvm::Type *DirectTy = 0) const;
+                        llvm::Type *DirectTy = nullptr) const;
 
   void computeInfo(CGFunctionInfo &FI) const override;
 
@@ -4588,7 +4588,7 @@ AArch64ABIInfo::tryUseRegs(QualType Ty, int &FreeRegs, int RegsNeeded,
     return ABIArgInfo::getDirect(DirectTy);
   }
 
-  llvm::Type *Padding = 0;
+  llvm::Type *Padding = nullptr;
 
   // We need padding so that later arguments don't get filled in anyway. That
   // wouldn't happen if only ByVal arguments followed in the same category, but
@@ -4675,7 +4675,7 @@ ABIArgInfo AArch64ABIInfo::classifyGenericType(QualType Ty,
   }
 
   // Homogeneous vector aggregates get passed in registers or on the stack.
-  const Type *Base = 0;
+  const Type *Base = nullptr;
   uint64_t NumMembers = 0;
   if (isHomogeneousAggregate(Ty, Base, getContext(), &NumMembers)) {
     assert(Base && "Base class should be set for homogeneous aggregate");
@@ -5180,7 +5180,7 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
   if (isCompoundType(Ty))
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
-  return ABIArgInfo::getDirect(0);
+  return ABIArgInfo::getDirect(nullptr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -5357,7 +5357,7 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
 llvm::Type *MipsABIInfo::getPaddingType(uint64_t OrigOffset,
                                         uint64_t Offset) const {
   if (OrigOffset + MinABIStackAlignInBytes > Offset)
-    return 0;
+    return nullptr;
 
   return llvm::IntegerType::get(getVMContext(), (Offset - OrigOffset) * 8);
 }
@@ -5398,7 +5398,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
     return ABIArgInfo::getExtend();
 
   return ABIArgInfo::getDirect(
-      0, 0, IsO32 ? 0 : getPaddingType(OrigOffset, CurrOffset));
+      nullptr, 0, IsO32 ? nullptr : getPaddingType(OrigOffset, CurrOffset));
 }
 
 llvm::Type*

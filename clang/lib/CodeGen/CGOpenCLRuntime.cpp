@@ -39,7 +39,7 @@ llvm::Type *CGOpenCLRuntime::convertOpenCLSpecificType(const Type *T) {
   switch (cast<BuiltinType>(T)->getKind()) {
   default: 
     llvm_unreachable("Unexpected opencl builtin type!");
-    return 0;
+    return nullptr;
   case BuiltinType::OCLImage1d:
     return llvm::PointerType::get(llvm::StructType::create(
                            Ctx, "opencl.image1d_t"), ImgAddrSpc);

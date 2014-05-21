@@ -56,7 +56,7 @@ namespace CodeGen {
   class CallArgList :
     public SmallVector<CallArg, 16> {
   public:
-    CallArgList() : StackBase(0), StackBaseMem(0) {}
+    CallArgList() : StackBase(nullptr), StackBaseMem(nullptr) {}
 
     struct Writeback {
       /// The original argument.  Note that the argument l-value

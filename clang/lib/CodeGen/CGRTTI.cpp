@@ -147,7 +147,8 @@ llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
     // Create a new global variable.
     GV = new llvm::GlobalVariable(CGM.getModule(), CGM.Int8PtrTy,
                                   /*Constant=*/true,
-                                  llvm::GlobalValue::ExternalLinkage, 0, Name);
+                                  llvm::GlobalValue::ExternalLinkage, nullptr,
+                                  Name);
   }
   
   return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
@@ -398,7 +399,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   static const char * const VMIClassTypeInfo =
     "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
 
-  const char *VTableName = 0;
+  const char *VTableName = nullptr;
 
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)

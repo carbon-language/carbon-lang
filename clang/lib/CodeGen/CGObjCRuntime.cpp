@@ -65,7 +65,7 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
 uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
                                               const ObjCInterfaceDecl *OID,
                                               const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID, 0, Ivar) / 
+  return LookupFieldBitOffset(CGM, OID, nullptr, Ivar) /
     CGM.getContext().getCharWidth();
 }
 
@@ -116,7 +116,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // Note, there is a subtle invariant here: we can only call this routine on
   // non-synthesized ivars but we may be called for synthesized ivars.  However,
   // a synthesized ivar can never be a bit-field, so this is safe.
-  uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
+  uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, nullptr, Ivar);
   uint64_t BitOffset = FieldBitOffset % CGF.CGM.getContext().getCharWidth();
   uint64_t AlignmentBits = CGF.CGM.getTarget().getCharAlign();
   uint64_t BitFieldSize = Ivar->getBitWidthValue(CGF.getContext());
@@ -201,7 +201,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
 
       // @catch(...) always matches.
       if (!CatchDecl) {
-        Handler.TypeInfo = 0; // catch-all
+        Handler.TypeInfo = nullptr; // catch-all
         // Don't consider any other catches.
         break;
       }
@@ -242,7 +242,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
 
     if (endCatchFn) {
       // Add a cleanup to leave the catch.
-      bool EndCatchMightThrow = (Handler.Variable == 0);
+      bool EndCatchMightThrow = (Handler.Variable == nullptr);
 
       CGF.EHStack.pushCleanup<CallObjCEndCatch>(NormalAndEHCleanup,
                                                 EndCatchMightThrow,

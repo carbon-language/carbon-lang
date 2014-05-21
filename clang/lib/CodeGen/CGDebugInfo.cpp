@@ -878,7 +878,7 @@ CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
 
   unsigned LineNumber = getLineNumber(Var->getLocation());
   StringRef VName = Var->getName();
-  llvm::Constant *C = NULL;
+  llvm::Constant *C = nullptr;
   if (Var->getInit()) {
     const APValue *Value = Var->evaluateValue();
     if (Value) {
@@ -1122,7 +1122,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                           MethodTy, /*isLocalToUnit=*/false,
                           /* isDefinition=*/ false,
                           Virtuality, VIndex, ContainingType,
-                          Flags, CGM.getLangOpts().Optimize, NULL,
+                          Flags, CGM.getLangOpts().Optimize, nullptr,
                           TParamsArray);
 
   SPCache[Method->getCanonicalDecl()] = llvm::WeakVH(SP);
@@ -1250,7 +1250,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
                                                ->getTypeForDecl())
                        : CGM.getContext().getPointerType(D->getType());
       llvm::DIType TTy = getOrCreateType(T, Unit);
-      llvm::Value *V = 0;
+      llvm::Value *V = nullptr;
       // Variable pointer template parameters have a value that is the address
       // of the variable.
       if (const VarDecl *VD = dyn_cast<VarDecl>(D))
@@ -1282,7 +1282,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
     case TemplateArgument::NullPtr: {
       QualType T = TA.getNullPtrType();
       llvm::DIType TTy = getOrCreateType(T, Unit);
-      llvm::Value *V = 0;
+      llvm::Value *V = nullptr;
       // Special case member data pointer null values since they're actually -1
       // instead of zero.
       if (const MemberPointerType *MPT =
@@ -1312,7 +1312,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
       llvm::DITemplateValueParameter TVP =
           DBuilder.createTemplateParameterPack(
               TheCU, Name, llvm::DIType(),
-              CollectTemplateParams(NULL, TA.getPackAsArray(), Unit));
+              CollectTemplateParams(nullptr, TA.getPackAsArray(), Unit));
       TemplateParams.push_back(TVP);
     } break;
     case TemplateArgument::Expression: {
@@ -1765,7 +1765,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty, llvm
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
       Flags = llvm::DIDescriptor::FlagPrivate;
 
-    llvm::MDNode *PropertyNode = NULL;
+    llvm::MDNode *PropertyNode = nullptr;
     if (ObjCImplementationDecl *ImpD = ID->getImplementation()) {
       if (ObjCPropertyImplDecl *PImpD =
           ImpD->FindPropertyImplIvarDecl(Field->getIdentifier())) {
@@ -2086,7 +2086,7 @@ unsigned CGDebugInfo::Checksum(const ObjCInterfaceDecl *ID) {
   // a checksum.
   unsigned Sum = 0;
   for (const ObjCIvarDecl *Ivar = ID->all_declared_ivar_begin();
-       Ivar != 0; Ivar = Ivar->getNextIvar())
+       Ivar != nullptr; Ivar = Ivar->getNextIvar())
     ++Sum;
 
   return Sum;
@@ -2100,7 +2100,7 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
   case Type::ObjCInterface:
     return cast<ObjCInterfaceType>(Ty)->getDecl();
   default:
-    return 0;
+    return nullptr;
   }
 }
 
@@ -2110,7 +2110,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   if (Ty.hasLocalQualifiers())
     return CreateQualifiedType(Ty, Unit);
 
-  const char *Diag = 0;
+  const char *Diag = nullptr;
 
   // Work out details of type.
   switch (Ty->getTypeClass()) {
@@ -2454,7 +2454,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
-  bool HasDecl = (D != 0);
+  bool HasDecl = (D != nullptr);
 
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(Loc);
@@ -2857,7 +2857,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(const VarDecl *VD,
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
-  if (Builder.GetInsertBlock() == 0)
+  if (Builder.GetInsertBlock() == nullptr)
     return;
 
   bool isByRef = VD->hasAttr<BlocksAttr>();
@@ -2987,7 +2987,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     BlockLayoutChunk chunk;
     chunk.OffsetInBits =
       blockLayout->getElementOffsetInBits(block.CXXThisIndex);
-    chunk.Capture = 0;
+    chunk.Capture = nullptr;
     chunks.push_back(chunk);
   }
 
@@ -3281,11 +3281,11 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
 llvm::DIImportedEntity
 CGDebugInfo::EmitNamespaceAlias(const NamespaceAliasDecl &NA) {
   if (CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
-    return llvm::DIImportedEntity(0);
+    return llvm::DIImportedEntity(nullptr);
   llvm::WeakVH &VH = NamespaceAliasCache[&NA];
   if (VH)
     return llvm::DIImportedEntity(cast<llvm::MDNode>(VH));
-  llvm::DIImportedEntity R(0);
+  llvm::DIImportedEntity R(nullptr);
   if (const NamespaceAliasDecl *Underlying =
           dyn_cast<NamespaceAliasDecl>(NA.getAliasedNamespace()))
     // This could cache & dedup here rather than relying on metadata deduping.

@@ -156,7 +156,7 @@ void CGCXXABI::buildThisParam(CodeGenFunction &CGF, FunctionArgList &params) {
   // FIXME: I'm not entirely sure I like using a fake decl just for code
   // generation. Maybe we can come up with a better way?
   ImplicitParamDecl *ThisDecl
-    = ImplicitParamDecl::Create(CGM.getContext(), 0, MD->getLocation(),
+    = ImplicitParamDecl::Create(CGM.getContext(), nullptr, MD->getLocation(),
                                 &CGM.getContext().Idents.get("this"),
                                 MD->getThisType(CGM.getContext()));
   params.push_back(ThisDecl);
@@ -194,7 +194,7 @@ llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
                                              QualType ElementType) {
   // Should never be called.
   ErrorUnsupportedABI(CGF, "array cookie initialization");
-  return 0;
+  return nullptr;
 }
 
 bool CGCXXABI::requiresArrayCookie(const CXXDeleteExpr *expr,
@@ -228,7 +228,7 @@ void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *ptr,
   // If we don't need an array cookie, bail out early.
   if (!requiresArrayCookie(expr, eltTy)) {
     allocPtr = ptr;
-    numElements = 0;
+    numElements = nullptr;
     cookieSize = CharUnits::Zero();
     return;
   }
@@ -307,7 +307,7 @@ CGCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
     llvm_unreachable("shouldn't be called in this ABI");
 
   ErrorUnsupportedABI(CGF, "complete object detection in ctor");
-  return 0;
+  return nullptr;
 }
 
 void CGCXXABI::EmitThreadLocalInitFuncs(

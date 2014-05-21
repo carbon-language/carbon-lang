@@ -84,7 +84,7 @@ struct CGRecordLowering {
       const CXXRecordDecl *RD;
     };
     MemberInfo(CharUnits Offset, InfoKind Kind, llvm::Type *Data,
-               const FieldDecl *FD = 0)
+               const FieldDecl *FD = nullptr)
       : Offset(Offset), Kind(Kind), Data(Data), FD(FD) {}
     MemberInfo(CharUnits Offset, InfoKind Kind, llvm::Type *Data,
                const CXXRecordDecl *RD)
@@ -278,7 +278,7 @@ void CGRecordLowering::lower(bool NVBaseType) {
 
 void CGRecordLowering::lowerUnion() {
   CharUnits LayoutSize = Layout.getSize();
-  llvm::Type *StorageType = 0;
+  llvm::Type *StorageType = nullptr;
   // Compute zero-initializable status.
   if (!D->field_empty() && !isZeroInitializable(*D->field_begin()))
     IsZeroInitializable = IsZeroInitializableAsBase = false;
@@ -373,7 +373,7 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
       // Bitfields get the offset of their storage but come afterward and remain
       // there after a stable sort.
       Members.push_back(MemberInfo(bitsToCharUnits(StartBitOffset),
-                                   MemberInfo::Field, 0, *Field));
+                                   MemberInfo::Field, nullptr, *Field));
     }
     return;
   }
@@ -407,7 +407,7 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
     Members.push_back(StorageInfo(bitsToCharUnits(StartBitOffset), Type));
     for (; Run != Field; ++Run)
       Members.push_back(MemberInfo(bitsToCharUnits(StartBitOffset),
-                                   MemberInfo::Field, 0, *Run));
+                                   MemberInfo::Field, nullptr, *Run));
     Run = FieldEnd;
   }
 }
@@ -458,7 +458,8 @@ void CGRecordLowering::accumulateVBases() {
       ScissorOffset = std::min(ScissorOffset,
                                Layout.getVBaseClassOffset(BaseDecl));
     }
-  Members.push_back(MemberInfo(ScissorOffset, MemberInfo::Scissor, 0, RD));
+  Members.push_back(MemberInfo(ScissorOffset, MemberInfo::Scissor, nullptr,
+                               RD));
   for (const auto &Base : RD->vbases()) {
     const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
     if (BaseDecl->isEmpty())
@@ -468,7 +469,8 @@ void CGRecordLowering::accumulateVBases() {
     // get its own storage location but instead lives inside of that base.
     if (!useMSABI() && Context.isNearlyEmpty(BaseDecl) &&
         !hasOwnStorage(RD, BaseDecl)) {
-      Members.push_back(MemberInfo(Offset, MemberInfo::VBase, 0, BaseDecl));
+      Members.push_back(MemberInfo(Offset, MemberInfo::VBase, nullptr,
+                                   BaseDecl));
       continue;
     }
     // If we've got a vtordisp, add it as a storage type.
@@ -644,7 +646,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
   Builder.lower(false);
 
   // If we're in C++, compute the base subobject type.
-  llvm::StructType *BaseTy = 0;
+  llvm::StructType *BaseTy = nullptr;
   if (isa<CXXRecordDecl>(D) && !D->isUnion() && !D->hasAttr<FinalAttr>()) {
     BaseTy = Ty;
     if (Builder.Layout.getNonVirtualSize() != Builder.Layout.getSize()) {

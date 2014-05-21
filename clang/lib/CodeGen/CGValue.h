@@ -169,7 +169,7 @@ class LValue {
 private:
   void Initialize(QualType Type, Qualifiers Quals,
                   CharUnits Alignment,
-                  llvm::MDNode *TBAAInfo = 0) {
+                  llvm::MDNode *TBAAInfo = nullptr) {
     this->Type = Type;
     this->Quals = Quals;
     this->Alignment = Alignment.getQuantity();
@@ -180,7 +180,7 @@ private:
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
     this->ImpreciseLifetime = false;
     this->ThreadLocalRef = false;
-    this->BaseIvarExp = 0;
+    this->BaseIvarExp = nullptr;
 
     // Initialize fields for TBAA.
     this->TBAABaseType = Type;
@@ -293,7 +293,7 @@ public:
 
   static LValue MakeAddr(llvm::Value *address, QualType type,
                          CharUnits alignment, ASTContext &Context,
-                         llvm::MDNode *TBAAInfo = 0) {
+                         llvm::MDNode *TBAAInfo = nullptr) {
     Qualifiers qs = type.getQualifiers();
     qs.setObjCGCAttr(Context.getObjCGCAttrKind(type));
 
@@ -405,7 +405,7 @@ public:
   /// ignored - Returns an aggregate value slot indicating that the
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
-    return forAddr(0, CharUnits(), Qualifiers(), IsNotDestructed,
+    return forAddr(nullptr, CharUnits(), Qualifiers(), IsNotDestructed,
                    DoesNotNeedGCBarriers, IsNotAliased);
   }
 
@@ -475,7 +475,7 @@ public:
   }
 
   bool isIgnored() const {
-    return Addr == 0;
+    return Addr == nullptr;
   }
 
   CharUnits getAlignment() const {
