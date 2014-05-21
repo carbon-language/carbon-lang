@@ -370,12 +370,6 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
     return 0;
   }
 
-  // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
-  // being gross, this is also totally broken if we ever care about
-  // concurrency.
-
-  TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
-
   unsigned CodeModel =
     llvm::StringSwitch<unsigned>(CodeGenOpts.CodeModel)
       .Case("small", llvm::CodeModel::Small)
@@ -495,6 +489,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.MCOptions.MCSaveTempLabels = CodeGenOpts.SaveTempLabels;
   Options.MCOptions.MCUseDwarfDirectory = !CodeGenOpts.NoDwarfDirectoryAsm;
   Options.MCOptions.MCNoExecStack = CodeGenOpts.NoExecStack;
+  Options.MCOptions.AsmVerbose = CodeGenOpts.AsmVerbose;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,
