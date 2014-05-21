@@ -17,9 +17,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexagonTargetMachine.h"
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonSubtarget.h"
+#include "HexagonTargetMachine.h"
+#include "HexagonTargetObjectFile.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -65,6 +66,12 @@ char HexagonSplitConst32AndConst64::ID = 0;
 
 
 bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
+
+  const HexagonTargetObjectFile &TLOF =
+      (const HexagonTargetObjectFile &)
+      QTM.getTargetLowering()->getObjFileLowering();
+  if (TLOF.IsSmallDataEnabled())
+    return true;
 
   const TargetInstrInfo *TII = QTM.getInstrInfo();
 
