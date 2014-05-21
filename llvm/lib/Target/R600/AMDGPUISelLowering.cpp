@@ -591,7 +591,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
     unsigned Size = TD->getTypeAllocSize(EltType);
     unsigned Alignment = TD->getPrefTypeAlignment(EltType);
 
-    const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV);
+    const GlobalVariable *Var = cast<GlobalVariable>(GV);
     const Constant *Init = Var->getInitializer();
     int FI = FrameInfo->CreateStackObject(Size, Alignment, false);
     SDValue InitPtr = DAG.getFrameIndex(FI,
