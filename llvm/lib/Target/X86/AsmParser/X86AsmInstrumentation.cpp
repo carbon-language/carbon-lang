@@ -161,8 +161,7 @@ void X86AddressSanitizer32::InstrumentMemOperandImpl(
         MCSymbolRefExpr::Create(FuncSym, MCSymbolRefExpr::VK_PLT, Ctx);
     EmitInstruction(Out, MCInstBuilder(X86::CALLpcrel32).addExpr(FuncExpr));
   }
-  EmitInstruction(Out, MCInstBuilder(X86::ADD32ri).addReg(X86::ESP)
-                           .addReg(X86::ESP).addImm(4));
+  EmitInstruction(Out, MCInstBuilder(X86::POP32r).addReg(X86::EAX));
   EmitInstruction(Out, MCInstBuilder(X86::POP32r).addReg(X86::EAX));
 }
 
