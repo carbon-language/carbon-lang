@@ -1252,7 +1252,9 @@ defm V_CVT_PKRTZ_F16_F32 : VOP2_32 <0x0000002f, "V_CVT_PKRTZ_F16_F32",
 let neverHasSideEffects = 1 in {
 
 defm V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
-defm V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32", []>;
+defm V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32",
+  [(set f32:$dst, (fadd (fmul f32:$src0, f32:$src1), f32:$src2))]
+>;
 defm V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
   [(set i32:$dst, (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2))]
 >;
@@ -2074,11 +2076,6 @@ def : Pat <
 //===----------------------------------------------------------------------===//
 // VOP3 Patterns
 //===----------------------------------------------------------------------===//
-
-def : Pat <
-  (f32 (fadd (fmul f32:$src0, f32:$src1), f32:$src2)),
-  (V_MAD_F32 $src0, $src1, $src2)
->;
 
 def : Pat <
   (fadd f64:$src0, f64:$src1),
