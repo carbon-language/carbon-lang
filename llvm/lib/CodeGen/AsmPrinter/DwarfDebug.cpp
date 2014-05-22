@@ -827,10 +827,8 @@ void DwarfDebug::collectDeadVariables() {
         if (Variables.getNumElements() == 0)
           continue;
 
-        // FIXME: See the comment in constructSubprogramDIE about duplicate
-        // subprogram DIEs.
-        constructSubprogramDIE(*SPCU, SP);
         DIE *SPDIE = SPCU->getDIE(SP);
+        assert(SPDIE);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
           assert(DV.isVariable());
