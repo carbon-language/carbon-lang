@@ -33,14 +33,14 @@ ModuleFile *ModuleManager::lookup(StringRef Name) {
   if (Entry)
     return lookup(Entry);
 
-  return 0;
+  return nullptr;
 }
 
 ModuleFile *ModuleManager::lookup(const FileEntry *File) {
   llvm::DenseMap<const FileEntry *, ModuleFile *>::iterator Known
     = Modules.find(File);
   if (Known == Modules.end())
-    return 0;
+    return nullptr;
 
   return Known->second;
 }
@@ -58,7 +58,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
                          off_t ExpectedSize, time_t ExpectedModTime,
                          ModuleFile *&Module,
                          std::string &ErrorStr) {
-  Module = 0;
+  Module = nullptr;
 
   // Look for the file entry. This only fails if the expected size or
   // modification time differ.
@@ -162,7 +162,7 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
     if (modMap) {
       StringRef ModuleName = (*victim)->ModuleName;
       if (Module *mod = modMap->findModule(ModuleName)) {
-        mod->setASTFile(0);
+        mod->setASTFile(nullptr);
       }
     }
     delete *victim;
@@ -185,7 +185,7 @@ ModuleManager::VisitState *ModuleManager::allocateVisitState() {
   if (FirstVisitState) {
     VisitState *Result = FirstVisitState;
     FirstVisitState = FirstVisitState->NextState;
-    Result->NextState = 0;
+    Result->NextState = nullptr;
     return Result;
   }
 
@@ -194,7 +194,7 @@ ModuleManager::VisitState *ModuleManager::allocateVisitState() {
 }
 
 void ModuleManager::returnVisitState(VisitState *State) {
-  assert(State->NextState == 0 && "Visited state is in list?");
+  assert(State->NextState == nullptr && "Visited state is in list?");
   State->NextState = FirstVisitState;
   FirstVisitState = State;
 }
@@ -223,7 +223,7 @@ void ModuleManager::moduleFileAccepted(ModuleFile *MF) {
 }
 
 ModuleManager::ModuleManager(FileManager &FileMgr)
-  : FileMgr(FileMgr), GlobalIndex(), FirstVisitState(0) { }
+  : FileMgr(FileMgr), GlobalIndex(), FirstVisitState(nullptr) {}
 
 ModuleManager::~ModuleManager() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)
@@ -283,7 +283,7 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     assert(VisitOrder.size() == N && "Visitation order is wrong?");
 
     delete FirstVisitState;
-    FirstVisitState = 0;
+    FirstVisitState = nullptr;
   }
 
   VisitState *State = allocateVisitState();

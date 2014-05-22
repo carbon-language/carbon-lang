@@ -31,7 +31,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            raw_ostream *OS, bool AllowASTWithErrors)
   : PP(PP), OutputFile(OutputFile), Module(Module), 
     isysroot(isysroot.str()), Out(OS), 
-    SemaPtr(0), Stream(Buffer), Writer(Stream),
+    SemaPtr(nullptr), Stream(Buffer), Writer(Stream),
     AllowASTWithErrors(AllowASTWithErrors),
     HasEmittedPCH(false) {
 }

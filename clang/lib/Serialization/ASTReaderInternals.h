@@ -129,11 +129,11 @@ class ASTIdentifierLookupTrait : public ASTIdentifierLookupTraitBase {
   
 public:
   typedef IdentifierInfo * data_type;
-  
+
   ASTIdentifierLookupTrait(ASTReader &Reader, ModuleFile &F,
-                           IdentifierInfo *II = 0)
+                           IdentifierInfo *II = nullptr)
     : Reader(Reader), F(F), KnownII(II) { }
-       
+
   data_type ReadData(const internal_key_type& k,
                      const unsigned char* d,
                      unsigned DataLen);

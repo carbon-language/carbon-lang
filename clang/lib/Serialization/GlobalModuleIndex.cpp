@@ -242,7 +242,7 @@ GlobalModuleIndex::readIndex(StringRef Path) {
   std::unique_ptr<llvm::MemoryBuffer> Buffer;
   if (llvm::MemoryBuffer::getFile(IndexPath.c_str(), Buffer) !=
       llvm::errc::success)
-    return std::make_pair((GlobalModuleIndex *)0, EC_NotFound);
+    return std::make_pair(nullptr, EC_NotFound);
 
   /// \brief The bitstream reader from which we'll read the AST file.
   llvm::BitstreamReader Reader((const unsigned char *)Buffer->getBufferStart(),
@@ -256,7 +256,7 @@ GlobalModuleIndex::readIndex(StringRef Path) {
       Cursor.Read(8) != 'C' ||
       Cursor.Read(8) != 'G' ||
       Cursor.Read(8) != 'I') {
-    return std::make_pair((GlobalModuleIndex *)0, EC_IOError);
+    return std::make_pair(nullptr, EC_IOError);
   }
 
   return std::make_pair(new GlobalModuleIndex(Buffer.release(), Cursor),
@@ -436,7 +436,7 @@ static void emitBlockID(unsigned ID, const char *Name,
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETBID, Record);
 
   // Emit the block name if present.
-  if (Name == 0 || Name[0] == 0) return;
+  if (!Name || Name[0] == 0) return;
   Record.clear();
   while (*Name)
     Record.push_back(*Name++);

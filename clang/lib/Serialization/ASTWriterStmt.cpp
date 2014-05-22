@@ -308,7 +308,7 @@ void ASTStmtWriter::VisitCapturedStmt(CapturedStmt *S) {
   // Captures
   for (const auto &I : S->captures()) {
     if (I.capturesThis())
-      Writer.AddDeclRef(0, Record);
+      Writer.AddDeclRef(nullptr, Record);
     else
       Writer.AddDeclRef(I.getCapturedVar(), Record);
     Record.push_back(I.getCaptureKind());
@@ -687,7 +687,7 @@ void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
     // Replace them by 0 to indicate that the filler goes in that place.
     Expr *filler = E->getArrayFiller();
     for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
-      Writer.AddStmt(E->getInit(I) != filler ? E->getInit(I) : 0);
+      Writer.AddStmt(E->getInit(I) != filler ? E->getInit(I) : nullptr);
   } else {
     for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
       Writer.AddStmt(E->getInit(I));
@@ -1051,7 +1051,7 @@ void ASTStmtWriter::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S) {
 
 void ASTStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   Record.push_back(S->getNumCatchStmts());
-  Record.push_back(S->getFinallyStmt() != 0);
+  Record.push_back(S->getFinallyStmt() != nullptr);
   Writer.AddStmt(S->getTryBody());
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I)
     Writer.AddStmt(S->getCatchStmt(I));
@@ -1397,7 +1397,7 @@ ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   if (!E->isImplicitAccess())
     Writer.AddStmt(E->getBase());
   else
-    Writer.AddStmt(0);
+    Writer.AddStmt(nullptr);
   Writer.AddTypeRef(E->getBaseType(), Record);
   Record.push_back(E->isArrow());
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
@@ -1467,7 +1467,7 @@ void ASTStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   VisitOverloadExpr(E);
   Record.push_back(E->isArrow());
   Record.push_back(E->hasUnresolvedUsing());
-  Writer.AddStmt(!E->isImplicitAccess() ? E->getBase() : 0);
+  Writer.AddStmt(!E->isImplicitAccess() ? E->getBase() : nullptr);
   Writer.AddTypeRef(E->getBaseType(), Record);
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = serialization::EXPR_CXX_UNRESOLVED_MEMBER;

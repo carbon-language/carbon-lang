@@ -95,21 +95,21 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   case Decl::TranslationUnit:
   case Decl::Namespace:
   case Decl::LinkageSpec:
-    return 0;
+    return nullptr;
 
   // C/C++ tag types can only be defined in one place.
   case Decl::Enum:
   case Decl::Record:
     if (const TagDecl *Def = cast<TagDecl>(DC)->getDefinition())
       return Def;
-    return 0;
+    return nullptr;
 
   // FIXME: These can be defined in one place... except special member
   // functions and out-of-line definitions.
   case Decl::CXXRecord:
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:
-    return 0;
+    return nullptr;
 
   // Each function, method, and block declaration is its own DeclContext.
   case Decl::Function:
@@ -131,14 +131,14 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
     if (const ObjCProtocolDecl *Def
           = cast<ObjCProtocolDecl>(DC)->getDefinition())
       return Def;
-    return 0;
+    return nullptr;
 
   // FIXME: These are defined in one place, but properties in class extensions
   // end up being back-patched into the main interface. See
   // Sema::HandlePropertyInClassExtension for the offending code.
   case Decl::ObjCInterface:
-    return 0;
-    
+    return nullptr;
+
   default:
     llvm_unreachable("Unhandled DeclContext in AST reader");
   }
