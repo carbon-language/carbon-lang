@@ -1640,6 +1640,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
 static bool MightBeFoldableInst(Instruction *I) {
   switch (I->getOpcode()) {
   case Instruction::BitCast:
+  case Instruction::AddrSpaceCast:
     // Don't touch identity bitcasts.
     if (I->getType() == I->getOperand(0)->getType())
       return false;
@@ -1994,6 +1995,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
       return MatchAddr(AddrInst->getOperand(0), Depth);
     return false;
   case Instruction::BitCast:
+  case Instruction::AddrSpaceCast:
     // BitCast is always a noop, and we can handle it as long as it is
     // int->int or pointer->pointer (we don't want int<->fp or something).
     if ((AddrInst->getOperand(0)->getType()->isPointerTy() ||
