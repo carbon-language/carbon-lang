@@ -30,3 +30,6 @@ template<typename T> struct Outer {
     void g();
   };
 };
+
+template<typename T> struct WithPartialSpecialization {};
+typedef WithPartialSpecialization<int*> WithPartialSpecializationUse;

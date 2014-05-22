@@ -102,6 +102,8 @@ void g() {
   TemplateInstantiationVisibility<char[3]> tiv3; // expected-error {{must be imported from module 'cxx_templates_b_impl'}}
   // expected-note@cxx-templates-b-impl.h:10 {{previous definition is here}}
   TemplateInstantiationVisibility<char[4]> tiv4;
+
+  int &p = WithPartialSpecializationUse().f();
 }
 
 RedeclaredAsFriend<int> raf1;
