@@ -162,6 +162,13 @@ namespace {
       return "X86 DAG->DAG Instruction Selection";
     }
 
+    bool runOnMachineFunction(MachineFunction &MF) override {
+      // Reset the subtarget each time through.
+      Subtarget = &TM.getSubtarget<X86Subtarget>();
+      SelectionDAGISel::runOnMachineFunction(MF);
+      return true;
+    }
+
     void EmitFunctionEntryCode() override;
 
     bool IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const override;
