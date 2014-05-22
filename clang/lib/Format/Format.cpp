@@ -690,8 +690,7 @@ private:
       if (I[1]->Last->Type == TT_LineComment)
         return 0;
       do {
-        if (Tok->is(tok::l_brace) && Tok->BlockKind != BK_BracedInit &&
-            !Style.AllowShortBlocksOnASingleLine)
+        if (Tok->is(tok::l_brace) && Tok->BlockKind != BK_BracedInit)
           return 0;
         Tok = Tok->Next;
       } while (Tok);

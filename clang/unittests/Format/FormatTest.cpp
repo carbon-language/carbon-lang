@@ -378,6 +378,11 @@ TEST_F(FormatTest, FormatShortBracedStatements) {
                "}",
                AllowSimpleBracedStatements);
 
+  verifyFormat("template <int> struct A2 {\n"
+               "  struct B {};\n"
+               "};",
+               AllowSimpleBracedStatements);
+
   AllowSimpleBracedStatements.AllowShortIfStatementsOnASingleLine = false;
   verifyFormat("if (true) {\n"
                "  f();\n"
