@@ -1778,6 +1778,10 @@ public:
     return getCanonicalType(T1) == getCanonicalType(T2);
   }
 
+  bool hasSameType(const Type *T1, const Type *T2) const {
+    return getCanonicalType(T1) == getCanonicalType(T2);
+  }
+
   /// \brief Return this type as a completely-unqualified array type,
   /// capturing the qualifiers in \p Quals.
   ///

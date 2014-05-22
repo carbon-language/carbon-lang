@@ -2526,8 +2526,7 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
   if (FromType->isMemberPointerType() && ToType->isMemberPointerType()) {
     const MemberPointerType *FromMember = FromType->getAs<MemberPointerType>(),
                             *ToMember = ToType->getAs<MemberPointerType>();
-    if (FromMember->getClass()->getCanonicalTypeInternal() !=
-        ToMember->getClass()->getCanonicalTypeInternal()) {
+    if (!Context.hasSameType(FromMember->getClass(), ToMember->getClass())) {
       PDiag << ft_different_class << QualType(ToMember->getClass(), 0)
             << QualType(FromMember->getClass(), 0);
       return;
