@@ -6,6 +6,7 @@ add_clang_library(clangTidy
   ClangTidy.cpp
   ClangTidyModule.cpp
   ClangTidyDiagnosticConsumer.cpp
+  ClangTidyOptions.cpp
 
   DEPENDS
   ClangSACheckers

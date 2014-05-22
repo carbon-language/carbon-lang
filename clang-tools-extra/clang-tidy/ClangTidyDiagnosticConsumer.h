@@ -79,12 +79,18 @@ private:
 struct ClangTidyStats {
   ClangTidyStats()
       : ErrorsDisplayed(0), ErrorsIgnoredCheckFilter(0), ErrorsIgnoredNOLINT(0),
-        ErrorsIgnoredNonUserCode(0) {}
+        ErrorsIgnoredNonUserCode(0), ErrorsIgnoredLineFilter(0) {}
 
   unsigned ErrorsDisplayed;
   unsigned ErrorsIgnoredCheckFilter;
   unsigned ErrorsIgnoredNOLINT;
   unsigned ErrorsIgnoredNonUserCode;
+  unsigned ErrorsIgnoredLineFilter;
+
+  unsigned errorsIgnored() const {
+    return ErrorsIgnoredNOLINT + ErrorsIgnoredCheckFilter +
+           ErrorsIgnoredNonUserCode + ErrorsIgnoredLineFilter;
+  }
 };
 
 /// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticEngine
@@ -165,13 +171,15 @@ public:
 
 private:
   void finalizeLastError();
-  bool relatesToUserCode(SourceLocation Location);
+  void checkFilters(SourceLocation Location);
+  bool passesLineFilter(StringRef FileName, unsigned LineNumber) const;
 
   ClangTidyContext &Context;
   llvm::Regex HeaderFilter;
   std::unique_ptr<DiagnosticsEngine> Diags;
   SmallVector<ClangTidyError, 8> Errors;
   bool LastErrorRelatesToUserCode;
+  bool LastErrorPassesLineFilter;
 };
 
 } // end namespace tidy

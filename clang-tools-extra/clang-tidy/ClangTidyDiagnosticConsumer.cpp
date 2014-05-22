@@ -203,7 +203,7 @@ StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
 
 ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
     : Context(Ctx), HeaderFilter(Ctx.getOptions().HeaderFilterRegex),
-      LastErrorRelatesToUserCode(false) {
+      LastErrorRelatesToUserCode(false), LastErrorPassesLineFilter(false) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   Diags.reset(new DiagnosticsEngine(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
@@ -220,11 +220,15 @@ void ClangTidyDiagnosticConsumer::finalizeLastError() {
     } else if (!LastErrorRelatesToUserCode) {
       ++Context.Stats.ErrorsIgnoredNonUserCode;
       Errors.pop_back();
+    } else if (!LastErrorPassesLineFilter) {
+      ++Context.Stats.ErrorsIgnoredLineFilter;
+      Errors.pop_back();
     } else {
       ++Context.Stats.ErrorsDisplayed;
     }
   }
   LastErrorRelatesToUserCode = false;
+  LastErrorPassesLineFilter = false;
 }
 
 void ClangTidyDiagnosticConsumer::HandleDiagnostic(
@@ -259,32 +263,58 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
       llvm::makeArrayRef(Info.getFixItHints(), Info.getNumFixItHints()),
       Sources);
 
-  // Let argument parsing-related warnings through.
-  if (relatesToUserCode(Info.getLocation())) {
-    LastErrorRelatesToUserCode = true;
-  }
+  checkFilters(Info.getLocation());
 }
 
-bool ClangTidyDiagnosticConsumer::relatesToUserCode(SourceLocation Location) {
-  // Invalid location may mean a diagnostic in a command line, don't skip these.
-  if (!Location.isValid())
+bool ClangTidyDiagnosticConsumer::passesLineFilter(StringRef FileName,
+                                                   unsigned LineNumber) const {
+  if (Context.getOptions().LineFilter.empty())
     return true;
+  for (const FileFilter& Filter : Context.getOptions().LineFilter) {
+    if (FileName.endswith(Filter.Name)) {
+      if (Filter.LineRanges.empty())
+        return true;
+      for (const FileFilter::LineRange &Range : Filter.LineRanges) {
+        if (Range.first <= LineNumber && LineNumber <= Range.second)
+          return true;
+      }
+      return false;
+    }
+  }
+  return false;
+}
+
+void ClangTidyDiagnosticConsumer::checkFilters(SourceLocation Location) {
+  // Invalid location may mean a diagnostic in a command line, don't skip these.
+  if (!Location.isValid()) {
+    LastErrorRelatesToUserCode = true;
+    LastErrorPassesLineFilter = true;
+    return;
+  }
 
   const SourceManager &Sources = Diags->getSourceManager();
   if (Sources.isInSystemHeader(Location))
-    return false;
+    return;
 
   // FIXME: We start with a conservative approach here, but the actual type of
   // location needed depends on the check (in particular, where this check wants
   // to apply fixes).
   FileID FID = Sources.getDecomposedExpansionLoc(Location).first;
-  if (FID == Sources.getMainFileID())
-    return true;
-
   const FileEntry *File = Sources.getFileEntryForID(FID);
+
   // -DMACRO definitions on the command line have locations in a virtual buffer
   // that doesn't have a FileEntry. Don't skip these as well.
-  return !File || HeaderFilter.match(File->getName());
+  if (!File) {
+    LastErrorRelatesToUserCode = true;
+    LastErrorPassesLineFilter = true;
+    return;
+  }
+
+  StringRef FileName(File->getName());
+  unsigned LineNumber = Sources.getExpansionLineNumber(Location);
+  LastErrorRelatesToUserCode |=
+      Sources.isInMainFile(Location) || HeaderFilter.match(FileName);
+  LastErrorPassesLineFilter |= passesLineFilter(FileName, LineNumber);
 }
 
 namespace {
