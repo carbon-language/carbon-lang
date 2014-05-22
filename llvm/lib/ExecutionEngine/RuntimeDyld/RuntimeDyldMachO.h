@@ -71,6 +71,12 @@ private:
                                              ObjectImage &ObjImg,
                                              ObjSectionToIDMap &ObjSectionToID);
 
+  relocation_iterator processI386ScatteredVANILLA(
+					     unsigned SectionID,
+					     relocation_iterator RelI,
+					     ObjectImage &ObjImg,
+					     ObjSectionToIDMap &ObjSectionToID);
+
   struct EHFrameRelatedSections {
     EHFrameRelatedSections()
         : EHFrameSID(RTDYLD_INVALID_SECTION_ID),

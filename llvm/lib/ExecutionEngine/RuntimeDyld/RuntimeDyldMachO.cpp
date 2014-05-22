@@ -460,7 +460,7 @@ relocation_iterator RuntimeDyldMachO::processSECTDIFFRelocation(
 
   uint32_t AddrB = MachO->getScatteredRelocationValue(RE2);
   section_iterator SBI = getSectionByAddress(*MachO, AddrB);
-  assert(SBI != MachO->section_end() && "Can't find seciton for address B");
+  assert(SBI != MachO->section_end() && "Can't find section for address B");
   uint64_t SectionBBase;
   SBI->getAddress(SectionBBase);
   uint64_t SectionBOffset = AddrB - SectionBBase;
@@ -483,7 +483,48 @@ relocation_iterator RuntimeDyldMachO::processSECTDIFFRelocation(
   addRelocationForSection(R, SectionAID);
   addRelocationForSection(R, SectionBID);
 
-  return RelI;
+  return ++RelI;
+}
+
+relocation_iterator RuntimeDyldMachO::processI386ScatteredVANILLA(
+                                            unsigned SectionID,
+                                            relocation_iterator RelI,
+                                            ObjectImage &Obj,
+                                            ObjSectionToIDMap &ObjSectionToID) {
+  const MachOObjectFile *MachO =
+    static_cast<const MachOObjectFile*>(Obj.getObjectFile());
+  MachO::any_relocation_info RE =
+    MachO->getRelocation(RelI->getRawDataRefImpl());
+
+  SectionEntry &Section = Sections[SectionID];
+  uint32_t RelocType = MachO->getAnyRelocationType(RE);
+  bool IsPCRel = MachO->getAnyRelocationPCRel(RE);
+  unsigned Size = MachO->getAnyRelocationLength(RE);
+  uint64_t Offset;
+  RelI->getOffset(Offset);
+  uint8_t *LocalAddress = Section.Address + Offset;
+  unsigned NumBytes = 1 << Size;
+  int64_t Addend = 0;
+  memcpy(&Addend, LocalAddress, NumBytes);
+
+  unsigned SymbolBaseAddr = MachO->getScatteredRelocationValue(RE);
+  section_iterator TargetSI = getSectionByAddress(*MachO, SymbolBaseAddr);
+  assert(TargetSI != MachO->section_end() && "Can't find section for symbol");
+  uint64_t SectionBaseAddr;
+  TargetSI->getAddress(SectionBaseAddr);
+  SectionRef TargetSection = *TargetSI;
+  bool IsCode;
+  TargetSection.isText(IsCode);
+  uint32_t TargetSectionID = findOrEmitSection(Obj, TargetSection, IsCode,
+                                               ObjSectionToID);
+
+  Addend -= SectionBaseAddr;
+  RelocationEntry R(SectionID, Offset, RelocType, Addend,
+                    IsPCRel, Size);
+
+  addRelocationForSection(R, TargetSectionID);
+
+  return ++RelI;
 }
 
 relocation_iterator RuntimeDyldMachO::processRelocationRef(
@@ -498,17 +539,22 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
   uint32_t RelType = MachO->getAnyRelocationType(RE);
 
   // FIXME: Properly handle scattered relocations.
-  //        For now, optimistically skip these: they can often be ignored, as
-  //        the static linker will already have applied the relocation, and it
-  //        only needs to be reapplied if symbols move relative to one another.
-  //        Note: This will fail horribly where the relocations *do* need to be
-  //        applied, but that was already the case.
+  //        Special case the couple of scattered relocations that we know how
+  //        to handle: SECTDIFF relocations, and scattered VANILLA relocations
+  //        on I386.
+  //        For all other scattered relocations, just bail out and hope for the
+  //        best, since the offsets computed by scattered relocations have often
+  //        been optimisticaly filled in by the compiler. This will fail
+  //        horribly where the relocations *do* need to be applied, but that was
+  //        already the case.
   if (MachO->isRelocationScattered(RE)) {
     if (RelType == MachO::GENERIC_RELOC_SECTDIFF ||
         RelType == MachO::GENERIC_RELOC_LOCAL_SECTDIFF)
       return processSECTDIFFRelocation(SectionID, RelI, Obj, ObjSectionToID);
-
-    return ++RelI;
+    else if (Arch == Triple::x86 && RelType == MachO::GENERIC_RELOC_VANILLA)
+      return processI386ScatteredVANILLA(SectionID, RelI, Obj, ObjSectionToID);
+    else
+      return ++RelI;
   }
 
   RelocationValueRef Value;
