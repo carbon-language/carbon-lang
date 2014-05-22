@@ -73,6 +73,13 @@ public:
       Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
 
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    // Reset the subtarget each time through.
+    Subtarget = &TM.getSubtarget<ARMSubtarget>();
+    SelectionDAGISel::runOnMachineFunction(MF);
+    return true;
+  }
+
   const char *getPassName() const override {
     return "ARM Instruction Selection";
   }
