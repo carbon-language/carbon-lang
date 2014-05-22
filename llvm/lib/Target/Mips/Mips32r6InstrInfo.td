@@ -25,7 +25,6 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: sdbbp
 // Reencoded: sdc2
 // Reencoded: swc2
-// Removed: /.ps$/, cvt.ps.s, cvt.ps.pw
 // Removed: addi
 // Removed: bc1any2, bc1any4
 // Removed: bc2[ft]
