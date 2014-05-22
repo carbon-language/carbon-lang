@@ -1040,6 +1040,8 @@ void X86TargetLowering::resetOperationActions() {
     setLoadExtAction(ISD::EXTLOAD,              MVT::v2f32, Legal);
 
     setOperationAction(ISD::BITCAST,            MVT::v2i32, Custom);
+    setOperationAction(ISD::BITCAST,            MVT::v4i16, Custom);
+    setOperationAction(ISD::BITCAST,            MVT::v8i8,  Custom);
   }
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE41()) {
@@ -14276,19 +14278,31 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget *Subtarget,
   MVT SrcVT = Op.getOperand(0).getSimpleValueType();
   MVT DstVT = Op.getSimpleValueType();
 
-  if (SrcVT == MVT::v2i32) {
+  if (SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 || SrcVT == MVT::v8i8) {
     assert(Subtarget->hasSSE2() && "Requires at least SSE2!");
     if (DstVT != MVT::f64)
       // This conversion needs to be expanded.
       return SDValue();
 
+    SDValue InVec = Op->getOperand(0);
     SDLoc dl(Op);
-    SDValue Elt0 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                               Op->getOperand(0), DAG.getIntPtrConstant(0));
-    SDValue Elt1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                               Op->getOperand(0), DAG.getIntPtrConstant(1));
-    SDValue Elts[] = {Elt0, Elt1, Elt0, Elt0};
-    SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Elts);
+    unsigned NumElts = SrcVT.getVectorNumElements();
+    EVT SVT = SrcVT.getVectorElementType();
+
+    // Widen the vector in input in the case of MVT::v2i32.
+    // Example: from MVT::v2i32 to MVT::v4i32.
+    SmallVector<SDValue, 16> Elts;
+    for (unsigned i = 0, e = NumElts; i != e; ++i)
+      Elts.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SVT, InVec,
+                                 DAG.getIntPtrConstant(i)));
+
+    // Explicitly mark the extra elements as Undef.
+    SDValue Undef = DAG.getUNDEF(SVT);
+    for (unsigned i = NumElts, e = NumElts * 2; i != e; ++i)
+      Elts.push_back(Undef);
+
+    EVT NewVT = EVT::getVectorVT(*DAG.getContext(), SVT, NumElts * 2);
+    SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT, Elts);
     SDValue ToV2F64 = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, BV);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, ToV2F64,
                        DAG.getIntPtrConstant(0));
@@ -14758,17 +14772,23 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     EVT DstVT = N->getValueType(0);
     EVT SrcVT = N->getOperand(0)->getValueType(0);
 
-    if (SrcVT == MVT::f64 && DstVT == MVT::v2i32) {
-      SDValue Expanded = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-                                     MVT::v2f64, N->getOperand(0));
-      SDValue ToV4I32 = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Expanded);
-      SDValue Elt0 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                                 ToV4I32, DAG.getIntPtrConstant(0));
-      SDValue Elt1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32,
-                                 ToV4I32, DAG.getIntPtrConstant(1));
-      SDValue Elts[] = {Elt0, Elt1};
-      Results.push_back(DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, Elts));
-    }
+    if (SrcVT != MVT::f64 ||
+        (DstVT != MVT::v2i32 && DstVT != MVT::v4i16 && DstVT != MVT::v8i8))
+      return;
+
+    unsigned NumElts = DstVT.getVectorNumElements();
+    EVT SVT = DstVT.getVectorElementType();
+    EVT WiderVT = EVT::getVectorVT(*DAG.getContext(), SVT, NumElts * 2);
+    SDValue Expanded = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
+                                   MVT::v2f64, N->getOperand(0));
+    SDValue ToVecInt = DAG.getNode(ISD::BITCAST, dl, WiderVT, Expanded);
+
+    SmallVector<SDValue, 8> Elts;
+    for (unsigned i = 0, e = NumElts; i != e; ++i)
+      Elts.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SVT,
+                                   ToVecInt, DAG.getIntPtrConstant(i)));
+
+    Results.push_back(DAG.getNode(ISD::BUILD_VECTOR, dl, DstVT, Elts));
   }
   }
 }
