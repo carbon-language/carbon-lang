@@ -45,7 +45,7 @@ class ARM64DAGToDAGISel : public SelectionDAGISel {
 public:
   explicit ARM64DAGToDAGISel(ARM64TargetMachine &tm, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(tm, OptLevel), TM(tm),
-        Subtarget(&TM.getSubtarget<ARM64Subtarget>()), ForCodeSize(false) {}
+        Subtarget(nullptr), ForCodeSize(false) {}
 
   const char *getPassName() const override {
     return "ARM64 Instruction Selection";
@@ -57,6 +57,7 @@ public:
         FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
                              Attribute::OptimizeForSize) ||
         FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+    Subtarget = &TM.getSubtarget<ARM64Subtarget>();
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
 
