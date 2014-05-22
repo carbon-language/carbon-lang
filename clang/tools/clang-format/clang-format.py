@@ -38,8 +38,13 @@ def main():
   text = '\n'.join(buf)
 
   # Determine range to format.
-  cursor = int(vim.eval('line2byte(line("."))+col(".")')) - 2
   lines = '%s:%s' % (vim.current.range.start + 1, vim.current.range.end + 1)
+
+  # Determine the cursor position.
+  cursor = int(vim.eval('line2byte(line("."))+col(".")')) - 2
+  if cursor < 0:
+    print 'Couldn\'t determine cursor position. Is your file empty?'
+    return
 
   # Avoid flashing an ugly, ugly cmd prompt on Windows when invoking clang-format.
   startupinfo = None
