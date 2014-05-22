@@ -2408,8 +2408,8 @@ def t2UBFX: T2TwoRegBitFI<
 }
 
 // A8.8.247  UDF - Undefined (Encoding T2)
-def t2UDF
-    : T2XI<(outs), (ins imm0_65535:$imm16), IIC_Br, "udf.w\t$imm16", []> {
+def t2UDF : T2XI<(outs), (ins imm0_65535:$imm16), IIC_Br, "udf.w\t$imm16",
+                 [(int_arm_undefined imm0_65535:$imm16)]> {
   bits<16> imm16;
   let Inst{31-29} = 0b111;
   let Inst{28-27} = 0b10;

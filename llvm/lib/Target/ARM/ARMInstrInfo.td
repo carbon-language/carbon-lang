@@ -1969,7 +1969,7 @@ def DBG : AI<(outs), (ins imm0_15:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
 
 // A8.8.247  UDF - Undefined (Encoding A1)
 def UDF : AInoP<(outs), (ins imm0_65535:$imm16), MiscFrm, NoItinerary,
-                "udf", "\t$imm16", []> {
+                "udf", "\t$imm16", [(int_arm_undefined imm0_65535:$imm16)]> {
   bits<16> imm16;
   let Inst{31-28} = 0b1110; // AL
   let Inst{27-25} = 0b011;

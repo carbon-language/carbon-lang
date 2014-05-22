@@ -126,6 +126,11 @@ def int_arm_crc32cw : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
 def int_arm_hint : Intrinsic<[], [llvm_i32_ty]>;
 
 //===----------------------------------------------------------------------===//
+// UND (reserved undefined sequence)
+
+def int_arm_undefined : Intrinsic<[], [llvm_i32_ty]>;
+
+//===----------------------------------------------------------------------===//
 // Advanced SIMD (NEON)
 
 // The following classes do not correspond directly to GCC builtins.

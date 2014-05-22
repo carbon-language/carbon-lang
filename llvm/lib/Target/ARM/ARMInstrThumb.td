@@ -1194,8 +1194,8 @@ def tTST :                      // A8.6.230
                Sched<[WriteALU]>;
 
 // A8.8.247  UDF - Undefined (Encoding T1)
-def tUDF : TI<(outs), (ins imm0_255:$imm8), IIC_Br, "udf\t$imm8", []>,
-           Encoding16 {
+def tUDF : TI<(outs), (ins imm0_255:$imm8), IIC_Br, "udf\t$imm8",
+              [(int_arm_undefined imm0_255:$imm8)]>, Encoding16 {
   bits<8> imm8;
   let Inst{15-12} = 0b1101;
   let Inst{11-8} = 0b1110;
