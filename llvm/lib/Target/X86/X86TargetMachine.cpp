@@ -178,9 +178,7 @@ bool X86PassConfig::addInstSelector() {
   if (getX86Subtarget().isTargetELF() && getOptLevel() != CodeGenOpt::None)
     addPass(createCleanupLocalDynamicTLSPass());
 
-  // For 32-bit, prepend instructions to set the "global base reg" for PIC.
-  if (!getX86Subtarget().is64Bit())
-    addPass(createX86GlobalBaseRegPass());
+  addPass(createX86GlobalBaseRegPass());
 
   return false;
 }
@@ -206,19 +204,13 @@ bool X86PassConfig::addPreEmitPass() {
     ShouldPrint = true;
   }
 
-  if (getX86Subtarget().hasAVX() && UseVZeroUpper) {
+  if (UseVZeroUpper) {
     addPass(createX86IssueVZeroUpperPass());
     ShouldPrint = true;
   }
 
-  if (getOptLevel() != CodeGenOpt::None &&
-      getX86Subtarget().padShortFunctions()) {
+  if (getOptLevel() != CodeGenOpt::None) {
     addPass(createX86PadShortFunctions());
-    ShouldPrint = true;
-  }
-  if (getOptLevel() != CodeGenOpt::None &&
-      (getX86Subtarget().LEAusesAG() ||
-       getX86Subtarget().slowLEA())){
     addPass(createX86FixupLEAs());
     ShouldPrint = true;
   }

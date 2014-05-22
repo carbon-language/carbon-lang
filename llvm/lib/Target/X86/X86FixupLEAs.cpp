@@ -150,6 +150,10 @@ FunctionPass *llvm::createX86FixupLEAs() {
 
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   TM = &Func.getTarget();
+  const X86Subtarget &ST = TM->getSubtarget<X86Subtarget>();
+  if (!ST.LEAusesAG() && !ST.slowLEA())
+    return false;
+
   TII = static_cast<const X86InstrInfo*>(TM->getInstrInfo());
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);

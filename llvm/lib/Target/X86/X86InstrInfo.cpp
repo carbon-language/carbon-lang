@@ -5395,8 +5395,10 @@ namespace {
       const X86TargetMachine *TM =
         static_cast<const X86TargetMachine *>(&MF.getTarget());
 
-      assert(!TM->getSubtarget<X86Subtarget>().is64Bit() &&
-             "X86-64 PIC uses RIP relative addressing");
+      // Don't do anything if this is 64-bit as 64-bit PIC
+      // uses RIP relative addressing.
+      if (TM->getSubtarget<X86Subtarget>().is64Bit())
+        return false;
 
       // Only emit a global base reg in PIC mode.
       if (TM->getRelocationModel() != Reloc::PIC_)
