@@ -4694,6 +4694,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("auto PointerBinding = [](const char *S) {};");
   verifyFormat("typedef typeof(int(int, int)) *MyFunc;");
   verifyIndependentOfContext("typedef void (*f)(int *a);");
+  verifyIndependentOfContext("int i{a * b};");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
@@ -7044,9 +7045,7 @@ TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
 
 TEST_F(FormatTest, DoNotPrematurelyEndUnwrappedLineForReturnStatements) {
   verifyFormat(
-      "void f() {\n"
-      "  return C{param1, param2}.SomeCall(param1, param2);\n"
-      "}\n");
+      "void f() { return C{param1, param2}.SomeCall(param1, param2); }");
 }
 
 TEST_F(FormatTest, FormatsClosingBracesInEmptyNestedBlocks) {

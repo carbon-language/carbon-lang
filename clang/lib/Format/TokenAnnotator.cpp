@@ -298,6 +298,8 @@ private:
 
       ScopedContextCreator ContextCreator(*this, tok::l_brace, 1);
       Contexts.back().ColonIsDictLiteral = true;
+      if (Left->BlockKind == BK_BracedInit)
+        Contexts.back().IsExpression = true;
 
       while (CurrentToken) {
         if (CurrentToken->is(tok::r_brace)) {
