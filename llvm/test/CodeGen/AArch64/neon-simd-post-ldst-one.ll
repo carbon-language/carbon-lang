@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has equivalents of these tests separately.
 
 define { [2 x <16 x i8>] } @test_vld2q_dup_fx_update(i8* %a, i8** %ptr) {
 ; CHECK-LABEL: test_vld2q_dup_fx_update

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has equivalent tests to these in various files.
 
 ;Check for a post-increment updating load.
 define <4 x i16> @test_vld1_fx_update(i16** %ptr) nounwind {
