@@ -49,9 +49,9 @@
 // CHECK-LD-RT: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../.."
 // CHECK-LD-RT: "-L[[SYSROOT]]/lib"
 // CHECK-LD-RT: "-L[[SYSROOT]]/usr/lib"
-// CHECK-LD-RT: libclang_rt.x86_64.a" "-lgcc_s"
+// CHECK-LD-RT: libclang_rt.builtins-x86_64.a" "-lgcc_s"
 // CHECK-LD-RT: "-lc"
-// CHECK-LD-RT: libclang_rt.x86_64.a" "-lgcc_s"
+// CHECK-LD-RT: libclang_rt.builtins-x86_64.a" "-lgcc_s"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=x86_64-unknown-linux \
