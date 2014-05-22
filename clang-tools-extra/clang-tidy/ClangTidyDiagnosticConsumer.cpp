@@ -258,10 +258,8 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   SourceManager *Sources = nullptr;
   if (Info.hasSourceManager())
     Sources = &Info.getSourceManager();
-  Converter.emitDiagnostic(
-      Info.getLocation(), DiagLevel, Message, Info.getRanges(),
-      llvm::makeArrayRef(Info.getFixItHints(), Info.getNumFixItHints()),
-      Sources);
+  Converter.emitDiagnostic(Info.getLocation(), DiagLevel, Message,
+                           Info.getRanges(), Info.getFixItHints(), Sources);
 
   checkFilters(Info.getLocation());
 }
