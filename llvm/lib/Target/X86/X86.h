@@ -30,9 +30,9 @@ class X86TargetMachine;
 FunctionPass *createX86ISelDag(X86TargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 
-/// createGlobalBaseRegPass - This pass initializes a global base
+/// createX86GlobalBaseRegPass - This pass initializes a global base
 /// register for PIC on x86-32.
-FunctionPass* createGlobalBaseRegPass();
+FunctionPass* createX86GlobalBaseRegPass();
 
 /// createCleanupLocalDynamicTLSPass() - This pass combines multiple accesses
 /// to local-dynamic TLS variables so that the TLS base address for the module

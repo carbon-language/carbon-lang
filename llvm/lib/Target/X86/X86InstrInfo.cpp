@@ -5451,7 +5451,7 @@ namespace {
 
 char CGBR::ID = 0;
 FunctionPass*
-llvm::createGlobalBaseRegPass() { return new CGBR(); }
+llvm::createX86GlobalBaseRegPass() { return new CGBR(); }
 
 namespace {
   struct LDTLSCleanup : public MachineFunctionPass {

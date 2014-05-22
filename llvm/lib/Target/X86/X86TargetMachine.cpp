@@ -180,7 +180,7 @@ bool X86PassConfig::addInstSelector() {
 
   // For 32-bit, prepend instructions to set the "global base reg" for PIC.
   if (!getX86Subtarget().is64Bit())
-    addPass(createGlobalBaseRegPass());
+    addPass(createX86GlobalBaseRegPass());
 
   return false;
 }
