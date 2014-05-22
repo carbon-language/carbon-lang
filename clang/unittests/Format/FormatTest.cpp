@@ -5263,6 +5263,9 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "};");
   verifyFormat("vector<int> foo = {::SomeGlobalFunction()};");
 
+  verifyFormat("int foo(int i) { return fo1{}(i); }");
+  verifyFormat("int foo(int i) { return fo1{}(i); }");
+
   // In combination with BinPackParameters = false.
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackParameters = false;

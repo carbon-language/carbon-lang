@@ -348,7 +348,8 @@ void UnwrappedLineParser::calculateBraceTypes() {
             // We exclude + and - as they can be ObjC visibility modifiers.
             ProbablyBracedList =
                 NextTok->isOneOf(tok::comma, tok::semi, tok::period, tok::colon,
-                                 tok::r_paren, tok::r_square, tok::l_brace) ||
+                                 tok::r_paren, tok::r_square, tok::l_brace,
+                                 tok::l_paren) ||
                 (NextTok->isBinaryOperator() &&
                  !NextTok->isOneOf(tok::plus, tok::minus));
           }
