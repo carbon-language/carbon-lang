@@ -73,13 +73,10 @@ LinkingContext::createUndefinedSymbolFile(StringRef filename) const {
 
 void LinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File> > &result) const {
-  std::unique_ptr<File> internalFile;
-  internalFile = createEntrySymbolFile();
-  if (internalFile)
-    result.push_back(std::move(internalFile));
-  internalFile = createUndefinedSymbolFile();
-  if (internalFile)
-    result.push_back(std::move(internalFile));
+  if (std::unique_ptr<File> file = createEntrySymbolFile())
+    result.push_back(std::move(file));
+  if (std::unique_ptr<File> file = createUndefinedSymbolFile())
+    result.push_back(std::move(file));
 }
 
 void LinkingContext::addPasses(PassManager &pm) {}
