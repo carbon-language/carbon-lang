@@ -22,13 +22,13 @@ public:
   /// Enables AddressSanitizer instrumentation at machine level.
   bool SanitizeAddress : 1;
 
-  unsigned MCRelaxAll : 1;
-  unsigned MCNoExecStack : 1;
-  unsigned MCSaveTempLabels : 1;
-  unsigned MCUseDwarfDirectory : 1;
-  unsigned ShowMCEncoding : 1;
-  unsigned ShowMCInst : 1;
-  unsigned AsmVerbose : 1;
+  bool MCRelaxAll : 1;
+  bool MCNoExecStack : 1;
+  bool MCSaveTempLabels : 1;
+  bool MCUseDwarfDirectory : 1;
+  bool ShowMCEncoding : 1;
+  bool ShowMCInst : 1;
+  bool AsmVerbose : 1;
   MCTargetOptions();
 };
 
