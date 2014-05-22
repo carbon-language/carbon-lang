@@ -3379,9 +3379,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                options::OPT_fstack_protector_all,
                                options::OPT_fstack_protector_strong,
                                options::OPT_fstack_protector)) {
-    if (A->getOption().matches(options::OPT_fstack_protector))
-      StackProtectorLevel = LangOptions::SSPOn;
-    else if (A->getOption().matches(options::OPT_fstack_protector_strong))
+    if (A->getOption().matches(options::OPT_fstack_protector)) {
+      StackProtectorLevel = std::max<unsigned>(LangOptions::SSPOn,
+        getToolChain().GetDefaultStackProtectorLevel(KernelOrKext));
+    } else if (A->getOption().matches(options::OPT_fstack_protector_strong))
       StackProtectorLevel = LangOptions::SSPStrong;
     else if (A->getOption().matches(options::OPT_fstack_protector_all))
       StackProtectorLevel = LangOptions::SSPReq;
