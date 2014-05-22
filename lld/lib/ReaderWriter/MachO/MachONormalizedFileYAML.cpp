@@ -659,8 +659,10 @@ bool MachOYamlIOTaggedDocumentHandler::handledDocTag(llvm::yaml::IO &io,
     std::unique_ptr<lld::File> f = std::move(foe.get());
     file = f.release();
     return true;
+  } else {
+    io.setError(foe.getError().message());
+    return false;
   }
-  return false;
 }
 
 

@@ -107,8 +107,8 @@ static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
   }
 }
 
-static void processSection(MachOFile &file, const Section &section,
-                           bool copyRefs) {
+static error_code processSection(MachOFile &file, const Section &section,
+                                 bool copyRefs) {
   unsigned offset = 0;
   switch (section.type) {
   case llvm::MachO::S_REGULAR:
@@ -128,7 +128,8 @@ static void processSection(MachOFile &file, const Section &section,
     }
     break;
   case llvm::MachO::S_4BYTE_LITERALS:
-    assert((section.content.size() % 4) == 0);
+    if ((section.content.size() % 4) != 0)
+      return llvm::make_error_code(llvm::errc::executable_format_error);
     for (size_t i = 0, e = section.content.size(); i != e; i += 4) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 4);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
@@ -137,7 +138,8 @@ static void processSection(MachOFile &file, const Section &section,
     }
     break;
   case llvm::MachO::S_8BYTE_LITERALS:
-    assert((section.content.size() % 8) == 0);
+    if ((section.content.size() % 8) != 0)
+      return llvm::make_error_code(llvm::errc::executable_format_error);
     for (size_t i = 0, e = section.content.size(); i != e; i += 8) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 8);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
@@ -146,7 +148,8 @@ static void processSection(MachOFile &file, const Section &section,
     }
     break;
   case llvm::MachO::S_16BYTE_LITERALS:
-    assert((section.content.size() % 16) == 0);
+    if ((section.content.size() % 16) != 0)
+      return llvm::make_error_code(llvm::errc::executable_format_error);
     for (size_t i = 0, e = section.content.size(); i != e; i += 16) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 16);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
@@ -155,9 +158,10 @@ static void processSection(MachOFile &file, const Section &section,
     }
     break;
   default:
-    llvm_unreachable("mach-o section type not supported");
+    llvm_unreachable("mach-o section type not supported yet");
     break;
   }
+  return error_code::success();
 }
 
 static ErrorOr<std::unique_ptr<lld::File>>
@@ -179,7 +183,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   }
   // Create atoms from sections that don't have symbols.
   for (auto &sect : normalizedFile.sections) {
-    processSection(*file, sect, copyRefs);
+    if (error_code ec = processSection(*file, sect, copyRefs))
+      return ec;
   }
 
   return std::unique_ptr<File>(std::move(file));
