@@ -75,8 +75,7 @@ def COS_eg : COS_Common<0x8E>;
 def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL>;
 def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_eg $src))>;
 
-def : IMad24ExpandPat<MULLO_INT_eg, ADD_INT>;
-def : UMad24ExpandPat<MULLO_UINT_eg, ADD_INT>;
+defm : Expand24IBitOps<MULLO_INT_eg, ADD_INT>;
 
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions
