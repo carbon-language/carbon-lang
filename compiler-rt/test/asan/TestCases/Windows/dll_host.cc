@@ -5,7 +5,7 @@
 // RUN: %clangxx_asan -O0 %s -Fe%t
 //
 // Get the list of ASan wrappers exported by the main module RTL:
-// RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" < %t.exports | grep -v @ | sort | uniq > %t.exported_wrappers
+// RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" | grep -v @ | sort | uniq > %t.exported_wrappers
 //
 // Get the list of ASan wrappers imported by the DLL RTL:
 // RUN: grep INTERCEPT_LIBRARY_FUNCTION %p/../../../../lib/asan/asan_dll_thunk.cc | grep -v define | sed "s/.*(\(.*\)).*/__asan_wrap_\1/" | sort | uniq > %t.dll_imports
