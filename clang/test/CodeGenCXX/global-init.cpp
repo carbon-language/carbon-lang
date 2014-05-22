@@ -12,7 +12,7 @@ struct C { void *field; };
 
 struct D { ~D(); };
 
-// CHECK: @__dso_handle = external unnamed_addr global i8
+// CHECK: @__dso_handle = external global i8
 // CHECK: @c = global %struct.C zeroinitializer, align 8
 
 // It's okay if we ever implement the IR-generation optimization to remove this.
