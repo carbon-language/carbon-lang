@@ -780,7 +780,7 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   if (!MF.getTarget()
            .getSubtarget<TargetSubtargetInfo>()
            .enableEarlyIfConversion())
-    return true;
+    return false;
 
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
