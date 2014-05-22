@@ -5262,6 +5262,8 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "  T member = {arg1, arg2};\n"
                "};");
   verifyFormat("vector<int> foo = {::SomeGlobalFunction()};");
+  verifyFormat("static_assert(std::is_integral<int>{} + 0, \"\");");
+  verifyFormat("int a = std::is_integral<int>{} + 0;");
 
   verifyFormat("int foo(int i) { return fo1{}(i); }");
   verifyFormat("int foo(int i) { return fo1{}(i); }");
@@ -6088,10 +6090,14 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "@implementation Bar\n"
                "@end");
 
-  verifyFormat("@implementation Foo : Bar\n"
-               "+ (id)init {\n}\n"
-               "- (void)foo {\n}\n"
-               "@end");
+  EXPECT_EQ("@implementation Foo : Bar\n"
+            "+ (id)init {\n}\n"
+            "- (void)foo {\n}\n"
+            "@end",
+            format("@implementation Foo : Bar\n"
+                   "+(id)init{}\n"
+                   "-(void)foo{}\n"
+                   "@end"));
 
   verifyFormat("@implementation Foo {\n"
                "  int _i;\n"
