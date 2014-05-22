@@ -14,6 +14,7 @@
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Attributes.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Regex.h"
@@ -48,20 +49,20 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
 
 namespace {
 
-/// \brief Regular expression corresponding to the value given in the
-/// command line flag -pass-remarks. Passes whose name matches this
-/// regexp will emit a diagnostic when calling
-/// LLVMContext::emitOptimizationRemark.
-static Regex *OptimizationRemarkPattern = nullptr;
-
+/// \brief Regular expression corresponding to the value given in one of the
+/// -pass-remarks* command line flags. Passes whose name matches this regexp
+/// will emit a diagnostic when calling the associated diagnostic function
+/// (emitOptimizationRemark, emitOptimizationRemarkMissed or
+/// emitOptimizationRemarkAnalysis).
 struct PassRemarksOpt {
-  void operator=(const std::string &Val) const {
+  std::shared_ptr<Regex> Pattern;
+
+  void operator=(const std::string &Val) {
     // Create a regexp object to match pass names for emitOptimizationRemark.
     if (!Val.empty()) {
-      delete OptimizationRemarkPattern;
-      OptimizationRemarkPattern = new Regex(Val);
+      Pattern = std::make_shared<Regex>(Val);
       std::string RegexError;
-      if (!OptimizationRemarkPattern->isValid(RegexError))
+      if (!Pattern->isValid(RegexError))
         report_fatal_error("Invalid regular expression '" + Val +
                                "' in -pass-remarks: " + RegexError,
                            false);
@@ -70,31 +71,62 @@ struct PassRemarksOpt {
 };
 
 static PassRemarksOpt PassRemarksOptLoc;
+static PassRemarksOpt PassRemarksMissedOptLoc;
+static PassRemarksOpt PassRemarksAnalysisOptLoc;
 
 // -pass-remarks
-//    Command line flag to enable LLVMContext::emitOptimizationRemark()
-//    and LLVMContext::emitOptimizationNote() calls.
+//    Command line flag to enable emitOptimizationRemark()
 static cl::opt<PassRemarksOpt, true, cl::parser<std::string>>
 PassRemarks("pass-remarks", cl::value_desc("pattern"),
             cl::desc("Enable optimization remarks from passes whose name match "
                      "the given regular expression"),
             cl::Hidden, cl::location(PassRemarksOptLoc), cl::ValueRequired,
             cl::ZeroOrMore);
+
+// -pass-remarks-missed
+//    Command line flag to enable emitOptimizationRemarkMissed()
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>> PassRemarksMissed(
+    "pass-remarks-missed", cl::value_desc("pattern"),
+    cl::desc("Enable missed optimization remarks from passes whose name match "
+             "the given regular expression"),
+    cl::Hidden, cl::location(PassRemarksMissedOptLoc), cl::ValueRequired,
+    cl::ZeroOrMore);
+
+// -pass-remarks-analysis
+//    Command line flag to enable emitOptimizationRemarkAnalysis()
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>>
+PassRemarksAnalysis(
+    "pass-remarks-analysis", cl::value_desc("pattern"),
+    cl::desc(
+        "Enable optimization analysis remarks from passes whose name match "
+        "the given regular expression"),
+    cl::Hidden, cl::location(PassRemarksAnalysisOptLoc), cl::ValueRequired,
+    cl::ZeroOrMore);
 }
 
-bool
-LLVMContextImpl::optimizationRemarksEnabledFor(const char *PassName) const {
-  return OptimizationRemarkPattern &&
-         OptimizationRemarkPattern->match(PassName);
+bool LLVMContextImpl::optimizationRemarkEnabledFor(
+    const DiagnosticInfoOptimizationRemark *DI) const {
+  return PassRemarksOptLoc.Pattern &&
+         PassRemarksOptLoc.Pattern->match(DI->getPassName());
 }
 
+bool LLVMContextImpl::optimizationRemarkEnabledFor(
+    const DiagnosticInfoOptimizationRemarkMissed *DI) const {
+  return PassRemarksMissedOptLoc.Pattern &&
+         PassRemarksMissedOptLoc.Pattern->match(DI->getPassName());
+}
+
+bool LLVMContextImpl::optimizationRemarkEnabledFor(
+    const DiagnosticInfoOptimizationRemarkAnalysis *DI) const {
+  return PassRemarksAnalysisOptLoc.Pattern &&
+         PassRemarksAnalysisOptLoc.Pattern->match(DI->getPassName());
+}
 
 namespace {
 struct DropReferences {
   // Takes the value_type of a ConstantUniqueMap's internal map, whose 'second'
   // is a Constant*.
-  template<typename PairT>
-  void operator()(const PairT &P) {
+  template <typename PairT> void operator()(const PairT &P) {
     P.second->dropAllReferences();
   }
 };

@@ -67,6 +67,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -1213,10 +1214,10 @@ struct LoopVectorize : public FunctionPass {
       DEBUG(dbgs() << "LV: Trying to at least unroll the loops.\n");
 
       // Report the unrolling decision.
-      F->getContext().emitOptimizationRemark(
-          DEBUG_TYPE, *F, L->getStartLoc(),
-          Twine("unrolled with interleaving factor " + Twine(UF) +
-                " (vectorization not beneficial)"));
+      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+                             Twine("unrolled with interleaving factor " +
+                                   Twine(UF) +
+                                   " (vectorization not beneficial)"));
 
       // We decided not to vectorize, but we may want to unroll.
       InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
@@ -1228,8 +1229,8 @@ struct LoopVectorize : public FunctionPass {
       ++LoopsVectorized;
 
       // Report the vectorization decision.
-      F->getContext().emitOptimizationRemark(
-          DEBUG_TYPE, *F, L->getStartLoc(),
+      emitOptimizationRemark(
+          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
           Twine("vectorized loop (vectorization factor: ") + Twine(VF.Width) +
               ", unrolling interleave factor: " + Twine(UF) + ")");
     }

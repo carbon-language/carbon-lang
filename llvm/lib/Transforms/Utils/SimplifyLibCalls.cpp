@@ -20,6 +20,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -789,9 +790,9 @@ struct StrLenOpt : public LibCallOptimization {
       uint64_t LenTrue = GetStringLength(SI->getTrueValue());
       uint64_t LenFalse = GetStringLength(SI->getFalseValue());
       if (LenTrue && LenFalse) {
-        Context->emitOptimizationRemark(
-            "simplify-libcalls", *Caller, SI->getDebugLoc(),
-            "folded strlen(select) to select of constants");
+        emitOptimizationRemark(*Context, "simplify-libcalls", *Caller,
+                               SI->getDebugLoc(),
+                               "folded strlen(select) to select of constants");
         return B.CreateSelect(SI->getCondition(),
                               ConstantInt::get(CI->getType(), LenTrue-1),
                               ConstantInt::get(CI->getType(), LenFalse-1));

@@ -12,6 +12,7 @@
 // Diagnostics reporting is still done as part of the LLVMContext.
 //===----------------------------------------------------------------------===//
 
+#include "LLVMContextImpl.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
@@ -67,20 +68,20 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
   DP << getMsg();
 }
 
-bool DiagnosticInfoOptimizationRemark::isLocationAvailable() const {
+bool DiagnosticInfoOptimizationRemarkBase::isLocationAvailable() const {
   return getFunction().getParent()->getNamedMetadata("llvm.dbg.cu") != nullptr;
 }
 
-void DiagnosticInfoOptimizationRemark::getLocation(StringRef *Filename,
-                                                   unsigned *Line,
-                                                   unsigned *Column) const {
+void DiagnosticInfoOptimizationRemarkBase::getLocation(StringRef *Filename,
+                                                       unsigned *Line,
+                                                       unsigned *Column) const {
   DILocation DIL(getDebugLoc().getAsMDNode(getFunction().getContext()));
   *Filename = DIL.getFilename();
   *Line = DIL.getLineNumber();
   *Column = DIL.getColumnNumber();
 }
 
-const std::string DiagnosticInfoOptimizationRemark::getLocationStr() const {
+const std::string DiagnosticInfoOptimizationRemarkBase::getLocationStr() const {
   StringRef Filename("<unknown>");
   unsigned Line = 0;
   unsigned Column = 0;
@@ -89,6 +90,43 @@ const std::string DiagnosticInfoOptimizationRemark::getLocationStr() const {
   return Twine(Filename + ":" + Twine(Line) + ":" + Twine(Column)).str();
 }
 
-void DiagnosticInfoOptimizationRemark::print(DiagnosticPrinter &DP) const {
+void DiagnosticInfoOptimizationRemarkBase::print(DiagnosticPrinter &DP) const {
   DP << getLocationStr() << ": " << getMsg();
+}
+
+bool
+DiagnosticInfoOptimizationRemark::isEnabled(LLVMContextImpl *pImpl) const {
+  return pImpl->optimizationRemarkEnabledFor(this);
+}
+
+bool DiagnosticInfoOptimizationRemarkMissed::isEnabled(
+    LLVMContextImpl *pImpl) const {
+  return pImpl->optimizationRemarkEnabledFor(this);
+}
+
+bool DiagnosticInfoOptimizationRemarkAnalysis::isEnabled(
+    LLVMContextImpl *pImpl) const {
+  return pImpl->optimizationRemarkEnabledFor(this);
+}
+
+void llvm::emitOptimizationRemark(LLVMContext &Ctx, const char *PassName,
+                                  const Function &Fn, const DebugLoc &DLoc,
+                                  const Twine &Msg) {
+  Ctx.diagnose(DiagnosticInfoOptimizationRemark(PassName, Fn, DLoc, Msg));
+}
+
+void llvm::emitOptimizationRemarkMissed(LLVMContext &Ctx, const char *PassName,
+                                        const Function &Fn,
+                                        const DebugLoc &DLoc,
+                                        const Twine &Msg) {
+  Ctx.diagnose(DiagnosticInfoOptimizationRemarkMissed(PassName, Fn, DLoc, Msg));
+}
+
+void llvm::emitOptimizationRemarkAnalysis(LLVMContext &Ctx,
+                                          const char *PassName,
+                                          const Function &Fn,
+                                          const DebugLoc &DLoc,
+                                          const Twine &Msg) {
+  Ctx.diagnose(
+      DiagnosticInfoOptimizationRemarkAnalysis(PassName, Fn, DLoc, Msg));
 }
