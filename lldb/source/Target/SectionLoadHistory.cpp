@@ -108,6 +108,7 @@ SectionLoadList &
 SectionLoadHistory::GetCurrentSectionLoadList ()
 {
     const bool read_only = true;
+    Mutex::Locker locker(m_mutex);
     SectionLoadList *section_load_list = GetSectionLoadListForStopID (eStopIDNow, read_only);
     assert(section_load_list != NULL);
     return *section_load_list;
