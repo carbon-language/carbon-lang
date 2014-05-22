@@ -9,9 +9,9 @@
 
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Resolver.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/ReaderWriter/Alias.h"
 #include "lld/ReaderWriter/Simple.h"
-
+#include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/Triple.h"
 
 namespace lld {
@@ -71,11 +71,31 @@ LinkingContext::createUndefinedSymbolFile(StringRef filename) const {
   return std::move(undefinedSymFile);
 }
 
+std::unique_ptr<File> LinkingContext::createAliasSymbolFile() const {
+  if (getAliases().empty())
+    return nullptr;
+  std::unique_ptr<SimpleFile> file(new SimpleFile("<alias>"));
+  for (const auto &i : getAliases()) {
+    StringRef from = i.first;
+    StringRef to = i.second;
+    SimpleDefinedAtom *fromAtom = new (_allocator) AliasAtom(*file, from);
+    UndefinedAtom *toAtom = new (_allocator) SimpleUndefinedAtom(*file, to);
+    fromAtom->addReference(Reference::KindNamespace::all,
+                           Reference::KindArch::all, Reference::kindLayoutAfter,
+                           0, toAtom, 0);
+    file->addAtom(*fromAtom);
+    file->addAtom(*toAtom);
+  }
+  return std::move(file);
+}
+
 void LinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File> > &result) const {
   if (std::unique_ptr<File> file = createEntrySymbolFile())
     result.push_back(std::move(file));
   if (std::unique_ptr<File> file = createUndefinedSymbolFile())
+    result.push_back(std::move(file));
+  if (std::unique_ptr<File> file = createAliasSymbolFile())
     result.push_back(std::move(file));
 }
 

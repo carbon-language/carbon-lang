@@ -214,6 +214,11 @@ public:
 
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
 
+  void addAlias(StringRef from, StringRef to) { _aliasSymbols[from] = to; }
+  const std::map<std::string, std::string> &getAliases() const {
+    return _aliasSymbols;
+  }
+
   void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
     _inputGraph = std::move(inputGraph);
   }
@@ -307,13 +312,16 @@ protected:
   /// Abstract method to lazily instantiate the Writer.
   virtual Writer &writer() const = 0;
 
-  /// Method to create a internal file for the entry symbol
+  /// Method to create an internal file for the entry symbol
   virtual std::unique_ptr<File> createEntrySymbolFile() const;
   std::unique_ptr<File> createEntrySymbolFile(StringRef filename) const;
 
-  /// Method to create a internal file for an undefined symbol
+  /// Method to create an internal file for an undefined symbol
   virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
   std::unique_ptr<File> createUndefinedSymbolFile(StringRef filename) const;
+
+  /// Method to create an internal file for alias symbols
+  std::unique_ptr<File> createAliasSymbolFile() const;
 
   StringRef _outputPath;
   StringRef _entrySymbolName;
@@ -330,6 +338,7 @@ protected:
   bool _allowShlibUndefines;
   OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
+  std::map<std::string, std::string> _aliasSymbols;
   std::vector<const char *> _llvmOptions;
   StringRefVector _initialUndefinedSymbols;
   std::unique_ptr<InputGraph> _inputGraph;
