@@ -433,6 +433,16 @@ class UMad24Pat<Instruction Inst> : Pat <
   (Inst $src0, $src1, $src2)
 >;
 
+class IMad24ExpandPat<Instruction MulInst, Instruction AddInst> : Pat <
+  (AMDGPUmad_i24 i32:$src0, i32:$src1, i32:$src2),
+  (AddInst (MulInst $src0, $src1), $src2)
+>;
+
+class UMad24ExpandPat<Instruction MulInst, Instruction AddInst> : Pat <
+  (AMDGPUmad_u24 i32:$src0, i32:$src1, i32:$src2),
+  (AddInst (MulInst $src0, $src1), $src2)
+>;
+
 
 include "R600Instructions.td"
 include "R700Instructions.td"

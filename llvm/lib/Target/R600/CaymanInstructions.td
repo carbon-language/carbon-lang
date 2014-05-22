@@ -49,6 +49,7 @@ def COS_cm : COS_Common<0x8E>;
 def : POW_Common <LOG_IEEE_cm, EXP_IEEE_cm, MUL>;
 
 defm DIV_cm : DIV_Common<RECIP_IEEE_cm>;
+def : UMad24ExpandPat<MULLO_UINT_cm, ADD_INT>;
 
 // RECIP_UINT emulation for Cayman
 // The multiplication scales from [0,1] to the unsigned integer range

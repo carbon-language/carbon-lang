@@ -1625,6 +1625,12 @@ def : DwordAddrPat  <i32, R600_Reg32>;
 
 } // End isR600toCayman Predicate
 
+let Predicates = [isR600] in {
+// Intrinsic patterns
+def : IMad24ExpandPat<MULLO_INT_r600, ADD_INT>;
+def : UMad24ExpandPat<MULLO_UINT_r600, ADD_INT>;
+} // End isR600
+
 def getLDSNoRetOp : InstrMapping {
   let FilterClass = "R600_LDS_1A1D";
   let RowFields = ["BaseOp"];

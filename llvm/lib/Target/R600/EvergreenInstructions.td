@@ -75,6 +75,9 @@ def COS_eg : COS_Common<0x8E>;
 def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL>;
 def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_eg $src))>;
 
+def : IMad24ExpandPat<MULLO_INT_eg, ADD_INT>;
+def : UMad24ExpandPat<MULLO_UINT_eg, ADD_INT>;
+
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions
 //===----------------------------------------------------------------------===//
@@ -301,8 +304,11 @@ def BFM_INT_eg : R600_2OP <0xA0, "BFM_INT",
 >;
 
 def MULADD_UINT24_eg : R600_3OP <0x10, "MULADD_UINT24",
-  [(set i32:$dst, (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2))], VecALU
+  [(set i32:$dst, (AMDGPUmad_u24 i32:$src0, i32:$src1, i32:$src2))], VecALU
 >;
+
+def : UMad24Pat<MULADD_UINT24_eg>;
+
 def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT", [], VecALU>;
 def : ROTRPattern <BIT_ALIGN_INT_eg>;
 def MULADD_eg : MULADD_Common<0x14>;
