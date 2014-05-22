@@ -1762,7 +1762,8 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
         NewArgs);
   }
   }
-  return SDValue();
+
+  return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }
 
 static bool

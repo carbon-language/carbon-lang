@@ -382,13 +382,97 @@ define void @sext_in_reg_to_illegal_type(i16 addrspace(1)* nocapture %out, i8 ad
 
 declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
 
+; FUNC-LABEL: @bfe_0_width
+; SI-NOT: BFE
+; SI: S_ENDPGM
+define void @bfe_0_width(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
+  %load = load i32 addrspace(1)* %ptr, align 4
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 8, i32 0) nounwind readnone
+  store i32 %bfe, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @bfe_8_bfe_8
+; SI: V_BFE_I32
+; SI-NOT: BFE
+; SI: S_ENDPGM
+define void @bfe_8_bfe_8(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
+  %load = load i32 addrspace(1)* %ptr, align 4
+  %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 8) nounwind readnone
+  %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 8) nounwind readnone
+  store i32 %bfe1, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @bfe_8_bfe_16
+; SI: V_BFE_I32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 8
+; SI: S_ENDPGM
+define void @bfe_8_bfe_16(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
+  %load = load i32 addrspace(1)* %ptr, align 4
+  %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 8) nounwind readnone
+  %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 16) nounwind readnone
+  store i32 %bfe1, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; This really should be folded into 1
+; FUNC-LABEL: @bfe_16_bfe_8
+; SI: V_BFE_I32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 16
+; SI: V_BFE_I32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 8
+; SI: S_ENDPGM
+define void @bfe_16_bfe_8(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
+  %load = load i32 addrspace(1)* %ptr, align 4
+  %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 16) nounwind readnone
+  %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 8) nounwind readnone
+  store i32 %bfe1, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; Make sure there isn't a redundant BFE
 ; FUNC-LABEL: @sext_in_reg_i8_to_i32_bfe
 ; SI: S_BFE_I32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000
 ; SI-NOT: BFE
+; SI: S_ENDPGM
 define void @sext_in_reg_i8_to_i32_bfe(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %c = add i32 %a, %b ; add to prevent folding into extload
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %c, i32 0, i32 8) nounwind readnone
+  %shl = shl i32 %bfe, 24
+  %ashr = ashr i32 %shl, 24
+  store i32 %ashr, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @sext_in_reg_i8_to_i32_bfe_wrong
+define void @sext_in_reg_i8_to_i32_bfe_wrong(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
+  %c = add i32 %a, %b ; add to prevent folding into extload
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %c, i32 8, i32 0) nounwind readnone
+  %shl = shl i32 %bfe, 24
+  %ashr = ashr i32 %shl, 24
+  store i32 %ashr, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @sextload_i8_to_i32_bfe
+; SI: BUFFER_LOAD_SBYTE
+; SI-NOT: BFE
+; SI: S_ENDPGM
+define void @sextload_i8_to_i32_bfe(i32 addrspace(1)* %out, i8 addrspace(1)* %ptr) nounwind {
+  %load = load i8 addrspace(1)* %ptr, align 1
+  %sext = sext i8 %load to i32
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %sext, i32 0, i32 8) nounwind readnone
+  %shl = shl i32 %bfe, 24
+  %ashr = ashr i32 %shl, 24
+  store i32 %ashr, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @sextload_i8_to_i32_bfe_0:
+; SI-NOT: BFE
+; SI: S_ENDPGM
+define void @sextload_i8_to_i32_bfe_0(i32 addrspace(1)* %out, i8 addrspace(1)* %ptr) nounwind {
+  %load = load i8 addrspace(1)* %ptr, align 1
+  %sext = sext i8 %load to i32
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %sext, i32 8, i32 0) nounwind readnone
   %shl = shl i32 %bfe, 24
   %ashr = ashr i32 %shl, 24
   store i32 %ashr, i32 addrspace(1)* %out, align 4

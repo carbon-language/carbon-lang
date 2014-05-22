@@ -1075,7 +1075,8 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       break;
     }
   }
-  return SDValue();
+
+  return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }
 
 /// \brief Test if RegClass is one of the VSrc classes
