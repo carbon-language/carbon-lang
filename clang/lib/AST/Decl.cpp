@@ -3240,7 +3240,7 @@ void TagDecl::startDefinition() {
     struct CXXRecordDecl::DefinitionData *Data =
       new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
     for (auto I : redecls())
-      cast<CXXRecordDecl>(I)->DefinitionData.setNotUpdated(Data);
+      cast<CXXRecordDecl>(I)->DefinitionData = Data;
   }
 }
 
