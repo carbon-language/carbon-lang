@@ -89,6 +89,8 @@ static DecodeStatus DecodeFixedPointScaleImm64(llvm::MCInst &Inst, unsigned Imm,
                                                const void *Decoder);
 static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
                                        uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMemExtend(llvm::MCInst &Inst, unsigned Imm,
+                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
@@ -114,10 +116,6 @@ static DecodeStatus DecodeExclusiveLdStInstruction(llvm::MCInst &Inst,
 static DecodeStatus DecodePairLdStInstruction(llvm::MCInst &Inst, uint32_t insn,
                                               uint64_t Address,
                                               const void *Decoder);
-static DecodeStatus DecodeRegOffsetLdStInstruction(llvm::MCInst &Inst,
-                                                   uint32_t insn,
-                                                   uint64_t Address,
-                                                   const void *Decoder);
 static DecodeStatus DecodeAddSubERegInstruction(llvm::MCInst &Inst,
                                                 uint32_t insn, uint64_t Address,
                                                 const void *Decoder);
@@ -602,6 +600,13 @@ static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
   if (!Dis->tryAddingSymbolicOperand(Inst, ImmVal << 2, Addr,
                                      Inst.getOpcode() != ARM64::LDRXl, 0, 4))
     Inst.addOperand(MCOperand::CreateImm(ImmVal));
+  return Success;
+}
+
+static DecodeStatus DecodeMemExtend(llvm::MCInst &Inst, unsigned Imm,
+                                    uint64_t Address, const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm((Imm  >> 1) & 1));
+  Inst.addOperand(MCOperand::CreateImm(Imm & 1));
   return Success;
 }
 
@@ -1186,81 +1191,6 @@ static DecodeStatus DecodePairLdStInstruction(llvm::MCInst &Inst, uint32_t insn,
   if (NeedsDisjointWritebackTransfer && Rn != 31 && (Rt == Rn || Rt2 == Rn))
     return SoftFail;
 
-  return Success;
-}
-
-static DecodeStatus DecodeRegOffsetLdStInstruction(llvm::MCInst &Inst,
-                                                   uint32_t insn, uint64_t Addr,
-                                                   const void *Decoder) {
-  unsigned Rt = fieldFromInstruction(insn, 0, 5);
-  unsigned Rn = fieldFromInstruction(insn, 5, 5);
-  unsigned Rm = fieldFromInstruction(insn, 16, 5);
-  unsigned extendHi = fieldFromInstruction(insn, 13, 3);
-  unsigned extendLo = fieldFromInstruction(insn, 12, 1);
-  unsigned extend = (extendHi << 1) | extendLo;
-
-  // All RO load-store instructions are undefined if option == 00x or 10x.
-  if (extend >> 2 == 0x0 || extend >> 2 == 0x2)
-    return Fail;
-
-  switch (Inst.getOpcode()) {
-  default:
-    return Fail;
-  case ARM64::LDRSWro:
-    DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRXro:
-  case ARM64::STRXro:
-    DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRWro:
-  case ARM64::STRWro:
-    DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRQro:
-  case ARM64::STRQro:
-    DecodeFPR128RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRDro:
-  case ARM64::STRDro:
-    DecodeFPR64RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRSro:
-  case ARM64::STRSro:
-    DecodeFPR32RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRHro:
-  case ARM64::STRHro:
-    DecodeFPR16RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRBro:
-  case ARM64::STRBro:
-    DecodeFPR8RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRBBro:
-  case ARM64::STRBBro:
-  case ARM64::LDRSBWro:
-    DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRHHro:
-  case ARM64::STRHHro:
-  case ARM64::LDRSHWro:
-    DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRSHXro:
-    DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::LDRSBXro:
-    DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
-    break;
-  case ARM64::PRFMro:
-    Inst.addOperand(MCOperand::CreateImm(Rt));
-  }
-
-  DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
-  DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
-
-  Inst.addOperand(MCOperand::CreateImm(extend));
   return Success;
 }
 

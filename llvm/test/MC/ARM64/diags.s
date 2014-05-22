@@ -9,7 +9,7 @@ foo:
   ldr x3, [foo + 4]
 ; CHECK:  ldr x3, foo+4               ; encoding: [0bAAA00011,A,A,0x58]
 ; CHECK:                              ;   fixup A - offset: 0, value: foo+4, kind: fixup_arm64_ldr_pcrel_imm19
-; CHECK-ERRORS: error: register expected
+; CHECK-ERRORS: error: invalid operand for instruction
 
 ; The last argument should be flagged as an error.  rdar://9576009
   ld4.8b	{v0, v1, v2, v3}, [x0], #33
@@ -33,10 +33,10 @@ foo:
 
         ldur x0, [x1, #-257]
 
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
 ; CHECK-ERRORS:         ldr x0, [x0, #804]
 ; CHECK-ERRORS:                 ^
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
 ; CHECK-ERRORS:         ldr w0, [x0, #802]
 ; CHECK-ERRORS:                 ^
 ; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
@@ -66,7 +66,7 @@ foo:
 ; CHECK-ERRORS: error: index must be a multiple of 8 in range [-512, 504].
 ; CHECK-ERRORS:         ldp x3, x4, [x5], #12
 ; CHECK-ERRORS:                           ^
-; CHECK-ERRORS: error: index must be a multiple of 8 in range [-512, 504].
+; CHECK-ERRORS: error: index must be a multiple of 16 in range [-1024, 1008].
 ; CHECK-ERRORS:         ldp q3, q4, [x5], #12
 ; CHECK-ERRORS:                           ^
 ; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
@@ -84,31 +84,31 @@ ldr    s1, [x3, w3, sxtw #4]
 ldr    d1, [x3, w3, sxtw #4]
 ldr    q1, [x3, w3, sxtw #1]
 
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0
 ; CHECK-ERRORS:ldrb   w1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
 ; CHECK-ERRORS:ldrh   w1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 ; CHECK-ERRORS:ldr    w1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
 ; CHECK-ERRORS:ldr    x1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: error: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0
 ; CHECK-ERRORS:ldr    b1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
 ; CHECK-ERRORS:ldr    h1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 ; CHECK-ERRORS:ldr    s1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
 ; CHECK-ERRORS:ldr    d1, [x3, w3, sxtw #4]
 ; CHECK-ERRORS:           ^
-; CHECK-ERRORS: invalid offset in memory address.
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #4
 ; CHECK-ERRORS:ldr    q1, [x3, w3, sxtw #1]
 ; CHECK-ERRORS:           ^
 
@@ -118,10 +118,10 @@ ldr    q1, [x3, w3, sxtw #1]
   str    d1, [x3, w3, sxtx #3]
   ldr    s1, [x3, d3, sxtx #2]
 
-; CHECK-ERRORS: 32-bit general purpose offset register requires sxtw or uxtw extend
+; CHECK-ERRORS: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
 ; CHECK-ERRORS:   str    d1, [x3, w3, sxtx #3]
 ; CHECK-ERRORS:                       ^
-; CHECK-ERRORS: error: 64-bit general purpose offset register expected
+; CHECK-ERRORS: error: index must be an integer in range [-256, 255].
 ; CHECK-ERRORS:   ldr    s1, [x3, d3, sxtx #2]
 ; CHECK-ERRORS:                   ^
 

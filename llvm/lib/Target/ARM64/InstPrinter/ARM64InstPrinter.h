@@ -62,18 +62,26 @@ protected:
   void printShifter(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printShiftedRegister(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printExtendedRegister(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printArithExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+
+  void printMemExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O,
+                      char SrcRegKind, unsigned Width);
+  template <char SrcRegKind, unsigned Width>
+  void printMemExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printMemExtend(MI, OpNum, O, SrcRegKind, Width);
+  }
+
   void printCondCode(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printInverseCondCode(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAlignedLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printAMIndexed(const MCInst *MI, unsigned OpNum, unsigned Scale,
-                      raw_ostream &O);
+  void printUImm12Offset(const MCInst *MI, unsigned OpNum, unsigned Scale,
+                         raw_ostream &O);
   void printAMIndexedWB(const MCInst *MI, unsigned OpNum, unsigned Scale,
                         raw_ostream &O);
 
-  template<int BitWidth>
-  void printAMIndexed(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, BitWidth / 8, O);
+  template<int Scale>
+  void printUImm12Offset(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printUImm12Offset(MI, OpNum, Scale, O);
   }
 
   template<int BitWidth>
@@ -87,21 +95,6 @@ protected:
   void printImmScale(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printPrefetchOp(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-
-  void printMemoryPostIndexed(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                              unsigned Scale);
-  template<int BitWidth>
-  void printMemoryPostIndexed(const MCInst *MI, unsigned OpNum,
-                              raw_ostream &O) {
-    printMemoryPostIndexed(MI, OpNum, O, BitWidth / 8);
-  }
-
-  void printMemoryRegOffset(const MCInst *MI, unsigned OpNum, raw_ostream &O,
-                            int LegalShiftAmt);
-  template<int BitWidth>
-  void printMemoryRegOffset(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printMemoryRegOffset(MI, OpNum, O, BitWidth / 8);
-  }
 
   void printFPImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 

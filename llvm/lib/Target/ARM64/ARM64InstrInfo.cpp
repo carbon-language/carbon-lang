@@ -1039,29 +1039,53 @@ bool ARM64InstrInfo::isScaledAddr(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default:
     break;
-  case ARM64::LDRBBro:
-  case ARM64::LDRBro:
-  case ARM64::LDRDro:
-  case ARM64::LDRHHro:
-  case ARM64::LDRHro:
-  case ARM64::LDRQro:
-  case ARM64::LDRSBWro:
-  case ARM64::LDRSBXro:
-  case ARM64::LDRSHWro:
-  case ARM64::LDRSHXro:
-  case ARM64::LDRSWro:
-  case ARM64::LDRSro:
-  case ARM64::LDRWro:
-  case ARM64::LDRXro:
-  case ARM64::STRBBro:
-  case ARM64::STRBro:
-  case ARM64::STRDro:
-  case ARM64::STRHHro:
-  case ARM64::STRHro:
-  case ARM64::STRQro:
-  case ARM64::STRSro:
-  case ARM64::STRWro:
-  case ARM64::STRXro:
+  case ARM64::LDRBBroW:
+  case ARM64::LDRBroW:
+  case ARM64::LDRDroW:
+  case ARM64::LDRHHroW:
+  case ARM64::LDRHroW:
+  case ARM64::LDRQroW:
+  case ARM64::LDRSBWroW:
+  case ARM64::LDRSBXroW:
+  case ARM64::LDRSHWroW:
+  case ARM64::LDRSHXroW:
+  case ARM64::LDRSWroW:
+  case ARM64::LDRSroW:
+  case ARM64::LDRWroW:
+  case ARM64::LDRXroW:
+  case ARM64::STRBBroW:
+  case ARM64::STRBroW:
+  case ARM64::STRDroW:
+  case ARM64::STRHHroW:
+  case ARM64::STRHroW:
+  case ARM64::STRQroW:
+  case ARM64::STRSroW:
+  case ARM64::STRWroW:
+  case ARM64::STRXroW:
+  case ARM64::LDRBBroX:
+  case ARM64::LDRBroX:
+  case ARM64::LDRDroX:
+  case ARM64::LDRHHroX:
+  case ARM64::LDRHroX:
+  case ARM64::LDRQroX:
+  case ARM64::LDRSBWroX:
+  case ARM64::LDRSBXroX:
+  case ARM64::LDRSHWroX:
+  case ARM64::LDRSHXroX:
+  case ARM64::LDRSWroX:
+  case ARM64::LDRSroX:
+  case ARM64::LDRWroX:
+  case ARM64::LDRXroX:
+  case ARM64::STRBBroX:
+  case ARM64::STRBroX:
+  case ARM64::STRDroX:
+  case ARM64::STRHHroX:
+  case ARM64::STRHroX:
+  case ARM64::STRQroX:
+  case ARM64::STRSroX:
+  case ARM64::STRWroX:
+  case ARM64::STRXroX:
+
     unsigned Val = MI->getOperand(3).getImm();
     ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getMemExtendType(Val);
     return (ExtType != ARM64_AM::UXTX) || ARM64_AM::getMemDoShift(Val);

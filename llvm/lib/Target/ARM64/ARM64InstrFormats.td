@@ -222,34 +222,27 @@ def simm9 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= -256 && Imm < 256; }]> {
   let ParserMatchClass = SImm9Operand;
 }
 
-// simm7s4 predicate - True if the immediate is a multiple of 4 in the range
-// [-256, 252].
-def SImm7s4Operand : AsmOperandClass {
-  let Name = "SImm7s4";
-  let DiagnosticType = "InvalidMemoryIndexed32SImm7";
+// simm7sN predicate - True if the immediate is a multiple of N in the range
+// [-64 * N, 63 * N].
+class SImm7Scaled<int Scale> : AsmOperandClass {
+  let Name = "SImm7s" # Scale;
+  let DiagnosticType = "InvalidMemoryIndexed" # Scale # "SImm7";
 }
+
+def SImm7s4Operand : SImm7Scaled<4>;
+def SImm7s8Operand : SImm7Scaled<8>;
+def SImm7s16Operand : SImm7Scaled<16>;
+
 def simm7s4 : Operand<i32> {
   let ParserMatchClass = SImm7s4Operand;
   let PrintMethod = "printImmScale<4>";
 }
 
-// simm7s8 predicate - True if the immediate is a multiple of 8 in the range
-// [-512, 504].
-def SImm7s8Operand : AsmOperandClass {
-  let Name = "SImm7s8";
-  let DiagnosticType = "InvalidMemoryIndexed64SImm7";
-}
 def simm7s8 : Operand<i32> {
   let ParserMatchClass = SImm7s8Operand;
   let PrintMethod = "printImmScale<8>";
 }
 
-// simm7s16 predicate - True if the immediate is a multiple of 16 in the range
-// [-1024, 1008].
-def SImm7s16Operand : AsmOperandClass {
-  let Name = "SImm7s16";
-  let DiagnosticType = "InvalidMemoryIndexed64SImm7";
-}
 def simm7s16 : Operand<i32> {
   let ParserMatchClass = SImm7s16Operand;
   let PrintMethod = "printImmScale<16>";
@@ -639,17 +632,17 @@ def neg_addsub_shifted_imm64 : neg_addsub_shifted_imm<i64>;
 //  {5-3} - extend type
 //  {2-0} - imm3
 def arith_extend : Operand<i32> {
-  let PrintMethod = "printExtend";
+  let PrintMethod = "printArithExtend";
   let ParserMatchClass = ExtendOperand;
 }
 def arith_extend64 : Operand<i32> {
-  let PrintMethod = "printExtend";
+  let PrintMethod = "printArithExtend";
   let ParserMatchClass = ExtendOperand64;
 }
 
 // 'extend' that's a lsl of a 64-bit register.
 def arith_extendlsl64 : Operand<i32> {
-  let PrintMethod = "printExtend";
+  let PrintMethod = "printArithExtend";
   let ParserMatchClass = ExtendOperandLSL64;
 }
 
@@ -2178,96 +2171,46 @@ def maski16_or_more : Operand<i32>,
 
 // (unsigned immediate)
 // Indexed for 8-bit registers. offset is in range [0,4095].
-def MemoryIndexed8Operand : AsmOperandClass {
-  let Name = "MemoryIndexed8";
-  let DiagnosticType = "InvalidMemoryIndexed8";
-}
-def am_indexed8 : Operand<i64>,
-                  ComplexPattern<i64, 2, "SelectAddrModeIndexed8", []> {
-  let PrintMethod = "printAMIndexed<8>";
-  let EncoderMethod
-      = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale1>";
-  let ParserMatchClass = MemoryIndexed8Operand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
+def am_indexed8 : ComplexPattern<i64, 2, "SelectAddrModeIndexed8", []>;
+def am_indexed16 : ComplexPattern<i64, 2, "SelectAddrModeIndexed16", []>;
+def am_indexed32 : ComplexPattern<i64, 2, "SelectAddrModeIndexed32", []>;
+def am_indexed64 : ComplexPattern<i64, 2, "SelectAddrModeIndexed64", []>;
+def am_indexed128 : ComplexPattern<i64, 2, "SelectAddrModeIndexed128", []>;
+
+class UImm12OffsetOperand<int Scale> : AsmOperandClass {
+  let Name = "UImm12Offset" # Scale;
+  let RenderMethod = "addUImm12OffsetOperands<" # Scale # ">";
+  let PredicateMethod = "isUImm12Offset<" # Scale # ">";
+  let DiagnosticType = "InvalidMemoryIndexed" # Scale;
 }
 
-// Indexed for 16-bit registers. offset is multiple of 2 in range [0,8190],
-// stored as immval/2 (the 12-bit literal that encodes directly into the insn).
-def MemoryIndexed16Operand : AsmOperandClass {
-  let Name = "MemoryIndexed16";
-  let DiagnosticType = "InvalidMemoryIndexed16";
-}
-def am_indexed16 : Operand<i64>,
-                   ComplexPattern<i64, 2, "SelectAddrModeIndexed16", []> {
-  let PrintMethod = "printAMIndexed<16>";
+def UImm12OffsetScale1Operand : UImm12OffsetOperand<1>;
+def UImm12OffsetScale2Operand : UImm12OffsetOperand<2>;
+def UImm12OffsetScale4Operand : UImm12OffsetOperand<4>;
+def UImm12OffsetScale8Operand : UImm12OffsetOperand<8>;
+def UImm12OffsetScale16Operand : UImm12OffsetOperand<16>;
+
+class uimm12_scaled<int Scale> : Operand<i64> {
+  let ParserMatchClass
+   = !cast<AsmOperandClass>("UImm12OffsetScale" # Scale # "Operand");
   let EncoderMethod
-      = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale2>";
-  let ParserMatchClass = MemoryIndexed16Operand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
+   = "getLdStUImm12OpValue<ARM64::fixup_arm64_ldst_imm12_scale" # Scale # ">";
+  let PrintMethod = "printUImm12Offset<" # Scale # ">";
 }
 
-// Indexed for 32-bit registers. offset is multiple of 4 in range [0,16380],
-// stored as immval/4 (the 12-bit literal that encodes directly into the insn).
-def MemoryIndexed32Operand : AsmOperandClass {
-  let Name = "MemoryIndexed32";
-  let DiagnosticType = "InvalidMemoryIndexed32";
-}
-def am_indexed32 : Operand<i64>,
-                   ComplexPattern<i64, 2, "SelectAddrModeIndexed32", []> {
-  let PrintMethod = "printAMIndexed<32>";
-  let EncoderMethod
-      = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale4>";
-  let ParserMatchClass = MemoryIndexed32Operand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
-}
-
-// Indexed for 64-bit registers. offset is multiple of 8 in range [0,32760],
-// stored as immval/8 (the 12-bit literal that encodes directly into the insn).
-def MemoryIndexed64Operand : AsmOperandClass {
-  let Name = "MemoryIndexed64";
-  let DiagnosticType = "InvalidMemoryIndexed64";
-}
-def am_indexed64 : Operand<i64>,
-                   ComplexPattern<i64, 2, "SelectAddrModeIndexed64", []> {
-  let PrintMethod = "printAMIndexed<64>";
-  let EncoderMethod
-      = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale8>";
-  let ParserMatchClass = MemoryIndexed64Operand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
-}
-
-// Indexed for 128-bit registers. offset is multiple of 16 in range [0,65520],
-// stored as immval/16 (the 12-bit literal that encodes directly into the insn).
-def MemoryIndexed128Operand : AsmOperandClass {
-  let Name = "MemoryIndexed128";
-  let DiagnosticType = "InvalidMemoryIndexed128";
-}
-def am_indexed128 : Operand<i64>,
-                   ComplexPattern<i64, 2, "SelectAddrModeIndexed128", []> {
-  let PrintMethod = "printAMIndexed<128>";
-  let EncoderMethod
-      = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale16>";
-  let ParserMatchClass = MemoryIndexed128Operand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
-}
-
-// No offset.
-def MemoryNoIndexOperand : AsmOperandClass { let Name = "MemoryNoIndex"; }
-def am_noindex : Operand<i64>,
-                 ComplexPattern<i64, 1, "SelectAddrModeNoIndex", []> {
-  let PrintMethod = "printAMNoIndex";
-  let ParserMatchClass = MemoryNoIndexOperand;
-  let MIOperandInfo = (ops GPR64sp:$base);
-}
+def uimm12s1 : uimm12_scaled<1>;
+def uimm12s2 : uimm12_scaled<2>;
+def uimm12s4 : uimm12_scaled<4>;
+def uimm12s8 : uimm12_scaled<8>;
+def uimm12s16 : uimm12_scaled<16>;
 
 class BaseLoadStoreUI<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
                       string asm, list<dag> pattern>
-    : I<oops, iops, asm, "\t$Rt, $addr", "", pattern> {
-  bits<5> dst;
+    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]", "", pattern> {
+  bits<5> Rt;
 
-  bits<17> addr;
-  bits<5> base = addr{4-0};
-  bits<12> offset = addr{16-5};
+  bits<5> Rn;
+  bits<12> offset;
 
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
@@ -2275,25 +2218,35 @@ class BaseLoadStoreUI<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
   let Inst{25-24} = 0b01;
   let Inst{23-22} = opc;
   let Inst{21-10} = offset;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeUnsignedLdStInstruction";
 }
 
-let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
-class LoadUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             Operand indextype, string asm, list<dag> pattern>
-    : BaseLoadStoreUI<sz, V, opc,
-                      (outs regtype:$Rt), (ins indextype:$addr), asm, pattern>,
-      Sched<[WriteLD]>;
+multiclass LoadUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                  Operand indextype, string asm, list<dag> pattern> {
+  let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
+  def ui : BaseLoadStoreUI<sz, V, opc, (outs regtype:$Rt),
+                           (ins GPR64sp:$Rn, indextype:$offset),
+                           asm, pattern>,
+           Sched<[WriteLD]>;
 
-let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
-class StoreUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             Operand indextype, string asm, list<dag> pattern>
-    : BaseLoadStoreUI<sz, V, opc,
-                      (outs), (ins regtype:$Rt, indextype:$addr), asm, pattern>,
-      Sched<[WriteST]>;
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "ui") regtype:$Rt, GPR64sp:$Rn, 0)>;
+}
+
+multiclass StoreUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+             Operand indextype, string asm, list<dag> pattern> {
+  let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
+  def ui : BaseLoadStoreUI<sz, V, opc, (outs),
+                           (ins regtype:$Rt, GPR64sp:$Rn, indextype:$offset),
+                           asm, pattern>,
+           Sched<[WriteST]>;
+
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "ui") regtype:$Rt, GPR64sp:$Rn, 0)>;
+}
 
 def PrefetchOperand : AsmOperandClass {
   let Name = "Prefetch";
@@ -2307,7 +2260,8 @@ def prfop : Operand<i32> {
 let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
 class PrefetchUI<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat>
     : BaseLoadStoreUI<sz, V, opc,
-                      (outs), (ins prfop:$Rt, am_indexed64:$addr), asm, pat>,
+                      (outs), (ins prfop:$Rt, GPR64sp:$Rn, uimm12s8:$offset),
+                      asm, pat>,
       Sched<[WriteLD]>;
 
 //---
@@ -2357,317 +2311,511 @@ class PrefetchLiteral<bits<2> opc, bit V, string asm, list<dag> pat>
 // Load/store register offset
 //---
 
-class MemROAsmOperand<int sz> : AsmOperandClass {
-  let Name = "MemoryRegisterOffset"#sz;
-  let DiagnosticType = "InvalidMemoryIndexed";
+def ro_Xindexed8 : ComplexPattern<i64, 4, "SelectAddrModeXRO<8>", []>;
+def ro_Xindexed16 : ComplexPattern<i64, 4, "SelectAddrModeXRO<16>", []>;
+def ro_Xindexed32 : ComplexPattern<i64, 4, "SelectAddrModeXRO<32>", []>;
+def ro_Xindexed64 : ComplexPattern<i64, 4, "SelectAddrModeXRO<64>", []>;
+def ro_Xindexed128 : ComplexPattern<i64, 4, "SelectAddrModeXRO<128>", []>;
+
+def ro_Windexed8 : ComplexPattern<i64, 4, "SelectAddrModeWRO<8>", []>;
+def ro_Windexed16 : ComplexPattern<i64, 4, "SelectAddrModeWRO<16>", []>;
+def ro_Windexed32 : ComplexPattern<i64, 4, "SelectAddrModeWRO<32>", []>;
+def ro_Windexed64 : ComplexPattern<i64, 4, "SelectAddrModeWRO<64>", []>;
+def ro_Windexed128 : ComplexPattern<i64, 4, "SelectAddrModeWRO<128>", []>;
+
+class MemExtendOperand<string Reg, int Width> : AsmOperandClass {
+  let Name = "Mem" # Reg # "Extend" # Width;
+  let PredicateMethod = "isMem" # Reg # "Extend<" # Width # ">";
+  let RenderMethod = "addMemExtendOperands";
+  let DiagnosticType = "InvalidMemory" # Reg # "Extend" # Width;
 }
 
-def MemROAsmOperand8 : MemROAsmOperand<8>;
-def MemROAsmOperand16 : MemROAsmOperand<16>;
-def MemROAsmOperand32 : MemROAsmOperand<32>;
-def MemROAsmOperand64 : MemROAsmOperand<64>;
-def MemROAsmOperand128 : MemROAsmOperand<128>;
+def MemWExtend8Operand : MemExtendOperand<"W", 8> {
+  // The address "[x0, x1, lsl #0]" actually maps to the variant which performs
+  // the trivial shift.
+  let RenderMethod = "addMemExtend8Operands";
+}
+def MemWExtend16Operand : MemExtendOperand<"W", 16>;
+def MemWExtend32Operand : MemExtendOperand<"W", 32>;
+def MemWExtend64Operand : MemExtendOperand<"W", 64>;
+def MemWExtend128Operand : MemExtendOperand<"W", 128>;
 
-class ro_indexed<int sz> : Operand<i64> { // ComplexPattern<...>
-  let PrintMethod = "printMemoryRegOffset<" # sz # ">";
-  let MIOperandInfo = (ops GPR64sp:$base, GPR64:$offset, i32imm:$extend);
+def MemXExtend8Operand : MemExtendOperand<"X", 8> {
+  // The address "[x0, x1, lsl #0]" actually maps to the variant which performs
+  // the trivial shift.
+  let RenderMethod = "addMemExtend8Operands";
+}
+def MemXExtend16Operand : MemExtendOperand<"X", 16>;
+def MemXExtend32Operand : MemExtendOperand<"X", 32>;
+def MemXExtend64Operand : MemExtendOperand<"X", 64>;
+def MemXExtend128Operand : MemExtendOperand<"X", 128>;
+
+class ro_extend<AsmOperandClass ParserClass, string Reg, int Width>
+        : Operand<i32> {
+  let ParserMatchClass = ParserClass;
+  let PrintMethod = "printMemExtend<'" # Reg # "', " # Width # ">";
+  let DecoderMethod = "DecodeMemExtend";
+  let EncoderMethod = "getMemExtendOpValue";
+  let MIOperandInfo = (ops i32imm:$signed, i32imm:$doshift);
 }
 
-def ro_indexed8 : ro_indexed<8>, ComplexPattern<i64, 3, "SelectAddrModeRO8", []> {
-  let ParserMatchClass = MemROAsmOperand8;
+def ro_Wextend8   : ro_extend<MemWExtend8Operand,   "w", 8>;
+def ro_Wextend16  : ro_extend<MemWExtend16Operand,  "w", 16>;
+def ro_Wextend32  : ro_extend<MemWExtend32Operand,  "w", 32>;
+def ro_Wextend64  : ro_extend<MemWExtend64Operand,  "w", 64>;
+def ro_Wextend128 : ro_extend<MemWExtend128Operand, "w", 128>;
+
+def ro_Xextend8   : ro_extend<MemXExtend8Operand,   "x", 8>;
+def ro_Xextend16  : ro_extend<MemXExtend16Operand,  "x", 16>;
+def ro_Xextend32  : ro_extend<MemXExtend32Operand,  "x", 32>;
+def ro_Xextend64  : ro_extend<MemXExtend64Operand,  "x", 64>;
+def ro_Xextend128 : ro_extend<MemXExtend128Operand, "x", 128>;
+
+class ROAddrMode<ComplexPattern windex, ComplexPattern xindex,
+                  Operand wextend, Operand xextend>  {
+  // CodeGen-level pattern covering the entire addressing mode.
+  ComplexPattern Wpat = windex;
+  ComplexPattern Xpat = xindex;
+
+  // Asm-level Operand covering the valid "uxtw #3" style syntax.
+  Operand Wext = wextend;
+  Operand Xext = xextend;
 }
 
-def ro_indexed16 : ro_indexed<16>, ComplexPattern<i64, 3, "SelectAddrModeRO16", []> {
-  let ParserMatchClass = MemROAsmOperand16;
-}
-
-def ro_indexed32 : ro_indexed<32>, ComplexPattern<i64, 3, "SelectAddrModeRO32", []> {
-  let ParserMatchClass = MemROAsmOperand32;
-}
-
-def ro_indexed64 : ro_indexed<64>, ComplexPattern<i64, 3, "SelectAddrModeRO64", []> {
-  let ParserMatchClass = MemROAsmOperand64;
-}
-
-def ro_indexed128 : ro_indexed<128>, ComplexPattern<i64, 3, "SelectAddrModeRO128", []> {
-  let ParserMatchClass = MemROAsmOperand128;
-}
+def ro8 : ROAddrMode<ro_Windexed8, ro_Xindexed8, ro_Wextend8, ro_Xextend8>;
+def ro16 : ROAddrMode<ro_Windexed16, ro_Xindexed16, ro_Wextend16, ro_Xextend16>;
+def ro32 : ROAddrMode<ro_Windexed32, ro_Xindexed32, ro_Wextend32, ro_Xextend32>;
+def ro64 : ROAddrMode<ro_Windexed64, ro_Xindexed64, ro_Wextend64, ro_Xextend64>;
+def ro128 : ROAddrMode<ro_Windexed128, ro_Xindexed128, ro_Wextend128,
+                       ro_Xextend128>;
 
 class LoadStore8RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                       string asm, dag ins, dag outs, list<dag> pat>
-    : I<ins, outs, asm, "\t$Rt, $addr", "", pat> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+    : I<ins, outs, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat> {
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
-
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 }
 
-class Load8RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore8RO<sz, V, opc, regtype, asm,
-                 (outs regtype:$Rt), (ins ro_indexed8:$addr), pat>,
-    Sched<[WriteLDIdx, ReadAdrBase]>;
+class ROInstAlias<string asm, RegisterClass regtype, Instruction INST>
+  : InstAlias<asm # " $Rt, [$Rn, $Rm]",
+              (INST regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, 0, 0)>;
 
-class Store8RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore8RO<sz, V, opc, regtype, asm,
-                 (outs), (ins regtype:$Rt, ro_indexed8:$addr), pat>,
-    Sched<[WriteSTIdx, ReadAdrBase]>;
+multiclass Load8RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                   string asm, ValueType Ty, SDPatternOperator loadop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore8RO<sz, V, opc, regtype, asm,
+                 (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR32:$Rm, ro_Wextend8:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Windexed8 GPR64sp:$Rn, GPR32:$Rm,
+                                             ro_Wextend8:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10 in
+  def roX : LoadStore8RO<sz, V, opc, regtype, asm,
+                 (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR64:$Rm, ro_Xextend8:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Xindexed8 GPR64sp:$Rn, GPR64:$Rm,
+                                             ro_Xextend8:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
+
+multiclass Store8RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                    string asm, ValueType Ty, SDPatternOperator storeop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore8RO<sz, V, opc, regtype, asm, (outs),
+                 (ins regtype:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend8:$extend),
+                 [(storeop (Ty regtype:$Rt),
+                           (ro_Windexed8 GPR64sp:$Rn, GPR32:$Rm,
+                                         ro_Wextend8:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10 in
+  def roX : LoadStore8RO<sz, V, opc, regtype, asm, (outs),
+                 (ins regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend8:$extend),
+                 [(storeop (Ty regtype:$Rt),
+                           (ro_Xindexed8 GPR64sp:$Rn, GPR64:$Rm,
+                                         ro_Xextend8:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
 
 class LoadStore16RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                       string asm, dag ins, dag outs, list<dag> pat>
-    : I<ins, outs, asm, "\t$Rt, $addr", "", pat> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+    : I<ins, outs, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat> {
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
-
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 }
 
-class Load16RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore16RO<sz, V, opc, regtype, asm,
-                 (outs regtype:$Rt), (ins ro_indexed16:$addr), pat>,
-    Sched<[WriteLDIdx, ReadAdrBase]>;
+multiclass Load16RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                    string asm, ValueType Ty, SDPatternOperator loadop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore16RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
+                                              ro_Wextend16:$extend)))]>,
+            Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
 
-class Store16RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore16RO<sz, V, opc, regtype, asm,
-                 (outs), (ins regtype:$Rt, ro_indexed16:$addr), pat>,
-    Sched<[WriteSTIdx, ReadAdrBase]>;
+  let AddedComplexity = 10 in
+  def roX : LoadStore16RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
+                                             ro_Xextend16:$extend)))]>,
+            Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
+
+multiclass Store16RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                     string asm, ValueType Ty, SDPatternOperator storeop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore16RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
+                                         ro_Wextend16:$extend))]>,
+           Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10 in
+  def roX : LoadStore16RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
+                                         ro_Xextend16:$extend))]>,
+           Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
 
 class LoadStore32RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                       string asm, dag ins, dag outs, list<dag> pat>
-    : I<ins, outs, asm, "\t$Rt, $addr", "", pat> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+    : I<ins, outs, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat> {
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
-
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 }
 
-class Load32RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore32RO<sz, V, opc, regtype, asm,
-                 (outs regtype:$Rt), (ins ro_indexed32:$addr), pat>,
-    Sched<[WriteLDIdx, ReadAdrBase]>;
+multiclass Load32RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                    string asm, ValueType Ty, SDPatternOperator loadop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore32RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR32:$Rm, ro_Wextend32:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Windexed32 GPR64sp:$Rn, GPR32:$Rm,
+                                              ro_Wextend32:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
 
-class Store32RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore32RO<sz, V, opc, regtype, asm,
-                 (outs), (ins regtype:$Rt, ro_indexed32:$addr), pat>,
-    Sched<[WriteSTIdx, ReadAdrBase]>;
+  let AddedComplexity = 10 in
+  def roX : LoadStore32RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                 (ins GPR64sp:$Rn, GPR64:$Rm, ro_Xextend32:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Xindexed32 GPR64sp:$Rn, GPR64:$Rm,
+                                              ro_Xextend32:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
+
+multiclass Store32RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                     string asm, ValueType Ty, SDPatternOperator storeop> {
+  let AddedComplexity = 10 in
+  def roW : LoadStore32RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend32:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Windexed32 GPR64sp:$Rn, GPR32:$Rm,
+                                         ro_Wextend32:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10 in
+  def roX : LoadStore32RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend32:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Xindexed32 GPR64sp:$Rn, GPR64:$Rm,
+                                        ro_Xextend32:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
 
 class LoadStore64RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                       string asm, dag ins, dag outs, list<dag> pat>
-    : I<ins, outs, asm, "\t$Rt, $addr", "", pat> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+    : I<ins, outs, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat> {
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
-
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 }
 
-let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
-class Load64RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore64RO<sz, V, opc, regtype, asm,
-                 (outs regtype:$Rt), (ins ro_indexed64:$addr), pat>,
-    Sched<[WriteLDIdx, ReadAdrBase]>;
+multiclass Load64RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                    string asm, ValueType Ty, SDPatternOperator loadop> {
+  let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
+  def roW : LoadStore64RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                (ins GPR64sp:$Rn, GPR32:$Rm, ro_Wextend64:$extend),
+                [(set (Ty regtype:$Rt),
+                      (loadop (ro_Windexed64 GPR64sp:$Rn, GPR32:$Rm,
+                                             ro_Wextend64:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
 
-let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
-class Store64RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore64RO<sz, V, opc, regtype, asm,
-                 (outs), (ins regtype:$Rt, ro_indexed64:$addr), pat>,
-    Sched<[WriteSTIdx, ReadAdrBase]>;
+  let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
+  def roX : LoadStore64RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                (ins GPR64sp:$Rn, GPR64:$Rm, ro_Xextend64:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Xindexed64 GPR64sp:$Rn, GPR64:$Rm,
+                                              ro_Xextend64:$extend)))]>,
+           Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
 
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
+
+multiclass Store64RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                     string asm, ValueType Ty, SDPatternOperator storeop> {
+  let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
+  def roW : LoadStore64RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend64:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Windexed64 GPR64sp:$Rn, GPR32:$Rm,
+                                         ro_Wextend64:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
+  def roX : LoadStore64RO<sz, V, opc, regtype, asm, (outs),
+                (ins regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend64:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Xindexed64 GPR64sp:$Rn, GPR64:$Rm,
+                                         ro_Xextend64:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
 
 class LoadStore128RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                       string asm, dag ins, dag outs, list<dag> pat>
-    : I<ins, outs, asm, "\t$Rt, $addr", "", pat> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+    : I<ins, outs, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat> {
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
-
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 }
 
-let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
-class Load128RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore128RO<sz, V, opc, regtype, asm,
-                 (outs regtype:$Rt), (ins ro_indexed128:$addr), pat>,
-    Sched<[WriteLDIdx, ReadAdrBase]>;
+multiclass Load128RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                     string asm, ValueType Ty, SDPatternOperator loadop> {
+  let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
+  def roW : LoadStore128RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                (ins GPR64sp:$Rn, GPR32:$Rm, ro_Wextend128:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Windexed128 GPR64sp:$Rn, GPR32:$Rm,
+                                               ro_Wextend128:$extend)))]>,
+            Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
 
-let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
-class Store128RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm, list<dag> pat>
-  : LoadStore128RO<sz, V, opc, regtype, asm,
-                 (outs), (ins regtype:$Rt, ro_indexed128:$addr), pat>,
-    Sched<[WriteSTIdx, ReadAdrBase]>;
+  let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
+  def roX : LoadStore128RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
+                (ins GPR64sp:$Rn, GPR64:$Rm, ro_Xextend128:$extend),
+                 [(set (Ty regtype:$Rt),
+                       (loadop (ro_Xindexed128 GPR64sp:$Rn, GPR64:$Rm,
+                                               ro_Xextend128:$extend)))]>,
+            Sched<[WriteLDIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
+
+multiclass Store128RO<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                      string asm, ValueType Ty, SDPatternOperator storeop> {
+  let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
+  def roW : LoadStore128RO<sz, V, opc, regtype, asm, (outs),
+               (ins regtype:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend128:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Windexed128 GPR64sp:$Rn, GPR32:$Rm,
+                                          ro_Wextend128:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b0;
+  }
+
+  let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
+  def roX : LoadStore128RO<sz, V, opc, regtype, asm, (outs),
+               (ins regtype:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend128:$extend),
+                [(storeop (Ty regtype:$Rt),
+                          (ro_Xindexed128 GPR64sp:$Rn, GPR64:$Rm,
+                                          ro_Xextend128:$extend))]>,
+            Sched<[WriteSTIdx, ReadAdrBase]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : ROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
+}
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
-class PrefetchRO<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat>
-    : I<(outs), (ins prfop:$Rt, ro_indexed64:$addr), asm,
-         "\t$Rt, $addr", "", pat>,
+class BasePrefetchRO<bits<2> sz, bit V, bits<2> opc, dag outs, dag ins,
+                     string asm, list<dag> pat>
+    : I<outs, ins, asm, "\t$Rt, [$Rn, $Rm, $extend]", "", pat>,
       Sched<[WriteLD]> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
-  bits<5> offset;
-  bits<4> extend;
+  bits<5> Rt;
+  bits<5> Rn;
+  bits<5> Rm;
+  bits<2> extend;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
   let Inst{26}    = V;
   let Inst{25-24} = 0b00;
   let Inst{23-22} = opc;
   let Inst{21}    = 1;
-  let Inst{20-16} = offset;
-  let Inst{15-13} = extend{3-1};
-
-  let Inst{12}    = extend{0};
+  let Inst{20-16} = Rm;
+  let Inst{15}    = extend{1}; // sign extend Rm?
+  let Inst{14}    = 1;
+  let Inst{12}    = extend{0}; // do shift?
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
+}
 
-  let DecoderMethod = "DecodeRegOffsetLdStInstruction";
+multiclass PrefetchRO<bits<2> sz, bit V, bits<2> opc, string asm> {
+  def roW : BasePrefetchRO<sz, V, opc, (outs),
+                (ins prfop:$Rt, GPR64sp:$Rn, GPR32:$Rm, ro_Wextend64:$extend),
+                asm, [(ARM64Prefetch imm:$Rt,
+                                     (ro_Windexed64 GPR64sp:$Rn, GPR32:$Rm,
+                                                    ro_Wextend64:$extend))]> {
+    let Inst{13} = 0b0;
+  }
+
+  def roX : BasePrefetchRO<sz, V, opc, (outs),
+                (ins prfop:$Rt, GPR64sp:$Rn, GPR64:$Rm, ro_Xextend64:$extend),
+                asm,  [(ARM64Prefetch imm:$Rt,
+                                      (ro_Xindexed64 GPR64sp:$Rn, GPR64:$Rm,
+                                                     ro_Xextend64:$extend))]> {
+    let Inst{13} = 0b1;
+  }
+
+  def : InstAlias<"prfm $Rt, [$Rn, $Rm]",
+               (!cast<Instruction>(NAME # "roX") prfop:$Rt,
+                                                 GPR64sp:$Rn, GPR64:$Rm, 0, 0)>;
 }
 
 //---
 // Load/store unscaled immediate
 //---
 
-def MemoryUnscaledOperand : AsmOperandClass {
-  let Name = "MemoryUnscaled";
-  let DiagnosticType = "InvalidMemoryIndexedSImm9";
-}
-class am_unscaled_operand : Operand<i64> {
-  let PrintMethod = "printAMIndexed<8>";
-  let ParserMatchClass = MemoryUnscaledOperand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
-}
-class am_unscaled_wb_operand : Operand<i64> {
-  let PrintMethod = "printAMIndexedWB<8>";
-  let ParserMatchClass = MemoryUnscaledOperand;
-  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
-}
-def am_unscaled   : am_unscaled_operand;
-def am_unscaled_wb: am_unscaled_wb_operand;
-def am_unscaled8  : am_unscaled_operand,
-                    ComplexPattern<i64, 2, "SelectAddrModeUnscaled8", []>;
-def am_unscaled16 : am_unscaled_operand,
-                    ComplexPattern<i64, 2, "SelectAddrModeUnscaled16", []>;
-def am_unscaled32 : am_unscaled_operand,
-                    ComplexPattern<i64, 2, "SelectAddrModeUnscaled32", []>;
-def am_unscaled64 : am_unscaled_operand,
-                    ComplexPattern<i64, 2, "SelectAddrModeUnscaled64", []>;
-def am_unscaled128 : am_unscaled_operand,
-                    ComplexPattern<i64, 2, "SelectAddrModeUnscaled128", []>;
+def am_unscaled8 :  ComplexPattern<i64, 2, "SelectAddrModeUnscaled8", []>;
+def am_unscaled16 : ComplexPattern<i64, 2, "SelectAddrModeUnscaled16", []>;
+def am_unscaled32 : ComplexPattern<i64, 2, "SelectAddrModeUnscaled32", []>;
+def am_unscaled64 : ComplexPattern<i64, 2, "SelectAddrModeUnscaled64", []>;
+def am_unscaled128 :ComplexPattern<i64, 2, "SelectAddrModeUnscaled128", []>;
 
 class BaseLoadStoreUnscale<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
                            string asm, list<dag> pattern>
-    : I<oops, iops, asm, "\t$Rt, $addr", "", pattern> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]", "", pattern> {
+  bits<5> Rt;
+  bits<5> Rn;
   bits<9> offset;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
@@ -2677,31 +2825,46 @@ class BaseLoadStoreUnscale<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
   let Inst{21}    = 0;
   let Inst{20-12} = offset;
   let Inst{11-10} = 0b00;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeSignedLdStInstruction";
 }
 
-let AddedComplexity = 1 in // try this before LoadUI
-class LoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-                   Operand amtype, string asm, list<dag> pattern>
-    : BaseLoadStoreUnscale<sz, V, opc, (outs regtype:$Rt),
-                           (ins amtype:$addr), asm, pattern>,
-      Sched<[WriteLD]>;
+multiclass LoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                   string asm, list<dag> pattern> {
+  let AddedComplexity = 1 in // try this before LoadUI
+  def i : BaseLoadStoreUnscale<sz, V, opc, (outs regtype:$Rt),
+                               (ins GPR64sp:$Rn, simm9:$offset), asm, pattern>,
+          Sched<[WriteLD]>;
 
-let AddedComplexity = 1 in // try this before StoreUI
-class StoreUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-                    Operand amtype, string asm, list<dag> pattern>
-    : BaseLoadStoreUnscale<sz, V, opc, (outs),
-                           (ins regtype:$Rt, amtype:$addr), asm, pattern>,
-      Sched<[WriteST]>;
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, GPR64sp:$Rn, 0)>;
+}
 
-let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
-class PrefetchUnscaled<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat>
-    : BaseLoadStoreUnscale<sz, V, opc, (outs),
-                           (ins prfop:$Rt, am_unscaled:$addr), asm, pat>,
-      Sched<[WriteLD]>;
+multiclass StoreUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+                         string asm, list<dag> pattern> {
+  let AddedComplexity = 1 in // try this before StoreUI
+  def i : BaseLoadStoreUnscale<sz, V, opc, (outs),
+                               (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
+                               asm, pattern>,
+          Sched<[WriteST]>;
+
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, GPR64sp:$Rn, 0)>;
+}
+
+multiclass PrefetchUnscaled<bits<2> sz, bit V, bits<2> opc, string asm,
+                            list<dag> pat> {
+  let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
+  def i : BaseLoadStoreUnscale<sz, V, opc, (outs),
+                               (ins prfop:$Rt, GPR64sp:$Rn, simm9:$offset),
+                               asm, pat>,
+          Sched<[WriteLD]>;
+
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") prfop:$Rt, GPR64sp:$Rn, 0)>;
+}
 
 //---
 // Load/store unscaled immediate, unprivileged
@@ -2709,13 +2872,9 @@ class PrefetchUnscaled<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat
 
 class BaseLoadStoreUnprivileged<bits<2> sz, bit V, bits<2> opc,
                                 dag oops, dag iops, string asm>
-    : I<oops, iops, asm, "\t$Rt, $addr", "", []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]", "", []> {
+  bits<5> Rt;
+  bits<5> Rn;
   bits<9> offset;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
@@ -2725,26 +2884,33 @@ class BaseLoadStoreUnprivileged<bits<2> sz, bit V, bits<2> opc,
   let Inst{21}    = 0;
   let Inst{20-12} = offset;
   let Inst{11-10} = 0b10;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeSignedLdStInstruction";
 }
 
-let mayStore = 0, mayLoad = 1, hasSideEffects = 0 in {
-class LoadUnprivileged<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-                   string asm>
-    : BaseLoadStoreUnprivileged<sz, V, opc,
-                      (outs regtype:$Rt), (ins am_unscaled:$addr), asm>,
-      Sched<[WriteLD]>;
+multiclass LoadUnprivileged<bits<2> sz, bit V, bits<2> opc,
+                            RegisterClass regtype, string asm> {
+  let mayStore = 0, mayLoad = 1, hasSideEffects = 0 in
+  def i : BaseLoadStoreUnprivileged<sz, V, opc, (outs regtype:$Rt),
+                                    (ins GPR64sp:$Rn, simm9:$offset), asm>,
+          Sched<[WriteLD]>;
+
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, GPR64sp:$Rn, 0)>;
 }
 
-let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in {
-class StoreUnprivileged<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-                    string asm>
-    : BaseLoadStoreUnprivileged<sz, V, opc,
-                      (outs), (ins regtype:$Rt, am_unscaled:$addr), asm>,
-      Sched<[WriteST]>;
+multiclass StoreUnprivileged<bits<2> sz, bit V, bits<2> opc,
+                             RegisterClass regtype, string asm> {
+  let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in
+  def i : BaseLoadStoreUnprivileged<sz, V, opc, (outs),
+                                 (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
+                                 asm>,
+          Sched<[WriteST]>;
+
+  def : InstAlias<asm # " $Rt, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, GPR64sp:$Rn, 0)>;
 }
 
 //---
@@ -2753,12 +2919,9 @@ class StoreUnprivileged<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 
 class BaseLoadStorePreIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
                           string asm, string cstr>
-    : I<oops, iops, asm, "\t$Rt, $addr!", cstr, []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling.
-  bits<5> dst;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]!", cstr, []> {
+  bits<5> Rt;
+  bits<5> Rn;
   bits<9> offset;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
@@ -2768,24 +2931,26 @@ class BaseLoadStorePreIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
   let Inst{21}    = 0;
   let Inst{20-12} = offset;
   let Inst{11-10} = 0b11;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeSignedLdStInstruction";
 }
 
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
-// FIXME: Modeling the write-back of these instructions for isel is tricky.
-//        we need the complex addressing mode for the memory reference, but
-//        we also need the write-back specified as a tied operand to the
-//        base register. That combination does not play nicely with
-//        the asm matcher and friends.
+// FIXME: Modeling the write-back of these instructions for isel used
+// to be tricky.  we need the complex addressing mode for the memory
+// reference, but we also need the write-back specified as a tied
+// operand to the base register. It should work now, but needs to be
+// done as a separate patch. This would allow us to be rid of the
+// codegenonly pseudoinstructions below too.
 class LoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
                      (outs regtype:$Rt/*, GPR64sp:$wback*/),
-                     (ins am_unscaled_wb:$addr), asm, ""/*"$addr.base = $wback"*/>,
+                     (ins GPR64sp:$Rn, simm9:$offset), asm,
+                     ""/*"$Rn = $wback"*/>,
       Sched<[WriteLD, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
@@ -2793,8 +2958,8 @@ class StorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
                       (outs/* GPR64sp:$wback*/),
-                      (ins regtype:$Rt, am_unscaled_wb:$addr),
-                       asm, ""/*"$addr.base = $wback"*/>,
+                      (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
+                      asm, ""/*"$Rn = $wback"*/>,
       Sched<[WriteAdr, WriteST]>;
 } // hasSideEffects = 0
 
@@ -2812,25 +2977,25 @@ class StorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 let mayStore = 0, mayLoad = 1, hasSideEffects = 0 in {
 class LoadPreIdxPseudo<RegisterClass regtype>
     : Pseudo<(outs regtype:$Rt, GPR64sp:$wback),
-             (ins am_noindex:$addr, simm9:$offset), [],
-              "$addr.base = $wback,@earlyclobber $wback">,
+             (ins GPR64sp:$addr, simm9:$offset), [],
+              "$addr = $wback,@earlyclobber $wback">,
       Sched<[WriteLD, WriteAdr]>;
 class LoadPostIdxPseudo<RegisterClass regtype>
     : Pseudo<(outs regtype:$Rt, GPR64sp:$wback),
-             (ins am_noindex:$addr, simm9:$offset), [],
-              "$addr.base = $wback,@earlyclobber $wback">,
+             (ins GPR64sp:$addr, simm9:$offset), [],
+              "$addr = $wback,@earlyclobber $wback">,
       Sched<[WriteLD, WriteI]>;
 }
 multiclass StorePreIdxPseudo<RegisterClass regtype, ValueType Ty,
                              SDPatternOperator OpNode> {
   let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in
   def _isel: Pseudo<(outs GPR64sp:$wback),
-                    (ins regtype:$Rt, am_noindex:$addr, simm9:$offset), [],
-                    "$addr.base = $wback,@earlyclobber $wback">,
+                    (ins regtype:$Rt, GPR64sp:$addr, simm9:$offset), [],
+                    "$addr = $wback,@earlyclobber $wback">,
       Sched<[WriteAdr, WriteST]>;
 
-  def : Pat<(OpNode (Ty regtype:$Rt), am_noindex:$addr, simm9:$offset),
-            (!cast<Instruction>(NAME#_isel) regtype:$Rt, am_noindex:$addr,
+  def : Pat<(OpNode (Ty regtype:$Rt), GPR64sp:$addr, simm9:$offset),
+            (!cast<Instruction>(NAME#_isel) regtype:$Rt, GPR64sp:$addr,
                                             simm9:$offset)>;
 }
 
@@ -2841,12 +3006,9 @@ multiclass StorePreIdxPseudo<RegisterClass regtype, ValueType Ty,
 // (pre-index) load/stores.
 class BaseLoadStorePostIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
                           string asm, string cstr>
-    : I<oops, iops, asm, "\t$Rt, $addr, $idx", cstr, []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling.
-  bits<5> dst;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, [$Rn], $offset", cstr, []> {
+  bits<5> Rt;
+  bits<5> Rn;
   bits<9> offset;
   let Inst{31-30} = sz;
   let Inst{29-27} = 0b111;
@@ -2856,24 +3018,25 @@ class BaseLoadStorePostIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
   let Inst{21}    = 0b0;
   let Inst{20-12} = offset;
   let Inst{11-10} = 0b01;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodeSignedLdStInstruction";
 }
 
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
-// FIXME: Modeling the write-back of these instructions for isel is tricky.
-//        we need the complex addressing mode for the memory reference, but
-//        we also need the write-back specified as a tied operand to the
-//        base register. That combination does not play nicely with
-//        the asm matcher and friends.
+// FIXME: Modeling the write-back of these instructions for isel used
+// to be tricky.  we need the complex addressing mode for the memory
+// reference, but we also need the write-back specified as a tied
+// operand to the base register. It should work now, but needs to be
+// done as a separate patch. This would allow us to be rid of the
+// codegenonly pseudoinstructions below too.
 class LoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePostIdx<sz, V, opc,
                       (outs regtype:$Rt/*, GPR64sp:$wback*/),
-                      (ins am_noindex:$addr, simm9:$idx),
+                      (ins GPR64sp:$Rn, simm9:$offset),
                       asm, ""/*"$addr.base = $wback"*/>,
       Sched<[WriteLD, WriteI]>;
 
@@ -2882,7 +3045,7 @@ class StorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePostIdx<sz, V, opc,
                       (outs/* GPR64sp:$wback*/),
-                      (ins regtype:$Rt, am_noindex:$addr, simm9:$idx),
+                      (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
                        asm, ""/*"$addr.base = $wback"*/>,
     Sched<[WriteAdr, WriteST, ReadAdrBase]>;
 } // hasSideEffects = 0
@@ -2899,13 +3062,13 @@ multiclass StorePostIdxPseudo<RegisterClass regtype, ValueType Ty,
                               SDPatternOperator OpNode, Instruction Insn> {
   let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in
   def _isel: Pseudo<(outs GPR64sp:$wback),
-                    (ins regtype:$Rt, am_noindex:$addr, simm9:$idx), [],
-                    "$addr.base = $wback,@earlyclobber $wback">,
-      PseudoInstExpansion<(Insn regtype:$Rt, am_noindex:$addr, simm9:$idx)>,
+                    (ins regtype:$Rt, GPR64sp:$Rn, simm9:$idx), [],
+                    "$Rn = $wback,@earlyclobber $wback">,
+      PseudoInstExpansion<(Insn regtype:$Rt, GPR64sp:$Rn, simm9:$idx)>,
       Sched<[WriteAdr, WriteST, ReadAdrBase]>;
 
-  def : Pat<(OpNode (Ty regtype:$Rt), am_noindex:$addr, simm9:$idx),
-            (!cast<Instruction>(NAME#_isel) regtype:$Rt, am_noindex:$addr,
+  def : Pat<(OpNode (Ty regtype:$Rt), GPR64sp:$Rn, simm9:$idx),
+            (!cast<Instruction>(NAME#_isel) regtype:$Rt, GPR64sp:$Rn,
                                             simm9:$idx)>;
 }
 
@@ -2917,14 +3080,10 @@ multiclass StorePostIdxPseudo<RegisterClass regtype, ValueType Ty,
 
 class BaseLoadStorePairOffset<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, $addr", "", []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> dst2;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn, $offset]", "", []> {
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
   bits<7> offset;
   let Inst{31-30} = opc;
   let Inst{29-27} = 0b101;
@@ -2932,88 +3091,48 @@ class BaseLoadStorePairOffset<bits<2> opc, bit V, bit L, dag oops, dag iops,
   let Inst{25-23} = 0b010;
   let Inst{22}    = L;
   let Inst{21-15} = offset;
-  let Inst{14-10} = dst2;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodePairLdStInstruction";
 }
 
-let hasSideEffects = 0 in {
-let mayStore = 0, mayLoad = 1 in
-class LoadPairOffset<bits<2> opc, bit V, RegisterClass regtype,
-                     Operand indextype, string asm>
-    : BaseLoadStorePairOffset<opc, V, 1,
-                              (outs regtype:$Rt, regtype:$Rt2),
-                              (ins indextype:$addr), asm>,
-      Sched<[WriteLD, WriteLDHi]>;
+multiclass LoadPairOffset<bits<2> opc, bit V, RegisterClass regtype,
+                          Operand indextype, string asm> {
+  let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
+  def i : BaseLoadStorePairOffset<opc, V, 1,
+                                  (outs regtype:$Rt, regtype:$Rt2),
+                                  (ins GPR64sp:$Rn, indextype:$offset), asm>,
+          Sched<[WriteLD, WriteLDHi]>;
 
-let mayLoad = 0, mayStore = 1 in
-class StorePairOffset<bits<2> opc, bit V, RegisterClass regtype,
-                      Operand indextype, string asm>
-    : BaseLoadStorePairOffset<opc, V, 0, (outs),
-                             (ins regtype:$Rt, regtype:$Rt2, indextype:$addr),
-                             asm>,
-      Sched<[WriteSTP]>;
-} // hasSideEffects = 0
+  def : InstAlias<asm # " $Rt, $Rt2, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, regtype:$Rt2,
+                                                  GPR64sp:$Rn, 0)>;
+}
+
+
+multiclass StorePairOffset<bits<2> opc, bit V, RegisterClass regtype,
+                           Operand indextype, string asm> {
+  let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
+  def i : BaseLoadStorePairOffset<opc, V, 0, (outs),
+                                  (ins regtype:$Rt, regtype:$Rt2,
+                                       GPR64sp:$Rn, indextype:$offset),
+                                  asm>,
+          Sched<[WriteSTP]>;
+
+  def : InstAlias<asm # " $Rt, $Rt2, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, regtype:$Rt2,
+                                                  GPR64sp:$Rn, 0)>;
+}
 
 // (pre-indexed)
-
-def MemoryIndexed32SImm7 : AsmOperandClass {
-  let Name = "MemoryIndexed32SImm7";
-  let DiagnosticType = "InvalidMemoryIndexed32SImm7";
-}
-def am_indexed32simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed<32>";
-  let ParserMatchClass = MemoryIndexed32SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-def am_indexed32simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexedWB<32>";
-  let ParserMatchClass = MemoryIndexed32SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-
-def MemoryIndexed64SImm7 : AsmOperandClass {
-  let Name = "MemoryIndexed64SImm7";
-  let DiagnosticType = "InvalidMemoryIndexed64SImm7";
-}
-def am_indexed64simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed<64>";
-  let ParserMatchClass = MemoryIndexed64SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-def am_indexed64simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexedWB<64>";
-  let ParserMatchClass = MemoryIndexed64SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-
-def MemoryIndexed128SImm7 : AsmOperandClass {
-  let Name = "MemoryIndexed128SImm7";
-  let DiagnosticType = "InvalidMemoryIndexed128SImm7";
-}
-def am_indexed128simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed<128>";
-  let ParserMatchClass = MemoryIndexed128SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-def am_indexed128simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexedWB<128>";
-  let ParserMatchClass = MemoryIndexed128SImm7;
-  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
-}
-
 class BaseLoadStorePairPreIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, $addr!", "", []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> dst2;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn, $offset]!", "", []> {
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
   bits<7> offset;
   let Inst{31-30} = opc;
   let Inst{29-27} = 0b101;
@@ -3021,9 +3140,9 @@ class BaseLoadStorePairPreIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
   let Inst{25-23} = 0b011;
   let Inst{22}    = L;
   let Inst{21-15} = offset;
-  let Inst{14-10} = dst2;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodePairLdStInstruction";
 }
@@ -3031,17 +3150,18 @@ class BaseLoadStorePairPreIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
 class LoadPairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
-                     Operand addrmode, string asm>
+                     Operand indextype, string asm>
     : BaseLoadStorePairPreIdx<opc, V, 1,
                               (outs regtype:$Rt, regtype:$Rt2),
-                              (ins addrmode:$addr), asm>,
+                              (ins GPR64sp:$Rn, indextype:$offset), asm>,
       Sched<[WriteLD, WriteLDHi, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
-                      Operand addrmode, string asm>
+                      Operand indextype, string asm>
     : BaseLoadStorePairPreIdx<opc, V, 0, (outs),
-                             (ins regtype:$Rt, regtype:$Rt2, addrmode:$addr),
+                             (ins regtype:$Rt, regtype:$Rt2,
+                                  GPR64sp:$Rn, indextype:$offset),
                              asm>,
       Sched<[WriteAdr, WriteSTP]>;
 } // hasSideEffects = 0
@@ -3050,14 +3170,10 @@ class StorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
 
 class BaseLoadStorePairPostIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, $addr, $idx", "", []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> dst2;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn], $offset", "", []> {
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
   bits<7> offset;
   let Inst{31-30} = opc;
   let Inst{29-27} = 0b101;
@@ -3065,9 +3181,9 @@ class BaseLoadStorePairPostIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
   let Inst{25-23} = 0b001;
   let Inst{22}    = L;
   let Inst{21-15} = offset;
-  let Inst{14-10} = dst2;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodePairLdStInstruction";
 }
@@ -3078,7 +3194,7 @@ class LoadPairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
                       Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 1,
                               (outs regtype:$Rt, regtype:$Rt2),
-                              (ins am_noindex:$addr, idxtype:$idx), asm>,
+                              (ins GPR64sp:$Rn, idxtype:$offset), asm>,
       Sched<[WriteLD, WriteLDHi, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
@@ -3086,7 +3202,7 @@ class StorePairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
                        Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 0, (outs),
                              (ins regtype:$Rt, regtype:$Rt2,
-                                  am_noindex:$addr, idxtype:$idx),
+                                  GPR64sp:$Rn, idxtype:$offset),
                              asm>,
       Sched<[WriteAdr, WriteSTP]>;
 } // hasSideEffects = 0
@@ -3095,14 +3211,10 @@ class StorePairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
 
 class BaseLoadStorePairNoAlloc<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, $addr", "", []> {
-  // The operands are in order to match the 'addr' MI operands, so we
-  // don't need an encoder method and by-name matching. Just use the default
-  // in-order handling. Since we're using by-order, make sure the names
-  // do not match.
-  bits<5> dst;
-  bits<5> dst2;
-  bits<5> base;
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn, $offset]", "", []> {
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
   bits<7> offset;
   let Inst{31-30} = opc;
   let Inst{29-27} = 0b101;
@@ -3110,30 +3222,40 @@ class BaseLoadStorePairNoAlloc<bits<2> opc, bit V, bit L, dag oops, dag iops,
   let Inst{25-23} = 0b000;
   let Inst{22}    = L;
   let Inst{21-15} = offset;
-  let Inst{14-10} = dst2;
-  let Inst{9-5}   = base;
-  let Inst{4-0}   = dst;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Rt;
 
   let DecoderMethod = "DecodePairLdStInstruction";
 }
 
-let hasSideEffects = 0 in {
-let mayStore = 0, mayLoad = 1 in
-class LoadPairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
-                     Operand indextype, string asm>
-    : BaseLoadStorePairNoAlloc<opc, V, 1,
-                              (outs regtype:$Rt, regtype:$Rt2),
-                              (ins indextype:$addr), asm>,
-      Sched<[WriteLD, WriteLDHi]>;
+multiclass LoadPairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
+                           Operand indextype, string asm> {
+  let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
+  def i : BaseLoadStorePairNoAlloc<opc, V, 1,
+                                   (outs regtype:$Rt, regtype:$Rt2),
+                                   (ins GPR64sp:$Rn, indextype:$offset), asm>,
+          Sched<[WriteLD, WriteLDHi]>;
 
-let mayStore = 1, mayLoad = 0 in
-class StorePairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
-                      Operand indextype, string asm>
-    : BaseLoadStorePairNoAlloc<opc, V, 0, (outs),
-                             (ins regtype:$Rt, regtype:$Rt2, indextype:$addr),
-                             asm>,
-      Sched<[WriteSTP]>;
-} // hasSideEffects = 0
+
+  def : InstAlias<asm # "\t$Rt, $Rt2, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, regtype:$Rt2,
+                                                  GPR64sp:$Rn, 0)>;
+}
+
+multiclass StorePairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
+                      Operand indextype, string asm> {
+  let hasSideEffects = 0, mayStore = 1, mayLoad = 0 in
+  def i : BaseLoadStorePairNoAlloc<opc, V, 0, (outs),
+                                   (ins regtype:$Rt, regtype:$Rt2,
+                                        GPR64sp:$Rn, indextype:$offset),
+                                   asm>,
+          Sched<[WriteSTP]>;
+
+  def : InstAlias<asm # "\t$Rt, $Rt2, [$Rn]",
+                  (!cast<Instruction>(NAME # "i") regtype:$Rt, regtype:$Rt2,
+                                                  GPR64sp:$Rn, 0)>;
+}
 
 //---
 // Load/store exclusive
@@ -3172,10 +3294,10 @@ class BaseLoadStoreExclusive<bits<2> sz, bit o2, bit L, bit o1, bit o0,
 class LoadStoreExclusiveSimple<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                                dag oops, dag iops, string asm, string operands>
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0, oops, iops, asm, operands> {
-  bits<5> reg;
-  bits<5> base;
-  let Inst{9-5} = base;
-  let Inst{4-0} = reg;
+  bits<5> Rt;
+  bits<5> Rn;
+  let Inst{9-5} = Rn;
+  let Inst{4-0} = Rt;
 
   let PostEncoderMethod = "fixLoadStoreExclusive<0,0>";
 }
@@ -3185,28 +3307,28 @@ let mayLoad = 1, mayStore = 0 in
 class LoadAcquire<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                   RegisterClass regtype, string asm>
     : LoadStoreExclusiveSimple<sz, o2, L, o1, o0, (outs regtype:$Rt),
-                               (ins am_noindex:$addr), asm, "\t$Rt, $addr">,
+                               (ins GPR64sp0:$Rn), asm, "\t$Rt, [$Rn]">,
       Sched<[WriteLD]>;
 
 class LoadExclusive<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                     RegisterClass regtype, string asm>
     : LoadStoreExclusiveSimple<sz, o2, L, o1, o0, (outs regtype:$Rt),
-                               (ins am_noindex:$addr), asm, "\t$Rt, $addr">,
+                               (ins GPR64sp0:$Rn), asm, "\t$Rt, [$Rn]">,
       Sched<[WriteLD]>;
 
 class LoadExclusivePair<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                        RegisterClass regtype, string asm>
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0,
                              (outs regtype:$Rt, regtype:$Rt2),
-                             (ins am_noindex:$addr), asm,
-                             "\t$Rt, $Rt2, $addr">,
+                             (ins GPR64sp0:$Rn), asm,
+                             "\t$Rt, $Rt2, [$Rn]">,
       Sched<[WriteLD, WriteLDHi]> {
-  bits<5> dst1;
-  bits<5> dst2;
-  bits<5> base;
-  let Inst{14-10} = dst2;
-  let Inst{9-5} = base;
-  let Inst{4-0} = dst1;
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5} = Rn;
+  let Inst{4-0} = Rt;
 
   let PostEncoderMethod = "fixLoadStoreExclusive<0,1>";
 }
@@ -3216,23 +3338,23 @@ let mayLoad = 0, mayStore = 1 in
 class StoreRelease<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                    RegisterClass regtype, string asm>
     : LoadStoreExclusiveSimple<sz, o2, L, o1, o0, (outs),
-                               (ins regtype:$Rt, am_noindex:$addr),
-                               asm, "\t$Rt, $addr">,
+                               (ins regtype:$Rt, GPR64sp0:$Rn),
+                               asm, "\t$Rt, [$Rn]">,
       Sched<[WriteST]>;
 
 let mayLoad = 1, mayStore = 1 in
 class StoreExclusive<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                      RegisterClass regtype, string asm>
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0, (outs GPR32:$Ws),
-                             (ins regtype:$Rt, am_noindex:$addr),
-                             asm, "\t$Ws, $Rt, $addr">,
+                             (ins regtype:$Rt, GPR64sp0:$Rn),
+                             asm, "\t$Ws, $Rt, [$Rn]">,
       Sched<[WriteSTX]> {
-  bits<5> status;
-  bits<5> reg;
-  bits<5> base;
-  let Inst{20-16} = status;
-  let Inst{9-5} = base;
-  let Inst{4-0} = reg;
+  bits<5> Ws;
+  bits<5> Rt;
+  bits<5> Rn;
+  let Inst{20-16} = Ws;
+  let Inst{9-5} = Rn;
+  let Inst{4-0} = Rt;
 
   let Constraints = "@earlyclobber $Ws";
   let PostEncoderMethod = "fixLoadStoreExclusive<1,0>";
@@ -3242,17 +3364,17 @@ class StoreExclusivePair<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                          RegisterClass regtype, string asm>
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0,
                              (outs GPR32:$Ws),
-                             (ins regtype:$Rt, regtype:$Rt2, am_noindex:$addr),
-                              asm, "\t$Ws, $Rt, $Rt2, $addr">,
+                             (ins regtype:$Rt, regtype:$Rt2, GPR64sp0:$Rn),
+                              asm, "\t$Ws, $Rt, $Rt2, [$Rn]">,
       Sched<[WriteSTX]> {
-  bits<5> status;
-  bits<5> dst1;
-  bits<5> dst2;
-  bits<5> base;
-  let Inst{20-16} = status;
-  let Inst{14-10} = dst2;
-  let Inst{9-5} = base;
-  let Inst{4-0} = dst1;
+  bits<5> Ws;
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<5> Rn;
+  let Inst{20-16} = Ws;
+  let Inst{14-10} = Rt2;
+  let Inst{9-5} = Rn;
+  let Inst{4-0} = Rt;
 
   let Constraints = "@earlyclobber $Ws";
 }
@@ -3915,18 +4037,6 @@ multiclass FPMoveImmediate<string asm> {
 //----------------------------------------------------------------------------
 // AdvSIMD
 //----------------------------------------------------------------------------
-
-def MemorySIMDNoIndexOperand : AsmOperandClass {
-  let Name = "MemorySIMDNoIndex";
-  let ParserMethod = "tryParseNoIndexMemory";
-}
-def am_simdnoindex : Operand<i64>,
-                     ComplexPattern<i64, 1, "SelectAddrModeNoIndex", []> {
-  let PrintMethod = "printAMNoIndex";
-  let ParserMatchClass = MemorySIMDNoIndexOperand;
-  let MIOperandInfo = (ops GPR64sp:$base);
-  let DecoderMethod = "DecodeGPR64spRegisterClass";
-}
 
 let Predicates = [HasNEON] in {
 
@@ -7573,13 +7683,13 @@ multiclass SIMDVectorLShiftLongBHSD<bit U, bits<5> opc, string asm,
 // SIMD ldX/stX no-index memory references don't allow the optional
 // ", #0" constant and handle post-indexing explicitly, so we use
 // a more specialized parse method for them. Otherwise, it's the same as
-// the general am_noindex handling.
+// the general GPR64sp handling.
 
 class BaseSIMDLdSt<bit Q, bit L, bits<4> opcode, bits<2> size,
                    string asm, dag oops, dag iops, list<dag> pattern>
-  : I<oops, iops, asm, "\t$Vt, $vaddr", "", pattern> {
+  : I<oops, iops, asm, "\t$Vt, [$Rn]", "", pattern> {
   bits<5> Vt;
-  bits<5> vaddr;
+  bits<5> Rn;
   let Inst{31} = 0;
   let Inst{30} = Q;
   let Inst{29-23} = 0b0011000;
@@ -7587,15 +7697,15 @@ class BaseSIMDLdSt<bit Q, bit L, bits<4> opcode, bits<2> size,
   let Inst{21-16} = 0b000000;
   let Inst{15-12} = opcode;
   let Inst{11-10} = size;
-  let Inst{9-5} = vaddr;
+  let Inst{9-5} = Rn;
   let Inst{4-0} = Vt;
 }
 
 class BaseSIMDLdStPost<bit Q, bit L, bits<4> opcode, bits<2> size,
                        string asm, dag oops, dag iops>
-  : I<oops, iops, asm, "\t$Vt, $vaddr, $Xm", "$vaddr = $wback", []> {
+  : I<oops, iops, asm, "\t$Vt, [$Rn], $Xm", "$Rn = $wback", []> {
   bits<5> Vt;
-  bits<5> vaddr;
+  bits<5> Rn;
   bits<5> Xm;
   let Inst{31} = 0;
   let Inst{30} = Q;
@@ -7605,7 +7715,7 @@ class BaseSIMDLdStPost<bit Q, bit L, bits<4> opcode, bits<2> size,
   let Inst{20-16} = Xm;
   let Inst{15-12} = opcode;
   let Inst{11-10} = size;
-  let Inst{9-5} = vaddr;
+  let Inst{9-5} = Rn;
   let Inst{4-0} = Vt;
 }
 
@@ -7614,41 +7724,41 @@ class BaseSIMDLdStPost<bit Q, bit L, bits<4> opcode, bits<2> size,
 multiclass SIMDLdStAliases<string asm, string layout, string Count,
                            int Offset, int Size> {
   // E.g. "ld1 { v0.8b, v1.8b }, [x1], #16"
-  //      "ld1\t$Vt, $vaddr, #16"
+  //      "ld1\t$Vt, [$Rn], #16"
   // may get mapped to
-  //      (LD1Twov8b_POST VecListTwo8b:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "\t$Vt, $vaddr, #" # Offset,
+  //      (LD1Twov8b_POST VecListTwo8b:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "\t$Vt, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # Count # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # layout):$Vt,
                       XZR), 1>;
 
   // E.g. "ld1.8b { v0, v1 }, [x1], #16"
-  //      "ld1.8b\t$Vt, $vaddr, #16"
+  //      "ld1.8b\t$Vt, [$Rn], #16"
   // may get mapped to
-  //      (LD1Twov8b_POST VecListTwo64:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr, #" # Offset,
+  //      (LD1Twov8b_POST VecListTwo64:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # Count # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
                       XZR), 0>;
 
   // E.g. "ld1.8b { v0, v1 }, [x1]"
-  //      "ld1\t$Vt, $vaddr"
+  //      "ld1\t$Vt, [$Rn]"
   // may get mapped to
-  //      (LD1Twov8b VecListTwo64:$Vt, am_simdnoindex:$vaddr)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr",
+  //      (LD1Twov8b VecListTwo64:$Vt, GPR64sp:$Rn)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn]",
                   (!cast<Instruction>(NAME # Count # "v" # layout)
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
-                      am_simdnoindex:$vaddr), 0>;
+                      GPR64sp:$Rn), 0>;
 
   // E.g. "ld1.8b { v0, v1 }, [x1], x2"
-  //      "ld1\t$Vt, $vaddr, $Xm"
+  //      "ld1\t$Vt, [$Rn], $Xm"
   // may get mapped to
-  //      (LD1Twov8b_POST VecListTwo64:$Vt, am_simdnoindex:$vaddr, GPR64pi8:$Xm)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr, $Xm",
+  //      (LD1Twov8b_POST VecListTwo64:$Vt, GPR64sp:$Rn, GPR64pi8:$Xm)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn], $Xm",
                   (!cast<Instruction>(NAME # Count # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
                       !cast<RegisterOperand>("GPR64pi" # Offset):$Xm), 0>;
 }
@@ -7658,61 +7768,61 @@ multiclass BaseSIMDLdN<string Count, string asm, string veclist, int Offset128,
   let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
     def v16b: BaseSIMDLdSt<1, 1, opcode, 0b00, asm,
                            (outs !cast<RegisterOperand>(veclist # "16b"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v8h : BaseSIMDLdSt<1, 1, opcode, 0b01, asm,
                            (outs !cast<RegisterOperand>(veclist # "8h"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v4s : BaseSIMDLdSt<1, 1, opcode, 0b10, asm,
                            (outs !cast<RegisterOperand>(veclist # "4s"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v2d : BaseSIMDLdSt<1, 1, opcode, 0b11, asm,
                            (outs !cast<RegisterOperand>(veclist # "2d"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v8b : BaseSIMDLdSt<0, 1, opcode, 0b00, asm,
                            (outs !cast<RegisterOperand>(veclist # "8b"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v4h : BaseSIMDLdSt<0, 1, opcode, 0b01, asm,
                            (outs !cast<RegisterOperand>(veclist # "4h"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
     def v2s : BaseSIMDLdSt<0, 1, opcode, 0b10, asm,
                            (outs !cast<RegisterOperand>(veclist # "2s"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
 
 
     def v16b_POST: BaseSIMDLdStPost<1, 1, opcode, 0b00, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "16b"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v8h_POST : BaseSIMDLdStPost<1, 1, opcode, 0b01, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "8h"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v4s_POST : BaseSIMDLdStPost<1, 1, opcode, 0b10, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "4s"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v2d_POST : BaseSIMDLdStPost<1, 1, opcode, 0b11, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "2d"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v8b_POST : BaseSIMDLdStPost<0, 1, opcode, 0b00, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "8b"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
     def v4h_POST : BaseSIMDLdStPost<0, 1, opcode, 0b01, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "4h"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
     def v2s_POST : BaseSIMDLdStPost<0, 1, opcode, 0b10, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "2s"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
   }
 
@@ -7731,60 +7841,60 @@ multiclass BaseSIMDStN<string Count, string asm, string veclist, int Offset128,
   let hasSideEffects = 0, mayStore = 1, mayLoad = 0 in {
     def v16b : BaseSIMDLdSt<1, 0, opcode, 0b00, asm, (outs),
                             (ins !cast<RegisterOperand>(veclist # "16b"):$Vt,
-                                 am_simdnoindex:$vaddr), []>;
+                                 GPR64sp:$Rn), []>;
     def v8h : BaseSIMDLdSt<1, 0, opcode, 0b01, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "8h"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
     def v4s : BaseSIMDLdSt<1, 0, opcode, 0b10, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "4s"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
     def v2d : BaseSIMDLdSt<1, 0, opcode, 0b11, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "2d"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
     def v8b : BaseSIMDLdSt<0, 0, opcode, 0b00, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "8b"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
     def v4h : BaseSIMDLdSt<0, 0, opcode, 0b01, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "4h"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
     def v2s : BaseSIMDLdSt<0, 0, opcode, 0b10, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "2s"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
 
     def v16b_POST : BaseSIMDLdStPost<1, 0, opcode, 0b00, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "16b"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v8h_POST : BaseSIMDLdStPost<1, 0, opcode, 0b01, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "8h"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v4s_POST : BaseSIMDLdStPost<1, 0, opcode, 0b10, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "4s"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v2d_POST : BaseSIMDLdStPost<1, 0, opcode, 0b11, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "2d"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset128):$Xm)>;
     def v8b_POST : BaseSIMDLdStPost<0, 0, opcode, 0b00, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "8b"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
     def v4h_POST : BaseSIMDLdStPost<0, 0, opcode, 0b01, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "4h"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
     def v2s_POST : BaseSIMDLdStPost<0, 0, opcode, 0b10, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "2s"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
   }
 
@@ -7805,12 +7915,12 @@ multiclass BaseSIMDLd1<string Count, string asm, string veclist,
   let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
     def v1d : BaseSIMDLdSt<0, 1, opcode, 0b11, asm,
                            (outs !cast<RegisterOperand>(veclist # "1d"):$Vt),
-                           (ins am_simdnoindex:$vaddr), []>;
+                           (ins GPR64sp:$Rn), []>;
 
     def v1d_POST : BaseSIMDLdStPost<0, 1, opcode, 0b11, asm,
-                       (outs am_simdnoindex:$wback,
+                       (outs GPR64sp:$wback,
                              !cast<RegisterOperand>(veclist # "1d"):$Vt),
-                       (ins am_simdnoindex:$vaddr,
+                       (ins GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
   }
 
@@ -7825,12 +7935,12 @@ multiclass BaseSIMDSt1<string Count, string asm, string veclist,
   let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
     def v1d : BaseSIMDLdSt<0, 0, opcode, 0b11, asm, (outs),
                            (ins !cast<RegisterOperand>(veclist # "1d"):$Vt,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
 
     def v1d_POST : BaseSIMDLdStPost<0, 0, opcode, 0b11, asm,
-                       (outs am_simdnoindex:$wback),
+                       (outs GPR64sp:$wback),
                        (ins !cast<RegisterOperand>(veclist # "1d"):$Vt,
-                            am_simdnoindex:$vaddr,
+                            GPR64sp:$Rn,
                             !cast<RegisterOperand>("GPR64pi" # Offset64):$Xm)>;
   }
 
@@ -7884,13 +7994,13 @@ class BaseSIMDLdStSingle<bit L, bit R, bits<3> opcode,
                          dag oops, dag iops, list<dag> pattern>
   : I<oops, iops, asm, operands, cst, pattern> {
   bits<5> Vt;
-  bits<5> vaddr;
+  bits<5> Rn;
   let Inst{31} = 0;
   let Inst{29-24} = 0b001101;
   let Inst{22} = L;
   let Inst{21} = R;
   let Inst{15-13} = opcode;
-  let Inst{9-5} = vaddr;
+  let Inst{9-5} = Rn;
   let Inst{4-0} = Vt;
 }
 
@@ -7899,13 +8009,13 @@ class BaseSIMDLdStSingleTied<bit L, bit R, bits<3> opcode,
                          dag oops, dag iops, list<dag> pattern>
   : I<oops, iops, asm, operands, "$Vt = $dst," # cst, pattern> {
   bits<5> Vt;
-  bits<5> vaddr;
+  bits<5> Rn;
   let Inst{31} = 0;
   let Inst{29-24} = 0b001101;
   let Inst{22} = L;
   let Inst{21} = R;
   let Inst{15-13} = opcode;
-  let Inst{9-5} = vaddr;
+  let Inst{9-5} = Rn;
   let Inst{4-0} = Vt;
 }
 
@@ -7913,8 +8023,8 @@ class BaseSIMDLdStSingleTied<bit L, bit R, bits<3> opcode,
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 class BaseSIMDLdR<bit Q, bit R, bits<3> opcode, bit S, bits<2> size, string asm,
                   Operand listtype>
-  : BaseSIMDLdStSingle<1, R, opcode, asm, "\t$Vt, $vaddr", "",
-                       (outs listtype:$Vt), (ins am_simdnoindex:$vaddr),
+  : BaseSIMDLdStSingle<1, R, opcode, asm, "\t$Vt, [$Rn]", "",
+                       (outs listtype:$Vt), (ins GPR64sp:$Rn),
                        []> {
   let Inst{30} = Q;
   let Inst{23} = 0;
@@ -7925,10 +8035,10 @@ class BaseSIMDLdR<bit Q, bit R, bits<3> opcode, bit S, bits<2> size, string asm,
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 class BaseSIMDLdRPost<bit Q, bit R, bits<3> opcode, bit S, bits<2> size,
                       string asm, Operand listtype, Operand GPR64pi>
-  : BaseSIMDLdStSingle<1, R, opcode, asm, "\t$Vt, $vaddr, $Xm",
-                       "$vaddr = $wback",
-                       (outs am_simdnoindex:$wback, listtype:$Vt),
-                       (ins am_simdnoindex:$vaddr, GPR64pi:$Xm), []> {
+  : BaseSIMDLdStSingle<1, R, opcode, asm, "\t$Vt, [$Rn], $Xm",
+                       "$Rn = $wback",
+                       (outs GPR64sp:$wback, listtype:$Vt),
+                       (ins GPR64sp:$Rn, GPR64pi:$Xm), []> {
   bits<5> Xm;
   let Inst{30} = Q;
   let Inst{23} = 1;
@@ -7940,41 +8050,41 @@ class BaseSIMDLdRPost<bit Q, bit R, bits<3> opcode, bit S, bits<2> size,
 multiclass SIMDLdrAliases<string asm, string layout, string Count,
                           int Offset, int Size> {
   // E.g. "ld1r { v0.8b }, [x1], #1"
-  //      "ld1r.8b\t$Vt, $vaddr, #1"
+  //      "ld1r.8b\t$Vt, [$Rn], #1"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne8b:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "\t$Vt, $vaddr, #" # Offset,
+  //      (LD1Rv8b_POST VecListOne8b:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "\t$Vt, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # layout):$Vt,
                       XZR), 1>;
 
   // E.g. "ld1r.8b { v0 }, [x1], #1"
-  //      "ld1r.8b\t$Vt, $vaddr, #1"
+  //      "ld1r.8b\t$Vt, [$Rn], #1"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne64:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr, #" # Offset,
+  //      (LD1Rv8b_POST VecListOne64:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
                       XZR), 0>;
 
   // E.g. "ld1r.8b { v0 }, [x1]"
-  //      "ld1r.8b\t$Vt, $vaddr"
+  //      "ld1r.8b\t$Vt, [$Rn]"
   // may get mapped to
-  //      (LD1Rv8b VecListOne64:$Vt, am_simdnoindex:$vaddr)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr",
+  //      (LD1Rv8b VecListOne64:$Vt, GPR64sp:$Rn)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn]",
                   (!cast<Instruction>(NAME # "v" # layout)
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
-                      am_simdnoindex:$vaddr), 0>;
+                      GPR64sp:$Rn), 0>;
 
   // E.g. "ld1r.8b { v0 }, [x1], x2"
-  //      "ld1r.8b\t$Vt, $vaddr, $Xm"
+  //      "ld1r.8b\t$Vt, [$Rn], $Xm"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne64:$Vt, am_simdnoindex:$vaddr, GPR64pi1:$Xm)
-  def : InstAlias<asm # "." # layout # "\t$Vt, $vaddr, $Xm",
+  //      (LD1Rv8b_POST VecListOne64:$Vt, GPR64sp:$Rn, GPR64pi1:$Xm)
+  def : InstAlias<asm # "." # layout # "\t$Vt, [$Rn], $Xm",
                   (!cast<Instruction>(NAME # "v" # layout # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # Size):$Vt,
                       !cast<RegisterOperand>("GPR64pi" # Offset):$Xm), 0>;
 }
@@ -8035,7 +8145,7 @@ multiclass SIMDLdR<bit R, bits<3> opcode, bit S, string asm, string Count,
 
 class SIMDLdStSingleB<bit L, bit R, bits<3> opcode, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "", oops, iops,
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "", oops, iops,
                        pattern> {
   // idx encoded in Q:S:size fields.
   bits<4> idx;
@@ -8047,7 +8157,7 @@ class SIMDLdStSingleB<bit L, bit R, bits<3> opcode, string asm,
 }
 class SIMDLdStSingleBTied<bit L, bit R, bits<3> opcode, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "",
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "",
                            oops, iops, pattern> {
   // idx encoded in Q:S:size fields.
   bits<4> idx;
@@ -8059,8 +8169,8 @@ class SIMDLdStSingleBTied<bit L, bit R, bits<3> opcode, string asm,
 }
 class SIMDLdStSingleBPost<bit L, bit R, bits<3> opcode, string asm,
                           dag oops, dag iops>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                       "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                       "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S:size fields.
   bits<4> idx;
   bits<5> Xm;
@@ -8072,8 +8182,8 @@ class SIMDLdStSingleBPost<bit L, bit R, bits<3> opcode, string asm,
 }
 class SIMDLdStSingleBTiedPost<bit L, bit R, bits<3> opcode, string asm,
                           dag oops, dag iops>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                           "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                           "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S:size fields.
   bits<4> idx;
   bits<5> Xm;
@@ -8086,7 +8196,7 @@ class SIMDLdStSingleBTiedPost<bit L, bit R, bits<3> opcode, string asm,
 
 class SIMDLdStSingleH<bit L, bit R, bits<3> opcode, bit size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "", oops, iops,
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "", oops, iops,
                        pattern> {
   // idx encoded in Q:S:size<1> fields.
   bits<3> idx;
@@ -8099,7 +8209,7 @@ class SIMDLdStSingleH<bit L, bit R, bits<3> opcode, bit size, string asm,
 }
 class SIMDLdStSingleHTied<bit L, bit R, bits<3> opcode, bit size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "",
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "",
                            oops, iops, pattern> {
   // idx encoded in Q:S:size<1> fields.
   bits<3> idx;
@@ -8113,8 +8223,8 @@ class SIMDLdStSingleHTied<bit L, bit R, bits<3> opcode, bit size, string asm,
 
 class SIMDLdStSingleHPost<bit L, bit R, bits<3> opcode, bit size, string asm,
                           dag oops, dag iops>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                       "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                       "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S:size<1> fields.
   bits<3> idx;
   bits<5> Xm;
@@ -8127,8 +8237,8 @@ class SIMDLdStSingleHPost<bit L, bit R, bits<3> opcode, bit size, string asm,
 }
 class SIMDLdStSingleHTiedPost<bit L, bit R, bits<3> opcode, bit size, string asm,
                           dag oops, dag iops>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                           "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                           "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S:size<1> fields.
   bits<3> idx;
   bits<5> Xm;
@@ -8141,7 +8251,7 @@ class SIMDLdStSingleHTiedPost<bit L, bit R, bits<3> opcode, bit size, string asm
 }
 class SIMDLdStSingleS<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "", oops, iops,
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "", oops, iops,
                        pattern> {
   // idx encoded in Q:S fields.
   bits<2> idx;
@@ -8153,7 +8263,7 @@ class SIMDLdStSingleS<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
 }
 class SIMDLdStSingleSTied<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "",
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "",
                            oops, iops, pattern> {
   // idx encoded in Q:S fields.
   bits<2> idx;
@@ -8165,8 +8275,8 @@ class SIMDLdStSingleSTied<bit L, bit R, bits<3> opcode, bits<2> size, string asm
 }
 class SIMDLdStSingleSPost<bit L, bit R, bits<3> opcode, bits<2> size,
                           string asm, dag oops, dag iops>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                       "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                       "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S fields.
   bits<2> idx;
   bits<5> Xm;
@@ -8178,8 +8288,8 @@ class SIMDLdStSingleSPost<bit L, bit R, bits<3> opcode, bits<2> size,
 }
 class SIMDLdStSingleSTiedPost<bit L, bit R, bits<3> opcode, bits<2> size,
                           string asm, dag oops, dag iops>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                           "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                           "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q:S fields.
   bits<2> idx;
   bits<5> Xm;
@@ -8191,7 +8301,7 @@ class SIMDLdStSingleSTiedPost<bit L, bit R, bits<3> opcode, bits<2> size,
 }
 class SIMDLdStSingleD<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "", oops, iops,
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "", oops, iops,
                        pattern> {
   // idx encoded in Q field.
   bits<1> idx;
@@ -8203,7 +8313,7 @@ class SIMDLdStSingleD<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
 }
 class SIMDLdStSingleDTied<bit L, bit R, bits<3> opcode, bits<2> size, string asm,
                       dag oops, dag iops, list<dag> pattern>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr", "",
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn]", "",
                            oops, iops, pattern> {
   // idx encoded in Q field.
   bits<1> idx;
@@ -8215,8 +8325,8 @@ class SIMDLdStSingleDTied<bit L, bit R, bits<3> opcode, bits<2> size, string asm
 }
 class SIMDLdStSingleDPost<bit L, bit R, bits<3> opcode, bits<2> size,
                           string asm, dag oops, dag iops>
-  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                       "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingle<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                       "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q field.
   bits<1> idx;
   bits<5> Xm;
@@ -8228,8 +8338,8 @@ class SIMDLdStSingleDPost<bit L, bit R, bits<3> opcode, bits<2> size,
 }
 class SIMDLdStSingleDTiedPost<bit L, bit R, bits<3> opcode, bits<2> size,
                           string asm, dag oops, dag iops>
-  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, $vaddr, $Xm",
-                           "$vaddr = $wback", oops, iops, []> {
+  : BaseSIMDLdStSingleTied<L, R, opcode, asm, "\t$Vt$idx, [$Rn], $Xm",
+                           "$Rn = $wback", oops, iops, []> {
   // idx encoded in Q field.
   bits<1> idx;
   bits<5> Xm;
@@ -8247,12 +8357,12 @@ multiclass SIMDLdSingleBTied<bit R, bits<3> opcode, string asm,
   def i8 : SIMDLdStSingleBTied<1, R, opcode, asm,
                            (outs listtype:$dst),
                            (ins listtype:$Vt, VectorIndexB:$idx,
-                                am_simdnoindex:$vaddr), []>;
+                                GPR64sp:$Rn), []>;
 
   def i8_POST : SIMDLdStSingleBTiedPost<1, R, opcode, asm,
-                            (outs am_simdnoindex:$wback, listtype:$dst),
+                            (outs GPR64sp:$wback, listtype:$dst),
                             (ins listtype:$Vt, VectorIndexB:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 multiclass SIMDLdSingleHTied<bit R, bits<3> opcode, bit size, string asm,
@@ -8261,12 +8371,12 @@ multiclass SIMDLdSingleHTied<bit R, bits<3> opcode, bit size, string asm,
   def i16 : SIMDLdStSingleHTied<1, R, opcode, size, asm,
                             (outs listtype:$dst),
                             (ins listtype:$Vt, VectorIndexH:$idx,
-                                 am_simdnoindex:$vaddr), []>;
+                                 GPR64sp:$Rn), []>;
 
   def i16_POST : SIMDLdStSingleHTiedPost<1, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback, listtype:$dst),
+                            (outs GPR64sp:$wback, listtype:$dst),
                             (ins listtype:$Vt, VectorIndexH:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 multiclass SIMDLdSingleSTied<bit R, bits<3> opcode, bits<2> size,string asm,
@@ -8275,12 +8385,12 @@ multiclass SIMDLdSingleSTied<bit R, bits<3> opcode, bits<2> size,string asm,
   def i32 : SIMDLdStSingleSTied<1, R, opcode, size, asm,
                             (outs listtype:$dst),
                             (ins listtype:$Vt, VectorIndexS:$idx,
-                                 am_simdnoindex:$vaddr), []>;
+                                 GPR64sp:$Rn), []>;
 
   def i32_POST : SIMDLdStSingleSTiedPost<1, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback, listtype:$dst),
+                            (outs GPR64sp:$wback, listtype:$dst),
                             (ins listtype:$Vt, VectorIndexS:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 multiclass SIMDLdSingleDTied<bit R, bits<3> opcode, bits<2> size, string asm,
@@ -8288,100 +8398,100 @@ multiclass SIMDLdSingleDTied<bit R, bits<3> opcode, bits<2> size, string asm,
   def i64 : SIMDLdStSingleDTied<1, R, opcode, size, asm,
                             (outs listtype:$dst),
                             (ins listtype:$Vt, VectorIndexD:$idx,
-                                 am_simdnoindex:$vaddr), []>;
+                                 GPR64sp:$Rn), []>;
 
   def i64_POST : SIMDLdStSingleDTiedPost<1, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback, listtype:$dst),
+                            (outs GPR64sp:$wback, listtype:$dst),
                             (ins listtype:$Vt, VectorIndexD:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleB<bit R, bits<3> opcode, string asm,
                          RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i8 : SIMDLdStSingleB<0, R, opcode, asm,
                            (outs), (ins listtype:$Vt, VectorIndexB:$idx,
-                                        am_simdnoindex:$vaddr), []>;
+                                        GPR64sp:$Rn), []>;
 
   def i8_POST : SIMDLdStSingleBPost<0, R, opcode, asm,
-                                    (outs am_simdnoindex:$wback),
+                                    (outs GPR64sp:$wback),
                                     (ins listtype:$Vt, VectorIndexB:$idx,
-                                         am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                         GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleH<bit R, bits<3> opcode, bit size, string asm,
                          RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i16 : SIMDLdStSingleH<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexH:$idx,
-                                         am_simdnoindex:$vaddr), []>;
+                                         GPR64sp:$Rn), []>;
 
   def i16_POST : SIMDLdStSingleHPost<0, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback),
+                            (outs GPR64sp:$wback),
                             (ins listtype:$Vt, VectorIndexH:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleS<bit R, bits<3> opcode, bits<2> size,string asm,
                          RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i32 : SIMDLdStSingleS<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexS:$idx,
-                                         am_simdnoindex:$vaddr), []>;
+                                         GPR64sp:$Rn), []>;
 
   def i32_POST : SIMDLdStSingleSPost<0, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback),
+                            (outs GPR64sp:$wback),
                             (ins listtype:$Vt, VectorIndexS:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleD<bit R, bits<3> opcode, bits<2> size, string asm,
                          RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i64 : SIMDLdStSingleD<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexD:$idx,
-                                         am_simdnoindex:$vaddr), []>;
+                                         GPR64sp:$Rn), []>;
 
   def i64_POST : SIMDLdStSingleDPost<0, R, opcode, size, asm,
-                            (outs am_simdnoindex:$wback),
+                            (outs GPR64sp:$wback),
                             (ins listtype:$Vt, VectorIndexD:$idx,
-                                 am_simdnoindex:$vaddr, GPR64pi:$Xm)>;
+                                 GPR64sp:$Rn, GPR64pi:$Xm)>;
 }
 
 multiclass SIMDLdStSingleAliases<string asm, string layout, string Type,
                                  string Count, int Offset, Operand idxtype> {
   // E.g. "ld1 { v0.8b }[0], [x1], #1"
-  //      "ld1\t$Vt, $vaddr, #1"
+  //      "ld1\t$Vt, [$Rn], #1"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne8b:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "\t$Vt$idx, $vaddr, #" # Offset,
+  //      (LD1Rv8b_POST VecListOne8b:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "\t$Vt$idx, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # Type  # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # layout):$Vt,
                       idxtype:$idx, XZR), 1>;
 
   // E.g. "ld1.8b { v0 }[0], [x1], #1"
-  //      "ld1.8b\t$Vt, $vaddr, #1"
+  //      "ld1.8b\t$Vt, [$Rn], #1"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne64:$Vt, am_simdnoindex:$vaddr, XZR)
-  def : InstAlias<asm # "." # layout # "\t$Vt$idx, $vaddr, #" # Offset,
+  //      (LD1Rv8b_POST VecListOne64:$Vt, GPR64sp:$Rn, XZR)
+  def : InstAlias<asm # "." # layout # "\t$Vt$idx, [$Rn], #" # Offset,
                   (!cast<Instruction>(NAME # Type # "_POST")
-                      am_simdnoindex:$vaddr,
+                      GPR64sp:$Rn,
                       !cast<RegisterOperand>("VecList" # Count # "128"):$Vt,
                       idxtype:$idx, XZR), 0>;
 
   // E.g. "ld1.8b { v0 }[0], [x1]"
-  //      "ld1.8b\t$Vt, $vaddr"
+  //      "ld1.8b\t$Vt, [$Rn]"
   // may get mapped to
-  //      (LD1Rv8b VecListOne64:$Vt, am_simdnoindex:$vaddr)
-  def : InstAlias<asm # "." # layout # "\t$Vt$idx, $vaddr",
+  //      (LD1Rv8b VecListOne64:$Vt, GPR64sp:$Rn)
+  def : InstAlias<asm # "." # layout # "\t$Vt$idx, [$Rn]",
                       (!cast<Instruction>(NAME # Type)
                          !cast<RegisterOperand>("VecList" # Count # "128"):$Vt,
-                         idxtype:$idx, am_simdnoindex:$vaddr), 0>;
+                         idxtype:$idx, GPR64sp:$Rn), 0>;
 
   // E.g. "ld1.8b { v0 }[0], [x1], x2"
-  //      "ld1.8b\t$Vt, $vaddr, $Xm"
+  //      "ld1.8b\t$Vt, [$Rn], $Xm"
   // may get mapped to
-  //      (LD1Rv8b_POST VecListOne64:$Vt, am_simdnoindex:$vaddr, GPR64pi1:$Xm)
-  def : InstAlias<asm # "." # layout # "\t$Vt$idx, $vaddr, $Xm",
+  //      (LD1Rv8b_POST VecListOne64:$Vt, GPR64sp:$Rn, GPR64pi1:$Xm)
+  def : InstAlias<asm # "." # layout # "\t$Vt$idx, [$Rn], $Xm",
                       (!cast<Instruction>(NAME # Type # "_POST")
-                         am_simdnoindex:$vaddr,
+                         GPR64sp:$Rn,
                          !cast<RegisterOperand>("VecList" # Count # "128"):$Vt,
                          idxtype:$idx,
                          !cast<RegisterOperand>("GPR64pi" # Offset):$Xm), 0>;

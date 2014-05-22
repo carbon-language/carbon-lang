@@ -57,7 +57,6 @@ private:
   int tryParseRegister();
   int tryMatchVectorRegister(StringRef &Kind, bool expected);
   bool parseRegister(OperandVector &Operands);
-  bool parseMemory(OperandVector &Operands);
   bool parseSymbolicImmVal(const MCExpr *&ImmVal);
   bool parseVectorList(OperandVector &Operands);
   bool parseOperand(OperandVector &Operands, bool isCondCode,
@@ -86,7 +85,6 @@ private:
   /// }
 
   OperandMatchResultTy tryParseOptionalShiftExtend(OperandVector &Operands);
-  OperandMatchResultTy tryParseNoIndexMemory(OperandVector &Operands);
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
   OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
   OperandMatchResultTy tryParseSysReg(OperandVector &Operands);
@@ -96,6 +94,7 @@ private:
   OperandMatchResultTy tryParseAdrLabel(OperandVector &Operands);
   OperandMatchResultTy tryParseFPImm(OperandVector &Operands);
   OperandMatchResultTy tryParseAddSubImm(OperandVector &Operands);
+  OperandMatchResultTy tryParseGPR64sp0Operand(OperandVector &Operands);
   bool tryParseVectorRegister(OperandVector &Operands);
 
 public:
@@ -133,18 +132,11 @@ namespace {
 /// ARM64Operand - Instances of this class represent a parsed ARM64 machine
 /// instruction.
 class ARM64Operand : public MCParsedAsmOperand {
-public:
-  enum MemIdxKindTy {
-    ImmediateOffset, // pre-indexed, no writeback
-    RegisterOffset   // register offset, with optional extend
-  };
-
 private:
   enum KindTy {
     k_Immediate,
     k_ShiftedImm,
     k_CondCode,
-    k_Memory,
     k_Register,
     k_VectorList,
     k_VectorIndex,
@@ -157,7 +149,7 @@ private:
     k_Barrier
   } Kind;
 
-  SMLoc StartLoc, EndLoc, OffsetLoc;
+  SMLoc StartLoc, EndLoc;
 
   struct TokOp {
     const char *Data;
@@ -221,20 +213,11 @@ private:
   struct ShiftExtendOp {
     ARM64_AM::ShiftExtendType Type;
     unsigned Amount;
+    bool HasExplicitAmount;
   };
 
   struct ExtendOp {
     unsigned Val;
-  };
-
-  // This is for all forms of ARM64 address expressions
-  struct MemOp {
-    unsigned BaseRegNum, OffsetRegNum;
-    ARM64_AM::ShiftExtendType ExtType;
-    unsigned ShiftVal;
-    bool ExplicitShift;
-    const MCExpr *OffsetImm;
-    MemIdxKindTy Mode;
   };
 
   union {
@@ -251,7 +234,6 @@ private:
     struct SysCRImmOp SysCRImm;
     struct PrefetchOp Prefetch;
     struct ShiftExtendOp ShiftExtend;
-    struct MemOp Mem;
   };
 
   // Keep the MCContext around as the MCExprs may need manipulated during
@@ -303,9 +285,6 @@ public:
     case k_Prefetch:
       Prefetch = o.Prefetch;
       break;
-    case k_Memory:
-      Mem = o.Mem;
-      break;
     case k_ShiftExtend:
       ShiftExtend = o.ShiftExtend;
       break;
@@ -316,8 +295,6 @@ public:
   SMLoc getStartLoc() const override { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const override { return EndLoc; }
-  /// getOffsetLoc - Get the location of the offset of this memory operand.
-  SMLoc getOffsetLoc() const { return OffsetLoc; }
 
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
@@ -409,7 +386,13 @@ public:
     return ShiftExtend.Amount;
   }
 
+  bool hasShiftExtendAmount() const {
+    assert(Kind == k_ShiftExtend && "Invalid access!");
+    return ShiftExtend.HasExplicitAmount;
+  }
+
   bool isImm() const override { return Kind == k_Immediate; }
+  bool isMem() const override { return false; }
   bool isSImm9() const {
     if (!isImm())
       return false;
@@ -446,6 +429,52 @@ public:
     int64_t Val = MCE->getValue();
     return (Val >= -1024 && Val <= 1008 && (Val & 15) == 0);
   }
+
+  bool isSymbolicUImm12Offset(const MCExpr *Expr, unsigned Scale) const {
+    ARM64MCExpr::VariantKind ELFRefKind;
+    MCSymbolRefExpr::VariantKind DarwinRefKind;
+    int64_t Addend;
+    if (!ARM64AsmParser::classifySymbolRef(Expr, ELFRefKind, DarwinRefKind,
+                                           Addend)) {
+      // If we don't understand the expression, assume the best and
+      // let the fixup and relocation code deal with it.
+      return true;
+    }
+
+    if (DarwinRefKind == MCSymbolRefExpr::VK_PAGEOFF ||
+        ELFRefKind == ARM64MCExpr::VK_LO12 ||
+        ELFRefKind == ARM64MCExpr::VK_GOT_LO12 ||
+        ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12 ||
+        ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12_NC ||
+        ELFRefKind == ARM64MCExpr::VK_TPREL_LO12 ||
+        ELFRefKind == ARM64MCExpr::VK_TPREL_LO12_NC ||
+        ELFRefKind == ARM64MCExpr::VK_GOTTPREL_LO12_NC ||
+        ELFRefKind == ARM64MCExpr::VK_TLSDESC_LO12) {
+      // Note that we don't range-check the addend. It's adjusted modulo page
+      // size when converted, so there is no "out of range" condition when using
+      // @pageoff.
+      return Addend >= 0 && (Addend % Scale) == 0;
+    } else if (DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGEOFF ||
+               DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGEOFF) {
+      // @gotpageoff/@tlvppageoff can only be used directly, not with an addend.
+      return Addend == 0;
+    }
+
+    return false;
+  }
+
+  template <int Scale> bool isUImm12Offset() const {
+    if (!isImm())
+      return false;
+
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return isSymbolicUImm12Offset(getImm(), Scale);
+
+    int64_t Val = MCE->getValue();
+    return (Val % Scale) == 0 && Val >= 0 && (Val / Scale) < 0x1000;
+  }
+
   bool isImm0_7() const {
     if (!isImm())
       return false;
@@ -826,6 +855,11 @@ public:
       ARM64MCRegisterClasses[ARM64::GPR64RegClassID].contains(Reg.RegNum);
   }
 
+  bool isGPR64sp0() const {
+    return Kind == k_Register && !Reg.isVector &&
+      ARM64MCRegisterClasses[ARM64::GPR64spRegClassID].contains(Reg.RegNum);
+  }
+
   /// Is this a vector list with the type implicit (presumably attached to the
   /// instruction itself)?
   template <unsigned NumRegs> bool isImplicitlyTypedVectorList() const {
@@ -863,7 +897,6 @@ public:
   bool isTokenEqual(StringRef Str) const {
     return Kind == k_Token && getToken() == Str;
   }
-  bool isMem() const override { return Kind == k_Memory; }
   bool isSysCR() const { return Kind == k_SysCR; }
   bool isPrefetch() const { return Kind == k_Prefetch; }
   bool isShiftExtend() const { return Kind == k_ShiftExtend; }
@@ -901,6 +934,24 @@ public:
     ARM64_AM::ShiftExtendType ET = getShiftExtendType();
     return (ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX || ET == ARM64_AM::LSL) &&
       getShiftExtendAmount() <= 4;
+  }
+
+  template<int Width> bool isMemXExtend() const {
+    if (!isExtend())
+      return false;
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    return (ET == ARM64_AM::LSL || ET == ARM64_AM::SXTX) &&
+           (getShiftExtendAmount() == Log2_32(Width / 8) ||
+            getShiftExtendAmount() == 0);
+  }
+
+  template<int Width> bool isMemWExtend() const {
+    if (!isExtend())
+      return false;
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    return (ET == ARM64_AM::UXTW || ET == ARM64_AM::SXTW) &&
+           (getShiftExtendAmount() == Log2_32(Width / 8) ||
+            getShiftExtendAmount() == 0);
   }
 
   template <unsigned width>
@@ -978,180 +1029,14 @@ public:
     return getShiftExtendType() == ARM64_AM::MSL && (Shift == 8 || Shift == 16);
   }
 
-  bool isMemoryRegisterOffset8() const {
-    return isMem() && Mem.Mode == RegisterOffset && Mem.ShiftVal == 0;
-  }
-
-  bool isMemoryRegisterOffset16() const {
-    return isMem() && Mem.Mode == RegisterOffset &&
-           (Mem.ShiftVal == 0 || Mem.ShiftVal == 1);
-  }
-
-  bool isMemoryRegisterOffset32() const {
-    return isMem() && Mem.Mode == RegisterOffset &&
-           (Mem.ShiftVal == 0 || Mem.ShiftVal == 2);
-  }
-
-  bool isMemoryRegisterOffset64() const {
-    return isMem() && Mem.Mode == RegisterOffset &&
-           (Mem.ShiftVal == 0 || Mem.ShiftVal == 3);
-  }
-
-  bool isMemoryRegisterOffset128() const {
-    return isMem() && Mem.Mode == RegisterOffset &&
-           (Mem.ShiftVal == 0 || Mem.ShiftVal == 4);
-  }
-
-  bool isMemoryUnscaled() const {
-    if (!isMem())
-      return false;
-    if (Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    // Make sure the immediate value is valid.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    if (!CE)
-      return false;
-    // The offset must fit in a signed 9-bit unscaled immediate.
-    int64_t Value = CE->getValue();
-    return (Value >= -256 && Value < 256);
-  }
   // Fallback unscaled operands are for aliases of LDR/STR that fall back
   // to LDUR/STUR when the offset is not legal for the former but is for
   // the latter. As such, in addition to checking for being a legal unscaled
   // address, also check that it is not a legal scaled address. This avoids
   // ambiguity in the matcher.
-  bool isMemoryUnscaledFB8() const {
-    return isMemoryUnscaled() && !isMemoryIndexed8();
-  }
-  bool isMemoryUnscaledFB16() const {
-    return isMemoryUnscaled() && !isMemoryIndexed16();
-  }
-  bool isMemoryUnscaledFB32() const {
-    return isMemoryUnscaled() && !isMemoryIndexed32();
-  }
-  bool isMemoryUnscaledFB64() const {
-    return isMemoryUnscaled() && !isMemoryIndexed64();
-  }
-  bool isMemoryUnscaledFB128() const {
-    return isMemoryUnscaled() && !isMemoryIndexed128();
-  }
-  bool isMemoryIndexed(unsigned Scale) const {
-    if (!isMem())
-      return false;
-    if (Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    // Make sure the immediate value is valid.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-
-    if (CE) {
-      // The offset must be a positive multiple of the scale and in range of
-      // encoding with a 12-bit immediate.
-      int64_t Value = CE->getValue();
-      return (Value >= 0 && (Value % Scale) == 0 && Value <= (4095 * Scale));
-    }
-
-    // If it's not a constant, check for some expressions we know.
-    const MCExpr *Expr = Mem.OffsetImm;
-    ARM64MCExpr::VariantKind ELFRefKind;
-    MCSymbolRefExpr::VariantKind DarwinRefKind;
-    int64_t Addend;
-    if (!ARM64AsmParser::classifySymbolRef(Expr, ELFRefKind, DarwinRefKind,
-                                           Addend)) {
-      // If we don't understand the expression, assume the best and
-      // let the fixup and relocation code deal with it.
-      return true;
-    }
-
-    if (DarwinRefKind == MCSymbolRefExpr::VK_PAGEOFF ||
-        ELFRefKind == ARM64MCExpr::VK_LO12 ||
-        ELFRefKind == ARM64MCExpr::VK_GOT_LO12 ||
-        ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12 ||
-        ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12_NC ||
-        ELFRefKind == ARM64MCExpr::VK_TPREL_LO12 ||
-        ELFRefKind == ARM64MCExpr::VK_TPREL_LO12_NC ||
-        ELFRefKind == ARM64MCExpr::VK_GOTTPREL_LO12_NC ||
-        ELFRefKind == ARM64MCExpr::VK_TLSDESC_LO12) {
-      // Note that we don't range-check the addend. It's adjusted modulo page
-      // size when converted, so there is no "out of range" condition when using
-      // @pageoff.
-      return Addend >= 0 && (Addend % Scale) == 0;
-    } else if (DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGEOFF ||
-               DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGEOFF) {
-      // @gotpageoff/@tlvppageoff can only be used directly, not with an addend.
-      return Addend == 0;
-    }
-
-    return false;
-  }
-  bool isMemoryIndexed128() const { return isMemoryIndexed(16); }
-  bool isMemoryIndexed64() const { return isMemoryIndexed(8); }
-  bool isMemoryIndexed32() const { return isMemoryIndexed(4); }
-  bool isMemoryIndexed16() const { return isMemoryIndexed(2); }
-  bool isMemoryIndexed8() const { return isMemoryIndexed(1); }
-  bool isMemoryNoIndex() const {
-    if (!isMem())
-      return false;
-    if (Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-
-    // Make sure the immediate value is valid. Only zero is allowed.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    if (!CE || CE->getValue() != 0)
-      return false;
-    return true;
-  }
-  bool isMemorySIMDNoIndex() const {
-    if (!isMem())
-      return false;
-    if (Mem.Mode != ImmediateOffset)
-      return false;
-    return Mem.OffsetImm == nullptr;
-  }
-  bool isMemoryIndexedSImm9() const {
-    if (!isMem() || Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    assert(CE && "Non-constant pre-indexed offset!");
-    int64_t Value = CE->getValue();
-    return Value >= -256 && Value <= 255;
-  }
-  bool isMemoryIndexed32SImm7() const {
-    if (!isMem() || Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    assert(CE && "Non-constant pre-indexed offset!");
-    int64_t Value = CE->getValue();
-    return ((Value % 4) == 0) && Value >= -256 && Value <= 252;
-  }
-  bool isMemoryIndexed64SImm7() const {
-    if (!isMem() || Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    assert(CE && "Non-constant pre-indexed offset!");
-    int64_t Value = CE->getValue();
-    return ((Value % 8) == 0) && Value >= -512 && Value <= 504;
-  }
-  bool isMemoryIndexed128SImm7() const {
-    if (!isMem() || Mem.Mode != ImmediateOffset)
-      return false;
-    if (!Mem.OffsetImm)
-      return true;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-    assert(CE && "Non-constant pre-indexed offset!");
-    int64_t Value = CE->getValue();
-    return ((Value % 16) == 0) && Value >= -1024 && Value <= 1008;
+  template<int Width>
+  bool isSImm9OffsetFB() const {
+    return isSImm9() && !isUImm12Offset<Width / 8>();
   }
 
   bool isAdrpLabel() const {
@@ -1311,6 +1196,18 @@ public:
 
   void addAdrLabelOperands(MCInst &Inst, unsigned N) const {
     addImmOperands(Inst, N);
+  }
+
+  template<int Scale>
+  void addUImm12OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+
+    if (!MCE) {
+      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      return;
+    }
+    Inst.addOperand(MCOperand::CreateImm(MCE->getValue() / Scale));
   }
 
   void addSImm9Operands(MCInst &Inst, unsigned N) const {
@@ -1577,6 +1474,26 @@ public:
     Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
+  void addMemExtendOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    bool IsSigned = ET == ARM64_AM::SXTW || ET == ARM64_AM::SXTX;
+    Inst.addOperand(MCOperand::CreateImm(IsSigned));
+    Inst.addOperand(MCOperand::CreateImm(getShiftExtendAmount() != 0));
+  }
+
+  // For 8-bit load/store instructions with a register offset, both the
+  // "DoShift" and "NoShift" variants have a shift of 0. Because of this,
+  // they're disambiguated by whether the shift was explicit or implicit rather
+  // than its size.
+  void addMemExtend8Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    ARM64_AM::ShiftExtendType ET = getShiftExtendType();
+    bool IsSigned = ET == ARM64_AM::SXTW || ET == ARM64_AM::SXTX;
+    Inst.addOperand(MCOperand::CreateImm(IsSigned));
+    Inst.addOperand(MCOperand::CreateImm(hasShiftExtendAmount()));
+  }
+
   template<int Shift>
   void addMOVZMovAliasOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
@@ -1593,168 +1510,6 @@ public:
     const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
     uint64_t Value = CE->getValue();
     Inst.addOperand(MCOperand::CreateImm((~Value >> Shift) & 0xffff));
-  }
-
-  void addMemoryRegisterOffsetOperands(MCInst &Inst, unsigned N, bool DoShift) {
-    assert(N == 3 && "Invalid number of operands!");
-
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(getXRegFromWReg(Mem.OffsetRegNum)));
-    unsigned ExtendImm = ARM64_AM::getMemExtendImm(Mem.ExtType, DoShift);
-    Inst.addOperand(MCOperand::CreateImm(ExtendImm));
-  }
-
-  void addMemoryRegisterOffset8Operands(MCInst &Inst, unsigned N) {
-    addMemoryRegisterOffsetOperands(Inst, N, Mem.ExplicitShift);
-  }
-
-  void addMemoryRegisterOffset16Operands(MCInst &Inst, unsigned N) {
-    addMemoryRegisterOffsetOperands(Inst, N, Mem.ShiftVal == 1);
-  }
-
-  void addMemoryRegisterOffset32Operands(MCInst &Inst, unsigned N) {
-    addMemoryRegisterOffsetOperands(Inst, N, Mem.ShiftVal == 2);
-  }
-
-  void addMemoryRegisterOffset64Operands(MCInst &Inst, unsigned N) {
-    addMemoryRegisterOffsetOperands(Inst, N, Mem.ShiftVal == 3);
-  }
-
-  void addMemoryRegisterOffset128Operands(MCInst &Inst, unsigned N) {
-    addMemoryRegisterOffsetOperands(Inst, N, Mem.ShiftVal == 4);
-  }
-
-  void addMemoryIndexedOperands(MCInst &Inst, unsigned N,
-                                unsigned Scale) const {
-    // Add the base register operand.
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-
-    if (!Mem.OffsetImm) {
-      // There isn't an offset.
-      Inst.addOperand(MCOperand::CreateImm(0));
-      return;
-    }
-
-    // Add the offset operand.
-    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm)) {
-      assert(CE->getValue() % Scale == 0 &&
-             "Offset operand must be multiple of the scale!");
-
-      // The MCInst offset operand doesn't include the low bits (like the
-      // instruction encoding).
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue() / Scale));
-    }
-
-    // If this is a pageoff symrefexpr with an addend, the linker will
-    // do the scaling of the addend.
-    //
-    // Otherwise we don't know what this is, so just add the scaling divide to
-    // the expression and let the MC fixup evaluation code deal with it.
-    const MCExpr *Expr = Mem.OffsetImm;
-    ARM64MCExpr::VariantKind ELFRefKind;
-    MCSymbolRefExpr::VariantKind DarwinRefKind;
-    int64_t Addend;
-    if (Scale > 1 &&
-        (!ARM64AsmParser::classifySymbolRef(Expr, ELFRefKind, DarwinRefKind,
-                                            Addend) ||
-         (Addend != 0 && DarwinRefKind != MCSymbolRefExpr::VK_PAGEOFF))) {
-      Expr = MCBinaryExpr::CreateDiv(Expr, MCConstantExpr::Create(Scale, Ctx),
-                                     Ctx);
-    }
-
-    Inst.addOperand(MCOperand::CreateExpr(Expr));
-  }
-
-  void addMemoryUnscaledOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryUnscaled() && "Invalid number of operands!");
-    // Add the base register operand.
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-
-    // Add the offset operand.
-    if (!Mem.OffsetImm)
-      Inst.addOperand(MCOperand::CreateImm(0));
-    else {
-      // Only constant offsets supported.
-      const MCConstantExpr *CE = cast<MCConstantExpr>(Mem.OffsetImm);
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
-    }
-  }
-
-  void addMemoryIndexed128Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryIndexed128() && "Invalid number of operands!");
-    addMemoryIndexedOperands(Inst, N, 16);
-  }
-
-  void addMemoryIndexed64Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryIndexed64() && "Invalid number of operands!");
-    addMemoryIndexedOperands(Inst, N, 8);
-  }
-
-  void addMemoryIndexed32Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryIndexed32() && "Invalid number of operands!");
-    addMemoryIndexedOperands(Inst, N, 4);
-  }
-
-  void addMemoryIndexed16Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryIndexed16() && "Invalid number of operands!");
-    addMemoryIndexedOperands(Inst, N, 2);
-  }
-
-  void addMemoryIndexed8Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemoryIndexed8() && "Invalid number of operands!");
-    addMemoryIndexedOperands(Inst, N, 1);
-  }
-
-  void addMemoryNoIndexOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && isMemoryNoIndex() && "Invalid number of operands!");
-    // Add the base register operand (the offset is always zero, so ignore it).
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-  }
-
-  void addMemorySIMDNoIndexOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && isMemorySIMDNoIndex() && "Invalid number of operands!");
-    // Add the base register operand (the offset is always zero, so ignore it).
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-  }
-
-  void addMemoryWritebackIndexedOperands(MCInst &Inst, unsigned N,
-                                         unsigned Scale) const {
-    assert(N == 2 && "Invalid number of operands!");
-
-    // Add the base register operand.
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-
-    // Add the offset operand.
-    int64_t Offset = 0;
-    if (Mem.OffsetImm) {
-      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.OffsetImm);
-      assert(CE && "Non-constant indexed offset operand!");
-      Offset = CE->getValue();
-    }
-
-    if (Scale != 1) {
-      assert(Offset % Scale == 0 &&
-             "Offset operand must be a multiple of the scale!");
-      Offset /= Scale;
-    }
-
-    Inst.addOperand(MCOperand::CreateImm(Offset));
-  }
-
-  void addMemoryIndexedSImm9Operands(MCInst &Inst, unsigned N) const {
-    addMemoryWritebackIndexedOperands(Inst, N, 1);
-  }
-
-  void addMemoryIndexed32SImm7Operands(MCInst &Inst, unsigned N) const {
-    addMemoryWritebackIndexedOperands(Inst, N, 4);
-  }
-
-  void addMemoryIndexed64SImm7Operands(MCInst &Inst, unsigned N) const {
-    addMemoryWritebackIndexedOperands(Inst, N, 8);
-  }
-
-  void addMemoryIndexed128SImm7Operands(MCInst &Inst, unsigned N) const {
-    addMemoryWritebackIndexedOperands(Inst, N, 16);
   }
 
   void print(raw_ostream &OS) const override;
@@ -1857,40 +1612,6 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateMem(unsigned BaseRegNum, const MCExpr *Off,
-                                 SMLoc S, SMLoc E, SMLoc OffsetLoc,
-                                 MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_Memory, Ctx);
-    Op->Mem.BaseRegNum = BaseRegNum;
-    Op->Mem.OffsetRegNum = 0;
-    Op->Mem.OffsetImm = Off;
-    Op->Mem.ExtType = ARM64_AM::UXTX;
-    Op->Mem.ShiftVal = 0;
-    Op->Mem.ExplicitShift = false;
-    Op->Mem.Mode = ImmediateOffset;
-    Op->OffsetLoc = OffsetLoc;
-    Op->StartLoc = S;
-    Op->EndLoc = E;
-    return Op;
-  }
-
-  static ARM64Operand *CreateRegOffsetMem(unsigned BaseReg, unsigned OffsetReg,
-                                          ARM64_AM::ShiftExtendType ExtType,
-                                          unsigned ShiftVal, bool ExplicitShift,
-                                          SMLoc S, SMLoc E, MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_Memory, Ctx);
-    Op->Mem.BaseRegNum = BaseReg;
-    Op->Mem.OffsetRegNum = OffsetReg;
-    Op->Mem.OffsetImm = nullptr;
-    Op->Mem.ExtType = ExtType;
-    Op->Mem.ShiftVal = ShiftVal;
-    Op->Mem.ExplicitShift = ExplicitShift;
-    Op->Mem.Mode = RegisterOffset;
-    Op->StartLoc = S;
-    Op->EndLoc = E;
-    return Op;
-  }
-
   static ARM64Operand *CreateSysCR(unsigned Val, SMLoc S, SMLoc E,
                                    MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_SysCR, Ctx);
@@ -1908,11 +1629,13 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateShiftExtend(ARM64_AM::ShiftExtendType ShOp, unsigned Val,
+  static ARM64Operand *CreateShiftExtend(ARM64_AM::ShiftExtendType ShOp,
+                                         unsigned Val, bool HasExplicitAmount,
                                          SMLoc S, SMLoc E, MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_ShiftExtend, Ctx);
     Op->ShiftExtend.Type = ShOp;
     Op->ShiftExtend.Amount = Val;
+    Op->ShiftExtend.HasExplicitAmount = HasExplicitAmount;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1949,9 +1672,6 @@ void ARM64Operand::print(raw_ostream &OS) const {
   case k_CondCode:
     OS << "<condcode " << getCondCode() << ">";
     break;
-  case k_Memory:
-    OS << "<memory>";
-    break;
   case k_Register:
     OS << "<register " << getReg() << ">";
     break;
@@ -1986,7 +1706,10 @@ void ARM64Operand::print(raw_ostream &OS) const {
   }
   case k_ShiftExtend: {
     OS << "<" << ARM64_AM::getShiftExtendName(getShiftExtendType()) << " #"
-       << getShiftExtendAmount() << ">";
+       << getShiftExtendAmount();
+    if (!hasShiftExtendAmount())
+      OS << "<imp>";
+    OS << '>';
     break;
   }
   }
@@ -2498,7 +2221,7 @@ ARM64AsmParser::tryParseOptionalShiftExtend(OperandVector &Operands) {
     // "extend" type operatoins don't need an immediate, #0 is implicit.
     SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
     Operands.push_back(
-        ARM64Operand::CreateShiftExtend(ShOp, 0, S, E, getContext()));
+        ARM64Operand::CreateShiftExtend(ShOp, 0, false, S, E, getContext()));
     return MatchOperand_Success;
   }
 
@@ -2523,8 +2246,8 @@ ARM64AsmParser::tryParseOptionalShiftExtend(OperandVector &Operands) {
   }
 
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
-  Operands.push_back(ARM64Operand::CreateShiftExtend(ShOp, MCE->getValue(), S,
-                                                     E, getContext()));
+  Operands.push_back(ARM64Operand::CreateShiftExtend(ShOp, MCE->getValue(),
+                                                     true, S, E, getContext()));
   return MatchOperand_Success;
 }
 
@@ -2931,213 +2654,6 @@ bool ARM64AsmParser::parseRegister(OperandVector &Operands) {
   return false;
 }
 
-/// tryParseNoIndexMemory - Custom parser method for memory operands that
-///                         do not allow base regisrer writeback modes,
-///                         or those that handle writeback separately from
-///                         the memory operand (like the AdvSIMD ldX/stX
-///                         instructions.
-ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseNoIndexMemory(OperandVector &Operands) {
-  if (Parser.getTok().isNot(AsmToken::LBrac))
-    return MatchOperand_NoMatch;
-  SMLoc S = getLoc();
-  Parser.Lex(); // Eat left bracket token.
-
-  const AsmToken &BaseRegTok = Parser.getTok();
-  if (BaseRegTok.isNot(AsmToken::Identifier)) {
-    Error(BaseRegTok.getLoc(), "register expected");
-    return MatchOperand_ParseFail;
-  }
-
-  int64_t Reg = tryParseRegister();
-  if (Reg == -1) {
-    Error(BaseRegTok.getLoc(), "register expected");
-    return MatchOperand_ParseFail;
-  }
-
-  SMLoc E = getLoc();
-  if (Parser.getTok().isNot(AsmToken::RBrac)) {
-    Error(E, "']' expected");
-    return MatchOperand_ParseFail;
-  }
-
-  Parser.Lex(); // Eat right bracket token.
-
-  Operands.push_back(ARM64Operand::CreateMem(Reg, nullptr, S, E, E, getContext()));
-  return MatchOperand_Success;
-}
-
-/// parseMemory - Parse a memory operand for a basic load/store instruction.
-bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
-  assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a Left Bracket");
-  SMLoc S = getLoc();
-  Parser.Lex(); // Eat left bracket token.
-
-  const AsmToken &BaseRegTok = Parser.getTok();
-  SMLoc BaseRegLoc = BaseRegTok.getLoc();
-  if (BaseRegTok.isNot(AsmToken::Identifier))
-    return Error(BaseRegLoc, "register expected");
-
-  int64_t Reg = tryParseRegister();
-  if (Reg == -1)
-    return Error(BaseRegLoc, "register expected");
-
-  if (!ARM64MCRegisterClasses[ARM64::GPR64spRegClassID].contains(Reg))
-    return Error(BaseRegLoc, "invalid operand for instruction");
-
-  // If there is an offset expression, parse it.
-  const MCExpr *OffsetExpr = nullptr;
-  SMLoc OffsetLoc;
-  if (Parser.getTok().is(AsmToken::Comma)) {
-    Parser.Lex(); // Eat the comma.
-    OffsetLoc = getLoc();
-
-    // Register offset
-    const AsmToken &OffsetRegTok = Parser.getTok();
-    int Reg2 = OffsetRegTok.is(AsmToken::Identifier) ? tryParseRegister() : -1;
-    if (Reg2 != -1) {
-      // Default shift is LSL, with an omitted shift.  We use the third bit of
-      // the extend value to indicate presence/omission of the immediate offset.
-      ARM64_AM::ShiftExtendType ExtOp = ARM64_AM::UXTX;
-      int64_t ShiftVal = 0;
-      bool ExplicitShift = false;
-
-      if (Parser.getTok().is(AsmToken::Comma)) {
-        // Embedded extend operand.
-        Parser.Lex(); // Eat the comma
-
-        SMLoc ExtLoc = getLoc();
-        const AsmToken &Tok = Parser.getTok();
-        ExtOp = StringSwitch<ARM64_AM::ShiftExtendType>(Tok.getString().lower())
-                    .Case("uxtw", ARM64_AM::UXTW)
-                    .Case("lsl", ARM64_AM::UXTX) // Alias for UXTX
-                    .Case("sxtw", ARM64_AM::SXTW)
-                    .Case("sxtx", ARM64_AM::SXTX)
-                    .Default(ARM64_AM::InvalidShiftExtend);
-        if (ExtOp == ARM64_AM::InvalidShiftExtend)
-          return Error(ExtLoc, "expected valid extend operation");
-
-        Parser.Lex(); // Eat the extend op.
-
-        // A 32-bit offset register is only valid for [SU]/XTW extend
-        // operators.
-        if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg2)) {
-         if (ExtOp != ARM64_AM::UXTW &&
-            ExtOp != ARM64_AM::SXTW)
-          return Error(ExtLoc, "32-bit general purpose offset register "
-                               "requires sxtw or uxtw extend");
-        } else if (!ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
-                       Reg2))
-          return Error(OffsetLoc,
-                       "64-bit general purpose offset register expected");
-
-        bool Hash = getLexer().is(AsmToken::Hash);
-        if (getLexer().is(AsmToken::RBrac)) {
-          // No immediate operand.
-          if (ExtOp == ARM64_AM::UXTX)
-            return Error(ExtLoc, "LSL extend requires immediate operand");
-        } else if (Hash || getLexer().is(AsmToken::Integer)) {
-          // Immediate operand.
-          if (Hash)
-            Parser.Lex(); // Eat the '#'
-          const MCExpr *ImmVal;
-          SMLoc ExprLoc = getLoc();
-          if (getParser().parseExpression(ImmVal))
-            return true;
-          const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-          if (!MCE)
-            return TokError("immediate value expected for extend operand");
-
-          ExplicitShift = true;
-          ShiftVal = MCE->getValue();
-          if (ShiftVal < 0 || ShiftVal > 4)
-            return Error(ExprLoc, "immediate operand out of range");
-        } else
-          return Error(getLoc(), "expected immediate operand");
-      }
-
-      if (Parser.getTok().isNot(AsmToken::RBrac))
-        return Error(getLoc(), "']' expected");
-
-      Parser.Lex(); // Eat right bracket token.
-
-      SMLoc E = getLoc();
-      Operands.push_back(ARM64Operand::CreateRegOffsetMem(
-          Reg, Reg2, ExtOp, ShiftVal, ExplicitShift, S, E, getContext()));
-      return false;
-
-      // Immediate expressions.
-    } else if (Parser.getTok().is(AsmToken::Hash) ||
-               Parser.getTok().is(AsmToken::Colon) ||
-               Parser.getTok().is(AsmToken::Integer)) {
-      if (Parser.getTok().is(AsmToken::Hash))
-        Parser.Lex(); // Eat hash token.
-
-      if (parseSymbolicImmVal(OffsetExpr))
-        return true;
-    } else {
-      // FIXME: We really should make sure that we're dealing with a LDR/STR
-      // instruction that can legally have a symbolic expression here.
-      // Symbol reference.
-      if (Parser.getTok().isNot(AsmToken::Identifier) &&
-          Parser.getTok().isNot(AsmToken::String))
-        return Error(getLoc(), "identifier or immediate expression expected");
-      if (getParser().parseExpression(OffsetExpr))
-        return true;
-      // If this is a plain ref, Make sure a legal variant kind was specified.
-      // Otherwise, it's a more complicated expression and we have to just
-      // assume it's OK and let the relocation stuff puke if it's not.
-      ARM64MCExpr::VariantKind ELFRefKind;
-      MCSymbolRefExpr::VariantKind DarwinRefKind;
-      int64_t Addend;
-      if (classifySymbolRef(OffsetExpr, ELFRefKind, DarwinRefKind, Addend) &&
-          Addend == 0) {
-        assert(ELFRefKind == ARM64MCExpr::VK_INVALID &&
-               "ELF symbol modifiers not supported here yet");
-
-        switch (DarwinRefKind) {
-        default:
-          return Error(getLoc(), "expected @pageoff or @gotpageoff modifier");
-        case MCSymbolRefExpr::VK_GOTPAGEOFF:
-        case MCSymbolRefExpr::VK_PAGEOFF:
-        case MCSymbolRefExpr::VK_TLVPPAGEOFF:
-          // These are what we're expecting.
-          break;
-        }
-      }
-    }
-  }
-
-  SMLoc E = getLoc();
-  if (Parser.getTok().isNot(AsmToken::RBrac))
-    return Error(E, "']' expected");
-
-  Parser.Lex(); // Eat right bracket token.
-
-  // Create the memory operand.
-  Operands.push_back(
-      ARM64Operand::CreateMem(Reg, OffsetExpr, S, E, OffsetLoc, getContext()));
-
-  // Check for a '!', indicating pre-indexed addressing with writeback.
-  if (Parser.getTok().is(AsmToken::Exclaim)) {
-    // There needs to have been an immediate or wback doesn't make sense.
-    if (!OffsetExpr)
-      return Error(E, "missing offset for pre-indexed addressing");
-    // Pre-indexed with writeback must have a constant expression for the
-    // offset. FIXME: Theoretically, we'd like to allow fixups so long
-    // as they don't require a relocation.
-    if (!isa<MCConstantExpr>(OffsetExpr))
-      return Error(OffsetLoc, "constant immediate expression expected");
-
-    // Create the Token operand for the '!'.
-    Operands.push_back(ARM64Operand::CreateToken(
-        "!", false, Parser.getTok().getLoc(), getContext()));
-    Parser.Lex(); // Eat the '!' token.
-  }
-
-  return false;
-}
-
 bool ARM64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
   bool HasELFModifier = false;
   ARM64MCExpr::VariantKind RefKind;
@@ -3313,6 +2829,47 @@ bool ARM64AsmParser::parseVectorList(OperandVector &Operands) {
   return false;
 }
 
+ARM64AsmParser::OperandMatchResultTy
+ARM64AsmParser::tryParseGPR64sp0Operand(OperandVector &Operands) {
+  const AsmToken &Tok = Parser.getTok();
+  if (!Tok.is(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
+
+  unsigned RegNum = MatchRegisterName(Tok.getString().lower());
+
+  MCContext &Ctx = getContext();
+  const MCRegisterInfo *RI = Ctx.getRegisterInfo();
+  if (!RI->getRegClass(ARM64::GPR64spRegClassID).contains(RegNum))
+    return MatchOperand_NoMatch;
+
+  SMLoc S = getLoc();
+  Parser.Lex(); // Eat register
+
+  if (Parser.getTok().isNot(AsmToken::Comma)) {
+    Operands.push_back(ARM64Operand::CreateReg(RegNum, false, S, getLoc(), Ctx));
+    return MatchOperand_Success;
+  }
+  Parser.Lex(); // Eat comma.
+
+  if (Parser.getTok().is(AsmToken::Hash))
+    Parser.Lex(); // Eat hash
+
+  if (Parser.getTok().isNot(AsmToken::Integer)) {
+    Error(getLoc(), "index must be absent or #0");
+    return MatchOperand_ParseFail;
+  }
+
+  const MCExpr *ImmVal;
+  if (Parser.parseExpression(ImmVal) || !isa<MCConstantExpr>(ImmVal) ||
+      cast<MCConstantExpr>(ImmVal)->getValue() != 0) {
+    Error(getLoc(), "index must be absent or #0");
+    return MatchOperand_ParseFail;
+  }
+
+  Operands.push_back(ARM64Operand::CreateReg(RegNum, false, S, getLoc(), Ctx));
+  return MatchOperand_Success;
+}
+
 /// parseOperand - Parse a arm instruction operand.  For now this parses the
 /// operand regardless of the mnemonic.
 bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
@@ -3341,8 +2898,16 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     Operands.push_back(ARM64Operand::CreateImm(Expr, S, E, getContext()));
     return false;
   }
-  case AsmToken::LBrac:
-    return parseMemory(Operands);
+  case AsmToken::LBrac: {
+    SMLoc Loc = Parser.getTok().getLoc();
+    Operands.push_back(ARM64Operand::CreateToken("[", false, Loc,
+                                                 getContext()));
+    Parser.Lex(); // Eat '['
+
+    // There's no comma after a '[', so we can parse the next operand
+    // immediately.
+    return parseOperand(Operands, false, false);
+  }
   case AsmToken::LCurly:
     return parseVectorList(Operands);
   case AsmToken::Identifier: {
@@ -3528,6 +3093,28 @@ bool ARM64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
                        condCodeSecondOperand || condCodeThirdOperand)) {
         Parser.eatToEndOfStatement();
         return true;
+      }
+
+      // After successfully parsing some operands there are two special cases to
+      // consider (i.e. notional operands not separated by commas). Both are due
+      // to memory specifiers:
+      //  + An RBrac will end an address for load/store/prefetch
+      //  + An '!' will indicate a pre-indexed operation.
+      //
+      // It's someone else's responsibility to make sure these tokens are sane
+      // in the given context!
+      if (Parser.getTok().is(AsmToken::RBrac)) {
+        SMLoc Loc = Parser.getTok().getLoc();
+        Operands.push_back(ARM64Operand::CreateToken("]", false, Loc,
+                                                     getContext()));
+        Parser.Lex();
+      }
+
+      if (Parser.getTok().is(AsmToken::Exclaim)) {
+        SMLoc Loc = Parser.getTok().getLoc();
+        Operands.push_back(ARM64Operand::CreateToken("!", false, Loc,
+                                                     getContext()));
+        Parser.Lex();
       }
 
       ++N;
@@ -3749,23 +3336,51 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
                  "expected compatible register or floating-point constant");
   case Match_InvalidMemoryIndexedSImm9:
     return Error(Loc, "index must be an integer in range [-256, 255].");
-  case Match_InvalidMemoryIndexed32SImm7:
+  case Match_InvalidMemoryIndexed4SImm7:
     return Error(Loc, "index must be a multiple of 4 in range [-256, 252].");
-  case Match_InvalidMemoryIndexed64SImm7:
+  case Match_InvalidMemoryIndexed8SImm7:
     return Error(Loc, "index must be a multiple of 8 in range [-512, 504].");
-  case Match_InvalidMemoryIndexed128SImm7:
+  case Match_InvalidMemoryIndexed16SImm7:
     return Error(Loc, "index must be a multiple of 16 in range [-1024, 1008].");
-  case Match_InvalidMemoryIndexed:
-    return Error(Loc, "invalid offset in memory address.");
-  case Match_InvalidMemoryIndexed8:
+  case Match_InvalidMemoryWExtend8:
+    return Error(Loc,
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0");
+  case Match_InvalidMemoryWExtend16:
+    return Error(Loc,
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #1");
+  case Match_InvalidMemoryWExtend32:
+    return Error(Loc,
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #2");
+  case Match_InvalidMemoryWExtend64:
+    return Error(Loc,
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #3");
+  case Match_InvalidMemoryWExtend128:
+    return Error(Loc,
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #4");
+  case Match_InvalidMemoryXExtend8:
+    return Error(Loc,
+                 "expected 'lsl' or 'sxtx' with optional shift of #0");
+  case Match_InvalidMemoryXExtend16:
+    return Error(Loc,
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #1");
+  case Match_InvalidMemoryXExtend32:
+    return Error(Loc,
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #2");
+  case Match_InvalidMemoryXExtend64:
+    return Error(Loc,
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #3");
+  case Match_InvalidMemoryXExtend128:
+    return Error(Loc,
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #4");
+  case Match_InvalidMemoryIndexed1:
     return Error(Loc, "index must be an integer in range [0, 4095].");
-  case Match_InvalidMemoryIndexed16:
+  case Match_InvalidMemoryIndexed2:
     return Error(Loc, "index must be a multiple of 2 in range [0, 8190].");
-  case Match_InvalidMemoryIndexed32:
+  case Match_InvalidMemoryIndexed4:
     return Error(Loc, "index must be a multiple of 4 in range [0, 16380].");
-  case Match_InvalidMemoryIndexed64:
+  case Match_InvalidMemoryIndexed8:
     return Error(Loc, "index must be a multiple of 8 in range [0, 32760].");
-  case Match_InvalidMemoryIndexed128:
+  case Match_InvalidMemoryIndexed16:
     return Error(Loc, "index must be a multiple of 16 in range [0, 65520].");
   case Match_InvalidImm0_7:
     return Error(Loc, "immediate must be an integer in range [0, 7].");
@@ -4109,39 +3724,11 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
     return showMatchError(ErrorLoc, MatchResult);
   }
-  case Match_InvalidMemoryIndexedSImm9: {
-    // If there is not a '!' after the memory operand that failed, we really
-    // want the diagnostic for the non-pre-indexed instruction variant instead.
-    // Be careful to check for the post-indexed variant as well, which also
-    // uses this match diagnostic. Also exclude the explicitly unscaled
-    // mnemonics, as they want the unscaled diagnostic as well.
-    if (Operands.size() == ErrorInfo + 1 &&
-        !((ARM64Operand *)Operands[ErrorInfo])->isImm() &&
-        !Tok.startswith("stur") && !Tok.startswith("ldur")) {
-      // FIXME: Here we use a vague diagnostic for memory operand in many
-      // instructions of various formats. This diagnostic can be more accurate
-      // if splitting memory operand into many smaller operands to help
-      // diagnose.
-      MatchResult = Match_InvalidMemoryIndexed;
-    }
-    else if(Operands.size() == 3 && Operands.size() == ErrorInfo + 1 &&
-            ((ARM64Operand *)Operands[ErrorInfo])->isImm()) {
-      MatchResult = Match_InvalidLabel;
-    }
-    SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();
-    if (ErrorLoc == SMLoc())
-      ErrorLoc = IDLoc;
-    return showMatchError(ErrorLoc, MatchResult);
-  }
-  case Match_InvalidMemoryIndexed32:
-  case Match_InvalidMemoryIndexed64:
-  case Match_InvalidMemoryIndexed128:
-    // If there is a '!' after the memory operand that failed, we really
-    // want the diagnostic for the pre-indexed instruction variant instead.
-    if (Operands.size() > ErrorInfo + 1 &&
-        ((ARM64Operand *)Operands[ErrorInfo + 1])->isTokenEqual("!"))
-      MatchResult = Match_InvalidMemoryIndexedSImm9;
-  // FALL THROUGH
+  case Match_InvalidMemoryIndexed1:
+  case Match_InvalidMemoryIndexed2:
+  case Match_InvalidMemoryIndexed4:
+  case Match_InvalidMemoryIndexed8:
+  case Match_InvalidMemoryIndexed16:
   case Match_InvalidCondCode:
   case Match_AddSubRegExtendSmall:
   case Match_AddSubRegExtendLarge:
@@ -4152,12 +3739,20 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMovImm32Shift:
   case Match_InvalidMovImm64Shift:
   case Match_InvalidFPImm:
-  case Match_InvalidMemoryIndexed:
-  case Match_InvalidMemoryIndexed8:
-  case Match_InvalidMemoryIndexed16:
-  case Match_InvalidMemoryIndexed32SImm7:
-  case Match_InvalidMemoryIndexed64SImm7:
-  case Match_InvalidMemoryIndexed128SImm7:
+  case Match_InvalidMemoryWExtend8:
+  case Match_InvalidMemoryWExtend16:
+  case Match_InvalidMemoryWExtend32:
+  case Match_InvalidMemoryWExtend64:
+  case Match_InvalidMemoryWExtend128:
+  case Match_InvalidMemoryXExtend8:
+  case Match_InvalidMemoryXExtend16:
+  case Match_InvalidMemoryXExtend32:
+  case Match_InvalidMemoryXExtend64:
+  case Match_InvalidMemoryXExtend128:
+  case Match_InvalidMemoryIndexed4SImm7:
+  case Match_InvalidMemoryIndexed8SImm7:
+  case Match_InvalidMemoryIndexed16SImm7:
+  case Match_InvalidMemoryIndexedSImm9:
   case Match_InvalidImm0_7:
   case Match_InvalidImm0_15:
   case Match_InvalidImm0_31:
@@ -4179,10 +3774,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Any time we get here, there's nothing fancy to do. Just get the
     // operand SMLoc and display the diagnostic.
     SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();
-    // If it's a memory operand, the error is with the offset immediate,
-    // so get that location instead.
-    if (((ARM64Operand *)Operands[ErrorInfo])->isMem())
-      ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getOffsetLoc();
     if (ErrorLoc == SMLoc())
       ErrorLoc = IDLoc;
     return showMatchError(ErrorLoc, MatchResult);

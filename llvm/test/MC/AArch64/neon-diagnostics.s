@@ -4080,8 +4080,7 @@
 // CHECK-ARM64-ERROR: error: vector register expected
 // CHECK-ERROR:        ld1 {v32.16b}, [x0]
 // CHECK-ERROR:             ^
-// CHECK-AARCH64-ERROR: error: invalid operand for instruction
-// CHECK-ARM64-ERROR: error: register expected
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        ld1 {v15.8h}, [x32]
 // CHECK-ERROR:                       ^
 
@@ -4130,8 +4129,7 @@
 // CHECK-ARM64-ERROR: error: registers must be sequential
 // CHECK-ERROR:        ld2 {v0.8b, v2.8b}, [x0]
 // CHECK-ERROR:                    ^
-// CHECK-AARCH64-ERROR: error: invalid operand for instruction
-// CHECK-ARM64-ERROR: error: register expected
+// CHECK-AARCH64: error: invalid operand for instruction
 // CHECK-ERROR:        ld2 {v15.4h, v16.4h, v17.4h}, [x32]
 // CHECK-ERROR:            ^
 // CHECK-AARCH64-ERROR: error: expected the same vector layout
@@ -4207,8 +4205,7 @@
 // CHECK-ARM64-ERROR: error: vector register expected
 // CHECK-ERROR:        st1 {v32.16b}, [x0]
 // CHECK-ERROR:             ^
-// CHECK-AARCH64-ERROR: error: invalid operand for instruction
-// CHECK-ARM64-ERROR: error: register expected
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:        st1 {v15.8h}, [x32]
 // CHECK-ERROR:                       ^
 
@@ -4434,8 +4431,7 @@
 // CHECK-ARM64-ERROR: vector lane must be an integer in range
 // CHECK-ERROR: st1 {v0.d}[16], [x0]
 // CHECK-ERROR:            ^
-// CHECK-AARCH64-ERROR: error: invalid operand for instruction
-// CHECK-ARM64-ERROR: error: register expected
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR: st2 {v31.s, v0.s}[3], [8]
 // CHECK-ERROR:                        ^
 // CHECK-AARCH64-ERROR: error: expected lane number

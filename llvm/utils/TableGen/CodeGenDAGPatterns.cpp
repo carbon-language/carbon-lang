@@ -1718,9 +1718,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         DagInit *MIOpInfo = OperandNode->getValueAsDag("MIOperandInfo");
         if (unsigned NumArgs = MIOpInfo->getNumArgs()) {
           // But don't do that if the whole operand is being provided by
-          // a single ComplexPattern.
-          const ComplexPattern *AM = Child->getComplexPatternInfo(CDP);
-          if (!AM || AM->getNumOperands() < NumArgs) {
+          // a single ComplexPattern-related Operand.
+
+          if (Child->getNumMIResults(CDP) < NumArgs) {
             // Match first sub-operand against the child we already have.
             Record *SubRec = cast<DefInit>(MIOpInfo->getArg(0))->getDef();
             MadeChange |=

@@ -1803,7 +1803,7 @@
        stxrb w2, w3, [x4, #20]
        stlxrh w10, w11, [w2]
 // CHECK-ERROR-AARCH64: error: expected '#0'
-// CHECK-ERROR-ARM64: error: invalid operand for instruction
+// CHECK-ERROR-ARM64: error: index must be absent or #0
 // CHECK-ERROR-NEXT:         stxrb w2, w3, [x4, #20]
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR: error: invalid operand for instruction
@@ -1887,7 +1887,8 @@
 //------------------------------------------------------------------------------
         ldr x3, [x4, #25], #0
         ldr x4, [x9, #0], #4
-// CHECK-ERROR: error: {{expected symbolic reference or integer|index must be a multiple of 8}} in range [0, 32760]
+// CHECK-ERROR-AARCH64: error: {{expected symbolic reference or integer|index must be a multiple of 8}} in range [0, 32760]
+// CHECK-ERROR-ARM64: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr x3, [x4, #25], #0
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
@@ -2083,22 +2084,19 @@
         strh w9, [sp, #-257]!
         str w1, [x19, #256]!
         str w9, [sp, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         strb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         strh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2111,22 +2109,19 @@
         ldrh w9, [sp, #-257]!
         ldr w1, [x19, #256]!
         ldr w9, [sp, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2139,22 +2134,19 @@
         ldrsh x22, [x13, #-257]!
         ldrsw x2, [x3, #256]!
         ldrsw x22, [x13, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsb x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsh x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsw x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2165,15 +2157,13 @@
         ldrsb w22, [x13, #-257]!
         ldrsh w2, [x3, #256]!
         ldrsh w22, [x13, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsb w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsh w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2188,29 +2178,25 @@
         str s3, [x13, #-257]!
         str d3, [x3, #256]!
         str d3, [x13, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2225,29 +2211,25 @@
         ldr s3, [x13, #-257]!
         ldr d3, [x3, #256]!
         ldr d3, [x13, #-257]!
-// CHECK-ERROR-AARCH64: error: invalid operand for instruction
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: invalid operand for instruction
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
@@ -2262,20 +2244,16 @@
         sttrh w17, [x1, #256]
         ldtrsw x20, [x1, #256]
         ldtr x12, [sp, #256]
-// CHECK-ERROR-AARCH64: error: expected integer in range [-256, 255]
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:        ldtrb w2, [sp, #256]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         sttrh w17, [x1, #256]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtrsw x20, [x1, #256]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtr x12, [sp, #256]
 // CHECK-ERROR-NEXT:                   ^
 
@@ -2290,12 +2268,10 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sttr b2, [x2, #-257]
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtrsb x9, [sp, #-257]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtr w2, [x30, #-257]
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2313,24 +2289,19 @@
         ldr w0, [x4, #16384]
         ldrh w2, [x21, #8192]
         ldrb w3, [x12, #4096]
-// CHECK-ERROR-AARCH64: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64: error: invalid offset in memory address
+// CHECK-ERROR: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q0, [x11, #65536]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr x0, [sp, #32768]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w0, [x4, #16384]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w2, [x21, #8192]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w3, [x12, #4096]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2372,8 +2343,7 @@
 // CHECK-ERROR-AARCH64-NEXT: error: too few operands for instruction
 // CHECK-ERROR-AARCH64-NEXT:         str x5, [x22, #12]
 // CHECK-ERROR-AARCH64-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: {{expected|index must be an}} integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w7, [x12, #16384]
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2411,92 +2381,78 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ldr w3, [xzr, x3]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected #imm after shift specifier
-// CHECK-ERROR-ARM64-NEXT: error: LSL extend requires immediate operand
+// CHECK-ERROR-NEXT: error: expected #imm after shift specifier
 // CHECK-ERROR-NEXT:         ldr w4, [x0, x4, lsl]
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
-// CHECK-ERROR-AARCH64-NEXT:         ldr w9, [x5, x5, uxtw]
-// CHECK-ERROR-AARCH64-NEXT:                          ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
-// CHECK-ERROR-AARCH64-NEXT:         ldr w10, [x6, x9, sxtw #2]
-// CHECK-ERROR-AARCH64-NEXT:                           ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
-// CHECK-ERROR-ARM64-NEXT: error: 32-bit general purpose offset register requires sxtw or uxtw extend
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-NEXT:         ldr w9, [x5, x5, uxtw]
+// CHECK-ERROR-NEXT:                          ^
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
+// CHECK-ERROR-NEXT:         ldr w10, [x6, x9, sxtw #2]
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w11, [x7, w2, lsl #2]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
-// CHECK-ERROR-ARM64-NEXT: error: 32-bit general purpose offset register requires sxtw or uxtw extend
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w12, [x8, w1, sxtx]
 // CHECK-ERROR-NEXT:                           ^
 
         ldrsb w9, [x4, x2, lsl #-1]
         strb w9, [x4, x2, lsl #1]
-// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldrsb w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0
 // CHECK-ERROR-NEXT:         strb w9, [x4, x2, lsl #1]
 // CHECK-ERROR-NEXT:                  ^
 
         ldrsh w9, [x4, x2, lsl #-1]
         ldr h13, [x4, w2, uxtw #2]
-// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldrsh w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
 // CHECK-ERROR-NEXT:         ldr h13, [x4, w2, uxtw #2]
 // CHECK-ERROR-NEXT:                           ^
 
         str w9, [x5, w9, sxtw #-1]
         str s3, [sp, w9, uxtw #1]
         ldrsw x9, [x15, x4, sxtx #3]
-// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         str w9, [x5, w9, sxtw #-1]
 // CHECK-ERROR-NEXT:                                ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         str s3, [sp, w9, uxtw #1]
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldrsw x9, [x15, x4, sxtx #3]
 // CHECK-ERROR-NEXT:                             ^
 
         str xzr, [x5, x9, sxtx #-1]
         prfm pldl3keep, [sp, x20, lsl #2]
         ldr d3, [x20, wzr, uxtw #4]
-// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         str xzr, [x5, x9, sxtx #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #3
-// CHECK-ERROR-ARM64-NEXT: error: expected label or encodable integer pc offset
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #3
 // CHECK-ERROR-NEXT:         prfm pldl3keep, [sp, x20, lsl #2]
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-AARCH64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
 // CHECK-ERROR-NEXT:         ldr d3, [x20, wzr, uxtw #4]
 // CHECK-ERROR-NEXT:                 ^
 
         ldr q5, [sp, x2, lsl #-1]
         ldr q10, [x20, w4, uxtw #2]
         str q21, [x20, w4, uxtw #5]
-// CHECK-ERROR-AARCH64-NEXT: error: expected integer shift amount
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldr q5, [sp, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                               ^
 // CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
-// CHECK-ERROR-ARM64-NEXT: error: invalid offset in memory address
+// CHECK-ERROR-ARM64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #4
 // CHECK-ERROR-NEXT:         ldr q10, [x20, w4, uxtw #2]
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-AARCH64-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
-// CHECK-ERROR-ARM64-NEXT: error: immediate operand out of range
+// CHECK-ERROR-ARM64-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #4
 // CHECK-ERROR-NEXT:         str q21, [x20, w4, uxtw #5]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2695,16 +2651,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp], #0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
-// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp], #8
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
-// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5], #1024
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-AARCH64-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
-// CHECK-ERROR-ARM64-NEXT: error: {{expected integer|index must be a}} multiple of 8 in range [-512, 504]
+// CHECK-ERROR-NEXT: error: {{expected integer|index must be a}} multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23], #-1040
 // CHECK-ERROR-NEXT:                       ^
 

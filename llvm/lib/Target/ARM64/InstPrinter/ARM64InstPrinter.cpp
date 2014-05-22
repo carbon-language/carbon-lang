@@ -990,11 +990,11 @@ void ARM64InstPrinter::printShiftedRegister(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printExtendedRegister(const MCInst *MI, unsigned OpNum,
                                              raw_ostream &O) {
   O << getRegisterName(MI->getOperand(OpNum).getReg());
-  printExtend(MI, OpNum + 1, O);
+  printArithExtend(MI, OpNum + 1, O);
 }
 
-void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O) {
+void ARM64InstPrinter::printArithExtend(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNum).getImm();
   ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getArithExtendType(Val);
   unsigned ShiftVal = ARM64_AM::getArithShiftValue(Val);
@@ -1017,6 +1017,23 @@ void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
   O << ", " << ARM64_AM::getShiftExtendName(ExtType);
   if (ShiftVal != 0)
     O << " #" << ShiftVal;
+}
+
+void ARM64InstPrinter::printMemExtend(const MCInst *MI, unsigned OpNum,
+                                      raw_ostream &O, char SrcRegKind,
+                                      unsigned Width) {
+  unsigned SignExtend = MI->getOperand(OpNum).getImm();
+  unsigned DoShift = MI->getOperand(OpNum + 1).getImm();
+
+  // sxtw, sxtx, uxtw or lsl (== uxtx)
+  bool IsLSL = !SignExtend && SrcRegKind == 'x';
+  if (IsLSL)
+    O << "lsl";
+  else
+    O << (SignExtend ? 's' : 'u') << "xt" << SrcRegKind;
+
+  if (DoShift || IsLSL)
+    O << " #" << Log2_32(Width / 8);
 }
 
 void ARM64InstPrinter::printCondCode(const MCInst *MI, unsigned OpNum,
@@ -1042,18 +1059,15 @@ void ARM64InstPrinter::printImmScale(const MCInst *MI, unsigned OpNum,
   O << '#' << Scale * MI->getOperand(OpNum).getImm();
 }
 
-void ARM64InstPrinter::printAMIndexed(const MCInst *MI, unsigned OpNum,
-                                      unsigned Scale, raw_ostream &O) {
-  const MCOperand MO1 = MI->getOperand(OpNum + 1);
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg());
-  if (MO1.isImm()) {
-    if (MO1.getImm() != 0)
-      O << ", #" << (MO1.getImm() * Scale);
+void ARM64InstPrinter::printUImm12Offset(const MCInst *MI, unsigned OpNum,
+                                         unsigned Scale, raw_ostream &O) {
+  const MCOperand MO = MI->getOperand(OpNum);
+  if (MO.isImm()) {
+    O << "#" << (MO.getImm() * Scale);
   } else {
-    assert(MO1.isExpr() && "Unexpected operand type!");
-    O << ", " << *MO1.getExpr();
+    assert(MO.isExpr() && "Unexpected operand type!");
+    O << *MO.getExpr();
   }
-  O << ']';
 }
 
 void ARM64InstPrinter::printAMIndexedWB(const MCInst *MI, unsigned OpNum,
@@ -1078,37 +1092,6 @@ void ARM64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
     O << Name;
   else
     O << '#' << prfop;
-}
-
-void ARM64InstPrinter::printMemoryPostIndexed(const MCInst *MI, unsigned OpNum,
-                                              raw_ostream &O, unsigned Scale) {
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']' << ", #"
-    << Scale * MI->getOperand(OpNum + 1).getImm();
-}
-
-void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
-                                            raw_ostream &O, int Scale) {
-  unsigned Val = MI->getOperand(OpNum + 2).getImm();
-  ARM64_AM::ShiftExtendType ExtType = ARM64_AM::getMemExtendType(Val);
-
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ", ";
-  if (ExtType == ARM64_AM::UXTW || ExtType == ARM64_AM::SXTW)
-    O << getRegisterName(getWRegFromXReg(MI->getOperand(OpNum + 1).getReg()));
-  else
-    O << getRegisterName(MI->getOperand(OpNum + 1).getReg());
-
-  bool DoShift = ARM64_AM::getMemDoShift(Val);
-
-  if (ExtType == ARM64_AM::UXTX) {
-    if (DoShift)
-      O << ", lsl";
-  } else
-    O << ", " << ARM64_AM::getShiftExtendName(ExtType);
-
-  if (DoShift)
-    O << " #" << Log2_32(Scale);
-
-  O << "]";
 }
 
 void ARM64InstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,

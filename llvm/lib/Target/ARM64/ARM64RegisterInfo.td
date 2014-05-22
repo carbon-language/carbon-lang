@@ -155,6 +155,16 @@ def GPR64sp : RegisterClass<"ARM64", [i64], 64, (add GPR64common, SP)> {
 def GPR32sponly : RegisterClass<"ARM64", [i32], 32, (add WSP)>;
 def GPR64sponly : RegisterClass<"ARM64", [i64], 64, (add SP)>;
 
+def GPR64spPlus0Operand : AsmOperandClass {
+  let Name = "GPR64sp0";
+  let RenderMethod = "addRegOperands";
+  let ParserMethod = "tryParseGPR64sp0Operand";
+}
+
+def GPR64sp0 : RegisterOperand<GPR64sp> {
+  let ParserMatchClass = GPR64spPlus0Operand;
+}
+
 // GPR register classes which include WZR/XZR AND SP/WSP. This is not a
 // constraint used by any instructions, it is used as a common super-class.
 def GPR32all : RegisterClass<"ARM64", [i32], 32, (add GPR32common, WZR, WSP)>;
