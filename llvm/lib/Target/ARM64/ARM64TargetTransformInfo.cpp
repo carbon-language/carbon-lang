@@ -27,7 +27,7 @@ using namespace llvm;
 #define DEBUG_TYPE "arm64tti"
 
 // Declare the pass initialization routine locally as target-specific passes
-// don't havve a target-wide initialization entry point, and so we rely on the
+// don't have a target-wide initialization entry point, and so we rely on the
 // pass constructor initialization.
 namespace llvm {
 void initializeARM64TTIPass(PassRegistry &);

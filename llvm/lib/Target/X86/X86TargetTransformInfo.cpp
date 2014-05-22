@@ -26,7 +26,7 @@ using namespace llvm;
 #define DEBUG_TYPE "x86tti"
 
 // Declare the pass initialization routine locally as target-specific passes
-// don't havve a target-wide initialization entry point, and so we rely on the
+// don't have a target-wide initialization entry point, and so we rely on the
 // pass constructor initialization.
 namespace llvm {
 void initializeX86TTIPass(PassRegistry &);
