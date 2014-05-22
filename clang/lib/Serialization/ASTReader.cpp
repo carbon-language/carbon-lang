@@ -135,8 +135,14 @@ void ChainedASTReaderListener::visitModuleFile(StringRef Filename) {
 bool ChainedASTReaderListener::visitInputFile(StringRef Filename,
                                               bool isSystem,
                                               bool isOverridden) {
-  return First->visitInputFile(Filename, isSystem, isOverridden) ||
-         Second->visitInputFile(Filename, isSystem, isOverridden);
+  bool Continue = false;
+  if (First->needsInputFileVisitation() &&
+      (!isSystem || First->needsSystemInputFileVisitation()))
+    Continue |= First->visitInputFile(Filename, isSystem, isOverridden);
+  if (Second->needsInputFileVisitation() &&
+      (!isSystem || Second->needsSystemInputFileVisitation()))
+    Continue |= Second->visitInputFile(Filename, isSystem, isOverridden);
+  return Continue;
 }
 
 //===----------------------------------------------------------------------===//
