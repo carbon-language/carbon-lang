@@ -45,9 +45,16 @@ class DMULU_ENC   : SPECIAL_3R_FM<0b00010, 0b111001>;
 //
 //===----------------------------------------------------------------------===//
 
+class AHI_ATI_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rs);
+  dag InOperandList = (ins GPROpnd:$rt, simm16:$imm);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $imm");
+  string Constraints = "$rs = $rt";
+}
+
 class DALIGN_DESC  : ALIGN_DESC_BASE<"dalign", GPR64Opnd, uimm3>;
-class DAHI_DESC    : AUI_DESC_BASE<"dahi", GPR64Opnd>;
-class DATI_DESC    : AUI_DESC_BASE<"dati", GPR64Opnd>;
+class DAHI_DESC    : AHI_ATI_DESC_BASE<"dahi", GPR64Opnd>;
+class DATI_DESC    : AHI_ATI_DESC_BASE<"dati", GPR64Opnd>;
 class DAUI_DESC    : AUI_DESC_BASE<"daui", GPR64Opnd>;
 class DBITSWAP_DESC : BITSWAP_DESC_BASE<"dbitswap", GPR64Opnd>;
 class DDIV_DESC    : DIVMOD_DESC_BASE<"ddiv", GPR64Opnd>;

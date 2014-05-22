@@ -23,14 +23,23 @@ class MipsR6Inst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther>,
 //
 //===----------------------------------------------------------------------===//
 
-def OPGROUP_COP1    { bits<6> Value = 0b010001; }
-def OPGROUP_COP2    { bits<6> Value = 0b010010; }
-def OPGROUP_AUI     { bits<6> Value = 0b001111; }
-def OPGROUP_DAUI    { bits<6> Value = 0b011101; }
-def OPGROUP_PCREL   { bits<6> Value = 0b111011; }
-def OPGROUP_REGIMM  { bits<6> Value = 0b000001; }
-def OPGROUP_SPECIAL { bits<6> Value = 0b000000; }
-def OPGROUP_SPECIAL3 { bits<6> Value = 0b011111; }
+class OPGROUP<bits<6> Val> {
+  bits<6> Value = Val;
+}
+def OPGROUP_COP1     : OPGROUP<0b010001>;
+def OPGROUP_COP2     : OPGROUP<0b010010>;
+def OPGROUP_ADDI     : OPGROUP<0b001000>;
+def OPGROUP_AUI      : OPGROUP<0b001111>;
+def OPGROUP_BLEZ     : OPGROUP<0b000110>;
+def OPGROUP_BGTZ     : OPGROUP<0b000111>;
+def OPGROUP_BLEZL    : OPGROUP<0b010110>;
+def OPGROUP_BGTZL    : OPGROUP<0b010111>;
+def OPGROUP_DADDI    : OPGROUP<0b011000>;
+def OPGROUP_DAUI     : OPGROUP<0b011101>;
+def OPGROUP_PCREL    : OPGROUP<0b111011>;
+def OPGROUP_REGIMM   : OPGROUP<0b000001>;
+def OPGROUP_SPECIAL  : OPGROUP<0b000000>;
+def OPGROUP_SPECIAL3 : OPGROUP<0b011111>;
 
 class OPCODE2<bits<2> Val> {
   bits<2> Value = Val;
@@ -90,6 +99,22 @@ class FIELD_CMP_FORMAT<bits<5> Val> {
 }
 def FIELD_CMP_FORMAT_S : FIELD_CMP_FORMAT<0b10100>;
 def FIELD_CMP_FORMAT_D : FIELD_CMP_FORMAT<0b10101>;
+
+//===----------------------------------------------------------------------===//
+//
+// Disambiguators
+//
+//===----------------------------------------------------------------------===//
+//
+// Some encodings are ambiguous except by comparing field values.
+
+class DecodeDisambiguates<string Name> {
+  string DecoderMethod = !strconcat("Decode", Name);
+}
+
+class DecodeDisambiguatedBy<string Name> : DecodeDisambiguates<Name> {
+  string DecoderNamespace = "Mips32r6_64r6_Ambiguous";
+}
 
 //===----------------------------------------------------------------------===//
 //
@@ -220,25 +245,53 @@ class SPECIAL_3R_FM<bits<5> mulop, bits<6> funct> : MipsR6Inst {
   let Inst{5-0}   = funct;
 }
 
-class CMP_BRANCH_OFF16_FM<bits<6> funct> : MipsR6Inst {
+// This class is ambiguous with other branches:
+//   BEQC/BNEC require that rs > rt
+class CMP_BRANCH_2R_OFF16_FM<OPGROUP funct> : MipsR6Inst {
   bits<5> rs;
   bits<5> rt;
   bits<16> offset;
 
   bits<32> Inst;
 
-  let Inst{31-26} = funct;
+  let Inst{31-26} = funct.Value;
   let Inst{25-21} = rs;
   let Inst{20-16} = rt;
   let Inst{15-0} = offset;
 }
 
-class CMP_BRANCH_RT_OFF16_FM<bits<6> funct> : CMP_BRANCH_OFF16_FM<funct> {
+// This class is ambiguous with other branches:
+//   BLEZC/BGEZC/BEQZALC/BNEZALC/BGTZALC require that rs == 0 && rt != 0
+// The '1R_RT' in the name means 1 register in the rt field.
+class CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP funct> : MipsR6Inst {
+  bits<5> rt;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = funct.Value;
   let Inst{25-21} = 0b00000;
+  let Inst{20-16} = rt;
+  let Inst{15-0} = offset;
+}
+
+// This class is ambiguous with other branches:
+//   BLTZC/BGTZC/BLTZALC/BGEZALC require that rs == rt && rt != 0
+// The '1R_BOTH' in the name means 1 register in both the rs and rt fields.
+class CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP funct> : MipsR6Inst {
+  bits<5> rt;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = funct.Value;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rt;
+  let Inst{15-0} = offset;
 }
 
 class CMP_BRANCH_OFF21_FM<bits<6> funct> : MipsR6Inst {
-  bits<5> rs;
+  bits<5> rs; // rs != 0
   bits<21> offset;
 
   bits<32> Inst;

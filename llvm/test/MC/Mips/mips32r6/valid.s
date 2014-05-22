@@ -1,5 +1,15 @@
 # Instructions that are valid
 #
+# Branches have some unusual encoding rules in MIPS32r6 so we need to test:
+#   rs == 0
+#   rs != 0
+#   rt == 0
+#   rt != 0
+#   rs < rt
+#   rs == rt
+#   rs > rt
+# appropriately for each branch instruction
+#
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32r6 | FileCheck %s
 
         .set noat
@@ -19,8 +29,12 @@
         bc2eqz  $31,8            # CHECK: bc2eqz $31, 8       # encoding: [0x49,0x3f,0x00,0x02]
         bc2nez  $0,8             # CHECK: bc2nez $0, 8        # encoding: [0x49,0xa0,0x00,0x02]
         bc2nez  $31,8            # CHECK: bc2nez $31, 8       # encoding: [0x49,0xbf,0x00,0x02]
+        # beqc requires rs < rt && rs != 0 but we also accept when this is not true. See also bovc
+        # FIXME: Testcases are in valid-xfail.s at the moment
         beqc $5, $6, 256         # CHECK: beqc $5, $6, 256    # encoding: [0x20,0xa6,0x00,0x40]
         beqzalc $2, 1332         # CHECK: beqzalc $2, 1332    # encoding: [0x20,0x02,0x01,0x4d]
+        # bnec requires rs < rt && rs != 0 but we accept when this is not true. See also bnvc
+        # FIXME: Testcases are in valid-xfail.s at the moment
         bnec $5, $6, 256         # CHECK: bnec $5, $6, 256    # encoding: [0x60,0xa6,0x00,0x40]
         bnezalc $2, 1332         # CHECK: bnezalc $2, 1332    # encoding: [0x60,0x02,0x01,0x4d]
         beqzc $5, 72256          # CHECK: beqzc $5, 72256     # encoding: [0xd8,0xa0,0x46,0x90]
@@ -34,6 +48,14 @@
         bgtzc $5, 256            # CHECK: bgtzc $5, 256       # encoding: [0x5c,0x05,0x00,0x40]
         bitswap $4, $2           # CHECK: bitswap $4, $2      # encoding: [0x7c,0x02,0x20,0x20]
         blezalc $2, 1332         # CHECK: blezalc $2, 1332    # encoding: [0x18,0x02,0x01,0x4d]
+        # bnvc requires that rs >= rt but we accept both. See also bnec
+        bnvc     $0, $0, 4       # CHECK: bnvc $zero, $zero, 4 # encoding: [0x60,0x00,0x00,0x01]
+        bnvc     $2, $0, 4       # CHECK: bnvc $2, $zero, 4    # encoding: [0x60,0x40,0x00,0x01]
+        bnvc     $4, $2, 4       # CHECK: bnvc $4, $2, 4       # encoding: [0x60,0x82,0x00,0x01]
+        # bovc requires that rs >= rt but we accept both. See also beqc
+        bovc     $0, $0, 4       # CHECK: bovc $zero, $zero, 4 # encoding: [0x20,0x00,0x00,0x01]
+        bovc     $2, $0, 4       # CHECK: bovc $2, $zero, 4    # encoding: [0x20,0x40,0x00,0x01]
+        bovc     $4, $2, 4       # CHECK: bovc $4, $2, 4       # encoding: [0x20,0x82,0x00,0x01]
         cmp.f.s    $f2,$f3,$f4      # CHECK: cmp.f.s $f2, $f3, $f4  # encoding: [0x46,0x84,0x18,0x80]
         cmp.f.d    $f2,$f3,$f4      # CHECK: cmp.f.d $f2, $f3, $f4  # encoding: [0x46,0xa4,0x18,0x80]
         cmp.un.s   $f2,$f3,$f4      # CHECK: cmp.un.s $f2, $f3, $f4  # encoding: [0x46,0x84,0x18,0x81]
