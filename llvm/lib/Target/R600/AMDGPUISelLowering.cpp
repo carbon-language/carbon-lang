@@ -1482,8 +1482,14 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
   unsigned Depth) const {
 
   KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything.
+
+  APInt KnownZero2;
+  APInt KnownOne2;
   unsigned Opc = Op.getOpcode();
+
   switch (Opc) {
+  default:
+    break;
   case ISD::INTRINSIC_WO_CHAIN: {
     // FIXME: The intrinsic should just use the node.
     switch (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue()) {
@@ -1507,7 +1513,29 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
     computeKnownBitsForMinMax(Op.getOperand(0), Op.getOperand(1),
                               KnownZero, KnownOne, DAG, Depth);
     break;
-  default:
+
+  case AMDGPUISD::BFE_I32:
+  case AMDGPUISD::BFE_U32: {
+    ConstantSDNode *CWidth = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+    if (!CWidth)
+      return;
+
+    unsigned BitWidth = 32;
+    uint32_t Width = CWidth->getZExtValue() & 0x1f;
+    if (Width == 0) {
+      KnownZero = APInt::getAllOnesValue(BitWidth);
+      KnownOne = APInt::getNullValue(BitWidth);
+      return;
+    }
+
+    // FIXME: This could do a lot more. If offset is 0, should be the same as
+    // sign_extend_inreg implementation, but that involves duplicating it.
+    if (Opc == AMDGPUISD::BFE_I32)
+      KnownOne = APInt::getHighBitsSet(BitWidth, BitWidth - Width);
+    else
+      KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - Width);
+
     break;
+  }
   }
 }
