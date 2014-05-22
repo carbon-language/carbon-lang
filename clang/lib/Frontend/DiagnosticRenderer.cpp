@@ -186,7 +186,7 @@ void DiagnosticRenderer::emitStoredDiagnostic(StoredDiagnostic &Diag) {
   emitDiagnostic(Diag.getLocation(), Diag.getLevel(), Diag.getMessage(),
                  Diag.getRanges(), Diag.getFixIts(),
                  Diag.getLocation().isValid() ? &Diag.getLocation().getManager()
-                                              : 0,
+                                              : nullptr,
                  &Diag);
 }
 
@@ -509,5 +509,5 @@ DiagnosticNoteRenderer::emitBuildingModuleLocation(SourceLocation Loc,
 
 
 void DiagnosticNoteRenderer::emitBasicNote(StringRef Message) {
-  emitNote(SourceLocation(), Message, 0);  
+  emitNote(SourceLocation(), Message, nullptr);
 }

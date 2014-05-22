@@ -49,7 +49,7 @@ ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
                                                StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
     return CreateASTPrinter(OS, CI.getFrontendOpts().ASTDumpFilter);
-  return 0;
+  return nullptr;
 }
 
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
@@ -77,13 +77,14 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
                                                   StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
-  raw_ostream *OS = 0;
+  raw_ostream *OS = nullptr;
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
-    return 0;
+    return nullptr;
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, 0, Sysroot, OS);
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, nullptr, Sysroot,
+                          OS);
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
@@ -114,10 +115,10 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
                                                      StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
-  raw_ostream *OS = 0;
+  raw_ostream *OS = nullptr;
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
-    return 0;
-  
+    return nullptr;
+
   return new PCHGenerator(CI.getPreprocessor(), OutputFile, Module, 
                           Sysroot, OS);
 }

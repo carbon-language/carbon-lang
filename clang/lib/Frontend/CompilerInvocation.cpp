@@ -1955,7 +1955,7 @@ createVFSFromCompilerInvocation(const CompilerInvocation &CI,
     }
 
     IntrusiveRefCntPtr<vfs::FileSystem> FS =
-        vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/0);
+        vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/nullptr);
     if (!FS.getPtr()) {
       Diags.Report(diag::err_invalid_vfs_overlay) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();

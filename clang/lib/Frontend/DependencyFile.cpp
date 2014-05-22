@@ -96,7 +96,7 @@ DependencyFileGenerator *DependencyFileGenerator::CreateAndAttachToPreprocessor(
 
   if (Opts.Targets.empty()) {
     PP.getDiagnostics().Report(diag::err_fe_dependency_file_requires_MT);
-    return NULL;
+    return nullptr;
   }
 
   // Disable the "file not found" diagnostic if the -MG option was given.
@@ -141,7 +141,7 @@ void DFGImpl::FileChanged(SourceLocation Loc,
 
   const FileEntry *FE =
     SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(Loc)));
-  if (FE == 0) return;
+  if (!FE) return;
 
   StringRef Filename = FE->getName();
   if (!FileMatchesDepCriteria(Filename.data(), FileType))

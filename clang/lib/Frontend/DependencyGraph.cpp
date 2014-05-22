@@ -79,7 +79,7 @@ void DependencyGraphCallback::InclusionDirective(SourceLocation HashLoc,
   SourceManager &SM = PP->getSourceManager();
   const FileEntry *FromFile
     = SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(HashLoc)));
-  if (FromFile == 0) 
+  if (!FromFile)
     return;
 
   Dependencies[FromFile].push_back(File);

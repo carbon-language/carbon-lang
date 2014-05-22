@@ -25,11 +25,11 @@
 
 using namespace clang;
 
-static ASTReader *createASTReader(CompilerInstance &CI,
-                             StringRef pchFile,
-                             SmallVectorImpl<llvm::MemoryBuffer *> &memBufs,
-                             SmallVectorImpl<std::string> &bufNames,
-                             ASTDeserializationListener *deserialListener = 0) {
+static ASTReader *
+createASTReader(CompilerInstance &CI, StringRef pchFile,
+                SmallVectorImpl<llvm::MemoryBuffer *> &memBufs,
+                SmallVectorImpl<std::string> &bufNames,
+                ASTDeserializationListener *deserialListener = nullptr) {
   Preprocessor &PP = CI.getPreprocessor();
   std::unique_ptr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, CI.getASTContext(), /*isysroot=*/"",
@@ -54,7 +54,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
   case ASTReader::HadErrors:
     break;
   }
-  return 0;
+  return nullptr;
 }
 
 ChainedIncludesSource::~ChainedIncludesSource() {
@@ -112,12 +112,12 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     SmallVector<char, 256> serialAST;
     llvm::raw_svector_ostream OS(serialAST);
     std::unique_ptr<ASTConsumer> consumer;
-    consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", 0,
+    consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", nullptr,
                                     /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(consumer.release());
-    Clang->createSema(TU_Prefix, 0);
+    Clang->createSema(TU_Prefix, nullptr);
 
     if (firstInclude) {
       Preprocessor &PP = Clang->getPreprocessor();
@@ -142,13 +142,13 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
       Reader = createASTReader(*Clang, pchName, bufs, serialBufNames, 
         Clang->getASTConsumer().GetASTDeserializationListener());
       if (!Reader)
-        return 0;
+        return nullptr;
       Clang->setModuleManager(Reader);
       Clang->getASTContext().setExternalSource(Reader);
     }
     
     if (!Clang->InitializeSourceManager(InputFile))
-      return 0;
+      return nullptr;
 
     ParseAST(Clang->getSema());
     OS.flush();
@@ -165,7 +165,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
   IntrusiveRefCntPtr<ASTReader> Reader;
   Reader = createASTReader(CI, pchName, serialBufs, serialBufNames);
   if (!Reader)
-    return 0;
+    return nullptr;
 
   source->FinalReader = Reader;
   return source;

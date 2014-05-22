@@ -36,7 +36,7 @@ namespace {
     typedef RecursiveASTVisitor<ASTPrinter> base;
 
   public:
-    ASTPrinter(raw_ostream *Out = NULL, bool Dump = false,
+    ASTPrinter(raw_ostream *Out = nullptr, bool Dump = false,
                StringRef FilterString = "", bool DumpLookups = false)
         : Out(Out ? *Out : llvm::outs()), Dump(Dump),
           FilterString(FilterString), DumpLookups(DumpLookups) {}
@@ -53,7 +53,7 @@ namespace {
     bool shouldWalkTypesOfTypeLocs() const { return false; }
 
     bool TraverseDecl(Decl *D) {
-      if (D != NULL && filterMatches(D)) {
+      if (D && filterMatches(D)) {
         bool ShowColors = Out.has_colors();
         if (ShowColors)
           Out.changeColor(raw_ostream::BLUE);
@@ -98,7 +98,7 @@ namespace {
   class ASTDeclNodeLister : public ASTConsumer,
                      public RecursiveASTVisitor<ASTDeclNodeLister> {
   public:
-    ASTDeclNodeLister(raw_ostream *Out = NULL)
+    ASTDeclNodeLister(raw_ostream *Out = nullptr)
         : Out(Out ? *Out : llvm::outs()) {}
 
     void HandleTranslationUnit(ASTContext &Context) override {
@@ -124,11 +124,11 @@ ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
 }
 
 ASTConsumer *clang::CreateASTDumper(StringRef FilterString, bool DumpLookups) {
-  return new ASTPrinter(0, /*Dump=*/ true, FilterString, DumpLookups);
+  return new ASTPrinter(nullptr, /*Dump=*/true, FilterString, DumpLookups);
 }
 
 ASTConsumer *clang::CreateASTDeclNodeLister() {
-  return new ASTDeclNodeLister(0);
+  return new ASTDeclNodeLister(nullptr);
 }
 
 //===----------------------------------------------------------------------===//

@@ -57,7 +57,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   // Just print the cc1 options if -### was present.
   if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
     C->getJobs().Print(llvm::errs(), "\n", true);
-    return 0;
+    return nullptr;
   }
 
   // We expect to get back exactly one command job, if we didn't something
@@ -68,13 +68,13 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
     llvm::raw_svector_ostream OS(Msg);
     Jobs.Print(OS, "; ", true);
     Diags->Report(diag::err_fe_expected_compiler_job) << OS.str();
-    return 0;
+    return nullptr;
   }
 
   const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
   if (StringRef(Cmd->getCreator().getName()) != "clang") {
     Diags->Report(diag::err_fe_expected_clang_command);
-    return 0;
+    return nullptr;
   }
 
   const ArgStringList &CCArgs = Cmd->getArguments();
@@ -84,6 +84,6 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
                                      const_cast<const char **>(CCArgs.data()) +
                                      CCArgs.size(),
                                      *Diags))
-    return 0;
+    return nullptr;
   return CI.release();
 }

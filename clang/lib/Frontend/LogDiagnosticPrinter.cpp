@@ -19,7 +19,7 @@ using namespace clang;
 LogDiagnosticPrinter::LogDiagnosticPrinter(raw_ostream &os,
                                            DiagnosticOptions *diags,
                                            bool _OwnsOutputStream)
-  : OS(os), LangOpts(0), DiagOpts(diags),
+  : OS(os), LangOpts(nullptr), DiagOpts(diags),
     OwnsOutputStream(_OwnsOutputStream) {
 }
 

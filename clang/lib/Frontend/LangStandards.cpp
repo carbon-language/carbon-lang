@@ -35,7 +35,7 @@ const LangStandard *LangStandard::getLangStandardForName(StringRef Name) {
 #include "clang/Frontend/LangStandards.def"
     .Default(lang_unspecified);
   if (K == lang_unspecified)
-    return 0;
+    return nullptr;
 
   return &getLangStandardForKind(K);
 }

@@ -63,13 +63,13 @@ class PTHEntryKeyVariant {
   FileData *Data;
 
 public:
-  PTHEntryKeyVariant(const FileEntry *fe) : FE(fe), Kind(IsFE), Data(0) {}
+  PTHEntryKeyVariant(const FileEntry *fe) : FE(fe), Kind(IsFE), Data(nullptr) {}
 
   PTHEntryKeyVariant(FileData *Data, const char *path)
       : Path(path), Kind(IsDE), Data(new FileData(*Data)) {}
 
   explicit PTHEntryKeyVariant(const char *path)
-      : Path(path), Kind(IsNoExist), Data(0) {}
+      : Path(path), Kind(IsNoExist), Data(nullptr) {}
 
   bool isFile() const { return Kind == IsFE; }
 
@@ -317,7 +317,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       Token Tmp = Tok;
       Tmp.setKind(tok::eod);
       Tmp.clearFlag(Token::StartOfLine);
-      Tmp.setIdentifierInfo(0);
+      Tmp.setIdentifierInfo(nullptr);
       EmitToken(Tmp);
       ParsingPreprocessorDirective = false;
     }

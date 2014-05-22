@@ -93,11 +93,12 @@ class SDiagsWriter : public DiagnosticConsumer {
   struct SharedState;
 
   explicit SDiagsWriter(IntrusiveRefCntPtr<SharedState> State)
-    : LangOpts(0), OriginalInstance(false), State(State) { }
+    : LangOpts(nullptr), OriginalInstance(false), State(State) {}
 
 public:
   SDiagsWriter(raw_ostream *os, DiagnosticOptions *diags)
-    : LangOpts(0), OriginalInstance(true), State(new SharedState(os, diags))
+    : LangOpts(nullptr), OriginalInstance(true),
+      State(new SharedState(os, diags))
   {
     EmitPreamble();
   }
@@ -254,7 +255,7 @@ static void EmitBlockID(unsigned ID, const char *Name,
   Stream.EmitRecord(llvm::bitc::BLOCKINFO_CODE_SETBID, Record);
   
   // Emit the block name if present.
-  if (Name == 0 || Name[0] == 0)
+  if (!Name || Name[0] == 0)
     return;
 
   Record.clear();
@@ -545,7 +546,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
       EnterDiagBlock();
 
     EmitDiagnosticMessage(SourceLocation(), PresumedLoc(), DiagLevel,
-                          State->diagBuf, 0, &Info);
+                          State->diagBuf, nullptr, &Info);
 
     if (DiagLevel == DiagnosticsEngine::Note)
       ExitDiagBlock();
@@ -702,5 +703,5 @@ void SDiagsWriter::finish() {
   State->OS->write((char *)&State->Buffer.front(), State->Buffer.size());
   State->OS->flush();
 
-  State->OS.reset(0);
+  State->OS.reset(nullptr);
 }
