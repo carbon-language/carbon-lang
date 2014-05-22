@@ -7,27 +7,27 @@ entry:
 
 ; r with char
 ;CHECK:	#APP
-;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},23
+;CHECK:	addiu ${{[0-9]+}},${{[0-9]+}},23
 ;CHECK:	#NO_APP
-  tail call i8 asm sideeffect "addi $0,$1,$2", "=r,r,n"(i8 27, i8 23) nounwind
+  tail call i8 asm sideeffect "addiu $0,$1,$2", "=r,r,n"(i8 27, i8 23) nounwind
 
 ; r with short
 ;CHECK:	#APP
-;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},13
+;CHECK:	addiu ${{[0-9]+}},${{[0-9]+}},13
 ;CHECK:	#NO_APP
-  tail call i16 asm sideeffect "addi $0,$1,$2", "=r,r,n"(i16 17, i16 13) nounwind
+  tail call i16 asm sideeffect "addiu $0,$1,$2", "=r,r,n"(i16 17, i16 13) nounwind
 
 ; r with int
 ;CHECK:	#APP
-;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},3
+;CHECK:	addiu ${{[0-9]+}},${{[0-9]+}},3
 ;CHECK:	#NO_APP
-  tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,n"(i32 7, i32 3) nounwind
+  tail call i32 asm sideeffect "addiu $0,$1,$2", "=r,r,n"(i32 7, i32 3) nounwind
 
 ; Now c with 1024: make sure register $25 is picked
 ; CHECK: #APP
-; CHECK: addi $25,${{[0-9]+}},1024
+; CHECK: addiu $25,${{[0-9]+}},1024
 ; CHECK: #NO_APP	
-   tail call i32 asm sideeffect "addi $0,$1,$2", "=c,c,I"(i32 4194304, i32 1024) nounwind
+   tail call i32 asm sideeffect "addiu $0,$1,$2", "=c,c,I"(i32 4194304, i32 1024) nounwind
 
 ; Now l with 1024: make sure register lo is picked. We do this by checking the instruction
 ; after the inline expression for a mflo to pull the value out of lo.

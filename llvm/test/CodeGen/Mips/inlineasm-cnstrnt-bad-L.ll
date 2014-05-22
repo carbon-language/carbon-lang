@@ -10,7 +10,7 @@ entry:
 
 ;CHECK-ERRORS:	error: invalid operand for inline asm constraint 'L'
 
-  tail call i32 asm "addi $0,$1,$2", "=r,r,L"(i32 7, i32 1048579) nounwind
+  tail call i32 asm "addiu $0,$1,$2", "=r,r,L"(i32 7, i32 1048579) nounwind
   ret i32 0
 }
 

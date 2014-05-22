@@ -11,6 +11,6 @@ entry:
 
 ;CHECK-ERRORS:	error: invalid operand for inline asm constraint 'O'
 
-  tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,O"(i32 undef, i32 16384) nounwind
+  tail call i32 asm sideeffect "addiu $0,$1,$2", "=r,r,O"(i32 undef, i32 16384) nounwind
   ret i32 0
 }
