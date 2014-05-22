@@ -977,8 +977,13 @@ defm V_CVT_F64_F32 : VOP1_64_32 <0x00000010, "V_CVT_F64_F32",
 //defm V_CVT_F32_UBYTE1 : VOP1_32 <0x00000012, "V_CVT_F32_UBYTE1", []>;
 //defm V_CVT_F32_UBYTE2 : VOP1_32 <0x00000013, "V_CVT_F32_UBYTE2", []>;
 //defm V_CVT_F32_UBYTE3 : VOP1_32 <0x00000014, "V_CVT_F32_UBYTE3", []>;
-//defm V_CVT_U32_F64 : VOP1_32 <0x00000015, "V_CVT_U32_F64", []>;
-//defm V_CVT_F64_U32 : VOP1_64 <0x00000016, "V_CVT_F64_U32", []>;
+defm V_CVT_U32_F64 : VOP1_32_64 <0x00000015, "V_CVT_U32_F64",
+  [(set i32:$dst, (fp_to_uint f64:$src0))]
+>;
+defm V_CVT_F64_U32 : VOP1_64_32 <0x00000016, "V_CVT_F64_U32",
+  [(set f64:$dst, (uint_to_fp i32:$src0))]
+>;
+
 defm V_FRACT_F32 : VOP1_32 <0x00000020, "V_FRACT_F32",
   [(set f32:$dst, (AMDGPUfract f32:$src0))]
 >;
