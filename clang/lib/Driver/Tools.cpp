@@ -771,7 +771,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   const char *ABIName = nullptr;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
-  } else if (Triple.isOSDarwin()) {
+  } else if (Triple.isOSBinFormatMachO()) {
     // The backend is hardwired to assume AAPCS for M-class processors, ensure
     // the frontend matches that.
     if (Triple.getEnvironment() == llvm::Triple::EABI ||
