@@ -166,6 +166,8 @@ def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
                       AssemblerPredicate<"FeatureMips32r2">;
 def HasMips32r6  :    Predicate<"Subtarget.hasMips32r6()">,
                       AssemblerPredicate<"FeatureMips32r6">;
+def NotMips32r6  :    Predicate<"!Subtarget.hasMips32r6()">,
+                      AssemblerPredicate<"!FeatureMips32r6">;
 def IsGP64bit    :    Predicate<"Subtarget.isGP64bit()">,
                       AssemblerPredicate<"FeatureGP64Bit">;
 def IsGP32bit    :    Predicate<"!Subtarget.isGP64bit()">,
@@ -176,6 +178,8 @@ def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
 def HasMips64r6  :    Predicate<"Subtarget.hasMips64r6()">,
                       AssemblerPredicate<"FeatureMips64r6">;
+def NotMips64r6  :    Predicate<"!Subtarget.hasMips64r6()">,
+                      AssemblerPredicate<"!FeatureMips64r6">;
 def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
 def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
@@ -211,6 +215,14 @@ class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
 // They are mutually exclusive.
 //===----------------------------------------------------------------------===//
 
+// FIXME: I'd prefer to use additive predicates to build the instruction sets
+//        but we are short on assembler feature bits at the moment. Using a
+//        subtractive predicate will hopefully keep us under the 32 predicate
+//        limit long enough to develop an alternative way to handle P1||P2
+//        predicates.
+class ISA_MIPS1_NOT_32R6_64R6 {
+  list<Predicate> InsnPredicates = [NotMips32r6, NotMips64r6];
+}
 class ISA_MIPS2    { list<Predicate> InsnPredicates = [HasMips2]; }
 class ISA_MIPS3    { list<Predicate> InsnPredicates = [HasMips3]; }
 class ISA_MIPS32   { list<Predicate> InsnPredicates = [HasMips32]; }
@@ -1000,7 +1012,8 @@ def LONG_BRANCH_ADDiu : PseudoSE<(outs GPR32Opnd:$dst),
 def ADDiu : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd, II_ADDIU, immSExt16,
                                add>,
             ADDI_FM<0x9>, IsAsCheapAsAMove;
-def ADDi  : MMRel, ArithLogicI<"addi", simm16, GPR32Opnd>, ADDI_FM<0x8>;
+def ADDi  : MMRel, ArithLogicI<"addi", simm16, GPR32Opnd>, ADDI_FM<0x8>,
+            ISA_MIPS1_NOT_32R6_64R6;
 def SLTi  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, GPR32Opnd>,
             SLTI_FM<0xa>;
 def SLTiu : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, GPR32Opnd>,
