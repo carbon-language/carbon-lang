@@ -7698,6 +7698,16 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "#endif",
                BreakBeforeBrace);
 
+  // This shouldn't affect ObjC blocks.
+  verifyFormat("[self doSomeThingWithACompletionHandler:^{\n"
+               "    // ...\n"
+               "    int i;\n"
+               "}];");
+  verifyFormat("void (^block)(void) = ^{\n"
+               "    // ...\n"
+               "    int i;\n"
+               "};");
+
   BreakBeforeBrace.ColumnLimit = 19;
   verifyFormat("void f() { int i; }", BreakBeforeBrace);
   BreakBeforeBrace.ColumnLimit = 18;

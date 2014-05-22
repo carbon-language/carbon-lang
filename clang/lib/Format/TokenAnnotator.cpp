@@ -1595,7 +1595,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Style.BreakConstructorInitializersBeforeComma &&
              !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
     return true;
-  } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
+  } else if (Right.is(tok::l_brace) && Right.BlockKind == BK_Block &&
+             Right.Type != TT_ObjCBlockLBrace) {
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
            Style.BreakBeforeBraces == FormatStyle::BS_GNU;
   } else if (Right.is(tok::string_literal) &&
