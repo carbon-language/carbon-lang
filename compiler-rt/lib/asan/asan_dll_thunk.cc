@@ -80,6 +80,21 @@ struct FunctionInterceptor<0> {
 // INTERCEPT_HOOKS must be used after the last INTERCEPT_WHEN_POSSIBLE.
 #define INTERCEPT_HOOKS FunctionInterceptor<__LINE__>::Execute
 
+// We can't define our own version of strlen etc. because that would lead to
+// link-time or even type mismatch errors.  Instead, we can declare a function
+// just to be able to get its address.  Me may miss the first few calls to the
+// functions since it can be called before __asan_init, but that would lead to
+// false negatives in the startup code before user's global initializers, which
+// isn't a big deal.
+#define INTERCEPT_LIBRARY_FUNCTION(name)                                       \
+  extern "C" void name();                                                      \
+  INTERCEPT_WHEN_POSSIBLE(WRAPPER_NAME(name), name)
+
+// Disable compiler warnings that show up if we declare our own version
+// of a compiler intrinsic (e.g. strlen).
+#pragma warning(disable: 4391)
+#pragma warning(disable: 4392)
+
 static void InterceptHooks();
 // }}}
 
@@ -284,10 +299,24 @@ WRAP_W_W(_expand_dbg)
 
 // TODO(timurrrr): Do we need to add _Crt* stuff here? (see asan_malloc_win.cc).
 
-// strlen is an intrinsic function, so we must specify its exact return and
-// parameter types to avoid a compiler error.
-extern "C" unsigned strlen(const char *s);
-INTERCEPT_WHEN_POSSIBLE(WRAPPER_NAME(strlen), strlen);
+INTERCEPT_LIBRARY_FUNCTION(atoi);
+INTERCEPT_LIBRARY_FUNCTION(atol);
+INTERCEPT_LIBRARY_FUNCTION(memchr);
+INTERCEPT_LIBRARY_FUNCTION(memcmp);
+INTERCEPT_LIBRARY_FUNCTION(memcpy);
+INTERCEPT_LIBRARY_FUNCTION(memmove);
+INTERCEPT_LIBRARY_FUNCTION(memset);
+INTERCEPT_LIBRARY_FUNCTION(strcat);  // NOLINT
+INTERCEPT_LIBRARY_FUNCTION(strchr);
+INTERCEPT_LIBRARY_FUNCTION(strcmp);
+INTERCEPT_LIBRARY_FUNCTION(strcpy);  // NOLINT
+INTERCEPT_LIBRARY_FUNCTION(strlen);
+INTERCEPT_LIBRARY_FUNCTION(strncat);
+INTERCEPT_LIBRARY_FUNCTION(strncmp);
+INTERCEPT_LIBRARY_FUNCTION(strncpy);
+INTERCEPT_LIBRARY_FUNCTION(strnlen);
+INTERCEPT_LIBRARY_FUNCTION(strtol);
+INTERCEPT_LIBRARY_FUNCTION(wcslen);
 
 // Must be at the end of the file due to the way INTERCEPT_HOOKS is defined.
 void InterceptHooks() {
