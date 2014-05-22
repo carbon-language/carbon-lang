@@ -49,3 +49,30 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
       CGOpenMPRuntime::OMPRTL__kmpc_fork_call);
   EmitRuntimeCall(RTLFn, Args);
 }
+
+void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
+  const CapturedStmt *CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  const Stmt *Body = CS->getCapturedStmt();
+  LoopStack.setParallel();
+  LoopStack.setVectorizerEnable(true);
+  for (auto C : S.clauses()) {
+    switch (C->getClauseKind()) {
+    case OMPC_safelen: {
+      RValue Len = EmitAnyExpr(cast<OMPSafelenClause>(C)->getSafelen(),
+                               AggValueSlot::ignored(), true);
+      llvm::ConstantInt *Val = cast<llvm::ConstantInt>(Len.getScalarVal());
+      LoopStack.setVectorizerWidth(Val->getZExtValue());
+      // In presence of finite 'safelen', it may be unsafe to mark all
+      // the memory instructions parallel, because loop-carried
+      // dependences of 'safelen' iterations are possible.
+      LoopStack.setParallel(false);
+      break;
+    }
+    default:
+      // Not handled yet
+      ;
+    }
+  }
+  EmitStmt(Body);
+}
+
