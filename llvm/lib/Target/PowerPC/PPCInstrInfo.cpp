@@ -1813,9 +1813,14 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
+      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
+      // If we don't have VSX then go ahead and return without doing
+      // anything.
+      if (!TM->getSubtargetImpl()->hasVSX())
+        return false;
+
       LIS = &getAnalysis<LiveIntervals>();
 
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       TII = TM->getInstrInfo();
 
       bool Changed = false;
@@ -1966,6 +1971,9 @@ protected:
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
+      // If we don't have VSX on the subtarget, don't do anything.
+      if (!TM->getSubtargetImpl()->hasVSX())
+        return false;
       TII = TM->getInstrInfo();
 
       bool Changed = false;
@@ -2040,6 +2048,9 @@ protected:
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
+      // If we don't have VSX don't bother doing anything here.
+      if (!TM->getSubtargetImpl()->hasVSX())
+        return false;
       TII = TM->getInstrInfo();
 
       bool Changed = false;

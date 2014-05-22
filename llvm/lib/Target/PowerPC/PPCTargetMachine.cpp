@@ -161,25 +161,19 @@ bool PPCPassConfig::addInstSelector() {
     addPass(createPPCCTRLoopsVerify());
 #endif
 
-  if (getPPCSubtarget().hasVSX())
-    addPass(createPPCVSXCopyPass());
-
+  addPass(createPPCVSXCopyPass());
   return false;
 }
 
 bool PPCPassConfig::addPreRegAlloc() {
-  if (getPPCSubtarget().hasVSX()) {
-    initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
-    insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
-               &PPCVSXFMAMutateID);
-  }
-
+  initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
+  insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
+             &PPCVSXFMAMutateID);
   return false;
 }
 
 bool PPCPassConfig::addPreSched2() {
-  if (getPPCSubtarget().hasVSX())
-    addPass(createPPCVSXCopyCleanupPass());
+  addPass(createPPCVSXCopyCleanupPass());
 
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
