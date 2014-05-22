@@ -1585,7 +1585,6 @@ def simm9_offset_fb128 : Operand<i64> {
   let ParserMatchClass = SImm9OffsetFB128Operand;
 }
 
-// FIXME: these don't work
 def : InstAlias<"ldr $Rt, [$Rn, $offset]",
                 (LDURXi GPR64:$Rt, GPR64sp:$Rn, simm9_offset_fb64:$offset), 0>;
 def : InstAlias<"ldr $Rt, [$Rn, $offset]",
