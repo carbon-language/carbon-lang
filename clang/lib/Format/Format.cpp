@@ -1005,6 +1005,12 @@ private:
     return Style.ColumnLimit - (InPPDirective ? 2 : 0);
   }
 
+  struct CompareLineStatePointers {
+    bool operator()(LineState *obj1, LineState *obj2) const {
+      return *obj1 < *obj2;
+    }
+  };
+
   /// \brief Analyze the entire solution space starting from \p InitialState.
   ///
   /// This implements a variant of Dijkstra's algorithm on the graph that spans
@@ -1014,7 +1020,7 @@ private:
   ///
   /// If \p DryRun is \c false, directly applies the changes.
   unsigned analyzeSolutionSpace(LineState &InitialState, bool DryRun = false) {
-    std::set<LineState> Seen;
+    std::set<LineState *, CompareLineStatePointers> Seen;
 
     // Increasing count of \c StateNode items we have created. This is used to
     // create a deterministic order independent of the container.
@@ -1044,7 +1050,7 @@ private:
       if (Count > 10000)
         Node->State.IgnoreStackForComparison = true;
 
-      if (!Seen.insert(Node->State).second)
+      if (!Seen.insert(&Node->State).second)
         // State already examined with lower penalty.
         continue;
 
