@@ -4898,9 +4898,11 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
 
   // A redeclaration is not allowed to drop a dllimport attribute, the only
   // exception being inline function definitions.
-  // FIXME: Handle inline functions.
   // NB: MSVC converts such a declaration to dllexport.
-  if (OldImportAttr && !HasNewAttr) {
+  bool IsInline =
+      isa<FunctionDecl>(NewDecl) && cast<FunctionDecl>(NewDecl)->isInlined();
+
+  if (OldImportAttr && !HasNewAttr && !IsInline) {
     S.Diag(NewDecl->getLocation(),
            diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
       << NewDecl << OldImportAttr;
