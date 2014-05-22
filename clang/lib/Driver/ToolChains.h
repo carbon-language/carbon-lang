@@ -534,7 +534,7 @@ public:
   bool isPIEDefault() const override { return true; }
 
   unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const override {
-    return 1;
+    return 2;
   }
 
 protected:
