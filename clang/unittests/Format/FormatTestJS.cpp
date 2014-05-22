@@ -137,6 +137,13 @@ TEST_F(FormatTestJS, Closures) {
                "  foo();\n"
                "  bar();\n"
                "}, this);");
+
+  verifyFormat("var x = {a: function() { return 1; }};",
+               getGoogleJSStyleWithColumns(38));
+  verifyFormat("var x = {\n"
+               "  a: function() { return 1; }\n"
+               "};",
+               getGoogleJSStyleWithColumns(37));
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

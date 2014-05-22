@@ -828,8 +828,10 @@ public:
 
         if (TheLine.Last->TotalLength + Indent <= ColumnLimit) {
           LineState State = Indenter->getInitialState(Indent, &TheLine, DryRun);
-          while (State.NextToken)
+          while (State.NextToken) {
+            formatChildren(State, /*Newline=*/false, /*DryRun=*/false, Penalty);
             Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
+          }
         } else if (Style.ColumnLimit == 0) {
           // FIXME: Implement nested blocks for ColumnLimit = 0.
           NoColumnLimitFormatter Formatter(Indenter);

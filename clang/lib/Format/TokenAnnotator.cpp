@@ -1178,6 +1178,12 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 }
 
 void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
+  for (SmallVectorImpl<AnnotatedLine *>::iterator I = Line.Children.begin(),
+                                                  E = Line.Children.end();
+       I != E; ++I) {
+    calculateFormattingInformation(**I);
+  }
+
   Line.First->TotalLength =
       Line.First->IsMultiline ? Style.ColumnLimit : Line.First->ColumnWidth;
   if (!Line.First->Next)
@@ -1222,12 +1228,18 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
 
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
-    if (Current->MustBreakBefore || !Current->Children.empty() ||
+    unsigned ChildSize = 0;
+    if (Current->Previous->Children.size() == 1) {
+      FormatToken &LastOfChild = *Current->Previous->Children[0]->Last;
+      ChildSize = LastOfChild.isTrailingComment() ? Style.ColumnLimit
+                                                  : LastOfChild.TotalLength + 1;
+    }
+    if (Current->MustBreakBefore || Current->Previous->Children.size() > 1 ||
         Current->IsMultiline)
       Current->TotalLength = Current->Previous->TotalLength + Style.ColumnLimit;
     else
       Current->TotalLength = Current->Previous->TotalLength +
-                             Current->ColumnWidth +
+                             Current->ColumnWidth + ChildSize +
                              Current->SpacesRequiredBefore;
 
     if (Current->Type == TT_CtorInitializerColon)
@@ -1249,12 +1261,6 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   }
 
   DEBUG({ printDebugInfo(Line); });
-
-  for (SmallVectorImpl<AnnotatedLine *>::iterator I = Line.Children.begin(),
-                                                  E = Line.Children.end();
-       I != E; ++I) {
-    calculateFormattingInformation(**I);
-  }
 }
 
 void TokenAnnotator::calculateUnbreakableTailLengths(AnnotatedLine &Line) {
