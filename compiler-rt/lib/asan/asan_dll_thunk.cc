@@ -170,6 +170,7 @@ extern "C" {
   void __asan_init_v3() {
     typedef void (*fntype)();
     static fntype fn = 0;
+    // __asan_init_v3 is expected to be called by only one thread.
     if (fn) return;
 
     fn = (fntype)getRealProcAddressOrDie("__asan_init_v3");
