@@ -271,10 +271,7 @@ public:
   /// or -pass-remarks-analysis). Note that this only handles the LLVM
   /// flags. We cannot access Clang flags from here (they are handled
   /// in BackendConsumer::OptimizationRemarkHandler).
-  ///
-  /// \p pImpl points to the current LLVM context. It is needed to query the
-  /// value of the command line flag associated with this remark.
-  virtual bool isEnabled(LLVMContextImpl *pImpl) const = 0;
+  virtual bool isEnabled() const = 0;
 
   /// Return true if location information is available for this diagnostic.
   bool isLocationAvailable() const;
@@ -332,7 +329,7 @@ public:
   }
 
   /// \see DiagnosticInfoOptimizationRemarkBase::isEnabled.
-  virtual bool isEnabled(LLVMContextImpl *pImpl) const override;
+  virtual bool isEnabled() const override;
 };
 
 /// Diagnostic information for missed-optimization remarks.
@@ -359,7 +356,7 @@ public:
   }
 
   /// \see DiagnosticInfoOptimizationRemarkBase::isEnabled.
-  virtual bool isEnabled(LLVMContextImpl *pImpl) const override;
+  virtual bool isEnabled() const override;
 };
 
 /// Diagnostic information for optimization analysis remarks.
@@ -387,7 +384,7 @@ public:
   }
 
   /// \see DiagnosticInfoOptimizationRemarkBase::isEnabled.
-  virtual bool isEnabled(LLVMContextImpl *pImpl) const override;
+  virtual bool isEnabled() const override;
 };
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).

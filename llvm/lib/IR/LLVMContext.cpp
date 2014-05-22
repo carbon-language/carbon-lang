@@ -148,15 +148,15 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   // diagnostic and return.
   switch (DI.getKind()) {
   case llvm::DK_OptimizationRemark:
-    if (!cast<DiagnosticInfoOptimizationRemark>(DI).isEnabled(pImpl))
+    if (!cast<DiagnosticInfoOptimizationRemark>(DI).isEnabled())
       return;
     break;
   case llvm::DK_OptimizationRemarkMissed:
-    if (!cast<DiagnosticInfoOptimizationRemarkMissed>(DI).isEnabled(pImpl))
+    if (!cast<DiagnosticInfoOptimizationRemarkMissed>(DI).isEnabled())
       return;
     break;
   case llvm::DK_OptimizationRemarkAnalysis:
-    if (!cast<DiagnosticInfoOptimizationRemarkAnalysis>(DI).isEnabled(pImpl))
+    if (!cast<DiagnosticInfoOptimizationRemarkAnalysis>(DI).isEnabled())
       return;
     break;
   default:

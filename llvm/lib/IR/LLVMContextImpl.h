@@ -374,15 +374,6 @@ public:
   typedef DenseMap<const Function *, ReturnInst *> PrefixDataMapTy;
   PrefixDataMapTy PrefixDataMap;
 
-  /// \brief Return true if the given pass name should emit optimization
-  /// remarks.
-  bool optimizationRemarkEnabledFor(
-      const DiagnosticInfoOptimizationRemark *DI) const;
-  bool optimizationRemarkEnabledFor(
-      const DiagnosticInfoOptimizationRemarkMissed *DI) const;
-  bool optimizationRemarkEnabledFor(
-      const DiagnosticInfoOptimizationRemarkAnalysis *DI) const;
-
   int getOrAddScopeRecordIdxEntry(MDNode *N, int ExistingIdx);
   int getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,int ExistingIdx);
   
