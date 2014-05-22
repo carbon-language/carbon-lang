@@ -323,22 +323,19 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   CurDiagID = storedDiag.getID();
   NumDiagArgs = 0;
 
-  NumDiagRanges = storedDiag.range_size();
-  assert(NumDiagRanges < DiagnosticsEngine::MaxRanges &&
-         "Too many arguments to diagnostic!");
-  unsigned i = 0;
+  DiagRanges.clear();
+  DiagRanges.reserve(storedDiag.range_size());
   for (StoredDiagnostic::range_iterator
          RI = storedDiag.range_begin(),
          RE = storedDiag.range_end(); RI != RE; ++RI)
-    DiagRanges[i++] = *RI;
+    DiagRanges.push_back(*RI);
 
-  assert(NumDiagRanges < DiagnosticsEngine::MaxFixItHints &&
-         "Too many arguments to diagnostic!");
-  NumDiagFixItHints = 0;
+  DiagFixItHints.clear();
+  DiagFixItHints.reserve(storedDiag.fixit_size());
   for (StoredDiagnostic::fixit_iterator
          FI = storedDiag.fixit_begin(),
          FE = storedDiag.fixit_end(); FI != FE; ++FI)
-    DiagFixItHints[NumDiagFixItHints++] = *FI;
+    DiagFixItHints.push_back(*FI);
 
   assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();

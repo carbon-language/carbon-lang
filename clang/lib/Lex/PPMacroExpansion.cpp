@@ -675,13 +675,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         DiagnosticBuilder DB =
             Diag(MacroName,
                  diag::note_init_list_at_beginning_of_macro_argument);
-        for (SmallVector<SourceRange, 4>::iterator
-                 Range = InitLists.begin(), RangeEnd = InitLists.end();
-                 Range != RangeEnd; ++Range) {
-          if (DB.hasMaxRanges())
-            break;
-          DB << *Range;
-        }
+        for (const SourceRange &Range : InitLists)
+          DB << Range;
       }
       return nullptr;
     }
@@ -689,15 +684,9 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       return nullptr;
 
     DiagnosticBuilder DB = Diag(MacroName, diag::note_suggest_parens_for_macro);
-    for (SmallVector<SourceRange, 4>::iterator
-             ParenLocation = ParenHints.begin(), ParenEnd = ParenHints.end();
-         ParenLocation != ParenEnd; ++ParenLocation) {
-      if (DB.hasMaxFixItHints())
-        break;
-      DB << FixItHint::CreateInsertion(ParenLocation->getBegin(), "(");
-      if (DB.hasMaxFixItHints())
-        break;
-      DB << FixItHint::CreateInsertion(ParenLocation->getEnd(), ")");
+    for (const SourceRange &ParenLocation : ParenHints) {
+      DB << FixItHint::CreateInsertion(ParenLocation.getBegin(), "(");
+      DB << FixItHint::CreateInsertion(ParenLocation.getEnd(), ")");
     }
     ArgTokens.swap(FixedArgTokens);
     NumActuals = FixedNumArgs;

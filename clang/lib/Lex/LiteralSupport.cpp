@@ -1577,8 +1577,7 @@ bool StringLiteralParser::CopyStringFragment(const Token &Tok,
     Dummy.reserve(Fragment.size() * CharByteWidth);
     char *Ptr = Dummy.data();
 
-    while (!Builder.hasMaxRanges() &&
-           !ConvertUTF8toWide(CharByteWidth, NextFragment, Ptr, ErrorPtrTmp)) {
+    while (!ConvertUTF8toWide(CharByteWidth, NextFragment, Ptr, ErrorPtrTmp)) {
       const char *ErrorPtr = reinterpret_cast<const char *>(ErrorPtrTmp);
       NextStart = resyncUTF8(ErrorPtr, Fragment.end());
       Builder << MakeCharSourceRange(Features, SourceLoc, TokBegin,

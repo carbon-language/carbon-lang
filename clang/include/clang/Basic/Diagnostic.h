@@ -738,20 +738,10 @@ private:
     /// diagnostic with more than that almost certainly has to be simplified
     /// anyway.
     MaxArguments = 10,
-
-    /// \brief The maximum number of ranges we can hold.
-    MaxRanges = 10,
-
-    /// \brief The maximum number of ranges we can hold.
-    MaxFixItHints = 10
   };
 
   /// \brief The number of entries in Arguments.
   signed char NumDiagArgs;
-  /// \brief The number of ranges in the DiagRanges array.
-  unsigned char NumDiagRanges;
-  /// \brief The number of hints in the DiagFixItHints array.
-  unsigned char NumDiagFixItHints;
 
   /// \brief Specifies whether an argument is in DiagArgumentsStr or
   /// in DiagArguments.
@@ -774,11 +764,11 @@ private:
   intptr_t DiagArgumentsVal[MaxArguments];
 
   /// \brief The list of ranges added to this diagnostic.
-  CharSourceRange DiagRanges[MaxRanges];
+  SmallVector<CharSourceRange, 8> DiagRanges;
 
   /// \brief If valid, provides a hint with some code to insert, remove,
   /// or modify at a particular position.
-  FixItHint DiagFixItHints[MaxFixItHints];
+  SmallVector<FixItHint, 8> DiagFixItHints;
 
   DiagnosticMappingInfo makeMappingInfo(diag::Mapping Map, SourceLocation L) {
     bool isPragma = L.isValid();
@@ -875,7 +865,7 @@ public:
 /// for example.
 class DiagnosticBuilder {
   mutable DiagnosticsEngine *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumFixits;
+  mutable unsigned NumArgs;
 
   /// \brief Status variable indicating if this diagnostic is still active.
   ///
@@ -890,15 +880,15 @@ class DiagnosticBuilder {
 
   void operator=(const DiagnosticBuilder &) LLVM_DELETED_FUNCTION;
   friend class DiagnosticsEngine;
-  
+
   DiagnosticBuilder()
-    : DiagObj(nullptr), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false),
-      IsForceEmit(false) { }
+      : DiagObj(nullptr), NumArgs(0), IsActive(false), IsForceEmit(false) {}
 
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(true),
-      IsForceEmit(false) {
+      : DiagObj(diagObj), NumArgs(0), IsActive(true), IsForceEmit(false) {
     assert(diagObj && "DiagnosticBuilder requires a valid DiagnosticsEngine!");
+    diagObj->DiagRanges.clear();
+    diagObj->DiagFixItHints.clear();
   }
 
   friend class PartialDiagnostic;
@@ -906,8 +896,6 @@ class DiagnosticBuilder {
 protected:
   void FlushCounts() {
     DiagObj->NumDiagArgs = NumArgs;
-    DiagObj->NumDiagRanges = NumRanges;
-    DiagObj->NumDiagFixItHints = NumFixits;
   }
 
   /// \brief Clear out the current diagnostic.
@@ -954,8 +942,6 @@ public:
     IsForceEmit = D.IsForceEmit;
     D.Clear();
     NumArgs = D.NumArgs;
-    NumRanges = D.NumRanges;
-    NumFixits = D.NumFixits;
   }
 
   /// \brief Retrieve an empty diagnostic builder.
@@ -1001,24 +987,12 @@ public:
 
   void AddSourceRange(const CharSourceRange &R) const {
     assert(isActive() && "Clients must not add to cleared diagnostic!");
-    assert(NumRanges < DiagnosticsEngine::MaxRanges &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagRanges[NumRanges++] = R;
+    DiagObj->DiagRanges.push_back(R);
   }
 
   void AddFixItHint(const FixItHint &Hint) const {
     assert(isActive() && "Clients must not add to cleared diagnostic!");
-    assert(NumFixits < DiagnosticsEngine::MaxFixItHints &&
-           "Too many arguments to diagnostic!");
-    DiagObj->DiagFixItHints[NumFixits++] = Hint;
-  }
-
-  bool hasMaxRanges() const {
-    return NumRanges == DiagnosticsEngine::MaxRanges;
-  }
-
-  bool hasMaxFixItHints() const {
-    return NumFixits == DiagnosticsEngine::MaxFixItHints;
+    DiagObj->DiagFixItHints.push_back(Hint);
   }
 
   void addFlagValue(StringRef V) const { DiagObj->setFlagNameValue(V); }
@@ -1224,22 +1198,22 @@ public:
 
   /// \brief Return the number of source ranges associated with this diagnostic.
   unsigned getNumRanges() const {
-    return DiagObj->NumDiagRanges;
+    return DiagObj->DiagRanges.size();
   }
 
   /// \pre Idx < getNumRanges()
   const CharSourceRange &getRange(unsigned Idx) const {
-    assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
+    assert(Idx < getNumRanges() && "Invalid diagnostic range index!");
     return DiagObj->DiagRanges[Idx];
   }
 
   /// \brief Return an array reference for this diagnostic's ranges.
   ArrayRef<CharSourceRange> getRanges() const {
-    return llvm::makeArrayRef(DiagObj->DiagRanges, DiagObj->NumDiagRanges);
+    return DiagObj->DiagRanges;
   }
 
   unsigned getNumFixItHints() const {
-    return DiagObj->NumDiagFixItHints;
+    return DiagObj->DiagFixItHints.size();
   }
 
   const FixItHint &getFixItHint(unsigned Idx) const {
@@ -1247,8 +1221,8 @@ public:
     return DiagObj->DiagFixItHints[Idx];
   }
 
-  const FixItHint *getFixItHints() const {
-    return getNumFixItHints()? DiagObj->DiagFixItHints : nullptr;
+  ArrayRef<FixItHint> getFixItHints() const {
+    return DiagObj->DiagFixItHints;
   }
 
   /// \brief Format this diagnostic into a string, substituting the

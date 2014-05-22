@@ -36,7 +36,7 @@ public:
   };
 
   struct Storage {
-    Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
+    Storage() : NumDiagArgs(0) { }
 
     enum {
         /// \brief The maximum number of arguments we can hold. We
@@ -49,9 +49,6 @@ public:
 
     /// \brief The number of entries in Arguments.
     unsigned char NumDiagArgs;
-
-    /// \brief This is the number of ranges in the DiagRanges array.
-    unsigned char NumDiagRanges;
 
     /// \brief Specifies for each argument whether it is in DiagArgumentsStr
     /// or in DiagArguments.
@@ -69,9 +66,7 @@ public:
     std::string DiagArgumentsStr[MaxArguments];
 
     /// \brief The list of ranges added to this diagnostic.
-    ///
-    /// It currently only support 10 ranges, could easily be extended if needed.
-    CharSourceRange DiagRanges[10];
+    SmallVector<CharSourceRange, 8> DiagRanges;
 
     /// \brief If valid, provides a hint with some code to insert, remove, or
     /// modify at a particular position.
@@ -97,7 +92,6 @@ public:
 
       Storage *Result = FreeList[--NumFreeListEntries];
       Result->NumDiagArgs = 0;
-      Result->NumDiagRanges = 0;
       Result->FixItHints.clear();
       return Result;
     }
@@ -166,10 +160,7 @@ private:
     if (!DiagStorage)
       DiagStorage = getStorage();
 
-    assert(DiagStorage->NumDiagRanges <
-           llvm::array_lengthof(DiagStorage->DiagRanges) &&
-           "Too many arguments to diagnostic!");
-    DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = R;
+    DiagStorage->DiagRanges.push_back(R);
   }
 
   void AddFixItHint(const FixItHint &Hint) const {
@@ -308,12 +299,12 @@ public:
     }
 
     // Add all ranges.
-    for (unsigned i = 0, e = DiagStorage->NumDiagRanges; i != e; ++i)
-      DB.AddSourceRange(DiagStorage->DiagRanges[i]);
+    for (const CharSourceRange &Range : DiagStorage->DiagRanges)
+      DB.AddSourceRange(Range);
 
     // Add all fix-its.
-    for (unsigned i = 0, e = DiagStorage->FixItHints.size(); i != e; ++i)
-      DB.AddFixItHint(DiagStorage->FixItHints[i]);
+    for (const FixItHint &Fix : DiagStorage->FixItHints)
+      DB.AddFixItHint(Fix);
   }
 
   void EmitToString(DiagnosticsEngine &Diags,

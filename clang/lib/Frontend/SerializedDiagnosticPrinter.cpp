@@ -560,8 +560,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Renderer.emitDiagnostic(Info.getLocation(), DiagLevel,
                           State->diagBuf.str(),
                           Info.getRanges(),
-                          llvm::makeArrayRef(Info.getFixItHints(),
-                                             Info.getNumFixItHints()),
+                          Info.getFixItHints(),
                           &Info.getSourceManager(),
                           &Info);
 }
