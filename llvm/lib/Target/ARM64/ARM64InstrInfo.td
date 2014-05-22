@@ -1633,7 +1633,6 @@ defm LDURSW
                     (sextloadi32 (am_unscaled32 GPR64sp:$Rn, simm9:$offset)))]>;
 
 // zero and sign extending aliases from generic LDR* mnemonics to LDUR*.
-// FIXME: these don't work now
 def : InstAlias<"ldrb $Rt, [$Rn, $offset]",
                 (LDURBBi GPR32:$Rt, GPR64sp:$Rn, simm9_offset_fb8:$offset), 0>;
 def : InstAlias<"ldrh $Rt, [$Rn, $offset]",
@@ -2010,7 +2009,6 @@ def : Pat<(truncstorei8 GPR64:$Rt, (am_unscaled8 GPR64sp:$Rn, simm9:$offset)),
 
 //---
 // STR mnemonics fall back to STUR for negative or unaligned offsets.
-// FIXME: these don't work now.
 def : InstAlias<"str $Rt, [$Rn, $offset]",
                 (STURXi GPR64:$Rt, GPR64sp:$Rn, simm9_offset_fb64:$offset), 0>;
 def : InstAlias<"str $Rt, [$Rn, $offset]",
