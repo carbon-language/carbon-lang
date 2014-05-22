@@ -482,7 +482,7 @@ llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
         Styles[i].Language == FormatStyle::LK_None) {
       *Style = Styles[i];
       Style->Language = Language;
-      return llvm::make_error_code(llvm::errc::success);
+      return llvm::error_code::success();
     }
   }
   return llvm::make_error_code(llvm::errc::not_supported);
