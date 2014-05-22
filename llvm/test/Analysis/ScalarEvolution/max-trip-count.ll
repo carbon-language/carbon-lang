@@ -98,3 +98,29 @@ for.end:                                          ; preds = %for.cond.for.end_cr
 ; CHECK: Determining loop execution counts for: @test
 ; CHECK-NEXT: backedge-taken count is
 ; CHECK-NEXT: max backedge-taken count is -1
+
+; PR19799: Indvars miscompile due to an incorrect max backedge taken count from SCEV.
+; CHECK-LABEL: @pr19799
+; CHECK: Loop %for.body.i: <multiple exits> Unpredictable backedge-taken count. 
+; CHECK: Loop %for.body.i: max backedge-taken count is 1
+@a = common global i32 0, align 4
+
+define i32 @pr19799() {
+entry:
+  store i32 -1, i32* @a, align 4
+  br label %for.body.i
+
+for.body.i:                                       ; preds = %for.cond.i, %entry
+  %storemerge1.i = phi i32 [ -1, %entry ], [ %add.i.i, %for.cond.i ]
+  %tobool.i = icmp eq i32 %storemerge1.i, 0
+  %add.i.i = add nsw i32 %storemerge1.i, 2
+  br i1 %tobool.i, label %bar.exit, label %for.cond.i
+
+for.cond.i:                                       ; preds = %for.body.i
+  store i32 %add.i.i, i32* @a, align 4
+  %cmp.i = icmp slt i32 %storemerge1.i, 0
+  br i1 %cmp.i, label %for.body.i, label %bar.exit
+
+bar.exit:                                         ; preds = %for.cond.i, %for.body.i
+  ret i32 0
+}

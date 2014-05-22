@@ -4413,7 +4413,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   const SCEV *MaxBECount = getCouldNotCompute();
   bool CouldComputeBECount = true;
   BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
-  const SCEV *LatchMaxCount = nullptr;
+  bool LatchMustExit = false;
   SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
   for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
     ExitLimit EL = ComputeExitLimit(L, ExitingBlocks[i]);
@@ -4431,15 +4431,13 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
       // skip some loop tests. Taking the max over the exits is sufficiently
       // conservative.  TODO: We could do better taking into consideration
       // non-latch exits that dominate the latch.
-      if (EL.MustExit && ExitingBlocks[i] == Latch)
-        LatchMaxCount = EL.Max;
-      else
+      if (EL.MustExit && ExitingBlocks[i] == Latch) {
+        MaxBECount = EL.Max;
+        LatchMustExit = true;
+      }
+      else if (!LatchMustExit)
         MaxBECount = getUMaxFromMismatchedTypes(MaxBECount, EL.Max);
     }
-  }
-  // Be more precise in the easy case of a loop latch that must exit.
-  if (LatchMaxCount) {
-    MaxBECount = getUMinFromMismatchedTypes(MaxBECount, LatchMaxCount);
   }
   return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
 }
