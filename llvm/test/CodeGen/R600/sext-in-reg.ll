@@ -379,3 +379,18 @@ define void @sext_in_reg_to_illegal_type(i16 addrspace(1)* nocapture %out, i8 ad
   store i16 %tmp6, i16 addrspace(1)* %out, align 2
   ret void
 }
+
+declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
+
+; Make sure there isn't a redundant BFE
+; FUNC-LABEL: @sext_in_reg_i8_to_i32_bfe
+; SI: S_BFE_I32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000
+; SI-NOT: BFE
+define void @sext_in_reg_i8_to_i32_bfe(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
+  %c = add i32 %a, %b ; add to prevent folding into extload
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %c, i32 0, i32 8) nounwind readnone
+  %shl = shl i32 %bfe, 24
+  %ashr = ashr i32 %shl, 24
+  store i32 %ashr, i32 addrspace(1)* %out, align 4
+  ret void
+}

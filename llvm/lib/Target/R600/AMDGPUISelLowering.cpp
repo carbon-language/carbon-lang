@@ -1539,3 +1539,28 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
   }
   }
 }
+
+unsigned AMDGPUTargetLowering::ComputeNumSignBitsForTargetNode(
+  SDValue Op,
+  const SelectionDAG &DAG,
+  unsigned Depth) const {
+  switch (Op.getOpcode()) {
+  case AMDGPUISD::BFE_I32: {
+    ConstantSDNode *Width = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+    if (!Width)
+      return 1;
+
+    unsigned SignBits = 32 - Width->getZExtValue() + 1;
+    ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+    if (!Offset || !Offset->isNullValue())
+      return SignBits;
+
+    // TODO: Could probably figure something out with non-0 offsets.
+    unsigned Op0SignBits = DAG.ComputeNumSignBits(Op.getOperand(0), Depth + 1);
+    return std::max(SignBits, Op0SignBits);
+  }
+
+  default:
+    return 1;
+  }
+}

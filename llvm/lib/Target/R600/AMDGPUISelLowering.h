@@ -124,6 +124,11 @@ public:
                                      const SelectionDAG &DAG,
                                      unsigned Depth = 0) const override;
 
+  virtual unsigned ComputeNumSignBitsForTargetNode(
+    SDValue Op,
+    const SelectionDAG &DAG,
+    unsigned Depth = 0) const override;
+
 // Functions defined in AMDILISelLowering.cpp
 public:
   bool getTgtMemIntrinsic(IntrinsicInfo &Info,
