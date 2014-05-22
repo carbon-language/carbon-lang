@@ -1256,13 +1256,14 @@ defm V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32",
   [(set f32:$dst, (fadd (fmul f32:$src0, f32:$src1), f32:$src2))]
 >;
 defm V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
-  [(set i32:$dst, (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2))]
+  [(set i32:$dst, (AMDGPUmad_i24 i32:$src0, i32:$src1, i32:$src2))]
 >;
 defm V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
-  [(set i32:$dst, (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2))]
+  [(set i32:$dst, (AMDGPUmad_u24 i32:$src0, i32:$src1, i32:$src2))]
 >;
 
 } // End neverHasSideEffects
+
 defm V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;
 defm V_CUBESC_F32 : VOP3_32 <0x00000145, "V_CUBESC_F32", []>;
 defm V_CUBETC_F32 : VOP3_32 <0x00000146, "V_CUBETC_F32", []>;
@@ -2076,6 +2077,9 @@ def : Pat <
 //===----------------------------------------------------------------------===//
 // VOP3 Patterns
 //===----------------------------------------------------------------------===//
+
+def : IMad24Pat<V_MAD_I32_I24>;
+def : UMad24Pat<V_MAD_U32_U24>;
 
 def : Pat <
   (fadd f64:$src0, f64:$src1),

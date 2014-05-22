@@ -186,6 +186,8 @@ enum {
   BFM, // Insert a range of bits into a 32-bit word.
   MUL_U24,
   MUL_I24,
+  MAD_U24,
+  MAD_I24,
   TEXTURE_FETCH,
   EXPORT,
   CONST_ADDRESS,

@@ -740,6 +740,14 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::MUL_I24, DL, VT,
                          Op.getOperand(1), Op.getOperand(2));
 
+    case AMDGPUIntrinsic::AMDGPU_umad24:
+      return DAG.getNode(AMDGPUISD::MAD_U24, DL, VT,
+                         Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
+    case AMDGPUIntrinsic::AMDGPU_imad24:
+      return DAG.getNode(AMDGPUISD::MAD_I24, DL, VT,
+                         Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
     case AMDGPUIntrinsic::AMDGPU_bfe_i32:
       return DAG.getNode(AMDGPUISD::BFE_I32, DL, VT,
                          Op.getOperand(1),
@@ -1432,6 +1440,8 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(BFM)
   NODE_NAME_CASE(MUL_U24)
   NODE_NAME_CASE(MUL_I24)
+  NODE_NAME_CASE(MAD_U24)
+  NODE_NAME_CASE(MAD_I24)
   NODE_NAME_CASE(URECIP)
   NODE_NAME_CASE(DOT4)
   NODE_NAME_CASE(EXPORT)

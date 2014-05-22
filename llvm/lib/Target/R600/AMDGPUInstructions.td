@@ -423,6 +423,17 @@ class UMUL24Pattern <Instruction UMUL24> : Pat <
 >;
 */
 
+class IMad24Pat<Instruction Inst> : Pat <
+  (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2),
+  (Inst $src0, $src1, $src2)
+>;
+
+class UMad24Pat<Instruction Inst> : Pat <
+  (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2),
+  (Inst $src0, $src1, $src2)
+>;
+
+
 include "R600Instructions.td"
 include "R700Instructions.td"
 include "EvergreenInstructions.td"

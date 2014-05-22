@@ -21,11 +21,13 @@ def isCayman : Predicate<"Subtarget.hasCaymanISA()">;
 let Predicates = [isCayman] in {
 
 def MULADD_INT24_cm : R600_3OP <0x08, "MULADD_INT24",
-  [(set i32:$dst, (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2))], VecALU
+  [(set i32:$dst, (AMDGPUmad_i24 i32:$src0, i32:$src1, i32:$src2))], VecALU
 >;
 def MUL_INT24_cm : R600_2OP <0x5B, "MUL_INT24",
   [(set i32:$dst, (AMDGPUmul_i24 i32:$src0, i32:$src1))], VecALU
 >;
+
+def : IMad24Pat<MULADD_INT24_cm>;
 
 let isVector = 1 in {
 
