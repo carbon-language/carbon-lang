@@ -107,22 +107,79 @@ static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
   }
 }
 
+static void processSection(MachOFile &file, const Section &section,
+                           bool copyRefs) {
+  unsigned offset = 0;
+  switch (section.type) {
+  case llvm::MachO::S_REGULAR:
+  case llvm::MachO::S_COALESCED:
+  case llvm::MachO::S_ZEROFILL:
+    // These sections are broken in to atoms based on symbols.
+    break;
+  case llvm::MachO::S_CSTRING_LITERALS:
+    for (size_t i = 0, e = section.content.size(); i != e; ++i) {
+      if (section.content[i] == 0) {
+        unsigned size = i - offset + 1;
+        ArrayRef<uint8_t> strContent = section.content.slice(offset, size);
+        file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                            DefinedAtom::typeCString, strContent, copyRefs);
+        offset = i + 1;
+      }
+    }
+    break;
+  case llvm::MachO::S_4BYTE_LITERALS:
+    assert((section.content.size() % 4) == 0);
+    for (size_t i = 0, e = section.content.size(); i != e; i += 4) {
+      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 4);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                          DefinedAtom::typeLiteral4, byteContent, copyRefs);
+      offset += 4;
+    }
+    break;
+  case llvm::MachO::S_8BYTE_LITERALS:
+    assert((section.content.size() % 8) == 0);
+    for (size_t i = 0, e = section.content.size(); i != e; i += 8) {
+      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 8);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                          DefinedAtom::typeLiteral8, byteContent, copyRefs);
+      offset += 8;
+    }
+    break;
+  case llvm::MachO::S_16BYTE_LITERALS:
+    assert((section.content.size() % 16) == 0);
+    for (size_t i = 0, e = section.content.size(); i != e; i += 16) {
+      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 16);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                          DefinedAtom::typeLiteral16, byteContent, copyRefs);
+      offset += 16;
+    }
+    break;
+  default:
+    llvm_unreachable("mach-o section type not supported");
+    break;
+  }
+}
 
 static ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
-
+  
+  // Create atoms from global symbols.
   for (const Symbol &sym : normalizedFile.globalSymbols) {
     processSymbol(normalizedFile, *file, sym, copyRefs);
   }
-
+  // Create atoms from local symbols.
   for (const Symbol &sym : normalizedFile.localSymbols) {
     processSymbol(normalizedFile, *file, sym, copyRefs);
   }
-
+  // Create atoms from undefinded symbols.
   for (auto &sym : normalizedFile.undefinedSymbols) {
     processUndefindeSymbol(*file, sym, copyRefs);
+  }
+  // Create atoms from sections that don't have symbols.
+  for (auto &sect : normalizedFile.sections) {
+    processSection(*file, sect, copyRefs);
   }
 
   return std::unique_ptr<File>(std::move(file));
