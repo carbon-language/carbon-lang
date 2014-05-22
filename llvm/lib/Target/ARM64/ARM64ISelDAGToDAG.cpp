@@ -369,8 +369,7 @@ getExtendTypeForNode(SDValue N, bool IsLoadStore = false) {
       return ARM64_AM::SXTH;
     else if (SrcVT == MVT::i32)
       return ARM64_AM::SXTW;
-    else if (SrcVT == MVT::i64)
-      return ARM64_AM::SXTX;
+    assert(SrcVT != MVT::i64 && "extend from 64-bits?");
 
     return ARM64_AM::InvalidShiftExtend;
   } else if (N.getOpcode() == ISD::ZERO_EXTEND ||
@@ -382,8 +381,7 @@ getExtendTypeForNode(SDValue N, bool IsLoadStore = false) {
       return ARM64_AM::UXTH;
     else if (SrcVT == MVT::i32)
       return ARM64_AM::UXTW;
-    else if (SrcVT == MVT::i64)
-      return ARM64_AM::UXTX;
+    assert(SrcVT != MVT::i64 && "extend from 64-bits?");
 
     return ARM64_AM::InvalidShiftExtend;
   } else if (N.getOpcode() == ISD::AND) {
