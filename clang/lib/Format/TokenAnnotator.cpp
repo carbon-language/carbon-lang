@@ -1622,6 +1622,13 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       BeforeClosingBrace->isOneOf(tok::comma, tok::comment))
     return true;
 
+  if (Style.Language == FormatStyle::LK_JavaScript) {
+    // FIXME: This might apply to other languages and token kinds.
+    if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
+        Left.Previous->is(tok::char_constant))
+      return true;
+  }
+
   return false;
 }
 

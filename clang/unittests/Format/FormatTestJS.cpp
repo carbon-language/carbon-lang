@@ -164,6 +164,11 @@ TEST_F(FormatTestJS, TryCatch) {
                "}");
 }
 
+TEST_F(FormatTestJS, StringLiteralConcatenation) {
+  verifyFormat("var literal = 'hello ' +\n"
+               "              'world';");
+}
+
 TEST_F(FormatTestJS, RegexLiteralClassification) {
   // Regex literals.
   verifyFormat("var regex = /abc/;");
