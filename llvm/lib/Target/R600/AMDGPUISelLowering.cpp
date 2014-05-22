@@ -1377,6 +1377,20 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       unsigned OpSignBits = DAG.ComputeNumSignBits(BitsFrom);
       if (OpSignBits >= SignBits)
         return BitsFrom;
+
+      EVT SmallVT = EVT::getIntegerVT(*DAG.getContext(), WidthVal);
+      if (Signed) {
+        // This is a sign_extend_inreg. Replace it to take advantage of existing
+        // DAG Combines. If not eliminated, we will match back to BFE during
+        // selection.
+
+        // TODO: The sext_inreg of extended types ends, although we can could
+        // handle them in a single BFE.
+        return DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, MVT::i32, BitsFrom,
+                           DAG.getValueType(SmallVT));
+      }
+
+      return DAG.getZeroExtendInReg(BitsFrom, DL, SmallVT);
     }
 
     if (ConstantSDNode *Val = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
@@ -1396,6 +1410,13 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     APInt Demanded = APInt::getBitsSet(32,
                                        OffsetVal,
                                        OffsetVal + WidthVal);
+
+    if ((OffsetVal + WidthVal) >= 32) {
+      SDValue ShiftVal = DAG.getConstant(OffsetVal, MVT::i32);
+      return DAG.getNode(Signed ? ISD::SRA : ISD::SRL, DL, MVT::i32,
+                         BitsFrom, ShiftVal);
+    }
+
     APInt KnownZero, KnownOne;
     TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                           !DCI.isBeforeLegalizeOps());

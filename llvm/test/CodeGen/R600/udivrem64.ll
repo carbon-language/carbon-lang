@@ -3,8 +3,7 @@
 
 ;FUNC-LABEL: @test_udiv
 ;EG: RECIP_UINT
-;EG: BFE_UINT
-;EG: BFE_UINT
+;EG: LSHL {{.*}}, 1,
 ;EG: BFE_UINT
 ;EG: BFE_UINT
 ;EG: BFE_UINT
@@ -74,8 +73,7 @@ define void @test_udiv(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG: BFE_UINT
 ;EG: BFE_UINT
 ;EG: BFE_UINT
-;EG: BFE_UINT
-;EG: BFE_UINT
+;EG: AND_INT {{.*}}, 1,
 ;SI: S_ENDPGM
 define void @test_urem(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %result = urem i64 %x, %y
