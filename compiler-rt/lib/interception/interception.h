@@ -127,9 +127,9 @@ const interpose_substitution substitution_##func_name[] \
 #  define WRAPPER_NAME(x) #x
 #  define INTERCEPTOR_ATTRIBUTE
 # else  // Static CRT
-#  define WRAP(x) wrap_##x
-#  define WRAPPER_NAME(x) "wrap_"#x
-#  define INTERCEPTOR_ATTRIBUTE
+#  define WRAP(x) __asan_wrap_##x
+#  define WRAPPER_NAME(x) "__asan_wrap_"#x
+#  define INTERCEPTOR_ATTRIBUTE __declspec(dllexport)
 # endif
 # define DECLARE_WRAPPER(ret_type, func, ...) \
     extern "C" ret_type func(__VA_ARGS__);

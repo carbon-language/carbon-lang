@@ -17,13 +17,13 @@ int test_function() {
 //
 // CHECK: [[ADDR]] is located 0 bytes inside of 42-byte region
 // CHECK-LABEL: freed by thread T0 here:
-// CHECK:       free
-// CHECK:       test_function {{.*}}dll_malloc_uaf.cc:[[@LINE-10]]
+// CHECK-NEXT:  free
+// CHECK-NEXT:  test_function {{.*}}dll_malloc_uaf.cc:[[@LINE-10]]
 // CHECK-NEXT:  main {{.*}}dll_host
 //
 // CHECK-LABEL: previously allocated by thread T0 here:
-// CHECK:       malloc
-// CHECK:       test_function {{.*}}dll_malloc_uaf.cc:[[@LINE-16]]
+// CHECK-NEXT:  malloc
+// CHECK-NEXT:  test_function {{.*}}dll_malloc_uaf.cc:[[@LINE-16]]
 // CHECK-NEXT:  main {{.*}}dll_host
   return 0;
 }
