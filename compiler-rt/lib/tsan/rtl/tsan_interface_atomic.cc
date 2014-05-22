@@ -274,10 +274,12 @@ static T NoTsanAtomicLoad(const volatile T *a, morder mo) {
   return atomic_load(to_atomic(a), to_mo(mo));
 }
 
+#if __TSAN_HAS_INT128
 static a128 NoTsanAtomicLoad(const volatile a128 *a, morder mo) {
   SpinMutexLock lock(&mutex128);
   return *a;
 }
+#endif
 
 template<typename T>
 static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
@@ -302,10 +304,12 @@ static void NoTsanAtomicStore(volatile T *a, T v, morder mo) {
   atomic_store(to_atomic(a), v, to_mo(mo));
 }
 
+#if __TSAN_HAS_INT128
 static void NoTsanAtomicStore(volatile a128 *a, a128 v, morder mo) {
   SpinMutexLock lock(&mutex128);
   *a = v;
 }
+#endif
 
 template<typename T>
 static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
@@ -434,6 +438,7 @@ static bool NoTsanAtomicCAS(volatile T *a, T *c, T v, morder mo, morder fmo) {
   return atomic_compare_exchange_strong(to_atomic(a), c, v, to_mo(mo));
 }
 
+#if __TSAN_HAS_INT128
 static bool NoTsanAtomicCAS(volatile a128 *a, a128 *c, a128 v,
     morder mo, morder fmo) {
   a128 old = *c;
@@ -443,6 +448,7 @@ static bool NoTsanAtomicCAS(volatile a128 *a, a128 *c, a128 v,
   *c = cur;
   return false;
 }
+#endif
 
 template<typename T>
 static bool NoTsanAtomicCAS(volatile T *a, T c, T v, morder mo, morder fmo) {
