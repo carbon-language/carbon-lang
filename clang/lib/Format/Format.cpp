@@ -223,6 +223,7 @@ template <> struct MappingTraits<FormatStyle> {
                      Style.SpaceBeforeParens);
     }
     IO.mapOptional("SpaceBeforeParens", Style.SpaceBeforeParens);
+    IO.mapOptional("DisableFormat", Style.DisableFormat);
   }
 };
 
@@ -313,6 +314,8 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PenaltyExcessCharacter = 1000000;
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
   LLVMStyle.PenaltyBreakBeforeFirstCallParameter = 19;
+
+  LLVMStyle.DisableFormat = false;
 
   return LLVMStyle;
 }
@@ -409,6 +412,12 @@ FormatStyle getGNUStyle() {
   return Style;
 }
 
+FormatStyle getNoStyle() {
+  FormatStyle NoStyle = getLLVMStyle();
+  NoStyle.DisableFormat = true;
+  return NoStyle;
+}
+
 bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
                         FormatStyle *Style) {
   if (Name.equals_lower("llvm")) {
@@ -423,6 +432,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
     *Style = getWebKitStyle();
   } else if (Name.equals_lower("gnu")) {
     *Style = getGNUStyle();
+  } else if (Name.equals_lower("none")) {
+    *Style = getNoStyle();
   } else {
     return false;
   }
@@ -1909,6 +1920,11 @@ private:
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
                                std::vector<CharSourceRange> Ranges) {
+  if (Style.DisableFormat) {
+    tooling::Replacements EmptyResult;
+    return EmptyResult;
+  }
+
   Formatter formatter(Style, Lex, SourceMgr, Ranges);
   return formatter.format();
 }

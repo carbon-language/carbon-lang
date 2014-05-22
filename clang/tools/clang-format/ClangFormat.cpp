@@ -68,7 +68,8 @@ FallbackStyle("fallback-style",
               cl::desc("The name of the predefined style used as a\n"
                        "fallback in case clang-format is invoked with\n"
                        "-style=file, but can not find the .clang-format\n"
-                       "file to use."),
+                       "file to use.\n"
+                       "Use -fallback-style=none to skip formatting."),
               cl::init("LLVM"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>

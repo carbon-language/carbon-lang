@@ -322,6 +322,9 @@ struct FormatStyle {
   /// which should not be split into lines or otherwise changed.
   std::string CommentPragmas;
 
+  /// \brief Disables formatting at all.
+  bool DisableFormat;
+
   /// \brief A vector of macros that should be interpreted as foreach loops
   /// instead of as function calls.
   ///
@@ -421,6 +424,9 @@ FormatStyle getWebKitStyle();
 /// \brief Returns a format style complying with GNU Coding Standards:
 /// http://www.gnu.org/prep/standards/standards.html
 FormatStyle getGNUStyle();
+
+/// \brief Returns style indicating formatting should be not applied at all.
+FormatStyle getNoStyle();
 
 /// \brief Gets a predefined style for the specified language by name.
 ///
