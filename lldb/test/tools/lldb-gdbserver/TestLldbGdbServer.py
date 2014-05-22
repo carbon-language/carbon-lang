@@ -38,6 +38,9 @@ class LldbGdbServerTestCase(TestBase):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
         self.set_inferior_startup_launch()
 
+    def reset_test_sequence(self):
+        self.test_sequence = GdbRemoteTestSequence(self.logger)
+
     def init_llgs_test(self):
         self.debug_monitor_exe = get_lldb_gdbserver_exe()
         if not self.debug_monitor_exe:
@@ -929,6 +932,81 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_attach()
         self.qThreadInfo_matches_qC()
+
+
+    def p_returns_correct_data_size_for_each_qRegisterInfo(self):
+        procs = self.prep_debug_monitor_and_inferior()
+        self.add_register_info_collection_packets()
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather register info entries.
+        reg_infos = self.parse_register_info_packets(context)
+        self.assertIsNotNone(reg_infos)
+        self.assertTrue(len(reg_infos) > 0)
+
+        # Read value for each register.
+        reg_index = 0
+        for reg_info in reg_infos:
+            # Clear existing packet expectations.
+            self.reset_test_sequence()
+
+            # Run the register query
+            self.test_sequence.add_log_lines(
+                ["read packet: $p{0:x}#00".format(reg_index),
+                 { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} }],
+                True)
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            # Verify the response length.
+            p_response = context.get("p_response")
+            self.assertIsNotNone(p_response)
+            self.assertEquals(len(p_response), 2 * int(reg_info["bitsize"]) / 8)
+            # print "register {} ({}): {}".format(reg_index, reg_info["name"], p_response)
+
+            # Increment loop
+            reg_index += 1
+
+
+    @debugserver_test
+    @dsym_test
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.p_returns_correct_data_size_for_each_qRegisterInfo()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.p_returns_correct_data_size_for_each_qRegisterInfo()
+
+
+    @debugserver_test
+    @dsym_test
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_attach()
+        self.p_returns_correct_data_size_for_each_qRegisterInfo()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_attach()
+        self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
 
 if __name__ == '__main__':
