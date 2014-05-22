@@ -282,7 +282,12 @@ int a5[] = (int5){1, 2, 3, 4, 5}; // expected-warning{{initialization of an arra
 int a6[5] = (int[]){1, 2, 3}; // expected-error{{cannot initialize array of type 'int [5]' with array of type 'int [3]'}}
 
 int nonconst_value();
-int a7[5] = (int[5]){ 1, 2, 3, 4, nonconst_value() }; // expected-error{{initializer element is not a compile-time constant}}
+int a7[5] = (int[5]){ 1,
+                      2,
+                      3,
+                      4,
+                      nonconst_value() // expected-error{{initializer element is not a compile-time constant}}
+};
 
 // <rdar://problem/10636946>
 __attribute__((weak)) const unsigned int test10_bound = 10;

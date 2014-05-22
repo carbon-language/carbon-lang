@@ -7931,10 +7931,11 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   // "may accept other forms of constant expressions" exception.
   // (We never end up here for C++, so the constant expression
   // rules there don't matter.)
-  if (Init->isConstantInitializer(Context, false))
+  const Expr *Culprit;
+  if (Init->isConstantInitializer(Context, false, &Culprit))
     return false;
-  Diag(Init->getExprLoc(), diag::err_init_element_not_constant)
-    << Init->getSourceRange();
+  Diag(Culprit->getExprLoc(), diag::err_init_element_not_constant)
+    << Culprit->getSourceRange();
   return true;
 }
 
@@ -8415,6 +8416,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // static storage duration shall be constant expressions or string literals.
     // C++ does not have this restriction.
     if (!getLangOpts().CPlusPlus && !VDecl->isInvalidDecl()) {
+      const Expr *Culprit;
       if (VDecl->getStorageClass() == SC_Static)
         CheckForConstantInitializer(Init, DclT);
       // C89 is stricter than C99 for non-static aggregate types.
@@ -8423,10 +8425,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       // constant expressions.
       else if (!getLangOpts().C99 && VDecl->getType()->isAggregateType() &&
                isa<InitListExpr>(Init) &&
-               !Init->isConstantInitializer(Context, false))
-        Diag(Init->getExprLoc(),
+               !Init->isConstantInitializer(Context, false, &Culprit))
+        Diag(Culprit->getExprLoc(),
              diag::ext_aggregate_init_not_constant)
-          << Init->getSourceRange();
+          << Culprit->getSourceRange();
     }
   } else if (VDecl->isStaticDataMember() &&
              VDecl->getLexicalDeclContext()->isRecord()) {
@@ -8897,6 +8899,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   }
 
   if (var->getTLSKind() == VarDecl::TLS_Static) {
+    const Expr *Culprit;
     if (var->getType().isDestructedType()) {
       // GNU C++98 edits for __thread, [basic.start.term]p3:
       //   The type of an object with thread storage duration shall not
@@ -8906,12 +8909,13 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
         Diag(var->getLocation(), diag::note_use_thread_local);
     } else if (getLangOpts().CPlusPlus && var->hasInit() &&
                !var->getInit()->isConstantInitializer(
-                   Context, var->getType()->isReferenceType())) {
+                   Context, var->getType()->isReferenceType(), &Culprit)) {
       // GNU C++98 edits for __thread, [basic.start.init]p4:
       //   An object of thread storage duration shall not require dynamic
       //   initialization.
       // FIXME: Need strict checking here.
-      Diag(var->getLocation(), diag::err_thread_dynamic_init);
+      Diag(Culprit->getExprLoc(), diag::err_thread_dynamic_init)
+        << Culprit->getSourceRange();
       if (getLangOpts().CPlusPlus11)
         Diag(var->getLocation(), diag::note_use_thread_local);
     }
