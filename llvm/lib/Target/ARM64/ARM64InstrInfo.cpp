@@ -1389,10 +1389,12 @@ void ARM64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
           SrcReg, getKillRegState(KillSrc));
     } else {
       BuildMI(MBB, I, DL, get(ARM64::STRQpre))
+        .addReg(ARM64::SP, RegState::Define)
         .addReg(SrcReg, getKillRegState(KillSrc))
         .addReg(ARM64::SP)
         .addImm(-16);
       BuildMI(MBB, I, DL, get(ARM64::LDRQpre))
+        .addReg(ARM64::SP, RegState::Define)
         .addReg(DestReg, RegState::Define)
         .addReg(ARM64::SP)
         .addImm(16);

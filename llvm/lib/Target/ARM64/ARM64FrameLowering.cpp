@@ -246,14 +246,14 @@ void ARM64FrameLowering::emitPrologue(MachineFunction &MF) const {
     // that is a multiple of -2.
     assert((MBBI->getOpcode() == ARM64::STPXpre ||
             MBBI->getOpcode() == ARM64::STPDpre) &&
-           MBBI->getOperand(2).getReg() == ARM64::SP &&
-           MBBI->getOperand(3).getImm() < 0 &&
-           (MBBI->getOperand(3).getImm() & 1) == 0);
+           MBBI->getOperand(3).getReg() == ARM64::SP &&
+           MBBI->getOperand(4).getImm() < 0 &&
+           (MBBI->getOperand(4).getImm() & 1) == 0);
 
     // Frame pointer is fp = sp - 16. Since the  STPXpre subtracts the space
     // required for the callee saved register area we get the frame pointer
     // by addding that offset - 16 = -getImm()*8 - 2*8 = -(getImm() + 2) * 8.
-    FPOffset = -(MBBI->getOperand(3).getImm() + 2) * 8;
+    FPOffset = -(MBBI->getOperand(4).getImm() + 2) * 8;
     assert(FPOffset >= 0 && "Bad Framepointer Offset");
   }
 
@@ -409,12 +409,16 @@ static bool isCalleeSavedRegister(unsigned Reg, const MCPhysReg *CSRegs) {
 }
 
 static bool isCSRestore(MachineInstr *MI, const MCPhysReg *CSRegs) {
+  unsigned RtIdx = 0;
+  if (MI->getOpcode() == ARM64::LDPXpost || MI->getOpcode() == ARM64::LDPDpost)
+    RtIdx = 1;
+
   if (MI->getOpcode() == ARM64::LDPXpost ||
       MI->getOpcode() == ARM64::LDPDpost || MI->getOpcode() == ARM64::LDPXi ||
       MI->getOpcode() == ARM64::LDPDi) {
-    if (!isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs) ||
-        !isCalleeSavedRegister(MI->getOperand(1).getReg(), CSRegs) ||
-        MI->getOperand(2).getReg() != ARM64::SP)
+    if (!isCalleeSavedRegister(MI->getOperand(RtIdx).getReg(), CSRegs) ||
+        !isCalleeSavedRegister(MI->getOperand(RtIdx + 1).getReg(), CSRegs) ||
+        MI->getOperand(RtIdx + 2).getReg() != ARM64::SP)
       return false;
     return true;
   }
@@ -667,8 +671,11 @@ bool ARM64FrameLowering::spillCalleeSavedRegisters(
     const int Offset = (i == 0) ? -Count : i;
     assert((Offset >= -64 && Offset <= 63) &&
            "Offset out of bounds for STP immediate");
-    BuildMI(MBB, MI, DL, TII.get(StrOpc))
-        .addReg(Reg2, getPrologueDeath(MF, Reg2))
+    MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(StrOpc));
+    if (StrOpc == ARM64::STPDpre || StrOpc == ARM64::STPXpre)
+      MIB.addReg(ARM64::SP, RegState::Define);
+
+    MIB.addReg(Reg2, getPrologueDeath(MF, Reg2))
         .addReg(Reg1, getPrologueDeath(MF, Reg1))
         .addReg(ARM64::SP)
         .addImm(Offset) // [sp, #offset * 8], where factor * 8 is implicit
@@ -734,8 +741,11 @@ bool ARM64FrameLowering::restoreCalleeSavedRegisters(
     const int Offset = (i == Count - 2) ? Count : Count - i - 2;
     assert((Offset >= -64 && Offset <= 63) &&
            "Offset out of bounds for LDP immediate");
-    BuildMI(MBB, MI, DL, TII.get(LdrOpc))
-        .addReg(Reg2, getDefRegState(true))
+    MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(LdrOpc));
+    if (LdrOpc == ARM64::LDPXpost || LdrOpc == ARM64::LDPDpost)
+      MIB.addReg(ARM64::SP, RegState::Define);
+
+    MIB.addReg(Reg2, getDefRegState(true))
         .addReg(Reg1, getDefRegState(true))
         .addReg(ARM64::SP)
         .addImm(Offset); // [sp], #offset * 8  or [sp, #offset * 8]

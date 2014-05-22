@@ -901,14 +901,14 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   ISD::LoadExtType ExtType = LD->getExtensionType();
   bool InsertTo64 = false;
   if (VT == MVT::i64)
-    Opcode = IsPre ? ARM64::LDRXpre_isel : ARM64::LDRXpost_isel;
+    Opcode = IsPre ? ARM64::LDRXpre : ARM64::LDRXpost;
   else if (VT == MVT::i32) {
     if (ExtType == ISD::NON_EXTLOAD)
-      Opcode = IsPre ? ARM64::LDRWpre_isel : ARM64::LDRWpost_isel;
+      Opcode = IsPre ? ARM64::LDRWpre : ARM64::LDRWpost;
     else if (ExtType == ISD::SEXTLOAD)
-      Opcode = IsPre ? ARM64::LDRSWpre_isel : ARM64::LDRSWpost_isel;
+      Opcode = IsPre ? ARM64::LDRSWpre : ARM64::LDRSWpost;
     else {
-      Opcode = IsPre ? ARM64::LDRWpre_isel : ARM64::LDRWpost_isel;
+      Opcode = IsPre ? ARM64::LDRWpre : ARM64::LDRWpost;
       InsertTo64 = true;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
@@ -917,11 +917,11 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   } else if (VT == MVT::i16) {
     if (ExtType == ISD::SEXTLOAD) {
       if (DstVT == MVT::i64)
-        Opcode = IsPre ? ARM64::LDRSHXpre_isel : ARM64::LDRSHXpost_isel;
+        Opcode = IsPre ? ARM64::LDRSHXpre : ARM64::LDRSHXpost;
       else
-        Opcode = IsPre ? ARM64::LDRSHWpre_isel : ARM64::LDRSHWpost_isel;
+        Opcode = IsPre ? ARM64::LDRSHWpre : ARM64::LDRSHWpost;
     } else {
-      Opcode = IsPre ? ARM64::LDRHHpre_isel : ARM64::LDRHHpost_isel;
+      Opcode = IsPre ? ARM64::LDRHHpre : ARM64::LDRHHpost;
       InsertTo64 = DstVT == MVT::i64;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
@@ -930,22 +930,22 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   } else if (VT == MVT::i8) {
     if (ExtType == ISD::SEXTLOAD) {
       if (DstVT == MVT::i64)
-        Opcode = IsPre ? ARM64::LDRSBXpre_isel : ARM64::LDRSBXpost_isel;
+        Opcode = IsPre ? ARM64::LDRSBXpre : ARM64::LDRSBXpost;
       else
-        Opcode = IsPre ? ARM64::LDRSBWpre_isel : ARM64::LDRSBWpost_isel;
+        Opcode = IsPre ? ARM64::LDRSBWpre : ARM64::LDRSBWpost;
     } else {
-      Opcode = IsPre ? ARM64::LDRBBpre_isel : ARM64::LDRBBpost_isel;
+      Opcode = IsPre ? ARM64::LDRBBpre : ARM64::LDRBBpost;
       InsertTo64 = DstVT == MVT::i64;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
       DstVT = MVT::i32;
     }
   } else if (VT == MVT::f32) {
-    Opcode = IsPre ? ARM64::LDRSpre_isel : ARM64::LDRSpost_isel;
+    Opcode = IsPre ? ARM64::LDRSpre : ARM64::LDRSpost;
   } else if (VT == MVT::f64 || VT.is64BitVector()) {
-    Opcode = IsPre ? ARM64::LDRDpre_isel : ARM64::LDRDpost_isel;
+    Opcode = IsPre ? ARM64::LDRDpre : ARM64::LDRDpost;
   } else if (VT.is128BitVector()) {
-    Opcode = IsPre ? ARM64::LDRQpre_isel : ARM64::LDRQpost_isel;
+    Opcode = IsPre ? ARM64::LDRQpre : ARM64::LDRQpost;
   } else
     return nullptr;
   SDValue Chain = LD->getChain();
@@ -954,21 +954,25 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   int OffsetVal = (int)OffsetOp->getZExtValue();
   SDValue Offset = CurDAG->getTargetConstant(OffsetVal, MVT::i64);
   SDValue Ops[] = { Base, Offset, Chain };
-  SDNode *Res = CurDAG->getMachineNode(Opcode, SDLoc(N), DstVT, MVT::i64,
+  SDNode *Res = CurDAG->getMachineNode(Opcode, SDLoc(N), MVT::i64, DstVT,
                                        MVT::Other, Ops);
   // Either way, we're replacing the node, so tell the caller that.
   Done = true;
+  SDValue LoadedVal = SDValue(Res, 1);
   if (InsertTo64) {
     SDValue SubReg = CurDAG->getTargetConstant(ARM64::sub_32, MVT::i32);
-    SDNode *Sub = CurDAG->getMachineNode(
-        ARM64::SUBREG_TO_REG, SDLoc(N), MVT::i64,
-        CurDAG->getTargetConstant(0, MVT::i64), SDValue(Res, 0), SubReg);
-    ReplaceUses(SDValue(N, 0), SDValue(Sub, 0));
-    ReplaceUses(SDValue(N, 1), SDValue(Res, 1));
-    ReplaceUses(SDValue(N, 2), SDValue(Res, 2));
-    return nullptr;
+    LoadedVal =
+        SDValue(CurDAG->getMachineNode(ARM64::SUBREG_TO_REG, SDLoc(N), MVT::i64,
+                                       CurDAG->getTargetConstant(0, MVT::i64),
+                                       LoadedVal, SubReg),
+                0);
   }
-  return Res;
+
+  ReplaceUses(SDValue(N, 0), LoadedVal);
+  ReplaceUses(SDValue(N, 1), SDValue(Res, 0));
+  ReplaceUses(SDValue(N, 2), SDValue(Res, 2));
+
+  return nullptr;
 }
 
 SDNode *ARM64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,

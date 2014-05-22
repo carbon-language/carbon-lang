@@ -1699,21 +1699,6 @@ def LDRHHpre : LoadPreIdx<0b01, 0, 0b01, GPR32, "ldrh">;
 // load sign-extended word
 def LDRSWpre : LoadPreIdx<0b10, 0, 0b10, GPR64, "ldrsw">;
 
-// ISel pseudos and patterns. See expanded comment on LoadPreIdxPseudo.
-def LDRQpre_isel  : LoadPreIdxPseudo<FPR128>;
-def LDRDpre_isel  : LoadPreIdxPseudo<FPR64>;
-def LDRSpre_isel  : LoadPreIdxPseudo<FPR32>;
-def LDRXpre_isel  : LoadPreIdxPseudo<GPR64>;
-def LDRWpre_isel  : LoadPreIdxPseudo<GPR32>;
-def LDRHHpre_isel : LoadPreIdxPseudo<GPR32>;
-def LDRBBpre_isel : LoadPreIdxPseudo<GPR32>;
-
-def LDRSWpre_isel : LoadPreIdxPseudo<GPR64>;
-def LDRSHWpre_isel : LoadPreIdxPseudo<GPR32>;
-def LDRSHXpre_isel : LoadPreIdxPseudo<GPR64>;
-def LDRSBWpre_isel : LoadPreIdxPseudo<GPR32>;
-def LDRSBXpre_isel : LoadPreIdxPseudo<GPR64>;
-
 //---
 // (immediate post-indexed)
 def LDRWpost : LoadPostIdx<0b10, 0, 0b01, GPR32, "ldr">;
@@ -1738,21 +1723,6 @@ def LDRHHpost : LoadPostIdx<0b01, 0, 0b01, GPR32, "ldrh">;
 
 // load sign-extended word
 def LDRSWpost : LoadPostIdx<0b10, 0, 0b10, GPR64, "ldrsw">;
-
-// ISel pseudos and patterns. See expanded comment on LoadPostIdxPseudo.
-def LDRQpost_isel  : LoadPostIdxPseudo<FPR128>;
-def LDRDpost_isel  : LoadPostIdxPseudo<FPR64>;
-def LDRSpost_isel  : LoadPostIdxPseudo<FPR32>;
-def LDRXpost_isel  : LoadPostIdxPseudo<GPR64>;
-def LDRWpost_isel  : LoadPostIdxPseudo<GPR32>;
-def LDRHHpost_isel : LoadPostIdxPseudo<GPR32>;
-def LDRBBpost_isel : LoadPostIdxPseudo<GPR32>;
-
-def LDRSWpost_isel : LoadPostIdxPseudo<GPR64>;
-def LDRSHWpost_isel : LoadPostIdxPseudo<GPR32>;
-def LDRSHXpost_isel : LoadPostIdxPseudo<GPR64>;
-def LDRSBWpost_isel : LoadPostIdxPseudo<GPR32>;
-def LDRSBXpost_isel : LoadPostIdxPseudo<GPR64>;
 
 //===----------------------------------------------------------------------===//
 // Store instructions.
@@ -2072,119 +2042,103 @@ defm STTRB : StoreUnprivileged<0b00, 0, 0b00, GPR32, "sttrb">;
 
 //---
 // (immediate pre-indexed)
-def STRWpre : StorePreIdx<0b10, 0, 0b00, GPR32, "str">;
-def STRXpre : StorePreIdx<0b11, 0, 0b00, GPR64, "str">;
-def STRBpre : StorePreIdx<0b00, 1, 0b00, FPR8,  "str">;
-def STRHpre : StorePreIdx<0b01, 1, 0b00, FPR16, "str">;
-def STRSpre : StorePreIdx<0b10, 1, 0b00, FPR32, "str">;
-def STRDpre : StorePreIdx<0b11, 1, 0b00, FPR64, "str">;
-def STRQpre : StorePreIdx<0b00, 1, 0b10, FPR128, "str">;
+def STRWpre : StorePreIdx<0b10, 0, 0b00, GPR32, "str",  pre_store, i32>;
+def STRXpre : StorePreIdx<0b11, 0, 0b00, GPR64, "str",  pre_store, i64>;
+def STRBpre : StorePreIdx<0b00, 1, 0b00, FPR8,  "str",  pre_store, untyped>;
+def STRHpre : StorePreIdx<0b01, 1, 0b00, FPR16, "str",  pre_store, f16>;
+def STRSpre : StorePreIdx<0b10, 1, 0b00, FPR32, "str",  pre_store, f32>;
+def STRDpre : StorePreIdx<0b11, 1, 0b00, FPR64, "str",  pre_store, f64>;
+def STRQpre : StorePreIdx<0b00, 1, 0b10, FPR128, "str", pre_store, f128>;
 
-def STRBBpre : StorePreIdx<0b00, 0, 0b00, GPR32, "strb">;
-def STRHHpre : StorePreIdx<0b01, 0, 0b00, GPR32, "strh">;
+def STRBBpre : StorePreIdx<0b00, 0, 0b00, GPR32, "strb", pre_truncsti8,  i32>;
+def STRHHpre : StorePreIdx<0b01, 0, 0b00, GPR32, "strh", pre_truncsti16, i32>;
 
-// ISel pseudos and patterns. See expanded comment on StorePreIdxPseudo.
-defm STRQpre : StorePreIdxPseudo<FPR128, f128, pre_store>;
-defm STRDpre : StorePreIdxPseudo<FPR64, f64, pre_store>;
-defm STRSpre : StorePreIdxPseudo<FPR32, f32, pre_store>;
-defm STRXpre : StorePreIdxPseudo<GPR64, i64, pre_store>;
-defm STRWpre : StorePreIdxPseudo<GPR32, i32, pre_store>;
-defm STRHHpre : StorePreIdxPseudo<GPR32, i32, pre_truncsti16>;
-defm STRBBpre : StorePreIdxPseudo<GPR32, i32, pre_truncsti8>;
 // truncstore i64
 def : Pat<(pre_truncsti32 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRWpre_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRWpre (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+           simm9:$off)>;
 def : Pat<(pre_truncsti16 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRHHpre_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRHHpre (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+            simm9:$off)>;
 def : Pat<(pre_truncsti8 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRBBpre_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRBBpre (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+            simm9:$off)>;
 
 def : Pat<(pre_store (v8i8 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v4i16 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v2i32 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v2f32 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v1i64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v1f64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpre_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpre FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 def : Pat<(pre_store (v16i8 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v8i16 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v4i32 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v4f32 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v2i64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(pre_store (v2f64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpre_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpre FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 //---
 // (immediate post-indexed)
-def STRWpost : StorePostIdx<0b10, 0, 0b00, GPR32, "str">;
-def STRXpost : StorePostIdx<0b11, 0, 0b00, GPR64, "str">;
-def STRBpost : StorePostIdx<0b00, 1, 0b00, FPR8,  "str">;
-def STRHpost : StorePostIdx<0b01, 1, 0b00, FPR16, "str">;
-def STRSpost : StorePostIdx<0b10, 1, 0b00, FPR32, "str">;
-def STRDpost : StorePostIdx<0b11, 1, 0b00, FPR64, "str">;
-def STRQpost : StorePostIdx<0b00, 1, 0b10, FPR128, "str">;
+def STRWpost : StorePostIdx<0b10, 0, 0b00, GPR32,  "str", post_store, i32>;
+def STRXpost : StorePostIdx<0b11, 0, 0b00, GPR64,  "str", post_store, i64>;
+def STRBpost : StorePostIdx<0b00, 1, 0b00, FPR8,   "str", post_store, untyped>;
+def STRHpost : StorePostIdx<0b01, 1, 0b00, FPR16,  "str", post_store, f16>;
+def STRSpost : StorePostIdx<0b10, 1, 0b00, FPR32,  "str", post_store, f32>;
+def STRDpost : StorePostIdx<0b11, 1, 0b00, FPR64,  "str", post_store, f64>;
+def STRQpost : StorePostIdx<0b00, 1, 0b10, FPR128, "str", post_store, f128>;
 
-def STRBBpost : StorePostIdx<0b00, 0, 0b00, GPR32, "strb">;
-def STRHHpost : StorePostIdx<0b01, 0, 0b00, GPR32, "strh">;
+def STRBBpost : StorePostIdx<0b00, 0, 0b00, GPR32, "strb", post_truncsti8, i32>;
+def STRHHpost : StorePostIdx<0b01, 0, 0b00, GPR32, "strh", post_truncsti16, i32>;
 
-// ISel pseudos and patterns. See expanded comment on StorePostIdxPseudo.
-defm STRQpost : StorePostIdxPseudo<FPR128, f128, post_store, STRQpost>;
-defm STRDpost : StorePostIdxPseudo<FPR64, f64, post_store, STRDpost>;
-defm STRSpost : StorePostIdxPseudo<FPR32, f32, post_store, STRSpost>;
-defm STRXpost : StorePostIdxPseudo<GPR64, i64, post_store, STRXpost>;
-defm STRWpost : StorePostIdxPseudo<GPR32, i32, post_store, STRWpost>;
-defm STRHHpost : StorePostIdxPseudo<GPR32, i32, post_truncsti16, STRHHpost>;
-defm STRBBpost : StorePostIdxPseudo<GPR32, i32, post_truncsti8, STRBBpost>;
 // truncstore i64
 def : Pat<(post_truncsti32 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRWpost_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRWpost (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+            simm9:$off)>;
 def : Pat<(post_truncsti16 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRHHpost_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRHHpost (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+             simm9:$off)>;
 def : Pat<(post_truncsti8 GPR64:$Rt, GPR64sp:$addr, simm9:$off),
-  (STRBBpost_isel (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
-                  simm9:$off)>;
+  (STRBBpost (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
+             simm9:$off)>;
 
 def : Pat<(post_store (v8i8 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v4i16 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v2i32 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v2f32 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v1i64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v1f64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRDpost_isel FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 def : Pat<(post_store (v16i8 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v8i16 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v4i32 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v4f32 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v2i64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_store (v2f64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
-          (STRQpost_isel FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 //===----------------------------------------------------------------------===//
 // Load/store exclusive instructions.

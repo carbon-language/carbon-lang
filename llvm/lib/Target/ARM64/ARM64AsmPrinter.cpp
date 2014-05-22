@@ -423,45 +423,6 @@ void ARM64AsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
 // instructions) auto-generated.
 #include "ARM64GenMCPseudoLowering.inc"
 
-static unsigned getRealIndexedOpcode(unsigned Opc) {
-  switch (Opc) {
-  case ARM64::LDRXpre_isel:    return ARM64::LDRXpre;
-  case ARM64::LDRWpre_isel:    return ARM64::LDRWpre;
-  case ARM64::LDRQpre_isel:    return ARM64::LDRQpre;
-  case ARM64::LDRDpre_isel:    return ARM64::LDRDpre;
-  case ARM64::LDRSpre_isel:    return ARM64::LDRSpre;
-  case ARM64::LDRBBpre_isel:   return ARM64::LDRBBpre;
-  case ARM64::LDRHHpre_isel:   return ARM64::LDRHHpre;
-  case ARM64::LDRSBWpre_isel:  return ARM64::LDRSBWpre;
-  case ARM64::LDRSBXpre_isel:  return ARM64::LDRSBXpre;
-  case ARM64::LDRSHWpre_isel:  return ARM64::LDRSHWpre;
-  case ARM64::LDRSHXpre_isel:  return ARM64::LDRSHXpre;
-  case ARM64::LDRSWpre_isel:   return ARM64::LDRSWpre;
-
-  case ARM64::LDRQpost_isel:   return ARM64::LDRQpost;
-  case ARM64::LDRDpost_isel:   return ARM64::LDRDpost;
-  case ARM64::LDRSpost_isel:   return ARM64::LDRSpost;
-  case ARM64::LDRXpost_isel:   return ARM64::LDRXpost;
-  case ARM64::LDRWpost_isel:   return ARM64::LDRWpost;
-  case ARM64::LDRHHpost_isel:  return ARM64::LDRHHpost;
-  case ARM64::LDRBBpost_isel:  return ARM64::LDRBBpost;
-  case ARM64::LDRSWpost_isel:  return ARM64::LDRSWpost;
-  case ARM64::LDRSHWpost_isel: return ARM64::LDRSHWpost;
-  case ARM64::LDRSHXpost_isel: return ARM64::LDRSHXpost;
-  case ARM64::LDRSBWpost_isel: return ARM64::LDRSBWpost;
-  case ARM64::LDRSBXpost_isel: return ARM64::LDRSBXpost;
-
-  case ARM64::STRXpre_isel:    return ARM64::STRXpre;
-  case ARM64::STRWpre_isel:    return ARM64::STRWpre;
-  case ARM64::STRHHpre_isel:   return ARM64::STRHHpre;
-  case ARM64::STRBBpre_isel:   return ARM64::STRBBpre;
-  case ARM64::STRQpre_isel:    return ARM64::STRQpre;
-  case ARM64::STRDpre_isel:    return ARM64::STRDpre;
-  case ARM64::STRSpre_isel:    return ARM64::STRSpre;
-  }
-  llvm_unreachable("Unexpected pre-indexed opcode!");
-}
-
 void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Do any auto-generated pseudo lowerings.
   if (emitPseudoExpansionLowering(OutStreamer, MI))
@@ -486,60 +447,6 @@ void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       PrintDebugValueComment(MI, OS);
       OutStreamer.EmitRawText(StringRef(OS.str()));
     }
-    return;
-  }
-  // Indexed loads and stores use a pseudo to handle complex operand
-  // tricks and writeback to the base register. We strip off the writeback
-  // operand and switch the opcode here. Post-indexed stores were handled by the
-  // tablegen'erated pseudos above. (The complex operand <--> simple
-  // operand isel is beyond tablegen's ability, so we do these manually).
-  case ARM64::LDRHHpre_isel:
-  case ARM64::LDRBBpre_isel:
-  case ARM64::LDRXpre_isel:
-  case ARM64::LDRWpre_isel:
-  case ARM64::LDRQpre_isel:
-  case ARM64::LDRDpre_isel:
-  case ARM64::LDRSpre_isel:
-  case ARM64::LDRSBWpre_isel:
-  case ARM64::LDRSBXpre_isel:
-  case ARM64::LDRSHWpre_isel:
-  case ARM64::LDRSHXpre_isel:
-  case ARM64::LDRSWpre_isel:
-  case ARM64::LDRQpost_isel:
-  case ARM64::LDRDpost_isel:
-  case ARM64::LDRSpost_isel:
-  case ARM64::LDRXpost_isel:
-  case ARM64::LDRWpost_isel:
-  case ARM64::LDRHHpost_isel:
-  case ARM64::LDRBBpost_isel:
-  case ARM64::LDRSWpost_isel:
-  case ARM64::LDRSHWpost_isel:
-  case ARM64::LDRSHXpost_isel:
-  case ARM64::LDRSBWpost_isel:
-  case ARM64::LDRSBXpost_isel: {
-    MCInst TmpInst;
-    // For loads, the writeback operand to be skipped is the second.
-    TmpInst.setOpcode(getRealIndexedOpcode(MI->getOpcode()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(2).getReg()));
-    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    EmitToStreamer(OutStreamer, TmpInst);
-    return;
-  }
-  case ARM64::STRXpre_isel:
-  case ARM64::STRWpre_isel:
-  case ARM64::STRHHpre_isel:
-  case ARM64::STRBBpre_isel:
-  case ARM64::STRQpre_isel:
-  case ARM64::STRDpre_isel:
-  case ARM64::STRSpre_isel: {
-    MCInst TmpInst;
-    // For loads, the writeback operand to be skipped is the first.
-    TmpInst.setOpcode(getRealIndexedOpcode(MI->getOpcode()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(2).getReg()));
-    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    EmitToStreamer(OutStreamer, TmpInst);
     return;
   }
 

@@ -3146,9 +3146,9 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   case ARM64::LDPWpre:
   case ARM64::LDPXpost:
   case ARM64::LDPXpre: {
-    unsigned Rt = Inst.getOperand(0).getReg();
-    unsigned Rt2 = Inst.getOperand(1).getReg();
-    unsigned Rn = Inst.getOperand(2).getReg();
+    unsigned Rt = Inst.getOperand(1).getReg();
+    unsigned Rt2 = Inst.getOperand(2).getReg();
+    unsigned Rn = Inst.getOperand(3).getReg();
     if (RI->isSubRegisterEq(Rn, Rt))
       return Error(Loc[0], "unpredictable LDP instruction, writeback base "
                            "is also a destination");
@@ -3157,13 +3157,6 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
                            "is also a destination");
     // FALLTHROUGH
   }
-  case ARM64::LDPDpost:
-  case ARM64::LDPDpre:
-  case ARM64::LDPQpost:
-  case ARM64::LDPQpre:
-  case ARM64::LDPSpost:
-  case ARM64::LDPSpre:
-  case ARM64::LDPSWpost:
   case ARM64::LDPDi:
   case ARM64::LDPQi:
   case ARM64::LDPSi:
@@ -3172,6 +3165,19 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   case ARM64::LDPXi: {
     unsigned Rt = Inst.getOperand(0).getReg();
     unsigned Rt2 = Inst.getOperand(1).getReg();
+    if (Rt == Rt2)
+      return Error(Loc[1], "unpredictable LDP instruction, Rt2==Rt");
+    break;
+  }
+  case ARM64::LDPDpost:
+  case ARM64::LDPDpre:
+  case ARM64::LDPQpost:
+  case ARM64::LDPQpre:
+  case ARM64::LDPSpost:
+  case ARM64::LDPSpre:
+  case ARM64::LDPSWpost: {
+    unsigned Rt = Inst.getOperand(1).getReg();
+    unsigned Rt2 = Inst.getOperand(2).getReg();
     if (Rt == Rt2)
       return Error(Loc[1], "unpredictable LDP instruction, Rt2==Rt");
     break;
@@ -3186,9 +3192,9 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   case ARM64::STPWpre:
   case ARM64::STPXpost:
   case ARM64::STPXpre: {
-    unsigned Rt = Inst.getOperand(0).getReg();
-    unsigned Rt2 = Inst.getOperand(1).getReg();
-    unsigned Rn = Inst.getOperand(2).getReg();
+    unsigned Rt = Inst.getOperand(1).getReg();
+    unsigned Rt2 = Inst.getOperand(2).getReg();
+    unsigned Rn = Inst.getOperand(3).getReg();
     if (RI->isSubRegisterEq(Rn, Rt))
       return Error(Loc[0], "unpredictable STP instruction, writeback base "
                            "is also a source");
@@ -3219,8 +3225,8 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   case ARM64::LDRSWpost:
   case ARM64::LDRWpost:
   case ARM64::LDRXpost: {
-    unsigned Rt = Inst.getOperand(0).getReg();
-    unsigned Rn = Inst.getOperand(1).getReg();
+    unsigned Rt = Inst.getOperand(1).getReg();
+    unsigned Rn = Inst.getOperand(2).getReg();
     if (RI->isSubRegisterEq(Rn, Rt))
       return Error(Loc[0], "unpredictable LDR instruction, writeback base "
                            "is also a source");
@@ -3238,8 +3244,8 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   case ARM64::STRHpre:
   case ARM64::STRWpre:
   case ARM64::STRXpre: {
-    unsigned Rt = Inst.getOperand(0).getReg();
-    unsigned Rn = Inst.getOperand(1).getReg();
+    unsigned Rt = Inst.getOperand(1).getReg();
+    unsigned Rn = Inst.getOperand(2).getReg();
     if (RI->isSubRegisterEq(Rn, Rt))
       return Error(Loc[0], "unpredictable STR instruction, writeback base "
                            "is also a source");

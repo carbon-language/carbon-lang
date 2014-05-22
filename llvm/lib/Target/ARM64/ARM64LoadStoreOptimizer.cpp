@@ -528,6 +528,7 @@ ARM64LoadStoreOpt::mergePreIdxUpdateInsn(MachineBasicBlock::iterator I,
   unsigned NewOpc = getPreIndexedOpcode(I->getOpcode());
   MachineInstrBuilder MIB =
       BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
+          .addOperand(Update->getOperand(0))
           .addOperand(I->getOperand(0))
           .addOperand(I->getOperand(1))
           .addImm(Value);
@@ -571,6 +572,7 @@ ARM64LoadStoreOpt::mergePostIdxUpdateInsn(MachineBasicBlock::iterator I,
   unsigned NewOpc = getPostIndexedOpcode(I->getOpcode());
   MachineInstrBuilder MIB =
       BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
+          .addOperand(Update->getOperand(0))
           .addOperand(I->getOperand(0))
           .addOperand(I->getOperand(1))
           .addImm(Value);

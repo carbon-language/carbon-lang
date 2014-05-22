@@ -2918,8 +2918,8 @@ multiclass StoreUnprivileged<bits<2> sz, bit V, bits<2> opc,
 //---
 
 class BaseLoadStorePreIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
-                          string asm, string cstr>
-    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]!", cstr, []> {
+                          string asm, string cstr, list<dag> pat>
+    : I<oops, iops, asm, "\t$Rt, [$Rn, $offset]!", cstr, pat> {
   bits<5> Rt;
   bits<5> Rn;
   bits<9> offset;
@@ -2939,65 +2939,25 @@ class BaseLoadStorePreIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
 
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
-// FIXME: Modeling the write-back of these instructions for isel used
-// to be tricky.  we need the complex addressing mode for the memory
-// reference, but we also need the write-back specified as a tied
-// operand to the base register. It should work now, but needs to be
-// done as a separate patch. This would allow us to be rid of the
-// codegenonly pseudoinstructions below too.
 class LoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
-                     (outs regtype:$Rt/*, GPR64sp:$wback*/),
+                     (outs GPR64sp:$wback, regtype:$Rt),
                      (ins GPR64sp:$Rn, simm9:$offset), asm,
-                     ""/*"$Rn = $wback"*/>,
+                     "$Rn = $wback", []>,
       Sched<[WriteLD, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm>
+                  string asm, SDPatternOperator storeop, ValueType Ty>
     : BaseLoadStorePreIdx<sz, V, opc,
-                      (outs/* GPR64sp:$wback*/),
+                      (outs GPR64sp:$wback),
                       (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
-                      asm, ""/*"$Rn = $wback"*/>,
+                      asm, "$Rn = $wback",
+      [(set GPR64sp:$wback,
+            (storeop (Ty regtype:$Rt), GPR64sp:$Rn, simm9:$offset))]>,
       Sched<[WriteAdr, WriteST]>;
 } // hasSideEffects = 0
-
-// ISel pseudo-instructions which have the tied operands. When the MC lowering
-// logic finally gets smart enough to strip off tied operands that are just
-// for isel convenience, we can get rid of these pseudos and just reference
-// the real instructions directly.
-//
-// Ironically, also because of the writeback operands, we can't put the
-// matcher pattern directly on the instruction, but need to define it
-// separately.
-//
-// Loads aren't matched with patterns here at all, but rather in C++
-// custom lowering.
-let mayStore = 0, mayLoad = 1, hasSideEffects = 0 in {
-class LoadPreIdxPseudo<RegisterClass regtype>
-    : Pseudo<(outs regtype:$Rt, GPR64sp:$wback),
-             (ins GPR64sp:$addr, simm9:$offset), [],
-              "$addr = $wback,@earlyclobber $wback">,
-      Sched<[WriteLD, WriteAdr]>;
-class LoadPostIdxPseudo<RegisterClass regtype>
-    : Pseudo<(outs regtype:$Rt, GPR64sp:$wback),
-             (ins GPR64sp:$addr, simm9:$offset), [],
-              "$addr = $wback,@earlyclobber $wback">,
-      Sched<[WriteLD, WriteI]>;
-}
-multiclass StorePreIdxPseudo<RegisterClass regtype, ValueType Ty,
-                             SDPatternOperator OpNode> {
-  let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in
-  def _isel: Pseudo<(outs GPR64sp:$wback),
-                    (ins regtype:$Rt, GPR64sp:$addr, simm9:$offset), [],
-                    "$addr = $wback,@earlyclobber $wback">,
-      Sched<[WriteAdr, WriteST]>;
-
-  def : Pat<(OpNode (Ty regtype:$Rt), GPR64sp:$addr, simm9:$offset),
-            (!cast<Instruction>(NAME#_isel) regtype:$Rt, GPR64sp:$addr,
-                                            simm9:$offset)>;
-}
 
 //---
 // Load/store post-indexed
@@ -3005,8 +2965,8 @@ multiclass StorePreIdxPseudo<RegisterClass regtype, ValueType Ty,
 
 // (pre-index) load/stores.
 class BaseLoadStorePostIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
-                          string asm, string cstr>
-    : I<oops, iops, asm, "\t$Rt, [$Rn], $offset", cstr, []> {
+                          string asm, string cstr, list<dag> pat>
+    : I<oops, iops, asm, "\t$Rt, [$Rn], $offset", cstr, pat> {
   bits<5> Rt;
   bits<5> Rn;
   bits<9> offset;
@@ -3026,51 +2986,26 @@ class BaseLoadStorePostIdx<bits<2> sz, bit V, bits<2> opc, dag oops, dag iops,
 
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
-// FIXME: Modeling the write-back of these instructions for isel used
-// to be tricky.  we need the complex addressing mode for the memory
-// reference, but we also need the write-back specified as a tied
-// operand to the base register. It should work now, but needs to be
-// done as a separate patch. This would allow us to be rid of the
-// codegenonly pseudoinstructions below too.
 class LoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePostIdx<sz, V, opc,
-                      (outs regtype:$Rt/*, GPR64sp:$wback*/),
+                      (outs GPR64sp:$wback, regtype:$Rt),
                       (ins GPR64sp:$Rn, simm9:$offset),
-                      asm, ""/*"$addr.base = $wback"*/>,
+                      asm, "$Rn = $wback", []>,
       Sched<[WriteLD, WriteI]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
-             string asm>
+                   string asm, SDPatternOperator storeop, ValueType Ty>
     : BaseLoadStorePostIdx<sz, V, opc,
-                      (outs/* GPR64sp:$wback*/),
+                      (outs GPR64sp:$wback),
                       (ins regtype:$Rt, GPR64sp:$Rn, simm9:$offset),
-                       asm, ""/*"$addr.base = $wback"*/>,
+                       asm, "$Rn = $wback",
+      [(set GPR64sp:$wback,
+            (storeop (Ty regtype:$Rt), GPR64sp:$Rn, simm9:$offset))]>,
     Sched<[WriteAdr, WriteST, ReadAdrBase]>;
 } // hasSideEffects = 0
 
-// ISel pseudo-instructions which have the tied operands. When the MC lowering
-// logic finally gets smart enough to strip off tied operands that are just
-// for isel convenience, we can get rid of these pseudos and just reference
-// the real instructions directly.
-//
-// Ironically, also because of the writeback operands, we can't put the
-// matcher pattern directly on the instruction, but need to define it
-// separately.
-multiclass StorePostIdxPseudo<RegisterClass regtype, ValueType Ty,
-                              SDPatternOperator OpNode, Instruction Insn> {
-  let mayStore = 1, mayLoad = 0, hasSideEffects = 0 in
-  def _isel: Pseudo<(outs GPR64sp:$wback),
-                    (ins regtype:$Rt, GPR64sp:$Rn, simm9:$idx), [],
-                    "$Rn = $wback,@earlyclobber $wback">,
-      PseudoInstExpansion<(Insn regtype:$Rt, GPR64sp:$Rn, simm9:$idx)>,
-      Sched<[WriteAdr, WriteST, ReadAdrBase]>;
-
-  def : Pat<(OpNode (Ty regtype:$Rt), GPR64sp:$Rn, simm9:$idx),
-            (!cast<Instruction>(NAME#_isel) regtype:$Rt, GPR64sp:$Rn,
-                                            simm9:$idx)>;
-}
 
 //---
 // Load/store pair
@@ -3129,7 +3064,7 @@ multiclass StorePairOffset<bits<2> opc, bit V, RegisterClass regtype,
 // (pre-indexed)
 class BaseLoadStorePairPreIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn, $offset]!", "", []> {
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn, $offset]!", "$Rn = $wback", []> {
   bits<5> Rt;
   bits<5> Rt2;
   bits<5> Rn;
@@ -3152,14 +3087,14 @@ let mayStore = 0, mayLoad = 1 in
 class LoadPairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
                      Operand indextype, string asm>
     : BaseLoadStorePairPreIdx<opc, V, 1,
-                              (outs regtype:$Rt, regtype:$Rt2),
+                              (outs GPR64sp:$wback, regtype:$Rt, regtype:$Rt2),
                               (ins GPR64sp:$Rn, indextype:$offset), asm>,
       Sched<[WriteLD, WriteLDHi, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
                       Operand indextype, string asm>
-    : BaseLoadStorePairPreIdx<opc, V, 0, (outs),
+    : BaseLoadStorePairPreIdx<opc, V, 0, (outs GPR64sp:$wback),
                              (ins regtype:$Rt, regtype:$Rt2,
                                   GPR64sp:$Rn, indextype:$offset),
                              asm>,
@@ -3170,7 +3105,7 @@ class StorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
 
 class BaseLoadStorePairPostIdx<bits<2> opc, bit V, bit L, dag oops, dag iops,
                               string asm>
-    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn], $offset", "", []> {
+    : I<oops, iops, asm, "\t$Rt, $Rt2, [$Rn], $offset", "$Rn = $wback", []> {
   bits<5> Rt;
   bits<5> Rt2;
   bits<5> Rn;
@@ -3193,7 +3128,7 @@ let mayStore = 0, mayLoad = 1 in
 class LoadPairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
                       Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 1,
-                              (outs regtype:$Rt, regtype:$Rt2),
+                              (outs GPR64sp:$wback, regtype:$Rt, regtype:$Rt2),
                               (ins GPR64sp:$Rn, idxtype:$offset), asm>,
       Sched<[WriteLD, WriteLDHi, WriteAdr]>;
 
@@ -3201,7 +3136,7 @@ let mayStore = 1, mayLoad = 0 in
 class StorePairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
                        Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 0, (outs),
-                             (ins regtype:$Rt, regtype:$Rt2,
+                             (ins GPR64sp:$wback, regtype:$Rt, regtype:$Rt2,
                                   GPR64sp:$Rn, idxtype:$offset),
                              asm>,
       Sched<[WriteAdr, WriteSTP]>;

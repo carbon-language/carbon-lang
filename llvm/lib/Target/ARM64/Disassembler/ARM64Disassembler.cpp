@@ -902,6 +902,60 @@ static DecodeStatus DecodeSignedLdStInstruction(llvm::MCInst &Inst,
   if (offset & (1 << (9 - 1)))
     offset |= ~((1LL << 9) - 1);
 
+  // First operand is always the writeback to the address register, if needed.
+  switch (Inst.getOpcode()) {
+  default:
+    break;
+  case ARM64::LDRSBWpre:
+  case ARM64::LDRSHWpre:
+  case ARM64::STRBBpre:
+  case ARM64::LDRBBpre:
+  case ARM64::STRHHpre:
+  case ARM64::LDRHHpre:
+  case ARM64::STRWpre:
+  case ARM64::LDRWpre:
+  case ARM64::LDRSBWpost:
+  case ARM64::LDRSHWpost:
+  case ARM64::STRBBpost:
+  case ARM64::LDRBBpost:
+  case ARM64::STRHHpost:
+  case ARM64::LDRHHpost:
+  case ARM64::STRWpost:
+  case ARM64::LDRWpost:
+  case ARM64::LDRSBXpre:
+  case ARM64::LDRSHXpre:
+  case ARM64::STRXpre:
+  case ARM64::LDRSWpre:
+  case ARM64::LDRXpre:
+  case ARM64::LDRSBXpost:
+  case ARM64::LDRSHXpost:
+  case ARM64::STRXpost:
+  case ARM64::LDRSWpost:
+  case ARM64::LDRXpost:
+  case ARM64::LDRQpre:
+  case ARM64::STRQpre:
+  case ARM64::LDRQpost:
+  case ARM64::STRQpost:
+  case ARM64::LDRDpre:
+  case ARM64::STRDpre:
+  case ARM64::LDRDpost:
+  case ARM64::STRDpost:
+  case ARM64::LDRSpre:
+  case ARM64::STRSpre:
+  case ARM64::LDRSpost:
+  case ARM64::STRSpost:
+  case ARM64::LDRHpre:
+  case ARM64::STRHpre:
+  case ARM64::LDRHpost:
+  case ARM64::STRHpost:
+  case ARM64::LDRBpre:
+  case ARM64::STRBpre:
+  case ARM64::LDRBpost:
+  case ARM64::STRBpost:
+    DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
+    break;
+  }
+
   switch (Inst.getOpcode()) {
   default:
     return Fail;
@@ -1112,6 +1166,37 @@ static DecodeStatus DecodePairLdStInstruction(llvm::MCInst &Inst, uint32_t insn,
 
   unsigned Opcode = Inst.getOpcode();
   bool NeedsDisjointWritebackTransfer = false;
+
+  // First operand is always writeback of base register.
+  switch (Opcode) {
+  default:
+    break;
+  case ARM64::LDPXpost:
+  case ARM64::STPXpost:
+  case ARM64::LDPSWpost:
+  case ARM64::LDPXpre:
+  case ARM64::STPXpre:
+  case ARM64::LDPSWpre:
+  case ARM64::LDPWpost:
+  case ARM64::STPWpost:
+  case ARM64::LDPWpre:
+  case ARM64::STPWpre:
+  case ARM64::LDPQpost:
+  case ARM64::STPQpost:
+  case ARM64::LDPQpre:
+  case ARM64::STPQpre:
+  case ARM64::LDPDpost:
+  case ARM64::STPDpost:
+  case ARM64::LDPDpre:
+  case ARM64::STPDpre:
+  case ARM64::LDPSpost:
+  case ARM64::STPSpost:
+  case ARM64::LDPSpre:
+  case ARM64::STPSpre:
+    DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
+    break;
+  }
+
   switch (Opcode) {
   default:
     return Fail;
