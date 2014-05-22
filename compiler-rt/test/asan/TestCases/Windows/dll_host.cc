@@ -3,6 +3,17 @@
 // Just make sure we can compile this.
 // The actual compile&run sequence is to be done by the DLL tests.
 // RUN: %clangxx_asan -O0 %s -Fe%t
+//
+// Get the list of ASan wrappers exported by the main module RTL:
+// RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" < %t.exports | grep -v @ | sort | uniq > %t.exported_wrappers
+//
+// Get the list of ASan wrappers imported by the DLL RTL:
+// RUN: grep INTERCEPT_LIBRARY_FUNCTION %p/../../../../lib/asan/asan_dll_thunk.cc | grep -v define | sed "s/.*(\(.*\)).*/__asan_wrap_\1/" | sort | uniq > %t.dll_imports
+//
+// Now make sure the DLL thunk imports everything:
+// RUN: echo
+// RUN: echo "=== NOTE === If you see a mismatch below, please update asan_dll_thunk.cc"
+// RUN: diff %t.dll_imports %t.exported_wrappers
 
 #include <stdio.h>
 #include <windows.h>
