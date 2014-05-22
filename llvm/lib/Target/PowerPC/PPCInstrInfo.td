@@ -610,10 +610,10 @@ def iaddroff : ComplexPattern<iPTR, 1, "SelectAddrImmOffs", [], []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
-def In32BitMode  : Predicate<"!PPCSubTarget.isPPC64()">;
-def In64BitMode  : Predicate<"PPCSubTarget.isPPC64()">;
-def IsBookE  : Predicate<"PPCSubTarget.isBookE()">;
-def IsNotBookE  : Predicate<"!PPCSubTarget.isBookE()">;
+def In32BitMode  : Predicate<"!PPCSubTarget->isPPC64()">;
+def In64BitMode  : Predicate<"PPCSubTarget->isPPC64()">;
+def IsBookE  : Predicate<"PPCSubTarget->isBookE()">;
+def IsNotBookE  : Predicate<"!PPCSubTarget->isBookE()">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Multiclass Definitions.

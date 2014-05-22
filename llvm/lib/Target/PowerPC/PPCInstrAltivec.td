@@ -223,7 +223,7 @@ class VX2_Int_Ty2<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
 //===----------------------------------------------------------------------===//
 // Instruction Definitions.
 
-def HasAltivec : Predicate<"PPCSubTarget.hasAltivec()">;
+def HasAltivec : Predicate<"PPCSubTarget->hasAltivec()">;
 let Predicates = [HasAltivec] in {
 
 let isCodeGenOnly = 1 in {

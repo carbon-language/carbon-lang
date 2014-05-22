@@ -86,7 +86,7 @@ class PPCFastISel final : public FastISel {
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  const PPCSubtarget &PPCSubTarget;
+  const PPCSubtarget *PPCSubTarget;
   LLVMContext *Context;
 
   public:
@@ -96,9 +96,7 @@ class PPCFastISel final : public FastISel {
       TM(FuncInfo.MF->getTarget()),
       TII(*TM.getInstrInfo()),
       TLI(*TM.getTargetLowering()),
-      PPCSubTarget(
-       *((static_cast<const PPCTargetMachine *>(&TM))->getSubtargetImpl())
-      ),
+      PPCSubTarget(&TM.getSubtarget<PPCSubtarget>()),
       Context(&FuncInfo.Fn->getContext()) { }
 
   // Backend specific FastISel code.
@@ -740,7 +738,7 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
     return false;
   MVT SrcVT = SrcEVT.getSimpleVT();
 
-  if (SrcVT == MVT::i1 && PPCSubTarget.useCRBits())
+  if (SrcVT == MVT::i1 && PPCSubTarget->useCRBits())
     return false;
 
   // See if operand 2 is an immediate encodeable in the compare.
@@ -901,7 +899,7 @@ unsigned PPCFastISel::PPCMoveToFPReg(MVT SrcVT, unsigned SrcReg,
     if (!IsSigned) {
       LoadOpc = PPC::LFIWZX;
       Addr.Offset = 4;
-    } else if (PPCSubTarget.hasLFIWAX()) {
+    } else if (PPCSubTarget->hasLFIWAX()) {
       LoadOpc = PPC::LFIWAX;
       Addr.Offset = 4;
     }
@@ -942,7 +940,7 @@ bool PPCFastISel::SelectIToFP(const Instruction *I, bool IsSigned) {
 
   // We can only lower an unsigned convert if we have the newer
   // floating-point conversion operations.
-  if (!IsSigned && !PPCSubTarget.hasFPCVT())
+  if (!IsSigned && !PPCSubTarget->hasFPCVT())
     return false;
 
   // FIXME: For now we require the newer floating-point conversion operations
@@ -950,7 +948,7 @@ bool PPCFastISel::SelectIToFP(const Instruction *I, bool IsSigned) {
   // to single-precision float.  Otherwise we have to generate a lot of
   // fiddly code to avoid double rounding.  If necessary, the fiddly code
   // can be found in PPCTargetLowering::LowerINT_TO_FP().
-  if (DstVT == MVT::f32 && !PPCSubTarget.hasFPCVT())
+  if (DstVT == MVT::f32 && !PPCSubTarget->hasFPCVT())
     return false;
 
   // Extend the input if necessary.
@@ -1065,7 +1063,7 @@ bool PPCFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
     if (IsSigned)
       Opc = PPC::FCTIWZ;
     else
-      Opc = PPCSubTarget.hasFPCVT() ? PPC::FCTIWUZ : PPC::FCTIDZ;
+      Opc = PPCSubTarget->hasFPCVT() ? PPC::FCTIWUZ : PPC::FCTIDZ;
   else
     Opc = IsSigned ? PPC::FCTIDZ : PPC::FCTIDUZ;
 
@@ -2002,7 +2000,7 @@ unsigned PPCFastISel::PPCMaterialize64BitInt(int64_t Imm,
 unsigned PPCFastISel::PPCMaterializeInt(const Constant *C, MVT VT) {
   // If we're using CR bit registers for i1 values, handle that as a special
   // case first.
-  if (VT == MVT::i1 && PPCSubTarget.useCRBits()) {
+  if (VT == MVT::i1 && PPCSubTarget->useCRBits()) {
     const ConstantInt *CI = cast<ConstantInt>(C);
     unsigned ImmReg = createResultReg(&PPC::CRBITRCRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -2176,7 +2174,7 @@ unsigned PPCFastISel::FastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
 
   // If we're using CR bit registers for i1 values, handle that as a special
   // case first.
-  if (VT == MVT::i1 && PPCSubTarget.useCRBits()) {
+  if (VT == MVT::i1 && PPCSubTarget->useCRBits()) {
     unsigned ImmReg = createResultReg(&PPC::CRBITRCRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(Imm == 0 ? PPC::CRUNSET : PPC::CRSET), ImmReg);

@@ -39,7 +39,7 @@ multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, dag OOL, dag IOL,
   }
 }
 
-def HasVSX : Predicate<"PPCSubTarget.hasVSX()">;
+def HasVSX : Predicate<"PPCSubTarget->hasVSX()">;
 let Predicates = [HasVSX] in {
 let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
 let neverHasSideEffects = 1 in { // VSX instructions don't have side effects.

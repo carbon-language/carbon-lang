@@ -51,23 +51,25 @@ namespace {
   ///
   class PPCDAGToDAGISel : public SelectionDAGISel {
     const PPCTargetMachine &TM;
-    const PPCTargetLowering &PPCLowering;
-    const PPCSubtarget &PPCSubTarget;
+    const PPCTargetLowering *PPCLowering;
+    const PPCSubtarget *PPCSubTarget;
     unsigned GlobalBaseReg;
   public:
     explicit PPCDAGToDAGISel(PPCTargetMachine &tm)
       : SelectionDAGISel(tm), TM(tm),
-        PPCLowering(*TM.getTargetLowering()),
-        PPCSubTarget(*TM.getSubtargetImpl()) {
+        PPCLowering(TM.getTargetLowering()),
+        PPCSubTarget(TM.getSubtargetImpl()) {
       initializePPCDAGToDAGISelPass(*PassRegistry::getPassRegistry());
     }
 
     bool runOnMachineFunction(MachineFunction &MF) override {
       // Make sure we re-emit a set of the global base reg if necessary
       GlobalBaseReg = 0;
+      PPCLowering = TM.getTargetLowering();
+      PPCSubTarget = TM.getSubtargetImpl();
       SelectionDAGISel::runOnMachineFunction(MF);
 
-      if (!PPCSubTarget.isSVR4ABI())
+      if (!PPCSubTarget->isSVR4ABI())
         InsertVRSaveCode(MF);
 
       return true;
@@ -89,7 +91,7 @@ namespace {
 
     /// getSmallIPtrImm - Return a target constant of pointer type.
     inline SDValue getSmallIPtrImm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, PPCLowering.getPointerTy());
+      return CurDAG->getTargetConstant(Imm, PPCLowering->getPointerTy());
     }
 
     /// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s
@@ -122,7 +124,7 @@ namespace {
     /// a base register plus a signed 16-bit displacement [r+imm].
     bool SelectAddrImm(SDValue N, SDValue &Disp,
                        SDValue &Base) {
-      return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG, false);
+      return PPCLowering->SelectAddressRegImm(N, Disp, Base, *CurDAG, false);
     }
 
     /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
@@ -142,20 +144,20 @@ namespace {
     /// represented as an indexed [r+r] operation.  Returns false if it can
     /// be represented by [r+imm], which are preferred.
     bool SelectAddrIdx(SDValue N, SDValue &Base, SDValue &Index) {
-      return PPCLowering.SelectAddressRegReg(N, Base, Index, *CurDAG);
+      return PPCLowering->SelectAddressRegReg(N, Base, Index, *CurDAG);
     }
 
     /// SelectAddrIdxOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
     bool SelectAddrIdxOnly(SDValue N, SDValue &Base, SDValue &Index) {
-      return PPCLowering.SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
+      return PPCLowering->SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
     }
 
     /// SelectAddrImmX4 - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement that is a multiple of 4.
     /// Suitable for use by STD and friends.
     bool SelectAddrImmX4(SDValue N, SDValue &Disp, SDValue &Base) {
-      return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG, true);
+      return PPCLowering->SelectAddressRegImm(N, Disp, Base, *CurDAG, true);
     }
 
     // Select an address into a single register.
@@ -272,7 +274,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     DebugLoc dl;
 
-    if (PPCLowering.getPointerTy() == MVT::i32) {
+    if (PPCLowering->getPointerTy() == MVT::i32) {
       GlobalBaseReg = RegInfo->createVirtualRegister(&PPC::GPRC_NOR0RegClass);
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR));
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR), GlobalBaseReg);
@@ -283,7 +285,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     }
   }
   return CurDAG->getRegister(GlobalBaseReg,
-                             PPCLowering.getPointerTy()).getNode();
+                             PPCLowering->getPointerTy()).getNode();
 }
 
 /// isIntS16Immediate - This method tests to see if the node is either a 32-bit
@@ -580,7 +582,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
     Opc = PPC::FCMPUS;
   } else {
     assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
-    Opc = PPCSubTarget.hasVSX() ? PPC::XSCMPUDP : PPC::FCMPUD;
+    Opc = PPCSubTarget->hasVSX() ? PPC::XSCMPUDP : PPC::FCMPUD;
   }
   return SDValue(CurDAG->getMachineNode(Opc, dl, MVT::i32, LHS, RHS), 0);
 }
@@ -746,7 +748,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   EVT PtrVT = CurDAG->getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = (PtrVT == MVT::i64);
 
-  if (!PPCSubTarget.useCRBits() &&
+  if (!PPCSubTarget->useCRBits() &&
       isInt32Immediate(N->getOperand(1), Imm)) {
     // We can codegen setcc op, imm very efficiently compared to a brcond.
     // Check for those cases here.
@@ -828,7 +830,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   if (LHS.getValueType().isVector()) {
     EVT VecVT = LHS.getValueType();
     MVT::SimpleValueType VT = VecVT.getSimpleVT().SimpleTy;
-    unsigned int VCmpInst = getVCmpInst(VT, CC, PPCSubTarget.hasVSX());
+    unsigned int VCmpInst = getVCmpInst(VT, CC, PPCSubTarget->hasVSX());
 
     switch (CC) {
       case ISD::SETEQ:
@@ -839,7 +841,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
       case ISD::SETONE:
       case ISD::SETUNE: {
         SDValue VCmp(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
-        return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLNOR :
+        return CurDAG->SelectNodeTo(N, PPCSubTarget->hasVSX() ? PPC::XXLNOR :
                                                                PPC::VNOR,
                                     VecVT, VCmp, VCmp);
       } 
@@ -861,9 +863,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
           return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, LHS, RHS);
         } else {
           SDValue VCmpGT(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
-          unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
+          unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget->hasVSX());
           SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
-          return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLOR :
+          return CurDAG->SelectNodeTo(N, PPCSubTarget->hasVSX() ? PPC::XXLOR :
                                                                  PPC::VOR,
                                       VecVT, VCmpGT, VCmpEQ);
         }
@@ -872,9 +874,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
       case ISD::SETOLE:
       case ISD::SETULE: {
         SDValue VCmpLE(CurDAG->getMachineNode(VCmpInst, dl, VecVT, RHS, LHS), 0);
-        unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
+        unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget->hasVSX());
         SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
-        return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLOR :
+        return CurDAG->SelectNodeTo(N, PPCSubTarget->hasVSX() ? PPC::XXLOR :
                                                                PPC::VOR,
                                     VecVT, VCmpLE, VCmpEQ);
       }
@@ -883,7 +885,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
     }
   }
 
-  if (PPCSubTarget.useCRBits())
+  if (PPCSubTarget->useCRBits())
     return nullptr;
 
   bool Inv;
@@ -1101,7 +1103,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       SDValue Base = LD->getBasePtr();
       SDValue Ops[] = { Offset, Base, Chain };
       return CurDAG->getMachineNode(Opcode, dl, LD->getValueType(0),
-                                    PPCLowering.getPointerTy(),
+                                    PPCLowering->getPointerTy(),
                                     MVT::Other, Ops);
     } else {
       unsigned Opcode;
@@ -1136,7 +1138,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       SDValue Base = LD->getBasePtr();
       SDValue Ops[] = { Base, Offset, Chain };
       return CurDAG->getMachineNode(Opcode, dl, LD->getValueType(0),
-                                    PPCLowering.getPointerTy(),
+                                    PPCLowering->getPointerTy(),
                                     MVT::Other, Ops);
     }
   }
@@ -1267,7 +1269,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     bool isPPC64 = (PtrVT == MVT::i64);
 
     // If this is a select of i1 operands, we'll pattern match it.
-    if (PPCSubTarget.useCRBits() &&
+    if (PPCSubTarget->useCRBits() &&
         N->getOperand(0).getValueType() == MVT::i1)
       break;
 
@@ -1338,14 +1340,14 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), Ops);
   }
   case ISD::VSELECT:
-    if (PPCSubTarget.hasVSX()) {
+    if (PPCSubTarget->hasVSX()) {
       SDValue Ops[] = { N->getOperand(2), N->getOperand(1), N->getOperand(0) };
       return CurDAG->SelectNodeTo(N, PPC::XXSEL, N->getValueType(0), Ops);
     }
 
     break;
   case ISD::VECTOR_SHUFFLE:
-    if (PPCSubTarget.hasVSX() && (N->getValueType(0) == MVT::v2f64 ||
+    if (PPCSubTarget->hasVSX() && (N->getValueType(0) == MVT::v2f64 ||
                                   N->getValueType(0) == MVT::v2i64)) {
       ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
       
@@ -1383,7 +1385,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     break;
   case PPCISD::BDNZ:
   case PPCISD::BDZ: {
-    bool IsPPC64 = PPCSubTarget.isPPC64();
+    bool IsPPC64 = PPCSubTarget->isPPC64();
     SDValue Ops[] = { N->getOperand(1), N->getOperand(0) };
     return CurDAG->SelectNodeTo(N, N->getOpcode() == PPCISD::BDNZ ?
                                    (IsPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
@@ -1443,7 +1445,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->SelectNodeTo(N, Reg, MVT::Other, Chain);
   }
   case PPCISD::TOC_ENTRY: {
-    assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
+    assert (PPCSubTarget->isPPC64() && "Only supported for 64-bit ABI");
 
     // For medium and large code model, we generate two instructions as
     // described below.  Otherwise we allow SelectCodeCommon to handle this,
@@ -1583,7 +1585,7 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
 // containing zero.
 bool PPCDAGToDAGISel::AllUsersSelectZero(SDNode *N) {
   // If we're not using isel, then this does not matter.
-  if (!PPCSubTarget.hasISEL())
+  if (!PPCSubTarget->hasISEL())
     return false;
 
   for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
@@ -2045,7 +2047,7 @@ void PPCDAGToDAGISel::PeepholeCROps() {
 
 void PPCDAGToDAGISel::PeepholePPC64() {
   // These optimizations are currently supported only for 64-bit SVR4.
-  if (PPCSubTarget.isDarwin() || !PPCSubTarget.isPPC64())
+  if (PPCSubTarget->isDarwin() || !PPCSubTarget->isPPC64())
     return;
 
   SelectionDAG::allnodes_iterator Position(CurDAG->getRoot().getNode());
