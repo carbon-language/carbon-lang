@@ -948,7 +948,7 @@ void ARM64InstPrinter::printAddSubImm(const MCInst *MI, unsigned OpNum,
       printShifter(MI, OpNum + 1, O);
 
     if (CommentStream)
-      *CommentStream << "=#" << (Val << Shift) << '\n';
+      *CommentStream << '=' << (Val << Shift) << '\n';
   } else {
     assert(MO.isExpr() && "Unexpected operand type!");
     O << *MO.getExpr();
