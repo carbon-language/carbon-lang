@@ -57,6 +57,8 @@ define void @test_basic() #0 {
 define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        %addend = load i32 * %closure
        %result = add i32 %other, %addend
+       %mem = alloca i32, i32 10
+       call void @dummy_use (i32* %mem, i32 10)
        ret i32 %result
 
 ; ARM-linux:      test_nested:
@@ -68,7 +70,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; ARM-linux-NEXT: cmp     r4, r5
 ; ARM-linux-NEXT: blo     .LBB1_2
 
-; ARM-linux:      mov     r4, #0
+; ARM-linux:      mov     r4, #56
 ; ARM-linux-NEXT: mov     r5, #0
 ; ARM-linux-NEXT: stmdb   sp!, {lr}
 ; ARM-linux-NEXT: bl      __morestack
@@ -87,7 +89,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; ARM-android-NEXT: cmp     r4, r5
 ; ARM-android-NEXT: blo     .LBB1_2
 
-; ARM-android:      mov     r4, #0
+; ARM-android:      mov     r4, #56
 ; ARM-android-NEXT: mov     r5, #0
 ; ARM-android-NEXT: stmdb   sp!, {lr}
 ; ARM-android-NEXT: bl      __morestack
@@ -232,6 +234,16 @@ define fastcc void @test_fastcc_large() #0 {
 
 ; ARM-android:      pop     {r4, r5}
 
+}
+
+define void @test_nostack() #0 {
+	ret void
+
+; ARM-linux-LABEL: test_nostack:
+; ARM-linux-NOT:   bl __morestack
+
+; ARM-android-LABEL: test_nostack:
+; ARM-android-NOT:   bl __morestack
 }
 
 attributes #0 = { "split-stack" }

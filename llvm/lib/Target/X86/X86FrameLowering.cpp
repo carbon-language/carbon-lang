@@ -1176,6 +1176,15 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       !STI.isTargetWin32() && !STI.isTargetWin64() && !STI.isTargetFreeBSD())
     report_fatal_error("Segmented stacks not supported on this platform.");
 
+  // Eventually StackSize will be calculated by a link-time pass; which will
+  // also decide whether checking code needs to be injected into this particular
+  // prologue.
+  StackSize = MFI->getStackSize();
+
+  // Do not generate a prologue for functions with a stack of size zero
+  if (StackSize == 0)
+    return;
+
   MachineBasicBlock *allocMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *checkMBB = MF.CreateMachineBasicBlock();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
@@ -1199,11 +1208,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   MF.push_front(allocMBB);
   MF.push_front(checkMBB);
-
-  // Eventually StackSize will be calculated by a link-time pass; which will
-  // also decide whether checking code needs to be injected into this particular
-  // prologue.
-  StackSize = MFI->getStackSize();
 
   // When the frame size is less than 256 we just compare the stack
   // boundary directly to the value of the stack pointer, per gcc.

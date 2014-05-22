@@ -107,13 +107,15 @@ define void @test_basic() #0 {
 define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        %addend = load i32 * %closure
        %result = add i32 %other, %addend
+       %mem = alloca i32, i32 10
+       call void @dummy_use (i32* %mem, i32 10)
        ret i32 %result
 
 ; X32-Linux:       cmpl %gs:48, %esp
 ; X32-Linux-NEXT:  ja      .LBB1_2
 
 ; X32-Linux:       pushl $4
-; X32-Linux-NEXT:  pushl $0
+; X32-Linux-NEXT:  pushl $60
 ; X32-Linux-NEXT:  calll __morestack
 ; X32-Linux-NEXT:  ret
 
@@ -121,7 +123,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X64-Linux-NEXT:  ja      .LBB1_2
 
 ; X64-Linux:       movq %r10, %rax
-; X64-Linux-NEXT:  movabsq $0, %r10
+; X64-Linux-NEXT:  movabsq $56, %r10
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
@@ -132,7 +134,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X32-Darwin-NEXT: ja      LBB1_2
 
 ; X32-Darwin:      pushl $4
-; X32-Darwin-NEXT: pushl $0
+; X32-Darwin-NEXT: pushl $60
 ; X32-Darwin-NEXT: calll ___morestack
 ; X32-Darwin-NEXT: ret
 
@@ -140,7 +142,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X64-Darwin-NEXT: ja      LBB1_2
 
 ; X64-Darwin:      movq %r10, %rax
-; X64-Darwin-NEXT: movabsq $0, %r10
+; X64-Darwin-NEXT: movabsq $56, %r10
 ; X64-Darwin-NEXT: movabsq $0, %r11
 ; X64-Darwin-NEXT: callq ___morestack
 ; X64-Darwin-NEXT: ret
@@ -150,7 +152,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X32-MinGW-NEXT:  ja      LBB1_2
 
 ; X32-MinGW:       pushl $4
-; X32-MinGW-NEXT:  pushl $0
+; X32-MinGW-NEXT:  pushl $52
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
@@ -159,7 +161,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X64-MinGW-NEXT:  ja      .LBB1_2
 
 ; X64-MinGW:       movq %r10, %rax
-; X64-MinGW-NEXT:  movabsq $0, %r10
+; X64-MinGW-NEXT:  movabsq $88, %r10
 ; X64-MinGW-NEXT:  movabsq $32, %r11
 ; X64-MinGW-NEXT:  callq __morestack
 ; X64-MinGW-NEXT:  retq
@@ -169,7 +171,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X64-FreeBSD-NEXT:  ja      .LBB1_2
 
 ; X64-FreeBSD:       movq %r10, %rax
-; X64-FreeBSD-NEXT:  movabsq $0, %r10
+; X64-FreeBSD-NEXT:  movabsq $56, %r10
 ; X64-FreeBSD-NEXT:  movabsq $0, %r11
 ; X64-FreeBSD-NEXT:  callq __morestack
 ; X64-FreeBSD-NEXT:  ret
@@ -433,6 +435,31 @@ define fastcc void @test_fastcc_large_with_ecx_arg(i32 %a) #0 {
 ; X32-Darwin-NEXT: calll ___morestack
 ; X32-Darwin-NEXT: ret
 
+}
+
+define void @test_nostack() #0 {
+	ret void
+
+; X32-Linux-LABEL: test_nostack:
+; X32-Linux-NOT:   calll __morestack
+
+; X64-Linux-LABEL: test_nostack:
+; X32-Linux-NOT:   callq __morestack
+
+; X32-Darwin-LABEL: test_nostack:
+; X32-Darwin-NOT:   calll __morestack
+
+; X64-Darwin-LABEL: test_nostack:
+; X64-Darwin-NOT:   callq __morestack
+
+; X32-MinGW-LABEL: test_nostack:
+; X32-MinGW-NOT:   calll __morestack
+
+; X64-MinGW-LABEL: test_nostack:
+; X64-MinGW-NOT:   callq __morestack
+
+; X64-FreeBSD-LABEL: test_nostack:
+; X64-FreeBSD-NOT:   callq __morestack
 }
 
 attributes #0 = { "split-stack" }

@@ -57,6 +57,8 @@ define void @test_basic() #0 {
 define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        %addend = load i32 * %closure
        %result = add i32 %other, %addend
+       %mem = alloca i32, i32 10
+       call void @dummy_use (i32* %mem, i32 10)
        ret i32 %result
 
 ; Thumb-android:      test_nested:
@@ -68,7 +70,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; Thumb-android-NEXT: cmp     r4, r5
 ; Thumb-android-NEXT: blo     .LBB1_2
 
-; Thumb-android:      mov     r4, #0
+; Thumb-android:      mov     r4, #56
 ; Thumb-android-NEXT: mov     r5, #0
 ; Thumb-android-NEXT: push    {lr}
 ; Thumb-android-NEXT: bl      __morestack
@@ -88,7 +90,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; Thumb-linux-NEXT: cmp     r4, r5
 ; Thumb-linux-NEXT: blo     .LBB1_2
 
-; Thumb-linux:      mov     r4, #0
+; Thumb-linux:      mov     r4, #56
 ; Thumb-linux-NEXT: mov     r5, #0
 ; Thumb-linux-NEXT: push    {lr}
 ; Thumb-linux-NEXT: bl      __morestack
@@ -244,6 +246,16 @@ define fastcc void @test_fastcc_large() #0 {
 
 ; Thumb-linux:      pop     {r4, r5}
 
+}
+
+define void @test_nostack() #0 {
+	ret void
+
+; Thumb-android-LABEL: test_nostack:
+; Thumb-android-NOT:   bl __morestack
+
+; Thumb-linux-LABEL: test_nostack:
+; Thumb-linux-NOT:   bl __morestack
 }
 
 attributes #0 = { "split-stack" }

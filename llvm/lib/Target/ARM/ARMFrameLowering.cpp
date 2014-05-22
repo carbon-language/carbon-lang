@@ -1746,6 +1746,12 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   ARMFunctionInfo *ARMFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc DL;
 
+  uint64_t StackSize = MFI->getStackSize();
+
+  // Do not generate a prologue for functions with a stack of size zero
+  if (StackSize == 0)
+    return;
+
   // Use R4 and R5 as scratch registers.
   // We save R4 and R5 before use and restore them before leaving the function.
   unsigned ScratchReg0 = ARM::R4;
@@ -1775,8 +1781,6 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MF.push_front(PrevStackMBB);
 
   // The required stack size that is aligned to ARM constant criterion.
-  uint64_t StackSize = MFI->getStackSize();
-
   AlignedStackSize = alignToARMConstant(StackSize);
 
   // When the frame size is less than 256 we just compare the stack
