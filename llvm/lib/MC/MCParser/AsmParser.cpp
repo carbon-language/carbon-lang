@@ -498,8 +498,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
                      const MCAsmInfo &_MAI)
     : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
       PlatformParser(nullptr), CurBuffer(0), MacrosEnabledFlag(true),
-      CppHashLineNumber(0), AssemblerDialect(~0U), IsDarwin(false),
-      ParsingInlineAsm(false) {
+      HadError(false), CppHashLineNumber(0), AssemblerDialect(~0U),
+      IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
