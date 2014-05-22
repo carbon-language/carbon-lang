@@ -20,6 +20,13 @@
 
 #include <stddef.h>
 
+// C++ operators can't have visibility attributes on Windows.
+#if SANITIZER_WINDOWS
+# define CXX_OPERATOR_ATTRIBUTE
+#else
+# define CXX_OPERATOR_ATTRIBUTE INTERCEPTOR_ATTRIBUTE
+#endif
+
 using namespace __asan;  // NOLINT
 
 // This code has issues on OSX.
@@ -51,14 +58,14 @@ struct nothrow_t {};
 #endif  // __FreeBSD_version
 #endif  // SANITIZER_FREEBSD && SANITIZER_WORDSIZE == 32
 
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void *operator new(size_t size) { OPERATOR_NEW_BODY(FROM_NEW); }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void *operator new[](size_t size) { OPERATOR_NEW_BODY(FROM_NEW_BR); }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void *operator new(size_t size, std::nothrow_t const&)
 { OPERATOR_NEW_BODY(FROM_NEW); }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void *operator new[](size_t size, std::nothrow_t const&)
 { OPERATOR_NEW_BODY(FROM_NEW_BR); }
 
@@ -82,19 +89,19 @@ INTERCEPTOR(void *, _ZnamRKSt9nothrow_t, size_t size, std::nothrow_t const&) {
   asan_free(ptr, &stack, type);
 
 #if !SANITIZER_MAC
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void operator delete(void *ptr) throw() {
   OPERATOR_DELETE_BODY(FROM_NEW);
 }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void operator delete[](void *ptr) throw() {
   OPERATOR_DELETE_BODY(FROM_NEW_BR);
 }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(FROM_NEW);
 }
-INTERCEPTOR_ATTRIBUTE
+CXX_OPERATOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(FROM_NEW_BR);
 }
