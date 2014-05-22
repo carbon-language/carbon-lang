@@ -80,8 +80,8 @@ enum AddressSpaces {
   GLOBAL_ADDRESS   = 1, ///< Address space for global memory (RAT0, VTX0).
   CONSTANT_ADDRESS = 2, ///< Address space for constant memory
   LOCAL_ADDRESS    = 3, ///< Address space for local memory.
-  REGION_ADDRESS   = 4, ///< Address space for region memory.
-  ADDRESS_NONE     = 5, ///< Address space for unknown memory.
+  FLAT_ADDRESS     = 4, ///< Address space for flat memory.
+  REGION_ADDRESS   = 5, ///< Address space for region memory.
   PARAM_D_ADDRESS  = 6, ///< Address space for direct addressible parameter memory (CONST0)
   PARAM_I_ADDRESS  = 7, ///< Address space for indirect addressible parameter memory (VTX1)
 
@@ -106,7 +106,8 @@ enum AddressSpaces {
   CONSTANT_BUFFER_13 = 21,
   CONSTANT_BUFFER_14 = 22,
   CONSTANT_BUFFER_15 = 23,
-  LAST_ADDRESS     = 24
+  ADDRESS_NONE = 24, ///< Address space for unknown memory.
+  LAST_ADDRESS = ADDRESS_NONE
 };
 
 } // namespace AMDGPUAS

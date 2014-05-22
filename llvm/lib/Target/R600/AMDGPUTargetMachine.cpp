@@ -54,7 +54,7 @@ static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
 
   if (ST.is64bit()) {
     // 32-bit private, local, and region pointers. 64-bit global and constant.
-    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64";
+    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
   }
 
   Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
