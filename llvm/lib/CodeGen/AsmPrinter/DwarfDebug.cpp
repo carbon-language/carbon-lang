@@ -2371,6 +2371,8 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   if (!useSplitDwarf())
     CU.applyStmtList(UnitDie);
 
+  // FIXME: Skip using COMDAT groups for type units in the .dwo file once tools
+  // such as DWP ( http://gcc.gnu.org/wiki/DebugFissionDWP ) can cope with it.
   NewTU.initSection(
       useSplitDwarf()
           ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
