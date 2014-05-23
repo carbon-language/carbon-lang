@@ -28,9 +28,11 @@ using namespace lldb_private;
 FuncUnwinders::FuncUnwinders
 (
     UnwindTable& unwind_table, 
+    const lldb::UnwindAssemblySP& assembly_profiler,
     AddressRange range
 ) : 
     m_unwind_table(unwind_table), 
+    m_assembly_profiler(assembly_profiler), 
     m_range(range), 
     m_mutex (Mutex::eMutexTypeNormal),
     m_unwind_plan_call_site_sp (), 
@@ -112,12 +114,10 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == nullptr)
     {
         m_tried_unwind_at_non_call_site = true;
-        Mutex::Locker assembly_locker;
-        UnwindAssemblySP assembly_profiler = m_unwind_table.GetUnwindAssemblyProfiler (assembly_locker);
-        if (assembly_profiler)
+        if (m_assembly_profiler)
         {
             m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-            if (!assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
+            if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
                 m_unwind_plan_non_call_site_sp.reset();
         }
     }
@@ -143,12 +143,10 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == nullptr)
     {
         m_tried_unwind_fast = true;
-        Mutex::Locker assembly_locker;
-        UnwindAssemblySP assembly_profiler = m_unwind_table.GetUnwindAssemblyProfiler (assembly_locker);
-        if (assembly_profiler)
+        if (m_assembly_profiler)
         {
             m_unwind_plan_fast_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-            if (!assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
+            if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
                 m_unwind_plan_fast_sp.reset();
         }
     }
@@ -234,10 +232,8 @@ FuncUnwinders::GetFirstNonPrologueInsn (Target& target)
     if (m_first_non_prologue_insn.IsValid())
         return m_first_non_prologue_insn;
     ExecutionContext exe_ctx (target.shared_from_this(), false);
-    Mutex::Locker assembly_locker;
-    UnwindAssemblySP assembly_profiler = m_unwind_table.GetUnwindAssemblyProfiler (assembly_locker);
-    if (assembly_profiler)
-        assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
+    if (m_assembly_profiler)
+        m_assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
     return m_first_non_prologue_insn;
 }
 
