@@ -421,7 +421,7 @@ public:
   ASTMutationListener *Listener;
 
   /// \brief Contains parents of a node.
-  typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 1> ParentVector;
+  typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 2> ParentVector;
 
   /// \brief Maps from a node to its parents.
   typedef llvm::DenseMap<const void *,
