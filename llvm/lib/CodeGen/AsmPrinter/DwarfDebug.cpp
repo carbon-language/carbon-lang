@@ -324,7 +324,9 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     assert(SPDie == AbsSPDIE);
     // Pick up abstract subprogram DIE.
-    SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
+    SPDie = &SPCU.createAndAddDIE(
+        dwarf::DW_TAG_subprogram,
+        *SPCU.getOrCreateContextDIE(resolve(SP.getContext())));
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
   }
 
