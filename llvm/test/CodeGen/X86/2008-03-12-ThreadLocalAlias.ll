@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=pic | grep TLSGD | count 2
+; RUN: llc < %s -relocation-model=pic | FileCheck %s
 ; PR2137
 
 ; ModuleID = '1.c'
@@ -11,6 +11,8 @@ target triple = "i386-pc-linux-gnu"
 @__libc_resp = hidden alias %struct.__res_state** @__resp		; <%struct.__res_state**> [#uses=2]
 
 define i32 @foo() {
+; CHECK-LABEL: foo:
+; CHECK: leal    __libc_resp@TLSGD
 entry:
 	%retval = alloca i32		; <i32*> [#uses=1]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
@@ -24,6 +26,8 @@ return:		; preds = %entry
 }
 
 define i32 @bar() {
+; CHECK-LABEL: bar:
+; CHECK: leal    __libc_resp@TLSGD
 entry:
 	%retval = alloca i32		; <i32*> [#uses=1]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
