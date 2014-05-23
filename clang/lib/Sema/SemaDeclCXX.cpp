@@ -11425,7 +11425,9 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
   //   If the type specifier in a friend declaration designates a (possibly
   //   cv-qualified) class type, that class is declared as a friend; otherwise,
   //   the friend declaration is ignored.
-  return FriendDecl::Create(Context, CurContext, LocStart, TSInfo, FriendLoc);
+  return FriendDecl::Create(Context, CurContext,
+                            TSInfo->getTypeLoc().getLocStart(), TSInfo,
+                            FriendLoc);
 }
 
 /// Handle a friend tag declaration where the scope specifier was
