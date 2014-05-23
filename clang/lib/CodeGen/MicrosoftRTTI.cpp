@@ -52,7 +52,7 @@ using namespace CodeGen;
 //   mangled into them so they can be aggressively deduplicated by the linker.
 
 // 5 routines for constructing the llvm types for MS RTTI structs.
-llvm::StructType *getClassHierarchyDescriptorType(CodeGenModule &CGM);
+static llvm::StructType *getClassHierarchyDescriptorType(CodeGenModule &CGM);
 
 static llvm::StructType *getTypeDescriptorType(CodeGenModule &CGM,
                                                StringRef TypeInfoString) {
