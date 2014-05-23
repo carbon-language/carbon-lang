@@ -3836,18 +3836,6 @@ DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
 }
 
 static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // Attribute can be applied only to functions or variables.
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD && !isa<VarDecl>(D)) {
-    // Apparently Visual C++ thinks it is okay to not emit a warning
-    // in this case, so only emit a warning when -fms-extensions is not
-    // specified.
-    if (!S.getLangOpts().MicrosoftExt)
-      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-        << Attr.getName() << ExpectedVariableOrFunction;
-    return;
-  }
-
   unsigned Index = Attr.getAttributeSpellingListIndex();
   DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange(), Index);
   if (NewAttr)

@@ -1665,8 +1665,7 @@ def DLLExport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
 
 def DLLImport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Spellings = [Declspec<"dllimport">, GCC<"dllimport">];
-  // Technically, the subjects for DllImport are Function and Var, but there is
-  // custom semantic handling required when MicrosoftExt is true.
+  let Subjects = SubjectList<[Function, Var]>;
   let Documentation = [Undocumented];
 }
 
