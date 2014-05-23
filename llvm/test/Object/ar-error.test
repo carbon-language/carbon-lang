@@ -1,0 +1,5 @@
+Test if we get a proper error with a filename that doesn't exist
+
+RUN: not llvm-ar r %t.out.a sparkle.o %t 2>&1 | FileCheck %s
+
+CHECK: llvm-ar{{(.exe|.EXE)?}}: sparkle.o: No such file or directory
