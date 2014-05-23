@@ -28,11 +28,9 @@ using namespace lldb_private;
 FuncUnwinders::FuncUnwinders
 (
     UnwindTable& unwind_table, 
-    const lldb::UnwindAssemblySP& assembly_profiler,
     AddressRange range
 ) : 
     m_unwind_table(unwind_table), 
-    m_assembly_profiler(assembly_profiler), 
     m_range(range), 
     m_mutex (Mutex::eMutexTypeNormal),
     m_unwind_plan_call_site_sp (), 
@@ -113,11 +111,11 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     Mutex::Locker locker (m_mutex);
     if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == nullptr)
     {
-        m_tried_unwind_at_non_call_site = true;
-        if (m_assembly_profiler)
+        UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
+        if (assembly_profiler_sp)
         {
             m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-            if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
+            if (!assembly_profiler_sp->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
                 m_unwind_plan_non_call_site_sp.reset();
         }
     }
@@ -143,10 +141,11 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == nullptr)
     {
         m_tried_unwind_fast = true;
-        if (m_assembly_profiler)
+        UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
+        if (assembly_profiler_sp)
         {
             m_unwind_plan_fast_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-            if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
+            if (!assembly_profiler_sp->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
                 m_unwind_plan_fast_sp.reset();
         }
     }
@@ -232,8 +231,10 @@ FuncUnwinders::GetFirstNonPrologueInsn (Target& target)
     if (m_first_non_prologue_insn.IsValid())
         return m_first_non_prologue_insn;
     ExecutionContext exe_ctx (target.shared_from_this(), false);
-    if (m_assembly_profiler)
-        m_assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
+    UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
+    if (assembly_profiler_sp)
+    if (assembly_profiler_sp)
+        assembly_profiler_sp->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
     return m_first_non_prologue_insn;
 }
 
@@ -251,4 +252,16 @@ FuncUnwinders::InvalidateNonCallSiteUnwindPlan (lldb_private::Thread& thread)
     {
         m_unwind_plan_call_site_sp = arch_default;
     }
+}
+
+lldb::UnwindAssemblySP
+FuncUnwinders::GetUnwindAssemblyProfiler ()
+{
+    UnwindAssemblySP assembly_profiler_sp;
+    ArchSpec arch;
+    if (m_unwind_table.GetArchitecture (arch))
+    {
+        assembly_profiler_sp = UnwindAssembly::FindPlugin (arch);
+    }
+    return assembly_profiler_sp;
 }

@@ -17,7 +17,6 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
-#include "lldb/Target/UnwindAssembly.h"
 
 // There is one UnwindTable object per ObjectFile.
 // It contains a list of Unwind objects -- one per function, populated lazily -- for the ObjectFile.
@@ -30,7 +29,6 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_object_file (objfile), 
     m_unwinds (),
     m_initialized (false),
-    m_assembly_profiler (nullptr),
     m_eh_frame (nullptr)
 {
 }
@@ -54,12 +52,7 @@ UnwindTable::Initialize ()
         }
     }
     
-    ArchSpec arch;
-    if (m_object_file.GetArchitecture (arch))
-    {
-        m_assembly_profiler = UnwindAssembly::FindPlugin (arch);
-        m_initialized = true;
-    }
+    m_initialized = true;
 }
 
 UnwindTable::~UnwindTable ()
@@ -100,7 +93,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
         }
     }
 
-    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, m_assembly_profiler, range));
+    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, range));
     m_unwinds.insert (insert_pos, std::make_pair(range.GetBaseAddress().GetFileAddress(), func_unwinder_sp));
 //    StreamFile s(stdout, false);
 //    Dump (s);
@@ -127,7 +120,7 @@ UnwindTable::GetUncachedFuncUnwindersContainingAddress (const Address& addr, Sym
         }
     }
 
-    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, m_assembly_profiler, range));
+    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, range));
     return func_unwinder_sp;
 }
 
@@ -150,4 +143,10 @@ UnwindTable::GetEHFrameInfo ()
 {
     Initialize();
     return m_eh_frame;
+}
+
+bool
+UnwindTable::GetArchitecture (lldb_private::ArchSpec &arch)
+{
+    return m_object_file.GetArchitecture (arch);
 }
