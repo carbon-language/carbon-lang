@@ -59,6 +59,9 @@ public:
 void SimpleCases::i() {}
 // CHECK: {{^void SimpleCases::i\(\) {}}}
 
+SimpleCases::~SimpleCases() {}
+// CHECK: {{^SimpleCases::~SimpleCases\(\) {}}}
+
 struct InlineDefinitions : public Base {
 public:
   virtual ~InlineDefinitions() {}
