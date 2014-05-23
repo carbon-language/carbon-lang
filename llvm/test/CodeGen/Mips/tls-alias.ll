@@ -5,6 +5,6 @@
 
 define i32* @zed() {
 ; CHECK-DAG: __tls_get_addr
-; CHECK-DAG: %tlsgd(bar)
+; CHECK-DAG: %tlsldm(bar)
        ret i32* @bar
 }
