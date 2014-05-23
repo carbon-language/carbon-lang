@@ -125,7 +125,7 @@ bar.exit:                                         ; preds = %for.cond.i, %for.bo
   ret i32 0
 }
 
-; Here we have a must-exit loop latch that is not computabe and a
+; Here we have a must-exit loop latch that is not computable and a
 ; may-exit early exit that can only have one non-exiting iteration
 ; before the check is forever skipped.
 ;
@@ -155,7 +155,7 @@ bar.exit:                                         ; preds = %for.cond.i, %for.bo
   ret i32 0
 }
 
-; This loop has two must-exits, both of with dominate the latch. The
+; This loop has two must-exits, both of which dominate the latch. The
 ; MaxBECount should be the minimum of them.
 ;
 ; CHECK-LABEL: @two_mustexit
