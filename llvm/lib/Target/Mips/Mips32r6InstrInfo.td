@@ -46,7 +46,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: sdxc1
 // Removed: suxc1
 // Removed: swxc1
-// Removed: teqi, tgei, tgeiu, tlti, tltiu, tnei
 // Rencoded: [ls][wd]c2
 
 def brtarget21 : Operand<OtherVT> {
