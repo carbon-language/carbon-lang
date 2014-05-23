@@ -268,10 +268,9 @@ LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
                      Op.getOperand(1));
 }
 
-SDValue XCoreTargetLowering::
-getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
-                        SelectionDAG &DAG) const
-{
+SDValue XCoreTargetLowering::getGlobalAddressWrapper(SDValue GA,
+                                                     const GlobalValue *GV,
+                                                     SelectionDAG &DAG) const {
   // FIXME there is no actual debug info here
   SDLoc dl(GA);
   const GlobalValue *UnderlyingGV = GV;
@@ -279,10 +278,9 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
     UnderlyingGV = GA->getAliasee();
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(UnderlyingGV)) {
-    if (  ( GVar->isConstant() &&
-            GV->hasLocalLinkage() )
-       || ( GVar->hasSection() &&
-            StringRef(GVar->getSection()).startswith(".cp.") ) )
+    if ((GVar->isConstant() && GV->hasLocalLinkage()) ||
+        (GVar->hasSection() &&
+         StringRef(GVar->getSection()).startswith(".cp.")))
       return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
     return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
   }
