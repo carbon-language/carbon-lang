@@ -18,6 +18,7 @@
 
 namespace clang {
   class ASTContext;
+  class CXXMethodDecl;
   class CXXRecordDecl;
   class Decl;
   class DeclGroupRef;
@@ -55,6 +56,10 @@ public:
   ///
   /// \returns true to continue parsing, or false to abort parsing.
   virtual bool HandleTopLevelDecl(DeclGroupRef D);
+
+  /// \brief This callback is invoked each time an inline method definition is
+  /// completed.
+  virtual void HandleInlineMethodDefinition(CXXMethodDecl *D) {}
 
   /// HandleInterestingDecl - Handle the specified interesting declaration. This
   /// is called by the AST reader when deserializing things that might interest

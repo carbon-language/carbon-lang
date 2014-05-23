@@ -15,10 +15,14 @@ template void DLLEXPORT c<int>();
 struct S {
   void DLLEXPORT a() {}
   // CHECK-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?a@S@@QAEXXZ"
+
+  struct T {
+    void DLLEXPORT a() {}
+    // CHECK-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?a@T@S@@QAEXXZ"
+  };
 };
+
 
 void user() {
   a();
-  // FIXME: dllexported methods must be emitted even if they're not referenced in this TU.
-  &S::a;
 }

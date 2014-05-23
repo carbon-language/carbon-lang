@@ -226,6 +226,11 @@ bool MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
   return Continue;
 }
 
+void MultiplexConsumer::HandleInlineMethodDefinition(CXXMethodDecl *D) {
+  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
+    Consumers[i]->HandleInlineMethodDefinition(D);
+}
+
 void  MultiplexConsumer::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
     Consumers[i]->HandleCXXStaticMemberVarInstantiation(VD);

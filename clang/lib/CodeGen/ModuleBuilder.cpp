@@ -81,6 +81,20 @@ namespace {
       return true;
     }
 
+    void HandleInlineMethodDefinition(CXXMethodDecl *D) override {
+      if (Diags.hasErrorOccurred())
+        return;
+
+      assert(D->doesThisDeclarationHaveABody());
+
+      // We may have member functions that need to be emitted at this point.
+      if (!D->isDependentContext() &&
+          (D->hasAttr<UsedAttr>() || D->hasAttr<ConstructorAttr>() ||
+           D->hasAttr<DLLExportAttr>())) {
+        Builder->EmitTopLevelDecl(D);
+      }
+    }
+
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
     /// to (e.g. struct, union, enum, class) is completed. This allows the
     /// client hack on the type, which can occur at any point in the file
@@ -90,17 +104,6 @@ namespace {
         return;
 
       Builder->UpdateCompletedType(D);
-      
-      // In C++, we may have member functions that need to be emitted at this 
-      // point.
-      if (Ctx->getLangOpts().CPlusPlus && !D->isDependentContext()) {
-        for (auto *M : D->decls())
-          if (auto *Method = dyn_cast<CXXMethodDecl>(M))
-            if (Method->doesThisDeclarationHaveABody() &&
-                (Method->hasAttr<UsedAttr>() || 
-                 Method->hasAttr<ConstructorAttr>()))
-              Builder->EmitTopLevelDecl(Method);
-      }
     }
 
     void HandleTagDeclRequiredDefinition(const TagDecl *D) override {

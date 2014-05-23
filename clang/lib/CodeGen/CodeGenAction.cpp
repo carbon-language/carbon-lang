@@ -11,6 +11,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -102,6 +103,19 @@ namespace clang {
         LLVMIRGeneration.stopTimer();
 
       return true;
+    }
+
+    void HandleInlineMethodDefinition(CXXMethodDecl *D) override {
+      PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
+                                     Context->getSourceManager(),
+                                     "LLVM IR generation of inline method");
+      if (llvm::TimePassesIsEnabled)
+        LLVMIRGeneration.startTimer();
+
+      Gen->HandleInlineMethodDefinition(D);
+
+      if (llvm::TimePassesIsEnabled)
+        LLVMIRGeneration.stopTimer();
     }
 
     void HandleTranslationUnit(ASTContext &C) override {

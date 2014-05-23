@@ -1670,6 +1670,7 @@ public:
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body, bool IsInstantiation);
   Decl *ActOnSkippedFunctionBody(Decl *Decl);
+  void ActOnFinishInlineMethodDef(CXXMethodDecl *D);
 
   /// ActOnFinishDelayedAttribute - Invoked when we have finished parsing an
   /// attribute for which parsing is delayed.

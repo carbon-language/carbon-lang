@@ -467,6 +467,9 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
       while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
         ConsumeAnyToken();
   }
+
+  if (CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(LM.D))
+    Actions.ActOnFinishInlineMethodDef(MD);
 }
 
 /// ParseLexedMemberInitializers - We finished parsing the member specification
