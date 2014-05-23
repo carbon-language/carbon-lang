@@ -718,10 +718,10 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
 #if defined(__aarch64__)
   // Keep track of which crypto features we have seen
   enum {
-    HWCAP_AES   = 0x1,
-    HWCAP_PMULL = 0x2,
-    HWCAP_SHA1  = 0x4,
-    HWCAP_SHA2  = 0x8
+    CAP_AES   = 0x1,
+    CAP_PMULL = 0x2,
+    CAP_SHA1  = 0x4,
+    CAP_SHA2  = 0x8
   };
   uint32_t crypto = 0;
 #endif
@@ -747,13 +747,13 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
     // We need to check crypto seperately since we need all of the crypto
     // extensions to enable the subtarget feature
     if (CPUFeatures[I] == "aes")
-      crypto |= HWCAP_AES;
+      crypto |= CAP_AES;
     else if (CPUFeatures[I] == "pmull")
-      crypto |= HWCAP_PMULL;
+      crypto |= CAP_PMULL;
     else if (CPUFeatures[I] == "sha1")
-      crypto |= HWCAP_SHA1;
+      crypto |= CAP_SHA1;
     else if (CPUFeatures[I] == "sha2")
-      crypto |= HWCAP_SHA2;
+      crypto |= CAP_SHA2;
 #endif
 
     if (LLVMFeatureStr != "")
@@ -762,7 +762,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
 
 #if defined(__aarch64__)
   // If we have all crypto bits we can add the feature
-  if (crypto == (HWCAP_AES | HWCAP_PMULL | HWCAP_SHA1 | HWCAP_SHA2))
+  if (crypto == (CAP_AES | CAP_PMULL | CAP_SHA1 | CAP_SHA2))
     Features.GetOrCreateValue("crypto").setValue(true);
 #endif
 
