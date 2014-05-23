@@ -234,7 +234,12 @@ public:
   /// \brief Reset the subtarget for the Mips target.
   void resetSubtarget(MachineFunction *MF);
 
-
+  /// Does the system support unaligned memory access.
+  ///
+  /// MIPS32r6/MIPS64r6 require full unaligned access support but does not
+  /// specify which component of the system provides it. Hardware, software, and
+  /// hybrid implementations are all valid.
+  bool systemSupportsUnalignedAccess() const { return hasMips32r6(); }
 };
 } // End llvm namespace
 

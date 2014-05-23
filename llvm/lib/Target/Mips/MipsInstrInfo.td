@@ -225,6 +225,9 @@ class ISA_MIPS1_NOT_32R6_64R6 {
 }
 class ISA_MIPS2    { list<Predicate> InsnPredicates = [HasMips2]; }
 class ISA_MIPS3    { list<Predicate> InsnPredicates = [HasMips3]; }
+class ISA_MIPS3_NOT_32R6_64R6 {
+  list<Predicate> InsnPredicates = [HasMips3, NotMips32r6, NotMips64r6];
+}
 class ISA_MIPS32   { list<Predicate> InsnPredicates = [HasMips32]; }
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64   { list<Predicate> InsnPredicates = [HasMips64]; }
@@ -1087,10 +1090,14 @@ def SW  : Store<"sw", GPR32Opnd, store, II_SW>, MMRel, LW_FM<0x2b>;
 /// load/store left/right
 let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably a bug
     AdditionalPredicates = [NotInMicroMips] in {
-def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd, II_LWL>, LW_FM<0x22>;
-def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd, II_LWR>, LW_FM<0x26>;
-def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, II_SWL>, LW_FM<0x2a>;
-def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, II_SWR>, LW_FM<0x2e>;
+def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd, II_LWL>, LW_FM<0x22>,
+          ISA_MIPS1_NOT_32R6_64R6;
+def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd, II_LWR>, LW_FM<0x26>,
+          ISA_MIPS1_NOT_32R6_64R6;
+def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, II_SWL>, LW_FM<0x2a>,
+          ISA_MIPS1_NOT_32R6_64R6;
+def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, II_SWR>, LW_FM<0x2e>,
+          ISA_MIPS1_NOT_32R6_64R6;
 }
 
 def SYNC : MMRel, SYNC_FT<"sync">, SYNC_FM;

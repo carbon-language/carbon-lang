@@ -17,7 +17,6 @@
 // Removed: daddi
 // Removed: ddiv, ddivu, dmult, dmultu
 // Removed: div, divu
-// Removed: ldl, ldr, ldle, ldre, sdl, sdr, sdle, sdre
 
 //===----------------------------------------------------------------------===//
 //

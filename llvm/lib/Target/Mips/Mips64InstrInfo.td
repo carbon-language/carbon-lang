@@ -155,13 +155,13 @@ def SWR64 : StoreLeftRight<"swr", MipsSWR, GPR64Opnd, II_SWR>, LW_FM<0x2e>;
 }
 
 def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd, II_LDL>, LW_FM<0x1a>,
-            ISA_MIPS3;
+            ISA_MIPS3_NOT_32R6_64R6;
 def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd, II_LDR>, LW_FM<0x1b>,
-            ISA_MIPS3;
+            ISA_MIPS3_NOT_32R6_64R6;
 def SDL   : StoreLeftRight<"sdl", MipsSDL, GPR64Opnd, II_SDL>, LW_FM<0x2c>,
-            ISA_MIPS3;
+            ISA_MIPS3_NOT_32R6_64R6;
 def SDR   : StoreLeftRight<"sdr", MipsSDR, GPR64Opnd, II_SDR>, LW_FM<0x2d>,
-            ISA_MIPS3;
+            ISA_MIPS3_NOT_32R6_64R6;
 
 /// Load-linked, Store-conditional
 def LLD : LLBase<"lld", GPR64Opnd>, LW_FM<0x34>, ISA_MIPS3;

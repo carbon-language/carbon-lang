@@ -254,6 +254,16 @@ MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
                                                     bool *Fast) const {
   MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
 
+  if (Subtarget->systemSupportsUnalignedAccess()) {
+    // MIPS32r6/MIPS64r6 is required to support unaligned access. It's
+    // implementation defined whether this is handled by hardware, software, or
+    // a hybrid of the two but it's expected that most implementations will
+    // handle the majority of cases in hardware.
+    if (Fast)
+      *Fast = true;
+    return true;
+  }
+
   switch (SVT) {
   case MVT::i64:
   case MVT::i32:

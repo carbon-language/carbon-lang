@@ -1941,6 +1941,9 @@ SDValue MipsTargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   LoadSDNode *LD = cast<LoadSDNode>(Op);
   EVT MemVT = LD->getMemoryVT();
 
+  if (Subtarget->systemSupportsUnalignedAccess())
+    return Op;
+
   // Return if load is aligned or if MemVT is neither i32 nor i64.
   if ((LD->getAlignment() >= MemVT.getSizeInBits() / 8) ||
       ((MemVT != MVT::i32) && (MemVT != MVT::i64)))
@@ -2064,7 +2067,8 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   EVT MemVT = SD->getMemoryVT();
 
   // Lower unaligned integer stores.
-  if ((SD->getAlignment() < MemVT.getSizeInBits() / 8) &&
+  if (!Subtarget->systemSupportsUnalignedAccess() &&
+      (SD->getAlignment() < MemVT.getSizeInBits() / 8) &&
       ((MemVT == MVT::i32) || (MemVT == MVT::i64)))
     return lowerUnalignedIntStore(SD, DAG, Subtarget->isLittle());
 
@@ -3485,21 +3489,22 @@ passByValArg(SDValue Chain, SDLoc DL,
              MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
              const MipsCC &CC, const ByValArgInfo &ByVal,
              const ISD::ArgFlagsTy &Flags, bool isLittle) const {
-  unsigned ByValSize = Flags.getByValSize();
-  unsigned Offset = 0; // Offset in # of bytes from the beginning of struct.
-  unsigned RegSize = CC.regSize();
-  unsigned Alignment = std::min(Flags.getByValAlign(), RegSize);
-  EVT PtrTy = getPointerTy(), RegTy = MVT::getIntegerVT(RegSize * 8);
+  unsigned ByValSizeInBytes = Flags.getByValSize();
+  unsigned OffsetInBytes = 0; // From beginning of struct
+  unsigned RegSizeInBytes = CC.regSize();
+  unsigned Alignment = std::min(Flags.getByValAlign(), RegSizeInBytes);
+  EVT PtrTy = getPointerTy(), RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
 
   if (ByVal.NumRegs) {
     const MCPhysReg *ArgRegs = CC.intArgRegs();
-    bool LeftoverBytes = (ByVal.NumRegs * RegSize > ByValSize);
+    bool LeftoverBytes = (ByVal.NumRegs * RegSizeInBytes > ByValSizeInBytes);
     unsigned I = 0;
 
     // Copy words to registers.
-    for (; I < ByVal.NumRegs - LeftoverBytes; ++I, Offset += RegSize) {
+    for (; I < ByVal.NumRegs - LeftoverBytes;
+         ++I, OffsetInBytes += RegSizeInBytes) {
       SDValue LoadPtr = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
-                                    DAG.getConstant(Offset, PtrTy));
+                                    DAG.getConstant(OffsetInBytes, PtrTy));
       SDValue LoadVal = DAG.getLoad(RegTy, DL, Chain, LoadPtr,
                                     MachinePointerInfo(), false, false, false,
                                     Alignment);
@@ -3509,38 +3514,38 @@ passByValArg(SDValue Chain, SDLoc DL,
     }
 
     // Return if the struct has been fully copied.
-    if (ByValSize == Offset)
+    if (ByValSizeInBytes == OffsetInBytes)
       return;
 
     // Copy the remainder of the byval argument with sub-word loads and shifts.
     if (LeftoverBytes) {
-      assert((ByValSize > Offset) && (ByValSize < Offset + RegSize) &&
-             "Size of the remainder should be smaller than RegSize.");
+      assert((ByValSizeInBytes > OffsetInBytes) &&
+             (ByValSizeInBytes < OffsetInBytes + RegSizeInBytes) &&
+             "Size of the remainder should be smaller than RegSizeInBytes.");
       SDValue Val;
 
-      for (unsigned LoadSize = RegSize / 2, TotalSizeLoaded = 0;
-           Offset < ByValSize; LoadSize /= 2) {
-        unsigned RemSize = ByValSize - Offset;
+      for (unsigned LoadSizeInBytes = RegSizeInBytes / 2, TotalBytesLoaded = 0;
+           OffsetInBytes < ByValSizeInBytes; LoadSizeInBytes /= 2) {
+        unsigned RemainingSizeInBytes = ByValSizeInBytes - OffsetInBytes;
 
-        if (RemSize < LoadSize)
+        if (RemainingSizeInBytes < LoadSizeInBytes)
           continue;
 
         // Load subword.
         SDValue LoadPtr = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
-                                      DAG.getConstant(Offset, PtrTy));
-        SDValue LoadVal =
-          DAG.getExtLoad(ISD::ZEXTLOAD, DL, RegTy, Chain, LoadPtr,
-                         MachinePointerInfo(), MVT::getIntegerVT(LoadSize * 8),
-                         false, false, Alignment);
+                                      DAG.getConstant(OffsetInBytes, PtrTy));
+        SDValue LoadVal = DAG.getExtLoad(
+            ISD::ZEXTLOAD, DL, RegTy, Chain, LoadPtr, MachinePointerInfo(),
+            MVT::getIntegerVT(LoadSizeInBytes * 8), false, false, Alignment);
         MemOpChains.push_back(LoadVal.getValue(1));
 
         // Shift the loaded value.
         unsigned Shamt;
 
         if (isLittle)
-          Shamt = TotalSizeLoaded;
+          Shamt = TotalBytesLoaded * 8;
         else
-          Shamt = (RegSize - (TotalSizeLoaded + LoadSize)) * 8;
+          Shamt = (RegSizeInBytes - (TotalBytesLoaded + LoadSizeInBytes)) * 8;
 
         SDValue Shift = DAG.getNode(ISD::SHL, DL, RegTy, LoadVal,
                                     DAG.getConstant(Shamt, MVT::i32));
@@ -3550,9 +3555,9 @@ passByValArg(SDValue Chain, SDLoc DL,
         else
           Val = Shift;
 
-        Offset += LoadSize;
-        TotalSizeLoaded += LoadSize;
-        Alignment = std::min(Alignment, LoadSize);
+        OffsetInBytes += LoadSizeInBytes;
+        TotalBytesLoaded += LoadSizeInBytes;
+        Alignment = std::min(Alignment, LoadSizeInBytes);
       }
 
       unsigned ArgReg = ArgRegs[ByVal.FirstIdx + I];
@@ -3562,9 +3567,9 @@ passByValArg(SDValue Chain, SDLoc DL,
   }
 
   // Copy remainder of byval arg to it with memcpy.
-  unsigned MemCpySize = ByValSize - Offset;
+  unsigned MemCpySize = ByValSizeInBytes - OffsetInBytes;
   SDValue Src = DAG.getNode(ISD::ADD, DL, PtrTy, Arg,
-                            DAG.getConstant(Offset, PtrTy));
+                            DAG.getConstant(OffsetInBytes, PtrTy));
   SDValue Dst = DAG.getNode(ISD::ADD, DL, PtrTy, StackPtr,
                             DAG.getIntPtrConstant(ByVal.Address));
   Chain = DAG.getMemcpy(Chain, DL, Dst, Src, DAG.getConstant(MemCpySize, PtrTy),

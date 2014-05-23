@@ -35,7 +35,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: jalx
 // Removed: ldxc1
 // Removed: luxc1
-// Removed: lwl, lwr, lwle, lwre, swl, swr, swle, swre
 // Removed: lwxc1
 // Removed: madd.[ds], nmadd.[ds], nmsub.[ds], sub.[ds]
 // Removed: mfhi, mflo, mthi, mtlo, madd, maddu, msub, msubu, mul
