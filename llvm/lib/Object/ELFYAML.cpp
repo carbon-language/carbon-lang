@@ -246,16 +246,17 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
   const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
   assert(Object && "The IO context is not initialized");
 #define BCase(X) IO.bitSetCase(Value, #X, ELF::X);
+#define BCaseMask(X, M) IO.maskedBitSetCase(Value, #X, ELF::X, ELF::M);
   switch (Object->Header.Machine) {
   case ELF::EM_ARM:
     BCase(EF_ARM_SOFT_FLOAT)
     BCase(EF_ARM_VFP_FLOAT)
-    BCase(EF_ARM_EABI_UNKNOWN)
-    BCase(EF_ARM_EABI_VER1)
-    BCase(EF_ARM_EABI_VER2)
-    BCase(EF_ARM_EABI_VER3)
-    BCase(EF_ARM_EABI_VER4)
-    BCase(EF_ARM_EABI_VER5)
+    BCaseMask(EF_ARM_EABI_UNKNOWN, EF_ARM_EABIMASK)
+    BCaseMask(EF_ARM_EABI_VER1, EF_ARM_EABIMASK)
+    BCaseMask(EF_ARM_EABI_VER2, EF_ARM_EABIMASK)
+    BCaseMask(EF_ARM_EABI_VER3, EF_ARM_EABIMASK)
+    BCaseMask(EF_ARM_EABI_VER4, EF_ARM_EABIMASK)
+    BCaseMask(EF_ARM_EABI_VER5, EF_ARM_EABIMASK)
     break;
   case ELF::EM_MIPS:
     BCase(EF_MIPS_NOREORDER)
@@ -266,17 +267,17 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
     BCase(EF_MIPS_ABI_O32)
     BCase(EF_MIPS_MICROMIPS)
     BCase(EF_MIPS_ARCH_ASE_M16)
-    BCase(EF_MIPS_ARCH_1)
-    BCase(EF_MIPS_ARCH_2)
-    BCase(EF_MIPS_ARCH_3)
-    BCase(EF_MIPS_ARCH_4)
-    BCase(EF_MIPS_ARCH_5)
-    BCase(EF_MIPS_ARCH_32)
-    BCase(EF_MIPS_ARCH_64)
-    BCase(EF_MIPS_ARCH_32R2)
-    BCase(EF_MIPS_ARCH_64R2)
-    BCase(EF_MIPS_ARCH_32R6)
-    BCase(EF_MIPS_ARCH_64R6)
+    BCaseMask(EF_MIPS_ARCH_1, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_2, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_3, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_4, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_5, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_32, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_64, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_32R2, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_64R2, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_32R6, EF_MIPS_ARCH)
+    BCaseMask(EF_MIPS_ARCH_64R6, EF_MIPS_ARCH)
     break;
   case ELF::EM_HEXAGON:
     BCase(EF_HEXAGON_MACH_V2)
@@ -292,6 +293,7 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
     llvm_unreachable("Unsupported architecture");
   }
 #undef BCase
+#undef BCaseMask
 }
 
 void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(

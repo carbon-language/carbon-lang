@@ -399,6 +399,42 @@ the above schema, a same valid YAML document is:
     name:    Tom
     flags:   [ pointy, flat ]
 
+Sometimes a "flags" field might contains an enumeration part
+defined by a bit-mask.
+
+.. code-block:: c++
+
+    enum {
+      flagsFeatureA = 1,
+      flagsFeatureB = 2,
+      flagsFeatureC = 4,
+
+      flagsCPUMask = 24,
+
+      flagsCPU1 = 8,
+      flagsCPU2 = 16
+    };
+
+To support reading and writing such fields, you need to use the maskedBitSet()
+method and provide the bit values, their names and the enumeration mask.
+
+.. code-block:: c++
+
+    template <>
+    struct ScalarBitSetTraits<MyFlags> {
+      static void bitset(IO &io, MyFlags &value) {
+        io.bitSetCase(value, "featureA",  flagsFeatureA);
+        io.bitSetCase(value, "featureB",  flagsFeatureB);
+        io.bitSetCase(value, "featureC",  flagsFeatureC);
+        io.maskedBitSetCase(value, "CPU1",  flagsCPU1, flagsCPUMask);
+        io.maskedBitSetCase(value, "CPU2",  flagsCPU2, flagsCPUMask);
+      }
+    };
+
+YAML I/O (when writing) will apply the enumeration mask to the flags field,
+and compare the result and values from the bitset. As in case of a regular
+bitset, each that matches will cause the corresponding string to be added
+to the flow sequence.
 
 Custom Scalar
 -------------
