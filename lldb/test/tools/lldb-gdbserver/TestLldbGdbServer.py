@@ -435,10 +435,15 @@ class LldbGdbServerTestCase(TestBase):
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
             ["read packet: $vCont;c#00",
-             "send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
              "send packet: $W00#00"],
             True)
-        self.expect_gdbremote_sequence()
+            
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        
+        O_content = context.get("O_content")
+        self.assertIsNotNone(O_content)
+        self.assertEquals(O_content, "hello, world\r\n")
 
     @debugserver_test
     @dsym_test
@@ -1008,6 +1013,122 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_attach()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
+
+    def wait_for_thread_count(self, thread_count, timeout_seconds=3):
+        start_time = time.time()
+        timeout_time = start_time + timeout_seconds
+
+        actual_thread_count = 0
+        while actual_thread_count < thread_count:
+            self.reset_test_sequence()
+            self.add_threadinfo_collection_packets()
+
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            threads = self.parse_threadinfo_packets(context)
+            self.assertIsNotNone(threads)
+            
+            actual_thread_count = len(threads)
+
+            if time.time() > timeout_time:
+                raise Exception(
+                    'timed out after {} seconds while waiting for theads: waiting for at least {} threads, found {}'.format(
+                        timeout_seconds, thread_count, actual_thread_count))
+        
+        return threads
+
+    def run_process_then_stop(self, run_seconds=1):
+        # Tell the stub to continue.
+        self.test_sequence.add_log_lines(
+             ["read packet: $vCont;c#00"],
+             True)
+        context = self.expect_gdbremote_sequence()
+
+        # Wait for run_seconds.
+        time.sleep(run_seconds)
+        
+        # Send an interrupt, capture a T response.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            ["read packet: {}".format(chr(03)),
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result"} }],
+            True)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        self.assertIsNotNone(context.get("stop_result"))
+
+    def Hg_switches_to_3_threads(self):
+        # Startup the inferior with three threads (main + 2 new ones).
+        procs = self.prep_debug_monitor_and_inferior(inferior_args=["thread:new", "thread:new"])
+        
+        
+        # Let the inferior process have a few moments to start up the thread when launched.  (The launch scenario has no time to run, so threads won't be there yet.)
+        self.run_process_then_stop(run_seconds=1)
+        
+        # thread_created_regex = re.compile(r"^thread 0x([0-9a-fA-F])+: created")
+        # self.add_log_lines([
+        #    {"type":"output_matcher", "regex":[thread_created_regex, thread_created_regex], "timeout_seconds":"5", save_key:"create_messages"}],
+        #    True)
+
+        # Wait at most x seconds for 3 threads to be present.
+        threads = self.wait_for_thread_count(3, timeout_seconds=5)
+        self.assertEquals(len(threads), 3)
+
+        # TODO verify we can $H to each thead, and $qC matches the thread we set.
+        for thread in threads:
+            # Change to each thread, verify current thread id.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                ["read packet: $Hg{}#00".format(hex(thread)),  # Set current thread.
+                 "send packet: $OK#00",
+                 "read packet: $qC#00",
+                 { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} }],
+                True)
+            
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+            
+            # Verify the thread id.
+            self.assertIsNotNone(context.get("thread_id"))
+            self.assertEquals(int(context.get("thread_id"), 16), thread)
+
+    @debugserver_test
+    @dsym_test
+    def test_Hg_switches_to_3_threads_launch_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.Hg_switches_to_3_threads()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_Hg_switches_to_3_threads_launch_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.Hg_switches_to_3_threads()
+
+
+    @debugserver_test
+    @dsym_test
+    def test_Hg_switches_to_3_threads_attach_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_attach()
+        self.Hg_switches_to_3_threads()
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_Hg_switches_to_3_threads_attach_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_attach()
+        self.Hg_switches_to_3_threads()
 
 if __name__ == '__main__':
     unittest2.main()

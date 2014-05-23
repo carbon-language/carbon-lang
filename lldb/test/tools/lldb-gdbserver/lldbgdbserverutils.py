@@ -108,6 +108,19 @@ def _is_packet_lldb_gdbserver_input(packet_type, llgs_input_is_read):
         raise "Unknown packet type: {}".format(packet_type)
 
 
+def handle_O_packet(context, packet_contents):
+    """Handle O packets."""
+    if (not packet_contents) or (len(packet_contents) < 1):
+        return False
+    elif packet_contents[0] != "O":
+        return False
+    elif packet_contents == "OK":
+        return False
+
+    context["O_content"] += gdbremote_hex_decode_string(packet_contents[1:])
+    context["O_count"] += 1
+    return True
+
 _STRIP_CHECKSUM_REGEX = re.compile(r'#[0-9a-fA-F]{2}$')
 _STRIP_COMMAND_PREFIX_REGEX = re.compile(r"^\$")
 _STRIP_COMMAND_PREFIX_M_REGEX = re.compile(r"^\$m")
@@ -151,6 +164,15 @@ def expect_lldb_gdbserver_replay(
         protocol sequence.  This will contain any of the capture
         elements specified to any GdbRemoteEntry instances in
         test_sequence.
+
+        The context will also contain an entry, context["O_content"]
+        which contains the text from the inferior received via $O
+        packets.  $O packets should not attempt to be matched
+        directly since they are not entirely deterministic as to
+        how many arrive and how much text is in each one.
+
+        context["O_count"] will contain an integer of the number of
+        O packets received.
     """
     
     # Ensure we have some work to do.
@@ -159,7 +181,7 @@ def expect_lldb_gdbserver_replay(
     
     received_lines = []
     receive_buffer = ''
-    context = {}
+    context = {"O_count":0, "O_content":""}
 
     sequence_entry = test_sequence.entries.pop(0)
     while sequence_entry:
@@ -183,11 +205,14 @@ def expect_lldb_gdbserver_replay(
                 # check for timeout
                 if time.time() > timeout_time:
                     raise Exception(
-                        'timed out after {} seconds while waiting for llgs to respond with: {}, currently received: {}'.format(
-                            timeout_seconds, sequence_entry.exact_payload, receive_buffer))
+                        'timed out after {} seconds while waiting for llgs to respond, currently received: {}'.format(
+                            timeout_seconds, receive_buffer))
                 can_read, _, _ = select.select([sock], [], [], 0)
                 if can_read and sock in can_read:
-                    new_bytes = sock.recv(4096)
+                    try:
+                        new_bytes = sock.recv(4096)
+                    except:
+                        new_bytes = None
                     if new_bytes and len(new_bytes) > 0:
                         # read the next bits from the socket
                         if logger:
@@ -208,7 +233,9 @@ def expect_lldb_gdbserver_replay(
                             else:
                                 packet_match = _GDB_REMOTE_PACKET_REGEX.match(receive_buffer)
                                 if packet_match:
-                                    received_lines.append(packet_match.group(0))
+                                    if not handle_O_packet(context, packet_match.group(1)):
+                                        # Normal packet to match.
+                                        received_lines.append(packet_match.group(0))
                                     receive_buffer = receive_buffer[len(packet_match.group(0)):]
                                     if logger:
                                         logger.debug('parsed packet from llgs: {}, new receive_buffer: {}'.format(packet_match.group(0), receive_buffer))
@@ -235,6 +262,8 @@ def gdbremote_hex_encode_string(str):
         output += '{0:02x}'.format(ord(c))
     return output
 
+def gdbremote_hex_decode_string(str):
+    return str.decode("hex")
 
 def gdbremote_packet_encode_string(str):
     checksum = 0
