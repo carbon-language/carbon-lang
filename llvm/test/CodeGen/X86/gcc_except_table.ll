@@ -50,7 +50,3 @@ eh.resume:
 declare void @_Z1fv() optsize
 
 declare i32 @__gxx_personality_v0(...)
-
-; CHECK: Leh_func_end0:
-; CHECK: GCC_except_table0
-; CHECK: = Leh_func_end0-
