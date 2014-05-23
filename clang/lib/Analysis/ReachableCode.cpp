@@ -59,32 +59,57 @@ static bool isTrivialDoWhile(const CFGBlock *B, const Stmt *S) {
 }
 
 static bool isDeadReturn(const CFGBlock *B, const Stmt *S) {
-  // Look to see if the block ends with a 'return', and see if 'S'
-  // is a substatement.  The 'return' may not be the last element in
-  // the block because of destructors.
-  for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
-       I != E; ++I) {
-    if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
-      if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
-        if (RS == S)
-          return true;
-        if (const Expr *RE = RS->getRetValue()) {
-          RE = RE->IgnoreParenCasts();
-          if (RE == S)
+  // Look to see if the current control flow ends with a 'return', and see if
+  // 'S' is a substatement. The 'return' may not be the last element in the
+  // block, or may be in a subsequent block because of destructors.
+  const CFGBlock *Current = B;
+  while (true) {
+    for (CFGBlock::const_reverse_iterator I = Current->rbegin(),
+                                          E = Current->rend();
+         I != E; ++I) {
+      if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
+        if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
+          if (RS == S)
             return true;
-          ParentMap PM(const_cast<Expr*>(RE));
-          // If 'S' is in the ParentMap, it is a subexpression of
-          // the return statement.  Note also that we are restricting
-          // to looking at return statements in the same CFGBlock,
-          // so this will intentionally not catch cases where the
-          // return statement contains nested control-flow.
-          return PM.getParent(S);
+          if (const Expr *RE = RS->getRetValue()) {
+            RE = RE->IgnoreParenCasts();
+            if (RE == S)
+              return true;
+            ParentMap PM(const_cast<Expr *>(RE));
+            // If 'S' is in the ParentMap, it is a subexpression of
+            // the return statement.
+            return PM.getParent(S);
+          }
         }
+        break;
       }
-      break;
+    }
+    // Note also that we are restricting the search for the return statement
+    // to stop at control-flow; only part of a return statement may be dead,
+    // without the whole return statement being dead.
+    if (Current->getTerminator().isTemporaryDtorsBranch()) {
+      // Temporary destructors have a predictable control flow, thus we want to
+      // look into the next block for the return statement.
+      // We look into the false branch, as we know the true branch only contains
+      // the call to the destructor.
+      assert(Current->succ_size() == 2);
+      Current = *(Current->succ_begin() + 1);
+    } else if (!Current->getTerminator() && Current->succ_size() == 1) {
+      // If there is only one successor, we're not dealing with outgoing control
+      // flow. Thus, look into the next block.
+      Current = *Current->succ_begin();
+      if (Current->pred_size() > 1) {
+        // If there is more than one predecessor, we're dealing with incoming
+        // control flow - if the return statement is in that block, it might
+        // well be reachable via a different control flow, thus it's not dead.
+        return false;
+      }
+    } else {
+      // We hit control flow or a dead end. Stop searching.
+      return false;
     }
   }
-  return false;
+  llvm_unreachable("Broke out of infinite loop.");
 }
 
 static SourceLocation getTopMostMacro(SourceLocation Loc, SourceManager &SM) {
