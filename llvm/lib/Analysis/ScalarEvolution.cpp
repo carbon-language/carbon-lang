@@ -4409,36 +4409,63 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   SmallVector<BasicBlock *, 8> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
-  // Examine all exits and pick the most conservative values.
-  const SCEV *MaxBECount = getCouldNotCompute();
+  SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
   bool CouldComputeBECount = true;
   BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
-  bool LatchMustExit = false;
-  SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
+  const SCEV *MustExitMaxBECount = nullptr;
+  const SCEV *MayExitMaxBECount = nullptr;
+
+  // Compute the ExitLimit for each loop exit. Use this to populate ExitCounts
+  // and compute maxBECount.
   for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
-    ExitLimit EL = ComputeExitLimit(L, ExitingBlocks[i]);
+    BasicBlock *ExitBB = ExitingBlocks[i];
+    ExitLimit EL = ComputeExitLimit(L, ExitBB);
+
+    // 1. For each exit that can be computed, add an entry to ExitCounts.
+    // CouldComputeBECount is true only if all exits can be computed.
     if (EL.Exact == getCouldNotCompute())
       // We couldn't compute an exact value for this exit, so
       // we won't be able to compute an exact value for the loop.
       CouldComputeBECount = false;
     else
-      ExitCounts.push_back(std::make_pair(ExitingBlocks[i], EL.Exact));
+      ExitCounts.push_back(std::make_pair(ExitBB, EL.Exact));
 
-    if (MaxBECount == getCouldNotCompute())
-      MaxBECount = EL.Max;
-    else if (EL.Max != getCouldNotCompute()) {
-      // We cannot take the "min" MaxBECount, because non-unit stride loops may
-      // skip some loop tests. Taking the max over the exits is sufficiently
-      // conservative.  TODO: We could do better taking into consideration
-      // non-latch exits that dominate the latch.
-      if (EL.MustExit && ExitingBlocks[i] == Latch) {
-        MaxBECount = EL.Max;
-        LatchMustExit = true;
+    // 2. Derive the loop's MaxBECount from each exit's max number of
+    // non-exiting iterations. Partition the loop exits into two kinds:
+    // LoopMustExits and LoopMayExits.
+    //
+    // A LoopMustExit meets two requirements:
+    //
+    // (a) Its ExitLimit.MustExit flag must be set which indicates that the exit
+    // test condition cannot be skipped (the tested variable has unit stride or
+    // the test is less-than or greater-than, rather than a strict inequality).
+    //
+    // (b) It must dominate the loop latch, hence must be tested on every loop
+    // iteration.
+    //
+    // If any computable LoopMustExit is found, then MaxBECount is the minimum
+    // EL.Max of computable LoopMustExits. Otherwise, MaxBECount is
+    // conservatively the maximum EL.Max, where CouldNotCompute is considered
+    // greater than any computable EL.Max.
+    if (EL.MustExit && EL.Max != getCouldNotCompute() && Latch &&
+        DT->dominates(ExitBB, Latch)) {
+      if (!MustExitMaxBECount)
+        MustExitMaxBECount = EL.Max;
+      else {
+        MustExitMaxBECount =
+          getUMinFromMismatchedTypes(MustExitMaxBECount, EL.Max);
       }
-      else if (!LatchMustExit)
-        MaxBECount = getUMaxFromMismatchedTypes(MaxBECount, EL.Max);
+    } else if (MayExitMaxBECount != getCouldNotCompute()) {
+      if (!MayExitMaxBECount || EL.Max == getCouldNotCompute())
+        MayExitMaxBECount = EL.Max;
+      else {
+        MayExitMaxBECount =
+          getUMaxFromMismatchedTypes(MayExitMaxBECount, EL.Max);
+      }
     }
   }
+  const SCEV *MaxBECount = MustExitMaxBECount ? MustExitMaxBECount :
+    (MayExitMaxBECount ? MayExitMaxBECount : getCouldNotCompute());
   return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
 }
 

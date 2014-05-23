@@ -124,3 +124,59 @@ for.cond.i:                                       ; preds = %for.body.i
 bar.exit:                                         ; preds = %for.cond.i, %for.body.i
   ret i32 0
 }
+
+; Here we have a must-exit loop latch that is not computabe and a
+; may-exit early exit that can only have one non-exiting iteration
+; before the check is forever skipped.
+;
+; CHECK-LABEL: @cannot_compute_mustexit
+; CHECK: Loop %for.body.i: <multiple exits> Unpredictable backedge-taken count. 
+; CHECK: Loop %for.body.i: Unpredictable max backedge-taken count. 
+@b = common global i32 0, align 4
+
+define i32 @cannot_compute_mustexit() {
+entry:
+  store i32 -1, i32* @a, align 4
+  br label %for.body.i
+
+for.body.i:                                       ; preds = %for.cond.i, %entry
+  %storemerge1.i = phi i32 [ -1, %entry ], [ %add.i.i, %for.cond.i ]
+  %tobool.i = icmp eq i32 %storemerge1.i, 0
+  %add.i.i = add nsw i32 %storemerge1.i, 2
+  br i1 %tobool.i, label %bar.exit, label %for.cond.i
+
+for.cond.i:                                       ; preds = %for.body.i
+  store i32 %add.i.i, i32* @a, align 4
+  %ld = load volatile i32* @b
+  %cmp.i = icmp ne i32 %ld, 0
+  br i1 %cmp.i, label %for.body.i, label %bar.exit
+
+bar.exit:                                         ; preds = %for.cond.i, %for.body.i
+  ret i32 0
+}
+
+; This loop has two must-exits, both of with dominate the latch. The
+; MaxBECount should be the minimum of them.
+;
+; CHECK-LABEL: @two_mustexit
+; CHECK: Loop %for.body.i: <multiple exits> Unpredictable backedge-taken count. 
+; CHECK: Loop %for.body.i: max backedge-taken count is 1
+define i32 @two_mustexit() {
+entry:
+  store i32 -1, i32* @a, align 4
+  br label %for.body.i
+
+for.body.i:                                       ; preds = %for.cond.i, %entry
+  %storemerge1.i = phi i32 [ -1, %entry ], [ %add.i.i, %for.cond.i ]
+  %tobool.i = icmp sgt i32 %storemerge1.i, 0
+  %add.i.i = add nsw i32 %storemerge1.i, 2
+  br i1 %tobool.i, label %bar.exit, label %for.cond.i
+
+for.cond.i:                                       ; preds = %for.body.i
+  store i32 %add.i.i, i32* @a, align 4
+  %cmp.i = icmp slt i32 %storemerge1.i, 3
+  br i1 %cmp.i, label %for.body.i, label %bar.exit
+
+bar.exit:                                         ; preds = %for.cond.i, %for.body.i
+  ret i32 0
+}
