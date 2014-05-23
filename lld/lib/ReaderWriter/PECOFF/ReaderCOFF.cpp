@@ -13,6 +13,7 @@
 #include "lld/Core/File.h"
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
+#include "lld/ReaderWriter/Alias.h"
 #include "lld/ReaderWriter/Reader.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -70,7 +71,7 @@ public:
 
   FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec);
 
-  error_code parse(StringMap &altNames);
+  error_code parse();
   StringRef getLinkerDirectives() const { return _directives; }
   bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
 
@@ -90,6 +91,12 @@ public:
     return _absoluteAtoms;
   }
 
+  void addDefinedAtom(const DefinedAtom *atom) {
+    _definedAtoms._atoms.push_back(atom);
+  }
+
+  mutable llvm::BumpPtrAllocator _alloc;
+
 private:
   error_code readSymbolTable(vector<const coff_symbol *> &result);
 
@@ -100,7 +107,6 @@ private:
                                   vector<const UndefinedAtom *> &result);
 
   error_code createDefinedSymbols(const SymbolVectorT &symbols,
-                                  StringMap &altNames,
                                   vector<const DefinedAtom *> &result);
 
   error_code cacheSectionAttributes();
@@ -108,12 +114,10 @@ private:
 
   error_code
   AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                 StringMap &altNames,
                                  vector<const coff_symbol *> &symbols,
                                  vector<COFFDefinedFileAtom *> &atoms);
 
   error_code AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
-                                   StringMap &altNames,
                                    vector<const DefinedAtom *> &definedAtoms);
 
   error_code findAtomAt(const coff_section *section, uint32_t targetAddress,
@@ -172,7 +176,6 @@ private:
            std::map<uint32_t, std::vector<COFFDefinedAtom *>>>
   _definedAtomLocations;
 
-  mutable llvm::BumpPtrAllocator _alloc;
   uint64_t _ordinal;
 };
 
@@ -295,7 +298,7 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
     _directives = ArrayRefToString(directives);
 }
 
-error_code FileCOFF::parse(StringMap &altNames) {
+error_code FileCOFF::parse() {
   if (error_code ec = getReferenceArch(_referenceArch))
     return ec;
 
@@ -309,7 +312,7 @@ error_code FileCOFF::parse(StringMap &altNames) {
   createAbsoluteAtoms(symbols, _absoluteAtoms._atoms);
   if (error_code ec = createUndefinedAtoms(symbols, _undefinedAtoms._atoms))
     return ec;
-  if (error_code ec = createDefinedSymbols(symbols, altNames, _definedAtoms._atoms))
+  if (error_code ec = createDefinedSymbols(symbols, _definedAtoms._atoms))
     return ec;
   if (error_code ec = addRelocationReferenceToAtoms())
     return ec;
@@ -440,7 +443,6 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
 /// the other two, because in order to create the atom for the defined symbol
 /// we need to know the adjacent symbols.
 error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
-                                          StringMap &altNames,
                                           vector<const DefinedAtom *> &result) {
   // A defined atom can be merged if its section attribute allows its contents
   // to be merged. In COFF, it's not very easy to get the section attribute
@@ -521,7 +523,7 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
   }
 
   // Atomize the defined symbols.
-  if (error_code ec = AtomizeDefinedSymbols(definedSymbols, altNames, result))
+  if (error_code ec = AtomizeDefinedSymbols(definedSymbols, result))
     return ec;
 
   return error_code::success();
@@ -572,7 +574,6 @@ error_code FileCOFF::cacheSectionAttributes() {
 /// assumed to have been defined in the \p section.
 error_code
 FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                         StringMap &altNames,
                                          vector<const coff_symbol *> &symbols,
                                          vector<COFFDefinedFileAtom *> &atoms) {
   // Sort symbols by position.
@@ -656,16 +657,6 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
     // if this is the last symbol, take up the remaining data.
     const uint8_t *end = (si + 1 == se) ? secData.data() + secData.size()
                                         : secData.data() + (*(si + 1))->Value;
-    auto pos = altNames.find(_symbolName[*si]);
-    if (pos != altNames.end()) {
-      auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, pos->second, sectionName, getScope(*si), type, isComdat, perms,
-          DefinedAtom::mergeAsWeak, ArrayRef<uint8_t>(), _ordinal++);
-      atoms.push_back(atom);
-      _symbolAtom[*si] = atom;
-      _definedAtomLocations[section][(*si)->Value].push_back(atom);
-    }
-
     ArrayRef<uint8_t> data(start, end);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
@@ -683,7 +674,6 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
 
 error_code
 FileCOFF::AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
-                                StringMap &altNames,
                                 vector<const DefinedAtom *> &definedAtoms) {
   // For each section, make atoms for all the symbols defined in the
   // section, and append the atoms to the result objects.
@@ -691,8 +681,7 @@ FileCOFF::AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
     const coff_section *section = i.first;
     vector<const coff_symbol *> &symbols = i.second;
     vector<COFFDefinedFileAtom *> atoms;
-    if (error_code ec =
-            AtomizeDefinedSymbolsInSection(section, altNames, symbols, atoms))
+    if (error_code ec = AtomizeDefinedSymbolsInSection(section, symbols, atoms))
       return ec;
 
     // Connect atoms with layout-before/layout-after edges.
@@ -939,8 +928,7 @@ public:
     std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(newmb), ec));
     if (ec)
       return ec;
-    FileCOFF::StringMap emptyMap;
-    if (error_code ec = file->parse(emptyMap))
+    if (error_code ec = file->parse())
       return ec;
     result.push_back(std::move(file));
     return error_code::success();
@@ -1020,7 +1008,7 @@ public:
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::coff_object);
+    return magic == llvm::sys::fs::file_magic::coff_object;
   }
 
   error_code
@@ -1039,7 +1027,7 @@ public:
       if (error_code ec = handleDirectiveSection(registry, directives))
         return ec;
 
-    if (error_code ec = file->parse(_context.alternateNames()))
+    if (error_code ec = file->parse())
       return ec;
 
     // Check for /SAFESEH.
@@ -1053,6 +1041,11 @@ public:
     // SEH. Disable SEH if the file being read is not compatible.
     if (!file->isCompatibleWithSEH())
       _context.setSafeSEH(false);
+
+    // One can define alias symbols using /alternatename:<sym>=<sym> option.
+    // The mapping for /alternatename is in the context object. This helper
+    // function iterate over defined atoms and create alias atoms if needed.
+    createAlternateNameAtoms(*file);
 
     result.push_back(std::move(file));
     return error_code::success();
@@ -1094,6 +1087,30 @@ private:
       llvm::errs() << "lld warning: " << errorMessage << "\n";
     }
     return error_code::success();
+  }
+
+  AliasAtom *createAlias(FileCOFF &file, StringRef name,
+                         const DefinedAtom *target) const {
+    AliasAtom *alias = new (file._alloc) AliasAtom(file, name);
+    alias->addReference(Reference::KindNamespace::all, Reference::KindArch::all,
+                        Reference::kindLayoutAfter, 0, target, 0);
+    alias->setMerge(DefinedAtom::mergeAsWeak);
+    if (target->contentType() == DefinedAtom::typeCode)
+      alias->setDeadStrip(DefinedAtom::deadStripNever);
+    return alias;
+  }
+
+  // Iterates over defined atoms and create alias atoms if needed.
+  void createAlternateNameAtoms(FileCOFF &file) const {
+    std::vector<const DefinedAtom *> aliases;
+    for (const DefinedAtom *atom : file.defined()) {
+      auto it = _context.alternateNames().find(atom->name());
+      if (it != _context.alternateNames().end())
+        aliases.push_back(createAlias(file, it->second, atom));
+    }
+    for (const DefinedAtom *alias : aliases) {
+      file.addDefinedAtom(alias);
+    }
   }
 
   PECOFFLinkingContext &_context;

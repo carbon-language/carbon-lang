@@ -17,6 +17,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/ReaderWriter/Simple.h"
+#include "llvm/ADT/Optional.h"
 
 #include <string>
 
@@ -33,7 +34,9 @@ namespace lld {
 class AliasAtom : public SimpleDefinedAtom {
 public:
   AliasAtom(const File &file, StringRef name)
-      : SimpleDefinedAtom(file), _target(nullptr), _name(name) {}
+      : SimpleDefinedAtom(file), _target(nullptr), _name(name),
+        _merge(DefinedAtom::mergeNo), _deadStrip(DefinedAtom::deadStripNormal) {
+  }
 
   StringRef name() const override { return _name; }
   uint64_t size() const override { return 0; }
@@ -45,9 +48,13 @@ public:
   }
 
   Merge merge() const override {
+    if (_merge.hasValue())
+      return _merge.getValue();
     getTarget();
     return _target ? _target->merge() : mergeNo;
   }
+
+  void setMerge(Merge val) { _merge = val; }
 
   ContentType contentType() const override {
     getTarget();
@@ -69,6 +76,9 @@ public:
     return _target ? _target->customSectionName() : StringRef("");
   }
 
+  DeadStripKind deadStrip() const override { return _deadStrip; }
+  void setDeadStrip(DeadStripKind val) { _deadStrip = val; }
+
 private:
   void getTarget() const {
     if (_target)
@@ -84,6 +94,8 @@ private:
 
   mutable const DefinedAtom *_target;
   std::string _name;
+  llvm::Optional<Merge> _merge;
+  DeadStripKind _deadStrip;
 };
 
 } // end namespace lld

@@ -17,11 +17,11 @@ CHECK1-NEXT: nop
 CHECK1-NEXT: nop
 CHECK1-NOT:  int3
 
-CHECK2-NOT:  nop
 CHECK2:      int3
 CHECK2-NEXT: int3
 CHECK2-NEXT: int3
 CHECK2-NEXT: int3
+CHECK2-NOT:  nop
 
 CHECK3:      nop
 CHECK3-NEXT: nop
