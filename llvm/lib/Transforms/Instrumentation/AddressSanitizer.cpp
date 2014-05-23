@@ -623,26 +623,31 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 }
 
 // If I is an interesting memory access, return the PointerOperand
-// and set IsWrite. Otherwise return NULL.
-static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite) {
+// and set IsWrite/Alignment. Otherwise return NULL.
+static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
+                                        unsigned *Alignment) {
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!ClInstrumentReads) return nullptr;
     *IsWrite = false;
+    *Alignment = LI->getAlignment();
     return LI->getPointerOperand();
   }
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (!ClInstrumentWrites) return nullptr;
     *IsWrite = true;
+    *Alignment = SI->getAlignment();
     return SI->getPointerOperand();
   }
   if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
+    *Alignment = 0;
     return RMW->getPointerOperand();
   }
   if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
+    *Alignment = 0;
     return XCHG->getPointerOperand();
   }
   return nullptr;
@@ -692,7 +697,8 @@ AddressSanitizer::instrumentPointerComparisonOrSubtraction(Instruction *I) {
 
 void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   bool IsWrite = false;
-  Value *Addr = isInterestingMemoryAccess(I, &IsWrite);
+  unsigned Alignment = 0;
+  Value *Addr = isInterestingMemoryAccess(I, &IsWrite, &Alignment);
   assert(Addr);
   if (ClOpt && ClOptGlobals) {
     if (GlobalVariable *G = dyn_cast<GlobalVariable>(Addr)) {
@@ -727,11 +733,14 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   else
     NumInstrumentedReads++;
 
-  // Instrument a 1-, 2-, 4-, 8-, or 16- byte access with one check.
-  if (TypeSize == 8  || TypeSize == 16 ||
-      TypeSize == 32 || TypeSize == 64 || TypeSize == 128)
+  unsigned Granularity = 1 << Mapping.Scale;
+  // Instrument a 1-, 2-, 4-, 8-, or 16- byte access with one check
+  // if the data is properly aligned.
+  if ((TypeSize == 8 || TypeSize == 16 || TypeSize == 32 || TypeSize == 64 ||
+       TypeSize == 128) &&
+      (Alignment >= Granularity || Alignment == 0 || Alignment >= TypeSize / 8))
     return instrumentAddress(I, I, Addr, TypeSize, IsWrite, nullptr, UseCalls);
-  // Instrument unusual size (but still multiple of 8).
+  // Instrument unusual size or unusual alignment.
   // We can not do it with a single check, so we do 1-byte check for the first
   // and the last bytes. We call __asan_report_*_n(addr, real_size) to be able
   // to report the actual access size.
@@ -1328,6 +1337,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   SmallVector<Instruction*, 16> PointerComparisonsOrSubtracts;
   int NumAllocas = 0;
   bool IsWrite;
+  unsigned Alignment;
 
   // Fill the set of memory operations to instrument.
   for (Function::iterator FI = F.begin(), FE = F.end();
@@ -1338,7 +1348,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
          BI != BE; ++BI) {
       if (LooksLikeCodeInBug11395(BI)) return false;
-      if (Value *Addr = isInterestingMemoryAccess(BI, &IsWrite)) {
+      if (Value *Addr = isInterestingMemoryAccess(BI, &IsWrite, &Alignment)) {
         if (ClOpt && ClOptSameTemp) {
           if (!TempsToInstrument.insert(Addr))
             continue;  // We've seen this temp in the current BB.
@@ -1390,7 +1400,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     Instruction *Inst = ToInstrument[i];
     if (ClDebugMin < 0 || ClDebugMax < 0 ||
         (NumInstrumented >= ClDebugMin && NumInstrumented <= ClDebugMax)) {
-      if (isInterestingMemoryAccess(Inst, &IsWrite))
+      if (isInterestingMemoryAccess(Inst, &IsWrite, &Alignment))
         instrumentMop(Inst, UseCalls);
       else
         instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));

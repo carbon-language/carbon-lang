@@ -6,7 +6,7 @@ entry:
   %tmp1 = load i32* %a, align 4
   ret i32 %tmp1
 }
-; CHECK: @read_4_bytes
+; CHECK-LABEL: @read_4_bytes
 ; CHECK-NOT: ret
 ; CHECK: lshr {{.*}} 3
 ; Check for ASAN's Offset for 64-bit (7fff8000)
@@ -19,8 +19,10 @@ entry:
   ret void
 }
 
-; CHECK: @example_atomicrmw
+; CHECK-LABEL: @example_atomicrmw
 ; CHECK: lshr {{.*}} 3
+; CHECK: __asan_report_store8
+; CHECK-NOT: __asan_report
 ; CHECK: atomicrmw
 ; CHECK: ret
 
@@ -30,7 +32,9 @@ entry:
   ret void
 }
 
-; CHECK: @example_cmpxchg
+; CHECK-LABEL: @example_cmpxchg
 ; CHECK: lshr {{.*}} 3
+; CHECK: __asan_report_store8
+; CHECK-NOT: __asan_report
 ; CHECK: cmpxchg
 ; CHECK: ret

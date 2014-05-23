@@ -20,10 +20,10 @@ entry:
 ; CHECK-CUSTOM-PREFIX: call void @__foo_load8
 ; CHECK-CUSTOM-PREFIX: call void @__foo_loadN
 ; CHECK-INLINE-NOT: call void @__asan_load
-  %tmp1 = load i32* %a
-  %tmp2 = load i64* %b
-  %tmp3 = load i512* %c
-  %tmp4 = load i80* %d
+  %tmp1 = load i32* %a, align 4
+  %tmp2 = load i64* %b, align 8
+  %tmp3 = load i512* %c, align 32
+  %tmp4 = load i80* %d, align 8
   ret void
 }
 

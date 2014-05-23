@@ -34,7 +34,7 @@ define i32 @test_load(i32* %a) sanitize_address {
 
 
 entry:
-  %tmp1 = load i32* %a
+  %tmp1 = load i32* %a, align 4
   ret i32 %tmp1
 }
 
@@ -66,7 +66,7 @@ define void @test_store(i32* %a) sanitize_address {
 ;
 
 entry:
-  store i32 42, i32* %a
+  store i32 42, i32* %a, align 4
   ret void
 }
 
@@ -114,6 +114,18 @@ define void @i40test(i40* %a, i40* %b) nounwind uwtable sanitize_address {
 ; CHECK: __asan_report_store_n{{.*}}, i64 5)
 ; CHECK: __asan_report_store_n{{.*}}, i64 5)
 ; CHECK: ret void
+
+define void @i64test_align1(i64* %b) nounwind uwtable sanitize_address {
+  entry:
+  store i64 0, i64* %b, align 1
+  ret void
+}
+
+; CHECK-LABEL: i64test_align1
+; CHECK: __asan_report_store_n{{.*}}, i64 8)
+; CHECK: __asan_report_store_n{{.*}}, i64 8)
+; CHECK: ret void
+
 
 define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
   entry:
