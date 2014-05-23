@@ -459,6 +459,9 @@ static int printf_get_value_size(PrintfDirective *dir) {
       case 8:                                                      \
         va_arg(*aq, double);                                       \
         break;                                                     \
+      case 12:                                                     \
+        va_arg(*aq, long double);                                  \
+        break;                                                     \
       case 16:                                                     \
         va_arg(*aq, long double);                                  \
         break;                                                     \

@@ -9,6 +9,21 @@
 // RUN: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
 // FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
 // RUN: %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
+// RUN: %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
+
+// FIXME: run all ubsan tests in 32- and 64-bit modes (?).
+// RUN: %clangxx -fsanitize=float-cast-overflow -m32 %s -o %t
+// RUN: %run %t _
+// RUN: %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
+// RUN: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
+// RUN: %run %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
+// RUN: %run %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3
+// RUN: %run %t 4 2>&1 | FileCheck %s --check-prefix=CHECK-4
+// RUN: %run %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
+// RUN: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
+// FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
+// RUN: %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
+// RUN: %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
@@ -95,5 +110,10 @@ int main(int argc, char **argv) {
   case '8':
     // CHECK-8: runtime error: value 1e+39 is outside the range of representable values of type 'float'
     return (float)1e39;
+  case '9':
+    volatile long double ld = 300.0;
+    // CHECK-9: runtime error: value 300 is outside the range of representable values of type 'char'
+    char c = ld;
+    return c;
   }
 }

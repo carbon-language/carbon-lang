@@ -94,6 +94,7 @@ FloatMax Value::getFloatValue() const {
     switch (getType().getFloatBitWidth()) {
     case 64: return *reinterpret_cast<double*>(Val);
     case 80: return *reinterpret_cast<long double*>(Val);
+    case 96: return *reinterpret_cast<long double*>(Val);
     case 128: return *reinterpret_cast<long double*>(Val);
     }
   }
