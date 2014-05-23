@@ -6135,18 +6135,30 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
 
   // If LHS or RHS is an addrec, check to see if the condition is true in
   // every iteration of the loop.
-  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
-    if (isLoopEntryGuardedByCond(
-          AR->getLoop(), Pred, AR->getStart(), RHS) &&
-        isLoopBackedgeGuardedByCond(
-          AR->getLoop(), Pred, AR->getPostIncExpr(*this), RHS))
-      return true;
-  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(RHS))
-    if (isLoopEntryGuardedByCond(
-          AR->getLoop(), Pred, LHS, AR->getStart()) &&
-        isLoopBackedgeGuardedByCond(
-          AR->getLoop(), Pred, LHS, AR->getPostIncExpr(*this)))
-      return true;
+  // If LHS and RHS are both addrec, both conditions must be true in
+  // every iteration of the loop.
+  const SCEVAddRecExpr *LAR = dyn_cast<SCEVAddRecExpr>(LHS);
+  const SCEVAddRecExpr *RAR = dyn_cast<SCEVAddRecExpr>(RHS);
+  bool LeftGuarded = false;
+  bool RightGuarded = false;
+  if (LAR) {
+    const Loop *L = LAR->getLoop();
+    if (isLoopEntryGuardedByCond(L, Pred, LAR->getStart(), RHS) &&
+        isLoopBackedgeGuardedByCond(L, Pred, LAR->getPostIncExpr(*this), RHS)) {
+      if (!RAR) return true;
+      LeftGuarded = true;
+    }
+  }
+  if (RAR) {
+    const Loop *L = RAR->getLoop();
+    if (isLoopEntryGuardedByCond(L, Pred, LHS, RAR->getStart()) &&
+        isLoopBackedgeGuardedByCond(L, Pred, LHS, RAR->getPostIncExpr(*this))) {
+      if (!LAR) return true;
+      RightGuarded = true;
+    }
+  }
+  if (LeftGuarded && RightGuarded)
+    return true;
 
   // Otherwise see what can be done with known constant ranges.
   return isKnownPredicateWithRanges(Pred, LHS, RHS);
