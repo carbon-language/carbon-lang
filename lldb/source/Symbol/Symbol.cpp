@@ -541,7 +541,7 @@ Symbol *
 Symbol::ResolveReExportedSymbolInModuleSpec (Target &target,
                                              ConstString &reexport_name,
                                              ModuleSpec &module_spec,
-                                             ModuleList &seen_modules)
+                                             ModuleList &seen_modules) const
 {
     ModuleSP module_sp;
     if (module_spec.GetFileSpec())
@@ -602,7 +602,7 @@ Symbol::ResolveReExportedSymbolInModuleSpec (Target &target,
 }
 
 Symbol *
-Symbol::ResolveReExportedSymbol (Target &target)
+Symbol::ResolveReExportedSymbol (Target &target) const
 {
     ConstString reexport_name (GetReExportedSymbolName());
     if (reexport_name)
@@ -616,6 +616,49 @@ Symbol::ResolveReExportedSymbol (Target &target)
         }
     }
     return nullptr;
+}
+
+lldb::addr_t
+Symbol::ResolveCallableAddress(Target &target) const
+{
+    if (GetType() == lldb::eSymbolTypeUndefined)
+        return LLDB_INVALID_ADDRESS;
+    
+    Address func_so_addr;
+    
+    bool is_indirect;
+    if (GetType() == eSymbolTypeReExported)
+    {
+        Symbol *reexported_symbol = ResolveReExportedSymbol(target);
+        if (reexported_symbol)
+        {
+            func_so_addr = reexported_symbol->GetAddress();
+            is_indirect = reexported_symbol->IsIndirect();
+        }
+    }
+    else
+    {
+        func_so_addr = GetAddress();
+        is_indirect = IsIndirect();
+    }
+
+    if (func_so_addr.IsValid())
+    {
+        if (!target.GetProcessSP() && is_indirect)
+        {
+            // can't resolve indirect symbols without calling a function...
+            return LLDB_INVALID_ADDRESS;
+        }
+        
+        lldb::addr_t load_addr = func_so_addr.GetCallableLoadAddress (&target, is_indirect);
+        
+        if (load_addr != LLDB_INVALID_ADDRESS)
+        {
+            return load_addr;
+        }
+    }
+    
+    return LLDB_INVALID_ADDRESS;
 }
 
 

@@ -573,37 +573,27 @@ ClangExpressionDeclMap::GetFunctionAddress
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
 
-        const Address *func_so_addr = NULL;
         bool is_indirect_function = false;
+        
+        lldb::addr_t callable_load_addr = LLDB_INVALID_ADDRESS;
+        
         if (sym_ctx.function)
-            func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
-        else if (sym_ctx.symbol)
         {
-            if (sym_ctx.symbol->GetType() == eSymbolTypeReExported)
+            const Address func_so_addr = sym_ctx.function->GetAddressRange().GetBaseAddress();
+            if (func_so_addr.IsValid())
             {
-                Symbol *reexported_symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
-                if (reexported_symbol)
-                {
-                    func_so_addr = &reexported_symbol->GetAddress();
-                    is_indirect_function = reexported_symbol->IsIndirect();
-                }
-            }
-            else
-            {
-                func_so_addr = &sym_ctx.symbol->GetAddress();
-                is_indirect_function = sym_ctx.symbol->IsIndirect();
+                callable_load_addr = func_so_addr.GetCallableLoadAddress(target, false);
             }
         }
-
-        if (func_so_addr && func_so_addr->IsValid())
+        else if (sym_ctx.symbol)
         {
-            lldb::addr_t load_addr = func_so_addr->GetCallableLoadAddress (target, is_indirect_function);
-            
-            if (load_addr != LLDB_INVALID_ADDRESS)
-            {
-                func_addr = load_addr;
-                return true;
-            }
+            callable_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target);
+        }
+
+        if (callable_load_addr != LLDB_INVALID_ADDRESS)
+        {
+            func_addr = callable_load_addr;
+            return true;
         }
     }
     return false;
