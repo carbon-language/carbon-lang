@@ -119,7 +119,7 @@ void __declspec(dllimport)      decl2B();
 __declspec(dllimport) void def() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
 
 // extern  "C"
-extern "C" __declspec(dllexport) void externC();
+extern "C" __declspec(dllimport) void externC();
 
 // Import inline function.
 __declspec(dllimport) inline void inlineFunc1() {}
