@@ -521,19 +521,19 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   assert(Scope->isAbstractScope());
   assert(!Scope->getInlinedAt());
 
-  DISubprogram Sub(Scope->getScopeNode());
+  DISubprogram SP(Scope->getScopeNode());
 
-  if (!ProcessedSPNodes.insert(Sub))
+  if (!ProcessedSPNodes.insert(SP))
     return;
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  DwarfCompileUnit &SPCU = *SPMap[Sub];
-  DIE *ScopeDIE = SPCU.getDIE(Sub);
-  assert(ScopeDIE);
-  AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
-  SPCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  createAndAddScopeChildren(SPCU, Scope, *ScopeDIE);
+  DwarfCompileUnit &SPCU = *SPMap[SP];
+  DIE *AbsDef = SPCU.getDIE(SP);
+  assert(AbsDef);
+  AbstractSPDies.insert(std::make_pair(SP, AbsDef));
+  SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  createAndAddScopeChildren(SPCU, Scope, *AbsDef);
 }
 
 DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
