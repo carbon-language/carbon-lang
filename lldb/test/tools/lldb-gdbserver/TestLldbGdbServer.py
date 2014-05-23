@@ -260,6 +260,52 @@ class LldbGdbServerTestCase(TestBase):
         return thread_ids
 
 
+    def wait_for_thread_count(self, thread_count, timeout_seconds=3):
+        start_time = time.time()
+        timeout_time = start_time + timeout_seconds
+
+        actual_thread_count = 0
+        while actual_thread_count < thread_count:
+            self.reset_test_sequence()
+            self.add_threadinfo_collection_packets()
+
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            threads = self.parse_threadinfo_packets(context)
+            self.assertIsNotNone(threads)
+
+            actual_thread_count = len(threads)
+
+            if time.time() > timeout_time:
+                raise Exception(
+                    'timed out after {} seconds while waiting for theads: waiting for at least {} threads, found {}'.format(
+                        timeout_seconds, thread_count, actual_thread_count))
+
+        return threads
+
+
+    def run_process_then_stop(self, run_seconds=1):
+        # Tell the stub to continue.
+        self.test_sequence.add_log_lines(
+             ["read packet: $vCont;c#00"],
+             True)
+        context = self.expect_gdbremote_sequence()
+
+        # Wait for run_seconds.
+        time.sleep(run_seconds)
+
+        # Send an interrupt, capture a T response.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            ["read packet: {}".format(chr(03)),
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result"} }],
+            True)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        self.assertIsNotNone(context.get("stop_result"))
+
+
     @debugserver_test
     def test_exe_starts_debugserver(self):
         self.init_debugserver_test()
@@ -1014,68 +1060,18 @@ class LldbGdbServerTestCase(TestBase):
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
 
-    def wait_for_thread_count(self, thread_count, timeout_seconds=3):
-        start_time = time.time()
-        timeout_time = start_time + timeout_seconds
-
-        actual_thread_count = 0
-        while actual_thread_count < thread_count:
-            self.reset_test_sequence()
-            self.add_threadinfo_collection_packets()
-
-            context = self.expect_gdbremote_sequence()
-            self.assertIsNotNone(context)
-
-            threads = self.parse_threadinfo_packets(context)
-            self.assertIsNotNone(threads)
-            
-            actual_thread_count = len(threads)
-
-            if time.time() > timeout_time:
-                raise Exception(
-                    'timed out after {} seconds while waiting for theads: waiting for at least {} threads, found {}'.format(
-                        timeout_seconds, thread_count, actual_thread_count))
-        
-        return threads
-
-    def run_process_then_stop(self, run_seconds=1):
-        # Tell the stub to continue.
-        self.test_sequence.add_log_lines(
-             ["read packet: $vCont;c#00"],
-             True)
-        context = self.expect_gdbremote_sequence()
-
-        # Wait for run_seconds.
-        time.sleep(run_seconds)
-        
-        # Send an interrupt, capture a T response.
-        self.reset_test_sequence()
-        self.test_sequence.add_log_lines(
-            ["read packet: {}".format(chr(03)),
-             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result"} }],
-            True)
-        context = self.expect_gdbremote_sequence()
-        self.assertIsNotNone(context)
-        self.assertIsNotNone(context.get("stop_result"))
-
     def Hg_switches_to_3_threads(self):
         # Startup the inferior with three threads (main + 2 new ones).
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["thread:new", "thread:new"])
         
-        
         # Let the inferior process have a few moments to start up the thread when launched.  (The launch scenario has no time to run, so threads won't be there yet.)
         self.run_process_then_stop(run_seconds=1)
-        
-        # thread_created_regex = re.compile(r"^thread 0x([0-9a-fA-F])+: created")
-        # self.add_log_lines([
-        #    {"type":"output_matcher", "regex":[thread_created_regex, thread_created_regex], "timeout_seconds":"5", save_key:"create_messages"}],
-        #    True)
 
         # Wait at most x seconds for 3 threads to be present.
         threads = self.wait_for_thread_count(3, timeout_seconds=5)
         self.assertEquals(len(threads), 3)
 
-        # TODO verify we can $H to each thead, and $qC matches the thread we set.
+        # verify we can $H to each thead, and $qC matches the thread we set.
         for thread in threads:
             # Change to each thread, verify current thread id.
             self.reset_test_sequence()
