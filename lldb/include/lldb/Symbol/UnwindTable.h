@@ -13,7 +13,8 @@
 
 #include <map>
 
-#include "lldb/lldb-private.h"
+#include "lldb/lldb-private.h" 
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -42,6 +43,8 @@ public:
     lldb::FuncUnwindersSP
     GetUncachedFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
 
+    lldb::UnwindAssemblySP GetUnwindAssemblyProfiler (lldb_private::Mutex::Locker &locker);
+
 private:
     void
     Dump (Stream &s);
@@ -58,6 +61,7 @@ private:
     bool                m_initialized;  // delay some initialization until ObjectFile is set up
 
     lldb::UnwindAssemblySP m_assembly_profiler;
+    Mutex               m_assembly_mutex;
 
     DWARFCallFrameInfo* m_eh_frame;
     
