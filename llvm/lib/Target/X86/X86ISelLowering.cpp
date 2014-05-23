@@ -8945,10 +8945,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     // Windows 64bit: gs:0x58
     // Windows 32bit: fs:__tls_array
 
-    // If GV is an alias then use the aliasee for determining
-    // thread-localness.
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GV = GA->getAliasee();
     SDLoc dl(GA);
     SDValue Chain = DAG.getEntryNode();
 
