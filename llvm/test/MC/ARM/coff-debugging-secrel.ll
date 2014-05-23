@@ -34,8 +34,6 @@ entry:
 ; CHECK-ITANIUM:     0xC IMAGE_REL_ARM_SECREL .debug_str
 ; CHECK-ITANIUM:     0x12 IMAGE_REL_ARM_SECREL .debug_str
 ; CHECK-ITANIUM:     0x16 IMAGE_REL_ARM_SECREL .debug_line
-; CHECK-ITANIUM:     0x1A IMAGE_REL_ARM_SECREL .debug_str
-; CHECK-ITANIUM:     0x27 IMAGE_REL_ARM_SECREL .debug_str
 ; CHECK-ITANIUM:   }
 ; CHECK-ITANIUM:   Section {{.*}}.debug_pubnames {
 ; CHECK-ITANIUM:     0x6 IMAGE_REL_ARM_SECREL .debug_info

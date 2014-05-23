@@ -14,7 +14,8 @@
 ; CHECK: DW_TAG_inlined_subroutine
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[F:0x.*]]}
 ; CHECK: [[F]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_name {{.*}} "f"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "f"
 
 
 ; Make sure the condition test is attributed to the inline function, not the

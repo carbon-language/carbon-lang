@@ -86,8 +86,10 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "D"
 
 ; CHECK: [[GLOB_NS_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
-; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_function"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "global_namespace_function"
 
 ; CHECK: [[GLOB_NS_VAR:[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_specification {{.*}}[[GLOB_NS_VAR_DECL]]
@@ -96,14 +98,18 @@
 ; CHECK-NEXT: DW_AT_specification {{.*}}[[D_VAR_DECL]]
 
 ; CHECK: [[MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
 
 ; CHECK: [[STATIC_MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
 
 ; CHECK: [[GLOBAL_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
-; CHECK-NEXT: DW_AT_name {{.*}} "global_function"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "global_function"
 
 ; CHECK-LABEL: .debug_gnu_pubnames contents:
 ; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
@@ -166,8 +172,10 @@
 ; DWARF3-NEXT: DW_AT_name {{.*}} "D"
 
 ; DWARF3: [[GLOB_NS_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; DWARF3-NEXT: DW_AT_MIPS_linkage_name
-; DWARF3-NEXT: DW_AT_name {{.*}} "global_namespace_function"
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_MIPS_linkage_name
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_name {{.*}} "global_namespace_function"
 
 ; DWARF3: [[GLOB_NS_VAR:[0-9a-f]+]]: DW_TAG_variable
 ; DWARF3-NEXT: DW_AT_specification {{.*}}[[GLOB_NS_VAR_DECL]]
@@ -176,14 +184,18 @@
 ; DWARF3-NEXT: DW_AT_specification {{.*}}[[D_VAR_DECL]]
 
 ; DWARF3: [[MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; DWARF3-NEXT: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
 
 ; DWARF3: [[STATIC_MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; DWARF3-NEXT: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
 
 ; DWARF3: [[GLOBAL_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
-; DWARF3-NEXT: DW_AT_MIPS_linkage_name
-; DWARF3-NEXT: DW_AT_name {{.*}} "global_function"
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_MIPS_linkage_name
+; DWARF3-NOT: DW_TAG
+; DWARF3: DW_AT_name {{.*}} "global_function"
 
 ; DWARF3-LABEL: .debug_gnu_pubnames contents:
 ; DWARF3-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]

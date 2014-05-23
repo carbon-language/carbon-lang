@@ -37,7 +37,9 @@
 ; CHECK: DW_AT_high_pc
 
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name [DW_FORM_strp]{{.*}}"_Z1a1A"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name [DW_FORM_strp]{{.*}}"_Z1a1A"
+; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp]{{.*}}"var"
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]   (0x00000000)

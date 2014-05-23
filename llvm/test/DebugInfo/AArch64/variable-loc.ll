@@ -1,4 +1,6 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-fp-elim < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-fp-elim -filetype=obj < %s \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=DEBUG %s
 
 ; This is a regression test making sure the location of variables is correct in
 ; debugging information, even if they're addressed via the frame pointer.
@@ -23,19 +25,10 @@
 ; CHECK: add x29, sp, #416
 ; CHECK: add {{x[0-9]+}}, sp, #4
 
-; CHECK: .Linfo_string7:
-; CHECK-NEXT: main_arr
-
-; Now check the debugging information reflects this:
-; CHECK: DW_TAG_variable
-; CHECK-NEXT: .word .Linfo_string7
-
-  ; Rather hard-coded, but 145 => DW_OP_fbreg and the .ascii is LEB128 encoded -412.
-; CHECK: DW_AT_location
-; CHECK-NEXT: .byte 145
-; CHECK-NEXT: .ascii "\344|"
-
-
+; DEBUG: DW_TAG_variable
+; DEBUG-NEXT: DW_AT_name {{.*}} "main_arr"
+; Rather hard-coded, but 0x91 => DW_OP_fbreg and 0xe47c is LEB128 encoded -412.
+; DEBUG: DW_AT_location {{.*}}(<0x3> 91 e4 7c )
 
 target datalayout = "e-p:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-i128:128:128-f32:32:32-f64:64:64-f128:128:128-n32:64-S128"
 target triple = "aarch64-none-linux-gnu"

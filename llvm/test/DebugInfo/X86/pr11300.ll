@@ -9,7 +9,8 @@
 ; CHECK: [[BAR_DECL:0x[0-9a-f]*]]:     DW_TAG_subprogram
 ; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}} {[[BAR_DECL]]}
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_specification {{.*}} {[[BAR_DECL]]}
 
 %struct.foo = type { i8 }
 

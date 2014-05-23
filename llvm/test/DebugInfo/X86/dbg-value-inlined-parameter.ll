@@ -16,7 +16,7 @@
 ;FIXME: Linux shouldn't drop this parameter either...
 ;LINUX-NOT: DW_TAG_formal_parameter
 ;DARWIN: DW_TAG_formal_parameter
-;DARWIN-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000055] = "sp")
+;DARWIN-NEXT: DW_AT_name {{.*}} "sp"
 
 %struct.S1 = type { float*, i32 }
 

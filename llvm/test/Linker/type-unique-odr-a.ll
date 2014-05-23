@@ -23,9 +23,11 @@
 ; }
 ;
 ; CHECK:      DW_TAG_subprogram
-; CHECK-NEXT:   DW_AT_MIPS_linkage_name {{.*}} "_Z3bazv"
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_Z3bazv"
 ; CHECK:      DW_TAG_subprogram
-; CHECK-NEXT:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
 ; CHECK:      DW_TAG_class_type
 ; CHECK-NEXT:   DW_AT_name {{.*}} "A"
 ; CHECK-NOT:  DW_TAG
@@ -33,8 +35,10 @@
 ; CHECK-NEXT:   DW_AT_name {{.*}} "data"
 ; CHECK-NOT:  DW_TAG
 ; CHECK:      DW_TAG_subprogram
-; CHECK-NEXT:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1A6getFooEv"
-; CHECK-NEXT:   DW_AT_name {{.*}} "getFoo"
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1A6getFooEv"
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_name {{.*}} "getFoo"
 
 ; getFoo and A may only appear once.
 ; CHECK-NOT:  {{(getFoo)|("A")}}

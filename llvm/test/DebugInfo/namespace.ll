@@ -17,11 +17,15 @@
 ; CHECK-NEXT: DW_AT_name{{.*}}= "i"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
-; CHECK-NEXT: DW_AT_name{{.*}}= "f1"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "f1"
 ; CHECK: [[FUNC1:0x[0-9a-f]*]]:{{ *}}DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
-; CHECK-NEXT: DW_AT_name{{.*}}= "f1"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "f1"
 ; CHECK: NULL
 ; CHECK-NOT: NULL
 ; CHECK: [[FOO:0x[0-9a-f]*]]:{{ *}}DW_TAG_structure_type
@@ -45,8 +49,10 @@
 ; CHECK-NOT: NULL
 
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
-; CHECK-NEXT: DW_AT_name{{.*}}= "func"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "func"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_module
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
