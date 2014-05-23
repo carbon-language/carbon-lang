@@ -528,11 +528,12 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  DIE *ScopeDIE = SPMap[Sub]->getDIE(Sub);
+  DwarfCompileUnit &SPCU = *SPMap[Sub];
+  DIE *ScopeDIE = SPCU.getDIE(Sub);
   assert(ScopeDIE);
   AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
-  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
+  SPCU.addUInt(*ScopeDIE, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  createAndAddScopeChildren(SPCU, Scope, *ScopeDIE);
 }
 
 DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
