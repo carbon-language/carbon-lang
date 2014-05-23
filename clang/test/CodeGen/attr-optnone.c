@@ -14,7 +14,7 @@ __attribute__((optnone)) __attribute__((cold))
 int test4() { return test2(); }
 // PRESENT-DAG: @test4{{.*}}[[ATTR4:#[0-9]+]]
 // Also check that test2 is inlined into test4 (always_inline still works).
-// PRESENT-DAG-NOT: call i32 @test2
+// PRESENT-NOT: call i32 @test2
 
 // Check for both noinline and optnone on each optnone function.
 // PRESENT-DAG: attributes [[ATTR3]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
