@@ -905,7 +905,7 @@ _mm_cvtps_pi16(__m128 __a)
   __a = _mm_movehl_ps(__a, __a);
   __c = _mm_cvtps_pi32(__a);
   
-  return _mm_packs_pi16(__b, __c);
+  return _mm_packs_pi32(__b, __c);
 }
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
