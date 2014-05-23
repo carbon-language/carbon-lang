@@ -63,7 +63,7 @@ public:
   static char ID;
   NVPTXFavorNonGenericAddrSpaces() : FunctionPass(ID) {}
 
-  virtual bool runOnFunction(Function &F) override;
+  bool runOnFunction(Function &F) override;
 
   /// Optimizes load/store instructions. Idx is the index of the pointer operand
   /// (0 for load, and 1 for store). Returns true if it changes anything.
