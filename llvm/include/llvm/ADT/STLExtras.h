@@ -67,11 +67,11 @@ template<typename Fn> class function_ref;
 
 template<typename Ret, typename ...Params>
 class function_ref<Ret(Params...)> {
-  Ret (*callback)(void *callable, Params ...params);
-  void *callable;
+  Ret (*callback)(intptr_t callable, Params ...params);
+  intptr_t callable;
 
   template<typename Callable>
-  static Ret callback_fn(void *callable, Params ...params) {
+  static Ret callback_fn(intptr_t callable, Params ...params) {
     return (*reinterpret_cast<Callable*>(callable))(
         std::forward<Params>(params)...);
   }
@@ -80,7 +80,7 @@ public:
   template<typename Callable>
   function_ref(Callable &&callable)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<void *>(&callable)) {}
+        callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Params ...params) const {
     return callback(callable, std::forward<Params>(params)...);
   }
@@ -90,11 +90,11 @@ public:
 
 template<typename Ret>
 class function_ref<Ret()> {
-  Ret (*callback)(void *callable);
-  void *callable;
+  Ret (*callback)(intptr_t callable);
+  intptr_t callable;
 
   template<typename Callable>
-  static Ret callback_fn(void *callable) {
+  static Ret callback_fn(intptr_t callable) {
     return (*reinterpret_cast<Callable*>(callable))();
   }
 
@@ -102,17 +102,17 @@ public:
   template<typename Callable>
   function_ref(Callable &&callable)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<void *>(&callable)) {}
+        callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()() const { return callback(callable); }
 };
 
 template<typename Ret, typename Param1>
 class function_ref<Ret(Param1)> {
-  Ret (*callback)(void *callable, Param1 param1);
-  void *callable;
+  Ret (*callback)(intptr_t callable, Param1 param1);
+  intptr_t callable;
 
   template<typename Callable>
-  static Ret callback_fn(void *callable, Param1 param1) {
+  static Ret callback_fn(intptr_t callable, Param1 param1) {
     return (*reinterpret_cast<Callable*>(callable))(
         std::forward<Param1>(param1));
   }
@@ -121,7 +121,7 @@ public:
   template<typename Callable>
   function_ref(Callable &&callable)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<void *>(&callable)) {}
+        callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1) {
     return callback(callable, std::forward<Param1>(param1));
   }
@@ -129,11 +129,11 @@ public:
 
 template<typename Ret, typename Param1, typename Param2>
 class function_ref<Ret(Param1, Param2)> {
-  Ret (*callback)(void *callable, Param1 param1, Param2 param2);
-  void *callable;
+  Ret (*callback)(intptr_t callable, Param1 param1, Param2 param2);
+  intptr_t callable;
 
   template<typename Callable>
-  static Ret callback_fn(void *callable, Param1 param1, Param2 param2) {
+  static Ret callback_fn(intptr_t callable, Param1 param1, Param2 param2) {
     return (*reinterpret_cast<Callable*>(callable))(
         std::forward<Param1>(param1),
         std::forward<Param2>(param2));
@@ -143,7 +143,7 @@ public:
   template<typename Callable>
   function_ref(Callable &&callable)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<void *>(&callable)) {}
+        callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1, Param2 param2) {
     return callback(callable,
                     std::forward<Param1>(param1),
@@ -153,11 +153,11 @@ public:
 
 template<typename Ret, typename Param1, typename Param2, typename Param3>
 class function_ref<Ret(Param1, Param2, Param3)> {
-  Ret (*callback)(void *callable, Param1 param1, Param2 param2, Param3 param3);
-  void *callable;
+  Ret (*callback)(intptr_t callable, Param1 param1, Param2 param2, Param3 param3);
+  intptr_t callable;
 
   template<typename Callable>
-  static Ret callback_fn(void *callable, Param1 param1, Param2 param2,
+  static Ret callback_fn(intptr_t callable, Param1 param1, Param2 param2,
                          Param3 param3) {
     return (*reinterpret_cast<Callable*>(callable))(
         std::forward<Param1>(param1),
@@ -169,7 +169,7 @@ public:
   template<typename Callable>
   function_ref(Callable &&callable)
       : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<void *>(&callable)) {}
+        callable(reinterpret_cast<intptr_t>(&callable)) {}
   Ret operator()(Param1 param1, Param2 param2, Param3 param3) {
     return callback(callable,
                     std::forward<Param1>(param1),
