@@ -2391,6 +2391,9 @@ TEST(For, ForLoopInternals) {
 TEST(For, ForRangeLoopInternals) {
   EXPECT_TRUE(matches("void f(){ int a[] {1, 2}; for (int i : a); }",
                       forRangeStmt(hasLoopVariable(anything()))));
+  EXPECT_TRUE(matches(
+      "void f(){ int a[] {1, 2}; for (int i : a); }",
+      forRangeStmt(hasRangeInit(declRefExpr(to(varDecl(hasName("a"))))))));
 }
 
 TEST(For, NegativeForLoopInternals) {

@@ -937,6 +937,20 @@ AST_MATCHER_P(CXXForRangeStmt, hasLoopVariable, internal::Matcher<VarDecl>,
   return (Var != nullptr && InnerMatcher.matches(*Var, Finder, Builder));
 }
 
+/// \brief Matches the range initialization statement of a for loop.
+///
+/// Example:
+///     forStmt(hasRangeInit(anything()))
+/// matches 'a' in
+/// \code
+///     for (int x : a) { }
+/// \endcode
+AST_MATCHER_P(CXXForRangeStmt, hasRangeInit, internal::Matcher<Expr>,
+              InnerMatcher) {
+  const Expr *const Init = Node.getRangeInit();
+  return (Init != nullptr && InnerMatcher.matches(*Init, Finder, Builder));
+}
+
 /// \brief Matches while statements.
 ///
 /// Given
