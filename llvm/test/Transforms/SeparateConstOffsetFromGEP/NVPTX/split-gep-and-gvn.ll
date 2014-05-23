@@ -54,7 +54,6 @@ define void @sum_of_array(i32 %x, i32 %y, float* nocapture %output) {
 
 ; IR-LABEL: @sum_of_array(
 ; IR: [[BASE_PTR:%[0-9]+]] = getelementptr inbounds [32 x [32 x float]] addrspace(3)* @array, i64 0, i32 %x, i32 %y
-; IR: [[BASE_INT:%[0-9]+]] = ptrtoint float addrspace(3)* [[BASE_PTR]] to i64
-; IR: %5 = add i64 [[BASE_INT]], 4
-; IR: %10 = add i64 [[BASE_INT]], 128
-; IR: %15 = add i64 [[BASE_INT]], 132
+; IR: getelementptr float addrspace(3)* [[BASE_PTR]], i64 1
+; IR: getelementptr float addrspace(3)* [[BASE_PTR]], i64 32
+; IR: getelementptr float addrspace(3)* [[BASE_PTR]], i64 33

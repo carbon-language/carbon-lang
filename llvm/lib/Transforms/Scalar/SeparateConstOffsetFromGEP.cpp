@@ -487,7 +487,8 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
       int64_t ConstantOffset =
           ConstantOffsetExtractor::Extract(GEP->getOperand(I), NewIdx, DL, GEP);
       if (ConstantOffset != 0) {
-        assert(NewIdx && "ConstantOffset != 0 implies NewIdx is set");
+        assert(NewIdx != nullptr &&
+               "ConstantOffset != 0 implies NewIdx is set");
         GEP->setOperand(I, NewIdx);
         // Clear the inbounds attribute because the new index may be off-bound.
         // e.g.,
@@ -522,44 +523,67 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   // => add the offset
   //
   //   %gep2                       ; clone of %gep
-  //   %0       = ptrtoint %gep2
-  //   %1       = add %0, <offset>
-  //   %new.gep = inttoptr %1
+  //   %new.gep = gep %gep2, <offset / sizeof(*%gep)>
   //   %gep                        ; will be removed
   //   ... %gep ...
   //
   // => replace all uses of %gep with %new.gep and remove %gep
   //
   //   %gep2                       ; clone of %gep
-  //   %0       = ptrtoint %gep2
-  //   %1       = add %0, <offset>
-  //   %new.gep = inttoptr %1
+  //   %new.gep = gep %gep2, <offset / sizeof(*%gep)>
   //   ... %new.gep ...
   //
-  // TODO(jingyue): Emit a GEP instead of an "uglygep"
-  // (http://llvm.org/docs/GetElementPtr.html#what-s-an-uglygep) to make the IR
-  // prettier and more alias analysis friendly. One caveat: if the original GEP
-  // ends with a StructType, we need to split the GEP at the last
-  // SequentialType. For instance, consider the following IR:
+  // If AccumulativeByteOffset is not a multiple of sizeof(*%gep), we emit an
+  // uglygep (http://llvm.org/docs/GetElementPtr.html#what-s-an-uglygep):
+  // bitcast %gep2 to i8*, add the offset, and bitcast the result back to the
+  // type of %gep.
   //
-  //   %struct.S = type { float, double }
-  //   @array = global [1024 x %struct.S]
-  //   %p = getelementptr %array, 0, %i + 5, 1
-  //
-  // To separate the constant 5 from %p, we would need to split %p at the last
-  // array index so that we have:
-  //
-  //   %addr = gep %array, 0, %i
-  //   %p = gep %addr, 5, 1
+  //   %gep2                       ; clone of %gep
+  //   %0       = bitcast %gep2 to i8*
+  //   %uglygep = gep %0, <offset>
+  //   %new.gep = bitcast %uglygep to <type of %gep>
+  //   ... %new.gep ...
   Instruction *NewGEP = GEP->clone();
   NewGEP->insertBefore(GEP);
-  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
-  Value *Addr = new PtrToIntInst(NewGEP, IntPtrTy, "", GEP);
-  Addr = BinaryOperator::CreateAdd(
-      Addr, ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true), "", GEP);
-  Addr = new IntToPtrInst(Addr, GEP->getType(), "", GEP);
 
-  GEP->replaceAllUsesWith(Addr);
+  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
+  uint64_t ElementTypeSizeOfGEP =
+      DL->getTypeAllocSize(GEP->getType()->getElementType());
+  if (AccumulativeByteOffset % ElementTypeSizeOfGEP == 0) {
+    // Very likely. As long as %gep is natually aligned, the byte offset we
+    // extracted should be a multiple of sizeof(*%gep).
+    // Per ANSI C standard, signed / unsigned = unsigned. Therefore, we
+    // cast ElementTypeSizeOfGEP to signed.
+    int64_t Index =
+        AccumulativeByteOffset / static_cast<int64_t>(ElementTypeSizeOfGEP);
+    NewGEP = GetElementPtrInst::Create(
+        NewGEP, ConstantInt::get(IntPtrTy, Index, true), GEP->getName(), GEP);
+  } else {
+    // Unlikely but possible. For example,
+    // #pragma pack(1)
+    // struct S {
+    //   int a[3];
+    //   int64 b[8];
+    // };
+    // #pragma pack()
+    //
+    // Suppose the gep before extraction is &s[i + 1].b[j + 3]. After
+    // extraction, it becomes &s[i].b[j] and AccumulativeByteOffset is
+    // sizeof(S) + 3 * sizeof(int64) = 100, which is not a multiple of
+    // sizeof(int64).
+    //
+    // Emit an uglygep in this case.
+    Type *I8PtrTy = Type::getInt8PtrTy(GEP->getContext(),
+                                       GEP->getPointerAddressSpace());
+    NewGEP = new BitCastInst(NewGEP, I8PtrTy, "", GEP);
+    NewGEP = GetElementPtrInst::Create(
+        NewGEP, ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true),
+        "uglygep", GEP);
+    if (GEP->getType() != I8PtrTy)
+      NewGEP = new BitCastInst(NewGEP, GEP->getType(), GEP->getName(), GEP);
+  }
+
+  GEP->replaceAllUsesWith(NewGEP);
   GEP->eraseFromParent();
 
   return true;

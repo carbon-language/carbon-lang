@@ -39,7 +39,7 @@ entry:
 }
 ; CHECK-LABEL: @sext_zext
 ; CHECK: getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i32 %i, i32 %j
-; CHECK: add i64 %{{[0-9]+}}, 136
+; CHECK: getelementptr float* %{{[0-9]+}}, i64 34
 
 ; We should be able to trace into sext/zext if it can be distributed to both
 ; operands, e.g., sext (add nsw a, b) == add nsw (sext a), (sext b)
@@ -55,8 +55,7 @@ define float* @ext_add_no_overflow(i64 %a, i32 %b, i64 %c, i32 %d) {
 }
 ; CHECK-LABEL: @ext_add_no_overflow
 ; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %{{[0-9]+}}, i64 %{{[0-9]+}}
-; CHECK: [[BASE_INT:%[0-9]+]] = ptrtoint float* [[BASE_PTR]] to i64
-; CHECK: add i64 [[BASE_INT]], 132
+; CHECK: getelementptr float* [[BASE_PTR]], i64 33
 
 ; We should treat "or" with no common bits (%k) as "add", and leave "or" with
 ; potentially common bits (%l) as is.
@@ -69,8 +68,8 @@ entry:
   ret float* %p
 }
 ; CHECK-LABEL: @or
-; CHECK: getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %j, i64 %l
-; CHECK: add i64 %{{[0-9]+}}, 384
+; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %j, i64 %l
+; CHECK: getelementptr float* [[BASE_PTR]], i64 96
 
 ; The subexpression (b + 5) is used in both "i = a + (b + 5)" and "*out = b +
 ; 5". When extracting the constant offset 5, make sure "*out = b + 5" isn't
@@ -84,8 +83,8 @@ entry:
   ret float* %p
 }
 ; CHECK-LABEL: @expr
-; CHECK: getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %0, i64 0
-; CHECK: add i64 %{{[0-9]+}}, 640
+; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %0, i64 0
+; CHECK: getelementptr float* [[BASE_PTR]], i64 160
 ; CHECK: store i64 %b5, i64* %out
 
 ; Verifies we handle "sub" correctly.
@@ -97,5 +96,24 @@ define float* @sub(i64 %i, i64 %j) {
 }
 ; CHECK-LABEL: @sub
 ; CHECK: %[[j2:[0-9]+]] = sub i64 0, %j
-; CHECK: getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %i, i64 %[[j2]]
-; CHECK: add i64 %{{[0-9]+}}, -620
+; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %i, i64 %[[j2]]
+; CHECK: getelementptr float* [[BASE_PTR]], i64 -155
+
+%struct.Packed = type <{ [3 x i32], [8 x i64] }> ; <> means packed
+
+; Verifies we can emit correct uglygep if the address is not natually aligned.
+define i64* @packed_struct(i32 %i, i32 %j) {
+entry:
+  %s = alloca [1024 x %struct.Packed], align 16
+  %add = add nsw i32 %j, 3
+  %idxprom = sext i32 %add to i64
+  %add1 = add nsw i32 %i, 1
+  %idxprom2 = sext i32 %add1 to i64
+  %arrayidx3 = getelementptr inbounds [1024 x %struct.Packed]* %s, i64 0, i64 %idxprom2, i32 1, i64 %idxprom
+  ret i64* %arrayidx3
+}
+; CHECK-LABEL: @packed_struct
+; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [1024 x %struct.Packed]* %s, i64 0, i32 %i, i32 1, i32 %j
+; CHECK: [[CASTED_PTR:%[0-9]+]] = bitcast i64* [[BASE_PTR]] to i8*
+; CHECK: %uglygep = getelementptr i8* [[CASTED_PTR]], i64 100
+; CHECK: bitcast i8* %uglygep to i64*
