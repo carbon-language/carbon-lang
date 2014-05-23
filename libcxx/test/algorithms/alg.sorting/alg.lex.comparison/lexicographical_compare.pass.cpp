@@ -27,12 +27,12 @@ test()
     int ia[] = {1, 2, 3, 4};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
     int ib[] = {1, 2, 3};
-    assert(!std::lexicographical_compare(ia, ia+sa, ib, ib+2));
-    assert(std::lexicographical_compare(ib, ib+2, ia, ia+sa));
-    assert(!std::lexicographical_compare(ia, ia+sa, ib, ib+3));
-    assert(std::lexicographical_compare(ib, ib+3, ia, ia+sa));
-    assert(std::lexicographical_compare(ia, ia+sa, ib+1, ib+3));
-    assert(!std::lexicographical_compare(ib+1, ib+3, ia, ia+sa));
+    assert(!std::lexicographical_compare(Iter1(ia),   Iter1(ia+sa), Iter2(ib),   Iter2(ib+2)));
+    assert( std::lexicographical_compare(Iter1(ib),   Iter1(ib+2),  Iter2(ia),   Iter2(ia+sa)));
+    assert(!std::lexicographical_compare(Iter1(ia),   Iter1(ia+sa), Iter2(ib),   Iter2(ib+3)));
+    assert( std::lexicographical_compare(Iter1(ib),   Iter1(ib+3),  Iter2(ia),   Iter2(ia+sa)));
+    assert( std::lexicographical_compare(Iter1(ia),   Iter1(ia+sa), Iter2(ib+1), Iter2(ib+3)));
+    assert(!std::lexicographical_compare(Iter1(ib+1), Iter1(ib+3),  Iter2(ia),   Iter2(ia+sa)));
 }
 
 int main()
