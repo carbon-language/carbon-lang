@@ -1004,7 +1004,7 @@ private:
 
 class COFFObjectReader : public Reader {
 public:
-  COFFObjectReader(PECOFFLinkingContext &ctx) : _context(ctx) {}
+  COFFObjectReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &) const override {
@@ -1031,7 +1031,7 @@ public:
       return ec;
 
     // Check for /SAFESEH.
-    if (_context.requireSEH() && !file->isCompatibleWithSEH()) {
+    if (_ctx.requireSEH() && !file->isCompatibleWithSEH()) {
       llvm::errs() << "/SAFESEH is specified, but " << mbName
                    << " is not compatible with SEH.\n";
       return llvm::object::object_error::parse_failed;
@@ -1040,7 +1040,7 @@ public:
     // In order to emit SEH table, all input files need to be compatible with
     // SEH. Disable SEH if the file being read is not compatible.
     if (!file->isCompatibleWithSEH())
-      _context.setSafeSEH(false);
+      _ctx.setSafeSEH(false);
 
     // One can define alias symbols using /alternatename:<sym>=<sym> option.
     // The mapping for /alternatename is in the context object. This helper
@@ -1074,7 +1074,7 @@ private:
     const char **argv = &tokens[0];
     std::string errorMessage;
     llvm::raw_string_ostream stream(errorMessage);
-    bool parseFailed = !WinLinkDriver::parse(argc, argv, _context, stream,
+    bool parseFailed = !WinLinkDriver::parse(argc, argv, _ctx, stream,
                                              /*isDirective*/ true);
     stream.flush();
     // Print error message if error.
@@ -1104,8 +1104,8 @@ private:
   void createAlternateNameAtoms(FileCOFF &file) const {
     std::vector<const DefinedAtom *> aliases;
     for (const DefinedAtom *atom : file.defined()) {
-      auto it = _context.alternateNames().find(atom->name());
-      if (it != _context.alternateNames().end())
+      auto it = _ctx.alternateNames().find(atom->name());
+      if (it != _ctx.alternateNames().end())
         aliases.push_back(createAlias(file, it->second, atom));
     }
     for (const DefinedAtom *alias : aliases) {
@@ -1113,7 +1113,7 @@ private:
     }
   }
 
-  PECOFFLinkingContext &_context;
+  PECOFFLinkingContext &_ctx;
   mutable BumpPtrStringSaver _stringSaver;
 };
 
