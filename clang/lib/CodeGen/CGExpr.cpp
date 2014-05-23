@@ -2086,7 +2086,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 /// integer, 1 for a floating point value, and -1 for anything else.
 llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   // Only emit each type's descriptor once.
-  if (llvm::Constant *C = CGM.getTypeDescriptor(T))
+  if (llvm::Constant *C = CGM.getTypeDescriptorFromMap(T))
     return C;
 
   uint16_t TypeKind = -1;
@@ -2121,7 +2121,7 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   GV->setUnnamedAddr(true);
 
   // Remember the descriptor for this type.
-  CGM.setTypeDescriptor(T, GV);
+  CGM.setTypeDescriptorInMap(T, GV);
 
   return GV;
 }

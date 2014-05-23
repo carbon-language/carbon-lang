@@ -60,6 +60,7 @@ add_clang_library(clangCodeGen
   CodeGenTypes.cpp
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
+  MicrosoftRTTI.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp
 

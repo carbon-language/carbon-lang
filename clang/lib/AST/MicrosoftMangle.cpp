@@ -113,7 +113,7 @@ public:
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
-                                        uint32_t NVOffset, uint32_t VBPtrOffset,
+                                        uint32_t NVOffset, int32_t VBPtrOffset,
                                         uint32_t VBTableOffset, uint32_t Flags,
                                         raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassArray(const CXXRecordDecl *Derived,
@@ -2258,7 +2258,7 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T,
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassDescriptor(
-    const CXXRecordDecl *Derived, uint32_t NVOffset, uint32_t VBPtrOffset,
+    const CXXRecordDecl *Derived, uint32_t NVOffset, int32_t VBPtrOffset,
     uint32_t VBTableOffset, uint32_t Flags, raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_R1";
@@ -2267,7 +2267,7 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassDescriptor(
   Mangler.mangleNumber(VBTableOffset);
   Mangler.mangleNumber(Flags);
   Mangler.mangleName(Derived);
-  Mangler.getStream() << "@8";
+  Mangler.getStream() << "8";
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassArray(
@@ -2275,7 +2275,7 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassArray(
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_R2";
   Mangler.mangleName(Derived);
-  Mangler.getStream() << "@8";
+  Mangler.getStream() << "8";
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTIClassHierarchyDescriptor(
@@ -2283,7 +2283,7 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIClassHierarchyDescriptor(
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_R3";
   Mangler.mangleName(Derived);
-  Mangler.getStream() << "@8";
+  Mangler.getStream() << "8";
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTICompleteObjectLocator(

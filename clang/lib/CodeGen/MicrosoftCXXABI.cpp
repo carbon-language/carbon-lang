@@ -897,14 +897,15 @@ void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   VPtrInfoVector VFPtrs = VFTContext.getVFPtrOffsets(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
 
-  for (VPtrInfoVector::iterator I = VFPtrs.begin(), E = VFPtrs.end(); I != E;
-       ++I) {
-    llvm::GlobalVariable *VTable = getAddrOfVTable(RD, (*I)->FullOffsetInMDC);
+  for (VPtrInfo *Info : VFPtrs) {
+    llvm::GlobalVariable *VTable = getAddrOfVTable(RD, Info->FullOffsetInMDC);
     if (VTable->hasInitializer())
       continue;
+    if (getContext().getLangOpts().RTTI)
+      CGM.getMSCompleteObjectLocator(RD, Info);
 
     const VTableLayout &VTLayout =
-        VFTContext.getVFTableLayout(RD, (*I)->FullOffsetInMDC);
+      VFTContext.getVFTableLayout(RD, Info->FullOffsetInMDC);
     llvm::Constant *Init = CGVT.CreateVTableInitializer(
         RD, VTLayout.vtable_component_begin(),
         VTLayout.getNumVTableComponents(), VTLayout.vtable_thunk_begin(),

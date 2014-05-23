@@ -214,7 +214,7 @@ public:
                                         raw_ostream &) = 0;
 
   virtual void mangleCXXRTTIBaseClassDescriptor(
-      const CXXRecordDecl *Derived, uint32_t NVOffset, uint32_t VBPtrOffset,
+      const CXXRecordDecl *Derived, uint32_t NVOffset, int32_t VBPtrOffset,
       uint32_t VBTableOffset, uint32_t Flags, raw_ostream &Out) = 0;
 
   virtual void mangleCXXRTTIBaseClassArray(const CXXRecordDecl *Derived,

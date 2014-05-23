@@ -528,10 +528,10 @@ public:
     AtomicGetterHelperFnMap[Ty] = Fn;
   }
 
-  llvm::Constant *getTypeDescriptor(QualType Ty) {
+  llvm::Constant *getTypeDescriptorFromMap(QualType Ty) {
     return TypeDescriptorMap[Ty];
   }
-  void setTypeDescriptor(QualType Ty, llvm::Constant *C) {
+  void setTypeDescriptorInMap(QualType Ty, llvm::Constant *C) {
     TypeDescriptorMap[Ty] = C;
   }
 
@@ -709,6 +709,12 @@ public:
 
   /// The type of a generic block literal.
   llvm::Type *getGenericBlockLiteralType();
+
+  /// \brief Gets or a creats a Microsoft TypeDescriptor.
+  llvm::Constant *getMSTypeDescriptor(QualType Ty);
+  /// \brief Gets or a creats a Microsoft CompleteObjectLocator.
+  llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
+                                                   const VPtrInfo *Info);
 
   /// Gets the address of a block which requires no captures.
   llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
@@ -944,6 +950,9 @@ public:
   void setFunctionLinkage(GlobalDecl GD, llvm::Function *F) {
     F->setLinkage(getFunctionLinkage(GD));
   }
+
+  /// \brief Returns the appropriate linkage for the TypeInfo struct for a type.
+  llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty);
 
   /// Return the appropriate linkage for the vtable, VTT, and type information
   /// of the given class.

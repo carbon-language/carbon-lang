@@ -22,7 +22,7 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace {
-class RTTIBuilder {
+class ItaniumRTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
   
@@ -62,7 +62,7 @@ class RTTIBuilder {
   void BuildPointerToMemberTypeInfo(const MemberPointerType *Ty);
   
 public:
-  RTTIBuilder(CodeGenModule &CGM) : CGM(CGM), 
+  ItaniumRTTIBuilder(CodeGenModule &CGM) : CGM(CGM), 
     VMContext(CGM.getModule().getContext()) { }
 
   // Pointer type info flags.
@@ -110,7 +110,7 @@ public:
 }
 
 llvm::GlobalVariable *
-RTTIBuilder::GetAddrOfTypeName(QualType Ty, 
+ItaniumRTTIBuilder::GetAddrOfTypeName(QualType Ty,
                                llvm::GlobalVariable::LinkageTypes Linkage) {
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -132,7 +132,8 @@ RTTIBuilder::GetAddrOfTypeName(QualType Ty,
   return GV;
 }
 
-llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
+llvm::Constant *
+ItaniumRTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   // Mangle the RTTI name.
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -317,8 +318,8 @@ static bool ContainsIncompleteClassType(QualType Ty) {
 
 /// getTypeInfoLinkage - Return the linkage that the type info and type info
 /// name constants should have for the given type.
-static llvm::GlobalVariable::LinkageTypes 
-getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
+llvm::GlobalVariable::LinkageTypes 
+CodeGenModule::getTypeInfoLinkage(QualType Ty) {
   // Itanium C++ ABI 2.9.5p7:
   //   In addition, it and all of the intermediate abi::__pointer_type_info 
   //   structs in the chain down to the abi::__class_type_info for the
@@ -339,7 +340,7 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
 
   case VisibleNoLinkage:
   case ExternalLinkage:
-    if (!CGM.getLangOpts().RTTI) {
+    if (!getLangOpts().RTTI) {
       // RTTI is not enabled, which means that this type info struct is going
       // to be used for exception handling. Give it linkonce_odr linkage.
       return llvm::GlobalValue::LinkOnceODRLinkage;
@@ -350,7 +351,7 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
       if (RD->hasAttr<WeakAttr>())
         return llvm::GlobalValue::WeakODRLinkage;
       if (RD->isDynamicClass())
-        return CGM.getVTableLinkage(RD);
+        return getVTableLinkage(RD);
     }
 
     return llvm::GlobalValue::LinkOnceODRLinkage;
@@ -388,7 +389,7 @@ static bool CanUseSingleInheritance(const CXXRecordDecl *RD) {
   return true;
 }
 
-void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
+void ItaniumRTTIBuilder::BuildVTablePointer(const Type *Ty) {
   // abi::__class_type_info.
   static const char * const ClassTypeInfo =
     "_ZTVN10__cxxabiv117__class_type_infoE";
@@ -509,7 +510,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   Fields.push_back(VTable);
 }
 
-llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
+llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // We want to operate on the canonical type.
   Ty = CGM.getContext().getCanonicalType(Ty);
 
@@ -538,7 +539,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   if (IsStdLib)
     Linkage = llvm::GlobalValue::ExternalLinkage;
   else
-    Linkage = getTypeInfoLinkage(CGM, Ty);
+    Linkage = CGM.getTypeInfoLinkage(Ty);
 
   // Add the vtable pointer.
   BuildVTablePointer(cast<Type>(Ty));
@@ -699,18 +700,18 @@ static unsigned ComputeQualifierFlags(Qualifiers Quals) {
   unsigned Flags = 0;
 
   if (Quals.hasConst())
-    Flags |= RTTIBuilder::PTI_Const;
+    Flags |= ItaniumRTTIBuilder::PTI_Const;
   if (Quals.hasVolatile())
-    Flags |= RTTIBuilder::PTI_Volatile;
+    Flags |= ItaniumRTTIBuilder::PTI_Volatile;
   if (Quals.hasRestrict())
-    Flags |= RTTIBuilder::PTI_Restrict;
+    Flags |= ItaniumRTTIBuilder::PTI_Restrict;
 
   return Flags;
 }
 
 /// BuildObjCObjectTypeInfo - Build the appropriate kind of type_info
 /// for the given Objective-C object type.
-void RTTIBuilder::BuildObjCObjectTypeInfo(const ObjCObjectType *OT) {
+void ItaniumRTTIBuilder::BuildObjCObjectTypeInfo(const ObjCObjectType *OT) {
   // Drop qualifiers.
   const Type *T = OT->getBaseType().getTypePtr();
   assert(isa<BuiltinType>(T) || isa<ObjCInterfaceType>(T));
@@ -728,18 +729,18 @@ void RTTIBuilder::BuildObjCObjectTypeInfo(const ObjCObjectType *OT) {
   QualType SuperTy = CGM.getContext().getObjCInterfaceType(Super);
 
   // Everything else is single inheritance.
-  llvm::Constant *BaseTypeInfo = RTTIBuilder(CGM).BuildTypeInfo(SuperTy);
+  llvm::Constant *BaseTypeInfo = ItaniumRTTIBuilder(CGM).BuildTypeInfo(SuperTy);
   Fields.push_back(BaseTypeInfo);
 }
 
 /// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
 /// inheritance, according to the Itanium C++ ABI, 2.95p6b.
-void RTTIBuilder::BuildSIClassTypeInfo(const CXXRecordDecl *RD) {
+void ItaniumRTTIBuilder::BuildSIClassTypeInfo(const CXXRecordDecl *RD) {
   // Itanium C++ ABI 2.9.5p6b:
   // It adds to abi::__class_type_info a single member pointing to the 
   // type_info structure for the base type,
   llvm::Constant *BaseTypeInfo = 
-    RTTIBuilder(CGM).BuildTypeInfo(RD->bases_begin()->getType());
+    ItaniumRTTIBuilder(CGM).BuildTypeInfo(RD->bases_begin()->getType());
   Fields.push_back(BaseTypeInfo);
 }
 
@@ -768,20 +769,20 @@ static unsigned ComputeVMIClassTypeInfoFlags(const CXXBaseSpecifier *Base,
     if (!Bases.VirtualBases.insert(BaseDecl)) {
       // If this virtual base has been seen before, then the class is diamond
       // shaped.
-      Flags |= RTTIBuilder::VMI_DiamondShaped;
+      Flags |= ItaniumRTTIBuilder::VMI_DiamondShaped;
     } else {
       if (Bases.NonVirtualBases.count(BaseDecl))
-        Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+        Flags |= ItaniumRTTIBuilder::VMI_NonDiamondRepeat;
     }
   } else {
     // Mark the non-virtual base as seen.
     if (!Bases.NonVirtualBases.insert(BaseDecl)) {
       // If this non-virtual base has been seen before, then the class has non-
       // diamond shaped repeated inheritance.
-      Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+      Flags |= ItaniumRTTIBuilder::VMI_NonDiamondRepeat;
     } else {
       if (Bases.VirtualBases.count(BaseDecl))
-        Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+        Flags |= ItaniumRTTIBuilder::VMI_NonDiamondRepeat;
     }
   }
 
@@ -806,7 +807,7 @@ static unsigned ComputeVMIClassTypeInfoFlags(const CXXRecordDecl *RD) {
 /// BuildVMIClassTypeInfo - Build an abi::__vmi_class_type_info, used for
 /// classes with bases that do not satisfy the abi::__si_class_type_info 
 /// constraints, according ti the Itanium C++ ABI, 2.9.5p5c.
-void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
+void ItaniumRTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
   llvm::Type *UnsignedIntLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
   
@@ -847,7 +848,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
   //   };
   for (const auto &Base : RD->bases()) {
     // The __base_type member points to the RTTI for the base type.
-    Fields.push_back(RTTIBuilder(CGM).BuildTypeInfo(Base.getType()));
+    Fields.push_back(ItaniumRTTIBuilder(CGM).BuildTypeInfo(Base.getType()));
 
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
@@ -882,7 +883,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
 
 /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
 /// used for pointer types.
-void RTTIBuilder::BuildPointerTypeInfo(QualType PointeeTy) {  
+void ItaniumRTTIBuilder::BuildPointerTypeInfo(QualType PointeeTy) {
   Qualifiers Quals;
   QualType UnqualifiedPointeeTy = 
     CGM.getContext().getUnqualifiedArrayType(PointeeTy, Quals);
@@ -906,13 +907,14 @@ void RTTIBuilder::BuildPointerTypeInfo(QualType PointeeTy) {
   //  __pointee is a pointer to the std::type_info derivation for the 
   //  unqualified type being pointed to.
   llvm::Constant *PointeeTypeInfo = 
-    RTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
+    ItaniumRTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
   Fields.push_back(PointeeTypeInfo);
 }
 
 /// BuildPointerToMemberTypeInfo - Build an abi::__pointer_to_member_type_info 
 /// struct, used for member pointer types.
-void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
+void
+ItaniumRTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   QualType PointeeTy = Ty->getPointeeType();
   
   Qualifiers Quals;
@@ -943,14 +945,15 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   //   __pointee is a pointer to the std::type_info derivation for the 
   //   unqualified type being pointed to.
   llvm::Constant *PointeeTypeInfo = 
-    RTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
+    ItaniumRTTIBuilder(CGM).BuildTypeInfo(UnqualifiedPointeeTy);
   Fields.push_back(PointeeTypeInfo);
 
   // Itanium C++ ABI 2.9.5p9:
   //   __context is a pointer to an abi::__class_type_info corresponding to the
   //   class type containing the member pointed to 
   //   (e.g., the "A" in "int A::*").
-  Fields.push_back(RTTIBuilder(CGM).BuildTypeInfo(QualType(ClassType, 0)));
+  Fields.push_back(
+      ItaniumRTTIBuilder(CGM).BuildTypeInfo(QualType(ClassType, 0)));
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
@@ -965,15 +968,17 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
       LangOpts.ObjCRuntime.isGNUFamily())
     return ObjCRuntime->GetEHType(Ty);
 
-  return RTTIBuilder(*this).BuildTypeInfo(Ty);
+  if (getTarget().getCXXABI().isMicrosoft())
+    return getMSTypeDescriptor(Ty);
+  return ItaniumRTTIBuilder(*this).BuildTypeInfo(Ty);
 }
 
 void CodeGenModule::EmitFundamentalRTTIDescriptor(QualType Type) {
   QualType PointerType = Context.getPointerType(Type);
   QualType PointerTypeConst = Context.getPointerType(Type.withConst());
-  RTTIBuilder(*this).BuildTypeInfo(Type, true);
-  RTTIBuilder(*this).BuildTypeInfo(PointerType, true);
-  RTTIBuilder(*this).BuildTypeInfo(PointerTypeConst, true);
+  ItaniumRTTIBuilder(*this).BuildTypeInfo(Type, true);
+  ItaniumRTTIBuilder(*this).BuildTypeInfo(PointerType, true);
+  ItaniumRTTIBuilder(*this).BuildTypeInfo(PointerTypeConst, true);
 }
 
 void CodeGenModule::EmitFundamentalRTTIDescriptors() {
