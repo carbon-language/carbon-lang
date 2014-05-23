@@ -104,6 +104,7 @@ void g() {
   TemplateInstantiationVisibility<char[4]> tiv4;
 
   int &p = WithPartialSpecializationUse().f();
+  int &q = WithExplicitSpecializationUse().inner_template<int>();
 }
 
 RedeclaredAsFriend<int> raf1;

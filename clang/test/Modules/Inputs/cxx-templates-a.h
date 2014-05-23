@@ -56,3 +56,10 @@ template<typename T> struct WithPartialSpecialization<T*> {
   T &f() { static T t; return t; }
 };
 typedef WithPartialSpecializationUse::type WithPartialSpecializationInstantiate;
+
+template<> struct WithExplicitSpecialization<int> {
+  int n;
+  template<typename T> T &inner_template() {
+    return n;
+  }
+};

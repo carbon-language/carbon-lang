@@ -6066,24 +6066,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // The canonical type
   QualType CanonType;
-  if (PrevDecl &&
-      (PrevDecl->getSpecializationKind() == TSK_Undeclared ||
-               TUK == TUK_Friend)) {
-    // Since the only prior class template specialization with these
-    // arguments was referenced but not declared, or we're only
-    // referencing this specialization as a friend, reuse that
-    // declaration node as our own, updating its source location and
-    // the list of outer template parameters to reflect our new declaration.
-    Specialization = PrevDecl;
-    Specialization->setLocation(TemplateNameLoc);
-    if (TemplateParameterLists.size() > 0) {
-      Specialization->setTemplateParameterListsInfo(Context,
-                                              TemplateParameterLists.size(),
-                                              TemplateParameterLists.data());
-    }
-    PrevDecl = 0;
-    CanonType = Context.getTypeDeclType(Specialization);
-  } else if (isPartialSpecialization) {
+  if (isPartialSpecialization) {
     // Build the canonical type that describes the converted template
     // arguments of the class template partial specialization.
     TemplateName CanonTemplate = Context.getCanonicalTemplateName(Name);
