@@ -40,6 +40,9 @@ class Status {
   llvm::sys::fs::perms Perms;
 
 public:
+  bool IsVFSMapped; // FIXME: remove when files support multiple names
+
+public:
   Status() : Type(llvm::sys::fs::file_type::status_error) {}
   Status(const llvm::sys::fs::file_status &Status);
   Status(StringRef Name, StringRef RealName, llvm::sys::fs::UniqueID UID,

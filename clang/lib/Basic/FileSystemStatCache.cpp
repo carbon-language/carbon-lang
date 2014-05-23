@@ -39,6 +39,7 @@ static void copyStatusToFileData(const vfs::Status &Status,
   Data.IsDirectory = Status.isDirectory();
   Data.IsNamedPipe = Status.getType() == llvm::sys::fs::file_type::fifo_file;
   Data.InPCH = false;
+  Data.IsVFSMapped = Status.IsVFSMapped;
 }
 
 /// FileSystemStatCache::get - Get the 'stat' information for the specified

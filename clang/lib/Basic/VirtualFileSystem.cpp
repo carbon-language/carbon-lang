@@ -31,13 +31,13 @@ using llvm::sys::fs::UniqueID;
 Status::Status(const file_status &Status)
     : UID(Status.getUniqueID()), MTime(Status.getLastModificationTime()),
       User(Status.getUser()), Group(Status.getGroup()), Size(Status.getSize()),
-      Type(Status.type()), Perms(Status.permissions()) {}
+      Type(Status.type()), Perms(Status.permissions()), IsVFSMapped(false)  {}
 
 Status::Status(StringRef Name, StringRef ExternalName, UniqueID UID,
                sys::TimeValue MTime, uint32_t User, uint32_t Group,
                uint64_t Size, file_type Type, perms Perms)
     : Name(Name), UID(UID), MTime(MTime), User(User), Group(Group), Size(Size),
-      Type(Type), Perms(Perms) {}
+      Type(Type), Perms(Perms), IsVFSMapped(false) {}
 
 bool Status::equivalent(const Status &Other) const {
   return getUniqueID() == Other.getUniqueID();
@@ -801,6 +801,8 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
     assert(!S || S->getName() == F->getExternalContentsPath());
     if (S && !F->useExternalName(UseExternalNames))
       S->setName(PathStr);
+    if (S)
+      S->IsVFSMapped = true;
     return S;
   } else { // directory
     DirectoryEntry *DE = cast<DirectoryEntry>(*Result);

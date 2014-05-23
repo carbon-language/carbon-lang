@@ -38,6 +38,10 @@ struct FileData {
   bool IsDirectory;
   bool IsNamedPipe;
   bool InPCH;
+  bool IsVFSMapped; // FIXME: remove this when files support multiple names
+  FileData()
+      : Size(0), ModTime(0), IsDirectory(false), IsNamedPipe(false),
+        InPCH(false), IsVFSMapped(false) {}
 };
 
 /// \brief Abstract interface for introducing a FileManager cache for 'stat'
