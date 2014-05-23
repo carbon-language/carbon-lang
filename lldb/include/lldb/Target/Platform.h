@@ -892,6 +892,7 @@ namespace lldb_private {
         std::string m_local_cache_directory;
         std::vector<ConstString> m_trap_handlers;
         bool m_calculated_trap_handlers;
+        Mutex m_trap_handler_mutex;
 
         //------------------------------------------------------------------
         /// Ask the Platform subclass to fill in the list of trap handler names
