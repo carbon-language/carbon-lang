@@ -92,6 +92,7 @@ public:
 
       Storage *Result = FreeList[--NumFreeListEntries];
       Result->NumDiagArgs = 0;
+      Result->DiagRanges.clear();
       Result->FixItHints.clear();
       return Result;
     }
