@@ -298,10 +298,6 @@ public:
   /// registered in this LLVMContext.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 
-
-  typedef DenseMap<StructType*, unsigned, DenseMapInfo<StructType*> >
-                   NumeredTypesMapTy;
-
   /// Return the type with the specified name, or null if there is none by that
   /// name.
   StructType *getTypeByName(StringRef Name) const;
