@@ -111,15 +111,20 @@ __declspec(dllexport) void redecl2();
                       void redecl3(); // expected-note{{previous declaration is here}}
 __declspec(dllexport) void redecl3(); // expected-error{{redeclaration of 'redecl3' cannot add 'dllexport' attribute}}
 
+                      void redecl4(); // expected-note{{previous declaration is here}}
+__declspec(dllexport) inline void redecl4() {} // expected-error{{redeclaration of 'redecl4' cannot add 'dllexport' attribute}}
+
 // Friend functions
 struct FuncFriend {
   friend __declspec(dllexport) void friend1();
   friend __declspec(dllexport) void friend2();
   friend                       void friend3(); // expected-note{{previous declaration is here}}
+  friend                       void friend4(); // expected-note{{previous declaration is here}}
 };
 __declspec(dllexport) void friend1() {}
                       void friend2() {}
 __declspec(dllexport) void friend3() {} // expected-error{{redeclaration of 'friend3' cannot add 'dllexport' attribute}}
+__declspec(dllexport) inline void friend4() {} // expected-error{{redeclaration of 'friend4' cannot add 'dllexport' attribute}}
 
 // Implicit declarations can be redeclared with dllexport.
 __declspec(dllexport) void* operator new(__SIZE_TYPE__ n);
@@ -143,6 +148,16 @@ template<typename T> void __declspec(dllexport) funcTmplDecl2();
 // Export function template definition.
 template<typename T> __declspec(dllexport) void funcTmplDef() {}
 
+// Export inline function template.
+template<typename T> __declspec(dllexport) inline void inlineFuncTmpl1() {}
+template<typename T> inline void __attribute__((dllexport)) inlineFuncTmpl2() {}
+
+template<typename T> __declspec(dllexport) inline void inlineFuncTmplDecl();
+template<typename T>                              void inlineFuncTmplDecl() {}
+
+template<typename T> __declspec(dllexport) void inlineFuncTmplDef();
+template<typename T>                inline void inlineFuncTmplDef() {}
+
 // Redeclarations
 template<typename T> __declspec(dllexport) void funcTmplRedecl1();
 template<typename T> __declspec(dllexport) void funcTmplRedecl1() {}
@@ -153,15 +168,20 @@ template<typename T>                       void funcTmplRedecl2() {}
 template<typename T>                       void funcTmplRedecl3(); // expected-note{{previous declaration is here}}
 template<typename T> __declspec(dllexport) void funcTmplRedecl3(); // expected-error{{redeclaration of 'funcTmplRedecl3' cannot add 'dllexport' attribute}}
 
+template<typename T>                       void funcTmplRedecl4(); // expected-note{{previous declaration is here}}
+template<typename T> __declspec(dllexport) inline void funcTmplRedecl4() {} // expected-error{{redeclaration of 'funcTmplRedecl4' cannot add 'dllexport' attribute}}
+
 // Function template friends
 struct FuncTmplFriend {
   template<typename T> friend __declspec(dllexport) void funcTmplFriend1();
   template<typename T> friend __declspec(dllexport) void funcTmplFriend2();
   template<typename T> friend                       void funcTmplFriend3(); // expected-note{{previous declaration is here}}
+  template<typename T> friend                       void funcTmplFriend4(); // expected-note{{previous declaration is here}}
 };
 template<typename T> __declspec(dllexport) void funcTmplFriend1() {}
 template<typename T>                       void funcTmplFriend2() {}
 template<typename T> __declspec(dllexport) void funcTmplFriend3() {} // expected-error{{redeclaration of 'funcTmplFriend3' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void funcTmplFriend4() {} // expected-error{{redeclaration of 'funcTmplFriend4' cannot add 'dllexport' attribute}}
 
 // External linkage is required.
 template<typename T> __declspec(dllexport) static int staticFuncTmpl(); // expected-error{{'staticFuncTmpl' must have external linkage when declared 'dllexport'}}

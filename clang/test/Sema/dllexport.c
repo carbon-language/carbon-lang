@@ -88,6 +88,9 @@ __declspec(dllexport) void redecl3();
                       void redecl4(); // expected-note{{previous declaration is here}}
 __declspec(dllexport) void redecl4(); // expected-error{{redeclaration of 'redecl4' cannot add 'dllexport' attribute}}
 
+                      void redecl5(); // expected-note{{previous declaration is here}}
+__declspec(dllexport) inline void redecl5() {} // expected-error{{redeclaration of 'redecl5' cannot add 'dllexport' attribute}}
+
 // External linkage is required.
 __declspec(dllexport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllexport'}}
 

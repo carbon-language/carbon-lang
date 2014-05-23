@@ -125,6 +125,12 @@ extern "C" __declspec(dllimport) void externC();
 __declspec(dllimport) inline void inlineFunc1() {}
 inline void __attribute__((dllimport)) inlineFunc2() {}
 
+__declspec(dllimport) inline void inlineDecl();
+                             void inlineDecl() {}
+
+__declspec(dllimport) void inlineDef();
+               inline void inlineDef() {}
+
 // Redeclarations
 __declspec(dllimport) void redecl1();
 __declspec(dllimport) void redecl1();
@@ -140,17 +146,22 @@ __declspec(dllimport) void redecl3(); // expected-note{{previous declaration is 
                       void redecl4(); // expected-note{{previous declaration is here}}
 __declspec(dllimport) void redecl4(); // expected-error{{redeclaration of 'redecl4' cannot add 'dllimport' attribute}}
 
+                      void redecl5(); // expected-note{{previous declaration is here}}
+__declspec(dllimport) inline void redecl5() {} // expected-error{{redeclaration of 'redecl5' cannot add 'dllimport' attribute}}
+
 // Friend functions
 struct FuncFriend {
   friend __declspec(dllimport) void friend1();
   friend __declspec(dllimport) void friend2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
   friend __declspec(dllimport) void friend3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
   friend                       void friend4(); // expected-note{{previous declaration is here}}
+  friend                       void friend5(); // expected-note{{previous declaration is here}}
 };
 __declspec(dllimport) void friend1();
                       void friend2(); // expected-warning{{'friend2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
                       void friend3() {} // expected-warning{{'friend3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 __declspec(dllimport) void friend4(); // expected-error{{redeclaration of 'friend4' cannot add 'dllimport' attribute}}
+__declspec(dllimport) inline void friend5() {} // expected-error{{redeclaration of 'friend5' cannot add 'dllimport' attribute}}
 
 // Implicit declarations can be redeclared with dllimport.
 __declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
@@ -171,6 +182,19 @@ namespace ns { __declspec(dllimport) void externalFunc(); }
 template<typename T> __declspec(dllimport) void funcTmplDecl1();
 template<typename T> void __declspec(dllimport) funcTmplDecl2();
 
+// Import function template definition.
+template<typename T> __declspec(dllimport) void funcTmplDef() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}
+
+// Import inline function template.
+template<typename T> __declspec(dllimport) inline void inlineFuncTmpl1() {}
+template<typename T> inline void __attribute__((dllimport)) inlineFuncTmpl2() {}
+
+template<typename T> __declspec(dllimport) inline void inlineFuncTmplDecl();
+template<typename T>                              void inlineFuncTmplDecl() {}
+
+template<typename T> __declspec(dllimport) void inlineFuncTmplDef();
+template<typename T>                inline void inlineFuncTmplDef() {}
+
 // Redeclarations
 template<typename T> __declspec(dllimport) void funcTmplRedecl1();
 template<typename T> __declspec(dllimport) void funcTmplRedecl1();
@@ -184,17 +208,22 @@ template<typename T>                       void funcTmplRedecl3() {} // expected
 template<typename T>                       void funcTmplRedecl4(); // expected-note{{previous declaration is here}}
 template<typename T> __declspec(dllimport) void funcTmplRedecl4(); // expected-error{{redeclaration of 'funcTmplRedecl4' cannot add 'dllimport' attribute}}
 
+template<typename T>                       void funcTmplRedecl5(); // expected-note{{previous declaration is here}}
+template<typename T> __declspec(dllimport) inline void funcTmplRedecl5() {} // expected-error{{redeclaration of 'funcTmplRedecl5' cannot add 'dllimport' attribute}}
+
 // Function template friends
 struct FuncTmplFriend {
   template<typename T> friend __declspec(dllimport) void funcTmplFriend1();
   template<typename T> friend __declspec(dllimport) void funcTmplFriend2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
   template<typename T> friend __declspec(dllimport) void funcTmplFriend3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
   template<typename T> friend                       void funcTmplFriend4(); // expected-note{{previous declaration is here}}
+  template<typename T> friend __declspec(dllimport) inline void funcTmplFriend5();
 };
 template<typename T> __declspec(dllimport) void funcTmplFriend1();
 template<typename T>                       void funcTmplFriend2(); // expected-warning{{'funcTmplFriend2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 template<typename T>                       void funcTmplFriend3() {} // expected-warning{{'funcTmplFriend3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 template<typename T> __declspec(dllimport) void funcTmplFriend4(); // expected-error{{redeclaration of 'funcTmplFriend4' cannot add 'dllimport' attribute}}
+template<typename T>                       inline void funcTmplFriend5() {}
 
 // External linkage is required.
 template<typename T> __declspec(dllimport) static int staticFuncTmpl(); // expected-error{{'staticFuncTmpl' must have external linkage when declared 'dllimport'}}
@@ -204,7 +233,21 @@ namespace ns { template<typename T> __declspec(dllimport) void externalFuncTmpl(
 
 
 template<typename T> void funcTmpl() {}
-template<typename T> __declspec(dllimport) void importedFuncTmpl();
+template<typename T> inline void inlineFuncTmpl() {}
+template<typename T> __declspec(dllimport) void importedFuncTmplDecl();
+template<typename T> __declspec(dllimport) inline void importedFuncTmpl() {}
+
+// Import implicit instantiation of an imported function template.
+void useFunTmplDecl() { importedFuncTmplDecl<ImplicitInst_Imported>(); }
+void useFunTmplDef() { importedFuncTmpl<ImplicitInst_Imported>(); }
+
+// Import explicit instantiation declaration of an imported function template.
+extern template void importedFuncTmpl<ExplicitDecl_Imported>();
+
+// Import explicit instantiation definition of an imported function template.
+// NB: MSVC fails this instantiation without explicit dllimport which is most
+// likely a bug because an implicit instantiation is accepted.
+template void importedFuncTmpl<ExplicitInst_Imported>();
 
 // Import specialization of an imported function template. A definition must be
 // declared inline.
@@ -219,6 +262,11 @@ template<> void importedFuncTmpl<ExplicitSpec_NotImported>() {}
 
 // Import explicit instantiation declaration of a non-imported function template.
 extern template __declspec(dllimport) void funcTmpl<ExplicitDecl_Imported>();
+extern template __declspec(dllimport) void inlineFuncTmpl<ExplicitDecl_Imported>();
+
+// Import explicit instantiation definition of a non-imported function template.
+template __declspec(dllimport) void funcTmpl<ExplicitInst_Imported>();
+template __declspec(dllimport) void inlineFuncTmpl<ExplicitInst_Imported>();
 
 // Import specialization of a non-imported function template. A definition must
 // be declared inline.

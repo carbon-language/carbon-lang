@@ -120,7 +120,10 @@ __declspec(dllimport) void redecl4(); // expected-error{{redeclaration of 'redec
 
 // Inline redeclarations are fine.
 __declspec(dllimport) void redecl5();
-inline                void redecl5() {}
+                      inline void redecl5() {}
+
+                      void redecl6(); // expected-note{{previous declaration is here}}
+__declspec(dllimport) inline void redecl6() {} // expected-error{{redeclaration of 'redecl6' cannot add 'dllimport' attribute}}
 
 // External linkage is required.
 __declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}
