@@ -1349,6 +1349,15 @@ llvm::Value* MicrosoftCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                       llvm::GlobalVariable *GV,
                                       bool PerformInit) {
+  // MSVC only uses guards for static locals.
+  if (!D.isStaticLocal()) {
+    assert(GV->hasWeakLinkage() || GV->hasLinkOnceLinkage());
+    // GlobalOpt is allowed to discard the initializer, so use linkonce_odr.
+    CGF.CurFn->setLinkage(llvm::GlobalValue::LinkOnceODRLinkage);
+    CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
+    return;
+  }
+
   // MSVC always uses an i32 bitfield to guard initialization, which is *not*
   // threadsafe.  Since the user may be linking in inline functions compiled by
   // cl.exe, there's no reason to provide a false sense of security by using
@@ -1362,11 +1371,7 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   llvm::ConstantInt *Zero = llvm::ConstantInt::get(GuardTy, 0);
 
   // Get the guard variable for this function if we have one already.
-  GuardInfo EmptyGuardInfo;
-  GuardInfo *GI = &EmptyGuardInfo;
-  if (isa<FunctionDecl>(D.getDeclContext())) {
-    GI = &GuardVariableMap[D.getDeclContext()];
-  }
+  GuardInfo *GI = &GuardVariableMap[D.getDeclContext()];
 
   unsigned BitIndex;
   if (D.isStaticLocal() && D.isExternallyVisible()) {

@@ -233,7 +233,18 @@ class CodeGenModule : public CodeGenTypeCache {
   CodeGenModule(const CodeGenModule &) LLVM_DELETED_FUNCTION;
   void operator=(const CodeGenModule &) LLVM_DELETED_FUNCTION;
 
-  typedef std::vector<std::pair<llvm::Constant*, int> > CtorList;
+  struct Structor {
+    Structor() : Priority(0), Initializer(nullptr), AssociatedData(nullptr) {}
+    Structor(int Priority, llvm::Constant *Initializer,
+             llvm::Constant *AssociatedData)
+        : Priority(Priority), Initializer(Initializer),
+          AssociatedData(AssociatedData) {}
+    int Priority;
+    llvm::Constant *Initializer;
+    llvm::Constant *AssociatedData;
+  };
+
+  typedef std::vector<Structor> CtorList;
 
   ASTContext &Context;
   const LangOptions &LangOpts;
@@ -1081,8 +1092,9 @@ private:
                                     bool PerformInit);
 
   // FIXME: Hardcoding priority here is gross.
-  void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);
-  void AddGlobalDtor(llvm::Function *Dtor, int Priority=65535);
+  void AddGlobalCtor(llvm::Function *Ctor, int Priority = 65535,
+                     llvm::Constant *AssociatedData = 0);
+  void AddGlobalDtor(llvm::Function *Dtor, int Priority = 65535);
 
   /// Generates a global array of functions and priorities using the given list
   /// and name. This array will have appending linkage and is suitable for use

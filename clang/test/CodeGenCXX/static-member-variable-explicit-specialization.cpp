@@ -12,14 +12,14 @@ template<> int A<char>::a;
 // CHECK: @_ZN1AIbE1aE = global i32 10
 template<> int A<bool>::a = 10;
 
-// CHECK: @llvm.global_ctors = appending global [7 x { i32, void ()* }]
-// CHECK: [{ i32, void ()* } { i32 65535, void ()* @[[unordered1:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered2:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered3:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered4:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered5:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @[[unordered6:[^ ]*]] },
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__sub_I_static_member_variable_explicit_specialization.cpp }]
+// CHECK: @llvm.global_ctors = appending global [7 x { i32, void ()*, i8* }]
+// CHECK: [{ i32, void ()*, i8* } { i32 65535, void ()* @[[unordered1:[^,]*]], i8* bitcast (i32* @_ZN1AIsE1aE to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered2:[^,]*]], i8* bitcast (i16* @_Z1xIsE to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered3:[^,]*]], i8* bitcast (i32* @_ZN2ns1aIiE1iE to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered4:[^,]*]], i8* bitcast (i32* @_ZN2ns1b1iIiEE to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered5:[^,]*]], i8* bitcast (i32* @_ZN1AIvE1aE to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered6:[^,]*]], i8* @_Z1xIcE },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_static_member_variable_explicit_specialization.cpp, i8* null }]
 
 template int A<short>::a;  // Unordered
 int b = foo();

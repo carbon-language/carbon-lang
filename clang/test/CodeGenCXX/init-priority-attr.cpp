@@ -27,7 +27,10 @@ public:
 
 A C::a = A();
 
-// CHECK: @llvm.global_ctors = appending global [3 x { i32, void ()* }] [{ i32, void ()* } { i32 200, void ()* @_GLOBAL__I_000200 }, { i32, void ()* } { i32 300, void ()* @_GLOBAL__I_000300 }, { i32, void ()* } { i32 65535, void ()* @_GLOBAL__sub_I_init_priority_attr.cpp }]
+// CHECK: @llvm.global_ctors = appending global [3 x { i32, void ()*, i8* }]
+// CHECK: [{ i32, void ()*, i8* } { i32 200, void ()* @_GLOBAL__I_000200, i8* null },
+// CHECK:  { i32, void ()*, i8* } { i32 300, void ()* @_GLOBAL__I_000300, i8* null },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_init_priority_attr.cpp, i8* null }]
 
 // CHECK: _GLOBAL__I_000200()
 // CHECK: _Z3fooi(i32 3)

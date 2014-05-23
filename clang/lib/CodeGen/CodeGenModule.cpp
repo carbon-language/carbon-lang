@@ -511,16 +511,17 @@ llvm::GlobalValue *CodeGenModule::GetGlobalValue(StringRef Name) {
 
 /// AddGlobalCtor - Add a function to the list that will be called before
 /// main() runs.
-void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor, int Priority) {
+void CodeGenModule::AddGlobalCtor(llvm::Function *Ctor, int Priority,
+                                  llvm::Constant *AssociatedData) {
   // FIXME: Type coercion of void()* types.
-  GlobalCtors.push_back(std::make_pair(Ctor, Priority));
+  GlobalCtors.push_back(Structor(Priority, Ctor, AssociatedData));
 }
 
 /// AddGlobalDtor - Add a function to the list that will be called
 /// when the module is unloaded.
-void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
+void CodeGenModule::AddGlobalDtor(llvm::Function *Dtor, int Priority) {
   // FIXME: Type coercion of void()* types.
-  GlobalDtors.push_back(std::make_pair(Dtor, Priority));
+  GlobalDtors.push_back(Structor(Priority, Dtor, 0));
 }
 
 void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
@@ -528,16 +529,19 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   llvm::FunctionType* CtorFTy = llvm::FunctionType::get(VoidTy, false);
   llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
 
-  // Get the type of a ctor entry, { i32, void ()* }.
-  llvm::StructType *CtorStructTy =
-    llvm::StructType::get(Int32Ty, llvm::PointerType::getUnqual(CtorFTy), NULL);
+  // Get the type of a ctor entry, { i32, void ()*, i8* }.
+  llvm::StructType *CtorStructTy = llvm::StructType::get(
+      Int32Ty, llvm::PointerType::getUnqual(CtorFTy), VoidPtrTy, NULL);
 
   // Construct the constructor and destructor arrays.
   SmallVector<llvm::Constant*, 8> Ctors;
   for (CtorList::const_iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
     llvm::Constant *S[] = {
-      llvm::ConstantInt::get(Int32Ty, I->second, false),
-      llvm::ConstantExpr::getBitCast(I->first, CtorPFTy)
+      llvm::ConstantInt::get(Int32Ty, I->Priority, false),
+      llvm::ConstantExpr::getBitCast(I->Initializer, CtorPFTy),
+      (I->AssociatedData
+           ? llvm::ConstantExpr::getBitCast(I->AssociatedData, VoidPtrTy)
+           : llvm::Constant::getNullValue(VoidPtrTy))
     };
     Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
   }

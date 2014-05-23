@@ -294,10 +294,12 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     //   have unordered initialization.
     //
     // As a consequence, we can put them into their own llvm.global_ctors entry.
-    // This should allow GlobalOpt to fire more often, and allow us to implement
-    // the Microsoft C++ ABI, which uses COMDAT elimination to avoid double
-    // initializaiton.
-    AddGlobalCtor(Fn);
+    //
+    // In addition, put the initializer into a COMDAT group with the global
+    // being initialized.  On most platforms, this is a minor startup time
+    // optimization.  In the MS C++ ABI, there are no guard variables, so this
+    // COMDAT key is required for correctness.
+    AddGlobalCtor(Fn, 65535, Addr);
     DelayedCXXInitPosition.erase(D);
   } else {
     llvm::DenseMap<const Decl *, unsigned>::iterator I =
@@ -430,8 +432,7 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
   // Use guarded initialization if the global variable is weak. This
   // occurs for, e.g., instantiated static data members and
   // definitions explicitly marked weak.
-  if (llvm::GlobalVariable::isWeakLinkage(Addr->getLinkage()) ||
-      llvm::GlobalVariable::isLinkOnceLinkage(Addr->getLinkage())) {
+  if (Addr->hasWeakLinkage() || Addr->hasLinkOnceLinkage()) {
     EmitCXXGuardedInit(*D, Addr, PerformInit);
   } else {
     EmitCXXGlobalVarDeclInit(*D, Addr, PerformInit);

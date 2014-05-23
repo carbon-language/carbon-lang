@@ -1,8 +1,9 @@
 // RUN: %clang_cc1 -fms-extensions -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 | FileCheck %s
 
-// CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()* }]
-// CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp }]
+// CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()*, i8* }]
+// CHECK: [{ i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ",
+// CHECK:       i8* bitcast (%class.A* @"\01?foo@?$B@H@@2VA@@A" to i8*) },
+// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp, i8* null }]
 
 struct S {
   S();
@@ -11,12 +12,12 @@ struct S {
 
 S s;
 
-// CHECK: define internal void @"\01??__Es@@YAXXZ"() [[NUW:#[0-9]+]]
-// CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
+// CHECK: define internal void @"\01??__Es@@YAXXZ"()
+// CHECK: call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"\01??__Fs@@YAXXZ")
 // CHECK: ret void
 
-// CHECK: define internal void @"\01??__Fs@@YAXXZ"() [[NUW]] {
+// CHECK: define internal void @"\01??__Fs@@YAXXZ"()
 // CHECK: call x86_thiscallcc void @"\01??1S@@QAE@XZ"
 // CHECK: ret void
 
@@ -24,11 +25,13 @@ S s;
 // the same global.
 __declspec(selectany) S selectany1;
 __declspec(selectany) S selectany2;
-// CHECK: define internal void @"\01??__Eselectany1@@YAXXZ"() [[NUW:#[0-9]+]]
-// CHECK: load i32* @"\01??_Bselectany1@@3US@@A@5"
+// CHECK: define linkonce_odr void @"\01??__Eselectany1@@YAXXZ"()
+// CHECK-NOT: @"\01??_Bselectany1
+// CHECK: call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: ret void
-// CHECK: define internal void @"\01??__Eselectany2@@YAXXZ"() [[NUW:#[0-9]+]]
-// CHECK: load i32* @"\01??_Bselectany2@@3US@@A@5"
+// CHECK: define linkonce_odr void @"\01??__Eselectany2@@YAXXZ"()
+// CHECK-NOT: @"\01??_Bselectany2
+// CHECK: call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: ret void
 
 void StaticLocal() {
@@ -96,6 +99,7 @@ class A {
  public:
   A() {}
   ~A() {}
+  int a;
 };
 
 template<typename T>
@@ -145,10 +149,10 @@ void force_usage() {
   (void)B<int>::foo;  // (void) - force usage
 }
 
-// CHECK: define internal void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"() [[NUW]]
-// CHECK: load i32* @"\01??_Bfoo@?$B@H@@2VA@@A@5"
-// CHECK: store i32 {{.*}}, i32* @"\01??_Bfoo@?$B@H@@2VA@@A@5"
-// CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
+// CHECK: define linkonce_odr void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"()
+// CHECK-NOT: and
+// CHECK-NOT: ?_Bfoo@
+// CHECK: call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"\01??__Ffoo@?$B@H@@2VA@@A@YAXXZ")
 // CHECK: ret void
 
@@ -160,8 +164,6 @@ void force_usage() {
 // CHECK: call x86_thiscallcc void @"\01??1A@@QAE@XZ"{{.*}}foo
 // CHECK: ret void
 
-// CHECK: define internal void @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp() [[NUW]] {
+// CHECK: define internal void @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp()
 // CHECK: call void @"\01??__Es@@YAXXZ"()
 // CHECK: ret void
-
-// CHECK: attributes [[NUW]] = { nounwind }
