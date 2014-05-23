@@ -333,6 +333,11 @@ public:
   /// VisContext - Manages the stack for \#pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
 
+  /// \brief This represents the last location of a "#pragma clang optimize off"
+  /// directive if such a directive has not been closed by an "on" yet. If
+  /// optimizations are currently "on", this is set to an invalid location.
+  SourceLocation OptimizeOffPragmaLocation;
+
   /// \brief Flag indicating if Sema is building a recovery call expression.
   ///
   /// This flag is used to avoid building recovery call expressions
@@ -7230,6 +7235,25 @@ public:
   /// '\#pragma clang arc_cf_code_audited' and, if so, consider adding
   /// the appropriate attribute.
   void AddCFAuditedAttribute(Decl *D);
+
+  /// \brief Called on well formed \#pragma clang optimize.
+  void ActOnPragmaOptimize(bool On, SourceLocation PragmaLoc);
+
+  /// \brief Get the location for the currently active "\#pragma clang optimize
+  /// off". If this location is invalid, then the state of the pragma is "on".
+  SourceLocation getOptimizeOffPragmaLocation() const {
+    return OptimizeOffPragmaLocation;
+  }
+
+  /// \brief Only called on function definitions; if there is a pragma in scope
+  /// with the effect of a range-based optnone, consider marking the function
+  /// with attribute optnone.
+  void AddRangeBasedOptnone(FunctionDecl *FD);
+
+  /// \brief Adds the 'optnone' attribute to the function declaration if there
+  /// are no conflicts; Loc represents the location causing the 'optnone'
+  /// attribute to be added (usually because of a pragma).
+  void AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD, SourceLocation Loc);
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,

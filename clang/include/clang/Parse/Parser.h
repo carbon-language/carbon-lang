@@ -160,6 +160,7 @@ class Parser : public CodeCompletionHandler {
   std::unique_ptr<PragmaHandler> MSConstSeg;
   std::unique_ptr<PragmaHandler> MSCodeSeg;
   std::unique_ptr<PragmaHandler> MSSection;
+  std::unique_ptr<PragmaHandler> OptimizeHandler;
 
   std::unique_ptr<CommentHandler> CommentSemaHandler;
 

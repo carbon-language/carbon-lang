@@ -470,6 +470,34 @@ void Sema::AddCFAuditedAttribute(Decl *D) {
   D->addAttr(CFAuditedTransferAttr::CreateImplicit(Context, Loc));
 }
 
+void Sema::ActOnPragmaOptimize(bool On, SourceLocation PragmaLoc) {
+  if(On)
+    OptimizeOffPragmaLocation = SourceLocation();
+  else
+    OptimizeOffPragmaLocation = PragmaLoc;
+}
+
+void Sema::AddRangeBasedOptnone(FunctionDecl *FD) {
+  // In the future, check other pragmas if they're implemented (e.g. pragma
+  // optimize 0 will probably map to this functionality too).
+  if(OptimizeOffPragmaLocation.isValid())
+    AddOptnoneAttributeIfNoConflicts(FD, OptimizeOffPragmaLocation);
+}
+
+void Sema::AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD, 
+                                            SourceLocation Loc) {
+  // Don't add a conflicting attribute. No diagnostic is needed.
+  if (FD->hasAttr<MinSizeAttr>() || FD->hasAttr<AlwaysInlineAttr>())
+    return;
+
+  // Add attributes only if required. Optnone requires noinline as well, but if
+  // either is already present then don't bother adding them.
+  if (!FD->hasAttr<OptimizeNoneAttr>())
+    FD->addAttr(OptimizeNoneAttr::CreateImplicit(Context, Loc));
+  if (!FD->hasAttr<NoInlineAttr>())
+    FD->addAttr(NoInlineAttr::CreateImplicit(Context, Loc));
+}
+
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
 enum : unsigned { NoVisibility = ~0U };
 

@@ -7373,6 +7373,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // marking the function.
   AddCFAuditedAttribute(NewFD);
 
+  // If this is a function definition, check if we have to apply optnone due to
+  // a pragma.
+  if(D.isFunctionDefinition())
+    AddRangeBasedOptnone(NewFD);
+
   // If this is the first declaration of an extern C variable, update
   // the map of such variables.
   if (NewFD->isFirstDecl() && !NewFD->isInvalidDecl() &&

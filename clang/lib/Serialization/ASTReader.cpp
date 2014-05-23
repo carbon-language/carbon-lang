@@ -3281,6 +3281,14 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       LateParsedTemplates.append(Record.begin(), Record.end());
       break;
     }
+
+    case OPTIMIZE_PRAGMA_OPTIONS:
+      if (Record.size() != 1) {
+        Error("invalid pragma optimize record");
+        return Failure;
+      }
+      OptimizeOffPragmaLocation = ReadSourceLocation(F, Record[0]);
+      break;
     }
   }
 }
@@ -6808,6 +6816,11 @@ void ASTReader::UpdateSema() {
     }
     SemaDeclRefs.clear();
   }
+
+  // Update the state of 'pragma clang optimize'. Use the same API as if we had
+  // encountered the pragma in the source.
+  if(OptimizeOffPragmaLocation.isValid())
+    SemaObj->ActOnPragmaOptimize(/* IsOn = */ false, OptimizeOffPragmaLocation);
 }
 
 IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
