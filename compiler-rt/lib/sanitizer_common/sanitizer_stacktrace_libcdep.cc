@@ -37,6 +37,14 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
     uptr pc = GetPreviousInstructionPc(addr[i]);
     uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
         pc, addr_frames.data(), addr_frames.size());
+    if (addr_frames_num == 0) {
+      frame_desc.clear();
+      PrintStackFramePrefix(&frame_desc, frame_num, pc);
+      frame_desc.append(" (<unknown module>)");
+      Printf("%s\n", frame_desc.data());
+      frame_num++;
+      continue;
+    }
     for (uptr j = 0; j < addr_frames_num; j++) {
       AddressInfo &info = addr_frames[j];
       frame_desc.clear();
