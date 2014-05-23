@@ -75,7 +75,9 @@ TEST(AddressSanitizer, OOB_int) {
 }
 
 TEST(AddressSanitizer, OOBRightTest) {
-  for (size_t access_size = 1; access_size <= 8; access_size *= 2) {
+  size_t max_access_size = SANITIZER_WORDSIZE == 64 ? 8 : 4;
+  for (size_t access_size = 1; access_size <= max_access_size;
+       access_size *= 2) {
     for (size_t alloc_size = 1; alloc_size <= 8; alloc_size++) {
       for (size_t offset = 0; offset <= 8; offset += access_size) {
         void *p = malloc(alloc_size);
