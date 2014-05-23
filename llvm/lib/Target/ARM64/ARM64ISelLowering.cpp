@@ -4270,23 +4270,22 @@ static bool isEXTMask(ArrayRef<int> M, EVT VT, bool &ReverseEXT,
 
   // The index of an EXT is the first element if it is not UNDEF.
   // Watch out for the beginning UNDEFs. The EXT index should be the expected
-  // value of the first element.
-  // E.g. <-1, -1, 3, ...> is treated as <1, 2, 3, ...>.
-  //      <-1, -1, 0, 1, ...> is treated as <IDX, IDX+1, 0, 1, ...>. IDX is
-  // equal to the ExpectedElt.
-  Imm = (M[0] >= 0) ? static_cast<unsigned>(M[0]) : ExpectedElt.getZExtValue();
+  // value of the first element.  E.g. 
+  // <-1, -1, 3, ...> is treated as <1, 2, 3, ...>.
+  // <-1, -1, 0, 1, ...> is treated as <2*NumElts-2, 2*NumElts-1, 0, 1, ...>.
+  // ExpectedElt is the last mask index plus 1.
+  Imm = ExpectedElt.getZExtValue();
 
-  // If no beginning UNDEFs, do swap when M[0] >= NumElts.
-  if (M[0] >= 0 && Imm >= NumElts) {
+  // There are two difference cases requiring to reverse input vectors.
+  // For example, for vector <4 x i32> we have the following cases,
+  // Case 1: shufflevector(<4 x i32>,<4 x i32>,<-1, -1, -1, 0>)
+  // Case 2: shufflevector(<4 x i32>,<4 x i32>,<-1, -1, 7, 0>)
+  // For both cases, we finally use mask <5, 6, 7, 0>, which requires
+  // to reverse two input vectors.
+  if (Imm < NumElts)
     ReverseEXT = true;
+  else
     Imm -= NumElts;
-  } else if (M[0] < 0) {
-    // Only do swap when beginning UNDEFs more than the first real element,
-    if (*FirstRealElt < FirstRealElt - M.begin())
-      ReverseEXT = true;
-    if (Imm >= NumElts)
-      Imm -= NumElts;
-  }
 
   return true;
 }
