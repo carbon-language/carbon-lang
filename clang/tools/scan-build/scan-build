@@ -18,6 +18,8 @@ use FindBin qw($RealBin);
 use Digest::MD5;
 use File::Basename;
 use File::Find;
+use File::Copy qw(copy);
+use File::Path qw( rmtree mkpath );
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 use Cwd qw/ getcwd abs_path /;
@@ -204,7 +206,7 @@ sub GetHTMLRunDir {
   else {
     $NewDir = "$Dir/$DateString-$RunNumber";
   }
-  system 'mkdir','-p',$NewDir;
+  mkpath($NewDir);
   return $NewDir;
 }
 
@@ -293,7 +295,7 @@ sub UpdateInFilePath {
 
   close (ROUT);
   close (RIN);
-  system("mv", "$fname.tmp", $fname);
+  rename("$fname.tmp", $fname)
 }
 
 ##----------------------------------------------------------------------------##
@@ -352,14 +354,14 @@ sub ScanFile {
 
   if (defined $AlreadyScanned{$digest}) {
     # Redundant file.  Remove it.
-    system ("rm", "-f", "$Dir/$FName");
+    unlink("$Dir/$FName");
     return;
   }
 
   $AlreadyScanned{$digest} = 1;
 
   # At this point the report file is not world readable.  Make it happen.
-  system ("chmod", "644", "$Dir/$FName");
+  chmod(0644, "$Dir/$FName");
 
   # Scan the report file for tags.
   open(IN, "$Dir/$FName") or DieDiag("Cannot open '$Dir/$FName'\n");
@@ -424,7 +426,7 @@ sub CopyFiles {
   DieDiag("Cannot find 'sorttable.js'.\n")
     if (! -r $JS);
 
-  system ("cp", $JS, "$Dir");
+  copy($JS, "$Dir");
 
   DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
@@ -434,7 +436,7 @@ sub CopyFiles {
   DieDiag("Cannot find 'scanview.css'.\n")
     if (! -r $CSS);
 
-  system ("cp", $CSS, "$Dir");
+  copy($CSS, "$Dir");
 
   DieDiag("Could not copy 'scanview.css' to '$Dir'.\n")
     if (! -r $CSS);
@@ -523,7 +525,7 @@ sub Postprocess {
   if (scalar(@filesFound) == 0 and ! -e "$Dir/failures") {
     if (! $KeepEmpty) {
       Diag("Removing directory '$Dir' because it contains no reports.\n");
-      system ("rm", "-fR", $Dir);
+      rmtree($Dir) or die "Cannot rmtree '$Dir' : $!";
     }
     Diag("No bugs found.\n");
     return 0;
@@ -844,8 +846,8 @@ ENDTEXT
   CopyFiles($Dir);
 
   # Make sure $Dir and $BaseDir are world readable/executable.
-  system("chmod", "755", $Dir);
-  if (defined $BaseDir) { system("chmod", "755", $BaseDir); }
+  chmod(0755, $Dir);
+  if (defined $BaseDir) { chmod(0755, $BaseDir); }
 
   # Print statistics
   print CalcStats(\@Stats) if $AnalyzerStats;

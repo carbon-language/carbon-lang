@@ -71,10 +71,10 @@ my $ResultFile;
 # Remove any stale files at exit.
 END {
   if (defined $ResultFile && -z $ResultFile) {
-    `rm -f $ResultFile`;
+    unlink($ResultFile);
   }
   if (defined $CleanupFile) {
-    `rm -f $CleanupFile`;
+    unlink($CleanupFile);
   }
 }
 
@@ -127,7 +127,7 @@ sub ProcessClangFailure {
   close OUT;
   `uname -a >> $PPFile.info.txt 2>&1`;
   `$Compiler -v >> $PPFile.info.txt 2>&1`;
-  system 'mv',$ofile,"$PPFile.stderr.txt";
+  rename($ofile, "$PPFile.stderr.txt");
   return (basename $PPFile);
 }
 
