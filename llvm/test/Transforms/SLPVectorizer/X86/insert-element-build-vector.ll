@@ -223,7 +223,7 @@ define <4 x float> @reschedule_extract(<4 x float> %a, <4 x float> %b) {
 ; instructions that are erased.
 define <4 x float> @take_credit(<4 x float> %a, <4 x float> %b) {
 ; ZEROTHRESH-LABEL: @take_credit(
-; ZEROTHRESH-CHECK: %1 = fadd <4 x float> %a, %b
+; ZEROTHRESH: %1 = fadd <4 x float> %a, %b
   %a0 = extractelement <4 x float> %a, i32 0
   %b0 = extractelement <4 x float> %b, i32 0
   %c0 = fadd float %a0, %b0

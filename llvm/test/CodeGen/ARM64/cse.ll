@@ -13,7 +13,7 @@ entry:
 ; CHECK: b.ge
 ; CHECK: sub
 ; CHECK: sub
-; CHECK_NOT: sub
+; CHECK-NOT: sub
 ; CHECK: ret
  %0 = load i32* %offset, align 4
  %cmp = icmp slt i32 %0, %size
