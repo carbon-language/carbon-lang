@@ -52,6 +52,7 @@ SOURCES= Polly.cpp \
 	 Support/ScopHelper.cpp \
 	 Analysis/Dependences.cpp \
 	 Analysis/ScopDetection.cpp \
+	 Analysis/ScopDetectionDiagnostic.cpp \
 	 Analysis/ScopInfo.cpp \
 	 Analysis/ScopGraphPrinter.cpp \
 	 Analysis/ScopPass.cpp \
