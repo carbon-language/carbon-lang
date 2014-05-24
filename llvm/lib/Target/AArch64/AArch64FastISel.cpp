@@ -247,6 +247,11 @@ unsigned AArch64FastISel::AArch64MaterializeGV(const GlobalValue *GV) {
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
     TLSGV = GA->getAliasee();
 
+  // MachO still uses GOT for large code-model accesses, but ELF requires
+  // movz/movk sequences, which FastISel doesn't handle yet.
+  if (TM.getCodeModel() != CodeModel::Small && !Subtarget->isTargetMachO())
+    return 0;
+
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(TLSGV))
     if (GVar->isThreadLocal())
       return 0;
