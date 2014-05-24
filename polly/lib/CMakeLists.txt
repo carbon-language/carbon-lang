@@ -36,6 +36,7 @@ endif (SCOPLIB_FOUND)
 add_polly_library(Polly
   Analysis/Dependences.cpp
   Analysis/ScopDetection.cpp
+  Analysis/ScopDetectionDiagnostic.cpp
   Analysis/ScopInfo.cpp
   Analysis/ScopGraphPrinter.cpp
   Analysis/ScopPass.cpp
