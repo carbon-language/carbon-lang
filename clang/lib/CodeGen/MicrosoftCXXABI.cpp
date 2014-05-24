@@ -50,7 +50,7 @@ public:
   // arbitrary.
   StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 
-  bool isInlineInitializedStaticDataMemberLinkOnce()  override{ return true; }
+  bool isInlineInitializedStaticDataMemberLinkOnce() override { return true; }
 
   llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
                                       llvm::Value *ptr,
