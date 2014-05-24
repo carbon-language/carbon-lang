@@ -3408,289 +3408,6 @@ public:
 };
 }
 
-namespace {
-class AArch64TargetInfo : public TargetInfo {
-  virtual void setDescriptionString() = 0;
-  static const char * const GCCRegNames[];
-  static const TargetInfo::GCCRegAlias GCCRegAliases[];
-
-  enum FPUModeEnum {
-    FPUMode,
-    NeonMode
-  };
-
-  unsigned FPU;
-  unsigned CRC;
-  unsigned Crypto;
-  static const Builtin::Info BuiltinInfo[];
-
-public:
-  AArch64TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-    LongWidth = LongAlign = 64;
-    LongDoubleWidth = LongDoubleAlign = 128;
-    PointerWidth = PointerAlign = 64;
-    SuitableAlign = 128;
-
-    WCharType = UnsignedInt;
-    if (getTriple().getOS() == llvm::Triple::NetBSD) {
-      WCharType = SignedInt;
-      Int64Type = SignedLongLong;
-      IntMaxType = SignedLongLong;
-      UIntMaxType = UnsignedLongLong;
-    } else {
-      WCharType = UnsignedInt;
-      Int64Type = SignedLong;
-      IntMaxType = SignedLong;
-      UIntMaxType = UnsignedLong;
-    }
-    LongDoubleFormat = &llvm::APFloat::IEEEquad;
-
-    // AArch64 backend supports 64-bit operations at the moment. In principle
-    // 128-bit is possible if register-pairs are used.
-    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
-
-    TheCXXABI.set(TargetCXXABI::GenericAArch64);
-  }
-  void getTargetDefines(const LangOptions &Opts,
-                        MacroBuilder &Builder) const override {
-    // GCC defines theses currently
-    Builder.defineMacro("__aarch64__");
-
-    // ACLE predefines. Many can only have one possible value on v8 AArch64.
-    Builder.defineMacro("__ARM_ACLE",         "200");
-    Builder.defineMacro("__ARM_ARCH",         "8");
-    Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
-
-    Builder.defineMacro("__ARM_64BIT_STATE");
-    Builder.defineMacro("__ARM_PCS_AAPCS64");
-    Builder.defineMacro("__ARM_ARCH_ISA_A64");
-
-    Builder.defineMacro("__ARM_FEATURE_UNALIGNED");
-    Builder.defineMacro("__ARM_FEATURE_CLZ");
-    Builder.defineMacro("__ARM_FEATURE_FMA");
-    Builder.defineMacro("__ARM_FEATURE_DIV");
-
-    Builder.defineMacro("__ARM_ALIGN_MAX_STACK_PWR", "4");
-
-    // 0xe implies support for half, single and double precision operations.
-    Builder.defineMacro("__ARM_FP", "0xe");
-
-    // PCS specifies this for SysV variants, which is all we support. Other ABIs
-    // may choose __ARM_FP16_FORMAT_ALTERNATIVE.
-    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE");
-
-    if (Opts.FastMath || Opts.FiniteMathOnly)
-      Builder.defineMacro("__ARM_FP_FAST");
-
-    if ((Opts.C99 || Opts.C11) && !Opts.Freestanding)
-      Builder.defineMacro("__ARM_FP_FENV_ROUNDING");
-
-    Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
-                        Opts.ShortWChar ? "2" : "4");
-
-    Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
-                        Opts.ShortEnums ? "1" : "4");
-
-    if (FPU == NeonMode) {
-      Builder.defineMacro("__ARM_NEON");
-      // 64-bit NEON supports half, single and double precision operations.
-      Builder.defineMacro("__ARM_NEON_FP", "0xe");
-    }
-
-    if (CRC)
-      Builder.defineMacro("__ARM_FEATURE_CRC32");
-
-    if (Crypto) {
-      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
-    }
-  }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::AArch64::LastTSBuiltin-Builtin::FirstTSBuiltin;
-  }
-  bool hasFeature(StringRef Feature) const override {
-    return Feature == "aarch64" || (Feature == "neon" && FPU == NeonMode);
-  }
-
-  bool setCPU(const std::string &Name) override {
-    return llvm::StringSwitch<bool>(Name)
-             .Case("generic", true)
-             .Cases("cortex-a53", "cortex-a57", true)
-             .Default(false);
-  }
-
-  bool handleTargetFeatures(std::vector<std::string> &Features,
-                            DiagnosticsEngine &Diags) override {
-    FPU = FPUMode;
-    CRC = 0;
-    Crypto = 0;
-    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
-      if (Features[i] == "+neon")
-        FPU = NeonMode;
-      if (Features[i] == "+crc")
-        CRC = 1;
-      if (Features[i] == "+crypto")
-        Crypto = 1;
-    }
-
-    setDescriptionString();
-
-    return true;
-  }
-
-  void getGCCRegNames(const char *const *&Names,
-                      unsigned &NumNames) const override;
-  void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                        unsigned &NumAliases) const override;
-
-  bool isCLZForZeroUndef() const override { return false; }
-
-  bool validateAsmConstraint(const char *&Name,
-                             TargetInfo::ConstraintInfo &Info) const override {
-    switch (*Name) {
-    default: return false;
-    case 'w': // An FP/SIMD vector register
-      Info.setAllowsRegister();
-      return true;
-    case 'I': // Constant that can be used with an ADD instruction
-    case 'J': // Constant that can be used with a SUB instruction
-    case 'K': // Constant that can be used with a 32-bit logical instruction
-    case 'L': // Constant that can be used with a 64-bit logical instruction
-    case 'M': // Constant that can be used as a 32-bit MOV immediate
-    case 'N': // Constant that can be used as a 64-bit MOV immediate
-    case 'Y': // Floating point constant zero
-    case 'Z': // Integer constant zero
-      return true;
-    case 'Q': // A memory reference with base register and no offset
-      Info.setAllowsMemory();
-      return true;
-    case 'S': // A symbolic address
-      Info.setAllowsRegister();
-      return true;
-    case 'U':
-      // Ump: A memory address suitable for ldp/stp in SI, DI, SF and DF modes, whatever they may be
-      // Utf: A memory address suitable for ldp/stp in TF mode, whatever it may be
-      // Usa: An absolute symbolic address
-      // Ush: The high part (bits 32:12) of a pc-relative symbolic address
-      llvm_unreachable("FIXME: Unimplemented support for bizarre constraints");
-    }
-  }
-
-  const char *getClobbers() const override {
-    // There are no AArch64 clobbers shared by all asm statements.
-    return "";
-  }
-
-  BuiltinVaListKind getBuiltinVaListKind() const override {
-    return TargetInfo::AArch64ABIBuiltinVaList;
-  }
-};
-
-const char * const AArch64TargetInfo::GCCRegNames[] = {
-  "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7",
-  "w8", "w9", "w10", "w11", "w12", "w13", "w14", "w15",
-  "w16", "w17", "w18", "w19", "w20", "w21", "w22", "w23",
-  "w24", "w25", "w26", "w27", "w28", "w29", "w30", "wsp", "wzr",
-
-  "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
-  "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
-  "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
-  "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp", "xzr",
-
-  "b0", "b1", "b2", "b3", "b4", "b5", "b6", "b7",
-  "b8", "b9", "b10", "b11", "b12", "b13", "b14", "b15",
-  "b16", "b17", "b18", "b19", "b20", "b21", "b22", "b23",
-  "b24", "b25", "b26", "b27", "b28", "b29", "b30", "b31",
-
-  "h0", "h1", "h2", "h3", "h4", "h5", "h6", "h7",
-  "h8", "h9", "h10", "h11", "h12", "h13", "h14", "h15",
-  "h16", "h17", "h18", "h19", "h20", "h21", "h22", "h23",
-  "h24", "h25", "h26", "h27", "h28", "h29", "h30", "h31",
-
-  "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-  "s8", "s9", "s10", "s11", "s12", "s13", "s14", "s15",
-  "s16", "s17", "s18", "s19", "s20", "s21", "s22", "s23",
-  "s24", "s25", "s26", "s27", "s28", "s29", "s30", "s31",
-
-  "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
-  "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15",
-  "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23",
-  "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31",
-
-  "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7",
-  "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15",
-  "q16", "q17", "q18", "q19", "q20", "q21", "q22", "q23",
-  "q24", "q25", "q26", "q27", "q28", "q29", "q30", "q31"
-};
-
-void AArch64TargetInfo::getGCCRegNames(const char * const *&Names,
-                                       unsigned &NumNames) const {
-  Names = GCCRegNames;
-  NumNames = llvm::array_lengthof(GCCRegNames);
-}
-
-const TargetInfo::GCCRegAlias AArch64TargetInfo::GCCRegAliases[] = {
-  { { "x16" }, "ip0"},
-  { { "x17" }, "ip1"},
-  { { "x29" }, "fp" },
-  { { "x30" }, "lr" }
-};
-
-void AArch64TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                         unsigned &NumAliases) const {
-  Aliases = GCCRegAliases;
-  NumAliases = llvm::array_lengthof(GCCRegAliases);
-
-}
-
-const Builtin::Info AArch64TargetInfo::BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
-#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
-                                              ALL_LANGUAGES },
-#include "clang/Basic/BuiltinsNEON.def"
-
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
-#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
-                                              ALL_LANGUAGES },
-#include "clang/Basic/BuiltinsAArch64.def"
-};
-
-class AArch64leTargetInfo : public AArch64TargetInfo {
-  void setDescriptionString() override {
-    DescriptionString = "e-m:e-i64:64-i128:128-n32:64-S128";
-  }
-
-public:
-  AArch64leTargetInfo(const llvm::Triple &Triple)
-    : AArch64TargetInfo(Triple) {
-    BigEndian = false;
-    }
-  void getTargetDefines(const LangOptions &Opts,
-                        MacroBuilder &Builder) const override {
-    Builder.defineMacro("__AARCH64EL__");
-    AArch64TargetInfo::getTargetDefines(Opts, Builder);
-  }
-};
-
-class AArch64beTargetInfo : public AArch64TargetInfo {
-  void setDescriptionString() override {
-    DescriptionString = "E-m:e-i64:64-i128:128-n32:64-S128";
-  }
-
-public:
-  AArch64beTargetInfo(const llvm::Triple &Triple)
-    : AArch64TargetInfo(Triple) { }
-  void getTargetDefines(const LangOptions &Opts,
-                        MacroBuilder &Builder) const override {
-    Builder.defineMacro("__AARCH64EB__");
-    Builder.defineMacro("__AARCH_BIG_ENDIAN");
-    Builder.defineMacro("__ARM_BIG_ENDIAN");
-    AArch64TargetInfo::getTargetDefines(Opts, Builder);
-  }
-};
-
-} // end anonymous namespace
 
 namespace {
 class ARMTargetInfo : public TargetInfo {
@@ -4537,11 +4254,23 @@ class ARM64TargetInfo : public TargetInfo {
 public:
   ARM64TargetInfo(const llvm::Triple &Triple)
       : TargetInfo(Triple), ABI("aapcs") {
+
+    if (getTriple().getOS() == llvm::Triple::NetBSD) {
+      WCharType = SignedInt;
+
+      // NetBSD apparently prefers consistency across ARM targets to consistency
+      // across 64-bit targets.
+      Int64Type = SignedLongLong;
+      IntMaxType = SignedLongLong;
+      UIntMaxType = UnsignedLongLong;
+    } else {
+      WCharType = UnsignedInt;
+      Int64Type = SignedLong;
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+    }
+
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
-    IntMaxType = SignedLong;
-    UIntMaxType = UnsignedLong;
-    Int64Type = SignedLong;
-    WCharType = UnsignedInt;
     MaxVectorAlign = 128;
     RegParmMax = 8;
     MaxAtomicInlineWidth = 128;
@@ -6218,21 +5947,21 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   case llvm::Triple::aarch64:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<AArch64leTargetInfo>(Triple);
+      return new LinuxTargetInfo<ARM64leTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<AArch64leTargetInfo>(Triple);
+      return new NetBSDTargetInfo<ARM64leTargetInfo>(Triple);
     default:
-      return new AArch64leTargetInfo(Triple);
+      return new ARM64leTargetInfo(Triple);
     }
 
   case llvm::Triple::aarch64_be:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<AArch64beTargetInfo>(Triple);
+      return new LinuxTargetInfo<ARM64beTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<AArch64beTargetInfo>(Triple);
+      return new NetBSDTargetInfo<ARM64beTargetInfo>(Triple);
     default:
-      return new AArch64beTargetInfo(Triple);
+      return new ARM64beTargetInfo(Triple);
     }
 
   case llvm::Triple::arm:

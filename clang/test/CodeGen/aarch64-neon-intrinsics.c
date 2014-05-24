@@ -1,7 +1,4 @@
-// REQUIRES: aarch64-registered-target
 // REQUIRES: arm64-registered-target
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
-// RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 // RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
@@ -8294,8 +8291,6 @@ uint64_t test_vsqaddd_u64(uint64_t a, uint64_t b) {
 }
 
 int32_t test_vqdmlalh_s16(int32_t a, int16_t b, int16_t c) {
-// CHECK-AARCH64-LABEL: test_vqdmlalh_s16
-// CHECK-AARCH64: sqdmlal {{s[0-9]+}}, {{h[0-9]+}}, {{h[0-9]+}}
 
 // CHECK-ARM64-LABEL: test_vqdmlalh_s16
 // CHECK-ARM64: sqdmull v[[PROD:[0-9]+]].4s, {{v[0-9]+.4h}}, {{v[0-9]+.4h}}
@@ -8310,8 +8305,6 @@ int64_t test_vqdmlals_s32(int64_t a, int32_t b, int32_t c) {
 }
 
 int32_t test_vqdmlslh_s16(int32_t a, int16_t b, int16_t c) {
-// CHECK-AARCH64-LABEL: test_vqdmlslh_s16
-// CHECK-AARCH64: sqdmlsl {{s[0-9]+|v[0-9]+.4s}}, {{h[0-9]+|v[0-9]+.4h}}, {{h[0-9]+|v[0-9]+.4h}}
 
 // CHECK-ARM64-LABEL: test_vqdmlslh_s16
 // CHECK-ARM64: sqdmull v[[PROD:[0-9]+]].4s, {{v[0-9]+.4h}}, {{v[0-9]+.4h}}
@@ -8572,8 +8565,6 @@ int64x1_t test_vshr_n_s64(int64x1_t a) {
 }
 
 uint64_t test_vshrd_n_u64(uint64_t a) {
-// CHECK-AARCH64-LABEL: test_vshrd_n_u64
-// CHECK-AARCH64: {{ushr d[0-9]+, d[0-9]+, #64}}
 
 // CHECK-ARM64-LABEL: test_vshrd_n_u64
 // CHECK-ARM64: mov x0, xzr
@@ -8581,8 +8572,6 @@ uint64_t test_vshrd_n_u64(uint64_t a) {
 }
 
 uint64_t test_vshrd_n_u64_2() {
-// CHECK-AARCH64-LABEL: test_vshrd_n_u64_2
-// CHECK-AARCH64: {{ushr d[0-9]+, d[0-9]+, #64}}
 
 // CHECK-ARM64-LABEL: test_vshrd_n_u64_2
 // CHECK-ARM64: mov x0, xzr
@@ -8639,8 +8628,6 @@ uint64_t test_vsrad_n_u64(uint64_t a, uint64_t b) {
 }
 
 uint64_t test_vsrad_n_u64_2(uint64_t a, uint64_t b) {
-// CHECK-AARCH64-LABEL: test_vsrad_n_u64_2
-// CHECK-AARCH64: {{usra d[0-9]+, d[0-9]+, #64}}
 
 // CHECK-ARM64-LABEL: test_vsrad_n_u64_2
 // CHECK-ARM64-NOT: add

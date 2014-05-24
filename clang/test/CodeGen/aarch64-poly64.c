@@ -1,8 +1,4 @@
-// REQUIRES: aarch64-registered-target
 // REQUIRES: arm64-registered-target
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
-// RUN:  -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK \
-// RUN:  --check-prefix=CHECK-AARCH64
 // RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon \
 // RUN:  -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK \
 // RUN:  --check-prefix=CHECK-ARM64
@@ -74,7 +70,6 @@ poly64x2_t test_vsetq_lane_p64(poly64_t a, poly64x2_t v) {
 poly64x1_t test_vcopy_lane_p64(poly64x1_t a, poly64x1_t b) {
   // CHECK-LABEL: test_vcopy_lane_p64
   return vcopy_lane_p64(a, 0, b, 0);
-  // CHECK-AARCH64: fmov  {{d[0-9]+}}, {{d[0-9]+}}
 
   // CHECK-ARM64: mov v0.16b, v1.16b
 }
@@ -88,7 +83,6 @@ poly64x2_t test_vcopyq_lane_p64(poly64x2_t a, poly64x1_t b) {
 poly64x2_t test_vcopyq_laneq_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vcopyq_laneq_p64
   return vcopyq_laneq_p64(a, 1, b, 1);
-  // CHECK-AARCH64: ins  {{v[0-9]+}}.d[1], {{v[0-9]+}}.d[1]
 }
 
 poly64x1_t test_vcreate_p64(uint64_t a) {
@@ -135,28 +129,24 @@ poly64x2_t test_vcombine_p64(poly64x1_t low, poly64x1_t high) {
 poly64x1_t test_vld1_p64(poly64_t const * ptr) {
   // CHECK-LABEL: test_vld1_p64
   return vld1_p64(ptr);
-  // CHECK-AARCH64:  ld1 { {{v[0-9]+}}.1d }, [{{x[0-9]+|sp}}]
   // CHECK-ARM64: ldr {{d[0-9]+}}, [{{x[0-9]+|sp}}]
 }
 
 poly64x2_t test_vld1q_p64(poly64_t const * ptr) {
   // CHECK-LABEL: test_vld1q_p64
   return vld1q_p64(ptr);
-  // CHECK-AARCH64:  ld1 { {{v[0-9]+}}.2d }, [{{x[0-9]+|sp}}]
   // CHECK-ARM64: ldr {{q[0-9]+}}, [{{x[0-9]+|sp}}]
 }
 
 void test_vst1_p64(poly64_t * ptr, poly64x1_t val) {
   // CHECK-LABEL: test_vst1_p64
   return vst1_p64(ptr, val);
-  // CHECK-AARCH64:  st1 { {{v[0-9]+}}.1d }, [{{x[0-9]+|sp}}]
   // CHECK-ARM64: str {{d[0-9]+}}, [{{x[0-9]+|sp}}]
 }
 
 void test_vst1q_p64(poly64_t * ptr, poly64x2_t val) {
   // CHECK-LABEL: test_vst1q_p64
   return vst1q_p64(ptr, val);
-  // CHECK-AARCH64:  st1 { {{v[0-9]+}}.2d }, [{{x[0-9]+|sp}}]
   // CHECK-ARM64: str {{q[0-9]+}}, [{{x[0-9]+|sp}}]
 }
 
@@ -247,42 +237,36 @@ poly64x2_t test_vextq_p64(poly64x2_t a, poly64x2_t b) {
 poly64x2_t test_vzip1q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vzip1q_p64
   return vzip1q_p64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[1], {{v[0-9]+}}.d[0]
   // CHECK-ARM64: zip1 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 poly64x2_t test_vzip2q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vzip2q_p64
   return vzip2q_u64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
   // CHECK-ARM64: zip2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 poly64x2_t test_vuzp1q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vuzp1q_p64
   return vuzp1q_p64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[1], {{v[0-9]+}}.d[0]
   // CHECK-ARM64: zip1 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 poly64x2_t test_vuzp2q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vuzp2q_p64
   return vuzp2q_u64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
   // CHECK-ARM64: zip2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 poly64x2_t test_vtrn1q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vtrn1q_p64
   return vtrn1q_p64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[1], {{v[0-9]+}}.d[0]
   // CHECK-ARM64: zip1 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
 poly64x2_t test_vtrn2q_p64(poly64x2_t a, poly64x2_t b) {
   // CHECK-LABEL: test_vtrn2q_p64
   return vtrn2q_u64(a, b);
-  // CHECK-AARCH64: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
   // CHECK-ARM64: zip2 {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 

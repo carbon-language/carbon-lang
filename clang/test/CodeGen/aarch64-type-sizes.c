@@ -1,6 +1,3 @@
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -emit-llvm -w -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
-
-// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -emit-llvm -w -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 // RUN: %clang_cc1 -triple arm64_be-none-linux-gnu -emit-llvm -w -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 // char by definition has size 1
 

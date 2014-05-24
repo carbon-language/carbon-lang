@@ -444,26 +444,6 @@ void Clang::AddPreprocessingOptions(Compilation &C,
   getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
 }
 
-/// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are targeting.
-//
-// FIXME: tblgen this.
-static std::string getAArch64TargetCPU(const ArgList &Args,
-                                       const llvm::Triple &Triple) {
-  // FIXME: Warn on inconsistent use of -mcpu and -march.
-
-  // If we have -mcpu=, use that.
-  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    StringRef MCPU = A->getValue();
-    // Handle -mcpu=native.
-    if (MCPU == "native")
-      return llvm::sys::getHostCPUName();
-    else
-      return MCPU;
-  }
-
-  return "generic";
-}
-
 // FIXME: Move to target hook.
 static bool isSignedCharDefault(const llvm::Triple &Triple) {
   switch (Triple.getArch()) {
@@ -1345,8 +1325,6 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-    return getAArch64TargetCPU(Args, T);
-
   case llvm::Triple::arm64:
   case llvm::Triple::arm64_be:
     return getARM64TargetCPU(Args);

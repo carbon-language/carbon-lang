@@ -2300,10 +2300,10 @@ void CXXNameMangler::mangleType(const VectorType *T) {
     llvm::Triple Target = getASTContext().getTargetInfo().getTriple();
     llvm::Triple::ArchType Arch =
         getASTContext().getTargetInfo().getTriple().getArch();
-    if (Arch == llvm::Triple::aarch64 ||
-        Arch == llvm::Triple::aarch64_be ||
-        Arch == llvm::Triple::arm64_be ||
-        (Arch == llvm::Triple::arm64 && !Target.isOSDarwin()))
+    if ((Arch == llvm::Triple::aarch64 ||
+         Arch == llvm::Triple::aarch64_be ||
+         Arch == llvm::Triple::arm64_be ||
+         Arch == llvm::Triple::arm64) && !Target.isOSDarwin())
       mangleAArch64NeonVectorType(T);
     else
       mangleNeonVectorType(T);

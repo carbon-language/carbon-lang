@@ -8126,7 +8126,6 @@ private:
   bool CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
 
   bool CheckARM64BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
-  bool CheckAArch64BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
   bool CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
   bool CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
 

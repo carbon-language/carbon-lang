@@ -3,11 +3,6 @@
 // RUN:   -target-cpu cortex-a8 \
 // RUN:   -emit-llvm -w -O1 -o - %s | FileCheck --check-prefix=CHECK-ARM %s
 
-// REQUIRES: aarch64-registered-target
-// RUN: %clang_cc1 -triple aarch64-linux-gnueabi \
-// RUN:   -target-feature +neon \
-// RUN:   -emit-llvm -w -O1 -o - %s | FileCheck --check-prefix=CHECK-AARCH64 %s
-
 // REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple arm64-linux-gnueabi \
 // RUN:   -target-feature +neon \

@@ -309,14 +309,11 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
         if (CheckARMBuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;
+      case llvm::Triple::aarch64:
+      case llvm::Triple::aarch64_be:
       case llvm::Triple::arm64:
       case llvm::Triple::arm64_be:
         if (CheckARM64BuiltinFunctionCall(BuiltinID, TheCall))
-          return ExprError();
-        break;
-      case llvm::Triple::aarch64:
-      case llvm::Triple::aarch64_be:
-        if (CheckAArch64BuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;
       case llvm::Triple::mips:
@@ -470,14 +467,6 @@ bool Sema::CheckNeonBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   }
 
   return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
-}
-
-bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
-                                           CallExpr *TheCall) {
-  if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
-    return true;
-
-  return false;
 }
 
 bool Sema::CheckARMBuiltinExclusiveCall(unsigned BuiltinID, CallExpr *TheCall,

@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -triple x86_64-linux-gnu -S -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -triple aarch64-linux-gnu -S -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -triple arm64-linux-gnu -S -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -triple armv7-linux-gnu -S -emit-llvm %s -o - | FileCheck %s
 
