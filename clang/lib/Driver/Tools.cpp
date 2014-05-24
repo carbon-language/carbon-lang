@@ -841,8 +841,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   }
 }
 
-/// getARM64TargetCPU - Get the (LLVM) name of the ARM64 cpu we are targeting.
-static std::string getARM64TargetCPU(const ArgList &Args) {
+/// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are
+/// targeting.
+static std::string getAArch64TargetCPU(const ArgList &Args) {
   // If we have -mcpu=, use that.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
     StringRef MCPU = A->getValue();
@@ -864,8 +865,8 @@ static std::string getARM64TargetCPU(const ArgList &Args) {
   return "generic";
 }
 
-void Clang::AddARM64TargetArgs(const ArgList &Args,
-                               ArgStringList &CmdArgs) const {
+void Clang::AddAArch64TargetArgs(const ArgList &Args,
+                                 ArgStringList &CmdArgs) const {
   std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   llvm::Triple Triple(TripleStr);
 
@@ -890,11 +891,11 @@ void Clang::AddARM64TargetArgs(const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(Args.MakeArgString(getARM64TargetCPU(Args)));
+  CmdArgs.push_back(Args.MakeArgString(getAArch64TargetCPU(Args)));
 
   if (Args.hasArg(options::OPT_mstrict_align)) {
     CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-arm64-strict-align");
+    CmdArgs.push_back("-aarch64-strict-align");
   }
 }
 
@@ -1327,7 +1328,7 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   case llvm::Triple::aarch64_be:
   case llvm::Triple::arm64:
   case llvm::Triple::arm64_be:
-    return getARM64TargetCPU(Args);
+    return getAArch64TargetCPU(Args);
 
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
@@ -2455,7 +2456,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // PIC or PIE options above, if these show up, PIC is disabled.
   llvm::Triple Triple(TripleStr);
   if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6) ||
-                       Triple.getArch() == llvm::Triple::arm64))
+                       Triple.getArch() == llvm::Triple::arm64 ||
+                       Triple.getArch() == llvm::Triple::aarch64))
     PIC = PIE = false;
   if (Args.hasArg(options::OPT_static))
     PIC = PIE = false;
@@ -2782,9 +2784,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     AddARMTargetArgs(Args, CmdArgs, KernelOrKext);
     break;
 
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
   case llvm::Triple::arm64:
   case llvm::Triple::arm64_be:
-    AddARM64TargetArgs(Args, CmdArgs);
+    AddAArch64TargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::mips:
@@ -3408,16 +3412,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                  options::OPT_munaligned_access)) {
       if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
         CmdArgs.push_back("-backend-option");
-        if (getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
+        if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
+            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be ||
+            getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
             getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
-          CmdArgs.push_back("-arm64-strict-align");
+          CmdArgs.push_back("-aarch64-strict-align");
         else
           CmdArgs.push_back("-arm-strict-align");
       } else {
         CmdArgs.push_back("-backend-option");
-        if (getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
+        if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
+            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be ||
+            getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
             getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
-          CmdArgs.push_back("-arm64-no-strict-align");
+          CmdArgs.push_back("-aarch64-no-strict-align");
         else
           CmdArgs.push_back("-arm-no-strict-align");
       }

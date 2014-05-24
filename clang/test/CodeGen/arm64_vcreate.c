@@ -17,7 +17,7 @@ float32x2_t test_vcreate_f32(uint64_t a1) {
 float64x1_t test_vcreate_f64(uint64_t a1) {
   // CHECK@ test_vcreate_f64
   return vcreate_f64(a1);
-  // CHECK@ llvm.arm64.neon.saddlv.i64.v2i32
+  // CHECK@ llvm.aarch64.neon.saddlv.i64.v2i32
   // CHECK-NEXT@ ret
 }
 */

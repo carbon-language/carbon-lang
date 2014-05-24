@@ -313,7 +313,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       case llvm::Triple::aarch64_be:
       case llvm::Triple::arm64:
       case llvm::Triple::arm64_be:
-        if (CheckARM64BuiltinFunctionCall(BuiltinID, TheCall))
+        if (CheckAArch64BuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;
       case llvm::Triple::mips:
@@ -473,11 +473,11 @@ bool Sema::CheckARMBuiltinExclusiveCall(unsigned BuiltinID, CallExpr *TheCall,
                                         unsigned MaxWidth) {
   assert((BuiltinID == ARM::BI__builtin_arm_ldrex ||
           BuiltinID == ARM::BI__builtin_arm_strex ||
-          BuiltinID == ARM64::BI__builtin_arm_ldrex ||
-          BuiltinID == ARM64::BI__builtin_arm_strex) &&
+          BuiltinID == AArch64::BI__builtin_arm_ldrex ||
+          BuiltinID == AArch64::BI__builtin_arm_strex) &&
          "unexpected ARM builtin");
   bool IsLdrex = BuiltinID == ARM::BI__builtin_arm_ldrex ||
-                 BuiltinID == ARM64::BI__builtin_arm_ldrex;
+                 BuiltinID == AArch64::BI__builtin_arm_ldrex;
 
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
 
@@ -608,12 +608,12 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
 }
 
-bool Sema::CheckARM64BuiltinFunctionCall(unsigned BuiltinID,
+bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
                                          CallExpr *TheCall) {
   llvm::APSInt Result;
 
-  if (BuiltinID == ARM64::BI__builtin_arm_ldrex ||
-      BuiltinID == ARM64::BI__builtin_arm_strex) {
+  if (BuiltinID == AArch64::BI__builtin_arm_ldrex ||
+      BuiltinID == AArch64::BI__builtin_arm_strex) {
     return CheckARMBuiltinExclusiveCall(BuiltinID, TheCall, 128);
   }
 

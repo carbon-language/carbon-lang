@@ -35,14 +35,14 @@ float32x4_t test_vcvt_high_f32_f64(float32x2_t x, float64x2_t v) {
 float32x2_t test_vcvtx_f32_f64(float64x2_t v) {
   // CHECK: test_vcvtx_f32_f64
   return vcvtx_f32_f64(v);
-  // CHECK: llvm.arm64.neon.fcvtxn.v2f32.v2f64
+  // CHECK: llvm.aarch64.neon.fcvtxn.v2f32.v2f64
   // CHECK-NEXT: ret
 }
 
 float32x4_t test_vcvtx_high_f32_f64(float32x2_t x, float64x2_t v) {
   // CHECK: test_vcvtx_high_f32_f64
   return vcvtx_high_f32_f64(x, v);
-  // CHECK: llvm.arm64.neon.fcvtxn.v2f32.v2f64
+  // CHECK: llvm.aarch64.neon.fcvtxn.v2f32.v2f64
   // CHECK: shufflevector
   // CHECK-NEXT: ret
 }

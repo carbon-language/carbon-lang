@@ -7,7 +7,7 @@
 int64x2_t test_vabsq_s64(int64x2_t a1) {
   // CHECK: test_vabsq_s64
   return vabsq_s64(a1);
-  // CHECK: llvm.arm64.neon.abs.v2i64
+  // CHECK: llvm.aarch64.neon.abs.v2i64
   // CHECK-NEXT: ret
 }
 
@@ -103,6 +103,6 @@ uint64x2_t test_vcltq_u64(uint64x2_t a1, uint64x2_t a2) {
 int64x2_t test_vqabsq_s64(int64x2_t a1) {
   // CHECK: test_vqabsq_s64
   return vqabsq_s64(a1);
-  // CHECK: llvm.arm64.neon.sqabs.v2i64(<2 x i64> %a1)
+  // CHECK: llvm.aarch64.neon.sqabs.v2i64(<2 x i64> %a1)
   // CHECK-NEXT: ret
 }

@@ -4233,7 +4233,7 @@ public:
 
 
 namespace {
-class ARM64TargetInfo : public TargetInfo {
+class AArch64TargetInfo : public TargetInfo {
   virtual void setDescriptionString() = 0;
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   static const char *const GCCRegNames[];
@@ -4252,7 +4252,7 @@ class ARM64TargetInfo : public TargetInfo {
   std::string ABI;
 
 public:
-  ARM64TargetInfo(const llvm::Triple &Triple)
+  AArch64TargetInfo(const llvm::Triple &Triple)
       : TargetInfo(Triple), ABI("aapcs") {
 
     if (getTriple().getOS() == llvm::Triple::NetBSD) {
@@ -4283,7 +4283,7 @@ public:
     // specifiers.
     NoAsmVariants = true;
 
-    // ARM64 targets default to using the ARM C++ ABI.
+    // AArch64 targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericAArch64);
   }
 
@@ -4364,7 +4364,7 @@ public:
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
     Records = BuiltinInfo;
-    NumRecords = clang::ARM64::LastTSBuiltin - Builtin::FirstTSBuiltin;
+    NumRecords = clang::AArch64::LastTSBuiltin - Builtin::FirstTSBuiltin;
   }
 
   virtual bool hasFeature(StringRef Feature) const {
@@ -4453,7 +4453,7 @@ public:
   }
 };
 
-const char *const ARM64TargetInfo::GCCRegNames[] = {
+const char *const AArch64TargetInfo::GCCRegNames[] = {
   // 32-bit Integer registers
   "w0",  "w1",  "w2",  "w3",  "w4",  "w5",  "w6",  "w7",  "w8",  "w9",  "w10",
   "w11", "w12", "w13", "w14", "w15", "w16", "w17", "w18", "w19", "w20", "w21",
@@ -4480,13 +4480,13 @@ const char *const ARM64TargetInfo::GCCRegNames[] = {
   "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"
 };
 
-void ARM64TargetInfo::getGCCRegNames(const char *const *&Names,
+void AArch64TargetInfo::getGCCRegNames(const char *const *&Names,
                                      unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
 }
 
-const TargetInfo::GCCRegAlias ARM64TargetInfo::GCCRegAliases[] = {
+const TargetInfo::GCCRegAlias AArch64TargetInfo::GCCRegAliases[] = {
   { { "w31" }, "wsp" },
   { { "x29" }, "fp" },
   { { "x30" }, "lr" },
@@ -4495,23 +4495,23 @@ const TargetInfo::GCCRegAlias ARM64TargetInfo::GCCRegAliases[] = {
   // don't want to substitute one of these for a different-sized one.
 };
 
-void ARM64TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+void AArch64TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
                                        unsigned &NumAliases) const {
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
 }
 
-const Builtin::Info ARM64TargetInfo::BuiltinInfo[] = {
+const Builtin::Info AArch64TargetInfo::BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS)                                               \
   { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #include "clang/Basic/BuiltinsNEON.def"
 
 #define BUILTIN(ID, TYPE, ATTRS)                                               \
   { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
-#include "clang/Basic/BuiltinsARM64.def"
+#include "clang/Basic/BuiltinsAArch64.def"
 };
 
-class ARM64leTargetInfo : public ARM64TargetInfo {
+class AArch64leTargetInfo : public AArch64TargetInfo {
   void setDescriptionString() override {
     if (getTriple().isOSBinFormatMachO())
       DescriptionString = "e-m:o-i64:64-i128:128-n32:64-S128";
@@ -4520,38 +4520,38 @@ class ARM64leTargetInfo : public ARM64TargetInfo {
   }
 
 public:
-  ARM64leTargetInfo(const llvm::Triple &Triple)
-    : ARM64TargetInfo(Triple) {
+  AArch64leTargetInfo(const llvm::Triple &Triple)
+    : AArch64TargetInfo(Triple) {
     BigEndian = false;
     }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__AARCH64EL__");
-    ARM64TargetInfo::getTargetDefines(Opts, Builder);
+    AArch64TargetInfo::getTargetDefines(Opts, Builder);
   }
 };
 
-class ARM64beTargetInfo : public ARM64TargetInfo {
+class AArch64beTargetInfo : public AArch64TargetInfo {
   void setDescriptionString() override {
     assert(!getTriple().isOSBinFormatMachO());
     DescriptionString = "E-m:e-i64:64-i128:128-n32:64-S128";
   }
 
 public:
-  ARM64beTargetInfo(const llvm::Triple &Triple)
-    : ARM64TargetInfo(Triple) { }
+  AArch64beTargetInfo(const llvm::Triple &Triple)
+    : AArch64TargetInfo(Triple) { }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__AARCH64EB__");
     Builder.defineMacro("__AARCH_BIG_ENDIAN");
     Builder.defineMacro("__ARM_BIG_ENDIAN");
-    ARM64TargetInfo::getTargetDefines(Opts, Builder);
+    AArch64TargetInfo::getTargetDefines(Opts, Builder);
   }
 };
 } // end anonymous namespace.
 
 namespace {
-class DarwinARM64TargetInfo : public DarwinTargetInfo<ARM64leTargetInfo> {
+class DarwinAArch64TargetInfo : public DarwinTargetInfo<AArch64leTargetInfo> {
 protected:
   void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     MacroBuilder &Builder) const override {
@@ -4567,8 +4567,8 @@ protected:
   }
 
 public:
-  DarwinARM64TargetInfo(const llvm::Triple &Triple)
-      : DarwinTargetInfo<ARM64leTargetInfo>(Triple) {
+  DarwinAArch64TargetInfo(const llvm::Triple &Triple)
+      : DarwinTargetInfo<AArch64leTargetInfo>(Triple) {
     Int64Type = SignedLongLong;
     WCharType = SignedInt;
     UseSignedCharForObjCBool = false;
@@ -5917,25 +5917,25 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
   case llvm::Triple::arm64:
     if (Triple.isOSDarwin())
-      return new DarwinARM64TargetInfo(Triple);
+      return new DarwinAArch64TargetInfo(Triple);
 
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<ARM64leTargetInfo>(Triple);
+      return new LinuxTargetInfo<AArch64leTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<ARM64leTargetInfo>(Triple);
+      return new NetBSDTargetInfo<AArch64leTargetInfo>(Triple);
     default:
-      return new ARM64leTargetInfo(Triple);
+      return new AArch64leTargetInfo(Triple);
     }
 
   case llvm::Triple::arm64_be:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<ARM64beTargetInfo>(Triple);
+      return new LinuxTargetInfo<AArch64beTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<ARM64beTargetInfo>(Triple);
+      return new NetBSDTargetInfo<AArch64beTargetInfo>(Triple);
     default:
-      return new ARM64beTargetInfo(Triple);
+      return new AArch64beTargetInfo(Triple);
     }
 
   case llvm::Triple::xcore:
@@ -5947,21 +5947,21 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   case llvm::Triple::aarch64:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<ARM64leTargetInfo>(Triple);
+      return new LinuxTargetInfo<AArch64leTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<ARM64leTargetInfo>(Triple);
+      return new NetBSDTargetInfo<AArch64leTargetInfo>(Triple);
     default:
-      return new ARM64leTargetInfo(Triple);
+      return new AArch64leTargetInfo(Triple);
     }
 
   case llvm::Triple::aarch64_be:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<ARM64beTargetInfo>(Triple);
+      return new LinuxTargetInfo<AArch64beTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<ARM64beTargetInfo>(Triple);
+      return new NetBSDTargetInfo<AArch64beTargetInfo>(Triple);
     default:
-      return new ARM64beTargetInfo(Triple);
+      return new AArch64beTargetInfo(Triple);
     }
 
   case llvm::Triple::arm:

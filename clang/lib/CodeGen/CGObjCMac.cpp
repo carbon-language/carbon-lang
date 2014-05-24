@@ -5034,7 +5034,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // arm64 targets use "int" ivar offset variables. All others,
   // including OS X x86_64 and Windows x86_64, use "long" ivar offsets.
-  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::arm64)
+  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::arm64 ||
+      CGM.getTarget().getTriple().getArch() == llvm::Triple::aarch64)
     IvarOffsetVarTy = IntTy;
   else
     IvarOffsetVarTy = LongTy;

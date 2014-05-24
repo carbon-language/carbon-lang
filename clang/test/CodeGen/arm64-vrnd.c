@@ -11,13 +11,13 @@ int64x2_t rnd5(float64x2_t a) { return vrndq_f64(a); }
 
 
 int32x2_t rnd7(float32x2_t a) { return vrndn_f32(a); }
-// CHECK: call <2 x float> @llvm.arm64.neon.frintn.v2f32(<2 x float>
+// CHECK: call <2 x float> @llvm.aarch64.neon.frintn.v2f32(<2 x float>
 int32x4_t rnd8(float32x4_t a) { return vrndnq_f32(a); }
-// CHECK: call <4 x float> @llvm.arm64.neon.frintn.v4f32(<4 x float>
+// CHECK: call <4 x float> @llvm.aarch64.neon.frintn.v4f32(<4 x float>
 int64x2_t rnd9(float64x2_t a) { return vrndnq_f64(a); }
-// CHECK: call <2 x double> @llvm.arm64.neon.frintn.v2f64(<2 x double>
+// CHECK: call <2 x double> @llvm.aarch64.neon.frintn.v2f64(<2 x double>
 int64x2_t rnd10(float64x2_t a) { return vrndnq_f64(a); }
-// CHECK: call <2 x double> @llvm.arm64.neon.frintn.v2f64(<2 x double>
+// CHECK: call <2 x double> @llvm.aarch64.neon.frintn.v2f64(<2 x double>
 
 int32x2_t rnd11(float32x2_t a) { return vrndm_f32(a); }
 // CHECK: call <2 x float> @llvm.floor.v2f32(<2 x float>

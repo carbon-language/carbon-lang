@@ -1,4 +1,4 @@
-//===--- BuiltinsARM64.def - ARM64 Builtin function database ----*- C++ -*-===//
+//==- BuiltinsAArch64.def - AArch64 Builtin function database ----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the ARM64-specific builtin function database.  Users of
+// This file defines the AArch64-specific builtin function database.  Users of
 // this file must define the BUILTIN macro to make use of this information.
 //
 //===----------------------------------------------------------------------===//

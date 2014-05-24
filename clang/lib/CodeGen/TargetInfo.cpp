@@ -3104,12 +3104,12 @@ PPC64TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
 }
 
 //===----------------------------------------------------------------------===//
-// ARM64 ABI Implementation
+// AArch64 ABI Implementation
 //===----------------------------------------------------------------------===//
 
 namespace {
 
-class ARM64ABIInfo : public ABIInfo {
+class AArch64ABIInfo : public ABIInfo {
 public:
   enum ABIKind {
     AAPCS = 0,
@@ -3120,7 +3120,7 @@ private:
   ABIKind Kind;
 
 public:
-  ARM64ABIInfo(CodeGenTypes &CGT, ABIKind Kind) : ABIInfo(CGT), Kind(Kind) {}
+  AArch64ABIInfo(CodeGenTypes &CGT, ABIKind Kind) : ABIInfo(CGT), Kind(Kind) {}
 
 private:
   ABIKind getABIKind() const { return Kind; }
@@ -3212,10 +3212,10 @@ private:
   }
 };
 
-class ARM64TargetCodeGenInfo : public TargetCodeGenInfo {
+class AArch64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  ARM64TargetCodeGenInfo(CodeGenTypes &CGT, ARM64ABIInfo::ABIKind Kind)
-      : TargetCodeGenInfo(new ARM64ABIInfo(CGT, Kind)) {}
+  AArch64TargetCodeGenInfo(CodeGenTypes &CGT, AArch64ABIInfo::ABIKind Kind)
+      : TargetCodeGenInfo(new AArch64ABIInfo(CGT, Kind)) {}
 
   StringRef getARCRetainAutoreleasedReturnValueMarker() const {
     return "mov\tfp, fp\t\t; marker for objc_retainAutoreleaseReturnValue";
@@ -3231,12 +3231,12 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
                                    ASTContext &Context,
                                    uint64_t *HAMembers = nullptr);
 
-ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
-                                              unsigned &AllocatedVFP,
-                                              bool &IsHA,
-                                              unsigned &AllocatedGPR,
-                                              bool &IsSmallAggr,
-                                              bool IsNamedArg) const {
+ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty,
+                                                unsigned &AllocatedVFP,
+                                                bool &IsHA,
+                                                unsigned &AllocatedGPR,
+                                                bool &IsSmallAggr,
+                                                bool IsNamedArg) const {
   // Handle illegal vector types here.
   if (isIllegalVectorType(Ty)) {
     uint64_t Size = getContext().getTypeSize(Ty);
@@ -3346,7 +3346,7 @@ ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
   return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 }
 
-ABIArgInfo ARM64ABIInfo::classifyReturnType(QualType RetTy) const {
+ABIArgInfo AArch64ABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -3382,8 +3382,8 @@ ABIArgInfo ARM64ABIInfo::classifyReturnType(QualType RetTy) const {
   return ABIArgInfo::getIndirect(0);
 }
 
-/// isIllegalVectorType - check whether the vector type is legal for ARM64.
-bool ARM64ABIInfo::isIllegalVectorType(QualType Ty) const {
+/// isIllegalVectorType - check whether the vector type is legal for AArch64.
+bool AArch64ABIInfo::isIllegalVectorType(QualType Ty) const {
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
     // Check whether VT is legal.
     unsigned NumElements = VT->getNumElements();
@@ -3624,7 +3624,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
-llvm::Value *ARM64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
+llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
                                           CodeGenFunction &CGF) const {
 
   unsigned AllocatedGPR = 0, AllocatedVFP = 0;
@@ -3636,7 +3636,7 @@ llvm::Value *ARM64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
                           AI.isIndirect(), CGF);
 }
 
-llvm::Value *ARM64ABIInfo::EmitDarwinVAArg(llvm::Value *VAListAddr, QualType Ty,
+llvm::Value *AArch64ABIInfo::EmitDarwinVAArg(llvm::Value *VAListAddr, QualType Ty,
                                            CodeGenFunction &CGF) const {
   // We do not support va_arg for aggregates or illegal vector types.
   // Lower VAArg here for these cases and use the LLVM va_arg instruction for
@@ -6473,11 +6473,11 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::aarch64_be:
   case llvm::Triple::arm64:
   case llvm::Triple::arm64_be: {
-    ARM64ABIInfo::ABIKind Kind = ARM64ABIInfo::AAPCS;
+    AArch64ABIInfo::ABIKind Kind = AArch64ABIInfo::AAPCS;
     if (strcmp(getTarget().getABI(), "darwinpcs") == 0)
-      Kind = ARM64ABIInfo::DarwinPCS;
+      Kind = AArch64ABIInfo::DarwinPCS;
 
-    return *(TheTargetCodeGenInfo = new ARM64TargetCodeGenInfo(Types, Kind));
+    return *(TheTargetCodeGenInfo = new AArch64TargetCodeGenInfo(Types, Kind));
   }
 
   case llvm::Triple::arm:

@@ -13,6 +13,6 @@ int64x2_t test_vnegq_s64(int64x2_t a1) {
 int64x2_t test_vqnegq_s64(int64x2_t a1) {
   // CHECK: test_vqnegq_s64
   return vqnegq_s64(a1);
-  // CHECK: llvm.arm64.neon.sqneg.v2i64
+  // CHECK: llvm.aarch64.neon.sqneg.v2i64
   // CHECK-NEXT: ret
 }
