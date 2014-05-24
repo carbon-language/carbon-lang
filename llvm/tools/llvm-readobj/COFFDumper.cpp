@@ -80,12 +80,6 @@ private:
 
   void cacheRelocations();
 
-  error_code getSectionContents(
-    const std::vector<RelocationRef> &Rels,
-    uint64_t Offset,
-    ArrayRef<uint8_t> &Contents,
-    uint64_t &Addr);
-
   error_code getSection(
     const std::vector<RelocationRef> &Rels,
     uint64_t Offset,
@@ -96,7 +90,6 @@ private:
 
   const llvm::object::COFFObjectFile *Obj;
   RelocMapTy RelocMap;
-  std::vector<RelocationRef> EmptyRelocs;
 };
 
 } // namespace
@@ -465,27 +458,6 @@ static std::string formatSymbol(const std::vector<RelocationRef> &Rels,
   }
 
   return Str.str();
-}
-
-// Given a vector of relocations for a section and an offset into this section
-// the function resolves the symbol used for the relocation at the offset and
-// returns the section content and the address inside the content pointed to
-// by the symbol.
-error_code COFFDumper::getSectionContents(
-    const std::vector<RelocationRef> &Rels, uint64_t Offset,
-    ArrayRef<uint8_t> &Contents, uint64_t &Addr) {
-
-  SymbolRef Sym;
-  const coff_section *Section;
-
-  if (error_code EC = resolveSymbol(Rels, Offset, Sym))
-    return EC;
-  if (error_code EC = resolveSectionAndAddress(Obj, Sym, Section, Addr))
-    return EC;
-  if (error_code EC = Obj->getSectionContents(Section, Contents))
-    return EC;
-
-  return object_error::success;
 }
 
 error_code COFFDumper::getSection(
