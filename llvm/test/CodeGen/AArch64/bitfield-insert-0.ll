@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -filetype=obj < %s | llvm-objdump -disassemble - | FileCheck %s
 ; RUN: llc -mtriple=arm64-linux-gnu -filetype=obj -o - %s | llvm-objdump -disassemble - | FileCheck %s
 
 ; The encoding of lsb -> immr in the CGed bitfield instructions was wrong at one

@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=aarch64-none-linux-gnu  | FileCheck %s
 ; RUN: llc -o - %s -mtriple=arm64-apple-ios7.0  | FileCheck %s
 
 define i8* @t() nounwind {

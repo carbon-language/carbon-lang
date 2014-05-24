@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-apple-ios7.0 | FileCheck %s
 
 define i32 @test_madd32(i32 %val0, i32 %val1, i32 %val2) {

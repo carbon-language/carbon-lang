@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu < %s -mattr=+neon | FileCheck %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu < %s -mattr=+neon | FileCheck %s
 
 define <4 x i32> @test1(<4 x i32> %a) {

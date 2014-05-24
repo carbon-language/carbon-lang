@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -tailcallopt | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -tailcallopt | FileCheck %s --check-prefix=CHECK-ARM64
 
 ; This test is designed to be run in the situation where the

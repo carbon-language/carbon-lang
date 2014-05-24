@@ -1,4 +1,3 @@
-// RUN: llvm-mc < %s -triple=aarch64-none-linux-gnu -filetype=obj | llvm-readobj -r | FileCheck %s
 // RUN: llvm-mc < %s -triple=arm64-none-linux-gnu -filetype=obj | llvm-readobj -r | FileCheck %s
 
 // External symbols are a different concept to global variables but should still

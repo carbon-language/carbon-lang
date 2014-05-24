@@ -1,4 +1,3 @@
-// RUN: llvm-mc -triple=aarch64-none-linux-gnu -mattr=+neon -show-encoding < %s | FileCheck %s
 // RUN: llvm-mc -triple=arm64-none-linux-gnu -mattr=+crypto -mattr=+neon -show-encoding < %s | FileCheck %s
 
 // Check that the assembler can handle the documented syntax for AArch64

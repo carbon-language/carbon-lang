@@ -1,7 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-AARCH64 --check-prefix=CHECK-LE %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE-AARCH64 --check-prefix=CHECK-BE %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64 %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
@@ -67,8 +63,6 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
 
     %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
-; CHECK-AARCH64: add x[[STRUCTVAL_ADDR:[0-9]+]], sp, #16
-; CHECK-AARCH64: ldr [[REG32:w[0-9]+]], [x[[STRUCTVAL_ADDR]], #12]
 ; CHECK-ARM64: ldr [[REG32:w[0-9]+]], [sp, #28]
     store i32 %val0, i32* @var32
 ; CHECK: str [[REG32]], [{{x[0-9]+}}, {{#?}}:lo12:var32]
@@ -166,9 +160,7 @@ define void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
     ; Beware as above: the offset would be different on big-endian
     ; machines if the first ldr were changed to use s-registers.
 ; CHECK-ARM64: ldr {{[ds]}}[[VALFLOAT:[0-9]+]], [sp]
-; CHECK-AARCH64: ldr {{[ds]}}[[VALFLOAT:[0-9]+]], [sp]
 ; CHECK-ARM64: str s[[VALFLOAT]], [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
-; CHECK-AARCH64: str s[[VALFLOAT]], [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
 
     ret void
 }
@@ -196,7 +188,6 @@ define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
 ; CHECK-BE-AARCH64: ldr {{x[0-9]+}}, [sp, #24]
 
     ; Important point is that we address sp+24 for second dword
-; CHECK-AARCH64: ldr     {{x[0-9]+}}, [sp, #16]
 
 ; CHECK-ARM64: ldp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #16]
     ret void

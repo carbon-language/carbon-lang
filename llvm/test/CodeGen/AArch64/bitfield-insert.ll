@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -mtriple=arm64-none-linux-gnu < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 ; First, a simple example from Clang. The registers could plausibly be
@@ -64,8 +63,6 @@ define void @test_whole64(i64* %existing, i64* %new) {
 define void @test_whole32_from64(i64* %existing, i64* %new) {
 ; CHECK-LABEL: test_whole32_from64:
 
-; CHECK-AARCH64: bfi {{w[0-9]+}}, {{w[0-9]+}}, #{{0|16}}, #16
-; CHECK-AARCH64-NOT: and
 
 ; CHECK-ARM64: bfxil {{x[0-9]+}}, {{x[0-9]+}}, #0, #16
 
@@ -88,7 +85,6 @@ define void @test_32bit_masked(i32 *%existing, i32 *%new) {
 
 ; CHECK-ARM64: and
 ; CHECK: bfi [[INSERT:w[0-9]+]], {{w[0-9]+}}, #3, #4
-; CHECK-AARCH64: and {{w[0-9]+}}, [[INSERT]], #0xff
 
   %oldval = load volatile i32* %existing
   %oldval_keep = and i32 %oldval, 135 ; = 0x87
@@ -107,7 +103,6 @@ define void @test_64bit_masked(i64 *%existing, i64 *%new) {
 ; CHECK-LABEL: test_64bit_masked:
 ; CHECK-ARM64: and
 ; CHECK: bfi [[INSERT:x[0-9]+]], {{x[0-9]+}}, #40, #8
-; CHECK-AARCH64: and {{x[0-9]+}}, [[INSERT]], #0xffff00000000
 
   %oldval = load volatile i64* %existing
   %oldval_keep = and i64 %oldval, 1095216660480 ; = 0xff_0000_0000
@@ -128,7 +123,6 @@ define void @test_32bit_complexmask(i32 *%existing, i32 *%new) {
 
 ; CHECK-ARM64: and
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #3, #4
-; CHECK-AARCH64: and {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 
   %oldval = load volatile i32* %existing
   %oldval_keep = and i32 %oldval, 647 ; = 0x287

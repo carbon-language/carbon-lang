@@ -1,5 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -use-init-array < %s | FileCheck %s
-; RUN: llc -mtriple=aarch64-none-none-eabi -verify-machineinstrs -use-init-array < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -use-init-array -o - %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-none-none-eabi -verify-machineinstrs -use-init-array -o - %s | FileCheck %s
 

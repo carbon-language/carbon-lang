@@ -1,4 +1,3 @@
-; RUN: not llc -mtriple=aarch64-none-linux-gnu < %s
 ; RUN: not llc -mtriple=arm64-none-linux-gnu -o - %s
 
 define void @foo() {

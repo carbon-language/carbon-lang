@@ -1,4 +1,3 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s --check-prefix=CHECK  --check-prefix=CHECK-AARCH64
 ; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 define <8 x i8> @movi8b() {
@@ -15,21 +14,18 @@ define <16 x i8> @movi16b() {
 
 define <2 x i32> @movi2s_lsl0() {
 ; CHECK-LABEL: movi2s_lsl0:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff
 ; CHECK-ARM64: movi {{d[0-9]+}}, #0x0000ff000000ff
    ret <2 x i32> < i32 255, i32 255 >
 }
 
 define <2 x i32> @movi2s_lsl8() {
 ; CHECK-LABEL: movi2s_lsl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff, lsl #8
 ; CHECK-ARM64: movi {{d[0-9]+}}, #0x00ff000000ff00
    ret <2 x i32> < i32 65280, i32 65280 >
 }
 
 define <2 x i32> @movi2s_lsl16() {
 ; CHECK-LABEL: movi2s_lsl16:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff, lsl #16
 ; CHECK-ARM64: movi {{d[0-9]+}}, #0xff000000ff0000
    ret <2 x i32> < i32 16711680, i32 16711680 >
 
@@ -37,28 +33,24 @@ define <2 x i32> @movi2s_lsl16() {
 
 define <2 x i32> @movi2s_lsl24() {
 ; CHECK-LABEL: movi2s_lsl24:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff, lsl #24
 ; CHECK-ARM64: movi {{d[0-9]+}}, #0xff000000ff000000
    ret <2 x i32> < i32 4278190080, i32 4278190080 >
 }
 
 define <4 x i32> @movi4s_lsl0() {
 ; CHECK-LABEL: movi4s_lsl0:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff
 ; CHECK-ARM64: movi {{v[0-9]+}}.2d, #0x0000ff000000ff
    ret <4 x i32> < i32 255, i32 255, i32 255, i32 255 >
 }
 
 define <4 x i32> @movi4s_lsl8() {
 ; CHECK-LABEL: movi4s_lsl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff, lsl #8
 ; CHECK-ARM64: movi {{v[0-9]+}}.2d, #0x00ff000000ff00
    ret <4 x i32> < i32 65280, i32 65280, i32 65280, i32 65280 >
 }
 
 define <4 x i32> @movi4s_lsl16() {
 ; CHECK-LABEL: movi4s_lsl16:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff, lsl #16
 ; CHECK-ARM64:  movi {{v[0-9]+}}.2d, #0xff000000ff0000
    ret <4 x i32> < i32 16711680, i32 16711680, i32 16711680, i32 16711680 >
 
@@ -66,35 +58,30 @@ define <4 x i32> @movi4s_lsl16() {
 
 define <4 x i32> @movi4s_lsl24() {
 ; CHECK-LABEL: movi4s_lsl24:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff, lsl #24
 ; CHECK-ARM64:  movi {{v[0-9]+}}.2d, #0xff000000ff000000
    ret <4 x i32> < i32 4278190080, i32 4278190080, i32 4278190080, i32 4278190080 >
 }
 
 define <4 x i16> @movi4h_lsl0() {
 ; CHECK-LABEL: movi4h_lsl0:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4h, #0xff
 ; CHECK-ARM64:  movi {{d[0-9]+}}, #0xff00ff00ff00ff
    ret <4 x i16> < i16 255, i16 255, i16 255, i16 255 >
 }
 
 define <4 x i16> @movi4h_lsl8() {
 ; CHECK-LABEL: movi4h_lsl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4h, #{{0xff|255}}, lsl #8
 ; CHECK-ARM64: movi d0, #0xff00ff00ff00ff00
    ret <4 x i16> < i16 65280, i16 65280, i16 65280, i16 65280 >
 }
 
 define <8 x i16> @movi8h_lsl0() {
 ; CHECK-LABEL: movi8h_lsl0:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.8h, #{{0xff|255}}
 ; CHECK-ARM64: movi v0.2d, #0xff00ff00ff00ff
    ret <8 x i16> < i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255 >
 }
 
 define <8 x i16> @movi8h_lsl8() {
 ; CHECK-LABEL: movi8h_lsl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.8h, #{{0xff|255}}, lsl #8
 ; CHECK-ARM64: movi v0.2d, #0xff00ff00ff00ff00
    ret <8 x i16> < i16 65280, i16 65280, i16 65280, i16 65280, i16 65280, i16 65280, i16 65280, i16 65280 >
 }
@@ -177,14 +164,12 @@ define <8 x i16> @mvni8h_lsl8() {
 
 define <2 x i32> @movi2s_msl8(<2 x i32> %a) {
 ; CHECK-LABEL: movi2s_msl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff, msl #8
 ; CHECK-ARM64: movi {{d[0-9]+}}, #0x00ffff0000ffff
 	ret <2 x i32> < i32 65535, i32 65535 >
 }
 
 define <2 x i32> @movi2s_msl16() {
 ; CHECK-LABEL: movi2s_msl16:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.2s, #0xff, msl #16
 ; CHECK-ARM64:  movi d0, #0xffffff00ffffff
    ret <2 x i32> < i32 16777215, i32 16777215 >
 }
@@ -192,14 +177,12 @@ define <2 x i32> @movi2s_msl16() {
 
 define <4 x i32> @movi4s_msl8() {
 ; CHECK-LABEL: movi4s_msl8:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff, msl #8
 ; CHECK-ARM64:  movi v0.2d, #0x00ffff0000ffff
    ret <4 x i32> < i32 65535, i32 65535, i32 65535, i32 65535 >
 }
 
 define <4 x i32> @movi4s_msl16() {
 ; CHECK-LABEL: movi4s_msl16:
-; CHECK-AARCH64:  movi {{v[0-9]+}}.4s, #0xff, msl #16
 ; CHECK-ARM64:  movi v0.2d, #0xffffff00ffffff
    ret <4 x i32> < i32 16777215, i32 16777215, i32 16777215, i32 16777215 >
 }

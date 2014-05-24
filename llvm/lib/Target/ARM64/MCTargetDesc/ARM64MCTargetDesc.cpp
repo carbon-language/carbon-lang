@@ -141,44 +141,70 @@ extern "C" void LLVMInitializeARM64TargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(TheARM64leTarget, createARM64MCAsmInfo);
   RegisterMCAsmInfoFn Y(TheARM64beTarget, createARM64MCAsmInfo);
+  RegisterMCAsmInfoFn Z(TheAArch64leTarget, createARM64MCAsmInfo);
+  RegisterMCAsmInfoFn W(TheAArch64beTarget, createARM64MCAsmInfo);
 
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheARM64leTarget,
                                         createARM64MCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheARM64beTarget,
                                         createARM64MCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64leTarget,
+                                        createARM64MCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64beTarget,
+                                        createARM64MCCodeGenInfo);
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheARM64leTarget, createARM64MCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheARM64beTarget, createARM64MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheAArch64leTarget, createARM64MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheAArch64beTarget, createARM64MCInstrInfo);
 
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(TheARM64leTarget, createARM64MCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheARM64beTarget, createARM64MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheAArch64leTarget, createARM64MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheAArch64beTarget, createARM64MCRegisterInfo);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheARM64leTarget,
                                           createARM64MCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(TheARM64beTarget,
                                           createARM64MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64leTarget,
+                                          createARM64MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64beTarget,
+                                          createARM64MCSubtargetInfo);
 
   // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(TheARM64leTarget, createARM64leAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheARM64beTarget, createARM64beAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheAArch64leTarget, createARM64leAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheAArch64beTarget, createARM64beAsmBackend);
 
   // Register the MC Code Emitter
   TargetRegistry::RegisterMCCodeEmitter(TheARM64leTarget,
                                         createARM64MCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(TheARM64beTarget,
                                         createARM64MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheAArch64leTarget,
+                                        createARM64MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheAArch64beTarget,
+                                        createARM64MCCodeEmitter);
 
   // Register the object streamer.
   TargetRegistry::RegisterMCObjectStreamer(TheARM64leTarget, createMCStreamer);
   TargetRegistry::RegisterMCObjectStreamer(TheARM64beTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheAArch64leTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheAArch64beTarget, createMCStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheARM64leTarget,
                                         createARM64MCInstPrinter);
   TargetRegistry::RegisterMCInstPrinter(TheARM64beTarget,
+                                        createARM64MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheAArch64leTarget,
+                                        createARM64MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheAArch64beTarget,
                                         createARM64MCInstPrinter);
 }

@@ -1,4 +1,3 @@
-// RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj -mattr=+fp-armv8 < %s | llvm-objdump -r - | FileCheck %s
 // RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj -mattr=+fp-armv8 < %s | llvm-objdump -r - | FileCheck %s
 
 	.file	"<stdin>"

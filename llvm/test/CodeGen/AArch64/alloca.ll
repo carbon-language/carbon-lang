@@ -1,6 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
-; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-AARCH64 %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
 
 declare void @use_addr(i8*)
@@ -54,8 +52,6 @@ define i64 @test_alloca_with_local(i64 %n) {
 ; CHECK: bl use_addr
 
   %val = load i64* %loc
-; CHECK-AARCH64: sub x[[TMP:[0-9]+]], x29, #[[LOC_FROM_FP]]
-; CHECK-AARCH64: ldr x0, [x[[TMP]]]
 
 ; CHECK-ARM64: ldur x0, [x29, #-[[LOC_FROM_FP]]]
 
@@ -68,13 +64,7 @@ define i64 @test_alloca_with_local(i64 %n) {
 define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK-LABEL: test_variadic_alloca:
 
-; CHECK-AARCH64: sub     sp, sp, #{{[0-9]+}}
-; CHECK-AARCH64: add     x29, sp, #192
-; CHECK-AARCH64: sub     [[TMP:x[0-9]+]], x29, #192
-; CHECK-AARCH64: add     x8, [[TMP]], #0
-; CHECK-AARCH64-FP: str     q7, [x8, #112]
 ; [...]
-; CHECK-AARCH64-FP: str     q1, [x8, #16]
 
 
 ; CHECK-NOFP-AARCH64: sub     sp, sp, #80
@@ -112,9 +102,6 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK: bl use_addr
 
   ret void
-; CHECK-AARCH64: sub sp, x29, #192
-; CHECK-AARCH64: ldp x29, x30, [sp, #192]
-; CHECK-AARCH64: add sp, sp, #208
 
 ; CHECK-NOFP-AARCH64: sub sp, x29, #64
 ; CHECK-NOFP-AARCH64: ldp x29, x30, [sp, #64]
@@ -127,11 +114,6 @@ define void @test_variadic_alloca(i64 %n, ...) {
 define void @test_alloca_large_frame(i64 %n) {
 ; CHECK-LABEL: test_alloca_large_frame:
 
-; CHECK-AARCH64: sub sp, sp, #496
-; CHECK-AARCH64: stp x29, x30, [sp, #480]
-; CHECK-AARCH64: add x29, sp, #480
-; CHECK-AARCH64: sub sp, sp, #48
-; CHECK-AARCH64: sub sp, sp, #1953, lsl #12
 
 ; CHECK-ARM64: stp     x20, x19, [sp, #-32]!
 ; CHECK-ARM64: stp     x29, x30, [sp, #16]
@@ -145,9 +127,6 @@ define void @test_alloca_large_frame(i64 %n) {
   call void @use_addr_loc(i8* %addr1, i64* %addr2)
 
   ret void
-; CHECK-AARCH64: sub sp, x29, #480
-; CHECK-AARCH64: ldp x29, x30, [sp, #480]
-; CHECK-AARCH64: add sp, sp, #496
 
 ; CHECK-ARM64: sub     sp, x29, #16
 ; CHECK-ARM64: ldp     x29, x30, [sp, #16]

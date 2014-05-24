@@ -1,4 +1,3 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 ; RUN: llc -o - %s -verify-machineinstrs -mtriple=arm64-linux-gnu -mattr=+neon | FileCheck %s
 
 

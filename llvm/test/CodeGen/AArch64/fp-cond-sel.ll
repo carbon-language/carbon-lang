@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -mcpu=cyclone | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 @varfloat = global float 0.0
@@ -13,7 +12,6 @@ define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
   %tst1 = icmp ugt i32 %lhs32, %rhs32
   %val1 = select i1 %tst1, float 0.0, float 1.0
   store float %val1, float* @varfloat
-; CHECK-AARCH64: ldr s[[FLT0:[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:.LCPI
 ; CHECK-ARM64: movi v[[FLT0:[0-9]+]].2d, #0
 ; CHECK: fmov s[[FLT1:[0-9]+]], #1.0
 ; CHECK: fcsel {{s[0-9]+}}, s[[FLT0]], s[[FLT1]], hi
@@ -22,7 +20,6 @@ define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
   %tst2 = icmp sle i64 %lhs64, %rhs64
   %val2 = select i1 %tst2, double 1.0, double 0.0
   store double %val2, double* @vardouble
-; CHECK-AARCH64: ldr d[[FLT0:[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:.LCPI
 ; FLT0 is reused from above on ARM64.
 ; CHECK: fmov d[[FLT1:[0-9]+]], #1.0
 ; CHECK: fcsel {{d[0-9]+}}, d[[FLT1]], d[[FLT0]], le

@@ -1,5 +1,3 @@
-// RUN: not llvm-mc -triple aarch64-none-linux-gnu < %s 2> %t
-// RUN: FileCheck --check-prefix=CHECK-ERROR --check-prefix=CHECK-ERROR-AARCH64 < %t %s
 // RUN: not llvm-mc -triple arm64-none-linux-gnu < %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ERROR --check-prefix=CHECK-ERROR-ARM64 < %t %s
 

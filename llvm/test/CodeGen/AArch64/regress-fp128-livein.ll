@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s
 ; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -o - %s
 
 ; Regression test for NZCV reg live-in not being added to fp128csel IfTrue BB,

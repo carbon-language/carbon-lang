@@ -1,5 +1,3 @@
-// RUN: llvm-mc -triple=aarch64 -mattr=+neon -mattr=+crypto -show-encoding < %s | FileCheck %s
-// RUN: not llvm-mc -triple=aarch64 -mattr=+neon -show-encoding < %s 2>&1 | FileCheck -check-prefix=CHECK-NO-CRYPTO %s
 // RUN: llvm-mc -triple=arm64 -mattr=+neon -mattr=+crypto -show-encoding < %s | FileCheck %s
 // RUN: not llvm-mc -triple=arm64 -mattr=+neon -show-encoding < %s 2>&1 | FileCheck -check-prefix=CHECK-NO-CRYPTO-ARM64 %s
 

@@ -57,6 +57,9 @@ extern "C" void LLVMInitializeARM64Target() {
   // Register the target.
   RegisterTargetMachine<ARM64leTargetMachine> X(TheARM64leTarget);
   RegisterTargetMachine<ARM64beTargetMachine> Y(TheARM64beTarget);
+
+  RegisterTargetMachine<ARM64leTargetMachine> Z(TheAArch64leTarget);
+  RegisterTargetMachine<ARM64beTargetMachine> W(TheAArch64beTarget);
 }
 
 /// TargetMachine ctor - Create an ARM64 architecture model.

@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -relocation-model=pic %s -o - | FileCheck %s
 ; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -relocation-model=pic %s -o - | FileCheck %s
 
 @var = global i32 0

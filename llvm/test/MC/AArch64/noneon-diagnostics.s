@@ -1,6 +1,3 @@
-// RUN: not llvm-mc  -triple aarch64-none-linux-gnu -mattr=-neon < %s 2> %t
-// RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
-
 // RUN: not llvm-mc  -triple arm64-none-linux-gnu -mattr=-neon < %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ARM64-ERROR < %t %s
 

@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-linux-gnu | FileCheck %s
 
 ; Note that this should be refactored (for efficiency if nothing else)

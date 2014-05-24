@@ -1,7 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-BE --check-prefix=CHECK-NOFP %s
 
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64-NONEON %s
@@ -93,10 +89,6 @@ define void @check_stack_args() {
   ; Want to check that the final double is passed in registers and
   ; that varstruct is passed on the stack. Rather dependent on how a
   ; memcpy gets created, but the following works for now.
-; CHECK-AARCH64: mov x[[SPREG:[0-9]+]], sp
-; CHECK-AARCH64-DAG: str {{w[0-9]+}}, [x[[SPREG]]]
-; CHECK-AARCH64-DAG: str {{w[0-9]+}}, [x[[SPREG]], #12]
-; CHECK-AARCH64-DAG: fmov d0,
 
 ; CHECK-ARM64-DAG: str {{q[0-9]+}}, [sp]
 ; CHECK-ARM64-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0
@@ -112,9 +104,6 @@ define void @check_stack_args() {
   call void @stacked_fpu(float -1.0, double 1.0, float 4.0, float 2.0,
                          float -2.0, float -8.0, float 16.0, float 1.0,
                          float 64.0)
-; CHECK-AARCH64: ldr s[[STACKEDREG:[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:.LCPI
-; CHECK-AARCH64: mov x0, sp
-; CHECK-AARCH64: str d[[STACKEDREG]], [x0]
 
 ; CHECK-ARM64:  movz [[SIXTY_FOUR:w[0-9]+]], #0x4280, lsl #16
 ; CHECK-ARM64: str [[SIXTY_FOUR]], [sp]
@@ -142,9 +131,6 @@ define void @check_i128_align() {
                                    i32 42, i128 %val)
 ; CHECK: ldr [[I128LO:x[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:var128]
 ; CHECK: ldr [[I128HI:x[0-9]+]], [{{x[0-9]+}}, #8]
-; CHECK-AARCH64: mov x[[SPREG:[0-9]+]], sp
-; CHECK-AARCH64: str [[I128HI]], [x[[SPREG]], #24]
-; CHECK-AARCH64: str [[I128LO]], [x[[SPREG]], #16]
 ; CHECK-ARM64: stp [[I128LO]], [[I128HI]], [sp, #16]
 ; CHECK-ARM64-NONEON: stp [[I128LO]], [[I128HI]], [sp, #16]
 ; CHECK: bl check_i128_stackalign

@@ -1,7 +1,3 @@
-// RUN: llvm-mc -triple=aarch64-none-linux-gnu -show-encoding < %s | FileCheck %s --check-prefix=CHECK-AARCH64
-// RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj < %s -o - | \
-// RUN:   llvm-readobj -r -t | FileCheck --check-prefix=CHECK-ELF %s
-
 // RUN: llvm-mc -triple=arm64-none-linux-gnu -show-encoding < %s | FileCheck %s --check-prefix=CHECK-ARM64
 // RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj < %s -o - | \
 // RUN:   llvm-readobj -r -t | FileCheck --check-prefix=CHECK-ELF %s
@@ -11,14 +7,6 @@
         movn x2, #:dtprel_g2:var
         movz x3, #:dtprel_g2:var
         movn x4, #:dtprel_g2:var
-// CHECK-AARCH64: movz    x1, #:dtprel_g2:var     // encoding: [0x01'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_a64_movw_dtprel_g2
-// CHECK-AARCH64: movn    x2, #:dtprel_g2:var     // encoding: [0x02'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_a64_movw_dtprel_g2
-// CHECK-AARCH64: movz    x3, #:dtprel_g2:var     // encoding: [0x03'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_a64_movw_dtprel_g2
-// CHECK-AARCH64: movn    x4, #:dtprel_g2:var     // encoding: [0x04'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_a64_movw_dtprel_g2
 
 // CHECK-ARM64: movz    x1, #:dtprel_g2:var     // encoding: [0bAAA00001,A,0b110AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_arm64_movw
@@ -41,14 +29,6 @@
         movn x6, #:dtprel_g1:var
         movz w7, #:dtprel_g1:var
         movn w8, #:dtprel_g1:var
-// CHECK-AARCH64: movz    x5, #:dtprel_g1:var     // encoding: [0x05'A',A,0xa0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-AARCH64: movn    x6, #:dtprel_g1:var     // encoding: [0x06'A',A,0xa0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-AARCH64: movz    w7, #:dtprel_g1:var     // encoding: [0x07'A',A,0xa0'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-AARCH64: movn    w8, #:dtprel_g1:var     // encoding: [0x08'A',A,0xa0'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
 
 // CHECK-ARM64: movz    x5, #:dtprel_g1:var     // encoding: [0bAAA00101,A,0b101AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_arm64_movw
@@ -67,10 +47,6 @@
 
         movk x9, #:dtprel_g1_nc:var
         movk w10, #:dtprel_g1_nc:var
-// CHECK-AARCH64: movk    x9, #:dtprel_g1_nc:var  // encoding: [0x09'A',A,0xa0'A',0xf2'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1_nc:var, kind: fixup_a64_movw_dtprel_g1_nc
-// CHECK-AARCH64: movk    w10, #:dtprel_g1_nc:var // encoding: [0x0a'A',A,0xa0'A',0x72'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1_nc:var, kind: fixup_a64_movw_dtprel_g1_nc
 
 // CHECK-ARM64: movk    x9, #:dtprel_g1_nc:var  // encoding: [0bAAA01001,A,0b101AAAAA,0xf2]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :dtprel_g1_nc:var, kind: fixup_arm64_movw
@@ -85,13 +61,6 @@
         movn x12, #:dtprel_g0:var
         movz w13, #:dtprel_g0:var
         movn w14, #:dtprel_g0:var
-// CHECK-AARCH64: movz    x11, #:dtprel_g0:var    // encoding: [0x0b'A',A,0x80'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g0:var, kind: fixup_a64_movw_dtprel_g0
-// CHECK-AARCH64: movn    x12, #:dtprel_g0:var    // encoding: [0x0c'A',A,0x80'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g0:var, kind: fixup_a64_movw_dtprel_g0
-// CHECK-AARCH64: movz    w13, #:dtprel_g0:var    // encoding: [0x0d'A',A,0x80'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g0:var, kind: fixup_a64_movw_dtprel_g0
-// CHECK-AARCH64: movn    w14, #:dtprel_g0:var    // encoding: [0x0e'A',A,0x80'A',0x12'A']
 
 // CHECK-ARM64: movz    x11, #:dtprel_g0:var    // encoding: [0bAAA01011,A,0b100AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :dtprel_g0:var, kind: fixup_arm64_movw
@@ -110,10 +79,6 @@
 
         movk x15, #:dtprel_g0_nc:var
         movk w16, #:dtprel_g0_nc:var
-// CHECK-AARCH64: movk    x15, #:dtprel_g0_nc:var // encoding: [0x0f'A',A,0x80'A',0xf2'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g0_nc:var, kind: fixup_a64_movw_dtprel_g0_nc
-// CHECK-AARCH64: movk    w16, #:dtprel_g0_nc:var // encoding: [0x10'A',A,0x80'A',0x72'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g0_nc:var, kind: fixup_a64_movw_dtprel_g0_nc
 
 // CHECK-ARM64: movk    x15, #:dtprel_g0_nc:var // encoding: [0bAAA01111,A,0b100AAAAA,0xf2]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :dtprel_g0_nc:var, kind: fixup_arm64_movw
@@ -126,10 +91,6 @@
 
         add x17, x18, #:dtprel_hi12:var, lsl #12
         add w19, w20, #:dtprel_hi12:var, lsl #12
-// CHECK-AARCH64: add     x17, x18, #:dtprel_hi12:var, lsl #12 // encoding: [0x51'A',0x02'A',0x40'A',0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_hi12:var, kind: fixup_a64_add_dtprel_hi12
-// CHECK-AARCH64: add     w19, w20, #:dtprel_hi12:var, lsl #12 // encoding: [0x93'A',0x02'A',0x40'A',0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_hi12:var, kind: fixup_a64_add_dtprel_hi12
 
 // CHECK-ARM64: add    x17, x18, :dtprel_hi12:var, lsl #12 // encoding: [0x51,0bAAAAAA10,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                            //   fixup A - offset: 0, value: :dtprel_hi12:var, kind: fixup_arm64_add_imm12
@@ -142,10 +103,6 @@
 
         add x21, x22, #:dtprel_lo12:var
         add w23, w24, #:dtprel_lo12:var
-// CHECK-AARCH64: add     x21, x22, #:dtprel_lo12:var // encoding: [0xd5'A',0x02'A',A,0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_add_dtprel_lo12
-// CHECK-AARCH64: add     w23, w24, #:dtprel_lo12:var // encoding: [0x17'A',0x03'A',A,0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_add_dtprel_lo12
 
 // CHECK-ARM64: add    x21, x22, :dtprel_lo12:var // encoding: [0xd5,0bAAAAAA10,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                   //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_add_imm12
@@ -158,10 +115,6 @@
 
         add x25, x26, #:dtprel_lo12_nc:var
         add w27, w28, #:dtprel_lo12_nc:var
-// CHECK-AARCH64: add     x25, x26, #:dtprel_lo12_nc:var // encoding: [0x59'A',0x03'A',A,0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_add_dtprel_lo12_nc
-// CHECK-AARCH64: add     w27, w28, #:dtprel_lo12_nc:var // encoding: [0x9b'A',0x03'A',A,0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_add_dtprel_lo12_nc
 
 // CHECK-ARM64: add    x25, x26, :dtprel_lo12_nc:var // encoding: [0x59,0bAAAAAA11,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                      //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_arm64_add_imm12
@@ -174,10 +127,6 @@
 
         ldrb w29, [x30, #:dtprel_lo12:var]
         ldrsb x29, [x28, #:dtprel_lo12_nc:var]
-// CHECK-AARCH64: ldrb    w29, [x30, #:dtprel_lo12:var] // encoding: [0xdd'A',0x03'A',0x40'A',0x39'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_ldst8_dtprel_lo12
-// CHECK-AARCH64: ldrsb   x29, [x28, #:dtprel_lo12_nc:var] // encoding: [0x9d'A',0x03'A',0x80'A',0x39'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_ldst8_dtprel_lo12_nc
 
 // CHECK-ARM64: ldrb    w29, [x30, :dtprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
 // CHECK-ARM64:                                      //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale1
@@ -190,10 +139,6 @@
 
         strh w27, [x26, #:dtprel_lo12:var]
         ldrsh x25, [x24, #:dtprel_lo12_nc:var]
-// CHECK-AARCH64: strh    w27, [x26, #:dtprel_lo12:var] // encoding: [0x5b'A',0x03'A',A,0x79'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_ldst16_dtprel_lo12
-// CHECK-AARCH64: ldrsh   x25, [x24, #:dtprel_lo12_nc:var] // encoding: [0x19'A',0x03'A',0x80'A',0x79'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_ldst16_dtprel_lo12_n
 
 // CHECK-ARM64: strh    w27, [x26, :dtprel_lo12:var] // encoding: [0x5b,0bAAAAAA11,0b00AAAAAA,0x79]
 // CHECK-ARM64:                                      //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale2
@@ -206,10 +151,6 @@
 
         ldr w23, [x22, #:dtprel_lo12:var]
         ldrsw x21, [x20, #:dtprel_lo12_nc:var]
-// CHECK-AARCH64: ldr     w23, [x22, #:dtprel_lo12:var] // encoding: [0xd7'A',0x02'A',0x40'A',0xb9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_ldst32_dtprel_lo12
-// CHECK-AARCH64: ldrsw   x21, [x20, #:dtprel_lo12_nc:var] // encoding: [0x95'A',0x02'A',0x80'A',0xb9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_ldst32_dtprel_lo12_n
 
 // CHECK-ARM64: ldr    w23, [x22, :dtprel_lo12:var] // encoding: [0xd7,0bAAAAAA10,0b01AAAAAA,0xb9]
 // CHECK-ARM64:                                     //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale4
@@ -222,10 +163,6 @@
 
         ldr x19, [x18, #:dtprel_lo12:var]
         str x17, [x16, #:dtprel_lo12_nc:var]
-// CHECK-AARCH64: ldr     x19, [x18, #:dtprel_lo12:var] // encoding: [0x53'A',0x02'A',0x40'A',0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_a64_ldst64_dtprel_lo12
-// CHECK-AARCH64: str     x17, [x16, #:dtprel_lo12_nc:var] // encoding: [0x11'A',0x02'A',A,0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_a64_ldst64_dtprel_lo12_nc
 
 // CHECK-ARM64: ldr    x19, [x18, :dtprel_lo12:var] // encoding: [0x53,0bAAAAAA10,0b01AAAAAA,0xf9]
 // CHECK-ARM64:                                     //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale8
@@ -239,10 +176,6 @@
         // TLS initial-exec forms
         movz x15, #:gottprel_g1:var
         movz w14, #:gottprel_g1:var
-// CHECK-AARCH64: movz    x15, #:gottprel_g1:var  // encoding: [0x0f'A',A,0xa0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel_g1:var, kind: fixup_a64_movw_gottprel_g1
-// CHECK-AARCH64: movz    w14, #:gottprel_g1:var  // encoding: [0x0e'A',A,0xa0'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel_g1:var, kind: fixup_a64_movw_gottprel_g1
 
 // CHECK-ARM64: movz    x15, #:gottprel_g1:var  // encoding: [0bAAA01111,A,0b101AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :gottprel_g1:var, kind: fixup_arm64_movw
@@ -255,10 +188,6 @@
 
         movk x13, #:gottprel_g0_nc:var
         movk w12, #:gottprel_g0_nc:var
-// CHECK-AARCH64: movk    x13, #:gottprel_g0_nc:var // encoding: [0x0d'A',A,0x80'A',0xf2'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel_g0_nc:var, kind: fixup_a64_movw_gottprel_g0_nc
-// CHECK-AARCH64: movk    w12, #:gottprel_g0_nc:var // encoding: [0x0c'A',A,0x80'A',0x72'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel_g0_nc:var, kind: fixup_a64_movw_gottprel_g0_nc
 
 // CHECK-ARM64: movk    x13, #:gottprel_g0_nc:var // encoding: [0bAAA01101,A,0b100AAAAA,0xf2]
 // CHECK-ARM64:                                   //   fixup A - offset: 0, value: :gottprel_g0_nc:var, kind: fixup_arm64_movw
@@ -272,12 +201,6 @@
         adrp x11, :gottprel:var
         ldr x10, [x0, #:gottprel_lo12:var]
         ldr x9, :gottprel:var
-// CHECK-AARCH64: adrp    x11, :gottprel:var      // encoding: [0x0b'A',A,A,0x90'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel:var, kind: fixup_a64_adr_gottprel_page
-// CHECK-AARCH64: ldr     x10, [x0, #:gottprel_lo12:var] // encoding: [0x0a'A',A,0x40'A',0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel_lo12:var, kind: fixup_a64_ld64_gottprel_lo12_nc
-// CHECK-AARCH64: ldr     x9, :gottprel:var       // encoding: [0x09'A',A,A,0x58'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :gottprel:var, kind: fixup_a64_ld_gottprel_prel19
 
 // CHECK-ARM64: adrp    x11, :gottprel:var      // encoding: [0x0b'A',A,A,0x90'A']
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :gottprel:var, kind: fixup_arm64_pcrel_adrp_imm21
@@ -294,10 +217,6 @@
         // TLS local-exec forms
         movz x3, #:tprel_g2:var
         movn x4, #:tprel_g2:var
-// CHECK-AARCH64: movz    x3, #:tprel_g2:var      // encoding: [0x03'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g2:var, kind: fixup_a64_movw_tprel_g2
-// CHECK-AARCH64: movn    x4, #:tprel_g2:var      // encoding: [0x04'A',A,0xc0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g2:var, kind: fixup_a64_movw_tprel_g2
 
 // CHECK-ARM64: movz    x3, #:tprel_g2:var      // encoding: [0bAAA00011,A,0b110AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tprel_g2:var, kind: fixup_arm64_movw
@@ -312,14 +231,6 @@
         movn x6, #:tprel_g1:var
         movz w7, #:tprel_g1:var
         movn w8, #:tprel_g1:var
-// CHECK-AARCH64: movz    x5, #:tprel_g1:var      // encoding: [0x05'A',A,0xa0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1:var, kind: fixup_a64_movw_tprel_g1
-// CHECK-AARCH64: movn    x6, #:tprel_g1:var      // encoding: [0x06'A',A,0xa0'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1:var, kind: fixup_a64_movw_tprel_g1
-// CHECK-AARCH64: movz    w7, #:tprel_g1:var      // encoding: [0x07'A',A,0xa0'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1:var, kind: fixup_a64_movw_tprel_g1
-// CHECK-AARCH64: movn    w8, #:tprel_g1:var      // encoding: [0x08'A',A,0xa0'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1:var, kind: fixup_a64_movw_tprel_g1
 
 // CHECK-ARM64: movz    x5, #:tprel_g1:var      // encoding: [0bAAA00101,A,0b101AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tprel_g1:var, kind: fixup_arm64_movw
@@ -338,10 +249,6 @@
 
         movk x9, #:tprel_g1_nc:var
         movk w10, #:tprel_g1_nc:var
-// CHECK-AARCH64: movk    x9, #:tprel_g1_nc:var   // encoding: [0x09'A',A,0xa0'A',0xf2'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1_nc:var, kind: fixup_a64_movw_tprel_g1_nc
-// CHECK-AARCH64: movk    w10, #:tprel_g1_nc:var  // encoding: [0x0a'A',A,0xa0'A',0x72'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g1_nc:var, kind: fixup_a64_movw_tprel_g1_nc
 
 // CHECK-ARM64: movk    x9, #:tprel_g1_nc:var   // encoding: [0bAAA01001,A,0b101AAAAA,0xf2]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tprel_g1_nc:var, kind: fixup_arm64_movw
@@ -356,14 +263,6 @@
         movn x12, #:tprel_g0:var
         movz w13, #:tprel_g0:var
         movn w14, #:tprel_g0:var
-// CHECK-AARCH64: movz    x11, #:tprel_g0:var     // encoding: [0x0b'A',A,0x80'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0:var, kind: fixup_a64_movw_tprel_g0
-// CHECK-AARCH64: movn    x12, #:tprel_g0:var     // encoding: [0x0c'A',A,0x80'A',0x92'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0:var, kind: fixup_a64_movw_tprel_g0
-// CHECK-AARCH64: movz    w13, #:tprel_g0:var     // encoding: [0x0d'A',A,0x80'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0:var, kind: fixup_a64_movw_tprel_g0
-// CHECK-AARCH64: movn    w14, #:tprel_g0:var     // encoding: [0x0e'A',A,0x80'A',0x12'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0:var, kind: fixup_a64_movw_tprel_g0
 
 // CHECK-ARM64: movz    x11, #:tprel_g0:var     // encoding: [0bAAA01011,A,0b100AAAAA,0x92]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tprel_g0:var, kind: fixup_arm64_movw
@@ -382,10 +281,6 @@
 
         movk x15, #:tprel_g0_nc:var
         movk w16, #:tprel_g0_nc:var
-// CHECK-AARCH64: movk    x15, #:tprel_g0_nc:var  // encoding: [0x0f'A',A,0x80'A',0xf2'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0_nc:var, kind: fixup_a64_movw_tprel_g0_nc
-// CHECK-AARCH64: movk    w16, #:tprel_g0_nc:var  // encoding: [0x10'A',A,0x80'A',0x72'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_g0_nc:var, kind: fixup_a64_movw_tprel_g0_nc
 
 // CHECK-ARM64: movk    x15, #:tprel_g0_nc:var  // encoding: [0bAAA01111,A,0b100AAAAA,0xf2]
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tprel_g0_nc:var, kind: fixup_arm64_movw
@@ -398,10 +293,6 @@
 
         add x17, x18, #:tprel_hi12:var, lsl #12
         add w19, w20, #:tprel_hi12:var, lsl #12
-// CHECK-AARCH64: add     x17, x18, #:tprel_hi12:var, lsl #12 // encoding: [0x51'A',0x02'A',0x40'A',0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_hi12:var, kind: fixup_a64_add_tprel_hi12
-// CHECK-AARCH64: add     w19, w20, #:tprel_hi12:var, lsl #12 // encoding: [0x93'A',0x02'A',0x40'A',0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_hi12:var, kind: fixup_a64_add_tprel_hi12
 
 // CHECK-ARM64: add    x17, x18, :tprel_hi12:var, lsl #12 // encoding: [0x51,0bAAAAAA10,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                           //   fixup A - offset: 0, value: :tprel_hi12:var, kind: fixup_arm64_add_imm12
@@ -414,10 +305,6 @@
 
         add x21, x22, #:tprel_lo12:var
         add w23, w24, #:tprel_lo12:var
-// CHECK-AARCH64: add     x21, x22, #:tprel_lo12:var // encoding: [0xd5'A',0x02'A',A,0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_add_tprel_lo12
-// CHECK-AARCH64: add     w23, w24, #:tprel_lo12:var // encoding: [0x17'A',0x03'A',A,0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_add_tprel_lo12
 
 // CHECK-ARM64: add    x21, x22, :tprel_lo12:var // encoding: [0xd5,0bAAAAAA10,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                  //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_add_imm12
@@ -430,10 +317,6 @@
 
         add x25, x26, #:tprel_lo12_nc:var
         add w27, w28, #:tprel_lo12_nc:var
-// CHECK-AARCH64: add     x25, x26, #:tprel_lo12_nc:var // encoding: [0x59'A',0x03'A',A,0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_add_tprel_lo12_nc
-// CHECK-AARCH64: add     w27, w28, #:tprel_lo12_nc:var // encoding: [0x9b'A',0x03'A',A,0x11'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_add_tprel_lo12_nc
 
 // CHECK-ARM64: add    x25, x26, :tprel_lo12_nc:var // encoding: [0x59,0bAAAAAA11,0b00AAAAAA,0x91]
 // CHECK-ARM64:                                     //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_arm64_add_imm12
@@ -446,10 +329,6 @@
 
         ldrb w29, [x30, #:tprel_lo12:var]
         ldrsb x29, [x28, #:tprel_lo12_nc:var]
-// CHECK-AARCH64: ldrb    w29, [x30, #:tprel_lo12:var] // encoding: [0xdd'A',0x03'A',0x40'A',0x39'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_ldst8_tprel_lo12
-// CHECK-AARCH64: ldrsb   x29, [x28, #:tprel_lo12_nc:var] // encoding: [0x9d'A',0x03'A',0x80'A',0x39'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_ldst8_tprel_lo12_nc
 
 // CHECK-ARM64: ldrb    w29, [x30, :tprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
 // CHECK-ARM64:                                     //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale1
@@ -462,10 +341,6 @@
 
         strh w27, [x26, #:tprel_lo12:var]
         ldrsh x25, [x24, #:tprel_lo12_nc:var]
-// CHECK-AARCH64: strh    w27, [x26, #:tprel_lo12:var] // encoding: [0x5b'A',0x03'A',A,0x79'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_ldst16_tprel_lo12
-// CHECK-AARCH64: ldrsh   x25, [x24, #:tprel_lo12_nc:var] // encoding: [0x19'A',0x03'A',0x80'A',0x79'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_ldst16_tprel_lo12_n
 
 // CHECK-ARM64: strh    w27, [x26, :tprel_lo12:var] // encoding: [0x5b,0bAAAAAA11,0b00AAAAAA,0x79]
 // CHECK-ARM64:                                     //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale2
@@ -478,10 +353,6 @@
 
         ldr w23, [x22, #:tprel_lo12:var]
         ldrsw x21, [x20, #:tprel_lo12_nc:var]
-// CHECK-AARCH64: ldr     w23, [x22, #:tprel_lo12:var] // encoding: [0xd7'A',0x02'A',0x40'A',0xb9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_ldst32_tprel_lo12
-// CHECK-AARCH64: ldrsw   x21, [x20, #:tprel_lo12_nc:var] // encoding: [0x95'A',0x02'A',0x80'A',0xb9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_ldst32_tprel_lo12_n
 
 // CHECK-ARM64: ldr    w23, [x22, :tprel_lo12:var] // encoding: [0xd7,0bAAAAAA10,0b01AAAAAA,0xb9]
 // CHECK-ARM64:                                    //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale4
@@ -493,10 +364,6 @@
 
         ldr x19, [x18, #:tprel_lo12:var]
         str x17, [x16, #:tprel_lo12_nc:var]
-// CHECK-AARCH64: ldr     x19, [x18, #:tprel_lo12:var] // encoding: [0x53'A',0x02'A',0x40'A',0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_a64_ldst64_tprel_lo12
-// CHECK-AARCH64: str     x17, [x16, #:tprel_lo12_nc:var] // encoding: [0x11'A',0x02'A',A,0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_a64_ldst64_tprel_lo12_nc
 
 // CHECK-ARM64: ldr    x19, [x18, :tprel_lo12:var] // encoding: [0x53,0bAAAAAA10,0b01AAAAAA,0xf9]
 // CHECK-ARM64:                                    //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale8
@@ -513,15 +380,6 @@
         .tlsdesccall var
         blr x3
 
-// CHECK-AARCH64: adrp    x8, :tlsdesc:var        // encoding: [0x08'A',A,A,0x90'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tlsdesc:var, kind: fixup_a64_tlsdesc_adr_page
-// CHECK-AARCH64: ldr     x7, [x6, #:tlsdesc_lo12:var] // encoding: [0xc7'A',A,0x40'A',0xf9'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tlsdesc_lo12:var, kind: fixup_a64_tlsdesc_ld64_lo12_nc
-// CHECK-AARCH64: add     x5, x4, #:tlsdesc_lo12:var // encoding: [0x85'A',A,A,0x91'A']
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tlsdesc_lo12:var, kind: fixup_a64_tlsdesc_add_lo12_nc
-// CHECK-AARCH64: .tlsdesccall var                // encoding: []
-// CHECK-AARCH64-NEXT:                                 //   fixup A - offset: 0, value: :tlsdesc:var, kind: fixup_a64_tlsdesc_call
-// CHECK-AARCH64: blr     x3                      // encoding: [0x60,0x00,0x3f,0xd6]
 
 // CHECK-ARM64: adrp    x8, :tlsdesc:var        // encoding: [0x08'A',A,A,0x90'A']
 // CHECK-ARM64:                                 //   fixup A - offset: 0, value: :tlsdesc:var, kind: fixup_arm64_pcrel_adrp_imm21

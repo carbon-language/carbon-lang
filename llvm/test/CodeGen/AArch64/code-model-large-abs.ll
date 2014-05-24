@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -code-model=large < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-linux-gnu -code-model=large -o - %s | FileCheck %s
 
 @var8 = global i8 0

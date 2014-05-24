@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-apple-ios7.0 -O0
 

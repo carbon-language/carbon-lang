@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -tailcallopt | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -tailcallopt | FileCheck --check-prefix=CHECK-ARM64 %s
 
 declare fastcc void @callee_stack0()

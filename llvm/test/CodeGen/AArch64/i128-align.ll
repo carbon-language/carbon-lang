@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-apple-ios7.0 -verify-machineinstrs -o - %s | FileCheck %s
 
 %struct = type { i32, i128, i8 }

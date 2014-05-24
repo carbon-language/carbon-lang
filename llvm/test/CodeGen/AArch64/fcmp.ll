@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck %s
 
 declare void @bar(i32)

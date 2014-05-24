@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -arm64-load-store-opt=0 | FileCheck %s
 
 declare void @callee_stack0()

@@ -1,5 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -code-model=large -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-LARGE %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -code-model=large -mtriple=arm64-none-linux-gnu -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-LARGE %s
 

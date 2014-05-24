@@ -1,4 +1,3 @@
-// RUN: llvm-mc -triple=aarch64-linux-gnu -filetype=obj -o - %s| llvm-readobj -r - | FileCheck %s
 // RUN: llvm-mc -triple=arm64-linux-gnu -filetype=obj -o - %s| llvm-readobj -r - | FileCheck %s
         .text
 // These should produce an ADRP/ADD pair to calculate the address of

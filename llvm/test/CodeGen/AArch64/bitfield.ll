@@ -1,4 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 @var32 = global i32 0
@@ -24,7 +23,6 @@ define void @test_extendb(i8 %var) {
 
   %uxt64 = zext i8 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK-AARCH64: uxtb {{x[0-9]+}}, {{w[0-9]+}}
 ; CHECK-ARM64: and {{x[0-9]+}}, {{x[0-9]+}}, #0xff
   ret void
 }
@@ -49,7 +47,6 @@ define void @test_extendh(i16 %var) {
 
   %uxt64 = zext i16 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK-AARCH64: uxth {{x[0-9]+}}, {{w[0-9]+}}
 ; CHECK-ARM64: and {{x[0-9]+}}, {{x[0-9]+}}, #0xffff
   ret void
 }
@@ -63,7 +60,6 @@ define void @test_extendw(i32 %var) {
 
   %uxt64 = zext i32 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK-AARCH64: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #0, #32
 ; CHECK-ARM64: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #32
   ret void
 }

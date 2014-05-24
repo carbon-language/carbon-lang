@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-apple-ios7.0 -verify-machineinstrs < %s | FileCheck %s
 
 ; CallingConv.td requires a bitcast for vector arguments. Make sure we're

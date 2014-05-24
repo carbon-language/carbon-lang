@@ -242,6 +242,15 @@ extern "C" void LLVMInitializeARM64Disassembler() {
                                        createARM64ExternalSymbolizer);
   TargetRegistry::RegisterMCSymbolizer(TheARM64beTarget,
                                        createARM64ExternalSymbolizer);
+
+  TargetRegistry::RegisterMCDisassembler(TheAArch64leTarget,
+                                         createARM64Disassembler);
+  TargetRegistry::RegisterMCDisassembler(TheAArch64beTarget,
+                                         createARM64Disassembler);
+  TargetRegistry::RegisterMCSymbolizer(TheAArch64leTarget,
+                                       createARM64ExternalSymbolizer);
+  TargetRegistry::RegisterMCSymbolizer(TheAArch64beTarget,
+                                       createARM64ExternalSymbolizer);
 }
 
 static const unsigned FPR128DecoderTable[] = {

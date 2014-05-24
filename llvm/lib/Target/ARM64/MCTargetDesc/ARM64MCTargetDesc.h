@@ -31,6 +31,8 @@ class raw_ostream;
 
 extern Target TheARM64leTarget;
 extern Target TheARM64beTarget;
+extern Target TheAArch64leTarget;
+extern Target TheAArch64beTarget;
 
 MCCodeEmitter *createARM64MCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,

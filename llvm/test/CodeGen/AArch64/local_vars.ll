@@ -1,5 +1,3 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 | FileCheck %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP-AARCH64 %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP-ARM64 %s
 

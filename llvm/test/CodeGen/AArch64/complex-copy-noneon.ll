@@ -1,4 +1,3 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-neon < %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=-neon < %s
 
 ; The DAG combiner decided to use a vector load/store for this struct copy
