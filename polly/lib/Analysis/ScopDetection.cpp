@@ -117,6 +117,11 @@ TrackFailures("polly-detect-track-failures",
               cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
               cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool> KeepGoing("polly-detect-keep-going",
+                               cl::desc("Do not fail on the first error."),
+                               cl::Hidden, cl::ZeroOrMore, cl::init(false),
+                               cl::cat(PollyCategory));
+
 static cl::opt<bool, true>
 PollyDelinearizeX("polly-delinearize",
                   cl::desc("Delinearize array access functions"),
@@ -589,7 +594,10 @@ void ScopDetection::findScops(Region &R) {
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 
-  if (isValidRegion(R)) {
+  bool IsValidRegion = isValidRegion(R);
+  bool HasErrors = RejectLogs.count(&R) > 0;
+
+  if (IsValidRegion && !HasErrors) {
     ++ValidRegion;
     ValidRegions.insert(&R);
     return;
@@ -597,6 +605,10 @@ void ScopDetection::findScops(Region &R) {
 
   for (auto &SubRegion : R)
     findScops(*SubRegion);
+
+  // Do not expand when we had errors. Bad things may happen.
+  if (IsValidRegion && HasErrors)
+    return;
 
   // Try to expand regions.
   //
@@ -635,17 +647,17 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
 
   for (const BasicBlock *BB : R.blocks()) {
     Loop *L = LI->getLoopFor(BB);
-    if (L && L->getHeader() == BB && !isValidLoop(L, Context))
+    if (L && L->getHeader() == BB && (!isValidLoop(L, Context) && !KeepGoing))
       return false;
   }
 
   for (BasicBlock *BB : R.blocks())
-    if (!isValidCFG(*BB, Context))
+    if (!isValidCFG(*BB, Context) && !KeepGoing)
       return false;
 
   for (BasicBlock *BB : R.blocks())
     for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
-      if (!isValidInstruction(*I, Context))
+      if (!isValidInstruction(*I, Context) && !KeepGoing)
         return false;
 
   if (!hasAffineMemoryAccesses(Context))
@@ -671,7 +683,9 @@ bool ScopDetection::isValidRegion(Region &R) const {
   DetectionContext Context(R, *AA, false /*verifying*/);
 
   bool RegionIsValid = isValidRegion(Context);
-  if (PollyTrackFailures && !RegionIsValid) {
+  bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
+
+  if (PollyTrackFailures && HasErrors) {
     // std::map::insert does not replace.
     std::pair<reject_iterator, bool> InsertedValue =
         RejectLogs.insert(std::make_pair(&R, Context.Log));

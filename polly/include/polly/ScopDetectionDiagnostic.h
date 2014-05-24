@@ -73,6 +73,7 @@ public:
 
   iterator begin() { return ErrorReports.begin(); }
   iterator end() { return ErrorReports.end(); }
+  size_t size() { return ErrorReports.size(); }
 
   const Region *region() const { return R; }
   void report(RejectReasonPtr Reject) { ErrorReports.push_back(Reject); }
