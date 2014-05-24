@@ -182,11 +182,15 @@ inline bool ScopDetection::invalid(DetectionContext &Context, bool Assert,
                                    Args &&... Arguments) const {
 
   if (!Context.Verifying) {
-    RR RejectReason = RR(Arguments...);
-    if (PollyTrackFailures)
-      LastFailure = RejectReason.getMessage();
+    RejectLog &Log = Context.Log;
+    std::shared_ptr<RR> RejectReason = std::make_shared<RR>(Arguments...);
 
-    DEBUG(dbgs() << RejectReason.getMessage());
+    if (PollyTrackFailures) {
+      Log.report(RejectReason);
+      LastFailure = RejectReason->getMessage();
+    }
+
+    DEBUG(dbgs() << RejectReason->getMessage());
     DEBUG(dbgs() << "\n");
   } else {
     assert(!Assert && "Verification of detected scop failed");
@@ -668,7 +672,16 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
 
 bool ScopDetection::isValidRegion(Region &R) const {
   DetectionContext Context(R, *AA, false /*verifying*/);
-  return isValidRegion(Context);
+
+  bool RegionIsValid = isValidRegion(Context);
+  if (PollyTrackFailures && !RegionIsValid) {
+    // std::map::insert does not replace.
+    std::pair<reject_iterator, bool> InsertedValue =
+        RejectLogs.insert(std::make_pair(&R, Context.Log));
+    assert(InsertedValue.second && "Two logs generated for the same Region.");
+  }
+
+  return RegionIsValid;
 }
 
 bool ScopDetection::isValidRegion(DetectionContext &Context) const {
@@ -821,6 +834,8 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 void ScopDetection::releaseMemory() {
   ValidRegions.clear();
   InvalidRegions.clear();
+  RejectLogs.clear();
+
   // Do not clear the invalid function set.
 }
 

@@ -50,6 +50,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 
+#include "polly/ScopDetectionDiagnostic.h"
+
 #include <set>
 #include <map>
 
@@ -100,12 +102,13 @@ class ScopDetection : public FunctionPass {
     Region &CurRegion;   // The region to check.
     AliasSetTracker AST; // The AliasSetTracker to hold the alias information.
     bool Verifying;      // If we are in the verification phase?
+    RejectLog Log;
 
     // Map a base pointer to all access functions accessing it.
     BaseToAFs NonAffineAccesses, AffineAccesses;
 
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
-        : CurRegion(R), AST(AA), Verifying(Verify) {}
+        : CurRegion(R), AST(AA), Verifying(Verify), Log(&R) {}
   };
 
   // Remember the valid regions
@@ -114,6 +117,9 @@ class ScopDetection : public FunctionPass {
 
   // Invalid regions and the reason they fail.
   std::map<const Region *, std::string> InvalidRegions;
+
+  // Remember a list of errors for every region.
+  mutable std::map<const Region *, RejectLog> RejectLogs;
 
   // Remember the invalid functions producted by backends;
   typedef std::set<const Function *> FunctionSet;
@@ -287,6 +293,22 @@ public:
 
   const_iterator begin() const { return ValidRegions.begin(); }
   const_iterator end() const { return ValidRegions.end(); }
+  //@}
+
+  /// @name Reject log iterators
+  ///
+  /// These iterators iterate over the logs of all rejected regions of this
+  //  function.
+  //@{
+  typedef std::map<const Region *, RejectLog>::iterator reject_iterator;
+  typedef std::map<const Region *, RejectLog>::const_iterator
+  const_reject_iterator;
+
+  reject_iterator reject_begin() { return RejectLogs.begin(); }
+  reject_iterator reject_end() { return RejectLogs.end(); }
+
+  const_reject_iterator reject_begin() const { return RejectLogs.begin(); }
+  const_reject_iterator reject_end() const { return RejectLogs.end(); }
   //@}
 
   /// @brief Mark the function as invalid so we will not extract any scop from

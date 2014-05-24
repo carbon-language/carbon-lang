@@ -59,6 +59,25 @@ public:
   virtual std::string getMessage() const = 0;
 };
 
+typedef std::shared_ptr<RejectReason> RejectReasonPtr;
+
+/// @brief Stores all errors that ocurred during the detection.
+class RejectLog {
+  Region *R;
+  llvm::SmallVector<RejectReasonPtr, 1> ErrorReports;
+
+public:
+  explicit RejectLog(Region *R) : R(R) {};
+
+  typedef llvm::SmallVector<RejectReasonPtr, 1>::iterator iterator;
+
+  iterator begin() { return ErrorReports.begin(); }
+  iterator end() { return ErrorReports.end(); }
+
+  const Region *region() const { return R; }
+  void report(RejectReasonPtr Reject) { ErrorReports.push_back(Reject); }
+};
+
 //===----------------------------------------------------------------------===//
 /// @brief Base class for CFG related reject reasons.
 ///
