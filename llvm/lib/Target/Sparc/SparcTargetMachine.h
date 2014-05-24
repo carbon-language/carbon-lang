@@ -44,7 +44,7 @@ public:
   const TargetFrameLowering  *getFrameLowering() const override {
     return &FrameLowering;
   }
-  const SparcSubtarget   *getSubtargetImpl() const override{ return &Subtarget; }
+  const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const SparcRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }

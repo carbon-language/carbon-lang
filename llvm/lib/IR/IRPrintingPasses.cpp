@@ -94,7 +94,7 @@ public:
     return false;
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override{
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 };

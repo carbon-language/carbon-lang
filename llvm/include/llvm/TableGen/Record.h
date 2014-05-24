@@ -198,16 +198,16 @@ public:
   Init *convertValue(VarBitInit *VB) override { return nullptr; }
   Init *convertValue(   DefInit *DI) override { return nullptr; }
   Init *convertValue(   DagInit *DI) override { return nullptr; }
-  Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
+  Init *convertValue(  UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
-  Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
+  Init *convertValue(TernOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TypedInit *TI) override;
-  Init *convertValue(   VarInit *VI) override{ return RecTy::convertValue(VI);}
-  Init *convertValue( FieldInit *FI) override{ return RecTy::convertValue(FI);}
+  Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
+  Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
 
   std::string getAsString() const override;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override{
+  bool typeIsConvertibleTo(const RecTy *RHS) const override {
     return RHS->baseClassOf(this);
   }
   bool baseClassOf(const RecTy*) const override;
@@ -313,16 +313,16 @@ public:
   Init *convertValue(VarBitInit *VB) override { return nullptr; }
   Init *convertValue(   DefInit *DI) override { return nullptr; }
   Init *convertValue(   DagInit *DI) override { return nullptr; }
-  Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
+  Init *convertValue(  UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
-  Init *convertValue( TernOpInit *UI) override{ return RecTy::convertValue(UI);}
+  Init *convertValue(TernOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TypedInit *TI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
   Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
 
   std::string getAsString() const override;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override{
+  bool typeIsConvertibleTo(const RecTy *RHS) const override {
     return RHS->baseClassOf(this);
   }
 
@@ -360,7 +360,7 @@ public:
 
   std::string getAsString() const override { return "dag"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override{
+  bool typeIsConvertibleTo(const RecTy *RHS) const override {
     return RHS->baseClassOf(this);
   }
 };

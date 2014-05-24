@@ -441,7 +441,7 @@ public:
   Pass *getAsPass() override { return this; }
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const override{
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
   }
 
