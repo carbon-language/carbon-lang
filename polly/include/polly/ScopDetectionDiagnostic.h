@@ -201,6 +201,9 @@ public:
   ReportNonAffBranch(BasicBlock *BB, const SCEV *LHS, const SCEV *RHS)
       : BB(BB), LHS(LHS), RHS(RHS) {}
 
+  const SCEV *lhs() { return LHS; }
+  const SCEV *rhs() { return RHS; }
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const;
@@ -257,6 +260,8 @@ class ReportNonAffineAccess : public ReportAffFunc {
 public:
   ReportNonAffineAccess(const SCEV *AccessFunction)
       : AccessFunction(AccessFunction) {}
+
+  const SCEV *get() { return AccessFunction; }
 
   /// @name RejectReason interface
   //@{
@@ -352,6 +357,8 @@ class ReportLoopBound : public RejectReason {
 
 public:
   ReportLoopBound(Loop *L, const SCEV *LoopCount);
+
+  const SCEV *loopCount() { return LoopCount; }
 
   /// @name RejectReason interface
   //@{
