@@ -21,8 +21,8 @@ void ASTRecordLayout::Destroy(ASTContext &Ctx) {
   if (FieldOffsets)
     Ctx.Deallocate(FieldOffsets);
   if (CXXInfo) {
-    Ctx.Deallocate(CXXInfo);
     CXXInfo->~CXXRecordLayoutInfo();
+    Ctx.Deallocate(CXXInfo);
   }
   this->~ASTRecordLayout();
   Ctx.Deallocate(this);
