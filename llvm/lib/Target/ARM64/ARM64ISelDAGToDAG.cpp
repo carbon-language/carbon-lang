@@ -517,6 +517,21 @@ SDNode *ARM64DAGToDAGISel::SelectMULLV64LaneV128(unsigned IntNo, SDNode *N) {
   return CurDAG->getMachineNode(SMULLOpc, SDLoc(N), N->getValueType(0), Ops);
 }
 
+/// Instructions that accept extend modifiers like UXTW expect the register
+/// being extended to be a GPR32, but the incoming DAG might be acting on a
+/// GPR64 (either via SEXT_INREG or AND). Extract the appropriate low bits if
+/// this is the case.
+static SDValue narrowIfNeeded(SelectionDAG *CurDAG, SDValue N) {
+  if (N.getValueType() == MVT::i32)
+    return N;
+
+  SDValue SubReg = CurDAG->getTargetConstant(ARM64::sub_32, MVT::i32);
+  MachineSDNode *Node = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                               SDLoc(N), MVT::i32, N, SubReg);
+  return SDValue(Node, 0);
+}
+
+
 /// SelectArithExtendedRegister - Select a "extended register" operand.  This
 /// operand folds in an extend followed by an optional left shift.
 bool ARM64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
@@ -551,13 +566,7 @@ bool ARM64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
   // there might not be an actual 32-bit value in the program.  We can
   // (harmlessly) synthesize one by injected an EXTRACT_SUBREG here.
   assert(Ext != ARM64_AM::UXTX && Ext != ARM64_AM::SXTX);
-  if (Reg.getValueType() == MVT::i64) {
-    SDValue SubReg = CurDAG->getTargetConstant(ARM64::sub_32, MVT::i32);
-    MachineSDNode *Node = CurDAG->getMachineNode(
-        TargetOpcode::EXTRACT_SUBREG, SDLoc(N), MVT::i32, Reg, SubReg);
-    Reg = SDValue(Node, 0);
-  }
-
+  Reg = narrowIfNeeded(CurDAG, Reg);
   Shift = CurDAG->getTargetConstant(getArithExtendImm(Ext, ShiftVal), MVT::i32);
   return isWorthFolding(N);
 }
@@ -677,7 +686,7 @@ bool ARM64DAGToDAGISel::SelectExtendedSHL(SDValue N, unsigned Size,
     if (Ext == ARM64_AM::InvalidShiftExtend)
       return false;
 
-    Offset = N.getOperand(0).getOperand(0);
+    Offset = narrowIfNeeded(CurDAG, N.getOperand(0).getOperand(0));
     SignExtend = CurDAG->getTargetConstant(Ext == ARM64_AM::SXTW, MVT::i32);
   } else {
     Offset = N.getOperand(0);
@@ -746,7 +755,7 @@ bool ARM64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding &&
       (Ext = getExtendTypeForNode(LHS, true)) != ARM64_AM::InvalidShiftExtend) {
     Base = RHS;
-    Offset = LHS.getOperand(0);
+    Offset = narrowIfNeeded(CurDAG, LHS.getOperand(0));
     SignExtend = CurDAG->getTargetConstant(Ext == ARM64_AM::SXTW, MVT::i32);
     if (isWorthFolding(LHS))
       return true;
@@ -756,7 +765,7 @@ bool ARM64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding &&
       (Ext = getExtendTypeForNode(RHS, true)) != ARM64_AM::InvalidShiftExtend) {
     Base = LHS;
-    Offset = RHS.getOperand(0);
+    Offset = narrowIfNeeded(CurDAG, RHS.getOperand(0));
     SignExtend = CurDAG->getTargetConstant(Ext == ARM64_AM::SXTW, MVT::i32);
     if (isWorthFolding(RHS))
       return true;
