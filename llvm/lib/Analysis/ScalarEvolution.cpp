@@ -1201,6 +1201,24 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       return getTruncateOrSignExtend(X, Ty);
   }
 
+  // sext(C1 + (C2 * x)) --> C1 + sext(C2 * x) if C1 < C2
+  if (auto SA = dyn_cast<SCEVAddExpr>(Op)) {
+    if (SA->getNumOperands() == 2) {
+      auto SC1 = dyn_cast<SCEVConstant>(SA->getOperand(0));
+      auto SMul = dyn_cast<SCEVMulExpr>(SA->getOperand(1));
+      if (SMul && SC1) {
+        if (auto SC2 = dyn_cast<SCEVConstant>(SMul->getOperand(0))) {
+          APInt C1 = SC1->getValue()->getValue();
+          APInt C2 = SC2->getValue()->getValue();
+          APInt CDiff = C2 - C1;
+          if (C1.isStrictlyPositive() && C2.isStrictlyPositive() &&
+              CDiff.isStrictlyPositive() && C2.isPowerOf2())
+            return getAddExpr(getSignExtendExpr(SC1, Ty),
+                              getSignExtendExpr(SMul, Ty));
+        }
+      }
+    }
+  }
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
   // operands (often constants).  This allows analysis of something like
@@ -1290,6 +1308,23 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
           return getAddRecExpr(getSignExtendAddRecStart(AR, Ty, this),
                                getSignExtendExpr(Step, Ty),
                                L, AR->getNoWrapFlags());
+        }
+      }
+      // If Start and Step are constants, check if we can apply this
+      // transformation:
+      // sext{C1,+,C2} --> C1 + sext{0,+,C2} if C1 < C2
+      auto SC1 = dyn_cast<SCEVConstant>(Start);
+      auto SC2 = dyn_cast<SCEVConstant>(Step);
+      if (SC1 && SC2) {
+        APInt C1 = SC1->getValue()->getValue();
+        APInt C2 = SC2->getValue()->getValue();
+        APInt CDiff = C2 - C1;
+        if (C1.isStrictlyPositive() && C2.isStrictlyPositive() &&
+            CDiff.isStrictlyPositive() && C2.isPowerOf2()) {
+          Start = getSignExtendExpr(Start, Ty);
+          const SCEV *NewAR = getAddRecExpr(getConstant(AR->getType(), 0), Step,
+                                            L, AR->getNoWrapFlags());
+          return getAddExpr(Start, getSignExtendExpr(NewAR, Ty));
         }
       }
     }
