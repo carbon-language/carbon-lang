@@ -205,6 +205,7 @@ private:
   void handle26(Reference &ref);
   void handleGOT(Reference &ref);
   void handleGPRel(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
+  void handleTLS(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
@@ -324,6 +325,10 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     break;
   case R_MIPS_GPREL32:
     handleGPRel(atom, ref);
+    break;
+  case R_MIPS_TLS_TPREL_HI16:
+  case R_MIPS_TLS_TPREL_LO16:
+    handleTLS(atom, ref);
     break;
   }
 }
@@ -505,6 +510,15 @@ void RelocationPass<ELFT>::handleGPRel(const MipsELFDefinedAtom<ELFT> &atom,
                                        Reference &ref) {
   assert(ref.kindValue() == R_MIPS_GPREL32);
   ref.setAddend(ref.addend() + atom.file().getGP0());
+}
+
+template <typename ELFT>
+void RelocationPass<ELFT>::handleTLS(const MipsELFDefinedAtom<ELFT> &atom,
+                                     Reference &ref) {
+  assert((ref.kindValue() == R_MIPS_TLS_TPREL_HI16 ||
+          ref.kindValue() == R_MIPS_TLS_TPREL_LO16) &&
+         "Unexpected kind of relocation");
+  ref.setAddend(ref.addend() - atom.file().getTPOffset());
 }
 
 template <typename ELFT>

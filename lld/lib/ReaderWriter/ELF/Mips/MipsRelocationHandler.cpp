@@ -101,6 +101,20 @@ static void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
   applyReloc(location, G, 0xffff);
 }
 
+/// \brief R_MIPS_TLS_TPREL_HI16
+/// (S + A) >> 16
+static void relocTLSTpRelHi16(uint8_t *location, uint64_t S, int64_t A) {
+  int32_t result = S + A + 0x8000;
+  applyReloc(location, result >> 16, 0xffff);
+}
+
+/// \brief R_MIPS_TLS_TPREL_LO16
+/// S + A
+static void relocTLSTpRelLo16(uint8_t *location, uint64_t S, int64_t A) {
+  int32_t result = S + A;
+  applyReloc(location, result, 0xffff);
+}
+
 /// \brief R_MIPS_GPREL32
 /// local: rel32 A + S + GP0 – GP (truncate)
 static void relocGPRel32(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
@@ -161,6 +175,12 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case R_MIPS_CALL16:
     relocCall16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
+    break;
+  case R_MIPS_TLS_TPREL_HI16:
+    relocTLSTpRelHi16(location, targetVAddress, ref.addend());
+    break;
+  case R_MIPS_TLS_TPREL_LO16:
+    relocTLSTpRelLo16(location, targetVAddress, ref.addend());
     break;
   case R_MIPS_GPREL32:
     relocGPRel32(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
