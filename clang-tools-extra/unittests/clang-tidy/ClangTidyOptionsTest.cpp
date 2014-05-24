@@ -20,20 +20,21 @@ TEST(ParseLineFilter, InvalidFilter) {
   EXPECT_TRUE(Options.LineFilter.empty());
 
   EXPECT_TRUE(parseLineFilter("[{}]", Options));
-  EXPECT_TRUE(parseLineFilter(R"([{"name":""}])", Options));
-  EXPECT_TRUE(parseLineFilter(R"([{"name":"test","lines":[[1]]}])", Options));
+  EXPECT_TRUE(parseLineFilter("[{\"name\":\"\"}]", Options));
   EXPECT_TRUE(
-      parseLineFilter(R"([{"name":"test","lines":[[1,2,3]]}])", Options));
+      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1]]}]", Options));
   EXPECT_TRUE(
-      parseLineFilter(R"([{"name":"test","lines":[[1,-1]]}])", Options));
+      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,2,3]]}]", Options));
+  EXPECT_TRUE(
+      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,-1]]}]", Options));
 }
 
 TEST(ParseLineFilter, ValidFilter) {
   ClangTidyOptions Options;
   llvm::error_code Error = parseLineFilter(
-      R"([{"name":"file1.cpp","lines":[[3,15],[20,30],[42,42]]},
-          {"name":"file2.h"},
-          {"name":"file3.cc","lines":[[100,1000]]}])",
+      "[{\"name\":\"file1.cpp\",\"lines\":[[3,15],[20,30],[42,42]]},"
+      "{\"name\":\"file2.h\"},"
+      "{\"name\":\"file3.cc\",\"lines\":[[100,1000]]}]",
       Options);
   EXPECT_FALSE(Error);
   EXPECT_EQ(3u, Options.LineFilter.size());
