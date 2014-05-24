@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=neon | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=neon | FileCheck %s --check-prefix=CHECK
 
 define void @test_store_f128(fp128* %ptr, fp128 %val) #0 {
 ; CHECK-LABEL: test_store_f128
@@ -17,8 +17,8 @@ entry:
 }
 
 define void @test_vstrq_p128(i128* %ptr, i128 %val) #0 {
-; CHECK-ARM64-LABEL: test_vstrq_p128
-; CHECK-ARM64: stp {{x[0-9]+}}, {{x[0-9]+}}, [{{x[0-9]+}}]
+; CHECK-LABEL: test_vstrq_p128
+; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [{{x[0-9]+}}]
 
 entry:
   %0 = bitcast i128* %ptr to fp128*
@@ -28,8 +28,8 @@ entry:
 }
 
 define i128 @test_vldrq_p128(i128* readonly %ptr) #2 {
-; CHECK-ARM64-LABEL: test_vldrq_p128
-; CHECK-ARM64: ldp {{x[0-9]+}}, {{x[0-9]+}}, [{{x[0-9]+}}]
+; CHECK-LABEL: test_vldrq_p128
+; CHECK: ldp {{x[0-9]+}}, {{x[0-9]+}}, [{{x[0-9]+}}]
 
 entry:
   %0 = bitcast i128* %ptr to fp128*

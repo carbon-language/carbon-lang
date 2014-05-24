@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
 define <8 x i8> @and8xi8(<8 x i8> %a, <8 x i8> %b) {
 ; CHECK-LABEL: and8xi8:

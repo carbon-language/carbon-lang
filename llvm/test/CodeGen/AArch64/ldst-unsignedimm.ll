@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 @var_8bit = global i8 0
 @var_16bit = global i16 0

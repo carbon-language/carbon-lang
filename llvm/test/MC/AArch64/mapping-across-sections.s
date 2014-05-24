@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj < %s | llvm-objdump -t - | FileCheck %s
+// RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj < %s | llvm-objdump -t - | FileCheck %s
 
         .text
         add w0, w0, w0

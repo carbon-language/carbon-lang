@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
-; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
+; RUN: llc -mtriple=aarch64-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
 
 declare void @use_addr(i8*)
 
@@ -53,7 +53,7 @@ define i64 @test_alloca_with_local(i64 %n) {
 
   %val = load i64* %loc
 
-; CHECK-ARM64: ldur x0, [x29, #-[[LOC_FROM_FP]]]
+; CHECK: ldur x0, [x29, #-[[LOC_FROM_FP]]]
 
   ret i64 %val
   ; Make sure epilogue restores sp from fp
@@ -74,16 +74,16 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK-NOFP-AARCH64: add     x8, [[TMP]], #0
 
 
-; CHECK-ARM64: stp     x29, x30, [sp, #-16]!
-; CHECK-ARM64: mov     x29, sp
-; CHECK-ARM64: sub     sp, sp, #192
-; CHECK-ARM64: stp     q6, q7, [x29, #-96]
+; CHECK: stp     x29, x30, [sp, #-16]!
+; CHECK: mov     x29, sp
+; CHECK: sub     sp, sp, #192
+; CHECK: stp     q6, q7, [x29, #-96]
 ; [...]
-; CHECK-ARM64: stp     q0, q1, [x29, #-192]
+; CHECK: stp     q0, q1, [x29, #-192]
 
-; CHECK-ARM64: stp     x6, x7, [x29, #-16]
+; CHECK: stp     x6, x7, [x29, #-16]
 ; [...]
-; CHECK-ARM64: stp     x2, x3, [x29, #-48]
+; CHECK: stp     x2, x3, [x29, #-48]
 
 ; CHECK-NOFP-ARM64: stp     x29, x30, [sp, #-16]!
 ; CHECK-NOFP-ARM64: mov     x29, sp
@@ -115,11 +115,11 @@ define void @test_alloca_large_frame(i64 %n) {
 ; CHECK-LABEL: test_alloca_large_frame:
 
 
-; CHECK-ARM64: stp     x20, x19, [sp, #-32]!
-; CHECK-ARM64: stp     x29, x30, [sp, #16]
-; CHECK-ARM64: add     x29, sp, #16
-; CHECK-ARM64: sub     sp, sp, #1953, lsl #12
-; CHECK-ARM64: sub     sp, sp, #512
+; CHECK: stp     x20, x19, [sp, #-32]!
+; CHECK: stp     x29, x30, [sp, #16]
+; CHECK: add     x29, sp, #16
+; CHECK: sub     sp, sp, #1953, lsl #12
+; CHECK: sub     sp, sp, #512
 
   %addr1 = alloca i8, i64 %n
   %addr2 = alloca i64, i64 1000000
@@ -128,9 +128,9 @@ define void @test_alloca_large_frame(i64 %n) {
 
   ret void
 
-; CHECK-ARM64: sub     sp, x29, #16
-; CHECK-ARM64: ldp     x29, x30, [sp, #16]
-; CHECK-ARM64: ldp     x20, x19, [sp], #32
+; CHECK: sub     sp, x29, #16
+; CHECK: ldp     x29, x30, [sp, #16]
+; CHECK: ldp     x20, x19, [sp], #32
 }
 
 declare i8* @llvm.stacksave()

@@ -1,11 +1,11 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-apple-ios7.0 -mcpu=cyclone | FileCheck %s --check-prefix=CHECK-ARM64
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-none-apple-ios7.0 -mcpu=cyclone | FileCheck %s
 
 ; Check  trunc i64 operation is translated as a subregister access
 ; eliminating an i32 induction varible.
 
-; CHECK-ARM64-NOT: add {{x[0-9]+}}, {{x[0-9]+}}, #1
-; CHECK-ARM64: add {{w[0-9]+}}, {{w[0-9]+}}, #1
-; CHECK-ARM64-NEXT: cmp {{w[0-9]+}}, {{w[0-9]+}}
+; CHECK-NOT: add {{x[0-9]+}}, {{x[0-9]+}}, #1
+; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #1
+; CHECK-NEXT: cmp {{w[0-9]+}}, {{w[0-9]+}}
 define void @test1_signed([8 x i8]* nocapture %a, i8* nocapture readonly %box, i8 %limit) minsize {
 entry:
   %conv = zext i8 %limit to i32

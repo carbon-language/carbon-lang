@@ -1,6 +1,6 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck %s
-; RUN: llc -code-model=large -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck --check-prefix=CHECK-LARGE %s
-; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -relocation-model=pic -o - %s | FileCheck --check-prefix=CHECK-PIC %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -code-model=large -verify-machineinstrs -o - %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK-LARGE %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -relocation-model=pic -o - %s | FileCheck --check-prefix=CHECK-PIC %s
 
 define i32 @test_jumptable(i32 %in) {
 ; CHECK: test_jumptable

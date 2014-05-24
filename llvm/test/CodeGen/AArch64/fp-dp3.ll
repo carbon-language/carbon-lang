@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -fp-contract=fast | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-none-linux-gnu -fp-contract=fast | FileCheck %s
 ; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-apple-ios7.0 | FileCheck %s -check-prefix=CHECK-NOFAST
 
 declare float @llvm.fma.f32(float, float, float)

@@ -168,8 +168,9 @@ void RuntimeDyldMachO::resolveRelocation(const RelocationEntry &RE,
   case Triple::thumb:
     resolveARMRelocation(RE, Value);
     break;
+  case Triple::aarch64:
   case Triple::arm64:
-    resolveARM64Relocation(RE, Value);
+    resolveAArch64Relocation(RE, Value);
     break;
   }
 }
@@ -289,8 +290,8 @@ bool RuntimeDyldMachO::resolveARMRelocation(const RelocationEntry &RE,
   return false;
 }
 
-bool RuntimeDyldMachO::resolveARM64Relocation(const RelocationEntry &RE,
-                                              uint64_t Value) {
+bool RuntimeDyldMachO::resolveAArch64Relocation(const RelocationEntry &RE,
+                                                uint64_t Value) {
   const SectionEntry &Section = Sections[RE.SectionID];
   uint8_t* LocalAddress = Section.Address + RE.Offset;
 

@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64-linux-gnu < %s -show-mc-encoding -code-model=large | FileCheck %s --check-prefix=CHECK-ARM64
+; RUN: llc -mtriple=aarch64-linux-gnu < %s -show-mc-encoding -code-model=large | FileCheck %s
 
 @var = global i32 0
 
@@ -8,8 +8,8 @@
 define i32* @get_var() {
   ret i32* @var
 
-; CHECK-ARM64: movz    x0, #:abs_g3:var        // encoding: [0bAAA00000,A,0b111AAAAA,0xd2]
-; CHECK-ARM64: movk    x0, #:abs_g2_nc:var     // encoding: [0bAAA00000,A,0b110AAAAA,0xf2]
-; CHECK-ARM64: movk    x0, #:abs_g1_nc:var     // encoding: [0bAAA00000,A,0b101AAAAA,0xf2]
-; CHECK-ARM64: movk    x0, #:abs_g0_nc:var     // encoding: [0bAAA00000,A,0b100AAAAA,0xf2]
+; CHECK: movz    x0, #:abs_g3:var        // encoding: [0bAAA00000,A,0b111AAAAA,0xd2]
+; CHECK: movk    x0, #:abs_g2_nc:var     // encoding: [0bAAA00000,A,0b110AAAAA,0xf2]
+; CHECK: movk    x0, #:abs_g1_nc:var     // encoding: [0bAAA00000,A,0b101AAAAA,0xf2]
+; CHECK: movk    x0, #:abs_g0_nc:var     // encoding: [0bAAA00000,A,0b100AAAAA,0xf2]
 }

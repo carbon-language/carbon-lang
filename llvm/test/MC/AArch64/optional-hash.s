@@ -1,5 +1,5 @@
 // PR18929
-// RUN: llvm-mc < %s -triple=arm64-linux-gnueabi -mattr=+fp-armv8,+neon -filetype=obj -o - \
+// RUN: llvm-mc < %s -triple=aarch64-linux-gnueabi -mattr=+fp-armv8,+neon -filetype=obj -o - \
 // RUN: | llvm-objdump --disassemble -arch=arm64 -mattr=+fp-armv8,+neon - | FileCheck %s
 
     .text

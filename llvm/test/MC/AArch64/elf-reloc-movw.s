@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj %s -o - | \
+// RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj %s -o - | \
 // RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
 
         movz x0, #:abs_g0:some_label

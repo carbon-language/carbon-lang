@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=arm64-none-linux-gnu -relocation-model=pic -o - %s | FileCheck %s
-; RUN: llc -mtriple=arm64-none-linux-gnu -relocation-model=pic -filetype=obj -o - %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -o - %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -filetype=obj -o - %s
 
 ; LLVM gives well-defined semantics to this horrible construct (though C says
 ; it's undefined). Regardless, we shouldn't crash. The important feature here is

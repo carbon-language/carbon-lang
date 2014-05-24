@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -mcpu=cyclone | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-none-linux-gnu -mcpu=cyclone | FileCheck %s --check-prefix=CHECK
 
 @varfloat = global float 0.0
 @vardouble = global double 0.0
@@ -12,7 +12,7 @@ define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
   %tst1 = icmp ugt i32 %lhs32, %rhs32
   %val1 = select i1 %tst1, float 0.0, float 1.0
   store float %val1, float* @varfloat
-; CHECK-ARM64: movi v[[FLT0:[0-9]+]].2d, #0
+; CHECK: movi v[[FLT0:[0-9]+]].2d, #0
 ; CHECK: fmov s[[FLT1:[0-9]+]], #1.0
 ; CHECK: fcsel {{s[0-9]+}}, s[[FLT0]], s[[FLT1]], hi
 

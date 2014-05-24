@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-apple-ios7.0 -O0
 
 ; (The O0 test is to make sure FastISel still constrains its operands properly

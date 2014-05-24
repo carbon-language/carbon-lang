@@ -1,9 +1,9 @@
-; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+neon < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s --check-prefix=CHECK
 
 
 define float @test_dup_sv2S(<2 x float> %v) {
  ; CHECK-LABEL: test_dup_sv2S
- ; CHECK-ARM64: ins {{v[0-9]+}}.s[0], {{v[0-9]+}}.s[1]
+ ; CHECK: ins {{v[0-9]+}}.s[0], {{v[0-9]+}}.s[1]
  %tmp1 = extractelement <2 x float> %v, i32 1
  ret float  %tmp1
 }
@@ -37,14 +37,14 @@ define double @test_dup_dvD(<1 x double> %v) {
 
 define double @test_dup_dv2D(<2 x double> %v) {
  ; CHECK-LABEL: test_dup_dv2D
- ; CHECK-ARM64: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
+ ; CHECK: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
  %tmp1 = extractelement <2 x double> %v, i32 1
  ret double  %tmp1
 }
 
 define double @test_dup_dv2D_0(<2 x double> %v) {
  ; CHECK-LABEL: test_dup_dv2D_0
- ; CHECK-ARM64: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
+ ; CHECK: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
  ; CHECK: ret
  %tmp1 = extractelement <2 x double> %v, i32 1
  ret double  %tmp1
@@ -88,7 +88,7 @@ define <1 x i32> @test_vector_dup_sv2S(<2 x i32> %v1) {
 
 define <1 x i64> @test_vector_dup_dv2D(<2 x i64> %v1) {
  ; CHECK-LABEL: test_vector_dup_dv2D
- ; CHECK-ARM64: ext {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #8
+ ; CHECK: ext {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #8
  %shuffle.i = shufflevector <2 x i64> %v1, <2 x i64> undef, <1 x i32> <i32 1> 
  ret <1 x i64> %shuffle.i
 }

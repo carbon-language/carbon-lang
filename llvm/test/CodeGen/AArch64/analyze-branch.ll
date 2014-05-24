@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64-none-linux-gnu < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
 
 ; This test checks that LLVM can do basic stripping and reapplying of branches
 ; to basic blocks.

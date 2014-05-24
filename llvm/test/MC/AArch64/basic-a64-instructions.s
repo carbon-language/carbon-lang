@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple arm64-none-linux-gnu -show-encoding -mattr=+fp-armv8 < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+// RUN: llvm-mc -triple aarch64-none-linux-gnu -show-encoding -mattr=+fp-armv8 < %s | FileCheck %s
   .globl _func
 
 // Check that the assembler can handle the documented syntax from the ARM ARM.
@@ -127,7 +127,7 @@ _func:
 // CHECK: adds     w19, w17, w1, uxtx         // encoding: [0x33,0x62,0x21,0x2b]
 // CHECK: adds     w2, w5, w1, sxtb #1        // encoding: [0xa2,0x84,0x21,0x2b]
 // CHECK: adds     w26, wsp, w19, sxth        // encoding: [0xfa,0xa3,0x33,0x2b]
-// CHECK-ARM64: cmn w2, w3, sxtw          // encoding: [0x5f,0xc0,0x23,0x2b]
+// CHECK: cmn w2, w3, sxtw          // encoding: [0x5f,0xc0,0x23,0x2b]
 // CHECK: adds     w2, w3, w5, sxtx           // encoding: [0x62,0xe0,0x25,0x2b]
 
         // subs
@@ -255,7 +255,7 @@ _func:
 // CHECK: sub      sp, x3, x7, lsl #4         // encoding: [0x7f,0x70,0x27,0xcb]
 // CHECK: add      w2, wsp, w3, lsl #1        // encoding: [0xe2,0x47,0x23,0x0b]
 // CHECK: cmp      wsp, w9                    // encoding: [0xff,0x43,0x29,0x6b]
-// CHECK-ARM64: cmn wsp, w3, lsl #4       // encoding: [0xff,0x53,0x23,0x2b]
+// CHECK: cmn wsp, w3, lsl #4       // encoding: [0xff,0x53,0x23,0x2b]
 // CHECK: subs     x3, sp, x9, lsl #2         // encoding: [0xe3,0x6b,0x29,0xeb]
 
 //------------------------------------------------------------------------------
@@ -349,8 +349,8 @@ _func:
 
 // A relocation check (default to lo12, which is the only sane relocation anyway really)
         add x0, x4, #:lo12:var
-// CHECK-ARM64: add x0, x4, :lo12:var       // encoding: [0x80,0bAAAAAA00,0b00AAAAAA,0x91]
-// CHECK-ARM64:                             // fixup A - offset: 0, value: :lo12:var, kind: fixup_arm64_add_imm12
+// CHECK: add x0, x4, :lo12:var       // encoding: [0x80,0bAAAAAA00,0b00AAAAAA,0x91]
+// CHECK:                             // fixup A - offset: 0, value: :lo12:var, kind: fixup_aarch64_add_imm12
 
 //------------------------------------------------------------------------------
 // Add-sub (shifted register)
@@ -484,7 +484,7 @@ _func:
         sub w4, w6, wzr
 // CHECK: sub      w3, w5, w7                 // encoding: [0xa3,0x00,0x07,0x4b]
 // CHECK: sub      wzr, w3, w5                // encoding: [0x7f,0x00,0x05,0x4b]
-// CHECK-ARM64: neg      w20, w4              // encoding: [0xf4,0x03,0x04,0x4b]
+// CHECK: neg      w20, w4              // encoding: [0xf4,0x03,0x04,0x4b]
 // CHECK: sub      w4, w6, wzr                // encoding: [0xc4,0x00,0x1f,0x4b]
 
         sub w11, w13, w15, lsl #0
@@ -514,7 +514,7 @@ _func:
         sub x4, x6, xzr
 // CHECK: sub      x3, x5, x7                 // encoding: [0xa3,0x00,0x07,0xcb]
 // CHECK: sub      xzr, x3, x5                // encoding: [0x7f,0x00,0x05,0xcb]
-// CHECK-ARM64: neg      x20, x4              // encoding: [0xf4,0x03,0x04,0xcb]
+// CHECK: neg      x20, x4              // encoding: [0xf4,0x03,0x04,0xcb]
 // CHECK: sub      x4, x6, xzr                // encoding: [0xc4,0x00,0x1f,0xcb]
 
         sub x11, x13, x15, lsl #0
@@ -544,7 +544,7 @@ _func:
         subs w4, w6, wzr
 // CHECK: subs     w3, w5, w7                 // encoding: [0xa3,0x00,0x07,0x6b]
 // CHECK: {{subs wzr,|cmp}} w3, w5            // encoding: [0x7f,0x00,0x05,0x6b]
-// CHECK-ARM64: negs     w20, w4              // encoding: [0xf4,0x03,0x04,0x6b]
+// CHECK: negs     w20, w4              // encoding: [0xf4,0x03,0x04,0x6b]
 // CHECK: subs     w4, w6, wzr                // encoding: [0xc4,0x00,0x1f,0x6b]
 
         subs w11, w13, w15, lsl #0
@@ -574,7 +574,7 @@ _func:
         subs x4, x6, xzr
 // CHECK: subs     x3, x5, x7                 // encoding: [0xa3,0x00,0x07,0xeb]
 // CHECK: {{subs xzr,|cmp}} x3, x5            // encoding: [0x7f,0x00,0x05,0xeb]
-// CHECK-ARM64: negs     x20, x4              // encoding: [0xf4,0x03,0x04,0xeb]
+// CHECK: negs     x20, x4              // encoding: [0xf4,0x03,0x04,0xeb]
 // CHECK: subs     x4, x6, xzr                // encoding: [0xc4,0x00,0x1f,0xeb]
 
         subs x11, x13, x15, lsl #0
@@ -713,17 +713,17 @@ _func:
         neg w29, w30
         neg w30, wzr
         neg wzr, w0
-// CHECK-ARM64: neg      w29, w30              // encoding: [0xfd,0x03,0x1e,0x4b]
-// CHECK-ARM64: neg      w30, wzr              // encoding: [0xfe,0x03,0x1f,0x4b]
-// CHECK-ARM64: neg      wzr, w0               // encoding: [0xff,0x03,0x00,0x4b]
+// CHECK: neg      w29, w30              // encoding: [0xfd,0x03,0x1e,0x4b]
+// CHECK: neg      w30, wzr              // encoding: [0xfe,0x03,0x1f,0x4b]
+// CHECK: neg      wzr, w0               // encoding: [0xff,0x03,0x00,0x4b]
 
         neg w28, w27, lsl #0
         neg w26, w25, lsl #29
         neg w24, w23, lsl #31
 
-// CHECK-ARM64: neg      w28, w27              // encoding: [0xfc,0x03,0x1b,0x4b]
-// CHECK-ARM64: neg      w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x4b]
-// CHECK-ARM64: neg      w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x4b]
+// CHECK: neg      w28, w27              // encoding: [0xfc,0x03,0x1b,0x4b]
+// CHECK: neg      w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x4b]
+// CHECK: neg      w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x4b]
 
         neg w22, w21, lsr #0
         neg w20, w19, lsr #1
@@ -742,17 +742,17 @@ _func:
         neg x29, x30
         neg x30, xzr
         neg xzr, x0
-// CHECK-ARM64: neg      x29, x30              // encoding: [0xfd,0x03,0x1e,0xcb]
-// CHECK-ARM64: neg      x30, xzr              // encoding: [0xfe,0x03,0x1f,0xcb]
-// CHECK-ARM64: neg      xzr, x0               // encoding: [0xff,0x03,0x00,0xcb]
+// CHECK: neg      x29, x30              // encoding: [0xfd,0x03,0x1e,0xcb]
+// CHECK: neg      x30, xzr              // encoding: [0xfe,0x03,0x1f,0xcb]
+// CHECK: neg      xzr, x0               // encoding: [0xff,0x03,0x00,0xcb]
 
         neg x28, x27, lsl #0
         neg x26, x25, lsl #29
         neg x24, x23, lsl #31
 
-// CHECK-ARM64: neg      x28, x27              // encoding: [0xfc,0x03,0x1b,0xcb]
-// CHECK-ARM64: neg      x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xcb]
-// CHECK-ARM64: neg      x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xcb]
+// CHECK: neg      x28, x27              // encoding: [0xfc,0x03,0x1b,0xcb]
+// CHECK: neg      x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xcb]
+// CHECK: neg      x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xcb]
 
         neg x22, x21, lsr #0
         neg x20, x19, lsr #1
@@ -771,17 +771,17 @@ _func:
         negs w29, w30
         negs w30, wzr
         negs wzr, w0
-// CHECK-ARM64: negs     w29, w30              // encoding: [0xfd,0x03,0x1e,0x6b]
-// CHECK-ARM64: negs     w30, wzr              // encoding: [0xfe,0x03,0x1f,0x6b]
-// CHECK-ARM64: cmp      wzr, w0               // encoding: [0xff,0x03,0x00,0x6b]
+// CHECK: negs     w29, w30              // encoding: [0xfd,0x03,0x1e,0x6b]
+// CHECK: negs     w30, wzr              // encoding: [0xfe,0x03,0x1f,0x6b]
+// CHECK: cmp      wzr, w0               // encoding: [0xff,0x03,0x00,0x6b]
 
         negs w28, w27, lsl #0
         negs w26, w25, lsl #29
         negs w24, w23, lsl #31
 
-// CHECK-ARM64: negs     w28, w27             // encoding: [0xfc,0x03,0x1b,0x6b]
-// CHECK-ARM64: negs     w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x6b]
-// CHECK-ARM64: negs     w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x6b]
+// CHECK: negs     w28, w27             // encoding: [0xfc,0x03,0x1b,0x6b]
+// CHECK: negs     w26, w25, lsl #29     // encoding: [0xfa,0x77,0x19,0x6b]
+// CHECK: negs     w24, w23, lsl #31     // encoding: [0xf8,0x7f,0x17,0x6b]
 
         negs w22, w21, lsr #0
         negs w20, w19, lsr #1
@@ -800,17 +800,17 @@ _func:
         negs x29, x30
         negs x30, xzr
         negs xzr, x0
-// CHECK-ARM64: negs     x29, x30              // encoding: [0xfd,0x03,0x1e,0xeb]
-// CHECK-ARM64: negs     x30, xzr              // encoding: [0xfe,0x03,0x1f,0xeb]
-// CHECK-ARM64: cmp     xzr, x0                // encoding: [0xff,0x03,0x00,0xeb]
+// CHECK: negs     x29, x30              // encoding: [0xfd,0x03,0x1e,0xeb]
+// CHECK: negs     x30, xzr              // encoding: [0xfe,0x03,0x1f,0xeb]
+// CHECK: cmp     xzr, x0                // encoding: [0xff,0x03,0x00,0xeb]
 
         negs x28, x27, lsl #0
         negs x26, x25, lsl #29
         negs x24, x23, lsl #31
 
-// CHECK-ARM64: negs     x28, x27              // encoding: [0xfc,0x03,0x1b,0xeb]
-// CHECK-ARM64: negs     x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xeb]
-// CHECK-ARM64: negs     x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xeb]
+// CHECK: negs     x28, x27              // encoding: [0xfc,0x03,0x1b,0xeb]
+// CHECK: negs     x26, x25, lsl #29     // encoding: [0xfa,0x77,0x19,0xeb]
+// CHECK: negs     x24, x23, lsl #31     // encoding: [0xf8,0x7f,0x17,0xeb]
 
         negs x22, x21, lsr #0
         negs x20, x19, lsr #1
@@ -938,28 +938,28 @@ _func:
         sbfm wzr, wzr, #31, #31
         sbfm w12, w9, #0, #0
 
-// CHECK-ARM64: sbfx     x1, x2, #3, #2       // encoding: [0x41,0x10,0x43,0x93]
-// CHECK-ARM64: asr      x3, x4, #63          // encoding: [0x83,0xfc,0x7f,0x93]
-// CHECK-ARM64: asr      wzr, wzr, #31        // encoding: [0xff,0x7f,0x1f,0x13]
-// CHECK-ARM64: sbfx     w12, w9, #0, #1      // encoding: [0x2c,0x01,0x00,0x13]
+// CHECK: sbfx     x1, x2, #3, #2       // encoding: [0x41,0x10,0x43,0x93]
+// CHECK: asr      x3, x4, #63          // encoding: [0x83,0xfc,0x7f,0x93]
+// CHECK: asr      wzr, wzr, #31        // encoding: [0xff,0x7f,0x1f,0x13]
+// CHECK: sbfx     w12, w9, #0, #1      // encoding: [0x2c,0x01,0x00,0x13]
 
         ubfm x4, x5, #12, #10
         ubfm xzr, x4, #0, #0
         ubfm x4, xzr, #63, #5
         ubfm x5, x6, #12, #63
-// CHECK-ARM64: ubfiz    x4, x5, #52, #11        // encoding: [0xa4,0x28,0x4c,0xd3]
-// CHECK-ARM64: ubfx     xzr, x4, #0, #1         // encoding: [0x9f,0x00,0x40,0xd3]
-// CHECK-ARM64: ubfiz    x4, xzr, #1, #6         // encoding: [0xe4,0x17,0x7f,0xd3]
-// CHECK-ARM64: lsr      x5, x6, #12             // encoding: [0xc5,0xfc,0x4c,0xd3]
+// CHECK: ubfiz    x4, x5, #52, #11        // encoding: [0xa4,0x28,0x4c,0xd3]
+// CHECK: ubfx     xzr, x4, #0, #1         // encoding: [0x9f,0x00,0x40,0xd3]
+// CHECK: ubfiz    x4, xzr, #1, #6         // encoding: [0xe4,0x17,0x7f,0xd3]
+// CHECK: lsr      x5, x6, #12             // encoding: [0xc5,0xfc,0x4c,0xd3]
 
         bfm x4, x5, #12, #10
         bfm xzr, x4, #0, #0
         bfm x4, xzr, #63, #5
         bfm x5, x6, #12, #63
-// CHECK-ARM64: bfi      x4, x5, #52, #11           // encoding: [0xa4,0x28,0x4c,0xb3]
-// CHECK-ARM64: bfxil    xzr, x4, #0, #1            // encoding: [0x9f,0x00,0x40,0xb3]
-// CHECK-ARM64: bfi      x4, xzr, #1, #6            // encoding: [0xe4,0x17,0x7f,0xb3]
-// CHECK-ARM64: bfxil    x5, x6, #12, #52           // encoding: [0xc5,0xfc,0x4c,0xb3]
+// CHECK: bfi      x4, x5, #52, #11           // encoding: [0xa4,0x28,0x4c,0xb3]
+// CHECK: bfxil    xzr, x4, #0, #1            // encoding: [0x9f,0x00,0x40,0xb3]
+// CHECK: bfi      x4, xzr, #1, #6            // encoding: [0xe4,0x17,0x7f,0xb3]
+// CHECK: bfxil    x5, x6, #12, #52           // encoding: [0xc5,0xfc,0x4c,0xb3]
 
         sxtb w1, w2
         sxtb xzr, w3
@@ -1018,9 +1018,9 @@ _func:
         sbfiz xzr, xzr, #10, #11
 // CHECK: {{sbfiz|sbfx}}    w9, w10, #0, #1   // encoding: [0x49,0x01,0x00,0x13]
 // CHECK: sbfiz    x2, x3, #63, #1            // encoding: [0x62,0x00,0x41,0x93]
-// CHECK-ARM64: asr    x19, x20, #0           // encoding: [0x93,0xfe,0x40,0x93]
+// CHECK: asr    x19, x20, #0           // encoding: [0x93,0xfe,0x40,0x93]
 // CHECK: sbfiz    x9, x10, #5, #59           // encoding: [0x49,0xe9,0x7b,0x93]
-// CHECK-ARM64: asr    w9, w10, #0            // encoding: [0x49,0x7d,0x00,0x13]
+// CHECK: asr    w9, w10, #0            // encoding: [0x49,0x7d,0x00,0x13]
 // CHECK: sbfiz    w11, w12, #31, #1          // encoding: [0x8b,0x01,0x01,0x13]
 // CHECK: sbfiz    w13, w14, #29, #3          // encoding: [0xcd,0x09,0x03,0x13]
 // CHECK: sbfiz    xzr, xzr, #10, #11         // encoding: [0xff,0x2b,0x76,0x93]
@@ -1034,12 +1034,12 @@ _func:
         sbfx w13, w14, #29, #3
         sbfx xzr, xzr, #10, #11
 // CHECK: sbfx     w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x13]
-// CHECK-ARM64: asr     x2, x3, #63           // encoding: [0x62,0xfc,0x7f,0x93]
-// CHECK-ARM64: asr     x19, x20, #0          // encoding: [0x93,0xfe,0x40,0x93]
-// CHECK-ARM64: asr     x9, x10, #5           // encoding: [0x49,0xfd,0x45,0x93]
-// CHECK-ARM64: asr     w9, w10, #0           // encoding: [0x49,0x7d,0x00,0x13]
-// CHECK-ARM64: asr     w11, w12, #31         // encoding: [0x8b,0x7d,0x1f,0x13]
-// CHECK-ARM64: asr     w13, w14, #29         // encoding: [0xcd,0x7d,0x1d,0x13]
+// CHECK: asr     x2, x3, #63           // encoding: [0x62,0xfc,0x7f,0x93]
+// CHECK: asr     x19, x20, #0          // encoding: [0x93,0xfe,0x40,0x93]
+// CHECK: asr     x9, x10, #5           // encoding: [0x49,0xfd,0x45,0x93]
+// CHECK: asr     w9, w10, #0           // encoding: [0x49,0x7d,0x00,0x13]
+// CHECK: asr     w11, w12, #31         // encoding: [0x8b,0x7d,0x1f,0x13]
+// CHECK: asr     w13, w14, #29         // encoding: [0xcd,0x7d,0x1d,0x13]
 // CHECK: sbfx     xzr, xzr, #10, #11         // encoding: [0xff,0x53,0x4a,0x93]
 
         bfi w9, w10, #0, #1
@@ -1051,14 +1051,14 @@ _func:
         bfi w13, w14, #29, #3
         bfi xzr, xzr, #10, #11
 
-// CHECK-ARM64: bfxil    w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x33]
-// CHECK-ARM64: bfi      x2, x3, #63, #1            // encoding: [0x62,0x00,0x41,0xb3]
-// CHECK-ARM64: bfxil    x19, x20, #0, #64          // encoding: [0x93,0xfe,0x40,0xb3]
-// CHECK-ARM64: bfi      x9, x10, #5, #59           // encoding: [0x49,0xe9,0x7b,0xb3]
-// CHECK-ARM64: bfxil    w9, w10, #0, #32           // encoding: [0x49,0x7d,0x00,0x33]
-// CHECK-ARM64: bfi      w11, w12, #31, #1          // encoding: [0x8b,0x01,0x01,0x33]
-// CHECK-ARM64: bfi      w13, w14, #29, #3          // encoding: [0xcd,0x09,0x03,0x33]
-// CHECK-ARM64: bfi      xzr, xzr, #10, #11         // encoding: [0xff,0x2b,0x76,0xb3]
+// CHECK: bfxil    w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x33]
+// CHECK: bfi      x2, x3, #63, #1            // encoding: [0x62,0x00,0x41,0xb3]
+// CHECK: bfxil    x19, x20, #0, #64          // encoding: [0x93,0xfe,0x40,0xb3]
+// CHECK: bfi      x9, x10, #5, #59           // encoding: [0x49,0xe9,0x7b,0xb3]
+// CHECK: bfxil    w9, w10, #0, #32           // encoding: [0x49,0x7d,0x00,0x33]
+// CHECK: bfi      w11, w12, #31, #1          // encoding: [0x8b,0x01,0x01,0x33]
+// CHECK: bfi      w13, w14, #29, #3          // encoding: [0xcd,0x09,0x03,0x33]
+// CHECK: bfi      xzr, xzr, #10, #11         // encoding: [0xff,0x2b,0x76,0xb3]
 
         bfxil w9, w10, #0, #1
         bfxil x2, x3, #63, #1
@@ -1086,14 +1086,14 @@ _func:
         ubfiz w13, w14, #29, #3
         ubfiz xzr, xzr, #10, #11
 
-// CHECK-ARM64: ubfx     w9, w10, #0, #1         // encoding: [0x49,0x01,0x00,0x53]
-// CHECK-ARM64: lsl      x2, x3, #63             // encoding: [0x62,0x00,0x41,0xd3]
-// CHECK-ARM64: lsr      x19, x20, #0            // encoding: [0x93,0xfe,0x40,0xd3]
-// CHECK-ARM64: lsl      x9, x10, #5             // encoding: [0x49,0xe9,0x7b,0xd3]
-// CHECK-ARM64: lsr      w9, w10, #0             // encoding: [0x49,0x7d,0x00,0x53]
-// CHECK-ARM64: lsl      w11, w12, #31           // encoding: [0x8b,0x01,0x01,0x53]
-// CHECK-ARM64: lsl      w13, w14, #29           // encoding: [0xcd,0x09,0x03,0x53]
-// CHECK-ARM64: ubfiz    xzr, xzr, #10, #11      // encoding: [0xff,0x2b,0x76,0xd3]
+// CHECK: ubfx     w9, w10, #0, #1         // encoding: [0x49,0x01,0x00,0x53]
+// CHECK: lsl      x2, x3, #63             // encoding: [0x62,0x00,0x41,0xd3]
+// CHECK: lsr      x19, x20, #0            // encoding: [0x93,0xfe,0x40,0xd3]
+// CHECK: lsl      x9, x10, #5             // encoding: [0x49,0xe9,0x7b,0xd3]
+// CHECK: lsr      w9, w10, #0             // encoding: [0x49,0x7d,0x00,0x53]
+// CHECK: lsl      w11, w12, #31           // encoding: [0x8b,0x01,0x01,0x53]
+// CHECK: lsl      w13, w14, #29           // encoding: [0xcd,0x09,0x03,0x53]
+// CHECK: ubfiz    xzr, xzr, #10, #11      // encoding: [0xff,0x2b,0x76,0xd3]
 
         ubfx w9, w10, #0, #1
         ubfx x2, x3, #63, #1
@@ -1104,14 +1104,14 @@ _func:
         ubfx w13, w14, #29, #3
         ubfx xzr, xzr, #10, #11
 
-// CHECK-ARM64: ubfx    w9, w10, #0, #1         // encoding: [0x49,0x01,0x00,0x53]
-// CHECK-ARM64: lsr     x2, x3, #63             // encoding: [0x62,0xfc,0x7f,0xd3]
-// CHECK-ARM64: lsr     x19, x20, #0            // encoding: [0x93,0xfe,0x40,0xd3]
-// CHECK-ARM64: lsr     x9, x10, #5             // encoding: [0x49,0xfd,0x45,0xd3]
-// CHECK-ARM64: lsr     w9, w10, #0             // encoding: [0x49,0x7d,0x00,0x53]
-// CHECK-ARM64: lsr     w11, w12, #31           // encoding: [0x8b,0x7d,0x1f,0x53]
-// CHECK-ARM64: lsr     w13, w14, #29           // encoding: [0xcd,0x7d,0x1d,0x53]
-// CHECK-ARM64: ubfx    xzr, xzr, #10, #11      // encoding: [0xff,0x53,0x4a,0xd3]
+// CHECK: ubfx    w9, w10, #0, #1         // encoding: [0x49,0x01,0x00,0x53]
+// CHECK: lsr     x2, x3, #63             // encoding: [0x62,0xfc,0x7f,0xd3]
+// CHECK: lsr     x19, x20, #0            // encoding: [0x93,0xfe,0x40,0xd3]
+// CHECK: lsr     x9, x10, #5             // encoding: [0x49,0xfd,0x45,0xd3]
+// CHECK: lsr     w9, w10, #0             // encoding: [0x49,0x7d,0x00,0x53]
+// CHECK: lsr     w11, w12, #31           // encoding: [0x8b,0x7d,0x1f,0x53]
+// CHECK: lsr     w13, w14, #29           // encoding: [0xcd,0x7d,0x1d,0x53]
+// CHECK: ubfx    xzr, xzr, #10, #11      // encoding: [0xff,0x53,0x4a,0xd3]
 //------------------------------------------------------------------------------
 // Compare & branch (immediate)
 //------------------------------------------------------------------------------
@@ -1120,22 +1120,22 @@ _func:
         cbz x5, lbl
         cbnz x2, lbl
         cbnz x26, lbl
-// CHECK-ARM64: cbz    w5, lbl                 // encoding: [0bAAA00101,A,A,0x34]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: cbz    x5, lbl                 // encoding: [0bAAA00101,A,A,0xb4]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: cbnz    x2, lbl                 // encoding: [0bAAA00010,A,A,0xb5]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: cbnz    x26, lbl                // encoding: [0bAAA11010,A,A,0xb5]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
+// CHECK: cbz    w5, lbl                 // encoding: [0bAAA00101,A,A,0x34]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: cbz    x5, lbl                 // encoding: [0bAAA00101,A,A,0xb4]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: cbnz    x2, lbl                 // encoding: [0bAAA00010,A,A,0xb5]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: cbnz    x26, lbl                // encoding: [0bAAA11010,A,A,0xb5]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
 
         cbz wzr, lbl
         cbnz xzr, lbl
 
-// CHECK-ARM64: cbz    wzr, lbl                // encoding: [0bAAA11111,A,A,0x34]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: cbnz    xzr, lbl                // encoding: [0bAAA11111,A,A,0xb5]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
+// CHECK: cbz    wzr, lbl                // encoding: [0bAAA11111,A,A,0x34]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: cbnz    xzr, lbl                // encoding: [0bAAA11111,A,A,0xb5]
+// CHECK:                                 //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
 
         cbz w5, #0
         cbnz x3, #-4
@@ -1168,40 +1168,40 @@ _func:
         b.le lbl
         b.al lbl
 
-// CHECK-ARM64: b.eq lbl                     // encoding: [0bAAA00000,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.ne lbl                     // encoding: [0bAAA00001,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.hs lbl                     // encoding: [0bAAA00010,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.hs lbl                     // encoding: [0bAAA00010,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.lo lbl                     // encoding: [0bAAA00011,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.lo lbl                     // encoding: [0bAAA00011,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.mi lbl                     // encoding: [0bAAA00100,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.pl lbl                     // encoding: [0bAAA00101,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.vs lbl                     // encoding: [0bAAA00110,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.vc lbl                     // encoding: [0bAAA00111,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.hi lbl                     // encoding: [0bAAA01000,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.ls lbl                     // encoding: [0bAAA01001,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.ge lbl                     // encoding: [0bAAA01010,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.lt lbl                     // encoding: [0bAAA01011,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.gt lbl                     // encoding: [0bAAA01100,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.le lbl                     // encoding: [0bAAA01101,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
-// CHECK-ARM64: b.al lbl                     // encoding: [0bAAA01110,A,A,0x54]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: lbl, kind: fixup_arm64_pcrel_branch19
+// CHECK: b.eq lbl                     // encoding: [0bAAA00000,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.ne lbl                     // encoding: [0bAAA00001,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.hs lbl                     // encoding: [0bAAA00010,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.hs lbl                     // encoding: [0bAAA00010,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.lo lbl                     // encoding: [0bAAA00011,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.lo lbl                     // encoding: [0bAAA00011,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.mi lbl                     // encoding: [0bAAA00100,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.pl lbl                     // encoding: [0bAAA00101,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.vs lbl                     // encoding: [0bAAA00110,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.vc lbl                     // encoding: [0bAAA00111,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.hi lbl                     // encoding: [0bAAA01000,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.ls lbl                     // encoding: [0bAAA01001,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.ge lbl                     // encoding: [0bAAA01010,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.lt lbl                     // encoding: [0bAAA01011,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.gt lbl                     // encoding: [0bAAA01100,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.le lbl                     // encoding: [0bAAA01101,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
+// CHECK: b.al lbl                     // encoding: [0bAAA01110,A,A,0x54]
+// CHECK:                              //   fixup A - offset: 0, value: lbl, kind: fixup_aarch64_pcrel_branch19
 
         //  ARM64 has these in a separate file
         beq lbl
@@ -2186,23 +2186,23 @@ _func:
         ldr x29, there
         ldrsw xzr, everywhere
 
-// CHECK-ARM64: ldr    w3, here                // encoding: [0bAAA00011,A,A,0x18]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: here, kind: fixup_arm64_ldr_pcrel_imm19
-// CHECK-ARM64: ldr    x29, there              // encoding: [0bAAA11101,A,A,0x58]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: there, kind: fixup_arm64_ldr_pcrel_imm19
-// CHECK-ARM64: ldrsw    xzr, everywhere         // encoding: [0bAAA11111,A,A,0x98]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: everywhere, kind: fixup_arm64_ldr_pcrel_imm19
+// CHECK: ldr    w3, here                // encoding: [0bAAA00011,A,A,0x18]
+// CHECK:                                 //   fixup A - offset: 0, value: here, kind: fixup_aarch64_ldr_pcrel_imm19
+// CHECK: ldr    x29, there              // encoding: [0bAAA11101,A,A,0x58]
+// CHECK:                                 //   fixup A - offset: 0, value: there, kind: fixup_aarch64_ldr_pcrel_imm19
+// CHECK: ldrsw    xzr, everywhere         // encoding: [0bAAA11111,A,A,0x98]
+// CHECK:                                 //   fixup A - offset: 0, value: everywhere, kind: fixup_aarch64_ldr_pcrel_imm19
 
         ldr s0, who_knows
         ldr d0, i_dont
         ldr q0, there_must_be_a_better_way
 
-// CHECK-ARM64: ldr    s0, who_knows           // encoding: [0bAAA00000,A,A,0x1c]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: who_knows, kind: fixup_arm64_ldr_pcrel_imm19
-// CHECK-ARM64: ldr    d0, i_dont              // encoding: [0bAAA00000,A,A,0x5c]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: i_dont, kind: fixup_arm64_ldr_pcrel_imm19
-// CHECK-ARM64: ldr    q0, there_must_be_a_better_way // encoding: [0bAAA00000,A,A,0x9c]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: there_must_be_a_better_way, kind: fixup_arm64_ldr_pcrel_imm19
+// CHECK: ldr    s0, who_knows           // encoding: [0bAAA00000,A,A,0x1c]
+// CHECK:                                 //   fixup A - offset: 0, value: who_knows, kind: fixup_aarch64_ldr_pcrel_imm19
+// CHECK: ldr    d0, i_dont              // encoding: [0bAAA00000,A,A,0x5c]
+// CHECK:                                 //   fixup A - offset: 0, value: i_dont, kind: fixup_aarch64_ldr_pcrel_imm19
+// CHECK: ldr    q0, there_must_be_a_better_way // encoding: [0bAAA00000,A,A,0x9c]
+// CHECK:                                 //   fixup A - offset: 0, value: there_must_be_a_better_way, kind: fixup_aarch64_ldr_pcrel_imm19
 
         ldr w0, #1048572
         ldr x10, #-1048576
@@ -2212,10 +2212,10 @@ _func:
         prfm pldl1strm, nowhere
         prfm #22, somewhere
 
-// CHECK-ARM64: prfm    pldl1strm, nowhere      // encoding: [0bAAA00001,A,A,0xd8]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: nowhere, kind: fixup_arm64_ldr_pcrel_imm19
-// CHECK-ARM64: prfm    #22, somewhere          // encoding: [0bAAA10110,A,A,0xd8]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: somewhere, kind: fixup_arm64_ldr_pcrel_imm19
+// CHECK: prfm    pldl1strm, nowhere      // encoding: [0bAAA00001,A,A,0xd8]
+// CHECK:                                 //   fixup A - offset: 0, value: nowhere, kind: fixup_aarch64_ldr_pcrel_imm19
+// CHECK: prfm    #22, somewhere          // encoding: [0bAAA10110,A,A,0xd8]
+// CHECK:                                 //   fixup A - offset: 0, value: somewhere, kind: fixup_aarch64_ldr_pcrel_imm19
 
 //------------------------------------------------------------------------------
 // Load/store exclusive
@@ -2431,18 +2431,18 @@ _func:
         ldr x15, [x5, #:lo12:sym]
         ldr q3, [x2, #:lo12:sym]
 
-// CHECK-ARM64: str    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b00AAAAAA,0xf9]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale8
-// CHECK-ARM64: ldrb    w15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b01AAAAAA,0x39]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale1
-// CHECK-ARM64: ldrsh    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b10AAAAAA,0x79]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale2
-// CHECK-ARM64: ldrsw    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b10AAAAAA,0xb9]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale4
-// CHECK-ARM64: ldr    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b01AAAAAA,0xf9]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale8
-// CHECK-ARM64: ldr    q3, [x2, :lo12:sym]     // encoding: [0x43,0bAAAAAA00,0b11AAAAAA,0x3d]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_arm64_ldst_imm12_scale16
+// CHECK: str    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b00AAAAAA,0xf9]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale8
+// CHECK: ldrb    w15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b01AAAAAA,0x39]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale1
+// CHECK: ldrsh    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b10AAAAAA,0x79]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale2
+// CHECK: ldrsw    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b10AAAAAA,0xb9]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale4
+// CHECK: ldr    x15, [x5, :lo12:sym]    // encoding: [0xaf,0bAAAAAA00,0b01AAAAAA,0xf9]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale8
+// CHECK: ldr    q3, [x2, :lo12:sym]     // encoding: [0x43,0bAAAAAA00,0b11AAAAAA,0x3d]
+// CHECK:                                 //   fixup A - offset: 0, value: :lo12:sym, kind: fixup_aarch64_ldst_imm12_scale16
 
         prfm pldl1keep, [sp, #8]
         prfm pldl1strm, [x3]
@@ -3323,34 +3323,34 @@ _func:
         movz x2, #:abs_g0:sym
         movk w3, #:abs_g0_nc:sym
 
-// CHECK-ARM64: movz    x2, #:abs_g0:sym        // encoding: [0bAAA00010,A,0b100AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movk    w3, #:abs_g0_nc:sym     // encoding: [0bAAA00011,A,0b100AAAAA,0x72]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_nc:sym, kind: fixup_arm64_movw
+// CHECK: movz    x2, #:abs_g0:sym        // encoding: [0bAAA00010,A,0b100AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0:sym, kind: fixup_aarch64_movw
+// CHECK: movk    w3, #:abs_g0_nc:sym     // encoding: [0bAAA00011,A,0b100AAAAA,0x72]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_nc:sym, kind: fixup_aarch64_movw
 
         movz x4, #:abs_g1:sym
         movk w5, #:abs_g1_nc:sym
 
-// CHECK-ARM64: movz    x4, #:abs_g1:sym        // encoding: [0bAAA00100,A,0b101AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movk    w5, #:abs_g1_nc:sym     // encoding: [0bAAA00101,A,0b101AAAAA,0x72]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_nc:sym, kind: fixup_arm64_movw
+// CHECK: movz    x4, #:abs_g1:sym        // encoding: [0bAAA00100,A,0b101AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1:sym, kind: fixup_aarch64_movw
+// CHECK: movk    w5, #:abs_g1_nc:sym     // encoding: [0bAAA00101,A,0b101AAAAA,0x72]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_nc:sym, kind: fixup_aarch64_movw
 
         movz x6, #:abs_g2:sym
         movk x7, #:abs_g2_nc:sym
 
-// CHECK-ARM64: movz    x6, #:abs_g2:sym        // encoding: [0bAAA00110,A,0b110AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movk    x7, #:abs_g2_nc:sym     // encoding: [0bAAA00111,A,0b110AAAAA,0xf2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_nc:sym, kind: fixup_arm64_movw
+// CHECK: movz    x6, #:abs_g2:sym        // encoding: [0bAAA00110,A,0b110AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2:sym, kind: fixup_aarch64_movw
+// CHECK: movk    x7, #:abs_g2_nc:sym     // encoding: [0bAAA00111,A,0b110AAAAA,0xf2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_nc:sym, kind: fixup_aarch64_movw
 
         movz x8, #:abs_g3:sym
         movk x9, #:abs_g3:sym
 
-// CHECK-ARM64: movz    x8, #:abs_g3:sym        // encoding: [0bAAA01000,A,0b111AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g3:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movk    x9, #:abs_g3:sym        // encoding: [0bAAA01001,A,0b111AAAAA,0xf2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g3:sym, kind: fixup_arm64_movw
+// CHECK: movz    x8, #:abs_g3:sym        // encoding: [0bAAA01000,A,0b111AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g3:sym, kind: fixup_aarch64_movw
+// CHECK: movk    x9, #:abs_g3:sym        // encoding: [0bAAA01001,A,0b111AAAAA,0xf2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g3:sym, kind: fixup_aarch64_movw
 
 
         movn x30, #:abs_g0_s:sym
@@ -3358,36 +3358,36 @@ _func:
         movn w10, #:abs_g0_s:sym
         movz w25, #:abs_g0_s:sym
 
-// CHECK-ARM64: movn    x30, #:abs_g0_s:sym     // encoding: [0bAAA11110,A,0b100AAAAA,0x92]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movz    x19, #:abs_g0_s:sym     // encoding: [0bAAA10011,A,0b100AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movn    w10, #:abs_g0_s:sym     // encoding: [0bAAA01010,A,0b100AAAAA,0x12]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movz    w25, #:abs_g0_s:sym     // encoding: [0bAAA11001,A,0b100AAAAA,0x52]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_arm64_movw
+// CHECK: movn    x30, #:abs_g0_s:sym     // encoding: [0bAAA11110,A,0b100AAAAA,0x92]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_aarch64_movw
+// CHECK: movz    x19, #:abs_g0_s:sym     // encoding: [0bAAA10011,A,0b100AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_aarch64_movw
+// CHECK: movn    w10, #:abs_g0_s:sym     // encoding: [0bAAA01010,A,0b100AAAAA,0x12]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_aarch64_movw
+// CHECK: movz    w25, #:abs_g0_s:sym     // encoding: [0bAAA11001,A,0b100AAAAA,0x52]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g0_s:sym, kind: fixup_aarch64_movw
 
         movn x30, #:abs_g1_s:sym
         movz x19, #:abs_g1_s:sym
         movn w10, #:abs_g1_s:sym
         movz w25, #:abs_g1_s:sym
 
-// CHECK-ARM64: movn    x30, #:abs_g1_s:sym     // encoding: [0bAAA11110,A,0b101AAAAA,0x92]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movz    x19, #:abs_g1_s:sym     // encoding: [0bAAA10011,A,0b101AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movn    w10, #:abs_g1_s:sym     // encoding: [0bAAA01010,A,0b101AAAAA,0x12]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movz    w25, #:abs_g1_s:sym     // encoding: [0bAAA11001,A,0b101AAAAA,0x52]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_arm64_movw
+// CHECK: movn    x30, #:abs_g1_s:sym     // encoding: [0bAAA11110,A,0b101AAAAA,0x92]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_aarch64_movw
+// CHECK: movz    x19, #:abs_g1_s:sym     // encoding: [0bAAA10011,A,0b101AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_aarch64_movw
+// CHECK: movn    w10, #:abs_g1_s:sym     // encoding: [0bAAA01010,A,0b101AAAAA,0x12]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_aarch64_movw
+// CHECK: movz    w25, #:abs_g1_s:sym     // encoding: [0bAAA11001,A,0b101AAAAA,0x52]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g1_s:sym, kind: fixup_aarch64_movw
 
         movn x30, #:abs_g2_s:sym
         movz x19, #:abs_g2_s:sym
 
-// CHECK-ARM64: movn    x30, #:abs_g2_s:sym     // encoding: [0bAAA11110,A,0b110AAAAA,0x92]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_s:sym, kind: fixup_arm64_movw
-// CHECK-ARM64: movz    x19, #:abs_g2_s:sym     // encoding: [0bAAA10011,A,0b110AAAAA,0xd2]
-// CHECK-ARM64-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_s:sym, kind: fixup_arm64_movw
+// CHECK: movn    x30, #:abs_g2_s:sym     // encoding: [0bAAA11110,A,0b110AAAAA,0x92]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_s:sym, kind: fixup_aarch64_movw
+// CHECK: movz    x19, #:abs_g2_s:sym     // encoding: [0bAAA10011,A,0b110AAAAA,0xd2]
+// CHECK-NEXT:                                 //   fixup A - offset: 0, value: :abs_g2_s:sym, kind: fixup_aarch64_movw
 
 //------------------------------------------------------------------------------
 // PC-relative addressing
@@ -3396,15 +3396,15 @@ _func:
         adr x2, loc
         adr xzr, loc
 
-// CHECK-ARM64: adr    x2, loc                 // encoding: [0x02'A',A,A,0x10'A']
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: loc, kind: fixup_arm64_pcrel_adr_imm21
-// CHECK-ARM64: adr    xzr, loc                // encoding: [0x1f'A',A,A,0x10'A']
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: loc, kind: fixup_arm64_pcrel_adr_imm21
+// CHECK: adr    x2, loc                 // encoding: [0x02'A',A,A,0x10'A']
+// CHECK:                                 //   fixup A - offset: 0, value: loc, kind: fixup_aarch64_pcrel_adr_imm21
+// CHECK: adr    xzr, loc                // encoding: [0x1f'A',A,A,0x10'A']
+// CHECK:                                 //   fixup A - offset: 0, value: loc, kind: fixup_aarch64_pcrel_adr_imm21
 
         adrp x29, loc
 
-// CHECK-ARM64: adrp    x29, loc                // encoding: [0x1d'A',A,A,0x90'A']
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: loc, kind: fixup_arm64_pcrel_adrp_imm21
+// CHECK: adrp    x29, loc                // encoding: [0x1d'A',A,A,0x90'A']
+// CHECK:                                 //   fixup A - offset: 0, value: loc, kind: fixup_aarch64_pcrel_adrp_imm21
         adrp x30, #4096
         adr x20, #0
         adr x9, #-1
@@ -4782,24 +4782,24 @@ _func:
         tbz xzr, #63, elsewhere
         tbnz x5, #45, nowhere
 
-// CHECK-ARM64: tbz    w5, #0, somewhere       // encoding: [0bAAA00101,A,0b00000AAA,0x36]
-// CHECK-ARM64:                                //   fixup A - offset: 0, value: somewhere, kind: fixup_arm64_pcrel_branch14
-// CHECK-ARM64: tbz    xzr, #63, elsewhere     // encoding: [0bAAA11111,A,0b11111AAA,0xb6]
-// CHECK-ARM64:                                //   fixup A - offset: 0, value: elsewhere, kind: fixup_arm64_pcrel_branch14
-// CHECK-ARM64: tbnz   x5, #45, nowhere        // encoding: [0bAAA00101,A,0b01101AAA,0xb7]
-// CHECK-ARM64:                                //   fixup A - offset: 0, value: nowhere, kind: fixup_arm64_pcrel_branch14
+// CHECK: tbz    w5, #0, somewhere       // encoding: [0bAAA00101,A,0b00000AAA,0x36]
+// CHECK:                                //   fixup A - offset: 0, value: somewhere, kind: fixup_aarch64_pcrel_branch14
+// CHECK: tbz    xzr, #63, elsewhere     // encoding: [0bAAA11111,A,0b11111AAA,0xb6]
+// CHECK:                                //   fixup A - offset: 0, value: elsewhere, kind: fixup_aarch64_pcrel_branch14
+// CHECK: tbnz   x5, #45, nowhere        // encoding: [0bAAA00101,A,0b01101AAA,0xb7]
+// CHECK:                                //   fixup A - offset: 0, value: nowhere, kind: fixup_aarch64_pcrel_branch14
 
 
         tbnz w3, #2, there
         tbnz wzr, #31, nowhere
         tbz w5, #12, anywhere
 
-// CHECK-ARM64: tbnz    w3, #2, there           // encoding: [0bAAA00011,A,0b00010AAA,0x37]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: there, kind: fixup_arm64_pcrel_branch14
-// CHECK-ARM64: tbnz    wzr, #31, nowhere       // encoding: [0bAAA11111,A,0b11111AAA,0x37]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: nowhere, kind: fixup_arm64_pcrel_branch14
-// CHECK-ARM64: tbz     w5, #12, anywhere       // encoding: [0bAAA00101,A,0b01100AAA,0x36]
-// CHECK-ARM64:                                 //   fixup A - offset: 0, value: anywhere, kind: fixup_arm64_pcrel_branch14
+// CHECK: tbnz    w3, #2, there           // encoding: [0bAAA00011,A,0b00010AAA,0x37]
+// CHECK:                                 //   fixup A - offset: 0, value: there, kind: fixup_aarch64_pcrel_branch14
+// CHECK: tbnz    wzr, #31, nowhere       // encoding: [0bAAA11111,A,0b11111AAA,0x37]
+// CHECK:                                 //   fixup A - offset: 0, value: nowhere, kind: fixup_aarch64_pcrel_branch14
+// CHECK: tbz     w5, #12, anywhere       // encoding: [0bAAA00101,A,0b01100AAA,0x36]
+// CHECK:                                 //   fixup A - offset: 0, value: anywhere, kind: fixup_aarch64_pcrel_branch14
 
 //------------------------------------------------------------------------------
 // Unconditional branch (immediate)
@@ -4808,10 +4808,10 @@ _func:
         b somewhere
         bl elsewhere
 
-// CHECK-ARM64: b    somewhere               // encoding: [A,A,A,0b000101AA]
-// CHECK-ARM64:                              //   fixup A - offset: 0, value: somewhere, kind: fixup_arm64_pcrel_branch26
-// CHECK-ARM64: bl    elsewhere               // encoding: [A,A,A,0b100101AA]
-// CHECK-ARM64:                               //   fixup A - offset: 0, value: elsewhere, kind: fixup_arm64_pcrel_call26
+// CHECK: b    somewhere               // encoding: [A,A,A,0b000101AA]
+// CHECK:                              //   fixup A - offset: 0, value: somewhere, kind: fixup_aarch64_pcrel_branch26
+// CHECK: bl    elsewhere               // encoding: [A,A,A,0b100101AA]
+// CHECK:                               //   fixup A - offset: 0, value: elsewhere, kind: fixup_aarch64_pcrel_call26
 
         b #4
         bl #0

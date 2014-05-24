@@ -1,4 +1,4 @@
-; RUN: llc -o - %s -verify-machineinstrs -mtriple=arm64-linux-gnu -mattr=+neon | FileCheck %s
+; RUN: llc -o - %s -verify-machineinstrs -mtriple=aarch64-linux-gnu -mattr=+neon | FileCheck %s
 
 
 define <2 x float> @test_cos_v2f64(<2 x double> %v1) {

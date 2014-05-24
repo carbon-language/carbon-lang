@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
 
 define <8 x i8> @cmeq8xi8(<8 x i8> %A, <8 x i8> %B) {
 ; CHECK-LABEL: cmeq8xi8:

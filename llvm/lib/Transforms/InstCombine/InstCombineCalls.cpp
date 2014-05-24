@@ -836,8 +836,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::arm_neon_vmulls:
   case Intrinsic::arm_neon_vmullu:
-  case Intrinsic::arm64_neon_smull:
-  case Intrinsic::arm64_neon_umull: {
+  case Intrinsic::aarch64_neon_smull:
+  case Intrinsic::aarch64_neon_umull: {
     Value *Arg0 = II->getArgOperand(0);
     Value *Arg1 = II->getArgOperand(1);
 
@@ -848,7 +848,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // Check for constant LHS & RHS - in this case we just simplify.
     bool Zext = (II->getIntrinsicID() == Intrinsic::arm_neon_vmullu ||
-                 II->getIntrinsicID() == Intrinsic::arm64_neon_umull);
+                 II->getIntrinsicID() == Intrinsic::aarch64_neon_umull);
     VectorType *NewVT = cast<VectorType>(II->getType());
     if (Constant *CV0 = dyn_cast<Constant>(Arg0)) {
       if (Constant *CV1 = dyn_cast<Constant>(Arg1)) {

@@ -41,7 +41,7 @@ private:
   bool resolveI386Relocation(const RelocationEntry &RE, uint64_t Value);
   bool resolveX86_64Relocation(const RelocationEntry &RE, uint64_t Value);
   bool resolveARMRelocation(const RelocationEntry &RE, uint64_t Value);
-  bool resolveARM64Relocation(const RelocationEntry &RE, uint64_t Value);
+  bool resolveAArch64Relocation(const RelocationEntry &RE, uint64_t Value);
 
   // Populate stubs in __jump_table section.
   void populateJumpTable(MachOObjectFile &Obj, const SectionRef &JTSection,
