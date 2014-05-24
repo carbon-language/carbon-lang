@@ -115,16 +115,12 @@ class ScopDetection : public FunctionPass {
   typedef std::set<const Region *> RegionSet;
   RegionSet ValidRegions;
 
-  // Invalid regions and the reason they fail.
-  std::map<const Region *, std::string> InvalidRegions;
-
   // Remember a list of errors for every region.
   mutable std::map<const Region *, RejectLog> RejectLogs;
 
   // Remember the invalid functions producted by backends;
   typedef std::set<const Function *> FunctionSet;
   FunctionSet InvalidFunctions;
-  mutable std::string LastFailure;
 
   // Delinearize all non affine memory accesses and return false when there
   // exists a non affine memory access that cannot be delinearized. Return true

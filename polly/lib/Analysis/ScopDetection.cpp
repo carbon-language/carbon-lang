@@ -185,10 +185,8 @@ inline bool ScopDetection::invalid(DetectionContext &Context, bool Assert,
     RejectLog &Log = Context.Log;
     std::shared_ptr<RR> RejectReason = std::make_shared<RR>(Arguments...);
 
-    if (PollyTrackFailures) {
+    if (PollyTrackFailures)
       Log.report(RejectReason);
-      LastFailure = RejectReason->getMessage();
-    }
 
     DEBUG(dbgs() << RejectReason->getMessage());
     DEBUG(dbgs() << "\n");
@@ -210,10 +208,13 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
 }
 
 std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
-  if (!InvalidRegions.count(R))
+  if (!RejectLogs.count(R))
     return "";
 
-  return InvalidRegions.find(R)->second;
+  // Get the first error we found. Even in keep-going mode, this is the first
+  // reason that caused the candidate to be rejected.
+  RejectLog Errors = RejectLogs.at(R);
+  return (*Errors.begin())->getMessage();
 }
 
 bool ScopDetection::isValidCFG(BasicBlock &BB,
@@ -588,15 +589,11 @@ void ScopDetection::findScops(Region &R) {
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 
-  LastFailure = "";
-
   if (isValidRegion(R)) {
     ++ValidRegion;
     ValidRegions.insert(&R);
     return;
   }
-
-  InvalidRegions[&R] = LastFailure;
 
   for (auto &SubRegion : R)
     findScops(*SubRegion);
@@ -833,7 +830,6 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 
 void ScopDetection::releaseMemory() {
   ValidRegions.clear();
-  InvalidRegions.clear();
   RejectLogs.clear();
 
   // Do not clear the invalid function set.
