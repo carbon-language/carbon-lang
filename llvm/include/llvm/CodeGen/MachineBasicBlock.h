@@ -219,10 +219,15 @@ public:
   unsigned size() const { return (unsigned)Insts.size(); }
   bool empty() const { return Insts.empty(); }
 
-  MachineInstr& front() { return Insts.front(); }
-  MachineInstr& back()  { return Insts.back(); }
-  const MachineInstr& front() const { return Insts.front(); }
-  const MachineInstr& back()  const { return Insts.back(); }
+  MachineInstr       &instr_front()       { return Insts.front(); }
+  MachineInstr       &instr_back()        { return Insts.back();  }
+  const MachineInstr &instr_front() const { return Insts.front(); }
+  const MachineInstr &instr_back()  const { return Insts.back();  }
+
+  MachineInstr       &front()             { return Insts.front(); }
+  MachineInstr       &back()              { return *--end();      }
+  const MachineInstr &front()       const { return Insts.front(); }
+  const MachineInstr &back()        const { return *--end();      }
 
   instr_iterator                instr_begin()       { return Insts.begin();  }
   const_instr_iterator          instr_begin() const { return Insts.begin();  }
