@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks='-*,google-explicit-constructor' -line-filter='[{"name":"%s","lines":[[18,18],[22,22]]},{"name":"header1.h","lines":[[1,2]]},{"name":"header2.h"},{"name":"header3.h"}]' -header-filter='header[12]\.h$' %s -- -I %S/Inputs/line-filter 2>&1 | FileCheck %s
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' -line-filter='[{"name":"line-filter.cpp","lines":[[18,18],[22,22]]},{"name":"header1.h","lines":[[1,2]]},{"name":"header2.h"},{"name":"header3.h"}]' -header-filter='header[12]\.h$' %s -- -I %S/Inputs/line-filter 2>&1 | FileCheck %s
 
 #include "header1.h"
 // CHECK-NOT: header1.h:{{.*}} warning
