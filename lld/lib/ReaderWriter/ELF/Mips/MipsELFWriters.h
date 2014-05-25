@@ -66,6 +66,16 @@ public:
     return _targetLayout.getGOTSection().hasGlobalGOTEntry(a);
   }
 
+  std::unique_ptr<MipsRuntimeFile<ELFT>> createRuntimeFile() {
+    auto file = llvm::make_unique<MipsRuntimeFile<ELFT>>(_context);
+    if (_context.isDynamic()) {
+      file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+      file->addAbsoluteAtom("_gp");
+      file->addAbsoluteAtom("_gp_disp");
+    }
+    return file;
+  }
+
 private:
   MipsLinkingContext &_context;
   MipsTargetLayout<ELFT> &_targetLayout;

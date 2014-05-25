@@ -42,16 +42,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) createDynamicSymbolTable();
 
 private:
-  void addDefaultAtoms() {
-    if (this->_context.isDynamic()) {
-      _mipsRuntimeFile->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _mipsRuntimeFile->addAbsoluteAtom("_gp");
-      _mipsRuntimeFile->addAbsoluteAtom("_gp_disp");
-    }
-  }
-
   MipsELFWriter<ELFT> _writeHelper;
-  std::unique_ptr<MipsRuntimeFile<ELFT>> _mipsRuntimeFile;
   MipsLinkingContext &_mipsContext;
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
 };
@@ -61,16 +52,13 @@ MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
     MipsLinkingContext &context, MipsTargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(context, layout),
       _writeHelper(context, layout),
-      _mipsRuntimeFile(new MipsRuntimeFile<ELFT>(context)),
       _mipsContext(context), _mipsTargetLayout(layout) {}
 
 template <class ELFT>
 bool MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
-  // Add the default atoms as defined for mips
-  addDefaultAtoms();
-  result.push_back(std::move(_mipsRuntimeFile));
+  result.push_back(std::move(_writeHelper.createRuntimeFile()));
   return true;
 }
 
