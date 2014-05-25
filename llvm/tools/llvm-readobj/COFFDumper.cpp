@@ -171,22 +171,6 @@ static unsigned getNumUsedSlots(const UnwindCode &UnwindCode) {
   }
 }
 
-// Given a symbol sym this functions returns the address and section of it.
-static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
-                                           const SymbolRef &Sym,
-                                           const coff_section *&ResolvedSection,
-                                           uint64_t &ResolvedAddr) {
-  if (error_code EC = Sym.getAddress(ResolvedAddr))
-    return EC;
-
-  section_iterator iter(Obj->section_begin());
-  if (error_code EC = Sym.getSection(iter))
-    return EC;
-
-  ResolvedSection = Obj->getCOFFSection(*iter);
-  return object_error::success;
-}
-
 // Given a a section and an offset into this section the function returns the
 // symbol used for the relocation at the offset.
 error_code COFFDumper::resolveSymbol(const coff_section *Section,
@@ -471,10 +455,14 @@ error_code COFFDumper::resolveRelocation(const coff_section *Section,
   if (error_code EC = resolveSymbol(Section, Offset, Sym))
     return EC;
 
-  if (error_code EC = resolveSectionAndAddress(Obj, Sym, ResolvedSection,
-                                               ResolvedAddress))
+  if (error_code EC = Sym.getAddress(ResolvedAddr))
     return EC;
 
+  section_iterator SI(Obj->section_begin());
+  if (error_code EC = Sym.getSection(SI))
+    return EC;
+
+  ResolvedSection = Obj->getCOFFSection(*SI);
   return object_error::success;
 }
 
