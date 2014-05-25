@@ -13,8 +13,6 @@
 #include "StreamWriter.h"
 #include "llvm/Support/Win64EH.h"
 
-#include <functional>
-
 namespace llvm {
 namespace object {
 class COFFObjectFile;
@@ -28,15 +26,17 @@ class Dumper {
   raw_ostream &OS;
 
 public:
-  typedef std::function<error_code(const object::coff_section *, uint64_t,
-                                   object::SymbolRef &)> SymbolResolver;
+  typedef error_code (*SymbolResolver)(const object::coff_section *, uint64_t,
+                                       object::SymbolRef &, void *);
 
   struct Context {
     const object::COFFObjectFile &COFF;
     SymbolResolver ResolveSymbol;
+    void *UserData;
 
-    Context(const object::COFFObjectFile &COFF, SymbolResolver Resolver)
-      : COFF(COFF), ResolveSymbol(Resolver) {}
+    Context(const object::COFFObjectFile &COFF, SymbolResolver Resolver,
+            void *UserData)
+      : COFF(COFF), ResolveSymbol(Resolver), UserData(UserData) {}
   };
 
 private:

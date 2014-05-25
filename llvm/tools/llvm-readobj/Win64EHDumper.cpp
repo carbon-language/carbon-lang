@@ -120,7 +120,8 @@ static std::string formatSymbol(const Dumper::Context &Ctx,
 
   StringRef Name;
   SymbolRef Symbol;
-  if (Ctx.ResolveSymbol(Section, Offset, Symbol) || Symbol.getName(Name)) {
+  if (Ctx.ResolveSymbol(Section, Offset, Symbol, Ctx.UserData) ||
+      Symbol.getName(Name)) {
     OS << format(" (0x%" PRIX64 ")", Offset);
     return OS.str();
   }
@@ -139,7 +140,7 @@ static error_code resolveRelocation(const Dumper::Context &Ctx,
                                     const coff_section *&ResolvedSection,
                                     uint64_t &ResolvedAddress) {
   SymbolRef Symbol;
-  if (error_code EC = Ctx.ResolveSymbol(Section, Offset, Symbol))
+  if (error_code EC = Ctx.ResolveSymbol(Section, Offset, Symbol, Ctx.UserData))
     return EC;
 
   if (error_code EC = Symbol.getAddress(ResolvedAddress))

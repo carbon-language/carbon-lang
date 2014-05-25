@@ -849,11 +849,12 @@ void COFFDumper::printUnwindInfo() {
   case COFF::IMAGE_FILE_MACHINE_AMD64: {
     Win64EH::Dumper Dumper(W);
     Win64EH::Dumper::SymbolResolver Resolver =
-      [this](const object::coff_section *Section, uint64_t Offset,
-             SymbolRef &Symbol) -> error_code {
-        return this->resolveSymbol(Section, Offset, Symbol);
+      [](const object::coff_section *Section, uint64_t Offset,
+         SymbolRef &Symbol, void *user_data) -> error_code {
+        COFFDumper *Dumper = reinterpret_cast<COFFDumper*>(user_data);
+        return Dumper->resolveSymbol(Section, Offset, Symbol);
       };
-    Win64EH::Dumper::Context Ctx(*Obj, Resolver);
+    Win64EH::Dumper::Context Ctx(*Obj, Resolver, this);
     Dumper.printData(Ctx);
     break;
   }
