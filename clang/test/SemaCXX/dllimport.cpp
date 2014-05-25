@@ -105,6 +105,86 @@ void functionScope() {
 
 
 //===----------------------------------------------------------------------===//
+// Variable templates
+//===----------------------------------------------------------------------===//
+#if __has_feature(cxx_variable_templates)
+
+// Import declaration.
+template<typename T> __declspec(dllimport) extern int ExternVarTmplDecl;
+
+// dllimport implies a declaration.
+template<typename T> __declspec(dllimport) int VarTmplDecl;
+
+// Not allowed on definitions.
+template<typename T> __declspec(dllimport) extern int ExternVarTmplInit = 1; // expected-error{{definition of dllimport data}}
+template<typename T> __declspec(dllimport) int VarTmplInit1 = 1; // expected-error{{definition of dllimport data}}
+template<typename T> int __declspec(dllimport) VarTmplInit2 = 1; // expected-error{{definition of dllimport data}}
+
+// Declare, then reject definition.
+template<typename T> __declspec(dllimport) extern int ExternVarTmplDeclInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+template<typename T>                              int ExternVarTmplDeclInit = 1; // expected-warning{{'ExternVarTmplDeclInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+template<typename T> __declspec(dllimport) int VarTmplDeclInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+template<typename T>                       int VarTmplDeclInit = 1; // expected-warning{{'VarTmplDeclInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+// Redeclarations
+template<typename T> __declspec(dllimport) extern int VarTmplRedecl1;
+template<typename T> __declspec(dllimport) extern int VarTmplRedecl1;
+
+template<typename T> __declspec(dllimport) int VarTmplRedecl2;
+template<typename T> __declspec(dllimport) int VarTmplRedecl2;
+
+template<typename T> __declspec(dllimport) extern int VarTmplRedecl3; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+template<typename T>                       extern int VarTmplRedecl3; // expected-warning{{'VarTmplRedecl3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+template<typename T>                       extern int VarTmplRedecl4; // expected-note{{previous declaration is here}}
+template<typename T> __declspec(dllimport) extern int VarTmplRedecl4; // expected-error{{redeclaration of 'VarTmplRedecl4' cannot add 'dllimport' attribute}}
+
+// External linkage is required.
+template<typename T> __declspec(dllimport) static int StaticVarTmpl; // expected-error{{'StaticVarTmpl' must have external linkage when declared 'dllimport'}}
+template<typename T> __declspec(dllimport) Internal InternalTypeVarTmpl; // expected-error{{'InternalTypeVarTmpl' must have external linkage when declared 'dllimport'}}
+namespace    { template<typename T> __declspec(dllimport) int InternalVarTmpl; } // expected-error{{'(anonymous namespace)::InternalVarTmpl' must have external linkage when declared 'dllimport'}}
+namespace ns { template<typename T> __declspec(dllimport) int ExternalVarTmpl; }
+
+template<typename T> __declspec(dllimport) auto InternalAutoTypeVarTmpl = Internal(); // expected-error{{definition of dllimport data}} // expected-error{{'InternalAutoTypeVarTmpl' must have external linkage when declared 'dllimport'}}
+
+
+template<typename T> int VarTmpl;
+template<typename T> __declspec(dllimport) int ImportedVarTmpl;
+
+// Import implicit instantiation of an imported variable template.
+int useVarTmpl() { return ImportedVarTmpl<ImplicitInst_Imported>; }
+
+// Import explicit instantiation declaration of an imported variable template.
+extern template int ImportedVarTmpl<ExplicitDecl_Imported>;
+
+// An explicit instantiation definition of an imported variable template cannot
+// be imported because the template must be defined which is illegal.
+
+// Import specialization of an imported variable template.
+template<> __declspec(dllimport) int ImportedVarTmpl<ExplicitSpec_Imported>;
+template<> __declspec(dllimport) int ImportedVarTmpl<ExplicitSpec_Def_Imported> = 1; // expected-error{{definition of dllimport data}}
+
+// Not importing specialization of an imported variable template without
+// explicit dllimport.
+template<> int ImportedVarTmpl<ExplicitSpec_NotImported>;
+
+
+// Import explicit instantiation declaration of a non-imported variable template.
+extern template __declspec(dllimport) int VarTmpl<ExplicitDecl_Imported>;
+
+// Import explicit instantiation definition of a non-imported variable template.
+template __declspec(dllimport) int VarTmpl<ExplicitInst_Imported>;
+
+// Import specialization of a non-imported variable template.
+template<> __declspec(dllimport) int VarTmpl<ExplicitSpec_Imported>;
+template<> __declspec(dllimport) int VarTmpl<ExplicitSpec_Def_Imported> = 1; // expected-error{{definition of dllimport data}}
+
+#endif // __has_feature(cxx_variable_templates)
+
+
+
+//===----------------------------------------------------------------------===//
 // Functions
 //===----------------------------------------------------------------------===//
 

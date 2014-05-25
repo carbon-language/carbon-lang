@@ -75,6 +75,83 @@ void functionScope() {
 
 
 //===----------------------------------------------------------------------===//
+// Variable templates
+//===----------------------------------------------------------------------===//
+#if __has_feature(cxx_variable_templates)
+
+// Export declaration.
+template<typename T> __declspec(dllexport) extern int ExternVarTmplDecl;
+
+// dllexport implies a definition.
+template<typename T> __declspec(dllexport) int VarTmplDef;
+
+// Export definition.
+template<typename T> __declspec(dllexport) int VarTmplInit1 = 1;
+template<typename T> int __declspec(dllexport) VarTmplInit2 = 1;
+
+// Declare, then export definition.
+template<typename T> __declspec(dllexport) extern int VarTmplDeclInit;
+template<typename T>                              int VarTmplDeclInit = 1;
+
+// Redeclarations
+template<typename T> __declspec(dllexport) extern int VarTmplRedecl1;
+template<typename T> __declspec(dllexport)        int VarTmplRedecl1 = 1;
+
+template<typename T> __declspec(dllexport) extern int VarTmplRedecl2;
+template<typename T>                              int VarTmplRedecl2 = 1;
+
+template<typename T>                       extern int VarTmplRedecl3; // expected-note{{previous declaration is here}}
+template<typename T> __declspec(dllexport) extern int VarTmplRedecl3; // expected-error{{redeclaration of 'VarTmplRedecl3' cannot add 'dllexport' attribute}}
+
+// External linkage is required.
+template<typename T> __declspec(dllexport) static int StaticVarTmpl; // expected-error{{'StaticVarTmpl' must have external linkage when declared 'dllexport'}}
+template<typename T> __declspec(dllexport) Internal InternalTypeVarTmpl; // expected-error{{'InternalTypeVarTmpl' must have external linkage when declared 'dllexport'}}
+namespace    { template<typename T> __declspec(dllexport) int InternalVarTmpl; } // expected-error{{'(anonymous namespace)::InternalVarTmpl' must have external linkage when declared 'dllexport'}}
+namespace ns { template<typename T> __declspec(dllexport) int ExternalVarTmpl = 1; }
+
+template<typename T> __declspec(dllexport) auto InternalAutoTypeVarTmpl = Internal(); // expected-error{{'InternalAutoTypeVarTmpl' must have external linkage when declared 'dllexport'}}
+template<typename T> __declspec(dllexport) auto ExternalAutoTypeVarTmpl = External();
+template External ExternalAutoTypeVarTmpl<ExplicitInst_Exported>;
+
+
+template<typename T> int VarTmpl = 1;
+template<typename T> __declspec(dllexport) int ExportedVarTmpl = 1;
+
+// Export implicit instantiation of an exported variable template.
+int useVarTmpl() { return ExportedVarTmpl<ImplicitInst_Exported>; }
+
+// Export explicit instantiation declaration of an exported variable template.
+extern template int ExportedVarTmpl<ExplicitDecl_Exported>;
+       template int ExportedVarTmpl<ExplicitDecl_Exported>;
+
+// Export explicit instantiation definition of an exported variable template.
+template __declspec(dllexport) int ExportedVarTmpl<ExplicitInst_Exported>;
+
+// Export specialization of an exported variable template.
+template<> __declspec(dllexport) int ExportedVarTmpl<ExplicitSpec_Exported>;
+template<> __declspec(dllexport) int ExportedVarTmpl<ExplicitSpec_Def_Exported> = 1;
+
+// Not exporting specialization of an exported variable template without
+// explicit dllexport.
+template<> int ExportedVarTmpl<ExplicitSpec_NotExported>;
+
+
+// Export explicit instantiation declaration of a non-exported variable template.
+extern template __declspec(dllexport) int VarTmpl<ExplicitDecl_Exported>;
+       template __declspec(dllexport) int VarTmpl<ExplicitDecl_Exported>;
+
+// Export explicit instantiation definition of a non-exported variable template.
+template __declspec(dllexport) int VarTmpl<ExplicitInst_Exported>;
+
+// Export specialization of a non-exported variable template.
+template<> __declspec(dllexport) int VarTmpl<ExplicitSpec_Exported>;
+template<> __declspec(dllexport) int VarTmpl<ExplicitSpec_Def_Exported> = 1;
+
+#endif // __has_feature(cxx_variable_templates)
+
+
+
+//===----------------------------------------------------------------------===//
 // Functions
 //===----------------------------------------------------------------------===//
 
