@@ -13,4 +13,5 @@ add_llvm_tool(llvm-readobj
   MachODumper.cpp
   ObjDumper.cpp
   StreamWriter.cpp
+  Win64EHDumper.cpp
   )

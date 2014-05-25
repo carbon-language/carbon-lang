@@ -16,6 +16,7 @@
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
+#include "Win64EHDumper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Object/COFF.h"
@@ -58,35 +59,19 @@ private:
   void printSymbol(const SymbolRef &Sym);
   void printRelocation(const SectionRef &Section, const RelocationRef &Reloc);
   void printDataDirectory(uint32_t Index, const std::string &FieldName);
-  void printX64UnwindInfo();
 
   template <class PEHeader> void printPEHeader(const PEHeader *Hdr);
   void printBaseOfDataField(const pe32_header *Hdr);
   void printBaseOfDataField(const pe32plus_header *Hdr);
 
-  void printRuntimeFunction(const RuntimeFunction& RTF,
-                            const coff_section *Section,
-                            uint64_t SectionOffset);
-
-  void printUnwindInfo(const Win64EH::UnwindInfo& UI,
-                       const coff_section *Section, uint64_t SectionOffset);
-
-  void printUnwindCode(const Win64EH::UnwindInfo &UI, ArrayRef<UnwindCode> UCs);
-
   void printCodeViewLineTables(const SectionRef &Section);
 
   void cacheRelocations();
-
-  error_code resolveRelocation(const coff_section *Section, uint64_t Offset,
-                               const coff_section *&ReesolvedSection,
-                               uint64_t &ResolvedAddress);
 
   error_code resolveSymbol(const coff_section *Section, uint64_t Offset,
                            SymbolRef &Sym);
   error_code resolveSymbolName(const coff_section *Section, uint64_t Offset,
                                StringRef &Name);
-  std::string formatSymbol(const coff_section *Section, uint64_t Offset,
-                           uint32_t Disp);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -110,66 +95,6 @@ error_code createCOFFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
 }
 
 } // namespace llvm
-
-
-// Returns the name of the unwind code.
-static StringRef getUnwindCodeTypeName(uint8_t Code) {
-  switch(Code) {
-  default: llvm_unreachable("Invalid unwind code");
-  case UOP_PushNonVol: return "PUSH_NONVOL";
-  case UOP_AllocLarge: return "ALLOC_LARGE";
-  case UOP_AllocSmall: return "ALLOC_SMALL";
-  case UOP_SetFPReg: return "SET_FPREG";
-  case UOP_SaveNonVol: return "SAVE_NONVOL";
-  case UOP_SaveNonVolBig: return "SAVE_NONVOL_FAR";
-  case UOP_SaveXMM128: return "SAVE_XMM128";
-  case UOP_SaveXMM128Big: return "SAVE_XMM128_FAR";
-  case UOP_PushMachFrame: return "PUSH_MACHFRAME";
-  }
-}
-
-// Returns the name of a referenced register.
-static StringRef getUnwindRegisterName(uint8_t Reg) {
-  switch(Reg) {
-  default: llvm_unreachable("Invalid register");
-  case 0: return "RAX";
-  case 1: return "RCX";
-  case 2: return "RDX";
-  case 3: return "RBX";
-  case 4: return "RSP";
-  case 5: return "RBP";
-  case 6: return "RSI";
-  case 7: return "RDI";
-  case 8: return "R8";
-  case 9: return "R9";
-  case 10: return "R10";
-  case 11: return "R11";
-  case 12: return "R12";
-  case 13: return "R13";
-  case 14: return "R14";
-  case 15: return "R15";
-  }
-}
-
-// Calculates the number of array slots required for the unwind code.
-static unsigned getNumUsedSlots(const UnwindCode &UnwindCode) {
-  switch (UnwindCode.getUnwindOp()) {
-  default: llvm_unreachable("Invalid unwind code");
-  case UOP_PushNonVol:
-  case UOP_AllocSmall:
-  case UOP_SetFPReg:
-  case UOP_PushMachFrame:
-    return 1;
-  case UOP_SaveNonVol:
-  case UOP_SaveXMM128:
-    return 2;
-  case UOP_SaveNonVolBig:
-  case UOP_SaveXMM128Big:
-    return 3;
-  case UOP_AllocLarge:
-    return (UnwindCode.getOpInfo() == 0) ? 2 : 3;
-  }
-}
 
 // Given a a section and an offset into this section the function returns the
 // symbol used for the relocation at the offset.
@@ -381,89 +306,12 @@ WeakExternalCharacteristics[] = {
   { "Alias"    , COFF::IMAGE_WEAK_EXTERN_SEARCH_ALIAS     }
 };
 
-static const EnumEntry<unsigned> UnwindFlags[] = {
-  { "ExceptionHandler", Win64EH::UNW_ExceptionHandler },
-  { "TerminateHandler", Win64EH::UNW_TerminateHandler },
-  { "ChainInfo"       , Win64EH::UNW_ChainInfo        }
-};
-
-static const EnumEntry<unsigned> UnwindOpInfo[] = {
-  { "RAX",  0 },
-  { "RCX",  1 },
-  { "RDX",  2 },
-  { "RBX",  3 },
-  { "RSP",  4 },
-  { "RBP",  5 },
-  { "RSI",  6 },
-  { "RDI",  7 },
-  { "R8",   8 },
-  { "R9",   9 },
-  { "R10", 10 },
-  { "R11", 11 },
-  { "R12", 12 },
-  { "R13", 13 },
-  { "R14", 14 },
-  { "R15", 15 }
-};
-
-static uint64_t getOffsetOfLSDA(const Win64EH::UnwindInfo& UI) {
-  return static_cast<const char*>(UI.getLanguageSpecificData())
-         - reinterpret_cast<const char*>(&UI);
-}
-
-static uint32_t getLargeSlotValue(ArrayRef<UnwindCode> UCs) {
-  if (UCs.size() < 3)
-    return 0;
-
-  return UCs[1].FrameOffset + (static_cast<uint32_t>(UCs[2].FrameOffset) << 16);
-}
-
 template<typename T>
 static error_code getSymbolAuxData(const COFFObjectFile *Obj,
                                    const coff_symbol *Symbol, const T* &Aux) {
   ArrayRef<uint8_t> AuxData = Obj->getSymbolAuxData(Symbol);
   Aux = reinterpret_cast<const T*>(AuxData.data());
   return readobj_error::success;
-}
-
-std::string COFFDumper::formatSymbol(const coff_section *Section,
-                                     uint64_t Offset, uint32_t Disp) {
-  std::string Buffer;
-  raw_string_ostream Str(Buffer);
-
-  StringRef Sym;
-  if (resolveSymbolName(Section, Offset, Sym)) {
-    Str << format(" (0x%" PRIX64 ")", Offset);
-    return Str.str();
-  }
-
-  Str << Sym;
-  if (Disp > 0) {
-    Str << format(" +0x%X (0x%" PRIX64 ")", Disp, Offset);
-  } else {
-    Str << format(" (0x%" PRIX64 ")", Offset);
-  }
-
-  return Str.str();
-}
-
-error_code COFFDumper::resolveRelocation(const coff_section *Section,
-                                         uint64_t Offset,
-                                         const coff_section *&ResolvedSection,
-                                         uint64_t &ResolvedAddress) {
-  SymbolRef Sym;
-  if (error_code EC = resolveSymbol(Section, Offset, Sym))
-    return EC;
-
-  if (error_code EC = Sym.getAddress(ResolvedAddr))
-    return EC;
-
-  section_iterator SI(Obj->section_begin());
-  if (error_code EC = Sym.getSection(SI))
-    return EC;
-
-  ResolvedSection = Obj->getCOFFSection(*SI);
-  return object_error::success;
 }
 
 void COFFDumper::cacheRelocations() {
@@ -997,182 +845,22 @@ void COFFDumper::printUnwindInfo() {
     return;
 
   ListScope D(W, "UnwindInformation");
-  if (Header->Machine != COFF::IMAGE_FILE_MACHINE_AMD64) {
-    W.startLine() << "Unsupported image machine type "
-              "(currently only AMD64 is supported).\n";
-    return;
+  switch (Header->Machine) {
+  case COFF::IMAGE_FILE_MACHINE_AMD64: {
+    Win64EH::Dumper Dumper(W);
+    Win64EH::Dumper::SymbolResolver Resolver =
+      [this](const object::coff_section *Section, uint64_t Offset,
+             SymbolRef &Symbol) -> error_code {
+        return this->resolveSymbol(Section, Offset, Symbol);
+      };
+    Win64EH::Dumper::Context Ctx(*Obj, Resolver);
+    Dumper.printData(Ctx);
+    break;
   }
-
-  printX64UnwindInfo();
-}
-
-void COFFDumper::printX64UnwindInfo() {
-  for (const SectionRef &Section : Obj->sections()) {
-    StringRef Name;
-    if (error(Section.getName(Name)))
-      continue;
-    if (Name != ".pdata" && !Name.startswith(".pdata$"))
-      continue;
-
-    const coff_section *PData = Obj->getCOFFSection(Section);
-
-    ArrayRef<uint8_t> Contents;
-    if (error(Obj->getSectionContents(PData, Contents)) || Contents.empty())
-      continue;
-
-    ArrayRef<RuntimeFunction> RFs(
-      reinterpret_cast<const RuntimeFunction *>(Contents.data()),
-      Contents.size() / sizeof(RuntimeFunction));
-
-    for (const RuntimeFunction *I = RFs.begin(), *E = RFs.end(); I < E; ++I) {
-      const uint64_t OffsetInSection = std::distance(RFs.begin(), I)
-                                     * sizeof(RuntimeFunction);
-
-      printRuntimeFunction(*I, PData, OffsetInSection);
-    }
+  default:
+    W.printEnum("unsupported Image Machine", Header->Machine,
+                makeArrayRef(ImageFileMachineType));
+    break;
   }
 }
 
-void COFFDumper::printRuntimeFunction(const RuntimeFunction& RTF,
-                                      const coff_section *Section,
-                                      uint64_t SectionOffset) {
-
-  DictScope D(W, "RuntimeFunction");
-  W.printString("StartAddress",
-                formatSymbol(Section, SectionOffset + 0, RTF.StartAddress));
-  W.printString("EndAddress",
-                formatSymbol(Section, SectionOffset + 4, RTF.EndAddress));
-  W.printString("UnwindInfoAddress",
-                formatSymbol(Section, SectionOffset + 8, RTF.UnwindInfoOffset));
-
-  const coff_section* XData = nullptr;
-  uint64_t UnwindInfoOffset = 0;
-  if (error(getSectionFromRelocation(Section, SectionOffset + 8,
-                                     XData, UnwindInfoOffset)))
-    return;
-
-  ArrayRef<uint8_t> XContents;
-  if (error(Obj->getSectionContents(XData, XContents)) || XContents.empty())
-    return;
-
-  UnwindInfoOffset += RTF.UnwindInfoOffset;
-  if (UnwindInfoOffset > XContents.size())
-    return;
-
-  const Win64EH::UnwindInfo *UI =
-    reinterpret_cast<const Win64EH::UnwindInfo *>(
-      XContents.data() + UnwindInfoOffset);
-
-  printUnwindInfo(*UI, XData, UnwindInfoOffset);
-}
-
-void COFFDumper::printUnwindInfo(const Win64EH::UnwindInfo& UI,
-                                 const coff_section *Section,
-                                 uint64_t SectionOffset) {
-  DictScope D(W, "UnwindInfo");
-  W.printNumber("Version", UI.getVersion());
-  W.printFlags("Flags", UI.getFlags(), makeArrayRef(UnwindFlags));
-  W.printNumber("PrologSize", UI.PrologSize);
-  if (UI.getFrameRegister() != 0) {
-    W.printEnum("FrameRegister", UI.getFrameRegister(),
-                makeArrayRef(UnwindOpInfo));
-    W.printHex("FrameOffset", UI.getFrameOffset());
-  } else {
-    W.printString("FrameRegister", StringRef("-"));
-    W.printString("FrameOffset", StringRef("-"));
-  }
-
-  W.printNumber("UnwindCodeCount", UI.NumCodes);
-  {
-    ListScope CodesD(W, "UnwindCodes");
-    ArrayRef<UnwindCode> UCs(&UI.UnwindCodes[0], UI.NumCodes);
-    for (const UnwindCode *I = UCs.begin(), *E = UCs.end(); I < E; ++I) {
-      unsigned UsedSlots = getNumUsedSlots(*I);
-      if (UsedSlots > UCs.size()) {
-        errs() << "Corrupt unwind data";
-        return;
-      }
-      printUnwindCode(UI, ArrayRef<UnwindCode>(I, E));
-      I += UsedSlots - 1;
-    }
-  }
-
-  uint64_t LSDAOffset = SectionOffset + getOffsetOfLSDA(UI);
-  if (UI.getFlags() & (UNW_ExceptionHandler | UNW_TerminateHandler)) {
-    W.printString("Handler",
-                  formatSymbol(Section, LSDAOffset,
-                               UI.getLanguageSpecificHandlerOffset()));
-  } else if (UI.getFlags() & UNW_ChainInfo) {
-    const RuntimeFunction *Chained = UI.getChainedFunctionEntry();
-    if (Chained) {
-      DictScope D(W, "Chained");
-      W.printString("StartAddress", formatSymbol(Section, LSDAOffset + 0,
-                                                 Chained->StartAddress));
-      W.printString("EndAddress", formatSymbol(Section, LSDAOffset + 4,
-                                               Chained->EndAddress));
-      W.printString("UnwindInfoAddress",
-                    formatSymbol(Section, LSDAOffset + 8,
-                                 Chained->UnwindInfoOffset));
-    }
-  }
-}
-
-// Prints one unwind code. Because an unwind code can occupy up to 3 slots in
-// the unwind codes array, this function requires that the correct number of
-// slots is provided.
-void COFFDumper::printUnwindCode(const Win64EH::UnwindInfo& UI,
-                                 ArrayRef<UnwindCode> UCs) {
-  assert(UCs.size() >= getNumUsedSlots(UCs[0]));
-
-  W.startLine() << format("0x%02X: ", unsigned(UCs[0].u.CodeOffset))
-                << getUnwindCodeTypeName(UCs[0].getUnwindOp());
-
-  uint32_t AllocSize = 0;
-
-  switch (UCs[0].getUnwindOp()) {
-  case UOP_PushNonVol:
-    outs() << " reg=" << getUnwindRegisterName(UCs[0].getOpInfo());
-    break;
-
-  case UOP_AllocLarge:
-    if (UCs[0].getOpInfo() == 0) {
-      AllocSize = UCs[1].FrameOffset * 8;
-    } else {
-      AllocSize = getLargeSlotValue(UCs);
-    }
-    outs() << " size=" << AllocSize;
-    break;
-  case UOP_AllocSmall:
-    outs() << " size=" << ((UCs[0].getOpInfo() + 1) * 8);
-    break;
-  case UOP_SetFPReg:
-    if (UI.getFrameRegister() == 0) {
-      outs() << " reg=<invalid>";
-    } else {
-      outs() << " reg=" << getUnwindRegisterName(UI.getFrameRegister())
-             << format(", offset=0x%X", UI.getFrameOffset() * 16);
-    }
-    break;
-  case UOP_SaveNonVol:
-    outs() << " reg=" << getUnwindRegisterName(UCs[0].getOpInfo())
-           << format(", offset=0x%X", UCs[1].FrameOffset * 8);
-    break;
-  case UOP_SaveNonVolBig:
-    outs() << " reg=" << getUnwindRegisterName(UCs[0].getOpInfo())
-           << format(", offset=0x%X", getLargeSlotValue(UCs));
-    break;
-  case UOP_SaveXMM128:
-    outs() << " reg=XMM" << static_cast<uint32_t>(UCs[0].getOpInfo())
-           << format(", offset=0x%X", UCs[1].FrameOffset * 16);
-    break;
-  case UOP_SaveXMM128Big:
-    outs() << " reg=XMM" << static_cast<uint32_t>(UCs[0].getOpInfo())
-           << format(", offset=0x%X", getLargeSlotValue(UCs));
-    break;
-  case UOP_PushMachFrame:
-    outs() << " errcode=" << (UCs[0].getOpInfo() == 0 ? "no" : "yes");
-    break;
-  }
-
-  outs() << "\n";
-}
