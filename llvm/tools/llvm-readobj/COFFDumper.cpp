@@ -80,11 +80,8 @@ private:
 
   void cacheRelocations();
 
-  error_code getSection(
-    const std::vector<RelocationRef> &Rels,
-    uint64_t Offset,
-    const coff_section **Section,
-    uint64_t *AddrPtr);
+  error_code getSection(const std::vector<RelocationRef> &Rels, uint64_t Offset,
+                        const coff_section *&Section, uint64_t &AddrPtr);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -460,23 +457,16 @@ static std::string formatSymbol(const std::vector<RelocationRef> &Rels,
   return Str.str();
 }
 
-error_code COFFDumper::getSection(
-    const std::vector<RelocationRef> &Rels, uint64_t Offset,
-    const coff_section **SectionPtr, uint64_t *AddrPtr) {
-
+error_code COFFDumper::getSection(const std::vector<RelocationRef> &Rels,
+                                  uint64_t Offset,
+                                  const coff_section *&SectionPtr,
+                                  uint64_t &AddrPtr) {
   SymbolRef Sym;
   if (error_code EC = resolveSymbol(Rels, Offset, Sym))
     return EC;
 
-  const coff_section *Section;
-  uint64_t Addr;
-  if (error_code EC = resolveSectionAndAddress(Obj, Sym, Section, Addr))
+  if (error_code EC = resolveSectionAndAddress(Obj, Sym, SectionPtr, AddrPtr))
     return EC;
-
-  if (SectionPtr)
-    *SectionPtr = Section;
-  if (AddrPtr)
-    *AddrPtr = Addr;
 
   return object_error::success;
 }
@@ -1063,7 +1053,7 @@ void COFFDumper::printRuntimeFunction(
 
   const coff_section* XData = nullptr;
   uint64_t UnwindInfoOffset = 0;
-  if (error(getSection(Rels, OffsetInSection + 8, &XData, &UnwindInfoOffset)))
+  if (error(getSection(Rels, OffsetInSection + 8, XData, UnwindInfoOffset)))
     return;
 
   ArrayRef<uint8_t> XContents;
