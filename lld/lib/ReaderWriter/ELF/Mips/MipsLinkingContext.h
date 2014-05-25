@@ -38,9 +38,6 @@ class MipsLinkingContext final : public ELFLinkingContext {
 public:
   MipsLinkingContext(llvm::Triple triple);
 
-  MipsTargetLayout<Mips32ElELFType> &getTargetLayout();
-  const MipsTargetLayout<Mips32ElELFType> &getTargetLayout() const;
-
   // ELFLinkingContext
   bool isLittleEndian() const override;
   uint64_t getBaseAddress() const override;
