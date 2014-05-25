@@ -210,21 +210,21 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   DIDescriptor Scope(N);
   if (Scope.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
-  auto I = AbstractScopeMap.find(N);
+  auto I = AbstractScopeMap.find(Scope);
   if (I != AbstractScopeMap.end())
     return &I->second;
 
   LexicalScope *Parent = nullptr;
   if (Scope.isLexicalBlock()) {
-    DILexicalBlock DB(N);
+    DILexicalBlock DB(Scope);
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
   I = AbstractScopeMap.emplace(std::piecewise_construct,
-                               std::forward_as_tuple(N),
-                               std::forward_as_tuple(Parent, DIDescriptor(N),
+                               std::forward_as_tuple(Scope),
+                               std::forward_as_tuple(Parent, Scope,
                                                      nullptr, true)).first;
-  if (DIDescriptor(N).isSubprogram())
+  if (Scope.isSubprogram())
     AbstractScopesList.push_back(&I->second);
   return &I->second;
 }

@@ -32,6 +32,9 @@
 ; Ensure that file changes don't interfere with creating inlined subroutines.
 ; (see the line directive inside 'f2' in thesource)
 ; CHECK: DW_TAG_inlined_subroutine
+; CHECK:   DW_TAG_variable
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_abstract_origin
 
 ; Function Attrs: uwtable
 define i32 @main() #0 {
