@@ -64,15 +64,12 @@ private:
   void printBaseOfDataField(const pe32_header *Hdr);
   void printBaseOfDataField(const pe32plus_header *Hdr);
 
-  void printRuntimeFunction(
-    const RuntimeFunction& RTF,
-    uint64_t OffsetInSection,
-    const std::vector<RelocationRef> &Rels);
+  void printRuntimeFunction(const RuntimeFunction& RTF,
+                            const coff_section *Section,
+                            uint64_t SectionOffset);
 
-  void printUnwindInfo(
-    const Win64EH::UnwindInfo& UI,
-    uint64_t OffsetInSection,
-    const std::vector<RelocationRef> &Rels);
+  void printUnwindInfo(const Win64EH::UnwindInfo& UI,
+                       const coff_section *Section, uint64_t SectionOffset);
 
   void printUnwindCode(const Win64EH::UnwindInfo &UI, ArrayRef<UnwindCode> UCs);
 
@@ -80,8 +77,16 @@ private:
 
   void cacheRelocations();
 
-  error_code getSection(const std::vector<RelocationRef> &Rels, uint64_t Offset,
-                        const coff_section *&Section, uint64_t &AddrPtr);
+  error_code resolveRelocation(const coff_section *Section, uint64_t Offset,
+                               const coff_section *&ReesolvedSection,
+                               uint64_t &ResolvedAddress);
+
+  error_code resolveSymbol(const coff_section *Section, uint64_t Offset,
+                           SymbolRef &Sym);
+  error_code resolveSymbolName(const coff_section *Section, uint64_t Offset,
+                               StringRef &Name);
+  std::string formatSymbol(const coff_section *Section, uint64_t Offset,
+                           uint32_t Disp);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -182,32 +187,33 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
   return object_error::success;
 }
 
-// Given a vector of relocations for a section and an offset into this section
-// the function returns the symbol used for the relocation at the offset.
-static error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
-                                uint64_t Offset, SymbolRef &Sym) {
-  for (const auto &Relocation : Rels) {
-    uint64_t Ofs;
-    if (error_code EC = Relocation.getOffset(Ofs))
+// Given a a section and an offset into this section the function returns the
+// symbol used for the relocation at the offset.
+error_code COFFDumper::resolveSymbol(const coff_section *Section,
+                                     uint64_t Offset, SymbolRef &Sym) {
+  const auto &Relocations = RelocMap[Section];
+  for (const auto &Relocation : Relocations) {
+    uint64_t RelocationOffset;
+    if (error_code EC = Relocation.getOffset(RelocationOffset))
       return EC;
 
-    if (Ofs == Offset) {
+    if (RelocationOffset == Offset) {
       Sym = *Relocation.getSymbol();
       return readobj_error::success;
     }
   }
-
   return readobj_error::unknown_symbol;
 }
 
-// Given a vector of relocations for a section and an offset into this section
-// the function returns the name of the symbol used for the relocation at the
-// offset.
-static error_code resolveSymbolName(const std::vector<RelocationRef> &Rels,
-                                    uint64_t Offset, StringRef &Name) {
-  SymbolRef Sym;
-  if (error_code EC = resolveSymbol(Rels, Offset, Sym)) return EC;
-  if (error_code EC = Sym.getName(Name)) return EC;
+// Given a section and an offset into this section the function returns the name
+// of the symbol used for the relocation at the offset.
+error_code COFFDumper::resolveSymbolName(const coff_section *Section,
+                                         uint64_t Offset, StringRef &Name) {
+  SymbolRef Symbol;
+  if (error_code EC = resolveSymbol(Section, Offset, Symbol))
+    return EC;
+  if (error_code EC = Symbol.getName(Name))
+    return EC;
   return object_error::success;
 }
 
@@ -436,13 +442,13 @@ static error_code getSymbolAuxData(const COFFObjectFile *Obj,
   return readobj_error::success;
 }
 
-static std::string formatSymbol(const std::vector<RelocationRef> &Rels,
-                                uint64_t Offset, uint32_t Disp) {
+std::string COFFDumper::formatSymbol(const coff_section *Section,
+                                     uint64_t Offset, uint32_t Disp) {
   std::string Buffer;
   raw_string_ostream Str(Buffer);
 
   StringRef Sym;
-  if (resolveSymbolName(Rels, Offset, Sym)) {
+  if (resolveSymbolName(Section, Offset, Sym)) {
     Str << format(" (0x%" PRIX64 ")", Offset);
     return Str.str();
   }
@@ -457,15 +463,16 @@ static std::string formatSymbol(const std::vector<RelocationRef> &Rels,
   return Str.str();
 }
 
-error_code COFFDumper::getSection(const std::vector<RelocationRef> &Rels,
-                                  uint64_t Offset,
-                                  const coff_section *&SectionPtr,
-                                  uint64_t &AddrPtr) {
+error_code COFFDumper::resolveRelocation(const coff_section *Section,
+                                         uint64_t Offset,
+                                         const coff_section *&ResolvedSection,
+                                         uint64_t &ResolvedAddress) {
   SymbolRef Sym;
-  if (error_code EC = resolveSymbol(Rels, Offset, Sym))
+  if (error_code EC = resolveSymbol(Section, Offset, Sym))
     return EC;
 
-  if (error_code EC = resolveSectionAndAddress(Obj, Sym, SectionPtr, AddrPtr))
+  if (error_code EC = resolveSectionAndAddress(Obj, Sym, ResolvedSection,
+                                               ResolvedAddress))
     return EC;
 
   return object_error::success;
@@ -638,8 +645,8 @@ void COFFDumper::printCodeViewLineTables(const SectionRef &Section) {
         }
 
         StringRef FunctionName;
-        if (error(resolveSymbolName(RelocMap[Obj->getCOFFSection(Section)],
-                                    Offset, FunctionName)))
+        if (error(resolveSymbolName(Obj->getCOFFSection(Section), Offset,
+                                    FunctionName)))
           return;
         W.printString("FunctionName", FunctionName);
         if (FunctionLineTables.count(FunctionName) != 0) {
@@ -1033,27 +1040,27 @@ void COFFDumper::printX64UnwindInfo() {
       const uint64_t OffsetInSection = std::distance(RFs.begin(), I)
                                      * sizeof(RuntimeFunction);
 
-      printRuntimeFunction(*I, OffsetInSection, RelocMap[PData]);
+      printRuntimeFunction(*I, PData, OffsetInSection);
     }
   }
 }
 
-void COFFDumper::printRuntimeFunction(
-    const RuntimeFunction& RTF,
-    uint64_t OffsetInSection,
-    const std::vector<RelocationRef> &Rels) {
+void COFFDumper::printRuntimeFunction(const RuntimeFunction& RTF,
+                                      const coff_section *Section,
+                                      uint64_t SectionOffset) {
 
   DictScope D(W, "RuntimeFunction");
   W.printString("StartAddress",
-                formatSymbol(Rels, OffsetInSection + 0, RTF.StartAddress));
+                formatSymbol(Section, SectionOffset + 0, RTF.StartAddress));
   W.printString("EndAddress",
-                formatSymbol(Rels, OffsetInSection + 4, RTF.EndAddress));
+                formatSymbol(Section, SectionOffset + 4, RTF.EndAddress));
   W.printString("UnwindInfoAddress",
-                formatSymbol(Rels, OffsetInSection + 8, RTF.UnwindInfoOffset));
+                formatSymbol(Section, SectionOffset + 8, RTF.UnwindInfoOffset));
 
   const coff_section* XData = nullptr;
   uint64_t UnwindInfoOffset = 0;
-  if (error(getSection(Rels, OffsetInSection + 8, XData, UnwindInfoOffset)))
+  if (error(getSectionFromRelocation(Section, SectionOffset + 8,
+                                     XData, UnwindInfoOffset)))
     return;
 
   ArrayRef<uint8_t> XContents;
@@ -1068,13 +1075,12 @@ void COFFDumper::printRuntimeFunction(
     reinterpret_cast<const Win64EH::UnwindInfo *>(
       XContents.data() + UnwindInfoOffset);
 
-  printUnwindInfo(*UI, UnwindInfoOffset, RelocMap[XData]);
+  printUnwindInfo(*UI, XData, UnwindInfoOffset);
 }
 
-void COFFDumper::printUnwindInfo(
-    const Win64EH::UnwindInfo& UI,
-    uint64_t OffsetInSection,
-    const std::vector<RelocationRef> &Rels) {
+void COFFDumper::printUnwindInfo(const Win64EH::UnwindInfo& UI,
+                                 const coff_section *Section,
+                                 uint64_t SectionOffset) {
   DictScope D(W, "UnwindInfo");
   W.printNumber("Version", UI.getVersion());
   W.printFlags("Flags", UI.getFlags(), makeArrayRef(UnwindFlags));
@@ -1103,20 +1109,22 @@ void COFFDumper::printUnwindInfo(
     }
   }
 
-  uint64_t LSDAOffset = OffsetInSection + getOffsetOfLSDA(UI);
+  uint64_t LSDAOffset = SectionOffset + getOffsetOfLSDA(UI);
   if (UI.getFlags() & (UNW_ExceptionHandler | UNW_TerminateHandler)) {
-    W.printString("Handler", formatSymbol(Rels, LSDAOffset,
-                                        UI.getLanguageSpecificHandlerOffset()));
+    W.printString("Handler",
+                  formatSymbol(Section, LSDAOffset,
+                               UI.getLanguageSpecificHandlerOffset()));
   } else if (UI.getFlags() & UNW_ChainInfo) {
     const RuntimeFunction *Chained = UI.getChainedFunctionEntry();
     if (Chained) {
       DictScope D(W, "Chained");
-      W.printString("StartAddress", formatSymbol(Rels, LSDAOffset + 0,
-                                                        Chained->StartAddress));
-      W.printString("EndAddress", formatSymbol(Rels, LSDAOffset + 4,
-                                                          Chained->EndAddress));
-      W.printString("UnwindInfoAddress", formatSymbol(Rels, LSDAOffset + 8,
-                                                    Chained->UnwindInfoOffset));
+      W.printString("StartAddress", formatSymbol(Section, LSDAOffset + 0,
+                                                 Chained->StartAddress));
+      W.printString("EndAddress", formatSymbol(Section, LSDAOffset + 4,
+                                               Chained->EndAddress));
+      W.printString("UnwindInfoAddress",
+                    formatSymbol(Section, LSDAOffset + 8,
+                                 Chained->UnwindInfoOffset));
     }
   }
 }
