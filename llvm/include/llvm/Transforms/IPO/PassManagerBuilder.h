@@ -86,7 +86,12 @@ public:
     /// EP_EnabledOnOptLevel0 - This extension point allows adding passes that
     /// should not be disabled by O0 optimization level. The passes will be
     /// inserted after the inlining pass.
-    EP_EnabledOnOptLevel0
+    EP_EnabledOnOptLevel0,
+
+    /// EP_Peephole - This extension point allows adding passes that perform
+    /// peephole optimizations similar to the instruction combiner. These passes
+    /// will be inserted after each instance of the instruction combiner pass.
+    EP_Peephole,
   };
 
   /// The Optimization Level - Specify the basic optimization level.
