@@ -1,5 +1,4 @@
-; RUN: llc -mtriple=x86_64-linux %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux < %s -filetype=obj | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
 ; test that we add DW_AT_inline even when we only have concrete out of line
 ; instances.
