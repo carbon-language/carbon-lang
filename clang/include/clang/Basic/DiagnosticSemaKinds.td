@@ -2035,7 +2035,7 @@ def err_attribute_aligned_not_power_of_two : Error<
 def err_attribute_aligned_too_great : Error<
   "requested alignment must be %0 bytes or smaller">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
-  "%0 redeclared without %1 attribute: previous %1 ignored">;
+  "%q0 redeclared without %1 attribute: previous %1 ignored">;
 def warn_attribute_ignored : Warning<"%0 attribute ignored">,
   InGroup<IgnoredAttributes>;
 def warn_attribute_after_definition_ignored : Warning<

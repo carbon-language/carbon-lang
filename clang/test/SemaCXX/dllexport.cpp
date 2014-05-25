@@ -346,3 +346,391 @@ void __declspec(dllexport) precedenceRedecl1() {}
 
 void __declspec(dllexport) precedenceRedecl2();
 void __declspec(dllimport) precedenceRedecl2() {} // expected-warning{{'dllimport' attribute ignored}}
+
+
+
+//===----------------------------------------------------------------------===//
+// Class members
+//===----------------------------------------------------------------------===//
+
+// Export individual members of a class.
+struct ExportMembers {
+  struct Nested {
+    __declspec(dllexport) void normalDef();
+  };
+
+  __declspec(dllexport)                void normalDecl();
+  __declspec(dllexport)                void normalDef();
+  __declspec(dllexport)                void normalInclass() {}
+  __declspec(dllexport)                void normalInlineDef();
+  __declspec(dllexport)         inline void normalInlineDecl();
+  __declspec(dllexport) virtual        void virtualDecl();
+  __declspec(dllexport) virtual        void virtualDef();
+  __declspec(dllexport) virtual        void virtualInclass() {}
+  __declspec(dllexport) virtual        void virtualInlineDef();
+  __declspec(dllexport) virtual inline void virtualInlineDecl();
+  __declspec(dllexport) static         void staticDecl();
+  __declspec(dllexport) static         void staticDef();
+  __declspec(dllexport) static         void staticInclass() {}
+  __declspec(dllexport) static         void staticInlineDef();
+  __declspec(dllexport) static  inline void staticInlineDecl();
+
+protected:
+  __declspec(dllexport)                void protectedDef();
+private:
+  __declspec(dllexport)                void privateDef();
+};
+
+       void ExportMembers::Nested::normalDef() {}
+       void ExportMembers::normalDef() {}
+inline void ExportMembers::normalInlineDef() {}
+       void ExportMembers::normalInlineDecl() {}
+       void ExportMembers::virtualDef() {}
+inline void ExportMembers::virtualInlineDef() {}
+       void ExportMembers::virtualInlineDecl() {}
+       void ExportMembers::staticDef() {}
+inline void ExportMembers::staticInlineDef() {}
+       void ExportMembers::staticInlineDecl() {}
+       void ExportMembers::protectedDef() {}
+       void ExportMembers::privateDef() {}
+
+
+// Export on member definitions.
+struct ExportMemberDefs {
+  __declspec(dllexport)                void normalDef();
+  __declspec(dllexport)                void normalInlineDef();
+  __declspec(dllexport)         inline void normalInlineDecl();
+  __declspec(dllexport) virtual        void virtualDef();
+  __declspec(dllexport) virtual        void virtualInlineDef();
+  __declspec(dllexport) virtual inline void virtualInlineDecl();
+  __declspec(dllexport) static         void staticDef();
+  __declspec(dllexport) static         void staticInlineDef();
+  __declspec(dllexport) static  inline void staticInlineDecl();
+};
+
+__declspec(dllexport)        void ExportMemberDefs::normalDef() {}
+__declspec(dllexport) inline void ExportMemberDefs::normalInlineDef() {}
+__declspec(dllexport)        void ExportMemberDefs::normalInlineDecl() {}
+__declspec(dllexport)        void ExportMemberDefs::virtualDef() {}
+__declspec(dllexport) inline void ExportMemberDefs::virtualInlineDef() {}
+__declspec(dllexport)        void ExportMemberDefs::virtualInlineDecl() {}
+__declspec(dllexport)        void ExportMemberDefs::staticDef() {}
+__declspec(dllexport) inline void ExportMemberDefs::staticInlineDef() {}
+__declspec(dllexport)        void ExportMemberDefs::staticInlineDecl() {}
+
+
+// Export special member functions.
+struct ExportSpecials {
+  __declspec(dllexport) ExportSpecials() {}
+  __declspec(dllexport) ~ExportSpecials();
+  __declspec(dllexport) inline ExportSpecials(const ExportSpecials&);
+  __declspec(dllexport) ExportSpecials& operator=(const ExportSpecials&);
+  __declspec(dllexport) ExportSpecials(ExportSpecials&&);
+  __declspec(dllexport) ExportSpecials& operator=(ExportSpecials&&);
+};
+
+ExportSpecials::~ExportSpecials() {}
+ExportSpecials::ExportSpecials(const ExportSpecials&) {}
+inline ExportSpecials& ExportSpecials::operator=(const ExportSpecials&) { return *this; }
+ExportSpecials::ExportSpecials(ExportSpecials&&) {}
+ExportSpecials& ExportSpecials::operator=(ExportSpecials&&) { return *this; }
+
+
+// Export allocation functions.
+extern "C" void* malloc(__SIZE_TYPE__ size);
+extern "C" void free(void* p);
+struct ExportAlloc {
+  __declspec(dllexport) void* operator new(__SIZE_TYPE__);
+  __declspec(dllexport) void* operator new[](__SIZE_TYPE__);
+  __declspec(dllexport) void operator delete(void*);
+  __declspec(dllexport) void operator delete[](void*);
+};
+void* ExportAlloc::operator new(__SIZE_TYPE__ n) { return malloc(n); }
+void* ExportAlloc::operator new[](__SIZE_TYPE__ n) { return malloc(n); }
+void ExportAlloc::operator delete(void* p) { free(p); }
+void ExportAlloc::operator delete[](void* p) { free(p); }
+
+
+// Export defaulted member functions.
+struct ExportDefaulted {
+  __declspec(dllexport) ExportDefaulted() = default;
+  __declspec(dllexport) ~ExportDefaulted() = default;
+  __declspec(dllexport) ExportDefaulted(const ExportDefaulted&) = default;
+  __declspec(dllexport) ExportDefaulted& operator=(const ExportDefaulted&) = default;
+  __declspec(dllexport) ExportDefaulted(ExportDefaulted&&) = default;
+  __declspec(dllexport) ExportDefaulted& operator=(ExportDefaulted&&) = default;
+};
+
+
+// Export defaulted member function definitions.
+struct ExportDefaultedDefs {
+  __declspec(dllexport) ExportDefaultedDefs();
+  __declspec(dllexport) ~ExportDefaultedDefs();
+
+  __declspec(dllexport) inline ExportDefaultedDefs(const ExportDefaultedDefs&);
+  __declspec(dllexport) ExportDefaultedDefs& operator=(const ExportDefaultedDefs&);
+
+  __declspec(dllexport) ExportDefaultedDefs(ExportDefaultedDefs&&);
+  __declspec(dllexport) ExportDefaultedDefs& operator=(ExportDefaultedDefs&&);
+};
+
+// Export definitions.
+__declspec(dllexport) ExportDefaultedDefs::ExportDefaultedDefs() = default;
+ExportDefaultedDefs::~ExportDefaultedDefs() = default;
+
+// Export inline declaration and definition.
+__declspec(dllexport) ExportDefaultedDefs::ExportDefaultedDefs(const ExportDefaultedDefs&) = default;
+inline ExportDefaultedDefs& ExportDefaultedDefs::operator=(const ExportDefaultedDefs&) = default;
+
+__declspec(dllexport) ExportDefaultedDefs::ExportDefaultedDefs(ExportDefaultedDefs&&) = default;
+ExportDefaultedDefs& ExportDefaultedDefs::operator=(ExportDefaultedDefs&&) = default;
+
+
+// Redeclarations cannot add dllexport.
+struct MemberRedecl {
+                 void normalDef();         // expected-note{{previous declaration is here}}
+                 void normalInlineDef();   // expected-note{{previous declaration is here}}
+          inline void normalInlineDecl();  // expected-note{{previous declaration is here}}
+  virtual        void virtualDef();        // expected-note{{previous declaration is here}}
+  virtual        void virtualInlineDef();  // expected-note{{previous declaration is here}}
+  virtual inline void virtualInlineDecl(); // expected-note{{previous declaration is here}}
+  static         void staticDef();         // expected-note{{previous declaration is here}}
+  static         void staticInlineDef();   // expected-note{{previous declaration is here}}
+  static  inline void staticInlineDecl();  // expected-note{{previous declaration is here}}
+};
+
+__declspec(dllexport)        void MemberRedecl::normalDef() {}         // expected-error{{redeclaration of 'MemberRedecl::normalDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport) inline void MemberRedecl::normalInlineDef() {}   // expected-error{{redeclaration of 'MemberRedecl::normalInlineDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport)        void MemberRedecl::normalInlineDecl() {}  // expected-error{{redeclaration of 'MemberRedecl::normalInlineDecl' cannot add 'dllexport' attribute}}
+__declspec(dllexport)        void MemberRedecl::virtualDef() {}        // expected-error{{redeclaration of 'MemberRedecl::virtualDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport) inline void MemberRedecl::virtualInlineDef() {}  // expected-error{{redeclaration of 'MemberRedecl::virtualInlineDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport)        void MemberRedecl::virtualInlineDecl() {} // expected-error{{redeclaration of 'MemberRedecl::virtualInlineDecl' cannot add 'dllexport' attribute}}
+__declspec(dllexport)        void MemberRedecl::staticDef() {}         // expected-error{{redeclaration of 'MemberRedecl::staticDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport) inline void MemberRedecl::staticInlineDef() {}   // expected-error{{redeclaration of 'MemberRedecl::staticInlineDef' cannot add 'dllexport' attribute}}
+__declspec(dllexport)        void MemberRedecl::staticInlineDecl() {}  // expected-error{{redeclaration of 'MemberRedecl::staticInlineDecl' cannot add 'dllexport' attribute}}
+
+
+
+//===----------------------------------------------------------------------===//
+// Class member templates
+//===----------------------------------------------------------------------===//
+
+struct ExportMemberTmpl {
+  template<typename T> __declspec(dllexport)               void normalDecl();
+  template<typename T> __declspec(dllexport)               void normalDef();
+  template<typename T> __declspec(dllexport)               void normalInclass() {}
+  template<typename T> __declspec(dllexport)               void normalInlineDef();
+  template<typename T> __declspec(dllexport)        inline void normalInlineDecl();
+  template<typename T> __declspec(dllexport) static        void staticDecl();
+  template<typename T> __declspec(dllexport) static        void staticDef();
+  template<typename T> __declspec(dllexport) static        void staticInclass() {}
+  template<typename T> __declspec(dllexport) static        void staticInlineDef();
+  template<typename T> __declspec(dllexport) static inline void staticInlineDecl();
+};
+
+template<typename T>        void ExportMemberTmpl::normalDef() {}
+template<typename T> inline void ExportMemberTmpl::normalInlineDef() {}
+template<typename T>        void ExportMemberTmpl::normalInlineDecl() {}
+template<typename T>        void ExportMemberTmpl::staticDef() {}
+template<typename T> inline void ExportMemberTmpl::staticInlineDef() {}
+template<typename T>        void ExportMemberTmpl::staticInlineDecl() {}
+
+
+
+// Redeclarations cannot add dllexport.
+struct MemTmplRedecl {
+  template<typename T>               void normalDef();         // expected-note{{previous declaration is here}}
+  template<typename T>               void normalInlineDef();   // expected-note{{previous declaration is here}}
+  template<typename T>        inline void normalInlineDecl();  // expected-note{{previous declaration is here}}
+  template<typename T> static        void staticDef();         // expected-note{{previous declaration is here}}
+  template<typename T> static        void staticInlineDef();   // expected-note{{previous declaration is here}}
+  template<typename T> static inline void staticInlineDecl();  // expected-note{{previous declaration is here}}
+};
+
+template<typename T> __declspec(dllexport)        void MemTmplRedecl::normalDef() {}        // expected-error{{redeclaration of 'MemTmplRedecl::normalDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void MemTmplRedecl::normalInlineDef() {}  // expected-error{{redeclaration of 'MemTmplRedecl::normalInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void MemTmplRedecl::normalInlineDecl() {} // expected-error{{redeclaration of 'MemTmplRedecl::normalInlineDecl' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void MemTmplRedecl::staticDef() {}        // expected-error{{redeclaration of 'MemTmplRedecl::staticDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void MemTmplRedecl::staticInlineDef() {}  // expected-error{{redeclaration of 'MemTmplRedecl::staticInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void MemTmplRedecl::staticInlineDecl() {} // expected-error{{redeclaration of 'MemTmplRedecl::staticInlineDecl' cannot add 'dllexport' attribute}}
+
+
+
+struct MemFunTmpl {
+  template<typename T>                              void normalDef() {}
+  template<typename T> __declspec(dllexport)        void exportedNormal() {}
+  template<typename T>                       static void staticDef() {}
+  template<typename T> __declspec(dllexport) static void exportedStatic() {}
+};
+
+// Export implicit instantiation of an exported member function template.
+void useMemFunTmpl() {
+  MemFunTmpl().exportedNormal<ImplicitInst_Exported>();
+  MemFunTmpl().exportedStatic<ImplicitInst_Exported>();
+}
+
+// Export explicit instantiation declaration of an exported member function
+// template.
+extern template void MemFunTmpl::exportedNormal<ExplicitDecl_Exported>();
+       template void MemFunTmpl::exportedNormal<ExplicitDecl_Exported>();
+
+extern template void MemFunTmpl::exportedStatic<ExplicitDecl_Exported>();
+       template void MemFunTmpl::exportedStatic<ExplicitDecl_Exported>();
+
+// Export explicit instantiation definition of an exported member function
+// template.
+template void MemFunTmpl::exportedNormal<ExplicitInst_Exported>();
+template void MemFunTmpl::exportedStatic<ExplicitInst_Exported>();
+
+// Export specialization of an exported member function template.
+template<> __declspec(dllexport) void MemFunTmpl::exportedNormal<ExplicitSpec_Exported>();
+template<> __declspec(dllexport) void MemFunTmpl::exportedNormal<ExplicitSpec_Def_Exported>() {}
+template<> __declspec(dllexport) inline void MemFunTmpl::exportedNormal<ExplicitSpec_InlineDef_Exported>() {}
+
+template<> __declspec(dllexport) void MemFunTmpl::exportedStatic<ExplicitSpec_Exported>();
+template<> __declspec(dllexport) void MemFunTmpl::exportedStatic<ExplicitSpec_Def_Exported>() {}
+template<> __declspec(dllexport) inline void MemFunTmpl::exportedStatic<ExplicitSpec_InlineDef_Exported>() {}
+
+// Not exporting specialization of an exported member function template without
+// explicit dllexport.
+template<> void MemFunTmpl::exportedNormal<ExplicitSpec_NotExported>() {}
+template<> void MemFunTmpl::exportedStatic<ExplicitSpec_NotExported>() {}
+
+
+// Export explicit instantiation declaration of a non-exported member function
+// template.
+extern template __declspec(dllexport) void MemFunTmpl::normalDef<ExplicitDecl_Exported>();
+       template __declspec(dllexport) void MemFunTmpl::normalDef<ExplicitDecl_Exported>();
+
+extern template __declspec(dllexport) void MemFunTmpl::staticDef<ExplicitDecl_Exported>();
+       template __declspec(dllexport) void MemFunTmpl::staticDef<ExplicitDecl_Exported>();
+
+// Export explicit instantiation definition of a non-exported member function
+// template.
+template __declspec(dllexport) void MemFunTmpl::normalDef<ExplicitInst_Exported>();
+template __declspec(dllexport) void MemFunTmpl::staticDef<ExplicitInst_Exported>();
+
+// Export specialization of a non-exported member function template.
+template<> __declspec(dllexport) void MemFunTmpl::normalDef<ExplicitSpec_Exported>();
+template<> __declspec(dllexport) void MemFunTmpl::normalDef<ExplicitSpec_Def_Exported>() {}
+template<> __declspec(dllexport) inline void MemFunTmpl::normalDef<ExplicitSpec_InlineDef_Exported>() {}
+
+template<> __declspec(dllexport) void MemFunTmpl::staticDef<ExplicitSpec_Exported>();
+template<> __declspec(dllexport) void MemFunTmpl::staticDef<ExplicitSpec_Def_Exported>() {}
+template<> __declspec(dllexport) inline void MemFunTmpl::staticDef<ExplicitSpec_InlineDef_Exported>() {}
+
+
+
+//===----------------------------------------------------------------------===//
+// Class template members
+//===----------------------------------------------------------------------===//
+
+// Export individual members of a class template.
+template<typename T>
+struct ExportClassTmplMembers {
+  __declspec(dllexport)                void normalDecl();
+  __declspec(dllexport)                void normalDef();
+  __declspec(dllexport)                void normalInclass() {}
+  __declspec(dllexport)                void normalInlineDef();
+  __declspec(dllexport)         inline void normalInlineDecl();
+  __declspec(dllexport) virtual        void virtualDecl();
+  __declspec(dllexport) virtual        void virtualDef();
+  __declspec(dllexport) virtual        void virtualInclass() {}
+  __declspec(dllexport) virtual        void virtualInlineDef();
+  __declspec(dllexport) virtual inline void virtualInlineDecl();
+  __declspec(dllexport) static         void staticDecl();
+  __declspec(dllexport) static         void staticDef();
+  __declspec(dllexport) static         void staticInclass() {}
+  __declspec(dllexport) static         void staticInlineDef();
+  __declspec(dllexport) static  inline void staticInlineDecl();
+
+protected:
+  __declspec(dllexport)                void protectedDef();
+private:
+  __declspec(dllexport)                void privateDef();
+};
+
+template<typename T>        void ExportClassTmplMembers<T>::normalDef() {}
+template<typename T> inline void ExportClassTmplMembers<T>::normalInlineDef() {}
+template<typename T>        void ExportClassTmplMembers<T>::normalInlineDecl() {}
+template<typename T>        void ExportClassTmplMembers<T>::virtualDef() {}
+template<typename T> inline void ExportClassTmplMembers<T>::virtualInlineDef() {}
+template<typename T>        void ExportClassTmplMembers<T>::virtualInlineDecl() {}
+template<typename T>        void ExportClassTmplMembers<T>::staticDef() {}
+template<typename T> inline void ExportClassTmplMembers<T>::staticInlineDef() {}
+template<typename T>        void ExportClassTmplMembers<T>::staticInlineDecl() {}
+template<typename T>        void ExportClassTmplMembers<T>::protectedDef() {}
+template<typename T>        void ExportClassTmplMembers<T>::privateDef() {}
+
+template struct ExportClassTmplMembers<ImplicitInst_Exported>;
+
+
+// Redeclarations cannot add dllexport.
+template<typename T>
+struct CTMR /*ClassTmplMemberRedecl*/ {
+                 void normalDef();         // expected-note{{previous declaration is here}}
+                 void normalInlineDef();   // expected-note{{previous declaration is here}}
+          inline void normalInlineDecl();  // expected-note{{previous declaration is here}}
+  virtual        void virtualDef();        // expected-note{{previous declaration is here}}
+  virtual        void virtualInlineDef();  // expected-note{{previous declaration is here}}
+  virtual inline void virtualInlineDecl(); // expected-note{{previous declaration is here}}
+  static         void staticDef();         // expected-note{{previous declaration is here}}
+  static         void staticInlineDef();   // expected-note{{previous declaration is here}}
+  static  inline void staticInlineDecl();  // expected-note{{previous declaration is here}}
+};
+
+template<typename T> __declspec(dllexport)        void CTMR<T>::normalDef() {}         // expected-error{{redeclaration of 'CTMR::normalDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void CTMR<T>::normalInlineDef() {}   // expected-error{{redeclaration of 'CTMR::normalInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void CTMR<T>::normalInlineDecl() {}  // expected-error{{redeclaration of 'CTMR::normalInlineDecl' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void CTMR<T>::virtualDef() {}        // expected-error{{redeclaration of 'CTMR::virtualDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void CTMR<T>::virtualInlineDef() {}  // expected-error{{redeclaration of 'CTMR::virtualInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void CTMR<T>::virtualInlineDecl() {} // expected-error{{redeclaration of 'CTMR::virtualInlineDecl' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void CTMR<T>::staticDef() {}         // expected-error{{redeclaration of 'CTMR::staticDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport) inline void CTMR<T>::staticInlineDef() {}   // expected-error{{redeclaration of 'CTMR::staticInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> __declspec(dllexport)        void CTMR<T>::staticInlineDecl() {}  // expected-error{{redeclaration of 'CTMR::staticInlineDecl' cannot add 'dllexport' attribute}}
+
+
+
+//===----------------------------------------------------------------------===//
+// Class template member templates
+//===----------------------------------------------------------------------===//
+
+template<typename T>
+struct ExportClsTmplMemTmpl {
+  template<typename U> __declspec(dllexport)               void normalDecl();
+  template<typename U> __declspec(dllexport)               void normalDef();
+  template<typename U> __declspec(dllexport)               void normalInclass() {}
+  template<typename U> __declspec(dllexport)               void normalInlineDef();
+  template<typename U> __declspec(dllexport)        inline void normalInlineDecl();
+  template<typename U> __declspec(dllexport) static        void staticDecl();
+  template<typename U> __declspec(dllexport) static        void staticDef();
+  template<typename U> __declspec(dllexport) static        void staticInclass() {}
+  template<typename U> __declspec(dllexport) static        void staticInlineDef();
+  template<typename U> __declspec(dllexport) static inline void staticInlineDecl();
+};
+
+template<typename T> template<typename U>        void ExportClsTmplMemTmpl<T>::normalDef() {}
+template<typename T> template<typename U> inline void ExportClsTmplMemTmpl<T>::normalInlineDef() {}
+template<typename T> template<typename U>        void ExportClsTmplMemTmpl<T>::normalInlineDecl() {}
+template<typename T> template<typename U>        void ExportClsTmplMemTmpl<T>::staticDef() {}
+template<typename T> template<typename U> inline void ExportClsTmplMemTmpl<T>::staticInlineDef() {}
+template<typename T> template<typename U>        void ExportClsTmplMemTmpl<T>::staticInlineDecl() {}
+
+
+// Redeclarations cannot add dllexport.
+template<typename T>
+struct CTMTR /*ClassTmplMemberTmplRedecl*/ {
+  template<typename U>               void normalDef();         // expected-note{{previous declaration is here}}
+  template<typename U>               void normalInlineDef();   // expected-note{{previous declaration is here}}
+  template<typename U>        inline void normalInlineDecl();  // expected-note{{previous declaration is here}}
+  template<typename U> static        void staticDef();         // expected-note{{previous declaration is here}}
+  template<typename U> static        void staticInlineDef();   // expected-note{{previous declaration is here}}
+  template<typename U> static inline void staticInlineDecl();  // expected-note{{previous declaration is here}}
+};
+
+template<typename T> template<typename U> __declspec(dllexport)        void CTMTR<T>::normalDef() {}         // expected-error{{redeclaration of 'CTMTR::normalDef' cannot add 'dllexport' attribute}}
+template<typename T> template<typename U> __declspec(dllexport) inline void CTMTR<T>::normalInlineDef() {}   // expected-error{{redeclaration of 'CTMTR::normalInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> template<typename U> __declspec(dllexport)        void CTMTR<T>::normalInlineDecl() {}  // expected-error{{redeclaration of 'CTMTR::normalInlineDecl' cannot add 'dllexport' attribute}}
+template<typename T> template<typename U> __declspec(dllexport)        void CTMTR<T>::staticDef() {}         // expected-error{{redeclaration of 'CTMTR::staticDef' cannot add 'dllexport' attribute}}
+template<typename T> template<typename U> __declspec(dllexport) inline void CTMTR<T>::staticInlineDef() {}   // expected-error{{redeclaration of 'CTMTR::staticInlineDef' cannot add 'dllexport' attribute}}
+template<typename T> template<typename U> __declspec(dllexport)        void CTMTR<T>::staticInlineDecl() {}  // expected-error{{redeclaration of 'CTMTR::staticInlineDecl' cannot add 'dllexport' attribute}}
