@@ -670,16 +670,12 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         DLLExportedGlobals.push_back(getSymbol(&Global));
 
     for (const auto &Alias : M.aliases()) {
-      const GlobalValue *GV = &Alias;
-      if (!GV->hasDLLExportStorageClass())
+      if (!Alias.hasDLLExportStorageClass())
         continue;
 
-      while (const GlobalAlias *A = dyn_cast<GlobalAlias>(GV))
-        GV = A->getAliasee();
-
-      if (isa<Function>(GV))
+      if (Alias.getType()->getElementType()->isFunctionTy())
         DLLExportedFns.push_back(getSymbol(&Alias));
-      else if (isa<GlobalVariable>(GV))
+      else
         DLLExportedGlobals.push_back(getSymbol(&Alias));
     }
 

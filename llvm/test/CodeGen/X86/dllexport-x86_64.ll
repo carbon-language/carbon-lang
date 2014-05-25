@@ -72,6 +72,8 @@ define weak_odr dllexport void @weak1() {
 ; CHECK: weak_alias = f1
 @weak_alias = dllexport alias weak_odr void()* @f1
 
+@blob = global [6 x i8] c"\B8*\00\00\00\C3", section ".text", align 16
+@blob_alias = dllexport alias i32 (), [6 x i8]* @blob
 
 ; CHECK: .section .drectve
 ; WIN32: /EXPORT:Var1,DATA"
@@ -88,6 +90,7 @@ define weak_odr dllexport void @weak1() {
 ; WIN32: /EXPORT:alias2"
 ; WIN32: /EXPORT:alias3"
 ; WIN32: /EXPORT:weak_alias"
+; WIN32: /EXPORT:blob_alias"
 ; MINGW: -export:Var1,data"
 ; MINGW: -export:Var2,data"
 ; MINGW: -export:Var3,data"
@@ -102,3 +105,4 @@ define weak_odr dllexport void @weak1() {
 ; MINGW: -export:alias2"
 ; MINGW: -export:alias3"
 ; MINGW: -export:weak_alias"
+; MINGW: -export:blob_alias"
