@@ -16,11 +16,11 @@
 
 ; Check the following transform:
 ;
-; ldr X, [x0, #32]
+; (ldr|str) X, [x0, #32]
 ;  ...
 ; add x0, x0, #32
 ;  ->
-; ldr X, [x0, #32]!
+; (ldr|str) X, [x0, #32]!
 ;
 ; with X being either w1, x1, s0, d0 or q0.
 
@@ -39,6 +39,19 @@ bar:
   ret void
 }
 
+define void @store-pre-indexed-word(%struct.word* %ptr, i32 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-word
+; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.word* %ptr, i64 0, i32 1, i32 0
+  store i32 %val, i32* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.word* %ptr, i64 0, i32 1
+  tail call void @bar_word(%s.word* %c, i32 %val)
+  ret void
+}
+
 declare void @bar_doubleword(%s.doubleword*, i64)
 
 define void @load-pre-indexed-doubleword(%struct.doubleword* %ptr) nounwind {
@@ -51,6 +64,19 @@ entry:
 bar:
   %c = getelementptr inbounds %struct.doubleword* %ptr, i64 0, i32 1
   tail call void @bar_doubleword(%s.doubleword* %c, i64 %add)
+  ret void
+}
+
+define void @store-pre-indexed-doubleword(%struct.doubleword* %ptr, i64 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-doubleword
+; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.doubleword* %ptr, i64 0, i32 1, i32 0
+  store i64 %val, i64* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.doubleword* %ptr, i64 0, i32 1
+  tail call void @bar_doubleword(%s.doubleword* %c, i64 %val)
   ret void
 }
 
@@ -69,6 +95,19 @@ bar:
   ret void
 }
 
+define void @store-pre-indexed-quadword(%struct.quadword* %ptr, fp128 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-quadword
+; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.quadword* %ptr, i64 0, i32 1, i32 0
+  store fp128 %val, fp128* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.quadword* %ptr, i64 0, i32 1
+  tail call void @bar_quadword(%s.quadword* %c, fp128 %val)
+  ret void
+}
+
 declare void @bar_float(%s.float*, float)
 
 define void @load-pre-indexed-float(%struct.float* %ptr) nounwind {
@@ -81,6 +120,19 @@ entry:
 bar:
   %c = getelementptr inbounds %struct.float* %ptr, i64 0, i32 1
   tail call void @bar_float(%s.float* %c, float %add)
+  ret void
+}
+
+define void @store-pre-indexed-float(%struct.float* %ptr, float %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-float
+; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.float* %ptr, i64 0, i32 1, i32 0
+  store float %val, float* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.float* %ptr, i64 0, i32 1
+  tail call void @bar_float(%s.float* %c, float %val)
   ret void
 }
 
@@ -99,3 +151,15 @@ bar:
   ret void
 }
 
+define void @store-pre-indexed-double(%struct.double* %ptr, double %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-double
+; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.double* %ptr, i64 0, i32 1, i32 0
+  store double %val, double* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.double* %ptr, i64 0, i32 1
+  tail call void @bar_double(%s.double* %c, double %val)
+  ret void
+}
