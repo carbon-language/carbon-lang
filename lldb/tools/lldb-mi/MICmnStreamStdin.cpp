@@ -23,7 +23,6 @@
 #if !defined( _MSC_VER )
 #include <sys/select.h>
 #include <termios.h>
-#include <stropts.h>
 #else
 #include <stdio.h>
 #include <Windows.h>
