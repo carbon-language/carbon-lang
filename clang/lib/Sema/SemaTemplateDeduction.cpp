@@ -126,7 +126,7 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
                                    unsigned TDF,
                                    bool PartialOrdering = false,
                             SmallVectorImpl<RefParamPartialOrderingComparison> *
-                                                      RefParamComparisons = 0);
+                                                 RefParamComparisons = nullptr);
 
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
@@ -155,7 +155,7 @@ static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     return dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl());
 
-  return 0;
+  return nullptr;
 }
 
 /// \brief Determine whether two declaration pointers refer to the same
@@ -382,7 +382,7 @@ DeduceNonTypeTemplateArgument(Sema &S,
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
-  D = D ? cast<ValueDecl>(D->getCanonicalDecl()) : 0;
+  D = D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
   TemplateArgument New(D, NTTP->getType()->isReferenceType());
   DeducedTemplateArgument NewDeduced(New);
   DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
@@ -715,7 +715,7 @@ DeduceTemplateArguments(Sema &S,
                         unsigned TDF,
                         bool PartialOrdering = false,
                         SmallVectorImpl<RefParamPartialOrderingComparison> *
-                                                     RefParamComparisons = 0) {
+                                                RefParamComparisons = nullptr) {
   // Fast-path check to see if we have too many/too few arguments.
   if (NumParams != NumArgs &&
       !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
@@ -2461,7 +2461,7 @@ Sema::DeduceTemplateArguments(VarTemplatePartialSpecializationDecl *Partial,
 static bool isSimpleTemplateIdType(QualType T) {
   if (const TemplateSpecializationType *Spec
         = T->getAs<TemplateSpecializationType>())
-    return Spec->getTemplateName().getAsTemplateDecl() != 0;
+    return Spec->getTemplateName().getAsTemplateDecl() != nullptr;
 
   return false;
 }
@@ -2600,7 +2600,7 @@ Sema::SubstituteExplicitTemplateArguments(
     //   and the end of the function-definition, member-declarator, or 
     //   declarator.
     unsigned ThisTypeQuals = 0;
-    CXXRecordDecl *ThisContext = 0;
+    CXXRecordDecl *ThisContext = nullptr;
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Function)) {
       ThisContext = Method->getParent();
       ThisTypeQuals = Method->getTypeQualifiers();
@@ -3052,7 +3052,7 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
         return QualType();
       
       // Otherwise, see if we can resolve a function type 
-      FunctionDecl *Specialization = 0;
+      FunctionDecl *Specialization = nullptr;
       TemplateDeductionInfo Info(Ovl->getNameLoc());
       if (S.DeduceTemplateArguments(FunTmpl, &ExplicitTemplateArgs,
                                     Specialization, Info))
@@ -3144,7 +3144,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
   if (ArgType == S.Context.OverloadTy) {
     ArgType = ResolveOverloadForDeduction(S, TemplateParams,
                                           Arg, ParamType,
-                                          ParamRefType != 0);
+                                          ParamRefType != nullptr);
     if (ArgType.isNull())
       return true;
   }
@@ -3313,7 +3313,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
                                           *ExplicitTemplateArgs,
                                           Deduced,
                                           ParamTypes,
-                                          0,
+                                          nullptr,
                                           Info);
     if (Result)
       return Result;
@@ -3679,7 +3679,7 @@ SpecializeCorrespondingLambdaCallOperatorAndInvoker(
   FunctionTemplateDecl *CallOpTemplate = 
       CallOpGeneric->getDescribedFunctionTemplate();
 
-  FunctionDecl *CallOpSpecialized = 0;
+  FunctionDecl *CallOpSpecialized = nullptr;
   // Use the deduced arguments of the conversion function, to specialize our 
   // generic lambda's call operator.
   if (Sema::TemplateDeductionResult Result
@@ -3705,7 +3705,7 @@ SpecializeCorrespondingLambdaCallOperatorAndInvoker(
   // specialized our corresponding call operator, we are ready to
   // specialize the static invoker with the deduced arguments of our
   // ptr-to-function.
-  FunctionDecl *InvokerSpecialized = 0;
+  FunctionDecl *InvokerSpecialized = nullptr;
   FunctionTemplateDecl *InvokerTemplate = LambdaClass->
                   getLambdaStaticInvoker()->getDescribedFunctionTemplate();
 
@@ -3848,7 +3848,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *ConversionTemplate,
   // Create an Instantiation Scope for finalizing the operator.
   LocalInstantiationScope InstScope(*this);
   // Finish template argument deduction.
-  FunctionDecl *ConversionSpecialized = 0;
+  FunctionDecl *ConversionSpecialized = nullptr;
   TemplateDeductionResult Result
       = FinishTemplateArgumentDeduction(ConversionTemplate, Deduced, 0, 
                                         ConversionSpecialized, Info);
@@ -4017,8 +4017,8 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
 
   // Build template<class TemplParam> void Func(FuncParam);
   TemplateTypeParmDecl *TemplParam =
-    TemplateTypeParmDecl::Create(Context, 0, SourceLocation(), Loc, 0, 0, 0,
-                                 false, false);
+    TemplateTypeParmDecl::Create(Context, nullptr, SourceLocation(), Loc, 0, 0,
+                                 nullptr, false, false);
   QualType TemplArg = QualType(TemplParam->getTypeForDecl(), 0);
   NamedDecl *TemplParamPtr = TemplParam;
   FixedSizeTemplateParameterList<1> TemplateParams(Loc, Loc, &TemplParamPtr,
@@ -4363,7 +4363,7 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                  unsigned NumCallArguments2) {
   SmallVector<RefParamPartialOrderingComparison, 4> RefParamComparisons;
   bool Better1 = isAtLeastAsSpecializedAs(*this, Loc, FT1, FT2, TPOC,
-                                          NumCallArguments1, 0);
+                                          NumCallArguments1, nullptr);
   bool Better2 = isAtLeastAsSpecializedAs(*this, Loc, FT2, FT1, TPOC,
                                           NumCallArguments2,
                                           &RefParamComparisons);
@@ -4372,7 +4372,7 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
     return Better1? FT1 : FT2;
 
   if (!Better1 && !Better2) // Neither is better than the other
-    return 0;
+    return nullptr;
 
   // C++0x [temp.deduct.partial]p10:
   //   If for each type being considered a given template is at least as
@@ -4398,13 +4398,13 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
         RefParamComparisons[I].ParamIsRvalueRef) {
       Better2 = true;
       if (Better1)
-        return 0;
+        return nullptr;
       continue;
     } else if (!RefParamComparisons[I].ParamIsRvalueRef &&
                RefParamComparisons[I].ArgIsRvalueRef) {
       Better1 = true;
       if (Better2)
-        return 0;
+        return nullptr;
       continue;
     }
 
@@ -4419,13 +4419,13 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
     case ParamMoreQualified:
       Better1 = true;
       if (Better2)
-        return 0;
+        return nullptr;
       continue;
 
     case ArgMoreQualified:
       Better2 = true;
       if (Better1)
-        return 0;
+        return nullptr;
       continue;
     }
 
@@ -4446,7 +4446,7 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
   if (Variadic1 != Variadic2)
     return Variadic1? FT2 : FT1;
 
-  return 0;
+  return nullptr;
 }
 
 /// \brief Determine if the two templates are equivalent.
@@ -4611,7 +4611,7 @@ Sema::getMoreSpecializedPartialSpecialization(
                                             PS2->getTemplateParameters(),
                                             PT2, PT1, Info, Deduced, TDF_None,
                                             /*PartialOrdering=*/true,
-                                            /*RefParamComparisons=*/0);
+                                            /*RefParamComparisons=*/nullptr);
   if (Better1) {
     SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(),Deduced.end());
     InstantiatingTemplate Inst(*this, Loc, PS2, DeducedArgs, Info);
@@ -4625,7 +4625,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   bool Better2 = !DeduceTemplateArgumentsByTypeMatch(
       *this, PS1->getTemplateParameters(), PT1, PT2, Info, Deduced, TDF_None,
       /*PartialOrdering=*/true,
-      /*RefParamComparisons=*/0);
+      /*RefParamComparisons=*/nullptr);
   if (Better2) {
     SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(),
                                                  Deduced.end());
@@ -4635,7 +4635,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   }
 
   if (Better1 == Better2)
-    return 0;
+    return nullptr;
 
   return Better1 ? PS1 : PS2;
 }
@@ -4669,7 +4669,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   bool Better1 = !DeduceTemplateArgumentsByTypeMatch(
       *this, PS2->getTemplateParameters(), PT2, PT1, Info, Deduced, TDF_None,
       /*PartialOrdering=*/true,
-      /*RefParamComparisons=*/0);
+      /*RefParamComparisons=*/nullptr);
   if (Better1) {
     SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(),
                                                  Deduced.end());
@@ -4686,7 +4686,7 @@ Sema::getMoreSpecializedPartialSpecialization(
                                             PS1->getTemplateParameters(),
                                             PT1, PT2, Info, Deduced, TDF_None,
                                             /*PartialOrdering=*/true,
-                                            /*RefParamComparisons=*/0);
+                                            /*RefParamComparisons=*/nullptr);
   if (Better2) {
     SmallVector<TemplateArgument, 4> DeducedArgs(Deduced.begin(),Deduced.end());
     InstantiatingTemplate Inst(*this, Loc, PS1, DeducedArgs, Info);
@@ -4696,7 +4696,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   }
 
   if (Better1 == Better2)
-    return 0;
+    return nullptr;
 
   return Better1? PS1 : PS2;
 }

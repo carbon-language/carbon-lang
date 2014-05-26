@@ -62,7 +62,7 @@ void TypeLocBuilder::grow(size_t NewCapacity) {
 
 TypeLoc TypeLocBuilder::pushImpl(QualType T, size_t LocalSize, unsigned LocalAlignment) {
 #ifndef NDEBUG
-  QualType TLast = TypeLoc(T, 0).getNextTypeLoc().getType();
+  QualType TLast = TypeLoc(T, nullptr).getNextTypeLoc().getType();
   assert(TLast == LastTy &&
          "mismatch between last type and new type's inner type");
   LastTy = T;

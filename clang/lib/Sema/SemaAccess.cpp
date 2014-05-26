@@ -78,7 +78,7 @@ static CXXRecordDecl *FindDeclaringClass(NamedDecl *D) {
 
 namespace {
 struct EffectiveContext {
-  EffectiveContext() : Inner(0), Dependent(false) {}
+  EffectiveContext() : Inner(nullptr), Dependent(false) {}
 
   explicit EffectiveContext(DeclContext *DC)
     : Inner(DC),
@@ -209,7 +209,8 @@ struct AccessTarget : public AccessedEntity {
 
     CalculatedInstanceContext = true;
     DeclContext *IC = S.computeDeclContext(getBaseObjectType());
-    InstanceContext = (IC ? cast<CXXRecordDecl>(IC)->getCanonicalDecl() : 0);
+    InstanceContext = (IC ? cast<CXXRecordDecl>(IC)->getCanonicalDecl()
+                          : nullptr);
     return InstanceContext;
   }
 
@@ -232,7 +233,7 @@ private:
                           !getBaseObjectType().isNull() &&
                           getTargetDecl()->isCXXInstanceMember());
     CalculatedInstanceContext = false;
-    InstanceContext = 0;
+    InstanceContext = nullptr;
 
     if (isMemberAccess())
       DeclaringClass = FindDeclaringClass(getTargetDecl());
@@ -709,7 +710,7 @@ struct ProtectedFriendContext {
 static AccessResult GetProtectedFriendKind(Sema &S, const EffectiveContext &EC,
                                            const CXXRecordDecl *InstanceContext,
                                            const CXXRecordDecl *NamingClass) {
-  assert(InstanceContext == 0 ||
+  assert(InstanceContext == nullptr ||
          InstanceContext->getCanonicalDecl() == InstanceContext);
   assert(NamingClass->getCanonicalDecl() == NamingClass);
 
@@ -842,7 +843,7 @@ static AccessResult HasAccess(Sema &S,
   // and instead rely on whether any potential P is a friend.
   if (Access == AS_protected && Target.isInstanceMember()) {
     // Compute the instance context if possible.
-    const CXXRecordDecl *InstanceContext = 0;
+    const CXXRecordDecl *InstanceContext = nullptr;
     if (Target.hasInstanceContext()) {
       InstanceContext = Target.resolveInstanceContext(S);
       if (!InstanceContext) return AR_dependent;
@@ -937,7 +938,7 @@ static CXXBasePath *FindBestPath(Sema &S,
   assert(isDerived && "derived class not actually derived from base");
   (void) isDerived;
 
-  CXXBasePath *BestPath = 0;
+  CXXBasePath *BestPath = nullptr;
 
   assert(FinalAccess != AS_none && "forbidden access after declaring class");
 
@@ -986,7 +987,7 @@ static CXXBasePath *FindBestPath(Sema &S,
 
     // Note that we modify the path's Access field to the
     // friend-modified access.
-    if (BestPath == 0 || PathAccess < BestPath->Access) {
+    if (BestPath == nullptr || PathAccess < BestPath->Access) {
       BestPath = &*PI;
       BestPath->Access = PathAccess;
 
@@ -1004,7 +1005,7 @@ static CXXBasePath *FindBestPath(Sema &S,
   // We didn't find a public path, but at least one path was subject
   // to dependent friendship, so delay the check.
   if (AnyDependent)
-    return 0;
+    return nullptr;
 
   return BestPath;
 }
@@ -1101,7 +1102,7 @@ static void diagnoseBadDirectAccess(Sema &S,
 
   // Find an original declaration.
   while (D->isOutOfLine()) {
-    NamedDecl *PrevDecl = 0;
+    NamedDecl *PrevDecl = nullptr;
     if (VarDecl *VD = dyn_cast<VarDecl>(D))
       PrevDecl = VD->getPreviousDecl();
     else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
@@ -1212,7 +1213,7 @@ static void DiagnoseAccessPath(Sema &S,
     case AR_accessible:
       accessSoFar = AS_public;
       entity.suppressInstanceContext();
-      constrainingBase = 0;
+      constrainingBase = nullptr;
       break;
     case AR_dependent:
       llvm_unreachable("cannot diagnose dependent access");
@@ -1259,7 +1260,7 @@ static void DiagnoseBadAccess(Sema &S, SourceLocation Loc,
                               AccessTarget &Entity) {
   const CXXRecordDecl *NamingClass = Entity.getNamingClass();
   const CXXRecordDecl *DeclaringClass = Entity.getDeclaringClass();
-  NamedDecl *D = (Entity.isMemberAccess() ? Entity.getTargetDecl() : 0);
+  NamedDecl *D = (Entity.isMemberAccess() ? Entity.getTargetDecl() : nullptr);
 
   S.Diag(Loc, Entity.getDiag())
     << (Entity.getAccess() == AS_protected)
@@ -1872,7 +1873,7 @@ bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
 
     // If we are inside a class or category implementation, determine the
     // interface we're in.
-    ObjCInterfaceDecl *ClassOfMethodDecl = 0;
+    ObjCInterfaceDecl *ClassOfMethodDecl = nullptr;
     if (ObjCMethodDecl *MD = getCurMethodDecl())
       ClassOfMethodDecl =  MD->getClassInterface();
     else if (FunctionDecl *FD = getCurFunctionDecl()) {

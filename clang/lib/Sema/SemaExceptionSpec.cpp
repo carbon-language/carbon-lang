@@ -283,7 +283,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
   case EST_ComputedNoexcept:
     OS << "noexcept(";
-    OldProto->getNoexceptExpr()->printPretty(OS, 0, getPrintingPolicy());
+    OldProto->getNoexceptExpr()->printPretty(OS, nullptr, getPrintingPolicy());
     OS << ")";
     break;
 
@@ -455,7 +455,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // throw(std::bad_alloc) as equivalent for operator new and operator new[].
   // This is because the implicit declaration changed, but old code would break.
   if (getLangOpts().CPlusPlus11 && IsOperatorNew) {
-    const FunctionProtoType *WithExceptions = 0;
+    const FunctionProtoType *WithExceptions = nullptr;
     if (OldEST == EST_None && NewEST == EST_Dynamic)
       WithExceptions = New;
     else if (OldEST == EST_Dynamic && NewEST == EST_None)

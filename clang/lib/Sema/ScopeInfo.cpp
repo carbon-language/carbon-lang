@@ -51,7 +51,7 @@ FunctionScopeInfo::WeakObjectProfileTy::BaseInfoTy
 FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
   E = E->IgnoreParenCasts();
 
-  const NamedDecl *D = 0;
+  const NamedDecl *D = nullptr;
   bool IsExact = false;
 
   switch (E->getStmtClass()) {
@@ -93,10 +93,9 @@ FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
   return BaseInfoTy(D, IsExact);
 }
 
-
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
                                           const ObjCPropertyRefExpr *PropE)
-    : Base(0, true), Property(getBestPropertyDecl(PropE)) {
+    : Base(nullptr, true), Property(getBestPropertyDecl(PropE)) {
 
   if (PropE->isObjectReceiver()) {
     const OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(PropE->getBase());
@@ -111,7 +110,7 @@ FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
 
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(const Expr *BaseE,
                                                 const ObjCPropertyDecl *Prop)
-    : Base(0, true), Property(Prop) {
+    : Base(nullptr, true), Property(Prop) {
   if (BaseE)
     Base = getBaseInfo(BaseE);
   // else, this is a message accessing a property on super.
@@ -119,7 +118,7 @@ FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(const Expr *BaseE,
 
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(
                                                       const DeclRefExpr *DRE)
-  : Base(0, true), Property(DRE->getDecl()) {
+  : Base(nullptr, true), Property(DRE->getDecl()) {
   assert(isa<VarDecl>(Property));
 }
 

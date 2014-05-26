@@ -94,7 +94,7 @@ class TypeLocBuilder {
   /// Pushes space for a new TypeLoc of the given type.  Invalidates
   /// any TypeLocs previously retrieved from this builder.
   template <class TyLocType> TyLocType push(QualType T) {
-    TyLocType Loc = TypeLoc(T, 0).castAs<TyLocType>();
+    TyLocType Loc = TypeLoc(T, nullptr).castAs<TyLocType>();
     size_t LocalSize = Loc.getLocalDataSize();
     unsigned LocalAlign = Loc.getLocalDataAlignment();
     return pushImpl(T, LocalSize, LocalAlign).castAs<TyLocType>();

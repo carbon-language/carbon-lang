@@ -28,7 +28,7 @@ void Scope::Init(Scope *parent, unsigned flags) {
   } else {
     // Control scopes do not contain the contents of nested function scopes for
     // control flow purposes.
-    BreakParent = ContinueParent = 0;
+    BreakParent = ContinueParent = nullptr;
   }
 
   if (parent) {
@@ -43,8 +43,8 @@ void Scope::Init(Scope *parent, unsigned flags) {
     Depth = 0;
     PrototypeDepth = 0;
     PrototypeIndex = 0;
-    MSLocalManglingParent = FnParent = BlockParent = 0;
-    TemplateParamParent = 0;
+    MSLocalManglingParent = FnParent = BlockParent = nullptr;
+    TemplateParamParent = nullptr;
     MSLocalManglingNumber = 1;
   }
 
@@ -76,7 +76,7 @@ void Scope::Init(Scope *parent, unsigned flags) {
 
   DeclsInScope.clear();
   UsingDirectives.clear();
-  Entity = 0;
+  Entity = nullptr;
   ErrorTrap.reset();
   NRVO.setPointerAndInt(nullptr, 0);
 }

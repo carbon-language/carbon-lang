@@ -104,7 +104,7 @@ namespace {
         if (DeclIndexPairVector *Vec
               = DeclOrVector.dyn_cast<DeclIndexPairVector *>()) {
           delete Vec;
-          DeclOrVector = ((NamedDecl *)0);
+          DeclOrVector = ((NamedDecl *)nullptr);
         }
       }
 
@@ -172,12 +172,12 @@ namespace {
     explicit ResultBuilder(Sema &SemaRef, CodeCompletionAllocator &Allocator,
                            CodeCompletionTUInfo &CCTUInfo,
                            const CodeCompletionContext &CompletionContext,
-                           LookupFilter Filter = 0)
+                           LookupFilter Filter = nullptr)
       : SemaRef(SemaRef), Allocator(Allocator), CCTUInfo(CCTUInfo),
         Filter(Filter), 
         AllowNestedNameSpecifiers(false), HasObjectTypeQualifiers(false), 
         CompletionContext(CompletionContext),
-        ObjCImplementation(0) 
+        ObjCImplementation(nullptr)
     { 
       // If this is an Objective-C instance method definition, dig out the 
       // corresponding implementation.
@@ -212,8 +212,8 @@ namespace {
     void setFilter(LookupFilter Filter) {
       this->Filter = Filter;
     }
-    
-    Result *data() { return Results.empty()? 0 : &Results.front(); }
+
+    Result *data() { return Results.empty()? nullptr : &Results.front(); }
     unsigned size() const { return Results.size(); }
     bool empty() const { return Results.empty(); }
     
@@ -289,8 +289,8 @@ namespace {
     /// \param R the result to add (if it is unique).
     ///
     /// \param CurContext the context in which this result will be named.
-    void MaybeAddResult(Result R, DeclContext *CurContext = 0);
-    
+    void MaybeAddResult(Result R, DeclContext *CurContext = nullptr);
+
     /// \brief Add a new result to this result set, where we already know
     /// the hiding declation (if any).
     ///
@@ -364,8 +364,8 @@ public:
       return &Value;
     }
   };
-        
-  iterator() : DeclOrIterator((NamedDecl *)0), SingleDeclIndex(0) { }
+
+  iterator() : DeclOrIterator((NamedDecl *)nullptr), SingleDeclIndex(0) {}
 
   iterator(const NamedDecl *SingleDecl, unsigned Index)
     : DeclOrIterator(SingleDecl), SingleDeclIndex(Index) { }
@@ -375,7 +375,7 @@ public:
 
   iterator &operator++() {
     if (DeclOrIterator.is<const NamedDecl *>()) {
-      DeclOrIterator = (NamedDecl *)0;
+      DeclOrIterator = (NamedDecl *)nullptr;
       SingleDeclIndex = 0;
       return *this;
     }
@@ -461,8 +461,8 @@ getRequiredQualification(ASTContext &Context,
     
     TargetParents.push_back(CommonAncestor);
   }
-  
-  NestedNameSpecifier *Result = 0;
+
+  NestedNameSpecifier *Result = nullptr;
   while (!TargetParents.empty()) {
     const DeclContext *Parent = TargetParents.pop_back_val();
 
@@ -530,7 +530,7 @@ bool ResultBuilder::isInterestingDecl(const NamedDecl *ND,
       ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
        Filter != &ResultBuilder::IsNamespace &&
        Filter != &ResultBuilder::IsNamespaceOrAlias &&
-       Filter != 0))
+       Filter != nullptr))
     AsNestedNameSpecifier = true;
 
   // Filter out any unwanted results.
@@ -779,7 +779,7 @@ void ResultBuilder::MaybeAddConstructorResults(Result R) {
   
   ASTContext &Context = SemaRef.Context;
   const NamedDecl *D = R.Declaration;
-  const CXXRecordDecl *Record = 0;
+  const CXXRecordDecl *Record = nullptr;
   if (const ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D))
     Record = ClassTemplate->getTemplatedDecl();
   else if ((Record = dyn_cast<CXXRecordDecl>(D))) {
@@ -910,10 +910,11 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
       !R.StartsNestedNameSpecifier) {
     const DeclContext *Ctx = R.Declaration->getDeclContext();
     if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Ctx))
-      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, nullptr,
+                                                Namespace);
     else if (const TagDecl *Tag = dyn_cast<TagDecl>(Ctx))
-      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, false, 
-                             SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, nullptr,
+                      false, SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
     else
       R.QualifierIsInformative = false;
   }
@@ -975,9 +976,10 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
       !R.StartsNestedNameSpecifier) {
     const DeclContext *Ctx = R.Declaration->getDeclContext();
     if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Ctx))
-      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, nullptr,
+                                                Namespace);
     else if (const TagDecl *Tag = dyn_cast<TagDecl>(Ctx))
-      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, false, 
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, nullptr, false,
                             SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
     else
       R.QualifierIsInformative = false;
@@ -1259,9 +1261,9 @@ namespace {
       bool Accessible = true;
       if (Ctx)
         Accessible = Results.getSema().IsSimplyAccessible(ND, Ctx);
-      
-      ResultBuilder::Result Result(ND, Results.getBasePriority(ND), 0, false,
-                                   Accessible);
+
+      ResultBuilder::Result Result(ND, Results.getBasePriority(ND), nullptr,
+                                   false, Accessible);
       Results.AddResult(Result, CurContext, Hiding, InBaseClass);
     }
   };
@@ -2444,7 +2446,7 @@ static void AddTypedNameChunk(ASTContext &Context, const PrintingPolicy &Policy,
   
   switch (Name.getNameKind()) {
     case DeclarationName::CXXOperatorName: {
-      const char *OperatorName = 0;
+      const char *OperatorName = nullptr;
       switch (Name.getCXXOverloadedOperator()) {
       case OO_None: 
       case OO_Conditional:
@@ -2483,7 +2485,7 @@ static void AddTypedNameChunk(ASTContext &Context, const PrintingPolicy &Policy,
     break;
       
   case DeclarationName::CXXConstructorName: {
-    CXXRecordDecl *Record = 0;
+    CXXRecordDecl *Record = nullptr;
     QualType Ty = Name.getCXXNameType();
     if (const RecordType *RecordTy = Ty->getAs<RecordType>())
       Record = cast<CXXRecordDecl>(RecordTy->getDecl());
@@ -3240,7 +3242,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
       Results.setFilter(&ResultBuilder::IsOrdinaryNonTypeName);
       
     if (getLangOpts().CPlusPlus)
-      MaybeAddOverrideCalls(*this, /*InContext=*/0, Results);
+      MaybeAddOverrideCalls(*this, /*InContext=*/nullptr, Results);
     break;
       
   case PCC_RecoveryInFunction:
@@ -3328,7 +3330,7 @@ void Sema::CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
       CodeCompletionDeclConsumer Consumer(Results, CurContext);
       LookupVisibleDecls(S, LookupNestedNameSpecifierName, Consumer,
                          CodeCompleter->includeGlobals());
-      Results.setFilter(0);
+      Results.setFilter(nullptr);
     }
   }
   Results.ExitScope();
@@ -3465,9 +3467,9 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   // Add properties in this container.
   for (const auto *P : Container->properties())
     if (AddedProperties.insert(P->getIdentifier()))
-      Results.MaybeAddResult(Result(P, Results.getBasePriority(P), 0),
+      Results.MaybeAddResult(Result(P, Results.getBasePriority(P), nullptr),
                              CurContext);
-  
+
   // Add nullary methods
   if (AllowNullaryMethods) {
     ASTContext &Context = Container->getASTContext();
@@ -3615,7 +3617,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
   } else if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
              (!IsArrow && BaseType->isObjCObjectType())) {
     // Objective-C instance variable access.
-    ObjCInterfaceDecl *Class = 0;
+    ObjCInterfaceDecl *Class = nullptr;
     if (const ObjCObjectPointerType *ObjCPtr
                                     = BaseType->getAs<ObjCObjectPointerType>())
       Class = ObjCPtr->getInterfaceDecl();
@@ -3644,8 +3646,8 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
 void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   if (!CodeCompleter)
     return;
-  
-  ResultBuilder::LookupFilter Filter = 0;
+
+  ResultBuilder::LookupFilter Filter = nullptr;
   enum CodeCompletionContext::Kind ContextKind
     = CodeCompletionContext::CCC_Other;
   switch ((DeclSpec::TST)TagSpec) {
@@ -3734,7 +3736,7 @@ void Sema::CodeCompleteCase(Scope *S) {
   // token, in case we are code-completing in the middle of the switch and not
   // at the end. However, we aren't able to do so at the moment.
   llvm::SmallPtrSet<EnumConstantDecl *, 8> EnumeratorsSeen;
-  NestedNameSpecifier *Qualifier = 0;
+  NestedNameSpecifier *Qualifier = nullptr;
   for (SwitchCase *SC = Switch->getSwitchCaseList(); SC; 
        SC = SC->getNextSwitchCase()) {
     CaseStmt *Case = dyn_cast<CaseStmt>(SC);
@@ -3785,7 +3787,7 @@ void Sema::CodeCompleteCase(Scope *S) {
       continue;
     
     CodeCompletionResult R(E, CCP_EnumInCase, Qualifier);
-    Results.AddResult(R, CurContext, 0, false);
+    Results.AddResult(R, CurContext, nullptr, false);
   }
   Results.ExitScope();
 
@@ -4141,8 +4143,9 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
            NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
       Results.AddResult(CodeCompletionResult(
-                          NS->second, Results.getBasePriority(NS->second), 0),
-                        CurContext, 0, false);
+                          NS->second, Results.getBasePriority(NS->second),
+                          nullptr),
+                        CurContext, nullptr, false);
     Results.ExitScope();
   }
   
@@ -4347,7 +4350,7 @@ void Sema::CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
       
       if (Known.insert(Var->getIdentifier()))
         Results.AddResult(CodeCompletionResult(Var, CCP_LocalDeclaration),
-                          CurContext, 0, false);
+                          CurContext, nullptr, false);
     }
   }
 
@@ -4816,8 +4819,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
 
       if (!Selectors.insert(M->getSelector()))
         continue;
-      
-      Result R = Result(M, Results.getBasePriority(M), 0);
+
+      Result R = Result(M, Results.getBasePriority(M), nullptr);
       R.StartParameter = SelIdents.size();
       R.AllParametersAreInformative = (WantKind != MK_Any);
       if (!InOriginalClass)
@@ -5019,22 +5022,22 @@ void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS,
 static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
   ObjCMessageExpr *Msg = dyn_cast_or_null<ObjCMessageExpr>(E);
   if (!Msg)
-    return 0;
+    return nullptr;
 
   Selector Sel = Msg->getSelector();
   if (Sel.isNull())
-    return 0;
+    return nullptr;
 
   IdentifierInfo *Id = Sel.getIdentifierInfoForSlot(0);
   if (!Id)
-    return 0;
+    return nullptr;
 
   ObjCMethodDecl *Method = Msg->getMethodDecl();
   if (!Method)
-    return 0;
+    return nullptr;
 
   // Determine the class that we're sending the message to.
-  ObjCInterfaceDecl *IFace = 0;
+  ObjCInterfaceDecl *IFace = nullptr;
   switch (Msg->getReceiverKind()) {
   case ObjCMessageExpr::Class:
     if (const ObjCObjectType *ObjType
@@ -5055,7 +5058,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
   }
 
   if (!IFace)
-    return 0;
+    return nullptr;
 
   ObjCInterfaceDecl *Super = IFace->getSuperClass();
   if (Method->isInstanceMethod())
@@ -5072,7 +5075,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
       .Case("class", IFace)
       .Case("classForCoder", IFace)
       .Case("superclass", Super)
-      .Default(0);
+      .Default(nullptr);
 
   return llvm::StringSwitch<ObjCInterfaceDecl *>(Id->getName())
     .Case("new", IFace)
@@ -5080,7 +5083,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
     .Case("allocWithZone", IFace)
     .Case("class", IFace)
     .Case("superclass", Super)
-    .Default(0);
+    .Default(nullptr);
 }
 
 // Add a special completion for a message send to "super", which fills in the
@@ -5105,14 +5108,14 @@ static ObjCMethodDecl *AddSuperSendCompletion(
                                           ResultBuilder &Results) {
   ObjCMethodDecl *CurMethod = S.getCurMethodDecl();
   if (!CurMethod)
-    return 0;
-  
+    return nullptr;
+
   ObjCInterfaceDecl *Class = CurMethod->getClassInterface();
   if (!Class)
-    return 0;
-  
+    return nullptr;
+
   // Try to find a superclass method with the same selector.
-  ObjCMethodDecl *SuperMethod = 0;
+  ObjCMethodDecl *SuperMethod = nullptr;
   while ((Class = Class->getSuperClass()) && !SuperMethod) {
     // Check in the class
     SuperMethod = Class->getMethod(CurMethod->getSelector(), 
@@ -5129,13 +5132,13 @@ static ObjCMethodDecl *AddSuperSendCompletion(
   }
 
   if (!SuperMethod)
-    return 0;
-  
+    return nullptr;
+
   // Check whether the superclass method has the same signature.
   if (CurMethod->param_size() != SuperMethod->param_size() ||
       CurMethod->isVariadic() != SuperMethod->isVariadic())
-    return 0;
-      
+    return nullptr;
+
   for (ObjCMethodDecl::param_iterator CurP = CurMethod->param_begin(),
                                    CurPEnd = CurMethod->param_end(),
                                     SuperP = SuperMethod->param_begin();
@@ -5143,11 +5146,11 @@ static ObjCMethodDecl *AddSuperSendCompletion(
     // Make sure the parameter types are compatible.
     if (!S.Context.hasSameUnqualifiedType((*CurP)->getType(), 
                                           (*SuperP)->getType()))
-      return 0;
-    
+      return nullptr;
+
     // Make sure we have a parameter name to forward!
     if (!(*CurP)->getIdentifier())
-      return 0;
+      return nullptr;
   }
   
   // We have a superclass method. Now, form the send-to-super completion.
@@ -5242,7 +5245,7 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
 void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                         ArrayRef<IdentifierInfo *> SelIdents,
                                         bool AtArgumentExpression) {
-  ObjCInterfaceDecl *CDecl = 0;
+  ObjCInterfaceDecl *CDecl = nullptr;
   if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
     // Figure out which interface we're in.
     CDecl = CurMethod->getClassInterface();
@@ -5258,7 +5261,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
       // We are inside an instance method, which means that the message
       // send [super ...] is actually calling an instance method on the
       // current object.
-      return CodeCompleteObjCInstanceMessage(S, 0, SelIdents,
+      return CodeCompleteObjCInstanceMessage(S, nullptr, SelIdents,
                                              AtArgumentExpression,
                                              CDecl);
     }
@@ -5343,12 +5346,12 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
                                        bool IsSuper,
                                        ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
-  ObjCInterfaceDecl *CDecl = 0;
-  
+  ObjCInterfaceDecl *CDecl = nullptr;
+
   // If the given name refers to an interface type, retrieve the
   // corresponding declaration.
   if (Receiver) {
-    QualType T = SemaRef.GetTypeFromParser(Receiver, 0);
+    QualType T = SemaRef.GetTypeFromParser(Receiver, nullptr);
     if (!T.isNull()) 
       if (const ObjCObjectType *Interface = T->getAs<ObjCObjectType>())
         CDecl = Interface->getInterface();
@@ -5401,8 +5404,9 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
            MethList = MethList->getNext()) {
         if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents))
           continue;
-        
-        Result R(MethList->Method, Results.getBasePriority(MethList->Method),0);
+
+        Result R(MethList->Method, Results.getBasePriority(MethList->Method),
+                 nullptr);
         R.StartParameter = SelIdents.size();
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, SemaRef.CurContext);
@@ -5576,8 +5580,9 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
         
         if (!Selectors.insert(MethList->Method->getSelector()))
           continue;
-        
-        Result R(MethList->Method, Results.getBasePriority(MethList->Method),0);
+
+        Result R(MethList->Method, Results.getBasePriority(MethList->Method),
+                 nullptr);
         R.StartParameter = SelIdents.size();
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, CurContext);
@@ -5693,8 +5698,8 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
     // Record any protocols we find.
     if (const auto *Proto = dyn_cast<ObjCProtocolDecl>(D))
       if (!OnlyForwardDeclarations || !Proto->hasDefinition())
-        Results.AddResult(Result(Proto, Results.getBasePriority(Proto), 0),
-                          CurContext, 0, false);
+        Results.AddResult(Result(Proto, Results.getBasePriority(Proto),nullptr),
+                          CurContext, nullptr, false);
   }
 }
 
@@ -5760,8 +5765,8 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
     if (const auto *Class = dyn_cast<ObjCInterfaceDecl>(D))
       if ((!OnlyForwardDeclarations || !Class->hasDefinition()) &&
           (!OnlyUnimplemented || !Class->getImplementation()))
-        Results.AddResult(Result(Class, Results.getBasePriority(Class), 0),
-                          CurContext, 0, false);
+        Results.AddResult(Result(Class, Results.getBasePriority(Class),nullptr),
+                          CurContext, nullptr, false);
   }
 }
 
@@ -5854,8 +5859,9 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   for (const auto *D : TU->decls()) 
     if (const auto *Category = dyn_cast<ObjCCategoryDecl>(D))
       if (CategoryNames.insert(Category->getIdentifier()))
-        Results.AddResult(Result(Category, Results.getBasePriority(Category),0),
-                          CurContext, 0, false);
+        Results.AddResult(Result(Category, Results.getBasePriority(Category),
+                                 nullptr),
+                          CurContext, nullptr, false);
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
@@ -5891,8 +5897,8 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
     for (const auto *Cat : Class->visible_categories()) {
       if ((!IgnoreImplemented || !Cat->getImplementation()) &&
           CategoryNames.insert(Cat->getIdentifier()))
-        Results.AddResult(Result(Cat, Results.getBasePriority(Cat), 0),
-                          CurContext, 0, false);
+        Results.AddResult(Result(Cat, Results.getBasePriority(Cat), nullptr),
+                          CurContext, nullptr, false);
     }
     
     Class = Class->getSuperClass();
@@ -5959,7 +5965,7 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
     return; 
   
   // Figure out which interface we're looking into.
-  ObjCInterfaceDecl *Class = 0;
+  ObjCInterfaceDecl *Class = nullptr;
   if (ObjCImplementationDecl *ClassImpl
                                  = dyn_cast<ObjCImplementationDecl>(Container))  
     Class = ClassImpl->getClassInterface();
@@ -5991,9 +5997,9 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
   for(; Class; Class = Class->getSuperClass()) {
     for (ObjCIvarDecl *Ivar = Class->all_declared_ivar_begin(); Ivar; 
          Ivar = Ivar->getNextIvar()) {
-      Results.AddResult(Result(Ivar, Results.getBasePriority(Ivar), 0),
-                        CurContext, 0, false);
-      
+      Results.AddResult(Result(Ivar, Results.getBasePriority(Ivar), nullptr),
+                        CurContext, nullptr, false);
+
       // Determine whether we've seen an ivar with a name similar to the 
       // property.
       if ((PropertyName == Ivar->getIdentifier() ||
@@ -6186,10 +6192,10 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
     CodeCompletionAllocator &Allocator;
     StringRef Key;
     const char *CopiedKey;
-    
+
     KeyHolder(CodeCompletionAllocator &Allocator, StringRef Key)
-    : Allocator(Allocator), Key(Key), CopiedKey(0) { }
-    
+    : Allocator(Allocator), Key(Key), CopiedKey(nullptr) {}
+
     operator const char *() {
       if (CopiedKey)
         return CopiedKey;
@@ -6791,13 +6797,13 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   // Determine the return type of the method we're declaring, if
   // provided.
   QualType ReturnType = GetTypeFromParser(ReturnTy);
-  Decl *IDecl = 0;
+  Decl *IDecl = nullptr;
   if (CurContext->isObjCContainer()) {
       ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(CurContext);
       IDecl = cast<Decl>(OCD);
   }
   // Determine where we should start searching for methods.
-  ObjCContainerDecl *SearchDecl = 0;
+  ObjCContainerDecl *SearchDecl = nullptr;
   bool IsInImplementation = false;
   if (Decl *D = IDecl) {
     if (ObjCImplementationDecl *Impl = dyn_cast<ObjCImplementationDecl>(D)) {
@@ -6819,7 +6825,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   if (!SearchDecl) {
     HandleCodeCompleteResults(this, CodeCompleter, 
                               CodeCompletionContext::CCC_Other,
-                              0, 0);
+                              nullptr, 0);
     return;
   }
     
@@ -7000,8 +7006,9 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
         
         continue;
       }
-      
-      Result R(MethList->Method, Results.getBasePriority(MethList->Method), 0);
+
+      Result R(MethList->Method, Results.getBasePriority(MethList->Method),
+               nullptr);
       R.StartParameter = SelIdents.size();
       R.AllParametersAreInformative = false;
       R.DeclaringEntity = true;
@@ -7247,7 +7254,7 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
 void Sema::CodeCompleteNaturalLanguage() {
   HandleCodeCompleteResults(this, CodeCompleter,
                             CodeCompletionContext::CCC_NaturalLanguage,
-                            0, 0);
+                            nullptr, 0);
 }
 
 void Sema::GatherGlobalCodeCompletions(CodeCompletionAllocator &Allocator,

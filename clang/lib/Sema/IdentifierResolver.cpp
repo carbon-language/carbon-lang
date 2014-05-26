@@ -45,7 +45,7 @@ class IdentifierResolver::IdDeclInfoMap {
   unsigned int CurIndex;
 
 public:
-  IdDeclInfoMap() : CurPool(0), CurIndex(POOL_SIZE) {}
+  IdDeclInfoMap() : CurPool(nullptr), CurIndex(POOL_SIZE) {}
 
   ~IdDeclInfoMap() {
     IdDeclInfoPool *Cur = CurPool;
@@ -151,7 +151,7 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
   IdDeclInfo *IDI;
 
   if (isDeclPtr(Ptr)) {
-    Name.setFETokenInfo(NULL);
+    Name.setFETokenInfo(nullptr);
     IDI = &(*IdDeclInfos)[Name];
     NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
     IDI->AddDecl(PrevD);
@@ -213,7 +213,7 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
 
   if (isDeclPtr(Ptr)) {
     assert(D == Ptr && "Didn't find this decl on its identifier's chain!");
-    Name.setFETokenInfo(NULL);
+    Name.setFETokenInfo(nullptr);
     return;
   }
 
@@ -314,8 +314,8 @@ bool IdentifierResolver::tryAddTopLevelDecl(NamedDecl *D, DeclarationName Name){
       Name.setFETokenInfo(D);
       return true;
     }
-    
-    Name.setFETokenInfo(NULL);
+
+    Name.setFETokenInfo(nullptr);
     IDI = &(*IdDeclInfos)[Name];
     
     // If the existing declaration is not visible in translation unit scope,

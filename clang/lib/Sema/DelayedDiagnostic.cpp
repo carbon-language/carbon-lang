@@ -40,7 +40,7 @@ DelayedDiagnostic::makeAvailability(Sema::AvailabilityDiagnostic AD,
   DD.DeprecationData.Decl = D;
   DD.DeprecationData.UnknownObjCClass = UnknownObjCClass;
   DD.DeprecationData.ObjCProperty = ObjCProperty;
-  char *MessageData = 0;
+  char *MessageData = nullptr;
   if (Msg.size()) {
     MessageData = new char [Msg.size()];
     memcpy(MessageData, Msg.data(), Msg.size());

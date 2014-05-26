@@ -316,18 +316,18 @@ Sema::getCurrentMangleNumberContext(const DeclContext *DC,
     if ((IsInNonspecializedTemplate &&
          !(ManglingContextDecl && isa<ParmVarDecl>(ManglingContextDecl))) ||
         isInInlineFunction(CurContext)) {
-      ManglingContextDecl = 0;
+      ManglingContextDecl = nullptr;
       return &Context.getManglingNumberContext(DC);
     }
 
-    ManglingContextDecl = 0;
-    return 0;
+    ManglingContextDecl = nullptr;
+    return nullptr;
 
   case StaticDataMember:
     //  -- the initializers of nonspecialized static members of template classes
     if (!IsInNonspecializedTemplate) {
-      ManglingContextDecl = 0;
-      return 0;
+      ManglingContextDecl = nullptr;
+      return nullptr;
     }
     // Fall through to get the current context.
 
@@ -403,7 +403,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
             FunctionTemplateDecl::Create(Context, Class,
                                          Method->getLocation(), MethodName, 
                                          TemplateParams,
-                                         Method) : 0;
+                                         Method) : nullptr;
   if (TemplateMethod) {
     TemplateMethod->setLexicalDeclContext(CurContext);
     TemplateMethod->setAccess(AS_public);
@@ -504,7 +504,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
           = dyn_cast<EnumConstantDecl>(DRE->getDecl())) {
       return cast<EnumDecl>(D->getDeclContext());
     }
-    return 0;
+    return nullptr;
   }
 
   //  - it is a comma expression whose RHS is an enumerator-like
@@ -512,7 +512,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
     if (BO->getOpcode() == BO_Comma)
       return findEnumForBlockReturn(BO->getRHS());
-    return 0;
+    return nullptr;
   }
 
   //  - it is a statement-expression whose value expression is an
@@ -520,7 +520,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
   if (StmtExpr *SE = dyn_cast<StmtExpr>(E)) {
     if (Expr *last = dyn_cast_or_null<Expr>(SE->getSubStmt()->body_back()))
       return findEnumForBlockReturn(last);
-    return 0;
+    return nullptr;
   }
 
   //   - it is a ternary conditional operator (not the GNU ?:
@@ -530,7 +530,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
     if (EnumDecl *ED = findEnumForBlockReturn(CO->getTrueExpr()))
       if (ED == findEnumForBlockReturn(CO->getFalseExpr()))
         return ED;
-    return 0;
+    return nullptr;
   }
 
   // (implicitly:)
@@ -551,7 +551,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
   }
 
   // Otherwise, nope.
-  return 0;
+  return nullptr;
 }
 
 /// Attempt to find a type T for which the returned expression of the
@@ -559,7 +559,7 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
 static EnumDecl *findEnumForBlockReturn(ReturnStmt *ret) {
   if (Expr *retValue = ret->getRetValue())
     return findEnumForBlockReturn(retValue);
-  return 0;
+  return nullptr;
 }
 
 /// Attempt to find a common type T for which all of the returned
@@ -570,16 +570,16 @@ static EnumDecl *findCommonEnumForBlockReturns(ArrayRef<ReturnStmt*> returns) {
 
   // Try to find one for the first return.
   EnumDecl *ED = findEnumForBlockReturn(*i);
-  if (!ED) return 0;
+  if (!ED) return nullptr;
 
   // Check that the rest of the returns have the same enum.
   for (++i; i != e; ++i) {
     if (findEnumForBlockReturn(*i) != ED)
-      return 0;
+      return nullptr;
   }
 
   // Never infer an anonymous enum type.
-  if (!ED->hasNameForLinkage()) return 0;
+  if (!ED->hasNameForLinkage()) return nullptr;
 
   return ED;
 }
@@ -603,7 +603,7 @@ static void adjustBlockReturnsToEnum(Sema &S, ArrayRef<ReturnStmt*> returns,
 
     Expr *E = (cleanups ? cleanups->getSubExpr() : retValue);
     E = ImplicitCastExpr::Create(S.Context, returnType, CK_IntegralCast,
-                                 E, /*base path*/ 0, VK_RValue);
+                                 E, /*base path*/ nullptr, VK_RValue);
     if (cleanups) {
       cleanups->setSubExpr(E);
     } else {
@@ -819,7 +819,8 @@ VarDecl *Sema::createLambdaInitCaptureVarDecl(SourceLocation Loc,
 FieldDecl *Sema::buildInitCaptureField(LambdaScopeInfo *LSI, VarDecl *Var) {
   FieldDecl *Field = FieldDecl::Create(
       Context, LSI->Lambda, Var->getLocation(), Var->getLocation(),
-      0, Var->getType(), Var->getTypeSourceInfo(), 0, false, ICIS_NoInit);
+      nullptr, Var->getType(), Var->getTypeSourceInfo(), nullptr, false,
+      ICIS_NoInit);
   Field->setImplicit(true);
   Field->setAccess(AS_private);
   LSI->Lambda->addDecl(Field);
@@ -845,7 +846,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // has template params, only then are we in a dependent scope.
     if (TemplateParams)  {
       TmplScope = TmplScope->getParent();
-      TmplScope = TmplScope ? TmplScope->getTemplateParamParent() : 0;
+      TmplScope = TmplScope ? TmplScope->getTemplateParamParent() : nullptr;
     }
     if (TmplScope && !TmplScope->decl_empty())
       KnownDependent = true;
@@ -996,7 +997,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (C->Init.isInvalid())
       continue;
 
-    VarDecl *Var = 0;
+    VarDecl *Var = nullptr;
     if (C->Init.isUsable()) {
       Diag(C->Loc, getLangOpts().CPlusPlus1y
                        ? diag::warn_cxx11_compat_init_capture
@@ -1145,8 +1146,8 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
   CXXRecordDecl *Class = LSI->Lambda;
   Class->setInvalidDecl();
   SmallVector<Decl*, 4> Fields(Class->fields());
-  ActOnFields(0, Class->getLocation(), Class, Fields, SourceLocation(),
-              SourceLocation(), 0);
+  ActOnFields(nullptr, Class->getLocation(), Class, Fields, SourceLocation(),
+              SourceLocation(), nullptr);
   CheckCompletedCXXClass(Class);
 
   PopFunctionScopeInfo();
@@ -1253,7 +1254,7 @@ static void addFunctionPointerConversion(Sema &S,
                                              From->getType(),
                                              From->getTypeSourceInfo(),
                                              From->getStorageClass(),
-                                             /*DefaultArg=*/0));
+                                             /*DefaultArg=*/nullptr));
     CallOpConvTL.setParam(I, From);
     CallOpConvNameTL.setParam(I, From);
   }
@@ -1504,8 +1505,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     
     // Finalize the lambda class.
     SmallVector<Decl*, 4> Fields(Class->fields());
-    ActOnFields(0, Class->getLocation(), Class, Fields, SourceLocation(),
-                SourceLocation(), 0);
+    ActOnFields(nullptr, Class->getLocation(), Class, Fields, SourceLocation(),
+                SourceLocation(), nullptr);
     CheckCompletedCXXClass(Class);
   }
 
@@ -1595,7 +1596,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
                                               From->getType(),
                                               From->getTypeSourceInfo(),
                                               From->getStorageClass(),
-                                              /*DefaultArg=*/0));
+                                              /*DefaultArg=*/nullptr));
   }
   Block->setParams(BlockParams);
 
@@ -1607,7 +1608,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
   TypeSourceInfo *CapVarTSI =
       Context.getTrivialTypeSourceInfo(Src->getType());
   VarDecl *CapVar = VarDecl::Create(Context, Block, ConvLocation,
-                                    ConvLocation, 0,
+                                    ConvLocation, nullptr,
                                     Src->getType(), CapVarTSI,
                                     SC_None);
   BlockDecl::Capture Capture(/*Variable=*/CapVar, /*ByRef=*/false,

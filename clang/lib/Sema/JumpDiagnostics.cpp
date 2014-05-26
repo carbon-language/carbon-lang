@@ -348,7 +348,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     }
     
     Stmt *SubStmt = *CI;
-    if (SubStmt == 0) continue;
+    if (!SubStmt) continue;
 
     // Cases, labels, and defaults aren't "scope parents".  It's also
     // important to handle these iteratively instead of recursively in

@@ -79,7 +79,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
   StringRef name = attr.getName()->getName();
 
   // The GC attributes are usually written with macros;  special-case them.
-  IdentifierInfo *II = attr.isArgIdent(0) ? attr.getArgAsIdent(0)->Ident : 0;
+  IdentifierInfo *II = attr.isArgIdent(0) ? attr.getArgAsIdent(0)->Ident
+                                          : nullptr;
   if (useExpansionLoc && loc.isMacroID() && II) {
     if (II->isStr("strong")) {
       if (S.findMacroSpelling(loc, "__strong")) name = "__strong";
@@ -223,14 +224,14 @@ namespace {
       assert(hasSavedAttrs);
 
       if (savedAttrs.empty()) {
-        getMutableDeclSpec().getAttributes().set(0);
+        getMutableDeclSpec().getAttributes().set(nullptr);
         return;
       }
 
       getMutableDeclSpec().getAttributes().set(savedAttrs[0]);
       for (unsigned i = 0, e = savedAttrs.size() - 1; i != e; ++i)
         savedAttrs[i]->setNext(savedAttrs[i+1]);
-      savedAttrs.back()->setNext(0);
+      savedAttrs.back()->setNext(nullptr);
     }
   };
 }
@@ -310,7 +311,7 @@ static DeclaratorChunk *maybeMovePastReturnType(Declarator &declarator,
                                                 unsigned i) {
   assert(i <= declarator.getNumTypeObjects());
 
-  DeclaratorChunk *result = 0;
+  DeclaratorChunk *result = nullptr;
 
   // First, look inwards past parens for a function declarator.
   for (; i != 0; --i) {
@@ -378,7 +379,7 @@ static void distributeObjCPointerTypeAttr(TypeProcessingState &state,
     case DeclaratorChunk::BlockPointer: {
       // But don't move an ARC ownership attribute to the return type
       // of a block.
-      DeclaratorChunk *destChunk = 0;
+      DeclaratorChunk *destChunk = nullptr;
       if (state.isProcessingDeclSpec() &&
           attr.getKind() == AttributeList::AT_ObjCOwnership)
         destChunk = maybeMovePastReturnType(declarator, i - 1);
@@ -662,7 +663,7 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
                              /*HasProto=*/true,
                              /*IsAmbiguous=*/false,
                              /*LParenLoc=*/NoLoc,
-                             /*ArgInfo=*/0,
+                             /*ArgInfo=*/nullptr,
                              /*NumArgs=*/0,
                              /*EllipsisLoc=*/NoLoc,
                              /*RParenLoc=*/NoLoc,
@@ -674,10 +675,10 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
                              /*MutableLoc=*/NoLoc,
                              EST_None,
                              /*ESpecLoc=*/NoLoc,
-                             /*Exceptions=*/0,
-                             /*ExceptionRanges=*/0,
+                             /*Exceptions=*/nullptr,
+                             /*ExceptionRanges=*/nullptr,
                              /*NumExceptions=*/0,
-                             /*NoexceptExpr=*/0,
+                             /*NoexceptExpr=*/nullptr,
                              loc, loc, declarator));
 
   // For consistency, make sure the state still has us as processing
@@ -1590,7 +1591,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   llvm::APSInt ConstVal(Context.getTypeSize(Context.getSizeType()));
   if (!ArraySize) {
     if (ASM == ArrayType::Star)
-      T = Context.getVariableArrayType(T, 0, ASM, Quals, Brackets);
+      T = Context.getVariableArrayType(T, nullptr, ASM, Quals, Brackets);
     else
       T = Context.getIncompleteArrayType(T, ASM, Quals);
   } else if (ArraySize->isTypeDependent() || ArraySize->isValueDependent()) {
@@ -1871,11 +1872,11 @@ QualType Sema::BuildBlockPointerType(QualType T,
 QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
   QualType QT = Ty.get();
   if (QT.isNull()) {
-    if (TInfo) *TInfo = 0;
+    if (TInfo) *TInfo = nullptr;
     return QualType();
   }
 
-  TypeSourceInfo *DI = 0;
+  TypeSourceInfo *DI = nullptr;
   if (const LocInfoType *LIT = dyn_cast<LocInfoType>(QT)) {
     QT = LIT->getType();
     DI = LIT->getTypeSourceInfo();
@@ -2107,10 +2108,10 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   Sema &SemaRef = state.getSema();
   Declarator &D = state.getDeclarator();
   QualType T;
-  ReturnTypeInfo = 0;
+  ReturnTypeInfo = nullptr;
 
   // The TagDecl owned by the DeclSpec.
-  TagDecl *OwnedTagDecl = 0;
+  TagDecl *OwnedTagDecl = nullptr;
 
   bool ContainsPlaceholderType = false;
 
@@ -2870,7 +2871,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             S.Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_param);
         }
 
-        if (FTI.NumParams && FTI.Params[0].Param == 0) {
+        if (FTI.NumParams && FTI.Params[0].Param == nullptr) {
           // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function
           // definition.
           S.Diag(FTI.Params[0].IdentLoc,
@@ -2970,7 +2971,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         SmallVector<QualType, 4> Exceptions;
         SmallVector<ParsedType, 2> DynamicExceptions;
         SmallVector<SourceRange, 2> DynamicExceptionRanges;
-        Expr *NoexceptExpr = 0;
+        Expr *NoexceptExpr = nullptr;
 
         if (FTI.getExceptionSpecType() == EST_Dynamic) {
           // FIXME: It's rather inefficient to have to split into two vectors
@@ -3256,7 +3257,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 
   TypeProcessingState state(*this, D);
 
-  TypeSourceInfo *ReturnTypeInfo = 0;
+  TypeSourceInfo *ReturnTypeInfo = nullptr;
   QualType T = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
   if (T.isNull())
     return Context.getNullTypeSourceInfo();
@@ -3291,7 +3292,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
     if (attr->getKind() == AttributeList::AT_ObjCOwnership)
       return;
 
-  const char *attrStr = 0;
+  const char *attrStr = nullptr;
   switch (ownership) {
   case Qualifiers::OCL_None: llvm_unreachable("no ownership!");
   case Qualifiers::OCL_ExplicitNone: attrStr = "none"; break;
@@ -3310,7 +3311,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
   // so that we don't make an AttributedType for it).
   AttributeList *attr = D.getAttributePool()
     .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
-            /*scope*/ 0, SourceLocation(),
+            /*scope*/ nullptr, SourceLocation(),
             /*args*/ &Args, 1, AttributeList::AS_GNU);
   spliceAttrIntoList(*attr, chunk.getAttrListRef());
 
@@ -3371,7 +3372,7 @@ static void transferARCOwnership(TypeProcessingState &state,
 TypeSourceInfo *Sema::GetTypeForDeclaratorCast(Declarator &D, QualType FromTy) {
   TypeProcessingState state(*this, D);
 
-  TypeSourceInfo *ReturnTypeInfo = 0;
+  TypeSourceInfo *ReturnTypeInfo = nullptr;
   QualType declSpecTy = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
   if (declSpecTy.isNull())
     return Context.getNullTypeSourceInfo();
@@ -3521,7 +3522,7 @@ namespace {
       Visit(TL.getPointeeLoc());
     }
     void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
-      TypeSourceInfo *TInfo = 0;
+      TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
 
       // If we got no declarator info from previous Sema routines,
@@ -3553,7 +3554,7 @@ namespace {
       TL.setTypeofLoc(DS.getTypeSpecTypeLoc());
       TL.setParensRange(DS.getTypeofParensRange());
       assert(DS.getRepAsType());
-      TypeSourceInfo *TInfo = 0;
+      TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       TL.setUnderlyingTInfo(TInfo);
     }
@@ -3563,7 +3564,7 @@ namespace {
       TL.setKWLoc(DS.getTypeSpecTypeLoc());
       TL.setParensRange(DS.getTypeofParensRange());
       assert(DS.getRepAsType());
-      TypeSourceInfo *TInfo = 0;
+      TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       TL.setUnderlyingTInfo(TInfo);
     }
@@ -3586,7 +3587,7 @@ namespace {
       ElaboratedTypeKeyword Keyword
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
       if (DS.getTypeSpecType() == TST_typename) {
-        TypeSourceInfo *TInfo = 0;
+        TypeSourceInfo *TInfo = nullptr;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
           TL.copy(TInfo->getTypeLoc().castAs<ElaboratedTypeLoc>());
@@ -3602,7 +3603,7 @@ namespace {
     }
     void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
       assert(DS.getTypeSpecType() == TST_typename);
-      TypeSourceInfo *TInfo = 0;
+      TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);
       TL.copy(TInfo->getTypeLoc().castAs<DependentNameTypeLoc>());
@@ -3610,7 +3611,7 @@ namespace {
     void VisitDependentTemplateSpecializationTypeLoc(
                                  DependentTemplateSpecializationTypeLoc TL) {
       assert(DS.getTypeSpecType() == TST_typename);
-      TypeSourceInfo *TInfo = 0;
+      TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);
       TL.copy(
@@ -3626,7 +3627,7 @@ namespace {
         TL.setKWLoc(DS.getTypeSpecTypeLoc());
         TL.setParensRange(DS.getTypeofParensRange());
 
-        TypeSourceInfo *TInfo = 0;
+        TypeSourceInfo *TInfo = nullptr;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         assert(TInfo);
         TL.getValueLoc().initializeFullCopy(TInfo->getTypeLoc());
@@ -3864,7 +3865,8 @@ void LocInfoType::getAsStringInternal(std::string &Str,
 TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // C99 6.7.6: Type names have no identifier.  This is already validated by
   // the parser.
-  assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
+  assert(D.getIdentifier() == nullptr &&
+         "Type name should have no identifier!");
 
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
@@ -4269,7 +4271,7 @@ namespace {
         } else {
           const Type *DTy = Ty->getUnqualifiedDesugaredType();
           if (Ty == DTy) {
-            Fn = 0;
+            Fn = nullptr;
             return;
           }
 
@@ -4279,7 +4281,7 @@ namespace {
       }
     }
 
-    bool isFunctionType() const { return (Fn != 0); }
+    bool isFunctionType() const { return (Fn != nullptr); }
     const FunctionType *get() const { return Fn; }
 
     QualType wrap(Sema &S, const FunctionType *New) {
@@ -5157,7 +5159,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   //         "Can't ask whether a dependent type is complete");
 
   // If we have a complete type, we're done.
-  NamedDecl *Def = 0;
+  NamedDecl *Def = nullptr;
   if (!T->isIncompleteType(&Def)) {
     // If we know about the definition but it is not visible, complain.
     NamedDecl *SuggestedDef = 0;
@@ -5451,7 +5453,7 @@ QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
   else {
     if (Keyword == ETK_None)
       return T;
-    NNS = 0;
+    NNS = nullptr;
   }
   return Context.getElaboratedType(Keyword, NNS, T);
 }

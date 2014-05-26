@@ -268,7 +268,8 @@ namespace {
   public:
     ObjCPropertyOpBuilder(Sema &S, ObjCPropertyRefExpr *refExpr) :
       PseudoOpBuilder(S, refExpr->getLocation()), RefExpr(refExpr),
-      SyntacticRefExpr(0), InstanceReceiver(0), Getter(0), Setter(0) {
+      SyntacticRefExpr(nullptr), InstanceReceiver(nullptr), Getter(nullptr),
+      Setter(nullptr) {
     }
 
     ExprResult buildRValueOperation(Expr *op);
@@ -307,9 +308,9 @@ namespace {
     ObjCSubscriptOpBuilder(Sema &S, ObjCSubscriptRefExpr *refExpr) :
       PseudoOpBuilder(S, refExpr->getSourceRange().getBegin()), 
       RefExpr(refExpr),
-    InstanceBase(0), InstanceKey(0), 
-    AtIndexGetter(0), AtIndexSetter(0) { }
-  
+      InstanceBase(nullptr), InstanceKey(nullptr),
+      AtIndexGetter(nullptr), AtIndexSetter(nullptr) {}
+
    ExprResult buildRValueOperation(Expr *op);
    ExprResult buildAssignmentOperation(Scope *Sc,
                                        SourceLocation opLoc,
@@ -579,7 +580,7 @@ bool ObjCPropertyOpBuilder::findGetter() {
 
   ObjCPropertyDecl *prop = RefExpr->getExplicitProperty();
   Getter = LookupMethodInReceiverType(S, prop->getGetterName(), RefExpr);
-  return (Getter != 0);
+  return (Getter != nullptr);
 }
 
 /// Try to find the most accurate setter declaration for the property
@@ -644,7 +645,7 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
 
 /// Capture the base object of an Objective-C property expression.
 Expr *ObjCPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
-  assert(InstanceReceiver == 0);
+  assert(InstanceReceiver == nullptr);
 
   // If we have a base, capture it in an OVE and rebuild the syntactic
   // form to use the OVE as its base.
@@ -967,8 +968,8 @@ ObjCSubscriptOpBuilder::buildAssignmentOperation(Scope *Sc,
 
 /// Capture the base object of an Objective-C Index'ed expression.
 Expr *ObjCSubscriptOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
-  assert(InstanceBase == 0);
-  
+  assert(InstanceBase == nullptr);
+
   // Capture base expression in an OVE and rebuild the syntactic
   // form to use the OVE as its base expression.
   InstanceBase = capture(RefExpr->getBaseExpr());
@@ -1134,7 +1135,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
     AtIndexGetter = ObjCMethodDecl::Create(S.Context, SourceLocation(), 
                            SourceLocation(), AtIndexGetterSelector,
                            S.Context.getObjCIdType() /*ReturnType*/,
-                           0 /*TypeSourceInfo */,
+                           nullptr /*TypeSourceInfo */,
                            S.Context.getTranslationUnitDecl(),
                            true /*Instance*/, false/*isVariadic*/,
                            /*isPropertyAccessor=*/false,
@@ -1147,9 +1148,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
                                                          : &S.Context.Idents.get("key"),
                                                 arrayRef ? S.Context.UnsignedLongTy
                                                          : S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     AtIndexGetter->setMethodParams(S.Context, Argument, None);
   }
 
@@ -1243,7 +1244,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                          BaseT->isObjCQualifiedIdType());
 
   if (!AtIndexSetter && S.getLangOpts().DebuggerObjCLiteral) {
-    TypeSourceInfo *ReturnTInfo = 0;
+    TypeSourceInfo *ReturnTInfo = nullptr;
     QualType ReturnType = S.Context.VoidTy;
     AtIndexSetter = ObjCMethodDecl::Create(
         S.Context, SourceLocation(), SourceLocation(), AtIndexSetterSelector,
@@ -1257,9 +1258,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                                                 SourceLocation(), SourceLocation(),
                                                 &S.Context.Idents.get("object"),
                                                 S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     Params.push_back(object);
     ParmVarDecl *key = ParmVarDecl::Create(S.Context, AtIndexSetter,
                                                 SourceLocation(), SourceLocation(),
@@ -1267,9 +1268,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                                                          :  &S.Context.Idents.get("key"),
                                                 arrayRef ? S.Context.UnsignedLongTy
                                                          : S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     Params.push_back(key);
     AtIndexSetter->setMethodParams(S.Context, Params, None);
   }
@@ -1409,7 +1410,7 @@ ExprResult MSPropertyOpBuilder::buildGet() {
   ExprResult GetterExpr = S.ActOnMemberAccessExpr(
     S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    GetterName, 0, true);
+    GetterName, nullptr, true);
   if (GetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 0 /* getter */
@@ -1439,7 +1440,7 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
   ExprResult SetterExpr = S.ActOnMemberAccessExpr(
     S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    SetterName, 0, true);
+    SetterName, nullptr, true);
   if (SetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 1 /* setter */

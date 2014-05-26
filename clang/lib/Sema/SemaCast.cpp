@@ -90,7 +90,7 @@ namespace {
       if (IsARCUnbridgedCast) {
         castExpr = ImplicitCastExpr::Create(Self.Context,
                                             Self.Context.ARCUnbridgedCastTy,
-                                            CK_Dependent, castExpr, 0,
+                                            CK_Dependent, castExpr, nullptr,
                                             castExpr->getValueKind());
       }
       return Self.Owned(castExpr);
@@ -286,7 +286,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     }
     return Op.complete(CXXReinterpretCastExpr::Create(Context, Op.ResultType,
                                     Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
-                                                      0, DestTInfo, OpLoc,
+                                                      nullptr, DestTInfo, OpLoc,
                                                       Parens.getEnd(),
                                                       AngleBrackets));
   }
@@ -549,7 +549,7 @@ void CastOperation::CheckDynamicCast() {
 
   QualType DestPointee;
   const PointerType *DestPointer = DestType->getAs<PointerType>();
-  const ReferenceType *DestReference = 0;
+  const ReferenceType *DestReference = nullptr;
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
   } else if ((DestReference = DestType->getAs<ReferenceType>())) {
@@ -1277,7 +1277,7 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_Failed;
   }
 
-  if (Paths.getDetectedVirtual() != 0) {
+  if (Paths.getDetectedVirtual() != nullptr) {
     QualType VirtualBase(Paths.getDetectedVirtual(), 0);
     Self.Diag(OpRange.getBegin(), diag::err_static_downcast_via_virtual)
       << OrigSrcType << OrigDestType << VirtualBase << OpRange;
@@ -1739,7 +1739,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     //   same effect as the conversion *reinterpret_cast<T*>(&x) with the
     //   built-in & and * operators.
 
-    const char *inappropriate = 0;
+    const char *inappropriate = nullptr;
     switch (SrcExpr.get()->getObjectKind()) {
     case OK_Ordinary:
       break;

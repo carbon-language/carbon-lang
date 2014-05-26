@@ -223,7 +223,7 @@ Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
   llvm::SmallPtrSet<IdentifierInfo *, 4> NamesKnown;
 
   for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
-    IdentifierInfo *Name = 0;
+    IdentifierInfo *Name = nullptr;
     if (const TemplateTypeParmType *TTP
           = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>())
       Name = TTP->getIdentifier();
@@ -463,7 +463,7 @@ Sema::CheckPackExpansion(TypeSourceInfo *Pattern, SourceLocation EllipsisLoc,
                                        Pattern->getTypeLoc().getSourceRange(),
                                        EllipsisLoc, NumExpansions);
   if (Result.isNull())
-    return 0;
+    return nullptr;
 
   TypeLocBuilder TLB;
   TLB.pushFullCopy(Pattern->getTypeLoc());
@@ -798,8 +798,8 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   //   The identifier in a sizeof... expression shall name a parameter pack.
   LookupResult R(*this, &Name, NameLoc, LookupOrdinaryName);
   LookupName(R, S);
-  
-  NamedDecl *ParameterPack = 0;
+
+  NamedDecl *ParameterPack = nullptr;
   ParameterPackValidatorCCC Validator;
   switch (R.getResultKind()) {
   case LookupResult::Found:
@@ -809,7 +809,7 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
-                                               R.getLookupKind(), S, 0,
+                                               R.getLookupKind(), S, nullptr,
                                                Validator, CTK_ErrorRecovery)) {
       diagnoseTypo(Corrected,
                    PDiag(diag::err_sizeof_pack_no_pack_name_suggest) << &Name,

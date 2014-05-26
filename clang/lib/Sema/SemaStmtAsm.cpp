@@ -381,7 +381,7 @@ ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
   ExprResult Result = ActOnIdExpression(getCurScope(), SS, TemplateKWLoc, Id,
                                         /*trailing lparen*/ false,
                                         /*is & operand*/ false,
-                                        /*CorrectionCandidateCallback=*/0,
+                                        /*CorrectionCandidateCallback=*/nullptr,
                                         /*IsInlineAsmIdentifier=*/ true);
 
   if (IsUnevaluatedContext)
@@ -437,7 +437,7 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
   if (!BaseResult.isSingleResult())
     return true;
 
-  const RecordType *RT = 0;
+  const RecordType *RT = nullptr;
   NamedDecl *FoundDecl = BaseResult.getFoundDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(FoundDecl))
     RT = VD->getType()->getAs<RecordType>();

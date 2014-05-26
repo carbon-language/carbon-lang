@@ -241,7 +241,7 @@ static void checkRecursiveFunction(Sema &S, const FunctionDecl *FD,
     return;
 
   CFG *cfg = AC.getCFG();
-  if (cfg == 0) return;
+  if (!cfg) return;
 
   // If the exit block is unreachable, skip processing the function.
   if (cfg->getExit().pred_empty())
@@ -282,7 +282,7 @@ enum ControlFlowKind {
 /// will return.
 static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
   CFG *cfg = AC.getCFG();
-  if (cfg == 0) return UnknownFallThrough;
+  if (!cfg) return UnknownFallThrough;
 
   // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
@@ -1033,7 +1033,7 @@ namespace {
         if (hasSpecificAttr<FallThroughAttr>(AS->getAttrs()))
           return AS;
       }
-      return 0;
+      return nullptr;
     }
 
     static const Stmt *getLastStmt(const CFGBlock &B) {
@@ -1052,7 +1052,7 @@ namespace {
         if (!isa<SwitchCase>(SW->getSubStmt()))
           return SW->getSubStmt();
 
-      return 0;
+      return nullptr;
     }
 
     bool FoundSwitchStatements;
@@ -1335,7 +1335,7 @@ class UninitValsDiagReporter : public UninitVariablesHandler {
   UsesMap *uses;
   
 public:
-  UninitValsDiagReporter(Sema &S) : S(S), uses(0) {}
+  UninitValsDiagReporter(Sema &S) : S(S), uses(nullptr) {}
   ~UninitValsDiagReporter() { 
     flushDiagnostics();
   }
@@ -1783,7 +1783,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   assert(Body);
 
   // Construct the analysis context with the specified CFG build options.
-  AnalysisDeclContext AC(/* AnalysisDeclContextManager */ 0, D);
+  AnalysisDeclContext AC(/* AnalysisDeclContextManager */ nullptr, D);
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
   // explosion for destructors that can result and the compile time hit.
