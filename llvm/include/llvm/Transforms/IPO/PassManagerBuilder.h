@@ -55,7 +55,6 @@ using legacy::FunctionPassManager;
 ///   ...
 class PassManagerBuilder {
 public:
-
   /// Extensions are passed the builder itself (so they can see how it is
   /// configured) as well as the pass manager to add stuff to.
   typedef void (*ExtensionFn)(const PassManagerBuilder &Builder,
@@ -135,8 +134,8 @@ public:
 private:
   void addExtensionsToPM(ExtensionPointTy ETy, PassManagerBase &PM) const;
   void addInitialAliasAnalysisPasses(PassManagerBase &PM) const;
-public:
 
+public:
   /// populateFunctionPassManager - This fills in the function pass manager,
   /// which is expected to be run on each function immediately as it is
   /// generated.  The idea is to reduce the size of the IR in memory.

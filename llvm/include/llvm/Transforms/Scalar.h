@@ -344,13 +344,11 @@ Pass *createCorrelatedValuePropagationPass();
 FunctionPass *createInstructionSimplifierPass();
 extern char &InstructionSimplifierID;
 
-
 //===----------------------------------------------------------------------===//
 //
 // LowerExpectIntrinsics - Removes llvm.expect intrinsics and creates
 // "block_weights" metadata.
 FunctionPass *createLowerExpectIntrinsicPass();
-
 
 //===----------------------------------------------------------------------===//
 //

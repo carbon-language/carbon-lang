@@ -58,20 +58,17 @@ ModulePass *createStripDeadDebugInfoPass();
 ///
 ModulePass *createConstantMergePass();
 
-
 //===----------------------------------------------------------------------===//
 /// createGlobalOptimizerPass - This function returns a new pass that optimizes
 /// non-address taken internal globals.
 ///
 ModulePass *createGlobalOptimizerPass();
 
-
 //===----------------------------------------------------------------------===//
 /// createGlobalDCEPass - This transform is designed to eliminate unreachable
 /// internal globals (functions or global variables)
 ///
 ModulePass *createGlobalDCEPass();
-
 
 //===----------------------------------------------------------------------===//
 /// createGVExtractionPass - If deleteFn is true, this pass deletes
