@@ -73,6 +73,18 @@ private:
   /// accordingly.
   unsigned moveStateToNextToken(LineState &State, bool DryRun, bool Newline);
 
+  /// \brief Update 'State' according to the next token's fake left parentheses.
+  void moveStatePastFakeLParens(LineState &State, bool Newline);
+  /// \brief Update 'State' according to the next token's fake r_parens.
+  void moveStatePastFakeRParens(LineState &State);
+
+  /// \brief Update 'State' according to the next token being one of "(<{[".
+  void moveStatePastScopeOpener(LineState &State, bool Newline);
+  /// \brief Update 'State' according to the next token being one of ")>}]".
+  void moveStatePastScopeCloser(LineState &State);
+  /// \brief Update 'State' with the next token opening a nested block.
+  void moveStateToNewBlock(LineState &State);
+
   /// \brief If the current token sticks out over the end of the line, break
   /// it if possible.
   ///
