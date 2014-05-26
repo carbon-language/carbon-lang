@@ -97,7 +97,7 @@ struct FullCommentParts {
 
 FullCommentParts::FullCommentParts(const FullComment *C,
                                    const CommandTraits &Traits) :
-    Brief(NULL), Headerfile(NULL), FirstParagraph(NULL) {
+    Brief(nullptr), Headerfile(nullptr), FirstParagraph(nullptr) {
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
        I != E; ++I) {
     const Comment *Child = *I;
@@ -1150,7 +1150,7 @@ void CommentToXMLConverter::convertCommentToHTML(const FullComment *FC,
 void CommentToXMLConverter::convertHTMLTagNodeToText(
     const comments::HTMLTagComment *HTC, SmallVectorImpl<char> &Text,
     const ASTContext &Context) {
-  CommentASTToHTMLConverter Converter(0, Text,
+  CommentASTToHTMLConverter Converter(nullptr, Text,
                                       Context.getCommentCommandTraits());
   Converter.visit(HTC);
 }

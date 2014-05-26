@@ -109,7 +109,7 @@ public:
   bool ShouldGenerateLocation(const NamedDecl *D);
 
   bool isLocal(const NamedDecl *D) {
-    return D->getParentFunctionOrMethod() != 0;
+    return D->getParentFunctionOrMethod() != nullptr;
   }
 
   /// Generate the string component containing the location of the
