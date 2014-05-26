@@ -1,6 +1,6 @@
 // RUN: %clangxx_asan -O0 %s -Fe%t
 // FIXME: 'cat' is needed due to PR19744.
-// RUN: ASAN_OPTIONS=detect_stack_use_after_return=1 not %run %t 2>&1 | cat | FileCheck %s
+// RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 not %run %t 2>&1 | cat | FileCheck %s
 
 char *x;
 
