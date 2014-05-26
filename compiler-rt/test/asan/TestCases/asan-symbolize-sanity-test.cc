@@ -3,7 +3,7 @@
 
 // RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O0 %s -ldl -o %t
-// RUN: ASAN_OPTIONS=symbolize=0 not %run %t 2>&1 | %asan_symbolize | FileCheck %s
+// RUN: env ASAN_OPTIONS=symbolize=0 not %run %t 2>&1 | %asan_symbolize | FileCheck %s
 
 #if !defined(SHARED_LIB)
 #include <dlfcn.h>

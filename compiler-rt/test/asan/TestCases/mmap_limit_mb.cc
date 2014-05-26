@@ -3,10 +3,10 @@
 // RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %run %t 100 16
 // RUN: %run %t 100 1000000
-// RUN: ASAN_OPTIONS=mmap_limit_mb=500 %run %t 50 16
-// RUN: ASAN_OPTIONS=mmap_limit_mb=500 %run %t 50 1000000
-// RUN: ASAN_OPTIONS=mmap_limit_mb=500 not %run %t 500 16 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=mmap_limit_mb=500 not %run %t 500 1000000 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=500 %run %t 50 16
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=500 %run %t 50 1000000
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=500 not %run %t 500 16 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=500 not %run %t 500 1000000 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdlib.h>
