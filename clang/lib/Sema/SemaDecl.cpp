@@ -3344,10 +3344,15 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   // Note that a linkage-specification sets a storage class, but
   // 'extern "C" struct foo;' is actually valid and not theoretically
   // useless.
-  if (DeclSpec::SCS SCS = DS.getStorageClassSpec())
-    if (!DS.isExternInLinkageSpec() && SCS != DeclSpec::SCS_typedef)
+  if (DeclSpec::SCS SCS = DS.getStorageClassSpec()) {
+    if (SCS == DeclSpec::SCS_mutable)
+      // Since mutable is not a viable storage class specifier in C, there is
+      // no reason to treat it as an extension. Instead, diagnose as an error.
+      Diag(DS.getStorageClassSpecLoc(), diag::err_mutable_nonmember);
+    else if (!DS.isExternInLinkageSpec() && SCS != DeclSpec::SCS_typedef)
       Diag(DS.getStorageClassSpecLoc(), DiagID)
         << DeclSpec::getSpecifierName(SCS);
+  }
 
   if (DeclSpec::TSCS TSCS = DS.getThreadStorageClassSpec())
     Diag(DS.getThreadStorageClassSpecLoc(), DiagID)
