@@ -443,7 +443,7 @@ styles:
 A symbol with ``internal`` or ``private`` linkage must have ``default``
 visibility.
 
-.. _namedtypes:
+.. _dllstorageclass:
 
 DLL Storage Classes
 -------------------
@@ -463,6 +463,8 @@ DLL storage class:
     ``__imp_`` and the function or variable name. Since this storage class
     exists for defining a dll interface, the compiler, assembler and linker know
     it is externally referenced and must refrain from deleting the symbol.
+
+.. _namedtypes:
 
 Structure Types
 ---------------
