@@ -7698,15 +7698,23 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "#endif",
                BreakBeforeBrace);
 
-  // This shouldn't affect ObjC blocks.
+  // This shouldn't affect ObjC blocks..
   verifyFormat("[self doSomeThingWithACompletionHandler:^{\n"
                "    // ...\n"
                "    int i;\n"
-               "}];");
+               "}];",
+               BreakBeforeBrace);
   verifyFormat("void (^block)(void) = ^{\n"
                "    // ...\n"
                "    int i;\n"
-               "};");
+               "};",
+               BreakBeforeBrace);
+  // .. or dict literals.
+  verifyFormat("void f()\n"
+               "{\n"
+               "  [object someMethod:@{ @\"a\" : @\"b\" }];\n"
+               "}",
+               BreakBeforeBrace);
 
   BreakBeforeBrace.ColumnLimit = 19;
   verifyFormat("void f() { int i; }", BreakBeforeBrace);
