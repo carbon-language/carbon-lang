@@ -24,7 +24,7 @@
 // Include compiler configuration
 #include "MICmnConfig.h"
 
-#if defined( __linux )
+#if defined( __FreeBSD__ ) || defined( __linux )
 
 // In-house headers:
 #include "MIUtilString.h"  

@@ -28,7 +28,7 @@
 
 #if defined( _MSC_VER )
 	#include "MIUtilSystemWindows.h"
-#elif defined( __linux )
+#elif defined( __FreeBSD__ ) || defined( __linux )
 	#include "MIUtilSystemLinux.h"
 #elif defined( __APPLE__ )
 	#include "MIUtilSystemOsx.h"
