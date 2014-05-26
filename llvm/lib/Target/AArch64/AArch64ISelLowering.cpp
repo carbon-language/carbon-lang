@@ -2263,6 +2263,11 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       Arg = DAG.getNode(ISD::ZERO_EXTEND, DL, VA.getLocVT(), Arg);
       break;
     case CCValAssign::AExt:
+      if (Outs[realArgIdx].ArgVT == MVT::i1) {
+        // AAPCS requires i1 to be zero-extended to 8-bits by the caller.
+        Arg = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, Arg);
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i8, Arg);
+      }
       Arg = DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), Arg);
       break;
     case CCValAssign::BCvt:
@@ -2503,6 +2508,13 @@ AArch64TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     default:
       llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full:
+      if (Outs[i].ArgVT == MVT::i1) {
+        // AAPCS requires i1 to be zero-extended to i8 by the producer of the
+        // value. This is strictly redundant on Darwin (which uses "zeroext
+        // i1"), but will be optimised out before ISel.
+        Arg = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, Arg);
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, DL, VA.getLocVT(), Arg);
+      }
       break;
     case CCValAssign::BCvt:
       Arg = DAG.getNode(ISD::BITCAST, DL, VA.getLocVT(), Arg);
