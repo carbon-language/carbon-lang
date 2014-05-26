@@ -25,6 +25,7 @@
 // Third party headers
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>		// Dor strerror()
 
 // In-house headers:
