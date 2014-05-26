@@ -21,19 +21,18 @@ public:
   MipsGOTSection(const MipsLinkingContext &context)
       : AtomSection<ELFType>(context, ".got", DefinedAtom::typeGOT,
                              DefinedAtom::permRW_,
-                             MipsTargetLayout<ELFType>::ORDER_GOT),
-        _globalCount(0) {
+                             MipsTargetLayout<ELFType>::ORDER_GOT) {
     this->_flags |= SHF_MIPS_GPREL;
     this->_align2 = 4;
   }
 
   /// \brief Number of local GOT entries.
   std::size_t getLocalCount() const {
-    return this->_atoms.size() - _globalCount;
+    return this->_atoms.size() - getGlobalCount();
   }
 
   /// \brief Number of global GOT entries.
-  std::size_t getGlobalCount() const { return _globalCount; }
+  std::size_t getGlobalCount() const { return _posMap.size(); }
 
   /// \brief Does the atom have a global GOT entry?
   bool hasGlobalGOTEntry(const Atom *a) const { return _posMap.count(a); }
@@ -63,18 +62,13 @@ public:
       }
     }
 
-    if (ta) {
+    if (ta)
       _posMap[ta] = _posMap.size();
-      ++_globalCount;
-    }
 
     return AtomSection<ELFType>::appendAtom(atom);
   }
 
 private:
-  /// \brief Number of global GOT entries.
-  std::size_t _globalCount;
-
   /// \brief Map Atoms to their GOT entry index.
   llvm::DenseMap<const Atom *, std::size_t> _posMap;
 };
