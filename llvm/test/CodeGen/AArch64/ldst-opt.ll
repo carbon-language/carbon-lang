@@ -2,30 +2,100 @@
 
 ; This file contains tests for the AArch64 load/store optimizer.
 
-%struct.A = type { %struct.B, %struct.C }
-%struct.B = type { i8*, i8*, i8*, i8* }
-%struct.C = type { i32, i32 }
+%padding = type { i8*, i8*, i8*, i8* }
+%s.word = type { i32, i32 }
+%s.doubleword = type { i64, i32 }
+%s.quadword = type { fp128, i32 }
+%s.float = type { float, i32 }
+%s.double = type { double, i32 }
+%struct.word = type { %padding, %s.word }
+%struct.doubleword = type { %padding, %s.doubleword }
+%struct.quadword = type { %padding, %s.quadword }
+%struct.float = type { %padding, %s.float }
+%struct.double = type { %padding, %s.double }
 
 ; Check the following transform:
 ;
-; ldr w1, [x0, #32]
+; ldr X, [x0, #32]
 ;  ...
 ; add x0, x0, #32
 ;  ->
-; ldr w1, [x0, #32]!
+; ldr X, [x0, #32]!
+;
+; with X being either w1, x1, s0, d0 or q0.
 
-define void @foo(%struct.A* %ptr) nounwind {
-; CHECK-LABEL: foo
+declare void @bar_word(%s.word*, i32)
+
+define void @load-pre-indexed-word(%struct.word* %ptr) nounwind {
+; CHECK-LABEL: load-pre-indexed-word
 ; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
-  %a = getelementptr inbounds %struct.A* %ptr, i64 0, i32 1, i32 0
+  %a = getelementptr inbounds %struct.word* %ptr, i64 0, i32 1, i32 0
   %add = load i32* %a, align 4
   br label %bar
 bar:
-  %c = getelementptr inbounds %struct.A* %ptr, i64 0, i32 1
-  tail call void @bar(%struct.C* %c, i32 %add)
+  %c = getelementptr inbounds %struct.word* %ptr, i64 0, i32 1
+  tail call void @bar_word(%s.word* %c, i32 %add)
   ret void
 }
 
-declare void @bar(%struct.C*, i32)
+declare void @bar_doubleword(%s.doubleword*, i64)
+
+define void @load-pre-indexed-doubleword(%struct.doubleword* %ptr) nounwind {
+; CHECK-LABEL: load-pre-indexed-doubleword
+; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.doubleword* %ptr, i64 0, i32 1, i32 0
+  %add = load i64* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.doubleword* %ptr, i64 0, i32 1
+  tail call void @bar_doubleword(%s.doubleword* %c, i64 %add)
+  ret void
+}
+
+declare void @bar_quadword(%s.quadword*, fp128)
+
+define void @load-pre-indexed-quadword(%struct.quadword* %ptr) nounwind {
+; CHECK-LABEL: load-pre-indexed-quadword
+; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.quadword* %ptr, i64 0, i32 1, i32 0
+  %add = load fp128* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.quadword* %ptr, i64 0, i32 1
+  tail call void @bar_quadword(%s.quadword* %c, fp128 %add)
+  ret void
+}
+
+declare void @bar_float(%s.float*, float)
+
+define void @load-pre-indexed-float(%struct.float* %ptr) nounwind {
+; CHECK-LABEL: load-pre-indexed-float
+; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.float* %ptr, i64 0, i32 1, i32 0
+  %add = load float* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.float* %ptr, i64 0, i32 1
+  tail call void @bar_float(%s.float* %c, float %add)
+  ret void
+}
+
+declare void @bar_double(%s.double*, double)
+
+define void @load-pre-indexed-double(%struct.double* %ptr) nounwind {
+; CHECK-LABEL: load-pre-indexed-double
+; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+entry:
+  %a = getelementptr inbounds %struct.double* %ptr, i64 0, i32 1, i32 0
+  %add = load double* %a, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.double* %ptr, i64 0, i32 1
+  tail call void @bar_double(%s.double* %c, double %add)
+  ret void
+}
 
