@@ -497,14 +497,7 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
                 "addrspacecast of GlobalValue",
             &GA);
 
-    if (CE->getOpcode() == Instruction::BitCast) {
-      unsigned SrcAS = GV->getType()->getPointerAddressSpace();
-      unsigned DstAS = CE->getType()->getPointerAddressSpace();
-
-      Assert1(SrcAS == DstAS,
-              "Alias bitcasts cannot be between different address spaces",
-              &GA);
-    }
+    VerifyConstantExprBitcastType(CE);
   }
   Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);
   if (const GlobalAlias *GAAliasee = dyn_cast<GlobalAlias>(GV)) {
