@@ -508,7 +508,11 @@ uptr internal_sigaltstack(const struct sigaltstack *ss,
 }
 
 int internal_fork() {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(SYSCALL(clone), SIGCHLD, 0);
+#else
   return internal_syscall(SYSCALL(fork));
+#endif
 }
 
 #if SANITIZER_LINUX
