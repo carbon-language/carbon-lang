@@ -161,3 +161,11 @@ define void @clobberScratch(i32* %p) {
 declare void @llvm.experimental.stackmap(i64, i32, ...)
 declare void @llvm.experimental.patchpoint.void(i64, i32, i8*, i32, ...)
 declare i64 @llvm.experimental.patchpoint.i64(i64, i32, i8*, i32, ...)
+
+; CHECK-LABEL: test_i16:
+; CHECK: ldrh [[BREG:w[0-9]+]], [sp]
+; CHECK: add w0, w0, [[BREG]]
+define webkit_jscc i16 @test_i16(i16 zeroext %a, i16 zeroext %b) {
+  %sum = add i16 %a, %b
+  ret i16 %sum
+}

@@ -14,7 +14,6 @@
 #include "AArch64ISelLowering.h"
 #include "AArch64PerfectShuffle.h"
 #include "AArch64Subtarget.h"
-#include "AArch64CallingConv.h"
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64TargetMachine.h"
 #include "AArch64TargetObjectFile.h"
@@ -1681,15 +1680,14 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
     EVT ActualVT = getValueType(CurOrigArg->getType(), /*AllowUnknown*/ true);
     MVT ActualMVT = ActualVT.isSimple() ? ActualVT.getSimpleVT() : MVT::Other;
     // If ActualMVT is i1/i8/i16, we should set LocVT to i8/i8/i16.
-    MVT LocVT = ValVT;
     if (ActualMVT == MVT::i1 || ActualMVT == MVT::i8)
-      LocVT = MVT::i8;
+      ValVT = MVT::i8;
     else if (ActualMVT == MVT::i16)
-      LocVT = MVT::i16;
+      ValVT = MVT::i16;
 
     CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, /*IsVarArg=*/false);
     bool Res =
-        AssignFn(i, ValVT, LocVT, CCValAssign::Full, Ins[i].Flags, CCInfo);
+        AssignFn(i, ValVT, ValVT, CCValAssign::Full, Ins[i].Flags, CCInfo);
     assert(!Res && "Call operand has unhandled type");
     (void)Res;
   }
@@ -1748,15 +1746,12 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       case CCValAssign::BCvt:
         ArgValue = DAG.getNode(ISD::BITCAST, DL, VA.getValVT(), ArgValue);
         break;
+      case CCValAssign::AExt:
       case CCValAssign::SExt:
-        ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
-        ArgValue = DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), ArgValue);
-        break;
       case CCValAssign::ZExt:
-        ArgValue = DAG.getNode(ISD::AssertZext, DL, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
-        ArgValue = DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), ArgValue);
+        // SelectionDAGBuilder will insert appropriate AssertZExt & AssertSExt
+        // nodes after our lowering.
+        assert(RegVT == Ins[i].VT && "incorrect register location selected");
         break;
       }
 
@@ -1777,20 +1772,25 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       SDValue ArgValue;
 
-      // If the loc type and val type are not the same, create an anyext load.
-      if (VA.getLocVT().getSizeInBits() != VA.getValVT().getSizeInBits()) {
-        // We should only get here if this is a pure integer.
-        assert(!VA.getValVT().isVector() && VA.getValVT().isInteger() &&
-               "Only integer extension supported!");
-        ArgValue = DAG.getExtLoad(ISD::EXTLOAD, DL, VA.getValVT(), Chain, FIN,
-                                  MachinePointerInfo::getFixedStack(FI),
-                                  VA.getLocVT(),
-                                  false, false, false, 0);
-      } else {
-        ArgValue = DAG.getLoad(VA.getValVT(), DL, Chain, FIN,
-                               MachinePointerInfo::getFixedStack(FI), false,
-                               false, false, 0);
+      ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
+      switch (VA.getLocInfo()) {
+      default:
+        break;
+      case CCValAssign::SExt:
+        ExtType = ISD::SEXTLOAD;
+        break;
+      case CCValAssign::ZExt:
+        ExtType = ISD::ZEXTLOAD;
+        break;
+      case CCValAssign::AExt:
+        ExtType = ISD::EXTLOAD;
+        break;
       }
+
+      ArgValue = DAG.getExtLoad(ExtType, DL, VA.getValVT(), Chain, FIN,
+                                MachinePointerInfo::getFixedStack(FI),
+                                VA.getLocVT(),
+                                false, false, false, 0);
 
       InVals.push_back(ArgValue);
     }
@@ -2184,14 +2184,13 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       MVT ActualMVT = ActualVT.isSimple() ? ActualVT.getSimpleVT() : ValVT;
       ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
       // If ActualMVT is i1/i8/i16, we should set LocVT to i8/i8/i16.
-      MVT LocVT = ValVT;
       if (ActualMVT == MVT::i1 || ActualMVT == MVT::i8)
-        LocVT = MVT::i8;
+        ValVT = MVT::i8;
       else if (ActualMVT == MVT::i16)
-        LocVT = MVT::i16;
+        ValVT = MVT::i16;
 
       CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, /*IsVarArg=*/false);
-      bool Res = AssignFn(i, ValVT, LocVT, CCValAssign::Full, ArgFlags, CCInfo);
+      bool Res = AssignFn(i, ValVT, ValVT, CCValAssign::Full, ArgFlags, CCInfo);
       assert(!Res && "Call operand has unhandled type");
       (void)Res;
     }
