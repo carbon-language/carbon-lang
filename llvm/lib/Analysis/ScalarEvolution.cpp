@@ -1208,11 +1208,10 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       auto SMul = dyn_cast<SCEVMulExpr>(SA->getOperand(1));
       if (SMul && SC1) {
         if (auto SC2 = dyn_cast<SCEVConstant>(SMul->getOperand(0))) {
-          APInt C1 = SC1->getValue()->getValue();
-          APInt C2 = SC2->getValue()->getValue();
-          APInt CDiff = C2 - C1;
+          const APInt &C1 = SC1->getValue()->getValue();
+          const APInt &C2 = SC2->getValue()->getValue();
           if (C1.isStrictlyPositive() && C2.isStrictlyPositive() &&
-              CDiff.isStrictlyPositive() && C2.isPowerOf2())
+              C2.ugt(C1) && C2.isPowerOf2())
             return getAddExpr(getSignExtendExpr(SC1, Ty),
                               getSignExtendExpr(SMul, Ty));
         }
@@ -1316,11 +1315,10 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       auto SC1 = dyn_cast<SCEVConstant>(Start);
       auto SC2 = dyn_cast<SCEVConstant>(Step);
       if (SC1 && SC2) {
-        APInt C1 = SC1->getValue()->getValue();
-        APInt C2 = SC2->getValue()->getValue();
-        APInt CDiff = C2 - C1;
-        if (C1.isStrictlyPositive() && C2.isStrictlyPositive() &&
-            CDiff.isStrictlyPositive() && C2.isPowerOf2()) {
+        const APInt &C1 = SC1->getValue()->getValue();
+        const APInt &C2 = SC2->getValue()->getValue();
+        if (C1.isStrictlyPositive() && C2.isStrictlyPositive() && C2.ugt(C1) &&
+            C2.isPowerOf2()) {
           Start = getSignExtendExpr(Start, Ty);
           const SCEV *NewAR = getAddRecExpr(getConstant(AR->getType(), 0), Step,
                                             L, AR->getNoWrapFlags());
