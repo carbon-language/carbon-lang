@@ -1377,10 +1377,6 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   DIScope Context = resolve(SP.getContext());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
 
-  // Unique declarations based on the ODR, where applicable.
-  SP = DISubprogram(DD->resolve(SP.getRef()));
-  assert(SP.Verify());
-
   if (DIE *SPDie = getDIE(SP))
     return SPDie;
 
