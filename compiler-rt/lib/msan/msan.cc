@@ -211,9 +211,7 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
 
   ++msan_report_count;
 
-  StackTrace stack;
-  GetStackTrace(&stack, kStackTraceMax, pc, bp,
-                common_flags()->fast_unwind_on_fatal);
+  GET_FATAL_STACK_TRACE_PC_BP(pc, bp);
 
   u32 report_origin =
     (__msan_get_track_origins() && OriginIsValid(origin)) ? origin : 0;
@@ -422,9 +420,7 @@ void __msan_set_expect_umr(int expect_umr) {
   } else if (!msan_expected_umr_found) {
     GET_CALLER_PC_BP_SP;
     (void)sp;
-    StackTrace stack;
-    GetStackTrace(&stack, kStackTraceMax, pc, bp,
-                  common_flags()->fast_unwind_on_fatal);
+    GET_FATAL_STACK_TRACE_PC_BP(pc, bp);
     ReportExpectedUMRNotFound(&stack);
     Die();
   }
@@ -662,3 +658,11 @@ SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char* __msan_default_options() { return ""; }
 }  // extern "C"
 #endif
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_print_stack_trace() {
+  GET_FATAL_STACK_TRACE_PC_BP(StackTrace::GetCurrentPc(), GET_CURRENT_FRAME());
+  stack.Print();
+}
+}  // extern "C"

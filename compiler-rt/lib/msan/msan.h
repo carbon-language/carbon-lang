@@ -111,6 +111,13 @@ u32 ChainOrigin(u32 id, StackTrace *stack);
     GetStackTrace(&stack, common_flags()->malloc_context_size, pc, bp, \
                   common_flags()->fast_unwind_on_malloc)
 
+#define GET_FATAL_STACK_TRACE_PC_BP(pc, bp)       \
+  StackTrace stack;                               \
+  stack.size = 0;                                 \
+  if (msan_inited)                                \
+    GetStackTrace(&stack, kStackTraceMax, pc, bp, \
+                  common_flags()->fast_unwind_on_fatal)
+
 #define GET_STORE_STACK_TRACE \
   GET_STORE_STACK_TRACE_PC_BP(StackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
 
