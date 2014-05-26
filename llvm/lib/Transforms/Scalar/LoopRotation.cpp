@@ -23,6 +23,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -32,7 +33,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "loop-rotate"
 
-#define MAX_HEADER_SIZE 16
+static cl::opt<unsigned>
+DefaultRotationThreshold("rotation-max-header-size", cl::init(16), cl::Hidden,
+       cl::desc("The default maximum header size for automatic loop rotation"));
 
 STATISTIC(NumRotated, "Number of loops rotated");
 namespace {
@@ -40,8 +43,12 @@ namespace {
   class LoopRotate : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopRotate() : LoopPass(ID) {
+    LoopRotate(int SpecifiedMaxHeaderSize = -1) : LoopPass(ID) {
       initializeLoopRotatePass(*PassRegistry::getPassRegistry());
+      if (SpecifiedMaxHeaderSize == -1)
+        MaxHeaderSize = DefaultRotationThreshold;
+      else
+        MaxHeaderSize = unsigned(SpecifiedMaxHeaderSize);
     }
 
     // LCSSA form makes instruction renaming easier.
@@ -62,6 +69,7 @@ namespace {
     bool rotateLoop(Loop *L, bool SimplifiedLatch);
 
   private:
+    unsigned MaxHeaderSize;
     LoopInfo *LI;
     const TargetTransformInfo *TTI;
   };
@@ -75,7 +83,9 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
 
-Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
+Pass *llvm::createLoopRotatePass(int MaxHeaderSize) {
+  return new LoopRotate(MaxHeaderSize);
+}
 
 /// Rotate Loop L as many times as possible. Return true if
 /// the loop is rotated at least once.
@@ -320,7 +330,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
             << " instructions: "; L->dump());
       return false;
     }
-    if (Metrics.NumInsts > MAX_HEADER_SIZE)
+    if (Metrics.NumInsts > MaxHeaderSize)
       return false;
   }
 

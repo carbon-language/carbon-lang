@@ -155,7 +155,7 @@ Pass *createLoopRerollPass();
 //
 // LoopRotate - This pass is a simple loop rotating pass.
 //
-Pass *createLoopRotatePass();
+Pass *createLoopRotatePass(int MaxHeaderSize = -1);
 
 //===----------------------------------------------------------------------===//
 //
