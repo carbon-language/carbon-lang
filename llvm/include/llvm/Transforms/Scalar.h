@@ -162,7 +162,7 @@ Pass *createLoopRotatePass();
 // LoopIdiom - This pass recognizes and replaces idioms in loops.
 //
 Pass *createLoopIdiomPass();
-  
+
 //===----------------------------------------------------------------------===//
 //
 // PromoteMemoryToRegister - This pass is used to promote memory references to
@@ -201,7 +201,7 @@ FunctionPass *createReassociatePass();
 // preds always go to some succ.
 //
 FunctionPass *createJumpThreadingPass();
-  
+
 //===----------------------------------------------------------------------===//
 //
 // CFGSimplification - Merge basic blocks, eliminate unreachable blocks,
@@ -284,10 +284,10 @@ extern char &LCSSAID;
 // tree.
 //
 FunctionPass *createEarlyCSEPass();
-  
+
 //===----------------------------------------------------------------------===//
 //
-// GVN - This pass performs global value numbering and redundant load 
+// GVN - This pass performs global value numbering and redundant load
 // elimination cotemporaneously.
 //
 FunctionPass *createGVNPass(bool NoLoads = false);
@@ -305,7 +305,7 @@ FunctionPass *createMemCpyOptPass();
 // can prove are dead.
 //
 Pass *createLoopDeletionPass();
-  
+
 //===----------------------------------------------------------------------===//
 //
 // ConstantHoisting - This pass prepares a function for expensive constants.
@@ -318,7 +318,7 @@ FunctionPass *createConstantHoistingPass();
 //
 FunctionPass *createInstructionNamerPass();
 extern char &InstructionNamerID;
-  
+
 //===----------------------------------------------------------------------===//
 //
 // Sink - Code Sinking
