@@ -1,6 +1,5 @@
 // RUN: %clangxx_asan -O0 %s -Fe%t
-// FIXME: 'cat' is needed due to PR19744.
-// RUN: not %run %t 2>&1 | cat | FileCheck %s
+// RUN: not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 

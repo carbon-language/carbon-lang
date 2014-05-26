@@ -1,7 +1,6 @@
 // RUN: %clangxx_asan -O0 %p/dll_host.cc -Fe%t
 // RUN: %clangxx_asan -LD -O0 %s -Fe%t.dll
-// FIXME: 'cat' is needed due to PR19744.
-// RUN: not %run %t %t.dll 2>&1 | cat | FileCheck %s
+// RUN: not %run %t %t.dll 2>&1 | FileCheck %s
 
 #include <malloc.h>
 
