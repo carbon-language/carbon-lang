@@ -13,7 +13,7 @@
 ; add x0, x0, #32
 ;  ->
 ; ldr w1, [x0, #32]!
- 
+
 define void @foo(%struct.A* %ptr) nounwind {
 ; CHECK-LABEL: foo
 ; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #32]!
@@ -23,7 +23,7 @@ entry:
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.A* %ptr, i64 0, i32 1
-  tail call void @bar(%struct.C* %c, i32 %add) 
+  tail call void @bar(%struct.C* %c, i32 %add)
   ret void
 }
 
