@@ -435,7 +435,7 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   DISubprogram InlinedSP = getDISubprogram(DS);
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  DIE *OriginDIE = SPMap[InlinedSP]->getDIE(InlinedSP);
+  DIE *OriginDIE = AbstractSPDies[InlinedSP];
   assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
 
   auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
