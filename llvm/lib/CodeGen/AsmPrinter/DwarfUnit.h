@@ -401,6 +401,8 @@ public:
   /// getOrCreateSubprogramDIE - Create new DIE using SP.
   DIE *getOrCreateSubprogramDIE(DISubprogram SP);
 
+  void applySubprogramAttributes(DISubprogram SP, DIE &SPDie);
+
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.
   DIE *getOrCreateTypeDIE(const MDNode *N);

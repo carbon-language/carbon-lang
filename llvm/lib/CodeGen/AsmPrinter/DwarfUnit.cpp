@@ -1374,24 +1374,32 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function
   // declarations).
-  DIScope Context = resolve(SP.getContext());
-  DIE *ContextDIE = getOrCreateContextDIE(Context);
+  DIE *ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
 
   if (DIE *SPDie = getDIE(SP))
     return SPDie;
 
-  DIE *DeclDie = nullptr;
-  StringRef DeclLinkageName;
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     // Add subprogram definitions to the CU die directly.
     ContextDIE = &getUnitDie();
-    DeclDie = getOrCreateSubprogramDIE(SPDecl);
-    DeclLinkageName = SPDecl.getLinkageName();
+    // Build the decl now to ensure it preceeds the definition.
+    getOrCreateSubprogramDIE(SPDecl);
   }
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   DIE &SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
+  applySubprogramAttributes(SP, SPDie);
+  return &SPDie;
+}
+
+void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
+  DIE *DeclDie = nullptr;
+  StringRef DeclLinkageName;
+  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+    DeclDie = getOrCreateSubprogramDIE(SPDecl);
+    DeclLinkageName = SPDecl.getLinkageName();
+  }
 
   // Add function template parameters.
   addTemplateParams(SPDie, SP.getTemplateParams());
@@ -1409,7 +1417,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     // Refer to the function declaration where all the other attributes will be
     // found.
     addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
-    return &SPDie;
+    return;
   }
 
   // Constructors and operators for anonymous aggregates do not have names.
@@ -1486,8 +1494,6 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   if (SP.isExplicit())
     addFlag(SPDie, dwarf::DW_AT_explicit);
-
-  return &SPDie;
 }
 
 // Return const expression if value is a GEP to access merged global
