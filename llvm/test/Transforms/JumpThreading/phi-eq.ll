@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -jump-threading | llvm-dis | FileCheck %s
+; RUN: opt < %s -jump-threading -S | FileCheck %s
 ; Test whether two consecutive switches with identical structures assign the
 ; proper value to the proper variable.  This is really testing 
 ; Instruction::isIdenticalToWhenDefined, as previously that function was 
