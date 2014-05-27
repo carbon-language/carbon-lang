@@ -129,6 +129,14 @@ static error_code processSection(MachOFile &file, const Section &section,
           offset = i + 2;
         }
       }
+      if (offset != section.content.size()) {
+        return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                       + "/" + section.sectionName 
+                                       + " is supposed to contain 0x0000 "
+                                       "terminated UTF16 strings, but the "
+                                       "last string in the section is not zero "
+                                       "terminated."); 
+      }
     }
   case llvm::MachO::S_COALESCED:
   case llvm::MachO::S_ZEROFILL:
@@ -143,6 +151,13 @@ static error_code processSection(MachOFile &file, const Section &section,
                             DefinedAtom::typeCString, strContent, copyRefs);
         offset = i + 1;
       }
+    }
+    if (offset != section.content.size()) {
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName 
+                                     + " has type S_CSTRING_LITERALS but the "
+                                     "last string in the section is not zero "
+                                     "terminated."); 
     }
     break;
   case llvm::MachO::S_4BYTE_LITERALS:
