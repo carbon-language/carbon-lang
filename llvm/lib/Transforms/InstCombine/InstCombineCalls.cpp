@@ -734,10 +734,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       auto SelectorType = cast<VectorType>(Mask->getType());
       auto EltTy = SelectorType->getElementType();
       unsigned Size = SelectorType->getNumElements();
-      unsigned BitWidth = EltTy->isFloatTy() ? 32 : (EltTy->isDoubleTy() ? 64 : EltTy->getIntegerBitWidth());
+      unsigned BitWidth =
+          EltTy->isFloatTy()
+              ? 32
+              : (EltTy->isDoubleTy() ? 64 : EltTy->getIntegerBitWidth());
       assert((BitWidth == 64 || BitWidth == 32 || BitWidth == 8) &&
              "Wrong arguments for variable blend intrinsic");
-      SmallVector<Constant*, 32> Selectors;
+      SmallVector<Constant *, 32> Selectors;
       for (unsigned I = 0; I < Size; ++I) {
         // The intrinsics only read the top bit
         uint64_t Selector;
@@ -748,7 +751,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Selectors.push_back(ConstantInt::get(Tyi1, Selector >> (BitWidth - 1)));
       }
       auto NewSelector = ConstantVector::get(Selectors);
-      return SelectInst::Create(NewSelector, II->getArgOperand(0), II->getArgOperand(1), "blendv");
+      return SelectInst::Create(NewSelector, II->getArgOperand(1),
+                                II->getArgOperand(0), "blendv");
     } else {
       break;
     }
