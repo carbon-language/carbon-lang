@@ -73,8 +73,7 @@ entry:
 }
 ; CHECK-LABEL: @ext_or
 ; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %{{[0-9]+}}, i64 %{{[0-9]+}}
-; CHECK: [[BASE_INT:%[0-9]+]] = ptrtoint float* [[BASE_PTR]] to i64
-; CHECK: add i64 [[BASE_INT]], 136
+; CHECK: getelementptr float* [[BASE_PTR]], i64 34
 
 ; We should treat "or" with no common bits (%k) as "add", and leave "or" with
 ; potentially common bits (%l) as is.
