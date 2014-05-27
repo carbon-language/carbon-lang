@@ -22,6 +22,7 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_atomic.h"
+#include "sanitizer_symbolizer.h"
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -527,6 +528,20 @@ void SetIndirectCallWrapper(uptr wrapper) {
   CHECK(!indirect_call_wrapper);
   CHECK(wrapper);
   indirect_call_wrapper = wrapper;
+}
+
+void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
+  // Some kinds of sandboxes may forbid filesystem access, so we won't be able
+  // to read the file mappings from /proc/self/maps. Luckily, neither the
+  // process will be able to load additional libraries, so it's fine to use the
+  // cached mappings.
+  MemoryMappingLayout::CacheMemoryMappings();
+  // Same for /proc/self/exe in the symbolizer.
+#if !SANITIZER_GO
+  if (Symbolizer *sym = Symbolizer::GetOrNull())
+    sym->PrepareForSandboxing();
+  CovPrepareForSandboxing(args);
+#endif
 }
 
 }  // namespace __sanitizer

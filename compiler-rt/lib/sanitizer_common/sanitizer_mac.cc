@@ -131,6 +131,14 @@ int internal_fork() {
   return fork();
 }
 
+uptr internal_rename(const char *oldpath, const char *newpath) {
+  return rename(oldpath, newpath);
+}
+
+uptr internal_ftruncate(fd_t fd, uptr size) {
+  return ftruncate(fd, size);
+}
+
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
   struct stat st;

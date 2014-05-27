@@ -6,6 +6,8 @@
 import array
 import struct
 import sys
+import bisect
+import os.path
 
 prog_name = "";
 
@@ -74,6 +76,63 @@ def Unpack(files):
   for f in files:
     UnpackOneFile(f)
 
+def UnpackOneRawFile(path, map_path):
+  mem_map = []
+  with open(map_path, mode="rt") as f_map:
+    print >> sys.stderr, "%s: reading map %s" % (prog_name, map_path)
+    bits = int(f_map.readline())
+    for line in f_map:
+      parts = line.rstrip().split()
+      assert len(parts) == 4
+      mem_map.append((int(parts[0], 16),
+                  int(parts[1], 16),
+                  int(parts[2], 16),
+                  parts[3]))
+  mem_map.sort(key=lambda m : m[0])
+  mem_map_keys = [m[0] for m in mem_map]
+
+  print mem_map
+  with open(path, mode="rb") as f:
+    print >> sys.stderr, "%s: unpacking %s" % (prog_name, path)
+
+    f.seek(0, 2)
+    size = f.tell()
+    f.seek(0, 0)
+    if bits == 64:
+      typecode = 'L'
+    else:
+      typecode = 'I'
+    pcs = array.array(typecode, f.read(size))
+    mem_map_pcs = [[] for i in range(0, len(mem_map))]
+
+    for pc in pcs:
+      if pc == 0: continue
+      map_idx = bisect.bisect(mem_map_keys, pc) - 1
+      (start, end, base, module_path) = mem_map[map_idx]
+      print pc
+      print start, end, base, module_path
+      assert pc >= start
+      if pc >= end:
+        print >> sys.stderr, "warning: %s: pc %x outside of any known mapping" % (prog_name, pc)
+        continue
+      mem_map_pcs[map_idx].append(pc - base)
+
+    for ((start, end, base, module_path), pc_list) in zip(mem_map, mem_map_pcs):
+      if len(pc_list) == 0: continue
+      assert path.endswith('.sancov.raw')
+      dst_path = module_path + '.' + os.path.basename(path)[:-4]
+      print "writing %d PCs to %s" % (len(pc_list), dst_path)
+      arr = array.array('I')
+      arr.fromlist(sorted(pc_list))
+      with open(dst_path, 'ab') as f2:
+        arr.tofile(f2)
+
+def RawUnpack(files):
+  for f in files:
+    if not f.endswith('.sancov.raw'):
+      raise Exception('Unexpected raw file name %s' % f)
+    f_map = f[:-3] + 'map'
+    UnpackOneRawFile(f, f_map)
 
 if __name__ == '__main__':
   prog_name = sys.argv[0]
@@ -85,5 +144,7 @@ if __name__ == '__main__':
     MergeAndPrint(sys.argv[2:])
   elif sys.argv[1] == "unpack":
     Unpack(sys.argv[2:])
+  elif sys.argv[1] == "rawunpack":
+    RawUnpack(sys.argv[2:])
   else:
     Usage()

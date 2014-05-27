@@ -41,4 +41,17 @@ bool ColorizeReports() {
   return internal_strcmp(flag, "always") == 0 ||
          (internal_strcmp(flag, "auto") == 0 && PrintsToTtyCached());
 }
+
+static void (*sandboxing_callback)();
+void SetSandboxingCallback(void (*f)()) {
+  sandboxing_callback = f;
+}
+
 }  // namespace __sanitizer
+
+void NOINLINE
+__sanitizer_sandbox_on_notify(__sanitizer_sandbox_arguments *args) {
+  PrepareForSandboxing(args);
+  if (sandboxing_callback)
+    sandboxing_callback();
+}

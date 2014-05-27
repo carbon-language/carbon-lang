@@ -206,6 +206,17 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   return internal_iserror(map) ? 0 : (void *)map;
 }
 
+void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset) {
+  uptr flags = MAP_SHARED;
+  if (addr) flags |= MAP_FIXED;
+  uptr p = internal_mmap(addr, size, PROT_READ | PROT_WRITE, flags, fd, offset);
+  if (internal_iserror(p)) {
+    Printf("could not map writable file (%zd, %zu, %zu): %zd\n", fd, offset,
+           size, p);
+    return 0;
+  }
+  return (void *)p;
+}
 
 static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
                                         uptr start2, uptr end2) {

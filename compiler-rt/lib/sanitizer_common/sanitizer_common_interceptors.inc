@@ -75,6 +75,19 @@
 #define COMMON_INTERCEPTOR_FILE_CLOSE(ctx, file) {}
 #endif
 
+#ifndef COMMON_INTERCEPTOR_LIBRARY_LOADED
+#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, map) {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_LIBRARY_UNLOADED
+#define COMMON_INTERCEPTOR_LIBRARY_UNLOADED() {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_ENTER_NOIGNORE
+#define COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, ...) \
+  COMMON_INTERCEPTOR_ENTER(ctx, __VA_ARGS__)
+#endif
+
 struct FileMetadata {
   // For open_memstream().
   char **addr;
@@ -4036,6 +4049,29 @@ INTERCEPTOR(int, fclose, __sanitizer_FILE *fp) {
 #define INIT_FCLOSE
 #endif
 
+#if SANITIZER_INTERCEPT_DLOPEN_DLCLOSE
+INTERCEPTOR(void*, dlopen, const char *filename, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, dlopen, filename, flag);
+  void *res = REAL(dlopen)(filename, flag);
+  COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, res);
+  return res;
+}
+
+INTERCEPTOR(int, dlclose, void *handle) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, dlclose, handle);
+  int res = REAL(dlclose)(handle);
+  COMMON_INTERCEPTOR_LIBRARY_UNLOADED();
+  return res;
+}
+#define INIT_DLOPEN_DLCLOSE          \
+  COMMON_INTERCEPT_FUNCTION(dlopen); \
+  COMMON_INTERCEPT_FUNCTION(dlclose);
+#else
+#define INIT_DLOPEN_DLCLOSE
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -4177,4 +4213,5 @@ static void InitializeCommonInterceptors() {
   INIT_OBSTACK;
   INIT_FFLUSH;
   INIT_FCLOSE;
+  INIT_DLOPEN_DLCLOSE;
 }

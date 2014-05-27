@@ -74,6 +74,7 @@ uptr internal_open(const char *filename, int flags, u32 mode);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
+uptr internal_ftruncate(fd_t fd, uptr size);
 
 // OS
 uptr internal_filesize(fd_t fd);  // -1 on error.
@@ -83,6 +84,7 @@ uptr internal_fstat(fd_t fd, void *buf);
 uptr internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
 uptr internal_unlink(const char *path);
+uptr internal_rename(const char *oldpath, const char *newpath);
 void NORETURN internal__exit(int exitcode);
 uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
 

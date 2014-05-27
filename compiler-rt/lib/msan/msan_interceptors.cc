@@ -886,25 +886,6 @@ INTERCEPTOR(char *, dlerror, int fake) {
   return res;
 }
 
-// dlopen() ultimately calls mmap() down inside the loader, which generally
-// doesn't participate in dynamic symbol resolution.  Therefore we won't
-// intercept its calls to mmap, and we have to hook it here.  The loader
-// initializes the module before returning, so without the dynamic component, we
-// won't be able to clear the shadow before the initializers.  Fixing this would
-// require putting our own initializer first to clear the shadow.
-INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
-  ENSURE_MSAN_INITED();
-  EnterLoader();
-  link_map *map = (link_map *)REAL(dlopen)(filename, flag);
-  ExitLoader();
-  if (!__msan_has_dynamic_component() && map) {
-    // If msandr didn't clear the shadow before the initializers ran, we do it
-    // ourselves afterwards.
-    ForEachMappedRegion(map, __msan_unpoison);
-  }
-  return (void *)map;
-}
-
 typedef int (*dl_iterate_phdr_cb)(__sanitizer_dl_phdr_info *info, SIZE_T size,
                                   void *data);
 struct dl_iterate_phdr_data {
@@ -1234,6 +1215,13 @@ int OnExit() {
   } while (false)  // FIXME
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
+#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, map)                       \
+  if (!__msan_has_dynamic_component() && map) {                                \
+    /* If msandr didn't clear the shadow before the initializers ran, we do */ \
+    /* it ourselves afterwards. */                                             \
+    ForEachMappedRegion((link_map *)map, __msan_unpoison);                     \
+  }
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
@@ -1559,7 +1547,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(recvfrom);
   INTERCEPT_FUNCTION(dladdr);
   INTERCEPT_FUNCTION(dlerror);
-  INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(dl_iterate_phdr);
   INTERCEPT_FUNCTION(getrusage);
   INTERCEPT_FUNCTION(sigaction);

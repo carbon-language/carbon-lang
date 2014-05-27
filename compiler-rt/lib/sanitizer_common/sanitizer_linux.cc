@@ -134,7 +134,7 @@ uptr internal_open(const char *filename, int flags, u32 mode) {
 
 uptr OpenFile(const char *filename, bool write) {
   return internal_open(filename,
-      write ? O_WRONLY | O_CREAT /*| O_CLOEXEC*/ : O_RDONLY, 0660);
+      write ? O_RDWR | O_CREAT /*| O_CLOEXEC*/ : O_RDONLY, 0660);
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
@@ -148,6 +148,12 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   sptr res;
   HANDLE_EINTR(res, (sptr)internal_syscall(SYSCALL(write), fd, (uptr)buf,
                count));
+  return res;
+}
+
+uptr internal_ftruncate(fd_t fd, uptr size) {
+  sptr res;
+  HANDLE_EINTR(res, (sptr)internal_syscall(SYSCALL(ftruncate), fd, size));
   return res;
 }
 
@@ -243,6 +249,15 @@ uptr internal_unlink(const char *path) {
   return internal_syscall(SYSCALL(unlinkat), AT_FDCWD, (uptr)path, 0);
 #else
   return internal_syscall(SYSCALL(unlink), (uptr)path);
+#endif
+}
+
+uptr internal_rename(const char *oldpath, const char *newpath) {
+#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return internal_syscall(SYSCALL(renameat), AT_FDCWD, (uptr)oldpath, AT_FDCWD,
+                          (uptr)newpath);
+#else
+  return internal_syscall(SYSCALL(rename), (uptr)oldpath, (uptr)newpath);
 #endif
 }
 
@@ -389,20 +404,6 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   *tls_size = 0;
 }
 #endif  // SANITIZER_GO
-
-void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
-  // Some kinds of sandboxes may forbid filesystem access, so we won't be able
-  // to read the file mappings from /proc/self/maps. Luckily, neither the
-  // process will be able to load additional libraries, so it's fine to use the
-  // cached mappings.
-  MemoryMappingLayout::CacheMemoryMappings();
-  // Same for /proc/self/exe in the symbolizer.
-#if !SANITIZER_GO
-  if (Symbolizer *sym = Symbolizer::GetOrNull())
-    sym->PrepareForSandboxing();
-  CovPrepareForSandboxing(args);
-#endif
-}
 
 enum MutexState {
   MtxUnlocked = 0,

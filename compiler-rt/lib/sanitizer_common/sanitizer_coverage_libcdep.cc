@@ -45,11 +45,10 @@ atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
 // pc_array is the array containing the covered PCs.
 // To make the pc_array thread- and async-signal-safe it has to be large enough.
 // 128M counters "ought to be enough for anybody" (4M on 32-bit).
-// pc_array is allocated with MmapNoReserveOrDie and so it uses only as
-// much RAM as it really needs.
-static const uptr kPcArraySize = FIRST_32_SECOND_64(1 << 22, 1 << 27);
-static uptr *pc_array;
-static atomic_uintptr_t pc_array_index;
+
+// With coverage_direct=1 in ASAN_OPTIONS, pc_array memory is mapped to a file.
+// In this mode, __sanitizer_cov_dump does nothing, and CovUpdateMapping()
+// dump current memory layout to another file.
 
 static bool cov_sandboxed = false;
 static int cov_fd = kInvalidFd;
@@ -57,22 +56,114 @@ static unsigned int cov_max_block_size = 0;
 
 namespace __sanitizer {
 
+class CoverageData {
+ public:
+  void Init();
+  void Extend(uptr npcs);
+  void Add(uptr pc);
+
+  uptr *data();
+  uptr size();
+
+ private:
+  // Maximal size pc array may ever grow.
+  // We MmapNoReserve this space to ensure that the array is contiguous.
+  static const uptr kPcArrayMaxSize = FIRST_32_SECOND_64(1 << 22, 1 << 27);
+  // The amount file mapping for the pc array is grown by.
+  static const uptr kPcArrayMmapSize = 64 * 1024;
+
+  // pc_array is allocated with MmapNoReserveOrDie and so it uses only as
+  // much RAM as it really needs.
+  uptr *pc_array;
+  // Index of the first available pc_array slot.
+  atomic_uintptr_t pc_array_index;
+  // Array size.
+  atomic_uintptr_t pc_array_size;
+  // Current file mapped size of the pc array.
+  uptr pc_array_mapped_size;
+  // Descriptor of the file mapped pc array.
+  int pc_fd;
+  StaticSpinMutex mu;
+
+  void DirectInit();
+};
+
+static CoverageData coverage_data;
+
+void CoverageData::DirectInit() {
+  InternalScopedString path(64);
+  internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.raw",
+                    internal_getpid());
+  pc_fd = OpenFile(path.data(), true);
+  if (internal_iserror(pc_fd)) {
+    Report(" Coverage: failed to open %s for writing\n", path.data());
+    Die();
+  }
+
+  atomic_store(&pc_array_size, 0, memory_order_relaxed);
+  pc_array_mapped_size = 0;
+
+  CovUpdateMapping();
+}
+
+void CoverageData::Init() {
+  pc_array = reinterpret_cast<uptr *>(
+      MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
+  if (common_flags()->coverage_direct) {
+    DirectInit();
+  } else {
+    pc_fd = 0;
+    atomic_store(&pc_array_size, kPcArrayMaxSize, memory_order_relaxed);
+  }
+}
+
+// Extend coverage PC array to fit additional npcs elements.
+void CoverageData::Extend(uptr npcs) {
+  // If pc_fd=0, pc array is a huge anonymous mapping that does not need to be
+  // resized.
+  if (!pc_fd) return;
+  SpinMutexLock l(&mu);
+
+  uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
+  size += npcs * sizeof(uptr);
+
+  if (size > pc_array_mapped_size) {
+    uptr new_mapped_size = pc_array_mapped_size;
+    while (size > new_mapped_size) new_mapped_size += kPcArrayMmapSize;
+
+    // Extend the file and map the new space at the end of pc_array.
+    uptr res = internal_ftruncate(pc_fd, new_mapped_size);
+    int err;
+    if (internal_iserror(res, &err)) {
+      Printf("failed to extend raw coverage file: %d\n", err);
+      Die();
+    }
+    void *p = MapWritableFileToMemory(pc_array + pc_array_mapped_size,
+                                      new_mapped_size - pc_array_mapped_size,
+                                      pc_fd, pc_array_mapped_size);
+    CHECK_EQ(p, pc_array + pc_array_mapped_size);
+    pc_array_mapped_size = new_mapped_size;
+  }
+
+  atomic_store(&pc_array_size, size, memory_order_release);
+}
+
 // Simply add the pc into the vector under lock. If the function is called more
 // than once for a given PC it will be inserted multiple times, which is fine.
-static void CovAdd(uptr pc) {
+void CoverageData::Add(uptr pc) {
   if (!pc_array) return;
   uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
-  CHECK_LT(idx, kPcArraySize);
+  CHECK_LT(idx * sizeof(uptr),
+           atomic_load(&pc_array_size, memory_order_acquire));
   pc_array[idx] = pc;
 }
 
-void CovInit() {
-  pc_array = reinterpret_cast<uptr *>(
-      MmapNoReserveOrDie(sizeof(uptr) * kPcArraySize, "CovInit"));
+uptr *CoverageData::data() {
+  return pc_array;
 }
 
-static inline bool CompareLess(const uptr &a, const uptr &b) {
-  return a < b;
+uptr CoverageData::size() {
+  return atomic_load(&pc_array_index, memory_order_relaxed);
 }
 
 // Block layout for packed file format: header, followed by module name (no
@@ -150,15 +241,15 @@ static int CovOpenFile(bool packed, const char* name) {
 
 // Dump the coverage on disk.
 static void CovDump() {
-  if (!common_flags()->coverage) return;
+  if (!common_flags()->coverage || common_flags()->coverage_direct) return;
 #if !SANITIZER_WINDOWS
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
-  uptr size = atomic_load(&pc_array_index, memory_order_relaxed);
-  InternalSort(&pc_array, size, CompareLess);
+  uptr size = coverage_data.size();
   InternalMmapVector<u32> offsets(size);
-  const uptr *vb = pc_array;
-  const uptr *ve = vb + size;
+  uptr *vb = coverage_data.data();
+  uptr *ve = vb + size;
+  SortArray(vb, size);
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr mb, me, off, prot;
   InternalScopedBuffer<char> module(4096);
@@ -227,10 +318,15 @@ int MaybeOpenCovFile(const char *name) {
 
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov() {
-  CovAdd(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()));
+  coverage_data.Add(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()));
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() { CovInit(); }
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
+  coverage_data.Init();
+}
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(uptr npcs) {
+  coverage_data.Extend(npcs);
+}
 SANITIZER_INTERFACE_ATTRIBUTE
 sptr __sanitizer_maybe_open_cov_file(const char *name) {
   return MaybeOpenCovFile(name);

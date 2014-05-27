@@ -207,7 +207,7 @@ ScopedInterceptor::~ScopedInterceptor() {
     if (REAL(func) == 0) { \
       Report("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
       Die(); \
-    } \
+    }                                                    \
     if (thr->ignore_interceptors || thr->in_ignored_lib) \
       return REAL(func)(__VA_ARGS__); \
 /**/
@@ -256,20 +256,6 @@ TSAN_INTERCEPTOR(int, nanosleep, void *req, void *rem) {
   SCOPED_TSAN_INTERCEPTOR(nanosleep, req, rem);
   int res = BLOCK_REAL(nanosleep)(req, rem);
   AfterSleep(thr, pc);
-  return res;
-}
-
-TSAN_INTERCEPTOR(void*, dlopen, const char *filename, int flag) {
-  SCOPED_INTERCEPTOR_RAW(dlopen, filename, flag);
-  void *res = REAL(dlopen)(filename, flag);
-  libignore()->OnLibraryLoaded(filename);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, dlclose, void *handle) {
-  SCOPED_INTERCEPTOR_RAW(dlclose, handle);
-  int res = REAL(dlclose)(handle);
-  libignore()->OnLibraryUnloaded();
   return res;
 }
 
@@ -2021,6 +2007,12 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
   ctx = (void *)&_ctx;                                \
   (void) ctx;
 
+#define COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, func, ...) \
+  SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__);              \
+  TsanInterceptorContext _ctx = {thr, caller_pc, pc};     \
+  ctx = (void *)&_ctx;                                    \
+  (void) ctx;
+
 #define COMMON_INTERCEPTOR_FILE_OPEN(ctx, file, path) \
   Acquire(thr, pc, File2addr(path));                  \
   if (file) {                                         \
@@ -2033,6 +2025,12 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
     int fd = fileno_unlocked(file);              \
     if (fd >= 0) FdClose(thr, pc, fd);           \
   }
+
+#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, res)  \
+  libignore()->OnLibraryLoaded(filename)
+
+#define COMMON_INTERCEPTOR_LIBRARY_UNLOADED() \
+  libignore()->OnLibraryUnloaded()
 
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
   FdAcquire(((TsanInterceptorContext *) ctx)->thr, pc, fd)
@@ -2376,8 +2374,6 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(fork);
   TSAN_INTERCEPT(vfork);
-  TSAN_INTERCEPT(dlopen);
-  TSAN_INTERCEPT(dlclose);
   TSAN_INTERCEPT(on_exit);
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);

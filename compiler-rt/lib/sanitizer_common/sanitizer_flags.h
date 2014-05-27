@@ -54,6 +54,7 @@ struct CommonFlags {
   bool help;
   uptr mmap_limit_mb;
   bool coverage;
+  bool coverage_direct;
   bool full_address_space;
 };
 

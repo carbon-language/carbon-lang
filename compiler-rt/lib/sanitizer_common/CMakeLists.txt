@@ -4,7 +4,6 @@
 set(SANITIZER_SOURCES
   sanitizer_allocator.cc
   sanitizer_common.cc
-  sanitizer_coverage.cc
   sanitizer_deadlock_detector1.cc
   sanitizer_deadlock_detector2.cc
   sanitizer_flags.cc
@@ -31,6 +30,8 @@ set(SANITIZER_SOURCES
 
 set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_common_libcdep.cc
+  sanitizer_coverage_libcdep.cc
+  sanitizer_coverage_mapping_libcdep.cc
   sanitizer_linux_libcdep.cc
   sanitizer_posix_libcdep.cc
   sanitizer_stacktrace_libcdep.cc

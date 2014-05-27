@@ -146,6 +146,8 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   } while (false)
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #define COMMON_INTERCEPTOR_ON_EXIT(ctx) OnExit()
+#define COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, res) CovUpdateMapping()
+#define COMMON_INTERCEPTOR_LIBRARY_UNLOADED() CovUpdateMapping()
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) ASAN_READ_RANGE(p, s)
