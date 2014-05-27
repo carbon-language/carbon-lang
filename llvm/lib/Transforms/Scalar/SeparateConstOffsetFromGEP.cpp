@@ -165,6 +165,10 @@ class ConstantOffsetExtractor {
   void ComputeKnownBits(Value *V, APInt &KnownOne, APInt &KnownZero) const;
   /// Finds the first use of Used in U. Returns -1 if not found.
   static unsigned FindFirstUse(User *U, Value *Used);
+  /// Returns whether OPC (sext or zext) can be distributed to the operands of
+  /// BO. e.g., sext can be distributed to the operands of an "add nsw" because
+  /// sext (add nsw a, b) == add nsw (sext a), (sext b).
+  static bool Distributable(unsigned OPC, BinaryOperator *BO);
 
   /// The path from the constant offset to the old GEP index. e.g., if the GEP
   /// index is "a * b + (c + 5)". After running function find, UserChain[0] will
@@ -223,6 +227,25 @@ FunctionPass *llvm::createSeparateConstOffsetFromGEPPass() {
   return new SeparateConstOffsetFromGEP();
 }
 
+bool ConstantOffsetExtractor::Distributable(unsigned OPC, BinaryOperator *BO) {
+  assert(OPC == Instruction::SExt || OPC == Instruction::ZExt);
+
+  // sext (add/sub nsw A, B) == add/sub nsw (sext A), (sext B)
+  // zext (add/sub nuw A, B) == add/sub nuw (zext A), (zext B)
+  if (BO->getOpcode() == Instruction::Add ||
+      BO->getOpcode() == Instruction::Sub) {
+    return (OPC == Instruction::SExt && BO->hasNoSignedWrap()) ||
+           (OPC == Instruction::ZExt && BO->hasNoUnsignedWrap());
+  }
+
+  // sext/zext (and/or/xor A, B) == and/or/xor (sext/zext A), (sext/zext B)
+  // -instcombine also leverages this invariant to do the reverse
+  // transformation to reduce integer casts.
+  return BO->getOpcode() == Instruction::And ||
+         BO->getOpcode() == Instruction::Or ||
+         BO->getOpcode() == Instruction::Xor;
+}
+
 int64_t ConstantOffsetExtractor::findInEitherOperand(User *U, bool IsSub) {
   assert(U->getNumOperands() == 2);
   int64_t ConstantOffset = find(U->getOperand(0));
@@ -273,21 +296,14 @@ int64_t ConstantOffsetExtractor::find(Value *V) {
           ConstantOffset = findInEitherOperand(U, false);
         break;
       }
-      case Instruction::SExt: {
-        // For safety, we trace into sext only when its operand is marked
-        // "nsw" because xxx.nsw guarantees no signed wrap. e.g., we can safely
-        // transform "sext (add nsw a, 5)" into "add nsw (sext a), 5".
-        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getOperand(0))) {
-          if (BO->hasNoSignedWrap())
-            ConstantOffset = find(U->getOperand(0));
-        }
-        break;
-      }
+      case Instruction::SExt:
       case Instruction::ZExt: {
-        // Similarly, we trace into zext only when its operand is marked with
-        // "nuw" because zext (add nuw a, b) == add nuw (zext a), (zext b).
+        // We trace into sext/zext if the operator can be distributed to its
+        // operand. e.g., we can transform into "sext (add nsw a, 5)" and
+        // extract constant 5, because
+        //   sext (add nsw a, 5) == add nsw (sext a), 5
         if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getOperand(0))) {
-          if (BO->hasNoUnsignedWrap())
+          if (Distributable(O->getOpcode(), BO))
             ConstantOffset = find(U->getOperand(0));
         }
         break;

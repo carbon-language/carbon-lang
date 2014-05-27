@@ -57,6 +57,25 @@ define float* @ext_add_no_overflow(i64 %a, i32 %b, i64 %c, i32 %d) {
 ; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %{{[0-9]+}}, i64 %{{[0-9]+}}
 ; CHECK: getelementptr float* [[BASE_PTR]], i64 33
 
+; Similar to @ext_add_no_overflow, we should be able to trace into sext/zext if
+; its operand is an "or" instruction.
+define float* @ext_or(i64 %a, i32 %b) {
+entry:
+  %b1 = shl i32 %b, 2
+  %b2 = or i32 %b1, 1
+  %b3 = or i32 %b1, 2
+  %b2.ext = sext i32 %b2 to i64
+  %b3.ext = sext i32 %b3 to i64
+  %i = add i64 %a, %b2.ext
+  %j = add i64 %a, %b3.ext
+  %p = getelementptr inbounds [32 x [32 x float]]* @float_2d_array, i64 0, i64 %i, i64 %j
+  ret float* %p
+}
+; CHECK-LABEL: @ext_or
+; CHECK: [[BASE_PTR:%[0-9]+]] = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %{{[0-9]+}}, i64 %{{[0-9]+}}
+; CHECK: [[BASE_INT:%[0-9]+]] = ptrtoint float* [[BASE_PTR]] to i64
+; CHECK: add i64 [[BASE_INT]], 136
+
 ; We should treat "or" with no common bits (%k) as "add", and leave "or" with
 ; potentially common bits (%l) as is.
 define float* @or(i64 %i) {
