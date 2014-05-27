@@ -203,11 +203,13 @@ static void StartBackgroundThread() {
   ctx->background_thread = internal_start_thread(&BackgroundThread, 0);
 }
 
+#ifndef TSAN_GO
 static void StopBackgroundThread() {
   atomic_store(&ctx->stop_background_thread, 1, memory_order_relaxed);
   internal_join_thread(ctx->background_thread);
   ctx->background_thread = 0;
 }
+#endif
 
 void DontNeedShadowFor(uptr addr, uptr size) {
   uptr shadow_beg = MemToShadow(addr);
@@ -268,7 +270,9 @@ void Initialize(ThreadState *thr) {
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
   StartBackgroundThread();
+#ifndef TSAN_GO
   SetSandboxingCallback(StopBackgroundThread);
+#endif
   if (flags()->detect_deadlocks)
     ctx->dd = DDetector::Create(flags());
 
