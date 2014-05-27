@@ -125,6 +125,33 @@ bar.exit:                                         ; preds = %for.cond.i, %for.bo
   ret i32 0
 }
 
+; PR18886: Indvars miscompile due to an incorrect max backedge taken count from SCEV.
+; CHECK-LABEL: @pr18886
+; CHECK: Loop %for.body: <multiple exits> Unpredictable backedge-taken count. 
+; CHECK: Loop %for.body: max backedge-taken count is 3
+@aa = global i64 0, align 8
+
+define i32 @pr18886() {
+entry:
+  store i64 -21, i64* @aa, align 8
+  br label %for.body
+
+for.body:
+  %storemerge1 = phi i64 [ -21, %entry ], [ %add, %for.cond ]
+  %tobool = icmp eq i64 %storemerge1, 0
+  %add = add nsw i64 %storemerge1, 8
+  br i1 %tobool, label %return, label %for.cond
+
+for.cond:
+  store i64 %add, i64* @aa, align 8
+  %cmp = icmp slt i64 %add, 9
+  br i1 %cmp, label %for.body, label %return
+
+return:
+  %retval.0 = phi i32 [ 1, %for.body ], [ 0, %for.cond ]
+  ret i32 %retval.0
+}
+
 ; Here we have a must-exit loop latch that is not computable and a
 ; may-exit early exit that can only have one non-exiting iteration
 ; before the check is forever skipped.
