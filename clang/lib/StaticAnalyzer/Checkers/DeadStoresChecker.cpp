@@ -140,7 +140,7 @@ public:
                ParentMap &parents,
                llvm::SmallPtrSet<const VarDecl *, 20> &escaped)
       : cfg(cfg), Ctx(ctx), BR(br), Checker(checker), AC(ac), Parents(parents),
-        Escaped(escaped), currentBlock(0) {}
+        Escaped(escaped), currentBlock(nullptr) {}
 
   virtual ~DeadStoreObs() {}
 
@@ -178,7 +178,7 @@ public:
 
     SmallString<64> buf;
     llvm::raw_svector_ostream os(buf);
-    const char *BugType = 0;
+    const char *BugType = nullptr;
 
     switch (dsk) {
       case DeadInit:

@@ -40,7 +40,7 @@ class ClangCheckerRegistry : public CheckerRegistry {
 
 public:
   ClangCheckerRegistry(ArrayRef<std::string> plugins,
-                       DiagnosticsEngine *diags = 0);
+                       DiagnosticsEngine *diags = nullptr);
 };
   
 } // end anonymous namespace
@@ -73,7 +73,7 @@ ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins,
 
 bool ClangCheckerRegistry::isCompatibleAPIVersion(const char *versionString) {
   // If the version string is null, it's not an analyzer plugin.
-  if (versionString == 0)
+  if (!versionString)
     return false;
 
   // For now, none of the static analyzer API is considered stable.

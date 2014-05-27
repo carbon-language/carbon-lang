@@ -67,9 +67,11 @@ class StreamChecker : public Checker<eval::Call,
 
 public:
   StreamChecker() 
-    : II_fopen(0), II_tmpfile(0) ,II_fclose(0), II_fread(0), II_fwrite(0), 
-      II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
-      II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0) {}
+    : II_fopen(nullptr), II_tmpfile(nullptr), II_fclose(nullptr),
+      II_fread(nullptr), II_fwrite(nullptr), II_fseek(nullptr),
+      II_ftell(nullptr), II_rewind(nullptr), II_fgetpos(nullptr),
+      II_fsetpos(nullptr), II_clearerr(nullptr), II_feof(nullptr),
+      II_ferror(nullptr), II_fileno(nullptr) {}
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
@@ -210,7 +212,8 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
-  DefinedSVal RetVal = svalBuilder.conjureSymbolVal(0, CE, LCtx, C.blockCount())
+  DefinedSVal RetVal = svalBuilder.conjureSymbolVal(nullptr, CE, LCtx,
+                                                    C.blockCount())
       .castAs<DefinedSVal>();
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
@@ -340,7 +343,7 @@ ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
                                     CheckerContext &C) const {
   Optional<DefinedSVal> DV = SV.getAs<DefinedSVal>();
   if (!DV)
-    return 0;
+    return nullptr;
 
   ConstraintManager &CM = C.getConstraintManager();
   ProgramStateRef stateNotNull, stateNull;
@@ -354,7 +357,7 @@ ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
       BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
       C.emitReport(R);
     }
-    return 0;
+    return nullptr;
   }
   return stateNotNull;
 }
@@ -386,7 +389,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                    BT_doubleclose->getDescription(), N);
       C.emitReport(R);
     }
-    return NULL;
+    return nullptr;
   }
   
   // Close the File Descriptor.

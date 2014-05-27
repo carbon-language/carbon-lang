@@ -817,7 +817,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     RegionOffset LeftOffset = LeftMR->getAsOffset();
     RegionOffset RightOffset = RightMR->getAsOffset();
 
-    if (LeftOffset.getRegion() != NULL &&
+    if (LeftOffset.getRegion() != nullptr &&
         LeftOffset.getRegion() == RightOffset.getRegion() &&
         !LeftOffset.hasSymbolicOffset() && !RightOffset.hasSymbolicOffset()) {
       int64_t left = LeftOffset.getOffset();
@@ -900,7 +900,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
   if (const MemRegion *region = lhs.getAsRegion()) {
     rhs = convertToArrayIndex(rhs).castAs<NonLoc>();
     SVal index = UnknownVal();
-    const MemRegion *superR = 0;
+    const MemRegion *superR = nullptr;
     QualType elementType;
 
     if (const ElementRegion *elemReg = dyn_cast<ElementRegion>(region)) {
@@ -928,7 +928,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
 const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,
                                                    SVal V) {
   if (V.isUnknownOrUndef())
-    return NULL;
+    return nullptr;
 
   if (Optional<loc::ConcreteInt> X = V.getAs<loc::ConcreteInt>())
     return &X->getValue();
@@ -940,5 +940,5 @@ const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,
     return state->getConstraintManager().getSymVal(state, Sym);
 
   // FIXME: Add support for SymExprs.
-  return NULL;
+  return nullptr;
 }

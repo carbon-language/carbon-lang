@@ -57,7 +57,7 @@ void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
     BT.reset(new BuiltinBug(this, str));
 
   // Generate a report for this bug.
-  const Expr *ex = 0;
+  const Expr *ex = nullptr;
 
   while (StoreE) {
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(StoreE)) {

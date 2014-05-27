@@ -239,7 +239,7 @@ void UnixAPIChecker::BasicAllocationCheck(CheckerContext &C,
 
   // Check if the allocation size is 0.
   ProgramStateRef state = C.getState();
-  ProgramStateRef trueState = NULL, falseState = NULL;
+  ProgramStateRef trueState = nullptr, falseState = nullptr;
   const Expr *arg = CE->getArg(sizeArg);
   SVal argVal = state->getSVal(arg, C.getLocationContext());
 
@@ -264,7 +264,7 @@ void UnixAPIChecker::CheckCallocZero(CheckerContext &C,
     return;
 
   ProgramStateRef state = C.getState();
-  ProgramStateRef trueState = NULL, falseState = NULL;
+  ProgramStateRef trueState = nullptr, falseState = nullptr;
 
   unsigned int i;
   for (i = 0; i < nArgs; i++) {
@@ -343,7 +343,7 @@ void UnixAPIChecker::checkPreStmt(const CallExpr *CE,
       .Case("reallocf", &UnixAPIChecker::CheckReallocfZero)
       .Cases("alloca", "__builtin_alloca", &UnixAPIChecker::CheckAllocaZero)
       .Case("valloc", &UnixAPIChecker::CheckVallocZero)
-      .Default(NULL);
+      .Default(nullptr);
 
   if (SC)
     (this->*SC)(C, CE);

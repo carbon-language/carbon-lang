@@ -153,7 +153,7 @@ static void checkObjCDealloc(const CheckerBase *Checker,
   // Get the "dealloc" selector.
   IdentifierInfo* II = &Ctx.Idents.get("dealloc");
   Selector S = Ctx.Selectors.getSelector(0, &II);
-  const ObjCMethodDecl *MD = 0;
+  const ObjCMethodDecl *MD = nullptr;
 
   // Scan the instance methods for "dealloc".
   for (const auto *I : D->instance_methods()) {
@@ -233,7 +233,7 @@ static void checkObjCDealloc(const CheckerBase *Checker,
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
     if (scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx)
        != requiresRelease) {
-      const char *name = 0;
+      const char *name = nullptr;
       std::string buf;
       llvm::raw_string_ostream os(buf);
 

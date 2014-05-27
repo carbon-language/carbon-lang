@@ -347,7 +347,7 @@ bool SymbolManager::canSymbolicate(QualType T) {
 void SymbolManager::addSymbolDependency(const SymbolRef Primary,
                                         const SymbolRef Dependent) {
   SymbolDependTy::iterator I = SymbolDependencies.find(Primary);
-  SymbolRefSmallVectorTy *dependencies = 0;
+  SymbolRefSmallVectorTy *dependencies = nullptr;
   if (I == SymbolDependencies.end()) {
     dependencies = new SymbolRefSmallVectorTy();
     SymbolDependencies[Primary] = dependencies;
@@ -361,7 +361,7 @@ const SymbolRefSmallVectorTy *SymbolManager::getDependentSymbols(
                                                      const SymbolRef Primary) {
   SymbolDependTy::const_iterator I = SymbolDependencies.find(Primary);
   if (I == SymbolDependencies.end())
-    return 0;
+    return nullptr;
   return I->second;
 }
 
@@ -487,7 +487,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 
 bool
 SymbolReaper::isLive(const Stmt *ExprVal, const LocationContext *ELCtx) const {
-  if (LCtx == 0)
+  if (LCtx == nullptr)
     return false;
 
   if (LCtx != ELCtx) {

@@ -58,7 +58,7 @@ void CheckerManager::runCheckersOnASTDecl(const Decl *D, AnalysisManager& mgr,
   assert(D);
 
   unsigned DeclKind = D->getKind();
-  CachedDeclCheckers *checkers = 0;
+  CachedDeclCheckers *checkers = nullptr;
   CachedDeclCheckersMapTy::iterator CCI = CachedDeclCheckersMap.find(DeclKind);
   if (CCI != CachedDeclCheckersMap.end()) {
     checkers = &(CCI->second);
@@ -109,7 +109,7 @@ static void expandGraphWithCheckers(CHECK_CTX checkCtx,
   const ExplodedNodeSet *PrevSet = &Src;
 
   for (; I != E; ++I) {
-    ExplodedNodeSet *CurrSet = 0;
+    ExplodedNodeSet *CurrSet = nullptr;
     if (I+1 == E)
       CurrSet = &Dst;
     else {
@@ -477,7 +477,7 @@ CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
     // If any checker declares the state infeasible (or if it starts that way),
     // bail out.
     if (!state)
-      return NULL;
+      return nullptr;
     state = RegionChangesCheckers[i].CheckFn(state, invalidated, 
                                              ExplicitRegions, Regions, Call);
   }
@@ -491,7 +491,7 @@ CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
                                    const CallEvent *Call,
                                    PointerEscapeKind Kind,
                                    RegionAndSymbolInvalidationTraits *ETraits) {
-  assert((Call != NULL ||
+  assert((Call != nullptr ||
           (Kind != PSK_DirectEscapeOnCall &&
            Kind != PSK_IndirectEscapeOnCall)) &&
          "Call must not be NULL when escaping on call");
@@ -499,7 +499,7 @@ CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
       // If any checker declares the state infeasible (or if it starts that
       //  way), bail out.
       if (!State)
-        return NULL;
+        return nullptr;
       State = PointerEscapeCheckers[i](State, Escaped, Call, Kind, ETraits);
     }
   return State;
@@ -513,7 +513,7 @@ CheckerManager::runCheckersForEvalAssume(ProgramStateRef state,
     // If any checker declares the state infeasible (or if it starts that way),
     // bail out.
     if (!state)
-      return NULL;
+      return nullptr;
     state = EvalAssumeCheckers[i](state, Cond, Assumption);
   }
   return state;

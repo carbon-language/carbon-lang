@@ -291,7 +291,7 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
 
 void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
                                         CheckerContext &C) const {
-  ProgramStateRef State = 0;
+  ProgramStateRef State = nullptr;
   const FunctionDecl *FDecl = C.getCalleeDecl(CE);
   if (!FDecl || FDecl->getKind() != Decl::Function)
     return;
@@ -314,7 +314,7 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
   // Otherwise, check if we have custom pre-processing implemented.
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Case("fscanf", &GenericTaintChecker::preFscanf)
-    .Default(0);
+    .Default(nullptr);
   // Check and evaluate the call.
   if (evalFunction)
     State = (this->*evalFunction)(CE, C);
@@ -388,11 +388,11 @@ void GenericTaintChecker::addSourcesPost(const CallExpr *CE,
     .Case("getch", &GenericTaintChecker::postRetTaint)
     .Case("wgetch", &GenericTaintChecker::postRetTaint)
     .Case("socket", &GenericTaintChecker::postSocket)
-    .Default(0);
+    .Default(nullptr);
 
   // If the callee isn't defined, it is not of security concern.
   // Check and evaluate the call.
-  ProgramStateRef State = 0;
+  ProgramStateRef State = nullptr;
   if (evalFunction)
     State = (this->*evalFunction)(CE, C);
   if (!State)
@@ -428,11 +428,11 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
   ProgramStateRef State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParens(), C.getLocationContext());
   if (AddrVal.isUnknownOrUndef())
-    return 0;
+    return nullptr;
 
   Optional<Loc> AddrLoc = AddrVal.getAs<Loc>();
   if (!AddrLoc)
-    return 0;
+    return nullptr;
 
   const PointerType *ArgTy =
     dyn_cast<PointerType>(Arg->getType().getCanonicalType().getTypePtr());
@@ -526,7 +526,7 @@ ProgramStateRef GenericTaintChecker::preFscanf(const CallExpr *CE,
     return State;
   }
 
-  return 0;
+  return nullptr;
 }
 
 

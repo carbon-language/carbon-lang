@@ -419,7 +419,7 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
     BT = &BT_call_arg;
 
   for (unsigned i = 0, e = Call.getNumArgs(); i != e; ++i) {
-    const ParmVarDecl *ParamDecl = NULL;
+    const ParmVarDecl *ParamDecl = nullptr;
     if(FD && i < FD->getNumParams())
       ParamDecl = FD->getParamDecl(i);
     if (PreVisitProcessArg(C, Call.getArgSVal(i), Call.getArgSourceRange(i),
@@ -437,7 +437,7 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   SVal recVal = msg.getReceiverSVal();
   if (recVal.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
-      BugType *BT = 0;
+      BugType *BT = nullptr;
       switch (msg.getMessageKind()) {
       case OCM_Message:
         if (!BT_msg_undef)
@@ -560,7 +560,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
             Ctx.LongDoubleTy == CanRetTy ||
             Ctx.LongLongTy == CanRetTy ||
             Ctx.UnsignedLongLongTy == CanRetTy)))) {
-      if (ExplodedNode *N = C.generateSink(state, 0 , &Tag))
+      if (ExplodedNode *N = C.generateSink(state, nullptr, &Tag))
         emitNilReceiverBug(C, Msg, N);
       return;
     }

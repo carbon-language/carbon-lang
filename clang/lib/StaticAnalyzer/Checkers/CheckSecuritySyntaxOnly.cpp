@@ -149,7 +149,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     .Case("rand_r", &WalkAST::checkCall_rand)
     .Case("random", &WalkAST::checkCall_random)
     .Case("vfork", &WalkAST::checkCall_vfork)
-    .Default(NULL);
+    .Default(nullptr);
 
   // If the callee isn't defined, it is not of security concern.
   // Check and evaluate the call.
@@ -189,7 +189,7 @@ getIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
   if (const BinaryOperator *B = dyn_cast<BinaryOperator>(expr)) {
     if (!(B->isAssignmentOp() || B->isCompoundAssignmentOp() ||
           B->getOpcode() == BO_Comma))
-      return NULL;
+      return nullptr;
 
     if (const DeclRefExpr *lhs = getIncrementedVar(B->getLHS(), x, y))
       return lhs;
@@ -197,19 +197,19 @@ getIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
     if (const DeclRefExpr *rhs = getIncrementedVar(B->getRHS(), x, y))
       return rhs;
 
-    return NULL;
+    return nullptr;
   }
 
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(expr)) {
     const NamedDecl *ND = DR->getDecl();
-    return ND == x || ND == y ? DR : NULL;
+    return ND == x || ND == y ? DR : nullptr;
   }
 
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(expr))
     return U->isIncrementDecrementOp()
-      ? getIncrementedVar(U->getSubExpr(), x, y) : NULL;
+      ? getIncrementedVar(U->getSubExpr(), x, y) : nullptr;
 
-  return NULL;
+  return nullptr;
 }
 
 /// CheckLoopConditionForFloat - This check looks for 'for' statements that
@@ -253,14 +253,14 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
     dyn_cast<DeclRefExpr>(B->getRHS()->IgnoreParenLValueCasts());
 
   // Does at least one of the variables have a floating point type?
-  drLHS = drLHS && drLHS->getType()->isRealFloatingType() ? drLHS : NULL;
-  drRHS = drRHS && drRHS->getType()->isRealFloatingType() ? drRHS : NULL;
+  drLHS = drLHS && drLHS->getType()->isRealFloatingType() ? drLHS : nullptr;
+  drRHS = drRHS && drRHS->getType()->isRealFloatingType() ? drRHS : nullptr;
 
   if (!drLHS && !drRHS)
     return;
 
-  const VarDecl *vdLHS = drLHS ? dyn_cast<VarDecl>(drLHS->getDecl()) : NULL;
-  const VarDecl *vdRHS = drRHS ? dyn_cast<VarDecl>(drRHS->getDecl()) : NULL;
+  const VarDecl *vdLHS = drLHS ? dyn_cast<VarDecl>(drLHS->getDecl()) : nullptr;
+  const VarDecl *vdRHS = drRHS ? dyn_cast<VarDecl>(drRHS->getDecl()) : nullptr;
 
   if (!vdLHS && !vdRHS)
     return;
@@ -688,7 +688,7 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
   if (!FD)
     return;
 
-  if (II_setid[0] == NULL) {
+  if (II_setid[0] == nullptr) {
     static const char * const identifiers[num_setids] = {
       "setuid", "setgid", "seteuid", "setegid",
       "setreuid", "setregid"

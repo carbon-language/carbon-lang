@@ -58,10 +58,10 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
   if (Eng.hasWorkRemaining())
     return;
 
-  const Decl *D = 0;
-  CFG *C = 0;
-  ParentMap *PM = 0;
-  const LocationContext *LC = 0;
+  const Decl *D = nullptr;
+  CFG *C = nullptr;
+  ParentMap *PM = nullptr;
+  const LocationContext *LC = nullptr;
   // Iterate over ExplodedGraph
   for (ExplodedGraph::node_iterator I = G.nodes_begin(), E = G.nodes_end();
       I != E; ++I) {
@@ -201,7 +201,7 @@ const Stmt *UnreachableCodeChecker::getUnreachableStmt(const CFGBlock *CB) {
   if (const Stmt *S = CB->getTerminator())
     return S;
   else
-    return 0;
+    return nullptr;
 }
 
 // Determines if the path to this CFGBlock contained an element that infers this
@@ -245,7 +245,7 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
 
 // Returns true if the given CFGBlock is empty
 bool UnreachableCodeChecker::isEmptyCFGBlock(const CFGBlock *CB) {
-  return CB->getLabel() == 0       // No labels
+  return CB->getLabel() == nullptr // No labels
       && CB->size() == 0           // No statements
       && !CB->getTerminator();     // No terminator
 }

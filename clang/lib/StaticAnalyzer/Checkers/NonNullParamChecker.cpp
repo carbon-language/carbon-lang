@@ -130,7 +130,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
       // we cache out.
       if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
 
-        BugReport *R = 0;
+        BugReport *R = nullptr;
         if (haveAttrNonNull)
           R = genReportNullAttrNonNull(errorNode, ArgE);
         else if (haveRefTypeParam)
@@ -186,7 +186,7 @@ BugReport *NonNullParamChecker::genReportReferenceToNullPointer(
                                ErrorNode);
   if (ArgE) {
     const Expr *ArgEDeref = bugreporter::getDerefExpr(ArgE);
-    if (ArgEDeref == 0)
+    if (!ArgEDeref)
       ArgEDeref = ArgE;
     bugreporter::trackNullOrUndefValue(ErrorNode,
                                        ArgEDeref,

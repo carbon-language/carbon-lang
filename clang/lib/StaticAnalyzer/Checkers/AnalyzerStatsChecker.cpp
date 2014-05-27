@@ -41,7 +41,7 @@ public:
 void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
                                             BugReporter &B,
                                             ExprEngine &Eng) const {
-  const CFG *C  = 0;
+  const CFG *C = nullptr;
   const SourceManager &SM = B.getSourceManager();
   llvm::SmallPtrSet<const CFGBlock*, 256> reachable;
 

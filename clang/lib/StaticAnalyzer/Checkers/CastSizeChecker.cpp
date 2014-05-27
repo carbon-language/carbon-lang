@@ -55,7 +55,7 @@ static bool evenFlexibleArraySize(ASTContext &Ctx, CharUnits RegionSize,
   const RecordDecl *RD = RT->getDecl();
   RecordDecl::field_iterator Iter(RD->field_begin());
   RecordDecl::field_iterator End(RD->field_end());
-  const FieldDecl *Last = 0;
+  const FieldDecl *Last = nullptr;
   for (; Iter != End; ++Iter)
     Last = *Iter;
   assert(Last && "empty structs should already be handled");
@@ -105,11 +105,11 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
 
   ProgramStateRef state = C.getState();
   const MemRegion *R = state->getSVal(E, C.getLocationContext()).getAsRegion();
-  if (R == 0)
+  if (!R)
     return;
 
   const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R);
-  if (SR == 0)
+  if (!SR)
     return;
 
   SValBuilder &svalBuilder = C.getSValBuilder();

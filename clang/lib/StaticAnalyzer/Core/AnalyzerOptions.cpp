@@ -39,7 +39,7 @@ IPAKind AnalyzerOptions::getIPAMode() {
     // Use the User Mode to set the default IPA value.
     // Note, we have to add the string to the Config map for the ConfigDumper
     // checker to function properly.
-    const char *DefaultIPA = 0;
+    const char *DefaultIPA = nullptr;
     UserModeKind HighLevelMode = getUserMode();
     if (HighLevelMode == UMK_Shallow)
       DefaultIPA = "inlining";

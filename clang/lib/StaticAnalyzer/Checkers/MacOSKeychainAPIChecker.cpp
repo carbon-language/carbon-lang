@@ -224,7 +224,7 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
     if (sym)
       return sym;
   }
-  return 0;
+  return nullptr;
 }
 
 // When checking for error code, we need to consider the following cases:
@@ -458,7 +458,7 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   // If the argument entered as an enclosing function parameter, skip it to
   // avoid false positives.
   if (isEnclosingFunctionParam(ArgExpr) &&
-      C.getLocationContext()->getParent() == 0)
+      C.getLocationContext()->getParent() == nullptr)
     return;
 
   if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C)) {
@@ -503,7 +503,7 @@ MacOSKeychainAPIChecker::getAllocationNode(const ExplodedNode *N,
     // symbol was tracked.
     if (N->getLocationContext() == LeakContext)
       AllocNode = N;
-    N = N->pred_empty() ? NULL : *(N->pred_begin());
+    N = N->pred_empty() ? nullptr : *(N->pred_begin());
   }
 
   return AllocNode;
@@ -525,7 +525,7 @@ BugReport *MacOSKeychainAPIChecker::
   // allocated, and only report a single path.
   PathDiagnosticLocation LocUsedForUniqueing;
   const ExplodedNode *AllocNode = getAllocationNode(N, AP.first, C);
-  const Stmt *AllocStmt = 0;
+  const Stmt *AllocStmt = nullptr;
   ProgramPoint P = AllocNode->getLocation();
   if (Optional<CallExitEnd> Exit = P.getAs<CallExitEnd>())
     AllocStmt = Exit->getCalleeContext()->getCallSite();
@@ -596,10 +596,10 @@ PathDiagnosticPiece *MacOSKeychainAPIChecker::SecKeychainBugVisitor::VisitNode(
                                                       BugReport &BR) {
   const AllocationState *AS = N->getState()->get<AllocatedData>(Sym);
   if (!AS)
-    return 0;
+    return nullptr;
   const AllocationState *ASPrev = PrevN->getState()->get<AllocatedData>(Sym);
   if (ASPrev)
-    return 0;
+    return nullptr;
 
   // (!ASPrev && AS) ~ We started tracking symbol in node N, it must be the
   // allocation site.

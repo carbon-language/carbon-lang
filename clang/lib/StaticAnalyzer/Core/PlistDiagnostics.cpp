@@ -292,7 +292,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
   // ranges of the diagnostics.
   FIDMap FM;
   SmallVector<FileID, 10> Fids;
-  const SourceManager* SM = 0;
+  const SourceManager* SM = nullptr;
 
   if (!Diags.empty())
     SM = &(*(*Diags.begin())->path.begin())->getLocation().getManager();

@@ -88,7 +88,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 
     // We don't know what to make of it.  Return a NULL region, which
     // will be interpretted as UnknownVal.
-    return NULL;
+    return nullptr;
   }
 
   // Now assume we are casting from pointer to pointer. Other cases should
@@ -166,7 +166,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
       // If we cannot compute a raw offset, throw up our hands and return
       // a NULL MemRegion*.
       if (!baseR)
-        return NULL;
+        return nullptr;
 
       CharUnits off = rawOff.getOffset();
 
@@ -193,7 +193,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 
       // Compute the index for the new ElementRegion.
       int64_t newIndex = 0;
-      const MemRegion *newSuperR = 0;
+      const MemRegion *newSuperR = nullptr;
 
       // We can only compute sizeof(PointeeTy) if it is a complete type.
       if (IsCompleteType(Ctx, PointeeTy)) {
@@ -300,7 +300,7 @@ static const CXXRecordDecl *getCXXRecordType(const MemRegion *MR) {
     return TVR->getValueType()->getAsCXXRecordDecl();
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
     return SR->getSymbol()->getType()->getPointeeCXXRecordDecl();
-  return 0;
+  return nullptr;
 }
 
 SVal StoreManager::evalDynamicCast(SVal Base, QualType TargetType,
@@ -401,7 +401,7 @@ SVal StoreManager::getLValueFieldOrIvar(const Decl *D, SVal Base) {
     return Base;
 
   Loc BaseL = Base.castAs<Loc>();
-  const MemRegion* BaseR = 0;
+  const MemRegion* BaseR = nullptr;
 
   switch (BaseL.getSubKind()) {
   case loc::MemRegionKind:

@@ -60,7 +60,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
 
     SmallString<256> sbuf;
     llvm::raw_svector_ostream OS(sbuf);
-    const Expr *Ex = NULL;
+    const Expr *Ex = nullptr;
     bool isLeft = true;
     
     if (state->getSVal(B->getLHS(), LCtx).isUndef()) {

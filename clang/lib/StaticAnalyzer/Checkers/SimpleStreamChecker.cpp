@@ -106,8 +106,8 @@ public:
 };
 } // end anonymous namespace
 
-
-SimpleStreamChecker::SimpleStreamChecker() : IIfopen(0), IIfclose(0) {
+SimpleStreamChecker::SimpleStreamChecker()
+    : IIfopen(nullptr), IIfclose(nullptr) {
   // Initialize the bug types.
   DoubleCloseBugType.reset(
       new BugType(this, "Double fclose", "Unix Stream API Error"));

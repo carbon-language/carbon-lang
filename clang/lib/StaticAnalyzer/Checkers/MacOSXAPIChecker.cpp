@@ -113,7 +113,7 @@ void MacOSXAPIChecker::checkPreStmt(const CallExpr *CE,
              "_dispatch_once",
              "dispatch_once_f",
              &MacOSXAPIChecker::CheckDispatchOnce)
-      .Default(NULL);
+      .Default(nullptr);
 
   if (SC)
     (this->*SC)(C, CE, Name);

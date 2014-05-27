@@ -69,8 +69,8 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
 // corresponding Block.
 static std::pair<const Stmt*,
                  const CFGBlock*> getLastStmt(const ExplodedNode *Node) {
-  const Stmt *S = 0;
-  const CFGBlock *Blk = 0;
+  const Stmt *S = nullptr;
+  const CFGBlock *Blk = nullptr;
   const StackFrameContext *SF =
           Node->getLocation().getLocationContext()->getCurrentStackFrame();
 
@@ -108,12 +108,12 @@ static std::pair<const Stmt*,
     }
 
     if (Node->pred_empty())
-      return std::pair<const Stmt*, const CFGBlock*>((Stmt*)0, (CFGBlock*)0);
+      return std::make_pair(nullptr, nullptr);
 
     Node = *Node->pred_begin();
   }
 
-  return std::pair<const Stmt*, const CFGBlock*>(S, Blk);
+  return std::make_pair(S, Blk);
 }
 
 /// Adjusts a return value when the called function's return type does not
@@ -160,8 +160,8 @@ void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
                                            ExplodedNode *Pred,
                                            ExplodedNodeSet &Dst) {
   // Find the last statement in the function and the corresponding basic block.
-  const Stmt *LastSt = 0;
-  const CFGBlock *Blk = 0;
+  const Stmt *LastSt = nullptr;
+  const CFGBlock *Blk = nullptr;
   std::tie(LastSt, Blk) = getLastStmt(Pred);
   if (!Blk || !LastSt) {
     Dst.Add(Pred);
@@ -229,8 +229,8 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   const Stmt *CE = calleeCtx->getCallSite();
   ProgramStateRef state = CEBNode->getState();
   // Find the last statement in the function and the corresponding basic block.
-  const Stmt *LastSt = 0;
-  const CFGBlock *Blk = 0;
+  const Stmt *LastSt = nullptr;
+  const CFGBlock *Blk = nullptr;
   std::tie(LastSt, Blk) = getLastStmt(CEBNode);
 
   // Generate a CallEvent /before/ cleaning the state, so that we can get the
@@ -296,10 +296,10 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     // context, telling it to clean up everything in the callee's context
     // (and its children). We use the callee's function body as a diagnostic
     // statement, with which the program point will be associated.
-    removeDead(BindedRetNode, CleanedNodes, 0, calleeCtx,
+    removeDead(BindedRetNode, CleanedNodes, nullptr, calleeCtx,
                calleeCtx->getAnalysisDeclContext()->getBody(),
                ProgramPoint::PostStmtPurgeDeadSymbolsKind);
-    currBldrCtx = 0;
+    currBldrCtx = nullptr;
   } else {
     CleanedNodes.Add(CEBNode);
   }
@@ -471,7 +471,7 @@ static ProgramStateRef getInlineFailedState(ProgramStateRef State,
                                             const Stmt *CallE) {
   const void *ReplayState = State->get<ReplayWithoutInlining>();
   if (!ReplayState)
-    return 0;
+    return nullptr;
 
   assert(ReplayState == CallE && "Backtracked to the wrong call.");
   (void)CallE;
@@ -565,7 +565,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
   QualType ResultTy = Call.getResultType();
   SValBuilder &SVB = getSValBuilder();
   unsigned Count = currBldrCtx->blockCount();
-  SVal R = SVB.conjureSymbolVal(0, E, LCtx, ResultTy, Count);
+  SVal R = SVB.conjureSymbolVal(nullptr, E, LCtx, ResultTy, Count);
   return State->BindExpr(E, LCtx, R);
 }
 

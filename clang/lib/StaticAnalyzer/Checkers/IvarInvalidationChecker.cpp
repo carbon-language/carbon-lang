@@ -157,7 +157,7 @@ class IvarInvalidationCheckerImpl {
       PropertySetterToIvarMap(InPropertySetterToIvarMap),
       PropertyGetterToIvarMap(InPropertyGetterToIvarMap),
       PropertyToIvarMap(InPropertyToIvarMap),
-      InvalidationMethod(0),
+      InvalidationMethod(nullptr),
       Ctx(InCtx) {}
 
     void VisitStmt(const Stmt *S) { VisitChildren(S); }
@@ -306,7 +306,7 @@ const ObjCIvarDecl *IvarInvalidationCheckerImpl::findPropertyBackingIvar(
                         const ObjCInterfaceDecl *InterfaceD,
                         IvarSet &TrackedIvars,
                         const ObjCIvarDecl **FirstIvarDecl) {
-  const ObjCIvarDecl *IvarD = 0;
+  const ObjCIvarDecl *IvarD = nullptr;
 
   // Lookup for the synthesized case.
   IvarD = Prop->getPropertyIvarDecl();
@@ -343,7 +343,7 @@ const ObjCIvarDecl *IvarInvalidationCheckerImpl::findPropertyBackingIvar(
   // Note, this is a possible source of false positives. We could look at the
   // getter implementation to find the ivar when its name is not derived from
   // the property name.
-  return 0;
+  return nullptr;
 }
 
 void IvarInvalidationCheckerImpl::printIvar(llvm::raw_svector_ostream &os,
@@ -367,7 +367,7 @@ visit(const ObjCImplementationDecl *ImplD) const {
   // Record the first Ivar needing invalidation; used in reporting when only
   // one ivar is sufficient. Cannot grab the first on the Ivars set to ensure
   // deterministic output.
-  const ObjCIvarDecl *FirstIvarDecl = 0;
+  const ObjCIvarDecl *FirstIvarDecl = nullptr;
   const ObjCInterfaceDecl *InterfaceD = ImplD->getClassInterface();
 
   // Collect ivars declared in this class, its extensions and its implementation
@@ -518,7 +518,7 @@ visit(const ObjCImplementationDecl *ImplD) const {
       // invalidation methods.
       for (IvarSet::const_iterator
            I = Ivars.begin(), E = Ivars.end(); I != E; ++I)
-        reportIvarNeedsInvalidation(I->first, IvarToPopertyMap, 0);
+        reportIvarNeedsInvalidation(I->first, IvarToPopertyMap, nullptr);
     } else {
       // Otherwise, no invalidation methods were implemented.
       reportNoInvalidationMethod(Filter.checkName_InstanceVariableInvalidation,
@@ -717,7 +717,7 @@ void IvarInvalidationCheckerImpl::MethodCrawler::VisitObjCMessageExpr(
   if (Receiver) {
     InvalidationMethod = MD;
     check(Receiver->IgnoreParenCasts());
-    InvalidationMethod = 0;
+    InvalidationMethod = nullptr;
   }
 
   VisitStmt(ME);

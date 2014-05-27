@@ -48,7 +48,7 @@ static const DeclRefExpr *FindBlockDeclRefExpr(const Stmt *S,
         return BR;
     }
 
-  return NULL;
+  return nullptr;
 }
 
 void

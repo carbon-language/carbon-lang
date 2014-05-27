@@ -45,9 +45,9 @@ class RegionRawOffsetV2 {
 private:
   const SubRegion *baseRegion;
   SVal byteOffset;
-  
+
   RegionRawOffsetV2()
-    : baseRegion(0), byteOffset(UnknownVal()) {}
+    : baseRegion(nullptr), byteOffset(UnknownVal()) {}
 
 public:
   RegionRawOffsetV2(const SubRegion* base, SVal offset)

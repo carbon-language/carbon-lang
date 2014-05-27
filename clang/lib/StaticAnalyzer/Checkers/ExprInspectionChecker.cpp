@@ -43,7 +43,7 @@ bool ExprInspectionChecker::evalCall(const CallExpr *CE,
           &ExprInspectionChecker::analyzerCheckInlined)
     .Case("clang_analyzer_crash", &ExprInspectionChecker::analyzerCrash)
     .Case("clang_analyzer_warnIfReached", &ExprInspectionChecker::analyzerWarnIfReached)
-    .Default(0);
+    .Default(nullptr);
 
   if (!Handler)
     return false;
@@ -91,7 +91,7 @@ void ExprInspectionChecker::analyzerEval(const CallExpr *CE,
 
   // A specific instantiation of an inlined function may have more constrained
   // values than can generally be assumed. Skip the check.
-  if (LC->getCurrentStackFrame()->getParent() != 0)
+  if (LC->getCurrentStackFrame()->getParent() != nullptr)
     return;
 
   if (!BT)
@@ -122,7 +122,7 @@ void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
   // when we are analyzing it as an inlined function. This means that
   // clang_analyzer_checkInlined(true) should always print TRUE, but
   // clang_analyzer_checkInlined(false) should never actually print anything.
-  if (LC->getCurrentStackFrame()->getParent() == 0)
+  if (LC->getCurrentStackFrame()->getParent() == nullptr)
     return;
 
   if (!BT)

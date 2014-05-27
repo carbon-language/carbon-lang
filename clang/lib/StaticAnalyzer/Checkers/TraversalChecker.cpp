@@ -72,7 +72,7 @@ public:
 void CallDumper::checkPreCall(const CallEvent &Call, CheckerContext &C) const {
   unsigned Indentation = 0;
   for (const LocationContext *LC = C.getLocationContext()->getParent();
-       LC != 0; LC = LC->getParent())
+       LC != nullptr; LC = LC->getParent())
     ++Indentation;
 
   // It is mildly evil to print directly to llvm::outs() rather than emitting
@@ -89,7 +89,7 @@ void CallDumper::checkPostCall(const CallEvent &Call, CheckerContext &C) const {
 
   unsigned Indentation = 0;
   for (const LocationContext *LC = C.getLocationContext()->getParent();
-       LC != 0; LC = LC->getParent())
+       LC != nullptr; LC = LC->getParent())
     ++Indentation;
 
   // It is mildly evil to print directly to llvm::outs() rather than emitting

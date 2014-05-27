@@ -95,7 +95,7 @@ public:
     if (FD) {
       IdentifierInfo *II = FD->getIdentifier();
       if (II == II_malloc || II == II_calloc || II == II_realloc)
-        return TypeCallPair((const TypeSourceInfo *)0, E);
+        return TypeCallPair((const TypeSourceInfo *)nullptr, E);
     }
     return TypeCallPair();
   }
@@ -205,7 +205,7 @@ public:
         if (compatibleWithArrayType(BR.getContext(), PointeeType, SizeofType))
           continue;
 
-        const TypeSourceInfo *TSI = 0;
+        const TypeSourceInfo *TSI = nullptr;
         if (i->CastedExprParent.is<const VarDecl *>()) {
           TSI =
               i->CastedExprParent.get<const VarDecl *>()->getTypeSourceInfo();

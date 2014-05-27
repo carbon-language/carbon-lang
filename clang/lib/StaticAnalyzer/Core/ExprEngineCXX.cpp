@@ -180,7 +180,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   const LocationContext *LCtx = Pred->getLocationContext();
   ProgramStateRef State = Pred->getState();
 
-  const MemRegion *Target = 0;
+  const MemRegion *Target = nullptr;
 
   // FIXME: Handle arrays, which run the same constructor for every element.
   // For now, we just run the first constructor (which should still invalidate
@@ -262,7 +262,8 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
         // since it's then possible to be initializing one part of a multi-
         // dimensional array.
         State = State->bindDefault(loc::MemRegionVal(Target), ZeroVal);
-        Bldr.generateNode(CE, *I, State, /*tag=*/0, ProgramPoint::PreStmtKind);
+        Bldr.generateNode(CE, *I, State, /*tag=*/nullptr,
+                          ProgramPoint::PreStmtKind);
       }
     }
   }
@@ -397,7 +398,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   if (IsStandardGlobalOpNewFunction)
     symVal = svalBuilder.getConjuredHeapSymbolVal(CNE, LCtx, blockCount);
   else
-    symVal = svalBuilder.conjureSymbolVal(0, CNE, LCtx, CNE->getType(), 
+    symVal = svalBuilder.conjureSymbolVal(nullptr, CNE, LCtx, CNE->getType(),
                                           blockCount);
 
   ProgramStateRef State = Pred->getState();

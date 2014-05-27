@@ -44,8 +44,8 @@ class ChrootChecker : public Checker<eval::Call, check::PreStmt<CallExpr> > {
   mutable std::unique_ptr<BuiltinBug> BT_BreakJail;
 
 public:
-  ChrootChecker() : II_chroot(0), II_chdir(0) {}
-  
+  ChrootChecker() : II_chroot(nullptr), II_chdir(nullptr) {}
+
   static void *getTag() {
     static int x;
     return &x;

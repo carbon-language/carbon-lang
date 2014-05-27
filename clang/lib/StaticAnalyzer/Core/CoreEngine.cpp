@@ -192,9 +192,9 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
 
     if (!InitState)
       // Generate the root.
-      generateNode(StartLoc, SubEng.getInitialState(L), 0);
+      generateNode(StartLoc, SubEng.getInitialState(L), nullptr);
     else
-      generateNode(StartLoc, InitState, 0);
+      generateNode(StartLoc, InitState, nullptr);
   }
 
   // Check if we have a steps limit
@@ -567,7 +567,7 @@ ExplodedNode *CoreEngine::generateCallExitBeginNode(ExplodedNode *N) {
   bool isNew;
   ExplodedNode *Node = G->getNode(Loc, N->getState(), false, &isNew);
   Node->addPredecessor(N, *G);
-  return isNew ? Node : 0;
+  return isNew ? Node : nullptr;
 }
 
 
@@ -616,7 +616,7 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   Frontier.erase(FromN);
 
   if (!IsNew)
-    return 0;
+    return nullptr;
 
   if (!MarkAsSink)
     Frontier.Add(N);
@@ -640,7 +640,7 @@ ExplodedNode *BranchNodeBuilder::generateNode(ProgramStateRef State,
                                               ExplodedNode *NodePred) {
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))
-    return NULL;
+    return nullptr;
 
   ProgramPoint Loc = BlockEdge(C.Block, branch ? DstT:DstF,
                                NodePred->getLocationContext());
@@ -659,7 +659,7 @@ IndirectGotoNodeBuilder::generateNode(const iterator &I,
   Succ->addPredecessor(Pred, *Eng.G);
 
   if (!IsNew)
-    return 0;
+    return nullptr;
 
   if (!IsSink)
     Eng.WList->enqueue(Succ);
@@ -678,7 +678,7 @@ SwitchNodeBuilder::generateCaseStmtNode(const iterator &I,
                                       false, &IsNew);
   Succ->addPredecessor(Pred, *Eng.G);
   if (!IsNew)
-    return 0;
+    return nullptr;
 
   Eng.WList->enqueue(Succ);
   return Succ;
@@ -695,8 +695,8 @@ SwitchNodeBuilder::generateDefaultCaseNode(ProgramStateRef St,
   // Sanity check for default blocks that are unreachable and not caught
   // by earlier stages.
   if (!DefaultBlock)
-    return NULL;
-  
+    return nullptr;
+
   bool IsNew;
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock,
                                       Pred->getLocationContext()), St,
@@ -704,7 +704,7 @@ SwitchNodeBuilder::generateDefaultCaseNode(ProgramStateRef St,
   Succ->addPredecessor(Pred, *Eng.G);
 
   if (!IsNew)
-    return 0;
+    return nullptr;
 
   if (!IsSink)
     Eng.WList->enqueue(Succ);

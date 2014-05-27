@@ -106,12 +106,12 @@ static void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
 
       MapTy::iterator MI = IMeths.find(S);
 
-      if (MI == IMeths.end() || MI->second == 0)
+      if (MI == IMeths.end() || MI->second == nullptr)
         continue;
 
       --NumMethods;
       ObjCMethodDecl *MethDerived = MI->second;
-      MI->second = 0;
+      MI->second = nullptr;
 
       CompareReturnTypes(MethDerived, M, BR, Ctx, ID, Checker);
     }

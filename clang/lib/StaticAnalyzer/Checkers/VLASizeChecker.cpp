@@ -106,7 +106,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   
   // Check if the size is tainted.
   if (state->isTainted(sizeV)) {
-    reportBug(VLA_Tainted, SE, 0, C);
+    reportBug(VLA_Tainted, SE, nullptr, C);
     return;
   }
 

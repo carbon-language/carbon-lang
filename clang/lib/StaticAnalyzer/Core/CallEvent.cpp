@@ -172,7 +172,7 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
   return Result->invalidateRegions(ValuesToInvalidate, getOriginExpr(),
                                    BlockCount, getLocationContext(),
                                    /*CausedByPointerEscape*/ true,
-                                   /*Symbols=*/0, this, &ETraits);
+                                   /*Symbols=*/nullptr, this, &ETraits);
 }
 
 ProgramPoint CallEvent::getProgramPoint(bool IsPreVisit,
@@ -218,7 +218,7 @@ LLVM_DUMP_METHOD void CallEvent::dump() const { dump(llvm::errs()); }
 void CallEvent::dump(raw_ostream &Out) const {
   ASTContext &Ctx = getState()->getStateManager().getContext();
   if (const Expr *E = getOriginExpr()) {
-    E->printPretty(Out, 0, Ctx.getPrintingPolicy());
+    E->printPretty(Out, nullptr, Ctx.getPrintingPolicy());
     Out << "\n";
     return;
   }
@@ -476,7 +476,7 @@ RuntimeDefinition CXXInstanceCall::getRuntimeDefinition() const {
   // that ExprEngine can decide what to do with it.
   if (DynType.canBeASubClass())
     return RuntimeDefinition(Definition, R->StripCasts());
-  return RuntimeDefinition(Definition, /*DispatchRegion=*/0);
+  return RuntimeDefinition(Definition, /*DispatchRegion=*/nullptr);
 }
 
 void CXXInstanceCall::getInitialStackFrameContents(
@@ -545,7 +545,7 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
 ArrayRef<ParmVarDecl*> BlockCall::parameters() const {
   const BlockDecl *D = getDecl();
   if (!D)
-    return 0;
+    return nullptr;
   return D->parameters();
 }
 
@@ -667,13 +667,13 @@ SourceRange ObjCMethodCall::getSourceRange() const {
 typedef llvm::PointerIntPair<const PseudoObjectExpr *, 2> ObjCMessageDataTy;
 
 const PseudoObjectExpr *ObjCMethodCall::getContainingPseudoObjectExpr() const {
-  assert(Data != 0 && "Lazy lookup not yet performed.");
+  assert(Data && "Lazy lookup not yet performed.");
   assert(getMessageKind() != OCM_Message && "Explicit message send.");
   return ObjCMessageDataTy::getFromOpaqueValue(Data).getPointer();
 }
 
 ObjCMessageKind ObjCMethodCall::getMessageKind() const {
-  if (Data == 0) {
+  if (!Data) {
 
     // Find the parent, ignoring implicit casts.
     ParentMap &PM = getLocationContext()->getParentMap();
@@ -711,7 +711,7 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
     }
     
     const_cast<ObjCMethodCall *>(this)->Data
-      = ObjCMessageDataTy(0, 1).getOpaqueValue();
+      = ObjCMessageDataTy(nullptr, 1).getOpaqueValue();
     assert(getMessageKind() == OCM_Message);
     return OCM_Message;
   }
@@ -747,7 +747,7 @@ bool ObjCMethodCall::canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
 
   // Find the first declaration in the class hierarchy that declares
   // the selector.
-  ObjCMethodDecl *D = 0;
+  ObjCMethodDecl *D = nullptr;
   while (true) {
     D = IDecl->lookupMethod(Sel, true);
 
@@ -786,10 +786,10 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
   if (E->isInstanceMessage()) {
 
     // Find the the receiver type.
-    const ObjCObjectPointerType *ReceiverT = 0;
+    const ObjCObjectPointerType *ReceiverT = nullptr;
     bool CanBeSubClassed = false;
     QualType SupersType = E->getSuperType();
-    const MemRegion *Receiver = 0;
+    const MemRegion *Receiver = nullptr;
 
     if (!SupersType.isNull()) {
       // Super always means the type of immediate predecessor to the method
@@ -853,7 +853,7 @@ RuntimeDefinition ObjCMethodCall::getRuntimeDefinition() const {
         if (CanBeSubClassed)
           return RuntimeDefinition(MD, Receiver);
         else
-          return RuntimeDefinition(MD, 0);
+          return RuntimeDefinition(MD, nullptr);
       }
 
   } else {

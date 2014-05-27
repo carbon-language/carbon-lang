@@ -223,7 +223,7 @@ DynamicTypePropagation::getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
 
   const Expr *RecE = MsgE->getInstanceReceiver();
   if (!RecE)
-    return 0;
+    return nullptr;
 
   RecE= RecE->IgnoreParenImpCasts();
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(RecE)) {
@@ -237,7 +237,7 @@ DynamicTypePropagation::getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
           return ObjTy;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 // Return a better dynamic type if one can be derived from the cast.
@@ -253,7 +253,7 @@ DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
   const ObjCObjectPointerType *NewTy =
       CastE->getType()->getAs<ObjCObjectPointerType>();
   if (!NewTy)
-    return 0;
+    return nullptr;
   QualType OldDTy = C.getState()->getDynamicTypeInfo(ToR).getType();
   if (OldDTy.isNull()) {
     return NewTy;
@@ -261,7 +261,7 @@ DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
   const ObjCObjectPointerType *OldTy =
     OldDTy->getAs<ObjCObjectPointerType>();
   if (!OldTy)
-    return 0;
+    return nullptr;
 
   // Id the old type is 'id', the new one is more precise.
   if (OldTy->isObjCIdType() && !NewTy->isObjCIdType())
@@ -273,7 +273,7 @@ DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
   if (ToI && FromI && FromI->isSuperClassOf(ToI))
     return NewTy;
 
-  return 0;
+  return nullptr;
 }
 
 void ento::registerDynamicTypePropagation(CheckerManager &mgr) {

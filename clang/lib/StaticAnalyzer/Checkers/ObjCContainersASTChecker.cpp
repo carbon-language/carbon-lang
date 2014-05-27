@@ -100,7 +100,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   if (Name.empty())
     return;
 
-  const Expr *Arg = 0;
+  const Expr *Arg = nullptr;
   unsigned ArgNum;
 
   if (Name.equals("CFArrayCreate") || Name.equals("CFSetCreate")) {

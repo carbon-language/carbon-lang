@@ -207,7 +207,7 @@ ProgramState::invalidateRegionsImpl(ValueList Values,
 
   const StoreRef &newStore =
   Mgr.StoreMgr->invalidateRegions(getStore(), Values, E, Count, LCtx, Call,
-                                  *IS, *ITraits, NULL, NULL);
+                                  *IS, *ITraits, nullptr, nullptr);
   return makeWithStore(newStore);
 }
 
@@ -387,7 +387,7 @@ ProgramStateRef ProgramStateManager::getPersistentState(ProgramState &State) {
   if (ProgramState *I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
 
-  ProgramState *newState = 0;
+  ProgramState *newState = nullptr;
   if (!freeStates.empty()) {
     newState = freeStates.back();
     freeStates.pop_back();    

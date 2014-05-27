@@ -262,7 +262,7 @@ RegionBindingsRef RegionBindingsRef::addBinding(const MemRegion *R,
 const SVal *RegionBindingsRef::lookup(BindingKey K) const {
   const ClusterBindings *Cluster = lookup(K.getBaseRegion());
   if (!Cluster)
-    return 0;
+    return nullptr;
   return Cluster->lookup(K);
 }
 
@@ -1625,8 +1625,8 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
   // getBindingForField if 'R' has a direct binding.
 
   // Lazy binding?
-  Store lazyBindingStore = NULL;
-  const SubRegion *lazyBindingRegion = NULL;
+  Store lazyBindingStore = nullptr;
+  const SubRegion *lazyBindingRegion = nullptr;
   std::tie(lazyBindingStore, lazyBindingRegion) = findLazyBinding(B, R, R);
   if (lazyBindingRegion)
     return getLazyBinding(lazyBindingRegion,
@@ -2291,7 +2291,7 @@ bool removeDeadBindingsWorker::UpdatePostponed() {
     if (const SymbolicRegion *SR = *I) {
       if (SymReaper.isLive(SR->getSymbol())) {
         changed |= AddToWorkList(SR);
-        *I = NULL;
+        *I = nullptr;
       }
     }
   }

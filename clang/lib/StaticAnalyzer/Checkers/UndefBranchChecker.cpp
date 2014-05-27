@@ -35,7 +35,7 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
 
     const Expr *FindExpr(const Expr *Ex) {
       if (!MatchesCriteria(Ex))
-        return 0;
+        return nullptr;
 
       for (Stmt::const_child_iterator I = Ex->child_begin(), 
                                       E = Ex->child_end();I!=E;++I)

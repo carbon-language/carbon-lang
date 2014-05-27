@@ -54,7 +54,8 @@ static const Stmt *ignoreTransparentExprs(const Stmt *S) {
 EnvironmentEntry::EnvironmentEntry(const Stmt *S, const LocationContext *L)
   : std::pair<const Stmt *,
               const StackFrameContext *>(ignoreTransparentExprs(S),
-                                         L ? L->getCurrentStackFrame() : 0) {}
+                                         L ? L->getCurrentStackFrame()
+                                           : nullptr) {}
 
 SVal Environment::lookupExpr(const EnvironmentEntry &E) const {
   const SVal* X = ExprBindings.lookup(E);
@@ -208,7 +209,7 @@ void Environment::print(raw_ostream &Out, const char *NL,
     Out << " (" << (const void*) En.getLocationContext() << ','
       << (const void*) S << ") ";
     LangOptions LO; // FIXME.
-    S->printPretty(Out, 0, PrintingPolicy(LO));
+    S->printPretty(Out, nullptr, PrintingPolicy(LO));
     Out << " : " << I.getData();
   }
 }

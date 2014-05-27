@@ -61,7 +61,7 @@ class WalkAST : public StmtVisitor<WalkAST> {
 public:
   WalkAST(const CheckerBase *checker, BugReporter &br,
           AnalysisDeclContext *ac)
-      : Checker(checker), BR(br), AC(ac), visitingCallExpr(0) {}
+      : Checker(checker), BR(br), AC(ac), visitingCallExpr(nullptr) {}
 
   bool hasWork() const { return !WList.empty(); }
 

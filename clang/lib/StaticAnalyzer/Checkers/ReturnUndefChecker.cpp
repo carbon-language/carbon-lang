@@ -79,7 +79,7 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
 }
 
 static void emitBug(CheckerContext &C, BuiltinBug &BT, const Expr *RetE,
-                    const Expr *TrackingE = 0) {
+                    const Expr *TrackingE = nullptr) {
   ExplodedNode *N = C.generateSink();
   if (!N)
     return;

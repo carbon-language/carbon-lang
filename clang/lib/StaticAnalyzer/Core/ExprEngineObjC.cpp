@@ -77,7 +77,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   
   if (const DeclStmt *DS = dyn_cast<DeclStmt>(elem)) {
     const VarDecl *elemD = cast<VarDecl>(DS->getSingleDecl());
-    assert(elemD->getInit() == 0);
+    assert(elemD->getInit() == nullptr);
     elementV = state->getLValue(elemD, Pred->getLocationContext());
   }
   else {
@@ -85,7 +85,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   }
   
   ExplodedNodeSet dstLocation;
-  evalLocation(dstLocation, S, elem, Pred, state, elementV, NULL, false);
+  evalLocation(dstLocation, S, elem, Pred, state, elementV, nullptr, false);
 
   ExplodedNodeSet Tmp;
   StmtNodeBuilder Bldr(Pred, Tmp, *currBldrCtx);
