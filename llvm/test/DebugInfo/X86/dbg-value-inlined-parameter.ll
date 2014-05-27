@@ -5,8 +5,20 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s -filetype=obj -regalloc=basic \
 ; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
 
+; FIXME: This is both a concrete and abstract definition, which is
+; incorrect. They should be separate
+; CHECK: [[ABS:.*]]: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_name {{.*}} "foo"
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_high_pc
+; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
+; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
+; CHECK: [[ABS_NUMS:.*]]:  DW_TAG_formal_parameter
+; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+
 ;CHECK: DW_TAG_inlined_subroutine
-;CHECK-NEXT: DW_AT_abstract_origin
+;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS]]}
 ;CHECK-NEXT: DW_AT_low_pc [DW_FORM_addr]
 ;CHECK-NEXT: DW_AT_high_pc [DW_FORM_data4]
 ;CHECK-NEXT: DW_AT_call_file
@@ -14,9 +26,11 @@
 
 ;CHECK: DW_TAG_formal_parameter
 ;FIXME: Linux shouldn't drop this parameter either...
-;LINUX-NOT: DW_TAG_formal_parameter
+;FIXME: These parameters should have DW_AT_abstract_origin, instead of names.
+;DARWIN-NEXT:   DW_AT_name {{.*}} "sp"
 ;DARWIN: DW_TAG_formal_parameter
-;DARWIN-NEXT: DW_AT_name {{.*}} "sp"
+;CHECK-NEXT:   DW_AT_name {{.*}} "nums"
+;CHECK-NOT: DW_TAG_formal_parameter
 
 %struct.S1 = type { float*, i32 }
 
@@ -62,7 +76,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !6 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"", i32 15, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, void ()* @foobar, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 15] [def] [scope 0] [foobar]
 !7 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null}
-!9 = metadata !{i32 786689, metadata !0, metadata !"sp", metadata !1, i32 7, metadata !10, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]
+!9 = metadata !{i32 786689, metadata !0, metadata !"sp", metadata !1, i32 16777223, metadata !10, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]
 !10 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]
 !11 = metadata !{i32 786454, metadata !42, metadata !2, metadata !"S1", i32 4, i64 0, i64 0, i64 0, i32 0, metadata !12} ; [ DW_TAG_typedef ]
 !12 = metadata !{i32 786451, metadata !42, metadata !2, metadata !"S1", i32 1, i64 128, i64 64, i32 0, i32 0, null, metadata !13, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [S1] [line 1, size 128, align 64, offset 0] [def] [from ]
@@ -71,7 +85,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !15 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !16} ; [ DW_TAG_pointer_type ]
 !16 = metadata !{i32 786468, null, metadata !2, metadata !"float", i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !17 = metadata !{i32 786445, metadata !42, metadata !1, metadata !"nums", i32 3, i64 32, i64 32, i64 64, i32 0, metadata !5} ; [ DW_TAG_member ]
-!18 = metadata !{i32 786689, metadata !0, metadata !"nums", metadata !1, i32 7, metadata !5, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]
+!18 = metadata !{i32 786689, metadata !0, metadata !"nums", metadata !1, i32 33554439, metadata !5, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]
 !19 = metadata !{i32 786484, i32 0, metadata !2, metadata !"p", metadata !"p", metadata !"", metadata !1, i32 14, metadata !11, i32 0, i32 1, %struct.S1* @p, null} ; [ DW_TAG_variable ]
 !20 = metadata !{i32 7, i32 13, metadata !0, null}
 !21 = metadata !{i32 7, i32 21, metadata !0, null}
