@@ -77,6 +77,7 @@ typedef std::set<const SCEV *> ParamSetType;
 
 typedef std::vector<const SCEVAddRecExpr *> AFs;
 typedef std::map<const SCEVUnknown *, AFs> BaseToAFs;
+typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 
 extern bool PollyTrackFailures;
 extern bool PollyDelinearize;
@@ -106,6 +107,7 @@ class ScopDetection : public FunctionPass {
 
     // Map a base pointer to all access functions accessing it.
     BaseToAFs NonAffineAccesses, AffineAccesses;
+    BaseToElSize ElementSize;
 
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify), Log(&R) {}

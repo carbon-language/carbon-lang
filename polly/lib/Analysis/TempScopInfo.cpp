@@ -171,7 +171,9 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
   const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
 
   if (!IsAffine && PollyDelinearize && AF) {
-    const SCEV *Remainder = AF->delinearize(*SE, Subscripts, Sizes);
+    const SCEV *ElementSize = SE->getElementSize(Inst);
+    const SCEV *Remainder =
+        AF->delinearize(*SE, Subscripts, Sizes, ElementSize);
     int NSubs = Subscripts.size();
 
     if (NSubs > 0) {

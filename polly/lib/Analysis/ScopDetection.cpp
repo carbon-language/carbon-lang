@@ -363,7 +363,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
 
     // Second step: find array shape.
     SmallVector<const SCEV *, 4> Sizes;
-    SE->findArrayDimensions(Terms, Sizes);
+    SE->findArrayDimensions(Terms, Sizes, Context.ElementSize[BasePointer]);
 
     // Third step: compute the access functions for each subscript.
     for (const SCEVAddRecExpr *AF : Context.NonAffineAccesses[BasePointer]) {
@@ -421,6 +421,9 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     if (!PollyDelinearize || !AF)
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                             AccessFunction);
+
+    const SCEV *ElementSize = SE->getElementSize(&Inst);
+    Context.ElementSize[BasePointer] = ElementSize;
 
     // Collect all non affine memory accesses, and check whether they are linear
     // at the end of scop detection. That way we can delinearize all the memory
