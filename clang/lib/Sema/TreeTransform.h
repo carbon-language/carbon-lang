@@ -1333,6 +1333,17 @@ public:
     return getSema().ActOnOpenMPSafelenClause(Len, StartLoc, LParenLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'collapse' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPCollapseClause(Expr *Num, SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPCollapseClause(Num, StartLoc, LParenLoc,
+                                               EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'default' clause.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -6396,6 +6407,16 @@ TreeTransform<Derived>::TransformOMPSafelenClause(OMPSafelenClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPSafelenClause(
+      E.take(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPCollapseClause(OMPCollapseClause *C) {
+  ExprResult E = getDerived().TransformExpr(C->getNumForLoops());
+  if (E.isInvalid())
+    return 0;
+  return getDerived().RebuildOMPCollapseClause(
       E.take(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 

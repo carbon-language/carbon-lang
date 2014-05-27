@@ -97,10 +97,10 @@ int main (int argc, char **argv) {
   for (int i=0; i < 2; ++i)*a=2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: *a = 2;
-#pragma omp simd private(argc, b)
+#pragma omp simd private(argc, b) collapse(2)
   for (int i = 0; i < 10; ++i)
   for (int j = 0; j < 10; ++j) {foo(); k1 += 8; k2 += 8;}
-// CHECK-NEXT: #pragma omp simd private(argc,b)
+// CHECK-NEXT: #pragma omp simd private(argc,b) collapse(2)
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: for (int j = 0; j < 10; ++j) {
 // CHECK-NEXT: foo();
@@ -112,8 +112,8 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: foo();
   const int CLEN = 4;
 // CHECK-NEXT: const int CLEN = 4;
-  #pragma omp simd linear(a:CLEN) safelen(CLEN)
-// CHECK-NEXT: #pragma omp simd linear(a: CLEN) safelen(CLEN)
+  #pragma omp simd linear(a:CLEN) safelen(CLEN) collapse( 1 )
+// CHECK-NEXT: #pragma omp simd linear(a: CLEN) safelen(CLEN) collapse(1)
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();

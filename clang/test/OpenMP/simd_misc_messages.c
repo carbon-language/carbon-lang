@@ -146,6 +146,78 @@ void test_safelen()
   for (i = 0; i < 16; ++i);
 }
 
+void test_collapse()
+{
+  int i;
+  // expected-error@+1 {{expected '('}}
+  #pragma omp simd collapse
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}} expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}}
+  #pragma omp simd collapse()
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}} expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(,
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}}  expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(,)
+  for (i = 0; i < 16; ++i) ;
+  // expected-warning@+2 {{extra tokens at the end of '#pragma omp simd' are ignored}}
+  // expected-error@+1 {{expected '('}}
+  #pragma omp simd collapse 4)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4,
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4,)
+  for (i = 0; i < 16; ++i) ;
+  // xxpected-error@+1 {{expected expression}}
+  #pragma omp simd collapse(4)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4 4)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4,,4)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd collapse(4)
+  for (int i1 = 0; i1 < 16; ++i1)
+    for (int i2 = 0; i2 < 16; ++i2)
+      for (int i3 = 0; i3 < 16; ++i3)
+        for (int i4 = 0; i4 < 16; ++i4)
+          foo();
+  // expected-error@+2 {{expected ')'}}
+  // expected-note@+1 {{to match this '('}}
+  #pragma omp simd collapse(4,8)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expression is not an integer constant expression}}
+  #pragma omp simd collapse(2.5)
+  for (i = 0; i < 16; ++i);
+  // expected-error@+1 {{expression is not an integer constant expression}}
+  #pragma omp simd collapse(foo())
+  for (i = 0; i < 16; ++i);
+  // expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+  #pragma omp simd collapse(-5)
+  for (i = 0; i < 16; ++i);
+  // expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+  #pragma omp simd collapse(0)
+  for (i = 0; i < 16; ++i);
+  // expected-error@+1 {{argument to 'collapse' clause must be a positive integer value}}
+  #pragma omp simd collapse(5-5)
+  for (i = 0; i < 16; ++i);
+}
+
 void test_linear()
 {
   int i;

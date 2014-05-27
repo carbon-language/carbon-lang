@@ -306,6 +306,62 @@ public:
   StmtRange children() { return StmtRange(&Safelen, &Safelen + 1); }
 };
 
+/// \brief This represents 'collapse' clause in the '#pragma omp ...'
+/// directive.
+///
+/// \code
+/// #pragma omp simd collapse(3)
+/// \endcode
+/// In this example directive '#pragma omp simd' has clause 'collapse'
+/// with single expression '3'.
+/// The parameter must be a constant positive integer expression, it specifies
+/// the number of nested loops that should be collapsed into a single iteration
+/// space.
+///
+class OMPCollapseClause : public OMPClause {
+  friend class OMPClauseReader;
+  /// \brief Location of '('.
+  SourceLocation LParenLoc;
+  /// \brief Number of for-loops.
+  Stmt *NumForLoops;
+
+  /// \brief Set the number of associated for-loops.
+  void setNumForLoops(Expr *Num) { NumForLoops = Num; }
+
+public:
+  /// \brief Build 'collapse' clause.
+  ///
+  /// \param Num Expression associated with this clause.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPCollapseClause(Expr *Num, SourceLocation StartLoc,
+                    SourceLocation LParenLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_collapse, StartLoc, EndLoc), LParenLoc(LParenLoc),
+        NumForLoops(Num) {}
+
+  /// \brief Build an empty clause.
+  ///
+  explicit OMPCollapseClause()
+      : OMPClause(OMPC_collapse, SourceLocation(), SourceLocation()),
+        LParenLoc(SourceLocation()), NumForLoops(nullptr) {}
+
+  /// \brief Sets the location of '('.
+  void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
+  /// \brief Returns the location of '('.
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+
+  /// \brief Return the number of associated for-loops.
+  Expr *getNumForLoops() const { return cast_or_null<Expr>(NumForLoops); }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_collapse;
+  }
+
+  StmtRange children() { return StmtRange(&NumForLoops, &NumForLoops + 1); }
+};
+
 /// \brief This represents 'default' clause in the '#pragma omp ...' directive.
 ///
 /// \code

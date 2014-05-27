@@ -809,6 +809,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
   case OMPC_safelen:
     Res = ActOnOpenMPSafelenClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_collapse:
+    Res = ActOnOpenMPCollapseClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_default:
   case OMPC_proc_bind:
   case OMPC_private:
@@ -950,6 +953,20 @@ OMPClause *Sema::ActOnOpenMPSafelenClause(Expr *Len, SourceLocation StartLoc,
       OMPSafelenClause(Safelen.take(), StartLoc, LParenLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *Num, SourceLocation StartLoc,
+                                           SourceLocation LParenLoc,
+                                           SourceLocation EndLoc) {
+  // OpenMP [2.8.1, simd construct, Description]
+  // The parameter of the collapse clause must be a constant
+  // positive integer expression.
+  ExprResult NumForLoops =
+      VerifyPositiveIntegerConstantInClause(Num, OMPC_collapse);
+  if (NumForLoops.isInvalid())
+    return nullptr;
+  return new (Context)
+      OMPCollapseClause(NumForLoops.take(), StartLoc, LParenLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
                                          unsigned Argument,
                                          SourceLocation ArgumentLoc,
@@ -971,6 +988,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
   case OMPC_if:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_collapse:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
@@ -1086,6 +1104,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
   case OMPC_if:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_collapse:
   case OMPC_default:
   case OMPC_proc_bind:
   case OMPC_threadprivate:

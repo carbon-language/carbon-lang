@@ -257,7 +257,8 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///
 ///    clause:
 ///       if-clause | num_threads-clause | safelen-clause | default-clause |
-///       private-clause | firstprivate-clause | shared-clause | linear-clause
+///       private-clause | firstprivate-clause | shared-clause | linear-clause |
+///       collapse-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -274,11 +275,13 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_if:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_collapse:
     // OpenMP [2.5, Restrictions]
     //  At most one if clause can appear on the directive.
     //  At most one num_threads clause can appear on the directive.
     // OpenMP [2.8.1, simd construct, Restrictions]
-    //  Only one safelen clause can appear on a simd directive.
+    //  Only one safelen  clause can appear on a simd directive.
+    //  Only one collapse clause can appear on a simd directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause)
            << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind);
@@ -333,6 +336,9 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 ///
 ///    safelen-clause:
 ///      'safelen' '(' expression ')'
+///
+///    collapse-clause:
+///      'collapse' '(' expression ')'
 ///
 OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = ConsumeToken();

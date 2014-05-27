@@ -1935,6 +1935,10 @@ void OMPClauseEnqueue::VisitOMPSafelenClause(const OMPSafelenClause *C) {
   Visitor->AddStmt(C->getSafelen());
 }
 
+void OMPClauseEnqueue::VisitOMPCollapseClause(const OMPCollapseClause *C) {
+  Visitor->AddStmt(C->getNumForLoops());
+}
+
 void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 void OMPClauseEnqueue::VisitOMPProcBindClause(const OMPProcBindClause *C) { }

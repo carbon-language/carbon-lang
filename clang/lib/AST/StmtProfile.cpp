@@ -279,6 +279,11 @@ void OMPClauseProfiler::VisitOMPSafelenClause(const OMPSafelenClause *C) {
     Profiler->VisitStmt(C->getSafelen());
 }
 
+void OMPClauseProfiler::VisitOMPCollapseClause(const OMPCollapseClause *C) {
+  if (C->getNumForLoops())
+    Profiler->VisitStmt(C->getNumForLoops());
+}
+
 void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 void OMPClauseProfiler::VisitOMPProcBindClause(const OMPProcBindClause *C) { }
