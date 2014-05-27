@@ -36,6 +36,14 @@ public:
 
   Scope scope() const override { return _scope; }
 
+  DeadStripKind deadStrip() const override {
+    if (_contentType == DefinedAtom::typeInitializerPtr)
+      return deadStripNever;
+    if (_contentType == DefinedAtom::typeTerminatorPtr)
+      return deadStripNever;
+    return deadStripNormal;
+  }
+
   ArrayRef<uint8_t> rawContent() const override {
     // Zerofill atoms have a content pointer which is null.
     assert(_content.data() != nullptr);

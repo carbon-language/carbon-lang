@@ -179,6 +179,12 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   case DefinedAtom::typeZeroFill:
      return new (_allocator) SectionInfo("__DATA", "__bss",
                             S_ZEROFILL);
+  case DefinedAtom::typeInitializerPtr:
+     return new (_allocator) SectionInfo("__DATA", "__mod_init_func",
+                            S_MOD_INIT_FUNC_POINTERS);
+  case DefinedAtom::typeTerminatorPtr:
+     return new (_allocator) SectionInfo("__DATA", "__mod_term_func",
+                            S_MOD_TERM_FUNC_POINTERS);
   case DefinedAtom::typeLiteral4:
      return new (_allocator) SectionInfo("__TEXT", "__literal4",
                             S_4BYTE_LITERALS);

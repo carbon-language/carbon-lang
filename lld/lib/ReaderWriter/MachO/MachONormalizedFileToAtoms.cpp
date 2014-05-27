@@ -109,8 +109,9 @@ static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
 }
 
 static error_code processSection(MachOFile &file, const Section &section,
-                                 bool copyRefs) {
+                                 bool is64, bool copyRefs) {
   unsigned offset = 0;
+  const unsigned pointerSize = (is64 ? 8 : 4);
   switch (section.type) {
   case llvm::MachO::S_REGULAR:
     if (section.segmentName.equals("__TEXT") && 
@@ -141,6 +142,40 @@ static error_code processSection(MachOFile &file, const Section &section,
   case llvm::MachO::S_COALESCED:
   case llvm::MachO::S_ZEROFILL:
     // These sections are broken in to atoms based on symbols.
+    break;
+  case S_MOD_INIT_FUNC_POINTERS:
+    if ((section.content.size() % pointerSize) != 0) {
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName
+                                     + " has type S_MOD_INIT_FUNC_POINTERS but "
+                                     "its size ("
+                                     + Twine(section.content.size())
+                                     + ") is not a multiple of "
+                                     + Twine(pointerSize));
+    }
+    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
+      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
+                          DefinedAtom::typeInitializerPtr, bytes, copyRefs);
+      offset += pointerSize;
+    }
+    break;
+  case S_MOD_TERM_FUNC_POINTERS:
+    if ((section.content.size() % pointerSize) != 0) {
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName
+                                     + " has type S_MOD_TERM_FUNC_POINTERS but "
+                                     "its size ("
+                                     + Twine(section.content.size())
+                                     + ") is not a multiple of "
+                                     + Twine(pointerSize));
+    }
+    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
+      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
+                          DefinedAtom::typeTerminatorPtr, bytes, copyRefs);
+      offset += pointerSize;
+    }
     break;
   case llvm::MachO::S_CSTRING_LITERALS:
     for (size_t i = 0, e = section.content.size(); i != e; ++i) {
@@ -227,8 +262,9 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     processUndefindeSymbol(*file, sym, copyRefs);
   }
   // Create atoms from sections that don't have symbols.
+  bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
   for (auto &sect : normalizedFile.sections) {
-    if (error_code ec = processSection(*file, sect, copyRefs))
+    if (error_code ec = processSection(*file, sect, is64, copyRefs))
       return ec;
   }
 
