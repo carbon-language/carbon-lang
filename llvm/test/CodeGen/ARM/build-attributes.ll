@@ -33,6 +33,11 @@
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,,+d16,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=pic | FileCheck %s --check-prefix=RELOC-PIC
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=static | FileCheck %s --check-prefix=RELOC-OTHER
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=default | FileCheck %s --check-prefix=RELOC-OTHER
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=dynamic-no-pic | FileCheck %s --check-prefix=RELOC-OTHER
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=RELOC-OTHER
 
 ; XSCALE:      .eabi_attribute 6, 5
 ; XSCALE:      .eabi_attribute 8, 1
@@ -452,6 +457,11 @@
 ; CORTEX-A57:  .eabi_attribute 42, 1
 ; CORTEX-A57-NOT:  .eabi_attribute 44
 ; CORTEX-A57:  .eabi_attribute 68, 3
+
+; RELOC-PIC:  .eabi_attribute 15, 1
+; RELOC-PIC:  .eabi_attribute 16, 1
+; RELOC-PIC:  .eabi_attribute 17, 2
+; RELOC-OTHER:  .eabi_attribute 17, 1
 
 define i32 @f(i64 %z) {
 	ret i32 0

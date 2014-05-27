@@ -146,6 +146,19 @@ enum {
   AllowNeon2 = 2,     // SIMDv2 was permitted (Half-precision FP, MAC operations)
   AllowNeonARMv8 = 3, // ARM v8-A SIMD was permitted
 
+  // Tag_ABI_PCS_RW_data, (=15), uleb128
+  AddressRWPCRel = 1, // Address RW static data PC-relative
+  AddressRWSBRel = 2, // Address RW static data SB-relative
+  AddressRWNone = 3, // No RW static data permitted
+
+  // Tag_ABI_PCS_RO_data, (=14), uleb128
+  AddressROPCRel = 1, // Address RO static data PC-relative
+  AddressRONone = 2, // No RO static data permitted
+
+  // Tag_ABI_PCS_GOT_use, (=17), uleb128
+  AddressDirect = 1, // Address imported data directly
+  AddressGOT = 2, // Address imported data indirectly (via GOT)
+
   // Tag_ABI_FP_denormal, (=20), uleb128
   PreserveFPSign = 2, // sign when flushed-to-zero is preserved
 

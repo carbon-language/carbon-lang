@@ -671,6 +671,20 @@ void ARMAsmPrinter::emitAttributes() {
       ATS.emitFPU(ARM::VFPV2);
   }
 
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    // PIC specific attributes.
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_RW_data,
+                      ARMBuildAttrs::AddressRWPCRel);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_RO_data,
+                      ARMBuildAttrs::AddressROPCRel);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_GOT_use,
+                      ARMBuildAttrs::AddressGOT);
+  } else {
+    // Allow direct addressing of imported data for all other relocation models.
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_GOT_use,
+                      ARMBuildAttrs::AddressDirect);
+  }
+
   // Signal various FP modes.
   if (!TM.Options.UnsafeFPMath) {
     ATS.emitAttribute(ARMBuildAttrs::ABI_FP_denormal, ARMBuildAttrs::Allowed);
