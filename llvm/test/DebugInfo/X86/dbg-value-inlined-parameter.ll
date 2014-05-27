@@ -5,12 +5,16 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s -filetype=obj -regalloc=basic \
 ; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
 
-; FIXME: This is both a concrete and abstract definition, which is
-; incorrect. They should be separate
-; CHECK: [[ABS:.*]]: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_high_pc
-; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_subprogram
+; CHECK:   DW_AT_abstract_origin {{.*}}{[[ABS:.*]]}
+; FIXME: An out of line definition preceeding an inline usage doesn't properly
+; reference abstract variables.
+; CHECK:   DW_TAG_formal_parameter
+; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
+; CHECK:   DW_TAG_formal_parameter
+; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+
+; CHECK: [[ABS]]: DW_TAG_subprogram
 ; CHECK:   DW_AT_name {{.*}} "foo"
 ; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
 ; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
@@ -26,10 +30,9 @@
 
 ;CHECK: DW_TAG_formal_parameter
 ;FIXME: Linux shouldn't drop this parameter either...
-;FIXME: These parameters should have DW_AT_abstract_origin, instead of names.
-;DARWIN-NEXT:   DW_AT_name {{.*}} "sp"
+;DARWIN-NEXT:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
 ;DARWIN: DW_TAG_formal_parameter
-;CHECK-NEXT:   DW_AT_name {{.*}} "nums"
+;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
 ;CHECK-NOT: DW_TAG_formal_parameter
 
 %struct.S1 = type { float*, i32 }

@@ -316,20 +316,6 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
                                           DISubprogram SP) {
   DIE *SPDie = SPCU.getOrCreateSubprogramDIE(SP);
 
-  assert(SPDie && "Unable to find subprogram DIE!");
-
-  // If we're updating an abstract DIE, then we will be adding the children and
-  // object pointer later on. But what we don't want to do is process the
-  // concrete DIE twice.
-  if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
-    assert(SPDie == AbsSPDIE);
-    // Pick up abstract subprogram DIE.
-    SPDie = &SPCU.createAndAddDIE(
-        dwarf::DW_TAG_subprogram,
-        *SPCU.getOrCreateContextDIE(resolve(SP.getContext())));
-    SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
-  }
-
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
@@ -525,6 +511,8 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   DISubprogram SP(Scope->getScopeNode());
 
+  ProcessedSPNodes.insert(SP);
+
   DIE *&AbsDef = AbstractSPDies[SP];
   if (AbsDef)
     return;
@@ -532,10 +520,24 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
   DwarfCompileUnit &SPCU = *SPMap[SP];
-  AbsDef = SPCU.getOrCreateSubprogramDIE(SP);
+  DIE *ContextDIE;
 
-  if (!ProcessedSPNodes.insert(SP))
-    return;
+  // Some of this is duplicated from DwarfUnit::getOrCreateSubprogramDIE, with
+  // the important distinction that the DIDescriptor is not associated with the
+  // DIE (since the DIDescriptor will be associated with the concrete DIE, if
+  // any). It could be refactored to some common utility function.
+  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+    ContextDIE = &SPCU.getUnitDie();
+    SPCU.getOrCreateSubprogramDIE(SPDecl);
+  } else
+    ContextDIE = SPCU.getOrCreateContextDIE(resolve(SP.getContext()));
+
+  // Passing null as the associated DIDescriptor because the abstract definition
+  // shouldn't be found by lookup.
+  AbsDef = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE,
+                                 DIDescriptor());
+  SPCU.applySubprogramAttributes(SP, *AbsDef);
+  SPCU.addGlobalName(SP.getName(), *AbsDef, resolve(SP.getContext()));
 
   SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   createAndAddScopeChildren(SPCU, Scope, *AbsDef);
@@ -686,28 +688,6 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   return NewCU;
 }
 
-// Construct subprogram DIE.
-void DwarfDebug::constructSubprogramDIE(DwarfCompileUnit &TheCU,
-                                        const MDNode *N) {
-  // FIXME: We should only call this routine once, however, during LTO if a
-  // program is defined in multiple CUs we could end up calling it out of
-  // beginModule as we walk the CUs.
-
-  DwarfCompileUnit *&CURef = SPMap[N];
-  if (CURef)
-    return;
-  CURef = &TheCU;
-
-  DISubprogram SP(N);
-  assert(SP.isSubprogram());
-  assert(SP.isDefinition());
-
-  DIE &SubprogramDie = *TheCU.getOrCreateSubprogramDIE(SP);
-
-  // Expose as a global name.
-  TheCU.addGlobalName(SP.getName(), SubprogramDie, resolve(SP.getContext()));
-}
-
 void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
                                             const MDNode *N) {
   DIImportedEntity Module(N);
@@ -826,12 +806,19 @@ void DwarfDebug::finishSubprogramDefinitions() {
       if (SPMap[SP] != SPCU)
         continue;
       DIE *D = SPCU->getDIE(SP);
-      if (!D)
-        // Lazily construct the subprogram if we didn't see either concrete or
-        // inlined versions during codegen.
-        D = SPCU->getOrCreateSubprogramDIE(SP);
-      SPCU->applySubprogramAttributes(SP, *D);
-      SPCU->addGlobalName(SP.getName(), *D, resolve(SP.getContext()));
+      if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
+        if (D)
+          // If this subprogram has an abstract definition, reference that
+          SPCU->addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
+      } else {
+        if (!D)
+          // Lazily construct the subprogram if we didn't see either concrete or
+          // inlined versions during codegen.
+          D = SPCU->getOrCreateSubprogramDIE(SP);
+        // And attach the attributes
+        SPCU->applySubprogramAttributes(SP, *D);
+        SPCU->addGlobalName(SP.getName(), *D, resolve(SP.getContext()));
+      }
     }
   }
 }
@@ -861,7 +848,9 @@ void DwarfDebug::collectDeadVariables() {
         if (Variables.getNumElements() == 0)
           continue;
 
-        DIE *SPDIE = SPCU->getDIE(SP);
+        DIE *SPDIE = AbstractSPDies.lookup(SP);
+        if (!SPDIE)
+          SPDIE = SPCU->getDIE(SP);
         assert(SPDIE);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));

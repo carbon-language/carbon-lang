@@ -25,9 +25,11 @@
 ; CHECK:   DW_TAG_subprogram
 ; CHECK:     DW_AT_type [DW_FORM_ref_addr] (0x00000000[[INT:.*]])
 ; CHECK:     DW_TAG_inlined_subroutine
-; CHECK-NEXT:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]])
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]])
 ; CHECK:       DW_TAG_formal_parameter
-; CHECK-NEXT:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]])
+; CHECK-NOT: DW_TAG
+; CHECK:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]])
 
 ; Check the abstract definition is in the 'b.cpp' CU and doesn't contain any
 ; concrete information (address range or variable location)
@@ -48,10 +50,13 @@
 ; Check the concrete out of line definition references the abstract and
 ; provides the address range and variable location
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]}
+; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_low_pc
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]}
 ; CHECK:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}
 ; CHECK:     DW_AT_location
 
 

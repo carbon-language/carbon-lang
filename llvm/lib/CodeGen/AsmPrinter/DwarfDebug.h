@@ -491,9 +491,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// DW_TAG_compile_unit.
   DwarfCompileUnit &constructDwarfCompileUnit(DICompileUnit DIUnit);
 
-  /// \brief Construct subprogram DIE.
-  void constructSubprogramDIE(DwarfCompileUnit &TheCU, const MDNode *N);
-
   /// \brief Construct imported_module or imported_declaration DIE.
   void constructImportedEntityDIE(DwarfCompileUnit &TheCU, const MDNode *N);
 
