@@ -88,3 +88,35 @@ entry:
   store double %extract214vector_func.i, double addrspace(1)* undef, align 8
   ret void
 }
+
+; If we can figure out a blend has a constant mask, we should emit the
+; blend instruction with an immediate mask
+define <2 x double> @constant_blendvpd(<2 x double> %xy, <2 x double> %ab) {
+; In this case, we emit a simple movss
+; CHECK-LABEL: constant_blendvpd
+; CHECK: movsd
+; CHECK: ret
+  %1 = select <2 x i1> <i1 true, i1 false>, <2 x double> %xy, <2 x double> %ab
+  ret <2 x double> %1
+}
+
+define <4 x float> @constant_blendvps(<4 x float> %xyzw, <4 x float> %abcd) {
+; CHECK-LABEL: constant_blendvps
+; CHECK-NOT: mov
+; CHECK: blendps $7
+; CHECK: ret
+  %1 = select <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> %xyzw, <4 x float> %abcd
+  ret <4 x float> %1
+}
+
+define <16 x i8> @constant_pblendvb(<16 x i8> %xyzw, <16 x i8> %abcd) {
+; CHECK-LABEL: constant_pblendvb:
+; CHECK: movaps
+; CHECK: pblendvb
+; CHECK: ret
+  %1 = select <16 x i1> <i1 false, i1 false, i1 true, i1 false, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 true, i1 true, i1 true, i1 false>, <16 x i8> %xyzw, <16 x i8> %abcd
+  ret <16 x i8> %1
+}
+declare <16 x i8> @llvm.x86.sse41.pblendvb(<16 x i8>, <16 x i8>, <16 x i8>)
+declare <4 x float> @llvm.x86.sse41.blendvps(<4 x float>, <4 x float>, <4 x float>)
+declare <2 x double> @llvm.x86.sse41.blendvpd(<2 x double>, <2 x double>, <2 x double>)

@@ -135,3 +135,26 @@ define <2 x double> @testb(<2 x double> %x, <2 x double> %y) {
   %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
   ret <2 x double> %min
 }
+
+; If we can figure out a blend has a constant mask, we should emit the
+; blend instruction with an immediate mask
+define <4 x double> @constant_blendvpd_avx(<4 x double> %xy, <4 x double> %ab) {
+; CHECK-LABEL: constant_blendvpd_avx:
+; CHECK-NOT: mov
+; CHECK: vblendpd
+; CHECK: ret
+  %1 = select <4 x i1> <i1 false, i1 false, i1 true, i1 false>, <4 x double> %xy, <4 x double> %ab
+  ret <4 x double> %1
+}
+
+define <8 x float> @constant_blendvps_avx(<8 x float> %xyzw, <8 x float> %abcd) {
+; CHECK-LABEL: constant_blendvps_avx:
+; CHECK-NOT: mov
+; CHECK: vblendps
+; CHECK: ret
+  %1 = select <8 x i1> <i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false, i1 true>, <8 x float> %xyzw, <8 x float> %abcd
+  ret <8 x float> %1
+}
+
+declare <8 x float> @llvm.x86.avx.blendv.ps.256(<8 x float>, <8 x float>, <8 x float>)
+declare <4 x double> @llvm.x86.avx.blendv.pd.256(<4 x double>, <4 x double>, <4 x double>)
