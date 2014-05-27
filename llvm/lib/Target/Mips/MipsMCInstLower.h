@@ -39,8 +39,7 @@ private:
                                MachineOperandType MOTy, unsigned Offset) const;
   MCOperand createSub(MachineBasicBlock *BB1, MachineBasicBlock *BB2,
                       MCSymbolRefExpr::VariantKind Kind) const;
-  void lowerLongBranchLUi(const MachineInstr *MI, MCInst &OutMI,
-                          int Opcode, MCSymbolRefExpr::VariantKind Kind) const;
+  void lowerLongBranchLUi(const MachineInstr *MI, MCInst &OutMI) const;
   void lowerLongBranchADDiu(const MachineInstr *MI, MCInst &OutMI,
                             int Opcode,
                             MCSymbolRefExpr::VariantKind Kind) const;

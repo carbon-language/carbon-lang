@@ -64,7 +64,7 @@ namespace {
       : MachineFunctionPass(ID), TM(tm),
         IsPIC(TM.getRelocationModel() == Reloc::PIC_),
         ABI(TM.getSubtarget<MipsSubtarget>().getTargetABI()),
-        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 13 : 9)) {}
+        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 10 : 9)) {}
 
     const char *getPassName() const override {
       return "Mips Long Branch";
@@ -324,10 +324,7 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       // $longbr:
       //  daddiu $sp, $sp, -16
       //  sd $ra, 0($sp)
-      //  lui64 $at, %highest($tgt - $baltgt)
-      //  daddiu $at, $at, %higher($tgt - $baltgt)
-      //  dsll $at, $at, 16
-      //  daddiu $at, $at, %hi($tgt - $baltgt)
+      //  daddiu $at, $zero, %hi($tgt - $baltgt)
       //  dsll $at, $at, 16
       //  bal $baltgt
       //  daddiu $at, $at, %lo($tgt - $baltgt)
@@ -339,10 +336,20 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       // $fallthrough:
       //
 
-      // TODO: %highest and %higher can have non-zero values only when the
-      // offset is greater than 4GB, which is highly unlikely.  Replace
-      // them (and the following instructon that shifts $at by 16) with the
-      // instruction that sets $at to zero.
+      // We assume the branch is within-function, and that offset is within
+      // +/- 2GB.  High 32 bits will therefore always be zero.
+
+      // Note that this will work even if the offset is negative, because
+      // of the +1 modification that's added in that case.  For example, if the
+      // offset is -1MB (0xFFFFFFFFFFF00000), the computation for %higher is
+      //
+      // 0xFFFFFFFFFFF00000 + 0x80008000 = 0x000000007FF08000
+      //
+      // and the bits [47:32] are zero.  For %highest
+      //
+      // 0xFFFFFFFFFFF00000 + 0x800080008000 = 0x000080007FF08000
+      //
+      // and the bits [63:48] are zero.
 
       Pos = LongBrMBB->begin();
 
@@ -350,16 +357,9 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::SP_64).addImm(-16);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::SD)).addReg(Mips::RA_64)
         .addReg(Mips::SP_64).addImm(0);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_LUi64),
-              Mips::AT_64).addMBB(TgtMBB).addMBB(BalTgtMBB);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
-              Mips::AT_64).addReg(Mips::AT_64).addMBB(TgtMBB, MipsII::MO_HIGHER)
-                          .addMBB(BalTgtMBB);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DSLL), Mips::AT_64)
-        .addReg(Mips::AT_64).addImm(16);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
-              Mips::AT_64).addReg(Mips::AT_64).addMBB(TgtMBB, MipsII::MO_ABS_HI)
-                          .addMBB(BalTgtMBB);
+              Mips::AT_64).addReg(Mips::ZERO_64)
+                          .addMBB(TgtMBB, MipsII::MO_ABS_HI).addMBB(BalTgtMBB);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DSLL), Mips::AT_64)
         .addReg(Mips::AT_64).addImm(16);
 

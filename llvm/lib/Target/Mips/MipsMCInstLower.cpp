@@ -162,16 +162,16 @@ MCOperand MipsMCInstLower::createSub(MachineBasicBlock *BB1,
 }
 
 void MipsMCInstLower::
-lowerLongBranchLUi(const MachineInstr *MI, MCInst &OutMI, int Opcode,
-                   MCSymbolRefExpr::VariantKind Kind) const {
-  OutMI.setOpcode(Opcode);
+lowerLongBranchLUi(const MachineInstr *MI, MCInst &OutMI) const {
+  OutMI.setOpcode(Mips::LUi);
 
   // Lower register operand.
   OutMI.addOperand(LowerOperand(MI->getOperand(0)));
 
-  // Create %hi($tgt-$baltgt) or %highest($tgt-$baltgt).
+  // Create %hi($tgt-$baltgt).
   OutMI.addOperand(createSub(MI->getOperand(1).getMBB(),
-                             MI->getOperand(2).getMBB(), Kind));
+                             MI->getOperand(2).getMBB(),
+                             MCSymbolRefExpr::VK_Mips_ABS_HI));
 }
 
 void MipsMCInstLower::
@@ -185,7 +185,7 @@ lowerLongBranchADDiu(const MachineInstr *MI, MCInst &OutMI, int Opcode,
     OutMI.addOperand(LowerOperand(MO));
   }
 
-  // Create %lo($tgt-$baltgt), %hi($tgt-$baltgt) or %higher($tgt-$baltgt).
+  // Create %lo($tgt-$baltgt) or %hi($tgt-$baltgt).
   OutMI.addOperand(createSub(MI->getOperand(2).getMBB(),
                              MI->getOperand(3).getMBB(), Kind));
 }
@@ -196,11 +196,7 @@ bool MipsMCInstLower::lowerLongBranch(const MachineInstr *MI,
   default:
     return false;
   case Mips::LONG_BRANCH_LUi:
-    lowerLongBranchLUi(MI, OutMI, Mips::LUi, MCSymbolRefExpr::VK_Mips_ABS_HI);
-    return true;
-  case Mips::LONG_BRANCH_LUi64:
-    lowerLongBranchLUi(MI, OutMI, Mips::LUi64,
-                       MCSymbolRefExpr::VK_Mips_HIGHEST);
+    lowerLongBranchLUi(MI, OutMI);
     return true;
   case Mips::LONG_BRANCH_ADDiu:
     lowerLongBranchADDiu(MI, OutMI, Mips::ADDiu,
@@ -208,10 +204,7 @@ bool MipsMCInstLower::lowerLongBranch(const MachineInstr *MI,
     return true;
   case Mips::LONG_BRANCH_DADDiu:
     unsigned TargetFlags = MI->getOperand(2).getTargetFlags();
-    if (TargetFlags == MipsII::MO_HIGHER)
-      lowerLongBranchADDiu(MI, OutMI, Mips::DADDiu,
-                           MCSymbolRefExpr::VK_Mips_HIGHER);
-    else if (TargetFlags == MipsII::MO_ABS_HI)
+    if (TargetFlags == MipsII::MO_ABS_HI)
       lowerLongBranchADDiu(MI, OutMI, Mips::DADDiu,
                            MCSymbolRefExpr::VK_Mips_ABS_HI);
     else if (TargetFlags == MipsII::MO_ABS_LO)

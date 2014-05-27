@@ -80,10 +80,7 @@ end:
 ; Check for long branch expansion:
 ; N64:           daddiu  $sp, $sp, -16
 ; N64-NEXT:      sd      $ra, 0($sp)
-; N64-NEXT:      lui     $1, %highest(($[[BB2:BB[0-9_]+]])-($[[BB1:BB[0-9_]+]]))
-; N64-NEXT:      daddiu  $1, $1, %higher(($[[BB2]])-($[[BB1]]))
-; N64-NEXT:      dsll    $1, $1, 16
-; N64-NEXT:      daddiu  $1, $1, %hi(($[[BB2]])-($[[BB1]]))
+; N64-NEXT:      daddiu  $1, $zero, %hi(($[[BB2:BB[0-9_]+]])-($[[BB1:BB[0-9_]+]]))
 ; N64-NEXT:      dsll    $1, $1, 16
 ; N64-NEXT:      bal     $[[BB1]]
 ; N64-NEXT:      daddiu  $1, $1, %lo(($[[BB2]])-($[[BB1]]))
