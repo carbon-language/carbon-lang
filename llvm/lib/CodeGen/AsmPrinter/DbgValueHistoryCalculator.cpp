@@ -144,6 +144,7 @@ void calculateDbgValueHistory(const MachineFunction *MF,
         continue;
       }
 
+      assert(MI.getNumOperands() > 1 && "Invalid DBG_VALUE instruction!");
       const MDNode *Var = MI.getDebugVariable();
       auto &History = Result[Var];
 
