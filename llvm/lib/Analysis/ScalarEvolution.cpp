@@ -7458,16 +7458,15 @@ void ScalarEvolution::findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
 
 /// Third step of delinearization: compute the access functions for the
 /// Subscripts based on the dimensions in Sizes.
-const SCEV *SCEVAddRecExpr::computeAccessFunctions(
+void SCEVAddRecExpr::computeAccessFunctions(
     ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Subscripts,
     SmallVectorImpl<const SCEV *> &Sizes) const {
 
   // Early exit in case this SCEV is not an affine multivariate function.
   if (Sizes.empty() || !this->isAffine())
-    return nullptr;
+    return;
 
-  const SCEV *Zero = SE.getConstant(this->getType(), 0);
-  const SCEV *Res = this, *Remainder = Zero;
+  const SCEV *Res = this;
   int Last = Sizes.size() - 1;
   for (int i = Last; i >= 0; i--) {
     const SCEV *Q, *R;
@@ -7488,10 +7487,12 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
     if (i == Last) {
 
       // Bail out if the remainder is too complex.
-      if (isa<SCEVAddRecExpr>(R))
-        return nullptr;
+      if (isa<SCEVAddRecExpr>(R)) {
+        Subscripts.clear();
+        Sizes.clear();
+        return;
+      }
 
-      Remainder = R;
       continue;
     }
 
@@ -7510,7 +7511,6 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
       for (const SCEV *S : Subscripts)
         dbgs() << *S << "\n";
     });
-  return Remainder;
 }
 
 /// Splits the SCEV into two vectors of SCEVs representing the subscripts and
@@ -7562,27 +7562,28 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
 /// asking for the SCEV of the memory access with respect to all enclosing
 /// loops, calling SCEV->delinearize on that and printing the results.
 
-const SCEV *SCEVAddRecExpr::delinearize(
-    ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Subscripts,
-    SmallVectorImpl<const SCEV *> &Sizes, const SCEV *ElementSize) const {
+void SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
+                                 SmallVectorImpl<const SCEV *> &Subscripts,
+                                 SmallVectorImpl<const SCEV *> &Sizes,
+                                 const SCEV *ElementSize) const {
   // First step: collect parametric terms.
   SmallVector<const SCEV *, 4> Terms;
   collectParametricTerms(SE, Terms);
 
   if (Terms.empty())
-    return nullptr;
+    return;
 
   // Second step: find subscript sizes.
   SE.findArrayDimensions(Terms, Sizes, ElementSize);
 
   if (Sizes.empty())
-    return nullptr;
+    return;
 
   // Third step: compute the access functions for each subscript.
-  const SCEV *Remainder = computeAccessFunctions(SE, Subscripts, Sizes);
+  computeAccessFunctions(SE, Subscripts, Sizes);
 
-  if (!Remainder || Subscripts.empty())
-    return nullptr;
+  if (Subscripts.empty())
+    return;
 
   DEBUG({
       dbgs() << "succeeded to delinearize " << *this << "\n";
@@ -7595,8 +7596,6 @@ const SCEV *SCEVAddRecExpr::delinearize(
         dbgs() << "[" << *S << "]";
       dbgs() << "\n";
     });
-
-  return Remainder;
 }
 
 //===----------------------------------------------------------------------===//

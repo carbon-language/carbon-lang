@@ -362,14 +362,12 @@ namespace llvm {
                                 SmallVectorImpl<const SCEV *> &Terms) const;
 
     /// Return in Subscripts the access functions for each dimension in Sizes.
-    const SCEV *
-    computeAccessFunctions(ScalarEvolution &SE,
-                           SmallVectorImpl<const SCEV *> &Subscripts,
-                           SmallVectorImpl<const SCEV *> &Sizes) const;
+    void computeAccessFunctions(ScalarEvolution &SE,
+                                SmallVectorImpl<const SCEV *> &Subscripts,
+                                SmallVectorImpl<const SCEV *> &Sizes) const;
 
     /// Split this SCEVAddRecExpr into two vectors of SCEVs representing the
-    /// subscripts and sizes of an array access. Returns the remainder of the
-    /// delinearization that is the offset start of the array.
+    /// subscripts and sizes of an array access.
     ///
     /// The delinearization is a 3 step process: the first two steps compute the
     /// sizes of each subscript and the third step computes the access functions
@@ -432,10 +430,10 @@ namespace llvm {
     /// The subscript of the outermost dimension is the Quotient: [j+k].
     ///
     /// Overall, we have: A[][n][m], and the access function: A[j+k][2i][5i].
-    const SCEV *delinearize(ScalarEvolution &SE,
-                            SmallVectorImpl<const SCEV *> &Subscripts,
-                            SmallVectorImpl<const SCEV *> &Sizes,
-                            const SCEV *ElementSize) const;
+    void delinearize(ScalarEvolution &SE,
+                     SmallVectorImpl<const SCEV *> &Subscripts,
+                     SmallVectorImpl<const SCEV *> &Sizes,
+                     const SCEV *ElementSize) const;
   };
 
   //===--------------------------------------------------------------------===//

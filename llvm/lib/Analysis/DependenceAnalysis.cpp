@@ -3184,6 +3184,17 @@ bool DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV,
                                         const SCEV *DstSCEV,
                                         SmallVectorImpl<Subscript> &Pair,
                                         const SCEV *ElementSize) const {
+  const SCEVUnknown *SrcBase =
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcSCEV));
+  const SCEVUnknown *DstBase =
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(DstSCEV));
+
+  if (!SrcBase || !DstBase || SrcBase != DstBase)
+    return false;
+
+  SrcSCEV = SE->getMinusSCEV(SrcSCEV, SrcBase);
+  DstSCEV = SE->getMinusSCEV(DstSCEV, DstBase);
+
   const SCEVAddRecExpr *SrcAR = dyn_cast<SCEVAddRecExpr>(SrcSCEV);
   const SCEVAddRecExpr *DstAR = dyn_cast<SCEVAddRecExpr>(DstSCEV);
   if (!SrcAR || !DstAR || !SrcAR->isAffine() || !DstAR->isAffine())
@@ -3200,18 +3211,12 @@ bool DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV,
 
   // Third step: compute the access functions for each subscript.
   SmallVector<const SCEV *, 4> SrcSubscripts, DstSubscripts;
-  const SCEV *RemainderS = SrcAR->computeAccessFunctions(*SE, SrcSubscripts, Sizes);
-  const SCEV *RemainderD = DstAR->computeAccessFunctions(*SE, DstSubscripts, Sizes);
+  SrcAR->computeAccessFunctions(*SE, SrcSubscripts, Sizes);
+  DstAR->computeAccessFunctions(*SE, DstSubscripts, Sizes);
 
   // Fail when there is only a subscript: that's a linearized access function.
   if (SrcSubscripts.size() < 2 || DstSubscripts.size() < 2 ||
       SrcSubscripts.size() != DstSubscripts.size())
-    return false;
-
-  // When the difference in remainders is different than a constant it might be
-  // that the base address of the arrays is not the same.
-  const SCEV *DiffRemainders = SE->getMinusSCEV(RemainderS, RemainderD);
-  if (!isa<SCEVConstant>(DiffRemainders))
     return false;
 
   int size = SrcSubscripts.size();
