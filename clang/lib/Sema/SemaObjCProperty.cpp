@@ -1907,6 +1907,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
   ObjCMethodDecl *GetterMethod, *SetterMethod;
 
+  if (CD->isInvalidDecl())
+    return;
+
   GetterMethod = CD->getInstanceMethod(property->getGetterName());
   SetterMethod = CD->getInstanceMethod(property->getSetterName());
   DiagnosePropertyAccessorMismatch(property, GetterMethod,
