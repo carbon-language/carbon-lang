@@ -10778,14 +10778,13 @@ static bool isHomogeneousAggregate(Type *Ty, HABaseType &Base,
 /// \brief Return true if a type is an AAPCS-VFP homogeneous aggregate.
 bool ARMTargetLowering::functionArgumentNeedsConsecutiveRegisters(
     Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
-  if (getEffectiveCallingConv(CallConv, isVarArg) ==
-      CallingConv::ARM_AAPCS_VFP) {
-    HABaseType Base = HA_UNKNOWN;
-    uint64_t Members = 0;
-    bool result = isHomogeneousAggregate(Ty, Base, Members);
-    DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump(); dbgs() << "\n");
-    return result;
-  } else {
+  if (getEffectiveCallingConv(CallConv, isVarArg) !=
+      CallingConv::ARM_AAPCS_VFP)
     return false;
-  }
+
+  HABaseType Base = HA_UNKNOWN;
+  uint64_t Members = 0;
+  bool result = isHomogeneousAggregate(Ty, Base, Members);
+  DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump(); dbgs() << "\n");
+  return result;
 }

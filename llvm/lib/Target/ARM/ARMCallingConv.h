@@ -177,9 +177,8 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
                                    ISD::ArgFlagsTy &ArgFlags, CCState &State) {
   SmallVectorImpl<CCValAssign> &PendingHAMembers = State.getPendingLocs();
-
   // AAPCS HFAs must have 1-4 elements, all of the same type
-  assert(PendingHAMembers.size() < 4);
+  assert(PendingHAMembers.size() < 8);
   if (PendingHAMembers.size() > 0)
     assert(PendingHAMembers[0].getLocVT() == LocVT);
 
@@ -189,7 +188,7 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
       CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
 
   if (ArgFlags.isInConsecutiveRegsLast()) {
-    assert(PendingHAMembers.size() > 0 && PendingHAMembers.size() <= 4 &&
+    assert(PendingHAMembers.size() > 0 && PendingHAMembers.size() <= 8 &&
            "Homogeneous aggregates must have between 1 and 4 members");
 
     // Try to allocate a contiguous block of registers, each of the correct
@@ -197,6 +196,7 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
     const uint16_t *RegList;
     unsigned NumRegs;
     switch (LocVT.SimpleTy) {
+    case MVT::i32:
     case MVT::f32:
       RegList = SRegList;
       NumRegs = 16;
@@ -235,11 +235,20 @@ static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
       State.AllocateReg(SRegList[regNo]);
 
     unsigned Size = LocVT.getSizeInBits() / 8;
-    unsigned Align = LocVT.SimpleTy == MVT::v2f64 ? 8 : Size;
+    unsigned Align = Size;
+
+    if (LocVT.SimpleTy == MVT::v2f64 || LocVT.SimpleTy == MVT::i32) {
+      // Vectors are always aligned to 8 bytes. If we've seen an i32 here
+      // it's because it's been split from a larger type, also with align 8.
+      Align = 8;
+    }
 
     for (auto It : PendingHAMembers) {
       It.convertToMem(State.AllocateStack(Size, Align));
       State.addLoc(It);
+
+      // Only the first member needs to be aligned.
+      Align = 1;
     }
 
     // All pending members have now been allocated
