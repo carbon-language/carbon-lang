@@ -1,6 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vadduhm
 ; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vsubuhm
-; XFAIL: *
 
 define <4 x i32> @test() nounwind {
 	ret <4 x i32> < i32 4293066722, i32 4293066722, i32 4293066722, i32 4293066722>
