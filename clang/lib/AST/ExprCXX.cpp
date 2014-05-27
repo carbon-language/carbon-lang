@@ -1030,6 +1030,10 @@ LambdaExpr::capture_iterator LambdaExpr::capture_end() const {
   return capture_begin() + NumCaptures;
 }
 
+LambdaExpr::capture_range LambdaExpr::captures() const {
+  return capture_range(capture_begin(), capture_end());
+}
+
 LambdaExpr::capture_iterator LambdaExpr::explicit_capture_begin() const {
   return capture_begin();
 }
@@ -1040,12 +1044,20 @@ LambdaExpr::capture_iterator LambdaExpr::explicit_capture_end() const {
   return Data.Captures + Data.NumExplicitCaptures;
 }
 
+LambdaExpr::capture_range LambdaExpr::explicit_captures() const {
+  return capture_range(explicit_capture_begin(), explicit_capture_end());
+}
+
 LambdaExpr::capture_iterator LambdaExpr::implicit_capture_begin() const {
   return explicit_capture_end();
 }
 
 LambdaExpr::capture_iterator LambdaExpr::implicit_capture_end() const {
   return capture_end();
+}
+
+LambdaExpr::capture_range LambdaExpr::implicit_captures() const {
+  return capture_range(implicit_capture_begin(), implicit_capture_end());
 }
 
 ArrayRef<VarDecl *> 

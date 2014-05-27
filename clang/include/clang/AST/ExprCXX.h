@@ -1426,6 +1426,12 @@ public:
   /// both implicit and explicit.
   typedef const Capture *capture_iterator;
 
+  /// \brief An iterator over a range of lambda captures.
+  typedef llvm::iterator_range<capture_iterator> capture_range;
+
+  /// \brief Retrieve this lambda's captures.
+  capture_range captures() const;
+  
   /// \brief Retrieve an iterator pointing to the first lambda capture.
   capture_iterator capture_begin() const;
 
@@ -1435,6 +1441,9 @@ public:
 
   /// \brief Determine the number of captures in this lambda.
   unsigned capture_size() const { return NumCaptures; }
+
+  /// \brief Retrieve this lambda's explicit captures.
+  capture_range explicit_captures() const;
   
   /// \brief Retrieve an iterator pointing to the first explicit
   /// lambda capture.
@@ -1443,6 +1452,9 @@ public:
   /// \brief Retrieve an iterator pointing past the end of the sequence of
   /// explicit lambda captures.
   capture_iterator explicit_capture_end() const;
+
+  /// \brief Retrieve this lambda's implicit captures.
+  capture_range implicit_captures() const;
 
   /// \brief Retrieve an iterator pointing to the first implicit
   /// lambda capture.
