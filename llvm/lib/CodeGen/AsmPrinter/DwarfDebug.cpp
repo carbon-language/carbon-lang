@@ -448,12 +448,7 @@ static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
                                                  DbgVariable &DV,
                                                  const LexicalScope &Scope,
                                                  DIE *&ObjectPointer) {
-  AbstractOrInlined AOI = AOI_None;
-  if (Scope.isAbstractScope())
-    AOI = AOI_Abstract;
-  else if (Scope.getInlinedAt())
-    AOI = AOI_Inlined;
-  auto Var = TheCU.constructVariableDIE(DV, AOI);
+  auto Var = TheCU.constructVariableDIE(DV, Scope.isAbstractScope());
   if (DV.isObjectPointer())
     ObjectPointer = Var.get();
   return Var;

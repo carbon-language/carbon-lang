@@ -1769,34 +1769,30 @@ void DwarfUnit::constructContainingTypeDIEs() {
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 std::unique_ptr<DIE> DwarfUnit::constructVariableDIE(DbgVariable &DV,
-                                                     AbstractOrInlined AbsIn) {
-  auto D = constructVariableDIEImpl(DV, AbsIn);
+                                                     bool Abstract) {
+  auto D = constructVariableDIEImpl(DV, Abstract);
   DV.setDIE(*D);
   return D;
 }
 
-std::unique_ptr<DIE>
-DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
-                                    AbstractOrInlined AbsIn) {
+std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
+                                                         bool Abstract) {
   StringRef Name = DV.getName();
 
   // Define variable debug information entry.
   auto VariableDie = make_unique<DIE>(DV.getTag());
-  DbgVariable *AbsVar = DV.getAbstractVariable();
-  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : nullptr;
-  if (AbsDIE)
-    addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsDIE);
+  if (DbgVariable *AbsVar = DV.getAbstractVariable())
+    addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsVar->getDIE());
   else {
     if (!Name.empty())
       addString(*VariableDie, dwarf::DW_AT_name, Name);
     addSourceLine(*VariableDie, DV.getVariable());
     addType(*VariableDie, DV.getType());
+    if (DV.isArtificial())
+      addFlag(*VariableDie, dwarf::DW_AT_artificial);
   }
 
-  if (AbsIn != AOI_Inlined && DV.isArtificial())
-    addFlag(*VariableDie, dwarf::DW_AT_artificial);
-
-  if (AbsIn == AOI_Abstract)
+  if (Abstract)
     return VariableDie;
 
   // Add variable address.
