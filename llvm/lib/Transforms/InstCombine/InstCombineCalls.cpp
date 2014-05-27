@@ -735,7 +735,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       auto EltTy = SelectorType->getElementType();
       unsigned Size = SelectorType->getNumElements();
       unsigned BitWidth = EltTy->isFloatTy() ? 32 : (EltTy->isDoubleTy() ? 64 : EltTy->getIntegerBitWidth());
-      assert(BitWidth == 64 || BitWidth == 32 || BitWidth == 8 && "Wrong arguments for variable blend intrinsic");
+      assert((BitWidth == 64 || BitWidth == 32 || BitWidth == 8) &&
+             "Wrong arguments for variable blend intrinsic");
       SmallVector<Constant*, 32> Selectors;
       for (unsigned I = 0; I < Size; ++I) {
         // The intrinsics only read the top bit
