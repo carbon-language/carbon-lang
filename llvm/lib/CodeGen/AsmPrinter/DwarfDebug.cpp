@@ -806,6 +806,25 @@ void DwarfDebug::beginModule() {
   SectionMap[Asm->getObjFileLowering().getTextSection()];
 }
 
+void DwarfDebug::finishSubprogramDefinitions() {
+  const Module *M = MMI->getModule();
+
+  NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
+  for (MDNode *N : CU_Nodes->operands()) {
+    DICompileUnit TheCU(N);
+    // Construct subprogram DIE and add variables DIEs.
+    DwarfCompileUnit *SPCU =
+        static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
+    DIArray Subprograms = TheCU.getSubprograms();
+    for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
+      DISubprogram SP(Subprograms.getElement(i));
+      if (DIE *D = SPCU->getDIE(SP))
+        SPCU->applySubprogramAttributes(SP, *D);
+    }
+  }
+}
+
+
 // Collect info for variables that were optimized out.
 void DwarfDebug::collectDeadVariables() {
   const Module *M = MMI->getModule();
@@ -846,6 +865,8 @@ void DwarfDebug::collectDeadVariables() {
 void DwarfDebug::finalizeModuleInfo() {
   // Collect info for variables that were optimized out.
   collectDeadVariables();
+
+  finishSubprogramDefinitions();
 
   // Handle anything that needs to be done on a per-unit basis after
   // all other generation.

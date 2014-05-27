@@ -389,6 +389,8 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Collect info for variables that were optimized out.
   void collectDeadVariables();
 
+  void finishSubprogramDefinitions();
+
   /// \brief Finish off debug information after all functions have been
   /// processed.
   void finalizeModuleInfo();

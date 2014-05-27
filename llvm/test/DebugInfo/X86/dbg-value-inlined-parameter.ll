@@ -9,9 +9,9 @@
 ; incorrect. They should be separate
 ; CHECK: [[ABS:.*]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_name {{.*}} "foo"
-; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_high_pc
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_name {{.*}} "foo"
 ; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
 ; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
 ; CHECK: [[ABS_NUMS:.*]]:  DW_TAG_formal_parameter

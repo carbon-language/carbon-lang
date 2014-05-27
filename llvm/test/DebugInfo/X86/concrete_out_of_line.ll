@@ -34,17 +34,16 @@
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS:0x........]]}
 
 ; CHECK: [[D1_ABS]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
 ; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
-; CHECK-NEXT:     DW_AT_inline
-; CHECK-NOT:     DW_AT_inline
-; CHECK-NOT: DW_TAG
+; CHECK-NOT:     DW_AT
 ; CHECK: [[D1_THIS_ABS:0x........]]: DW_TAG_formal_parameter
 ; CHECK: [[D2_ABS]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
 ; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
-; CHECK-NEXT:     DW_AT_inline
-; CHECK-NOT:     DW_AT_inline
+; CHECK-NOT:     DW_AT
 ; CHECK: DW_TAG
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.

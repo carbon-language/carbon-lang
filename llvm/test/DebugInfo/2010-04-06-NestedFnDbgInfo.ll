@@ -10,10 +10,10 @@
 ; Check that the subprogram inside the class definition has low_pc, only
 ; attached to the definition.
 ; CHECK: [[FOO_INL:0x........]]: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZZN1B2fnEvEN1A3fooEv"
-; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_low_pc
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name {{.*}} "_ZZN1B2fnEvEN1A3fooEv"
 ; And just double check that there's no out of line definition that references
 ; this subprogram.
 ; CHECK-NOT: DW_AT_specification {{.*}} {[[FOO_INL]]}
