@@ -802,6 +802,8 @@ void ASTDumper::dumpDecl(const Decl *D) {
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
     if (ND->isHidden())
       OS << " hidden";
+  if (D->isImplicit())
+    OS << " implicit";
 
   bool HasAttrs = D->hasAttrs();
   const FullComment *Comment =

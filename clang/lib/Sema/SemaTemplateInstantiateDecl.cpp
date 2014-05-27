@@ -423,6 +423,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D,
       Var->setNRVOVariable(true);
   }
 
+  Var->setImplicit(D->isImplicit());
+
   return Var;
 }
 
