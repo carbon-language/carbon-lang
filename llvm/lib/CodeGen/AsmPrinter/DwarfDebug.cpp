@@ -314,7 +314,7 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
 // scope then create and insert DIEs for these variables.
 DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
                                           DISubprogram SP) {
-  DIE *SPDie = SPCU.getDIE(SP);
+  DIE *SPDie = SPCU.getOrCreateSubprogramDIE(SP);
 
   assert(SPDie && "Unable to find subprogram DIE!");
 
@@ -525,15 +525,18 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   DISubprogram SP(Scope->getScopeNode());
 
-  if (!ProcessedSPNodes.insert(SP))
+  DIE *&AbsDef = AbstractSPDies[SP];
+  if (AbsDef)
     return;
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
   DwarfCompileUnit &SPCU = *SPMap[SP];
-  DIE *AbsDef = SPCU.getDIE(SP);
-  assert(AbsDef);
-  AbstractSPDies.insert(std::make_pair(SP, AbsDef));
+  AbsDef = SPCU.getOrCreateSubprogramDIE(SP);
+
+  if (!ProcessedSPNodes.insert(SP))
+    return;
+
   SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   createAndAddScopeChildren(SPCU, Scope, *AbsDef);
 }
@@ -781,7 +784,7 @@ void DwarfDebug::beginModule() {
       CU.createGlobalVariableDIE(DIGlobalVariable(GVs.getElement(i)));
     DIArray SPs = CUNode.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-      constructSubprogramDIE(CU, SPs.getElement(i));
+      SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
     DIArray EnumTypes = CUNode.getEnumTypes();
     for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
       CU.getOrCreateTypeDIE(EnumTypes.getElement(i));
@@ -818,8 +821,17 @@ void DwarfDebug::finishSubprogramDefinitions() {
     DIArray Subprograms = TheCU.getSubprograms();
     for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
       DISubprogram SP(Subprograms.getElement(i));
-      if (DIE *D = SPCU->getDIE(SP))
-        SPCU->applySubprogramAttributes(SP, *D);
+      // Perhaps the subprogram is in another CU (such as due to comdat
+      // folding, etc), in which case ignore it here.
+      if (SPMap[SP] != SPCU)
+        continue;
+      DIE *D = SPCU->getDIE(SP);
+      if (!D)
+        // Lazily construct the subprogram if we didn't see either concrete or
+        // inlined versions during codegen.
+        D = SPCU->getOrCreateSubprogramDIE(SP);
+      SPCU->applySubprogramAttributes(SP, *D);
+      SPCU->addGlobalName(SP.getName(), *D, resolve(SP.getContext()));
     }
   }
 }
@@ -863,10 +875,10 @@ void DwarfDebug::collectDeadVariables() {
 }
 
 void DwarfDebug::finalizeModuleInfo() {
+  finishSubprogramDefinitions();
+
   // Collect info for variables that were optimized out.
   collectDeadVariables();
-
-  finishSubprogramDefinitions();
 
   // Handle anything that needs to be done on a per-unit basis after
   // all other generation.

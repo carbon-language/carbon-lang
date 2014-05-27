@@ -5,6 +5,11 @@
 ; rdar://problem/9279956
 ; test that the DW_AT_location of self is at ( fbreg +{{[0-9]+}}, deref, +{{[0-9]+}} )
 
+; CHECK: [[A:.*]]:   DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_APPLE_objc_complete_type
+; CHECK-NEXT: DW_AT_name{{.*}}"A"
+
+; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
@@ -32,9 +37,6 @@
 ; 0x91 = DW_OP_fbreg
 ; CHECK: DW_AT_location{{.*}}91 {{[0-9]+}} 06 23 {{[0-9]+}} )
 
-; CHECK: [[A:.*]]:   DW_TAG_structure_type
-; CHECK-NEXT: DW_AT_APPLE_objc_complete_type
-; CHECK-NEXT: DW_AT_name{{.*}}"A"
 ; CHECK: [[APTR]]:   DW_TAG_pointer_type
 ; CHECK-NEXT: {[[A]]}
 

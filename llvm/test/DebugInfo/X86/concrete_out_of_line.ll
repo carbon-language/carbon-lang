@@ -14,6 +14,19 @@
 ; CHECK: [[RELEASE_DECL:0x........]]:  DW_TAG_subprogram
 ; CHECK: [[DTOR_DECL:0x........]]:  DW_TAG_subprogram
 
+; CHECK: [[D2_ABS:.*]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_inline
+; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D2
+; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
+; CHECK-NOT:      DW_AT
+; CHECK: DW_TAG
+; CHECK: [[D1_ABS:.*]]: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_inline
+; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D1
+; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
+; CHECK-NOT:     DW_AT
+; CHECK: [[D1_THIS_ABS:.*]]: DW_TAG_formal_parameter
+
 ; CHECK: [[RELEASE:0x........]]: DW_TAG_subprogram
 ; CHECK:     DW_AT_specification {{.*}} {[[RELEASE_DECL]]}
 ; CHECK: DW_TAG_formal_parameter
@@ -27,28 +40,14 @@
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS:0x........]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS:0x........]]}
-
-; CHECK: [[D1_ABS]]: DW_TAG_subprogram
-; CHECK-NEXT:     DW_AT_inline
-; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
-; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
-; CHECK-NOT:     DW_AT
-; CHECK: [[D1_THIS_ABS:0x........]]: DW_TAG_formal_parameter
-; CHECK: [[D2_ABS]]: DW_TAG_subprogram
-; CHECK-NEXT:     DW_AT_inline
-; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
-; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
-; CHECK-NOT:     DW_AT
-; CHECK: DW_TAG
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS]]}
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.
 
-; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
 ; CHECK: DW_TAG_formal_parameter

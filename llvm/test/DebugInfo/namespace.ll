@@ -16,18 +16,6 @@
 ; CHECK: [[I:0x[0-9a-f]*]]:{{ *}}DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name{{.*}}= "i"
 ; CHECK-NOT: NULL
-; CHECK: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name{{.*}}= "f1"
-; CHECK: [[FUNC1:0x[0-9a-f]*]]:{{ *}}DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name{{.*}}= "f1"
-; CHECK: NULL
-; CHECK-NOT: NULL
 ; CHECK: [[FOO:0x[0-9a-f]*]]:{{ *}}DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name{{.*}}= "foo"
 ; CHECK-NEXT: DW_AT_declaration
@@ -35,7 +23,16 @@
 ; CHECK: [[BAR:0x[0-9a-f]*]]:{{ *}}DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name{{.*}}= "bar"
 ; CHECK: NULL
-; CHECK: NULL
+; CHECK: [[FUNC1:.*]]: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "f1"
+; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}= "f1"
 ; CHECK: NULL
 
 ; CHECK-NOT: NULL
@@ -46,6 +43,13 @@
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x08)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
 ; CHECK: NULL
+; CHECK-NOT: NULL
+
+; CHECK: DW_TAG_imported_module
+; Same bug as above, this should be F2, not F1
+; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x0b)
+; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 ; CHECK-NOT: NULL
 
 ; CHECK: DW_TAG_subprogram
@@ -99,13 +103,7 @@
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
 ; CHECK: NULL
 ; CHECK: NULL
-; CHECK-NOT: NULL
-
-; CHECK: DW_TAG_imported_module
-; Same bug as above, this should be F2, not F1
-; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x0b)
-; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
+; CHECK: NULL
 
 ; CHECK: file_names[  [[F1]]]{{.*}}debug-info-namespace.cpp
 ; CHECK: file_names[  [[F2]]]{{.*}}foo.cpp

@@ -13,6 +13,16 @@
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "a"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK: DW_TAG_unspecified_parameters
+;
+; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "b"
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_formal_parameter
@@ -21,16 +31,6 @@
 ;
 ; Variadic C++ member function.
 ; struct A { void a(int c, ...); }
-;
-; CHECK: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name {{.*}} "a"
-; CHECK-NOT: DW_TAG
-; CHECK: DW_TAG_formal_parameter
-; CHECK-NOT: DW_TAG
-; CHECK: DW_TAG_formal_parameter
-; CHECK-NOT: DW_TAG
-; CHECK: DW_TAG_unspecified_parameters
 ;
 ; Variadic function pointer.
 ; void (*fptr)(int, ...);

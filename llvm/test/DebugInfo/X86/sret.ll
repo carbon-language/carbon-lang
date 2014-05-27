@@ -3,8 +3,8 @@
 
 ; Based on the debuginfo-tests/sret.cpp code.
 
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0xc68148e4333befda)
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0xc68148e4333befda)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0x72aabf538392d298)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8] (0x72aabf538392d298)
 
 %class.A = type { i32 (...)**, i32 }
 %class.B = type { i8 }

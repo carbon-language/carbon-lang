@@ -22,12 +22,6 @@
 ;     return A().getFoo();
 ; }
 ;
-; CHECK:      DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_Z3bazv"
-; CHECK:      DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
 ; CHECK:      DW_TAG_class_type
 ; CHECK-NEXT:   DW_AT_name {{.*}} "A"
 ; CHECK-NOT:  DW_TAG
@@ -39,6 +33,12 @@
 ; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1A6getFooEv"
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "getFoo"
+; CHECK:      DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_Z3bazv"
+; CHECK:      DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
 
 ; getFoo and A may only appear once.
 ; CHECK-NOT:  {{(getFoo)|("A")}}
