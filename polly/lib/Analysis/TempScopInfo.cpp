@@ -172,8 +172,7 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
 
   if (!IsAffine && PollyDelinearize && AF) {
     const SCEV *ElementSize = SE->getElementSize(Inst);
-    const SCEV *Remainder =
-        AF->delinearize(*SE, Subscripts, Sizes, ElementSize);
+    AF->delinearize(*SE, Subscripts, Sizes, ElementSize);
     int NSubs = Subscripts.size();
 
     if (NSubs > 0) {
@@ -181,7 +180,6 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
       // dimension" and the remainder of the delinearization.
       Subscripts[NSubs - 1] =
           SE->getMulExpr(Subscripts[NSubs - 1], Sizes[NSubs - 1]);
-      Subscripts[NSubs - 1] = SE->getAddExpr(Subscripts[NSubs - 1], Remainder);
 
       IsAffine = true;
       for (int i = 0; i < NSubs; ++i)
