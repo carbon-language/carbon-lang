@@ -80,6 +80,7 @@ static const char *const kAsanUnregisterGlobalsName =
 static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
 static const char *const kAsanInitName = "__asan_init_v3";
+static const char *const kAsanCovModuleInitName = "__sanitizer_cov_module_init";
 static const char *const kAsanCovName = "__sanitizer_cov";
 static const char *const kAsanPtrCmp = "__sanitizer_ptr_cmp";
 static const char *const kAsanPtrSub = "__sanitizer_ptr_sub";
@@ -408,6 +409,7 @@ class AddressSanitizerModule : public ModulePass {
   Function *AsanUnpoisonGlobals;
   Function *AsanRegisterGlobals;
   Function *AsanUnregisterGlobals;
+  Function *AsanCovModuleInit;
 };
 
 // Stack poisoning does not play well with exception handling.
@@ -990,6 +992,10 @@ void AddressSanitizerModule::initializeCallbacks(Module &M) {
       kAsanUnregisterGlobalsName,
       IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
   AsanUnregisterGlobals->setLinkage(Function::ExternalLinkage);
+  AsanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanCovModuleInitName,
+      IRB.getVoidTy(), IntptrTy, NULL));
+  AsanCovModuleInit->setLinkage(Function::ExternalLinkage);
 }
 
 // This function replaces all global variables with new variables that have
@@ -1020,6 +1026,14 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
       GlobalsToChange.push_back(G);
   }
 
+  Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
+  assert(CtorFunc);
+  IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
+
+  Function *CovFunc = M.getFunction(kAsanCovName);
+  int nCov = CovFunc ? CovFunc->getNumUses() : 0;
+  IRB.CreateCall(AsanCovModuleInit, ConstantInt::get(IntptrTy, nCov));
+
   size_t n = GlobalsToChange.size();
   if (n == 0) return false;
 
@@ -1035,10 +1049,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
                                                IntptrTy, IntptrTy,
                                                IntptrTy, IntptrTy, NULL);
   SmallVector<Constant *, 16> Initializers(n);
-
-  Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
-  assert(CtorFunc);
-  IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
 
   bool HasDynamicallyInitializedGlobals = false;
 

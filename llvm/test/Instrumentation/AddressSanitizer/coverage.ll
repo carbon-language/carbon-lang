@@ -16,6 +16,7 @@ entry:
   if.end:                                           ; preds = %entry, %if.then
   ret void
 }
+
 ; CHECK1-LABEL: define void @foo
 ; CHECK1: %0 = load atomic i8* @__asan_gen_cov_foo monotonic, align 1
 ; CHECK1: %1 = icmp eq i8 0, %0
@@ -24,9 +25,20 @@ entry:
 ; CHECK1-NOT: call void @__sanitizer_cov
 ; CHECK1: store atomic i8 1, i8* @__asan_gen_cov_foo monotonic, align 1
 
+; CHECK1-LABEL: define internal void @asan.module_ctor
+; CHECK1-NOT: ret
+; CHECK1: call void @__sanitizer_cov_module_init(i64 1)
+; CHECK1: ret
+
+
 ; CHECK2-LABEL: define void @foo
 ; CHECK2: call void @__sanitizer_cov
 ; CHECK2: call void @__sanitizer_cov
 ; CHECK2: call void @__sanitizer_cov
 ; CHECK2-NOT: call void @__sanitizer_cov
 ; CHECK2: ret void
+
+; CHECK2-LABEL: define internal void @asan.module_ctor
+; CHECK2-NOT: ret
+; CHECK2: call void @__sanitizer_cov_module_init(i64 3)
+; CHECK2: ret
