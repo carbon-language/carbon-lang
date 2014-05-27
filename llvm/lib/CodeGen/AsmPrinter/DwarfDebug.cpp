@@ -1364,6 +1364,17 @@ void DwarfDebug::identifyScopeMarkers() {
   }
 }
 
+static DebugLoc findPrologueEndLoc(const MachineFunction *MF) {
+  // First known non-DBG_VALUE and non-frame setup location marks
+  // the beginning of the function body.
+  for (const auto &MBB : *MF)
+    for (const auto &MI : MBB)
+      if (!MI.isDebugValue() && !MI.getFlag(MachineInstr::FrameSetup) &&
+          !MI.getDebugLoc().isUnknown())
+        return MI.getDebugLoc();
+  return DebugLoc();
+}
+
 // Gather pre-function debug information.  Assumes being called immediately
 // after the function entry point has been emitted.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
@@ -1401,18 +1412,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
-  // Collect user variables, find the end of the prologue.
-  for (const auto &MBB : *MF) {
-    for (const auto &MI : MBB) {
-      if (!MI.isDebugValue() && !MI.getFlag(MachineInstr::FrameSetup) &&
-          PrologEndLoc.isUnknown() && !MI.getDebugLoc().isUnknown()) {
-        // First known non-DBG_VALUE and non-frame setup location marks
-        // the beginning of the function body.
-        PrologEndLoc = MI.getDebugLoc();
-      }
-    }
-  }
-
   // Calculate history for local variables.
   calculateDbgValueHistory(MF, Asm->TM.getRegisterInfo(), DbgValues);
 
@@ -1441,6 +1440,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   PrevLabel = FunctionBeginSym;
 
   // Record beginning of function.
+  PrologEndLoc = findPrologueEndLoc(MF);
   if (!PrologEndLoc.isUnknown()) {
     DebugLoc FnStartDL =
         PrologEndLoc.getFnDebugLoc(MF->getFunction()->getContext());
