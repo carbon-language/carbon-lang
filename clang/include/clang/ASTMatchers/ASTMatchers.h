@@ -3505,14 +3505,14 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesNamespace,
 ///
 /// \c Decl has pointer identity in the AST.
 inline internal::Matcher<Decl> equalsNode(const Decl *Node) {
-  return makeMatcher(new internal::EqualsNodeMatcher<Decl>(Node));
+  return internal::makeMatcher(new internal::EqualsNodeMatcher<Decl>(Node));
 }
 /// \brief Matches if a node equals another node.
 ///
 /// \c Stmt has pointer identity in the AST.
 ///
 inline internal::Matcher<Stmt> equalsNode(const Stmt *Node) {
-  return makeMatcher(new internal::EqualsNodeMatcher<Stmt>(Node));
+  return internal::makeMatcher(new internal::EqualsNodeMatcher<Stmt>(Node));
 }
 
 /// @}
