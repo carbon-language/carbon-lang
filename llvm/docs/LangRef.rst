@@ -3201,7 +3201,7 @@ The '``llvm.global_dtors``' Global Variable
 The ``@llvm.global_dtors`` array contains a list of destructor
 functions, priorities, and an optional associated global or function.
 The functions referenced by this array will be called in descending
-order of priority (i.e. highest first) when the module is loaded. The
+order of priority (i.e. highest first) when the module is unloaded. The
 order of functions with the same priority is not defined.
 
 If the third field is present, non-null, and points to a global variable
