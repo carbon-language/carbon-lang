@@ -43,6 +43,15 @@ sections:
     address:         0x0000000000000130
     content:         [ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                        0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00 ]
+  - segment:         __TEXT
+    section:         __ustring
+    type:            S_REGULAR
+    attributes:      [  ]
+    alignment:       0
+    address:         0x0000000000000100
+    content:         [ 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 
+                       0x6F, 0x00, 0x00, 0x00, 0x74, 0x00, 0x68, 0x00, 
+                       0x65, 0x00, 0x72, 0x00, 0x65, 0x00, 0x00, 0x00 ]
 ...
 
 
@@ -56,6 +65,12 @@ sections:
 # CHECK:  - scope:           hidden
 # CHECK:    type:            c-string
 # CHECK:    content:         [ 77, 6F, 72, 6C, 64, 00 ]
+# CHECK:  - scope:           hidden
+# CHECK:    type:            utf16-string
+# CHECK:    content:         [ 68, 00, 65, 00, 6C, 00, 6C, 00, 6F, 00, 00, 00 ]
+# CHECK:  - scope:           hidden
+# CHECK:    type:            utf16-string
+# CHECK:    content:         [ 74, 00, 68, 00, 65, 00, 72, 00, 65, 00, 00, 00 ]
 # CHECK:  - scope:           hidden
 # CHECK:    type:            const-4-byte
 # CHECK:    content:         [ 01, 02, 03, 04 ]

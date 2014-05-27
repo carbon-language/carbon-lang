@@ -113,6 +113,23 @@ static error_code processSection(MachOFile &file, const Section &section,
   unsigned offset = 0;
   switch (section.type) {
   case llvm::MachO::S_REGULAR:
+    if (section.segmentName.equals("__TEXT") && 
+        section.sectionName.equals("__ustring")) {
+      if ((section.content.size() % 4) != 0)
+        return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName 
+                                     + " has a size that is not even"); 
+      for (size_t i = 0, e = section.content.size(); i != e; i +=2) {
+        if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
+          unsigned size = i - offset + 2;
+          ArrayRef<uint8_t> utf16Content = section.content.slice(offset, size);
+          file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                              DefinedAtom::typeUTF16String, utf16Content, 
+                              copyRefs);
+          offset = i + 2;
+        }
+      }
+    }
   case llvm::MachO::S_COALESCED:
   case llvm::MachO::S_ZEROFILL:
     // These sections are broken in to atoms based on symbols.
