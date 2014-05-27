@@ -2430,9 +2430,11 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
 ///   matches 'for (;;) {}'
 /// with compoundStmt()
 ///   matching '{}'
-AST_POLYMORPHIC_MATCHER_P(
-    hasBody, AST_POLYMORPHIC_SUPPORTED_TYPES_3(DoStmt, ForStmt, WhileStmt),
-    internal::Matcher<Stmt>, InnerMatcher) {
+AST_POLYMORPHIC_MATCHER_P(hasBody,
+                          AST_POLYMORPHIC_SUPPORTED_TYPES_4(DoStmt, ForStmt,
+                                                            WhileStmt,
+                                                            CXXForRangeStmt),
+                          internal::Matcher<Stmt>, InnerMatcher) {
   const Stmt *const Statement = Node.getBody();
   return (Statement != nullptr &&
           InnerMatcher.matches(*Statement, Finder, Builder));

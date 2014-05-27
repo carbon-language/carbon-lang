@@ -2432,6 +2432,8 @@ TEST(HasBody, FindsBodyOfForWhileDoLoops) {
               whileStmt(hasBody(compoundStmt()))));
   EXPECT_TRUE(matches("void f() { do {} while(true); }",
               doStmt(hasBody(compoundStmt()))));
+  EXPECT_TRUE(matches("void f() { int p[2]; for (auto x : p) {} }",
+              forRangeStmt(hasBody(compoundStmt()))));
 }
 
 TEST(HasAnySubstatement, MatchesForTopLevelCompoundStatement) {

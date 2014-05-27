@@ -631,6 +631,15 @@ Example matches x()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('exprWithCleanups0')"><a name="exprWithCleanups0Anchor">exprWithCleanups</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ExprWithCleanups.html">ExprWithCleanups</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="exprWithCleanups0"><pre>Matches expressions that introduce cleanups to be run at the end
+of the sub-expression's evaluation.
+
+Example matches std::string()
+  const std::string str = std::string();
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('floatLiteral0')"><a name="floatLiteral0Anchor">floatLiteral</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FloatingLiteral.html">FloatingLiteral</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="floatLiteral0"><pre>Matches float literals of all sizes encodings, e.g.
 1.0, 1.0f, 1.0L and 1e10.
@@ -1357,12 +1366,6 @@ Example matches f(0, 0) (matcher = callExpr(argumentCountIs(2)))
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructorDecl.html">CXXConstructorDecl</a>&gt;</td><td class="name" onclick="toggle('isImplicit0')"><a name="isImplicit0Anchor">isImplicit</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="isImplicit0"><pre>Matches a constructor declaration that has been implicitly added
-by the compiler (eg. implicit defaultcopy constructors).
-</pre></td></tr>
-
-
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXCtorInitializer.html">CXXCtorInitializer</a>&gt;</td><td class="name" onclick="toggle('isWritten0')"><a name="isWritten0Anchor">isWritten</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isWritten0"><pre>Matches a constructor initializer if it is explicitly written in
 code (as opposed to implicitly added by the compiler).
@@ -1602,6 +1605,12 @@ and reference to that variable declaration within a compound statement.
 <tr><td colspan="4" class="doc" id="equalsNode0"><pre>Matches if a node equals another node.
 
 Decl has pointer identity in the AST.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isImplicit0')"><a name="isImplicit0Anchor">isImplicit</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isImplicit0"><pre>Matches a declaration that has been implicitly added
+by the compiler (eg. implicit defaultcopy constructors).
 </pre></td></tr>
 
 
@@ -2393,12 +2402,35 @@ with withInitializer matching (1)
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXForRangeStmt.html">CXXForRangeStmt</a>&gt;</td><td class="name" onclick="toggle('hasBody3')"><a name="hasBody3Anchor">hasBody</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasBody3"><pre>Matches a 'for', 'while', or 'do while' statement that has
+a given body.
+
+Given
+  for (;;) {}
+hasBody(compoundStmt())
+  matches 'for (;;) {}'
+with compoundStmt()
+  matching '{}'
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXForRangeStmt.html">CXXForRangeStmt</a>&gt;</td><td class="name" onclick="toggle('hasLoopVariable0')"><a name="hasLoopVariable0Anchor">hasLoopVariable</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="hasLoopVariable0"><pre>Matches the initialization statement of a for loop.
 
 Example:
     forStmt(hasLoopVariable(anything()))
 matches 'int x' in
+    for (int x : a) { }
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXForRangeStmt.html">CXXForRangeStmt</a>&gt;</td><td class="name" onclick="toggle('hasRangeInit0')"><a name="hasRangeInit0Anchor">hasRangeInit</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasRangeInit0"><pre>Matches the range initialization statement of a for loop.
+
+Example:
+    forStmt(hasRangeInit(anything()))
+matches 'a' in
     for (int x : a) { }
 </pre></td></tr>
 
