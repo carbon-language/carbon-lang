@@ -14,21 +14,21 @@ int main() {
   // CHECK: {{.*ERROR: AddressSanitizer: heap-use-after-free on address}}
   // CHECK:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
   // CHECK: {{WRITE of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in main .*use-after-free-right.cc:13}}
+  // CHECK: {{    #0 0x.* in main .*use-after-free-right.cc:}}[[@LINE-4]]
   // CHECK: {{0x.* is located 0 bytes inside of 1-byte region .0x.*,0x.*}}
   // CHECK: {{freed by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*free}}
-  // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:12}}
+  // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:}}[[@LINE-10]]
 
   // CHECK-Darwin: {{    #0 0x.* in wrap_free}}
-  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:12}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:}}[[@LINE-13]]
 
   // CHECK: {{previously allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*malloc}}
-  // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:11}}
+  // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:}}[[@LINE-19]]
 
   // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:11}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:}}[[@LINE-22]]
 }

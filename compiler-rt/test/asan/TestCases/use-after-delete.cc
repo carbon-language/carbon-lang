@@ -11,17 +11,17 @@ int main() {
   // CHECK: {{.*ERROR: AddressSanitizer: heap-use-after-free on address}}
   // CHECK:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in main .*use-after-delete.cc:10}}
+  // CHECK: {{    #0 0x.* in main .*use-after-delete.cc:}}[[@LINE-4]]
   // CHECK: {{0x.* is located 5 bytes inside of 10-byte region .0x.*,0x.*}}
   // CHECK: {{freed by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in operator delete\[\]}}
-  // CHECK-Linux: {{    #1 0x.* in main .*use-after-delete.cc:9}}
+  // CHECK-Linux: {{    #1 0x.* in main .*use-after-delete.cc:}}[[@LINE-10]]
 
   // CHECK: {{previously allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in operator new\[\]}}
-  // CHECK-Linux: {{    #1 0x.* in main .*use-after-delete.cc:8}}
+  // CHECK-Linux: {{    #1 0x.* in main .*use-after-delete.cc:}}[[@LINE-16]]
 
   // CHECK: Shadow byte legend (one shadow byte represents 8 application bytes):
   // CHECK: Global redzone:
