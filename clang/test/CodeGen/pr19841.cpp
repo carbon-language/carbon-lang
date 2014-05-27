@@ -22,7 +22,7 @@ A::A() {
       ? b
       : _highlightColorTableVGA;
 // Make sure the PHI value is casted correctly to the PHI type
-// CHECK: %{{.*}} = phi [0 x i8]* [ bitcast ([1 x i8]* @_ZN6Common1A1bE to [0 x i8]*), %cond.true ], [ %{{.*}}, %cond.false ]
+// CHECK: %{{.*}} = phi [0 x i8]* [ bitcast ([1 x i8]* @_ZN6Common1A1bE to [0 x i8]*), %{{.*}} ], [ %{{.*}}, %{{.*}} ]
 }
 const unsigned char A::b[] = { 0 };
 }
