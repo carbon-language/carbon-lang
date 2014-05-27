@@ -7131,9 +7131,19 @@ public:
 
   void visitAddExpr(const SCEVAddExpr *Numerator) {
     SmallVector<const SCEV *, 2> Qs, Rs;
+    Type *Ty = Denominator->getType();
+
     for (const SCEV *Op : Numerator->operands()) {
       const SCEV *Q, *R;
       divide(SE, Op, Denominator, &Q, &R);
+
+      // Bail out if types do not match.
+      if (Ty != Q->getType() || Ty != R->getType()) {
+        Quotient = Zero;
+        Remainder = Numerator;
+        return;
+      }
+
       Qs.push_back(Q);
       Rs.push_back(R);
     }
@@ -7150,9 +7160,17 @@ public:
 
   void visitMulExpr(const SCEVMulExpr *Numerator) {
     SmallVector<const SCEV *, 2> Qs;
+    Type *Ty = Denominator->getType();
 
     bool FoundDenominatorTerm = false;
     for (const SCEV *Op : Numerator->operands()) {
+      // Bail out if types do not match.
+      if (Ty != Op->getType()) {
+        Quotient = Zero;
+        Remainder = Numerator;
+        return;
+      }
+
       if (FoundDenominatorTerm) {
         Qs.push_back(Op);
         continue;
@@ -7165,6 +7183,14 @@ public:
         Qs.push_back(Op);
         continue;
       }
+
+      // Bail out if types do not match.
+      if (Ty != Q->getType()) {
+        Quotient = Zero;
+        Remainder = Numerator;
+        return;
+      }
+
       FoundDenominatorTerm = true;
       Qs.push_back(Q);
     }
