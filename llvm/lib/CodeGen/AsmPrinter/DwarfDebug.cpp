@@ -1153,12 +1153,10 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (Processed.count(DV))
       continue;
 
-    // History contains relevant DBG_VALUE instructions for DV and instructions
-    // clobbering it.
-    const SmallVectorImpl<const MachineInstr *> &History = I.second;
-    if (History.empty())
+    // Instruction ranges, specifying where DV is accessible.
+    const auto &Ranges = I.second;
+    if (Ranges.empty())
       continue;
-    const MachineInstr *MInsn = History.front();
 
     LexicalScope *Scope = nullptr;
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
@@ -1175,6 +1173,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       continue;
 
     Processed.insert(DV);
+    const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
     DbgVariable *RegVar = new DbgVariable(DV, AbsVar, this);
@@ -1183,9 +1182,8 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (AbsVar)
       AbsVar->setMInsn(MInsn);
 
-    // Simplify ranges that are fully coalesced.
-    if (History.size() <= 1 ||
-        (History.size() == 2 && MInsn->isIdenticalTo(History.back()))) {
+    // Check if the first DBG_VALUE is valid for the rest of the function.
+    if (Ranges.size() == 1 && Ranges.front().second == nullptr) {
       RegVar->setMInsn(MInsn);
       continue;
     }
@@ -1198,42 +1196,31 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     LocList.Label =
         Asm->GetTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
     SmallVector<DebugLocEntry, 4> &DebugLoc = LocList.List;
-    for (SmallVectorImpl<const MachineInstr *>::const_iterator
-             HI = History.begin(),
-             HE = History.end();
-         HI != HE; ++HI) {
-      const MachineInstr *Begin = *HI;
+    for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
+      const MachineInstr *Begin = I->first;
+      const MachineInstr *End = I->second;
       assert(Begin->isDebugValue() && "Invalid History entry");
 
-      // Check if DBG_VALUE is truncating a range.
+      // Check if a variable is unaccessible in this range.
       if (Begin->getNumOperands() > 1 && Begin->getOperand(0).isReg() &&
           !Begin->getOperand(0).getReg())
         continue;
 
-      // Compute the range for a register location.
-      const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
-      const MCSymbol *SLabel = nullptr;
+      const MCSymbol *StartLabel = getLabelBeforeInsn(Begin);
+      assert(StartLabel && "Forgot label before DBG_VALUE starting a range!");
 
-      if (HI + 1 == HE)
-        // If Begin is the last instruction in History then its value is valid
-        // until the end of the function.
-        SLabel = FunctionEndSym;
-      else {
-        const MachineInstr *End = HI[1];
-        DEBUG(dbgs() << "DotDebugLoc Pair:\n"
-                     << "\t" << *Begin << "\t" << *End << "\n");
-        if (End->isDebugValue() && End->getDebugVariable() == DV)
-          SLabel = getLabelBeforeInsn(End);
-        else {
-          // End is clobbering the range.
-          SLabel = getLabelAfterInsn(End);
-          assert(SLabel && "Forgot label after clobber instruction");
-          ++HI;
-        }
-      }
+      const MCSymbol *EndLabel;
+      if (End != nullptr)
+        EndLabel = getLabelAfterInsn(End);
+      else if (std::next(I) == Ranges.end())
+        EndLabel = FunctionEndSym;
+      else
+        EndLabel = getLabelBeforeInsn(std::next(I)->first);
+      assert(EndLabel && "Forgot label after instruction ending a range!");
 
-      // The value is valid until the next DBG_VALUE or clobber.
-      DebugLocEntry Loc(FLabel, SLabel, getDebugLocValue(Begin), TheCU);
+      DEBUG(dbgs() << "DotDebugLoc Pair:\n"
+                   << "\t" << *Begin << "\t" << *End << "\n");
+      DebugLocEntry Loc(StartLabel, EndLabel, getDebugLocValue(Begin), TheCU);
       if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc))
         DebugLoc.push_back(std::move(Loc));
     }
@@ -1416,9 +1403,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   calculateDbgValueHistory(MF, Asm->TM.getRegisterInfo(), DbgValues);
 
   // Request labels for the full history.
-  for (auto &I : DbgValues) {
-    const SmallVectorImpl<const MachineInstr *> &History = I.second;
-    if (History.empty())
+  for (const auto &I : DbgValues) {
+    const auto &Ranges = I.second;
+    if (Ranges.empty())
       continue;
 
     // The first mention of a function argument gets the FunctionBeginSym
@@ -1426,13 +1413,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     DIVariable DV(I.first);
     if (DV.isVariable() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DV.getContext()).describes(MF->getFunction()))
-      LabelsBeforeInsn[History.front()] = FunctionBeginSym;
+      LabelsBeforeInsn[Ranges.front().first] = FunctionBeginSym;
 
-    for (const MachineInstr *MI : History) {
-      if (MI->isDebugValue() && MI->getDebugVariable() == DV)
-        requestLabelBeforeInsn(MI);
-      else
-        requestLabelAfterInsn(MI);
+    for (const auto &Range : Ranges) {
+      requestLabelBeforeInsn(Range.first);
+      if (Range.second)
+        requestLabelAfterInsn(Range.second);
     }
   }
 

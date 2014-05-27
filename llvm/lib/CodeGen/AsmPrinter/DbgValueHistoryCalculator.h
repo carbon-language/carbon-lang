@@ -20,12 +20,31 @@ class MachineInstr;
 class MDNode;
 class TargetRegisterInfo;
 
-// For each user variable, keep a list of DBG_VALUE instructions for it
-// in the order of appearance. The list can also contain another
-// instructions, which are assumed to clobber the previous DBG_VALUE.
-// The variables are listed in order of appearance.
-typedef MapVector<const MDNode *, SmallVector<const MachineInstr *, 4>>
-DbgValueHistoryMap;
+// For each user variable, keep a list of instruction ranges where this variable
+// is accessible. The variables are listed in order of appearance.
+class DbgValueHistoryMap {
+  // Each instruction range starts with a DBG_VALUE instruction, specifying the
+  // location of a variable, which is assumed to be valid until the end of the
+  // range. If end is not specified, location is valid until the start
+  // instruction of the next instruction range, or until the end of the
+  // function.
+  typedef std::pair<const MachineInstr *, const MachineInstr *> InstrRange;
+  typedef SmallVector<InstrRange, 4> InstrRanges;
+  typedef MapVector<const MDNode *, InstrRanges> InstrRangesMap;
+  InstrRangesMap VarInstrRanges;
+
+public:
+  void startInstrRange(const MDNode *Var, const MachineInstr &MI);
+  void endInstrRange(const MDNode *Var, const MachineInstr &MI);
+  // Returns register currently describing @Var. If @Var is currently
+  // unaccessible or is not described by a register, returns 0.
+  unsigned getRegisterForVar(const MDNode *Var) const;
+
+  bool empty() const { return VarInstrRanges.empty(); }
+  void clear() { VarInstrRanges.clear(); }
+  InstrRangesMap::const_iterator begin() const { return VarInstrRanges.begin(); }
+  InstrRangesMap::const_iterator end() const { return VarInstrRanges.end(); }
+};
 
 void calculateDbgValueHistory(const MachineFunction *MF,
                               const TargetRegisterInfo *TRI,
