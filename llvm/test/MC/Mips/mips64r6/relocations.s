@@ -23,6 +23,14 @@
 # CHECK-FIXUP: bc    bar        # encoding: [0b110010AA,A,A,A]
 # CHECK-FIXUP:                  #   fixup A - offset: 0,
 # CHECK-FIXUP:                      value: bar, kind: fixup_MIPS_PC26_S2
+# CHECK-FIXUP: aluipc $2, %pcrel_hi(bar)    # encoding: [0xec,0x5f,A,A]
+# CHECK-FIXUP:                              #   fixup A - offset: 0,
+# CHECK-FIXUP:                                  value: bar@PCREL_HI16,
+# CHECK-FIXUP:                                  kind: fixup_MIPS_PCHI16
+# CHECK-FIXUP: addiu $2, $2, %pcrel_lo(bar) # encoding: [0x24,0x42,A,A]
+# CHECK-FIXUP:                              #   fixup A - offset: 0,
+# CHECK-FIXUP:                                  value: bar@PCREL_LO16,
+# CHECK-FIXUP:                                  kind: fixup_MIPS_PCLO16
 #------------------------------------------------------------------------------
 # Check that the appropriate relocations were created.
 #------------------------------------------------------------------------------
@@ -33,6 +41,8 @@
 # CHECK-ELF:     0xC R_MIPS_PC21_S2 bar 0x0
 # CHECK-ELF:     0x10 R_MIPS_PC26_S2 bar 0x0
 # CHECK-ELF:     0x14 R_MIPS_PC26_S2 bar 0x0
+# CHECK-ELF:     0x18 R_MIPS_PCHI16 bar 0x0
+# CHECK-ELF:     0x1C R_MIPS_PCLO16 bar 0x0
 # CHECK-ELF: ]
 
   beqc  $5, $6, bar
@@ -41,3 +51,5 @@
   bnezc $9, bar
   balc  bar
   bc    bar
+  aluipc $2, %pcrel_hi(bar)
+  addiu  $2, $2, %pcrel_lo(bar)

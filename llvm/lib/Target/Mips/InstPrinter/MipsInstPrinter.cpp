@@ -166,6 +166,8 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   case MCSymbolRefExpr::VK_Mips_GOT_LO16:  OS << "%got_lo("; break;
   case MCSymbolRefExpr::VK_Mips_CALL_HI16: OS << "%call_hi("; break;
   case MCSymbolRefExpr::VK_Mips_CALL_LO16: OS << "%call_lo("; break;
+  case MCSymbolRefExpr::VK_Mips_PCREL_HI16: OS << "%pcrel_hi("; break;
+  case MCSymbolRefExpr::VK_Mips_PCREL_LO16: OS << "%pcrel_lo("; break;
   }
 
   OS << SRE->getSymbol();

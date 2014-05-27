@@ -56,6 +56,7 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case Mips::fixup_MICROMIPS_GOT_PAGE:
   case Mips::fixup_MICROMIPS_GOT_OFST:
   case Mips::fixup_MICROMIPS_GOT_DISP:
+  case Mips::fixup_MIPS_PCLO16:
     break;
   case Mips::fixup_Mips_PC16:
     // So far we are only using this type for branches.
@@ -80,6 +81,7 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case Mips::fixup_Mips_GOT_HI16:
   case Mips::fixup_Mips_CALL_HI16:
   case Mips::fixup_MICROMIPS_HI16:
+  case Mips::fixup_MIPS_PCHI16:
     // Get the 2nd 16-bits. Also add 1 if bit 15 is 1.
     Value = ((Value + 0x8000) >> 16) & 0xffff;
     break;
@@ -247,6 +249,8 @@ getFixupKindInfo(MCFixupKind Kind) const {
     { "fixup_Mips_CALL_LO16",    0,     16,   0 },
     { "fixup_MIPS_PC21_S2",      0,     21,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC26_S2",      0,     26,  MCFixupKindInfo::FKF_IsPCRel },
+    { "fixup_MIPS_PCHI16",       0,     16,  MCFixupKindInfo::FKF_IsPCRel },
+    { "fixup_MIPS_PCLO16",       0,     16,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MICROMIPS_26_S1",   0,     26,   0 },
     { "fixup_MICROMIPS_HI16",    0,     16,   0 },
     { "fixup_MICROMIPS_LO16",    0,     16,   0 },
@@ -306,6 +310,8 @@ getFixupKindInfo(MCFixupKind Kind) const {
     { "fixup_Mips_CALL_LO16",   16,     16,   0 },
     { "fixup_MIPS_PC21_S2",     11,     21,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC26_S2",      6,     26,  MCFixupKindInfo::FKF_IsPCRel },
+    { "fixup_MIPS_PCHI16",      16,     16,  MCFixupKindInfo::FKF_IsPCRel },
+    { "fixup_MIPS_PCLO16",      16,     16,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MICROMIPS_26_S1",   6,     26,   0 },
     { "fixup_MICROMIPS_HI16",   16,     16,   0 },
     { "fixup_MICROMIPS_LO16",   16,     16,   0 },

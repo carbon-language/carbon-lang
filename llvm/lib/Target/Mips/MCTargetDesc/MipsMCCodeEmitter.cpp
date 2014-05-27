@@ -480,6 +480,12 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
     case MCSymbolRefExpr::VK_Mips_CALL_LO16:
       FixupKind = Mips::fixup_Mips_CALL_LO16;
       break;
+    case MCSymbolRefExpr::VK_Mips_PCREL_HI16:
+      FixupKind = Mips::fixup_MIPS_PCHI16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_PCREL_LO16:
+      FixupKind = Mips::fixup_MIPS_PCLO16;
+      break;
     } // switch
 
     Fixups.push_back(MCFixup::Create(0, Expr, MCFixupKind(FixupKind)));

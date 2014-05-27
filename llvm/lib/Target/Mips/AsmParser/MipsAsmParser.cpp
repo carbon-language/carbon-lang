@@ -1982,6 +1982,8 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
           .Case("call_lo", MCSymbolRefExpr::VK_Mips_CALL_LO16)
           .Case("higher", MCSymbolRefExpr::VK_Mips_HIGHER)
           .Case("highest", MCSymbolRefExpr::VK_Mips_HIGHEST)
+          .Case("pcrel_hi", MCSymbolRefExpr::VK_Mips_PCREL_HI16)
+          .Case("pcrel_lo", MCSymbolRefExpr::VK_Mips_PCREL_LO16)
           .Default(MCSymbolRefExpr::VK_None);
 
   assert(VK != MCSymbolRefExpr::VK_None);

@@ -134,6 +134,12 @@ namespace Mips {
     // resulting in - R_MIPS_PC26_S2
     fixup_MIPS_PC26_S2,
 
+    // resulting in - R_MIPS_PCHI16
+    fixup_MIPS_PCHI16,
+
+    // resulting in - R_MIPS_PCLO16
+    fixup_MIPS_PCLO16,
+
     // resulting in - R_MICROMIPS_26_S1
     fixup_MICROMIPS_26_S1,
 
