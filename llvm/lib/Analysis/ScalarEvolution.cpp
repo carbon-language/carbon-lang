@@ -7211,82 +7211,31 @@ private:
 };
 }
 
-// Find the Greatest Common Divisor of A and B.
-static const SCEV *
-findGCD(ScalarEvolution &SE, const SCEV *A, const SCEV *B) {
-
-  if (const SCEVConstant *CA = dyn_cast<SCEVConstant>(A))
-    if (const SCEVConstant *CB = dyn_cast<SCEVConstant>(B))
-      return SE.getConstant(gcd(CA, CB));
-
-  const SCEV *One = SE.getConstant(A->getType(), 1);
-  if (isa<SCEVConstant>(A) && isa<SCEVUnknown>(B))
-    return One;
-  if (isa<SCEVUnknown>(A) && isa<SCEVConstant>(B))
-    return One;
-
-  const SCEV *Q, *R;
-  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(A)) {
-    SmallVector<const SCEV *, 2> Qs;
-    for (const SCEV *Op : M->operands())
-      Qs.push_back(findGCD(SE, Op, B));
-    return SE.getMulExpr(Qs);
-  }
-  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(B)) {
-    SmallVector<const SCEV *, 2> Qs;
-    for (const SCEV *Op : M->operands())
-      Qs.push_back(findGCD(SE, A, Op));
-    return SE.getMulExpr(Qs);
-  }
-
-  SCEVDivision::divide(SE, A, B, &Q, &R);
-  if (R->isZero())
-    return B;
-
-  SCEVDivision::divide(SE, B, A, &Q, &R);
-  if (R->isZero())
-    return A;
-
-  return One;
-}
-
-// Find the Greatest Common Divisor of all the SCEVs in Terms.
-static const SCEV *
-findGCD(ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Terms) {
-  assert(Terms.size() > 0 && "Terms vector is empty");
-
-  const SCEV *GCD = Terms[0];
-  for (const SCEV *T : Terms)
-    GCD = findGCD(SE, GCD, T);
-
-  return GCD;
-}
-
 static bool findArrayDimensionsRec(ScalarEvolution &SE,
                                    SmallVectorImpl<const SCEV *> &Terms,
                                    SmallVectorImpl<const SCEV *> &Sizes) {
-  // The GCD of all Terms is the dimension of the innermost dimension.
-  const SCEV *GCD = findGCD(SE, Terms);
+  int Last = Terms.size() - 1;
+  const SCEV *Step = Terms[Last];
 
   // End of recursion.
-  if (Terms.size() == 1) {
-    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(GCD)) {
+  if (Last == 0) {
+    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(Step)) {
       SmallVector<const SCEV *, 2> Qs;
       for (const SCEV *Op : M->operands())
         if (!isa<SCEVConstant>(Op))
           Qs.push_back(Op);
 
-      GCD = SE.getMulExpr(Qs);
+      Step = SE.getMulExpr(Qs);
     }
 
-    Sizes.push_back(GCD);
+    Sizes.push_back(Step);
     return true;
   }
 
   for (const SCEV *&Term : Terms) {
     // Normalize the terms before the next call to findArrayDimensionsRec.
     const SCEV *Q, *R;
-    SCEVDivision::divide(SE, Term, GCD, &Q, &R);
+    SCEVDivision::divide(SE, Term, Step, &Q, &R);
 
     // Bail out when GCD does not evenly divide one of the terms.
     if (!R->isZero())
@@ -7305,7 +7254,7 @@ static bool findArrayDimensionsRec(ScalarEvolution &SE,
     if (!findArrayDimensionsRec(SE, Terms, Sizes))
       return false;
 
-  Sizes.push_back(GCD);
+  Sizes.push_back(Step);
   return true;
 }
 
