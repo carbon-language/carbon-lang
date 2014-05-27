@@ -3504,15 +3504,15 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesNamespace,
 /// \brief Matches if a node equals another node.
 ///
 /// \c Decl has pointer identity in the AST.
-AST_MATCHER_P_OVERLOAD(Decl, equalsNode, Decl*, Other, 0) {
-  return &Node == Other;
+inline internal::Matcher<Decl> equalsNode(const Decl *Node) {
+  return makeMatcher(new internal::EqualsNodeMatcher<Decl>(Node));
 }
 /// \brief Matches if a node equals another node.
 ///
 /// \c Stmt has pointer identity in the AST.
 ///
-AST_MATCHER_P_OVERLOAD(Stmt, equalsNode, Stmt*, Other, 1) {
-  return &Node == Other;
+inline internal::Matcher<Stmt> equalsNode(const Stmt *Node) {
+  return makeMatcher(new internal::EqualsNodeMatcher<Stmt>(Node));
 }
 
 /// @}

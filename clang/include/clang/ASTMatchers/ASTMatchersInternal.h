@@ -1387,6 +1387,20 @@ private:
   const ValueT ExpectedValue;
 };
 
+template <typename T>
+class EqualsNodeMatcher : public SingleNodeMatcherInterface<T> {
+public:
+  explicit EqualsNodeMatcher(const T *ExpectedNode)
+      : ExpectedNode(ExpectedNode) {}
+
+  bool matchesNode(const T &Node) const override {
+    return &Node == ExpectedNode;
+  }
+
+private:
+  const T *ExpectedNode;
+};
+
 /// \brief A VariadicDynCastAllOfMatcher<SourceT, TargetT> object is a
 /// variadic functor that takes a number of Matcher<TargetT> and returns a
 /// Matcher<SourceT> that matches TargetT nodes that are matched by all of the
