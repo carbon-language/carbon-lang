@@ -52,6 +52,7 @@ public:
     setAtomValue("_GLOBAL_OFFSET_TABLE_", got);
     setAtomValue("_gp", gp);
     setAtomValue("_gp_disp", gp);
+    setAtomValue("__gnu_local_gp", gp);
   }
 
   bool hasGlobalGOTEntry(const Atom *a) const {
@@ -64,6 +65,7 @@ public:
       file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       file->addAbsoluteAtom("_gp");
       file->addAbsoluteAtom("_gp_disp");
+      file->addAbsoluteAtom("__gnu_local_gp");
     }
     return file;
   }

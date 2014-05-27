@@ -69,7 +69,7 @@
 # PLT-SYM-NEXT:     Section: .bss (0xD)
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
-# PLT-SYM-NEXT:     Name: T3@ (7)
+# PLT-SYM-NEXT:     Name: T3@ (4)
 # PLT-SYM-NEXT:     Value: 0x0
 # PLT-SYM-NEXT:     Size: 0
 # PLT-SYM-NEXT:     Binding: Global (0x1)
@@ -78,7 +78,7 @@
 # PLT-SYM-NEXT:     Section: Undefined (0x0)
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
-# PLT-SYM-NEXT:     Name: T1@ (10)
+# PLT-SYM-NEXT:     Name: T1@ (7)
 # PLT-SYM-NEXT:     Value: 0x400240
 # PLT-SYM-NEXT:     Size: 0
 # PLT-SYM-NEXT:     Binding: Global (0x1)
@@ -96,7 +96,7 @@
 # PLT-SYM-NEXT:     Section: Undefined (0x0)
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
-# PLT-SYM-NEXT:     Name: T2@ (4)
+# PLT-SYM-NEXT:     Name: T2@ (10)
 # PLT-SYM-NEXT:     Value: 0x0
 # PLT-SYM-NEXT:     Size: 0
 # PLT-SYM-NEXT:     Binding: Global (0x1)

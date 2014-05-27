@@ -45,7 +45,7 @@
 # CHECK-NEXT:     Section: Undefined (0x0)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: T1@ (4)
+# CHECK-NEXT:     Name: T1@ (1)
 # CHECK-NEXT:     Value: 0x0
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Global (0x1)
@@ -54,7 +54,7 @@
 # CHECK-NEXT:     Section: Undefined (0x0)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: T2@ (1)
+# CHECK-NEXT:     Name: T2@ (4)
 # CHECK-NEXT:     Value: 0x0
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Global (0x1)

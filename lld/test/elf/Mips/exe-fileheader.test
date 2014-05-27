@@ -31,7 +31,7 @@
 # CHECK:   Version: 1
 # CHECK:   Entry: 0x4001A0
 # CHECK:   ProgramHeaderOffset: 0x34
-# CHECK:   SectionHeaderOffset: 0x2268
+# CHECK:   SectionHeaderOffset: 0x2288
 # CHECK:   Flags [ (0x70001005)
 # CHECK:     EF_MIPS_ABI_O32 (0x1000)
 # CHECK:     EF_MIPS_ARCH_32R2 (0x70000000)
