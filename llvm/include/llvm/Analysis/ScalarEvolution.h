@@ -894,10 +894,14 @@ namespace llvm {
     /// indirect operand.
     bool hasOperand(const SCEV *S, const SCEV *Op) const;
 
+    /// Return the size of an element read or written by Inst.
+    const SCEV *getElementSize(Instruction *Inst);
+
     /// Compute the array dimensions Sizes from the set of Terms extracted from
     /// the memory access function of this SCEVAddRecExpr.
     void findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
-                             SmallVectorImpl<const SCEV *> &Sizes) const;
+                             SmallVectorImpl<const SCEV *> &Sizes,
+                             const SCEV *ElementSize) const;
 
     bool runOnFunction(Function &F) override;
     void releaseMemory() override;

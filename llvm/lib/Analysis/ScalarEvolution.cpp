@@ -6944,7 +6944,7 @@ struct SCEVCollectTerms {
       : Terms(T) {}
 
   bool follow(const SCEV *S) {
-    if (isa<SCEVUnknown>(S) || isa<SCEVConstant>(S) || isa<SCEVMulExpr>(S)) {
+    if (isa<SCEVUnknown>(S) || isa<SCEVMulExpr>(S)) {
       if (!containsUndefs(S))
         Terms.push_back(S);
 
@@ -7356,13 +7356,46 @@ static inline int numberOfTerms(const SCEV *S) {
   return 1;
 }
 
+static const SCEV *removeConstantFactors(ScalarEvolution &SE, const SCEV *T) {
+  if (isa<SCEVConstant>(T))
+    return nullptr;
+
+  if (isa<SCEVUnknown>(T))
+    return T;
+
+  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(T)) {
+    SmallVector<const SCEV *, 2> Factors;
+    for (const SCEV *Op : M->operands())
+      if (!isa<SCEVConstant>(Op))
+        Factors.push_back(Op);
+
+    return SE.getMulExpr(Factors);
+  }
+
+  return T;
+}
+
+/// Return the size of an element read or written by Inst.
+const SCEV *ScalarEvolution::getElementSize(Instruction *Inst) {
+  Type *Ty;
+  if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
+    Ty = Store->getValueOperand()->getType();
+  else if (LoadInst *Load = dyn_cast<LoadInst>(Inst))
+    Ty = Load->getPointerOperand()->getType();
+  else
+    return nullptr;
+
+  Type *ETy = getEffectiveSCEVType(PointerType::getUnqual(Ty));
+  return getSizeOfExpr(ETy, Ty);
+}
+
 /// Second step of delinearization: compute the array dimensions Sizes from the
 /// set of Terms extracted from the memory access function of this SCEVAddRec.
-void ScalarEvolution::findArrayDimensions(
-    SmallVectorImpl<const SCEV *> &Terms,
-    SmallVectorImpl<const SCEV *> &Sizes) const {
+void ScalarEvolution::findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
+                                          SmallVectorImpl<const SCEV *> &Sizes,
+                                          const SCEV *ElementSize) const {
 
-  if (Terms.size() < 2)
+  if (Terms.size() < 1)
     return;
 
   // Early return when Terms do not contain parameters: we do not delinearize
@@ -7385,19 +7418,36 @@ void ScalarEvolution::findArrayDimensions(
     return numberOfTerms(LHS) > numberOfTerms(RHS);
   });
 
+  ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
+
+  // Divide all terms by the element size.
+  for (const SCEV *&Term : Terms) {
+    const SCEV *Q, *R;
+    SCEVDivision::divide(SE, Term, ElementSize, &Q, &R);
+    Term = Q;
+  }
+
+  SmallVector<const SCEV *, 4> NewTerms;
+
+  // Remove constant factors.
+  for (const SCEV *T : Terms)
+    if (const SCEV *NewT = removeConstantFactors(SE, T))
+      NewTerms.push_back(NewT);
+
   DEBUG({
       dbgs() << "Terms after sorting:\n";
-      for (const SCEV *T : Terms)
+      for (const SCEV *T : NewTerms)
         dbgs() << *T << "\n";
     });
 
-  ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
-  bool Res = findArrayDimensionsRec(SE, Terms, Sizes);
-
-  if (!Res) {
+  if (NewTerms.empty() ||
+      !findArrayDimensionsRec(SE, NewTerms, Sizes)) {
     Sizes.clear();
     return;
   }
+
+  // The last element to be pushed into Sizes is the size of an element.
+  Sizes.push_back(ElementSize);
 
   DEBUG({
       dbgs() << "Sizes:\n";
@@ -7433,9 +7483,14 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
 
     Res = Q;
 
+    // Do not record the last subscript corresponding to the size of elements in
+    // the array.
     if (i == Last) {
-      // Do not record the last subscript corresponding to the size of elements
-      // in the array.
+
+      // Bail out if the remainder is too complex.
+      if (isa<SCEVAddRecExpr>(R))
+        return nullptr;
+
       Remainder = R;
       continue;
     }
@@ -7507,10 +7562,9 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
 /// asking for the SCEV of the memory access with respect to all enclosing
 /// loops, calling SCEV->delinearize on that and printing the results.
 
-const SCEV *
-SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
-                            SmallVectorImpl<const SCEV *> &Subscripts,
-                            SmallVectorImpl<const SCEV *> &Sizes) const {
+const SCEV *SCEVAddRecExpr::delinearize(
+    ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Subscripts,
+    SmallVectorImpl<const SCEV *> &Sizes, const SCEV *ElementSize) const {
   // First step: collect parametric terms.
   SmallVector<const SCEV *, 4> Terms;
   collectParametricTerms(SE, Terms);
@@ -7519,7 +7573,7 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
     return nullptr;
 
   // Second step: find subscript sizes.
-  SE.findArrayDimensions(Terms, Sizes);
+  SE.findArrayDimensions(Terms, Sizes, ElementSize);
 
   if (Sizes.empty())
     return nullptr;

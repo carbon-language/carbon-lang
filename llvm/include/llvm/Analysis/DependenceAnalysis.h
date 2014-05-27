@@ -910,7 +910,8 @@ namespace llvm {
                          const Constraint &CurConstraint) const;
 
     bool tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
-                        SmallVectorImpl<Subscript> &Pair) const;
+                        SmallVectorImpl<Subscript> &Pair,
+                        const SCEV *ElementSize) const;
 
   public:
     static char ID; // Class identification, replacement for typeinfo

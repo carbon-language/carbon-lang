@@ -434,7 +434,8 @@ namespace llvm {
     /// Overall, we have: A[][n][m], and the access function: A[j+k][2i][5i].
     const SCEV *delinearize(ScalarEvolution &SE,
                             SmallVectorImpl<const SCEV *> &Subscripts,
-                            SmallVectorImpl<const SCEV *> &Sizes) const;
+                            SmallVectorImpl<const SCEV *> &Sizes,
+                            const SCEV *ElementSize) const;
   };
 
   //===--------------------------------------------------------------------===//
