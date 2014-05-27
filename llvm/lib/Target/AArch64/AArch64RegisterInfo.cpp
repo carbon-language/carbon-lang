@@ -138,7 +138,7 @@ AArch64RegisterInfo::getPointerRegClass(const MachineFunction &MF,
 const TargetRegisterClass *
 AArch64RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &AArch64::CCRRegClass)
-    return nullptr; // Can't copy NZCV.
+    return &AArch64::GPR64RegClass; // Only MSR & MRS copy NZCV.
   return RC;
 }
 

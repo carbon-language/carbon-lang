@@ -1507,7 +1507,25 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  assert(0 && "unimplemented reg-to-reg copy");
+  if (DestReg == AArch64::NZCV) {
+    assert(AArch64::GPR64RegClass.contains(SrcReg) && "Invalid NZCV copy");
+    BuildMI(MBB, I, DL, get(AArch64::MSR))
+      .addImm(AArch64SysReg::NZCV)
+      .addReg(SrcReg, getKillRegState(KillSrc))
+      .addReg(AArch64::NZCV, RegState::Implicit | RegState::Define);
+    return;
+  }
+
+  if (SrcReg == AArch64::NZCV) {
+    assert(AArch64::GPR64RegClass.contains(DestReg) && "Invalid NZCV copy");
+    BuildMI(MBB, I, DL, get(AArch64::MRS))
+      .addReg(DestReg)
+      .addImm(AArch64SysReg::NZCV)
+      .addReg(AArch64::NZCV, RegState::Implicit | getKillRegState(KillSrc));
+    return;
+  }
+
+  llvm_unreachable("unimplemented reg-to-reg copy");
 }
 
 void AArch64InstrInfo::storeRegToStackSlot(
