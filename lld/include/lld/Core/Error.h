@@ -14,6 +14,7 @@
 #ifndef LLD_CORE_ERROR_H
 #define LLD_CORE_ERROR_H
 
+#include "lld/Core/LLVM.h"
 #include "llvm/Support/system_error.h"
 
 namespace lld {
@@ -81,6 +82,16 @@ enum class ReaderError {
 inline llvm::error_code make_error_code(ReaderError e) {
   return llvm::error_code(static_cast<int>(e), ReaderErrorCategory());
 }
+
+
+/// Creates an error_code object that has associated with it an arbitrary
+/// error messsage.  The value() of the error_code will always be non-zero
+/// but its value is meaningless. The messsage() will be (a copy of) the 
+/// supplied error string.
+/// Note:  Once ErrorOr<> is updated to work with errors other than error_code, 
+/// this can be updated to return some other kind of error.
+llvm::error_code make_dynamic_error_code(StringRef msg);
+llvm::error_code make_dynamic_error_code(const Twine &msg);
 
 } // end namespace lld
 

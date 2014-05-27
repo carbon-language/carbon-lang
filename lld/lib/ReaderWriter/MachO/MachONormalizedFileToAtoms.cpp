@@ -24,6 +24,7 @@
 #include "File.h"
 #include "Atoms.h"
 
+#include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 
 #include "llvm/Support/MachO.h"
@@ -129,7 +130,11 @@ static error_code processSection(MachOFile &file, const Section &section,
     break;
   case llvm::MachO::S_4BYTE_LITERALS:
     if ((section.content.size() % 4) != 0)
-      return llvm::make_error_code(llvm::errc::executable_format_error);
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName 
+                                     + " has type S_4BYTE_LITERALS but its "
+                                     "size (" + Twine(section.content.size()) 
+                                     + ") is not a multiple of 4"); 
     for (size_t i = 0, e = section.content.size(); i != e; i += 4) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 4);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
@@ -139,7 +144,11 @@ static error_code processSection(MachOFile &file, const Section &section,
     break;
   case llvm::MachO::S_8BYTE_LITERALS:
     if ((section.content.size() % 8) != 0)
-      return llvm::make_error_code(llvm::errc::executable_format_error);
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName 
+                                     + " has type S_8YTE_LITERALS but its "
+                                     "size (" + Twine(section.content.size()) 
+                                     + ") is not a multiple of 8"); 
     for (size_t i = 0, e = section.content.size(); i != e; i += 8) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 8);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
@@ -149,7 +158,11 @@ static error_code processSection(MachOFile &file, const Section &section,
     break;
   case llvm::MachO::S_16BYTE_LITERALS:
     if ((section.content.size() % 16) != 0)
-      return llvm::make_error_code(llvm::errc::executable_format_error);
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName 
+                                     + " has type S_16BYTE_LITERALS but its "
+                                     "size (" + Twine(section.content.size()) 
+                                     + ") is not a multiple of 16"); 
     for (size_t i = 0, e = section.content.size(); i != e; i += 16) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 16);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,

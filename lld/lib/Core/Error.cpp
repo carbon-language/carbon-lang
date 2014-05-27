@@ -9,7 +9,12 @@
 
 #include "lld/Core/Error.h"
 
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Mutex.h"
+
+#include <string>
+#include <vector>
 
 using namespace lld;
 
@@ -153,3 +158,52 @@ const llvm::error_category &lld::ReaderErrorCategory() {
   static _ReaderErrorCategory i;
   return i;
 }
+
+
+
+
+namespace lld {
+
+
+/// Temporary class to enable make_dynamic_error_code() until
+/// llvm::ErrorOr<> is updated to work with error encapsulations 
+/// other than error_code.
+class dynamic_error_category : public llvm::_do_message {
+public:
+  const char *name() const override { return "lld.dynamic_error"; }
+
+  std::string message(int ev) const override {
+    assert(ev >= 0);
+    assert(ev < (int)_messages.size());
+    // The value is an index into the string vector.
+    return _messages[ev];
+  }
+  
+  int add(std::string msg) {
+    llvm::sys::SmartScopedLock<true> lock(_mutex);
+    // Value zero is always the successs value.
+    if (_messages.empty())
+      _messages.push_back("Success");
+    _messages.push_back(msg);
+    // Return the index of the string just appended.
+    return _messages.size() - 1;
+  }
+  
+private:
+  std::vector<std::string> _messages;
+  llvm::sys::SmartMutex<true> _mutex;
+};
+
+static dynamic_error_category categorySingleton;
+
+
+llvm::error_code make_dynamic_error_code(StringRef msg) {
+  return llvm::error_code(categorySingleton.add(msg), categorySingleton);
+}
+
+llvm::error_code make_dynamic_error_code(const Twine &msg) {
+  return llvm::error_code(categorySingleton.add(msg.str()), categorySingleton);
+}
+
+}
+
