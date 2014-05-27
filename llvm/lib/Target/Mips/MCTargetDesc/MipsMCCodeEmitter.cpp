@@ -258,7 +258,9 @@ getBranchTarget21OpValue(const MCInst &MI, unsigned OpNo,
   assert(MO.isExpr() &&
          "getBranchTarget21OpValue expects only expressions or immediates");
 
-  // TODO: Push 21 PC fixup.
+  const MCExpr *Expr = MO.getExpr();
+  Fixups.push_back(MCFixup::Create(0, Expr,
+                                   MCFixupKind(Mips::fixup_MIPS_PC21_S2)));
   return 0;
 }
 
@@ -278,7 +280,9 @@ getBranchTarget26OpValue(const MCInst &MI, unsigned OpNo,
   assert(MO.isExpr() &&
          "getBranchTarget26OpValue expects only expressions or immediates");
 
-  // TODO: Push 26 PC fixup.
+  const MCExpr *Expr = MO.getExpr();
+  Fixups.push_back(MCFixup::Create(0, Expr,
+                                   MCFixupKind(Mips::fixup_MIPS_PC26_S2)));
   return 0;
 }
 
