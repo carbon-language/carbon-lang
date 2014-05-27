@@ -262,6 +262,58 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   }
 }
 
+/// Return true if both instructions have the same special state
+/// This must be kept in sync with lib/Transforms/IPO/MergeFunctions.cpp.
+static bool haveSameSpecialState(const Instruction *I1, const Instruction *I2,
+                                 bool IgnoreAlignment = false) {
+  assert(I1->getOpcode() == I2->getOpcode() &&
+         "Can not compare special state of different instructions");
+
+  if (const LoadInst *LI = dyn_cast<LoadInst>(I1))
+    return LI->isVolatile() == cast<LoadInst>(I2)->isVolatile() &&
+           (LI->getAlignment() == cast<LoadInst>(I2)->getAlignment() ||
+            IgnoreAlignment) &&
+           LI->getOrdering() == cast<LoadInst>(I2)->getOrdering() &&
+           LI->getSynchScope() == cast<LoadInst>(I2)->getSynchScope();
+  if (const StoreInst *SI = dyn_cast<StoreInst>(I1))
+    return SI->isVolatile() == cast<StoreInst>(I2)->isVolatile() &&
+           (SI->getAlignment() == cast<StoreInst>(I2)->getAlignment() ||
+            IgnoreAlignment) &&
+           SI->getOrdering() == cast<StoreInst>(I2)->getOrdering() &&
+           SI->getSynchScope() == cast<StoreInst>(I2)->getSynchScope();
+  if (const CmpInst *CI = dyn_cast<CmpInst>(I1))
+    return CI->getPredicate() == cast<CmpInst>(I2)->getPredicate();
+  if (const CallInst *CI = dyn_cast<CallInst>(I1))
+    return CI->isTailCall() == cast<CallInst>(I2)->isTailCall() &&
+           CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
+           CI->getAttributes() == cast<CallInst>(I2)->getAttributes();
+  if (const InvokeInst *CI = dyn_cast<InvokeInst>(I1))
+    return CI->getCallingConv() == cast<InvokeInst>(I2)->getCallingConv() &&
+           CI->getAttributes() ==
+             cast<InvokeInst>(I2)->getAttributes();
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(I1))
+    return IVI->getIndices() == cast<InsertValueInst>(I2)->getIndices();
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I1))
+    return EVI->getIndices() == cast<ExtractValueInst>(I2)->getIndices();
+  if (const FenceInst *FI = dyn_cast<FenceInst>(I1))
+    return FI->getOrdering() == cast<FenceInst>(I2)->getOrdering() &&
+           FI->getSynchScope() == cast<FenceInst>(I2)->getSynchScope();
+  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(I1))
+    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I2)->isVolatile() &&
+           CXI->getSuccessOrdering() ==
+               cast<AtomicCmpXchgInst>(I2)->getSuccessOrdering() &&
+           CXI->getFailureOrdering() ==
+               cast<AtomicCmpXchgInst>(I2)->getFailureOrdering() &&
+           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I2)->getSynchScope();
+  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I1))
+    return RMWI->getOperation() == cast<AtomicRMWInst>(I2)->getOperation() &&
+           RMWI->isVolatile() == cast<AtomicRMWInst>(I2)->isVolatile() &&
+           RMWI->getOrdering() == cast<AtomicRMWInst>(I2)->getOrdering() &&
+           RMWI->getSynchScope() == cast<AtomicRMWInst>(I2)->getSynchScope();
+
+  return true;
+}
+
 /// isIdenticalTo - Return true if the specified instruction is exactly
 /// identical to the current one.  This means that all operands match and any
 /// extra information (e.g. load is volatile) agree.
@@ -284,51 +336,13 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
   if (!std::equal(op_begin(), op_end(), I->op_begin()))
     return false;
 
-  // Check special state that is a part of some instructions.
-  if (const LoadInst *LI = dyn_cast<LoadInst>(this))
-    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile() &&
-           LI->getAlignment() == cast<LoadInst>(I)->getAlignment() &&
-           LI->getOrdering() == cast<LoadInst>(I)->getOrdering() &&
-           LI->getSynchScope() == cast<LoadInst>(I)->getSynchScope();
-  if (const StoreInst *SI = dyn_cast<StoreInst>(this))
-    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile() &&
-           SI->getAlignment() == cast<StoreInst>(I)->getAlignment() &&
-           SI->getOrdering() == cast<StoreInst>(I)->getOrdering() &&
-           SI->getSynchScope() == cast<StoreInst>(I)->getSynchScope();
-  if (const CmpInst *CI = dyn_cast<CmpInst>(this))
-    return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
-  if (const CallInst *CI = dyn_cast<CallInst>(this))
-    return CI->isTailCall() == cast<CallInst>(I)->isTailCall() &&
-           CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
-           CI->getAttributes() == cast<CallInst>(I)->getAttributes();
-  if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
-    return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
-           CI->getAttributes() == cast<InvokeInst>(I)->getAttributes();
-  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this))
-    return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
-  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
-    return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
-  if (const FenceInst *FI = dyn_cast<FenceInst>(this))
-    return FI->getOrdering() == cast<FenceInst>(FI)->getOrdering() &&
-           FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
-  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
-    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
-           CXI->getSuccessOrdering() ==
-               cast<AtomicCmpXchgInst>(I)->getSuccessOrdering() &&
-           CXI->getFailureOrdering() ==
-               cast<AtomicCmpXchgInst>(I)->getFailureOrdering() &&
-           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
-  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
-    return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&
-           RMWI->isVolatile() == cast<AtomicRMWInst>(I)->isVolatile() &&
-           RMWI->getOrdering() == cast<AtomicRMWInst>(I)->getOrdering() &&
-           RMWI->getSynchScope() == cast<AtomicRMWInst>(I)->getSynchScope();
   if (const PHINode *thisPHI = dyn_cast<PHINode>(this)) {
     const PHINode *otherPHI = cast<PHINode>(I);
     return std::equal(thisPHI->block_begin(), thisPHI->block_end(),
                       otherPHI->block_begin());
   }
-  return true;
+
+  return haveSameSpecialState(this, I);
 }
 
 // isSameOperationAs
@@ -355,50 +369,7 @@ bool Instruction::isSameOperationAs(const Instruction *I,
         getOperand(i)->getType() != I->getOperand(i)->getType())
       return false;
 
-  // Check special state that is a part of some instructions.
-  if (const LoadInst *LI = dyn_cast<LoadInst>(this))
-    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile() &&
-           (LI->getAlignment() == cast<LoadInst>(I)->getAlignment() ||
-            IgnoreAlignment) &&
-           LI->getOrdering() == cast<LoadInst>(I)->getOrdering() &&
-           LI->getSynchScope() == cast<LoadInst>(I)->getSynchScope();
-  if (const StoreInst *SI = dyn_cast<StoreInst>(this))
-    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile() &&
-           (SI->getAlignment() == cast<StoreInst>(I)->getAlignment() ||
-            IgnoreAlignment) &&
-           SI->getOrdering() == cast<StoreInst>(I)->getOrdering() &&
-           SI->getSynchScope() == cast<StoreInst>(I)->getSynchScope();
-  if (const CmpInst *CI = dyn_cast<CmpInst>(this))
-    return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
-  if (const CallInst *CI = dyn_cast<CallInst>(this))
-    return CI->isTailCall() == cast<CallInst>(I)->isTailCall() &&
-           CI->getCallingConv() == cast<CallInst>(I)->getCallingConv() &&
-           CI->getAttributes() == cast<CallInst>(I)->getAttributes();
-  if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
-    return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
-           CI->getAttributes() ==
-             cast<InvokeInst>(I)->getAttributes();
-  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this))
-    return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
-  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
-    return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
-  if (const FenceInst *FI = dyn_cast<FenceInst>(this))
-    return FI->getOrdering() == cast<FenceInst>(I)->getOrdering() &&
-           FI->getSynchScope() == cast<FenceInst>(I)->getSynchScope();
-  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
-    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
-           CXI->getSuccessOrdering() ==
-               cast<AtomicCmpXchgInst>(I)->getSuccessOrdering() &&
-           CXI->getFailureOrdering() ==
-               cast<AtomicCmpXchgInst>(I)->getFailureOrdering() &&
-           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
-  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
-    return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&
-           RMWI->isVolatile() == cast<AtomicRMWInst>(I)->isVolatile() &&
-           RMWI->getOrdering() == cast<AtomicRMWInst>(I)->getOrdering() &&
-           RMWI->getSynchScope() == cast<AtomicRMWInst>(I)->getSynchScope();
-
-  return true;
+  return haveSameSpecialState(this, I, IgnoreAlignment);
 }
 
 /// isUsedOutsideOfBlock - Return true if there are any uses of I outside of the
