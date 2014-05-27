@@ -2334,6 +2334,30 @@ AST_POLYMORPHIC_MATCHER_P(
           InnerMatcher.matches(*Condition, Finder, Builder));
 }
 
+/// \brief Matches the then-statement of an if statement.
+///
+/// Examples matches the if statement
+///   (matcher = ifStmt(hasThen(boolLiteral(equals(true)))))
+/// \code
+///   if (false) true; else false;
+/// \endcode
+AST_MATCHER_P(IfStmt, hasThen, internal::Matcher<Stmt>, InnerMatcher) {
+  const Stmt *const Then = Node.getThen();
+  return (Then != nullptr && InnerMatcher.matches(*Then, Finder, Builder));
+}
+
+/// \brief Matches the else-statement of an if statement.
+///
+/// Examples matches the if statement
+///   (matcher = ifStmt(hasElse(boolLiteral(equals(true)))))
+/// \code
+///   if (false) false; else true;
+/// \endcode
+AST_MATCHER_P(IfStmt, hasElse, internal::Matcher<Stmt>, InnerMatcher) {
+  const Stmt *const Else = Node.getElse();
+  return (Else != nullptr && InnerMatcher.matches(*Else, Finder, Builder));
+}
+
 /// \brief Matches if a node equals a previously bound node.
 ///
 /// Matches a node if it equals the node previously bound to \p ID.

@@ -1966,6 +1966,17 @@ TEST(Matcher, Conditions) {
   EXPECT_TRUE(notMatches("void x() { if (1) {} }", Condition));
 }
 
+TEST(IfStmt, ChildTraversalMatchers) {
+  EXPECT_TRUE(matches("void f() { if (false) true; else false; }",
+                      ifStmt(hasThen(boolLiteral(equals(true))))));
+  EXPECT_TRUE(notMatches("void f() { if (false) false; else true; }",
+                         ifStmt(hasThen(boolLiteral(equals(true))))));
+  EXPECT_TRUE(matches("void f() { if (false) false; else true; }",
+                      ifStmt(hasElse(boolLiteral(equals(true))))));
+  EXPECT_TRUE(notMatches("void f() { if (false) true; else false; }",
+                         ifStmt(hasElse(boolLiteral(equals(true))))));
+}
+
 TEST(MatchBinaryOperator, HasOperatorName) {
   StatementMatcher OperatorOr = binaryOperator(hasOperatorName("||"));
 
