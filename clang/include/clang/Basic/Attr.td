@@ -1088,10 +1088,10 @@ def InitPriority : InheritableAttr {
 def Section : InheritableAttr {
   let Spellings = [GCC<"section">, Declspec<"allocate">];
   let Args = [StringArgument<"Name">];
-  let Subjects = SubjectList<[Function, GlobalVar, 
+  let Subjects = SubjectList<[Function, GlobalVar,
                               ObjCMethod, ObjCProperty], ErrorDiag,
                              "ExpectedFunctionGlobalVarMethodOrProperty">;
-  let Documentation = [Undocumented];
+  let Documentation = [SectionDocs];
 }
 
 def Sentinel : InheritableAttr {
@@ -1714,7 +1714,6 @@ def MSInheritance : InheritableAttr {
                    Keyword<"__multiple_inheritance">,
                    Keyword<"__virtual_inheritance">,
                    Keyword<"__unspecified_inheritance">];
-  let Documentation = [SectionDocs];
   let AdditionalMembers = [{
   static bool hasVBPtrOffsetField(Spelling Inheritance) {
     return Inheritance == Keyword_unspecified_inheritance;
