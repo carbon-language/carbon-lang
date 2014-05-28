@@ -202,7 +202,7 @@ namespace BoolPtrToMember {
     bool member;
   };
 
-  // CHECK-LABEL: define i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
+  // CHECK-LABEL: define nonnull i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
   bool &f(X &x, bool X::*member) {
     // CHECK: {{bitcast.* to i8\*}}
     // CHECK-NEXT: getelementptr inbounds i8*

@@ -119,7 +119,7 @@ inline S &UnreachableStatic() {
   return s;
 }
 
-// CHECK-LABEL: define linkonce_odr %struct.S* @"\01?UnreachableStatic@@YAAAUS@@XZ"()
+// CHECK-LABEL: define linkonce_odr nonnull %struct.S* @"\01?UnreachableStatic@@YAAAUS@@XZ"()
 // CHECK: and i32 {{.*}}, 2
 // CHECK: or i32 {{.*}}, 2
 // CHECK: ret
@@ -129,7 +129,7 @@ inline S &getS() {
   return TheS;
 }
 
-// CHECK-LABEL: define linkonce_odr %struct.S* @"\01?getS@@YAAAUS@@XZ"
+// CHECK-LABEL: define linkonce_odr nonnull %struct.S* @"\01?getS@@YAAAUS@@XZ"
 // CHECK: load i32* @"\01??_B?1??getS@@YAAAUS@@XZ@51"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: icmp ne i32 {{.*}}, 0

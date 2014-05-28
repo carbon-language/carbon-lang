@@ -93,5 +93,4 @@ int main() {
   dstY.pr();
 }
 
-// CHECK: define linkonce_odr %struct.X* @_ZN1XaSERKS_
-
+// CHECK: define linkonce_odr nonnull %struct.X* @_ZN1XaSERKS_

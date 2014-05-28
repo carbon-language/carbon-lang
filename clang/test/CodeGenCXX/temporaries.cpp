@@ -310,7 +310,7 @@ int& f(int);
 void g() {
   // CHECK: call void @_ZN3T121AC1Ev
   // CHECK-NEXT: call i32 @_ZN3T121A1fEv(
-  // CHECK-NEXT: call i32* @_ZN3T121fEi(
+  // CHECK-NEXT: call nonnull i32* @_ZN3T121fEi(
   // CHECK-NEXT: call void @_ZN3T121AD1Ev(
   int& i = f(A().f());
 }
@@ -325,7 +325,7 @@ namespace PR6648 {
   struct D;
   D& zed(B);
   void foobar() {
-    // CHECK: call %"struct.PR6648::D"* @_ZN6PR66483zedENS_1BE
+    // CHECK: call nonnull %"struct.PR6648::D"* @_ZN6PR66483zedENS_1BE
     zed(foo);
   }
 }
@@ -412,10 +412,10 @@ namespace Elision {
     // CHECK-NEXT: [[J:%.*]] = alloca [[A]], align 8
 
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[I]])
-    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[I]], [[A]]* [[X:%.*]])
+    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[I]], [[A]]* nonnull [[X:%.*]])
     A i = (c ? A() : x);
 
-    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[J]], [[A]]* [[X]])
+    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[J]], [[A]]* nonnull [[X]])
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[J]])
     A j = (c ? x : A());
 
@@ -435,10 +435,10 @@ namespace Elision {
   A test3(int v, A x) {
     if (v < 5)
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[RET:%.*]])
-    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET]], [[A]]* [[X:%.*]])
+    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET]], [[A]]* nonnull [[X:%.*]])
       return (v < 0 ? A() : x);
     else
-    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET]], [[A]]* [[X]])
+    // CHECK:      call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET]], [[A]]* nonnull [[X]])
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[RET]])
       return (v > 10 ? x : A());
 
@@ -456,7 +456,7 @@ namespace Elision {
     // CHECK-NEXT: [[XS0:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i64 0, i64 0
     // CHECK-NEXT: call void @_ZN7Elision1AC1Ev([[A]]* [[XS0]])
     // CHECK-NEXT: [[XS1:%.*]] = getelementptr inbounds [[A]]* [[XS0]], i64 1
-    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[XS1]], [[A]]* [[X]])
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[XS1]], [[A]]* nonnull [[X]])
     A xs[] = { A(), x };
 
     // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i32 0, i32 0
@@ -483,7 +483,7 @@ namespace Elision {
 
     // CHECK:      call void @_ZN7Elision1BC1Ev([[B]]* [[BT0]])
     // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT0]], i32 0, i32 0
-    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[AT0]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[AT0]], [[A]]* nonnull [[AM]])
     // CHECK-NEXT: call void @_ZN7Elision5takeAENS_1AE([[A]]* [[AT0]])
     // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[AT0]])
     // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT0]])
@@ -491,13 +491,13 @@ namespace Elision {
 
     // CHECK-NEXT: call void @_ZN7Elision1BC1Ev([[B]]* [[BT1]])
     // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT1]], i32 0, i32 0
-    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[X]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[X]], [[A]]* nonnull [[AM]])
     // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT1]])
     A x = B().a;
 
     // CHECK-NEXT: call void @_ZN7Elision1BC1Ev([[B]]* [[BT2]])
     // CHECK-NEXT: [[AM:%.*]] = getelementptr inbounds [[B]]* [[BT2]], i32 0, i32 0
-    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET:%.*]], [[A]]* [[AM]])
+    // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[RET:%.*]], [[A]]* nonnull [[AM]])
     // CHECK-NEXT: call void @_ZN7Elision1BD1Ev([[B]]* [[BT2]])
     return B().a;
 

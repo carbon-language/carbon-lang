@@ -54,7 +54,6 @@ void f3() {
   // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1Ev(%class.Test3* %var)
   var.Test3::Test3();
 
-  // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1ERKS_(%class.Test3* %var, %class.Test3* %var2)
+  // CHECK-NEXT: call x86_thiscallcc void @_ZN5Test3C1ERKS_(%class.Test3* %var, %class.Test3* nonnull %var2)
   var.Test3::Test3(var2);
 }
-

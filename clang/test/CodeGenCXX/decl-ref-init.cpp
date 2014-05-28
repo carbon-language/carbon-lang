@@ -23,5 +23,5 @@ int main() {
 	const A& rca2 = d();
 }
 
-// CHECK: call %struct.A* @_ZN1BcvR1AEv
-// CHECK: call %struct.A* @_ZN1BcvR1AEv
+// CHECK: call nonnull %struct.A* @_ZN1BcvR1AEv
+// CHECK: call nonnull %struct.A* @_ZN1BcvR1AEv

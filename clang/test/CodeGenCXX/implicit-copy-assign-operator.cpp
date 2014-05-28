@@ -40,7 +40,7 @@ void test_D(D d1, D d2) {
   d1 = d2;
 }
 
-// CHECK-LABEL: define linkonce_odr %struct.D* @_ZN1DaSERS_
+// CHECK-LABEL: define linkonce_odr nonnull %struct.D* @_ZN1DaSERS_
 // CHECK: {{call.*_ZN1AaSERS_}}
 // CHECK: {{call.*_ZN1BaSERS_}}
 // CHECK: {{call.*_ZN1CaSERKS_}}
@@ -53,4 +53,3 @@ void test_D(D d1, D d2) {
 // CHECK: call void @_ZN11CopyByValueC1ERKS_
 // CHECK: {{call.*_ZN11CopyByValueaSES_}}
 // CHECK: ret
-

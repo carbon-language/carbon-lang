@@ -280,13 +280,13 @@ struct Ops {
   void *v;
 };
 
-// CHECK-LABEL: define %struct.Ops* @_ZN3OpsplERKS_
+// CHECK-LABEL: define nonnull %struct.Ops* @_ZN3OpsplERKS_
 Ops& Ops::operator+(const Ops&) { return *this; }
-// CHECK-LABEL: define %struct.Ops* @_ZN3OpsmiERKS_
+// CHECK-LABEL: define nonnull %struct.Ops* @_ZN3OpsmiERKS_
 Ops& Ops::operator-(const Ops&) { return *this; }
-// CHECK-LABEL: define %struct.Ops* @_ZN3OpsanERKS_
+// CHECK-LABEL: define nonnull %struct.Ops* @_ZN3OpsanERKS_
 Ops& Ops::operator&(const Ops&) { return *this; }
-// CHECK-LABEL: define %struct.Ops* @_ZN3OpsmlERKS_
+// CHECK-LABEL: define nonnull %struct.Ops* @_ZN3OpsmlERKS_
 Ops& Ops::operator*(const Ops&) { return *this; }
 
 // PR5861
@@ -899,7 +899,7 @@ namespace test39 {
 }
 
 namespace test40 {
-  // CHECK: i32* @_ZZN6test401fEvE1a_0
+  // CHECK: i32* {{.*}} @_ZZN6test401fEvE1a_0
   void h(int&);
   inline void f() {
     if (0) {

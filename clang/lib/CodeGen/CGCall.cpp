@@ -1200,6 +1200,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     llvm_unreachable("Invalid ABI kind for return argument");
   }
 
+  if (RetTy->isReferenceType())
+    RetAttrs.addAttribute(llvm::Attribute::NonNull);
+
   if (RetAttrs.hasAttributes())
     PAL.push_back(llvm::
                   AttributeSet::get(getLLVMContext(),
@@ -1287,6 +1290,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       continue;
     }
     }
+
+    if (ParamType->isReferenceType())
+      Attrs.addAttribute(llvm::Attribute::NonNull);
 
     if (Attrs.hasAttributes())
       PAL.push_back(llvm::AttributeSet::get(getLLVMContext(), Index, Attrs));

@@ -15,7 +15,7 @@ namespace test0 {
   void test(A t) {
     // CHECK:      [[ARR:%.*]] = load [[A:%.*]]** @_ZN5test05arrayE, align 8
     // CHECK-NEXT: [[IDX:%.*]] = getelementptr inbounds [[A]]* [[ARR]], i64 0
-    // CHECK-NEXT: [[TMP:%.*]] = call [[A]]* @_ZNV5test01AaSERVKS0_([[A]]* [[IDX]], [[A]]* [[T:%.*]])
+    // CHECK-NEXT: [[TMP:%.*]] = call nonnull [[A]]* @_ZNV5test01AaSERVKS0_([[A]]* [[IDX]], [[A]]* nonnull [[T:%.*]])
     // CHECK-NEXT: ret void
     array[0] = t;
   }

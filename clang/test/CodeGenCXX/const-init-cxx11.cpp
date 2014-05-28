@@ -532,10 +532,10 @@ namespace InitFromConst {
     // CHECK: call void @_ZN13InitFromConst7consumeIdEEvT_(double 4.300000e+00)
     consume(d);
 
-    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
+    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* nonnull @_ZN13InitFromConstL1sE)
     consume<const S&>(s);
 
-    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
+    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* nonnull @_ZN13InitFromConstL1sE)
     consume<const S&>(r);
 
     // CHECK: call void @_ZN13InitFromConst7consumeIPKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)

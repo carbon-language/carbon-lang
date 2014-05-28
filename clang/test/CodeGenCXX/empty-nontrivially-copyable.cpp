@@ -19,7 +19,7 @@ bool foo(Empty e) {
 }
 
 void caller(Empty &e) {
-// CHECK: @_Z6callerR5Empty(%struct.Empty* %e)
+// CHECK: @_Z6callerR5Empty(%struct.Empty* nonnull %e)
 // CHECK: call {{.*}} @_ZN5EmptyC1ERKS_(%struct.Empty* [[NEWTMP:%.*]], %struct.Empty*
 // CHECK: call {{.*}} @_Z3foo5Empty(%struct.Empty* [[NEWTMP]])
   foo(e);

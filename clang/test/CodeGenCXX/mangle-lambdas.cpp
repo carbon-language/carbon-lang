@@ -192,7 +192,7 @@ namespace PR12123 {
   };
   void B::h() { f(); }
 }
-// CHECK-LABEL: define linkonce_odr %"struct.PR12123::A"* @_ZZN7PR121231B1fERKSt9type_infoEd_NKUlvE_clEv
+// CHECK-LABEL: define linkonce_odr nonnull %"struct.PR12123::A"* @_ZZN7PR121231B1fERKSt9type_infoEd_NKUlvE_clEv
 
 namespace PR12808 {
   template <typename> struct B {

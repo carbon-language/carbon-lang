@@ -357,7 +357,7 @@ void downcast_pointer(B *b) {
   // CHECK-NEXT: br i1 [[AND]]
 }
 
-// CHECK-LABEL: define void @_Z18downcast_referenceR1B(%class.B* %b)
+// CHECK-LABEL: define void @_Z18downcast_referenceR1B(%class.B* nonnull %b)
 void downcast_reference(B &b) {
   (void) static_cast<C&>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastReference, ...)
