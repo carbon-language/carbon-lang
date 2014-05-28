@@ -294,6 +294,131 @@ exit:
   ret void
 }
 
+; Check the following transform:
+;
+; str X, [x20]
+;  ...
+; add x20, x20, #32
+;  ->
+; str X, [x20], #32
+;
+; with X being either w0, x0, s0, d0 or q0.
+
+define void @store-post-indexed-word(i32* %array, i64 %count, i32 %val) nounwind {
+; CHECK-LABEL: store-post-indexed-word
+; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}], #16
+entry:
+  %gep1 = getelementptr i32* %array, i64 2
+  br label %body
+
+body:
+  %iv2 = phi i32* [ %gep3, %body ], [ %gep1, %entry ]
+  %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
+  %gep2 = getelementptr i32* %iv2, i64 -1
+  %load = load i32* %gep2
+  call void @use-word(i32 %load)
+  store i32 %val, i32* %iv2
+  %iv.next = add i64 %iv, -4
+  %gep3 = getelementptr i32* %iv2, i64 4
+  %cond = icmp eq i64 %iv.next, 0
+  br i1 %cond, label %exit, label %body
+
+exit:
+  ret void
+}
+
+define void @store-post-indexed-doubleword(i64* %array, i64 %count, i64 %val) nounwind {
+; CHECK-LABEL: store-post-indexed-doubleword
+; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}], #32
+entry:
+  %gep1 = getelementptr i64* %array, i64 2
+  br label %body
+
+body:
+  %iv2 = phi i64* [ %gep3, %body ], [ %gep1, %entry ]
+  %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
+  %gep2 = getelementptr i64* %iv2, i64 -1
+  %load = load i64* %gep2
+  call void @use-doubleword(i64 %load)
+  store i64 %val, i64* %iv2
+  %iv.next = add i64 %iv, -4
+  %gep3 = getelementptr i64* %iv2, i64 4
+  %cond = icmp eq i64 %iv.next, 0
+  br i1 %cond, label %exit, label %body
+
+exit:
+  ret void
+}
+
+define void @store-post-indexed-quadword(<2 x i64>* %array, i64 %count, <2 x i64> %val) nounwind {
+; CHECK-LABEL: store-post-indexed-quadword
+; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}], #64
+entry:
+  %gep1 = getelementptr <2 x i64>* %array, i64 2
+  br label %body
+
+body:
+  %iv2 = phi <2 x i64>* [ %gep3, %body ], [ %gep1, %entry ]
+  %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
+  %gep2 = getelementptr <2 x i64>* %iv2, i64 -1
+  %load = load <2 x i64>* %gep2
+  call void @use-quadword(<2 x i64> %load)
+  store <2 x i64> %val, <2 x i64>* %iv2
+  %iv.next = add i64 %iv, -4
+  %gep3 = getelementptr <2 x i64>* %iv2, i64 4
+  %cond = icmp eq i64 %iv.next, 0
+  br i1 %cond, label %exit, label %body
+
+exit:
+  ret void
+}
+
+define void @store-post-indexed-float(float* %array, i64 %count, float %val) nounwind {
+; CHECK-LABEL: store-post-indexed-float
+; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}], #16
+entry:
+  %gep1 = getelementptr float* %array, i64 2
+  br label %body
+
+body:
+  %iv2 = phi float* [ %gep3, %body ], [ %gep1, %entry ]
+  %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
+  %gep2 = getelementptr float* %iv2, i64 -1
+  %load = load float* %gep2
+  call void @use-float(float %load)
+  store float %val, float* %iv2
+  %iv.next = add i64 %iv, -4
+  %gep3 = getelementptr float* %iv2, i64 4
+  %cond = icmp eq i64 %iv.next, 0
+  br i1 %cond, label %exit, label %body
+
+exit:
+  ret void
+}
+
+define void @store-post-indexed-double(double* %array, i64 %count, double %val) nounwind {
+; CHECK-LABEL: store-post-indexed-double
+; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}], #32
+entry:
+  %gep1 = getelementptr double* %array, i64 2
+  br label %body
+
+body:
+  %iv2 = phi double* [ %gep3, %body ], [ %gep1, %entry ]
+  %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
+  %gep2 = getelementptr double* %iv2, i64 -1
+  %load = load double* %gep2
+  call void @use-double(double %load)
+  store double %val, double* %iv2
+  %iv.next = add i64 %iv, -4
+  %gep3 = getelementptr double* %iv2, i64 4
+  %cond = icmp eq i64 %iv.next, 0
+  br i1 %cond, label %exit, label %body
+
+exit:
+  ret void
+}
+
 declare void @use-word(i32)
 declare void @use-doubleword(i64)
 declare void @use-quadword(<2 x i64>)
