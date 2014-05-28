@@ -3,6 +3,7 @@
 // RUN: %clangxx %s -DRT=\"%shared_libasan\" -o %t -ldl
 // RUN: not %run %t 2>&1 | FileCheck %s
 // REQUIRES: asan-dynamic-runtime
+// XFAIL: android
 
 #include <dlfcn.h>
 
