@@ -530,6 +530,9 @@ RecurseCopy_Callback (void *baton,
             rc_baton->error.SetErrorStringWithFormat("invalid file detected during copy: %s", src.GetPath().c_str());
             return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
             break;
+        default:
+            return FileSpec::eEnumerateDirectoryResultQuit; // unsupported file type, bail out
+            break;
     }
 }
 

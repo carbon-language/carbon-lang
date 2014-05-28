@@ -110,7 +110,7 @@ DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
     return eAccessNone;
 }
 
-#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+#if defined(LLDB_CONFIGURATION_DEBUG) || defined(LLDB_CONFIGURATION_RELEASE)
 
 class DIEStack
 {
@@ -5681,7 +5681,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
     if (type_is_new_ptr)
         *type_is_new_ptr = false;
 
-#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+#if defined(LLDB_CONFIGURATION_DEBUG) || defined(LLDB_CONFIGURATION_RELEASE)
     static DIEStack g_die_stack;
     DIEStack::ScopedPopper scoped_die_logger(g_die_stack);
 #endif
@@ -5702,7 +5702,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                       DW_TAG_value_to_name(die->Tag()),
                                                       die->GetName(this, dwarf_cu));
 
-#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+#if defined(LLDB_CONFIGURATION_DEBUG) || defined(LLDB_CONFIGURATION_RELEASE)
             scoped_die_logger.Push (dwarf_cu, die);
             g_die_stack.LogDIEs(log, this);
 #endif

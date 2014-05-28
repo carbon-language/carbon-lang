@@ -57,13 +57,7 @@ CommandObjectArgs::CommandOptions::SetOptionValue (uint32_t option_idx, const ch
     Error error;
     
     const int short_option = m_getopt_table[option_idx].val;
-    
-    switch (short_option)
-    {
-        default:
-            error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
-            break;
-    }
+    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
     
     return error;
 }

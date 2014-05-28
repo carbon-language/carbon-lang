@@ -609,14 +609,14 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 
     switch (m_fd_send_type)
     {
-#ifndef LLDB_DISABLE_POSIX
         case eFDTypeFile:       // Other FD requireing read/write
+#ifndef LLDB_DISABLE_POSIX
             do
             {
                 bytes_sent = ::write (m_fd_send, src, src_len);
             } while (bytes_sent < 0 && errno == EINTR);
-            break;
 #endif
+            break;
         case eFDTypeSocket:     // Socket requiring send/recv
             do
             {

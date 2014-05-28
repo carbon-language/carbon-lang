@@ -38,7 +38,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-#ifdef LLDB_DISABLE_POSIX
+#if defined(LLDB_DISABLE_POSIX) && !defined(SIGSTOP)
 #define SIGSTOP 17
 #endif
 

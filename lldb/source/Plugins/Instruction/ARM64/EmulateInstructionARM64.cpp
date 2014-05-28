@@ -575,7 +575,7 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
     }
     
     idx = LSL(llvm::SignExtend64<7>(imm7), scale);
-    size = 1 << scale;
+    size = (integer)1 << scale;
     uint64_t datasize = size * 8;
     uint64_t address;
     uint64_t wb_address;

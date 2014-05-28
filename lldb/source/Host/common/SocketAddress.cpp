@@ -90,6 +90,7 @@ GetFamilyLength (sa_family_t family)
         case AF_INET6: return sizeof(struct sockaddr_in6);
     }
     assert(0 && "Unsupported address family");
+    return 0;
 }
 
 socklen_t
