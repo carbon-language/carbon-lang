@@ -32,6 +32,14 @@
 #ifndef __BMIINTRIN_H
 #define __BMIINTRIN_H
 
+#define _tzcnt_u16(a)     (__tzcnt_u16((a)))
+#define _andn_u32(a, b)   (__andn_u32((a), (b)))
+/* _bextr_u32 != __bextr_u32 */
+#define _blsi_u32(a)      (__blsi_u32((a)))
+#define _blsmsk_u32(a)    (__blsmsk_u32((a)))
+#define _blsr_u32(a)      (__blsr_u32((a)))
+#define _tzcnt_u32(a)     (__tzcnt_u32((a)))
+
 static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
 __tzcnt_u16(unsigned short __X)
 {
@@ -44,10 +52,18 @@ __andn_u32(unsigned int __X, unsigned int __Y)
   return ~__X & __Y;
 }
 
+/* AMD-specified, double-leading-underscore version of BEXTR */
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __bextr_u32(unsigned int __X, unsigned int __Y)
 {
   return __builtin_ia32_bextr_u32(__X, __Y);
+}
+
+/* Intel-specified, single-leading-underscore version of BEXTR */
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_bextr_u32(unsigned int __X, unsigned int __Y, unsigned int __Z)
+{
+  return __builtin_ia32_bextr_u32 (__X, ((__Y & 0xff) | ((__Z & 0xff) << 8)));
 }
 
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
@@ -75,16 +91,32 @@ __tzcnt_u32(unsigned int __X)
 }
 
 #ifdef __x86_64__
+
+#define _andn_u64(a, b)   (__andn_u64((a), (b)))
+/* _bextr_u64 != __bextr_u64 */
+#define _blsi_u64(a)      (__blsi_u64((a)))
+#define _blsmsk_u64(a)    (__blsmsk_u64((a)))
+#define _blsr_u64(a)      (__blsr_u64((a)))
+#define _tzcnt_u64(a)     (__tzcnt_u64((a)))
+
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __andn_u64 (unsigned long long __X, unsigned long long __Y)
 {
   return ~__X & __Y;
 }
 
+/* AMD-specified, double-leading-underscore version of BEXTR */
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __bextr_u64(unsigned long long __X, unsigned long long __Y)
 {
   return __builtin_ia32_bextr_u64(__X, __Y);
+}
+
+/* Intel-specified, single-leading-underscore version of BEXTR */
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+_bextr_u64(unsigned long long __X, unsigned int __Y, unsigned int __Z)
+{
+  return __builtin_ia32_bextr_u64 (__X, ((__Y & 0xff) | ((__Z & 0xff) << 8)));
 }
 
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
@@ -110,6 +142,7 @@ __tzcnt_u64(unsigned long long __X)
 {
   return __builtin_ctzll(__X);
 }
-#endif
+
+#endif /* __x86_64__ */
 
 #endif /* __BMIINTRIN_H */
