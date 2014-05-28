@@ -129,6 +129,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   AtomLayout *gpAtom = _mipsTargetLayout.getGP();
   uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
 
+  AtomLayout *gpDispAtom = _mipsTargetLayout.getGPDisp();
+  bool isGpDisp = gpDispAtom && ref.target() == gpDispAtom->_atom;
+
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
@@ -144,12 +147,10 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     reloc26loc(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_MIPS_HI16:
-    relocHi16(location, relocVAddress, targetVAddress, ref.addend(),
-              ref.target() == gpAtom->_atom);
+    relocHi16(location, relocVAddress, targetVAddress, ref.addend(), isGpDisp);
     break;
   case R_MIPS_LO16:
-    relocLo16(location, relocVAddress, targetVAddress, ref.addend(),
-              ref.target() == gpAtom->_atom);
+    relocLo16(location, relocVAddress, targetVAddress, ref.addend(), isGpDisp);
     break;
   case R_MIPS_GOT16:
     relocGOT(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);

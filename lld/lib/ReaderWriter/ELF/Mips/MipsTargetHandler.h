@@ -26,8 +26,7 @@ public:
   MipsTargetLayout(const MipsLinkingContext &ctx)
       : TargetLayout<ELFType>(ctx),
         _gotSection(new (_alloc) MipsGOTSection<ELFType>(ctx)),
-        _pltSection(new (_alloc) MipsPLTSection<ELFType>(ctx)),
-        _cachedGP(false) {}
+        _pltSection(new (_alloc) MipsPLTSection<ELFType>(ctx)) {}
 
   const MipsGOTSection<ELFType> &getGOTSection() const { return *_gotSection; }
   const MipsPLTSection<ELFType> &getPLTSection() const { return *_pltSection; }
@@ -47,22 +46,30 @@ public:
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }
 
-  /// \brief Get the cached value of the GP atom.
+  /// \brief Get '_gp' symbol atom layout.
   AtomLayout *getGP() {
-    if (!_cachedGP) {
-      auto gpAtomIter = this->findAbsoluteAtom("_gp_disp");
-      _gp = *(gpAtomIter);
-      _cachedGP = true;
+    if (!_gpAtom.hasValue()) {
+      auto atom = this->findAbsoluteAtom("_gp");
+      _gpAtom = atom != this->absoluteAtoms().end() ? *atom : nullptr;
     }
-    return _gp;
+    return *_gpAtom;
+  }
+
+  /// \brief Get '_gp_disp' symbol atom layout.
+  AtomLayout *getGPDisp() {
+    if (!_gpDispAtom.hasValue()) {
+      auto atom = this->findAbsoluteAtom("_gp_disp");
+      _gpDispAtom = atom != this->absoluteAtoms().end() ? *atom : nullptr;
+    }
+    return *_gpDispAtom;
   }
 
 private:
   llvm::BumpPtrAllocator _alloc;
   MipsGOTSection<ELFType> *_gotSection;
   MipsPLTSection<ELFType> *_pltSection;
-  AtomLayout *_gp;
-  bool _cachedGP;
+  llvm::Optional<AtomLayout *> _gpAtom;
+  llvm::Optional<AtomLayout *> _gpDispAtom;
 };
 
 /// \brief Mips Runtime file.
