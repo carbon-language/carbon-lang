@@ -565,12 +565,9 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
     LinkModuleToUse = ModuleOrErr.get();
   }
 
-  StringRef MainFileName = getCompilerInstance().getCodeGenOpts().MainFileName;
-  if (MainFileName.empty())
-    MainFileName = InFile;
   BEConsumer = new BackendConsumer(BA, CI.getDiagnostics(), CI.getCodeGenOpts(),
                                    CI.getTargetOpts(), CI.getLangOpts(),
-                                   CI.getFrontendOpts().ShowTimers, MainFileName,
+                                   CI.getFrontendOpts().ShowTimers, InFile,
                                    LinkModuleToUse, OS.release(), *VMContext);
   return BEConsumer;
 }
