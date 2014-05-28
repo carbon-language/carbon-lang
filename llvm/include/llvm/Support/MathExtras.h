@@ -258,6 +258,12 @@ inline uint32_t Lo_32(uint64_t Value) {
   return static_cast<uint32_t>(Value);
 }
 
+/// Make_64 - This functions makes a 64-bit integer from a high / low pair of
+///           32-bit integers.
+inline uint64_t Make_64(uint32_t High, uint32_t Low) {
+  return ((uint64_t)High << 32) | (uint64_t)Low;
+}
+
 /// isInt - Checks if an integer fits into the given bit width.
 template<unsigned N>
 inline bool isInt(int64_t x) {
