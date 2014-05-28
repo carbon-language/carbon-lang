@@ -58,7 +58,7 @@ static bool IsStdString(QualType T) {
 
   const TypedefNameDecl *TD = TT->getDecl();
 
-  if (!InNamespace(TD, "std"))
+  if (!TD->isInStdNamespace())
     return false;
 
   return TD->getName() == "string";

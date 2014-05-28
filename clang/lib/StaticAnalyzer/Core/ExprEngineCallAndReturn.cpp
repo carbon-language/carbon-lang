@@ -387,14 +387,14 @@ static bool IsInStdNamespace(const FunctionDecl *FD) {
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
   if (!ND)
     return false;
-  
+
   while (const DeclContext *Parent = ND->getParent()) {
     if (!isa<NamespaceDecl>(Parent))
       break;
     ND = cast<NamespaceDecl>(Parent);
   }
 
-  return ND->getName() == "std";
+  return ND->isStdNamespace();
 }
 
 // The GDM component containing the dynamic dispatch bifurcation info. When

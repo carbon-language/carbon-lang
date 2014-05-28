@@ -739,16 +739,6 @@ void ConsumedStmtVisitor::VisitBinaryOperator(const BinaryOperator *BinOp) {
   }
 }
 
-static bool isStdNamespace(const DeclContext *DC) {
-  if (!DC->isNamespace()) return false;
-  while (DC->getParent()->isNamespace())
-    DC = DC->getParent();
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
-
-  return ND && ND->getName() == "std" &&
-         ND->getDeclContext()->isTranslationUnit();
-}
-
 void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
   const FunctionDecl *FunDecl = Call->getDirectCallee();
   if (!FunDecl)
@@ -756,9 +746,8 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
 
   // Special case for the std::move function.
   // TODO: Make this more specific. (Deferred)
-  if (Call->getNumArgs() == 1 &&
-      FunDecl->getNameAsString() == "move" &&
-      isStdNamespace(FunDecl->getDeclContext())) {
+  if (Call->getNumArgs() == 1 && FunDecl->getNameAsString() == "move" &&
+      FunDecl->isInStdNamespace()) {
     copyInfo(Call->getArg(0), Call, CS_Consumed);
     return;
   }

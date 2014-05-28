@@ -2328,12 +2328,6 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
   return (proto->getParamType(1).getCanonicalType() == Context.VoidPtrTy);
 }
 
-static bool isNamespaceStd(const DeclContext *DC) {
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC->getRedeclContext());
-  return ND && isNamed(ND, "std") &&
-         ND->getParent()->getRedeclContext()->isTranslationUnit();
-}
-
 bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
   if (getDeclName().getNameKind() != DeclarationName::CXXOperatorName)
     return false;
@@ -2371,9 +2365,8 @@ bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
   Ty = Ty->getPointeeType();
   if (Ty.getCVRQualifiers() != Qualifiers::Const)
     return false;
-  // FIXME: Recognise nothrow_t in an inline namespace inside std?
   const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  return RD && isNamed(RD, "nothrow_t") && isNamespaceStd(RD->getDeclContext());
+  return RD && isNamed(RD, "nothrow_t") && RD->isInStdNamespace();
 }
 
 FunctionDecl *

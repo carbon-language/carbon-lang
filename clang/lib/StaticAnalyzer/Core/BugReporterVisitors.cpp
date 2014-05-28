@@ -1514,7 +1514,7 @@ static bool isInStdNamespace(const Decl *D) {
   while (const NamespaceDecl *Parent = dyn_cast<NamespaceDecl>(ND->getParent()))
     ND = Parent;
 
-  return ND->getName() == "std";
+  return ND->isStdNamespace();
 }
 
 

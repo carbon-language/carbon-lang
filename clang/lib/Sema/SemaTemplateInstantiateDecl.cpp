@@ -887,11 +887,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
         if (DCParent->isNamespace() &&
             cast<NamespaceDecl>(DCParent)->getIdentifier() &&
             cast<NamespaceDecl>(DCParent)->getIdentifier()->isStr("tr1")) {
-          DeclContext *DCParent2 = DCParent->getParent();
-          if (DCParent2->isNamespace() &&
-              cast<NamespaceDecl>(DCParent2)->getIdentifier() &&
-              cast<NamespaceDecl>(DCParent2)->getIdentifier()->isStr("std") &&
-              DCParent2->getParent()->isTranslationUnit())
+          if (cast<Decl>(DCParent)->isInStdNamespace())
             Complain = false;
         }
       }
