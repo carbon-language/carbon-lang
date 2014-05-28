@@ -683,6 +683,13 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "case (b):\n"
                "  return;\n"
                "}");
+
+  verifyFormat("switch (a) {\n"
+               "case some_namespace::\n"
+               "    some_constant:\n"
+               "  return;\n"
+               "}",
+               getLLVMStyleWithColumns(34));
 }
 
 TEST_F(FormatTest, CaseRanges) {

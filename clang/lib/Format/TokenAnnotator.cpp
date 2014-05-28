@@ -392,7 +392,8 @@ private:
         Tok->Type = TT_RangeBasedForLoopColon;
       } else if (CurrentToken && CurrentToken->is(tok::numeric_constant)) {
         Tok->Type = TT_BitFieldColon;
-      } else if (Contexts.size() == 1 && Line.First->isNot(tok::kw_enum)) {
+      } else if (Contexts.size() == 1 &&
+                 !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) {
         Tok->Type = TT_InheritanceColon;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
         Tok->Type = TT_InlineASMColon;
@@ -1655,11 +1656,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return Style.BreakBeforeTernaryOperators;
   if (Left.Type == TT_ConditionalExpr || Left.is(tok::question))
     return !Style.BreakBeforeTernaryOperators;
-  if (Right.is(tok::colon) &&
-      (Right.Type == TT_DictLiteral || Right.Type == TT_ObjCMethodExpr))
-    return false;
   if (Right.Type == TT_InheritanceColon)
     return true;
+  if (Right.is(tok::colon) && (Right.Type != TT_CtorInitializerColon &&
+                               Right.Type != TT_InlineASMColon))
+    return false;
   if (Left.is(tok::colon) &&
       (Left.Type == TT_DictLiteral || Left.Type == TT_ObjCMethodExpr))
     return true;
