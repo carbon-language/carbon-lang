@@ -422,9 +422,8 @@ struct ImportSpecials {
   // G64-DAG: declare dllimport                void                    @_ZN14ImportSpecialsC1Ev(%struct.ImportSpecials*)
   __declspec(dllimport) ImportSpecials();
 
-  // FIXME: MSVC emits ??1ImportSpecials@@{{QAE|QEAA}}@XZ here.
-  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??_DImportSpecials@@QAE@XZ"(%struct.ImportSpecials*)
-  // M64-DAG: declare dllimport                void @"\01??_DImportSpecials@@QEAA@XZ"(%struct.ImportSpecials*)
+  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??1ImportSpecials@@QAE@XZ"(%struct.ImportSpecials*)
+  // M64-DAG: declare dllimport                void @"\01??1ImportSpecials@@QEAA@XZ"(%struct.ImportSpecials*)
   // G32-DAG: declare dllimport x86_thiscallcc void                    @_ZN14ImportSpecialsD1Ev(%struct.ImportSpecials*)
   // G64-DAG: declare dllimport                void                    @_ZN14ImportSpecialsD1Ev(%struct.ImportSpecials*)
   __declspec(dllimport) ~ImportSpecials() {}
@@ -466,12 +465,11 @@ struct ImportInlineSpecials {
   // GO1-DAG: define available_externally dllimport x86_thiscallcc void @_ZN20ImportInlineSpecialsC1Ev(
   __declspec(dllimport) ImportInlineSpecials() {}
 
-  // FIXME: MSVC emits ??1ImportInlineSpecials@@{{QAE|QEAA}}@XZ here.
-  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??_DImportInlineSpecials@@QAE@XZ"(%struct.ImportInlineSpecials*)
-  // M64-DAG: declare dllimport                void @"\01??_DImportInlineSpecials@@QEAA@XZ"(%struct.ImportInlineSpecials*)
+  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??1ImportInlineSpecials@@QAE@XZ"(%struct.ImportInlineSpecials*)
+  // M64-DAG: declare dllimport                void @"\01??1ImportInlineSpecials@@QEAA@XZ"(%struct.ImportInlineSpecials*)
   // G32-DAG: declare dllimport x86_thiscallcc void @_ZN20ImportInlineSpecialsD1Ev(%struct.ImportInlineSpecials*)
   // G64-DAG: declare dllimport                void @_ZN20ImportInlineSpecialsD1Ev(%struct.ImportInlineSpecials*)
-  // MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01??_DImportInlineSpecials@@QAE@XZ"(
+  // MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01??1ImportInlineSpecials@@QAE@XZ"(
   // GO1-DAG: define available_externally dllimport x86_thiscallcc void @_ZN20ImportInlineSpecialsD1Ev(
   __declspec(dllimport) ~ImportInlineSpecials() {}
 
@@ -522,11 +520,11 @@ struct ImportDefaulted {
   // GO1-DAG: define available_externally dllimport x86_thiscallcc void @_ZN15ImportDefaultedC1Ev(%struct.ImportDefaulted* %this)
   __declspec(dllimport) ImportDefaulted() = default;
 
-  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??_DImportDefaulted@@QAE@XZ"(%struct.ImportDefaulted*)
-  // M64-DAG: declare dllimport                void @"\01??_DImportDefaulted@@QEAA@XZ"(%struct.ImportDefaulted*)
+  // M32-DAG: declare dllimport x86_thiscallcc void @"\01??1ImportDefaulted@@QAE@XZ"(%struct.ImportDefaulted*)
+  // M64-DAG: declare dllimport                void @"\01??1ImportDefaulted@@QEAA@XZ"(%struct.ImportDefaulted*)
   // G32-DAG: declare dllimport x86_thiscallcc void @_ZN15ImportDefaultedD1Ev(%struct.ImportDefaulted*)
   // G64-DAG: declare dllimport                void @_ZN15ImportDefaultedD1Ev(%struct.ImportDefaulted*)
-  // MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01??_DImportDefaulted@@QAE@XZ"(%struct.ImportDefaulted* %this)
+  // MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01??1ImportDefaulted@@QAE@XZ"(%struct.ImportDefaulted* %this)
   // GO1-DAG: define available_externally dllimport x86_thiscallcc void @_ZN15ImportDefaultedD1Ev(%struct.ImportDefaulted* %this)
   __declspec(dllimport) ~ImportDefaulted() = default;
 
@@ -585,9 +583,8 @@ struct ImportDefaultedDefs {
 // G64-DAG: declare dllimport                void                         @_ZN19ImportDefaultedDefsC1Ev(%struct.ImportDefaultedDefs*)
 __declspec(dllimport) ImportDefaultedDefs::ImportDefaultedDefs() = default;
 
-// FIXME: MSVC emits ??1ImportDefaultedDefs@@{{QAE|QEAA}}@XZ here.
-// M32-DAG: declare dllimport x86_thiscallcc void @"\01??_DImportDefaultedDefs@@QAE@XZ"(%struct.ImportDefaultedDefs*)
-// M64-DAG: declare dllimport                void @"\01??_DImportDefaultedDefs@@QEAA@XZ"(%struct.ImportDefaultedDefs*)
+// M32-DAG: declare dllimport x86_thiscallcc void @"\01??1ImportDefaultedDefs@@QAE@XZ"(%struct.ImportDefaultedDefs*)
+// M64-DAG: declare dllimport                void @"\01??1ImportDefaultedDefs@@QEAA@XZ"(%struct.ImportDefaultedDefs*)
 // G32-DAG: declare dllimport x86_thiscallcc void @_ZN19ImportDefaultedDefsD1Ev(%struct.ImportDefaultedDefs*)
 // G64-DAG: declare dllimport                void @_ZN19ImportDefaultedDefsD1Ev(%struct.ImportDefaultedDefs*)
 __declspec(dllimport) ImportDefaultedDefs::~ImportDefaultedDefs() = default;

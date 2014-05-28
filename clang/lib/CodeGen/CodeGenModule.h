@@ -975,8 +975,7 @@ public:
   /// Returns LLVM linkage for a declarator.
   llvm::GlobalValue::LinkageTypes
   getLLVMLinkageForDeclarator(const DeclaratorDecl *D, GVALinkage Linkage,
-                              bool IsConstantVariable,
-                              bool UseThunkForDtorVariant);
+                              bool IsConstantVariable);
 
   /// Returns LLVM linkage for a declarator.
   llvm::GlobalValue::LinkageTypes

@@ -561,13 +561,16 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
 
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
-  bool UseThunkForDtorVariant =
-      isa<CXXDestructorDecl>(D) &&
+  if (isa<CXXDestructorDecl>(D) &&
       getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType());
+                                         GD.getDtorType())) {
+    // Destructor variants in the Microsoft C++ ABI are always internal or
+    // linkonce_odr thunks emitted on an as-needed basis.
+    return Linkage == GVA_Internal ? llvm::GlobalValue::InternalLinkage
+                                   : llvm::GlobalValue::LinkOnceODRLinkage;
+  }
 
-  return getLLVMLinkageForDeclarator(D, Linkage, /*isConstantVariable=*/false,
-                                     UseThunkForDtorVariant);
+  return getLLVMLinkageForDeclarator(D, Linkage, /*isConstantVariable=*/false);
 }
 
 void CodeGenModule::setFunctionDefinitionAttributes(const FunctionDecl *D,
@@ -779,6 +782,13 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   // overridden by a definition.
 
   setLinkageAndVisibilityForGV(F, FD);
+
+  if (const auto *Dtor = dyn_cast_or_null<CXXDestructorDecl>(FD)) {
+    if (getCXXABI().useThunkForDtorVariant(Dtor, GD.getDtorType())) {
+      // Don't dllexport/import destructor thunks.
+      F->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
+    }
+  }
 
   if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
     F->setSection(SA->getName());
@@ -1914,8 +1924,7 @@ static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
 }
 
 llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
-    const DeclaratorDecl *D, GVALinkage Linkage, bool IsConstantVariable,
-    bool UseThunkForDtorVariant) {
+    const DeclaratorDecl *D, GVALinkage Linkage, bool IsConstantVariable) {
   if (Linkage == GVA_Internal)
     return llvm::Function::InternalLinkage;
 
@@ -1954,11 +1963,6 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
     return !Context.getLangOpts().AppleKext ? llvm::Function::WeakODRLinkage
                                             : llvm::Function::ExternalLinkage;
 
-  // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
-  // emitted on an as-needed basis.
-  if (UseThunkForDtorVariant)
-    return llvm::GlobalValue::LinkOnceODRLinkage;
-
   // If required by the ABI, give definitions of static data members with inline
   // initializers at least linkonce_odr linkage.
   if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
@@ -1987,8 +1991,7 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
 llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageVarDefinition(
     const VarDecl *VD, bool IsConstant) {
   GVALinkage Linkage = getContext().GetGVALinkageForVariable(VD);
-  return getLLVMLinkageForDeclarator(VD, Linkage, IsConstant,
-                                     /*UseThunkForDtorVariant=*/false);
+  return getLLVMLinkageForDeclarator(VD, Linkage, IsConstant);
 }
 
 /// Replace the uses of a function that was declared with a non-proto type.
