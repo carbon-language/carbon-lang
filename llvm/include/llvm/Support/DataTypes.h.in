@@ -37,6 +37,16 @@
 #include <math.h>
 #endif
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#else
+#error "Compiler must provide an implementation of stdint.h"
+#endif
+
 #ifndef _MSC_VER
 
 /* Note that this header's correct operation depends on __STDC_LIMIT_MACROS
@@ -55,14 +65,6 @@
 /* Note that <inttypes.h> includes <stdint.h>, if this is a C99 system. */
 #include <sys/types.h>
 
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #ifdef _AIX
 #include "llvm/Support/AIXDataTypesFix.h"
 #endif
@@ -77,8 +79,6 @@ typedef u_int64_t uint64_t;
 #endif
 
 #else /* _MSC_VER */
-/* Visual C++ doesn't provide standard integer headers, but it does provide
-   built-in data types. */
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -87,94 +87,21 @@ typedef u_int64_t uint64_t;
 #else
 #include <math.h>
 #endif
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-typedef signed int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
+
 #if defined(_WIN64)
-  typedef signed __int64 ssize_t;
+typedef signed __int64 ssize_t;
 #else
-  typedef signed int ssize_t;
-#endif
+typedef signed int ssize_t;
+#endif /* _WIN64 */
 
-#ifndef INT8_MAX
-# define INT8_MAX 127
-#endif
-#ifndef INT8_MIN
-# define INT8_MIN -128
-#endif
-#ifndef UINT8_MAX
-# define UINT8_MAX 255
-#endif
-#ifndef INT16_MAX
-# define INT16_MAX 32767
-#endif
-#ifndef INT16_MIN
-# define INT16_MIN -32768
-#endif
-#ifndef UINT16_MAX
-# define UINT16_MAX 65535
-#endif
-#ifndef INT32_MAX
-# define INT32_MAX 2147483647
-#endif
-#ifndef INT32_MIN
-/* MSC treats -2147483648 as -(2147483648U). */
-# define INT32_MIN (-INT32_MAX - 1)
-#endif
-#ifndef UINT32_MAX
-# define UINT32_MAX 4294967295U
-#endif
-/* Certain compatibility updates to VC++ introduce the `cstdint'
- * header, which defines the INT*_C macros. On default installs they
- * are absent. */
-#ifndef INT8_C
-# define INT8_C(C)   C##i8
-#endif
-#ifndef UINT8_C
-# define UINT8_C(C)  C##ui8
-#endif
-#ifndef INT16_C
-# define INT16_C(C)  C##i16
-#endif
-#ifndef UINT16_C
-# define UINT16_C(C) C##ui16
-#endif
-#ifndef INT32_C
-# define INT32_C(C)  C##i32
-#endif
-#ifndef UINT32_C
-# define UINT32_C(C) C##ui32
-#endif
-#ifndef INT64_C
-# define INT64_C(C)  C##i64
-#endif
-#ifndef UINT64_C
-# define UINT64_C(C) C##ui64
-#endif
-
-#ifndef PRId64
-# define PRId64 "I64d"
-#endif
-#ifndef PRIi64
-# define PRIi64 "I64i"
-#endif
-#ifndef PRIo64
-# define PRIo64 "I64o"
-#endif
-#ifndef PRIu64
-# define PRIu64 "I64u"
-#endif
-#ifndef PRIx64
-# define PRIx64 "I64x"
-#endif
-#ifndef PRIX64
-# define PRIX64 "I64X"
-#endif
+#ifndef HAVE_INTTYPES_H
+#define PRId64 "I64d"
+#define PRIi64 "I64i"
+#define PRIo64 "I64o"
+#define PRIu64 "I64u"
+#define PRIx64 "I64x"
+#define PRIX64 "I64X"
+#endif /* HAVE_INTTYPES_H */
 
 #endif /* _MSC_VER */
 
