@@ -6956,6 +6956,8 @@ def err_omp_linear_expected_int_or_ptr : Error<
 def warn_omp_linear_step_zero : Warning<
   "zero linear step (%0 %select{|and other variables in clause }1should probably be const)">,
   InGroup<OpenMPClauses>;
+def err_omp_local_var_in_threadprivate_init : Error<
+  "variable with local storage in initial value of threadprivate variable">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

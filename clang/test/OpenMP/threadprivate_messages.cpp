@@ -108,10 +108,12 @@ int o; // expected-note {{candidate found by name lookup is '(anonymous namespac
 
 int main(int argc, char **argv) { // expected-note {{'argc' defined here}}
 
-  int x, y = argc; // expected-note {{'y' defined here}}
+  int x, y = argc; // expected-note 2 {{'y' defined here}}
   static double d1;
   static double d2;
   static double d3; // expected-note {{'d3' defined here}}
+  static Class LocalClass(y); // expected-error {{variable with local storage in initial value of threadprivate variable}}
+#pragma omp threadprivate(LocalClass)
 
   d.a = a;
   d2++;

@@ -553,6 +553,35 @@ Sema::ActOnOpenMPThreadprivateDirective(SourceLocation Loc,
   return DeclGroupPtrTy();
 }
 
+namespace {
+class LocalVarRefChecker : public ConstStmtVisitor<LocalVarRefChecker, bool> {
+  Sema &SemaRef;
+
+public:
+  bool VisitDeclRefExpr(const DeclRefExpr *E) {
+    if (auto VD = dyn_cast<VarDecl>(E->getDecl())) {
+      if (VD->hasLocalStorage()) {
+        SemaRef.Diag(E->getLocStart(),
+                     diag::err_omp_local_var_in_threadprivate_init)
+            << E->getSourceRange();
+        SemaRef.Diag(VD->getLocation(), diag::note_defined_here)
+            << VD << VD->getSourceRange();
+        return true;
+      }
+    }
+    return false;
+  }
+  bool VisitStmt(const Stmt *S) {
+    for (auto Child : S->children()) {
+      if (Child && Visit(Child))
+        return true;
+    }
+    return false;
+  }
+  LocalVarRefChecker(Sema &SemaRef) : SemaRef(SemaRef) {}
+};
+} // namespace
+
 OMPThreadPrivateDecl *
 Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
   SmallVector<Expr *, 8> Vars;
@@ -590,6 +619,13 @@ Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
            IsDecl ? diag::note_previous_decl : diag::note_defined_here)
           << VD;
       continue;
+    }
+
+    // Check if initial value of threadprivate variable reference variable with
+    // local storage (it is not supported by runtime).
+    if (auto Init = VD->getAnyInitializer()) {
+      LocalVarRefChecker Checker(*this);
+      if (Checker.Visit(Init)) continue;
     }
 
     Vars.push_back(RefExpr);
