@@ -185,19 +185,15 @@ static uptr AllocationSize(const void *p) {
 using namespace __msan;
 
 uptr __msan_get_current_allocated_bytes() {
-  u64 stats[AllocatorStatCount];
+  uptr stats[AllocatorStatCount];
   allocator.GetStats(stats);
-  u64 m = stats[AllocatorStatMalloced];
-  u64 f = stats[AllocatorStatFreed];
-  return m >= f ? m - f : 1;
+  return stats[AllocatorStatAllocated];
 }
 
 uptr __msan_get_heap_size() {
-  u64 stats[AllocatorStatCount];
+  uptr stats[AllocatorStatCount];
   allocator.GetStats(stats);
-  u64 m = stats[AllocatorStatMmapped];
-  u64 f = stats[AllocatorStatUnmapped];
-  return m >= f ? m - f : 1;
+  return stats[AllocatorStatMapped];
 }
 
 uptr __msan_get_free_bytes() {
