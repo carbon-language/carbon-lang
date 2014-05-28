@@ -91,9 +91,11 @@ static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
     file.addZeroFillDefinedAtom(sym.name, atomScope(sym.scope), size, copyRefs);
   } else {
     ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
+    DefinedAtom::Merge m = DefinedAtom::mergeNo;
+    if (sym.desc & N_WEAK_DEF)
+      m = DefinedAtom::mergeAsWeak;
     file.addDefinedAtom(sym.name, atomScope(sym.scope),
-                        atomTypeFromSection(section), DefinedAtom::mergeNo,
-                        atomContent, copyRefs);
+                        atomTypeFromSection(section), m, atomContent, copyRefs);
   }
 }
 

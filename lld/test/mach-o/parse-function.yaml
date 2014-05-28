@@ -1,6 +1,6 @@
 # RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t  | FileCheck %s
 #
-# Test parsing of scope of functions.
+# Test parsing of mach-o functions.
 #
 
 --- !mach-o
@@ -16,29 +16,51 @@ sections:
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     alignment:       4
     address:         0x0000000000000000
-    content:         [ 0xC3, 0xC3, 0xC3 ]
+    content:         [ 0xC3, 0xC3, 0xC3, 0xC3, 0xC3 ]
 local-symbols:
   - name:            _myStatic
     type:            N_SECT
     sect:            1
-    value:           0x0000000000000002
+    value:           0x0000000000000005
 global-symbols:
   - name:            _myGlobal
     type:            N_SECT
     scope:           [ N_EXT ]
     sect:            1
     value:           0x0000000000000000
+  - name:            _myGlobalWeak
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    desc:            [ N_WEAK_DEF ]
+    value:           0x0000000000000001
   - name:            _myHidden
     type:            N_SECT
     scope:           [ N_EXT, N_PEXT ]
     sect:            1
-    value:           0x0000000000000001
+    value:           0x0000000000000002
+  - name:            _myHiddenWeak
+    type:            N_SECT
+    scope:           [ N_EXT, N_PEXT ]
+    sect:            1
+    desc:            [ N_WEAK_DEF ]
+    value:           0x0000000000000003
 ...
 
 # CHECK:      name:   _myGlobal
 # CHECK:      scope:  global
+
+# CHECK:      name:   _myGlobalWeak
+# CHECK:      scope:  global
+# CHECK:      merge:  as-weak
+
 # CHECK:      name:   _myHidden
 # CHECK:      scope:  hidden
+
+# CHECK:      name:   _myHiddenWeak
+# CHECK:      scope:  hidden
+# CHECK:      merge:  as-weak
+
 # CHECK:      name:   _myStatic
 # CHECK-NOT:	scope:  global
 # CHECK-NOT:	scope:  hidden
