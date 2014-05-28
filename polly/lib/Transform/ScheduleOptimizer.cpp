@@ -78,6 +78,19 @@ MaximizeBandDepth("polly-opt-maximize-bands",
                   cl::desc("Maximize the band depth (yes/no)"), cl::Hidden,
                   cl::init("yes"), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<int>
+DefaultTileSize("polly-default-tile-size",
+                cl::desc("The default tile size (if not enough were provided by"
+                         " --polly-tile-sizes)"),
+                cl::Hidden, cl::init(32), cl::ZeroOrMore,
+                cl::cat(PollyCategory));
+
+static cl::list<int> TileSizes("polly-tile-sizes",
+                               cl::desc("A tile size"
+                                        " for each loop dimension, filled with"
+                                        " --polly-default-tile-size"),
+                               cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
+                               cl::cat(PollyCategory));
 namespace {
 
 class IslScheduleOptimizer : public ScopPass {
@@ -103,11 +116,11 @@ private:
   /// tiling.
   ///
   /// Example:
-  ///   scheduleDimensions = 2, parameterDimensions = 1, tileSize = 32
+  ///   scheduleDimensions = 2, parameterDimensions = 1, TileSizes = <32, 64>
   ///
   ///   tileMap := [p0] -> {[s0, s1] -> [t0, t1, s0, s1]:
   ///                        t0 % 32 = 0 and t0 <= s0 < t0 + 32 and
-  ///                        t1 % 32 = 0 and t1 <= s1 < t1 + 32}
+  ///                        t1 % 64 = 0 and t1 <= s1 < t1 + 64}
   ///
   ///  Before tiling:
   ///
@@ -118,13 +131,13 @@ private:
   ///  After tiling:
   ///
   ///  for (t_i = 0; t_i < N; i+=32)
-  ///    for (t_j = 0; t_j < M; j+=32)
+  ///    for (t_j = 0; t_j < M; j+=64)
   ///	for (i = t_i; i < min(t_i + 32, N); i++)  | Unknown that N % 32 = 0
-  ///	  for (j = t_j; j < t_j + 32; j++)        |   Known that M % 32 = 0
+  ///	  for (j = t_j; j < t_j + 64; j++)        |   Known that M % 64 = 0
   ///	    S(i,j)
   ///
   static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
-                                   isl_space *SpaceModel, int tileSize = 32);
+                                   isl_space *SpaceModel);
 
   /// @brief Get the schedule for this band.
   ///
@@ -219,13 +232,12 @@ void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
 
 isl_basic_map *IslScheduleOptimizer::getTileMap(isl_ctx *ctx,
                                                 int scheduleDimensions,
-                                                isl_space *SpaceModel,
-                                                int tileSize) {
+                                                isl_space *SpaceModel) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
-  //	                  s0 = a0 * 32 and s0 = p0 and t0 <= p0 < t0 + 32 and
-  //	                  s1 = a1 * 32 and s1 = p1 and t1 <= p1 < t1 + 32}
+  //	                  s0 = a0 * 32 and s0 = p0 and t0 <= p0 < t0 + 64 and
+  //	                  s1 = a1 * 64 and s1 = p1 and t1 <= p1 < t1 + 64}
   //
   // and project out the auxilary dimensions a0 and a1.
   isl_space *Space =
@@ -239,6 +251,8 @@ isl_basic_map *IslScheduleOptimizer::getTileMap(isl_ctx *ctx,
     int tX = x;
     int pX = scheduleDimensions + x;
     int aX = 2 * scheduleDimensions + x;
+    int tileSize = (int)TileSizes.size() > x ? TileSizes[x] : DefaultTileSize;
+    assert(tileSize > 0 && "Invalid tile size");
 
     isl_constraint *c;
 
