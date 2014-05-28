@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // Check that LSan annotations work fine.
 // RUN: %clangxx_asan -O0 %s -o %t && %run %t
 // RUN: %clangxx_asan -O3 %s -o %t && %run %t

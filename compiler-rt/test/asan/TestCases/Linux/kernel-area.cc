@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // Test that kernel area is not sanitized on 32-bit machines.
 //
 // RUN: %clangxx_asan %s -o %t

@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // Test for the following situation:
 // (1) global A is constructed.
 // (2) exit() is called during construction of global B.

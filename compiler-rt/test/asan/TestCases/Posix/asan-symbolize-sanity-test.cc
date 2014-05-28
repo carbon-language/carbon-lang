@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // Check that asan_symbolize.py script works (for binaries, ASan RTL and
 // shared object files.
 

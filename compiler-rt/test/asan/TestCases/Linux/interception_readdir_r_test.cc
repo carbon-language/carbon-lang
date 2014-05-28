@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // RUN: %clangxx_asan -O0 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O1 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s

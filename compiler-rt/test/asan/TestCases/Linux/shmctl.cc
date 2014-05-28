@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // RUN: %clangxx_asan -O1 %s -o %t && %run %t 2>&1
 // Regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=250

@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // RUN: %clangxx_asan  %s -o %t
 
 // Regular run.

@@ -1,3 +1,6 @@
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
+// XFAIL: android
+//
 // Make sure __asan_gen_* strings do not end up in the symbol table.
 
 // RUN: %clang_asan %s -o %t.exe
