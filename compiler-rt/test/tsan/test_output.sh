@@ -14,7 +14,7 @@ BLACKLIST=$HERE/Helpers/blacklist.txt
 
 # TODO: add testing for all of -O0...-O3
 CFLAGS="-fsanitize=thread -fsanitize-blacklist=$BLACKLIST -fPIE -O1 -g -Wall"
-LDFLAGS="-pie -lpthread -ldl -lrt -lm -Wl,--whole-archive $TSAN_DIR/rtl/libtsan.a -Wl,--no-whole-archive"
+LDFLAGS="-pie -pthread -ldl -lrt -lm -Wl,--whole-archive $TSAN_DIR/rtl/libtsan.a -Wl,--no-whole-archive"
 
 test_file() {
   SRC=$1

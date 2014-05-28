@@ -1,14 +1,14 @@
 // RUN: export ASAN_OPTIONS=detect_stack_use_after_return=1
-// RUN: %clangxx_asan  -O0 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan  -O1 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan  -O2 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan  -O3 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan  -O0 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan  -O1 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan  -O2 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan  -O3 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t
 // Regression test for a CHECK failure with small stack size and large frame.
-// RUN: %clangxx_asan  -O3 %s -lpthread -o %t -DkSize=10000 -DUseThread -DkStackSize=65536 && not %run %t 2>&1 | FileCheck --check-prefix=THREAD %s
+// RUN: %clangxx_asan  -O3 %s -pthread -o %t -DkSize=10000 -DUseThread -DkStackSize=65536 && not %run %t 2>&1 | FileCheck --check-prefix=THREAD %s
 //
 // Test that we can find UAR in a thread other than main:
-// RUN: %clangxx_asan  -DUseThread -O2 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck --check-prefix=THREAD %s
+// RUN: %clangxx_asan  -DUseThread -O2 %s -pthread -o %t && not %run %t 2>&1 | FileCheck --check-prefix=THREAD %s
 //
 // Test the max_uar_stack_size_log/min_uar_stack_size_log flag.
 //

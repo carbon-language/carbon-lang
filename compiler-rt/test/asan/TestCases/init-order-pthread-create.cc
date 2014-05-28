@@ -1,7 +1,7 @@
 // Check that init-order checking is properly disabled if pthread_create is
 // called.
 
-// RUN: %clangxx_asan %s %p/Helpers/init-order-pthread-create-extra.cc -lpthread -o %t
+// RUN: %clangxx_asan %s %p/Helpers/init-order-pthread-create-extra.cc -pthread -o %t
 // RUN: env ASAN_OPTIONS=strict_init_order=true %run %t
 
 #include <stdio.h>

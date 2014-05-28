@@ -1,7 +1,7 @@
 // Test that TLS is unpoisoned on thread death.
 // REQUIRES: x86_64-supported-target,i386-supported-target
 
-// RUN: %clangxx_asan -O1 %s -lpthread -o %t && %run %t 2>&1
+// RUN: %clangxx_asan -O1 %s -pthread -o %t && %run %t 2>&1
 
 #include <assert.h>
 #include <pthread.h>

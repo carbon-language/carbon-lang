@@ -9,7 +9,7 @@
 // RUN: %clangxx_asan -x c -DSO_NAME=f0 %s -shared -o %t-f0.so -fPIC
 // RUN: %clangxx_asan -x c -DSO_NAME=f1 %s -shared -o %t-f1.so -fPIC
 // RUN: %clangxx_asan -x c -DSO_NAME=f2 %s -shared -o %t-f2.so -fPIC
-// RUN: %clangxx_asan %s -ldl -lpthread -o %t
+// RUN: %clangxx_asan %s -ldl -pthread -o %t
 // RUN: %run %t 0 3
 // RUN: %run %t 2 3
 // RUN: ASAN_OPTIONS=verbosity=2 %run %t 10 2 2>&1 | FileCheck %s
@@ -31,7 +31,7 @@
 /*
 cc=your-compiler
 
-$cc stress_dtls.c -lpthread -ldl
+$cc stress_dtls.c -pthread -ldl
 for((i=0;i<100;i++)); do
   $cc -fPIC -shared -DSO_NAME=f$i -o a.out-f$i.so stress_dtls.c;
 done
