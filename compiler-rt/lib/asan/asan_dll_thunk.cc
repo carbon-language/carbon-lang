@@ -273,6 +273,8 @@ INTERFACE_FUNCTION(__asan_stack_free_8)
 INTERFACE_FUNCTION(__asan_stack_free_9)
 INTERFACE_FUNCTION(__asan_stack_free_10)
 
+INTERFACE_FUNCTION(__sanitizer_cov_module_init)
+
 // TODO(timurrrr): Add more interface functions on the as-needed basis.
 
 // ----------------- Memory allocation functions ---------------------
