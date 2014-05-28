@@ -41,9 +41,6 @@ class GlobalVariable : public GlobalObject, public ilist_node<GlobalVariable> {
   void setParent(Module *parent);
 
   bool isConstantGlobal : 1;                   // Is this a global constant?
-  unsigned threadLocalMode : 3;                // Is this symbol "Thread Local",
-                                               // if so, what is the desired
-                                               // model?
   bool isExternallyInitializedConstant : 1;    // Is this a global whose value
                                                // can change from its initial
                                                // value before global
@@ -54,14 +51,6 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
-
-  enum ThreadLocalMode {
-    NotThreadLocal = 0,
-    GeneralDynamicTLSModel,
-    LocalDynamicTLSModel,
-    InitialExecTLSModel,
-    LocalExecTLSModel
-  };
 
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
@@ -154,16 +143,6 @@ public:
   ///
   bool isConstant() const { return isConstantGlobal; }
   void setConstant(bool Val) { isConstantGlobal = Val; }
-
-  /// If the value is "Thread Local", its value isn't shared by the threads.
-  bool isThreadLocal() const { return threadLocalMode != NotThreadLocal; }
-  void setThreadLocal(bool Val) {
-    threadLocalMode = Val ? GeneralDynamicTLSModel : NotThreadLocal;
-  }
-  void setThreadLocalMode(ThreadLocalMode Val) { threadLocalMode = Val; }
-  ThreadLocalMode getThreadLocalMode() const {
-    return static_cast<ThreadLocalMode>(threadLocalMode);
-  }
 
   bool isExternallyInitialized() const {
     return isExternallyInitializedConstant;

@@ -1859,15 +1859,9 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
   // handle switches; if that changes, we need them as well.  For now,
   // what follows assumes everything's a generic (or TLS) global address.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-  if (!GVar) {
-    // If GV is an alias, use the aliasee for determining thread-locality.
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GVar = dyn_cast_or_null<GlobalVariable>(GA->getAliasee());
-  }
 
   // FIXME: We don't yet handle the complexity of TLS.
-  bool IsTLS = GVar && GVar->isThreadLocal();
-  if (IsTLS)
+  if (GV->isThreadLocal())
     return 0;
 
   // For small code model, generate a simple TOC load.

@@ -355,17 +355,8 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
       return false;
 
     // Can't handle TLS yet.
-    if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
-      if (GVar->isThreadLocal())
-        return false;
-
-    // Can't handle TLS yet, part 2 (this is slightly crazy, but this is how
-    // it works...).
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      if (const GlobalVariable *GVar =
-              dyn_cast_or_null<GlobalVariable>(GA->getAliasee()))
-        if (GVar->isThreadLocal())
-          return false;
+    if (GV->isThreadLocal())
+      return false;
 
     // RIP-relative addresses can't have additional register operands, so if
     // we've already folded stuff into the addressing mode, just force the

@@ -88,8 +88,8 @@ CodeModel::Model TargetMachine::getCodeModel() const {
 }
 
 /// Get the IR-specified TLS model for Var.
-static TLSModel::Model getSelectedTLSModel(const GlobalVariable *Var) {
-  switch (Var->getThreadLocalMode()) {
+static TLSModel::Model getSelectedTLSModel(const GlobalValue *GV) {
+  switch (GV->getThreadLocalMode()) {
   case GlobalVariable::NotThreadLocal:
     llvm_unreachable("getSelectedTLSModel for non-TLS variable");
     break;
@@ -127,13 +127,10 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
       Model = TLSModel::InitialExec;
   }
 
-  const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV);
-  if (Var) {
-    // If the user specified a more specific model, use that.
-    TLSModel::Model SelectedModel = getSelectedTLSModel(Var);
-    if (SelectedModel > Model)
-      return SelectedModel;
-  }
+  // If the user specified a more specific model, use that.
+  TLSModel::Model SelectedModel = getSelectedTLSModel(GV);
+  if (SelectedModel > Model)
+    return SelectedModel;
 
   return Model;
 }

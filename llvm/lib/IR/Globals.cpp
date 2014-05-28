@@ -113,8 +113,9 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
     : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
                    OperandTraits<GlobalVariable>::op_begin(this),
                    InitVal != nullptr, Link, Name),
-      isConstantGlobal(constant), threadLocalMode(TLMode),
+      isConstantGlobal(constant),
       isExternallyInitializedConstant(isExternallyInitialized) {
+  setThreadLocalMode(TLMode);
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
@@ -132,8 +133,9 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
     : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
                    OperandTraits<GlobalVariable>::op_begin(this),
                    InitVal != nullptr, Link, Name),
-      isConstantGlobal(constant), threadLocalMode(TLMode),
+      isConstantGlobal(constant),
       isExternallyInitializedConstant(isExternallyInitialized) {
+  setThreadLocalMode(TLMode);
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");

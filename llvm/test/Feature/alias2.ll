@@ -17,3 +17,6 @@
 
 @v6 = alias i16, i32* @v1
 ; CHECK: @v6 = alias i16, i32* @v1
+
+@v7 = thread_local(localdynamic) alias i32* @v1
+; CHECK: @v7 = thread_local(localdynamic) alias i32* @v1

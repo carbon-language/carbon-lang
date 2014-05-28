@@ -2017,6 +2017,8 @@ error_code BitcodeReader::ParseModule(bool Resume) {
         NewGA->setDLLStorageClass(GetDecodedDLLStorageClass(Record[4]));
       else
         UpgradeDLLImportExportLinkage(NewGA, Record[2]);
+      if (Record.size() > 5)
+	NewGA->setThreadLocalMode(GetDecodedThreadLocalMode(Record[5]));
       ValueList.push_back(NewGA);
       AliasInits.push_back(std::make_pair(NewGA, Record[1]));
       break;

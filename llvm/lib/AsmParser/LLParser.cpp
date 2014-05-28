@@ -259,10 +259,13 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_extern_weak:         // OptionalLinkage
     case lltok::kw_external: {          // OptionalLinkage
       unsigned Linkage, Visibility, DLLStorageClass;
+      GlobalVariable::ThreadLocalMode TLM;
       if (ParseOptionalLinkage(Linkage) ||
           ParseOptionalVisibility(Visibility) ||
           ParseOptionalDLLStorageClass(DLLStorageClass) ||
-          ParseGlobal("", SMLoc(), Linkage, true, Visibility, DLLStorageClass))
+          ParseOptionalThreadLocal(TLM) ||
+          ParseGlobal("", SMLoc(), Linkage, true, Visibility, DLLStorageClass,
+                      TLM))
         return true;
       break;
     }
@@ -270,18 +273,28 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_hidden:        // OptionalVisibility
     case lltok::kw_protected: {   // OptionalVisibility
       unsigned Visibility, DLLStorageClass;
+      GlobalVariable::ThreadLocalMode TLM;
       if (ParseOptionalVisibility(Visibility) ||
           ParseOptionalDLLStorageClass(DLLStorageClass) ||
-          ParseGlobal("", SMLoc(), 0, false, Visibility, DLLStorageClass))
+          ParseOptionalThreadLocal(TLM) ||
+          ParseGlobal("", SMLoc(), 0, false, Visibility, DLLStorageClass, TLM))
         return true;
       break;
     }
 
-    case lltok::kw_thread_local:  // OptionalThreadLocal
+    case lltok::kw_thread_local: { // OptionalThreadLocal
+      GlobalVariable::ThreadLocalMode TLM;
+      if (ParseOptionalThreadLocal(TLM) ||
+          ParseGlobal("", SMLoc(), 0, false, 0, 0, TLM))
+        return true;
+      break;
+    }
+
     case lltok::kw_addrspace:     // OptionalAddrSpace
     case lltok::kw_constant:      // GlobalType
     case lltok::kw_global:        // GlobalType
-      if (ParseGlobal("", SMLoc(), 0, false, 0, 0)) return true;
+      if (ParseGlobal("", SMLoc(), 0, false, 0, 0, GlobalValue::NotThreadLocal))
+        return true;
       break;
 
     case lltok::kw_attributes: if (ParseUnnamedAttrGrp()) return true; break;
@@ -470,15 +483,17 @@ bool LLParser::ParseUnnamedGlobal() {
 
   bool HasLinkage;
   unsigned Linkage, Visibility, DLLStorageClass;
+  GlobalVariable::ThreadLocalMode TLM;
   if (ParseOptionalLinkage(Linkage, HasLinkage) ||
       ParseOptionalVisibility(Visibility) ||
-      ParseOptionalDLLStorageClass(DLLStorageClass))
+      ParseOptionalDLLStorageClass(DLLStorageClass) ||
+      ParseOptionalThreadLocal(TLM))
     return true;
 
   if (HasLinkage || Lex.getKind() != lltok::kw_alias)
     return ParseGlobal(Name, NameLoc, Linkage, HasLinkage, Visibility,
-                       DLLStorageClass);
-  return ParseAlias(Name, NameLoc, Visibility, DLLStorageClass);
+                       DLLStorageClass, TLM);
+  return ParseAlias(Name, NameLoc, Visibility, DLLStorageClass, TLM);
 }
 
 /// ParseNamedGlobal:
@@ -493,16 +508,18 @@ bool LLParser::ParseNamedGlobal() {
 
   bool HasLinkage;
   unsigned Linkage, Visibility, DLLStorageClass;
+  GlobalVariable::ThreadLocalMode TLM;
   if (ParseToken(lltok::equal, "expected '=' in global variable") ||
       ParseOptionalLinkage(Linkage, HasLinkage) ||
       ParseOptionalVisibility(Visibility) ||
-      ParseOptionalDLLStorageClass(DLLStorageClass))
+      ParseOptionalDLLStorageClass(DLLStorageClass) ||
+      ParseOptionalThreadLocal(TLM))
     return true;
 
   if (HasLinkage || Lex.getKind() != lltok::kw_alias)
     return ParseGlobal(Name, NameLoc, Linkage, HasLinkage, Visibility,
-                       DLLStorageClass);
-  return ParseAlias(Name, NameLoc, Visibility, DLLStorageClass);
+                       DLLStorageClass, TLM);
+  return ParseAlias(Name, NameLoc, Visibility, DLLStorageClass, TLM);
 }
 
 // MDString:
@@ -639,7 +656,8 @@ static bool isValidVisibilityForLinkage(unsigned V, unsigned L) {
 /// Everything through DLL storage class has already been parsed.
 ///
 bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
-                          unsigned Visibility, unsigned DLLStorageClass) {
+                          unsigned Visibility, unsigned DLLStorageClass,
+                          GlobalVariable::ThreadLocalMode TLM) {
   assert(Lex.getKind() == lltok::kw_alias);
   Lex.Lex();
   LocTy LinkageLoc = Lex.getLoc();
@@ -699,6 +717,7 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
   std::unique_ptr<GlobalAlias> GA(
       GlobalAlias::create(Ty, AddrSpace, (GlobalValue::LinkageTypes)Linkage,
                           Name, Aliasee, /*Parent*/ nullptr));
+  GA->setThreadLocalMode(TLM);
   GA->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GA->setDLLStorageClass((GlobalValue::DLLStorageClassTypes)DLLStorageClass);
 
@@ -753,21 +772,20 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 ///
 bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
-                           unsigned Visibility, unsigned DLLStorageClass) {
+                           unsigned Visibility, unsigned DLLStorageClass,
+                           GlobalVariable::ThreadLocalMode TLM) {
   if (!isValidVisibilityForLinkage(Visibility, Linkage))
     return Error(NameLoc,
                  "symbol with local linkage must have default visibility");
 
   unsigned AddrSpace;
   bool IsConstant, UnnamedAddr, IsExternallyInitialized;
-  GlobalVariable::ThreadLocalMode TLM;
   LocTy UnnamedAddrLoc;
   LocTy IsExternallyInitializedLoc;
   LocTy TyLoc;
 
   Type *Ty = nullptr;
-  if (ParseOptionalThreadLocal(TLM) ||
-      ParseOptionalAddrSpace(AddrSpace) ||
+  if (ParseOptionalAddrSpace(AddrSpace) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
       ParseOptionalToken(lltok::kw_externally_initialized,

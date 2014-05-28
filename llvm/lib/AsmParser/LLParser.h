@@ -239,9 +239,11 @@ namespace llvm {
     bool ParseNamedGlobal();
     bool ParseGlobal(const std::string &Name, LocTy Loc, unsigned Linkage,
                      bool HasLinkage, unsigned Visibility,
-                     unsigned DLLStorageClass);
+                     unsigned DLLStorageClass,
+                     GlobalVariable::ThreadLocalMode TLM);
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility,
-                    unsigned DLLStorageClass);
+                    unsigned DLLStorageClass,
+                    GlobalVariable::ThreadLocalMode TLM);
     bool ParseStandaloneMetadata();
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);

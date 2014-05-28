@@ -1488,6 +1488,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   }
   PrintVisibility(GA->getVisibility(), Out);
   PrintDLLStorageClass(GA->getDLLStorageClass(), Out);
+  PrintThreadLocalModel(GA->getThreadLocalMode(), Out);
 
   Out << "alias ";
 

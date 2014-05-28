@@ -63,7 +63,8 @@ protected:
               LinkageTypes Linkage, const Twine &Name)
       : Constant(Ty, VTy, Ops, NumOps), Linkage(Linkage),
         Visibility(DefaultVisibility), UnnamedAddr(0),
-        DllStorageClass(DefaultStorageClass), Parent(nullptr) {
+        DllStorageClass(DefaultStorageClass),
+        ThreadLocal(NotThreadLocal), Parent(nullptr) {
     setName(Name);
   }
 
@@ -74,21 +75,32 @@ protected:
   unsigned UnnamedAddr : 1;   // This value's address is not significant
   unsigned DllStorageClass : 2; // DLL storage class
 
+  unsigned ThreadLocal : 3; // Is this symbol "Thread Local", if so, what is
+                            // the desired model?
+
 private:
   // Give subclasses access to what otherwise would be wasted padding.
-  // (22 + 2 + 1 + 2 + 5) == 32.
-  unsigned SubClassData : 22;
+  // (19 + 3 + 2 + 1 + 2 + 5) == 32.
+  unsigned SubClassData : 19;
 protected:
   unsigned getGlobalValueSubClassData() const {
     return SubClassData;
   }
   void setGlobalValueSubClassData(unsigned V) {
-    assert(V < (1 << 22) && "It will not fit");
+    assert(V < (1 << 19) && "It will not fit");
     SubClassData = V;
   }
 
   Module *Parent;             // The containing module.
 public:
+  enum ThreadLocalMode {
+    NotThreadLocal = 0,
+    GeneralDynamicTLSModel,
+    LocalDynamicTLSModel,
+    InitialExecTLSModel,
+    LocalExecTLSModel
+  };
+
   ~GlobalValue() {
     removeDeadConstantUsers();   // remove any dead constants using this.
   }
@@ -108,6 +120,19 @@ public:
     assert((!hasLocalLinkage() || V == DefaultVisibility) &&
            "local linkage requires default visibility");
     Visibility = V;
+  }
+
+  /// If the value is "Thread Local", its value isn't shared by the threads.
+  bool isThreadLocal() const { return getThreadLocalMode() != NotThreadLocal; }
+  void setThreadLocal(bool Val) {
+    setThreadLocalMode(Val ? GeneralDynamicTLSModel : NotThreadLocal);
+  }
+  void setThreadLocalMode(ThreadLocalMode Val) {
+    assert(Val == NotThreadLocal || getValueID() != Value::FunctionVal);
+    ThreadLocal = Val;
+  }
+  ThreadLocalMode getThreadLocalMode() const {
+    return static_cast<ThreadLocalMode>(ThreadLocal);
   }
 
   DLLStorageClassTypes getDLLStorageClass() const {

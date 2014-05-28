@@ -1,4 +1,20 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false \
+; RUN: -relocation-model=pic | FileCheck %s
+
+@thread_var = thread_local global i32 42, align 4
+@thread_alias = thread_local(localdynamic) alias i32* @thread_var
+
+; CHECK-LABEL: get_thread_var
+define i32* @get_thread_var() {
+; CHECK: leal    thread_var@TLSGD
+  ret i32* @thread_var
+}
+
+; CHECK-LABEL: get_thread_alias
+define i32* @get_thread_alias() {
+; CHECK: leal    thread_alias@TLSLD
+  ret i32* @thread_alias
+}
 
 @bar = global i32 42
 
