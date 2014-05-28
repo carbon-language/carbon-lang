@@ -162,10 +162,12 @@ D: Improvements for space efficiency
 
 N: James Grosbach
 E: grosbach@apple.com
+I: grosbach
 D: SjLj exception handling support
 D: General fixes and improvements for the ARM back-end
 D: MCJIT
 D: ARM integrated assembler and assembly parser
+D: Led effort for the backend formerly known as ARM64
 
 N: Lang Hames
 E: lhames@gmail.com
