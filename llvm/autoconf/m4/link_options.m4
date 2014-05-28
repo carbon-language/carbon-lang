@@ -6,7 +6,7 @@
 AC_DEFUN([AC_LINK_GET_VERSION],
   [AC_CACHE_CHECK([for linker version],[llvm_cv_link_version],
   [
-   version_string="$(ld -v 2>&1 | head -1)"
+   version_string="$(${LD:-ld} -v 2>&1 | head -1)"
 
    # Check for ld64.
    if (echo "$version_string" | grep -q "ld64"); then

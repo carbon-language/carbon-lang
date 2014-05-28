@@ -7612,7 +7612,7 @@ if test "${llvm_cv_link_version+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
-   version_string="$(ld -v 2>&1 | head -1)"
+   version_string="$(${LD:-ld} -v 2>&1 | head -1)"
 
    # Check for ld64.
    if (echo "$version_string" | grep -q "ld64"); then
