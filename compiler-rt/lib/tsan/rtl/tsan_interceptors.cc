@@ -1704,8 +1704,8 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
     ThreadRegistryLock l(ctx->thread_registry);
     ScopedReport rep(ReportTypeErrnoInSignal);
     if (!IsFiredSuppression(ctx, rep, stack)) {
-      rep.AddStack(&stack);
-      OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+      rep.AddStack(&stack, true);
+      OutputReport(ctx, rep);
     }
   }
   errno = saved_errno;

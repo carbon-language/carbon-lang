@@ -123,7 +123,8 @@ SuppressionType conv(ReportType typ) {
 
 uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
   CHECK(g_ctx);
-  if (!g_ctx->SuppressionCount() || stack == 0) return 0;
+  if (!g_ctx->SuppressionCount() || stack == 0 || !stack->suppressable)
+    return 0;
   SuppressionType stype = conv(typ);
   if (stype == SuppressionNone)
     return 0;
@@ -144,7 +145,7 @@ uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
 uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp) {
   CHECK(g_ctx);
   if (!g_ctx->SuppressionCount() || loc == 0 ||
-      loc->type != ReportLocationGlobal)
+      loc->type != ReportLocationGlobal || !loc->suppressable)
     return 0;
   SuppressionType stype = conv(typ);
   if (stype == SuppressionNone)

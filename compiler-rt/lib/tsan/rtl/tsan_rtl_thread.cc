@@ -205,9 +205,9 @@ void ThreadFinalize(ThreadState *thr) {
       MaybeReportThreadLeak, &leaks);
   for (uptr i = 0; i < leaks.Size(); i++) {
     ScopedReport rep(ReportTypeThreadLeak);
-    rep.AddThread(leaks[i].tctx);
+    rep.AddThread(leaks[i].tctx, true);
     rep.SetCount(leaks[i].count);
-    OutputReport(ctx, rep, rep.GetReport()->threads[0]->stack);
+    OutputReport(ctx, rep);
   }
 #endif
 }

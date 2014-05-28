@@ -95,8 +95,8 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(ReportTypeSignalUnsafe);
   if (!IsFiredSuppression(ctx, rep, stack)) {
-    rep.AddStack(&stack);
-    OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+    rep.AddStack(&stack, true);
+    OutputReport(ctx, rep);
   }
 }
 

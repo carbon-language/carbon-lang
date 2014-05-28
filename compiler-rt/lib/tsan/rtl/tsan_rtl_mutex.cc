@@ -57,9 +57,9 @@ static void ReportMutexMisuse(ThreadState *thr, uptr pc, ReportType typ,
   rep.AddMutex(mid);
   StackTrace trace;
   trace.ObtainCurrent(thr, pc);
-  rep.AddStack(&trace);
+  rep.AddStack(&trace, true);
   rep.AddLocation(addr, 1);
-  OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+  OutputReport(ctx, rep);
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -113,9 +113,9 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
     rep.AddStack(&trace);
     FastState last(s->last_lock);
     RestoreStack(last.tid(), last.epoch(), &trace, 0);
-    rep.AddStack(&trace);
+    rep.AddStack(&trace, true);
     rep.AddLocation(s->addr, 1);
-    OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+    OutputReport(ctx, rep);
   }
   thr->mset.Remove(s->GetId());
   DestroyAndFree(s);
@@ -462,12 +462,10 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
         // but we should still produce some stack trace in the report.
         stacks[i].Init(&dummy_pc, 1);
       }
-      rep.AddStack(&stacks[i]);
+      rep.AddStack(&stacks[i], true);
     }
   }
-  // FIXME: use all stacks for suppressions, not just the second stack of the
-  // first edge.
-  OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
+  OutputReport(ctx, rep);
 }
 
 }  // namespace __tsan

@@ -576,11 +576,11 @@ class ScopedReport {
   explicit ScopedReport(ReportType typ);
   ~ScopedReport();
 
-  void AddStack(const StackTrace *stack);
   void AddMemoryAccess(uptr addr, Shadow s, const StackTrace *stack,
                        const MutexSet *mset);
-  void AddThread(const ThreadContext *tctx);
-  void AddThread(int unique_tid);
+  void AddStack(const StackTrace *stack, bool suppressable = false);
+  void AddThread(const ThreadContext *tctx, bool suppressable = false);
+  void AddThread(int unique_tid, bool suppressable = false);
   void AddUniqueTid(int unique_tid);
   void AddMutex(const SyncVar *s);
   u64 AddMutex(u64 id);
@@ -628,11 +628,7 @@ void ForkParentAfter(ThreadState *thr, uptr pc);
 void ForkChildAfter(ThreadState *thr, uptr pc);
 
 void ReportRace(ThreadState *thr);
-bool OutputReport(Context *ctx,
-                  const ScopedReport &srep,
-                  const ReportStack *suppress_stack1,
-                  const ReportStack *suppress_stack2 = 0,
-                  const ReportLocation *suppress_loc = 0);
+bool OutputReport(Context *ctx, const ScopedReport &srep);
 bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace);
