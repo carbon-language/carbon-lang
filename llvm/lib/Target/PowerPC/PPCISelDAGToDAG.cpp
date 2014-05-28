@@ -1472,8 +1472,17 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
 
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(GA)) {
       const GlobalValue *GValue = G->getGlobal();
-      if (GValue->isDeclaration() || GValue->hasCommonLinkage() ||
-        GValue->hasAvailableExternallyLinkage())
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ? GAlias->getAliasee() : GValue;
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
+      assert((GVar || isa<Function>(RealGValue)) &&
+             "Unexpected global value subclass!");
+
+      // An external variable is one without an initializer.  For these,
+      // for variables with common linkage, and for Functions, generate
+      // the LDtocL form.
+      if (!GVar || !GVar->hasInitializer() || RealGValue->hasCommonLinkage() ||
+          RealGValue->hasAvailableExternallyLinkage())
         return CurDAG->getMachineNode(PPC::LDtocL, dl, MVT::i64, GA,
                                       SDValue(Tmp, 0));
     }

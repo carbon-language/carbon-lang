@@ -380,12 +380,15 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     bool IsAvailExt = false;
 
     if (MO.isGlobal()) {
-      const GlobalValue *GV = MO.getGlobal();
-      MOSymbol = getSymbol(GV);
-      IsExternal = GV->isDeclaration();
-      IsCommon = GV->hasCommonLinkage();
-      IsFunction = GV->getType()->getElementType()->isFunctionTy();
-      IsAvailExt = GV->hasAvailableExternallyLinkage();
+      const GlobalValue *GValue = MO.getGlobal();
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ? GAlias->getAliasee() : GValue;
+      MOSymbol = getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
+      IsExternal = GVar && !GVar->hasInitializer();
+      IsCommon = GVar && RealGValue->hasCommonLinkage();
+      IsFunction = !GVar;
+      IsAvailExt = GVar && RealGValue->hasAvailableExternallyLinkage();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
     else if (MO.isJTI())
@@ -424,9 +427,13 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     else if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
-      MOSymbol = getSymbol(GValue);
-      if (GValue->isDeclaration() || GValue->hasCommonLinkage() ||
-          GValue->hasAvailableExternallyLinkage() ||
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ? GAlias->getAliasee() : GValue;
+      MOSymbol = getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
+    
+      if (!GVar || !GVar->hasInitializer() || RealGValue->hasCommonLinkage() ||
+          RealGValue->hasAvailableExternallyLinkage() ||
           TM.getCodeModel() == CodeModel::Large)
         MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
     }
@@ -453,10 +460,13 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     bool IsFunction = false;
 
     if (MO.isGlobal()) {
-      const GlobalValue *GV = MO.getGlobal();
-      MOSymbol = getSymbol(GV);
-      IsExternal = GV->isDeclaration();
-      IsFunction = GV->getType()->getElementType()->isFunctionTy();
+      const GlobalValue *GValue = MO.getGlobal();
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ? GAlias->getAliasee() : GValue;
+      MOSymbol = getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
+      IsExternal = GVar && !GVar->hasInitializer();
+      IsFunction = !GVar;
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
 
