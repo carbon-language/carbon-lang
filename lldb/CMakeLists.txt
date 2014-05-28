@@ -153,6 +153,7 @@ if( MSVC )
     -wd4068 # Suppress 'warning C4068: unknown pragma'
     -wd4150 # Suppress 'warning C4150: deletion of pointer to incomplete type'
     -wd4521 # Suppress 'warning C4521: 'type' : multiple copy constructors specified'
+    -wd4530 # Suppress 'warning C4530: C++ exception handler used, but unwind semantics are not enabled.'
   )
 endif() 
 
@@ -290,20 +291,27 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   ${DEBUG_SYMBOLS_LIBRARY})
 endif()
 
+if(LLDB_REQUIRES_EH)
+  set(LLDB_REQUIRES_RTTI ON)
+else()
+  if(LLVM_COMPILER_IS_GCC_COMPATIBLE)
+    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} -fno-exceptions")
+  elseif(MSVC)
+    add_definitions( -D_HAS_EXCEPTIONS=0 )
+    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} /EHs-c-")
+  endif()
+endif()
+
 # Disable RTTI by default
 if(NOT LLDB_REQUIRES_RTTI)
-  if (NOT MSVC)
-    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
-        "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-      #gnu && clang compilers
-      set(LLDB_COMPILE_FLAGS "-fno-rtti")
-    endif() #GNU or CLANG
-  else()
-    #MSVC
-    set(LLDB_COMPILE_FLAGS "/GR-")
-  endif() #NOT MSVC
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
+  if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
+    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} -fno-rtti")
+  elseif(MSVC)
+    set(LLDB_COMPILE_FLAGS "${LLDB_COMPILE_FLAGS} /GR-")
+  endif()
 endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
 
 #add_subdirectory(include)
 add_subdirectory(docs)
