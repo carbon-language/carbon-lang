@@ -736,25 +736,58 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
   }
 }
 
+// Remove the fake r_parens after 'Tok'.
+static void consumeRParens(LineState& State, const FormatToken &Tok) {
+  for (unsigned i = 0, e = Tok.FakeRParens; i != e; ++i) {
+    unsigned VariablePos = State.Stack.back().VariablePos;
+    assert(State.Stack.size() > 1);
+    if (State.Stack.size() == 1) {
+      // Do not pop the last element.
+      break;
+    }
+    State.Stack.pop_back();
+    State.Stack.back().VariablePos = VariablePos;
+  }
+}
+
+// Returns whether 'Tok' opens or closes a scope requiring special handling
+// of the subsequent fake r_parens.
+//
+// For example, if this is an l_brace starting a nested block, we pretend (wrt.
+// to indentation) that we already consumed the corresponding r_brace. Thus, we
+// remove all ParenStates caused by fake parentheses that end at the r_brace.
+// The net effect of this is that we don't indent relative to the l_brace, if
+// the nested block is the last parameter of a function. This formats:
+//
+//   SomeFunction(a, [] {
+//     f();  // break
+//   });
+//
+// instead of:
+//   SomeFunction(a, [] {
+//                     f();  // break
+//                   });
+static bool fakeRParenSpecialCase(const FormatToken& Tok) {
+  if (!Tok.MatchingParen)
+    return false;
+  const FormatToken *Left = &Tok;
+  if (Tok.isOneOf(tok::r_brace, tok::r_square))
+    Left = Tok.MatchingParen;
+  return Left->isOneOf(tok::l_brace, tok::l_square) &&
+         (Left->BlockKind == BK_Block ||
+          Left->Type == TT_ArrayInitializerLSquare ||
+          Left->Type == TT_DictLiteral);
+}
+
 void ContinuationIndenter::moveStatePastFakeRParens(LineState &State) {
   const FormatToken &Current = *State.NextToken;
 
-  // Remove scopes created by fake parenthesis.
-  if (Current.isNot(tok::r_brace) ||
-      (Current.MatchingParen && Current.MatchingParen->BlockKind != BK_Block)) {
-    // Don't remove FakeRParens attached to r_braces that surround nested blocks
-    // as they will have been removed early (see above).
-    for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
-      unsigned VariablePos = State.Stack.back().VariablePos;
-      assert(State.Stack.size() > 1);
-      if (State.Stack.size() == 1) {
-        // Do not pop the last element.
-        break;
-      }
-      State.Stack.pop_back();
-      State.Stack.back().VariablePos = VariablePos;
-    }
-  }
+  // Don't remove FakeRParens attached to r_braces that surround nested blocks
+  // as they will have been removed early (see above).
+  if (fakeRParenSpecialCase(Current))
+    return;
+
+  consumeRParens(State, *State.NextToken);
 }
 
 void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
@@ -773,6 +806,9 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
   if (Current.is(tok::l_brace) || Current.Type == TT_ArrayInitializerLSquare) {
+    if (fakeRParenSpecialCase(Current))
+      consumeRParens(State, *Current.MatchingParen);
+
     NewIndent = State.Stack.back().LastSpace;
     if (Current.opensBlockTypeList(Style)) {
       NewIndent += Style.IndentWidth;
@@ -824,9 +860,9 @@ void ContinuationIndenter::moveStatePastScopeCloser(LineState &State) {
   if (State.Stack.size() > 1 &&
       (Current.isOneOf(tok::r_paren, tok::r_square) ||
        (Current.is(tok::r_brace) && State.NextToken != State.Line->First) ||
-       State.NextToken->Type == TT_TemplateCloser)) {
+       State.NextToken->Type == TT_TemplateCloser))
     State.Stack.pop_back();
-  }
+
   if (Current.is(tok::r_square)) {
     // If this ends the array subscript expr, reset the corresponding value.
     const FormatToken *NextNonComment = Current.getNextNonComment();
@@ -836,35 +872,13 @@ void ContinuationIndenter::moveStatePastScopeCloser(LineState &State) {
 }
 
 void ContinuationIndenter::moveStateToNewBlock(LineState &State) {
-  // If this is an l_brace starting a nested block, we pretend (wrt. to
-  // indentation) that we already consumed the corresponding r_brace. Thus, we
-  // remove all ParenStates caused by fake parentheses that end at the r_brace.
-  // The net effect of this is that we don't indent relative to the l_brace, if
-  // the nested block is the last parameter of a function. For example, this
-  // formats:
-  //
-  //   SomeFunction(a, [] {
-  //     f();  // break
-  //   });
-  //
-  // instead of:
-  //   SomeFunction(a, [] {
-  //                     f();  // break
-  //                   });
-  //
   // If we have already found more than one lambda introducers on this level, we
   // opt out of this because similarity between the lambdas is more important.
-  if (State.Stack.back().LambdasFound <= 1) {
-    for (unsigned i = 0; i != State.NextToken->MatchingParen->FakeRParens;
-         ++i) {
-      assert(State.Stack.size() > 1);
-      if (State.Stack.size() == 1) {
-        // Do not pop the last element.
-        break;
-      }
-      State.Stack.pop_back();
-    }
-  }
+  // FIXME: This should use fakeRParenSpecialCase() and fakeRParenSpecialCase()
+  // Needs to include the LambdasFound check. Otherwise the corresponding
+  // fake r_parens will never be consumed.
+  if (State.Stack.back().LambdasFound <= 1)
+    consumeRParens(State, *State.NextToken->MatchingParen);
 
   // For some reason, ObjC blocks are indented like continuations.
   unsigned NewIndent = State.Stack.back().LastSpace +

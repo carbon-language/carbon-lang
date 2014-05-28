@@ -6491,6 +6491,12 @@ TEST_F(FormatTest, ObjCDictLiterals) {
       "  @\"dte\" : [NSDate date],\n"
       "  @\"processInfo\" : [NSProcessInfo processInfo]\n"
       "};");
+  verifyFormat("NSMutableDictionary *dictionary =\n"
+               "    [NSMutableDictionary dictionaryWithDictionary:@{\n"
+               "      aaaaaaaaaaaaaaaaaaaaa : aaaaaaaaaaaaa,\n"
+               "      bbbbbbbbbbbbbbbbbb : bbbbb,\n"
+               "      cccccccccccccccc : ccccccccccccccc\n"
+               "    }];");
 }
 
 TEST_F(FormatTest, ObjCArrayLiterals) {
@@ -8590,10 +8596,12 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             format("NSArray*a=[[NSArray alloc]initWithArray:@[ @\"a\" ]\n"
                    "             copyItems:YES];",
                    Style));
+  // FIXME: This does not seem right, there should be more indentation before
+  // the array literal's entries. Nested blocks have the same problem.
   EXPECT_EQ("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
-            "                                               @\"a\",\n"
-            "                                               @\"a\"\n"
-            "                                            ]\n"
+            "    @\"a\",\n"
+            "    @\"a\"\n"
+            "]\n"
             "                                  copyItems:YES];",
             format("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
                    "     @\"a\",\n"
