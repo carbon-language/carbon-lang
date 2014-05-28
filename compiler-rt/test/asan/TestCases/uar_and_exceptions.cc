@@ -2,6 +2,9 @@
 // export ASAN_OPTIONS=detect_stack_use_after_return=1
 // RUN: %clangxx_asan  -O0 %s -o %t && %run %t
 
+// Clang doesn't support exceptions on Windows yet.
+// XFAIL: win32
+
 #include <stdio.h>
 
 volatile char *g;

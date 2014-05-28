@@ -16,12 +16,16 @@ int main() {
   // CHECK-Linux-NEXT: #0 0x{{.*}} in operator delete[]
   // CHECK-Darwin: freed by thread T{{.*}} here:
   // CHECK-Darwin-NEXT: #0 0x{{.*}} in wrap__ZdaPv
+  // CHECK-Windows: freed by thread T{{.*}} here:
+  // CHECK-Windows-NEXT: #0 0x{{.*}} in operator delete[]
   // CHECK-NOT: #1 0x{{.*}}
 
   // CHECK-Linux: previously allocated by thread T{{.*}} here:
   // CHECK-Linux-NEXT: #0 0x{{.*}} in operator new[]
   // CHECK-Darwin: previously allocated by thread T{{.*}} here:
   // CHECK-Darwin-NEXT: #0 0x{{.*}} in wrap__Znam
+  // CHECK-Windows: previously allocated by thread T{{.*}} here:
+  // CHECK-Windows-NEXT: #0 0x{{.*}} in operator new[]
   // CHECK-NOT: #1 0x{{.*}}
 
   // CHECK: SUMMARY: AddressSanitizer: heap-use-after-free

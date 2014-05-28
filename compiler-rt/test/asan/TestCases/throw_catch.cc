@@ -1,5 +1,8 @@
 // RUN: %clangxx_asan -O %s -o %t && %run %t
 
+// Clang doesn't support exceptions on Windows yet.
+// XFAIL: win32
+
 #include <assert.h>
 #include <setjmp.h>
 #include <stdlib.h>

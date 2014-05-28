@@ -4,6 +4,10 @@
 // RUN: %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
+#if defined(_WIN32)
+# define snprintf _snprintf
+#endif
+
 int main() {
   volatile char c = '0';
   volatile int x = 12;

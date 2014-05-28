@@ -5,6 +5,9 @@
 // Android builds with static libstdc++ by default.
 // XFAIL: android
 
+// Clang doesn't support exceptions on Windows yet.
+// XFAIL: win32
+
 #include <stdio.h>
 static volatile int zero = 0;
 inline void pretend_to_do_something(void *x) {

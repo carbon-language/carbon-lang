@@ -2,6 +2,9 @@
 
 // Test the time() interceptor.
 
+// There's no interceptor for time() on Windows yet.
+// XFAIL: win32
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

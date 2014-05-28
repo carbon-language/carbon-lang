@@ -12,8 +12,9 @@ int main(int argc, char **argv) {
   int x = copy[4 + argc];  // BOOM
   // CHECK: AddressSanitizer: heap-buffer-overflow
   // CHECK: #0 {{.*}}main {{.*}}strdup_oob_test.cc:[[@LINE-2]]
-  // CHECK: allocated by thread T{{.*}} here:
-  // CHECK: #0 {{.*}}strdup
+  // CHECK-LABEL: allocated by thread T{{.*}} here:
+  // CHECK: #{{[01]}} {{.*}}strdup
+  // CHECK-LABEL: SUMMARY
   // CHECK: strdup_oob_test.cc:[[@LINE-6]]
   return x;
 }

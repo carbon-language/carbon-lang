@@ -1,5 +1,9 @@
 // RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %run %t 2>&1 | FileCheck %s
+
+// Malloc/free hooks are not supported on Windows.
+// XFAIL: win32
+
 #include <stdlib.h>
 #include <unistd.h>
 
