@@ -3653,7 +3653,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                               ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
                               LHS, RHS);
     Results.push_back(Sum);
-    EVT OType = Node->getValueType(1);
+    EVT ResultType = Node->getValueType(1);
+    EVT OType = getSetCCResultType(Node->getValueType(0));
 
     SDValue Zero = DAG.getConstant(0, LHS.getValueType());
 
@@ -3676,7 +3677,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
 
     SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
-    Results.push_back(Cmp);
+    Results.push_back(DAG.getBoolExtOrTrunc(Cmp, dl, ResultType));
     break;
   }
   case ISD::UADDO:
@@ -3687,9 +3688,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                               ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
                               LHS, RHS);
     Results.push_back(Sum);
-    Results.push_back(DAG.getSetCC(dl, Node->getValueType(1), Sum, LHS,
-                                   Node->getOpcode () == ISD::UADDO ?
-                                   ISD::SETULT : ISD::SETUGT));
+
+    EVT ResultType = Node->getValueType(1);
+    EVT SetCCType = getSetCCResultType(Node->getValueType(0));
+    ISD::CondCode CC
+      = Node->getOpcode() == ISD::UADDO ? ISD::SETULT : ISD::SETUGT;
+    SDValue SetCC = DAG.getSetCC(dl, SetCCType, Sum, LHS, CC);
+
+    Results.push_back(DAG.getBoolExtOrTrunc(SetCC, dl, ResultType));
     break;
   }
   case ISD::UMULO:
