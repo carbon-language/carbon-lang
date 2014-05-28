@@ -573,8 +573,6 @@ ClangExpressionDeclMap::GetFunctionAddress
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
 
-        bool is_indirect_function = false;
-        
         lldb::addr_t callable_load_addr = LLDB_INVALID_ADDRESS;
         
         if (sym_ctx.function)
