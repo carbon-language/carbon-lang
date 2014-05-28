@@ -1,9 +1,17 @@
 """
-Load into LLDB with:
-script import lldbDataFormatters
-type synthetic add -x "^llvm::SmallVectorImpl<.+>$" -l lldbDataFormatters.SmallVectorSynthProvider
-type synthetic add -x "^llvm::SmallVector<.+,.+>$" -l lldbDataFormatters.SmallVectorSynthProvider
+LLDB Formatters for LLVM data types.
+
+Load into LLDB with 'command script import /path/to/lldbDataFormatters.py'
 """
+
+def __lldb_init_module(debugger, internal_dict):
+    debugger.HandleCommand('type category define -e llvm -l c++')
+    debugger.HandleCommand('type synthetic add -w llvm '
+                           '-l lldbDataFormatters.SmallVectorSynthProvider '
+                           '-x "^llvm::SmallVectorImpl<.+>$"')
+    debugger.HandleCommand('type synthetic add -w llvm '
+                           '-l lldbDataFormatters.SmallVectorSynthProvider '
+                           '-x "^llvm::SmallVector<.+,.+>$"')
 
 # Pretty printer for llvm::SmallVector/llvm::SmallVectorImpl
 class SmallVectorSynthProvider:
