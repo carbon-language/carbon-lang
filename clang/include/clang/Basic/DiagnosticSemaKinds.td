@@ -5817,6 +5817,10 @@ def err_cast_pointer_from_non_pointer_int : Error<
 def warn_cast_pointer_from_sel : Warning<
   "cast of type %0 to %1 is deprecated; use sel_getName instead">,
   InGroup<SelTypeCast>;
+def warn_function_def_in_objc_container : Warning<
+  "function definition inside an Objective-C container is deprecated">,
+  InGroup<FunctionDefInObjCContainer>;
+  
 def warn_bad_function_cast : Warning<
   "cast from function call of type %0 to non-matching type %1">,
   InGroup<BadFunctionCast>, DefaultIgnore;
