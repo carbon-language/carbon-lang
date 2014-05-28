@@ -118,9 +118,15 @@ set(COMPILER_RT_GTEST_PATH ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest)
 set(COMPILER_RT_GTEST_SOURCE ${COMPILER_RT_GTEST_PATH}/src/gtest-all.cc)
 set(COMPILER_RT_GTEST_CFLAGS
   -DGTEST_NO_LLVM_RAW_OSTREAM=1
+  -DGTEST_HAS_RTTI=0
   -I${COMPILER_RT_GTEST_PATH}/include
   -I${COMPILER_RT_GTEST_PATH}
 )
+
+if(MSVC)
+  # Clang doesn't support SEH on Windows yet.
+  list(APPEND COMPILER_RT_GTEST_CFLAGS -DGTEST_HAS_SEH=0)
+endif()
 
 # Link objects into a single executable with COMPILER_RT_TEST_COMPILER,
 # using specified link flags. Make executable a part of provided
@@ -147,9 +153,8 @@ macro(add_compiler_rt_test test_suite test_name)
     separate_arguments(TEST_LINK_FLAGS)
   endif()
   add_custom_target(${test_name}
-    # MSVS CL doesn't allow a space between -Fe and the output file name.
     COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS}
-            ${COMPILER_RT_TEST_COMPILER_EXE}"${output_bin}"
+            -o "${output_bin}"
             ${TEST_LINK_FLAGS}
     DEPENDS ${TEST_DEPS})
   # Make the test suite depend on the binary.

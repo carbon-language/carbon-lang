@@ -38,28 +38,28 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
-  -DGTEST_HAS_RTTI=0
+  -fno-rtti
   -O2
   -Werror=sign-compare
   -Wno-non-virtual-dtor)
 
-append_if(COMPILER_RT_HAS_G_FLAG -g SANITIZER_TEST_CFLAGS_COMMON)
-append_if(COMPILER_RT_HAS_Zi_FLAG -Zi SANITIZER_TEST_CFLAGS_COMMON)
-
-append_if(COMPILER_RT_HAS_FNO_RTTI_FLAG -fno-rtti SANITIZER_TEST_CFLAGS_COMMON)
-append_if(COMPILER_RT_HAS_GR_FLAG -GR- SANITIZER_TEST_CFLAGS_COMMON)
+# -gline-tables-only must be enough for these tests, so use it if possible.
+if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gline-tables-only)
+else()
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
+endif()
 
 if(MSVC)
-  # System headers and gtest use a lot of deprecated stuff.
+  # MSVC system headers and gtest use a lot of deprecated stuff.
   list(APPEND SANITIZER_TEST_CFLAGS_COMMON
        -Wno-deprecated-declarations)
 
-  # clang-cl doesn't support exceptions yet.
+  # clang doesn't support exceptions on Windows yet.
   list(APPEND SANITIZER_TEST_CFLAGS_COMMON
-       /fallback
        -D_HAS_EXCEPTIONS=0)
 
-  # We should teach clang-cl to understand more pragmas.
+  # We should teach clang to understand more pragmas.
   list(APPEND SANITIZER_TEST_CFLAGS_COMMON
        -Wno-unknown-pragmas
        -Wno-undefined-inline)

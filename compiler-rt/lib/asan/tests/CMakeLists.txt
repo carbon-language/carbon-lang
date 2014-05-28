@@ -26,24 +26,29 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/asan
   -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common/tests
+  -fno-rtti
+  -O2
   -Wno-format
-  -Werror=sign-compare
-  -O2)
-append_if(COMPILER_RT_HAS_G_FLAG -g ASAN_UNITTEST_COMMON_CFLAGS)
-append_if(COMPILER_RT_HAS_Zi_FLAG -Zi ASAN_UNITTEST_COMMON_CFLAGS)
+  -Werror=sign-compare)
 append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
+
+# -gline-tables-only must be enough for ASan, so use it if possible.
+if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gline-tables-only)
+else()
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
+endif()
 
 if(MSVC)
   # MSVC system headers and gtest use a lot of deprecated stuff.
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
        -Wno-deprecated-declarations)
 
-  # clang-cl doesn't support exceptions yet.
+  # clang doesn't support exceptions on Windows yet.
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-       /fallback
        -D_HAS_EXCEPTIONS=0)
 
-  # We should teach clang-cl to understand more pragmas.
+  # We should teach clang to understand more pragmas.
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
        -Wno-unknown-pragmas
        -Wno-undefined-inline)

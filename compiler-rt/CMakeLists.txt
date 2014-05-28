@@ -61,12 +61,8 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
   # Windows where we need to use clang-cl instead.
   if(NOT MSVC)
     set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
-    set(COMPILER_RT_TEST_COMPILER_EXE "-o")
-    set(COMPILER_RT_TEST_COMPILER_OBJ "-o")
   else()
-    set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang-cl.exe)
-    set(COMPILER_RT_TEST_COMPILER_EXE "-Fe")
-    set(COMPILER_RT_TEST_COMPILER_OBJ "-Fo")
+    set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang.exe)
   endif()
 else()
   # Take output dir and install path from the user.
@@ -80,8 +76,6 @@ else()
   option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered" OFF)
   # Use a host compiler to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER} CACHE PATH "Compiler to use for testing")
-  set(COMPILER_RT_TEST_COMPILER_EXE "-o")
-  set(COMPILER_RT_TEST_COMPILER_OBJ "-o")
 
   if (NOT LLVM_CONFIG_PATH)
     find_program(LLVM_CONFIG_PATH "llvm-config"
@@ -131,7 +125,7 @@ endif()
 
 if("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang[+]*$")
   set(COMPILER_RT_TEST_COMPILER_ID Clang)
-elseif("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang-cl.exe$")
+elseif("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang.*.exe$")
   set(COMPILER_RT_TEST_COMPILER_ID Clang)
 else()
   set(COMPILER_RT_TEST_COMPILER_ID GNU)

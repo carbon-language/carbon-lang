@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 %s -Fe%t
+// RUN: %clang_cl_asan -O0 %s -Fe%t
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 not %run %t 2>&1 | FileCheck %s
 
 char *x;

@@ -2,7 +2,7 @@
 //
 // Just make sure we can compile this.
 // The actual compile&run sequence is to be done by the DLL tests.
-// RUN: %clangxx_asan -O0 %s -Fe%t
+// RUN: %clang_cl_asan -O0 %s -Fe%t
 //
 // Get the list of ASan wrappers exported by the main module RTL:
 // RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" | grep -v @ | sort | uniq > %t.exported_wrappers
