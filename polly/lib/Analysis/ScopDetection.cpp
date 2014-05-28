@@ -372,7 +372,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
 
       SmallVector<const SCEV *, 4> Subscripts;
       AF->computeAccessFunctions(*SE, Subscripts, Sizes);
-      if(Sizes.empty() || Subscripts.empty())
+      if (Sizes.empty() || Subscripts.empty())
         return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
 
       // Check that the delinearized subscripts are affine.
