@@ -889,11 +889,34 @@ static inline Value *dyn_castFoldableMul(Value *V, Constant *&CST) {
   return nullptr;
 }
 
+// If one of the operands only has one non-zero bit, and if the other
+// operand has a known-zero bit in a more significant place than it (not
+// including the sign bit) the ripple may go up to and fill the zero, but
+// won't change the sign. For example, (X & ~4) + 1.
+// FIXME: Handle case where LHS has a zero before the 1 in the RHS, but also
+// has one after.
+static bool CheckRippleForAdd(APInt Op0KnownZero, APInt Op0KnownOne,
+                              APInt Op1KnownZero, APInt Op1KnownOne) {
+  // Make sure that one of the operand has only one bit set to 1 and all other
+  // bit set to 0.
+  if ((~Op1KnownZero).countPopulation() == 1) {
+    int BitWidth = Op0KnownZero.getBitWidth();
+    // Ignore Sign Bit.
+    Op0KnownZero.clearBit(BitWidth - 1);
+    int Op1OnePosition = BitWidth - Op1KnownOne.countLeadingZeros() - 1;
+    int Op0ZeroPosition = BitWidth - Op0KnownZero.countLeadingZeros() - 1;
+    if ((Op0ZeroPosition != (BitWidth - 1)) &&
+        (Op0ZeroPosition >= Op1OnePosition))
+      return true;
+  }
+  return false;
+}
 
 /// WillNotOverflowSignedAdd - Return true if we can prove that:
 ///    (sext (add LHS, RHS))  === (add (sext LHS), (sext RHS))
 /// This basically requires proving that the add in the original type would not
 /// overflow to change the sign bit or have a carry out.
+/// TODO: Handle this for Vectors.
 bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   // There are different heuristics we can use for this.  Here are some simple
   // ones.
@@ -905,14 +928,29 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
     return true;
 
+  if (IntegerType *IT = dyn_cast<IntegerType>(LHS->getType())) {
 
-  // If one of the operands only has one non-zero bit, and if the other operand
-  // has a known-zero bit in a more significant place than it (not including the
-  // sign bit) the ripple may go up to and fill the zero, but won't change the
-  // sign.  For example, (X & ~4) + 1.
+    int BitWidth = IT->getBitWidth();
+    APInt LHSKnownZero(BitWidth, 0, /*isSigned*/ true);
+    APInt LHSKnownOne(BitWidth, 0, /*isSigned*/ true);
+    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
 
-  // TODO: Implement.
+    APInt RHSKnownZero(BitWidth, 0, /*isSigned*/ true);
+    APInt RHSKnownOne(BitWidth, 0, /*isSigned*/ true);
+    computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
 
+    // Addition of two 2's compliment numbers having opposite signs will never
+    // overflow.
+    if ((LHSKnownOne[BitWidth - 1] && RHSKnownZero[BitWidth - 1]) ||
+        (LHSKnownZero[BitWidth - 1] && RHSKnownOne[BitWidth - 1]))
+      return true;
+
+    // Check if carry bit of addition will not cause overflow.
+    if (CheckRippleForAdd(LHSKnownZero, LHSKnownOne, RHSKnownZero, RHSKnownOne))
+      return true;
+    if (CheckRippleForAdd(RHSKnownZero, RHSKnownOne, LHSKnownZero, LHSKnownOne))
+      return true;
+  }
   return false;
 }
 
