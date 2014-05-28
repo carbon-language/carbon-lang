@@ -241,7 +241,7 @@ TransformSubExpr(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
 }
 
 /// Top level driver for transforming an expression DAG into its requested
-/// post-inc form (either "Normalized" or "Denormalized".
+/// post-inc form (either "Normalized" or "Denormalized").
 const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
                                          const SCEV *S,
                                          Instruction *User,
