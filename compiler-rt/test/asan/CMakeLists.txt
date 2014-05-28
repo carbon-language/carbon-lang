@@ -9,6 +9,8 @@ if(CAN_TARGET_arm_android)
   get_filename_component(ASAN_TEST_LLVM_TOOLS_DIR ${CMAKE_C_COMPILER} PATH)
   set(ASAN_TEST_CONFIG_SUFFIX "-arm-android")
   set(ASAN_TEST_BITS "32")
+  set(ASAN_TEST_DYNAMIC True)
+  set(ASAN_TEST_TARGET_ARCH "arm-android")
   get_target_flags_for_arch(arm_android ASAN_TEST_TARGET_CFLAGS)
   configure_lit_site_cfg(
     ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
