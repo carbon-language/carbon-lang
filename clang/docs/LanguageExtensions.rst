@@ -1667,3 +1667,82 @@ with :doc:`ThreadSanitizer`.
 
 Use ``__has_feature(memory_sanitizer)`` to check if the code is being built
 with :doc:`MemorySanitizer`.
+
+
+Extensions for selectively disabling optimization
+=================================================
+
+Clang provides a mechanism for selectively disabling optimizations in functions
+and methods.
+
+To disable optimizations in a single function definition, the GNU-style or C++11
+non-standard attribute ``optnone`` can be used.
+
+.. code-block:: c++
+
+  // The following functions will not be optimized.
+  // GNU-style attribute
+  __attribute__((optnone)) int foo() {
+    // ... code
+  }
+  // C++11 attribute
+  [[clang::optnone]] int bar() {
+    // ... code
+  }
+
+To facilitate disabling optimization for a range of function definitions, a
+range-based pragma is provided. Its syntax is ``#pragma clang optimize``
+followed by ``off`` or ``on``.
+
+All function definitions in the region between an ``off`` and the following
+``on`` will be decorated with the ``optnone`` attribute unless doing so would
+conflict with explicit attributes already present on the function (e.g. the
+ones that control inlining).
+
+.. code-block:: c++
+
+  #pragma clang optimize off
+  // This function will be decorated with optnone.
+  int foo() {
+    // ... code
+  }
+
+  // optnone conflicts with always_inline, so bar() will not be decorated.
+  __attribute__((always_inline)) int bar() {
+    // ... code
+  }
+  #pragma clang optimize on
+
+If no ``on`` is found to close an ``off`` region, the end of the region is the
+end of the compilation unit.
+
+Note that a stray ``#pragma clang optimize on`` does not selectively enable
+additional optimizations when compiling at low optimization levels. This feature
+can only be used to selectively disable optimizations.
+
+The pragma has an effect on functions only at the point of their definition; for
+function templates, this means that the state of the pragma at the point of an
+instantiation is not necessarily relevant. Consider the following example:
+
+.. code-block:: c++
+
+  template<typename T> T twice(T t) {
+    return 2 * t;
+  }
+
+  #pragma clang optimize off
+  template<typename T> T thrice(T t) {
+    return 3 * t;
+  }
+
+  int container(int a, int b) {
+    return twice(a) + thrice(b);
+  }
+  #pragma clang optimize on
+
+In this example, the definition of the template function ``twice`` is outside
+the pragma region, whereas the definition of ``thrice`` is inside the region.
+The ``container`` function is also in the region and will not be optimized, but
+it causes the instantiation of ``twice`` and ``thrice`` with an ``int`` type; of
+these two instantiations, ``twice`` will be optimized (because its definition
+was outside the region) and ``thrice`` will not be optimized.
