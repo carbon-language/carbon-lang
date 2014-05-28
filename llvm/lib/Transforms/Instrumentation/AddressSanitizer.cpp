@@ -1030,9 +1030,11 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   assert(CtorFunc);
   IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
 
-  Function *CovFunc = M.getFunction(kAsanCovName);
-  int nCov = CovFunc ? CovFunc->getNumUses() : 0;
-  IRB.CreateCall(AsanCovModuleInit, ConstantInt::get(IntptrTy, nCov));
+  if (ClCoverage > 0) {
+    Function *CovFunc = M.getFunction(kAsanCovName);
+    int nCov = CovFunc ? CovFunc->getNumUses() : 0;
+    IRB.CreateCall(AsanCovModuleInit, ConstantInt::get(IntptrTy, nCov));
+  }
 
   size_t n = GlobalsToChange.size();
   if (n == 0) return false;

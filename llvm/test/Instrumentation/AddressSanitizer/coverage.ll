@@ -1,3 +1,4 @@
+; RUN: opt < %s -asan -asan-module -asan-coverage=0 -S | FileCheck %s --check-prefix=CHECK0
 ; RUN: opt < %s -asan -asan-module -asan-coverage=1 -S | FileCheck %s --check-prefix=CHECK1
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK2
@@ -16,6 +17,9 @@ entry:
   if.end:                                           ; preds = %entry, %if.then
   ret void
 }
+
+; CHECK0-NOT: call void @__sanitizer_cov(
+; CHECK0-NOT: call void @__sanitizer_cov_module_init(
 
 ; CHECK1-LABEL: define void @foo
 ; CHECK1: %0 = load atomic i8* @__asan_gen_cov_foo monotonic, align 1
