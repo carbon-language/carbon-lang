@@ -238,7 +238,7 @@ public:
       : Arena(A), SelfVar(nullptr), Scfg(nullptr), CurrentBB(nullptr),
         CurrentBlockInfo(nullptr) {
     // FIXME: we don't always have a self-variable.
-    SelfVar = new (Arena) til::Variable();
+    SelfVar = new (Arena) til::Variable(nullptr);
     SelfVar->setKind(til::Variable::VK_SFun);
   }
 

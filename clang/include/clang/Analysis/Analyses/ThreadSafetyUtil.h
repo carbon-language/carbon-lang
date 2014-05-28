@@ -109,14 +109,23 @@ public:
     return *this;
   }
 
+  // Reserve space for at least Ncp items, reallocating if necessary.
   void reserve(size_t Ncp, MemRegionRef A) {
-    if (Ncp < Capacity)
+    if (Ncp <= Capacity)
       return;
     T *Odata = Data;
     Data = A.allocateT<T>(Ncp);
     Capacity = Ncp;
     memcpy(Data, Odata, sizeof(T) * Size);
     return;
+  }
+
+  // Reserve space for at least N more items.
+  void reserveCheck(size_t N, MemRegionRef A) {
+    if (Capacity == 0)
+      reserve(InitialCapacity, A);
+    else if (Size + N < Capacity)
+      reserve(Capacity*2, A);
   }
 
   typedef T *iterator;
@@ -163,6 +172,8 @@ public:
   }
 
 private:
+  static const unsigned InitialCapacity = 4;
+
   SimpleArray(const SimpleArray<T> &A) LLVM_DELETED_FUNCTION;
 
   T *Data;

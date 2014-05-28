@@ -384,8 +384,7 @@ SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
                                           CallingContext *Ctx) {
   til::SExpr *E0 = translate(E->getBase(), Ctx);
   til::SExpr *E1 = translate(E->getIdx(), Ctx);
-  auto *AA = new (Arena) til::ArrayAdd(E0, E1);
-  return new (Arena) til::ArrayFirst(AA);
+  return new (Arena) til::ArrayIndex(E0, E1);
 }
 
 
@@ -628,7 +627,8 @@ void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
   BlockMap.resize(NBlocks, nullptr);
   // create map from clang blockID to til::BasicBlocks
   for (auto *B : *Cfg) {
-    auto *BB = new (Arena) til::BasicBlock(Arena, 0, B->size());
+    auto *BB = new (Arena) til::BasicBlock(Arena);
+    BB->reserveInstructions(B->size());
     BlockMap[B->getBlockID()] = BB;
   }
   CallCtx.reset(new SExprBuilder::CallingContext(D));
@@ -654,7 +654,7 @@ void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
 void SExprBuilder::enterCFGBlock(const CFGBlock *B) {
   // Intialize TIL basic block and add it to the CFG.
   CurrentBB = lookupBlock(B);
-  CurrentBB->setNumPredecessors(B->pred_size());
+  CurrentBB->reservePredecessors(B->pred_size());
   Scfg->add(CurrentBB);
 
   CurrentBlockInfo = &BBInfo[B->getBlockID()];
@@ -668,6 +668,7 @@ void SExprBuilder::enterCFGBlock(const CFGBlock *B) {
 void SExprBuilder::handlePredecessor(const CFGBlock *Pred) {
   // Compute CurrentLVarMap on entry from ExitMaps of predecessors
 
+  CurrentBB->addPredecessor(BlockMap[Pred->getBlockID()]);
   BlockInfo *PredInfo = &BBInfo[Pred->getBlockID()];
   assert(PredInfo->UnprocessedSuccessors > 0);
 
@@ -724,7 +725,8 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
   if (N == 1) {
     til::BasicBlock *BB = *It ? lookupBlock(*It) : nullptr;
     // TODO: set index
-    til::SExpr *Tm = new (Arena) til::Goto(BB, 0);
+    unsigned Idx = BB->findPredecessorIndex(CurrentBB);
+    til::SExpr *Tm = new (Arena) til::Goto(BB, Idx);
     CurrentBB->setTerminator(Tm);
   }
   else if (N == 2) {
@@ -732,8 +734,9 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
     til::BasicBlock *BB1 = *It ? lookupBlock(*It) : nullptr;
     ++It;
     til::BasicBlock *BB2 = *It ? lookupBlock(*It) : nullptr;
-    // TODO: set conditional, set index
-    til::SExpr *Tm = new (Arena) til::Branch(C, BB1, BB2);
+    unsigned Idx1 = BB1 ? BB1->findPredecessorIndex(CurrentBB) : 0;
+    unsigned Idx2 = BB2 ? BB2->findPredecessorIndex(CurrentBB) : 0;
+    til::SExpr *Tm = new (Arena) til::Branch(C, BB1, BB2, Idx1, Idx2);
     CurrentBB->setTerminator(Tm);
   }
 }
