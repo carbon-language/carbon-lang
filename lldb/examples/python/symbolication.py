@@ -153,6 +153,15 @@ class Section:
         self.end_addr = end_addr
         self.name = name
     
+    @classmethod
+    def InitWithSBTargetAndSBSection(cls, target, section):
+        sect_load_addr = section.GetLoadAddress(target)
+        if sect_load_addr != lldb.LLDB_INVALID_ADDRESS:
+            obj = cls(sect_load_addr, sect_load_addr + section.size, section.name)
+            return obj
+        else:
+            return None
+        
     def contains(self, addr):
         return self.start_addr <= addr and addr < self.end_addr;
     
@@ -212,7 +221,23 @@ class Image:
         self.symfile = None
         self.slide = None
         
-    
+    @classmethod
+    def InitWithSBTargetAndSBModule(cls, target, module):
+        '''Initalize this Image object with a module from a target.'''
+        obj = cls(module.file.fullpath, module.uuid)
+        obj.resolved_path = module.platform_file.fullpath
+        obj.resolved = True
+        obj.arch = module.triple
+        for section in module.sections:
+            symb_section = Section.InitWithSBTargetAndSBSection(target, section)
+            if symb_section:
+                obj.section_infos.append (symb_section)
+        obj.arch = module.triple
+        obj.module = module
+        obj.symfile = None
+        obj.slide = None
+        return obj
+        
     def dump(self, prefix):
         print "%s%s" % (prefix, self)
 
@@ -231,7 +256,16 @@ class Image:
         print 'slide = %i (0x%x)' % (self.slide, self.slide)
         
     def __str__(self):
-        s = "%s %s %s" % (self.get_uuid(), self.version, self.get_resolved_path())
+        s = ''
+        if self.uuid:
+            s += "%s " % (self.get_uuid())
+        if self.arch:
+            s += "%s " % (self.arch)
+        if self.version:
+            s += "%s " % (self.version)
+        resolved_path = self.get_resolved_path()
+        if resolved_path:
+            s += "%s " % (resolved_path)
         for section_info in self.section_infos:
             s += ", %s" % (section_info)
         if self.slide != None:
@@ -380,13 +414,29 @@ class Symbolicator:
         self.images = list() # a list of images to be used when symbolicating
         self.addr_mask = 0xffffffffffffffff
     
+    @classmethod
+    def InitWithSBTarget(cls, target):
+        obj = cls()
+        obj.target = target
+        obj.images = list();
+        triple = target.triple
+        if triple:
+            arch = triple.split('-')[0]
+            if "arm" in arch:
+                obj.addr_mask = 0xfffffffffffffffe
+
+        for module in target.modules:
+            image = Image.InitWithSBTargetAndSBModule(target, module)
+            obj.images.append(image)
+        return obj
+        
     def __str__(self):
         s = "Symbolicator:\n"
         if self.target:
             s += "Target = '%s'\n" % (self.target)
-            s += "Target modules:'\n"
+            s += "Target modules:\n"
             for m in self.target.modules:
-                print m
+                s += str(m) + "\n"
         s += "Images:\n"
         for image in self.images:
             s += '    %s\n' % (image)
@@ -422,6 +472,7 @@ class Symbolicator:
                     return self.target
         return None
     
+            
     def symbolicate(self, load_addr, verbose = False):
         if not self.target:
             self.create_target()
