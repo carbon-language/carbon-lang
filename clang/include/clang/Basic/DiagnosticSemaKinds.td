@@ -2008,6 +2008,9 @@ def note_objc_literal_comparison_isequal : Note<
   "use 'isEqual:' instead">;
 def err_attribute_argument_is_zero : Error<
   "%0 attribute must be greater than 0">;
+def err_property_function_in_objc_container : Error<
+  "use of Objective-C property in function nested in Objective-C "
+  "container not supported, move function outside its container">;
 
 let CategoryName = "Cocoa API Issue" in {
 def warn_objc_redundant_literal_use : Warning<

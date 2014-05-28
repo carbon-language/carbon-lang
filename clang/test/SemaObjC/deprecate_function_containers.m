@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1  -fsyntax-only -fblocks -verify -Wno-objc-root-class %s
 // rdar://10414277
 
 @protocol P
@@ -22,4 +22,16 @@ inline void v_imp_foo() {}
 
 @implementation I(CAT)
 void cat_imp_foo() {} 
+@end
+
+// rdar://16859666
+@interface PrototypeState
+
+@property (strong, readwrite) id moin1; // expected-note {{property declared here}}
+
+static inline void prototype_observe_moin1(void (^callback)(id)) { // expected-warning {{function definition inside an Objective-C container is deprecated}}
+        (void)^(PrototypeState *prototypeState){
+            callback(prototypeState.moin1); // expected-error {{use of Objective-C property in function nested in Objective-C container not supported, move function outside its container}}
+        };
+}
 @end

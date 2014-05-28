@@ -284,6 +284,7 @@ namespace {
     bool tryBuildGetOfReference(Expr *op, ExprResult &result);
     bool findSetter(bool warn=true);
     bool findGetter();
+    bool DiagnoseUnsupportedPropertyUse();
 
     Expr *rebuildAndCaptureObject(Expr *syntacticBase) override;
     ExprResult buildGet() override;
@@ -643,6 +644,20 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
   return false;
 }
 
+bool ObjCPropertyOpBuilder::DiagnoseUnsupportedPropertyUse() {
+  if (S.getCurLexicalContext()->isObjCContainer() &&
+      S.getCurLexicalContext()->getDeclKind() != Decl::ObjCCategoryImpl &&
+      S.getCurLexicalContext()->getDeclKind() != Decl::ObjCImplementation) {
+    if (ObjCPropertyDecl *prop = RefExpr->getExplicitProperty()) {
+        S.Diag(RefExpr->getLocation(),
+               diag::err_property_function_in_objc_container);
+        S.Diag(prop->getLocation(), diag::note_property_declare);
+        return true;
+    }
+  }
+  return false;
+}
+
 /// Capture the base object of an Objective-C property expression.
 Expr *ObjCPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
   assert(InstanceReceiver == nullptr);
@@ -666,6 +681,9 @@ Expr *ObjCPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
 /// Load from an Objective-C property reference.
 ExprResult ObjCPropertyOpBuilder::buildGet() {
   findGetter();
+  if (!Getter && DiagnoseUnsupportedPropertyUse())
+      return ExprError();
+
   assert(Getter);
 
   if (SyntacticRefExpr)
@@ -704,6 +722,8 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
 ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                            bool captureSetValueAsResult) {
   bool hasSetter = findSetter(false);
+  if (!hasSetter && DiagnoseUnsupportedPropertyUse())
+      return ExprError();
   assert(hasSetter); (void) hasSetter;
 
   if (SyntacticRefExpr)
