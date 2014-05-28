@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // XFAIL: *
+// FIXME: This is PR7655
+
 struct X { 
   template<typename T> X(T);
   X(int, int);
