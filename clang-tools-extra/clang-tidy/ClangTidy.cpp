@@ -298,11 +298,9 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
 
 ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
                             const tooling::CompilationDatabase &Compilations,
-                            ArrayRef<std::string> Ranges,
+                            ArrayRef<std::string> InputFiles,
                             std::vector<ClangTidyError> *Errors) {
-  // FIXME: Ranges are currently full files. Support selecting specific
-  // (line-)ranges.
-  ClangTool Tool(Compilations, Ranges);
+  ClangTool Tool(Compilations, InputFiles);
   clang::tidy::ClangTidyContext Context(Options);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
