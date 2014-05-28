@@ -137,6 +137,10 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   UNIMPLEMENTED();
 }
 
+void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset) {
+  UNIMPLEMENTED();
+}
+
 static const int kMaxEnvNameLength = 128;
 static const DWORD kMaxEnvValueLength = 32767;
 
@@ -350,6 +354,14 @@ uptr internal_sched_yield() {
 
 void internal__exit(int exitcode) {
   ExitProcess(exitcode);
+}
+
+uptr internal_ftruncate(fd_t fd, uptr size) {
+  UNIMPLEMENTED();
+}
+
+uptr internal_rename(const char *oldpath, const char *newpath) {
+  UNIMPLEMENTED();
 }
 
 // ---------------------- BlockingMutex ---------------- {{{1
