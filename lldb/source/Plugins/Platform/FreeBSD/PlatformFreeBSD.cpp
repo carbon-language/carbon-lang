@@ -1,4 +1,4 @@
-//===-- PlatformFreeBSD.cpp ---------------------------------------*- C++ -*-===//
+//===-- PlatformFreeBSD.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -47,7 +47,7 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
             case llvm::Triple::PC:
                 create = true;
                 break;
-                
+
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
             // Only accept "unknown" for the vendor if the host is BSD and
             // it "unknown" wasn't specified (it was just returned becasue it
@@ -59,7 +59,7 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
             default:
                 break;
         }
-        
+
         if (create)
         {
             switch (triple.getOS())
@@ -67,7 +67,7 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
                 case llvm::Triple::FreeBSD:
                 case llvm::Triple::KFreeBSD:
                     break;
-                    
+
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
                 // Only accept "unknown" for the OS if the host is BSD and
                 // it "unknown" wasn't specified (it was just returned becasue it
@@ -186,10 +186,10 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 {
     Error error;
     // Nothing special to do here, just use the actual file and architecture
-    
+
     char exe_path[PATH_MAX];
     FileSpec resolved_exe_file (exe_file);
-    
+
     if (IsHost())
     {
         // If we have "ls" as the exe_file, resolve the executable location based on
@@ -199,10 +199,10 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             exe_file.GetPath(exe_path, sizeof(exe_path));
             resolved_exe_file.SetFile(exe_path, true);
         }
-        
+
         if (!resolved_exe_file.Exists())
             resolved_exe_file.ResolveExecutableLocation ();
-        
+
         if (resolved_exe_file.Exists())
             error.Clear();
         else
@@ -223,10 +223,10 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
         else
         {
             // We may connect to a process and use the provided executable (Don't use local $PATH).
-            
+
             // Resolve any executable within a bundle on MacOSX
             Host::ResolveExecutableInBundle (resolved_exe_file);
-            
+
             if (resolved_exe_file.Exists()) {
                 error.Clear();
             }
@@ -248,7 +248,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
                                                  module_search_paths_ptr,
                                                  NULL,
                                                  NULL);
-            
+
             if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
@@ -279,12 +279,12 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
                     else
                         error.SetErrorToGenericError();
                 }
-                
+
                 if (idx > 0)
                     arch_names.PutCString (", ");
                 arch_names.PutCString (platform_arch.GetArchitectureName());
             }
-            
+
             if (error.Fail() || !exe_module_sp)
             {
                 error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
@@ -449,7 +449,7 @@ PlatformFreeBSD::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_i
     {
         success = Platform::GetProcessInfo (pid, process_info);
     }
-    else if (m_remote_platform_sp) 
+    else if (m_remote_platform_sp)
     {
         success = m_remote_platform_sp->GetProcessInfo (pid, process_info);
     }

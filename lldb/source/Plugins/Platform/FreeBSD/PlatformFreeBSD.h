@@ -1,4 +1,4 @@
-//===-- PlatformFreeBSD.h -----------------------------------------*- C++ -*-===//
+//===-- PlatformFreeBSD.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
