@@ -22,7 +22,7 @@ public:
   MachOFile(StringRef path) : SimpleFile(path) {}
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
-                      DefinedAtom::ContentType type,
+                      DefinedAtom::ContentType type, DefinedAtom::Merge merge,
                       ArrayRef<uint8_t> content, bool copyRefs) {
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
@@ -30,7 +30,8 @@ public:
       content = content.copy(_allocator);
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, scope, type, content);
+        new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
+                                          content);
     addAtom(*atom);
   }
 

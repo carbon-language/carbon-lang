@@ -91,6 +91,24 @@ appendRelocations(Relocations &relocs, StringRef buffer, bool swap,
   return error_code::success();
 }
 
+static error_code
+appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
+                      bool bigEndian, uint32_t istOffset, uint32_t istCount,
+                      uint32_t startIndex, uint32_t count) {
+  if ((istOffset + istCount*4) > buffer.size())
+    return llvm::make_error_code(llvm::errc::executable_format_error);
+  if (startIndex+count  > istCount)
+    return llvm::make_error_code(llvm::errc::executable_format_error);
+  const uint32_t *indirectSymbolArray =
+            reinterpret_cast<const uint32_t*>(buffer.begin()+istOffset);
+
+  for(uint32_t i=0; i < count; ++i) {
+    isyms.push_back(read32(swap, indirectSymbolArray[startIndex+i]));
+  }
+  return error_code::success();
+}
+
+
 template <typename T> static T readBigEndian(T t) {
   if (llvm::sys::IsLittleEndianHost)
     return SwapByteOrder(t);
@@ -185,8 +203,24 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   f->flags = smh->flags;
 
 
-  // Walk load commands looking for segments/sections and the symbol table.
+  // Pre-scan load commands looking for indirect symbol table.
+  uint32_t indirectSymbolTableOffset = 0;
+  uint32_t indirectSymbolTableCount = 0;
   error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
+                    [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
+    if (cmd == LC_DYSYMTAB) {
+      const dysymtab_command *d = reinterpret_cast<const dysymtab_command*>(lc);
+      indirectSymbolTableOffset = read32(swap, d->indirectsymoff);
+      indirectSymbolTableCount = read32(swap, d->nindirectsyms);
+      return true;
+    }
+    return false;
+  });
+  if (ec)
+    return ec;
+
+  // Walk load commands looking for segments/sections and the symbol table.
+  ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
                     [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
     if (is64) {
       if (cmd == LC_SEGMENT_64) {
@@ -220,6 +254,13 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           appendRelocations(section.relocations, mb->getBuffer(),
                             swap, isBigEndianArch, read32(swap, sect->reloff),
                                                    read32(swap, sect->nreloc));
+          if (section.type == S_NON_LAZY_SYMBOL_POINTERS) {
+            appendIndirectSymbols(section.indirectSymbols, mb->getBuffer(),
+                                  swap, isBigEndianArch,
+                                  indirectSymbolTableOffset,
+                                  indirectSymbolTableCount,
+                                  read32(swap, sect->reserved1), contentSize/4);
+          }
           f->sections.push_back(section);
         }
       }
@@ -255,6 +296,13 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           appendRelocations(section.relocations, mb->getBuffer(),
                             swap, isBigEndianArch, read32(swap, sect->reloff),
                                                    read32(swap, sect->nreloc));
+          if (section.type == S_NON_LAZY_SYMBOL_POINTERS) {
+            appendIndirectSymbols(section.indirectSymbols, mb->getBuffer(),
+                                  swap, isBigEndianArch,
+                                  indirectSymbolTableOffset,
+                                  indirectSymbolTableCount,
+                                  read32(swap, sect->reserved1), contentSize/4);
+          }
           f->sections.push_back(section);
         }
       }
@@ -328,10 +376,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             f->localSymbols.push_back(sout);
         }
       }
-    } else if (cmd == LC_DYSYMTAB) {
-      // TODO: indirect symbols
     }
-
     return false;
   });
   if (ec)

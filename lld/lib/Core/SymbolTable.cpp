@@ -49,7 +49,10 @@ bool SymbolTable::add(const DefinedAtom &atom) {
   if (atom.merge() == DefinedAtom::mergeByContent) {
     // Named atoms cannot be merged by content.
     assert(atom.name().empty());
-    return addByContent(atom);
+    // Currently only read-only constants can be merged.
+    if (atom.permissions() == DefinedAtom::permR__)
+      return addByContent(atom);
+    // TODO: support mergeByContent of data atoms by comparing content & fixups.
   }
   return false;
 }
@@ -338,8 +341,6 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
 }
 
 bool SymbolTable::addByContent(const DefinedAtom &newAtom) {
-  // Currently only read-only constants can be merged.
-  assert(newAtom.permissions() == DefinedAtom::permR__);
   AtomContentSet::iterator pos = _contentTable.find(&newAtom);
   if (pos == _contentTable.end()) {
     _contentTable.insert(&newAtom);

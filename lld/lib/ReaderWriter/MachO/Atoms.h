@@ -17,16 +17,18 @@ namespace mach_o {
 class MachODefinedAtom : public SimpleDefinedAtom {
 public:
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
-                   ContentType type, const ArrayRef<uint8_t> content)
+                   ContentType type, Merge merge,
+                   const ArrayRef<uint8_t> content)
       : SimpleDefinedAtom(f), _name(name), _content(content),
-        _contentType(type), _scope(scope) {}
+        _contentType(type), _scope(scope), _merge(merge) {}
 
   // Constructor for zero-fill content
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
                    uint64_t size)
       : SimpleDefinedAtom(f), _name(name),
         _content(ArrayRef<uint8_t>(nullptr, size)),
-        _contentType(DefinedAtom::typeZeroFill), _scope(scope) {}
+        _contentType(DefinedAtom::typeZeroFill),
+        _scope(scope), _merge(mergeNo) {}
 
   uint64_t size() const override { return _content.size(); }
 
@@ -35,6 +37,8 @@ public:
   StringRef name() const override { return _name; }
 
   Scope scope() const override { return _scope; }
+
+  Merge merge() const override { return _merge; }
 
   DeadStripKind deadStrip() const override {
     if (_contentType == DefinedAtom::typeInitializerPtr)
@@ -55,6 +59,7 @@ private:
   const ArrayRef<uint8_t> _content;
   const ContentType _contentType;
   const Scope _scope;
+  const Merge _merge;
 };
 
 

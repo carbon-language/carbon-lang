@@ -92,7 +92,8 @@ static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
   } else {
     ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
     file.addDefinedAtom(sym.name, atomScope(sym.scope),
-                        atomTypeFromSection(section), atomContent, copyRefs);
+                        atomTypeFromSection(section), DefinedAtom::mergeNo,
+                        atomContent, copyRefs);
   }
 }
 
@@ -125,7 +126,8 @@ static error_code processSection(MachOFile &file, const Section &section,
           unsigned size = i - offset + 2;
           ArrayRef<uint8_t> utf16Content = section.content.slice(offset, size);
           file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                              DefinedAtom::typeUTF16String, utf16Content, 
+                              DefinedAtom::typeUTF16String,
+                              DefinedAtom::mergeByContent, utf16Content,
                               copyRefs);
           offset = i + 2;
         }
@@ -139,9 +141,10 @@ static error_code processSection(MachOFile &file, const Section &section,
                                        "terminated."); 
       }
     }
+    break;
   case llvm::MachO::S_COALESCED:
   case llvm::MachO::S_ZEROFILL:
-    // These sections are broken in to atoms based on symbols.
+    // These sections are broken into atoms based on symbols.
     break;
   case S_MOD_INIT_FUNC_POINTERS:
     if ((section.content.size() % pointerSize) != 0) {
@@ -156,7 +159,8 @@ static error_code processSection(MachOFile &file, const Section &section,
     for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
       ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                          DefinedAtom::typeInitializerPtr, bytes, copyRefs);
+                          DefinedAtom::typeInitializerPtr, DefinedAtom::mergeNo,
+                          bytes, copyRefs);
       offset += pointerSize;
     }
     break;
@@ -173,7 +177,26 @@ static error_code processSection(MachOFile &file, const Section &section,
     for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
       ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                          DefinedAtom::typeTerminatorPtr, bytes, copyRefs);
+                          DefinedAtom::typeTerminatorPtr, DefinedAtom::mergeNo,
+                          bytes, copyRefs);
+      offset += pointerSize;
+    }
+    break;
+  case S_NON_LAZY_SYMBOL_POINTERS:
+    if ((section.content.size() % pointerSize) != 0) {
+      return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName
+                                     + " has type S_NON_LAZY_SYMBOL_POINTERS "
+                                     "but its size ("
+                                     + Twine(section.content.size())
+                                     + ") is not a multiple of "
+                                     + Twine(pointerSize));
+    }
+    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
+      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                          DefinedAtom::typeGOT, DefinedAtom::mergeByContent,
+                          bytes, copyRefs);
       offset += pointerSize;
     }
     break;
@@ -183,7 +206,8 @@ static error_code processSection(MachOFile &file, const Section &section,
         unsigned size = i - offset + 1;
         ArrayRef<uint8_t> strContent = section.content.slice(offset, size);
         file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                            DefinedAtom::typeCString, strContent, copyRefs);
+                            DefinedAtom::typeCString,
+                            DefinedAtom::mergeByContent, strContent, copyRefs);
         offset = i + 1;
       }
     }
@@ -205,7 +229,8 @@ static error_code processSection(MachOFile &file, const Section &section,
     for (size_t i = 0, e = section.content.size(); i != e; i += 4) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 4);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral4, byteContent, copyRefs);
+                          DefinedAtom::typeLiteral4,
+                          DefinedAtom::mergeByContent, byteContent, copyRefs);
       offset += 4;
     }
     break;
@@ -219,7 +244,8 @@ static error_code processSection(MachOFile &file, const Section &section,
     for (size_t i = 0, e = section.content.size(); i != e; i += 8) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 8);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral8, byteContent, copyRefs);
+                          DefinedAtom::typeLiteral8,
+                          DefinedAtom::mergeByContent, byteContent, copyRefs);
       offset += 8;
     }
     break;
@@ -233,7 +259,8 @@ static error_code processSection(MachOFile &file, const Section &section,
     for (size_t i = 0, e = section.content.size(); i != e; i += 16) {
       ArrayRef<uint8_t> byteContent = section.content.slice(offset, 16);
       file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral16, byteContent, copyRefs);
+                          DefinedAtom::typeLiteral16,
+                          DefinedAtom::mergeByContent, byteContent, copyRefs);
       offset += 16;
     }
     break;
@@ -248,7 +275,7 @@ static ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
-  
+
   // Create atoms from global symbols.
   for (const Symbol &sym : normalizedFile.globalSymbols) {
     processSymbol(normalizedFile, *file, sym, copyRefs);
