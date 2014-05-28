@@ -667,24 +667,23 @@ static char proc_self_exe_cache_str[kMaxPathLength];
 static uptr proc_self_exe_cache_len = 0;
 
 uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
+  if (proc_self_exe_cache_len > 0) {
+    // If available, use the cached module name.
+    uptr module_name_len =
+        internal_snprintf(buf, buf_len, "%s", proc_self_exe_cache_str);
+    CHECK_LT(module_name_len, buf_len);
+    return module_name_len;
+  }
   uptr module_name_len = internal_readlink(
       "/proc/self/exe", buf, buf_len);
   int readlink_error;
   if (internal_iserror(module_name_len, &readlink_error)) {
-    if (proc_self_exe_cache_len) {
-      // If available, use the cached module name.
-      CHECK_LE(proc_self_exe_cache_len, buf_len);
-      internal_strncpy(buf, proc_self_exe_cache_str, buf_len);
-      module_name_len = internal_strlen(proc_self_exe_cache_str);
-    } else {
-      // We can't read /proc/self/exe for some reason, assume the name of the
-      // binary is unknown.
-      Report("WARNING: readlink(\"/proc/self/exe\") failed with errno %d, "
-             "some stack frames may not be symbolized\n", readlink_error);
-      module_name_len = internal_snprintf(buf, buf_len, "/proc/self/exe");
-    }
+    // We can't read /proc/self/exe for some reason, assume the name of the
+    // binary is unknown.
+    Report("WARNING: readlink(\"/proc/self/exe\") failed with errno %d, "
+           "some stack frames may not be symbolized\n", readlink_error);
+    module_name_len = internal_snprintf(buf, buf_len, "/proc/self/exe");
     CHECK_LT(module_name_len, buf_len);
-    buf[module_name_len] = '\0';
   }
   return module_name_len;
 }
