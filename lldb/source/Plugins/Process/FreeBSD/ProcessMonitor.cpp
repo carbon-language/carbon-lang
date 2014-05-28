@@ -1628,9 +1628,13 @@ ProcessMonitor::Resume(lldb::tid_t unused, uint32_t signo)
     bool result;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
-    if (log)
-        log->Printf ("ProcessMonitor::%s() resuming pid %"  PRIu64 " with signal %s", __FUNCTION__, GetPID(),
-                                 m_process->GetUnixSignals().GetSignalAsCString (signo));
+    if (log) {
+        const char *signame = m_process->GetUnixSignals().GetSignalAsCString (signo);
+        if (signame == nullptr)
+            signame = "<none>";
+        log->Printf("ProcessMonitor::%s() resuming pid %"  PRIu64 " with signal %s",
+                    __FUNCTION__, GetPID(), signame);
+    }
     ResumeOperation op(signo, result);
     DoOperation(&op);
     if (log)
