@@ -3879,6 +3879,14 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("attribute(const)");
   case CXCursor_NoDuplicateAttr:
     return cxstring::createRef("attribute(noduplicate)");
+  case CXCursor_CUDAConstantAttr:
+    return cxstring::createRef("attribute(constant)");
+  case CXCursor_CUDADeviceAttr:
+    return cxstring::createRef("attribute(device)");
+  case CXCursor_CUDAGlobalAttr:
+    return cxstring::createRef("attribute(global)");
+  case CXCursor_CUDAHostAttr:
+    return cxstring::createRef("attribute(host)");
   case CXCursor_PreprocessingDirective:
     return cxstring::createRef("preprocessing directive");
   case CXCursor_MacroDefinition:

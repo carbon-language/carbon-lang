@@ -53,6 +53,10 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     case attr::Pure: return CXCursor_PureAttr;
     case attr::Const: return CXCursor_ConstAttr;
     case attr::NoDuplicate: return CXCursor_NoDuplicateAttr;
+    case attr::CUDAConstant: return CXCursor_CUDAConstantAttr;
+    case attr::CUDADevice: return CXCursor_CUDADeviceAttr;
+    case attr::CUDAGlobal: return CXCursor_CUDAGlobalAttr;
+    case attr::CUDAHost: return CXCursor_CUDAHostAttr;
   }
 
   return CXCursor_UnexposedAttr;

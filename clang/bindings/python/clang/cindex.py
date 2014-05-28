@@ -1082,6 +1082,10 @@ CursorKind.PACKED_ATTR = CursorKind(408)
 CursorKind.PURE_ATTR = CursorKind(409)
 CursorKind.CONST_ATTR = CursorKind(410)
 CursorKind.NODUPLICATE_ATTR = CursorKind(411)
+CursorKind.CUDACONSTANT_ATTR = CursorKind(412)
+CursorKind.CUDADEVICE_ATTR = CursorKind(413)
+CursorKind.CUDAGLOBAL_ATTR = CursorKind(414)
+CursorKind.CUDAHOST_ATTR = CursorKind(415)
 
 ###
 # Preprocessing
