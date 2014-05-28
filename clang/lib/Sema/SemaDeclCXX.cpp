@@ -1398,8 +1398,8 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     Diag(BaseLoc, diag::err_class_marked_final_used_as_base)
       << CXXBaseDecl->getDeclName()
       << FA->isSpelledAsSealed();
-    Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
-      << CXXBaseDecl->getDeclName();
+    Diag(CXXBaseDecl->getLocation(), diag::note_entity_declared_at)
+        << CXXBaseDecl->getDeclName() << FA->getRange();
     return nullptr;
   }
 

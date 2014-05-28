@@ -14,6 +14,11 @@
 let Component = "Sema" in {
 let CategoryName = "Semantic Issue" in {
 
+def note_previous_decl : Note<"%0 declared here">;
+def note_entity_declared_at : Note<"%0 declared here">;
+def note_callee_decl : Note<"%0 declared here">;
+def note_defined_here : Note<"%0 defined here">;
+
 // For loop analysis
 def warn_variables_not_in_loop_body : Warning<
   "variable%select{s| %1|s %1 and %2|s %1, %2, and %3|s %1, %2, %3, and %4}0 "
@@ -1222,10 +1227,9 @@ def warn_call_to_pure_virtual_member_function_from_ctor_dtor : Warning<
   "call to pure virtual member function %0; overrides of %0 in subclasses are "
   "not available in the %select{constructor|destructor}1 of %2">;
 
-def note_field_decl : Note<"member is declared here">;
+def note_member_declared_at : Note<"member is declared here">;
 def note_ivar_decl : Note<"instance variable is declared here">;
 def note_bitfield_decl : Note<"bit-field is declared here">;
-def note_previous_decl : Note<"%0 declared here">;
 def note_implicit_param_decl : Note<"%0 is an implicit parameter">;
 def note_member_synthesized_at : Note<
   "implicit %select{default constructor|copy constructor|move constructor|copy "
@@ -3061,7 +3065,6 @@ def err_template_arg_list_different_arity : Error<
   "%select{class template|function template|template template parameter"
   "|template}1 %2">;
 def note_template_decl_here : Note<"template is declared here">;
-def note_member_of_template_here : Note<"member is declared here">;
 def err_template_arg_must_be_type : Error<
   "template argument for template type parameter must be a type">;
 def err_template_arg_must_be_type_suggest : Error<
@@ -3726,8 +3729,6 @@ def warn_static_local_in_extern_inline : Warning<
   "in different files">, InGroup<StaticLocalInInline>;
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
-def note_internal_decl_declared_here : Note<
-  "%0 declared here">;
 
 def warn_redefinition_of_typedef : ExtWarn<
   "redefinition of typedef %0 is a C11 feature">,
@@ -5352,8 +5353,6 @@ def err_typecheck_deleted_function : Error<
   
 def err_expected_class_or_namespace : Error<"%0 is not a class"
   "%select{ or namespace|, namespace, or scoped enumeration}1">;
-def note_expected_class_or_namespace_declared_here : Note<
-  "%0 declared here">;
 def err_invalid_declarator_scope : Error<"cannot define or redeclare %0 here "
   "because namespace %1 does not enclose namespace %2">;
 def err_invalid_declarator_global_scope : Error<
@@ -5648,8 +5647,6 @@ def err_call_incomplete_return : Error<
   "calling function with incomplete return type %0">;
 def err_call_function_incomplete_return : Error<
   "calling %0 with incomplete return type %1">;
-def note_function_with_incomplete_return_type_declared_here : Note<
-  "%0 declared here">;
 def err_call_incomplete_argument : Error<
   "argument type %0 is incomplete">;
 def err_typecheck_call_too_few_args : Error<
@@ -5705,10 +5702,6 @@ def err_arc_typecheck_convert_incompatible_pointer : Error<
   "incompatible pointer types passing retainable parameter of type %0"
   "to a CF function expecting %1 type">;
   
-def note_callee_decl : Note<
-  "%0 declared here">;
-def note_defined_here : Note<"%0 defined here">;
-
 def err_builtin_fn_use : Error<"builtin functions must be directly called">;
 
 def warn_call_wrong_number_of_arguments : Warning<
@@ -6060,8 +6053,6 @@ def err_reference_to_local_var_in_enclosing_lambda : Error<
 def err_reference_to_local_var_in_enclosing_context : Error<
   "reference to local variable %0 declared in enclosing context">;
 
-def note_local_variable_declared_here : Note<
-  "%0 declared here">;
 def err_static_data_member_not_allowed_in_local_class : Error<
   "static data member %0 not allowed in local class %1">; 
   

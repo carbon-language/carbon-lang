@@ -1850,7 +1850,7 @@ static bool DiagnoseUninstantiableTemplate(Sema &S,
     S.Diag(PointOfInstantiation,
            diag::err_implicit_instantiate_member_undefined)
       << S.Context.getTypeDeclType(Instantiation);
-    S.Diag(Pattern->getLocation(), diag::note_member_of_template_here);
+    S.Diag(Pattern->getLocation(), diag::note_member_declared_at);
   } else {
     S.Diag(PointOfInstantiation, diag::err_template_instantiate_undefined)
       << (TSK != TSK_ImplicitInstantiation)

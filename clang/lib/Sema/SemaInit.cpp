@@ -6588,7 +6588,8 @@ bool InitializationSequence::Diagnose(Sema &S,
               << S.Context.getTypeDeclType(Constructor->getParent())
               << /*member=*/1
               << Entity.getName();
-            S.Diag(Entity.getDecl()->getLocation(), diag::note_field_decl);
+            S.Diag(Entity.getDecl()->getLocation(),
+                   diag::note_member_declared_at);
 
             if (const RecordType *Record
                                  = Entity.getType()->getAs<RecordType>())

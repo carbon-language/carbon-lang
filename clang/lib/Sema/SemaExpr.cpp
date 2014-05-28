@@ -223,9 +223,8 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
 
   S.MaybeSuggestAddingStaticToDecl(Current);
 
-  S.Diag(D->getCanonicalDecl()->getLocation(),
-         diag::note_internal_decl_declared_here)
-    << D;
+  S.Diag(D->getCanonicalDecl()->getLocation(), diag::note_entity_declared_at)
+      << D;
 }
 
 void Sema::MaybeSuggestAddingStaticToDecl(const FunctionDecl *Cur) {
@@ -11469,8 +11468,8 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
       << var->getIdentifier();
   }
 
-  S.Diag(var->getLocation(), diag::note_local_variable_declared_here)
-    << var->getIdentifier();
+  S.Diag(var->getLocation(), diag::note_entity_declared_at)
+      << var->getIdentifier();
 
   // FIXME: Add additional diagnostic info about class etc. which prevents
   // capture.
@@ -12586,9 +12585,8 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
       
       S.Diag(Loc, diag::err_call_function_incomplete_return)
         << CE->getSourceRange() << FD->getDeclName() << T;
-      S.Diag(FD->getLocation(),
-             diag::note_function_with_incomplete_return_type_declared_here)
-        << FD->getDeclName();
+      S.Diag(FD->getLocation(), diag::note_entity_declared_at)
+          << FD->getDeclName();
     }
   } Diagnoser(FD, CE);
   

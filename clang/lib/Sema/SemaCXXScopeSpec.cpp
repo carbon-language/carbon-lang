@@ -532,9 +532,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       Diag(R.getNameLoc(), diag::err_expected_class_or_namespace)
           << &Identifier << getLangOpts().CPlusPlus;
       if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
-        Diag(ND->getLocation(),
-             diag::note_expected_class_or_namespace_declared_here)
-            << &Identifier;
+        Diag(ND->getLocation(), diag::note_entity_declared_at) << &Identifier;
       return true;
     }
   }
@@ -718,9 +716,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       Diag(IdentifierLoc, diag::err_expected_class_or_namespace)
           << &Identifier << getLangOpts().CPlusPlus;
       if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
-        Diag(ND->getLocation(),
-             diag::note_expected_class_or_namespace_declared_here)
-          << &Identifier;
+        Diag(ND->getLocation(), diag::note_entity_declared_at) << &Identifier;
     }
   } else if (SS.isSet())
     Diag(IdentifierLoc, diag::err_no_member) << &Identifier << LookupCtx

@@ -1252,7 +1252,8 @@ static void DiagnoseAccessPath(Sema &S,
     << (base->getAccessSpecifierAsWritten() == AS_none);
 
   if (entity.isMemberAccess())
-    S.Diag(entity.getTargetDecl()->getLocation(), diag::note_field_decl);
+    S.Diag(entity.getTargetDecl()->getLocation(),
+           diag::note_member_declared_at);
 }
 
 static void DiagnoseBadAccess(Sema &S, SourceLocation Loc,
