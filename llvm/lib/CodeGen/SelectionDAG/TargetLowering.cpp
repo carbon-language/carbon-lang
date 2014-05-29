@@ -327,6 +327,10 @@ TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
   assert(Op.getNode()->getNumValues() == 1 &&
          "ShrinkDemandedOp only supports nodes with one result!");
 
+  // Early return, as this function cannot handle vector types.
+  if (Op.getValueType().isVector())
+    return false;
+
   // Don't do this if the node has another user, which may require the
   // full value.
   if (!Op.getNode()->hasOneUse())
