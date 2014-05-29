@@ -1069,8 +1069,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
     // Determine whether this global should be poisoned in initialization.
     bool GlobalHasDynamicInitializer =
         DynamicallyInitializedGlobals.Contains(G);
-    // Don't check initialization order if this global is blacklisted.
-    GlobalHasDynamicInitializer &= !BL->isIn(*G, "init");
 
     StructType *NewTy = StructType::get(Ty, RightRedZoneTy, NULL);
     Constant *NewInitializer = ConstantStruct::get(
