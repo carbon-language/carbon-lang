@@ -7969,6 +7969,16 @@ class avx_broadcast<bits<8> opc, string OpcodeStr, RegisterClass RC,
         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
         [(set RC:$dst, (Int addr:$src))]>, Sched<[Sched]>, VEX;
 
+class avx_broadcast_no_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                           X86MemOperand x86memop, ValueType VT,
+                           PatFrag ld_frag, SchedWrite Sched> :
+  AVX8I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+        !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+        [(set RC:$dst, (VT (X86VBroadcast (ld_frag addr:$src))))]>,
+        Sched<[Sched]>, VEX {
+    let mayLoad = 1;
+}
+
 // AVX2 adds register forms
 class avx2_broadcast_reg<bits<8> opc, string OpcodeStr, RegisterClass RC,
                          Intrinsic Int, SchedWrite Sched> :
@@ -7977,16 +7987,15 @@ class avx2_broadcast_reg<bits<8> opc, string OpcodeStr, RegisterClass RC,
          [(set RC:$dst, (Int VR128:$src))]>, Sched<[Sched]>, VEX;
 
 let ExeDomain = SSEPackedSingle in {
-  def VBROADCASTSSrm  : avx_broadcast<0x18, "vbroadcastss", VR128, f32mem,
-                                      int_x86_avx_vbroadcast_ss, WriteLoad>;
-  def VBROADCASTSSYrm : avx_broadcast<0x18, "vbroadcastss", VR256, f32mem,
-                                      int_x86_avx_vbroadcast_ss_256,
-                                      WriteFShuffleLd>, VEX_L;
+  def VBROADCASTSSrm  : avx_broadcast_no_int<0x18, "vbroadcastss", VR128,
+                                             f32mem, v4f32, loadf32, WriteLoad>;
+  def VBROADCASTSSYrm : avx_broadcast_no_int<0x18, "vbroadcastss", VR256,
+                                             f32mem, v8f32, loadf32,
+                                             WriteFShuffleLd>, VEX_L;
 }
 let ExeDomain = SSEPackedDouble in
-def VBROADCASTSDYrm  : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
-                                    int_x86_avx_vbroadcast_sd_256,
-                                    WriteFShuffleLd>, VEX_L;
+def VBROADCASTSDYrm  : avx_broadcast_no_int<0x19, "vbroadcastsd", VR256, f64mem,
+                                    v4f64, loadf64, WriteFShuffleLd>, VEX_L;
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem,
                                    int_x86_avx_vbroadcastf128_pd_256,
                                    WriteFShuffleLd>, VEX_L;
@@ -8543,13 +8552,6 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
 }
 
 let Predicates = [HasAVX] in {
-def : Pat<(v8f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSYrm addr:$src)>;
-def : Pat<(v4f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VBROADCASTSDYrm addr:$src)>;
-def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
-          (VBROADCASTSSrm addr:$src)>;
-
   // Provide fallback in case the load node that is used in the patterns above
   // is used by additional users, which prevents the pattern selection.
   let AddedComplexity = 20 in {
