@@ -599,26 +599,26 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void materializeStores(bool InstrumentWithCalls) {
-    for (size_t i = 0, n = StoreList.size(); i < n; i++) {
-      StoreInst &I = *dyn_cast<StoreInst>(StoreList[i]);
+    for (auto Inst : StoreList) {
+      StoreInst &SI = *dyn_cast<StoreInst>(Inst);
 
-      IRBuilder<> IRB(&I);
-      Value *Val = I.getValueOperand();
-      Value *Addr = I.getPointerOperand();
-      Value *Shadow = I.isAtomic() ? getCleanShadow(Val) : getShadow(Val);
+      IRBuilder<> IRB(&SI);
+      Value *Val = SI.getValueOperand();
+      Value *Addr = SI.getPointerOperand();
+      Value *Shadow = SI.isAtomic() ? getCleanShadow(Val) : getShadow(Val);
       Value *ShadowPtr = getShadowPtr(Addr, Shadow->getType(), IRB);
 
       StoreInst *NewSI =
-          IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
+          IRB.CreateAlignedStore(Shadow, ShadowPtr, SI.getAlignment());
       DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
       (void)NewSI;
 
-      if (ClCheckAccessAddress) insertShadowCheck(Addr, &I);
+      if (ClCheckAccessAddress) insertShadowCheck(Addr, &SI);
 
-      if (I.isAtomic()) I.setOrdering(addReleaseOrdering(I.getOrdering()));
+      if (SI.isAtomic()) SI.setOrdering(addReleaseOrdering(SI.getOrdering()));
 
       if (MS.TrackOrigins) {
-        unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
+        unsigned Alignment = std::max(kMinOriginAlignment, SI.getAlignment());
         storeOrigin(IRB, Addr, Shadow, getOrigin(Val), Alignment,
                     InstrumentWithCalls);
       }
@@ -662,18 +662,17 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void materializeChecks(bool InstrumentWithCalls) {
-    for (size_t i = 0, n = InstrumentationList.size(); i < n; i++) {
-      Instruction *OrigIns = InstrumentationList[i].OrigIns;
-      Value *Shadow = InstrumentationList[i].Shadow;
-      Value *Origin = InstrumentationList[i].Origin;
+    for (const auto &ShadowData : InstrumentationList) {
+      Instruction *OrigIns = ShadowData.OrigIns;
+      Value *Shadow = ShadowData.Shadow;
+      Value *Origin = ShadowData.Origin;
       materializeOneCheck(OrigIns, Shadow, Origin, InstrumentWithCalls);
     }
     DEBUG(dbgs() << "DONE:\n" << F);
   }
 
   void materializeIndirectCalls() {
-    for (size_t i = 0, n = IndirectCallList.size(); i < n; i++) {
-      CallSite CS = IndirectCallList[i];
+    for (auto &CS : IndirectCallList) {
       Instruction *I = CS.getInstruction();
       BasicBlock *B = I->getParent();
       IRBuilder<> IRB(I);
@@ -732,8 +731,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
 
     // Finalize PHI nodes.
-    for (size_t i = 0, n = ShadowPHINodes.size(); i < n; i++) {
-      PHINode *PN = ShadowPHINodes[i];
+    for (PHINode *PN : ShadowPHINodes) {
       PHINode *PNS = cast<PHINode>(getShadow(PN));
       PHINode *PNO = MS.TrackOrigins ? cast<PHINode>(getOrigin(PN)) : nullptr;
       size_t NumValues = PN->getNumIncomingValues();
@@ -950,22 +948,21 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Function *F = A->getParent();
       IRBuilder<> EntryIRB(F->getEntryBlock().getFirstNonPHI());
       unsigned ArgOffset = 0;
-      for (Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-           AI != AE; ++AI) {
-        if (!AI->getType()->isSized()) {
+      for (auto &FArg : F->args()) {
+        if (!FArg.getType()->isSized()) {
           DEBUG(dbgs() << "Arg is not sized\n");
           continue;
         }
-        unsigned Size = AI->hasByValAttr()
-          ? MS.DL->getTypeAllocSize(AI->getType()->getPointerElementType())
-          : MS.DL->getTypeAllocSize(AI->getType());
-        if (A == AI) {
-          Value *Base = getShadowPtrForArgument(AI, EntryIRB, ArgOffset);
-          if (AI->hasByValAttr()) {
+        unsigned Size = FArg.hasByValAttr()
+          ? MS.DL->getTypeAllocSize(FArg.getType()->getPointerElementType())
+          : MS.DL->getTypeAllocSize(FArg.getType());
+        if (A == &FArg) {
+          Value *Base = getShadowPtrForArgument(&FArg, EntryIRB, ArgOffset);
+          if (FArg.hasByValAttr()) {
             // ByVal pointer itself has clean shadow. We copy the actual
             // argument shadow to the underlying memory.
             // Figure out maximal valid memcpy alignment.
-            unsigned ArgAlign = AI->getParamAlignment();
+            unsigned ArgAlign = FArg.getParamAlignment();
             if (ArgAlign == 0) {
               Type *EltType = A->getType()->getPointerElementType();
               ArgAlign = MS.DL->getABITypeAlignment(EltType);
@@ -980,10 +977,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           } else {
             *ShadowPtr = EntryIRB.CreateAlignedLoad(Base, kShadowTLSAlignment);
           }
-          DEBUG(dbgs() << "  ARG:    "  << *AI << " ==> " <<
+          DEBUG(dbgs() << "  ARG:    "  << FArg << " ==> " <<
                 **ShadowPtr << "\n");
           if (MS.TrackOrigins) {
-            Value* OriginPtr = getOriginPtrForArgument(AI, EntryIRB, ArgOffset);
+            Value *OriginPtr =
+                getOriginPtrForArgument(&FArg, EntryIRB, ArgOffset);
             setOrigin(A, EntryIRB.CreateLoad(OriginPtr));
           }
         }

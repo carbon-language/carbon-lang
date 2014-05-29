@@ -225,8 +225,7 @@ class SetOfDynamicallyInitializedGlobals {
         M.getNamedMetadata("llvm.asan.dynamically_initialized_globals");
     if (!DynamicGlobals)
       return;
-    for (int i = 0, n = DynamicGlobals->getNumOperands(); i < n; ++i) {
-      MDNode *MDN = DynamicGlobals->getOperand(i);
+    for (const auto MDN : DynamicGlobals->operands()) {
       assert(MDN->getNumOperands() == 1);
       Value *VG = MDN->getOperand(0);
       // The optimizer may optimize away a global entirely, in which case we
@@ -1009,10 +1008,9 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
 
   SmallVector<GlobalVariable *, 16> GlobalsToChange;
 
-  for (Module::GlobalListType::iterator G = M.global_begin(),
-       E = M.global_end(); G != E; ++G) {
-    if (ShouldInstrumentGlobal(G))
-      GlobalsToChange.push_back(G);
+  for (auto &G : M.globals()) {
+    if (ShouldInstrumentGlobal(&G))
+      GlobalsToChange.push_back(&G);
   }
 
   Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
@@ -1305,8 +1303,8 @@ bool AddressSanitizer::InjectCoverage(Function &F,
       (unsigned)ClCoverageBlockThreshold < AllBlocks.size()) {
     InjectCoverageAtBlock(F, F.getEntryBlock());
   } else {
-    for (size_t i = 0, n = AllBlocks.size(); i < n; i++)
-      InjectCoverageAtBlock(F, *AllBlocks[i]);
+    for (auto BB : AllBlocks)
+      InjectCoverageAtBlock(F, *BB);
   }
   return true;
 }
@@ -1339,29 +1337,28 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   unsigned Alignment;
 
   // Fill the set of memory operations to instrument.
-  for (Function::iterator FI = F.begin(), FE = F.end();
-       FI != FE; ++FI) {
-    AllBlocks.push_back(FI);
+  for (auto &BB : F) {
+    AllBlocks.push_back(&BB);
     TempsToInstrument.clear();
     int NumInsnsPerBB = 0;
-    for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
-         BI != BE; ++BI) {
-      if (LooksLikeCodeInBug11395(BI)) return false;
-      if (Value *Addr = isInterestingMemoryAccess(BI, &IsWrite, &Alignment)) {
+    for (auto &Inst : BB) {
+      if (LooksLikeCodeInBug11395(&Inst)) return false;
+      if (Value *Addr =
+              isInterestingMemoryAccess(&Inst, &IsWrite, &Alignment)) {
         if (ClOpt && ClOptSameTemp) {
           if (!TempsToInstrument.insert(Addr))
             continue;  // We've seen this temp in the current BB.
         }
       } else if (ClInvalidPointerPairs &&
-                 isInterestingPointerComparisonOrSubtraction(BI)) {
-        PointerComparisonsOrSubtracts.push_back(BI);
+                 isInterestingPointerComparisonOrSubtraction(&Inst)) {
+        PointerComparisonsOrSubtracts.push_back(&Inst);
         continue;
-      } else if (isa<MemIntrinsic>(BI)) {
+      } else if (isa<MemIntrinsic>(Inst)) {
         // ok, take it.
       } else {
-        if (isa<AllocaInst>(BI))
+        if (isa<AllocaInst>(Inst))
           NumAllocas++;
-        CallSite CS(BI);
+        CallSite CS(&Inst);
         if (CS) {
           // A call inside BB.
           TempsToInstrument.clear();
@@ -1370,7 +1367,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
         }
         continue;
       }
-      ToInstrument.push_back(BI);
+      ToInstrument.push_back(&Inst);
       NumInsnsPerBB++;
       if (NumInsnsPerBB >= ClMaxInsnsToInstrumentPerBB)
         break;
@@ -1395,8 +1392,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
 
   // Instrument.
   int NumInstrumented = 0;
-  for (size_t i = 0, n = ToInstrument.size(); i != n; i++) {
-    Instruction *Inst = ToInstrument[i];
+  for (auto Inst : ToInstrument) {
     if (ClDebugMin < 0 || ClDebugMax < 0 ||
         (NumInstrumented >= ClDebugMin && NumInstrumented <= ClDebugMax)) {
       if (isInterestingMemoryAccess(Inst, &IsWrite, &Alignment))
@@ -1412,14 +1408,13 @@ bool AddressSanitizer::runOnFunction(Function &F) {
 
   // We must unpoison the stack before every NoReturn call (throw, _exit, etc).
   // See e.g. http://code.google.com/p/address-sanitizer/issues/detail?id=37
-  for (size_t i = 0, n = NoReturnCalls.size(); i != n; i++) {
-    Instruction *CI = NoReturnCalls[i];
+  for (auto CI : NoReturnCalls) {
     IRBuilder<> IRB(CI);
     IRB.CreateCall(AsanHandleNoReturnFunc);
   }
 
-  for (size_t i = 0, n = PointerComparisonsOrSubtracts.size(); i != n; i++) {
-    instrumentPointerComparisonOrSubtraction(PointerComparisonsOrSubtracts[i]);
+  for (auto Inst : PointerComparisonsOrSubtracts) {
+    instrumentPointerComparisonOrSubtraction(Inst);
     NumInstrumented++;
   }
 
@@ -1532,12 +1527,10 @@ void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
 }
 
 static DebugLoc getFunctionEntryDebugLocation(Function &F) {
-  BasicBlock::iterator I = F.getEntryBlock().begin(),
-                       E = F.getEntryBlock().end();
-  for (; I != E; ++I)
-    if (!isa<AllocaInst>(I))
-      break;
-  return I->getDebugLoc();
+  for (const auto &Inst : F.getEntryBlock())
+    if (!isa<AllocaInst>(Inst))
+      return Inst.getDebugLoc();
+  return DebugLoc();
 }
 
 void FunctionStackPoisoner::poisonStack() {
@@ -1551,8 +1544,7 @@ void FunctionStackPoisoner::poisonStack() {
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
   SVD.reserve(AllocaVec.size());
-  for (size_t i = 0, n = AllocaVec.size(); i < n; i++) {
-    AllocaInst *AI = AllocaVec[i];
+  for (AllocaInst *AI : AllocaVec) {
     ASanStackVariableDescription D = { AI->getName().data(),
                                    getAllocaSizeInBytes(AI),
                                    AI->getAlignment(), AI, 0};
@@ -1607,8 +1599,7 @@ void FunctionStackPoisoner::poisonStack() {
 
   // Insert poison calls for lifetime intrinsics for alloca.
   bool HavePoisonedAllocas = false;
-  for (size_t i = 0, n = AllocaPoisonCallVec.size(); i < n; i++) {
-    const AllocaPoisonCall &APC = AllocaPoisonCallVec[i];
+  for (const auto &APC : AllocaPoisonCallVec) {
     assert(APC.InsBefore);
     assert(APC.AI);
     IRBuilder<> IRB(APC.InsBefore);
@@ -1617,11 +1608,10 @@ void FunctionStackPoisoner::poisonStack() {
   }
 
   // Replace Alloca instructions with base+offset.
-  for (size_t i = 0, n = SVD.size(); i < n; i++) {
-    AllocaInst *AI = SVD[i].AI;
+  for (const auto &Desc : SVD) {
+    AllocaInst *AI = Desc.AI;
     Value *NewAllocaPtr = IRB.CreateIntToPtr(
-        IRB.CreateAdd(LocalStackBase,
-                      ConstantInt::get(IntptrTy, SVD[i].Offset)),
+        IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, Desc.Offset)),
         AI->getType());
     replaceDbgDeclareForAlloca(AI, NewAllocaPtr, DIB);
     AI->replaceAllUsesWith(NewAllocaPtr);
@@ -1654,8 +1644,7 @@ void FunctionStackPoisoner::poisonStack() {
   poisonRedZones(L.ShadowBytes, IRB, ShadowBase, true);
 
   // (Un)poison the stack before all ret instructions.
-  for (size_t i = 0, n = RetVec.size(); i < n; i++) {
-    Instruction *Ret = RetVec[i];
+  for (auto Ret : RetVec) {
     IRBuilder<> IRBRet(Ret);
     // Mark the current frame as retired.
     IRBRet.CreateStore(ConstantInt::get(IntptrTy, kRetiredStackFrameMagic),
@@ -1709,8 +1698,8 @@ void FunctionStackPoisoner::poisonStack() {
   }
 
   // We are done. Remove the old unused alloca instructions.
-  for (size_t i = 0, n = AllocaVec.size(); i < n; i++)
-    AllocaVec[i]->eraseFromParent();
+  for (auto AI : AllocaVec)
+    AI->eraseFromParent();
 }
 
 void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
