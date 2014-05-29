@@ -31,13 +31,13 @@ static MutexType CanLockTab[MutexTypeCount][MutexTypeCount] = {
   /*0  MutexTypeInvalid*/     {},
   /*1  MutexTypeTrace*/       {MutexTypeLeaf},
   /*2  MutexTypeThreads*/     {MutexTypeReport},
-  /*3  MutexTypeReport*/      {MutexTypeSyncTab, MutexTypeSyncVar,
+  /*3  MutexTypeReport*/      {MutexTypeSyncVar,
                                MutexTypeMBlock, MutexTypeJavaMBlock},
   /*4  MutexTypeSyncVar*/     {MutexTypeDDetector},
-  /*5  MutexTypeSyncTab*/     {MutexTypeSyncVar},
+  /*5  MutexTypeSyncTab*/     {},  // unused
   /*6  MutexTypeSlab*/        {MutexTypeLeaf},
   /*7  MutexTypeAnnotations*/ {},
-  /*8  MutexTypeAtExit*/      {MutexTypeSyncTab},
+  /*8  MutexTypeAtExit*/      {MutexTypeSyncVar},
   /*9  MutexTypeMBlock*/      {MutexTypeSyncVar},
   /*10 MutexTypeJavaMBlock*/  {MutexTypeSyncVar},
   /*11 MutexTypeDDetector*/   {},
@@ -161,7 +161,19 @@ void InternalDeadlockDetector::Unlock(MutexType t) {
   CHECK(locked_[t]);
   locked_[t] = 0;
 }
+
+void InternalDeadlockDetector::CheckNoLocks() {
+  for (int i = 0; i != MutexTypeCount; i++) {
+    CHECK_EQ(locked_[i], 0);
+  }
+}
 #endif
+
+void CheckNoLocks(ThreadState *thr) {
+#if TSAN_DEBUG && !TSAN_GO
+  thr->internal_deadlock_detector.CheckNoLocks();
+#endif
+}
 
 const uptr kUnlocked = 0;
 const uptr kWriteLock = 1;

@@ -12,53 +12,100 @@
 //===----------------------------------------------------------------------===//
 #include "tsan_sync.h"
 #include "tsan_rtl.h"
-#include "tsan_mman.h"
 #include "gtest/gtest.h"
-
-#include <stdlib.h>
-#include <stdint.h>
-#include <map>
 
 namespace __tsan {
 
-TEST(Sync, Table) {
-  const uintptr_t kIters = 512*1024;
-  const uintptr_t kRange = 10000;
-
+TEST(MetaMap, Basic) {
   ThreadState *thr = cur_thread();
-  uptr pc = 0;
+  MetaMap *m = &ctx->metamap;
+  u64 block[1] = {};  // fake malloc block
+  m->AllocBlock(thr, 0, (uptr)&block[0], 1 * sizeof(u64));
+  MBlock *mb = m->GetBlock((uptr)&block[0]);
+  EXPECT_NE(mb, (MBlock*)0);
+  EXPECT_EQ(mb->siz, 1 * sizeof(u64));
+  EXPECT_EQ(mb->tid, thr->tid);
+  uptr sz = m->FreeBlock(thr, 0, (uptr)&block[0]);
+  EXPECT_EQ(sz, 1 * sizeof(u64));
+  mb = m->GetBlock((uptr)&block[0]);
+  EXPECT_EQ(mb, (MBlock*)0);
+}
 
-  SyncTab tab;
-  SyncVar *golden[kRange] = {};
-  unsigned seed = 0;
-  for (uintptr_t i = 0; i < kIters; i++) {
-    uintptr_t addr = rand_r(&seed) % (kRange - 1) + 1;
-    if (rand_r(&seed) % 2) {
-      // Get or add.
-      SyncVar *v = tab.GetOrCreateAndLock(thr, pc, addr, true);
-      EXPECT_TRUE(golden[addr] == 0 || golden[addr] == v);
-      EXPECT_EQ(v->addr, addr);
-      golden[addr] = v;
-      v->mtx.Unlock();
-    } else {
-      // Remove.
-      SyncVar *v = tab.GetAndRemove(thr, pc, addr);
-      EXPECT_EQ(golden[addr], v);
-      if (v) {
-        EXPECT_EQ(v->addr, addr);
-        golden[addr] = 0;
-        DestroyAndFree(v);
-      }
-    }
-  }
-  for (uintptr_t addr = 0; addr < kRange; addr++) {
-    if (golden[addr] == 0)
-      continue;
-    SyncVar *v = tab.GetAndRemove(thr, pc, addr);
-    EXPECT_EQ(v, golden[addr]);
-    EXPECT_EQ(v->addr, addr);
-    DestroyAndFree(v);
-  }
+TEST(MetaMap, FreeRange) {
+  ThreadState *thr = cur_thread();
+  MetaMap *m = &ctx->metamap;
+  u64 block[4] = {};  // fake malloc block
+  m->AllocBlock(thr, 0, (uptr)&block[0], 1 * sizeof(u64));
+  m->AllocBlock(thr, 0, (uptr)&block[1], 3 * sizeof(u64));
+  MBlock *mb1 = m->GetBlock((uptr)&block[0]);
+  EXPECT_EQ(mb1->siz, 1 * sizeof(u64));
+  MBlock *mb2 = m->GetBlock((uptr)&block[1]);
+  EXPECT_EQ(mb2->siz, 3 * sizeof(u64));
+  m->FreeRange(thr, 0, (uptr)&block[0], 4 * sizeof(u64));
+  mb1 = m->GetBlock((uptr)&block[0]);
+  EXPECT_EQ(mb1, (MBlock*)0);
+  mb2 = m->GetBlock((uptr)&block[1]);
+  EXPECT_EQ(mb2, (MBlock*)0);
+}
+
+TEST(MetaMap, Sync) {
+  ThreadState *thr = cur_thread();
+  MetaMap *m = &ctx->metamap;
+  u64 block[4] = {};  // fake malloc block
+  m->AllocBlock(thr, 0, (uptr)&block[0], 4 * sizeof(u64));
+  SyncVar *s1 = m->GetIfExistsAndLock((uptr)&block[0]);
+  EXPECT_EQ(s1, (SyncVar*)0);
+  s1 = m->GetOrCreateAndLock(thr, 0, (uptr)&block[0], true);
+  EXPECT_NE(s1, (SyncVar*)0);
+  EXPECT_EQ(s1->addr, (uptr)&block[0]);
+  s1->mtx.Unlock();
+  SyncVar *s2 = m->GetOrCreateAndLock(thr, 0, (uptr)&block[1], false);
+  EXPECT_NE(s2, (SyncVar*)0);
+  EXPECT_EQ(s2->addr, (uptr)&block[1]);
+  s2->mtx.ReadUnlock();
+  m->FreeBlock(thr, 0, (uptr)&block[0]);
+  s1 = m->GetIfExistsAndLock((uptr)&block[0]);
+  EXPECT_EQ(s1, (SyncVar*)0);
+  s2 = m->GetIfExistsAndLock((uptr)&block[1]);
+  EXPECT_EQ(s2, (SyncVar*)0);
+  m->OnThreadIdle(thr);
+}
+
+TEST(MetaMap, MoveMemory) {
+  ThreadState *thr = cur_thread();
+  MetaMap *m = &ctx->metamap;
+  u64 block1[4] = {};  // fake malloc block
+  u64 block2[4] = {};  // fake malloc block
+  m->AllocBlock(thr, 0, (uptr)&block1[0], 3 * sizeof(u64));
+  m->AllocBlock(thr, 0, (uptr)&block1[3], 1 * sizeof(u64));
+  SyncVar *s1 = m->GetOrCreateAndLock(thr, 0, (uptr)&block1[0], true);
+  s1->mtx.Unlock();
+  SyncVar *s2 = m->GetOrCreateAndLock(thr, 0, (uptr)&block1[1], true);
+  s2->mtx.Unlock();
+  m->MoveMemory((uptr)&block1[0], (uptr)&block2[0], 4 * sizeof(u64));
+  MBlock *mb1 = m->GetBlock((uptr)&block1[0]);
+  EXPECT_EQ(mb1, (MBlock*)0);
+  MBlock *mb2 = m->GetBlock((uptr)&block1[3]);
+  EXPECT_EQ(mb2, (MBlock*)0);
+  mb1 = m->GetBlock((uptr)&block2[0]);
+  EXPECT_NE(mb1, (MBlock*)0);
+  EXPECT_EQ(mb1->siz, 3 * sizeof(u64));
+  mb2 = m->GetBlock((uptr)&block2[3]);
+  EXPECT_NE(mb2, (MBlock*)0);
+  EXPECT_EQ(mb2->siz, 1 * sizeof(u64));
+  s1 = m->GetIfExistsAndLock((uptr)&block1[0]);
+  EXPECT_EQ(s1, (SyncVar*)0);
+  s2 = m->GetIfExistsAndLock((uptr)&block1[1]);
+  EXPECT_EQ(s2, (SyncVar*)0);
+  s1 = m->GetIfExistsAndLock((uptr)&block2[0]);
+  EXPECT_NE(s1, (SyncVar*)0);
+  EXPECT_EQ(s1->addr, (uptr)&block2[0]);
+  s1->mtx.Unlock();
+  s2 = m->GetIfExistsAndLock((uptr)&block2[1]);
+  EXPECT_NE(s2, (SyncVar*)0);
+  EXPECT_EQ(s2->addr, (uptr)&block2[1]);
+  s2->mtx.Unlock();
+  m->FreeRange(thr, 0, (uptr)&block2[0], 4 * sizeof(u64));
 }
 
 }  // namespace __tsan

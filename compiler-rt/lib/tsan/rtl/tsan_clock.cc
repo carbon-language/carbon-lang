@@ -330,6 +330,11 @@ SyncClock::SyncClock()
 
 void SyncClock::Reset() {
   clk_.Reset();
+  Zero();
+}
+
+void SyncClock::Zero() {
+  clk_.Resize(0);
   release_store_tid_ = kInvalidTid;
   release_store_reused_ = 0;
   for (uptr i = 0; i < kDirtyTids; i++)

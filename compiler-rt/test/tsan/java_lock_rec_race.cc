@@ -25,7 +25,7 @@ void *Thread(void *p) {
 
 int main() {
   int const kHeapSize = 1024 * 1024;
-  void *jheap = malloc(kHeapSize);
+  void *jheap = (char*)malloc(kHeapSize + 8) + 8;
   __tsan_java_init((jptr)jheap, kHeapSize);
   const int kBlockSize = 16;
   __tsan_java_alloc((jptr)jheap, kBlockSize);

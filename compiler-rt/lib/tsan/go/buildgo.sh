@@ -12,6 +12,7 @@ SRCS="
 	../rtl/tsan_rtl_mutex.cc
 	../rtl/tsan_rtl_report.cc
 	../rtl/tsan_rtl_thread.cc
+	../rtl/tsan_stack_trace.cc
 	../rtl/tsan_stat.cc
 	../rtl/tsan_suppressions.cc
 	../rtl/tsan_sync.cc

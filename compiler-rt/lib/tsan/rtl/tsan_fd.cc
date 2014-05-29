@@ -47,8 +47,8 @@ static bool bogusfd(int fd) {
   return fd < 0 || fd >= kTableSize;
 }
 
-static FdSync *allocsync() {
-  FdSync *s = (FdSync*)internal_alloc(MBlockFD, sizeof(FdSync));
+static FdSync *allocsync(ThreadState *thr, uptr pc) {
+  FdSync *s = (FdSync*)user_alloc(thr, pc, sizeof(FdSync));
   atomic_store(&s->rc, 1, memory_order_relaxed);
   return s;
 }
@@ -65,10 +65,7 @@ static void unref(ThreadState *thr, uptr pc, FdSync *s) {
       CHECK_NE(s, &fdctx.globsync);
       CHECK_NE(s, &fdctx.filesync);
       CHECK_NE(s, &fdctx.socksync);
-      SyncVar *v = ctx->synctab.GetAndRemove(thr, pc, (uptr)s);
-      if (v)
-        DestroyAndFree(v);
-      internal_free(s);
+      user_free(thr, pc, s);
     }
   }
 }
@@ -219,7 +216,7 @@ void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
 
 void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
   DPrintf("#%d: FdCreatePipe(%d, %d)\n", thr->tid, rfd, wfd);
-  FdSync *s = allocsync();
+  FdSync *s = allocsync(thr, pc);
   init(thr, pc, rfd, ref(s));
   init(thr, pc, wfd, ref(s));
   unref(thr, pc, s);
@@ -229,7 +226,7 @@ void FdEventCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdEventCreate(%d)\n", thr->tid, fd);
   if (bogusfd(fd))
     return;
-  init(thr, pc, fd, allocsync());
+  init(thr, pc, fd, allocsync(thr, pc));
 }
 
 void FdSignalCreate(ThreadState *thr, uptr pc, int fd) {
@@ -250,7 +247,7 @@ void FdPollCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdPollCreate(%d)\n", thr->tid, fd);
   if (bogusfd(fd))
     return;
-  init(thr, pc, fd, allocsync());
+  init(thr, pc, fd, allocsync(thr, pc));
 }
 
 void FdSocketCreate(ThreadState *thr, uptr pc, int fd) {

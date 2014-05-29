@@ -15,7 +15,7 @@
 
 #include "tsan_defs.h"
 #include "tsan_mutex.h"
-#include "tsan_sync.h"
+#include "tsan_stack_trace.h"
 #include "tsan_mutexset.h"
 
 namespace __tsan {

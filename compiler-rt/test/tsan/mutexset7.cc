@@ -13,12 +13,13 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  pthread_mutex_t mtx;
-  pthread_mutex_init(&mtx, 0);
-  pthread_mutex_lock(&mtx);
+  pthread_mutex_t *mtx = new pthread_mutex_t;
+  pthread_mutex_init(mtx, 0);
+  pthread_mutex_lock(mtx);
   Global--;
-  pthread_mutex_unlock(&mtx);
-  pthread_mutex_destroy(&mtx);
+  pthread_mutex_unlock(mtx);
+  pthread_mutex_destroy(mtx);
+  delete mtx;
   return NULL;
 }
 

@@ -51,20 +51,8 @@ TEST(Mman, User) {
   char *p2 = (char*)user_alloc(thr, pc, 20);
   EXPECT_NE(p2, (char*)0);
   EXPECT_NE(p2, p);
-  MBlock *b = user_mblock(thr, p);
-  EXPECT_NE(b, (MBlock*)0);
-  EXPECT_EQ(b->Size(), (uptr)10);
-  MBlock *b2 = user_mblock(thr, p2);
-  EXPECT_NE(b2, (MBlock*)0);
-  EXPECT_EQ(b2->Size(), (uptr)20);
-  for (int i = 0; i < 10; i++) {
-    p[i] = 42;
-    EXPECT_EQ(b, user_mblock(thr, p + i));
-  }
-  for (int i = 0; i < 20; i++) {
-    ((char*)p2)[i] = 42;
-    EXPECT_EQ(b2, user_mblock(thr, p2 + i));
-  }
+  EXPECT_EQ(user_alloc_usable_size(thr, pc, p), (uptr)10);
+  EXPECT_EQ(user_alloc_usable_size(thr, pc, p2), (uptr)20);
   user_free(thr, pc, p);
   user_free(thr, pc, p2);
 }

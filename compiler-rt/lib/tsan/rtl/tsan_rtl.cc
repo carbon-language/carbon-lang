@@ -131,6 +131,7 @@ static void BackgroundThread(void *arg) {
 
   fd_t mprof_fd = kInvalidFd;
   if (flags()->profile_memory && flags()->profile_memory[0]) {
+    // FIXME(dvyukov): support stdout/stderr
     InternalScopedBuffer<char> filename(4096);
     internal_snprintf(filename.data(), filename.size(), "%s.%d",
         flags()->profile_memory, (int)internal_getpid());
@@ -144,6 +145,7 @@ static void BackgroundThread(void *arg) {
   }
 
   u64 last_flush = NanoTime();
+  u64 last_rss_check = NanoTime();
   uptr last_rss = 0;
   for (int i = 0;
       atomic_load(&ctx->stop_background_thread, memory_order_relaxed) == 0;
@@ -160,7 +162,9 @@ static void BackgroundThread(void *arg) {
         last_flush = NanoTime();
       }
     }
-    if (flags()->memory_limit_mb > 0) {
+    // GetRSS can be expensive on huge programs, so don't do it every 100ms.
+    if (flags()->memory_limit_mb > 0 && last_rss_check + 1000 * kMs2Ns < now) {
+      last_rss_check = now;
       uptr rss = GetRSS();
       uptr limit = uptr(flags()->memory_limit_mb) << 20;
       if (flags()->verbosity > 0) {
@@ -222,6 +226,22 @@ void MapShadow(uptr addr, uptr size) {
   // so we can get away with unaligned mapping.
   // CHECK_EQ(addr, addr & ~((64 << 10) - 1));  // windows wants 64K alignment
   MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier);
+
+  // Meta shadow is 2:1, so tread carefully.
+  static uptr mapped_meta_end = 0;
+  uptr meta_begin = (uptr)MemToMeta(addr);
+  uptr meta_end = (uptr)MemToMeta(addr + size);
+  // windows wants 64K alignment
+  meta_begin = RoundDownTo(meta_begin, 64 << 10);
+  meta_end = RoundUpTo(meta_end, 64 << 10);
+  if (meta_end <= mapped_meta_end)
+    return;
+  if (meta_begin < mapped_meta_end)
+    meta_begin = mapped_meta_end;
+  MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
+  mapped_meta_end = meta_end;
+  DPrintf("mapped meta shadow for (%p-%p) at (%p-%p)\n",
+      addr, addr+size, meta_begin, meta_end);
 }
 
 void MapThreadTrace(uptr addr, uptr size) {

@@ -17,7 +17,14 @@ EXE=$SRC.exe
 $CXX $SRC $CFLAGS -c -o $OBJ
 $CXX $OBJ $LDFLAGS -o $EXE
 
-NCALL=$(objdump -d $EXE | egrep "callq .*__interceptor_mem(cpy|set)" | wc -l)
+NCALL=$(objdump -d $EXE | egrep "callq .*<__interceptor_mem(cpy|set)>" | wc -l)
+if [ "$NCALL" != "0" ]; then
+  echo FAIL: found $NCALL memcpy/memset calls
+  exit 1
+fi
+
+# tail calls
+NCALL=$(objdump -d $EXE | egrep "jmpq .*<__interceptor_mem(cpy|set)>" | wc -l)
 if [ "$NCALL" != "0" ]; then
   echo FAIL: found $NCALL memcpy/memset calls
   exit 1

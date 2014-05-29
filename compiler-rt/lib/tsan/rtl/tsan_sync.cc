@@ -19,293 +19,192 @@ namespace __tsan {
 
 void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s);
 
-SyncVar::SyncVar(uptr addr, u64 uid)
-  : mtx(MutexTypeSyncVar, StatMtxSyncVar)
-  , addr(addr)
-  , uid(uid)
-  , creation_stack_id()
-  , owner_tid(kInvalidTid)
-  , last_lock()
-  , recursion()
-  , is_rw()
-  , is_recursive()
-  , is_broken()
-  , is_linker_init() {
+SyncVar::SyncVar()
+    : mtx(MutexTypeSyncVar, StatMtxSyncVar) {
+  Reset();
 }
 
-SyncTab::Part::Part()
-  : mtx(MutexTypeSyncTab, StatMtxSyncTab)
-  , val() {
+void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
+  this->addr = addr;
+  this->uid = uid;
+
+  creation_stack_id = 0;
+  if (kCppMode)  // Go does not use them
+    creation_stack_id = CurrentStackId(thr, pc);
+  if (flags()->detect_deadlocks)
+    DDMutexInit(thr, pc, this);
 }
 
-SyncTab::SyncTab() {
+void SyncVar::Reset() {
+  addr = 0;
+  uid = 0;
+  creation_stack_id = 0;
+  owner_tid = kInvalidTid;
+  last_lock = 0;
+  recursion = 0;
+  is_rw = 0;
+  is_recursive = 0;
+  is_broken = 0;
+  is_linker_init = 0;
+  next = 0;
+
+  clock.Zero();
+  read_clock.Reset();
 }
 
-SyncTab::~SyncTab() {
-  for (int i = 0; i < kPartCount; i++) {
-    while (tab_[i].val) {
-      SyncVar *tmp = tab_[i].val;
-      tab_[i].val = tmp->next;
-      DestroyAndFree(tmp);
+MetaMap::MetaMap() {
+  atomic_store(&uid_gen_, 0, memory_order_relaxed);
+}
+
+void MetaMap::AllocBlock(ThreadState *thr, uptr pc, uptr p, uptr sz) {
+  u32 idx = block_alloc_.Alloc(&thr->block_cache);
+  MBlock *b = block_alloc_.Map(idx);
+  b->siz = sz;
+  b->tid = thr->tid;
+  b->stk = CurrentStackId(thr, pc);
+  u32 *meta = MemToMeta(p);
+  DCHECK_EQ(*meta, 0);
+  *meta = idx | kFlagBlock;
+}
+
+uptr MetaMap::FreeBlock(ThreadState *thr, uptr pc, uptr p) {
+  MBlock* b = GetBlock(p);
+  if (b == 0)
+    return 0;
+  uptr sz = RoundUpTo(b->siz, kMetaShadowCell);
+  FreeRange(thr, pc, p, sz);
+  return sz;
+}
+
+void MetaMap::FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz) {
+  u32 *meta = MemToMeta(p);
+  u32 *end = MemToMeta(p + sz);
+  if (end == meta)
+    end++;
+  for (; meta < end; meta++) {
+    u32 idx = *meta;
+    *meta = 0;
+    for (;;) {
+      if (idx == 0)
+        break;
+      if (idx & kFlagBlock) {
+        block_alloc_.Free(&thr->block_cache, idx & ~kFlagMask);
+        break;
+      } else if (idx & kFlagSync) {
+        DCHECK(idx & kFlagSync);
+        SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
+        u32 next = s->next;
+        s->Reset();
+        sync_alloc_.Free(&thr->sync_cache, idx & ~kFlagMask);
+        idx = next;
+      } else {
+        CHECK(0);
+      }
     }
   }
 }
 
-SyncVar* SyncTab::GetOrCreateAndLock(ThreadState *thr, uptr pc,
-                                     uptr addr, bool write_lock) {
+MBlock* MetaMap::GetBlock(uptr p) {
+  u32 *meta = MemToMeta(p);
+  u32 idx = *meta;
+  for (;;) {
+    if (idx == 0)
+      return 0;
+    if (idx & kFlagBlock)
+      return block_alloc_.Map(idx & ~kFlagMask);
+    DCHECK(idx & kFlagSync);
+    SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
+    idx = s->next;
+  }
+}
+
+SyncVar* MetaMap::GetOrCreateAndLock(ThreadState *thr, uptr pc,
+                              uptr addr, bool write_lock) {
   return GetAndLock(thr, pc, addr, write_lock, true);
 }
 
-SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
-  return GetAndLock(0, 0, addr, write_lock, false);
+SyncVar* MetaMap::GetIfExistsAndLock(uptr addr) {
+  return GetAndLock(0, 0, addr, true, false);
 }
 
-SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
-  StatInc(thr, StatSyncCreated);
-  void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
-  const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
-  SyncVar *res = new(mem) SyncVar(addr, uid);
-  res->creation_stack_id = 0;
-  if (!kGoMode)  // Go does not use them
-    res->creation_stack_id = CurrentStackId(thr, pc);
-  if (flags()->detect_deadlocks)
-    DDMutexInit(thr, pc, res);
-  return res;
-}
-
-SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
+SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
                              uptr addr, bool write_lock, bool create) {
-#ifndef TSAN_GO
-  {  // NOLINT
-    SyncVar *res = GetJavaSync(thr, pc, addr, write_lock, create);
-    if (res)
-      return res;
-  }
-
-  // Here we ask only PrimaryAllocator, because
-  // SecondaryAllocator::PointerIsMine() is slow and we have fallback on
-  // the hashmap anyway.
-  if (PrimaryAllocator::PointerIsMine((void*)addr)) {
-    MBlock *b = user_mblock(thr, (void*)addr);
-    CHECK_NE(b, 0);
-    MBlock::ScopedLock l(b);
-    SyncVar *res = 0;
-    for (res = b->ListHead(); res; res = res->next) {
-      if (res->addr == addr)
+  u32 *meta = MemToMeta(addr);
+  u32 idx0 = *meta;
+  u32 myidx = 0;
+  SyncVar *mys = 0;
+  for (;;) {
+    u32 idx = *meta;
+    for (;;) {
+      if (idx == 0)
         break;
-    }
-    if (res == 0) {
-      if (!create)
-        return 0;
-      res = Create(thr, pc, addr);
-      b->ListPush(res);
-    }
-    if (write_lock)
-      res->mtx.Lock();
-    else
-      res->mtx.ReadLock();
-    return res;
-  }
-#endif
-
-  Part *p = &tab_[PartIdx(addr)];
-  {
-    ReadLock l(&p->mtx);
-    for (SyncVar *res = p->val; res; res = res->next) {
-      if (res->addr == addr) {
+      if (idx & kFlagBlock)
+        break;
+      DCHECK(idx & kFlagSync);
+      SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
+      if (s->addr == addr) {
+        if (myidx != 0) {
+          mys->Reset();
+          sync_alloc_.Free(&thr->sync_cache, myidx);
+        }
         if (write_lock)
-          res->mtx.Lock();
+          s->mtx.Lock();
         else
-          res->mtx.ReadLock();
-        return res;
+          s->mtx.ReadLock();
+        return s;
       }
+      idx = s->next;
+    }
+    if (!create)
+      return 0;
+    if (*meta != idx0)
+      continue;
+
+    if (myidx == 0) {
+      const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
+      myidx = sync_alloc_.Alloc(&thr->sync_cache);
+      mys = sync_alloc_.Map(myidx);
+      mys->Init(thr, pc, addr, uid);
+    }
+    mys->next = idx0;
+    if (atomic_compare_exchange_strong((atomic_uint32_t*)meta, &idx0,
+        myidx | kFlagSync, memory_order_release)) {
+      if (write_lock)
+        mys->mtx.Lock();
+      else
+        mys->mtx.ReadLock();
+      return mys;
     }
   }
-  if (!create)
-    return 0;
-  {
-    Lock l(&p->mtx);
-    SyncVar *res = p->val;
-    for (; res; res = res->next) {
-      if (res->addr == addr)
+}
+
+void MetaMap::MoveMemory(uptr src, uptr dst, uptr sz) {
+  // Here we assume that src and dst do not overlap,
+  // and there are no concurrent accesses to the regions (e.g. stop-the-world).
+  uptr diff = dst - src;
+  u32 *src_meta = MemToMeta(src);
+  u32 *dst_meta = MemToMeta(dst);
+  u32 *src_meta_end = MemToMeta(src + sz);
+  for (; src_meta != src_meta_end; src_meta++, dst_meta++) {
+    CHECK_EQ(*dst_meta, 0);
+    u32 idx = *src_meta;
+    *src_meta = 0;
+    *dst_meta = idx;
+    // Patch the addresses in sync objects.
+    while (idx != 0) {
+      if (idx & kFlagBlock)
         break;
-    }
-    if (res == 0) {
-      res = Create(thr, pc, addr);
-      res->next = p->val;
-      p->val = res;
-    }
-    if (write_lock)
-      res->mtx.Lock();
-    else
-      res->mtx.ReadLock();
-    return res;
-  }
-}
-
-SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
-#ifndef TSAN_GO
-  {  // NOLINT
-    SyncVar *res = GetAndRemoveJavaSync(thr, pc, addr);
-    if (res)
-      return res;
-  }
-  if (PrimaryAllocator::PointerIsMine((void*)addr)) {
-    MBlock *b = user_mblock(thr, (void*)addr);
-    CHECK_NE(b, 0);
-    SyncVar *res = 0;
-    {
-      MBlock::ScopedLock l(b);
-      res = b->ListHead();
-      if (res) {
-        if (res->addr == addr) {
-          if (res->is_linker_init)
-            return 0;
-          b->ListPop();
-        } else {
-          SyncVar **prev = &res->next;
-          res = *prev;
-          while (res) {
-            if (res->addr == addr) {
-              if (res->is_linker_init)
-                return 0;
-              *prev = res->next;
-              break;
-            }
-            prev = &res->next;
-            res = *prev;
-          }
-        }
-        if (res) {
-          StatInc(thr, StatSyncDestroyed);
-          res->mtx.Lock();
-          res->mtx.Unlock();
-        }
-      }
-    }
-    return res;
-  }
-#endif
-
-  Part *p = &tab_[PartIdx(addr)];
-  SyncVar *res = 0;
-  {
-    Lock l(&p->mtx);
-    SyncVar **prev = &p->val;
-    res = *prev;
-    while (res) {
-      if (res->addr == addr) {
-        if (res->is_linker_init)
-          return 0;
-        *prev = res->next;
-        break;
-      }
-      prev = &res->next;
-      res = *prev;
+      CHECK(idx & kFlagSync);
+      SyncVar *s = sync_alloc_.Map(idx & ~kFlagMask);
+      s->addr += diff;
+      idx = s->next;
     }
   }
-  if (res) {
-    StatInc(thr, StatSyncDestroyed);
-    res->mtx.Lock();
-    res->mtx.Unlock();
-  }
-  return res;
 }
 
-int SyncTab::PartIdx(uptr addr) {
-  return (addr >> 3) % kPartCount;
-}
-
-StackTrace::StackTrace()
-    : n_()
-    , s_()
-    , c_() {
-}
-
-StackTrace::StackTrace(uptr *buf, uptr cnt)
-    : n_()
-    , s_(buf)
-    , c_(cnt) {
-  CHECK_NE(buf, 0);
-  CHECK_NE(cnt, 0);
-}
-
-StackTrace::~StackTrace() {
-  Reset();
-}
-
-void StackTrace::Reset() {
-  if (s_ && !c_) {
-    CHECK_NE(n_, 0);
-    internal_free(s_);
-    s_ = 0;
-  }
-  n_ = 0;
-}
-
-void StackTrace::Init(const uptr *pcs, uptr cnt) {
-  Reset();
-  if (cnt == 0)
-    return;
-  if (c_) {
-    CHECK_NE(s_, 0);
-    CHECK_LE(cnt, c_);
-  } else {
-    s_ = (uptr*)internal_alloc(MBlockStackTrace, cnt * sizeof(s_[0]));
-  }
-  n_ = cnt;
-  internal_memcpy(s_, pcs, cnt * sizeof(s_[0]));
-}
-
-void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
-  Reset();
-  n_ = thr->shadow_stack_pos - thr->shadow_stack;
-  if (n_ + !!toppc == 0)
-    return;
-  uptr start = 0;
-  if (c_) {
-    CHECK_NE(s_, 0);
-    if (n_ + !!toppc > c_) {
-      start = n_ - c_ + !!toppc;
-      n_ = c_ - !!toppc;
-    }
-  } else {
-    // Cap potentially huge stacks.
-    if (n_ + !!toppc > kTraceStackSize) {
-      start = n_ - kTraceStackSize + !!toppc;
-      n_ = kTraceStackSize - !!toppc;
-    }
-    s_ = (uptr*)internal_alloc(MBlockStackTrace,
-                               (n_ + !!toppc) * sizeof(s_[0]));
-  }
-  for (uptr i = 0; i < n_; i++)
-    s_[i] = thr->shadow_stack[start + i];
-  if (toppc) {
-    s_[n_] = toppc;
-    n_++;
-  }
-}
-
-void StackTrace::CopyFrom(const StackTrace& other) {
-  Reset();
-  Init(other.Begin(), other.Size());
-}
-
-bool StackTrace::IsEmpty() const {
-  return n_ == 0;
-}
-
-uptr StackTrace::Size() const {
-  return n_;
-}
-
-uptr StackTrace::Get(uptr i) const {
-  CHECK_LT(i, n_);
-  return s_[i];
-}
-
-const uptr *StackTrace::Begin() const {
-  return s_;
+void MetaMap::OnThreadIdle(ThreadState *thr) {
+  block_alloc_.FlushCache(&thr->block_cache);
+  sync_alloc_.FlushCache(&thr->sync_cache);
 }
 
 }  // namespace __tsan

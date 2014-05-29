@@ -38,6 +38,7 @@ class SyncClock {
   }
 
   void Reset();
+  void Zero();
 
   void DebugDump(int(*printf)(const char *s, ...));
 

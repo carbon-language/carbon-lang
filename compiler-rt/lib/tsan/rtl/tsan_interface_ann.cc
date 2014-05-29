@@ -40,6 +40,7 @@ class ScopedAnnotation {
 
   ~ScopedAnnotation() {
     FuncExit(thr_);
+    CheckNoLocks(thr_);
   }
  private:
   ThreadState *const thr_;

@@ -16,46 +16,21 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
-#include "tsan_clock.h"
 #include "tsan_defs.h"
+#include "tsan_clock.h"
 #include "tsan_mutex.h"
+#include "tsan_dense_alloc.h"
 
 namespace __tsan {
 
-class StackTrace {
- public:
-  StackTrace();
-  // Initialized the object in "static mode",
-  // in this mode it never calls malloc/free but uses the provided buffer.
-  StackTrace(uptr *buf, uptr cnt);
-  ~StackTrace();
-  void Reset();
-
-  void Init(const uptr *pcs, uptr cnt);
-  void ObtainCurrent(ThreadState *thr, uptr toppc);
-  bool IsEmpty() const;
-  uptr Size() const;
-  uptr Get(uptr i) const;
-  const uptr *Begin() const;
-  void CopyFrom(const StackTrace& other);
-
- private:
-  uptr n_;
-  uptr *s_;
-  const uptr c_;
-
-  StackTrace(const StackTrace&);
-  void operator = (const StackTrace&);
-};
-
 struct SyncVar {
-  explicit SyncVar(uptr addr, u64 uid);
+  SyncVar();
 
   static const int kInvalidTid = -1;
 
+  uptr addr;  // overwritten by DenseSlabAlloc freelist
   Mutex mtx;
-  uptr addr;
-  const u64 uid;  // Globally unique id.
+  u64 uid;  // Globally unique id.
   u32 creation_stack_id;
   int owner_tid;  // Set only by exclusive owners.
   u64 last_lock;
@@ -64,12 +39,15 @@ struct SyncVar {
   bool is_recursive;
   bool is_broken;
   bool is_linker_init;
-  SyncVar *next;  // In SyncTab hashtable.
+  u32 next;  // in MetaMap
   DDMutex dd;
   SyncClock read_clock;  // Used for rw mutexes only.
   // The clock is placed last, so that it is situated on a different cache line
   // with the mtx. This reduces contention for hot sync objects.
   SyncClock clock;
+
+  void Init(ThreadState *thr, uptr pc, uptr addr, u64 uid);
+  void Reset();
 
   u64 GetId() const {
     // 47 lsb is addr, then 14 bits is low part of uid, then 3 zero bits.
@@ -85,40 +63,39 @@ struct SyncVar {
   }
 };
 
-class SyncTab {
+/* MetaMap allows to map arbitrary user pointers onto various descriptors.
+   Currently it maps pointers to heap block descriptors and sync var descs.
+   It uses 1/2 direct shadow, see tsan_platform.h.
+*/
+class MetaMap {
  public:
-  SyncTab();
-  ~SyncTab();
+  MetaMap();
+
+  void AllocBlock(ThreadState *thr, uptr pc, uptr p, uptr sz);
+  uptr FreeBlock(ThreadState *thr, uptr pc, uptr p);
+  void FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz);
+  MBlock* GetBlock(uptr p);
 
   SyncVar* GetOrCreateAndLock(ThreadState *thr, uptr pc,
                               uptr addr, bool write_lock);
-  SyncVar* GetIfExistsAndLock(uptr addr, bool write_lock);
+  SyncVar* GetIfExistsAndLock(uptr addr);
 
-  // If the SyncVar does not exist, returns 0.
-  SyncVar* GetAndRemove(ThreadState *thr, uptr pc, uptr addr);
+  void MoveMemory(uptr src, uptr dst, uptr sz);
 
-  SyncVar* Create(ThreadState *thr, uptr pc, uptr addr);
+  void OnThreadIdle(ThreadState *thr);
 
  private:
-  struct Part {
-    Mutex mtx;
-    SyncVar *val;
-    char pad[kCacheLineSize - sizeof(Mutex) - sizeof(SyncVar*)];  // NOLINT
-    Part();
-  };
-
-  // FIXME: Implement something more sane.
-  static const int kPartCount = 1009;
-  Part tab_[kPartCount];
+  static const u32 kFlagMask  = 3 << 30;
+  static const u32 kFlagBlock = 1 << 30;
+  static const u32 kFlagSync  = 2 << 30;
+  typedef DenseSlabAlloc<MBlock, 1<<16, 1<<12> BlockAlloc;
+  typedef DenseSlabAlloc<SyncVar, 1<<16, 1<<10> SyncAlloc;
+  BlockAlloc block_alloc_;
+  SyncAlloc sync_alloc_;
   atomic_uint64_t uid_gen_;
 
-  int PartIdx(uptr addr);
-
-  SyncVar* GetAndLock(ThreadState *thr, uptr pc,
-                      uptr addr, bool write_lock, bool create);
-
-  SyncTab(const SyncTab&);  // Not implemented.
-  void operator = (const SyncTab&);  // Not implemented.
+  SyncVar* GetAndLock(ThreadState *thr, uptr pc, uptr addr, bool write_lock,
+                      bool create);
 };
 
 }  // namespace __tsan

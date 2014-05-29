@@ -179,7 +179,8 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
   mop->write = s.IsWrite();
   mop->atomic = s.IsAtomic();
   mop->stack = SymbolizeStack(*stack);
-  mop->stack->suppressable = true;
+  if (mop->stack)
+    mop->stack->suppressable = true;
   for (uptr i = 0; i < mset->Size(); i++) {
     MutexSet::Desc d = mset->Get(i);
     u64 mid = this->AddMutex(d.id);
@@ -279,7 +280,7 @@ u64 ScopedReport::AddMutex(u64 id) {
   u64 uid = 0;
   u64 mid = id;
   uptr addr = SyncVar::SplitId(id, &uid);
-  SyncVar *s = ctx->synctab.GetIfExistsAndLock(addr, false);
+  SyncVar *s = ctx->metamap.GetIfExistsAndLock(addr);
   // Check that the mutex is still alive.
   // Another mutex can be created at the same address,
   // so check uid as well.
@@ -290,7 +291,7 @@ u64 ScopedReport::AddMutex(u64 id) {
     AddDeadMutex(id);
   }
   if (s)
-    s->mtx.ReadUnlock();
+    s->mtx.Unlock();
   return mid;
 }
 
@@ -330,21 +331,26 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
     return;
   }
   MBlock *b = 0;
-  if (allocator()->PointerIsMine((void*)addr)
-      && (b = user_mblock(0, (void*)addr))) {
-    ThreadContext *tctx = FindThreadByTidLocked(b->Tid());
+  Allocator *a = allocator();
+  if (a->PointerIsMine((void*)addr)) {
+    void *block_begin = a->GetBlockBegin((void*)addr);
+    if (block_begin)
+      b = ctx->metamap.GetBlock((uptr)block_begin);
+  }
+  if (b != 0) {
+    ThreadContext *tctx = FindThreadByTidLocked(b->tid);
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
     rep_->locs.PushBack(loc);
     loc->type = ReportLocationHeap;
     loc->addr = (uptr)allocator()->GetBlockBegin((void*)addr);
-    loc->size = b->Size();
-    loc->tid = tctx ? tctx->tid : b->Tid();
+    loc->size = b->siz;
+    loc->tid = tctx ? tctx->tid : b->tid;
     loc->name = 0;
     loc->file = 0;
     loc->line = 0;
     loc->stack = 0;
-    loc->stack = SymbolizeStackId(b->StackId());
+    loc->stack = SymbolizeStackId(b->stk);
     if (tctx)
       AddThread(tctx);
     return;
@@ -500,7 +506,7 @@ static void AddRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
   }
 }
 
-bool OutputReport(Context *ctx, const ScopedReport &srep) {
+bool OutputReport(ThreadState *thr, const ScopedReport &srep) {
   atomic_store(&ctx->last_symbolize_time_ns, NanoTime(), memory_order_relaxed);
   const ReportDesc *rep = srep.GetReport();
   Suppression *supp = 0;
@@ -517,8 +523,14 @@ bool OutputReport(Context *ctx, const ScopedReport &srep) {
     FiredSuppression s = {srep.GetReport()->typ, suppress_pc, supp};
     ctx->fired_suppressions.push_back(s);
   }
-  if (OnReport(rep, suppress_pc != 0))
-    return false;
+  {
+    bool old_is_freeing = thr->is_freeing;
+    thr->is_freeing = false;
+    bool suppressed = OnReport(rep, suppress_pc != 0);
+    thr->is_freeing = old_is_freeing;
+    if (suppressed)
+      return false;
+  }
   PrintReport(rep);
   ctx->nreported++;
   if (flags()->halt_on_error)
@@ -616,6 +628,8 @@ static bool RaceBetweenAtomicAndFree(ThreadState *thr) {
 }
 
 void ReportRace(ThreadState *thr) {
+  CheckNoLocks(thr);
+
   // Symbolizer makes lots of intercepted calls. If we try to process them,
   // at best it will cause deadlocks on internal mutexes.
   ScopedIgnoreInterceptors ignore;
@@ -700,7 +714,7 @@ void ReportRace(ThreadState *thr) {
   }
 #endif
 
-  if (!OutputReport(ctx, rep))
+  if (!OutputReport(thr, rep))
     return;
 
   AddRacyStacks(thr, traces, addr_min, addr_max);

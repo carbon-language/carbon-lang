@@ -44,83 +44,13 @@
 #include "tsan_platform.h"
 #include "tsan_mutexset.h"
 #include "tsan_ignoreset.h"
+#include "tsan_stack_trace.h"
 
 #if SANITIZER_WORDSIZE != 64
 # error "ThreadSanitizer is supported only on 64-bit platforms"
 #endif
 
 namespace __tsan {
-
-// Descriptor of user's memory block.
-struct MBlock {
-  /*
-  u64 mtx : 1;  // must be first
-  u64 lst : 44;
-  u64 stk : 31;  // on word boundary
-  u64 tid : kTidBits;
-  u64 siz : 128 - 1 - 31 - 44 - kTidBits;  // 39
-  */
-  u64 raw[2];
-
-  void Init(uptr siz, u32 tid, u32 stk) {
-    raw[0] = raw[1] = 0;
-    raw[1] |= (u64)siz << ((1 + 44 + 31 + kTidBits) % 64);
-    raw[1] |= (u64)tid << ((1 + 44 + 31) % 64);
-    raw[0] |= (u64)stk << (1 + 44);
-    raw[1] |= (u64)stk >> (64 - 44 - 1);
-    DCHECK_EQ(Size(), siz);
-    DCHECK_EQ(Tid(), tid);
-    DCHECK_EQ(StackId(), stk);
-  }
-
-  u32 Tid() const {
-    return GetLsb(raw[1] >> ((1 + 44 + 31) % 64), kTidBits);
-  }
-
-  uptr Size() const {
-    return raw[1] >> ((1 + 31 + 44 + kTidBits) % 64);
-  }
-
-  u32 StackId() const {
-    return (raw[0] >> (1 + 44)) | GetLsb(raw[1] << (64 - 44 - 1), 31);
-  }
-
-  SyncVar *ListHead() const {
-    return (SyncVar*)(GetLsb(raw[0] >> 1, 44) << 3);
-  }
-
-  void ListPush(SyncVar *v) {
-    SyncVar *lst = ListHead();
-    v->next = lst;
-    u64 x = (u64)v ^ (u64)lst;
-    x = (x >> 3) << 1;
-    raw[0] ^= x;
-    DCHECK_EQ(ListHead(), v);
-  }
-
-  SyncVar *ListPop() {
-    SyncVar *lst = ListHead();
-    SyncVar *nxt = lst->next;
-    lst->next = 0;
-    u64 x = (u64)lst ^ (u64)nxt;
-    x = (x >> 3) << 1;
-    raw[0] ^= x;
-    DCHECK_EQ(ListHead(), nxt);
-    return lst;
-  }
-
-  void ListReset() {
-    SyncVar *lst = ListHead();
-    u64 x = (u64)lst;
-    x = (x >> 3) << 1;
-    raw[0] ^= x;
-    DCHECK_EQ(ListHead(), 0);
-  }
-
-  void Lock();
-  void Unlock();
-  typedef GenericScopedLock<MBlock> ScopedLock;
-};
 
 #ifndef TSAN_GO
 #if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
@@ -131,7 +61,7 @@ const uptr kAllocatorSpace = 0x7d0000000000ULL;
 const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
 
 struct MapUnmapCallback;
-typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, sizeof(MBlock),
+typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0,
     DefaultSizeClassMap, MapUnmapCallback> PrimaryAllocator;
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MapUnmapCallback> SecondaryAllocator;
@@ -457,6 +387,9 @@ struct ThreadState {
   bool in_signal_handler;
   SignalContext *signal_ctx;
 
+  DenseSlabAllocCache block_cache;
+  DenseSlabAllocCache sync_cache;
+
 #ifndef TSAN_GO
   u32 last_sleep_stack_id;
   ThreadClock last_sleep_clock;
@@ -530,7 +463,7 @@ struct Context {
   bool initialized;
   bool after_multithreaded_fork;
 
-  SyncTab synctab;
+  MetaMap metamap;
 
   Mutex report_mtx;
   int nreported;
@@ -628,7 +561,7 @@ void ForkParentAfter(ThreadState *thr, uptr pc);
 void ForkChildAfter(ThreadState *thr, uptr pc);
 
 void ReportRace(ThreadState *thr);
-bool OutputReport(Context *ctx, const ScopedReport &srep);
+bool OutputReport(ThreadState *thr, const ScopedReport &srep);
 bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace);
@@ -657,9 +590,8 @@ void PrintCurrentStackSlow();  // uses libunwind
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);
 
-SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
-                     bool write_lock, bool create);
-SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr);
+void OnUserAlloc(ThreadState *thr, uptr pc, uptr p, uptr sz, bool write);
+void OnUserFree(ThreadState *thr, uptr pc, uptr p, bool write);
 
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic);

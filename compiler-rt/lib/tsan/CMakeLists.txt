@@ -38,6 +38,7 @@ set(TSAN_SOURCES
   rtl/tsan_rtl_mutex.cc
   rtl/tsan_rtl_report.cc
   rtl/tsan_rtl_thread.cc
+  rtl/tsan_stack_trace.cc
   rtl/tsan_stat.cc
   rtl/tsan_suppressions.cc
   rtl/tsan_symbolize.cc
@@ -54,6 +55,7 @@ endif()
 set(TSAN_HEADERS
   rtl/tsan_clock.h
   rtl/tsan_defs.h
+  rtl/tsan_dense_alloc.h
   rtl/tsan_fd.h
   rtl/tsan_flags.h
   rtl/tsan_ignoreset.h
@@ -67,6 +69,7 @@ set(TSAN_HEADERS
   rtl/tsan_platform.h
   rtl/tsan_report.h
   rtl/tsan_rtl.h
+  rtl/tsan_stack_trace.h
   rtl/tsan_stat.h
   rtl/tsan_suppressions.h
   rtl/tsan_symbolize.h

@@ -191,6 +191,7 @@ ScopedInterceptor::~ScopedInterceptor() {
   if (!thr_->ignore_interceptors) {
     ProcessPendingSignals(thr_);
     FuncExit(thr_);
+    CheckNoLocks(thr_);
   }
 }
 
@@ -1705,7 +1706,7 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
     ScopedReport rep(ReportTypeErrnoInSignal);
     if (!IsFiredSuppression(ctx, rep, stack)) {
       rep.AddStack(&stack, true);
-      OutputReport(ctx, rep);
+      OutputReport(thr, rep);
     }
   }
   errno = saved_errno;

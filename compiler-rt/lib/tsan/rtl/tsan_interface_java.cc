@@ -22,54 +22,17 @@
 
 using namespace __tsan;  // NOLINT
 
+const jptr kHeapAlignment = 8;
+
 namespace __tsan {
-
-const uptr kHeapShadow = 0x300000000000ull;
-const uptr kHeapAlignment = 8;
-
-struct BlockDesc {
-  bool begin;
-  Mutex mtx;
-  SyncVar *head;
-
-  BlockDesc()
-      : mtx(MutexTypeJavaMBlock, StatMtxJavaMBlock)
-      , head() {
-    CHECK_EQ(begin, false);
-    begin = true;
-  }
-
-  ~BlockDesc() {
-    CHECK_EQ(begin, true);
-    begin = false;
-    ThreadState *thr = cur_thread();
-    SyncVar *s = head;
-    while (s) {
-      SyncVar *s1 = s->next;
-      StatInc(thr, StatSyncDestroyed);
-      s->mtx.Lock();
-      s->mtx.Unlock();
-      thr->mset.Remove(s->GetId());
-      DestroyAndFree(s);
-      s = s1;
-    }
-  }
-};
 
 struct JavaContext {
   const uptr heap_begin;
   const uptr heap_size;
-  BlockDesc *heap_shadow;
 
   JavaContext(jptr heap_begin, jptr heap_size)
       : heap_begin(heap_begin)
       , heap_size(heap_size) {
-    uptr size = heap_size / kHeapAlignment * sizeof(BlockDesc);
-    heap_shadow = (BlockDesc*)MmapFixedNoReserve(kHeapShadow, size);
-    if ((uptr)heap_shadow != kHeapShadow) {
-      Printf("ThreadSanitizer: failed to mmap Java heap shadow\n");
-      Die();
-    }
   }
 };
 
@@ -92,63 +55,6 @@ class ScopedJavaFunc {
 
 static u64 jctx_buf[sizeof(JavaContext) / sizeof(u64) + 1];
 static JavaContext *jctx;
-
-static BlockDesc *getblock(uptr addr) {
-  uptr i = (addr - jctx->heap_begin) / kHeapAlignment;
-  return &jctx->heap_shadow[i];
-}
-
-static uptr USED getmem(BlockDesc *b) {
-  uptr i = b - jctx->heap_shadow;
-  uptr p = jctx->heap_begin + i * kHeapAlignment;
-  CHECK_GE(p, jctx->heap_begin);
-  CHECK_LT(p, jctx->heap_begin + jctx->heap_size);
-  return p;
-}
-
-static BlockDesc *getblockbegin(uptr addr) {
-  for (BlockDesc *b = getblock(addr);; b--) {
-    CHECK_GE(b, jctx->heap_shadow);
-    if (b->begin)
-      return b;
-  }
-  return 0;
-}
-
-SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
-                     bool write_lock, bool create) {
-  if (jctx == 0 || addr < jctx->heap_begin
-      || addr >= jctx->heap_begin + jctx->heap_size)
-    return 0;
-  BlockDesc *b = getblockbegin(addr);
-  DPrintf("#%d: GetJavaSync %p->%p\n", thr->tid, addr, b);
-  Lock l(&b->mtx);
-  SyncVar *s = b->head;
-  for (; s; s = s->next) {
-    if (s->addr == addr) {
-      DPrintf("#%d: found existing sync for %p\n", thr->tid, addr);
-      break;
-    }
-  }
-  if (s == 0 && create) {
-    DPrintf("#%d: creating new sync for %p\n", thr->tid, addr);
-    s = ctx->synctab.Create(thr, pc, addr);
-    s->next = b->head;
-    b->head = s;
-  }
-  if (s) {
-    if (write_lock)
-      s->mtx.Lock();
-    else
-      s->mtx.ReadLock();
-  }
-  return s;
-}
-
-SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr) {
-  // We do not destroy Java mutexes other than in __tsan_java_free().
-  return 0;
-}
 
 }  // namespace __tsan
 
@@ -192,8 +98,7 @@ void __tsan_java_alloc(jptr ptr, jptr size) {
   CHECK_GE(ptr, jctx->heap_begin);
   CHECK_LE(ptr + size, jctx->heap_begin + jctx->heap_size);
 
-  BlockDesc *b = getblock(ptr);
-  new(b) BlockDesc();
+  OnUserAlloc(thr, pc, ptr, size, false);
 }
 
 void __tsan_java_free(jptr ptr, jptr size) {
@@ -206,12 +111,7 @@ void __tsan_java_free(jptr ptr, jptr size) {
   CHECK_GE(ptr, jctx->heap_begin);
   CHECK_LE(ptr + size, jctx->heap_begin + jctx->heap_size);
 
-  BlockDesc *beg = getblock(ptr);
-  BlockDesc *end = getblock(ptr + size);
-  for (BlockDesc *b = beg; b != end; b++) {
-    if (b->begin)
-      b->~BlockDesc();
-  }
+  ctx->metamap.FreeRange(thr, pc, ptr, size);
 }
 
 void __tsan_java_move(jptr src, jptr dst, jptr size) {
@@ -230,35 +130,15 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
 
   // Assuming it's not running concurrently with threads that do
   // memory accesses and mutex operations (stop-the-world phase).
-  {  // NOLINT
-    BlockDesc *s = getblock(src);
-    BlockDesc *d = getblock(dst);
-    BlockDesc *send = getblock(src + size);
-    for (; s != send; s++, d++) {
-      CHECK_EQ(d->begin, false);
-      if (s->begin) {
-        DPrintf("#%d: moving block %p->%p\n", thr->tid, getmem(s), getmem(d));
-        new(d) BlockDesc;
-        d->head = s->head;
-        for (SyncVar *sync = d->head; sync; sync = sync->next) {
-          uptr newaddr = sync->addr - src + dst;
-          DPrintf("#%d: moving sync %p->%p\n", thr->tid, sync->addr, newaddr);
-          sync->addr = newaddr;
-        }
-        s->head = 0;
-        s->~BlockDesc();
-      }
-    }
-  }
+  ctx->metamap.MoveMemory(src, dst, size);
 
-  {  // NOLINT
-    u64 *s = (u64*)MemToShadow(src);
-    u64 *d = (u64*)MemToShadow(dst);
-    u64 *send = (u64*)MemToShadow(src + size);
-    for (; s != send; s++, d++) {
-      *d = *s;
-      *s = 0;
-    }
+  // Move shadow.
+  u64 *s = (u64*)MemToShadow(src);
+  u64 *d = (u64*)MemToShadow(dst);
+  u64 *send = (u64*)MemToShadow(src + size);
+  for (; s != send; s++, d++) {
+    *d = *s;
+    *s = 0;
   }
 }
 
