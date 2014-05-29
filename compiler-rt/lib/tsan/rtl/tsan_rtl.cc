@@ -131,16 +131,21 @@ static void BackgroundThread(void *arg) {
 
   fd_t mprof_fd = kInvalidFd;
   if (flags()->profile_memory && flags()->profile_memory[0]) {
-    // FIXME(dvyukov): support stdout/stderr
-    InternalScopedBuffer<char> filename(4096);
-    internal_snprintf(filename.data(), filename.size(), "%s.%d",
-        flags()->profile_memory, (int)internal_getpid());
-    uptr openrv = OpenFile(filename.data(), true);
-    if (internal_iserror(openrv)) {
-      Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
-          &filename[0]);
+    if (internal_strcmp(flags()->profile_memory, "stdout") == 0) {
+      mprof_fd = 1;
+    } else if (internal_strcmp(flags()->profile_memory, "stderr") == 0) {
+      mprof_fd = 2;
     } else {
-      mprof_fd = openrv;
+      InternalScopedBuffer<char> filename(4096);
+      internal_snprintf(filename.data(), filename.size(), "%s.%d",
+          flags()->profile_memory, (int)internal_getpid());
+      uptr openrv = OpenFile(filename.data(), true);
+      if (internal_iserror(openrv)) {
+        Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
+            &filename[0]);
+      } else {
+        mprof_fd = openrv;
+      }
     }
   }
 
