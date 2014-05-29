@@ -698,14 +698,12 @@ The following options can be used to set or enable LLVM specific options:
 
   Controls which targets will be built and linked into llc. The default value
   for ``target_options`` is "all" which builds and links all available targets.
-  The value "host-only" can be specified to build only a native compiler (no
-  cross-compiler targets available). The "native" target is selected as the
-  target of the build host. You can also specify a comma separated list of
-  target names that you want available in llc. The target names use all lower
-  case. The current set of targets is:
+  The "host" target is selected as the target of the build host. You can also
+  specify a comma separated list of target names that you want available in llc.
+  The target names use all lower case. The current set of targets is:
 
-    ``arm, cpp, hexagon, mips, mipsel, msp430, powerpc, ptx, sparc, spu,
-    systemz, x86, x86_64, xcore``.
+    ``aarch64, arm, arm64, cpp, hexagon, mips, mipsel, mips64, mips64el, msp430,
+    powerpc, nvptx, r600, sparc, systemz, x86, x86_64, xcore``.
 
 ``--enable-doxygen``
 
