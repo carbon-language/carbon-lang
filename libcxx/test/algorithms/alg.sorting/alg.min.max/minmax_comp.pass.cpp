@@ -51,7 +51,7 @@ int main()
 #if _LIBCPP_STD_VER > 11
     {
 //  Note that you can't take a reference to a local var, since 
-//  it's address is not a compile-time constant.
+//  its address is not a compile-time constant.
     constexpr static int x = 1;
     constexpr static int y = 0;
     constexpr auto p1 = std::minmax(x, y, std::greater<>());
