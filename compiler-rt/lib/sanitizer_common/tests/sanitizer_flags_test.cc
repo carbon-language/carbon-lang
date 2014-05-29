@@ -49,7 +49,7 @@ TEST(SanitizerCommon, BooleanFlags) {
 
 TEST(SanitizerCommon, IntFlags) {
   TestFlag(-11, 0, -11);
-  TestFlag(-11, "flag_name", 0);
+  TestFlag(-11, "flag_name", -11);
   TestFlag(-11, "--flag_name=", 0);
   TestFlag(-11, "--flag_name=42", 42);
   TestFlag(-11, "--flag_name=-42", -42);
@@ -57,7 +57,7 @@ TEST(SanitizerCommon, IntFlags) {
 
 TEST(SanitizerCommon, StrFlags) {
   TestStrFlag("zzz", 0, "zzz");
-  TestStrFlag("zzz", "flag_name", "");
+  TestStrFlag("zzz", "flag_name", "zzz");
   TestStrFlag("zzz", "--flag_name=", "");
   TestStrFlag("", "--flag_name=abc", "abc");
   TestStrFlag("", "--flag_name='abc zxc'", "abc zxc");
