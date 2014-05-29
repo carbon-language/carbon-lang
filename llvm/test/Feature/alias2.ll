@@ -6,17 +6,17 @@
 @v2 = global [1 x i32] zeroinitializer
 ; CHECK: @v2 = global [1 x i32] zeroinitializer
 
-@v3 = alias i16, i32* @v1
-; CHECK: @v3 = alias i16, i32* @v1
+@a1 = alias i16, i32* @v1
+; CHECK: @a1 = alias i16, i32* @v1
 
-@v4 = alias i32, [1 x i32]* @v2
-; CHECK: @v4 = alias i32, [1 x i32]* @v2
+@a2 = alias i32, [1 x i32]* @v2
+; CHECK: @a2 = alias i32, [1 x i32]* @v2
 
-@v5 = alias addrspace(2) i32, i32* @v1
-; CHECK: @v5 = alias addrspace(2) i32, i32* @v1
+@a3 = alias addrspace(2) i32, i32* @v1
+; CHECK: @a3 = alias addrspace(2) i32, i32* @v1
 
-@v6 = alias i16, i32* @v1
-; CHECK: @v6 = alias i16, i32* @v1
+@a4 = alias i16, i32* @v1
+; CHECK: @a4 = alias i16, i32* @v1
 
-@v7 = thread_local(localdynamic) alias i32* @v1
-; CHECK: @v7 = thread_local(localdynamic) alias i32* @v1
+@a5 = thread_local(localdynamic) alias i32* @v1
+; CHECK: @a5 = thread_local(localdynamic) alias i32* @v1
