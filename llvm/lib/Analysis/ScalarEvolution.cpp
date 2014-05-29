@@ -7370,7 +7370,7 @@ void ScalarEvolution::findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
                                           SmallVectorImpl<const SCEV *> &Sizes,
                                           const SCEV *ElementSize) const {
 
-  if (Terms.size() < 1)
+  if (Terms.size() < 1 || !ElementSize)
     return;
 
   // Early return when Terms do not contain parameters: we do not delinearize
