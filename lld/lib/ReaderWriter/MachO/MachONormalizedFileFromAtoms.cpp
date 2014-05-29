@@ -197,6 +197,9 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   case DefinedAtom::typeUTF16String:
      return new (_allocator) SectionInfo("__TEXT", "__ustring",
                             S_REGULAR);
+  case DefinedAtom::typeCFString:
+     return new (_allocator) SectionInfo("__DATA", "__cfstring",
+                            S_REGULAR);
   default:
     llvm_unreachable("TO DO: add support for more sections");
     break;

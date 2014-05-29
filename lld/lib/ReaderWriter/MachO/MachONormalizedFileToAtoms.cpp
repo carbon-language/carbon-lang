@@ -87,8 +87,12 @@ static void processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
   const Section &section = normalizedFile.sections[sym.sect - 1];
   uint64_t offset = sym.value - section.address;
   uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
-  if (section.type == llvm::MachO::S_ZEROFILL){
+  if (section.type == llvm::MachO::S_ZEROFILL) {
     file.addZeroFillDefinedAtom(sym.name, atomScope(sym.scope), size, copyRefs);
+  }
+  else if ((section.type == llvm::MachO::S_CSTRING_LITERALS) &&
+          (sym.name[0] == 'L')) {
+    // Ignore L labels on cstrings.
   } else {
     ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
     DefinedAtom::Merge m = DefinedAtom::mergeNo;
@@ -111,37 +115,72 @@ static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
   }
 }
 
+// A __TEXT/__ustring section contains UTF16 strings.  Atom boundaries are
+// determined by finding the terminating 0x0000 in each string.
+static error_code processUTF16Section(MachOFile &file, const Section &section,
+                                      bool is64, bool copyRefs) {
+  if ((section.content.size() % 4) != 0)
+    return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                 + "/" + section.sectionName
+                                 + " has a size that is not even");
+  unsigned offset = 0;
+  for (size_t i = 0, e = section.content.size(); i != e; i +=2) {
+    if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
+      unsigned size = i - offset + 2;
+      ArrayRef<uint8_t> utf16Content = section.content.slice(offset, size);
+      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                          DefinedAtom::typeUTF16String,
+                          DefinedAtom::mergeByContent, utf16Content,
+                          copyRefs);
+      offset = i + 2;
+    }
+  }
+  if (offset != section.content.size()) {
+    return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                   + "/" + section.sectionName
+                                   + " is supposed to contain 0x0000 "
+                                   "terminated UTF16 strings, but the "
+                                   "last string in the section is not zero "
+                                   "terminated.");
+  }
+  return error_code::success();
+}
+
+// A __DATA/__cfstring section contain NS/CFString objects. Atom boundaries
+// are determined because each object is known to be 4 pointers in size.
+static error_code processCFStringSection(MachOFile &file,const Section &section,
+                                      bool is64, bool copyRefs) {
+  const uint32_t cfsObjSize = (is64 ? 32 : 16);
+  if ((section.content.size() % cfsObjSize) != 0) {
+    return make_dynamic_error_code(Twine("Section __DATA/__cfstring has a size "
+                                   "(" + Twine(section.content.size())
+                                   + ") that is not a multiple of "
+                                   + Twine(cfsObjSize)));
+  }
+  unsigned offset = 0;
+  for (size_t i = 0, e = section.content.size(); i != e; i += cfsObjSize) {
+    ArrayRef<uint8_t> byteContent = section.content.slice(offset, cfsObjSize);
+    file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
+                        DefinedAtom::typeCFString,
+                        DefinedAtom::mergeByContent, byteContent, copyRefs);
+    offset += cfsObjSize;
+  }
+  return error_code::success();
+}
+
 static error_code processSection(MachOFile &file, const Section &section,
                                  bool is64, bool copyRefs) {
   unsigned offset = 0;
   const unsigned pointerSize = (is64 ? 8 : 4);
   switch (section.type) {
   case llvm::MachO::S_REGULAR:
-    if (section.segmentName.equals("__TEXT") && 
+    if (section.segmentName.equals("__TEXT") &&
         section.sectionName.equals("__ustring")) {
-      if ((section.content.size() % 4) != 0)
-        return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName 
-                                     + " has a size that is not even"); 
-      for (size_t i = 0, e = section.content.size(); i != e; i +=2) {
-        if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
-          unsigned size = i - offset + 2;
-          ArrayRef<uint8_t> utf16Content = section.content.slice(offset, size);
-          file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                              DefinedAtom::typeUTF16String,
-                              DefinedAtom::mergeByContent, utf16Content,
-                              copyRefs);
-          offset = i + 2;
-        }
-      }
-      if (offset != section.content.size()) {
-        return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                       + "/" + section.sectionName 
-                                       + " is supposed to contain 0x0000 "
-                                       "terminated UTF16 strings, but the "
-                                       "last string in the section is not zero "
-                                       "terminated."); 
-      }
+      return processUTF16Section(file, section, is64, copyRefs);
+    }
+    else if (section.segmentName.equals("__DATA") &&
+             section.sectionName.equals("__cfstring")) {
+      return processCFStringSection(file, section, is64, copyRefs);
     }
     break;
   case llvm::MachO::S_COALESCED:
