@@ -725,7 +725,7 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
   if (N == 1) {
     til::BasicBlock *BB = *It ? lookupBlock(*It) : nullptr;
     // TODO: set index
-    unsigned Idx = BB->findPredecessorIndex(CurrentBB);
+    unsigned Idx = BB ? BB->findPredecessorIndex(CurrentBB) : 0;
     til::SExpr *Tm = new (Arena) til::Goto(BB, Idx);
     CurrentBB->setTerminator(Tm);
   }

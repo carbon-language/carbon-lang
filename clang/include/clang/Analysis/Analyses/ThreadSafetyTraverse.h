@@ -843,7 +843,7 @@ protected:
     if (E->parent())
       SS << " BB_" << E->parent()->blockID();
     newline(SS);
-    for (auto A : E->arguments()) {
+    for (auto *A : E->arguments()) {
       SS << "let ";
       self()->printVariable(A, SS, true);
       SS << " = ";
@@ -851,7 +851,7 @@ protected:
       SS << ";";
       newline(SS);
     }
-    for (auto I : E->instructions()) {
+    for (auto *I : E->instructions()) {
       if (I->definition()->opcode() != COP_Store) {
         SS << "let ";
         self()->printVariable(I, SS, true);

@@ -123,9 +123,9 @@ public:
   // Reserve space for at least N more items.
   void reserveCheck(size_t N, MemRegionRef A) {
     if (Capacity == 0)
-      reserve(InitialCapacity, A);
+      reserve(u_max(InitialCapacity, N), A);
     else if (Size + N < Capacity)
-      reserve(Capacity*2, A);
+      reserve(u_max(Size + N, Capacity * 2), A);
   }
 
   typedef T *iterator;
@@ -172,7 +172,11 @@ public:
   }
 
 private:
-  static const unsigned InitialCapacity = 4;
+  // std::max is annoying here, because it requires a reference,
+  // thus forcing InitialCapacity to be initialized outside the .h file.
+  size_t u_max(size_t i, size_t j) { return (i < j) ? j : i; }
+
+  static const size_t InitialCapacity = 4;
 
   SimpleArray(const SimpleArray<T> &A) LLVM_DELETED_FUNCTION;
 

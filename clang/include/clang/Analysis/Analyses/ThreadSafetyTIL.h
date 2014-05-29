@@ -52,6 +52,7 @@
 #include "ThreadSafetyUtil.h"
 
 #include <stdint.h>
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <utility>
@@ -598,6 +599,8 @@ public:
 };
 
 
+template <class T> class LiteralT;
+
 // Base class for literal values.
 class Literal : public SExpr {
 public:
@@ -614,6 +617,13 @@ public:
 
   ValueType valueType() const { return ValType; }
 
+  template<class T> const LiteralT<T>& as() const {
+    return *static_cast<const LiteralT<T>*>(this);
+  }
+  template<class T> LiteralT<T>& as() {
+    return *static_cast<LiteralT<T>*>(this);
+  }
+
   template <class V> typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx);
 
   template <class C> typename C::CType compare(Literal* E, C& Cmp) {
@@ -621,7 +631,7 @@ public:
     return Cmp.comparePointers(Cexpr, E->Cexpr);
   }
 
-protected:
+private:
   const ValueType ValType;
   const clang::Expr *Cexpr;
 };
@@ -642,6 +652,7 @@ private:
 };
 
 
+
 template <class V>
 typename V::R_SExpr Literal::traverse(V &Vs, typename V::R_Ctx Ctx) {
   if (Cexpr)
@@ -651,29 +662,29 @@ typename V::R_SExpr Literal::traverse(V &Vs, typename V::R_Ctx Ctx) {
   case ValueType::BT_Void:
     break;
   case ValueType::BT_Bool:
-    return Vs.reduceLiteralT(*static_cast<LiteralT<bool>*>(this));
+    return Vs.reduceLiteralT(as<bool>());
   case ValueType::BT_Int: {
     switch (ValType.Size) {
     case ValueType::ST_8:
       if (ValType.Signed)
-        return Vs.reduceLiteralT(*static_cast<LiteralT<int8_t>*>(this));
+        return Vs.reduceLiteralT(as<int8_t>());
       else
-        return Vs.reduceLiteralT(*static_cast<LiteralT<uint8_t>*>(this));
+        return Vs.reduceLiteralT(as<uint8_t>());
     case ValueType::ST_16:
       if (ValType.Signed)
-        return Vs.reduceLiteralT(*static_cast<LiteralT<int16_t>*>(this));
+        return Vs.reduceLiteralT(as<int16_t>());
       else
-        return Vs.reduceLiteralT(*static_cast<LiteralT<uint16_t>*>(this));
+        return Vs.reduceLiteralT(as<uint16_t>());
     case ValueType::ST_32:
       if (ValType.Signed)
-        return Vs.reduceLiteralT(*static_cast<LiteralT<int32_t>*>(this));
+        return Vs.reduceLiteralT(as<int32_t>());
       else
-        return Vs.reduceLiteralT(*static_cast<LiteralT<uint32_t>*>(this));
+        return Vs.reduceLiteralT(as<uint32_t>());
     case ValueType::ST_64:
       if (ValType.Signed)
-        return Vs.reduceLiteralT(*static_cast<LiteralT<int64_t>*>(this));
+        return Vs.reduceLiteralT(as<int64_t>());
       else
-        return Vs.reduceLiteralT(*static_cast<LiteralT<uint64_t>*>(this));
+        return Vs.reduceLiteralT(as<uint64_t>());
     default:
       break;
     }
@@ -681,17 +692,17 @@ typename V::R_SExpr Literal::traverse(V &Vs, typename V::R_Ctx Ctx) {
   case ValueType::BT_Float: {
     switch (ValType.Size) {
     case ValueType::ST_32:
-      return Vs.reduceLiteralT(*static_cast<LiteralT<float>*>(this));
+      return Vs.reduceLiteralT(as<float>());
     case ValueType::ST_64:
-      return Vs.reduceLiteralT(*static_cast<LiteralT<double>*>(this));
+      return Vs.reduceLiteralT(as<double>());
     default:
       break;
     }
   }
   case ValueType::BT_String:
-    return Vs.reduceLiteralT(*static_cast<LiteralT<StringRef>*>(this));
+    return Vs.reduceLiteralT(as<StringRef>());
   case ValueType::BT_Pointer:
-    return Vs.reduceLiteralT(*static_cast<LiteralT<void*>*>(this));
+    return Vs.reduceLiteralT(as<void*>());
   case ValueType::BT_ValueRef:
     break;
   }
@@ -1458,13 +1469,9 @@ public:
   void reservePredecessors(unsigned NumPreds);
 
   // Return the index of BB, or Predecessors.size if BB is not a predecessor.
-  unsigned findPredecessorIndex(BasicBlock *BB) {
-    unsigned I = 0;
-    for (BasicBlock *B : Predecessors) {
-      if (B == BB) return I;
-      ++I;
-    }
-    return Predecessors.size();
+  unsigned findPredecessorIndex(const BasicBlock *BB) const {
+    auto I = std::find(Predecessors.cbegin(), Predecessors.cend(), BB);
+    return std::distance(Predecessors.cbegin(), I);
   }
 
   // Set id numbers for variables.
