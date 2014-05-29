@@ -158,3 +158,36 @@ define <8 x float> @constant_blendvps_avx(<8 x float> %xyzw, <8 x float> %abcd) 
 
 declare <8 x float> @llvm.x86.avx.blendv.ps.256(<8 x float>, <8 x float>, <8 x float>)
 declare <4 x double> @llvm.x86.avx.blendv.pd.256(<4 x double>, <4 x double>, <4 x double>)
+
+;; 4 tests for shufflevectors that optimize to blend + immediate
+; CHECK-LABEL: @blend_shufflevector_4xfloat
+define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) {
+; CHECK: vblendps
+; CHECK: ret
+  %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+  ret <4 x float> %1
+}
+
+; CHECK-LABEL: @blend_shufflevector_8xfloat
+define <8 x float> @blend_shufflevector_8xfloat(<8 x float> %a, <8 x float> %b) {
+; CHECK: vblendps
+; CHECK: ret
+  %1 = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 11, i32 12, i32 13, i32 6, i32 15>
+  ret <8 x float> %1
+}
+
+; CHECK-LABEL: @blend_shufflevector_4xdouble
+define <4 x double> @blend_shufflevector_4xdouble(<4 x double> %a, <4 x double> %b) {
+; CHECK: vblendpd
+; CHECK: ret
+  %1 = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 3>
+  ret <4 x double> %1
+}
+
+; CHECK-LABEL: @blend_shufflevector_4xi64
+define <4 x i64> @blend_shufflevector_4xi64(<4 x i64> %a, <4 x i64> %b) {
+; CHECK: vblendpd
+; CHECK: ret
+  %1 = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 4, i32 1, i32 6, i32 7>
+  ret <4 x i64> %1
+}
