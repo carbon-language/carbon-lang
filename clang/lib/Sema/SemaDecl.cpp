@@ -4907,10 +4907,15 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
   // A redeclaration is not allowed to drop a dllimport attribute, the only
   // exception being inline function definitions.
   // NB: MSVC converts such a declaration to dllexport.
-  bool IsInline =
-      isa<FunctionDecl>(NewDecl) && cast<FunctionDecl>(NewDecl)->isInlined();
+  bool IsInline = false, IsStaticDataMember = false;
+  if (const auto *VD = dyn_cast<VarDecl>(NewDecl))
+    // Ignore static data because out-of-line definitions are diagnosed
+    // separately.
+    IsStaticDataMember = VD->isStaticDataMember();
+  else if (const auto *FD = dyn_cast<FunctionDecl>(NewDecl))
+    IsInline = FD->isInlined();
 
-  if (OldImportAttr && !HasNewAttr && !IsInline) {
+  if (OldImportAttr && !HasNewAttr && !IsInline && !IsStaticDataMember) {
     S.Diag(NewDecl->getLocation(),
            diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
       << NewDecl << OldImportAttr;
@@ -9051,6 +9056,17 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     return;
 
   checkAttributesAfterMerging(*this, *VD);
+
+  // Imported static data members cannot be defined out-of-line.
+  if (const DLLImportAttr *IA = VD->getAttr<DLLImportAttr>()) {
+    if (VD->isStaticDataMember() && VD->isOutOfLine() &&
+        VD->isThisDeclarationADefinition()) {
+      Diag(VD->getLocation(),
+           diag::err_attribute_dllimport_static_field_definition);
+      Diag(IA->getLocation(), diag::note_attribute);
+      VD->setInvalidDecl();
+    }
+  }
 
   if (UsedAttr *Attr = VD->getAttr<UsedAttr>()) {
     if (!Attr->isInherited() && !VD->isThisDeclarationADefinition()) {
