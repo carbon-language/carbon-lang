@@ -215,8 +215,12 @@ else()
     test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
     test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "ARM")
-    test_target_arch(arm "")
+  endif()
+
+  # Build ARM libraries if we are configured to test on ARM
+  if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
+    test_target_arch(arm "-march=armv7-a")
+    test_target_arch(aarch64 "-march=armv8-a")
   endif()
 endif()
 
@@ -347,14 +351,14 @@ endif()
 # Architectures supported by Sanitizer runtimes. Specific sanitizers may
 # support only subset of these (e.g. TSan works on x86_64 only).
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm)
-filter_available_targets(ASAN_SUPPORTED_ARCH x86_64 i386 powerpc64)
+  x86_64 i386 powerpc64 arm aarch64)
+filter_available_targets(ASAN_SUPPORTED_ARCH x86_64 i386 powerpc64 arm)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm)
+filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm aarch64)
 filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386)
+filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 arm aarch64)
 
 add_subdirectory(include)
 
