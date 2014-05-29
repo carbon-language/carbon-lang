@@ -1240,14 +1240,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (Op1->getOperand(J)->getType() != Op2->getOperand(J)->getType())
           return nullptr;
 
-        if (J > 1) {
-          if (CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
-            CurTy = CT->getTypeAtIndex(Op1->getOperand(J));
-          } else {
-            CurTy = nullptr;
-          }
-        }
-
         if (Op1->getOperand(J) != Op2->getOperand(J)) {
           if (DI == -1) {
             // We have not seen any differences yet in the GEPs feeding the
@@ -1268,6 +1260,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // directly supports and would need to be broken into several
             // simpler instructions anyway.
             return nullptr;
+          }
+        }
+
+        // Sink down a layer of the type for the next iteration.
+        if (J > 0) {
+          if (CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
+            CurTy = CT->getTypeAtIndex(Op1->getOperand(J));
+          } else {
+            CurTy = nullptr;
           }
         }
       }
