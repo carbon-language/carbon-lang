@@ -76,7 +76,6 @@ struct Section {
   ELF_SHF Flags;
   llvm::yaml::Hex64 Address;
   StringRef Link;
-  StringRef Info;
   llvm::yaml::Hex64 AddressAlign;
   Section(SectionKind Kind) : Kind(Kind) {}
   virtual ~Section();
@@ -96,6 +95,7 @@ struct Relocation {
   StringRef Symbol;
 };
 struct RelocationSection : Section {
+  StringRef Info;
   std::vector<Relocation> Relocations;
   RelocationSection() : Section(SectionKind::Relocation) {}
   static bool classof(const Section *S) {

@@ -28,6 +28,8 @@ class ELFDumper {
 
   error_code dumpSymbol(Elf_Sym_Iter Sym, ELFYAML::Symbol &S);
   error_code dumpCommonSection(const Elf_Shdr *Shdr, ELFYAML::Section &S);
+  error_code dumpCommonRelocationSection(const Elf_Shdr *Shdr,
+                                         ELFYAML::RelocationSection &S);
   template <class RelT>
   error_code dumpRelocation(const Elf_Shdr *Shdr, const RelT *Rel,
                             ELFYAML::Relocation &R);
@@ -84,6 +86,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
       Y->Sections.push_back(std::unique_ptr<ELFYAML::Section>(S.get()));
       break;
     }
+    // FIXME: Support SHT_GROUP section format.
     default: {
       ErrorOr<ELFYAML::RawContentSection *> S = dumpContentSection(&Sec);
       if (error_code EC = S.getError())
@@ -190,14 +193,24 @@ error_code ELFDumper<ELFT>::dumpCommonSection(const Elf_Shdr *Shdr,
       S.Link = NameOrErr.get();
     }
   }
-  if (Shdr->sh_info != ELF::SHN_UNDEF) {
-    if (const Elf_Shdr *InfoSection = Obj.getSection(Shdr->sh_info)) {
-      NameOrErr = Obj.getSectionName(InfoSection);
-      if (error_code EC = NameOrErr.getError())
-        return EC;
-      S.Info = NameOrErr.get();
-    }
+
+  return obj2yaml_error::success;
+}
+
+template <class ELFT>
+error_code
+ELFDumper<ELFT>::dumpCommonRelocationSection(const Elf_Shdr *Shdr,
+                                             ELFYAML::RelocationSection &S) {
+  if (error_code EC = dumpCommonSection(Shdr, S))
+    return EC;
+
+  if (const Elf_Shdr *InfoSection = Obj.getSection(Shdr->sh_info)) {
+    ErrorOr<StringRef> NameOrErr = Obj.getSectionName(InfoSection);
+    if (error_code EC = NameOrErr.getError())
+      return EC;
+    S.Info = NameOrErr.get();
   }
+
   return obj2yaml_error::success;
 }
 
@@ -207,7 +220,7 @@ ELFDumper<ELFT>::dumpRelSection(const Elf_Shdr *Shdr) {
   assert(Shdr->sh_type == ELF::SHT_REL && "Section type is not SHT_REL");
   auto S = make_unique<ELFYAML::RelocationSection>();
 
-  if (error_code EC = dumpCommonSection(Shdr, *S))
+  if (error_code EC = dumpCommonRelocationSection(Shdr, *S))
     return EC;
 
   for (auto RI = Obj.begin_rel(Shdr), RE = Obj.end_rel(Shdr); RI != RE;
@@ -227,7 +240,7 @@ ELFDumper<ELFT>::dumpRelaSection(const Elf_Shdr *Shdr) {
   assert(Shdr->sh_type == ELF::SHT_RELA && "Section type is not SHT_RELA");
   auto S = make_unique<ELFYAML::RelocationSection>();
 
-  if (error_code EC = dumpCommonSection(Shdr, *S))
+  if (error_code EC = dumpCommonRelocationSection(Shdr, *S))
     return EC;
 
   for (auto RI = Obj.begin_rela(Shdr), RE = Obj.end_rela(Shdr); RI != RE;

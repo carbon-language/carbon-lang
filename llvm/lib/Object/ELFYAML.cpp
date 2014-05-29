@@ -664,7 +664,6 @@ static void commonSectionMapping(IO &IO, ELFYAML::Section &Section) {
   IO.mapOptional("Flags", Section.Flags, ELFYAML::ELF_SHF(0));
   IO.mapOptional("Address", Section.Address, Hex64(0));
   IO.mapOptional("Link", Section.Link, StringRef());
-  IO.mapOptional("Info", Section.Info, StringRef());
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
 }
 
@@ -676,6 +675,7 @@ static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
 
 static void sectionMapping(IO &IO, ELFYAML::RelocationSection &Section) {
   commonSectionMapping(IO, Section);
+  IO.mapOptional("Info", Section.Info, StringRef());
   IO.mapOptional("Relocations", Section.Relocations);
 }
 

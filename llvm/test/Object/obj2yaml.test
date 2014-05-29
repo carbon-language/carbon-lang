@@ -201,8 +201,8 @@ ELF-MIPSEL-NEXT:     Content:         0000023C00004224E8FFBD271400BFAF1000B0AF21
 ELF-MIPSEL-NEXT:   - Name:            .rel.text
 ELF-MIPSEL-NEXT:     Type:            SHT_REL
 ELF-MIPSEL-NEXT:     Link:            .symtab
-ELF-MIPSEL-NEXT:     Info:            .text
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
+ELF-MIPSEL-NEXT:     Info:            .text
 ELF-MIPSEL-NEXT:     Relocations:
 ELF-MIPSEL-NEXT:       - Offset:          0
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
@@ -300,8 +300,8 @@ ELF-MIPS64EL-NEXT:     Content:         '00000000000000000000000000000000'
 ELF-MIPS64EL-NEXT:   - Name:            .rela.data
 ELF-MIPS64EL-NEXT:     Type:            SHT_RELA
 ELF-MIPS64EL-NEXT:     Link:            .symtab
-ELF-MIPS64EL-NEXT:     Info:            .data
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000008
+ELF-MIPS64EL-NEXT:     Info:            .data
 ELF-MIPS64EL-NEXT:     Relocations:
 ELF-MIPS64EL-NEXT:       - Offset:          0
 ELF-MIPS64EL-NEXT:         Symbol:          zed
@@ -370,8 +370,8 @@ ELF-X86-64-NEXT:   - Name:            .rela.text
 ELF-X86-64-NEXT:     Type:            SHT_RELA
 ELF-X86-64-NEXT:     Address:         0x0000000000000038
 ELF-X86-64-NEXT:     Link:            .symtab
-ELF-X86-64-NEXT:     Info:            .text
 ELF-X86-64-NEXT:     AddressAlign:    0x0000000000000008
+ELF-X86-64-NEXT:     Info:            .text
 ELF-X86-64-NEXT:     Relocations:
 ELF-X86-64-NEXT:       - Offset:          0x000000000000000D
 ELF-X86-64-NEXT:         Symbol:          .rodata.str1.1
