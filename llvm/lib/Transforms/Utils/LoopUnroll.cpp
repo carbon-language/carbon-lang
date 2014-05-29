@@ -487,6 +487,15 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     if (OuterL) {
       ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
       simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE);
+
+      // LCSSA must be performed on the outermost affected loop. The unrolled
+      // loop's last loop latch is guaranteed to be in the outermost loop after
+      // deleteLoopFromQueue updates LoopInfo.
+      Loop *LatchLoop = LI->getLoopFor(Latches.back());
+      if (!OuterL->contains(LatchLoop))
+        while (OuterL->getParentLoop() != LatchLoop)
+          OuterL = OuterL->getParentLoop();
+
       formLCSSARecursively(*OuterL, *DT, SE);
     }
   }
