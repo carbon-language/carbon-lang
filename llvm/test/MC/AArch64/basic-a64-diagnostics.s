@@ -395,6 +395,7 @@
         cmn w11, w12, lsr #-1
         cmn w11, w12, lsr #32
         cmn w19, wzr, asr #-1
+        cmn wsp, w0
         cmn wzr, wzr, asr #32
         cmn x9, x10, lsl #-1
         cmn x9, x10, lsl #64
@@ -417,6 +418,9 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn w19, wzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
+// CHECK-ERROR-NEXT: error: too few operands for instruction
+// CHECK-ERROR-NEXT:         cmn wsp, w0
+// CHECK-ERROR-NEXT:         ^
 // CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         cmn wzr, wzr, asr #32
 // CHECK-ERROR-NEXT:                       ^

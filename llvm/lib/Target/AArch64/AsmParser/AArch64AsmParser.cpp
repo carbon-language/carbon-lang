@@ -3794,6 +3794,8 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidLabel:
   case Match_MSR:
   case Match_MRS: {
+    if (ErrorInfo >= Operands.size())
+      return Error(IDLoc, "too few operands for instruction");
     // Any time we get here, there's nothing fancy to do. Just get the
     // operand SMLoc and display the diagnostic.
     SMLoc ErrorLoc = ((AArch64Operand *)Operands[ErrorInfo])->getStartLoc();
