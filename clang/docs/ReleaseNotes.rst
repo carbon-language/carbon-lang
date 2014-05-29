@@ -92,6 +92,11 @@ Deprecated flags `-faddress-sanitizer`, `-fthread-sanitizer`,
 `-fcatch-undefined-behavior` and `-fbounds-checking` were removed in favor of
 `-fsanitize=` family of flags.
 
+It is now possible to get optimization reports from the major transformation
+passes via three new flags: `-Rpass`, `-Rpass-missed` and `-Rpass-analysis`.
+These flags take a POSIX regular expression which indicates the name
+of the pass (or passes) that should emit optimization remarks.
+
 C Language Changes in Clang
 ---------------------------
 

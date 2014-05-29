@@ -531,6 +531,72 @@ control the crash diagnostics.
 The -fno-crash-diagnostics flag can be helpful for speeding the process
 of generating a delta reduced test case.
 
+Options to Emit Optimization Reports
+------------------------------------
+
+Optimization reports trace, at a high-level, all the major decisions
+done by compiler transformations. For instance, when the inliner
+decides to inline function ``foo()`` into ``bar()``, or the loop unroller
+decides to unroll a loop N times, or the vectorizer decides to
+vectorize a loop body.
+
+Clang offers a family of flags which the optimizers can use to emit
+a diagnostic in three cases:
+
+1. When the pass makes a transformation (:option:`-Rpass`).
+
+2. When the pass fails to make a transformation (:option:`-Rpass-missed`).
+
+3. When the pass determines whether or not to make a transformation
+   (:option:`-Rpass-analysis`).
+
+NOTE: Although the discussion below focuses on :option:`-Rpass`, the exact
+same options apply to :option:`-Rpass-missed` and :option:`-Rpass-analysis`.
+
+Since there are dozens of passes inside the compiler, each of these flags
+take a regular expression that identifies the name of the pass which should
+emit the associated diagnostic. For example, to get a report from the inliner,
+compile the code with:
+
+.. code-block:: console
+
+   $ clang -O2 -Rpass=inline code.cc -o code
+   code.cc:4:25: remark: foo inlined into bar [-Rpass=inline]
+   int bar(int j) { return foo(j, j - 2); }
+                           ^
+
+Note that remarks from the inliner are identified with `[-Rpass=inline]`.
+To request a report from every optimization pass, you should use
+:option:`-Rpass=.*` (in fact, you can use any valid POSIX regular
+expression). However, do not expect a report from every transformation
+made by the compiler. Optimization remarks do not really make sense
+outside of the major transformations (e.g., inlining, vectorization,
+loop optimizations) and not every optimization pass supports this
+feature.
+
+Current limitations
+^^^^^^^^^^^^^^^^^^^
+
+1. For :option:`-Rpass` to provide source location information, you
+   need to enable debug line tables and column information. That is,
+   you need to add :option:`-gmlt` (or any of the debug-generating
+   flags) and :option:`-gcolumn-info`. If you omit these options,
+   every remark will be accompanied by a note stating that line number
+   information is missing.
+
+2. Optimization remarks that refer to function names will display the
+   mangled name of the function. Since these remarks are emitted by the
+   back end of the compiler, it does not know anything about the input
+   language, nor its mangling rules.
+
+3. Some source locations are not displayed correctly. The front end has
+   a more detailed source location tracking than the locations included
+   in the debug info (e.g., the front end can locate code inside macro
+   expansions). However, the locations used by :option:`-Rpass` are
+   translated from debug annotations. That translation can be lossy,
+   which results in some remarks having no location information.
+
+
 Language and Target-Independent Features
 ========================================
 
