@@ -897,6 +897,14 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-aarch64-strict-align");
   }
+
+  // Setting -mno-global-merge disables the codegen global merge pass. Setting
+  // -mglobal-merge has no effect as the pass is enabled by default.
+  if (Arg *A = Args.getLastArg(options::OPT_mglobal_merge,
+                               options::OPT_mno_global_merge)) {
+    if (A->getOption().matches(options::OPT_mno_global_merge))
+      CmdArgs.push_back("-mno-global-merge");
+  }
 }
 
 // Get CPU and ABI names. They are not independent
