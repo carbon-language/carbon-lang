@@ -451,9 +451,6 @@ void f0() {
   tmp_i = __builtin_ia32_movmskps256(tmp_V8f);
   __builtin_ia32_vzeroall();
   __builtin_ia32_vzeroupper();
-  tmp_V4f = __builtin_ia32_vbroadcastss(tmp_fCp);
-  tmp_V4d = __builtin_ia32_vbroadcastsd256(tmp_dCp);
-  tmp_V8f = __builtin_ia32_vbroadcastss256(tmp_fCp);
   tmp_V4d = __builtin_ia32_vbroadcastf128_pd256(tmp_V2dCp);
   tmp_V8f = __builtin_ia32_vbroadcastf128_ps256(tmp_V4fCp);
   __builtin_ia32_storeupd256(tmp_dp, tmp_V4d);

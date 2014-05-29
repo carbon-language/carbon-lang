@@ -737,19 +737,22 @@ _mm256_zeroupper(void)
 static __inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_broadcast_ss(float const *__a)
 {
-  return (__m128)__builtin_ia32_vbroadcastss(__a);
+  float __f = *__a;
+  return (__m128)(__v4sf){ __f, __f, __f, __f };
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_broadcast_sd(double const *__a)
 {
-  return (__m256d)__builtin_ia32_vbroadcastsd256(__a);
+  double __d = *__a;
+  return (__m256d)(__v4df){ __d, __d, __d, __d };
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_broadcast_ss(float const *__a)
 {
-  return (__m256)__builtin_ia32_vbroadcastss256(__a);
+  float __f = *__a;
+  return (__m256)(__v8sf){ __f, __f, __f, __f, __f, __f, __f, __f };
 }
 
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
