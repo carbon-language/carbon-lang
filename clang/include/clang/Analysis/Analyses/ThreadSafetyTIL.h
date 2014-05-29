@@ -364,6 +364,7 @@ public:
   // Let-variable, function parameter, or self-variable
   enum VariableKind {
     VK_Let,
+    VK_LetBB,
     VK_Fun,
     VK_SFun
   };
@@ -388,6 +389,7 @@ public:
   unsigned getID() const { return Id; }
   unsigned getBlockID() const { return BlockID; }
 
+  void setName(StringRef S) { Name = S; }
   void setID(unsigned Bid, unsigned I) {
     BlockID = static_cast<unsigned short>(Bid);
     Id = static_cast<unsigned short>(I);
@@ -1432,11 +1434,13 @@ public:
 
   // Add a new argument.  V must define a phi-node.
   void addArgument(Variable *V) {
+    V->setKind(Variable::VK_LetBB);
     Args.reserveCheck(1, Arena);
     Args.push_back(V);
   }
   // Add a new instruction.
   void addInstruction(Variable *V) {
+    V->setKind(Variable::VK_LetBB);
     Instrs.reserveCheck(1, Arena);
     Instrs.push_back(V);
   }

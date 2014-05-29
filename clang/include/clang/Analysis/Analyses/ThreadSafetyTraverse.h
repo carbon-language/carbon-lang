@@ -475,9 +475,10 @@ template <typename Self, typename StreamType>
 class PrettyPrinter {
 private:
   bool Verbose;  // Print out additional information
+  bool Cleanup;  // Omit redundant decls.
 
 public:
-  PrettyPrinter(bool V = false) : Verbose(V) { }
+  PrettyPrinter(bool V = false, bool C = true) : Verbose(V), Cleanup(C) { }
 
   static void print(SExpr *E, StreamType &SS) {
     Self printer;
@@ -489,17 +490,6 @@ protected:
 
   void newline(StreamType &SS) {
     SS << "\n";
-  }
-
-  void printBlockLabel(StreamType & SS, BasicBlock *BB, unsigned index) {
-    if (!BB) {
-      SS << "BB_null";
-      return;
-    }
-    SS << "BB_";
-    SS << BB->blockID();
-    SS << ":";
-    SS << index;
   }
 
   // TODO: further distinguish between binary operations.
@@ -552,6 +542,17 @@ protected:
       case COP_Let:        return Prec_Decl;
     }
     return Prec_MAX;
+  }
+
+  void printBlockLabel(StreamType & SS, BasicBlock *BB, unsigned index) {
+    if (!BB) {
+      SS << "BB_null";
+      return;
+    }
+    SS << "BB_";
+    SS << BB->blockID();
+    SS << ":";
+    SS << index;
   }
 
   void printSExpr(SExpr *E, StreamType &SS, unsigned P) {
@@ -683,20 +684,17 @@ protected:
   }
 
   void printVariable(Variable *V, StreamType &SS, bool IsVarDecl = false) {
-    SExpr* E = nullptr;
-    if (!IsVarDecl) {
-      E = getCanonicalVal(V);
+    if (!IsVarDecl && Cleanup) {
+      SExpr* E = getCanonicalVal(V);
       if (E != V) {
         printSExpr(E, SS, Prec_Atom);
-        if (Verbose) {
-          SS << " /*";
-          SS << V->name() << V->getBlockID() << "_" << V->getID();
-          SS << "*/";
-        }
         return;
       }
     }
-    SS << V->name() << V->getBlockID() << "_" << V->getID();
+    if (V->kind() == Variable::VK_LetBB)
+      SS << V->name() << V->getBlockID() << "_" << V->getID();
+    else
+      SS << V->name() << V->getID();
   }
 
   void printFunction(Function *E, StreamType &SS, unsigned sugared = 0) {
