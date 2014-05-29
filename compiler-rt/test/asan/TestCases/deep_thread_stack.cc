@@ -2,6 +2,7 @@
 // RUN: %clangxx_asan -O1 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -pthread -o %t && not %run %t 2>&1 | FileCheck %s
+// REQUIRES: stable-runtime
 
 #include <pthread.h>
 

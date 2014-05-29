@@ -1,5 +1,6 @@
 // RUN: %clangxx_asan -O0 %s -pthread -o %t && %run %t
 // RUN: %clangxx_asan -O2 %s -pthread -o %t && %run %t
+// REQUIRES: stable-runtime
 
 #include <assert.h>
 #include <pthread.h>
