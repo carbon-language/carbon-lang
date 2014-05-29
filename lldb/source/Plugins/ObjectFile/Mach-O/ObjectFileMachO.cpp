@@ -647,18 +647,15 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
             {
                 ModuleSpec spec;
                 spec.GetFileSpec() = file;
-                spec.GetArchitecture().SetArchitecture(eArchTypeMachO,
-                                                       header.cputype,
-                                                       header.cpusubtype);
-                if (header.filetype == MH_PRELOAD) // 0x5u
+                spec.SetObjectOffset(file_offset);
+                
+                if (GetArchitecture (header, data, data_offset, spec.GetArchitecture()))
                 {
-                    // Set OS to "unknown" - this is a standalone binary with no dyld et al
-                    spec.GetArchitecture().GetTriple().setOS (llvm::Triple::UnknownOS);
-                }
-                if (spec.GetArchitecture().IsValid())
-                {
-                    GetUUID (header, data, data_offset, spec.GetUUID());
-                    specs.Append(spec);
+                    if (spec.GetArchitecture().IsValid())
+                    {
+                        GetUUID (header, data, data_offset, spec.GetUUID());
+                        specs.Append(spec);
+                    }
                 }
             }
         }
@@ -854,36 +851,40 @@ ObjectFileMachO::ParseHeader ()
         {
             m_data.GetU32(&offset, &m_header.cputype, 6);
 
-            ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
-
-            // Check if the module has a required architecture
-            const ArchSpec &module_arch = module_sp->GetArchitecture();
-            if (module_arch.IsValid() && !module_arch.IsCompatibleMatch(mach_arch))
-                return false;
-
-            if (SetModulesArchitecture (mach_arch))
+            
+            ArchSpec mach_arch;
+            
+            if (GetArchitecture (mach_arch))
             {
-                const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
-                if (m_data.GetByteSize() < header_and_lc_size)
+                // Check if the module has a required architecture
+                const ArchSpec &module_arch = module_sp->GetArchitecture();
+                if (module_arch.IsValid() && !module_arch.IsCompatibleMatch(mach_arch))
+                    return false;
+
+                if (SetModulesArchitecture (mach_arch))
                 {
-                    DataBufferSP data_sp;
-                    ProcessSP process_sp (m_process_wp.lock());
-                    if (process_sp)
+                    const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
+                    if (m_data.GetByteSize() < header_and_lc_size)
                     {
-                        data_sp = ReadMemory (process_sp, m_memory_addr, header_and_lc_size);
+                        DataBufferSP data_sp;
+                        ProcessSP process_sp (m_process_wp.lock());
+                        if (process_sp)
+                        {
+                            data_sp = ReadMemory (process_sp, m_memory_addr, header_and_lc_size);
+                        }
+                        else
+                        {
+                            // Read in all only the load command data from the file on disk
+                            data_sp = m_file.ReadFileContents(m_file_offset, header_and_lc_size);
+                            if (data_sp->GetByteSize() != header_and_lc_size)
+                                return false;
+                        }
+                        if (data_sp)
+                            m_data.SetData (data_sp);
                     }
-                    else
-                    {
-                        // Read in all only the load command data from the file on disk
-                        data_sp = m_file.ReadFileContents(m_file_offset, header_and_lc_size);
-                        if (data_sp->GetByteSize() != header_and_lc_size)
-                            return false;
-                    }
-                    if (data_sp)
-                        m_data.SetData (data_sp);
                 }
+                return true;
             }
-            return true;
         }
         else
         {
@@ -2182,7 +2183,8 @@ ObjectFileMachO::ParseSymtab ()
 
             // Next we need to determine the correct path for the dyld shared cache.
 
-            ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+            ArchSpec header_arch;
+            GetArchitecture(header_arch);
             char dsc_path[PATH_MAX];
 
             snprintf(dsc_path, sizeof(dsc_path), "%s%s%s",
@@ -4098,7 +4100,8 @@ ObjectFileMachO::Dump (Stream *s)
         else
             s->PutCString("ObjectFileMachO32");
 
-        ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+        ArchSpec header_arch;
+        GetArchitecture(header_arch);
 
         *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
 
@@ -4153,6 +4156,61 @@ ObjectFileMachO::GetUUID (const llvm::MachO::mach_header &header,
         offset = cmd_offset + load_cmd.cmdsize;
     }
     return false;
+}
+
+
+bool
+ObjectFileMachO::GetArchitecture (const llvm::MachO::mach_header &header,
+                                  const lldb_private::DataExtractor &data,
+                                  lldb::offset_t lc_offset,
+                                  ArchSpec &arch)
+{
+    arch.SetArchitecture (eArchTypeMachO, header.cputype, header.cpusubtype);
+
+    if (arch.IsValid())
+    {
+        llvm::Triple &triple = arch.GetTriple();
+        if (header.filetype == MH_PRELOAD)
+        {
+            // Set OS to "unknown" - this is a standalone binary with no dyld et al
+            triple.setOS(llvm::Triple::UnknownOS);
+            return true;
+        }
+        else
+        {
+            struct load_command load_cmd;
+            
+            lldb::offset_t offset = lc_offset;
+            for (uint32_t i=0; i<header.ncmds; ++i)
+            {
+                const lldb::offset_t cmd_offset = offset;
+                if (data.GetU32(&offset, &load_cmd, 2) == NULL)
+                    break;
+                
+                switch (load_cmd.cmd)
+                {
+                    case LC_VERSION_MIN_IPHONEOS:
+                        triple.setOS (llvm::Triple::IOS);
+                        return true;
+                        
+                    case LC_VERSION_MIN_MACOSX:
+                        triple.setOS (llvm::Triple::MacOSX);
+                        return true;
+                        
+                    default:
+                        break;
+                }
+
+                offset = cmd_offset + load_cmd.cmdsize;
+            }
+            
+            if (header.cputype == CPU_TYPE_ARM || header.cputype == CPU_TYPE_ARM64)
+                triple.setOS (llvm::Triple::IOS);
+            else
+                triple.setOS (llvm::Triple::MacOSX);
+        }
+    }
+    return arch.IsValid();
 }
 
 bool
@@ -4627,16 +4685,7 @@ ObjectFileMachO::GetArchitecture (ArchSpec &arch)
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        arch.SetArchitecture (eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
-
-        // Files with type MH_PRELOAD are currently used in cases where the image
-        // debugs at the addresses in the file itself. Below we set the OS to
-        // unknown to make sure we use the DynamicLoaderStatic()...
-        if (m_header.filetype == MH_PRELOAD)
-        {
-            arch.GetTriple().setOS (llvm::Triple::UnknownOS);
-        }
-        return true;
+        return GetArchitecture (m_header, m_data, MachHeaderSizeFromMagic(m_header.magic), arch);
     }
     return false;
 }

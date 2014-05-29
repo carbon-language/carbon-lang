@@ -182,6 +182,12 @@ protected:
              lldb::offset_t lc_offset, // Offset to the first load command
              lldb_private::UUID& uuid);
     
+    static bool
+    GetArchitecture (const llvm::MachO::mach_header &header,
+                     const lldb_private::DataExtractor &data,
+                     lldb::offset_t lc_offset,
+                     lldb_private::ArchSpec &arch);
+
     // Intended for same-host arm device debugging where lldb needs to
     // detect libraries in the shared cache and augment the nlist entries
     // with an on-disk dyld_shared_cache file.  The process will record

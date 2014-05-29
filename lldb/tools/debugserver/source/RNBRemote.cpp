@@ -21,6 +21,7 @@
 #include <sys/sysctl.h>
 
 #include "DNB.h"
+#include "DNBDataRef.h"
 #include "DNBLog.h"
 #include "DNBThreadResumeActions.h"
 #include "RNBContext.h"
@@ -4047,7 +4048,60 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
         rep << "ostype:ios;";
     else
-        rep << "ostype:macosx;";
+    {
+        bool is_ios_simulator = false;
+        if (cputype == CPU_TYPE_X86 || cputype == CPU_TYPE_X86_64)
+        {
+            // Check for iOS simulator binaries by getting the process argument
+            // and environment and checking for SIMULATOR_UDID in the environment
+            int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, (int)pid };
+            
+            uint8_t arg_data[8192];
+            size_t arg_data_size = sizeof(arg_data);
+            if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
+            {
+                DNBDataRef data (arg_data, arg_data_size, false);
+                DNBDataRef::offset_t offset = 0;
+                uint32_t argc = data.Get32 (&offset);
+                const char *cstr;
+                
+                cstr = data.GetCStr (&offset);
+                if (cstr)
+                {
+                    // Skip NULLs
+                    while (1)
+                    {
+                        const char *p = data.PeekCStr(offset);
+                        if ((p == NULL) || (*p != '\0'))
+                            break;
+                        ++offset;
+                    }
+                    // Now skip all arguments
+                    for (int i=0; i<static_cast<int>(argc); ++i)
+                    {
+                        cstr = data.GetCStr(&offset);
+                    }
+                    
+                    // Now iterate across all environment variables
+                    while ((cstr = data.GetCStr(&offset)))
+                    {
+                        if (strncmp(cstr, "SIMULATOR_UDID=", strlen("SIMULATOR_UDID=")) == 0)
+                        {
+                            is_ios_simulator = true;
+                            break;
+                        }
+                        if (cstr[0] == '\0')
+                            break;
+                        
+                    }
+                }
+            }
+        }
+        if (is_ios_simulator)
+            rep << "ostype:ios;";
+        else
+            rep << "ostype:macosx;";
+    }
 
     rep << "vendor:apple;";
 

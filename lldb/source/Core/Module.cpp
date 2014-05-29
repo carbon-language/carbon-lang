@@ -187,16 +187,46 @@ Module::Module (const ModuleSpec &module_spec) :
     ModuleSpec matching_module_spec;
     if (modules_specs.FindMatchingModuleSpec(module_spec, matching_module_spec) == 0)
         return;
-    m_mod_time = module_spec.GetFileSpec().GetModificationTime();
-    if (module_spec.GetArchitecture().IsValid())
-        m_arch = module_spec.GetArchitecture();
-    else
+    
+    if (module_spec.GetFileSpec())
+        m_mod_time = module_spec.GetFileSpec().GetModificationTime();
+    else if (matching_module_spec.GetFileSpec())
+        m_mod_time = matching_module_spec.GetFileSpec().GetModificationTime();
+    
+    // Copy the architecture from the actual spec if we got one back, else use the one that was specified
+    if (matching_module_spec.GetArchitecture().IsValid())
         m_arch = matching_module_spec.GetArchitecture();
-    m_mod_time = module_spec.GetFileSpec().GetModificationTime();
-    m_file = module_spec.GetFileSpec();
-    m_platform_file = module_spec.GetPlatformFileSpec();
-    m_symfile_spec = module_spec.GetSymbolFileSpec();
-    m_object_name = module_spec.GetObjectName();
+    else if (module_spec.GetArchitecture().IsValid())
+        m_arch = module_spec.GetArchitecture();
+    
+    // Copy the file spec over and use the specfied one (if there was one) so we
+    // don't use a path that might have gotten resolved a path in 'matching_module_spec'
+    if (module_spec.GetFileSpec())
+        m_file = module_spec.GetFileSpec();
+    else if (matching_module_spec.GetFileSpec())
+        m_file = matching_module_spec.GetFileSpec();
+
+    // Copy the platform file spec over
+    if (module_spec.GetPlatformFileSpec())
+        m_platform_file = module_spec.GetPlatformFileSpec();
+    else if (matching_module_spec.GetPlatformFileSpec())
+        m_platform_file = matching_module_spec.GetPlatformFileSpec();
+    
+    // Copy the symbol file spec over
+    if (module_spec.GetSymbolFileSpec())
+        m_symfile_spec = module_spec.GetSymbolFileSpec();
+    else if (matching_module_spec.GetSymbolFileSpec())
+        m_symfile_spec = matching_module_spec.GetSymbolFileSpec();
+    
+    // Copy the object name over
+    if (matching_module_spec.GetObjectName())
+        m_object_name = matching_module_spec.GetObjectName();
+    else
+        m_object_name = module_spec.GetObjectName();
+    
+    // Always trust the object offset (file offset) and object modification
+    // time (for mod time in a BSD static archive) of from the matching
+    // module specification
     m_object_offset = matching_module_spec.GetObjectOffset();
     m_object_mod_time = matching_module_spec.GetObjectModificationTime();
     
