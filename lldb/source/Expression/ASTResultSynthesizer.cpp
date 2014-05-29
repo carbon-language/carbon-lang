@@ -59,6 +59,9 @@ ASTResultSynthesizer::Initialize(ASTContext &Context)
 
 void
 ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     if (NamedDecl *named_decl = dyn_cast<NamedDecl>(D))
     {
         if (log && log->GetVerbose())
