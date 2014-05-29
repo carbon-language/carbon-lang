@@ -197,8 +197,8 @@ Module::Module (const ModuleSpec &module_spec) :
     m_platform_file = module_spec.GetPlatformFileSpec();
     m_symfile_spec = module_spec.GetSymbolFileSpec();
     m_object_name = module_spec.GetObjectName();
-    m_object_offset = module_spec.GetObjectOffset();
-    m_object_mod_time = module_spec.GetObjectModificationTime();
+    m_object_offset = matching_module_spec.GetObjectOffset();
+    m_object_mod_time = matching_module_spec.GetObjectModificationTime();
     
 }
 
