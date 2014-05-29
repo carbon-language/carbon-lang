@@ -70,7 +70,7 @@ static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
 
 static const char *const kAsanModuleCtorName = "asan.module_ctor";
 static const char *const kAsanModuleDtorName = "asan.module_dtor";
-static const int         kAsanCtorAndCtorPriority = 1;
+static const int         kAsanCtorAndDtorPriority = 1;
 static const char *const kAsanReportErrorTemplate = "__asan_report_";
 static const char *const kAsanReportLoadN = "__asan_report_load_n";
 static const char *const kAsanReportStoreN = "__asan_report_store_n";
@@ -1138,7 +1138,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   IRB_Dtor.CreateCall2(AsanUnregisterGlobals,
                        IRB.CreatePointerCast(AllGlobals, IntptrTy),
                        ConstantInt::get(IntptrTy, n));
-  appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndCtorPriority);
+  appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndDtorPriority);
 
   DEBUG(dbgs() << M);
   return true;
@@ -1227,7 +1227,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
 
   Mapping = getShadowMapping(M, LongSize);
 
-  appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndCtorPriority);
+  appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
   return true;
 }
 
