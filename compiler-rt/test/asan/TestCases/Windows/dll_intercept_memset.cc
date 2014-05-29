@@ -7,21 +7,21 @@
 
 extern "C" __declspec(dllexport)
 int test_function() {
-  char buff1[6] = "Hello", buff2[5];
+  char buff[5] = "aaaa";
 
-  memcpy(buff2, buff1, 5);
-  if (buff1[2] != buff2[2])
+  memset(buff, 'b', 5);
+  if (buff[2] != 'b')
     return 2;
   printf("Initial test OK\n");
   fflush(0);
 // CHECK: Initial test OK
 
-  memcpy(buff2, buff1, 6);
+  memset(buff, 'c', 6);
 // CHECK: AddressSanitizer: stack-buffer-overflow on address [[ADDR:0x[0-9a-f]+]]
 // CHECK: WRITE of size 6 at [[ADDR]] thread T0
-// CHECK-NEXT:  __asan_memcpy
-// CHECK-NEXT:  test_function {{.*}}dll_intercept_memcpy.cc:[[@LINE-4]]
+// CHECK-NEXT:  __asan_memset
+// CHECK-NEXT:  test_function {{.*}}dll_intercept_memset.cc:[[@LINE-4]]
 // CHECK: Address [[ADDR]] is located in stack of thread T0 at offset {{.*}} in frame
-// CHECK-NEXT:  test_function {{.*}}dll_intercept_memcpy.cc
-// CHECK: 'buff2' <== Memory access at offset {{.*}} overflows this variable
+// CHECK-NEXT:  test_function {{.*}}dll_intercept_memset.cc
+// CHECK: 'buff' <== Memory access at offset {{.*}} overflows this variable
 }
