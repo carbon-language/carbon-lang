@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class BasicBlockPass;
 class FunctionPass;
 class Pass;
 class GetElementPtrInst;
@@ -380,6 +381,12 @@ FunctionPass *createAddDiscriminatorsPass();
 // SeparateConstOffsetFromGEP - Split GEPs for better CSE
 //
 FunctionPass *createSeparateConstOffsetFromGEPPass();
+
+//===----------------------------------------------------------------------===//
+//
+// LoadCombine - Combine loads into bigger loads.
+//
+BasicBlockPass *createLoadCombinePass();
 
 } // End llvm namespace
 

@@ -12,6 +12,7 @@ add_llvm_library(LLVMScalarOpts
   IndVarSimplify.cpp
   JumpThreading.cpp
   LICM.cpp
+  LoadCombine.cpp
   LoopDeletion.cpp
   LoopIdiomRecognize.cpp
   LoopInstSimplify.cpp
