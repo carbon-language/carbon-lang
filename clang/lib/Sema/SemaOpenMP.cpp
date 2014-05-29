@@ -57,20 +57,23 @@ private:
     DeclRefExpr *RefExpr;
   };
   typedef llvm::SmallDenseMap<VarDecl *, DSAInfo, 64> DeclSAMapTy;
+  typedef llvm::SmallDenseMap<VarDecl *, DeclRefExpr *, 64> AlignedMapTy;
 
   struct SharingMapTy {
     DeclSAMapTy SharingMap;
+    AlignedMapTy AlignedMap;
     DefaultDataSharingAttributes DefaultAttr;
     OpenMPDirectiveKind Directive;
     DeclarationNameInfo DirectiveName;
     Scope *CurScope;
     SharingMapTy(OpenMPDirectiveKind DKind, DeclarationNameInfo Name,
                  Scope *CurScope)
-        : SharingMap(), DefaultAttr(DSA_unspecified), Directive(DKind),
-          DirectiveName(std::move(Name)), CurScope(CurScope) {}
+        : SharingMap(), AlignedMap(), DefaultAttr(DSA_unspecified),
+          Directive(DKind), DirectiveName(std::move(Name)), CurScope(CurScope) {
+    }
     SharingMapTy()
-        : SharingMap(), DefaultAttr(DSA_unspecified), Directive(OMPD_unknown),
-          DirectiveName(), CurScope(nullptr) {}
+        : SharingMap(), AlignedMap(), DefaultAttr(DSA_unspecified),
+          Directive(OMPD_unknown), DirectiveName(), CurScope(nullptr) {}
   };
 
   typedef SmallVector<SharingMapTy, 64> StackTy;
@@ -98,6 +101,11 @@ public:
     assert(Stack.size() > 1 && "Data-sharing attributes stack is empty!");
     Stack.pop_back();
   }
+
+  /// \brief If 'aligned' declaration for given variable \a D was not seen yet,
+  /// add it and return NULL; otherwise return previous occurence's expression
+  /// for diagnostics.
+  DeclRefExpr *addUniqueAligned(VarDecl *D, DeclRefExpr *NewDE);
 
   /// \brief Adds explicit data sharing attribute to the specified declaration.
   void addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A);
@@ -240,6 +248,20 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
   //  variables inherit their data-sharing attributes from the enclosing
   //  context.
   return getDSA(std::next(Iter), D);
+}
+
+DeclRefExpr *DSAStackTy::addUniqueAligned(VarDecl *D, DeclRefExpr *NewDE) {
+  assert(Stack.size() > 1 && "Data sharing attributes stack is empty");
+  auto It = Stack.back().AlignedMap.find(D);
+  if (It == Stack.back().AlignedMap.end()) {
+    assert(NewDE && "Unexpected nullptr expr to be added into aligned map");
+    Stack.back().AlignedMap[D] = NewDE;
+    return nullptr;
+  } else {
+    assert(It->second && "Unexpected nullptr expr in the aligned map");
+    return It->second;
+  }
+  return nullptr;
 }
 
 void DSAStackTy::addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A) {
@@ -855,6 +877,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_firstprivate:
   case OMPC_shared:
   case OMPC_linear:
+  case OMPC_aligned:
   case OMPC_copyin:
   case OMPC_threadprivate:
   case OMPC_unknown:
@@ -1025,6 +1048,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_firstprivate:
   case OMPC_shared:
   case OMPC_linear:
+  case OMPC_aligned:
   case OMPC_copyin:
   case OMPC_threadprivate:
   case OMPC_unknown:
@@ -1127,6 +1151,10 @@ Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> VarList,
   case OMPC_linear:
     Res = ActOnOpenMPLinearClause(VarList, TailExpr, StartLoc, LParenLoc,
                                   ColonLoc, EndLoc);
+    break;
+  case OMPC_aligned:
+    Res = ActOnOpenMPAlignedClause(VarList, TailExpr, StartLoc, LParenLoc,
+                                   ColonLoc, EndLoc);
     break;
   case OMPC_copyin:
     Res = ActOnOpenMPCopyinClause(VarList, StartLoc, LParenLoc, EndLoc);
@@ -1639,6 +1667,81 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
 
   return OMPLinearClause::Create(Context, StartLoc, LParenLoc, ColonLoc, EndLoc,
                                  Vars, StepExpr);
+}
+
+OMPClause *Sema::ActOnOpenMPAlignedClause(
+    ArrayRef<Expr *> VarList, Expr *Alignment, SourceLocation StartLoc,
+    SourceLocation LParenLoc, SourceLocation ColonLoc, SourceLocation EndLoc) {
+
+  SmallVector<Expr *, 8> Vars;
+  for (auto &RefExpr : VarList) {
+    assert(RefExpr && "NULL expr in OpenMP aligned clause.");
+    if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
+      // It will be analyzed later.
+      Vars.push_back(RefExpr);
+      continue;
+    }
+
+    SourceLocation ELoc = RefExpr->getExprLoc();
+    // OpenMP [2.1, C/C++]
+    //  A list item is a variable name.
+    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(RefExpr);
+    if (!DE || !isa<VarDecl>(DE->getDecl())) {
+      Diag(ELoc, diag::err_omp_expected_var_name) << RefExpr->getSourceRange();
+      continue;
+    }
+
+    VarDecl *VD = cast<VarDecl>(DE->getDecl());
+
+    // OpenMP  [2.8.1, simd construct, Restrictions]
+    // The type of list items appearing in the aligned clause must be
+    // array, pointer, reference to array, or reference to pointer.
+    QualType QType = DE->getType()
+                         .getNonReferenceType()
+                         .getUnqualifiedType()
+                         .getCanonicalType();
+    const Type *Ty = QType.getTypePtrOrNull();
+    if (!Ty || (!Ty->isDependentType() && !Ty->isArrayType() &&
+                !Ty->isPointerType())) {
+      Diag(ELoc, diag::err_omp_aligned_expected_array_or_ptr)
+          << QType << getLangOpts().CPlusPlus << RefExpr->getSourceRange();
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
+    // OpenMP  [2.8.1, simd construct, Restrictions]
+    // A list-item cannot appear in more than one aligned clause.
+    if (DeclRefExpr *PrevRef = DSAStack->addUniqueAligned(VD, DE)) {
+      Diag(ELoc, diag::err_omp_aligned_twice) << RefExpr->getSourceRange();
+      Diag(PrevRef->getExprLoc(), diag::note_omp_explicit_dsa)
+          << getOpenMPClauseName(OMPC_aligned);
+      continue;
+    }
+
+    Vars.push_back(DE);
+  }
+
+  // OpenMP [2.8.1, simd construct, Description]
+  // The parameter of the aligned clause, alignment, must be a constant
+  // positive integer expression.
+  // If no optional parameter is specified, implementation-defined default
+  // alignments for SIMD instructions on the target platforms are assumed.
+  if (Alignment != nullptr) {
+    ExprResult AlignResult =
+        VerifyPositiveIntegerConstantInClause(Alignment, OMPC_aligned);
+    if (AlignResult.isInvalid())
+      return nullptr;
+    Alignment = AlignResult.get();
+  }
+  if (Vars.empty())
+    return nullptr;
+
+  return OMPAlignedClause::Create(Context, StartLoc, LParenLoc, ColonLoc,
+                                  EndLoc, Vars, Alignment);
 }
 
 OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,

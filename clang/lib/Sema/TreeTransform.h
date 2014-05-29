@@ -1419,6 +1419,19 @@ public:
                                              ColonLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'aligned' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPAlignedClause(ArrayRef<Expr *> VarList, Expr *Alignment,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation ColonLoc,
+                                     SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPAlignedClause(VarList, Alignment, StartLoc,
+                                              LParenLoc, ColonLoc, EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'copyin' clause.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -6504,6 +6517,25 @@ TreeTransform<Derived>::TransformOMPLinearClause(OMPLinearClause *C) {
   return getDerived().RebuildOMPLinearClause(
       Vars, Step.get(), C->getLocStart(), C->getLParenLoc(), C->getColonLoc(),
       C->getLocEnd());
+}
+
+template<typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPAlignedClause(OMPAlignedClause *C) {
+  llvm::SmallVector<Expr *, 16> Vars;
+  Vars.reserve(C->varlist_size());
+  for (auto *VE : C->varlists()) {
+    ExprResult EVar = getDerived().TransformExpr(cast<Expr>(VE));
+    if (EVar.isInvalid())
+      return nullptr;
+    Vars.push_back(EVar.get());
+  }
+  ExprResult Alignment = getDerived().TransformExpr(C->getAlignment());
+  if (Alignment.isInvalid())
+    return nullptr;
+  return getDerived().RebuildOMPAlignedClause(
+      Vars, Alignment.get(), C->getLocStart(), C->getLParenLoc(),
+      C->getColonLoc(), C->getLocEnd());
 }
 
 template<typename Derived>

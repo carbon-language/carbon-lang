@@ -255,7 +255,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///    clause:
 ///       if-clause | num_threads-clause | safelen-clause | default-clause |
 ///       private-clause | firstprivate-clause | shared-clause | linear-clause |
-///       collapse-clause
+///       aligned-clause | collapse-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -304,6 +304,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_firstprivate:
   case OMPC_shared:
   case OMPC_linear:
+  case OMPC_aligned:
   case OMPC_copyin:
     Clause = ParseOpenMPVarListClause(CKind);
     break;
@@ -400,6 +401,8 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///       'shared' '(' list ')'
 ///    linear-clause:
 ///       'linear' '(' list [ ':' linear-step ] ')'
+///    aligned-clause:
+///       'aligned' '(' list [ ':' alignment ] ')'
 ///
 OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();
@@ -413,7 +416,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
 
   SmallVector<Expr *, 5> Vars;
   bool IsComma = true;
-  const bool MayHaveTail = (Kind == OMPC_linear);
+  const bool MayHaveTail = (Kind == OMPC_linear || Kind == OMPC_aligned);
   while (IsComma || (Tok.isNot(tok::r_paren) && Tok.isNot(tok::colon) &&
                      Tok.isNot(tok::annot_pragma_openmp_end))) {
     ColonProtectionRAIIObject ColonRAII(*this, MayHaveTail);
@@ -435,7 +438,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
       Diag(Tok, diag::err_omp_expected_punc) << getOpenMPClauseName(Kind);
   }
 
-  // Parse ':' linear-step
+  // Parse ':' linear-step (or ':' alignment).
   Expr *TailExpr = nullptr;
   const bool MustHaveTail = MayHaveTail && Tok.is(tok::colon);
   if (MustHaveTail) {

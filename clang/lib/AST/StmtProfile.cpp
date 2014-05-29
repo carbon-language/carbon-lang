@@ -308,6 +308,10 @@ void OMPClauseProfiler::VisitOMPLinearClause(const OMPLinearClause *C) {
   VisitOMPClauseList(C);
   Profiler->VisitStmt(C->getStep());
 }
+void OMPClauseProfiler::VisitOMPAlignedClause(const OMPAlignedClause *C) {
+  VisitOMPClauseList(C);
+  Profiler->VisitStmt(C->getAlignment());
+}
 void OMPClauseProfiler::VisitOMPCopyinClause(const OMPCopyinClause *C) {
   VisitOMPClauseList(C);
 }

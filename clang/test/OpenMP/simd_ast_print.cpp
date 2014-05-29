@@ -14,8 +14,8 @@ template<class T, class N> T reduct(T* arr, N num) {
   N myind;
   T sum = (T)0;
 // CHECK: T sum = (T)0;
-#pragma omp simd private(myind, g_ind), linear(ind)
-// CHECK-NEXT: #pragma omp simd private(myind,g_ind) linear(ind)
+#pragma omp simd private(myind, g_ind), linear(ind), aligned(arr)
+// CHECK-NEXT: #pragma omp simd private(myind,g_ind) linear(ind) aligned(arr)
   for (i = 0; i < num; ++i) {
     myind = ind;
     T cur = arr[myind];
@@ -62,7 +62,7 @@ template<class T> struct S {
 template<int LEN> struct S2 {
   static void func(int n, float *a, float *b, float *c) {
     int k1 = 0, k2 = 0;
-#pragma omp simd safelen(LEN) linear(k1,k2:LEN)
+#pragma omp simd safelen(LEN) linear(k1,k2:LEN) aligned(a:LEN)
     for(int i = 0; i < n; i++) {
       c[i] = a[i] + b[i];
       c[k1] = a[k1] + b[k1];
@@ -77,7 +77,7 @@ template<int LEN> struct S2 {
 // CHECK: template <int LEN = 4> struct S2 {
 // CHECK-NEXT: static void func(int n, float *a, float *b, float *c)     {
 // CHECK-NEXT:   int k1 = 0, k2 = 0;
-// CHECK-NEXT: #pragma omp simd safelen(4) linear(k1,k2: 4)
+// CHECK-NEXT: #pragma omp simd safelen(4) linear(k1,k2: 4) aligned(a: 4)
 // CHECK-NEXT:   for (int i = 0; i < n; i++) {
 // CHECK-NEXT:     c[i] = a[i] + b[i];
 // CHECK-NEXT:     c[k1] = a[k1] + b[k1];
@@ -97,10 +97,10 @@ int main (int argc, char **argv) {
   for (int i=0; i < 2; ++i)*a=2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: *a = 2;
-#pragma omp simd private(argc, b) collapse(2)
+#pragma omp simd private(argc, b) collapse(2) aligned(a : 4)
   for (int i = 0; i < 10; ++i)
   for (int j = 0; j < 10; ++j) {foo(); k1 += 8; k2 += 8;}
-// CHECK-NEXT: #pragma omp simd private(argc,b) collapse(2)
+// CHECK-NEXT: #pragma omp simd private(argc,b) collapse(2) aligned(a: 4)
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: for (int j = 0; j < 10; ++j) {
 // CHECK-NEXT: foo();
@@ -112,8 +112,8 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: foo();
   const int CLEN = 4;
 // CHECK-NEXT: const int CLEN = 4;
-  #pragma omp simd linear(a:CLEN) safelen(CLEN) collapse( 1 )
-// CHECK-NEXT: #pragma omp simd linear(a: CLEN) safelen(CLEN) collapse(1)
+  #pragma omp simd aligned(a:CLEN) linear(a:CLEN) safelen(CLEN) collapse( 1 )
+// CHECK-NEXT: #pragma omp simd aligned(a: CLEN) linear(a: CLEN) safelen(CLEN) collapse(1)
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();
