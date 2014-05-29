@@ -108,3 +108,30 @@ define i32 @i16_loop() nounwind readnone ssp uwtable {
 ; <label>:5                                       ; preds = %1
   ret i32 %2
 }
+
+; This loop has a backedge taken count of i32_max. We need to check for this
+; condition and branch directly to the scalar loop.
+
+; CHECK-LABEL: max_i32_backedgetaken
+; CHECK:  %backedge.overflow = icmp eq i32 -1, -1
+; CHECK:  br i1 %backedge.overflow, label %scalar.ph, label %overflow.checked
+
+; CHECK: scalar.ph:
+; CHECK:  %bc.resume.val = phi i32 [ %resume.val, %middle.block ], [ 0, %0 ]
+; CHECK:  %bc.merge.rdx = phi i32 [ 1, %0 ], [ %5, %middle.block ]
+
+define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
+
+  br label %1
+
+; <label>:1                                       ; preds = %1, %0
+  %a.0 = phi i32 [ 1, %0 ], [ %2, %1 ]
+  %b.0 = phi i32 [ 0, %0 ], [ %3, %1 ]
+  %2 = and i32 %a.0, 4
+  %3 = add i32 %b.0, -1
+  %4 = icmp eq i32 %3, 0
+  br i1 %4, label %5, label %1
+
+; <label>:5                                       ; preds = %1
+  ret i32 %2
+}

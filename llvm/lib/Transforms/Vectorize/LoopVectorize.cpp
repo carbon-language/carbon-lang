@@ -1909,20 +1909,23 @@ void InnerLoopVectorizer::createEmptyLoop() {
    the vectorized instructions while the old loop will continue to run the
    scalar remainder.
 
-       [ ] <-- vector loop bypass (may consist of multiple blocks).
-     /  |
-    /   v
-   |   [ ]     <-- vector pre header.
-   |    |
-   |    v
-   |   [  ] \
-   |   [  ]_|   <-- vector loop.
-   |    |
-    \   v
-      >[ ]   <--- middle-block.
-     /  |
-    /   v
-   |   [ ]     <--- new preheader.
+       [ ] <-- Back-edge taken count overflow check.
+    /   |
+   /    v
+  |    [ ] <-- vector loop bypass (may consist of multiple blocks).
+  |  /  |
+  | /   v
+  ||   [ ]     <-- vector pre header.
+  ||    |
+  ||    v
+  ||   [  ] \
+  ||   [  ]_|   <-- vector loop.
+  ||    |
+  | \   v
+  |   >[ ]   <--- middle-block.
+  |  /  |
+  | /   v
+  -|- >[ ]     <--- new preheader.
    |    |
    |    v
    |   [ ] \
@@ -1936,6 +1939,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   BasicBlock *OldBasicBlock = OrigLoop->getHeader();
   BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
   BasicBlock *ExitBlock = OrigLoop->getExitBlock();
+  assert(BypassBlock && "Invalid loop structure");
   assert(ExitBlock && "Must have an exit block");
 
   // Some loops have a single integer induction variable, while other loops
@@ -1958,14 +1962,30 @@ void InnerLoopVectorizer::createEmptyLoop() {
       IdxTy->getPrimitiveSizeInBits())
     ExitCount = SE->getTruncateOrNoop(ExitCount, IdxTy);
 
-  ExitCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
+  const SCEV *BackedgeTakeCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
   // Get the total trip count from the count by adding 1.
-  ExitCount = SE->getAddExpr(ExitCount,
-                             SE->getConstant(ExitCount->getType(), 1));
+  ExitCount = SE->getAddExpr(BackedgeTakeCount,
+                             SE->getConstant(BackedgeTakeCount->getType(), 1));
 
   // Expand the trip count and place the new instructions in the preheader.
   // Notice that the pre-header does not change, only the loop body.
   SCEVExpander Exp(*SE, "induction");
+
+  // We need to test whether the backedge-taken count is uint##_max. Adding one
+  // to it will cause overflow and an incorrect loop trip count in the vector
+  // body. In case of overflow we want to directly jump to the scalar remainder
+  // loop.
+  Value *BackedgeCount =
+      Exp.expandCodeFor(BackedgeTakeCount, BackedgeTakeCount->getType(),
+                        BypassBlock->getTerminator());
+  if (BackedgeCount->getType()->isPointerTy())
+    BackedgeCount = CastInst::CreatePointerCast(BackedgeCount, IdxTy,
+                                                "backedge.ptrcnt.to.int",
+                                                BypassBlock->getTerminator());
+  Instruction *CheckBCOverflow =
+      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, BackedgeCount,
+                      Constant::getAllOnesValue(BackedgeCount->getType()),
+                      "backedge.overflow", BypassBlock->getTerminator());
 
   // Count holds the overall loop count (N).
   Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
@@ -1980,7 +2000,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
                        IdxTy):
     ConstantInt::get(IdxTy, 0);
 
-  assert(BypassBlock && "Invalid loop structure");
   LoopBypassBlocks.push_back(BypassBlock);
 
   // Split the single block loop into the two loop structure described above.
@@ -2054,24 +2073,39 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
   BasicBlock *LastBypassBlock = BypassBlock;
 
+  // Generate code to check that the loops trip count that we computed by adding
+  // one to the backedge-taken count will not overflow.
+  {
+    auto PastOverflowCheck = std::next(BasicBlock::iterator(CheckBCOverflow));
+    BasicBlock *CheckBlock =
+        LastBypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
+    if (ParentLoop)
+      ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
+    LoopBypassBlocks.push_back(CheckBlock);
+    Instruction *OldTerm = LastBypassBlock->getTerminator();
+    BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow, OldTerm);
+    OldTerm->eraseFromParent();
+    LastBypassBlock = CheckBlock;
+  }
+
   // Generate the code to check that the strides we assumed to be one are really
   // one. We want the new basic block to start at the first instruction in a
   // sequence of instructions that form a check.
   Instruction *StrideCheck;
   Instruction *FirstCheckInst;
   std::tie(FirstCheckInst, StrideCheck) =
-      addStrideCheck(BypassBlock->getTerminator());
+      addStrideCheck(LastBypassBlock->getTerminator());
   if (StrideCheck) {
     // Create a new block containing the stride check.
     BasicBlock *CheckBlock =
-        BypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
+        LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
     LoopBypassBlocks.push_back(CheckBlock);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    Instruction *OldTerm = BypassBlock->getTerminator();
+    Instruction *OldTerm = LastBypassBlock->getTerminator();
     BranchInst::Create(MiddleBlock, CheckBlock, Cmp, OldTerm);
     OldTerm->eraseFromParent();
 
@@ -2134,6 +2168,19 @@ void InnerLoopVectorizer::createEmptyLoop() {
       PHINode::Create(OrigPhi->getType(), 2, "trunc.resume.val",
                       MiddleBlock->getTerminator()) : nullptr;
 
+    // Create phi nodes to merge from the  backedge-taken check block.
+    PHINode *BCResumeVal = PHINode::Create(ResumeValTy, 3, "bc.resume.val",
+                                           ScalarPH->getTerminator());
+    BCResumeVal->addIncoming(ResumeVal, MiddleBlock);
+
+    PHINode *BCTruncResumeVal = nullptr;
+    if (OrigPhi == OldInduction) {
+      BCTruncResumeVal =
+          PHINode::Create(OrigPhi->getType(), 2, "bc.trunc.resume.val",
+                          ScalarPH->getTerminator());
+      BCTruncResumeVal->addIncoming(TruncResumeVal, MiddleBlock);
+    }
+
     Value *EndValue = nullptr;
     switch (II.IK) {
     case LoopVectorizationLegality::IK_NoInduction:
@@ -2150,9 +2197,11 @@ void InnerLoopVectorizer::createEmptyLoop() {
           BypassBuilder.CreateTrunc(IdxEndRoundDown, OrigPhi->getType());
         // The new PHI merges the original incoming value, in case of a bypass,
         // or the value at the end of the vectorized loop.
-        for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+        for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
           TruncResumeVal->addIncoming(II.StartValue, LoopBypassBlocks[I]);
         TruncResumeVal->addIncoming(EndValue, VecBody);
+
+        BCTruncResumeVal->addIncoming(II.StartValue, LoopBypassBlocks[0]);
 
         // We know what the end value is.
         EndValue = IdxEndRoundDown;
@@ -2199,7 +2248,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // The new PHI merges the original incoming value, in case of a bypass,
     // or the value at the end of the vectorized loop.
-    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I) {
+    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I) {
       if (OrigPhi == OldInduction)
         ResumeVal->addIncoming(StartIdx, LoopBypassBlocks[I]);
       else
@@ -2209,11 +2258,16 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // Fix the scalar body counter (PHI node).
     unsigned BlockIdx = OrigPhi->getBasicBlockIndex(ScalarPH);
-    // The old inductions phi node in the scalar body needs the truncated value.
-    if (OrigPhi == OldInduction)
-      OrigPhi->setIncomingValue(BlockIdx, TruncResumeVal);
-    else
-      OrigPhi->setIncomingValue(BlockIdx, ResumeVal);
+
+    // The old induction's phi node in the scalar body needs the truncated
+    // value.
+    if (OrigPhi == OldInduction) {
+      BCResumeVal->addIncoming(StartIdx, LoopBypassBlocks[0]);
+      OrigPhi->setIncomingValue(BlockIdx, BCTruncResumeVal);
+    } else {
+      BCResumeVal->addIncoming(II.StartValue, LoopBypassBlocks[0]);
+      OrigPhi->setIncomingValue(BlockIdx, BCResumeVal);
+    }
   }
 
   // If we are generating a new induction variable then we also need to
@@ -2224,7 +2278,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
     assert(!ResumeIndex && "Unexpected resume value found");
     ResumeIndex = PHINode::Create(IdxTy, 2, "new.indc.resume.val",
                                   MiddleBlock->getTerminator());
-    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
       ResumeIndex->addIncoming(StartIdx, LoopBypassBlocks[I]);
     ResumeIndex->addIncoming(IdxEndRoundDown, VecBody);
   }
@@ -2494,7 +2548,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // To do so, we need to generate the 'identity' vector and override
     // one of the elements with the incoming scalar reduction. We need
     // to do it in the vector-loop preheader.
-    Builder.SetInsertPoint(LoopBypassBlocks.front()->getTerminator());
+    Builder.SetInsertPoint(LoopBypassBlocks[1]->getTerminator());
 
     // This is the vector-clone of the value that leaves the loop.
     VectorParts &VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
@@ -2568,7 +2622,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
       VectorParts &RdxExitVal = getVectorValue(RdxDesc.LoopExitInstr);
       PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
       Value *StartVal = (part == 0) ? VectorStart : Identity;
-      for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+      for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
         NewPhi->addIncoming(StartVal, LoopBypassBlocks[I]);
       NewPhi->addIncoming(RdxExitVal[part],
                           LoopVectorBody.back());
@@ -2626,6 +2680,13 @@ void InnerLoopVectorizer::vectorizeLoop() {
                                                     Builder.getInt32(0));
     }
 
+    // Create a phi node that merges control-flow from the backedge-taken check
+    // block and the middle block.
+    PHINode *BCBlockPhi = PHINode::Create(RdxPhi->getType(), 2, "bc.merge.rdx",
+                                          LoopScalarPreHeader->getTerminator());
+    BCBlockPhi->addIncoming(RdxDesc.StartValue, LoopBypassBlocks[0]);
+    BCBlockPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
+
     // Now, we need to fix the users of the reduction variable
     // inside and outside of the scalar remainder loop.
     // We know that the loop is in LCSSA form. We need to update the
@@ -2655,7 +2716,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
     // Pick the other block.
     int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
-    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, ReducedPartRdx);
+    (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, BCBlockPhi);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
 
@@ -3112,8 +3173,8 @@ void InnerLoopVectorizer::updateAnalysis() {
     }
   }
 
-  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlocks.front());
-  DT->addNewBlock(LoopScalarPreHeader, LoopMiddleBlock);
+  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlocks[1]);
+  DT->addNewBlock(LoopScalarPreHeader, LoopBypassBlocks[0]);
   DT->changeImmediateDominator(LoopScalarBody, LoopScalarPreHeader);
   DT->changeImmediateDominator(LoopExitBlock, LoopMiddleBlock);
 
