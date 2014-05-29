@@ -150,14 +150,17 @@ static bool GetFlagValue(const char *env, const char *name,
     pos = internal_strstr(env, name);
     if (pos == 0)
       return false;
-    if (pos != env && ((pos[-1] >= 'a' && pos[-1] <= 'z') || pos[-1] == '_')) {
+    const char *name_end = pos + internal_strlen(name);
+    if ((pos != env &&
+         ((pos[-1] >= 'a' && pos[-1] <= 'z') || pos[-1] == '_')) ||
+        *name_end != '=') {
       // Seems to be middle of another flag name or value.
       env = pos + 1;
       continue;
     }
+    pos = name_end;
     break;
   }
-  pos += internal_strlen(name);
   const char *end;
   if (pos[0] != '=') {
     end = pos;
