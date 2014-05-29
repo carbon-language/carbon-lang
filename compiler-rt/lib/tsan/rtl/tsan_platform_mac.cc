@@ -47,7 +47,7 @@ uptr GetShadowMemoryConsumption() {
 void FlushShadowMemory() {
 }
 
-void WriteMemoryProfile(char *buf, uptr buf_size) {
+void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
 }
 
 uptr GetRSS() {

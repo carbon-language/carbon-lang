@@ -55,8 +55,6 @@
 # undef sa_sigaction
 #endif
 
-extern "C" struct mallinfo __libc_mallinfo();
-
 namespace __tsan {
 
 const uptr kPageSize = 4096;
@@ -93,21 +91,16 @@ void FillProfileCallback(uptr start, uptr rss, bool file,
     mem[MemOther] += rss;
 }
 
-void WriteMemoryProfile(char *buf, uptr buf_size) {
+void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
   uptr mem[MemCount] = {};
   __sanitizer::GetMemoryProfile(FillProfileCallback, mem, 7);
-  char *buf_pos = buf;
-  char *buf_end = buf + buf_size;
-  buf_pos += internal_snprintf(buf_pos, buf_end - buf_pos,
+  internal_snprintf(buf, buf_size,
       "RSS %zd MB: shadow:%zd meta:%zd file:%zd mmap:%zd"
-      " trace:%zd heap:%zd other:%zd\n",
+      " trace:%zd heap:%zd other:%zd nthr=%zd/%zd\n",
       mem[MemTotal] >> 20, mem[MemShadow] >> 20, mem[MemMeta] >> 20,
       mem[MemFile] >> 20, mem[MemMmap] >> 20, mem[MemTrace] >> 20,
-      mem[MemHeap] >> 20, mem[MemOther] >> 20);
-  struct mallinfo mi = __libc_mallinfo();
-  buf_pos += internal_snprintf(buf_pos, buf_end - buf_pos,
-      "mallinfo: arena=%d mmap=%d fordblks=%d keepcost=%d\n",
-      mi.arena >> 20, mi.hblkhd >> 20, mi.fordblks >> 20, mi.keepcost >> 20);
+      mem[MemHeap] >> 20, mem[MemOther] >> 20,
+      nlive, nthread);
 }
 
 uptr GetRSS() {

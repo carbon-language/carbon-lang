@@ -112,10 +112,7 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
   uptr n_running_threads;
   ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
   InternalScopedBuffer<char> buf(4096);
-  internal_snprintf(buf.data(), buf.size(), "%d: nthr=%d nlive=%d\n",
-      i, n_threads, n_running_threads);
-  internal_write(fd, buf.data(), internal_strlen(buf.data()));
-  WriteMemoryProfile(buf.data(), buf.size());
+  WriteMemoryProfile(buf.data(), buf.size(), n_threads, n_running_threads);
   internal_write(fd, buf.data(), internal_strlen(buf.data()));
 }
 
