@@ -1233,9 +1233,20 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (!Op2 || Op1->getNumOperands() != Op2->getNumOperands())
         return nullptr;
 
+      // Keep track of the type as we walk the GEP.
+      Type *CurTy = Op1->getOperand(0)->getType()->getScalarType();
+
       for (unsigned J = 0, F = Op1->getNumOperands(); J != F; ++J) {
         if (Op1->getOperand(J)->getType() != Op2->getOperand(J)->getType())
           return nullptr;
+
+        if (J > 1) {
+          if (CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
+            CurTy = CT->getTypeAtIndex(Op1->getOperand(J));
+          } else {
+            CurTy = nullptr;
+          }
+        }
 
         if (Op1->getOperand(J) != Op2->getOperand(J)) {
           if (DI == -1) {
@@ -1245,14 +1256,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
             // The first two arguments can vary for any GEP, the rest have to be
             // static for struct slots
-            if (J > 1) {
-              SmallVector<Value*, 8> Idxs(GEP.idx_begin(), GEP.idx_begin()+J-1);
-              Type *Ty =
-                GetElementPtrInst::getIndexedType(Op1->getOperand(0)->getType(),
-                                                  Idxs);
-              if (Ty->isStructTy())
-                return nullptr;
-            }
+            if (J > 1 && CurTy->isStructTy())
+              return nullptr;
 
             DI = J;
           } else {
