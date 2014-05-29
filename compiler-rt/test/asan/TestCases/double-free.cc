@@ -4,6 +4,7 @@
 // Also works if no malloc context is available.
 // RUN: env ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=0 not %run %t 2>&1 | FileCheck %s
 // RUN: env ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=1 not %run %t 2>&1 | FileCheck %s
+// XFAIL: arm
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,6 +1,7 @@
 // RUN: %clangxx_asan %s -pthread -o %t
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK0
+// XFAIL: arm
 
 #include <assert.h>
 #include <stdio.h>

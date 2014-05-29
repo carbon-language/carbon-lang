@@ -2,6 +2,7 @@
 
 // RUN: %clangxx_asan -O0 %s -o %t 2>&1
 // RUN: env ASAN_OPTIONS=malloc_context_size=120:redzone=512 not %run %t 2>&1 | FileCheck %s
+// XFAIL: arm
 #include <stdlib.h>
 #include <stdio.h>
 
