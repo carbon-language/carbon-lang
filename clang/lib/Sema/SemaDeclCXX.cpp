@@ -4348,6 +4348,15 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
   }
 }
 
+/// \brief Return a DLL attribute from the declaration.
+static InheritableAttr *getDLLAttr(Decl *D) {
+  if (auto *Import = D->getAttr<DLLImportAttr>())
+    return Import;
+  if (auto *Export = D->getAttr<DLLExportAttr>())
+    return Export;
+  return nullptr;
+}
+
 /// \brief Perform semantic checks on a class definition that has been
 /// completing, introducing implicitly-declared members, checking for
 /// abstract types, etc.
@@ -11969,6 +11978,12 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     // If the declaration wasn't the first, we delete the function anyway for
     // recovery.
     Fn = Fn->getCanonicalDecl();
+  }
+
+  // dllimport/dllexport cannot be deleted.
+  if (const InheritableAttr *DLLAttr = getDLLAttr(Fn)) {
+    Diag(Fn->getLocation(), diag::err_attribute_dll_deleted) << DLLAttr;
+    Fn->setInvalidDecl();
   }
 
   if (Fn->isDeleted())

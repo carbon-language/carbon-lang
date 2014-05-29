@@ -252,6 +252,13 @@ __declspec(dllimport) Internal internalRetFunc(); // expected-error{{'internalRe
 namespace    { __declspec(dllimport) void internalFunc(); } // expected-error{{'(anonymous namespace)::internalFunc' must have external linkage when declared 'dllimport'}}
 namespace ns { __declspec(dllimport) void externalFunc(); }
 
+// Import deleted functions.
+// FIXME: Deleted functions are definitions so a missing inline is diagnosed
+// here which is irrelevant. But because the delete keyword is parsed later
+// there is currently no straight-forward way to avoid this diagnostic.
+__declspec(dllimport) void deletedFunc() = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}} expected-error{{dllimport cannot be applied to non-inline function definition}}
+__declspec(dllimport) inline void deletedInlineFunc() = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -456,6 +463,18 @@ struct ImportSpecials {
   __declspec(dllimport) ImportSpecials& operator=(const ImportSpecials&);
   __declspec(dllimport) ImportSpecials(ImportSpecials&&);
   __declspec(dllimport) ImportSpecials& operator=(ImportSpecials&&);
+};
+
+
+// Import deleted member functions.
+struct ImportDeleted {
+  __declspec(dllimport) ImportDeleted() = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) ~ImportDeleted() = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) ImportDeleted(const ImportDeleted&) = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) ImportDeleted& operator=(const ImportDeleted&) = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) ImportDeleted(ImportDeleted&&) = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) ImportDeleted& operator=(ImportDeleted&&) = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
+  __declspec(dllimport) void deleted() = delete; // expected-error{{attribute 'dllimport' cannot be applied to a deleted function}}
 };
 
 

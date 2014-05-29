@@ -2100,6 +2100,8 @@ def err_attribute_dll_redeclaration : Error<
   "redeclaration of %q0 cannot add %q1 attribute">;
 def err_attribute_dllimport_function_definition : Error<
   "dllimport cannot be applied to non-inline function definition">;
+def err_attribute_dll_deleted : Error<
+  "attribute %q0 cannot be applied to a deleted function">;
 def err_attribute_dllimport_data_definition : Error<
   "definition of dllimport data">;
 def err_attribute_dllimport_static_field_definition : Error<

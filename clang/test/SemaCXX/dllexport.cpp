@@ -212,6 +212,10 @@ __declspec(dllexport) Internal internalRetFunc(); // expected-error{{'internalRe
 namespace    { __declspec(dllexport) void internalFunc() {} } // expected-error{{'(anonymous namespace)::internalFunc' must have external linkage when declared 'dllexport'}}
 namespace ns { __declspec(dllexport) void externalFunc() {} }
 
+// Export deleted function.
+__declspec(dllexport) void deletedFunc() = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+__declspec(dllexport) inline void deletedInlineFunc() = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -472,6 +476,18 @@ void* ExportAlloc::operator new(__SIZE_TYPE__ n) { return malloc(n); }
 void* ExportAlloc::operator new[](__SIZE_TYPE__ n) { return malloc(n); }
 void ExportAlloc::operator delete(void* p) { free(p); }
 void ExportAlloc::operator delete[](void* p) { free(p); }
+
+
+// Export deleted member functions.
+struct ExportDeleted {
+  __declspec(dllexport) ExportDeleted() = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) ~ExportDeleted() = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) ExportDeleted(const ExportDeleted&) = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) ExportDeleted& operator=(const ExportDeleted&) = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) ExportDeleted(ExportDeleted&&) = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) ExportDeleted& operator=(ExportDeleted&&) = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+  __declspec(dllexport) void deleted() = delete; // expected-error{{attribute 'dllexport' cannot be applied to a deleted function}}
+};
 
 
 // Export defaulted member functions.
