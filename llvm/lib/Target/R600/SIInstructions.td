@@ -2139,8 +2139,8 @@ multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
   >;
 
   def : Pat <
-    (frag vt:$src1, i32:$src0),
-    (inst 0, $src0, $src1, 0)
+    (frag vt:$val, i32:$ptr),
+    (inst 0, $ptr, $val, 0)
   >;
 }
 
