@@ -19,6 +19,7 @@
 
 namespace clang {
 
+struct DeducedPack;
 class TemplateArgumentList;
 class Sema;
 
@@ -162,6 +163,11 @@ public:
   ///   an overloaded function which could not be resolved to a specific
   ///   function.
   Expr *Expression;
+
+  /// \brief Information on packs that we're currently expanding.
+  ///
+  /// FIXME: This should be kept internal to SemaTemplateDeduction.
+  SmallVector<DeducedPack *, 8> PendingDeducedPacks;
 };
 
 } // end namespace sema

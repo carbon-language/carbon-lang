@@ -297,6 +297,7 @@ checkDeducedTemplateArguments(ASTContext &Context,
                                       XAEnd = X.pack_end(),
                                          YA = Y.pack_begin();
          XA != XAEnd; ++XA, ++YA) {
+      // FIXME: Do we need to merge the results together here?
       if (checkDeducedTemplateArguments(Context,
                     DeducedTemplateArgument(*XA, X.wasDeducedFromArrayBound()),
                     DeducedTemplateArgument(*YA, Y.wasDeducedFromArrayBound()))
@@ -581,96 +582,181 @@ static TemplateParameter makeTemplateParameter(Decl *D) {
   return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
 }
 
-typedef SmallVector<SmallVector<DeducedTemplateArgument, 4>, 2>
-  NewlyDeducedPacksType;
+/// A pack that we're currently deducing.
+struct clang::DeducedPack {
+  DeducedPack(unsigned Index) : Index(Index), Outer(nullptr) {}
 
-/// \brief Prepare to perform template argument deduction for all of the
-/// arguments in a set of argument packs.
-static void
-PrepareArgumentPackDeduction(Sema &S,
-                           SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                           ArrayRef<unsigned> PackIndices,
-                           SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
-                           NewlyDeducedPacksType &NewlyDeducedPacks) {
-  // Save the deduced template arguments for each parameter pack expanded
-  // by this pack expansion, then clear out the deduction.
-  for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-    // Save the previously-deduced argument pack, then clear it out so that we
-    // can deduce a new argument pack.
-    SavedPacks[I] = Deduced[PackIndices[I]];
-    Deduced[PackIndices[I]] = TemplateArgument();
+  // The index of the pack.
+  unsigned Index;
 
-    if (!S.CurrentInstantiationScope)
-      continue;
+  // The old value of the pack before we started deducing it.
+  DeducedTemplateArgument Saved;
 
-    // If the template argument pack was explicitly specified, add that to
-    // the set of deduced arguments.
-    const TemplateArgument *ExplicitArgs;
-    unsigned NumExplicitArgs;
-    if (NamedDecl *PartiallySubstitutedPack
-        = S.CurrentInstantiationScope->getPartiallySubstitutedPack(
-                                                           &ExplicitArgs,
-                                                           &NumExplicitArgs)) {
-      if (getDepthAndIndex(PartiallySubstitutedPack).second == PackIndices[I])
-        NewlyDeducedPacks[I].append(ExplicitArgs,
-                                    ExplicitArgs + NumExplicitArgs);
+  // A deferred value of this pack from an inner deduction, that couldn't be
+  // deduced because this deduction hadn't happened yet.
+  DeducedTemplateArgument DeferredDeduction;
+
+  // The new value of the pack.
+  SmallVector<DeducedTemplateArgument, 4> New;
+
+  // The outer deduction for this pack, if any.
+  DeducedPack *Outer;
+};
+
+/// A scope in which we're performing pack deduction.
+class PackDeductionScope {
+public:
+  PackDeductionScope(Sema &S, TemplateParameterList *TemplateParams,
+                     SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                     TemplateDeductionInfo &Info, TemplateArgument Pattern)
+      : S(S), TemplateParams(TemplateParams), Deduced(Deduced), Info(Info) {
+    // Compute the set of template parameter indices that correspond to
+    // parameter packs expanded by the pack expansion.
+    {
+      llvm::SmallBitVector SawIndices(TemplateParams->size());
+      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
+      for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
+        unsigned Depth, Index;
+        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
+        if (Depth == 0 && !SawIndices[Index]) {
+          SawIndices[Index] = true;
+
+          // Save the deduced template argument for the parameter pack expanded
+          // by this pack expansion, then clear out the deduction.
+          DeducedPack Pack(Index);
+          Pack.Saved = Deduced[Index];
+          Deduced[Index] = TemplateArgument();
+
+          Packs.push_back(Pack);
+        }
+      }
+    }
+    assert(!Packs.empty() && "Pack expansion without unexpanded packs?");
+
+    for (auto &Pack : Packs) {
+      if (Info.PendingDeducedPacks.size() > Pack.Index)
+        Pack.Outer = Info.PendingDeducedPacks[Pack.Index];
+      else
+        Info.PendingDeducedPacks.resize(Pack.Index + 1);
+      Info.PendingDeducedPacks[Pack.Index] = &Pack;
+
+      if (S.CurrentInstantiationScope) {
+        // If the template argument pack was explicitly specified, add that to
+        // the set of deduced arguments.
+        const TemplateArgument *ExplicitArgs;
+        unsigned NumExplicitArgs;
+        NamedDecl *PartiallySubstitutedPack =
+            S.CurrentInstantiationScope->getPartiallySubstitutedPack(
+                &ExplicitArgs, &NumExplicitArgs);
+        if (PartiallySubstitutedPack &&
+            getDepthAndIndex(PartiallySubstitutedPack).second == Pack.Index)
+          Pack.New.append(ExplicitArgs, ExplicitArgs + NumExplicitArgs);
+      }
     }
   }
-}
 
-/// \brief Finish template argument deduction for a set of argument packs,
-/// producing the argument packs and checking for consistency with prior
-/// deductions.
-static Sema::TemplateDeductionResult
-FinishArgumentPackDeduction(Sema &S,
-                           TemplateParameterList *TemplateParams,
-                           bool HasAnyArguments,
-                           SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                           ArrayRef<unsigned> PackIndices,
-                           SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
-                           NewlyDeducedPacksType &NewlyDeducedPacks,
-                           TemplateDeductionInfo &Info) {
-  // Build argument packs for each of the parameter packs expanded by this
-  // pack expansion.
-  for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-    if (HasAnyArguments && NewlyDeducedPacks[I].empty()) {
-      // We were not able to deduce anything for this parameter pack,
-      // so just restore the saved argument pack.
-      Deduced[PackIndices[I]] = SavedPacks[I];
-      continue;
-    }
-
-    DeducedTemplateArgument NewPack;
-
-    if (NewlyDeducedPacks[I].empty()) {
-      // If we deduced an empty argument pack, create it now.
-      NewPack = DeducedTemplateArgument(TemplateArgument::getEmptyPack());
-    } else {
-      TemplateArgument *ArgumentPack
-        = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
-      std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
-                ArgumentPack);
-      NewPack
-        = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
-                                                   NewlyDeducedPacks[I].size()),
-                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());
-    }
-
-    DeducedTemplateArgument Result
-      = checkDeducedTemplateArguments(S.Context, SavedPacks[I], NewPack);
-    if (Result.isNull()) {
-      Info.Param
-        = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
-      Info.FirstArg = SavedPacks[I];
-      Info.SecondArg = NewPack;
-      return Sema::TDK_Inconsistent;
-    }
-
-    Deduced[PackIndices[I]] = Result;
+  ~PackDeductionScope() {
+    for (auto &Pack : Packs)
+      Info.PendingDeducedPacks[Pack.Index] = Pack.Outer;
   }
 
-  return Sema::TDK_Success;
-}
+  /// Move to deducing the next element in each pack that is being deduced.
+  void nextPackElement() {
+    // Capture the deduced template arguments for each parameter pack expanded
+    // by this pack expansion, add them to the list of arguments we've deduced
+    // for that pack, then clear out the deduced argument.
+    for (auto &Pack : Packs) {
+      DeducedTemplateArgument &DeducedArg = Deduced[Pack.Index];
+      if (!DeducedArg.isNull()) {
+        Pack.New.push_back(DeducedArg);
+        DeducedArg = DeducedTemplateArgument();
+      }
+    }
+  }
+
+  /// \brief Finish template argument deduction for a set of argument packs,
+  /// producing the argument packs and checking for consistency with prior
+  /// deductions.
+  Sema::TemplateDeductionResult finish(bool HasAnyArguments) {
+    // Build argument packs for each of the parameter packs expanded by this
+    // pack expansion.
+    for (auto &Pack : Packs) {
+      // Put back the old value for this pack.
+      Deduced[Pack.Index] = Pack.Saved;
+
+      // Build or find a new value for this pack.
+      DeducedTemplateArgument NewPack;
+      if (HasAnyArguments && Pack.New.empty()) {
+        if (Pack.DeferredDeduction.isNull()) {
+          // We were not able to deduce anything for this parameter pack
+          // (because it only appeared in non-deduced contexts), so just
+          // restore the saved argument pack.
+          continue;
+        }
+
+        NewPack = Pack.DeferredDeduction;
+        Pack.DeferredDeduction = TemplateArgument();
+      } else if (Pack.New.empty()) {
+        // If we deduced an empty argument pack, create it now.
+        NewPack = DeducedTemplateArgument(TemplateArgument::getEmptyPack());
+      } else {
+        TemplateArgument *ArgumentPack =
+            new (S.Context) TemplateArgument[Pack.New.size()];
+        std::copy(Pack.New.begin(), Pack.New.end(), ArgumentPack);
+        NewPack = DeducedTemplateArgument(
+            TemplateArgument(ArgumentPack, Pack.New.size()),
+            Pack.New[0].wasDeducedFromArrayBound());
+      }
+
+      // Pick where we're going to put the merged pack.
+      DeducedTemplateArgument *Loc;
+      if (Pack.Outer) {
+        if (Pack.Outer->DeferredDeduction.isNull()) {
+          // Defer checking this pack until we have a complete pack to compare
+          // it against.
+          Pack.Outer->DeferredDeduction = NewPack;
+          continue;
+        }
+        Loc = &Pack.Outer->DeferredDeduction;
+      } else {
+        Loc = &Deduced[Pack.Index];
+      }
+
+      // Check the new pack matches any previous value.
+      DeducedTemplateArgument OldPack = *Loc;
+      DeducedTemplateArgument Result =
+          checkDeducedTemplateArguments(S.Context, OldPack, NewPack);
+
+      // If we deferred a deduction of this pack, check that one now too.
+      if (!Result.isNull() && !Pack.DeferredDeduction.isNull()) {
+        OldPack = Result;
+        NewPack = Pack.DeferredDeduction;
+        Result = checkDeducedTemplateArguments(S.Context, OldPack, NewPack);
+      }
+
+      if (Result.isNull()) {
+        Info.Param =
+            makeTemplateParameter(TemplateParams->getParam(Pack.Index));
+        Info.FirstArg = OldPack;
+        Info.SecondArg = NewPack;
+        return Sema::TDK_Inconsistent;
+      }
+
+      *Loc = Result;
+    }
+
+    return Sema::TDK_Success;
+  }
+
+private:
+  Sema &S;
+  TemplateParameterList *TemplateParams;
+  SmallVectorImpl<DeducedTemplateArgument> &Deduced;
+  TemplateDeductionInfo &Info;
+
+  SmallVector<DeducedPack, 2> Packs;
+};
 
 /// \brief Deduce the template arguments by comparing the list of parameter
 /// types to the list of argument types, as in the parameter-type-lists of
@@ -773,33 +859,8 @@ DeduceTemplateArguments(Sema &S,
     //   comparison deduces template arguments for subsequent positions in the
     //   template parameter packs expanded by the function parameter pack.
 
-    // Compute the set of template parameter indices that correspond to
-    // parameter packs expanded by the pack expansion.
-    SmallVector<unsigned, 2> PackIndices;
     QualType Pattern = Expansion->getPattern();
-    {
-      llvm::SmallBitVector SawIndices(TemplateParams->size());
-      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
-      for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
-        unsigned Depth, Index;
-        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
-        if (Depth == 0 && !SawIndices[Index]) {
-          SawIndices[Index] = true;
-          PackIndices.push_back(Index);
-        }
-      }
-    }
-    assert(!PackIndices.empty() && "Pack expansion without unexpanded packs?");
-
-    // Keep track of the deduced template arguments for each parameter pack
-    // expanded by this pack expansion (the outer index) and for each
-    // template argument (the inner SmallVectors).
-    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
-    SmallVector<DeducedTemplateArgument, 2>
-      SavedPacks(PackIndices.size());
-    PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks,
-                                 NewlyDeducedPacks);
+    PackDeductionScope PackScope(S, TemplateParams, Deduced, Info, Pattern);
 
     bool HasAnyArguments = false;
     for (; ArgIdx < NumArgs; ++ArgIdx) {
@@ -813,24 +874,12 @@ DeduceTemplateArguments(Sema &S,
                                                  RefParamComparisons))
         return Result;
 
-      // Capture the deduced template arguments for each parameter pack expanded
-      // by this pack expansion, add them to the list of arguments we've deduced
-      // for that pack, then clear out the deduced argument.
-      for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-        DeducedTemplateArgument &DeducedArg = Deduced[PackIndices[I]];
-        if (!DeducedArg.isNull()) {
-          NewlyDeducedPacks[I].push_back(DeducedArg);
-          DeducedArg = DeducedTemplateArgument();
-        }
-      }
+      PackScope.nextPackElement();
     }
 
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    if (Sema::TemplateDeductionResult Result
-          = FinishArgumentPackDeduction(S, TemplateParams, HasAnyArguments,
-                                        Deduced, PackIndices, SavedPacks,
-                                        NewlyDeducedPacks, Info))
+    if (auto Result = PackScope.finish(HasAnyArguments))
       return Result;
   }
 
@@ -1852,41 +1901,18 @@ DeduceTemplateArguments(Sema &S,
     //   template parameter packs expanded by Pi.
     TemplateArgument Pattern = Params[ParamIdx].getPackExpansionPattern();
 
-    // Compute the set of template parameter indices that correspond to
-    // parameter packs expanded by the pack expansion.
-    SmallVector<unsigned, 2> PackIndices;
-    {
-      llvm::SmallBitVector SawIndices(TemplateParams->size());
-      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
-      for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
-        unsigned Depth, Index;
-        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
-        if (Depth == 0 && !SawIndices[Index]) {
-          SawIndices[Index] = true;
-          PackIndices.push_back(Index);
-        }
-      }
-    }
-    assert(!PackIndices.empty() && "Pack expansion without unexpanded packs?");
-
     // FIXME: If there are no remaining arguments, we can bail out early
     // and set any deduced parameter packs to an empty argument pack.
     // The latter part of this is a (minor) correctness issue.
 
-    // Save the deduced template arguments for each parameter pack expanded
-    // by this pack expansion, then clear out the deduction.
-    SmallVector<DeducedTemplateArgument, 2>
-      SavedPacks(PackIndices.size());
-    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
-    PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks,
-                                 NewlyDeducedPacks);
+    // Prepare to deduce the packs within the pattern.
+    PackDeductionScope PackScope(S, TemplateParams, Deduced, Info, Pattern);
 
     // Keep track of the deduced template arguments for each parameter pack
     // expanded by this pack expansion (the outer index) and for each
     // template argument (the inner SmallVectors).
     bool HasAnyArguments = false;
-    while (hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs)) {
+    for (; hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs); ++ArgIdx) {
       HasAnyArguments = true;
 
       // Deduce template arguments from the pattern.
@@ -1895,26 +1921,12 @@ DeduceTemplateArguments(Sema &S,
                                       Info, Deduced))
         return Result;
 
-      // Capture the deduced template arguments for each parameter pack expanded
-      // by this pack expansion, add them to the list of arguments we've deduced
-      // for that pack, then clear out the deduced argument.
-      for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-        DeducedTemplateArgument &DeducedArg = Deduced[PackIndices[I]];
-        if (!DeducedArg.isNull()) {
-          NewlyDeducedPacks[I].push_back(DeducedArg);
-          DeducedArg = DeducedTemplateArgument();
-        }
-      }
-
-      ++ArgIdx;
+      PackScope.nextPackElement();
     }
 
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    if (Sema::TemplateDeductionResult Result
-          = FinishArgumentPackDeduction(S, TemplateParams, HasAnyArguments,
-                                        Deduced, PackIndices, SavedPacks,
-                                        NewlyDeducedPacks, Info))
+    if (auto Result = PackScope.finish(HasAnyArguments))
       return Result;
   }
 
@@ -3403,30 +3415,9 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       break;
 
     QualType ParamPattern = ParamExpansion->getPattern();
-    SmallVector<unsigned, 2> PackIndices;
-    {
-      llvm::SmallBitVector SawIndices(TemplateParams->size());
-      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      collectUnexpandedParameterPacks(ParamPattern, Unexpanded);
-      for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
-        unsigned Depth, Index;
-        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
-        if (Depth == 0 && !SawIndices[Index]) {
-          SawIndices[Index] = true;
-          PackIndices.push_back(Index);
-        }
-      }
-    }
-    assert(!PackIndices.empty() && "Pack expansion without unexpanded packs?");
+    PackDeductionScope PackScope(*this, TemplateParams, Deduced, Info,
+                                 ParamPattern);
 
-    // Keep track of the deduced template arguments for each parameter pack
-    // expanded by this pack expansion (the outer index) and for each
-    // template argument (the inner SmallVectors).
-    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
-    SmallVector<DeducedTemplateArgument, 2>
-      SavedPacks(PackIndices.size());
-    PrepareArgumentPackDeduction(*this, Deduced, PackIndices, SavedPacks,
-                                 NewlyDeducedPacks);
     bool HasAnyArguments = false;
     for (; ArgIdx < Args.size(); ++ArgIdx) {
       HasAnyArguments = true;
@@ -3435,7 +3426,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       ParamType = OrigParamType;
       Expr *Arg = Args[ArgIdx];
       QualType ArgType = Arg->getType();
-      
+
       unsigned TDF = 0;
       if (AdjustFunctionParmAndArgTypesForDeduction(*this, TemplateParams,
                                                     ParamType, ArgType, Arg,
@@ -3476,24 +3467,12 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
           return Result;
       }
 
-      // Capture the deduced template arguments for each parameter pack expanded
-      // by this pack expansion, add them to the list of arguments we've deduced
-      // for that pack, then clear out the deduced argument.
-      for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-        DeducedTemplateArgument &DeducedArg = Deduced[PackIndices[I]];
-        if (!DeducedArg.isNull()) {
-          NewlyDeducedPacks[I].push_back(DeducedArg);
-          DeducedArg = DeducedTemplateArgument();
-        }
-      }
+      PackScope.nextPackElement();
     }
 
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    if (Sema::TemplateDeductionResult Result
-          = FinishArgumentPackDeduction(*this, TemplateParams, HasAnyArguments,
-                                        Deduced, PackIndices, SavedPacks,
-                                        NewlyDeducedPacks, Info))
+    if (auto Result = PackScope.finish(HasAnyArguments))
       return Result;
 
     // After we've matching against a parameter pack, we're done.
@@ -4240,7 +4219,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
                                 Args1.data(), Args1.size(), Info, Deduced,
                                 TDF_None, /*PartialOrdering=*/true,
                                 RefParamComparisons))
-        return false;
+      return false;
 
     break;
   }
