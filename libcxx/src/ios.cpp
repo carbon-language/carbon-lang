@@ -56,7 +56,9 @@ __iostream_category::message(int ev) const
     if (ev != static_cast<int>(io_errc::stream)
 #ifdef ELAST
         && ev <= ELAST
-#endif
+#elif defined(__linux__)
+        && ev <= 4095
+#endif  // ELAST
         )
         return __do_message::message(ev);
     return string("unspecified iostream_category error");

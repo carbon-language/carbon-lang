@@ -23,7 +23,7 @@ int main()
     std::error_condition e_cond = e_cat1.default_error_condition(5);
     assert(e_cond.value() == 5);
     assert(e_cond.category() == std::generic_category());
-    e_cond = e_cat1.default_error_condition(500);
-    assert(e_cond.value() == 500);
+    e_cond = e_cat1.default_error_condition(5000);
+    assert(e_cond.value() == 5000);
     assert(e_cond.category() == std::system_category());
 }

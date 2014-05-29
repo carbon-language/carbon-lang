@@ -68,6 +68,9 @@ __generic_error_category::message(int ev) const
 #ifdef ELAST
     if (ev > ELAST)
       return string("unspecified generic_category error");
+#elif defined(__linux__)
+    if (ev > 4095)
+      return string("unspecified generic_category error");
 #endif  // ELAST
     return __do_message::message(ev);
 }
@@ -100,6 +103,9 @@ __system_error_category::message(int ev) const
 #ifdef ELAST
     if (ev > ELAST)
       return string("unspecified system_category error");
+#elif defined(__linux__)
+    if (ev > 4095)
+      return string("unspecified system_category error");
 #endif  // ELAST
     return __do_message::message(ev);
 }
@@ -109,6 +115,9 @@ __system_error_category::default_error_condition(int ev) const _NOEXCEPT
 {
 #ifdef ELAST
     if (ev > ELAST)
+      return error_condition(ev, system_category());
+#elif defined(__linux__)
+    if (ev > 4095)
       return error_condition(ev, system_category());
 #endif  // ELAST
     return error_condition(ev, generic_category());
