@@ -4,6 +4,8 @@ Test lldb-gdbserver operation
 
 import unittest2
 import pexpect
+import platform
+import signal
 import socket
 import subprocess
 import sys
@@ -38,6 +40,11 @@ class LldbGdbServerTestCase(TestBase):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
         self.set_inferior_startup_launch()
 
+        # Uncomment this code to force only a single test to run (by name).
+        # if self._testMethodName != "test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym":
+        #     # print "skipping test {}".format(self._testMethodName)
+        #     self.skipTest("focusing on one test")
+
     def reset_test_sequence(self):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
 
@@ -45,11 +52,13 @@ class LldbGdbServerTestCase(TestBase):
         self.debug_monitor_exe = get_lldb_gdbserver_exe()
         if not self.debug_monitor_exe:
             self.skipTest("lldb_gdbserver exe not found")
+        self.debug_monitor_extra_args = ""
 
     def init_debugserver_test(self):
         self.debug_monitor_exe = get_debugserver_exe()
         if not self.debug_monitor_exe:
             self.skipTest("debugserver exe not found")
+        self.debug_monitor_extra_args = " --log-file=/tmp/packets-{}.log --log-flags=0x800000".format(self._testMethodName)
 
     def create_socket(self):
         sock = socket.socket()
@@ -81,7 +90,7 @@ class LldbGdbServerTestCase(TestBase):
 
     def start_server(self, attach_pid=None):
         # Create the command line
-        commandline = "{} localhost:{}".format(self.debug_monitor_exe, self.port)
+        commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
             commandline += " --attach=%d" % attach_pid
             
@@ -239,14 +248,12 @@ class LldbGdbServerTestCase(TestBase):
         self.assertTrue("encoding" in reg_info)
         self.assertTrue("format" in reg_info)
 
-
     def add_threadinfo_collection_packets(self):
         self.test_sequence.add_log_lines(
             [ { "type":"multi_response", "first_query":"qfThreadInfo", "next_query":"qsThreadInfo",
                 "append_iteration_suffix":False, "end_regex":re.compile(r"^\$(l)?#[0-9a-fA-F]{2}$"),
               "save_key":"threadinfo_responses" } ],
             True)
-
 
     def parse_threadinfo_packets(self, context):
         """Return an array of thread ids (decimal ints), one per thread."""
@@ -258,7 +265,6 @@ class LldbGdbServerTestCase(TestBase):
             new_thread_infos = parse_threadinfo_response(threadinfo_response)
             thread_ids.extend(new_thread_infos)
         return thread_ids
-
 
     def wait_for_thread_count(self, thread_count, timeout_seconds=3):
         start_time = time.time()
@@ -284,7 +290,6 @@ class LldbGdbServerTestCase(TestBase):
 
         return threads
 
-
     def run_process_then_stop(self, run_seconds=1):
         # Tell the stub to continue.
         self.test_sequence.add_log_lines(
@@ -304,7 +309,8 @@ class LldbGdbServerTestCase(TestBase):
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
         self.assertIsNotNone(context.get("stop_result"))
-
+        
+        return context
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
@@ -806,7 +812,6 @@ class LldbGdbServerTestCase(TestBase):
         # Ensure we have a flags register.
         self.assertTrue('flags' in generic_regs)
 
-
     @debugserver_test
     @dsym_test
     def test_qRegisterInfo_contains_required_generics_debugserver_dsym(self):
@@ -821,7 +826,6 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qRegisterInfo_contains_required_generics()
-
 
     def qRegisterInfo_contains_at_least_one_register_set(self):
         server = self.start_server()
@@ -846,14 +850,12 @@ class LldbGdbServerTestCase(TestBase):
         register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
         self.assertTrue(len(register_sets) >= 1)
 
-
     @debugserver_test
     @dsym_test
     def test_qRegisterInfo_contains_at_least_one_register_set_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
         self.qRegisterInfo_contains_at_least_one_register_set()
-
 
     @llgs_test
     @dwarf_test
@@ -862,7 +864,6 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qRegisterInfo_contains_at_least_one_register_set()
-
 
     def qThreadInfo_contains_thread(self):
         procs = self.prep_debug_monitor_and_inferior()
@@ -879,7 +880,6 @@ class LldbGdbServerTestCase(TestBase):
         # We should have exactly one thread.
         self.assertEqual(len(threads), 1)
 
-
     @debugserver_test
     @dsym_test
     def test_qThreadInfo_contains_thread_launch_debugserver_dsym(self):
@@ -887,7 +887,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_launch()
         self.qThreadInfo_contains_thread()
-
 
     @llgs_test
     @dwarf_test
@@ -898,7 +897,6 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.qThreadInfo_contains_thread()
 
-
     @debugserver_test
     @dsym_test
     def test_qThreadInfo_contains_thread_attach_debugserver_dsym(self):
@@ -906,7 +904,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_attach()
         self.qThreadInfo_contains_thread()
-
 
     @llgs_test
     @dwarf_test
@@ -916,7 +913,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_attach()
         self.qThreadInfo_contains_thread()
-
 
     def qThreadInfo_matches_qC(self):
         procs = self.prep_debug_monitor_and_inferior()
@@ -946,7 +942,6 @@ class LldbGdbServerTestCase(TestBase):
         # Those two should be the same.
         self.assertEquals(threads[0], QC_thread_id)
 
-
     @debugserver_test
     @dsym_test
     def test_qThreadInfo_matches_qC_launch_debugserver_dsym(self):
@@ -954,7 +949,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_launch()
         self.qThreadInfo_matches_qC()
-
 
     @llgs_test
     @dwarf_test
@@ -965,7 +959,6 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.qThreadInfo_matches_qC()
 
-
     @debugserver_test
     @dsym_test
     def test_qThreadInfo_matches_qC_attach_debugserver_dsym(self):
@@ -973,7 +966,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_attach()
         self.qThreadInfo_matches_qC()
-
 
     @llgs_test
     @dwarf_test
@@ -983,7 +975,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_attach()
         self.qThreadInfo_matches_qC()
-
 
     def p_returns_correct_data_size_for_each_qRegisterInfo(self):
         procs = self.prep_debug_monitor_and_inferior()
@@ -1021,7 +1012,6 @@ class LldbGdbServerTestCase(TestBase):
             # Increment loop
             reg_index += 1
 
-
     @debugserver_test
     @dsym_test
     def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_debugserver_dsym(self):
@@ -1029,7 +1019,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_launch()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
-
 
     @llgs_test
     @dwarf_test
@@ -1040,7 +1029,6 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
-
     @debugserver_test
     @dsym_test
     def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_debugserver_dsym(self):
@@ -1048,7 +1036,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_attach()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
-
 
     @llgs_test
     @dwarf_test
@@ -1058,7 +1045,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_attach()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
-
 
     def Hg_switches_to_3_threads(self):
         # Startup the inferior with three threads (main + 2 new ones).
@@ -1076,7 +1062,7 @@ class LldbGdbServerTestCase(TestBase):
             # Change to each thread, verify current thread id.
             self.reset_test_sequence()
             self.test_sequence.add_log_lines(
-                ["read packet: $Hg{}#00".format(hex(thread)),  # Set current thread.
+                ["read packet: $Hg{0:x}#00".format(thread),  # Set current thread.
                  "send packet: $OK#00",
                  "read packet: $qC#00",
                  { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} }],
@@ -1097,7 +1083,6 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.Hg_switches_to_3_threads()
 
-
     @llgs_test
     @dwarf_test
     @unittest2.expectedFailure()
@@ -1107,7 +1092,6 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.Hg_switches_to_3_threads()
 
-
     @debugserver_test
     @dsym_test
     def test_Hg_switches_to_3_threads_attach_debugserver_dsym(self):
@@ -1115,7 +1099,6 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDsym()
         self.set_inferior_startup_attach()
         self.Hg_switches_to_3_threads()
-
 
     @llgs_test
     @dwarf_test
@@ -1125,6 +1108,88 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_attach()
         self.Hg_switches_to_3_threads()
+
+    def Hc_then_Csignal_signals_correct_thread(self):
+        # NOTE only run this one in inferior-launched mode: we can't grab inferior stdout when running attached,
+        # and the test requires getting stdout from the exe.
+
+        NUM_THREADS = 3
+        
+        # Startup the inferior with three threads (main + NUM_THREADS-1 worker threads).
+        inferior_args=["thread:print-ids"]
+        for i in range(NUM_THREADS - 1):
+            inferior_args.append("thread:new")
+        inferior_args.append("sleep:20")
+        
+        procs = self.prep_debug_monitor_and_inferior(inferior_args=inferior_args)
+
+        # Let the inferior process have a few moments to start up the thread when launched.
+        context = self.run_process_then_stop(run_seconds=1)
+
+        # Wait at most x seconds for all threads to be present.
+        threads = self.wait_for_thread_count(NUM_THREADS, timeout_seconds=5)
+        self.assertEquals(len(threads), NUM_THREADS)
+
+        # print_thread_ids = {}
+
+        # Switch to each thread, deliver a signal, and verify signal delivery
+        for thread_id in threads:
+            # Change to each thread, verify current thread id.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                ["read packet: $Hc{0:x}#00".format(thread_id),  # Set current thread.
+                 "send packet: $OK#00",
+                 "read packet: $C{0:x}#00".format(signal.SIGUSR1),
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                 # "read packet: $vCont;C{0:x}:{1:x};c#00".format(signal.SIGUSR1, thread_id),
+                 # "read packet: $vCont;C{0:x};c#00".format(signal.SIGUSR1, thread_id),
+                 # { "type":"output_match", "regex":r"^received SIGUSR1 on thread id: ([0-9a-fA-F]+)\r\n$", "capture":{ 1:"print_thread_id"} },
+                 "read packet: $c#00",
+                 "read packet: {}".format(chr(03)),
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"intr_signo", 2:"intr_thread_id"} }
+                ],
+                True)
+
+            # Run the sequence.
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            # Ensure the stop signal is the signal we delivered.
+            stop_signo = context.get("stop_signo")
+            self.assertIsNotNone(stop_signo)
+            self.assertEquals(int(stop_signo,16), signal.SIGUSR1)
+            
+            # Ensure the stop thread is the thread to which we delivered the signal.
+            stop_thread_id = context.get("stop_thread_id")
+            self.assertIsNotNone(stop_thread_id)
+            self.assertEquals(int(stop_thread_id,16), thread_id)
+
+            # Ensure we haven't seen this thread id yet.  The inferior's self-obtained thread ids are not guaranteed to match the stub tids (at least on MacOSX).
+            # print_thread_id = context.get("print_thread_id")
+            # self.assertIsNotNone(print_thread_id)
+            # self.assertFalse(print_thread_id in print_thread_ids)
+            
+            # Now remember this print (i.e. inferior-reflected) thread id and ensure we don't hit it again.
+            # print_thread_ids[print_thread_id] = 1
+
+    @debugserver_test
+    @dsym_test
+    @unittest2.expectedFailure() # this test is failing on MacOSX 10.9
+    def test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.Hc_then_Csignal_signals_correct_thread()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_Hc_then_Csignal_signals_correct_thread_launch_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.Hc_then_Csignal_signals_correct_thread()
+
 
 if __name__ == '__main__':
     unittest2.main()

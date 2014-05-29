@@ -4,11 +4,12 @@
 import os
 import os.path
 import platform
+import Queue
 import re
 import select
+import socket_packet_pump
 import subprocess
 import time
-
 
 def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
     """Return the debug monitor exe path given the lldb exe path.
@@ -108,7 +109,7 @@ def _is_packet_lldb_gdbserver_input(packet_type, llgs_input_is_read):
         raise "Unknown packet type: {}".format(packet_type)
 
 
-def handle_O_packet(context, packet_contents):
+def handle_O_packet(context, packet_contents, logger):
     """Handle O packets."""
     if (not packet_contents) or (len(packet_contents) < 1):
         return False
@@ -117,8 +118,13 @@ def handle_O_packet(context, packet_contents):
     elif packet_contents == "OK":
         return False
 
-    context["O_content"] += gdbremote_hex_decode_string(packet_contents[1:])
+    new_text = gdbremote_hex_decode_string(packet_contents[1:])
+    context["O_content"] += new_text
     context["O_count"] += 1
+    
+    if logger:
+        logger.debug("text: new \"{}\", cumulative: \"{}\"".format(new_text, context["O_content"]))
+    
     return True
 
 _STRIP_CHECKSUM_REGEX = re.compile(r'#[0-9a-fA-F]{2}$')
@@ -133,9 +139,6 @@ def assert_packets_equal(asserter, actual_packet, expected_packet):
     actual_stripped = _STRIP_CHECKSUM_REGEX.sub('', actual_packet)
     expected_stripped = _STRIP_CHECKSUM_REGEX.sub('', expected_packet)
     asserter.assertEqual(actual_stripped, expected_stripped)
-
-
-_GDB_REMOTE_PACKET_REGEX = re.compile(r'^\$([^\#]*)#[0-9a-fA-F]{2}')
 
 def expect_lldb_gdbserver_replay(
     asserter,
@@ -178,83 +181,63 @@ def expect_lldb_gdbserver_replay(
     # Ensure we have some work to do.
     if len(test_sequence.entries) < 1:
         return {}
-    
-    received_lines = []
-    receive_buffer = ''
+
     context = {"O_count":0, "O_content":""}
-
-    sequence_entry = test_sequence.entries.pop(0)
-    while sequence_entry:
-        if sequence_entry.is_send_to_remote():
-            # This is an entry to send to the remote debug monitor.
-            send_packet = sequence_entry.get_send_packet()
-            if logger:
-                logger.info("sending packet to remote: %s" % send_packet)
-            sock.sendall(send_packet)
-        else:
-            # This is an entry to expect to receive from the remote debug monitor.
-            if logger:
-                logger.info("receiving packet from remote")
-
-            start_time = time.time()
-            timeout_time = start_time + timeout_seconds
-
-            # while we don't have a complete line of input, wait
-            # for it from socket.
-            while len(received_lines) < 1:
-                # check for timeout
-                if time.time() > timeout_time:
-                    raise Exception(
-                        'timed out after {} seconds while waiting for llgs to respond, currently received: {}'.format(
-                            timeout_seconds, receive_buffer))
-                can_read, _, _ = select.select([sock], [], [], 0)
-                if can_read and sock in can_read:
-                    try:
-                        new_bytes = sock.recv(4096)
-                    except:
-                        new_bytes = None
-                    if new_bytes and len(new_bytes) > 0:
-                        # read the next bits from the socket
-                        if logger:
-                            logger.debug("llgs responded with bytes: {}".format(new_bytes))
-                        receive_buffer += new_bytes
-
-                        # parse fully-formed packets into individual packets
-                        has_more = len(receive_buffer) > 0
-                        while has_more:
-                            if len(receive_buffer) <= 0:
-                                has_more = False
-                            # handle '+' ack
-                            elif receive_buffer[0] == '+':
-                                received_lines.append('+')
-                                receive_buffer = receive_buffer[1:]
-                                if logger:
-                                    logger.debug('parsed packet from llgs: +, new receive_buffer: {}'.format(receive_buffer))
-                            else:
-                                packet_match = _GDB_REMOTE_PACKET_REGEX.match(receive_buffer)
-                                if packet_match:
-                                    if not handle_O_packet(context, packet_match.group(1)):
-                                        # Normal packet to match.
-                                        received_lines.append(packet_match.group(0))
-                                    receive_buffer = receive_buffer[len(packet_match.group(0)):]
-                                    if logger:
-                                        logger.debug('parsed packet from llgs: {}, new receive_buffer: {}'.format(packet_match.group(0), receive_buffer))
-                                else:
-                                    has_more = False
-            # got a line - now try to match it against expected line
-            if len(received_lines) > 0:
-                received_packet = received_lines.pop(0)
-                context = sequence_entry.assert_match(asserter, received_packet, context=context)
-                
-        # Move on to next sequence entry as needed.  Some sequence entries support executing multiple
-        # times in different states (for looping over query/response packets).
-        if sequence_entry.is_consumed():
-            if len(test_sequence.entries) > 0:
-                sequence_entry = test_sequence.entries.pop(0)
+    with socket_packet_pump.SocketPacketPump(sock, logger) as pump:
+        # Grab the first sequence entry.
+        sequence_entry = test_sequence.entries.pop(0)
+        
+        # While we have an active sequence entry, send messages
+        # destined for the stub and collect/match/process responses
+        # expected from the stub.
+        while sequence_entry:
+            if sequence_entry.is_send_to_remote():
+                # This is an entry to send to the remote debug monitor.
+                send_packet = sequence_entry.get_send_packet()
+                if logger:
+                    logger.info("sending packet to remote: %s" % send_packet)
+                sock.sendall(send_packet)
             else:
-                sequence_entry = None
-    return context
+                # This is an entry expecting to receive content from the remote debug monitor.
 
+                # We'll pull from (and wait on) the queue appropriate for the type of matcher.
+                # We keep separate queues for process output (coming from non-deterministic
+                # $O packet division) and for all other packets.
+                if sequence_entry.is_output_matcher():
+                    try:
+                        # Grab next entry from the output queue.
+                        content = pump.output_queue().get(True, timeout_seconds)
+                    except Queue.Empty:
+                        if logger:
+                            logger.warning("timeout waiting for stub output (accumulated output:{})".format(pump.get_accumulated_output()))
+                        raise Exception("timed out while waiting for output match (accumulated output: {})".format(pump.get_accumulated_output()))
+                else:
+                    try:
+                        content = pump.packet_queue().get(True, timeout_seconds)
+                    except Queue.Empty:
+                        if logger:
+                            logger.warning("timeout waiting for packet match (receive buffer: {})".format(pump.get_receive_buffer()))
+                        raise Exception("timed out while waiting for packet match (receive buffer: {})".format(pump.get_receive_buffer()))
+                
+                # Give the sequence entry the opportunity to match the content.
+                # Output matchers might match or pass after more output accumulates.
+                # Other packet types generally must match.
+                asserter.assertIsNotNone(content)
+                context = sequence_entry.assert_match(asserter, content, context=context)
+
+            # Move on to next sequence entry as needed.  Some sequence entries support executing multiple
+            # times in different states (for looping over query/response packets).
+            if sequence_entry.is_consumed():
+                if len(test_sequence.entries) > 0:
+                    sequence_entry = test_sequence.entries.pop(0)
+                else:
+                    sequence_entry = None
+    
+        # Fill in the O_content entries.
+        context["O_count"] = 1
+        context["O_content"] = pump.get_accumulated_output()
+        
+    return context
 
 def gdbremote_hex_encode_string(str):
     output = ''
@@ -270,7 +253,6 @@ def gdbremote_packet_encode_string(str):
     for c in str:
         checksum += ord(c)
     return '$' + str + '#{0:02x}'.format(checksum % 256)
-
 
 def build_gdbremote_A_packet(args_list):
     """Given a list of args, create a properly-formed $A packet containing each arg.
@@ -327,8 +309,11 @@ def parse_threadinfo_response(response_packet):
     # Return list of thread ids
     return [int(thread_id_hex,16) for thread_id_hex in response_packet.split(",") if len(thread_id_hex) > 0]
 
+class GdbRemoteEntryBase(object):
+    def is_output_matcher(self):
+        return False
 
-class GdbRemoteEntry(object):
+class GdbRemoteEntry(GdbRemoteEntryBase):
 
     def __init__(self, is_send_to_remote=True, exact_payload=None, regex=None, capture=None, expect_captures=None):
         """Create an entry representing one piece of the I/O to/from a gdb remote debug monitor.
@@ -446,7 +431,7 @@ class GdbRemoteEntry(object):
         else:
             raise Exception("Don't know how to match a remote-sent packet when exact_payload isn't specified.")
 
-class MultiResponseGdbRemoteEntry(object):
+class MultiResponseGdbRemoteEntry(GdbRemoteEntryBase):
     """Represents a query/response style packet.
     
     Assumes the first item is sent to the gdb remote.
@@ -557,6 +542,99 @@ class MultiResponseGdbRemoteEntry(object):
         self._is_send_to_remote = True
         return context
 
+class MatchRemoteOutputEntry(GdbRemoteEntryBase):
+    """Waits for output from the debug monitor to match a regex or time out.
+    
+    This entry type tries to match each time new gdb remote output is accumulated
+    using a provided regex.  If the output does not match the regex within the
+    given timeframe, the command fails the playback session.  If the regex does
+    match, any capture fields are recorded in the context.
+    
+    Settings accepted from params:
+
+        regex: required. Specifies a compiled regex object that must either succeed
+            with re.match or re.search (see regex_mode below) within the given timeout
+            (see timeout_seconds below) or cause the playback to fail.
+
+        regex_mode: optional. Available values: "match" or "search". If "match", the entire
+            stub output as collected so far must match the regex.  If search, then the regex
+            must match starting somewhere within the output text accumulated thus far.
+            Default: "match" (i.e. the regex must match the entirety of the accumulated output
+            buffer, so unexpected text will generally fail the match).
+        
+        capture: optional.  If specified, is a dictionary of regex match group indices (should start
+            with 1) to variable names that will store the capture group indicated by the
+            index. For example, {1:"thread_id"} will store capture group 1's content in the
+            context dictionary where "thread_id" is the key and the match group value is
+            the value. The value stored off can be used later in a expect_captures expression.
+            This arg only makes sense when regex is specified.
+    """
+    def __init__(self, regex=None, regex_mode="match", capture=None):
+        self._regex = regex
+        self._regex_mode = regex_mode
+        self._capture = capture
+        self._matched = False
+        
+        if not self._regex:
+            raise Exception("regex cannot be None")
+        
+        if not self._regex_mode in ["match", "search"]:
+            raise Exception("unsupported regex mode \"{}\": must be \"match\" or \"search\"".format(self._regex_mode))
+
+    def is_output_matcher(self):
+        return True
+
+    def is_send_to_remote(self):
+        # This is always a "wait for remote" command.
+        return False
+
+    def is_consumed(self):
+        return self._matched
+
+    def assert_match(self, asserter, accumulated_output, context):
+        # Validate args.
+        if not accumulated_output:
+            raise Exception("accumulated_output cannot be none")
+        if not context:
+            raise Exception("context cannot be none")
+
+        # Validate that we haven't already matched.
+        if self._matched:
+            raise Exception("invalid state - already matched, attempting to match again")
+
+        # If we don't have any content yet, we don't match.
+        if len(accumulated_output) < 1:
+            return context
+        
+        # Check if we match
+        if self._regex_mode == "match":
+            match = self._regex.match(accumulated_output)
+        elif self._regex_mode == "search":
+            match = self._regex.search(accumulated_output)
+        else:
+            raise Exception("Unexpected regex mode: {}".format(self._regex_mode))
+        
+        # If we don't match, wait to try again after next $O content, or time out.
+        if not match:
+            # print "re pattern \"{}\" did not match against \"{}\"".format(self._regex.pattern, accumulated_output)
+            return context
+        
+        # We do match.
+        self._matched = True
+        # print "re pattern \"{}\" matched against \"{}\"".format(self._regex.pattern, accumulated_output)
+        
+        # Collect up any captures into the context.
+        if self._capture:
+            # Handle captures.
+            for group_index, var_name in self._capture.items():
+                capture_text = match.group(group_index)
+                if not capture_text:
+                    raise Exception("No content for group index {}".format(group_index))
+                context[var_name] = capture_text
+
+        return context
+
+
 class GdbRemoteTestSequence(object):
 
     _LOG_LINE_REGEX = re.compile(r'^.*(read|send)\s+packet:\s+(.+)$')
@@ -569,21 +647,21 @@ class GdbRemoteTestSequence(object):
         for line in log_lines:
             if type(line) == str:
                 # Handle log line import
-                if self.logger:
-                    self.logger.debug("processing log line: {}".format(line))
+                # if self.logger:
+                #     self.logger.debug("processing log line: {}".format(line))
                 match = self._LOG_LINE_REGEX.match(line)
                 if match:
                     playback_packet = match.group(2)
                     direction = match.group(1)
                     if _is_packet_lldb_gdbserver_input(direction, remote_input_is_read):
                         # Handle as something to send to the remote debug monitor.
-                        if self.logger:
-                            self.logger.info("processed packet to send to remote: {}".format(playback_packet))
+                        # if self.logger:
+                        #     self.logger.info("processed packet to send to remote: {}".format(playback_packet))
                         self.entries.append(GdbRemoteEntry(is_send_to_remote=True, exact_payload=playback_packet))
                     else:
                         # Log line represents content to be expected from the remote debug monitor.
-                        if self.logger:
-                            self.logger.info("receiving packet from llgs, should match: {}".format(playback_packet))
+                        # if self.logger:
+                        #     self.logger.info("receiving packet from llgs, should match: {}".format(playback_packet))
                         self.entries.append(GdbRemoteEntry(is_send_to_remote=False,exact_payload=playback_packet))
                 else:
                     raise Exception("failed to interpret log line: {}".format(line))
@@ -602,16 +680,26 @@ class GdbRemoteTestSequence(object):
 
                     if _is_packet_lldb_gdbserver_input(direction, remote_input_is_read):
                         # Handle as something to send to the remote debug monitor.
-                        if self.logger:
-                            self.logger.info("processed dict sequence to send to remote")
+                        # if self.logger:
+                        #     self.logger.info("processed dict sequence to send to remote")
                         self.entries.append(GdbRemoteEntry(is_send_to_remote=True, regex=regex, capture=capture, expect_captures=expect_captures))
                     else:
                         # Log line represents content to be expected from the remote debug monitor.
-                        if self.logger:
-                            self.logger.info("processed dict sequence to match receiving from remote")
+                        # if self.logger:
+                        #     self.logger.info("processed dict sequence to match receiving from remote")
                         self.entries.append(GdbRemoteEntry(is_send_to_remote=False, regex=regex, capture=capture, expect_captures=expect_captures))
                 elif entry_type == "multi_response":
                     self.entries.append(MultiResponseGdbRemoteEntry(line))
+                elif entry_type == "output_match":
+
+                    regex = line.get("regex", None)
+                    # Compile the regex.
+                    if regex and (type(regex) == str):
+                        regex = re.compile(regex)
+
+                    regex_mode = line.get("regex_mode", "match")
+                    capture = line.get("capture", None)
+                    self.entries.append(MatchRemoteOutputEntry(regex=regex, regex_mode=regex_mode, capture=capture))
                 else:
                     raise Exception("unknown entry type \"%s\"" % entry_type)
 
