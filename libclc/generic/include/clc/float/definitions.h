@@ -25,5 +25,6 @@
 #define DBL_EPSILON     0x1.0p-52
 
 #define M_LOG2E         0x1.71547652b82fep+0
+#define M_PI            0x1.921fb54442d18p+1
 
 #endif
