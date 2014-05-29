@@ -229,6 +229,27 @@ static error_code processCFISection(MachOFile &file, const Section &section,
   return error_code::success();
 }
 
+static error_code 
+processCompactUnwindSection(MachOFile &file, const Section &section,
+                            bool is64, bool copyRefs) {
+  const uint32_t cuObjSize = (is64 ? 32 : 20);
+  if ((section.content.size() % cuObjSize) != 0) {
+    return make_dynamic_error_code(Twine("Section __LD/__compact_unwind has a "
+                                   "size (" + Twine(section.content.size())
+                                   + ") that is not a multiple of "
+                                   + Twine(cuObjSize)));
+  }
+  unsigned offset = 0;
+  for (size_t i = 0, e = section.content.size(); i != e; i += cuObjSize) {
+    ArrayRef<uint8_t> byteContent = section.content.slice(offset, cuObjSize);
+    file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
+                        DefinedAtom::typeCompactUnwindInfo,
+                        DefinedAtom::mergeNo, byteContent, copyRefs);
+    offset += cuObjSize;
+  }
+  return error_code::success();
+}
+
 static error_code processSection(MachOFile &file, const Section &section,
                                  bool is64, bool swap, bool copyRefs,
                                  SymbolsInSection &symbolsInSect) {
@@ -244,6 +265,10 @@ static error_code processSection(MachOFile &file, const Section &section,
              section.sectionName.equals("__cfstring")) {
       symbolsInSect = symbolsIllegal;
       return processCFStringSection(file, section, is64, copyRefs);
+    } else if (section.segmentName.equals("__LD") &&
+             section.sectionName.equals("__compact_unwind")) {
+      symbolsInSect = symbolsIllegal;
+      return processCompactUnwindSection(file, section, is64, copyRefs);
     }
     break;
   case llvm::MachO::S_COALESCED:

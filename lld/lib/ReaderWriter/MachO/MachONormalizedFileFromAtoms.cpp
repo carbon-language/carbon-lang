@@ -203,6 +203,9 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   case DefinedAtom::typeCFI:
      return new (_allocator) SectionInfo("__TEXT", "__eh_frame",
                             S_COALESCED);
+  case DefinedAtom::typeCompactUnwindInfo:
+     return new (_allocator) SectionInfo("__LD", "__compact_unwind",
+                            S_REGULAR);
   default:
     llvm_unreachable("TO DO: add support for more sections");
     break;
