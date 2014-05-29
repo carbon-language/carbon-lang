@@ -461,6 +461,12 @@ void BackendConsumer::DiagnosticHandlerImpl(const DiagnosticInfo &DI) {
     // handler. There is no generic way of emitting them.
     OptimizationRemarkHandler(cast<DiagnosticInfoOptimizationRemark>(DI));
     return;
+  case llvm::DK_OptimizationRemarkMissed:
+  case llvm::DK_OptimizationRemarkAnalysis:
+    // TODO: Do nothing for now. The implementation of these
+    // two remarks is still under review (http://reviews.llvm.org/D3683).
+    // Remove this once that patch lands.
+    return;
   default:
     // Plugin IDs are not bound to any value as they are set dynamically.
     ComputeDiagRemarkID(Severity, backend_plugin, DiagID);
