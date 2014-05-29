@@ -31,3 +31,12 @@ template<bool, bool> struct ExplicitInstantiation {
 };
 
 template<typename> struct DelayUpdates {};
+
+template<typename T> struct OutOfLineInline {
+  void f();
+  void g();
+  void h();
+};
+template<typename T> inline void OutOfLineInline<T>::f() {}
+template<typename T> inline void OutOfLineInline<T>::g() {}
+template<typename T> inline void OutOfLineInline<T>::h() {}

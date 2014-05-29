@@ -4,6 +4,12 @@
 // expected-no-diagnostics
 
 @import templates_left;
+
+void testInlineRedeclEarly() {
+  // instantiate definition now, we'll add another declaration in _right.
+  OutOfLineInline<int>().h();
+}
+
 @import templates_right;
 
 // CHECK: @list_left = global { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 8,
@@ -37,6 +43,14 @@ void testPendingInstantiations() {
 void testRedeclDefinition() {
   // CHECK: define {{.*redeclDefinitionEmit}}
   redeclDefinitionEmit();
+}
+
+void testInlineRedecl() {
+  outOfLineInlineUseLeftF();
+  outOfLineInlineUseRightG();
+
+  outOfLineInlineUseRightF();
+  outOfLineInlineUseLeftG();
 }
 
 // CHECK-NOT: @_ZN21ExplicitInstantiationILb0ELb0EE1fEv(

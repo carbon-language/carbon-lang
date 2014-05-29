@@ -3377,8 +3377,16 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       !PatternDecl->getReturnType()->getContainedAutoType())
     return;
 
-  if (PatternDecl->isInlined())
-    Function->setImplicitlyInline();
+  if (PatternDecl->isInlined()) {
+    // Function, and all later redeclarations of it (from imported modules,
+    // for instance), are now implicitly inline.
+    for (auto *D = Function->getMostRecentDecl(); /**/;
+         D = D->getPreviousDecl()) {
+      D->setImplicitlyInline();
+      if (D == Function)
+        break;
+    }
+  }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
   if (Inst.isInvalid())

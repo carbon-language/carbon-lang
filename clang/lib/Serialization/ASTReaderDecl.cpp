@@ -2491,6 +2491,32 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
   D->IdentifierNamespace |=
       Previous->IdentifierNamespace &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
+
+  // If the previous declaration is an inline function declaration, then this
+  // declaration is too.
+  if (auto *FD = dyn_cast<FunctionDecl>(D)) {
+    if (cast<FunctionDecl>(Previous)->IsInline != FD->IsInline) {
+      // FIXME: [dcl.fct.spec]p4:
+      //   If a function with external linkage is declared inline in one
+      //   translation unit, it shall be declared inline in all translation
+      //   units in which it appears.
+      //
+      // Be careful of this case:
+      //
+      // module A:
+      //   template<typename T> struct X { void f(); };
+      //   template<typename T> inline void X<T>::f() {}
+      //
+      // module B instantiates the declaration of X<int>::f
+      // module C instantiates the definition of X<int>::f
+      //
+      // If module B and C are merged, we do not have a violation of this rule.
+      //
+      //if (!FD->IsInline || Previous->getOwningModule())
+      //  Diag(FD->getLocation(), diag::err_odr_differing_inline);
+      FD->IsInline = true;
+    }
+  }
 }
 
 template<typename DeclT>
@@ -3162,8 +3188,17 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
         return;
       }
 
-      if (Record[Idx++])
-        FD->setImplicitlyInline();
+      if (Record[Idx++]) {
+        // Maintain AST consistency: any later redeclarations of this function
+        // are inline if this one is. (We might have merged another declaration
+        // into this one.)
+        for (auto *D = FD->getMostRecentDecl(); /**/;
+             D = D->getPreviousDecl()) {
+          D->setImplicitlyInline();
+          if (D == FD)
+            break;
+        }
+      }
       FD->setInnerLocStart(Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       if (auto *CD = dyn_cast<CXXConstructorDecl>(FD))
         std::tie(CD->CtorInitializers, CD->NumCtorInitializers) =

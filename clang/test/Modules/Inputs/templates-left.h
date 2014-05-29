@@ -56,3 +56,7 @@ template<typename> struct DelayUpdates;
 template<> struct DelayUpdates<int>;
 template<typename T> struct DelayUpdates<T*>;
 template<typename T> void testDelayUpdates(DelayUpdates<T> *p = 0) {}
+
+void outOfLineInlineUseLeftF(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::f);
+void outOfLineInlineUseLeftG(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::g);
+void outOfLineInlineUseLeftH(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::h);

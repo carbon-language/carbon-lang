@@ -39,3 +39,7 @@ int defineListDoubleRight() {
 }
 
 template<typename T> struct MergePatternDecl;
+
+void outOfLineInlineUseRightF(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::f);
+void outOfLineInlineUseRightG(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::g);
+void outOfLineInlineUseRightH(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::h);
