@@ -107,6 +107,10 @@ N: Rafael Avila de Espindola
 E: rafael.espindola@gmail.com
 D: The ARM backend
 
+N: Dave Estes
+E: cestes@codeaurora.org
+D: AArch64 machine description for Cortex-A53
+
 N: Alkis Evlogimenos
 E: alkis@evlogimenos.com
 D: Linear scan register allocator, many codegen improvements, Java frontend
@@ -341,6 +345,10 @@ D: LTO tool, PassManager rewrite, Loop Pass Manager, Loop Rotate
 D: GCC PCH Integration (llvm-gcc), llvm-gcc improvements
 D: Optimizer improvements, Loop Index Split
 
+N: Ana Pazos
+E: apazos@codeaurora.org
+D: Fixes and improvements to the AArch64 backend
+
 N: Wesley Peck
 E: peckw@wesleypeck.com
 W: http://wesleypeck.com/
@@ -370,8 +378,10 @@ D: ARM calling conventions rewrite, hard float support
 
 N: Chad Rosier
 E: mcrosier@codeaurora.org
-D: ARM fast-isel improvements
-D: Performance monitoring
+I: mcrosier
+D: AArch64 fast instruction selection pass
+D: Fixes and improvements to the ARM fast-isel pass
+D: Fixes and improvements to the AArch64 backend
 
 N: Nadav Rotem
 E: nrotem@apple.com
