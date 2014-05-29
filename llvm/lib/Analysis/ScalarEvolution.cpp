@@ -7216,6 +7216,15 @@ public:
         cast<SCEVConstant>(Zero)->getValue();
     Remainder = SCEVParameterRewriter::rewrite(Numerator, SE, RewriteMap, true);
 
+    if (Remainder->isZero()) {
+      // The Quotient is obtained by replacing Denominator by 1 in Numerator.
+      RewriteMap[cast<SCEVUnknown>(Denominator)->getValue()] =
+          cast<SCEVConstant>(One)->getValue();
+      Quotient =
+          SCEVParameterRewriter::rewrite(Numerator, SE, RewriteMap, true);
+      return;
+    }
+
     // Quotient is (Numerator - Remainder) divided by Denominator.
     const SCEV *Q, *R;
     const SCEV *Diff = SE.getMinusSCEV(Numerator, Remainder);
