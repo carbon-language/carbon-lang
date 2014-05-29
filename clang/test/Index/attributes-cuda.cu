@@ -1,10 +1,9 @@
-// RUN: c-index-test -test-load-source all -x cuda -std=cuda %s | FileCheck %s
+// RUN: c-index-test -test-load-source all -x cuda %s | FileCheck %s
 
 __attribute__((device)) void f_device();
 __attribute__((global)) void f_global();
 __attribute__((constant)) int* g_constant;
 __attribute__((host)) void f_host();
-
 
 // CHECK:       attributes-cuda.cu:3:30: FunctionDecl=f_device:3:30
 // CHECK-NEXT:  attributes-cuda.cu:3:16: attribute(device)
