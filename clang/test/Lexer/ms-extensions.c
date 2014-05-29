@@ -13,6 +13,10 @@ __int64 w = 0x43ui64;
 __int64 z = 9Li64;  // expected-error {{invalid suffix}}
 __int64 q = 10lli64;  // expected-error {{invalid suffix}}
 
+__complex double c1 = 1i;
+__complex double c2 = 1.0i;
+__complex float c3 = 1.0if;
+
 // radar 7562363
 #define ULLONG_MAX 0xffffffffffffffffui64
 #define UINT 0xffffffffui32

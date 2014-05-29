@@ -606,16 +606,18 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
     case 'i':
     case 'I':
       if (PP.getLangOpts().MicrosoftExt) {
-        if (isFPConstant || isLong || isLongLong) break;
+        if (isLong || isLongLong) break;
 
         // Allow i8, i16, i32, i64, and i128.
         if (s + 1 != ThisTokEnd) {
           switch (s[1]) {
             case '8':
+              if (isFPConstant) break;
               s += 2; // i8 suffix
               isMicrosoftInteger = true;
               break;
             case '1':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '6') {
                 s += 3; // i16 suffix
@@ -630,6 +632,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               }
               break;
             case '3':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '2') {
                 s += 3; // i32 suffix
@@ -638,6 +641,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               }
               break;
             case '6':
+              if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '4') {
                 s += 3; // i64 suffix
@@ -648,7 +652,8 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
             default:
               break;
           }
-          break;
+          if (isMicrosoftInteger)
+            break;
         }
       }
       // "i", "if", and "il" are user-defined suffixes in C++1y.
