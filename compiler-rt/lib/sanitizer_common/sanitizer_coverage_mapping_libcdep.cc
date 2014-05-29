@@ -41,9 +41,12 @@ void CovUpdateMapping() {
   if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
 
   int err;
-  InternalScopedString tmp_path(64);
-  internal_snprintf((char *)tmp_path.data(), tmp_path.size(),
-                    "%zd.sancov.map.tmp", internal_getpid());
+  InternalScopedString tmp_path(64 +
+                                internal_strlen(common_flags()->coverage_dir));
+  uptr res = internal_snprintf((char *)tmp_path.data(), tmp_path.size(),
+                    "%s/%zd.sancov.map.tmp", common_flags()->coverage_dir,
+                    internal_getpid());
+  CHECK_LE(res, tmp_path.size());
   uptr map_fd = OpenFile(tmp_path.data(), true);
   if (internal_iserror(map_fd)) {
     Report(" Coverage: failed to open %s for writing\n", tmp_path.data());
@@ -59,7 +62,7 @@ void CovUpdateMapping() {
 
   InternalScopedString line(4096);
   line.append("%d\n", sizeof(uptr) * 8);
-  uptr res = internal_write(map_fd, line.data(), line.length());
+  res = internal_write(map_fd, line.data(), line.length());
   if (internal_iserror(res, &err)) {
     Printf("sancov.map write failed: %d\n", err);
     Die();
@@ -84,9 +87,10 @@ void CovUpdateMapping() {
 
   internal_close(map_fd);
 
-  InternalScopedString path(64);
-  internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.map",
-                    internal_getpid());
+  InternalScopedString path(64 + internal_strlen(common_flags()->coverage_dir));
+  res = internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.map",
+                    common_flags()->coverage_dir, internal_getpid());
+  CHECK_LE(res, path.size());
   res = internal_rename(tmp_path.data(), path.data());
   if (internal_iserror(res, &err)) {
     Printf("sancov.map rename failed: %d\n", err);

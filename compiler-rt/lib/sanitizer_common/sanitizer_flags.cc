@@ -56,6 +56,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->intercept_tls_get_addr = false;
   f->coverage = false;
   f->coverage_direct = false;
+  f->coverage_dir = ".";
   f->full_address_space = false;
 }
 
@@ -132,6 +133,9 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
             "If set, coverage information will be dumped directly to a memory "
             "mapped file. This way data is not lost even if the process is "
             "suddenly killed.");
+  ParseFlag(str, &f->coverage_dir, "coverage_dir",
+            "Target directory for coverage dumps. Defaults to the current "
+            "directory.");
   ParseFlag(str, &f->full_address_space, "full_address_space",
             "Sanitize complete address space; "
             "by default kernel area on 32-bit platforms will not be sanitized");

@@ -91,9 +91,9 @@ class CoverageData {
 static CoverageData coverage_data;
 
 void CoverageData::DirectInit() {
-  InternalScopedString path(64);
-  internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.raw",
-                    internal_getpid());
+  InternalScopedString path(1024);
+  internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.raw",
+                    common_flags()->coverage_dir, internal_getpid());
   pc_fd = OpenFile(path.data(), true);
   if (internal_iserror(pc_fd)) {
     Report(" Coverage: failed to open %s for writing\n", path.data());
@@ -221,15 +221,17 @@ static int CovOpenFile(bool packed, const char* name) {
   InternalScopedBuffer<char> path(1024);
   if (!packed) {
     CHECK(name);
-    internal_snprintf((char *)path.data(), path.size(), "%s.%zd.sancov",
-                      name, internal_getpid());
+    Printf("%s\n", common_flags()->coverage_dir);
+    internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
+                      common_flags()->coverage_dir, name, internal_getpid());
   } else {
     if (!name)
-      internal_snprintf((char *)path.data(), path.size(), "%zd.sancov.packed",
+      internal_snprintf((char *)path.data(), path.size(),
+                        "%s/%zd.sancov.packed", common_flags()->coverage_dir,
                         internal_getpid());
     else
-      internal_snprintf((char *)path.data(), path.size(), "%s.sancov.packed",
-                        name);
+      internal_snprintf((char *)path.data(), path.size(), "%s/%s.sancov.packed",
+                        common_flags()->coverage_dir, name);
   }
   uptr fd = OpenFile(path.data(), true);
   if (internal_iserror(fd)) {
@@ -279,8 +281,9 @@ static void CovDump() {
         }
       } else {
         // One file per module per process.
-        internal_snprintf((char *)path.data(), path.size(), "%s.%zd.sancov",
-                          module_name, internal_getpid());
+        internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
+                          common_flags()->coverage_dir, module_name,
+                          internal_getpid());
         int fd = CovOpenFile(false /* packed */, module_name);
         if (fd > 0) {
           internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));

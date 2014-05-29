@@ -4,13 +4,13 @@
 
 // RUN: rm -rf %T/coverage-direct
 
-// RUN: mkdir -p %T/coverage-direct/normal && cd %T/coverage-direct/normal
-// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:verbosity=1 %run %t
-// RUN: %sancov print *.sancov >out.txt
-// RUN: cd ../..
+// RUN: mkdir -p %T/coverage-direct/normal
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t
+// RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
 
-// RUN: mkdir -p %T/coverage-direct/direct && cd %T/coverage-direct/direct
-// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:verbosity=1 %run %t
+// RUN: mkdir -p %T/coverage-direct/direct
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t
+// RUN: cd %T/coverage-direct/direct
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
