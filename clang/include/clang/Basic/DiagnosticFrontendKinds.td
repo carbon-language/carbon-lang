@@ -34,6 +34,10 @@ def note_fe_backend_plugin: Note<"%0">, CatBackend;
 
 def remark_fe_backend_optimization_remark : Remark<"%0">, CatBackend,
     InGroup<BackendOptimizationRemark>, DefaultRemark;
+def remark_fe_backend_optimization_remark_missed : Remark<"%0">, CatBackend,
+    InGroup<BackendOptimizationRemarkMissed>, DefaultRemark;
+def remark_fe_backend_optimization_remark_analysis : Remark<"%0">, CatBackend,
+    InGroup<BackendOptimizationRemarkAnalysis>, DefaultRemark;
 def note_fe_backend_optimization_remark_missing_loc : Note<"use "
   "-gline-tables-only -gcolumn-info to track source location information "
   "for this optimization remark">;

@@ -235,11 +235,18 @@ namespace clang {
     /// \return True if the diagnostic has been successfully reported, false
     /// otherwise.
     bool StackSizeDiagHandler(const llvm::DiagnosticInfoStackSize &D);
-    /// \brief Specialized handler for the optimization diagnostic.
-    /// Note that this handler only accepts remarks and it always handles
+    /// \brief Specialized handlers for optimization remarks.
+    /// Note that these handlers only accept remarks and they always handle
     /// them.
     void
+    EmitOptimizationRemark(const llvm::DiagnosticInfoOptimizationRemarkBase &D,
+                           unsigned DiagID);
+    void
     OptimizationRemarkHandler(const llvm::DiagnosticInfoOptimizationRemark &D);
+    void OptimizationRemarkHandler(
+        const llvm::DiagnosticInfoOptimizationRemarkMissed &D);
+    void OptimizationRemarkHandler(
+        const llvm::DiagnosticInfoOptimizationRemarkAnalysis &D);
   };
   
   void BackendConsumer::anchor() {}
@@ -394,49 +401,74 @@ BackendConsumer::StackSizeDiagHandler(const llvm::DiagnosticInfoStackSize &D) {
   return true;
 }
 
-void BackendConsumer::OptimizationRemarkHandler(
-    const llvm::DiagnosticInfoOptimizationRemark &D) {
+void BackendConsumer::EmitOptimizationRemark(
+    const llvm::DiagnosticInfoOptimizationRemarkBase &D, unsigned DiagID) {
   // We only support remarks.
   assert(D.getSeverity() == llvm::DS_Remark);
 
-  // Optimization remarks are active only if -Rpass=regexp is given and the
-  // regular expression pattern in 'regexp' matches the name of the pass
-  // name in \p D.
-  if (CodeGenOpts.OptimizationRemarkPattern &&
-      CodeGenOpts.OptimizationRemarkPattern->match(D.getPassName())) {
-    SourceManager &SourceMgr = Context->getSourceManager();
-    FileManager &FileMgr = SourceMgr.getFileManager();
-    StringRef Filename;
-    unsigned Line, Column;
-    D.getLocation(&Filename, &Line, &Column);
-    SourceLocation Loc;
-    const FileEntry *FE = FileMgr.getFile(Filename);
-    if (FE && Line > 0) {
-      // If -gcolumn-info was not used, Column will be 0. This upsets the
-      // source manager, so if Column is not set, set it to 1.
-      if (Column == 0)
-        Column = 1;
-      Loc = SourceMgr.translateFileLineCol(FE, Line, Column);
-    }
-    Diags.Report(Loc, diag::remark_fe_backend_optimization_remark)
-        << AddFlagValue(D.getPassName()) << D.getMsg().str();
-
-    if (Line == 0)
-      // If we could not extract a source location for the diagnostic,
-      // inform the user how they can get source locations back.
-      //
-      // FIXME: We should really be generating !srcloc annotations when
-      // -Rpass is used. !srcloc annotations need to be emitted in
-      // approximately the same spots as !dbg nodes.
-      Diags.Report(diag::note_fe_backend_optimization_remark_missing_loc);
-    else if (Loc.isInvalid())
-      // If we were not able to translate the file:line:col information
-      // back to a SourceLocation, at least emit a note stating that
-      // we could not translate this location. This can happen in the
-      // case of #line directives.
-      Diags.Report(diag::note_fe_backend_optimization_remark_invalid_loc)
-        << Filename << Line << Column;
+  SourceManager &SourceMgr = Context->getSourceManager();
+  FileManager &FileMgr = SourceMgr.getFileManager();
+  StringRef Filename;
+  unsigned Line, Column;
+  D.getLocation(&Filename, &Line, &Column);
+  SourceLocation Loc;
+  const FileEntry *FE = FileMgr.getFile(Filename);
+  if (FE && Line > 0) {
+    // If -gcolumn-info was not used, Column will be 0. This upsets the
+    // source manager, so if Column is not set, set it to 1.
+    if (Column == 0)
+      Column = 1;
+    Loc = SourceMgr.translateFileLineCol(FE, Line, Column);
   }
+  Diags.Report(Loc, DiagID) << AddFlagValue(D.getPassName())
+                            << D.getMsg().str();
+
+  if (Line == 0)
+    // If we could not extract a source location for the diagnostic,
+    // inform the user how they can get source locations back.
+    //
+    // FIXME: We should really be generating !srcloc annotations when
+    // -Rpass is used. !srcloc annotations need to be emitted in
+    // approximately the same spots as !dbg nodes.
+    Diags.Report(diag::note_fe_backend_optimization_remark_missing_loc);
+  else if (Loc.isInvalid())
+    // If we were not able to translate the file:line:col information
+    // back to a SourceLocation, at least emit a note stating that
+    // we could not translate this location. This can happen in the
+    // case of #line directives.
+    Diags.Report(diag::note_fe_backend_optimization_remark_invalid_loc)
+        << Filename << Line << Column;
+}
+
+void BackendConsumer::OptimizationRemarkHandler(
+    const llvm::DiagnosticInfoOptimizationRemark &D) {
+  // Optimization remarks are active only if the -Rpass flag has a regular
+  // expression that matches the name of the pass name in \p D.
+  if (CodeGenOpts.OptimizationRemarkPattern &&
+      CodeGenOpts.OptimizationRemarkPattern->match(D.getPassName()))
+    EmitOptimizationRemark(D, diag::remark_fe_backend_optimization_remark);
+}
+
+void BackendConsumer::OptimizationRemarkHandler(
+    const llvm::DiagnosticInfoOptimizationRemarkMissed &D) {
+  // Missed optimization remarks are active only if the -Rpass-missed
+  // flag has a regular expression that matches the name of the pass
+  // name in \p D.
+  if (CodeGenOpts.OptimizationRemarkMissedPattern &&
+      CodeGenOpts.OptimizationRemarkMissedPattern->match(D.getPassName()))
+    EmitOptimizationRemark(D,
+                           diag::remark_fe_backend_optimization_remark_missed);
+}
+
+void BackendConsumer::OptimizationRemarkHandler(
+    const llvm::DiagnosticInfoOptimizationRemarkAnalysis &D) {
+  // Optimization analysis remarks are active only if the -Rpass-analysis
+  // flag has a regular expression that matches the name of the pass
+  // name in \p D.
+  if (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
+      CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName()))
+    EmitOptimizationRemark(
+        D, diag::remark_fe_backend_optimization_remark_analysis);
 }
 
 /// \brief This function is invoked when the backend needs
@@ -462,10 +494,15 @@ void BackendConsumer::DiagnosticHandlerImpl(const DiagnosticInfo &DI) {
     OptimizationRemarkHandler(cast<DiagnosticInfoOptimizationRemark>(DI));
     return;
   case llvm::DK_OptimizationRemarkMissed:
+    // Optimization remarks are always handled completely by this
+    // handler. There is no generic way of emitting them.
+    OptimizationRemarkHandler(cast<DiagnosticInfoOptimizationRemarkMissed>(DI));
+    return;
   case llvm::DK_OptimizationRemarkAnalysis:
-    // TODO: Do nothing for now. The implementation of these
-    // two remarks is still under review (http://reviews.llvm.org/D3683).
-    // Remove this once that patch lands.
+    // Optimization remarks are always handled completely by this
+    // handler. There is no generic way of emitting them.
+    OptimizationRemarkHandler(
+        cast<DiagnosticInfoOptimizationRemarkAnalysis>(DI));
     return;
   default:
     // Plugin IDs are not bound to any value as they are set dynamically.

@@ -309,6 +309,22 @@ static StringRef getCodeModel(ArgList &Args, DiagnosticsEngine &Diags) {
   return "default";
 }
 
+/// \brief Create a new Regex instance out of the string value in \p RpassArg.
+/// It returns a pointer to the newly generated Regex instance.
+static std::shared_ptr<llvm::Regex>
+GenerateOptimizationRemarkRegex(DiagnosticsEngine &Diags, ArgList &Args,
+                                Arg *RpassArg) {
+  StringRef Val = RpassArg->getValue();
+  std::string RegexError;
+  std::shared_ptr<llvm::Regex> Pattern = std::make_shared<llvm::Regex>(Val);
+  if (!Pattern->isValid(RegexError)) {
+    Diags.Report(diag::err_drv_optimization_remark_pattern)
+        << RegexError << RpassArg->getAsString(Args);
+    Pattern.reset();
+  }
+  return Pattern;
+}
+
 static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                              DiagnosticsEngine &Diags,
                              const TargetOptions &TargetOpts) {
@@ -544,6 +560,18 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Opts.OptimizationRemarkPattern.reset();
     }
   }
+
+  if (Arg *A = Args.getLastArg(OPT_Rpass_EQ))
+    Opts.OptimizationRemarkPattern =
+        GenerateOptimizationRemarkRegex(Diags, Args, A);
+
+  if (Arg *A = Args.getLastArg(OPT_Rpass_missed_EQ))
+    Opts.OptimizationRemarkMissedPattern =
+        GenerateOptimizationRemarkRegex(Diags, Args, A);
+
+  if (Arg *A = Args.getLastArg(OPT_Rpass_analysis_EQ))
+    Opts.OptimizationRemarkAnalysisPattern =
+        GenerateOptimizationRemarkRegex(Diags, Args, A);
 
   return Success;
 }

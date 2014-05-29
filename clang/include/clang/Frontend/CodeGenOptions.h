@@ -153,6 +153,21 @@ public:
   /// -Rpass=regexp flag.
   std::shared_ptr<llvm::Regex> OptimizationRemarkPattern;
 
+  /// Regular expression to select optimizations for which we should enable
+  /// missed optimization remarks. Transformation passes whose name matches this
+  /// expression (and support this feature), will emit a diagnostic
+  /// whenever they tried but failed to perform a transformation. This is
+  /// enabled by the -Rpass-missed=regexp flag.
+  std::shared_ptr<llvm::Regex> OptimizationRemarkMissedPattern;
+
+  /// Regular expression to select optimizations for which we should enable
+  /// optimization analyses. Transformation passes whose name matches this
+  /// expression (and support this feature), will emit a diagnostic
+  /// whenever they want to explain why they decided to apply or not apply
+  /// a given transformation. This is enabled by the -Rpass-analysis=regexp
+  /// flag.
+  std::shared_ptr<llvm::Regex> OptimizationRemarkAnalysisPattern;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)

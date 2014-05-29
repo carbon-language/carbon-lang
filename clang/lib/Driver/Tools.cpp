@@ -3469,6 +3469,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_Rpass_EQ))
     A->render(Args, CmdArgs);
 
+  if (Arg *A = Args.getLastArg(options::OPT_Rpass_missed_EQ))
+    A->render(Args, CmdArgs);
+
+  if (Arg *A = Args.getLastArg(options::OPT_Rpass_analysis_EQ))
+    A->render(Args, CmdArgs);
+
   if (Args.hasArg(options::OPT_mkernel)) {
     if (!Args.hasArg(options::OPT_fapple_kext) && types::isCXX(InputType))
       CmdArgs.push_back("-fapple-kext");

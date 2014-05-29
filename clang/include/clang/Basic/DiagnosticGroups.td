@@ -685,6 +685,8 @@ def BackendFrameLargerThan : DiagGroup<"frame-larger-than">;
 def BackendPlugin : DiagGroup<"backend-plugin">;
 def RemarkBackendPlugin : DiagGroup<"remark-backend-plugin">;
 def BackendOptimizationRemark : DiagGroup<"pass">;
+def BackendOptimizationRemarkMissed : DiagGroup<"pass-missed">;
+def BackendOptimizationRemarkAnalysis : DiagGroup<"pass-analysis">;
 
 // Instrumentation based profiling warnings.
 def ProfileInstrOutOfDate : DiagGroup<"profile-instr-out-of-date">;
