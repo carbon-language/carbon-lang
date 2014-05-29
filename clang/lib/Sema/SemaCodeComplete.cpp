@@ -3428,7 +3428,7 @@ void Sema::CodeCompletePostfixExpression(Scope *S, ExprResult E) {
   if (E.isInvalid())
     CodeCompleteOrdinaryName(S, PCC_RecoveryInFunction);
   else if (getLangOpts().ObjC1)
-    CodeCompleteObjCInstanceMessage(S, E.take(), None, false);
+    CodeCompleteObjCInstanceMessage(S, E.get(), None, false);
 }
 
 /// \brief The set of properties that have already been added, referenced by
@@ -5466,7 +5466,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
     ExprResult Conv = DefaultFunctionArrayLvalueConversion(RecExpr);
     if (Conv.isInvalid()) // conversion failed. bail.
       return;
-    RecExpr = Conv.take();
+    RecExpr = Conv.get();
   }
   QualType ReceiverType = RecExpr? RecExpr->getType() 
                           : Super? Context.getObjCObjectPointerType(
@@ -5490,7 +5490,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
   } else if (RecExpr && getLangOpts().CPlusPlus) {
     ExprResult Conv = PerformContextuallyConvertToObjCPointer(RecExpr);
     if (Conv.isUsable()) {
-      RecExpr = Conv.take();
+      RecExpr = Conv.get();
       ReceiverType = RecExpr->getType();
     }
   }

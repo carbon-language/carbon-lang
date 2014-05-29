@@ -268,7 +268,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind, Arg);
   if (Result.isInvalid())
     return true;
-  Arg = Result.takeAs<Expr>();
+  Arg = Result.getAs<Expr>();
 
   CheckCompletedExpr(Arg, EqualLoc);
   Arg = MaybeCreateExprWithCleanups(Arg);
@@ -2392,13 +2392,13 @@ void Sema::ActOnFinishCXXInClassMemberInitializer(Decl *D,
   // C++11 [class.base.init]p7:
   //   The initialization of each base and member constitutes a
   //   full-expression.
-  Init = ActOnFinishFullExpr(Init.take(), InitLoc);
+  Init = ActOnFinishFullExpr(Init.get(), InitLoc);
   if (Init.isInvalid()) {
     FD->setInvalidDecl();
     return;
   }
 
-  InitExpr = Init.release();
+  InitExpr = Init.get();
 
   FD->setInClassInitializer(InitExpr);
 }
@@ -2836,7 +2836,7 @@ Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo, Expr *Init,
     DelegationInit = Owned(Init);
 
   return new (Context) CXXCtorInitializer(Context, TInfo, InitRange.getBegin(), 
-                                          DelegationInit.takeAs<Expr>(),
+                                          DelegationInit.getAs<Expr>(),
                                           InitRange.getEnd());
 }
 
@@ -2967,7 +2967,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   return new (Context) CXXCtorInitializer(Context, BaseTInfo,
                                           BaseSpec->isVirtual(),
                                           InitRange.getBegin(),
-                                          BaseInit.takeAs<Expr>(),
+                                          BaseInit.getAs<Expr>(),
                                           InitRange.getEnd(), EllipsisLoc);
 }
 
@@ -2982,7 +2982,7 @@ static Expr *CastForMoving(Sema &SemaRef, Expr *E, QualType T = QualType()) {
 
   return SemaRef.BuildCXXNamedCast(ExprLoc, tok::kw_static_cast, TargetLoc, E,
                                    SourceRange(ExprLoc, ExprLoc),
-                                   E->getSourceRange()).take();
+                                   E->getSourceRange()).get();
 }
 
 /// ImplicitInitializerKind - How an implicit base or member initializer should
@@ -3024,7 +3024,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                      VK_LValue, SourceLocation());
         if (ArgExpr.isInvalid())
           return true;
-        Args.push_back(CastForMoving(SemaRef, ArgExpr.take(), PD->getType()));
+        Args.push_back(CastForMoving(SemaRef, ArgExpr.get(), PD->getType()));
       }
 
       InitializationKind InitKind = InitializationKind::CreateDirect(
@@ -3071,7 +3071,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     CopyCtorArg = SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                                             CK_UncheckedDerivedToBase,
                                             Moving ? VK_XValue : VK_LValue,
-                                            &BasePath).take();
+                                            &BasePath).get();
 
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
@@ -3092,7 +3092,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                                         SourceLocation()),
                                              BaseSpec->isVirtual(),
                                              SourceLocation(),
-                                             BaseInit.takeAs<Expr>(),
+                                             BaseInit.getAs<Expr>(),
                                              SourceLocation(),
                                              SourceLocation());
 
@@ -3157,7 +3157,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     //   - if a member m has rvalue reference type T&&, it is direct-initialized
     //     with static_cast<T&&>(x.m);
     if (RefersToRValueRef(CtorArg.get())) {
-      CtorArg = CastForMoving(SemaRef, CtorArg.take());
+      CtorArg = CastForMoving(SemaRef, CtorArg.get());
     }
 
     // When the field we are copying is an array, create index variables for 
@@ -3191,13 +3191,13 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
         = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, VK_LValue, Loc);
       assert(!IterationVarRef.isInvalid() &&
              "Reference to invented variable cannot fail!");
-      IterationVarRef = SemaRef.DefaultLvalueConversion(IterationVarRef.take());
+      IterationVarRef = SemaRef.DefaultLvalueConversion(IterationVarRef.get());
       assert(!IterationVarRef.isInvalid() &&
              "Conversion of invented variable cannot fail!");
 
       // Subscript the array with this iteration variable.
-      CtorArg = SemaRef.CreateBuiltinArraySubscriptExpr(CtorArg.take(), Loc,
-                                                        IterationVarRef.take(),
+      CtorArg = SemaRef.CreateBuiltinArraySubscriptExpr(CtorArg.get(), Loc,
+                                                        IterationVarRef.get(),
                                                         Loc);
       if (CtorArg.isInvalid())
         return true;
@@ -3207,7 +3207,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
     // The array subscript expression is an lvalue, which is wrong for moving.
     if (Moving && InitializingArray)
-      CtorArg = CastForMoving(SemaRef, CtorArg.take());
+      CtorArg = CastForMoving(SemaRef, CtorArg.get());
 
     // Construct the entity that we will be initializing. For an array, this
     // will be first element in the array, which may require several levels
@@ -3227,7 +3227,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     InitializationKind InitKind =
       InitializationKind::CreateDirect(Loc, SourceLocation(), SourceLocation());
     
-    Expr *CtorArgE = CtorArg.takeAs<Expr>();
+    Expr *CtorArgE = CtorArg.getAs<Expr>();
     InitializationSequence InitSeq(SemaRef, Entities.back(), InitKind, CtorArgE);
     
     ExprResult MemberInit
@@ -3243,11 +3243,11 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       CXXMemberInit
         = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Indirect, 
                                                    Loc, Loc, 
-                                                   MemberInit.takeAs<Expr>(), 
+                                                   MemberInit.getAs<Expr>(), 
                                                    Loc);
     } else
       CXXMemberInit = CXXCtorInitializer::Create(SemaRef.Context, Field, Loc, 
-                                                 Loc, MemberInit.takeAs<Expr>(), 
+                                                 Loc, MemberInit.getAs<Expr>(), 
                                                  Loc,
                                                  IndexVariables.data(),
                                                  IndexVariables.size());
@@ -8874,7 +8874,7 @@ class RefBuilder: public ExprBuilder {
 
 public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
-    return assertNotNull(S.BuildDeclRefExpr(Var, VarType, VK_LValue, Loc).take());
+    return assertNotNull(S.BuildDeclRefExpr(Var, VarType, VK_LValue, Loc).get());
   }
 
   RefBuilder(VarDecl *Var, QualType VarType)
@@ -8884,7 +8884,7 @@ public:
 class ThisBuilder: public ExprBuilder {
 public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
-    return assertNotNull(S.ActOnCXXThis(Loc).takeAs<Expr>());
+    return assertNotNull(S.ActOnCXXThis(Loc).getAs<Expr>());
   }
 };
 
@@ -8898,7 +8898,7 @@ public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.ImpCastExprToType(Builder.build(S, Loc), Type,
                                              CK_UncheckedDerivedToBase, Kind,
-                                             &Path).take());
+                                             &Path).get());
   }
 
   CastBuilder(const ExprBuilder &Builder, QualType Type, ExprValueKind Kind,
@@ -8912,7 +8912,7 @@ class DerefBuilder: public ExprBuilder {
 public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(
-        S.CreateBuiltinUnaryOp(Loc, UO_Deref, Builder.build(S, Loc)).take());
+        S.CreateBuiltinUnaryOp(Loc, UO_Deref, Builder.build(S, Loc)).get());
   }
 
   DerefBuilder(const ExprBuilder &Builder) : Builder(Builder) {}
@@ -8929,7 +8929,7 @@ public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.BuildMemberReferenceExpr(
         Builder.build(S, Loc), Type, Loc, IsArrow, SS, SourceLocation(),
-        nullptr, MemberLookup, nullptr).take());
+        nullptr, MemberLookup, nullptr).get());
   }
 
   MemberBuilder(const ExprBuilder &Builder, QualType Type, bool IsArrow,
@@ -8955,7 +8955,7 @@ class LvalueConvBuilder: public ExprBuilder {
 public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(
-        S.DefaultLvalueConversion(Builder.build(S, Loc)).take());
+        S.DefaultLvalueConversion(Builder.build(S, Loc)).get());
   }
 
   LvalueConvBuilder(const ExprBuilder &Builder) : Builder(Builder) {}
@@ -8968,7 +8968,7 @@ class SubscriptBuilder: public ExprBuilder {
 public:
   virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.CreateBuiltinArraySubscriptExpr(
-        Base.build(S, Loc), Loc, Index.build(S, Loc), Loc).take());
+        Base.build(S, Loc), Loc, Index.build(S, Loc), Loc).get());
   }
 
   SubscriptBuilder(const ExprBuilder &Base, const ExprBuilder &Index)
@@ -9026,11 +9026,11 @@ buildMemcpyForAssignmentOp(Sema &S, SourceLocation Loc, QualType T,
   Expr *CallArgs[] = {
     To, From, IntegerLiteral::Create(S.Context, Size, SizeType, Loc)
   };
-  ExprResult Call = S.ActOnCallExpr(/*Scope=*/nullptr, MemCpyRef.take(),
+  ExprResult Call = S.ActOnCallExpr(/*Scope=*/nullptr, MemCpyRef.get(),
                                     Loc, CallArgs, Loc);
 
   assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
-  return S.Owned(Call.takeAs<Stmt>());
+  return S.Owned(Call.getAs<Stmt>());
 }
 
 /// \brief Builds a statement that copies/moves the given entity from \p From to
@@ -9148,7 +9148,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
     Expr *FromInst = From.build(S, Loc);
     ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/nullptr,
-                                                  OpEqualRef.takeAs<Expr>(),
+                                                  OpEqualRef.getAs<Expr>(),
                                                   Loc, FromInst, Loc);
     if (Call.isInvalid())
       return StmtError();
@@ -9247,7 +9247,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
   return S.ActOnForStmt(Loc, Loc, InitStmt, 
                         S.MakeFullExpr(Comparison),
                         nullptr, S.MakeFullDiscardedValueExpr(Increment),
-                        Loc, Copy.take());
+                        Loc, Copy.get());
 }
 
 static StmtResult
@@ -9542,7 +9542,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
     
     // Success! Record the copy.
-    Statements.push_back(Copy.takeAs<Expr>());
+    Statements.push_back(Copy.getAs<Expr>());
   }
   
   // Assign non-static members.
@@ -9613,7 +9613,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     }
     
     // Success! Record the copy.
-    Statements.push_back(Copy.takeAs<Stmt>());
+    Statements.push_back(Copy.getAs<Stmt>());
   }
 
   if (!Invalid) {
@@ -9624,7 +9624,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     if (Return.isInvalid())
       Invalid = true;
     else {
-      Statements.push_back(Return.takeAs<Stmt>());
+      Statements.push_back(Return.getAs<Stmt>());
 
       if (Trap.hasErrorOccurred()) {
         Diag(CurrentLocation, diag::note_member_synthesized_at) 
@@ -9646,7 +9646,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                              /*isStmtExpr=*/false);
     assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   }
-  CopyAssignOperator->setBody(Body.takeAs<Stmt>());
+  CopyAssignOperator->setBody(Body.getAs<Stmt>());
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyAssignOperator);
@@ -9958,7 +9958,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     }
 
     // Success! Record the move.
-    Statements.push_back(Move.takeAs<Expr>());
+    Statements.push_back(Move.getAs<Expr>());
   }
 
   // Assign non-static members.
@@ -10032,7 +10032,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     }
 
     // Success! Record the copy.
-    Statements.push_back(Move.takeAs<Stmt>());
+    Statements.push_back(Move.getAs<Stmt>());
   }
 
   if (!Invalid) {
@@ -10043,7 +10043,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     if (Return.isInvalid())
       Invalid = true;
     else {
-      Statements.push_back(Return.takeAs<Stmt>());
+      Statements.push_back(Return.getAs<Stmt>());
 
       if (Trap.hasErrorOccurred()) {
         Diag(CurrentLocation, diag::note_member_synthesized_at) 
@@ -10065,7 +10065,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
                              /*isStmtExpr=*/false);
     assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   }
-  MoveAssignOperator->setBody(Body.takeAs<Stmt>());
+  MoveAssignOperator->setBody(Body.getAs<Stmt>());
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(MoveAssignOperator);
@@ -10217,7 +10217,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
     Sema::CompoundScopeRAII CompoundScope(*this);
     CopyConstructor->setBody(ActOnCompoundStmt(
         CopyConstructor->getLocation(), CopyConstructor->getLocation(), None,
-        /*isStmtExpr=*/ false).takeAs<Stmt>());
+        /*isStmtExpr=*/ false).getAs<Stmt>());
   }
 
   CopyConstructor->markUsed(Context);
@@ -10373,7 +10373,7 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
     Sema::CompoundScopeRAII CompoundScope(*this);
     MoveConstructor->setBody(ActOnCompoundStmt(
         MoveConstructor->getLocation(), MoveConstructor->getLocation(), None,
-        /*isStmtExpr=*/ false).takeAs<Stmt>());
+        /*isStmtExpr=*/ false).getAs<Stmt>());
   }
 
   MoveConstructor->markUsed(Context);
@@ -10442,9 +10442,9 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   }
   // Construct the body of the conversion function { return __invoke; }.
   Expr *FunctionRef = BuildDeclRefExpr(Invoker, Invoker->getType(),
-                                        VK_LValue, Conv->getLocation()).take();
+                                        VK_LValue, Conv->getLocation()).get();
    assert(FunctionRef && "Can't refer to __invoke function?");
-   Stmt *Return = BuildReturnStmt(Conv->getLocation(), FunctionRef).take();
+   Stmt *Return = BuildReturnStmt(Conv->getLocation(), FunctionRef).get();
    Conv->setBody(new (Context) CompoundStmt(Context, Return,
                                             Conv->getLocation(),
                                             Conv->getLocation()));
@@ -10478,8 +10478,8 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
   DiagnosticErrorTrap Trap(Diags);
   
   // Copy-initialize the lambda object as needed to capture it.
-  Expr *This = ActOnCXXThis(CurrentLocation).take();
-  Expr *DerefThis =CreateBuiltinUnaryOp(CurrentLocation, UO_Deref, This).take();
+  Expr *This = ActOnCXXThis(CurrentLocation).get();
+  Expr *DerefThis =CreateBuiltinUnaryOp(CurrentLocation, UO_Deref, This).get();
   
   ExprResult BuildBlock = BuildBlockForLambdaConversion(CurrentLocation,
                                                         Conv->getLocation(),
@@ -10510,7 +10510,7 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
   }
 
   // Set the body of the conversion function.
-  Stmt *ReturnS = Return.take();
+  Stmt *ReturnS = Return.get();
   Conv->setBody(new (Context) CompoundStmt(Context, ReturnS,
                                            Conv->getLocation(), 
                                            Conv->getLocation()));
@@ -11242,7 +11242,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       else {
         // If the constructor used was non-trivial, set this as the
         // "initializer".
-        CXXConstructExpr *construct = result.takeAs<CXXConstructExpr>();
+        CXXConstructExpr *construct = result.getAs<CXXConstructExpr>();
         if (!construct->getConstructor()->isTrivial()) {
           Expr *init = MaybeCreateExprWithCleanups(construct);
           ExDecl->setInit(init);
@@ -11462,7 +11462,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
                                 TemplateParams, AS_public,
                                 /*ModulePrivateLoc=*/SourceLocation(),
                                 TempParamLists.size() - 1,
-                                TempParamLists.data()).take();
+                                TempParamLists.data()).get();
     } else {
       // The "template<>" header is extraneous.
       Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
@@ -12540,7 +12540,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       Member =
         new (Context) CXXCtorInitializer(Context, Field, SourceLocation(),
                                          SourceLocation(),
-                                         MemberInit.takeAs<Expr>(),
+                                         MemberInit.getAs<Expr>(),
                                          SourceLocation());
       AllToInit.push_back(Member);
       
@@ -12823,7 +12823,7 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
       if (!NoexceptExpr->isValueDependent())
         NoexceptExpr = VerifyIntegerConstantExpression(NoexceptExpr, nullptr,
                          diag::err_noexcept_needs_constant_expression,
-                         /*AllowFold*/ false).take();
+                         /*AllowFold*/ false).get();
       EPI.NoexceptExpr = NoexceptExpr;
     }
     return;

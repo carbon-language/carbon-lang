@@ -289,7 +289,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
       Lang.isInvalid()
           ? nullptr
           : Actions.ActOnStartLinkageSpecification(
-                getCurScope(), DS.getSourceRange().getBegin(), Lang.take(),
+                getCurScope(), DS.getSourceRange().getBegin(), Lang.get(),
                 Tok.is(tok::l_brace) ? Tok.getLocation() : SourceLocation());
 
   ParsedAttributesWithRange attrs(AttrFactory);
@@ -713,8 +713,8 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   ExpectAndConsumeSemi(diag::err_expected_semi_after_static_assert);
 
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc,
-                                              AssertExpr.take(),
-                                              AssertMessage.take(),
+                                              AssertExpr.get(),
+                                              AssertMessage.get(),
                                               T.getCloseLocation());
 }
 
@@ -789,7 +789,7 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
         return EndLoc;
       }
 
-      Result = Actions.ActOnDecltypeExpression(Result.take());
+      Result = Actions.ActOnDecltypeExpression(Result.get());
     }
 
     // Match the ')'
@@ -816,7 +816,7 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   // Check for duplicate type specifiers (e.g. "int decltype(a)").
   if (Result.get()
         ? DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec,
-                             DiagID, Result.release(), Policy)
+                             DiagID, Result.get(), Policy)
         : DS.SetTypeSpecType(DeclSpec::TST_decltype_auto, StartLoc, PrevSpec,
                              DiagID, Policy)) {
     Diag(StartLoc, DiagID) << PrevSpec;
@@ -869,7 +869,7 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   const char *PrevSpec = nullptr;
   unsigned DiagID;
   if (DS.SetTypeSpecType(DeclSpec::TST_underlyingType, StartLoc, PrevSpec,
-                         DiagID, Result.release(),
+                         DiagID, Result.get(),
                          Actions.getASTContext().getPrintingPolicy()))
     Diag(StartLoc, DiagID) << PrevSpec;
   DS.setTypeofParensRange(T.getRange());
@@ -1939,7 +1939,7 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
     if (AsmLabel.isInvalid())
       SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
 
-    DeclaratorInfo.setAsmLabel(AsmLabel.release());
+    DeclaratorInfo.setAsmLabel(AsmLabel.get());
     DeclaratorInfo.SetRangeEnd(Loc);
   }
 
@@ -2305,7 +2305,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       ThisDecl = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS,
                                                   DeclaratorInfo,
                                                   TemplateParams,
-                                                  BitfieldSize.release(),
+                                                  BitfieldSize.get(),
                                                   VS, HasInClassInit);
 
       if (VarTemplateDecl *VT =
@@ -2893,7 +2893,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, DS, IdLoc, 
-                                       InitList.take(), EllipsisLoc);
+                                       InitList.get(), EllipsisLoc);
   } else if(Tok.is(tok::l_paren)) {
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();

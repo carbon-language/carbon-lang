@@ -751,7 +751,7 @@ static void handleEnableIfAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     ExprResult Converted = S.PerformContextuallyConvertToBool(Cond);
     if (Converted.isInvalid())
       return;
-    Cond = Converted.take();
+    Cond = Converted.get();
   }
 
   StringRef Msg;
@@ -2787,7 +2787,7 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   }
 
   AlignedAttr *AA = ::new (Context) AlignedAttr(AttrRange, Context, true,
-                                                ICE.take(), SpellingListIndex);
+                                                ICE.get(), SpellingListIndex);
   AA->setPackExpansion(IsPackExpansion);
   D->addAttr(AA);
 }

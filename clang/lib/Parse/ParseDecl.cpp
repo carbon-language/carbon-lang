@@ -304,7 +304,7 @@ unsigned Parser::ParseAttributeArgsCommon(
         SkipUntil(tok::r_paren, StopAtSemi);
         return 0;
       }
-      ArgExprs.push_back(ArgExpr.release());
+      ArgExprs.push_back(ArgExpr.get());
       // Eat the comma, move to the next argument
     } while (TryConsumeToken(tok::comma));
   }
@@ -906,7 +906,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                Changes[Introduced],
                Changes[Deprecated],
                Changes[Obsoleted],
-               UnavailableLoc, MessageExpr.take(),
+               UnavailableLoc, MessageExpr.get(),
                AttributeList::AS_GNU);
 }
 
@@ -1187,7 +1187,7 @@ void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
 
   if (!T.consumeClose()) {
     Attrs.addNewTypeTagForDatatype(&AttrName, AttrNameLoc, nullptr, AttrNameLoc,
-                                   ArgumentKind, MatchingCType.release(),
+                                   ArgumentKind, MatchingCType.get(),
                                    LayoutCompatible, MustBeNull,
                                    AttributeList::AS_GNU);
   }
@@ -1699,7 +1699,7 @@ bool Parser::ParseAsmAttributesAfterDeclarator(Declarator &D) {
       return true;
     }
 
-    D.setAsmLabel(AsmLabel.release());
+    D.setAsmLabel(AsmLabel.get());
     D.SetRangeEnd(Loc);
   }
 
@@ -1857,7 +1857,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
         SkipUntil(StopTokens, StopAtSemi | StopBeforeMatch);
         Actions.ActOnInitializerError(ThisDecl);
       } else
-        Actions.AddInitializerToDecl(ThisDecl, Init.take(),
+        Actions.AddInitializerToDecl(ThisDecl, Init.get(),
                                      /*DirectInit=*/false, TypeContainsAuto);
     }
   } else if (Tok.is(tok::l_paren)) {
@@ -1896,7 +1896,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
       ExprResult Initializer = Actions.ActOnParenListExpr(T.getOpenLocation(),
                                                           T.getCloseLocation(),
                                                           Exprs);
-      Actions.AddInitializerToDecl(ThisDecl, Initializer.take(),
+      Actions.AddInitializerToDecl(ThisDecl, Initializer.get(),
                                    /*DirectInit=*/true, TypeContainsAuto);
     }
   } else if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace) &&
@@ -1919,7 +1919,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
     if (Init.isInvalid()) {
       Actions.ActOnInitializerError(ThisDecl);
     } else
-      Actions.AddInitializerToDecl(ThisDecl, Init.take(),
+      Actions.AddInitializerToDecl(ThisDecl, Init.get(),
                                    /*DirectInit=*/true, TypeContainsAuto);
 
   } else {
@@ -2294,7 +2294,7 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
     *EndLoc = T.getCloseLocation();
 
   ArgsVector ArgExprs;
-  ArgExprs.push_back(ArgExpr.release());
+  ArgExprs.push_back(ArgExpr.get());
   Attrs.addNew(KWName, KWLoc, nullptr, KWLoc, ArgExprs.data(), 1,
                AttributeList::AS_Keyword, EllipsisLoc);
 }
@@ -3261,7 +3261,7 @@ ParseStructDeclaration(ParsingDeclSpec &DS, FieldCallback &Fields) {
       if (Res.isInvalid())
         SkipUntil(tok::semi, StopBeforeMatch);
       else
-        DeclaratorInfo.BitfieldSize = Res.release();
+        DeclaratorInfo.BitfieldSize = Res.get();
     }
 
     // If attributes exist after the declarator, parse them.
@@ -3817,7 +3817,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
                                                     LastEnumConstDecl,
                                                     IdentLoc, Ident,
                                                     attrs.getList(), EqualLoc,
-                                                    AssignedVal.release());
+                                                    AssignedVal.get());
     PD.complete(EnumConstDecl);
 
     EnumConstantDecls.push_back(EnumConstDecl);
@@ -5435,7 +5435,7 @@ void Parser::ParseParameterDeclarationClause(
           } else {
             // Inform the actions module about the default argument
             Actions.ActOnParamDefaultArgument(Param, EqualLoc,
-                                              DefArgResult.take());
+                                              DefArgResult.get());
           }
         }
       }
@@ -5497,7 +5497,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
     // Remember that we parsed a array type, and remember its features.
     D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false,
-                                            ExprRes.release(),
+                                            ExprRes.get(),
                                             T.getOpenLocation(),
                                             T.getCloseLocation()),
                   attrs, T.getCloseLocation());
@@ -5567,7 +5567,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // Remember that we parsed a array type, and remember its features.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
-                                          NumElements.release(),
+                                          NumElements.get(),
                                           T.getOpenLocation(),
                                           T.getCloseLocation()),
                 attrs, T.getCloseLocation());
@@ -5670,7 +5670,7 @@ void Parser::ParseAtomicSpecifier(DeclSpec &DS) {
   const char *PrevSpec = nullptr;
   unsigned DiagID;
   if (DS.SetTypeSpecType(DeclSpec::TST_atomic, StartLoc, PrevSpec,
-                         DiagID, Result.release(),
+                         DiagID, Result.get(),
                          Actions.getASTContext().getPrintingPolicy()))
     Diag(StartLoc, DiagID) << PrevSpec;
 }

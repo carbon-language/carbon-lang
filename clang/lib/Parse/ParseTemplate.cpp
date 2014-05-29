@@ -651,7 +651,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Create the parameter.
   return Actions.ActOnNonTypeTemplateParameter(getCurScope(), ParamDecl, 
                                                Depth, Position, EqualLoc, 
-                                               DefaultArg.take());
+                                               DefaultArg.get());
 }
 
 /// \brief Parses a '>' at the end of a template list.
@@ -1118,7 +1118,7 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
     return ParsedTemplateArgument();
 
   return ParsedTemplateArgument(ParsedTemplateArgument::NonType, 
-                                ExprArg.release(), Loc);
+                                ExprArg.get(), Loc);
 }
 
 /// \brief Determine whether the current tokens can only be parsed as a 

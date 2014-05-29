@@ -155,13 +155,13 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
         Actions.ActOnCapturedRegionError();
         CreateDirective = false;
       } else {
-        AssociatedStmt = Actions.ActOnCapturedRegionEnd(AssociatedStmt.take());
+        AssociatedStmt = Actions.ActOnCapturedRegionEnd(AssociatedStmt.get());
         CreateDirective = AssociatedStmt.isUsable();
       }
     }
     if (CreateDirective)
       Directive = Actions.ActOnOpenMPExecutableDirective(
-          DKind, Clauses, AssociatedStmt.take(), Loc, EndLoc);
+          DKind, Clauses, AssociatedStmt.get(), Loc, EndLoc);
 
     // Exit scope.
     Actions.EndOpenMPDSABlock(Directive.get());
@@ -231,7 +231,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
       ExprResult Res =
           Actions.ActOnOpenMPIdExpression(getCurScope(), SS, NameInfo);
       if (Res.isUsable())
-        VarList.push_back(Res.take());
+        VarList.push_back(Res.get());
     }
     // Consume ','.
     if (Tok.is(tok::comma)) {
@@ -355,7 +355,7 @@ OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
     return nullptr;
 
   return Actions.ActOnOpenMPSingleExprClause(
-      Kind, Val.take(), Loc, T.getOpenLocation(), T.getCloseLocation());
+      Kind, Val.get(), Loc, T.getOpenLocation(), T.getCloseLocation());
 }
 
 /// \brief Parsing of simple OpenMP clauses like 'default' or 'proc_bind'.
@@ -420,7 +420,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
     // Parse variable
     ExprResult VarExpr = ParseAssignmentExpression();
     if (VarExpr.isUsable()) {
-      Vars.push_back(VarExpr.take());
+      Vars.push_back(VarExpr.get());
     } else {
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 StopBeforeMatch);
@@ -443,7 +443,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
     ConsumeToken();
     ExprResult Tail = ParseAssignmentExpression();
     if (Tail.isUsable())
-      TailExpr = Tail.take();
+      TailExpr = Tail.get();
     else
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 StopBeforeMatch);

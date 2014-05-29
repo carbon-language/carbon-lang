@@ -79,7 +79,7 @@ static void instantiateDependentAlignedAttr(
     EnterExpressionEvaluationContext Unevaluated(S, Sema::ConstantEvaluated);
     ExprResult Result = S.SubstExpr(Aligned->getAlignmentExpr(), TemplateArgs);
     if (!Result.isInvalid())
-      S.AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>(),
+      S.AddAlignedAttr(Aligned->getLocation(), New, Result.getAs<Expr>(),
                        Aligned->getSpellingListIndex(), IsPackExpansion);
   } else {
     TypeSourceInfo *Result = S.SubstType(Aligned->getAlignmentType(),
@@ -138,13 +138,13 @@ static void instantiateDependentEnableIfAttr(
     ExprResult Result = S.SubstExpr(A->getCond(), TemplateArgs);
     if (Result.isInvalid())
       return;
-    Cond = Result.takeAs<Expr>();
+    Cond = Result.getAs<Expr>();
   }
   if (A->getCond()->isTypeDependent() && !Cond->isTypeDependent()) {
     ExprResult Converted = S.PerformContextuallyConvertToBool(Cond);
     if (Converted.isInvalid())
       return;
-    Cond = Converted.take();
+    Cond = Converted.get();
   }
 
   SmallVector<PartialDiagnosticAt, 8> Diags;
@@ -475,7 +475,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
       Invalid = true;
       BitWidth = nullptr;
     } else
-      BitWidth = InstantiatedBitWidth.takeAs<Expr>();
+      BitWidth = InstantiatedBitWidth.getAs<Expr>();
   }
 
   FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(),
@@ -2311,7 +2311,7 @@ Decl *TemplateDeclInstantiator::VisitOMPThreadPrivateDecl(
                                      OMPThreadPrivateDecl *D) {
   SmallVector<Expr *, 5> Vars;
   for (auto *I : D->varlists()) {
-    Expr *Var = SemaRef.SubstExpr(I, TemplateArgs).take();
+    Expr *Var = SemaRef.SubstExpr(I, TemplateArgs).get();
     assert(isa<DeclRefExpr>(Var) && "threadprivate arg is not a DeclRefExpr");
     Vars.push_back(Var);
   }
@@ -3127,13 +3127,13 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
       E = SemaRef.CheckBooleanCondition(E.get(), E.get()->getLocStart());
 
     if (E.isUsable()) {
-      NoexceptExpr = E.take();
+      NoexceptExpr = E.get();
       if (!NoexceptExpr->isTypeDependent() &&
           !NoexceptExpr->isValueDependent())
         NoexceptExpr
           = SemaRef.VerifyIntegerConstantExpression(NoexceptExpr,
               nullptr, diag::err_noexcept_needs_constant_expression,
-              /*AllowFold*/ false).take();
+              /*AllowFold*/ false).get();
     }
   }
 
@@ -3685,7 +3685,7 @@ void Sema::InstantiateVariableInitializer(
       bool TypeMayContainAuto = true;
       if (Init.get()) {
         bool DirectInit = OldVar->isDirectInit();
-        AddInitializerToDecl(Var, Init.take(), DirectInit, TypeMayContainAuto);
+        AddInitializerToDecl(Var, Init.get(), DirectInit, TypeMayContainAuto);
       } else
         ActOnUninitializedDecl(Var, TypeMayContainAuto);
     } else {
@@ -4064,7 +4064,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
         // Build the initializer.
         MemInitResult NewInit = BuildBaseInitializer(BaseTInfo->getType(),
-                                                     BaseTInfo, TempInit.take(),
+                                                     BaseTInfo, TempInit.get(),
                                                      New->getParent(),
                                                      SourceLocation());
         if (NewInit.isInvalid()) {
@@ -4099,10 +4099,10 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       }
 
       if (Init->isBaseInitializer())
-        NewInit = BuildBaseInitializer(TInfo->getType(), TInfo, TempInit.take(),
+        NewInit = BuildBaseInitializer(TInfo->getType(), TInfo, TempInit.get(),
                                        New->getParent(), EllipsisLoc);
       else
-        NewInit = BuildDelegatingInitializer(TInfo, TempInit.take(),
+        NewInit = BuildDelegatingInitializer(TInfo, TempInit.get(),
                                   cast<CXXRecordDecl>(CurContext->getParent()));
     } else if (Init->isMemberInitializer()) {
       FieldDecl *Member = cast_or_null<FieldDecl>(FindInstantiatedDecl(
@@ -4115,7 +4115,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
         continue;
       }
 
-      NewInit = BuildMemberInitializer(Member, TempInit.take(),
+      NewInit = BuildMemberInitializer(Member, TempInit.get(),
                                        Init->getSourceLocation());
     } else if (Init->isIndirectMemberInitializer()) {
       IndirectFieldDecl *IndirectMember =
@@ -4129,7 +4129,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
         continue;
       }
 
-      NewInit = BuildMemberInitializer(IndirectMember, TempInit.take(),
+      NewInit = BuildMemberInitializer(IndirectMember, TempInit.get(),
                                        Init->getSourceLocation());
     }
 

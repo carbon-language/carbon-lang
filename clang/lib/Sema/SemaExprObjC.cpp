@@ -1296,7 +1296,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       }
       if (result.isInvalid())
         return true;
-      Args[i] = result.take();
+      Args[i] = result.get();
     }
 
     unsigned DiagID;
@@ -1383,7 +1383,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       if (argE.isInvalid()) {
         IsError = true;
       } else {
-        Args[i] = argE.take();
+        Args[i] = argE.get();
 
         // Update the parameter type in-place.
         param->setType(paramType);
@@ -1402,7 +1402,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     if (ArgE.isInvalid())
       IsError = true;
     else
-      Args[i] = ArgE.takeAs<Expr>();
+      Args[i] = ArgE.getAs<Expr>();
   }
 
   // Promote additional arguments to variadic methods.
@@ -1414,7 +1414,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], VariadicMethod,
                                                         nullptr);
       IsError |= Arg.isInvalid();
-      Args[i] = Arg.take();
+      Args[i] = Arg.get();
     }
   } else {
     // Check for extra arguments to non-variadic methods.
@@ -2288,7 +2288,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       else
         Result = CheckPlaceholderExpr(Receiver);
       if (Result.isInvalid()) return ExprError();
-      Receiver = Result.take();
+      Receiver = Result.get();
     }
 
     if (Receiver->isTypeDependent()) {
@@ -2309,7 +2309,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     ExprResult Result = DefaultFunctionArrayLvalueConversion(Receiver);
     if (Result.isInvalid())
       return ExprError();
-    Receiver = Result.take();
+    Receiver = Result.get();
     ReceiverType = Receiver->getType();
 
     // If the receiver is an ObjC pointer, a block pointer, or an
@@ -2328,14 +2328,14 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         << Receiver->getSourceRange();
       if (ReceiverType->isPointerType()) {
         Receiver = ImpCastExprToType(Receiver, Context.getObjCIdType(), 
-                                     CK_CPointerToObjCPointerCast).take();
+                                     CK_CPointerToObjCPointerCast).get();
       } else {
         // TODO: specialized warning on null receivers?
         bool IsNull = Receiver->isNullPointerConstant(Context,
                                               Expr::NPC_ValueDependentIsNull);
         CastKind Kind = IsNull ? CK_NullToPointer : CK_IntegralToPointer;
         Receiver = ImpCastExprToType(Receiver, Context.getObjCIdType(),
-                                     Kind).take();
+                                     Kind).get();
       }
       ReceiverType = Receiver->getType();
     } else if (getLangOpts().CPlusPlus) {
@@ -2346,7 +2346,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 
       ExprResult result = PerformContextuallyConvertToObjCPointer(Receiver);
       if (result.isUsable()) {
-        Receiver = result.take();
+        Receiver = result.get();
         ReceiverType = Receiver->getType();
       }
     }
@@ -2733,7 +2733,7 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
   if (isa<ParenListExpr>(Receiver)) {
     ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Receiver);
     if (Result.isInvalid()) return ExprError();
-    Receiver = Result.take();
+    Receiver = Result.get();
   }
   
   if (RespondsToSelectorSel.isNull()) {
@@ -3547,7 +3547,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
                                       ClassMethod->getLocation(),
                                       ClassMethod->getSelector(), ClassMethod,
                                       MultiExprArg(args, 1));
-      SrcExpr = msg.take();
+      SrcExpr = msg.get();
       return true;
     }
   }
@@ -3584,7 +3584,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
                                      InstanceMethod->getLocation(),
                                      InstanceMethod->getSelector(),
                                      InstanceMethod, None);
-      SrcExpr = msg.take();
+      SrcExpr = msg.get();
       return true;
     }
   }
@@ -3806,7 +3806,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
                                       Expr *SubExpr) {
   ExprResult SubResult = UsualUnaryConversions(SubExpr);
   if (SubResult.isInvalid()) return ExprError();
-  SubExpr = SubResult.take();
+  SubExpr = SubResult.get();
 
   QualType T = TSInfo->getType();
   QualType FromType = SubExpr->getType();

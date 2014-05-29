@@ -1185,7 +1185,7 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
   }
   if (result.isInvalid()) return ExprError();
 
-  Expr *resultExpr = result.take();
+  Expr *resultExpr = result.get();
   return SemaRef.Owned(new (SemaRef.Context)
                 SubstNonTypeTemplateParmExpr(type,
                                              resultExpr->getValueKind(),
@@ -2035,7 +2035,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
       ActOnStartCXXInClassMemberInitializer();
       ExprResult NewInit = SubstInitializer(OldInit, TemplateArgs,
                                             /*CXXDirectInit=*/false);
-      Expr *Init = NewInit.take();
+      Expr *Init = NewInit.get();
       assert((!Init || !isa<ParenListExpr>(Init)) &&
              "call-style init in class");
       ActOnFinishCXXInClassMemberInitializer(NewField, Init->getLocStart(),

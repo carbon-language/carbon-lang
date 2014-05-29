@@ -106,7 +106,7 @@ static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
   if (ResultType.isNull())
     return true;
 
-  TheCall->setArg(0, Arg.take());
+  TheCall->setArg(0, Arg.get());
   TheCall->setType(ResultType);
   return false;
 }
@@ -493,7 +493,7 @@ bool Sema::CheckARMBuiltinExclusiveCall(unsigned BuiltinID, CallExpr *TheCall,
   ExprResult PointerArgRes = DefaultFunctionArrayLvalueConversion(PointerArg);
   if (PointerArgRes.isInvalid())
     return true;
-  PointerArg = PointerArgRes.take();
+  PointerArg = PointerArgRes.get();
 
   const PointerType *pointerType = PointerArg->getType()->getAs<PointerType>();
   if (!pointerType) {
@@ -525,7 +525,7 @@ bool Sema::CheckARMBuiltinExclusiveCall(unsigned BuiltinID, CallExpr *TheCall,
   PointerArgRes = ImpCastExprToType(PointerArg, AddrType, CastNeeded);
   if (PointerArgRes.isInvalid())
     return true;
-  PointerArg = PointerArgRes.take();
+  PointerArg = PointerArgRes.get();
 
   TheCall->setArg(IsLdrex ? 0 : 1, PointerArg);
 
@@ -1243,7 +1243,7 @@ static bool checkBuiltinArgument(Sema &S, CallExpr *E, unsigned ArgIndex) {
   if (Arg.isInvalid())
     return true;
 
-  E->setArg(ArgIndex, Arg.take());
+  E->setArg(ArgIndex, Arg.get());
   return false;
 }
 
@@ -1278,7 +1278,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   ExprResult FirstArgResult = DefaultFunctionArrayLvalueConversion(FirstArg);
   if (FirstArgResult.isInvalid())
     return ExprError();
-  FirstArg = FirstArgResult.take();
+  FirstArg = FirstArgResult.get();
   TheCall->setArg(0, FirstArg);
 
   const PointerType *pointerType = FirstArg->getType()->getAs<PointerType>();
@@ -1556,7 +1556,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    TheCall->setArg(i+1, Arg.take());
+    TheCall->setArg(i+1, Arg.get());
   }
 
   ASTContext& Context = this->getASTContext();
@@ -1577,7 +1577,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   QualType CalleePtrTy = Context.getPointerType(NewBuiltinDecl->getType());
   ExprResult PromotedCall = ImpCastExprToType(NewDRE, CalleePtrTy,
                                               CK_BuiltinFnToFnPtr);
-  TheCall->setCallee(PromotedCall.take());
+  TheCall->setCallee(PromotedCall.get());
 
   // Change the result type of the call to match the original value type. This
   // is arbitrary, but the codegen for these builtins ins design to handle it

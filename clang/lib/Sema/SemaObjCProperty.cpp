@@ -1158,7 +1158,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                               /*NRVO=*/false),
           PropertyDiagLoc, Owned(IvarRefExpr));
       if (!Res.isInvalid()) {
-        Expr *ResExpr = Res.takeAs<Expr>();
+        Expr *ResExpr = Res.getAs<Expr>();
         if (ResExpr)
           ResExpr = MaybeCreateExprWithCleanups(ResExpr);
         PIDecl->setGetterCXXConstructor(ResExpr);
@@ -1212,7 +1212,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   BO_Assign, lhs, rhs);
       if (property->getPropertyAttributes() & 
           ObjCPropertyDecl::OBJC_PR_atomic) {
-        Expr *callExpr = Res.takeAs<Expr>();
+        Expr *callExpr = Res.getAs<Expr>();
         if (const CXXOperatorCallExpr *CXXCE = 
               dyn_cast_or_null<CXXOperatorCallExpr>(callExpr))
           if (const FunctionDecl *FuncDecl = CXXCE->getDirectCallee())
@@ -1225,7 +1225,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                      diag::note_callee_decl) << FuncDecl;
               }
       }
-      PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
+      PIDecl->setSetterCXXAssignment(Res.getAs<Expr>());
     }
   }
   

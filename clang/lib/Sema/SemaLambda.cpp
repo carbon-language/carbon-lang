@@ -782,7 +782,7 @@ QualType Sema::performLambdaInitCaptureInitialization(SourceLocation Loc,
 
   if (Result.isInvalid())
     return QualType();
-  Init = Result.takeAs<Expr>();
+  Init = Result.getAs<Expr>();
 
   // The init-capture initialization is a full-expression that must be
   // processed as one before we enter the declcontext of the lambda's
@@ -793,7 +793,7 @@ QualType Sema::performLambdaInitCaptureInitialization(SourceLocation Loc,
   if (Result.isInvalid())
     return QualType();
 
-  Init = Result.takeAs<Expr>();
+  Init = Result.getAs<Expr>();
   return DeducedType;
 }
 
@@ -1013,7 +1013,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       if (C->InitCaptureType.get().isNull()) 
         continue;
       Var = createLambdaInitCaptureVarDecl(C->Loc, C->InitCaptureType.get(), 
-            C->Id, C->Init.take());
+            C->Id, C->Init.get());
       // C++1y [expr.prim.lambda]p11:
       //   An init-capture behaves as if it declares and explicitly
       //   captures a variable [...] whose declarative region is the
@@ -1572,7 +1572,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
                                                          /*NRVO=*/false),
                       CurrentLocation, Src);
   if (!Init.isInvalid())
-    Init = ActOnFinishFullExpr(Init.take());
+    Init = ActOnFinishFullExpr(Init.get());
   
   if (Init.isInvalid())
     return ExprError();
@@ -1612,7 +1612,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
                                     Src->getType(), CapVarTSI,
                                     SC_None);
   BlockDecl::Capture Capture(/*Variable=*/CapVar, /*ByRef=*/false,
-                             /*Nested=*/false, /*Copy=*/Init.take());
+                             /*Nested=*/false, /*Copy=*/Init.get());
   Block->setCaptures(Context, &Capture, &Capture + 1, 
                      /*CapturesCXXThis=*/false);
 

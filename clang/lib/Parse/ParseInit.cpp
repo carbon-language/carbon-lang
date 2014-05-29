@@ -309,12 +309,12 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                          SourceLocation(),
                                                          ParsedType(),
-                                                         Idx.take());
+                                                         Idx.get());
     }
 
     // If this is a normal array designator, remember it.
     if (Tok.isNot(tok::ellipsis)) {
-      Desig.AddDesignator(Designator::getArray(Idx.release(), StartLoc));
+      Desig.AddDesignator(Designator::getArray(Idx.get(), StartLoc));
     } else {
       // Handle the gnu array range extension.
       Diag(Tok, diag::ext_gnu_array_range);
@@ -325,8 +325,8 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         SkipUntil(tok::r_square, StopAtSemi);
         return RHS;
       }
-      Desig.AddDesignator(Designator::getArrayRange(Idx.release(),
-                                                    RHS.release(),
+      Desig.AddDesignator(Designator::getArrayRange(Idx.get(),
+                                                    RHS.get(),
                                                     StartLoc, EllipsisLoc));
     }
 
@@ -426,7 +426,7 @@ ExprResult Parser::ParseBraceInitializer() {
     
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid()) {
-      InitExprs.push_back(SubElt.release());
+      InitExprs.push_back(SubElt.get());
     } else {
       InitExprsOk = false;
 
@@ -509,7 +509,7 @@ bool Parser::ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
     
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid())
-      InitExprs.push_back(SubElt.release());
+      InitExprs.push_back(SubElt.get());
     else
       InitExprsOk = false;
 

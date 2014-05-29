@@ -731,7 +731,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
       Param->setInvalidDecl();
       return Param;
     }
-    Default = DefaultRes.take();
+    Default = DefaultRes.get();
 
     Param->setDefaultArgument(Default, false);
   }
@@ -3310,7 +3310,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
     if (Arg.isInvalid())
       return TemplateArgumentLoc();
 
-    Expr *ArgE = Arg.takeAs<Expr>();
+    Expr *ArgE = Arg.getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(ArgE), ArgE);
   }
 
@@ -3461,13 +3461,13 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         // If we parsed the template argument as a pack expansion, create a
         // pack expansion expression.
         if (Arg.getArgument().getKind() == TemplateArgument::TemplateExpansion){
-          E = ActOnPackExpansion(E.take(), Arg.getTemplateEllipsisLoc());
+          E = ActOnPackExpansion(E.get(), Arg.getTemplateEllipsisLoc());
           if (E.isInvalid())
             return true;
         }
 
         TemplateArgument Result;
-        E = CheckTemplateArgument(NTTP, NTTPType, E.take(), Result);
+        E = CheckTemplateArgument(NTTP, NTTPType, E.get(), Result);
         if (E.isInvalid())
           return true;
 
@@ -3817,7 +3817,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       if (E.isInvalid())
         return true;
 
-      Expr *Ex = E.takeAs<Expr>();
+      Expr *Ex = E.getAs<Expr>();
       Arg = TemplateArgumentLoc(TemplateArgument(Ex), Ex);
     } else {
       TemplateTemplateParmDecl *TempParm
@@ -4168,7 +4168,7 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
   ExprResult ArgRV = S.DefaultFunctionArrayConversion(Arg);
   if (ArgRV.isInvalid())
     return NPV_Error;
-  Arg = ArgRV.take();
+  Arg = ArgRV.get();
   
   Expr::EvalResult EvalResult;
   SmallVector<PartialDiagnosticAt, 8> Notes;
@@ -4611,7 +4611,7 @@ static bool CheckTemplateArgumentPointerToMember(Sema &S,
                                   ParamType.getNonReferenceType(),
                                   false, ObjCLifetimeConversion)) {
     Arg = S.ImpCastExprToType(Arg, ParamType, CK_NoOp,
-                              Arg->getValueKind()).take();
+                              Arg->getValueKind()).get();
     ResultArg = Arg;
   } else if (!S.Context.hasSameUnqualifiedType(Arg->getType(),
                 ParamType.getNonReferenceType())) {
@@ -4809,7 +4809,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     ExprResult ArgResult = DefaultLvalueConversion(Arg);
     if (ArgResult.isInvalid())
       return ExprError();
-    Arg = ArgResult.take();
+    Arg = ArgResult.get();
 
     QualType ArgType = Arg->getType();
 
@@ -4842,7 +4842,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       } Diagnoser(ArgType);
 
       Arg = VerifyIntegerConstantExpression(Arg, &Value, Diagnoser,
-                                            false).take();
+                                            false).get();
       if (!Arg)
         return ExprError();
     }
@@ -4857,11 +4857,11 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       // Okay: no conversion necessary
     } else if (ParamType->isBooleanType()) {
       // This is an integral-to-boolean conversion.
-      Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralToBoolean).take();
+      Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralToBoolean).get();
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
       // This is an integral promotion or conversion.
-      Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralCast).take();
+      Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralCast).get();
     } else {
       // We can't perform this conversion.
       Diag(Arg->getLocStart(),
@@ -5192,7 +5192,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       if (IsQualificationConversion(((Expr*) RefExpr.get())->getType(),
                                     ParamType.getUnqualifiedType(), false,
                                     ObjCLifetimeConversion))
-        RefExpr = ImpCastExprToType(RefExpr.take(), ParamType.getUnqualifiedType(), CK_NoOp);
+        RefExpr = ImpCastExprToType(RefExpr.get(), ParamType.getUnqualifiedType(), CK_NoOp);
 
       assert(!RefExpr.isInvalid() &&
              Context.hasSameType(((Expr*) RefExpr.get())->getType(),
@@ -5212,7 +5212,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
 
     if (T->isFunctionType() || T->isArrayType()) {
       // Decay functions and arrays.
-      RefExpr = DefaultFunctionArrayConversion(RefExpr.take());
+      RefExpr = DefaultFunctionArrayConversion(RefExpr.get());
       if (RefExpr.isInvalid())
         return ExprError();
 

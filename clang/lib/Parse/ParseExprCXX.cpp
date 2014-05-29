@@ -1184,7 +1184,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
   BodyScope.Exit();
 
   if (!Stmt.isInvalid())
-    return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.take(), getCurScope());
+    return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.get(), getCurScope());
  
   Actions.ActOnLambdaError(LambdaBeginLoc, getCurScope());
   return ExprError();
@@ -1253,7 +1253,7 @@ ExprResult Parser::ParseCXXCasts() {
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
                                        LAngleBracketLoc, DeclaratorInfo,
                                        RAngleBracketLoc,
-                                       T.getOpenLocation(), Result.take(), 
+                                       T.getOpenLocation(), Result.get(), 
                                        T.getCloseLocation());
 
   return Result;
@@ -1319,7 +1319,7 @@ ExprResult Parser::ParseCXXTypeid() {
         return ExprError();
 
       Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
-                                      Result.release(), RParenLoc);
+                                      Result.get(), RParenLoc);
     }
   }
 
@@ -1367,7 +1367,7 @@ ExprResult Parser::ParseCXXUuidof() {
 
       Result = Actions.ActOnCXXUuidof(OpLoc, T.getOpenLocation(),
                                       /*isType=*/false,
-                                      Result.release(), T.getCloseLocation());
+                                      Result.get(), T.getCloseLocation());
     }
   }
 
@@ -1494,7 +1494,7 @@ ExprResult Parser::ParseThrowExpression() {
   default:
     ExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid()) return Expr;
-    return Actions.ActOnCXXThrow(getCurScope(), ThrowLoc, Expr.take());
+    return Actions.ActOnCXXThrow(getCurScope(), ThrowLoc, Expr.get());
   }
 }
 
@@ -1534,7 +1534,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
     ExprResult Init = ParseBraceInitializer();
     if (Init.isInvalid())
       return Init;
-    Expr *InitList = Init.take();
+    Expr *InitList = Init.get();
     return Actions.ActOnCXXTypeConstructExpr(TypeRep, SourceLocation(),
                                              MultiExprArg(&InitList, 1),
                                              SourceLocation());
@@ -1636,7 +1636,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
       SkipUntil(tok::semi, StopAtSemi);
       return true;
     }
-    DeclaratorInfo.setAsmLabel(AsmLabel.release());
+    DeclaratorInfo.setAsmLabel(AsmLabel.get());
     DeclaratorInfo.SetRangeEnd(Loc);
   }
 
@@ -1676,7 +1676,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   }
 
   if (!InitExpr.isInvalid())
-    Actions.AddInitializerToDecl(DeclOut, InitExpr.take(), !CopyInitialization,
+    Actions.AddInitializerToDecl(DeclOut, InitExpr.get(), !CopyInitialization,
                                  DS.containsPlaceholderType());
   else
     Actions.ActOnInitializerError(DeclOut);
@@ -2617,7 +2617,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
                              PlacementArgs, PlacementRParen,
-                             TypeIdParens, DeclaratorInfo, Initializer.take());
+                             TypeIdParens, DeclaratorInfo, Initializer.get());
 }
 
 /// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be
@@ -2655,7 +2655,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
 
     D.AddTypeInfo(DeclaratorChunk::getArray(0,
                                             /*static=*/false, /*star=*/false,
-                                            Size.release(),
+                                            Size.get(),
                                             T.getOpenLocation(),
                                             T.getCloseLocation()),
                   Attrs, T.getCloseLocation());
@@ -2732,7 +2732,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
   if (Operand.isInvalid())
     return Operand;
 
-  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.take());
+  return Actions.ActOnCXXDelete(Start, UseGlobal, ArrayDelete, Operand.get());
 }
 
 static TypeTrait TypeTraitFromTokKind(tok::TokenKind kind) {
@@ -3017,7 +3017,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
     if (!Result.isInvalid())
       Result = Actions.ActOnCastExpr(getCurScope(), Tracker.getOpenLocation(),
                                     DeclaratorInfo, CastTy,
-                                    Tracker.getCloseLocation(), Result.take());
+                                    Tracker.getCloseLocation(), Result.get());
     return Result;
   }
 
@@ -3028,7 +3028,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
   Result = ParseExpression();
   if (!Result.isInvalid() && Tok.is(tok::r_paren))
     Result = Actions.ActOnParenExpr(Tracker.getOpenLocation(), 
-                                    Tok.getLocation(), Result.take());
+                                    Tok.getLocation(), Result.get());
 
   // Match the ')'.
   if (Result.isInvalid()) {

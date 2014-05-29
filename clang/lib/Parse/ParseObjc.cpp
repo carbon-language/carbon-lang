@@ -1783,7 +1783,7 @@ StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
   }
   // consume ';'
   ExpectAndConsume(tok::semi, diag::err_expected_after, "@throw");
-  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.take(), getCurScope());
+  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.get(), getCurScope());
 }
 
 /// objc-synchronized-statement:
@@ -1820,7 +1820,7 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
 
   // Check the @synchronized operand now.
   if (!operand.isInvalid())
-    operand = Actions.ActOnObjCAtSynchronizedOperand(atLoc, operand.take());
+    operand = Actions.ActOnObjCAtSynchronizedOperand(atLoc, operand.get());
 
   // Parse the compound statement within a new scope.
   ParseScope bodyScope(this, Scope::DeclScope);
@@ -1911,9 +1911,9 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         StmtResult Catch = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc,
                                                               RParenLoc, 
                                                               FirstPart, 
-                                                              CatchBody.take());
+                                                              CatchBody.get());
         if (!Catch.isInvalid())
-          CatchStmts.push_back(Catch.release());
+          CatchStmts.push_back(Catch.get());
         
       } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after)
@@ -1934,7 +1934,7 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       if (FinallyBody.isInvalid())
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc,
-                                                   FinallyBody.take());
+                                                   FinallyBody.get());
       catch_or_finally_seen = true;
       break;
     }
@@ -1944,9 +1944,9 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     return StmtError();
   }
   
-  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.take(), 
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.get(), 
                                     CatchStmts,
-                                    FinallyStmt.take());
+                                    FinallyStmt.get());
 }
 
 /// objc-autoreleasepool-statement:
@@ -1969,7 +1969,7 @@ Parser::ParseObjCAutoreleasePoolStmt(SourceLocation atLoc) {
   if (AutoreleasePoolBody.isInvalid())
     AutoreleasePoolBody = Actions.ActOnNullStmt(Tok.getLocation());
   return Actions.ActOnObjCAutoreleasePoolStmt(atLoc, 
-                                                AutoreleasePoolBody.take());
+                                                AutoreleasePoolBody.get());
 }
 
 /// StashAwayMethodOrFunctionBodyTokens -  Consume the tokens and store them 
@@ -2116,12 +2116,12 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
     }
     ConsumeToken(); // Consume the literal token.
 
-    Lit = Actions.ActOnUnaryOp(getCurScope(), OpLoc, Kind, Lit.take());
+    Lit = Actions.ActOnUnaryOp(getCurScope(), OpLoc, Kind, Lit.get());
     if (Lit.isInvalid())
       return Lit;
 
     return ParsePostfixExpressionSuffix(
-             Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
+             Actions.BuildObjCNumericLiteral(AtLoc, Lit.get()));
   }
 
   case tok::string_literal:    // primary-expression: string-literal
@@ -2222,7 +2222,7 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
       return true;
 
     IsExpr = true;
-    TypeOrExpr = Receiver.take();
+    TypeOrExpr = Receiver.get();
     return false;
   }
 
@@ -2248,14 +2248,14 @@ bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
     // instance method.
     ExprResult Receiver = ParseCXXTypeConstructExpression(DS);
     if (!Receiver.isInvalid())
-      Receiver = ParsePostfixExpressionSuffix(Receiver.take());
+      Receiver = ParsePostfixExpressionSuffix(Receiver.get());
     if (!Receiver.isInvalid())
-      Receiver = ParseRHSOfBinaryExpression(Receiver.take(), prec::Comma);
+      Receiver = ParseRHSOfBinaryExpression(Receiver.get(), prec::Comma);
     if (Receiver.isInvalid())
       return true;
 
     IsExpr = true;
-    TypeOrExpr = Receiver.take();
+    TypeOrExpr = Receiver.get();
     return false;
   }
   
@@ -2401,7 +2401,7 @@ ExprResult Parser::ParseObjCMessageExpression() {
   }
 
   return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(),
-                                        ParsedType(), Res.take());
+                                        ParsedType(), Res.get());
 }
 
 /// \brief Parse the remainder of an Objective-C message following the
@@ -2522,7 +2522,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       }
 
       // We have a valid expression.
-      KeyExprs.push_back(Res.release());
+      KeyExprs.push_back(Res.get());
 
       // Code completion after each argument.
       if (Tok.is(tok::code_completion)) {
@@ -2566,7 +2566,7 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       }
 
       // We have a valid expression.
-      KeyExprs.push_back(Res.release());
+      KeyExprs.push_back(Res.get());
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected) << tok::identifier; // missing selector name.
@@ -2617,7 +2617,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   SmallVector<SourceLocation, 4> AtLocs;
   ExprVector AtStrings;
   AtLocs.push_back(AtLoc);
-  AtStrings.push_back(Res.release());
+  AtStrings.push_back(Res.get());
 
   while (Tok.is(tok::at)) {
     AtLocs.push_back(ConsumeToken()); // eat the @.
@@ -2630,7 +2630,7 @@ ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
     if (Lit.isInvalid())
       return Lit;
 
-    AtStrings.push_back(Lit.release());
+    AtStrings.push_back(Lit.get());
   }
 
   return Actions.ParseObjCStringLiteral(&AtLocs[0], AtStrings.data(),
@@ -2657,7 +2657,7 @@ ExprResult Parser::ParseObjCCharacterLiteral(SourceLocation AtLoc) {
     return Lit;
   }
   ConsumeToken(); // Consume the literal token.
-  return Actions.BuildObjCNumericLiteral(AtLoc, Lit.take());
+  return Actions.BuildObjCNumericLiteral(AtLoc, Lit.get());
 }
 
 /// ParseObjCNumericLiteral -
@@ -2671,7 +2671,7 @@ ExprResult Parser::ParseObjCNumericLiteral(SourceLocation AtLoc) {
     return Lit;
   }
   ConsumeToken(); // Consume the literal token.
-  return Actions.BuildObjCNumericLiteral(AtLoc, Lit.take());
+  return Actions.BuildObjCNumericLiteral(AtLoc, Lit.get());
 }
 
 /// ParseObjCBoxedExpr -
@@ -2694,9 +2694,9 @@ Parser::ParseObjCBoxedExpr(SourceLocation AtLoc) {
   // Wrap the sub-expression in a parenthesized expression, to distinguish
   // a boxed expression from a literal.
   SourceLocation LPLoc = T.getOpenLocation(), RPLoc = T.getCloseLocation();
-  ValueExpr = Actions.ActOnParenExpr(LPLoc, RPLoc, ValueExpr.take());
+  ValueExpr = Actions.ActOnParenExpr(LPLoc, RPLoc, ValueExpr.get());
   return Actions.BuildObjCBoxedExpr(SourceRange(AtLoc, RPLoc),
-                                    ValueExpr.take());
+                                    ValueExpr.get());
 }
 
 ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {
@@ -2720,7 +2720,7 @@ ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {
     if (Res.isInvalid())
       return true;
 
-    ElementExprs.push_back(Res.release());
+    ElementExprs.push_back(Res.get());
 
     if (Tok.is(tok::comma))
       ConsumeToken(); // Eat the ','.

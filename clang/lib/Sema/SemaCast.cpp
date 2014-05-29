@@ -134,7 +134,7 @@ namespace {
       if (!isPlaceholder() || isPlaceholder(BuiltinType::Overload))
         return;
 
-      SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.take());
+      SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.get());
       if (SrcExpr.isInvalid())
         return;
       PlaceholderKind = (BuiltinType::Kind) 0;
@@ -262,7 +262,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
         return ExprError();
     }
     return Op.complete(CXXConstCastExpr::Create(Context, Op.ResultType,
-                                  Op.ValueKind, Op.SrcExpr.take(), DestTInfo,
+                                  Op.ValueKind, Op.SrcExpr.get(), DestTInfo,
                                                 OpLoc, Parens.getEnd(),
                                                 AngleBrackets));
 
@@ -273,7 +273,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
         return ExprError();
     }
     return Op.complete(CXXDynamicCastExpr::Create(Context, Op.ResultType,
-                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                    Op.ValueKind, Op.Kind, Op.SrcExpr.get(),
                                                   &Op.BasePath, DestTInfo,
                                                   OpLoc, Parens.getEnd(),
                                                   AngleBrackets));
@@ -285,7 +285,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
         return ExprError();
     }
     return Op.complete(CXXReinterpretCastExpr::Create(Context, Op.ResultType,
-                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                    Op.ValueKind, Op.Kind, Op.SrcExpr.get(),
                                                       nullptr, DestTInfo, OpLoc,
                                                       Parens.getEnd(),
                                                       AngleBrackets));
@@ -298,7 +298,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     }
     
     return Op.complete(CXXStaticCastExpr::Create(Context, Op.ResultType,
-                                   Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                                   Op.ValueKind, Op.Kind, Op.SrcExpr.get(),
                                                  &Op.BasePath, DestTInfo,
                                                  OpLoc, Parens.getEnd(),
                                                  AngleBrackets));
@@ -535,9 +535,9 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
 /// checked downcasts in class hierarchies.
 void CastOperation::CheckDynamicCast() {
   if (ValueKind == VK_RValue)
-    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
   else if (isPlaceholder())
-    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.take());
+    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.get());
   if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
     return;
 
@@ -690,9 +690,9 @@ void CastOperation::CheckDynamicCast() {
 /// legacy_function(const_cast\<char*\>(str));
 void CastOperation::CheckConstCast() {
   if (ValueKind == VK_RValue)
-    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
   else if (isPlaceholder())
-    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.take());
+    SrcExpr = Self.CheckPlaceholderExpr(SrcExpr.get());
   if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
     return;
 
@@ -805,7 +805,7 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
 /// char *bytes = reinterpret_cast\<char*\>(int_ptr);
 void CastOperation::CheckReinterpretCast() {
   if (ValueKind == VK_RValue && !isPlaceholder(BuiltinType::Overload))
-    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
   else
     checkNonOverloadPlaceholders();
   if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
@@ -864,13 +864,13 @@ void CastOperation::CheckStaticCast() {
         return;
     }
 
-    SrcExpr = Self.IgnoredValueConversions(SrcExpr.take());
+    SrcExpr = Self.IgnoredValueConversions(SrcExpr.get());
     return;
   }
 
   if (ValueKind == VK_RValue && !DestType->isRecordType() &&
       !isPlaceholder(BuiltinType::Overload)) {
-    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
     if (SrcExpr.isInvalid()) // if conversion failed, don't report another error
       return;
   }
@@ -1589,7 +1589,7 @@ static TryCastResult TryConstCast(Sema &Self, ExprResult &SrcExpr,
     // This is a const_cast from a class prvalue to an rvalue reference type.
     // Materialize a temporary to store the result of the conversion.
     SrcExpr = new (Self.Context) MaterializeTemporaryExpr(
-        SrcType, SrcExpr.take(), /*IsLValueReference*/ false);
+        SrcType, SrcExpr.get(), /*IsLValueReference*/ false);
 
   return TC_Success;
 }
@@ -2024,7 +2024,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
         return;
     }
 
-    SrcExpr = Self.IgnoredValueConversions(SrcExpr.take());
+    SrcExpr = Self.IgnoredValueConversions(SrcExpr.get());
     return;
   }
 
@@ -2037,7 +2037,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
 
   if (ValueKind == VK_RValue && !DestType->isRecordType() &&
       !isPlaceholder(BuiltinType::Overload)) {
-    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+    SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
     if (SrcExpr.isInvalid())
       return;
   }
@@ -2175,7 +2175,7 @@ void CastOperation::CheckCStyleCast() {
   // type needs to be scalar.
   if (DestType->isVoidType()) {
     // We don't necessarily do lvalue-to-rvalue conversions on this.
-    SrcExpr = Self.IgnoredValueConversions(SrcExpr.take());
+    SrcExpr = Self.IgnoredValueConversions(SrcExpr.get());
     if (SrcExpr.isInvalid())
       return;
 
@@ -2184,7 +2184,7 @@ void CastOperation::CheckCStyleCast() {
     return;
   }
 
-  SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.take());
+  SrcExpr = Self.DefaultFunctionArrayLvalueConversion(SrcExpr.get());
   if (SrcExpr.isInvalid())
     return;
   QualType SrcType = SrcExpr.get()->getType();
@@ -2265,7 +2265,7 @@ void CastOperation::CheckCStyleCast() {
   }
 
   if (DestType->isExtVectorType()) {
-    SrcExpr = Self.CheckExtVectorCast(OpRange, DestType, SrcExpr.take(), Kind);
+    SrcExpr = Self.CheckExtVectorCast(OpRange, DestType, SrcExpr.get(), Kind);
     return;
   }
 
@@ -2387,7 +2387,7 @@ ExprResult Sema::BuildCStyleCastExpr(SourceLocation LPLoc,
     return ExprError();
 
   return Op.complete(CStyleCastExpr::Create(Context, Op.ResultType,
-                              Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
+                              Op.ValueKind, Op.Kind, Op.SrcExpr.get(),
                               &Op.BasePath, CastTypeInfo, LPLoc, RPLoc));
 }
 
@@ -2409,5 +2409,5 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
 
   return Op.complete(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
                          Op.ValueKind, CastTypeInfo, Op.Kind,
-                         Op.SrcExpr.take(), &Op.BasePath, LPLoc, RPLoc));
+                         Op.SrcExpr.get(), &Op.BasePath, LPLoc, RPLoc));
 }

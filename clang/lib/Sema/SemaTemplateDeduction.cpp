@@ -2032,21 +2032,21 @@ getTrivialTemplateArgumentLoc(Sema &S,
   case TemplateArgument::Declaration: {
     Expr *E
       = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
-          .takeAs<Expr>();
+          .getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
 
   case TemplateArgument::NullPtr: {
     Expr *E
       = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
-          .takeAs<Expr>();
+          .getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(NTTPType, /*isNullPtr*/true),
                                E);
   }
 
   case TemplateArgument::Integral: {
     Expr *E
-      = S.BuildExpressionFromIntegralTemplateArgument(Arg, Loc).takeAs<Expr>();
+      = S.BuildExpressionFromIntegralTemplateArgument(Arg, Loc).getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
 
@@ -3961,7 +3961,7 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
     ExprResult NonPlaceholder = CheckPlaceholderExpr(Init);
     if (NonPlaceholder.isInvalid())
       return DAR_FailedAlreadyDiagnosed;
-    Init = NonPlaceholder.take();
+    Init = NonPlaceholder.get();
   }
 
   if (Init->isTypeDependent() || Type.getType()->isDependentType()) {

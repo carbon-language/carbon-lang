@@ -876,7 +876,7 @@ OMPClause *Sema::ActOnOpenMPIfClause(Expr *Condition, SourceLocation StartLoc,
     if (Val.isInvalid())
       return nullptr;
 
-    ValExpr = Val.take();
+    ValExpr = Val.get();
   }
 
   return new (Context) OMPIfClause(ValExpr, StartLoc, LParenLoc, EndLoc);
@@ -940,7 +940,7 @@ OMPClause *Sema::ActOnOpenMPNumThreadsClause(Expr *NumThreads,
     if (Val.isInvalid())
       return nullptr;
 
-    ValExpr = Val.take();
+    ValExpr = Val.get();
 
     // OpenMP [2.5, Restrictions]
     //  The num_threads expression must evaluate to a positive integer value.
@@ -986,7 +986,7 @@ OMPClause *Sema::ActOnOpenMPSafelenClause(Expr *Len, SourceLocation StartLoc,
   if (Safelen.isInvalid())
     return nullptr;
   return new (Context)
-      OMPSafelenClause(Safelen.take(), StartLoc, LParenLoc, EndLoc);
+      OMPSafelenClause(Safelen.get(), StartLoc, LParenLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *Num, SourceLocation StartLoc,
@@ -1000,7 +1000,7 @@ OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *Num, SourceLocation StartLoc,
   if (NumForLoops.isInvalid())
     return nullptr;
   return new (Context)
-      OMPCollapseClause(NumForLoops.take(), StartLoc, LParenLoc, EndLoc);
+      OMPCollapseClause(NumForLoops.get(), StartLoc, LParenLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPSimpleClause(
@@ -1627,7 +1627,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
     ExprResult Val = PerformImplicitIntegerConversion(StepLoc, Step);
     if (Val.isInvalid())
       return nullptr;
-    StepExpr = Val.take();
+    StepExpr = Val.get();
 
     // Warn about zero linear step (it would be probably better specified as
     // making corresponding variables 'const').

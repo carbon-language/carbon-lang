@@ -859,7 +859,7 @@ namespace {
       OS << "        ExprResult " << "Result = S.SubstExpr("
          << "A->get" << getUpperName() << "(), TemplateArgs);\n";
       OS << "        tempInst" << getUpperName() << " = "
-         << "Result.takeAs<Expr>();\n";
+         << "Result.getAs<Expr>();\n";
       OS << "      }\n";
     }
 
@@ -911,7 +911,7 @@ namespace {
          << "_end();\n";
       OS << "        for (; I != E; ++I, ++TI) {\n";
       OS << "          ExprResult Result = S.SubstExpr(*I, TemplateArgs);\n";
-      OS << "          *TI = Result.takeAs<Expr>();\n";
+      OS << "          *TI = Result.getAs<Expr>();\n";
       OS << "        }\n";
       OS << "      }\n";
     }

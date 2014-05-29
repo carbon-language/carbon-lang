@@ -166,7 +166,7 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (Result.isInvalid())
       return StmtError();
 
-    Exprs[i] = Result.take();
+    Exprs[i] = Result.get();
     InputConstraintInfos.push_back(Info);
 
     const Type *Ty = Exprs[i]->getType().getTypePtr();
@@ -351,7 +351,7 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
         InputExpr->isEvaluatable(Context)) {
       CastKind castKind =
         (OutTy->isBooleanType() ? CK_IntegralToBoolean : CK_IntegralCast);
-      InputExpr = ImpCastExprToType(InputExpr, OutTy, castKind).take();
+      InputExpr = ImpCastExprToType(InputExpr, OutTy, castKind).get();
       Exprs[InputOpNo] = InputExpr;
       NS->setInputExpr(i, InputExpr);
       continue;
@@ -389,7 +389,7 @@ ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
 
   if (!Result.isUsable()) return Result;
 
-  Result = CheckPlaceholderExpr(Result.take());
+  Result = CheckPlaceholderExpr(Result.get());
   if (!Result.isUsable()) return Result;
 
   QualType T = Result.get()->getType();

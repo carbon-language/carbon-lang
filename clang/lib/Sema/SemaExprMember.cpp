@@ -690,7 +690,7 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
 
     if (BaseResult.isInvalid())
       return ExprError();
-    Base = BaseResult.take();
+    Base = BaseResult.get();
 
     if (Result.isInvalid()) {
       Owned(Base);
@@ -746,7 +746,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
       = BuildDeclarationNameExpr(EmptySS, baseNameInfo, baseVariable);
     if (result.isInvalid()) return ExprError();
     
-    baseObjectExpr = result.take();    
+    baseObjectExpr = result.get();    
     baseObjectIsPointer = false;
     baseQuals = baseObjectExpr->getType().getQualifiers();
     
@@ -802,7 +802,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     
     result = BuildFieldReferenceExpr(*this, result, baseObjectIsPointer,
                                      EmptySS, field, foundDecl,
-                                     memberNameInfo).take();
+                                     memberNameInfo).get();
     if (!result)
       return ExprError();
 
@@ -822,7 +822,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
 
     result = BuildFieldReferenceExpr(*this, result, /*isarrow*/ false,
                                      (FI == FEnd? SS : EmptySS), field,
-                                     fakeFoundDecl, memberNameInfo).take();
+                                     fakeFoundDecl, memberNameInfo).get();
   }
   
   return Owned(result);
@@ -1128,7 +1128,7 @@ static bool ShouldTryAgainWithRedefinitionType(Sema &S, ExprResult &base) {
   if (opty && !opty->getObjectType()->getInterface())
     return false;
 
-  base = S.ImpCastExprToType(base.take(), redef, CK_BitCast);
+  base = S.ImpCastExprToType(base.get(), redef, CK_BitCast);
   return true;
 }
 
@@ -1168,7 +1168,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   assert(BaseExpr.get() && "no base expression");
 
   // Perform default conversions.
-  BaseExpr = PerformMemberExprBaseConversion(BaseExpr.take(), IsArrow);
+  BaseExpr = PerformMemberExprBaseConversion(BaseExpr.get(), IsArrow);
   if (BaseExpr.isInvalid())
     return ExprError();
 
@@ -1246,7 +1246,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // But we only actually find it this way on objects of type 'id',
       // apparently.
       if (OTy->isObjCId() && Member->isStr("isa"))
-        return Owned(new (Context) ObjCIsaExpr(BaseExpr.take(), IsArrow, MemberLoc,
+        return Owned(new (Context) ObjCIsaExpr(BaseExpr.get(), IsArrow, MemberLoc,
                                                OpLoc,
                                                Context.getObjCClassType()));
       if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
@@ -1365,7 +1365,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
     ObjCIvarRefExpr *Result = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                             MemberLoc, OpLoc,
-                                                            BaseExpr.take(),
+                                                            BaseExpr.get(),
                                                             IsArrow);
 
     if (getLangOpts().ObjCAutoRefCount) {
@@ -1392,7 +1392,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     }
 
     // This actually uses the base as an r-value.
-    BaseExpr = DefaultLvalueConversion(BaseExpr.take());
+    BaseExpr = DefaultLvalueConversion(BaseExpr.get());
     if (BaseExpr.isInvalid())
       return ExprError();
 
@@ -1417,7 +1417,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                                                          VK_LValue,
                                                          OK_ObjCProperty,
                                                          MemberLoc, 
-                                                         BaseExpr.take()));
+                                                         BaseExpr.get()));
         }
 
         if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
@@ -1437,7 +1437,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           return Owned(new (Context) ObjCPropertyRefExpr(OMD, SMD,
                                                          Context.PseudoObjectTy,
                                                          VK_LValue, OK_ObjCProperty,
-                                                         MemberLoc, BaseExpr.take()));
+                                                         MemberLoc, BaseExpr.get()));
         }
       }
       // Use of id.member can only be for a property reference. Do not
@@ -1492,7 +1492,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
                                                        Context.PseudoObjectTy,
                                                        VK_LValue, OK_ObjCProperty,
-                                                       MemberLoc, BaseExpr.take()));
+                                                       MemberLoc, BaseExpr.get()));
       }
 
       if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
@@ -1519,7 +1519,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     if (ret.isNull())
       return ExprError();
 
-    return Owned(new (Context) ExtVectorElementExpr(ret, VK, BaseExpr.take(),
+    return Owned(new (Context) ExtVectorElementExpr(ret, VK, BaseExpr.get(),
                                                     *Member, MemberLoc));
   }
 
@@ -1528,7 +1528,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   if (IsArrow &&
       BaseType->isSpecificBuiltinType(BuiltinType::ObjCSel) &&
       !Context.getObjCSelRedefinitionType()->isObjCSelType()) {
-    BaseExpr = ImpCastExprToType(BaseExpr.take(), 
+    BaseExpr = ImpCastExprToType(BaseExpr.get(), 
                                  Context.getObjCSelRedefinitionType(),
                                  CK_BitCast);
     return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
@@ -1567,7 +1567,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                            IsArrow ? &isPointerToRecordType : &isRecordType)) {
     if (BaseExpr.isInvalid())
       return ExprError();
-    BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
+    BaseExpr = DefaultFunctionArrayConversion(BaseExpr.get());
     return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
                             ObjCImpDecl, HasTemplateArgs);
   }
@@ -1625,7 +1625,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   // This is a postfix expression, so get rid of ParenListExprs.
   ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
   if (Result.isInvalid()) return ExprError();
-  Base = Result.take();
+  Base = Result.get();
 
   if (Base->getType()->isDependentType() || Name.isDependentName() ||
       isDependentScopeSpecifier(SS)) {
@@ -1640,7 +1640,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                               SS, ObjCImpDecl, TemplateArgs != nullptr);
     if (BaseResult.isInvalid())
       return ExprError();
-    Base = BaseResult.take();
+    Base = BaseResult.get();
 
     if (Result.isInvalid()) {
       Owned(Base);
@@ -1725,7 +1725,7 @@ BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
                                   FoundDecl, Field);
   if (Base.isInvalid())
     return ExprError();
-  return S.Owned(BuildMemberExpr(S, S.Context, Base.take(), IsArrow, SS,
+  return S.Owned(BuildMemberExpr(S, S.Context, Base.get(), IsArrow, SS,
                                  /*TemplateKWLoc=*/SourceLocation(),
                                  Field, FoundDecl, MemberNameInfo,
                                  MemberType, VK, OK));

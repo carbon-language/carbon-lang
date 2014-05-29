@@ -161,10 +161,7 @@ namespace clang {
     bool isUnset() const { return !Invalid && !Val; }
 
     PtrTy get() const { return Val; }
-    // FIXME: Replace with get.
-    PtrTy release() const { return Val; }
-    PtrTy take() const { return Val; }
-    template <typename T> T *takeAs() { return static_cast<T*>(get()); }
+    template <typename T> T *getAs() { return static_cast<T*>(get()); }
 
     void set(PtrTy V) { Val = V; }
 
@@ -206,10 +203,7 @@ namespace clang {
       void *VP = reinterpret_cast<void *>(PtrWithInvalid & ~0x01);
       return PtrTraits::getFromVoidPointer(VP);
     }
-    // FIXME: Replace with get.
-    PtrTy take() const { return get(); }
-    PtrTy release() const { return get(); }
-    template <typename T> T *takeAs() { return static_cast<T*>(get()); }
+    template <typename T> T *getAs() { return static_cast<T*>(get()); }
 
     void set(PtrTy V) {
       void *VP = PtrTraits::getAsVoidPointer(V);
