@@ -391,6 +391,7 @@ class AddressSanitizerModule : public ModulePass {
   void initializeCallbacks(Module &M);
 
   bool ShouldInstrumentGlobal(GlobalVariable *G);
+  void poisonOneInitializer(Function &GlobalInit, GlobalValue *ModuleName);
   void createInitializerPoisonCalls(Module &M, GlobalValue *ModuleName);
   size_t MinRedzoneSizeForGlobal() const {
     return RedzoneSizeForScale(Mapping.Scale);
@@ -851,48 +852,36 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   Crash->setDebugLoc(OrigIns->getDebugLoc());
 }
 
-void AddressSanitizerModule::createInitializerPoisonCalls(
-    Module &M, GlobalValue *ModuleName) {
-  // We do all of our poisoning and unpoisoning within a global constructor.
-  // These are called _GLOBAL__(sub_)?I_.*.
-  // TODO: Consider looking through the functions in
-  // M.getGlobalVariable("llvm.global_ctors") instead of using this stringly
-  // typed approach.
-  Function *GlobalInit = nullptr;
-  for (auto &F : M.getFunctionList()) {
-    StringRef FName = F.getName();
-
-    const char kGlobalPrefix[] = "_GLOBAL__";
-    if (!FName.startswith(kGlobalPrefix))
-      continue;
-    FName = FName.substr(strlen(kGlobalPrefix));
-
-    const char kOptionalSub[] = "sub_";
-    if (FName.startswith(kOptionalSub))
-      FName = FName.substr(strlen(kOptionalSub));
-
-    if (FName.startswith("I_")) {
-      GlobalInit = &F;
-      break;
-    }
-  }
-  // If that function is not present, this TU contains no globals, or they have
-  // all been optimized away
-  if (!GlobalInit)
-    return;
-
+void AddressSanitizerModule::poisonOneInitializer(Function &GlobalInit,
+                                                  GlobalValue *ModuleName) {
   // Set up the arguments to our poison/unpoison functions.
-  IRBuilder<> IRB(GlobalInit->begin()->getFirstInsertionPt());
+  IRBuilder<> IRB(GlobalInit.begin()->getFirstInsertionPt());
 
   // Add a call to poison all external globals before the given function starts.
   Value *ModuleNameAddr = ConstantExpr::getPointerCast(ModuleName, IntptrTy);
   IRB.CreateCall(AsanPoisonGlobals, ModuleNameAddr);
 
   // Add calls to unpoison all globals before each return instruction.
-  for (Function::iterator I = GlobalInit->begin(), E = GlobalInit->end();
-       I != E; ++I) {
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(I->getTerminator())) {
+  for (auto &BB : GlobalInit.getBasicBlockList())
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB.getTerminator()))
       CallInst::Create(AsanUnpoisonGlobals, "", RI);
+}
+
+void AddressSanitizerModule::createInitializerPoisonCalls(
+    Module &M, GlobalValue *ModuleName) {
+  GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
+
+  ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
+  for (Use &OP : CA->operands()) {
+    if (isa<ConstantAggregateZero>(OP))
+      continue;
+    ConstantStruct *CS = cast<ConstantStruct>(OP);
+
+    // Must have a function or null ptr.
+    // (CS->getOperand(0) is the init priority.)
+    if (Function* F = dyn_cast<Function>(CS->getOperand(1))) {
+      if (F->getName() != kAsanModuleCtorName)
+        poisonOneInitializer(*F, ModuleName);
     }
   }
 }
