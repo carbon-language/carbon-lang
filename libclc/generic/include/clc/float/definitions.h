@@ -10,6 +10,9 @@
 #define FLT_EPSILON     0x1.0p-23f
 
 #define M_LOG2E_F       0x1.715476p+0f
+#define M_LOG10E_F      0x1.bcb7b2p-2f
+#define M_LN2_F         0x1.62e430p-1f
+#define M_LN10_F        0x1.26bb1cp+1f
 #define M_PI_F          0x1.921fb6p+1f
 
 #ifdef cl_khr_fp64
