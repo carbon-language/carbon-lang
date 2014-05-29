@@ -93,7 +93,7 @@ namespace {
                                             CK_Dependent, castExpr, nullptr,
                                             castExpr->getValueKind());
       }
-      return Self.Owned(castExpr);
+      return castExpr;
     }
 
     // Internal convenience methods.
@@ -239,7 +239,7 @@ ExprResult
 Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         TypeSourceInfo *DestTInfo, Expr *E,
                         SourceRange AngleBrackets, SourceRange Parens) {
-  ExprResult Ex = Owned(E);
+  ExprResult Ex = E;
   QualType DestType = DestTInfo->getType();
 
   // If the type is dependent, we won't do the semantic analysis now.

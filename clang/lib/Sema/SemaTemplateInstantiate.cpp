@@ -1084,7 +1084,7 @@ TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
 ExprResult 
 TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
-    return SemaRef.Owned(E);
+    return E;
 
   return getSema().BuildPredefinedExpr(E->getLocation(), E->getIdentType());
 }
@@ -1098,7 +1098,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
   // arguments left unspecified.
   if (!TemplateArgs.hasTemplateArgument(NTTP->getDepth(),
                                         NTTP->getPosition()))
-    return SemaRef.Owned(E);
+    return E;
 
   TemplateArgument Arg = TemplateArgs(NTTP->getDepth(), NTTP->getPosition());
   if (NTTP->isParameterPack()) {
@@ -1138,7 +1138,7 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
   // case we just return that expression.
   if (arg.getKind() == TemplateArgument::Expression) {
     Expr *argExpr = arg.getAsExpr();
-    result = SemaRef.Owned(argExpr);
+    result = argExpr;
     type = argExpr->getType();
 
   } else if (arg.getKind() == TemplateArgument::Declaration ||
@@ -1186,10 +1186,8 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
   if (result.isInvalid()) return ExprError();
 
   Expr *resultExpr = result.get();
-  return SemaRef.Owned(new (SemaRef.Context)
-                SubstNonTypeTemplateParmExpr(type,
-                                             resultExpr->getValueKind(),
-                                             loc, parm, resultExpr));
+  return new (SemaRef.Context) SubstNonTypeTemplateParmExpr(
+      type, resultExpr->getValueKind(), loc, parm, resultExpr);
 }
                                                    
 ExprResult 
@@ -1197,7 +1195,7 @@ TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
                                           SubstNonTypeTemplateParmPackExpr *E) {
   if (getSema().ArgumentPackSubstitutionIndex == -1) {
     // We aren't expanding the parameter pack, so just return ourselves.
-    return getSema().Owned(E);
+    return E;
   }
 
   TemplateArgument Arg = E->getArgumentPack();
@@ -2571,7 +2569,7 @@ Sema::InstantiateClassTemplateSpecializationMembers(
 StmtResult
 Sema::SubstStmt(Stmt *S, const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (!S)
-    return Owned(S);
+    return S;
 
   TemplateInstantiator Instantiator(*this, TemplateArgs,
                                     SourceLocation(),
@@ -2582,7 +2580,7 @@ Sema::SubstStmt(Stmt *S, const MultiLevelTemplateArgumentList &TemplateArgs) {
 ExprResult
 Sema::SubstExpr(Expr *E, const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (!E)
-    return Owned(E);
+    return E;
 
   TemplateInstantiator Instantiator(*this, TemplateArgs,
                                     SourceLocation(),

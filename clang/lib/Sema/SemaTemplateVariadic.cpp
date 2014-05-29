@@ -509,8 +509,8 @@ ExprResult Sema::CheckPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc,
   }
   
   // Create the pack expansion expression and source-location information.
-  return Owned(new (Context) PackExpansionExpr(Context.DependentTy, Pattern,
-                                               EllipsisLoc, NumExpansions));
+  return new (Context)
+    PackExpansionExpr(Context.DependentTy, Pattern, EllipsisLoc, NumExpansions);
 }
 
 /// \brief Retrieve the depth and index of a parameter pack.

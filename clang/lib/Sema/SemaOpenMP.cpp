@@ -806,8 +806,8 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return Owned(
-      OMPParallelDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt));
+  return OMPParallelDirective::Create(Context, StartLoc, EndLoc, Clauses,
+                                      AStmt);
 }
 
 StmtResult Sema::ActOnOpenMPSimdDirective(ArrayRef<OMPClause *> Clauses,
@@ -828,8 +828,7 @@ StmtResult Sema::ActOnOpenMPSimdDirective(ArrayRef<OMPClause *> Clauses,
   // FIXME: Checking loop canonical form, collapsing etc.
 
   getCurFunction()->setHasBranchProtectedScope();
-  return Owned(
-      OMPSimdDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt));
+  return OMPSimdDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
@@ -963,7 +962,7 @@ ExprResult Sema::VerifyPositiveIntegerConstantInClause(Expr *E,
     return ExprError();
   if (E->isValueDependent() || E->isTypeDependent() ||
       E->isInstantiationDependent() || E->containsUnexpandedParameterPack())
-    return Owned(E);
+    return E;
   llvm::APSInt Result;
   ExprResult ICE = VerifyIntegerConstantExpression(E, &Result);
   if (ICE.isInvalid())

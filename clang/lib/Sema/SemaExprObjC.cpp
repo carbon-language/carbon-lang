@@ -296,7 +296,7 @@ ExprResult Sema::BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number) {
                                                                     ParamDecl);
   ExprResult ConvertedNumber = PerformCopyInitialization(Entity,
                                                          SourceLocation(),
-                                                         Owned(Number));
+                                                         Number);
   if (ConvertedNumber.isInvalid())
     return ExprError();
   Number = ConvertedNumber.get();
@@ -445,7 +445,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
   if (ValueExpr->isTypeDependent()) {
     ObjCBoxedExpr *BoxedExpr = 
       new (Context) ObjCBoxedExpr(ValueExpr, Context.DependentTy, nullptr, SR);
-    return Owned(BoxedExpr);
+    return BoxedExpr;
   }
   ObjCMethodDecl *BoxingMethod = nullptr;
   QualType BoxedType;
@@ -586,7 +586,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                                                     ParamDecl);
   ExprResult ConvertedValueExpr = PerformCopyInitialization(Entity,
                                                             SourceLocation(),
-                                                            Owned(ValueExpr));
+                                                            ValueExpr);
   if (ConvertedValueExpr.isInvalid())
     return ExprError();
   ValueExpr = ConvertedValueExpr.get();
@@ -624,13 +624,9 @@ ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
   BaseExpr = Result.get();
 
   // Build the pseudo-object expression.
-  return Owned(ObjCSubscriptRefExpr::Create(Context, 
-                                            BaseExpr,
-                                            IndexExpr,
-                                            Context.PseudoObjectTy,
-                                            getterMethod,
-                                            setterMethod, RB));
-  
+  return ObjCSubscriptRefExpr::Create(Context, BaseExpr, IndexExpr,
+                                      Context.PseudoObjectTy, getterMethod,
+                                      setterMethod, RB);
 }
 
 ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
@@ -1398,7 +1394,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
     InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
                                                                       param);
-    ExprResult ArgE = PerformCopyInitialization(Entity, SelLoc, Owned(argExpr));
+    ExprResult ArgE = PerformCopyInitialization(Entity, SelLoc, argExpr);
     if (ArgE.isInvalid())
       IsError = true;
     else
@@ -1583,14 +1579,13 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     if (DiagnoseUseOfDecl(PD, MemberLoc))
       return ExprError();
     if (Super)
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, Context.PseudoObjectTy,
-                                                     VK_LValue, OK_ObjCProperty,
-                                                     MemberLoc, 
-                                                     SuperLoc, SuperType));
+      return new (Context)
+          ObjCPropertyRefExpr(PD, Context.PseudoObjectTy, VK_LValue,
+                              OK_ObjCProperty, MemberLoc, SuperLoc, SuperType);
     else
-      return Owned(new (Context) ObjCPropertyRefExpr(PD, Context.PseudoObjectTy,
-                                                     VK_LValue, OK_ObjCProperty,
-                                                     MemberLoc, BaseExpr));
+      return new (Context)
+          ObjCPropertyRefExpr(PD, Context.PseudoObjectTy, VK_LValue,
+                              OK_ObjCProperty, MemberLoc, BaseExpr);
   }
   // Check protocols on qualified interfaces.
   for (const auto *I : OPT->quals())
@@ -1600,19 +1595,13 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
         return ExprError();
 
       if (Super)
-        return Owned(new (Context) ObjCPropertyRefExpr(PD,
-                                                       Context.PseudoObjectTy,
-                                                       VK_LValue,
-                                                       OK_ObjCProperty,
-                                                       MemberLoc, 
-                                                       SuperLoc, SuperType));
+        return new (Context) ObjCPropertyRefExpr(
+            PD, Context.PseudoObjectTy, VK_LValue, OK_ObjCProperty, MemberLoc,
+            SuperLoc, SuperType);
       else
-        return Owned(new (Context) ObjCPropertyRefExpr(PD,
-                                                       Context.PseudoObjectTy,
-                                                       VK_LValue,
-                                                       OK_ObjCProperty,
-                                                       MemberLoc,
-                                                       BaseExpr));
+        return new (Context)
+            ObjCPropertyRefExpr(PD, Context.PseudoObjectTy, VK_LValue,
+                                OK_ObjCProperty, MemberLoc, BaseExpr);
     }
   // If that failed, look for an "implicit" property by seeing if the nullary
   // selector is implemented.
@@ -1658,16 +1647,13 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
   if (Getter || Setter) {
     if (Super)
-      return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                     Context.PseudoObjectTy,
-                                                     VK_LValue, OK_ObjCProperty,
-                                                     MemberLoc,
-                                                     SuperLoc, SuperType));
+      return new (Context)
+          ObjCPropertyRefExpr(Getter, Setter, Context.PseudoObjectTy, VK_LValue,
+                              OK_ObjCProperty, MemberLoc, SuperLoc, SuperType);
     else
-      return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                     Context.PseudoObjectTy,
-                                                     VK_LValue, OK_ObjCProperty,
-                                                     MemberLoc, BaseExpr));
+      return new (Context)
+          ObjCPropertyRefExpr(Getter, Setter, Context.PseudoObjectTy, VK_LValue,
+                              OK_ObjCProperty, MemberLoc, BaseExpr);
 
   }
 
@@ -1798,18 +1784,14 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 
   if (Getter || Setter) {
     if (IsSuper)
-    return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                   Context.PseudoObjectTy,
-                                                   VK_LValue, OK_ObjCProperty,
-                                                   propertyNameLoc,
-                                                   receiverNameLoc, 
-                                          Context.getObjCInterfaceType(IFace)));
+      return new (Context)
+          ObjCPropertyRefExpr(Getter, Setter, Context.PseudoObjectTy, VK_LValue,
+                              OK_ObjCProperty, propertyNameLoc, receiverNameLoc,
+                              Context.getObjCInterfaceType(IFace));
 
-    return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
-                                                   Context.PseudoObjectTy,
-                                                   VK_LValue, OK_ObjCProperty,
-                                                   propertyNameLoc,
-                                                   receiverNameLoc, IFace));
+    return new (Context) ObjCPropertyRefExpr(
+        Getter, Setter, Context.PseudoObjectTy, VK_LValue, OK_ObjCProperty,
+        propertyNameLoc, receiverNameLoc, IFace);
   }
   return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)
                      << &propertyName << Context.getObjCInterfaceType(IFace));
@@ -2103,11 +2085,10 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     unsigned NumArgs = ArgsIn.size();
     Expr **Args = ArgsIn.data();
     assert(SuperLoc.isInvalid() && "Message to super with dependent type");
-    return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
-                                         VK_RValue, LBracLoc, ReceiverTypeInfo,
-                                         Sel, SelectorLocs, /*Method=*/nullptr,
-                                         makeArrayRef(Args, NumArgs),RBracLoc,
-                                         isImplicit));
+    return ObjCMessageExpr::Create(
+        Context, ReceiverType, VK_RValue, LBracLoc, ReceiverTypeInfo, Sel,
+        SelectorLocs, /*Method=*/nullptr, makeArrayRef(Args, NumArgs), RBracLoc,
+        isImplicit);
   }
   
   // Find the class to which we are sending this message.
@@ -2297,11 +2278,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       unsigned NumArgs = ArgsIn.size();
       Expr **Args = ArgsIn.data();
       assert(SuperLoc.isInvalid() && "Message to super with dependent type");
-      return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
-                                           VK_RValue, LBracLoc, Receiver, Sel, 
-                                           SelectorLocs, /*Method=*/nullptr,
-                                           makeArrayRef(Args, NumArgs),
-                                           RBracLoc, isImplicit));
+      return ObjCMessageExpr::Create(
+          Context, Context.DependentTy, VK_RValue, LBracLoc, Receiver, Sel,
+          SelectorLocs, /*Method=*/nullptr, makeArrayRef(Args, NumArgs),
+          RBracLoc, isImplicit);
     }
 
     // If necessary, apply function/array conversion to the receiver.
@@ -2674,7 +2654,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         // The implicit assignment to self means we also don't want to
         // consume the result.
         Result->setDelegateInitCall(true);
-        return Owned(Result);
+        return Result;
       }
     }
 

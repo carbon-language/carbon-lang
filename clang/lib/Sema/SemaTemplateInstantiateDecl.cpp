@@ -741,7 +741,7 @@ void TemplateDeclInstantiator::InstantiateEnumDefinition(
   EnumConstantDecl *LastEnumConst = nullptr;
   for (auto *EC : Pattern->enumerators()) {
     // The specified value for the enumerator.
-    ExprResult Value = SemaRef.Owned((Expr *)nullptr);
+    ExprResult Value((Expr *)nullptr);
     if (Expr *UninstValue = EC->getInitExpr()) {
       // The enumerator's value expression is a constant expression.
       EnterExpressionEvaluationContext Unevaluated(SemaRef,
@@ -753,7 +753,7 @@ void TemplateDeclInstantiator::InstantiateEnumDefinition(
     // Drop the initial value and continue.
     bool isInvalid = false;
     if (Value.isInvalid()) {
-      Value = SemaRef.Owned((Expr *)nullptr);
+      Value = nullptr;
       isInvalid = true;
     }
 

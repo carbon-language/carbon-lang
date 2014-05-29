@@ -1036,10 +1036,6 @@ public:
   /// \brief Retrieve the module loader associated with the preprocessor.
   ModuleLoader &getModuleLoader() const;
 
-  ExprResult Owned(Expr* E) { return E; }
-  ExprResult Owned(ExprResult R) { return R; }
-  StmtResult Owned(Stmt* S) { return S; }
-
   void ActOnEndOfTranslationUnit();
 
   void CheckDelegatingCtorCycles();
@@ -7699,8 +7695,8 @@ public:
     Expr *E1Tmp = E1.get(), *E2Tmp = E2.get();
     QualType Composite = FindCompositePointerType(Loc, E1Tmp, E2Tmp,
                                                   NonStandardCompositeType);
-    E1 = Owned(E1Tmp);
-    E2 = Owned(E2Tmp);
+    E1 = E1Tmp;
+    E2 = E2Tmp;
     return Composite;
   }
 

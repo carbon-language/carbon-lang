@@ -101,7 +101,7 @@ static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
   if (checkArgCount(S, TheCall, 1))
     return true;
 
-  ExprResult Arg(S.Owned(TheCall->getArg(0)));
+  ExprResult Arg(TheCall->getArg(0));
   QualType ResultType = S.CheckAddressOfOperand(Arg, TheCall->getLocStart());
   if (ResultType.isNull())
     return true;
@@ -113,7 +113,7 @@ static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
 
 ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
-  ExprResult TheCallResult(Owned(TheCall));
+  ExprResult TheCallResult(TheCall);
 
   // Find out if any arguments are required to be integer constant expressions.
   unsigned ICEArguments = 0;
@@ -1219,7 +1219,7 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     Diag(AE->getLocStart(), diag::err_atomic_load_store_uses_lib) <<
     ((Op == AtomicExpr::AO__c11_atomic_load) ? 0 : 1);
 
-  return Owned(AE);
+  return AE;
 }
 
 
@@ -1861,9 +1861,9 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, nullptr);
   }
 
-  return Owned(new (Context) ShuffleVectorExpr(Context, exprs, resType,
-                                            TheCall->getCallee()->getLocStart(),
-                                            TheCall->getRParenLoc()));
+  return new (Context) ShuffleVectorExpr(Context, exprs, resType,
+                                         TheCall->getCallee()->getLocStart(),
+                                         TheCall->getRParenLoc());
 }
 
 /// SemaConvertVectorExpr - Handle __builtin_convertvector
@@ -1892,9 +1892,8 @@ ExprResult Sema::SemaConvertVectorExpr(Expr *E, TypeSourceInfo *TInfo,
                        << E->getSourceRange());
   }
 
-  return Owned(new (Context) ConvertVectorExpr(E, TInfo, DstTy, VK, OK,
-               BuiltinLoc, RParenLoc));
-
+  return new (Context)
+      ConvertVectorExpr(E, TInfo, DstTy, VK, OK, BuiltinLoc, RParenLoc);
 }
 
 /// SemaBuiltinPrefetch - Handle __builtin_prefetch.

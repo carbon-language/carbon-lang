@@ -1156,7 +1156,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           InitializedEntity::InitializeResult(PropertyDiagLoc,
                                               getterMethod->getReturnType(),
                                               /*NRVO=*/false),
-          PropertyDiagLoc, Owned(IvarRefExpr));
+          PropertyDiagLoc, IvarRefExpr);
       if (!Res.isInvalid()) {
         Expr *ResExpr = Res.getAs<Expr>();
         if (ResExpr)

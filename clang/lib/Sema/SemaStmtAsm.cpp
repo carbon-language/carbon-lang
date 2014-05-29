@@ -364,7 +364,7 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     return StmtError();
   }
 
-  return Owned(NS);
+  return NS;
 }
 
 ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
@@ -484,5 +484,5 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                             /*IsVolatile*/ true, AsmToks, NumOutputs, NumInputs,
                             Constraints, Exprs, AsmString,
                             Clobbers, EndLoc);
-  return Owned(NS);
+  return NS;
 }

@@ -421,15 +421,10 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
     // perform the double-lookup check.
     NamedDecl *FirstQualifierInScope = nullptr;
 
-    return Owned(CXXDependentScopeMemberExpr::Create(Context,
-                                                     /*This*/ nullptr, ThisType,
-                                                     /*IsArrow*/ true,
-                                                     /*Op*/ SourceLocation(),
-                                               SS.getWithLocInContext(Context),
-                                                     TemplateKWLoc,
-                                                     FirstQualifierInScope,
-                                                     NameInfo,
-                                                     TemplateArgs));
+    return CXXDependentScopeMemberExpr::Create(
+        Context, /*This*/ nullptr, ThisType, /*IsArrow*/ true,
+        /*Op*/ SourceLocation(), SS.getWithLocInContext(Context), TemplateKWLoc,
+        FirstQualifierInScope, NameInfo, TemplateArgs);
   }
 
   return BuildDependentDeclRefExpr(SS, TemplateKWLoc, NameInfo, TemplateArgs);
@@ -440,11 +435,9 @@ Sema::BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
                                 SourceLocation TemplateKWLoc,
                                 const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
-  return Owned(DependentScopeDeclRefExpr::Create(Context,
-                                               SS.getWithLocInContext(Context),
-                                                 TemplateKWLoc,
-                                                 NameInfo,
-                                                 TemplateArgs));
+  return DependentScopeDeclRefExpr::Create(
+      Context, SS.getWithLocInContext(Context), TemplateKWLoc, NameInfo,
+      TemplateArgs);
 }
 
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
@@ -2869,7 +2862,7 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                                    RequiresADL, TemplateArgs,
                                    R.begin(), R.end());
 
-  return Owned(ULE);
+  return ULE;
 }
 
 // We actually only call this from template instantiation.
@@ -3452,11 +3445,9 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         // so it was provided with a template keyword. However, its source
         // location is not stored in the template argument structure.
         SourceLocation TemplateKWLoc;
-        ExprResult E = Owned(DependentScopeDeclRefExpr::Create(Context,
-                                                SS.getWithLocInContext(Context),
-                                                               TemplateKWLoc,
-                                                               NameInfo,
-                                                               nullptr));
+        ExprResult E = DependentScopeDeclRefExpr::Create(
+            Context, SS.getWithLocInContext(Context), TemplateKWLoc, NameInfo,
+            nullptr);
 
         // If we parsed the template argument as a pack expansion, create a
         // pack expansion expression.
@@ -4732,7 +4723,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (InstantiatedParamType->isDependentType() || Arg->isTypeDependent()) {
     // FIXME: Produce a cloned, canonical expression?
     Converted = TemplateArgument(Arg);
-    return Owned(Arg);
+    return Arg;
   }
 
   // C++ [temp.arg.nontype]p5:
@@ -4776,7 +4767,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       // we should be able to diagnose that prior to instantiation.
       if (Arg->isValueDependent()) {
         Converted = TemplateArgument(Arg);
-        return Owned(Arg);
+        return Arg;
       }
 
       // C++ [temp.arg.nontype]p1:
@@ -4878,7 +4869,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       // The argument is value-dependent. Create a new
       // TemplateArgument with the converted expression.
       Converted = TemplateArgument(Arg);
-      return Owned(Arg);
+      return Arg;
     }
 
     QualType IntegerType = Context.getCanonicalType(ParamType);
@@ -4932,7 +4923,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                  ParamType->isEnumeralType() 
                                    ? Context.getCanonicalType(ParamType)
                                    : IntegerType);
-    return Owned(Arg);
+    return Arg;
   }
 
   QualType ArgType = Arg->getType();
@@ -4980,13 +4971,13 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                          ParamType,
                                                          Arg, Converted))
         return ExprError();
-      return Owned(Arg);
+      return Arg;
     }
 
     if (CheckTemplateArgumentPointerToMember(*this, Param, ParamType, Arg,
                                              Converted))
       return ExprError();
-    return Owned(Arg);
+    return Arg;
   }
 
   if (ParamType->isPointerType()) {
@@ -5001,7 +4992,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                        ParamType,
                                                        Arg, Converted))
       return ExprError();
-    return Owned(Arg);
+    return Arg;
   }
 
   if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
@@ -5032,14 +5023,14 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                        ParamType,
                                                        Arg, Converted))
       return ExprError();
-    return Owned(Arg);
+    return Arg;
   }
 
   // Deal with parameters of type std::nullptr_t.
   if (ParamType->isNullPtrType()) {
     if (Arg->isTypeDependent() || Arg->isValueDependent()) {
       Converted = TemplateArgument(Arg);
-      return Owned(Arg);
+      return Arg;
     }
     
     switch (isNullPointerValueTemplateArgument(*this, Param, ParamType, Arg)) {
@@ -5055,7 +5046,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     case NPV_NullPointer:
       Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
       Converted = TemplateArgument(ParamType, /*isNullPtr*/true);
-      return Owned(Arg);
+      return Arg;
     }
   }
 
@@ -5066,7 +5057,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (CheckTemplateArgumentPointerToMember(*this, Param, ParamType, Arg,
                                            Converted))
     return ExprError();
-  return Owned(Arg);
+  return Arg;
 }
 
 /// \brief Check a template argument against its corresponding
@@ -5295,7 +5286,7 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                Loc, Loc);
   }
   
-  return Owned(E);
+  return E;
 }
 
 /// \brief Match two template parameters within template parameter lists.

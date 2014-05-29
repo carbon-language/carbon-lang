@@ -11453,7 +11453,7 @@ ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
   // If the bit-width is type- or value-dependent, don't try to check
   // it now.
   if (BitWidth->isValueDependent() || BitWidth->isTypeDependent())
-    return Owned(BitWidth);
+    return BitWidth;
 
   llvm::APSInt Value;
   ExprResult ICE = VerifyIntegerConstantExpression(BitWidth, &Value);
@@ -11500,7 +11500,7 @@ ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
     }
   }
 
-  return Owned(BitWidth);
+  return BitWidth;
 }
 
 /// ActOnField - Each field of a C struct/union is passed into this in order
