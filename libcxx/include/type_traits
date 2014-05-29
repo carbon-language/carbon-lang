@@ -444,8 +444,26 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_function
 
 // is_member_function_pointer
 
-template <class _Tp> struct            __libcpp_is_member_function_pointer             : public false_type {};
-template <class _Tp, class _Up> struct __libcpp_is_member_function_pointer<_Tp _Up::*> : public is_function<_Tp> {};
+// template <class _Tp> struct            __libcpp_is_member_function_pointer             : public false_type {};
+// template <class _Tp, class _Up> struct __libcpp_is_member_function_pointer<_Tp _Up::*> : public is_function<_Tp> {};
+// 
+
+template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
+struct __member_pointer_traits_imp
+{  // forward declaration; specializations later
+};
+
+
+namespace __libcpp_is_member_function_pointer_imp {
+	template <typename _Tp>
+	char __test(typename std::__member_pointer_traits_imp<_Tp, true, false>::_FnType *);
+
+	template <typename>
+	std::__two __test(...);
+};
+	
+template <class _Tp> struct __libcpp_is_member_function_pointer
+    : public integral_constant<bool, sizeof(__libcpp_is_member_function_pointer_imp::__test<_Tp>(nullptr)) == 1> {};
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_member_function_pointer
     : public __libcpp_is_member_function_pointer<typename remove_cv<_Tp>::type> {};
@@ -1654,11 +1672,6 @@ __decay_copy(const _Tp& __t)
 
 #endif
 
-template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
-struct __member_pointer_traits_imp
-{
-};
-
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1666,6 +1679,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1673,6 +1687,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const, true, false
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1680,6 +1695,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile, true, fa
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1687,6 +1703,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile, tr
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 #if __has_feature(cxx_reference_qualified_functions)
@@ -1696,6 +1713,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &, true, false>
 {
     typedef _Class& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1703,6 +1721,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&, true, fals
 {
     typedef _Class const& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1710,6 +1729,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&, true, f
 {
     typedef _Class volatile& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1717,6 +1737,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&, t
 {
     typedef _Class const volatile& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1724,6 +1745,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &&, true, false>
 {
     typedef _Class&& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1731,6 +1753,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&&, true, fal
 {
     typedef _Class const&& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1738,6 +1761,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&&, true, 
 {
     typedef _Class volatile&& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1745,6 +1769,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&&, 
 {
     typedef _Class const volatile&& _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param...);
 };
 
 #endif  // __has_feature(cxx_reference_qualified_functions)
@@ -1756,6 +1781,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) ();
 };
 
 template <class _Rp, class _Class, class _P0>
@@ -1763,6 +1789,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1770,6 +1797,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
@@ -1777,6 +1805,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2);
 };
 
 template <class _Rp, class _Class>
@@ -1784,6 +1813,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) ();
 };
 
 template <class _Rp, class _Class, class _P0>
@@ -1791,6 +1821,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1798,6 +1829,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
@@ -1805,6 +1837,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const, true, f
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2);
 };
 
 template <class _Rp, class _Class>
@@ -1812,6 +1845,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() volatile, true, false>
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) ();
 };
 
 template <class _Rp, class _Class, class _P0>
@@ -1819,6 +1853,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1826,6 +1861,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) volatile, true, fal
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
@@ -1833,6 +1869,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) volatile, true
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2);
 };
 
 template <class _Rp, class _Class>
@@ -1840,6 +1877,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() const volatile, true, false
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) ();
 };
 
 template <class _Rp, class _Class, class _P0>
@@ -1847,6 +1885,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const volatile, true, fa
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1854,6 +1893,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const volatile, tru
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
@@ -1861,6 +1901,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const volatile
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2);
 };
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
@@ -1880,6 +1921,7 @@ struct __member_pointer_traits
 {
 //     typedef ... _ClassType;
 //     typedef ... _ReturnType;
+//     typedef ... _FnType;
 };
 
 // result_of
@@ -2595,6 +2637,15 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
 
 // is_nothrow_constructible
 
+#if 0
+template <class _Tp, class... _Args>
+struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible
+    : public integral_constant<bool, __is_nothrow_constructible(_Tp(_Args...))>
+{
+};
+
+#else
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
 #if __has_feature(cxx_noexcept)
@@ -2733,6 +2784,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible<_Tp, _Tp&,
 };
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // __has_feature(is_nothrow_constructible)
 
 // is_nothrow_default_constructible
 
