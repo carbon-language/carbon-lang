@@ -1878,12 +1878,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     EmitCXXGlobalVarDeclInitFunc(D, GV, NeedsGlobalCtor);
 
   // If we are compiling with ASan, add metadata indicating dynamically
-  // initialized globals.
-  if (SanOpts.Address && NeedsGlobalCtor) {
-    llvm::Module &M = getModule();
-
-    llvm::NamedMDNode *DynamicInitializers =
-        M.getOrInsertNamedMetadata("llvm.asan.dynamically_initialized_globals");
+  // initialized (and not blacklisted) globals.
+  if (SanOpts.Address && NeedsGlobalCtor &&
+      !SanitizerBlacklist->isIn(*GV, "init")) {
+    llvm::NamedMDNode *DynamicInitializers = TheModule.getOrInsertNamedMetadata(
+        "llvm.asan.dynamically_initialized_globals");
     llvm::Value *GlobalToAdd[] = { GV };
     llvm::MDNode *ThisGlobal = llvm::MDNode::get(VMContext, GlobalToAdd);
     DynamicInitializers->addOperand(ThisGlobal);
