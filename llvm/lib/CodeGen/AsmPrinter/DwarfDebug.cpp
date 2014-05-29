@@ -1179,8 +1179,6 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     DbgVariable *RegVar = new DbgVariable(DV, AbsVar, this);
     if (!addCurrentFnArgument(RegVar, Scope))
       addScopeVariable(Scope, RegVar);
-    if (AbsVar)
-      AbsVar->setMInsn(MInsn);
 
     // Check if the first DBG_VALUE is valid for the rest of the function.
     if (Ranges.size() == 1 && Ranges.front().second == nullptr) {
