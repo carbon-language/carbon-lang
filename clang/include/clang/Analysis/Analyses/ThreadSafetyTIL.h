@@ -607,9 +607,9 @@ public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Literal; }
 
   Literal(const clang::Expr *C)
-     : SExpr(COP_Literal), ValType(ValueType::getValueType<void>())
+     : SExpr(COP_Literal), ValType(ValueType::getValueType<void>()), Cexpr(C)
   { }
-  Literal(ValueType VT) : SExpr(COP_Literal), ValType(VT) {}
+  Literal(ValueType VT) : SExpr(COP_Literal), ValType(VT), Cexpr(nullptr) {}
   Literal(const Literal &L) : SExpr(L), ValType(L.ValType), Cexpr(L.Cexpr) {}
 
   // The clang expression for this literal.
