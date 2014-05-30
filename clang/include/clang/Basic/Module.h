@@ -425,6 +425,10 @@ public:
 
   /// \brief Determine whether the specified module would be visible to
   /// a lookup at the end of this module.
+  ///
+  /// FIXME: This may return incorrect results for (submodules of) the
+  /// module currently being built, if it's queried before we see all
+  /// of its imports.
   bool isModuleVisible(const Module *M) const {
     if (VisibleModulesCache.empty())
       buildVisibleModulesCache();
