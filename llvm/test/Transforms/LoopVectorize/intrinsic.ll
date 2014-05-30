@@ -1090,3 +1090,105 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+declare double @llvm.powi.f64(double %Val, i32 %power) nounwind readnone
+
+;CHECK-LABEL: @powi_f64(
+;CHECK: llvm.powi.v4f64
+;CHECK: ret void
+define void @powi_f64(i32 %n, double* noalias %y, double* noalias %x, i32 %P) nounwind uwtable {
+entry:
+  %cmp9 = icmp sgt i32 %n, 0
+  br i1 %cmp9, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds double* %y, i64 %indvars.iv
+  %0 = load double* %arrayidx, align 8
+  %call = tail call double @llvm.powi.f64(double %0, i32  %P) nounwind readnone
+  %arrayidx4 = getelementptr inbounds double* %x, i64 %indvars.iv
+  store double %call, double* %arrayidx4, align 8
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+
+;CHECK-LABEL: @powi_f64_neg(
+;CHECK-NOT: llvm.powi.v4f64
+;CHECK: ret void
+define void @powi_f64_neg(i32 %n, double* noalias %y, double* noalias %x) nounwind uwtable {
+entry:
+  %cmp9 = icmp sgt i32 %n, 0
+  br i1 %cmp9, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds double* %y, i64 %indvars.iv
+  %0 = load double* %arrayidx, align 8
+  %1 = trunc i64 %indvars.iv to i32
+  %call = tail call double @llvm.powi.f64(double %0, i32  %1) nounwind readnone
+  %arrayidx4 = getelementptr inbounds double* %x, i64 %indvars.iv
+  store double %call, double* %arrayidx4, align 8
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+
+declare i64  @llvm.cttz.i64 (i64, i1) nounwind readnone
+
+;CHECK-LABEL: @cttz_f64(
+;CHECK: llvm.cttz.v4i64
+;CHECK: ret void
+define void @cttz_f64(i32 %n, i64* noalias %y, i64* noalias %x) nounwind uwtable {
+entry:
+  %cmp9 = icmp sgt i32 %n, 0
+  br i1 %cmp9, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i64* %y, i64 %indvars.iv
+  %0 = load i64* %arrayidx, align 8
+  %call = tail call i64 @llvm.cttz.i64(i64 %0, i1 true) nounwind readnone
+  %arrayidx4 = getelementptr inbounds i64* %x, i64 %indvars.iv
+  store i64 %call, i64* %arrayidx4, align 8
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+
+declare i64  @llvm.ctlz.i64 (i64, i1) nounwind readnone
+
+;CHECK-LABEL: @ctlz_f64(
+;CHECK: llvm.ctlz.v4i64
+;CHECK: ret void
+define void @ctlz_f64(i32 %n, i64* noalias %y, i64* noalias %x) nounwind uwtable {
+entry:
+  %cmp9 = icmp sgt i32 %n, 0
+  br i1 %cmp9, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i64* %y, i64 %indvars.iv
+  %0 = load i64* %arrayidx, align 8
+  %call = tail call i64 @llvm.ctlz.i64(i64 %0, i1 true) nounwind readnone
+  %arrayidx4 = getelementptr inbounds i64* %x, i64 %indvars.iv
+  store i64 %call, i64* %arrayidx4, align 8
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}

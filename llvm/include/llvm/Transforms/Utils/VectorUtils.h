@@ -48,9 +48,24 @@ static inline bool isTriviallyVectorizable(Intrinsic::ID ID) {
   case Intrinsic::pow:
   case Intrinsic::fma:
   case Intrinsic::fmuladd:
+  case Intrinsic::ctlz:
+  case Intrinsic::cttz:
+  case Intrinsic::powi:
     return true;
   default:
     return false;
+  }
+}
+
+static bool hasVectorInstrinsicScalarOpd(Intrinsic::ID ID,
+                                         unsigned ScalarOpdIdx) {
+  switch (ID) {
+    case Intrinsic::ctlz:
+    case Intrinsic::cttz:
+    case Intrinsic::powi:
+      return (ScalarOpdIdx == 1);
+    default:
+      return false;
   }
 }
 

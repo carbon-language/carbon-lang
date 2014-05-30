@@ -117,3 +117,270 @@ entry:
 ; CHECK: store <4 x i32>
 ; CHECK: ret
 }
+
+declare i32 @llvm.ctlz.i32(i32,i1) nounwind readnone
+
+define void @vec_ctlz_i32(i32* %a, i32* %b, i32* %c, i1) {
+entry:
+  %i0 = load i32* %a, align 4
+  %i1 = load i32* %b, align 4
+  %add1 = add i32 %i0, %i1
+  %call1 = tail call i32 @llvm.ctlz.i32(i32 %add1,i1 true) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds i32* %a, i32 1
+  %i2 = load i32* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i32 1
+  %i3 = load i32* %arrayidx3, align 4
+  %add2 = add i32 %i2, %i3
+  %call2 = tail call i32 @llvm.ctlz.i32(i32 %add2,i1 true) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds i32* %a, i32 2
+  %i4 = load i32* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds i32* %b, i32 2
+  %i5 = load i32* %arrayidx5, align 4
+  %add3 = add i32 %i4, %i5
+  %call3 = tail call i32 @llvm.ctlz.i32(i32 %add3,i1 true) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds i32* %a, i32 3
+  %i6 = load i32* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds i32* %b, i32 3
+  %i7 = load i32* %arrayidx7, align 4
+  %add4 = add i32 %i6, %i7
+  %call4 = tail call i32 @llvm.ctlz.i32(i32 %add4,i1 true) nounwind readnone
+
+  store i32 %call1, i32* %c, align 4
+  %arrayidx8 = getelementptr inbounds i32* %c, i32 1
+  store i32 %call2, i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %c, i32 2
+  store i32 %call3, i32* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds i32* %c, i32 3
+  store i32 %call4, i32* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_ctlz_i32(
+; CHECK: load <4 x i32>
+; CHECK: load <4 x i32>
+; CHECK: call <4 x i32> @llvm.ctlz.v4i32
+; CHECK: store <4 x i32>
+; CHECK: ret
+}
+
+define void @vec_ctlz_i32_neg(i32* %a, i32* %b, i32* %c, i1) {
+entry:
+  %i0 = load i32* %a, align 4
+  %i1 = load i32* %b, align 4
+  %add1 = add i32 %i0, %i1
+  %call1 = tail call i32 @llvm.ctlz.i32(i32 %add1,i1 true) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds i32* %a, i32 1
+  %i2 = load i32* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i32 1
+  %i3 = load i32* %arrayidx3, align 4
+  %add2 = add i32 %i2, %i3
+  %call2 = tail call i32 @llvm.ctlz.i32(i32 %add2,i1 false) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds i32* %a, i32 2
+  %i4 = load i32* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds i32* %b, i32 2
+  %i5 = load i32* %arrayidx5, align 4
+  %add3 = add i32 %i4, %i5
+  %call3 = tail call i32 @llvm.ctlz.i32(i32 %add3,i1 true) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds i32* %a, i32 3
+  %i6 = load i32* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds i32* %b, i32 3
+  %i7 = load i32* %arrayidx7, align 4
+  %add4 = add i32 %i6, %i7
+  %call4 = tail call i32 @llvm.ctlz.i32(i32 %add4,i1 false) nounwind readnone
+
+  store i32 %call1, i32* %c, align 4
+  %arrayidx8 = getelementptr inbounds i32* %c, i32 1
+  store i32 %call2, i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %c, i32 2
+  store i32 %call3, i32* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds i32* %c, i32 3
+  store i32 %call4, i32* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_ctlz_i32_neg(
+; CHECK-NOT: call <4 x i32> @llvm.ctlz.v4i32
+
+}
+
+
+declare i32 @llvm.cttz.i32(i32,i1) nounwind readnone
+
+define void @vec_cttz_i32(i32* %a, i32* %b, i32* %c, i1) {
+entry:
+  %i0 = load i32* %a, align 4
+  %i1 = load i32* %b, align 4
+  %add1 = add i32 %i0, %i1
+  %call1 = tail call i32 @llvm.cttz.i32(i32 %add1,i1 true) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds i32* %a, i32 1
+  %i2 = load i32* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i32 1
+  %i3 = load i32* %arrayidx3, align 4
+  %add2 = add i32 %i2, %i3
+  %call2 = tail call i32 @llvm.cttz.i32(i32 %add2,i1 true) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds i32* %a, i32 2
+  %i4 = load i32* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds i32* %b, i32 2
+  %i5 = load i32* %arrayidx5, align 4
+  %add3 = add i32 %i4, %i5
+  %call3 = tail call i32 @llvm.cttz.i32(i32 %add3,i1 true) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds i32* %a, i32 3
+  %i6 = load i32* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds i32* %b, i32 3
+  %i7 = load i32* %arrayidx7, align 4
+  %add4 = add i32 %i6, %i7
+  %call4 = tail call i32 @llvm.cttz.i32(i32 %add4,i1 true) nounwind readnone
+
+  store i32 %call1, i32* %c, align 4
+  %arrayidx8 = getelementptr inbounds i32* %c, i32 1
+  store i32 %call2, i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %c, i32 2
+  store i32 %call3, i32* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds i32* %c, i32 3
+  store i32 %call4, i32* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_cttz_i32(
+; CHECK: load <4 x i32>
+; CHECK: load <4 x i32>
+; CHECK: call <4 x i32> @llvm.cttz.v4i32
+; CHECK: store <4 x i32>
+; CHECK: ret
+}
+
+define void @vec_cttz_i32_neg(i32* %a, i32* %b, i32* %c, i1) {
+entry:
+  %i0 = load i32* %a, align 4
+  %i1 = load i32* %b, align 4
+  %add1 = add i32 %i0, %i1
+  %call1 = tail call i32 @llvm.cttz.i32(i32 %add1,i1 true) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds i32* %a, i32 1
+  %i2 = load i32* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i32 1
+  %i3 = load i32* %arrayidx3, align 4
+  %add2 = add i32 %i2, %i3
+  %call2 = tail call i32 @llvm.cttz.i32(i32 %add2,i1 false) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds i32* %a, i32 2
+  %i4 = load i32* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds i32* %b, i32 2
+  %i5 = load i32* %arrayidx5, align 4
+  %add3 = add i32 %i4, %i5
+  %call3 = tail call i32 @llvm.cttz.i32(i32 %add3,i1 true) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds i32* %a, i32 3
+  %i6 = load i32* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds i32* %b, i32 3
+  %i7 = load i32* %arrayidx7, align 4
+  %add4 = add i32 %i6, %i7
+  %call4 = tail call i32 @llvm.cttz.i32(i32 %add4,i1 false) nounwind readnone
+
+  store i32 %call1, i32* %c, align 4
+  %arrayidx8 = getelementptr inbounds i32* %c, i32 1
+  store i32 %call2, i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %c, i32 2
+  store i32 %call3, i32* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds i32* %c, i32 3
+  store i32 %call4, i32* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_cttz_i32_neg(
+; CHECK-NOT: call <4 x i32> @llvm.cttz.v4i32
+}
+
+
+declare float @llvm.powi.f32(float, i32)
+define void @vec_powi_f32(float* %a, float* %b, float* %c, i32 %P) {
+entry:
+  %i0 = load float* %a, align 4
+  %i1 = load float* %b, align 4
+  %add1 = fadd float %i0, %i1
+  %call1 = tail call float @llvm.powi.f32(float %add1,i32 %P) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds float* %a, i32 1
+  %i2 = load float* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds float* %b, i32 1
+  %i3 = load float* %arrayidx3, align 4
+  %add2 = fadd float %i2, %i3
+  %call2 = tail call float @llvm.powi.f32(float %add2,i32 %P) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds float* %a, i32 2
+  %i4 = load float* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds float* %b, i32 2
+  %i5 = load float* %arrayidx5, align 4
+  %add3 = fadd float %i4, %i5
+  %call3 = tail call float @llvm.powi.f32(float %add3,i32 %P) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds float* %a, i32 3
+  %i6 = load float* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds float* %b, i32 3
+  %i7 = load float* %arrayidx7, align 4
+  %add4 = fadd float %i6, %i7
+  %call4 = tail call float @llvm.powi.f32(float %add4,i32 %P) nounwind readnone
+
+  store float %call1, float* %c, align 4
+  %arrayidx8 = getelementptr inbounds float* %c, i32 1
+  store float %call2, float* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds float* %c, i32 2
+  store float %call3, float* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds float* %c, i32 3
+  store float %call4, float* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_powi_f32(
+; CHECK: load <4 x float>
+; CHECK: load <4 x float>
+; CHECK: call <4 x float> @llvm.powi.v4f32
+; CHECK: store <4 x float>
+; CHECK: ret
+}
+
+
+define void @vec_powi_f32_neg(float* %a, float* %b, float* %c, i32 %P, i32 %Q) {
+entry:
+  %i0 = load float* %a, align 4
+  %i1 = load float* %b, align 4
+  %add1 = fadd float %i0, %i1
+  %call1 = tail call float @llvm.powi.f32(float %add1,i32 %P) nounwind readnone
+
+  %arrayidx2 = getelementptr inbounds float* %a, i32 1
+  %i2 = load float* %arrayidx2, align 4
+  %arrayidx3 = getelementptr inbounds float* %b, i32 1
+  %i3 = load float* %arrayidx3, align 4
+  %add2 = fadd float %i2, %i3
+  %call2 = tail call float @llvm.powi.f32(float %add2,i32 %Q) nounwind readnone
+
+  %arrayidx4 = getelementptr inbounds float* %a, i32 2
+  %i4 = load float* %arrayidx4, align 4
+  %arrayidx5 = getelementptr inbounds float* %b, i32 2
+  %i5 = load float* %arrayidx5, align 4
+  %add3 = fadd float %i4, %i5
+  %call3 = tail call float @llvm.powi.f32(float %add3,i32 %P) nounwind readnone
+
+  %arrayidx6 = getelementptr inbounds float* %a, i32 3
+  %i6 = load float* %arrayidx6, align 4
+  %arrayidx7 = getelementptr inbounds float* %b, i32 3
+  %i7 = load float* %arrayidx7, align 4
+  %add4 = fadd float %i6, %i7
+  %call4 = tail call float @llvm.powi.f32(float %add4,i32 %Q) nounwind readnone
+
+  store float %call1, float* %c, align 4
+  %arrayidx8 = getelementptr inbounds float* %c, i32 1
+  store float %call2, float* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds float* %c, i32 2
+  store float %call3, float* %arrayidx9, align 4
+  %arrayidx10 = getelementptr inbounds float* %c, i32 3
+  store float %call4, float* %arrayidx10, align 4
+  ret void
+
+; CHECK-LABEL: @vec_powi_f32_neg(
+; CHECK-NOT: call <4 x float> @llvm.powi.v4f32
+}

@@ -961,9 +961,10 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
         DEBUG(dbgs() << "SLP: Non-vectorizable call.\n");
         return;
       }
-
       Function *Int = CI->getCalledFunction();
-
+      Value *A1I = nullptr;
+      if (hasVectorInstrinsicScalarOpd(ID, 1))
+        A1I = CI->getArgOperand(1);
       for (unsigned i = 1, e = VL.size(); i != e; ++i) {
         CallInst *CI2 = dyn_cast<CallInst>(VL[i]);
         if (!CI2 || CI2->getCalledFunction() != Int ||
@@ -972,6 +973,18 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
           DEBUG(dbgs() << "SLP: mismatched calls:" << *CI << "!=" << *VL[i]
                        << "\n");
           return;
+        }
+        // ctlz,cttz and powi are special intrinsics whose second argument
+        // should be same in order for them to be vectorized.
+        if (hasVectorInstrinsicScalarOpd(ID, 1)) {
+          Value *A1J = CI2->getArgOperand(1);
+          if (A1I != A1J) {
+            newTreeEntry(VL, false);
+            DEBUG(dbgs() << "SLP: mismatched arguments in call:" << *CI
+                         << " argument "<< A1I<<"!=" << A1J
+                         << "\n");
+            return;
+          }
         }
       }
 
@@ -1652,9 +1665,21 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::Call: {
       CallInst *CI = cast<CallInst>(VL0);
       setInsertPointAfterBundle(E->Scalars);
+      Function *FI;
+      Intrinsic::ID IID  = Intrinsic::not_intrinsic;
+      if (CI && (FI = CI->getCalledFunction())) {
+        IID = (Intrinsic::ID) FI->getIntrinsicID();
+      }
       std::vector<Value *> OpVecs;
       for (int j = 0, e = CI->getNumArgOperands(); j < e; ++j) {
         ValueList OpVL;
+        // ctlz,cttz and powi are special intrinsics whose second argument is
+        // a scalar. This argument should not be vectorized.
+        if (hasVectorInstrinsicScalarOpd(IID, 1) && j == 1) {
+          CallInst *CEI = cast<CallInst>(E->Scalars[0]);
+          OpVecs.push_back(CEI->getArgOperand(j));
+          continue;
+        }
         for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
           CallInst *CEI = cast<CallInst>(E->Scalars[i]);
           OpVL.push_back(CEI->getArgOperand(j));

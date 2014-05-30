@@ -3123,9 +3123,14 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         scalarizeInstruction(it);
         break;
       default:
+        bool HasScalarOpd = hasVectorInstrinsicScalarOpd(ID, 1);
         for (unsigned Part = 0; Part < UF; ++Part) {
           SmallVector<Value *, 4> Args;
           for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
+            if (HasScalarOpd && i == 1) {
+              Args.push_back(CI->getArgOperand(i));
+              continue;
+            }
             VectorParts &Arg = getVectorValue(CI->getArgOperand(i));
             Args.push_back(Arg[Part]);
           }
@@ -3472,6 +3477,16 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
+      }
+
+      // Intrinsics such as powi,cttz and ctlz are legal to vectorize if the
+      // second argument is the same (i.e. loop invariant)
+      if (CI &&
+          hasVectorInstrinsicScalarOpd(getIntrinsicIDForCall(CI, TLI), 1)) {
+        if (!SE->isLoopInvariant(SE->getSCEV(CI->getOperand(1)), TheLoop)) {
+          DEBUG(dbgs() << "LV: Found unvectorizable intrinsic " << *CI << "\n");
+          return false;
+        }
       }
 
       // Check that the instruction return type is vectorizable.
