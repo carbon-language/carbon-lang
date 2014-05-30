@@ -599,6 +599,10 @@ protected:
     SS << E->value();
   }
 
+  void printLiteralT(LiteralT<uint8_t> *E, StreamType &SS) {
+    SS << "'" << E->value() << "'";
+  }
+
   void printLiteral(Literal *E, StreamType &SS) {
     if (E->clangExpr()) {
       SS << getSourceLiteralString(E->clangExpr());

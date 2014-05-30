@@ -237,7 +237,7 @@ inline ValueType ValueType::getValueType<long double>() {
 
 template<>
 inline ValueType ValueType::getValueType<StringRef>() {
-  return ValueType(BT_Pointer, getSizeType(sizeof(StringRef)), false, 0);
+  return ValueType(BT_String, getSizeType(sizeof(StringRef)), false, 0);
 }
 
 template<>
