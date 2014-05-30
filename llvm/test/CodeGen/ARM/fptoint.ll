@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm-eabi -mattr=+v6,+vfp2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -arm-atomic-cfg-tidy=0 -mattr=+v6,+vfp2 %s -o - | FileCheck %s
 
 @i = weak global i32 0		; <i32*> [#uses=2]
 @u = weak global i32 0		; <i32*> [#uses=2]

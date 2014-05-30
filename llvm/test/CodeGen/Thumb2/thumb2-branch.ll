@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; If-conversion defeats the purpose of this test, which is to check
 ; conditional branch generation, so a call to make sure it doesn't
 ; happen and we get actual branches.

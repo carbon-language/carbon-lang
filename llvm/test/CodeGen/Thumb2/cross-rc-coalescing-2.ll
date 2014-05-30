@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8 -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 define void @fht(float* nocapture %fz, i16 signext %n) nounwind {
 ; CHECK-LABEL: fht:

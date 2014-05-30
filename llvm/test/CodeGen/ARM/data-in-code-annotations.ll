@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-darwin -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 define double @f1() nounwind {
 ; CHECK-LABEL: f1:

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabi -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; PR4659
 ; PR4682
 

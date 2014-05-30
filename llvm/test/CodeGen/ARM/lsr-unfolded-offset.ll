@@ -1,4 +1,4 @@
-; RUN: llc -regalloc=greedy < %s | FileCheck %s
+; RUN: llc -regalloc=greedy -arm-atomic-cfg-tidy=0 < %s | FileCheck %s
 
 ; LSR shouldn't introduce more induction variables than needed, increasing
 ; register pressure and therefore spilling. There is more room for improvement

@@ -1,5 +1,5 @@
 ; rdar://8465407
-; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 %struct.buf = type opaque
 

@@ -28,6 +28,12 @@ DisableA15SDOptimization("disable-a15-sd-optimization", cl::Hidden,
                    cl::desc("Inhibit optimization of S->D register accesses on A15"),
                    cl::init(false));
 
+static cl::opt<bool>
+EnableAtomicTidy("arm-atomic-cfg-tidy", cl::Hidden,
+                 cl::desc("Run SimplifyCFG after expanding atomic operations"
+                          " to make use of cmpxchg flow-based information"),
+                 cl::init(true));
+
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMLETargetMachine> X(TheARMLETarget);
@@ -213,6 +219,7 @@ public:
     return *getARMTargetMachine().getSubtargetImpl();
   }
 
+  void addIRPasses() override;
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addPreRegAlloc() override;
@@ -225,11 +232,22 @@ TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new ARMPassConfig(this, PM);
 }
 
-bool ARMPassConfig::addPreISel() {
+void ARMPassConfig::addIRPasses() {
   const ARMSubtarget *Subtarget = &getARMSubtarget();
-  if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only())
+  if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only()) {
     addPass(createAtomicExpandLoadLinkedPass(TM));
 
+    // Cmpxchg instructions are often used with a subsequent comparison to
+    // determine whether it succeeded. We can exploit existing control-flow in
+    // ldrex/strex loops to simplify this, but it needs tidying up.
+    if (TM->getOptLevel() != CodeGenOpt::None && EnableAtomicTidy)
+      addPass(createCFGSimplificationPass());
+  }
+
+  TargetPassConfig::addIRPasses();
+}
+
+bool ARMPassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createGlobalMergePass(TM));
 

@@ -1,4 +1,4 @@
-; RUN: llc -O3 -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
+; RUN: llc -O3 -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - -arm-atomic-cfg-tidy=0 | FileCheck %s
 ;
 ; LSR should only check for valid address modes when the IV user is a
 ; memory address.

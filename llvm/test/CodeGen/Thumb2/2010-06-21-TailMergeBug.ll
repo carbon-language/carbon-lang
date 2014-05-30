@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -O3 -relocation-model=pic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -O3 -relocation-model=pic -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; rdar://8115404
 ; Tail merging must not split an IT block.
 

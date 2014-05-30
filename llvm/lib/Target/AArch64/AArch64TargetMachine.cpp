@@ -53,6 +53,12 @@ static cl::opt<bool>
 EnableLoadStoreOpt("aarch64-load-store-opt", cl::desc("Enable the load/store pair"
                    " optimization pass"), cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+EnableAtomicTidy("aarch64-atomic-cfg-tidy", cl::Hidden,
+                 cl::desc("Run SimplifyCFG after expanding atomic operations"
+                          " to make use of cmpxchg flow-based information"),
+                 cl::init(true));
+
 extern "C" void LLVMInitializeAArch64Target() {
   // Register the target.
   RegisterTargetMachine<AArch64leTargetMachine> X(TheAArch64leTarget);
@@ -113,6 +119,7 @@ public:
     return getTM<AArch64TargetMachine>();
   }
 
+  void addIRPasses()  override;
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
@@ -135,6 +142,20 @@ TargetPassConfig *AArch64TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AArch64PassConfig(this, PM);
 }
 
+void AArch64PassConfig::addIRPasses() {
+  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
+  // ourselves.
+  addPass(createAtomicExpandLoadLinkedPass(TM));
+
+  // Cmpxchg instructions are often used with a subsequent comparison to
+  // determine whether it succeeded. We can exploit existing control-flow in
+  // ldrex/strex loops to simplify this, but it needs tidying up.
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableAtomicTidy)
+    addPass(createCFGSimplificationPass());
+
+  TargetPassConfig::addIRPasses();
+}
+
 // Pass Pipeline Configuration
 bool AArch64PassConfig::addPreISel() {
   // Run promote constant before global merge, so that the promoted constants
@@ -145,10 +166,6 @@ bool AArch64PassConfig::addPreISel() {
     addPass(createGlobalMergePass(TM));
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64AddressTypePromotionPass());
-
-  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
-  // ourselves.
-  addPass(createAtomicExpandLoadLinkedPass(TM));
 
   return false;
 }

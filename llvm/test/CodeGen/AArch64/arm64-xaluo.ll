@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm64 | FileCheck %s
+; RUN: llc < %s -march=arm64 -aarch64-atomic-cfg-tidy=0 | FileCheck %s
 
 ;
 ; Get the actual value of the overflow bit.

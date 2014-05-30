@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-elf -mattr=+neon | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-elf -mattr=+neon -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; PR4789
 
 %bar = type { float, float, float }

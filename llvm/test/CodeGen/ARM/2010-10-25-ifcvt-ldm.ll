@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=arm1136jf-s | FileCheck %s
+; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=arm1136jf-s -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; Radar 8589805: Counting the number of microcoded operations, such as for an
 ; LDM instruction, was causing an assertion failure because the microop count
 ; was being treated as an instruction count.

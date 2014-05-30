@@ -189,9 +189,9 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB-LE-DAG: eor.w     [[MISMATCH_LO:[a-z0-9]+]], [[REG1]], r2
 ; CHECK-THUMB-LE-DAG: eor.w     [[MISMATCH_HI:[a-z0-9]+]], [[REG2]], r3
-; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_HI:[a-z0-9]+]], [[REG1]]
-; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_LO:[a-z0-9]+]], [[REG2]]
-; CHECK-THUMB: orrs    [[MISMATCH_HI]], [[MISMATCH_LO]]
+; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_HI:[a-z0-9]+]], [[REG1]], r2
+; CHECK-THUMB-BE-DAG: eor.w     [[MISMATCH_LO:[a-z0-9]+]], [[REG2]], r3
+; CHECK-THUMB-LE: orrs    [[MISMATCH_HI]], [[MISMATCH_LO]]
 ; CHECK-THUMB: bne
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, {{[a-z0-9]+}}, {{[a-z0-9]+}}
 ; CHECK-THUMB: cmp

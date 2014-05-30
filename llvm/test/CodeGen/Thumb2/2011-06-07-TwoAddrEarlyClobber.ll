@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv7-apple-darwin10 < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-apple-darwin10 -arm-atomic-cfg-tidy=0 < %s | FileCheck %s
 
 %struct.op = type { %struct.op*, %struct.op*, %struct.op* ()*, i32, i16, i16, i8, i8 }
 

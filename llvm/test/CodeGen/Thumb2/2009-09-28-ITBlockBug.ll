@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -disable-cgp-branch-opts | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -disable-cgp-branch-opts -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 %struct.pix_pos = type { i32, i32, i32, i32, i32, i32 }
 

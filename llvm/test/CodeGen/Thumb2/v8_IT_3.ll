@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=thumbv8 | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7 -arm-restrict-it | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv8 -relocation-model=pic | FileCheck %s --check-prefix=CHECK-PIC
-; RUN: llc < %s -mtriple=thumbv7 -arm-restrict-it -relocation-model=pic | FileCheck %s --check-prefix=CHECK-PIC
+; RUN: llc < %s -mtriple=thumbv8 -arm-atomic-cfg-tidy=0 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7 -arm-atomic-cfg-tidy=0 -arm-restrict-it | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv8 -arm-atomic-cfg-tidy=0 -relocation-model=pic | FileCheck %s --check-prefix=CHECK-PIC
+; RUN: llc < %s -mtriple=thumbv7 -arm-atomic-cfg-tidy=0 -arm-restrict-it -relocation-model=pic | FileCheck %s --check-prefix=CHECK-PIC
 
 %struct.FF = type { i32 (i32*)*, i32 (i32*, i32*, i32, i32, i32, i32)*, i32 (i32, i32, i8*)*, void ()*, i32 (i32, i8*, i32*)*, i32 ()* }
 %struct.BD = type { %struct.BD*, i32, i32, i32, i32, i64, i32 (%struct.BD*, i8*, i64, i32)*, i32 (%struct.BD*, i8*, i32, i32)*, i32 (%struct.BD*, i8*, i64, i32)*, i32 (%struct.BD*, i8*, i32, i32)*, i32 (%struct.BD*, i64, i32)*, [16 x i8], i64, i64 }

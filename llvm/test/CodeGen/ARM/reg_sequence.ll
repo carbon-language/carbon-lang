@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a8 | FileCheck %s
-; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a8 -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a8 -arm-atomic-cfg-tidy=0 | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mcpu=cortex-a8 -arm-atomic-cfg-tidy=0 -regalloc=basic | FileCheck %s
 ; Implementing vld / vst as REG_SEQUENCE eliminates the extra vmov's.
 
 %struct.int16x8_t = type { <8 x i16> }

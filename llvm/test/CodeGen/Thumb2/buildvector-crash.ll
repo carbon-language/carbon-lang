@@ -1,4 +1,4 @@
-; RUN: llc < %s -O3 -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -O3 -mtriple=thumbv7-apple-ios -arm-atomic-cfg-tidy=0 -mcpu=cortex-a8 | FileCheck %s
 ; Formerly crashed, 3573915.
 
 define void @RotateStarsFP_Vec() nounwind {

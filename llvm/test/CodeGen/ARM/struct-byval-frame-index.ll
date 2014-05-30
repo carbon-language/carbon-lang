@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=cortex-a15 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mcpu=cortex-a15 -verify-machineinstrs -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 ; Check a spill right after a function call with large struct byval is correctly
 ; generated.

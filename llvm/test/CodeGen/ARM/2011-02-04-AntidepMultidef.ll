@@ -1,4 +1,4 @@
-; RUN: llc < %s -asm-verbose=false -O3 -mtriple=armv6-apple-darwin -relocation-model=pic  -mcpu=arm1136jf-s | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -O3 -mtriple=armv6-apple-darwin -relocation-model=pic  -mcpu=arm1136jf-s -arm-atomic-cfg-tidy=0 | FileCheck %s
 ; rdar://8959122 illegal register operands for UMULL instruction
 ;   in cfrac nightly test.
 ; Armv6 generates a umull that must write to two distinct destination regs.

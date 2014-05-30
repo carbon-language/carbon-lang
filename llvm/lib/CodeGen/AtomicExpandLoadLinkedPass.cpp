@@ -300,11 +300,49 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
   Builder.CreateCondBr(TryAgain, LoopBB, BarrierBB);
 
-  // Finally, make sure later instructions don't get reordered with a fence if
-  // necessary.
+  // Make sure later instructions don't get reordered with a fence if necessary.
   Builder.SetInsertPoint(BarrierBB);
   insertTrailingFence(Builder, SuccessOrder);
   Builder.CreateBr(ExitBB);
+
+  // Finally, we have control-flow based knowledge of whether the cmpxchg
+  // succeeded or not. We expose this to later passes by converting any
+  // subsequent "icmp eq/ne %loaded, %oldval" into a use of an appropriate PHI.
+
+  // Setup the builder so we can create any PHIs we need.
+  Builder.SetInsertPoint(FailureBB, FailureBB->begin());
+  BasicBlock *SuccessBB = FailureOrder == Monotonic ? BarrierBB : TryStoreBB;
+  PHINode *Success = 0, *Failure = 0;
+
+  // Look for any users of the cmpxchg that are just comparing the loaded value
+  // against the desired one, and replace them with the CFG-derived version.
+  for (auto User : CI->users()) {
+    ICmpInst *ICmp = dyn_cast<ICmpInst>(User);
+    if (!ICmp)
+      continue;
+
+    // Because we know ICmp uses CI, we only need one operand to be the old
+    // value.
+    if (ICmp->getOperand(0) != CI->getCompareOperand() &&
+        ICmp->getOperand(1) != CI->getCompareOperand())
+      continue;
+
+    if (ICmp->getPredicate() == CmpInst::ICMP_EQ) {
+      if (!Success) {
+        Success = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
+        Success->addIncoming(ConstantInt::getTrue(Ctx), SuccessBB);
+        Success->addIncoming(ConstantInt::getFalse(Ctx), LoopBB);
+      }
+      ICmp->replaceAllUsesWith(Success);
+    } else if (ICmp->getPredicate() == CmpInst::ICMP_NE) {
+      if (!Failure) {
+        Failure = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
+        Failure->addIncoming(ConstantInt::getFalse(Ctx), SuccessBB);
+        Failure->addIncoming(ConstantInt::getTrue(Ctx), LoopBB);
+      }
+      ICmp->replaceAllUsesWith(Failure);
+    }
+  }
 
   CI->replaceAllUsesWith(Loaded);
   CI->eraseFromParent();

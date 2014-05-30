@@ -889,8 +889,7 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
   ;  function there.
 ; CHECK-NEXT: cmp w[[OLD]], w0
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
-  ; As above, w1 is a reasonable guess.
-; CHECK: stxrb [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
+; CHECK: stxrb [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK-NOT: dmb
 
@@ -911,8 +910,7 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
   ;  function there.
 ; CHECK-NEXT: cmp w[[OLD]], w0
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
-  ; As above, w1 is a reasonable guess.
-; CHECK: stlxrh [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
+; CHECK: stlxrh [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK-NOT: dmb
 
@@ -933,8 +931,7 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
   ;  function there.
 ; CHECK-NEXT: cmp w[[OLD]], w0
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
-  ; As above, w1 is a reasonable guess.
-; CHECK: stlxr [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
+; CHECK: stlxr [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK-NOT: dmb
 

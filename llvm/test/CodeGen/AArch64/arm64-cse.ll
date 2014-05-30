@@ -1,4 +1,4 @@
-; RUN: llc -O3 < %s | FileCheck %s
+; RUN: llc -O3 < %s -aarch64-atomic-cfg-tidy=0 | FileCheck %s
 target triple = "arm64-apple-ios"
 
 ; rdar://12462006

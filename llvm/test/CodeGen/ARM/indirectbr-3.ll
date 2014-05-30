@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-atomic-cfg-tidy=0 | FileCheck %s
 
 ; If ARMBaseInstrInfo::AnalyzeBlocks returns the wrong value, which was possible
 ; for blocks with indirect branches, the IfConverter could end up deleting
