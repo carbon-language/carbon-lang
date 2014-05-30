@@ -5915,6 +5915,13 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   default:
     return nullptr;
 
+  case llvm::Triple::xcore:
+    return new XCoreTargetInfo(Triple);
+
+  case llvm::Triple::hexagon:
+    return new HexagonTargetInfo(Triple);
+
+  case llvm::Triple::aarch64:
   case llvm::Triple::arm64:
     if (Triple.isOSDarwin())
       return new DarwinAArch64TargetInfo(Triple);
@@ -5928,33 +5935,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new AArch64leTargetInfo(Triple);
     }
 
-  case llvm::Triple::arm64_be:
-    switch (os) {
-    case llvm::Triple::Linux:
-      return new LinuxTargetInfo<AArch64beTargetInfo>(Triple);
-    case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<AArch64beTargetInfo>(Triple);
-    default:
-      return new AArch64beTargetInfo(Triple);
-    }
-
-  case llvm::Triple::xcore:
-    return new XCoreTargetInfo(Triple);
-
-  case llvm::Triple::hexagon:
-    return new HexagonTargetInfo(Triple);
-
-  case llvm::Triple::aarch64:
-    switch (os) {
-    case llvm::Triple::Linux:
-      return new LinuxTargetInfo<AArch64leTargetInfo>(Triple);
-    case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<AArch64leTargetInfo>(Triple);
-    default:
-      return new AArch64leTargetInfo(Triple);
-    }
-
   case llvm::Triple::aarch64_be:
+  case llvm::Triple::arm64_be:
     switch (os) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<AArch64beTargetInfo>(Triple);
