@@ -33,6 +33,7 @@ def SectionDocs : Documentation {
 The ``section`` attribute allows you to specify a specific section a
 global variable or function should be in after translation.
   }];
+  let Heading = "section (gnu::section, __declspec(allocate))";
 }
 
 def TLSModelDocs : Documentation {
