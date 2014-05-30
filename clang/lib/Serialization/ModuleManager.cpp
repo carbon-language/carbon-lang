@@ -135,31 +135,18 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   return NewModule? NewlyLoaded : AlreadyLoaded;
 }
 
-static void invalidateFileCacheForFileAndImporters(
-    ModuleFile *F, FileManager &FileMgr,
-    llvm::SmallPtrSetImpl<ModuleFile *> &VictimSet) {
-  assert(VictimSet.count(F) && "removeModules() missing ancestor of module "
-         "that failed to load");
-  FileMgr.invalidateCache(F->File);
-  F->File = nullptr;
-  for (ModuleFile *Importer : F->ImportedBy)
-    invalidateFileCacheForFileAndImporters(Importer, FileMgr, VictimSet);
-}
-
 void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
                                   ModuleMap *modMap) {
   if (first == last)
     return;
 
+  // The first file entry is about to be rebuilt (or there was an error), so
+  // there should be no references to it. Remove it from the cache to close it,
+  // as Windows doesn't seem to allow renaming over an open file.
+  FileMgr.invalidateCache((*first)->File);
+
   // Collect the set of module file pointers that we'll be removing.
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
-
-  // The last module file caused the load failure, so it and its ancestors in
-  // the module dependency tree will be rebuilt (or there was an error), so
-  // there should be no references to them. Remove them from the cache,
-  // since rebuilding them will create new files at the old locations.
-  invalidateFileCacheForFileAndImporters(*(last-1), FileMgr, victimSet);
-  assert((*first)->File == nullptr && "non-dependent module loaded");
 
   // Remove any references to the now-destroyed modules.
   for (unsigned i = 0, n = Chain.size(); i != n; ++i) {
