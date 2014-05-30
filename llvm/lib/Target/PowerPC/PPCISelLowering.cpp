@@ -50,7 +50,7 @@ cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
 // FIXME: Remove this once the bug has been fixed!
 extern cl::opt<bool> ANDIGlueBug;
 
-static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
+static TargetLoweringObjectFile *createTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
     return new TargetLoweringObjectFileMachO();
 
@@ -61,7 +61,7 @@ static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
 }
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
-  : TargetLowering(TM, CreateTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
+  : TargetLowering(TM, createTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
 
   setPow2DivIsCheap();
@@ -7930,8 +7930,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       DCI.AddToWorklist(RV.getNode());
       RV = DAGCombineFastRecip(RV, DCI);
       if (RV.getNode()) {
-	// Unfortunately, RV is now NaN if the input was exactly 0. Select out
-	// this case and force the answer to 0.
+        // Unfortunately, RV is now NaN if the input was exactly 0. Select out
+        // this case and force the answer to 0.
 
         EVT VT = RV.getValueType();
 
