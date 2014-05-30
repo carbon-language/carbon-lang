@@ -12,11 +12,11 @@ declare void @bar(i8*)
 
 define void @check_simple() minsize {
 ; CHECK-LABEL: check_simple:
-; CHECK: push {r3, r4, r5, r6, r7, lr}
+; CHECK: push.w {r7, r8, r9, r10, r11, lr}
 ; CHECK-NOT: sub sp, sp,
 ; ...
 ; CHECK-NOT: add sp, sp,
-; CHECK: pop {r0, r1, r2, r3, r7, pc}
+; CHECK: pop.w {r0, r1, r2, r3, r11, pc}
 
 ; CHECK-T1-LABEL: check_simple:
 ; CHECK-T1: push {r3, r4, r5, r6, r7, lr}
@@ -44,11 +44,11 @@ define void @check_simple() minsize {
 
 define void @check_simple_too_big() minsize {
 ; CHECK-LABEL: check_simple_too_big:
-; CHECK: push {r7, lr}
+; CHECK: push.w {r11, lr}
 ; CHECK: sub sp,
 ; ...
 ; CHECK: add sp,
-; CHECK: pop {r7, pc}
+; CHECK: pop.w {r11, pc}
   %var = alloca i8, i32 64
   call void @bar(i8* %var)
   ret void
@@ -93,11 +93,11 @@ define void @check_vfp_fold() minsize {
 ; folded in except that doing so would clobber the value being returned.
 define i64 @check_no_return_clobber() minsize {
 ; CHECK-LABEL: check_no_return_clobber:
-; CHECK: push {r1, r2, r3, r4, r5, r6, r7, lr}
+; CHECK: push.w {r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-NOT: sub sp,
 ; ...
 ; CHECK: add sp, #24
-; CHECK: pop {r7, pc}
+; CHECK: pop.w {r11, pc}
 
   ; Just to keep iOS FileCheck within previous function:
 ; CHECK-IOS-LABEL: check_no_return_clobber:
@@ -176,9 +176,9 @@ define void @test_varsize(...) minsize {
 
 ; CHECK-LABEL: test_varsize:
 ; CHECK: sub	sp, #16
-; CHECK: push	{r5, r6, r7, lr}
+; CHECK: push.w {r9, r10, r11, lr}
 ; ...
-; CHECK: pop.w	{r2, r3, r7, lr}
+; CHECK: pop.w	{r2, r3, r11, lr}
 ; CHECK: add	sp, #16
 ; CHECK: bx	lr
 
