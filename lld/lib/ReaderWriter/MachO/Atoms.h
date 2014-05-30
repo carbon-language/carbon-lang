@@ -62,6 +62,26 @@ private:
   const Merge _merge;
 };
 
+class MachODefinedCustomSectionAtom : public MachODefinedAtom {
+public:
+  MachODefinedCustomSectionAtom(const File &f, const StringRef name, 
+                                Scope scope, ContentType type, Merge merge,
+                                const ArrayRef<uint8_t> content,
+                                StringRef sectionName)
+      : MachODefinedAtom(f, name, scope, type, merge, content), 
+        _sectionName(sectionName) {}
+
+  SectionChoice sectionChoice() const override {
+    return DefinedAtom::sectionCustomRequired;
+  }
+  
+  StringRef customSectionName() const override {
+    return _sectionName;
+  }
+private:  
+  StringRef _sectionName;
+};
+
 
 class MachOTentativeDefAtom : public SimpleDefinedAtom {
 public:

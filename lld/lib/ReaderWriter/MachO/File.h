@@ -35,6 +35,22 @@ public:
     addAtom(*atom);
   }
 
+  void addDefinedAtomInCustomSection(StringRef name, Atom::Scope scope,
+                      DefinedAtom::ContentType type, DefinedAtom::Merge merge,
+                      ArrayRef<uint8_t> content, StringRef sectionName,
+                      bool copyRefs) {
+    if (copyRefs) {
+      // Make a copy of the atom's name and content that is owned by this file.
+      name = name.copy(_allocator);
+      content = content.copy(_allocator);
+      sectionName = sectionName.copy(_allocator);
+    }
+    MachODefinedCustomSectionAtom *atom =
+        new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type, 
+                                                  merge, content, sectionName);
+    addAtom(*atom);
+  }
+
   void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope, uint64_t size,
                               bool copyRefs) {
     if (copyRefs) {

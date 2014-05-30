@@ -149,6 +149,7 @@ private:
   std::vector<SectionInfo*>     _sectionInfos;
   std::vector<SegmentInfo*>     _segmentInfos;
   TypeToSection                 _sectionMap;
+  std::vector<SectionInfo*>     _customSections;
   AtomToAddress                 _atomToAddress;
   DylibPathToInfo               _dylibInfo;
   const DefinedAtom            *_entryAtom;
@@ -206,6 +207,18 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
   case DefinedAtom::typeCompactUnwindInfo:
      return new (_allocator) SectionInfo("__LD", "__compact_unwind",
                             S_REGULAR);
+  case DefinedAtom::typeConstant:
+     return new (_allocator) SectionInfo("__TEXT", "__const",
+                            S_REGULAR);
+  case DefinedAtom::typeData:
+     return new (_allocator) SectionInfo("__DATA", "__data",
+                            S_REGULAR);
+  case DefinedAtom::typeConstData:
+     return new (_allocator) SectionInfo("__DATA", "__const",
+                            S_REGULAR);
+  case DefinedAtom::typeLSDA:
+     return new (_allocator) SectionInfo("__TEXT", "__gcc_except_tab",
+                            S_REGULAR);
   default:
     llvm_unreachable("TO DO: add support for more sections");
     break;
@@ -215,14 +228,36 @@ SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
 
 
 SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
-  DefinedAtom::ContentType type = atom->contentType();
-  auto pos = _sectionMap.find(type);
-  if ( pos != _sectionMap.end() )
-    return pos->second;
-  SectionInfo *si = makeSection(type);
-  _sectionInfos.push_back(si);
-  _sectionMap[type] = si;
-  return si;
+  if (atom->sectionChoice() == DefinedAtom::sectionBasedOnContent) {
+    // Section for this atom is derived from content type.
+    DefinedAtom::ContentType type = atom->contentType();
+    auto pos = _sectionMap.find(type);
+    if ( pos != _sectionMap.end() )
+      return pos->second;
+    SectionInfo *si = makeSection(type);
+    _sectionInfos.push_back(si);
+    _sectionMap[type] = si;
+    return si;
+  } else {
+    // This atom needs to be in a custom section.
+    StringRef customName = atom->customSectionName();
+    // Look to see if we have already allocated the needed custom section.
+    for(SectionInfo *sect : _customSections) {
+      const DefinedAtom *firstAtom = sect->atomsAndOffsets.front().atom;
+      if (firstAtom->customSectionName().equals(customName)) {
+        return sect;
+      }
+    }
+    // Not found, so need to create a new custom section.
+    size_t seperatorIndex = customName.find('/');
+    assert(seperatorIndex != StringRef::npos);
+    StringRef segName = customName.slice(0, seperatorIndex-1);
+    StringRef sectName = customName.drop_front(seperatorIndex);
+    SectionInfo *sect = new (_allocator) SectionInfo(segName, sectName,
+                                                     S_REGULAR);
+    _customSections.push_back(sect);
+    return sect;
+  }
 }
 
 

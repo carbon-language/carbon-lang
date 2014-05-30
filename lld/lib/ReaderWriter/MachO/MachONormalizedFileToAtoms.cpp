@@ -83,8 +83,25 @@ static Atom::Scope atomScope(uint8_t scope) {
 }
 
 static DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
-  // FIX ME
-  return DefinedAtom::typeCode;
+  if (section.attributes & S_ATTR_PURE_INSTRUCTIONS)
+    return DefinedAtom::typeCode;
+  if (section.segmentName.equals("__TEXT")) {
+    if (section.sectionName.equals("__StaticInit"))
+      return DefinedAtom::typeCode;
+    if (section.sectionName.equals("__gcc_except_tab"))
+      return DefinedAtom::typeLSDA;
+    if (section.sectionName.startswith("__text"))
+      return DefinedAtom::typeCode;
+    if (section.sectionName.startswith("__const"))
+      return DefinedAtom::typeConstant;
+  } else if (section.segmentName.equals("__DATA")) {
+    if (section.sectionName.startswith("__data"))
+      return DefinedAtom::typeData;
+    if (section.sectionName.startswith("__const"))
+      return DefinedAtom::typeConstData;
+  }
+
+  return DefinedAtom::typeUnknown;
 }
 
 static error_code
@@ -124,8 +141,19 @@ processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
     DefinedAtom::Merge m = DefinedAtom::mergeNo;
     if (sym.desc & N_WEAK_DEF)
       m = DefinedAtom::mergeAsWeak;
-    file.addDefinedAtom(sym.name, atomScope(sym.scope),
-                        atomTypeFromSection(section), m, atomContent, copyRefs);
+    DefinedAtom::ContentType type = atomTypeFromSection(section);
+    if (type == DefinedAtom::typeUnknown) {
+      // Mach-O needs a segment and section name.  Concatentate those two
+      // with a / seperator (e.g. "seg/sect") to fit into the lld model
+      // of just a section name.
+      std::string segSectName = section.segmentName.str() 
+                                + "/" + section.sectionName.str();
+      file.addDefinedAtomInCustomSection(sym.name, atomScope(sym.scope), type, 
+                                         m, atomContent, segSectName, true);
+    } else {
+      file.addDefinedAtom(sym.name, atomScope(sym.scope), type, m, atomContent, 
+                        copyRefs);
+    }
   }
   return error_code::success();
 }
