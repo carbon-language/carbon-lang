@@ -2185,8 +2185,11 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
       const APInt &RA = Rem->getAPIntValue();
       if (RA.isPowerOf2()) {
         APInt LowBits = (RA - 1);
-        KnownZero |= ~LowBits;
-        computeKnownBits(Op.getOperand(0), KnownZero, KnownOne,Depth+1);
+        computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth + 1);
+
+        // The upper bits are all zero, the lower ones are unchanged.
+        KnownZero = KnownZero2 | ~LowBits;
+        KnownOne = KnownOne2 & LowBits;
         break;
       }
     }
