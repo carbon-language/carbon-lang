@@ -3570,12 +3570,12 @@ static SDValue InsertFenceForAtomic(SDValue Chain, AtomicOrdering Order,
   if (Before) {
     if (Order == AcquireRelease || Order == SequentiallyConsistent)
       Order = Release;
-    else if (Order == Acquire || Order == Monotonic)
+    else if (Order == Acquire || Order == Monotonic || Order == Unordered)
       return Chain;
   } else {
     if (Order == AcquireRelease)
       Order = Acquire;
-    else if (Order == Release || Order == Monotonic)
+    else if (Order == Release || Order == Monotonic || Order == Unordered)
       return Chain;
   }
   SDValue Ops[3];
