@@ -15,17 +15,6 @@ struct ExplicitSpec_NotExported {};
 extern "C" void* malloc(__SIZE_TYPE__ size);
 extern "C" void free(void* p);
 
-// Used to force non-trivial special members.
-struct ForceNonTrivial {
-  ForceNonTrivial();
-  ~ForceNonTrivial();
-  ForceNonTrivial(const ForceNonTrivial&);
-  ForceNonTrivial& operator=(const ForceNonTrivial&);
-  ForceNonTrivial(ForceNonTrivial&&);
-  ForceNonTrivial& operator=(ForceNonTrivial&&);
-};
-
-
 
 //===----------------------------------------------------------------------===//
 // Class members
