@@ -375,3 +375,14 @@ namespace PR19729 {
   };
   B *p = new ({123}) B;
 }
+
+namespace PR11410 {
+  struct A {
+    A() = delete; // expected-note {{deleted here}}
+    A(int);
+  };
+
+  A a[3] = {
+    {1}, {2}
+  }; // expected-error {{call to deleted constructor}} expected-note {{implicitly default constructed}}
+}

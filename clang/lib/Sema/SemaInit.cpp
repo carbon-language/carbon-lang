@@ -429,9 +429,6 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
                                             bool &RequiresSecondPass) {
   assert((ILE->getType() != SemaRef.Context.VoidTy) &&
          "Should not have void type");
-  SourceLocation Loc = ILE->getLocStart();
-  if (ILE->getSyntacticForm())
-    Loc = ILE->getSyntacticForm()->getLocStart();
 
   if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
     const RecordDecl *RDecl = RType->getDecl();
@@ -489,6 +486,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
   } else
     ElementType = ILE->getType();
 
+  SourceLocation Loc = ILE->getLocEnd();
+  if (ILE->getSyntacticForm())
+    Loc = ILE->getSyntacticForm()->getLocEnd();
 
   for (unsigned Init = 0; Init != NumElements; ++Init) {
     if (hadError)
@@ -505,6 +505,11 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, None);
       if (!InitSeq) {
         InitSeq.Diagnose(SemaRef, ElementEntity, Kind, None);
+        if (NumInits < NumElements &&
+            InitSeq.getFailureKind() ==
+              InitializationSequence::FK_ConstructorOverloadFailed &&
+            InitSeq.getFailedOverloadResult() == OverloadingResult::OR_Deleted)
+          SemaRef.Diag(Loc, diag::note_omitted_element_default_constructed);
         hadError = true;
         return;
       }
