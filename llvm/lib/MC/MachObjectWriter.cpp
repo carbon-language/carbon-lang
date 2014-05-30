@@ -303,20 +303,50 @@ void MachObjectWriter::WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
   assert(OS.tell() - Start == sizeof(MachO::dysymtab_command));
 }
 
+MachObjectWriter::MachSymbolData *
+MachObjectWriter::findSymbolData(const MCSymbol &Sym) {
+  for (auto &Entry : LocalSymbolData)
+    if (&Entry.SymbolData->getSymbol() == &Sym)
+      return &Entry;
+
+  for (auto &Entry : ExternalSymbolData)
+    if (&Entry.SymbolData->getSymbol() == &Sym)
+      return &Entry;
+
+  for (auto &Entry : UndefinedSymbolData)
+    if (&Entry.SymbolData->getSymbol() == &Sym)
+      return &Entry;
+
+  return nullptr;
+}
+
 void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &Data = *MSD.SymbolData;
-  const MCSymbol &Symbol = Data.getSymbol();
+  const MCSymbol *Symbol = &Data.getSymbol();
+  const MCSymbol *AliasedSymbol = &Symbol->AliasedSymbol();
+  uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
   uint16_t Flags = Data.getFlags();
   uint64_t Address = 0;
+  bool IsAlias = Symbol != AliasedSymbol;
+
+  MachSymbolData *AliaseeInfo;
+  if (IsAlias) {
+    AliaseeInfo = findSymbolData(*AliasedSymbol);
+    if (AliaseeInfo)
+      SectionIndex = AliaseeInfo->SectionIndex;
+    Symbol = AliasedSymbol;
+  }
 
   // Set the N_TYPE bits. See <mach-o/nlist.h>.
   //
   // FIXME: Are the prebound or indirect fields possible here?
-  if (Symbol.isUndefined())
+  if (IsAlias && Symbol->isUndefined())
+    Type = MachO::N_INDR;
+  else if (Symbol->isUndefined())
     Type = MachO::N_UNDF;
-  else if (Symbol.isAbsolute())
+  else if (Symbol->isAbsolute())
     Type = MachO::N_ABS;
   else
     Type = MachO::N_SECT;
@@ -327,13 +357,15 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
     Type |= MachO::N_PEXT;
 
   // Set external bit.
-  if (Data.isExternal() || Symbol.isUndefined())
+  if (Data.isExternal() || (!IsAlias && Symbol->isUndefined()))
     Type |= MachO::N_EXT;
 
   // Compute the symbol address.
-  if (Symbol.isDefined()) {
+  if (IsAlias && Symbol->isUndefined())
+    Address = AliaseeInfo->StringIndex;
+  else if (Symbol->isDefined())
     Address = getSymbolAddress(&Data, Layout);
-  } else if (Data.isCommon()) {
+  else if (Data.isCommon()) {
     // Common symbols are encoded with the size in the address
     // field, and their alignment in the flags.
     Address = Data.getCommonSize();
@@ -344,21 +376,21 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
       assert((1U << Log2Size) == Align && "Invalid 'common' alignment!");
       if (Log2Size > 15)
         report_fatal_error("invalid 'common' alignment '" +
-                           Twine(Align) + "' for '" + Symbol.getName() + "'",
+                           Twine(Align) + "' for '" + Symbol->getName() + "'",
                            false);
       // FIXME: Keep this mask with the SymbolFlags enumeration.
       Flags = (Flags & 0xF0FF) | (Log2Size << 8);
     }
   }
 
-  if (Layout.getAssembler().isThumbFunc(&Symbol))
+  if (Layout.getAssembler().isThumbFunc(Symbol))
     Flags |= SF_ThumbFunc;
 
   // struct nlist (12 bytes)
 
   Write32(MSD.StringIndex);
   Write8(Type);
-  Write8(MSD.SectionIndex);
+  Write8(SectionIndex);
 
   // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
   // value.

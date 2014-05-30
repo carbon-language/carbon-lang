@@ -395,6 +395,8 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, basic_symbol_iterator I) {
   switch (NType & MachO::N_TYPE) {
   case MachO::N_ABS:
     return 's';
+  case MachO::N_INDR:
+    return 'i';
   case MachO::N_SECT: {
     section_iterator Sec = Obj.section_end();
     Obj.getSymbolSection(Symb, Sec);

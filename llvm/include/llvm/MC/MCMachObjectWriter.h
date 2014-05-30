@@ -111,6 +111,8 @@ class MachObjectWriter : public MCObjectWriter {
 
   /// @}
 
+  MachSymbolData *findSymbolData(const MCSymbol &Sym);
+
 public:
   MachObjectWriter(MCMachObjectTargetWriter *MOTW, raw_ostream &_OS,
                    bool _IsLittleEndian)

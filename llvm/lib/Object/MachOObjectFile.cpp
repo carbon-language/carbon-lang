@@ -584,6 +584,9 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
   if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF)
     Result |= SymbolRef::SF_Undefined;
 
+  if ((MachOType & MachO::N_TYPE) == MachO::N_INDR)
+    Result |= SymbolRef::SF_Indirect;
+
   if (MachOType & MachO::N_STAB)
     Result |= SymbolRef::SF_FormatSpecific;
 

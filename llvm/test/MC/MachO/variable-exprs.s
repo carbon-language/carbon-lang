@@ -202,10 +202,10 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 8
 // CHECK-I386:    (('n_strx', 1)
-// CHECK-I386:     ('n_type', 0x1)
+// CHECK-I386:     ('n_type', 0xb)
 // CHECK-I386:     ('n_sect', 0)
 // CHECK-I386:     ('n_desc', 0)
-// CHECK-I386:     ('n_value', 0)
+// CHECK-I386:     ('n_value', 4)
 // CHECK-I386:     ('_string', 'd2')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 9
@@ -403,10 +403,10 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 8
 // CHECK-X86_64:    (('n_strx', 1)
-// CHECK-X86_64:     ('n_type', 0x1)
+// CHECK-X86_64:     ('n_type', 0xb)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)
-// CHECK-X86_64:     ('n_value', 0)
+// CHECK-X86_64:     ('n_value', 4)
 // CHECK-X86_64:     ('_string', 'd2')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 9
