@@ -27,6 +27,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/CodeGen/LexicalScopes.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MachineLocation.h"
@@ -77,10 +78,19 @@ class DbgVariable {
   DwarfDebug *DD;
 
 public:
-  // AbsVar may be NULL.
-  DbgVariable(DIVariable V, DbgVariable *AV, DwarfDebug *DD)
-      : Var(V), TheDIE(nullptr), DotDebugLocOffset(~0U), AbsVar(AV),
+  /// Construct a DbgVariable from a DIVariable.
+  /// AbstractVar may be NULL.
+  DbgVariable(DIVariable V, DbgVariable *AbstractVar, DwarfDebug *DD)
+      : Var(V), TheDIE(nullptr), DotDebugLocOffset(~0U), AbsVar(AbstractVar),
         MInsn(nullptr), FrameIndex(~0), DD(DD) {}
+
+  /// Construct a DbgVariable from a DEBUG_VALUE.
+  /// AbstractVar may be NULL.
+  DbgVariable(const MachineInstr *DbgValue, DbgVariable *AbstractVar,
+              DwarfDebug *DD)
+    : Var(DbgValue->getDebugVariable()),
+      TheDIE(nullptr), DotDebugLocOffset(~0U), AbsVar(AbstractVar),
+      MInsn(DbgValue), FrameIndex(~0), DD(DD) {}
 
   // Accessors.
   DIVariable getVariable() const { return Var; }
@@ -91,7 +101,6 @@ public:
   StringRef getName() const { return Var.getName(); }
   DbgVariable *getAbstractVariable() const { return AbsVar; }
   const MachineInstr *getMInsn() const { return MInsn; }
-  void setMInsn(const MachineInstr *M) { MInsn = M; }
   int getFrameIndex() const { return FrameIndex; }
   void setFrameIndex(int FI) { FrameIndex = FI; }
   // Translate tag to proper Dwarf tag.

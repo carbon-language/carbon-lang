@@ -1176,15 +1176,13 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
-    DbgVariable *RegVar = new DbgVariable(DV, AbsVar, this);
+    DbgVariable *RegVar = new DbgVariable(MInsn, AbsVar, this);
     if (!addCurrentFnArgument(RegVar, Scope))
       addScopeVariable(Scope, RegVar);
 
     // Check if the first DBG_VALUE is valid for the rest of the function.
-    if (Ranges.size() == 1 && Ranges.front().second == nullptr) {
-      RegVar->setMInsn(MInsn);
+    if (Ranges.size() == 1 && Ranges.front().second == nullptr)
       continue;
-    }
 
     // Handle multiple DBG_VALUE instructions describing one variable.
     RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
