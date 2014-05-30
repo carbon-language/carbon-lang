@@ -25,6 +25,16 @@
 #include "tsan_suppressions.h"
 #include "tsan_symbolize.h"
 
+#ifdef __SSE3__
+// <emmintrin.h> transitively includes <stdlib.h>,
+// and it's prohibited to include std headers into tsan runtime.
+// So we do this dirty trick.
+#define _MM_MALLOC_H_INCLUDED
+#define __MM_MALLOC_H
+#include <emmintrin.h>
+typedef __m128i m128;
+#endif
+
 volatile int __tsan_resumed = 0;
 
 extern "C" void __tsan_resume() {
@@ -471,7 +481,8 @@ void StoreIfNotYetStored(u64 *sp, u64 *s) {
   *s = 0;
 }
 
-static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
+ALWAYS_INLINE
+void HandleRace(ThreadState *thr, u64 *shadow_mem,
                               Shadow cur, Shadow old) {
   thr->racy_state[0] = cur.raw();
   thr->racy_state[1] = old.raw();
@@ -483,16 +494,12 @@ static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
 #endif
 }
 
-static inline bool OldIsInSameSynchEpoch(Shadow old, ThreadState *thr) {
-  return old.epoch() >= thr->fast_synch_epoch;
-}
-
 static inline bool HappensBefore(Shadow old, ThreadState *thr) {
   return thr->clock.get(old.TidWithIgnore()) >= old.epoch();
 }
 
-ALWAYS_INLINE USED
-void MemoryAccessImpl(ThreadState *thr, uptr addr,
+ALWAYS_INLINE
+void MemoryAccessImpl1(ThreadState *thr, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
   StatInc(thr, StatMop);
@@ -586,6 +593,90 @@ void UnalignedMemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   }
 }
 
+ALWAYS_INLINE
+bool ContainsSameAccessSlow(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+  Shadow cur(a);
+  for (uptr i = 0; i < kShadowCnt; i++) {
+    Shadow old(LoadShadow(&s[i]));
+    if (Shadow::Addr0AndSizeAreEqual(cur, old) &&
+        old.TidWithIgnore() == cur.TidWithIgnore() &&
+        old.epoch() > sync_epoch &&
+        old.IsAtomic() == cur.IsAtomic() &&
+        old.IsRead() <= cur.IsRead())
+      return true;
+  }
+  return false;
+}
+
+#if defined(__SSE3__) && TSAN_SHADOW_COUNT == 4
+#define SHUF(v0, v1, i0, i1, i2, i3) _mm_castps_si128(_mm_shuffle_ps( \
+    _mm_castsi128_ps(v0), _mm_castsi128_ps(v1), \
+    (i0)*1 + (i1)*4 + (i2)*16 + (i3)*64))
+ALWAYS_INLINE
+bool ContainsSameAccessFast(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+  // This is an optimized version of ContainsSameAccessSlow.
+  // load current access into access[0:63]
+  const m128 access     = _mm_cvtsi64_si128(a);
+  // duplicate high part of access in addr0:
+  // addr0[0:31]        = access[32:63]
+  // addr0[32:63]       = access[32:63]
+  // addr0[64:95]       = access[32:63]
+  // addr0[96:127]      = access[32:63]
+  const m128 addr0      = SHUF(access, access, 1, 1, 1, 1);
+  // load 4 shadow slots
+  const m128 shadow0    = _mm_load_si128((__m128i*)s);
+  const m128 shadow1    = _mm_load_si128((__m128i*)s + 1);
+  // load high parts of 4 shadow slots into addr_vect:
+  // addr_vect[0:31]    = shadow0[32:63]
+  // addr_vect[32:63]   = shadow0[96:127]
+  // addr_vect[64:95]   = shadow1[32:63]
+  // addr_vect[96:127]  = shadow1[96:127]
+  m128 addr_vect        = SHUF(shadow0, shadow1, 1, 3, 1, 3);
+  if (!is_write) {
+    // set IsRead bit in addr_vect
+    const m128 rw_mask1 = _mm_cvtsi64_si128(1<<15);
+    const m128 rw_mask  = SHUF(rw_mask1, rw_mask1, 0, 0, 0, 0);
+    addr_vect           = _mm_or_si128(addr_vect, rw_mask);
+  }
+  // addr0 == addr_vect?
+  const m128 addr_res   = _mm_cmpeq_epi32(addr0, addr_vect);
+  // epoch1[0:63]       = sync_epoch
+  const m128 epoch1     = _mm_cvtsi64_si128(sync_epoch);
+  // epoch[0:31]        = sync_epoch[0:31]
+  // epoch[32:63]       = sync_epoch[0:31]
+  // epoch[64:95]       = sync_epoch[0:31]
+  // epoch[96:127]      = sync_epoch[0:31]
+  const m128 epoch      = SHUF(epoch1, epoch1, 0, 0, 0, 0);
+  // load low parts of shadow cell epochs into epoch_vect:
+  // epoch_vect[0:31]   = shadow0[0:31]
+  // epoch_vect[32:63]  = shadow0[64:95]
+  // epoch_vect[64:95]  = shadow1[0:31]
+  // epoch_vect[96:127] = shadow1[64:95]
+  const m128 epoch_vect = SHUF(shadow0, shadow1, 0, 2, 0, 2);
+  // epoch_vect >= sync_epoch?
+  const m128 epoch_res  = _mm_cmpgt_epi32(epoch_vect, epoch);
+  // addr_res & epoch_res
+  const m128 res        = _mm_and_si128(addr_res, epoch_res);
+  // mask[0] = res[7]
+  // mask[1] = res[15]
+  // ...
+  // mask[15] = res[127]
+  const int mask        = _mm_movemask_epi8(res);
+  return mask != 0;
+}
+#endif
+
+ALWAYS_INLINE
+bool ContainsSameAccess(u64 *s, u64 a, u64 sync_epoch, bool is_write) {
+#if defined(__SSE3__) && TSAN_SHADOW_COUNT == 4
+  bool res = ContainsSameAccessFast(s, a, sync_epoch, is_write);
+  DCHECK_EQ(res, ContainsSameAccessSlow(s, a, sync_epoch, is_write));
+  return res;
+#else
+  return ContainsSameAccessSlow(s, a, sync_epoch, is_write);
+#endif
+}
+
 ALWAYS_INLINE USED
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {
@@ -618,14 +709,12 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   }
 
   FastState fast_state = thr->fast_state;
-  if (fast_state.GetIgnoreBit())
+  if (fast_state.GetIgnoreBit()) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopIgnored);
     return;
-  if (kCollectHistory) {
-    fast_state.IncrementEpoch();
-    thr->fast_state = fast_state;
-    // We must not store to the trace if we do not store to the shadow.
-    // That is, this call must be moved somewhere below.
-    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
   }
 
   Shadow cur(fast_state);
@@ -633,7 +722,40 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   cur.SetWrite(kAccessIsWrite);
   cur.SetAtomic(kIsAtomic);
 
-  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
+  if (LIKELY(ContainsSameAccess(shadow_mem, cur.raw(),
+      thr->fast_synch_epoch, kAccessIsWrite))) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopSame);
+    return;
+  }
+
+  if (kCollectHistory) {
+    fast_state.IncrementEpoch();
+    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
+    thr->fast_state = fast_state;
+    cur.IncrementEpoch();
+  }
+
+  MemoryAccessImpl1(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
+      shadow_mem, cur);
+}
+
+// Called by MemoryAccessRange in tsan_rtl_thread.cc
+void MemoryAccessImpl(ThreadState *thr, uptr addr,
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
+    u64 *shadow_mem, Shadow cur) {
+  if (LIKELY(ContainsSameAccess(shadow_mem, cur.raw(),
+      thr->fast_synch_epoch, kAccessIsWrite))) {
+    StatInc(thr, StatMop);
+    StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
+    StatInc(thr, (StatType)(StatMop1 + kAccessSizeLog));
+    StatInc(thr, StatMopSame);
+    return;
+  }
+
+  MemoryAccessImpl1(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
       shadow_mem, cur);
 }
 

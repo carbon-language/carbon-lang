@@ -37,6 +37,7 @@ void StatOutput(u64 *stat) {
   name[StatMop4]                         = "            size 4                ";
   name[StatMop8]                         = "            size 8                ";
   name[StatMopSame]                      = "  Including same                  ";
+  name[StatMopIgnored]                   = "  Including ignored               ";
   name[StatMopRange]                     = "  Including range                 ";
   name[StatMopRodata]                    = "  Including .rodata               ";
   name[StatMopRangeRodata]               = "  Including .rodata range         ";

@@ -54,6 +54,7 @@ const uptr kShadowCnt = TSAN_SHADOW_COUNT;
 # endif
 #else
 // Count of shadow values in a shadow cell.
+#define TSAN_SHADOW_COUNT 4
 const uptr kShadowCnt = 4;
 #endif
 

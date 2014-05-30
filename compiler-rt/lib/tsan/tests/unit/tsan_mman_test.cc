@@ -144,6 +144,11 @@ TEST(Mman, Stats) {
 }
 
 TEST(Mman, CallocOverflow) {
+#if TSAN_DEBUG
+  // EXPECT_DEATH clones a thread with 4K stack,
+  // which is overflown by tsan memory accesses functions in debug mode.
+  return;
+#endif
   size_t kArraySize = 4096;
   volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
   volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;

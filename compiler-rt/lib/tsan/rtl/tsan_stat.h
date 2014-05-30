@@ -26,6 +26,7 @@ enum StatType {
   StatMop4,
   StatMop8,
   StatMopSame,
+  StatMopIgnored,
   StatMopRange,
   StatMopRodata,
   StatMopRangeRodata,
