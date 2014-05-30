@@ -386,11 +386,59 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
 }
 
 
+
+class MachOReader : public Reader {
+public:
+  MachOReader(MachOLinkingContext::Arch arch) : _arch(arch) {}
+
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &mb) const override {
+    if (magic != llvm::sys::fs::file_magic::macho_object)
+      return false;
+    if (mb.getBufferSize() < 32)
+      return false;
+    const char *start = mb.getBufferStart();
+    const mach_header *mh = reinterpret_cast<const mach_header *>(start);
+    const bool swap = (mh->magic == llvm::MachO::MH_CIGAM) ||
+                      (mh->magic == llvm::MachO::MH_CIGAM_64);
+    const uint32_t filesCpuType = read32(swap, mh->cputype);
+    const uint32_t filesCpuSubtype = read32(swap, mh->cpusubtype);
+    if (filesCpuType != MachOLinkingContext::cpuTypeFromArch(_arch))
+      return false;
+    if (filesCpuSubtype != MachOLinkingContext::cpuSubtypeFromArch(_arch))
+      return false;
+
+    // Is mach-o file with correct cpu type/subtype.
+    return true;
+  }
+
+  error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
+            std::vector<std::unique_ptr<File> > &result) const override {
+    // Convert binary file to normalized mach-o.
+    auto normFile = readBinary(mb, _arch);
+    if (error_code ec = normFile.getError())
+      return ec;
+    // Convert normalized mach-o to atoms.
+    auto file = normalizedToAtoms(**normFile, mb->getBufferIdentifier(), false);
+    if (error_code ec = file.getError())
+      return ec;
+
+    result.push_back(std::move(*file));
+
+    return error_code::success();
+  }
+private:
+  MachOLinkingContext::Arch _arch;
+};
+
+
 } // namespace normalized
 } // namespace mach_o
 
 void Registry::addSupportMachOObjects(StringRef archName) {
   MachOLinkingContext::Arch arch = MachOLinkingContext::archFromName(archName);
+  add(std::unique_ptr<Reader>(new mach_o::normalized::MachOReader(arch)));
   switch (arch) {
   case MachOLinkingContext::arch_x86_64:
     addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::x86_64,
