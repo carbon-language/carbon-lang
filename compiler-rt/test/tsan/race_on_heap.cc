@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,7 +38,7 @@ int main() {
 // CHECK: WARNING: ThreadSanitizer: data race
 // ...
 // CHECK: Location is heap block of size 99 at [[ADDR]] allocated by thread T1:
-// CHCEKL     #0 malloc
+// CHCEK:     #0 malloc
 // CHECK:     #{{1|2}} alloc
 // CHECK:     #{{2|3}} AllocThread
 // ...

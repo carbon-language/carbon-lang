@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && TSAN_OPTIONS="$TSAN_OPTIONS halt_on_error=1" not %run %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t && TSAN_OPTIONS="$TSAN_OPTIONS halt_on_error=1" %deflake %run %t | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>

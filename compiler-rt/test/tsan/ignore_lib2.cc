@@ -1,7 +1,7 @@
 // RUN: %clangxx_tsan -O1 %s -DLIB -fPIC -fno-sanitize=thread -shared -o %T/libignore_lib2_0.so
 // RUN: %clangxx_tsan -O1 %s -DLIB -fPIC -fno-sanitize=thread -shared -o %T/libignore_lib2_1.so
 // RUN: %clangxx_tsan -O1 %s -o %t
-// RUN: TSAN_OPTIONS="$TSAN_OPTIONS suppressions=%s.supp" not %run %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS="$TSAN_OPTIONS suppressions=%s.supp" %deflake %run %t | FileCheck %s
 
 // Tests that called_from_lib suppression matched against 2 libraries
 // causes program crash (this is not supported).

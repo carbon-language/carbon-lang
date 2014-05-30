@@ -1,7 +1,7 @@
 // RUN: %clangxx_tsan -O1 %s -DLIB -fPIC -fno-sanitize=thread -shared -o %T/libignore_lib1.so
 // RUN: %clangxx_tsan -O1 %s -o %t
 // RUN: echo running w/o suppressions:
-// RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-NOSUPP
+// RUN: %deflake %run %t | FileCheck %s --check-prefix=CHECK-NOSUPP
 // RUN: echo running with suppressions:
 // RUN: TSAN_OPTIONS="$TSAN_OPTIONS suppressions=%s.supp" %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-WITHSUPP
 

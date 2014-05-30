@@ -1,29 +1,26 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
 #include <pthread.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
 
-void *Thread2(void *a) {
-  sleep(1);
-  *(int*)a = 43;
-  return 0;
-}
+int x;
 
 void *Thread(void *a) {
-  static __thread int Var = 42;
-  pthread_t t;
-  pthread_create(&t, 0, Thread2, &Var);
-  Var = 42;
-  pthread_join(t, 0);
+  sleep(1);
+  x = 1;
   return 0;
 }
 
 int main() {
+  fprintf(stderr, "addr2=%p\n", &x);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
+  x = 0;
   pthread_join(t, 0);
 }
 
+// CHECK: addr2=[[ADDR2:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Location is TLS of thread T1.
+// CHECK: Location is global 'x' of size 4 at [[ADDR2]] ({{.*}}+0x{{[0-9,a-f]+}})
 

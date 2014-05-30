@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -26,3 +26,4 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race
+

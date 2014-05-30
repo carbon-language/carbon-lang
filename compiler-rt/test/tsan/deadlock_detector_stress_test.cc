@@ -1,12 +1,12 @@
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadMutex
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOT-SECOND
-// TSAN_OPTIONS="detect_deadlocks=1 second_deadlock_stack=1" not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SECOND
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOT-SECOND
+// TSAN_OPTIONS="detect_deadlocks=1 second_deadlock_stack=1" %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SECOND
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadSpinLock
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-RD
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-RD
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRecursiveMutex
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-REC
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-REC
 #include <pthread.h>
 #undef NDEBUG
 #include <assert.h>
