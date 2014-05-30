@@ -53,11 +53,8 @@ extern cl::opt<bool> ANDIGlueBug;
 static TargetLoweringObjectFile *createTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
     return new TargetLoweringObjectFileMachO();
-
-  if (TM.getSubtargetImpl()->isSVR4ABI())
+  else
     return new PPC64LinuxTargetObjectFile();
-
-  return new TargetLoweringObjectFileELF();
 }
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
