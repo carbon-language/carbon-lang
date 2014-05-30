@@ -16,13 +16,13 @@ struct External { int v; };
 
 
 // Invalid usage.
-__declspec(dllexport) typedef int typedef1; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
-typedef __declspec(dllexport) int typedef2; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
-typedef int __declspec(dllexport) typedef3; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
-typedef __declspec(dllexport) void (*FunTy)(); // expected-warning{{'dllexport' attribute only applies to variables and functions}}
-enum __declspec(dllexport) Enum {}; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
+__declspec(dllexport) typedef int typedef1; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllexport) int typedef2; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
+typedef int __declspec(dllexport) typedef3; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllexport) void (*FunTy)(); // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
+enum __declspec(dllexport) Enum {}; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
 #if __has_feature(cxx_strong_enums)
-  enum class __declspec(dllexport) EnumClass {}; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
+  enum class __declspec(dllexport) EnumClass {}; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
 #endif
 
 
@@ -311,6 +311,14 @@ template<> __declspec(dllexport) inline void funcTmpl<ExplicitSpec_InlineDef_Exp
 
 
 //===----------------------------------------------------------------------===//
+// Classes
+//===----------------------------------------------------------------------===//
+
+class __declspec(dllexport) ClassDecl;
+
+class __declspec(dllexport) ClassDef { };
+
+//===----------------------------------------------------------------------===//
 // Precedence
 //===----------------------------------------------------------------------===//
 
@@ -385,7 +393,7 @@ private:
   __declspec(dllexport)                void privateDef();
 public:
 
-  __declspec(dllexport)                int  Field; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
+  __declspec(dllexport)                int  Field; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
   __declspec(dllexport) static         int  StaticField;
   __declspec(dllexport) static         int  StaticFieldDef;
   __declspec(dllexport) static  const  int  StaticConstField;
@@ -771,7 +779,7 @@ private:
   __declspec(dllexport)                void privateDef();
 public:
 
-  __declspec(dllexport)                int  Field; // expected-warning{{'dllexport' attribute only applies to variables and functions}}
+  __declspec(dllexport)                int  Field; // expected-warning{{'dllexport' attribute only applies to variables, functions and classes}}
   __declspec(dllexport) static         int  StaticField;
   __declspec(dllexport) static         int  StaticFieldDef;
   __declspec(dllexport) static  const  int  StaticConstField;
@@ -907,3 +915,5 @@ template<typename T> template<typename U> __declspec(dllexport)        int  CTMT
 template<typename T> template<typename U> __declspec(dllexport) const  int  CTMTR<T>::StaticConstField = 1;  // expected-error{{redeclaration of 'CTMTR::StaticConstField' cannot add 'dllexport' attribute}}
 template<typename T> template<typename U> __declspec(dllexport) constexpr int CTMTR<T>::ConstexprField;      // expected-error{{redeclaration of 'CTMTR::ConstexprField' cannot add 'dllexport' attribute}}
 #endif // __has_feature(cxx_variable_templates)
+
+// FIXME: Precedence rules seem to be different for classes.

@@ -203,6 +203,9 @@ public:
 
   void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) override {
     Thunk->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
+
+    // Never dllimport/dllexport thunks.
+    Thunk->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
   }
 
   llvm::Value *performThisAdjustment(CodeGenFunction &CGF, llvm::Value *This,
@@ -913,6 +916,7 @@ void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
     VTable->setInitializer(Init);
 
     VTable->setLinkage(Linkage);
+
     CGM.setGlobalVisibility(VTable, RD);
   }
 }
@@ -994,6 +998,10 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
     VTable = CGM.CreateOrReplaceCXXRuntimeVariable(
         Name.str(), ArrayType, llvm::GlobalValue::ExternalLinkage);
     VTable->setUnnamedAddr(true);
+    if (RD->hasAttr<DLLImportAttr>())
+      VTable->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+    else if (RD->hasAttr<DLLExportAttr>())
+      VTable->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
     break;
   }
 
@@ -1169,6 +1177,12 @@ MicrosoftCXXABI::getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
   llvm::GlobalVariable *GV =
       CGM.CreateOrReplaceCXXRuntimeVariable(Name, VBTableType, Linkage);
   GV->setUnnamedAddr(true);
+
+  if (RD->hasAttr<DLLImportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+  else if (RD->hasAttr<DLLExportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+
   return GV;
 }
 

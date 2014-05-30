@@ -3,6 +3,8 @@
 // RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G32 %s
 // RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G64 %s
 
+// RUN: %clang_cc1 -triple i686-pc-win32 -O1 -mconstructor-aliases -std=c++1y -emit-llvm -o - %s | FileCheck %s --check-prefix=MSC --check-prefix=M32
+
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Exported {};
 struct ExplicitDecl_Exported {};
@@ -447,3 +449,91 @@ void __declspec(dllexport) precedenceRedecl1() {}
 // GNU-DAG: define dllexport void @_Z17precedenceRedecl2v()
 void __declspec(dllexport) precedenceRedecl2();
 void __declspec(dllimport) precedenceRedecl2() {}
+
+
+
+//===----------------------------------------------------------------------===//
+// Classes
+//===----------------------------------------------------------------------===//
+
+struct S {
+  void __declspec(dllexport) a() {}
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?a@S@@QAEXXZ"
+
+  struct T {
+    void __declspec(dllexport) a() {}
+    // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?a@T@S@@QAEXXZ"
+  };
+};
+
+
+struct __declspec(dllexport) T {
+  // Copy assignment operator:
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.T* @"\01??4T@@QAEAAU0@ABU0@@Z"
+
+  // Explicitly defaulted copy constructur:
+  T(const T&) = default;
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.T* @"\01??0T@@QAE@ABU0@@Z"
+
+  void a() {}
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?a@T@@QAEXXZ"
+
+  static int b;
+  // M32-DAG: @"\01?b@T@@2HA" = external dllexport global i32
+
+  static int c;
+  // M32-DAG: @"\01?c@T@@2HA" = dllexport global i32 0, align 4
+};
+
+USEVAR(T::b)
+int T::c;
+
+template <typename T> struct __declspec(dllexport) U { void foo() {} };
+// The U<int> specialization below must cause the following to be emitted:
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?foo@?$U@H@@QAEXXZ"
+// M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.U* @"\01??4?$U@H@@QAEAAU0@ABU0@@Z"
+struct __declspec(dllexport) V : public U<int> { };
+
+
+struct __declspec(dllexport) W { virtual void foo() {} };
+// Default ctor:
+// M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.W* @"\01??0W@@QAE@XZ"
+// Copy ctor:
+// M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.W* @"\01??0W@@QAE@ABU0@@Z"
+// vftable:
+// M32-DAG: @"\01??_7W@@6B@" = weak_odr dllexport unnamed_addr constant [1 x i8*] [i8* bitcast (void (%struct.W*)* @"\01?foo@W@@UAEXXZ" to i8*)]
+
+struct __declspec(dllexport) X : public virtual W {};
+// vbtable:
+// M32-DAG: @"\01??_8X@@7B@" = weak_odr dllexport unnamed_addr constant [2 x i32] [i32 0, i32 4]
+
+struct __declspec(dllexport) Y {
+  // Move assignment operator:
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.Y* @"\01??4Y@@QAEAAU0@$$QAU0@@Z"
+
+  int x;
+};
+
+struct __declspec(dllexport) Z { virtual ~Z() {} };
+// The scalar deleting dtor does not get exported:
+// M32-DAG: define linkonce_odr x86_thiscallcc void @"\01??_GZ@@UAEPAXI@Z"
+
+
+// The user-defined dtor does get exported:
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??1Z@@UAE@XZ"
+
+namespace DontUseDtorAlias {
+  struct __declspec(dllexport) A { ~A(); };
+  struct __declspec(dllexport) B : A { ~B(); };
+  A::~A() { }
+  B::~B() { }
+  // Emit a real definition of B's constructor; don't alias it to A's.
+  // M32-DAG: define dllexport x86_thiscallcc void @"\01??1B@DontUseDtorAlias@@QAE@XZ"
+}
+
+struct __declspec(dllexport) DefaultedCtorsDtors {
+  DefaultedCtorsDtors() = default;
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.DefaultedCtorsDtors* @"\01??0DefaultedCtorsDtors@@QAE@XZ"
+  ~DefaultedCtorsDtors() = default;
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??1DefaultedCtorsDtors@@QAE@XZ"
+};

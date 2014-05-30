@@ -1659,13 +1659,13 @@ def MsStruct : InheritableAttr {
 
 def DLLExport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Spellings = [Declspec<"dllexport">, GCC<"dllexport">];
-  let Subjects = SubjectList<[Function, Var]>;
+  let Subjects = SubjectList<[Function, Var, CXXRecord]>;
   let Documentation = [Undocumented];
 }
 
 def DLLImport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Spellings = [Declspec<"dllimport">, GCC<"dllimport">];
-  let Subjects = SubjectList<[Function, Var]>;
+  let Subjects = SubjectList<[Function, Var, CXXRecord]>;
   let Documentation = [Undocumented];
 }
 

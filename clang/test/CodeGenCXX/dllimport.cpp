@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M32 %s
-// RUN: %clang_cc1 -triple x86_64-windows-msvc -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M64 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G32 %s
-// RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G64 %s
-// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c++1y -O1 -o - %s -DMSABI | FileCheck --check-prefix=MO1 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c++1y -O1 -o - %s         | FileCheck --check-prefix=GO1 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M32 %s
+// RUN: %clang_cc1 -triple x86_64-windows-msvc -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M64 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G32 %s
+// RUN: %clang_cc1 -triple x86_64-windows-gnu  -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G64 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s -DMSABI | FileCheck --check-prefix=MO1 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s         | FileCheck --check-prefix=GO1 %s
 
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Imported {};
@@ -21,8 +21,8 @@ struct ExplicitSpec_NotImported {};
 #define USEVARTYPE(type, var) type UNIQ(use)() { return var; }
 #define USEVAR(var) USEVARTYPE(int, var)
 #define USE(func) void UNIQ(use)() { func(); }
-
-
+#define USEMEMFUNC(class, func) void (class::*UNIQ(use)())() { return &class::func; }
+#define USECLASS(class) void UNIQ(USE)() { class x; }
 
 //===----------------------------------------------------------------------===//
 // Globals
@@ -501,3 +501,69 @@ USE(funcTmpl<ExplicitSpec_Imported>)
 // GO1-DAG: define available_externally dllimport void @_Z8funcTmplI31ExplicitSpec_InlineDef_ImportedEvv()
 template<> __declspec(dllimport) inline void funcTmpl<ExplicitSpec_InlineDef_Imported>() {}
 USE(funcTmpl<ExplicitSpec_InlineDef_Imported>)
+
+
+
+//===----------------------------------------------------------------------===//
+// Classes
+//===----------------------------------------------------------------------===//
+
+struct __declspec(dllimport) T {
+  void a() {}
+  // MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01?a@T@@QAEXXZ"
+
+  static int b;
+  // MO1-DAG: @"\01?b@T@@2HA" = external dllimport global i32
+};
+USEMEMFUNC(T, a)
+USEVAR(T::b)
+
+template <typename T> struct __declspec(dllimport) U { void foo() {} };
+// MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01?foo@?$U@H@@QAEXXZ"
+struct __declspec(dllimport) V : public U<int> { };
+USEMEMFUNC(V, foo)
+
+struct __declspec(dllimport) W { virtual void foo() {} };
+USECLASS(W)
+// vftable:
+// MO1-DAG: @"\01??_7W@@6B@" = available_externally dllimport unnamed_addr constant [1 x i8*] [i8* bitcast (void (%struct.W*)* @"\01?foo@W@@UAEXXZ" to i8*)]
+
+struct __declspec(dllimport) X : public virtual W {};
+USECLASS(X)
+// vbtable:
+// MO1-DAG: @"\01??_8X@@7B@" = available_externally dllimport unnamed_addr constant [2 x i32] [i32 0, i32 4]
+
+struct __declspec(dllimport) Y {
+  int x;
+};
+
+struct __declspec(dllimport) Z { virtual ~Z() {} };
+USECLASS(Z)
+// User-defined dtor:
+// MO1-DAG: define available_externally dllimport x86_thiscallcc void @"\01??1Z@@UAE@XZ"
+
+namespace DontUseDtorAlias {
+  struct __declspec(dllimport) A { ~A(); };
+  struct __declspec(dllimport) B : A { ~B(); };
+  inline A::~A() { }
+  inline B::~B() { }
+  // Emit a real definition of B's constructor; don't alias it to A's.
+  // MO1-DAG: available_externally dllimport x86_thiscallcc void @"\01??1B@DontUseDtorAlias@@QAE@XZ"
+  USECLASS(B)
+}
+
+namespace Vtordisp {
+  // Don't dllimport the vtordisp.
+  // MO1-DAG: define weak x86_thiscallcc void @"\01?f@?$C@D@Vtordisp@@$4PPPPPPPM@A@AEXXZ"
+
+  class Base {
+    virtual void f() {}
+  };
+  template <typename T>
+  class __declspec(dllimport) C : virtual public Base {
+  public:
+    C() {}
+    virtual void f() {}
+  };
+  template class C<char>;
+}

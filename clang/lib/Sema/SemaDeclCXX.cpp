@@ -4350,11 +4350,66 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
 
 /// \brief Return a DLL attribute from the declaration.
 static InheritableAttr *getDLLAttr(Decl *D) {
+  assert(!(D->hasAttr<DLLImportAttr>() && D->hasAttr<DLLExportAttr>()) &&
+         "A declaration cannot be both dllimport and dllexport.");
   if (auto *Import = D->getAttr<DLLImportAttr>())
     return Import;
   if (auto *Export = D->getAttr<DLLExportAttr>())
     return Export;
   return nullptr;
+}
+
+/// \brief Check class-level dllimport/dllexport attribute.
+static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
+  Attr *ClassAttr = getDLLAttr(Class);
+  if (!ClassAttr)
+    return;
+
+  bool ClassExported = ClassAttr->getKind() == attr::DLLExport;
+
+  // Force declaration of implicit members so they can inherit the attribute.
+  S.ForceDeclarationOfImplicitMembers(Class);
+
+  // FIXME: MSVC's docs say all bases must be exportable, but this doesn't
+  // seem to be true in practice?
+
+  // FIXME: We also need to propagate the attribute upwards to class template
+  // specialization bases.
+
+  for (Decl *Member : Class->decls()) {
+    if (getDLLAttr(Member)) {
+      // FIXME: Error about importing/exporting individual members.
+    }
+
+    if (!isa<CXXMethodDecl>(Member) && !isa<VarDecl>(Member))
+      continue;
+
+    auto *NewAttr = cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
+    NewAttr->setInherited(true);
+    Member->addAttr(NewAttr);
+
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
+      if (ClassExported) {
+        if (MD->isDeleted())
+          continue;
+
+        if (MD->isUserProvided()) {
+          // Instantiate non-default methods.
+          S.MarkFunctionReferenced(Class->getLocation(), MD);
+        } else if (!MD->isTrivial() || MD->isExplicitlyDefaulted() ||
+                   MD->isCopyAssignmentOperator() ||
+                   MD->isMoveAssignmentOperator()) {
+          // Instantiate non-trival or explicitly defaulted methods, and the
+          // copy assignment / move assignment operators.
+          S.MarkFunctionReferenced(Class->getLocation(), MD);
+          // Resolve its exception specification; CodeGen needs it.
+          auto *FPT = MD->getType()->getAs<FunctionProtoType>();
+          S.ResolveExceptionSpec(Class->getLocation(), FPT);
+          S.ActOnFinishInlineMethodDef(MD);
+        }
+      }
+    }
+  }
 }
 
 /// \brief Perform semantic checks on a class definition that has been
@@ -4521,6 +4576,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   instantiated (e.g. meta-functions). This doesn't apply to classes that
   //   have inheriting constructors.
   DeclareInheritingConstructors(Record);
+
+  checkDLLAttribute(*this, Record);
 }
 
 /// Look up the special member function that would be called by a special

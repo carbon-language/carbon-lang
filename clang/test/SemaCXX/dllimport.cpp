@@ -15,13 +15,13 @@ namespace { struct Internal {}; }
 
 
 // Invalid usage.
-__declspec(dllimport) typedef int typedef1; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef __declspec(dllimport) int typedef2; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef int __declspec(dllimport) typedef3; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-typedef __declspec(dllimport) void (*FunTy)(); // expected-warning{{'dllimport' attribute only applies to variables and functions}}
-enum __declspec(dllimport) Enum {}; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+__declspec(dllimport) typedef int typedef1; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllimport) int typedef2; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef int __declspec(dllimport) typedef3; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+typedef __declspec(dllimport) void (*FunTy)(); // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
+enum __declspec(dllimport) Enum {}; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
 #if __has_feature(cxx_strong_enums)
-  enum class __declspec(dllimport) EnumClass {}; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  enum class __declspec(dllimport) EnumClass {}; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
 #endif
 
 
@@ -362,7 +362,6 @@ template<> __declspec(dllimport) void funcTmpl<ExplicitSpec_Def_Imported>() {} /
 template<> __declspec(dllimport) inline void funcTmpl<ExplicitSpec_InlineDef_Imported>() {}
 
 
-
 //===----------------------------------------------------------------------===//
 // Class members
 //===----------------------------------------------------------------------===//
@@ -396,7 +395,7 @@ private:
   __declspec(dllimport)                void privateDecl();
 public:
 
-  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
   __declspec(dllimport) static         int  StaticField;
   __declspec(dllimport) static         int  StaticFieldDef; // expected-note{{attribute is here}}
   __declspec(dllimport) static  const  int  StaticConstField;
@@ -794,7 +793,7 @@ private:
   __declspec(dllimport)                void privateDecl();
 public:
 
-  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables and functions}}
+  __declspec(dllimport)                int  Field; // expected-warning{{'dllimport' attribute only applies to variables, functions and classes}}
   __declspec(dllimport) static         int  StaticField;
   __declspec(dllimport) static         int  StaticFieldDef; // expected-note{{attribute is here}}
   __declspec(dllimport) static  const  int  StaticConstField;
@@ -945,3 +944,13 @@ template<typename T> template<typename U> __declspec(dllimport) constexpr int CT
                                                                                                              // expected-error@-1{{definition of dllimport static field not allowed}}
                                                                                                              // expected-note@-2{{attribute is here}}
 #endif // __has_feature(cxx_variable_templates)
+
+
+
+//===----------------------------------------------------------------------===//
+// Classes
+//===----------------------------------------------------------------------===//
+
+class __declspec(dllimport) ClassDecl;
+
+class __declspec(dllimport) ClassDef { };
