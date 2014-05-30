@@ -324,40 +324,14 @@ FileSpec::SetFile (const char *pathname, bool resolve)
     
     if (path_fit)
     {
-        char *filename = ::basename (resolved_path);
-        if (filename)
+        llvm::StringRef resolve_path_ref(resolved_path);
+        llvm::StringRef filename_ref = llvm::sys::path::filename(resolve_path_ref);
+        if (!filename_ref.empty())
         {
-            m_filename.SetCString (filename);
-            // Truncate the basename off the end of the resolved path
-
-            // Only attempt to get the dirname if it looks like we have a path
-            if (strchr(resolved_path, '/')
-#ifdef _WIN32
-                || strchr(resolved_path, '\\')
-#endif
-                )
-            {
-                char *directory = ::dirname (resolved_path);
-
-                // Make sure we didn't get our directory resolved to "." without having
-                // specified
-                if (directory)
-                    m_directory.SetCString(directory);
-                else
-                {
-                    char *last_resolved_path_slash = strrchr(resolved_path, '/');
-#ifdef _WIN32
-                    char* last_resolved_path_slash_windows = strrchr(resolved_path, '\\');
-                    if (last_resolved_path_slash_windows > last_resolved_path_slash)
-                        last_resolved_path_slash = last_resolved_path_slash_windows;
-#endif
-                    if (last_resolved_path_slash)
-                    {
-                        *last_resolved_path_slash = '\0';
-                        m_directory.SetCString(resolved_path);
-                    }
-                }
-            }
+            m_filename.SetString (filename_ref);
+            llvm::StringRef directory_ref = llvm::sys::path::parent_path(resolve_path_ref);
+            if (!directory_ref.empty())
+                m_directory.SetString(directory_ref);
         }
         else
             m_directory.SetCString(resolved_path);
@@ -572,8 +546,7 @@ FileSpec::ResolveExecutableLocation ()
             const std::string file_str (file_cstr);
             std::string path = llvm::sys::FindProgramByName (file_str);
             llvm::StringRef dir_ref = llvm::sys::path::parent_path(path);
-            //llvm::StringRef dir_ref = path.getDirname();
-            if (! dir_ref.empty())
+            if (!dir_ref.empty())
             {
                 // FindProgramByName returns "." if it can't find the file.
                 if (strcmp (".", dir_ref.data()) == 0)
