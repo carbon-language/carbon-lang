@@ -90,7 +90,7 @@ Here's the short story for getting up and running quickly with LLVM:
    * It is also possible to use `CMake <CMake.html>`_ instead of the makefiles.
      With CMake it is possible to generate project files for several IDEs:
      Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks
-     generator),KDevelop3.
+     generator), KDevelop3.
 
    * If you get an "internal compiler error (ICE)" or test failures, see
      `below`.
@@ -681,7 +681,7 @@ The following options can be used to set or enable LLVM specific options:
 
   Enables optimized compilation (debugging symbols are removed and GCC
   optimization flags are enabled). Note that this is the default setting if you
-  are using the LLVM distribution. The default behavior of an Subversion
+  are using the LLVM distribution. The default behavior of a Subversion
   checkout is to use an unoptimized build (also known as a debug build).
 
 ``--enable-debug-runtime``
