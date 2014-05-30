@@ -10,32 +10,46 @@
 #include "ArrayOrderPass.h"
 
 #include <algorithm>
+#include <limits>
 
 namespace lld {
 namespace elf {
 void ArrayOrderPass::perform(std::unique_ptr<MutableFile> &f) {
   auto definedAtoms = f->definedAtoms();
-  std::stable_sort(definedAtoms.begin(), definedAtoms.end(),
-                   [](const DefinedAtom *left, const DefinedAtom *right) {
-    if (left->sectionChoice() != DefinedAtom::sectionCustomRequired ||
-        right->sectionChoice() != DefinedAtom::sectionCustomRequired)
+
+  // Move sections need to be sorted into the separate continious group.
+  // That reduces a number of sorting elements and simplifies conditions
+  // in the sorting predicate.
+  auto last = std::stable_partition(definedAtoms.begin(), definedAtoms.end(),
+                                    [](const DefinedAtom *atom) {
+    if (atom->sectionChoice() != DefinedAtom::sectionCustomRequired)
       return false;
 
+    StringRef name = atom->customSectionName();
+    return name.startswith(".init_array") || name.startswith(".fini_array");
+  });
+
+  std::stable_sort(definedAtoms.begin(), last,
+                   [](const DefinedAtom *left, const DefinedAtom *right) {
     StringRef leftSec = left->customSectionName();
     StringRef rightSec = right->customSectionName();
 
-    // Both sections start with the same array type.
-    if (!(leftSec.startswith(".init_array") &&
-          rightSec.startswith(".init_array")) &&
-        !(leftSec.startswith(".fini_array") &&
-          rightSec.startswith(".fini_array")))
-      return false;
+    // Drop the front dot from the section name and get
+    // an optional section's number starting after the second dot.
+    StringRef leftNum = leftSec.drop_front().rsplit('.').second;
+    StringRef rightNum = rightSec.drop_front().rsplit('.').second;
 
-    // Get priortiy
-    uint16_t leftPriority = 0;
-    leftSec.rsplit('.').second.getAsInteger(10, leftPriority);
-    uint16_t rightPriority = 0;
-    rightSec.rsplit('.').second.getAsInteger(10, rightPriority);
+    // Sort {.init_array, .fini_array}[.<num>] sections
+    // according to their number. Sections without optional
+    // numer suffix should go last.
+
+    uint32_t leftPriority = std::numeric_limits<uint32_t>::max();
+    if (!leftNum.empty())
+      leftNum.getAsInteger(10, leftPriority);
+
+    uint32_t rightPriority = std::numeric_limits<uint32_t>::max();
+    if (!rightNum.empty())
+      rightNum.getAsInteger(10, rightPriority);
 
     return leftPriority < rightPriority;
   });

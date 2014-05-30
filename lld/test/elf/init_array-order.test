@@ -10,11 +10,31 @@ FileHeader:
   Machine: EM_X86_64
 
 Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+  Content: "1100000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC, SHF_EXECINSTR]
 - Name: .init_array.2
   Type: SHT_INIT_ARRAY
   Content: "0200000000000000"
   AddressAlign: 8
   Flags: [SHF_ALLOC]
+- Name: .init_array.3
+  Type: SHT_INIT_ARRAY
+  Content: "0300000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC]
+- Name: .init_array
+  Type: SHT_INIT_ARRAY
+  Content: "9900000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC]
+- Name: .data
+  Type: SHT_PROGBITS
+  Content: "2200000000000000"
+  AddressAlign: 8
+  Flags: [SHF_ALLOC, SHF_WRITE]
 - Name: .init_array.1
   Type: SHT_INIT_ARRAY
   Content: "0100000000000000"
@@ -23,15 +43,31 @@ Sections:
 
 Symbols:
   Local:
+  - Name: .text
+    Type: STT_SECTION
+    Section: .text
+  - Name: .data
+    Type: STT_SECTION
+    Section: .data
+  - Name: .init_array.3
+    Type: STT_SECTION
+    Section: .init_array.3
   - Name: .init_array.2
     Type: STT_SECTION
     Section: .init_array.2
   - Name: .init_array.1
     Type: STT_SECTION
     Section: .init_array.1
+  - Name: .init_array
+    Type: STT_SECTION
+    Section: .init_array
 
 #CHECK: defined-atoms:
 #CHECK:   content: [ 01,
 #CHECK:   section-name: .init_array.1
 #CHECK:   content: [ 02,
 #CHECK:   section-name: .init_array.2
+#CHECK:   content: [ 03,
+#CHECK:   section-name: .init_array.3
+#CHECK:   content: [ 99,
+#CHECK:   section-name: .init_array
