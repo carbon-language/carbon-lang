@@ -4466,7 +4466,7 @@ def warn_addition_in_bitshift : Warning<
   "'%1' will be evaluated first">, InGroup<ShiftOpParentheses>;
 
 def warn_self_assignment : Warning<
-  "explicitly assigning a variable of type %0 to itself">,
+  "explicitly assigning value of variable of type %0 to itself">,
   InGroup<SelfAssignment>, DefaultIgnore;
 
 def warn_string_plus_int : Warning<

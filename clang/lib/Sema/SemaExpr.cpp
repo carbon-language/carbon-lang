@@ -9297,8 +9297,9 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
       ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_AndAssign:
+  case BO_OrAssign: // fallthrough
+	  DiagnoseSelfAssignment(*this, LHS.get(), RHS.get(), OpLoc);
   case BO_XorAssign:
-  case BO_OrAssign:
     CompResultTy = CheckBitwiseOperands(LHS, RHS, OpLoc, true);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
