@@ -14,6 +14,7 @@
 // RUN: %clangxx_asan -O0 %s -DTHREAD -pthread -o %t && env ASAN_OPTIONS=use_sigaltstack=1 not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -DTHREAD -pthread -o %t && env ASAN_OPTIONS=use_sigaltstack=1 not %run %t 2>&1 | FileCheck %s
 // RUN: not %run %t 2>&1 | FileCheck %s
+// REQUIRES: stable-runtime
 
 #include <assert.h>
 #include <stdlib.h>
