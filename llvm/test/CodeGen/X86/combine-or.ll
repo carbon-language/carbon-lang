@@ -25,7 +25,7 @@ define <4 x i32> @test2(<4 x i32> %a, <4 x i32> %b) {
 }
 ; CHECK-LABEL: test2
 ; CHECK-NOT: xorps
-; CHECK: shufps
+; CHECK: movsd
 ; CHECK: ret
 
 
@@ -111,7 +111,7 @@ define <4 x i32> @test9(<4 x i32> %a, <4 x i32> %b) {
 }
 ; CHECK-LABEL: test9
 ; CHECK-NOT: xorps
-; CHECK: shufps
+; CHECK: movsd
 ; CHECK: ret
 
 

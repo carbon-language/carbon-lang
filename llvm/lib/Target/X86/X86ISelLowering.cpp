@@ -6429,38 +6429,30 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
 
-// Try to lower a shuffle node into a simple blend instruction.
-static SDValue
-LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
-                           const X86Subtarget *Subtarget, SelectionDAG &DAG) {
-  SDValue V1 = SVOp->getOperand(0);
-  SDValue V2 = SVOp->getOperand(1);
-  SDLoc dl(SVOp);
-  MVT VT = SVOp->getSimpleValueType(0);
+static bool isBlendMask(ArrayRef<int> MaskVals, MVT VT, bool hasSSE41,
+                        bool hasInt256, unsigned *MaskOut = nullptr) {
   MVT EltVT = VT.getVectorElementType();
-  unsigned NumElems = VT.getVectorNumElements();
 
   // There is no blend with immediate in AVX-512.
   if (VT.is512BitVector())
-    return SDValue();
+    return false;
 
-  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
-    return SDValue();
-  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
-    return SDValue();
+  if (!hasSSE41 || EltVT == MVT::i8)
+    return false;
+  if (!hasInt256 && VT == MVT::v16i16)
+    return false;
 
-  // Check the mask for BLEND and build the value.
   unsigned MaskValue = 0;
+  unsigned NumElems = VT.getVectorNumElements();
   // There are 2 lanes if (NumElems > 8), and 1 lane otherwise.
-  unsigned NumLanes = (NumElems-1)/8 + 1;
+  unsigned NumLanes = (NumElems - 1) / 8 + 1;
   unsigned NumElemsInLane = NumElems / NumLanes;
 
   // Blend for v16i16 should be symetric for the both lanes.
   for (unsigned i = 0; i < NumElemsInLane; ++i) {
 
-    int SndLaneEltIdx = (NumLanes == 2) ?
-      SVOp->getMaskElt(i + NumElemsInLane) : -1;
-    int EltIdx = SVOp->getMaskElt(i);
+    int SndLaneEltIdx = (NumLanes == 2) ? MaskVals[i + NumElemsInLane] : -1;
+    int EltIdx = MaskVals[i];
 
     if ((EltIdx < 0 || EltIdx == (int)i) &&
         (SndLaneEltIdx < 0 || SndLaneEltIdx == (int)(i + NumElemsInLane)))
@@ -6469,10 +6461,33 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
     if (((unsigned)EltIdx == (i + NumElems)) &&
         (SndLaneEltIdx < 0 ||
          (unsigned)SndLaneEltIdx == i + NumElems + NumElemsInLane))
-      MaskValue |= (1<<i);
+      MaskValue |= (1 << i);
     else
-      return SDValue();
+      return false;
   }
+
+  if (MaskOut)
+    *MaskOut = MaskValue;
+  return true;
+}
+
+// Try to lower a shuffle node into a simple blend instruction.
+// This function assumes isBlendMask returns true for this
+// SuffleVectorSDNode
+static SDValue LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
+                                          unsigned MaskValue,
+                                          const X86Subtarget *Subtarget,
+                                          SelectionDAG &DAG) {
+  MVT VT = SVOp->getSimpleValueType(0);
+  MVT EltVT = VT.getVectorElementType();
+  assert(isBlendMask(SVOp->getMask(), VT, Subtarget->hasSSE41(),
+                     Subtarget->hasInt256() && "Trying to lower a "
+                                               "VECTOR_SHUFFLE to a Blend but "
+                                               "with the wrong mask"));
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  SDLoc dl(SVOp);
+  unsigned NumElems = VT.getVectorNumElements();
 
   // Convert i32 vectors to floating point if it is not AVX2.
   // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
@@ -7910,9 +7925,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
 
-  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(SVOp, Subtarget, DAG);
-  if (BlendOp.getNode())
-    return BlendOp;
+  unsigned MaskValue;
+  if (isBlendMask(M, VT, Subtarget->hasSSE41(), Subtarget->hasInt256(),
+                  &MaskValue))
+    return LowerVECTOR_SHUFFLEtoBlend(SVOp, MaskValue, Subtarget, DAG);
 
   if (Subtarget->hasSSE41() && isINSERTPSMask(M, VT))
     return getINSERTPS(SVOp, dl, DAG);
@@ -15173,7 +15189,8 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isUNPCKLMask(M, SVT, Subtarget->hasInt256()) ||
           isUNPCKHMask(M, SVT, Subtarget->hasInt256()) ||
           isUNPCKL_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
-          isUNPCKH_v_undef_Mask(M, SVT, Subtarget->hasInt256()));
+          isUNPCKH_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
+          isBlendMask(M, SVT, Subtarget->hasSSE41(), Subtarget->hasInt256()));
 }
 
 bool
