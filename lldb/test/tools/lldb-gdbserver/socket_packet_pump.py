@@ -2,6 +2,7 @@ import Queue
 import re
 import select
 import threading
+import traceback
 
 def _handle_output_packet_string(packet_contents):
     if (not packet_contents) or (len(packet_contents) < 1):
@@ -12,6 +13,11 @@ def _handle_output_packet_string(packet_contents):
         return None
     else:
         return packet_contents[1:].decode("hex")
+
+def _dump_queue(the_queue):
+    while not the_queue.empty():
+        print the_queue.get(True)
+        print "\n"
 
 class SocketPacketPump(object):
     """A threaded packet reader that partitions packets into two streams.
@@ -47,11 +53,25 @@ class SocketPacketPump(object):
         self.start_pump_thread()
         return self
 
-    def __exit__(self, exit_type, value, traceback):
+    def __exit__(self, exit_type, value, the_traceback):
         """Support the python 'with' statement.
 
         Shut down the pump thread."""
         self.stop_pump_thread()
+
+        # Warn if there is any content left in any of the queues.
+        # That would represent unmatched packets.
+        if not self.output_queue().empty():
+            print "warning: output queue entries still exist:"
+            _dump_queue(self.output_queue())
+            print "from here:"
+            traceback.print_stack()
+
+        if not self.packet_queue().empty():
+            print "warning: packet queue entries still exist:"
+            _dump_queue(self.packet_queue())
+            print "from here:"
+            traceback.print_stack()
 
     def start_pump_thread(self):
         if self._thread:
@@ -115,9 +135,11 @@ class SocketPacketPump(object):
                     self._receive_buffer = self._receive_buffer[
                         len(packet_match.group(0)):]
                     if self._logger:
-                        self._logger.debug("parsed packet from stub: " +
+                        self._logger.debug(
+                            "parsed packet from stub: " +
                             packet_match.group(0))
-                        self._logger.debug("new receive_buffer: " +
+                        self._logger.debug(
+                            "new receive_buffer: " +
                             self._receive_buffer)
                 else:
                     # We don't have enough in the receive bufferto make a full
@@ -138,11 +160,13 @@ class SocketPacketPump(object):
                 try:
                     new_bytes = self._socket.recv(4096)
                     if self._logger and new_bytes and len(new_bytes) > 0:
-                        self._logger.debug("pump received bytes: {}".format(new_bytes))
+                        self._logger.debug(
+                            "pump received bytes: {}".format(new_bytes))
                 except:
                     # Likely a closed socket.  Done with the pump thread.
                     if self._logger:
-                        self._logger.debug("socket read failed, stopping pump read thread")
+                        self._logger.debug(
+                            "socket read failed, stopping pump read thread")
                     break
                 self._process_new_bytes(new_bytes)
 
@@ -151,6 +175,6 @@ class SocketPacketPump(object):
 
     def get_accumulated_output(self):
         return self._accumulated_output
-        
+
     def get_receive_buffer(self):
         return self._receive_buffer

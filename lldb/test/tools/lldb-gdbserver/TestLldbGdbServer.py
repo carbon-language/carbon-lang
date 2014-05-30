@@ -31,6 +31,14 @@ class LldbGdbServerTestCase(TestBase):
     _STARTUP_ATTACH = "attach"
     _STARTUP_LAUNCH = "launch"
 
+    # GDB Signal numbers that are not target-specific used for common exceptions
+    TARGET_EXC_BAD_ACCESS      = 0x91
+    TARGET_EXC_BAD_INSTRUCTION = 0x92
+    TARGET_EXC_ARITHMETIC      = 0x93
+    TARGET_EXC_EMULATION       = 0x94
+    TARGET_EXC_SOFTWARE        = 0x95
+    TARGET_EXC_BREAKPOINT      = 0x96
+
     def setUp(self):
         TestBase.setUp(self)
         FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -42,8 +50,8 @@ class LldbGdbServerTestCase(TestBase):
 
         # Uncomment this code to force only a single test to run (by name).
         # if self._testMethodName != "test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym":
-        #     # print "skipping test {}".format(self._testMethodName)
-        #     self.skipTest("focusing on one test")
+        #   # print "skipping test {}".format(self._testMethodName)
+        #   self.skipTest("focusing on one test")
 
     def reset_test_sequence(self):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
@@ -487,15 +495,16 @@ class LldbGdbServerTestCase(TestBase):
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
             ["read packet: $vCont;c#00",
+             {"type":"output_match", "regex":r"^hello, world\r\n$" },
              "send packet: $W00#00"],
             True)
             
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
         
-        O_content = context.get("O_content")
-        self.assertIsNotNone(O_content)
-        self.assertEquals(O_content, "hello, world\r\n")
+        # O_content = context.get("O_content")
+        # self.assertIsNotNone(O_content)
+        # self.assertEquals(O_content, "hello, world\r\n")
 
     @debugserver_test
     @dsym_test
@@ -1116,37 +1125,61 @@ class LldbGdbServerTestCase(TestBase):
         NUM_THREADS = 3
         
         # Startup the inferior with three threads (main + NUM_THREADS-1 worker threads).
-        inferior_args=["thread:print-ids"]
+        # inferior_args=["thread:print-ids"]
+        inferior_args=["thread:segfault"]
         for i in range(NUM_THREADS - 1):
+            # if i > 0:
+                # Give time between thread creation/segfaulting for the handler to work.
+                # inferior_args.append("sleep:1")
             inferior_args.append("thread:new")
-        inferior_args.append("sleep:20")
-        
+        inferior_args.append("sleep:10")
+
+        # Launch/attach.  (In our case, this should only ever be launched since we need inferior stdout/stderr).
         procs = self.prep_debug_monitor_and_inferior(inferior_args=inferior_args)
+        self.test_sequence.add_log_lines(["read packet: $c#00"], True)
+        context = self.expect_gdbremote_sequence()
 
         # Let the inferior process have a few moments to start up the thread when launched.
-        context = self.run_process_then_stop(run_seconds=1)
+        # context = self.run_process_then_stop(run_seconds=1)
 
         # Wait at most x seconds for all threads to be present.
-        threads = self.wait_for_thread_count(NUM_THREADS, timeout_seconds=5)
-        self.assertEquals(len(threads), NUM_THREADS)
+        # threads = self.wait_for_thread_count(NUM_THREADS, timeout_seconds=5)
+        # self.assertEquals(len(threads), NUM_THREADS)
 
-        # print_thread_ids = {}
+        signaled_tids = {}
 
         # Switch to each thread, deliver a signal, and verify signal delivery
-        for thread_id in threads:
-            # Change to each thread, verify current thread id.
+        for i in range(NUM_THREADS - 1):
+            # Run until SIGSEGV comes in.
             self.reset_test_sequence()
             self.test_sequence.add_log_lines(
-                ["read packet: $Hc{0:x}#00".format(thread_id),  # Set current thread.
+                [ # "read packet: $c#00",
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"signo", 2:"thread_id"} }
+                 ], True)
+            context = self.expect_gdbremote_sequence()
+            
+            self.assertIsNotNone(context)
+            signo = context.get("signo")
+            self.assertEqual(int(signo, 16), self.TARGET_EXC_BAD_ACCESS)
+            
+            # Ensure we haven't seen this tid yet.
+            thread_id = int(context.get("thread_id"), 16)
+            self.assertFalse(thread_id in signaled_tids)
+            signaled_tids[thread_id] = 1
+            
+            # Send SIGUSR1 to the thread that signaled the SIGSEGV.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                [
+                 "read packet: $Hc{0:x}#00".format(thread_id),  # Set current thread.
                  "send packet: $OK#00",
                  "read packet: $C{0:x}#00".format(signal.SIGUSR1),
-                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
                  # "read packet: $vCont;C{0:x}:{1:x};c#00".format(signal.SIGUSR1, thread_id),
-                 # "read packet: $vCont;C{0:x};c#00".format(signal.SIGUSR1, thread_id),
+                 # "read packet: $c#00",
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                  "read packet: $c#00",
                  # { "type":"output_match", "regex":r"^received SIGUSR1 on thread id: ([0-9a-fA-F]+)\r\n$", "capture":{ 1:"print_thread_id"} },
-                 "read packet: $c#00",
-                 "read packet: {}".format(chr(03)),
-                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"intr_signo", 2:"intr_thread_id"} }
+                 # "read packet: {}".format(chr(03)),
                 ],
                 True)
 
@@ -1174,7 +1207,7 @@ class LldbGdbServerTestCase(TestBase):
 
     @debugserver_test
     @dsym_test
-    @unittest2.expectedFailure() # this test is failing on MacOSX 10.9
+    @unittest2.expectedFailure()
     def test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
