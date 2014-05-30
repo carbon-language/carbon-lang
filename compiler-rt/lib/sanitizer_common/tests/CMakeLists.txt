@@ -34,6 +34,7 @@ foreach(header ${SANITIZER_HEADERS})
 endforeach()
 
 set(SANITIZER_TEST_CFLAGS_COMMON
+  ${COMPILER_RT_TEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
@@ -48,21 +49,6 @@ if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gline-tables-only)
 else()
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
-endif()
-
-if(MSVC)
-  # MSVC system headers and gtest use a lot of deprecated stuff.
-  list(APPEND SANITIZER_TEST_CFLAGS_COMMON
-       -Wno-deprecated-declarations)
-
-  # clang doesn't support exceptions on Windows yet.
-  list(APPEND SANITIZER_TEST_CFLAGS_COMMON
-       -D_HAS_EXCEPTIONS=0)
-
-  # We should teach clang to understand more pragmas.
-  list(APPEND SANITIZER_TEST_CFLAGS_COMMON
-       -Wno-unknown-pragmas
-       -Wno-undefined-inline)
 endif()
 
 if(NOT MSVC)

@@ -21,6 +21,7 @@ set(ASAN_UNITTEST_HEADERS
   asan_test_utils.h)
 
 set(ASAN_UNITTEST_COMMON_CFLAGS
+  ${COMPILER_RT_TEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
@@ -37,21 +38,6 @@ if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gline-tables-only)
 else()
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
-endif()
-
-if(MSVC)
-  # MSVC system headers and gtest use a lot of deprecated stuff.
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-       -Wno-deprecated-declarations)
-
-  # clang doesn't support exceptions on Windows yet.
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-       -D_HAS_EXCEPTIONS=0)
-
-  # We should teach clang to understand more pragmas.
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-       -Wno-unknown-pragmas
-       -Wno-undefined-inline)
 endif()
 
 # Use -D instead of definitions to please custom compile command.
