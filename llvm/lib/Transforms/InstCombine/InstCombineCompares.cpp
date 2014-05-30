@@ -2439,6 +2439,23 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), A, B);
     }
 
+    // PR19753:
+    // (icmp (ashr exact const2, A), const1) -> icmp A, Log2(const2/const1)
+    // Cases where const1 doesn't divide const2 exactly or Quotient is not
+    // exact of log2 are handled by SimplifyICmpInst call above where we
+    // return false.
+    // TODO: Handle this for lshr exact with udiv.
+    {
+      ConstantInt *CI2;
+      if (match(Op0, m_AShr(m_ConstantInt(CI2), m_Value(A))) &&
+          (cast<BinaryOperator>(Op0)->isExact())) {
+        APInt Quotient = CI2->getValue().sdiv(CI->getValue());
+        unsigned shift = Quotient.logBase2();
+        return new ICmpInst(I.getPredicate(), A,
+                            ConstantInt::get(A->getType(), shift));
+      }
+    }
+
     // If we have an icmp le or icmp ge instruction, turn it into the
     // appropriate icmp lt or icmp gt instruction.  This allows us to rely on
     // them being folded in the code below.  The SimplifyICmpInst code has
