@@ -87,9 +87,10 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``make check-all`` --- This run the regression tests to ensure everything
      is in working order.
 
-   * It is also possible to use CMake instead of the makefiles. With CMake it is
-     possible to generate project files for several IDEs: Xcode, Eclipse CDT4,
-     CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.
+   * It is also possible to use `CMake <CMake.html>`_ instead of the makefiles.
+     With CMake it is possible to generate project files for several IDEs:
+     Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks
+     generator),KDevelop3.
 
    * If you get an "internal compiler error (ICE)" or test failures, see
      `below`.
