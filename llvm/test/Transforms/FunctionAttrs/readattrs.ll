@@ -51,3 +51,17 @@ define void @test6_2(i8** %p, i8* %q) {
 define void @test7_1(i32* inalloca %a) {
   ret void
 }
+
+; CHECK: define i32* @test8_1(i32* readnone %p)
+define i32* @test8_1(i32* %p) {
+entry:
+  ret i32* %p
+}
+
+; CHECK: define void @test8_2(i32* %p)
+define void @test8_2(i32* %p) {
+entry:
+  %call = call i32* @test8_1(i32* %p)
+  store i32 10, i32* %call, align 4
+  ret void
+}

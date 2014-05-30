@@ -68,7 +68,7 @@ define i1* @lookup_bit(i32* %q, i32 %bitno) readnone nounwind {
 	ret i1* %lookup
 }
 
-; CHECK: define i1 @c7(i32* readnone %q, i32 %bitno)
+; CHECK: define i1 @c7(i32* readonly %q, i32 %bitno)
 define i1 @c7(i32* %q, i32 %bitno) {
 	%ptr = call i1* @lookup_bit(i32* %q, i32 %bitno)
 	%val = load i1* %ptr
