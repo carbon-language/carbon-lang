@@ -1303,6 +1303,9 @@ void NamedDecl::printQualifiedName(raw_ostream &OS,
                                                             TemplateArgs.size(),
                                                             P);
     } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(*I)) {
+      if (P.SuppressUnwrittenScope &&
+          (ND->isAnonymousNamespace() || ND->isInline()))
+        continue;
       if (ND->isAnonymousNamespace())
         OS << "(anonymous namespace)";
       else
