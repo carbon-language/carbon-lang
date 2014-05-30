@@ -1078,8 +1078,11 @@ void ExtAddrMode::print(raw_ostream &OS) const {
     NeedPlus = true;
   }
 
-  if (BaseOffs)
-    OS << (NeedPlus ? " + " : "") << BaseOffs, NeedPlus = true;
+  if (BaseOffs) {
+    OS << (NeedPlus ? " + " : "")
+       << BaseOffs;
+    NeedPlus = true;
+  }
 
   if (BaseReg) {
     OS << (NeedPlus ? " + " : "")
