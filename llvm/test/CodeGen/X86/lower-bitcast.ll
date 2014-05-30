@@ -14,7 +14,7 @@ define double @test1(double %A) {
 ; CHECK-LABEL: test1
 ; CHECK-NOT: movsd
 ; CHECK: pshufd
-; CHECK-NEXT: paddq
+; CHECK-NEXT: paddd
 ; CHECK-NEXT: pshufd
 ; CHECK-NEXT: ret
 
@@ -26,16 +26,9 @@ define double @test2(double %A, double %B) {
   %3 = bitcast <2 x i32> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test2 into a
-; single 'paddd %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddq+pshufd.
-
 ; CHECK-LABEL: test2
 ; CHECK-NOT: movsd
-; CHECK: pshufd
-; CHECK-NEXT: pshufd
-; CHECK-NEXT: paddq
-; CHECK-NEXT: pshufd
+; CHECK: paddd
 ; CHECK-NEXT: ret
 
 
@@ -91,7 +84,7 @@ define double @test6(double %A) {
 ; CHECK-LABEL: test6
 ; CHECK-NOT: movsd
 ; CHECK: punpcklwd
-; CHECK-NEXT: paddd
+; CHECK-NEXT: paddw
 ; CHECK-NEXT: pshufb
 ; CHECK-NEXT: ret
 
@@ -103,16 +96,10 @@ define double @test7(double %A, double %B) {
   %3 = bitcast <4 x i16> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test7 into a
-; single 'paddw %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddd+pshufd.
-
 ; CHECK-LABEL: test7
 ; CHECK-NOT: movsd
-; CHECK: punpcklwd
-; CHECK-NEXT: punpcklwd
-; CHECK-NEXT: paddd
-; CHECK-NEXT: pshufb
+; CHECK-NOT: punpcklwd
+; CHECK: paddw
 ; CHECK-NEXT: ret
 
 
@@ -129,7 +116,7 @@ define double @test8(double %A) {
 ; CHECK-LABEL: test8
 ; CHECK-NOT: movsd
 ; CHECK: punpcklbw
-; CHECK-NEXT: paddw
+; CHECK-NEXT: paddb
 ; CHECK-NEXT: pshufb
 ; CHECK-NEXT: ret
 
@@ -141,15 +128,9 @@ define double @test9(double %A, double %B) {
   %3 = bitcast <8 x i8> %add to double
   ret double %3
 }
-; FIXME: Ideally we should be able to fold the entire body of @test9 into a
-; single 'paddb %xmm1, %xmm0' instruction. At the moment we produce the
-; sequence pshufd+pshufd+paddw+pshufd.
-
 ; CHECK-LABEL: test9
 ; CHECK-NOT: movsd
-; CHECK: punpcklbw
-; CHECK-NEXT: punpcklbw
-; CHECK-NEXT: paddw
-; CHECK-NEXT: pshufb
+; CHECK-NOT: punpcklbw
+; CHECK: paddb
 ; CHECK-NEXT: ret
 

@@ -10801,6 +10801,27 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
       return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), LHS.getValueType(), Ops);
   }
 
+  // Type legalization might introduce new shuffles in the DAG.
+  // Fold (VBinOp (shuffle (A, Undef, Mask)), (shuffle (B, Undef, Mask)))
+  //   -> (shuffle (VBinOp (A, B)), Undef, Mask).
+  if (LegalTypes && isa<ShuffleVectorSDNode>(LHS) &&
+      isa<ShuffleVectorSDNode>(RHS) && LHS.hasOneUse() && RHS.hasOneUse() &&
+      LHS.getOperand(1).getOpcode() == ISD::UNDEF &&
+      RHS.getOperand(1).getOpcode() == ISD::UNDEF) {
+    ShuffleVectorSDNode *SVN0 = cast<ShuffleVectorSDNode>(LHS);
+    ShuffleVectorSDNode *SVN1 = cast<ShuffleVectorSDNode>(RHS);
+
+    if (SVN0->getMask().equals(SVN1->getMask())) {
+      EVT VT = N->getValueType(0);
+      SDValue UndefVector = LHS.getOperand(1);
+      SDValue NewBinOp = DAG.getNode(N->getOpcode(), SDLoc(N), VT,
+                                     LHS.getOperand(0), RHS.getOperand(0));
+      AddUsersToWorkList(N);
+      return DAG.getVectorShuffle(VT, SDLoc(N), NewBinOp, UndefVector,
+                                  &SVN0->getMask()[0]);
+    }
+  }
+
   return SDValue();
 }
 
