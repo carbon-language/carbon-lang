@@ -6435,8 +6435,8 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
       return IncompatiblePointer;
     }
 
-    // T^ -> A*
-    if (RHSType->isBlockPointerType()) {
+    // T^ -> id; not T^ ->A* and not T^ -> id<P>
+    if (RHSType->isBlockPointerType() && LHSType->isObjCIdType()) {
       maybeExtendBlockObject(*this, RHS);
       Kind = CK_BlockPointerToObjCPointerCast;
       return Compatible;

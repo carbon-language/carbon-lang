@@ -155,3 +155,25 @@ void f() {
         return NSOrderedSame;
    }];
 }
+
+// rdar://16739120
+@protocol P1 @end
+@protocol P2 @end
+
+void Test() {
+void (^aBlock)();
+id anId = aBlock;  // OK
+
+id<P1,P2> anQualId = aBlock;  // expected-error {{initializing 'id<P1,P2>' with an expression of incompatible type 'void (^)()'}}
+
+NSArray* anArray = aBlock; // expected-error {{initializing 'NSArray *' with an expression of incompatible type 'void (^)()'}}
+
+aBlock = anId; // OK
+
+id<P1,P2> anQualId1;
+aBlock = anQualId1; // expected-error {{assigning to 'void (^)()' from incompatible type 'id<P1,P2>'}}
+
+NSArray* anArray1;
+aBlock = anArray1; // expected-error {{assigning to 'void (^)()' from incompatible type 'NSArray *'}}
+}
+
