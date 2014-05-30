@@ -18,11 +18,13 @@
 namespace __sanitizer {
 
 uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
-#ifdef __arm__
+#if defined(__arm__)
   // Cancel Thumb bit.
   pc = pc & (~1);
-#endif
-#if defined(__sparc__)
+#elif defined(__powerpc__) || defined(__powerpc64__)
+  // PCs are always 4 byte aligned.
+  return pc - 4;
+#elif defined(__sparc__)
   return pc - 8;
 #else
   return pc - 1;

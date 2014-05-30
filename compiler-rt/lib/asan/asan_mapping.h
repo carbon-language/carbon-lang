@@ -87,6 +87,7 @@ static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
+static const u64 kPPC64_ShadowOffset64 = 1ULL << 41;
 static const u64 kFreeBSD_ShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 
@@ -109,6 +110,8 @@ static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 # else
 #  if defined(__aarch64__)
 #    define SHADOW_OFFSET kAArch64_ShadowOffset64
+#  elif defined(__powerpc64__)
+#    define SHADOW_OFFSET kPPC64_ShadowOffset64
 #  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset64
 #  elif SANITIZER_MAC
