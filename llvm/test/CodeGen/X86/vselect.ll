@@ -262,3 +262,17 @@ define <2 x i64> @test25(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK: movsd
 ; CHECK: ret
 
+define <4 x float> @select_of_shuffles_0(<2 x float> %a0, <2 x float> %b0, <2 x float> %a1, <2 x float> %b1) {
+; CHECK-LABEL: select_of_shuffles_0
+; CHECK-DAG: movlhps %xmm2, [[REGA:%xmm[0-9]+]]
+; CHECK-DAG: movlhps %xmm3, [[REGB:%xmm[0-9]+]]
+; CHECK: subps [[REGB]], [[REGA]]
+  %1 = shufflevector <2 x float> %a0, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %2 = shufflevector <2 x float> %a1, <2 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %3 = select <4 x i1> <i1 false, i1 false, i1 true, i1 true>, <4 x float> %2, <4 x float> %1
+  %4 = shufflevector <2 x float> %b0, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %5 = shufflevector <2 x float> %b1, <2 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %6 = select <4 x i1> <i1 false, i1 false, i1 true, i1 true>, <4 x float> %5, <4 x float> %4
+  %7 = fsub <4 x float> %3, %6
+  ret <4 x float> %7
+}

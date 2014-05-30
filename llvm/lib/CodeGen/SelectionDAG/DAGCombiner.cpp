@@ -4592,6 +4592,56 @@ std::pair<SDValue, SDValue> SplitVSETCC(const SDNode *N, SelectionDAG &DAG) {
   return std::make_pair(Lo, Hi);
 }
 
+// This function assumes all the vselect's arguments are CONCAT_VECTOR
+// nodes and that the condition is a BV of ConstantSDNodes (or undefs).
+static SDValue ConvertSelectToConcatVector(SDNode *N, SelectionDAG &DAG) {
+  SDLoc dl(N);
+  SDValue Cond = N->getOperand(0);
+  SDValue LHS = N->getOperand(1);
+  SDValue RHS = N->getOperand(2);
+  MVT VT = N->getSimpleValueType(0);
+  int NumElems = VT.getVectorNumElements();
+  assert(LHS.getOpcode() == ISD::CONCAT_VECTORS &&
+         RHS.getOpcode() == ISD::CONCAT_VECTORS &&
+         Cond.getOpcode() == ISD::BUILD_VECTOR);
+
+  // We're sure we have an even number of elements due to the
+  // concat_vectors we have as arguments to vselect.
+  // Skip BV elements until we find one that's not an UNDEF
+  // After we find an UNDEF element, keep looping until we get to half the
+  // length of the BV and see if all the non-undef nodes are the same.
+  ConstantSDNode *BottomHalf = nullptr;
+  for (int i = 0; i < NumElems / 2; ++i) {
+    if (Cond->getOperand(i)->getOpcode() == ISD::UNDEF)
+      continue;
+
+    if (BottomHalf == nullptr)
+      BottomHalf = cast<ConstantSDNode>(Cond.getOperand(i));
+    else if (Cond->getOperand(i).getNode() != BottomHalf)
+      return SDValue();
+  }
+
+  // Do the same for the second half of the BuildVector
+  ConstantSDNode *TopHalf = nullptr;
+  for (int i = NumElems / 2; i < NumElems; ++i) {
+    if (Cond->getOperand(i)->getOpcode() == ISD::UNDEF)
+      continue;
+
+    if (TopHalf == nullptr)
+      TopHalf = cast<ConstantSDNode>(Cond.getOperand(i));
+    else if (Cond->getOperand(i).getNode() != TopHalf)
+      return SDValue();
+  }
+
+  assert(TopHalf && BottomHalf &&
+         "One half of the selector was all UNDEFs and the other was all the "
+         "same value. This should have been addressed before this function.");
+  return DAG.getNode(
+      ISD::CONCAT_VECTORS, dl, VT,
+      BottomHalf->isNullValue() ? RHS->getOperand(0) : LHS->getOperand(0),
+      TopHalf->isNullValue() ? RHS->getOperand(1) : LHS->getOperand(1));
+}
+
 SDValue DAGCombiner::visitVSELECT(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -4663,6 +4713,17 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
   // Fold (vselect (build_vector all_zeros), N1, N2) -> N2
   if (ISD::isBuildVectorAllZeros(N0.getNode()))
     return N2;
+
+  // The ConvertSelectToConcatVector function is assuming both the above
+  // checks for (vselect (build_vector all{ones,zeros) ...) have been made
+  // and addressed.
+  if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
+      N2.getOpcode() == ISD::CONCAT_VECTORS &&
+      ISD::isBuildVectorOfConstantSDNodes(N0.getNode())) {
+    SDValue CV = ConvertSelectToConcatVector(N, DAG);
+    if (CV.getNode())
+      return CV;
+  }
 
   return SDValue();
 }

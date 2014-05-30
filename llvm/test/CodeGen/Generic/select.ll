@@ -192,4 +192,3 @@ define <1 x i32> @checkScalariseVSELECT(<1 x i32> %a, <1 x i32> %b) {
         %s = select <1 x i1> %cond, <1 x i32> %a, <1 x i32> %b
         ret <1 x i32> %s
 }
-
