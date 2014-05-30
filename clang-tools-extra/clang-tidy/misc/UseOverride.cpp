@@ -96,8 +96,10 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
       }
     }
 
-    if (InsertLoc.isInvalid() && Method->doesThisDeclarationHaveABody())
+    if (InsertLoc.isInvalid() && Method->doesThisDeclarationHaveABody() &&
+        Method->getBody()) {
       InsertLoc = Method->getBody()->getLocStart();
+    }
 
     if (!InsertLoc.isValid()) {
       if (Tokens.size() > 2 && GetText(Tokens.back(), Sources) == "0" &&
