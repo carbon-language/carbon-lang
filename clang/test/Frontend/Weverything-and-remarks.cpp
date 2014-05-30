@@ -4,7 +4,7 @@
 // flags to filter them. The handler in BackendConsumer::DiagnosticHandlerImpl
 // should not emitting diagnostics for unhandled kinds.
 
-// RUN: %clang -c -S -Weverything -O0 -o /dev/null %s 2> %t.err
+// RUN: %clang -target x86_64-unknown-unknown -c -S -Weverything -O0 -o /dev/null %s 2> %t.err
 // RUN: FileCheck < %t.err %s
 
 typedef __char32_t char32_t;
