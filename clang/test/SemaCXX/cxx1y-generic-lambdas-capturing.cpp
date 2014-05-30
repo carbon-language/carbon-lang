@@ -1358,6 +1358,21 @@ template<class R> struct X {
 int run_char = X<int>{}.foo('a');
 int run_int = X<double>{}.foo(4);
 }
-
 #endif // MS_EXTENSIONS
 
+namespace nsdmi_capturing_this {
+struct X {
+  int m = 10;
+  int n = [this](auto) { return m; }(20);
+};
+
+template<class T>
+struct XT {
+  T m = 10;
+  T n = [this](auto) { return m; }(20);
+};
+
+XT<int> xt{};
+
+
+}

@@ -15,6 +15,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "TypeLocBuilder.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTLambda.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
@@ -732,7 +733,20 @@ QualType Sema::getCurrentThisType() {
     if (method && method->isInstance())
       ThisTy = method->getThisType(Context);
   }
-  
+  if (ThisTy.isNull()) {
+    if (isGenericLambdaCallOperatorSpecialization(CurContext) &&
+        CurContext->getParent()->getParent()->isRecord()) {
+      // This is a generic lambda call operator that is being instantiated
+      // within a default initializer - so use the enclosing class as 'this'.
+      // There is no enclosing member function to retrieve the 'this' pointer
+      // from.
+      QualType ClassTy = Context.getTypeDeclType(
+          cast<CXXRecordDecl>(CurContext->getParent()->getParent()));
+      // There are no cv-qualifiers for 'this' within default initializers, 
+      // per [expr.prim.general]p4.
+      return Context.getPointerType(ClassTy);
+    }
+  }
   return ThisTy;
 }
 
