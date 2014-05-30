@@ -48,16 +48,12 @@ MCSymbol *TargetLoweringObjectFileELF::getCFIPersonalitySymbol(
     const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
     MachineModuleInfo *MMI) const {
   unsigned Encoding = getPersonalityEncoding();
-  switch (Encoding & 0x70) {
-  default:
-    report_fatal_error("We do not support this DWARF encoding yet!");
-  case dwarf::DW_EH_PE_absptr:
-    return TM.getSymbol(GV, Mang);
-  case dwarf::DW_EH_PE_pcrel: {
+  if ((Encoding & 0x80) == dwarf::DW_EH_PE_indirect)
     return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
                                           TM.getSymbol(GV, Mang)->getName());
-  }
-  }
+  if ((Encoding & 0x70) == dwarf::DW_EH_PE_absptr)
+    return TM.getSymbol(GV, Mang);
+  report_fatal_error("We do not support this DWARF encoding yet!");
 }
 
 void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,

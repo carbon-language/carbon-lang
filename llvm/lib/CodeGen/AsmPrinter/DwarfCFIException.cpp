@@ -59,7 +59,7 @@ void DwarfCFIException::endModule() {
 
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
 
-  if ((PerEncoding & 0x70) != dwarf::DW_EH_PE_pcrel)
+  if ((PerEncoding & 0x80) != dwarf::DW_EH_PE_indirect)
     return;
 
   // Emit references to all used personality functions

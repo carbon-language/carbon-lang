@@ -321,6 +321,13 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
     break;
+  case Triple::mips:
+  case Triple::mipsel:
+    // MIPS uses indirect pointer to refer personality functions, so that the
+    // eh_frame section can be read-only.  DW.ref.personality will be generated
+    // for relocation.
+    PersonalityEncoding = dwarf::DW_EH_PE_indirect;
+    break;
   case Triple::ppc64:
   case Triple::ppc64le:
     PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
