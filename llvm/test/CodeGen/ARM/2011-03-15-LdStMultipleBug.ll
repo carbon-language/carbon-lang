@@ -8,7 +8,7 @@
 
 @oStruct = external global %struct.Outer, align 4
 
-define void @main() nounwind {
+define void @main(i8 %val8) nounwind {
 ; CHECK-LABEL: main:
 ; CHECK-NOT: ldrd
 ; CHECK: mul
@@ -28,7 +28,7 @@ for.body:                                         ; preds = %_Z14printIsNotZeroi
   br i1 %tobool.i14, label %_Z14printIsNotZeroi.exit17, label %if.then.i16
 
 if.then.i16:                                      ; preds = %_Z14printIsNotZeroi.exit
-  unreachable
+  ret void
 
 _Z14printIsNotZeroi.exit17:                       ; preds = %_Z14printIsNotZeroi.exit
   br label %_Z14printIsNotZeroi.exit17.for.body_crit_edge
@@ -36,7 +36,7 @@ _Z14printIsNotZeroi.exit17:                       ; preds = %_Z14printIsNotZeroi
 _Z14printIsNotZeroi.exit17.for.body_crit_edge:    ; preds = %_Z14printIsNotZeroi.exit17
   %b.phi.trans.insert = getelementptr %struct.Outer* @oStruct, i32 0, i32 1, i32 %inc, i32 3
   %tmp3.pre = load i8* %b.phi.trans.insert, align 1
-  %phitmp27 = icmp eq i8 undef, 0
+  %phitmp27 = icmp eq i8 %val8, 0
   br label %for.body
 
 for.end:                                          ; preds = %_Z14printIsNotZeroi.exit17

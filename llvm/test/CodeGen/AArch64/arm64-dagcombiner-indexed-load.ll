@@ -13,12 +13,12 @@ target triple = "arm64-apple-ios"
 
 ; CHECK-LABEL: XX:
 ; CHECK: ldr
-define void @XX(%class.A* %K) {
+define i32 @XX(%class.A* %K, i1 %tst, i32* %addr, %class.C** %ppC, %class.C* %pC) {
 entry:
-  br i1 undef, label %if.then, label %lor.rhs.i
+  br i1 %tst, label %if.then, label %lor.rhs.i
 
 lor.rhs.i:                                        ; preds = %entry
-  %tmp = load i32* undef, align 4
+  %tmp = load i32* %addr, align 4
   %y.i.i.i = getelementptr inbounds %class.A* %K, i64 0, i32 1
   %tmp1 = load i64* %y.i.i.i, align 8
   %U.sroa.3.8.extract.trunc.i = trunc i64 %tmp1 to i32
@@ -30,17 +30,17 @@ lor.rhs.i:                                        ; preds = %entry
   %add16.i = add nsw i32 %add12.i, %div15.i
   %rem.i.i = srem i32 %add16.i, %tmp
   %idxprom = sext i32 %rem.i.i to i64
-  %arrayidx = getelementptr inbounds %class.C** undef, i64 %idxprom
-  %tobool533 = icmp eq %class.C* undef, null
+  %arrayidx = getelementptr inbounds %class.C** %ppC, i64 %idxprom
+  %tobool533 = icmp eq %class.C* %pC, null
   br i1 %tobool533, label %while.end, label %while.body
 
 if.then:                                          ; preds = %entry
-  unreachable
+  ret i32 42
 
 while.body:                                       ; preds = %lor.rhs.i
-  unreachable
+  ret i32 5
 
 while.end:                                        ; preds = %lor.rhs.i
   %tmp3 = load %class.C** %arrayidx, align 8
-  unreachable
+  ret i32 50
 }

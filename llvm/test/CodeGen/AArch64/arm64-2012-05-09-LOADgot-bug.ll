@@ -2,14 +2,14 @@
 ; RUN: llc -mtriple=arm64-linux-gnu -relocation-model=pic < %s | FileCheck %s --check-prefix=CHECK-LINUX
 ; <rdar://problem/11392109>
 
-define hidden void @t() optsize ssp {
+define hidden void @t(i64* %addr) optsize ssp {
 entry:
-  store i64 zext (i32 ptrtoint (i64 (i32)* @x to i32) to i64), i64* undef, align 8
+  store i64 zext (i32 ptrtoint (i64 (i32)* @x to i32) to i64), i64* %addr, align 8
 ; CHECK:             adrp    x{{[0-9]+}}, _x@GOTPAGE
 ; CHECK:        ldr     x{{[0-9]+}}, [x{{[0-9]+}}, _x@GOTPAGEOFF]
 ; CHECK-NEXT:        and     x{{[0-9]+}}, x{{[0-9]+}}, #0xffffffff
 ; CHECK-NEXT:        str     x{{[0-9]+}}, [x{{[0-9]+}}]
-  unreachable
+  ret void
 }
 
 declare i64 @x(i32) optsize

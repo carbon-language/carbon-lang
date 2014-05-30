@@ -24,13 +24,13 @@ entry:
 ; CHECK-NOT:	bfc
 ; CHECK: bx	lr
 
-define double @test2(i32 %a, i32 %b, ...) nounwind optsize {
+define double @test2(i32 %a, i32* %b, ...) nounwind optsize {
 entry:
   %ap = alloca i8*, align 4                       ; <i8**> [#uses=3]
   %ap1 = bitcast i8** %ap to i8*                  ; <i8*> [#uses=2]
   call void @llvm.va_start(i8* %ap1)
   %0 = va_arg i8** %ap, i32                       ; <i32> [#uses=0]
-  store i32 %0, i32* undef
+  store i32 %0, i32* %b
   %1 = va_arg i8** %ap, double                    ; <double> [#uses=1]
   call void @llvm.va_end(i8* %ap1)
   ret double %1

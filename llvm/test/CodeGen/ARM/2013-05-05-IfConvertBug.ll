@@ -42,34 +42,34 @@ UnifiedReturnBlock:
   ret i32 %tmp13
 }
 
-define hidden fastcc void @t3(i8** %retaddr) {
+define hidden fastcc void @t3(i8** %retaddr, i1 %tst, i8* %p8) {
 ; CHECK-LABEL: t3:
 ; CHECK: Block address taken
 ; CHECK-NOT: Address of block that was removed by CodeGen
 bb:
   store i8* blockaddress(@t3, %KBBlockZero_return_1), i8** %retaddr
-  br i1 undef, label %bb77, label %bb7.i
+  br i1 %tst, label %bb77, label %bb7.i
 
 bb7.i:                                            ; preds = %bb35
   br label %bb2.i
 
 KBBlockZero_return_1:                             ; preds = %KBBlockZero.exit
-  unreachable
+  ret void
 
 KBBlockZero_return_0:                             ; preds = %KBBlockZero.exit
-  unreachable
+  ret void
 
 bb77:                                             ; preds = %bb26, %bb12, %bb
   ret void
 
 bb2.i:                                            ; preds = %bb6.i350, %bb7.i
-  br i1 undef, label %bb6.i350, label %KBBlockZero.exit
+  br i1 %tst, label %bb6.i350, label %KBBlockZero.exit
 
 bb6.i350:                                         ; preds = %bb2.i
   br label %bb2.i
 
 KBBlockZero.exit:                                 ; preds = %bb2.i
-  indirectbr i8* undef, [label %KBBlockZero_return_1, label %KBBlockZero_return_0]
+  indirectbr i8* %p8, [label %KBBlockZero_return_1, label %KBBlockZero_return_0]
 }
 
 @foo = global i32 ()* null

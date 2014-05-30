@@ -4,22 +4,26 @@
 
 %struct.foo = type { i64, i64 }
 
-define zeroext i8 @t(%struct.foo* %this) noreturn optsize {
+define zeroext i8 @t(%struct.foo* %this, i1 %tst) noreturn optsize {
 entry:
 ; ARM-LABEL:       t:
-; ARM:       str r2, [r1], r0
+; ARM-DAG:       mov r[[ADDR:[0-9]+]], #8
+; ARM-DAG:       mov [[VAL:r[0-9]+]], #0
+; ARM:       str [[VAL]], [r[[ADDR]]], r0
 
 ; THUMB-LABEL:     t:
-; THUMB-NOT: str r0, [r1], r0
-; THUMB:     str r1, [r0]
+; THUMB-DAG:       movs r[[ADDR:[0-9]+]], #8
+; THUMB-DAG:       movs [[VAL:r[0-9]+]], #0
+; THUMB-NOT: str {{[a-z0-9]+}}, [{{[a-z0-9]+}}], {{[a-z0-9]+}}
+; THUMB:     str [[VAL]], [r[[ADDR]]]
   %0 = getelementptr inbounds %struct.foo* %this, i32 0, i32 1 ; <i64*> [#uses=1]
   store i32 0, i32* inttoptr (i32 8 to i32*), align 8
-  br i1 undef, label %bb.nph96, label %bb3
+  br i1 %tst, label %bb.nph96, label %bb3
 
 bb3:                                              ; preds = %entry
   %1 = load i64* %0, align 4                      ; <i64> [#uses=0]
-  unreachable
+  ret i8 42
 
 bb.nph96:                                         ; preds = %entry
-  unreachable
+  ret i8 3
 }
