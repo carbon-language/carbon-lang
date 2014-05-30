@@ -2,6 +2,10 @@
 // RUN: %clang_cl_asan -LD -O0 %s -Fe%t.dll
 // RUN: not %run %t %t.dll 2>&1 | FileCheck %s
 
+// Test that it works correctly even with ICF enabled.
+// RUN: %clang_cl_asan -LD -O0 %s -Fe%t.dll -link /OPT:REF /OPT:ICF
+// RUN: not %run %t %t.dll 2>&1 | FileCheck %s
+
 #include <stdio.h>
 #include <string.h>
 
