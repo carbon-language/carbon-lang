@@ -540,6 +540,12 @@ public:
   /// undefined.
   SDValue getVectorShuffle(EVT VT, SDLoc dl, SDValue N1, SDValue N2,
                            const int *MaskElts);
+  SDValue getVectorShuffle(EVT VT, SDLoc dl, SDValue N1, SDValue N2,
+                           ArrayRef<int> MaskElts) {
+    assert(VT.getVectorNumElements() == MaskElts.size() &&
+           "Must have the same number of vector elements as mask elements!");
+    return getVectorShuffle(VT, dl, N1, N2, MaskElts.data());
+  }
 
   /// getAnyExtOrTrunc - Convert Op, which must be of integer type, to the
   /// integer type VT, by either any-extending or truncating it.
