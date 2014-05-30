@@ -21,7 +21,8 @@ uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
 #if defined(__arm__)
   // Cancel Thumb bit.
   pc = pc & (~1);
-#elif defined(__powerpc__) || defined(__powerpc64__)
+#endif
+#if defined(__powerpc__) || defined(__powerpc64__)
   // PCs are always 4 byte aligned.
   return pc - 4;
 #elif defined(__sparc__)
