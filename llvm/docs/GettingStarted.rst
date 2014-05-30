@@ -741,7 +741,7 @@ builds:
 
 Debug Builds
 
-  These builds are the default when one is using an Subversion checkout and
+  These builds are the default when one is using a Subversion checkout and
   types ``gmake`` (unless the ``--enable-optimized`` option was used during
   configuration).  The build system will compile the tools and libraries with
   debugging information.  To get a Debug Build using the LLVM distribution the
