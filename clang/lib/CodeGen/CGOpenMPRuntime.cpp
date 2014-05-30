@@ -57,9 +57,10 @@ CGOpenMPRuntime::GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags) {
     DefaultOpenMPLocation->setLinkage(llvm::GlobalValue::PrivateLinkage);
 
     llvm::Constant *Zero = llvm::ConstantInt::get(CGM.Int32Ty, 0, true);
-    llvm::Constant *Values[] = { Zero,
-                                 llvm::ConstantInt::get(CGM.Int32Ty, Flags),
-                                 Zero, Zero, DefaultOpenMPPSource };
+    llvm::Constant *Values[] = {
+      Zero, llvm::ConstantInt::get(CGM.Int32Ty, Flags), Zero,
+      Zero, DefaultOpenMPPSource
+    };
     llvm::Constant *Init = llvm::ConstantStruct::get(IdentTy, Values);
     DefaultOpenMPLocation->setInitializer(Init);
     return DefaultOpenMPLocation;
@@ -98,19 +99,24 @@ llvm::Value *CGOpenMPRuntime::EmitOpenMPUpdateLocation(
   llvm::Value *PSource =
       CGF.Builder.CreateConstInBoundsGEP2_32(LocValue, 0, IdentField_PSource);
 
-  SmallString<128> Buffer2;
-  llvm::raw_svector_ostream OS2(Buffer2);
-  // Build debug location
-  PresumedLoc PLoc = CGF.getContext().getSourceManager().getPresumedLoc(Loc);
-  OS2 << ";" << PLoc.getFilename() << ";";
-  if (const FunctionDecl *FD =
-          dyn_cast_or_null<FunctionDecl>(CGF.CurFuncDecl)) {
-    OS2 << FD->getQualifiedNameAsString();
+  auto OMPDebugLoc = OpenMPDebugLocMap.lookup(Loc.getRawEncoding());
+  if (OMPDebugLoc == nullptr) {
+    SmallString<128> Buffer2;
+    llvm::raw_svector_ostream OS2(Buffer2);
+    // Build debug location
+    PresumedLoc PLoc = CGF.getContext().getSourceManager().getPresumedLoc(Loc);
+    OS2 << ";" << PLoc.getFilename() << ";";
+    if (const FunctionDecl *FD =
+            dyn_cast_or_null<FunctionDecl>(CGF.CurFuncDecl)) {
+      OS2 << FD->getQualifiedNameAsString();
+    }
+    OS2 << ";" << PLoc.getLine() << ";" << PLoc.getColumn() << ";;";
+    OMPDebugLoc = CGF.Builder.CreateGlobalStringPtr(OS2.str());
+    OpenMPDebugLocMap[Loc.getRawEncoding()] = OMPDebugLoc;
   }
-  OS2 << ";" << PLoc.getLine() << ";" << PLoc.getColumn() << ";;";
   // *psource = ";<File>;<Function>;<Line>;<Column>;;";
-  CGF.Builder.CreateStore(CGF.Builder.CreateGlobalStringPtr(OS2.str()),
-                          PSource);
+  CGF.Builder.CreateStore(OMPDebugLoc, PSource);
+
   return LocValue;
 }
 

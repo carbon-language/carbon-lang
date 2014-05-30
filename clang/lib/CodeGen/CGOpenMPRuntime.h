@@ -121,6 +121,9 @@ private:
     IdentField_PSource
   };
   llvm::StructType *IdentTy;
+  /// \brief Map for Sourcelocation and OpenMP runtime library debug locations.
+  typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDebugLocMapTy;
+  OpenMPDebugLocMapTy OpenMPDebugLocMap;
   /// \brief The type for a microtask which gets passed to __kmpc_fork_call().
   /// Original representation is:
   /// typedef void (kmpc_micro)(kmp_int32 global_tid, kmp_int32 bound_tid,...);
