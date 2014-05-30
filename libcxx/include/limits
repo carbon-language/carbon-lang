@@ -768,7 +768,7 @@ template <class _Tp>
 template <class _Tp>
     _LIBCPP_CONSTEXPR const int numeric_limits<const volatile _Tp>::digits10;
 template <class _Tp>
-    const int numeric_limits<const volatile _Tp>::max_digits10;
+    _LIBCPP_CONSTEXPR const int numeric_limits<const volatile _Tp>::max_digits10;
 template <class _Tp>
     _LIBCPP_CONSTEXPR const bool numeric_limits<const volatile _Tp>::is_signed;
 template <class _Tp>
