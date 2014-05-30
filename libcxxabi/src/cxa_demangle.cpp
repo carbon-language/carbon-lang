@@ -4847,32 +4847,33 @@ operator!=(const malloc_alloc<T>& x, const malloc_alloc<U>& y) noexcept
 const size_t bs = 4 * 1024;
 template <class T> using Alloc = short_alloc<T, bs>;
 template <class T> using Vector = std::vector<T, Alloc<T>>;
-using String = std::basic_string<char, std::char_traits<char>, malloc_alloc<char>>;
 
+template <class StrT>
 struct string_pair
 {
-    String first;
-    String second;
+    StrT first;
+    StrT second;
 
     string_pair() = default;
-    string_pair(String f) : first(std::move(f)) {}
-    string_pair(String f, String s)
+    string_pair(StrT f) : first(std::move(f)) {}
+    string_pair(StrT f, StrT s)
         : first(std::move(f)), second(std::move(s)) {}
     template <size_t N>
         string_pair(const char (&s)[N]) : first(s, N-1) {}
 
     size_t size() const {return first.size() + second.size();}
-    String full() const {return first + second;}
-    String move_full() {return std::move(first) + std::move(second);}
+    StrT full() const {return first + second;}
+    StrT move_full() {return std::move(first) + std::move(second);}
 };
 
 struct Db
 {
-    typedef String String;
-    typedef Vector<string_pair> sub_type;
+    typedef std::basic_string<char, std::char_traits<char>,
+                              malloc_alloc<char>> String;
+    typedef Vector<string_pair<String>> sub_type;
     typedef Vector<sub_type> template_param_type;
-    Vector<string_pair> names;
-    Vector<sub_type> subs;
+    sub_type names;
+    template_param_type subs;
     Vector<template_param_type> template_param;
     unsigned cv;
     unsigned ref;
