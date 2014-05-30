@@ -227,6 +227,9 @@ static unsigned ComputeSpeculationCost(const User *I) {
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
+  case Instruction::BitCast:
+  case Instruction::ExtractElement:
+  case Instruction::InsertElement:
     return 1; // These are all cheap.
 
   case Instruction::Call:
