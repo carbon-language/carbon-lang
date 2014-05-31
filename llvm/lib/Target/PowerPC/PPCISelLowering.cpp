@@ -19,6 +19,7 @@
 #include "PPCTargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -50,15 +51,16 @@ cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
 // FIXME: Remove this once the bug has been fixed!
 extern cl::opt<bool> ANDIGlueBug;
 
-static TargetLoweringObjectFile *createTLOF(const PPCTargetMachine &TM) {
-  if (TM.getSubtargetImpl()->isDarwin())
+static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
+  if (TT.isOSDarwin())
     return new TargetLoweringObjectFileMachO();
   else
     return new PPC64LinuxTargetObjectFile();
 }
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
-  : TargetLowering(TM, createTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
+    : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))),
+      PPCSubTarget(*TM.getSubtargetImpl()) {
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
 
   setPow2DivIsCheap();

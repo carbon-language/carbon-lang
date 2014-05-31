@@ -178,29 +178,26 @@ static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
   return Insert256BitVector(V, V2, NumElems/2, DAG, dl);
 }
 
-static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  bool is64Bit = Subtarget->is64Bit();
-
-  if (Subtarget->isTargetMacho()) {
-    if (is64Bit)
+static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
+  if (TT.isOSBinFormatMachO()) {
+    if (TT.getArch() == Triple::x86_64)
       return new X86_64MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();
   }
 
-  if (Subtarget->isTargetLinux())
+  if (TT.isOSLinux())
     return new X86LinuxTargetObjectFile();
-  if (Subtarget->isTargetELF())
+  if (TT.isOSBinFormatELF())
     return new TargetLoweringObjectFileELF();
-  if (Subtarget->isTargetKnownWindowsMSVC())
+  if (TT.isKnownWindowsMSVCEnvironment())
     return new X86WindowsTargetObjectFile();
-  if (Subtarget->isTargetCOFF())
+  if (TT.isOSBinFormatCOFF())
     return new TargetLoweringObjectFileCOFF();
   llvm_unreachable("unknown subtarget type");
 }
 
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
-  : TargetLowering(TM, createTLOF(TM)) {
+  : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();
