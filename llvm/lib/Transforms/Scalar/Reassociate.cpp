@@ -1368,11 +1368,10 @@ Value *Reassociate::OptimizeXor(Instruction *I,
 Value *Reassociate::OptimizeAdd(Instruction *I,
                                 SmallVectorImpl<ValueEntry> &Ops) {
   // Scan the operand lists looking for X and -X pairs.  If we find any, we
-  // can simplify the expression. X+-X == 0.  While we're at it, scan for any
+  // can simplify expressions like X+-X == 0 and X+~X ==-1.  While we're at it,
+  // scan for any
   // duplicates.  We want to canonicalize Y+Y+Y+Z -> 3*Y+Z.
-  //
-  // TODO: We could handle "X + ~X" -> "-1" if we wanted, since "-X = ~X+1".
-  //
+
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     Value *TheOp = Ops[i].Op;
     // Check to see if we've seen this operand before.  If so, we factor all
@@ -1412,18 +1411,27 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
       continue;
     }
 
-    // Check for X and -X in the operand list.
-    if (!BinaryOperator::isNeg(TheOp))
+    // Check for X and -X or X and ~X in the operand list.
+    if (!BinaryOperator::isNeg(TheOp) && !BinaryOperator::isNot(TheOp))
       continue;
 
-    Value *X = BinaryOperator::getNegArgument(TheOp);
+    Value *X = nullptr;
+    if (BinaryOperator::isNeg(TheOp))
+      X = BinaryOperator::getNegArgument(TheOp);
+    else if (BinaryOperator::isNot(TheOp))
+      X = BinaryOperator::getNotArgument(TheOp);
+
     unsigned FoundX = FindInOperandList(Ops, i, X);
     if (FoundX == i)
       continue;
 
     // Remove X and -X from the operand list.
-    if (Ops.size() == 2)
+    if (Ops.size() == 2 && BinaryOperator::isNeg(TheOp))
       return Constant::getNullValue(X->getType());
+
+    // Remove X and ~X from the operand list.
+    if (Ops.size() == 2 && BinaryOperator::isNot(TheOp))
+      return Constant::getAllOnesValue(X->getType());
 
     Ops.erase(Ops.begin()+i);
     if (i < FoundX)
@@ -1434,6 +1442,13 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
     ++NumAnnihil;
     --i;     // Revisit element.
     e -= 2;  // Removed two elements.
+
+    // if X and ~X we append -1 to the operand list.
+    if (BinaryOperator::isNot(TheOp)) {
+      Value *V = Constant::getAllOnesValue(X->getType());
+      Ops.insert(Ops.end(), ValueEntry(getRank(V), V));
+      e += 1;
+    }
   }
 
   // Scan the operand list, checking to see if there are any common factors
