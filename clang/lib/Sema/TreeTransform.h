@@ -2510,24 +2510,12 @@ public:
                                           bool IsArrow, bool IsFreeIvar) {
     // FIXME: We lose track of the IsFreeIvar bit.
     CXXScopeSpec SS;
-    ExprResult Base = BaseArg;
-    LookupResult R(getSema(), Ivar->getDeclName(), IvarLoc,
-                   Sema::LookupMemberName);
-    ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
-                                                         /*FIME:*/IvarLoc,
-                                                         SS, nullptr,
-                                                         false);
-    if (Result.isInvalid() || Base.isInvalid())
-      return ExprError();
-
-    if (Result.get())
-      return Result;
-
-    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
+    DeclarationNameInfo NameInfo(Ivar->getDeclName(), IvarLoc);
+    return getSema().BuildMemberReferenceExpr(BaseArg, BaseArg->getType(),
                                               /*FIXME:*/IvarLoc, IsArrow,
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
-                                              R,
+                                              NameInfo,
                                               /*TemplateArgs=*/nullptr);
   }
 
@@ -2539,24 +2527,14 @@ public:
                                         ObjCPropertyDecl *Property,
                                         SourceLocation PropertyLoc) {
     CXXScopeSpec SS;
-    ExprResult Base = BaseArg;
-    LookupResult R(getSema(), Property->getDeclName(), PropertyLoc,
-                   Sema::LookupMemberName);
-    bool IsArrow = false;
-    ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
-                                                         /*FIME:*/PropertyLoc,
-                                                         SS, nullptr, false);
-    if (Result.isInvalid() || Base.isInvalid())
-      return ExprError();
-
-    if (Result.get())
-      return Result;
-
-    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
-                                              /*FIXME:*/PropertyLoc, IsArrow,
+    DeclarationNameInfo NameInfo(Property->getDeclName(), PropertyLoc);
+    return getSema().BuildMemberReferenceExpr(BaseArg, BaseArg->getType(),
+                                              /*FIXME:*/PropertyLoc,
+                                              /*IsArrow=*/false,
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
-                                              R, /*TemplateArgs=*/nullptr);
+                                              NameInfo,
+                                              /*TemplateArgs=*/nullptr);
   }
 
   /// \brief Build a new Objective-C property reference expression.
@@ -2580,26 +2558,14 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildObjCIsaExpr(Expr *BaseArg, SourceLocation IsaLoc,
-                                SourceLocation OpLoc,
-                                      bool IsArrow) {
+                                SourceLocation OpLoc, bool IsArrow) {
     CXXScopeSpec SS;
-    ExprResult Base = BaseArg;
-    LookupResult R(getSema(), &getSema().Context.Idents.get("isa"), IsaLoc,
-                   Sema::LookupMemberName);
-    ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
-                                                         OpLoc,
-                                                         SS, nullptr, false);
-    if (Result.isInvalid() || Base.isInvalid())
-      return ExprError();
-
-    if (Result.get())
-      return Result;
-
-    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
+    DeclarationNameInfo NameInfo(&getSema().Context.Idents.get("isa"), IsaLoc);
+    return getSema().BuildMemberReferenceExpr(BaseArg, BaseArg->getType(),
                                               OpLoc, IsArrow,
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
-                                              R,
+                                              NameInfo,
                                               /*TemplateArgs=*/nullptr);
   }
 

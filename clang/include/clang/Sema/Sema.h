@@ -3493,14 +3493,6 @@ public:
   ExprResult CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                                              Expr *Idx, SourceLocation RLoc);
 
-  ExprResult BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
-                                      SourceLocation OpLoc, bool IsArrow,
-                                      CXXScopeSpec &SS,
-                                      SourceLocation TemplateKWLoc,
-                                      NamedDecl *FirstQualifierInScope,
-                                const DeclarationNameInfo &NameInfo,
-                                const TemplateArgumentListInfo *TemplateArgs);
-
   // This struct is for use by ActOnMemberAccess to allow
   // BuildMemberReferenceExpr to be able to reinvoke ActOnMemberAccess after
   // changing the access operator from a '.' to a '->' (to see if that is the
@@ -3513,6 +3505,13 @@ public:
     bool HasTrailingLParen;
   };
 
+  ExprResult BuildMemberReferenceExpr(
+      Expr *Base, QualType BaseType, SourceLocation OpLoc, bool IsArrow,
+      CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
+      NamedDecl *FirstQualifierInScope, const DeclarationNameInfo &NameInfo,
+      const TemplateArgumentListInfo *TemplateArgs,
+      ActOnMemberAccessExtraArgs *ExtraArgs = nullptr);
+
   ExprResult
   BuildMemberReferenceExpr(Expr *Base, QualType BaseType, SourceLocation OpLoc,
                            bool IsArrow, const CXXScopeSpec &SS,
@@ -3523,11 +3522,6 @@ public:
                            ActOnMemberAccessExtraArgs *ExtraArgs = nullptr);
 
   ExprResult PerformMemberExprBaseConversion(Expr *Base, bool IsArrow);
-  ExprResult LookupMemberExpr(LookupResult &R, ExprResult &Base,
-                              bool &IsArrow, SourceLocation OpLoc,
-                              CXXScopeSpec &SS,
-                              Decl *ObjCImpDecl,
-                              bool HasTemplateArgs);
 
   bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,
                                      const CXXScopeSpec &SS,

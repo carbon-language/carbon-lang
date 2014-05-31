@@ -653,6 +653,11 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   return false;
 }
 
+static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
+                                   ExprResult &BaseExpr, bool &IsArrow,
+                                   SourceLocation OpLoc, CXXScopeSpec &SS,
+                                   Decl *ObjCImpDecl, bool HasTemplateArgs);
+
 ExprResult
 Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
                                SourceLocation OpLoc, bool IsArrow,
@@ -660,7 +665,8 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
                                SourceLocation TemplateKWLoc,
                                NamedDecl *FirstQualifierInScope,
                                const DeclarationNameInfo &NameInfo,
-                               const TemplateArgumentListInfo *TemplateArgs) {
+                               const TemplateArgumentListInfo *TemplateArgs,
+                               ActOnMemberAccessExtraArgs *ExtraArgs) {
   if (BaseType->isDependentType() ||
       (SS.isSet() && isDependentScopeSpecifier(SS)))
     return ActOnDependentMemberExpr(Base, BaseType,
@@ -682,9 +688,10 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
   // Explicit member accesses.
   } else {
     ExprResult BaseResult = Base;
-    ExprResult Result =
-      LookupMemberExpr(R, BaseResult, IsArrow, OpLoc,
-                       SS, /*ObjCImpDecl*/ nullptr, TemplateArgs != nullptr);
+    ExprResult Result = LookupMemberExpr(
+        *this, R, BaseResult, IsArrow, OpLoc, SS,
+        ExtraArgs ? ExtraArgs->ObjCImpDecl : nullptr,
+        TemplateArgs != nullptr);
 
     if (BaseResult.isInvalid())
       return ExprError();
@@ -702,7 +709,8 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
 
   return BuildMemberReferenceExpr(Base, BaseType,
                                   OpLoc, IsArrow, SS, TemplateKWLoc,
-                                  FirstQualifierInScope, R, TemplateArgs);
+                                  FirstQualifierInScope, R, TemplateArgs,
+                                  false, ExtraArgs);
 }
 
 static ExprResult
@@ -1151,15 +1159,14 @@ Sema::PerformMemberExprBaseConversion(Expr *Base, bool IsArrow) {
 ///
 /// The ObjCImpDecl bit is a gross hack that will need to be properly
 /// fixed for ObjC++.
-ExprResult
-Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
-                       bool &IsArrow, SourceLocation OpLoc,
-                       CXXScopeSpec &SS,
-                       Decl *ObjCImpDecl, bool HasTemplateArgs) {
+static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
+                                   ExprResult &BaseExpr, bool &IsArrow,
+                                   SourceLocation OpLoc, CXXScopeSpec &SS,
+                                   Decl *ObjCImpDecl, bool HasTemplateArgs) {
   assert(BaseExpr.get() && "no base expression");
 
   // Perform default conversions.
-  BaseExpr = PerformMemberExprBaseConversion(BaseExpr.get(), IsArrow);
+  BaseExpr = S.PerformMemberExprBaseConversion(BaseExpr.get(), IsArrow);
   if (BaseExpr.isInvalid())
     return ExprError();
 
@@ -1187,8 +1194,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // overloaded operator->, but that should have been dealt with
       // by now--or a diagnostic message already issued if a problem
       // was encountered while looking for the overloaded operator->.
-      if (!getLangOpts().CPlusPlus) {
-        Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+      if (!S.getLangOpts().CPlusPlus) {
+        S.Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
           << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
           << FixItHint::CreateReplacement(OpLoc, ".");
       }
@@ -1196,7 +1203,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     } else if (BaseType->isFunctionType()) {
       goto fail;
     } else {
-      Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
+      S.Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr.get()->getSourceRange();
       return ExprError();
     }
@@ -1204,7 +1211,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
   // Handle field access to simple records.
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
-    if (LookupMemberExprInRecord(*this, R, BaseExpr.get()->getSourceRange(),
+    if (LookupMemberExprInRecord(S, R, BaseExpr.get()->getSourceRange(),
                                  RTy, OpLoc, SS, HasTemplateArgs))
       return ExprError();
 
@@ -1216,12 +1223,12 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   // Handle ivar access to Objective-C objects.
   if (const ObjCObjectType *OTy = BaseType->getAs<ObjCObjectType>()) {
     if (!SS.isEmpty() && !SS.isInvalid()) {
-      Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
+      S.Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
         << 1 << SS.getScopeRep()
         << FixItHint::CreateRemoval(SS.getRange());
       SS.clear();
     }
-    
+
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
     // There are three cases for the base type:
@@ -1230,23 +1237,24 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     //   - an interface
     ObjCInterfaceDecl *IDecl = OTy->getInterface();
     if (!IDecl) {
-      if (getLangOpts().ObjCAutoRefCount &&
+      if (S.getLangOpts().ObjCAutoRefCount &&
           (OTy->isObjCId() || OTy->isObjCClass()))
         goto fail;
       // There's an implicit 'isa' ivar on all objects.
       // But we only actually find it this way on objects of type 'id',
       // apparently.
       if (OTy->isObjCId() && Member->isStr("isa"))
-        return new (Context) ObjCIsaExpr(BaseExpr.get(), IsArrow, MemberLoc,
-                                         OpLoc, Context.getObjCClassType());
-      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
-        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+        return new (S.Context) ObjCIsaExpr(BaseExpr.get(), IsArrow, MemberLoc,
+                                           OpLoc, S.Context.getObjCClassType());
+      if (ShouldTryAgainWithRedefinitionType(S, BaseExpr))
+        return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                                 ObjCImpDecl, HasTemplateArgs);
       goto fail;
     }
-    
-    if (RequireCompleteType(OpLoc, BaseType, diag::err_typecheck_incomplete_tag,
-                            BaseExpr.get()))
+
+    if (S.RequireCompleteType(OpLoc, BaseType,
+                              diag::err_typecheck_incomplete_tag,
+                              BaseExpr.get()))
       return ExprError();
 
     ObjCInterfaceDecl *ClassDeclared = nullptr;
@@ -1256,14 +1264,14 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // Attempt to correct for typos in ivar names.
       DeclFilterCCC<ObjCIvarDecl> Validator;
       Validator.IsObjCIvarLookup = IsArrow;
-      if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
-                                                 LookupMemberName, nullptr,
-                                                 nullptr, Validator,
-                                                 CTK_ErrorRecovery, IDecl)) {
+      if (TypoCorrection Corrected = S.CorrectTypo(
+              R.getLookupNameInfo(), Sema::LookupMemberName, nullptr, nullptr,
+              Validator, Sema::CTK_ErrorRecovery, IDecl)) {
         IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>();
-        diagnoseTypo(Corrected,
-                     PDiag(diag::err_typecheck_member_reference_ivar_suggest)
-                          << IDecl->getDeclName() << MemberName);
+        S.diagnoseTypo(
+            Corrected,
+            S.PDiag(diag::err_typecheck_member_reference_ivar_suggest)
+                << IDecl->getDeclName() << MemberName);
 
         // Figure out the class that declares the ivar.
         assert(!ClassDeclared);
@@ -1273,20 +1281,19 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         ClassDeclared = cast<ObjCInterfaceDecl>(D);
       } else {
         if (IsArrow && IDecl->FindPropertyDeclaration(Member)) {
-          Diag(MemberLoc, 
-          diag::err_property_found_suggest)
-          << Member << BaseExpr.get()->getType()
-          << FixItHint::CreateReplacement(OpLoc, ".");
+          S.Diag(MemberLoc, diag::err_property_found_suggest)
+              << Member << BaseExpr.get()->getType()
+              << FixItHint::CreateReplacement(OpLoc, ".");
           return ExprError();
         }
 
-        Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-          << IDecl->getDeclName() << MemberName
-          << BaseExpr.get()->getSourceRange();
+        S.Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
+            << IDecl->getDeclName() << MemberName
+            << BaseExpr.get()->getSourceRange();
         return ExprError();
       }
     }
-    
+
     assert(ClassDeclared);
 
     // If the decl being referenced had an error, return an error for this
@@ -1296,14 +1303,14 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       return ExprError();
 
     // Check whether we can reference this field.
-    if (DiagnoseUseOfDecl(IV, MemberLoc))
+    if (S.DiagnoseUseOfDecl(IV, MemberLoc))
       return ExprError();
     if (IV->getAccessControl() != ObjCIvarDecl::Public &&
         IV->getAccessControl() != ObjCIvarDecl::Package) {
       ObjCInterfaceDecl *ClassOfMethodDecl = nullptr;
-      if (ObjCMethodDecl *MD = getCurMethodDecl())
+      if (ObjCMethodDecl *MD = S.getCurMethodDecl())
         ClassOfMethodDecl =  MD->getClassInterface();
-      else if (ObjCImpDecl && getCurFunctionDecl()) {
+      else if (ObjCImpDecl && S.getCurFunctionDecl()) {
         // Case of a c-function declared inside an objc implementation.
         // FIXME: For a c-style function nested inside an objc implementation
         // class, there is no implementation context available, so we pass
@@ -1317,20 +1324,20 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                    dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
           ClassOfMethodDecl = CatImplClass->getClassInterface();
       }
-      if (!getLangOpts().DebuggerSupport) {
+      if (!S.getLangOpts().DebuggerSupport) {
         if (IV->getAccessControl() == ObjCIvarDecl::Private) {
           if (!declaresSameEntity(ClassDeclared, IDecl) ||
               !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
-            Diag(MemberLoc, diag::error_private_ivar_access)
+            S.Diag(MemberLoc, diag::error_private_ivar_access)
               << IV->getDeclName();
         } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
           // @protected
-          Diag(MemberLoc, diag::error_protected_ivar_access)
-            << IV->getDeclName();
+          S.Diag(MemberLoc, diag::error_protected_ivar_access)
+              << IV->getDeclName();
       }
     }
     bool warn = true;
-    if (getLangOpts().ObjCAutoRefCount) {
+    if (S.getLangOpts().ObjCAutoRefCount) {
       Expr *BaseExp = BaseExpr.get()->IgnoreParenImpCasts();
       if (UnaryOperator *UO = dyn_cast<UnaryOperator>(BaseExp))
         if (UO->getOpcode() == UO_Deref)
@@ -1338,33 +1345,30 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       
       if (DeclRefExpr *DE = dyn_cast<DeclRefExpr>(BaseExp))
         if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
-          Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
+          S.Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
           warn = false;
         }
     }
     if (warn) {
-      if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+      if (ObjCMethodDecl *MD = S.getCurMethodDecl()) {
         ObjCMethodFamily MF = MD->getMethodFamily();
         warn = (MF != OMF_init && MF != OMF_dealloc && 
                 MF != OMF_finalize &&
-                !IvarBacksCurrentMethodAccessor(IDecl, MD, IV));
+                !S.IvarBacksCurrentMethodAccessor(IDecl, MD, IV));
       }
       if (warn)
-        Diag(MemberLoc, diag::warn_direct_ivar_access) << IV->getDeclName();
+        S.Diag(MemberLoc, diag::warn_direct_ivar_access) << IV->getDeclName();
     }
 
-    ObjCIvarRefExpr *Result = new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                                            MemberLoc, OpLoc,
-                                                            BaseExpr.get(),
-                                                            IsArrow);
+    ObjCIvarRefExpr *Result = new (S.Context) ObjCIvarRefExpr(
+        IV, IV->getType(), MemberLoc, OpLoc, BaseExpr.get(), IsArrow);
 
-    if (getLangOpts().ObjCAutoRefCount) {
+    if (S.getLangOpts().ObjCAutoRefCount) {
       if (IV->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
-        DiagnosticsEngine::Level Level =
-          Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
-                                   MemberLoc);
+        DiagnosticsEngine::Level Level = S.Diags.getDiagnosticLevel(
+            diag::warn_arc_repeated_use_of_weak, MemberLoc);
         if (Level != DiagnosticsEngine::Ignored)
-          recordUseOfEvaluatedWeak(Result);
+          S.recordUseOfEvaluatedWeak(Result);
       }
     }
 
@@ -1375,18 +1379,18 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   const ObjCObjectPointerType *OPT;
   if (!IsArrow && (OPT = BaseType->getAs<ObjCObjectPointerType>())) {
     if (!SS.isEmpty() && !SS.isInvalid()) {
-      Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
-        << 0 << SS.getScopeRep()
-        << FixItHint::CreateRemoval(SS.getRange());
+      S.Diag(SS.getRange().getBegin(), diag::err_qualified_objc_access)
+          << 0 << SS.getScopeRep() << FixItHint::CreateRemoval(SS.getRange());
       SS.clear();
     }
 
     // This actually uses the base as an r-value.
-    BaseExpr = DefaultLvalueConversion(BaseExpr.get());
+    BaseExpr = S.DefaultLvalueConversion(BaseExpr.get());
     if (BaseExpr.isInvalid())
       return ExprError();
 
-    assert(Context.hasSameUnqualifiedType(BaseType, BaseExpr.get()->getType()));
+    assert(S.Context.hasSameUnqualifiedType(BaseType,
+                                            BaseExpr.get()->getType()));
 
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
@@ -1395,74 +1399,75 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     // id, with and without qualifiers.
     if (OT->isObjCId()) {
       // Check protocols on qualified interfaces.
-      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-      if (Decl *PMDecl = FindGetterSetterNameDecl(OPT, Member, Sel, Context)) {
+      Selector Sel = S.PP.getSelectorTable().getNullarySelector(Member);
+      if (Decl *PMDecl =
+              FindGetterSetterNameDecl(OPT, Member, Sel, S.Context)) {
         if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
           // Check the use of this declaration
-          if (DiagnoseUseOfDecl(PD, MemberLoc))
+          if (S.DiagnoseUseOfDecl(PD, MemberLoc))
             return ExprError();
 
-          return new (Context)
-              ObjCPropertyRefExpr(PD, Context.PseudoObjectTy, VK_LValue,
+          return new (S.Context)
+              ObjCPropertyRefExpr(PD, S.Context.PseudoObjectTy, VK_LValue,
                                   OK_ObjCProperty, MemberLoc, BaseExpr.get());
         }
 
         if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
           // Check the use of this method.
-          if (DiagnoseUseOfDecl(OMD, MemberLoc))
+          if (S.DiagnoseUseOfDecl(OMD, MemberLoc))
             return ExprError();
           Selector SetterSel =
-            SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
-                                                   PP.getSelectorTable(),
+            SelectorTable::constructSetterSelector(S.PP.getIdentifierTable(),
+                                                   S.PP.getSelectorTable(),
                                                    Member);
           ObjCMethodDecl *SMD = nullptr;
           if (Decl *SDecl = FindGetterSetterNameDecl(OPT,
-                                                     /*Property id*/nullptr,
-                                                     SetterSel, Context))
+                                                     /*Property id*/ nullptr,
+                                                     SetterSel, S.Context))
             SMD = dyn_cast<ObjCMethodDecl>(SDecl);
-          
-          return new (Context)
-              ObjCPropertyRefExpr(OMD, SMD, Context.PseudoObjectTy, VK_LValue,
+
+          return new (S.Context)
+              ObjCPropertyRefExpr(OMD, SMD, S.Context.PseudoObjectTy, VK_LValue,
                                   OK_ObjCProperty, MemberLoc, BaseExpr.get());
         }
       }
       // Use of id.member can only be for a property reference. Do not
       // use the 'id' redefinition in this case.
-      if (IsArrow && ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
-        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+      if (IsArrow && ShouldTryAgainWithRedefinitionType(S, BaseExpr))
+        return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                                 ObjCImpDecl, HasTemplateArgs);
 
-      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+      return ExprError(S.Diag(MemberLoc, diag::err_property_not_found)
                          << MemberName << BaseType);
     }
 
     // 'Class', unqualified only.
     if (OT->isObjCClass()) {
       // Only works in a method declaration (??!).
-      ObjCMethodDecl *MD = getCurMethodDecl();
+      ObjCMethodDecl *MD = S.getCurMethodDecl();
       if (!MD) {
-        if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
-          return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+        if (ShouldTryAgainWithRedefinitionType(S, BaseExpr))
+          return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                                   ObjCImpDecl, HasTemplateArgs);
 
         goto fail;
       }
 
       // Also must look for a getter name which uses property syntax.
-      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
+      Selector Sel = S.PP.getSelectorTable().getNullarySelector(Member);
       ObjCInterfaceDecl *IFace = MD->getClassInterface();
       ObjCMethodDecl *Getter;
       if ((Getter = IFace->lookupClassMethod(Sel))) {
         // Check the use of this method.
-        if (DiagnoseUseOfDecl(Getter, MemberLoc))
+        if (S.DiagnoseUseOfDecl(Getter, MemberLoc))
           return ExprError();
       } else
         Getter = IFace->lookupPrivateMethod(Sel, false);
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
       Selector SetterSel =
-        SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
-                                               PP.getSelectorTable(),
+        SelectorTable::constructSetterSelector(S.PP.getIdentifierTable(),
+                                               S.PP.getSelectorTable(),
                                                Member);
       ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
       if (!Setter) {
@@ -1471,27 +1476,27 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         Setter = IFace->lookupPrivateMethod(SetterSel, false);
       }
 
-      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
+      if (Setter && S.DiagnoseUseOfDecl(Setter, MemberLoc))
         return ExprError();
 
       if (Getter || Setter) {
-        return new (Context) ObjCPropertyRefExpr(
-            Getter, Setter, Context.PseudoObjectTy, VK_LValue, OK_ObjCProperty,
-            MemberLoc, BaseExpr.get());
+        return new (S.Context) ObjCPropertyRefExpr(
+            Getter, Setter, S.Context.PseudoObjectTy, VK_LValue,
+            OK_ObjCProperty, MemberLoc, BaseExpr.get());
       }
 
-      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
-        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+      if (ShouldTryAgainWithRedefinitionType(S, BaseExpr))
+        return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                                 ObjCImpDecl, HasTemplateArgs);
 
-      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+      return ExprError(S.Diag(MemberLoc, diag::err_property_not_found)
                          << MemberName << BaseType);
     }
 
     // Normal property access.
-    return HandleExprPropertyRefExpr(OPT, BaseExpr.get(), OpLoc, 
-                                     MemberName, MemberLoc,
-                                     SourceLocation(), QualType(), false);
+    return S.HandleExprPropertyRefExpr(OPT, BaseExpr.get(), OpLoc, MemberName,
+                                       MemberLoc, SourceLocation(), QualType(),
+                                       false);
   }
 
   // Handle 'field access' to vectors, such as 'V.xx'.
@@ -1499,24 +1504,22 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     // FIXME: this expr should store IsArrow.
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
     ExprValueKind VK = (IsArrow ? VK_LValue : BaseExpr.get()->getValueKind());
-    QualType ret = CheckExtVectorComponent(*this, BaseType, VK, OpLoc,
+    QualType ret = CheckExtVectorComponent(S, BaseType, VK, OpLoc,
                                            Member, MemberLoc);
     if (ret.isNull())
       return ExprError();
 
-    return new (Context)
+    return new (S.Context)
         ExtVectorElementExpr(ret, VK, BaseExpr.get(), *Member, MemberLoc);
   }
 
   // Adjust builtin-sel to the appropriate redefinition type if that's
   // not just a pointer to builtin-sel again.
-  if (IsArrow &&
-      BaseType->isSpecificBuiltinType(BuiltinType::ObjCSel) &&
-      !Context.getObjCSelRedefinitionType()->isObjCSelType()) {
-    BaseExpr = ImpCastExprToType(BaseExpr.get(), 
-                                 Context.getObjCSelRedefinitionType(),
-                                 CK_BitCast);
-    return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+  if (IsArrow && BaseType->isSpecificBuiltinType(BuiltinType::ObjCSel) &&
+      !S.Context.getObjCSelRedefinitionType()->isObjCSelType()) {
+    BaseExpr = S.ImpCastExprToType(
+        BaseExpr.get(), S.Context.getObjCSelRedefinitionType(), CK_BitCast);
+    return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                             ObjCImpDecl, HasTemplateArgs);
   }
 
@@ -1533,31 +1536,31 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
     if (!IsArrow && Ptr->getPointeeType()->isRecordType() &&
         MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
-      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-        << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
+      S.Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+          << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
           << FixItHint::CreateReplacement(OpLoc, "->");
 
       // Recurse as an -> access.
       IsArrow = true;
-      return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+      return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                               ObjCImpDecl, HasTemplateArgs);
     }
   }
 
   // If the user is trying to apply -> or . to a function name, it's probably
   // because they forgot parentheses to call that function.
-  if (tryToRecoverWithCall(BaseExpr,
-                           PDiag(diag::err_member_reference_needs_call),
-                           /*complain*/ false,
-                           IsArrow ? &isPointerToRecordType : &isRecordType)) {
+  if (S.tryToRecoverWithCall(
+          BaseExpr, S.PDiag(diag::err_member_reference_needs_call),
+          /*complain*/ false,
+          IsArrow ? &isPointerToRecordType : &isRecordType)) {
     if (BaseExpr.isInvalid())
       return ExprError();
-    BaseExpr = DefaultFunctionArrayConversion(BaseExpr.get());
-    return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+    BaseExpr = S.DefaultFunctionArrayConversion(BaseExpr.get());
+    return LookupMemberExpr(S, R, BaseExpr, IsArrow, OpLoc, SS,
                             ObjCImpDecl, HasTemplateArgs);
   }
 
-  Diag(OpLoc, diag::err_typecheck_member_reference_struct_union)
+  S.Diag(OpLoc, diag::err_typecheck_member_reference_struct_union)
     << BaseType << BaseExpr.get()->getSourceRange() << MemberLoc;
 
   return ExprError();
@@ -1587,6 +1590,19 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   if (SS.isSet() && SS.isInvalid())
     return ExprError();
 
+  // The only way a reference to a destructor can be used is to
+  // immediately call it. If the next token is not a '(', produce
+  // a diagnostic and build the call now.
+  if (!HasTrailingLParen &&
+      Id.getKind() == UnqualifiedId::IK_DestructorName) {
+    ExprResult DtorAccess =
+        ActOnMemberAccessExpr(S, Base, OpLoc, OpKind, SS, TemplateKWLoc, Id,
+                              ObjCImpDecl, /*HasTrailingLParen*/true);
+    if (DtorAccess.isInvalid())
+      return DtorAccess;
+    return DiagnoseDtorReference(Id.getLocStart(), DtorAccess.get());
+  }
+
   // Warn about the explicit constructor calls Microsoft extension.
   if (getLangOpts().MicrosoftExt &&
       Id.getKind() == UnqualifiedId::IK_ConstructorName)
@@ -1614,42 +1630,16 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
 
   if (Base->getType()->isDependentType() || Name.isDependentName() ||
       isDependentScopeSpecifier(SS)) {
-    Result = ActOnDependentMemberExpr(Base, Base->getType(),
-                                      IsArrow, OpLoc,
-                                      SS, TemplateKWLoc, FirstQualifierInScope,
-                                      NameInfo, TemplateArgs);
-  } else {
-    LookupResult R(*this, NameInfo, LookupMemberName);
-    ExprResult BaseResult = Base;
-    Result = LookupMemberExpr(R, BaseResult, IsArrow, OpLoc,
-                              SS, ObjCImpDecl, TemplateArgs != nullptr);
-    if (BaseResult.isInvalid())
-      return ExprError();
-    Base = BaseResult.get();
-
-    if (Result.isInvalid())
-      return ExprError();
-
-    if (Result.get()) {
-      // The only way a reference to a destructor can be used is to
-      // immediately call it, which falls into this case.  If the
-      // next token is not a '(', produce a diagnostic and build the
-      // call now.
-      if (!HasTrailingLParen &&
-          Id.getKind() == UnqualifiedId::IK_DestructorName)
-        return DiagnoseDtorReference(NameInfo.getLoc(), Result.get());
-
-      return Result;
-    }
-
-    ActOnMemberAccessExtraArgs ExtraArgs = {S, Id, ObjCImpDecl, HasTrailingLParen};
-    Result = BuildMemberReferenceExpr(Base, Base->getType(),
-                                      OpLoc, IsArrow, SS, TemplateKWLoc,
-                                      FirstQualifierInScope, R, TemplateArgs,
-                                      false, &ExtraArgs);
+    return ActOnDependentMemberExpr(Base, Base->getType(), IsArrow, OpLoc, SS,
+                                    TemplateKWLoc, FirstQualifierInScope,
+                                    NameInfo, TemplateArgs);
   }
 
-  return Result;
+  ActOnMemberAccessExtraArgs ExtraArgs = {S, Id, ObjCImpDecl,
+                                          HasTrailingLParen};
+  return BuildMemberReferenceExpr(Base, Base->getType(), OpLoc, IsArrow, SS,
+                                  TemplateKWLoc, FirstQualifierInScope,
+                                  NameInfo, TemplateArgs, &ExtraArgs);
 }
 
 static ExprResult
