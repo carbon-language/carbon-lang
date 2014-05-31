@@ -629,9 +629,11 @@ void ASTDumper::dumpAttr(const Attr *A) {
   }
   dumpPointer(A);
   dumpSourceRange(A->getRange());
-#include "clang/AST/AttrDump.inc"
+  if (A->isInherited())
+    OS << " Inherited";
   if (A->isImplicit())
     OS << " Implicit";
+#include "clang/AST/AttrDump.inc"
 }
 
 static void dumpPreviousDeclImpl(raw_ostream &OS, ...) {}

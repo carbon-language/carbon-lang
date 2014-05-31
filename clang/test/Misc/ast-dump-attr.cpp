@@ -108,7 +108,13 @@ namespace Test {
 extern "C" int printf(const char *format, ...);
 // CHECK: FunctionDecl{{.*}}printf
 // CHECK-NEXT: ParmVarDecl{{.*}}format{{.*}}'const char *'
-// CHECK-NEXT: FormatAttr{{.*}}printf 1 2 Implicit
+// CHECK-NEXT: FormatAttr{{.*}}Implicit printf 1 2
+
+alignas(8) extern int x;
+extern int x;
+// CHECK: VarDecl{{.*}} x 'int'
+// CHECK: VarDecl{{.*}} x 'int'
+// CHECK-NEXT: AlignedAttr{{.*}} Inherited
 }
 
 int __attribute__((cdecl)) TestOne(void), TestTwo(void);
