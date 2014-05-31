@@ -4178,34 +4178,24 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     // otherwise, the ordering rules for static functions against non-static
     // functions don't make any sense.
     //
-    // C++98/03 doesn't have this provision, so instead we drop the
-    // first argument of the free function, which seems to match
-    // existing practice.
+    // C++98/03 doesn't have this provision but we've extended DR532 to cover
+    // it as wording was broken prior to it.
     SmallVector<QualType, 4> Args1;
 
-    unsigned Skip1 = 0, Skip2 = 0;
     unsigned NumComparedArguments = NumCallArguments1;
 
     if (!Method2 && Method1 && !Method1->isStatic()) {
-      if (S.getLangOpts().CPlusPlus11) {
-        // Compare 'this' from Method1 against first parameter from Method2.
-        AddImplicitObjectParameterType(S.Context, Method1, Args1);
-        ++NumComparedArguments;
-      } else
-        // Ignore first parameter from Method2.
-        ++Skip2;
+      // Compare 'this' from Method1 against first parameter from Method2.
+      AddImplicitObjectParameterType(S.Context, Method1, Args1);
+      ++NumComparedArguments;
     } else if (!Method1 && Method2 && !Method2->isStatic()) {
-      if (S.getLangOpts().CPlusPlus11)
-        // Compare 'this' from Method2 against first parameter from Method1.
-        AddImplicitObjectParameterType(S.Context, Method2, Args2);
-      else
-        // Ignore first parameter from Method1.
-        ++Skip1;
+      // Compare 'this' from Method2 against first parameter from Method1.
+      AddImplicitObjectParameterType(S.Context, Method2, Args2);
     }
 
-    Args1.insert(Args1.end(), Proto1->param_type_begin() + Skip1,
+    Args1.insert(Args1.end(), Proto1->param_type_begin(),
                  Proto1->param_type_end());
-    Args2.insert(Args2.end(), Proto2->param_type_begin() + Skip2,
+    Args2.insert(Args2.end(), Proto2->param_type_begin(),
                  Proto2->param_type_end());
 
     // C++ [temp.func.order]p5:
