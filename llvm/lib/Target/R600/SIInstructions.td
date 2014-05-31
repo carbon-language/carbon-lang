@@ -2392,20 +2392,6 @@ defm : SI_INDIRECT_Pattern <v4i32, i32, SI_INDIRECT_DST_V4>;
 defm : SI_INDIRECT_Pattern <v8i32, i32, SI_INDIRECT_DST_V8>;
 defm : SI_INDIRECT_Pattern <v16i32, i32, SI_INDIRECT_DST_V16>;
 
-/********** =============== **********/
-/**********   Conditions    **********/
-/********** =============== **********/
-
-def : Pat<
-  (i1 (setcc f32:$src0, f32:$src1, SETO)),
-  (V_CMP_O_F32_e64 $src0, $src1)
->;
-
-def : Pat<
-  (i1 (setcc f32:$src0, f32:$src1, SETUO)),
-  (V_CMP_U_F32_e64 $src0, $src1)
->;
-
 //===----------------------------------------------------------------------===//
 // Conversion Patterns
 //===----------------------------------------------------------------------===//
