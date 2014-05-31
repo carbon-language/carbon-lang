@@ -322,7 +322,6 @@ static bool isAtomic(Instruction *I) {
 
 bool ThreadSanitizer::runOnFunction(Function &F) {
   if (!DL) return false;
-  if (BL->isIn(F)) return false;
   initializeCallbacks(*F.getParent());
   SmallVector<Instruction*, 8> RetVec;
   SmallVector<Instruction*, 8> AllLoadsAndStores;
@@ -331,6 +330,8 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   SmallVector<Instruction*, 8> MemIntrinCalls;
   bool Res = false;
   bool HasCalls = false;
+  bool SanitizeFunction =
+      F.hasFnAttribute(Attribute::SanitizeThread) && !BL->isIn(F);
 
   // Traverse all instructions, collect loads/stores/returns, check for calls.
   for (auto &BB : F) {
@@ -355,19 +356,20 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   // FIXME: many of these accesses do not need to be checked for races
   // (e.g. variables that do not escape, etc).
 
-  // Instrument memory accesses.
-  if (ClInstrumentMemoryAccesses && F.hasFnAttribute(Attribute::SanitizeThread))
+  // Instrument memory accesses only if we want to report bugs in the function.
+  if (ClInstrumentMemoryAccesses && SanitizeFunction)
     for (auto Inst : AllLoadsAndStores) {
       Res |= instrumentLoadOrStore(Inst);
     }
 
-  // Instrument atomic memory accesses.
+  // Instrument atomic memory accesses in any case (they can be used to
+  // implement synchronization).
   if (ClInstrumentAtomics)
     for (auto Inst : AtomicAccesses) {
       Res |= instrumentAtomic(Inst);
     }
 
-  if (ClInstrumentMemIntrinsics)
+  if (ClInstrumentMemIntrinsics && SanitizeFunction)
     for (auto Inst : MemIntrinCalls) {
       Res |= instrumentMemIntrinsic(Inst);
     }
