@@ -6,23 +6,23 @@ typedef unsigned int uint4 __attribute__((ext_vector_type(4)));
 // CHECK-LABEL: define void @clang_shufflevector_v_v(
 void clang_shufflevector_v_v( float4* A, float4 x, uint4 mask ) {
 // CHECK: [[MASK:%.*]] = and <4 x i32> {{%.*}}, <i32 3, i32 3, i32 3, i32 3>
-// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 0
-// CHECK: [[E:%.*]] = extractelement <4 x float> [[X:%.*]], i32 [[I]]
+// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i{{[0-9]+}} 0
+// CHECK: [[E:%.*]] = extractelement <4 x float> [[X:%.*]], i{{[0-9]+}} [[I]]
 //
 // Here is where ToT Clang code generation makes a mistake.  
 // It uses [[I]] as the insertion index instead of 0.
 // Similarly on the remaining insertelement.
-// CHECK: [[V:%[a-zA-Z0-9._]+]] = insertelement <4 x float> undef, float [[E]], i32 0
+// CHECK: [[V:%[a-zA-Z0-9._]+]] = insertelement <4 x float> undef, float [[E]], i{{[0-9]+}} 0
 
-// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 1
-// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V2:%.*]] = insertelement <4 x float> [[V]], float [[E]], i32 1
-// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 2
-// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V3:%.*]] = insertelement <4 x float> [[V2]], float [[E]], i32 2
-// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i32 3
-// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i32 [[I]]
-// CHECK: [[V4:%.*]] = insertelement <4 x float> [[V3]], float [[E]], i32 3
+// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i{{[0-9]+}} 1
+// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i{{[0-9]+}} [[I]]
+// CHECK: [[V2:%.*]] = insertelement <4 x float> [[V]], float [[E]], i{{[0-9]+}} 1
+// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i{{[0-9]+}} 2
+// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i{{[0-9]+}} [[I]]
+// CHECK: [[V3:%.*]] = insertelement <4 x float> [[V2]], float [[E]], i{{[0-9]+}} 2
+// CHECK: [[I:%.*]] = extractelement <4 x i32> [[MASK]], i{{[0-9]+}} 3
+// CHECK: [[E:%.*]] = extractelement <4 x float> [[X]], i{{[0-9]+}} [[I]]
+// CHECK: [[V4:%.*]] = insertelement <4 x float> [[V3]], float [[E]], i{{[0-9]+}} 3
 // CHECK: store <4 x float> [[V4]], <4 x float>* {{%.*}},
   *A = __builtin_shufflevector( x, mask );
 }

@@ -940,9 +940,8 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
                                                   MTy->getNumElements());
     Value* NewV = llvm::UndefValue::get(RTy);
     for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i) {
-      Value *IIndx = Builder.getInt32(i);
+      Value *IIndx = llvm::ConstantInt::get(CGF.SizeTy, i);
       Value *Indx = Builder.CreateExtractElement(Mask, IIndx, "shuf_idx");
-      Indx = Builder.CreateZExt(Indx, CGF.Int32Ty, "idx_zext");
 
       Value *VExt = Builder.CreateExtractElement(LHS, Indx, "shuf_elt");
       NewV = Builder.CreateInsertElement(NewV, VExt, IIndx, "shuf_ins");
@@ -1073,8 +1072,6 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   if (CGF.SanOpts->ArrayBounds)
     CGF.EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, /*Accessed*/true);
 
-  bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
-  Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
 
