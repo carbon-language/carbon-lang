@@ -845,7 +845,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         ListRecTy *LType = dyn_cast<ListRecTy>(LHSt->getType());
         StringRecTy *SType = dyn_cast<StringRecTy>(LHSt->getType());
         if (!LType && !SType) {
-          TokError("expected list or string type argumnet in unary operator");
+          TokError("expected list or string type argument in unary operator");
           return nullptr;
         }
       }
@@ -853,7 +853,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       if (Code == UnOpInit::HEAD
           || Code == UnOpInit::TAIL) {
         if (!LHSl && !LHSt) {
-          TokError("expected list type argumnet in unary operator");
+          TokError("expected list type argument in unary operator");
           return nullptr;
         }
 
@@ -877,7 +877,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
           assert(LHSt && "expected list type argument in unary operator");
           ListRecTy *LType = dyn_cast<ListRecTy>(LHSt->getType());
           if (!LType) {
-            TokError("expected list type argumnet in unary operator");
+            TokError("expected list type argument in unary operator");
             return nullptr;
           }
           if (Code == UnOpInit::HEAD) {
