@@ -62,7 +62,7 @@ define <4 x i64> @blend_test4(<4 x i64> %a, <4 x i64> %b) nounwind alwaysinline 
 
 ;; 2 tests for shufflevectors that optimize to blend + immediate
 ; CHECK-LABEL: @blend_test5
-; CHECK: vpblendd
+; CHECK: vpblendd $10, %xmm1, %xmm0, %xmm0
 ; CHECK: ret
 define <4 x i32> @blend_test5(<4 x i32> %a, <4 x i32> %b) {
   %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
@@ -70,7 +70,7 @@ define <4 x i32> @blend_test5(<4 x i32> %a, <4 x i32> %b) {
 }
 
 ; CHECK-LABEL: @blend_test6
-; CHECK: vpblendw
+; CHECK: vpblendw $134, %ymm1, %ymm0, %ymm0
 ; CHECK: ret
 define <16 x i16> @blend_test6(<16 x i16> %a, <16 x i16> %b) {
   %1 = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 0, i32 17, i32 18, i32  3, i32  4, i32  5, i32  6, i32 23,

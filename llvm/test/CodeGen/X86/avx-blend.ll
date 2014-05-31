@@ -162,7 +162,16 @@ declare <4 x double> @llvm.x86.avx.blendv.pd.256(<4 x double>, <4 x double>, <4 
 ;; 4 tests for shufflevectors that optimize to blend + immediate
 ; CHECK-LABEL: @blend_shufflevector_4xfloat
 define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) {
-; CHECK: vblendps
+; Equivalent select mask is <i1 true, i1 false, i1 true, i1 false>.
+; Big endian representation is 0101 = 5.
+; '1' means takes the first argument, '0' means takes the second argument.
+; This is the opposite of the intel syntax, thus we expect
+; Inverted mask: 1010 = 10.
+; According to the ABI:
+; a is in xmm0 => first argument is xmm0.
+; b is in xmm1 => second argument is xmm1.
+; Result is in xmm0 => destination argument.
+; CHECK: vblendps $10, %xmm1, %xmm0, %xmm0
 ; CHECK: ret
   %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
   ret <4 x float> %1
@@ -170,7 +179,7 @@ define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) 
 
 ; CHECK-LABEL: @blend_shufflevector_8xfloat
 define <8 x float> @blend_shufflevector_8xfloat(<8 x float> %a, <8 x float> %b) {
-; CHECK: vblendps
+; CHECK: vblendps $190, %ymm1, %ymm0, %ymm0
 ; CHECK: ret
   %1 = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 11, i32 12, i32 13, i32 6, i32 15>
   ret <8 x float> %1
@@ -178,7 +187,7 @@ define <8 x float> @blend_shufflevector_8xfloat(<8 x float> %a, <8 x float> %b) 
 
 ; CHECK-LABEL: @blend_shufflevector_4xdouble
 define <4 x double> @blend_shufflevector_4xdouble(<4 x double> %a, <4 x double> %b) {
-; CHECK: vblendpd
+; CHECK: vblendpd $2, %ymm1, %ymm0, %ymm0
 ; CHECK: ret
   %1 = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 3>
   ret <4 x double> %1
@@ -186,7 +195,7 @@ define <4 x double> @blend_shufflevector_4xdouble(<4 x double> %a, <4 x double> 
 
 ; CHECK-LABEL: @blend_shufflevector_4xi64
 define <4 x i64> @blend_shufflevector_4xi64(<4 x i64> %a, <4 x i64> %b) {
-; CHECK: vblendpd
+; CHECK: vblendpd $13, %ymm1, %ymm0, %ymm0
 ; CHECK: ret
   %1 = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 4, i32 1, i32 6, i32 7>
   ret <4 x i64> %1

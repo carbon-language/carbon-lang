@@ -124,7 +124,7 @@ declare <2 x double> @llvm.x86.sse41.blendvpd(<2 x double>, <2 x double>, <2 x d
 
 ;; 2 tests for shufflevectors that optimize to blend + immediate
 ; CHECK-LABEL: @blend_shufflevector_4xfloat
-; CHECK: blendps
+; CHECK: blendps $6, %xmm1, %xmm0
 ; CHECK: ret
 define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) {
   %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 5, i32 6, i32 3>
@@ -132,7 +132,7 @@ define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) 
 }
 
 ; CHECK-LABEL: @blend_shufflevector_8xi16
-; CHECK: pblendw
+; CHECK: pblendw $134, %xmm1, %xmm0
 ; CHECK: ret
 define <8 x i16> @blend_shufflevector_8xi16(<8 x i16> %a, <8 x i16> %b) {
   %1 = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 3, i32 4, i32 5, i32 6, i32 15>
