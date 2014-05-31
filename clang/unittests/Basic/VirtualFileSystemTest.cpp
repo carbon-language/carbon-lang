@@ -35,7 +35,7 @@ public:
     std::map<std::string, vfs::Status>::iterator I =
         FilesAndDirs.find(Path.str());
     if (I == FilesAndDirs.end())
-      return error_code(errc::no_such_file_or_directory, posix_category());
+      return make_error_code(errc::no_such_file_or_directory);
     return I->second;
   }
   error_code openFileForRead(const Twine &Path,
