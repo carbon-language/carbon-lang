@@ -148,10 +148,11 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, char isDefineUndef) {
     if (!getLangOpts().MSVCCompat)
       // C++ 2.5p2: Alternative tokens behave the same as its primary token
       // except for their spellings.
-      return Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name)
-             << II << MacroNameTok.getKind();
+      Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name)
+          << II << MacroNameTok.getKind();
 
-    // Allow #defining |and| and friends for Microsoft compatibility.
+    // Allow #defining |and| and friends for Microsoft compatibility or
+    // recovery when legacy C headers are included in C++.
     MacroNameTok.setIdentifierInfo(II);
   }
 
