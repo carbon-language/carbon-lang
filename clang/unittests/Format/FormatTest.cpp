@@ -8187,20 +8187,19 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
   Style.IndentWidth = 234;
   Style.BreakBeforeBraces = FormatStyle::BS_Linux;
   Style.TabWidth = 345;
-  EXPECT_EQ(llvm::errc::success,
-            parseConfiguration("---\n"
-                               "IndentWidth: 456\n"
-                               "BreakBeforeBraces: Allman\n"
-                               "---\n"
-                               "Language: JavaScript\n"
-                               "IndentWidth: 111\n"
-                               "TabWidth: 111\n"
-                               "---\n"
-                               "Language: Cpp\n"
-                               "BreakBeforeBraces: Stroustrup\n"
-                               "TabWidth: 789\n"
-                               "...\n",
-                               &Style));
+  EXPECT_FALSE(parseConfiguration("---\n"
+                                  "IndentWidth: 456\n"
+                                  "BreakBeforeBraces: Allman\n"
+                                  "---\n"
+                                  "Language: JavaScript\n"
+                                  "IndentWidth: 111\n"
+                                  "TabWidth: 111\n"
+                                  "---\n"
+                                  "Language: Cpp\n"
+                                  "BreakBeforeBraces: Stroustrup\n"
+                                  "TabWidth: 789\n"
+                                  "...\n",
+                                  &Style));
   EXPECT_EQ(123u, Style.ColumnLimit);
   EXPECT_EQ(456u, Style.IndentWidth);
   EXPECT_EQ(FormatStyle::BS_Stroustrup, Style.BreakBeforeBraces);

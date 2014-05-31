@@ -1971,7 +1971,7 @@ createVFSFromCompilerInvocation(const CompilerInvocation &CI,
   // earlier vfs files are on the bottom
   for (const std::string &File : CI.getHeaderSearchOpts().VFSOverlayFiles) {
     std::unique_ptr<llvm::MemoryBuffer> Buffer;
-    if (llvm::errc::success != llvm::MemoryBuffer::getFile(File, Buffer)) {
+    if (llvm::MemoryBuffer::getFile(File, Buffer)) {
       Diags.Report(diag::err_missing_vfs_overlay_file) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();
     }

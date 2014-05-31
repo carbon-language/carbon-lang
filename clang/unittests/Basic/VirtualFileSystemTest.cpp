@@ -79,7 +79,7 @@ TEST(VirtualFileSystemTest, StatusQueries) {
 
   D->addRegularFile("/foo");
   Status = D->status("/foo");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE(Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_FALSE(Status->isDirectory());
   EXPECT_TRUE(Status->isRegularFile());
@@ -89,7 +89,7 @@ TEST(VirtualFileSystemTest, StatusQueries) {
 
   D->addDirectory("/bar");
   Status = D->status("/bar");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE(Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_TRUE(Status->isDirectory());
   EXPECT_FALSE(Status->isRegularFile());
@@ -99,7 +99,7 @@ TEST(VirtualFileSystemTest, StatusQueries) {
 
   D->addSymlink("/baz");
   Status = D->status("/baz");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE(Status.getError());
   EXPECT_TRUE(Status->isStatusKnown());
   EXPECT_FALSE(Status->isDirectory());
   EXPECT_FALSE(Status->isRegularFile());
@@ -109,7 +109,7 @@ TEST(VirtualFileSystemTest, StatusQueries) {
 
   EXPECT_TRUE(Status->equivalent(*Status));
   ErrorOr<vfs::Status> Status2 = D->status("/foo");
-  ASSERT_EQ(errc::success, Status2.getError());
+  ASSERT_FALSE(Status2.getError());
   EXPECT_FALSE(Status->equivalent(*Status2));
 }
 
@@ -123,11 +123,11 @@ TEST(VirtualFileSystemTest, BaseOnlyOverlay) {
 
   D->addRegularFile("/foo");
   Status = D->status("/foo");
-  EXPECT_EQ(errc::success, Status.getError());
+  EXPECT_FALSE(Status.getError());
 
   ErrorOr<vfs::Status> Status2((error_code()));
   Status2 = O->status("/foo");
-  EXPECT_EQ(errc::success, Status2.getError());
+  EXPECT_FALSE(Status2.getError());
   EXPECT_TRUE(Status->equivalent(*Status2));
 }
 
@@ -146,19 +146,19 @@ TEST(VirtualFileSystemTest, OverlayFiles) {
 
   Base->addRegularFile("/foo");
   StatusB = Base->status("/foo");
-  ASSERT_EQ(errc::success, StatusB.getError());
+  ASSERT_FALSE(StatusB.getError());
   Status1 = O->status("/foo");
-  ASSERT_EQ(errc::success, Status1.getError());
+  ASSERT_FALSE(Status1.getError());
   Middle->addRegularFile("/foo");
   StatusM = Middle->status("/foo");
-  ASSERT_EQ(errc::success, StatusM.getError());
+  ASSERT_FALSE(StatusM.getError());
   Status2 = O->status("/foo");
-  ASSERT_EQ(errc::success, Status2.getError());
+  ASSERT_FALSE(Status2.getError());
   Top->addRegularFile("/foo");
   StatusT = Top->status("/foo");
-  ASSERT_EQ(errc::success, StatusT.getError());
+  ASSERT_FALSE(StatusT.getError());
   Status3 = O->status("/foo");
-  ASSERT_EQ(errc::success, Status3.getError());
+  ASSERT_FALSE(Status3.getError());
 
   EXPECT_TRUE(Status1->equivalent(*StatusB));
   EXPECT_TRUE(Status2->equivalent(*StatusM));
@@ -181,15 +181,15 @@ TEST(VirtualFileSystemTest, OverlayDirsNonMerged) {
 
   // non-merged paths should be the same
   ErrorOr<vfs::Status> Status1 = Lower->status("/lower-only");
-  ASSERT_EQ(errc::success, Status1.getError());
+  ASSERT_FALSE(Status1.getError());
   ErrorOr<vfs::Status> Status2 = O->status("/lower-only");
-  ASSERT_EQ(errc::success, Status2.getError());
+  ASSERT_FALSE(Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 
   Status1 = Upper->status("/upper-only");
-  ASSERT_EQ(errc::success, Status1.getError());
+  ASSERT_FALSE(Status1.getError());
   Status2 = O->status("/upper-only");
-  ASSERT_EQ(errc::success, Status2.getError());
+  ASSERT_FALSE(Status2.getError());
   EXPECT_TRUE(Status1->equivalent(*Status2));
 }
 
@@ -205,17 +205,17 @@ TEST(VirtualFileSystemTest, MergedDirPermissions) {
   Lower->addDirectory("/both", sys::fs::owner_read);
   Upper->addDirectory("/both", sys::fs::owner_all | sys::fs::group_read);
   Status = O->status("/both");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE(Status.getError());
   EXPECT_EQ(0740, Status->getPermissions());
 
   // permissions (as usual) are not recursively applied
   Lower->addRegularFile("/both/foo", sys::fs::owner_read);
   Upper->addRegularFile("/both/bar", sys::fs::owner_write);
   Status = O->status("/both/foo");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE( Status.getError());
   EXPECT_EQ(0400, Status->getPermissions());
   Status = O->status("/both/bar");
-  ASSERT_EQ(errc::success, Status.getError());
+  ASSERT_FALSE(Status.getError());
   EXPECT_EQ(0200, Status->getPermissions());
 }
 
@@ -292,7 +292,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
 
   // file
   ErrorOr<vfs::Status> S = O->status("//root/file1");
-  ASSERT_EQ(errc::success, S.getError());
+  ASSERT_FALSE(S.getError());
   EXPECT_EQ("//root/foo/bar/a", S->getName());
 
   ErrorOr<vfs::Status> SLower = O->status("//root/foo/bar/a");
@@ -301,7 +301,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
 
   // directory
   S = O->status("//root/");
-  ASSERT_EQ(errc::success, S.getError());
+  ASSERT_FALSE(S.getError());
   EXPECT_TRUE(S->isDirectory());
   EXPECT_TRUE(S->equivalent(*O->status("//root/"))); // non-volatile UniqueID
 
@@ -334,10 +334,10 @@ TEST_F(VFSFromYAMLTest, CaseInsensitive) {
   O->pushOverlay(FS);
 
   ErrorOr<vfs::Status> S = O->status("//root/XX");
-  ASSERT_EQ(errc::success, S.getError());
+  ASSERT_FALSE(S.getError());
 
   ErrorOr<vfs::Status> SS = O->status("//root/xx");
-  ASSERT_EQ(errc::success, SS.getError());
+  ASSERT_FALSE(SS.getError());
   EXPECT_TRUE(S->equivalent(*SS));
   SS = O->status("//root/xX");
   EXPECT_TRUE(S->equivalent(*SS));
@@ -531,10 +531,10 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "    'external-contents': '//root/other' }]\n"
       "}", Lower);
   ASSERT_TRUE(NULL != FS.getPtr());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to/file").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/").getError());
+  EXPECT_FALSE(FS->status("//root/path/to/file").getError());
+  EXPECT_FALSE(FS->status("//root/path/to").getError());
+  EXPECT_FALSE(FS->status("//root/path").getError());
+  EXPECT_FALSE(FS->status("//root/").getError());
 
   // at the start
   FS = getFromYAMLString(
@@ -544,10 +544,10 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
   ASSERT_TRUE(NULL != FS.getPtr());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to/file").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/").getError());
+  EXPECT_FALSE(FS->status("//root/path/to/file").getError());
+  EXPECT_FALSE(FS->status("//root/path/to").getError());
+  EXPECT_FALSE(FS->status("//root/path").getError());
+  EXPECT_FALSE(FS->status("//root/").getError());
 
   // at the end
   FS = getFromYAMLString(
@@ -557,10 +557,10 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
   ASSERT_TRUE(NULL != FS.getPtr());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to/file").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/").getError());
+  EXPECT_FALSE(FS->status("//root/path/to/file").getError());
+  EXPECT_FALSE(FS->status("//root/path/to").getError());
+  EXPECT_FALSE(FS->status("//root/path").getError());
+  EXPECT_FALSE(FS->status("//root/").getError());
 }
 
 TEST_F(VFSFromYAMLTest, TrailingSlashes) {
@@ -575,8 +575,8 @@ TEST_F(VFSFromYAMLTest, TrailingSlashes) {
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
   ASSERT_TRUE(NULL != FS.getPtr());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to/file").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path/to").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/path").getError());
-  EXPECT_EQ(errc::success, FS->status("//root/").getError());
+  EXPECT_FALSE(FS->status("//root/path/to/file").getError());
+  EXPECT_FALSE(FS->status("//root/path/to").getError());
+  EXPECT_FALSE(FS->status("//root/path").getError());
+  EXPECT_FALSE(FS->status("//root/").getError());
 }
