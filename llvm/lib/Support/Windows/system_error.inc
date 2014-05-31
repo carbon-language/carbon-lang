@@ -57,7 +57,6 @@ _system_error_category::message(int ev) const {
 error_condition
 _system_error_category::default_error_condition(int ev) const {
   switch (ev) {
-  MAP_ERR_TO_COND(0, success);
   // Windows system -> posix_errno decode table  ---------------------------//
   // see WinError.h comments for descriptions of errors
   MAP_ERR_TO_COND(ERROR_ACCESS_DENIED,       permission_denied);
