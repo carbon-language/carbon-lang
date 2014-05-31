@@ -744,7 +744,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
       .Default("");
 
 #if defined(__aarch64__)
-    // We need to check crypto seperately since we need all of the crypto
+    // We need to check crypto separately since we need all of the crypto
     // extensions to enable the subtarget feature
     if (CPUFeatures[I] == "aes")
       crypto |= CAP_AES;

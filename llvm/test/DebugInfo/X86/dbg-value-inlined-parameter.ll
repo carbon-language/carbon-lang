@@ -7,7 +7,7 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK:   DW_AT_abstract_origin {{.*}}{[[ABS:.*]]}
-; FIXME: An out of line definition preceeding an inline usage doesn't properly
+; FIXME: An out of line definition preceding an inline usage doesn't properly
 ; reference abstract variables.
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NEXT:     DW_AT_name {{.*}} "sp"

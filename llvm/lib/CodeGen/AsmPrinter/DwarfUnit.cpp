@@ -1382,7 +1382,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     // Add subprogram definitions to the CU die directly.
     ContextDIE = &getUnitDie();
-    // Build the decl now to ensure it preceeds the definition.
+    // Build the decl now to ensure it precedes the definition.
     getOrCreateSubprogramDIE(SPDecl);
   }
 

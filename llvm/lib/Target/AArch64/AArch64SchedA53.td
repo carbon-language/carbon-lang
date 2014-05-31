@@ -148,9 +148,9 @@ def : ReadAdvance<ReadVLD, 0>;
 
 // ALU - Most operands in the ALU pipes are not needed for two cycles. Shiftable
 //       operands are needed one cycle later if and only if they are to be
-//       shifted. Otherwise, they too are needed two cycle later. This same
+//       shifted. Otherwise, they too are needed two cycles later. This same
 //       ReadAdvance applies to Extended registers as well, even though there is
-//       a seperate SchedPredicate for them.
+//       a separate SchedPredicate for them.
 def : ReadAdvance<ReadI, 2, [WriteImm,WriteI,
                              WriteISReg, WriteIEReg,WriteIS,
                              WriteID32,WriteID64,
