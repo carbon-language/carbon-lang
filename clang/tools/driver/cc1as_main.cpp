@@ -266,6 +266,7 @@ static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
   if (!Error.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_output)
       << Opts.OutputPath << Error;
+    delete Out;
     return 0;
   }
 
@@ -276,24 +277,23 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
                              DiagnosticsEngine &Diags) {
   // Get the target specific parser.
   std::string Error;
-  const Target *TheTarget(TargetRegistry::lookupTarget(Opts.Triple, Error));
+  const Target *TheTarget = TargetRegistry::lookupTarget(Opts.Triple, Error);
   if (!TheTarget) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;
   }
 
-  std::unique_ptr<MemoryBuffer> BufferPtr;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, BufferPtr)) {
+  std::unique_ptr<MemoryBuffer> Buffer;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, Buffer)) {
     Error = ec.message();
     Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
     return false;
   }
-  MemoryBuffer *Buffer = BufferPtr.release();
 
   SourceMgr SrcMgr;
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  SrcMgr.AddNewSourceBuffer(Buffer.release(), SMLoc());
 
   // Record the location of the include directories so that the lexer can find
   // it later.
@@ -311,7 +311,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     MAI->setCompressDebugSections(true);
 
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
-  formatted_raw_ostream *Out = GetOutputStream(Opts, Diags, IsBinary);
+  std::unique_ptr<formatted_raw_ostream> Out(
+      GetOutputStream(Opts, Diags, IsBinary));
   if (!Out)
     return false;
 
@@ -380,6 +381,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Str.get()->InitSections();
   }
 
+  bool Success = true;
+
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
 
@@ -389,17 +392,18 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
       TheTarget->createMCAsmParser(*STI, *Parser, *MCII, Options));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
-    return false;
+    Success = false;
   }
 
-  Parser->setTargetParser(*TAP.get());
+  if (Success) {
+    Parser->setTargetParser(*TAP.get());
+    Success = !Parser->Run(Opts.NoInitialTextSection);
+  }
 
-  bool Success = !Parser->Run(Opts.NoInitialTextSection);
+  // Close the output stream early.
+  Out.reset();
 
-  // Close the output.
-  delete Out;
-
-  // Delete output on errors.
+  // Delete output file if there were errors.
   if (!Success && Opts.OutputPath != "-")
     sys::fs::remove(Opts.OutputPath);
 
