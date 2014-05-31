@@ -103,7 +103,7 @@ error_code parseCLInput(StringRef Line, std::vector<std::string> &List,
 
     llvm::errs() << "Parse: " <<List.back() << "\n";
   }
-  return error_code::success();
+  return error_code();
 }
 } // end anonymous namespace
 
@@ -115,7 +115,7 @@ error_code IncludeExcludeInfo::readListFromString(StringRef IncludeString,
   if (error_code Err = parseCLInput(ExcludeString, ExcludeList,
                                     /*Separator=*/ ","))
     return Err;
-  return error_code::success();
+  return error_code();
 }
 
 error_code IncludeExcludeInfo::readListFromFile(StringRef IncludeListFile,
@@ -140,7 +140,7 @@ error_code IncludeExcludeInfo::readListFromFile(StringRef IncludeListFile,
                                       /*Separator=*/ "\n"))
       return Err;
   }
-  return error_code::success();
+  return error_code();
 }
 
 bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) const {

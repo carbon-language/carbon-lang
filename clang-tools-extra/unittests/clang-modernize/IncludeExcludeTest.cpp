@@ -20,7 +20,7 @@ TEST(IncludeExcludeTest, ParseString) {
       /*include=*/ "a,b/b2,c/c2,d/../d2/../d3",
       /*exclude=*/ "a/af.cpp,a/a2,b/b2/b2f.cpp,c/c2");
 
-  ASSERT_EQ(Err, llvm::error_code::success());
+  ASSERT_EQ(Err, llvm::error_code());
 
   // If the file does not appear on the include list then it is not safe to
   // transform. Files are not safe to transform by default.
@@ -65,7 +65,7 @@ TEST(IncludeExcludeTest, ParseStringCases) {
       /*include=*/  "a/.,b/b2/,c/c2/c3/../../c4/,d/d2/./d3/,/e/e2/.",
       /*exclude=*/ "");
 
-  ASSERT_EQ(Err, llvm::error_code::success());
+  ASSERT_EQ(Err, llvm::error_code());
 
   EXPECT_TRUE(IEManager.isFileIncluded("a/f.cpp"));
   EXPECT_TRUE(IEManager.isFileIncluded("b/b2/f.cpp"));
@@ -126,7 +126,7 @@ TEST(IncludeExcludeFileTest, UNIXFile) {
   llvm::error_code Err = IEManager.readListFromFile(
       UnixFiles.IncludeDataPath.c_str(), UnixFiles.ExcludeDataPath.c_str());
 
-  ASSERT_EQ(Err, llvm::error_code::success());
+  ASSERT_EQ(Err, llvm::error_code());
 
   EXPECT_FALSE(IEManager.isFileIncluded("f.cpp"));
   EXPECT_TRUE(IEManager.isFileIncluded("a/f.cpp"));
@@ -141,7 +141,7 @@ TEST(IncludeExcludeFileTest, DOSFile) {
   llvm::error_code Err = IEManager.readListFromFile(
       DOSFiles.IncludeDataPath.c_str(), DOSFiles.ExcludeDataPath.c_str());
 
-  ASSERT_EQ(Err, llvm::error_code::success());
+  ASSERT_EQ(Err, llvm::error_code());
 
   EXPECT_FALSE(IEManager.isFileIncluded("f.cpp"));
   EXPECT_TRUE(IEManager.isFileIncluded("a/f.cpp"));

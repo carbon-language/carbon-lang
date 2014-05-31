@@ -284,7 +284,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
     Dependencies[HeaderFileName.str()] = Dependents;
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 // Helper function for finding the input file in an arguments list.
