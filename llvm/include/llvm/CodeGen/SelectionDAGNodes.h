@@ -49,7 +49,8 @@ template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 
-void checkForCycles(const SDNode *N, const SelectionDAG *DAG = nullptr);
+void checkForCycles(const SDNode *N, const SelectionDAG *DAG = nullptr,
+                    bool force = false);
 
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by

@@ -6002,6 +6002,8 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
       SDNode *S = ++I;
       dbgs() << "Overran sorted position:\n";
       S->dumprFull(this); dbgs() << "\n";
+      dbgs() << "Checking if this is due to cycles\n";
+      checkForCycles(this, true);
 #endif
       llvm_unreachable(nullptr);
     }
@@ -6587,7 +6589,7 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
   return true;
 }
 
-#ifdef XDEBUG
+#ifndef NDEBUG
 static void checkForCyclesHelper(const SDNode *N,
                                  SmallPtrSet<const SDNode*, 32> &Visited,
                                  SmallPtrSet<const SDNode*, 32> &Checked,
@@ -6614,15 +6616,22 @@ static void checkForCyclesHelper(const SDNode *N,
 #endif
 
 void llvm::checkForCycles(const llvm::SDNode *N,
-                          const llvm::SelectionDAG *DAG) {
+                          const llvm::SelectionDAG *DAG,
+                          bool force) {
+#ifndef NDEBUG
+  bool check = force;
 #ifdef XDEBUG
-  assert(N && "Checking nonexistent SDNode");
-  SmallPtrSet<const SDNode*, 32> visited;
-  SmallPtrSet<const SDNode*, 32> checked;
-  checkForCyclesHelper(N, visited, checked, DAG);
-#endif
+  check = true;
+#endif  // XDEBUG
+  if (check) {
+    assert(N && "Checking nonexistent SDNode");
+    SmallPtrSet<const SDNode*, 32> visited;
+    SmallPtrSet<const SDNode*, 32> checked;
+    checkForCyclesHelper(N, visited, checked, DAG);
+  }
+#endif  // !NDEBUG
 }
 
-void llvm::checkForCycles(const llvm::SelectionDAG *DAG) {
-  checkForCycles(DAG->getRoot().getNode(), DAG);
+void llvm::checkForCycles(const llvm::SelectionDAG *DAG, bool force) {
+  checkForCycles(DAG->getRoot().getNode(), DAG, force);
 }
