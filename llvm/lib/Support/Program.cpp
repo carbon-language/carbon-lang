@@ -34,7 +34,8 @@ int sys::ExecuteAndWait(StringRef Program, const char **args, const char **envp,
   if (Execute(PI, Program, args, envp, redirects, memoryLimit, ErrMsg)) {
     if (ExecutionFailed)
       *ExecutionFailed = false;
-    ProcessInfo Result = Wait(PI, secondsToWait, true, ErrMsg);
+    ProcessInfo Result = Wait(
+        PI, secondsToWait, /*WaitUntilTerminates=*/secondsToWait == 0, ErrMsg);
     return Result.ReturnCode;
   }
 

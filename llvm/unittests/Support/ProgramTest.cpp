@@ -162,6 +162,36 @@ TEST(ProgramTest, TestExecuteNoWait) {
   ASSERT_GT(LoopCount, 1u) << "LoopCount should be >1";
 }
 
+TEST(ProgramTest, TestExecuteAndWaitTimeout) {
+  using namespace llvm::sys;
+
+  if (getenv("LLVM_PROGRAM_TEST_TIMEOUT")) {
+    sleep_for(/*seconds*/ 10);
+    exit(0);
+  }
+
+  std::string Executable =
+      sys::fs::getMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
+  const char *argv[] = {
+    Executable.c_str(),
+    "--gtest_filter=ProgramTest.TestExecuteAndWaitTimeout",
+    0
+  };
+
+  // Add LLVM_PROGRAM_TEST_TIMEOUT to the environment of the child.
+  std::vector<const char *> envp;
+  CopyEnvironment(envp);
+  envp.push_back("LLVM_PROGRAM_TEST_TIMEOUT=1");
+  envp.push_back(0);
+
+  std::string Error;
+  bool ExecutionFailed;
+  int RetCode =
+      ExecuteAndWait(Executable, argv, &envp[0], 0, /*secondsToWait=*/1, 0,
+                     &Error, &ExecutionFailed);
+  ASSERT_EQ(-2, RetCode);
+}
+
 TEST(ProgramTest, TestExecuteNegative) {
   std::string Executable = "i_dont_exist";
   const char *argv[] = { Executable.c_str(), 0 };
