@@ -204,9 +204,8 @@ public:
     // C++0x [class.mem]p1:
     //   The enumerators of an unscoped enumeration defined in
     //   the class are members of the class.
-    // FIXME: support C++0x scoped enumerations.
     if (isa<EnumDecl>(DC))
-      DC = DC->getParent();
+      DC = DC->getRedeclContext();
 
     return DC->isRecord();
   }
