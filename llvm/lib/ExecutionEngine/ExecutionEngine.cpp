@@ -457,6 +457,27 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
   return ExecutionEngine::JITCtor(M, ErrorStr, JMM, GVsWithCode, TM);
 }
 
+void EngineBuilder::InitEngine() {
+  WhichEngine = EngineKind::Either;
+  ErrorStr = nullptr;
+  OptLevel = CodeGenOpt::Default;
+  MCJMM = nullptr;
+  JMM = nullptr;
+  Options = TargetOptions();
+  AllocateGVsWithCode = false;
+  RelocModel = Reloc::Default;
+  CMModel = CodeModel::JITDefault;
+  UseMCJIT = false;
+
+// IR module verification is enabled by default in debug builds, and disabled
+// by default in release builds.
+#ifndef NDEBUG
+  VerifyModules = true;
+#else
+  VerifyModules = false;
+#endif
+}
+
 ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   std::unique_ptr<TargetMachine> TheTM(TM); // Take ownership.
 

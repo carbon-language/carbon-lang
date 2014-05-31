@@ -586,26 +586,7 @@ private:
   bool VerifyModules;
 
   /// InitEngine - Does the common initialization of default options.
-  void InitEngine() {
-    WhichEngine = EngineKind::Either;
-    ErrorStr = nullptr;
-    OptLevel = CodeGenOpt::Default;
-    MCJMM = nullptr;
-    JMM = nullptr;
-    Options = TargetOptions();
-    AllocateGVsWithCode = false;
-    RelocModel = Reloc::Default;
-    CMModel = CodeModel::JITDefault;
-    UseMCJIT = false;
-
-  // IR module verification is enabled by default in debug builds, and disabled
-  // by default in release builds.
-#ifndef NDEBUG
-  VerifyModules = true;
-#else
-  VerifyModules = false;
-#endif
-  }
+  void InitEngine();
 
 public:
   /// EngineBuilder - Constructor for EngineBuilder.  If create() is called and
