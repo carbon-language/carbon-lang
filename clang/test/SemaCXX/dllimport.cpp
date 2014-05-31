@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 %s
-// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y %s
+// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 -DMS %s
+// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y -DMS %s
 // RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c++1y %s
 // RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c++11 %s
 
@@ -954,3 +954,25 @@ template<typename T> template<typename U> __declspec(dllimport) constexpr int CT
 class __declspec(dllimport) ClassDecl;
 
 class __declspec(dllimport) ClassDef { };
+
+#ifdef MS
+// expected-note@+5{{previous attribute is here}}
+// expected-note@+4{{previous attribute is here}}
+// expected-error@+4{{attribute 'dllexport' cannot be applied to member of 'dllimport' class}}
+// expected-error@+4{{attribute 'dllimport' cannot be applied to member of 'dllimport' class}}
+#endif
+class __declspec(dllimport) ImportClassWithDllMember {
+  void __declspec(dllexport) foo();
+  void __declspec(dllimport) bar();
+};
+
+#ifdef MS
+// expected-note@+5{{previous attribute is here}}
+// expected-note@+4{{previous attribute is here}}
+// expected-error@+4{{attribute 'dllimport' cannot be applied to member of 'dllexport' class}}
+// expected-error@+4{{attribute 'dllexport' cannot be applied to member of 'dllexport' class}}
+#endif
+class __declspec(dllexport) ExportClassWithDllMember {
+  void __declspec(dllimport) foo();
+  void __declspec(dllexport) bar();
+};

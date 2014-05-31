@@ -2109,6 +2109,8 @@ def err_attribute_dllimport_data_definition : Error<
   "definition of dllimport data">;
 def err_attribute_dllimport_static_field_definition : Error<
   "definition of dllimport static field not allowed">;
+def err_attribute_dll_member_of_dll_class : Error<
+  "attribute %q0 cannot be applied to member of %q1 class">;
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<

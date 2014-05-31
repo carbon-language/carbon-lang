@@ -4377,16 +4377,25 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   // specialization bases.
 
   for (Decl *Member : Class->decls()) {
-    if (getDLLAttr(Member)) {
-      // FIXME: Error about importing/exporting individual members.
-    }
-
     if (!isa<CXXMethodDecl>(Member) && !isa<VarDecl>(Member))
       continue;
 
-    auto *NewAttr = cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
-    NewAttr->setInherited(true);
-    Member->addAttr(NewAttr);
+    if (InheritableAttr *MemberAttr = getDLLAttr(Member)) {
+      if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+          !MemberAttr->isInherited()) {
+        S.Diag(MemberAttr->getLocation(),
+               diag::err_attribute_dll_member_of_dll_class)
+            << MemberAttr << ClassAttr;
+        S.Diag(ClassAttr->getLocation(), diag::note_previous_attribute);
+        Member->setInvalidDecl();
+        continue;
+      }
+    } else {
+      auto *NewAttr =
+          cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
+      NewAttr->setInherited(true);
+      Member->addAttr(NewAttr);
+    }
 
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
       if (ClassExported) {
