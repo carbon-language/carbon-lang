@@ -278,16 +278,13 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(Opts.Triple, Error);
-  if (!TheTarget) {
-    Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
-    return false;
-  }
+  if (!TheTarget)
+    return Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
 
   std::unique_ptr<MemoryBuffer> Buffer;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, Buffer)) {
     Error = ec.message();
-    Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
-    return false;
+    return Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
   }
 
   SourceMgr SrcMgr;
@@ -314,7 +311,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   std::unique_ptr<formatted_raw_ostream> Out(
       GetOutputStream(Opts, Diags, IsBinary));
   if (!Out)
-    return false;
+    return true;
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
@@ -381,7 +378,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Str.get()->InitSections();
   }
 
-  bool Success = true;
+  bool Failed = false;
 
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
@@ -390,24 +387,22 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   MCTargetOptions Options;
   std::unique_ptr<MCTargetAsmParser> TAP(
       TheTarget->createMCAsmParser(*STI, *Parser, *MCII, Options));
-  if (!TAP) {
-    Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
-    Success = false;
-  }
+  if (!TAP)
+    Failed = Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
 
-  if (Success) {
+  if (!Failed) {
     Parser->setTargetParser(*TAP.get());
-    Success = !Parser->Run(Opts.NoInitialTextSection);
+    Failed = Parser->Run(Opts.NoInitialTextSection);
   }
 
   // Close the output stream early.
   Out.reset();
 
   // Delete output file if there were errors.
-  if (!Success && Opts.OutputPath != "-")
+  if (Failed && Opts.OutputPath != "-")
     sys::fs::remove(Opts.OutputPath);
 
-  return Success;
+  return Failed;
 }
 
 static void LLVMErrorHandler(void *UserData, const std::string &Message,
@@ -479,13 +474,11 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   }
 
   // Execute the invocation, unless there were parsing errors.
-  bool Success = false;
-  if (!Diags.hasErrorOccurred())
-    Success = ExecuteAssembler(Asm, Diags);
+  bool Failed = Diags.hasErrorOccurred() || ExecuteAssembler(Asm, Diags);
 
   // If any timers were active but haven't been destroyed yet, print their
   // results now.
   TimerGroup::printAll(errs());
 
-  return !Success;
+  return !!Failed;
 }
