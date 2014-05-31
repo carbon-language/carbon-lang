@@ -142,7 +142,7 @@ error_code RealFile::close() {
   if (::close(FD))
     return error_code(errno, system_category());
   FD = -1;
-  return error_code::success();
+  return error_code();
 }
 
 void RealFile::setName(StringRef Name) {
@@ -175,7 +175,7 @@ error_code RealFileSystem::openFileForRead(const Twine &Name,
     return EC;
   Result.reset(new RealFile(FD));
   Result->setName(Name.str());
-  return error_code::success();
+  return error_code();
 }
 
 IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
@@ -829,7 +829,7 @@ error_code VFSFromYAML::openFileForRead(const Twine &Path,
   if (!F->useExternalName(UseExternalNames))
     Result->setName(Path.str());
 
-  return error_code::success();
+  return error_code();
 }
 
 IntrusiveRefCntPtr<FileSystem>

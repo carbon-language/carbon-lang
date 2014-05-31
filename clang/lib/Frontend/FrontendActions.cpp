@@ -153,7 +153,7 @@ static llvm::error_code addHeaderInclude(StringRef HeaderName,
   Includes += "\"\n";
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "}\n";
-  return llvm::error_code::success();
+  return llvm::error_code();
 }
 
 static llvm::error_code addHeaderInclude(const FileEntry *Header,
@@ -176,7 +176,7 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
                             SmallVectorImpl<char> &Includes) {
   // Don't collect any headers for unavailable modules.
   if (!Module->isAvailable())
-    return llvm::error_code::success();
+    return llvm::error_code();
 
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->NormalHeaders.size(); I != N; ++I) {
@@ -237,7 +237,7 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
             LangOpts, FileMgr, ModMap, *Sub, Includes))
       return Err;
 
-  return llvm::error_code::success();
+  return llvm::error_code();
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
@@ -310,7 +310,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
-  llvm::error_code Err = llvm::error_code::success();
+  llvm::error_code Err = llvm::error_code();
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
     Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
                            Module->IsExternC);
