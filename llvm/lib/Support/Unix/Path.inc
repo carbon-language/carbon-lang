@@ -248,7 +248,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
   while (true) {
     if (::getcwd(result.data(), result.capacity()) == nullptr) {
       // See if there was a real error.
-      if (errno != errc::not_enough_memory)
+      if (errno != ENOMEM)
         return error_code(errno, system_category());
       // Otherwise there just wasn't enough space.
       result.reserve(result.capacity() * 2);
@@ -265,7 +265,7 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::mkdir(p.begin(), S_IRWXU | S_IRWXG) == -1) {
-    if (errno != errc::file_exists || !IgnoreExisting)
+    if (errno != EEXIST || !IgnoreExisting)
       return error_code(errno, system_category());
   }
 
@@ -306,7 +306,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
 
   struct stat buf;
   if (lstat(p.begin(), &buf) != 0) {
-    if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (errno != ENOENT || !IgnoreNonExisting)
       return error_code(errno, system_category());
     return error_code();
   }
@@ -320,7 +320,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
     return make_error_code(errc::operation_not_permitted);
 
   if (::remove(p.begin()) == -1) {
-    if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (errno != ENOENT || !IgnoreNonExisting)
       return error_code(errno, system_category());
   }
 
@@ -355,7 +355,7 @@ error_code exists(const Twine &path, bool &result) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::access(p.begin(), F_OK) == -1) {
-    if (errno != errc::no_such_file_or_directory)
+    if (errno != ENOENT)
       return error_code(errno, system_category());
     result = false;
   } else

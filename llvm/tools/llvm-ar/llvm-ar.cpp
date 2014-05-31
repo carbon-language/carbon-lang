@@ -453,8 +453,7 @@ int NewArchiveIterator::getFD() const {
   // Linux cannot open directories with open(2), although
   // cygwin and *bsd can.
   if (NewStatus.type() == sys::fs::file_type::directory_file)
-    failIfError(error_code(errc::is_a_directory, posix_category()),
-                NewFilename);
+    failIfError(make_error_code(errc::is_a_directory), NewFilename);
 
   return NewFD;
 }

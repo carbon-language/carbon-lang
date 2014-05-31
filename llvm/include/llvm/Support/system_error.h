@@ -482,9 +482,7 @@ template <class Tp> struct is_error_condition_enum : public std::false_type {};
 // Some error codes are not present on all platforms, so we provide equivalents
 // for them:
 
-//enum class errc
-struct errc {
-enum _ {
+enum class errc {
   success                             = 0,
   address_family_not_supported        = EAFNOSUPPORT,
   address_in_use                      = EADDRINUSE,
@@ -606,15 +604,8 @@ enum _ {
   wrong_protocol_type                 = EPROTOTYPE
 };
 
-  _ v_;
-
-  errc(_ v) : v_(v) {}
-  operator int() const {return v_;}
-};
 
 template <> struct is_error_condition_enum<errc> : std::true_type { };
-
-template <> struct is_error_condition_enum<errc::_> : std::true_type { };
 
 class error_condition;
 class error_code;
@@ -818,8 +809,7 @@ inline bool operator!=(const error_condition& _x, const error_condition& _y) {
 //  To construct an error_code after an API error:
 //
 //      error_code( ::GetLastError(), system_category() )
-struct windows_error {
-enum _ {
+enum class windows_error {
   success = 0,
   // These names and values are based on Windows WinError.h
   // This is not a complete list. Add to this list if you need to explicitly
@@ -876,17 +866,8 @@ enum _ {
   cancel_violation        = 173, // ERROR_CANCEL_VIOLATION,
   already_exists          = 183  // ERROR_ALREADY_EXISTS
 };
-  _ v_;
-
-  windows_error(_ v) : v_(v) {}
-  explicit windows_error(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
-};
-
 
 template <> struct is_error_code_enum<windows_error> : std::true_type { };
-
-template <> struct is_error_code_enum<windows_error::_> : std::true_type { };
 
 inline error_code make_error_code(windows_error e) {
   return error_code(static_cast<int>(e), system_category());

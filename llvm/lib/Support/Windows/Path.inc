@@ -810,7 +810,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
     if (EC != windows_error::access_denied)
       return EC;
     if (is_directory(Name))
-      return error_code(errc::is_a_directory, posix_category());
+      return make_error_code(errc::is_a_directory);
     return EC;
   }
 
@@ -861,7 +861,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
     if (EC != windows_error::access_denied)
       return EC;
     if (is_directory(Name))
-      return error_code(errc::is_a_directory, posix_category());
+      return make_error_code(errc::is_a_directory);
     return EC;
   }
 
