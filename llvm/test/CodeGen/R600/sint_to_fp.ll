@@ -29,3 +29,25 @@ define void @sint_to_fp_v4i32(<4 x float> addrspace(1)* %out, <4 x i32> addrspac
   store <4 x float> %result, <4 x float> addrspace(1)* %out
   ret void
 }
+
+; FUNC-LABEL: @sint_to_fp_i1_f32:
+; SI: V_CMP_EQ_I32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
+; SI-NEXT: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, -1.000000e+00, [[CMP]]
+; SI: BUFFER_STORE_DWORD [[RESULT]],
+; SI: S_ENDPGM
+define void @sint_to_fp_i1_f32(float addrspace(1)* %out, i32 %in) {
+  %cmp = icmp eq i32 %in, 0
+  %fp = uitofp i1 %cmp to float
+  store float %fp, float addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @sint_to_fp_i1_f32_load:
+; SI: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, -1.000000e+00
+; SI: BUFFER_STORE_DWORD [[RESULT]],
+; SI: S_ENDPGM
+define void @sint_to_fp_i1_f32_load(float addrspace(1)* %out, i1 %in) {
+  %fp = sitofp i1 %in to float
+  store float %fp, float addrspace(1)* %out, align 4
+  ret void
+}
