@@ -1553,12 +1553,16 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
 
     OS << R.getName() << "Attr *" << R.getName()
        << "Attr::clone(ASTContext &C) const {\n";
-    OS << "  return new (C) " << R.getName() << "Attr(getLocation(), C";
+    OS << "  auto *A = new (C) " << R.getName() << "Attr(getLocation(), C";
     for (auto const &ai : Args) {
       OS << ", ";
       ai->writeCloneArgs(OS);
     }
-    OS << ", getSpellingListIndex());\n}\n\n";
+    OS << ", getSpellingListIndex());\n";
+    OS << "  A->Inherited = Inherited;\n";
+    OS << "  A->IsPackExpansion = IsPackExpansion;\n";
+    OS << "  A->Implicit = Implicit;\n";
+    OS << "  return A;\n}\n\n";
 
     writePrettyPrintFunction(R, Args, OS);
     writeGetSpellingFunction(R, OS);
