@@ -43,7 +43,7 @@ public:
 
   llvm::error_condition default_error_condition(int ev) const override {
     if (NativeReaderError(ev) == NativeReaderError::success)
-      return llvm::errc::success;
+      return llvm::error_condition();
     return llvm::errc::invalid_argument;
   }
 };
@@ -72,7 +72,7 @@ public:
 
   llvm::error_condition default_error_condition(int ev) const override {
     if (YamlReaderError(ev) == YamlReaderError::success)
-      return llvm::errc::success;
+      return llvm::error_condition();
     return llvm::errc::invalid_argument;
   }
 };
@@ -100,7 +100,7 @@ public:
   llvm::error_condition default_error_condition(int ev) const override {
     LinkerScriptReaderError e = LinkerScriptReaderError(ev);
     if (e == LinkerScriptReaderError::success)
-      return llvm::errc::success;
+      return llvm::error_condition();
     return llvm::errc::invalid_argument;
   }
 };
@@ -123,7 +123,7 @@ public:
 
   llvm::error_condition default_error_condition(int ev) const override {
     if (InputGraphError(ev) == InputGraphError::success)
-      return llvm::errc::success;
+      return llvm::error_condition();
     return llvm::errc::invalid_argument;
   }
 };
@@ -149,7 +149,7 @@ public:
 
   llvm::error_condition default_error_condition(int ev) const override {
     if (ReaderError(ev) == ReaderError::success)
-      return llvm::errc::success;
+      return llvm::error_condition();
     return llvm::errc::invalid_argument;
   }
 };
