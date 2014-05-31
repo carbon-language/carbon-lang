@@ -151,7 +151,6 @@ public:
 };
 
 class SelectionDAG;
-void checkForCycles(const SDNode *N);
 void checkForCycles(const SelectionDAG *DAG);
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
