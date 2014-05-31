@@ -49,7 +49,7 @@ std::string _object_error_category::message(int ev) const {
 
 error_condition _object_error_category::default_error_condition(int ev) const {
   if (ev == object_error::success)
-    return errc::success;
+    return error_condition();
   return errc::invalid_argument;
 }
 

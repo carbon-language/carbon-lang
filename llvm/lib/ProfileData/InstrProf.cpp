@@ -54,7 +54,7 @@ class InstrProfErrorCategoryType : public error_category {
   }
   error_condition default_error_condition(int EV) const override {
     if (EV == instrprof_error::success)
-      return errc::success;
+      return error_condition();
     return errc::invalid_argument;
   }
 };

@@ -483,7 +483,6 @@ template <class Tp> struct is_error_condition_enum : public std::false_type {};
 // for them:
 
 enum class errc {
-  success                             = 0,
   address_family_not_supported        = EAFNOSUPPORT,
   address_in_use                      = EADDRINUSE,
   address_not_available               = EADDRNOTAVAIL,
@@ -810,7 +809,6 @@ inline bool operator!=(const error_condition& _x, const error_condition& _y) {
 //
 //      error_code( ::GetLastError(), system_category() )
 enum class windows_error {
-  success = 0,
   // These names and values are based on Windows WinError.h
   // This is not a complete list. Add to this list if you need to explicitly
   // check for it.

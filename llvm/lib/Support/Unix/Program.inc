@@ -427,12 +427,12 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
 
 error_code sys::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
-  return make_error_code(errc::success);
+  return error_code();
 }
 
 error_code sys::ChangeStdoutToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
-  return make_error_code(errc::success);
+  return error_code();
 }
 
 bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {

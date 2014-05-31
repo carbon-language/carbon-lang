@@ -124,7 +124,7 @@ LockFileManager::LockFileManager(StringRef FileName)
     // Create a link from the lock file name. If this succeeds, we're done.
     error_code EC =
         sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
-    if (EC == errc::success)
+    if (!EC)
       return;
 
     if (EC != errc::file_exists) {
