@@ -82,14 +82,14 @@ void test_class_correction (Class x) {
 
 typedef enum : int { NSUTF8StringEncoding = 8 } NSStringEncoding;
 void test_fixed_enum_correction(NSStringEncoding x) {
-  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has type 'NSStringEncoding'}}
+  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has underlying type 'int'}}
   // CHECK: fix-it:"{{.*}}":{85:11-85:13}:"%d"
 }
 
 typedef __SIZE_TYPE__ size_t;
 enum SomeSize : size_t { IntegerSize = sizeof(int) };
 void test_named_fixed_enum_correction(enum SomeSize x) {
-  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has type 'enum SomeSize'}}
+  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has underlying type 'size_t' (aka 'unsigned long')}}
   // CHECK: fix-it:"{{.*}}":{92:11-92:13}:"%zu"
 }
 
@@ -227,4 +227,30 @@ void testSignedness(long i, unsigned long u) {
   printf("%+d", u); // expected-warning{{format specifies type 'int' but the argument has type 'unsigned long'}}
 
   // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:14}:"%+ld"
+}
+
+void testEnum() {
+  typedef enum {
+    ImplicitA = 1,
+    ImplicitB = 2
+  } Implicit;
+
+  typedef enum {
+    ImplicitLLA = 0,
+    ImplicitLLB = ~0ULL
+  } ImplicitLongLong;
+
+  typedef enum : short {
+    ExplicitA = 0,
+    ExplicitB
+  } ExplicitShort;
+
+  printf("%f", (Implicit)0); // expected-warning{{format specifies type 'double' but the argument has underlying type}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%{{[du]}}"
+
+  printf("%f", (ImplicitLongLong)0); // expected-warning{{format specifies type 'double' but the argument has underlying type}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%{{l*[du]}}"
+
+  printf("%f", (ExplicitShort)0); // expected-warning{{format specifies type 'double' but the argument has underlying type 'short'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%hd"
 }

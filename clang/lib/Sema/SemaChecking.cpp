@@ -3110,6 +3110,13 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         ExprTy = S.Context.CharTy;
   }
 
+  // Look through enums to their underlying type.
+  bool IsEnum = false;
+  if (auto EnumTy = ExprTy->getAs<EnumType>()) {
+    ExprTy = EnumTy->getDecl()->getIntegerType();
+    IsEnum = true;
+  }
+
   // %C in an Objective-C context prints a unichar, not a wchar_t.
   // If the argument is an integer of some kind, believe the %C and suggest
   // a cast instead of changing the conversion specifier.
@@ -3182,8 +3189,8 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
       // In this case, the specifier is wrong and should be changed to match
       // the argument.
       EmitFormatDiagnostic(
-        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << IntendedTy
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << IntendedTy << IsEnum
           << E->getSourceRange(),
         E->getLocStart(),
         /*IsStringLocation*/false,
@@ -3235,7 +3242,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         StringRef Name = cast<TypedefType>(ExprTy)->getDecl()->getName();
 
         EmitFormatDiagnostic(S.PDiag(diag::warn_format_argument_needs_cast)
-                               << Name << IntendedTy
+                               << Name << IntendedTy << IsEnum
                                << E->getSourceRange(),
                              E->getLocStart(), /*IsStringLocation=*/false,
                              SpecRange, Hints);
@@ -3244,8 +3251,8 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         // specifier, but we've decided that the specifier is probably correct 
         // and we should cast instead. Just use the normal warning message.
         EmitFormatDiagnostic(
-          S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-            << AT.getRepresentativeTypeName(S.Context) << ExprTy
+          S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+            << AT.getRepresentativeTypeName(S.Context) << ExprTy << IsEnum
             << E->getSourceRange(),
           E->getLocStart(), /*IsStringLocation*/false,
           SpecRange, Hints);
@@ -3261,8 +3268,8 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     case Sema::VAK_Valid:
     case Sema::VAK_ValidInCXX11:
       EmitFormatDiagnostic(
-        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << ExprTy
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << ExprTy << IsEnum
           << CSR
           << E->getSourceRange(),
         E->getLocStart(), /*IsStringLocation*/false, CSR);
@@ -3453,8 +3460,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
       fixedFS.toString(os);
 
       EmitFormatDiagnostic(
-        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << Ex->getType()
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << Ex->getType() << false
           << Ex->getSourceRange(),
         Ex->getLocStart(),
         /*IsStringLocation*/false,
@@ -3464,8 +3471,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
           os.str()));
     } else {
       EmitFormatDiagnostic(
-        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << Ex->getType()
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << Ex->getType() << false
           << Ex->getSourceRange(),
         Ex->getLocStart(),
         /*IsStringLocation*/false,

@@ -20,7 +20,7 @@ void test(TestEnum input) {
     printf("%d", input); // no-warning
     printf("%d", Constant); // no-warning
 
-    printf("%lld", input); // expected-warning{{format specifies type 'long long' but the argument has type 'TestEnum'}}
+    printf("%lld", input); // expected-warning-re{{format specifies type 'long long' but the argument has underlying type '{{(unsigned)?}} int'}}
     printf("%lld", Constant); // expected-warning{{format specifies type 'long long'}}
 }
 
@@ -28,7 +28,7 @@ void test(TestEnum input) {
 typedef enum { LongConstant = ~0UL } LongEnum;
 
 void testLong(LongEnum input) {
-  printf("%u", input); // expected-warning{{format specifies type 'unsigned int' but the argument has type 'LongEnum'}}
+  printf("%u", input); // expected-warning{{format specifies type 'unsigned int' but the argument has underlying type}}
   printf("%u", LongConstant); // expected-warning{{format specifies type 'unsigned int'}}
   
   printf("%lu", input);

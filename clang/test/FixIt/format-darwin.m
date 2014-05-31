@@ -1,11 +1,8 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -fblocks -Wformat-non-iso -verify %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fsyntax-only -fblocks -Wformat-non-iso -verify %s
 
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck %s
-
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck -check-prefix=CHECK-32 %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck -check-prefix=CHECK-64 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck -check-prefix=CHECK -check-prefix=CHECK-32 %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fdiagnostics-parseable-fixits -fblocks -Wformat-non-iso %s 2>&1 | FileCheck -check-prefix=CHECK -check-prefix=CHECK-64 %s
 
 int printf(const char * restrict, ...);
 
@@ -25,10 +22,16 @@ typedef unsigned long UInt32;
 
 typedef SInt32 OSStatus;
 
+typedef enum NSIntegerEnum : NSInteger {
+  EnumValueA,
+  EnumValueB
+} NSIntegerEnum;
+
 NSInteger getNSInteger();
 NSUInteger getNSUInteger();
 SInt32 getSInt32();
 UInt32 getUInt32();
+NSIntegerEnum getNSIntegerEnum();
 
 void testCorrectionInAllCases() {
   printf("%s", getNSInteger()); // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
@@ -47,6 +50,11 @@ void testCorrectionInAllCases() {
 
   // CHECK: fix-it:"{{.*}}":{[[@LINE-11]]:11-[[@LINE-11]]:13}:"%u"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-12]]:16-[[@LINE-12]]:16}:"(unsigned int)"
+
+  printf("%s", getNSIntegerEnum()); // expected-warning{{enum values with underlying type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:13}:"%ld"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:16-[[@LINE-3]]:16}:"(long)"
 }
 
 @interface Foo {
@@ -107,6 +115,11 @@ void testWarn() {
 
   // CHECK-64: fix-it:"{{.*}}":{[[@LINE-11]]:11-[[@LINE-11]]:14}:"%u"
   // CHECK-64: fix-it:"{{.*}}":{[[@LINE-12]]:17-[[@LINE-12]]:17}:"(unsigned int)"
+
+  printf("%d", getNSIntegerEnum()); // expected-warning{{enum values with underlying type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+
+  // CHECK-64: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:13}:"%ld"
+  // CHECK-64: fix-it:"{{.*}}":{[[@LINE-3]]:16-[[@LINE-3]]:16}:"(long)"
 }
 
 void testPreserveHex() {
@@ -135,6 +148,7 @@ void testNoWarn() {
   printf("%lu", getNSUInteger()); // no-warning
   printf("%d", getSInt32()); // no-warning
   printf("%u", getUInt32()); // no-warning
+  printf("%ld", getNSIntegerEnum()); // no-warning
 }
 
 #else
@@ -149,6 +163,10 @@ void testWarn() {
   // CHECK-32: fix-it:"{{.*}}":{[[@LINE-5]]:17-[[@LINE-5]]:17}:"(unsigned long)"
   // CHECK-32: fix-it:"{{.*}}":{[[@LINE-5]]:16-[[@LINE-5]]:16}:"(int)"
   // CHECK-32: fix-it:"{{.*}}":{[[@LINE-5]]:16-[[@LINE-5]]:16}:"(unsigned int)"
+
+  printf("%ld", getNSIntegerEnum()); // expected-warning{{enum values with underlying type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+
+  // CHECK-32: fix-it:"{{.*}}":{[[@LINE-2]]:17-[[@LINE-2]]:17}:"(long)"
 }
 
 void testPreserveHex() {
@@ -164,6 +182,7 @@ void testNoWarn() {
   printf("%u", getNSUInteger()); // no-warning
   printf("%ld", getSInt32()); // no-warning
   printf("%lu", getUInt32()); // no-warning
+  printf("%d", getNSIntegerEnum()); // no-warning
 }
 
 void testSignedness(NSInteger i, NSUInteger u) {
@@ -194,6 +213,11 @@ void testCasts() {
 
   // CHECK: fix-it:"{{.*}}":{[[@LINE-11]]:11-[[@LINE-11]]:13}:"%u"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-12]]:16-[[@LINE-12]]:24}:"(unsigned int)"
+
+  printf("%s", (NSIntegerEnum)0); // expected-warning{{enum values with underlying type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:13}:"%ld"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:16-[[@LINE-3]]:31}:"(long)"
 }
 
 void testCapitals() {
