@@ -35,7 +35,7 @@ protected:
   virtual error_code setELFHeader() {
     ExecutableWriter<ELFT>::setELFHeader();
     HexagonELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
-    return error_code::success();
+    return error_code();
   }
 
 private:

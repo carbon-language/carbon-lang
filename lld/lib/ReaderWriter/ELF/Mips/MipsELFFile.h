@@ -158,7 +158,7 @@ private:
       } else if (!_tpOff.hasValue() && section.sh_flags & llvm::ELF::SHF_TLS)
         _tpOff = section.sh_addr + TP_OFFSET;
     }
-    return error_code::success();
+    return error_code();
   }
 
   void createRelocationReferences(const Elf_Sym &symbol,

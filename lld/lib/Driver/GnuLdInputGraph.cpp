@@ -41,7 +41,7 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
     }
     // if --whole-archive is around non-archive, just use it as normal.
     _files.push_back(std::move(f));
-    return error_code::success();
+    return error_code();
   }
   return ctx.registry().parseFile(_buffer, _files);
 }
@@ -66,7 +66,7 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
   if (!_linkerScript)
     return LinkerScriptReaderError::parse_error;
 
-  return error_code::success();
+  return error_code();
 }
 
 static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
@@ -106,5 +106,5 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     }
     _expandElements.push_back(std::move(groupStart));
   }
-  return error_code::success();
+  return error_code();
 }

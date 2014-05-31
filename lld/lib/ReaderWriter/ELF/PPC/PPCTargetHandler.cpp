@@ -44,7 +44,7 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code::success();
+    return error_code();
   assert(ref.kindArch() == Reference::KindArch::PowerPC);
   switch (ref.kindValue()) {
   case R_PPC_REL24:
@@ -60,7 +60,7 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &context)

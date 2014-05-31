@@ -122,7 +122,7 @@ static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
   case llvm::sys::fs::file_magic::elf_relocatable:
   case llvm::sys::fs::file_magic::elf_shared_object:
   case llvm::sys::fs::file_magic::unknown:
-    return error_code::success();
+    return error_code();
   default:
     break;
   }

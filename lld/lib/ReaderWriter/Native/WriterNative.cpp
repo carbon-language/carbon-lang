@@ -73,11 +73,11 @@ public:
     llvm::raw_fd_ostream out(outPath.data(), errorInfo,
                              llvm::sys::fs::F_None);
     if (!errorInfo.empty())
-      return error_code::success(); // FIXME
+      return error_code(); // FIXME
 
     this->write(out);
 
-    return error_code::success();
+    return error_code();
   }
 
   virtual ~Writer() {

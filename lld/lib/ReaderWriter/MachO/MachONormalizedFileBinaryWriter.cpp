@@ -524,7 +524,7 @@ error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
     ++sout;
   }
   lc = next;
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -587,7 +587,7 @@ error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
   if (_swap)
     swapStruct(*cmd);
   lc = next;
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -954,7 +954,7 @@ error_code MachOFileLayout::writeBinary(StringRef path) {
   writeLinkEditContent();
   fob->commit();
 
-  return error_code::success();
+  return error_code();
 }
 
 

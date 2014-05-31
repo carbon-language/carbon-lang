@@ -58,7 +58,7 @@ public:
       } else {
         // if --whole-archive is around non-archive, just use it as normal.
         _files.push_back(std::move(f));
-        return error_code::success();
+        return error_code();
       }
     }
     return ctx.registry().parseFile(_buffer, _files);

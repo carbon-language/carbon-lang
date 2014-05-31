@@ -706,7 +706,7 @@ writeYaml(const NormalizedFile &file, raw_ostream &out) {
   // Stream out yaml.
   yout << *f;
 
-  return error_code::success();
+  return error_code();
 }
 
 } // namespace normalized

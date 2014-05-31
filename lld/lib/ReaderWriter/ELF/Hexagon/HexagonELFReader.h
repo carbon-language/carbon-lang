@@ -54,7 +54,7 @@ public:
     if (error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
-    return error_code::success();
+    return error_code();
   }
 };
 
@@ -73,7 +73,7 @@ public:
     if (error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
-    return error_code::success();
+    return error_code();
   }
 };
 

@@ -90,7 +90,7 @@ error_code FileNode::getBuffer(StringRef filePath) {
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
     return ec;
   _buffer = std::move(mb);
-  return error_code::success();
+  return error_code();
 }
 
 /// \brief Return the next file that need to be processed by the resolver.

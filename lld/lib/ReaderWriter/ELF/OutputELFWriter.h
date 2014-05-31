@@ -394,7 +394,7 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   if (_context.isDynamic())
     _dynamicTable->updateDynamicTable();
 
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT> error_code OutputELFWriter<ELFT>::setELFHeader() {
@@ -419,7 +419,7 @@ template <class ELFT> error_code OutputELFWriter<ELFT>::setELFHeader() {
   _layout.findAtomAddrByName(_context.entrySymbolName(), virtualAddr);
   _elfHeader->e_entry(virtualAddr);
 
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT> uint64_t OutputELFWriter<ELFT>::outputFileSize() const {

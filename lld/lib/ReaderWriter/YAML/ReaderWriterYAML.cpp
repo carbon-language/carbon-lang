@@ -663,7 +663,7 @@ template <> struct MappingTraits<const lld::File *> {
 
     virtual error_code
     parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
-      return error_code::success();
+      return error_code();
     }
 
     StringRef               _path;
@@ -1308,7 +1308,7 @@ public:
     const lld::File *fileRef = &file;
     yout << fileRef;
 
-    return error_code::success();
+    return error_code();
   }
 
 private:

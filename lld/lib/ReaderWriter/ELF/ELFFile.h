@@ -509,7 +509,7 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtomizableSections() {
     }
   }
   _references.reserve(totalRelocs);
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT> error_code ELFFile<ELFT>::createMergeableAtoms() {
@@ -550,7 +550,7 @@ template <class ELFT> error_code ELFFile<ELFT>::createMergeableAtoms() {
     _definedAtoms._atoms.push_back(*mergeAtom);
     _mergeAtoms.push_back(*mergeAtom);
   }
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT>
@@ -594,7 +594,7 @@ error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
     }
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
@@ -736,7 +736,7 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
   }
 
   updateReferences();
-  return error_code::success();
+  return error_code();
 }
 
 template <class ELFT>

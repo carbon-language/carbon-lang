@@ -78,7 +78,7 @@ public:
       if (error_code ec = instantiateMember(mf, result))
         return ec;
     }
-    return error_code::success();
+    return error_code();
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
@@ -117,7 +117,7 @@ protected:
     _registry.parseFile(mb, result);
     const char *memberStart = member->getBuffer().data();
     _membersInstantiated.insert(memberStart);
-    return error_code::success();
+    return error_code();
   }
 
   error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb, StringRef symbol) const {
@@ -152,7 +152,7 @@ protected:
         return ec;
 
       if (symtype == SymbolRef::ST_Data) {
-        return error_code::success();
+        return error_code();
       }
     }
     return object_error::parse_failed;
@@ -199,7 +199,7 @@ public:
                        << "'" << name << "'\n");
       _symbolMemberMap[name] = member;
     }
-    return error_code::success();
+    return error_code();
   }
 
 }; // class FileArchive
@@ -233,7 +233,7 @@ public:
     mb.release();
 
     result.push_back(std::move(file));
-    return error_code::success();
+    return error_code();
   }
 
 private:

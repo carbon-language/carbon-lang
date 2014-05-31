@@ -220,7 +220,7 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code::success();
+    return error_code();
   assert(ref.kindArch() == Reference::KindArch::Hexagon);
   switch (ref.kindValue()) {
   case R_HEX_B22_PCREL:
@@ -353,7 +353,7 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 

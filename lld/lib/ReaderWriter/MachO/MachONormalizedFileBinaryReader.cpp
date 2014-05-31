@@ -68,12 +68,12 @@ forEachLoadCommand(StringRef lcRange, unsigned lcCount, bool swap, bool is64,
       return llvm::make_error_code(llvm::errc::executable_format_error);
 
     if (func(slc->cmd, slc->cmdsize, p))
-      return error_code::success();
+      return error_code();
 
     p += slc->cmdsize;
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -88,7 +88,7 @@ appendRelocations(Relocations &relocs, StringRef buffer, bool swap,
   for(uint32_t i=0; i < nreloc; ++i) {
     relocs.push_back(unpackRelocation(relocsArray[i], swap, bigEndian));
   }
-  return error_code::success();
+  return error_code();
 }
 
 static error_code
@@ -105,7 +105,7 @@ appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
   for(uint32_t i=0; i < count; ++i) {
     isyms.push_back(read32(swap, indirectSymbolArray[startIndex+i]));
   }
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -426,7 +426,7 @@ public:
 
     result.push_back(std::move(*file));
 
-    return error_code::success();
+    return error_code();
   }
 private:
   MachOLinkingContext::Arch _arch;

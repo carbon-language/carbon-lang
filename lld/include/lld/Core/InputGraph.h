@@ -188,7 +188,7 @@ public:
     for (std::unique_ptr<InputElement> &ei : _elements)
       if (error_code ec = ei->parse(ctx, diag))
         return ec;
-    return error_code::success();
+    return error_code();
   }
 
   /// If Resolver made a progress using the current file, it's ok to revisit
@@ -290,7 +290,7 @@ public:
 
   /// \brief parse the input element
   error_code parse(const LinkingContext &, raw_ostream &) override {
-    return error_code::success();
+    return error_code();
   }
 
   /// \brief Return the next File thats part of this node to the

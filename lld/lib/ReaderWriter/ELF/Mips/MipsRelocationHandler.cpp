@@ -123,7 +123,7 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
-    return error_code::success();
+    return error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
   AtomLayout *gpAtom = _mipsTargetLayout.getGP();
@@ -204,5 +204,5 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code::success();
+  return error_code();
 }

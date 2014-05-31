@@ -19,7 +19,7 @@ bool isCOFFLibraryFileExtension(StringRef path) {
 error_code PECOFFFileNode::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   if (_parsed)
-    return error_code::success();
+    return error_code();
   _parsed = true;
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (error_code ec = filePath.getError()) {

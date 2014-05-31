@@ -318,7 +318,7 @@ error_code FileCOFF::parse() {
     return ec;
   if (error_code ec = maybeCreateSXDataAtoms())
     return ec;
-  return error_code::success();
+  return error_code();
 }
 
 /// Iterate over the symbol table to retrieve all symbols.
@@ -364,7 +364,7 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
  next:
       i += sym->NumberOfAuxSymbols;
   }
-  return error_code::success();
+  return error_code();
 }
 
 /// Create atoms for the absolute symbols.
@@ -436,7 +436,7 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
     result.push_back(atom);
     _symbolAtom[sym] = atom;
   }
-  return error_code::success();
+  return error_code();
 }
 
 /// Create atoms for the defined symbols. This pass is a bit complicated than
@@ -526,7 +526,7 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
   if (error_code ec = AtomizeDefinedSymbols(definedSymbols, result))
     return ec;
 
-  return error_code::success();
+  return error_code();
 }
 
 // Cache the COMDAT attributes, which indicate whether the symbols in the
@@ -567,7 +567,7 @@ error_code FileCOFF::cacheSectionAttributes() {
     if (!_merge.count(sec))
       _merge[sec] = DefinedAtom::mergeNo;
   }
-  return error_code::success();
+  return error_code();
 }
 
 /// Atomize \p symbols and append the results to \p atoms. The symbols are
@@ -603,7 +603,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
       atoms.push_back(atom);
       _symbolAtom[sym] = atom;
     }
-    return error_code::success();
+    return error_code();
   }
 
   ArrayRef<uint8_t> secData;
@@ -614,7 +614,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   // a part of the output image. That's what the COFF spec says.
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_INFO ||
       section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
-    return error_code::success();
+    return error_code();
 
   // Supporting debug info needs more work than just linking and combining
   // .debug sections. We don't support it yet. Let's discard .debug sections at
@@ -622,7 +622,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   // blobs that nobody would understand.
   if ((section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE) &&
       (sectionName == ".debug" || sectionName.startswith(".debug$"))) {
-    return error_code::success();
+    return error_code();
   }
 
   DefinedAtom::ContentType type = getContentType(section);
@@ -637,7 +637,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
         perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
-    return error_code::success();
+    return error_code();
   }
 
   // Create an unnamed atom if the first atom isn't at the start of the
@@ -669,7 +669,7 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
   // Finally, set alignment to the first atom so that the section contents
   // will be aligned as specified by the object section header.
   _definedAtomLocations[section][0][0]->setAlignment(getAlignment(section));
-  return error_code::success();
+  return error_code();
 }
 
 error_code
@@ -692,7 +692,7 @@ FileCOFF::AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
       definedAtoms.push_back(atom);
     }
   }
-  return error_code::success();
+  return error_code();
 }
 
 /// Find the atom that is at \p targetAddress in \p section.
@@ -708,7 +708,7 @@ error_code FileCOFF::findAtomAt(const coff_section *section,
         targetAddress < atomAddress + atom->size()) {
       result = atom;
       offsetInAtom = targetAddress - atomAddress;
-      return error_code::success();
+      return error_code();
     }
   }
   // Relocation target is out of range
@@ -723,7 +723,7 @@ error_code FileCOFF::getAtomBySymbolIndex(uint32_t index, Atom *&ret) {
     return ec;
   ret = _symbolAtom[symbol];
   assert(ret);
-  return error_code::success();
+  return error_code();
 }
 
 /// Add relocation information to an atom based on \p rel. \p rel is an
@@ -751,7 +751,7 @@ FileCOFF::addRelocationReference(const coff_relocation *rel,
       new COFFReference(targetAtom, offsetInAtom, rel->Type,
                         Reference::KindNamespace::COFF,
                         _referenceArch)));
-  return error_code::success();
+  return error_code();
 }
 
 // Read section contents.
@@ -761,10 +761,10 @@ error_code FileCOFF::getSectionContents(StringRef sectionName,
   if (error_code ec = findSection(sectionName, section))
     return ec;
   if (!section)
-    return error_code::success();
+    return error_code();
   if (error_code ec = _obj->getSectionContents(section, result))
     return ec;
-  return error_code::success();
+  return error_code();
 }
 
 /// Returns the target machine type of the current object file.
@@ -775,13 +775,13 @@ error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   switch (header->Machine) {
   case llvm::COFF::IMAGE_FILE_MACHINE_I386:
     result = Reference::KindArch::x86;
-    return error_code::success();
+    return error_code();
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
     result = Reference::KindArch::x86_64;
-    return error_code::success();
+    return error_code();
   case llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN:
     result = Reference::KindArch::all;
-    return error_code::success();
+    return error_code();
   }
   llvm::errs() << "Unsupported machine type: " << header->Machine << "\n";
   return llvm::object::object_error::parse_failed;
@@ -806,7 +806,7 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
         return ec;
     }
   }
-  return error_code::success();
+  return error_code();
 }
 
 // Read .sxdata section if exists. .sxdata is a x86-only section that contains a
@@ -827,7 +827,7 @@ error_code FileCOFF::maybeCreateSXDataAtoms() {
   if (error_code ec = getSectionContents(".sxdata", sxdata))
     return ec;
   if (sxdata.empty())
-    return error_code::success();
+    return error_code();
 
   std::vector<uint8_t> atomContent =
       *new (_alloc) std::vector<uint8_t>((size_t)sxdata.size());
@@ -851,7 +851,7 @@ error_code FileCOFF::maybeCreateSXDataAtoms() {
   }
 
   _definedAtoms._atoms.push_back(atom);
-  return error_code::success();
+  return error_code();
 }
 
 /// Find a section by name.
@@ -863,12 +863,12 @@ error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
       return ec;
     if (sectionName == name) {
       result = section;
-      return error_code::success();
+      return error_code();
     }
   }
   // Section was not found, but it's not an error. This method returns
   // an error only when there's a read error.
-  return error_code::success();
+  return error_code();
 }
 
 // Convert ArrayRef<uint8_t> to std::string. The array contains a string which
@@ -931,7 +931,7 @@ public:
     if (error_code ec = file->parse())
       return ec;
     result.push_back(std::move(file));
-    return error_code::success();
+    return error_code();
   }
 
 private:
@@ -1048,7 +1048,7 @@ public:
     createAlternateNameAtoms(*file);
 
     result.push_back(std::move(file));
-    return error_code::success();
+    return error_code();
   }
 
 private:
@@ -1086,7 +1086,7 @@ private:
     if (!errorMessage.empty()) {
       llvm::errs() << "lld warning: " << errorMessage << "\n";
     }
-    return error_code::success();
+    return error_code();
   }
 
   AliasAtom *createAlias(FileCOFF &file, StringRef name,

@@ -120,7 +120,7 @@ processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
   case symbolsOk:
     break;
   case symbolsIgnored:
-    return error_code::success();
+    return error_code();
     break;
   case symbolsIllegal:
     return make_dynamic_error_code(Twine("Symbol '") + sym.name
@@ -155,7 +155,7 @@ processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
                         copyRefs);
     }
   }
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -198,7 +198,7 @@ static error_code processUTF16Section(MachOFile &file, const Section &section,
                                    "last string in the section is not zero "
                                    "terminated.");
   }
-  return error_code::success();
+  return error_code();
 }
 
 // A __DATA/__cfstring section contain NS/CFString objects. Atom boundaries
@@ -220,7 +220,7 @@ static error_code processCFStringSection(MachOFile &file,const Section &section,
                         DefinedAtom::mergeByContent, byteContent, copyRefs);
     offset += cfsObjSize;
   }
-  return error_code::success();
+  return error_code();
 }
 
 
@@ -254,7 +254,7 @@ static error_code processCFISection(MachOFile &file, const Section &section,
                         bytes, copyRefs);
     offset += len;
   }
-  return error_code::success();
+  return error_code();
 }
 
 static error_code 
@@ -275,7 +275,7 @@ processCompactUnwindSection(MachOFile &file, const Section &section,
                         DefinedAtom::mergeNo, byteContent, copyRefs);
     offset += cuObjSize;
   }
-  return error_code::success();
+  return error_code();
 }
 
 static error_code processSection(MachOFile &file, const Section &section,
@@ -437,7 +437,7 @@ static error_code processSection(MachOFile &file, const Section &section,
     llvm_unreachable("mach-o section type not supported yet");
     break;
   }
-  return error_code::success();
+  return error_code();
 }
 
 static ErrorOr<std::unique_ptr<lld::File>>

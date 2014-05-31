@@ -304,7 +304,7 @@ public:
   error_code handleGOTREL(const Reference &ref) {
     // Turn this so that the target is set to the GOT entry
     const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
-    return error_code::success();
+    return error_code();
   }
 
   error_code handlePLT32(const Reference &ref) {
@@ -313,7 +313,7 @@ public:
     assert(ref.kindArch() == Reference::KindArch::Hexagon);
     const_cast<Reference &>(ref).setKindValue(R_HEX_B22_PCREL);
     const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
-    return error_code::success();
+    return error_code();
   }
 };
 

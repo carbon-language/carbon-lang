@@ -18,6 +18,6 @@ namespace lld {
 error_code PassManager::runOnFile(std::unique_ptr<MutableFile> &mf) {
   for (std::unique_ptr<Pass> &pass : _passes)
     pass->perform(mf);
-  return error_code::success();
+  return error_code();
 }
 } // end namespace lld

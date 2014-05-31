@@ -36,7 +36,7 @@ protected:
   error_code setELFHeader() override {
     ExecutableWriter<ELFT>::setELFHeader();
     _writeHelper.setELFHeader(*this->_elfHeader);
-    return error_code::success();
+    return error_code();
   }
 
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable();

@@ -52,7 +52,7 @@ public:
     if (!f)
       return f;
     result.push_back(std::move(*f));
-    return error_code::success();
+    return error_code();
   }
 };
 
@@ -71,7 +71,7 @@ public:
     if (!f)
       return f;
     result.push_back(std::move(*f));
-    return error_code::success();
+    return error_code();
   }
 };
 

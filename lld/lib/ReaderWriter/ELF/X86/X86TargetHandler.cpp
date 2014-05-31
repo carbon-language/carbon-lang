@@ -105,7 +105,7 @@ error_code X86TargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code::success();
+    return error_code();
   assert(ref.kindArch() == Reference::KindArch::x86);
   switch (ref.kindValue()) {
   case R_386_32:
@@ -123,7 +123,7 @@ error_code X86TargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 X86TargetHandler::X86TargetHandler(X86LinkingContext &context)
