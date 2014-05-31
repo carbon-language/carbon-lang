@@ -1679,7 +1679,7 @@ SourceRange VarDecl::getSourceRange() const {
 }
 
 template<typename T>
-static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
+static LanguageLinkage getDeclLanguageLinkage(const T &D) {
   // C++ [dcl.link]p1: All function types, function names with external linkage,
   // and variable names with external linkage have a language linkage.
   if (!D.hasExternalFormalLinkage())
@@ -1707,7 +1707,7 @@ static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
 }
 
 template<typename T>
-static bool isExternCTemplate(const T &D) {
+static bool isDeclExternC(const T &D) {
   // Since the context is ignored for class members, they can only have C++
   // language linkage or no language linkage.
   const DeclContext *DC = D.getDeclContext();
@@ -1720,11 +1720,11 @@ static bool isExternCTemplate(const T &D) {
 }
 
 LanguageLinkage VarDecl::getLanguageLinkage() const {
-  return getLanguageLinkageTemplate(*this);
+  return getDeclLanguageLinkage(*this);
 }
 
 bool VarDecl::isExternC() const {
-  return isExternCTemplate(*this);
+  return isDeclExternC(*this);
 }
 
 bool VarDecl::isInExternCContext() const {
@@ -2406,11 +2406,11 @@ FunctionDecl::getCorrespondingUnsizedGlobalDeallocationFunction() const {
 }
 
 LanguageLinkage FunctionDecl::getLanguageLinkage() const {
-  return getLanguageLinkageTemplate(*this);
+  return getDeclLanguageLinkage(*this);
 }
 
 bool FunctionDecl::isExternC() const {
-  return isExternCTemplate(*this);
+  return isDeclExternC(*this);
 }
 
 bool FunctionDecl::isInExternCContext() const {
