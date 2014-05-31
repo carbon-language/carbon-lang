@@ -210,7 +210,7 @@ static error_code GetFileNameFromHandle(HANDLE FileHandle,
     return windows_error(::GetLastError());
   else {
     Name = Filename;
-    return windows_error::success;
+    return error_code();
   }
 }
 
@@ -249,7 +249,7 @@ static std::string FindProgram(const std::string &Program, error_code &ec) {
       break;
     } else {
       // We found the path! Return it.
-      ec = windows_error::success;
+      ec = error_code();
       break;
     }
   }
