@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __THUMB_FRAMEINFO_H_
-#define __THUMB_FRAMEINFO_H_
+#ifndef LLVM_ARM_THUMB1FRAMELOWERING_H
+#define LLVM_ARM_THUMB1FRAMELOWERING_H
 
 #include "ARMFrameLowering.h"
 #include "ARMSubtarget.h"

@@ -1,5 +1,5 @@
-#ifndef __CL_COMMON_DEFINES_H__
-#define __CL_COMMON_DEFINES_H__
+#ifndef CL_COMMON_DEFINES_H
+#define CL_COMMON_DEFINES_H
 // This file includes defines that are common to both kernel code and
 // the NVPTX back-end.
 
@@ -119,4 +119,4 @@ typedef enum clk_sampler_type {
 #define CLK_LOCAL_MEM_FENCE (1 << 0)
 #define CLK_GLOBAL_MEM_FENCE (1 << 1)
 
-#endif // __CL_COMMON_DEFINES_H__
+#endif // CL_COMMON_DEFINES_H
