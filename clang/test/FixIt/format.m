@@ -89,7 +89,7 @@ void test_fixed_enum_correction(NSStringEncoding x) {
 typedef __SIZE_TYPE__ size_t;
 enum SomeSize : size_t { IntegerSize = sizeof(int) };
 void test_named_fixed_enum_correction(enum SomeSize x) {
-  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has underlying type 'size_t' (aka 'unsigned long')}}
+  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has underlying type 'size_t' (aka}}
   // CHECK: fix-it:"{{.*}}":{92:11-92:13}:"%zu"
 }
 
