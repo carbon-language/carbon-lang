@@ -334,7 +334,7 @@ public:
     assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
     if (N.getNode())
-      checkForCycles(N.getNode());
+      checkForCycles(N.getNode(), this);
     Root = N;
     if (N.getNode())
       checkForCycles(this);
