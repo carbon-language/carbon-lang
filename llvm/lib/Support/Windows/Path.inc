@@ -791,17 +791,6 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   return error_code::success();
 }
 
-error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,
-                                            bool map_writable, void *&result) {
-  assert(0 && "NOT IMPLEMENTED");
-  return windows_error::invalid_function;
-}
-
-error_code unmap_file_pages(void *base, size_t size) {
-  assert(0 && "NOT IMPLEMENTED");
-  return windows_error::invalid_function;
-}
-
 error_code openFileForRead(const Twine &Name, int &ResultFD) {
   SmallString<128> PathStorage;
   SmallVector<wchar_t, 128> PathUTF16;

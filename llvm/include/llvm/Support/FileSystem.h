@@ -722,30 +722,6 @@ public:
   static int alignment();
 };
 
-/// @brief Memory maps the contents of a file
-///
-/// @param path Path to file to map.
-/// @param file_offset Byte offset in file where mapping should begin.
-/// @param size Byte length of range of the file to map.
-/// @param map_writable If true, the file will be mapped in r/w such
-///        that changes to the mapped buffer will be flushed back
-///        to the file.  If false, the file will be mapped read-only
-///        and the buffer will be read-only.
-/// @param result Set to the start address of the mapped buffer.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,  
-                          bool map_writable, void *&result);
-
-
-/// @brief Memory unmaps the contents of a file
-///
-/// @param base Pointer to the start of the buffer.
-/// @param size Byte length of the range to unmmap.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code unmap_file_pages(void *base, size_t size);
-
 /// Return the path to the main executable, given the value of argv[0] from
 /// program startup and the address of main itself. In extremis, this function
 /// may fail and return an empty path.

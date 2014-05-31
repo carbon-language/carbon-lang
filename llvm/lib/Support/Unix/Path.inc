@@ -653,35 +653,6 @@ error_code get_magic(const Twine &path, uint32_t len,
   return error_code::success();
 }
 
-error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,  
-                                            bool map_writable, void *&result) {
-  SmallString<128> path_storage;
-  StringRef name = path.toNullTerminatedStringRef(path_storage);
-  int oflags = map_writable ? O_RDWR : O_RDONLY;
-  int ofd = ::open(name.begin(), oflags);
-  if ( ofd == -1 )
-    return error_code(errno, system_category());
-  AutoFD fd(ofd);
-  int flags = map_writable ? MAP_SHARED : MAP_PRIVATE;
-  int prot = map_writable ? (PROT_READ|PROT_WRITE) : PROT_READ;
-#ifdef MAP_FILE
-  flags |= MAP_FILE;
-#endif
-  result = ::mmap(nullptr, size, prot, flags, fd, file_offset);
-  if (result == MAP_FAILED) {
-    return error_code(errno, system_category());
-  }
-  
-  return error_code::success();
-}
-
-error_code unmap_file_pages(void *base, size_t size) {
-  if ( ::munmap(base, size) == -1 )
-    return error_code(errno, system_category());
-   
-  return error_code::success();
-}
-
 error_code openFileForRead(const Twine &Name, int &ResultFD) {
   SmallString<128> Storage;
   StringRef P = Name.toNullTerminatedStringRef(Storage);
