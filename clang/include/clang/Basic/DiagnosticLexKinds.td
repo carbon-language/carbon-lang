@@ -501,6 +501,8 @@ def ext_pp_bad_paste_ms : ExtWarn<
   InGroup<DiagGroup<"invalid-token-paste">>;
 def err_pp_operator_used_as_macro_name : Error<
   "C++ operator %0 (aka %1) used as a macro name">;
+def ext_pp_operator_used_as_macro_name : Extension<
+  "C++ operator %0 (aka %1) used as a macro name">, InGroup<Microsoft>;
 def err_pp_illegal_floating_literal : Error<
   "floating point literal in preprocessor expression">;
 def err_pp_line_requires_integer : Error<

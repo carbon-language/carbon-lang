@@ -426,3 +426,6 @@ void TestProperty() {
   sp.V11++;
   ++sp.V11;
 }
+
+//expected-warning@+1 {{C++ operator 'and' (aka '&&') used as a macro name}}
+#define and foo

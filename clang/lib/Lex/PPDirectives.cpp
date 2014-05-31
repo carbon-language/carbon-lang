@@ -145,11 +145,12 @@ bool Preprocessor::CheckMacroName(Token &MacroNameTok, char isDefineUndef) {
     if (!II->isCPlusPlusOperatorKeyword())
       return Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
 
-    if (!getLangOpts().MSVCCompat)
-      // C++ 2.5p2: Alternative tokens behave the same as its primary token
-      // except for their spellings.
-      Diag(MacroNameTok, diag::err_pp_operator_used_as_macro_name)
-          << II << MacroNameTok.getKind();
+    // C++ 2.5p2: Alternative tokens behave the same as its primary token
+    // except for their spellings.
+    Diag(MacroNameTok, getLangOpts().MicrosoftExt
+                           ? diag::ext_pp_operator_used_as_macro_name
+                           : diag::err_pp_operator_used_as_macro_name)
+        << II << MacroNameTok.getKind();
 
     // Allow #defining |and| and friends for Microsoft compatibility or
     // recovery when legacy C headers are included in C++.
