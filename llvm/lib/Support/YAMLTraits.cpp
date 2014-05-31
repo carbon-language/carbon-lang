@@ -90,8 +90,8 @@ bool Input::setCurrentDocument() {
   return false;
 }
 
-void Input::nextDocument() {
-  ++DocIterator;
+bool Input::nextDocument() {
+  return ++DocIterator != Strm->end();
 }
 
 bool Input::mapTag(StringRef Tag, bool Default) {

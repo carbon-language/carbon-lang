@@ -982,7 +982,7 @@ public:
   // These are only used by operator>>. They could be private
   // if those templated things could be made friends.
   bool setCurrentDocument();
-  void nextDocument();
+  bool nextDocument();
 
 private:
   llvm::SourceMgr                     SrcMgr; // must be before Strm

@@ -467,8 +467,7 @@ static bool isLittleEndian(const ELFYAML::Object &Doc) {
   return Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB);
 }
 
-int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
-  yaml::Input YIn(Buf->getBuffer());
+int yaml2elf(yaml::Input &YIn, raw_ostream &Out) {
   ELFYAML::Object Doc;
   YIn >> Doc;
   if (YIn.error()) {

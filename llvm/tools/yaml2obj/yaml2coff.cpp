@@ -327,8 +327,7 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   return true;
 }
 
-int yaml2coff(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
-  yaml::Input YIn(Buf->getBuffer());
+int yaml2coff(yaml::Input &YIn, raw_ostream &Out) {
   COFFYAML::Object Doc;
   YIn >> Doc;
   if (YIn.error()) {

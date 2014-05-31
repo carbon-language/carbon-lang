@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "yaml2obj.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -24,6 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/YAMLTraits.h"
 
 using namespace llvm;
 
@@ -51,8 +53,26 @@ cl::opt<YAMLObjectFormat> Format(
     clEnumValN(YOF_ELF, "elf", "ELF object file format"),
   clEnumValEnd));
 
+cl::opt<unsigned>
+DocNum("docnum", cl::init(1),
+       cl::desc("Read specified document from input (default = 1)"));
+
 static cl::opt<std::string> OutputFilename("o", cl::desc("Output filename"),
                                            cl::value_desc("filename"));
+
+typedef int (*ConvertFuncPtr)(yaml::Input & YIn, raw_ostream &Out);
+
+int convertYAML(yaml::Input & YIn, raw_ostream &Out, ConvertFuncPtr Convert) {
+  unsigned CurDocNum = 0;
+  do {
+    if (++CurDocNum == DocNum)
+      return Convert(YIn, Out);
+  } while (YIn.nextDocument());
+
+  errs() << "yaml2obj: Cannot find the " << DocNum
+         << llvm::getOrdinalSuffix(DocNum) << " document\n";
+  return 1;
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
@@ -75,14 +95,19 @@ int main(int argc, char **argv) {
   if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
     return 1;
 
-  int Res = 1;
+  ConvertFuncPtr Convert = nullptr;
   if (Format == YOF_COFF)
-    Res = yaml2coff(Out->os(), Buf.get());
+    Convert = yaml2coff;
   else if (Format == YOF_ELF)
-    Res = yaml2elf(Out->os(), Buf.get());
-  else
+    Convert = yaml2elf;
+  else {
     errs() << "Not yet implemented\n";
+    return 1;
+  }
 
+  yaml::Input YIn(Buf->getBuffer());
+
+  int Res = convertYAML(YIn, Out->os(), Convert);
   if (Res == 0)
     Out->keep();
 
