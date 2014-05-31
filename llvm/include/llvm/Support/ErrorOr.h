@@ -163,7 +163,7 @@ public:
   const_reference get() const { return const_cast<ErrorOr<T> >(this)->get(); }
 
   error_code getError() const {
-    return HasError ? *getErrorStorage() : error_code::success();
+    return HasError ? *getErrorStorage() : error_code();
   }
 
   pointer operator ->() {

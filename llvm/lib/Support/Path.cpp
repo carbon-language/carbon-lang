@@ -209,7 +209,7 @@ retry_random_path:
       return EC;
     }
 
-    return error_code::success();
+    return error_code();
   }
 
   case FS_Name: {
@@ -219,7 +219,7 @@ retry_random_path:
       return EC;
     if (Exists)
       goto retry_random_path;
-    return error_code::success();
+    return error_code();
   }
 
   case FS_Dir: {
@@ -228,7 +228,7 @@ retry_random_path:
         goto retry_random_path;
       return EC;
     }
-    return error_code::success();
+    return error_code();
   }
   }
   llvm_unreachable("Invalid Type");
@@ -711,7 +711,7 @@ error_code getUniqueID(const Twine Path, UniqueID &Result) {
   if (EC)
     return EC;
   Result = Status.getUniqueID();
-  return error_code::success();
+  return error_code();
 }
 
 error_code createUniqueFile(const Twine &Model, int &ResultFd,
@@ -781,7 +781,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   // Already absolute.
   if (rootName && rootDirectory)
-    return error_code::success();
+    return error_code();
 
   // All of the following conditions will need the current directory.
   SmallString<128> current_dir;
@@ -793,7 +793,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     path::append(current_dir, p);
     // Set path to the result.
     path.swap(current_dir);
-    return error_code::success();
+    return error_code();
   }
 
   if (!rootName && rootDirectory) {
@@ -802,7 +802,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     path::append(curDirRootName, p);
     // Set path to the result.
     path.swap(curDirRootName);
-    return error_code::success();
+    return error_code();
   }
 
   if (rootName && !rootDirectory) {
@@ -814,7 +814,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     SmallString<128> res;
     path::append(res, pRootName, bRootDirectory, bRelativePath, pRelativePath);
     path.swap(res);
-    return error_code::success();
+    return error_code();
   }
 
   llvm_unreachable("All rootName and rootDirectory combinations should have "
@@ -861,7 +861,7 @@ error_code is_directory(const Twine &path, bool &result) {
   if (error_code ec = status(path, st))
     return ec;
   result = is_directory(st);
-  return error_code::success();
+  return error_code();
 }
 
 bool is_regular_file(file_status status) {
@@ -873,7 +873,7 @@ error_code is_regular_file(const Twine &path, bool &result) {
   if (error_code ec = status(path, st))
     return ec;
   result = is_regular_file(st);
-  return error_code::success();
+  return error_code();
 }
 
 bool is_other(file_status status) {
@@ -899,13 +899,13 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
     if (ec == errc::value_too_large) {
       // Magic.size() > file_size(Path).
       result = false;
-      return error_code::success();
+      return error_code();
     }
     return ec;
   }
 
   result = Magic == Buffer;
-  return error_code::success();
+  return error_code();
 }
 
 /// @brief Identify the magic in magic.
@@ -1047,7 +1047,7 @@ error_code identify_magic(const Twine &path, file_magic &result) {
     return ec;
 
   result = identify_magic(Magic);
-  return error_code::success();
+  return error_code();
 }
 
 error_code directory_entry::status(file_status &result) const {

@@ -505,7 +505,7 @@ inline error_code file_size(const Twine &Path, uint64_t &Result) {
   if (EC)
     return EC;
   Result = Status.getSize();
-  return error_code::success();
+  return error_code();
 }
 
 /// @brief Set the file modification and access time.

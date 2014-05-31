@@ -81,7 +81,7 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   if (Result)
     MappedFile.release();
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {

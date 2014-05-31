@@ -228,7 +228,7 @@ static error_code getMemoryBufferForStream(int FD,
   } while (ReadBytes != 0);
 
   Result.reset(MemoryBuffer::getMemBufferCopy(Buffer, BufferName));
-  return error_code::success();
+  return error_code();
 }
 
 static error_code getFileAux(const char *Filename,
@@ -354,7 +354,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
     Result.reset(new (NamedBufferAlloc(Filename)) MemoryBufferMMapFile(
         RequiresNullTerminator, FD, MapSize, Offset, EC));
     if (!EC)
-      return error_code::success();
+      return error_code();
   }
 
   MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(MapSize, Filename);
@@ -394,7 +394,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
   }
 
   Result.swap(SB);
-  return error_code::success();
+  return error_code();
 }
 
 error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,

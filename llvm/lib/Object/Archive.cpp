@@ -179,7 +179,7 @@ error_code Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result
                                   .toStringRef(Path)
                             : Name,
       false));
-  return error_code::success();
+  return error_code();
 }
 
 error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,

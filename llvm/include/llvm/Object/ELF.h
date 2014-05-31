@@ -744,7 +744,7 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
     }
   }
 
-  ec = error_code::success();
+  ec = error_code();
 }
 
 // Get the symbol table index in the symtab section given a symbol

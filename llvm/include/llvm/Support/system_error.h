@@ -727,10 +727,6 @@ class error_code {
 public:
   error_code() : _val_(0), _cat_(&system_category()) {}
 
-  static error_code success() {
-    return error_code();
-  }
-
   error_code(int _val, const error_category& _cat)
     : _val_(_val), _cat_(&_cat) {}
 

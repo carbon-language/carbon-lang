@@ -396,7 +396,7 @@ void Module::Dematerialize(GlobalValue *GV) {
 
 error_code Module::materializeAll() {
   if (!Materializer)
-    return error_code::success();
+    return error_code();
   return Materializer->MaterializeModule(this);
 }
 
@@ -405,7 +405,7 @@ error_code Module::materializeAllPermanently() {
     return EC;
 
   Materializer.reset();
-  return error_code::success();
+  return error_code();
 }
 
 //===----------------------------------------------------------------------===//

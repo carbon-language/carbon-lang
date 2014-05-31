@@ -208,7 +208,7 @@ Process::GetArgumentVector(SmallVectorImpl<const char *> &Args,
   if (ec)
     return ec;
 
-  return error_code::success();
+  return error_code();
 }
 
 bool Process::StandardInIsUserInput() {

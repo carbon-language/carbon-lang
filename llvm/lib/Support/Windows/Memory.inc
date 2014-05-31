@@ -70,7 +70,7 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
                                          const MemoryBlock *const NearBlock,
                                          unsigned Flags,
                                          error_code &EC) {
-  EC = error_code::success();
+  EC = error_code();
   if (NumBytes == 0)
     return MemoryBlock();
 
@@ -115,7 +115,7 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
 
 error_code Memory::releaseMappedMemory(MemoryBlock &M) {
   if (M.Address == 0 || M.Size == 0)
-    return error_code::success();
+    return error_code();
 
   if (!VirtualFree(M.Address, 0, MEM_RELEASE))
     return error_code(::GetLastError(), system_category());
@@ -123,13 +123,13 @@ error_code Memory::releaseMappedMemory(MemoryBlock &M) {
   M.Address = 0;
   M.Size = 0;
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code Memory::protectMappedMemory(const MemoryBlock &M,
                                        unsigned Flags) {
   if (M.Address == 0 || M.Size == 0)
-    return error_code::success();
+    return error_code();
 
   DWORD Protect = getWindowsProtectionFlags(Flags);
 
@@ -140,7 +140,7 @@ error_code Memory::protectMappedMemory(const MemoryBlock &M,
   if (Flags & MF_EXEC)
     Memory::InvalidateInstructionCache(M.Address, M.Size);
 
-  return error_code::success();
+  return error_code();
 }
 
 /// InvalidateInstructionCache - Before the JIT can run a block of code
@@ -159,7 +159,7 @@ MemoryBlock Memory::AllocateRWX(size_t NumBytes,
   error_code EC;
   MB = allocateMappedMemory(NumBytes, NearBlock,
                             MF_READ|MF_WRITE|MF_EXEC, EC);
-  if (EC != error_code::success() && ErrMsg) {
+  if (EC != error_code() && ErrMsg) {
     MakeErrMsg(ErrMsg, EC.message());
   }
   return MB;
@@ -167,7 +167,7 @@ MemoryBlock Memory::AllocateRWX(size_t NumBytes,
 
 bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   error_code EC = releaseMappedMemory(M);
-  if (EC == error_code::success())
+  if (EC == error_code())
     return false;
   MakeErrMsg(ErrMsg, EC.message());
   return true;

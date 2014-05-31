@@ -84,7 +84,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
                              const MemoryBlock *const NearBlock,
                              unsigned PFlags,
                              error_code &EC) {
-  EC = error_code::success();
+  EC = error_code();
   if (NumBytes == 0)
     return MemoryBlock();
 
@@ -140,7 +140,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
 error_code
 Memory::releaseMappedMemory(MemoryBlock &M) {
   if (M.Address == nullptr || M.Size == 0)
-    return error_code::success();
+    return error_code();
 
   if (0 != ::munmap(M.Address, M.Size))
     return error_code(errno, system_category());
@@ -148,13 +148,13 @@ Memory::releaseMappedMemory(MemoryBlock &M) {
   M.Address = nullptr;
   M.Size = 0;
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code
 Memory::protectMappedMemory(const MemoryBlock &M, unsigned Flags) {
   if (M.Address == nullptr || M.Size == 0)
-    return error_code::success();
+    return error_code();
 
   if (!Flags)
     return error_code(EINVAL, generic_category());
@@ -168,7 +168,7 @@ Memory::protectMappedMemory(const MemoryBlock &M, unsigned Flags) {
   if (Flags & MF_EXEC)
     Memory::InvalidateInstructionCache(M.Address, M.Size);
 
-  return error_code::success();
+  return error_code();
 }
 
 /// AllocateRWX - Allocate a slab of memory with read/write/execute

@@ -155,7 +155,7 @@ error_code SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGro
       }
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 void SectionMemoryManager::invalidateInstructionCache() {

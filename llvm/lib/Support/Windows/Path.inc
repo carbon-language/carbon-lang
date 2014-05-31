@@ -155,12 +155,12 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
       return ec;
   }
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code normalize_separators(SmallVectorImpl<char> &Path) {
   (void) Path;
-  return error_code::success();
+  return error_code();
 }
 
 // We can't use symbolic links for windows.
@@ -180,7 +180,7 @@ error_code create_link(const Twine &to, const Twine &from) {
   if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
     return windows_error(::GetLastError());
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code remove(const Twine &path, bool IgnoreNonExisting) {
@@ -191,7 +191,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   if (error_code EC = status(path, ST)) {
     if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
-    return error_code::success();
+    return error_code();
   }
 
   if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
@@ -204,14 +204,14 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
       if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
         return EC;
     }
-    return error_code::success();
+    return error_code();
   }
   if (!::DeleteFileW(c_str(path_utf16))) {
     error_code EC = windows_error(::GetLastError());
     if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
   }
-  return error_code::success();
+  return error_code();
 }
 
 error_code rename(const Twine &from, const Twine &to) {
@@ -227,11 +227,11 @@ error_code rename(const Twine &from, const Twine &to) {
   if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
-  error_code ec = error_code::success();
+  error_code ec = error_code();
   for (int i = 0; i < 2000; i++) {
     if (::MoveFileExW(wide_from.begin(), wide_to.begin(),
                       MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
-      return error_code::success();
+      return error_code();
     ec = windows_error(::GetLastError());
     if (ec != windows_error::access_denied)
       break;
@@ -283,7 +283,7 @@ error_code exists(const Twine &path, bool &result) {
     result = false;
   } else
     result = true;
-  return error_code::success();
+  return error_code();
 }
 
 bool can_write(const Twine &Path) {
@@ -325,7 +325,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   if (error_code ec = status(A, fsA)) return ec;
   if (error_code ec = status(B, fsB)) return ec;
   result = equivalent(fsA, fsB);
-  return error_code::success();
+  return error_code();
 }
 
 static bool isReservedName(StringRef path) {
@@ -363,16 +363,16 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
     if (Err != NO_ERROR)
       return windows_error(Err);
     Result = file_status(file_type::type_unknown);
-    return error_code::success();
+    return error_code();
   }
   case FILE_TYPE_DISK:
     break;
   case FILE_TYPE_CHAR:
     Result = file_status(file_type::character_file);
-    return error_code::success();
+    return error_code();
   case FILE_TYPE_PIPE:
     Result = file_status(file_type::fifo_file);
-    return error_code::success();
+    return error_code();
   }
 
   BY_HANDLE_FILE_INFORMATION Info;
@@ -388,7 +388,7 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
                     Info.ftLastWriteTime.dwLowDateTime,
                     Info.dwVolumeSerialNumber, Info.nFileSizeHigh,
                     Info.nFileSizeLow, Info.nFileIndexHigh, Info.nFileIndexLow);
-    return error_code::success();
+    return error_code();
   }
 
 handle_status_error:
@@ -410,7 +410,7 @@ error_code status(const Twine &path, file_status &result) {
   StringRef path8 = path.toStringRef(path_storage);
   if (isReservedName(path8)) {
     result = file_status(file_type::character_file);
-    return error_code::success();
+    return error_code();
   }
 
   if (error_code ec = UTF8ToUTF16(path8, path_utf16))
@@ -458,7 +458,7 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   HANDLE FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(FD));
   if (!SetFileTime(FileHandle, NULL, &FT, &FT))
     return windows_error(::GetLastError());
-  return error_code::success();
+  return error_code();
 }
 
 error_code get_magic(const Twine &path, uint32_t len,
@@ -500,7 +500,7 @@ error_code get_magic(const Twine &path, uint32_t len,
   }
 
   result.set_size(len);
-  return error_code::success();
+  return error_code();
 }
 
 error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
@@ -584,7 +584,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
       _close(FileDescriptor); // Also closes FileHandle.
   } else
     ::CloseHandle(FileHandle);
-  return error_code::success();
+  return error_code();
 }
 
 mapped_file_region::mapped_file_region(const Twine &path,
@@ -753,7 +753,7 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
   path::append(directory_entry_path, directory_entry_name_utf8.str());
   it.CurrentEntry = directory_entry(directory_entry_path.str());
 
-  return error_code::success();
+  return error_code();
 }
 
 error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
@@ -762,7 +762,7 @@ error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
     ScopedFindHandle close(HANDLE(it.IterationHandle));
   it.IterationHandle = 0;
   it.CurrentEntry = directory_entry();
-  return error_code::success();
+  return error_code();
 }
 
 error_code detail::directory_iterator_increment(detail::DirIterState &it) {
@@ -788,7 +788,7 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
     return ec;
 
   it.CurrentEntry.replace_filename(Twine(directory_entry_path_utf8));
-  return error_code::success();
+  return error_code();
 }
 
 error_code openFileForRead(const Twine &Name, int &ResultFD) {
@@ -821,7 +821,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
   }
 
   ResultFD = FD;
-  return error_code::success();
+  return error_code();
 }
 
 error_code openFileForWrite(const Twine &Name, int &ResultFD,
@@ -879,7 +879,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   }
 
   ResultFD = FD;
-  return error_code::success();
+  return error_code();
 }
 } // end namespace fs
 
@@ -923,7 +923,7 @@ llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
   utf16.push_back(0);
   utf16.pop_back();
 
-  return llvm::error_code::success();
+  return llvm::error_code();
 }
 
 llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
@@ -951,7 +951,7 @@ llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
   utf8.push_back(0);
   utf8.pop_back();
 
-  return llvm::error_code::success();
+  return llvm::error_code();
 }
 } // end namespace windows
 } // end namespace sys

@@ -195,7 +195,7 @@ error_code Process::GetArgumentVector(SmallVectorImpl<const char *> &ArgsOut,
                                       SpecificBumpPtrAllocator<char> &) {
   ArgsOut.append(ArgsIn.begin(), ArgsIn.end());
 
-  return error_code::success();
+  return error_code();
 }
 
 bool Process::StandardInIsUserInput() {

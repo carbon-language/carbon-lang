@@ -68,7 +68,7 @@ public:
     if (Filename == "-") {
       Fd = 0;
       sys::ChangeStdinToBinary();
-      return error_code::success();
+      return error_code();
     }
 
     return sys::fs::openFileForRead(Filename, Fd);
