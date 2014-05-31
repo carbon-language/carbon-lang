@@ -1310,7 +1310,6 @@ bool AddressSanitizer::InjectCoverage(Function &F,
 }
 
 bool AddressSanitizer::runOnFunction(Function &F) {
-  if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
   if (F.getLinkage() == GlobalValue::AvailableExternallyLinkage) return false;
   DEBUG(dbgs() << "ASAN instrumenting:\n" << F << "\n");
@@ -1319,7 +1318,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   // If needed, insert __asan_init before checking for SanitizeAddress attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
-  if (!F.hasFnAttribute(Attribute::SanitizeAddress))
+  if (!F.hasFnAttribute(Attribute::SanitizeAddress) || BL->isIn(F))
     return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())
