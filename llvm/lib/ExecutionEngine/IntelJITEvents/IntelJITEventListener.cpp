@@ -86,7 +86,7 @@ static LineNumberInfo DILineInfoToIntelJITFormat(uintptr_t StartAddress,
   LineNumberInfo Result;
 
   Result.Offset = Address - StartAddress;
-  Result.LineNumber = Line.getLine();
+  Result.LineNumber = Line.Line;
 
   return Result;
 }
@@ -233,7 +233,7 @@ void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
           FunctionMessage.line_number_size = 0;
           FunctionMessage.line_number_table = 0;
         } else {
-          SourceFileName = Lines.front().second.getFileName();
+          SourceFileName = Lines.front().second.FileName;
           FunctionMessage.source_file_name = const_cast<char *>(SourceFileName.c_str());
           FunctionMessage.line_number_size = LineInfo.size();
           FunctionMessage.line_number_table = &*LineInfo.begin();
