@@ -58,8 +58,10 @@ inline void MarkVarDeclODRUsed(VarDecl *Var,
     SourceLocation Loc, Sema &SemaRef,
     const unsigned *const FunctionScopeIndexToStopAt) {
   // Keep track of used but undefined variables.
-  if (Var->hasDefinition(SemaRef.Context) != VarDecl::Definition &&
-      !Var->isExternallyVisible()) {
+  // FIXME: We shouldn't suppress this warning for static data members.
+  if (Var->hasDefinition(SemaRef.Context) == VarDecl::DeclarationOnly &&
+    !Var->isExternallyVisible() &&
+    !(Var->isStaticDataMember() && Var->hasInit())) {
       SourceLocation &old = SemaRef.UndefinedButUsed[Var->getCanonicalDecl()];
       if (old.isInvalid()) old = Loc;
   }

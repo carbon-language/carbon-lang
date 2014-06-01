@@ -507,13 +507,14 @@ namespace dr48 { // dr48: yes
   namespace {
     struct S {
       static const int m = 0;
-      // FIXME: This diagnostic is working but gets suppressed due to other errors in the TU.
-      static const int n = 0; // FIXME-expected-warning {{has internal linkage but is not defined}}
+      static const int n = 0;
       static const int o = 0;
     };
   }
   int a = S::m;
-  const int &b = S::n; // FIXME-expected-note {{used here}}
+  // FIXME: We should produce a 'has internal linkage but is not defined'
+  // diagnostic for 'S::n'.
+  const int &b = S::n;
   const int S::o;
   const int &c = S::o;
 }
