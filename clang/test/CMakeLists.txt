@@ -29,10 +29,16 @@ list(APPEND CLANG_TEST_DEPS
   c-index-test diagtool arcmt-test c-arcmt-test
   clang-check clang-format
   clang-tblgen
-  clang-interpreter
-  PrintFunctionNames
-  SampleAnalyzerPlugin
   )
+
+if (ENABLE_CLANG_EXAMPLES)
+  list(APPEND CLANG_TEST_DEPS
+    clang-interpreter
+    PrintFunctionNames
+    SampleAnalyzerPlugin
+    )
+endif ()
+
 set(CLANG_TEST_PARAMS
   clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
