@@ -2816,9 +2816,19 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
         // argument, because it was explicitly-specified. Just record the
         // presence of this argument.
         Builder.push_back(Deduced[I]);
+        // We may have had explicitly-specified template arguments for a
+        // template parameter pack (that may or may not have been extended
+        // via additional deduced arguments).
+        if (Param->isParameterPack() && CurrentInstantiationScope) {
+          if (CurrentInstantiationScope->getPartiallySubstitutedPack() ==
+              Param) {
+            // Forget the partially-substituted pack; its substitution is now
+            // complete.
+            CurrentInstantiationScope->ResetPartiallySubstitutedPack();
+          }
+        }
         continue;
       }
-
       // We have deduced this argument, so it still needs to be
       // checked and converted.
 
