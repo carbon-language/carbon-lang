@@ -7,8 +7,12 @@
 
 #ifdef __x86_64__
 
-#ifndef __ELF__
-.const
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.rodata
+#else
+	.section .rdata,"rd"
 #endif
 	.balign 4
 twop64:
@@ -39,6 +43,10 @@ END_COMPILERRT_FUNCTION(__floatundixf)
 
 #if defined(__APPLE__)
 	.const
+#elif defined(__ELF__)
+	.rdata
+#else
+	.section .rdata,"rd"
 #endif
 	.balign 4
 twop52:
