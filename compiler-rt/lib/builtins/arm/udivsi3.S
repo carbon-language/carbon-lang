@@ -15,8 +15,8 @@
 #include "../assembly.h"
 
 	.syntax unified
-
 	.text
+
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)

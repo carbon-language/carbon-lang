@@ -15,8 +15,8 @@
 #include "../assembly.h"
 
 	.syntax unified
-
 	.text
+
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 #if __ARM_ARCH_EXT_IDIV__

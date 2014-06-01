@@ -14,8 +14,8 @@
 #include "../assembly.h"
 
 	.syntax unified
-
 	.text
+
 	.p2align	2
 DEFINE_COMPILERRT_FUNCTION(__clzdi2)
 #ifdef __ARM_FEATURE_CLZ

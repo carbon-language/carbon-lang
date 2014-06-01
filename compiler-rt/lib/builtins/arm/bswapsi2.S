@@ -9,12 +9,15 @@
 
 #include "../assembly.h"
 
+	.syntax unified
+	.text
+
 //
 // extern uint32_t __bswapsi2(uint32_t);
 //
 // Reverse all the bytes in a 32-bit integer.
 //
-.p2align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
 #if __ARM_ARCH < 6
     // before armv6 does not have "rev" instruction
