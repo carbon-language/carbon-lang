@@ -8315,6 +8315,8 @@ static SDValue PerformVMOVRRDCombine(SDNode *N,
                                  std::min(4U, LD->getAlignment() / 2));
 
     DAG.ReplaceAllUsesOfValueWith(SDValue(LD, 1), NewLD2.getValue(1));
+    if (DCI.DAG.getTargetLoweringInfo().isBigEndian())
+      std::swap (NewLD1, NewLD2);
     SDValue Result = DCI.CombineTo(N, NewLD1, NewLD2);
     DCI.RemoveFromWorklist(LD);
     DAG.DeleteNode(LD);
