@@ -1175,7 +1175,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     Processed.insert(DV);
     const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
-    DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
+    DbgVariable *AbsVar = findAbstractVariable(DV, Scope->getScopeNode());
     DbgVariable *RegVar = new DbgVariable(MInsn, AbsVar, this);
     if (!addCurrentFnArgument(RegVar, Scope))
       addScopeVariable(Scope, RegVar);
