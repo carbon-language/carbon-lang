@@ -43,6 +43,23 @@ public:
                                                  order);
   }
 
+  StringRef getSectionName(const DefinedAtom *da) const override {
+    return llvm::StringSwitch<StringRef>(da->customSectionName())
+        .StartsWith(".ctors", ".ctors")
+        .StartsWith(".dtors", ".dtors")
+        .Default(TargetLayout<ELFType>::getSectionName(da));
+  }
+
+  Layout::SegmentType getSegmentType(Section<ELFType> *section) const override {
+    switch (section->order()) {
+    case DefaultLayout<ELFType>::ORDER_CTORS:
+    case DefaultLayout<ELFType>::ORDER_DTORS:
+      return llvm::ELF::PT_LOAD;
+    default:
+      return TargetLayout<ELFType>::getSegmentType(section);
+    }
+  }
+
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }
 
