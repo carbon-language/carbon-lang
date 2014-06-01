@@ -1,5 +1,5 @@
 <ompts:test>
-<ompts:testdescription>Test which checks the omp single directive by controling how often a directive is called in an omp single region.</ompts:testdescription>
+<ompts:testdescription>Test which checks the omp single directive by controlling how often a directive is called in an omp single region.</ompts:testdescription>
 <ompts:ompversion>2.0</ompts:ompversion>
 <ompts:directive>omp single</ompts:directive>
 <ompts:dependences>omp parallel private,omp flush</ompts:dependences>

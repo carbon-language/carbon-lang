@@ -47,6 +47,6 @@ int <ompts:testcode:functionname>omp_task</ompts:testcode:functionname>(FILE * l
             return 1;
     }
     return 0;
-} /* end of check_paralel_for_private */
+} /* end of check_parallel_for_private */
 </ompts:testcode>
 </ompts:test>

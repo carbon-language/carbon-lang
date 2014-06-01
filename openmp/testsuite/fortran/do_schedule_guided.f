@@ -7,7 +7,7 @@
   ! TODO:
   ! C. Niethammer:
   !       Find check to decide if the test was run as schedule(static) because
-  !       this also can pass the test if the work is devided into thread-counts 
+  !       this also can pass the test if the work is divided into thread-counts 
       INTEGER FUNCTION <ompts:testcode:functionname>do_schedule_guided</ompts:testcode:functionname>()
         IMPLICIT NONE
         INTEGER omp_get_thread_num,omp_get_num_threads

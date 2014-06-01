@@ -2290,7 +2290,7 @@ bool OffloadDescriptor::is_signaled()
 
 // Send pointer data if source or destination or both of them are
 // noncontiguous. There is guarantee that length of destination enough for
-// transfered data.
+// transferred data.
 bool OffloadDescriptor::send_noncontiguous_pointer_data(
     int i,
     PtrData* src_data,
@@ -2915,10 +2915,10 @@ bool OffloadDescriptor::compute()
     return true;
 }
 
-// recieve pointer data if source or destination or both of them are
+// receive pointer data if source or destination or both of them are
 // noncontiguous. There is guarantee that length of destination enough for
-// transfered data.
-bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
+// transferred data.
+bool OffloadDescriptor::receive_noncontiguous_pointer_data(
     int i,
     char* base,
     COIBUFFER dst_buf,
@@ -2928,7 +2928,7 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
     int64_t offset_src, offset_dst;
     int64_t length_src, length_dst;
     int64_t length_src_cur, length_dst_cur;
-    int64_t recieve_size, data_recieved = 0;
+    int64_t receive_size, data_received = 0;
     COIRESULT res;
     bool dst_is_empty = true;
     bool src_is_empty = true;
@@ -2939,10 +2939,10 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
     length_dst = !m_vars[i].into ? length_src :
                      (m_vars_extra[i].read_rng_dst) ?
                      m_vars_extra[i].read_rng_dst->range_size : m_vars[i].size;
-    recieve_size = (length_src < length_dst) ? length_src : length_dst;
+    receive_size = (length_src < length_dst) ? length_src : length_dst;
 
     // consequently get contiguous ranges,
-    // define corresponded destination offset and recieve data
+    // define corresponded destination offset and receive data
     do {
         // get sorce offset
         if (src_is_empty) {
@@ -2953,7 +2953,7 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
                     break;
                 }
             }
-            else if (data_recieved == 0) {
+            else if (data_received == 0) {
                 offset_src = 0;
             }
             else {
@@ -2964,9 +2964,9 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
         else {
             // if source is contiguous or its contiguous range is greater
             // than destination one
-            offset_src += recieve_size;
+            offset_src += receive_size;
         }
-        length_src_cur -= recieve_size;
+        length_src_cur -= receive_size;
         src_is_empty = length_src_cur == 0;
 
         // get destination offset
@@ -2995,9 +2995,9 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
         else {
             // if destination is contiguous or its contiguous range is greater
             // than source one
-            offset_dst += recieve_size;
+            offset_dst += receive_size;
         }
-        length_dst_cur -= recieve_size;
+        length_dst_cur -= receive_size;
         dst_is_empty = length_dst_cur == 0;
 
         if (dst_buf != 0) {
@@ -3008,7 +3008,7 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
                 m_vars[i].offset + offset_src +
                 m_vars[i].mic_offset -
                 m_vars_extra[i].src_data->alloc_disp,
-                recieve_size,
+                receive_size,
                 COI_COPY_UNSPECIFIED,
                 m_in_deps_total,
                 m_in_deps_total > 0 ? m_in_deps : 0,
@@ -3028,7 +3028,7 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
                 m_vars[i].mic_offset -
                 m_vars_extra[i].src_data->alloc_disp,
                 base + offset_dst,
-                recieve_size,
+                receive_size,
                 COI_COPY_UNSPECIFIED,
                 m_in_deps_total,
                 m_in_deps_total > 0 ? m_in_deps : 0,
@@ -3041,7 +3041,7 @@ bool OffloadDescriptor::recieve_noncontiguous_pointer_data(
                 report_coi_error(c_buf_read, res);
             }
         }
-        data_recieved += recieve_size;
+        data_received += receive_size;
     }
     while (true);
     return true;
@@ -3095,7 +3095,7 @@ bool OffloadDescriptor::receive_pointer_data(bool is_async)
 
                     if (m_vars[i].flags.is_noncont_src ||
                         m_vars[i].flags.is_noncont_dst) {
-                        recieve_noncontiguous_pointer_data(
+                        receive_noncontiguous_pointer_data(
                             i, base, dst_buf, event);
                     }
                     else if (dst_buf != 0) {
@@ -3209,7 +3209,7 @@ bool OffloadDescriptor::receive_pointer_data(bool is_async)
 
                     if (m_vars[i].flags.is_noncont_src ||
                         m_vars[i].flags.is_noncont_dst) {
-                        recieve_noncontiguous_pointer_data(
+                        receive_noncontiguous_pointer_data(
                             i, base, dst_buf, event);
                     }
                     else if (dst_buf != 0) {
@@ -3513,7 +3513,7 @@ bool OffloadDescriptor::gen_var_descs_for_pointer_array(int i)
 
     ap = static_cast<const arr_desc*>(vd3->ptr_array);
 
-    // "pointers_number" for total number of transfered pointers.
+    // "pointers_number" for total number of transferred pointers.
     // For each of them we create new var_desc and put it at the bottom
     // of the var_desc's array
     get_arr_desc_numbers(ap, sizeof(void *), ptr.offset, ptr.size,
@@ -4241,7 +4241,7 @@ extern "C" void __offload_register_image(const void *target_image)
 
         case ET_DYN:
             // Registration code for libraries is called from the DllMain
-            // context (on windows) and thus we cannot do anything usefull
+            // context (on windows) and thus we cannot do anything useful
             // here. So we just add it to the list of pending libraries for
             // the later use.
             __target_libs_lock.lock();

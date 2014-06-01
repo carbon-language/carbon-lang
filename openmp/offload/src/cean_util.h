@@ -60,7 +60,7 @@ bool is_arr_desc_contiguous(const arr_desc *ap);
 // to read consequently contiguous ranges described by "ap" argument
 CeanReadRanges * init_read_ranges_arr_desc(const arr_desc *ap);
 
-// check if ranges described by 1 argument could be transfered into ranges
+// check if ranges described by 1 argument could be transferred into ranges
 // described by 2-nd one
 bool cean_ranges_match(
     CeanReadRanges * read_rng1,
@@ -75,7 +75,7 @@ bool get_next_range(
     int64_t *offset
 );
 
-// returns number of transfered bytes
+// returns number of transferred bytes
 int64_t cean_get_transf_size(CeanReadRanges * read_rng);
 
 #if OFFLOAD_DEBUG > 0

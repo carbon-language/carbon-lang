@@ -214,7 +214,7 @@ struct PersistData
     {
         stack_ptr_data = new PtrData(0, size);
     }
-    // 1-st key value - begining of the stack at CPU
+    // 1-st key value - beginning of the stack at CPU
     const void *   stack_cpu_addr;
     // 2-nd key value - identifier of routine invocation at CPU
     uint64_t   routine_id;

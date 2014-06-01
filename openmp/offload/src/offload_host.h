@@ -107,7 +107,7 @@ private:
         PtrData* src_buf,
         PtrData* dst_buf,
         COIEVENT *event);
-    bool recieve_noncontiguous_pointer_data(
+    bool receive_noncontiguous_pointer_data(
         int i,
         char* src_data,
         COIBUFFER dst_buf,

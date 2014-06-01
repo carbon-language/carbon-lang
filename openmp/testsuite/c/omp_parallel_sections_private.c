@@ -56,7 +56,7 @@ int <ompts:testcode:functionname>omp_parallel_sections_private</ompts:testcode:f
 	sum= sum+sum0;
       }                         /*end of critical */
     }               
-  }        /*end of paralell sections*/
+  }        /*end of parallel sections*/
 </ompts:orphan>
 known_sum=(999*1000)/2+7;
 return (known_sum==sum); 

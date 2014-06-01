@@ -52,7 +52,7 @@ extern "C" OFFLOAD OFFLOAD_TARGET_ACQUIRE(
 
     OFFLOAD_TIMER_START(timer_data, c_offload_host_initialize);
 
-    // initalize all devices is init_type is on_offload_all
+    // initialize all devices is init_type is on_offload_all
     if (retval && __offload_init_type == c_init_on_offload_all) {
         for (int i = 0; i < mic_engines_total; i++) {
              mic_engines[i].init();

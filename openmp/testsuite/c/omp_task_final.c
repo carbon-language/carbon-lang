@@ -47,6 +47,6 @@ int <ompts:testcode:functionname>omp_task_final</ompts:testcode:functionname>(FI
             error++;
     }
     return (error==0);
-} /* end of check_paralel_for_private */
+} /* end of check_parallel_for_private */
 </ompts:testcode>
 </ompts:test>

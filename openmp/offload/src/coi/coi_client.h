@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 
-// The interface betwen offload library and the COI API on the host
+// The interface between offload library and the COI API on the host
 
 #ifndef COI_CLIENT_H_INCLUDED
 #define COI_CLIENT_H_INCLUDED

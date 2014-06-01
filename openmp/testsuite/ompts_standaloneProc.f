@@ -44,7 +44,7 @@
       DO j = 1, N
         temp =  <testfunctionname></testfunctionname>()
         IF (temp .EQ. 1) THEN
-          WRITE (1,*)  j, ". test successfull."
+          WRITE (1,*)  j, ". test successful."
           success = success + 1
         ELSE
           WRITE (1,*) "Error: ",j, ". test failed."

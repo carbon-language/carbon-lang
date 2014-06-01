@@ -1,5 +1,5 @@
 <ompts:test>
-<ompts:testdescription>Test which checks the omp barrier directive. The test creates several threads and sends one of them sleeping before setting a flag. After the barrier the other ones do some littel work depending on the flag.</ompts:testdescription>
+<ompts:testdescription>Test which checks the omp barrier directive. The test creates several threads and sends one of them sleeping before setting a flag. After the barrier the other ones do some little work depending on the flag.</ompts:testdescription>
 <ompts:ompversion>2.0</ompts:ompversion>
 <ompts:directive>omp barrier</ompts:directive>
 <ompts:testcode>

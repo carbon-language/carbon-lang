@@ -24,7 +24,7 @@
 
 !Yi Wen added omp_Set_dynamics here to make sure num_threads clause work
 !Thanks to Dr. Yin Ma in Absoft. should be not be called before the test loop
-!becuase it allows the dynamic adjustment of the number of threads at runtime
+!because it allows the dynamic adjustment of the number of threads at runtime
 !instead of using the max_threads set. 
 
         !CALL OMP_SET_DYNAMIC(.TRUE.)

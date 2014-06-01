@@ -214,7 +214,7 @@ int <ompts:testcode:functionname>omp_for_schedule_guided</ompts:testcode:functio
 		  fprintf (logFile, "Chunksize did not decrease: %d instead of %d\n", chunksizes[i],expected_chunk_size);
 #endif
 
-		/* calculating the remaining ammount of work */
+		/* calculating the remaining amount of work */
 		openwork -= chunksizes[i];
 	  }	
 	}

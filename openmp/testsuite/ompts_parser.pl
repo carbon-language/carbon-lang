@@ -131,7 +131,7 @@ foreach $testtype (@testtypes)
 	$code = "#include \"omp_testsuite.h\"\n".$orphvarsdef . $orphfuncsdefs . $code . $orphfuncs;
       }
       else {
-	print "An error occured!";
+	print "An error occurred!";
       }
     }
 # remove parameters between <ompts:orphan:parms> tags, added by joon

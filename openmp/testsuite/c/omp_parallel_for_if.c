@@ -33,6 +33,6 @@ int <ompts:testcode:functionname>omp_parallel_for_if</ompts:testcode:functionnam
     known_sum = (LOOPCOUNT * (LOOPCOUNT + 1)) / 2;
     fprintf (logFile, "Number of threads determined by omp_get_num_threads: %d\n", num_threads);
     return (known_sum == sum && num_threads == 1);
-} /* end of check_paralel_for_private */
+} /* end of check_parallel_for_private */
 </ompts:testcode>
 </ompts:test>

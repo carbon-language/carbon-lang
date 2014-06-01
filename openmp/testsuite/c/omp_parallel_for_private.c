@@ -43,6 +43,6 @@ int <ompts:testcode:functionname>omp_parallel_for_private</ompts:testcode:functi
 
     known_sum = (LOOPCOUNT * (LOOPCOUNT + 1)) / 2;
     return (known_sum == sum);
-} /* end of check_paralel_for_private */
+} /* end of check_parallel_for_private */
 </ompts:testcode>
 </ompts:test>
