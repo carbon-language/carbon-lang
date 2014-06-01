@@ -204,9 +204,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
-  setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
-  setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
-
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
 
   setOperationAction(ISD::MUL, MVT::i64, Expand);
@@ -216,8 +213,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
-  setOperationAction(ISD::VSELECT, MVT::v2f32, Expand);
-  setOperationAction(ISD::VSELECT, MVT::v4f32, Expand);
 
   static const MVT::SimpleValueType IntTypes[] = {
     MVT::v2i32, MVT::v4i32
@@ -261,7 +256,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FSQRT, VT, Expand);
     setOperationAction(ISD::FSIN, VT, Expand);
     setOperationAction(ISD::FSUB, VT, Expand);
+    setOperationAction(ISD::FNEG, VT, Expand);
     setOperationAction(ISD::SELECT, VT, Expand);
+    setOperationAction(ISD::VSELECT, VT, Expand);
   }
 
   setTargetDAGCombine(ISD::MUL);
