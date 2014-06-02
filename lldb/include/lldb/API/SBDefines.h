@@ -72,6 +72,8 @@ class LLDB_API SBTarget;
 class LLDB_API SBThread;
 class LLDB_API SBType;
 class LLDB_API SBTypeCategory;
+class LLDB_API SBTypeEnumMember;
+class LLDB_API SBTypeEnumMemberList;
 class LLDB_API SBTypeFilter;
 class LLDB_API SBTypeFormat;
 class LLDB_API SBTypeNameSpecifier;

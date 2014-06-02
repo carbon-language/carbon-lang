@@ -647,6 +647,9 @@ public:
                    AddressType address_type,
                    StreamString &new_value);
 
+    clang::EnumDecl *
+    GetAsEnumDecl () const;
+
     
     clang::RecordDecl *
     GetAsRecordDecl () const;

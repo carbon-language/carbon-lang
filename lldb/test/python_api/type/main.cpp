@@ -12,9 +12,14 @@ class Task {
 public:
     int id;
     Task *next;
+    enum {
+        TASK_TYPE_1,
+        TASK_TYPE_2
+    } type;
     Task(int i, Task *n):
         id(i),
-        next(n)
+        next(n),
+        type(TASK_TYPE_1)
     {}
 };
 

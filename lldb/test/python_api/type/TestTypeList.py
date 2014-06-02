@@ -70,6 +70,11 @@ class TypeAndTypeListTestCase(TestBase):
         for type in type_list:
             self.assertTrue(type)
             self.DebugSBType(type)
+            for field in type.fields:
+                if field.name == "type":
+                    for enum_member in field.type.enum_members:
+                        self.assertTrue(enum_member)
+                        self.DebugSBType(enum_member.type)
 
         # Pass an empty string.  LLDB should not crash. :-)
         fuzz_types = target.FindTypes(None)

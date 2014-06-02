@@ -143,6 +143,9 @@ public:
     lldb::SBTypeMember
     GetVirtualBaseClassAtIndex (uint32_t idx);
 
+    lldb::SBTypeEnumMemberList
+    GetEnumMembers();
+
     uint32_t
     GetNumberOfTemplateArguments ();
     
@@ -202,6 +205,8 @@ protected:
     friend class SBFunction;
     friend class SBModule;
     friend class SBTarget;
+    friend class SBTypeEnumMember;
+    friend class SBTypeEnumMemberList;
     friend class SBTypeNameSpecifier;
     friend class SBTypeMember;
     friend class SBTypeList;

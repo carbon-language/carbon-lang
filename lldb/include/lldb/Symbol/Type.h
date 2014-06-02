@@ -17,6 +17,8 @@
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/Declaration.h"
 
+#include "llvm/ADT/APSInt.h"
+
 #include <set>
 
 namespace lldb_private {
@@ -785,7 +787,105 @@ private:
     TypePair m_type_pair;
     ConstString m_type_name;
 };
-    
+
+class TypeEnumMemberImpl
+{
+public:
+    TypeEnumMemberImpl () :
+        m_integer_type(),
+        m_name("<invalid>"),
+        m_value(),
+        m_valid(false)
+    {
+    }
+
+    TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
+                        const lldb_private::ClangASTType& integer_type);
+
+    TypeEnumMemberImpl (const TypeEnumMemberImpl& rhs) :
+        m_integer_type(rhs.m_integer_type),
+        m_name(rhs.m_name),
+        m_value(rhs.m_value),
+        m_valid(rhs.m_valid)
+    {
+    }
+
+    TypeEnumMemberImpl&
+    operator = (const TypeEnumMemberImpl& rhs);
+
+    bool
+    IsValid ()
+    {
+        return m_valid;
+    }
+
+    const ConstString &
+    GetName () const
+    {
+        return m_name;
+    }
+
+    const lldb::TypeImplSP &
+    GetIntegerType () const
+    {
+        return m_integer_type;
+    }
+
+    uint64_t
+    GetValueAsUnsigned () const
+    {
+        return *m_value.getRawData();
+    }
+
+    int64_t
+    GetValueAsSigned () const
+    {
+        return (int64_t) *m_value.getRawData();
+    }
+
+protected:
+    lldb::TypeImplSP m_integer_type;
+    ConstString m_name;
+    llvm::APSInt m_value;
+    bool m_valid;
+};
+
+class TypeEnumMemberListImpl
+{
+public:
+    TypeEnumMemberListImpl() :
+        m_content()
+    {
+    }
+
+    void
+    Append (const lldb::TypeEnumMemberImplSP& type)
+    {
+        m_content.push_back(type);
+    }
+
+    void
+    Append (const lldb_private::TypeEnumMemberListImpl& type_list);
+
+    lldb::TypeEnumMemberImplSP
+    GetTypeEnumMemberAtIndex(size_t idx)
+    {
+        lldb::TypeEnumMemberImplSP enum_member;
+        if (idx < GetSize())
+            enum_member = m_content[idx];
+        return enum_member;
+    }
+
+    size_t
+    GetSize()
+    {
+        return m_content.size();
+    }
+
+private:
+    std::vector<lldb::TypeEnumMemberImplSP> m_content;
+};
+
 } // namespace lldb_private
 
 #endif  // liblldb_Type_h_

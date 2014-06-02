@@ -4452,6 +4452,15 @@ IsOperator (const char *name, clang::OverloadedOperatorKind &op_kind)
     return true;
 }
 
+clang::EnumDecl *
+ClangASTType::GetAsEnumDecl () const
+{
+    const clang::EnumType *enum_type = llvm::dyn_cast<clang::EnumType>(GetCanonicalQualType());
+    if (enum_type)
+        return enum_type->getDecl();
+    return NULL;
+}
+
 clang::RecordDecl *
 ClangASTType::GetAsRecordDecl () const
 {
