@@ -40,7 +40,6 @@
 
 #define DEBUG_TYPE "ReaderCOFF"
 
-using std::vector;
 using lld::pecoff::COFFAbsoluteAtom;
 using lld::pecoff::COFFBSSAtom;
 using lld::pecoff::COFFDefinedAtom;
@@ -60,10 +59,10 @@ namespace {
 
 class FileCOFF : public File {
 private:
-  typedef vector<const coff_symbol *> SymbolVectorT;
+  typedef std::vector<const coff_symbol *> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *>>
+  typedef std::map<const coff_section *, std::vector<COFFDefinedFileAtom *>>
   SectionToAtomsT;
 
 public:
@@ -98,27 +97,27 @@ public:
   mutable llvm::BumpPtrAllocator _alloc;
 
 private:
-  error_code readSymbolTable(vector<const coff_symbol *> &result);
+  error_code readSymbolTable(std::vector<const coff_symbol *> &result);
 
   void createAbsoluteAtoms(const SymbolVectorT &symbols,
-                           vector<const AbsoluteAtom *> &result);
+                           std::vector<const AbsoluteAtom *> &result);
 
   error_code createUndefinedAtoms(const SymbolVectorT &symbols,
-                                  vector<const UndefinedAtom *> &result);
+                                  std::vector<const UndefinedAtom *> &result);
 
   error_code createDefinedSymbols(const SymbolVectorT &symbols,
-                                  vector<const DefinedAtom *> &result);
+                                  std::vector<const DefinedAtom *> &result);
 
   error_code cacheSectionAttributes();
   error_code maybeCreateSXDataAtoms();
 
   error_code
   AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                 vector<const coff_symbol *> &symbols,
-                                 vector<COFFDefinedFileAtom *> &atoms);
+                                 std::vector<const coff_symbol *> &symbols,
+                                 std::vector<COFFDefinedFileAtom *> &atoms);
 
   error_code AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
-                                   vector<const DefinedAtom *> &definedAtoms);
+                                   std::vector<const DefinedAtom *> &definedAtoms);
 
   error_code findAtomAt(const coff_section *section, uint32_t targetAddress,
                         COFFDefinedFileAtom *&result, uint32_t &offsetInAtom);
@@ -127,7 +126,7 @@ private:
 
   error_code addRelocationReference(const coff_relocation *rel,
                                     const coff_section *section,
-                                    const vector<COFFDefinedFileAtom *> &atoms);
+                                    const std::vector<COFFDefinedFileAtom *> &atoms);
 
   error_code getSectionContents(StringRef sectionName,
                                 ArrayRef<uint8_t> &result);
@@ -162,7 +161,7 @@ private:
   std::map<const coff_symbol *, const coff_symbol *> _auxSymbol;
 
   // A map from section to its atoms.
-  std::map<const coff_section *, vector<COFFDefinedFileAtom *> > _sectionAtoms;
+  std::map<const coff_section *, std::vector<COFFDefinedFileAtom *> > _sectionAtoms;
 
   // A set of COMDAT sections.
   std::set<const coff_section *> _comdatSections;
@@ -322,7 +321,7 @@ error_code FileCOFF::parse() {
 }
 
 /// Iterate over the symbol table to retrieve all symbols.
-error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
+error_code FileCOFF::readSymbolTable(std::vector<const coff_symbol *> &result) {
   const llvm::object::coff_file_header *header = nullptr;
   if (error_code ec = _obj->getHeader(header))
     return ec;
@@ -369,7 +368,7 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
 
 /// Create atoms for the absolute symbols.
 void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
-                                   vector<const AbsoluteAtom *> &result) {
+                                   std::vector<const AbsoluteAtom *> &result) {
   for (const coff_symbol *sym : symbols) {
     if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE)
       continue;
@@ -390,7 +389,7 @@ void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
 /// fallback mechanism of undefined symbol.
 error_code
 FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
-                               vector<const UndefinedAtom *> &result) {
+                               std::vector<const UndefinedAtom *> &result) {
   // Sort out undefined symbols from all symbols.
   std::set<const coff_symbol *> undefines;
   std::map<const coff_symbol *, const coff_symbol *> weakExternal;
@@ -443,7 +442,7 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
 /// the other two, because in order to create the atom for the defined symbol
 /// we need to know the adjacent symbols.
 error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
-                                          vector<const DefinedAtom *> &result) {
+                                          std::vector<const DefinedAtom *> &result) {
   // A defined atom can be merged if its section attribute allows its contents
   // to be merged. In COFF, it's not very easy to get the section attribute
   // for the symbol, so scan all sections in advance and cache the attributes
@@ -574,8 +573,8 @@ error_code FileCOFF::cacheSectionAttributes() {
 /// assumed to have been defined in the \p section.
 error_code
 FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                         vector<const coff_symbol *> &symbols,
-                                         vector<COFFDefinedFileAtom *> &atoms) {
+                                         std::vector<const coff_symbol *> &symbols,
+                                         std::vector<COFFDefinedFileAtom *> &atoms) {
   // Sort symbols by position.
   std::stable_sort(
       symbols.begin(), symbols.end(),
@@ -674,13 +673,13 @@ FileCOFF::AtomizeDefinedSymbolsInSection(const coff_section *section,
 
 error_code
 FileCOFF::AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
-                                vector<const DefinedAtom *> &definedAtoms) {
+                                std::vector<const DefinedAtom *> &definedAtoms) {
   // For each section, make atoms for all the symbols defined in the
   // section, and append the atoms to the result objects.
   for (auto &i : definedSymbols) {
     const coff_section *section = i.first;
-    vector<const coff_symbol *> &symbols = i.second;
-    vector<COFFDefinedFileAtom *> atoms;
+    std::vector<const coff_symbol *> &symbols = i.second;
+    std::vector<COFFDefinedFileAtom *> atoms;
     if (error_code ec = AtomizeDefinedSymbolsInSection(section, symbols, atoms))
       return ec;
 
@@ -732,7 +731,7 @@ error_code FileCOFF::getAtomBySymbolIndex(uint32_t index, Atom *&ret) {
 error_code
 FileCOFF::addRelocationReference(const coff_relocation *rel,
                                  const coff_section *section,
-                                 const vector<COFFDefinedFileAtom *> &atoms) {
+                                 const std::vector<COFFDefinedFileAtom *> &atoms) {
   assert(atoms.size() > 0);
   // The address of the item which relocation is applied. Section's
   // VirtualAddress needs to be added for historical reasons, but the value
