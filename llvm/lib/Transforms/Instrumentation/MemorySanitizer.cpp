@@ -115,7 +115,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 using namespace llvm;
 
@@ -176,10 +175,6 @@ static cl::opt<bool> ClDumpStrictInstructions("msan-dump-strict-instructions",
        cl::desc("print out instructions with default strict semantics"),
        cl::Hidden, cl::init(false));
 
-static cl::opt<std::string>  ClBlacklistFile("msan-blacklist",
-       cl::desc("File containing the list of functions where MemorySanitizer "
-                "should not report bugs"), cl::Hidden);
-
 static cl::opt<int> ClInstrumentationWithCallThreshold(
     "msan-instrumentation-with-call-threshold",
     cl::desc(
@@ -209,13 +204,11 @@ namespace {
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
  public:
-  MemorySanitizer(int TrackOrigins = 0,
-                  StringRef BlacklistFile = StringRef())
+  MemorySanitizer(int TrackOrigins = 0)
       : FunctionPass(ID),
         TrackOrigins(std::max(TrackOrigins, (int)ClTrackOrigins)),
         DL(nullptr),
         WarningFn(nullptr),
-        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile : BlacklistFile),
         WrapIndirectCalls(!ClWrapIndirectCalls.empty()) {}
   const char *getPassName() const override { return "MemorySanitizer"; }
   bool runOnFunction(Function &F) override;
@@ -280,10 +273,6 @@ class MemorySanitizer : public FunctionPass {
   MDNode *ColdCallWeights;
   /// \brief Branch weights for origin store.
   MDNode *OriginStoreWeights;
-  /// \brief Path to blacklist file.
-  SmallString<64> BlacklistFile;
-  /// \brief The blacklist.
-  std::unique_ptr<SpecialCaseList> BL;
   /// \brief An empty volatile inline asm that prevents callback merge.
   InlineAsm *EmptyAsm;
 
@@ -303,9 +292,8 @@ INITIALIZE_PASS(MemorySanitizer, "msan",
                 "MemorySanitizer: detects uninitialized reads.",
                 false, false)
 
-FunctionPass *llvm::createMemorySanitizerPass(int TrackOrigins,
-                                              StringRef BlacklistFile) {
-  return new MemorySanitizer(TrackOrigins, BlacklistFile);
+FunctionPass *llvm::createMemorySanitizerPass(int TrackOrigins) {
+  return new MemorySanitizer(TrackOrigins);
 }
 
 /// \brief Create a non-const global initialized with the given string.
@@ -429,7 +417,6 @@ bool MemorySanitizer::doInitialization(Module &M) {
     report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
-  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   C = &(M.getContext());
   unsigned PtrSize = DL->getPointerSizeInBits(/* AddressSpace */0);
   switch (PtrSize) {
@@ -542,9 +529,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   MemorySanitizerVisitor(Function &F, MemorySanitizer &MS)
       : F(F), MS(MS), VAHelper(CreateVarArgHelper(F, MS, *this)) {
-    bool SanitizeFunction = !MS.BL->isIn(F) && F.getAttributes().hasAttribute(
-                                                   AttributeSet::FunctionIndex,
-                                                   Attribute::SanitizeMemory);
+    bool SanitizeFunction = F.getAttributes().hasAttribute(
+        AttributeSet::FunctionIndex, Attribute::SanitizeMemory);
     InsertChecks = SanitizeFunction;
     LoadShadow = SanitizeFunction;
     PoisonStack = SanitizeFunction && ClPoisonStack;

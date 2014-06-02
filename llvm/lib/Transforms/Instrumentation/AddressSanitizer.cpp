@@ -307,14 +307,11 @@ static size_t RedzoneSizeForScale(int MappingScale) {
 struct AddressSanitizer : public FunctionPass {
   AddressSanitizer(bool CheckInitOrder = true,
                    bool CheckUseAfterReturn = false,
-                   bool CheckLifetime = false,
-                   StringRef BlacklistFile = StringRef())
+                   bool CheckLifetime = false)
       : FunctionPass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
-        CheckLifetime(CheckLifetime || ClCheckLifetime),
-        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile) {}
+        CheckLifetime(CheckLifetime || ClCheckLifetime) {}
   const char *getPassName() const override {
     return "AddressSanitizerFunctionPass";
   }
@@ -346,7 +343,6 @@ struct AddressSanitizer : public FunctionPass {
   bool CheckInitOrder;
   bool CheckUseAfterReturn;
   bool CheckLifetime;
-  SmallString<64> BlacklistFile;
 
   LLVMContext *C;
   const DataLayout *DL;
@@ -358,7 +354,6 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanHandleNoReturnFunc;
   Function *AsanCovFunction;
   Function *AsanPtrCmpFunction, *AsanPtrSubFunction;
-  std::unique_ptr<SpecialCaseList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   Function *AsanMemoryAccessCallback[2][kNumberOfAccessSizes];
@@ -553,10 +548,9 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
 FunctionPass *llvm::createAddressSanitizerFunctionPass(
-    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime,
-    StringRef BlacklistFile) {
+    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime) {
   return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
-                              CheckLifetime, BlacklistFile);
+                              CheckLifetime);
 }
 
 char AddressSanitizerModule::ID = 0;
@@ -1203,7 +1197,6 @@ bool AddressSanitizer::doInitialization(Module &M) {
     report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
-  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   DynamicallyInitializedGlobals.Init(M);
 
   C = &(M.getContext());
@@ -1318,7 +1311,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   // If needed, insert __asan_init before checking for SanitizeAddress attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
-  if (!F.hasFnAttribute(Attribute::SanitizeAddress) || BL->isIn(F))
+  if (!F.hasFnAttribute(Attribute::SanitizeAddress))
     return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())

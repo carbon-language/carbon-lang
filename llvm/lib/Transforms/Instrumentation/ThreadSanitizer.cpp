@@ -46,8 +46,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "tsan"
 
-static cl::opt<std::string>  ClBlacklistFile("tsan-blacklist",
-       cl::desc("Blacklist file"), cl::Hidden);
 static cl::opt<bool>  ClInstrumentMemoryAccesses(
     "tsan-instrument-memory-accesses", cl::init(true),
     cl::desc("Instrument memory accesses"), cl::Hidden);
@@ -76,11 +74,7 @@ namespace {
 
 /// ThreadSanitizer: instrument the code in module to find races.
 struct ThreadSanitizer : public FunctionPass {
-  ThreadSanitizer(StringRef BlacklistFile = StringRef())
-      : FunctionPass(ID),
-        DL(nullptr),
-        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile) { }
+  ThreadSanitizer() : FunctionPass(ID), DL(nullptr) {}
   const char *getPassName() const override;
   bool runOnFunction(Function &F) override;
   bool doInitialization(Module &M) override;
@@ -98,8 +92,6 @@ struct ThreadSanitizer : public FunctionPass {
 
   const DataLayout *DL;
   Type *IntptrTy;
-  SmallString<64> BlacklistFile;
-  std::unique_ptr<SpecialCaseList> BL;
   IntegerType *OrdTy;
   // Callbacks to run-time library are computed in doInitialization.
   Function *TsanFuncEntry;
@@ -129,8 +121,8 @@ const char *ThreadSanitizer::getPassName() const {
   return "ThreadSanitizer";
 }
 
-FunctionPass *llvm::createThreadSanitizerPass(StringRef BlacklistFile) {
-  return new ThreadSanitizer(BlacklistFile);
+FunctionPass *llvm::createThreadSanitizerPass() {
+  return new ThreadSanitizer();
 }
 
 static Function *checkInterfaceFunction(Constant *FuncOrBitcast) {
@@ -228,7 +220,6 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   if (!DLP)
     report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
-  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
@@ -330,8 +321,7 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   SmallVector<Instruction*, 8> MemIntrinCalls;
   bool Res = false;
   bool HasCalls = false;
-  bool SanitizeFunction =
-      F.hasFnAttribute(Attribute::SanitizeThread) && !BL->isIn(F);
+  bool SanitizeFunction = F.hasFnAttribute(Attribute::SanitizeThread);
 
   // Traverse all instructions, collect loads/stores/returns, check for calls.
   for (auto &BB : F) {
