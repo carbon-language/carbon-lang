@@ -39,7 +39,7 @@ using namespace llvm;
 
 /// InitLibcallNames - Set default libcall names.
 ///
-static void InitLibcallNames(const char **Names, const TargetMachine &TM) {
+static void InitLibcallNames(const char **Names, const Triple &TT) {
   Names[RTLIB::SHL_I16] = "__ashlhi3";
   Names[RTLIB::SHL_I32] = "__ashlsi3";
   Names[RTLIB::SHL_I64] = "__ashldi3";
@@ -384,7 +384,7 @@ static void InitLibcallNames(const char **Names, const TargetMachine &TM) {
   Names[RTLIB::SYNC_FETCH_AND_UMIN_8] = "__sync_fetch_and_umin_8";
   Names[RTLIB::SYNC_FETCH_AND_UMIN_16] = "__sync_fetch_and_umin_16";
   
-  if (Triple(TM.getTargetTriple()).getEnvironment() == Triple::GNU) {
+  if (TT.getEnvironment() == Triple::GNU) {
     Names[RTLIB::SINCOS_F32] = "sincosf";
     Names[RTLIB::SINCOS_F64] = "sincos";
     Names[RTLIB::SINCOS_F80] = "sincosl";
@@ -399,7 +399,7 @@ static void InitLibcallNames(const char **Names, const TargetMachine &TM) {
     Names[RTLIB::SINCOS_PPCF128] = nullptr;
   }
 
-  if (Triple(TM.getTargetTriple()).getOS() != Triple::OpenBSD) {
+  if (TT.getOS() != Triple::OpenBSD) {
     Names[RTLIB::STACKPROTECTOR_CHECK_FAIL] = "__stack_chk_fail";
   } else {
     // These are generally not available.
@@ -702,7 +702,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   SupportJumpTables = true;
   MinimumJumpTableEntries = 4;
 
-  InitLibcallNames(LibcallRoutineNames, TM);
+  InitLibcallNames(LibcallRoutineNames, Triple(TM.getTargetTriple()));
   InitCmpLibcallCCs(CmpLibcallCCs);
   InitLibcallCallingConvs(LibcallCallingConvs);
 }
