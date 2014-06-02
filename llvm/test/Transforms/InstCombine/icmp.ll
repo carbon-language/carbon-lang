@@ -166,6 +166,14 @@ define i1 @test17(i32 %x) nounwind {
 ; CHECK-NEXT: %cmp = icmp ne i32 %x, 3
 }
 
+define i1 @test17a(i32 %x) nounwind {
+  %shl = shl i32 1, %x
+  %and = and i32 %shl, 7
+  %cmp = icmp eq i32 %and, 0
+  ret i1 %cmp
+; CHECK-LABEL: @test17a(
+; CHECK-NEXT: %cmp = icmp ugt i32 %x, 2
+}
 
 define i1 @test18(i32 %x) nounwind {
   %sh = lshr i32 8, %x
@@ -192,6 +200,15 @@ define i1 @test20(i32 %x) nounwind {
   ret i1 %cmp
 ; CHECK-LABEL: @test20(
 ; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
+}
+
+define i1 @test20a(i32 %x) nounwind {
+  %shl = shl i32 1, %x
+  %and = and i32 %shl, 7
+  %cmp = icmp ne i32 %and, 0
+  ret i1 %cmp
+; CHECK-LABEL: @test20a(
+; CHECK-NEXT: %cmp = icmp ult i32 %x, 3
 }
 
 define i1 @test21(i8 %x, i8 %y) {

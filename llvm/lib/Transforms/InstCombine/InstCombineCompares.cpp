@@ -2540,7 +2540,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // bit is set.   If the comparison is against zero, then this is a check
       // to see if *that* bit is set.
       APInt Op0KnownZeroInverted = ~Op0KnownZero;
-      if (~Op1KnownZero == 0 && Op0KnownZeroInverted.isPowerOf2()) {
+      if (~Op1KnownZero == 0) {
         // If the LHS is an AND with the same constant, look through it.
         Value *LHS = nullptr;
         ConstantInt *LHSC = nullptr;
@@ -2550,11 +2550,19 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
         // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
         // then turn "((1 << x)&8) == 0" into "x != 3".
+        // or turn "((1 << x)&7) == 0" into "x > 2".
         Value *X = nullptr;
         if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
-          unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_NE, X,
-                              ConstantInt::get(X->getType(), CmpVal));
+          APInt ValToCheck = Op0KnownZeroInverted;
+          if (ValToCheck.isPowerOf2()) {
+            unsigned CmpVal = ValToCheck.countTrailingZeros();
+            return new ICmpInst(ICmpInst::ICMP_NE, X,
+                                ConstantInt::get(X->getType(), CmpVal));
+          } else if ((++ValToCheck).isPowerOf2()) {
+            unsigned CmpVal = ValToCheck.countTrailingZeros() - 1;
+            return new ICmpInst(ICmpInst::ICMP_UGT, X,
+                                ConstantInt::get(X->getType(), CmpVal));
+          }
         }
 
         // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
@@ -2577,7 +2585,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // bit is set.   If the comparison is against zero, then this is a check
       // to see if *that* bit is set.
       APInt Op0KnownZeroInverted = ~Op0KnownZero;
-      if (~Op1KnownZero == 0 && Op0KnownZeroInverted.isPowerOf2()) {
+      if (~Op1KnownZero == 0) {
         // If the LHS is an AND with the same constant, look through it.
         Value *LHS = nullptr;
         ConstantInt *LHSC = nullptr;
@@ -2587,11 +2595,19 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
         // If the LHS is 1 << x, and we know the result is a power of 2 like 8,
         // then turn "((1 << x)&8) != 0" into "x == 3".
+        // or turn "((1 << x)&7) != 0" into "x < 3".
         Value *X = nullptr;
         if (match(LHS, m_Shl(m_One(), m_Value(X)))) {
-          unsigned CmpVal = Op0KnownZeroInverted.countTrailingZeros();
-          return new ICmpInst(ICmpInst::ICMP_EQ, X,
-                              ConstantInt::get(X->getType(), CmpVal));
+          APInt ValToCheck = Op0KnownZeroInverted;
+          if (ValToCheck.isPowerOf2()) {
+            unsigned CmpVal = ValToCheck.countTrailingZeros();
+            return new ICmpInst(ICmpInst::ICMP_EQ, X,
+                                ConstantInt::get(X->getType(), CmpVal));
+          } else if ((++ValToCheck).isPowerOf2()) {
+            unsigned CmpVal = ValToCheck.countTrailingZeros();
+            return new ICmpInst(ICmpInst::ICMP_ULT, X,
+                                ConstantInt::get(X->getType(), CmpVal));
+          }
         }
 
         // If the LHS is 8 >>u x, and we know the result is a power of 2 like 1,
