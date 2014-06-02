@@ -67,7 +67,7 @@ class RejectLog {
   llvm::SmallVector<RejectReasonPtr, 1> ErrorReports;
 
 public:
-  explicit RejectLog(Region *R) : R(R) {};
+  explicit RejectLog(Region *R) : R(R) {}
 
   typedef llvm::SmallVector<RejectReasonPtr, 1>::iterator iterator;
 
