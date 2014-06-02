@@ -2579,14 +2579,11 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
 /// CreateLexicalBlock - Creates a new lexical block node and pushes it on
 /// the stack.
 void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
-  llvm::DIDescriptor D =
-    DBuilder.createLexicalBlock(LexicalBlockStack.empty() ?
-                                llvm::DIDescriptor() :
-                                llvm::DIDescriptor(LexicalBlockStack.back()),
-                                getOrCreateFile(CurLoc),
-                                getLineNumber(CurLoc),
-                                getColumnNumber(CurLoc),
-                                0);
+  llvm::DIDescriptor D = DBuilder.createLexicalBlock(
+      llvm::DIDescriptor(LexicalBlockStack.empty() ? nullptr
+                                                   : LexicalBlockStack.back()),
+      getOrCreateFile(CurLoc), getLineNumber(CurLoc), getColumnNumber(CurLoc),
+      0);
   llvm::MDNode *DN = D;
   LexicalBlockStack.push_back(DN);
 }
