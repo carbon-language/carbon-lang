@@ -4798,8 +4798,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("STATIC_ASSERT((a & b) == 0);");
   verifyFormat("STATIC_ASSERT(0 == (a & b));");
   verifyFormat("template <bool a, bool b> "
-               "typename t::if<x && y>::type f() {};");
-  verifyFormat("template <int *y> f() {};");
+               "typename t::if<x && y>::type f() {}");
+  verifyFormat("template <int *y> f() {}");
   verifyFormat("vector<int *> v;");
   verifyFormat("vector<int *const> v;");
   verifyFormat("vector<int *const **const *> v;");
@@ -5256,7 +5256,7 @@ TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {
 }
 
 TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
-  verifyFormat("return (a)(b) {1, 2, 3};");
+  verifyFormat("return (a)(b){1, 2, 3};");
 }
 
 TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
@@ -5286,6 +5286,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
 
   verifyFormat("int foo(int i) { return fo1{}(i); }");
   verifyFormat("int foo(int i) { return fo1{}(i); }");
+  verifyFormat("auto i = decltype(x){};");
 
   // In combination with BinPackParameters = false.
   FormatStyle NoBinPacking = getLLVMStyle();
@@ -7072,7 +7073,7 @@ TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
   verifyFormat("void f() {\n"
                "  return g() {}\n"
                "  void h() {}");
-  verifyFormat("int a[] = {void forgot_closing_brace() {f();\n"
+  verifyFormat("int a[] = {void forgot_closing_brace(){f();\n"
                "g();\n"
                "}");
 }
