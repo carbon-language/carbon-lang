@@ -19,23 +19,6 @@
 #include <fstream>
 #include <cassert>
 
-template <class CharT>
-struct test_buf
-    : public std::basic_filebuf<CharT>
-{
-    typedef std::basic_filebuf<CharT> base;
-    typedef typename base::char_type  char_type;
-    typedef typename base::int_type   int_type;
-    typedef typename base::pos_type   pos_type;
-
-    char_type* eback() const {return base::eback();}
-    char_type* gptr()  const {return base::gptr();}
-    char_type* egptr() const {return base::egptr();}
-    void gbump(int n) {base::gbump(n);}
-
-    virtual int_type underflow() {return base::underflow();}
-};
-
 int main()
 {
     {
