@@ -10,8 +10,6 @@
 /// This file is a part of MemorySanitizer, a detector of uninitialized
 /// reads.
 ///
-/// Status: early prototype.
-///
 /// The algorithm of the tool is similar to Memcheck
 /// (http://goo.gl/QKbem). We associate a few shadow bits with every
 /// byte of the application memory, poison the shadow of the malloc-ed
