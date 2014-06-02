@@ -219,11 +219,6 @@ USE(inlineDef)
 __declspec(dllimport) __attribute__((noinline)) inline void noinline() {}
 USE(noinline)
 
-// MSC-NOT: @"\01?alwaysInline@@YAXXZ"()
-// GNU-NOT: @_Z12alwaysInlinev()
-__declspec(dllimport) __attribute__((always_inline)) inline void alwaysInline() {}
-USE(alwaysInline)
-
 // Redeclarations
 // MSC-DAG: declare dllimport void @"\01?redecl1@@YAXXZ"()
 // GNU-DAG: declare dllimport void @_Z7redecl1v()
@@ -527,6 +522,14 @@ struct __declspec(dllimport) W { virtual void foo() {} };
 USECLASS(W)
 // vftable:
 // MO1-DAG: @"\01??_7W@@6B@" = available_externally dllimport unnamed_addr constant [1 x i8*] [i8* bitcast (void (%struct.W*)* @"\01?foo@W@@UAEXXZ" to i8*)]
+// GO1-DAG: @_ZTV1W = available_externally dllimport unnamed_addr constant [3 x i8*] [i8* null, i8* null, i8* bitcast (void (%struct.W*)* @_ZN1W3fooEv to i8*)]
+
+struct __declspec(dllimport) KeyFuncClass {
+  constexpr KeyFuncClass() {}
+  virtual void foo();
+};
+constexpr KeyFuncClass keyFuncClassVar;
+// G32-DAG: @_ZTV12KeyFuncClass = external dllimport unnamed_addr constant [3 x i8*]
 
 struct __declspec(dllimport) X : public virtual W {};
 USECLASS(X)
@@ -567,3 +570,14 @@ namespace Vtordisp {
   };
   template class C<char>;
 }
+
+//===----------------------------------------------------------------------===//
+// Negative checks
+//===----------------------------------------------------------------------===//
+
+// These checks are at the end to avoid interference with the DAG checks.
+
+// MSC-NOT: @"\01?alwaysInline@@YAXXZ"()
+// GNU-NOT: @_Z12alwaysInlinev()
+__declspec(dllimport) __attribute__((always_inline)) inline void alwaysInline() {}
+USE(alwaysInline)
