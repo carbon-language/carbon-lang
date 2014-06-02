@@ -4,7 +4,7 @@
 
 @import cxx_irgen_top;
 
-// CHECK-DAG: call i32 @_ZN8CtorInitIiE1fEv(
+// CHECK-DAG: call {{[a-z]*[ ]?i32}} @_ZN8CtorInitIiE1fEv(
 CtorInit<int> x;
 
 @import cxx_irgen_left;

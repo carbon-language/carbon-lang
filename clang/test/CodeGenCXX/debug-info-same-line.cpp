@@ -35,8 +35,8 @@ int main() {
 
 // Check that we don't give column information (and thus end up with distinct
 // line entries) for two non-inlined calls on the same line.
-// CHECK: call {{.*}}noinline{{.*}}(i32 5, i32 6), !dbg [[NOINLINE:![0-9]*]]
-// CHECK: call {{.*}}noinline{{.*}}(i32 7, i32 8), !dbg [[NOINLINE]]
+// CHECK: call {{.*}}noinline{{.*}}({{i32[ ]?[a-z]*}} 5, {{i32[ ]?[a-z]*}} 6), !dbg [[NOINLINE:![0-9]*]]
+// CHECK: call {{.*}}noinline{{.*}}({{i32[ ]?[a-z]*}} 7, {{i32[ ]?[a-z]*}} 8), !dbg [[NOINLINE]]
 
 // FIXME: These should be separate locations but because the two calls have the
 // same line /and/ column, they get coalesced into a single inlined call by
@@ -50,8 +50,8 @@ int main() {
 // Even if the functions are marked inline but do not get inlined, they
 // shouldn't use column information, and thus should be at the same debug
 // location.
-// CHECK: call {{.*}}inlsum{{.*}}(i32 13, i32 14), !dbg [[INL_FIRST:![0-9]*]]
-// CHECK: call {{.*}}inlsum{{.*}}(i32 15, i32 16), !dbg [[INL_SECOND:![0-9]*]]
+// CHECK: call {{.*}}inlsum{{.*}}({{i32[ ]?[a-z]*}} 13, {{i32[ ]?[a-z]*}} 14), !dbg [[INL_FIRST:![0-9]*]]
+// CHECK: call {{.*}}inlsum{{.*}}({{i32[ ]?[a-z]*}} 15, {{i32[ ]?[a-z]*}} 16), !dbg [[INL_SECOND:![0-9]*]]
 
 // [[FIRST_INLINE]] =
 // [[SECOND_INLINE]] =

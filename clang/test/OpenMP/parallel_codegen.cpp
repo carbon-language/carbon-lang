@@ -34,14 +34,14 @@ int main (int argc, char **argv) {
   return tmain(argv);
 }
 
-// CHECK-LABEL: define i32 @main(i32 %argc, i8** %argv)
+// CHECK-LABEL: define {{[a-z]*[ ]?i32}} @main({{i32[ ]?[a-z]*}} %argc, i8** %argv)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon
 // CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i32* {{%[a-z0-9.]+}}, i32** [[ARGC_REF]]
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @__captured_stmt to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-NEXT:  [[ARGV:%.+]] = load i8*** {{%[a-z0-9.]+}}
-// CHECK-NEXT:  [[RET:%.+]] = call i32 [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
+// CHECK-NEXT:  [[RET:%.+]] = call {{[a-z]*[ ]?i32}} [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
 // CHECK-NEXT:  ret i32 [[RET]]
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define i32 @main(i32 %argc, i8** %argv)
@@ -68,7 +68,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i32** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
-// CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
+// CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32{{[ ]?[a-z]*}} [[ARGC]])
 // CHECK:       ret void
 // CHECK:       call void @{{.+terminate.*}}(
 // CHECK-NEXT:  unreachable
@@ -86,12 +86,12 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK-DAG: define linkonce_odr void [[FOO]](i32 %argc)
+// CHECK-DAG: define linkonce_odr void [[FOO]]({{i32[ ]?[a-z]*}} %argc)
 // CHECK-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
 // CHECK-DEBUG-DAG: define linkonce_odr void [[FOO]](i32 %argc)
 // CHECK-DEBUG-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
 
-// CHECK:       define linkonce_odr i32 [[TMAIN]](i8** %argc)
+// CHECK:       define linkonce_odr {{[a-z]*[ ]?i32}} [[TMAIN]](i8** %argc)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon.0
 // CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
