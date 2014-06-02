@@ -3187,32 +3187,6 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 
-/// EmitGlobalVariable - Emit information about an objective-c interface.
-void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
-                                     ObjCInterfaceDecl *ID) {
-  assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
-  // Create global variable debug descriptor.
-  llvm::DIFile Unit = getOrCreateFile(ID->getLocation());
-  unsigned LineNo = getLineNumber(ID->getLocation());
-
-  StringRef Name = ID->getName();
-
-  QualType T = CGM.getContext().getObjCInterfaceType(ID);
-  if (T->isIncompleteArrayType()) {
-
-    // CodeGen turns int[] into int[1] so we'll do the same here.
-    llvm::APInt ConstVal(32, 1);
-    QualType ET = CGM.getContext().getAsArrayType(T)->getElementType();
-
-    T = CGM.getContext().getConstantArrayType(ET, ConstVal,
-                                           ArrayType::Normal, 0);
-  }
-
-  DBuilder.createGlobalVariable(Name, Unit, LineNo,
-                                getOrCreateType(T, Unit),
-                                Var->hasInternalLinkage(), Var);
-}
-
 /// EmitGlobalVariable - Emit global variable's debug info.
 void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
                                      llvm::Constant *Init) {

@@ -273,9 +273,6 @@ public:
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
 
-  /// EmitGlobalVariable - Emit information about an objective-c interface.
-  void EmitGlobalVariable(llvm::GlobalVariable *GV, ObjCInterfaceDecl *Decl);
-
   /// EmitGlobalVariable - Emit global variable's debug info.
   void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
 
