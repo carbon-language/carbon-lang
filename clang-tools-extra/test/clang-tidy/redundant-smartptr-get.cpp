@@ -6,20 +6,21 @@
 namespace std {
 
 template <typename T>
-class unique_ptr {
+struct unique_ptr {
   T& operator*() const;
   T* operator->() const;
   T* get() const;
 };
 
 template <typename T>
-class shared_ptr {
+struct shared_ptr {
   T& operator*() const;
   T* operator->() const;
   T* get() const;
 };
 
 }  // namespace std
+#define NULL __null
 
 struct int_ptr {
   int* get();

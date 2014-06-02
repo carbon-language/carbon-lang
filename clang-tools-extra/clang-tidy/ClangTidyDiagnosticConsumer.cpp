@@ -109,7 +109,9 @@ ClangTidyMessage::ClangTidyMessage(StringRef Message,
   FileOffset = Sources.getFileOffset(Loc);
 }
 
-ClangTidyError::ClangTidyError(StringRef CheckName) : CheckName(CheckName) {}
+ClangTidyError::ClangTidyError(StringRef CheckName,
+                               ClangTidyError::Level DiagLevel)
+    : CheckName(CheckName), DiagLevel(DiagLevel) {}
 
 // Returns true if GlobList starts with the negative indicator ('-'), removes it
 // from the GlobList.
@@ -214,7 +216,8 @@ ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
 void ClangTidyDiagnosticConsumer::finalizeLastError() {
   if (!Errors.empty()) {
     ClangTidyError &Error = Errors.back();
-    if (!Context.getChecksFilter().isCheckEnabled(Error.CheckName)) {
+    if (!Context.getChecksFilter().isCheckEnabled(Error.CheckName) &&
+        Error.DiagLevel != ClangTidyError::Error) {
       ++Context.Stats.ErrorsIgnoredCheckFilter;
       Errors.pop_back();
     } else if (!LastErrorRelatesToUserCode) {
@@ -246,7 +249,14 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
                                 ? ("clang-diagnostic-" + WarningOption).str()
                                 : Context.getCheckName(Info.getID()).str();
 
-    Errors.push_back(ClangTidyError(CheckName));
+    ClangTidyError::Level Level = ClangTidyError::Warning;
+    if (DiagLevel == DiagnosticsEngine::Error ||
+        DiagLevel == DiagnosticsEngine::Fatal) {
+      Level = ClangTidyError::Error;
+      LastErrorRelatesToUserCode = true;
+      LastErrorPassesLineFilter = true;
+    }
+    Errors.push_back(ClangTidyError(CheckName, Level));
   }
 
   // FIXME: Provide correct LangOptions for each file.

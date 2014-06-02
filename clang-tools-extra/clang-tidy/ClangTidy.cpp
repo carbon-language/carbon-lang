@@ -336,8 +336,9 @@ ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
 void handleErrors(const std::vector<ClangTidyError> &Errors, bool Fix) {
   ErrorReporter Reporter(Fix);
   for (const ClangTidyError &Error : Errors) {
-    Reporter.reportDiagnostic(Error.Message, DiagnosticsEngine::Warning,
-                              &Error.Fix);
+    Reporter.reportDiagnostic(
+        Error.Message, static_cast<DiagnosticsEngine::Level>(Error.DiagLevel),
+        &Error.Fix);
     for (const ClangTidyMessage &Note : Error.Notes)
       Reporter.reportDiagnostic(Note, DiagnosticsEngine::Note);
   }

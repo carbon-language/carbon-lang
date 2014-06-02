@@ -49,12 +49,19 @@ struct ClangTidyMessage {
 ///
 /// FIXME: Make Diagnostics flexible enough to support this directly.
 struct ClangTidyError {
-  ClangTidyError(StringRef CheckName);
+  enum Level {
+    Warning = DiagnosticsEngine::Warning,
+    Error = DiagnosticsEngine::Error
+  };
+
+  ClangTidyError(StringRef CheckName, Level DiagLevel);
 
   std::string CheckName;
   ClangTidyMessage Message;
   tooling::Replacements Fix;
   SmallVector<ClangTidyMessage, 1> Notes;
+
+  Level DiagLevel;
 };
 
 /// \brief Filters checks by name.
