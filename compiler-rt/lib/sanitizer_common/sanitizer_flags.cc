@@ -55,7 +55,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->legacy_pthread_cond = false;
   f->intercept_tls_get_addr = false;
   f->coverage = false;
-  f->coverage_direct = false;
+  f->coverage_direct = SANITIZER_ANDROID;
   f->coverage_dir = ".";
   f->full_address_space = false;
 }
