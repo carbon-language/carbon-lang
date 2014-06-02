@@ -136,6 +136,12 @@ set(COMPILER_RT_TEST_TARGET_TRIPLE ${TARGET_TRIPLE} CACHE STRING
     "Default triple for cross-compiled executables")
 string(REPLACE "-" ";" TARGET_TRIPLE_LIST ${COMPILER_RT_TEST_TARGET_TRIPLE})
 list(GET TARGET_TRIPLE_LIST 0 COMPILER_RT_TEST_TARGET_ARCH)
+list(GET TARGET_TRIPLE_LIST 1 COMPILER_RT_TEST_TARGET_OS)
+list(GET TARGET_TRIPLE_LIST 2 COMPILER_RT_TEST_TARGET_ABI)
+
+if ("${COMPILER_RT_TEST_TARGET_ABI}" STREQUAL "androideabi")
+  set(ANDROID 1)
+endif()
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} COMPILER_RT_OS_DIR)
 set(COMPILER_RT_LIBRARY_OUTPUT_DIR
@@ -199,29 +205,32 @@ macro(test_target_arch arch)
   set(TARGET_${arch}_CFLAGS ${ARGN})
   try_compile(CAN_TARGET_${arch} ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE}
               COMPILE_DEFINITIONS "${TARGET_${arch}_CFLAGS}"
+              OUTPUT_VARIABLE TARGET_${arch}_OUTPUT
               CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_${arch}_CFLAGS}")
   if(${CAN_TARGET_${arch}})
     list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}" OR
+         "${arch}" STREQUAL "arm_android")
+    # Bail out if we cannot target the architecture we plan to test.
+    message(FATAL_ERROR "Cannot compile for ${arch}:\n${TARGET_${arch}_OUTPUT}")
   endif()
 endmacro()
 
-if(ANDROID_COMMON_FLAGS)
-  test_target_arch(arm_android "${ANDROID_COMMON_FLAGS}")
-else()
-  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
-    if (NOT MSVC)
-      test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
-    endif()
-    test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
-    test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
+  if (NOT MSVC)
+    test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
   endif()
+  test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
+elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
+  test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+endif()
 
-  # Build ARM libraries if we are configured to test on ARM
-  if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
-    test_target_arch(arm "-march=armv7-a")
-    test_target_arch(aarch64 "-march=armv8-a")
-  endif()
+# Build ARM libraries if we are configured to test on ARM
+if(ANDROID)
+  test_target_arch(arm_android "")
+elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
+  test_target_arch(arm "-march=armv7-a")
+  test_target_arch(aarch64 "-march=armv8-a")
 endif()
 
 # We support running instrumented tests when we're not cross compiling
