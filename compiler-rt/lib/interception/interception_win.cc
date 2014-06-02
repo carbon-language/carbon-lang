@@ -121,6 +121,7 @@ static size_t RoundUpToInstrBoundary(size_t size, char *code) {
     }
     switch (0x00FFFFFF & *(unsigned int*)(code + cursor)) {
       case 0x24448A:  // 8A 44 24 XX = mov eal, dword ptr [esp+XXh]
+      case 0x24448B:  // 8B 44 24 XX = mov eax, dword ptr [esp+XXh]
       case 0x244C8B:  // 8B 4C 24 XX = mov ecx, dword ptr [esp+XXh]
       case 0x24548B:  // 8B 54 24 XX = mov edx, dword ptr [esp+XXh]
       case 0x24748B:  // 8B 74 24 XX = mov esi, dword ptr [esp+XXh]
