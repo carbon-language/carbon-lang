@@ -67,7 +67,7 @@ private:
   void checkDylibSymbolCollisions();
   void forEachUndefines(bool searchForOverrides, UndefCallback callback);
 
-  void markLive(const Atom &atom);
+  void markLive(const Atom *atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
   class MergedFile : public MutableFile {

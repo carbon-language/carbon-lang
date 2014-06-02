@@ -305,17 +305,16 @@ void Resolver::updateReferences() {
 }
 
 // For dead code stripping, recursively mark atoms "live"
-void Resolver::markLive(const Atom &atom) {
+void Resolver::markLive(const Atom *atom) {
   // Mark the atom is live. If it's already marked live, then stop recursion.
-  auto exists = _liveAtoms.insert(&atom);
+  auto exists = _liveAtoms.insert(atom);
   if (!exists.second)
     return;
 
   // Mark all atoms it references as live
-  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
     for (const Reference *ref : *defAtom)
-      if (const Atom *target = ref->target())
-        markLive(*target);
+      markLive(ref->target());
 }
 
 // remove all atoms not actually used
@@ -342,7 +341,7 @@ void Resolver::deadStripOptimize() {
 
   // mark all roots as live, and recursively all atoms they reference
   for (const Atom *dsrAtom : _deadStripRoots)
-    markLive(*dsrAtom);
+    markLive(dsrAtom);
 
   // now remove all non-live atoms from _atoms
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(), [&](const Atom *a) {
