@@ -331,6 +331,10 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
       getType() != I->getType())
     return false;
 
+  // If both instructions have no operands, they are identical.
+  if (getNumOperands() == 0 && I->getNumOperands() == 0)
+    return haveSameSpecialState(this, I);
+
   // We have two instructions of identical opcode and #operands.  Check to see
   // if all operands are the same.
   if (!std::equal(op_begin(), op_end(), I->op_begin()))
