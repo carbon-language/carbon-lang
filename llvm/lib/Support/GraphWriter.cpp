@@ -176,7 +176,7 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   std::string GeneratorPath;
   if (PSViewer &&
       (S.TryFindProgram(getProgramName(program), GeneratorPath) ||
-       S.TryFindProgram("circo|twopi|neato|fdp|dot", GeneratorPath))) {
+       S.TryFindProgram("dot|fdp|neato|twopi|circo", GeneratorPath))) {
     std::string PSFilename = Filename + ".ps";
 
     std::vector<const char *> args;
