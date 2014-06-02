@@ -91,6 +91,10 @@ static int FindFirstDSOCallback(struct dl_phdr_info *info, size_t size,
   if (!info->dlpi_name || info->dlpi_name[0] == 0)
     return 0;
 
+  // Ignore vDSO
+  if (internal_strncmp(info->dlpi_name, "linux-", sizeof("linux-") - 1) == 0)
+    return 0;
+
   *(const char **)data = info->dlpi_name;
   return 1;
 }
