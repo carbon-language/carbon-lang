@@ -18,6 +18,8 @@
 #include <sys/mman.h>
 #endif
 
+#include "llvm/Support/MathExtras.h"
+
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/File.h"
@@ -113,7 +115,7 @@ DataBufferMemoryMap::Clear()
 size_t
 DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
                                             lldb::offset_t offset,
-                                            lldb::offset_t length,
+                                            size_t length,
                                             bool writeable)
 {
     if (filespec != NULL)
@@ -124,7 +126,7 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
             log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s\", offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i",
                         filespec->GetPath().c_str(),
                         offset,
-                        length,
+                        (uint64_t)length,
                         writeable);
         }
         char path[PATH_MAX];
@@ -174,7 +176,7 @@ void LoadWin32MemMapAlignment ()
 size_t
 DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, 
                                                   lldb::offset_t offset, 
-                                                  lldb::offset_t length,
+                                                  size_t length,
                                                   bool writeable,
                                                   bool fd_is_file)
 {
@@ -184,14 +186,10 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP|LIBLLDB_LOG_VERBOSE));
         if (log)
         {
-#ifdef _WIN32
-            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%p, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
-#else
-            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%i, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
-#endif
+            log->Printf("DataBufferMemoryMap::MemoryMapFromFileDescriptor(fd=%i, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
                         fd,
                         offset,
-                        length,
+                        (uint64_t)length,
                         writeable,
                         fd_is_file);
         }
@@ -199,16 +197,13 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
         HANDLE handle = (HANDLE)_get_osfhandle(fd);
         DWORD file_size_low, file_size_high;
         file_size_low = GetFileSize(handle, &file_size_high);
-        const size_t file_size = (file_size_high << 32) | file_size_low;
-        const size_t max_bytes_available = file_size - offset;
-        if (length == SIZE_MAX)
-        {
-            length = max_bytes_available;
-        }
-        else if (length > max_bytes_available)
+        const lldb::offset_t file_size = llvm::Make_64(file_size_high, file_size_low);
+        const lldb::offset_t max_bytes_available = file_size - offset;
+        const size_t max_bytes_mappable = (size_t)std::min<lldb::offset_t>(SIZE_MAX, max_bytes_available);
+        if (length == SIZE_MAX || length > max_bytes_mappable)
         {
             // Cap the length if too much data was requested
-            length = max_bytes_available;
+            length = max_bytes_mappable;
         }
 
         if (length > 0)
@@ -222,7 +217,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                 if (realoffset % win32memmapalignment != 0) {
                   realoffset = realoffset / win32memmapalignment * win32memmapalignment;
                   delta = offset - realoffset;
-	              }
+	            }
 
                 LPVOID data = MapViewOfFile(fileMapping, writeable ? FILE_MAP_WRITE : FILE_MAP_READ, 0, realoffset, length + delta);
                 m_mmap_addr = (uint8_t *)data;

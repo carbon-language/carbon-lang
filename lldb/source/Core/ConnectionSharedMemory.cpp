@@ -24,6 +24,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "llvm/Support/MathExtras.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Log.h"
@@ -125,8 +126,15 @@ ConnectionSharedMemory::Open (bool create, const char *name, size_t size, Error 
 
 #ifdef _WIN32
     HANDLE handle;
-    if (create)
-        handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, (DWORD)(size >> 32), (DWORD)(size), name);
+    if (create) {
+        handle = CreateFileMapping(
+            INVALID_HANDLE_VALUE,
+            NULL,
+            PAGE_READWRITE,
+            llvm::Hi_32(size),
+            llvm::Lo_32(size),
+            name);
+    }
     else
         handle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
 

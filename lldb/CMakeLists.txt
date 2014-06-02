@@ -218,9 +218,7 @@ macro(add_lldb_library name)
   endif ()
 
   if(LLDB_USED_LIBS)
-    if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR
-        CMAKE_SYSTEM_NAME MATCHES "FreeBSD" OR
-        CMAKE_SYSTEM_NAME MATCHES "Windows")
+    if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
       target_link_libraries(${name} ${cmake_2_8_12_PUBLIC}
                             -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
     else()

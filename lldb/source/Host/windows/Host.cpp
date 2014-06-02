@@ -34,10 +34,15 @@ Host::GetOSVersion(uint32_t &major,
 
     ZeroMemory(&info, sizeof(OSVERSIONINFOEX));
     info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-
+#pragma warning(push)
+#pragma warning(disable: 4996)
+    // Starting with Microsoft SDK for Windows 8.1, this function is deprecated in favor of the
+    // new Windows Version Helper APIs.  Since we don't specify a minimum SDK version, it's easier
+    // to simply disable the warning rather than try to support both APIs.
     if (GetVersionEx((LPOSVERSIONINFO) &info) == 0) {
         return false;
     }
+#pragma warning(pop)
 
     major = (uint32_t) info.dwMajorVersion;
     minor = (uint32_t) info.dwMinorVersion;

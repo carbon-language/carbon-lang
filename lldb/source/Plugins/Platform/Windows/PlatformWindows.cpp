@@ -628,19 +628,17 @@ PlatformWindows::GetStatus (Stream &strm)
     Platform::GetStatus(strm);
 
 #ifdef _WIN32
-    OSVERSIONINFO info;
-
-    ZeroMemory(&info, sizeof(OSVERSIONINFO));
-    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-    if (GetVersionEx(&info) == 0)
+    uint32_t major;
+    uint32_t minor;
+    uint32_t update;
+    if (!Host::GetOSVersion(major, minor, update))
     {
         strm << "Windows";
         return;
     }
 
-    strm << "Host: Windows " << (int) info.dwMajorVersion
-        << '.' << (int) info.dwMinorVersion
-        << " Build: " << (int) info.dwBuildNumber << '\n';
+    strm << "Host: Windows " << major
+         << '.' << minor
+         << " Build: " << update << '\n';
 #endif
 }

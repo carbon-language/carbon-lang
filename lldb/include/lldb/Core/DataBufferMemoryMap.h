@@ -100,7 +100,12 @@ public:
     /// @param[in] length
     ///     The size in bytes that should be mapped starting \a offset
     ///     bytes into the file. If \a length is \c SIZE_MAX, map
-    ///     as many bytes as possible.
+    ///     as many bytes as possible.  Even though it may be possible
+    ///     for a 32-bit host debugger to debug a 64-bit target, size_t
+    ///     still dictates the maximum possible size that can be mapped
+    ///     into this process.  For this kind of cross-arch debugging
+    ///     scenario, mappings and views should be managed at a higher
+    ///     level.
     ///
     /// @return
     ///     The number of bytes mapped starting from the \a offset.
@@ -108,7 +113,7 @@ public:
     size_t
     MemoryMapFromFileSpec (const FileSpec* file,
                            lldb::offset_t offset = 0,
-                           lldb::offset_t length = SIZE_MAX,
+                           size_t length = SIZE_MAX,
                            bool writeable = false);
 
     //------------------------------------------------------------------
@@ -137,7 +142,7 @@ public:
     size_t
     MemoryMapFromFileDescriptor (int fd, 
                                  lldb::offset_t offset,
-                                 lldb::offset_t length,
+                                 size_t length,
                                  bool write,
                                  bool fd_is_file);
 
