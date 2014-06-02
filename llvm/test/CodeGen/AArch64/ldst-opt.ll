@@ -272,6 +272,111 @@ return:
 
 ; Check the following transform:
 ;
+; add x8, x8, #16
+;  ...
+; str X, [x8]
+;  ->
+; str X, [x8, #16]!
+;
+; with X being either w0, x0, s0, d0 or q0.
+
+define void @store-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
+                                     %pre.struct.i32* %load2,
+                                     i32 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-word2
+; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i32** %this
+  %gep1 = getelementptr inbounds %pre.struct.i32* %load1, i64 0, i32 1
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i32* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi i32* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store i32 %val, i32* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-doubleword2(%pre.struct.i64** %this, i1 %cond,
+                                           %pre.struct.i64* %load2,
+                                           i64 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-doubleword2
+; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i64** %this
+  %gep1 = getelementptr inbounds %pre.struct.i64* %load1, i64 0, i32 1
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i64* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi i64* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store i64 %val, i64* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-quadword2(%pre.struct.i128** %this, i1 %cond,
+                                         %pre.struct.i128* %load2,
+                                         <2 x i64> %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-quadword2
+; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i128** %this
+  %gep1 = getelementptr inbounds %pre.struct.i128* %load1, i64 0, i32 1
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i128* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi <2 x i64>* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store <2 x i64> %val, <2 x i64>* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-float2(%pre.struct.float** %this, i1 %cond,
+                                      %pre.struct.float* %load2,
+                                      float %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-float2
+; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.float** %this
+  %gep1 = getelementptr inbounds %pre.struct.float* %load1, i64 0, i32 1
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.float* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi float* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store float %val, float* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-double2(%pre.struct.double** %this, i1 %cond,
+                                      %pre.struct.double* %load2,
+                                      double %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-double2
+; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.double** %this
+  %gep1 = getelementptr inbounds %pre.struct.double* %load1, i64 0, i32 1
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.double* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store double %val, double* %retptr
+  ret void
+}
+
+; Check the following transform:
+;
 ; ldr X, [x20]
 ;  ...
 ; add x20, x20, #32
