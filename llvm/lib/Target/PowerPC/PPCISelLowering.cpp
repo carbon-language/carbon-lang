@@ -52,10 +52,12 @@ cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
 extern cl::opt<bool> ANDIGlueBug;
 
 static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
+  // If it isn't a Mach-O file then it's going to be a linux ELF
+  // object file.
   if (TT.isOSDarwin())
     return new TargetLoweringObjectFileMachO();
-  else
-    return new PPC64LinuxTargetObjectFile();
+
+  return new PPC64LinuxTargetObjectFile();
 }
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
