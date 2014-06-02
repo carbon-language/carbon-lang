@@ -11482,8 +11482,9 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (addTest) {
-    CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, dl, DAG);
+    X86::CondCode X86Cond = Inverted ? X86::COND_E : X86::COND_NE;
+    CC = DAG.getConstant(X86Cond, MVT::i8);
+    Cond = EmitTest(Cond, X86Cond, dl, DAG);
   }
   Cond = ConvertCmpIfNecessary(Cond, DAG);
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
