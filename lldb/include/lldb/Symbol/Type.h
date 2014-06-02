@@ -792,7 +792,7 @@ class TypeEnumMemberImpl
 {
 public:
     TypeEnumMemberImpl () :
-        m_integer_type(),
+        m_integer_type_sp(),
         m_name("<invalid>"),
         m_value(),
         m_valid(false)
@@ -803,7 +803,7 @@ public:
                         const lldb_private::ClangASTType& integer_type);
 
     TypeEnumMemberImpl (const TypeEnumMemberImpl& rhs) :
-        m_integer_type(rhs.m_integer_type),
+        m_integer_type_sp(rhs.m_integer_type_sp),
         m_name(rhs.m_name),
         m_value(rhs.m_value),
         m_valid(rhs.m_valid)
@@ -828,7 +828,7 @@ public:
     const lldb::TypeImplSP &
     GetIntegerType () const
     {
-        return m_integer_type;
+        return m_integer_type_sp;
     }
 
     uint64_t
@@ -844,7 +844,7 @@ public:
     }
 
 protected:
-    lldb::TypeImplSP m_integer_type;
+    lldb::TypeImplSP m_integer_type_sp;
     ConstString m_name;
     llvm::APSInt m_value;
     bool m_valid;

@@ -1171,9 +1171,17 @@ TypeImpl::GetDescription (lldb_private::Stream &strm,
 
 TypeEnumMemberImpl::TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
                                         const lldb_private::ClangASTType& integer_type) :
-    m_value(enum_member_decl->getInitVal()),
-    m_integer_type(new TypeImpl(integer_type))
+    m_integer_type_sp(),
+    m_name(),
+    m_value(),
+    m_valid(false)
+
 {
-    m_name = ConstString(enum_member_decl->getNameAsString().c_str());
-    m_valid = true;
+    if (enum_member_decl)
+    {
+        m_integer_type_sp.reset(new TypeImpl(integer_type));
+        m_name = ConstString(enum_member_decl->getNameAsString().c_str());
+        m_value = enum_member_decl->getInitVal();
+        m_valid = true;
+    }
 }
