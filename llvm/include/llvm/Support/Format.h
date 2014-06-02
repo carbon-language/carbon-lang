@@ -170,6 +170,30 @@ public:
   }
 };
 
+/// format_object6 - This is a templated helper class used by the format
+/// function that captures the object to be formated and the format string. When
+/// actually printed, this synthesizes the string into a temporary buffer
+/// provided and returns whether or not it is big enough.
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6>
+class format_object6 : public format_object_base {
+  T1 Val1;
+  T2 Val2;
+  T3 Val3;
+  T4 Val4;
+  T5 Val5;
+  T6 Val6;
+public:
+  format_object6(const char *Fmt, const T1 &Val1, const T2 &Val2,
+                 const T3 &Val3, const T4 &Val4, const T5 &Val5, const T6 &Val6)
+    : format_object_base(Fmt), Val1(Val1), Val2(Val2), Val3(Val3), Val4(Val4),
+      Val5(Val5), Val6(Val6) { }
+
+  int snprint(char *Buffer, unsigned BufferSize) const override {
+    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4, Val5, Val6);
+  }
+};
+
 /// This is a helper function that is used to produce formatted output.
 ///
 /// This is typically used like:
@@ -229,6 +253,21 @@ inline format_object5<T1, T2, T3, T4, T5> format(const char *Fmt,const T1 &Val1,
                                              const T2 &Val2, const T3 &Val3,
                                              const T4 &Val4, const T5 &Val5) {
   return format_object5<T1, T2, T3, T4, T5>(Fmt, Val1, Val2, Val3, Val4, Val5);
+}
+
+/// This is a helper function that is used to produce formatted output.
+///
+/// This is typically used like:
+/// \code
+///   OS << format("%0.4f", myfloat) << '\n';
+/// \endcode
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6>
+inline format_object6<T1, T2, T3, T4, T5, T6>
+format(const char *Fmt, const T1 &Val1, const T2 &Val2, const T3 &Val3,
+       const T4 &Val4, const T5 &Val5, const T6 &Val6) {
+  return format_object6<T1, T2, T3, T4, T5, T6>(Fmt, Val1, Val2, Val3, Val4,
+                                                Val5, Val6);
 }
 
 } // end namespace llvm
