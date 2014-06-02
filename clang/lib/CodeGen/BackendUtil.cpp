@@ -214,8 +214,6 @@ static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
                                    PassManagerBase &PM) {
-  const PassManagerBuilderWrapper &BuilderWrapper =
-      static_cast<const PassManagerBuilderWrapper&>(Builder);
   PM.add(createThreadSanitizerPass());
 }
 
