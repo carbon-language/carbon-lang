@@ -3612,6 +3612,27 @@ TEST(VectorShiftTest, avx2_left) {
 #endif // __AVX2__
 } // namespace
 
+TEST(VectorPackTest, sse2_packssdw_128) {
+  const unsigned S2_max = (1 << 15) - 1;
+  V4x32 a = {*GetPoisoned<U4>() & 0xFF0000U, *GetPoisoned<U4>() & 0xFFFF0000,
+             S2_max + 100, 4};
+  V4x32 b = {*GetPoisoned<U4>() & 0xFF, S2_max + 10000,
+             *GetPoisoned<U4>() & 0xFF00, S2_max};
+  V8x16 c = _mm_packs_epi32(a, b);
+  EXPECT_POISONED(c[0]);
+  EXPECT_POISONED(c[1]);
+  EXPECT_NOT_POISONED(c[2]);
+  EXPECT_NOT_POISONED(c[3]);
+  EXPECT_POISONED(c[4]);
+  EXPECT_NOT_POISONED(c[5]);
+  EXPECT_POISONED(c[6]);
+  EXPECT_NOT_POISONED(c[7]);
+
+  EXPECT_EQ(c[2], S2_max);
+  EXPECT_EQ(c[3], 4);
+  EXPECT_EQ(c[5], S2_max);
+  EXPECT_EQ(c[7], S2_max);
+}
 
 TEST(MemorySanitizerDr, StoreInDSOTest) {
   if (!__msan_has_dynamic_component()) return;
