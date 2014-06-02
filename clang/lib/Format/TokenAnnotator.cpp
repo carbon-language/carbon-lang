@@ -1329,8 +1329,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 150;
   }
 
-  if (Right.Type == TT_TrailingAnnotation && Right.Next &&
-      Right.Next->isNot(tok::l_paren)) {
+  if (Right.Type == TT_TrailingAnnotation &&
+      (!Right.Next || Right.Next->isNot(tok::l_paren))) {
     // Generally, breaking before a trailing annotation is bad unless it is
     // function-like. It seems to be especially preferable to keep standard
     // annotations (i.e. "const", "final" and "override") on the same line.

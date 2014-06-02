@@ -3469,6 +3469,13 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
                "    int parameter) const override {}",
                Style);
 
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) const\n"
+               "{\n"
+               "}",
+               Style);
+
   // Unless these are unknown annotations.
   verifyFormat("void SomeFunction(aaaaaaaaaa aaaaaaaaaaaaaaa,\n"
                "                  aaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
