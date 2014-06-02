@@ -99,7 +99,7 @@ public:
                              VTableAddressPointsMapTy& AddressPoints);
 
     
-  /// GetAddrOfVTable - Get the address of the VTT for the given record decl.
+  /// GetAddrOfVTT - Get the address of the VTT for the given record decl.
   llvm::GlobalVariable *GetAddrOfVTT(const CXXRecordDecl *RD);
 
   /// EmitVTTDefinition - Emit the definition of the given vtable.
