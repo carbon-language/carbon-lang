@@ -90,7 +90,6 @@ set(SOURCES
   kmp_ftn_extra.c
   kmp_global.c
   kmp_gsupport.c
-  kmp_global.c
   kmp_i18n.c
   kmp_io.c
   kmp_itt.c
