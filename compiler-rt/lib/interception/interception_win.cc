@@ -134,8 +134,9 @@ static size_t RoundUpToInstrBoundary(size_t size, char *code) {
     // FIXME: Unknown instruction failures might happen when we add a new
     // interceptor or a new compiler version. In either case, they should result
     // in visible and readable error messages. However, merely calling abort()
-    // or __debugbreak() leads to an infinite recursion in CheckFailed.
+    // leads to an infinite recursion in CheckFailed.
     // Do we have a good way to abort with an error message here?
+    __debugbreak();
     return 0;
   }
 
