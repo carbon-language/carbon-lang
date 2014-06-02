@@ -281,7 +281,7 @@ define i32 @test15i(i32 %X) {
 ; CHECK-NEXT: %t1 = shl i32 %X, 8
 ; CHECK-NEXT: %1 = and i32 %t1, 512
 ; CHECK-NEXT: %2 = xor i32 %1, 512
-; CHECK-NEXT: %3 = add i32 %2, 577
+; CHECK-NEXT: %3 = add nsw i32 %2, 577
 ; CHECK-NEXT: ret i32 %3
 }
 
@@ -294,7 +294,7 @@ define i32 @test15j(i32 %X) {
 ; CHECK-LABEL: @test15j(
 ; CHECK-NEXT: %t1 = shl i32 %X, 8
 ; CHECK-NEXT: %1 = and i32 %t1, 512
-; CHECK-NEXT: %2 = add i32 %1, 577
+; CHECK-NEXT: %2 = add nsw i32 %1, 577
 ; CHECK-NEXT: ret i32 %2
 }
 
@@ -521,7 +521,7 @@ define i32 @test35(i32 %x) {
 ; CHECK-LABEL: @test35(
 ; CHECK: ashr i32 %x, 31
 ; CHECK: and i32 {{.*}}, 40
-; CHECK: add i32 {{.*}}, 60
+; CHECK: add nsw i32 {{.*}}, 60
 ; CHECK: ret
 }
 
@@ -532,7 +532,7 @@ define i32 @test36(i32 %x) {
 ; CHECK-LABEL: @test36(
 ; CHECK: ashr i32 %x, 31
 ; CHECK: and i32 {{.*}}, -40
-; CHECK: add i32 {{.*}}, 100
+; CHECK: add nsw i32 {{.*}}, 100
 ; CHECK: ret
 }
 

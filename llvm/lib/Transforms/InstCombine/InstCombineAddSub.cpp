@@ -898,10 +898,20 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   // There are different heuristics we can use for this.  Here are some simple
   // ones.
 
-  // Add has the property that adding any two 2's complement numbers can only
-  // have one carry bit which can change a sign.  As such, if LHS and RHS each
-  // have at least two sign bits, we know that the addition of the two values
-  // will sign extend fine.
+  // If LHS and RHS each have at least two sign bits, the addition will look
+  // like
+  //
+  // XX..... +
+  // YY.....
+  //
+  // If the carry into the most significant position is 0, X and Y can't both
+  // be 1 and therefore the carry out of the addition is also 0.
+  //
+  // If the carry into the most significant position is 1, X and Y can't both
+  // be 0 and therefore the carry out of the addition is also 1.
+  //
+  // Since the carry into the most significant position is always equal to
+  // the carry out of the addition, there is no signed overflow.
   if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
     return true;
 
@@ -1189,6 +1199,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         (match(RHS, m_And(m_Specific(A), m_Specific(B))) ||
          match(RHS, m_And(m_Specific(B), m_Specific(A)))))
       return BinaryOperator::CreateOr(A, B);
+  }
+
+  if (!I.hasNoSignedWrap() && WillNotOverflowSignedAdd(LHS, RHS)) {
+    Changed = true;
+    I.setHasNoSignedWrap(true);
   }
 
   return Changed ? &I : nullptr;
