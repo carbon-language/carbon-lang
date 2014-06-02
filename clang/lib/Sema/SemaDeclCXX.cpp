@@ -11353,13 +11353,17 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
                                              LookupOrdinaryName,
                                              ForRedeclaration)) {
     // The scope should be freshly made just for us. There is just no way
-    // it contains any previous declaration.
+    // it contains any previous declaration, except for function parameters in
+    // a function-try-block's catch statement.
     assert(!S->isDeclScope(PrevDecl));
-    if (PrevDecl->isTemplateParameter()) {
+    if (isDeclInScope(PrevDecl, CurContext, S)) {
+      Diag(D.getIdentifierLoc(), diag::err_redefinition)
+        << D.getIdentifier();
+      Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+      Invalid = true;
+    } else if (PrevDecl->isTemplateParameter())
       // Maybe we will complain about the shadowed template parameter.
       DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
-      PrevDecl = nullptr;
-    }
   }
 
   if (D.getCXXScopeSpec().isSet() && !Invalid) {

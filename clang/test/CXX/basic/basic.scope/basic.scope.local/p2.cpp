@@ -9,8 +9,8 @@ void func2(int i) try { // expected-note{{previous definition is here}}
 } catch (...) {
 }
 
-void func3(int i) try { // FIXME: note {{previous definition is here}}
-} catch (int i) { // FIXME: error {{redefinition of 'i'}}
+void func3(int i) try { // expected-note {{previous definition is here}}
+} catch (int i) { // expected-error {{redefinition of 'i'}}
 }
 
 void func4(int i) try { // expected-note{{previous definition is here}}
@@ -57,4 +57,10 @@ void func10() {
     if (true) {
       int b; // FIXME: decide whether this is valid
     }
+}
+
+void func11(int a) {
+  try {
+  } catch (int a) {  // OK
+  }
 }
