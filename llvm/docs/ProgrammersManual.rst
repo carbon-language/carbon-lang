@@ -545,14 +545,15 @@ methods.  Within GDB, for example, you can usually use something like ``call
 DAG.viewGraph()`` to pop up a window.  Alternatively, you can sprinkle calls to
 these functions in your code in places you want to debug.
 
-Getting this to work requires a small amount of configuration.  On Unix systems
+Getting this to work requires a small amount of setup.  On Unix systems
 with X11, install the `graphviz <http://www.graphviz.org>`_ toolkit, and make
 sure 'dot' and 'gv' are in your path.  If you are running on Mac OS X, download
 and install the Mac OS X `Graphviz program
 <http://www.pixelglow.com/graphviz/>`_ and add
 ``/Applications/Graphviz.app/Contents/MacOS/`` (or wherever you install it) to
-your path.  Once in your system and path are set up, rerun the LLVM configure
-script and rebuild LLVM to enable this functionality.
+your path. The programs need not be present when configuring, building or
+running LLVM and can simply be installed when needed during an active debug
+session.
 
 ``SelectionDAG`` has been extended to make it easier to locate *interesting*
 nodes in large complex graphs.  From gdb, if you ``call DAG.setGraphColor(node,

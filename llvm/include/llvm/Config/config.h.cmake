@@ -45,9 +45,6 @@
 /* Define to 1 if you have the `ceilf' function. */
 #cmakedefine HAVE_CEILF ${HAVE_CEILF}
 
-/* Define if the neat program is available */
-#cmakedefine HAVE_CIRCO ${HAVE_CIRCO}
-
 /* Define to 1 if you have the `closedir' function. */
 #cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
 
@@ -80,12 +77,6 @@
 /* Define if dlopen() is available on this platform. */
 #cmakedefine HAVE_DLOPEN ${HAVE_DLOPEN}
 
-/* Define if the dot program is available */
-#cmakedefine HAVE_DOT ${HAVE_DOT}
-
-/* Define if the dotty program is available */
-#cmakedefine HAVE_DOTTY ${HAVE_DOTTY}
-
 /* Define if you have the _dyld_func_lookup function. */
 #undef HAVE_DYLD
 
@@ -97,9 +88,6 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #cmakedefine HAVE_FCNTL_H ${HAVE_FCNTL_H}
-
-/* Define if the neat program is available */
-#cmakedefine HAVE_FDP ${HAVE_FDP}
 
 /* Define to 1 if you have the <fenv.h> header file. */
 #cmakedefine HAVE_FENV_H ${HAVE_FENV_H}
@@ -160,12 +148,6 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #cmakedefine HAVE_GETTIMEOFDAY ${HAVE_GETTIMEOFDAY}
-
-/* Define if the Graphviz program is available */
-#cmakedefine HAVE_GRAPHVIZ ${HAVE_GRAPHVIZ}
-
-/* Define if the gv program is available */
-#cmakedefine HAVE_GV ${HAVE_GV}
 
 /* Define to 1 if the system has the type `int64_t'. */
 #cmakedefine HAVE_INT64_T ${HAVE_INT64_T}
@@ -270,9 +252,6 @@
 
 /* Define to 1 if you have the `nearbyintf' function. */
 #cmakedefine HAVE_NEARBYINTF ${HAVE_NEARBYINTF}
-
-/* Define if the neat program is available */
-#cmakedefine HAVE_NEATO ${HAVE_NEATO}
 
 /* Define to 1 if you have the `opendir' function. */
 #cmakedefine HAVE_OPENDIR ${HAVE_OPENDIR}
@@ -417,9 +396,6 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
 
-/* Define if the neat program is available */
-#cmakedefine HAVE_TWOPI ${HAVE_TWOPI}
-
 /* Define to 1 if the system has the type `uint64_t'. */
 #cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
 
@@ -437,9 +413,6 @@
 
 /* Define to 1 if you have the `writev' function. */
 #cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
-
-/* Define if the xdot.py program is available */
-#cmakedefine HAVE_XDOT ${HAVE_XDOT}
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #cmakedefine HAVE_ZLIB_H ${HAVE_ZLIB_H}
@@ -566,33 +539,6 @@
 
 /* Define if this is Win32ish platform */
 #cmakedefine LLVM_ON_WIN32 ${LLVM_ON_WIN32}
-
-/* Define to path to circo program if found or 'echo circo' otherwise */
-#cmakedefine LLVM_PATH_CIRCO "${LLVM_PATH_CIRCO}"
-
-/* Define to path to dot program if found or 'echo dot' otherwise */
-#cmakedefine LLVM_PATH_DOT "${LLVM_PATH_DOT}"
-
-/* Define to path to dotty program if found or 'echo dotty' otherwise */
-#cmakedefine LLVM_PATH_DOTTY "${LLVM_PATH_DOTTY}"
-
-/* Define to path to fdp program if found or 'echo fdp' otherwise */
-#cmakedefine LLVM_PATH_FDP "${LLVM_PATH_FDP}"
-
-/* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
-#cmakedefine LLVM_PATH_GRAPHVIZ "${LLVM_PATH_GRAPHVIZ}"
-
-/* Define to path to gv program if found or 'echo gv' otherwise */
-#cmakedefine LLVM_PATH_GV "${LLVM_PATH_GV}"
-
-/* Define to path to neato program if found or 'echo neato' otherwise */
-#cmakedefine LLVM_PATH_NEATO "${LLVM_PATH_NEATO}"
-
-/* Define to path to twopi program if found or 'echo twopi' otherwise */
-#cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
-
-/* Define to path to xdot.py program if found or 'echo xdot' otherwise */
-#cmakedefine LLVM_PATH_XDOT "${LLVM_PATH_XDOT}"
 
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"

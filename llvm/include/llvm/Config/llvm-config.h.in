@@ -79,33 +79,6 @@
 /* Define if this is Win32ish platform */
 #undef LLVM_ON_WIN32
 
-/* Define to path to circo program if found or 'echo circo' otherwise */
-#undef LLVM_PATH_CIRCO
-
-/* Define to path to dot program if found or 'echo dot' otherwise */
-#undef LLVM_PATH_DOT
-
-/* Define to path to dotty program if found or 'echo dotty' otherwise */
-#undef LLVM_PATH_DOTTY
-
-/* Define to path to fdp program if found or 'echo fdp' otherwise */
-#undef LLVM_PATH_FDP
-
-/* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
-#undef LLVM_PATH_GRAPHVIZ
-
-/* Define to path to gv program if found or 'echo gv' otherwise */
-#undef LLVM_PATH_GV
-
-/* Define to path to neato program if found or 'echo neato' otherwise */
-#undef LLVM_PATH_NEATO
-
-/* Define to path to twopi program if found or 'echo twopi' otherwise */
-#undef LLVM_PATH_TWOPI
-
-/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
-#undef LLVM_PATH_XDOT_PY
-
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 

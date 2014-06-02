@@ -50,7 +50,7 @@ namespace GraphProgram {
    };
 }
 
-void DisplayGraph(StringRef Filename, bool wait = true,
+bool DisplayGraph(StringRef Filename, bool wait = true,
                   GraphProgram::Name program = GraphProgram::DOT);
 
 template<typename GraphType>
