@@ -1,9 +1,11 @@
-; RUN: opt < %s -instcombine -S | grep "add nsw i32"
-; RUN: opt < %s -instcombine -S | grep sext | count 1
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
-; Should only have one sext and the add should be i32 instead of i64.
-
+; CHECK-LABEL: define i64 @test
 define i64 @test1(i32 %A) {
+; CHECK: %[[ADD:.*]] = add nsw i32 %B, %C
+; CHECK: %F = sext i32 %[[ADD]] to i64
+; CHECK: ret i64 %F
+
 	%B = ashr i32 %A, 7		; <i32> [#uses=1]
 	%C = ashr i32 %A, 9		; <i32> [#uses=1]
 	%D = sext i32 %B to i64		; <i64> [#uses=1]
