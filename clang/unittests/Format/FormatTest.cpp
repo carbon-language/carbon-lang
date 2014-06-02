@@ -7679,6 +7679,11 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "  Y = 0,\n"
                "}\n",
                BreakBeforeBrace);
+  verifyFormat("enum X\n"
+               "{\n"
+               "  Y = 0\n"
+               "}\n",
+               BreakBeforeBrace);
 
   verifyFormat("@interface BSApplicationController ()\n"
                "{\n"

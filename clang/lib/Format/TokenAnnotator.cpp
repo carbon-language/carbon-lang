@@ -1570,6 +1570,12 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   return spaceRequiredBetween(Line, *Tok.Previous, Tok);
 }
 
+// Returns 'true' if 'Tok' is a brace we'd want to break before in Allman style.
+static bool isAllmanBrace(const FormatToken &Tok) {
+  return Tok.is(tok::l_brace) && Tok.BlockKind == BK_Block &&
+         Tok.Type != TT_ObjCBlockLBrace && Tok.Type != TT_DictLiteral;
+}
+
 bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                                      const FormatToken &Right) {
   const FormatToken &Left = *Right.Previous;
@@ -1596,10 +1602,6 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Style.BreakConstructorInitializersBeforeComma &&
              !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
     return true;
-  } else if (Right.is(tok::l_brace) && Right.BlockKind == BK_Block &&
-             Right.Type != TT_ObjCBlockLBrace && Right.Type != TT_DictLiteral) {
-    return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
-           Style.BreakBeforeBraces == FormatStyle::BS_GNU;
   } else if (Right.is(tok::string_literal) &&
              Right.TokenText.startswith("R\"")) {
     // Raw string literals are special wrt. line breaks. The author has made a
@@ -1610,6 +1612,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Style.Language == FormatStyle::LK_Proto) {
     // Don't enums onto single lines in protocol buffers.
     return true;
+  } else if (isAllmanBrace(Left) || isAllmanBrace(Right)) {
+    return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+           Style.BreakBeforeBraces == FormatStyle::BS_GNU;
   }
 
   // If the last token before a '}' is a comma or a comment, the intention is to
