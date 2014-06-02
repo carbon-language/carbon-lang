@@ -6,7 +6,7 @@ entry:
 ; CHECK-LABEL: @a(
 ; CHECK: [[TMP1:%.*]] = sext i1 %y to i32
 ; CHECK: [[TMP2:%.*]] = select i1 %x, i32 2, i32 1
-; CHECK-NEXT: add nsw i32 [[TMP2]], [[TMP1]]
+; CHECK-NEXT: add i32 [[TMP2]], [[TMP1]]
   %conv = zext i1 %x to i32
   %conv3 = zext i1 %y to i32
   %conv3.neg = sub i32 0, %conv3

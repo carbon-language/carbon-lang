@@ -103,7 +103,7 @@ define i32 @test_simplify13(i32 %x) {
 ; CHECK-LABEL: @test_simplify13(
   %ret = call i32 @ffs(i32 %x)
 ; CHECK-NEXT: [[CTTZ:%[a-z0-9]+]] = call i32 @llvm.cttz.i32(i32 %x, i1 false)
-; CHECK-NEXT: [[INC:%[a-z0-9]+]] = add nsw i32 [[CTTZ]], 1
+; CHECK-NEXT: [[INC:%[a-z0-9]+]] = add i32 [[CTTZ]], 1
 ; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 %x, 0
 ; CHECK-NEXT: [[RET:%[a-z0-9]+]] = select i1 [[CMP]], i32 [[INC]], i32 0
   ret i32 %ret
@@ -114,7 +114,7 @@ define i32 @test_simplify14(i32 %x) {
 ; CHECK-LINUX-LABEL: @test_simplify14(
   %ret = call i32 @ffsl(i32 %x)
 ; CHECK-LINUX-NEXT: [[CTTZ:%[a-z0-9]+]] = call i32 @llvm.cttz.i32(i32 %x, i1 false)
-; CHECK-LINUX-NEXT: [[INC:%[a-z0-9]+]] = add nsw i32 [[CTTZ]], 1
+; CHECK-LINUX-NEXT: [[INC:%[a-z0-9]+]] = add i32 [[CTTZ]], 1
 ; CHECK-LINUX-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 %x, 0
 ; CHECK-LINUX-NEXT: [[RET:%[a-z0-9]+]] = select i1 [[CMP]], i32 [[INC]], i32 0
   ret i32 %ret
@@ -125,7 +125,7 @@ define i32 @test_simplify15(i64 %x) {
 ; CHECK-LINUX-LABEL: @test_simplify15(
   %ret = call i32 @ffsll(i64 %x)
 ; CHECK-LINUX-NEXT: [[CTTZ:%[a-z0-9]+]] = call i64 @llvm.cttz.i64(i64 %x, i1 false)
-; CHECK-LINUX-NEXT: [[INC:%[a-z0-9]+]] = add nsw i64 [[CTTZ]], 1
+; CHECK-LINUX-NEXT: [[INC:%[a-z0-9]+]] = add i64 [[CTTZ]], 1
 ; CHECK-LINUX-NEXT: [[TRUNC:%[a-z0-9]+]] = trunc i64 [[INC]] to i32
 ; CHECK-LINUX-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i64 %x, 0
 ; CHECK-LINUX-NEXT: [[RET:%[a-z0-9]+]] = select i1 [[CMP]], i32 [[TRUNC]], i32 0
