@@ -990,9 +990,81 @@ char_traits<char32_t>::assign(char_type* __s, size_t __n, char_type __a)
 
 // helper fns for basic_string
 
+// __find
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_first_of(const _CharT *__p, _SizeT __sz,
-    const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find(const _CharT *__p, _SizeT __sz, 
+             _CharT __c, _SizeT __pos) _NOEXCEPT
+{
+    if (__pos >= __sz)
+        return __npos;
+    const _CharT* __r = _Traits::find(__p + __pos, __sz - __pos, __c);
+    if (__r == 0)
+        return __npos;
+    return static_cast<_SizeT>(__r - __p);
+}
+
+template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find(const _CharT *__p, _SizeT __sz, 
+       const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+{
+    if (__pos > __sz || __sz - __pos < __n)
+        return __npos;
+    if (__n == 0)
+        return __pos;
+//     if (__n == 1)
+//     	return _VSTD::__find<_CharT, _SizeT, _Traits, __npos>(__p, __sz, *__s, __pos);
+    const _CharT* __r = 
+            _VSTD::search(__p + __pos, __p + __sz, __s, __s + __n, _Traits::eq);
+    if (__r == __p + __sz)
+        return __npos;
+    return static_cast<_SizeT>(__r - __p);
+}
+
+
+// __rfind
+
+template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__rfind(const _CharT *__p, _SizeT __sz, 
+              _CharT __c, _SizeT __pos) _NOEXCEPT
+{
+    if (__sz < 1)
+    	return __npos;
+	if (__pos < __sz)
+		++__pos;
+	else
+		__pos = __sz;
+	for (const _CharT* __ps = __p + __pos; __ps != __p;)
+	{
+		if (_Traits::eq(*--__ps, __c))
+			return static_cast<_SizeT>(__ps - __p);
+	}
+    return __npos;
+}
+
+template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__rfind(const _CharT *__p, _SizeT __sz, 
+        const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+{
+    __pos = _VSTD::min(__pos, __sz);
+    if (__n < __sz - __pos)
+        __pos += __n;
+    else
+        __pos = __sz;
+    const _CharT* __r = _VSTD::find_end(__p, __p + __pos, __s, __s + __n, _Traits::eq);
+    if (__n > 0 && __r == __p + __pos)
+        return __npos;
+    return static_cast<_SizeT>(__r - __p);
+}
+
+// __find_first_of
+template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find_first_of(const _CharT *__p, _SizeT __sz,
+                const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
 {
     if (__pos >= __sz || __n == 0)
         return __npos;
@@ -1003,9 +1075,12 @@ _SizeT _LIBCPP_INLINE_VISIBILITY __find_first_of(const _CharT *__p, _SizeT __sz,
     return static_cast<_SizeT>(__r - __p);
 }
 
+
+// __find_last_of
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_last_of(const _CharT *__p, _SizeT __sz,
-    const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY 
+__find_last_of(const _CharT *__p, _SizeT __sz,
+               const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
     {
     if (__n != 0)
     {
@@ -1024,9 +1099,11 @@ _SizeT _LIBCPP_INLINE_VISIBILITY __find_last_of(const _CharT *__p, _SizeT __sz,
 }
 
 
+// __find_first_not_of
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_first_not_of(const _CharT *__p, _SizeT __sz,
-    const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find_first_not_of(const _CharT *__p, _SizeT __sz,
+                    const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
 {
     if (__pos < __sz)
     {
@@ -1040,8 +1117,9 @@ _SizeT _LIBCPP_INLINE_VISIBILITY __find_first_not_of(const _CharT *__p, _SizeT _
 
 
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_first_not_of(const _CharT *__p, _SizeT __sz,
-    _CharT __c, _SizeT __pos) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find_first_not_of(const _CharT *__p, _SizeT __sz,
+                          _CharT __c, _SizeT __pos) _NOEXCEPT
 {
     if (__pos < __sz)
     {
@@ -1054,9 +1132,11 @@ _SizeT _LIBCPP_INLINE_VISIBILITY __find_first_not_of(const _CharT *__p, _SizeT _
 }
 
 
+// __find_last_not_of
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_last_not_of(const _CharT *__p, _SizeT __sz,
-        const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find_last_not_of(const _CharT *__p, _SizeT __sz,
+                   const _CharT* __s, _SizeT __pos, _SizeT __n) _NOEXCEPT
 {
     if (__pos < __sz)
         ++__pos;
@@ -1070,8 +1150,9 @@ _SizeT _LIBCPP_INLINE_VISIBILITY __find_last_not_of(const _CharT *__p, _SizeT __
 
 
 template<class _CharT, class _SizeT, class _Traits, _SizeT __npos>
-_SizeT _LIBCPP_INLINE_VISIBILITY __find_last_not_of(const _CharT *__p, _SizeT __sz,
-        _CharT __c, _SizeT __pos) _NOEXCEPT
+_SizeT _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+__find_last_not_of(const _CharT *__p, _SizeT __sz,
+                         _CharT __c, _SizeT __pos) _NOEXCEPT
 {
     if (__pos < __sz)
         ++__pos;
@@ -3346,17 +3427,8 @@ basic_string<_CharT, _Traits, _Allocator>::find(const value_type* __s,
                                                 size_type __n) const _NOEXCEPT
 {
     _LIBCPP_ASSERT(__n == 0 || __s != nullptr, "string::find(): received nullptr");
-    size_type __sz = size();
-    if (__pos > __sz || __sz - __pos < __n)
-        return npos;
-    if (__n == 0)
-        return __pos;
-    const value_type* __p = data();
-    const value_type* __r = _VSTD::search(__p + __pos, __p + __sz, __s, __s + __n,
-                                     __traits_eq<traits_type>());
-    if (__r == __p + __sz)
-        return npos;
-    return static_cast<size_type>(__r - __p);
+    return _VSTD::__find<value_type, size_type, traits_type, npos>
+        (data(), size(), __s, __pos, __n);
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3365,7 +3437,8 @@ typename basic_string<_CharT, _Traits, _Allocator>::size_type
 basic_string<_CharT, _Traits, _Allocator>::find(const basic_string& __str,
                                                 size_type __pos) const _NOEXCEPT
 {
-    return find(__str.data(), __pos, __str.size());
+    return _VSTD::__find<value_type, size_type, traits_type, npos>
+        (data(), size(), __str.data(), __pos, __str.size());
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3375,7 +3448,8 @@ basic_string<_CharT, _Traits, _Allocator>::find(const value_type* __s,
                                                 size_type __pos) const _NOEXCEPT
 {
     _LIBCPP_ASSERT(__s != nullptr, "string::find(): received nullptr");
-    return find(__s, __pos, traits_type::length(__s));
+    return _VSTD::__find<value_type, size_type, traits_type, npos>
+        (data(), size(), __s, __pos, traits_type::length(__s));
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3383,14 +3457,8 @@ typename basic_string<_CharT, _Traits, _Allocator>::size_type
 basic_string<_CharT, _Traits, _Allocator>::find(value_type __c,
                                                 size_type __pos) const _NOEXCEPT
 {
-    size_type __sz = size();
-    if (__pos >= __sz)
-        return npos;
-    const value_type* __p = data();
-    const value_type* __r = traits_type::find(__p + __pos, __sz - __pos, __c);
-    if (__r == 0)
-        return npos;
-    return static_cast<size_type>(__r - __p);
+    return _VSTD::__find<value_type, size_type, traits_type, npos>
+        (data(), size(), __c, __pos);
 }
 
 // rfind
@@ -3402,18 +3470,8 @@ basic_string<_CharT, _Traits, _Allocator>::rfind(const value_type* __s,
                                                  size_type __n) const _NOEXCEPT
 {
     _LIBCPP_ASSERT(__n == 0 || __s != nullptr, "string::rfind(): received nullptr");
-    size_type __sz = size();
-    __pos = _VSTD::min(__pos, __sz);
-    if (__n < __sz - __pos)
-        __pos += __n;
-    else
-        __pos = __sz;
-    const value_type* __p = data();
-    const value_type* __r = _VSTD::find_end(__p, __p + __pos, __s, __s + __n,
-                                       __traits_eq<traits_type>());
-    if (__n > 0 && __r == __p + __pos)
-        return npos;
-    return static_cast<size_type>(__r - __p);
+    return _VSTD::__rfind<value_type, size_type, traits_type, npos>
+        (data(), size(), __s, __pos, __n);
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3422,7 +3480,8 @@ typename basic_string<_CharT, _Traits, _Allocator>::size_type
 basic_string<_CharT, _Traits, _Allocator>::rfind(const basic_string& __str,
                                                  size_type __pos) const _NOEXCEPT
 {
-    return rfind(__str.data(), __pos, __str.size());
+    return _VSTD::__rfind<value_type, size_type, traits_type, npos>
+        (data(), size(), __str.data(), __pos, __str.size());
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3432,7 +3491,8 @@ basic_string<_CharT, _Traits, _Allocator>::rfind(const value_type* __s,
                                                  size_type __pos) const _NOEXCEPT
 {
     _LIBCPP_ASSERT(__s != nullptr, "string::rfind(): received nullptr");
-    return rfind(__s, __pos, traits_type::length(__s));
+    return _VSTD::__rfind<value_type, size_type, traits_type, npos>
+        (data(), size(), __s, __pos, traits_type::length(__s));
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3440,21 +3500,8 @@ typename basic_string<_CharT, _Traits, _Allocator>::size_type
 basic_string<_CharT, _Traits, _Allocator>::rfind(value_type __c,
                                                  size_type __pos) const _NOEXCEPT
 {
-    size_type __sz = size();
-    if (__sz)
-    {
-        if (__pos < __sz)
-            ++__pos;
-        else
-            __pos = __sz;
-        const value_type* __p = data();
-        for (const value_type* __ps = __p + __pos; __ps != __p;)
-        {
-            if (traits_type::eq(*--__ps, __c))
-                return static_cast<size_type>(__ps - __p);
-        }
-    }
-    return npos;
+    return _VSTD::__rfind<value_type, size_type, traits_type, npos>
+        (data(), size(), __c, __pos);
 }
 
 // find_first_of
