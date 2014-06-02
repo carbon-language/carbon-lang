@@ -15,7 +15,8 @@ def Usage():
   print >> sys.stderr, "Usage: \n" + \
       " " + prog_name + " merge file1 [file2 ...]  > output\n" \
       " " + prog_name + " print file1 [file2 ...]\n" \
-      " " + prog_name + " unpack file1 [file2 ...]\n"
+      " " + prog_name + " unpack file1 [file2 ...]\n" \
+      " " + prog_name + " rawunpack file1 [file2 ...]\n"
   exit(1)
 
 def ReadOneFile(path):
@@ -91,7 +92,6 @@ def UnpackOneRawFile(path, map_path):
   mem_map.sort(key=lambda m : m[0])
   mem_map_keys = [m[0] for m in mem_map]
 
-  print mem_map
   with open(path, mode="rb") as f:
     print >> sys.stderr, "%s: unpacking %s" % (prog_name, path)
 
@@ -109,8 +109,6 @@ def UnpackOneRawFile(path, map_path):
       if pc == 0: continue
       map_idx = bisect.bisect(mem_map_keys, pc) - 1
       (start, end, base, module_path) = mem_map[map_idx]
-      print pc
-      print start, end, base, module_path
       assert pc >= start
       if pc >= end:
         print >> sys.stderr, "warning: %s: pc %x outside of any known mapping" % (prog_name, pc)
