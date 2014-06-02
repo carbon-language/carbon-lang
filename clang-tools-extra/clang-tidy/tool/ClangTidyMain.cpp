@@ -119,13 +119,21 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
+  std::vector<std::string> EnabledChecks = clang::tidy::getCheckNames(Options);
+
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
     llvm::outs() << "Enabled checks:";
-    for (auto CheckName : clang::tidy::getCheckNames(Options))
+    for (auto CheckName : EnabledChecks)
       llvm::outs() << "\n    " << CheckName;
     llvm::outs() << "\n\n";
     return 0;
+  }
+
+  if (EnabledChecks.empty()) {
+    llvm::errs() << "Error: no checks enabled.\n";
+    llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
+    return 1;
   }
 
   std::vector<clang::tidy::ClangTidyError> Errors;

@@ -1,7 +1,7 @@
 // RUN: clang-tidy %s.nonexistent.cpp -- | FileCheck -check-prefix=CHECK1 %s
 // RUN: clang-tidy -checks='google-explicit-constructor' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK2 %s
 // RUN: clang-tidy -checks='-*,google-explicit-constructor,clang-diagnostic-literal-conversion' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK3 %s
-// RUN: clang-tidy -checks='-*,clang-diagnostic-macro-redefined' %s -- -DMACRO_FROM_COMMAND_LINE | FileCheck -check-prefix=CHECK4 %s
+// RUN: clang-tidy -checks='-*,misc-use-override,clang-diagnostic-macro-redefined' %s -- -DMACRO_FROM_COMMAND_LINE | FileCheck -check-prefix=CHECK4 %s
 
 // CHECK1-NOT: warning
 // CHECK2-NOT: warning
