@@ -127,6 +127,7 @@ static const char *getProgramName(GraphProgram::Name program) {
   case GraphProgram::CIRCO:
     return "circo";
   }
+  llvm_unreachable("bad kind");
 }
 
 bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
