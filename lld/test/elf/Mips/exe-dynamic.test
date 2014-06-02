@@ -3,9 +3,8 @@
 # Check MIPS specific tags in the dynamic table in case executable linking.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t-obj %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
 
 # Build executable
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
@@ -21,14 +20,14 @@
 # CHECK-NEXT:   0x00000004 HASH                 0x400110
 # CHECK-NEXT:   0x00000005 STRTAB               0x400144
 # CHECK-NEXT:   0x00000006 SYMTAB               0x400124
-# CHECK-NEXT:   0x0000000A STRSZ                30 (bytes)
+# CHECK-NEXT:   0x0000000A STRSZ                28 (bytes)
 # CHECK-NEXT:   0x0000000B SYMENT               16 (bytes)
 # CHECK-NEXT:   0x0000001A FINI_ARRAY           0x0
 # CHECK-NEXT:   0x0000001C FINI_ARRAYSZ         0 (bytes)
 # CHECK-NEXT:   0x00000002 PLTRELSZ             8 (bytes)
 # CHECK-NEXT:   0x70000032 MIPS_PLTGOT          0x402000
 # CHECK-NEXT:   0x00000014 PLTREL               REL
-# CHECK-NEXT:   0x00000017 JMPREL               0x400164
+# CHECK-NEXT:   0x00000017 JMPREL               0x400160
 # CHECK-NEXT:   0x70000001 MIPS_RLD_VERSION     1
 # CHECK-NEXT:   0x70000005 MIPS_FLAGS           NOTPOT
 # CHECK-NEXT:   0x70000006 MIPS_BASE_ADDRESS    0x400000
@@ -44,7 +43,7 @@
     .global glob
     .ent    glob
 loc:
-    jal     ext1
+    jal     T1
 glob:
     jal     loc
     jal     glob

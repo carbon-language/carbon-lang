@@ -5,14 +5,13 @@
 # entry in the local GOT section.
 #
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t1 %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
 
 # Build executable
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
 # RUN: lld -flavor gnu -target mipsel -e glob \
-# RUN:     --output-filetype=yaml -o %t4 %t3 %t2
+# RUN:     --output-filetype=yaml -o %t4 %t3 %t-so
 # RUN: FileCheck -check-prefix=GOT %s < %t4
 
 # GOT header
@@ -40,7 +39,7 @@
 # GOT:       - kind:            R_MIPS_32
 # GOT:         offset:          0
 # GOT:         target:          glob
-# Global GOT entry for 'ext1' symbol
+# Global GOT entry for 'T1' symbol
 # GOT:   - ref-name:        L001
 # GOT:     type:            got
 # GOT:     content:         [ 00, 00, 00, 00 ]
@@ -51,12 +50,12 @@
 # GOT:     references:
 # GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # GOT:         offset:          0
-# GOT:         target:          ext1
+# GOT:         target:          T1
 
     .abicalls
     .global glob
     .ent    glob
 glob:
     lw      $4,%call16(glob)($28)
-    lw      $4,%call16(ext1)($28)
+    lw      $4,%call16(T1)($28)
     .end    glob

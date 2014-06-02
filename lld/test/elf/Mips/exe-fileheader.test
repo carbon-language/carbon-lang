@@ -3,9 +3,8 @@
 # Check ELF Header for non-pic executable file.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t-obj %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
 
 # Build executable
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
@@ -50,5 +49,5 @@
     .global glob
     .ent    glob
 glob:
-    jal     ext1
+    jal     T1
     .end    glob

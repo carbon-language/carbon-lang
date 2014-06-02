@@ -3,13 +3,12 @@
 # Check initialization of .plt header entries.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t1 %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
 
 # Build executable
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t4 %t3 %t2
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t4 %t3 %t-so
 # RUN: llvm-objdump -section-headers -disassemble %t4 | \
 # RUN:   FileCheck -check-prefix=EXE %s
 
@@ -38,5 +37,5 @@ glob:
     jal     loc
 loc:
     jal     glob
-    jal     ext1
+    jal     T1
     .end    glob

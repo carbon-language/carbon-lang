@@ -3,8 +3,7 @@
 # Check handling of R_MIPS_26 relocation.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t-pic-o %p/Inputs/ext.s
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-pic-o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-pic-o
 
 # Build executable
@@ -21,14 +20,14 @@
 # OBJ-REL-NEXT:   Section (2) .rel.text {
 # OBJ-REL-NEXT:      0x8 R_MIPS_26 .text 0x0
 # OBJ-REL-NEXT:     0x10 R_MIPS_26 glob  0x0
-# OBJ-REL-NEXT:     0x18 R_MIPS_26 ext1  0x0
+# OBJ-REL-NEXT:     0x18 R_MIPS_26 T1  0x0
 # OBJ-REL-NEXT:   }
 # OBJ-REL-NEXT: ]
 
 # Executable file has the only relocation for external symbol
 # EXE-REL: Relocations [
 # EXE-REL-NEXT:   Section (5) .rel.plt {
-# EXE-REL-NEXT:     0x402008 R_MIPS_JUMP_SLOT ext1 0x0
+# EXE-REL-NEXT:     0x402008 R_MIPS_JUMP_SLOT T1 0x0
 # EXE-REL-NEXT:   }
 # EXE-REL-NEXT: ]
 
@@ -54,7 +53,7 @@
 # EXE-NEXT:   4001b0:  68 00 10 0c  jal     4194720
 # EXE-NEXT:   4001b4:  00 00 00 00  nop
 #
-# Jump to the first PLT entry (.plt + 32) for ext1 entry
+# Jump to the first PLT entry (.plt + 32) for T1 entry
 # EXE-NEXT:   4001b8:  64 00 10 0c  jal     4194704
 # EXE-NEXT:   4001bc:  00 00 00 00  nop
 
@@ -70,5 +69,5 @@ glob:
     jal     loc
 loc:
     jal     glob
-    jal     ext1
+    jal     T1
     .end    glob
