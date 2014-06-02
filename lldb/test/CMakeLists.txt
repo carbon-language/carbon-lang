@@ -27,7 +27,7 @@ set(LLDB_TRACE_DIR "${CMAKE_BINARY_DIR}/lldb-test-traces"
 
 set(LLDB_COMMON_TEST_ARGS
   --executable
-  ${CMAKE_BINARY_DIR}/bin/lldb
+  ${CMAKE_BINARY_DIR}/bin/lldb${CMAKE_EXECUTABLE_SUFFIX}
   -s
   ${LLDB_TRACE_DIR}
   -u CXXFLAGS

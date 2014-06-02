@@ -11,7 +11,7 @@ import multiprocessing
 from optparse import OptionParser
 
 # Command template of the invocation of the test driver.
-template = '%s/dotest.py %s -p %s %s'
+template = '%s %s/dotest.py %s -p %s %s'
 
 def process_dir(root, files, test_root, dotest_options):
     """Examine a directory for tests, and invoke any found within it."""
@@ -28,7 +28,7 @@ def process_dir(root, files, test_root, dotest_options):
         if os.path.islink(path):
             continue
 
-        command = template % (test_root, dotest_options if dotest_options else "", name, root)
+        command = template % (sys.executable, test_root, dotest_options if dotest_options else "", name, root)
         if 0 != os.system(command):
             failed.append(name)
         else:
