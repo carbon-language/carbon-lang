@@ -1191,6 +1191,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return BinaryOperator::CreateOr(A, B);
   }
 
+  if (!I.hasNoSignedWrap() && WillNotOverflowSignedAdd(LHS, RHS)) {
+    Changed = true;
+    I.setHasNoSignedWrap(true);
+  }
+
   return Changed ? &I : nullptr;
 }
 

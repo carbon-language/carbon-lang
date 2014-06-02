@@ -127,7 +127,7 @@ define i64 @test14(i64 %x, i32 %y) {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT: [[SHL:%.*]] = shl i32 1, %y
 ; CHECK-NEXT: [[ZEXT:%.*]] = zext i32 [[SHL]] to i64
-; CHECK-NEXT: [[ADD:%.*]] = add i64 [[ZEXT]], -1
+; CHECK-NEXT: [[ADD:%.*]] = add nsw i64 [[ZEXT]], -1
 ; CHECK-NEXT: [[AND:%.*]] = and i64 [[ADD]], %x
 ; CHECK-NEXT: ret i64 [[AND]]
 	%shl = shl i32 1, %y

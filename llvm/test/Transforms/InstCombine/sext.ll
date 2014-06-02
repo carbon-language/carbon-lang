@@ -145,7 +145,7 @@ define i32 @test13(i32 %x) nounwind {
 ; CHECK-LABEL: @test13(
 ; CHECK-NEXT: %and = lshr i32 %x, 3
 ; CHECK-NEXT: %1 = and i32 %and, 1
-; CHECK-NEXT: %sext = add i32 %1, -1
+; CHECK-NEXT: %sext = add nsw i32 %1, -1
 ; CHECK-NEXT: ret i32 %sext
 }
 
@@ -157,7 +157,7 @@ define i32 @test14(i16 %x) nounwind {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT: %and = lshr i16 %x, 4
 ; CHECK-NEXT: %1 = and i16 %and, 1
-; CHECK-NEXT: %sext = add i16 %1, -1
+; CHECK-NEXT: %sext = add nsw i16 %1, -1
 ; CHECK-NEXT: %ext = sext i16 %sext to i32
 ; CHECK-NEXT: ret i32 %ext
 }

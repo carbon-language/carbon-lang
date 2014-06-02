@@ -370,7 +370,7 @@ define zeroext i64 @test43(i8 zeroext %on_off) nounwind readonly {
 	ret i64 %C  ;; Should be (add (zext i8 -> i64), -1)
 ; CHECK-LABEL: @test43(
 ; CHECK-NEXT: %A = zext i8 %on_off to i64
-; CHECK-NEXT: %B = add i64 %A, -1
+; CHECK-NEXT: %B = add nsw i64 %A, -1
 ; CHECK-NEXT: ret i64 %B
 }
 
