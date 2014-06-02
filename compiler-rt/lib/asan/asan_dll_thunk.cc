@@ -325,9 +325,24 @@ INTERCEPT_LIBRARY_FUNCTION(strnlen);
 INTERCEPT_LIBRARY_FUNCTION(strtol);
 INTERCEPT_LIBRARY_FUNCTION(wcslen);
 
-// Must be at the end of the file due to the way INTERCEPT_HOOKS is defined.
+// Must be after all the interceptor declarations due to the way INTERCEPT_HOOKS
+// is defined.
 void InterceptHooks() {
   INTERCEPT_HOOKS();
 }
+
+// We want to call __asan_init before C/C++ initializers/constructors are
+// executed, otherwise functions like memset might be invoked.
+// For some strange reason, merely linking in asan_preinit.cc doesn't work
+// as the callback is never called...  Is link.exe doing something too smart?
+
+// In DLLs, the callbacks are expected to return 0,
+// otherwise CRT initialization fails.
+static int call_asan_init() {
+  __asan_init_v3();
+  return 0;
+}
+#pragma section(".CRT$XIB", long, read)  // NOLINT
+__declspec(allocate(".CRT$XIB")) int (*__asan_preinit)() = call_asan_init;
 
 #endif // ASAN_DLL_THUNK
