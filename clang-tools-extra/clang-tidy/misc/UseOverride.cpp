@@ -65,8 +65,9 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
       !Method->isVirtualAsWritten())
     return; // Nothing to do.
 
-  DiagnosticBuilder Diag = diag(Method->getLocation(),
-                                "Prefer using 'override' instead of 'virtual'");
+  DiagnosticBuilder Diag =
+      diag(Method->getLocation(),
+           "Prefer using 'override' or 'final' instead of 'virtual'");
 
   CharSourceRange FileRange =
       Lexer::makeFileCharRange(CharSourceRange::getTokenRange(
@@ -83,7 +84,8 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
                                               Result.Context->getLangOpts());
 
   // Add 'override' on inline declarations that don't already have it.
-  if (Method->getAttr<clang::OverrideAttr>() == nullptr) {
+  if (Method->getAttr<clang::OverrideAttr>() == nullptr &&
+      Method->getAttr<clang::FinalAttr>() == nullptr) {
     SourceLocation InsertLoc;
     StringRef ReplacementText = "override ";
 

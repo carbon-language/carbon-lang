@@ -62,6 +62,25 @@ void SimpleCases::i() {}
 SimpleCases::~SimpleCases() {}
 // CHECK: {{^SimpleCases::~SimpleCases\(\) {}}}
 
+struct FinalSpecified : public Base {
+public:
+  virtual ~FinalSpecified() final;
+  // CHECK: {{^  ~FinalSpecified\(\) final;}}
+
+  void b() final;
+  // CHECK: {{^  void b\(\) final;}}
+  virtual void d() final;
+  // CHECK: {{^  void d\(\) final;}}
+
+  virtual void e() final = 0;
+  // CHECK: {{^  void e\(\) final = 0;}}
+
+  virtual void j() const final;
+  // CHECK: {{^  void j\(\) const final;}}
+  virtual bool l() final MUST_USE_RESULT;
+  // CHECK: {{^  bool l\(\) final MUST_USE_RESULT;}}
+};
+
 struct InlineDefinitions : public Base {
 public:
   virtual ~InlineDefinitions() {}
