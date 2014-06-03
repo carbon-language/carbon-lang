@@ -47,7 +47,7 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     llvm_unreachable("native reader not registered or read error");
   }
   File *objFile = _nativeFile[0].get();
-  mergedFile.reset(new FileToMutable(_context, *objFile));
+  mergedFile.reset(new SimpleFileWrapper(_context, *objFile));
 
   llvm::sys::fs::remove(tmpNativeFile.str());
 }

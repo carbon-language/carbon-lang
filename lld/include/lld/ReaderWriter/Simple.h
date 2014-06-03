@@ -66,9 +66,9 @@ protected:
   atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
 };
 
-class FileToMutable : public SimpleFile {
+class SimpleFileWrapper : public SimpleFile {
 public:
-  FileToMutable(const LinkingContext &context, const File &file)
+  SimpleFileWrapper(const LinkingContext &context, const File &file)
       : SimpleFile(file.path()) {
     for (auto definedAtom : file.defined())
       _definedAtoms._atoms.push_back(std::move(definedAtom));

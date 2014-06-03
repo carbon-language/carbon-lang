@@ -46,6 +46,6 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     llvm_unreachable("yaml reader not registered or read error");
   }
   File *objFile = _yamlFile[0].get();
-  mergedFile.reset(new FileToMutable(_context, *objFile));
+  mergedFile.reset(new SimpleFileWrapper(_context, *objFile));
   llvm::sys::fs::remove(tmpYAMLFile.str());
 }
