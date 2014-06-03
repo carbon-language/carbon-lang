@@ -32,7 +32,11 @@ public:
     _passes.push_back(std::move(pass));
   }
 
-  error_code runOnFile(std::unique_ptr<MutableFile> &);
+  error_code runOnFile(std::unique_ptr<MutableFile> &file) {
+    for (std::unique_ptr<Pass> &pass : _passes)
+      pass->perform(file);
+    return error_code();
+  }
 
 private:
   /// \brief Passes in the order they should run.
