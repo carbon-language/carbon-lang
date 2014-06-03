@@ -439,10 +439,9 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
   // type is an array (or array of array, etc.) of class type.
   Expr *filler = E->getArrayFiller();
   bool hasTrivialFiller = true;
-  if (CXXConstructExpr *cons = dyn_cast_or_null<CXXConstructExpr>(filler)) {
-    assert(cons->getConstructor()->isDefaultConstructor());
-    hasTrivialFiller = cons->getConstructor()->isTrivial();
-  }
+  if (CXXConstructExpr *cons = dyn_cast_or_null<CXXConstructExpr>(filler))
+    hasTrivialFiller = cons->getConstructor()->isDefaultConstructor() &&
+                       cons->getConstructor()->isTrivial();
 
   // Any remaining elements need to be zero-initialized, possibly
   // using the filler expression.  We can skip this if the we're

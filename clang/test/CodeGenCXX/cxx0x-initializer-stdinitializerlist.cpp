@@ -448,3 +448,10 @@ namespace DR1070 {
   };
   C c = {};
 }
+
+namespace ArrayOfInitList {
+  struct S {
+    S(std::initializer_list<int>);
+  };
+  S x[1] = {};
+}
