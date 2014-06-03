@@ -193,7 +193,7 @@ public:
   /// @name Compiler Invocation and Options
   /// {
 
-  bool hasInvocation() const { return (bool)Invocation; }
+  bool hasInvocation() const { return Invocation != nullptr; }
 
   CompilerInvocation &getInvocation() {
     assert(Invocation && "Compiler instance has no invocation!");
@@ -291,7 +291,7 @@ public:
   /// @name Diagnostics Engine
   /// {
 
-  bool hasDiagnostics() const { return (bool)Diagnostics; }
+  bool hasDiagnostics() const { return Diagnostics != nullptr; }
 
   /// Get the current diagnostics engine.
   DiagnosticsEngine &getDiagnostics() const {
@@ -312,7 +312,7 @@ public:
   /// @name Target Info
   /// {
 
-  bool hasTarget() const { return (bool)Target; }
+  bool hasTarget() const { return Target != nullptr; }
 
   TargetInfo &getTarget() const {
     assert(Target && "Compiler instance has no target!");
@@ -326,7 +326,7 @@ public:
   /// @name Virtual File System
   /// {
 
-  bool hasVirtualFileSystem() const { return (bool)VirtualFileSystem; }
+  bool hasVirtualFileSystem() const { return VirtualFileSystem != nullptr; }
 
   vfs::FileSystem &getVirtualFileSystem() const {
     assert(hasVirtualFileSystem() &&
@@ -346,7 +346,7 @@ public:
   /// @name File Manager
   /// {
 
-  bool hasFileManager() const { return (bool)FileMgr; }
+  bool hasFileManager() const { return FileMgr != nullptr; }
 
   /// Return the current file manager to the caller.
   FileManager &getFileManager() const {
@@ -366,7 +366,7 @@ public:
   /// @name Source Manager
   /// {
 
-  bool hasSourceManager() const { return (bool)SourceMgr; }
+  bool hasSourceManager() const { return SourceMgr != nullptr; }
 
   /// Return the current source manager.
   SourceManager &getSourceManager() const {
@@ -386,7 +386,7 @@ public:
   /// @name Preprocessor
   /// {
 
-  bool hasPreprocessor() const { return (bool)PP; }
+  bool hasPreprocessor() const { return PP != nullptr; }
 
   /// Return the current preprocessor.
   Preprocessor &getPreprocessor() const {
@@ -406,7 +406,7 @@ public:
   /// @name ASTContext
   /// {
 
-  bool hasASTContext() const { return (bool)Context; }
+  bool hasASTContext() const { return Context != nullptr; }
 
   ASTContext &getASTContext() const {
     assert(Context && "Compiler instance has no AST context!");
