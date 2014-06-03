@@ -40,8 +40,8 @@ public:
   }
   void setAlignment(unsigned Align);
 
-  bool hasSection() const { return !getSection().empty(); }
-  const std::string &getSection() const { return Section; }
+  bool hasSection() const { return !StringRef(getSection()).empty(); }
+  const char *getSection() const { return Section.c_str(); }
   void setSection(StringRef S);
 
   void copyAttributesFrom(const GlobalValue *Src) override;

@@ -5,12 +5,12 @@
 ; CHECK-DAG: @foo = alias i32* @zed
 
 @bar = alias i32* @foo
-; CHECK-DAG: @bar = alias i32* @zed
+; CHECK-DAG: @bar = alias i32* @foo
 
 @foo2 = weak global i32 0
-; CHECK-DAG: @foo2 = alias i16, i32* @zed
+; CHECK-DAG: @foo2 = alias bitcast (i32* @zed to i16*)
 
 @bar2 = alias i32* @foo2
-; CHECK-DAG: @bar2 = alias i32* @zed
+; CHECK-DAG: @bar2 = alias bitcast (i16* @foo2 to i32*)
 
 ; CHECK-DAG: @zed = global i32 42

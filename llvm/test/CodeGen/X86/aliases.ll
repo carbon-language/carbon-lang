@@ -38,7 +38,7 @@ define i32 @foo_f() {
 @bar_i = alias internal i32* @bar
 
 ; CHECK-DAG: .globl	A
-@A = alias i64, i32* @bar
+@A = alias bitcast (i32* @bar to i64*)
 
 ; CHECK-DAG: .globl	bar_h
 ; CHECK-DAG: .hidden	bar_h
@@ -47,6 +47,19 @@ define i32 @foo_f() {
 ; CHECK-DAG: .globl	bar_p
 ; CHECK-DAG: .protected	bar_p
 @bar_p = protected alias i32* @bar
+
+; CHECK-DAG: test2 = bar+4
+@test2 = alias getelementptr(i32 *@bar, i32 1)
+
+; CHECK-DAG: test3 = 42
+@test3 = alias inttoptr(i32 42 to i32*)
+
+; CHECK-DAG: test4 = bar
+@test4 = alias inttoptr(i64 ptrtoint (i32* @bar to i64) to i32*)
+
+; CHECK-DAG: test5 = test2-bar
+@test5 = alias inttoptr(i32 sub (i32 ptrtoint (i32* @test2 to i32),
+                                 i32 ptrtoint (i32* @bar to i32)) to i32*)
 
 ; CHECK-DAG: .globl	test
 define i32 @test() {

@@ -107,7 +107,7 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I) {
     GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
-    if (const GlobalObject *C = I->getAliasee())
+    if (const Constant *C = I->getAliasee())
       GA->setAliasee(cast<GlobalObject>(MapValue(C, VMap)));
   }
 

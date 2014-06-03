@@ -273,18 +273,16 @@ SDValue XCoreTargetLowering::getGlobalAddressWrapper(SDValue GA,
                                                      SelectionDAG &DAG) const {
   // FIXME there is no actual debug info here
   SDLoc dl(GA);
-  const GlobalValue *UnderlyingGV = GV;
-  // If GV is an alias then use the aliasee to determine the wrapper type
-  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    UnderlyingGV = GA->getAliasee();
-  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(UnderlyingGV)) {
-    if ((GVar->isConstant() && GV->hasLocalLinkage()) ||
-        (GVar->hasSection() &&
-         StringRef(GVar->getSection()).startswith(".cp.")))
-      return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
-    return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
-  }
-  return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
+
+  if (GV->getType()->getElementType()->isFunctionTy())
+    return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
+
+  const auto *GVar = dyn_cast<GlobalVariable>(GV);
+  if ((GV->hasSection() && StringRef(GV->getSection()).startswith(".cp.")) ||
+      (GVar && GVar->isConstant() && GV->hasLocalLinkage()))
+    return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
+
+  return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
 }
 
 static bool IsSmallObject(const GlobalValue *GV, const XCoreTargetLowering &XTL) {

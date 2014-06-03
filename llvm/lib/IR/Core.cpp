@@ -1286,7 +1286,7 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
 }
 
 const char *LLVMGetSection(LLVMValueRef Global) {
-  return unwrap<GlobalValue>(Global)->getSection().c_str();
+  return unwrap<GlobalValue>(Global)->getSection();
 }
 
 void LLVMSetSection(LLVMValueRef Global, const char *Section) {

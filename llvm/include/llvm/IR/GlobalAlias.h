@@ -34,7 +34,7 @@ class GlobalAlias : public GlobalValue, public ilist_node<GlobalAlias> {
   void setParent(Module *parent);
 
   GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
-              const Twine &Name, GlobalObject *Aliasee, Module *Parent);
+              const Twine &Name, Constant *Aliasee, Module *Parent);
 
 public:
   // allocate space for exactly one operand
@@ -46,7 +46,7 @@ public:
   /// the end of the specified module's alias list.
   static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
                              LinkageTypes Linkage, const Twine &Name,
-                             GlobalObject *Aliasee, Module *Parent);
+                             Constant *Aliasee, Module *Parent);
 
   // Without the Aliasee.
   static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
@@ -56,14 +56,14 @@ public:
   // The module is taken from the Aliasee.
   static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
                              LinkageTypes Linkage, const Twine &Name,
-                             GlobalObject *Aliasee);
+                             GlobalValue *Aliasee);
 
   // Type, Parent and AddressSpace taken from the Aliasee.
   static GlobalAlias *create(LinkageTypes Linkage, const Twine &Name,
-                             GlobalObject *Aliasee);
+                             GlobalValue *Aliasee);
 
   // Linkage, Type, Parent and AddressSpace taken from the Aliasee.
-  static GlobalAlias *create(const Twine &Name, GlobalObject *Aliasee);
+  static GlobalAlias *create(const Twine &Name, GlobalValue *Aliasee);
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -78,14 +78,13 @@ public:
   ///
   void eraseFromParent() override;
 
-  /// set/getAliasee - These methods retrive and set alias target.
-  void setAliasee(GlobalObject *GO);
-  const GlobalObject *getAliasee() const {
+  /// These methods retrive and set alias target.
+  void setAliasee(Constant *Aliasee);
+  const Constant *getAliasee() const {
     return const_cast<GlobalAlias *>(this)->getAliasee();
   }
-
-  GlobalObject *getAliasee() {
-    return cast_or_null<GlobalObject>(getOperand(0));
+  Constant *getAliasee() {
+    return getOperand(0);
   }
 
   static bool isValidLinkage(LinkageTypes L) {

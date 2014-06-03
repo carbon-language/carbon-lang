@@ -1094,28 +1094,6 @@ uint64_t BitcodeReader::decodeSignRotatedValue(uint64_t V) {
   return 1ULL << 63;
 }
 
-// FIXME: Delete this in LLVM 4.0 and just assert that the aliasee is a
-// GlobalObject.
-static GlobalObject &
-getGlobalObjectInExpr(const DenseMap<GlobalAlias *, Constant *> &Map,
-                      Constant &C) {
-  auto *GO = dyn_cast<GlobalObject>(&C);
-  if (GO)
-    return *GO;
-
-  auto *GA = dyn_cast<GlobalAlias>(&C);
-  if (GA)
-    return getGlobalObjectInExpr(Map, *Map.find(GA)->second);
-
-  auto &CE = cast<ConstantExpr>(C);
-  assert(CE.getOpcode() == Instruction::BitCast ||
-         CE.getOpcode() == Instruction::GetElementPtr ||
-         CE.getOpcode() == Instruction::AddrSpaceCast);
-  if (CE.getOpcode() == Instruction::GetElementPtr)
-    assert(cast<GEPOperator>(CE).hasAllZeroIndices());
-  return getGlobalObjectInExpr(Map, *CE.getOperand(0));
-}
-
 /// ResolveGlobalAndAliasInits - Resolve all of the initializers for global
 /// values and aliases that we can.
 error_code BitcodeReader::ResolveGlobalAndAliasInits() {
@@ -1141,28 +1119,17 @@ error_code BitcodeReader::ResolveGlobalAndAliasInits() {
     GlobalInitWorklist.pop_back();
   }
 
-  // FIXME: Delete this in LLVM 4.0
-  // Older versions of llvm could write an alias pointing to another. We cannot
-  // construct those aliases, so we first collect an alias to aliasee expression
-  // and then compute the actual aliasee.
-  DenseMap<GlobalAlias *, Constant *> AliasInit;
-
   while (!AliasInitWorklist.empty()) {
     unsigned ValID = AliasInitWorklist.back().second;
     if (ValID >= ValueList.size()) {
       AliasInits.push_back(AliasInitWorklist.back());
     } else {
       if (Constant *C = dyn_cast_or_null<Constant>(ValueList[ValID]))
-        AliasInit.insert(std::make_pair(AliasInitWorklist.back().first, C));
+        AliasInitWorklist.back().first->setAliasee(C);
       else
         return Error(ExpectedConstant);
     }
     AliasInitWorklist.pop_back();
-  }
-
-  for (auto &Pair : AliasInit) {
-    auto &GO = getGlobalObjectInExpr(AliasInit, *Pair.second);
-    Pair.first->setAliasee(&GO);
   }
 
   while (!FunctionPrefixWorklist.empty()) {

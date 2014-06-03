@@ -11,8 +11,8 @@
 @L1 = alias i32* @A
 ; CHECK: @L1 = alias i32* @A
 
-@L2 = alias internal i32* @A
-; DEAD-NOT: @L2
+@L2 = alias internal i32* @L1
+; CHECK: @L2 = alias internal i32* @L1
 
-@L3 = alias i32* @A
-; CHECK: @L3 = alias i32* @A
+@L3 = alias i32* @L2
+; CHECK: @L3 = alias i32* @L2

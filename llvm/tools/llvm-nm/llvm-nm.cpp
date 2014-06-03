@@ -415,15 +415,11 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, basic_symbol_iterator I) {
 }
 
 static char getSymbolNMTypeChar(const GlobalValue &GV) {
-  if (isa<Function>(GV))
+  if (GV.getType()->getElementType()->isFunctionTy())
     return 't';
   // FIXME: should we print 'b'? At the IR level we cannot be sure if this
   // will be in bss or not, but we could approximate.
-  if (isa<GlobalVariable>(GV))
-    return 'd';
-  const GlobalAlias *GA = cast<GlobalAlias>(&GV);
-  const GlobalValue *AliasedGV = GA->getAliasee();
-  return getSymbolNMTypeChar(*AliasedGV);
+  return 'd';
 }
 
 static char getSymbolNMTypeChar(IRObjectFile &Obj, basic_symbol_iterator I) {

@@ -73,7 +73,7 @@ define weak_odr dllexport void @weak1() {
 @weak_alias = dllexport alias weak_odr void()* @f1
 
 @blob = global [6 x i8] c"\B8*\00\00\00\C3", section ".text", align 16
-@blob_alias = dllexport alias i32 (), [6 x i8]* @blob
+@blob_alias = dllexport alias bitcast ([6 x i8]* @blob to i32 ()*)
 
 ; CHECK: .section .drectve
 ; WIN32: " /EXPORT:Var1,DATA"

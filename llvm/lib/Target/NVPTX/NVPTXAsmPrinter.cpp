@@ -1356,7 +1356,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
 
   // Skip meta data
   if (GVar->hasSection()) {
-    if (GVar->getSection() == "llvm.metadata")
+    if (GVar->getSection() == StringRef("llvm.metadata"))
       return;
   }
 

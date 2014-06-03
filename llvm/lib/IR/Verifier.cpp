@@ -241,6 +241,9 @@ private:
   void visitGlobalValue(const GlobalValue &GV);
   void visitGlobalVariable(const GlobalVariable &GV);
   void visitGlobalAlias(const GlobalAlias &GA);
+  void visitAliaseeSubExpr(const GlobalAlias &A, const Constant &C);
+  void visitAliaseeSubExpr(SmallPtrSet<const GlobalAlias *, 4> &Visited,
+                           const GlobalAlias &A, const Constant &C);
   void visitNamedMDNode(const NamedMDNode &NMD);
   void visitMDNode(MDNode &MD, Function *F);
   void visitModuleIdents(const Module &M);
@@ -474,36 +477,52 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
   visitGlobalValue(GV);
 }
 
+void Verifier::visitAliaseeSubExpr(const GlobalAlias &GA, const Constant &C) {
+  SmallPtrSet<const GlobalAlias*, 4> Visited;
+  Visited.insert(&GA);
+  visitAliaseeSubExpr(Visited, GA, C);
+}
+
+void Verifier::visitAliaseeSubExpr(SmallPtrSet<const GlobalAlias *, 4> &Visited,
+                                   const GlobalAlias &GA, const Constant &C) {
+  if (const auto *GV = dyn_cast<GlobalValue>(&C)) {
+    Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);
+
+    if (const auto *GA2 = dyn_cast<GlobalAlias>(GV)) {
+      Assert1(Visited.insert(GA2), "Aliases cannot form a cycle", &GA);
+
+      Assert1(!GA2->mayBeOverridden(), "Alias cannot point to a weak alias",
+              &GA);
+    }
+  }
+
+  if (const auto *CE = dyn_cast<ConstantExpr>(&C))
+    VerifyConstantExprBitcastType(CE);
+
+  for (const Use &U : C.operands()) {
+    Value *V = &*U;
+    if (const auto *GA2 = dyn_cast<GlobalAlias>(V))
+      visitAliaseeSubExpr(Visited, GA, *GA2->getAliasee());
+    else if (const auto *C2 = dyn_cast<Constant>(V))
+      visitAliaseeSubExpr(Visited, GA, *C2);
+  }
+}
+
 void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
   Assert1(!GA.getName().empty(),
           "Alias name cannot be empty!", &GA);
   Assert1(GlobalAlias::isValidLinkage(GA.getLinkage()),
           "Alias should have external or external weak linkage!", &GA);
-  Assert1(GA.getAliasee(),
-          "Aliasee cannot be NULL!", &GA);
+  const Constant *Aliasee = GA.getAliasee();
+  Assert1(Aliasee, "Aliasee cannot be NULL!", &GA);
+  Assert1(GA.getType() == Aliasee->getType(),
+          "Alias and aliasee types should match!", &GA);
   Assert1(!GA.hasUnnamedAddr(), "Alias cannot have unnamed_addr!", &GA);
 
-  const Constant *Aliasee = GA.getAliasee();
-  const GlobalValue *GV = dyn_cast<GlobalValue>(Aliasee);
+  Assert1(isa<GlobalValue>(Aliasee) || isa<ConstantExpr>(Aliasee),
+          "Aliasee should be either GlobalValue or ConstantExpr", &GA);
 
-  if (!GV) {
-    const ConstantExpr *CE = dyn_cast<ConstantExpr>(Aliasee);
-    if (CE && (CE->getOpcode() == Instruction::BitCast ||
-               CE->getOpcode() == Instruction::AddrSpaceCast ||
-               CE->getOpcode() == Instruction::GetElementPtr))
-      GV = dyn_cast<GlobalValue>(CE->getOperand(0));
-
-    Assert1(GV, "Aliasee should be either GlobalValue, bitcast or "
-                "addrspacecast of GlobalValue",
-            &GA);
-
-    VerifyConstantExprBitcastType(CE);
-  }
-  Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);
-  if (const GlobalAlias *GAAliasee = dyn_cast<GlobalAlias>(GV)) {
-    Assert1(!GAAliasee->mayBeOverridden(), "Alias cannot point to a weak alias",
-            &GA);
-  }
+  visitAliaseeSubExpr(GA, *Aliasee);
 
   visitGlobalValue(GA);
 }

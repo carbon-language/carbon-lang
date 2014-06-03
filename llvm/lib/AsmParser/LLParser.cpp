@@ -674,44 +674,30 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
     return Error(LinkageLoc,
                  "symbol with local linkage must have default visibility");
 
-  bool HasAddrSpace = Lex.getKind() == lltok::kw_addrspace;
-  unsigned AddrSpace;
-  LocTy AddrSpaceLoc = Lex.getLoc();
-  if (ParseOptionalAddrSpace(AddrSpace))
-    return true;
-
-  LocTy TyLoc = Lex.getLoc();
-  Type *Ty = nullptr;
-  if (ParseType(Ty))
-    return true;
-
-  bool DifferentType = EatIfPresent(lltok::comma);
-  if (HasAddrSpace && !DifferentType)
-    return Error(AddrSpaceLoc, "A type is required if addrspace is given");
-
-  Type *AliaseeType = nullptr;
-  if (DifferentType) {
-    if (ParseType(AliaseeType))
+  Constant *Aliasee;
+  LocTy AliaseeLoc = Lex.getLoc();
+  if (Lex.getKind() != lltok::kw_bitcast &&
+      Lex.getKind() != lltok::kw_getelementptr &&
+      Lex.getKind() != lltok::kw_addrspacecast &&
+      Lex.getKind() != lltok::kw_inttoptr) {
+    if (ParseGlobalTypeAndValue(Aliasee))
       return true;
   } else {
-    AliaseeType = Ty;
-    auto *PTy = dyn_cast<PointerType>(Ty);
-    if (!PTy)
-      return Error(TyLoc, "An alias must have pointer type");
-    Ty = PTy->getElementType();
-    AddrSpace = PTy->getAddressSpace();
+    // The bitcast dest type is not present, it is implied by the dest type.
+    ValID ID;
+    if (ParseValID(ID))
+      return true;
+    if (ID.Kind != ValID::t_Constant)
+      return Error(AliaseeLoc, "invalid aliasee");
+    Aliasee = ID.ConstantVal;
   }
 
-  LocTy AliaseeLoc = Lex.getLoc();
-  Constant *C;
-  if (ParseGlobalValue(AliaseeType, C))
-    return true;
-
-  auto *Aliasee = dyn_cast<GlobalObject>(C);
-  if (!Aliasee)
-    return Error(AliaseeLoc, "Alias must point to function or variable");
-
-  assert(Aliasee->getType()->isPointerTy());
+  Type *AliaseeType = Aliasee->getType();
+  auto *PTy = dyn_cast<PointerType>(AliaseeType);
+  if (!PTy)
+    return Error(AliaseeLoc, "An alias must have pointer type");
+  Type *Ty = PTy->getElementType();
+  unsigned AddrSpace = PTy->getAddressSpace();
 
   // Okay, create the alias but do not insert it into the module yet.
   std::unique_ptr<GlobalAlias> GA(
@@ -739,11 +725,6 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
     // If they agree, just RAUW the old value with the alias and remove the
     // forward ref info.
-    for (auto *User : Val->users()) {
-      if (auto *GA = dyn_cast<GlobalAlias>(User))
-        return Error(NameLoc, "Alias is pointed by alias " + GA->getName());
-    }
-
     Val->replaceAllUsesWith(GA.get());
     Val->eraseFromParent();
     ForwardRefVals.erase(I);

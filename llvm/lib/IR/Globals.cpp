@@ -20,6 +20,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -58,10 +59,22 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setDLLStorageClass(Src->getDLLStorageClass());
 }
 
-unsigned GlobalValue::getAlignment() const {
-  if (auto *GA = dyn_cast<GlobalAlias>(this))
-    return GA->getAliasee()->getAlignment();
+const GlobalObject *getBaseObject(const Constant &C) {
+  // FIXME: We should probably return a base + offset pair for non-zero GEPs.
+  return dyn_cast<GlobalObject>(C.stripPointerCasts());
+}
 
+unsigned GlobalValue::getAlignment() const {
+  if (auto *GA = dyn_cast<GlobalAlias>(this)) {
+    // In general we cannot compute this at the IR level, but we try.
+    if (const GlobalObject *GO = getBaseObject(*GA->getAliasee()))
+      return GO->getAlignment();
+
+    // FIXME: we should also be able to handle:
+    // Alias = Global + Offset
+    // Alias = Absolute
+    return 0;
+  }
   return cast<GlobalObject>(this)->getAlignment();
 }
 
@@ -80,9 +93,13 @@ void GlobalObject::copyAttributesFrom(const GlobalValue *Src) {
   setSection(GV->getSection());
 }
 
-const std::string &GlobalValue::getSection() const {
-  if (auto *GA = dyn_cast<GlobalAlias>(this))
-    return GA->getAliasee()->getSection();
+const char *GlobalValue::getSection() const {
+  if (auto *GA = dyn_cast<GlobalAlias>(this)) {
+    // In general we cannot compute this at the IR level, but we try.
+    if (const GlobalObject *GO = getBaseObject(*GA->getAliasee()))
+      return GO->getSection();
+    return "";
+  }
   return cast<GlobalObject>(this)->getSection();
 }
 
@@ -216,7 +233,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 //===----------------------------------------------------------------------===//
 
 GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Link,
-                         const Twine &Name, GlobalObject *Aliasee,
+                         const Twine &Name, Constant *Aliasee,
                          Module *ParentModule)
     : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalAliasVal,
                   &Op<0>(), 1, Link, Name) {
@@ -229,7 +246,7 @@ GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Link,
 
 GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
                                  LinkageTypes Link, const Twine &Name,
-                                 GlobalObject *Aliasee, Module *ParentModule) {
+                                 Constant *Aliasee, Module *ParentModule) {
   return new GlobalAlias(Ty, AddressSpace, Link, Name, Aliasee, ParentModule);
 }
 
@@ -241,18 +258,18 @@ GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
 
 GlobalAlias *GlobalAlias::create(Type *Ty, unsigned AddressSpace,
                                  LinkageTypes Linkage, const Twine &Name,
-                                 GlobalObject *Aliasee) {
+                                 GlobalValue *Aliasee) {
   return create(Ty, AddressSpace, Linkage, Name, Aliasee, Aliasee->getParent());
 }
 
 GlobalAlias *GlobalAlias::create(LinkageTypes Link, const Twine &Name,
-                                 GlobalObject *Aliasee) {
+                                 GlobalValue *Aliasee) {
   PointerType *PTy = Aliasee->getType();
   return create(PTy->getElementType(), PTy->getAddressSpace(), Link, Name,
                 Aliasee);
 }
 
-GlobalAlias *GlobalAlias::create(const Twine &Name, GlobalObject *Aliasee) {
+GlobalAlias *GlobalAlias::create(const Twine &Name, GlobalValue *Aliasee) {
   return create(Aliasee->getLinkage(), Name, Aliasee);
 }
 
@@ -272,4 +289,8 @@ void GlobalAlias::eraseFromParent() {
   getParent()->getAliasList().erase(this);
 }
 
-void GlobalAlias::setAliasee(GlobalObject *Aliasee) { setOperand(0, Aliasee); }
+void GlobalAlias::setAliasee(Constant *Aliasee) {
+  assert(!Aliasee || Aliasee->getType() == getType() &&
+         "Alias and aliasee types should match!");
+  setOperand(0, Aliasee);
+}
