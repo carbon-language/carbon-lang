@@ -211,6 +211,7 @@ namespace {
   class GCOVLines : public GCOVRecord {
    public:
     void addLine(uint32_t Line) {
+      assert(Line != 0 && "Line zero is not a valid real line number.");
       Lines.push_back(Line);
     }
 
@@ -453,10 +454,10 @@ static bool functionHasLines(Function *F) {
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
          I != IE; ++I) {
+      if (isa<DbgInfoIntrinsic>(I)) continue;
       const DebugLoc &Loc = I->getDebugLoc();
       if (Loc.isUnknown()) continue;
-      if (Loc.getLine() != 0)
-        return true;
+      return true;
     }
   }
   return false;
@@ -515,6 +516,7 @@ void GCOVProfiler::emitProfileNotes() {
         uint32_t Line = 0;
         for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
              I != IE; ++I) {
+          if (isa<DbgInfoIntrinsic>(I)) continue;
           const DebugLoc &Loc = I->getDebugLoc();
           if (Loc.isUnknown()) continue;
           if (Line == Loc.getLine()) continue;
