@@ -312,15 +312,20 @@ class InitListChecker {
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
 
-  void FillInValueInitForField(unsigned Init, FieldDecl *Field,
+  static ExprResult PerformEmptyInit(Sema &SemaRef,
+                                     SourceLocation Loc,
+                                     const InitializedEntity &Entity,
+                                     bool VerifyOnly);
+  void FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
                                const InitializedEntity &ParentEntity,
                                InitListExpr *ILE, bool &RequiresSecondPass);
-  void FillInValueInitializations(const InitializedEntity &Entity,
+  void FillInEmptyInitializations(const InitializedEntity &Entity,
                                   InitListExpr *ILE, bool &RequiresSecondPass);
   bool CheckFlexibleArrayInit(const InitializedEntity &Entity,
                               Expr *InitExpr, FieldDecl *Field,
                               bool TopLevelObject);
-  void CheckValueInitializable(const InitializedEntity &Entity);
+  void CheckEmptyInitializable(const InitializedEntity &Entity,
+                               SourceLocation Loc);
 
 public:
   InitListChecker(Sema &S, const InitializedEntity &Entity,
@@ -333,33 +338,84 @@ public:
 };
 } // end anonymous namespace
 
-void InitListChecker::CheckValueInitializable(const InitializedEntity &Entity) {
-  assert(VerifyOnly &&
-         "CheckValueInitializable is only inteded for verification mode.");
-
-  SourceLocation Loc;
+ExprResult InitListChecker::PerformEmptyInit(Sema &SemaRef,
+                                             SourceLocation Loc,
+                                             const InitializedEntity &Entity,
+                                             bool VerifyOnly) {
   InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
                                                             true);
-  InitializationSequence InitSeq(SemaRef, Entity, Kind, None);
-  if (InitSeq.Failed())
+  MultiExprArg SubInit;
+  Expr *InitExpr;
+  InitListExpr DummyInitList(SemaRef.Context, Loc, None, Loc);
+
+  // C++ [dcl.init.aggr]p7:
+  //   If there are fewer initializer-clauses in the list than there are
+  //   members in the aggregate, then each member not explicitly initialized
+  //   ...
+  if (SemaRef.getLangOpts().CPlusPlus11 &&
+      Entity.getType()->getBaseElementTypeUnsafe()->isRecordType()) {
+    // C++1y / DR1070:
+    //   shall be initialized [...] from an empty initializer list.
+    //
+    // We apply the resolution of this DR to C++11 but not C++98, since C++98
+    // does not have useful semantics for initialization from an init list.
+    // We treat this as copy-initialization, because aggregate initialization
+    // always performs copy-initialization on its elements.
+    //
+    // Only do this if we're initializing a class type, to avoid filling in
+    // the initializer list where possible.
+    InitExpr = VerifyOnly ? &DummyInitList : new (SemaRef.Context)
+                   InitListExpr(SemaRef.Context, Loc, None, Loc);
+    InitExpr->setType(SemaRef.Context.VoidTy);
+    SubInit = InitExpr;
+    Kind = InitializationKind::CreateCopy(Loc, Loc);
+  } else {
+    // C++03:
+    //   shall be value-initialized.
+  }
+
+  InitializationSequence InitSeq(SemaRef, Entity, Kind, SubInit);
+  if (!InitSeq) {
+    if (!VerifyOnly) {
+      InitSeq.Diagnose(SemaRef, Entity, Kind, SubInit);
+      if (Entity.getKind() == InitializedEntity::EK_Member)
+        SemaRef.Diag(Entity.getDecl()->getLocation(),
+                     diag::note_in_omitted_aggregate_initializer)
+          << /*field*/1 << Entity.getDecl();
+      else if (Entity.getKind() == InitializedEntity::EK_ArrayElement)
+        SemaRef.Diag(Loc, diag::note_in_omitted_aggregate_initializer)
+          << /*array element*/0 << Entity.getElementIndex();
+    }
+    return ExprError();
+  }
+
+  return VerifyOnly ? ExprResult(static_cast<Expr *>(nullptr))
+                    : InitSeq.Perform(SemaRef, Entity, Kind, SubInit);
+}
+
+void InitListChecker::CheckEmptyInitializable(const InitializedEntity &Entity,
+                                              SourceLocation Loc) {
+  assert(VerifyOnly &&
+         "CheckEmptyInitializable is only inteded for verification mode.");
+  if (PerformEmptyInit(SemaRef, Loc, Entity, /*VerifyOnly*/true).isInvalid())
     hadError = true;
 }
 
-void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
+void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
                                         const InitializedEntity &ParentEntity,
                                               InitListExpr *ILE,
                                               bool &RequiresSecondPass) {
-  SourceLocation Loc = ILE->getLocStart();
+  SourceLocation Loc = ILE->getLocEnd();
   unsigned NumInits = ILE->getNumInits();
   InitializedEntity MemberEntity
     = InitializedEntity::InitializeMember(Field, &ParentEntity);
   if (Init >= NumInits || !ILE->getInit(Init)) {
-    // If there's no explicit initializer but we have a default initializer, use
-    // that. This only happens in C++1y, since classes with default
-    // initializers are not aggregates in C++11.
+    // C++1y [dcl.init.aggr]p7:
+    //   If there are fewer initializer-clauses in the list than there are
+    //   members in the aggregate, then each member not explicitly initialized
+    //   shall be initialized from its brace-or-equal-initializer [...]
     if (Field->hasInClassInitializer()) {
-      Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context,
-                                             ILE->getRBraceLoc(), Field);
+      Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context, Loc, Field);
       if (Init < NumInits)
         ILE->setInit(Init, DIE);
       else {
@@ -369,9 +425,6 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
       return;
     }
 
-    // FIXME: We probably don't need to handle references
-    // specially here, since value-initialization of references is
-    // handled in InitializationSequence.
     if (Field->getType()->isReferenceType()) {
       // C++ [dcl.init.aggr]p9:
       //   If an incomplete or empty initializer-list leaves a
@@ -386,20 +439,8 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
       return;
     }
 
-    InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
-                                                              true);
-    InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, None);
-    if (!InitSeq) {
-      InitSeq.Diagnose(SemaRef, MemberEntity, Kind, None);
-      SemaRef.Diag(Field->getLocation(),
-                   diag::note_in_omitted_aggregate_initializer)
-        << /*field*/1 << Field;
-      hadError = true;
-      return;
-    }
-
-    ExprResult MemberInit
-      = InitSeq.Perform(SemaRef, MemberEntity, Kind, None);
+    ExprResult MemberInit = PerformEmptyInit(SemaRef, Loc, MemberEntity,
+                                             /*VerifyOnly*/false);
     if (MemberInit.isInvalid()) {
       hadError = true;
       return;
@@ -409,8 +450,8 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
       // Do nothing
     } else if (Init < NumInits) {
       ILE->setInit(Init, MemberInit.getAs<Expr>());
-    } else if (InitSeq.isConstructorInitialization()) {
-      // Value-initialization requires a constructor call, so
+    } else if (!isa<ImplicitValueInitExpr>(MemberInit.get())) {
+      // Empty initialization requires a constructor call, so
       // extend the initializer list to include the constructor
       // call and make a note that we'll need to take another pass
       // through the initializer list.
@@ -419,7 +460,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
     }
   } else if (InitListExpr *InnerILE
                = dyn_cast<InitListExpr>(ILE->getInit(Init)))
-    FillInValueInitializations(MemberEntity, InnerILE,
+    FillInEmptyInitializations(MemberEntity, InnerILE,
                                RequiresSecondPass);
 }
 
@@ -427,7 +468,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
 /// with expressions that perform value-initialization of the
 /// appropriate type.
 void
-InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
+InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
                                             InitListExpr *ILE,
                                             bool &RequiresSecondPass) {
   assert((ILE->getType() != SemaRef.Context.VoidTy) &&
@@ -436,13 +477,13 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
   if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
     const RecordDecl *RDecl = RType->getDecl();
     if (RDecl->isUnion() && ILE->getInitializedFieldInUnion())
-      FillInValueInitForField(0, ILE->getInitializedFieldInUnion(),
+      FillInEmptyInitForField(0, ILE->getInitializedFieldInUnion(),
                               Entity, ILE, RequiresSecondPass);
     else if (RDecl->isUnion() && isa<CXXRecordDecl>(RDecl) &&
              cast<CXXRecordDecl>(RDecl)->hasInClassInitializer()) {
       for (auto *Field : RDecl->fields()) {
         if (Field->hasInClassInitializer()) {
-          FillInValueInitForField(0, Field, Entity, ILE, RequiresSecondPass);
+          FillInEmptyInitForField(0, Field, Entity, ILE, RequiresSecondPass);
           break;
         }
       }
@@ -455,7 +496,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         if (hadError)
           return;
 
-        FillInValueInitForField(Init, Field, Entity, ILE, RequiresSecondPass);
+        FillInEmptyInitForField(Init, Field, Entity, ILE, RequiresSecondPass);
         if (hadError)
           return;
 
@@ -489,10 +530,6 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
   } else
     ElementType = ILE->getType();
 
-  SourceLocation Loc = ILE->getLocEnd();
-  if (ILE->getSyntacticForm())
-    Loc = ILE->getSyntacticForm()->getLocEnd();
-
   for (unsigned Init = 0; Init != NumElements; ++Init) {
     if (hadError)
       return;
@@ -503,19 +540,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
 
     Expr *InitExpr = (Init < NumInits ? ILE->getInit(Init) : nullptr);
     if (!InitExpr && !ILE->hasArrayFiller()) {
-      InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
-                                                                true);
-      InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, None);
-      if (!InitSeq) {
-        InitSeq.Diagnose(SemaRef, ElementEntity, Kind, None);
-        SemaRef.Diag(Loc, diag::note_in_omitted_aggregate_initializer)
-          << /*array element*/0 << Init;
-        hadError = true;
-        return;
-      }
-
-      ExprResult ElementInit
-        = InitSeq.Perform(SemaRef, ElementEntity, Kind, None);
+      ExprResult ElementInit = PerformEmptyInit(SemaRef, ILE->getLocEnd(),
+                                                ElementEntity,
+                                                /*VerifyOnly*/false);
       if (ElementInit.isInvalid()) {
         hadError = true;
         return;
@@ -538,8 +565,8 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
           return;
         }
 
-        if (InitSeq.isConstructorInitialization()) {
-          // Value-initialization requires a constructor call, so
+        if (!isa<ImplicitValueInitExpr>(ElementInit.get())) {
+          // Empty initialization requires a constructor call, so
           // extend the initializer list to include the constructor
           // call and make a note that we'll need to take another pass
           // through the initializer list.
@@ -549,7 +576,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       }
     } else if (InitListExpr *InnerILE
                  = dyn_cast_or_null<InitListExpr>(InitExpr))
-      FillInValueInitializations(ElementEntity, InnerILE, RequiresSecondPass);
+      FillInEmptyInitializations(ElementEntity, InnerILE, RequiresSecondPass);
   }
 }
 
@@ -567,9 +594,9 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
 
   if (!hadError && !VerifyOnly) {
     bool RequiresSecondPass = false;
-    FillInValueInitializations(Entity, FullyStructuredList, RequiresSecondPass);
+    FillInEmptyInitializations(Entity, FullyStructuredList, RequiresSecondPass);
     if (RequiresSecondPass && !hadError)
-      FillInValueInitializations(Entity, FullyStructuredList,
+      FillInEmptyInitializations(Entity, FullyStructuredList,
                                  RequiresSecondPass);
   }
 }
@@ -678,7 +705,6 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *IList, QualType &T,
                                             InitListExpr *StructuredList,
                                             bool TopLevelObject) {
-  assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
   if (!VerifyOnly) {
     SyntacticToSemantic[IList] = StructuredList;
     StructuredList->setSyntacticForm(IList);
@@ -1121,8 +1147,9 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
   if (Index >= IList->getNumInits()) {
     // Make sure the element type can be value-initialized.
     if (VerifyOnly)
-      CheckValueInitializable(
-          InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity));
+      CheckEmptyInitializable(
+          InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity),
+          IList->getLocEnd());
     return;
   }
 
@@ -1169,7 +1196,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
       // Don't attempt to go past the end of the init list
       if (Index >= IList->getNumInits()) {
         if (VerifyOnly)
-          CheckValueInitializable(ElementEntity);
+          CheckEmptyInitializable(ElementEntity, IList->getLocEnd());
         break;
       }
 
@@ -1346,8 +1373,9 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
     // If so, check if doing that is possible.
     // FIXME: This needs to detect holes left by designated initializers too.
     if (maxElementsKnown && elementIndex < maxElements)
-      CheckValueInitializable(InitializedEntity::InitializeElement(
-                                                  SemaRef.Context, 0, Entity));
+      CheckEmptyInitializable(InitializedEntity::InitializeElement(
+                                                  SemaRef.Context, 0, Entity),
+                              IList->getLocEnd());
   }
 }
 
@@ -1432,8 +1460,9 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
          Field != FieldEnd; ++Field) {
       if (Field->getDeclName()) {
         if (VerifyOnly)
-          CheckValueInitializable(
-              InitializedEntity::InitializeMember(*Field, &Entity));
+          CheckEmptyInitializable(
+              InitializedEntity::InitializeMember(*Field, &Entity),
+              IList->getLocEnd());
         else
           StructuredList->setInitializedFieldInUnion(*Field);
         break;
@@ -1545,8 +1574,9 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     // FIXME: Should check for holes left by designated initializers too.
     for (; Field != FieldEnd && !hadError; ++Field) {
       if (!Field->isUnnamedBitfield() && !Field->hasInClassInitializer())
-        CheckValueInitializable(
-            InitializedEntity::InitializeMember(*Field, &Entity));
+        CheckEmptyInitializable(
+            InitializedEntity::InitializeMember(*Field, &Entity),
+            IList->getLocEnd());
     }
   }
 

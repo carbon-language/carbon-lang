@@ -401,6 +401,13 @@ public:
     return SourceLocation::getFromRawEncoding(LocAndNRVO.Location);
   }
 
+  /// \brief If this is an array, vector, or complex number element, get the
+  /// element's index.
+  unsigned getElementIndex() const {
+    assert(getKind() == EK_ArrayElement || getKind() == EK_VectorElement ||
+           getKind() == EK_ComplexElement);
+    return Index;
+  }
   /// \brief If this is already the initializer for an array or vector
   /// element, sets the element index.
   void setElementIndex(unsigned Index) {
@@ -851,17 +858,17 @@ public:
   ///
   /// \param Args the argument(s) provided for initialization.
   ///
-  /// \param InInitList true if we are initializing from an expression within
-  ///        an initializer list. This disallows narrowing conversions in C++11
-  ///        onwards.
+  /// \param TopLevelOfInitList true if we are initializing from an expression
+  ///        at the top level inside an initializer list. This disallows
+  ///        narrowing conversions in C++11 onwards.
   InitializationSequence(Sema &S, 
                          const InitializedEntity &Entity,
                          const InitializationKind &Kind,
                          MultiExprArg Args,
-                         bool InInitList = false);
+                         bool TopLevelOfInitList = false);
   void InitializeFrom(Sema &S, const InitializedEntity &Entity,
                       const InitializationKind &Kind, MultiExprArg Args,
-                      bool InInitList);
+                      bool TopLevelOfInitList);
 
   ~InitializationSequence();
   

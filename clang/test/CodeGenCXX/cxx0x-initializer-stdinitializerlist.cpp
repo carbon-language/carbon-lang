@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -S -triple x86_64-none-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple x86_64-none-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 namespace std {
   typedef decltype(sizeof(int)) size_t;
@@ -430,4 +430,21 @@ namespace nested {
     // CHECK-NOT: call
     // CHECK: }
   }
+}
+
+namespace DR1070 {
+  struct A {
+    A(std::initializer_list<int>);
+  };
+  struct B {
+    int i;
+    A a;
+  };
+  B b = {1};
+  struct C {
+    std::initializer_list<int> a;
+    B b;
+    std::initializer_list<double> c;
+  };
+  C c = {};
 }

@@ -389,8 +389,8 @@ namespace PR11410 {
 
   struct B {
     A a; // expected-note {{in implicit initialization of field 'a'}}
-  } b = { // expected-error {{call to deleted constructor}}
-  };
+  } b = {
+  }; // expected-error {{call to deleted constructor}}
 
   struct C {
     C(int = 0); // expected-note 2{{candidate}}

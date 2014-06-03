@@ -3909,6 +3909,7 @@ public:
 
   // Iterators
   child_range children() {
+    // FIXME: This does not include the array filler expression.
     if (InitExprs.empty()) return child_range();
     return child_range(&InitExprs[0], &InitExprs[0] + InitExprs.size());
   }

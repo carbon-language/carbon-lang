@@ -858,9 +858,21 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     return true;
   };
 
+  // If all elements have already been initialized, skip any further
+  // initialization.
+  llvm::ConstantInt *ConstNum = dyn_cast<llvm::ConstantInt>(NumElements);
+  if (ConstNum && ConstNum->getZExtValue() <= InitListElements) {
+    // If there was a Cleanup, deactivate it.
+    if (CleanupDominator)
+      DeactivateCleanupBlock(Cleanup, CleanupDominator);
+    return;
+  }
+
+  assert(Init && "have trailing elements to initialize but no initializer");
+
   // If this is a constructor call, try to optimize it out, and failing that
   // emit a single loop to initialize all remaining elements.
-  if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)){
+  if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init)) {
     CXXConstructorDecl *Ctor = CCE->getConstructor();
     if (Ctor->isTrivial()) {
       // If new expression did not specify value-initialization, then there
@@ -891,7 +903,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
 
   // If this is value-initialization, we can usually use memset.
   ImplicitValueInitExpr IVIE(ElementType);
-  if (Init && isa<ImplicitValueInitExpr>(Init)) {
+  if (isa<ImplicitValueInitExpr>(Init)) {
     if (TryMemsetInitialization())
       return;
 
@@ -906,15 +918,10 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   assert(getContext().hasSameUnqualifiedType(ElementType, Init->getType()) &&
          "got wrong type of element to initialize");
 
-  llvm::ConstantInt *ConstNum = dyn_cast<llvm::ConstantInt>(NumElements);
-
-  // If all elements have already been initialized, skip the whole loop.
-  if (ConstNum && ConstNum->getZExtValue() <= InitListElements) {
-    // If there was a Cleanup, deactivate it.
-    if (CleanupDominator)
-      DeactivateCleanupBlock(Cleanup, CleanupDominator);
-    return;
-  }
+  // If we have an empty initializer list, we can usually use memset.
+  if (auto *ILE = dyn_cast<InitListExpr>(Init))
+    if (ILE->getNumInits() == 0 && TryMemsetInitialization())
+      return;
 
   // Create the loop blocks.
   llvm::BasicBlock *EntryBB = Builder.GetInsertBlock();
