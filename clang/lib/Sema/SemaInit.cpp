@@ -391,6 +391,9 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
     InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, None);
     if (!InitSeq) {
       InitSeq.Diagnose(SemaRef, MemberEntity, Kind, None);
+      SemaRef.Diag(Field->getLocation(),
+                   diag::note_in_omitted_aggregate_initializer)
+        << /*field*/1 << Field;
       hadError = true;
       return;
     }
@@ -505,11 +508,8 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, None);
       if (!InitSeq) {
         InitSeq.Diagnose(SemaRef, ElementEntity, Kind, None);
-        if (NumInits < NumElements &&
-            InitSeq.getFailureKind() ==
-              InitializationSequence::FK_ConstructorOverloadFailed &&
-            InitSeq.getFailedOverloadResult() == OverloadingResult::OR_Deleted)
-          SemaRef.Diag(Loc, diag::note_omitted_element_default_constructed);
+        SemaRef.Diag(Loc, diag::note_in_omitted_aggregate_initializer)
+          << /*array element*/0 << Init;
         hadError = true;
         return;
       }

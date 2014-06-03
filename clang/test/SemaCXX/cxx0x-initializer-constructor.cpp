@@ -378,11 +378,28 @@ namespace PR19729 {
 
 namespace PR11410 {
   struct A {
-    A() = delete; // expected-note {{deleted here}}
+    A() = delete; // expected-note 2{{deleted here}}
     A(int);
   };
 
   A a[3] = {
     {1}, {2}
-  }; // expected-error {{call to deleted constructor}} expected-note {{implicitly default constructed}}
+  }; // expected-error {{call to deleted constructor}} \
+        expected-note {{in implicit initialization of array element 2 with omitted initializer}}
+
+  struct B {
+    A a; // expected-note {{in implicit initialization of field 'a'}}
+  } b = { // expected-error {{call to deleted constructor}}
+  };
+
+  struct C {
+    C(int = 0); // expected-note 2{{candidate}}
+    C(float = 0); // expected-note 2{{candidate}}
+  };
+  C c[3] = {
+    0, 1
+  }; // expected-error {{ambiguous}} expected-note {{in implicit initialization of array element 2}}
+  C c2[3] = {
+    [0] = 1, [2] = 3
+  }; // expected-error {{ambiguous}} expected-note {{in implicit initialization of array element 1}}
 }

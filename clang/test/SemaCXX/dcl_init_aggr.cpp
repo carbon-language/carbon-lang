@@ -46,7 +46,7 @@ struct NoDefaultConstructor { // expected-note 3 {{candidate constructor (the im
 };
 struct TooFewError { // expected-error{{implicit default constructor for}}
   int a;
-  NoDefaultConstructor nodef; // expected-note{{member is declared here}}
+  NoDefaultConstructor nodef; // expected-note{{member is declared here}} expected-note 2{{in implicit initialization of field 'nodef'}}
 };
 TooFewError too_few_okay = { 1, 1 };
 TooFewError too_few_error = { 1 }; // expected-error{{no matching constructor}}
@@ -54,7 +54,7 @@ TooFewError too_few_error = { 1 }; // expected-error{{no matching constructor}}
 TooFewError too_few_okay2[2] = { 1, 1 }; // expected-note{{implicit default constructor for 'TooFewError' first required here}}
 TooFewError too_few_error2[2] = { 1 }; // expected-error{{no matching constructor}}
 
-NoDefaultConstructor too_few_error3[3] = { }; // expected-error {{no matching constructor}}
+NoDefaultConstructor too_few_error3[3] = { }; // expected-error {{no matching constructor}} expected-note {{implicit initialization of array element 0}}
 
 // C++ [dcl.init.aggr]p8
 struct Empty { };
