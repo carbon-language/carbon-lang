@@ -86,7 +86,7 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   SmallVector<OMPClause *, 5> Clauses;
   SmallVector<llvm::PointerIntPair<OMPClause *, 1, bool>, OMPC_unknown + 1>
   FirstClauses(OMPC_unknown + 1);
-  const unsigned ScopeFlags =
+  unsigned ScopeFlags =
       Scope::FnScope | Scope::DeclScope | Scope::OpenMPDirectiveScope;
   SourceLocation Loc = ConsumeToken(), EndLoc;
   OpenMPDirectiveKind DKind = Tok.isAnnotation()
@@ -142,6 +142,9 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
 
     StmtResult AssociatedStmt;
     bool CreateDirective = true;
+    if (DKind == OMPD_simd)
+      ScopeFlags |=
+          Scope::OpenMPLoopDirectiveScope | Scope::OpenMPSimdDirectiveScope;
     ParseScope OMPDirectiveScope(this, ScopeFlags);
     {
       // The body is a block scope like in Lambdas and Blocks.

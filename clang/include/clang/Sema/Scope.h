@@ -101,21 +101,29 @@ public:
     /// \brief This is the scope for a function-level C++ try or catch scope.
     FnTryCatchScope = 0x4000,
 
-    /// \brief This is the scope of OpenMP executable directive
-    OpenMPDirectiveScope = 0x8000
+    /// \brief This is the scope of OpenMP executable directive.
+    OpenMPDirectiveScope = 0x8000,
+
+    /// \brief This is the scope of some OpenMP loop directive.
+    OpenMPLoopDirectiveScope = 0x10000,
+
+    /// \brief This is the scope of some OpenMP simd directive.
+    /// For example, it is used for 'omp simd', 'omp for simd'.
+    /// This flag is propagated to children scopes.
+    OpenMPSimdDirectiveScope = 0x20000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
   /// scope.
   Scope *AnyParent;
 
+  /// Flags - This contains a set of ScopeFlags, which indicates how the scope
+  /// interrelates with other control flow statements.
+  unsigned Flags;
+
   /// Depth - This is the depth of this scope.  The translation-unit scope has
   /// depth 0.
   unsigned short Depth;
-
-  /// Flags - This contains a set of ScopeFlags, which indicates how the scope
-  /// interrelates with other control flow statements.
-  unsigned short Flags;
 
   /// \brief Declarations with static linkage are mangled with the number of
   /// scopes seen as a component.
@@ -358,6 +366,30 @@ public:
   /// \brief Determines whether this scope is the OpenMP directive scope
   bool isOpenMPDirectiveScope() const {
     return (getFlags() & Scope::OpenMPDirectiveScope);
+  }
+
+  /// \brief Determine whether this scope is some OpenMP loop directive scope
+  /// (for example, 'omp for', 'omp simd').
+  bool isOpenMPLoopDirectiveScope() const {
+    if (getFlags() & Scope::OpenMPLoopDirectiveScope) {
+      assert(isOpenMPDirectiveScope() &&
+             "OpenMP loop directive scope is not a directive scope");
+      return true;
+    }
+    return false;
+  }
+
+  /// \brief Determine whether this scope is (or is nested into) some OpenMP
+  /// loop simd directive scope (for example, 'omp simd', 'omp for simd').
+  bool isOpenMPSimdDirectiveScope() const {
+    return getFlags() & Scope::OpenMPSimdDirectiveScope;
+  }
+
+  /// \brief Determine whether this scope is a loop having OpenMP loop
+  /// directive attached.
+  bool isOpenMPLoopScope() const {
+    const Scope *P = getParent();
+    return P && P->isOpenMPLoopDirectiveScope();
   }
 
   /// \brief Determine whether this scope is a C++ 'try' block.

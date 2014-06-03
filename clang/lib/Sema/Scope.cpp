@@ -39,6 +39,10 @@ void Scope::Init(Scope *parent, unsigned flags) {
     BlockParent    = parent->BlockParent;
     TemplateParamParent = parent->TemplateParamParent;
     MSLocalManglingParent = parent->MSLocalManglingParent;
+    if ((Flags & (FnScope | ClassScope | BlockScope | TemplateParamScope |
+                  FunctionPrototypeScope | AtCatchScope | ObjCMethodScope)) ==
+        0)
+      Flags |= parent->getFlags() & OpenMPSimdDirectiveScope;
   } else {
     Depth = 0;
     PrototypeDepth = 0;
@@ -178,6 +182,12 @@ void Scope::dumpImpl(raw_ostream &OS) const {
     } else if (Flags & OpenMPDirectiveScope) {
       OS << "OpenMPDirectiveScope";
       Flags &= ~OpenMPDirectiveScope;
+    } else if (Flags & OpenMPLoopDirectiveScope) {
+      OS << "OpenMPLoopDirectiveScope";
+      Flags &= ~OpenMPLoopDirectiveScope;
+    } else if (Flags & OpenMPSimdDirectiveScope) {
+      OS << "OpenMPSimdDirectiveScope";
+      Flags &= ~OpenMPSimdDirectiveScope;
     }
 
     if (Flags)

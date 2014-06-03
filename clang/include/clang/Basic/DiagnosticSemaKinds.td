@@ -6937,6 +6937,8 @@ def note_omp_explicit_dsa : Note<
   "defined as %0">;
 def note_omp_predetermined_dsa : Note<
   "predetermined as %0">;
+def err_omp_loop_var_dsa : Error<
+  "loop iteration variable may not be %0">;
 def err_omp_not_for : Error<
   "statement after '#pragma omp %0' must be a for loop">;
 def err_omp_negative_expression_in_clause : Error<
@@ -6973,6 +6975,29 @@ def err_omp_aligned_twice : Error<
   "a variable cannot appear in more than one aligned clause">;
 def err_omp_local_var_in_threadprivate_init : Error<
   "variable with local storage in initial value of threadprivate variable">;
+def err_omp_loop_not_canonical_init : Error<
+  "initialization clause of OpenMP for loop must be of the form "
+  "'var = init' or 'T var = init'">;
+def ext_omp_loop_not_canonical_init : ExtWarn<
+  "initialization clause of OpenMP for loop is not in canonical form "
+  "('var = init' or 'T var = init')">, InGroup<OpenMPLoopForm>;
+def err_omp_loop_not_canonical_cond : Error<
+  "condition of OpenMP for loop must be a relational comparison "
+  "('<', '<=', '>', or '>=') of loop variable %0">;
+def err_omp_loop_not_canonical_incr : Error<
+  "increment clause of OpenMP for loop must perform simple addition "
+  "or subtraction on loop variable %0">;
+def err_omp_loop_variable_type : Error<
+  "variable must be of integer or %select{pointer|random access iterator}0 type">;
+def err_omp_loop_incr_not_compatible : Error<
+  "increment expression must cause %0 to %select{decrease|increase}1 "
+  "on each iteration of OpenMP for loop">;
+def note_omp_loop_cond_requres_compatible_incr : Note<
+  "loop step is expected to be %select{negative|positive}0 due to this condition">;
+def err_omp_loop_cannot_use_stmt : Error<
+  "'%0' statement cannot be used in OpenMP for loop">;
+def err_omp_simd_region_cannot_use_stmt : Error<
+  "'%0' statement cannot be used in OpenMP simd region">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

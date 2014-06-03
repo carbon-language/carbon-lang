@@ -414,3 +414,18 @@ void test_firstprivate()
   for (i = 0; i < 16; ++i) ;
 }
 
+void test_loop_messages()
+{
+  float a[100], b[100], c[100];
+  // expected-error@+2 {{variable must be of integer or pointer type}}
+  #pragma omp simd
+  for (float fi = 0; fi < 10.0; fi++) {
+    c[(int)fi] = a[(int)fi] + b[(int)fi];
+  }
+  // expected-error@+2 {{variable must be of integer or pointer type}}
+  #pragma omp simd
+  for (double fi = 0; fi < 10.0; fi++) {
+    c[(int)fi] = a[(int)fi] + b[(int)fi];
+  }
+}
+
