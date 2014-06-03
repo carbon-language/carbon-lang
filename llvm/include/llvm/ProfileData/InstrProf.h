@@ -22,8 +22,7 @@ namespace llvm {
 
 const error_category &instrprof_category();
 
-struct instrprof_error {
-  enum ErrorType {
+enum class instrprof_error {
     success = 0,
     eof,
     bad_magic,
@@ -37,11 +36,6 @@ struct instrprof_error {
     hash_mismatch,
     count_mismatch,
     counter_overflow
-  };
-  ErrorType V;
-
-  instrprof_error(ErrorType V) : V(V) {}
-  operator ErrorType() const { return V; }
 };
 
 inline error_code make_error_code(instrprof_error E) {
@@ -49,8 +43,6 @@ inline error_code make_error_code(instrprof_error E) {
 }
 
 template <> struct is_error_code_enum<instrprof_error> : std::true_type {};
-template <> struct is_error_code_enum<instrprof_error::ErrorType>
-  : std::true_type {};
 
 } // end namespace llvm
 
