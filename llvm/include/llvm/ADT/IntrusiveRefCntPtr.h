@@ -248,7 +248,7 @@ public:
 
   template <class T>
   bool operator==(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
-    return !A;
+    return B == A;
   }
 
   template <class T>
