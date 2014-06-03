@@ -107,10 +107,12 @@ public:
 
   void dump(raw_ostream &os) const override {
     os << "OUTPUT_FORMAT(";
-    for (auto fb = _formats.begin(), fe = _formats.end(); fb != fe; ++fb) {
-      if (fb != _formats.begin())
+    bool first = true;
+    for (StringRef format : _formats) {
+      if (!first)
         os << ",";
-      os << *fb;
+      first = false;
+      os << format;
     }
     os << ")\n";
   }
@@ -166,8 +168,7 @@ public:
     for (const Path &path : getPaths()) {
       if (!first)
         os << " ";
-      else
-        first = false;
+      first = false;
       if (path._asNeeded)
         os << "AS_NEEDED(";
       os << path._path;
