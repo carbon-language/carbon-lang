@@ -177,10 +177,7 @@ public:
 
     T* getPtr() const { return Obj; }
 
-    typedef T* (IntrusiveRefCntPtr::*unspecified_bool_type) () const;
-    operator unspecified_bool_type() const {
-      return Obj ? &IntrusiveRefCntPtr::getPtr : nullptr;
-    }
+    LLVM_EXPLICIT operator bool() const { return Obj; }
 
     void swap(IntrusiveRefCntPtr& other) {
       T* tmp = other.Obj;
