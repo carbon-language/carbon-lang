@@ -150,6 +150,7 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
 FunctionPass *llvm::createX86FixupLEAs() { return new FixupLEAPass(); }
 
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
+  MF = &Func;
   TM = &Func.getTarget();
   const X86Subtarget &ST = TM->getSubtarget<X86Subtarget>();
   if (!ST.LEAusesAG() && !ST.slowLEA())
