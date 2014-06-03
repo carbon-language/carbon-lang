@@ -26,16 +26,14 @@ public:
   SimpleFile(StringRef path) : MutableFile(path) {}
 
   void addAtom(const Atom &atom) override {
-    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
+    if (auto *defAtom = dyn_cast<DefinedAtom>(&atom)) {
       _definedAtoms._atoms.push_back(defAtom);
-    } else if (
-        const UndefinedAtom *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
+    } else if (auto *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
       _undefinedAtoms._atoms.push_back(undefAtom);
-    } else if (
-        const SharedLibraryAtom *slAtom = dyn_cast<SharedLibraryAtom>(&atom)) {
-      _sharedLibraryAtoms._atoms.push_back(slAtom);
-    } else if (const AbsoluteAtom *abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
-      _absoluteAtoms._atoms.push_back(abAtom);
+    } else if (auto *shlibAtom = dyn_cast<SharedLibraryAtom>(&atom)) {
+      _sharedLibraryAtoms._atoms.push_back(shlibAtom);
+    } else if (auto *absAtom = dyn_cast<AbsoluteAtom>(&atom)) {
+      _absoluteAtoms._atoms.push_back(absAtom);
     } else {
       llvm_unreachable("atom has unknown definition kind");
     }
