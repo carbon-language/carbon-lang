@@ -36,6 +36,12 @@ class Atom;
 /// means R_X86_64_32 for x86_64, and R_386_GOTPC for i386. For PE/COFF
 /// relocation 10 means IMAGE_REL_AMD64_SECTION.
 ///
+/// References and atoms form a directed graph. The dead-stripping pass
+/// traverses them starting from dead-strip root atoms to garbage collect
+/// unreachable ones.
+///
+/// References of any kind are considered as directed edges. In addition to
+/// that, references of some kind is considered as bidirected edges.
 class Reference {
 public:
   /// Which universe defines the kindValue().
@@ -77,10 +83,11 @@ public:
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
     kindInGroup = 1,
+    // kindLayoutAfter is treated as a bidirected edge by the dead-stripping
+    // pass.
     kindLayoutAfter = 2,
-    // kindLayoutBefore is currently used only by dead-stripping pass in
-    // the Resolver. Will be removed soon. To enforce layout, use
-    // kindLayoutAfter instead.
+    // kindLayoutBefore is currently used only by PECOFF port, and will
+    // be removed soon. To enforce layout, use kindLayoutAfter instead.
     kindLayoutBefore = 3,
     kindGroupChild = 4,
     kindGroupParent = 5

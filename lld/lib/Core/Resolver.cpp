@@ -312,9 +312,17 @@ void Resolver::markLive(const Atom *atom) {
     return;
 
   // Mark all atoms it references as live
-  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
     for (const Reference *ref : *defAtom)
       markLive(ref->target());
+    for (const Atom *target : _reverseRef[defAtom])
+      markLive(target);
+  }
+}
+
+static bool isBackref(const Reference *ref) {
+  return ref->kindNamespace() == lld::Reference::KindNamespace::all &&
+    ref->kindValue() == lld::Reference::kindLayoutBefore;
 }
 
 // remove all atoms not actually used
@@ -323,7 +331,14 @@ void Resolver::deadStripOptimize() {
   // only do this optimization with -dead_strip
   if (!_context.deadStrip())
     return;
-  assert(_liveAtoms.empty());
+
+  // Some type of references prevent referring atoms to be dead-striped.
+  // Make a reverse map of such references before traversing the graph.
+  for (const Atom *atom : _atoms)
+    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
+      for (const Reference *ref : *defAtom)
+        if (isBackref(ref))
+          _reverseRef[ref->target()].insert(atom);
 
   // By default, shared libraries are built with all globals as dead strip roots
   if (_context.globalsAreDeadStripRoots())
