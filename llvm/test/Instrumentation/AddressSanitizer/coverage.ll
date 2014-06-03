@@ -3,6 +3,18 @@
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK1
+
+; RUN: opt < %s -asan -asan-module -asan-coverage=0 -asan-globals=0 -S | \
+; RUN:     FileCheck %s --check-prefix=CHECK0
+; RUN: opt < %s -asan -asan-module -asan-coverage=1 -asan-globals=0 -S | \
+; RUN:     FileCheck %s --check-prefix=CHECK1
+; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-globals=0 -S | \
+; RUN:     FileCheck %s --check-prefix=CHECK2
+; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=10 \
+; RUN:     -asan-globals=0 -S | FileCheck %s --check-prefix=CHECK2
+; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=1 \
+; RUN:     -asan-globals=0 -S | FileCheck %s --check-prefix=CHECK1
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
 define void @foo(i32* %a) sanitize_address {

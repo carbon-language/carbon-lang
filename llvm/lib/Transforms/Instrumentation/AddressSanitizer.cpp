@@ -384,6 +384,7 @@ class AddressSanitizerModule : public ModulePass {
  private:
   void initializeCallbacks(Module &M);
 
+  bool InstrumentGlobals(IRBuilder<> &IRB, Module &M);
   bool ShouldInstrumentGlobal(GlobalVariable *G);
   void poisonOneInitializer(Function &GlobalInit, GlobalValue *ModuleName);
   void createInitializerPoisonCalls(Module &M, GlobalValue *ModuleName);
@@ -983,21 +984,7 @@ void AddressSanitizerModule::initializeCallbacks(Module &M) {
 // This function replaces all global variables with new variables that have
 // trailing redzones. It also creates a function that poisons
 // redzones and inserts this function into llvm.global_ctors.
-bool AddressSanitizerModule::runOnModule(Module &M) {
-  if (!ClGlobals) return false;
-
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  if (!DLP)
-    return false;
-  DL = &DLP->getDataLayout();
-
-  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
-  if (BL->isIn(M)) return false;
-  C = &(M.getContext());
-  int LongSize = DL->getPointerSizeInBits();
-  IntptrTy = Type::getIntNTy(*C, LongSize);
-  Mapping = getShadowMapping(M, LongSize);
-  initializeCallbacks(M);
+bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   DynamicallyInitializedGlobals.Init(M);
 
   SmallVector<GlobalVariable *, 16> GlobalsToChange;
@@ -1005,16 +992,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   for (auto &G : M.globals()) {
     if (ShouldInstrumentGlobal(&G))
       GlobalsToChange.push_back(&G);
-  }
-
-  Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
-  assert(CtorFunc);
-  IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
-
-  if (ClCoverage > 0) {
-    Function *CovFunc = M.getFunction(kAsanCovName);
-    int nCov = CovFunc ? CovFunc->getNumUses() : 0;
-    IRB.CreateCall(AsanCovModuleInit, ConstantInt::get(IntptrTy, nCov));
   }
 
   size_t n = GlobalsToChange.size();
@@ -1132,6 +1109,36 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
 
   DEBUG(dbgs() << M);
   return true;
+}
+
+bool AddressSanitizerModule::runOnModule(Module &M) {
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  if (!DLP)
+    return false;
+  DL = &DLP->getDataLayout();
+  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
+  C = &(M.getContext());
+  int LongSize = DL->getPointerSizeInBits();
+  IntptrTy = Type::getIntNTy(*C, LongSize);
+  Mapping = getShadowMapping(M, LongSize);
+  initializeCallbacks(M);
+
+  bool Changed = false;
+
+  Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
+  assert(CtorFunc);
+  IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
+
+  if (ClCoverage > 0) {
+    Function *CovFunc = M.getFunction(kAsanCovName);
+    int nCov = CovFunc ? CovFunc->getNumUses() : 0;
+    IRB.CreateCall(AsanCovModuleInit, ConstantInt::get(IntptrTy, nCov));
+    Changed = true;
+  }
+
+  if (ClGlobals && !BL->isIn(M)) Changed |= InstrumentGlobals(IRB, M);
+
+  return Changed;
 }
 
 void AddressSanitizer::initializeCallbacks(Module &M) {
