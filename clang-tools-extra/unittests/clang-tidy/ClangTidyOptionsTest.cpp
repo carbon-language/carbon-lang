@@ -19,14 +19,14 @@ TEST(ParseLineFilter, InvalidFilter) {
   EXPECT_FALSE(parseLineFilter("asdf", Options));
   EXPECT_TRUE(Options.LineFilter.empty());
 
-  EXPECT_TRUE(parseLineFilter("[{}]", Options));
-  EXPECT_TRUE(parseLineFilter("[{\"name\":\"\"}]", Options));
+  EXPECT_TRUE(!!parseLineFilter("[{}]", Options));
+  EXPECT_TRUE(!!parseLineFilter("[{\"name\":\"\"}]", Options));
   EXPECT_TRUE(
-      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1]]}]", Options));
+      !!parseLineFilter("[{\"name\":\"test\",\"lines\":[[1]]}]", Options));
   EXPECT_TRUE(
-      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,2,3]]}]", Options));
+      !!parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,2,3]]}]", Options));
   EXPECT_TRUE(
-      parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,-1]]}]", Options));
+      !!parseLineFilter("[{\"name\":\"test\",\"lines\":[[1,-1]]}]", Options));
 }
 
 TEST(ParseLineFilter, ValidFilter) {
