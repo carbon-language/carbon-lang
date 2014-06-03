@@ -93,6 +93,6 @@ Condition::Wait (Mutex &mutex, const TimeValue *abstime, bool *timed_out)
             *timed_out = false;
     }
 
-    return err != 0;
+    return err == 0;
 }
 
