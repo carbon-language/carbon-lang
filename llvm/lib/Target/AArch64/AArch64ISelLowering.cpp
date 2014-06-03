@@ -1781,21 +1781,21 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       switch (VA.getLocInfo()) {
       default:
         break;
+      case CCValAssign::BCvt:
+        MemVT = VA.getLocVT();
+        break;
       case CCValAssign::SExt:
         ExtType = ISD::SEXTLOAD;
-        MemVT = VA.getLocVT();
         break;
       case CCValAssign::ZExt:
         ExtType = ISD::ZEXTLOAD;
-        MemVT = VA.getLocVT();
         break;
       case CCValAssign::AExt:
         ExtType = ISD::EXTLOAD;
-        MemVT = VA.getLocVT();
         break;
       }
 
-      ArgValue = DAG.getExtLoad(ExtType, DL, VA.getValVT(), Chain, FIN,
+      ArgValue = DAG.getExtLoad(ExtType, DL, VA.getLocVT(), Chain, FIN,
                                 MachinePointerInfo::getFixedStack(FI),
                                 MemVT, false, false, false, 0);
 
@@ -2346,11 +2346,9 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
         // Since we pass i1/i8/i16 as i1/i8/i16 on stack and Arg is already
         // promoted to a legal register type i32, we should truncate Arg back to
         // i1/i8/i16.
-        if (Arg.getValueType().isSimple() &&
-            Arg.getValueType().getSimpleVT() == MVT::i32 &&
-            (VA.getLocVT() == MVT::i1 || VA.getLocVT() == MVT::i8 ||
-             VA.getLocVT() == MVT::i16))
-          Arg = DAG.getNode(ISD::TRUNCATE, DL, VA.getLocVT(), Arg);
+        if (VA.getValVT() == MVT::i1 || VA.getValVT() == MVT::i8 ||
+            VA.getValVT() == MVT::i16)
+          Arg = DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), Arg);
 
         SDValue Store =
             DAG.getStore(Chain, DL, Arg, DstAddr, DstInfo, false, false, 0);

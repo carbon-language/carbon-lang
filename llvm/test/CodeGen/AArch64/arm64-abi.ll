@@ -1,5 +1,6 @@
-; RUN: llc < %s -march=arm64 -mcpu=cyclone -enable-misched=false | FileCheck %s
+; RUN: llc < %s -debug -march=arm64 -mcpu=cyclone -enable-misched=false | FileCheck %s
 ; RUN: llc < %s -O0 | FileCheck -check-prefix=FAST %s
+; REQUIRES: asserts
 target triple = "arm64-apple-darwin"
 
 ; rdar://9932559
@@ -8,15 +9,15 @@ entry:
 ; CHECK-LABEL: i8i16callee:
 ; The 8th, 9th, 10th and 11th arguments are passed at sp, sp+2, sp+4, sp+5.
 ; They are i8, i16, i8 and i8.
-; CHECK: ldrsb	{{w[0-9]+}}, [sp, #5]
-; CHECK: ldrsh	{{w[0-9]+}}, [sp, #2]
-; CHECK: ldrsb	{{w[0-9]+}}, [sp]
-; CHECK: ldrsb	{{w[0-9]+}}, [sp, #4]
+; CHECK-DAG: ldrsb {{w[0-9]+}}, [sp, #5]
+; CHECK-DAG: ldrsb {{w[0-9]+}}, [sp, #4]
+; CHECK-DAG: ldrsh {{w[0-9]+}}, [sp, #2]
+; CHECK-DAG: ldrsb {{w[0-9]+}}, [sp]
 ; FAST-LABEL: i8i16callee:
-; FAST: ldrb  {{w[0-9]+}}, [sp, #5]
-; FAST: ldrb  {{w[0-9]+}}, [sp, #4]
-; FAST: ldrh  {{w[0-9]+}}, [sp, #2]
-; FAST: ldrb  {{w[0-9]+}}, [sp]
+; FAST-DAG: ldrsb  {{w[0-9]+}}, [sp, #5]
+; FAST-DAG: ldrsb  {{w[0-9]+}}, [sp, #4]
+; FAST-DAG: ldrsh  {{w[0-9]+}}, [sp, #2]
+; FAST-DAG: ldrsb  {{w[0-9]+}}, [sp]
   %conv = sext i8 %a4 to i64
   %conv3 = sext i16 %a5 to i64
   %conv8 = sext i8 %b1 to i64
@@ -44,10 +45,10 @@ entry:
 ; CHECK: i8i16caller
 ; The 8th, 9th, 10th and 11th arguments are passed at sp, sp+2, sp+4, sp+5.
 ; They are i8, i16, i8 and i8.
-; CHECK: strb {{w[0-9]+}}, [sp, #5]
-; CHECK: strb {{w[0-9]+}}, [sp, #4]
-; CHECK: strh {{w[0-9]+}}, [sp, #2]
-; CHECK: strb {{w[0-9]+}}, [sp]
+; CHECK-DAG: strb {{w[0-9]+}}, [sp, #5]
+; CHECK-DAG: strb {{w[0-9]+}}, [sp, #4]
+; CHECK-DAG: strh {{w[0-9]+}}, [sp, #2]
+; CHECK-DAG: strb {{w[0-9]+}}, [sp]
 ; CHECK: bl
 ; FAST: i8i16caller
 ; FAST: strb {{w[0-9]+}}, [sp]

@@ -1218,7 +1218,6 @@ bool AArch64FastISel::ProcessCallArgs(
       Arg = EmitIntExt(SrcVT, Arg, DestVT, /*isZExt*/ false);
       if (Arg == 0)
         return false;
-      ArgVT = DestVT;
       break;
     }
     case CCValAssign::AExt:
@@ -1229,7 +1228,6 @@ bool AArch64FastISel::ProcessCallArgs(
       Arg = EmitIntExt(SrcVT, Arg, DestVT, /*isZExt*/ true);
       if (Arg == 0)
         return false;
-      ArgVT = DestVT;
       break;
     }
     default:
@@ -1248,7 +1246,7 @@ bool AArch64FastISel::ProcessCallArgs(
       assert(VA.isMemLoc() && "Assuming store on stack.");
 
       // Need to store on the stack.
-      unsigned ArgSize = VA.getLocVT().getSizeInBits() / 8;
+      unsigned ArgSize = (ArgVT.getSizeInBits() + 7) / 8;
 
       unsigned BEAlign = 0;
       if (ArgSize < 8 && !Subtarget->isLittleEndian())

@@ -18,9 +18,6 @@ class CCIfAlign<string Align, CCAction A> :
 class CCIfBigEndian<CCAction A> :
   CCIf<"State.getTarget().getDataLayout()->isBigEndian()", A>;
 
-class CCIfUnallocated<string Reg, CCAction A> :
-  CCIf<"!State.isAllocated(AArch64::" # Reg # ")", A>;
-
 //===----------------------------------------------------------------------===//
 // ARM AAPCS64 Calling Convention
 //===----------------------------------------------------------------------===//
@@ -45,7 +42,7 @@ def CC_AArch64_AAPCS : CallingConv<[
 
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
   // up to eight each of GPR and FPR.
-  CCIfType<[i1, i8, i16], CCIfUnallocated<"X7", CCPromoteToType<i32>>>,
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
   CCIfType<[i32], CCAssignToRegWithShadow<[W0, W1, W2, W3, W4, W5, W6, W7],
                                           [X0, X1, X2, X3, X4, X5, X6, X7]>>,
   // i128 is split to two i64s, we can't fit half to register X7.
@@ -120,7 +117,7 @@ def CC_AArch64_DarwinPCS : CallingConv<[
 
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
   // up to eight each of GPR and FPR.
-  CCIfType<[i1, i8, i16], CCIfUnallocated<"X7", CCPromoteToType<i32>>>,
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
   CCIfType<[i32], CCAssignToRegWithShadow<[W0, W1, W2, W3, W4, W5, W6, W7],
                                           [X0, X1, X2, X3, X4, X5, X6, X7]>>,
   // i128 is split to two i64s, we can't fit half to register X7.
@@ -143,8 +140,8 @@ def CC_AArch64_DarwinPCS : CallingConv<[
            CCAssignToReg<[Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>,
 
   // If more than will fit in registers, pass them on the stack instead.
-  CCIfType<[i1, i8], CCAssignToStack<1, 1>>,
-  CCIfType<[i16], CCAssignToStack<2, 2>>,
+  CCIf<"ValVT == MVT::i1 || ValVT == MVT::i8", CCAssignToStack<1, 1>>,
+  CCIf<"ValVT == MVT::i16", CCAssignToStack<2, 2>>,
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
   CCIfType<[i64, f64, v1f64, v2f32, v1i64, v2i32, v4i16, v8i8],
            CCAssignToStack<8, 8>>,
@@ -172,12 +169,11 @@ def CC_AArch64_DarwinPCS_VarArg : CallingConv<[
 // 32bit quantity as undef.
 def CC_AArch64_WebKit_JS : CallingConv<[
   // Handle i1, i8, i16, i32, and i64 passing in register X0 (W0).
-  CCIfType<[i1, i8, i16], CCIfUnallocated<"X0", CCPromoteToType<i32>>>,
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
   CCIfType<[i32], CCAssignToRegWithShadow<[W0], [X0]>>,
   CCIfType<[i64], CCAssignToRegWithShadow<[X0], [W0]>>,
 
   // Pass the remaining arguments on the stack instead.
-  CCIfType<[i1, i8, i16], CCAssignToStack<4, 4>>,
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
   CCIfType<[i64, f64], CCAssignToStack<8, 8>>
 ]>;
