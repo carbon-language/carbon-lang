@@ -647,8 +647,6 @@ static bool isValidVisibilityForLinkage(unsigned V, unsigned L) {
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalVisibility OptionalDLLStorageClass 'alias'
 ///                     OptionalLinkage Aliasee
-///   ::= GlobalVar '=' OptionalVisibility OptionalDLLStorageClass 'alias'
-///                     OptionalLinkage OptionalAddrSpace Type, Aliasee
 ///
 /// Aliasee
 ///   ::= TypeAndValue
