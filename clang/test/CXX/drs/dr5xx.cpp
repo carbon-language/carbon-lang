@@ -195,8 +195,8 @@ namespace dr525 { // dr525: yes
   }
 }
 
-// Core DR 532.
-namespace PR8130 {
+// PR8130
+namespace dr532 { // dr532: 3.5
   struct A { };
 
   template<class T> struct B {
