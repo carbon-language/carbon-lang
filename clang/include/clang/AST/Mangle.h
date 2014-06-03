@@ -36,33 +36,6 @@ namespace clang {
   struct ThunkInfo;
   class VarDecl;
 
-/// MangleBuffer - a convenient class for storing a name which is
-/// either the result of a mangling or is a constant string with
-/// external memory ownership.
-class MangleBuffer {
-public:
-  void setString(StringRef Ref) {
-    String = Ref;
-  }
-
-  SmallVectorImpl<char> &getBuffer() {
-    return Buffer;
-  }
-
-  StringRef getString() const {
-    if (!String.empty()) return String;
-    return Buffer.str();
-  }
-
-  operator StringRef() const {
-    return getString();
-  }
-
-private:
-  StringRef String;
-  SmallString<256> Buffer;
-};
-
 /// MangleContext - Context for tracking state which persists across multiple
 /// calls to the C++ name mangler.
 class MangleContext {

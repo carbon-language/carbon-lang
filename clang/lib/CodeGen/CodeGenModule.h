@@ -71,7 +71,6 @@ class CodeGenOptions;
 class DiagnosticsEngine;
 class AnnotateAttr;
 class CXXDestructorDecl;
-class MangleBuffer;
 class Module;
 
 namespace CodeGen {
@@ -937,8 +936,7 @@ public:
                               bool AttrOnCallSite);
 
   StringRef getMangledName(GlobalDecl GD);
-  void getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
-                           const BlockDecl *BD);
+  std::string getBlockMangledName(GlobalDecl GD, const BlockDecl *BD);
 
   void EmitTentativeDefinition(const VarDecl *D);
 

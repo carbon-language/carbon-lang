@@ -489,11 +489,13 @@ StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   return Str;
 }
 
-void CodeGenModule::getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
-                                        const BlockDecl *BD) {
+std::string CodeGenModule::getBlockMangledName(GlobalDecl GD,
+                                               const BlockDecl *BD) {
   MangleContext &MangleCtx = getCXXABI().getMangleContext();
   const Decl *D = GD.getDecl();
-  llvm::raw_svector_ostream Out(Buffer.getBuffer());
+
+  std::string Buffer;
+  llvm::raw_string_ostream Out(Buffer);
   if (!D)
     MangleCtx.mangleGlobalBlock(BD, 
       dyn_cast_or_null<VarDecl>(initializedGlobalDecl.getDecl()), Out);
@@ -503,6 +505,8 @@ void CodeGenModule::getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
     MangleCtx.mangleDtorBlock(DD, GD.getDtorType(), BD, Out);
   else
     MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Out);
+
+  return Out.str();
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(StringRef Name) {

@@ -1127,11 +1127,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   llvm::FunctionType *fnLLVMType = CGM.getTypes().GetFunctionType(fnInfo);
 
-  MangleBuffer name;
-  CGM.getBlockMangledName(GD, name, blockDecl);
-  llvm::Function *fn =
-    llvm::Function::Create(fnLLVMType, llvm::GlobalValue::InternalLinkage, 
-                           name.getString(), &CGM.getModule());
+  std::string name = CGM.getBlockMangledName(GD, blockDecl);
+  llvm::Function *fn = llvm::Function::Create(
+      fnLLVMType, llvm::GlobalValue::InternalLinkage, name, &CGM.getModule());
   CGM.SetInternalFunctionAttributes(blockDecl, fn, fnInfo);
 
   // Begin generating the function.
