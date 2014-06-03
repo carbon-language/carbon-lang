@@ -352,7 +352,8 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
 #ifndef _MSC_VER
     use_editline = m_input_sp->GetFile().GetIsRealTerminal();
 #else
-    use_editline = true;
+    // Editline is causing issues on Windows, so use the fallback.
+    use_editline = false;
 #endif
 
     if (use_editline)
