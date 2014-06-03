@@ -32,86 +32,89 @@ using namespace llvm;
 STATISTIC(NumLEAs, "Number of LEA instructions created");
 
 namespace {
-  class FixupLEAPass : public MachineFunctionPass {
-    enum RegUsageState { RU_NotUsed, RU_Write, RU_Read };
-    static char ID;
-    /// \brief Loop over all of the instructions in the basic block
-    /// replacing applicable instructions with LEA instructions,
-    /// where appropriate.
-    bool processBasicBlock(MachineFunction &MF, MachineFunction::iterator MFI);
+class FixupLEAPass : public MachineFunctionPass {
+  enum RegUsageState { RU_NotUsed, RU_Write, RU_Read };
+  static char ID;
+  /// \brief Loop over all of the instructions in the basic block
+  /// replacing applicable instructions with LEA instructions,
+  /// where appropriate.
+  bool processBasicBlock(MachineFunction &MF, MachineFunction::iterator MFI);
 
-    const char *getPassName() const override { return "X86 Atom LEA Fixup";}
+  const char *getPassName() const override { return "X86 Atom LEA Fixup"; }
 
-    /// \brief Given a machine register, look for the instruction
-    /// which writes it in the current basic block. If found,
-    /// try to replace it with an equivalent LEA instruction.
-    /// If replacement succeeds, then also process the the newly created
-    /// instruction.
-    void  seekLEAFixup(MachineOperand& p, MachineBasicBlock::iterator& I,
-                      MachineFunction::iterator MFI);
+  /// \brief Given a machine register, look for the instruction
+  /// which writes it in the current basic block. If found,
+  /// try to replace it with an equivalent LEA instruction.
+  /// If replacement succeeds, then also process the the newly created
+  /// instruction.
+  void seekLEAFixup(MachineOperand &p, MachineBasicBlock::iterator &I,
+                    MachineFunction::iterator MFI);
 
-    /// \brief Given a memory access or LEA instruction
-    /// whose address mode uses a base and/or index register, look for
-    /// an opportunity to replace the instruction which sets the base or index
-    /// register with an equivalent LEA instruction.
-    void processInstruction(MachineBasicBlock::iterator& I,
-                            MachineFunction::iterator MFI);
+  /// \brief Given a memory access or LEA instruction
+  /// whose address mode uses a base and/or index register, look for
+  /// an opportunity to replace the instruction which sets the base or index
+  /// register with an equivalent LEA instruction.
+  void processInstruction(MachineBasicBlock::iterator &I,
+                          MachineFunction::iterator MFI);
 
-    /// \brief Given a LEA instruction which is unprofitable
-    /// on Silvermont try to replace it with an equivalent ADD instruction
-    void processInstructionForSLM(MachineBasicBlock::iterator& I,
-                                  MachineFunction::iterator MFI);
+  /// \brief Given a LEA instruction which is unprofitable
+  /// on Silvermont try to replace it with an equivalent ADD instruction
+  void processInstructionForSLM(MachineBasicBlock::iterator &I,
+                                MachineFunction::iterator MFI);
 
-    /// \brief Determine if an instruction references a machine register
-    /// and, if so, whether it reads or writes the register.
-    RegUsageState usesRegister(MachineOperand& p,
-                               MachineBasicBlock::iterator I);
+  /// \brief Determine if an instruction references a machine register
+  /// and, if so, whether it reads or writes the register.
+  RegUsageState usesRegister(MachineOperand &p, MachineBasicBlock::iterator I);
 
-    /// \brief Step backwards through a basic block, looking
-    /// for an instruction which writes a register within 
-    /// a maximum of INSTR_DISTANCE_THRESHOLD instruction latency cycles.
-    MachineBasicBlock::iterator searchBackwards(MachineOperand& p,
-                                                MachineBasicBlock::iterator& I,
-                                                MachineFunction::iterator MFI);
+  /// \brief Step backwards through a basic block, looking
+  /// for an instruction which writes a register within
+  /// a maximum of INSTR_DISTANCE_THRESHOLD instruction latency cycles.
+  MachineBasicBlock::iterator searchBackwards(MachineOperand &p,
+                                              MachineBasicBlock::iterator &I,
+                                              MachineFunction::iterator MFI);
 
-    /// \brief if an instruction can be converted to an 
-    /// equivalent LEA, insert the new instruction into the basic block
-    /// and return a pointer to it. Otherwise, return zero.
-    MachineInstr* postRAConvertToLEA(MachineFunction::iterator &MFI,
-                                     MachineBasicBlock::iterator &MBBI) const;
+  /// \brief if an instruction can be converted to an
+  /// equivalent LEA, insert the new instruction into the basic block
+  /// and return a pointer to it. Otherwise, return zero.
+  MachineInstr *postRAConvertToLEA(MachineFunction::iterator &MFI,
+                                   MachineBasicBlock::iterator &MBBI) const;
 
-  public:
-    FixupLEAPass() : MachineFunctionPass(ID) {}
+public:
+  FixupLEAPass() : MachineFunctionPass(ID) {}
 
-    /// \brief Loop over all of the basic blocks,
-    /// replacing instructions by equivalent LEA instructions
-    /// if needed and when possible.
-    bool runOnMachineFunction(MachineFunction &MF) override;
+  /// \brief Loop over all of the basic blocks,
+  /// replacing instructions by equivalent LEA instructions
+  /// if needed and when possible.
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  private:
-    MachineFunction *MF;
-    const TargetMachine *TM;
-    const X86InstrInfo *TII; // Machine instruction info.
-
-  };
-  char FixupLEAPass::ID = 0;
+private:
+  MachineFunction *MF;
+  const TargetMachine *TM;
+  const X86InstrInfo *TII; // Machine instruction info.
+};
+char FixupLEAPass::ID = 0;
 }
 
 MachineInstr *
 FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
                                  MachineBasicBlock::iterator &MBBI) const {
-  MachineInstr* MI = MBBI;
-  MachineInstr* NewMI;
+  MachineInstr *MI = MBBI;
+  MachineInstr *NewMI;
   switch (MI->getOpcode()) {
   case X86::MOV32rr:
   case X86::MOV64rr: {
-    const MachineOperand& Src = MI->getOperand(1);
-    const MachineOperand& Dest = MI->getOperand(0);
+    const MachineOperand &Src = MI->getOperand(1);
+    const MachineOperand &Dest = MI->getOperand(0);
     NewMI = BuildMI(*MF, MI->getDebugLoc(),
-      TII->get( MI->getOpcode() == X86::MOV32rr ? X86::LEA32r : X86::LEA64r))
-      .addOperand(Dest)
-      .addOperand(Src).addImm(1).addReg(0).addImm(0).addReg(0);
-    MFI->insert(MBBI, NewMI);   // Insert the new inst
+                    TII->get(MI->getOpcode() == X86::MOV32rr ? X86::LEA32r
+                                                             : X86::LEA64r))
+                .addOperand(Dest)
+                .addOperand(Src)
+                .addImm(1)
+                .addReg(0)
+                .addImm(0)
+                .addReg(0);
+    MFI->insert(MBBI, NewMI); // Insert the new inst
     return NewMI;
   }
   case X86::ADD64ri32:
@@ -144,9 +147,7 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
   return TII->convertToThreeAddress(MFI, MBBI, nullptr);
 }
 
-FunctionPass *llvm::createX86FixupLEAs() {
-  return new FixupLEAPass();
-}
+FunctionPass *llvm::createX86FixupLEAs() { return new FixupLEAPass(); }
 
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   TM = &Func.getTarget();
@@ -154,7 +155,7 @@ bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   if (!ST.LEAusesAG() && !ST.slowLEA())
     return false;
 
-  TII = static_cast<const X86InstrInfo*>(TM->getInstrInfo());
+  TII = static_cast<const X86InstrInfo *>(TM->getInstrInfo());
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);
   // Process all basic blocks.
@@ -165,14 +166,14 @@ bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   return true;
 }
 
-FixupLEAPass::RegUsageState FixupLEAPass::usesRegister(MachineOperand& p,
-                                MachineBasicBlock::iterator I) {
+FixupLEAPass::RegUsageState
+FixupLEAPass::usesRegister(MachineOperand &p, MachineBasicBlock::iterator I) {
   RegUsageState RegUsage = RU_NotUsed;
-  MachineInstr* MI = I;
+  MachineInstr *MI = I;
 
   for (unsigned int i = 0; i < MI->getNumOperands(); ++i) {
-    MachineOperand& opnd = MI->getOperand(i);
-    if (opnd.isReg() && opnd.getReg() == p.getReg()){
+    MachineOperand &opnd = MI->getOperand(i);
+    if (opnd.isReg() && opnd.getReg() == p.getReg()) {
       if (opnd.isDef())
         return RU_Write;
       RegUsage = RU_Read;
@@ -185,23 +186,22 @@ FixupLEAPass::RegUsageState FixupLEAPass::usesRegister(MachineOperand& p,
 /// block, return a reference to the previous instruction in the block,
 /// wrapping around to the last instruction of the block if the block
 /// branches to itself.
-static inline bool getPreviousInstr(MachineBasicBlock::iterator& I,
+static inline bool getPreviousInstr(MachineBasicBlock::iterator &I,
                                     MachineFunction::iterator MFI) {
   if (I == MFI->begin()) {
     if (MFI->isPredecessor(MFI)) {
       I = --MFI->end();
       return true;
-    }
-    else
+    } else
       return false;
   }
   --I;
   return true;
 }
 
-MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
-                                   MachineBasicBlock::iterator& I,
-                                   MachineFunction::iterator MFI) {
+MachineBasicBlock::iterator
+FixupLEAPass::searchBackwards(MachineOperand &p, MachineBasicBlock::iterator &I,
+                              MachineFunction::iterator MFI) {
   int InstrDistance = 1;
   MachineBasicBlock::iterator CurInst;
   static const int INSTR_DISTANCE_THRESHOLD = 5;
@@ -209,12 +209,12 @@ MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
   CurInst = I;
   bool Found;
   Found = getPreviousInstr(CurInst, MFI);
-  while( Found && I != CurInst) {
+  while (Found && I != CurInst) {
     if (CurInst->isCall() || CurInst->isInlineAsm())
       break;
     if (InstrDistance > INSTR_DISTANCE_THRESHOLD)
       break; // too far back to make a difference
-    if (usesRegister(p, CurInst) == RU_Write){
+    if (usesRegister(p, CurInst) == RU_Write) {
       return CurInst;
     }
     InstrDistance += TII->getInstrLatency(TM->getInstrItineraryData(), CurInst);
@@ -223,32 +223,32 @@ MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
   return nullptr;
 }
 
-void FixupLEAPass::processInstruction(MachineBasicBlock::iterator& I,
+void FixupLEAPass::processInstruction(MachineBasicBlock::iterator &I,
                                       MachineFunction::iterator MFI) {
   // Process a load, store, or LEA instruction.
   MachineInstr *MI = I;
   int opcode = MI->getOpcode();
-  const MCInstrDesc& Desc = MI->getDesc();
+  const MCInstrDesc &Desc = MI->getDesc();
   int AddrOffset = X86II::getMemoryOperandNo(Desc.TSFlags, opcode);
   if (AddrOffset >= 0) {
     AddrOffset += X86II::getOperandBias(Desc);
-    MachineOperand& p = MI->getOperand(AddrOffset + X86::AddrBaseReg);
+    MachineOperand &p = MI->getOperand(AddrOffset + X86::AddrBaseReg);
     if (p.isReg() && p.getReg() != X86::ESP) {
       seekLEAFixup(p, I, MFI);
     }
-    MachineOperand& q = MI->getOperand(AddrOffset + X86::AddrIndexReg);
+    MachineOperand &q = MI->getOperand(AddrOffset + X86::AddrIndexReg);
     if (q.isReg() && q.getReg() != X86::ESP) {
       seekLEAFixup(q, I, MFI);
     }
   }
 }
 
-void FixupLEAPass::seekLEAFixup(MachineOperand& p,
-                                MachineBasicBlock::iterator& I,
+void FixupLEAPass::seekLEAFixup(MachineOperand &p,
+                                MachineBasicBlock::iterator &I,
                                 MachineFunction::iterator MFI) {
   MachineBasicBlock::iterator MBI = searchBackwards(p, I, MFI);
   if (MBI) {
-    MachineInstr* NewMI = postRAConvertToLEA(MFI, MBI);
+    MachineInstr *NewMI = postRAConvertToLEA(MFI, MBI);
     if (NewMI) {
       ++NumLEAs;
       DEBUG(dbgs() << "FixLEA: Candidate to replace:"; MBI->dump(););
@@ -256,7 +256,7 @@ void FixupLEAPass::seekLEAFixup(MachineOperand& p,
       DEBUG(dbgs() << "FixLEA: Replaced by: "; NewMI->dump(););
       MFI->erase(MBI);
       MachineBasicBlock::iterator J =
-                             static_cast<MachineBasicBlock::iterator> (NewMI);
+          static_cast<MachineBasicBlock::iterator>(NewMI);
       processInstruction(J, MFI);
     }
   }
