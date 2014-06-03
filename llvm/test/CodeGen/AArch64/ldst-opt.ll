@@ -635,3 +635,133 @@ declare void @use-doubleword(i64)
 declare void @use-quadword(<2 x i64>)
 declare void @use-float(float)
 declare void @use-double(double)
+
+; Check the following transform:
+;
+; (ldr|str) X, [x20]
+;  ...
+; sub x20, x20, #16
+;  ->
+; (ldr|str) X, [x20], #-16
+;
+; with X being either w0, x0, s0, d0 or q0.
+
+define void @post-indexed-sub-word(i32* %a, i32* %b, i64 %count) nounwind {
+; CHECK-LABEL: post-indexed-sub-word
+; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}], #-8
+; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}], #-8
+  br label %for.body
+for.body:
+  %phi1 = phi i32* [ %gep4, %for.body ], [ %b, %0 ]
+  %phi2 = phi i32* [ %gep3, %for.body ], [ %a, %0 ]
+  %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
+  %gep1 = getelementptr i32* %phi1, i64 -1
+  %load1 = load i32* %gep1
+  %gep2 = getelementptr i32* %phi2, i64 -1
+  store i32 %load1, i32* %gep2
+  %load2 = load i32* %phi1
+  store i32 %load2, i32* %phi2
+  %dec.i = add nsw i64 %i, -1
+  %gep3 = getelementptr i32* %phi2, i64 -2
+  %gep4 = getelementptr i32* %phi1, i64 -2
+  %cond = icmp sgt i64 %dec.i, 0
+  br i1 %cond, label %for.body, label %end
+end:
+  ret void
+}
+
+define void @post-indexed-sub-doubleword(i64* %a, i64* %b, i64 %count) nounwind {
+; CHECK-LABEL: post-indexed-sub-doubleword
+; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}], #-16
+; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}], #-16
+  br label %for.body
+for.body:
+  %phi1 = phi i64* [ %gep4, %for.body ], [ %b, %0 ]
+  %phi2 = phi i64* [ %gep3, %for.body ], [ %a, %0 ]
+  %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
+  %gep1 = getelementptr i64* %phi1, i64 -1
+  %load1 = load i64* %gep1
+  %gep2 = getelementptr i64* %phi2, i64 -1
+  store i64 %load1, i64* %gep2
+  %load2 = load i64* %phi1
+  store i64 %load2, i64* %phi2
+  %dec.i = add nsw i64 %i, -1
+  %gep3 = getelementptr i64* %phi2, i64 -2
+  %gep4 = getelementptr i64* %phi1, i64 -2
+  %cond = icmp sgt i64 %dec.i, 0
+  br i1 %cond, label %for.body, label %end
+end:
+  ret void
+}
+
+define void @post-indexed-sub-quadword(<2 x i64>* %a, <2 x i64>* %b, i64 %count) nounwind {
+; CHECK-LABEL: post-indexed-sub-quadword
+; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}], #-32
+; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}], #-32
+  br label %for.body
+for.body:
+  %phi1 = phi <2 x i64>* [ %gep4, %for.body ], [ %b, %0 ]
+  %phi2 = phi <2 x i64>* [ %gep3, %for.body ], [ %a, %0 ]
+  %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
+  %gep1 = getelementptr <2 x i64>* %phi1, i64 -1
+  %load1 = load <2 x i64>* %gep1
+  %gep2 = getelementptr <2 x i64>* %phi2, i64 -1
+  store <2 x i64> %load1, <2 x i64>* %gep2
+  %load2 = load <2 x i64>* %phi1
+  store <2 x i64> %load2, <2 x i64>* %phi2
+  %dec.i = add nsw i64 %i, -1
+  %gep3 = getelementptr <2 x i64>* %phi2, i64 -2
+  %gep4 = getelementptr <2 x i64>* %phi1, i64 -2
+  %cond = icmp sgt i64 %dec.i, 0
+  br i1 %cond, label %for.body, label %end
+end:
+  ret void
+}
+
+define void @post-indexed-sub-float(float* %a, float* %b, i64 %count) nounwind {
+; CHECK-LABEL: post-indexed-sub-float
+; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}], #-8
+; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}], #-8
+  br label %for.body
+for.body:
+  %phi1 = phi float* [ %gep4, %for.body ], [ %b, %0 ]
+  %phi2 = phi float* [ %gep3, %for.body ], [ %a, %0 ]
+  %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
+  %gep1 = getelementptr float* %phi1, i64 -1
+  %load1 = load float* %gep1
+  %gep2 = getelementptr float* %phi2, i64 -1
+  store float %load1, float* %gep2
+  %load2 = load float* %phi1
+  store float %load2, float* %phi2
+  %dec.i = add nsw i64 %i, -1
+  %gep3 = getelementptr float* %phi2, i64 -2
+  %gep4 = getelementptr float* %phi1, i64 -2
+  %cond = icmp sgt i64 %dec.i, 0
+  br i1 %cond, label %for.body, label %end
+end:
+  ret void
+}
+
+define void @post-indexed-sub-double(double* %a, double* %b, i64 %count) nounwind {
+; CHECK-LABEL: post-indexed-sub-double
+; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}], #-16
+; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}], #-16
+  br label %for.body
+for.body:
+  %phi1 = phi double* [ %gep4, %for.body ], [ %b, %0 ]
+  %phi2 = phi double* [ %gep3, %for.body ], [ %a, %0 ]
+  %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
+  %gep1 = getelementptr double* %phi1, i64 -1
+  %load1 = load double* %gep1
+  %gep2 = getelementptr double* %phi2, i64 -1
+  store double %load1, double* %gep2
+  %load2 = load double* %phi1
+  store double %load2, double* %phi2
+  %dec.i = add nsw i64 %i, -1
+  %gep3 = getelementptr double* %phi2, i64 -2
+  %gep4 = getelementptr double* %phi1, i64 -2
+  %cond = icmp sgt i64 %dec.i, 0
+  br i1 %cond, label %for.body, label %end
+end:
+  ret void
+}
