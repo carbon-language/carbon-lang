@@ -138,7 +138,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_InlineAsm;
   }
@@ -166,7 +165,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_StackSize;
   }
@@ -195,7 +193,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_DebugMetadataVersion;
   }
@@ -221,7 +218,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_SampleProfile;
   }
@@ -261,7 +257,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  /// Hand rolled RTTI.
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_OptimizationRemark;
   }
@@ -323,7 +318,6 @@ public:
       : DiagnosticInfoOptimizationRemarkBase(DK_OptimizationRemark, PassName,
                                              Fn, DLoc, Msg) {}
 
-  /// Hand rolled RTTI
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_OptimizationRemark;
   }
@@ -350,7 +344,6 @@ public:
       : DiagnosticInfoOptimizationRemarkBase(DK_OptimizationRemarkMissed,
                                              PassName, Fn, DLoc, Msg) {}
 
-  /// Hand rolled RTTI
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_OptimizationRemarkMissed;
   }
@@ -378,7 +371,6 @@ public:
       : DiagnosticInfoOptimizationRemarkBase(DK_OptimizationRemarkAnalysis,
                                              PassName, Fn, DLoc, Msg) {}
 
-  /// Hand rolled RTTI
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_OptimizationRemarkAnalysis;
   }
