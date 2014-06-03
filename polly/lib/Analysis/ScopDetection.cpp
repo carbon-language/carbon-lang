@@ -377,7 +377,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
                                               PIAF.second);
 
       MemAcc *Acc = new MemAcc(Insn, Shape);
-      InsnToMemAcc.insert({ Insn, Acc });
+      InsnToMemAcc.insert({Insn, Acc});
       AF->computeAccessFunctions(*SE, Acc->DelinearizedSubscripts,
                                  Shape->DelinearizedSizes);
       if (Shape->DelinearizedSizes.empty() ||
@@ -439,12 +439,12 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     // accesses to the same array in a unique step.
     if (Context.NonAffineAccesses[BasePointer].size() == 0)
       Context.NonAffineAccesses[BasePointer] = AFs();
-    Context.NonAffineAccesses[BasePointer].push_back({ &Inst, AF });
+    Context.NonAffineAccesses[BasePointer].push_back({&Inst, AF});
   } else if (const SCEVAddRecExpr *AF =
                  dyn_cast<SCEVAddRecExpr>(AccessFunction)) {
     if (Context.AffineAccesses[BasePointer].size() == 0)
       Context.AffineAccesses[BasePointer] = AFs();
-    Context.AffineAccesses[BasePointer].push_back({ &Inst, AF });
+    Context.AffineAccesses[BasePointer].push_back({&Inst, AF});
   }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
