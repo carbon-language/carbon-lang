@@ -15,6 +15,7 @@
 
 #include <random>
 #include <cassert>
+#include <unistd.h>
 
 int main()
 {
@@ -27,6 +28,16 @@ int main()
     {
     }
     {
+        std::random_device r;
+    }
+    {
+        int ec;
+        ec = close(STDIN_FILENO);
+        assert(!ec);
+        ec = close(STDOUT_FILENO);
+        assert(!ec);
+        ec = close(STDERR_FILENO);
+        assert(!ec);
         std::random_device r;
     }
     {

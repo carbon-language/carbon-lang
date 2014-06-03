@@ -49,7 +49,7 @@ random_device::operator()()
 random_device::random_device(const string& __token)
     : __f_(open(__token.c_str(), O_RDONLY))
 {
-    if (__f_ <= 0)
+    if (__f_ < 0)
         __throw_system_error(errno, ("random_device failed to open " + __token).c_str());
 }
 
