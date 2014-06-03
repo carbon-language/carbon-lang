@@ -1079,9 +1079,9 @@ private:
     stream.flush();
     // Print error message if error.
     if (parseFailed) {
-      llvm::errs() << "Failed to parse '" << directives << "'\n"
-                   << "Reason: " << errorMessage;
-      return make_error_code(llvm::object::object_error::invalid_file_type);
+      auto msg = Twine("Failed to parse '") + directives + "'\n"
+        + "Reason: " + errorMessage;
+      return make_dynamic_error_code(msg);
     }
     if (!errorMessage.empty()) {
       llvm::errs() << "lld warning: " << errorMessage << "\n";
