@@ -628,13 +628,13 @@ static bool isValidVisibilityForLinkage(unsigned V, unsigned L) {
 }
 
 /// ParseAlias:
-///   ::= GlobalVar '=' OptionalVisibility OptionalDLLStorageClass 'alias'
-///                     OptionalLinkage Aliasee
+///   ::= GlobalVar '=' OptionalVisibility OptionalDLLStorageClass
+///                     OptionalThreadLocal 'alias' OptionalLinkage Aliasee
 ///
 /// Aliasee
 ///   ::= TypeAndValue
 ///
-/// Everything through DLL storage class has already been parsed.
+/// Everything through OptionalThreadLocal has already been parsed.
 ///
 bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
                           unsigned Visibility, unsigned DLLStorageClass,
@@ -729,7 +729,7 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 ///       OptionalThreadLocal OptionalAddrSpace OptionalUnNammedAddr
 ///       OptionalExternallyInitialized GlobalType Type Const
 ///
-/// Everything up to and including OptionalDLLStorageClass has been parsed
+/// Everything up to and including OptionalThreadLocal has been parsed
 /// already.
 ///
 bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
