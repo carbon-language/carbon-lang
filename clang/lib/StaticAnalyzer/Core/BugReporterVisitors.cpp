@@ -724,7 +724,7 @@ const char *TrackConstraintBRVisitor::getTag() {
 bool TrackConstraintBRVisitor::isUnderconstrained(const ExplodedNode *N) const {
   if (IsZeroCheck)
     return N->getState()->isNull(Constraint).isUnderconstrained();
-  return N->getState()->assume(Constraint, !Assumption);
+  return (bool)N->getState()->assume(Constraint, !Assumption);
 }
 
 PathDiagnosticPiece *
