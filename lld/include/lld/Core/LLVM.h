@@ -38,12 +38,6 @@ namespace llvm {
   template<typename T>
   class ErrorOr;
 
-  // Reference counting.
-  template <typename T> class IntrusiveRefCntPtr;
-  template <typename T> struct IntrusiveRefCntPtrInfo;
-  template <class Derived> class RefCountedBase;
-  class RefCountedBaseVPTR;
-
   class error_code;
   class raw_ostream;
   // TODO: DenseMap, ...
@@ -67,12 +61,6 @@ namespace lld {
   using llvm::SmallVectorImpl;
   using llvm::SaveAndRestore;
   using llvm::ErrorOr;
-
-  // Reference counting.
-  using llvm::IntrusiveRefCntPtr;
-  using llvm::IntrusiveRefCntPtrInfo;
-  using llvm::RefCountedBase;
-  using llvm::RefCountedBaseVPTR;
 
   using llvm::error_code;
   using llvm::raw_ostream;
