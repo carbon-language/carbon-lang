@@ -1,59 +1,133 @@
-# REQUIRES: mips
-
 # Check LA25 stubs creation when PIC code is called from non-PIC routines.
 
 # Build executable from pic and non-pic code.
-# RUN: yaml2obj -format=elf %S/Inputs/npic-obj.yaml > %t-npic-o
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-pic-o
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-main-o %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe \
-# RUN:         %t-npic-o %t-pic-o %t-main-o
-#
-# RUN: llvm-objdump -disassemble %t-exe | FileCheck -check-prefix=EXE %s
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-npic.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-pic.o
+# RUN: yaml2obj -format=elf -docnum 3 %s > %t-main.o
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe \
+# RUN:         %t-npic.o %t-pic.o %t-main.o
 
-# EXE: Disassembly of section .text:
-# EXE: T1N:
-# EXE-NEXT:   400140:       00 00 00 00  nop
+# RUN: llvm-readobj -t %t.exe | FileCheck -check-prefix=SYM %s
+# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=ASM %s
 
-# EXE: T1:
-# EXE-NEXT:   400150:       00 00 00 00  nop
+# SYM:      Name: loc (13)
+# SYM-NEXT: Value: 0x400144
+# SYM:      Name: T1N (1)
+# SYM-NEXT: Value: 0x400120
+# SYM:      Name: T1 (5)
+# SYM-NEXT: Value: 0x400130
+# SYM:      Name: glob (8)
+# SYM-NEXT: Value: 0x400134
 
-# EXE: glob:
-# EXE-NEXT:   40015c:       09 f8 20 03  jalr    $25
-# EXE-NEXT:   400160:       00 00 00 00  nop
+# ASM:      Contents of section .text:
+# ASM-NEXT:  400120 00000000 00000000 00000000 00000000  ................
+# ASM-NEXT:  400130 00000000 00000000 00000000 4d001000  ............M...
+#           0x10004d << 2 == 0x400134 (glob) --^
+# ASM-NEXT:  400140 00000000 4d001000 00000000 48001000  ....M.......H...
+#                            ^-- 0x10004d << 2 == 0x400134 (glob)
+#               0x100048 << 2 == 0x400120 (T1N) --^
+# ASM-NEXT:  400150 00000000 58001000 00000000 00000000  ....X...........
+#                            ^-- 0x100058 << 2 == 0x400160 (T1 stub)
+# ASM-NEXT:  400160 4000193c 4c001008 30013927 00000000  @..<L...0.9'....
+#                            ^-- j 0x400130 (T1)
 
-# Jump to 'loc' label address
-# EXE-NEXT:   400164:       5b 00 10 0c  jal     4194668
-# EXE-NEXT:   400168:       00 00 00 00  nop
-#
-# EXE: loc:
-# Jump to 'glob' non-pic symbol
-# EXE-NEXT:   40016c:       57 00 10 0c  jal     4194652
-# EXE-NEXT:   400170:       00 00 00 00  nop
-# Jump to 'T1N' non-pic symbol
-# EXE-NEXT:   400174:       50 00 10 0c  jal     4194624
-# EXE-NEXT:   400178:       00 00 00 00  nop
-# Jump to LA25 stub for 'T1' pic symbol
-# EXE-NEXT:   40017c:       64 00 10 0c  jal     4194704
-# EXE-NEXT:   400180:       00 00 00 00  nop
-# EXE-NEXT:   400184:       00 00 00 00  nop
-# EXE-NEXT:   400188:       00 00 00 00  nop
-# EXE-NEXT:   40018c:       00 00 00 00  nop
+# npic.o
+---
+FileHeader:
+  Class:    ELFCLASS32
+  Data:     ELFDATA2LSB
+  Type:     ET_REL
+  Machine:  EM_MIPS
+  Flags:    [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32, EF_MIPS_CPIC ]
 
-# LA25 Stub
-# EXE-NEXT:   400190:       40 00 19 3c  lui     $25, 64
-# Jump to 'T1' label address
-# EXE-NEXT:   400194:       54 00 10 08  j       4194640
-# EXE-NEXT:   400198:       50 01 39 27  addiu   $25, $25, 336
-# EXE-NEXT:   40019c:       00 00 00 00  nop
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x04
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
 
-    .global glob
-    .ent    glob
-glob:
-    jal     $t9
-    jal     loc
-loc:
-    jal     glob
-    jal     T1N
-    jal     T1
-    .end    glob
+Symbols:
+  Global:
+    - Name:    T1N
+      Section: .text
+      Type:    STT_FUNC
+      Value:   0x0
+      Size:    4
+
+# pic.o
+---
+FileHeader:
+  Class:    ELFCLASS32
+  Data:     ELFDATA2LSB
+  Type:     ET_REL
+  Machine:  EM_MIPS
+  Flags:    [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32, EF_MIPS_CPIC, EF_MIPS_PIC ]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x04
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name: T1
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+
+# main.o
+---
+FileHeader:
+  Class:     ELFCLASS32
+  Data:      ELFDATA2LSB
+  Type:      ET_REL
+  Machine:   EM_MIPS
+  Flags:     [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32, EF_MIPS_CPIC ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x28
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x08
+        Symbol:          .text
+        Type:            R_MIPS_26
+        Addend:          0
+      - Offset:          0x10
+        Symbol:          glob
+        Type:            R_MIPS_26
+        Addend:          0
+      - Offset:          0x18
+        Symbol:          T1N
+        Type:            R_MIPS_26
+        Addend:          0
+      - Offset:          0x20
+        Symbol:          T1
+        Type:            R_MIPS_26
+        Addend:          0
+
+Symbols:
+  Local:
+    - Name:            loc
+      Section:         .text
+      Value:           0x10
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+  Global:
+    - Name:            glob
+      Section:         .text
+    - Name:            T1
+    - Name:            T1N
+...
