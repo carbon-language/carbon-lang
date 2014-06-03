@@ -30,8 +30,8 @@ const char *_object_error_category::name() const {
   return "llvm.object";
 }
 
-std::string _object_error_category::message(int ev) const {
-  object_error::Impl E = static_cast<object_error::Impl>(ev);
+std::string _object_error_category::message(int EV) const {
+  object_error E = static_cast<object_error>(EV);
   switch (E) {
   case object_error::success: return "Success";
   case object_error::arch_not_found:
@@ -47,8 +47,8 @@ std::string _object_error_category::message(int ev) const {
                    "defined.");
 }
 
-error_condition _object_error_category::default_error_condition(int ev) const {
-  if (ev == object_error::success)
+error_condition _object_error_category::default_error_condition(int EV) const {
+  if (static_cast<object_error>(EV) == object_error::success)
     return error_condition();
   return errc::invalid_argument;
 }

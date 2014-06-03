@@ -21,18 +21,12 @@ namespace object {
 
 const error_category &object_category();
 
-struct object_error {
-  enum Impl {
-    success = 0,
-    arch_not_found,
-    invalid_file_type,
-    parse_failed,
-    unexpected_eof
-  };
-  Impl V;
-
-  object_error(Impl V) : V(V) {}
-  operator Impl() const { return V; }
+enum class object_error {
+  success = 0,
+  arch_not_found,
+  invalid_file_type,
+  parse_failed,
+  unexpected_eof
 };
 
 inline error_code make_error_code(object_error e) {
@@ -42,9 +36,6 @@ inline error_code make_error_code(object_error e) {
 } // end namespace object.
 
 template <> struct is_error_code_enum<object::object_error> : std::true_type {};
-
-template <>
-struct is_error_code_enum<object::object_error::Impl> : std::true_type {};
 
 } // end namespace llvm.
 
