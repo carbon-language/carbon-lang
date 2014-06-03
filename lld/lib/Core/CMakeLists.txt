@@ -6,7 +6,6 @@ add_lld_library(lldCore
   File.cpp
   InputGraph.cpp
   LinkingContext.cpp
-  PassManager.cpp
   Resolver.cpp
   SymbolTable.cpp
   )
