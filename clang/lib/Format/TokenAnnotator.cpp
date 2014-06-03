@@ -198,7 +198,6 @@ private:
         return false;
       else if (CurrentToken->is(tok::l_brace))
         Left->Type = TT_Unknown; // Not TT_ObjCBlockLParen
-      updateParameterCount(Left, CurrentToken);
       if (CurrentToken->is(tok::comma) && CurrentToken->Next &&
           !CurrentToken->Next->HasUnescapedNewline &&
           !CurrentToken->Next->isTrailingComment())
@@ -206,8 +205,10 @@ private:
       if (CurrentToken->isOneOf(tok::kw_const, tok::kw_auto) ||
           CurrentToken->isSimpleTypeSpecifier())
         Contexts.back().IsExpression = false;
+      FormatToken *Tok = CurrentToken;
       if (!consumeToken())
         return false;
+      updateParameterCount(Left, Tok);
       if (CurrentToken && CurrentToken->HasUnescapedNewline)
         HasMultipleLines = true;
     }
@@ -266,7 +267,7 @@ private:
         if (Contexts.back().FirstObjCSelectorName) {
           Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName =
               Contexts.back().LongestObjCSelectorName;
-          if (Contexts.back().NumBlockParameters > 1)
+          if (Left->BlockParameterCount > 1)
             Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName = 0;
         }
         next();
@@ -281,9 +282,10 @@ private:
           (Left->Type == TT_ArraySubscriptLSquare ||
            (Left->Type == TT_ObjCMethodExpr && !ColonFound)))
         Left->Type = TT_ArrayInitializerLSquare;
-      updateParameterCount(Left, CurrentToken);
+      FormatToken* Tok = CurrentToken;
       if (!consumeToken())
         return false;
+      updateParameterCount(Left, Tok);
     }
     return false;
   }
@@ -324,6 +326,12 @@ private:
   }
 
   void updateParameterCount(FormatToken *Left, FormatToken *Current) {
+    if (Current->Type == TT_LambdaLSquare ||
+        (Current->is(tok::caret) && Current->Type == TT_UnaryOperator) ||
+        (Style.Language == FormatStyle::LK_JavaScript &&
+         Current->TokenText == "function")) {
+      ++Left->BlockParameterCount;
+    }
     if (Current->is(tok::comma)) {
       ++Left->ParameterCount;
       if (!Left->Role)
@@ -639,17 +647,16 @@ private:
     Context(tok::TokenKind ContextKind, unsigned BindingStrength,
             bool IsExpression)
         : ContextKind(ContextKind), BindingStrength(BindingStrength),
-          LongestObjCSelectorName(0), NumBlockParameters(0),
-          ColonIsForRangeExpr(false), ColonIsDictLiteral(false),
-          ColonIsObjCMethodExpr(false), FirstObjCSelectorName(nullptr),
-          FirstStartOfName(nullptr), IsExpression(IsExpression),
-          CanBeExpression(true), InTemplateArgument(false),
-          InCtorInitializer(false), CaretFound(false), IsForEachMacro(false) {}
+          LongestObjCSelectorName(0), ColonIsForRangeExpr(false),
+          ColonIsDictLiteral(false), ColonIsObjCMethodExpr(false),
+          FirstObjCSelectorName(nullptr), FirstStartOfName(nullptr),
+          IsExpression(IsExpression), CanBeExpression(true),
+          InTemplateArgument(false), InCtorInitializer(false),
+          CaretFound(false), IsForEachMacro(false) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
     unsigned LongestObjCSelectorName;
-    unsigned NumBlockParameters;
     bool ColonIsForRangeExpr;
     bool ColonIsDictLiteral;
     bool ColonIsObjCMethodExpr;
@@ -742,10 +749,8 @@ private:
                                   Contexts.back().InTemplateArgument);
       } else if (Current.isOneOf(tok::minus, tok::plus, tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
-        if (Current.Type == TT_UnaryOperator && Current.is(tok::caret)) {
-          ++Contexts.back().NumBlockParameters;
+        if (Current.Type == TT_UnaryOperator && Current.is(tok::caret))
           Contexts.back().CaretFound = true;
-        }
       } else if (Current.isOneOf(tok::minusminus, tok::plusplus)) {
         Current.Type = determineIncrementUsage(Current);
       } else if (Current.is(tok::exclaim)) {

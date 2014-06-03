@@ -146,6 +146,39 @@ TEST_F(FormatTestJS, Closures) {
                getGoogleJSStyleWithColumns(37));
 }
 
+TEST_F(FormatTestJS, MultipleFunctionLiterals) {
+  verifyFormat("promise.then(\n"
+               "    function success() {\n"
+               "      doFoo();\n"
+               "      doBar();\n"
+               "    },\n"
+               "    function error() {\n"
+               "      doFoo();\n"
+               "      doBaz();\n"
+               "    },\n"
+               "    []);\n");
+  verifyFormat("promise.then(\n"
+               "    function success() {\n"
+               "      doFoo();\n"
+               "      doBar();\n"
+               "    },\n"
+               "    [],\n"
+               "    function error() {\n"
+               "      doFoo();\n"
+               "      doBaz();\n"
+               "    });\n");
+  // FIXME: Here, we should probably break right after the "(" for consistency.
+  verifyFormat("promise.then([],\n"
+               "             function success() {\n"
+               "               doFoo();\n"
+               "               doBar();\n"
+               "             },\n"
+               "             function error() {\n"
+               "               doFoo();\n"
+               "               doBaz();\n"
+               "             });\n");
+}
+
 TEST_F(FormatTestJS, ReturnStatements) {
   verifyFormat("function() { return [hello, world]; }");
 }

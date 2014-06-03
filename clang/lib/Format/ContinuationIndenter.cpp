@@ -112,6 +112,15 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
     return false;
   if (Current.isMemberAccess() && State.Stack.back().ContainsUnwrappedBuilder)
     return false;
+
+  // Don't create a 'hanging' indent if there are multiple blocks in a single
+  // statement.
+  if (Style.Language == FormatStyle::LK_JavaScript &&
+      Previous.is(tok::l_brace) && State.Stack.size() > 1 &&
+      State.Stack[State.Stack.size() - 2].JSFunctionInlined &&
+      State.Stack[State.Stack.size() - 2].HasMultipleNestedBlocks)
+    return false;
+
   return !State.Stack.back().NoLineBreak;
 }
 
@@ -294,7 +303,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     // Treat the condition inside an if as if it was a second function
     // parameter, i.e. let nested calls have a continuation indent.
     State.Stack.back().LastSpace = State.Column;
-  else if (Current.isNot(tok::comment) &&
+  else if (!Current.isOneOf(tok::comment, tok::caret) &&
            (Previous.is(tok::comma) ||
             (Previous.is(tok::colon) && Previous.Type == TT_ObjCMethodExpr)))
     State.Stack.back().LastSpace = State.Column;
@@ -589,8 +598,6 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         Current.LastOperator ? 0 : State.Column + Current.ColumnWidth;
   if (Current.Type == TT_ObjCSelectorName)
     State.Stack.back().ObjCSelectorNameFound = true;
-  if (Current.Type == TT_LambdaLSquare)
-    ++State.Stack.back().LambdasFound;
   if (Current.Type == TT_CtorInitializerColon) {
     // Indent 2 from the column, so:
     // SomeClass::SomeClass()
@@ -767,24 +774,24 @@ static void consumeRParens(LineState& State, const FormatToken &Tok) {
 //   SomeFunction(a, [] {
 //                     f();  // break
 //                   });
-static bool fakeRParenSpecialCase(const FormatToken& Tok) {
+static bool fakeRParenSpecialCase(const LineState &State) {
+  const FormatToken &Tok = *State.NextToken;
   if (!Tok.MatchingParen)
     return false;
   const FormatToken *Left = &Tok;
   if (Tok.isOneOf(tok::r_brace, tok::r_square))
     Left = Tok.MatchingParen;
-  return Left->isOneOf(tok::l_brace, tok::l_square) &&
+  return !State.Stack.back().HasMultipleNestedBlocks &&
+         Left->isOneOf(tok::l_brace, tok::l_square) &&
          (Left->BlockKind == BK_Block ||
           Left->Type == TT_ArrayInitializerLSquare ||
           Left->Type == TT_DictLiteral);
 }
 
 void ContinuationIndenter::moveStatePastFakeRParens(LineState &State) {
-  const FormatToken &Current = *State.NextToken;
-
   // Don't remove FakeRParens attached to r_braces that surround nested blocks
   // as they will have been removed early (see above).
-  if (fakeRParenSpecialCase(Current))
+  if (fakeRParenSpecialCase(State))
     return;
 
   consumeRParens(State, *State.NextToken);
@@ -806,7 +813,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
   if (Current.is(tok::l_brace) || Current.Type == TT_ArrayInitializerLSquare) {
-    if (fakeRParenSpecialCase(Current))
+    if (fakeRParenSpecialCase(State))
       consumeRParens(State, *Current.MatchingParen);
 
     NewIndent = State.Stack.back().LastSpace;
@@ -848,6 +855,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
                                    State.Stack.back().LastSpace,
                                    AvoidBinPacking, NoLineBreak));
   State.Stack.back().BreakBeforeParameter = BreakBeforeParameter;
+  State.Stack.back().HasMultipleNestedBlocks = Current.BlockParameterCount > 1;
 }
 
 void ContinuationIndenter::moveStatePastScopeCloser(LineState &State) {
@@ -874,10 +882,7 @@ void ContinuationIndenter::moveStatePastScopeCloser(LineState &State) {
 void ContinuationIndenter::moveStateToNewBlock(LineState &State) {
   // If we have already found more than one lambda introducers on this level, we
   // opt out of this because similarity between the lambdas is more important.
-  // FIXME: This should use fakeRParenSpecialCase() and fakeRParenSpecialCase()
-  // Needs to include the LambdasFound check. Otherwise the corresponding
-  // fake r_parens will never be consumed.
-  if (State.Stack.back().LambdasFound <= 1)
+  if (fakeRParenSpecialCase(State))
     consumeRParens(State, *State.NextToken->MatchingParen);
 
   // For some reason, ObjC blocks are indented like continuations.
