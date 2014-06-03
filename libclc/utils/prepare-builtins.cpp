@@ -33,7 +33,11 @@ int main(int argc, char **argv) {
   std::auto_ptr<Module> M;
 
   {
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
+    std::unique_ptr<MemoryBuffer> BufferPtr;
+#else
     OwningPtr<MemoryBuffer> BufferPtr;
+#endif
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
       ErrorMessage = ec.message();
     else {
