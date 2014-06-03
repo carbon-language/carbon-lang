@@ -142,7 +142,7 @@ static bool isUnscaledLdst(unsigned Opc) {
 int AArch64LoadStoreOpt::getMemSize(MachineInstr *MemMI) {
   switch (MemMI->getOpcode()) {
   default:
-    llvm_unreachable("Opcode has has unknown size!");
+    llvm_unreachable("Opcode has unknown size!");
   case AArch64::STRSui:
   case AArch64::STURSi:
     return 4;
