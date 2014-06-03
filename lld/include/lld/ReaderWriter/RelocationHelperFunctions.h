@@ -21,10 +21,10 @@ template <typename T> T gatherBits(T val, T mask) {
   T result = 0;
   size_t off = 0;
 
-  for (size_t bit = 0; bit != sizeof(T) * 8; ++bit) {
-    const bool valBit = (val >> bit) & 1;
-    const bool maskBit = (mask >> bit) & 1;
+  for (size_t bit = 0; bit < sizeof(T) * 8; ++bit) {
+    bool maskBit = (mask >> bit) & 1;
     if (maskBit) {
+      bool valBit = (val >> bit) & 1;
       result |= static_cast<T>(valBit) << off;
       ++off;
     }
@@ -41,10 +41,10 @@ template <typename T> T scatterBits(T val, T mask) {
   T result = 0;
   size_t off = 0;
 
-  for (size_t bit = 0; bit != sizeof(T) * 8; ++bit) {
-    const bool valBit = (val >> off) & 1;
-    const bool maskBit = (mask >> bit) & 1;
+  for (size_t bit = 0; bit < sizeof(T) * 8; ++bit) {
+    bool maskBit = (mask >> bit) & 1;
     if (maskBit) {
+      bool valBit = (val >> off) & 1;
       result |= static_cast<T>(valBit) << bit;
       ++off;
     }
