@@ -93,13 +93,15 @@ public:
 
   uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
-  const Atom *target() const override { return _target; }
+  const Atom *target() const override {
+    assert(_target);
+    return _target;
+  }
 
   Addend addend() const override { return _addend; }
-
   void setAddend(Addend a) override { _addend = a; }
-
   void setTarget(const Atom *newAtom) override { _target = newAtom; }
+
 private:
   const Atom *_target;
   uint64_t _offsetInAtom;

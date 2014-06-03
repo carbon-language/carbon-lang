@@ -100,8 +100,7 @@ public:
   /// byte offset into the Atom's content to do the fix up.
   virtual uint64_t offsetInAtom() const = 0;
 
-  /// If the reference is an edge to another Atom, then this returns the
-  /// other Atom.  Otherwise, it returns nullptr.
+  /// Returns the atom this reference refers to.
   virtual const Atom *target() const = 0;
 
   /// During linking, the linker may merge graphs which coalesces some nodes
