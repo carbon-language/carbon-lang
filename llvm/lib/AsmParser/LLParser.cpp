@@ -261,6 +261,8 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_default:             // OptionalVisibility
     case lltok::kw_hidden:              // OptionalVisibility
     case lltok::kw_protected:           // OptionalVisibility
+    case lltok::kw_dllimport:           // OptionalDLLStorageClass
+    case lltok::kw_dllexport:           // OptionalDLLStorageClass
     case lltok::kw_thread_local:        // OptionalThreadLocal
     case lltok::kw_addrspace:           // OptionalAddrSpace
     case lltok::kw_constant:            // GlobalType
