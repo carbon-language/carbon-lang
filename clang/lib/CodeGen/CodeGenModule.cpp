@@ -225,6 +225,25 @@ void CodeGenModule::applyReplacements() {
   }
 }
 
+// This is only used in aliases that we created and we know they have a
+// linear structure.
+static const llvm::GlobalObject *getAliasedGlobal(const llvm::GlobalAlias &GA) {
+  llvm::SmallPtrSet<const llvm::GlobalAlias*, 4> Visited;
+  const llvm::Constant *C = &GA;
+  for (;;) {
+    C = cast<llvm::Constant>(C->stripPointerCasts());
+    if (auto *GO = dyn_cast<llvm::GlobalObject>(C))
+      return GO;
+    // stripPointerCasts will not walk over weak aliases.
+    auto *GA2 = dyn_cast<llvm::GlobalAlias>(C);
+    if (!GA2)
+      return nullptr;
+    if (!Visited.insert(GA2))
+      return nullptr;
+    C = GA2->getAliasee();
+  }
+}
+
 void CodeGenModule::checkAliases() {
   // Check if the constructed aliases are well formed. It is really unfortunate
   // that we have to do this in CodeGen, but we only construct mangled names
@@ -239,18 +258,42 @@ void CodeGenModule::checkAliases() {
     StringRef MangledName = getMangledName(GD);
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     auto *Alias = cast<llvm::GlobalAlias>(Entry);
-    llvm::GlobalValue *GV = Alias->getAliasee();
-    if (GV->isDeclaration()) {
+    const llvm::GlobalValue *GV = getAliasedGlobal(*Alias);
+    if (!GV) {
+      Error = true;
+      Diags.Report(AA->getLocation(), diag::err_cyclic_alias);
+    } else if (GV->isDeclaration()) {
       Error = true;
       Diags.Report(AA->getLocation(), diag::err_alias_to_undefined);
     }
 
-    llvm::GlobalObject *Aliasee = Alias->getAliasee();
+    llvm::Constant *Aliasee = Alias->getAliasee();
+    llvm::GlobalValue *AliaseeGV;
+    if (auto CE = dyn_cast<llvm::ConstantExpr>(Aliasee))
+      AliaseeGV = cast<llvm::GlobalValue>(CE->getOperand(0));
+    else
+      AliaseeGV = cast<llvm::GlobalValue>(Aliasee);
+
     if (const SectionAttr *SA = D->getAttr<SectionAttr>()) {
       StringRef AliasSection = SA->getName();
-      if (AliasSection != Aliasee->getSection())
+      if (AliasSection != AliaseeGV->getSection())
         Diags.Report(SA->getLocation(), diag::warn_alias_with_section)
             << AliasSection;
+    }
+
+    // We have to handle alias to weak aliases in here. LLVM itself disallows
+    // this since the object semantics would not match the IL one. For
+    // compatibility with gcc we implement it by just pointing the alias
+    // to its aliasee's aliasee. We also warn, since the user is probably
+    // expecting the link to be weak.
+    if (auto GA = dyn_cast<llvm::GlobalAlias>(AliaseeGV)) {
+      if (GA->mayBeOverridden()) {
+        Diags.Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
+            << GV->getName() << GA->getName();
+        Aliasee = llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(
+            GA->getAliasee(), Alias->getType());
+        Alias->setAliasee(Aliasee);
+      }
     }
   }
   if (!Error)
@@ -2228,29 +2271,6 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
     AddGlobalAnnotations(D, Fn);
 }
 
-static llvm::GlobalObject &getGlobalObjectInExpr(DiagnosticsEngine &Diags,
-                                                 const AliasAttr *AA,
-                                                 llvm::Constant *C) {
-  if (auto *GO = dyn_cast<llvm::GlobalObject>(C))
-    return *GO;
-
-  auto *GA = dyn_cast<llvm::GlobalAlias>(C);
-  if (GA) {
-    if (GA->mayBeOverridden()) {
-      Diags.Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
-          << GA->getAliasee()->getName() << GA->getName();
-    }
-
-    return *GA->getAliasee();
-  }
-
-  auto *CE = cast<llvm::ConstantExpr>(C);
-  assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-         CE->getOpcode() == llvm::Instruction::GetElementPtr ||
-         CE->getOpcode() == llvm::Instruction::AddrSpaceCast);
-  return *cast<llvm::GlobalObject>(CE->getOperand(0));
-}
-
 void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   const auto *D = cast<ValueDecl>(GD.getDecl());
   const AliasAttr *AA = D->getAttr<AliasAttr>();
@@ -2282,8 +2302,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   // Create the new alias itself, but don't set a name yet.
   auto *GA = llvm::GlobalAlias::create(
       cast<llvm::PointerType>(Aliasee->getType())->getElementType(), 0,
-      llvm::Function::ExternalLinkage, "",
-      &getGlobalObjectInExpr(Diags, AA, Aliasee));
+      llvm::Function::ExternalLinkage, "", Aliasee, &getModule());
 
   if (Entry) {
     if (GA->getAliasee() == Entry) {
@@ -3208,8 +3227,7 @@ void CodeGenModule::EmitStaticExternCAliases() {
     IdentifierInfo *Name = I->first;
     llvm::GlobalValue *Val = I->second;
     if (Val && !getModule().getNamedValue(Name->getName()))
-      addUsedGlobal(llvm::GlobalAlias::create(Name->getName(),
-                                              cast<llvm::GlobalObject>(Val)));
+      addUsedGlobal(llvm::GlobalAlias::create(Name->getName(), Val));
   }
 }
 

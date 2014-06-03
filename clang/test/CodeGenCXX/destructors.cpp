@@ -4,13 +4,13 @@
 // CHECK-DAG: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK-DAG: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // CHECK-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// CHECK-DAG: @_ZN5test11SD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
 
 // WIN32-DAG: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
 // WIN32-DAG: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // WIN32-DAG: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
 // WIN32-DAG: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
-// WIN32-DAG: @_ZN5test11SD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// WIN32-DAG: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
 
 
 struct A {

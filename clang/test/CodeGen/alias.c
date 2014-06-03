@@ -14,8 +14,8 @@ void f0(void) { }
 extern void f1(void);
 extern void f1(void) __attribute((alias("f0")));
 // CHECKBASIC-DAG: @f1 = alias void ()* @f0
-// CHECKBASIC-DAG: @test8_foo = alias weak void (...), void ()* @test8_bar
-// CHECKBASIC-DAG: @test8_zed = alias void (...), void ()* @test8_bar
+// CHECKBASIC-DAG: @test8_foo = alias weak bitcast (void ()* @test8_bar to void (...)*)
+// CHECKBASIC-DAG: @test8_zed = alias bitcast (void ()* @test8_bar to void (...)*)
 // CHECKBASIC-DAG: @test9_zed = alias void ()* @test9_bar
 // CHECKBASIC: define void @f0() [[NUW:#[0-9]+]] {
 

@@ -119,7 +119,7 @@ namespace test7 {
 
 namespace test8 {
   // Test that we replace ~zed with ~bar which is an alias to ~foo.
-  // CHECK-DAG: call i32 @__cxa_atexit({{.*}}@_ZN5test83fooD2Ev
+  // CHECK-DAG: call i32 @__cxa_atexit({{.*}}@_ZN5test83barD2Ev
   // CHECK-DAG: @_ZN5test83barD2Ev = alias {{.*}} @_ZN5test83fooD2Ev
   struct foo {
     ~foo();
