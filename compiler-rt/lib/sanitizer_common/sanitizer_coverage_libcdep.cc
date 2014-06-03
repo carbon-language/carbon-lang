@@ -85,12 +85,12 @@ class CoverageData {
   int pc_fd;
   StaticSpinMutex mu;
 
-  void DirectInit();
+  void DirectOpen();
 };
 
 static CoverageData coverage_data;
 
-void CoverageData::DirectInit() {
+void CoverageData::DirectOpen() {
   InternalScopedString path(1024);
   internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.raw",
                     common_flags()->coverage_dir, internal_getpid());
@@ -100,9 +100,7 @@ void CoverageData::DirectInit() {
     Die();
   }
 
-  atomic_store(&pc_array_size, 0, memory_order_relaxed);
   pc_array_mapped_size = 0;
-
   CovUpdateMapping();
 }
 
@@ -110,19 +108,22 @@ void CoverageData::Init() {
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
   if (common_flags()->coverage_direct) {
-    DirectInit();
+    atomic_store(&pc_array_size, 0, memory_order_relaxed);
+    atomic_store(&pc_array_index, 0, memory_order_relaxed);
   } else {
     pc_fd = 0;
     atomic_store(&pc_array_size, kPcArrayMaxSize, memory_order_relaxed);
+    atomic_store(&pc_array_index, 0, memory_order_relaxed);
   }
 }
 
 // Extend coverage PC array to fit additional npcs elements.
 void CoverageData::Extend(uptr npcs) {
-  // If pc_fd=0, pc array is a huge anonymous mapping that does not need to be
-  // resized.
-  if (!pc_fd) return;
+  if (!common_flags()->coverage_direct) return;
   SpinMutexLock l(&mu);
+
+  if (!pc_fd) DirectOpen();
+  CHECK(pc_fd);
 
   uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
   size += npcs * sizeof(uptr);
