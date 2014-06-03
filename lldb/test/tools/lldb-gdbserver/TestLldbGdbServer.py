@@ -49,9 +49,8 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
 
         # Uncomment this code to force only a single test to run (by name).
-        # if self._testMethodName != "test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym":
-        #   # print "skipping test {}".format(self._testMethodName)
-        #   self.skipTest("focusing on one test")
+        # if not re.search(r"m_packet_reads_memory", self._testMethodName):
+        #     self.skipTest("focusing on one test")
 
     def reset_test_sequence(self):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
@@ -1223,6 +1222,68 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.Hc_then_Csignal_signals_correct_thread()
 
+    def m_packet_reads_memory(self):
+        # This is the memory we will write into the inferior and then ensure we can read back with $m.
+        MEMORY_CONTENTS = "Test contents 0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["set-message:%s" % MEMORY_CONTENTS, "get-message-address-hex:", "sleep:5"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [
+             # Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the message buffer within the inferior. 
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^message address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"message_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the message address.
+        self.assertIsNotNone(context.get("message_address"))
+        message_address = int(context.get("message_address"), 16)
+
+        # Grab contents from the inferior.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            ["read packet: $m{0:x},{1:x}#00".format(message_address, len(MEMORY_CONTENTS)),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"read_contents"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Ensure what we read from inferior memory is what we wrote.
+        self.assertIsNotNone(context.get("read_contents"))
+        read_contents = context.get("read_contents").decode("hex")
+        self.assertEquals(read_contents, MEMORY_CONTENTS)
+        
+    @debugserver_test
+    @dsym_test
+    def test_m_packet_reads_memory_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.m_packet_reads_memory()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_m_packet_reads_memory_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.m_packet_reads_memory()
 
 if __name__ == '__main__':
     unittest2.main()

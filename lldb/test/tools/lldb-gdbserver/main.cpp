@@ -7,6 +7,8 @@
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <vector>
 
@@ -20,6 +22,8 @@ int pthread_threadid_np(pthread_t,__uint64_t*);
 static const char *const RETVAL_PREFIX = "retval:";
 static const char *const SLEEP_PREFIX  = "sleep:";
 static const char *const STDERR_PREFIX = "stderr:";
+static const char *const SET_MESSAGE_PREFIX = "set-message:";
+static const char *const GET_MESSAGE_ADDRESS_COMMAND = "get-message-address-hex:";
 
 static const char *const THREAD_PREFIX = "thread:";
 static const char *const THREAD_COMMAND_NEW = "new"; 
@@ -33,6 +37,8 @@ static bool g_threads_do_segfault = false;
 static pthread_mutex_t g_jump_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static jmp_buf g_jump_buffer;
 static bool g_is_segfaulting = false;
+
+static char g_message[256];
 
 static void
 print_thread_id ()
@@ -219,6 +225,22 @@ int main (int argc, char **argv)
 				sleep_seconds_remaining = sleep (sleep_seconds_remaining);
 				// std::cout << "sleep result (call " << i << "): " << sleep_seconds_remaining << std::endl;
 			}
+        }
+		else if (std::strstr (argv[i], SET_MESSAGE_PREFIX))
+		{
+			// Copy the contents after "set-message:" to the g_message buffer.
+			// Used for reading inferior memory and verifying contents match expectations.
+            strncpy (g_message, argv[i] + strlen (SET_MESSAGE_PREFIX), sizeof (g_message));
+
+			// Ensure we're null terminated.
+			g_message[sizeof (g_message) - 1] = '\0';
+			
+		}
+        else if (std::strstr (argv[i], GET_MESSAGE_ADDRESS_COMMAND))
+        {
+			pthread_mutex_lock (&g_print_mutex);
+            printf ("message address: %p\n", &g_message[0]);
+			pthread_mutex_unlock (&g_print_mutex);
         }
 		else if (std::strstr (argv[i], THREAD_PREFIX))
 		{
