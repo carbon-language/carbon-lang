@@ -234,7 +234,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
                                               + sectionCount*sizeof(section_64);
         // Verify sections don't extend beyond end of segment load command.
         if (lcSize > size)
-          return llvm::make_error_code(llvm::errc::executable_format_error);
+          return true;
         for (unsigned i=0; i < sectionCount; ++i) {
           const section_64 *sect = &sects[i];
           Section section;
@@ -276,7 +276,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
                                               + sectionCount*sizeof(section);
         // Verify sections don't extend beyond end of segment load command.
         if (lcSize > size)
-          return llvm::make_error_code(llvm::errc::executable_format_error);
+          return true;
         for (unsigned i=0; i < sectionCount; ++i) {
           const section *sect = &sects[i];
           Section section;
@@ -314,12 +314,12 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       // Validate string pool and symbol table all in buffer.
       if ( read32(swap, st->stroff)+read32(swap, st->strsize)
                                                         > objSize )
-        return llvm::make_error_code(llvm::errc::executable_format_error);
+        return true;
       if (is64) {
         const uint32_t symOffset = read32(swap, st->symoff);
         const uint32_t symCount = read32(swap, st->nsyms);
         if ( symOffset+(symCount*sizeof(nlist_64)) > objSize)
-          return llvm::make_error_code(llvm::errc::executable_format_error);
+          return true;
         const nlist_64 *symbols =
             reinterpret_cast<const nlist_64 *>(start + symOffset);
         // Convert each nlist_64 to a lld::mach_o::normalized::Symbol.
@@ -331,7 +331,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           }
           Symbol sout;
           if (sin->n_strx > strSize)
-            return llvm::make_error_code(llvm::errc::executable_format_error);
+            return true;
           sout.name  = &strings[sin->n_strx];
           sout.type  = (NListType)(sin->n_type & N_TYPE);
           sout.scope = (sin->n_type & (N_PEXT|N_EXT));
@@ -349,7 +349,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
         const uint32_t symOffset = read32(swap, st->symoff);
         const uint32_t symCount = read32(swap, st->nsyms);
         if ( symOffset+(symCount*sizeof(nlist)) > objSize)
-          return llvm::make_error_code(llvm::errc::executable_format_error);
+          return true;
         const nlist *symbols =
             reinterpret_cast<const nlist *>(start + symOffset);
         // Convert each nlist to a lld::mach_o::normalized::Symbol.
@@ -361,7 +361,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           }
           Symbol sout;
           if (sin->n_strx > strSize)
-            return llvm::make_error_code(llvm::errc::executable_format_error);
+            return true;
           sout.name  = &strings[sin->n_strx];
           sout.type  = (NListType)(sin->n_type & N_TYPE);
           sout.scope = (sin->n_type & (N_PEXT|N_EXT));
