@@ -478,6 +478,12 @@ CompilerInstance::createDefaultOutputFile(bool Binary,
                           /*UseTemporary=*/true);
 }
 
+llvm::raw_null_ostream *CompilerInstance::createNullOutputFile() {
+  llvm::raw_null_ostream *OS = new llvm::raw_null_ostream();
+  addOutputFile(OutputFile("", "", OS));
+  return OS;
+}
+
 llvm::raw_fd_ostream *
 CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool Binary, bool RemoveFileOnSignal,
