@@ -186,6 +186,7 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
   LRCalc->createDeadDefs(LI);
   LRCalc->extendToUses(LI);
+  computeDeadValues(&LI, LI, nullptr, nullptr);
 }
 
 void LiveIntervals::computeVirtRegs() {
@@ -412,21 +413,34 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 
   // Handle dead values.
   bool CanSeparate = false;
+  computeDeadValues(li, NewLR, &CanSeparate, dead);
+
+  // Move the trimmed segments back.
+  li->segments.swap(NewLR.segments);
+  DEBUG(dbgs() << "Shrunk: " << *li << '\n');
+  return CanSeparate;
+}
+
+void LiveIntervals::computeDeadValues(LiveInterval *li,
+                                      LiveRange &LR,
+                                      bool *CanSeparate,
+                                      SmallVectorImpl<MachineInstr*> *dead) {
   for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
        I != E; ++I) {
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    LiveRange::iterator LRI = NewLR.FindSegmentContaining(VNI->def);
-    assert(LRI != NewLR.end() && "Missing segment for PHI");
+    LiveRange::iterator LRI = LR.FindSegmentContaining(VNI->def);
+    assert(LRI != LR.end() && "Missing segment for PHI");
     if (LRI->end != VNI->def.getDeadSlot())
       continue;
     if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->markUnused();
-      NewLR.removeSegment(LRI->start, LRI->end);
+      LR.removeSegment(LRI->start, LRI->end);
       DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
-      CanSeparate = true;
+      if (CanSeparate)
+        *CanSeparate = true;
     } else {
       // This is a dead def. Make sure the instruction knows.
       MachineInstr *MI = getInstructionFromIndex(VNI->def);
@@ -438,11 +452,6 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       }
     }
   }
-
-  // Move the trimmed segments back.
-  li->segments.swap(NewLR.segments);
-  DEBUG(dbgs() << "Shrunk: " << *li << '\n');
-  return CanSeparate;
 }
 
 void LiveIntervals::extendToIndices(LiveRange &LR,
