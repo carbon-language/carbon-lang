@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/TempScopInfo.h"
+#include "polly/ScopDetection.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/GICHelper.h"
@@ -143,6 +144,8 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
   return AnyCrossStmtUse;
 }
 
+extern MapInsnToMemAcc InsnToMemAcc;
+
 IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
   unsigned Size;
   Type *SizeType;
@@ -167,34 +170,14 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
   SmallVector<const SCEV *, 4> Subscripts, Sizes;
 
+  MemAcc *Acc = InsnToMemAcc[Inst];
+  if (PollyDelinearize && Acc)
+    return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
+                    Acc->DelinearizedSubscripts, Acc->Shape->DelinearizedSizes);
+
   bool IsAffine = isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
-  const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
-
-  if (!IsAffine && PollyDelinearize && AF) {
-    const SCEV *ElementSize = SE->getElementSize(Inst);
-    AF->delinearize(*SE, Subscripts, Sizes, ElementSize);
-    int NSubs = Subscripts.size();
-
-    if (NSubs > 0) {
-      // Normalize the last dimension: integrate the size of the "scalar
-      // dimension" and the remainder of the delinearization.
-      Subscripts[NSubs - 1] =
-          SE->getMulExpr(Subscripts[NSubs - 1], Sizes[NSubs - 1]);
-
-      IsAffine = true;
-      for (int i = 0; i < NSubs; ++i)
-        if (!isAffineExpr(R, Subscripts[i], *SE, BasePointer->getValue())) {
-          IsAffine = false;
-          break;
-        }
-    }
-  }
-
-  if (Subscripts.size() == 0) {
-    Subscripts.push_back(AccessFunction);
-    Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
-  }
-
+  Subscripts.push_back(AccessFunction);
+  Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
   return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine,
                   Subscripts, Sizes);
 }

@@ -75,7 +75,33 @@ class Value;
 namespace polly {
 typedef std::set<const SCEV *> ParamSetType;
 
-typedef std::vector<const SCEVAddRecExpr *> AFs;
+// Description of the shape of an array.
+struct ArrayShape {
+  // Base pointer identifying all accesses to this array.
+  const SCEVUnknown *BasePointer;
+
+  // Sizes of each delinearized dimension.
+  SmallVector<const SCEV *, 4> DelinearizedSizes;
+
+  ArrayShape(const SCEVUnknown *B) : BasePointer(B), DelinearizedSizes() {}
+};
+
+struct MemAcc {
+  const Instruction *Insn;
+
+  // A pointer to the shape description of the array.
+  ArrayShape *Shape;
+
+  // Subscripts computed by delinearization.
+  SmallVector<const SCEV *, 4> DelinearizedSubscripts;
+
+  MemAcc(const Instruction *I, ArrayShape *S)
+      : Insn(I), Shape(S), DelinearizedSubscripts() {}
+};
+
+typedef std::map<const Instruction *, MemAcc *> MapInsnToMemAcc;
+typedef std::pair<const Instruction *, const SCEVAddRecExpr *> PairInsnAddRec;
+typedef std::vector<PairInsnAddRec> AFs;
 typedef std::map<const SCEVUnknown *, AFs> BaseToAFs;
 typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 

@@ -344,9 +344,9 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
     isl_pw_aff *Affine =
         SCEVAffinator::getPwAff(Statement, Access.Subscripts[i]);
 
-    if (i == Size - 1) {
-      // Divide the access function of the last subscript by the size of the
-      // elements in the array.
+    if (Size == 1) {
+      // For the non delinearized arrays, divide the access function of the last
+      // subscript by the size of the elements in the array.
       //
       // A stride one array access in C expressed as A[i] is expressed in
       // LLVM-IR as something like A[i * elementsize]. This hides the fact that

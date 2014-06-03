@@ -347,36 +347,45 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   return true;
 }
 
+MapInsnToMemAcc InsnToMemAcc;
+
 bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
   for (auto P : Context.NonAffineAccesses) {
     const SCEVUnknown *BasePointer = P.first;
     Value *BaseValue = BasePointer->getValue();
+    ArrayShape *Shape = new ArrayShape(BasePointer);
 
     // First step: collect parametric terms in all array references.
     SmallVector<const SCEV *, 4> Terms;
-    for (const SCEVAddRecExpr *AF : Context.NonAffineAccesses[BasePointer])
-      AF->collectParametricTerms(*SE, Terms);
+    for (PairInsnAddRec PIAF : Context.NonAffineAccesses[BasePointer])
+      PIAF.second->collectParametricTerms(*SE, Terms);
 
     // Also collect terms from the affine memory accesses.
-    for (const SCEVAddRecExpr *AF : Context.AffineAccesses[BasePointer])
-      AF->collectParametricTerms(*SE, Terms);
+    for (PairInsnAddRec PIAF : Context.AffineAccesses[BasePointer])
+      PIAF.second->collectParametricTerms(*SE, Terms);
 
     // Second step: find array shape.
-    SmallVector<const SCEV *, 4> Sizes;
-    SE->findArrayDimensions(Terms, Sizes, Context.ElementSize[BasePointer]);
+    SE->findArrayDimensions(Terms, Shape->DelinearizedSizes,
+                            Context.ElementSize[BasePointer]);
 
     // Third step: compute the access functions for each subscript.
-    for (const SCEVAddRecExpr *AF : Context.NonAffineAccesses[BasePointer]) {
-      if (Sizes.empty())
-        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
+    for (PairInsnAddRec PIAF : Context.NonAffineAccesses[BasePointer]) {
+      const SCEVAddRecExpr *AF = PIAF.second;
+      const Instruction *Insn = PIAF.first;
+      if (Shape->DelinearizedSizes.empty())
+        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
+                                              PIAF.second);
 
-      SmallVector<const SCEV *, 4> Subscripts;
-      AF->computeAccessFunctions(*SE, Subscripts, Sizes);
-      if (Sizes.empty() || Subscripts.empty())
+      MemAcc *Acc = new MemAcc(Insn, Shape);
+      InsnToMemAcc.insert({ Insn, Acc });
+      AF->computeAccessFunctions(*SE, Acc->DelinearizedSubscripts,
+                                 Shape->DelinearizedSizes);
+      if (Shape->DelinearizedSizes.empty() ||
+          Acc->DelinearizedSubscripts.empty())
         return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
 
       // Check that the delinearized subscripts are affine.
-      for (const SCEV *S : Subscripts)
+      for (const SCEV *S : Acc->DelinearizedSubscripts)
         if (!isAffineExpr(&Context.CurRegion, S, *SE, BaseValue))
           return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
     }
@@ -430,12 +439,12 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     // accesses to the same array in a unique step.
     if (Context.NonAffineAccesses[BasePointer].size() == 0)
       Context.NonAffineAccesses[BasePointer] = AFs();
-    Context.NonAffineAccesses[BasePointer].push_back(AF);
+    Context.NonAffineAccesses[BasePointer].push_back({ &Inst, AF });
   } else if (const SCEVAddRecExpr *AF =
                  dyn_cast<SCEVAddRecExpr>(AccessFunction)) {
     if (Context.AffineAccesses[BasePointer].size() == 0)
       Context.AffineAccesses[BasePointer] = AFs();
-    Context.AffineAccesses[BasePointer].push_back(AF);
+    Context.AffineAccesses[BasePointer].push_back({ &Inst, AF });
   }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
