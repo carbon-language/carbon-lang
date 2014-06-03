@@ -252,6 +252,7 @@ add_lldb_library(liblldb
   API/SBThread.cpp
   API/SBType.cpp
   API/SBTypeCategory.cpp
+  API/SBTypeEnumMember.cpp
   API/SBTypeFilter.cpp
   API/SBTypeFormat.cpp
   API/SBTypeNameSpecifier.cpp
