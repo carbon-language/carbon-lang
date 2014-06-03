@@ -731,8 +731,8 @@ unsigned SIInstrInfo::buildExtractSubReg(MachineBasicBlock::iterator MI,
   unsigned SubReg = MRI.createVirtualRegister(SubRC);
 
   // Just in case the super register is itself a sub-register, copy it to a new
-  // value so we don't need to wory about merging its subreg index with the
-  // SubIdx passed to this function.  The register coalescer should be able to
+  // value so we don't need to worry about merging its subreg index with the
+  // SubIdx passed to this function. The register coalescer should be able to
   // eliminate this extra copy.
   BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(TargetOpcode::COPY),
           NewSuperReg)

@@ -1297,7 +1297,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   int32_t Immediate = Desc->getSize() == 4 ? 0 : -1;
   bool HaveVSrc = false, HaveSSrc = false;
 
-  // First figure out what we alread have in this instruction
+  // First figure out what we already have in this instruction.
   for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
        i != e && Op < NumOps; ++i, ++Op) {
 
@@ -1316,7 +1316,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
     }
   }
 
-  // If we neither have VSrc nor SSrc it makes no sense to continue
+  // If we neither have VSrc nor SSrc, it makes no sense to continue.
   if (!HaveVSrc && !HaveSSrc)
     return Node;
 
@@ -1332,17 +1332,17 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
     const SDValue &Operand = Node->getOperand(i);
     Ops.push_back(Operand);
 
-    // Already folded immediate ?
+    // Already folded immediate?
     if (isa<ConstantSDNode>(Operand.getNode()) ||
         isa<ConstantFPSDNode>(Operand.getNode()))
       continue;
 
-    // Is this a VSrc or SSrc operand ?
+    // Is this a VSrc or SSrc operand?
     unsigned RegClass = Desc->OpInfo[Op].RegClass;
     if (isVSrc(RegClass) || isSSrc(RegClass)) {
       // Try to fold the immediates
       if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
-        // Folding didn't worked, make sure we don't hit the SReg limit
+        // Folding didn't work, make sure we don't hit the SReg limit.
         ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
       }
       continue;
@@ -1535,7 +1535,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   }
 }
 
-/// \brief Fold the instructions after slecting them
+/// \brief Fold the instructions after selecting them.
 SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
   const SIInstrInfo *TII =
