@@ -241,6 +241,26 @@ public:
     return A != B.getPtr();
   }
 
+  template <class T>
+  bool operator==(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
+    return !B;
+  }
+
+  template <class T>
+  bool operator==(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
+    return !A;
+  }
+
+  template <class T>
+  bool operator!=(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
+    return !(A == B);
+  }
+
+  template <class T>
+  bool operator!=(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
+    return !(A == B);
+  }
+
 //===----------------------------------------------------------------------===//
 // LLVM-style downcasting support for IntrusiveRefCntPtr objects
 //===----------------------------------------------------------------------===//
