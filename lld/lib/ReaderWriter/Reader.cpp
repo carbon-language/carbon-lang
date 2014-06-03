@@ -58,7 +58,6 @@ static const Registry::KindStrings kindStrings[] = {
     {Reference::kindLayoutAfter, "layout-after"},
     {Reference::kindLayoutBefore, "layout-before"},
     {Reference::kindGroupChild, "group-child"},
-    {Reference::kindGroupParent, "group-parent"},
     LLD_KIND_STRING_END};
 
 Registry::Registry() {

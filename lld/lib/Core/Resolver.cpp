@@ -321,8 +321,10 @@ void Resolver::markLive(const Atom *atom) {
 }
 
 static bool isBackref(const Reference *ref) {
-  return ref->kindNamespace() == lld::Reference::KindNamespace::all &&
-    ref->kindValue() == lld::Reference::kindLayoutBefore;
+  if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
+    return false;
+  return (ref->kindValue() == lld::Reference::kindLayoutBefore ||
+          ref->kindValue() == lld::Reference::kindGroupChild);
 }
 
 // remove all atoms not actually used

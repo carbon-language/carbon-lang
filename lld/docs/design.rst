@@ -170,8 +170,7 @@ outside the '.group'.
 
 In lld the the '.group' sections with COMDAT are identified by contentType(
 typeGroupComdat). The '.group' members are identified by using
-**kindGroupChild** references. The group child members have a reference to the
-group section by using **kindGroupParent** references.
+**kindGroupChild** references.
 
 The point to be noted here is the 'group child' members would need to be emitted
 in the output file **iff** the group was selected by the resolver.

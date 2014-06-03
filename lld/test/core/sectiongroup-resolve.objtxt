@@ -10,27 +10,15 @@ defined-atoms:
   - name:            f1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            f2
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            d1
     scope:           global
     type:            data
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            group-comdat
@@ -48,27 +36,15 @@ defined-atoms:
   - name:            f1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            f2
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            d1
     scope:           global
     type:            data
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            group-comdat
@@ -104,30 +80,14 @@ defined-atoms:
 #CHECK:   - name:            f1
 #CHECK:     ref-name:        [[GCHILDONE]]
 #CHECK:     scope:           global
-#CHECK:     references:
-#CHECK:       - kind:            group-parent
-#CHECK:         offset:          0
-#CHECK:         target:          [[PARENT]]
 #CHECK:   - name:            f2
 #CHECK:     ref-name:        [[GCHILDTWO]]
 #CHECK:     scope:           global
-#CHECK:     references:
-#CHECK:       - kind:            group-parent
-#CHECK:         offset:          0
-#CHECK:         target:          [[PARENT]]
 #CHECK:   - name:            g1
 #CHECK:     ref-name:        [[GCHILDTHREE]]
 #CHECK:     scope:           global
-#CHECK:     references:
-#CHECK:       - kind:            group-parent
-#CHECK:         offset:          0
-#CHECK:         target:          [[PARENT]]
 #CHECK:   - name:            d1
 #CHECK:     ref-name:        [[GCHILDFOUR]]
 #CHECK:     scope:           global
 #CHECK:     type:            data
-#CHECK:     references:
-#CHECK:       - kind:            group-parent
-#CHECK:         offset:          0
-#CHECK:         target:          [[PARENT]]
 #CHECK: ...

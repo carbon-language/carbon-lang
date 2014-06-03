@@ -10,27 +10,15 @@ defined-atoms:
   - name:            f1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            f2
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            d1
     scope:           global
     type:            data
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            group-comdat
@@ -48,27 +36,15 @@ defined-atoms:
   - name:            f1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            f2
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            code
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            d1
     scope:           global
     type:            data
-    references:
-      - kind:            group-parent
-        target:          g1
   - name:            g1
     scope:           global
     type:            gnu-linkonce

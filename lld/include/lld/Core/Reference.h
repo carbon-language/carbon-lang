@@ -89,8 +89,8 @@ public:
     // kindLayoutBefore is currently used only by PECOFF port, and will
     // be removed soon. To enforce layout, use kindLayoutAfter instead.
     kindLayoutBefore = 3,
+    // kindGroupChild is treated as a bidirected edge too.
     kindGroupChild = 4,
-    kindGroupParent = 5
   };
 
   // A value to be added to the value of a target
