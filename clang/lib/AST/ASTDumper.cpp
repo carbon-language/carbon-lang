@@ -315,6 +315,7 @@ namespace  {
     void VisitIntegerLiteral(const IntegerLiteral *Node);
     void VisitFloatingLiteral(const FloatingLiteral *Node);
     void VisitStringLiteral(const StringLiteral *Str);
+    void VisitInitListExpr(const InitListExpr *ILE);
     void VisitUnaryOperator(const UnaryOperator *Node);
     void VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Node);
     void VisitMemberExpr(const MemberExpr *Node);
@@ -1720,6 +1721,22 @@ void ASTDumper::VisitStringLiteral(const StringLiteral *Str) {
   ColorScope Color(*this, ValueColor);
   OS << " ";
   Str->outputString(OS);
+}
+
+void ASTDumper::VisitInitListExpr(const InitListExpr *ILE) {
+  VisitExpr(ILE);
+  if (auto *Filler = ILE->getArrayFiller()) {
+    if (!ILE->getNumInits())
+      lastChild();
+    IndentScope Indent(*this);
+    OS << "array filler";
+    lastChild();
+    dumpStmt(Filler);
+  }
+  if (auto *Field = ILE->getInitializedFieldInUnion()) {
+    OS << " field ";
+    dumpBareDeclRef(Field);
+  }
 }
 
 void ASTDumper::VisitUnaryOperator(const UnaryOperator *Node) {
