@@ -1206,7 +1206,7 @@ TEST(YAMLIO, TestValidatingInput) {
             "--- \nvalue:  -1.0\n...\n",
             NULL, suppressErrorMessages);
   yin >> docList;
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1227,7 +1227,7 @@ TEST(YAMLIO, TestColorsReadError) {
             /*Ctxt=*/NULL,
             suppressErrorMessages);
   yin >> map;
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1245,7 +1245,7 @@ TEST(YAMLIO, TestFlagsReadError) {
             suppressErrorMessages);
   yin >> map;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1264,7 +1264,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint8Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1283,7 +1283,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint16Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1302,7 +1302,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint32Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1321,7 +1321,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint64Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1341,7 +1341,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint8OverError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1359,7 +1359,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint8UnderError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1379,7 +1379,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint16UnderError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1398,7 +1398,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint16OverError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1418,7 +1418,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint32UnderError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1436,7 +1436,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint32OverError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1456,7 +1456,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint64UnderError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1474,7 +1474,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint64OverError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1493,7 +1493,7 @@ TEST(YAMLIO, TestReadBuiltInTypesFloatError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1512,7 +1512,7 @@ TEST(YAMLIO, TestReadBuiltInTypesDoubleError) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1530,7 +1530,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex8Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 
@@ -1549,7 +1549,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex16Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1567,7 +1567,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex32Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 //
@@ -1585,7 +1585,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex64Error) {
             suppressErrorMessages);
   yin >> seq;
 
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 TEST(YAMLIO, TestMalformedMapFailsGracefully) {
@@ -1595,13 +1595,13 @@ TEST(YAMLIO, TestMalformedMapFailsGracefully) {
     // message generated in the constructor of Input.
     Input yin("{foo:3, bar: 5}", /*Ctxt=*/NULL, suppressErrorMessages);
     yin >> doc;
-    EXPECT_TRUE(yin.error());
+    EXPECT_TRUE(!!yin.error());
   }
 
   {
     Input yin("---\nfoo:3\nbar: 5\n...\n", /*Ctxt=*/NULL, suppressErrorMessages);
     yin >> doc;
-    EXPECT_TRUE(yin.error());
+    EXPECT_TRUE(!!yin.error());
   }
 }
 
@@ -1673,7 +1673,7 @@ TEST(YAMLIO, TestEmptyStringFailsForMapWithRequiredFields) {
   FooBar doc;
   Input yin("");
   yin >> doc;
-  EXPECT_TRUE(yin.error());
+  EXPECT_TRUE(!!yin.error());
 }
 
 TEST(YAMLIO, TestEmptyStringSucceedsForMapWithOptionalFields) {
