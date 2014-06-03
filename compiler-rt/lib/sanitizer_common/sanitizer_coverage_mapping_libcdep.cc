@@ -37,8 +37,38 @@ namespace __sanitizer {
 
 static const uptr kMaxNumberOfModules = 1 << 14;
 
+static char *last_mapping;
+static StaticSpinMutex mapping_mu;
+
 void CovUpdateMapping() {
   if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
+
+  SpinMutexLock l(&mapping_mu);
+
+  const uptr kMaxTextSize = 64 * 1024;
+  InternalScopedString text(kMaxTextSize);
+  InternalScopedBuffer<char> modules_data(kMaxNumberOfModules *
+                                          sizeof(LoadedModule));
+  LoadedModule *modules = (LoadedModule *)modules_data.data();
+  CHECK(modules);
+  int n_modules = GetListOfModules(modules, kMaxNumberOfModules,
+                                   /* filter */ 0);
+
+  text.append("%d\n", sizeof(uptr) * 8);
+  for (int i = 0; i < n_modules; ++i) {
+    char *module_name = StripModuleName(modules[i].full_name());
+    for (unsigned j = 0; j < modules[i].n_ranges(); ++j) {
+      text.append("%zx %zx %zx %s\n", modules[i].address_range_start(j),
+                  modules[i].address_range_end(j), modules[i].base_address(),
+                  module_name);
+    }
+    InternalFree(module_name);
+  }
+
+  // Do not write mapping if it is the same as the one we've wrote last time.
+  if (last_mapping && (internal_strcmp(last_mapping, text.data()) == 0)) return;
+  if (!last_mapping) last_mapping = (char *)InternalAlloc(kMaxTextSize);
+  internal_strncpy(last_mapping, text.data(), kMaxTextSize);
 
   int err;
   InternalScopedString tmp_path(64 +
@@ -53,38 +83,11 @@ void CovUpdateMapping() {
     Die();
   }
 
-  InternalScopedBuffer<char> modules_data(kMaxNumberOfModules *
-                                          sizeof(LoadedModule));
-  LoadedModule *modules = (LoadedModule *)modules_data.data();
-  CHECK(modules);
-  int n_modules = GetListOfModules(modules, kMaxNumberOfModules,
-                                   /* filter */ 0);
-
-  InternalScopedString line(4096);
-  line.append("%d\n", sizeof(uptr) * 8);
-  res = internal_write(map_fd, line.data(), line.length());
+  res = internal_write(map_fd, text.data(), text.length());
   if (internal_iserror(res, &err)) {
     Printf("sancov.map write failed: %d\n", err);
     Die();
   }
-  line.clear();
-
-  for (int i = 0; i < n_modules; ++i) {
-    char *module_name = StripModuleName(modules[i].full_name());
-    for (unsigned j = 0; j < modules[i].n_ranges(); ++j) {
-      line.append("%zx %zx %zx %s\n", modules[i].address_range_start(j),
-                  modules[i].address_range_end(j), modules[i].base_address(),
-                  module_name);
-      res = internal_write(map_fd, line.data(), line.length());
-      if (internal_iserror(res, &err)) {
-        Printf("sancov.map write failed: %d\n", err);
-        Die();
-      }
-      line.clear();
-    }
-    InternalFree(module_name);
-  }
-
   internal_close(map_fd);
 
   InternalScopedString path(64 + internal_strlen(common_flags()->coverage_dir));

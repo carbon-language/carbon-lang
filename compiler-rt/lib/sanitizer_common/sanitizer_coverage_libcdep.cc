@@ -146,6 +146,12 @@ void CoverageData::Extend(uptr npcs) {
   }
 
   atomic_store(&pc_array_size, size, memory_order_release);
+
+  if (SANITIZER_ANDROID) {
+    // dlopen/dlclose interceptors do not work on Android, so we rely on
+    // Extend() calls to update .sancov.map.
+    CovUpdateMapping();
+  }
 }
 
 // Simply add the pc into the vector under lock. If the function is called more
