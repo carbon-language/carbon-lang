@@ -6,8 +6,8 @@ void fn(int n) {
   // CHECK: store i32 1
   // CHECK: store i32 2
   // CHECK: store i32 3
-  // CHECK: icmp eq i32*
-  // CHECK-NEXT: br i1
+  // CHECK: sub {{.*}}, 12
+  // CHECK: call void @llvm.memset
   new int[n] { 1, 2, 3 };
 }
 
@@ -30,4 +30,19 @@ void const_sufficient() {
   // CHECK-NOT: icmp ult i{{32|64}} %{{[^ ]+}}, 3
   new int[4] { 1, 2, 3 };
   // CHECK: ret void
+}
+
+// CHECK-LABEL: define void @_Z22check_array_value_initv
+void check_array_value_init() {
+  struct S;
+  new (int S::*[3][4][5]) ();
+
+  // CHECK: call noalias i8* @_Zna{{.}}(i{{32 240|64 480}})
+  // CHECK: getelementptr inbounds i{{32|64}}* {{.*}}, i{{32|64}} 60
+
+  // CHECK: phi
+  // CHECK: store i{{32|64}} -1,
+  // CHECK: getelementptr inbounds i{{32|64}}* {{.*}}, i{{32|64}} 1
+  // CHECK: icmp eq
+  // CHECK: br i1
 }
