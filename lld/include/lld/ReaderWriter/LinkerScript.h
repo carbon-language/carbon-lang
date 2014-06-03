@@ -155,9 +155,7 @@ class Group : public Command {
 public:
   template <class RangeT>
   explicit Group(RangeT range) : Command(Kind::Group) {
-    using std::begin;
-    using std::end;
-    std::copy(begin(range), end(range), std::back_inserter(_paths));
+    std::copy(std::begin(range), std::end(range), std::back_inserter(_paths));
   }
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Group; }
