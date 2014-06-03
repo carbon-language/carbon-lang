@@ -1711,7 +1711,9 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       InVals.push_back(FrameIdxN);
 
       continue;
-    } if (VA.isRegLoc()) {
+    }
+    
+    if (VA.isRegLoc()) {
       // Arguments stored in registers.
       EVT RegVT = VA.getLocVT();
 
@@ -1772,25 +1774,30 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       SDValue ArgValue;
 
+      // For NON_EXTLOAD, generic code in getLoad assert(ValVT == MemVT)
       ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
+      MVT MemVT = VA.getValVT();
+
       switch (VA.getLocInfo()) {
       default:
         break;
       case CCValAssign::SExt:
         ExtType = ISD::SEXTLOAD;
+        MemVT = VA.getLocVT();
         break;
       case CCValAssign::ZExt:
         ExtType = ISD::ZEXTLOAD;
+        MemVT = VA.getLocVT();
         break;
       case CCValAssign::AExt:
         ExtType = ISD::EXTLOAD;
+        MemVT = VA.getLocVT();
         break;
       }
 
       ArgValue = DAG.getExtLoad(ExtType, DL, VA.getValVT(), Chain, FIN,
                                 MachinePointerInfo::getFixedStack(FI),
-                                VA.getLocVT(),
-                                false, false, false, 0);
+                                MemVT, false, false, false, 0);
 
       InVals.push_back(ArgValue);
     }

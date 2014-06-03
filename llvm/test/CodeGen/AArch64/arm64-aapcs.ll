@@ -101,3 +101,11 @@ define fp128 @test_fp128([8 x float] %arg0, fp128 %arg1) {
 ; CHECK: ldr {{q[0-9]+}}, [sp]
   ret fp128 %arg1
 }
+
+; Check if VPR can be correctly pass by stack.
+define <2 x double> @test_vreg_stack([8 x <2 x double>], <2 x double> %varg_stack) {
+entry:
+; CHECK-LABEL: test_vreg_stack:
+; CHECK: ldr {{q[0-9]+}}, [sp]
+  ret <2 x double> %varg_stack;
+}
