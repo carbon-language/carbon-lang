@@ -216,21 +216,23 @@ macro(test_target_arch arch)
   endif()
 endmacro()
 
-if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
-  if (NOT MSVC)
-    test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
-  endif()
-  test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
-elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
-  test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
-endif()
-
-# Build ARM libraries if we are configured to test on ARM
 if(ANDROID)
   test_target_arch(arm_android "")
-elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
-  test_target_arch(arm "-march=armv7-a")
-  test_target_arch(aarch64 "-march=armv8-a")
+else()
+  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
+    if (NOT MSVC)
+      test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
+    endif()
+    test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
+  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
+    test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+  endif()
+
+  # Build ARM libraries if we are configured to test on ARM
+  if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
+    test_target_arch(arm "-march=armv7-a")
+    test_target_arch(aarch64 "-march=armv8-a")
+  endif()
 endif()
 
 # We support running instrumented tests when we're not cross compiling
