@@ -1446,6 +1446,24 @@ object that overloads ``operator&``.
     return __builtin_addressof(value);
   }
 
+``__builtin_operator_new`` and ``__builtin_operator_delete``
+------------------------------------------------------------
+
+``__builtin_operator_new`` allocates memory just like a non-placement non-class
+*new-expression*. This is exactly like directly calling the normal
+non-placement ``::operator new``, except that it allows certain optimizations
+that the C++ standard does not permit for a direct function call to
+``::operator new`` (in particular, removing ``new`` / ``delete`` pairs and
+merging allocations).
+
+Likewise, ``__builtin_operator_delete`` deallocates memory just like a
+non-class *delete-expression*, and is exactly like directly calling the normal
+``::operator delete``, except that it permits optimizations. Only the unsized
+form of ``__builtin_operator_delete`` is currently available.
+
+These builtins are intended for use in the implementation of ``std::allocator``
+and other similar allocation libraries, and are only available in C++.
+
 Multiprecision Arithmetic Builtins
 ----------------------------------
 

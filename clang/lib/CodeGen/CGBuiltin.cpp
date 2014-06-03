@@ -1508,6 +1508,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin_addressof:
     return RValue::get(EmitLValue(E->getArg(0)).getAddress());
+  case Builtin::BI__builtin_operator_new:
+    return EmitBuiltinNewDeleteCall(FD->getType()->castAs<FunctionProtoType>(),
+                                    E->getArg(0), false);
+  case Builtin::BI__builtin_operator_delete:
+    return EmitBuiltinNewDeleteCall(FD->getType()->castAs<FunctionProtoType>(),
+                                    E->getArg(0), true);
   case Builtin::BI__noop:
     return RValue::get(nullptr);
   case Builtin::BI_InterlockedCompareExchange: {

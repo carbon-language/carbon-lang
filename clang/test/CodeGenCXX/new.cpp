@@ -326,6 +326,15 @@ namespace N3664 {
   }
 }
 
+namespace builtins {
+  // CHECK-LABEL: define void @_ZN8builtins1fEv
+  void f() {
+    // CHECK: call noalias i8* @_Znwm(i64 4) [[ATTR_BUILTIN_NEW]]
+    // CHECK: call void @_ZdlPv({{.*}}) [[ATTR_BUILTIN_DELETE]]
+    __builtin_operator_delete(__builtin_operator_new(4));
+  }
+}
+
 // CHECK-DAG: attributes [[ATTR_NOBUILTIN]] = {{[{].*}} nobuiltin {{.*[}]}}
 // CHECK-DAG: attributes [[ATTR_NOBUILTIN_NOUNWIND]] = {{[{].*}} nobuiltin nounwind {{.*[}]}}
 

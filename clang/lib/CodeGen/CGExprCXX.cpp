@@ -1029,6 +1029,23 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
   return RV;
 }
 
+RValue CodeGenFunction::EmitBuiltinNewDeleteCall(const FunctionProtoType *Type,
+                                                 const Expr *Arg,
+                                                 bool IsDelete) {
+  CallArgList Args;
+  const Stmt *ArgS = Arg;
+  EmitCallArgs(Args, *Type->param_type_begin(),
+               ConstExprIterator(&ArgS), ConstExprIterator(&ArgS + 1));
+  // Find the allocation or deallocation function that we're calling.
+  ASTContext &Ctx = getContext();
+  DeclarationName Name = Ctx.DeclarationNames
+      .getCXXOperatorName(IsDelete ? OO_Delete : OO_New);
+  for (auto *Decl : Ctx.getTranslationUnitDecl()->lookup(Name))
+    if (Ctx.hasSameType(cast<FunctionDecl>(Decl)->getType(), QualType(Type, 0)))
+      return EmitNewDeleteCall(*this, cast<FunctionDecl>(Decl), Type, Args);
+  llvm_unreachable("predeclared global operator new/delete is missing");
+}
+
 namespace {
   /// A cleanup to call the given 'operator delete' function upon
   /// abnormal exit from a new expression.

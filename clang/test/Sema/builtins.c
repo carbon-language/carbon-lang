@@ -197,3 +197,8 @@ void no_ms_builtins() {
   __noop(1); // expected-warning {{implicit declaration}}
   __debugbreak(); // expected-warning {{implicit declaration}}
 }
+
+void unavailable() {
+  __builtin_operator_new(0); // expected-error {{'__builtin_operator_new' is only available in C++}}
+  __builtin_operator_delete(0); // expected-error {{'__builtin_operator_delete' is only available in C++}}
+}
