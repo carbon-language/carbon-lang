@@ -84,11 +84,10 @@ def UnpackOneRawFile(path, map_path):
     bits = int(f_map.readline())
     for line in f_map:
       parts = line.rstrip().split()
-      assert len(parts) == 4
       mem_map.append((int(parts[0], 16),
                   int(parts[1], 16),
                   int(parts[2], 16),
-                  parts[3]))
+                  ' '.join(parts[3:])))
   mem_map.sort(key=lambda m : m[0])
   mem_map_keys = [m[0] for m in mem_map]
 
