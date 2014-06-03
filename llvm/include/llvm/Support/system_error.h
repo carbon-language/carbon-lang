@@ -692,12 +692,7 @@ public:
   const error_category& category() const {return *_cat_;}
   std::string message() const;
 
-  typedef void (*unspecified_bool_type)();
-  static void unspecified_bool_true() {}
-
-  operator unspecified_bool_type() const { // true if error
-    return _val_ == 0 ? nullptr : unspecified_bool_true;
-  }
+  LLVM_EXPLICIT operator bool() const { return _val_ != 0; }
 };
 
 inline error_condition make_error_condition(errc _e) {
