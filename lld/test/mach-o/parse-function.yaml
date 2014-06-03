@@ -21,7 +21,7 @@ local-symbols:
   - name:            _myStatic
     type:            N_SECT
     sect:            1
-    value:           0x0000000000000005
+    value:           0x0000000000000004
 global-symbols:
   - name:            _myGlobal
     type:            N_SECT

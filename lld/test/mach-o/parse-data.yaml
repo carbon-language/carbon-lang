@@ -96,15 +96,15 @@ global-symbols:
 # CHECK:     type:            data
 # CHECK:     content:         [ 21, 22, 23, 24 ]
 
+# CHECK:   - name:            _s2
+# CHECK:     type:            data
+# CHECK:     content:         [ 31, 32, 33, 34 ]
+
 # CHECK:   - name:            _cWeak
 # CHECK:     scope:           global
 # CHECK:     type:            data
 # CHECK:     content:         [ 41, 42, 43, 44 ]
 # CHECK:     merge:           as-weak
-
-# CHECK:   - name:            _s2
-# CHECK:     type:            data
-# CHECK:     content:         [ 31, 32, 33, 34 ]
 
 # CHECK:   - name:            _s1
 # CHECK:     type:            zero-fill

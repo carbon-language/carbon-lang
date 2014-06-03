@@ -31,46 +31,159 @@
 #include "llvm/Support/MachO.h"
 
 using namespace llvm::MachO;
+using namespace lld::mach_o::normalized;
 
 namespace lld {
 namespace mach_o {
-namespace normalized {
 
-enum SymbolsInSection {
-  symbolsOk,
-  symbolsIgnored,
-  symbolsIllegal
-};
 
-static uint64_t nextSymbolAddress(const NormalizedFile &normalizedFile,
-                                  const Symbol &symbol) {
-  uint64_t symbolAddr = symbol.value;
-  uint8_t symbolSectionIndex = symbol.sect;
-  const Section &section = normalizedFile.sections[symbolSectionIndex - 1];
-  // If no symbol after this address, use end of section address.
-  uint64_t closestAddr = section.address + section.content.size();
-  for (const Symbol &s : normalizedFile.globalSymbols) {
-    if (s.sect != symbolSectionIndex)
+namespace { // anonymous
+
+
+/// Figures out ContentType of a mach-o section.
+DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
+  struct MachORelocatableSectionToAtomType {
+    StringRef                 segmentName;
+    StringRef                 sectionName;
+    SectionType               sectionType;
+    DefinedAtom::ContentType  atomType;
+  };
+
+  #define ENTRY(seg, sect, type, atomType) \
+    {seg, sect, type, DefinedAtom::atomType }
+
+  static const MachORelocatableSectionToAtomType sectsToAtomType[] = {
+    ENTRY("__TEXT", "__text",           S_REGULAR,          typeCode),
+    ENTRY("__TEXT", "__cstring",        S_CSTRING_LITERALS, typeCString),
+    ENTRY("",       "",                 S_CSTRING_LITERALS, typeCString),
+    ENTRY("__TEXT", "__ustring",        S_REGULAR,          typeUTF16String),
+    ENTRY("__TEXT", "__const",          S_REGULAR,          typeConstant),
+    ENTRY("__TEXT", "__eh_frame",       S_COALESCED,        typeCFI),
+    ENTRY("__TEXT", "__literal4",       S_4BYTE_LITERALS,   typeLiteral4),
+    ENTRY("__TEXT", "__literal8",       S_8BYTE_LITERALS,   typeLiteral8),
+    ENTRY("__TEXT", "__literal16",      S_16BYTE_LITERALS,  typeLiteral16),
+    ENTRY("__TEXT", "__gcc_except_tab", S_REGULAR,          typeLSDA),
+    ENTRY("__DATA", "__data",           S_REGULAR,          typeData),
+    ENTRY("__DATA", "__const",          S_REGULAR,          typeConstData),
+    ENTRY("__DATA", "__cfstring",       S_REGULAR,          typeCFString),
+    ENTRY("__DATA", "__mod_init_func",  S_MOD_INIT_FUNC_POINTERS,
+                                                            typeInitializerPtr),
+    ENTRY("__DATA", "__mod_term_func",  S_MOD_TERM_FUNC_POINTERS,
+                                                            typeTerminatorPtr),
+    ENTRY("__DATA", "___got",           S_NON_LAZY_SYMBOL_POINTERS,
+                                                            typeGOT),
+    ENTRY("",       "",                 S_NON_LAZY_SYMBOL_POINTERS,
+                                                            typeGOT),
+    ENTRY("__LD",   "__compact_unwind", S_REGULAR,
+                                                         typeCompactUnwindInfo),
+    ENTRY("",       "",                 S_REGULAR,          typeUnknown)
+  };
+  #undef ENTRY
+
+  // First look for match of name and type. Empty names in table are wildcards.
+  for (const MachORelocatableSectionToAtomType *p = sectsToAtomType ;
+                                 p->atomType != DefinedAtom::typeUnknown; ++p) {
+    if (p->sectionType != section.type)
       continue;
-    uint64_t sValue = s.value;
-    if (sValue <= symbolAddr)
+    if (!p->segmentName.equals(section.segmentName) && !p->segmentName.empty())
       continue;
-    if (sValue < closestAddr)
-      closestAddr = s.value;
+    if (!p->sectionName.equals(section.sectionName) && !p->sectionName.empty())
+      continue;
+    return p->atomType;
   }
-  for (const Symbol &s : normalizedFile.localSymbols) {
-    if (s.sect != symbolSectionIndex)
-      continue;
-    uint64_t sValue = s.value;
-    if (sValue <= symbolAddr)
-      continue;
-    if (sValue < closestAddr)
-      closestAddr = s.value;
-  }
-  return closestAddr;
+  // Look for code denoted by section attributes
+  if (section.attributes & S_ATTR_PURE_INSTRUCTIONS)
+    return DefinedAtom::typeCode;
+
+  return DefinedAtom::typeUnknown;
 }
 
-static Atom::Scope atomScope(uint8_t scope) {
+enum AtomizeModel {
+  atomizeAtSymbols,
+  atomizeFixedSize,
+  atomizePointerSize,
+  atomizeUTF8,
+  atomizeUTF16,
+  atomizeCFI,
+  atomizeCU
+};
+
+/// Returns info on how to atomize a section of the specified ContentType.
+void sectionParseInfo(DefinedAtom::ContentType atomType,
+                      unsigned int &sizeMultiple,
+                      DefinedAtom::Scope &scope,
+                      DefinedAtom::Merge &merge,
+                      AtomizeModel &atomizeModel) {
+  struct ParseInfo {
+    DefinedAtom::ContentType  atomType;
+    unsigned int              sizeMultiple;
+    DefinedAtom::Scope        scope;
+    DefinedAtom::Merge        merge;
+    AtomizeModel              atomizeModel;
+  };
+
+  #define ENTRY(type, size, scope, merge, model) \
+    {DefinedAtom::type, size, DefinedAtom::scope, DefinedAtom::merge, model }
+
+  static const ParseInfo parseInfo[] = {
+    ENTRY(typeCode,              1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols),
+    ENTRY(typeData,              1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols),
+    ENTRY(typeConstData,         1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols),
+    ENTRY(typeZeroFill,          1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols),
+    ENTRY(typeConstant,          1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols),
+    ENTRY(typeCString,           1, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeUTF8),
+    ENTRY(typeUTF16String,       1, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeUTF16),
+    ENTRY(typeCFI,               1, scopeTranslationUnit, mergeNo, 
+                                                            atomizeCFI),
+    ENTRY(typeLiteral4,          4, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeFixedSize),
+    ENTRY(typeLiteral8,          8, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeFixedSize),
+    ENTRY(typeLiteral16,        16, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeFixedSize),
+    ENTRY(typeCFString,         16, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizeFixedSize),
+    ENTRY(typeInitializerPtr,    4, scopeTranslationUnit, mergeNo, 
+                                                            atomizePointerSize),
+    ENTRY(typeTerminatorPtr,     4, scopeTranslationUnit, mergeNo, 
+                                                            atomizePointerSize),
+    ENTRY(typeCompactUnwindInfo, 4, scopeTranslationUnit, mergeNo, 
+                                                            atomizeCU),
+    ENTRY(typeCFI,               4, scopeTranslationUnit, mergeNo, 
+                                                            atomizeFixedSize),
+    ENTRY(typeGOT,               4, scopeLinkageUnit,     mergeByContent, 
+                                                            atomizePointerSize),
+    ENTRY(typeUnknown,           1, scopeGlobal,          mergeNo, 
+                                                            atomizeAtSymbols)
+  };
+  #undef ENTRY
+  const int tableLen = sizeof(parseInfo) / sizeof(ParseInfo);
+  for (int i=0; i < tableLen; ++i) {
+    if (parseInfo[i].atomType == atomType) {
+      sizeMultiple = parseInfo[i].sizeMultiple;
+      scope        = parseInfo[i].scope;
+      merge        = parseInfo[i].merge;
+      atomizeModel = parseInfo[i].atomizeModel;
+      return;
+    }
+  }
+
+  // Unknown type is atomized by symbols.
+  sizeMultiple = 1;
+  scope = DefinedAtom::scopeGlobal;
+  merge = DefinedAtom::mergeNo;
+  atomizeModel = atomizeAtSymbols;
+}
+
+
+Atom::Scope atomScope(uint8_t scope) {
   switch (scope) {
   case N_EXT:
     return Atom::scopeGlobal;
@@ -82,398 +195,224 @@ static Atom::Scope atomScope(uint8_t scope) {
   llvm_unreachable("unknown scope value!");
 }
 
-static DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
-  if (section.attributes & S_ATTR_PURE_INSTRUCTIONS)
-    return DefinedAtom::typeCode;
-  if (section.segmentName.equals("__TEXT")) {
-    if (section.sectionName.equals("__StaticInit"))
-      return DefinedAtom::typeCode;
-    if (section.sectionName.equals("__gcc_except_tab"))
-      return DefinedAtom::typeLSDA;
-    if (section.sectionName.startswith("__text"))
-      return DefinedAtom::typeCode;
-    if (section.sectionName.startswith("__const"))
-      return DefinedAtom::typeConstant;
-  } else if (section.segmentName.equals("__DATA")) {
-    if (section.sectionName.startswith("__data"))
-      return DefinedAtom::typeData;
-    if (section.sectionName.startswith("__const"))
-      return DefinedAtom::typeConstData;
+void appendSymbolsInSection(const std::vector<Symbol> &inSymbols,
+                            uint32_t sectionIndex,
+                            SmallVector<const Symbol *, 64> &outSyms) {
+  for (const Symbol &sym : inSymbols) {
+    // Only look at definition symbols.
+    if ((sym.type & N_TYPE) != N_SECT)
+      continue;
+    if (sym.sect != sectionIndex)
+      continue;
+    outSyms.push_back(&sym);
   }
-
-  return DefinedAtom::typeUnknown;
 }
 
-static error_code
-processSymbol(const NormalizedFile &normalizedFile, MachOFile &file,
-              const Symbol &sym, bool copyRefs,
-              const SmallVector<SymbolsInSection, 32> symbolsInSect) {
-  if (sym.sect > normalizedFile.sections.size()) {
-    int sectionIndex = sym.sect;
-    return make_dynamic_error_code(Twine("Symbol '") + sym.name
-                                 + "' has n_sect ("
-                                 + Twine(sectionIndex)
-                                 + ") which is too large");
-  }
-  const Section &section = normalizedFile.sections[sym.sect - 1];
-  switch (symbolsInSect[sym.sect-1]) {
-  case symbolsOk:
-    break;
-  case symbolsIgnored:
-    return error_code();
-    break;
-  case symbolsIllegal:
-    return make_dynamic_error_code(Twine("Symbol '") + sym.name
-                                 + "' is not legal in section "
-                                 + section.segmentName + "/"
-                                 + section.sectionName);
-    break;
-  }
-
-  uint64_t offset = sym.value - section.address;
-  // Mach-O symbol table does have size in it, so need to scan ahead
-  // to find symbol with next highest address.
-  uint64_t size = nextSymbolAddress(normalizedFile, sym) - sym.value;
+void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
+                    MachOFile &file, const Symbol &symbol,
+                    uint64_t nextSymbolAddr, bool copyRefs) {
+  // Mach-O symbol table does have size in it. Instead the size is the
+  // difference between this and the next symbol.
+  uint64_t size = nextSymbolAddr - symbol.value;
   if (section.type == llvm::MachO::S_ZEROFILL) {
-    file.addZeroFillDefinedAtom(sym.name, atomScope(sym.scope), size, copyRefs);
+    file.addZeroFillDefinedAtom(symbol.name, atomScope(symbol.scope),
+                                size, copyRefs);
   } else {
+    uint64_t offset = symbol.value - section.address;
     ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
-    DefinedAtom::Merge m = DefinedAtom::mergeNo;
-    if (sym.desc & N_WEAK_DEF)
-      m = DefinedAtom::mergeAsWeak;
-    DefinedAtom::ContentType type = atomTypeFromSection(section);
-    if (type == DefinedAtom::typeUnknown) {
+    DefinedAtom::Merge merge = DefinedAtom::mergeNo;
+    if (symbol.desc & N_WEAK_DEF)
+      merge = DefinedAtom::mergeAsWeak;
+    if (atomType == DefinedAtom::typeUnknown) {
       // Mach-O needs a segment and section name.  Concatentate those two
       // with a / seperator (e.g. "seg/sect") to fit into the lld model
       // of just a section name.
-      std::string segSectName = section.segmentName.str() 
+      std::string segSectName = section.segmentName.str()
                                 + "/" + section.sectionName.str();
-      file.addDefinedAtomInCustomSection(sym.name, atomScope(sym.scope), type, 
-                                         m, atomContent, segSectName, true);
+      file.addDefinedAtomInCustomSection(symbol.name, atomScope(symbol.scope),
+                                         atomType, merge, atomContent,
+                                         segSectName, true);
     } else {
-      file.addDefinedAtom(sym.name, atomScope(sym.scope), type, m, atomContent, 
-                        copyRefs);
+      file.addDefinedAtom(symbol.name, atomScope(symbol.scope), atomType, merge,
+                          atomContent, copyRefs);
     }
+  }
+}
+
+error_code processSymboledSection(DefinedAtom::ContentType atomType,
+                                  const Section &section,
+                                  const NormalizedFile &normalizedFile,
+                                  MachOFile &file, bool copyRefs) {
+  // Find section's index.
+  uint32_t sectIndex = 1;
+  for (auto &sect : normalizedFile.sections) {
+    if (&sect == &section)
+      break;
+    ++sectIndex;
+  }
+
+  // Find all symbols in this section.
+  SmallVector<const Symbol *, 64> symbols;
+  appendSymbolsInSection(normalizedFile.globalSymbols, sectIndex, symbols);
+  appendSymbolsInSection(normalizedFile.localSymbols,  sectIndex, symbols);
+
+  // Sort symbols by address.
+  std::sort(symbols.begin(), symbols.end(),
+            [](const Symbol *lhs, const Symbol *rhs) -> bool {
+              return lhs->value < rhs->value;
+            });
+
+  // Debug logging of symbols.
+  //for (const Symbol *sym : symbols)
+  //  llvm::errs() << "sym: " << sym->value << ", " << sym->name << "\n";
+
+  // If section has no symbols and no content, there are no atoms.
+  if (symbols.empty() && section.content.empty())
+    return error_code();
+
+  if (symbols.front()->value != section.address) {
+    // Section has anonymous content before first symbol.
+    // FIXME
+  }
+
+  const Symbol *lastSym = nullptr;
+  for (const Symbol *sym : symbols) {
+    if (lastSym != nullptr) {
+      atomFromSymbol(atomType, section, file, *lastSym, sym->value, copyRefs);
+    }
+    lastSym = sym;
+  }
+  if (lastSym != nullptr) {
+    atomFromSymbol(atomType, section, file, *lastSym,
+                   section.address + section.content.size(), copyRefs);
   }
   return error_code();
 }
 
+error_code processSection(DefinedAtom::ContentType atomType,
+                          const Section &section,
+                          const NormalizedFile &normalizedFile,
+                          MachOFile &file, bool copyRefs) {
+  const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
+  const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
 
-static void processUndefindeSymbol(MachOFile &file, const Symbol &sym,
-                                  bool copyRefs) {
-  // Undefinded symbols with n_value!=0 are actually tentative definitions.
-  if (sym.value == Hex64(0)) {
-    file.addUndefinedAtom(sym.name, copyRefs);
+  // Get info on how to atomize section.
+  unsigned int       sizeMultiple;
+  DefinedAtom::Scope scope;
+  DefinedAtom::Merge merge;
+  AtomizeModel       atomizeModel;
+  sectionParseInfo(atomType, sizeMultiple, scope, merge, atomizeModel);
+
+  // Validate section size.
+  if ((section.content.size() % sizeMultiple) != 0)
+    return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName
+                                     + " has size ("
+                                     + Twine(section.content.size())
+                                     + ") which is not a multiple of "
+                                     + Twine(sizeMultiple) );
+
+  if (atomizeModel == atomizeAtSymbols) {
+    // Break section up into atoms each with a fixed size.
+    return processSymboledSection(atomType, section, normalizedFile, file,
+                                                                      copyRefs);
   } else {
-    file.addTentativeDefAtom(sym.name, atomScope(sym.scope), sym.value,
-                              DefinedAtom::Alignment(sym.desc >> 8), copyRefs);
-  }
-}
-
-// A __TEXT/__ustring section contains UTF16 strings.  Atom boundaries are
-// determined by finding the terminating 0x0000 in each string.
-static error_code processUTF16Section(MachOFile &file, const Section &section,
-                                      bool is64, bool copyRefs) {
-  if ((section.content.size() % 4) != 0)
-    return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                 + "/" + section.sectionName
-                                 + " has a size that is not even");
-  unsigned offset = 0;
-  for (size_t i = 0, e = section.content.size(); i != e; i +=2) {
-    if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
-      unsigned size = i - offset + 2;
-      ArrayRef<uint8_t> utf16Content = section.content.slice(offset, size);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeUTF16String,
-                          DefinedAtom::mergeByContent, utf16Content,
-                          copyRefs);
-      offset = i + 2;
-    }
-  }
-  if (offset != section.content.size()) {
-    return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                   + "/" + section.sectionName
-                                   + " is supposed to contain 0x0000 "
-                                   "terminated UTF16 strings, but the "
-                                   "last string in the section is not zero "
-                                   "terminated.");
-  }
-  return error_code();
-}
-
-// A __DATA/__cfstring section contain NS/CFString objects. Atom boundaries
-// are determined because each object is known to be 4 pointers in size.
-static error_code processCFStringSection(MachOFile &file,const Section &section,
-                                      bool is64, bool copyRefs) {
-  const uint32_t cfsObjSize = (is64 ? 32 : 16);
-  if ((section.content.size() % cfsObjSize) != 0) {
-    return make_dynamic_error_code(Twine("Section __DATA/__cfstring has a size "
-                                   "(" + Twine(section.content.size())
-                                   + ") that is not a multiple of "
-                                   + Twine(cfsObjSize)));
-  }
-  unsigned offset = 0;
-  for (size_t i = 0, e = section.content.size(); i != e; i += cfsObjSize) {
-    ArrayRef<uint8_t> byteContent = section.content.slice(offset, cfsObjSize);
-    file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                        DefinedAtom::typeCFString,
-                        DefinedAtom::mergeByContent, byteContent, copyRefs);
-    offset += cfsObjSize;
-  }
-  return error_code();
-}
-
-
-// A __TEXT/__eh_frame section contains dwarf unwind CFIs (either CIE or FDE).
-// Atom boundaries are determined by looking at the length content header
-// in each CFI.
-static error_code processCFISection(MachOFile &file, const Section &section,
-                                      bool is64, bool swap, bool copyRefs) {
-  const unsigned char* buffer = section.content.data();
-  for (size_t offset = 0, end = section.content.size(); offset < end; ) {
-    size_t remaining = end - offset;
-    if (remaining < 16) {
-      return make_dynamic_error_code(Twine("Section __TEXT/__eh_frame is "
-                                     "malformed.  Not enough room left for "
-                                     "a CFI starting at offset ("
-                                     + Twine(offset)
-                                     + ")"));
-    }
-    const uint32_t *cfi = reinterpret_cast<const uint32_t *>(&buffer[offset]);
-    uint32_t len = read32(swap, *cfi) + 4;
-    if (offset+len > end) {
-      return make_dynamic_error_code(Twine("Section __TEXT/__eh_frame is "
-                                     "malformed.  Size of CFI starting at "
-                                     "at offset ("
-                                     + Twine(offset)
-                                     + ") is past end of section."));
-    }
-    ArrayRef<uint8_t> bytes = section.content.slice(offset, len);
-    file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                        DefinedAtom::typeCFI, DefinedAtom::mergeNo,
-                        bytes, copyRefs);
-    offset += len;
-  }
-  return error_code();
-}
-
-static error_code 
-processCompactUnwindSection(MachOFile &file, const Section &section,
-                            bool is64, bool copyRefs) {
-  const uint32_t cuObjSize = (is64 ? 32 : 20);
-  if ((section.content.size() % cuObjSize) != 0) {
-    return make_dynamic_error_code(Twine("Section __LD/__compact_unwind has a "
-                                   "size (" + Twine(section.content.size())
-                                   + ") that is not a multiple of "
-                                   + Twine(cuObjSize)));
-  }
-  unsigned offset = 0;
-  for (size_t i = 0, e = section.content.size(); i != e; i += cuObjSize) {
-    ArrayRef<uint8_t> byteContent = section.content.slice(offset, cuObjSize);
-    file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                        DefinedAtom::typeCompactUnwindInfo,
-                        DefinedAtom::mergeNo, byteContent, copyRefs);
-    offset += cuObjSize;
-  }
-  return error_code();
-}
-
-static error_code processSection(MachOFile &file, const Section &section,
-                                 bool is64, bool swap, bool copyRefs,
-                                 SymbolsInSection &symbolsInSect) {
-  unsigned offset = 0;
-  const unsigned pointerSize = (is64 ? 8 : 4);
-  switch (section.type) {
-  case llvm::MachO::S_REGULAR:
-    if (section.segmentName.equals("__TEXT") &&
-        section.sectionName.equals("__ustring")) {
-      symbolsInSect = symbolsIgnored;
-      return processUTF16Section(file, section, is64, copyRefs);
-    } else if (section.segmentName.equals("__DATA") &&
-             section.sectionName.equals("__cfstring")) {
-      symbolsInSect = symbolsIllegal;
-      return processCFStringSection(file, section, is64, copyRefs);
-    } else if (section.segmentName.equals("__LD") &&
-             section.sectionName.equals("__compact_unwind")) {
-      symbolsInSect = symbolsIllegal;
-      return processCompactUnwindSection(file, section, is64, copyRefs);
-    }
-    break;
-  case llvm::MachO::S_COALESCED:
-    if (section.segmentName.equals("__TEXT") &&
-        section.sectionName.equals("__eh_frame")) {
-      symbolsInSect = symbolsIgnored;
-      return processCFISection(file, section, is64, swap, copyRefs);
-    }
-  case llvm::MachO::S_ZEROFILL:
-    // These sections are broken into atoms based on symbols.
-    break;
-  case S_MOD_INIT_FUNC_POINTERS:
-    if ((section.content.size() % pointerSize) != 0) {
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName
-                                     + " has type S_MOD_INIT_FUNC_POINTERS but "
-                                     "its size ("
-                                     + Twine(section.content.size())
-                                     + ") is not a multiple of "
-                                     + Twine(pointerSize));
-    }
-    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
-      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                          DefinedAtom::typeInitializerPtr, DefinedAtom::mergeNo,
-                          bytes, copyRefs);
-      offset += pointerSize;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  case S_MOD_TERM_FUNC_POINTERS:
-    if ((section.content.size() % pointerSize) != 0) {
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName
-                                     + " has type S_MOD_TERM_FUNC_POINTERS but "
-                                     "its size ("
-                                     + Twine(section.content.size())
-                                     + ") is not a multiple of "
-                                     + Twine(pointerSize));
-    }
-    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
-      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeTranslationUnit,
-                          DefinedAtom::typeTerminatorPtr, DefinedAtom::mergeNo,
-                          bytes, copyRefs);
-      offset += pointerSize;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  case S_NON_LAZY_SYMBOL_POINTERS:
-    if ((section.content.size() % pointerSize) != 0) {
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName
-                                     + " has type S_NON_LAZY_SYMBOL_POINTERS "
-                                     "but its size ("
-                                     + Twine(section.content.size())
-                                     + ") is not a multiple of "
-                                     + Twine(pointerSize));
-    }
-    for (size_t i = 0, e = section.content.size(); i != e; i += pointerSize) {
-      ArrayRef<uint8_t> bytes = section.content.slice(offset, pointerSize);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeGOT, DefinedAtom::mergeByContent,
-                          bytes, copyRefs);
-      offset += pointerSize;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  case llvm::MachO::S_CSTRING_LITERALS:
-    for (size_t i = 0, e = section.content.size(); i != e; ++i) {
-      if (section.content[i] == 0) {
-        unsigned size = i - offset + 1;
-        ArrayRef<uint8_t> strContent = section.content.slice(offset, size);
-        file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                            DefinedAtom::typeCString,
-                            DefinedAtom::mergeByContent, strContent, copyRefs);
-        offset = i + 1;
+    const uint32_t *cfi;
+    unsigned int size;
+    for (unsigned int offset = 0, e = section.content.size(); offset != e;) {
+      switch (atomizeModel) {
+      case atomizeFixedSize:
+        // Break section up into atoms each with a fixed size.
+        size = sizeMultiple;
+        break;
+      case atomizePointerSize:
+        // Break section up into atoms each the size of a pointer.
+        size = is64 ? 8 : 4;;
+        break;
+      case atomizeUTF8:
+        // Break section up into zero terminated c-strings.
+        size = 0;
+        for (unsigned int i=0; offset+i < e; ++i) {
+          if (section.content[i] == 0) {
+            size = i+1;
+            break;
+          }
+        }
+        break;
+      case atomizeUTF16:
+        // Break section up into zero terminated UTF16 strings.
+        size = 0;
+        for (unsigned int i=0; offset+i < e; i += 2) {
+          if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
+            size = i+2;
+            break;
+          }
+        }
+        break;
+      case atomizeCFI:
+        // Break section up into dwarf unwind CFIs (FDE or CIE).
+        cfi = reinterpret_cast<const uint32_t *>(&section.content[offset]);
+        size = read32(swap, *cfi) + 4;
+        if (offset+size > section.content.size()) {
+          return make_dynamic_error_code(Twine(Twine("Section ")
+                                         + section.segmentName
+                                         + "/" + section.sectionName
+                                         + " is malformed.  Size of CFI "
+                                         "starting at offset ("
+                                         + Twine(offset)
+                                         + ") is past end of section."));
+        }
+        break;
+      case atomizeCU:
+        // Break section up into compact unwind entries.
+        size = is64 ? 32 : 20;
+        break;
+      case atomizeAtSymbols:
+        break;
       }
+      if (size == 0) {
+        return make_dynamic_error_code(Twine("Section ") + section.segmentName
+                                     + "/" + section.sectionName
+                                     + " is malformed.  The last atom is "
+                                     "not zero terminated.");
+      }
+      ArrayRef<uint8_t> byteContent = section.content.slice(offset, size);
+      file.addDefinedAtom(StringRef(), scope, atomType, merge, byteContent,
+                          copyRefs);
+      offset += size;
     }
-    if (offset != section.content.size()) {
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName 
-                                     + " has type S_CSTRING_LITERALS but the "
-                                     "last string in the section is not zero "
-                                     "terminated."); 
-    }
-    symbolsInSect = symbolsIgnored;
-    break;
-  case llvm::MachO::S_4BYTE_LITERALS:
-    if ((section.content.size() % 4) != 0)
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName 
-                                     + " has type S_4BYTE_LITERALS but its "
-                                     "size (" + Twine(section.content.size()) 
-                                     + ") is not a multiple of 4"); 
-    for (size_t i = 0, e = section.content.size(); i != e; i += 4) {
-      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 4);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral4,
-                          DefinedAtom::mergeByContent, byteContent, copyRefs);
-      offset += 4;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  case llvm::MachO::S_8BYTE_LITERALS:
-    if ((section.content.size() % 8) != 0)
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName 
-                                     + " has type S_8YTE_LITERALS but its "
-                                     "size (" + Twine(section.content.size()) 
-                                     + ") is not a multiple of 8"); 
-    for (size_t i = 0, e = section.content.size(); i != e; i += 8) {
-      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 8);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral8,
-                          DefinedAtom::mergeByContent, byteContent, copyRefs);
-      offset += 8;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  case llvm::MachO::S_16BYTE_LITERALS:
-    if ((section.content.size() % 16) != 0)
-      return make_dynamic_error_code(Twine("Section ") + section.segmentName
-                                     + "/" + section.sectionName 
-                                     + " has type S_16BYTE_LITERALS but its "
-                                     "size (" + Twine(section.content.size()) 
-                                     + ") is not a multiple of 16"); 
-    for (size_t i = 0, e = section.content.size(); i != e; i += 16) {
-      ArrayRef<uint8_t> byteContent = section.content.slice(offset, 16);
-      file.addDefinedAtom(StringRef(), DefinedAtom::scopeLinkageUnit,
-                          DefinedAtom::typeLiteral16,
-                          DefinedAtom::mergeByContent, byteContent, copyRefs);
-      offset += 16;
-    }
-    symbolsInSect = symbolsIllegal;
-    break;
-  default:
-    llvm_unreachable("mach-o section type not supported yet");
-    break;
   }
   return error_code();
 }
 
-static ErrorOr<std::unique_ptr<lld::File>>
+ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                         bool copyRefs) {
   std::unique_ptr<MachOFile> file(new MachOFile(path));
-
-  // Create atoms from sections that don't have symbols.
-  bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
-  bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
-  SmallVector<SymbolsInSection, 32> symbolsInSect;
+  // Create atoms from each section.
   for (auto &sect : normalizedFile.sections) {
-    symbolsInSect.push_back(symbolsOk);
-    if (error_code ec = processSection(*file, sect, is64, swap, copyRefs,
-                                       symbolsInSect.back()))
-      return ec;
-  }
-  // Create atoms from global symbols.
-  for (const Symbol &sym : normalizedFile.globalSymbols) {
-    if (error_code ec = processSymbol(normalizedFile, *file, sym, copyRefs,
-                                      symbolsInSect))
-      return ec;
-  }
-  // Create atoms from local symbols.
-  for (const Symbol &sym : normalizedFile.localSymbols) {
-    if (error_code ec = processSymbol(normalizedFile, *file, sym, copyRefs,
-                                      symbolsInSect))
+    DefinedAtom::ContentType atomType = atomTypeFromSection(sect);
+    if (error_code ec = processSection(atomType, sect, normalizedFile, *file,
+                                       copyRefs))
       return ec;
   }
   // Create atoms from undefined symbols.
   for (auto &sym : normalizedFile.undefinedSymbols) {
-    processUndefindeSymbol(*file, sym, copyRefs);
+    // Undefinded symbols with n_value != 0 are actually tentative definitions.
+    if (sym.value == Hex64(0)) {
+      file->addUndefinedAtom(sym.name, copyRefs);
+    } else {
+      file->addTentativeDefAtom(sym.name, atomScope(sym.scope), sym.value,
+                               DefinedAtom::Alignment(sym.desc >> 8), copyRefs);
+    }
   }
 
   return std::unique_ptr<File>(std::move(file));
 }
+
+} // anonymous namespace
+
+namespace normalized {
 
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,

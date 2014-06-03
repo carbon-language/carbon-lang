@@ -63,10 +63,10 @@ global-symbols:
 # CHECK:   - type:            compact-unwind
 # CHECK:     content:         [ 10, 00, 00, 00, 0A, 00, 00, 00, 00, 00, 00, 01,
 # CHECK:                        00, 00, 00, 00, 00, 00, 00, 00 ]
-# CHECK:   - name:            __Z3barv
+# CHECK:   - name:            __Z3foov
 # CHECK:     scope:           global
 # CHECK:     content:         [ 55, 89, E5, B8, 0A, 00, 00, 00, 5D, C3 ]
-# CHECK:   - name:            __Z3foov
+# CHECK:   - name:            __Z3barv
 # CHECK:     scope:           global
 # CHECK:     content:         [ 55, 89, E5, B8, 0A, 00, 00, 00, 5D, C3 ]
 
