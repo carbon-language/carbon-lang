@@ -7,12 +7,13 @@
 // RUN: ASAN_OPTIONS=detect_odr_violation=1 not %run %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=detect_odr_violation=2 not %run %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=detect_odr_violation=0     %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
-// RUN:                                         %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
+// RUN:                                     not %run %t 2>&1 | FileCheck %s
 //
 // Same size: report a bug only if detect_odr_violation>=2.
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so -DSZ=100
 // RUN: ASAN_OPTIONS=detect_odr_violation=1     %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
 // RUN: ASAN_OPTIONS=detect_odr_violation=2 not %run %t 2>&1 | FileCheck %s
+// RUN:                                     not %run %t 2>&1 | FileCheck %s
 
 // GNU driver doesn't handle .so files properly.
 // REQUIRES: Clang

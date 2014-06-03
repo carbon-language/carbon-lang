@@ -279,6 +279,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->start_deactivated = false;
   f->detect_invalid_pointer_pairs = 0;
   f->detect_container_overflow = true;
+  f->detect_odr_violation = 2;
 
   // Override from compile definition.
   ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefinition());
