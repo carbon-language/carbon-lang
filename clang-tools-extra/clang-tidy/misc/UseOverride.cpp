@@ -61,7 +61,8 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
       Method->isOutOfLine())
     return;
 
-  if (Method->getAttr<clang::OverrideAttr>() != nullptr &&
+  if ((Method->getAttr<clang::OverrideAttr>() != nullptr ||
+       Method->getAttr<clang::FinalAttr>() != nullptr) &&
       !Method->isVirtualAsWritten())
     return; // Nothing to do.
 
