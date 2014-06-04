@@ -550,10 +550,18 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
+#ifndef __has_builtin
+#define __has_builtin(__x) 0
+#endif
+
 #if __has_feature(cxx_explicit_conversions) || defined(__IBMCPP__)
 #   define _LIBCPP_EXPLICIT explicit
 #else
 #   define _LIBCPP_EXPLICIT
+#endif
+
+#if !__has_builtin(__builtin_operator_new) || !__has_builtin(__builtin_operator_delete)
+#   define _LIBCPP_HAS_NO_BUILTIN_OPERATOR_NEW_DELETE
 #endif
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS

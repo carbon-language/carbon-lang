@@ -147,4 +147,24 @@ inline _LIBCPP_INLINE_VISIBILITY void* operator new[](std::size_t, void* __p) _N
 inline _LIBCPP_INLINE_VISIBILITY void  operator delete  (void*, void*) _NOEXCEPT {}
 inline _LIBCPP_INLINE_VISIBILITY void  operator delete[](void*, void*) _NOEXCEPT {}
 
+_LIBCPP_BEGIN_NAMESPACE_STD
+
+inline _LIBCPP_INLINE_VISIBILITY void *__allocate(size_t __size) {
+#ifdef _LIBCPP_HAS_NO_BUILTIN_OPERATOR_NEW_DELETE
+  return ::operator new(__size);
+#else
+  return __builtin_operator_new(__size);
+#endif
+}
+
+inline _LIBCPP_INLINE_VISIBILITY void __deallocate(void *__ptr) {
+#ifdef _LIBCPP_HAS_NO_BUILTIN_OPERATOR_NEW_DELETE
+  ::operator delete(__ptr);
+#else
+  __builtin_operator_delete(__ptr);
+#endif
+}
+
+_LIBCPP_END_NAMESPACE_STD
+
 #endif  // _LIBCPP_NEW

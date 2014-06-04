@@ -147,12 +147,12 @@ private:
             assert(!"dynarray::allocation");
 #endif
         }
-        return static_cast<value_type *> (::operator new (sizeof(value_type) * count));
+        return static_cast<value_type *> (_VSTD::__allocate (sizeof(value_type) * count));
     }
 
     static inline _LIBCPP_INLINE_VISIBILITY void __deallocate ( value_type* __ptr ) noexcept
     {
-        ::operator delete (static_cast<void *> (__ptr));
+        _VSTD::__deallocate (static_cast<void *> (__ptr));
     }
 
 public:
