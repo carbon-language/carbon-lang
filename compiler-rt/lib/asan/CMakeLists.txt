@@ -127,6 +127,9 @@ elseif(ANDROID)
     COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
   target_link_libraries(clang_rt.asan-arm-android dl log)
   add_dependencies(asan clang_rt.asan-arm-android)
+  install(TARGETS clang_rt.asan-arm-android
+          ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR}
+          LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
 else()
   # Build separate libraries for each target.
   foreach(arch ${ASAN_SUPPORTED_ARCH})
