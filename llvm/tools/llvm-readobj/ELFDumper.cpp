@@ -902,13 +902,12 @@ void ELFDumper<ELFType<support::little, 2, false> >::printUnwindInfo() {
 
 template<class ELFT>
 void ELFDumper<ELFT>::printDynamicTable() {
-  typedef typename ELFO::Elf_Dyn_Iter EDI;
-  EDI Start = Obj->begin_dynamic_table(), End = Obj->end_dynamic_table(true);
+  auto DynTable = Obj->dynamic_table(true);
 
-  if (Start == End)
+  ptrdiff_t Total = std::distance(DynTable.begin(), DynTable.end());
+  if (Total == 0)
     return;
 
-  ptrdiff_t Total = std::distance(Start, End);
   raw_ostream &OS = W.getOStream();
   W.startLine() << "DynamicSection [ (" << Total << " entries)\n";
 
@@ -917,12 +916,12 @@ void ELFDumper<ELFT>::printDynamicTable() {
   W.startLine()
      << "  Tag" << (Is64 ? "                " : "        ") << "Type"
      << "                 " << "Name/Value\n";
-  for (; Start != End; ++Start) {
+  for (const auto &Entry : DynTable) {
     W.startLine()
        << "  "
-       << format(Is64 ? "0x%016" PRIX64 : "0x%08" PRIX64, Start->getTag())
-       << " " << format("%-21s", getTypeString(Start->getTag()));
-    printValue(Obj, Start->getTag(), Start->getVal(), Is64, OS);
+       << format(Is64 ? "0x%016" PRIX64 : "0x%08" PRIX64, Entry.getTag())
+       << " " << format("%-21s", getTypeString(Entry.getTag()));
+    printValue(Obj, Entry.getTag(), Entry.getVal(), Is64, OS);
     OS << "\n";
   }
 
@@ -936,11 +935,9 @@ void ELFDumper<ELFT>::printNeededLibraries() {
   typedef std::vector<StringRef> LibsTy;
   LibsTy Libs;
 
-  for (typename ELFO::Elf_Dyn_Iter DynI = Obj->begin_dynamic_table(),
-                                   DynE = Obj->end_dynamic_table();
-       DynI != DynE; ++DynI)
-    if (DynI->d_tag == ELF::DT_NEEDED)
-      Libs.push_back(Obj->getDynamicString(DynI->d_un.d_val));
+  for (const auto &Entry : Obj->dynamic_table())
+    if (Entry.d_tag == ELF::DT_NEEDED)
+      Libs.push_back(Obj->getDynamicString(Entry.d_un.d_val));
 
   std::stable_sort(Libs.begin(), Libs.end());
 

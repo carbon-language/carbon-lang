@@ -133,6 +133,7 @@ public:
   typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
   typedef ELFEntityIterator<const Elf_Dyn> Elf_Dyn_Iter;
+  typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
   typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
   typedef ELFEntityIterator<const Elf_Shdr> Elf_Shdr_Iter;
@@ -342,6 +343,9 @@ public:
   /// \param NULLEnd use one past the first DT_NULL entry as the end instead of
   /// the section size.
   Elf_Dyn_Iter end_dynamic_table(bool NULLEnd = false) const;
+  Elf_Dyn_Range dynamic_table(bool NULLEnd = false) const {
+    return make_range(begin_dynamic_table(), end_dynamic_table(NULLEnd));
+  }
 
   Elf_Sym_Iter begin_dynamic_symbols() const {
     if (DynSymRegion.Addr)
@@ -823,17 +827,13 @@ ELFFile<ELFT>::end_dynamic_table(bool NULLEnd) const {
 template <class ELFT>
 StringRef ELFFile<ELFT>::getLoadName() const {
   if (!dt_soname) {
+    dt_soname = "";
     // Find the DT_SONAME entry
-    Elf_Dyn_Iter it = begin_dynamic_table();
-    Elf_Dyn_Iter ie = end_dynamic_table();
-    while (it != ie && it->getTag() != ELF::DT_SONAME)
-      ++it;
-
-    if (it != ie) {
-      dt_soname = getDynamicString(it->getVal());
-    } else {
-      dt_soname = "";
-    }
+    for (const auto &Entry : dynamic_table())
+      if (Entry.getTag() == ELF::DT_SONAME) {
+        dt_soname = getDynamicString(Entry.getVal());
+        break;
+      }
   }
   return dt_soname;
 }
