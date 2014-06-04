@@ -3741,7 +3741,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       continue;
 
     // EFLAGS is used by this instruction.
-    X86::CondCode OldCC;
+    X86::CondCode OldCC = X86::COND_INVALID;
     bool OpcIsSET = false;
     if (IsCmpZero || IsSwapped) {
       // We decode the condition code from opcode.
