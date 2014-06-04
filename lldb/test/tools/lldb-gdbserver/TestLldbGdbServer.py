@@ -1285,5 +1285,34 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.m_packet_reads_memory()
 
+    def qMemoryRegionInfo_is_supported(self):
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior()
+
+        # Ask if it supports $qMemoryRegionInfo.
+        self.test_sequence.add_log_lines(
+            ["read packet: $qMemoryRegionInfo#00",
+             "send packet: $OK#00"
+             ], True)
+        self.expect_gdbremote_sequence()
+
+    @debugserver_test
+    @dsym_test
+    def test_qMemoryRegionInfo_is_supported_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_is_supported()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qMemoryRegionInfo_is_supported_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_is_supported()
+
+
 if __name__ == '__main__':
     unittest2.main()
