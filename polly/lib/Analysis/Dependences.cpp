@@ -76,9 +76,7 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
   *MayWrite = isl_union_map_empty(isl_space_copy(Space));
   *Schedule = isl_union_map_empty(Space);
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-
+  for (ScopStmt *Stmt : S) {
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
                                    ME = Stmt->memacc_end();
          MI != ME; ++MI) {
@@ -195,12 +193,10 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
 
   isl_space *ScatteringSpace = 0;
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-
+  for (ScopStmt *Stmt : S) {
     isl_map *StmtScat;
 
-    if (NewScattering->find(*SI) == NewScattering->end())
+    if (NewScattering->find(Stmt) == NewScattering->end())
       StmtScat = Stmt->getScattering();
     else
       StmtScat = isl_map_copy((*NewScattering)[Stmt]);
@@ -234,8 +230,7 @@ isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
   isl_space *Space = scop->getParamSpace();
   isl_union_map *schedule = isl_union_map_empty(Space);
 
-  for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : *scop) {
     unsigned remainingDimensions = Stmt->getNumScattering() - dimLevel;
     isl_map *Scattering = isl_map_project_out(
         Stmt->getScattering(), isl_dim_out, dimLevel, remainingDimensions);

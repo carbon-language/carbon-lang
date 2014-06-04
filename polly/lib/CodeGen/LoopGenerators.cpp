@@ -240,8 +240,8 @@ Function *OMPGenerator::createSubfunctionDefinition() {
 Value *OMPGenerator::loadValuesIntoStruct(SetVector<Value *> &Values) {
   std::vector<Type *> Members;
 
-  for (unsigned i = 0; i < Values.size(); i++)
-    Members.push_back(Values[i]->getType());
+  for (Value *V : Values)
+    Members.push_back(V->getType());
 
   StructType *Ty = StructType::get(Builder.getContext(), Members);
   Value *Struct = Builder.CreateAlloca(Ty, 0, "omp.userContext");

@@ -1014,9 +1014,8 @@ void IslNodeBuilder::createSubstitutionsVector(
   int i = 0;
 
   Value *OldValue = IDToValue[IteratorID];
-  for (std::vector<Value *>::iterator II = IVS.begin(), IE = IVS.end();
-       II != IE; ++II) {
-    IDToValue[IteratorID] = *II;
+  for (Value *IV : IVS) {
+    IDToValue[IteratorID] = IV;
     createSubstitutions(isl_pw_multi_aff_copy(PMA), isl_ast_build_copy(Context),
                         Stmt, VMap[i], VLTS[i]);
     i++;

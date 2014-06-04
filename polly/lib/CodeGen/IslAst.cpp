@@ -395,8 +395,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
 __isl_give isl_union_map *IslAst::getSchedule() {
   isl_union_map *Schedule = isl_union_map_empty(S->getParamSpace());
 
-  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : *S) {
     isl_map *StmtSchedule = Stmt->getScattering();
 
     StmtSchedule = isl_map_intersect_domain(StmtSchedule, Stmt->getDomain());
