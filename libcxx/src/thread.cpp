@@ -121,7 +121,9 @@ sleep_for(const chrono::nanoseconds& ns)
             ts.tv_sec = ts_sec_max;
             ts.tv_nsec = giga::num - 1;
         }
-        nanosleep(&ts, 0);
+
+        while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
+            ;
     }
 }
 
