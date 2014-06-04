@@ -43,6 +43,10 @@ bool TargetSubtargetInfo::enableMachineScheduler() const {
   return false;
 }
 
+bool TargetSubtargetInfo::enablePostMachineScheduler() const {
+  return false;
+}
+
 bool TargetSubtargetInfo::enablePostRAScheduler(
           CodeGenOpt::Level OptLevel,
           AntiDepBreakMode& Mode,

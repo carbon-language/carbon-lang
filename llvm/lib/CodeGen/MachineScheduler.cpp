@@ -333,6 +333,12 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   if (skipOptnoneFunction(*mf.getFunction()))
     return false;
 
+  const TargetSubtargetInfo &ST =
+    mf.getTarget().getSubtarget<TargetSubtargetInfo>();
+  if (!ST.enablePostMachineScheduler()) {
+    DEBUG(dbgs() << "Subtarget disables post-MI-sched.\n");
+    return false;
+  }
   DEBUG(dbgs() << "Before post-MI-sched:\n"; mf.print(dbgs()));
 
   // Initialize the context of the pass.

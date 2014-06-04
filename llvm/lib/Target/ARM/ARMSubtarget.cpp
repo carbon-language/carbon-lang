@@ -352,6 +352,13 @@ bool ARMSubtarget::hasSinCos() const {
     !getTargetTriple().isOSVersionLT(7, 0);
 }
 
+// Enable the PostMachineScheduler if the target selects it instead of
+// PostRAScheduler. Currently only available on the command line via
+// -misched-postra.
+bool ARMSubtarget::enablePostMachineScheduler() const {
+  return PostRAScheduler;
+}
+
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,

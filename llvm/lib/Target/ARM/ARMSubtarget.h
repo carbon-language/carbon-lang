@@ -396,6 +396,9 @@ public:
   /// compiler runtime or math libraries.
   bool hasSinCos() const;
 
+  /// True for some subtargets at > -O0.
+  bool enablePostMachineScheduler() const;
+
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,

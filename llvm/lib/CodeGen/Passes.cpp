@@ -92,9 +92,9 @@ PrintMachineInstrs("print-machineinstrs", cl::ValueOptional,
 
 // Temporary option to allow experimenting with MachineScheduler as a post-RA
 // scheduler. Targets can "properly" enable this with
-// substitutePass(&PostRASchedulerID, &MachineSchedulerID); Ideally it wouldn't
-// be part of the standard pass pipeline, and the target would just add a PostRA
-// scheduling pass wherever it wants.
+// substitutePass(&PostRASchedulerID, &PostMachineSchedulerID); Ideally it
+// wouldn't be part of the standard pass pipeline, and the target would just add
+// a PostRA scheduling pass wherever it wants.
 static cl::opt<bool> MISchedPostRA("misched-postra", cl::Hidden,
   cl::desc("Run MachineScheduler post regalloc (independent of preRA sched)"));
 
