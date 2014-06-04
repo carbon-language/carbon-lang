@@ -290,7 +290,7 @@ void GlobalAlias::eraseFromParent() {
 }
 
 void GlobalAlias::setAliasee(Constant *Aliasee) {
-  assert(!Aliasee || Aliasee->getType() == getType() &&
+  assert((!Aliasee || Aliasee->getType() == getType()) &&
          "Alias and aliasee types should match!");
   setOperand(0, Aliasee);
 }
