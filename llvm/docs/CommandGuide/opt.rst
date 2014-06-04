@@ -99,10 +99,6 @@ OPTIONS
  :option:`-std-compile-opts` and :option:`-verify-each` can quickly track down
  this kind of problem.
 
-.. option:: -profile-info-file <filename>
-
- Specify the name of the file loaded by the ``-profile-loader`` option.
-
 .. option:: -stats
 
  Print statistics.

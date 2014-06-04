@@ -261,12 +261,6 @@ returns "I don't know" for alias queries.  NoAA is unlike other alias analysis
 implementations, in that it does not chain to a previous analysis.  As such it
 doesn't follow many of the rules that other alias analyses must.
 
-``-no-profile``: No Profile Information
----------------------------------------
-
-The default "no profile" implementation of the abstract ``ProfileInfo``
-interface.
-
 ``-postdomfrontier``: Post-Dominance Frontier Construction
 ----------------------------------------------------------
 
@@ -335,23 +329,6 @@ This pass simply prints out the entire module when it is executed.
 This pass is used to seek out all of the types in use by the program.  Note
 that this analysis explicitly does not include types only used by the symbol
 table.
-
-``-profile-estimator``: Estimate profiling information
-------------------------------------------------------
-
-Profiling information that estimates the profiling information in a very crude
-and unimaginative way.
-
-``-profile-loader``: Load profile information from ``llvmprof.out``
--------------------------------------------------------------------
-
-A concrete implementation of profiling information that loads the information
-from a profile dump file.
-
-``-profile-verifier``: Verify profiling information
----------------------------------------------------
-
-Pass that checks profiling information for plausibility.
 
 ``-regions``: Detect single entry single exit regions
 -----------------------------------------------------
@@ -625,24 +602,6 @@ where it is profitable, the loop could be transformed to count down to zero
 ------------------------------------------
 
 Bottom-up inlining of functions into callees.
-
-``-insert-edge-profiling``: Insert instrumentation for edge profiling
----------------------------------------------------------------------
-
-This pass instruments the specified program with counters for edge profiling.
-Edge profiling can give a reasonable approximation of the hot paths through a
-program, and is used for a wide variety of program transformations.
-
-Note that this implementation is very naïve.  It inserts a counter for *every*
-edge in the program, instead of using control flow information to prune the
-number of counters inserted.
-
-``-insert-optimal-edge-profiling``: Insert optimal instrumentation for edge profiling
--------------------------------------------------------------------------------------
-
-This pass instruments the specified program with counters for edge profiling.
-Edge profiling can give a reasonable approximation of the hot paths through a
-program, and is used for a wide variety of program transformations.
 
 .. _passes-instcombine:
 

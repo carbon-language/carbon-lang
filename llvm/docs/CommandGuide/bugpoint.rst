@@ -124,10 +124,6 @@ OPTIONS
  do not use this option, **bugpoint** will attempt to generate a reference output
  by compiling the program with the "safe" backend and running it.
 
-**--profile-info-file** *filename*
-
- Profile file loaded by **--profile-loader**.
-
 **--run-{int,jit,llc,custom}**
 
  Whenever the test program is compiled, **bugpoint** should generate code for it

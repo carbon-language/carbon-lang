@@ -259,7 +259,6 @@ To see what happened to the other string you registered, try running
       -hello                    - Hello World Pass
       -indvars                  - Induction Variable Simplification
       -inline                   - Function Integration/Inlining
-      -insert-edge-profiling    - Insert instrumentation for edge profiling
   ...
 
 The pass name gets added as the information string for your pass, giving some
