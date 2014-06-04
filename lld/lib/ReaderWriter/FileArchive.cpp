@@ -120,6 +120,9 @@ protected:
     return error_code();
   }
 
+  // Parses the given memory buffer as an object file, and returns success error
+  // code if the given symbol is a data symbol. If the symbol is not a data
+  // symbol or does not exist, returns a failure.
   error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb, StringRef symbol) const {
     auto objOrErr(ObjectFile::createObjectFile(mb.release()));
     if (auto ec = objOrErr.getError())
@@ -132,12 +135,9 @@ protected:
     StringRef symbolname;
 
     for (symbol_iterator i = ibegin; i != iend; ++i) {
-      error_code ec;
-
       // Get symbol name
-      if ((ec = (i->getName(symbolname))))
+      if (error_code ec = i->getName(symbolname))
         return ec;
-
       if (symbolname != symbol)
         continue;
 
@@ -148,12 +148,11 @@ protected:
         continue;
 
       // Get Symbol Type
-      if ((ec = (i->getType(symtype))))
+      if (error_code ec = i->getType(symtype))
         return ec;
 
-      if (symtype == SymbolRef::ST_Data) {
+      if (symtype == SymbolRef::ST_Data)
         return error_code();
-      }
     }
     return object_error::parse_failed;
   }
