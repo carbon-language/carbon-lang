@@ -35,6 +35,12 @@ namespace {
 /// \brief The FileArchive class represents an Archive Library file
 class FileArchive : public lld::ArchiveLibraryFile {
 public:
+  FileArchive(const Registry &registry, Archive *archive, StringRef path,
+              bool isWholeArchive, bool logLoading)
+      : ArchiveLibraryFile(path), _registry(registry),
+        _archive(std::move(archive)), _isWholeArchive(isWholeArchive),
+        _logLoading(logLoading) {}
+
   virtual ~FileArchive() {}
 
   /// \brief Check if any member of the archive contains an Atom with the
@@ -95,6 +101,27 @@ public:
 
   const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
+  }
+
+  error_code buildTableOfContents() {
+    DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
+                                       << "Table of contents for archive '"
+                                       << _archive->getFileName() << "':\n");
+    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
+         i != e; ++i) {
+      StringRef name;
+      Archive::child_iterator member;
+      if (error_code ec = i->getName(name))
+        return ec;
+      if (error_code ec = i->getMember(member))
+        return ec;
+      DEBUG_WITH_TYPE(
+          "FileArchive",
+          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
+                       << "'" << name << "'\n");
+      _symbolMemberMap[name] = member;
+    }
+    return error_code();
   }
 
   /// Returns a set of all defined symbols in the archive.
@@ -171,37 +198,7 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _isWholeArchive;
   bool _logLoading;
-
-public:
-  /// only subclasses of ArchiveLibraryFile can be instantiated
-  FileArchive(const Registry &registry, Archive *archive, StringRef path,
-              bool isWholeArchive, bool logLoading)
-      : ArchiveLibraryFile(path), _registry(registry),
-        _archive(std::move(archive)), _isWholeArchive(isWholeArchive),
-        _logLoading(logLoading) {}
-
-  error_code buildTableOfContents() {
-    DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
-                                       << "Table of contents for archive '"
-                                       << _archive->getFileName() << "':\n");
-    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
-         i != e; ++i) {
-      StringRef name;
-      Archive::child_iterator member;
-      if (error_code ec = i->getName(name))
-        return ec;
-      if (error_code ec = i->getMember(member))
-        return ec;
-      DEBUG_WITH_TYPE(
-          "FileArchive",
-          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
-                       << "'" << name << "'\n");
-      _symbolMemberMap[name] = member;
-    }
-    return error_code();
-  }
-
-}; // class FileArchive
+};
 
 class ArchiveReader : public Reader {
 public:
