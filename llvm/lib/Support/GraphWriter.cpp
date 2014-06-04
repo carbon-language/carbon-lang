@@ -164,12 +164,14 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
     return ExecGraphViewer(ViewerPath, args, Filename, wait, ErrMsg);
   }
 
-  enum PSViewerKind { PSV_None, PSV_OSXOpen, PSV_Ghostview };
+  enum PSViewerKind { PSV_None, PSV_OSXOpen, PSV_XDGOpen, PSV_Ghostview };
   PSViewerKind PSViewer = PSV_None;
 #ifdef __APPLE__
-  if (S.TryFindProgram("open", ViewerPath))
+  if (!PSViewer && S.TryFindProgram("open", ViewerPath))
     PSViewer = PSV_OSXOpen;
 #endif
+  if (!PSViewer && S.TryFindProgram("xdg-open", ViewerPath))
+    PSViewer = PSV_XDGOpen;
   if (!PSViewer && S.TryFindProgram("gv", ViewerPath))
     PSViewer = PSV_Ghostview;
 
@@ -200,6 +202,10 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
     switch (PSViewer) {
     case PSV_OSXOpen:
       args.push_back("-W");
+      args.push_back(PSFilename.c_str());
+      break;
+    case PSV_XDGOpen:
+      wait = false;
       args.push_back(PSFilename.c_str());
       break;
     case PSV_Ghostview:
