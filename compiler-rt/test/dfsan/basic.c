@@ -17,5 +17,12 @@ int main(void) {
   dfsan_label read_label = dfsan_read_label(&i, sizeof(i));
   assert(i_label == read_label);
 
+  dfsan_label j_label = dfsan_create_label("j", 0);
+  dfsan_add_label(j_label, &i, sizeof(i));
+
+  read_label = dfsan_read_label(&i, sizeof(i));
+  assert(dfsan_has_label(read_label, i_label));
+  assert(dfsan_has_label(read_label, j_label));
+
   return 0;
 }
