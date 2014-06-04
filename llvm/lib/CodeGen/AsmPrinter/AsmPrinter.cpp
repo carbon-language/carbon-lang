@@ -1349,9 +1349,14 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
     const TargetLoweringObjectFile &Obj = getObjFileLowering();
     const MCSymbol *KeySym = nullptr;
     const MCSection *KeySec = nullptr;
-    if (S.ComdatKey) {
-      KeySym = getSymbol(S.ComdatKey);
-      KeySec = getObjFileLowering().SectionForGlobal(S.ComdatKey, *Mang, TM);
+    if (GlobalValue *GV = S.ComdatKey) {
+      if (GV->hasAvailableExternallyLinkage())
+        // If the associated variable is available_externally, some other TU
+        // will provide its dynamic initializer.
+        continue;
+
+      KeySym = getSymbol(GV);
+      KeySec = getObjFileLowering().SectionForGlobal(GV, *Mang, TM);
     }
     const MCSection *OutputSection =
         (isCtor ? Obj.getStaticCtorSection(S.Priority, KeySym, KeySec)
