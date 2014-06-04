@@ -368,7 +368,14 @@ namespace std {
 #endif
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+
+// constexpr was added to GCC in 4.6.
+#if _GNUC_VER < 406
 #define _LIBCPP_HAS_NO_CONSTEXPR
+// Can only use constexpr in c++11 mode.
+#elif !defined(__GXX_EXPERIMENTAL_CXX0X__) && __cplusplus < 201103L
+#define _LIBCPP_HAS_NO_CONSTEXPR
+#endif
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
