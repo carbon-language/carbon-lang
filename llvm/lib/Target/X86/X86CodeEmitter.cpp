@@ -1113,9 +1113,14 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     case TargetOpcode::INLINEASM:
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
-      if (MI.getOperand(0).getSymbolName()[0])
+      if (MI.getOperand(0).getSymbolName()[0]) {
+        DebugLoc DL = MI.getDebugLoc();
+        DL.print(MI.getParent()->getParent()->getFunction()->getContext(),
+                 llvm::errs());
         report_fatal_error("JIT does not support inline asm!");
+      }
       break;
+    case TargetOpcode::DBG_VALUE:
     case TargetOpcode::CFI_INSTRUCTION:
       break;
     case TargetOpcode::GC_LABEL:
