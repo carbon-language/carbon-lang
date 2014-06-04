@@ -444,7 +444,7 @@ bool Decoder::opcode_11111111(const ulittle8_t *OC, unsigned &Offset,
 
 void Decoder::decodeOpcodes(ArrayRef<ulittle8_t> Opcodes, unsigned Offset,
                             bool Prologue) {
-  assert(!Prologue || Offset == 0 && "prologue should always use offset 0");
+  assert((!Prologue || Offset == 0) && "prologue should always use offset 0");
 
   bool Terminated = false;
   for (unsigned OI = Offset, OE = Opcodes.size(); !Terminated && OI < OE; ) {
