@@ -16,6 +16,7 @@
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
+#include "ARMWinEHPrinter.h"
 #include "Win64EHDumper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -856,6 +857,11 @@ void COFFDumper::printUnwindInfo() {
       };
     Win64EH::Dumper::Context Ctx(*Obj, Resolver, this);
     Dumper.printData(Ctx);
+    break;
+  }
+  case COFF::IMAGE_FILE_MACHINE_ARMNT: {
+    ARM::WinEH::Decoder Decoder(W);
+    Decoder.dumpProcedureData(*Obj);
     break;
   }
   default:
