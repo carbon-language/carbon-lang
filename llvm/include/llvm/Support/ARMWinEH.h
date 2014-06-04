@@ -90,6 +90,14 @@ enum class ReturnType {
 ///     + r11 must NOT be included in the set of registers described by Reg
 ///   - IF Ret is 0:
 ///     + L flag must be set
+
+// NOTE: RuntimeFunction is meant to be a simple class that provides raw access
+// to all fields in the structure.  The accessor methods reflect the names of
+// the bitfields that they correspond to.  Although some obvious simplifications
+// are possible via merging of methods, it would prevent the use of this class
+// to fully inspect the contents of the data structure which is particularly
+// useful for scenarios such as llvm-readobj to aid in testing.
+
 class RuntimeFunction {
 public:
   const support::ulittle32_t BeginAddress;
