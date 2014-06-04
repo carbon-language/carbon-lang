@@ -145,7 +145,7 @@ public:
   struct Handler {
     /// A type info value, or null (C++ null, not an LLVM null pointer)
     /// for a catch-all.
-    llvm::Value *Type;
+    llvm::Constant *Type;
 
     /// The catch handler for this type.
     llvm::BasicBlock *Block;
@@ -183,7 +183,7 @@ public:
     setHandler(I, /*catchall*/ nullptr, Block);
   }
 
-  void setHandler(unsigned I, llvm::Value *Type, llvm::BasicBlock *Block) {
+  void setHandler(unsigned I, llvm::Constant *Type, llvm::BasicBlock *Block) {
     assert(I < getNumHandlers());
     getHandlers()[I].Type = Type;
     getHandlers()[I].Block = Block;

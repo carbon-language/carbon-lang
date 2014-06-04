@@ -622,7 +622,7 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       QualType CaughtType = C->getCaughtType();
       CaughtType = CaughtType.getNonReferenceType().getUnqualifiedType();
 
-      llvm::Value *TypeInfo = nullptr;
+      llvm::Constant *TypeInfo = nullptr;
       if (CaughtType->isObjCObjectPointerType())
         TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
       else

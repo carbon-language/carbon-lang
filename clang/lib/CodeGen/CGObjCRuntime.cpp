@@ -149,7 +149,7 @@ namespace {
     const VarDecl *Variable;
     const Stmt *Body;
     llvm::BasicBlock *Block;
-    llvm::Value *TypeInfo;
+    llvm::Constant *TypeInfo;
   };
 
   struct CallObjCEndCatch : EHScopeStack::Cleanup {
