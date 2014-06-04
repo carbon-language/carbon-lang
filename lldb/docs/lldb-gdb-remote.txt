@@ -791,7 +791,7 @@ not supported.
 // "qMemoryRegionInfo:<addr>"
 //
 // BRIEF
-//  Get information about the address the range that contains "<addr>"
+//  Get information about the address range that contains "<addr>"
 //
 // PRIORITY TO IMPLEMENT
 //  Medium. This is nice to have, but it isn't necessary. It helps LLDB
@@ -809,7 +809,7 @@ We added a way to get information for a memory region. The packet is:
     
 Where <addr> is a big endian hex address. The response is returned in a series
 of tuples like the data returned in a stop reply packet. The currently valid
-tuples tp return are:
+tuples to return are:
 
     start:<start-addr>; // <start-addr> is a big endian hex address that is 
                         // the start address of the range that contains <addr>
