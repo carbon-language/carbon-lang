@@ -169,6 +169,10 @@ public:
     startLine() << Label << ": " << int(Value) << "\n";
   }
 
+  void printBoolean(StringRef Label, bool Value) {
+    startLine() << Label << ": " << (Value ? "Yes" : "No") << '\n';
+  }
+
   template <typename T_>
   void printList(StringRef Label, const SmallVectorImpl<T_> &List) {
     startLine() << Label << ": [";
