@@ -189,6 +189,7 @@
 
 // RUN: %clangxx -fsanitize=undefined %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-CXX %s
 // CHECK-UBSAN-LINUX-CXX: "{{.*}}ld{{(.exe)?}}"
@@ -196,8 +197,10 @@
 // CHECK-UBSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.san-i386.a" "-no-whole-archive"
 // CHECK-UBSAN-LINUX-CXX-NOT: libclang_rt.asan
 // CHECK-UBSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.ubsan-i386.a" "-no-whole-archive"
+// CHECK-UBSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.ubsan-i386.a.syms"
 // CHECK-UBSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.ubsan_cxx-i386.a" "-no-whole-archive"
 // CHECK-UBSAN-LINUX-CXX: "-lpthread"
+// CHECK-UBSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.ubsan_cxx-i386.a.syms"
 // CHECK-UBSAN-LINUX-CXX: "-lstdc++"
 
 // RUN: %clang -fsanitize=address,undefined %s -### -o %t.o 2>&1 \
@@ -228,11 +231,16 @@
 
 // RUN: %clang -fsanitize=undefined %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-SHARED %s
 // CHECK-UBSAN-LINUX-SHARED: "{{.*}}ld{{(.exe)?}}"
+// CHECK-UBSAN-LINUX-SHARED-NOT: --export-dynamic
+// CHECK-UBSAN-LINUX-SHARED-NOT: --dynamic-list
 // CHECK-UBSAN-LINUX-SHARED: libclang_rt.ubsan-i386.a"
+// CHECK-UBSAN-LINUX-SHARED-NOT: --export-dynamic
+// CHECK-UBSAN-LINUX-SHARED-NOT: --dynamic-list
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-linux -fsanitize=leak \
