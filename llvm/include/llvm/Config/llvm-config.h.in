@@ -1,4 +1,4 @@
-/*===-- llvm/config/llvm-config.h - llvm configure variable -------*- C -*-===*/
+/*===------- llvm/Config/llvm-config.h - llvm configuration -------*- C -*-===*/
 /*                                                                            */
 /*                     The LLVM Compiler Infrastructure                       */
 /*                                                                            */
@@ -7,14 +7,12 @@
 /*                                                                            */
 /*===----------------------------------------------------------------------===*/
 
-/* This file enumerates all of the llvm variables from configure so that
-   they can be in exported headers and won't override package specific
-   directives.  This is a C file so we can include it in the llvm-c headers.  */
+/* This file enumerates variables from the LLVM configuration so that they
+   can be in exported headers and won't override package specific directives.
+   This is a C header that can be included in the llvm-c headers. */
 
-/* To avoid multiple inclusions of these variables when we include the exported
-   headers and config.h, conditionally include these.  */
-/* TODO: This is a bit of a hack.  */
-#ifndef CONFIG_H
+#ifndef LLVM_CONFIG_H
+#define LLVM_CONFIG_H
 
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
