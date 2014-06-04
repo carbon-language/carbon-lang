@@ -130,3 +130,6 @@ void A::foo() __restrict & {}
 void A::foo() __restrict && {}
 // CHECK-DAG: @"\01?foo@A@PR19361@@QIHAEXXZ"
 }
+
+int operator"" _deg(long double) { return 0; }
+// CHECK-DAG: @"\01??__K_deg@@YAHO@Z"

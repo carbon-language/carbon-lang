@@ -803,11 +803,8 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       break;
 
     case DeclarationName::CXXLiteralOperatorName: {
-      // FIXME: Was this added in VS2010? Does MS even know how to mangle this?
-      DiagnosticsEngine &Diags = Context.getDiags();
-      unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-        "cannot mangle this literal operator yet");
-      Diags.Report(ND->getLocation(), DiagID);
+      Out << "?__K";
+      mangleSourceName(Name.getCXXLiteralIdentifier()->getName());
       break;
     }
 
