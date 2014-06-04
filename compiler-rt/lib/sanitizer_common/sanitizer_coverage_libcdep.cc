@@ -59,6 +59,8 @@ namespace __sanitizer {
 class CoverageData {
  public:
   void Init();
+  void BeforeFork();
+  void AfterFork(int child_pid);
   void Extend(uptr npcs);
   void Add(uptr pc);
 
@@ -86,6 +88,7 @@ class CoverageData {
   StaticSpinMutex mu;
 
   void DirectOpen();
+  void ReInit();
 };
 
 static CoverageData coverage_data;
@@ -107,14 +110,38 @@ void CoverageData::DirectOpen() {
 void CoverageData::Init() {
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
+  pc_fd = kInvalidFd;
   if (common_flags()->coverage_direct) {
     atomic_store(&pc_array_size, 0, memory_order_relaxed);
     atomic_store(&pc_array_index, 0, memory_order_relaxed);
   } else {
-    pc_fd = 0;
     atomic_store(&pc_array_size, kPcArrayMaxSize, memory_order_relaxed);
     atomic_store(&pc_array_index, 0, memory_order_relaxed);
   }
+}
+
+void CoverageData::ReInit() {
+  internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
+  if (pc_fd != kInvalidFd) internal_close(pc_fd);
+  if (common_flags()->coverage_direct) {
+    // In memory-mapped mode we must extend the new file to the known array
+    // size.
+    uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
+    Init();
+    if (size) Extend(size);
+  } else {
+    Init();
+  }
+}
+
+void CoverageData::BeforeFork() {
+  mu.Lock();
+}
+
+void CoverageData::AfterFork(int child_pid) {
+  // We are single-threaded so it's OK to release the lock early.
+  mu.Unlock();
+  if (child_pid == 0) ReInit();
 }
 
 // Extend coverage PC array to fit additional npcs elements.
@@ -122,8 +149,8 @@ void CoverageData::Extend(uptr npcs) {
   if (!common_flags()->coverage_direct) return;
   SpinMutexLock l(&mu);
 
-  if (!pc_fd) DirectOpen();
-  CHECK(pc_fd);
+  if (pc_fd == kInvalidFd) DirectOpen();
+  CHECK_NE(pc_fd, kInvalidFd);
 
   uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
   size += npcs * sizeof(uptr);
@@ -324,6 +351,15 @@ int MaybeOpenCovFile(const char *name) {
   if (!common_flags()->coverage) return -1;
   return CovOpenFile(true /* packed */, name);
 }
+
+void CovBeforeFork() {
+  coverage_data.BeforeFork();
+}
+
+void CovAfterFork(int child_pid) {
+  coverage_data.AfterFork(child_pid);
+}
+
 }  // namespace __sanitizer
 
 extern "C" {

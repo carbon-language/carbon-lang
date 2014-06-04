@@ -697,6 +697,16 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
 
+#if ASAN_INTERCEPT_FORK
+INTERCEPTOR(int, fork, void) {
+  ENSURE_ASAN_INITED();
+  if (common_flags()->coverage) CovBeforeFork();
+  int pid = REAL(fork)();
+  if (common_flags()->coverage) CovAfterFork(pid);
+  return pid;
+}
+#endif  // ASAN_INTERCEPT_FORK
+
 #if SANITIZER_WINDOWS
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
@@ -806,6 +816,10 @@ void InitializeAsanInterceptors() {
   // Intercept atexit function.
 #if ASAN_INTERCEPT___CXA_ATEXIT
   ASAN_INTERCEPT_FUNC(__cxa_atexit);
+#endif
+
+#if ASAN_INTERCEPT_FORK
+  ASAN_INTERCEPT_FUNC(fork);
 #endif
 
   // Some Windows-specific interceptors.

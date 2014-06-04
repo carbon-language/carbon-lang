@@ -193,6 +193,8 @@ void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args);
 void SetSandboxingCallback(void (*f)());
 
 void CovUpdateMapping();
+void CovBeforeFork();
+void CovAfterFork(int child_pid);
 
 void InitTlsSize();
 uptr GetTlsSize();
