@@ -2220,9 +2220,9 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
     ArgTypes.push_back(IntPtrTy);
   }
 
-  bool Recover = (RecoverKind == CRK_AlwaysRecoverable) ||
-                 ((RecoverKind == CRK_Recoverable) &&
-                   CGM.getCodeGenOpts().SanitizeRecover);
+  bool Recover = RecoverKind == CRK_AlwaysRecoverable ||
+                 (RecoverKind == CRK_Recoverable &&
+                  CGM.getCodeGenOpts().SanitizeRecover);
 
   llvm::FunctionType *FnType =
     llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
@@ -2234,15 +2234,14 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
   B.addAttribute(llvm::Attribute::UWTable);
 
   // Checks that have two variants use a suffix to differentiate them
-  bool NeedsAbortSuffix = (RecoverKind != CRK_Unrecoverable) &&
-                           !CGM.getCodeGenOpts().SanitizeRecover;
+  bool NeedsAbortSuffix = RecoverKind != CRK_Unrecoverable &&
+                          !CGM.getCodeGenOpts().SanitizeRecover;
   std::string FunctionName = ("__ubsan_handle_" + CheckName +
                               (NeedsAbortSuffix? "_abort" : "")).str();
-  llvm::Value *Fn =
-    CGM.CreateRuntimeFunction(FnType, FunctionName,
-                              llvm::AttributeSet::get(getLLVMContext(),
-                                              llvm::AttributeSet::FunctionIndex,
-                                                      B));
+  llvm::Value *Fn = CGM.CreateRuntimeFunction(
+      FnType, FunctionName,
+      llvm::AttributeSet::get(getLLVMContext(),
+                              llvm::AttributeSet::FunctionIndex, B));
   llvm::CallInst *HandlerCall = EmitNounwindRuntimeCall(Fn, Args);
   if (Recover) {
     Builder.CreateBr(Cont);
