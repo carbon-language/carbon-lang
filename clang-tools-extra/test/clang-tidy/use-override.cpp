@@ -12,14 +12,14 @@ struct Base {
 struct SimpleCases : public Base {
 public:
   virtual ~SimpleCases() {}
-  // CHECK: warning: Prefer using 'override' or 'final' instead of 'virtual'
+  // CHECK: :[[@LINE-1]]:11: warning: Prefer using 'override' or 'final' instead of 'virtual'
 
   void a();
-  // CHECK: warning: Prefer using
+  // CHECK: :[[@LINE-1]]:8: warning: Prefer using
   virtual void b();
-  // CHECK: warning: Prefer using
+  // CHECK: :[[@LINE-1]]:16: warning: Prefer using
   void c() override;
-  // CHECK-NOT: warning:
+  // CHECK-NOT: :[[@LINE-1]]:{{.*}} warning:
   void d() final;
-  // CHECK-NOT: warning:
+  // CHECK-NOT: :[[@LINE-1]]:{{.*}} warning:
 };
