@@ -237,9 +237,8 @@ protected:
       NameAndAttributes += TypeStr;
       NameAndAttributes += '\0';
       NameAndAttributes += PD->getNameAsString();
-      NameAndAttributes += '\0';
       return llvm::ConstantExpr::getGetElementPtr(
-          CGM.GetAddrOfConstantString(NameAndAttributes), Zeros);
+          CGM.GetAddrOfConstantCString(NameAndAttributes), Zeros);
     }
     return MakeConstantString(PD->getNameAsString());
   }

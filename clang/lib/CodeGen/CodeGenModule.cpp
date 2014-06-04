@@ -2778,17 +2778,13 @@ llvm::StringMapEntry<llvm::GlobalVariable *> *CodeGenModule::getConstantStringMa
   return &ConstantStringMap->GetOrCreateValue(Str);
 }
 
-/// GetAddrOfConstantString - Returns a pointer to a character array
-/// containing the literal. This contents are exactly that of the
-/// given string, i.e. it will not be null terminated automatically;
-/// see GetAddrOfConstantCString. Note that whether the result is
-/// actually a pointer to an LLVM constant depends on
-/// Feature.WriteableStrings.
-///
+/// GetAddrOfConstantCString - Returns a pointer to a character array containing
+/// the literal and a terminating '\0' character.
 /// The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
-                                                       const char *GlobalName,
-                                                       unsigned Alignment) {
+llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
+                                                        const char *GlobalName,
+                                                        unsigned Alignment) {
+  StringRef StrWithNull(Str.c_str(), Str.size() + 1);
   if (Alignment == 0) {
     Alignment = getContext()
                     .getAlignOfGlobalVarInChars(getContext().CharTy)
@@ -2798,7 +2794,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
   // Don't share any string literals if strings aren't constant.
   llvm::StringMapEntry<llvm::GlobalVariable *> *Entry = nullptr;
   if (!LangOpts.WritableStrings) {
-    Entry = getConstantStringMapEntry(Str, 1);
+    Entry = getConstantStringMapEntry(StrWithNull, 1);
     if (auto GV = Entry->getValue()) {
       if (Alignment > GV->getAlignment())
         GV->setAlignment(Alignment);
@@ -2806,9 +2802,8 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
     }
   }
 
-  // Create Constant for this string literal. Don't add a '\0'.
   llvm::Constant *C =
-      llvm::ConstantDataArray::getString(getLLVMContext(), Str, false);
+      llvm::ConstantDataArray::getString(getLLVMContext(), StrWithNull, false);
   // Get the default prefix if a name wasn't specified.
   if (!GlobalName)
     GlobalName = ".str";
@@ -2818,16 +2813,6 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
   if (Entry)
     Entry->setValue(GV);
   return GV;
-}
-
-/// GetAddrOfConstantCString - Returns a pointer to a character
-/// array containing the literal and a terminating '\0'
-/// character. The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
-                                                        const char *GlobalName,
-                                                        unsigned Alignment) {
-  StringRef StrWithNull(Str.c_str(), Str.size() + 1);
-  return GetAddrOfConstantString(StrWithNull, GlobalName, Alignment);
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(

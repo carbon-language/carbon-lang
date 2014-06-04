@@ -746,28 +746,14 @@ public:
   /// Return a pointer to a constant array for the given ObjCEncodeExpr node.
   llvm::Constant *GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *);
 
-  /// Returns a pointer to a character array containing the literal. This
-  /// contents are exactly that of the given string, i.e. it will not be null
-  /// terminated automatically; see GetAddrOfConstantCString. Note that whether
-  /// the result is actually a pointer to an LLVM constant depends on
-  /// Feature.WriteableStrings.
-  ///
-  /// The result has pointer to array type.
-  ///
-  /// \param GlobalName If provided, the name to use for the global
-  /// (if one is created).
-  llvm::Constant *GetAddrOfConstantString(StringRef Str,
-                                          const char *GlobalName=nullptr,
-                                          unsigned Alignment=0);
-
   /// Returns a pointer to a character array containing the literal and a
   /// terminating '\0' character. The result has pointer to array type.
   ///
   /// \param GlobalName If provided, the name to use for the global (if one is
   /// created).
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
-                                           const char *GlobalName=nullptr,
-                                           unsigned Alignment=0);
+                                           const char *GlobalName = nullptr,
+                                           unsigned Alignment = 0);
 
   /// Returns a pointer to a constant global variable for the given file-scope
   /// compound literal expression.
