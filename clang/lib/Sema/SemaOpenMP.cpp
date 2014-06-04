@@ -1486,18 +1486,21 @@ OMPClause *Sema::ActOnOpenMPSafelenClause(Expr *Len, SourceLocation StartLoc,
       OMPSafelenClause(Safelen.get(), StartLoc, LParenLoc, EndLoc);
 }
 
-OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *Num, SourceLocation StartLoc,
+OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *NumForLoops,
+                                           SourceLocation StartLoc,
                                            SourceLocation LParenLoc,
                                            SourceLocation EndLoc) {
+  // OpenMP [2.7.1, loop construct, Description]
   // OpenMP [2.8.1, simd construct, Description]
+  // OpenMP [2.9.6, distribute construct, Description]
   // The parameter of the collapse clause must be a constant
   // positive integer expression.
-  ExprResult NumForLoops =
-      VerifyPositiveIntegerConstantInClause(Num, OMPC_collapse);
-  if (NumForLoops.isInvalid())
+  ExprResult NumForLoopsResult =
+      VerifyPositiveIntegerConstantInClause(NumForLoops, OMPC_collapse);
+  if (NumForLoopsResult.isInvalid())
     return nullptr;
   return new (Context)
-      OMPCollapseClause(NumForLoops.get(), StartLoc, LParenLoc, EndLoc);
+      OMPCollapseClause(NumForLoopsResult.get(), StartLoc, LParenLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPSimpleClause(

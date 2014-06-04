@@ -1301,7 +1301,7 @@ public:
 
   /// \brief Build a new OpenMP 'if' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPIfClause(Expr *Condition,
                                 SourceLocation StartLoc,
@@ -1313,7 +1313,7 @@ public:
 
   /// \brief Build a new OpenMP 'num_threads' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPNumThreadsClause(Expr *NumThreads,
                                         SourceLocation StartLoc,
@@ -1325,7 +1325,7 @@ public:
 
   /// \brief Build a new OpenMP 'safelen' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPSafelenClause(Expr *Len, SourceLocation StartLoc,
                                      SourceLocation LParenLoc,
@@ -1335,7 +1335,7 @@ public:
 
   /// \brief Build a new OpenMP 'collapse' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPCollapseClause(Expr *Num, SourceLocation StartLoc,
                                       SourceLocation LParenLoc,
@@ -1346,7 +1346,7 @@ public:
 
   /// \brief Build a new OpenMP 'default' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPDefaultClause(OpenMPDefaultClauseKind Kind,
                                      SourceLocation KindKwLoc,
@@ -1359,7 +1359,7 @@ public:
 
   /// \brief Build a new OpenMP 'proc_bind' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPProcBindClause(OpenMPProcBindClauseKind Kind,
                                       SourceLocation KindKwLoc,
@@ -1372,7 +1372,7 @@ public:
 
   /// \brief Build a new OpenMP 'private' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPPrivateClause(ArrayRef<Expr *> VarList,
                                      SourceLocation StartLoc,
@@ -1384,7 +1384,7 @@ public:
 
   /// \brief Build a new OpenMP 'firstprivate' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPFirstprivateClause(ArrayRef<Expr *> VarList,
                                           SourceLocation StartLoc,
@@ -1396,7 +1396,7 @@ public:
 
   /// \brief Build a new OpenMP 'shared' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPSharedClause(ArrayRef<Expr *> VarList,
                                     SourceLocation StartLoc,
@@ -1408,7 +1408,7 @@ public:
 
   /// \brief Build a new OpenMP 'linear' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
                                     SourceLocation StartLoc,
@@ -1421,7 +1421,7 @@ public:
 
   /// \brief Build a new OpenMP 'aligned' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPAlignedClause(ArrayRef<Expr *> VarList, Expr *Alignment,
                                      SourceLocation StartLoc,
@@ -1434,7 +1434,7 @@ public:
 
   /// \brief Build a new OpenMP 'copyin' clause.
   ///
-  /// By default, performs semantic analysis to build the new statement.
+  /// By default, performs semantic analysis to build the new OpenMP clause.
   /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPCopyinClause(ArrayRef<Expr *> VarList,
                                     SourceLocation StartLoc,
@@ -6294,10 +6294,12 @@ StmtResult TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
     return getDerived().TransformSEHExceptStmt(cast<SEHExceptStmt>(Handler));
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformOMPExecutableDirective(
-                                 OMPExecutableDirective *D) {
+//===----------------------------------------------------------------------===//
+// OpenMP directive transformation
+//===----------------------------------------------------------------------===//
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
+    OMPExecutableDirective *D) {
 
   // Transform the clauses
   llvm::SmallVector<OMPClause *, 16> TClauses;
@@ -6311,8 +6313,7 @@ TreeTransform<Derived>::TransformOMPExecutableDirective(
         return StmtError();
       }
       TClauses.push_back(Clause);
-    }
-    else {
+    } else {
       TClauses.push_back(nullptr);
     }
   }
@@ -6320,19 +6321,17 @@ TreeTransform<Derived>::TransformOMPExecutableDirective(
     return StmtError();
   }
   StmtResult AssociatedStmt =
-    getDerived().TransformStmt(D->getAssociatedStmt());
+      getDerived().TransformStmt(D->getAssociatedStmt());
   if (AssociatedStmt.isInvalid()) {
     return StmtError();
   }
 
-  return getDerived().RebuildOMPExecutableDirective(D->getDirectiveKind(),
-                                                    TClauses,
-                                                    AssociatedStmt.get(),
-                                                    D->getLocStart(),
-                                                    D->getLocEnd());
+  return getDerived().RebuildOMPExecutableDirective(
+      D->getDirectiveKind(), TClauses, AssociatedStmt.get(), D->getLocStart(),
+      D->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
   DeclarationNameInfo DirName;
@@ -6342,7 +6341,7 @@ TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
   return Res;
 }
 
-template<typename Derived>
+template <typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformOMPSimdDirective(OMPSimdDirective *D) {
   DeclarationNameInfo DirName;
@@ -6352,9 +6351,11 @@ TreeTransform<Derived>::TransformOMPSimdDirective(OMPSimdDirective *D) {
   return Res;
 }
 
-template<typename Derived>
-OMPClause *
-TreeTransform<Derived>::TransformOMPIfClause(OMPIfClause *C) {
+//===----------------------------------------------------------------------===//
+// OpenMP clause transformation
+//===----------------------------------------------------------------------===//
+template <typename Derived>
+OMPClause *TreeTransform<Derived>::TransformOMPIfClause(OMPIfClause *C) {
   ExprResult Cond = getDerived().TransformExpr(C->getCondition());
   if (Cond.isInvalid())
     return nullptr;
@@ -6362,16 +6363,14 @@ TreeTransform<Derived>::TransformOMPIfClause(OMPIfClause *C) {
                                          C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPNumThreadsClause(OMPNumThreadsClause *C) {
   ExprResult NumThreads = getDerived().TransformExpr(C->getNumThreads());
   if (NumThreads.isInvalid())
     return nullptr;
-  return getDerived().RebuildOMPNumThreadsClause(NumThreads.get(),
-                                                 C->getLocStart(),
-                                                 C->getLParenLoc(),
-                                                 C->getLocEnd());
+  return getDerived().RebuildOMPNumThreadsClause(
+      NumThreads.get(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
 template <typename Derived>
@@ -6394,27 +6393,23 @@ TreeTransform<Derived>::TransformOMPCollapseClause(OMPCollapseClause *C) {
       E.get(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPDefaultClause(OMPDefaultClause *C) {
-  return getDerived().RebuildOMPDefaultClause(C->getDefaultKind(),
-                                              C->getDefaultKindKwLoc(),
-                                              C->getLocStart(),
-                                              C->getLParenLoc(),
-                                              C->getLocEnd());
+  return getDerived().RebuildOMPDefaultClause(
+      C->getDefaultKind(), C->getDefaultKindKwLoc(), C->getLocStart(),
+      C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPProcBindClause(OMPProcBindClause *C) {
-  return getDerived().RebuildOMPProcBindClause(C->getProcBindKind(),
-                                               C->getProcBindKindKwLoc(),
-                                               C->getLocStart(),
-                                               C->getLParenLoc(),
-                                               C->getLocEnd());
+  return getDerived().RebuildOMPProcBindClause(
+      C->getProcBindKind(), C->getProcBindKindKwLoc(), C->getLocStart(),
+      C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPPrivateClause(OMPPrivateClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
@@ -6425,16 +6420,13 @@ TreeTransform<Derived>::TransformOMPPrivateClause(OMPPrivateClause *C) {
       return nullptr;
     Vars.push_back(EVar.get());
   }
-  return getDerived().RebuildOMPPrivateClause(Vars,
-                                              C->getLocStart(),
-                                              C->getLParenLoc(),
-                                              C->getLocEnd());
+  return getDerived().RebuildOMPPrivateClause(
+      Vars, C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
-OMPClause *
-TreeTransform<Derived>::TransformOMPFirstprivateClause(
-                                                 OMPFirstprivateClause *C) {
+template <typename Derived>
+OMPClause *TreeTransform<Derived>::TransformOMPFirstprivateClause(
+    OMPFirstprivateClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
   Vars.reserve(C->varlist_size());
   for (auto *VE : C->varlists()) {
@@ -6443,13 +6435,11 @@ TreeTransform<Derived>::TransformOMPFirstprivateClause(
       return nullptr;
     Vars.push_back(EVar.get());
   }
-  return getDerived().RebuildOMPFirstprivateClause(Vars,
-                                                   C->getLocStart(),
-                                                   C->getLParenLoc(),
-                                                   C->getLocEnd());
+  return getDerived().RebuildOMPFirstprivateClause(
+      Vars, C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPSharedClause(OMPSharedClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
@@ -6460,13 +6450,11 @@ TreeTransform<Derived>::TransformOMPSharedClause(OMPSharedClause *C) {
       return nullptr;
     Vars.push_back(EVar.get());
   }
-  return getDerived().RebuildOMPSharedClause(Vars,
-                                             C->getLocStart(),
-                                             C->getLParenLoc(),
-                                             C->getLocEnd());
+  return getDerived().RebuildOMPSharedClause(Vars, C->getLocStart(),
+                                             C->getLParenLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPLinearClause(OMPLinearClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
@@ -6480,12 +6468,12 @@ TreeTransform<Derived>::TransformOMPLinearClause(OMPLinearClause *C) {
   ExprResult Step = getDerived().TransformExpr(C->getStep());
   if (Step.isInvalid())
     return nullptr;
-  return getDerived().RebuildOMPLinearClause(
-      Vars, Step.get(), C->getLocStart(), C->getLParenLoc(), C->getColonLoc(),
-      C->getLocEnd());
+  return getDerived().RebuildOMPLinearClause(Vars, Step.get(), C->getLocStart(),
+                                             C->getLParenLoc(),
+                                             C->getColonLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPAlignedClause(OMPAlignedClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
@@ -6504,7 +6492,7 @@ TreeTransform<Derived>::TransformOMPAlignedClause(OMPAlignedClause *C) {
       C->getColonLoc(), C->getLocEnd());
 }
 
-template<typename Derived>
+template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPCopyinClause(OMPCopyinClause *C) {
   llvm::SmallVector<Expr *, 16> Vars;
@@ -6515,10 +6503,8 @@ TreeTransform<Derived>::TransformOMPCopyinClause(OMPCopyinClause *C) {
       return nullptr;
     Vars.push_back(EVar.get());
   }
-  return getDerived().RebuildOMPCopyinClause(Vars,
-                                             C->getLocStart(),
-                                             C->getLParenLoc(),
-                                             C->getLocEnd());
+  return getDerived().RebuildOMPCopyinClause(Vars, C->getLocStart(),
+                                             C->getLParenLoc(), C->getLocEnd());
 }
 
 //===----------------------------------------------------------------------===//
