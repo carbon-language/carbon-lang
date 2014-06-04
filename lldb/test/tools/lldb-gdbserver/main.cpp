@@ -2,6 +2,7 @@
 #include <cstring>
 #include <errno.h>
 #include <inttypes.h>
+#include <memory>
 #include <pthread.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -29,9 +30,9 @@ static const char *const GET_HEAP_ADDRESS_COMMAND = "get-heap-address-hex:";
 static const char *const GET_CODE_ADDRESS_COMMAND = "get-code-address-hex:";
 
 static const char *const THREAD_PREFIX = "thread:";
-static const char *const THREAD_COMMAND_NEW = "new"; 
-static const char *const THREAD_COMMAND_PRINT_IDS = "print-ids"; 
-static const char *const THREAD_COMMAND_SEGFAULT = "segfault"; 
+static const char *const THREAD_COMMAND_NEW = "new";
+static const char *const THREAD_COMMAND_PRINT_IDS = "print-ids";
+static const char *const THREAD_COMMAND_SEGFAULT = "segfault";
 
 static bool g_print_thread_ids = false;
 static pthread_mutex_t g_print_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -84,21 +85,21 @@ signal_handler (int signo)
 	// Reset the signal handler if we're one of the expected signal handlers.
 	switch (signo)
 	{
-	case SIGSEGV:
-		// Fix up the pointer we're writing to.  This needs to happen if nothing intercepts the SIGSEGV
-		// (i.e. if somebody runs this from the command line).
-		longjmp(g_jump_buffer, 1);
-		break;
-	case SIGUSR1:
-		if (g_is_segfaulting)
-		{
-			// Fix up the pointer we're writing to.  This is used to test gdb remote signal delivery.
-			// A SIGSEGV will be raised when the thread is created, switched out for a SIGUSR1, and
-			// then this code still needs to fix the seg fault.
-			// (i.e. if somebody runs this from the command line).
-			longjmp(g_jump_buffer, 1);
-		}
-		break;
+        case SIGSEGV:
+            // Fix up the pointer we're writing to.  This needs to happen if nothing intercepts the SIGSEGV
+            // (i.e. if somebody runs this from the command line).
+            longjmp(g_jump_buffer, 1);
+            break;
+        case SIGUSR1:
+            if (g_is_segfaulting)
+            {
+                // Fix up the pointer we're writing to.  This is used to test gdb remote signal delivery.
+                // A SIGSEGV will be raised when the thread is created, switched out for a SIGUSR1, and
+                // then this code still needs to fix the seg fault.
+                // (i.e. if somebody runs this from the command line).
+                longjmp(g_jump_buffer, 1);
+            }
+            break;
 	}
 
 	// Reset the signal handler.
@@ -139,7 +140,7 @@ thread_func (void *arg)
 		int sleep_seconds = 2 * (this_thread_index - 1);
 		while (sleep_seconds > 0)
 			sleep_seconds = sleep(sleep_seconds);
-		
+
 		// Test creating a SEGV.
 		pthread_mutex_lock (&g_jump_buffer_mutex);
 		g_is_segfaulting = true;
@@ -166,7 +167,7 @@ thread_func (void *arg)
 		printf (": past SIGSEGV\n");
 		pthread_mutex_unlock (&g_print_mutex);
 	}
-	
+
 	int sleep_seconds_remaining = 5;
 	while (sleep_seconds_remaining > 0)
 	{
@@ -203,7 +204,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "failed to set SIGUSR1 handler: errno=%d\n", errno);
 		exit (1);
 	}
-	
+
 	// Process command line args.
     for (int i = 1; i < argc; ++i)
     {
@@ -221,7 +222,7 @@ int main (int argc, char **argv)
         {
             // Treat as the amount of time to have this process sleep (in seconds).
             int sleep_seconds_remaining = std::atoi (argv[i] + strlen (SLEEP_PREFIX));
-			
+
 			// Loop around, sleeping until all sleep time is used up.  Note that
 			// signals will cause sleep to end early with the number of seconds remaining.
 			for (int i = 0; sleep_seconds_remaining > 0; ++i)
@@ -238,7 +239,7 @@ int main (int argc, char **argv)
 
 			// Ensure we're null terminated.
 			g_message[sizeof (g_message) - 1] = '\0';
-			
+
 		}
         else if (std::strstr (argv[i], GET_MESSAGE_ADDRESS_COMMAND))
         {
@@ -251,7 +252,7 @@ int main (int argc, char **argv)
 			// Create a byte array if not already present.
 			if (!heap_array_up)
 				heap_array_up.reset (new uint8_t[32]);
-				
+
 			pthread_mutex_lock (&g_print_mutex);
             printf ("heap address: %p\n", heap_array_up.get ());
 			pthread_mutex_unlock (&g_print_mutex);
@@ -287,7 +288,7 @@ int main (int argc, char **argv)
 			{
 				// Turn on thread id announcing.
 				g_print_thread_ids = true;
-				
+
 				// And announce us.
 				pthread_mutex_lock (&g_print_mutex);
 				printf ("thread 0 id: ");
@@ -320,6 +321,6 @@ int main (int argc, char **argv)
 	    if (err != 0)
 			fprintf (stderr, "pthread_join() failed with error code %d\n", err);
 	}
-
+    
     return return_value;
 }

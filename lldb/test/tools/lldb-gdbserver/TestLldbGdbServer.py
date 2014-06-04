@@ -255,7 +255,34 @@ class LldbGdbServerTestCase(TestBase):
         self.assertTrue("encoding" in reg_info)
         self.assertTrue("format" in reg_info)
 
-    def assert_address_within_range(self, test_address, range_start, range_size):
+    def add_query_memory_region_packets(self, address):
+        self.test_sequence.add_log_lines(
+            ["read packet: $qMemoryRegionInfo:{0:x}#00".format(address),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"memory_region_response"} }],
+            True)
+        
+    def parse_memory_region_packet(self, context):
+        # Ensure we have a context.
+        self.assertIsNotNone(context.get("memory_region_response"))
+        
+        # Pull out key:value; pairs.
+        mem_region_dict = {match.group(1):match.group(2) for match in re.finditer(r"([^:]+):([^;]+);", context.get("memory_region_response"))}
+
+        # Validate keys are known.
+        for (key, val) in mem_region_dict.items():
+            self.assertTrue(key in ["start", "size", "permissions", "error"])
+            self.assertIsNotNone(val)
+
+        # Return the dictionary of key-value pairs for the memory region.
+        return mem_region_dict
+
+    def assert_address_within_memory_region(self, test_address, mem_region_dict):
+        self.assertIsNotNone(mem_region_dict)
+        self.assertTrue("start" in mem_region_dict)
+        self.assertTrue("size" in mem_region_dict)
+        
+        range_start = int(mem_region_dict["start"], 16)
+        range_size = int(mem_region_dict["size"], 16)
         range_end = range_start + range_size
 
         if test_address < range_start:
@@ -1350,35 +1377,20 @@ class LldbGdbServerTestCase(TestBase):
 
         # Grab memory region info from the inferior.
         self.reset_test_sequence()
-        self.test_sequence.add_log_lines(
-            ["read packet: $qMemoryRegionInfo:{0:x}#00".format(code_address),
-             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"memory_region_response"} }],
-            True)
+        self.add_query_memory_region_packets(code_address)
 
         # Run the packet stream.
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
-
-        # Parse the memory region response
-        self.assertIsNotNone(context.get("memory_region_response"))
-        mem_region_dict = {match.group(1):match.group(2) for match in re.finditer(r"([^:]+):([^;]+);", context.get("memory_region_response"))}
-        # print "mem_region_dict: {}".format(mem_region_dict)
-        
-        for (key, val) in mem_region_dict.items():
-            self.assertTrue(key in ["start", "size", "permissions", "error"])
-            self.assertIsNotNone(val)
+        mem_region_dict = self.parse_memory_region_packet(context)
 
         # Ensure code address is readable and executable.
         self.assertTrue("permissions" in mem_region_dict)
         self.assertTrue("r" in mem_region_dict["permissions"])
         self.assertTrue("x" in mem_region_dict["permissions"])
-
-        # Ensure it has a start address and a size.
-        self.assertTrue("start" in mem_region_dict)
-        self.assertTrue("size" in mem_region_dict)
         
         # Ensure the start address and size encompass the address we queried.
-        self.assert_address_within_range(code_address, int(mem_region_dict["start"], 16), int(mem_region_dict["size"], 16))
+        self.assert_address_within_memory_region(code_address, mem_region_dict)
         
 
     @debugserver_test
@@ -1398,6 +1410,129 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_code_address_as_executable()
 
+    def qMemoryRegionInfo_reports_stack_address_as_readable_writeable(self):
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["get-stack-address-hex:", "sleep:5"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [
+             # Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the message buffer within the inferior. 
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^stack address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"stack_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the address.
+        self.assertIsNotNone(context.get("stack_address"))
+        stack_address = int(context.get("stack_address"), 16)
+
+        # Grab memory region info from the inferior.
+        self.reset_test_sequence()
+        self.add_query_memory_region_packets(stack_address)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        mem_region_dict = self.parse_memory_region_packet(context)
+
+        # Ensure address is readable and executable.
+        self.assertTrue("permissions" in mem_region_dict)
+        self.assertTrue("r" in mem_region_dict["permissions"])
+        self.assertTrue("w" in mem_region_dict["permissions"])
+
+        # Ensure the start address and size encompass the address we queried.
+        self.assert_address_within_memory_region(stack_address, mem_region_dict)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_reports_stack_address_as_readable_writeable()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_reports_stack_address_as_readable_writeable()
+
+    def qMemoryRegionInfo_reports_heap_address_as_readable_writeable(self):
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["get-heap-address-hex:", "sleep:5"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [
+             # Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the message buffer within the inferior. 
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^heap address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"heap_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the address.
+        self.assertIsNotNone(context.get("heap_address"))
+        heap_address = int(context.get("heap_address"), 16)
+
+        # Grab memory region info from the inferior.
+        self.reset_test_sequence()
+        self.add_query_memory_region_packets(heap_address)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        mem_region_dict = self.parse_memory_region_packet(context)
+
+        # Ensure address is readable and executable.
+        self.assertTrue("permissions" in mem_region_dict)
+        self.assertTrue("r" in mem_region_dict["permissions"])
+        self.assertTrue("w" in mem_region_dict["permissions"])
+
+        # Ensure the start address and size encompass the address we queried.
+        self.assert_address_within_memory_region(heap_address, mem_region_dict)
+
+
+    @debugserver_test
+    @dsym_test
+    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_reports_heap_address_as_readable_writeable()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.qMemoryRegionInfo_reports_heap_address_as_readable_writeable()
 
 
 if __name__ == '__main__':
