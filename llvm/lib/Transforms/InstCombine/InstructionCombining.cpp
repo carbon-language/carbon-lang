@@ -2108,7 +2108,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
     if (LI.isCatch(i)) {
       // A catch clause.
       Constant *CatchClause = LI.getClause(i);
-      Constant *TypeInfo = cast<Constant>(CatchClause->stripPointerCasts());
+      Constant *TypeInfo = CatchClause->stripPointerCasts();
 
       // If we already saw this clause, there is no point in having a second
       // copy of it.
@@ -2181,8 +2181,8 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
         // catch-alls.  If so, the filter can be discarded.
         bool SawCatchAll = false;
         for (unsigned j = 0; j != NumTypeInfos; ++j) {
-          Value *Elt = Filter->getOperand(j);
-          Constant *TypeInfo = cast<Constant>(Elt->stripPointerCasts());
+          Constant *Elt = Filter->getOperand(j);
+          Constant *TypeInfo = Elt->stripPointerCasts();
           if (isCatchAll(Personality, TypeInfo)) {
             // This element is a catch-all.  Bail out, noting this fact.
             SawCatchAll = true;

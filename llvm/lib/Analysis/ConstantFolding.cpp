@@ -706,7 +706,7 @@ static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
 static Constant* StripPtrCastKeepAS(Constant* Ptr) {
   assert(Ptr->getType()->isPointerTy() && "Not a pointer type");
   PointerType *OldPtrTy = cast<PointerType>(Ptr->getType());
-  Ptr = cast<Constant>(Ptr->stripPointerCasts());
+  Ptr = Ptr->stripPointerCasts();
   PointerType *NewPtrTy = cast<PointerType>(Ptr->getType());
 
   // Preserve the address space number of the pointer.

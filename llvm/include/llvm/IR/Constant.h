@@ -163,6 +163,14 @@ public:
   /// that want to check to see if a global is unused, but don't want to deal
   /// with potentially dead constants hanging off of the globals.
   void removeDeadConstantUsers() const;
+
+  Constant *stripPointerCasts() {
+    return cast<Constant>(Value::stripPointerCasts());
+  }
+
+  const Constant *stripPointerCasts() const {
+    return const_cast<Constant*>(this)->stripPointerCasts();
+  }
 };
 
 } // End llvm namespace

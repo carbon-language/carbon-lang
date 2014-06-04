@@ -687,7 +687,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 //
 
 static GlobalObject *getSimpleAliasee(Constant *C) {
-  C = cast<Constant>(C->stripPointerCasts());
+  C = C->stripPointerCasts();
   return dyn_cast<GlobalObject>(C);
 }
 
