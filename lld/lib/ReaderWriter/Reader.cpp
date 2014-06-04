@@ -19,12 +19,7 @@
 
 namespace lld {
 
-Reader::~Reader() {
-}
-
-
-YamlIOTaggedDocumentHandler::~YamlIOTaggedDocumentHandler() { }
-
+YamlIOTaggedDocumentHandler::~YamlIOTaggedDocumentHandler() {}
 
 void Registry::add(std::unique_ptr<Reader> reader) {
   _readers.push_back(std::move(reader));
@@ -44,10 +39,9 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
   StringRef extension = llvm::sys::path::extension(mb->getBufferIdentifier());
 
   // Ask each registered reader if it can handle this file type or extension.
-  for (const std::unique_ptr<Reader> &reader : _readers) {
+  for (const std::unique_ptr<Reader> &reader : _readers)
     if (reader->canParse(fileType, extension, *mb))
       return reader->parseFile(mb, *this, result);
-  }
 
   // No Reader could parse this file.
   return llvm::make_error_code(llvm::errc::executable_format_error);
@@ -67,10 +61,9 @@ Registry::Registry() {
 
 bool Registry::handleTaggedDoc(llvm::yaml::IO &io,
                                const lld::File *&file) const {
-  for (const std::unique_ptr<YamlIOTaggedDocumentHandler> &h : _yamlHandlers) {
+  for (const std::unique_ptr<YamlIOTaggedDocumentHandler> &h : _yamlHandlers)
     if (h->handledDocTag(io, file))
       return true;
-  }
   return false;
 }
 

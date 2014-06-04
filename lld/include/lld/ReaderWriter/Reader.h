@@ -22,9 +22,9 @@
 using llvm::sys::fs::file_magic;
 
 namespace llvm {
-  namespace yaml {
-    class IO;
-  }
+namespace yaml {
+class IO;
+}
 }
 
 namespace lld {
@@ -41,7 +41,7 @@ class TargetHandlerBase;
 /// subclass of Reader.
 class Reader {
 public:
-  virtual ~Reader();
+  virtual ~Reader() {}
 
   /// Sniffs the file to determine if this Reader can parse it.
   /// The method is called with:
