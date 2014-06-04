@@ -2099,7 +2099,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   // Simplify the list of clauses, eg by removing repeated catch clauses
   // (these are often created by inlining).
   bool MakeNewInstruction = false; // If true, recreate using the following:
-  SmallVector<Value *, 16> NewClauses; // - Clauses for the new instruction;
+  SmallVector<Constant *, 16> NewClauses; // - Clauses for the new instruction;
   bool CleanupFlag = LI.isCleanup();   // - The new instruction is a cleanup.
 
   SmallPtrSet<Value *, 16> AlreadyCaught; // Typeinfos known caught already.
@@ -2107,7 +2107,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
     bool isLastClause = i + 1 == e;
     if (LI.isCatch(i)) {
       // A catch clause.
-      Value *CatchClause = LI.getClause(i);
+      Constant *CatchClause = LI.getClause(i);
       Constant *TypeInfo = cast<Constant>(CatchClause->stripPointerCasts());
 
       // If we already saw this clause, there is no point in having a second
@@ -2137,7 +2137,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
       // equal (for example if one represents a C++ class, and the other some
       // class derived from it).
       assert(LI.isFilter(i) && "Unsupported landingpad clause!");
-      Value *FilterClause = LI.getClause(i);
+      Constant *FilterClause = LI.getClause(i);
       ArrayType *FilterType = cast<ArrayType>(FilterClause->getType());
       unsigned NumTypeInfos = FilterType->getNumElements();
 
@@ -2287,7 +2287,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
         continue;
       // If Filter is a subset of LFilter, i.e. every element of Filter is also
       // an element of LFilter, then discard LFilter.
-      SmallVectorImpl<Value *>::iterator J = NewClauses.begin() + j;
+      SmallVectorImpl<Constant *>::iterator J = NewClauses.begin() + j;
       // If Filter is empty then it is a subset of LFilter.
       if (!FElts) {
         // Discard LFilter.

@@ -2826,7 +2826,7 @@ error_code BitcodeReader::ParseFunctionBody(Function *F) {
         assert((CT != LandingPadInst::Filter ||
                 isa<ArrayType>(Val->getType())) &&
                "Filter clause has invalid type!");
-        LP->addClause(Val);
+        LP->addClause(cast<Constant>(Val));
       }
 
       I = LP;

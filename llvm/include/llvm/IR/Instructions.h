@@ -2311,12 +2311,14 @@ public:
                                (V ? 1 : 0));
   }
 
-  /// addClause - Add a catch or filter clause to the landing pad.
-  void addClause(Value *ClauseVal);
+  /// Add a catch or filter clause to the landing pad.
+  void addClause(Constant *ClauseVal);
 
-  /// getClause - Get the value of the clause at index Idx. Use isCatch/isFilter
-  /// to determine what type of clause this is.
-  Value *getClause(unsigned Idx) const { return OperandList[Idx + 1]; }
+  /// Get the value of the clause at index Idx. Use isCatch/isFilter to
+  /// determine what type of clause this is.
+  Constant *getClause(unsigned Idx) const {
+    return cast<Constant>(OperandList[Idx + 1]);
+  }
 
   /// isCatch - Return 'true' if the clause and index Idx is a catch clause.
   bool isCatch(unsigned Idx) const {

@@ -3991,7 +3991,8 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
     else
       return TokError("expected 'catch' or 'filter' clause type");
 
-    Value *V; LocTy VLoc;
+    Value *V;
+    LocTy VLoc;
     if (ParseTypeAndValue(V, VLoc, PFS)) {
       delete LP;
       return true;
@@ -4007,7 +4008,7 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
         Error(VLoc, "'filter' clause has an invalid type");
     }
 
-    LP->addClause(V);
+    LP->addClause(cast<Constant>(V));
   }
 
   Inst = LP;

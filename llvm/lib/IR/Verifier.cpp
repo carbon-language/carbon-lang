@@ -2077,8 +2077,7 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   Assert1(isa<Constant>(PersonalityFn), "Personality function is not constant!",
           &LPI);
   for (unsigned i = 0, e = LPI.getNumClauses(); i < e; ++i) {
-    Value *Clause = LPI.getClause(i);
-    Assert1(isa<Constant>(Clause), "Clause is not constant!", &LPI);
+    Constant *Clause = LPI.getClause(i);
     if (LPI.isCatch(i)) {
       Assert1(isa<PointerType>(Clause->getType()),
               "Catch operand does not have pointer type!", &LPI);

@@ -248,7 +248,7 @@ void LandingPadInst::growOperands(unsigned Size) {
   Use::zap(OldOps, OldOps + e, true);
 }
 
-void LandingPadInst::addClause(Value *Val) {
+void LandingPadInst::addClause(Constant *Val) {
   unsigned OpNo = getNumOperands();
   growOperands(1);
   assert(OpNo < ReservedSpace && "Growing didn't work!");
