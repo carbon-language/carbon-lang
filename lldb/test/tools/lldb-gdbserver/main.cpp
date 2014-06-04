@@ -24,6 +24,9 @@ static const char *const SLEEP_PREFIX  = "sleep:";
 static const char *const STDERR_PREFIX = "stderr:";
 static const char *const SET_MESSAGE_PREFIX = "set-message:";
 static const char *const GET_MESSAGE_ADDRESS_COMMAND = "get-message-address-hex:";
+static const char *const GET_STACK_ADDRESS_COMMAND = "get-stack-address-hex:";
+static const char *const GET_HEAP_ADDRESS_COMMAND = "get-heap-address-hex:";
+static const char *const GET_CODE_ADDRESS_COMMAND = "get-code-address-hex:";
 
 static const char *const THREAD_PREFIX = "thread:";
 static const char *const THREAD_COMMAND_NEW = "new"; 
@@ -176,6 +179,7 @@ thread_func (void *arg)
 int main (int argc, char **argv)
 {
 	std::vector<pthread_t> threads;
+	std::unique_ptr<uint8_t[]> heap_array_up;
     int return_value = 0;
 
 	// Set the signal handler.
@@ -240,6 +244,28 @@ int main (int argc, char **argv)
         {
 			pthread_mutex_lock (&g_print_mutex);
             printf ("message address: %p\n", &g_message[0]);
+			pthread_mutex_unlock (&g_print_mutex);
+        }
+        else if (std::strstr (argv[i], GET_HEAP_ADDRESS_COMMAND))
+        {
+			// Create a byte array if not already present.
+			if (!heap_array_up)
+				heap_array_up.reset (new uint8_t[32]);
+				
+			pthread_mutex_lock (&g_print_mutex);
+            printf ("heap address: %p\n", heap_array_up.get ());
+			pthread_mutex_unlock (&g_print_mutex);
+        }
+        else if (std::strstr (argv[i], GET_STACK_ADDRESS_COMMAND))
+        {
+			pthread_mutex_lock (&g_print_mutex);
+            printf ("stack address: %p\n", &return_value);
+			pthread_mutex_unlock (&g_print_mutex);
+        }
+        else if (std::strstr (argv[i], GET_CODE_ADDRESS_COMMAND))
+        {
+			pthread_mutex_lock (&g_print_mutex);
+            printf ("code address: %p\n", main);
 			pthread_mutex_unlock (&g_print_mutex);
         }
 		else if (std::strstr (argv[i], THREAD_PREFIX))
