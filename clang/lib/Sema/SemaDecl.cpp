@@ -9061,10 +9061,19 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   if (const DLLImportAttr *IA = VD->getAttr<DLLImportAttr>()) {
     if (VD->isStaticDataMember() && VD->isOutOfLine() &&
         VD->isThisDeclarationADefinition()) {
+      // We allow definitions of dllimport class template static data members
+      // with a warning.
+      bool IsClassTemplateMember =
+          cast<CXXRecordDecl>(VD->getFirstDecl()->getDeclContext())
+              ->getDescribedClassTemplate();
+
       Diag(VD->getLocation(),
-           diag::err_attribute_dllimport_static_field_definition);
+           IsClassTemplateMember
+               ? diag::warn_attribute_dllimport_static_field_definition
+               : diag::err_attribute_dllimport_static_field_definition);
       Diag(IA->getLocation(), diag::note_attribute);
-      VD->setInvalidDecl();
+      if (!IsClassTemplateMember)
+        VD->setInvalidDecl();
     }
   }
 

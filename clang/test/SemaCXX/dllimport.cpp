@@ -816,9 +816,9 @@ template<typename T>        void ImportClassTmplMembers<T>::staticDef() {} // ex
 template<typename T> inline void ImportClassTmplMembers<T>::staticInlineDef() {}
 template<typename T>        void ImportClassTmplMembers<T>::staticInlineDecl() {}
 
-template<typename T>        int  ImportClassTmplMembers<T>::StaticFieldDef; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> const  int  ImportClassTmplMembers<T>::StaticConstFieldDef = 1; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> constexpr int ImportClassTmplMembers<T>::ConstexprFieldDef; // expected-error{{definition of dllimport static field not allowed}}
+template<typename T>        int  ImportClassTmplMembers<T>::StaticFieldDef; // expected-warning{{definition of dllimport static field}}
+template<typename T> const  int  ImportClassTmplMembers<T>::StaticConstFieldDef = 1; // expected-warning{{definition of dllimport static field}}
+template<typename T> constexpr int ImportClassTmplMembers<T>::ConstexprFieldDef; // expected-warning{{definition of dllimport static field}}
 
 
 // Redeclarations cannot add dllimport.
@@ -853,13 +853,13 @@ template<typename T> __declspec(dllimport) inline void CTMR<T>::staticInlineDef(
 template<typename T> __declspec(dllimport)        void CTMR<T>::staticInlineDecl() {}  // expected-error{{redeclaration of 'CTMR::staticInlineDecl' cannot add 'dllimport' attribute}}
 
 template<typename T> __declspec(dllimport)        int  CTMR<T>::StaticField = 1;       // expected-error{{redeclaration of 'CTMR::StaticField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 template<typename T> __declspec(dllimport) const  int  CTMR<T>::StaticConstField = 1;  // expected-error{{redeclaration of 'CTMR::StaticConstField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 template<typename T> __declspec(dllimport) constexpr int CTMR<T>::ConstexprField;      // expected-error{{redeclaration of 'CTMR::ConstexprField' cannot add 'dllimport' attribute}}
-                                                                                       // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                       // expected-warning@-1{{definition of dllimport static field}}
                                                                                        // expected-note@-2{{attribute is here}}
 
 
@@ -901,9 +901,9 @@ template<typename T> template<typename U> inline void ImportClsTmplMemTmpl<T>::s
 template<typename T> template<typename U>        void ImportClsTmplMemTmpl<T>::staticInlineDecl() {}
 
 #if __has_feature(cxx_variable_templates)
-template<typename T> template<typename U>        int  ImportClsTmplMemTmpl<T>::StaticFieldDef; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> template<typename U> const  int  ImportClsTmplMemTmpl<T>::StaticConstFieldDef = 1; // expected-error{{definition of dllimport static field not allowed}}
-template<typename T> template<typename U> constexpr int ImportClsTmplMemTmpl<T>::ConstexprFieldDef; // expected-error{{definition of dllimport static field not allowed}}
+template<typename T> template<typename U>        int  ImportClsTmplMemTmpl<T>::StaticFieldDef; // expected-warning{{definition of dllimport static field}}
+template<typename T> template<typename U> const  int  ImportClsTmplMemTmpl<T>::StaticConstFieldDef = 1; // expected-warning{{definition of dllimport static field}}
+template<typename T> template<typename U> constexpr int ImportClsTmplMemTmpl<T>::ConstexprFieldDef; // expected-warning{{definition of dllimport static field}}
 #endif // __has_feature(cxx_variable_templates)
 
 
@@ -935,13 +935,13 @@ template<typename T> template<typename U> __declspec(dllimport)        void CTMT
 
 #if __has_feature(cxx_variable_templates)
 template<typename T> template<typename U> __declspec(dllimport)        int  CTMTR<T>::StaticField = 1;       // expected-error{{redeclaration of 'CTMTR::StaticField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 template<typename T> template<typename U> __declspec(dllimport) const  int  CTMTR<T>::StaticConstField = 1;  // expected-error{{redeclaration of 'CTMTR::StaticConstField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 template<typename T> template<typename U> __declspec(dllimport) constexpr int CTMTR<T>::ConstexprField;      // expected-error{{redeclaration of 'CTMTR::ConstexprField' cannot add 'dllimport' attribute}}
-                                                                                                             // expected-error@-1{{definition of dllimport static field not allowed}}
+                                                                                                             // expected-warning@-1{{definition of dllimport static field}}
                                                                                                              // expected-note@-2{{attribute is here}}
 #endif // __has_feature(cxx_variable_templates)
 
@@ -976,3 +976,10 @@ class __declspec(dllexport) ExportClassWithDllMember {
   void __declspec(dllimport) foo();
   void __declspec(dllexport) bar();
 };
+
+namespace ImportedExplicitSpecialization {
+template <typename T> struct S { static int x; };
+template <typename T> int S<T>::x = sizeof(T);
+template <> struct __declspec(dllimport) S<int> { static int x; }; // expected-note{{attribute is here}}
+int S<int>::x = -1; // expected-error{{definition of dllimport static field not allowed}}
+}

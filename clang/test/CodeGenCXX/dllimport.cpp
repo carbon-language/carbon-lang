@@ -571,6 +571,15 @@ namespace Vtordisp {
   template class C<char>;
 }
 
+namespace ClassTemplateStaticDef {
+  template <typename T> struct __declspec(dllimport) S {
+    static int x;
+  };
+  template <typename T> int S<T>::x;
+  // CHECK-DAG: @"\01?x@?$S@H@ClassTemplateStaticDef@@2HA" = available_externally dllimport global i32 0
+  int f() { return S<int>::x; }
+}
+
 //===----------------------------------------------------------------------===//
 // Negative checks
 //===----------------------------------------------------------------------===//
