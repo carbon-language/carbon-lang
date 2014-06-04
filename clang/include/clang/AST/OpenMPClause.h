@@ -620,6 +620,66 @@ public:
   }
 };
 
+/// \brief This represents clause 'lastprivate' in the '#pragma omp ...'
+/// directives.
+///
+/// \code
+/// #pragma omp simd lastprivate(a,b)
+/// \endcode
+/// In this example directive '#pragma omp simd' has clause 'lastprivate'
+/// with the variables 'a' and 'b'.
+///
+class OMPLastprivateClause : public OMPVarListClause<OMPLastprivateClause> {
+  /// \brief Build clause with number of variables \a N.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param N Number of the variables in the clause.
+  ///
+  OMPLastprivateClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                       SourceLocation EndLoc, unsigned N)
+      : OMPVarListClause<OMPLastprivateClause>(OMPC_lastprivate, StartLoc,
+                                               LParenLoc, EndLoc, N) {}
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param N Number of variables.
+  ///
+  explicit OMPLastprivateClause(unsigned N)
+      : OMPVarListClause<OMPLastprivateClause>(
+            OMPC_lastprivate, SourceLocation(), SourceLocation(),
+            SourceLocation(), N) {}
+
+public:
+  /// \brief Creates clause with a list of variables \a VL.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param VL List of references to the variables.
+  ///
+  static OMPLastprivateClause *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+         SourceLocation EndLoc, ArrayRef<Expr *> VL);
+  /// \brief Creates an empty clause with the place for \a N variables.
+  ///
+  /// \param C AST context.
+  /// \param N The number of variables.
+  ///
+  static OMPLastprivateClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_lastprivate;
+  }
+};
+
 /// \brief This represents clause 'shared' in the '#pragma omp ...' directives.
 ///
 /// \code

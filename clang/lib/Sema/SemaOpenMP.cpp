@@ -832,6 +832,10 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
                                       AStmt);
 }
 
+static bool isSimdDirective(OpenMPDirectiveKind DKind) {
+  return DKind == OMPD_simd; // FIXME: || DKind == OMPD_for_simd || ...
+}
+
 namespace {
 /// \brief Helper class for checking canonical form of the OpenMP loops and
 /// extracting iteration space of each loop in the loop nest, that will be used
@@ -1238,14 +1242,13 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
   // The loop iteration variable(s) in the associated for-loop(s) of a for or
   // parallel for construct may be listed in a private or lastprivate clause.
   DSAStackTy::DSAVarData DVar = DSA.getTopDSA(Var);
-  if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_linear &&
-      DVar.CKind != OMPC_threadprivate) {
+  if (isSimdDirective(DKind) && DVar.CKind != OMPC_unknown &&
+      DVar.CKind != OMPC_linear && DVar.CKind != OMPC_lastprivate &&
+      (DVar.CKind != OMPC_private || DVar.RefExpr != nullptr)) {
     // The loop iteration variable in the associated for-loop of a simd
     // construct with just one associated for-loop may be listed in a linear
     // clause with a constant-linear-step that is the increment of the
     // associated for-loop.
-    // FIXME: allow OMPC_lastprivate when it is ready.
-    assert(DKind == OMPD_simd && "DSA for non-simd loop vars");
     SemaRef.Diag(Init->getLocStart(), diag::err_omp_loop_var_dsa)
         << getOpenMPClauseName(DVar.CKind);
     if (DVar.RefExpr)
@@ -1259,6 +1262,8 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
     // Make the loop iteration variable private by default.
     DSA.addDSA(Var, nullptr, OMPC_private);
   }
+
+  assert(isSimdDirective(DKind) && "DSA for non-simd loop vars");
 
   // Check test-expr.
   HasErrors |= ISC.CheckCond(For->getCond());
@@ -1350,6 +1355,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_proc_bind:
   case OMPC_private:
   case OMPC_firstprivate:
+  case OMPC_lastprivate:
   case OMPC_shared:
   case OMPC_linear:
   case OMPC_aligned:
@@ -1524,6 +1530,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_collapse:
   case OMPC_private:
   case OMPC_firstprivate:
+  case OMPC_lastprivate:
   case OMPC_shared:
   case OMPC_linear:
   case OMPC_aligned:
@@ -1622,6 +1629,9 @@ Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> VarList,
     break;
   case OMPC_firstprivate:
     Res = ActOnOpenMPFirstprivateClause(VarList, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_lastprivate:
+    Res = ActOnOpenMPLastprivateClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_shared:
     Res = ActOnOpenMPSharedClause(VarList, StartLoc, LParenLoc, EndLoc);
@@ -1955,6 +1965,171 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
 
   return OMPFirstprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
                                        Vars);
+}
+
+OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
+                                              SourceLocation StartLoc,
+                                              SourceLocation LParenLoc,
+                                              SourceLocation EndLoc) {
+  SmallVector<Expr *, 8> Vars;
+  for (auto &RefExpr : VarList) {
+    assert(RefExpr && "NULL expr in OpenMP lastprivate clause.");
+    if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
+      // It will be analyzed later.
+      Vars.push_back(RefExpr);
+      continue;
+    }
+
+    SourceLocation ELoc = RefExpr->getExprLoc();
+    // OpenMP [2.1, C/C++]
+    //  A list item is a variable name.
+    // OpenMP  [2.14.3.5, Restrictions, p.1]
+    //  A variable that is part of another variable (as an array or structure
+    //  element) cannot appear in a lastprivate clause.
+    DeclRefExpr *DE = dyn_cast_or_null<DeclRefExpr>(RefExpr);
+    if (!DE || !isa<VarDecl>(DE->getDecl())) {
+      Diag(ELoc, diag::err_omp_expected_var_name) << RefExpr->getSourceRange();
+      continue;
+    }
+    Decl *D = DE->getDecl();
+    VarDecl *VD = cast<VarDecl>(D);
+
+    QualType Type = VD->getType();
+    if (Type->isDependentType() || Type->isInstantiationDependentType()) {
+      // It will be analyzed later.
+      Vars.push_back(DE);
+      continue;
+    }
+
+    // OpenMP [2.14.3.5, Restrictions, C/C++, p.2]
+    //  A variable that appears in a lastprivate clause must not have an
+    //  incomplete type or a reference type.
+    if (RequireCompleteType(ELoc, Type,
+                            diag::err_omp_lastprivate_incomplete_type)) {
+      continue;
+    }
+    if (Type->isReferenceType()) {
+      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
+          << getOpenMPClauseName(OMPC_lastprivate) << Type;
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
+    // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced
+    // in a Construct]
+    //  Variables with the predetermined data-sharing attributes may not be
+    //  listed in data-sharing attributes clauses, except for the cases
+    //  listed below.
+    //  A list item that is private within a parallel region, or that appears in
+    //  the reduction clause of a parallel construct, must not appear in a
+    //  lastprivate clause on a worksharing construct if any of the
+    //  corresponding worksharing regions ever binds to any of the corresponding
+    //  parallel regions.
+    //  TODO: Check implicit DSA for worksharing directives.
+    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD);
+    if (DVar.CKind != OMPC_unknown && DVar.CKind != OMPC_lastprivate &&
+        DVar.CKind != OMPC_firstprivate &&
+        (DVar.CKind != OMPC_private || DVar.RefExpr != nullptr)) {
+      Diag(ELoc, diag::err_omp_wrong_dsa)
+          << getOpenMPClauseName(DVar.CKind)
+          << getOpenMPClauseName(OMPC_lastprivate);
+      if (DVar.RefExpr)
+        Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_explicit_dsa)
+            << getOpenMPClauseName(DVar.CKind);
+      else
+        Diag(VD->getLocation(), diag::note_omp_predetermined_dsa)
+            << getOpenMPClauseName(DVar.CKind);
+      continue;
+    }
+
+    // OpenMP [2.14.3.5, Restrictions, C++, p.1,2]
+    //  A variable of class type (or array thereof) that appears in a lastprivate
+    //  clause requires an accessible, unambiguous default constructor for the
+    //  class type, unless the list item is also specified in a firstprivate
+    //  clause.
+    //  A variable of class type (or array thereof) that appears in a
+    //  lastprivate clause requires an accessible, unambiguous copy assignment
+    //  operator for the class type.
+    while (Type.getNonReferenceType()->isArrayType())
+      Type = cast<ArrayType>(Type.getNonReferenceType().getTypePtr())
+                 ->getElementType();
+    CXXRecordDecl *RD = getLangOpts().CPlusPlus
+                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
+                            : nullptr;
+    if (RD) {
+      // FIXME: If a variable is also specified in a firstprivate clause, we may
+      // not require default constructor. This can be fixed after adding some
+      // directive allowing both firstprivate and lastprivate clauses (and this
+      // should be probably checked after all clauses are processed).
+      CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
+      PartialDiagnostic PD =
+          PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
+      if (!CD || CheckConstructorAccess(
+                     ELoc, CD, InitializedEntity::InitializeTemporary(Type),
+                     CD->getAccess(), PD) == AR_inaccessible ||
+          CD->isDeleted()) {
+        Diag(ELoc, diag::err_omp_required_method)
+            << getOpenMPClauseName(OMPC_lastprivate) << 0;
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+        Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+        continue;
+      }
+      MarkFunctionReferenced(ELoc, CD);
+      DiagnoseUseOfDecl(CD, ELoc);
+
+      CXXMethodDecl *MD = LookupCopyingAssignment(RD, 0, false, 0);
+      DeclAccessPair FoundDecl = DeclAccessPair::make(MD, MD->getAccess());
+      if (!MD || CheckMemberAccess(ELoc, RD, FoundDecl) == AR_inaccessible ||
+          MD->isDeleted()) {
+        Diag(ELoc, diag::err_omp_required_method)
+            << getOpenMPClauseName(OMPC_lastprivate) << 2;
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+        Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+        continue;
+      }
+      MarkFunctionReferenced(ELoc, MD);
+      DiagnoseUseOfDecl(MD, ELoc);
+
+      CXXDestructorDecl *DD = RD->getDestructor();
+      if (DD) {
+        if (CheckDestructorAccess(ELoc, DD, PD) == AR_inaccessible ||
+            DD->isDeleted()) {
+          Diag(ELoc, diag::err_omp_required_method)
+              << getOpenMPClauseName(OMPC_lastprivate) << 4;
+          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                        VarDecl::DeclarationOnly;
+          Diag(VD->getLocation(),
+               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+              << VD;
+          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+          continue;
+        }
+        MarkFunctionReferenced(ELoc, DD);
+        DiagnoseUseOfDecl(DD, ELoc);
+      }
+    }
+
+    DSAStack->addDSA(VD, DE, OMPC_lastprivate);
+    Vars.push_back(DE);
+  }
+
+  if (Vars.empty())
+    return nullptr;
+
+  return OMPLastprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
+                                      Vars);
 }
 
 OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,

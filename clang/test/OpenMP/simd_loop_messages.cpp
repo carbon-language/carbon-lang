@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fopenmp=libiomp5 -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
 
 static int sii;
-#pragma omp threadprivate(sii)
+#pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
 
 int test_iteration_spaces() {
   const int N = 100;
@@ -247,6 +247,7 @@ int test_iteration_spaces() {
 
   #pragma omp parallel
   {
+    // expected-error@+2 {{loop iteration variable may not be threadprivate or thread local}}
     #pragma omp simd
     for (sii = 0; sii < 10; sii+=1)
       c[sii] = a[sii];

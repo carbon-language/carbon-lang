@@ -301,6 +301,10 @@ void OMPClauseProfiler::VisitOMPFirstprivateClause(
                                          const OMPFirstprivateClause *C) {
   VisitOMPClauseList(C);
 }
+void
+OMPClauseProfiler::VisitOMPLastprivateClause(const OMPLastprivateClause *C) {
+  VisitOMPClauseList(C);
+}
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }

@@ -35,8 +35,8 @@ template<class T> struct S {
 // CHECK: T res;
 // CHECK: T val;
 // CHECK: T lin = 0;
-    #pragma omp simd private(val)  safelen(7) linear(lin : -5)
-// CHECK-NEXT: #pragma omp simd private(val) safelen(7) linear(lin: -5)
+    #pragma omp simd private(val)  safelen(7) linear(lin : -5) lastprivate(res)
+// CHECK-NEXT: #pragma omp simd private(val) safelen(7) linear(lin: -5) lastprivate(res)
     for (T i = 7; i < m_a; ++i) {
       val = v[i-7] + m_a;
       res = val;
@@ -97,10 +97,10 @@ int main (int argc, char **argv) {
   for (int i=0; i < 2; ++i)*a=2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: *a = 2;
-#pragma omp simd private(argc, b) collapse(2) aligned(a : 4)
+#pragma omp simd private(argc, b),lastprivate(d,f) collapse(2) aligned(a : 4)
   for (int i = 0; i < 10; ++i)
   for (int j = 0; j < 10; ++j) {foo(); k1 += 8; k2 += 8;}
-// CHECK-NEXT: #pragma omp simd private(argc,b) collapse(2) aligned(a: 4)
+// CHECK-NEXT: #pragma omp simd private(argc,b) lastprivate(d,f) collapse(2) aligned(a: 4)
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: for (int j = 0; j < 10; ++j) {
 // CHECK-NEXT: foo();

@@ -258,7 +258,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///    clause:
 ///       if-clause | num_threads-clause | safelen-clause | default-clause |
 ///       private-clause | firstprivate-clause | shared-clause | linear-clause |
-///       aligned-clause | collapse-clause
+///       aligned-clause | collapse-clause | lastprivate-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -305,6 +305,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     break;
   case OMPC_private:
   case OMPC_firstprivate:
+  case OMPC_lastprivate:
   case OMPC_shared:
   case OMPC_linear:
   case OMPC_aligned:
@@ -393,13 +394,15 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
                                          Tok.getLocation());
 }
 
-/// \brief Parsing of OpenMP clause 'private', 'firstprivate',
+/// \brief Parsing of OpenMP clause 'private', 'firstprivate', 'lastprivate',
 /// 'shared', 'copyin', or 'reduction'.
 ///
 ///    private-clause:
 ///       'private' '(' list ')'
 ///    firstprivate-clause:
 ///       'firstprivate' '(' list ')'
+///    lastprivate-clause:
+///       'lastprivate' '(' list ')'
 ///    shared-clause:
 ///       'shared' '(' list ')'
 ///    linear-clause:

@@ -1394,6 +1394,18 @@ public:
                                                    EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'lastprivate' clause.
+  ///
+  /// By default, performs semantic analysis to build the new OpenMP clause.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPLastprivateClause(ArrayRef<Expr *> VarList,
+                                         SourceLocation StartLoc,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPLastprivateClause(VarList, StartLoc, LParenLoc,
+                                                  EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'shared' clause.
   ///
   /// By default, performs semantic analysis to build the new OpenMP clause.
@@ -6436,6 +6448,21 @@ OMPClause *TreeTransform<Derived>::TransformOMPFirstprivateClause(
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPFirstprivateClause(
+      Vars, C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPLastprivateClause(OMPLastprivateClause *C) {
+  llvm::SmallVector<Expr *, 16> Vars;
+  Vars.reserve(C->varlist_size());
+  for (auto *VE : C->varlists()) {
+    ExprResult EVar = getDerived().TransformExpr(cast<Expr>(VE));
+    if (EVar.isInvalid())
+      return nullptr;
+    Vars.push_back(EVar.get());
+  }
+  return getDerived().RebuildOMPLastprivateClause(
       Vars, C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
