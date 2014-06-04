@@ -870,6 +870,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
 		23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeEnumMember.h; path = include/lldb/API/SBTypeEnumMember.h; sourceTree = "<group>"; };
 		23EFE38A193D1AEC00E54E54 /* SBTypeEnumMember.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBTypeEnumMember.cpp; path = source/API/SBTypeEnumMember.cpp; sourceTree = "<group>"; };
@@ -3432,6 +3433,7 @@
 				4CB4430A12491DDA00C13DC2 /* LanguageRuntime.cpp */,
 				2690B36F1381D5B600ECFBAE /* Memory.h */,
 				2690B3701381D5C300ECFBAE /* Memory.cpp */,
+				2360092C193FB21500189DB1 /* MemoryRegionInfo.h */,
 				4CB443F612499B6E00C13DC2 /* ObjCLanguageRuntime.h */,
 				4CB443F212499B5000C13DC2 /* ObjCLanguageRuntime.cpp */,
 				495BBACF119A0DE700418BEA /* PathMappingList.h */,

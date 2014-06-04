@@ -44,6 +44,7 @@
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/JITLoaderList.h"
 #include "lldb/Target/Memory.h"
+#include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/QueueList.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
@@ -1335,91 +1336,6 @@ inline bool operator!= (const ProcessModID &lhs, const ProcessModID &rhs)
         return false;
 }
     
-class MemoryRegionInfo
-{
-public:
-    typedef Range<lldb::addr_t, lldb::addr_t> RangeType;
-
-    enum OptionalBool {
-        eDontKnow  = -1,
-        eNo         = 0,
-        eYes        = 1
-    };
-
-    MemoryRegionInfo () :
-        m_range (),
-        m_read (eDontKnow),
-        m_write (eDontKnow),
-        m_execute (eDontKnow)
-    {
-    }
-
-    ~MemoryRegionInfo ()
-    {
-    }
-
-    RangeType &
-    GetRange()
-    {
-        return m_range;
-    }
-
-    void
-    Clear()
-    {
-        m_range.Clear();
-        m_read = m_write = m_execute = eDontKnow;
-    }
-
-    const RangeType &
-    GetRange() const
-    {
-        return m_range;
-    }
-
-    OptionalBool
-    GetReadable () const
-    {
-        return m_read;
-    }
-
-    OptionalBool
-    GetWritable () const
-    {
-        return m_write;
-    }
-
-    OptionalBool
-    GetExecutable () const
-    {
-        return m_execute;
-    }
-
-    void
-    SetReadable (OptionalBool val)
-    {
-        m_read = val;
-    }
-
-    void
-    SetWritable (OptionalBool val)
-    {
-        m_write = val;
-    }
-
-    void
-    SetExecutable (OptionalBool val)
-    {
-        m_execute = val;
-    }
-
-protected:
-    RangeType m_range;
-    OptionalBool m_read;
-    OptionalBool m_write;
-    OptionalBool m_execute;
-};
-
 //----------------------------------------------------------------------
 /// @class Process Process.h "lldb/Target/Process.h"
 /// @brief A plug-in interface definition class for debugging a process.
