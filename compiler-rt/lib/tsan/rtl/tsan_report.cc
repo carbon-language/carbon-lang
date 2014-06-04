@@ -17,9 +17,9 @@
 
 namespace __tsan {
 
-class Decorator: private __sanitizer::AnsiColorDecorator {
+class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
-  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  Decorator() : SanitizerCommonDecorator() { }
   const char *Warning()    { return Red(); }
   const char *EndWarning() { return Default(); }
   const char *Access()     { return Blue(); }

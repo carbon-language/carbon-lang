@@ -27,9 +27,9 @@ using namespace __sanitizer;
 
 namespace __msan {
 
-class Decorator: private __sanitizer::AnsiColorDecorator {
+class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
-  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  Decorator() : SanitizerCommonDecorator() { }
   const char *Warning()    { return Red(); }
   const char *Origin()     { return Magenta(); }
   const char *Name()   { return Green(); }

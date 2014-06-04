@@ -131,9 +131,9 @@ void InitCommonLsan() {
   }
 }
 
-class Decorator: private __sanitizer::AnsiColorDecorator {
+class Decorator: public __sanitizer::SanitizerCommonDecorator {
  public:
-  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
+  Decorator() : SanitizerCommonDecorator() { }
   const char *Error() { return Red(); }
   const char *Leak() { return Blue(); }
   const char *End() { return Default(); }
