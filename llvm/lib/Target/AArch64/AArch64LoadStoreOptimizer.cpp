@@ -40,14 +40,13 @@ STATISTIC(NumPreFolded, "Number of pre-index updates folded");
 STATISTIC(NumUnscaledPairCreated,
           "Number of load/store from unscaled generated");
 
-static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit", cl::init(20),
-                                   cl::Hidden);
+static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit",
+                                   cl::init(20), cl::Hidden);
 
 // Place holder while testing unscaled load/store combining
-static cl::opt<bool>
-EnableAArch64UnscaledMemOp("aarch64-unscaled-mem-op", cl::Hidden,
-                         cl::desc("Allow AArch64 unscaled load/store combining"),
-                         cl::init(true));
+static cl::opt<bool> EnableAArch64UnscaledMemOp(
+    "aarch64-unscaled-mem-op", cl::Hidden,
+    cl::desc("Allow AArch64 unscaled load/store combining"), cl::init(true));
 
 namespace {
 struct AArch64LoadStoreOpt : public MachineFunctionPass {
@@ -217,16 +216,26 @@ static unsigned getPreIndexedOpcode(unsigned Opc) {
   switch (Opc) {
   default:
     llvm_unreachable("Opcode has no pre-indexed equivalent!");
-  case AArch64::STRSui:    return AArch64::STRSpre;
-  case AArch64::STRDui:    return AArch64::STRDpre;
-  case AArch64::STRQui:    return AArch64::STRQpre;
-  case AArch64::STRWui:    return AArch64::STRWpre;
-  case AArch64::STRXui:    return AArch64::STRXpre;
-  case AArch64::LDRSui:    return AArch64::LDRSpre;
-  case AArch64::LDRDui:    return AArch64::LDRDpre;
-  case AArch64::LDRQui:    return AArch64::LDRQpre;
-  case AArch64::LDRWui:    return AArch64::LDRWpre;
-  case AArch64::LDRXui:    return AArch64::LDRXpre;
+  case AArch64::STRSui:
+    return AArch64::STRSpre;
+  case AArch64::STRDui:
+    return AArch64::STRDpre;
+  case AArch64::STRQui:
+    return AArch64::STRQpre;
+  case AArch64::STRWui:
+    return AArch64::STRWpre;
+  case AArch64::STRXui:
+    return AArch64::STRXpre;
+  case AArch64::LDRSui:
+    return AArch64::LDRSpre;
+  case AArch64::LDRDui:
+    return AArch64::LDRDpre;
+  case AArch64::LDRQui:
+    return AArch64::LDRQpre;
+  case AArch64::LDRWui:
+    return AArch64::LDRWpre;
+  case AArch64::LDRXui:
+    return AArch64::LDRXpre;
   }
 }
 
