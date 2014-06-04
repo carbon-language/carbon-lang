@@ -454,6 +454,8 @@ static bool functionHasLines(Function *F) {
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
          I != IE; ++I) {
+      // Debug intrinsic locations correspond to the location of the
+      // declaration, not necessarily any statements or expressions.
       if (isa<DbgInfoIntrinsic>(I)) continue;
       const DebugLoc &Loc = I->getDebugLoc();
       if (Loc.isUnknown()) continue;
@@ -516,6 +518,8 @@ void GCOVProfiler::emitProfileNotes() {
         uint32_t Line = 0;
         for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
              I != IE; ++I) {
+          // Debug intrinsic locations correspond to the location of the
+          // declaration, not necessarily any statements or expressions.
           if (isa<DbgInfoIntrinsic>(I)) continue;
           const DebugLoc &Loc = I->getDebugLoc();
           if (Loc.isUnknown()) continue;
