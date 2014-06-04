@@ -1174,11 +1174,16 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
   case TemplateArgument::Expression:
     mangleExpression(TA.getAsExpr());
     break;
-  case TemplateArgument::Pack:
-    // Unlike Itanium, there is no character code to indicate an argument pack.
-    for (const TemplateArgument &PA : TA.getPackAsArray())
-      mangleTemplateArg(TD, PA);
+  case TemplateArgument::Pack: {
+    llvm::ArrayRef<TemplateArgument> TemplateArgs = TA.getPackAsArray();
+    if (TemplateArgs.empty()) {
+      Out << "$S";
+    } else {
+      for (const TemplateArgument &PA : TemplateArgs)
+        mangleTemplateArg(TD, PA);
+    }
     break;
+  }
   case TemplateArgument::Template:
     mangleType(cast<TagDecl>(
         TA.getAsTemplate().getAsTemplateDecl()->getTemplatedDecl()));
