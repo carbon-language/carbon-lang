@@ -3671,6 +3671,12 @@ void Sema::InstantiateVariableInitializer(
     // We already have an initializer in the class.
     return;
 
+  if (Var->hasAttr<DLLImportAttr>() &&
+      !(OldVar->getInit() && OldVar->checkInitIsICE())) {
+    // Do not dynamically initialize dllimport variables.
+    return;
+  }
+
   if (OldVar->getInit()) {
     if (Var->isStaticDataMember() && !OldVar->isOutOfLine())
       PushExpressionEvaluationContext(Sema::ConstantEvaluated, OldVar);
