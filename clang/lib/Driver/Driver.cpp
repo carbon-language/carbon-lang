@@ -11,6 +11,7 @@
 #include "InputInfo.h"
 #include "ToolChains.h"
 #include "clang/Basic/Version.h"
+#include "clang/Config/config.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/DriverDiagnostic.h"
@@ -36,10 +37,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <memory>
-
-// FIXME: It would prevent us from including llvm-config.h
-// if config.h were included before system_error.h.
-#include "clang/Config/config.h"
 
 using namespace clang::driver;
 using namespace clang;

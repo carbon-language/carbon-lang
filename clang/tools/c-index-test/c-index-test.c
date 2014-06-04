@@ -1,10 +1,10 @@
 /* c-index-test.c */
 
+#include "clang/Config/config.h"
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 #include "clang-c/BuildSystem.h"
 #include "clang-c/Documentation.h"
-#include "llvm/Config/config.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>

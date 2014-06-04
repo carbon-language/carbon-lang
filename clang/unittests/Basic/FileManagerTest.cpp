@@ -11,7 +11,7 @@
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/FileSystemStatCache.h"
 #include "gtest/gtest.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 
 using namespace llvm;
 using namespace clang;

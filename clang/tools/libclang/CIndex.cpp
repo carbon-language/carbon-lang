@@ -39,7 +39,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/Format.h"
@@ -52,7 +52,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 
-#if HAVE_PTHREAD_H
+#ifdef __APPLE__
 #include <pthread.h>
 #endif
 
@@ -6962,7 +6962,7 @@ cxindex::Logger::~Logger() {
   OS << "[libclang:" << Name << ':';
 
   // FIXME: Portability.
-#if HAVE_PTHREAD_H && __APPLE__
+#ifdef __APPLE__
   mach_port_t tid = pthread_mach_thread_np(pthread_self());
   OS << tid << ':';
 #endif

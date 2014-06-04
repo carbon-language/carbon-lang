@@ -1,5 +1,3 @@
-/* include/clang/Config/config.h.in. */
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -20,5 +18,8 @@
 
 /* Directory where gcc is installed. */
 #undef GCC_INSTALL_PREFIX
+
+/* Define if we have libxml2 */
+#undef CLANG_HAVE_LIBXML
 
 #endif
