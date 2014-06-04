@@ -11,7 +11,7 @@
 #define LLVM_READOBJ_ARMWINEHPRINTER_H
 
 #include "StreamWriter.h"
-#include "llvm/object/COFF.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
