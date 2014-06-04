@@ -413,10 +413,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     State.Stack.back().BreakBeforeParameter = true;
 
   if (!DryRun) {
-    unsigned Newlines = 1;
-    if (Current.is(tok::comment))
-      Newlines = std::max(Newlines, std::min(Current.NewlinesBefore,
-                                             Style.MaxEmptyLinesToKeep + 1));
+    unsigned Newlines = std::max(
+        1u, std::min(Current.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1));
     Whitespaces.replaceWhitespace(Current, Newlines,
                                   State.Stack.back().IndentLevel, State.Column,
                                   State.Column, State.Line->InPPDirective);
