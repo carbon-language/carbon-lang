@@ -1052,22 +1052,47 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
   return findAbstractVariable(DV, ScopeLoc.getScope(DV->getContext()));
 }
 
-DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
-                                              const MDNode *ScopeNode) {
+DbgVariable *DwarfDebug::getExistingAbstractVariable(DIVariable &DV,
+                                                     DIVariable &Cleansed) {
   LLVMContext &Ctx = DV->getContext();
   // More then one inlined variable corresponds to one abstract variable.
-  DIVariable Var = cleanseInlinedVariable(DV, Ctx);
-  auto I = AbstractVariables.find(Var);
+  // FIXME: This duplication of variables when inlining should probably be
+  // removed. It's done to allow each DIVariable to describe its location
+  // because the DebugLoc on the dbg.value/declare isn't accurate. We should
+  // make it accurate then remove this duplication/cleansing stuff.
+  Cleansed = cleanseInlinedVariable(DV, Ctx);
+  auto I = AbstractVariables.find(Cleansed);
   if (I != AbstractVariables.end())
     return I->second.get();
+  return nullptr;
+}
 
-  LexicalScope *Scope = LScopes.findAbstractScope(ScopeNode);
-  if (!Scope)
-    return nullptr;
-
+DbgVariable *DwarfDebug::createAbstractVariable(DIVariable &Var,
+                                                LexicalScope *Scope) {
   auto AbsDbgVariable = make_unique<DbgVariable>(Var, nullptr, this);
   addScopeVariable(Scope, AbsDbgVariable.get());
   return (AbstractVariables[Var] = std::move(AbsDbgVariable)).get();
+}
+
+DbgVariable *DwarfDebug::getOrCreateAbstractVariable(DIVariable &DV,
+                                                     const MDNode *ScopeNode) {
+  DIVariable Cleansed = DV;
+  if (DbgVariable *Var = getExistingAbstractVariable(DV, Cleansed))
+    return Var;
+
+  return createAbstractVariable(Cleansed,
+                                LScopes.getOrCreateAbstractScope(ScopeNode));
+}
+
+DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
+                                              const MDNode *ScopeNode) {
+  DIVariable Cleansed = DV;
+  if (DbgVariable *Var = getExistingAbstractVariable(DV, Cleansed))
+    return Var;
+
+  if (LexicalScope *Scope = LScopes.findAbstractScope(ScopeNode))
+    return createAbstractVariable(Cleansed, Scope);
+  return nullptr;
 }
 
 // If Var is a current function argument then add it to CurrentFnArguments list.
@@ -1513,7 +1538,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       assert(DV && DV.isVariable());
       if (!ProcessedVars.insert(DV))
         continue;
-      findAbstractVariable(DV, DV.getContext());
+      getOrCreateAbstractVariable(DV, DV.getContext());
     }
     constructAbstractSubprogramScopeDIE(TheCU, AScope);
   }

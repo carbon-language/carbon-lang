@@ -197,6 +197,9 @@ public:
   /// dump - Print data structures to dbgs().
   void dump();
 
+  /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
+  LexicalScope *getOrCreateAbstractScope(const MDNode *N);
+
 private:
   /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
   /// not available then create new lexical scope.
@@ -207,9 +210,6 @@ private:
 
   /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
   LexicalScope *getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt);
-
-  /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
-  LexicalScope *getOrCreateAbstractScope(const MDNode *N);
 
   /// extractLexicalScopes - Extract instruction ranges for each lexical scopes
   /// for the given machine function.

@@ -1782,12 +1782,10 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
   // Define variable debug information entry.
   auto VariableDie = make_unique<DIE>(DV.getTag());
   DbgVariable *AbsVar = DV.getAbstractVariable();
-  // FIXME: any missing abstract variable missing a DIE will result in incorrect
-  // DWARF. More details in test/DebugInfo/missing-abstract-variable.ll for an
-  // example of why this is happening.
-  if (AbsVar && AbsVar->getDIE())
+  if (AbsVar) {
+    assert(AbsVar->getDIE());
     addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsVar->getDIE());
-  else {
+  } else {
     if (!Name.empty())
       addString(*VariableDie, dwarf::DW_AT_name, Name);
     addSourceLine(*VariableDie, DV.getVariable());
