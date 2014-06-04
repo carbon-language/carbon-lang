@@ -170,10 +170,10 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   if (!PSViewer && S.TryFindProgram("open", ViewerPath))
     PSViewer = PSV_OSXOpen;
 #endif
-  if (!PSViewer && S.TryFindProgram("xdg-open", ViewerPath))
-    PSViewer = PSV_XDGOpen;
   if (!PSViewer && S.TryFindProgram("gv", ViewerPath))
     PSViewer = PSV_Ghostview;
+  if (!PSViewer && S.TryFindProgram("xdg-open", ViewerPath))
+    PSViewer = PSV_XDGOpen;
 
   // PostScript graph generator + PostScript viewer
   std::string GeneratorPath;
