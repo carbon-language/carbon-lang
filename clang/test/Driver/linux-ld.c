@@ -895,6 +895,12 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-PTHREAD %s
 // CHECK-ANDROID-PTHREAD-NOT: -lpthread
 //
+// RUN: %clang -no-canonical-prefixes %t.o -### -o %t 2>&1 \
+// RUN:     --target=arm-linux-androideabi -pthread \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-PTHREAD-LINK %s
+// CHECK-ANDROID-PTHREAD-LINK-NOT: argument unused during compilation: '-pthread'
+//
 // Check linker invocation on Debian 6 MIPS 32/64-bit.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mipsel-linux-gnu \

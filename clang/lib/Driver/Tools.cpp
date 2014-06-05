@@ -7189,9 +7189,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       }
       AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
 
-      if (!isAndroid &&
-          (Args.hasArg(options::OPT_pthread) ||
-           Args.hasArg(options::OPT_pthreads) || UsedOpenMPLib != LibUnknown))
+      if ((Args.hasArg(options::OPT_pthread) ||
+           Args.hasArg(options::OPT_pthreads) || UsedOpenMPLib != LibUnknown) &&
+          !isAndroid)
         CmdArgs.push_back("-lpthread");
 
       CmdArgs.push_back("-lc");
