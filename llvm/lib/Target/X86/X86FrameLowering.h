@@ -23,14 +23,10 @@ class MCSymbol;
 class X86TargetMachine;
 
 class X86FrameLowering : public TargetFrameLowering {
-  const X86Subtarget &STI;
 public:
   explicit X86FrameLowering(const X86Subtarget &sti)
-    : TargetFrameLowering(StackGrowsDown,
-                          sti.getStackAlignment(),
-                          (sti.is64Bit() ? -8 : -4)),
-      STI(sti) {
-  }
+      : TargetFrameLowering(StackGrowsDown, sti.getStackAlignment(),
+                            (sti.is64Bit() ? -8 : -4)) {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI, DebugLoc DL,

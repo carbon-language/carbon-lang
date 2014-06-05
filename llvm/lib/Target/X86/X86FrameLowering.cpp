@@ -411,6 +411,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   uint64_t MaxAlign  = MFI->getMaxAlignment(); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
   bool HasFP = hasFP(MF);
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   bool IsLP64 = STI.isTarget64BitLP64();
   bool IsWin64 = STI.isTargetWin64();
@@ -728,6 +729,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   assert(MBBI != MBB.end() && "Returning block has no instructions");
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   bool IsLP64 = STI.isTarget64BitLP64();
   bool UseLEA = STI.useLeaForSP();
@@ -990,6 +992,7 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
 
   // Push GPRs. It increases frame size.
   unsigned Opc = STI.is64Bit() ? X86::PUSH64r : X86::PUSH32r;
@@ -1039,6 +1042,7 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
 
   // Reload XMMs from stack frame.
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
@@ -1167,6 +1171,7 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   uint64_t StackSize;
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   unsigned TlsReg, TlsOffset;
   DebugLoc DL;
@@ -1378,6 +1383,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   const unsigned SlotSize =
       static_cast<const X86RegisterInfo *>(MF.getTarget().getRegisterInfo())
           ->getSlotSize();
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   const bool Is64Bit = STI.is64Bit();
   DebugLoc DL;
   // HiPE-specific values
@@ -1513,6 +1519,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   bool reseveCallFrame = hasReservedCallFrame(MF);
   int Opcode = I->getOpcode();
   bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
+  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL = I->getDebugLoc();
   uint64_t Amount = !reseveCallFrame ? I->getOperand(0).getImm() : 0;
