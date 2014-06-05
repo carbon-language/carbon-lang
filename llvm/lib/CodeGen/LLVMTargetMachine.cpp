@@ -12,11 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetMachine.h"
+
+#include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/JumpInstrTables.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -82,6 +86,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
                                           bool DisableVerify,
                                           AnalysisID StartAfter,
                                           AnalysisID StopAfter) {
+
   // Add internal analysis passes from the target machine.
   TM->addAnalysisPasses(PM);
 
@@ -136,6 +141,11 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                             bool DisableVerify,
                                             AnalysisID StartAfter,
                                             AnalysisID StopAfter) {
+  // Passes to handle jumptable function annotations. These can't be handled at
+  // JIT time, so we don't add them directly to addPassesToGenerateCode.
+  PM.add(createJumpInstrTableInfoPass());
+  PM.add(createJumpInstrTablesPass(Options.JTType));
+
   // Add common CodeGen passes.
   MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify,
                                                StartAfter, StopAfter);

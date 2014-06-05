@@ -75,6 +75,7 @@ public:
     Cold,                  ///< Marks function as being in a cold path.
     InlineHint,            ///< Source said inlining was desirable
     InReg,                 ///< Force argument to be passed in register
+    JumpTable,             ///< Build jump-instruction tables and replace refs.
     MinSize,               ///< Function must be optimized for size first
     Naked,                 ///< Naked function
     Nest,                  ///< Nested function static chain

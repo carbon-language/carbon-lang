@@ -1020,6 +1020,14 @@ example:
     inlining this function is desirable (such as the "inline" keyword in
     C/C++). It is just a hint; it imposes no requirements on the
     inliner.
+``jumptable``
+    This attribute indicates that the function should be added to a
+    jump-instruction table at code-generation time, and that all address-taken
+    references to this function should be replaced with a reference to the
+    appropriate jump-instruction-table function pointer. Note that this creates
+    a new pointer for the original function, which means that code that depends
+    on function-pointer identity can break. So, any function annotated with
+    ``jumptable`` must also be ``unnamed_addr``.
 ``minsize``
     This attribute suggests that optimization passes and code generator
     passes make choices that keep the code size of this function as small

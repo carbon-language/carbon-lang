@@ -549,6 +549,8 @@ static Attribute::AttrKind GetAttrFromCode(uint64_t Code) {
     return Attribute::InlineHint;
   case bitc::ATTR_KIND_IN_REG:
     return Attribute::InReg;
+  case bitc::ATTR_KIND_JUMP_TABLE:
+    return Attribute::JumpTable;
   case bitc::ATTR_KIND_MIN_SIZE:
     return Attribute::MinSize;
   case bitc::ATTR_KIND_NAKED:

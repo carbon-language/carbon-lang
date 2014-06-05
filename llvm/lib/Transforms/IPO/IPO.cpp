@@ -30,6 +30,7 @@ void llvm::initializeIPO(PassRegistry &Registry) {
   initializeGlobalDCEPass(Registry);
   initializeGlobalOptPass(Registry);
   initializeIPCPPass(Registry);
+  initializeJumpInstrTablesPass(Registry);
   initializeAlwaysInlinerPass(Registry);
   initializeSimpleInlinerPass(Registry);
   initializeInternalizePassPass(Registry);

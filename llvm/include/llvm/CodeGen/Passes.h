@@ -588,6 +588,8 @@ namespace llvm {
   /// the intrinsic for later emission to the StackMap.
   extern char &StackMapLivenessID;
 
+  /// createJumpInstrTables - This pass creates jump-instruction tables.
+  ModulePass *createJumpInstrTablesPass();
 } // End llvm namespace
 
 #endif

@@ -107,6 +107,7 @@ namespace lltok {
     kw_cold,
     kw_inlinehint,
     kw_inreg,
+    kw_jumptable,
     kw_minsize,
     kw_naked,
     kw_nest,

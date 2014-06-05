@@ -177,6 +177,8 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
     return bitc::ATTR_KIND_INLINE_HINT;
   case Attribute::InReg:
     return bitc::ATTR_KIND_IN_REG;
+  case Attribute::JumpTable:
+    return bitc::ATTR_KIND_JUMP_TABLE;
   case Attribute::MinSize:
     return bitc::ATTR_KIND_MIN_SIZE;
   case Attribute::Naked:

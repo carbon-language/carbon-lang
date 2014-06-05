@@ -202,6 +202,21 @@ FunctionSections("function-sections",
                  cl::desc("Emit functions into separate sections"),
                  cl::init(false));
 
+cl::opt<llvm::JumpTable::JumpTableType>
+JTableType("jump-table-type",
+          cl::desc("Choose the type of Jump-Instruction Table for jumptable."),
+          cl::init(JumpTable::Single),
+          cl::values(
+              clEnumValN(JumpTable::Single, "single",
+                         "Create a single table for all jumptable functions"),
+              clEnumValN(JumpTable::Arity, "arity",
+                         "Create one table per number of parameters."),
+              clEnumValN(JumpTable::Simplified, "simplified",
+                         "Create one table per simplified function type."),
+              clEnumValN(JumpTable::Full, "full",
+                         "Create one table per unique function type."),
+              clEnumValEnd));
+
 // Common utility function tightly tied to the options listed here. Initializes
 // a TargetOptions object with CodeGen flags and returns it.
 static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
@@ -228,6 +243,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.FunctionSections = FunctionSections;
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
+  Options.JTType = JTableType;
 
   return Options;
 }

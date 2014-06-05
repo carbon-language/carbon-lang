@@ -229,6 +229,13 @@ public:
                                       const TargetRegisterInfo*) const override;
   void breakPartialRegDependency(MachineBasicBlock::iterator, unsigned,
                                  const TargetRegisterInfo *TRI) const override;
+
+  void
+  getUnconditionalBranch(MCInst &Branch,
+                         const MCSymbolRefExpr *BranchTarget) const override;
+
+  void getTrap(MCInst &MI) const override;
+
   /// Get the number of addresses by LDM or VLDM or zero for unknown.
   unsigned getNumLDMAddresses(const MachineInstr *MI) const;
 

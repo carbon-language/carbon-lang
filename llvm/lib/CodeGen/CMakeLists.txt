@@ -27,6 +27,7 @@ add_llvm_library(LLVMCodeGen
   InterferenceCache.cpp
   IntrinsicLowering.cpp
   JITCodeEmitter.cpp
+  JumpInstrTables.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp
   LexicalScopes.cpp

@@ -396,6 +396,12 @@ public:
                                       const SmallVectorImpl<MachineOperand> &MOs,
                                       unsigned Size, unsigned Alignment) const;
 
+  void
+  getUnconditionalBranch(MCInst &Branch,
+                         const MCSymbolRefExpr *BranchTarget) const override;
+
+  void getTrap(MCInst &MI) const override;
+
   bool isHighLatencyDef(int opc) const override;
 
   bool hasHighOperandLatency(const InstrItineraryData *ItinData,

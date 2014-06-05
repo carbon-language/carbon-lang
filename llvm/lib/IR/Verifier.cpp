@@ -735,7 +735,8 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::Builtin ||
         I->getKindAsEnum() == Attribute::NoBuiltin ||
         I->getKindAsEnum() == Attribute::Cold ||
-        I->getKindAsEnum() == Attribute::OptimizeNone) {
+        I->getKindAsEnum() == Attribute::OptimizeNone ||
+        I->getKindAsEnum() == Attribute::JumpTable) {
       if (!isFunction) {
         CheckFailed("Attribute '" + I->getAsString() +
                     "' only applies to functions!", V);
@@ -908,6 +909,14 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
     Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
                                 Attribute::MinSize),
             "Attributes 'minsize and optnone' are incompatible!", V);
+  }
+
+  if (Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                         Attribute::JumpTable)) {
+    const GlobalValue *GV = cast<GlobalValue>(V);
+    Assert1(GV->hasUnnamedAddr(),
+            "Attribute 'jumptable' requires 'unnamed_addr'", V);
+
   }
 }
 

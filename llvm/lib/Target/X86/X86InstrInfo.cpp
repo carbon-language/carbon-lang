@@ -28,6 +28,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -5297,6 +5298,16 @@ void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
 void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
+}
+
+void X86InstrInfo::getUnconditionalBranch(
+    MCInst &Branch, const MCSymbolRefExpr *BranchTarget) const {
+  Branch.setOpcode(X86::JMP_4);
+  Branch.addOperand(MCOperand::CreateExpr(BranchTarget));
+}
+
+void X86InstrInfo::getTrap(MCInst &MI) const {
+  MI.setOpcode(X86::TRAP);
 }
 
 bool X86InstrInfo::isHighLatencyDef(int opc) const {

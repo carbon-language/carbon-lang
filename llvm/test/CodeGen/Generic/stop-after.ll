@@ -5,6 +5,6 @@
 ; STOP: Loop Strength Reduction
 ; STOP-NEXT: Machine Function Analysis
 
-; START: -machine-branch-prob -gc-lowering
+; START: -machine-branch-prob -jump-instr-tables -gc-lowering
 ; START: FunctionPass Manager
 ; START-NEXT: Lower Garbage Collection Instructions

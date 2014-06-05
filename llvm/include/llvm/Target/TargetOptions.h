@@ -39,6 +39,17 @@ namespace llvm {
     };
   }
 
+  namespace JumpTable {
+    enum JumpTableType {
+      Single,          // Use a single table for all indirect jumptable calls.
+      Arity,           // Use one table per number of function parameters.
+      Simplified,      // Use one table per function type, with types projected
+                       // into 4 types: pointer to non-function, struct,
+                       // primitive, and function pointer.
+      Full             // Use one table per unique function type
+    };
+  }
+
   class TargetOptions {
   public:
     TargetOptions()
@@ -54,7 +65,7 @@ namespace llvm {
           CompressDebugSections(false), FunctionSections(false),
           DataSections(false), TrapUnreachable(false), TrapFuncName(""),
           FloatABIType(FloatABI::Default),
-          AllowFPOpFusion(FPOpFusion::Standard) {}
+          AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
     /// option is specified on the command line, and should enable debugging
@@ -204,6 +215,10 @@ namespace llvm {
     /// via the llvm.fma.* intrinsic) will always be honored, regardless of
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
+
+    /// JTType - This flag specifies the type of jump-instruction table to
+    /// create for functions that have the jumptable attribute.
+    JumpTable::JumpTableType JTType;
 
     /// Machine level options.
     MCTargetOptions MCOptions;
