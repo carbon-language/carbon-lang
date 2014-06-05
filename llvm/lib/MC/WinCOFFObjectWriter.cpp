@@ -347,6 +347,11 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
 
   COFFSection *coff_section = createSection(Sec.getSectionName());
   COFFSymbol  *coff_symbol = createSymbol(Sec.getSectionName());
+  if (const MCSymbol *S = Sec.getCOMDATSymbol()) {
+    COFFSymbol *COMDATSymbol = GetOrCreateCOFFSymbol(S);
+    assert(!COMDATSymbol->Section);
+    COMDATSymbol->Section = coff_section;
+  }
 
   coff_section->Symbol = coff_symbol;
   coff_symbol->Section = coff_section;
@@ -458,9 +463,15 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     } else {
       const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
-      if (BaseData.Fragment)
-        coff_symbol->Section =
+      if (BaseData.Fragment) {
+        COFFSection *Sec =
             SectionMap[&BaseData.Fragment->getParent()->getSection()];
+
+        if (coff_symbol->Section && coff_symbol->Section != Sec)
+          report_fatal_error("conflicting sections for symbol");
+
+        coff_symbol->Section = Sec;
+      }
     }
 
     coff_symbol->MCData = &ResSymData;

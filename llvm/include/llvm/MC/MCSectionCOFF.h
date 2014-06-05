@@ -76,6 +76,7 @@ class MCSymbol;
       return SectionName.str() + "_end";
     }
     unsigned getCharacteristics() const { return Characteristics; }
+    const MCSymbol *getCOMDATSymbol() const { return COMDATSymbol; }
     int getSelection() const { return Selection; }
     const MCSectionCOFF *getAssocSection() const { return Assoc; }
 

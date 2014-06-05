@@ -40,6 +40,11 @@ Symbol6:
 Symbol7:
 .long 1
 
+.section SecName, "dr", newest, "Symbol8"
+.globl AnotherSymbol
+AnotherSymbol:
+.long 1
+
 // CHECK: Sections [
 // CHECK:   Section {
 // CHECK:     Number: 1
@@ -114,6 +119,10 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol1
+// CHECK:     Section: secName (2)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: secName
 // CHECK:     Section: secName (3)
 // CHECK:     AuxSectionDef {
@@ -121,11 +130,19 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol2
+// CHECK:     Section: secName (3)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: SecName
 // CHECK:     Section: SecName (4)
 // CHECK:     AuxSectionDef {
 // CHECK:       Selection: SameSize
 // CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol3
+// CHECK:     Section: SecName (4)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: SecName
@@ -136,12 +153,20 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol4
+// CHECK:     Section: SecName (5)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: SecName
 // CHECK:     Section: SecName (6)
 // CHECK:     AuxSectionDef {
 // CHECK:       Selection: Associative
 // CHECK:       AssocSection: assocSec (1)
 // CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol5
+// CHECK:     Section: SecName (6)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: SecName
@@ -151,6 +176,10 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol6
+// CHECK:     Section: SecName (7)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: SecName
 // CHECK:     Section: SecName (8)
 // CHECK:     AuxSectionDef {
@@ -158,31 +187,22 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
-// CHECK:     Name: Symbol1
-// CHECK:     Section: secName (2)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol2
-// CHECK:     Section: secName (3)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol3
-// CHECK:     Section: SecName (4)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol4
-// CHECK:     Section: SecName (5)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol5
-// CHECK:     Section: SecName (6)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol6
-// CHECK:     Section: SecName (7)
-// CHECK:   }
-// CHECK:   Symbol {
 // CHECK:     Name: Symbol7
 // CHECK:     Section: SecName (8)
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: SecName
+// CHECK:     Section: SecName (9)
+// CHECK:     AuxSectionDef {
+// CHECK:       Selection: Newest (0x7)
+// CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol8
+// CHECK:     Section: SecName (9)
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: AnotherSymbol
+// CHECK:     Section: SecName (9)
 // CHECK:   }
 // CHECK: ]
