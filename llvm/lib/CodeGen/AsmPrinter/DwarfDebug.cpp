@@ -1047,11 +1047,6 @@ void DwarfDebug::endModule() {
 }
 
 // Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
-                                              DebugLoc ScopeLoc) {
-  return findAbstractVariable(DV, ScopeLoc.getScope(DV->getContext()));
-}
-
 DbgVariable *DwarfDebug::getExistingAbstractVariable(DIVariable &DV,
                                                      DIVariable &Cleansed) {
   LLVMContext &Ctx = DV->getContext();
@@ -1131,7 +1126,8 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VI.Loc);
+    DbgVariable *AbsDbgVariable =
+        findAbstractVariable(DV, Scope->getScopeNode());
     DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable, this);
     RegVar->setFrameIndex(VI.Slot);
     addScopeVariable(Scope, RegVar);
