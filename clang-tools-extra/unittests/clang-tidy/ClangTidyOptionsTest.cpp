@@ -6,7 +6,7 @@ namespace tidy {
 namespace test {
 
 TEST(ParseLineFilter, EmptyFilter) {
-  ClangTidyOptions Options;
+  ClangTidyGlobalOptions Options;
   EXPECT_FALSE(parseLineFilter("", Options));
   EXPECT_TRUE(Options.LineFilter.empty());
   EXPECT_FALSE(parseLineFilter("[]", Options));
@@ -14,7 +14,7 @@ TEST(ParseLineFilter, EmptyFilter) {
 }
 
 TEST(ParseLineFilter, InvalidFilter) {
-  ClangTidyOptions Options;
+  ClangTidyGlobalOptions Options;
   // TODO: Figure out why parsing succeeds here.
   EXPECT_FALSE(parseLineFilter("asdf", Options));
   EXPECT_TRUE(Options.LineFilter.empty());
@@ -30,7 +30,7 @@ TEST(ParseLineFilter, InvalidFilter) {
 }
 
 TEST(ParseLineFilter, ValidFilter) {
-  ClangTidyOptions Options;
+  ClangTidyGlobalOptions Options;
   llvm::error_code Error = parseLineFilter(
       "[{\"name\":\"file1.cpp\",\"lines\":[[3,15],[20,30],[42,42]]},"
       "{\"name\":\"file2.h\"},"
@@ -52,6 +52,18 @@ TEST(ParseLineFilter, ValidFilter) {
   EXPECT_EQ(1u, Options.LineFilter[2].LineRanges.size());
   EXPECT_EQ(100u, Options.LineFilter[2].LineRanges[0].first);
   EXPECT_EQ(1000u, Options.LineFilter[2].LineRanges[0].second);
+}
+
+TEST(ParseConfiguration, ValidConfiguration) {
+  ClangTidyOptions Options;
+  llvm::error_code Error = parseConfiguration("Checks: \"-*,misc-*\"\n"
+                                              "HeaderFilterRegex: \".*\"\n"
+                                              "AnalyzeTemporaryDtors: true\n",
+                                              Options);
+  EXPECT_FALSE(Error);
+  EXPECT_EQ("-*,misc-*", Options.Checks);
+  EXPECT_EQ(".*", Options.HeaderFilterRegex);
+  EXPECT_TRUE(Options.AnalyzeTemporaryDtors);
 }
 
 } // namespace test

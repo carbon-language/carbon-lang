@@ -16,6 +16,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
+#include <memory>
 #include <vector>
 
 namespace clang {
@@ -95,26 +96,21 @@ class ClangTidyCheckFactories;
 
 class ClangTidyASTConsumerFactory {
 public:
-  ClangTidyASTConsumerFactory(ClangTidyContext &Context,
-                              const ClangTidyOptions &Options);
-  ~ClangTidyASTConsumerFactory();
+  ClangTidyASTConsumerFactory(ClangTidyContext &Context);
 
   /// \brief Returns an ASTConsumer that runs the specified clang-tidy checks.
   clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
                                         StringRef File);
 
   /// \brief Get the list of enabled checks.
-  std::vector<std::string> getCheckNames();
+  std::vector<std::string> getCheckNames(ChecksFilter &Filter);
 
 private:
   typedef std::vector<std::pair<std::string, bool> > CheckersList;
-  CheckersList getCheckersControlList();
+  CheckersList getCheckersControlList(ChecksFilter &Filter);
 
-  SmallVector<ClangTidyCheck *, 8> Checks;
   ClangTidyContext &Context;
-  ast_matchers::MatchFinder Finder;
   std::unique_ptr<ClangTidyCheckFactories> CheckFactories;
-  ClangTidyOptions Options;
 };
 
 /// \brief Fills the list of check names that are enabled when the provided
@@ -122,10 +118,13 @@ private:
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
-ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
-                            const tooling::CompilationDatabase &Compilations,
-                            ArrayRef<std::string> InputFiles,
-                            std::vector<ClangTidyError> *Errors);
+///
+/// Takes ownership of the \c OptionsProvider.
+ClangTidyStats
+runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
+             const tooling::CompilationDatabase &Compilations,
+             ArrayRef<std::string> InputFiles,
+             std::vector<ClangTidyError> *Errors);
 
 // FIXME: This interface will need to be significantly extended to be useful.
 // FIXME: Implement confidence levels for displaying/fixing errors.

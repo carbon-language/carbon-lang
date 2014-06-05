@@ -87,7 +87,7 @@ public:
   ///
   /// The caller takes ownership of the return \c ClangTidyChecks.
   void createChecks(ChecksFilter &Filter,
-                    SmallVectorImpl<ClangTidyCheck *> &Checks);
+                    std::vector<std::unique_ptr<ClangTidyCheck>> &Checks);
 
   typedef std::map<std::string, CheckFactoryBase *> FactoryMap;
   FactoryMap::const_iterator begin() const { return Factories.begin(); }

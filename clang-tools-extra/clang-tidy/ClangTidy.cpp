@@ -169,51 +169,63 @@ private:
   unsigned AppliedFixes;
 };
 
+class ClangTidyASTConsumer : public MultiplexConsumer {
+public:
+  ClangTidyASTConsumer(const SmallVectorImpl<ASTConsumer *> &Consumers,
+                       std::unique_ptr<ast_matchers::MatchFinder> Finder,
+                       std::vector<std::unique_ptr<ClangTidyCheck>> Checks)
+      : MultiplexConsumer(Consumers), Finder(std::move(Finder)),
+        Checks(std::move(Checks)) {}
+
+private:
+  std::unique_ptr<ast_matchers::MatchFinder> Finder;
+  std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
+};
+
 } // namespace
 
 ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
-    ClangTidyContext &Context, const ClangTidyOptions &Options)
-    : Context(Context), CheckFactories(new ClangTidyCheckFactories),
-      Options(Options) {
+    ClangTidyContext &Context)
+    : Context(Context), CheckFactories(new ClangTidyCheckFactories) {
   for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
                                          E = ClangTidyModuleRegistry::end();
        I != E; ++I) {
     std::unique_ptr<ClangTidyModule> Module(I->instantiate());
     Module->addCheckFactories(*CheckFactories);
   }
-
-  CheckFactories->createChecks(Context.getChecksFilter(), Checks);
-
-  for (ClangTidyCheck *Check : Checks) {
-    Check->setContext(&Context);
-    Check->registerMatchers(&Finder);
-  }
 }
 
-ClangTidyASTConsumerFactory::~ClangTidyASTConsumerFactory() {
-  for (ClangTidyCheck *Check : Checks)
-    delete Check;
-}
 
 clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
     clang::CompilerInstance &Compiler, StringRef File) {
   // FIXME: Move this to a separate method, so that CreateASTConsumer doesn't
   // modify Compiler.
   Context.setSourceManager(&Compiler.getSourceManager());
-  for (ClangTidyCheck *Check : Checks)
+  Context.setCurrentFile(File);
+
+  std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
+  ChecksFilter &Filter = Context.getChecksFilter();
+  CheckFactories->createChecks(Filter, Checks);
+
+  std::unique_ptr<ast_matchers::MatchFinder> Finder(
+      new ast_matchers::MatchFinder);
+  for (auto &Check : Checks) {
+    Check->setContext(&Context);
+    Check->registerMatchers(&*Finder);
     Check->registerPPCallbacks(Compiler);
+  }
 
   SmallVector<ASTConsumer *, 2> Consumers;
-  if (!CheckFactories->empty())
-    Consumers.push_back(Finder.newASTConsumer());
+  if (!Checks.empty())
+    Consumers.push_back(Finder->newASTConsumer());
 
   AnalyzerOptionsRef AnalyzerOptions = Compiler.getAnalyzerOpts();
   // FIXME: Remove this option once clang's cfg-temporary-dtors option defaults
   // to true.
   AnalyzerOptions->Config["cfg-temporary-dtors"] =
-      Options.AnalyzeTemporaryDtors ? "true" : "false";
+      Context.getOptions().AnalyzeTemporaryDtors ? "true" : "false";
 
-  AnalyzerOptions->CheckersControlList = getCheckersControlList();
+  AnalyzerOptions->CheckersControlList = getCheckersControlList(Filter);
   if (!AnalyzerOptions->CheckersControlList.empty()) {
     AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
     AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
@@ -226,17 +238,19 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
         new AnalyzerDiagnosticConsumer(Context));
     Consumers.push_back(AnalysisConsumer);
   }
-  return new MultiplexConsumer(Consumers);
+  return new ClangTidyASTConsumer(Consumers, std::move(Finder),
+                                  std::move(Checks));
 }
 
-std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
+std::vector<std::string>
+ClangTidyASTConsumerFactory::getCheckNames(ChecksFilter &Filter) {
   std::vector<std::string> CheckNames;
   for (const auto &CheckFactory : *CheckFactories) {
-    if (Context.getChecksFilter().isCheckEnabled(CheckFactory.first))
+    if (Filter.isCheckEnabled(CheckFactory.first))
       CheckNames.push_back(CheckFactory.first);
   }
 
-  for (const auto &AnalyzerCheck : getCheckersControlList())
+  for (const auto &AnalyzerCheck : getCheckersControlList(Filter))
     CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
 
   std::sort(CheckNames.begin(), CheckNames.end());
@@ -244,15 +258,15 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
 }
 
 ClangTidyASTConsumerFactory::CheckersList
-ClangTidyASTConsumerFactory::getCheckersControlList() {
+ClangTidyASTConsumerFactory::getCheckersControlList(ChecksFilter &Filter) {
   CheckersList List;
 
   bool AnalyzerChecksEnabled = false;
   for (StringRef CheckName : StaticAnalyzerChecks) {
     std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
-    AnalyzerChecksEnabled |=
-        Context.getChecksFilter().isCheckEnabled(Checker) &&
-        !CheckName.startswith("debug");
+    AnalyzerChecksEnabled =
+        AnalyzerChecksEnabled ||
+        (!CheckName.startswith("debug") && Filter.isCheckEnabled(Checker));
   }
 
   if (AnalyzerChecksEnabled) {
@@ -267,8 +281,7 @@ ClangTidyASTConsumerFactory::getCheckersControlList() {
       std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
 
       if (CheckName.startswith("core") ||
-          (!CheckName.startswith("debug") &&
-           Context.getChecksFilter().isCheckEnabled(Checker)))
+          (!CheckName.startswith("debug") && Filter.isCheckEnabled(Checker)))
         List.push_back(std::make_pair(CheckName, true));
     }
   }
@@ -291,17 +304,18 @@ void ClangTidyCheck::setName(StringRef Name) {
 }
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
-  clang::tidy::ClangTidyContext Context(Options);
-  ClangTidyASTConsumerFactory Factory(Context, Options);
-  return Factory.getCheckNames();
+  clang::tidy::ClangTidyContext Context(
+      new DefaultOptionsProvider(ClangTidyGlobalOptions(), Options));
+  ClangTidyASTConsumerFactory Factory(Context);
+  return Factory.getCheckNames(Context.getChecksFilter());
 }
 
-ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
+ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
                             const tooling::CompilationDatabase &Compilations,
                             ArrayRef<std::string> InputFiles,
                             std::vector<ClangTidyError> *Errors) {
   ClangTool Tool(Compilations, InputFiles);
-  clang::tidy::ClangTidyContext Context(Options);
+  clang::tidy::ClangTidyContext Context(OptionsProvider);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);
@@ -328,7 +342,7 @@ ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
     ClangTidyASTConsumerFactory *ConsumerFactory;
   };
 
-  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context, Options)));
+  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context)));
   *Errors = Context.getErrors();
   return Context.getStats();
 }

@@ -108,16 +108,18 @@ static void printStats(const clang::tidy::ClangTidyStats &Stats) {
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
-  clang::tidy::ClangTidyOptions Options;
-  Options.Checks = DefaultChecks + Checks;
-  Options.HeaderFilterRegex = HeaderFilter;
-  Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+  clang::tidy::ClangTidyGlobalOptions GlobalOptions;
   if (llvm::error_code Err =
-          clang::tidy::parseLineFilter(LineFilter, Options)) {
+          clang::tidy::parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
     return 1;
   }
+
+  clang::tidy::ClangTidyOptions Options;
+  Options.Checks = DefaultChecks + Checks;
+  Options.HeaderFilterRegex = HeaderFilter;
+  Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
   std::vector<std::string> EnabledChecks = clang::tidy::getCheckNames(Options);
 
@@ -136,10 +138,13 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
+  // TODO: Implement configuration file reading and a "real" options provider.
+  auto OptionsProvider =
+      new clang::tidy::DefaultOptionsProvider(GlobalOptions, Options);
   std::vector<clang::tidy::ClangTidyError> Errors;
-  clang::tidy::ClangTidyStats Stats =
-      clang::tidy::runClangTidy(Options, OptionsParser.getCompilations(),
-                                OptionsParser.getSourcePathList(), &Errors);
+  clang::tidy::ClangTidyStats Stats = clang::tidy::runClangTidy(
+      OptionsProvider, OptionsParser.getCompilations(),
+      OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
   printStats(Stats);

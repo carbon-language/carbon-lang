@@ -10,6 +10,7 @@
 #include "ClangTidyOptions.h"
 #include "llvm/Support/YAMLTraits.h"
 
+using clang::tidy::ClangTidyOptions;
 using clang::tidy::FileFilter;
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FileFilter)
@@ -46,6 +47,14 @@ template <> struct MappingTraits<FileFilter> {
   }
 };
 
+template <> struct MappingTraits<ClangTidyOptions> {
+  static void mapping(IO &IO, ClangTidyOptions &Options) {
+    IO.mapOptional("Checks", Options.Checks);
+    IO.mapOptional("HeaderFilterRegex", Options.HeaderFilterRegex);
+    IO.mapOptional("AnalyzeTemporaryDtors", Options.AnalyzeTemporaryDtors);
+  }
+};
+
 } // namespace yaml
 } // namespace llvm
 
@@ -54,9 +63,16 @@ namespace tidy {
 
 /// \brief Parses -line-filter option and stores it to the \c Options.
 llvm::error_code parseLineFilter(const std::string &LineFilter,
-                                 clang::tidy::ClangTidyOptions &Options) {
+                                 clang::tidy::ClangTidyGlobalOptions &Options) {
   llvm::yaml::Input Input(LineFilter);
   Input >> Options.LineFilter;
+  return Input.error();
+}
+
+llvm::error_code parseConfiguration(const std::string &Config,
+                                    clang::tidy::ClangTidyOptions &Options) {
+  llvm::yaml::Input Input(Config);
+  Input >> Options;
   return Input.error();
 }
 

@@ -43,8 +43,8 @@ template <typename T>
 std::string runCheckOnCode(StringRef Code,
                            std::vector<ClangTidyError> *Errors = nullptr) {
   T Check;
-  ClangTidyOptions Options;
-  ClangTidyContext Context(Options);
+  ClangTidyContext Context(
+      new DefaultOptionsProvider(ClangTidyGlobalOptions(), ClangTidyOptions()));
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
   std::vector<std::string> ArgCXX11(1, "-std=c++11");

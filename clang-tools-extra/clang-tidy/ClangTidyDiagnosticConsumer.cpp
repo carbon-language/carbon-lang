@@ -154,8 +154,12 @@ bool ChecksFilter::isCheckEnabled(StringRef Name, bool Enabled) {
   return Enabled;
 }
 
-ClangTidyContext::ClangTidyContext(const ClangTidyOptions &Options)
-    : DiagEngine(nullptr), Options(Options), Filter(Options.Checks) {}
+ClangTidyContext::ClangTidyContext(ClangTidyOptionsProvider *OptionsProvider)
+    : DiagEngine(nullptr), OptionsProvider(OptionsProvider) {
+  // Before the first translation unit we can get errors related to command-line
+  // parsing, use empty string for the file name in this case.
+  setCurrentFile("");
+}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
@@ -190,6 +194,24 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
   DiagEngine->setSourceManager(SourceMgr);
 }
 
+void ClangTidyContext::setCurrentFile(StringRef File) {
+  CurrentFile = File;
+  CheckFilter.reset(new ChecksFilter(getOptions().Checks));
+}
+
+const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {
+  return OptionsProvider->getGlobalOptions();
+}
+
+const ClangTidyOptions &ClangTidyContext::getOptions() const {
+  return OptionsProvider->getOptions(CurrentFile);
+}
+
+ChecksFilter &ClangTidyContext::getChecksFilter() {
+  assert(CheckFilter != nullptr);
+  return *CheckFilter;
+}
+
 /// \brief Store a \c ClangTidyError.
 void ClangTidyContext::storeError(const ClangTidyError &Error) {
   Errors.push_back(Error);
@@ -204,8 +226,8 @@ StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
 }
 
 ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
-    : Context(Ctx), HeaderFilter(Ctx.getOptions().HeaderFilterRegex),
-      LastErrorRelatesToUserCode(false), LastErrorPassesLineFilter(false) {
+    : Context(Ctx), LastErrorRelatesToUserCode(false),
+      LastErrorPassesLineFilter(false) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   Diags.reset(new DiagnosticsEngine(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
@@ -274,11 +296,18 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   checkFilters(Info.getLocation());
 }
 
+void ClangTidyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
+                                                  const Preprocessor *PP) {
+  // Before the first translation unit we don't need HeaderFilter, as we
+  // shouldn't get valid source locations in diagnostics.
+  HeaderFilter.reset(new llvm::Regex(Context.getOptions().HeaderFilterRegex));
+}
+
 bool ClangTidyDiagnosticConsumer::passesLineFilter(StringRef FileName,
                                                    unsigned LineNumber) const {
-  if (Context.getOptions().LineFilter.empty())
+  if (Context.getGlobalOptions().LineFilter.empty())
     return true;
-  for (const FileFilter& Filter : Context.getOptions().LineFilter) {
+  for (const FileFilter& Filter : Context.getGlobalOptions().LineFilter) {
     if (FileName.endswith(Filter.Name)) {
       if (Filter.LineRanges.empty())
         return true;
@@ -319,10 +348,15 @@ void ClangTidyDiagnosticConsumer::checkFilters(SourceLocation Location) {
   }
 
   StringRef FileName(File->getName());
+  assert(LastErrorRelatesToUserCode || Sources.isInMainFile(Location) ||
+         HeaderFilter != nullptr);
+  LastErrorRelatesToUserCode = LastErrorRelatesToUserCode ||
+                               Sources.isInMainFile(Location) ||
+                               HeaderFilter->match(FileName);
+
   unsigned LineNumber = Sources.getExpansionLineNumber(Location);
-  LastErrorRelatesToUserCode |=
-      Sources.isInMainFile(Location) || HeaderFilter.match(FileName);
-  LastErrorPassesLineFilter |= passesLineFilter(FileName, LineNumber);
+  LastErrorPassesLineFilter =
+      LastErrorPassesLineFilter || passesLineFilter(FileName, LineNumber);
 }
 
 namespace {

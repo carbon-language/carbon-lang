@@ -67,12 +67,13 @@ struct ClangTidyError {
 /// \brief Filters checks by name.
 class ChecksFilter {
 public:
-  // GlobList is a comma-separated list of globs (only '*' metacharacter is
-  // supported) with optional '-' prefix to denote exclusion.
+  /// \brief \p GlobList is a comma-separated list of globs (only '*'
+  /// metacharacter is supported) with optional '-' prefix to denote exclusion.
   ChecksFilter(StringRef GlobList);
-  // Returns true if the check with the specified Name should be enabled.
-  // The result is the last matching glob's Positive flag. If Name is not
-  // matched by any globs, the check is not enabled.
+
+  /// \brief Returns \c true if the check with the specified \p Name should be
+  /// enabled. The result is the last matching glob's Positive flag. If \p Name
+  /// is not matched by any globs, the check is not enabled.
   bool isCheckEnabled(StringRef Name) { return isCheckEnabled(Name, false); }
 
 private:
@@ -83,6 +84,8 @@ private:
   std::unique_ptr<ChecksFilter> NextFilter;
 };
 
+/// \brief Contains displayed and ignored diagnostic counters for a ClangTidy
+/// run.
 struct ClangTidyStats {
   ClangTidyStats()
       : ErrorsDisplayed(0), ErrorsIgnoredCheckFilter(0), ErrorsIgnoredNOLINT(0),
@@ -111,7 +114,10 @@ struct ClangTidyStats {
 /// \endcode
 class ClangTidyContext {
 public:
-  ClangTidyContext(const ClangTidyOptions &Options);
+  /// \brief Initializes \c ClangTidyContext instance.
+  ///
+  /// Takes ownership of the \c OptionsProvider.
+  ClangTidyContext(ClangTidyOptionsProvider *OptionsProvider);
 
   /// \brief Report any errors detected using this method.
   ///
@@ -122,37 +128,55 @@ public:
                          StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
-  /// \brief Sets the \c DiagnosticsEngine so that Diagnostics can be generated
-  /// correctly.
-  ///
-  /// This is called from the \c ClangTidyCheck base class.
-  void setDiagnosticsEngine(DiagnosticsEngine *Engine);
-
   /// \brief Sets the \c SourceManager of the used \c DiagnosticsEngine.
   ///
   /// This is called from the \c ClangTidyCheck base class.
   void setSourceManager(SourceManager *SourceMgr);
 
+  /// \brief Should be called when starting to process new translation unit.
+  void setCurrentFile(StringRef File);
+
   /// \brief Returns the name of the clang-tidy check which produced this
   /// diagnostic ID.
   StringRef getCheckName(unsigned DiagnosticID) const;
 
-  ChecksFilter &getChecksFilter() { return Filter; }
-  const ClangTidyOptions &getOptions() const { return Options; }
+  /// \brief Returns check filter for the \c CurrentFile.
+  ChecksFilter &getChecksFilter();
+
+  /// \brief Returns global options.
+  const ClangTidyGlobalOptions &getGlobalOptions() const;
+
+  /// \brief Returns options for \c CurrentFile.
+  const ClangTidyOptions &getOptions() const;
+
+  /// \brief Returns \c ClangTidyStats containing issued and ignored diagnostic
+  /// counters.
   const ClangTidyStats &getStats() const { return Stats; }
+
+  /// \brief Returns all collected errors.
   const std::vector<ClangTidyError> &getErrors() const { return Errors; }
+
+  /// \brief Clears collected errors.
   void clearErrors() { Errors.clear(); }
 
 private:
-  friend class ClangTidyDiagnosticConsumer; // Calls storeError().
+  // Calls setDiagnosticsEngine() and storeError().
+  friend class ClangTidyDiagnosticConsumer;
 
-  /// \brief Store a \c ClangTidyError.
+  /// \brief Sets the \c DiagnosticsEngine so that Diagnostics can be generated
+  /// correctly.
+  void setDiagnosticsEngine(DiagnosticsEngine *Engine);
+
+  /// \brief Store an \p Error.
   void storeError(const ClangTidyError &Error);
 
   std::vector<ClangTidyError> Errors;
   DiagnosticsEngine *DiagEngine;
-  ClangTidyOptions Options;
-  ChecksFilter Filter;
+  std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider;
+
+  std::string CurrentFile;
+  std::unique_ptr<ChecksFilter> CheckFilter;
+
   ClangTidyStats Stats;
 
   llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
@@ -173,18 +197,25 @@ public:
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override;
 
-  // Flushes the internal diagnostics buffer to the ClangTidyContext.
+  /// \brief Sets \c HeaderFilter to the value configured for this file.
+  void BeginSourceFile(const LangOptions &LangOpts,
+                       const Preprocessor *PP) override;
+
+  /// \brief Flushes the internal diagnostics buffer to the ClangTidyContext.
   void finish() override;
 
 private:
   void finalizeLastError();
+
+  /// \brief Updates \c LastErrorRelatesToUserCode and LastErrorPassesLineFilter
+  /// according to the diagnostic \p Location.
   void checkFilters(SourceLocation Location);
   bool passesLineFilter(StringRef FileName, unsigned LineNumber) const;
 
   ClangTidyContext &Context;
-  llvm::Regex HeaderFilter;
   std::unique_ptr<DiagnosticsEngine> Diags;
   SmallVector<ClangTidyError, 8> Errors;
+  std::unique_ptr<llvm::Regex> HeaderFilter;
   bool LastErrorRelatesToUserCode;
   bool LastErrorPassesLineFilter;
 };

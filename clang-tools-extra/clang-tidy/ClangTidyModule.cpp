@@ -27,12 +27,13 @@ void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
 }
 
 void ClangTidyCheckFactories::createChecks(
-    ChecksFilter &Filter, SmallVectorImpl<ClangTidyCheck *> &Checks) {
+    ChecksFilter &Filter,
+    std::vector<std::unique_ptr<ClangTidyCheck>> &Checks) {
   for (const auto &Factory : Factories) {
     if (Filter.isCheckEnabled(Factory.first)) {
       ClangTidyCheck *Check = Factory.second->createCheck();
       Check->setName(Factory.first);
-      Checks.push_back(Check);
+      Checks.emplace_back(Check);
     }
   }
 }
