@@ -29,24 +29,6 @@
 
 namespace lld {
 
-namespace {
-
-/// This is used as a filter function to std::remove_if to coalesced atoms.
-class AtomCoalescedAway {
-public:
-  explicit AtomCoalescedAway(SymbolTable &sym) : _symbolTable(sym) {}
-
-  bool operator()(const Atom *atom) const {
-    const Atom *rep = _symbolTable.replacement(atom);
-    return rep != atom;
-  }
-
-private:
-  SymbolTable &_symbolTable;
-};
-
-} // namespace
-
 void Resolver::handleFile(const File &file) {
   bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
@@ -394,7 +376,7 @@ bool Resolver::checkUndefines() {
         continue;
 
       // If the undefine is coalesced away, skip over it.
-      if (_symbolTable.replacement(undefAtom) != undefAtom)
+      if (_symbolTable.isCoalescedAway(undefAtom))
         continue;
 
       // Seems like this symbol is undefined. Warn that.
@@ -416,8 +398,9 @@ bool Resolver::checkUndefines() {
 // remove from _atoms all coaleseced away atoms
 void Resolver::removeCoalescedAwayAtoms() {
   ScopedTask task(getDefaultDomain(), "removeCoalescedAwayAtoms");
-  _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
-                              AtomCoalescedAway(_symbolTable)),
+  _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(), [&](const Atom *a) {
+                 return _symbolTable.isCoalescedAway(a);
+               }),
                _atoms.end());
 }
 

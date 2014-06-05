@@ -72,6 +72,9 @@ public:
   /// @brief if atom has been coalesced away, return replacement, else return atom
   const Atom *replacement(const Atom *);
 
+  /// @brief if atom has been coalesced away, return true
+  bool isCoalescedAway(const Atom *);
+
   /// @brief Find a group atom.
   const Atom *findGroup(StringRef name);
 

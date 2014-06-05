@@ -381,6 +381,10 @@ const Atom *SymbolTable::replacement(const Atom *atom) {
   }
 }
 
+bool SymbolTable::isCoalescedAway(const Atom *atom) {
+  return _replacedAtoms.count(atom) > 0;
+}
+
 unsigned int SymbolTable::size() {
   return _nameTable.size();
 }
