@@ -1165,6 +1165,18 @@ TEST(Matcher, VariableUsage) {
       "}", Reference));
 }
 
+TEST(Matcher, VarDecl_Storage) {
+  auto M = varDecl(hasName("X"), hasLocalStorage());
+  EXPECT_TRUE(matches("void f() { int X; }", M));
+  EXPECT_TRUE(notMatches("int X;", M));
+  EXPECT_TRUE(notMatches("void f() { static int X; }", M));
+
+  M = varDecl(hasName("X"), hasGlobalStorage());
+  EXPECT_TRUE(notMatches("void f() { int X; }", M));
+  EXPECT_TRUE(matches("int X;", M));
+  EXPECT_TRUE(matches("void f() { static int X; }", M));
+}
+
 TEST(Matcher, FindsVarDeclInFunctionParameter) {
   EXPECT_TRUE(matches(
       "void f(int i) {}",
