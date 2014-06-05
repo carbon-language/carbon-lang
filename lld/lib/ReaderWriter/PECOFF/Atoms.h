@@ -167,13 +167,6 @@ public:
   uint64_t ordinal() const override { return _ordinal; }
   Alignment alignment() const override { return _alignment; }
 
-  void associate(COFFDefinedFileAtom *other) {
-    auto *r = new COFFReference(other, 0, Reference::kindAssociate,
-				Reference::KindNamespace::all,
-				Reference::KindArch::all);
-    addReference(std::unique_ptr<COFFReference>(r));
-  }
-
 private:
   StringRef _sectionName;
   Scope _scope;
