@@ -297,13 +297,24 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   FullSourceLoc Loc;
   if (D.getLoc() != SMLoc())
     Loc = ConvertBackendLocation(D, Context->getSourceManager());
-  
 
+  unsigned DiagID;
+  switch (D.getKind()) {
+  case llvm::SourceMgr::DK_Error:
+    DiagID = diag::err_fe_inline_asm;
+    break;
+  case llvm::SourceMgr::DK_Warning:
+    DiagID = diag::warn_fe_inline_asm;
+    break;
+  case llvm::SourceMgr::DK_Note:
+    DiagID = diag::note_fe_inline_asm;
+    break;
+  }
   // If this problem has clang-level source location information, report the
-  // issue as being an error in the source with a note showing the instantiated
+  // issue in the source with a note showing the instantiated
   // code.
   if (LocCookie.isValid()) {
-    Diags.Report(LocCookie, diag::err_fe_inline_asm).AddString(Message);
+    Diags.Report(LocCookie, DiagID).AddString(Message);
     
     if (D.getLoc().isValid()) {
       DiagnosticBuilder B = Diags.Report(Loc, diag::note_fe_inline_asm_here);
@@ -319,10 +330,10 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
     return;
   }
   
-  // Otherwise, report the backend error as occurring in the generated .s file.
-  // If Loc is invalid, we still need to report the error, it just gets no
+  // Otherwise, report the backend issue as occurring in the generated .s file.
+  // If Loc is invalid, we still need to report the issue, it just gets no
   // location info.
-  Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
+  Diags.Report(Loc, DiagID).AddString(Message);
 }
 
 #define ComputeDiagID(Severity, GroupName, DiagID)                             \
