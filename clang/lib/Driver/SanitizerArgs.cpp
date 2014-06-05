@@ -171,8 +171,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
 
   if (NeedsAsan) {
     AsanSharedRuntime =
-      (TC.getTriple().getEnvironment() == llvm::Triple::Android) ||
-      Args.hasArg(options::OPT_shared_libasan);
+        Args.hasArg(options::OPT_shared_libasan) ||
+        (TC.getTriple().getEnvironment() == llvm::Triple::Android);
     AsanZeroBaseShadow =
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
   }
