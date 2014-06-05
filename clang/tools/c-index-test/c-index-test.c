@@ -4116,13 +4116,19 @@ typedef struct thread_info {
 void thread_runner(void *client_data_v) {
   thread_info *client_data = client_data_v;
   client_data->result = cindextest_main(client_data->argc, client_data->argv);
-#ifdef __CYGWIN__
-  fflush(stdout);  /* stdout is not flushed on Cygwin. */
-#endif
+}
+
+static void flush_atexit(void) {
+  // stdout, and surprisingly even stderr, are not always flushed on process
+  // and thread exit, particularly when the system is under heavy load.
+  fflush(stdout);
+  fflush(stderr);
 }
 
 int main(int argc, const char **argv) {
   thread_info client_data;
+
+  atexit(flush_atexit);
 
 #ifdef CLANG_HAVE_LIBXML
   LIBXML_TEST_VERSION
