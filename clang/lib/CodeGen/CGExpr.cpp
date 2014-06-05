@@ -1350,12 +1350,22 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
 
 /// @brief Load of global gamed gegisters are always calls to intrinsics.
 RValue CodeGenFunction::EmitLoadOfGlobalRegLValue(LValue LV) {
-  assert(LV.getType()->isIntegerType() && "Bad type for register variable");
+  assert((LV.getType()->isIntegerType() || LV.getType()->isPointerType()) &&
+         "Bad type for register variable");
   llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(LV.getGlobalReg());
   assert(RegName && "Register LValue is not metadata");
-  llvm::Type *Types[] = { CGM.getTypes().ConvertType(LV.getType()) };
+
+  // We accept integer and pointer types only
+  llvm::Type *OrigTy = CGM.getTypes().ConvertType(LV.getType());
+  llvm::Type *Ty = OrigTy;
+  if (OrigTy->isPointerTy())
+    Ty = CGM.getTypes().getDataLayout().getIntPtrType(OrigTy);
+  llvm::Type *Types[] = { Ty };
+
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::read_register, Types);
-  llvm::Value* Call = Builder.CreateCall(F, RegName);
+  llvm::Value *Call = Builder.CreateCall(F, RegName);
+  if (OrigTy->isPointerTy())
+    Call = Builder.CreateIntToPtr(Call, OrigTy);
   return RValue::get(Call);
 }
 
@@ -1601,12 +1611,22 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 
 /// @brief Store of global named registers are always calls to intrinsics.
 void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
-  assert(Dst.getType()->isIntegerType() && "Bad type for register variable");
+  assert((Dst.getType()->isIntegerType() || Dst.getType()->isPointerType()) &&
+         "Bad type for register variable");
   llvm::MDNode *RegName = dyn_cast<llvm::MDNode>(Dst.getGlobalReg());
   assert(RegName && "Register LValue is not metadata");
-  llvm::Type *Types[] = { CGM.getTypes().ConvertType(Dst.getType()) };
+
+  // We accept integer and pointer types only
+  llvm::Type *OrigTy = CGM.getTypes().ConvertType(Dst.getType());
+  llvm::Type *Ty = OrigTy;
+  if (OrigTy->isPointerTy())
+    Ty = CGM.getTypes().getDataLayout().getIntPtrType(OrigTy);
+  llvm::Type *Types[] = { Ty };
+
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::write_register, Types);
   llvm::Value *Value = Src.getScalarVal();
+  if (OrigTy->isPointerTy())
+    Value = Builder.CreatePtrToInt(Value, Ty);
   Builder.CreateCall2(F, RegName, Value);
 }
 

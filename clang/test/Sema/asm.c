@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -Wno-private-extern -triple i386-pc-linux-gnu -verify -fsyntax-only
 
+
+
 void f() {
   int i;
 
@@ -147,3 +149,11 @@ double test15() {
   __asm("0.0":"=g"(ret)); // no-error
   return ret;
 }
+
+// PR19837
+struct foo {
+  int a;
+  char b;
+};
+register struct foo bar asm("sp"); // expected-error {{bad type for named register variable}}
+register float baz asm("sp"); // expected-error {{bad type for named register variable}}
