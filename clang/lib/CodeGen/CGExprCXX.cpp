@@ -1041,8 +1041,9 @@ RValue CodeGenFunction::EmitBuiltinNewDeleteCall(const FunctionProtoType *Type,
   DeclarationName Name = Ctx.DeclarationNames
       .getCXXOperatorName(IsDelete ? OO_Delete : OO_New);
   for (auto *Decl : Ctx.getTranslationUnitDecl()->lookup(Name))
-    if (Ctx.hasSameType(cast<FunctionDecl>(Decl)->getType(), QualType(Type, 0)))
-      return EmitNewDeleteCall(*this, cast<FunctionDecl>(Decl), Type, Args);
+    if (auto *FD = dyn_cast<FunctionDecl>(Decl))
+      if (Ctx.hasSameType(FD->getType(), QualType(Type, 0)))
+        return EmitNewDeleteCall(*this, cast<FunctionDecl>(Decl), Type, Args);
   llvm_unreachable("predeclared global operator new/delete is missing");
 }
 

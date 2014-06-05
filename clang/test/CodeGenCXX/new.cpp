@@ -2,6 +2,9 @@
 
 typedef __typeof__(sizeof(0)) size_t;
 
+// Declare an 'operator new' template to tickle a bug in __builtin_operator_new.
+template<typename T> void *operator new(size_t, int (*)(T));
+
 // Ensure that this declaration doesn't cause operator new to lose its
 // 'noalias' attribute.
 void *operator new[](size_t);
@@ -32,7 +35,6 @@ void *operator new(size_t, const std::nothrow_t &) throw();
 void *operator new[](size_t, const std::nothrow_t &) throw();
 void operator delete(void *, const std::nothrow_t &) throw();
 void operator delete[](void *, const std::nothrow_t &) throw();
-
 
 void t2(int* a) {
   int* b = new (a) int;
