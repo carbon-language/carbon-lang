@@ -73,6 +73,9 @@ vec_perm(vector bool int __a, vector bool int __b, vector unsigned char __c);
 static vector float __ATTRS_o_ai
 vec_perm(vector float __a, vector float __b, vector unsigned char __c);
 
+static vector unsigned char __ATTRS_o_ai
+vec_xor(vector unsigned char __a, vector unsigned char __b);
+
 /* vec_abs */
 
 #define __builtin_altivec_abs_v16qi vec_abs
@@ -4281,11 +4284,27 @@ vec_vpkswus(vector unsigned int __a, vector unsigned int __b)
 
 /* vec_perm */
 
+// The vperm instruction is defined architecturally with a big-endian bias.
+// For little endian, we swap the input operands and invert the permute
+// control vector.  Only the rightmost 5 bits matter, so we could use
+// a vector of all 31s instead of all 255s to perform the inversion.
+// However, when the PCV is not a constant, using 255 has an advantage
+// in that the vec_xor can be recognized as a vec_nor (and for P8 and
+// later, possibly a vec_nand).
+
 vector signed char __ATTRS_o_ai
 vec_perm(vector signed char __a, vector signed char __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector signed char)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector signed char)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector unsigned char __ATTRS_o_ai
@@ -4293,22 +4312,46 @@ vec_perm(vector unsigned char __a,
          vector unsigned char __b,
          vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector unsigned char)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector unsigned char)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector bool char __ATTRS_o_ai
 vec_perm(vector bool char __a, vector bool char __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector bool char)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector bool char)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector short __ATTRS_o_ai
 vec_perm(vector short __a, vector short __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector short)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector short)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector unsigned short __ATTRS_o_ai
@@ -4316,49 +4359,104 @@ vec_perm(vector unsigned short __a,
          vector unsigned short __b,
          vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector unsigned short)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector unsigned short)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector bool short __ATTRS_o_ai
 vec_perm(vector bool short __a, vector bool short __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector bool short)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector bool short)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector pixel __ATTRS_o_ai
 vec_perm(vector pixel __a, vector pixel __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector pixel)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector pixel)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector int __ATTRS_o_ai
 vec_perm(vector int __a, vector int __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector int)__builtin_altivec_vperm_4si(__b, __a, __d);
+#else
   return (vector int)__builtin_altivec_vperm_4si(__a, __b, __c);
+#endif
 }
 
 vector unsigned int __ATTRS_o_ai
 vec_perm(vector unsigned int __a, vector unsigned int __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector unsigned int)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector unsigned int)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector bool int __ATTRS_o_ai
 vec_perm(vector bool int __a, vector bool int __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector bool int)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector bool int)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 vector float __ATTRS_o_ai
 vec_perm(vector float __a, vector float __b, vector unsigned char __c)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector unsigned char __d = {255,255,255,255,255,255,255,255,
+                              255,255,255,255,255,255,255,255};
+  __d = vec_xor(__c, __d);
+  return (vector float)
+           __builtin_altivec_vperm_4si((vector int)__b, (vector int)__a, __d);
+#else
   return (vector float)
            __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+#endif
 }
 
 /* vec_vperm */
@@ -4366,8 +4464,7 @@ vec_perm(vector float __a, vector float __b, vector unsigned char __c)
 static vector signed char __ATTRS_o_ai
 vec_vperm(vector signed char __a, vector signed char __b, vector unsigned char __c)
 {
-  return (vector signed char)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector unsigned char __ATTRS_o_ai
@@ -4375,22 +4472,19 @@ vec_vperm(vector unsigned char __a,
           vector unsigned char __b,
           vector unsigned char __c)
 {
-  return (vector unsigned char)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector bool char __ATTRS_o_ai
 vec_vperm(vector bool char __a, vector bool char __b, vector unsigned char __c)
 {
-  return (vector bool char)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector short __ATTRS_o_ai
 vec_vperm(vector short __a, vector short __b, vector unsigned char __c)
 {
-  return (vector short)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector unsigned short __ATTRS_o_ai
@@ -4398,49 +4492,43 @@ vec_vperm(vector unsigned short __a,
           vector unsigned short __b,
           vector unsigned char __c)
 {
-  return (vector unsigned short)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector bool short __ATTRS_o_ai
 vec_vperm(vector bool short __a, vector bool short __b, vector unsigned char __c)
 {
-  return (vector bool short)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector pixel __ATTRS_o_ai
 vec_vperm(vector pixel __a, vector pixel __b, vector unsigned char __c)
 {
-  return (vector pixel)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector int __ATTRS_o_ai
 vec_vperm(vector int __a, vector int __b, vector unsigned char __c)
 {
-  return (vector int)__builtin_altivec_vperm_4si(__a, __b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_vperm(vector unsigned int __a, vector unsigned int __b, vector unsigned char __c)
 {
-  return (vector unsigned int)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector bool int __ATTRS_o_ai
 vec_vperm(vector bool int __a, vector bool int __b, vector unsigned char __c)
 {
-  return (vector bool int)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 static vector float __ATTRS_o_ai
 vec_vperm(vector float __a, vector float __b, vector unsigned char __c)
 {
-  return (vector float)
-           __builtin_altivec_vperm_4si((vector int)__a, (vector int)__b, __c);
+  return vec_perm(__a, __b, __c);
 }
 
 /* vec_re */
