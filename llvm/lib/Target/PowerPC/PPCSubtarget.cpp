@@ -156,6 +156,11 @@ void PPCSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   // Determine endianness.
   IsLittleEndian = (TargetTriple.getArch() == Triple::ppc64le);
+
+  // FIXME: For now, we disable VSX in little-endian mode until endian
+  // issues in those instructions can be addressed.
+  if (IsLittleEndian)
+    HasVSX = false;
 }
 
 /// hasLazyResolverStub - Return true if accesses to the specified global have
