@@ -1988,28 +1988,6 @@ LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
                         E->getType());
 }
 
-static llvm::Constant*
-GetAddrOfConstantWideString(StringRef Str,
-                            const char *GlobalName,
-                            ASTContext &Context,
-                            QualType Ty, SourceLocation Loc,
-                            CodeGenModule &CGM) {
-
-  StringLiteral *SL = StringLiteral::Create(Context,
-                                            Str,
-                                            StringLiteral::Wide,
-                                            /*Pascal = */false,
-                                            Ty, Loc);
-  llvm::Constant *C = CGM.GetConstantArrayFromStringLiteral(SL);
-  auto *GV = new llvm::GlobalVariable(
-      CGM.getModule(), C->getType(), !CGM.getLangOpts().WritableStrings,
-      llvm::GlobalValue::PrivateLinkage, C, GlobalName);
-  const unsigned WideAlignment =
-    Context.getTypeAlignInChars(Ty).getQuantity();
-  GV->setAlignment(WideAlignment);
-  return GV;
-}
-
 static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
                                     SmallString<32>& Target) {
   Target.resize(CharByteWidth * (Source.size() + 1));
@@ -2078,14 +2056,12 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
     if (ElemType->isWideCharType()) {
       SmallString<32> RawChars;
       ConvertUTF8ToWideString(
-          getContext().getTypeSizeInChars(ElemType).getQuantity(),
-          FunctionName, RawChars);
-      C = GetAddrOfConstantWideString(RawChars,
-                                      GVName.c_str(),
-                                      getContext(),
-                                      E->getType(),
-                                      E->getLocation(),
-                                      CGM);
+          getContext().getTypeSizeInChars(ElemType).getQuantity(), FunctionName,
+          RawChars);
+      StringLiteral *SL = StringLiteral::Create(
+          getContext(), RawChars, StringLiteral::Wide,
+          /*Pascal = */ false, E->getType(), E->getLocation());
+      C = CGM.GetAddrOfConstantStringFromLiteral(SL);
     } else {
       C = CGM.GetAddrOfConstantCString(FunctionName, GVName.c_str(), 1);
     }
