@@ -77,7 +77,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
                                    CodeGenOpt::Level OL)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, Options.StackAlignmentOverride),
-    FrameLowering(*this, Subtarget),
+    FrameLowering(Subtarget),
     InstrItins(Subtarget.getInstrItineraryData()),
     DL(computeDataLayout(*getSubtargetImpl())),
     InstrInfo(*this),
