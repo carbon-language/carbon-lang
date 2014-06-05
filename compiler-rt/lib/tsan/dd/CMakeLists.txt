@@ -34,18 +34,15 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
     CFLAGS ${DD_CFLAGS}
     DEFS ${DD_COMMON_DEFINITIONS})
 
-  add_library(RTDD OBJECT ${DD_SOURCES})
-  set_target_compile_flags(RTDD ${DD_CFLAGS})
-  set_property(TARGET RTDD APPEND PROPERTY
-    COMPILE_DEFINITIONS ${DD_COMMON_DEFINITIONS})
-  set_property(TARGET RTDD APPEND PROPERTY
-    COMPILE_DEFINITIONS ${DD_DYNAMIC_DEFINITIONS})
+  add_compiler_rt_object_library(RTDD ${arch}
+    SOURCES ${DD_SOURCES} CFLAGS ${DD_CFLAGS}
+    DEFS ${DD_COMMON_DEFINITIONS} ${DD_DYNAMIC_DEFINITIONS})
 
-  add_library(clang_rt.dyndd-${arch} SHARED
-    $<TARGET_OBJECTS:RTDD>
-    $<TARGET_OBJECTS:RTInterception.${arch}>
-    $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-    $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+  add_compiler_rt_runtime(clang_rt.dyndd-${arch} ${arch} SHARED
+    SOURCES $<TARGET_OBJECTS:RTDD.${arch}>
+            $<TARGET_OBJECTS:RTInterception.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
   target_link_libraries(clang_rt.dyndd-${arch} pthread dl)
 endif()
 
