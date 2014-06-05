@@ -467,7 +467,7 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
     rep.AddUniqueTid((int)r->loop[i].thr_ctx);
     rep.AddThread((int)r->loop[i].thr_ctx);
   }
-  StackTrace stacks[2 * DDReport::kMaxLoopSize];
+  InternalScopedBuffer<StackTrace> stacks(2 * DDReport::kMaxLoopSize);
   uptr dummy_pc = 0x42;
   for (int i = 0; i < r->n; i++) {
     uptr size;
