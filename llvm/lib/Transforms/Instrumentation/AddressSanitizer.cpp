@@ -1254,7 +1254,9 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
       break;
   }
 
+  DebugLoc EntryLoc = IP->getDebugLoc().getFnDebugLoc(*C);
   IRBuilder<> IRB(IP);
+  IRB.SetCurrentDebugLocation(EntryLoc);
   Type *Int8Ty = IRB.getInt8Ty();
   GlobalVariable *Guard = new GlobalVariable(
       *F.getParent(), Int8Ty, false, GlobalValue::PrivateLinkage,
@@ -1266,10 +1268,10 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
   Instruction *Ins = SplitBlockAndInsertIfThen(
       Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
   IRB.SetInsertPoint(Ins);
+  IRB.SetCurrentDebugLocation(EntryLoc);
   // We pass &F to __sanitizer_cov. We could avoid this and rely on
   // GET_CALLER_PC, but having the PC of the first instruction is just nice.
-  Instruction *Call = IRB.CreateCall(AsanCovFunction);
-  Call->setDebugLoc(IP->getDebugLoc());
+  IRB.CreateCall(AsanCovFunction);
   StoreInst *Store = IRB.CreateStore(ConstantInt::get(Int8Ty, 1), Guard);
   Store->setAtomic(Monotonic);
   Store->setAlignment(1);
