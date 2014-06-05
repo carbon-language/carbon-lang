@@ -1389,7 +1389,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // DW_TAG_inlined_subroutine may refer to this DIE.
   DIE &SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
-  // Abort here and fill this in later, depending on whether or not this
+  // Stop here and fill this in later, depending on whether or not this
   // subprogram turns out to have inlined instances or not.
   if (SP.isDefinition())
     return &SPDie;
@@ -1403,7 +1403,9 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   StringRef DeclLinkageName;
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     DeclDie = getDIE(SPDecl);
-    assert(DeclDie);
+    assert(DeclDie && "This DIE should've already been constructed when the "
+                      "definition DIE was creaeted in "
+                      "getOrCreateSubprogramDIE");
     DeclLinkageName = SPDecl.getLinkageName();
   }
 
