@@ -424,15 +424,22 @@ void BackendConsumer::EmitOptimizationRemark(
   StringRef Filename;
   unsigned Line, Column;
   D.getLocation(&Filename, &Line, &Column);
-  SourceLocation Loc;
+  SourceLocation DILoc;
   const FileEntry *FE = FileMgr.getFile(Filename);
   if (FE && Line > 0) {
     // If -gcolumn-info was not used, Column will be 0. This upsets the
-    // source manager, so if Column is not set, set it to 1.
-    if (Column == 0)
-      Column = 1;
-    Loc = SourceMgr.translateFileLineCol(FE, Line, Column);
+    // source manager, so pass 1 if Column is not set.
+    DILoc = SourceMgr.translateFileLineCol(FE, Line, Column ? Column : 1);
   }
+
+  // If a location isn't available, try to approximate it using the associated
+  // function definition. We use the definition's right brace to differentiate
+  // from diagnostics that genuinely relate to the function itself.
+  FullSourceLoc Loc(DILoc, SourceMgr);
+  if (Loc.isInvalid())
+    if (const Decl *FD = Gen->GetDeclForMangledName(D.getFunction().getName()))
+      Loc = FD->getASTContext().getFullLoc(FD->getBodyRBrace());
+
   Diags.Report(Loc, DiagID) << AddFlagValue(D.getPassName())
                             << D.getMsg().str();
 
@@ -443,13 +450,13 @@ void BackendConsumer::EmitOptimizationRemark(
     // FIXME: We should really be generating !srcloc annotations when
     // -Rpass is used. !srcloc annotations need to be emitted in
     // approximately the same spots as !dbg nodes.
-    Diags.Report(diag::note_fe_backend_optimization_remark_missing_loc);
-  else if (Loc.isInvalid())
+    Diags.Report(Loc, diag::note_fe_backend_optimization_remark_missing_loc);
+  else if (DILoc.isInvalid())
     // If we were not able to translate the file:line:col information
     // back to a SourceLocation, at least emit a note stating that
     // we could not translate this location. This can happen in the
     // case of #line directives.
-    Diags.Report(diag::note_fe_backend_optimization_remark_invalid_loc)
+    Diags.Report(Loc, diag::note_fe_backend_optimization_remark_invalid_loc)
         << Filename << Line << Column;
 }
 
