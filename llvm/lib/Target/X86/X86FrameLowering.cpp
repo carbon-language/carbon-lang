@@ -982,8 +982,9 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction &MF = *MBB.getParent();
-
-  unsigned SlotSize = STI.is64Bit() ? 8 : 4;
+  const X86RegisterInfo *RegInfo =
+    static_cast<const X86RegisterInfo *>(MF.getTarget().getRegisterInfo());
+  unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FPReg = TRI->getFrameRegister(MF);
   unsigned CalleeFrameSize = 0;
 
