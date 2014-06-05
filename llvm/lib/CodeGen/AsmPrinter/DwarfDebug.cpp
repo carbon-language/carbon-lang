@@ -1134,8 +1134,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VI.Loc);
     DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable, this);
     RegVar->setFrameIndex(VI.Slot);
-    if (!addCurrentFnArgument(RegVar, Scope))
-      addScopeVariable(Scope, RegVar);
+    addScopeVariable(Scope, RegVar);
   }
 }
 
@@ -1202,8 +1201,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     DbgVariable *AbsVar = findAbstractVariable(DV, Scope->getScopeNode());
     DbgVariable *RegVar = new DbgVariable(MInsn, AbsVar, this);
-    if (!addCurrentFnArgument(RegVar, Scope))
-      addScopeVariable(Scope, RegVar);
+    addScopeVariable(Scope, RegVar);
 
     // Check if the first DBG_VALUE is valid for the rest of the function.
     if (Ranges.size() == 1 && Ranges.front().second == nullptr)
@@ -1257,8 +1255,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext())) {
       auto *RegVar = new DbgVariable(
           DV, findAbstractVariable(DV, Scope->getScopeNode()), this);
-      if (!addCurrentFnArgument(RegVar, Scope))
-        addScopeVariable(Scope, RegVar);
+      addScopeVariable(Scope, RegVar);
     }
   }
 }
@@ -1462,6 +1459,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 }
 
 void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
+  if (addCurrentFnArgument(Var, LS))
+    return;
   SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
   DIVariable DV = Var->getVariable();
   // Variables with positive arg numbers are parameters.
