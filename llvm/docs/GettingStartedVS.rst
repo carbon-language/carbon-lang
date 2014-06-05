@@ -99,6 +99,9 @@ Here's the short story for getting up and running quickly with LLVM:
      build.
    * See the :doc:`LLVM CMake guide <CMake>` for detailed information about
      how to configure the LLVM build.
+   * CMake generates project files for all build types. To select a specific
+     build type, use the Configuration manager from the VS IDE or the 
+     ``/property:Configuration`` command line option when using MSBuild.
 
 6. Start Visual Studio
 
