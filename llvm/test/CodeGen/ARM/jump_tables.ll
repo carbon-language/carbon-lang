@@ -1,5 +1,5 @@
-; RUN: llc <%s -march=arm -jump-table-type=single | FileCheck --check-prefix=ARM %s
-; RUN: llc <%s -march=thumb -jump-table-type=single | FileCheck --check-prefix=THUMB %s
+; RUN: llc <%s -mtriple=arm-unknown-linux-gnueabi -jump-table-type=single | FileCheck --check-prefix=ARM %s
+; RUN: llc <%s -mtriple=thumb-unknown-linux-gnueabi -jump-table-type=single | FileCheck --check-prefix=THUMB %s
 
 define void @indirect_fun() unnamed_addr jumptable {
   ret void
