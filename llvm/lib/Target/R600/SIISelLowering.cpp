@@ -1371,7 +1371,6 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
       continue;
 
     if (DescE64) {
-
       // Test if it makes sense to switch to e64 encoding
       unsigned OtherRegClass = DescE64->OpInfo[Op].RegClass;
       if (!isVSrc(OtherRegClass) && !isSSrc(OtherRegClass))
@@ -1402,7 +1401,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
       if (!DescE64)
         continue;
       Desc = DescE64;
-      DescE64 = 0;
+      DescE64 = nullptr;
     }
     else if (Operand.getMachineOpcode() == AMDGPU::FABS_SI) {
       Ops.pop_back();
@@ -1412,7 +1411,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
       if (!DescE64)
         continue;
       Desc = DescE64;
-      DescE64 = 0;
+      DescE64 = nullptr;
     }
   }
 
