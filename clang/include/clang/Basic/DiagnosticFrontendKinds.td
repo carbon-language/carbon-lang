@@ -22,8 +22,9 @@ def note_fe_inline_asm_here : Note<"instantiated into assembly here">;
 def err_fe_cannot_link_module : Error<"cannot link module '%0': %1">,
   DefaultFatal;
 
-def warn_fe_backend_frame_larger_than: Warning<"stack size exceeded (%0) in %1">,
+def warn_fe_frame_larger_than : Warning<"stack frame size of %0 bytes in %q1">,
     CatBackend, InGroup<BackendFrameLargerThan>;
+def warn_fe_backend_frame_larger_than: Warning<"%0">, CatBackend, InGroup<BackendFrameLargerThan>;
 def err_fe_backend_frame_larger_than: Error<"%0">, CatBackend;
 def note_fe_backend_frame_larger_than: Note<"%0">, CatBackend;
 

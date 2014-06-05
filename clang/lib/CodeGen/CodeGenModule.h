@@ -287,7 +287,7 @@ class CodeGenModule : public CodeGenTypeCache {
   /// for emission and therefore should only be output if they are actually
   /// used. If a decl is in this, then it is known to have not been referenced
   /// yet.
-  llvm::StringMap<GlobalDecl> DeferredDecls;
+  std::map<StringRef, GlobalDecl> DeferredDecls;
 
   /// This is a list of deferred decls which we have seen that *are* actually
   /// referenced. These get code generated when the module is done.
@@ -327,8 +327,8 @@ class CodeGenModule : public CodeGenTypeCache {
 
   /// A map of canonical GlobalDecls to their mangled names.
   llvm::DenseMap<GlobalDecl, StringRef> MangledDeclNames;
-  llvm::BumpPtrAllocator MangledNamesAllocator;
-  
+  llvm::StringMap<GlobalDecl, llvm::BumpPtrAllocator> Manglings;
+
   /// Global annotations.
   std::vector<llvm::Constant*> Annotations;
 
@@ -521,6 +521,9 @@ public:
                                       llvm::GlobalVariable *C) {
     StaticLocalDeclGuardMap[D] = C;
   }
+
+  bool lookupRepresentativeDecl(StringRef MangledName,
+                                GlobalDecl &Result) const;
 
   llvm::Constant *getAtomicSetterHelperFnMap(QualType Ty) {
     return AtomicSetterHelperFnMap[Ty];
@@ -922,7 +925,7 @@ public:
                               bool AttrOnCallSite);
 
   StringRef getMangledName(GlobalDecl GD);
-  std::string getBlockMangledName(GlobalDecl GD, const BlockDecl *BD);
+  StringRef getBlockMangledName(GlobalDecl GD, const BlockDecl *BD);
 
   void EmitTentativeDefinition(const VarDecl *D);
 

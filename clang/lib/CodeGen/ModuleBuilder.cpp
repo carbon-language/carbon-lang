@@ -49,6 +49,21 @@ namespace {
       return M.get();
     }
 
+    const Decl *GetDeclForMangledName(StringRef MangledName) override {
+      GlobalDecl Result;
+      if (!Builder->lookupRepresentativeDecl(MangledName, Result))
+        return nullptr;
+      const Decl *D = Result.getCanonicalDecl().getDecl();
+      if (auto FD = dyn_cast<FunctionDecl>(D)) {
+        if (FD->hasBody(FD))
+          return FD;
+      } else if (auto TD = dyn_cast<TagDecl>(D)) {
+        if (auto Def = TD->getDefinition())
+          return Def;
+      }
+      return D;
+    }
+
     llvm::Module *ReleaseModule() override { return M.release(); }
 
     void Initialize(ASTContext &Context) override {

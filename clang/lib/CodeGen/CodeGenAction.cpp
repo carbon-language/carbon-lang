@@ -404,12 +404,14 @@ BackendConsumer::StackSizeDiagHandler(const llvm::DiagnosticInfoStackSize &D) {
     // We do not know how to format other severities.
     return false;
 
-  // FIXME: We should demangle the function name.
-  // FIXME: Is there a way to get a location for that function?
-  FullSourceLoc Loc;
-  Diags.Report(Loc, diag::warn_fe_backend_frame_larger_than)
-      << D.getStackSize() << D.getFunction().getName();
-  return true;
+  if (const Decl *ND = Gen->GetDeclForMangledName(D.getFunction().getName())) {
+    Diags.Report(ND->getASTContext().getFullLoc(ND->getLocation()),
+                 diag::warn_fe_frame_larger_than)
+        << D.getStackSize() << Decl::castToDeclContext(ND);
+    return true;
+  }
+
+  return false;
 }
 
 void BackendConsumer::EmitOptimizationRemark(

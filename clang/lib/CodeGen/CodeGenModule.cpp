@@ -498,47 +498,40 @@ void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
 }
 
 StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
+  StringRef &FoundStr = MangledDeclNames[GD.getCanonicalDecl()];
+  if (!FoundStr.empty())
+    return FoundStr;
+
   const auto *ND = cast<NamedDecl>(GD.getDecl());
-
-  StringRef &Str = MangledDeclNames[GD.getCanonicalDecl()];
-  if (!Str.empty())
-    return Str;
-
-  if (!getCXXABI().getMangleContext().shouldMangleDeclName(ND)) {
+  SmallString<256> Buffer;
+  StringRef Str;
+  if (getCXXABI().getMangleContext().shouldMangleDeclName(ND)) {
+    llvm::raw_svector_ostream Out(Buffer);
+    if (const auto *D = dyn_cast<CXXConstructorDecl>(ND))
+      getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Out);
+    else if (const auto *D = dyn_cast<CXXDestructorDecl>(ND))
+      getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Out);
+    else
+      getCXXABI().getMangleContext().mangleName(ND, Out);
+    Str = Out.str();
+  } else {
     IdentifierInfo *II = ND->getIdentifier();
     assert(II && "Attempt to mangle unnamed decl.");
-
     Str = II->getName();
-    return Str;
   }
-  
-  SmallString<256> Buffer;
-  llvm::raw_svector_ostream Out(Buffer);
-  if (const auto *D = dyn_cast<CXXConstructorDecl>(ND))
-    getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Out);
-  else if (const auto *D = dyn_cast<CXXDestructorDecl>(ND))
-    getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Out);
-  else
-    getCXXABI().getMangleContext().mangleName(ND, Out);
 
-  // Allocate space for the mangled name.
-  Out.flush();
-  size_t Length = Buffer.size();
-  char *Name = MangledNamesAllocator.Allocate<char>(Length);
-  std::copy(Buffer.begin(), Buffer.end(), Name);
-  
-  Str = StringRef(Name, Length);
-  
-  return Str;
+  auto &Mangled = Manglings.GetOrCreateValue(Str);
+  Mangled.second = GD;
+  return FoundStr = Mangled.first();
 }
 
-std::string CodeGenModule::getBlockMangledName(GlobalDecl GD,
-                                               const BlockDecl *BD) {
+StringRef CodeGenModule::getBlockMangledName(GlobalDecl GD,
+                                             const BlockDecl *BD) {
   MangleContext &MangleCtx = getCXXABI().getMangleContext();
   const Decl *D = GD.getDecl();
 
-  std::string Buffer;
-  llvm::raw_string_ostream Out(Buffer);
+  SmallString<256> Buffer;
+  llvm::raw_svector_ostream Out(Buffer);
   if (!D)
     MangleCtx.mangleGlobalBlock(BD, 
       dyn_cast_or_null<VarDecl>(initializedGlobalDecl.getDecl()), Out);
@@ -549,7 +542,9 @@ std::string CodeGenModule::getBlockMangledName(GlobalDecl GD,
   else
     MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Out);
 
-  return Out.str();
+  auto &Mangled = Manglings.GetOrCreateValue(Out.str());
+  Mangled.second = BD;
+  return Mangled.first();
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(StringRef Name) {
@@ -1462,7 +1457,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     // This is the first use or definition of a mangled name.  If there is a
     // deferred decl with this name, remember that we need to emit it at the end
     // of the file.
-    llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
+    auto DDI = DeferredDecls.find(MangledName);
     if (DDI != DeferredDecls.end()) {
       // Move the potentially referenced deferred decl to the
       // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
@@ -1622,7 +1617,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
-  llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
+  auto DDI = DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
@@ -3203,6 +3198,15 @@ void CodeGenModule::EmitStaticExternCAliases() {
     if (Val && !getModule().getNamedValue(Name->getName()))
       addUsedGlobal(llvm::GlobalAlias::create(Name->getName(), Val));
   }
+}
+
+bool CodeGenModule::lookupRepresentativeDecl(StringRef MangledName,
+                                             GlobalDecl &Result) const {
+  auto Res = Manglings.find(MangledName);
+  if (Res == Manglings.end())
+    return false;
+  Result = Res->getValue();
+  return true;
 }
 
 /// Emits metadata nodes associating all the global values in the

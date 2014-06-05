@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTLambda.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -345,7 +346,8 @@ void clang::FormatASTNodeDiagnosticArgument(
     case DiagnosticsEngine::ak_declcontext: {
       DeclContext *DC = reinterpret_cast<DeclContext *> (Val);
       assert(DC && "Should never have a null declaration context");
-      
+      NeedQuotes = false;
+
       if (DC->isTranslationUnit()) {
         // FIXME: Get these strings from some localized place
         if (Context.getLangOpts().CPlusPlus)
@@ -359,6 +361,14 @@ void clang::FormatASTNodeDiagnosticArgument(
                                             QualTypeVals);
       } else {
         // FIXME: Get these strings from some localized place
+        if (isa<BlockDecl>(DC)) {
+          OS << "block literal";
+          break;
+        }
+        if (isLambdaCallOperator(DC)) {
+          OS << "lambda expression";
+          break;
+        }
         NamedDecl *ND = cast<NamedDecl>(DC);
         if (isa<NamespaceDecl>(ND))
           OS << "namespace ";
@@ -371,7 +381,6 @@ void clang::FormatASTNodeDiagnosticArgument(
         ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), true);
         OS << '\'';
       }
-      NeedQuotes = false;
       break;
     }
     case DiagnosticsEngine::ak_attr: {
