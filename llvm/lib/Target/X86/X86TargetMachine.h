@@ -31,7 +31,6 @@ class X86TargetMachine final : public LLVMTargetMachine {
   virtual void anchor();
   X86Subtarget       Subtarget;
   X86FrameLowering   FrameLowering;
-  InstrItineraryData InstrItins;
   const DataLayout   DL; // Calculates type size & alignment
   X86InstrInfo       InstrInfo;
   X86TargetLowering  TLInfo;
@@ -65,7 +64,7 @@ public:
     return &getInstrInfo()->getRegisterInfo();
   }
   const InstrItineraryData *getInstrItineraryData() const override {
-    return &InstrItins;
+    return &getSubtargetImpl()->getInstrItineraryData();
   }
 
   /// \brief Register X86 analysis passes with a pass manager.
