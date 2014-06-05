@@ -1505,10 +1505,17 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     if (MO.isUse()) {
       for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
         Uses.insert(*AI);
-    } else if (!MO.isDead())
-      // Don't try to hoist code in the rare case the terminator defines a
-      // register that is later used.
-      return MBB->end();
+    } else {
+      if (!MO.isDead())
+        // Don't try to hoist code in the rare case the terminator defines a
+        // register that is later used.
+        return MBB->end();
+
+      // If the terminator defines a register, make sure we don't hoist
+      // the instruction whose def might be clobbered by the terminator.
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        Defs.insert(*AI);
+    }
   }
 
   if (Uses.empty())
