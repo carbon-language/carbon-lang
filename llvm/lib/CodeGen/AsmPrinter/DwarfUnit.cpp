@@ -1784,8 +1784,7 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
   // Define variable debug information entry.
   auto VariableDie = make_unique<DIE>(DV.getTag());
   DbgVariable *AbsVar = DV.getAbstractVariable();
-  if (AbsVar) {
-    assert(AbsVar->getDIE());
+  if (AbsVar && AbsVar->getDIE()) {
     addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsVar->getDIE());
   } else {
     if (!Name.empty())
