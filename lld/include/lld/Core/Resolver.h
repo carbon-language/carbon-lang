@@ -57,7 +57,7 @@ private:
   typedef std::function<void(StringRef, bool)> UndefCallback;
 
   /// \brief Add section group/.gnu.linkonce if it does not exist previously.
-  bool maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
+  void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
 
   /// \brief The main function that iterates over the files to resolve
   bool resolveUndefines();
