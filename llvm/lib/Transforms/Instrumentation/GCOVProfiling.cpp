@@ -457,8 +457,13 @@ static bool functionHasLines(Function *F) {
       // Debug intrinsic locations correspond to the location of the
       // declaration, not necessarily any statements or expressions.
       if (isa<DbgInfoIntrinsic>(I)) continue;
+
       const DebugLoc &Loc = I->getDebugLoc();
       if (Loc.isUnknown()) continue;
+
+      // Artificial lines such as calls to the global constructors.
+      if (Loc.getLine() == 0) continue; 
+
       return true;
     }
   }
@@ -521,8 +526,13 @@ void GCOVProfiler::emitProfileNotes() {
           // Debug intrinsic locations correspond to the location of the
           // declaration, not necessarily any statements or expressions.
           if (isa<DbgInfoIntrinsic>(I)) continue;
+
           const DebugLoc &Loc = I->getDebugLoc();
           if (Loc.isUnknown()) continue;
+
+          // Artificial lines such as calls to the global constructors.
+          if (Loc.getLine() == 0) continue;
+
           if (Line == Loc.getLine()) continue;
           Line = Loc.getLine();
           if (SP != getDISubprogram(Loc.getScope(*Ctx))) continue;
