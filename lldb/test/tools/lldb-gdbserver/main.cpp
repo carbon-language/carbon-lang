@@ -20,14 +20,16 @@ int pthread_threadid_np(pthread_t,__uint64_t*);
 #include <sys/syscall.h>
 #endif
 
-static const char *const RETVAL_PREFIX = "retval:";
-static const char *const SLEEP_PREFIX  = "sleep:";
-static const char *const STDERR_PREFIX = "stderr:";
-static const char *const SET_MESSAGE_PREFIX = "set-message:";
+static const char *const RETVAL_PREFIX               = "retval:";
+static const char *const SLEEP_PREFIX                = "sleep:";
+static const char *const STDERR_PREFIX               = "stderr:";
+static const char *const SET_MESSAGE_PREFIX          = "set-message:";
 static const char *const GET_MESSAGE_ADDRESS_COMMAND = "get-message-address-hex:";
-static const char *const GET_STACK_ADDRESS_COMMAND = "get-stack-address-hex:";
-static const char *const GET_HEAP_ADDRESS_COMMAND = "get-heap-address-hex:";
-static const char *const GET_CODE_ADDRESS_COMMAND = "get-code-address-hex:";
+static const char *const GET_STACK_ADDRESS_COMMAND   = "get-stack-address-hex:";
+static const char *const GET_HEAP_ADDRESS_COMMAND    = "get-heap-address-hex:";
+
+static const char *const GET_CODE_ADDRESS_PREFIX     = "get-code-address-hex:";
+static const char *const CALL_FUNCTION_PREFIX        = "call-function:";
 
 static const char *const THREAD_PREFIX = "thread:";
 static const char *const THREAD_COMMAND_NEW = "new";
@@ -64,12 +66,12 @@ print_thread_id ()
 static void
 signal_handler (int signo)
 {
-	const char *signal_name = NULL;
+	const char *signal_name = nullptr;
 	switch (signo)
 	{
 		case SIGUSR1: signal_name = "SIGUSR1"; break;
 		case SIGSEGV: signal_name = "SIGSEGV"; break;
-		default:      signal_name = NULL;
+		default:      signal_name = nullptr;
 	}
 
 	// Print notice that we received the signal on a given thread.
@@ -111,6 +113,14 @@ signal_handler (int signo)
 	}
 }
 
+static void
+hello ()
+{
+    pthread_mutex_lock (&g_print_mutex);
+    printf ("hello, world\n");
+    pthread_mutex_unlock (&g_print_mutex);
+}
+
 static void*
 thread_func (void *arg)
 {
@@ -144,7 +154,7 @@ thread_func (void *arg)
 		// Test creating a SEGV.
 		pthread_mutex_lock (&g_jump_buffer_mutex);
 		g_is_segfaulting = true;
-		int *bad_p = NULL;
+		int *bad_p = nullptr;
 		if (setjmp(g_jump_buffer) == 0)
 		{
 			// Force a seg fault signal on this thread.
@@ -174,7 +184,7 @@ thread_func (void *arg)
 		sleep_seconds_remaining = sleep (sleep_seconds_remaining);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 int main (int argc, char **argv)
@@ -263,11 +273,29 @@ int main (int argc, char **argv)
             printf ("stack address: %p\n", &return_value);
 			pthread_mutex_unlock (&g_print_mutex);
         }
-        else if (std::strstr (argv[i], GET_CODE_ADDRESS_COMMAND))
+        else if (std::strstr (argv[i], GET_CODE_ADDRESS_PREFIX))
         {
+            // Defaut to providing the address of main.
+            void (*func_p)() = nullptr;
+
+            if (std::strstr (argv[i] + strlen (GET_CODE_ADDRESS_PREFIX), "hello"))
+                func_p = hello;
+
 			pthread_mutex_lock (&g_print_mutex);
-            printf ("code address: %p\n", main);
+            printf ("code address: %p\n", func_p);
 			pthread_mutex_unlock (&g_print_mutex);
+        }
+        else if (std::strstr (argv[i], CALL_FUNCTION_PREFIX))
+        {
+            // Defaut to providing the address of main.
+            if (std::strcmp (argv[i] + strlen (CALL_FUNCTION_PREFIX), "hello") == 0)
+                hello();
+            else
+            {
+                pthread_mutex_lock (&g_print_mutex);
+                printf ("unknown function: %s\n", argv[i] + strlen (CALL_FUNCTION_PREFIX));
+                pthread_mutex_unlock (&g_print_mutex);
+            }
         }
 		else if (std::strstr (argv[i], THREAD_PREFIX))
 		{
@@ -276,7 +304,7 @@ int main (int argc, char **argv)
 			{
 				// Create a new thread.
 				pthread_t new_thread;
-				const int err = ::pthread_create (&new_thread, NULL, thread_func, NULL);
+				const int err = ::pthread_create (&new_thread, nullptr, thread_func, nullptr);
 			    if (err)
 				{
 					fprintf (stderr, "pthread_create() failed with error code %d\n", err);
@@ -316,7 +344,7 @@ int main (int argc, char **argv)
 	// If we launched any threads, join them
 	for (std::vector<pthread_t>::iterator it = threads.begin (); it != threads.end (); ++it)
 	{
-		void *thread_retval = NULL;
+		void *thread_retval = nullptr;
 		const int err = ::pthread_join (*it, &thread_retval);
 	    if (err != 0)
 			fprintf (stderr, "pthread_join() failed with error code %d\n", err);

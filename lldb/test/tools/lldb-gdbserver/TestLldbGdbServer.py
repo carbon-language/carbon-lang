@@ -49,7 +49,7 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
 
         # Uncomment this code to force only a single test to run (by name).
-        # if not re.search(r"qMemoryRegionInfo", self._testMethodName):
+        # if not re.search(r"breakpoint", self._testMethodName):
         #     self.skipTest("focusing on one test")
 
     def reset_test_sequence(self):
@@ -1351,7 +1351,7 @@ class LldbGdbServerTestCase(TestBase):
     def qMemoryRegionInfo_reports_code_address_as_executable(self):
         # Start up the inferior.
         procs = self.prep_debug_monitor_and_inferior(
-            inferior_args=["get-code-address-hex:", "sleep:5"])
+            inferior_args=["get-code-address-hex:hello", "sleep:5"])
 
         # Run the process
         self.test_sequence.add_log_lines(
@@ -1533,6 +1533,101 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_heap_address_as_readable_writeable()
+
+    def software_breakpoint_set_and_remove_work(self):
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["get-code-address-hex:hello", "sleep:1", "call-function:hello"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [
+             # Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the function call entry point.
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"function_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the address.
+        self.assertIsNotNone(context.get("function_address"))
+        function_address = int(context.get("function_address"), 16)
+
+        # Set the breakpoint.
+        # Note this might need to be switched per platform (ARM, mips, etc.).
+        BREAKPOINT_KIND = 1
+        
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            [
+             # Set the breakpoint.
+             "read packet: $Z0,{0:x},{1}#00".format(function_address, BREAKPOINT_KIND),
+             # Verify the stub could set it.
+             "send packet: $OK#00",
+             # Continue the inferior.
+             "read packet: $c#00",
+             # Expect a breakpoint stop report.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+             ], True)
+             
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Verify the stop signal reported was the breakpoint signal number.
+        stop_signo = context.get("stop_signo")
+        self.assertIsNotNone(stop_signo)
+        self.assertEquals(int(stop_signo,16), signal.SIGTRAP)
+
+        # Ensure we did not receive any output.  If the breakpoint was not set, we would
+        # see output (from a launched process with captured stdio) printing a hello, world message.
+        # That would indicate the breakpoint didn't take.
+        self.assertEquals(len(context["O_content"]), 0)
+
+        # Verify that a breakpoint unset and continue gets us the expected output.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            [
+             # Remove the breakpoint.
+             "read packet: $z0,{0:x},{1}#00".format(function_address, BREAKPOINT_KIND),
+             # Verify the stub could unset it.
+             "send packet: $OK#00",
+             # Continue running.
+             "read packet: $c#00",
+             # We should now receive the output from the call.
+             { "type":"output_match", "regex":r"^hello, world\r\n$" },
+             # And wait for program completion.
+             {"direction":"send", "regex":r"^\$W00(.*)#00" },
+             ], True)
+
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+        
+
+    @debugserver_test
+    @dsym_test
+    def test_software_breakpoint_set_and_remove_work_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.software_breakpoint_set_and_remove_work()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_software_breakpoint_set_and_remove_work_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.software_breakpoint_set_and_remove_work()
 
 
 if __name__ == '__main__':
