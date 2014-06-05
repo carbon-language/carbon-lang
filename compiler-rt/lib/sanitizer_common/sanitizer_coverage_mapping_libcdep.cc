@@ -40,29 +40,35 @@ static const uptr kMaxTextSize = 64 * 1024;
 
 struct CachedMapping {
  public:
-  bool TestAndUpdate(const char *new_mapping) {
+  bool NeedsUpdate(uptr pc) {
     int new_pid = internal_getpid();
-    if (last_mapping && last_pid == new_pid &&
-        internal_strcmp(last_mapping, new_mapping) == 0)
+    if (last_pid == new_pid && pc && pc >= last_range_start &&
+        pc < last_range_end)
       return false;
-    if (!last_mapping) last_mapping = (char *)InternalAlloc(kMaxTextSize);
     last_pid = new_pid;
-    internal_strncpy(last_mapping, new_mapping, kMaxTextSize);
     return true;
   }
 
+  void SetModuleRange(uptr start, uptr end) {
+    last_range_start = start;
+    last_range_end = end;
+  }
+
  private:
-  char *last_mapping;
+  uptr last_range_start, last_range_end;
   int last_pid;
 };
 
 static CachedMapping cached_mapping;
 static StaticSpinMutex mapping_mu;
 
-void CovUpdateMapping() {
+void CovUpdateMapping(uptr caller_pc) {
   if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
 
   SpinMutexLock l(&mapping_mu);
+
+  if (!cached_mapping.NeedsUpdate(caller_pc))
+    return;
 
   InternalScopedString text(kMaxTextSize);
   InternalScopedBuffer<char> modules_data(kMaxNumberOfModules *
@@ -76,16 +82,15 @@ void CovUpdateMapping() {
   for (int i = 0; i < n_modules; ++i) {
     char *module_name = StripModuleName(modules[i].full_name());
     for (unsigned j = 0; j < modules[i].n_ranges(); ++j) {
-      text.append("%zx %zx %zx %s\n", modules[i].address_range_start(j),
-                  modules[i].address_range_end(j), modules[i].base_address(),
-                  module_name);
+      uptr start = modules[i].address_range_start(j);
+      uptr end = modules[i].address_range_end(j);
+      uptr base = modules[i].base_address();
+      text.append("%zx %zx %zx %s\n", start, end, base, module_name);
+      if (caller_pc && caller_pc >= start && caller_pc < end)
+        cached_mapping.SetModuleRange(start, end);
     }
     InternalFree(module_name);
   }
-
-  // Do not write mapping if it is the same as the one we've wrote last time.
-  if (!cached_mapping.TestAndUpdate(text.data()))
-    return;
 
   int err;
   InternalScopedString tmp_path(64 +
