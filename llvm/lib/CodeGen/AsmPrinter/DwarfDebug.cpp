@@ -1220,6 +1220,11 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       if (Begin->getNumOperands() > 1 && Begin->getOperand(0).isReg() &&
           !Begin->getOperand(0).getReg())
         continue;
+      DEBUG(dbgs() << "DotDebugLoc Pair:\n" << "\t" << *Begin);
+      if (End != nullptr)
+        DEBUG(dbgs() << "\t" << *End);
+      else
+        DEBUG(dbgs() << "\tNULL\n");
 
       const MCSymbol *StartLabel = getLabelBeforeInsn(Begin);
       assert(StartLabel && "Forgot label before DBG_VALUE starting a range!");
@@ -1233,8 +1238,6 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
         EndLabel = getLabelBeforeInsn(std::next(I)->first);
       assert(EndLabel && "Forgot label after instruction ending a range!");
 
-      DEBUG(dbgs() << "DotDebugLoc Pair:\n"
-                   << "\t" << *Begin << "\t" << *End << "\n");
       DebugLocEntry Loc(StartLabel, EndLabel, getDebugLocValue(Begin), TheCU);
       if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc))
         DebugLoc.push_back(std::move(Loc));
