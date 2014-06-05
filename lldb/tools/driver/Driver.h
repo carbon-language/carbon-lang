@@ -23,9 +23,6 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 
-#define ASYNC true
-#define NO_ASYNC false
-
 class IOChannel;
 
 class Driver : public lldb::SBBroadcaster
