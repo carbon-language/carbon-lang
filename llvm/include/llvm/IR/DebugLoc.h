@@ -95,7 +95,7 @@ namespace llvm {
 
     // getFnDebugLoc - Walk up the scope chain of given debug loc and find line
     // number info for the function.
-    DebugLoc getFnDebugLoc(const LLVMContext &Ctx);
+    DebugLoc getFnDebugLoc(const LLVMContext &Ctx) const;
 
     /// getAsMDNode - This method converts the compressed DebugLoc node into a
     /// DILocation compatible MDNode.

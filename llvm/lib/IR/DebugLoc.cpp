@@ -76,7 +76,7 @@ MDNode *DebugLoc::getScopeNode(const LLVMContext &Ctx) const {
   return getScope(Ctx);
 }
 
-DebugLoc DebugLoc::getFnDebugLoc(const LLVMContext &Ctx) {
+DebugLoc DebugLoc::getFnDebugLoc(const LLVMContext &Ctx) const {
   const MDNode *Scope = getScopeNode(Ctx);
   DISubprogram SP = getDISubprogram(Scope);
   if (SP.isSubprogram()) {
