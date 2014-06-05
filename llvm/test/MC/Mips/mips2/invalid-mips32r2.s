@@ -1,6 +1,6 @@
 # Instructions that are invalid
 #
-# RUN: not llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips2 \
+# RUN: not llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips2 \
 # RUN:     2>%t1
 # RUN: FileCheck %s < %t1
 
