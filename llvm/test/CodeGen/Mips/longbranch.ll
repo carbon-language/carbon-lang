@@ -7,6 +7,8 @@
 ; RUN:   < %s | FileCheck %s -check-prefix=N64
 ; RUN: llc -march=mipsel -mcpu=mips32r2 -mattr=micromips \
 ; RUN:   -force-mips-long-branch -O3 < %s | FileCheck %s -check-prefix=MICROMIPS
+; RUN: llc -mtriple=mipsel-none-nacl -force-mips-long-branch -O3 < %s \
+; RUN:   | FileCheck %s -check-prefix=NACL
 
 
 @x = external global i32
@@ -126,4 +128,36 @@ end:
 ; MICROMIPS:   $[[BB2]]:
 ; MICROMIPS:        jr      $ra
 ; MICROMIPS:        nop
+
+
+; Check the NaCl version.  Check that sp change is not in the branch delay slot
+; of "jr $1" instruction.  Check that target of indirect branch "jr $1" is
+; bundle aligned.
+
+; NACL:        lui     $[[R0:[0-9]+]], %hi(_gp_disp)
+; NACL:        addiu   $[[R0]], $[[R0]], %lo(_gp_disp)
+; NACL:        bnez    $4, $[[BB0:BB[0-9_]+]]
+; NACL:        addu    $[[GP:[0-9]+]], $[[R0]], $25
+
+; Check for long branch expansion:
+; NACL:             addiu   $sp, $sp, -8
+; NACL-NEXT:        sw      $ra, 0($sp)
+; NACL-NEXT:        lui     $1, %hi(($[[BB2:BB[0-9_]+]])-($[[BB1:BB[0-9_]+]]))
+; NACL-NEXT:        bal     $[[BB1]]
+; NACL-NEXT:        addiu   $1, $1, %lo(($[[BB2]])-($[[BB1]]))
+; NACL-NEXT:   $[[BB1]]:
+; NACL-NEXT:        addu    $1, $ra, $1
+; NACL-NEXT:        lw      $ra, 0($sp)
+; NACL-NEXT:        addiu   $sp, $sp, 8
+; NACL-NEXT:        jr      $1
+; NACL-NEXT:        nop
+
+; NACL:        $[[BB0]]:
+; NACL:             lw      $[[R1:[0-9]+]], %got(x)($[[GP]])
+; NACL:             addiu   $[[R2:[0-9]+]], $zero, 1
+; NACL:             sw      $[[R2]], 0($[[R1]])
+; NACL:             .align  4
+; NACL-NEXT:   $[[BB2]]:
+; NACL:             jr      $ra
+; NACL:             nop
 }

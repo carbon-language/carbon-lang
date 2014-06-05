@@ -15,6 +15,7 @@
 
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsMCNaCl.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -64,7 +65,8 @@ namespace {
       : MachineFunctionPass(ID), TM(tm),
         IsPIC(TM.getRelocationModel() == Reloc::PIC_),
         ABI(TM.getSubtarget<MipsSubtarget>().getTargetABI()),
-        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 10 : 9)) {}
+        LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 10 :
+            (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl() ? 9 : 10))) {}
 
     const char *getPassName() const override {
       return "Mips Long Branch";
@@ -316,10 +318,23 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LW), Mips::RA)
         .addReg(Mips::SP).addImm(0);
 
-      MIBundleBuilder(*BalTgtMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
-        .append(BuildMI(*MF, DL, TII->get(Mips::ADDiu), Mips::SP)
-                .addReg(Mips::SP).addImm(8));
+      if (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl()) {
+        MIBundleBuilder(*BalTgtMBB, Pos)
+          .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
+          .append(BuildMI(*MF, DL, TII->get(Mips::ADDiu), Mips::SP)
+                  .addReg(Mips::SP).addImm(8));
+      } else {
+        // In NaCl, modifying the sp is not allowed in branch delay slot.
+        BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::ADDiu), Mips::SP)
+          .addReg(Mips::SP).addImm(8);
+
+        MIBundleBuilder(*BalTgtMBB, Pos)
+          .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
+          .append(BuildMI(*MF, DL, TII->get(Mips::NOP)));
+
+        // Bundle-align the target of indirect branch JR.
+        TgtMBB->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
+      }
     } else {
       // $longbr:
       //  daddiu $sp, $sp, -16
@@ -450,9 +465,18 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
         continue;
 
       int ShVal = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode() ? 2 : 4;
+      int64_t Offset = computeOffset(I->Br) / ShVal;
+
+      if (TM.getSubtarget<MipsSubtarget>().isTargetNaCl()) {
+        // The offset calculation does not include sandboxing instructions
+        // that will be added later in the MC layer.  Since at this point we
+        // don't know the exact amount of code that "sandboxing" will add, we
+        // conservatively estimate that code will not grow more than 100%.
+        Offset *= 2;
+      }
 
       // Check if offset fits into 16-bit immediate field of branches.
-      if (!ForceLongBranch && isInt<16>(computeOffset(I->Br) / ShVal))
+      if (!ForceLongBranch && isInt<16>(Offset))
         continue;
 
       I->HasLongBranch = true;
