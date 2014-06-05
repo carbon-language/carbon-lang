@@ -47,11 +47,12 @@ using namespace llvm;
 using namespace object;
 
 namespace {
-enum OutputFormatTy { bsd, sysv, posix };
+enum OutputFormatTy { bsd, sysv, posix, darwin };
 cl::opt<OutputFormatTy> OutputFormat(
     "format", cl::desc("Specify output format"),
     cl::values(clEnumVal(bsd, "BSD format"), clEnumVal(sysv, "System V format"),
-               clEnumVal(posix, "POSIX.2 format"), clEnumValEnd),
+               clEnumVal(posix, "POSIX.2 format"),
+               clEnumVal(darwin, "Darwin -m format"), clEnumValEnd),
     cl::init(bsd));
 cl::alias OutputFormat2("f", cl::desc("Alias for --format"),
                         cl::aliasopt(OutputFormat));
@@ -145,6 +146,7 @@ struct NMSymbol {
   uint64_t Size;
   char TypeChar;
   StringRef Name;
+  DataRefImpl Symb;
 };
 }
 
@@ -204,6 +206,169 @@ static StringRef CurrentFilename;
 typedef std::vector<NMSymbol> SymbolListT;
 static SymbolListT SymbolList;
 
+// darwinPrintSymbol() is used to print a symbol from a Mach-O file when the
+// the OutputFormat is darwin.  It produces the same output as darwin's nm(1) -m
+// output.
+static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
+                              char *SymbolAddrStr, const char *printBlanks) {
+  MachO::mach_header H;
+  MachO::mach_header_64 H_64;
+  uint32_t Filetype, Flags;
+  MachO::nlist_64 STE_64;
+  MachO::nlist STE;
+  uint8_t NType;
+  uint16_t NDesc;
+  uint64_t NValue;
+  if (MachO->is64Bit()) {
+    H_64 = MachO->MachOObjectFile::getHeader64();
+    Filetype = H_64.filetype;
+    Flags = H_64.flags;
+    STE_64 = MachO->getSymbol64TableEntry(I->Symb);
+    NType = STE_64.n_type;
+    NDesc = STE_64.n_desc;
+    NValue = STE_64.n_value;
+  } else {
+    H = MachO->MachOObjectFile::getHeader();
+    Filetype = H.filetype;
+    Flags = H.flags;
+    STE = MachO->getSymbolTableEntry(I->Symb);
+    NType = STE.n_type;
+    NDesc = STE.n_desc;
+    NValue = STE.n_value;
+  }
+
+  if (PrintAddress) {
+    if ((NType & MachO::N_TYPE) == MachO::N_INDR)
+      strcpy(SymbolAddrStr, printBlanks);
+    outs() << SymbolAddrStr << ' ';
+  }
+
+  switch (NType & MachO::N_TYPE) {
+  case MachO::N_UNDF:
+    if (NValue != 0) {
+      outs() << "(common) ";
+      if (MachO::GET_COMM_ALIGN(NDesc) != 0)
+        outs() << "(alignment 2^" <<
+                   (int)MachO::GET_COMM_ALIGN(NDesc) << ") ";
+    } else {
+      if ((NType & MachO::N_TYPE) == MachO::N_PBUD)
+        outs() << "(prebound ";
+      else
+        outs() << "(";
+      if ((NDesc & MachO::REFERENCE_TYPE) ==
+          MachO::REFERENCE_FLAG_UNDEFINED_LAZY)
+        outs() << "undefined [lazy bound]) ";
+      else if ((NDesc & MachO::REFERENCE_TYPE) ==
+               MachO::REFERENCE_FLAG_UNDEFINED_LAZY)
+        outs() << "undefined [private lazy bound]) ";
+      else if ((NDesc & MachO::REFERENCE_TYPE) ==
+               MachO::REFERENCE_FLAG_PRIVATE_UNDEFINED_NON_LAZY)
+        outs() << "undefined [private]) ";
+      else
+        outs() << "undefined) ";
+    }
+    break;
+  case MachO::N_ABS:
+    outs() << "(absolute) ";
+    break;
+  case MachO::N_INDR:
+    outs() << "(indirect) ";
+    break;
+  case MachO::N_SECT: {
+    section_iterator Sec = MachO->section_end();
+    MachO->getSymbolSection(I->Symb, Sec);
+    DataRefImpl Ref = Sec->getRawDataRefImpl();
+    StringRef SectionName;
+    MachO->getSectionName(Ref, SectionName);
+    StringRef SegmentName = MachO->getSectionFinalSegmentName(Ref);
+    outs() << "(" << SegmentName << "," << SectionName << ") ";
+    break;
+  }
+  default:
+    outs() << "(?) ";
+    break;
+  }
+
+  if (NType & MachO::N_EXT) {
+    if (NDesc & MachO::REFERENCED_DYNAMICALLY)
+      outs() << "[referenced dynamically] ";
+    if (NType & MachO::N_PEXT) {
+      if ((NDesc & MachO::N_WEAK_DEF) == MachO::N_WEAK_DEF)
+        outs() <<  "weak private external ";
+      else
+        outs() <<  "private external ";
+    } else {
+      if ((NDesc & MachO::N_WEAK_REF) == MachO::N_WEAK_REF ||
+          (NDesc & MachO::N_WEAK_DEF) == MachO::N_WEAK_DEF){
+        if ((NDesc & (MachO::N_WEAK_REF | MachO::N_WEAK_DEF)) ==
+            (MachO::N_WEAK_REF | MachO::N_WEAK_DEF))
+          outs() << "weak external automatically hidden ";
+        else
+          outs() << "weak external ";
+      }
+      else
+        outs() << "external ";
+    }
+  } else {
+    if (NType & MachO::N_PEXT)
+      outs() << "non-external (was a private external) ";
+    else
+      outs() << "non-external ";
+  }
+
+  if (Filetype == MachO::MH_OBJECT &&
+      (NDesc & MachO::N_NO_DEAD_STRIP) == MachO::N_NO_DEAD_STRIP)
+    outs() << "[no dead strip] ";
+
+  if (Filetype == MachO::MH_OBJECT &&
+      ((NType & MachO::N_TYPE) != MachO::N_UNDF) &&
+      (NDesc & MachO::N_SYMBOL_RESOLVER) == MachO::N_SYMBOL_RESOLVER)
+    outs() << "[symbol resolver] ";
+
+  if (Filetype == MachO::MH_OBJECT &&
+      ((NType & MachO::N_TYPE) != MachO::N_UNDF) &&
+      (NDesc & MachO::N_ALT_ENTRY) == MachO::N_ALT_ENTRY)
+    outs() << "[alt entry] ";
+
+  if ((NDesc & MachO::N_ARM_THUMB_DEF) == MachO::N_ARM_THUMB_DEF)
+    outs() << "[Thumb] ";
+
+  if ((NType & MachO::N_TYPE) == MachO::N_INDR) {
+    outs() << I->Name << " (for ";
+    StringRef IndirectName;
+    if (MachO->getIndirectName(I->Symb, IndirectName))
+      outs() << "?)";
+    else
+      outs() << IndirectName << ")";
+  }
+  else
+    outs() << I->Name;
+
+  if ((Flags & MachO::MH_TWOLEVEL) == MachO::MH_TWOLEVEL &&
+      (((NType & MachO::N_TYPE) == MachO::N_UNDF &&
+        NValue == 0) ||
+       (NType & MachO::N_TYPE) == MachO::N_PBUD)) {
+    uint32_t LibraryOrdinal = MachO::GET_LIBRARY_ORDINAL(NDesc);
+    if (LibraryOrdinal != 0) {
+      if (LibraryOrdinal == MachO::EXECUTABLE_ORDINAL)
+        outs() << " (from executable)";
+      else if (LibraryOrdinal == MachO::DYNAMIC_LOOKUP_ORDINAL)
+        outs() << " (dynamically looked up)";
+      else {
+        StringRef LibraryName;
+        if (MachO->getLibraryShortNameByIndex(LibraryOrdinal - 1,
+                                              LibraryName))
+          outs() << " (from bad library ordinal " <<
+                 LibraryOrdinal << ")";
+        else
+          outs() << " (from " << LibraryName << ")";
+      }
+    }
+  }
+
+  outs() << "\n";
+}
+
 static void sortAndPrintSymbolList(SymbolicFile *Obj) {
   if (!NoSort) {
     if (NumericSort)
@@ -256,10 +421,16 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj) {
     if (I->Size != UnknownAddressOrSize)
       format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
-    if (OutputFormat == posix) {
+    // If OutputFormat is darwin and we have a MachOObjectFile print as darwin's
+    // nm(1) -m output, else if OutputFormat is darwin and not a Mach-O object
+    // fall back to OutputFormat bsd (see below).
+    MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
+    if (OutputFormat == darwin && MachO) {
+      darwinPrintSymbol(MachO, I, SymbolAddrStr, printBlanks);
+    } else if (OutputFormat == posix) {
       outs() << I->Name << " " << I->TypeChar << " " << SymbolAddrStr
              << SymbolSizeStr << "\n";
-    } else if (OutputFormat == bsd) {
+    } else if (OutputFormat == bsd || (OutputFormat == darwin && !MachO)) {
       if (PrintAddress)
         outs() << SymbolAddrStr << ' ';
       if (PrintSize) {
@@ -529,6 +700,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj) {
     if (error(I->printName(OS)))
       break;
     OS << '\0';
+    S.Symb = I->getRawDataRefImpl();
     SymbolList.push_back(S);
   }
 

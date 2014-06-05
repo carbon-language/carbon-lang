@@ -360,11 +360,28 @@ namespace llvm {
     enum {
       // Constant masks for the "n_desc" field in llvm::MachO::nlist and
       // llvm::MachO::nlist_64
+      // The low 3 bits are the for the REFERENCE_TYPE.
+      REFERENCE_TYPE                            = 0x7,
+      REFERENCE_FLAG_UNDEFINED_NON_LAZY         = 0,
+      REFERENCE_FLAG_UNDEFINED_LAZY             = 1,
+      REFERENCE_FLAG_DEFINED                    = 2,
+      REFERENCE_FLAG_PRIVATE_DEFINED            = 3,
+      REFERENCE_FLAG_PRIVATE_UNDEFINED_NON_LAZY = 4,
+      REFERENCE_FLAG_PRIVATE_UNDEFINED_LAZY     = 5,
+      // Flag bits (some overlap with the library ordinal bits).
       N_ARM_THUMB_DEF   = 0x0008u,
+      REFERENCED_DYNAMICALLY = 0x0010u,
       N_NO_DEAD_STRIP   = 0x0020u,
       N_WEAK_REF        = 0x0040u,
       N_WEAK_DEF        = 0x0080u,
-      N_SYMBOL_RESOLVER = 0x0100u
+      N_SYMBOL_RESOLVER = 0x0100u,
+      N_ALT_ENTRY       = 0x0200u,
+      // For undefined symbols coming from libraries, see GET_LIBRARY_ORDINAL()
+      // as these are in the top 8 bits.
+      SELF_LIBRARY_ORDINAL   = 0x0,
+      MAX_LIBRARY_ORDINAL    = 0xfd,
+      DYNAMIC_LOOKUP_ORDINAL = 0xfe,
+      EXECUTABLE_ORDINAL     = 0xff 
     };
 
     enum StabType {

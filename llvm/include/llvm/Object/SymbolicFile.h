@@ -86,8 +86,8 @@ public:
     SF_Weak = 1U << 2,           // Weak symbol
     SF_Absolute = 1U << 3,       // Absolute symbol
     SF_Common = 1U << 4,         // Symbol has common linkage
-    SF_Indirect = 1U << 5,
-    SF_FormatSpecific = 1U << 5  // Specific to the object file format
+    SF_Indirect = 1U << 5,       // Symbol is an alias to another symbol
+    SF_FormatSpecific = 1U << 6  // Specific to the object file format
                                  // (e.g. section symbols)
   };
 

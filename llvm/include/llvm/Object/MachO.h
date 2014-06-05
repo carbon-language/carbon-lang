@@ -61,6 +61,10 @@ public:
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const override;
+
+  // MachO specific.
+  error_code getIndirectName(DataRefImpl Symb, StringRef &Res) const;
+
   error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const override;
   error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const override;
   error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
@@ -104,6 +108,9 @@ public:
   error_code getLibraryNext(DataRefImpl LibData,
                             LibraryRef &Res) const override;
   error_code getLibraryPath(DataRefImpl LibData, StringRef &Res) const override;
+
+  // MachO specific.
+  error_code getLibraryShortNameByIndex(unsigned Index, StringRef &Res);
 
   // TODO: Would be useful to have an iterator based version
   // of the load command interface too.
@@ -198,6 +205,9 @@ public:
   bool is64Bit() const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
 
+  static StringRef guessLibraryShortName(StringRef Name, bool &isFramework,
+                                         StringRef &Suffix);
+
   static Triple::ArchType getArch(uint32_t CPUType);
 
   static bool classof(const Binary *v) {
@@ -207,6 +217,10 @@ public:
 private:
   typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
+  typedef SmallVector<const char*, 1> LibraryList;
+  LibraryList Libraries;
+  typedef SmallVector<StringRef, 1> LibraryShortName;
+  LibraryShortName LibrariesShortNames;
   const char *SymtabLoadCmd;
   const char *DysymtabLoadCmd;
   const char *DataInCodeLoadCmd;

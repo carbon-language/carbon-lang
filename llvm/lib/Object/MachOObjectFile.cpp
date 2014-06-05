@@ -223,6 +223,16 @@ void SwapStruct(MachO::version_min_command&C) {
 }
 
 template<>
+void SwapStruct(MachO::dylib_command&C) {
+  SwapValue(C.cmd);
+  SwapValue(C.cmdsize);
+  SwapValue(C.dylib.name);
+  SwapValue(C.dylib.timestamp);
+  SwapValue(C.dylib.current_version);
+  SwapValue(C.dylib.compatibility_version);
+}
+
+template<>
 void SwapStruct(MachO::data_in_code_entry &C) {
   SwapValue(C.offset);
   SwapValue(C.length);
@@ -443,6 +453,12 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian,
         const char *Sec = getSectionPtr(this, Load, J);
         Sections.push_back(Sec);
       }
+    } else if (Load.C.cmd == MachO::LC_LOAD_DYLIB ||
+               Load.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
+               Load.C.cmd == MachO::LC_LAZY_LOAD_DYLIB ||
+               Load.C.cmd == MachO::LC_REEXPORT_DYLIB ||
+               Load.C.cmd == MachO::LC_LOAD_UPWARD_DYLIB) {
+      Libraries.push_back(Load.Ptr);
     }
 
     if (I == LoadCommandCount - 1)
@@ -464,6 +480,30 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl Symb,
   StringRef StringTable = getStringTableData();
   nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   const char *Start = &StringTable.data()[Entry.n_strx];
+  Res = StringRef(Start);
+  return object_error::success;
+}
+
+// getIndirectName() returns the name of the alias'ed symbol who's string table
+// index is in the n_value field.
+error_code MachOObjectFile::getIndirectName(DataRefImpl Symb,
+                                            StringRef &Res) const {
+  StringRef StringTable = getStringTableData();
+  uint64_t NValue;
+  if (is64Bit()) {
+    MachO::nlist_64 Entry = getSymbol64TableEntry(Symb);
+    NValue = Entry.n_value;
+    if ((Entry.n_type & MachO::N_TYPE) != MachO::N_INDR)
+      return object_error::parse_failed;
+  } else {
+    MachO::nlist Entry = getSymbolTableEntry(Symb);
+    NValue = Entry.n_value;
+    if ((Entry.n_type & MachO::N_TYPE) != MachO::N_INDR)
+      return object_error::parse_failed;
+  }
+  if (NValue >= StringTable.size())
+    return object_error::parse_failed;
+  const char *Start = &StringTable.data()[NValue];
   Res = StringRef(Start);
   return object_error::success;
 }
@@ -1178,6 +1218,189 @@ error_code MachOObjectFile::getLibraryNext(DataRefImpl LibData,
 error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
                                            StringRef &Res) const {
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
+}
+
+//
+// guessLibraryShortName() is passed a name of a dynamic library and returns a
+// guess on what the short name is.  Then name is returned as a substring of the
+// StringRef Name passed in.  The name of the dynamic library is recognized as
+// a framework if it has one of the two following forms:
+//      Foo.framework/Versions/A/Foo
+//      Foo.framework/Foo
+// Where A and Foo can be any string.  And may contain a trailing suffix
+// starting with an underbar.  If the Name is recognized as a framework then
+// isFramework is set to true else it is set to false.  If the Name has a
+// suffix then Suffix is set to the substring in Name that contains the suffix
+// else it is set to a NULL StringRef.
+//
+// The Name of the dynamic library is recognized as a library name if it has
+// one of the two following forms:
+//      libFoo.A.dylib
+//      libFoo.dylib
+// The library may have a suffix trailing the name Foo of the form:
+//      libFoo_profile.A.dylib
+//      libFoo_profile.dylib
+//
+// The Name of the dynamic library is also recognized as a library name if it
+// has the following form:
+//      Foo.qtx
+//
+// If the Name of the dynamic library is none of the forms above then a NULL
+// StringRef is returned.
+//
+StringRef MachOObjectFile::guessLibraryShortName(StringRef Name,
+                                                 bool &isFramework,
+                                                 StringRef &Suffix) {
+  StringRef Foo, F, DotFramework, V, Dylib, Lib, Dot, Qtx;
+  size_t a, b, c, d, Idx;
+
+  isFramework = false;
+  Suffix = StringRef();
+
+  // Pull off the last component and make Foo point to it
+  a = Name.rfind('/');
+  if (a == Name.npos || a == 0)
+    goto guess_library;
+  Foo = Name.slice(a+1, Name.npos);
+
+  // Look for a suffix starting with a '_'
+  Idx = Foo.rfind('_');
+  if (Idx != Foo.npos && Foo.size() >= 2) {
+    Suffix = Foo.slice(Idx, Foo.npos);
+    Foo = Foo.slice(0, Idx);
+  }
+
+  // First look for the form Foo.framework/Foo
+  b = Name.rfind('/', a);
+  if (b == Name.npos)
+    Idx = 0;
+  else
+    Idx = b+1;
+  F = Name.slice(Idx, Idx + Foo.size());
+  DotFramework = Name.slice(Idx + Foo.size(),
+                            Idx + Foo.size() + sizeof(".framework/")-1);
+  if (F == Foo && DotFramework == ".framework/") {
+    isFramework = true;
+    return Foo;
+  }
+
+  // Next look for the form Foo.framework/Versions/A/Foo
+  if (b == Name.npos)
+    goto guess_library;
+  c =  Name.rfind('/', b);
+  if (c == Name.npos || c == 0)
+    goto guess_library;
+  V = Name.slice(c+1, Name.npos);
+  if (!V.startswith("Versions/"))
+    goto guess_library;
+  d =  Name.rfind('/', c);
+  if (d == Name.npos)
+    Idx = 0;
+  else
+    Idx = d+1;
+  F = Name.slice(Idx, Idx + Foo.size());
+  DotFramework = Name.slice(Idx + Foo.size(),
+                            Idx + Foo.size() + sizeof(".framework/")-1);
+  if (F == Foo && DotFramework == ".framework/") {
+    isFramework = true;
+    return Foo;
+  }
+
+guess_library:
+  // pull off the suffix after the "." and make a point to it
+  a = Name.rfind('.');
+  if (a == Name.npos || a == 0)
+    return StringRef();
+  Dylib = Name.slice(a, Name.npos);
+  if (Dylib != ".dylib")
+    goto guess_qtx;
+
+  // First pull off the version letter for the form Foo.A.dylib if any.
+  if (a >= 3) {
+    Dot = Name.slice(a-2, a-1);
+    if (Dot == ".")
+      a = a - 2;
+  }
+
+  b = Name.rfind('/', a);
+  if (b == Name.npos)
+    b = 0;
+  else
+    b = b+1;
+  // ignore any suffix after an underbar like Foo_profile.A.dylib
+  Idx = Name.find('_', b);
+  if (Idx != Name.npos && Idx != b) {
+    Lib = Name.slice(b, Idx);
+    Suffix = Name.slice(Idx, a);
+  }
+  else
+    Lib = Name.slice(b, a);
+  // There are incorrect library names of the form:
+  // libATS.A_profile.dylib so check for these.
+  if (Lib.size() >= 3) {
+    Dot = Lib.slice(Lib.size()-2, Lib.size()-1);
+    if (Dot == ".")
+      Lib = Lib.slice(0, Lib.size()-2);
+  }
+  return Lib;
+
+guess_qtx:
+  Qtx = Name.slice(a, Name.npos);
+  if (Qtx != ".qtx")
+    return StringRef();
+  b = Name.rfind('/', a);
+  if (b == Name.npos)
+    Lib = Name.slice(0, a);
+  else
+    Lib = Name.slice(b+1, a);
+  // There are library names of the form: QT.A.qtx so check for these.
+  if (Lib.size() >= 3) {
+    Dot = Lib.slice(Lib.size()-2, Lib.size()-1);
+    if (Dot == ".")
+      Lib = Lib.slice(0, Lib.size()-2);
+  }
+  return Lib;
+}
+
+// getLibraryShortNameByIndex() is used to get the short name of the library
+// for an undefined symbol in a linked Mach-O binary that was linked with the
+// normal two-level namespace default (that is MH_TWOLEVEL in the header).
+// It is passed the index (0 - based) of the library as translated from
+// GET_LIBRARY_ORDINAL (1 - based).
+error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
+                                                       StringRef &Res) {
+  if (Index >= Libraries.size())
+    return object_error::parse_failed;
+
+  MachO::dylib_command D =
+    getStruct<MachO::dylib_command>(this, Libraries[Index]);
+  if (D.dylib.name >= D.cmdsize)
+    return object_error::parse_failed;
+
+  // If the cache of LibrariesShortNames is not built up do that first for
+  // all the Libraries.
+  if (LibrariesShortNames.size() == 0) {
+    for (unsigned i = 0; i < Libraries.size(); i++) {
+      MachO::dylib_command D =
+        getStruct<MachO::dylib_command>(this, Libraries[i]);
+      if (D.dylib.name >= D.cmdsize) {
+        LibrariesShortNames.push_back(StringRef());
+        continue;
+      }
+      char *P = (char *)(Libraries[i]) + D.dylib.name;
+      StringRef Name = StringRef(P);
+      StringRef Suffix;
+      bool isFramework;
+      StringRef shortName = guessLibraryShortName(Name, isFramework, Suffix);
+      if (shortName == StringRef())
+        LibrariesShortNames.push_back(Name);
+      else
+        LibrariesShortNames.push_back(shortName);
+    }
+  }
+
+  Res = LibrariesShortNames[Index];
+  return object_error::success;
 }
 
 basic_symbol_iterator MachOObjectFile::symbol_begin_impl() const {
