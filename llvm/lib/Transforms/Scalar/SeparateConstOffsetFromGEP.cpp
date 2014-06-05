@@ -121,41 +121,75 @@ class ConstantOffsetExtractor {
   /// numeric value of the extracted constant offset (0 if failed), and a
   /// new index representing the remainder (equal to the original index minus
   /// the constant offset).
-  /// \p Idx The given GEP index
-  /// \p NewIdx The new index to replace
-  /// \p DL The datalayout of the module
-  /// \p IP Calculating the new index requires new instructions. IP indicates
-  /// where to insert them (typically right before the GEP).
+  /// \p Idx    The given GEP index
+  /// \p NewIdx The new index to replace (output)
+  /// \p DL     The datalayout of the module
+  /// \p GEP    The given GEP
   static int64_t Extract(Value *Idx, Value *&NewIdx, const DataLayout *DL,
-                         Instruction *IP);
+                         GetElementPtrInst *GEP);
   /// Looks for a constant offset without extracting it. The meaning of the
   /// arguments and the return value are the same as Extract.
-  static int64_t Find(Value *Idx, const DataLayout *DL);
+  static int64_t Find(Value *Idx, const DataLayout *DL, GetElementPtrInst *GEP);
 
  private:
   ConstantOffsetExtractor(const DataLayout *Layout, Instruction *InsertionPt)
       : DL(Layout), IP(InsertionPt) {}
-  /// Searches the expression that computes V for a constant offset. If the
-  /// searching is successful, update UserChain as a path from V to the constant
-  /// offset.
-  int64_t find(Value *V);
-  /// A helper function to look into both operands of a binary operator U.
-  /// \p IsSub Whether U is a sub operator. If so, we need to negate the
-  /// constant offset at some point.
-  int64_t findInEitherOperand(User *U, bool IsSub);
-  /// After finding the constant offset and how it is reached from the GEP
-  /// index, we build a new index which is a clone of the old one except the
-  /// constant offset is removed. For example, given (a + (b + 5)) and knowning
-  /// the constant offset is 5, this function returns (a + b).
+  /// Searches the expression that computes V for a non-zero constant C s.t.
+  /// V can be reassociated into the form V' + C. If the searching is
+  /// successful, returns C and update UserChain as a def-use chain from C to V;
+  /// otherwise, UserChain is empty.
   ///
-  /// We cannot simply change the constant to zero because the expression that
-  /// computes the index or its intermediate result may be used by others.
-  Value *rebuildWithoutConstantOffset();
-  // A helper function for rebuildWithoutConstantOffset that rebuilds the direct
-  // user (U) of the constant offset (C).
-  Value *rebuildLeafWithoutConstantOffset(User *U, Value *C);
-  /// Returns a clone of U except the first occurrence of From with To.
-  Value *cloneAndReplace(User *U, Value *From, Value *To);
+  /// \p V            The given expression
+  /// \p SignExtended Whether V will be sign-extended in the computation of the
+  ///                 GEP index
+  /// \p ZeroExtended Whether V will be zero-extended in the computation of the
+  ///                 GEP index
+  /// \p NonNegative  Whether V is guaranteed to be non-negative. For example,
+  ///                 an index of an inbounds GEP is guaranteed to be
+  ///                 non-negative. Levaraging this, we can better split
+  ///                 inbounds GEPs.
+  APInt find(Value *V, bool SignExtended, bool ZeroExtended, bool NonNegative);
+  /// A helper function to look into both operands of a binary operator.
+  APInt findInEitherOperand(BinaryOperator *BO, bool SignExtended,
+                            bool ZeroExtended);
+  /// After finding the constant offset C from the GEP index I, we build a new
+  /// index I' s.t. I' + C = I. This function builds and returns the new
+  /// index I' according to UserChain produced by function "find".
+  ///
+  /// The building conceptually takes two steps:
+  /// 1) iteratively distribute s/zext towards the leaves of the expression tree
+  /// that computes I
+  /// 2) reassociate the expression tree to the form I' + C.
+  ///
+  /// For example, to extract the 5 from sext(a + (b + 5)), we first distribute
+  /// sext to a, b and 5 so that we have
+  ///   sext(a) + (sext(b) + 5).
+  /// Then, we reassociate it to
+  ///   (sext(a) + sext(b)) + 5.
+  /// Given this form, we know I' is sext(a) + sext(b).
+  Value *rebuildWithoutConstOffset();
+  /// After the first step of rebuilding the GEP index without the constant
+  /// offset, distribute s/zext to the operands of all operators in UserChain.
+  /// e.g., zext(sext(a + (b + 5)) (assuming no overflow) =>
+  /// zext(sext(a)) + (zext(sext(b)) + zext(sext(5))).
+  ///
+  /// The function also updates UserChain to point to new subexpressions after
+  /// distributing s/zext. e.g., the old UserChain of the above example is
+  /// 5 -> b + 5 -> a + (b + 5) -> sext(...) -> zext(sext(...)),
+  /// and the new UserChain is
+  /// zext(sext(5)) -> zext(sext(b)) + zext(sext(5)) ->
+  ///   zext(sext(a)) + (zext(sext(b)) + zext(sext(5))
+  ///
+  /// \p ChainIndex The index to UserChain. ChainIndex is initially
+  ///               UserChain.size() - 1, and is decremented during
+  ///               the recursion.
+  Value *distributeExtsAndCloneChain(unsigned ChainIndex);
+  /// Reassociates the GEP index to the form I' + C and returns I'.
+  Value *removeConstOffset(unsigned ChainIndex);
+  /// A helper function to apply ExtInsts, a list of s/zext, to value V.
+  /// e.g., if ExtInsts = [sext i32 to i64, zext i16 to i32], this function
+  /// returns "sext i32 (zext i16 V to i32) to i64".
+  Value *applyExts(Value *V);
 
   /// Returns true if LHS and RHS have no bits in common, i.e., LHS | RHS == 0.
   bool NoCommonBits(Value *LHS, Value *RHS) const;
@@ -163,20 +197,26 @@ class ConstantOffsetExtractor {
   /// \p KnownOne Mask of all bits that are known to be one.
   /// \p KnownZero Mask of all bits that are known to be zero.
   void ComputeKnownBits(Value *V, APInt &KnownOne, APInt &KnownZero) const;
-  /// Finds the first use of Used in U. Returns -1 if not found.
-  static unsigned FindFirstUse(User *U, Value *Used);
-  /// Returns whether OPC (sext or zext) can be distributed to the operands of
-  /// BO. e.g., sext can be distributed to the operands of an "add nsw" because
-  /// sext (add nsw a, b) == add nsw (sext a), (sext b).
-  static bool Distributable(unsigned OPC, BinaryOperator *BO);
+  /// A helper function that returns whether we can trace into the operands
+  /// of binary operator BO for a constant offset.
+  ///
+  /// \p SignExtended Whether BO is surrounded by sext
+  /// \p ZeroExtended Whether BO is surrounded by zext
+  /// \p NonNegative Whether BO is known to be non-negative, e.g., an in-bound
+  ///                array index.
+  bool CanTraceInto(bool SignExtended, bool ZeroExtended, BinaryOperator *BO,
+                    bool NonNegative);
 
   /// The path from the constant offset to the old GEP index. e.g., if the GEP
   /// index is "a * b + (c + 5)". After running function find, UserChain[0] will
   /// be the constant 5, UserChain[1] will be the subexpression "c + 5", and
   /// UserChain[2] will be the entire expression "a * b + (c + 5)".
   ///
-  /// This path helps rebuildWithoutConstantOffset rebuild the new GEP index.
+  /// This path helps to rebuild the new GEP index.
   SmallVector<User *, 8> UserChain;
+  /// A data structure used in rebuildWithoutConstOffset. Contains all
+  /// sext/zext instructions along UserChain.
+  SmallVector<CastInst *, 16> ExtInsts;
   /// The data layout of the module. Used in ComputeKnownBits.
   const DataLayout *DL;
   Instruction *IP;  /// Insertion position of cloned instructions.
@@ -227,181 +267,273 @@ FunctionPass *llvm::createSeparateConstOffsetFromGEPPass() {
   return new SeparateConstOffsetFromGEP();
 }
 
-bool ConstantOffsetExtractor::Distributable(unsigned OPC, BinaryOperator *BO) {
-  assert(OPC == Instruction::SExt || OPC == Instruction::ZExt);
+bool ConstantOffsetExtractor::CanTraceInto(bool SignExtended,
+                                            bool ZeroExtended,
+                                            BinaryOperator *BO,
+                                            bool NonNegative) {
+  // We only consider ADD, SUB and OR, because a non-zero constant found in
+  // expressions composed of these operations can be easily hoisted as a
+  // constant offset by reassociation.
+  if (BO->getOpcode() != Instruction::Add &&
+      BO->getOpcode() != Instruction::Sub &&
+      BO->getOpcode() != Instruction::Or) {
+    return false;
+  }
+
+  Value *LHS = BO->getOperand(0), *RHS = BO->getOperand(1);
+  // Do not trace into "or" unless it is equivalent to "add". If LHS and RHS
+  // don't have common bits, (LHS | RHS) is equivalent to (LHS + RHS).
+  if (BO->getOpcode() == Instruction::Or && !NoCommonBits(LHS, RHS))
+    return false;
+
+  // In addition, tracing into BO requires that its surrounding s/zext (if
+  // any) is distributable to both operands.
+  //
+  // Suppose BO = A op B.
+  //  SignExtended | ZeroExtended | Distributable?
+  // --------------+--------------+----------------------------------
+  //       0       |      0       | true because no s/zext exists
+  //       0       |      1       | zext(BO) == zext(A) op zext(B)
+  //       1       |      0       | sext(BO) == sext(A) op sext(B)
+  //       1       |      1       | zext(sext(BO)) ==
+  //               |              |     zext(sext(A)) op zext(sext(B))
+  if (BO->getOpcode() == Instruction::Add && NonNegative) {
+    // If a + b >= 0 and (a >= 0 or b >= 0), then
+    //   s/zext(a + b) = s/zext(a) + s/zext(b)
+    // even if the addition is not marked nsw.
+    //
+    // Leveraging this invarient, we can trace into an sext'ed inbound GEP
+    // index if the constant offset is non-negative.
+    //
+    // Verified in @sext_add in split-gep.ll.
+    if (ConstantInt *ConstLHS = dyn_cast<ConstantInt>(LHS)) {
+      if (!ConstLHS->isNegative())
+        return true;
+    }
+    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS)) {
+      if (!ConstRHS->isNegative())
+        return true;
+    }
+  }
 
   // sext (add/sub nsw A, B) == add/sub nsw (sext A), (sext B)
   // zext (add/sub nuw A, B) == add/sub nuw (zext A), (zext B)
   if (BO->getOpcode() == Instruction::Add ||
       BO->getOpcode() == Instruction::Sub) {
-    return (OPC == Instruction::SExt && BO->hasNoSignedWrap()) ||
-           (OPC == Instruction::ZExt && BO->hasNoUnsignedWrap());
+    if (SignExtended && !BO->hasNoSignedWrap())
+      return false;
+    if (ZeroExtended && !BO->hasNoUnsignedWrap())
+      return false;
   }
 
-  // sext/zext (and/or/xor A, B) == and/or/xor (sext/zext A), (sext/zext B)
-  // -instcombine also leverages this invariant to do the reverse
-  // transformation to reduce integer casts.
-  return BO->getOpcode() == Instruction::And ||
-         BO->getOpcode() == Instruction::Or ||
-         BO->getOpcode() == Instruction::Xor;
+  return true;
 }
 
-int64_t ConstantOffsetExtractor::findInEitherOperand(User *U, bool IsSub) {
-  assert(U->getNumOperands() == 2);
-  int64_t ConstantOffset = find(U->getOperand(0));
+APInt ConstantOffsetExtractor::findInEitherOperand(BinaryOperator *BO,
+                                                   bool SignExtended,
+                                                   bool ZeroExtended) {
+  // BO being non-negative does not shed light on whether its operands are
+  // non-negative. Clear the NonNegative flag here.
+  APInt ConstantOffset = find(BO->getOperand(0), SignExtended, ZeroExtended,
+                              /* NonNegative */ false);
   // If we found a constant offset in the left operand, stop and return that.
   // This shortcut might cause us to miss opportunities of combining the
   // constant offsets in both operands, e.g., (a + 4) + (b + 5) => (a + b) + 9.
   // However, such cases are probably already handled by -instcombine,
   // given this pass runs after the standard optimizations.
   if (ConstantOffset != 0) return ConstantOffset;
-  ConstantOffset = find(U->getOperand(1));
+  ConstantOffset = find(BO->getOperand(1), SignExtended, ZeroExtended,
+                        /* NonNegative */ false);
   // If U is a sub operator, negate the constant offset found in the right
   // operand.
-  return IsSub ? -ConstantOffset : ConstantOffset;
+  if (BO->getOpcode() == Instruction::Sub)
+    ConstantOffset = -ConstantOffset;
+  return ConstantOffset;
 }
 
-int64_t ConstantOffsetExtractor::find(Value *V) {
-  // TODO(jingyue): We can even trace into integer/pointer casts, such as
+APInt ConstantOffsetExtractor::find(Value *V, bool SignExtended,
+                                    bool ZeroExtended, bool NonNegative) {
+  // TODO(jingyue): We could trace into integer/pointer casts, such as
   // inttoptr, ptrtoint, bitcast, and addrspacecast. We choose to handle only
   // integers because it gives good enough results for our benchmarks.
-  assert(V->getType()->isIntegerTy());
+  unsigned BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
 
+  // We cannot do much with Values that are not a User, such as an Argument.
   User *U = dyn_cast<User>(V);
-  // We cannot do much with Values that are not a User, such as BasicBlock and
-  // MDNode.
-  if (U == nullptr) return 0;
+  if (U == nullptr) return APInt(BitWidth, 0);
 
-  int64_t ConstantOffset = 0;
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(U)) {
+  APInt ConstantOffset(BitWidth, 0);
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     // Hooray, we found it!
-    ConstantOffset = CI->getSExtValue();
-  } else if (Operator *O = dyn_cast<Operator>(U)) {
-    // The GEP index may be more complicated than a simple addition of a
-    // varaible and a constant. Therefore, we trace into subexpressions for more
-    // hoisting opportunities.
-    switch (O->getOpcode()) {
-      case Instruction::Add: {
-        ConstantOffset = findInEitherOperand(U, false);
-        break;
-      }
-      case Instruction::Sub: {
-        ConstantOffset = findInEitherOperand(U, true);
-        break;
-      }
-      case Instruction::Or: {
-        // If LHS and RHS don't have common bits, (LHS | RHS) is equivalent to
-        // (LHS + RHS).
-        if (NoCommonBits(U->getOperand(0), U->getOperand(1)))
-          ConstantOffset = findInEitherOperand(U, false);
-        break;
-      }
-      case Instruction::SExt:
-      case Instruction::ZExt: {
-        // We trace into sext/zext if the operator can be distributed to its
-        // operand. e.g., we can transform into "sext (add nsw a, 5)" and
-        // extract constant 5, because
-        //   sext (add nsw a, 5) == add nsw (sext a), 5
-        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(U->getOperand(0))) {
-          if (Distributable(O->getOpcode(), BO))
-            ConstantOffset = find(U->getOperand(0));
-        }
-        break;
-      }
+    ConstantOffset = CI->getValue();
+  } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V)) {
+    // Trace into subexpressions for more hoisting opportunities.
+    if (CanTraceInto(SignExtended, ZeroExtended, BO, NonNegative)) {
+      ConstantOffset = findInEitherOperand(BO, SignExtended, ZeroExtended);
     }
+  } else if (isa<SExtInst>(V)) {
+    ConstantOffset = find(U->getOperand(0), /* SignExtended */ true,
+                          ZeroExtended, NonNegative).sext(BitWidth);
+  } else if (isa<ZExtInst>(V)) {
+    // As an optimization, we can clear the SignExtended flag because
+    // sext(zext(a)) = zext(a). Verified in @sext_zext in split-gep.ll.
+    //
+    // Clear the NonNegative flag, because zext(a) >= 0 does not imply a >= 0.
+    // TODO: if zext(a) < 2 ^ (bitwidth(a) - 1), we can prove a >= 0.
+    ConstantOffset =
+        find(U->getOperand(0), /* SignExtended */ false,
+             /* ZeroExtended */ true, /* NonNegative */ false).zext(BitWidth);
   }
-  // If we found a non-zero constant offset, adds it to the path for future
-  // transformation (rebuildWithoutConstantOffset). Zero is a valid constant
-  // offset, but doesn't help this optimization.
+
+  // If we found a non-zero constant offset, add it to the path for
+  // rebuildWithoutConstOffset. Zero is a valid constant offset, but doesn't
+  // help this optimization.
   if (ConstantOffset != 0)
     UserChain.push_back(U);
   return ConstantOffset;
 }
 
-unsigned ConstantOffsetExtractor::FindFirstUse(User *U, Value *Used) {
-  for (unsigned I = 0, E = U->getNumOperands(); I < E; ++I) {
-    if (U->getOperand(I) == Used)
-      return I;
+Value *ConstantOffsetExtractor::applyExts(Value *V) {
+  Value *Current = V;
+  // ExtInsts is built in the use-def order. Therefore, we apply them to V
+  // in the reversed order.
+  for (auto I = ExtInsts.rbegin(), E = ExtInsts.rend(); I != E; ++I) {
+    if (Constant *C = dyn_cast<Constant>(Current)) {
+      // If Current is a constant, apply s/zext using ConstantExpr::getCast.
+      // ConstantExpr::getCast emits a ConstantInt if C is a ConstantInt.
+      Current = ConstantExpr::getCast((*I)->getOpcode(), C, (*I)->getType());
+    } else {
+      Instruction *Ext = (*I)->clone();
+      Ext->setOperand(0, Current);
+      Ext->insertBefore(IP);
+      Current = Ext;
+    }
   }
-  return -1;
+  return Current;
 }
 
-Value *ConstantOffsetExtractor::cloneAndReplace(User *U, Value *From,
-                                                Value *To) {
-  // Finds in U the first use of From. It is safe to ignore future occurrences
-  // of From, because findInEitherOperand similarly stops searching the right
-  // operand when the first operand has a non-zero constant offset.
-  unsigned OpNo = FindFirstUse(U, From);
-  assert(OpNo != (unsigned)-1 && "UserChain wasn't built correctly");
-
-  // ConstantOffsetExtractor::find only follows Operators (i.e., Instructions
-  // and ConstantExprs). Therefore, U is either an Instruction or a
-  // ConstantExpr.
-  if (Instruction *I = dyn_cast<Instruction>(U)) {
-    Instruction *Clone = I->clone();
-    Clone->setOperand(OpNo, To);
-    Clone->insertBefore(IP);
-    return Clone;
+Value *ConstantOffsetExtractor::rebuildWithoutConstOffset() {
+  distributeExtsAndCloneChain(UserChain.size() - 1);
+  // Remove all nullptrs (used to be s/zext) from UserChain.
+  unsigned NewSize = 0;
+  for (auto I = UserChain.begin(), E = UserChain.end(); I != E; ++I) {
+    if (*I != nullptr) {
+      UserChain[NewSize] = *I;
+      NewSize++;
+    }
   }
-  // cast<Constant>(To) is safe because a ConstantExpr only uses Constants.
-  return cast<ConstantExpr>(U)
-      ->getWithOperandReplaced(OpNo, cast<Constant>(To));
+  UserChain.resize(NewSize);
+  return removeConstOffset(UserChain.size() - 1);
 }
 
-Value *ConstantOffsetExtractor::rebuildLeafWithoutConstantOffset(User *U,
-                                                                 Value *C) {
-  assert(U->getNumOperands() <= 2 &&
-         "We didn't trace into any operator with more than 2 operands");
-  // If U has only one operand which is the constant offset, removing the
-  // constant offset leaves U as a null value.
-  if (U->getNumOperands() == 1)
-    return Constant::getNullValue(U->getType());
+Value *
+ConstantOffsetExtractor::distributeExtsAndCloneChain(unsigned ChainIndex) {
+  User *U = UserChain[ChainIndex];
+  if (ChainIndex == 0) {
+    assert(isa<ConstantInt>(U));
+    // If U is a ConstantInt, applyExts will return a ConstantInt as well.
+    return UserChain[ChainIndex] = cast<ConstantInt>(applyExts(U));
+  }
 
-  // U->getNumOperands() == 2
-  unsigned OpNo = FindFirstUse(U, C); // U->getOperand(OpNo) == C
-  assert(OpNo < 2 && "UserChain wasn't built correctly");
-  Value *TheOther = U->getOperand(1 - OpNo); // The other operand of U
-  // If U = C - X, removing C makes U = -X; otherwise U will simply be X.
-  if (!isa<SubOperator>(U) || OpNo == 1)
-    return TheOther;
-  if (isa<ConstantExpr>(U))
-    return ConstantExpr::getNeg(cast<Constant>(TheOther));
-  return BinaryOperator::CreateNeg(TheOther, "", IP);
+  if (CastInst *Cast = dyn_cast<CastInst>(U)) {
+    assert((isa<SExtInst>(Cast) || isa<ZExtInst>(Cast)) &&
+           "We only traced into two types of CastInst: sext and zext");
+    ExtInsts.push_back(Cast);
+    UserChain[ChainIndex] = nullptr;
+    return distributeExtsAndCloneChain(ChainIndex - 1);
+  }
+
+  // Function find only trace into BinaryOperator and CastInst.
+  BinaryOperator *BO = cast<BinaryOperator>(U);
+  // OpNo = which operand of BO is UserChain[ChainIndex - 1]
+  unsigned OpNo = (BO->getOperand(0) == UserChain[ChainIndex - 1] ? 0 : 1);
+  Value *TheOther = applyExts(BO->getOperand(1 - OpNo));
+  Value *NextInChain = distributeExtsAndCloneChain(ChainIndex - 1);
+
+  BinaryOperator *NewBO = nullptr;
+  if (OpNo == 0) {
+    NewBO = BinaryOperator::Create(BO->getOpcode(), NextInChain, TheOther,
+                                   BO->getName(), IP);
+  } else {
+    NewBO = BinaryOperator::Create(BO->getOpcode(), TheOther, NextInChain,
+                                   BO->getName(), IP);
+  }
+  return UserChain[ChainIndex] = NewBO;
 }
 
-Value *ConstantOffsetExtractor::rebuildWithoutConstantOffset() {
-  assert(UserChain.size() > 0 && "you at least found a constant, right?");
-  // Start with the constant and go up through UserChain, each time building a
-  // clone of the subexpression but with the constant removed.
-  // e.g., to build a clone of (a + (b + (c + 5)) but with the 5 removed, we
-  // first c, then (b + c), and finally (a + (b + c)).
-  //
-  // Fast path: if the GEP index is a constant, simply returns 0.
-  if (UserChain.size() == 1)
-    return ConstantInt::get(UserChain[0]->getType(), 0);
+Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
+  if (ChainIndex == 0) {
+    assert(isa<ConstantInt>(UserChain[ChainIndex]));
+    return ConstantInt::getNullValue(UserChain[ChainIndex]->getType());
+  }
 
-  Value *Remainder =
-      rebuildLeafWithoutConstantOffset(UserChain[1], UserChain[0]);
-  for (size_t I = 2; I < UserChain.size(); ++I)
-    Remainder = cloneAndReplace(UserChain[I], UserChain[I - 1], Remainder);
-  return Remainder;
+  BinaryOperator *BO = cast<BinaryOperator>(UserChain[ChainIndex]);
+  unsigned OpNo = (BO->getOperand(0) == UserChain[ChainIndex - 1] ? 0 : 1);
+  assert(BO->getOperand(OpNo) == UserChain[ChainIndex - 1]);
+  Value *NextInChain = removeConstOffset(ChainIndex - 1);
+  Value *TheOther = BO->getOperand(1 - OpNo);
+
+  // If NextInChain is 0 and not the LHS of a sub, we can simplify the
+  // sub-expression to be just TheOther.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(NextInChain)) {
+    if (CI->isZero() && !(BO->getOpcode() == Instruction::Sub && OpNo == 0))
+      return TheOther;
+  }
+
+  if (BO->getOpcode() == Instruction::Or) {
+    // Rebuild "or" as "add", because "or" may be invalid for the new
+    // epxression.
+    //
+    // For instance, given
+    //   a | (b + 5) where a and b + 5 have no common bits,
+    // we can extract 5 as the constant offset.
+    //
+    // However, reusing the "or" in the new index would give us
+    //   (a | b) + 5
+    // which does not equal a | (b + 5).
+    //
+    // Replacing the "or" with "add" is fine, because
+    //   a | (b + 5) = a + (b + 5) = (a + b) + 5
+    return BinaryOperator::CreateAdd(BO->getOperand(0), BO->getOperand(1),
+                                     BO->getName(), IP);
+  }
+
+  // We can reuse BO in this case, because the new expression shares the same
+  // instruction type and BO is used at most once.
+  assert(BO->getNumUses() <= 1 &&
+         "distributeExtsAndCloneChain clones each BinaryOperator in "
+         "UserChain, so no one should be used more than "
+         "once");
+  BO->setOperand(OpNo, NextInChain);
+  BO->setHasNoSignedWrap(false);
+  BO->setHasNoUnsignedWrap(false);
+  // Make sure it appears after all instructions we've inserted so far.
+  BO->moveBefore(IP);
+  return BO;
 }
 
 int64_t ConstantOffsetExtractor::Extract(Value *Idx, Value *&NewIdx,
                                          const DataLayout *DL,
-                                         Instruction *IP) {
-  ConstantOffsetExtractor Extractor(DL, IP);
+                                         GetElementPtrInst *GEP) {
+  ConstantOffsetExtractor Extractor(DL, GEP);
   // Find a non-zero constant offset first.
-  int64_t ConstantOffset = Extractor.find(Idx);
-  if (ConstantOffset == 0)
-    return 0;
-  // Then rebuild a new index with the constant removed.
-  NewIdx = Extractor.rebuildWithoutConstantOffset();
-  return ConstantOffset;
+  APInt ConstantOffset =
+      Extractor.find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
+                     GEP->isInBounds());
+  if (ConstantOffset != 0) {
+    // Separates the constant offset from the GEP index.
+    NewIdx = Extractor.rebuildWithoutConstOffset();
+  }
+  return ConstantOffset.getSExtValue();
 }
 
-int64_t ConstantOffsetExtractor::Find(Value *Idx, const DataLayout *DL) {
-  return ConstantOffsetExtractor(DL, nullptr).find(Idx);
+int64_t ConstantOffsetExtractor::Find(Value *Idx, const DataLayout *DL,
+      GetElementPtrInst *GEP) {
+  // If Idx is an index of an inbound GEP, Idx is guaranteed to be non-negative.
+  return ConstantOffsetExtractor(DL, GEP)
+      .find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
+            GEP->isInBounds())
+      .getSExtValue();
 }
 
 void ConstantOffsetExtractor::ComputeKnownBits(Value *V, APInt &KnownOne,
@@ -430,7 +562,7 @@ int64_t SeparateConstOffsetFromGEP::accumulateByteOffset(
     if (isa<SequentialType>(*GTI)) {
       // Tries to extract a constant offset from this GEP index.
       int64_t ConstantOffset =
-          ConstantOffsetExtractor::Find(GEP->getOperand(I), DL);
+          ConstantOffsetExtractor::Find(GEP->getOperand(I), DL, GEP);
       if (ConstantOffset != 0) {
         NeedsExtraction = true;
         // A GEP may have multiple indices.  We accumulate the extracted
@@ -455,28 +587,32 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     return false;
 
   bool Changed = false;
-
-  // Shortcuts integer casts. Eliminating these explicit casts can make
-  // subsequent optimizations more obvious: ConstantOffsetExtractor needn't
-  // trace into these casts.
-  if (GEP->isInBounds()) {
-    // Doing this to inbounds GEPs is safe because their indices are guaranteed
-    // to be non-negative and in bounds.
-    gep_type_iterator GTI = gep_type_begin(*GEP);
-    for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
-      if (isa<SequentialType>(*GTI)) {
-        if (Operator *O = dyn_cast<Operator>(GEP->getOperand(I))) {
-          if (O->getOpcode() == Instruction::SExt ||
-              O->getOpcode() == Instruction::ZExt) {
-            GEP->setOperand(I, O->getOperand(0));
-            Changed = true;
-          }
-        }
+  // Canonicalize array indices to pointer-size integers. This helps to simplify
+  // the logic of splitting a GEP. For example, if a + b is a pointer-size
+  // integer, we have
+  //   gep base, a + b = gep (gep base, a), b
+  // However, this equality may not hold if the size of a + b is smaller than
+  // the pointer size, because LLVM conceptually sign-extends GEP indices to
+  // pointer size before computing the address
+  // (http://llvm.org/docs/LangRef.html#id181).
+  //
+  // This canonicalization is very likely already done in clang and instcombine.
+  // Therefore, the program will probably remain the same.
+  //
+  // Verified in @i32_add in split-gep.ll
+  const DataLayout *DL = &getAnalysis<DataLayoutPass>().getDataLayout();
+  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
+  gep_type_iterator GTI = gep_type_begin(*GEP);
+  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end();
+       I != E; ++I, ++GTI) {
+    if (isa<SequentialType>(*GTI)) {
+      if ((*I)->getType() != IntPtrTy) {
+        *I = CastInst::CreateIntegerCast(*I, IntPtrTy, true, "idxprom", GEP);
+        Changed = true;
       }
     }
   }
 
-  const DataLayout *DL = &getAnalysis<DataLayoutPass>().getDataLayout();
   bool NeedsExtraction;
   int64_t AccumulativeByteOffset =
       accumulateByteOffset(GEP, DL, NeedsExtraction);
@@ -495,7 +631,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 
   // Remove the constant offset in each GEP index. The resultant GEP computes
   // the variadic base.
-  gep_type_iterator GTI = gep_type_begin(*GEP);
+  GTI = gep_type_begin(*GEP);
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (isa<SequentialType>(*GTI)) {
       Value *NewIdx = nullptr;
@@ -506,30 +642,29 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
         assert(NewIdx != nullptr &&
                "ConstantOffset != 0 implies NewIdx is set");
         GEP->setOperand(I, NewIdx);
-        // Clear the inbounds attribute because the new index may be off-bound.
-        // e.g.,
-        //
-        // b = add i64 a, 5
-        // addr = gep inbounds float* p, i64 b
-        //
-        // is transformed to:
-        //
-        // addr2 = gep float* p, i64 a
-        // addr = gep float* addr2, i64 5
-        //
-        // If a is -4, although the old index b is in bounds, the new index a is
-        // off-bound. http://llvm.org/docs/LangRef.html#id181 says "if the
-        // inbounds keyword is not present, the offsets are added to the base
-        // address with silently-wrapping two's complement arithmetic".
-        // Therefore, the final code will be a semantically equivalent.
-        //
-        // TODO(jingyue): do some range analysis to keep as many inbounds as
-        // possible. GEPs with inbounds are more friendly to alias analysis.
-        GEP->setIsInBounds(false);
-        Changed = true;
       }
     }
   }
+  // Clear the inbounds attribute because the new index may be off-bound.
+  // e.g.,
+  //
+  // b = add i64 a, 5
+  // addr = gep inbounds float* p, i64 b
+  //
+  // is transformed to:
+  //
+  // addr2 = gep float* p, i64 a
+  // addr = gep float* addr2, i64 5
+  //
+  // If a is -4, although the old index b is in bounds, the new index a is
+  // off-bound. http://llvm.org/docs/LangRef.html#id181 says "if the
+  // inbounds keyword is not present, the offsets are added to the base
+  // address with silently-wrapping two's complement arithmetic".
+  // Therefore, the final code will be a semantically equivalent.
+  //
+  // TODO(jingyue): do some range analysis to keep as many inbounds as
+  // possible. GEPs with inbounds are more friendly to alias analysis.
+  GEP->setIsInBounds(false);
 
   // Offsets the base with the accumulative byte offset.
   //
@@ -562,7 +697,6 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   Instruction *NewGEP = GEP->clone();
   NewGEP->insertBefore(GEP);
 
-  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
   uint64_t ElementTypeSizeOfGEP =
       DL->getTypeAllocSize(GEP->getType()->getElementType());
   if (AccumulativeByteOffset % ElementTypeSizeOfGEP == 0) {
