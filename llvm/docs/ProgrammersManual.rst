@@ -387,7 +387,8 @@ Fine grained debug info with ``DEBUG_TYPE`` and the ``-debug-only`` option
 Sometimes you may find yourself in a situation where enabling ``-debug`` just
 turns on **too much** information (such as when working on the code generator).
 If you want to enable debug information with more fine-grained control, you
-define the ``DEBUG_TYPE`` macro and the ``-debug`` only option as follows:
+can define the ``DEBUG_TYPE`` macro and use the ``-debug-only`` option as
+follows:
 
 .. code-block:: c++
 
