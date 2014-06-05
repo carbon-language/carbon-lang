@@ -1254,11 +1254,12 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     assert(DV.isVariable());
     if (!Processed.insert(DV))
       continue;
-    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
-      addScopeVariable(
-          Scope,
-          new DbgVariable(DV, findAbstractVariable(DV, Scope->getScopeNode()),
-                          this));
+    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext())) {
+      auto *RegVar = new DbgVariable(
+          DV, findAbstractVariable(DV, Scope->getScopeNode()), this);
+      if (!addCurrentFnArgument(RegVar, Scope))
+        addScopeVariable(Scope, RegVar);
+    }
   }
 }
 
