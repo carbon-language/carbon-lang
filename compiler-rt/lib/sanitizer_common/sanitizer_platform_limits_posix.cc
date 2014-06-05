@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -45,6 +44,7 @@
 
 #if !SANITIZER_ANDROID
 #include <sys/mount.h>
+#include <sys/timeb.h>
 #endif
 
 #if SANITIZER_LINUX
@@ -1088,11 +1088,13 @@ CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_data);
 COMPILER_CHECK(sizeof(__sanitizer_mallinfo) == sizeof(struct mallinfo));
 #endif
 
+#if !SANITIZER_ANDROID
 CHECK_TYPE_SIZE(timeb);
 CHECK_SIZE_AND_OFFSET(timeb, time);
 CHECK_SIZE_AND_OFFSET(timeb, millitm);
 CHECK_SIZE_AND_OFFSET(timeb, timezone);
 CHECK_SIZE_AND_OFFSET(timeb, dstflag);
+#endif
 
 CHECK_TYPE_SIZE(passwd);
 CHECK_SIZE_AND_OFFSET(passwd, pw_name);
