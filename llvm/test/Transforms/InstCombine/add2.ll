@@ -76,3 +76,13 @@ define <2 x i64> @test8(<2 x i64> %A) {
 ; CHECK-NEXT: %add = sub <2 x i64> <i64 1, i64 2>, %A
 ; CHECK-NEXT: ret <2 x i64> %add
 }
+
+define i16 @test9(i16 %a) {
+       %b = mul i16 %a, 2
+       %c = mul i16 %a, 32767
+       %d = add i16 %b, %c
+       ret i16 %d
+; CHECK-LABEL: @test9(
+; CHECK-NEXT:  %d = mul i16 %a, -32767
+; CHECK-NEXT:  ret i16 %d
+}
