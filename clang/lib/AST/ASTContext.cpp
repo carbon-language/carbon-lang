@@ -3687,10 +3687,10 @@ QualType ASTContext::getTypeOfExprType(Expr *tofExpr) const {
 }
 
 /// getTypeOfType -  Unlike many "get<Type>" functions, we don't unique
-/// TypeOfType AST's. The only motivation to unique these nodes would be
+/// TypeOfType nodes. The only motivation to unique these nodes would be
 /// memory savings. Since typeof(t) is fairly uncommon, space shouldn't be
-/// an issue. This doesn't effect the type checker, since it operates
-/// on canonical type's (which are always unique).
+/// an issue. This doesn't affect the type checker, since it operates
+/// on canonical types (which are always unique).
 QualType ASTContext::getTypeOfType(QualType tofType) const {
   QualType Canonical = getCanonicalType(tofType);
   TypeOfType *tot = new (*this, TypeAlignment) TypeOfType(tofType, Canonical);
@@ -3699,18 +3699,17 @@ QualType ASTContext::getTypeOfType(QualType tofType) const {
 }
 
 
-/// getDecltypeType -  Unlike many "get<Type>" functions, we don't unique
-/// DecltypeType AST's. The only motivation to unique these nodes would be
-/// memory savings. Since decltype(t) is fairly uncommon, space shouldn't be
-/// an issue. This doesn't effect the type checker, since it operates
-/// on canonical types (which are always unique).
+/// \brief Unlike many "get<Type>" functions, we don't unique DecltypeType
+/// nodes. This would never be helpful, since each such type has its own
+/// expression, and would not give a significant memory saving, since there
+/// is an Expr tree under each such type.
 QualType ASTContext::getDecltypeType(Expr *e, QualType UnderlyingType) const {
   DecltypeType *dt;
-  
-  // C++0x [temp.type]p2:
+
+  // C++11 [temp.type]p2:
   //   If an expression e involves a template parameter, decltype(e) denotes a
-  //   unique dependent type. Two such decltype-specifiers refer to the same 
-  //   type only if their expressions are equivalent (14.5.6.1). 
+  //   unique dependent type. Two such decltype-specifiers refer to the same
+  //   type only if their expressions are equivalent (14.5.6.1).
   if (e->isInstantiationDependent()) {
     llvm::FoldingSetNodeID ID;
     DependentDecltypeType::Profile(ID, *this, e);
@@ -3718,20 +3717,16 @@ QualType ASTContext::getDecltypeType(Expr *e, QualType UnderlyingType) const {
     void *InsertPos = nullptr;
     DependentDecltypeType *Canon
       = DependentDecltypeTypes.FindNodeOrInsertPos(ID, InsertPos);
-    if (Canon) {
-      // We already have a "canonical" version of an equivalent, dependent
-      // decltype type. Use that as our canonical type.
-      dt = new (*this, TypeAlignment) DecltypeType(e, UnderlyingType,
-                                       QualType((DecltypeType*)Canon, 0));
-    } else {
+    if (!Canon) {
       // Build a new, canonical typeof(expr) type.
       Canon = new (*this, TypeAlignment) DependentDecltypeType(*this, e);
       DependentDecltypeTypes.InsertNode(Canon, InsertPos);
-      dt = Canon;
     }
+    dt = new (*this, TypeAlignment)
+        DecltypeType(e, UnderlyingType, QualType((DecltypeType *)Canon, 0));
   } else {
-    dt = new (*this, TypeAlignment) DecltypeType(e, UnderlyingType, 
-                                      getCanonicalType(UnderlyingType));
+    dt = new (*this, TypeAlignment)
+        DecltypeType(e, UnderlyingType, getCanonicalType(UnderlyingType));
   }
   Types.push_back(dt);
   return QualType(dt, 0);
