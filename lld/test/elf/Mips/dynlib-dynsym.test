@@ -1,15 +1,13 @@
-# REQUIRES: mips
-
 # Check sorting of .dynsym content accordingly to .got section.
 
 # Build shared library
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so \
-# RUN: %S/Inputs/dynlib-dynsym.o
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so %t.o
 # RUN: llvm-readobj -dyn-symbols %t-so | FileCheck -check-prefix=CHECK-DYN %s
 
 # Build shared library (yaml format)
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-# RUN:     --output-filetype=yaml -o %t-yaml %S/Inputs/dynlib-dynsym.o
+# RUN:     --output-filetype=yaml -o %t-yaml %t.o
 # RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
 
 # CHECK-DYN: Format: ELF32-mips
@@ -28,7 +26,7 @@
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: bar@ (5)
-# CHECK-DYN:     Value: 0x158
+# CHECK-DYN:     Value: 0x138
 # CHECK-DYN:     Size: 4
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: Function (0x2)
@@ -37,7 +35,7 @@
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: foo@ (1)
-# CHECK-DYN:     Value: 0x140
+# CHECK-DYN:     Value: 0x120
 # CHECK-DYN:     Size: 24
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: Function (0x2)
@@ -131,3 +129,74 @@
 # CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          ext2
+
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32,
+                     EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x1C
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          .rodata.str1
+        Type:            R_MIPS_GOT16
+      - Offset:          0x04
+        Symbol:          .rodata.str1
+        Type:            R_MIPS_LO16
+      - Offset:          0x08
+        Symbol:          .rodata.str2
+        Type:            R_MIPS_GOT16
+      - Offset:          0x0C
+        Symbol:          .rodata.str2
+        Type:            R_MIPS_LO16
+      - Offset:          0x10
+        Symbol:          foo
+        Type:            R_MIPS_CALL16
+      - Offset:          0x14
+        Symbol:          ext1
+        Type:            R_MIPS_CALL16
+      - Offset:          0x18
+        Symbol:          ext2
+        Type:            R_MIPS_CALL16
+  - Name:            .rodata.str1
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x01
+    Size:            0x05
+  - Name:            .rodata.str2
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x01
+    Size:            0x05
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .rodata.str1
+      Type:            STT_SECTION
+      Section:         .rodata.str1
+    - Name:            .rodata.str2
+      Type:            STT_SECTION
+      Section:         .rodata.str2
+  Global:
+    - Name:            bar
+      Section:         .text
+      Value:           0x18
+    - Name:            foo
+      Section:         .text
+    - Name:            ext1
+    - Name:            ext2
+...
