@@ -14,7 +14,6 @@
 #ifndef X86_FRAMELOWERING_H
 #define X86_FRAMELOWERING_H
 
-#include "X86Subtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
@@ -24,9 +23,8 @@ class X86TargetMachine;
 
 class X86FrameLowering : public TargetFrameLowering {
 public:
-  explicit X86FrameLowering(const X86Subtarget &sti)
-      : TargetFrameLowering(StackGrowsDown, sti.getStackAlignment(),
-                            (sti.is64Bit() ? -8 : -4)) {}
+  explicit X86FrameLowering(StackDirection D, unsigned StackAl, int LAO)
+    : TargetFrameLowering(StackGrowsDown, StackAl, LAO) {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI, DebugLoc DL,

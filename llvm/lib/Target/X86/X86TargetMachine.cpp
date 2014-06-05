@@ -70,19 +70,17 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
-                                   StringRef CPU, StringRef FS,
-                                   const TargetOptions &Options,
+X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
+                                   StringRef FS, const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, Options.StackAlignmentOverride),
-    FrameLowering(Subtarget),
-    DL(computeDataLayout(*getSubtargetImpl())),
-    InstrInfo(*this),
-    TLInfo(*this),
-    TSInfo(*this),
-    JITInfo(*this) {
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, Options.StackAlignmentOverride),
+      FrameLowering(TargetFrameLowering::StackGrowsDown,
+                    Subtarget.getStackAlignment(),
+                    Subtarget.is64Bit() ? -8 : -4),
+      DL(computeDataLayout(*getSubtargetImpl())), InstrInfo(*this),
+      TLInfo(*this), TSInfo(*this), JITInfo(*this) {
   // Determine the PICStyle based on the target selected.
   if (getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
