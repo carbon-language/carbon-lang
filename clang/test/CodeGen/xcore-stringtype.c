@@ -59,39 +59,38 @@ int* pointerType(int *I, int * (*FP)(int *)) {
   return I? EP : GP;
 }
 
-
 // test ArrayType
 // CHECK: !12 = metadata !{[2 x i32]* (i32*, i32*, [2 x i32]*, [2 x i32]*, i32*)*
-// CHECK:       @arrayType, metadata !"f{p(a(2:si))}(p(si),p(si),p(a(2:si)),
+// CHECK:       @arrayType, metadata !"f{p(a(2:si))}(p(si),p(cv:si),p(a(2:si)),
 // CHECK:       p(a(2:si)),p(si))"}
-// CHECK: !13 = metadata !{[0 x i32]* @EA1, metadata !"a(*:si)"}
+// CHECK: !13 = metadata !{[0 x i32]* @EA1, metadata !"a(*:cv:si)"}
 // CHECK: !14 = metadata !{[2 x i32]* @EA2, metadata !"a(2:si)"}
 // CHECK: !15 = metadata !{[0 x [2 x i32]]* @EA3, metadata !"a(*:a(2:si))"}
 // CHECK: !16 = metadata !{[3 x [2 x i32]]* @EA4, metadata !"a(3:a(2:si))"}
-// CHECK: !17 = metadata !{[2 x i32]* @GA1, metadata !"a(2:si)"}
+// CHECK: !17 = metadata !{[2 x i32]* @GA1, metadata !"a(2:cv:si)"}
 // CHECK: !18 = metadata !{void ([2 x i32]*)* @arrayTypeVariable1,
 // CHECK:       metadata !"f{0}(p(a(2:si)))"}
 // CHECK: !19 = metadata !{void (void ([2 x i32]*)*)* @arrayTypeVariable2,
 // CHECK:       metadata !"f{0}(p(f{0}(p(a(2:si)))))"}
 // CHECK: !20 = metadata !{[3 x [2 x i32]]* @GA2, metadata !"a(3:a(2:si))"}
-extern int EA1[];
+extern const volatile int EA1[];
 extern int EA2[2];
 extern int EA3[][2];
 extern int EA4[3][2];
-int GA1[2];
+const volatile int GA1[2];
 int GA2[3][2];
 extern void arrayTypeVariable1(int[*][2]);
 extern void arrayTypeVariable2( void(*fp)(int[*][2]) );
 extern void arrayTypeVariable3(int[3][*]);                // not supported
 extern void arrayTypeVariable4( void(*fp)(int[3][*]) );   // not supported
 typedef int RetType[2];
-RetType* arrayType(int A1[], int A2[2], int A3[][2], int A4[3][2],
-                   int A5[const volatile restrict static 2]) {
-  if (A1) return &EA1;
+RetType* arrayType(int A1[], int const volatile A2[2], int A3[][2],
+                   int A4[3][2], int A5[const volatile restrict static 2]) {
+  if (A1) EA2[0] = EA1[0];
   if (A2) return &EA2;
   if (A3) return EA3;
   if (A4) return EA4;
-  if (A5) return &GA1;
+  if (A5) EA2[0] = GA1[0];
   arrayTypeVariable1(EA4);
   arrayTypeVariable2(arrayTypeVariable1);
   arrayTypeVariable3(EA4);

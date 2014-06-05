@@ -6335,7 +6335,8 @@ static bool appendPointerType(SmallStringEnc &Enc, const PointerType *PT,
 }
 
 /// Appends array encoding to Enc before calling appendType for the element.
-static bool appendArrayType(SmallStringEnc &Enc, const ArrayType *AT,
+static bool appendArrayType(SmallStringEnc &Enc, QualType QT,
+                            const ArrayType *AT,
                             const CodeGen::CodeGenModule &CGM,
                             TypeStringCache &TSC, StringRef NoSizeEnc) {
   if (AT->getSizeModifier() != ArrayType::Normal)
@@ -6346,6 +6347,8 @@ static bool appendArrayType(SmallStringEnc &Enc, const ArrayType *AT,
   else
     Enc += NoSizeEnc; // Global arrays use "*", otherwise it is "".
   Enc += ':';
+  // The Qualifiers should be attached to the type rather than the array.
+  appendQualifier(Enc, QT);
   if (!appendType(Enc, AT->getElementType(), CGM, TSC))
     return false;
   Enc += ')';
@@ -6394,13 +6397,15 @@ static bool appendType(SmallStringEnc &Enc, QualType QType,
 
   QualType QT = QType.getCanonicalType();
 
+  if (const ArrayType *AT = QT->getAsArrayTypeUnsafe())
+    // The Qualifiers should be attached to the type rather than the array.
+    // Thus we don't call appendQualifier() here.
+    return appendArrayType(Enc, QT, AT, CGM, TSC, "");
+
   appendQualifier(Enc, QT);
 
   if (const BuiltinType *BT = QT->getAs<BuiltinType>())
     return appendBuiltinType(Enc, BT);
-
-  if (const ArrayType *AT = QT->getAsArrayTypeUnsafe())
-    return appendArrayType(Enc, AT, CGM, TSC, "");
 
   if (const PointerType *PT = QT->getAs<PointerType>())
     return appendPointerType(Enc, PT, CGM, TSC);
@@ -6437,8 +6442,9 @@ static bool getTypeString(SmallStringEnc &Enc, const Decl *D,
     QualType QT = VD->getType().getCanonicalType();
     if (const ArrayType *AT = QT->getAsArrayTypeUnsafe()) {
       // Global ArrayTypes are given a size of '*' if the size is unknown.
-      appendQualifier(Enc, QT);
-      return appendArrayType(Enc, AT, CGM, TSC, "*");
+      // The Qualifiers should be attached to the type rather than the array.
+      // Thus we don't call appendQualifier() here.
+      return appendArrayType(Enc, QT, AT, CGM, TSC, "*");
     }
     return appendType(Enc, QT, CGM, TSC);
   }
