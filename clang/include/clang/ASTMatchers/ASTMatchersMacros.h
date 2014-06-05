@@ -52,9 +52,9 @@
                                   0)
 #define AST_MATCHER_FUNCTION_P_OVERLOAD(ReturnType, DefineMatcher, ParamType,  \
                                         Param, OverloadId)                     \
-  inline ReturnType DefineMatcher(const ParamType &Param);                     \
-  typedef ReturnType (&DefineMatcher##_Type##OverloadId)(const ParamType &);   \
-  inline ReturnType DefineMatcher(const ParamType &Param)
+  inline ReturnType DefineMatcher(ParamType const &Param);                     \
+  typedef ReturnType (&DefineMatcher##_Type##OverloadId)(ParamType const &);   \
+  inline ReturnType DefineMatcher(ParamType const &Param)
 
 /// \brief AST_MATCHER(Type, DefineMatcher) { ... }
 /// defines a zero parameter function named DefineMatcher() that returns a
@@ -107,21 +107,21 @@
       : public MatcherInterface<Type> {                                        \
   public:                                                                      \
     explicit matcher_##DefineMatcher##OverloadId##Matcher(                     \
-        const ParamType &A##Param)                                             \
+        ParamType const &A##Param)                                             \
         : Param(A##Param) {}                                                   \
     bool matches(const Type &Node, ASTMatchFinder *Finder,                     \
                  BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
-    const ParamType Param;                                                     \
+    ParamType const Param;                                                     \
   };                                                                           \
   }                                                                            \
-  inline internal::Matcher<Type> DefineMatcher(const ParamType &Param) {       \
+  inline internal::Matcher<Type> DefineMatcher(ParamType const &Param) {       \
     return internal::makeMatcher(                                              \
         new internal::matcher_##DefineMatcher##OverloadId##Matcher(Param));    \
   }                                                                            \
   typedef internal::Matcher<Type>(&DefineMatcher##_Type##OverloadId)(          \
-      const ParamType &Param);                                                 \
+      ParamType const &Param);                                                 \
   inline bool internal::matcher_##DefineMatcher##OverloadId##Matcher::matches( \
       const Type &Node, ASTMatchFinder *Finder,                                \
       BoundNodesTreeBuilder *Builder) const
@@ -151,25 +151,25 @@
   class matcher_##DefineMatcher##OverloadId##Matcher                           \
       : public MatcherInterface<Type> {                                        \
   public:                                                                      \
-    matcher_##DefineMatcher##OverloadId##Matcher(const ParamType1 &A##Param1,  \
-                                                 const ParamType2 &A##Param2)  \
+    matcher_##DefineMatcher##OverloadId##Matcher(ParamType1 const &A##Param1,  \
+                                                 ParamType2 const &A##Param2)  \
         : Param1(A##Param1), Param2(A##Param2) {}                              \
     bool matches(const Type &Node, ASTMatchFinder *Finder,                     \
                  BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
-    const ParamType1 Param1;                                                   \
-    const ParamType2 Param2;                                                   \
+    ParamType1 const Param1;                                                   \
+    ParamType2 const Param2;                                                   \
   };                                                                           \
   }                                                                            \
-  inline internal::Matcher<Type> DefineMatcher(const ParamType1 &Param1,       \
-                                               const ParamType2 &Param2) {     \
+  inline internal::Matcher<Type> DefineMatcher(ParamType1 const &Param1,       \
+                                               ParamType2 const &Param2) {     \
     return internal::makeMatcher(                                              \
         new internal::matcher_##DefineMatcher##OverloadId##Matcher(Param1,     \
                                                                    Param2));   \
   }                                                                            \
   typedef internal::Matcher<Type>(&DefineMatcher##_Type##OverloadId)(          \
-      const ParamType1 &Param1, const ParamType2 &Param2);                     \
+      ParamType1 const &Param1, ParamType2 const &Param2);                     \
   inline bool internal::matcher_##DefineMatcher##OverloadId##Matcher::matches( \
       const Type &Node, ASTMatchFinder *Finder,                                \
       BoundNodesTreeBuilder *Builder) const
@@ -240,18 +240,18 @@
       : public MatcherInterface<NodeType> {                                    \
   public:                                                                      \
     explicit matcher_##DefineMatcher##OverloadId##Matcher(                     \
-        const ParamType &A##Param)                                             \
+        ParamType const &A##Param)                                             \
         : Param(A##Param) {}                                                   \
     bool matches(const NodeType &Node, ASTMatchFinder *Finder,                 \
                  BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
-    const ParamType Param;                                                     \
+    ParamType const Param;                                                     \
   };                                                                           \
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam1<                               \
       internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType,       \
-      ReturnTypesF> DefineMatcher(const ParamType &Param) {                    \
+      ReturnTypesF> DefineMatcher(ParamType const &Param) {                    \
     return internal::PolymorphicMatcherWithParam1<                             \
         internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType,     \
         ReturnTypesF>(Param);                                                  \
@@ -259,7 +259,7 @@
   typedef internal::PolymorphicMatcherWithParam1<                              \
       internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType,       \
       ReturnTypesF>(&DefineMatcher##_Type##OverloadId)(                        \
-      const ParamType &Param);                                                 \
+      ParamType const &Param);                                                 \
   template <typename NodeType, typename ParamT>                                \
   bool internal::matcher_##DefineMatcher##OverloadId##Matcher<                 \
       NodeType, ParamT>::matches(const NodeType &Node, ASTMatchFinder *Finder, \
@@ -286,21 +286,21 @@
   class matcher_##DefineMatcher##OverloadId##Matcher                           \
       : public MatcherInterface<NodeType> {                                    \
   public:                                                                      \
-    matcher_##DefineMatcher##OverloadId##Matcher(const ParamType1 &A##Param1,  \
-                                                 const ParamType2 &A##Param2)  \
+    matcher_##DefineMatcher##OverloadId##Matcher(ParamType1 const &A##Param1,  \
+                                                 ParamType2 const &A##Param2)  \
         : Param1(A##Param1), Param2(A##Param2) {}                              \
      bool matches(const NodeType &Node, ASTMatchFinder *Finder,                \
                   BoundNodesTreeBuilder *Builder) const override;              \
                                                                                \
   private:                                                                     \
-    const ParamType1 Param1;                                                   \
-    const ParamType2 Param2;                                                   \
+    ParamType1 const Param1;                                                   \
+    ParamType2 const Param2;                                                   \
   };                                                                           \
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam2<                               \
       internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType1,      \
-      ParamType2, ReturnTypesF> DefineMatcher(const ParamType1 &Param1,        \
-                                              const ParamType2 &Param2) {      \
+      ParamType2, ReturnTypesF> DefineMatcher(ParamType1 const &Param1,        \
+                                              ParamType2 const &Param2) {      \
     return internal::PolymorphicMatcherWithParam2<                             \
         internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType1,    \
         ParamType2, ReturnTypesF>(Param1, Param2);                             \
@@ -308,7 +308,7 @@
   typedef internal::PolymorphicMatcherWithParam2<                              \
       internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType1,      \
       ParamType2, ReturnTypesF>(&DefineMatcher##_Type##OverloadId)(            \
-      const ParamType1 &Param1, const ParamType2 &Param2);                     \
+      ParamType1 const &Param1, ParamType2 const &Param2);                     \
   template <typename NodeType, typename ParamT1, typename ParamT2>             \
   bool internal::matcher_##DefineMatcher##OverloadId##Matcher<                 \
       NodeType, ParamT1, ParamT2>::matches(                                    \
