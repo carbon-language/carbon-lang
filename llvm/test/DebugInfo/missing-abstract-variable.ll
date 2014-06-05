@@ -5,7 +5,7 @@
 ; The formal parameter 'b' for Function 'x' when inlined within 'a' is lost on
 ; mips and powerpc64 (and on x86_64 at at least -O2). Presumably this is a
 ; SelectionDAG issue (do mips/powerpc64 use FastISel?).
-; XFAIL: mips, powerpc64
+; XFAIL: mips, powerpc64, s390x
 
 ; Build from the following source with clang -O2.
 
