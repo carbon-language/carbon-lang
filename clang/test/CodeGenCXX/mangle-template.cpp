@@ -147,7 +147,7 @@ namespace test10 {
   }
 }
 
-// Report from Jason Merrill on cxx-abi-dev, 2012.01.04.
+// Report from cxx-abi-dev, 2012.01.04.
 namespace test11 {
   int cmp(char a, char b);
   template <typename T, int (*cmp)(T, T)> struct A {};
