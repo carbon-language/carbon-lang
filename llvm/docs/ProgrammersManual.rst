@@ -1918,7 +1918,7 @@ which is a pointer to an integer on the run time stack.
 
 *Inserting instructions*
 
-There are essentially two ways to insert an ``Instruction`` into an existing
+There are essentially three ways to insert an ``Instruction`` into an existing
 sequence of instructions that form a ``BasicBlock``:
 
 * Insertion into an explicit instruction list
@@ -1987,6 +1987,41 @@ sequence of instructions that form a ``BasicBlock``:
 
   which is much cleaner, especially if you're creating a lot of instructions and
   adding them to ``BasicBlock``\ s.
+
+* Insertion using an instance of ``IRBuilder``
+
+  Inserting several ``Instuction``\ s can be quite laborious using the previous
+  methods. The ``IRBuilder`` is a convenience class that can be used to add
+  several instructions to the end of a ``BasicBlock`` or before a particular
+  ``Instruction``. It also supports constant folding and renaming named
+  registers (see ``IRBuilder``'s template arguments).
+
+  The example below demonstrates a very simple use of the ``IRBuilder`` where
+  three instructions are inserted before the instruction ``pi``. The first two
+  instructions are Call instructions and third instruction multiplies the return
+  value of the two calls.
+
+  .. code-block:: c++
+
+    Instruction *pi = ...;
+    IRBuilder<> Builder(pi);
+    CallInst* callOne = Builder.CreateCall(...);
+    CallInst* callTwo = Builder.CreateCall(...);
+    Value* result = Builder.CreateMul(callOne, callTwo);
+
+  The example below is similar to the above example except that the created
+  ``IRBuilder`` inserts instructions at the end of the ``BasicBlock`` ``pb``.
+
+  .. code-block:: c++
+
+    BasicBlock *pb = ...;
+    IRBuilder<> Builder(pb);
+    CallInst* callOne = Builder.CreateCall(...);
+    CallInst* callTwo = Builder.CreateCall(...);
+    Value* result = Builder.CreateMul(callOne, callTwo);
+
+  See :doc:`tutorial/LangImpl3` for a practical use of the ``IRBuilder``.
+
 
 .. _schanges_deleting:
 
