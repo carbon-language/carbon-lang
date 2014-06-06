@@ -13,7 +13,7 @@
 
 #include "clang/Basic/Version.h"
 #include "clang/Basic/LLVM.h"
-#include "llvm/Config/config.h"
+#include "clang/Config/config.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <cstring>
@@ -130,7 +130,7 @@ std::string getClangToolFullVersion(StringRef ToolName) {
 
   // If vendor supplied, include the base LLVM version as well.
 #ifdef CLANG_VENDOR
-  OS << " (based on LLVM " << PACKAGE_VERSION << ")";
+  OS << " (based on " << BACKEND_PACKAGE_STRING << ")";
 #endif
 
   return OS.str();
