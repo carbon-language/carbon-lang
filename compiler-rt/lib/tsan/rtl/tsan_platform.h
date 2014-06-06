@@ -131,6 +131,8 @@ static inline bool IsAppMem(uptr mem) {
 #if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
   return (mem >= kLinuxAppMemBeg && mem < kAppMemGapBeg) ||
          (mem >= kAppMemGapEnd   && mem <= kLinuxAppMemEnd);
+#elif defined(TSAN_GO)
+  return mem <= kLinuxAppMemEnd;
 #else
   return mem >= kLinuxAppMemBeg && mem <= kLinuxAppMemEnd;
 #endif
