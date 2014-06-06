@@ -201,11 +201,20 @@ public:
   void emitVBTableDefinition(const VPtrInfo &VBT, const CXXRecordDecl *RD,
                              llvm::GlobalVariable *GV) const;
 
-  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) override {
-    Thunk->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
-
+  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable,
+                       GlobalDecl GD, bool ReturnAdjustment) override {
     // Never dllimport/dllexport thunks.
     Thunk->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
+
+    GVALinkage Linkage =
+        getContext().GetGVALinkageForFunction(cast<FunctionDecl>(GD.getDecl()));
+
+    if (Linkage == GVA_Internal)
+      Thunk->setLinkage(llvm::GlobalValue::InternalLinkage);
+    else if (ReturnAdjustment)
+      Thunk->setLinkage(llvm::GlobalValue::WeakODRLinkage);
+    else
+      Thunk->setLinkage(llvm::GlobalValue::LinkOnceODRLinkage);
   }
 
   llvm::Value *performThisAdjustment(CodeGenFunction &CGF, llvm::Value *This,

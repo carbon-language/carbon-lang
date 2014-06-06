@@ -153,7 +153,7 @@ C::~C() {
 void foo() {
   C c;
 }
-// DTORS2-LABEL: define weak x86_thiscallcc void @"\01??_EC@dtor_in_second_nvbase@@W3AEPAXI@Z"
+// DTORS2-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_EC@dtor_in_second_nvbase@@W3AEPAXI@Z"
 // DTORS2:       (%"struct.dtor_in_second_nvbase::C"* %this, i32 %should_call_delete)
 //      Do an adjustment from B* to C*.
 // DTORS2:   getelementptr i8* %{{.*}}, i32 -4

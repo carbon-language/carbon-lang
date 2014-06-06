@@ -566,7 +566,7 @@ namespace DontUseDtorAlias {
 
 namespace Vtordisp {
   // Don't dllimport the vtordisp.
-  // MO1-DAG: define weak x86_thiscallcc void @"\01?f@?$C@D@Vtordisp@@$4PPPPPPPM@A@AEXXZ"
+  // MO1-DAG: define linkonce_odr x86_thiscallcc void @"\01?f@?$C@D@Vtordisp@@$4PPPPPPPM@A@AEXXZ"
 
   class Base {
     virtual void f() {}

@@ -61,13 +61,13 @@ struct C : A, B {
 
 C::C() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define weak x86_thiscallcc void @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete)
+// CODEGEN-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete)
 // CODEGEN:   getelementptr i8* {{.*}}, i32 -4
 // FIXME: should actually call _EC, not _GC.
 // CODEGEN:   call x86_thiscallcc void @"\01??_GC@@UAEPAXI@Z"
 // CODEGEN: ret
 
-// CODEGEN-LABEL: define weak x86_thiscallcc void @"\01?public_f@C@@W3AEXXZ"(%struct.C*
+// CODEGEN-LABEL: define linkonce_odr x86_thiscallcc void @"\01?public_f@C@@W3AEXXZ"(%struct.C*
 // CODEGEN:   getelementptr i8* {{.*}}, i32 -4
 // CODEGEN:   call x86_thiscallcc void @"\01?public_f@C@@UAEXXZ"(%struct.C*
 // CODEGEN: ret
@@ -91,7 +91,7 @@ struct E : D {
 
 E::E() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define weak x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"
+// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"
 // CODEGEN:   call x86_thiscallcc %struct.C* @"\01?goo@E@@UAEPAUC@@XZ"
 // CODEGEN:   getelementptr inbounds i8* {{.*}}, i32 4
 // CODEGEN: ret
@@ -124,7 +124,7 @@ struct I : D {
 
 I::I() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define weak x86_thiscallcc %struct.{{[BF]}}* @"\01?goo@I@@QAEPAUB@@XZ"
+// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.{{[BF]}}* @"\01?goo@I@@QAEPAUB@@XZ"
 // CODEGEN: %[[ORIG_RET:.*]] = call x86_thiscallcc %struct.F* @"\01?goo@I@@UAEPAUF@@XZ"
 // CODEGEN: %[[ORIG_RET_i8:.*]] = bitcast %struct.F* %[[ORIG_RET]] to i8*
 // CODEGEN: %[[VBPTR_i8:.*]] = getelementptr inbounds i8* %[[ORIG_RET_i8]], i32 4
@@ -151,4 +151,15 @@ struct C : A, B {
   virtual void __stdcall foo();
 };
 C c;
+}
+
+namespace {
+struct E : D {
+  E();
+  virtual C* goo();
+};
+E::E() {}
+E e;
+// Class with internal linkage has internal linkage thunks.
+// CODEGEN: define internal x86_thiscallcc %struct.C* @"\01?goo@E@?A@@QAEPAUB@@XZ"
 }

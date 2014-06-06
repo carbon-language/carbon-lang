@@ -174,7 +174,8 @@ public:
 
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
-  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) override {
+  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable, GlobalDecl GD,
+                       bool ReturnAdjustment) override {
     // Allow inlining of thunks by emitting them with available_externally
     // linkage together with vtables when needed.
     if (ForVTable)

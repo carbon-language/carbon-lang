@@ -382,12 +382,14 @@ void CodeGenVTables::emitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
     // FIXME: Do something better here; GenerateVarArgsThunk is extremely ugly.
     if (!UseAvailableExternallyLinkage) {
       CodeGenFunction(CGM).GenerateVarArgsThunk(ThunkFn, FnInfo, GD, Thunk);
-      CGM.getCXXABI().setThunkLinkage(ThunkFn, ForVTable);
+      CGM.getCXXABI().setThunkLinkage(ThunkFn, ForVTable, GD,
+                                      !Thunk.Return.isEmpty());
     }
   } else {
     // Normal thunk body generation.
     CodeGenFunction(CGM).GenerateThunk(ThunkFn, FnInfo, GD, Thunk);
-    CGM.getCXXABI().setThunkLinkage(ThunkFn, ForVTable);
+    CGM.getCXXABI().setThunkLinkage(ThunkFn, ForVTable, GD,
+                                    !Thunk.Return.isEmpty());
   }
 }
 
