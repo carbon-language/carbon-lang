@@ -69,7 +69,7 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
           .Case("interleave_count", LoopHintAttr::InterleaveCount)
           .Default(LoopHintAttr::Vectorize);
 
-  int ValueInt;
+  int ValueInt = 0;
   if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave) {
     if (!ValueInfo) {
       S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword)
