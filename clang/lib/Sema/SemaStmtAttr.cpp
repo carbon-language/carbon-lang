@@ -69,7 +69,7 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
           .Case("interleave_count", LoopHintAttr::InterleaveCount)
           .Default(LoopHintAttr::Vectorize);
 
-  int ValueInt = 0;
+  int ValueInt;
   if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave) {
     if (!ValueInfo) {
       S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword)
@@ -102,7 +102,8 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
           << /*MissingValue=*/false << ValueInt;
       return nullptr;
     }
-  }
+  } else
+    llvm_unreachable("Unknown loop hint option");
 
   return LoopHintAttr::CreateImplicit(S.Context, Option, ValueInt,
                                       A.getRange());
