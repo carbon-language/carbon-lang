@@ -12,18 +12,6 @@
 /* Bug report URL. */
 #undef BUG_REPORT_URL
 
-/* Define if we have libxml2 */
-#undef CLANG_HAVE_LIBXML
-
-/* Relative directory for resource files */
-#undef CLANG_RESOURCE_DIR
-
-/* Directories clang will search for headers */
-#undef C_INCLUDE_DIRS
-
-/* Default <path> to all compiler invocations for --sysroot=<path>. */
-#undef DEFAULT_SYSROOT
-
 /* Define if you want backtraces on crash */
 #undef ENABLE_BACKTRACES
 
@@ -35,9 +23,6 @@
 
 /* Define if timestamp information (e.g., __DATE__) is allowed */
 #undef ENABLE_TIMESTAMPS
-
-/* Directory where gcc is installed. */
-#undef GCC_INSTALL_PREFIX
 
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE

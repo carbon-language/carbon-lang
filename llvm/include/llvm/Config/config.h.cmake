@@ -12,18 +12,6 @@
 /* Bug report URL. */
 #define BUG_REPORT_URL "${BUG_REPORT_URL}"
 
-/* Define if we have libxml2 */
-#cmakedefine CLANG_HAVE_LIBXML ${CLANG_HAVE_LIBXML}
-
-/* Relative directory for resource files */
-#define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
-
-/* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
-
-/* Default <path> to all compiler invocations for --sysroot=<path>. */
-#undef DEFAULT_SYSROOT
-
 /* Define if you want backtraces on crash */
 #cmakedefine ENABLE_BACKTRACES
 
@@ -35,9 +23,6 @@
 
 /* Define if timestamp information (e.g., __DATE__) is allowed */
 #cmakedefine ENABLE_TIMESTAMPS ${ENABLE_TIMESTAMPS}
-
-/* Directory where gcc is installed. */
-#undef GCC_INSTALL_PREFIX
 
 /* Define to 1 if you have the `arc4random' function. */
 #cmakedefine HAVE_ARC4RANDOM
