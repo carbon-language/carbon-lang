@@ -28,11 +28,89 @@ define <4 x i32*> @combine_redundant_addrspacecast_vector(<4 x i32 addrspace(1)*
 
 define float* @combine_redundant_addrspacecast_types(i32 addrspace(1)* %x) nounwind {
 ; CHECK-LABEL: @combine_redundant_addrspacecast_types(
-; CHECK: addrspacecast i32 addrspace(1)* %x to float*
+; CHECK-NEXT: bitcast i32 addrspace(1)* %x to float addrspace(1)*
+; CHECK-NEXT: addrspacecast float addrspace(1)* %1 to float*
 ; CHECK-NEXT: ret
   %y = addrspacecast i32 addrspace(1)* %x to i32 addrspace(3)*
   %z = addrspacecast i32 addrspace(3)* %y to float*
   ret float* %z
+}
+
+define <4 x float*> @combine_redundant_addrspacecast_types_vector(<4 x i32 addrspace(1)*> %x) nounwind {
+; CHECK-LABEL: @combine_redundant_addrspacecast_types_vector(
+; CHECK-NEXT: bitcast <4 x i32 addrspace(1)*> %x to <4 x float addrspace(1)*>
+; CHECK-NEXT: addrspacecast <4 x float addrspace(1)*> %1 to <4 x float*>
+; CHECK-NEXT: ret
+  %y = addrspacecast <4 x i32 addrspace(1)*> %x to <4 x i32 addrspace(3)*>
+  %z = addrspacecast <4 x i32 addrspace(3)*> %y to <4 x float*>
+  ret <4 x float*> %z
+}
+
+define float addrspace(2)* @combine_addrspacecast_bitcast_1(i32 addrspace(1)* %x) nounwind {
+; CHECK-LABEL: @combine_addrspacecast_bitcast_1(
+; CHECK-NEXT: bitcast i32 addrspace(1)* %x to float addrspace(1)*
+; CHECK-NEXT: addrspacecast float addrspace(1)* %1 to float addrspace(2)*
+; CHECK-NEXT: ret
+  %y = addrspacecast i32 addrspace(1)* %x to i32 addrspace(2)*
+  %z = bitcast i32 addrspace(2)* %y to float addrspace(2)*
+  ret float addrspace(2)* %z
+}
+
+define i32 addrspace(2)* @combine_addrspacecast_bitcast_2(i32 addrspace(1)* %x) nounwind {
+; CHECK-LABEL: @combine_addrspacecast_bitcast_2(
+; CHECK: addrspacecast i32 addrspace(1)* %x to i32 addrspace(2)*
+; CHECK-NEXT: ret
+  %y = addrspacecast i32 addrspace(1)* %x to float addrspace(2)*
+  %z = bitcast float addrspace(2)* %y to i32 addrspace(2)*
+  ret i32 addrspace(2)* %z
+}
+
+define i32 addrspace(2)* @combine_bitcast_addrspacecast_1(i32 addrspace(1)* %x) nounwind {
+; CHECK-LABEL: @combine_bitcast_addrspacecast_1(
+; CHECK: addrspacecast i32 addrspace(1)* %x to i32 addrspace(2)*
+; CHECK-NEXT: ret
+  %y = bitcast i32 addrspace(1)* %x to i8 addrspace(1)*
+  %z = addrspacecast i8 addrspace(1)* %y to i32 addrspace(2)*
+  ret i32 addrspace(2)* %z
+}
+
+define float addrspace(2)* @combine_bitcast_addrspacecast_2(i32 addrspace(1)* %x) nounwind {
+; CHECK-LABEL: @combine_bitcast_addrspacecast_2(
+; CHECK: bitcast i32 addrspace(1)* %x to float addrspace(1)*
+; CHECK: addrspacecast float addrspace(1)* %1 to float addrspace(2)*
+; CHECK-NEXT: ret
+  %y = bitcast i32 addrspace(1)* %x to i8 addrspace(1)*
+  %z = addrspacecast i8 addrspace(1)* %y to float addrspace(2)*
+  ret float addrspace(2)* %z
+}
+
+define float addrspace(2)* @combine_addrspacecast_types(i32 addrspace(1)* %x) nounwind {
+; CHECK-LABEL: @combine_addrspacecast_types(
+; CHECK-NEXT: bitcast i32 addrspace(1)* %x to float addrspace(1)*
+; CHECK-NEXT: addrspacecast float addrspace(1)* %1 to float addrspace(2)*
+; CHECK-NEXT: ret
+  %y = addrspacecast i32 addrspace(1)* %x to float addrspace(2)*
+  ret float addrspace(2)* %y
+}
+
+define <4 x float addrspace(2)*> @combine_addrspacecast_types_vector(<4 x i32 addrspace(1)*> %x) nounwind {
+; CHECK-LABEL: @combine_addrspacecast_types_vector(
+; CHECK-NEXT: bitcast <4 x i32 addrspace(1)*> %x to <4 x float addrspace(1)*>
+; CHECK-NEXT: addrspacecast <4 x float addrspace(1)*> %1 to <4 x float addrspace(2)*>
+; CHECK-NEXT: ret
+  %y = addrspacecast <4 x i32 addrspace(1)*> %x to <4 x float addrspace(2)*>
+  ret <4 x float addrspace(2)*> %y
+}
+
+define i32 @canonicalize_addrspacecast([16 x i32] addrspace(1)* %arr) {
+; CHECK-LABEL: @canonicalize_addrspacecast(
+; CHECK-NEXT: getelementptr inbounds [16 x i32] addrspace(1)* %arr, i32 0, i32 0
+; CHECK-NEXT: addrspacecast i32 addrspace(1)* %{{[a-zA-Z0-9]+}} to i32*
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: ret i32
+  %p = addrspacecast [16 x i32] addrspace(1)* %arr to i32*
+  %v = load i32* %p
+  ret i32 %v
 }
 
 @const_array = addrspace(2) constant [60 x i8] [i8 2, i8 9, i8 4, i8 22, i8 2, i8 9, i8 4, i8 22, i8 2, i8 9, i8 4, i8 22,

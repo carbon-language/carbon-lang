@@ -78,7 +78,8 @@ define void @test2_addrspacecast() {
 ; %A alloca is deleted
 ; This doesn't exactly match what test2 does, because folding the type
 ; cast into the alloca doesn't work for the addrspacecast yet.
-; CHECK-NEXT: alloca %T
+; CHECK-NEXT: alloca [124 x i8]
+; CHECK-NEXT: getelementptr
 ; CHECK-NEXT: addrspacecast
 
 ; use @G instead of %A

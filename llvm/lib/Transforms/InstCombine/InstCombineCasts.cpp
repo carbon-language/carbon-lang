@@ -1434,7 +1434,12 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
     // If casting the result of a getelementptr instruction with no offset, turn
     // this into a cast of the original pointer!
-    if (GEP->hasAllZeroIndices()) {
+    if (GEP->hasAllZeroIndices() &&
+        // If CI is an addrspacecast and GEP changes the poiner type, merging
+        // GEP into CI would undo canonicalizing addrspacecast with different
+        // pointer types, causing infinite loops.
+        (!isa<AddrSpaceCastInst>(CI) ||
+          GEP->getType() == GEP->getPointerOperand()->getType())) {
       // Changing the cast operand is usually not a good idea but it is safe
       // here because the pointer operand is being replaced with another
       // pointer operand so the opcode doesn't need to change.
@@ -1904,5 +1909,22 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
 }
 
 Instruction *InstCombiner::visitAddrSpaceCast(AddrSpaceCastInst &CI) {
+  // If the destination pointer element type is not the the same as the source's
+  // do the addrspacecast to the same type, and then the bitcast in the new
+  // address space. This allows the cast to be exposed to other transforms.
+  Value *Src = CI.getOperand(0);
+  PointerType *SrcTy = cast<PointerType>(Src->getType()->getScalarType());
+  PointerType *DestTy = cast<PointerType>(CI.getType()->getScalarType());
+
+  Type *DestElemTy = DestTy->getElementType();
+  if (SrcTy->getElementType() != DestElemTy) {
+    Type *MidTy = PointerType::get(DestElemTy, SrcTy->getAddressSpace());
+    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
+      MidTy = VectorType::get(MidTy, CI.getType()->getVectorNumElements());
+
+    Value *NewBitCast = Builder->CreateBitCast(Src, MidTy);
+    return new AddrSpaceCastInst(NewBitCast, CI.getType());
+  }
+
   return commonPointerCastTransforms(CI);
 }

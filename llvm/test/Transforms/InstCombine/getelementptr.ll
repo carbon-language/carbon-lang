@@ -732,7 +732,8 @@ define i64 @test_gep_bitcast_array_same_size_element([100 x double]* %arr, i64 %
 define i64 @test_gep_bitcast_array_same_size_element_addrspacecast([100 x double]* %arr, i64 %N) {
 ; CHECK-LABEL: @test_gep_bitcast_array_same_size_element_addrspacecast(
 ; CHECK: getelementptr [100 x double]* %arr, i64 0, i64 %V
-; CHECK-NEXT: %t = addrspacecast double*
+; CHECK-NEXT: bitcast double*
+; CHECK-NEXT: %t = addrspacecast i64*
 ; CHECK: load i64 addrspace(3)* %t
   %cast = addrspacecast [100 x double]* %arr to i64 addrspace(3)*
   %V = mul i64 %N, 8
@@ -802,10 +803,22 @@ define i16 @test41([3 x i32] addrspace(1)* %array) {
 ; CHECK-NEXT: ret i16 8
 }
 
-define i32 addrspace(1)* @ascast_0_gep([128 x i32]* %p) nounwind {
+define i32 addrspace(1)* @ascast_0_gep(i32* %p) nounwind {
 ; CHECK-LABEL: @ascast_0_gep(
 ; CHECK-NOT: getelementptr
 ; CHECK: ret
+  %gep = getelementptr i32* %p, i32 0
+  %x = addrspacecast i32* %gep to i32 addrspace(1)*
+  ret i32 addrspace(1)* %x
+}
+
+; Do not merge the GEP and the addrspacecast, because it would undo the
+; addrspacecast canonicalization.
+define i32 addrspace(1)* @ascast_0_0_gep([128 x i32]* %p) nounwind {
+; CHECK-LABEL: @ascast_0_0_gep(
+; CHECK-NEXT: getelementptr [128 x i32]
+; CHECK-NEXT: addrspacecast i32*
+; CHECK-NEXT: ret i32 addrspace(1)*
   %gep = getelementptr [128 x i32]* %p, i32 0, i32 0
   %x = addrspacecast i32* %gep to i32 addrspace(1)*
   ret i32 addrspace(1)* %x

@@ -2331,18 +2331,12 @@ unsigned CastInst::isEliminableCastPair(
       // Allowed, use first cast's opcode
       return firstOp;
     case 14:
-      // FIXME: this state can be merged with (2), but the following assert
-      // is useful to check the correcteness of the sequence due to semantic
-      // change of bitcast.
-      assert(
-        SrcTy->isPtrOrPtrVectorTy() &&
-        MidTy->isPtrOrPtrVectorTy() &&
-        DstTy->isPtrOrPtrVectorTy() &&
-        SrcTy->getPointerAddressSpace() == MidTy->getPointerAddressSpace() &&
-        MidTy->getPointerAddressSpace() != DstTy->getPointerAddressSpace() &&
-        "Illegal bitcast, addrspacecast sequence!");
-      // Allowed, use second cast's opcode
-      return secondOp;
+      // bitcast, addrspacecast -> addrspacecast if the element type of
+      // bitcast's source is the same as that of addrspacecast's destination.
+      if (SrcTy->getPointerElementType() == DstTy->getPointerElementType())
+        return Instruction::AddrSpaceCast;
+      return 0;
+
     case 15:
       // FIXME: this state can be merged with (1), but the following assert
       // is useful to check the correcteness of the sequence due to semantic
