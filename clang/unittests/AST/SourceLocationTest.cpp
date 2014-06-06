@@ -263,6 +263,84 @@ TEST(UnresolvedUsingValueDecl, SourceRange) {
       unresolvedUsingValueDecl()));
 }
 
+TEST(FriendDecl, FriendFunctionLocation) {
+  LocationVerifier<FriendDecl> Verifier;
+  Verifier.expectLocation(2, 13);
+  EXPECT_TRUE(Verifier.match("struct A {\n"
+                             "friend void f();\n"
+                             "};\n",
+                             friendDecl()));
+}
+
+TEST(FriendDecl, FriendFunctionRange) {
+  RangeVerifier<FriendDecl> Verifier;
+  Verifier.expectRange(2, 1, 2, 15);
+  EXPECT_TRUE(Verifier.match("struct A {\n"
+                             "friend void f();\n"
+                             "};\n",
+                             friendDecl()));
+}
+
+TEST(FriendDecl, FriendClassLocation) {
+  LocationVerifier<FriendDecl> Verifier;
+  Verifier.expectLocation(2, 8);
+  EXPECT_TRUE(Verifier.match("struct A {\n"
+                             "friend class B;\n"
+                             "};\n",
+                             friendDecl()));
+}
+
+TEST(FriendDecl, FriendClassRange) {
+  RangeVerifier<FriendDecl> Verifier;
+  Verifier.expectRange(2, 1, 2, 14);
+  EXPECT_TRUE(Verifier.match("struct A {\n"
+                             "friend class B;\n"
+                             "};\n",
+                             friendDecl()));
+}
+
+TEST(FriendDecl, FriendTemplateParameterLocation) {
+  LocationVerifier<FriendDecl> Verifier;
+  Verifier.expectLocation(3, 8);
+  EXPECT_TRUE(Verifier.match("template <typename T>\n"
+                             "struct A {\n"
+                             "friend T;\n"
+                             "};\n",
+                             friendDecl(), Lang_CXX11));
+}
+
+TEST(FriendDecl, FriendTemplateParameterRange) {
+  RangeVerifier<FriendDecl> Verifier;
+  Verifier.expectRange(3, 1, 3, 8);
+  EXPECT_TRUE(Verifier.match("template <typename T>\n"
+                             "struct A {\n"
+                             "friend T;\n"
+                             "};\n",
+                             friendDecl(), Lang_CXX11));
+}
+
+TEST(FriendDecl, FriendDecltypeLocation) {
+  LocationVerifier<FriendDecl> Verifier;
+  Verifier.expectLocation(4, 8);
+  EXPECT_TRUE(Verifier.match("struct A;\n"
+                             "A foo();\n"
+                             "struct A {\n"
+                             "friend decltype(foo());\n"
+                             "};\n",
+                             friendDecl(), Lang_CXX11));
+}
+
+TEST(FriendDecl, FriendDecltypeRange) {
+  RangeVerifier<FriendDecl> Verifier;
+  Verifier.expectRange(4, 1, 4, 8);
+  EXPECT_TRUE(Verifier.match("struct A;\n"
+                             "A foo();\n"
+                             "struct A {\n"
+                             "friend decltype(foo());\n"
+                             "};\n",
+                             friendDecl(), Lang_CXX11));
+}
+
 TEST(FriendDecl, InstantiationSourceRange) {
   RangeVerifier<FriendDecl> Verifier;
   Verifier.expectRange(4, 3, 4, 35);
