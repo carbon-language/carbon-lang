@@ -423,13 +423,11 @@ void ForkChildAfter(ThreadState *thr, uptr pc) {
 u32 CurrentStackId(ThreadState *thr, uptr pc) {
   if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
     return 0;
-  if (pc) {
-    thr->shadow_stack_pos[0] = pc;
-    thr->shadow_stack_pos++;
-  }
+  if (pc != 0)
+    FuncEntry(thr, pc);  // can resize the shadow stack
   u32 id = StackDepotPut(thr->shadow_stack,
                          thr->shadow_stack_pos - thr->shadow_stack);
-  if (pc)
+  if (pc != 0)
     thr->shadow_stack_pos--;
   return id;
 }
