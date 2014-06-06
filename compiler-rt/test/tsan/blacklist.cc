@@ -1,8 +1,7 @@
 // Test blacklist functionality for TSan.
 
-// RUN: %clangxx_tsan -O1 %s \
-// RUN:   -fsanitize-blacklist=%p/Helpers/blacklist.txt \
-// RUN:   -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: echo "fun:*Blacklisted_Thread2*" > %t.blacklist
+// RUN: %clangxx_tsan -O1 %s -fsanitize-blacklist=%t.blacklist -o %t && %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 

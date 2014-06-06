@@ -1,6 +1,9 @@
 // Test that blacklisted functions are still contained in the stack trace.
 
-// RUN: %clangxx_tsan -O1 %s -fsanitize-blacklist=%p/Helpers/blacklist.txt -o %t
+// RUN: echo "fun:*Blacklisted_Thread2*" > %t.blacklist
+// RUN: echo "fun:*CallTouchGlobal*" >> %t.blacklist
+
+// RUN: %clangxx_tsan -O1 %s -fsanitize-blacklist=%t.blacklist -o %t
 // RUN: %deflake %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>

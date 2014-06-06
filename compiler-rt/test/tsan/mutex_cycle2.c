@@ -1,9 +1,9 @@
 // RUN: %clangxx_tsan %s -o %t
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s
-// RUN: echo "deadlock:main" > sup
-// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=sup" %run %t
-// RUN: echo "deadlock:zzzz" > sup
-// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=sup" not %run %t 2>&1 | FileCheck %s
+// RUN: echo "deadlock:main" > %t.sup
+// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=%t.sup" %run %t
+// RUN: echo "deadlock:zzzz" > %t.sup
+// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=%t.sup" not %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
 
 int main() {

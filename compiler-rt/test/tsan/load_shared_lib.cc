@@ -2,9 +2,25 @@
 // reports, the second report occurring in a new shared library is still
 // symbolized correctly.
 
-// RUN: %clangxx_tsan -O1 %p/SharedLibs/load_shared_lib-so.cc \
-// RUN:     -fPIC -shared -o %t-so.so
+// RUN: %clangxx_tsan -O1 %s -DBUILD_SO -fPIC -shared -o %t-so.so
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+
+#ifdef BUILD_SO
+
+#include <stddef.h>
+#include <unistd.h>
+
+int GLOB_SHARED = 0;
+
+extern "C"
+void *write_from_so(void *unused) {
+  if (unused)
+    sleep(1);
+  GLOB_SHARED++;
+  return NULL;
+}
+
+#else  // BUILD_SO
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -46,3 +62,5 @@ int main(int argc, char *argv[]) {
   // CHECK: write_from_so
   return 0;
 }
+
+#endif  // BUILD_SO
