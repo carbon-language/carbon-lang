@@ -15,3 +15,13 @@ struct X1 {
     void __attribute__((used)) f() {}
   };
 };
+
+struct X2 {
+  // We must delay emission of bar() until foo() has had its body parsed,
+  // otherwise foo() would not be emitted.
+  void __attribute__((used)) bar() { foo(); }
+  void foo() { }
+
+  // CHECK: define linkonce_odr {{.*}} @_ZN2X23barEv
+  // CHECK: define linkonce_odr {{.*}} @_ZN2X23fooEv
+};

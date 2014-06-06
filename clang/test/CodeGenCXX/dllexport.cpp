@@ -538,3 +538,17 @@ struct __declspec(dllexport) DefaultedCtorsDtors {
   ~DefaultedCtorsDtors() = default;
   // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??1DefaultedCtorsDtors@@QAE@XZ"
 };
+
+namespace ReferencedInlineMethodInNestedClass {
+  struct __declspec(dllexport) S {
+    void foo() {
+      t->bar();
+    }
+    struct T {
+      void bar() {}
+    };
+    T *t;
+  };
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?foo@S@ReferencedInlineMethodInNestedClass@@QAEXXZ"
+  // M32-DAG: define linkonce_odr x86_thiscallcc void @"\01?bar@T@S@ReferencedInlineMethodInNestedClass@@QAEXXZ"
+}

@@ -40,10 +40,12 @@ struct ExportMembers {
   // G64-DAG: define weak_odr dllexport                void @_ZN13ExportMembers15normalInlineDefEv(%struct.ExportMembers* %this)
   // G32-DAG: define weak_odr dllexport x86_thiscallcc void @_ZN13ExportMembers16normalInlineDeclEv(%struct.ExportMembers* %this)
   // G64-DAG: define weak_odr dllexport                void @_ZN13ExportMembers16normalInlineDeclEv(%struct.ExportMembers* %this)
+  // M32-DAG: define linkonce_odr       x86_thiscallcc void @"\01?referencedNonExportedInClass@ExportMembers@@QAEXXZ"
   __declspec(dllexport)                void normalDef();
-  __declspec(dllexport)                void normalInclass() {}
+  __declspec(dllexport)                void normalInclass() { referencedNonExportedInClass(); }
   __declspec(dllexport)                void normalInlineDef();
   __declspec(dllexport)         inline void normalInlineDecl();
+                                       void referencedNonExportedInClass() {}
 
   // M32-DAG: define          dllexport x86_thiscallcc void @"\01?virtualDef@ExportMembers@@UAEXXZ"(%struct.ExportMembers* %this)
   // M64-DAG: define          dllexport                void @"\01?virtualDef@ExportMembers@@UEAAXXZ"(%struct.ExportMembers* %this)

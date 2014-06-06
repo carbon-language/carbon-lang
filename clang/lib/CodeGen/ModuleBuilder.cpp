@@ -93,6 +93,12 @@ namespace {
       // Make sure to emit all elements of a Decl.
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         Builder->EmitTopLevelDecl(*I);
+
+      // Emit any deferred inline method definitions.
+      for (CXXMethodDecl *MD : DeferredInlineMethodDefinitions)
+        Builder->EmitTopLevelDecl(MD);
+      DeferredInlineMethodDefinitions.clear();
+
       return true;
     }
 
@@ -102,12 +108,15 @@ namespace {
 
       assert(D->doesThisDeclarationHaveABody());
 
-      // We may have member functions that need to be emitted at this point.
-      if (!D->isDependentContext() &&
-          (D->hasAttr<UsedAttr>() || D->hasAttr<ConstructorAttr>() ||
-           D->hasAttr<DLLExportAttr>())) {
-        Builder->EmitTopLevelDecl(D);
-      }
+      // We may want to emit this definition. However, that decision might be
+      // based on computing the linkage, and we have to defer that in case we
+      // are inside of something that will change the method's final linkage,
+      // e.g.
+      //   typedef struct {
+      //     void bar();
+      //     void foo() { bar(); }
+      //   } A;
+      DeferredInlineMethodDefinitions.push_back(D);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
@@ -168,6 +177,9 @@ namespace {
     void HandleDependentLibrary(llvm::StringRef Lib) override {
       Builder->AddDependentLib(Lib);
     }
+
+  private:
+    std::vector<CXXMethodDecl *> DeferredInlineMethodDefinitions;
   };
 }
 
