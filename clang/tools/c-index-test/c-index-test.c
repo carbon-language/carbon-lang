@@ -4119,8 +4119,8 @@ void thread_runner(void *client_data_v) {
 }
 
 static void flush_atexit(void) {
-  // stdout, and surprisingly even stderr, are not always flushed on process
-  // and thread exit, particularly when the system is under heavy load.
+  /* stdout, and surprisingly even stderr, are not always flushed on process
+   * and thread exit, particularly when the system is under heavy load. */
   fflush(stdout);
   fflush(stderr);
 }
