@@ -432,7 +432,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   // SSE Callback should be called for SSE-enabled LLVM.
   return X86CompilationCallback_SSE;
 #else
-  if (Subtarget->hasSSE1())
+  if (useSSE)
     return X86CompilationCallback_SSE;
 #endif
 #endif
@@ -440,8 +440,8 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return X86CompilationCallback;
 }
 
-X86JITInfo::X86JITInfo(X86TargetMachine &tm) : TM(tm) {
-  Subtarget = &TM.getSubtarget<X86Subtarget>();
+X86JITInfo::X86JITInfo(bool UseSSE) {
+  useSSE = UseSSE;
   useGOT = 0;
   TLSOffset = nullptr;
 }
