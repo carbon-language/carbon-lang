@@ -914,8 +914,20 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       if (isa<BinaryOperator>(VL0) && VL0->isCommutative()) {
         ValueList Left, Right;
         reorderInputsAccordingToOpcode(VL, Left, Right);
-        buildTree_rec(Left, Depth + 1);
-        buildTree_rec(Right, Depth + 1);
+        BasicBlock *LeftBB = getSameBlock(Left);
+        BasicBlock *RightBB = getSameBlock(Right);
+        // If we have common uses on separate paths in the tree make sure we
+        // process the one with greater common depth first.
+        // We can use block numbering to determine the subtree traversal as
+        // earler user has to come in between the common use and the later user.
+        if (LeftBB && RightBB && LeftBB == RightBB &&
+            getLastIndex(Right) > getLastIndex(Left)) {
+          buildTree_rec(Right, Depth + 1);
+          buildTree_rec(Left, Depth + 1);
+        } else {
+          buildTree_rec(Left, Depth + 1);
+          buildTree_rec(Right, Depth + 1);
+        }
         return;
       }
 
