@@ -692,3 +692,14 @@ define <4 x float> @insertps_from_broadcast_multiple_use(<4 x float> %a, <4 x fl
   %13 = fadd <4 x float> %11, %12
   ret <4 x float> %13
 }
+
+define <4 x float> @insertps_with_undefs(<4 x float> %a, float* %b) {
+; CHECK-LABEL: insertps_with_undefs:
+; CHECK-NOT: shufps
+; CHECK: insertps    $32, %xmm0
+; CHECK: ret
+  %1 = load float* %b, align 4
+  %2 = insertelement <4 x float> undef, float %1, i32 0
+  %result = shufflevector <4 x float> %a, <4 x float> %2, <4 x i32> <i32 4, i32 undef, i32 0, i32 7>
+  ret <4 x float> %result
+}

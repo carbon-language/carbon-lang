@@ -3964,14 +3964,22 @@ static bool isINSERTPSMask(ArrayRef<int> Mask, MVT VT) {
 
   unsigned CorrectPosV1 = 0;
   unsigned CorrectPosV2 = 0;
-  for (int i = 0, e = (int)VT.getVectorNumElements(); i != e; ++i)
+  for (int i = 0, e = (int)VT.getVectorNumElements(); i != e; ++i) {
+    if (Mask[i] == -1) {
+      ++CorrectPosV1;
+      ++CorrectPosV2;
+      continue;
+    }
+
     if (Mask[i] == i)
       ++CorrectPosV1;
     else if (Mask[i] == i + 4)
       ++CorrectPosV2;
+  }
 
   if (CorrectPosV1 == 3 || CorrectPosV2 == 3)
-    // We have 3 elements from one vector, and one from another.
+    // We have 3 elements (undefs count as elements from any vector) from one
+    // vector, and one from another.
     return true;
 
   return false;
@@ -7462,8 +7470,9 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
   assert((VT == MVT::v4f32 || VT == MVT::v4i32) &&
          "unsupported vector type for insertps/pinsrd");
 
-  int FromV1 = std::count_if(Mask.begin(), Mask.end(),
-                             [](const int &i) { return i < 4; });
+  auto FromV1Predicate = [](const int &i) { return i < 4 && i > -1; };
+  auto FromV2Predicate = [](const int &i) { return i >= 4; };
+  int FromV1 = std::count_if(Mask.begin(), Mask.end(), FromV1Predicate);
 
   SDValue From;
   SDValue To;
@@ -7471,15 +7480,17 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
   if (FromV1 == 1) {
     From = V1;
     To = V2;
-    DestIndex = std::find_if(Mask.begin(), Mask.end(),
-                             [](const int &i) { return i < 4; }) -
+    DestIndex = std::find_if(Mask.begin(), Mask.end(), FromV1Predicate) -
                 Mask.begin();
   } else {
+    assert(std::count_if(Mask.begin(), Mask.end(), FromV2Predicate) == 1 &&
+           "More than one element from V1 and from V2, or no elements from one "
+           "of the vectors. This case should not have returned true from "
+           "isINSERTPSMask");
     From = V2;
     To = V1;
-    DestIndex = std::find_if(Mask.begin(), Mask.end(),
-                             [](const int &i) { return i >= 4; }) -
-                Mask.begin();
+    DestIndex =
+        std::find_if(Mask.begin(), Mask.end(), FromV2Predicate) - Mask.begin();
   }
 
   if (MayFoldLoad(From)) {

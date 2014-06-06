@@ -5,8 +5,10 @@ define <4 x float> @test1(<4 x float> %a) nounwind {
   %b = shufflevector <4 x float> zeroinitializer, <4 x float> %a, <4 x i32> <i32 2, i32 5, i32 undef, i32 undef>
   ret <4 x float> %b
 ; CHECK-LABEL: test1:
-; CHECK: vshufps
-; CHECK: vpshufd
+;; TODO: This test could be improved by removing the xor instruction and
+;; having vinsertps zero out the needed elements.
+; CHECK: vxorps
+; CHECK: vinsertps
 }
 
 ; rdar://10538417
