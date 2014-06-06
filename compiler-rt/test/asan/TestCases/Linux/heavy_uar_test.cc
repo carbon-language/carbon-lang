@@ -3,7 +3,7 @@
 // RUN:   not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -o %t && \
 // RUN:   not %run %t 2>&1 | FileCheck %s
-// XFAIL: arm
+// XFAIL: arm-linux-gnueabi
 
 // FIXME: Fix this test under GCC.
 // REQUIRES: Clang
