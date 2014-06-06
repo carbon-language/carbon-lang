@@ -309,6 +309,29 @@ def parse_threadinfo_response(response_packet):
     # Return list of thread ids
     return [int(thread_id_hex,16) for thread_id_hex in response_packet.split(",") if len(thread_id_hex) > 0]
 
+
+def unpack_register_hex_unsigned(endian, value_string):
+    """Unpack a gdb-remote $p-style response to an unsigned int given endianness of inferior."""
+    if not endian:
+        raise Exception("endian cannot be None")
+    if not value_string or len(value_string) < 1:
+        raise Exception("value_string cannot be None or empty")
+    
+    if endian == 'little':
+        value = 0
+        i = 0
+        while len(value_string) > 0:
+            value += (int(value_string[0:2], 16) << i)
+            value_string = value_string[2:]
+            i += 8
+        return value
+    elif endian == 'big':
+        return int(value_string, 16)
+    else:
+        # pdp is valid but need to add parse code once needed.
+        raise Exception("unsupported endian:{}".format(endian))
+
+
 class GdbRemoteEntryBase(object):
     def is_output_matcher(self):
         return False

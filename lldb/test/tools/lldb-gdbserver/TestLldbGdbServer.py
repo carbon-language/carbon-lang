@@ -160,15 +160,15 @@ class LldbGdbServerTestCase(TestBase):
         The return value is:
         {inferior:<inferior>, server:<server>}
         """
+        inferior = None
+        attach_pid = None
+
         if self._inferior_startup == self._STARTUP_ATTACH:
             # Launch the process that we'll use as the inferior.
             inferior = self.launch_process_for_attach(inferior_args=inferior_args, sleep_seconds=inferior_sleep_seconds)
             self.assertIsNotNone(inferior)
             self.assertTrue(inferior.pid > 0)
             attach_pid = inferior.pid
-        else:
-            attach_pid = None
-            inferior = None
 
         # Launch the debug monitor stub, attaching to the inferior.
         server = self.start_server(attach_pid=attach_pid)
@@ -204,11 +204,43 @@ class LldbGdbServerTestCase(TestBase):
              "send packet: $OK#00"],
             True)
 
-    def add_get_pid(self):
+    def add_process_info_collection_packets(self):
         self.test_sequence.add_log_lines(
             ["read packet: $qProcessInfo#00",
-              { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
+              { "direction":"send", "regex":r"^\$(.+)#00", "capture":{1:"process_info_raw"} }],
             True)
+
+    _KNOWN_PROCESS_INFO_KEYS = [
+        "pid",
+        "parent-pid",
+        "real-uid",
+        "real-gid",
+        "effective-uid",
+        "effective-gid",
+        "cputype",
+        "cpusubtype",
+        "ostype",
+        "vendor",
+        "endian",
+        "ptrsize"
+        ]
+
+    def parse_process_info_response(self, context):
+        # Ensure we have a process info response.
+        self.assertIsNotNone(context)
+        process_info_raw = context.get("process_info_raw")
+        self.assertIsNotNone(process_info_raw)
+
+        # Pull out key:value; pairs.
+        process_info_dict = { match.group(1):match.group(2) for match in re.finditer(r"([^:]+):([^;]+);", process_info_raw) }
+
+        # Validate keys are known.
+        for (key, val) in process_info_dict.items():
+            self.assertTrue(key in self._KNOWN_PROCESS_INFO_KEYS)
+            self.assertIsNotNone(val)
+
+        # Return the dictionary of key-value pairs for the memory region.
+        return process_info_dict
 
     def add_register_info_collection_packets(self):
         self.test_sequence.add_log_lines(
@@ -254,6 +286,15 @@ class LldbGdbServerTestCase(TestBase):
         self.assertTrue("offset" in reg_info)
         self.assertTrue("encoding" in reg_info)
         self.assertTrue("format" in reg_info)
+
+    def find_pc_reg_info(self, reg_infos):
+        lldb_reg_index = 0
+        for reg_info in reg_infos:
+            if ("generic" in reg_info) and (reg_info["generic"] == "pc"):
+                return (lldb_reg_index, reg_info)
+            lldb_reg_index += 1
+
+        return (None, None)
 
     def add_query_memory_region_packets(self, address):
         self.test_sequence.add_log_lines(
@@ -588,26 +629,19 @@ class LldbGdbServerTestCase(TestBase):
         self.first_launch_stop_reply_thread_matches_first_qC()
 
     def qProcessInfo_returns_running_process(self):
-        server = self.start_server()
-        self.assertIsNotNone(server)
-
-        # Build launch args
-        launch_args = [os.path.abspath('a.out'), "hello, world"]
-
-        # Build the expected protocol stream
-        self.add_no_ack_remote_stream()
-        self.add_verified_launch_packets(launch_args)
-        self.test_sequence.add_log_lines(
-            ["read packet: $qProcessInfo#00",
-             { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
-            True)
+        procs = self.prep_debug_monitor_and_inferior()
+        self.add_process_info_collection_packets()
 
         # Run the stream
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
 
+        # Gather process info response
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+
         # Ensure the process id looks reasonable.
-        pid_text = context.get('pid', None)
+        pid_text = process_info.get("pid")
         self.assertIsNotNone(pid_text)
         pid = int(pid_text, base=16)
         self.assertNotEqual(0, pid)
@@ -630,55 +664,76 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.qProcessInfo_returns_running_process()
 
-    def attach_commandline_qProcessInfo_reports_pid(self):
-        # Launch the process that we'll use as the inferior.
-        inferior = self.launch_process_for_attach()
-        self.assertIsNotNone(inferior)
-        self.assertTrue(inferior.pid > 0)
-        
-        # Launch the debug monitor stub, attaching to the inferior.
-        server = self.start_server(attach_pid=inferior.pid)
-        self.assertIsNotNone(server)
+    def attach_commandline_qProcessInfo_reports_correct_pid(self):
+        procs = self.prep_debug_monitor_and_inferior()
+        self.assertIsNotNone(procs)
+        self.add_process_info_collection_packets()
 
-        # Check that the stub reports attachment to the inferior.
-        self.add_no_ack_remote_stream()
-        self.add_get_pid()
+        # Run the stream
         context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather process info response
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
 
         # Ensure the process id matches what we expected.
-        pid_text = context.get('pid', None)
+        pid_text = process_info.get('pid', None)
         self.assertIsNotNone(pid_text)
         reported_pid = int(pid_text, base=16)
-        self.assertEqual(reported_pid, inferior.pid)
+        self.assertEqual(reported_pid, procs["inferior"].pid)
 
     @debugserver_test
     @dsym_test
-    def test_attach_commandline_qProcessInfo_reports_pid_debugserver_dsym(self):
+    def test_attach_commandline_qProcessInfo_reports_correct_pid_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
-        self.attach_commandline_qProcessInfo_reports_pid()
+        self.set_inferior_startup_attach()
+        self.attach_commandline_qProcessInfo_reports_correct_pid()
 
     @llgs_test
     @dwarf_test
     @unittest2.expectedFailure()
-    def test_attach_commandline_qProcessInfo_reports_pid_llgs_dwarf(self):
+    def test_attach_commandline_qProcessInfo_reports_correct_pid_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
-        self.attach_commandline_qProcessInfo_reports_pid()
+        self.set_inferior_startup_attach()
+        self.attach_commandline_qProcessInfo_reports_correct_pid()
+
+    def qProcessInfo_reports_valid_endian(self):
+        procs = self.prep_debug_monitor_and_inferior()
+        self.add_process_info_collection_packets()
+
+        # Run the stream
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather process info response
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+
+        # Ensure the process id looks reasonable.
+        endian = process_info.get("endian")
+        self.assertIsNotNone(endian)
+        self.assertTrue(endian in ["little", "big", "pdp"])
+
+    @debugserver_test
+    @dsym_test
+    def test_qProcessInfo_reports_valid_endian_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qProcessInfo_reports_valid_endian()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qProcessInfo_reports_valid_endian_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qProcessInfo_reports_valid_endian()
 
     def attach_commandline_continue_app_exits(self):
-        # Launch the process that we'll use as the inferior.
-        inferior = self.launch_process_for_attach(sleep_seconds=1)
-        self.assertIsNotNone(inferior)
-        self.assertTrue(inferior.pid > 0)
-
-        # Launch the debug monitor stub, attaching to the inferior.
-        server = self.start_server(attach_pid=inferior.pid)
-        self.assertIsNotNone(server)
-
-        # Check that the stub reports attachment to the inferior.
-        self.add_no_ack_remote_stream()
-        self.add_get_pid()
+        procs = self.prep_debug_monitor_and_inferior()
         self.test_sequence.add_log_lines(
             ["read packet: $vCont;c#00",
              "send packet: $W00#00"],
@@ -686,17 +741,18 @@ class LldbGdbServerTestCase(TestBase):
         self.expect_gdbremote_sequence()
 
         # Process should be dead now.  Reap results.
-        poll_result = inferior.poll()
+        poll_result = procs["inferior"].poll()
         self.assertIsNotNone(poll_result)
 
         # Where possible, verify at the system level that the process is not running.
-        self.assertFalse(process_is_running(inferior.pid, False))
+        self.assertFalse(process_is_running(procs["inferior"].pid, False))
 
     @debugserver_test
     @dsym_test
     def test_attach_commandline_continue_app_exits_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
+        self.set_inferior_startup_attach()
         self.attach_commandline_continue_app_exits()
 
     @llgs_test
@@ -705,21 +761,11 @@ class LldbGdbServerTestCase(TestBase):
     def test_attach_commandline_continue_app_exits_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
+        self.set_inferior_startup_attach()
         self.attach_commandline_continue_app_exits()
 
     def attach_commandline_kill_after_initial_stop(self):
-        # Launch the process that we'll use as the inferior.
-        inferior = self.launch_process_for_attach(sleep_seconds=10)
-        self.assertIsNotNone(inferior)
-        self.assertTrue(inferior.pid > 0)
-
-        # Launch the debug monitor stub, attaching to the inferior.
-        server = self.start_server(attach_pid=inferior.pid)
-        self.assertIsNotNone(server)
-
-        # Check that the stub reports attachment to the inferior.
-        self.add_no_ack_remote_stream()
-        self.add_get_pid()
+        procs = self.prep_debug_monitor_and_inferior()
         self.test_sequence.add_log_lines(
             ["read packet: $k#6b",
              "send packet: $X09#00"],
@@ -727,17 +773,18 @@ class LldbGdbServerTestCase(TestBase):
         self.expect_gdbremote_sequence()
 
         # Process should be dead now.  Reap results.
-        poll_result = inferior.poll()
+        poll_result = procs["inferior"].poll()
         self.assertIsNotNone(poll_result)
 
         # Where possible, verify at the system level that the process is not running.
-        self.assertFalse(process_is_running(inferior.pid, False))
+        self.assertFalse(process_is_running(procs["inferior"].pid, False))
 
     @debugserver_test
     @dsym_test
     def test_attach_commandline_kill_after_initial_stop_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
+        self.set_inferior_startup_attach()
         self.attach_commandline_kill_after_initial_stop()
 
     @llgs_test
@@ -746,6 +793,7 @@ class LldbGdbServerTestCase(TestBase):
     def test_attach_commandline_kill_after_initial_stop_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
+        self.set_inferior_startup_attach()
         self.attach_commandline_kill_after_initial_stop()
 
     def qRegisterInfo_returns_one_valid_result(self):
@@ -1540,9 +1588,10 @@ class LldbGdbServerTestCase(TestBase):
             inferior_args=["get-code-address-hex:hello", "sleep:1", "call-function:hello"])
 
         # Run the process
+        self.add_register_info_collection_packets()
+        self.add_process_info_collection_packets()
         self.test_sequence.add_log_lines(
-            [
-             # Start running after initial stop.
+            [# Start running after initial stop.
              "read packet: $c#00",
              # Match output line that prints the memory address of the function call entry point.
              # Note we require launch-only testing so we can get inferior otuput.
@@ -1557,6 +1606,17 @@ class LldbGdbServerTestCase(TestBase):
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
 
+        # Gather process info - we need endian of target to handle register value conversions.
+        process_info = self.parse_process_info_response(context)
+        endian = process_info.get("endian")
+        self.assertIsNotNone(endian)
+
+        # Gather register info entries.
+        reg_infos = self.parse_register_info_packets(context)
+        (pc_lldb_reg_index, pc_reg_info) = self.find_pc_reg_info(reg_infos)
+        self.assertIsNotNone(pc_lldb_reg_index)
+        self.assertIsNotNone(pc_reg_info)
+
         # Grab the address.
         self.assertIsNotNone(context.get("function_address"))
         function_address = int(context.get("function_address"), 16)
@@ -1564,7 +1624,7 @@ class LldbGdbServerTestCase(TestBase):
         # Set the breakpoint.
         # Note this might need to be switched per platform (ARM, mips, etc.).
         BREAKPOINT_KIND = 1
-        
+
         self.reset_test_sequence()
         self.test_sequence.add_log_lines(
             [
@@ -1577,7 +1637,7 @@ class LldbGdbServerTestCase(TestBase):
              # Expect a breakpoint stop report.
              {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
              ], True)
-             
+
         # Run the packet stream.
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
@@ -1592,25 +1652,46 @@ class LldbGdbServerTestCase(TestBase):
         # That would indicate the breakpoint didn't take.
         self.assertEquals(len(context["O_content"]), 0)
 
-        # Verify that a breakpoint unset and continue gets us the expected output.
+        # Verify that the PC for the main thread is where we expect it - right at the breakpoint address.
+        # This acts as a another validation on the register reading code.
         self.reset_test_sequence()
         self.test_sequence.add_log_lines(
             [
-             # Remove the breakpoint.
-             "read packet: $z0,{0:x},{1}#00".format(function_address, BREAKPOINT_KIND),
-             # Verify the stub could unset it.
-             "send packet: $OK#00",
-             # Continue running.
-             "read packet: $c#00",
-             # We should now receive the output from the call.
-             { "type":"output_match", "regex":r"^hello, world\r\n$" },
-             # And wait for program completion.
-             {"direction":"send", "regex":r"^\$W00(.*)#00" },
+             # Print the PC.  This should match the breakpoint address.
+             "read packet: $p{0:x}#00".format(pc_lldb_reg_index),
+             # Capture $p results.
+             { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} },
              ], True)
 
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
-        
+
+        # Verify the PC is where we expect.  Note response is in endianness of the inferior.
+        p_response = context.get("p_response")
+        self.assertIsNotNone(p_response)
+
+        # Convert from target endian to int.
+        returned_pc = unpack_register_hex_unsigned(endian, p_response)
+        self.assertEquals(returned_pc, function_address)
+
+        # Verify that a breakpoint remove and continue gets us the expected output.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            [
+            # Remove the breakpoint.
+            "read packet: $z0,{0:x},{1}#00".format(function_address, BREAKPOINT_KIND),
+            # Verify the stub could unset it.
+            "send packet: $OK#00",
+            # Continue running.
+            "read packet: $c#00",
+            # We should now receive the output from the call.
+            { "type":"output_match", "regex":r"^hello, world\r\n$" },
+            # And wait for program completion.
+            {"direction":"send", "regex":r"^\$W00(.*)#00" },
+            ], True)
+
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
 
     @debugserver_test
     @dsym_test
