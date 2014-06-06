@@ -4408,7 +4408,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         } else if (!MD->isTrivial() || MD->isExplicitlyDefaulted() ||
                    MD->isCopyAssignmentOperator() ||
                    MD->isMoveAssignmentOperator()) {
-          // Instantiate non-trival or explicitly defaulted methods, and the
+          // Instantiate non-trivial or explicitly defaulted methods, and the
           // copy assignment / move assignment operators.
           S.MarkFunctionReferenced(Class->getLocation(), MD);
           // Resolve its exception specification; CodeGen needs it.

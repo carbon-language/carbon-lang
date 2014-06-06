@@ -103,7 +103,7 @@ public:
   }
 
   /// \brief If 'aligned' declaration for given variable \a D was not seen yet,
-  /// add it and return NULL; otherwise return previous occurence's expression
+  /// add it and return NULL; otherwise return previous occurrence's expression
   /// for diagnostics.
   DeclRefExpr *addUniqueAligned(VarDecl *D, DeclRefExpr *NewDE);
 

@@ -262,7 +262,7 @@ namespace clang {
     StandardConversionSequence Before;
 
     /// EllipsisConversion - When this is true, it means user-defined
-    /// conversion sequence starts with a ... (elipsis) conversion, instead of 
+    /// conversion sequence starts with a ... (ellipsis) conversion, instead of
     /// a standard conversion. In this case, 'Before' field must be ignored.
     // FIXME. I much rather put this as the first field. But there seems to be
     // a gcc code gen. bug which causes a crash in a test. Putting it here seems

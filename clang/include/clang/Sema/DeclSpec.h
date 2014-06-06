@@ -814,8 +814,8 @@ public:
   void setSetterName(IdentifierInfo *name) { SetterName = name; }
 
 private:
-  // FIXME: These two are unrelated and mutially exclusive. So perhaps
-  // we can put them in a union to reflect their mutual exclusiveness
+  // FIXME: These two are unrelated and mutually exclusive. So perhaps
+  // we can put them in a union to reflect their mutual exclusivity
   // (space saving is negligible).
   ObjCDeclQualifier objcDeclQualifier : 6;
 
