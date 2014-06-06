@@ -6,7 +6,7 @@
 
 ; XXX: Test on SI once 64-bit adds are supportes.
 
-@float_gv = internal addrspace(2) unnamed_addr constant [5 x float] [float 0.0, float 1.0, float 2.0, float 3.0, float 4.0], align 4
+@float_gv = internal unnamed_addr addrspace(2) constant [5 x float] [float 0.0, float 1.0, float 2.0, float 3.0, float 4.0], align 4
 
 ; FUNC-LABEL: @float
 
@@ -25,7 +25,7 @@ entry:
   ret void
 }
 
-@i32_gv = internal addrspace(2) unnamed_addr constant [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4], align 4
+@i32_gv = internal unnamed_addr addrspace(2) constant [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4], align 4
 
 ; FUNC-LABEL: @i32
 
@@ -47,7 +47,7 @@ entry:
 
 %struct.foo = type { float, [5 x i32] }
 
-@struct_foo_gv = internal addrspace(2) unnamed_addr constant [1 x %struct.foo] [ %struct.foo { float 16.0, [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4] } ]
+@struct_foo_gv = internal unnamed_addr addrspace(2) constant [1 x %struct.foo] [ %struct.foo { float 16.0, [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4] } ]
 
 ; FUNC-LABEL: @struct_foo_gv_load
 

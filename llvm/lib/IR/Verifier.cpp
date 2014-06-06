@@ -517,7 +517,6 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
   Assert1(Aliasee, "Aliasee cannot be NULL!", &GA);
   Assert1(GA.getType() == Aliasee->getType(),
           "Alias and aliasee types should match!", &GA);
-  Assert1(!GA.hasUnnamedAddr(), "Alias cannot have unnamed_addr!", &GA);
 
   Assert1(isa<GlobalValue>(Aliasee) || isa<ConstantExpr>(Aliasee),
           "Aliasee should be either GlobalValue or ConstantExpr", &GA);

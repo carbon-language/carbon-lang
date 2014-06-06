@@ -21,6 +21,11 @@ define weak void @func-b() unnamed_addr { ret void }
 @global-f = weak global i32 42
 ; CHECK-DAG: @global-f = global i32 42
 
+@alias-a = weak global i32 42
+; CHECK-DAG: @alias-a = alias i32* @global-f
+@alias-b = weak unnamed_addr global i32 42
+; CHECK-DAG: @alias-b = unnamed_addr alias i32* @global-f
+
 declare void @func-c()
 ; CHECK-DAG: define weak void @func-c() {
 define weak void @func-d() { ret void }
@@ -37,6 +42,12 @@ define weak void @func-e() unnamed_addr { ret void }
 ; CHECK-DAG: @global-i = global i32 42
 @global-j = weak global i32 42
 ; CHECK-DAG: @global-j = global i32 42
+
+@alias-c = weak global i32 42
+; CHECK-DAG: @alias-c = alias i32* @global-f
+@alias-d = weak unnamed_addr global i32 42
+; CHECK-DAG: @alias-d = alias i32* @global-f
+
 
 declare void @func-g()
 ; CHECK-DAG: define weak void @func-g() {

@@ -698,7 +698,8 @@ The linkage must be one of ``private``, ``internal``, ``linkonce``, ``weak``,
 might not correctly handle dropping a weak symbol that is aliased.
 
 Alias that are not ``unnamed_addr`` are guaranteed to have the same address as
-the aliasee.
+the aliasee expression. ``unnamed_addr`` ones are only guaranteed to point
+to the same content.
 
 Since aliases are only a second name, some restrictions apply, of which
 some can only be checked when producing an object file:

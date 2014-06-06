@@ -6,7 +6,7 @@
 ; CHECK-LABEL: @test
 ; CHECK: .long   166120
 ; CHECK-NEXT: .long   1
-@lds = internal addrspace(3) unnamed_addr global i32 zeroinitializer, align 4
+@lds = internal unnamed_addr addrspace(3) global i32 zeroinitializer, align 4
 
 define void @test(i32 addrspace(1)* %out, i32 %cond) {
 entry:

@@ -893,6 +893,7 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
 bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   GlobalValue *DGV = getLinkedToGlobal(SGA);
   llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+  bool HasUnnamedAddr = SGA->hasUnnamedAddr();
 
   if (DGV) {
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
@@ -901,11 +902,13 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
     if (getLinkageResult(DGV, SGA, NewLinkage, NV, LinkFromSrc))
       return true;
     NewVisibility = NV;
+    HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
 
     if (!LinkFromSrc) {
       // Set calculated linkage.
       DGV->setLinkage(NewLinkage);
       DGV->setVisibility(*NewVisibility);
+      DGV->setUnnamedAddr(HasUnnamedAddr);
 
       // Make sure to remember this mapping.
       ValueMap[SGA] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGA->getType()));
@@ -926,6 +929,7 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   copyGVAttributes(NewDA, SGA);
   if (NewVisibility)
     NewDA->setVisibility(*NewVisibility);
+  NewDA->setUnnamedAddr(HasUnnamedAddr);
 
   if (DGV) {
     // Any uses of DGV need to change to NewDA, with cast.

@@ -1988,6 +1988,8 @@ error_code BitcodeReader::ParseModule(bool Resume) {
         UpgradeDLLImportExportLinkage(NewGA, Record[2]);
       if (Record.size() > 5)
 	NewGA->setThreadLocalMode(GetDecodedThreadLocalMode(Record[5]));
+      if (Record.size() > 6)
+	NewGA->setUnnamedAddr(Record[6]);
       ValueList.push_back(NewGA);
       AliasInits.push_back(std::make_pair(NewGA, Record[1]));
       break;

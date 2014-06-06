@@ -1,7 +1,7 @@
 ; RUN: opt < %s -S -nvvm-reflect -nvvm-reflect-list USE_MUL=0 -O2 | FileCheck %s --check-prefix=USE_MUL_0
 ; RUN: opt < %s -S -nvvm-reflect -nvvm-reflect-list USE_MUL=1 -O2 | FileCheck %s --check-prefix=USE_MUL_1
 
-@str = private addrspace(4) unnamed_addr constant [8 x i8] c"USE_MUL\00"
+@str = private unnamed_addr addrspace(4) constant [8 x i8] c"USE_MUL\00"
 
 declare i32 @__nvvm_reflect(i8*)
 declare i8* @llvm.nvvm.ptr.constant.to.gen.p0i8.p4i8(i8 addrspace(4)*)

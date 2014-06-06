@@ -44,23 +44,6 @@ TEST(VerifierTest, Branch_i1) {
   EXPECT_TRUE(verifyFunction(*F));
 }
 
-TEST(VerifierTest, AliasUnnamedAddr) {
-  LLVMContext &C = getGlobalContext();
-  Module M("M", C);
-  Type *Ty = Type::getInt8Ty(C);
-  Constant *Init = Constant::getNullValue(Ty);
-  GlobalVariable *Aliasee = new GlobalVariable(M, Ty, true,
-                                               GlobalValue::ExternalLinkage,
-                                               Init, "foo");
-  auto *GA = GlobalAlias::create(GlobalValue::ExternalLinkage, "bar", Aliasee);
-  GA->setUnnamedAddr(true);
-  std::string Error;
-  raw_string_ostream ErrorOS(Error);
-  EXPECT_TRUE(verifyModule(M, &ErrorOS));
-  EXPECT_TRUE(
-      StringRef(ErrorOS.str()).startswith("Alias cannot have unnamed_addr"));
-}
-
 TEST(VerifierTest, InvalidRetAttribute) {
   LLVMContext &C = getGlobalContext();
   Module M("M", C);

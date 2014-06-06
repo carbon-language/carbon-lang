@@ -52,7 +52,7 @@ fn.exit:
 }
 
 
-@global_as1 = private addrspace(1) unnamed_addr constant [10 x i8] c"ola\00mundo\00", align 1
+@global_as1 = private unnamed_addr addrspace(1) constant [10 x i8] c"ola\00mundo\00", align 1
 
 define void @f1_as1(i8 addrspace(1)* nocapture %c) {
 ; CHECK: @f1_as1

@@ -670,8 +670,8 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(getEncodedLinkage(A));
     Vals.push_back(getEncodedVisibility(A));
     Vals.push_back(getEncodedDLLStorageClass(A));
-    if (A.isThreadLocal())
-      Vals.push_back(getEncodedThreadLocalMode(A));
+    Vals.push_back(getEncodedThreadLocalMode(A));
+    Vals.push_back(A.hasUnnamedAddr());
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_ALIAS, Vals, AbbrevToUse);
     Vals.clear();

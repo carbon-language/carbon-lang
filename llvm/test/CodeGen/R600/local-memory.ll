@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 ; RUN: llc < %s -march=r600 -mcpu=bonaire -verify-machineinstrs | FileCheck --check-prefix=CI-CHECK %s
 
-@local_memory.local_mem = internal addrspace(3) unnamed_addr global [128 x i32] zeroinitializer, align 4
+@local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] zeroinitializer, align 4
 
 ; EG-CHECK-LABEL: @local_memory
 ; SI-CHECK-LABEL: @local_memory

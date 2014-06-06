@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
-@local_memory_two_objects.local_mem0 = internal addrspace(3) unnamed_addr global [4 x i32] zeroinitializer, align 4
-@local_memory_two_objects.local_mem1 = internal addrspace(3) unnamed_addr global [4 x i32] zeroinitializer, align 4
+@local_memory_two_objects.local_mem0 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
+@local_memory_two_objects.local_mem1 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
 
 ; EG-CHECK: @local_memory_two_objects
 

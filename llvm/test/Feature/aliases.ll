@@ -8,6 +8,7 @@
 @foo1 = alias i32* @bar
 @foo2 = alias i32* @bar
 @foo3 = alias i32* @foo2
+@foo4 = unnamed_addr alias i32* @foo2
 
 %FunTy = type i32()
 
