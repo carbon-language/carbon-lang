@@ -350,6 +350,10 @@ public:
     return getOS() == Triple::Win32 && getEnvironment() == Triple::MSVC;
   }
 
+  bool isWindowsItaniumEnvironment() const {
+    return getOS() == Triple::Win32 && getEnvironment() == Triple::Itanium;
+  }
+
   bool isWindowsCygwinEnvironment() const {
     return getOS() == Triple::Cygwin ||
            (getOS() == Triple::Win32 && getEnvironment() == Triple::Cygnus);
