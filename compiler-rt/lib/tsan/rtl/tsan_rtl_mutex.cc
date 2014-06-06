@@ -198,7 +198,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   TraceAddEvent(thr, thr->fast_state, EventTypeUnlock, s->GetId());
   int rec = 0;
   bool report_bad_unlock = false;
-  if (s->recursion == 0 || s->owner_tid != thr->tid) {
+  if (kCppMode && (s->recursion == 0 || s->owner_tid != thr->tid)) {
     if (flags()->report_mutex_bugs && !s->is_broken) {
       s->is_broken = true;
       report_bad_unlock = true;
