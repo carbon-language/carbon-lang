@@ -2912,12 +2912,31 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
         if (Out.isInvalid())
           return true;
 
+        // FIXME: Can this happen? We should not try to expand the pack
+        // in this case.
         if (Out.get()->containsUnexpandedParameterPack()) {
-          Out = RebuildPackExpansion(Out.get(), Expansion->getEllipsisLoc(),
-                                     OrigNumExpansions);
+          Out = getDerived().RebuildPackExpansion(
+              Out.get(), Expansion->getEllipsisLoc(), OrigNumExpansions);
           if (Out.isInvalid())
             return true;
         }
+
+        Outputs.push_back(Out.get());
+      }
+
+      // If we're supposed to retain a pack expansion, do so by temporarily
+      // forgetting the partially-substituted parameter pack.
+      if (RetainExpansion) {
+        ForgetPartiallySubstitutedPackRAII Forget(getDerived());
+
+        ExprResult Out = getDerived().TransformExpr(Pattern);
+        if (Out.isInvalid())
+          return true;
+
+        Out = getDerived().RebuildPackExpansion(
+            Out.get(), Expansion->getEllipsisLoc(), OrigNumExpansions);
+        if (Out.isInvalid())
+          return true;
 
         Outputs.push_back(Out.get());
       }
@@ -8618,6 +8637,9 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
           // Capture the transformed variable.
           getSema().tryCaptureVariable(CapturedVar, C->getLocation(), Kind);
         }
+
+        // FIXME: Retain a pack expansion if RetainExpansion is true.
+
         continue;
       }
 
@@ -9122,12 +9144,15 @@ TreeTransform<Derived>::TransformObjCDictionaryLiteral(
 
         // If any unexpanded parameter packs remain, we still have a
         // pack expansion.
+        // FIXME: Can this really happen?
         if (Key.get()->containsUnexpandedParameterPack() ||
             Value.get()->containsUnexpandedParameterPack())
           Element.EllipsisLoc = OrigElement.EllipsisLoc;
 
         Elements.push_back(Element);
       }
+
+      // FIXME: Retain a pack expansion if RetainExpansion is true.
 
       // We've finished with this pack expansion.
       continue;

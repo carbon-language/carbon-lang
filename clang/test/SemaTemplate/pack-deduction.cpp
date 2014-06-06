@@ -30,3 +30,10 @@ namespace PR14841 {
     f<char, short, int>(a); // expected-error {{no matching function}}
   }
 }
+
+namespace RetainExprPacks {
+  int f(int a, int b, int c);
+  template<typename ...Ts> struct X {};
+  template<typename ...Ts> int g(X<Ts...>, decltype(f(Ts()...)));
+  int n = g<int, int>(X<int, int, int>(), 0);
+}
