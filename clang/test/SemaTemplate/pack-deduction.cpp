@@ -18,3 +18,15 @@ namespace Nested {
   int b1 = f2(P<X<int, double>, int>(), P<X<int, double>, double>());
   int b2 = f2(P<X<int, double>, int>(), P<X<int, double>, double>(), P<X<int, double>, char>()); // expected-error {{no matching}}
 }
+
+namespace PR14841 {
+  template<typename T, typename U> struct A {};
+  template<typename ...Ts> void f(A<Ts...>); // expected-note {{substitution failure [with Ts = <char, short, int>]: too many template arg}}
+
+  void g(A<char, short> a) {
+    f(a);
+    f<char>(a);
+    f<char, short>(a);
+    f<char, short, int>(a); // expected-error {{no matching function}}
+  }
+}

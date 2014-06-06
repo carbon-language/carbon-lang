@@ -3856,6 +3856,17 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     ++ArgIdx;
   }
 
+  // If we're performing a partial argument substitution, allow any trailing
+  // pack expansions; they might be empty. This can happen even if
+  // PartialTemplateArgs is false (the list of arguments is complete but
+  // still dependent).
+  if (ArgIdx < NumArgs && CurrentInstantiationScope &&
+      CurrentInstantiationScope->getPartiallySubstitutedPack()) {
+    while (ArgIdx < NumArgs &&
+           TemplateArgs[ArgIdx].getArgument().isPackExpansion())
+      Converted.push_back(TemplateArgs[ArgIdx++].getArgument());
+  }
+
   // If we have any leftover arguments, then there were too many arguments.
   // Complain and fail.
   if (ArgIdx < NumArgs)
