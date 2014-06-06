@@ -400,6 +400,7 @@ public:
   DIE *getOrCreateSubprogramDIE(DISubprogram SP);
 
   void applySubprogramAttributes(DISubprogram SP, DIE &SPDie);
+  void applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie);
 
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.

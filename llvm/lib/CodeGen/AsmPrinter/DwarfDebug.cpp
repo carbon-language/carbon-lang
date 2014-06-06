@@ -531,8 +531,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   // shouldn't be found by lookup.
   AbsDef = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE,
                                  DIDescriptor());
-  SPCU.applySubprogramAttributes(SP, *AbsDef);
-  SPCU.addGlobalName(SP.getName(), *AbsDef, resolve(SP.getContext()));
+  SPCU.applySubprogramAttributesToDefinition(SP, *AbsDef);
 
   SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   createAndAddScopeChildren(SPCU, Scope, *AbsDef);
@@ -811,8 +810,7 @@ void DwarfDebug::finishSubprogramDefinitions() {
           // inlined versions during codegen.
           D = SPCU->getOrCreateSubprogramDIE(SP);
         // And attach the attributes
-        SPCU->applySubprogramAttributes(SP, *D);
-        SPCU->addGlobalName(SP.getName(), *D, resolve(SP.getContext()));
+        SPCU->applySubprogramAttributesToDefinition(SP, *D);
       }
     }
   }

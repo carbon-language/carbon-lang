@@ -1401,6 +1401,13 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   return &SPDie;
 }
 
+void DwarfUnit::applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie) {
+  DISubprogram SPDecl = SP.getFunctionDeclaration();
+  DIScope Context = resolve(SPDecl ? SPDecl.getContext() : SP.getContext());
+  applySubprogramAttributes(SP, SPDie);
+  addGlobalName(SP.getName(), SPDie, Context);
+}
+
 void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   DIE *DeclDie = nullptr;
   StringRef DeclLinkageName;

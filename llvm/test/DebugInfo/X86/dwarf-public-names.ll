@@ -44,15 +44,13 @@
 
 ; Check for each name in the output.
 ; LINUX-DAG: "ns"
-; FIXME: This should be C::static_member_function
-; LINUX-DAG: "static_member_function"
+; LINUX-DAG: "C::static_member_function"
 ; LINUX-DAG: "global_variable"
 ; LINUX-DAG: "ns::global_namespace_variable"
 ; LINUX-DAG: "ns::global_namespace_function"
 ; LINUX-DAG: "global_function"
 ; LINUX-DAG: "C::static_member_variable"
-; FIXME: This should be C::member_function
-; LINUX-DAG: "member_function"
+; LINUX-DAG: "C::member_function"
 
 %struct.C = type { i8 }
 

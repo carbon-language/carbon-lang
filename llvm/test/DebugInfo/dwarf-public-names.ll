@@ -41,15 +41,13 @@
 
 ; Check for each name in the output.
 ; CHECK-DAG: "ns"
-; FIXME: This should be C::static_member_function
-; CHECK-DAG: "static_member_function"
+; CHECK-DAG: "C::static_member_function"
 ; CHECK-DAG: "global_variable"
 ; CHECK-DAG: "ns::global_namespace_variable"
 ; CHECK-DAG: "ns::global_namespace_function"
 ; CHECK-DAG: "global_function"
 ; CHECK-DAG: "C::static_member_variable"
-; FIXME: This should be C::member_function
-; CHECK-DAG: "member_function"
+; CHECK-DAG: "C::member_function"
 
 %struct.C = type { i8 }
 
