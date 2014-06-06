@@ -8356,10 +8356,26 @@ vec_vsum4shs(vector signed short __a, vector int __b)
 
 /* vec_sum2s */
 
+/* The vsum2sws instruction has a big-endian bias, so that the second
+   input vector and the result always reference big-endian elements
+   1 and 3 (little-endian element 0 and 2).  For ease of porting the
+   programmer wants elements 1 and 3 in both cases, so for little
+   endian we must perform some permutes.  */
+
 static vector signed int __attribute__((__always_inline__))
 vec_sum2s(vector int __a, vector int __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector int __c = (vector signed int)
+    vec_perm(__b, __b, (vector unsigned char)
+	     (4,5,6,7,0,1,2,3,12,13,14,15,8,9,10,11));
+  __c = __builtin_altivec_vsum2sws(__a, __c);
+  return (vector signed int)
+    vec_perm(__c, __c, (vector unsigned char)
+	     (4,5,6,7,0,1,2,3,12,13,14,15,8,9,10,11));
+#else
   return __builtin_altivec_vsum2sws(__a, __b);
+#endif
 }
 
 /* vec_vsum2sws */
@@ -8367,7 +8383,17 @@ vec_sum2s(vector int __a, vector int __b)
 static vector signed int __attribute__((__always_inline__))
 vec_vsum2sws(vector int __a, vector int __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  vector int __c = (vector signed int)
+    vec_perm(__b, __b, (vector unsigned char)
+	     (4,5,6,7,0,1,2,3,12,13,14,15,8,9,10,11));
+  __c = __builtin_altivec_vsum2sws(__a, __c);
+  return (vector signed int)
+    vec_perm(__c, __c, (vector unsigned char)
+	     (4,5,6,7,0,1,2,3,12,13,14,15,8,9,10,11));
+#else
   return __builtin_altivec_vsum2sws(__a, __b);
+#endif
 }
 
 /* vec_sums */
