@@ -234,7 +234,7 @@ void Mutex::Lock() {
       cmp = kUnlocked;
       if (atomic_compare_exchange_weak(&state_, &cmp, kWriteLock,
                                        memory_order_acquire)) {
-#if TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS && !TSAN_GO
         StatInc(cur_thread(), stat_type_, backoff.Contention());
 #endif
         return;
@@ -262,7 +262,7 @@ void Mutex::ReadLock() {
   for (Backoff backoff; backoff.Do();) {
     prev = atomic_load(&state_, memory_order_acquire);
     if ((prev & kWriteLock) == 0) {
-#if TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS && !TSAN_GO
       StatInc(cur_thread(), stat_type_, backoff.Contention());
 #endif
       return;
