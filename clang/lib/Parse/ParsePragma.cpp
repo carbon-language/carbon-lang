@@ -15,6 +15,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Sema/LoopHint.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
@@ -141,6 +142,12 @@ private:
   Sema &Actions;
 };
 
+struct PragmaLoopHintHandler : public PragmaHandler {
+  PragmaLoopHintHandler() : PragmaHandler("loop") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &FirstToken) override;
+};
+
 }  // end namespace
 
 void Parser::initializePragmaHandlers() {
@@ -208,6 +215,9 @@ void Parser::initializePragmaHandlers() {
 
   OptimizeHandler.reset(new PragmaOptimizeHandler(Actions));
   PP.AddPragmaHandler("clang", OptimizeHandler.get());
+
+  LoopHintHandler.reset(new PragmaLoopHintHandler());
+  PP.AddPragmaHandler("clang", LoopHintHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -265,6 +275,9 @@ void Parser::resetPragmaHandlers() {
 
   PP.RemovePragmaHandler("clang", OptimizeHandler.get());
   OptimizeHandler.reset();
+
+  PP.RemovePragmaHandler("clang", LoopHintHandler.get());
+  LoopHintHandler.reset();
 }
 
 /// \brief Handle the annotation token produced for #pragma unused(...)
@@ -584,6 +597,40 @@ unsigned Parser::HandlePragmaMSInitSeg(llvm::StringRef PragmaName,
                                        SourceLocation PragmaLocation) {
   return PP.getDiagnostics().getCustomDiagID(
       DiagnosticsEngine::Error, "'#pragma %0' not implemented.");
+}
+
+struct PragmaLoopHintInfo {
+  Token Loop;
+  Token Value;
+  Token Option;
+};
+
+LoopHint Parser::HandlePragmaLoopHint() {
+  assert(Tok.is(tok::annot_pragma_loop_hint));
+  PragmaLoopHintInfo *Info =
+      static_cast<PragmaLoopHintInfo *>(Tok.getAnnotationValue());
+
+  LoopHint Hint;
+  Hint.LoopLoc =
+      IdentifierLoc::create(Actions.Context, Info->Loop.getLocation(),
+                            Info->Loop.getIdentifierInfo());
+  Hint.OptionLoc =
+      IdentifierLoc::create(Actions.Context, Info->Option.getLocation(),
+                            Info->Option.getIdentifierInfo());
+  Hint.ValueLoc =
+      IdentifierLoc::create(Actions.Context, Info->Value.getLocation(),
+                            Info->Value.getIdentifierInfo());
+  Hint.Range =
+      SourceRange(Info->Option.getLocation(), Info->Value.getLocation());
+
+  // FIXME: We should support template parameters for the loop hint value.
+  // See bug report #19610
+  if (Info->Value.is(tok::numeric_constant))
+    Hint.ValueExpr = Actions.ActOnNumericConstant(Info->Value).get();
+  else
+    Hint.ValueExpr = nullptr;
+
+  return Hint;
 }
 
 // #pragma GCC visibility comes in two variants:
@@ -1583,4 +1630,111 @@ void PragmaOptimizeHandler::HandlePragma(Preprocessor &PP,
   }
 
   Actions.ActOnPragmaOptimize(IsOn, FirstToken.getLocation());
+}
+
+/// \brief Handle the \#pragma clang loop directive.
+///  #pragma clang 'loop' loop-hints
+///
+///  loop-hints:
+///    loop-hint loop-hints[opt]
+///
+///  loop-hint:
+///    'vectorize' '(' loop-hint-keyword ')'
+///    'interleave' '(' loop-hint-keyword ')'
+///    'vectorize_width' '(' loop-hint-value ')'
+///    'interleave_count' '(' loop-hint-value ')'
+///
+///  loop-hint-keyword:
+///    'enable'
+///    'disable'
+///
+///  loop-hint-value:
+///    constant-expression
+///
+/// Specifying vectorize(enable) or vectorize_width(_value_) instructs llvm to
+/// try vectorizing the instructions of the loop it precedes. Specifying
+/// interleave(enable) or interleave_count(_value_) instructs llvm to try
+/// interleaving multiple iterations of the loop it precedes. The width of the
+/// vector instructions is specified by vectorize_width() and the number of
+/// interleaved loop iterations is specified by interleave_count(). Specifying a
+/// value of 1 effectively disables vectorization/interleaving, even if it is
+/// possible and profitable, and 0 is invalid. The loop vectorizer currently
+/// only works on inner loops.
+///
+void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
+                                         PragmaIntroducerKind Introducer,
+                                         Token &Tok) {
+  Token Loop = Tok;
+  SmallVector<Token, 1> TokenList;
+
+  // Lex the optimization option and verify it is an identifier.
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_loop_invalid_option)
+        << /*MissingOption=*/true << "";
+    return;
+  }
+
+  while (Tok.is(tok::identifier)) {
+    Token Option = Tok;
+    IdentifierInfo *OptionInfo = Tok.getIdentifierInfo();
+
+    if (!OptionInfo->isStr("vectorize") && !OptionInfo->isStr("interleave") &&
+        !OptionInfo->isStr("vectorize_width") &&
+        !OptionInfo->isStr("interleave_count")) {
+      PP.Diag(Tok.getLocation(), diag::err_pragma_loop_invalid_option)
+          << /*MissingOption=*/false << OptionInfo;
+      return;
+    }
+
+    // Read '('
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::l_paren)) {
+      PP.Diag(Tok.getLocation(), diag::err_expected) << tok::l_paren;
+      return;
+    }
+
+    // FIXME: All tokens between '(' and ')' should be stored and parsed as a
+    // constant expression.
+    PP.Lex(Tok);
+    Token Value;
+    if (Tok.is(tok::identifier) || Tok.is(tok::numeric_constant))
+      Value = Tok;
+
+    // Read ')'
+    PP.Lex(Tok);
+    if (Tok.isNot(tok::r_paren)) {
+      PP.Diag(Tok.getLocation(), diag::err_expected) << tok::r_paren;
+      return;
+    }
+
+    // Get next optimization option.
+    PP.Lex(Tok);
+
+    auto *Info = new (PP.getPreprocessorAllocator()) PragmaLoopHintInfo;
+    Info->Loop = Loop;
+    Info->Option = Option;
+    Info->Value = Value;
+
+    // Generate the vectorization hint token.
+    Token LoopHintTok;
+    LoopHintTok.startToken();
+    LoopHintTok.setKind(tok::annot_pragma_loop_hint);
+    LoopHintTok.setLocation(Loop.getLocation());
+    LoopHintTok.setAnnotationValue(static_cast<void *>(Info));
+    TokenList.push_back(LoopHintTok);
+  }
+
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+        << "clang loop";
+    return;
+  }
+
+  Token *TokenArray = new Token[TokenList.size()];
+  std::copy(TokenList.begin(), TokenList.end(), TokenArray);
+
+  PP.EnterTokenStream(TokenArray, TokenList.size(),
+                      /*DisableMacroExpansion=*/false,
+                      /*OwnsTokens=*/true);
 }

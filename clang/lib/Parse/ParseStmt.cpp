@@ -15,11 +15,13 @@
 #include "clang/Parse/Parser.h"
 #include "RAIIObjectsForParser.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/Attributes.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/LoopHint.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TypoCorrection.h"
@@ -357,6 +359,10 @@ Retry:
     ProhibitAttributes(Attrs);
     HandlePragmaMSPragma();
     return StmtEmpty();
+
+  case tok::annot_pragma_loop_hint:
+    ProhibitAttributes(Attrs);
+    return ParsePragmaLoopHint(Stmts, OnlyStatement, TrailingElseLoc, Attrs);
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -1757,6 +1763,37 @@ StmtResult Parser::ParseReturnStatement() {
     }
   }
   return Actions.ActOnReturnStmt(ReturnLoc, R.get(), getCurScope());
+}
+
+StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts, bool OnlyStatement,
+                                       SourceLocation *TrailingElseLoc,
+                                       ParsedAttributesWithRange &Attrs) {
+  // Create temporary attribute list.
+  ParsedAttributesWithRange TempAttrs(AttrFactory);
+
+  // Get vectorize hints and consume annotated token.
+  while (Tok.is(tok::annot_pragma_loop_hint)) {
+    LoopHint Hint = HandlePragmaLoopHint();
+    ConsumeToken();
+
+    if (!Hint.LoopLoc || !Hint.OptionLoc || !Hint.ValueLoc)
+      continue;
+
+    ArgsUnion ArgHints[] = {Hint.OptionLoc, Hint.ValueLoc,
+                            ArgsUnion(Hint.ValueExpr)};
+    // FIXME: Replace AS_Keyword with Pragma spelling AS_Pragma.
+    TempAttrs.addNew(Hint.LoopLoc->Ident, Hint.Range, 0, Hint.LoopLoc->Loc,
+                     ArgHints, 3, AttributeList::AS_Keyword);
+  }
+
+  // Get the next statement.
+  MaybeParseCXX11Attributes(Attrs);
+
+  StmtResult S = ParseStatementOrDeclarationAfterAttributes(
+      Stmts, OnlyStatement, TrailingElseLoc, Attrs);
+
+  Attrs.takeAllFrom(TempAttrs);
+  return S;
 }
 
 namespace {

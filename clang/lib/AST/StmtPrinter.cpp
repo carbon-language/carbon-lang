@@ -168,8 +168,22 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 }
 
 void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
-  for (const auto *Attr : Node->getAttrs())
-    Attr->printPretty(OS, Policy);
+  std::string raw_attr_os;
+  llvm::raw_string_ostream AttrOS(raw_attr_os);
+  for (const auto *Attr : Node->getAttrs()) {
+    // FIXME: This hack will be removed when printPretty
+    // has been modified to print pretty pragmas
+    if (const LoopHintAttr *LHA = dyn_cast<LoopHintAttr>(Attr)) {
+      LHA->print(OS, Policy);
+    } else
+      Attr->printPretty(AttrOS, Policy);
+  }
+
+  // Print attributes after pragmas.
+  StringRef AttrStr = AttrOS.str();
+  if (!AttrStr.empty())
+    OS << AttrStr;
+
   PrintStmt(Node->getSubStmt(), 0);
 }
 
