@@ -473,10 +473,8 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   SourceLocation KeyLoc = ConsumeToken();
 
   // Grab the ellipsis (if given).
-  bool Ellipsis = false;
   SourceLocation EllipsisLoc;
   if (TryConsumeToken(tok::ellipsis, EllipsisLoc)) {
-    Ellipsis = true;
     Diag(EllipsisLoc,
          getLangOpts().CPlusPlus11
            ? diag::warn_cxx98_compat_variadic_templates
