@@ -3488,30 +3488,49 @@ vec_mtvscr(vector float __a)
   __builtin_altivec_mtvscr((vector int)__a);
 }
 
+/* The vmulos* and vmules* instructions have a big endian bias, so
+   we must reverse the meaning of "even" and "odd" for little endian.  */
+
 /* vec_mule */
 
 static vector short __ATTRS_o_ai
 vec_mule(vector signed char __a, vector signed char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulosb(__a, __b);
+#else
   return __builtin_altivec_vmulesb(__a, __b);
+#endif
 }
 
 static vector unsigned short __ATTRS_o_ai
 vec_mule(vector unsigned char __a, vector unsigned char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuloub(__a, __b);
+#else
   return __builtin_altivec_vmuleub(__a, __b);
+#endif
 }
 
 static vector int __ATTRS_o_ai
 vec_mule(vector short __a, vector short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulosh(__a, __b);
+#else
   return __builtin_altivec_vmulesh(__a, __b);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_mule(vector unsigned short __a, vector unsigned short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulouh(__a, __b);
+#else
   return __builtin_altivec_vmuleuh(__a, __b);
+#endif
 }
 
 /* vec_vmulesb */
@@ -3519,7 +3538,11 @@ vec_mule(vector unsigned short __a, vector unsigned short __b)
 static vector short __attribute__((__always_inline__))
 vec_vmulesb(vector signed char __a, vector signed char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulosb(__a, __b);
+#else
   return __builtin_altivec_vmulesb(__a, __b);
+#endif
 }
 
 /* vec_vmuleub */
@@ -3527,7 +3550,11 @@ vec_vmulesb(vector signed char __a, vector signed char __b)
 static vector unsigned short __attribute__((__always_inline__))
 vec_vmuleub(vector unsigned char __a, vector unsigned char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuloub(__a, __b);
+#else
   return __builtin_altivec_vmuleub(__a, __b);
+#endif
 }
 
 /* vec_vmulesh */
@@ -3535,7 +3562,11 @@ vec_vmuleub(vector unsigned char __a, vector unsigned char __b)
 static vector int __attribute__((__always_inline__))
 vec_vmulesh(vector short __a, vector short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulosh(__a, __b);
+#else
   return __builtin_altivec_vmulesh(__a, __b);
+#endif
 }
 
 /* vec_vmuleuh */
@@ -3543,7 +3574,11 @@ vec_vmulesh(vector short __a, vector short __b)
 static vector unsigned int __attribute__((__always_inline__))
 vec_vmuleuh(vector unsigned short __a, vector unsigned short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulouh(__a, __b);
+#else
   return __builtin_altivec_vmuleuh(__a, __b);
+#endif
 }
 
 /* vec_mulo */
@@ -3551,25 +3586,41 @@ vec_vmuleuh(vector unsigned short __a, vector unsigned short __b)
 static vector short __ATTRS_o_ai
 vec_mulo(vector signed char __a, vector signed char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulesb(__a, __b);
+#else
   return __builtin_altivec_vmulosb(__a, __b);
+#endif
 }
 
 static vector unsigned short __ATTRS_o_ai
 vec_mulo(vector unsigned char __a, vector unsigned char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuleub(__a, __b);
+#else
   return __builtin_altivec_vmuloub(__a, __b);
+#endif
 }
 
 static vector int __ATTRS_o_ai
 vec_mulo(vector short __a, vector short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulesh(__a, __b);
+#else
   return __builtin_altivec_vmulosh(__a, __b);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_mulo(vector unsigned short __a, vector unsigned short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuleuh(__a, __b);
+#else
   return __builtin_altivec_vmulouh(__a, __b);
+#endif
 }
 
 /* vec_vmulosb */
@@ -3577,7 +3628,11 @@ vec_mulo(vector unsigned short __a, vector unsigned short __b)
 static vector short __attribute__((__always_inline__))
 vec_vmulosb(vector signed char __a, vector signed char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulesb(__a, __b);
+#else
   return __builtin_altivec_vmulosb(__a, __b);
+#endif
 }
 
 /* vec_vmuloub */
@@ -3585,7 +3640,11 @@ vec_vmulosb(vector signed char __a, vector signed char __b)
 static vector unsigned short __attribute__((__always_inline__))
 vec_vmuloub(vector unsigned char __a, vector unsigned char __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuleub(__a, __b);
+#else
   return __builtin_altivec_vmuloub(__a, __b);
+#endif
 }
 
 /* vec_vmulosh */
@@ -3593,7 +3652,11 @@ vec_vmuloub(vector unsigned char __a, vector unsigned char __b)
 static vector int __attribute__((__always_inline__))
 vec_vmulosh(vector short __a, vector short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmulesh(__a, __b);
+#else
   return __builtin_altivec_vmulosh(__a, __b);
+#endif
 }
 
 /* vec_vmulouh */
@@ -3601,7 +3664,11 @@ vec_vmulosh(vector short __a, vector short __b)
 static vector unsigned int __attribute__((__always_inline__))
 vec_vmulouh(vector unsigned short __a, vector unsigned short __b)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vmuleuh(__a, __b);
+#else
   return __builtin_altivec_vmulouh(__a, __b);
+#endif
 }
 
 /* vec_nmsub */
