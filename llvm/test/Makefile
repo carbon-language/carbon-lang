@@ -61,6 +61,15 @@ clang-tools-site-cfg: FORCE
 extra-site-cfgs:: clang-tools-site-cfg
 endif
 
+ifeq ($(shell test -f $(PROJ_OBJ_DIR)/../tools/lld/Makefile && echo OK), OK)
+LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/lld/test
+
+# Force creation of lld's lit.site.cfg.
+lld-site-cfg: FORCE
+	$(MAKE) -C $(PROJ_OBJ_DIR)/../tools/lld/test lit.site.cfg Unit/lit.site.cfg
+extra-site-cfgs:: lld-site-cfg
+endif
+
 ifeq ($(shell test -f $(PROJ_OBJ_DIR)/../tools/polly/Makefile && echo OK), OK)
 LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/polly/test
 
