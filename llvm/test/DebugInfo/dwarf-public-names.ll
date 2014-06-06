@@ -40,12 +40,16 @@
 ; CHECK: version = 0x0002
 
 ; Check for each name in the output.
-; CHECK: global_namespace_variable
-; CHECK: global_namespace_function
-; CHECK: static_member_function
-; CHECK: global_variable
-; CHECK: global_function
-; CHECK: member_function
+; CHECK-DAG: "ns"
+; FIXME: This should be C::static_member_function
+; CHECK-DAG: "static_member_function"
+; CHECK-DAG: "global_variable"
+; CHECK-DAG: "ns::global_namespace_variable"
+; CHECK-DAG: "ns::global_namespace_function"
+; CHECK-DAG: "global_function"
+; CHECK-DAG: "C::static_member_variable"
+; FIXME: This should be C::member_function
+; CHECK-DAG: "member_function"
 
 %struct.C = type { i8 }
 
@@ -109,7 +113,7 @@ attributes #1 = { nounwind readnone }
 !18 = metadata !{i32 786478, metadata !4, null, metadata !"static_member_function", metadata !"static_member_function", metadata !"_ZN1C22static_member_functionEv", i32 13, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_ZN1C22static_member_functionEv, null, metadata !14, metadata !1, i32 13} ; [ DW_TAG_subprogram ] [line 13] [def] [static_member_function]
 !19 = metadata !{i32 786478, metadata !4, metadata !4, metadata !"global_function", metadata !"global_function", metadata !"_Z15global_functionv", i32 19, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z15global_functionv, null, null, metadata !1, i32 19} ; [ DW_TAG_subprogram ] [line 19] [def] [global_function]
 !20 = metadata !{i32 786478, metadata !4, metadata !21, metadata !"global_namespace_function", metadata !"global_namespace_function", metadata !"_ZN2ns25global_namespace_functionEv", i32 24, metadata !22, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_ZN2ns25global_namespace_functionEv, null, null, metadata !1, i32 24} ; [ DW_TAG_subprogram ] [line 24] [def] [global_namespace_function]
-!21 = metadata !{i32 786489, null, metadata !"ns", metadata !4, i32 23} ; [ DW_TAG_namespace ] [/usr2/kparzysz/s.hex/t/dwarf-public-names.cpp]
+!21 = metadata !{i32 786489, metadata !4, null, metadata !"ns", i32 23} ; [ DW_TAG_namespace ] [/usr2/kparzysz/s.hex/t/dwarf-public-names.cpp]
 !22 = metadata !{i32 786453, i32 0, null, i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !23, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !23 = metadata !{null}
 !24 = metadata !{metadata !25, metadata !26, metadata !27}

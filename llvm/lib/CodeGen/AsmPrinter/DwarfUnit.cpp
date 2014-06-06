@@ -1071,6 +1071,8 @@ std::string DwarfUnit::getParentContextString(DIScope Context) const {
        I != E; ++I) {
     DIScope Ctx = *I;
     StringRef Name = Ctx.getName();
+    if (Name.empty() && Ctx.isNameSpace())
+      Name = "(anonymous namespace)";
     if (!Name.empty()) {
       CS += Name;
       CS += "::";
@@ -1359,12 +1361,13 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
     return NDie;
   DIE &NDie = createAndAddDIE(dwarf::DW_TAG_namespace, *ContextDIE, NS);
 
-  if (!NS.getName().empty()) {
+  StringRef Name = NS.getName();
+  if (!Name.empty())
     addString(NDie, dwarf::DW_AT_name, NS.getName());
-    DD->addAccelNamespace(NS.getName(), NDie);
-    addGlobalName(NS.getName(), NDie, NS.getContext());
-  } else
-    DD->addAccelNamespace("(anonymous namespace)", NDie);
+  else
+    Name = "(anonymous namespace)";
+  DD->addAccelNamespace(Name, NDie);
+  addGlobalName(Name, NDie, NS.getContext());
   addSourceLine(NDie, NS);
   return &NDie;
 }
@@ -1667,10 +1670,8 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       DD->addAccelName(GV.getLinkageName(), AddrDIE);
   }
 
-  if (!GV.isLocalToUnit())
-    addGlobalName(GV.getName(),
-                  VariableSpecDIE ? *VariableSpecDIE : *VariableDIE,
-                  GV.getContext());
+  addGlobalName(GV.getName(), VariableSpecDIE ? *VariableSpecDIE : *VariableDIE,
+                GV.getContext());
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
