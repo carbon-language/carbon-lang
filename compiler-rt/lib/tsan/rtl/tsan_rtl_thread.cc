@@ -134,6 +134,7 @@ void ThreadContext::OnFinished() {
     ctx->dd->DestroyPhysicalThread(thr->dd_pt);
     ctx->dd->DestroyLogicalThread(thr->dd_lt);
   }
+  ctx->metamap.OnThreadIdle(thr);
 #ifndef TSAN_GO
   AllocatorThreadFinish(thr);
 #endif
