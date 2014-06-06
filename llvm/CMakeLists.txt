@@ -244,6 +244,9 @@ set(LLVM_USE_SANITIZER "" CACHE STRING
 option(LLVM_USE_SPLIT_DWARF
   "Use -gsplit-dwarf when compiling llvm." OFF)
 
+option(WITH_POLLY "Build LLVM with Polly" ON)
+option(LINK_POLLY_INTO_TOOLS "Static link Polly into tools" OFF)
+
 # Define an option controlling whether we should build for 32-bit on 64-bit
 # platforms, where supported.
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
@@ -514,9 +517,6 @@ if(LLVM_INCLUDE_TESTS)
 endif()
 
 add_subdirectory(projects)
-
-option(WITH_POLLY "Build LLVM with Polly" ON)
-option(LINK_POLLY_INTO_TOOLS "Static link Polly into tools" OFF)
 
 if(WITH_POLLY)
   if(NOT EXISTS ${LLVM_MAIN_SRC_DIR}/tools/polly/CMakeLists.txt)
