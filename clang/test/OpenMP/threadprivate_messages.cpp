@@ -55,17 +55,17 @@ extern IncompleteSt e;
 int &f = a; // expected-note {{'f' defined here}}
 #pragma omp threadprivate (f) // expected-error {{arguments of '#pragma omp threadprivate' cannot be of reference type 'int &'}}
 
-class Class {
+class TestClass {
   private:
     int a; // expected-note {{declared here}}
     static int b; // expected-note {{'b' declared here}}
-    Class() : a(0){}
+    TestClass() : a(0){}
   public:
-    Class (int aaa) : a(aaa) {}
+    TestClass (int aaa) : a(aaa) {}
 #pragma omp threadprivate (b, a) // expected-error {{'a' is not a global variable, static local variable or static data member}}
 } g(10);
 #pragma omp threadprivate (b) // expected-error {{use of undeclared identifier 'b'}}
-#pragma omp threadprivate (Class::b) // expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'Class::b' variable declaration}}
+#pragma omp threadprivate (TestClass::b) // expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'TestClass::b' variable declaration}}
 #pragma omp threadprivate (g)
 
 namespace ns {
@@ -112,7 +112,7 @@ int main(int argc, char **argv) { // expected-note {{'argc' defined here}}
   static double d1;
   static double d2;
   static double d3; // expected-note {{'d3' defined here}}
-  static Class LocalClass(y); // expected-error {{variable with local storage in initial value of threadprivate variable}}
+  static TestClass LocalClass(y); // expected-error {{variable with local storage in initial value of threadprivate variable}}
 #pragma omp threadprivate(LocalClass)
 
   d.a = a;
