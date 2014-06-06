@@ -347,6 +347,14 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
 
   COFFSection *coff_section = createSection(Sec.getSectionName());
   COFFSymbol  *coff_symbol = createSymbol(Sec.getSectionName());
+  if (Sec.getSelection() != COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+    if (const MCSymbol *S = Sec.getCOMDATSymbol()) {
+      COFFSymbol *COMDATSymbol = GetOrCreateCOFFSymbol(S);
+      if (COMDATSymbol->Section)
+        report_fatal_error("two sections have the same comdat");
+      COMDATSymbol->Section = coff_section;
+    }
+  }
 
   coff_section->Symbol = coff_symbol;
   coff_symbol->Section = coff_section;
@@ -458,9 +466,15 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     } else {
       const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
-      if (BaseData.Fragment)
-        coff_symbol->Section =
+      if (BaseData.Fragment) {
+        COFFSection *Sec =
             SectionMap[&BaseData.Fragment->getParent()->getSection()];
+
+        if (coff_symbol->Section && coff_symbol->Section != Sec)
+          report_fatal_error("conflicting sections for symbol");
+
+        coff_symbol->Section = Sec;
+      }
     }
 
     coff_symbol->MCData = &ResSymData;
@@ -865,11 +879,15 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     const MCSectionCOFF &MCSec =
       static_cast<const MCSectionCOFF &>(Section->MCData->getSection());
 
-    COFFSection *Assoc = SectionMap.lookup(MCSec.getAssocSection());
+    const MCSymbol *COMDAT = MCSec.getCOMDATSymbol();
+    assert(COMDAT);
+    COFFSymbol *COMDATSymbol = GetOrCreateCOFFSymbol(COMDAT);
+    assert(COMDATSymbol);
+    COFFSection *Assoc = COMDATSymbol->Section;
     if (!Assoc)
-      report_fatal_error(Twine("Missing associated COMDAT section ") +
-                         MCSec.getAssocSection()->getSectionName() +
-                         " for section " + MCSec.getSectionName());
+      report_fatal_error(
+          Twine("Missing associated COMDAT section for section ") +
+          MCSec.getSectionName());
 
     // Skip this section if the associated section is unused.
     if (Assoc->Number == -1)

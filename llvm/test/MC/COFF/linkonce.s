@@ -24,7 +24,6 @@
 .long 1
 
 .section s6
-.linkonce associative s1
 .long 1
 
 .section s7
@@ -37,11 +36,6 @@
 
 .section .foo$bar
 .linkonce discard
-.long 1
-
-// Check that valid '.section' names can be associated.
-.section multi
-.linkonce associative .foo$bar
 .long 1
 
 
@@ -79,7 +73,6 @@
 // CHECK:   Section {
 // CHECK:     Name: s6
 // CHECK:     Characteristics [
-// CHECK:       IMAGE_SCN_LNK_COMDAT
 // CHECK:     ]
 // CHECK:   }
 // CHECK:   Section {
@@ -90,12 +83,6 @@
 // CHECK:   }
 // CHECK:   Section {
 // CHECK:     Name: s8
-// CHECK:     Characteristics [
-// CHECK:       IMAGE_SCN_LNK_COMDAT
-// CHECK:     ]
-// CHECK:   }
-// CHECK:   Section {
-// CHECK:     Name: multi
 // CHECK:     Characteristics [
 // CHECK:       IMAGE_SCN_LNK_COMDAT
 // CHECK:     ]
@@ -144,12 +131,6 @@
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s6
-// CHECK:     Section: s6 (6)
-// CHECK:     AuxSectionDef {
-// CHECK:       Number: 1
-// CHECK:       Selection: Associative (0x5)
-// CHECK:       AssocSection: s1
-// CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s7
@@ -165,15 +146,5 @@
 // CHECK:     AuxSectionDef {
 // CHECK:       Number: 8
 // CHECK:       Selection: Newest (0x7)
-// CHECK:     }
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: multi
-// CHECK:     Value: 0
-// CHECK:     Section: multi (10)
-// CHECK:     AuxSectionDef {
-// CHECK:       Number: 9
-// CHECK:       Selection: Associative (0x5)
-// CHECK:       AssocSection: .foo$bar
 // CHECK:     }
 // CHECK:   }

@@ -37,7 +37,7 @@ class COFFAsmParser : public MCAsmParserExtension {
 
   bool ParseSectionSwitch(StringRef Section, unsigned Characteristics,
                           SectionKind Kind, StringRef COMDATSymName,
-                          COFF::COMDATType Type, const MCSectionCOFF *Assoc);
+                          COFF::COMDATType Type);
 
   bool ParseSectionName(StringRef &SectionName);
   bool ParseSectionFlags(StringRef FlagsString, unsigned* Flags);
@@ -117,8 +117,7 @@ class COFFAsmParser : public MCAsmParserExtension {
   bool ParseDirectiveEndef(StringRef, SMLoc);
   bool ParseDirectiveSecRel32(StringRef, SMLoc);
   bool ParseDirectiveSecIdx(StringRef, SMLoc);
-  bool parseCOMDATTypeAndAssoc(COFF::COMDATType &Type,
-                               const MCSectionCOFF *&Assoc);
+  bool parseCOMDATType(COFF::COMDATType &Type);
   bool ParseDirectiveLinkOnce(StringRef, SMLoc);
 
   // Win64 EH directives.
@@ -293,21 +292,20 @@ bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
                                        unsigned Characteristics,
                                        SectionKind Kind) {
   return ParseSectionSwitch(Section, Characteristics, Kind, "",
-                            COFF::IMAGE_COMDAT_SELECT_ANY, nullptr);
+                            COFF::IMAGE_COMDAT_SELECT_ANY);
 }
 
 bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
                                        unsigned Characteristics,
                                        SectionKind Kind,
                                        StringRef COMDATSymName,
-                                       COFF::COMDATType Type,
-                                       const MCSectionCOFF *Assoc) {
+                                       COFF::COMDATType Type) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in section switching directive");
   Lex();
 
   getStreamer().SwitchSection(getContext().getCOFFSection(
-      Section, Characteristics, Kind, COMDATSymName, Type, Assoc));
+      Section, Characteristics, Kind, COMDATSymName, Type));
 
   return false;
 }
@@ -359,14 +357,13 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   }
 
   COFF::COMDATType Type = COFF::IMAGE_COMDAT_SELECT_ANY;
-  const MCSectionCOFF *Assoc = nullptr;
   StringRef COMDATSymName;
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
 
     Flags |= COFF::IMAGE_SCN_LNK_COMDAT;
 
-    if (parseCOMDATTypeAndAssoc(Type, Assoc))
+    if (parseCOMDATType(Type))
       return true;
 
     if (getLexer().isNot(AsmToken::Comma))
@@ -381,7 +378,7 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     return TokError("unexpected token in directive");
 
   SectionKind Kind = computeSectionKind(Flags);
-  ParseSectionSwitch(SectionName, Flags, Kind, COMDATSymName, Type, Assoc);
+  ParseSectionSwitch(SectionName, Flags, Kind, COMDATSymName, Type);
   return false;
 }
 
@@ -461,9 +458,8 @@ bool COFFAsmParser::ParseDirectiveSecIdx(StringRef, SMLoc) {
   return false;
 }
 
-/// ::= [ identifier [ identifier ] ]
-bool COFFAsmParser::parseCOMDATTypeAndAssoc(COFF::COMDATType &Type,
-                                            const MCSectionCOFF *&Assoc) {
+/// ::= [ identifier ]
+bool COFFAsmParser::parseCOMDATType(COFF::COMDATType &Type) {
   StringRef TypeId = getTok().getIdentifier();
 
   Type = StringSwitch<COFF::COMDATType>(TypeId)
@@ -481,48 +477,28 @@ bool COFFAsmParser::parseCOMDATTypeAndAssoc(COFF::COMDATType &Type,
 
   Lex();
 
-  if (Type == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-    SMLoc Loc = getTok().getLoc();
-    StringRef AssocName;
-    if (ParseSectionName(AssocName))
-      return TokError("expected associated section name");
-
-    Assoc = static_cast<const MCSectionCOFF*>(
-                                        getContext().getCOFFSection(AssocName));
-    if (!Assoc)
-      return Error(Loc, "cannot associate unknown section '" + AssocName + "'");
-    if (!(Assoc->getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT))
-      return Error(Loc, "associated section must be a COMDAT section");
-    if (Assoc->getSelection() == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
-      return Error(Loc, "associated section cannot be itself associative");
-  }
-
   return false;
 }
 
 /// ParseDirectiveLinkOnce
-///  ::= .linkonce [ identifier [ identifier ] ]
+///  ::= .linkonce [ identifier ]
 bool COFFAsmParser::ParseDirectiveLinkOnce(StringRef, SMLoc Loc) {
   COFF::COMDATType Type = COFF::IMAGE_COMDAT_SELECT_ANY;
-  const MCSectionCOFF *Assoc = nullptr;
   if (getLexer().is(AsmToken::Identifier))
-    if (parseCOMDATTypeAndAssoc(Type, Assoc))
+    if (parseCOMDATType(Type))
       return true;
 
   const MCSectionCOFF *Current = static_cast<const MCSectionCOFF*>(
                                        getStreamer().getCurrentSection().first);
 
-
-  if (Type == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-    if (Assoc == Current)
-      return Error(Loc, "cannot associate a section with itself");
-  }
+  if (Type == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
+    return Error(Loc, "cannot make section associative with .linkonce");
 
   if (Current->getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT)
     return Error(Loc, Twine("section '") + Current->getSectionName() +
                                                        "' is already linkonce");
 
-  Current->setSelection(Type, Assoc);
+  Current->setSelection(Type);
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");

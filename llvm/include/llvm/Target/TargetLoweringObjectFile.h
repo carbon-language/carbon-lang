@@ -131,14 +131,12 @@ public:
                     MCStreamer &Streamer) const;
 
   virtual const MCSection *getStaticCtorSection(unsigned Priority,
-                                                const MCSymbol *KeySym,
-                                                const MCSection *KeySec) const {
+                                                const MCSymbol *KeySym) const {
     return StaticCtorSection;
   }
 
   virtual const MCSection *getStaticDtorSection(unsigned Priority,
-                                                const MCSymbol *KeySym,
-                                                const MCSection *KeySec) const {
+                                                const MCSymbol *KeySym) const {
     return StaticDtorSection;
   }
 

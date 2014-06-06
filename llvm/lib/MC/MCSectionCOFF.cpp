@@ -30,14 +30,9 @@ bool MCSectionCOFF::ShouldOmitSectionDirective(StringRef Name,
   return false;
 }
 
-void MCSectionCOFF::setSelection(int Selection,
-                                 const MCSectionCOFF *Assoc) const {
+void MCSectionCOFF::setSelection(int Selection) const {
   assert(Selection != 0 && "invalid COMDAT selection type");
-  assert((Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) ==
-         (Assoc != nullptr) &&
-    "associative COMDAT section must have an associated section");
   this->Selection = Selection;
-  this->Assoc = Assoc;
   Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
 }
 
@@ -82,7 +77,7 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
         OS << "same_contents,";
         break;
       case COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE:
-        OS << "associative " << Assoc->getSectionName() << ",";
+        OS << "associative,";
         break;
       case COFF::IMAGE_COMDAT_SELECT_LARGEST:
         OS << "largest,";

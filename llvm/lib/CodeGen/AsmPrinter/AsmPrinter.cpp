@@ -1397,7 +1397,6 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
   for (Structor &S : Structors) {
     const TargetLoweringObjectFile &Obj = getObjFileLowering();
     const MCSymbol *KeySym = nullptr;
-    const MCSection *KeySec = nullptr;
     if (GlobalValue *GV = S.ComdatKey) {
       if (GV->hasAvailableExternallyLinkage())
         // If the associated variable is available_externally, some other TU
@@ -1405,11 +1404,10 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
         continue;
 
       KeySym = getSymbol(GV);
-      KeySec = getObjFileLowering().SectionForGlobal(GV, *Mang, TM);
     }
     const MCSection *OutputSection =
-        (isCtor ? Obj.getStaticCtorSection(S.Priority, KeySym, KeySec)
-                : Obj.getStaticDtorSection(S.Priority, KeySym, KeySec));
+        (isCtor ? Obj.getStaticCtorSection(S.Priority, KeySym)
+                : Obj.getStaticDtorSection(S.Priority, KeySym));
     OutStreamer.SwitchSection(OutputSection);
     if (OutStreamer.getCurrentSection() != OutStreamer.getPreviousSection())
       EmitAlignment(Align);

@@ -277,10 +277,11 @@ const MCSectionELF *MCContext::CreateELFGroupSection() {
   return Result;
 }
 
-const MCSectionCOFF *
-MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
-                          SectionKind Kind, StringRef COMDATSymName,
-                          int Selection, const MCSectionCOFF *Assoc) {
+const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
+                                               unsigned Characteristics,
+                                               SectionKind Kind,
+                                               StringRef COMDATSymName,
+                                               int Selection) {
   // Do the lookup, if we have a hit, return it.
 
   SectionGroupPair P(Section, COMDATSymName);
@@ -294,8 +295,8 @@ MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
     COMDATSymbol = GetOrCreateSymbol(COMDATSymName);
 
   StringRef CachedName = Iter->first.first;
-  MCSectionCOFF *Result = new (*this) MCSectionCOFF(
-      CachedName, Characteristics, COMDATSymbol, Selection, Assoc, Kind);
+  MCSectionCOFF *Result = new (*this)
+      MCSectionCOFF(CachedName, Characteristics, COMDATSymbol, Selection, Kind);
 
   Iter->second = Result;
   return Result;

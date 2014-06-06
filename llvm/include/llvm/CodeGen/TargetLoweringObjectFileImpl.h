@@ -68,11 +68,9 @@ public:
 
   void InitializeELF(bool UseInitArray_);
   const MCSection *getStaticCtorSection(unsigned Priority,
-                                        const MCSymbol *KeySym,
-                                        const MCSection *KeySec) const override;
+                                        const MCSymbol *KeySym) const override;
   const MCSection *getStaticDtorSection(unsigned Priority,
-                                        const MCSymbol *KeySym,
-                                        const MCSection *KeySec) const override;
+                                        const MCSymbol *KeySym) const override;
 };
 
 
@@ -144,11 +142,9 @@ public:
                        Mangler &Mang, const TargetMachine &TM) const override;
 
   const MCSection *getStaticCtorSection(unsigned Priority,
-                                        const MCSymbol *KeySym,
-                                        const MCSection *KeySec) const override;
+                                        const MCSymbol *KeySym) const override;
   const MCSection *getStaticDtorSection(unsigned Priority,
-                                        const MCSymbol *KeySym,
-                                        const MCSection *KeySec) const override;
+                                        const MCSymbol *KeySym) const override;
 };
 
 } // end namespace llvm

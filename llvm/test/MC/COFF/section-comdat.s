@@ -1,8 +1,7 @@
 // RUN: llvm-mc -triple i386-pc-win32 -filetype=obj %s | llvm-readobj -s -t | FileCheck %s
 // RUN: llvm-mc -triple x86_64-pc-win32 -filetype=obj %s | llvm-readobj -s -t | FileCheck %s
 
-.section assocSec
-.linkonce
+.section assocSec, "dr", discard, "assocSym"
 .long 1
 
 .section secName, "dr", discard, "Symbol1"
@@ -25,7 +24,7 @@ Symbol3:
 Symbol4:
 .long 1
 
-.section SecName, "dr", associative assocSec, "Symbol5"
+.section SecName, "dr", associative, "assocSym"
 .globl Symbol5
 Symbol5:
 .long 1
@@ -107,11 +106,19 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: assocSym
+// CHECK:     Section: assocSec
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: secName
 // CHECK:     Section: secName (2)
 // CHECK:     AuxSectionDef {
 // CHECK:       Selection: Any
 // CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol1
+// CHECK:     Section: secName (2)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: secName
@@ -121,11 +128,19 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol2
+// CHECK:     Section: secName (3)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: SecName
 // CHECK:     Section: SecName (4)
 // CHECK:     AuxSectionDef {
 // CHECK:       Selection: SameSize
 // CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol3
+// CHECK:     Section: SecName (4)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: SecName
@@ -134,6 +149,10 @@ Symbol7:
 // CHECK:     AuxSectionDef {
 // CHECK:       Selection: ExactMatch
 // CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol4
+// CHECK:     Section: SecName (5)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: SecName
@@ -151,6 +170,10 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: Symbol6
+// CHECK:     Section: SecName (7)
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: SecName
 // CHECK:     Section: SecName (8)
 // CHECK:     AuxSectionDef {
@@ -158,31 +181,11 @@ Symbol7:
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
-// CHECK:     Name: Symbol1
-// CHECK:     Section: secName (2)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol2
-// CHECK:     Section: secName (3)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol3
-// CHECK:     Section: SecName (4)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol4
-// CHECK:     Section: SecName (5)
+// CHECK:     Name: Symbol7
+// CHECK:     Section: SecName (8)
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: Symbol5
 // CHECK:     Section: SecName (6)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol6
-// CHECK:     Section: SecName (7)
-// CHECK:   }
-// CHECK:   Symbol {
-// CHECK:     Name: Symbol7
-// CHECK:     Section: SecName (8)
 // CHECK:   }
 // CHECK: ]

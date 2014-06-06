@@ -76,7 +76,7 @@ the target.  It corresponds to the COFF relocation types
 
 Syntax:
 
-   ``.linkonce [ comdat type [ section identifier ] ]``
+   ``.linkonce [ comdat type ]``
 
 Supported COMDAT types:
 
@@ -95,16 +95,6 @@ Supported COMDAT types:
    Duplicates are discarded, but the linker issues an error if any duplicates
    do not have exactly the same content.
 
-``associative``
-   Links the section if a certain other COMDAT section is linked. This other
-   section is indicated by its section identifier following the comdat type.
-   The following restrictions apply to the associated section:
-
-   1. It must be the name of a section already defined.
-   2. It must differ from the current section.
-   3. It must be a COMDAT section.
-   4. It cannot be another associative COMDAT section.
-
 ``largest``
    Links the largest section from among the duplicates.
 
@@ -116,10 +106,6 @@ Supported COMDAT types:
 
   .section .text$foo
   .linkonce
-    ...
-
-  .section .xdata$foo
-  .linkonce associative .text$foo
     ...
 
 ``.section`` Directive
@@ -159,6 +145,25 @@ different COMDATs:
   .globl Symbol2
   Symbol2:
   .long 1
+
+In addition to the types allowed with ``.linkonce``, ``.section`` also accepts
+``associative``. The meaning is that the section is linked  if a certain other
+COMDAT section is linked. This other section is indicated by the comdat symbol
+in this directive. It can be any symbol defined in the associated section, but
+is usually the associated section's comdat.
+
+   The following restrictions apply to the associated section:
+
+   1. It must be a COMDAT section.
+   2. It cannot be another associative COMDAT section.
+
+In the following example the symobl ``sym`` is the comdat symbol of ``.foo``
+and ``.bar`` is associated to ``.foo``.
+
+.. code-block:: gas
+
+	.section	.foo,"bw",discard, "sym"
+	.section	.bar,"rd",associative, "sym"
 
 Target Specific Behaviour
 =========================
