@@ -156,11 +156,11 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   endif()
 
   set( CLANG_BUILT_STANDALONE 1 )
+endif()
 
-  find_package(LibXml2)
-  if (LIBXML2_FOUND)
-    set(CLANG_HAVE_LIBXML 1)
-  endif ()
+find_package(LibXml2)
+if (LIBXML2_FOUND)
+  set(CLANG_HAVE_LIBXML 1)
 endif()
 
 set(CLANG_RESOURCE_DIR "" CACHE STRING
