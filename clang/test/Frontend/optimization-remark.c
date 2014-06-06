@@ -3,8 +3,8 @@
 // always trigger the inliner, so it should be independent of the
 // optimization level.
 
-// RUN: %clang_cc1 %s -Rpass=inline -Rpass-analysis=inline -Rpass-missed=inline -O0 -gline-tables-only -emit-llvm-only -verify -S -o /dev/null
-// RUN: %clang_cc1 %s -DNDEBUG -Rpass=inline -emit-llvm-only -verify -S -o /dev/null
+// RUN: %clang_cc1 %s -Rpass=inline -Rpass-analysis=inline -Rpass-missed=inline -O0 -gline-tables-only -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -DNDEBUG -Rpass=inline -emit-llvm-only -verify
 
 int foo(int x, int y) __attribute__((always_inline));
 int foo(int x, int y) { return x + y; }
