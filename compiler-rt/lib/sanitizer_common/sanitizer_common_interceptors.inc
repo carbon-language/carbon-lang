@@ -13,6 +13,7 @@
 // This file should be included into the tool's interceptor file,
 // which has to define it's own macros:
 //   COMMON_INTERCEPTOR_ENTER
+//   COMMON_INTERCEPTOR_ENTER_NOIGNORE
 //   COMMON_INTERCEPTOR_READ_RANGE
 //   COMMON_INTERCEPTOR_WRITE_RANGE
 //   COMMON_INTERCEPTOR_INITIALIZE_RANGE
