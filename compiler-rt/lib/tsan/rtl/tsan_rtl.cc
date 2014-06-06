@@ -420,11 +420,34 @@ void ForkChildAfter(ThreadState *thr, uptr pc) {
 }
 #endif
 
+#ifdef TSAN_GO
+NOINLINE
+void GrowShadowStack(ThreadState *thr) {
+  const int sz = thr->shadow_stack_end - thr->shadow_stack;
+  const int newsz = 2 * sz;
+  uptr *newstack = (uptr*)internal_alloc(MBlockShadowStack,
+      newsz * sizeof(uptr));
+  internal_memcpy(newstack, thr->shadow_stack, sz * sizeof(uptr));
+  internal_free(thr->shadow_stack);
+  thr->shadow_stack = newstack;
+  thr->shadow_stack_pos = newstack + sz;
+  thr->shadow_stack_end = newstack + newsz;
+}
+#endif
+
 u32 CurrentStackId(ThreadState *thr, uptr pc) {
   if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
     return 0;
-  if (pc != 0)
-    FuncEntry(thr, pc);  // can resize the shadow stack
+  if (pc != 0) {
+#ifndef TSAN_GO
+    DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
+#else
+    if (thr->shadow_stack_pos == thr->shadow_stack_end)
+      GrowShadowStack(thr);
+#endif
+    thr->shadow_stack_pos[0] = pc;
+    thr->shadow_stack_pos++;
+  }
   u32 id = StackDepotPut(thr->shadow_stack,
                          thr->shadow_stack_pos - thr->shadow_stack);
   if (pc != 0)
@@ -741,8 +764,8 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
 
   if (kCollectHistory) {
     fast_state.IncrementEpoch();
-    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
     thr->fast_state = fast_state;
+    TraceAddEvent(thr, fast_state, EventTypeMop, pc);
     cur.IncrementEpoch();
   }
 
@@ -882,17 +905,8 @@ void FuncEntry(ThreadState *thr, uptr pc) {
 #ifndef TSAN_GO
   DCHECK_LT(thr->shadow_stack_pos, thr->shadow_stack_end);
 #else
-  if (thr->shadow_stack_pos == thr->shadow_stack_end) {
-    const int sz = thr->shadow_stack_end - thr->shadow_stack;
-    const int newsz = 2 * sz;
-    uptr *newstack = (uptr*)internal_alloc(MBlockShadowStack,
-        newsz * sizeof(uptr));
-    internal_memcpy(newstack, thr->shadow_stack, sz * sizeof(uptr));
-    internal_free(thr->shadow_stack);
-    thr->shadow_stack = newstack;
-    thr->shadow_stack_pos = newstack + sz;
-    thr->shadow_stack_end = newstack + newsz;
-  }
+  if (thr->shadow_stack_pos == thr->shadow_stack_end)
+    GrowShadowStack(thr);
 #endif
   thr->shadow_stack_pos[0] = pc;
   thr->shadow_stack_pos++;
