@@ -2828,7 +2828,7 @@ with the same loop identifier.
 Precisely, given two instructions ``m1`` and ``m2`` that both have the 
 ``llvm.mem.parallel_loop_access`` metadata, with ``L1`` and ``L2`` being the 
 set of loops associated with that metadata, respectively, then there is no loop 
-carried dependence between ``m1`` and ``m2`` for loops ``L1`` or 
+carried dependence between ``m1`` and ``m2`` for loops in both ``L1`` and 
 ``L2``.
 
 As a special case, if all memory accessing instructions in a loop have 
