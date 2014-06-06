@@ -71,15 +71,17 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS -Wno-unused-const-variable -Wno-unknown-warning-option"
 if [ "$DEBUG" == "" ]; then
-	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
+	FLAGS+=" -DTSAN_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
 else
 	FLAGS+=" -DTSAN_DEBUG=1 -g"
 fi
 
-echo gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
-gcc gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
+CC=${CC:-gcc}
 
-gcc test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
+echo $CC gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
+$CC gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
+
+$CC test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
 GORACE="exitcode=0 atexit_sleep_ms=0" ./test
