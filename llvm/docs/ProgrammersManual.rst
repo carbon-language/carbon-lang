@@ -1990,7 +1990,7 @@ sequence of instructions that form a ``BasicBlock``:
 
 * Insertion using an instance of ``IRBuilder``
 
-  Inserting several ``Instuction``\ s can be quite laborious using the previous
+  Inserting several ``Instruction``\ s can be quite laborious using the previous
   methods. The ``IRBuilder`` is a convenience class that can be used to add
   several instructions to the end of a ``BasicBlock`` or before a particular
   ``Instruction``. It also supports constant folding and renaming named
