@@ -1628,6 +1628,20 @@ static void EmitBadTypeidCall(CodeGenFunction &CGF) {
   CGF.Builder.CreateUnreachable();
 }
 
+/// \brief Gets the offset to the virtual base that contains the vfptr for
+/// MS-ABI polymorphic types.
+static llvm::Value *getPolymorphicOffset(CodeGenFunction &CGF,
+                                         const CXXRecordDecl *RD,
+                                         llvm::Value *Value) {
+  const ASTContext &Context = RD->getASTContext();
+  for (const CXXBaseSpecifier &Base : RD->vbases())
+    if (Context.getASTRecordLayout(Base.getType()->getAsCXXRecordDecl())
+            .hasExtendableVFPtr())
+      return CGF.CGM.getCXXABI().GetVirtualBaseClassOffset(
+          CGF, Value, RD, Base.getType()->getAsCXXRecordDecl());
+  llvm_unreachable("One of our vbases should be polymorphic.");
+}
+
 static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF,
                                          const Expr *E, 
                                          llvm::Type *StdTypeInfoPtrTy) {
@@ -1686,7 +1700,7 @@ llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
                                StdTypeInfoPtrTy);
 }
 
-static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
+static llvm::Constant *getItaniumDynamicCastFn(CodeGenFunction &CGF) {
   // void *__dynamic_cast(const void *sub,
   //                      const abi::__class_type_info *src,
   //                      const abi::__class_type_info *dst,
@@ -1774,7 +1788,7 @@ static CharUnits computeOffsetHint(ASTContext &Context,
 }
 
 static llvm::Value *
-EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
+EmitItaniumDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
                     QualType SrcTy, QualType DestTy,
                     llvm::BasicBlock *CastEnd) {
   llvm::Type *PtrDiffLTy = 
@@ -1834,7 +1848,7 @@ EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
   Value = CGF.EmitCastToVoidPtr(Value);
 
   llvm::Value *args[] = { Value, SrcRTTI, DestRTTI, OffsetHint };
-  Value = CGF.EmitNounwindRuntimeCall(getDynamicCastFn(CGF), args);
+  Value = CGF.EmitNounwindRuntimeCall(getItaniumDynamicCastFn(CGF), args);
   Value = CGF.Builder.CreateBitCast(Value, DestLTy);
 
   /// C++ [expr.dynamic.cast]p9:
@@ -1867,8 +1881,125 @@ static llvm::Value *EmitDynamicCastToNull(CodeGenFunction &CGF,
   return llvm::UndefValue::get(DestLTy);
 }
 
+namespace {
+struct MSDynamicCastBuilder {
+  MSDynamicCastBuilder(CodeGenFunction &CGF, const CXXDynamicCastExpr *DCE);
+  llvm::Value *emitDynamicCastCall(llvm::Value *Value);
+  llvm::Value *emitDynamicCast(llvm::Value *Value);
+
+  CodeGenFunction &CGF;
+  CGBuilderTy &Builder;
+  llvm::PointerType *Int8PtrTy;
+  QualType SrcTy, DstTy;
+  const CXXRecordDecl *SrcDecl;
+  bool IsPtrCast, IsCastToVoid, IsCastOfNull;
+};
+} // namespace
+
+MSDynamicCastBuilder::MSDynamicCastBuilder(CodeGenFunction &CGF,
+                                           const CXXDynamicCastExpr *DCE)
+    : CGF(CGF), Builder(CGF.Builder), Int8PtrTy(CGF.Int8PtrTy),
+      SrcDecl(nullptr) {
+  DstTy = DCE->getTypeAsWritten();
+  IsPtrCast = DstTy->isPointerType();
+  // Get the PointeeTypes.  After this point the original types are not used.
+  DstTy = IsPtrCast ? DstTy->castAs<PointerType>()->getPointeeType()
+                    : DstTy->castAs<ReferenceType>()->getPointeeType();
+  IsCastToVoid = DstTy->isVoidType();
+  IsCastOfNull = DCE->isAlwaysNull();
+  if (IsCastOfNull)
+    return;
+  SrcTy = DCE->getSubExpr()->getType();
+  SrcTy = IsPtrCast ? SrcTy->castAs<PointerType>()->getPointeeType() : SrcTy;
+  SrcDecl = SrcTy->getAsCXXRecordDecl();
+  // If we don't need a base adjustment, we don't need a SrcDecl so clear it
+  // here.  Later we use the existance of the SrcDecl to determine the need for
+  // a base adjustment.
+  if (CGF.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr())
+    SrcDecl = nullptr;
+}
+
+llvm::Value *MSDynamicCastBuilder::emitDynamicCastCall(llvm::Value *Value) {
+  llvm::IntegerType *Int32Ty = CGF.Int32Ty;
+  llvm::Value *Offset = llvm::ConstantInt::get(Int32Ty, 0);
+  Value = Builder.CreateBitCast(Value, Int8PtrTy);
+  // If we need to perform a base adjustment, do it here.
+  if (SrcDecl) {
+    Offset = getPolymorphicOffset(CGF, SrcDecl, Value);
+    Value = Builder.CreateInBoundsGEP(Value, Offset);
+    Offset = Builder.CreateTrunc(Offset, Int32Ty);
+  }
+  if (IsCastToVoid) {
+    // PVOID __RTCastToVoid(
+    //   PVOID inptr)
+    llvm::Type *ArgTypes[] = {Int8PtrTy};
+    llvm::Constant *Function = CGF.CGM.CreateRuntimeFunction(
+        llvm::FunctionType::get(Int8PtrTy, ArgTypes, false), "__RTCastToVoid");
+    llvm::Value *Args[] = {Value};
+    return CGF.EmitRuntimeCall(Function, Args);
+  }
+  // PVOID __RTDynamicCast(
+  //   PVOID inptr,
+  //   LONG VfDelta,
+  //   PVOID SrcType,
+  //   PVOID TargetType,
+  //   BOOL isReference)
+  llvm::Type *ArgTypes[] = {Int8PtrTy, Int32Ty, Int8PtrTy, Int8PtrTy, Int32Ty};
+  llvm::Constant *Function = CGF.CGM.CreateRuntimeFunction(
+      llvm::FunctionType::get(Int8PtrTy, ArgTypes, false), "__RTDynamicCast");
+  llvm::Value *Args[] = {
+    Value, Offset,
+      CGF.CGM.GetAddrOfRTTIDescriptor(SrcTy.getUnqualifiedType()),
+      CGF.CGM.GetAddrOfRTTIDescriptor(DstTy.getUnqualifiedType()),
+      llvm::ConstantInt::get(Int32Ty, IsPtrCast ? 0 : 1)};
+  return CGF.EmitRuntimeCall(Function, Args);
+}
+
+llvm::Value *MSDynamicCastBuilder::emitDynamicCast(llvm::Value *Value) {
+  // Note about undefined behavior: If the dynamic cast is casting to a
+  // reference type and the input is null, we hit a grey area in the standard.
+  // Here we're interpreting the behavior as undefined.  The effects are the
+  // following:  If the compiler determines that the argument is statically null
+  // or if the argument is dynamically null but does not require base
+  // adjustment, __RTDynamicCast will be called with a null argument and the
+  // isreference bit set.  In this case __RTDynamicCast will throw
+  // std::bad_cast. If the argument is dynamically null and a base adjustment is
+  // required the resulting code will produce an out of bounds memory reference
+  // when trying to read VBTblPtr.  In Itanium mode clang also emits a vtable
+  // load that fails at run time.
+  llvm::PointerType *DstLTy = CGF.ConvertType(DstTy)->getPointerTo();
+  if (IsCastOfNull && IsPtrCast)
+    return Builder.CreateBitCast(Value, DstLTy);
+  if (IsCastOfNull || !IsPtrCast || !SrcDecl)
+    return Builder.CreateBitCast(emitDynamicCastCall(Value), DstLTy);
+  // !IsCastOfNull && IsPtrCast && SrcDecl
+  // In this case we have a pointer that requires a base adjustment.  An
+  // adjustment is only required if the pointer is actually valid so here we
+  // perform a null check before doing the base adjustment and calling
+  // __RTDynamicCast.  In the case that the argument is null we simply return
+  // null without calling __RTDynamicCast.
+  llvm::BasicBlock *EntryBlock = Builder.GetInsertBlock();
+  llvm::BasicBlock *CallBlock = CGF.createBasicBlock("dynamic_cast.valid");
+  llvm::BasicBlock *ExitBlock = CGF.createBasicBlock("dynamic_cast.call");
+  Builder.CreateCondBr(Builder.CreateIsNull(Value), ExitBlock, CallBlock);
+  // Emit the call block and code for it.
+  CGF.EmitBlock(CallBlock);
+  Value = emitDynamicCastCall(Value);
+  // Emit the call block and the phi nodes for it.
+  CGF.EmitBlock(ExitBlock);
+  llvm::PHINode *ValuePHI = Builder.CreatePHI(Int8PtrTy, 2);
+  ValuePHI->addIncoming(Value, CallBlock);
+  ValuePHI->addIncoming(llvm::Constant::getNullValue(Int8PtrTy), EntryBlock);
+  return Builder.CreateBitCast(ValuePHI, DstLTy);
+}
+
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *Value,
                                               const CXXDynamicCastExpr *DCE) {
+  if (getTarget().getCXXABI().isMicrosoft()) {
+    MSDynamicCastBuilder Builder(*this, DCE);
+    return Builder.emitDynamicCast(Value);
+  }
+
   QualType DestTy = DCE->getTypeAsWritten();
 
   if (DCE->isAlwaysNull())
@@ -1894,7 +2025,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *Value,
     EmitBlock(CastNotNull);
   }
 
-  Value = EmitDynamicCastCall(*this, Value, SrcTy, DestTy, CastEnd);
+  Value = EmitItaniumDynamicCastCall(*this, Value, SrcTy, DestTy, CastEnd);
 
   if (ShouldNullCheckSrcValue) {
     EmitBranch(CastEnd);
