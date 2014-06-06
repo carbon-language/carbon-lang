@@ -1164,7 +1164,8 @@ private:
       return true;
 
     if (NewLine) {
-      int AdditionalIndent = 0;
+      int AdditionalIndent =
+          State.FirstIndent - State.Line->Level * Style.IndentWidth;
       if (State.Stack.size() < 2 ||
           !State.Stack[State.Stack.size() - 2].JSFunctionInlined) {
         AdditionalIndent = State.Stack.back().Indent -
