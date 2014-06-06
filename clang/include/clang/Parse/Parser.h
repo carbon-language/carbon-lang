@@ -2371,6 +2371,12 @@ private:
   Decl *ParseTypeParameter(unsigned Depth, unsigned Position);
   Decl *ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
   Decl *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
+  void DiagnoseMisplacedEllipsis(SourceLocation EllipsisLoc,
+                                 SourceLocation CorrectLoc,
+                                 bool AlreadyHasEllipsis,
+                                 bool IdentifierHasName);
+  void DiagnoseMisplacedEllipsisInDeclarator(SourceLocation EllipsisLoc,
+                                             Declarator &D);
   // C++ 14.3: Template arguments [temp.arg]
   typedef SmallVector<ParsedTemplateArgument, 16> TemplateArgList;
 

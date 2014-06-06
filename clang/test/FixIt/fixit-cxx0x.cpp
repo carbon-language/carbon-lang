@@ -138,3 +138,23 @@ int RegisterVariable() {
   register int n; // expected-warning {{'register' storage class specifier is deprecated}}
   return n;
 }
+
+namespace MisplacedParameterPack {
+  template <typename Args...> // expected-error {{'...' must immediately precede declared identifier}}
+  void misplacedEllipsisInTypeParameter(Args...);
+
+  template <typename... Args...> // expected-error {{'...' must immediately precede declared identifier}}
+  void redundantEllipsisInTypeParameter(Args...);
+
+  template <template <typename> class Args...> // expected-error {{'...' must immediately precede declared identifier}}
+  void misplacedEllipsisInTemplateTypeParameter(Args<int>...);
+
+  template <template <typename> class... Args...> // expected-error {{'...' must immediately precede declared identifier}}
+  void redundantEllipsisInTemplateTypeParameter(Args<int>...);
+
+  template <int N...> // expected-error {{'...' must immediately precede declared identifier}}
+  void misplacedEllipsisInNonTypeTemplateParameter();
+
+  template <int... N...> // expected-error {{'...' must immediately precede declared identifier}}
+  void redundantEllipsisInNonTypeTemplateParameter();
+}

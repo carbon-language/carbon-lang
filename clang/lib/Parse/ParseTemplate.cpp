@@ -498,6 +498,11 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     return nullptr;
   }
 
+  // Recover from misplaced ellipsis.
+  bool AlreadyHasEllipsis = EllipsisLoc.isValid();
+  if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
+    DiagnoseMisplacedEllipsis(EllipsisLoc, NameLoc, AlreadyHasEllipsis, true);
+
   // Grab a default argument (if available).
   // Per C++0x [basic.scope.pdecl]p9, we parse the default argument before
   // we introduce the type parameter into the local scope.
@@ -507,9 +512,9 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     DefaultArg = ParseTypeName(/*Range=*/nullptr,
                                Declarator::TemplateTypeArgContext).get();
 
-  return Actions.ActOnTypeParameter(getCurScope(), TypenameKeyword, Ellipsis, 
-                                    EllipsisLoc, KeyLoc, ParamName, NameLoc,
-                                    Depth, Position, EqualLoc, DefaultArg);
+  return Actions.ActOnTypeParameter(getCurScope(), TypenameKeyword, EllipsisLoc,
+                                    KeyLoc, ParamName, NameLoc, Depth, Position,
+                                    EqualLoc, DefaultArg);
 }
 
 /// ParseTemplateTemplateParameter - Handle the parsing of template
@@ -579,6 +584,11 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     return nullptr;
   }
 
+  // Recover from misplaced ellipsis.
+  bool AlreadyHasEllipsis = EllipsisLoc.isValid();
+  if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
+    DiagnoseMisplacedEllipsis(EllipsisLoc, NameLoc, AlreadyHasEllipsis, true);
+
   TemplateParameterList *ParamList =
     Actions.ActOnTemplateParameterList(Depth, SourceLocation(),
                                        TemplateLoc, LAngleLoc,
@@ -629,6 +639,11 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
     return nullptr;
   }
 
+  // Recover from misplaced ellipsis.
+  SourceLocation EllipsisLoc;
+  if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
+    DiagnoseMisplacedEllipsisInDeclarator(EllipsisLoc, ParamDecl);
+
   // If there is a default value, parse it.
   // Per C++0x [basic.scope.pdecl]p9, we parse the default argument before
   // we introduce the template parameter into the local scope.
@@ -652,6 +667,28 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   return Actions.ActOnNonTypeTemplateParameter(getCurScope(), ParamDecl, 
                                                Depth, Position, EqualLoc, 
                                                DefaultArg.get());
+}
+
+void Parser::DiagnoseMisplacedEllipsis(SourceLocation EllipsisLoc,
+                                       SourceLocation CorrectLoc,
+                                       bool AlreadyHasEllipsis,
+                                       bool IdentifierHasName) {
+  FixItHint Insertion;
+  if (!AlreadyHasEllipsis)
+    Insertion = FixItHint::CreateInsertion(CorrectLoc, "...");
+  Diag(EllipsisLoc, diag::err_misplaced_ellipsis_in_declaration)
+      << FixItHint::CreateRemoval(EllipsisLoc) << Insertion
+      << !IdentifierHasName;
+}
+
+void Parser::DiagnoseMisplacedEllipsisInDeclarator(SourceLocation EllipsisLoc,
+                                                   Declarator &D) {
+  assert(EllipsisLoc.isValid());
+  bool AlreadyHasEllipsis = D.getEllipsisLoc().isValid();
+  if (!AlreadyHasEllipsis)
+    D.setEllipsisLoc(EllipsisLoc);
+  DiagnoseMisplacedEllipsis(EllipsisLoc, D.getIdentifierLoc(),
+                            AlreadyHasEllipsis, D.hasName());
 }
 
 /// \brief Parses a '>' at the end of a template list.

@@ -4661,19 +4661,6 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   }
 }
 
-static void diagnoseMisplacedEllipsis(Parser &P, Declarator &D,
-                                      SourceLocation EllipsisLoc) {
-  if (EllipsisLoc.isValid()) {
-    FixItHint Insertion;
-    if (!D.getEllipsisLoc().isValid()) {
-      Insertion = FixItHint::CreateInsertion(D.getIdentifierLoc(), "...");
-      D.setEllipsisLoc(EllipsisLoc);
-    }
-    P.Diag(EllipsisLoc, diag::err_misplaced_ellipsis_in_declaration)
-      << FixItHint::CreateRemoval(EllipsisLoc) << Insertion << !D.hasName();
-  }
-}
-
 /// ParseDirectDeclarator
 ///       direct-declarator: [C99 6.7.5]
 /// [C99]   identifier
@@ -4753,7 +4740,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         // The ellipsis was put in the wrong place. Recover, and explain to
         // the user what they should have done.
         ParseDeclarator(D);
-        diagnoseMisplacedEllipsis(*this, D, EllipsisLoc);
+        if (EllipsisLoc.isValid())
+          DiagnoseMisplacedEllipsisInDeclarator(EllipsisLoc, D);
         return;
       } else
         D.setEllipsisLoc(EllipsisLoc);
@@ -5004,7 +4992,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
     // An ellipsis cannot be placed outside parentheses.
     if (EllipsisLoc.isValid())
-      diagnoseMisplacedEllipsis(*this, D, EllipsisLoc);
+      DiagnoseMisplacedEllipsisInDeclarator(EllipsisLoc, D);
 
     return;
   }
