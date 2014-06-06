@@ -2402,10 +2402,10 @@ def warn_impcast_pointer_to_bool : Warning<
     InGroup<PointerBoolConversion>;
 def warn_this_bool_conversion : Warning<
   "'this' pointer cannot be null in well-defined C++ code; pointer may be "
-  "assumed always converted to true">, InGroup<UndefinedBoolConversion>;
+  "assumed to always convert to true">, InGroup<UndefinedBoolConversion>;
 def warn_address_of_reference_bool_conversion : Warning<
   "reference cannot be bound to dereferenced null pointer in well-defined C++ "
-  "code; pointer may be assumed always converted to true">,
+  "code; pointer may be assumed to always convert to true">,
   InGroup<UndefinedBoolConversion>;
 
 def warn_null_pointer_compare : Warning<
