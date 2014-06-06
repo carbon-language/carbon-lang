@@ -706,7 +706,7 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   }
 #endif
 
-  if (*shadow_mem == kShadowRodata) {
+  if (kCppMode && *shadow_mem == kShadowRodata) {
     // Access to .rodata section, no races here.
     // Measurements show that it can be 10-20% of all memory accesses.
     StatInc(thr, StatMop);
@@ -751,6 +751,7 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
 }
 
 // Called by MemoryAccessRange in tsan_rtl_thread.cc
+ALWAYS_INLINE USED
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
