@@ -240,19 +240,29 @@ void MapShadow(uptr addr, uptr size) {
   MmapFixedNoReserve(MemToShadow(addr), size * kShadowMultiplier);
 
   // Meta shadow is 2:1, so tread carefully.
+  static bool data_mapped = false;
   static uptr mapped_meta_end = 0;
   uptr meta_begin = (uptr)MemToMeta(addr);
   uptr meta_end = (uptr)MemToMeta(addr + size);
-  // windows wants 64K alignment
   meta_begin = RoundDownTo(meta_begin, 64 << 10);
   meta_end = RoundUpTo(meta_end, 64 << 10);
-  if (meta_end <= mapped_meta_end)
-    return;
-  if (meta_begin < mapped_meta_end)
-    meta_begin = mapped_meta_end;
-  MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
-  mapped_meta_end = meta_end;
-  DPrintf("mapped meta shadow for (%p-%p) at (%p-%p)\n",
+  if (!data_mapped) {
+    // First call maps data+bss.
+    data_mapped = true;
+    MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
+  } else {
+    // Mapping continous heap.
+    // Windows wants 64K alignment.
+    meta_begin = RoundDownTo(meta_begin, 64 << 10);
+    meta_end = RoundUpTo(meta_end, 64 << 10);
+    if (meta_end <= mapped_meta_end)
+      return;
+    if (meta_begin < mapped_meta_end)
+      meta_begin = mapped_meta_end;
+    MmapFixedNoReserve(meta_begin, meta_end - meta_begin);
+    mapped_meta_end = meta_end;
+  }
+  VPrintf(2, "mapped meta shadow for (%p-%p) at (%p-%p)\n",
       addr, addr+size, meta_begin, meta_end);
 }
 
