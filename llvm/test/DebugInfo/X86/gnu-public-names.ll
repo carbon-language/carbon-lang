@@ -45,73 +45,73 @@
 ; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
-; CHECK: Compile Unit: length = [[UNIT_SIZE:[0-9a-f]+]]
+; CHECK: Compile Unit:
 ; CHECK: DW_AT_GNU_pubnames [DW_FORM_flag_present]   (true)
 ; CHECK-NOT: DW_AT_GNU_pubtypes [
 
-; CHECK: [[C:[0-9a-f]+]]: DW_TAG_structure_type
+; CHECK: [[C:0x[0-9a-f]+]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "C"
 
-; CHECK: [[STATIC_MEM_DECL:[0-9a-f]+]]: DW_TAG_member
+; CHECK: [[STATIC_MEM_DECL:0x[0-9a-f]+]]: DW_TAG_member
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_variable"
 
-; CHECK: [[MEM_FUNC_DECL:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[MEM_FUNC_DECL:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "member_function"
 
-; CHECK: [[STATIC_MEM_FUNC_DECL:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[STATIC_MEM_FUNC_DECL:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_function"
 
-; CHECK: [[INT:[0-9a-f]+]]: DW_TAG_base_type
+; CHECK: [[INT:0x[0-9a-f]+]]: DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "int"
 
-; CHECK: [[STATIC_MEM_VAR:[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}}[[STATIC_MEM_DECL]]
+; CHECK: [[STATIC_MEM_VAR:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK-NEXT: DW_AT_specification {{.*}} {[[STATIC_MEM_DECL]]}
 
-; CHECK: [[GLOB_VAR:[0-9a-f]+]]: DW_TAG_variable
+; CHECK: [[GLOB_VAR:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_variable"
 
-; CHECK: [[NS:[0-9a-f]+]]: DW_TAG_namespace
+; CHECK: [[NS:0x[0-9a-f]+]]: DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name {{.*}} "ns"
 
-; CHECK: [[GLOB_NS_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
+; CHECK: [[GLOB_NS_VAR_DECL:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
 
-; CHECK: [[D_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
+; CHECK: [[D_VAR_DECL:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "d"
 
-; CHECK: [[D:[0-9a-f]+]]: DW_TAG_structure_type
+; CHECK: [[D:0x[0-9a-f]+]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "D"
 
-; CHECK: [[GLOB_NS_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[GLOB_NS_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_MIPS_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "global_namespace_function"
 
-; CHECK: [[GLOB_NS_VAR:[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}}[[GLOB_NS_VAR_DECL]]
+; CHECK: [[GLOB_NS_VAR:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK-NEXT: DW_AT_specification {{.*}} {[[GLOB_NS_VAR_DECL]]}
 
-; CHECK: [[D_VAR:[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}}[[D_VAR_DECL]]
+; CHECK: [[D_VAR:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK-NEXT: DW_AT_specification {{.*}} {[[D_VAR_DECL]]}
 
-; CHECK: [[MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
+; CHECK: DW_AT_specification {{.*}} {[[MEM_FUNC_DECL]]}
 
-; CHECK: [[STATIC_MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[STATIC_MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
+; CHECK: DW_AT_specification {{.*}} {[[STATIC_MEM_FUNC_DECL]]}
 
-; CHECK: [[GLOBAL_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: [[GLOBAL_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_MIPS_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "global_function"
 
 ; CHECK-LABEL: .debug_gnu_pubnames contents:
-; CHECK-NEXT: length = {{.*}} version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
+; CHECK-NEXT: length = {{.*}} version = 0x0002 unit_offset = 0x00000000 unit_size = {{.*}}
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  [[NS]] EXTERNAL TYPE     "ns"
