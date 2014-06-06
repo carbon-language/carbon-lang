@@ -368,6 +368,16 @@ void ScalarEnumerationTraits<ELFYAML::ELF_STT>::enumeration(
 #undef ECase
 }
 
+void ScalarEnumerationTraits<ELFYAML::ELF_STV>::enumeration(
+    IO &IO, ELFYAML::ELF_STV &Value) {
+#define ECase(X) IO.enumCase(Value, #X, ELF::X);
+  ECase(STV_DEFAULT)
+  ECase(STV_INTERNAL)
+  ECase(STV_HIDDEN)
+  ECase(STV_PROTECTED)
+#undef ECase
+}
+
 void ScalarEnumerationTraits<ELFYAML::ELF_REL>::enumeration(
     IO &IO, ELFYAML::ELF_REL &Value) {
   const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
@@ -649,6 +659,7 @@ void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Section", Symbol.Section, StringRef());
   IO.mapOptional("Value", Symbol.Value, Hex64(0));
   IO.mapOptional("Size", Symbol.Size, Hex64(0));
+  IO.mapOptional("Visibility", Symbol.Visibility, ELFYAML::ELF_STV(0));
 }
 
 void MappingTraits<ELFYAML::LocalGlobalWeakSymbols>::mapping(

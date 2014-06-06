@@ -132,6 +132,7 @@ error_code ELFDumper<ELFT>::dumpSymbol(Elf_Sym_Iter Sym, ELFYAML::Symbol &S) {
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
+  S.Visibility = Sym->st_other & 0x3;
 
   ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(Sym);
   if (error_code EC = NameOrErr.getError())

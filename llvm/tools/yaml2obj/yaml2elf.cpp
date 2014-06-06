@@ -304,6 +304,7 @@ void ELFState<ELFT>::addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
       Symbol.st_shndx = Index;
     } // else Symbol.st_shndex == SHN_UNDEF (== 0), since it was zero'd earlier.
     Symbol.st_value = Sym.Value;
+    Symbol.st_other = Sym.Visibility;
     Symbol.st_size = Sym.Size;
     Syms.push_back(Symbol);
   }
