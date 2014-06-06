@@ -239,7 +239,6 @@ class LldbGdbServerTestCase(TestBase):
             self.assertTrue(key in self._KNOWN_PROCESS_INFO_KEYS)
             self.assertIsNotNone(val)
 
-        # Return the dictionary of key-value pairs for the memory region.
         return process_info_dict
 
     def add_register_info_collection_packets(self):
