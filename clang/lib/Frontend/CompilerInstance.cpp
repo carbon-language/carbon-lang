@@ -16,7 +16,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
-#include "clang/Config/config.h"
 #include "clang/Frontend/ChainedDiagnosticConsumer.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -710,7 +709,9 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   // Validate/process some options.
   if (getHeaderSearchOpts().Verbose)
     OS << "clang -cc1 version " CLANG_VERSION_STRING
-       << " based upon " << BACKEND_PACKAGE_STRING
+#ifdef PACKAGE_STRING
+       << " based upon " << PACKAGE_STRING
+#endif
        << " default target " << llvm::sys::getDefaultTargetTriple() << "\n";
 
   if (getFrontendOpts().ShowTimers)
