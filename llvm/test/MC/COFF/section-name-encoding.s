@@ -10,11 +10,11 @@
 // Raw encoding
 
 // CHECK:   Section {
-// CHECK:     Number: 1
+// CHECK:     Number: 4
 // CHECK:     Name: s (73 00 00 00 00 00 00 00)
 // CHECK:   }
 // CHECK:   Section {
-// CHECK:     Number: 2
+// CHECK:     Number: 5
 // CHECK:     Name: s1234567 (73 31 32 33 34 35 36 37)
 // CHECK:   }
 .section s;        .long 1
@@ -25,7 +25,7 @@
 
 // /4
 // CHECK:   Section {
-// CHECK:     Number: 3
+// CHECK:     Number: 6
 // CHECK:     Name: s12345678 (2F 34 00 00 00 00 00 00)
 // CHECK:   }
 .section s12345678; .long 1
@@ -57,7 +57,7 @@ pad_sections aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 //     "s12345678\0"     # of pad sections
 //
 // CHECK:   Section {
-// CHECK:     Number: 9
+// CHECK:     Number: 12
 // CHECK:     Name: seven_digit (2F 31 30 30 30 30 32 39)
 // CHECK:   }
 .section seven_digit; .long 1
@@ -82,7 +82,7 @@ pad_sections_ex aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 // "2F 2F 41 41 6D 4A 61 34" is "//AAmJa4", which decodes to "0 0 38 9 26 56".
 //
 // CHECK:   Section {
-// CHECK:     Number: 15
+// CHECK:     Number: 18
 // CHECK:     Name: double_slash (2F 2F 41 41 6D 4A 61 34)
 // CHECK:   }
 .section double_slash; .long 1

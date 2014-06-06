@@ -91,41 +91,41 @@
 // CHECK: Symbols [
 // CHECK:   Symbol {
 // CHECK:     Name: s1
-// CHECK:     Section: s1 (1)
+// CHECK:     Section: s1 (4)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 1
+// CHECK:       Number: 4
 // CHECK:       Selection: Any (0x2)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s2
-// CHECK:     Section: s2 (2)
+// CHECK:     Section: s2 (5)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 2
+// CHECK:       Number: 5
 // CHECK:       Selection: NoDuplicates (0x1)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s3
-// CHECK:     Section: s3 (3)
+// CHECK:     Section: s3 (6)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 3
+// CHECK:       Number: 6
 // CHECK:       Selection: Any (0x2)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s4
-// CHECK:     Section: s4 (4)
+// CHECK:     Section: s4 (7)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 4
+// CHECK:       Number: 7
 // CHECK:       Selection: SameSize (0x3)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s5
-// CHECK:     Section: s5 (5)
+// CHECK:     Section: s5 (8)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 5
+// CHECK:       Number: 8
 // CHECK:       Selection: ExactMatch (0x4)
 // CHECK:     }
 // CHECK:   }
@@ -134,17 +134,17 @@
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s7
-// CHECK:     Section: s7 (7)
+// CHECK:     Section: s7 (10)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 7
+// CHECK:       Number: 10
 // CHECK:       Selection: Largest (0x6)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
 // CHECK:     Name: s8
-// CHECK:     Section: s8 (8)
+// CHECK:     Section: s8 (11)
 // CHECK:     AuxSectionDef {
-// CHECK:       Number: 8
+// CHECK:       Number: 11
 // CHECK:       Selection: Newest (0x7)
 // CHECK:     }
 // CHECK:   }

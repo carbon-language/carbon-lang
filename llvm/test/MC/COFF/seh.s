@@ -35,13 +35,13 @@
 // CHECK-NEXT: ]
 
 // CHECK-NEXT: Relocations [
-// CHECK-NEXT:   Section (2) .xdata {
+// CHECK-NEXT:   Section (4) .xdata {
 // CHECK-NEXT:     0x14 IMAGE_REL_AMD64_ADDR32NB __C_specific_handler
 // CHECK-NEXT:     0x20 IMAGE_REL_AMD64_ADDR32NB func
 // CHECK-NEXT:     0x24 IMAGE_REL_AMD64_ADDR32NB func
 // CHECK-NEXT:     0x28 IMAGE_REL_AMD64_ADDR32NB .xdata
 // CHECK-NEXT:   }
-// CHECK-NEXT:   Section (3) .pdata {
+// CHECK-NEXT:   Section (5) .pdata {
 // CHECK-NEXT:     0x0 IMAGE_REL_AMD64_ADDR32NB func
 // CHECK-NEXT:     0x4 IMAGE_REL_AMD64_ADDR32NB func
 // CHECK-NEXT:     0x8 IMAGE_REL_AMD64_ADDR32NB .xdata

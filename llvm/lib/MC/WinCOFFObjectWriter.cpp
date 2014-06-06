@@ -833,13 +833,9 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   DenseMap<COFFSection *, uint16_t> SectionIndices;
   for (auto & Section : Sections) {
-    if (Layout.getSectionAddressSize(Section->MCData) > 0) {
-      size_t Number = ++Header.NumberOfSections;
-      SectionIndices[Section.get()] = Number;
-      MakeSectionReal(*Section, Number);
-    } else {
-      Section->Number = -1;
-    }
+    size_t Number = ++Header.NumberOfSections;
+    SectionIndices[Section.get()] = Number;
+    MakeSectionReal(*Section, Number);
   }
 
   Header.NumberOfSymbols = 0;
