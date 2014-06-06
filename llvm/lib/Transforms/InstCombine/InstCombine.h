@@ -37,8 +37,9 @@ enum SelectPatternFlavor {
   SPF_SMIN,
   SPF_UMIN,
   SPF_SMAX,
-  SPF_UMAX
-  // SPF_ABS - TODO.
+  SPF_UMAX,
+  SPF_ABS,
+  SPF_NABS
 };
 
 /// getComplexity:  Assign a complexity or rank value to LLVM Values...
