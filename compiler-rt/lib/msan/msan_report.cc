@@ -63,6 +63,10 @@ static void DescribeOrigin(u32 id) {
   Decorator d;
   while (true) {
     Origin o(id);
+    if (!o.isValid()) {
+      Printf("  %sinvalid origin id(%d)%s\n", d.Warning(), id, d.End());
+      break;
+    }
     u32 prev_id;
     u32 stack_id = ChainedOriginDepotGet(o.id(), &prev_id);
     Origin prev_o(prev_id);

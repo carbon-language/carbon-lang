@@ -20,7 +20,7 @@ struct ChainedOriginDepotDesc {
   u32 here_id;
   u32 prev_id;
   u32 hash() const { return here_id ^ prev_id; }
-  bool is_valid() { return true; }
+  bool is_valid() { return here_id && prev_id; }
 };
 
 struct ChainedOriginDepotNode {

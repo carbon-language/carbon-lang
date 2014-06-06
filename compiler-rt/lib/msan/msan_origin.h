@@ -66,6 +66,7 @@ class Origin {
   u32 raw_id() const { return raw_id_; }
   bool isStackRoot() const { return raw_id_ == kStackRoot; }
   bool isHeapRoot() const { return raw_id_ == kHeapRoot; }
+  bool isValid() const { return raw_id_ != 0 && raw_id_ != (u32)-1; }
 
  private:
   u32 raw_id_;
