@@ -623,8 +623,10 @@ template <unsigned> struct __static_assert_check {};
 #ifndef _LIBCPP_STD_VER
 #  if  __cplusplus <= 201103L
 #    define _LIBCPP_STD_VER 11
+#  elif __cplusplus <= 201402L
+#    define _LIBCPP_STD_VER 14
 #  else
-#    define _LIBCPP_STD_VER 13  // current year, or date of c++14 ratification
+#    define _LIBCPP_STD_VER 15  // current year, or date of c++17 ratification
 #  endif
 #endif  // _LIBCPP_STD_VER
 
