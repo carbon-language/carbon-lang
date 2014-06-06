@@ -11,21 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86TargetMachine.h"
+#include "X86InstrInfo.h"
+#include "X86ISelLowering.h"
+#include "X86RegisterInfo.h"
+#include "X86Subtarget.h"
+#include "X86SelectionDAGInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/Target/TargetLowering.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-selectiondag-info"
 
-X86SelectionDAGInfo::X86SelectionDAGInfo(const X86TargetMachine &TM) :
-  TargetSelectionDAGInfo(TM.getDataLayout()),
-  Subtarget(&TM.getSubtarget<X86Subtarget>()),
-  TLI(*TM.getTargetLowering()) {
-}
+X86SelectionDAGInfo::X86SelectionDAGInfo(const DataLayout &DL)
+    : TargetSelectionDAGInfo(&DL) {}
 
-X86SelectionDAGInfo::~X86SelectionDAGInfo() {
-}
+X86SelectionDAGInfo::~X86SelectionDAGInfo() {}
 
 SDValue
 X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
@@ -35,6 +37,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                              bool isVolatile,
                                          MachinePointerInfo DstPtrInfo) const {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  const X86Subtarget &Subtarget = DAG.getTarget().getSubtarget<X86Subtarget>();
 
   // If to a segment-relative address space, use the default lowering.
   if (DstPtrInfo.getAddrSpace() >= 256)
@@ -43,16 +46,14 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
   // If not DWORD aligned or size is more than the threshold, call the library.
   // The libc version is likely to be faster for these cases. It can use the
   // address value and run time information about the CPU.
-  if ((Align & 3) != 0 ||
-      !ConstantSize ||
-      ConstantSize->getZExtValue() >
-        Subtarget->getMaxInlineSizeThreshold()) {
+  if ((Align & 3) != 0 || !ConstantSize ||
+      ConstantSize->getZExtValue() > Subtarget.getMaxInlineSizeThreshold()) {
     // Check to see if there is a specialized entry-point for memory zeroing.
     ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
 
     if (const char *bzeroEntry =  V &&
-        V->isNullValue() ? Subtarget->getBZeroEntry() : nullptr) {
-      EVT IntPtr = TLI.getPointerTy();
+        V->isNullValue() ? Subtarget.getBZeroEntry() : nullptr) {
+      EVT IntPtr = DAG.getTargetLoweringInfo().getPointerTy();
       Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
       TargetLowering::ArgListTy Args;
       TargetLowering::ArgListEntry Entry;
@@ -68,7 +69,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                    DAG.getExternalSymbol(bzeroEntry, IntPtr), &Args, 0)
         .setDiscardResult();
 
-      std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
+      std::pair<SDValue,SDValue> CallResult = DAG.getTargetLoweringInfo().LowerCallTo(CLI);
       return CallResult.second;
     }
 
@@ -99,7 +100,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
       ValReg = X86::EAX;
       Val = (Val << 8)  | Val;
       Val = (Val << 16) | Val;
-      if (Subtarget->is64Bit() && ((Align & 0x7) == 0)) {  // QWORD aligned
+      if (Subtarget.is64Bit() && ((Align & 0x7) == 0)) {  // QWORD aligned
         AVT = MVT::i64;
         ValReg = X86::RAX;
         Val = (Val << 32) | Val;
@@ -128,13 +129,11 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
     InFlag = Chain.getValue(1);
   }
 
-  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RCX :
-                                                              X86::ECX,
-                            Count, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RCX : X86::ECX,
+                           Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI :
-                                                              X86::EDI,
-                            Dst, InFlag);
+  Chain = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RDI : X86::EDI,
+                           Dst, InFlag);
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
@@ -182,10 +181,11 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
   // This requires the copy size to be a constant, preferably
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  const X86Subtarget &Subtarget = DAG.getTarget().getSubtarget<X86Subtarget>();
   if (!ConstantSize)
     return SDValue();
   uint64_t SizeVal = ConstantSize->getZExtValue();
-  if (!AlwaysInline && SizeVal > Subtarget->getMaxInlineSizeThreshold())
+  if (!AlwaysInline && SizeVal > Subtarget.getMaxInlineSizeThreshold())
     return SDValue();
 
   /// If not DWORD aligned, it is more efficient to call the library.  However
@@ -218,7 +218,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
     AVT = MVT::i32;
   else
     // QWORD aligned
-    AVT = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
+    AVT = Subtarget.is64Bit() ? MVT::i64 : MVT::i32;
 
   unsigned UBytes = AVT.getSizeInBits() / 8;
   unsigned CountVal = SizeVal / UBytes;
@@ -226,15 +226,15 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
   unsigned BytesLeft = SizeVal % UBytes;
 
   SDValue InFlag;
-  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RCX :
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RCX :
                                                               X86::ECX,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI :
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RDI :
                                                               X86::EDI,
                             Dst, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RSI :
+  Chain  = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RSI :
                                                               X86::ESI,
                             Src, InFlag);
   InFlag = Chain.getValue(1);

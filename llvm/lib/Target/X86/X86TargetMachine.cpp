@@ -80,7 +80,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                     Subtarget.getStackAlignment(),
                     Subtarget.is64Bit() ? -8 : -4),
       DL(computeDataLayout(*getSubtargetImpl())), InstrInfo(*this),
-      TLInfo(*this), TSInfo(*this), JITInfo(*this) {
+      TLInfo(*this), TSInfo(DL), JITInfo(*this) {
   // Determine the PICStyle based on the target selected.
   if (getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
