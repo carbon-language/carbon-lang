@@ -17,8 +17,7 @@ using namespace llvm;
 #define DEBUG_TYPE "mips-selectiondag-info"
 
 MipsSelectionDAGInfo::MipsSelectionDAGInfo(const MipsTargetMachine &TM)
-  : TargetSelectionDAGInfo(TM) {
-}
+    : TargetSelectionDAGInfo(TM.getDataLayout()) {}
 
 MipsSelectionDAGInfo::~MipsSelectionDAGInfo() {
 }

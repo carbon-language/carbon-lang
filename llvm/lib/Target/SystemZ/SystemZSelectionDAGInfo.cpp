@@ -20,7 +20,7 @@ using namespace llvm;
 
 SystemZSelectionDAGInfo::
 SystemZSelectionDAGInfo(const SystemZTargetMachine &TM)
-  : TargetSelectionDAGInfo(TM) {
+  : TargetSelectionDAGInfo(TM.getDataLayout()) {
 }
 
 SystemZSelectionDAGInfo::~SystemZSelectionDAGInfo() {

@@ -15,8 +15,8 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-TargetSelectionDAGInfo::TargetSelectionDAGInfo(const TargetMachine &TM)
-  : DL(TM.getDataLayout()) {
+TargetSelectionDAGInfo::TargetSelectionDAGInfo(const DataLayout *DL)
+  : DL(DL) {
 }
 
 TargetSelectionDAGInfo::~TargetSelectionDAGInfo() {

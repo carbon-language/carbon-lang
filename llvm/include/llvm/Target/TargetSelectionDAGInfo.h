@@ -37,7 +37,7 @@ protected:
   const DataLayout *getDataLayout() const { return DL; }
 
 public:
-  explicit TargetSelectionDAGInfo(const TargetMachine &TM);
+  explicit TargetSelectionDAGInfo(const DataLayout *DL);
   virtual ~TargetSelectionDAGInfo();
 
   /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a

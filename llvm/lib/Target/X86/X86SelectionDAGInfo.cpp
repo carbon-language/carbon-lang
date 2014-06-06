@@ -19,7 +19,7 @@ using namespace llvm;
 #define DEBUG_TYPE "x86-selectiondag-info"
 
 X86SelectionDAGInfo::X86SelectionDAGInfo(const X86TargetMachine &TM) :
-  TargetSelectionDAGInfo(TM),
+  TargetSelectionDAGInfo(TM.getDataLayout()),
   Subtarget(&TM.getSubtarget<X86Subtarget>()),
   TLI(*TM.getTargetLowering()) {
 }

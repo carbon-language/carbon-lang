@@ -83,7 +83,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(
     CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, is64bit), DL(computeDataLayout(Subtarget)),
-      InstrInfo(*this), TLInfo(*this), TSInfo(*this),
+      InstrInfo(*this), TLInfo(*this), TSInfo(&DL),
       FrameLowering(
           *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
   initAsmInfo();

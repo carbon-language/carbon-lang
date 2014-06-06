@@ -18,10 +18,8 @@ using namespace llvm;
 
 bool llvm::flag_aligned_memcpy;
 
-HexagonSelectionDAGInfo::HexagonSelectionDAGInfo(const HexagonTargetMachine
-                                                 &TM)
-  : TargetSelectionDAGInfo(TM) {
-}
+HexagonSelectionDAGInfo::HexagonSelectionDAGInfo(const HexagonTargetMachine &TM)
+    : TargetSelectionDAGInfo(TM.getDataLayout()) {}
 
 HexagonSelectionDAGInfo::~HexagonSelectionDAGInfo() {
 }

@@ -19,9 +19,8 @@ using namespace llvm;
 #define DEBUG_TYPE "arm-selectiondag-info"
 
 ARMSelectionDAGInfo::ARMSelectionDAGInfo(const TargetMachine &TM)
-  : TargetSelectionDAGInfo(TM),
-    Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
-}
+    : TargetSelectionDAGInfo(TM.getDataLayout()),
+      Subtarget(&TM.getSubtarget<ARMSubtarget>()) {}
 
 ARMSelectionDAGInfo::~ARMSelectionDAGInfo() {
 }
