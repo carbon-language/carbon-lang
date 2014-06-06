@@ -941,6 +941,51 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       }
       return;
     }
+    case Instruction::GetElementPtr: {
+      // We don't combine GEPs with complicated (nested) indexing.
+      for (unsigned j = 0; j < VL.size(); ++j) {
+        if (cast<Instruction>(VL[j])->getNumOperands() != 2) {
+          DEBUG(dbgs() << "SLP: not-vectorizable GEP (nested indexes).\n");
+          newTreeEntry(VL, false);
+          return;
+        }
+      }
+
+      // We can't combine several GEPs into one vector if they operate on
+      // different types.
+      Type *Ty0 = cast<Instruction>(VL0)->getOperand(0)->getType();
+      for (unsigned j = 0; j < VL.size(); ++j) {
+        Type *CurTy = cast<Instruction>(VL[j])->getOperand(0)->getType();
+        if (Ty0 != CurTy) {
+          DEBUG(dbgs() << "SLP: not-vectorizable GEP (different types).\n");
+          newTreeEntry(VL, false);
+          return;
+        }
+      }
+
+      // We don't combine GEPs with non-constant indexes.
+      for (unsigned j = 0; j < VL.size(); ++j) {
+        auto Op = cast<Instruction>(VL[j])->getOperand(1);
+        if (!isa<ConstantInt>(Op)) {
+          DEBUG(
+              dbgs() << "SLP: not-vectorizable GEP (non-constant indexes).\n");
+          newTreeEntry(VL, false);
+          return;
+        }
+      }
+
+      newTreeEntry(VL, true);
+      DEBUG(dbgs() << "SLP: added a vector of GEPs.\n");
+      for (unsigned i = 0, e = 2; i < e; ++i) {
+        ValueList Operands;
+        // Prepare the operand vector.
+        for (unsigned j = 0; j < VL.size(); ++j)
+          Operands.push_back(cast<Instruction>(VL[j])->getOperand(i));
+
+        buildTree_rec(Operands, Depth + 1);
+      }
+      return;
+    }
     case Instruction::Store: {
       // Check if the stores are consecutive or of we need to swizzle them.
       for (unsigned i = 0, e = VL.size() - 1; i < e; ++i)
@@ -1144,6 +1189,20 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
             TTI->getArithmeticInstrCost(Opcode, ScalarTy, Op1VK, Op2VK);
         VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy, Op1VK, Op2VK);
       }
+      return VecCost - ScalarCost;
+    }
+    case Instruction::GetElementPtr: {
+      TargetTransformInfo::OperandValueKind Op1VK =
+          TargetTransformInfo::OK_AnyValue;
+      TargetTransformInfo::OperandValueKind Op2VK =
+          TargetTransformInfo::OK_UniformConstantValue;
+
+      int ScalarCost =
+          VecTy->getNumElements() *
+          TTI->getArithmeticInstrCost(Instruction::Add, ScalarTy, Op1VK, Op2VK);
+      int VecCost =
+          TTI->getArithmeticInstrCost(Instruction::Add, VecTy, Op1VK, Op2VK);
+
       return VecCost - ScalarCost;
     }
     case Instruction::Load: {
@@ -1673,6 +1732,34 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
       return propagateMetadata(S, E->Scalars);
+    }
+    case Instruction::GetElementPtr: {
+      setInsertPointAfterBundle(E->Scalars);
+
+      ValueList Op0VL;
+      for (int i = 0, e = E->Scalars.size(); i < e; ++i)
+        Op0VL.push_back(cast<GetElementPtrInst>(E->Scalars[i])->getOperand(0));
+
+      Value *Op0 = vectorizeTree(Op0VL);
+
+      std::vector<Value *> OpVecs;
+      for (int j = 1, e = cast<GetElementPtrInst>(VL0)->getNumOperands(); j < e;
+           ++j) {
+        ValueList OpVL;
+        for (int i = 0, e = E->Scalars.size(); i < e; ++i)
+          OpVL.push_back(cast<GetElementPtrInst>(E->Scalars[i])->getOperand(j));
+
+        Value *OpVec = vectorizeTree(OpVL);
+        OpVecs.push_back(OpVec);
+      }
+
+      Value *V = Builder.CreateGEP(Op0, OpVecs);
+      E->VectorizedValue = V;
+
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        return propagateMetadata(I, E->Scalars);
+
+      return V;
     }
     case Instruction::Call: {
       CallInst *CI = cast<CallInst>(VL0);
