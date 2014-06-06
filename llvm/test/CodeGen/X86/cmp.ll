@@ -198,3 +198,16 @@ define i32 @test14(i32 %mask, i32 %base, i32 %intra) #0 {
 ; CHECK: 	shrl	$7, %edi
 ; CHECK-NEXT: 	cmovnsl	%edx, %esi
 }
+
+; PR19964
+define zeroext i1 @test15(i32 %bf.load, i32 %n) {
+  %bf.lshr = lshr i32 %bf.load, 16
+  %cmp2 = icmp eq i32 %bf.lshr, 0
+  %cmp5 = icmp uge i32 %bf.lshr, %n
+  %.cmp5 = or i1 %cmp2, %cmp5
+  ret i1 %.cmp5
+
+; CHECK-LABEL: test15:
+; CHECK:  shrl	$16, %edi
+; CHECK:  cmpl	%esi, %edi
+}
