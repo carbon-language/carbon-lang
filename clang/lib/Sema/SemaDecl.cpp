@@ -343,6 +343,50 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
   return ParsedType::make(T);
 }
 
+// Builds a fake NNS for the given decl context.
+static NestedNameSpecifier *
+synthesizeCurrentNestedNameSpecifier(ASTContext &Context, DeclContext *DC) {
+  for (;; DC = DC->getLookupParent()) {
+    DC = DC->getPrimaryContext();
+    auto *ND = dyn_cast<NamespaceDecl>(DC);
+    if (ND && !ND->isInline() && !ND->isAnonymousNamespace())
+      return NestedNameSpecifier::Create(Context, nullptr, ND);
+    else if (auto *RD = dyn_cast<CXXRecordDecl>(DC))
+      return NestedNameSpecifier::Create(Context, nullptr, RD->isTemplateDecl(),
+                                         RD->getTypeForDecl());
+    else if (isa<TranslationUnitDecl>(DC))
+      return NestedNameSpecifier::GlobalSpecifier(Context);
+  }
+  llvm_unreachable("something isn't in TU scope?");
+}
+
+ParsedType Sema::ActOnDelayedDefaultTemplateArg(const IdentifierInfo &II,
+                                                SourceLocation NameLoc) {
+  // Accepting an undeclared identifier as a default argument for a template
+  // type parameter is a Microsoft extension.
+  Diag(NameLoc, diag::ext_ms_delayed_template_argument) << &II;
+
+  // Build a fake DependentNameType that will perform lookup into CurContext at
+  // instantiation time.  The name specifier isn't dependent, so template
+  // instantiation won't transform it.  It will retry the lookup, however.
+  NestedNameSpecifier *NNS =
+      synthesizeCurrentNestedNameSpecifier(Context, CurContext);
+  QualType T = Context.getDependentNameType(ETK_None, NNS, &II);
+
+  // Build type location information.  We synthesized the qualifier, so we have
+  // to build a fake NestedNameSpecifierLoc.
+  NestedNameSpecifierLocBuilder NNSLocBuilder;
+  NNSLocBuilder.MakeTrivial(Context, NNS, SourceRange(NameLoc));
+  NestedNameSpecifierLoc QualifierLoc = NNSLocBuilder.getWithLocInContext(Context);
+
+  TypeLocBuilder Builder;
+  DependentNameTypeLoc DepTL = Builder.push<DependentNameTypeLoc>(T);
+  DepTL.setNameLoc(NameLoc);
+  DepTL.setElaboratedKeywordLoc(SourceLocation());
+  DepTL.setQualifierLoc(QualifierLoc);
+  return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
+}
+
 /// isTagName() - This method is called *for error recovery purposes only*
 /// to determine if the specified name is a valid tag name ("struct foo").  If
 /// so, this returns the TST for the tag corresponding to it (TST_enum,

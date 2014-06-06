@@ -1418,6 +1418,13 @@ public:
                                ParsedType &SuggestedType,
                                bool AllowClassTemplates = false);
 
+  /// \brief For compatibility with MSVC, we delay parsing of some default
+  /// template type arguments until instantiation time.  Emits a warning and
+  /// returns a synthesized DependentNameType that isn't really dependent on any
+  /// other template arguments.
+  ParsedType ActOnDelayedDefaultTemplateArg(const IdentifierInfo &II,
+                                            SourceLocation NameLoc);
+
   /// \brief Describes the result of the name lookup and resolution performed
   /// by \c ClassifyName().
   enum NameClassificationKind {

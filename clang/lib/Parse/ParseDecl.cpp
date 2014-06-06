@@ -2227,6 +2227,8 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
     return DSC_class;
   if (Context == Declarator::FileContext)
     return DSC_top_level;
+  if (Context == Declarator::TemplateTypeArgContext)
+    return DSC_template_type_arg;
   if (Context == Declarator::TrailingReturnContext)
     return DSC_trailing;
   if (Context == Declarator::AliasDeclContext ||
@@ -2752,6 +2754,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       ParsedType TypeRep =
         Actions.getTypeName(*Tok.getIdentifierInfo(),
                             Tok.getLocation(), getCurScope());
+
+      // MSVC: If we weren't able to parse a default template argument, and it's
+      // just a simple identifier, create a DependentNameType.  This will allow us
+      // to defer the name lookup to template instantiation time, as long we forge a
+      // NestedNameSpecifier for the current context.
+      if (!TypeRep && DSContext == DSC_template_type_arg &&
+          getLangOpts().MSVCCompat && getCurScope()->isTemplateParamScope()) {
+        TypeRep = Actions.ActOnDelayedDefaultTemplateArg(
+            *Tok.getIdentifierInfo(), Tok.getLocation());
+      }
 
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.

@@ -3224,6 +3224,9 @@ def err_pointer_to_member_oper_value_classify: Error<
 def ext_ms_deref_template_argument: ExtWarn<
   "non-type template argument containing a dereference operation is a "
   "Microsoft extension">, InGroup<Microsoft>;
+def ext_ms_delayed_template_argument: ExtWarn<
+  "using the undeclared type %0 as a default template argument is a "
+  "Microsoft extension">, InGroup<Microsoft>;
 
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<

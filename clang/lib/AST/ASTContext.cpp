@@ -3318,8 +3318,6 @@ QualType ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
                                           NestedNameSpecifier *NNS,
                                           const IdentifierInfo *Name,
                                           QualType Canon) const {
-  assert(NNS->isDependent() && "nested-name-specifier must be dependent");
-
   if (Canon.isNull()) {
     NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
     ElaboratedTypeKeyword CanonKeyword = Keyword;

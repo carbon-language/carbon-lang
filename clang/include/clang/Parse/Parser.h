@@ -1691,7 +1691,8 @@ private:
     DSC_type_specifier, // C++ type-specifier-seq or C specifier-qualifier-list
     DSC_trailing, // C++11 trailing-type-specifier in a trailing return type
     DSC_alias_declaration, // C++11 type-specifier-seq in an alias-declaration
-    DSC_top_level // top-level/namespace declaration context
+    DSC_top_level, // top-level/namespace declaration context
+    DSC_template_type_arg // template type argument context
   };
 
   /// Is this a context in which we are parsing just a type-specifier (or
@@ -1703,6 +1704,7 @@ private:
     case DSC_top_level:
       return false;
 
+    case DSC_template_type_arg:
     case DSC_type_specifier:
     case DSC_trailing:
     case DSC_alias_declaration:

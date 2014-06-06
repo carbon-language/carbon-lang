@@ -4057,11 +4057,14 @@ public:
 /// dependent.
 ///
 /// DependentNameType represents a class of dependent types that involve a
-/// dependent nested-name-specifier (e.g., "T::") followed by a (dependent)
+/// possibly dependent nested-name-specifier (e.g., "T::") followed by a
 /// name of a type. The DependentNameType may start with a "typename" (for a
 /// typename-specifier), "class", "struct", "union", or "enum" (for a
 /// dependent elaborated-type-specifier), or nothing (in contexts where we
 /// know that we must be referring to a type, e.g., in a base class specifier).
+/// Typically the nested-name-specifier is dependent, but in MSVC compatibility
+/// mode, this type is used with non-dependent names to delay name lookup until
+/// instantiation.
 class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
 
   /// \brief The nested name specifier containing the qualifier.
@@ -4076,10 +4079,7 @@ class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
                       /*InstantiationDependent=*/true,
                       /*VariablyModified=*/false,
                       NNS->containsUnexpandedParameterPack()),
-      NNS(NNS), Name(Name) {
-    assert(NNS->isDependent() &&
-           "DependentNameType requires a dependent nested-name-specifier");
-  }
+      NNS(NNS), Name(Name) {}
 
   friend class ASTContext;  // ASTContext creates these
 
