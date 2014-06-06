@@ -52,6 +52,10 @@ void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s) {
 
 static void ReportMutexMisuse(ThreadState *thr, uptr pc, ReportType typ,
     uptr addr, u64 mid) {
+  // In Go, these misuses are either impossible, or detected by std lib,
+  // or false positives (e.g. unlock in a different thread).
+  if (kGoMode)
+    return;
   ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(typ);
   rep.AddMutex(mid);
