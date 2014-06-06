@@ -19,4 +19,7 @@
 /* Define if we have libxml2 */
 #cmakedefine CLANG_HAVE_LIBXML ${CLANG_HAVE_LIBXML}
 
+/* The LLVM product name and version */
+#define BACKEND_PACKAGE_STRING "${BACKEND_PACKAGE_STRING}"
+
 #endif
