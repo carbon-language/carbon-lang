@@ -42,21 +42,23 @@ const MallocDebug asan_malloc_dispatch ALIGNED(32) = {
   WRAP(malloc), WRAP(free), WRAP(calloc), WRAP(realloc), WRAP(memalign)
 };
 
-extern "C" const MallocDebug* __libc_malloc_dispatch;
-
 namespace __asan {
 void ReplaceSystemMalloc() {
-  __libc_malloc_dispatch = &asan_malloc_dispatch;
+  const MallocDebug** __libc_malloc_dispatch_p;
+  __libc_malloc_dispatch_p =
+      (const MallocDebug **)AsanDlSymNext("__libc_malloc_dispatch");
+  if (__libc_malloc_dispatch_p)
+    *__libc_malloc_dispatch_p = &asan_malloc_dispatch;
 }
 }  // namespace __asan
 
-#else  // ANDROID
+#else  // SANITIZER_ANDROID
 
 namespace __asan {
 void ReplaceSystemMalloc() {
 }
 }  // namespace __asan
-#endif  // ANDROID
+#endif  // SANITIZER_ANDROID
 
 // ---------------------- Replacement functions ---------------- {{{1
 using namespace __asan;  // NOLINT

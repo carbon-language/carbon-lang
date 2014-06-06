@@ -98,6 +98,8 @@ void AppendToErrorMessageBuffer(const char *buffer);
 
 void ParseExtraActivationFlags();
 
+void *AsanDlSymNext(const char *sym);
+
 // Platform-specific options.
 #if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();

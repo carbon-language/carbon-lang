@@ -27,6 +27,7 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -42,7 +43,6 @@
 extern "C" void* _DYNAMIC;
 #else
 #include <sys/ucontext.h>
-#include <dlfcn.h>
 #include <link.h>
 #endif
 
@@ -242,6 +242,10 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }
 #endif
+
+void *AsanDlSymNext(const char *sym) {
+  return dlsym(RTLD_NEXT, sym);
+}
 
 }  // namespace __asan
 
