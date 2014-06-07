@@ -632,9 +632,7 @@ public:
   }
 
   /// \brief Get the ABI currently in use.
-  virtual const char *getABI() const {
-    return "";
-  }
+  virtual StringRef getABI() const { return StringRef(); }
 
   /// \brief Get the C++ ABI currently in use.
   TargetCXXABI getCXXABI() const {

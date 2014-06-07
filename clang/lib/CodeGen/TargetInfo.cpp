@@ -6480,7 +6480,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::arm64:
   case llvm::Triple::arm64_be: {
     AArch64ABIInfo::ABIKind Kind = AArch64ABIInfo::AAPCS;
-    if (strcmp(getTarget().getABI(), "darwinpcs") == 0)
+    if (getTarget().getABI() == "darwinpcs")
       Kind = AArch64ABIInfo::DarwinPCS;
 
     return *(TheTargetCodeGenInfo = new AArch64TargetCodeGenInfo(Types, Kind));
@@ -6492,7 +6492,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::thumbeb:
     {
       ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
-      if (strcmp(getTarget().getABI(), "apcs-gnu") == 0)
+      if (getTarget().getABI() == "apcs-gnu")
         Kind = ARMABIInfo::APCS;
       else if (CodeGenOpts.FloatABI == "hard" ||
                (CodeGenOpts.FloatABI != "soft" &&
@@ -6555,7 +6555,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   }
 
   case llvm::Triple::x86_64: {
-    bool HasAVX = strcmp(getTarget().getABI(), "avx") == 0;
+    bool HasAVX = getTarget().getABI() == "avx";
 
     switch (Triple.getOS()) {
     case llvm::Triple::Win32:

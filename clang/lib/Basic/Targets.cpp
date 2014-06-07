@@ -1863,7 +1863,7 @@ public:
   bool hasFeature(StringRef Feature) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
-  const char* getABI() const override {
+  StringRef getABI() const override {
     if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
       return "avx";
     else if (getTriple().getArch() == llvm::Triple::x86 &&
@@ -3663,7 +3663,7 @@ public:
     // zero length bitfield.
     UseZeroLengthBitfieldAlignment = true;
   }
-  const char *getABI() const override { return ABI.c_str(); }
+  StringRef getABI() const override { return ABI; }
   bool setABI(const std::string &Name) override {
     ABI = Name;
 
@@ -4287,7 +4287,7 @@ public:
     TheCXXABI.set(TargetCXXABI::GenericAArch64);
   }
 
-  virtual const char *getABI() const { return ABI.c_str(); }
+  StringRef getABI() const override { return ABI; }
   virtual bool setABI(const std::string &Name) {
     if (Name != "aapcs" && Name != "darwinpcs")
       return false;
@@ -5222,7 +5222,7 @@ public:
         IsNan2008(false), IsSingleFloat(false), FloatABI(HardFloat),
         DspRev(NoDSP), HasMSA(false), HasFP64(false), ABI(ABIStr) {}
 
-  const char *getABI() const override { return ABI.c_str(); }
+  StringRef getABI() const override { return ABI; }
   bool setABI(const std::string &Name) override = 0;
   bool setCPU(const std::string &Name) override {
     CPU = Name;
