@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -O2 -optzns -o - -triple=i386-pc-win32 2>/dev/null %s | FileCheck %s
+// REQUIRES: asserts
 
 struct S { char a; };
 struct V { virtual void f(){} };
