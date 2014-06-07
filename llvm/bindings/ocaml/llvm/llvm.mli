@@ -48,6 +48,9 @@ type llbuilder
     See the [llvm::MemoryBuffer] class. *)
 type llmemorybuffer
 
+(** The kind id of metadata attached to an instruction. *)
+type llmdkind
+
 (** The kind of an [lltype], the result of [classify_type ty]. See the
     [llvm::Type::TypeID] enumeration. *)
 module TypeKind : sig
@@ -770,15 +773,15 @@ val has_metadata : llvalue -> bool
 (** [metadata i kind] optionally returns the metadata associated with the
     kind [kind] in the instruction [i] See the function
     [llvm::Instruction::getMetadata]. *)
-val metadata : llvalue -> int -> llvalue option
+val metadata : llvalue -> llmdkind -> llvalue option
 
 (** [set_metadata i kind md] sets the metadata [md] of kind [kind] in the
     instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
-val set_metadata : llvalue -> int -> llvalue -> unit
+val set_metadata : llvalue -> llmdkind -> llvalue -> unit
 
 (** [clear_metadata i kind] clears the metadata of kind [kind] in the
     instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
-val clear_metadata : llvalue -> int -> unit
+val clear_metadata : llvalue -> llmdkind -> unit
 
 
 (** {7 Operations on metadata} *)

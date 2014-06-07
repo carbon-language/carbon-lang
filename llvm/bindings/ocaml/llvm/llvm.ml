@@ -16,6 +16,7 @@ type lluse
 type llbasicblock
 type llbuilder
 type llmemorybuffer
+type llmdkind
 
 module TypeKind = struct
   type t =
@@ -299,7 +300,7 @@ type ('a, 'b) llrev_pos =
 external create_context : unit -> llcontext = "llvm_create_context"
 external dispose_context : llcontext -> unit = "llvm_dispose_context"
 external global_context : unit -> llcontext = "llvm_global_context"
-external mdkind_id : llcontext -> string -> int = "llvm_mdkind_id"
+external mdkind_id : llcontext -> string -> llmdkind = "llvm_mdkind_id"
 
 (*===-- Modules -----------------------------------------------------------===*)
 external create_module : llcontext -> string -> llmodule = "llvm_create_module"
@@ -442,9 +443,9 @@ external constexpr_opcode : llvalue -> Opcode.t = "llvm_constexpr_get_opcode"
 
 (*--... Operations on instructions .........................................--*)
 external has_metadata : llvalue -> bool = "llvm_has_metadata"
-external metadata : llvalue -> int -> llvalue option = "llvm_metadata"
-external set_metadata : llvalue -> int -> llvalue -> unit = "llvm_set_metadata"
-external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
+external metadata : llvalue -> llmdkind -> llvalue option = "llvm_metadata"
+external set_metadata : llvalue -> llmdkind -> llvalue -> unit = "llvm_set_metadata"
+external clear_metadata : llvalue -> llmdkind -> unit = "llvm_clear_metadata"
 
 (*--... Operations on metadata .......,.....................................--*)
 external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
