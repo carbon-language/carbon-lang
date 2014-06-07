@@ -62,7 +62,7 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   assert(OptionInfo && "Attribute must have valid option info.");
 
   LoopHintAttr::OptionType Option =
-      llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getNameStart())
+      llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getName())
           .Case("vectorize", LoopHintAttr::Vectorize)
           .Case("vectorize_width", LoopHintAttr::VectorizeWidth)
           .Case("interleave", LoopHintAttr::Interleave)

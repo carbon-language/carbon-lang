@@ -1018,14 +1018,12 @@ protected:
   /// \param Name - The variable name.
   /// \param Init - The variable initializer; this is also used to
   /// define the type of the variable.
-  /// \param Section - The section the variable should go into, or 0.
+  /// \param Section - The section the variable should go into, or empty.
   /// \param Align - The alignment for the variable, or 0.
   /// \param AddToUsed - Whether the variable should be added to
   /// "llvm.used".
-  llvm::GlobalVariable *CreateMetadataVar(Twine Name,
-                                          llvm::Constant *Init,
-                                          const char *Section,
-                                          unsigned Align,
+  llvm::GlobalVariable *CreateMetadataVar(Twine Name, llvm::Constant *Init,
+                                          StringRef Section, unsigned Align,
                                           bool AddToUsed);
 
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
@@ -2723,9 +2721,8 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
     llvm::ConstantStruct::get(ObjCTypes.ProtocolExtensionTy, Values);
 
   // No special section, but goes in llvm.used
-  return CreateMetadataVar("\01l_OBJC_PROTOCOLEXT_" + PD->getName(),
-                           Init,
-                           nullptr, 0, true);
+  return CreateMetadataVar("\01l_OBJC_PROTOCOLEXT_" + PD->getName(), Init,
+                           StringRef(), 0, true);
 }
 
 /*
@@ -2858,11 +2855,9 @@ CGObjCCommonMac::EmitProtocolMethodTypes(Twine Name,
                                              MethodTypes.size());
   llvm::Constant *Init = llvm::ConstantArray::get(AT, MethodTypes);
 
-  llvm::GlobalVariable *GV = 
-    CreateMetadataVar(Name, Init,
-                      (ObjCABI == 2) ? "__DATA, __objc_const" : nullptr,
-                      (ObjCABI == 2) ? 8 : 4,
-                      true);
+  llvm::GlobalVariable *GV = CreateMetadataVar(
+      Name, Init, (ObjCABI == 2) ? "__DATA, __objc_const" : StringRef(),
+      (ObjCABI == 2) ? 8 : 4, true);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.Int8PtrPtrTy);
 }
 
@@ -3395,18 +3390,17 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   return Method;
 }
 
-llvm::GlobalVariable *
-CGObjCCommonMac::CreateMetadataVar(Twine Name,
-                                   llvm::Constant *Init,
-                                   const char *Section,
-                                   unsigned Align,
-                                   bool AddToUsed) {
+llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(Twine Name,
+                                                         llvm::Constant *Init,
+                                                         StringRef Section,
+                                                         unsigned Align,
+                                                         bool AddToUsed) {
   llvm::Type *Ty = Init->getType();
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Ty, false,
                              llvm::GlobalValue::PrivateLinkage, Init, Name);
   assertPrivateName(GV);
-  if (Section)
+  if (!Section.empty())
     GV->setSection(Section);
   if (Align)
     GV->setAlignment(Align);
@@ -4457,13 +4451,12 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = ClassNames[Ident];
 
   if (!Entry)
-    Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
-                              llvm::ConstantDataArray::getString(VMContext,
-                                                         Ident->getNameStart()),
-                              ((ObjCABI == 2) ?
-                               "__TEXT,__objc_classname,cstring_literals" :
-                               "__TEXT,__cstring,cstring_literals"),
-                              1, true);
+    Entry = CreateMetadataVar(
+        "\01L_OBJC_CLASS_NAME_",
+        llvm::ConstantDataArray::getString(VMContext, Ident->getName()),
+        ((ObjCABI == 2) ? "__TEXT,__objc_classname,cstring_literals"
+                        : "__TEXT,__cstring,cstring_literals"),
+        1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
 }
@@ -4926,11 +4919,10 @@ llvm::Constant *CGObjCCommonMac::GetPropertyName(IdentifierInfo *Ident) {
   llvm::GlobalVariable *&Entry = PropertyNames[Ident];
 
   if (!Entry)
-    Entry = CreateMetadataVar("\01L_OBJC_PROP_NAME_ATTR_",
-                        llvm::ConstantDataArray::getString(VMContext,
-                                                       Ident->getNameStart()),
-                              "__TEXT,__cstring,cstring_literals",
-                              1, true);
+    Entry = CreateMetadataVar(
+        "\01L_OBJC_PROP_NAME_ATTR_",
+        llvm::ConstantDataArray::getString(VMContext, Ident->getName()),
+        "__TEXT,__cstring,cstring_literals", 1, true);
 
   return getConstantGEP(VMContext, Entry, 0, 0);
 }

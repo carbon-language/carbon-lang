@@ -824,7 +824,7 @@ bool clang::index::generateUSRForMacro(const MacroDefinition *MD,
   if (ShouldGenerateLocation)
     printLoc(Out, Loc, SM, /*IncludeOffset=*/true);
   Out << "@macro@";
-  Out << MD->getName()->getNameStart();
+  Out << MD->getName()->getName();
   return false;
 }
 

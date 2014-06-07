@@ -1947,9 +1947,7 @@ public:
   //
   // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
   // something different.
-  StringRef getName() const {
-    return Id ? Id->getNameStart() : "";
-  }
+  StringRef getName() const { return Id ? Id->getName() : StringRef(); }
 
   /// @brief Get the name of the class associated with this interface.
   //

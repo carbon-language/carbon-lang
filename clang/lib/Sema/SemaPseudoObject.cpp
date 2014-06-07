@@ -569,13 +569,11 @@ bool ObjCPropertyOpBuilder::findGetter() {
       assert(setter && "both setter and getter are null - cannot happen");
       IdentifierInfo *setterName = 
         setter->getSelector().getIdentifierInfoForSlot(0);
-      const char *compStr = setterName->getNameStart();
-      compStr += 3;
-      IdentifierInfo *getterName = &S.Context.Idents.get(compStr);
+      IdentifierInfo *getterName =
+          &S.Context.Idents.get(setterName->getName().substr(3));
       GetterSelector = 
         S.PP.getSelectorTable().getNullarySelector(getterName);
       return false;
-
     }
   }
 
