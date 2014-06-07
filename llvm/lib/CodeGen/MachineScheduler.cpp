@@ -535,6 +535,11 @@ void ScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
     llvm_unreachable(nullptr);
   }
 #endif
+  // SU->TopReadyCycle was set to CurrCycle when it was scheduled. However,
+  // CurrCycle may have advanced since then.
+  if (SuccSU->TopReadyCycle < SU->TopReadyCycle + SuccEdge->getLatency())
+    SuccSU->TopReadyCycle = SU->TopReadyCycle + SuccEdge->getLatency();
+
   --SuccSU->NumPredsLeft;
   if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
     SchedImpl->releaseTopNode(SuccSU);
@@ -569,6 +574,11 @@ void ScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
     llvm_unreachable(nullptr);
   }
 #endif
+  // SU->BotReadyCycle was set to CurrCycle when it was scheduled. However,
+  // CurrCycle may have advanced since then.
+  if (PredSU->BotReadyCycle < SU->BotReadyCycle + PredEdge->getLatency())
+    PredSU->BotReadyCycle = SU->BotReadyCycle + PredEdge->getLatency();
+
   --PredSU->NumSuccsLeft;
   if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
     SchedImpl->releaseBottomNode(PredSU);
@@ -680,10 +690,13 @@ void ScheduleDAGMI::schedule() {
         CurrentBottom = MI;
       }
     }
-    updateQueues(SU, IsTopNode);
-
-    // Notify the scheduling strategy after updating the DAG.
+    // Notify the scheduling strategy before updating the DAG.
+    // This sets the scheduled nodes ReadyCycle to CurrCycle. When updateQueues
+    // runs, it can then use the accurate ReadyCycle time to determine whether
+    // newly released nodes can move to the readyQ.
     SchedImpl->schedNode(SU, IsTopNode);
+
+    updateQueues(SU, IsTopNode);
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 
@@ -1574,7 +1587,7 @@ void SchedBoundary::reset() {
   // Track the maximum number of stall cycles that could arise either from the
   // latency of a DAG edge or the number of cycles that a processor resource is
   // reserved (SchedBoundary::ReservedCycles).
-  MaxObservedLatency = 0;
+  MaxObservedStall = 0;
 #endif
   // Reserve a zero-count for invalid CritResIdx.
   ExecutedResCounts.resize(1);
@@ -1731,6 +1744,12 @@ getOtherResourceCount(unsigned &OtherCritIdx) {
 }
 
 void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle) {
+  assert(SU->getInstr() && "Scheduled SUnit must have instr");
+
+#ifndef NDEBUG
+  MaxObservedStall = std::max(ReadyCycle - CurrCycle, MaxObservedStall);
+#endif
+
   if (ReadyCycle < MinReadyCycle)
     MinReadyCycle = ReadyCycle;
 
@@ -1750,18 +1769,6 @@ void SchedBoundary::releaseTopNode(SUnit *SU) {
   if (SU->isScheduled)
     return;
 
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    if (I->isWeak())
-      continue;
-    unsigned PredReadyCycle = I->getSUnit()->TopReadyCycle;
-    unsigned Latency = I->getLatency();
-#ifndef NDEBUG
-    MaxObservedLatency = std::max(Latency, MaxObservedLatency);
-#endif
-    if (SU->TopReadyCycle < PredReadyCycle + Latency)
-      SU->TopReadyCycle = PredReadyCycle + Latency;
-  }
   releaseNode(SU, SU->TopReadyCycle);
 }
 
@@ -1769,20 +1776,6 @@ void SchedBoundary::releaseBottomNode(SUnit *SU) {
   if (SU->isScheduled)
     return;
 
-  assert(SU->getInstr() && "Scheduled SUnit must have instr");
-
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isWeak())
-      continue;
-    unsigned SuccReadyCycle = I->getSUnit()->BotReadyCycle;
-    unsigned Latency = I->getLatency();
-#ifndef NDEBUG
-    MaxObservedLatency = std::max(Latency, MaxObservedLatency);
-#endif
-    if (SU->BotReadyCycle < SuccReadyCycle + Latency)
-      SU->BotReadyCycle = SuccReadyCycle + Latency;
-  }
   releaseNode(SU, SU->BotReadyCycle);
 }
 
@@ -1951,7 +1944,7 @@ void SchedBoundary::bumpNode(SUnit *SU) {
         if (SchedModel->getProcResource(PIdx)->BufferSize == 0) {
           ReservedCycles[PIdx] = isTop() ? NextCycle + PI->Cycles : NextCycle;
 #ifndef NDEBUG
-          MaxObservedLatency = std::max(PI->Cycles, MaxObservedLatency);
+          MaxObservedStall = std::max(PI->Cycles, MaxObservedStall);
 #endif
         }
       }
@@ -2055,7 +2048,7 @@ SUnit *SchedBoundary::pickOnlyChoice() {
     }
   }
   for (unsigned i = 0; Available.empty(); ++i) {
-    assert(i <= (HazardRec->getMaxLookAhead() + MaxObservedLatency) &&
+    assert(i <= (HazardRec->getMaxLookAhead() + MaxObservedStall) &&
            "permanent hazard"); (void)i;
     bumpCycle(CurrCycle + 1);
     releasePending();
