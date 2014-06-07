@@ -395,7 +395,7 @@ val global_context : unit -> llcontext
 (** [mdkind_id context name] returns the MDKind ID that corresponds to the
     name [name] in the context [context].  See the function
     [llvm::LLVMContext::getMDKindID]. *)
-val mdkind_id : llcontext -> string -> int
+val mdkind_id : llcontext -> string -> llmdkind
 
 
 (** {6 Modules} *)
