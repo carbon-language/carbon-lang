@@ -2348,7 +2348,7 @@ bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
     return false;
 
   const FunctionProtoType *FPT = getType()->castAs<FunctionProtoType>();
-  if (FPT->getNumParams() > 2 || FPT->isVariadic())
+  if (FPT->getNumParams() == 0 || FPT->getNumParams() > 2 || FPT->isVariadic())
     return false;
 
   // If this is a single-parameter function, it must be a replaceable global

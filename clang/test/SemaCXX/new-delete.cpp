@@ -521,3 +521,6 @@ class DeletingPlaceholder {
 namespace PR18544 {
   inline void *operator new(size_t); // expected-error {{'operator new' cannot be declared inside a namespace}}
 }
+
+// PR19968
+inline void* operator new(); // expected-error {{'operator new' must have at least one parameter}}
