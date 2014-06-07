@@ -3469,6 +3469,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-arm-restrict-it");
   }
 
+  if (TT.getArch() == llvm::Triple::arm ||
+      TT.getArch() == llvm::Triple::thumb) {
+    if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
+                                 options::OPT_mno_long_calls)) {
+      if (A->getOption().matches(options::OPT_mlong_calls)) {
+        CmdArgs.push_back("-backend-option");
+        CmdArgs.push_back("-enable-arm-long-calls");
+      }
+    }
+  }
+
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
   if (Arg *A = Args.getLastArg(options::OPT_fprofile_sample_use_EQ)) {
