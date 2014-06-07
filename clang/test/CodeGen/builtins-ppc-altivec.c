@@ -5173,84 +5173,84 @@ void test6() {
   /* vec_unpackh */
   res_vs  = vec_unpackh(vsc);
 // CHECK: @llvm.ppc.altivec.vupkhsb
-// CHECK-LE: @llvm.ppc.altivec.vupkhsb
+// CHECK-LE: @llvm.ppc.altivec.vupklsb
 
   res_vbs = vec_unpackh(vbc);
 // CHECK: @llvm.ppc.altivec.vupkhsb
-// CHECK-LE: @llvm.ppc.altivec.vupkhsb
+// CHECK-LE: @llvm.ppc.altivec.vupklsb
 
   res_vi  = vec_unpackh(vs);
 // CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK-LE: @llvm.ppc.altivec.vupklsh
 
   res_vbi = vec_unpackh(vbs);
 // CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK-LE: @llvm.ppc.altivec.vupklsh
 
   res_vui = vec_unpackh(vp);
-// CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK: @llvm.ppc.altivec.vupkhpx
+// CHECK-LE: @llvm.ppc.altivec.vupklpx
 
   res_vs  = vec_vupkhsb(vsc);
 // CHECK: @llvm.ppc.altivec.vupkhsb
-// CHECK-LE: @llvm.ppc.altivec.vupkhsb
+// CHECK-LE: @llvm.ppc.altivec.vupklsb
 
   res_vbs = vec_vupkhsb(vbc);
 // CHECK: @llvm.ppc.altivec.vupkhsb
-// CHECK-LE: @llvm.ppc.altivec.vupkhsb
+// CHECK-LE: @llvm.ppc.altivec.vupklsb
 
   res_vi  = vec_vupkhsh(vs);
 // CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK-LE: @llvm.ppc.altivec.vupklsh
 
   res_vbi = vec_vupkhsh(vbs);
 // CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK-LE: @llvm.ppc.altivec.vupklsh
 
   res_vui = vec_vupkhsh(vp);
-// CHECK: @llvm.ppc.altivec.vupkhsh
-// CHECK-LE: @llvm.ppc.altivec.vupkhsh
+// CHECK: @llvm.ppc.altivec.vupkhpx
+// CHECK-LE: @llvm.ppc.altivec.vupklpx
 
   /* vec_unpackl */
   res_vs  = vec_unpackl(vsc);
 // CHECK: @llvm.ppc.altivec.vupklsb
-// CHECK-LE: @llvm.ppc.altivec.vupklsb
+// CHECK-LE: @llvm.ppc.altivec.vupkhsb
 
   res_vbs = vec_unpackl(vbc);
 // CHECK: @llvm.ppc.altivec.vupklsb
-// CHECK-LE: @llvm.ppc.altivec.vupklsb
+// CHECK-LE: @llvm.ppc.altivec.vupkhsb
 
   res_vi  = vec_unpackl(vs);
 // CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK-LE: @llvm.ppc.altivec.vupkhsh
 
   res_vbi = vec_unpackl(vbs);
 // CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK-LE: @llvm.ppc.altivec.vupkhsh
 
   res_vui = vec_unpackl(vp);
-// CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK: @llvm.ppc.altivec.vupklpx
+// CHECK-LE: @llvm.ppc.altivec.vupkhpx
 
   res_vs  = vec_vupklsb(vsc);
 // CHECK: @llvm.ppc.altivec.vupklsb
-// CHECK-LE: @llvm.ppc.altivec.vupklsb
+// CHECK-LE: @llvm.ppc.altivec.vupkhsb
 
   res_vbs = vec_vupklsb(vbc);
 // CHECK: @llvm.ppc.altivec.vupklsb
-// CHECK-LE: @llvm.ppc.altivec.vupklsb
+// CHECK-LE: @llvm.ppc.altivec.vupkhsb
 
   res_vi  = vec_vupklsh(vs);
 // CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK-LE: @llvm.ppc.altivec.vupkhsh
 
   res_vbi = vec_vupklsh(vbs);
 // CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK-LE: @llvm.ppc.altivec.vupkhsh
 
   res_vui = vec_vupklsh(vp);
-// CHECK: @llvm.ppc.altivec.vupklsh
-// CHECK-LE: @llvm.ppc.altivec.vupklsh
+// CHECK: @llvm.ppc.altivec.vupklpx
+// CHECK-LE: @llvm.ppc.altivec.vupkhpx
 
   /* vec_xor */
   res_vsc = vec_xor(vsc, vsc);

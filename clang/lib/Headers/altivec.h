@@ -8430,34 +8430,57 @@ vec_vrfiz(vector float __a)
 
 /* vec_unpackh */
 
+/* The vector unpack instructions all have a big-endian bias, so for
+   little endian we must reverse the meanings of "high" and "low."  */
+
 static vector short __ATTRS_o_ai
 vec_unpackh(vector signed char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupklsb((vector char)__a);
+#else
   return __builtin_altivec_vupkhsb((vector char)__a);
+#endif
 }
 
 static vector bool short __ATTRS_o_ai
 vec_unpackh(vector bool char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool short)__builtin_altivec_vupklsb((vector char)__a);
+#else
   return (vector bool short)__builtin_altivec_vupkhsb((vector char)__a);
+#endif
 }
 
 static vector int __ATTRS_o_ai
 vec_unpackh(vector short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupklsh(__a);
+#else
   return __builtin_altivec_vupkhsh(__a);
+#endif
 }
 
 static vector bool int __ATTRS_o_ai
 vec_unpackh(vector bool short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool int)__builtin_altivec_vupklsh((vector short)__a);
+#else
   return (vector bool int)__builtin_altivec_vupkhsh((vector short)__a);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_unpackh(vector pixel __a)
 {
-  return (vector unsigned int)__builtin_altivec_vupkhsh((vector short)__a);
+#ifdef __LITTLE_ENDIAN__
+  return (vector unsigned int)__builtin_altivec_vupklpx((vector short)__a);
+#else
+  return (vector unsigned int)__builtin_altivec_vupkhpx((vector short)__a);
+#endif
 }
 
 /* vec_vupkhsb */
@@ -8465,13 +8488,21 @@ vec_unpackh(vector pixel __a)
 static vector short __ATTRS_o_ai
 vec_vupkhsb(vector signed char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupklsb((vector char)__a);
+#else
   return __builtin_altivec_vupkhsb((vector char)__a);
+#endif
 }
 
 static vector bool short __ATTRS_o_ai
 vec_vupkhsb(vector bool char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool short)__builtin_altivec_vupklsb((vector char)__a);
+#else
   return (vector bool short)__builtin_altivec_vupkhsb((vector char)__a);
+#endif
 }
 
 /* vec_vupkhsh */
@@ -8479,19 +8510,31 @@ vec_vupkhsb(vector bool char __a)
 static vector int __ATTRS_o_ai
 vec_vupkhsh(vector short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupklsh(__a);
+#else
   return __builtin_altivec_vupkhsh(__a);
+#endif
 }
 
 static vector bool int __ATTRS_o_ai
 vec_vupkhsh(vector bool short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool int)__builtin_altivec_vupklsh((vector short)__a);
+#else
   return (vector bool int)__builtin_altivec_vupkhsh((vector short)__a);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_vupkhsh(vector pixel __a)
 {
-  return (vector unsigned int)__builtin_altivec_vupkhsh((vector short)__a);
+#ifdef __LITTLE_ENDIAN__
+  return (vector unsigned int)__builtin_altivec_vupklpx((vector short)__a);
+#else
+  return (vector unsigned int)__builtin_altivec_vupkhpx((vector short)__a);
+#endif
 }
 
 /* vec_unpackl */
@@ -8499,31 +8542,51 @@ vec_vupkhsh(vector pixel __a)
 static vector short __ATTRS_o_ai
 vec_unpackl(vector signed char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupkhsb((vector char)__a);
+#else
   return __builtin_altivec_vupklsb((vector char)__a);
+#endif
 }
 
 static vector bool short __ATTRS_o_ai
 vec_unpackl(vector bool char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool short)__builtin_altivec_vupkhsb((vector char)__a);
+#else
   return (vector bool short)__builtin_altivec_vupklsb((vector char)__a);
+#endif
 }
 
 static vector int __ATTRS_o_ai
 vec_unpackl(vector short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupkhsh(__a);
+#else
   return __builtin_altivec_vupklsh(__a);
+#endif
 }
 
 static vector bool int __ATTRS_o_ai
 vec_unpackl(vector bool short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool int)__builtin_altivec_vupkhsh((vector short)__a);
+#else
   return (vector bool int)__builtin_altivec_vupklsh((vector short)__a);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_unpackl(vector pixel __a)
 {
-  return (vector unsigned int)__builtin_altivec_vupklsh((vector short)__a);
+#ifdef __LITTLE_ENDIAN__
+  return (vector unsigned int)__builtin_altivec_vupkhpx((vector short)__a);
+#else
+  return (vector unsigned int)__builtin_altivec_vupklpx((vector short)__a);
+#endif
 }
 
 /* vec_vupklsb */
@@ -8531,13 +8594,21 @@ vec_unpackl(vector pixel __a)
 static vector short __ATTRS_o_ai
 vec_vupklsb(vector signed char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupkhsb((vector char)__a);
+#else
   return __builtin_altivec_vupklsb((vector char)__a);
+#endif
 }
 
 static vector bool short __ATTRS_o_ai
 vec_vupklsb(vector bool char __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool short)__builtin_altivec_vupkhsb((vector char)__a);
+#else
   return (vector bool short)__builtin_altivec_vupklsb((vector char)__a);
+#endif
 }
 
 /* vec_vupklsh */
@@ -8545,19 +8616,31 @@ vec_vupklsb(vector bool char __a)
 static vector int __ATTRS_o_ai
 vec_vupklsh(vector short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return __builtin_altivec_vupkhsh(__a);
+#else
   return __builtin_altivec_vupklsh(__a);
+#endif
 }
 
 static vector bool int __ATTRS_o_ai
 vec_vupklsh(vector bool short __a)
 {
+#ifdef __LITTLE_ENDIAN__
+  return (vector bool int)__builtin_altivec_vupkhsh((vector short)__a);
+#else
   return (vector bool int)__builtin_altivec_vupklsh((vector short)__a);
+#endif
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_vupklsh(vector pixel __a)
 {
-  return (vector unsigned int)__builtin_altivec_vupklsh((vector short)__a);
+#ifdef __LITTLE_ENDIAN__
+  return (vector unsigned int)__builtin_altivec_vupkhpx((vector short)__a);
+#else
+  return (vector unsigned int)__builtin_altivec_vupklpx((vector short)__a);
+#endif
 }
 
 /* vec_xor */
