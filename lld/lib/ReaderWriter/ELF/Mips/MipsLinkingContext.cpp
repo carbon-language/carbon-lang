@@ -56,6 +56,9 @@ bool MipsLinkingContext::isDynamicRelocation(const DefinedAtom &,
   switch (r.kindValue()) {
   case llvm::ELF::R_MIPS_COPY:
   case llvm::ELF::R_MIPS_REL32:
+  case llvm::ELF::R_MIPS_TLS_DTPMOD32:
+  case llvm::ELF::R_MIPS_TLS_DTPREL32:
+  case llvm::ELF::R_MIPS_TLS_TPREL32:
     return true;
   default:
     return false;

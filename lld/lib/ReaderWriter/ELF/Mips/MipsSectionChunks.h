@@ -21,21 +21,22 @@ public:
   MipsGOTSection(const MipsLinkingContext &context)
       : AtomSection<ELFType>(context, ".got", DefinedAtom::typeGOT,
                              DefinedAtom::permRW_,
-                             MipsTargetLayout<ELFType>::ORDER_GOT) {
+                             MipsTargetLayout<ELFType>::ORDER_GOT),
+        _hasNonLocal(false), _localCount(0) {
     this->_flags |= SHF_MIPS_GPREL;
     this->_align2 = 4;
   }
 
   /// \brief Number of local GOT entries.
-  std::size_t getLocalCount() const {
-    return this->_atoms.size() - getGlobalCount();
-  }
+  std::size_t getLocalCount() const { return _localCount; }
 
   /// \brief Number of global GOT entries.
   std::size_t getGlobalCount() const { return _posMap.size(); }
 
   /// \brief Does the atom have a global GOT entry?
-  bool hasGlobalGOTEntry(const Atom *a) const { return _posMap.count(a); }
+  bool hasGlobalGOTEntry(const Atom *a) const {
+    return _posMap.count(a) || _tlsMap.count(a);
+  }
 
   /// \brief Compare two atoms accordingly theirs positions in the GOT.
   bool compare(const Atom *a, const Atom *b) const {
@@ -51,24 +52,42 @@ public:
   const lld::AtomLayout &appendAtom(const Atom *atom) override {
     const DefinedAtom *da = dyn_cast<DefinedAtom>(atom);
 
-    const Atom *ta = nullptr;
     for (const auto &r : *da) {
       if (r->kindNamespace() != lld::Reference::KindNamespace::ELF)
         continue;
       assert(r->kindArch() == Reference::KindArch::Mips);
-      if (r->kindValue() == LLD_R_MIPS_GLOBAL_GOT) {
-        ta = r->target();
-        break;
+      switch (r->kindValue()) {
+      case LLD_R_MIPS_GLOBAL_GOT:
+        _hasNonLocal = true;
+        _posMap[r->target()] = _posMap.size();
+        return AtomSection<ELFType>::appendAtom(atom);
+      case R_MIPS_TLS_TPREL32:
+      case R_MIPS_TLS_DTPREL32:
+        _hasNonLocal = true;
+        _tlsMap[r->target()] = _tlsMap.size();
+        return AtomSection<ELFType>::appendAtom(atom);
+      case R_MIPS_TLS_DTPMOD32:
+        _hasNonLocal = true;
+        return AtomSection<ELFType>::appendAtom(atom);
       }
     }
 
-    if (ta)
-      _posMap[ta] = _posMap.size();
+    if (!_hasNonLocal)
+      ++_localCount;
 
     return AtomSection<ELFType>::appendAtom(atom);
   }
 
 private:
+  /// \brief True if the GOT contains non-local entries.
+  bool _hasNonLocal;
+
+  /// \brief Number of local GOT entries.
+  std::size_t _localCount;
+
+  /// \brief Map TLS Atoms to their GOT entry index.
+  llvm::DenseMap<const Atom *, std::size_t> _tlsMap;
+
   /// \brief Map Atoms to their GOT entry index.
   llvm::DenseMap<const Atom *, std::size_t> _posMap;
 };
