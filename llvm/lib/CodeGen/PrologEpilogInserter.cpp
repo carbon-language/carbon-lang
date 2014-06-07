@@ -160,7 +160,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   replaceFrameIndices(Fn);
 
   // If register scavenging is needed, as we've enabled doing it as a
-  // post-pass, scavenge the virtual registers that frame index elimiation
+  // post-pass, scavenge the virtual registers that frame index elimination
   // inserted.
   if (TRI->requiresRegisterScavenging(Fn) && FrameIndexVirtualScavenging)
     scavengeFrameVirtualRegs(Fn);

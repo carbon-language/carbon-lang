@@ -1414,7 +1414,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
     DeclDie = getDIE(SPDecl);
     assert(DeclDie && "This DIE should've already been constructed when the "
-                      "definition DIE was creaeted in "
+                      "definition DIE was created in "
                       "getOrCreateSubprogramDIE");
     DeclLinkageName = SPDecl.getLinkageName();
   }

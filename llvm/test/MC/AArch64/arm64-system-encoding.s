@@ -4,7 +4,7 @@
 foo:
 
 ;-----------------------------------------------------------------------------
-; Simple encodings (instuctions w/ no operands)
+; Simple encodings (instructions w/ no operands)
 ;-----------------------------------------------------------------------------
 
   nop

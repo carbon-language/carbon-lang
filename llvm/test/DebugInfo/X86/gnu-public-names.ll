@@ -123,7 +123,7 @@
 ; CHECK:     NULL
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; FIXME: We probably shouldn't bother describing the implicit
-; import of the preceeding anonymous namespace. This should be fixed
+; import of the preceding anonymous namespace. This should be fixed
 ; in clang.
 ; CHECK:     DW_TAG_imported_module
 ; CHECK-NOT: {{DW_TAG|NULL}}
