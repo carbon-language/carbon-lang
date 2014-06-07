@@ -1382,19 +1382,3 @@ define i1 @icmp_neg_cst_slt(i32 %a) {
   %2 = icmp slt i32 %1, -10
   ret i1 %2
 }
-
-; CHECK-LABEL: @exact_ashr_eq_false
-; CHECK-NEXT: icmp eq i32 %a, 1
-define i1 @exact_ashr_eq_false(i32 %a) {
-  %shr = ashr exact i32 -30, %a
-  %cmp = icmp eq i32 %shr, -15
-  ret i1 %cmp
-}
-
-; CHECK-LABEL: @exact_lhsr
-; CHECK-NEXT: icmp eq i32 %a, 3
-define i1 @exact_lhsr(i32 %a) {
-  %shr = lshr exact i32 80, %a
-  %cmp = icmp eq i32 %shr, 10
-  ret i1 %cmp
-}
