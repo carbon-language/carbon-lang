@@ -193,7 +193,6 @@ class MicrosoftCXXNameMangler {
 
   typedef llvm::StringMap<unsigned> BackRefMap;
   BackRefMap NameBackReferences;
-  bool UseNameBackReferences;
 
   typedef llvm::DenseMap<void *, unsigned> ArgBackRefMap;
   ArgBackRefMap TypeBackReferences;
@@ -209,14 +208,12 @@ public:
 
   MicrosoftCXXNameMangler(MicrosoftMangleContextImpl &C, raw_ostream &Out_)
       : Context(C), Out(Out_), Structor(nullptr), StructorType(-1),
-        UseNameBackReferences(true),
         PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
                          64) {}
 
   MicrosoftCXXNameMangler(MicrosoftMangleContextImpl &C, raw_ostream &Out_,
                           const CXXDestructorDecl *D, CXXDtorType Type)
       : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
-        UseNameBackReferences(true),
         PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
                          64) {}
 
@@ -241,7 +238,6 @@ public:
   void mangleNestedName(const NamedDecl *ND);
 
 private:
-  void disableBackReferences() { UseNameBackReferences = false; }
   void mangleUnqualifiedName(const NamedDecl *ND) {
     mangleUnqualifiedName(ND, ND->getDeclName());
   }
@@ -667,26 +663,22 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     //   type [ -> template-parameters]
     //      \-> namespace[s]
     // What we do is we create a new mangler, mangle the same type (without
-    // a namespace suffix) using the extra mangler with back references
-    // disabled (to avoid infinite recursion) and then use the mangled type
-    // name as a key to check the mangling of different types for aliasing.
+    // a namespace suffix) to a string using the extra mangler and then use 
+    // the mangled type name as a key to check the mangling of different types
+    // for aliasing.
 
-    std::string BackReferenceKey;
-    BackRefMap::iterator Found;
-    if (UseNameBackReferences) {
-      llvm::raw_string_ostream Stream(BackReferenceKey);
-      MicrosoftCXXNameMangler Extra(Context, Stream);
-      Extra.disableBackReferences();
-      Extra.mangleUnqualifiedName(ND, Name);
-      Stream.flush();
+    std::string TemplateMangling;
+    llvm::raw_string_ostream Stream(TemplateMangling);
+    MicrosoftCXXNameMangler Extra(Context, Stream);
+    Extra.mangleTemplateInstantiationName(TD, *TemplateArgs);
+    Stream.flush();
 
-      Found = NameBackReferences.find(BackReferenceKey);
-    }
-    if (!UseNameBackReferences || Found == NameBackReferences.end()) {
-      mangleTemplateInstantiationName(TD, *TemplateArgs);
-      if (UseNameBackReferences && NameBackReferences.size() < 10) {
+    BackRefMap::iterator Found = NameBackReferences.find(TemplateMangling);
+    if (Found == NameBackReferences.end()) {
+      Out << TemplateMangling;
+      if (NameBackReferences.size() < 10) {
         size_t Size = NameBackReferences.size();
-        NameBackReferences[BackReferenceKey] = Size;
+        NameBackReferences[TemplateMangling] = Size;
       }
     } else {
       Out << Found->second;
@@ -1009,12 +1001,10 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(StringRef Name) {
   // <source name> ::= <identifier> @
-  BackRefMap::iterator Found;
-  if (UseNameBackReferences)
-    Found = NameBackReferences.find(Name);
-  if (!UseNameBackReferences || Found == NameBackReferences.end()) {
+  BackRefMap::iterator Found = NameBackReferences.find(Name);
+  if (Found == NameBackReferences.end()) {
     Out << Name << '@';
-    if (UseNameBackReferences && NameBackReferences.size() < 10) {
+    if (NameBackReferences.size() < 10) {
       size_t Size = NameBackReferences.size();
       NameBackReferences[Name] = Size;
     }
