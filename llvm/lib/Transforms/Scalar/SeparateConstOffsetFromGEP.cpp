@@ -268,8 +268,27 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   /// This canonicalization is very likely already done in clang and
   /// instcombine. Therefore, the program will probably remain the same.
   ///
+  /// Returns true if the module changes.
+  ///
   /// Verified in @i32_add in split-gep.ll
   bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
+  /// For each array index that is in the form of zext(a), convert it to sext(a)
+  /// if we can prove zext(a) <= max signed value of typeof(a). We prefer
+  /// sext(a) to zext(a), because in the special case where x + y >= 0 and
+  /// (x >= 0 or y >= 0), function CanTraceInto can split sext(x + y),
+  /// while no such case exists for zext(x + y).
+  ///
+  /// Note that
+  ///   zext(x + y) = zext(x) + zext(y)
+  /// is wrong, e.g.,
+  ///   zext i32(UINT_MAX + 1) to i64 !=
+  ///   (zext i32 UINT_MAX to i64) + (zext i32 1 to i64)
+  ///
+  /// Returns true if the module changes.
+  ///
+  /// Verified in @inbounds_zext_add in split-gep.ll and @sum_of_array3 in
+  /// split-gep-and-gvn.ll
+  bool convertInBoundsZExtToSExt(GetElementPtrInst *GEP);
 
   const DataLayout *DL;
 };
@@ -403,7 +422,6 @@ APInt ConstantOffsetExtractor::find(Value *V, bool SignExtended,
     // sext(zext(a)) = zext(a). Verified in @sext_zext in split-gep.ll.
     //
     // Clear the NonNegative flag, because zext(a) >= 0 does not imply a >= 0.
-    // TODO: if zext(a) < 2 ^ (bitwidth(a) - 1), we can prove a >= 0.
     ConstantOffset =
         find(U->getOperand(0), /* SignExtended */ false,
              /* ZeroExtended */ true, /* NonNegative */ false).zext(BitWidth);
@@ -595,6 +613,43 @@ bool SeparateConstOffsetFromGEP::canonicalizeArrayIndicesToPointerSize(
   return Changed;
 }
 
+bool
+SeparateConstOffsetFromGEP::convertInBoundsZExtToSExt(GetElementPtrInst *GEP) {
+  if (!GEP->isInBounds())
+    return false;
+
+  // TODO: consider alloca
+  GlobalVariable *UnderlyingObject =
+      dyn_cast<GlobalVariable>(GEP->getPointerOperand());
+  if (UnderlyingObject == nullptr)
+    return false;
+
+  uint64_t ObjectSize =
+      DL->getTypeAllocSize(UnderlyingObject->getType()->getElementType());
+  gep_type_iterator GTI = gep_type_begin(*GEP);
+  bool Changed = false;
+  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end(); I != E;
+       ++I, ++GTI) {
+    if (isa<SequentialType>(*GTI)) {
+      if (ZExtInst *Extended = dyn_cast<ZExtInst>(*I)) {
+        unsigned SrcBitWidth =
+            cast<IntegerType>(Extended->getSrcTy())->getBitWidth();
+        // For GEP operand zext(a), if a <= max signed value of typeof(a), then
+        // the sign bit of a is zero and sext(a) = zext(a). Because the GEP is
+        // in bounds, we know a <= ObjectSize, so the condition can be reduced
+        // to ObjectSize <= max signed value of typeof(a).
+        if (ObjectSize <=
+            APInt::getSignedMaxValue(SrcBitWidth).getZExtValue()) {
+          *I = new SExtInst(Extended->getOperand(0), Extended->getType(),
+                            Extended->getName(), GEP);
+          Changed = true;
+        }
+      }
+    }
+  }
+  return Changed;
+}
+
 int64_t
 SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
                                                  bool &NeedsExtraction) {
@@ -631,6 +686,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 
   bool Changed = false;
   Changed |= canonicalizeArrayIndicesToPointerSize(GEP);
+  Changed |= convertInBoundsZExtToSExt(GEP);
 
   bool NeedsExtraction;
   int64_t AccumulativeByteOffset = accumulateByteOffset(GEP, NeedsExtraction);
