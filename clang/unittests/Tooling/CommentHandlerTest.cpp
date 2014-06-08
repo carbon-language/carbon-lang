@@ -28,7 +28,7 @@ class CommentHandlerVisitor : public TestVisitor<CommentHandlerVisitor>,
   typedef TestVisitor<CommentHandlerVisitor> base;
 
 public:
-  CommentHandlerVisitor() : base(), PP(0), Verified(false) { }
+  CommentHandlerVisitor() : base(), PP(nullptr), Verified(false) {}
 
   ~CommentHandlerVisitor() {
     EXPECT_TRUE(Verified) << "CommentVerifier not accessed";

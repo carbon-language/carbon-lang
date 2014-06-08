@@ -40,7 +40,7 @@ public:
       : Verified(Verified), FindResultReviewer(FindResultVerifier) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
-    if (FindResultReviewer != NULL) {
+    if (FindResultReviewer != nullptr) {
       *Verified |= FindResultReviewer->run(&Result.Nodes, Result.Context);
     } else {
       *Verified = true;
@@ -64,9 +64,9 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
                                               llvm::StringRef CompileArg) {
   bool Found = false, DynamicFound = false;
   MatchFinder Finder;
-  VerifyMatch VerifyFound(0, &Found);
+  VerifyMatch VerifyFound(nullptr, &Found);
   Finder.addMatcher(AMatcher, &VerifyFound);
-  VerifyMatch VerifyDynamicFound(0, &DynamicFound);
+  VerifyMatch VerifyDynamicFound(nullptr, &DynamicFound);
   if (!Finder.addDynamicMatcher(AMatcher, &VerifyDynamicFound))
     return testing::AssertionFailure() << "Could not add dynamic matcher";
   std::unique_ptr<FrontendActionFactory> Factory(

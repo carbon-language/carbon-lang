@@ -48,7 +48,7 @@ class VoidModuleLoader : public ModuleLoader {
                          bool Complain) override { }
 
   GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
-    { return 0; }
+    { return nullptr; }
   bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
     { return 0; };
 };
@@ -174,7 +174,7 @@ protected:
 
     IntrusiveRefCntPtr<PreprocessorOptions> PPOpts = new PreprocessorOptions();
     Preprocessor PP(PPOpts, Diags, LangOpts, SourceMgr, HeaderInfo, ModLoader,
-                    /*IILookup =*/0,
+                    /*IILookup =*/nullptr,
                     /*OwnsHeaderSearch =*/false);
     PP.Initialize(*Target);
     InclusionDirectiveCallbacks* Callbacks = new InclusionDirectiveCallbacks;
@@ -207,7 +207,7 @@ protected:
                             OpenCLLangOpts, Target.getPtr());
 
     Preprocessor PP(new PreprocessorOptions(), Diags, OpenCLLangOpts, SourceMgr,
-                    HeaderInfo, ModLoader, /*IILookup =*/0,
+                    HeaderInfo, ModLoader, /*IILookup =*/nullptr,
                     /*OwnsHeaderSearch =*/false);
     PP.Initialize(*Target);
 

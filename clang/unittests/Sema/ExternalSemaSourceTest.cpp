@@ -49,7 +49,7 @@ class NamespaceDiagnosticWatcher : public clang::DiagnosticConsumer {
 
 public:
   NamespaceDiagnosticWatcher(StringRef From, StringRef To)
-      : Chained(NULL), FromNS(From), ToNS("'"), SeenCount(0) {
+      : Chained(nullptr), FromNS(From), ToNS("'"), SeenCount(0) {
     ToNS.append(To);
     ToNS.append("'");
   }
@@ -95,11 +95,11 @@ class NamespaceTypoProvider : public clang::ExternalSemaSource {
 
 public:
   NamespaceTypoProvider(StringRef From, StringRef To)
-      : CorrectFrom(From), CorrectTo(To), CurrentSema(NULL), CallCount(0) {}
+      : CorrectFrom(From), CorrectTo(To), CurrentSema(nullptr), CallCount(0) {}
 
   virtual void InitializeSema(Sema &S) { CurrentSema = &S; }
 
-  virtual void ForgetSema() { CurrentSema = NULL; }
+  virtual void ForgetSema() { CurrentSema = nullptr; }
 
   virtual TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
                                      int LookupKind, Scope *S, CXXScopeSpec *SS,
@@ -109,17 +109,17 @@ public:
                                      const ObjCObjectPointerType *OPT) {
     ++CallCount;
     if (CurrentSema && Typo.getName().getAsString() == CorrectFrom) {
-      DeclContext *DestContext = NULL;
+      DeclContext *DestContext = nullptr;
       ASTContext &Context = CurrentSema->getASTContext();
-      if (SS != NULL)
+      if (SS)
         DestContext = CurrentSema->computeDeclContext(*SS, EnteringContext);
-      if (DestContext == NULL)
+      if (!DestContext)
         DestContext = Context.getTranslationUnitDecl();
       IdentifierInfo *ToIdent =
           CurrentSema->getPreprocessor().getIdentifierInfo(CorrectTo);
       NamespaceDecl *NewNamespace =
           NamespaceDecl::Create(Context, DestContext, false, Typo.getBeginLoc(),
-                                Typo.getLoc(), ToIdent, NULL);
+                                Typo.getLoc(), ToIdent, nullptr);
       DestContext->addDecl(NewNamespace);
       TypoCorrection Correction(ToIdent);
       Correction.addCorrectionDecl(NewNamespace);
@@ -149,7 +149,7 @@ protected:
   virtual void ExecuteAction() {
     CompilerInstance &CI = getCompilerInstance();
     ASSERT_FALSE(CI.hasSema());
-    CI.createSema(getTranslationUnitKind(), NULL);
+    CI.createSema(getTranslationUnitKind(), nullptr);
     ASSERT_TRUE(CI.hasDiagnostics());
     DiagnosticsEngine &Diagnostics = CI.getDiagnostics();
     DiagnosticConsumer *Client = Diagnostics.getClient();

@@ -22,8 +22,8 @@ namespace tooling {
 
 static void expectFailure(StringRef JSONDatabase, StringRef Explanation) {
   std::string ErrorMessage;
-  EXPECT_EQ(NULL, JSONCompilationDatabase::loadFromBuffer(JSONDatabase,
-                                                          ErrorMessage))
+  EXPECT_EQ(nullptr, JSONCompilationDatabase::loadFromBuffer(JSONDatabase,
+                                                             ErrorMessage))
     << "Expected an error because of: " << Explanation.str();
 }
 
@@ -434,7 +434,7 @@ TEST(FixedCompilationDatabase, GetAllCompileCommands) {
 TEST(ParseFixedCompilationDatabase, ReturnsNullOnEmptyArgumentList) {
   int Argc = 0;
   std::unique_ptr<FixedCompilationDatabase> Database(
-      FixedCompilationDatabase::loadFromCommandLine(Argc, NULL));
+      FixedCompilationDatabase::loadFromCommandLine(Argc, nullptr));
   EXPECT_FALSE(Database);
   EXPECT_EQ(0, Argc);
 }

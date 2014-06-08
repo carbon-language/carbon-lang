@@ -253,11 +253,11 @@ public:
 TEST_F(VFSFromYAMLTest, BasicVFSFromYAML) {
   IntrusiveRefCntPtr<vfs::FileSystem> FS;
   FS = getFromYAMLString("");
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("[]");
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("'string'");
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   EXPECT_EQ(3, NumDiagnostics);
 }
 
@@ -284,7 +284,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
                         "]\n"
                         "}",
                         Lower);
-  ASSERT_TRUE(FS.getPtr() != NULL);
+  ASSERT_TRUE(FS.getPtr() != nullptr);
 
   IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
       new vfs::OverlayFileSystem(Lower));
@@ -327,7 +327,7 @@ TEST_F(VFSFromYAMLTest, CaseInsensitive) {
                         "              ]\n"
                         "}]}",
                         Lower);
-  ASSERT_TRUE(FS.getPtr() != NULL);
+  ASSERT_TRUE(FS.getPtr() != nullptr);
 
   IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
       new vfs::OverlayFileSystem(Lower));
@@ -363,7 +363,7 @@ TEST_F(VFSFromYAMLTest, CaseSensitive) {
                         "              ]\n"
                         "}]}",
                         Lower);
-  ASSERT_TRUE(FS.getPtr() != NULL);
+  ASSERT_TRUE(FS.getPtr() != nullptr);
 
   IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
       new vfs::OverlayFileSystem(Lower));
@@ -383,89 +383,89 @@ TEST_F(VFSFromYAMLTest, IllegalVFSFile) {
 
   // invalid YAML at top-level
   IntrusiveRefCntPtr<vfs::FileSystem> FS = getFromYAMLString("{]", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   // invalid YAML in roots
   FS = getFromYAMLString("{ 'roots':[}", Lower);
   // invalid YAML in directory
   FS = getFromYAMLString(
       "{ 'roots':[ { 'name': 'foo', 'type': 'directory', 'contents': [}",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // invalid configuration
   FS = getFromYAMLString("{ 'knobular': 'true', 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("{ 'case-sensitive': 'maybe', 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // invalid roots
   FS = getFromYAMLString("{ 'roots':'' }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("{ 'roots':{} }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // invalid entries
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'other', 'name': 'me', 'contents': '' }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("{ 'roots':[ { 'type': 'file', 'name': [], "
                          "'external-contents': 'other' }",
                          Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'file', 'name': 'me', 'external-contents': [] }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'file', 'name': 'me', 'external-contents': {} }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'directory', 'name': 'me', 'contents': {} }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'directory', 'name': 'me', 'contents': '' }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'thingy': 'directory', 'name': 'me', 'contents': [] }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // missing mandatory fields
   FS = getFromYAMLString("{ 'roots':[ { 'type': 'file', 'name': 'me' }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'roots':[ { 'type': 'file', 'external-contents': 'other' }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString("{ 'roots':[ { 'name': 'me', 'contents': [] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // duplicate keys
   FS = getFromYAMLString("{ 'roots':[], 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLString(
       "{ 'case-sensitive':'true', 'case-sensitive':'true', 'roots':[] }",
       Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS =
       getFromYAMLString("{ 'roots':[{'name':'me', 'name':'you', 'type':'file', "
                         "'external-contents':'blah' } ] }",
                         Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // missing version
   FS = getFromYAMLRawString("{ 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
 
   // bad version number
   FS = getFromYAMLRawString("{ 'version':'foo', 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLRawString("{ 'version':-1, 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   FS = getFromYAMLRawString("{ 'version':100000, 'roots':[] }", Lower);
-  EXPECT_EQ(NULL, FS.getPtr());
+  EXPECT_EQ(nullptr, FS.getPtr());
   EXPECT_EQ(24, NumDiagnostics);
 }
 
@@ -487,7 +487,7 @@ TEST_F(VFSFromYAMLTest, UseExternalName) {
       "    'external-contents': '//root/external/file'\n"
       "  }\n"
       "] }", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
 
   // default true
   EXPECT_EQ("//root/external/file", FS->status("//root/A")->getName());
@@ -511,7 +511,7 @@ TEST_F(VFSFromYAMLTest, UseExternalName) {
       "    'external-contents': '//root/external/file'\n"
       "  }\n"
       "] }", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
 
   // default
   EXPECT_EQ("//root/A", FS->status("//root/A")->getName());
@@ -530,7 +530,7 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "  { 'type': 'file', 'name': '//root/path/to/file',\n"
       "    'external-contents': '//root/other' }]\n"
       "}", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
   EXPECT_FALSE(FS->status("//root/path/to/file").getError());
   EXPECT_FALSE(FS->status("//root/path/to").getError());
   EXPECT_FALSE(FS->status("//root/path").getError());
@@ -543,7 +543,7 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "    'contents': [ { 'type': 'file', 'name': 'file',\n"
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
   EXPECT_FALSE(FS->status("//root/path/to/file").getError());
   EXPECT_FALSE(FS->status("//root/path/to").getError());
   EXPECT_FALSE(FS->status("//root/path").getError());
@@ -556,7 +556,7 @@ TEST_F(VFSFromYAMLTest, MultiComponentPath) {
       "    'contents': [ { 'type': 'file', 'name': 'path/to/file',\n"
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
   EXPECT_FALSE(FS->status("//root/path/to/file").getError());
   EXPECT_FALSE(FS->status("//root/path/to").getError());
   EXPECT_FALSE(FS->status("//root/path").getError());
@@ -574,7 +574,7 @@ TEST_F(VFSFromYAMLTest, TrailingSlashes) {
       "    'contents': [ { 'type': 'file', 'name': 'file',\n"
       "                    'external-contents': '//root/other' }]}]\n"
       "}", Lower);
-  ASSERT_TRUE(NULL != FS.getPtr());
+  ASSERT_TRUE(nullptr != FS.getPtr());
   EXPECT_FALSE(FS->status("//root/path/to/file").getError());
   EXPECT_FALSE(FS->status("//root/path/to").getError());
   EXPECT_FALSE(FS->status("//root/path").getError());

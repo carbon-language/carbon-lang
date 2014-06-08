@@ -44,14 +44,15 @@ TEST(IsDerivedFromDeathTest, DiesOnEmptyBaseName) {
 
 TEST(Finder, DynamicOnlyAcceptsSomeMatchers) {
   MatchFinder Finder;
-  EXPECT_TRUE(Finder.addDynamicMatcher(decl(), NULL));
-  EXPECT_TRUE(Finder.addDynamicMatcher(callExpr(), NULL));
-  EXPECT_TRUE(Finder.addDynamicMatcher(constantArrayType(hasSize(42)), NULL));
+  EXPECT_TRUE(Finder.addDynamicMatcher(decl(), nullptr));
+  EXPECT_TRUE(Finder.addDynamicMatcher(callExpr(), nullptr));
+  EXPECT_TRUE(Finder.addDynamicMatcher(constantArrayType(hasSize(42)),
+                                       nullptr));
 
   // Do not accept non-toplevel matchers.
-  EXPECT_FALSE(Finder.addDynamicMatcher(isArrow(), NULL));
-  EXPECT_FALSE(Finder.addDynamicMatcher(hasSize(2), NULL));
-  EXPECT_FALSE(Finder.addDynamicMatcher(hasName("x"), NULL));
+  EXPECT_FALSE(Finder.addDynamicMatcher(isArrow(), nullptr));
+  EXPECT_FALSE(Finder.addDynamicMatcher(hasSize(2), nullptr));
+  EXPECT_FALSE(Finder.addDynamicMatcher(hasName("x"), nullptr));
 }
 
 TEST(Decl, MatchesDeclarations) {
@@ -697,7 +698,8 @@ public:
         EXPECT_EQ(Nodes->getNodeAs<T>(Id), I->second.get<T>());
       return true;
     }
-    EXPECT_TRUE(M.count(Id) == 0 || M.find(Id)->second.template get<T>() == 0);
+    EXPECT_TRUE(M.count(Id) == 0 ||
+                M.find(Id)->second.template get<T>() == nullptr);
     return false;
   }
 
@@ -4116,7 +4118,7 @@ public:
   virtual bool run(const BoundNodes *Nodes, ASTContext *Context) {
     const T *Node = Nodes->getNodeAs<T>(Id);
     return selectFirst<const T>(InnerId,
-                                match(InnerMatcher, *Node, *Context)) != NULL;
+                                match(InnerMatcher, *Node, *Context)) !=nullptr;
   }
 private:
   std::string Id;
@@ -4176,7 +4178,7 @@ public:
     return selectFirst<const T>(
                "", match(stmt(hasParent(
                              stmt(has(stmt(equalsNode(TypedNode)))).bind(""))),
-                         *Node, Context)) != NULL;
+                         *Node, Context)) != nullptr;
   }
   bool verify(const BoundNodes &Nodes, ASTContext &Context, const Decl *Node) {
     // Use the original typed pointer to verify we can pass pointers to subtypes
@@ -4185,7 +4187,7 @@ public:
     return selectFirst<const T>(
                "", match(decl(hasParent(
                              decl(has(decl(equalsNode(TypedNode)))).bind(""))),
-                         *Node, Context)) != NULL;
+                         *Node, Context)) != nullptr;
   }
 };
 

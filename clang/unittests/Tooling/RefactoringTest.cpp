@@ -236,7 +236,7 @@ public:
     OutStream << Content;
     OutStream.close();
     const FileEntry *File = Context.Files.getFile(Path);
-    assert(File != NULL);
+    assert(File != nullptr);
 
     StringRef Found = TemporaryFiles.GetOrCreateValue(Name, Path.str()).second;
     assert(Found == Path);
@@ -253,7 +253,7 @@ public:
     // FIXME: Figure out whether there is a way to get the SourceManger to
     // reopen the file.
     std::unique_ptr<const llvm::MemoryBuffer> FileBuffer(
-        Context.Files.getBufferForFile(Path, NULL));
+        Context.Files.getBufferForFile(Path, nullptr));
     return FileBuffer->getBuffer();
   }
 

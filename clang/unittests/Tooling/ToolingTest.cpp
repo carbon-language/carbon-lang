@@ -121,12 +121,12 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory<SyntaxOnlyAction>());
   std::unique_ptr<FrontendAction> Action(Factory->create());
-  EXPECT_TRUE(Action.get() != NULL);
+  EXPECT_TRUE(Action.get() != nullptr);
 }
 
 struct IndependentFrontendActionCreator {
   ASTConsumer *newASTConsumer() {
-    return new FindTopLevelDeclConsumer(NULL);
+    return new FindTopLevelDeclConsumer(nullptr);
   }
 };
 
@@ -135,7 +135,7 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Creator));
   std::unique_ptr<FrontendAction> Action(Factory->create());
-  EXPECT_TRUE(Action.get() != NULL);
+  EXPECT_TRUE(Action.get() != nullptr);
 }
 
 TEST(ToolInvocation, TestMapVirtualFile) {

@@ -65,7 +65,7 @@ class VoidModuleLoader : public ModuleLoader {
                          bool Complain) override { }
 
   GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
-    { return 0; }
+    { return nullptr; }
   bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
     { return 0; };
 };
@@ -98,7 +98,7 @@ TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {
                           Target.getPtr());
   Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
                   HeaderInfo, ModLoader,
-                  /*IILookup =*/0,
+                  /*IILookup =*/nullptr,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
   PPConditionalDirectiveRecord *

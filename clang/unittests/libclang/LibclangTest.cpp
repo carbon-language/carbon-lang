@@ -12,21 +12,22 @@
 
 TEST(libclang, clang_parseTranslationUnit2_InvalidArgs) {
   EXPECT_EQ(CXError_InvalidArguments,
-            clang_parseTranslationUnit2(0, 0, 0, 0, 0, 0, 0, 0));
+            clang_parseTranslationUnit2(nullptr, nullptr, nullptr, 0, nullptr,
+                                        0, 0, nullptr));
 }
 
 TEST(libclang, clang_createTranslationUnit_InvalidArgs) {
-  EXPECT_EQ(0, clang_createTranslationUnit(0, 0));
+  EXPECT_EQ(nullptr, clang_createTranslationUnit(nullptr, nullptr));
 }
 
 TEST(libclang, clang_createTranslationUnit2_InvalidArgs) {
   EXPECT_EQ(CXError_InvalidArguments,
-            clang_createTranslationUnit2(0, 0, 0));
+            clang_createTranslationUnit2(nullptr, nullptr, nullptr));
 
   CXTranslationUnit TU = reinterpret_cast<CXTranslationUnit>(1);
   EXPECT_EQ(CXError_InvalidArguments,
-            clang_createTranslationUnit2(0, 0, &TU));
-  EXPECT_EQ(0, TU);
+            clang_createTranslationUnit2(nullptr, nullptr, &TU));
+  EXPECT_EQ(nullptr, TU);
 }
 
 namespace {
@@ -107,7 +108,7 @@ TEST(libclang, VirtualFileOverlay_Unicode) {
 }
 
 TEST(libclang, VirtualFileOverlay_InvalidArgs) {
-  TestVFO T(NULL);
+  TestVFO T(nullptr);
   T.mapError("/path/./virtual/../foo.h", "/real/foo.h",
              CXError_InvalidArguments);
 }

@@ -33,7 +33,7 @@ namespace {
 
 void PrintStmt(raw_ostream &Out, const ASTContext *Context, const Stmt *S) {
   PrintingPolicy Policy = Context->getPrintingPolicy();
-  S->printPretty(Out, /*Helper*/ 0, Policy);
+  S->printPretty(Out, /*Helper*/ nullptr, Policy);
 }
 
 class PrintMatch : public MatchFinder::MatchCallback {

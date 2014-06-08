@@ -18,7 +18,7 @@
 using namespace clang;
 
 LLVM_ATTRIBUTE_UNUSED void CompileTest() {
-  ASTContext *C = 0;
+  ASTContext *C = nullptr;
   ASTVector<int> V;
   V.insert(*C, V.begin(), 0);
 }

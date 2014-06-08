@@ -53,7 +53,7 @@ class RewriterTestContext {
     const FileEntry *Entry =
       Files.getVirtualFile(Name, Source->getBufferSize(), 0);
     Sources.overrideFileContents(Entry, Source);
-    assert(Entry != NULL);
+    assert(Entry != nullptr);
     return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
   }
 
@@ -71,7 +71,7 @@ class RewriterTestContext {
     OutStream << Content;
     OutStream.close();
     const FileEntry *File = Files.getFile(Path);
-    assert(File != NULL);
+    assert(File != nullptr);
 
     StringRef Found = TemporaryFiles.GetOrCreateValue(Name, Path.str()).second;
     assert(Found == Path);
@@ -103,7 +103,7 @@ class RewriterTestContext {
     // FIXME: Figure out whether there is a way to get the SourceManger to
     // reopen the file.
     std::unique_ptr<const llvm::MemoryBuffer> FileBuffer(
-        Files.getBufferForFile(Path, NULL));
+        Files.getBufferForFile(Path, nullptr));
     return FileBuffer->getBuffer();
   }
 
