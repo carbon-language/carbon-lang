@@ -465,20 +465,56 @@ TYPED_TEST(SmallVectorTest, InsertCopy) {
 TYPED_TEST(SmallVectorTest, InsertRepeatedTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
+  // FIXME: This range is too big (it's outside the "small" zone to start with,
+  // and the buffer allocated is large enough that none of these tests ever
+  // reallocate) to test all the code paths, specifically none of them test
+  // reallocation.
   this->makeSequence(this->theVector, 10, 15);
   Constructable::reset();
-  typename TypeParam::iterator I =
-    this->theVector.insert(this->theVector.begin() + 1, 2, Constructable(16));
+  auto I =
+      this->theVector.insert(this->theVector.begin() + 1, 2, Constructable(16));
+  // Once this tests reallocation, there could be more move constructions here.
+  // Move construct the top two elements into newly allocated space.
+  EXPECT_EQ(2, Constructable::getNumMoveConstructorCalls());
+  // Move assign the next two to shift them up and make a gap.
+  EXPECT_EQ(3, Constructable::getNumMoveAssignmentCalls());
+  // Copy construct the two new elements from the parameter.
+  EXPECT_EQ(2, Constructable::getNumCopyAssignmentCalls());
+  // All without any copy construction.
   EXPECT_EQ(0, Constructable::getNumCopyConstructorCalls());
   EXPECT_EQ(this->theVector.begin() + 1, I);
   this->assertValuesInOrder(this->theVector, 8u,
                       10, 16, 16, 11, 12, 13, 14, 15);
+}
 
-  // Insert at end.
-  I = this->theVector.insert(this->theVector.end(), 2, Constructable(16));
-  EXPECT_EQ(this->theVector.begin() + 8, I);
-  this->assertValuesInOrder(this->theVector, 10u,
-                      10, 16, 16, 11, 12, 13, 14, 15, 16, 16);
+
+TYPED_TEST(SmallVectorTest, InsertRepeatedAtEndTest) {
+  SCOPED_TRACE("InsertRepeatedTest");
+
+  // FIXME: This range is too big (it's outside the "small" zone to start with,
+  // and the buffer allocated is large enough that none of these tests ever
+  // reallocate) to test all the code paths, specifically none of them test
+  // reallocation.
+  this->makeSequence(this->theVector, 10, 15);
+  Constructable::reset();
+  auto I = this->theVector.insert(this->theVector.end(), 2, Constructable(16));
+  // Just copy construct them into newly allocated space
+  EXPECT_EQ(2, Constructable::getNumCopyConstructorCalls());
+  // Move everything across during reallocation.
+  EXPECT_EQ(0, Constructable::getNumMoveConstructorCalls());
+  // Without ever moving or copying anything else.
+  EXPECT_EQ(0, Constructable::getNumCopyAssignmentCalls());
+  EXPECT_EQ(0, Constructable::getNumMoveAssignmentCalls());
+
+  EXPECT_EQ(this->theVector.begin() + 6, I);
+  this->assertValuesInOrder(this->theVector, 8u,
+                      10, 11, 12, 13, 14, 15, 16, 16);
+}
+
+TYPED_TEST(SmallVectorTest, InsertRepeatedEmptyTest) {
+  SCOPED_TRACE("InsertRepeatedTest");
+
+  this->makeSequence(this->theVector, 10, 15);
 
   // Empty insert.
   EXPECT_EQ(this->theVector.end(),
@@ -497,16 +533,53 @@ TYPED_TEST(SmallVectorTest, InsertRangeTest) {
     { Constructable(77), Constructable(77), Constructable(77) };
 
   this->makeSequence(this->theVector, 1, 3);
-  typename TypeParam::iterator I =
-    this->theVector.insert(this->theVector.begin() + 1, Arr, Arr+3);
+  Constructable::reset();
+  auto I = this->theVector.insert(this->theVector.begin() + 1, Arr, Arr + 3);
+  // Move construct the top 3 elements into newly allocated space.
+  // Possibly move the whole sequence into new space first.
+  // FIXME: This is inefficient, we shouldn't move things into newly allocated
+  // space, then move them up/around, there should only be 2 or 3 move
+  // constructions here.
+  EXPECT_TRUE(Constructable::getNumMoveConstructorCalls() == 2 ||
+              Constructable::getNumMoveConstructorCalls() == 5);
+  // Copy assign the lower 2 new elements into existing space.
+  EXPECT_EQ(2, Constructable::getNumCopyAssignmentCalls());
+  // Copy construct the third element into newly allocated space.
+  EXPECT_EQ(1, Constructable::getNumCopyConstructorCalls());
   EXPECT_EQ(this->theVector.begin() + 1, I);
   this->assertValuesInOrder(this->theVector, 6u, 1, 77, 77, 77, 2, 3);
+}
+
+
+TYPED_TEST(SmallVectorTest, InsertRangeAtEndTest) {
+  SCOPED_TRACE("InsertRangeTest");
+
+  Constructable Arr[3] =
+    { Constructable(77), Constructable(77), Constructable(77) };
+
+  this->makeSequence(this->theVector, 1, 3);
 
   // Insert at end.
-  I = this->theVector.insert(this->theVector.end(), Arr, Arr+3);
-  EXPECT_EQ(this->theVector.begin() + 6, I);
-  this->assertValuesInOrder(this->theVector, 9u,
-                            1, 77, 77, 77, 2, 3, 77, 77, 77);
+  Constructable::reset();
+  auto I = this->theVector.insert(this->theVector.end(), Arr, Arr+3);
+  // Copy construct the 3 elements into new space at the top.
+  EXPECT_EQ(3, Constructable::getNumCopyConstructorCalls());
+  // Don't copy/move anything else.
+  EXPECT_EQ(0, Constructable::getNumCopyAssignmentCalls());
+  // Reallocation might occur, causing all elements to be moved into the new
+  // buffer.
+  EXPECT_TRUE(Constructable::getNumMoveConstructorCalls() == 0 ||
+              Constructable::getNumMoveConstructorCalls() == 3);
+  EXPECT_EQ(0, Constructable::getNumMoveAssignmentCalls());
+  EXPECT_EQ(this->theVector.begin() + 3, I);
+  this->assertValuesInOrder(this->theVector, 6u,
+                            1, 2, 3, 77, 77, 77);
+}
+
+TYPED_TEST(SmallVectorTest, InsertEmptyRangeTest) {
+  SCOPED_TRACE("InsertRangeTest");
+
+  this->makeSequence(this->theVector, 1, 3);
 
   // Empty insert.
   EXPECT_EQ(this->theVector.end(),
