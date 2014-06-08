@@ -1,7 +1,12 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang_cc1 -triple x86_64 %s -S -o /dev/null 2>&1 | FileCheck %s
-// RUN: not %clang_cc1 -triple x86_64 %s -S -o /dev/null -Werror 2>&1 | FileCheck %s --check-prefix=CHECK-Werror
+// RUN: %clang_cc1 -triple x86_64 %s -S -o /dev/null -DWARN -verify
+// RUN: %clang_cc1 -triple x86_64 %s -S -o /dev/null -Werror -verify
 void f() {
-  asm("movaps %xmm3, (%esi, 2)"); // CHECK: warning: scale factor without index register is ignored
-                                  // CHECK-Werror: error: scale factor without index register is ignored
+  asm("movaps %xmm3, (%esi, 2)");
+// expected-note@1 {{instantiated into assembly here}}
+#ifdef WARN
+// expected-warning@-3 {{scale factor without index register is ignored}}
+#else
+// expected-error@-5 {{scale factor without index register is ignored}}
+#endif
 }

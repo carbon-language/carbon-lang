@@ -1,8 +1,13 @@
 // REQUIRES: arm-registered-target
-// RUN: %clang_cc1 -triple armv8 -target-feature +neon %s -S -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-v8
-// RUN: not %clang_cc1 -triple armv8 -target-feature +neon %s -S -o /dev/null -Werror 2>&1 | FileCheck %s --check-prefix=CHECK-v8-Werror
+// RUN: %clang_cc1 -triple armv8 -target-feature +neon %s -S -o /dev/null -verify -DWARN
+// RUN: %clang_cc1 -triple armv8 -target-feature +neon %s -S -o /dev/null -Werror -verify
 
 void set_endian() {
-  asm("setend be"); // CHECK-v8: warning: deprecated 
-                    // CHECK-v8-Werror: error: deprecated
+  asm("setend be");
+// expected-note@1 {{instantiated into assembly here}}
+#ifdef WARN
+// expected-warning@-3 {{deprecated}}
+#else
+// expected-error@-5 {{deprecated}}
+#endif
 }
