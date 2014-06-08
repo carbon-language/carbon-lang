@@ -561,6 +561,19 @@ bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
   return false;
 }
 
+static MCSymbolAttr MCAttrForString(StringRef Type) {
+  return StringSwitch<MCSymbolAttr>(Type)
+          .Cases("STT_FUNC", "function", MCSA_ELF_TypeFunction)
+          .Cases("STT_OBJECT", "object", MCSA_ELF_TypeObject)
+          .Cases("STT_TLS", "tls_object", MCSA_ELF_TypeTLS)
+          .Cases("STT_COMMON", "common", MCSA_ELF_TypeCommon)
+          .Cases("STT_NOTYPE", "notype", MCSA_ELF_TypeNoType)
+          .Cases("STT_GNU_IFUNC", "gnu_indirect_function",
+                 MCSA_ELF_TypeIndFunction)
+          .Case("gnu_unique_object", MCSA_ELF_TypeGnuUniqueObject)
+          .Default(MCSA_Invalid);
+}
+
 /// ParseDirectiveELFType
 ///  ::= .type identifier , STT_<TYPE_IN_UPPER_CASE>
 ///  ::= .type identifier , #attribute
@@ -575,53 +588,36 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
   // Handle the identifier as the key symbol.
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("unexpected token in '.type' directive");
-  Lex();
+  // NOTE the comma is optional in all cases.  It is only documented as being
+  // optional in the first case, however, GAS will silently treat the comma as
+  // optional in all cases.  Furthermore, although the documentation states that
+  // the first form only accepts STT_<TYPE_IN_UPPER_CASE>, in reality, GAS
+  // accepts both the upper case name as well as the lower case aliases.
+  if (getLexer().is(AsmToken::Comma))
+    Lex();
 
-  StringRef Type;
-  SMLoc TypeLoc;
-  MCSymbolAttr Attr;
-  if (getLexer().is(AsmToken::Identifier)) {
-    TypeLoc = getLexer().getLoc();
-    if (getParser().parseIdentifier(Type))
-      return TokError("expected symbol type in directive");
-    Attr = StringSwitch<MCSymbolAttr>(Type)
-               .Case("STT_FUNC", MCSA_ELF_TypeFunction)
-               .Case("STT_OBJECT", MCSA_ELF_TypeObject)
-               .Case("STT_TLS", MCSA_ELF_TypeTLS)
-               .Case("STT_COMMON", MCSA_ELF_TypeCommon)
-               .Case("STT_NOTYPE", MCSA_ELF_TypeNoType)
-               .Case("STT_GNU_IFUNC", MCSA_ELF_TypeIndFunction)
-               .Default(MCSA_Invalid);
-  } else if (getLexer().is(AsmToken::Hash) || getLexer().is(AsmToken::At) ||
-             getLexer().is(AsmToken::Percent) ||
-             getLexer().is(AsmToken::String)) {
-    if (!getLexer().is(AsmToken::String))
-      Lex();
-
-    TypeLoc = getLexer().getLoc();
-    if (getParser().parseIdentifier(Type))
-      return TokError("expected symbol type in directive");
-    Attr = StringSwitch<MCSymbolAttr>(Type)
-               .Case("function", MCSA_ELF_TypeFunction)
-               .Case("object", MCSA_ELF_TypeObject)
-               .Case("tls_object", MCSA_ELF_TypeTLS)
-               .Case("common", MCSA_ELF_TypeCommon)
-               .Case("notype", MCSA_ELF_TypeNoType)
-               .Case("gnu_unique_object", MCSA_ELF_TypeGnuUniqueObject)
-               .Case("gnu_indirect_function", MCSA_ELF_TypeIndFunction)
-               .Default(MCSA_Invalid);
-  } else
+  if (getLexer().isNot(AsmToken::Identifier) &&
+      getLexer().isNot(AsmToken::Hash) && getLexer().isNot(AsmToken::At) &&
+      getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::String))
     return TokError("expected STT_<TYPE_IN_UPPER_CASE>, '#<type>', '@<type>', "
                     "'%<type>' or \"<type>\"");
 
+  if (getLexer().isNot(AsmToken::String) &&
+      getLexer().isNot(AsmToken::Identifier))
+    Lex();
+
+  SMLoc TypeLoc = getLexer().getLoc();
+
+  StringRef Type;
+  if (getParser().parseIdentifier(Type))
+    return TokError("expected symbol type in directive");
+
+  MCSymbolAttr Attr = MCAttrForString(Type);
   if (Attr == MCSA_Invalid)
     return Error(TypeLoc, "unsupported attribute in '.type' directive");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.type' directive");
-
   Lex();
 
   getStreamer().EmitSymbolAttribute(Sym, Attr);
