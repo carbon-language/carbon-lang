@@ -31,11 +31,13 @@ class Module;
 /// JumpInstrTableInfo.
 ///
 /// These special functions get lowered in AsmPrinter to assembly of the form:
+/// \verbatim
 ///   .globl f
 ///   .type f,@function
 ///   .align 8,0x90
 /// f:
 ///   jmp f_orig@PLT
+/// \endverbatim
 ///
 /// Support for an architecture depends on two functions in TargetInstrInfo:
 /// getUnconditionalBranch, and getTrap. AsmPrinter uses these to generate the
