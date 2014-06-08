@@ -1,11 +1,11 @@
 # REQUIRES: mips
 
 # Check handling of global/local GOT16 relocations.
+# RUN: yaml2obj -format=elf %s > %t.o
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-# RUN:     --output-filetype=yaml %S/Inputs/got16.o \
+# RUN:     --output-filetype=yaml %t.o \
 # RUN:     | FileCheck -check-prefix YAML %s
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 \
-# RUN: %S/Inputs/got16.o
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t.o
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
 # Local GOT entries:
@@ -119,3 +119,78 @@
 # RAW: 00012200 l     .data  00000005 str2
 # RAW: 0000012c g   F .text  0000001c glob
 # RAW: 00012205 g     .data  00000004 hidden
+
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Content:         '0000848F000084240100848F000284240000848F0000848F0000848F'
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          .data
+        Type:            R_MIPS_GOT16
+      - Offset:          0x04
+        Symbol:          .data
+        Type:            R_MIPS_LO16
+      - Offset:          0x08
+        Symbol:          .data
+        Type:            R_MIPS_GOT16
+      - Offset:          0x0C
+        Symbol:          .data
+        Type:            R_MIPS_LO16
+      - Offset:          0x10
+        Symbol:          hidden
+        Type:            R_MIPS_GOT16
+      - Offset:          0x14
+        Symbol:          glob
+        Type:            R_MIPS_CALL16
+      - Offset:          0x18
+        Symbol:          extern
+        Type:            R_MIPS_CALL16
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x04
+    Size:            0x10209
+
+Symbols:
+  Local:
+    - Name:            str1
+      Type:            STT_OBJECT
+      Section:         .data
+      Size:            0x10200
+    - Name:            str2
+      Type:            STT_OBJECT
+      Section:         .data
+      Value:           0x10200
+      Size:            0x05
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .data
+      Type:            STT_SECTION
+      Section:         .data
+  Global:
+    - Name:            glob
+      Section:         .text
+    - Name:            hidden
+      Type:            STT_OBJECT
+      Section:         .data
+      Value:           0x10205
+      Size:            0x04
+      Visibility:      STV_HIDDEN
+    - Name:            extern
