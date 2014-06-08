@@ -36,8 +36,8 @@ protected:
   const void *data[3];
   CXCursor parent;
   Kind K;
-  VisitorJob(CXCursor C, Kind k, const void *d1, const void *d2 = 0,
-             const void *d3 = 0)
+  VisitorJob(CXCursor C, Kind k, const void *d1, const void *d2 = nullptr,
+             const void *d3 = nullptr)
     : parent(C), K(k) {
     data[0] = d1;
     data[1] = d2;
@@ -147,7 +147,7 @@ public:
                 bool VisitIncludedPreprocessingEntries = false,
                 SourceRange RegionOfInterest = SourceRange(),
                 bool VisitDeclsOnly = false,
-                PostChildrenVisitorTy PostChildrenVisitor = 0)
+                PostChildrenVisitorTy PostChildrenVisitor = nullptr)
     : TU(TU), AU(cxtu::getASTUnit(TU)),
       Visitor(Visitor), PostChildrenVisitor(PostChildrenVisitor),
       ClientData(ClientData),
@@ -155,13 +155,13 @@ public:
       VisitIncludedEntities(VisitIncludedPreprocessingEntries),
       RegionOfInterest(RegionOfInterest),
       VisitDeclsOnly(VisitDeclsOnly),
-      DI_current(0), FileDI_current(0)
+      DI_current(nullptr), FileDI_current(nullptr)
   {
     Parent.kind = CXCursor_NoDeclFound;
-    Parent.data[0] = 0;
-    Parent.data[1] = 0;
-    Parent.data[2] = 0;
-    StmtParent = 0;
+    Parent.data[0] = nullptr;
+    Parent.data[1] = nullptr;
+    Parent.data[2] = nullptr;
+    StmtParent = nullptr;
   }
 
   ~CursorVisitor() {

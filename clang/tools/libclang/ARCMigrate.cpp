@@ -40,7 +40,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
   if (!migrate_dir_path) {
     if (Logging)
       llvm::errs() << "clang_getRemappings was called with NULL parameter\n";
-    return 0;
+    return nullptr;
   }
 
   bool exists = false;
@@ -51,7 +51,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
                    << "\")\n";
       llvm::errs() << "\"" << migrate_dir_path << "\" does not exist\n";
     }
-    return 0;
+    return nullptr;
   }
 
   TextDiagnosticBuffer diagBuffer;
@@ -67,7 +67,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
              I = diagBuffer.err_begin(), E = diagBuffer.err_end(); I != E; ++I)
         llvm::errs() << I->second << '\n';
     }
-    return 0;
+    return nullptr;
   }
 
   return remap.release();
@@ -90,7 +90,7 @@ CXRemapping clang_getRemappingsFromFileList(const char **filePaths,
     if (Logging)
       llvm::errs() << "clang_getRemappingsFromFileList was called with "
                       "NULL filePaths\n";
-    return 0;
+    return nullptr;
   }
 
   TextDiagnosticBuffer diagBuffer;

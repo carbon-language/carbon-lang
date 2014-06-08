@@ -186,7 +186,7 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
       // Diagnostics in the ASTUnit were updated, reset the associated
       // diagnostics.
       delete Set;
-      TU->Diagnostics = 0;
+      TU->Diagnostics = nullptr;
     }
   }
 
@@ -223,16 +223,16 @@ unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
   if (cxtu::isNotUsableTU(Unit)) {
     LOG_BAD_TU(Unit);
-    return 0;
+    return nullptr;
   }
 
   CXDiagnosticSet D = clang_getDiagnosticSetFromTU(Unit);
   if (!D)
-    return 0;
+    return nullptr;
 
   CXDiagnosticSetImpl *Diags = static_cast<CXDiagnosticSetImpl*>(D);
   if (Index >= Diags->getNumDiagnostics())
-    return 0;
+    return nullptr;
 
   return Diags->getDiagnostic(Index);
 }
@@ -240,10 +240,10 @@ CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
 CXDiagnosticSet clang_getDiagnosticSetFromTU(CXTranslationUnit Unit) {
   if (cxtu::isNotUsableTU(Unit)) {
     LOG_BAD_TU(Unit);
-    return 0;
+    return nullptr;
   }
   if (!cxtu::getASTUnit(Unit))
-    return 0;
+    return nullptr;
   return static_cast<CXDiagnostic>(lazyCreateDiags(Unit));
 }
 
@@ -267,7 +267,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
     CXFile File;
     unsigned Line, Column;
     clang_getSpellingLocation(clang_getDiagnosticLocation(Diagnostic),
-                              &File, &Line, &Column, 0);
+                              &File, &Line, &Column, nullptr);
     if (File) {
       CXString FName = clang_getFileName(File);
       Out << clang_getCString(FName) << ":" << Line << ":";
@@ -285,10 +285,10 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
           unsigned StartLine, StartColumn, EndLine, EndColumn;
           clang_getSpellingLocation(clang_getRangeStart(Range),
                                     &StartFile, &StartLine, &StartColumn,
-                                    0);
+                                    nullptr);
           clang_getSpellingLocation(clang_getRangeEnd(Range),
-                                    &EndFile, &EndLine, &EndColumn, 0);
-          
+                                    &EndFile, &EndLine, &EndColumn, nullptr);
+
           if (StartFile != EndFile || StartFile != File)
             continue;
           
@@ -326,7 +326,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
     bool NeedComma = false;
 
     if (Options & CXDiagnostic_DisplayOption) {
-      CXString OptionName = clang_getDiagnosticOption(Diagnostic, 0);
+      CXString OptionName = clang_getDiagnosticOption(Diagnostic, nullptr);
       if (const char *OptionText = clang_getCString(OptionName)) {
         if (OptionText[0]) {
           Out << " [" << OptionText;
@@ -464,15 +464,15 @@ CXDiagnostic clang_getDiagnosticInSet(CXDiagnosticSet Diags,
   if (CXDiagnosticSetImpl *D = static_cast<CXDiagnosticSetImpl*>(Diags))
     if (Index < D->getNumDiagnostics())
       return D->getDiagnostic(Index);
-  return 0;  
+  return nullptr;
 }
   
 CXDiagnosticSet clang_getChildDiagnostics(CXDiagnostic Diag) {
   if (CXDiagnosticImpl *D = static_cast<CXDiagnosticImpl *>(Diag)) {
     CXDiagnosticSetImpl &ChildDiags = D->getChildDiagnostics();
-    return ChildDiags.empty() ? 0 : (CXDiagnosticSet) &ChildDiags;
+    return ChildDiags.empty() ? nullptr : (CXDiagnosticSet) &ChildDiags;
   }
-  return 0;
+  return nullptr;
 }
 
 unsigned clang_getNumDiagnosticsInSet(CXDiagnosticSet Diags) {

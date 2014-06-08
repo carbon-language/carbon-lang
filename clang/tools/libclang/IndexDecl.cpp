@@ -31,7 +31,8 @@ public:
     return MD && !MD->isImplicit() && MD->isThisDeclarationADefinition();
   }
 
-  void handleDeclarator(const DeclaratorDecl *D, const NamedDecl *Parent = 0) {
+  void handleDeclarator(const DeclaratorDecl *D,
+                        const NamedDecl *Parent = nullptr) {
     if (!Parent) Parent = D;
 
     if (!IndexCtx.shouldIndexFunctionLocalSymbols()) {
@@ -227,7 +228,7 @@ public:
     
     if (ObjCIvarDecl *IvarD = D->getPropertyIvarDecl()) {
       if (!IvarD->getSynthesize())
-        IndexCtx.handleReference(IvarD, D->getPropertyIvarDeclLoc(), 0,
+        IndexCtx.handleReference(IvarD, D->getPropertyIvarDeclLoc(), nullptr,
                                  D->getDeclContext());
     }
 

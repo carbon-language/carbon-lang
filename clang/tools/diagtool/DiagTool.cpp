@@ -32,7 +32,7 @@ DiagTools::~DiagTools() { delete getTools(tools); }
 
 DiagTool *DiagTools::getTool(llvm::StringRef toolCmd) {
   ToolMap::iterator it = getTools(tools)->find(toolCmd);
-  return (it == getTools(tools)->end()) ? 0 : it->getValue();
+  return (it == getTools(tools)->end()) ? nullptr : it->getValue();
 }
 
 void DiagTools::registerTool(DiagTool *tool) {

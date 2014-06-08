@@ -511,8 +511,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   ITUI->result = CXError_Failure;
 
   if (out_TU)
-    *out_TU = 0;
-  bool requestedToGetTU = (out_TU != 0);
+    *out_TU = nullptr;
+  bool requestedToGetTU = (out_TU != nullptr);
 
   if (!cxIdxAction) {
     ITUI->result = CXError_InvalidArguments;
@@ -537,7 +537,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
 
   bool CaptureDiagnostics = !Logger::isLoggingEnabled();
 
-  CaptureDiagnosticConsumer *CaptureDiag = 0;
+  CaptureDiagnosticConsumer *CaptureDiag = nullptr;
   if (CaptureDiagnostics)
     CaptureDiag = new CaptureDiagnosticConsumer();
 
@@ -632,7 +632,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   std::unique_ptr<IndexingFrontendAction> IndexAction;
   IndexAction.reset(new IndexingFrontendAction(client_data, CB,
                                                index_options, CXTU->getTU(),
-                              SkipBodies ? IdxSession->SkipBodyData.get() : 0));
+                        SkipBodies ? IdxSession->SkipBodyData.get() : nullptr));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingFrontendAction>
@@ -796,7 +796,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
     IndexCtxCleanup(IndexCtx.get());
 
   std::unique_ptr<IndexingConsumer> IndexConsumer;
-  IndexConsumer.reset(new IndexingConsumer(*IndexCtx, 0));
+  IndexConsumer.reset(new IndexingConsumer(*IndexCtx, nullptr));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingConsumer>
@@ -814,7 +814,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
   FileManager &FileMgr = Unit->getFileManager();
 
   if (Unit->getOriginalSourceFileName().empty())
-    IndexCtx->enteredMainFile(0);
+    IndexCtx->enteredMainFile(nullptr);
   else
     IndexCtx->enteredMainFile(FileMgr.getFile(Unit->getOriginalSourceFileName()));
 
@@ -840,46 +840,46 @@ int clang_index_isEntityObjCContainerKind(CXIdxEntityKind K) {
 const CXIdxObjCContainerDeclInfo *
 clang_index_getObjCContainerDeclInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   if (const ObjCContainerDeclInfo *
         ContInfo = dyn_cast<ObjCContainerDeclInfo>(DI))
     return &ContInfo->ObjCContDeclInfo;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxObjCInterfaceDeclInfo *
 clang_index_getObjCInterfaceDeclInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   if (const ObjCInterfaceDeclInfo *
         InterInfo = dyn_cast<ObjCInterfaceDeclInfo>(DI))
     return &InterInfo->ObjCInterDeclInfo;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxObjCCategoryDeclInfo *
 clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *DInfo){
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   if (const ObjCCategoryDeclInfo *
         CatInfo = dyn_cast<ObjCCategoryDeclInfo>(DI))
     return &CatInfo->ObjCCatDeclInfo;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxObjCProtocolRefListInfo *
 clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   
@@ -894,50 +894,50 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
   if (const ObjCCategoryDeclInfo *CatInfo = dyn_cast<ObjCCategoryDeclInfo>(DI))
     return CatInfo->ObjCCatDeclInfo.protocols;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxObjCPropertyDeclInfo *
 clang_index_getObjCPropertyDeclInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   if (const ObjCPropertyDeclInfo *PropInfo = dyn_cast<ObjCPropertyDeclInfo>(DI))
     return &PropInfo->ObjCPropDeclInfo;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxIBOutletCollectionAttrInfo *
 clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *AInfo) {
   if (!AInfo)
-    return 0;
+    return nullptr;
 
   const AttrInfo *DI = static_cast<const AttrInfo *>(AInfo);
   if (const IBOutletCollectionInfo *
         IBInfo = dyn_cast<IBOutletCollectionInfo>(DI))
     return &IBInfo->IBCollInfo;
 
-  return 0;
+  return nullptr;
 }
 
 const CXIdxCXXClassDeclInfo *
 clang_index_getCXXClassDeclInfo(const CXIdxDeclInfo *DInfo) {
   if (!DInfo)
-    return 0;
+    return nullptr;
 
   const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
   if (const CXXClassDeclInfo *ClassInfo = dyn_cast<CXXClassDeclInfo>(DI))
     return &ClassInfo->CXXClassInfo;
 
-  return 0;
+  return nullptr;
 }
 
 CXIdxClientContainer
 clang_index_getClientContainer(const CXIdxContainerInfo *info) {
   if (!info)
-    return 0;
+    return nullptr;
   const ContainerInfo *Container = static_cast<const ContainerInfo *>(info);
   return Container->IndexCtx->getClientContainerForDC(Container->DC);
 }
@@ -952,7 +952,7 @@ void clang_index_setClientContainer(const CXIdxContainerInfo *info,
 
 CXIdxClientEntity clang_index_getClientEntity(const CXIdxEntityInfo *info) {
   if (!info)
-    return 0;
+    return nullptr;
   const EntityInfo *Entity = static_cast<const EntityInfo *>(info);
   return Entity->IndexCtx->getClientEntity(Entity->Dcl);
 }
@@ -1072,8 +1072,8 @@ void clang_indexLoc_getFileLocation(CXIdxLoc location,
                                     unsigned *line,
                                     unsigned *column,
                                     unsigned *offset) {
-  if (indexFile) *indexFile = 0;
-  if (file)   *file = 0;
+  if (indexFile) *indexFile = nullptr;
+  if (file)   *file = nullptr;
   if (line)   *line = 0;
   if (column) *column = 0;
   if (offset) *offset = 0;

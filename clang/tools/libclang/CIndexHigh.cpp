@@ -78,7 +78,7 @@ struct FindFileIdRefVisitData {
   /// itself, so both 'C' can be highlighted.
   const Decl *getCanonical(const Decl *D) const {
     if (!D)
-      return 0;
+      return nullptr;
 
     D = D->getCanonicalDecl();
 
@@ -265,7 +265,7 @@ struct FindFileMacroRefVisitData {
 static enum CXChildVisitResult findFileMacroRefVisit(CXCursor cursor,
                                                      CXCursor parent,
                                                      CXClientData client_data) {
-  const IdentifierInfo *Macro = 0;
+  const IdentifierInfo *Macro = nullptr;
   if (cursor.kind == CXCursor_MacroDefinition)
     Macro = getCursorMacroDefinition(cursor)->getName();
   else if (cursor.kind == CXCursor_MacroExpansion)
@@ -317,7 +317,7 @@ static bool findMacroRefsInFile(CXTranslationUnit TU, CXCursor Cursor,
   SourceManager &SM = Unit->getSourceManager();
 
   FileID FID = SM.translateFile(File);
-  const IdentifierInfo *Macro = 0;
+  const IdentifierInfo *Macro = nullptr;
   if (Cursor.kind == CXCursor_MacroDefinition)
     Macro = getCursorMacroDefinition(Cursor)->getName();
   else
@@ -522,7 +522,7 @@ CXResult clang_findReferencesInFileWithBlock(CXCursor cursor,
                                              CXFile file,
                                            CXCursorAndRangeVisitorBlock block) {
   CXCursorAndRangeVisitor visitor = { block,
-                                      block ? _visitCursorAndRange : 0 };
+                                      block ? _visitCursorAndRange : nullptr };
   return clang_findReferencesInFile(cursor, file, visitor);
 }
 
@@ -530,7 +530,7 @@ CXResult clang_findIncludesInFileWithBlock(CXTranslationUnit TU,
                                            CXFile file,
                                            CXCursorAndRangeVisitorBlock block) {
   CXCursorAndRangeVisitor visitor = { block,
-                                      block ? _visitCursorAndRange : 0 };
+                                      block ? _visitCursorAndRange : nullptr };
   return clang_findIncludesInFile(TU, file, visitor);
 }
 

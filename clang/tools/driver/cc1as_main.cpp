@@ -267,7 +267,7 @@ static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
     Diags.Report(diag::err_fe_unable_to_open_output)
       << Opts.OutputPath << Error;
     delete Out;
-    return 0;
+    return nullptr;
   }
 
   return new formatted_raw_ostream(*Out, formatted_raw_ostream::DELETE_STREAM);
@@ -354,8 +354,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI, *MCII, *MRI,
                                      *STI);
-    MCCodeEmitter *CE = 0;
-    MCAsmBackend *MAB = 0;
+    MCCodeEmitter *CE = nullptr;
+    MCAsmBackend *MAB = nullptr;
     if (Opts.ShowEncoding) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(*MRI, Opts.Triple, Opts.CPU);
@@ -469,7 +469,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
     Args[0] = "clang (LLVM option parsing)";
     for (unsigned i = 0; i != NumArgs; ++i)
       Args[i + 1] = Asm.LLVMArgs[i].c_str();
-    Args[NumArgs + 1] = 0;
+    Args[NumArgs + 1] = nullptr;
     llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
   }
 

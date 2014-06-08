@@ -51,7 +51,7 @@ CXString createEmpty() {
 
 CXString createNull() {
   CXString Str;
-  Str.data = 0;
+  Str.data = nullptr;
   Str.private_flags = CXS_Unmanaged;
   return Str;
 }

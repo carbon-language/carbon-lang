@@ -48,7 +48,7 @@ namespace diagtool {
       friend struct GroupRecord;
       group_iterator(const short *Start) : CurrentID(Start) {
         if (CurrentID && *CurrentID == -1)
-          CurrentID = 0;
+          CurrentID = nullptr;
       }
 
     public:
@@ -70,7 +70,7 @@ namespace diagtool {
       group_iterator &operator++() {
         ++CurrentID;
         if (*CurrentID == -1)
-          CurrentID = 0;
+          CurrentID = nullptr;
         return *this;
       }
 

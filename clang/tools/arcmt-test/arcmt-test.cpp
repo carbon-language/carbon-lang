@@ -81,10 +81,10 @@ class PrintTransforms : public MigrationProcess::RewriteListener {
 
 public:
   PrintTransforms(raw_ostream &OS)
-    : Ctx(0), OS(OS) { }
+    : Ctx(nullptr), OS(OS) {}
 
   void start(ASTContext &ctx) override { Ctx = &ctx; }
-  void finish() override { Ctx = 0; }
+  void finish() override { Ctx = nullptr; }
 
   void insert(SourceLocation loc, StringRef text) override {
     assert(Ctx);
@@ -112,7 +112,7 @@ static bool checkForMigration(StringRef resourcesPath,
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
       new DiagnosticsEngine(DiagID, &*DiagOpts, DiagClient));
   // Chain in -verify checker, if requested.
-  VerifyDiagnosticConsumer *verifyDiag = 0;
+  VerifyDiagnosticConsumer *verifyDiag = nullptr;
   if (VerifyDiags) {
     verifyDiag = new VerifyDiagnosticConsumer(*Diags);
     Diags->setClient(verifyDiag);

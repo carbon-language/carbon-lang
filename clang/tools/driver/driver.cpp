@@ -214,15 +214,15 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     const char *Suffix;
     const char *ModeFlag;
   } suffixes [] = {
-    { "clang",     0 },
+    { "clang",     nullptr },
     { "clang++",   "--driver-mode=g++" },
     { "clang-c++", "--driver-mode=g++" },
-    { "clang-cc",  0 },
+    { "clang-cc",  nullptr },
     { "clang-cpp", "--driver-mode=cpp" },
     { "clang-g++", "--driver-mode=g++" },
-    { "clang-gcc", 0 },
+    { "clang-gcc", nullptr },
     { "clang-cl",  "--driver-mode=cl"  },
-    { "cc",        0 },
+    { "cc",        nullptr },
     { "cpp",       "--driver-mode=cpp" },
     { "cl" ,       "--driver-mode=cl"  },
     { "++",        "--driver-mode=g++" },
@@ -420,7 +420,7 @@ int main(int argc_, const char **argv_) {
   // Force a crash to test the diagnostics.
   if (::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH")) {
     Diags.Report(diag::err_drv_force_crash) << "FORCE_CLANG_DIAGNOSTICS_CRASH";
-    const Command *FailingCommand = 0;
+    const Command *FailingCommand = nullptr;
     FailingCommands.push_back(std::make_pair(-1, FailingCommand));
   }
 

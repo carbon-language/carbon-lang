@@ -30,7 +30,7 @@ IndexingContext::ObjCProtocolListInfo::ObjCProtocolListInfo(
     ObjCProtocolDecl *PD = *I;
     ProtEntities.push_back(EntityInfo());
     IdxCtx.getEntityInfo(PD, ProtEntities.back(), SA);
-    CXIdxObjCProtocolRefInfo ProtInfo = { 0,
+    CXIdxObjCProtocolRefInfo ProtInfo = { nullptr,
                                 MakeCursorObjCProtocolRef(PD, Loc, IdxCtx.CXTU),
                                 IdxCtx.getIndexLoc(Loc) };
     ProtInfos.push_back(ProtInfo);
@@ -58,7 +58,7 @@ IBOutletCollectionInfo::IBOutletCollectionInfo(
     ClassInfo = other.ClassInfo;
     IBCollInfo.objcClass = &ClassInfo;
   } else
-    IBCollInfo.objcClass = 0;
+    IBCollInfo.objcClass = nullptr;
 }
 
 AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
@@ -96,7 +96,7 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
         IBAttr->getInterfaceLoc()->getTypeLoc().getLocStart();
     IBInfo.IBCollInfo.attrInfo = &IBInfo;
     IBInfo.IBCollInfo.classLoc = IdxCtx.getIndexLoc(InterfaceLocStart);
-    IBInfo.IBCollInfo.objcClass = 0;
+    IBInfo.IBCollInfo.objcClass = nullptr;
     IBInfo.IBCollInfo.classCursor = clang_getNullCursor();
     QualType Ty = IBAttr->getInterface();
     if (const ObjCObjectType *ObjectTy = Ty->getAs<ObjCObjectType>()) {
@@ -125,7 +125,7 @@ IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
                                    ScratchAlloc &SA) {
   for (const auto &Base : D->bases()) {
     BaseEntities.push_back(EntityInfo());
-    const NamedDecl *BaseD = 0;
+    const NamedDecl *BaseD = nullptr;
     QualType T = Base.getType();
     SourceLocation Loc = getBaseLoc(Base);
 
@@ -140,7 +140,7 @@ IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
 
     if (BaseD)
       IdxCtx.getEntityInfo(BaseD, BaseEntities.back(), SA);
-    CXIdxBaseClassInfo BaseInfo = { 0,
+    CXIdxBaseClassInfo BaseInfo = { nullptr,
                          MakeCursorCXXBaseSpecifier(&Base, IdxCtx.CXTU),
                          IdxCtx.getIndexLoc(Loc) };
     BaseInfos.push_back(BaseInfo);
@@ -227,14 +227,15 @@ bool IndexingContext::isFunctionLocalDecl(const Decl *D) {
 bool IndexingContext::shouldAbort() {
   if (!CB.abortQuery)
     return false;
-  return CB.abortQuery(ClientData, 0);
+  return CB.abortQuery(ClientData, nullptr);
 }
 
 void IndexingContext::enteredMainFile(const FileEntry *File) {
   if (File && CB.enteredMainFile) {
     CXIdxClientFile idxFile =
       CB.enteredMainFile(ClientData,
-                         static_cast<CXFile>(const_cast<FileEntry *>(File)), 0);
+                         static_cast<CXFile>(const_cast<FileEntry *>(File)),
+                         nullptr);
     FileMap[File] = idxFile;
   }
 }
@@ -283,7 +284,7 @@ void IndexingContext::importedPCH(const FileEntry *File) {
   CXIdxImportedASTFileInfo Info = {
                                     static_cast<CXFile>(
                                       const_cast<FileEntry *>(File)),
-                                    /*module=*/NULL,
+                                    /*module=*/nullptr,
                                     getIndexLoc(SourceLocation()),
                                     /*isImplicit=*/false
                                   };
@@ -292,9 +293,9 @@ void IndexingContext::importedPCH(const FileEntry *File) {
 }
 
 void IndexingContext::startedTranslationUnit() {
-  CXIdxClientContainer idxCont = 0;
+  CXIdxClientContainer idxCont = nullptr;
   if (CB.startedTranslationUnit)
-    idxCont = CB.startedTranslationUnit(ClientData, 0);
+    idxCont = CB.startedTranslationUnit(ClientData, nullptr);
   addContainerInMap(Ctx->getTranslationUnitDecl(), idxCont);
 }
 
@@ -302,7 +303,7 @@ void IndexingContext::handleDiagnosticSet(CXDiagnostic CXDiagSet) {
   if (!CB.diagnostic)
     return;
 
-  CB.diagnostic(ClientData, CXDiagSet, 0);
+  CB.diagnostic(ClientData, CXDiagSet, nullptr);
 }
 
 bool IndexingContext::handleDecl(const NamedDecl *D,
@@ -464,7 +465,8 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   ObjCInterfaceDeclInfo InterInfo(D);
   InterInfo.ObjCProtoListInfo = ProtInfo.getListInfo();
   InterInfo.ObjCInterDeclInfo.containerInfo = &InterInfo.ObjCContDeclInfo;
-  InterInfo.ObjCInterDeclInfo.superInfo = D->getSuperClass() ? &BaseClass : 0;
+  InterInfo.ObjCInterDeclInfo.superInfo = D->getSuperClass() ? &BaseClass
+                                                             : nullptr;
   InterInfo.ObjCInterDeclInfo.protocols = &InterInfo.ObjCProtoListInfo;
 
   return handleObjCContainer(D, D->getLocation(), getCursor(D), InterInfo);
@@ -529,7 +531,7 @@ bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
     CatDInfo.ObjCCatDeclInfo.classCursor =
         MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
   } else {
-    CatDInfo.ObjCCatDeclInfo.objcClass = 0;
+    CatDInfo.ObjCCatDeclInfo.objcClass = nullptr;
     CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
   }
   CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
@@ -559,11 +561,11 @@ bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
     CatDInfo.ObjCCatDeclInfo.classCursor =
         MakeCursorObjCClassRef(IFaceD, ClassLoc, CXTU);
   } else {
-    CatDInfo.ObjCCatDeclInfo.objcClass = 0;
+    CatDInfo.ObjCCatDeclInfo.objcClass = nullptr;
     CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
   }
   CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
-  CatDInfo.ObjCCatDeclInfo.protocols = 0;
+  CatDInfo.ObjCCatDeclInfo.protocols = nullptr;
 
   return handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
@@ -587,7 +589,8 @@ bool IndexingContext::handleObjCMethod(const ObjCMethodDecl *D) {
 bool IndexingContext::handleSynthesizedObjCProperty(
                                                 const ObjCPropertyImplDecl *D) {
   ObjCPropertyDecl *PD = D->getPropertyDecl();
-  return handleReference(PD, D->getLocation(), getCursor(D), 0, D->getDeclContext());
+  return handleReference(PD, D->getLocation(), getCursor(D), nullptr,
+                         D->getDeclContext());
 }
 
 bool IndexingContext::handleSynthesizedObjCMethod(const ObjCMethodDecl *D,
@@ -611,13 +614,13 @@ bool IndexingContext::handleObjCProperty(const ObjCPropertyDecl *D) {
     getEntityInfo(Getter, GetterEntity, SA);
     DInfo.ObjCPropDeclInfo.getter = &GetterEntity;
   } else {
-    DInfo.ObjCPropDeclInfo.getter = 0;
+    DInfo.ObjCPropDeclInfo.getter = nullptr;
   }
   if (ObjCMethodDecl *Setter = D->getSetterMethodDecl()) {
     getEntityInfo(Setter, SetterEntity, SA);
     DInfo.ObjCPropDeclInfo.setter = &SetterEntity;
   } else {
-    DInfo.ObjCPropDeclInfo.setter = 0;
+    DInfo.ObjCPropDeclInfo.setter = nullptr;
   }
 
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
@@ -700,7 +703,7 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
                               Cursor,
                               getIndexLoc(Loc),
                               &RefEntity,
-                              Parent ? &ParentEntity : 0,
+                              Parent ? &ParentEntity : nullptr,
                               &Container };
   CB.indexEntityReference(ClientData, &Info);
   return true;
@@ -712,7 +715,7 @@ bool IndexingContext::isNotFromSourceFile(SourceLocation Loc) const {
   SourceManager &SM = Ctx->getSourceManager();
   SourceLocation FileLoc = SM.getFileLoc(Loc);
   FileID FID = SM.getFileID(FileLoc);
-  return SM.getFileEntryForID(FID) == 0;
+  return SM.getFileEntryForID(FID) == nullptr;
 }
 
 void IndexingContext::addContainerInMap(const DeclContext *DC,
@@ -736,10 +739,10 @@ void IndexingContext::addContainerInMap(const DeclContext *DC,
 
 CXIdxClientEntity IndexingContext::getClientEntity(const Decl *D) const {
   if (!D)
-    return 0;
+    return nullptr;
   EntityMapTy::const_iterator I = EntityMap.find(D);
   if (I == EntityMap.end())
-    return 0;
+    return nullptr;
   return I->second;
 }
 
@@ -848,28 +851,28 @@ IndexingContext::getEntityContainer(const Decl *D) const {
 CXIdxClientContainer
 IndexingContext::getClientContainerForDC(const DeclContext *DC) const {
   if (!DC)
-    return 0;
+    return nullptr;
 
   ContainerMapTy::const_iterator I = ContainerMap.find(DC);
   if (I == ContainerMap.end())
-    return 0;
+    return nullptr;
 
   return I->second;
 }
 
 CXIdxClientFile IndexingContext::getIndexFile(const FileEntry *File) {
   if (!File)
-    return 0;
+    return nullptr;
 
   FileMapTy::iterator FI = FileMap.find(File);
   if (FI != FileMap.end())
     return FI->second;
 
-  return 0;
+  return nullptr;
 }
 
 CXIdxLoc IndexingContext::getIndexLoc(SourceLocation Loc) const {
-  CXIdxLoc idxLoc =  { {0, 0}, 0 };
+  CXIdxLoc idxLoc =  { {nullptr, nullptr}, 0 };
   if (Loc.isInvalid())
     return idxLoc;
 
@@ -1093,7 +1096,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
     EntityInfo.name = SA.toCStr(II->getName());
 
   } else if (isa<TagDecl>(D) || isa<FieldDecl>(D) || isa<NamespaceDecl>(D)) {
-    EntityInfo.name = 0; // anonymous tag/field/namespace.
+    EntityInfo.name = nullptr; // anonymous tag/field/namespace.
 
   } else {
     SmallString<256> StrBuf;
@@ -1108,7 +1111,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
     SmallString<512> StrBuf;
     bool Ignore = getDeclCursorUSR(D, StrBuf);
     if (Ignore) {
-      EntityInfo.USR = 0;
+      EntityInfo.USR = nullptr;
     } else {
       EntityInfo.USR = SA.copyCStr(StrBuf.str());
     }

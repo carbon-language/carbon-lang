@@ -44,7 +44,7 @@ template<typename T>
 static inline const T *getASTNodeAs(CXComment CXC) {
   const comments::Comment *C = getASTNode(CXC);
   if (!C)
-    return NULL;
+    return nullptr;
 
   return dyn_cast<T>(C);
 }

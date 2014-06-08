@@ -48,7 +48,7 @@ public:
     static const char *sCachedVar = ::getenv("LIBCLANG_LOGGING");
     return sCachedVar;
   }
-  static bool isLoggingEnabled() { return getEnvVar() != 0; }
+  static bool isLoggingEnabled() { return getEnvVar() != nullptr; }
   static bool isStackTracingEnabled() {
     if (const char *EnvOpt = Logger::getEnvVar())
       return llvm::StringRef(EnvOpt) == "2";
@@ -58,7 +58,7 @@ public:
                      bool trace = isStackTracingEnabled()) {
     if (isLoggingEnabled())
       return new Logger(name, trace);
-    return 0;
+    return nullptr;
   }
 
   explicit Logger(llvm::StringRef name, bool trace)

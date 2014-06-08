@@ -68,14 +68,14 @@ createDiagnostics(unsigned int argc, char **argv) {
       createInvocationFromCommandLine(ArrayRef<const char *>(argv, argc),
                                       InterimDiags));
   if (!Invocation)
-    return NULL;
+    return nullptr;
 
   // Build the diagnostics parser
   IntrusiveRefCntPtr<DiagnosticsEngine> FinalDiags =
     CompilerInstance::createDiagnostics(&Invocation->getDiagnosticOpts());
   if (!FinalDiags)
-    return NULL;
-  
+    return nullptr;
+
   // Flush any errors created when initializing everything. This could happen
   // for invalid command lines, which will probably give non-sensical results.
   DiagsBuffer->FlushDiagnostics(*FinalDiags);

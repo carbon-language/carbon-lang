@@ -54,7 +54,7 @@ clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
       return new AllocatedCXCompileCommands(std::move(CCmd));
   }
 
-  return 0;
+  return nullptr;
 }
 
 CXCompileCommands
@@ -65,7 +65,7 @@ clang_CompilationDatabase_getAllCompileCommands(CXCompilationDatabase CDb) {
       return new AllocatedCXCompileCommands(std::move(CCmd));
   }
 
-  return 0;
+  return nullptr;
 }
 
 void
@@ -90,13 +90,13 @@ CXCompileCommand
 clang_CompileCommands_getCommand(CXCompileCommands Cmds, unsigned I)
 {
   if (!Cmds)
-    return 0;
+    return nullptr;
 
   AllocatedCXCompileCommands *ACC =
     static_cast<AllocatedCXCompileCommands *>(Cmds);
 
   if (I >= ACC->CCmd.size())
-    return 0;
+    return nullptr;
 
   return &ACC->CCmd[I];
 }

@@ -89,8 +89,8 @@ CXCursor clang_getSpecializedCursorTemplate(CXCursor C) {
   const Decl *D = getCursorDecl(C);
   if (!D)
     return clang_getNullCursor();
-  
-  Decl *Template = 0;
+
+  Decl *Template = nullptr;
   if (const CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
     if (const ClassTemplatePartialSpecializationDecl *PartialSpec
           = dyn_cast<ClassTemplatePartialSpecializationDecl>(CXXRecord))

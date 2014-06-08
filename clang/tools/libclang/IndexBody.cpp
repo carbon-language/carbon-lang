@@ -170,7 +170,7 @@ void IndexingContext::indexBody(const Stmt *S, const NamedDecl *Parent,
   if (!S)
     return;
 
-  if (DC == 0)
+  if (!DC)
     DC = Parent->getLexicalDeclContext();
   BodyIndexer(*this, Parent, DC).TraverseStmt(const_cast<Stmt*>(S));
 }

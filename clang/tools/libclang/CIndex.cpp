@@ -63,15 +63,15 @@ using namespace clang::cxindex;
 
 CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU) {
   if (!AU)
-    return 0;
+    return nullptr;
   assert(CIdx);
   CXTranslationUnit D = new CXTranslationUnitImpl();
   D->CIdx = CIdx;
   D->TheASTUnit = AU;
   D->StringPool = new cxstring::CXStringPool();
-  D->Diagnostics = 0;
+  D->Diagnostics = nullptr;
   D->OverridenCursorsPool = createOverridenCXCursorsPool();
-  D->CommentToXML = 0;
+  D->CommentToXML = nullptr;
   return D;
 }
 
@@ -321,7 +321,7 @@ bool CursorVisitor::visitDeclsFromFileRegion(FileID File,
   assert(!Decls.empty());
 
   bool VisitedAtLeastOnce = false;
-  DeclContext *CurDC = 0;
+  DeclContext *CurDC = nullptr;
   SmallVectorImpl<Decl *>::iterator DIt = Decls.begin();
   for (SmallVectorImpl<Decl *>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
     Decl *D = *DIt;
@@ -350,7 +350,7 @@ bool CursorVisitor::visitDeclsFromFileRegion(FileID File,
       FileDI_current = &DIt;
       FileDE_current = DE;
     } else {
-      FileDI_current = 0;
+      FileDI_current = nullptr;
     }
 
     if (Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true))
@@ -1703,7 +1703,7 @@ class DeclVisit : public VisitorJob {
 public:
   DeclVisit(const Decl *D, CXCursor parent, bool isFirst) :
     VisitorJob(parent, VisitorJob::DeclVisitKind,
-               D, isFirst ? (void*) 1 : (void*) 0) {}
+               D, isFirst ? (void*) 1 : (void*) nullptr) {}
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == DeclVisitKind;
   }
@@ -2366,7 +2366,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           case CXChildVisit_Continue: break;
           case CXChildVisit_Recurse:
             if (PostChildrenVisitor)
-              WL.push_back(PostChildrenVisit(0, Cursor));
+              WL.push_back(PostChildrenVisit(nullptr, Cursor));
             EnqueueWorkList(WL, S);
             break;
         }
@@ -2495,7 +2495,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
 }
 
 bool CursorVisitor::Visit(const Stmt *S) {
-  VisitorWorkList *WL = 0;
+  VisitorWorkList *WL = nullptr;
   if (!WorkListFreeList.empty()) {
     WL = WorkListFreeList.back();
     WL->clear();
@@ -2513,10 +2513,10 @@ bool CursorVisitor::Visit(const Stmt *S) {
 
 namespace {
 typedef SmallVector<SourceRange, 4> RefNamePieces;
-RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
-                          const DeclarationNameInfo &NI, 
-                          const SourceRange &QLoc, 
-                          const ASTTemplateArgumentListInfo *TemplateArgs = 0){
+RefNamePieces
+buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
+            const DeclarationNameInfo &NI, const SourceRange &QLoc,
+            const ASTTemplateArgumentListInfo *TemplateArgs = nullptr) {
   const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
   const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
   const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;
@@ -2579,7 +2579,7 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   {
     llvm::sys::ScopedLock L(EnableMultithreadingMutex);
     if (!EnabledMultithreading) {
-      llvm::install_fatal_error_handler(fatal_error_handler, 0);
+      llvm::install_fatal_error_handler(fatal_error_handler, nullptr);
       llvm::llvm_start_multithreaded();
       EnabledMultithreading = true;
     }
@@ -2639,7 +2639,7 @@ enum CXErrorCode clang_createTranslationUnit2(CXIndex CIdx,
                                               const char *ast_filename,
                                               CXTranslationUnit *out_TU) {
   if (out_TU)
-    *out_TU = NULL;
+    *out_TU = nullptr;
 
   if (!CIdx || !ast_filename || !out_TU)
     return CXError_InvalidArguments;
@@ -2705,12 +2705,12 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
 
   // Set up the initial return values.
   if (out_TU)
-    *out_TU = NULL;
+    *out_TU = nullptr;
   PTUI->result = CXError_Failure;
 
   // Check arguments.
   if (!CIdx || !out_TU ||
-      (unsaved_files == NULL && num_unsaved_files != 0)) {
+      (unsaved_files == nullptr && num_unsaved_files != 0)) {
     PTUI->result = CXError_InvalidArguments;
     return;
   }
@@ -3010,14 +3010,14 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
     RTUI->result = CXError_InvalidArguments;
     return;
   }
-  if (unsaved_files == NULL && num_unsaved_files != 0) {
+  if (unsaved_files == nullptr && num_unsaved_files != 0) {
     RTUI->result = CXError_InvalidArguments;
     return;
   }
 
   // Reset the associated diagnostics.
   delete static_cast<CXDiagnosticSetImpl*>(TU->Diagnostics);
-  TU->Diagnostics = 0;
+  TU->Diagnostics = nullptr;
 
   CIndexer *CXXIdx = TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
@@ -3122,7 +3122,7 @@ time_t clang_getFileTime(CXFile SFile) {
 CXFile clang_getFile(CXTranslationUnit TU, const char *file_name) {
   if (isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
-    return 0;
+    return nullptr;
   }
 
   ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
@@ -3209,8 +3209,8 @@ static const Decl *getDeclFromExpr(const Stmt *E) {
     if (isa<NonTypeTemplateParmDecl>(SizeOfPack->getPack()) || 
         isa<ParmVarDecl>(SizeOfPack->getPack()))
       return SizeOfPack->getPack();
-  
-  return 0;
+
+  return nullptr;
 }
 
 static SourceLocation getLocationFromExpr(const Expr *E) {
@@ -4082,10 +4082,11 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     CXString SearchFileName, ResultFileName, KindSpelling, USR;
     const char *IsDef = clang_isCursorDefinition(Result)? " (Definition)" : "";
     CXSourceLocation ResultLoc = clang_getCursorLocation(Result);
-    
-    clang_getFileLocation(Loc, &SearchFile, &SearchLine, &SearchColumn, 0);
+
+    clang_getFileLocation(Loc, &SearchFile, &SearchLine, &SearchColumn,
+                          nullptr);
     clang_getFileLocation(ResultLoc, &ResultFile, &ResultLine,
-                               &ResultColumn, 0);
+                          &ResultColumn, nullptr);
     SearchFileName = clang_getFileName(SearchFile);
     ResultFileName = clang_getFileName(ResultFile);
     KindSpelling = clang_getCursorKindSpelling(Result.kind);
@@ -4109,7 +4110,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
       CXFile DefinitionFile;
       unsigned DefinitionLine, DefinitionColumn;
       clang_getFileLocation(DefinitionLoc, &DefinitionFile,
-                                 &DefinitionLine, &DefinitionColumn, 0);
+                            &DefinitionLine, &DefinitionColumn, nullptr);
       CXString DefinitionFileName = clang_getFileName(DefinitionFile);
       *Log << llvm::format("  -> %s(%s:%d:%d)",
                      clang_getCString(DefinitionKindSpelling),
@@ -4136,9 +4137,9 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
   // when visiting a DeclStmt currently, the AST should be enhanced to be able
   // to provide that kind of info.
   if (clang_isDeclaration(X.kind))
-    X.data[1] = 0;
+    X.data[1] = nullptr;
   if (clang_isDeclaration(Y.kind))
-    Y.data[1] = 0;
+    Y.data[1] = nullptr;
 
   return X == Y;
 }
@@ -4716,7 +4717,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::CXXConstructor:
   case Decl::CXXDestructor:
   case Decl::CXXConversion: {
-    const FunctionDecl *Def = 0;
+    const FunctionDecl *Def = nullptr;
     if (cast<FunctionDecl>(D)->getBody(Def))
       return MakeCXCursor(Def, TU);
     return clang_getNullCursor();
@@ -4732,7 +4733,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   }
 
   case Decl::FunctionTemplate: {
-    const FunctionDecl *Def = 0;
+    const FunctionDecl *Def = nullptr;
     if (cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->getBody(Def))
       return MakeCXCursor(Def->getDescribedFunctionTemplate(), TU);
     return clang_getNullCursor();
@@ -5139,10 +5140,10 @@ static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
       CXTok.ptr_data = II;
     } else if (Tok.is(tok::comment)) {
       CXTok.int_data[0] = CXToken_Comment;
-      CXTok.ptr_data = 0;
+      CXTok.ptr_data = nullptr;
     } else {
       CXTok.int_data[0] = CXToken_Punctuation;
-      CXTok.ptr_data = 0;
+      CXTok.ptr_data = nullptr;
     }
     CXTokens.push_back(CXTok);
     previousWasAt = Tok.is(tok::at);
@@ -5156,7 +5157,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   }
 
   if (Tokens)
-    *Tokens = 0;
+    *Tokens = nullptr;
   if (NumTokens)
     *NumTokens = 0;
 
@@ -5713,7 +5714,7 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
       if (lexNext(Lex, Tok, NextIdx, NumTokens))
         break;
 
-      MacroInfo *MI = 0;
+      MacroInfo *MI = nullptr;
       if (Tok.is(tok::raw_identifier) && Tok.getRawIdentifier() == "define") {
         if (lexNext(Lex, Tok, NextIdx, NumTokens))
           break;
@@ -6154,7 +6155,7 @@ CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
  /// function template.
 static const Decl *maybeGetTemplateCursor(const Decl *D) {
   if (!D)
-    return 0;
+    return nullptr;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (FunctionTemplateDecl *FunTmpl = FD->getDescribedFunctionTemplate())
@@ -6206,8 +6207,8 @@ CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
 
 CXFile clang_getIncludedFile(CXCursor cursor) {
   if (cursor.kind != CXCursor_InclusionDirective)
-    return 0;
-  
+    return nullptr;
+
   const InclusionDirective *ID = getCursorInclusionDirective(cursor);
   return const_cast<FileEntry *>(ID->getFile());
 }
@@ -6345,7 +6346,7 @@ CXModule clang_Cursor_getModule(CXCursor C) {
       return ImportD->getImportedModule();
   }
 
-  return 0;
+  return nullptr;
 }
 
 CXModule clang_getModuleForFile(CXTranslationUnit TU, CXFile File) {
@@ -6370,14 +6371,14 @@ CXModule clang_getModuleForFile(CXTranslationUnit TU, CXFile File) {
 
 CXFile clang_Module_getASTFile(CXModule CXMod) {
   if (!CXMod)
-    return 0;
+    return nullptr;
   Module *Mod = static_cast<Module*>(CXMod);
   return const_cast<FileEntry *>(Mod->getASTFile());
 }
 
 CXModule clang_Module_getParent(CXModule CXMod) {
   if (!CXMod)
-    return 0;
+    return nullptr;
   Module *Mod = static_cast<Module*>(CXMod);
   return Mod->Parent;
 }
@@ -6421,10 +6422,10 @@ CXFile clang_Module_getTopLevelHeader(CXTranslationUnit TU,
                                       CXModule CXMod, unsigned Index) {
   if (isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
-    return 0;
+    return nullptr;
   }
   if (!CXMod)
-    return 0;
+    return nullptr;
   Module *Mod = static_cast<Module*>(CXMod);
   FileManager &FileMgr = cxtu::getASTUnit(TU)->getFileManager();
 
@@ -6432,7 +6433,7 @@ CXFile clang_Module_getTopLevelHeader(CXTranslationUnit TU,
   if (Index < TopHeaders.size())
     return const_cast<FileEntry *>(TopHeaders[Index]);
 
-  return 0;
+  return nullptr;
 }
 
 } // end: extern "C"
@@ -6448,7 +6449,7 @@ unsigned clang_CXXMethod_isPureVirtual(CXCursor C) {
 
   const Decl *D = cxcursor::getCursorDecl(C);
   const CXXMethodDecl *Method =
-      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : nullptr;
   return (Method && Method->isVirtual() && Method->isPure()) ? 1 : 0;
 }
 
@@ -6458,7 +6459,7 @@ unsigned clang_CXXMethod_isConst(CXCursor C) {
 
   const Decl *D = cxcursor::getCursorDecl(C);
   const CXXMethodDecl *Method =
-      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : nullptr;
   return (Method && (Method->getTypeQualifiers() & Qualifiers::Const)) ? 1 : 0;
 }
 
@@ -6468,7 +6469,7 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   
   const Decl *D = cxcursor::getCursorDecl(C);
   const CXXMethodDecl *Method =
-      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : nullptr;
   return (Method && Method->isStatic()) ? 1 : 0;
 }
 
@@ -6478,7 +6479,7 @@ unsigned clang_CXXMethod_isVirtual(CXCursor C) {
   
   const Decl *D = cxcursor::getCursorDecl(C);
   const CXXMethodDecl *Method =
-      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : nullptr;
   return (Method && Method->isVirtual()) ? 1 : 0;
 }
 } // end: extern "C"
@@ -6566,7 +6567,7 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
 CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   if (isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
-    CXTUResourceUsage usage = { (void*) 0, 0, 0 };
+    CXTUResourceUsage usage = { (void*) nullptr, 0, nullptr };
     return usage;
   }
   
@@ -6648,10 +6649,10 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_Preprocessor_HeaderSearch,
                                pp.getHeaderSearchInfo().getTotalMemory());
-  
+
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
-                            entries->size() ? &(*entries)[0] : 0 };
+                            entries->size() ? &(*entries)[0] : nullptr };
   entries.release();
   return usage;
 }
@@ -6664,7 +6665,7 @@ void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
 CXSourceRangeList *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
   CXSourceRangeList *skipped = new CXSourceRangeList;
   skipped->count = 0;
-  skipped->ranges = 0;
+  skipped->ranges = nullptr;
 
   if (isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
@@ -6783,9 +6784,9 @@ MacroInfo *cxindex::getMacroInfo(const IdentifierInfo &II,
                                  SourceLocation MacroDefLoc,
                                  CXTranslationUnit TU){
   if (MacroDefLoc.isInvalid() || !TU)
-    return 0;
+    return nullptr;
   if (!II.hadMacroDefinition())
-    return 0;
+    return nullptr;
 
   ASTUnit *Unit = cxtu::getASTUnit(TU);
   Preprocessor &PP = Unit->getPreprocessor();
@@ -6798,16 +6799,16 @@ MacroInfo *cxindex::getMacroInfo(const IdentifierInfo &II,
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 const MacroInfo *cxindex::getMacroInfo(const MacroDefinition *MacroDef,
                                        CXTranslationUnit TU) {
   if (!MacroDef || !TU)
-    return 0;
+    return nullptr;
   const IdentifierInfo *II = MacroDef->getName();
   if (!II)
-    return 0;
+    return nullptr;
 
   return getMacroInfo(*II, MacroDef->getLocation(), TU);
 }
@@ -6816,12 +6817,12 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
                                                          const Token &Tok,
                                                          CXTranslationUnit TU) {
   if (!MI || !TU)
-    return 0;
+    return nullptr;
   if (Tok.isNot(tok::raw_identifier))
-    return 0;
+    return nullptr;
 
   if (MI->getNumTokens() == 0)
-    return 0;
+    return nullptr;
   SourceRange DefRange(MI->getReplacementToken(0).getLocation(),
                        MI->getDefinitionEndLoc());
   ASTUnit *Unit = cxtu::getASTUnit(TU);
@@ -6829,26 +6830,26 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
   // Check that the token is inside the definition and not its argument list.
   SourceManager &SM = Unit->getSourceManager();
   if (SM.isBeforeInTranslationUnit(Tok.getLocation(), DefRange.getBegin()))
-    return 0;
+    return nullptr;
   if (SM.isBeforeInTranslationUnit(DefRange.getEnd(), Tok.getLocation()))
-    return 0;
+    return nullptr;
 
   Preprocessor &PP = Unit->getPreprocessor();
   PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
   if (!PPRec)
-    return 0;
+    return nullptr;
 
   IdentifierInfo &II = PP.getIdentifierTable().get(Tok.getRawIdentifier());
   if (!II.hadMacroDefinition())
-    return 0;
+    return nullptr;
 
   // Check that the identifier is not one of the macro arguments.
   if (std::find(MI->arg_begin(), MI->arg_end(), &II) != MI->arg_end())
-    return 0;
+    return nullptr;
 
   MacroDirective *InnerMD = PP.getMacroDirectiveHistory(&II);
   if (!InnerMD)
-    return 0;
+    return nullptr;
 
   return PPRec->findMacroDefinition(InnerMD->getMacroInfo());
 }
@@ -6857,18 +6858,18 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
                                                          SourceLocation Loc,
                                                          CXTranslationUnit TU) {
   if (Loc.isInvalid() || !MI || !TU)
-    return 0;
+    return nullptr;
 
   if (MI->getNumTokens() == 0)
-    return 0;
+    return nullptr;
   ASTUnit *Unit = cxtu::getASTUnit(TU);
   Preprocessor &PP = Unit->getPreprocessor();
   if (!PP.getPreprocessingRecord())
-    return 0;
+    return nullptr;
   Loc = Unit->getSourceManager().getSpellingLoc(Loc);
   Token Tok;
   if (PP.getRawToken(Loc, Tok))
-    return 0;
+    return nullptr;
 
   return checkForMacroInMacroDefinition(MI, Tok, TU);
 }
@@ -6910,7 +6911,7 @@ Logger &cxindex::Logger::operator<<(CXCursor cursor) {
 Logger &cxindex::Logger::operator<<(CXSourceLocation Loc) {
   CXFile File;
   unsigned Line, Column;
-  clang_getFileLocation(Loc, &File, &Line, &Column, 0);
+  clang_getFileLocation(Loc, &File, &Line, &Column, nullptr);
   CXString FileName = clang_getFileName(File);
   *this << llvm::format("(%s:%d:%d)", clang_getCString(FileName), Line, Column);
   clang_disposeString(FileName);
@@ -6923,11 +6924,11 @@ Logger &cxindex::Logger::operator<<(CXSourceRange range) {
 
   CXFile BFile;
   unsigned BLine, BColumn;
-  clang_getFileLocation(BLoc, &BFile, &BLine, &BColumn, 0);
+  clang_getFileLocation(BLoc, &BFile, &BLine, &BColumn, nullptr);
 
   CXFile EFile;
   unsigned ELine, EColumn;
-  clang_getFileLocation(ELoc, &EFile, &ELine, &EColumn, 0);
+  clang_getFileLocation(ELoc, &EFile, &ELine, &EColumn, nullptr);
 
   CXString BFileName = clang_getFileName(BFile);
   if (BFile == EFile) {
