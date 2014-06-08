@@ -1819,7 +1819,7 @@ namespace {
     }
 
     void *LookupInlineAsmIdentifier(StringRef &LineBuf,
-                                    InlineAsmIdentifierInfo &Info,
+                                    llvm::InlineAsmIdentifierInfo &Info,
                                     bool IsUnevaluatedContext) override {
       // Collect the desired tokens.
       SmallVector<Token, 16> LineToks;
