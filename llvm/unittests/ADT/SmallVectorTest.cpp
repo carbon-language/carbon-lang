@@ -26,8 +26,12 @@ namespace {
 class Constructable {
 private:
   static int numConstructorCalls;
+  static int numMoveConstructorCalls;
+  static int numCopyConstructorCalls;
   static int numDestructorCalls;
   static int numAssignmentCalls;
+  static int numMoveAssignmentCalls;
+  static int numCopyAssignmentCalls;
 
   bool constructed;
   int value;
@@ -44,11 +48,13 @@ public:
   Constructable(const Constructable & src) : constructed(true) {
     value = src.value;
     ++numConstructorCalls;
+    ++numCopyConstructorCalls;
   }
 
   Constructable(Constructable && src) : constructed(true) {
     value = src.value;
     ++numConstructorCalls;
+    ++numMoveConstructorCalls;
   }
 
   ~Constructable() {
@@ -61,6 +67,7 @@ public:
     EXPECT_TRUE(constructed);
     value = src.value;
     ++numAssignmentCalls;
+    ++numCopyAssignmentCalls;
     return *this;
   }
 
@@ -68,6 +75,7 @@ public:
     EXPECT_TRUE(constructed);
     value = src.value;
     ++numAssignmentCalls;
+    ++numMoveAssignmentCalls;
     return *this;
   }
 
@@ -77,16 +85,40 @@ public:
 
   static void reset() {
     numConstructorCalls = 0;
+    numMoveConstructorCalls = 0;
+    numCopyConstructorCalls = 0;
     numDestructorCalls = 0;
     numAssignmentCalls = 0;
+    numMoveAssignmentCalls = 0;
+    numCopyAssignmentCalls = 0;
   }
 
   static int getNumConstructorCalls() {
     return numConstructorCalls;
   }
 
+  static int getNumMoveConstructorCalls() {
+    return numMoveConstructorCalls;
+  }
+
+  static int getNumCopyConstructorCalls() {
+    return numCopyConstructorCalls;
+  }
+
   static int getNumDestructorCalls() {
     return numDestructorCalls;
+  }
+
+  static int getNumAssignmentCalls() {
+    return numAssignmentCalls;
+  }
+
+  static int getNumMoveAssignmentCalls() {
+    return numMoveAssignmentCalls;
+  }
+
+  static int getNumCopyAssignmentCalls() {
+    return numCopyAssignmentCalls;
   }
 
   friend bool operator==(const Constructable & c0, const Constructable & c1) {
@@ -100,8 +132,12 @@ public:
 };
 
 int Constructable::numConstructorCalls;
+int Constructable::numCopyConstructorCalls;
+int Constructable::numMoveConstructorCalls;
 int Constructable::numDestructorCalls;
 int Constructable::numAssignmentCalls;
+int Constructable::numCopyAssignmentCalls;
+int Constructable::numMoveAssignmentCalls;
 
 // Test fixture class
 template <typename VectorT>
@@ -430,8 +466,10 @@ TYPED_TEST(SmallVectorTest, InsertRepeatedTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
   this->makeSequence(this->theVector, 10, 15);
+  Constructable::reset();
   typename TypeParam::iterator I =
     this->theVector.insert(this->theVector.begin() + 1, 2, Constructable(16));
+  EXPECT_EQ(0, Constructable::getNumCopyConstructorCalls());
   EXPECT_EQ(this->theVector.begin() + 1, I);
   this->assertValuesInOrder(this->theVector, 8u,
                       10, 16, 16, 11, 12, 13, 14, 15);

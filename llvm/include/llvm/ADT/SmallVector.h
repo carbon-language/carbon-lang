@@ -555,7 +555,8 @@ public:
     // reallocate the vector.
     if (size_t(this->end()-I) >= NumToInsert) {
       T *OldEnd = this->end();
-      append(this->end()-NumToInsert, this->end());
+      append(std::move_iterator<iterator>(this->end() - NumToInsert),
+             std::move_iterator<iterator>(this->end()));
 
       // Copy the existing elements that get replaced.
       this->move_backward(I, OldEnd-NumToInsert, OldEnd);
