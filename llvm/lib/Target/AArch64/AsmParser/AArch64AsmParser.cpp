@@ -38,9 +38,6 @@ namespace {
 class AArch64Operand;
 
 class AArch64AsmParser : public MCTargetAsmParser {
-public:
-  typedef SmallVectorImpl<MCParsedAsmOperand *> OperandVector;
-
 private:
   StringRef Mnemonic; ///< Instruction mnemonic.
   MCSubtargetInfo &STI;
@@ -117,7 +114,7 @@ public:
                         SMLoc NameLoc, OperandVector &Operands) override;
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
   bool ParseDirective(AsmToken DirectiveID) override;
-  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+  unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
                                       unsigned Kind) override;
 
   static bool classifySymbolRef(const MCExpr *Expr,
@@ -240,10 +237,10 @@ private:
   // the add<>Operands() calls.
   MCContext &Ctx;
 
+public:
   AArch64Operand(KindTy K, MCContext &_Ctx)
       : MCParsedAsmOperand(), Kind(K), Ctx(_Ctx) {}
 
-public:
   AArch64Operand(const AArch64Operand &o) : MCParsedAsmOperand(), Ctx(o.Ctx) {
     Kind = o.Kind;
     StartLoc = o.StartLoc;
@@ -1523,9 +1520,9 @@ public:
 
   void print(raw_ostream &OS) const override;
 
-  static AArch64Operand *CreateToken(StringRef Str, bool IsSuffix, SMLoc S,
-                                   MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_Token, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateToken(StringRef Str, bool IsSuffix, SMLoc S, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_Token, Ctx);
     Op->Tok.Data = Str.data();
     Op->Tok.Length = Str.size();
     Op->Tok.IsSuffix = IsSuffix;
@@ -1534,9 +1531,9 @@ public:
     return Op;
   }
 
-  static AArch64Operand *CreateReg(unsigned RegNum, bool isVector, SMLoc S,
-                                 SMLoc E, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_Register, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateReg(unsigned RegNum, bool isVector, SMLoc S, SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_Register, Ctx);
     Op->Reg.RegNum = RegNum;
     Op->Reg.isVector = isVector;
     Op->StartLoc = S;
@@ -1544,10 +1541,10 @@ public:
     return Op;
   }
 
-  static AArch64Operand *CreateVectorList(unsigned RegNum, unsigned Count,
-                                        unsigned NumElements, char ElementKind,
-                                        SMLoc S, SMLoc E, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_VectorList, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateVectorList(unsigned RegNum, unsigned Count, unsigned NumElements,
+                   char ElementKind, SMLoc S, SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_VectorList, Ctx);
     Op->VectorList.RegNum = RegNum;
     Op->VectorList.Count = Count;
     Op->VectorList.NumElements = NumElements;
@@ -1557,28 +1554,29 @@ public:
     return Op;
   }
 
-  static AArch64Operand *CreateVectorIndex(unsigned Idx, SMLoc S, SMLoc E,
-                                         MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_VectorIndex, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateVectorIndex(unsigned Idx, SMLoc S, SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_VectorIndex, Ctx);
     Op->VectorIndex.Val = Idx;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
   }
 
-  static AArch64Operand *CreateImm(const MCExpr *Val, SMLoc S, SMLoc E,
-                                 MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_Immediate, Ctx);
+  static std::unique_ptr<AArch64Operand> CreateImm(const MCExpr *Val, SMLoc S,
+                                                   SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_Immediate, Ctx);
     Op->Imm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
   }
 
-  static AArch64Operand *CreateShiftedImm(const MCExpr *Val,
-                                          unsigned ShiftAmount, SMLoc S,
-                                          SMLoc E, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_ShiftedImm, Ctx);
+  static std::unique_ptr<AArch64Operand> CreateShiftedImm(const MCExpr *Val,
+                                                          unsigned ShiftAmount,
+                                                          SMLoc S, SMLoc E,
+                                                          MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_ShiftedImm, Ctx);
     Op->ShiftedImm .Val = Val;
     Op->ShiftedImm.ShiftAmount = ShiftAmount;
     Op->StartLoc = S;
@@ -1586,34 +1584,36 @@ public:
     return Op;
   }
 
-  static AArch64Operand *CreateCondCode(AArch64CC::CondCode Code, SMLoc S,
-                                        SMLoc E, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_CondCode, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateCondCode(AArch64CC::CondCode Code, SMLoc S, SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_CondCode, Ctx);
     Op->CondCode.Code = Code;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
   }
 
-  static AArch64Operand *CreateFPImm(unsigned Val, SMLoc S, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_FPImm, Ctx);
+  static std::unique_ptr<AArch64Operand> CreateFPImm(unsigned Val, SMLoc S,
+                                                     MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_FPImm, Ctx);
     Op->FPImm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
   }
 
-  static AArch64Operand *CreateBarrier(unsigned Val, SMLoc S, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_Barrier, Ctx);
+  static std::unique_ptr<AArch64Operand> CreateBarrier(unsigned Val, SMLoc S,
+                                                       MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_Barrier, Ctx);
     Op->Barrier.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
   }
 
-  static AArch64Operand *CreateSysReg(StringRef Str, SMLoc S,
-                                    uint64_t FeatureBits, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_SysReg, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateSysReg(StringRef Str, SMLoc S, uint64_t FeatureBits, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_SysReg, Ctx);
     Op->SysReg.Data = Str.data();
     Op->SysReg.Length = Str.size();
     Op->SysReg.FeatureBits = FeatureBits;
@@ -1622,27 +1622,28 @@ public:
     return Op;
   }
 
-  static AArch64Operand *CreateSysCR(unsigned Val, SMLoc S, SMLoc E,
-                                   MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_SysCR, Ctx);
+  static std::unique_ptr<AArch64Operand> CreateSysCR(unsigned Val, SMLoc S,
+                                                     SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_SysCR, Ctx);
     Op->SysCRImm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
   }
 
-  static AArch64Operand *CreatePrefetch(unsigned Val, SMLoc S, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_Prefetch, Ctx);
+  static std::unique_ptr<AArch64Operand> CreatePrefetch(unsigned Val, SMLoc S,
+                                                        MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_Prefetch, Ctx);
     Op->Prefetch.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
   }
 
-  static AArch64Operand *CreateShiftExtend(AArch64_AM::ShiftExtendType ShOp,
-                                         unsigned Val, bool HasExplicitAmount,
-                                         SMLoc S, SMLoc E, MCContext &Ctx) {
-    AArch64Operand *Op = new AArch64Operand(k_ShiftExtend, Ctx);
+  static std::unique_ptr<AArch64Operand>
+  CreateShiftExtend(AArch64_AM::ShiftExtendType ShOp, unsigned Val,
+                    bool HasExplicitAmount, SMLoc S, SMLoc E, MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_ShiftExtend, Ctx);
     Op->ShiftExtend.Type = ShOp;
     Op->ShiftExtend.Amount = Val;
     Op->ShiftExtend.HasExplicitAmount = HasExplicitAmount;
@@ -3456,23 +3457,23 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                unsigned &ErrorInfo,
                                                bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
-  AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[0]);
-  assert(Op->isToken() && "Leading operand should always be a mnemonic!");
+  AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[0]);
+  assert(Op.isToken() && "Leading operand should always be a mnemonic!");
 
-  StringRef Tok = Op->getToken();
+  StringRef Tok = Op.getToken();
   unsigned NumOperands = Operands.size();
 
   if (NumOperands == 4 && Tok == "lsl") {
-    AArch64Operand *Op2 = static_cast<AArch64Operand *>(Operands[2]);
-    AArch64Operand *Op3 = static_cast<AArch64Operand *>(Operands[3]);
-    if (Op2->isReg() && Op3->isImm()) {
-      const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3->getImm());
+    AArch64Operand &Op2 = static_cast<AArch64Operand &>(*Operands[2]);
+    AArch64Operand &Op3 = static_cast<AArch64Operand &>(*Operands[3]);
+    if (Op2.isReg() && Op3.isImm()) {
+      const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3.getImm());
       if (Op3CE) {
         uint64_t Op3Val = Op3CE->getValue();
         uint64_t NewOp3Val = 0;
         uint64_t NewOp4Val = 0;
         if (AArch64MCRegisterClasses[AArch64::GPR32allRegClassID].contains(
-                Op2->getReg())) {
+                Op2.getReg())) {
           NewOp3Val = (32 - Op3Val) & 0x1f;
           NewOp4Val = 31 - Op3Val;
         } else {
@@ -3484,26 +3485,24 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         const MCExpr *NewOp4 = MCConstantExpr::Create(NewOp4Val, getContext());
 
         Operands[0] = AArch64Operand::CreateToken(
-            "ubfm", false, Op->getStartLoc(), getContext());
-        Operands[3] = AArch64Operand::CreateImm(NewOp3, Op3->getStartLoc(),
-                                                Op3->getEndLoc(), getContext());
+            "ubfm", false, Op.getStartLoc(), getContext());
         Operands.push_back(AArch64Operand::CreateImm(
-            NewOp4, Op3->getStartLoc(), Op3->getEndLoc(), getContext()));
-        delete Op3;
-        delete Op;
+            NewOp4, Op3.getStartLoc(), Op3.getEndLoc(), getContext()));
+        Operands[3] = AArch64Operand::CreateImm(NewOp3, Op3.getStartLoc(),
+                                                Op3.getEndLoc(), getContext());
       }
     }
   } else if (NumOperands == 5) {
     // FIXME: Horrible hack to handle the BFI -> BFM, SBFIZ->SBFM, and
     // UBFIZ -> UBFM aliases.
     if (Tok == "bfi" || Tok == "sbfiz" || Tok == "ubfiz") {
-      AArch64Operand *Op1 = static_cast<AArch64Operand *>(Operands[1]);
-      AArch64Operand *Op3 = static_cast<AArch64Operand *>(Operands[3]);
-      AArch64Operand *Op4 = static_cast<AArch64Operand *>(Operands[4]);
+      AArch64Operand &Op1 = static_cast<AArch64Operand &>(*Operands[1]);
+      AArch64Operand &Op3 = static_cast<AArch64Operand &>(*Operands[3]);
+      AArch64Operand &Op4 = static_cast<AArch64Operand &>(*Operands[4]);
 
-      if (Op1->isReg() && Op3->isImm() && Op4->isImm()) {
-        const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3->getImm());
-        const MCConstantExpr *Op4CE = dyn_cast<MCConstantExpr>(Op4->getImm());
+      if (Op1.isReg() && Op3.isImm() && Op4.isImm()) {
+        const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3.getImm());
+        const MCConstantExpr *Op4CE = dyn_cast<MCConstantExpr>(Op4.getImm());
 
         if (Op3CE && Op4CE) {
           uint64_t Op3Val = Op3CE->getValue();
@@ -3511,21 +3510,21 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
           uint64_t RegWidth = 0;
           if (AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
-              Op1->getReg()))
+                  Op1.getReg()))
             RegWidth = 64;
           else
             RegWidth = 32;
 
           if (Op3Val >= RegWidth)
-            return Error(Op3->getStartLoc(),
+            return Error(Op3.getStartLoc(),
                          "expected integer in range [0, 31]");
           if (Op4Val < 1 || Op4Val > RegWidth)
-            return Error(Op4->getStartLoc(),
+            return Error(Op4.getStartLoc(),
                          "expected integer in range [1, 32]");
 
           uint64_t NewOp3Val = 0;
           if (AArch64MCRegisterClasses[AArch64::GPR32allRegClassID].contains(
-                  Op1->getReg()))
+                  Op1.getReg()))
             NewOp3Val = (32 - Op3Val) & 0x1f;
           else
             NewOp3Val = (64 - Op3Val) & 0x3f;
@@ -3533,7 +3532,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           uint64_t NewOp4Val = Op4Val - 1;
 
           if (NewOp3Val != 0 && NewOp4Val >= NewOp3Val)
-            return Error(Op4->getStartLoc(),
+            return Error(Op4.getStartLoc(),
                          "requested insert overflows register");
 
           const MCExpr *NewOp3 =
@@ -3541,24 +3540,20 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           const MCExpr *NewOp4 =
               MCConstantExpr::Create(NewOp4Val, getContext());
           Operands[3] = AArch64Operand::CreateImm(
-              NewOp3, Op3->getStartLoc(), Op3->getEndLoc(), getContext());
+              NewOp3, Op3.getStartLoc(), Op3.getEndLoc(), getContext());
           Operands[4] = AArch64Operand::CreateImm(
-              NewOp4, Op4->getStartLoc(), Op4->getEndLoc(), getContext());
+              NewOp4, Op4.getStartLoc(), Op4.getEndLoc(), getContext());
           if (Tok == "bfi")
             Operands[0] = AArch64Operand::CreateToken(
-                "bfm", false, Op->getStartLoc(), getContext());
+                "bfm", false, Op.getStartLoc(), getContext());
           else if (Tok == "sbfiz")
             Operands[0] = AArch64Operand::CreateToken(
-                "sbfm", false, Op->getStartLoc(), getContext());
+                "sbfm", false, Op.getStartLoc(), getContext());
           else if (Tok == "ubfiz")
             Operands[0] = AArch64Operand::CreateToken(
-                "ubfm", false, Op->getStartLoc(), getContext());
+                "ubfm", false, Op.getStartLoc(), getContext());
           else
             llvm_unreachable("No valid mnemonic for alias?");
-
-          delete Op;
-          delete Op3;
-          delete Op4;
         }
       }
 
@@ -3566,13 +3561,13 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       // UBFX -> UBFM aliases.
     } else if (NumOperands == 5 &&
                (Tok == "bfxil" || Tok == "sbfx" || Tok == "ubfx")) {
-      AArch64Operand *Op1 = static_cast<AArch64Operand *>(Operands[1]);
-      AArch64Operand *Op3 = static_cast<AArch64Operand *>(Operands[3]);
-      AArch64Operand *Op4 = static_cast<AArch64Operand *>(Operands[4]);
+      AArch64Operand &Op1 = static_cast<AArch64Operand &>(*Operands[1]);
+      AArch64Operand &Op3 = static_cast<AArch64Operand &>(*Operands[3]);
+      AArch64Operand &Op4 = static_cast<AArch64Operand &>(*Operands[4]);
 
-      if (Op1->isReg() && Op3->isImm() && Op4->isImm()) {
-        const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3->getImm());
-        const MCConstantExpr *Op4CE = dyn_cast<MCConstantExpr>(Op4->getImm());
+      if (Op1.isReg() && Op3.isImm() && Op4.isImm()) {
+        const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3.getImm());
+        const MCConstantExpr *Op4CE = dyn_cast<MCConstantExpr>(Op4.getImm());
 
         if (Op3CE && Op4CE) {
           uint64_t Op3Val = Op3CE->getValue();
@@ -3580,42 +3575,39 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
           uint64_t RegWidth = 0;
           if (AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
-              Op1->getReg()))
+                  Op1.getReg()))
             RegWidth = 64;
           else
             RegWidth = 32;
 
           if (Op3Val >= RegWidth)
-            return Error(Op3->getStartLoc(),
+            return Error(Op3.getStartLoc(),
                          "expected integer in range [0, 31]");
           if (Op4Val < 1 || Op4Val > RegWidth)
-            return Error(Op4->getStartLoc(),
+            return Error(Op4.getStartLoc(),
                          "expected integer in range [1, 32]");
 
           uint64_t NewOp4Val = Op3Val + Op4Val - 1;
 
           if (NewOp4Val >= RegWidth || NewOp4Val < Op3Val)
-            return Error(Op4->getStartLoc(),
+            return Error(Op4.getStartLoc(),
                          "requested extract overflows register");
 
           const MCExpr *NewOp4 =
               MCConstantExpr::Create(NewOp4Val, getContext());
           Operands[4] = AArch64Operand::CreateImm(
-              NewOp4, Op4->getStartLoc(), Op4->getEndLoc(), getContext());
+              NewOp4, Op4.getStartLoc(), Op4.getEndLoc(), getContext());
           if (Tok == "bfxil")
             Operands[0] = AArch64Operand::CreateToken(
-                "bfm", false, Op->getStartLoc(), getContext());
+                "bfm", false, Op.getStartLoc(), getContext());
           else if (Tok == "sbfx")
             Operands[0] = AArch64Operand::CreateToken(
-                "sbfm", false, Op->getStartLoc(), getContext());
+                "sbfm", false, Op.getStartLoc(), getContext());
           else if (Tok == "ubfx")
             Operands[0] = AArch64Operand::CreateToken(
-                "ubfm", false, Op->getStartLoc(), getContext());
+                "ubfm", false, Op.getStartLoc(), getContext());
           else
             llvm_unreachable("No valid mnemonic for alias?");
-
-          delete Op;
-          delete Op4;
         }
       }
     }
@@ -3626,63 +3618,58 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (NumOperands == 3 && (Tok == "sxtw" || Tok == "uxtw")) {
     // The source register can be Wn here, but the matcher expects a
     // GPR64. Twiddle it here if necessary.
-    AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[2]);
-    if (Op->isReg()) {
-      unsigned Reg = getXRegFromWReg(Op->getReg());
-      Operands[2] = AArch64Operand::CreateReg(Reg, false, Op->getStartLoc(),
-                                              Op->getEndLoc(), getContext());
-      delete Op;
+    AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[2]);
+    if (Op.isReg()) {
+      unsigned Reg = getXRegFromWReg(Op.getReg());
+      Operands[2] = AArch64Operand::CreateReg(Reg, false, Op.getStartLoc(),
+                                              Op.getEndLoc(), getContext());
     }
   }
   // FIXME: Likewise for sxt[bh] with a Xd dst operand
   else if (NumOperands == 3 && (Tok == "sxtb" || Tok == "sxth")) {
-    AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[1]);
-    if (Op->isReg() &&
+    AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[1]);
+    if (Op.isReg() &&
         AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
-            Op->getReg())) {
+            Op.getReg())) {
       // The source register can be Wn here, but the matcher expects a
       // GPR64. Twiddle it here if necessary.
-      AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[2]);
-      if (Op->isReg()) {
-        unsigned Reg = getXRegFromWReg(Op->getReg());
-        Operands[2] = AArch64Operand::CreateReg(Reg, false, Op->getStartLoc(),
-                                                Op->getEndLoc(), getContext());
-        delete Op;
+      AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[2]);
+      if (Op.isReg()) {
+        unsigned Reg = getXRegFromWReg(Op.getReg());
+        Operands[2] = AArch64Operand::CreateReg(Reg, false, Op.getStartLoc(),
+                                                Op.getEndLoc(), getContext());
       }
     }
   }
   // FIXME: Likewise for uxt[bh] with a Xd dst operand
   else if (NumOperands == 3 && (Tok == "uxtb" || Tok == "uxth")) {
-    AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[1]);
-    if (Op->isReg() &&
+    AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[1]);
+    if (Op.isReg() &&
         AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
-            Op->getReg())) {
+            Op.getReg())) {
       // The source register can be Wn here, but the matcher expects a
       // GPR32. Twiddle it here if necessary.
-      AArch64Operand *Op = static_cast<AArch64Operand *>(Operands[1]);
-      if (Op->isReg()) {
-        unsigned Reg = getWRegFromXReg(Op->getReg());
-        Operands[1] = AArch64Operand::CreateReg(Reg, false, Op->getStartLoc(),
-                                                Op->getEndLoc(), getContext());
-        delete Op;
+      AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[1]);
+      if (Op.isReg()) {
+        unsigned Reg = getWRegFromXReg(Op.getReg());
+        Operands[1] = AArch64Operand::CreateReg(Reg, false, Op.getStartLoc(),
+                                                Op.getEndLoc(), getContext());
       }
     }
   }
 
   // Yet another horrible hack to handle FMOV Rd, #0.0 using [WX]ZR.
   if (NumOperands == 3 && Tok == "fmov") {
-    AArch64Operand *RegOp = static_cast<AArch64Operand *>(Operands[1]);
-    AArch64Operand *ImmOp = static_cast<AArch64Operand *>(Operands[2]);
-    if (RegOp->isReg() && ImmOp->isFPImm() &&
-        ImmOp->getFPImm() == (unsigned)-1) {
+    AArch64Operand &RegOp = static_cast<AArch64Operand &>(*Operands[1]);
+    AArch64Operand &ImmOp = static_cast<AArch64Operand &>(*Operands[2]);
+    if (RegOp.isReg() && ImmOp.isFPImm() && ImmOp.getFPImm() == (unsigned)-1) {
       unsigned zreg =
           AArch64MCRegisterClasses[AArch64::FPR32RegClassID].contains(
-              RegOp->getReg())
+              RegOp.getReg())
               ? AArch64::WZR
               : AArch64::XZR;
-      Operands[2] = AArch64Operand::CreateReg(zreg, false, Op->getStartLoc(),
-                                              Op->getEndLoc(), getContext());
-      delete ImmOp;
+      Operands[2] = AArch64Operand::CreateReg(zreg, false, Op.getStartLoc(),
+                                              Op.getEndLoc(), getContext());
     }
   }
 
@@ -3735,14 +3722,14 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
 
-      ErrorLoc = ((AArch64Operand *)Operands[ErrorInfo])->getStartLoc();
+      ErrorLoc = ((AArch64Operand &)*Operands[ErrorInfo]).getStartLoc();
       if (ErrorLoc == SMLoc())
         ErrorLoc = IDLoc;
     }
     // If the match failed on a suffix token operand, tweak the diagnostic
     // accordingly.
-    if (((AArch64Operand *)Operands[ErrorInfo])->isToken() &&
-        ((AArch64Operand *)Operands[ErrorInfo])->isTokenSuffix())
+    if (((AArch64Operand &)*Operands[ErrorInfo]).isToken() &&
+        ((AArch64Operand &)*Operands[ErrorInfo]).isTokenSuffix())
       MatchResult = Match_InvalidSuffix;
 
     return showMatchError(ErrorLoc, MatchResult);
@@ -3798,7 +3785,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return Error(IDLoc, "too few operands for instruction");
     // Any time we get here, there's nothing fancy to do. Just get the
     // operand SMLoc and display the diagnostic.
-    SMLoc ErrorLoc = ((AArch64Operand *)Operands[ErrorInfo])->getStartLoc();
+    SMLoc ErrorLoc = ((AArch64Operand &)*Operands[ErrorInfo]).getStartLoc();
     if (ErrorLoc == SMLoc())
       ErrorLoc = IDLoc;
     return showMatchError(ErrorLoc, MatchResult);
@@ -3988,9 +3975,9 @@ extern "C" void LLVMInitializeAArch64AsmParser() {
 
 // Define this matcher function after the auto-generated include so we
 // have the match class enum definitions.
-unsigned AArch64AsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
+unsigned AArch64AsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
                                                       unsigned Kind) {
-  AArch64Operand *Op = static_cast<AArch64Operand *>(AsmOp);
+  AArch64Operand &Op = static_cast<AArch64Operand &>(AsmOp);
   // If the kind is a token for a literal immediate, check if our asm
   // operand matches. This is for InstAliases which have a fixed-value
   // immediate in the syntax.
@@ -4038,9 +4025,9 @@ unsigned AArch64AsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
     ExpectedVal = 8;
     break;
   }
-  if (!Op->isImm())
+  if (!Op.isImm())
     return Match_InvalidOperand;
-  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op.getImm());
   if (!CE)
     return Match_InvalidOperand;
   if (CE->getValue() == ExpectedVal)

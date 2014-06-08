@@ -14,6 +14,8 @@
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
 #include "llvm/MC/MCTargetOptions.h"
 
+#include <memory>
+
 namespace llvm {
 class AsmToken;
 class MCInst;
@@ -22,6 +24,8 @@ class MCStreamer;
 class SMLoc;
 class StringRef;
 template <typename T> class SmallVectorImpl;
+
+typedef SmallVectorImpl<std::unique_ptr<MCParsedAsmOperand>> OperandVector;
 
 enum AsmRewriteKind {
   AOK_Delete = 0,     // Rewrite should be ignored.
@@ -131,8 +135,7 @@ public:
   ///        ownership of them to the caller.
   /// \return True on failure.
   virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                SMLoc NameLoc,
-                            SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
+                                SMLoc NameLoc, OperandVector &Operands) = 0;
 
   /// ParseDirective - Parse a target specific assembler directive
   ///
@@ -156,17 +159,16 @@ public:
   ///
   /// On failure, the target parser is responsible for emitting a diagnostic
   /// explaining the match failure.
-  virtual bool
-  MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
-                          SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                          MCStreamer &Out, unsigned &ErrorInfo,
-                          bool MatchingInlineAsm) = 0;
+  virtual bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+                                       OperandVector &Operands, MCStreamer &Out,
+                                       unsigned &ErrorInfo,
+                                       bool MatchingInlineAsm) = 0;
 
   /// Allow a target to add special case operand matching for things that
   /// tblgen doesn't/can't handle effectively. For example, literal
   /// immediates on ARM. TableGen expects a token operand, but the parser
   /// will recognize them as immediates.
-  virtual unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+  virtual unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
                                               unsigned Kind) {
     return Match_InvalidOperand;
   }
@@ -178,7 +180,7 @@ public:
   }
 
   virtual void convertToMapAndConstraints(unsigned Kind,
-                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) = 0;
+                                          const OperandVector &Operands) = 0;
 
   virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
                                             MCSymbolRefExpr::VariantKind,

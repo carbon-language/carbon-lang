@@ -20,6 +20,7 @@
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -46,21 +47,21 @@ public:
   virtual ~X86AddressSanitizer() {}
 
   // X86AsmInstrumentation implementation:
-  virtual void InstrumentInstruction(
-      const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) override {
+  virtual void InstrumentInstruction(const MCInst &Inst,
+                                     OperandVector &Operands, MCContext &Ctx,
+                                     const MCInstrInfo &MII,
+                                     MCStreamer &Out) override {
     InstrumentMOV(Inst, Operands, Ctx, MII, Out);
   }
 
   // Should be implemented differently in x86_32 and x86_64 subclasses.
-  virtual void InstrumentMemOperandImpl(X86Operand *Op, unsigned AccessSize,
+  virtual void InstrumentMemOperandImpl(X86Operand &Op, unsigned AccessSize,
                                         bool IsWrite, MCContext &Ctx,
                                         MCStreamer &Out) = 0;
 
-  void InstrumentMemOperand(MCParsedAsmOperand *Op, unsigned AccessSize,
+  void InstrumentMemOperand(MCParsedAsmOperand &Op, unsigned AccessSize,
                             bool IsWrite, MCContext &Ctx, MCStreamer &Out);
-  void InstrumentMOV(const MCInst &Inst,
-                     SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+  void InstrumentMOV(const MCInst &Inst, OperandVector &Operands,
                      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
   void EmitInstruction(MCStreamer &Out, const MCInst &Inst) {
     Out.EmitInstruction(Inst, STI);
@@ -70,24 +71,26 @@ protected:
   const MCSubtargetInfo &STI;
 };
 
-void X86AddressSanitizer::InstrumentMemOperand(
-    MCParsedAsmOperand *Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
-    MCStreamer &Out) {
-  assert(Op && Op->isMem() && "Op should be a memory operand.");
+void X86AddressSanitizer::InstrumentMemOperand(MCParsedAsmOperand &Op,
+                                               unsigned AccessSize,
+                                               bool IsWrite, MCContext &Ctx,
+                                               MCStreamer &Out) {
+  assert(Op.isMem() && "Op should be a memory operand.");
   assert((AccessSize & (AccessSize - 1)) == 0 && AccessSize <= 16 &&
          "AccessSize should be a power of two, less or equal than 16.");
 
-  X86Operand *MemOp = static_cast<X86Operand *>(Op);
+  X86Operand &MemOp = static_cast<X86Operand &>(Op);
   // FIXME: get rid of this limitation.
-  if (IsStackReg(MemOp->getMemBaseReg()) || IsStackReg(MemOp->getMemIndexReg()))
+  if (IsStackReg(MemOp.getMemBaseReg()) || IsStackReg(MemOp.getMemIndexReg()))
     return;
 
   InstrumentMemOperandImpl(MemOp, AccessSize, IsWrite, Ctx, Out);
 }
 
-void X86AddressSanitizer::InstrumentMOV(
-    const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-    MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) {
+void X86AddressSanitizer::InstrumentMOV(const MCInst &Inst,
+                                        OperandVector &Operands, MCContext &Ctx,
+                                        const MCInstrInfo &MII,
+                                        MCStreamer &Out) {
   // Access size in bytes.
   unsigned AccessSize = 0;
 
@@ -124,8 +127,9 @@ void X86AddressSanitizer::InstrumentMOV(
 
   const bool IsWrite = MII.get(Inst.getOpcode()).mayStore();
   for (unsigned Ix = 0; Ix < Operands.size(); ++Ix) {
-    MCParsedAsmOperand *Op = Operands[Ix];
-    if (Op && Op->isMem())
+    assert(Operands[Ix]);
+    MCParsedAsmOperand &Op = *Operands[Ix];
+    if (Op.isMem())
       InstrumentMemOperand(Op, AccessSize, IsWrite, Ctx, Out);
   }
 }
@@ -136,21 +140,23 @@ public:
       : X86AddressSanitizer(STI) {}
   virtual ~X86AddressSanitizer32() {}
 
-  virtual void InstrumentMemOperandImpl(X86Operand *Op, unsigned AccessSize,
+  virtual void InstrumentMemOperandImpl(X86Operand &Op, unsigned AccessSize,
                                         bool IsWrite, MCContext &Ctx,
                                         MCStreamer &Out) override;
 };
 
-void X86AddressSanitizer32::InstrumentMemOperandImpl(
-    X86Operand *Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
-    MCStreamer &Out) {
+void X86AddressSanitizer32::InstrumentMemOperandImpl(X86Operand &Op,
+                                                     unsigned AccessSize,
+                                                     bool IsWrite,
+                                                     MCContext &Ctx,
+                                                     MCStreamer &Out) {
   // FIXME: emit .cfi directives for correct stack unwinding.
   EmitInstruction(Out, MCInstBuilder(X86::PUSH32r).addReg(X86::EAX));
   {
     MCInst Inst;
     Inst.setOpcode(X86::LEA32r);
     Inst.addOperand(MCOperand::CreateReg(X86::EAX));
-    Op->addMemOperands(Inst, 5);
+    Op.addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
   EmitInstruction(Out, MCInstBuilder(X86::PUSH32r).addReg(X86::EAX));
@@ -171,12 +177,12 @@ public:
       : X86AddressSanitizer(STI) {}
   virtual ~X86AddressSanitizer64() {}
 
-  virtual void InstrumentMemOperandImpl(X86Operand *Op, unsigned AccessSize,
+  virtual void InstrumentMemOperandImpl(X86Operand &Op, unsigned AccessSize,
                                         bool IsWrite, MCContext &Ctx,
                                         MCStreamer &Out) override;
 };
 
-void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
+void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand &Op,
                                                      unsigned AccessSize,
                                                      bool IsWrite,
                                                      MCContext &Ctx,
@@ -201,7 +207,7 @@ void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
     MCInst Inst;
     Inst.setOpcode(X86::LEA64r);
     Inst.addOperand(MCOperand::CreateReg(X86::RDI));
-    Op->addMemOperands(Inst, 5);
+    Op.addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
   {
@@ -232,9 +238,11 @@ void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
 X86AsmInstrumentation::X86AsmInstrumentation() {}
 X86AsmInstrumentation::~X86AsmInstrumentation() {}
 
-void X86AsmInstrumentation::InstrumentInstruction(
-    const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-    MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) {}
+void X86AsmInstrumentation::InstrumentInstruction(const MCInst &Inst,
+                                                  OperandVector &Operands,
+                                                  MCContext &Ctx,
+                                                  const MCInstrInfo &MII,
+                                                  MCStreamer &Out) {}
 
 X86AsmInstrumentation *
 CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,

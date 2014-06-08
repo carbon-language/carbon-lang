@@ -238,7 +238,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool ParseExpression(const MCExpr *&EVal);
   bool ParseDarwinExpression(const MCExpr *&EVal);
 
-  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool ParseOperand(OperandVector &Operands);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveTC(unsigned Size, SMLoc L);
@@ -246,12 +246,11 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool ParseDarwinDirectiveMachine(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
-                               SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               MCStreamer &Out, unsigned &ErrorInfo,
+                               OperandVector &Operands, MCStreamer &Out,
+                               unsigned &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
-  void ProcessInstruction(MCInst &Inst,
-                          const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+  void ProcessInstruction(MCInst &Inst, const OperandVector &Ops);
 
   /// @name Auto-generated Match Functions
   /// {
@@ -276,13 +275,12 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
-  bool ParseInstruction(ParseInstructionInfo &Info,
-                        StringRef Name, SMLoc NameLoc,
-                        SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
+  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                        SMLoc NameLoc, OperandVector &Operands) override;
 
   bool ParseDirective(AsmToken DirectiveID) override;
 
-  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+  unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
                                       unsigned Kind) override;
 
   const MCExpr *applyModifierToExpr(const MCExpr *E,
@@ -548,8 +546,9 @@ public:
 
   void print(raw_ostream &OS) const override;
 
-  static PPCOperand *CreateToken(StringRef Str, SMLoc S, bool IsPPC64) {
-    PPCOperand *Op = new PPCOperand(Token);
+  static std::unique_ptr<PPCOperand> CreateToken(StringRef Str, SMLoc S,
+                                                 bool IsPPC64) {
+    auto Op = make_unique<PPCOperand>(Token);
     Op->Tok.Data = Str.data();
     Op->Tok.Length = Str.size();
     Op->StartLoc = S;
@@ -558,22 +557,27 @@ public:
     return Op;
   }
 
-  static PPCOperand *CreateTokenWithStringCopy(StringRef Str, SMLoc S,
-                                               bool IsPPC64) {
+  static std::unique_ptr<PPCOperand>
+  CreateTokenWithStringCopy(StringRef Str, SMLoc S, bool IsPPC64) {
     // Allocate extra memory for the string and copy it.
+    // FIXME: This is incorrect, Operands are owned by unique_ptr with a default
+    // deleter which will destroy them by simply using "delete", not correctly
+    // calling operator delete on this extra memory after calling the dtor
+    // explicitly.
     void *Mem = ::operator new(sizeof(PPCOperand) + Str.size());
-    PPCOperand *Op = new (Mem) PPCOperand(Token);
-    Op->Tok.Data = (const char *)(Op + 1);
+    std::unique_ptr<PPCOperand> Op(new (Mem) PPCOperand(Token));
+    Op->Tok.Data = (const char *)(Op.get() + 1);
     Op->Tok.Length = Str.size();
-    std::memcpy((char *)(Op + 1), Str.data(), Str.size());
+    std::memcpy((void *)Op->Tok.Data, Str.data(), Str.size());
     Op->StartLoc = S;
     Op->EndLoc = S;
     Op->IsPPC64 = IsPPC64;
     return Op;
   }
 
-  static PPCOperand *CreateImm(int64_t Val, SMLoc S, SMLoc E, bool IsPPC64) {
-    PPCOperand *Op = new PPCOperand(Immediate);
+  static std::unique_ptr<PPCOperand> CreateImm(int64_t Val, SMLoc S, SMLoc E,
+                                               bool IsPPC64) {
+    auto Op = make_unique<PPCOperand>(Immediate);
     Op->Imm.Val = Val;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -581,9 +585,9 @@ public:
     return Op;
   }
 
-  static PPCOperand *CreateExpr(const MCExpr *Val,
-                                SMLoc S, SMLoc E, bool IsPPC64) {
-    PPCOperand *Op = new PPCOperand(Expression);
+  static std::unique_ptr<PPCOperand> CreateExpr(const MCExpr *Val, SMLoc S,
+                                                SMLoc E, bool IsPPC64) {
+    auto Op = make_unique<PPCOperand>(Expression);
     Op->Expr.Val = Val;
     Op->Expr.CRVal = EvaluateCRExpr(Val);
     Op->StartLoc = S;
@@ -592,9 +596,9 @@ public:
     return Op;
   }
 
-  static PPCOperand *CreateTLSReg(const MCSymbolRefExpr *Sym,
-                                  SMLoc S, SMLoc E, bool IsPPC64) {
-    PPCOperand *Op = new PPCOperand(TLSRegister);
+  static std::unique_ptr<PPCOperand>
+  CreateTLSReg(const MCSymbolRefExpr *Sym, SMLoc S, SMLoc E, bool IsPPC64) {
+    auto Op = make_unique<PPCOperand>(TLSRegister);
     Op->TLSReg.Sym = Sym;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -602,8 +606,8 @@ public:
     return Op;
   }
 
-  static PPCOperand *CreateFromMCExpr(const MCExpr *Val,
-                                      SMLoc S, SMLoc E, bool IsPPC64) {
+  static std::unique_ptr<PPCOperand>
+  CreateFromMCExpr(const MCExpr *Val, SMLoc S, SMLoc E, bool IsPPC64) {
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Val))
       return CreateImm(CE->getValue(), S, E, IsPPC64);
 
@@ -634,10 +638,8 @@ void PPCOperand::print(raw_ostream &OS) const {
   }
 }
 
-
-void PPCAsmParser::
-ProcessInstruction(MCInst &Inst,
-                   const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+void PPCAsmParser::ProcessInstruction(MCInst &Inst,
+                                      const OperandVector &Operands) {
   int Opcode = Inst.getOpcode();
   switch (Opcode) {
   case PPC::LAx: {
@@ -917,11 +919,10 @@ ProcessInstruction(MCInst &Inst,
   }
 }
 
-bool PPCAsmParser::
-MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
-                        SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                        MCStreamer &Out, unsigned &ErrorInfo,
-                        bool MatchingInlineAsm) {
+bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+                                           OperandVector &Operands,
+                                           MCStreamer &Out, unsigned &ErrorInfo,
+                                           bool MatchingInlineAsm) {
   MCInst Inst;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
@@ -942,7 +943,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
 
-      ErrorLoc = ((PPCOperand*)Operands[ErrorInfo])->getStartLoc();
+      ErrorLoc = ((PPCOperand &)*Operands[ErrorInfo]).getStartLoc();
       if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
     }
 
@@ -1216,12 +1217,10 @@ ParseDarwinExpression(const MCExpr *&EVal) {
 /// ParseOperand
 /// This handles registers in the form 'NN', '%rNN' for ELF platforms and
 /// rNN for MachO.
-bool PPCAsmParser::
-ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+bool PPCAsmParser::ParseOperand(OperandVector &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
   const MCExpr *EVal;
-  PPCOperand *Op;
 
   // Attempt to parse the next token as an immediate
   switch (getLexer().getKind()) {
@@ -1233,8 +1232,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     int64_t IntVal;
     if (!MatchRegisterName(Parser.getTok(), RegNo, IntVal)) {
       Parser.Lex(); // Eat the identifier token.
-      Op = PPCOperand::CreateImm(IntVal, S, E, isPPC64());
-      Operands.push_back(Op);
+      Operands.push_back(PPCOperand::CreateImm(IntVal, S, E, isPPC64()));
       return false;
     }
     return Error(S, "invalid register name");
@@ -1249,8 +1247,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       int64_t IntVal;
       if (!MatchRegisterName(Parser.getTok(), RegNo, IntVal)) {
         Parser.Lex(); // Eat the identifier token.
-        Op = PPCOperand::CreateImm(IntVal, S, E, isPPC64());
-        Operands.push_back(Op);
+        Operands.push_back(PPCOperand::CreateImm(IntVal, S, E, isPPC64()));
         return false;
       }
     }
@@ -1272,8 +1269,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
 
   // Push the parsed operand into the list of operands
-  Op = PPCOperand::CreateFromMCExpr(EVal, S, E, isPPC64());
-  Operands.push_back(Op);
+  Operands.push_back(PPCOperand::CreateFromMCExpr(EVal, S, E, isPPC64()));
 
   // Check whether this is a TLS call expression
   bool TLSCall = false;
@@ -1292,8 +1288,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     E = Parser.getTok().getLoc();
     Parser.Lex(); // Eat the ')'.
 
-    Op = PPCOperand::CreateFromMCExpr(TLSSym, S, E, isPPC64());
-    Operands.push_back(Op);
+    Operands.push_back(PPCOperand::CreateFromMCExpr(TLSSym, S, E, isPPC64()));
   }
 
   // Otherwise, check for D-form memory operands
@@ -1340,17 +1335,15 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     E = Parser.getTok().getLoc();
     Parser.Lex(); // Eat the ')'.
 
-    Op = PPCOperand::CreateImm(IntVal, S, E, isPPC64());
-    Operands.push_back(Op);
+    Operands.push_back(PPCOperand::CreateImm(IntVal, S, E, isPPC64()));
   }
 
   return false;
 }
 
 /// Parse an instruction mnemonic followed by its operands.
-bool PPCAsmParser::
-ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
-                 SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+bool PPCAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                                    SMLoc NameLoc, OperandVector &Operands) {
   // The first operand is the token for the instruction name.
   // If the next character is a '+' or '-', we need to add it to the
   // instruction name, to match what TableGen is doing.
@@ -1554,7 +1547,7 @@ extern "C" void LLVMInitializePowerPCAsmParser() {
 
 // Define this matcher function after the auto-generated include so we
 // have the match class enum definitions.
-unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
+unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
                                                   unsigned Kind) {
   // If the kind is a token for a literal immediate, check if our asm
   // operand matches. This is for InstAliases which have a fixed-value
@@ -1568,8 +1561,8 @@ unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
     default: return Match_InvalidOperand;
   }
 
-  PPCOperand *Op = static_cast<PPCOperand*>(AsmOp);
-  if (Op->isImm() && Op->getImm() == ImmVal)
+  PPCOperand &Op = static_cast<PPCOperand &>(AsmOp);
+  if (Op.isImm() && Op.getImm() == ImmVal)
     return Match_Success;
 
   return Match_InvalidOperand;

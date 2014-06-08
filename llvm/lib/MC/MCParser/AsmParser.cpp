@@ -102,7 +102,7 @@ public:
 
 struct ParseStatementInfo {
   /// \brief The parsed operands from the last parsed statement.
-  SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
+  SmallVector<std::unique_ptr<MCParsedAsmOperand>, 8> ParsedOperands;
 
   /// \brief The opcode from the last parsed instruction.
   unsigned Opcode;
@@ -115,13 +115,6 @@ struct ParseStatementInfo {
   ParseStatementInfo() : Opcode(~0U), ParseError(false), AsmRewrites(nullptr) {}
   ParseStatementInfo(SmallVectorImpl<AsmRewrite> *rewrites)
     : Opcode(~0), ParseError(false), AsmRewrites(rewrites) {}
-
-  ~ParseStatementInfo() {
-    // Free any parsed operands.
-    for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
-      delete ParsedOperands[i];
-    ParsedOperands.clear();
-  }
 };
 
 /// \brief The concrete assembly parser instance.
@@ -4465,27 +4458,27 @@ bool AsmParser::parseMSInlineAsm(
 
     // Build the list of clobbers, outputs and inputs.
     for (unsigned i = 1, e = Info.ParsedOperands.size(); i != e; ++i) {
-      MCParsedAsmOperand *Operand = Info.ParsedOperands[i];
+      MCParsedAsmOperand &Operand = *Info.ParsedOperands[i];
 
       // Immediate.
-      if (Operand->isImm())
+      if (Operand.isImm())
         continue;
 
       // Register operand.
-      if (Operand->isReg() && !Operand->needAddressOf()) {
+      if (Operand.isReg() && !Operand.needAddressOf()) {
         unsigned NumDefs = Desc.getNumDefs();
         // Clobber.
-        if (NumDefs && Operand->getMCOperandNum() < NumDefs)
-          ClobberRegs.push_back(Operand->getReg());
+        if (NumDefs && Operand.getMCOperandNum() < NumDefs)
+          ClobberRegs.push_back(Operand.getReg());
         continue;
       }
 
       // Expr/Input or Output.
-      StringRef SymName = Operand->getSymName();
+      StringRef SymName = Operand.getSymName();
       if (SymName.empty())
         continue;
 
-      void *OpDecl = Operand->getOpDecl();
+      void *OpDecl = Operand.getOpDecl();
       if (!OpDecl)
         continue;
 
@@ -4494,13 +4487,13 @@ bool AsmParser::parseMSInlineAsm(
       if (isOutput) {
         ++InputIdx;
         OutputDecls.push_back(OpDecl);
-        OutputDeclsAddressOf.push_back(Operand->needAddressOf());
-        OutputConstraints.push_back('=' + Operand->getConstraint().str());
+        OutputDeclsAddressOf.push_back(Operand.needAddressOf());
+        OutputConstraints.push_back('=' + Operand.getConstraint().str());
         AsmStrRewrites.push_back(AsmRewrite(AOK_Output, Start, SymName.size()));
       } else {
         InputDecls.push_back(OpDecl);
-        InputDeclsAddressOf.push_back(Operand->needAddressOf());
-        InputConstraints.push_back(Operand->getConstraint().str());
+        InputDeclsAddressOf.push_back(Operand.needAddressOf());
+        InputConstraints.push_back(Operand.getConstraint().str());
         AsmStrRewrites.push_back(AsmRewrite(AOK_Input, Start, SymName.size()));
       }
     }

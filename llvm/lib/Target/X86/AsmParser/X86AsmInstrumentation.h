@@ -12,6 +12,8 @@
 
 #include "llvm/ADT/SmallVector.h"
 
+#include <memory>
+
 namespace llvm {
 
 class MCContext;
@@ -35,10 +37,9 @@ public:
   // Instruments Inst. Should be called just before the original
   // instruction is sent to Out.
   virtual void InstrumentInstruction(
-      const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-      MCContext &Ctx,
-      const MCInstrInfo &MII,
-      MCStreamer &Out);
+      const MCInst &Inst,
+      SmallVectorImpl<std::unique_ptr<MCParsedAsmOperand>> &Operands,
+      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
 
 protected:
   friend X86AsmInstrumentation *
