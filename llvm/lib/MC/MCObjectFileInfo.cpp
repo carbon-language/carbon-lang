@@ -569,6 +569,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
 
 void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
+  bool IsWoA = T.getArch() == Triple::arm || T.getArch() == Triple::thumb;
+
   // The object file format cannot represent common symbols with explicit
   // alignments.
   CommDirectiveSupportsAlignment = false;
@@ -582,6 +584,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getBSS());
   TextSection =
     Ctx->getCOFFSection(".text",
+                        (IsWoA ? COFF::IMAGE_SCN_MEM_16BIT : 0) |
                         COFF::IMAGE_SCN_CNT_CODE |
                         COFF::IMAGE_SCN_MEM_EXECUTE |
                         COFF::IMAGE_SCN_MEM_READ,
