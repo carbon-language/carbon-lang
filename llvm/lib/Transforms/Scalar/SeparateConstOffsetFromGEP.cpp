@@ -321,9 +321,9 @@ bool ConstantOffsetExtractor::CanTraceInto(bool SignExtended,
   //       1       |      0       | sext(BO) == sext(A) op sext(B)
   //       1       |      1       | zext(sext(BO)) ==
   //               |              |     zext(sext(A)) op zext(sext(B))
-  if (BO->getOpcode() == Instruction::Add && NonNegative) {
+  if (BO->getOpcode() == Instruction::Add && !ZeroExtended && NonNegative) {
     // If a + b >= 0 and (a >= 0 or b >= 0), then
-    //   s/zext(a + b) = s/zext(a) + s/zext(b)
+    //   sext(a + b) = sext(a) + sext(b)
     // even if the addition is not marked nsw.
     //
     // Leveraging this invarient, we can trace into an sext'ed inbound GEP
