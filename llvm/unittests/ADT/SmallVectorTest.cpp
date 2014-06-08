@@ -42,15 +42,12 @@ public:
   }
 
   Constructable(const Constructable & src) : constructed(true) {
-    EXPECT_TRUE(src.constructed);
     value = src.value;
     ++numConstructorCalls;
   }
 
   Constructable(Constructable && src) : constructed(true) {
-    EXPECT_TRUE(src.constructed);
     value = src.value;
-    src.value = -1;
     ++numConstructorCalls;
   }
 
@@ -62,7 +59,6 @@ public:
 
   Constructable & operator=(const Constructable & src) {
     EXPECT_TRUE(constructed);
-    EXPECT_TRUE(src.constructed);
     value = src.value;
     ++numAssignmentCalls;
     return *this;
@@ -70,9 +66,7 @@ public:
 
   Constructable & operator=(Constructable && src) {
     EXPECT_TRUE(constructed);
-    EXPECT_TRUE(src.constructed);
     value = src.value;
-    src.value = -1;
     ++numAssignmentCalls;
     return *this;
   }
