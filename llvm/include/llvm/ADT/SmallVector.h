@@ -488,9 +488,9 @@ public:
     }
 
     ::new ((void*) this->end()) T(::std::move(this->back()));
-    this->setEnd(this->end()+1);
     // Push everything else over.
     this->move_backward(I, this->end()-1, this->end());
+    this->setEnd(this->end()+1);
 
     // If we just moved the element we're inserting, be sure to update
     // the reference.

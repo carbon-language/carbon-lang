@@ -531,4 +531,26 @@ TEST(SmallVectorCustomTest, NoAssignTest) {
   EXPECT_EQ(42, vec.pop_back_val().x);
 }
 
+struct MovedFrom {
+  bool hasValue;
+  MovedFrom() : hasValue(true) {
+  }
+  MovedFrom(MovedFrom&& m) : hasValue(m.hasValue) {
+    m.hasValue = false;
+  }
+  MovedFrom &operator=(MovedFrom&& m) {
+    hasValue = m.hasValue;
+    m.hasValue = false;
+    return *this;
+  }
+};
+
+TEST(SmallVectorTest, MidInsert) {
+  SmallVector<MovedFrom, 3> v;
+  v.push_back(MovedFrom());
+  v.insert(v.begin(), MovedFrom());
+  for (MovedFrom &m : v)
+    EXPECT_TRUE(m.hasValue);
+}
+
 }
