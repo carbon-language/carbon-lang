@@ -33,8 +33,8 @@ TEST_F(MDBuilderTest, createFPMath) {
   MDBuilder MDHelper(Context);
   MDNode *MD0 = MDHelper.createFPMath(0.0);
   MDNode *MD1 = MDHelper.createFPMath(1.0);
-  EXPECT_EQ(MD0, (MDNode *)0);
-  EXPECT_NE(MD1, (MDNode *)0);
+  EXPECT_EQ(MD0, (MDNode *)nullptr);
+  EXPECT_NE(MD1, (MDNode *)nullptr);
   EXPECT_EQ(MD1->getNumOperands(), 1U);
   Value *Op = MD1->getOperand(0);
   EXPECT_TRUE(isa<ConstantFP>(Op));
@@ -47,8 +47,8 @@ TEST_F(MDBuilderTest, createRangeMetadata) {
   APInt A(8, 1), B(8, 2);
   MDNode *R0 = MDHelper.createRange(A, A);
   MDNode *R1 = MDHelper.createRange(A, B);
-  EXPECT_EQ(R0, (MDNode *)0);
-  EXPECT_NE(R1, (MDNode *)0);
+  EXPECT_EQ(R0, (MDNode *)nullptr);
+  EXPECT_NE(R1, (MDNode *)nullptr);
   EXPECT_EQ(R1->getNumOperands(), 2U);
   EXPECT_TRUE(isa<ConstantInt>(R1->getOperand(0)));
   EXPECT_TRUE(isa<ConstantInt>(R1->getOperand(1)));
@@ -66,8 +66,8 @@ TEST_F(MDBuilderTest, createAnonymousTBAARoot) {
   EXPECT_GE(R1->getNumOperands(), 1U);
   EXPECT_EQ(R0->getOperand(0), R0);
   EXPECT_EQ(R1->getOperand(0), R1);
-  EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == 0);
-  EXPECT_TRUE(R1->getNumOperands() == 1 || R1->getOperand(1) == 0);
+  EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == nullptr);
+  EXPECT_TRUE(R1->getNumOperands() == 1 || R1->getOperand(1) == nullptr);
 }
 TEST_F(MDBuilderTest, createTBAARoot) {
   MDBuilder MDHelper(Context);
@@ -77,7 +77,7 @@ TEST_F(MDBuilderTest, createTBAARoot) {
   EXPECT_GE(R0->getNumOperands(), 1U);
   EXPECT_TRUE(isa<MDString>(R0->getOperand(0)));
   EXPECT_EQ(cast<MDString>(R0->getOperand(0))->getString(), "Root");
-  EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == 0);
+  EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == nullptr);
 }
 TEST_F(MDBuilderTest, createTBAANode) {
   MDBuilder MDHelper(Context);

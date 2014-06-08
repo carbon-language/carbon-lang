@@ -25,14 +25,14 @@ struct S {
 TEST_F(ThreadLocalTest, Basics) {
   ThreadLocal<const S> x;
 
-  EXPECT_EQ(0, x.get());
+  EXPECT_EQ(nullptr, x.get());
 
   S s;
   x.set(&s);
   EXPECT_EQ(&s, x.get());
 
   x.erase();
-  EXPECT_EQ(0, x.get());
+  EXPECT_EQ(nullptr, x.get());
 }
 
 }

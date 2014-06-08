@@ -32,7 +32,7 @@ namespace {
 class CloneInstruction : public ::testing::Test {
 protected:
   virtual void SetUp() {
-    V = NULL;
+    V = nullptr;
   }
 
   template <typename T>
@@ -272,7 +272,7 @@ protected:
 
   void CreateNewFunc() {
     ValueToValueMapTy VMap;
-    NewFunc = CloneFunction(OldFunc, VMap, true, NULL);
+    NewFunc = CloneFunction(OldFunc, VMap, true, nullptr);
     M->getFunctionList().push_back(NewFunc);
   }
 

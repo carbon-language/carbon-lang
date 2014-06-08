@@ -1797,7 +1797,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
 
       ArgValue = DAG.getExtLoad(ExtType, DL, VA.getLocVT(), Chain, FIN,
                                 MachinePointerInfo::getFixedStack(FI),
-                                MemVT, false, false, false, 0);
+                                MemVT, false, false, false, nullptr);
 
       InVals.push_back(ArgValue);
     }

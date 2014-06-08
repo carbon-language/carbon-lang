@@ -1204,7 +1204,7 @@ TEST(YAMLIO, TestValidatingInput) {
   std::vector<MyValidation> docList;
   Input yin("--- \nvalue:  3.0\n"
             "--- \nvalue:  -1.0\n...\n",
-            NULL, suppressErrorMessages);
+            nullptr, suppressErrorMessages);
   yin >> docList;
   EXPECT_TRUE(!!yin.error());
 }
@@ -1224,7 +1224,7 @@ TEST(YAMLIO, TestColorsReadError) {
             "c2:  purple\n"
             "c3:  green\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> map;
   EXPECT_TRUE(!!yin.error());
@@ -1241,7 +1241,7 @@ TEST(YAMLIO, TestFlagsReadError) {
             "f2:  [ round, hollow ]\n"
             "f3:  []\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> map;
 
@@ -1260,7 +1260,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint8Error) {
             "- 0\n"
             "- 257\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1279,7 +1279,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint16Error) {
             "- 0\n"
             "- 66000\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1298,7 +1298,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint32Error) {
             "- 0\n"
             "- 5000000000\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1317,7 +1317,7 @@ TEST(YAMLIO, TestReadBuiltInTypesUint64Error) {
             "- 0\n"
             "- 19446744073709551615\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1337,7 +1337,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint8OverError) {
             "- 127\n"
             "- 128\n"
            "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1355,7 +1355,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint8UnderError) {
             "- 127\n"
             "- -129\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1375,7 +1375,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint16UnderError) {
             "- -32768\n"
             "- -32769\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1394,7 +1394,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint16OverError) {
             "- -32768\n"
             "- 32768\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1414,7 +1414,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint32UnderError) {
             "- -2147483648\n"
             "- -2147483649\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1432,7 +1432,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint32OverError) {
             "- -2147483648\n"
             "- 2147483649\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1452,7 +1452,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint64UnderError) {
             "- 9223372036854775807\n"
             "- -9223372036854775809\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1470,7 +1470,7 @@ TEST(YAMLIO, TestReadBuiltInTypesint64OverError) {
             "- 9223372036854775807\n"
             "- 9223372036854775809\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1489,7 +1489,7 @@ TEST(YAMLIO, TestReadBuiltInTypesFloatError) {
             "- -123.456\n"
             "- 1.2.3\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1508,7 +1508,7 @@ TEST(YAMLIO, TestReadBuiltInTypesDoubleError) {
             "- -123.456\n"
             "- 1.2.3\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1526,7 +1526,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex8Error) {
             "- 0xFE\n"
             "- 0x123\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1545,7 +1545,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex16Error) {
             "- 0xFEFF\n"
             "- 0x12345\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1563,7 +1563,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex32Error) {
             "- 0xFEFF0000\n"
             "- 0x1234556789\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1581,7 +1581,7 @@ TEST(YAMLIO, TestReadBuiltInTypesHex64Error) {
             "- 0xFFEEDDCCBBAA9988\n"
             "- 0x12345567890ABCDEF0\n"
             "...\n",
-            /*Ctxt=*/NULL,
+            /*Ctxt=*/nullptr,
             suppressErrorMessages);
   yin >> seq;
 
@@ -1593,13 +1593,13 @@ TEST(YAMLIO, TestMalformedMapFailsGracefully) {
   {
     // We pass the suppressErrorMessages handler to handle the error
     // message generated in the constructor of Input.
-    Input yin("{foo:3, bar: 5}", /*Ctxt=*/NULL, suppressErrorMessages);
+    Input yin("{foo:3, bar: 5}", /*Ctxt=*/nullptr, suppressErrorMessages);
     yin >> doc;
     EXPECT_TRUE(!!yin.error());
   }
 
   {
-    Input yin("---\nfoo:3\nbar: 5\n...\n", /*Ctxt=*/NULL, suppressErrorMessages);
+    Input yin("---\nfoo:3\nbar: 5\n...\n", /*Ctxt=*/nullptr, suppressErrorMessages);
     yin >> doc;
     EXPECT_TRUE(!!yin.error());
   }
@@ -1685,7 +1685,7 @@ TEST(YAMLIO, TestEmptyStringSucceedsForMapWithOptionalFields) {
 
 TEST(YAMLIO, TestEmptyStringSucceedsForSequence) {
   std::vector<uint8_t> seq;
-  Input yin("", /*Ctxt=*/NULL, suppressErrorMessages);
+  Input yin("", /*Ctxt=*/nullptr, suppressErrorMessages);
   yin >> seq;
 
   EXPECT_FALSE(yin.error());

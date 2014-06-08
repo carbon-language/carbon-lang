@@ -476,7 +476,7 @@ namespace llvm {
       // Function: test1 (func_test1)
       {
 
-        BasicBlock* label_entry = BasicBlock::Create(getGlobalContext(), "entry",func_test1,0);
+        BasicBlock* label_entry = BasicBlock::Create(getGlobalContext(), "entry",func_test1,nullptr);
 
         // Block entry (label_entry)
         CallInst* int32_3 = CallInst::Create(func_test2, "", label_entry);
@@ -491,7 +491,7 @@ namespace llvm {
       // Function: test2 (func_test2)
       {
 
-        BasicBlock* label_entry_5 = BasicBlock::Create(getGlobalContext(), "entry",func_test2,0);
+        BasicBlock* label_entry_5 = BasicBlock::Create(getGlobalContext(), "entry",func_test2,nullptr);
 
         // Block entry (label_entry_5)
         CallInst* int32_6 = CallInst::Create(func_test3, "", label_entry_5);
@@ -506,7 +506,7 @@ namespace llvm {
       // Function: test3 (func_test3)
       {
 
-        BasicBlock* label_entry_8 = BasicBlock::Create(getGlobalContext(), "entry",func_test3,0);
+        BasicBlock* label_entry_8 = BasicBlock::Create(getGlobalContext(), "entry",func_test3,nullptr);
 
         // Block entry (label_entry_8)
         CallInst* int32_9 = CallInst::Create(func_test1, "", label_entry_8);
@@ -524,10 +524,10 @@ namespace llvm {
         Value* int1_f = args++;
         int1_f->setName("f");
 
-        BasicBlock* label_entry_11 = BasicBlock::Create(getGlobalContext(), "entry",func_test4,0);
-        BasicBlock* label_bb = BasicBlock::Create(getGlobalContext(), "bb",func_test4,0);
-        BasicBlock* label_bb1 = BasicBlock::Create(getGlobalContext(), "bb1",func_test4,0);
-        BasicBlock* label_return = BasicBlock::Create(getGlobalContext(), "return",func_test4,0);
+        BasicBlock* label_entry_11 = BasicBlock::Create(getGlobalContext(), "entry",func_test4,nullptr);
+        BasicBlock* label_bb = BasicBlock::Create(getGlobalContext(), "bb",func_test4,nullptr);
+        BasicBlock* label_bb1 = BasicBlock::Create(getGlobalContext(), "bb1",func_test4,nullptr);
+        BasicBlock* label_return = BasicBlock::Create(getGlobalContext(), "return",func_test4,nullptr);
 
         // Block entry (label_entry_11)
         BranchInst::Create(label_bb, label_entry_11);

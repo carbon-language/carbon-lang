@@ -66,7 +66,7 @@ TEST_F(PointerUnionTest, Is) {
 TEST_F(PointerUnionTest, Get) {
   EXPECT_EQ(a.get<float *>(), &f);
   EXPECT_EQ(b.get<int *>(), &i);
-  EXPECT_EQ(n.get<int *>(), (int *)0);
+  EXPECT_EQ(n.get<int *>(), (int *)nullptr);
 }
 
 } // end anonymous namespace

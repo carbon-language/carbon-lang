@@ -213,7 +213,7 @@ public:
           // Return a pointer to it.
           return FirstNode + i;
       assert(false && "Dereferencing end iterator!");
-      return 0; // Avoid compiler warning.
+      return nullptr; // Avoid compiler warning.
     }
   };
 

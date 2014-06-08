@@ -40,8 +40,8 @@ TYPED_TEST_CASE(ValueMapTest, KeyTypes);
 
 TYPED_TEST(ValueMapTest, Null) {
   ValueMap<TypeParam*, int> VM1;
-  VM1[NULL] = 7;
-  EXPECT_EQ(7, VM1.lookup(NULL));
+  VM1[nullptr] = 7;
+  EXPECT_EQ(7, VM1.lookup(nullptr));
 }
 
 TYPED_TEST(ValueMapTest, FollowsValue) {

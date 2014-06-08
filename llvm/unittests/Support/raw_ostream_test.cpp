@@ -69,7 +69,7 @@ TEST(raw_ostreamTest, Types_Buffered) {
   EXPECT_EQ("1.100000e+00", printToString(1.1));
 
   // void*
-  EXPECT_EQ("0x0", printToString((void*) 0));
+  EXPECT_EQ("0x0", printToString((void*) nullptr));
   EXPECT_EQ("0xbeef", printToString((void*) 0xbeef));
   EXPECT_EQ("0xdeadbeef", printToString((void*) 0xdeadbeef));
 
@@ -100,7 +100,7 @@ TEST(raw_ostreamTest, Types_Unbuffered) {
   EXPECT_EQ("1.100000e+00", printToStringUnbuffered(1.1));
 
   // void*
-  EXPECT_EQ("0x0", printToStringUnbuffered((void*) 0));
+  EXPECT_EQ("0x0", printToStringUnbuffered((void*) nullptr));
   EXPECT_EQ("0xbeef", printToStringUnbuffered((void*) 0xbeef));
   EXPECT_EQ("0xdeadbeef", printToStringUnbuffered((void*) 0xdeadbeef));
 

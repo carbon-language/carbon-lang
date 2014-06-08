@@ -30,7 +30,8 @@ int main(int argc, const char **argv) {
   std::string Program = sys::FindProgramByName(argv[0]);
 
   std::string ErrMsg;
-  int Result = sys::ExecuteAndWait(Program, argv, 0, 0, 0, 0, &ErrMsg);
+  int Result = sys::ExecuteAndWait(Program, argv, nullptr, nullptr, 0, 0,
+                                   &ErrMsg);
   if (Result < 0) {
     errs() << "Error: " << ErrMsg << "\n";
     if (ExpectCrash)

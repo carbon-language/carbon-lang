@@ -46,10 +46,10 @@ protected:
     }
 
     Function *F = M->getFunction("test");
-    if (F == NULL)
+    if (F == nullptr)
       report_fatal_error("Test must have a function named @test");
 
-    A = B = NULL;
+    A = B = nullptr;
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
       if (I->hasName()) {
         if (I->getName() == "A")
@@ -58,9 +58,9 @@ protected:
           B = &*I;
       }
     }
-    if (A == NULL)
+    if (A == nullptr)
       report_fatal_error("@test must have an instruction %A");
-    if (B == NULL)
+    if (B == nullptr)
       report_fatal_error("@test must have an instruction %B");
   }
 
@@ -74,7 +74,7 @@ protected:
 
       static int initialize() {
         PassInfo *PI = new PassInfo("isPotentiallyReachable testing pass",
-                                    "", &ID, 0, true, true);
+                                    "", &ID, nullptr, true, true);
         PassRegistry::getPassRegistry()->registerPass(*PI, false);
         initializeLoopInfoPass(*PassRegistry::getPassRegistry());
         initializeDominatorTreeWrapperPassPass(
@@ -95,9 +95,10 @@ protected:
         LoopInfo *LI = &getAnalysis<LoopInfo>();
         DominatorTree *DT =
             &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-        EXPECT_EQ(isPotentiallyReachable(A, B, 0, 0), ExpectedResult);
-        EXPECT_EQ(isPotentiallyReachable(A, B, DT, 0), ExpectedResult);
-        EXPECT_EQ(isPotentiallyReachable(A, B, 0, LI), ExpectedResult);
+        EXPECT_EQ(isPotentiallyReachable(A, B, nullptr, nullptr),
+                  ExpectedResult);
+        EXPECT_EQ(isPotentiallyReachable(A, B, DT, nullptr), ExpectedResult);
+        EXPECT_EQ(isPotentiallyReachable(A, B, nullptr, LI), ExpectedResult);
         EXPECT_EQ(isPotentiallyReachable(A, B, DT, LI), ExpectedResult);
         return false;
       }

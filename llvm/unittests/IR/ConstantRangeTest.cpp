@@ -99,11 +99,11 @@ TEST_F(ConstantRangeTest, Equality) {
 }
 
 TEST_F(ConstantRangeTest, SingleElement) {
-  EXPECT_EQ(Full.getSingleElement(), static_cast<APInt *>(NULL));
-  EXPECT_EQ(Empty.getSingleElement(), static_cast<APInt *>(NULL));
+  EXPECT_EQ(Full.getSingleElement(), static_cast<APInt *>(nullptr));
+  EXPECT_EQ(Empty.getSingleElement(), static_cast<APInt *>(nullptr));
   EXPECT_EQ(*One.getSingleElement(), APInt(16, 0xa));
-  EXPECT_EQ(Some.getSingleElement(), static_cast<APInt *>(NULL));
-  EXPECT_EQ(Wrap.getSingleElement(), static_cast<APInt *>(NULL));
+  EXPECT_EQ(Some.getSingleElement(), static_cast<APInt *>(nullptr));
+  EXPECT_EQ(Wrap.getSingleElement(), static_cast<APInt *>(nullptr));
 
   EXPECT_FALSE(Full.isSingleElement());
   EXPECT_FALSE(Empty.isSingleElement());

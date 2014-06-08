@@ -48,7 +48,7 @@ public:
     const MemoryBuffer* BufferFound = getObjectInternal(M);
     ModulesLookedUp.insert(M->getModuleIdentifier());
     if (!BufferFound)
-      return NULL;
+      return nullptr;
     // Our test cache wants to maintain ownership of its object buffers
     // so we make a copy here for the execution engine.
     return MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer());
@@ -67,7 +67,7 @@ public:
     const std::string ModuleID = M->getModuleIdentifier();
     StringMap<const MemoryBuffer *>::iterator it = ObjMap.find(ModuleID);
     if (it == ObjMap.end())
-      return 0;
+      return nullptr;
     return it->second;
   }
 
@@ -101,13 +101,13 @@ protected:
   void compileAndRun(int ExpectedRC = OriginalRC) {
     // This function shouldn't be called until after SetUp.
     ASSERT_TRUE(bool(TheJIT));
-    ASSERT_TRUE(0 != Main);
+    ASSERT_TRUE(nullptr != Main);
 
     // We may be using a null cache, so ensure compilation is valid.
     TheJIT->finalizeObject();
     void *vPtr = TheJIT->getPointerToFunction(Main);
 
-    EXPECT_TRUE(0 != vPtr)
+    EXPECT_TRUE(nullptr != vPtr)
       << "Unable to get pointer to main() from JIT";
 
     int (*FuncPtr)(void) = (int(*)(void))(intptr_t)vPtr;
@@ -123,7 +123,7 @@ TEST_F(MCJITObjectCacheTest, SetNullObjectCache) {
 
   createJIT(M.release());
 
-  TheJIT->setObjectCache(NULL);
+  TheJIT->setObjectCache(nullptr);
 
   compileAndRun();
 }
@@ -143,7 +143,7 @@ TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
 
   // Verify that our object cache does not contain the module yet.
   const MemoryBuffer *ObjBuffer = Cache->getObjectInternal(SavedModulePointer);
-  EXPECT_EQ(0, ObjBuffer);
+  EXPECT_EQ(nullptr, ObjBuffer);
 
   compileAndRun();
 
@@ -152,7 +152,7 @@ TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
 
   // Verify that our object cache now contains the module.
   ObjBuffer = Cache->getObjectInternal(SavedModulePointer);
-  EXPECT_TRUE(0 != ObjBuffer);
+  EXPECT_TRUE(nullptr != ObjBuffer);
 
   // Verify that the cache was only notified once.
   EXPECT_FALSE(Cache->wereDuplicatesInserted());
@@ -221,7 +221,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
 
   // Verify that our object cache does not contain the module yet.
   const MemoryBuffer *ObjBuffer = Cache->getObjectInternal(SecondModulePointer);
-  EXPECT_EQ(0, ObjBuffer);
+  EXPECT_EQ(nullptr, ObjBuffer);
 
   // Run the function and look for the replacement return code.
   compileAndRun(ReplacementRC);
@@ -231,7 +231,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
 
   // Verify that our object cache now contains the module.
   ObjBuffer = Cache->getObjectInternal(SecondModulePointer);
-  EXPECT_TRUE(0 != ObjBuffer);
+  EXPECT_TRUE(nullptr != ObjBuffer);
 
   // Verify that MCJIT didn't try to cache this again.
   EXPECT_FALSE(Cache->wereDuplicatesInserted());

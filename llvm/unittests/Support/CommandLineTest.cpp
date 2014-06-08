@@ -23,7 +23,7 @@ class TempEnvVar {
   TempEnvVar(const char *name, const char *value)
       : name(name) {
     const char *old_value = getenv(name);
-    EXPECT_EQ(NULL, old_value) << old_value;
+    EXPECT_EQ(nullptr, old_value) << old_value;
 #if HAVE_SETENV
     setenv(name, value, true);
 #else

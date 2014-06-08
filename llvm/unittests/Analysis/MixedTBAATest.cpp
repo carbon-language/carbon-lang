@@ -43,7 +43,7 @@ TEST_F(MixedTBAATest, MixedTBAA) {
 
   auto *Store1 = new StoreInst(Value, Addr, BB);
   auto *Store2 = new StoreInst(Value, Addr, BB);
-  ReturnInst::Create(C, 0, BB);
+  ReturnInst::Create(C, nullptr, BB);
 
   // New TBAA metadata
   {

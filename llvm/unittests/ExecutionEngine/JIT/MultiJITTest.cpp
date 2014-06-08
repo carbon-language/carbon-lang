@@ -27,7 +27,7 @@ namespace {
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
   bool success =
-    NULL != ParseAssemblyString(assembly, M, Error, M->getContext());
+    nullptr != ParseAssemblyString(assembly, M, Error, M->getContext());
   std::string errMsg;
   raw_string_ostream os(errMsg);
   Error.print("", os);
@@ -71,13 +71,13 @@ void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
 
 TEST(MultiJitTest, EagerMode) {
   LLVMContext Context1;
-  Module *M1 = 0;
-  Function *FooF1 = 0;
+  Module *M1 = nullptr;
+  Function *FooF1 = nullptr;
   createModule1(Context1, M1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = 0;
-  Function *FooF2 = 0;
+  Module *M2 = nullptr;
+  Function *FooF2 = nullptr;
   createModule2(Context2, M2, FooF2);
 
   // Now we create the JIT in eager mode
@@ -101,13 +101,13 @@ TEST(MultiJitTest, EagerMode) {
 
 TEST(MultiJitTest, LazyMode) {
   LLVMContext Context1;
-  Module *M1 = 0;
-  Function *FooF1 = 0;
+  Module *M1 = nullptr;
+  Function *FooF1 = nullptr;
   createModule1(Context1, M1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = 0;
-  Function *FooF2 = 0;
+  Module *M2 = nullptr;
+  Function *FooF2 = nullptr;
   createModule2(Context2, M2, FooF2);
 
   // Now we create the JIT in lazy mode
@@ -135,13 +135,13 @@ extern "C" {
 
 TEST(MultiJitTest, JitPool) {
   LLVMContext Context1;
-  Module *M1 = 0;
-  Function *FooF1 = 0;
+  Module *M1 = nullptr;
+  Function *FooF1 = nullptr;
   createModule1(Context1, M1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = 0;
-  Function *FooF2 = 0;
+  Module *M2 = nullptr;
+  Function *FooF2 = nullptr;
   createModule2(Context2, M2, FooF2);
 
   // Now we create two JITs

@@ -415,7 +415,7 @@ TEST(InstructionsTest, isEliminableCastPair) {
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
                                            CastInst::IntToPtr,
                                            Int64PtrTy, Int64Ty, Int64PtrTy,
-                                           Int32Ty, 0, Int32Ty),
+                                           Int32Ty, nullptr, Int32Ty),
             CastInst::BitCast);
 
   // Source and destination have unknown sizes, but the same address space and
@@ -423,7 +423,7 @@ TEST(InstructionsTest, isEliminableCastPair) {
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
                                            CastInst::IntToPtr,
                                            Int64PtrTy, Int64Ty, Int64PtrTy,
-                                           0, 0, 0),
+                                           nullptr, nullptr, nullptr),
             CastInst::BitCast);
 
   // Source and destination have unknown sizes, but the same address space and
@@ -431,21 +431,21 @@ TEST(InstructionsTest, isEliminableCastPair) {
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
                                            CastInst::IntToPtr,
                                            Int64PtrTy, Int32Ty, Int64PtrTy,
-                                           0, 0, 0),
+                                           nullptr, nullptr, nullptr),
             0U);
 
   // Middle pointer big enough -> bitcast.
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
                                            CastInst::PtrToInt,
                                            Int64Ty, Int64PtrTy, Int64Ty,
-                                           0, Int64Ty, 0),
+                                           nullptr, Int64Ty, nullptr),
             CastInst::BitCast);
 
   // Middle pointer too small -> fail.
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
                                            CastInst::PtrToInt,
                                            Int64Ty, Int64PtrTy, Int64Ty,
-                                           0, Int32Ty, 0),
+                                           nullptr, Int32Ty, nullptr),
             0U);
 
   // Test that we don't eliminate bitcasts between different address spaces,
@@ -464,21 +464,21 @@ TEST(InstructionsTest, isEliminableCastPair) {
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
                                            CastInst::AddrSpaceCast,
                                            Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
-                                           0, Int16SizePtr, Int64SizePtr),
+                                           nullptr, Int16SizePtr, Int64SizePtr),
             0U);
 
   // Cannot simplify addrspacecast, ptrtoint
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::AddrSpaceCast,
                                            CastInst::PtrToInt,
                                            Int64PtrTyAS1, Int64PtrTyAS2, Int16Ty,
-                                           Int64SizePtr, Int16SizePtr, 0),
+                                           Int64SizePtr, Int16SizePtr, nullptr),
             0U);
 
   // Pass since the bitcast address spaces are the same
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
                                            CastInst::BitCast,
                                            Int16Ty, Int64PtrTyAS1, Int64PtrTyAS1,
-                                           0, 0, 0),
+                                           nullptr, nullptr, nullptr),
             CastInst::IntToPtr);
 
 }

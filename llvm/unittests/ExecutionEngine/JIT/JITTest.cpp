@@ -169,7 +169,7 @@ public:
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
   bool success =
-    NULL != ParseAssemblyString(assembly, M, Error, M->getContext());
+    nullptr != ParseAssemblyString(assembly, M, Error, M->getContext());
   std::string errMsg;
   raw_string_ostream os(errMsg);
   Error.print("", os);
@@ -193,7 +193,7 @@ class JITTest : public testing::Test {
                  .setJITMemoryManager(RJMM)
                  .setErrorStr(&Error)
                  .setTargetOptions(Options).create());
-    ASSERT_TRUE(TheJIT.get() != NULL) << Error;
+    ASSERT_TRUE(TheJIT.get() != nullptr) << Error;
   }
 
   void LoadAssembly(const char *assembly) {
@@ -249,7 +249,7 @@ TEST(JIT, GlobalInFunction) {
 
   // Since F1 was codegen'd, a pointer to G should be available.
   int32_t *GPtr = (int32_t*)JIT->getPointerToGlobalIfAvailable(G);
-  ASSERT_NE((int32_t*)NULL, GPtr);
+  ASSERT_NE((int32_t*)nullptr, GPtr);
   EXPECT_EQ(0, *GPtr);
 
   // F1() should increment G.
@@ -636,7 +636,7 @@ ExecutionEngine *getJITFromBitcode(
   if (error_code EC = ModuleOrErr.getError()) {
     ADD_FAILURE() << EC.message();
     delete BitcodeBuffer;
-    return NULL;
+    return nullptr;
   }
   M = ModuleOrErr.get();
   std::string errMsg;
@@ -644,11 +644,11 @@ ExecutionEngine *getJITFromBitcode(
     .setEngineKind(EngineKind::JIT)
     .setErrorStr(&errMsg)
     .create();
-  if (TheJIT == NULL) {
+  if (TheJIT == nullptr) {
     ADD_FAILURE() << errMsg;
     delete M;
-    M = NULL;
-    return NULL;
+    M = nullptr;
+    return nullptr;
   }
   return TheJIT;
 }

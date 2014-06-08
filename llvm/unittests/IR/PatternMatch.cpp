@@ -230,17 +230,17 @@ TEST_F(PatternMatchTest, OverflowingBinOps) {
       m_NSWAdd(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWAdd(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(
       m_NSWSub(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWSub(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(
       m_NSWMul(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNSWMul(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(m_NSWShl(m_Value(MatchL), m_Value(MatchR)).match(
       IRB.CreateShl(L, R, "", /* NUW */ false, /* NSW */ true)));
   EXPECT_EQ(L, MatchL);
@@ -250,17 +250,17 @@ TEST_F(PatternMatchTest, OverflowingBinOps) {
       m_NUWAdd(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWAdd(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(
       m_NUWSub(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWSub(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(
       m_NUWMul(m_Value(MatchL), m_Value(MatchR)).match(IRB.CreateNUWMul(L, R)));
   EXPECT_EQ(L, MatchL);
   EXPECT_EQ(R, MatchR);
-  MatchL = MatchR = 0;
+  MatchL = MatchR = nullptr;
   EXPECT_TRUE(m_NUWShl(m_Value(MatchL), m_Value(MatchR)).match(
       IRB.CreateShl(L, R, "", /* NUW */ true, /* NSW */ false)));
   EXPECT_EQ(L, MatchL);

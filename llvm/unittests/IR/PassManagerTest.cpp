@@ -168,7 +168,7 @@ struct TestInvalidationFunctionPass {
 Module *parseIR(const char *IR) {
   LLVMContext &C = getGlobalContext();
   SMDiagnostic Err;
-  return ParseAssemblyString(IR, 0, Err, C);
+  return ParseAssemblyString(IR, nullptr, Err, C);
 }
 
 class PassManagerTest : public ::testing::Test {

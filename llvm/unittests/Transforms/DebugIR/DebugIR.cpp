@@ -65,7 +65,7 @@ char * current_dir() {
 #if defined(LLVM_ON_WIN32) || defined(HAVE_GETCWD)
   // calling getcwd (or _getcwd() on windows) with a null buffer makes it
   // allocate a sufficiently sized buffer to store the current working dir.
-  return getcwd_impl(0, 0);
+  return getcwd_impl(nullptr, 0);
 #else
   return 0;
 #endif

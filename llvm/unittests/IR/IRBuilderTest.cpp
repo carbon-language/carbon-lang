@@ -31,11 +31,11 @@ protected:
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
     BB = BasicBlock::Create(Ctx, "", F);
     GV = new GlobalVariable(*M, Type::getFloatTy(Ctx), true,
-                            GlobalValue::ExternalLinkage, 0);
+                            GlobalValue::ExternalLinkage, nullptr);
   }
 
   virtual void TearDown() {
-    BB = 0;
+    BB = nullptr;
     M.reset();
   }
 
@@ -71,9 +71,9 @@ TEST_F(IRBuilderTest, Lifetime) {
 
   IntrinsicInst *II_Start1 = dyn_cast<IntrinsicInst>(Start1);
   IntrinsicInst *II_End1 = dyn_cast<IntrinsicInst>(End1);
-  ASSERT_TRUE(II_Start1 != NULL);
+  ASSERT_TRUE(II_Start1 != nullptr);
   EXPECT_EQ(II_Start1->getIntrinsicID(), Intrinsic::lifetime_start);
-  ASSERT_TRUE(II_End1 != NULL);
+  ASSERT_TRUE(II_End1 != nullptr);
   EXPECT_EQ(II_End1->getIntrinsicID(), Intrinsic::lifetime_end);
 }
 
@@ -203,7 +203,7 @@ TEST_F(IRBuilderTest, WrapFlags) {
 
   // Test instructions.
   GlobalVariable *G = new GlobalVariable(*M, Builder.getInt32Ty(), true,
-                                         GlobalValue::ExternalLinkage, 0);
+                                         GlobalValue::ExternalLinkage, nullptr);
   Value *V = Builder.CreateLoad(G);
   EXPECT_TRUE(
       cast<BinaryOperator>(Builder.CreateNSWAdd(V, V))->hasNoSignedWrap());

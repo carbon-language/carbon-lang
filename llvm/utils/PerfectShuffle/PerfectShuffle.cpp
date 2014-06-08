@@ -219,10 +219,10 @@ static void EvaluateOps(unsigned short Elt, unsigned short Vals[],
 int main() {
   // Seed the table with accesses to the LHS and RHS.
   ShufTab[0x0123].Cost = 0;
-  ShufTab[0x0123].Op = 0;
+  ShufTab[0x0123].Op = nullptr;
   ShufTab[0x0123].Arg0 = 0x0123;
   ShufTab[0x4567].Cost = 0;
-  ShufTab[0x4567].Op = 0;
+  ShufTab[0x4567].Op = nullptr;
   ShufTab[0x4567].Arg0 = 0x4567;
 
   // Seed the first-level of shuffles, shuffles whose inputs are the input to

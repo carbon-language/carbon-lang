@@ -54,7 +54,7 @@ static void CopyEnvironment(std::vector<const char *> &out) {
   // environ seems to work for Windows and most other Unices.
   char **envp = environ;
 #endif
-  while (*envp != 0) {
+  while (*envp != nullptr) {
     out.push_back(*envp);
     ++envp;
   }
@@ -76,14 +76,14 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
     "--gtest_filter=ProgramTest.CreateProcessTrailingSlash",
     "-program-test-string-arg1", "has\\\\ trailing\\",
     "-program-test-string-arg2", "has\\\\ trailing\\",
-    0
+    nullptr
   };
 
   // Add LLVM_PROGRAM_TEST_CHILD to the environment of the child.
   std::vector<const char *> envp;
   CopyEnvironment(envp);
   envp.push_back("LLVM_PROGRAM_TEST_CHILD=1");
-  envp.push_back(0);
+  envp.push_back(nullptr);
 
   std::string error;
   bool ExecutionFailed;
@@ -93,7 +93,7 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
 #else
   StringRef nul("/dev/null");
 #endif
-  const StringRef *redirects[] = { &nul, &nul, 0 };
+  const StringRef *redirects[] = { &nul, &nul, nullptr };
   int rc = ExecuteAndWait(my_exe, argv, &envp[0], redirects,
                           /*secondsToWait=*/ 10, /*memoryLimit=*/ 0, &error,
                           &ExecutionFailed);
@@ -114,19 +114,19 @@ TEST(ProgramTest, TestExecuteNoWait) {
   const char *argv[] = {
     Executable.c_str(),
     "--gtest_filter=ProgramTest.TestExecuteNoWait",
-    0
+    nullptr
   };
 
   // Add LLVM_PROGRAM_TEST_EXECUTE_NO_WAIT to the environment of the child.
   std::vector<const char *> envp;
   CopyEnvironment(envp);
   envp.push_back("LLVM_PROGRAM_TEST_EXECUTE_NO_WAIT=1");
-  envp.push_back(0);
+  envp.push_back(nullptr);
 
   std::string Error;
   bool ExecutionFailed;
-  ProcessInfo PI1 =
-      ExecuteNoWait(Executable, argv, &envp[0], 0, 0, &Error, &ExecutionFailed);
+  ProcessInfo PI1 = ExecuteNoWait(Executable, argv, &envp[0], nullptr, 0,
+                                  &Error, &ExecutionFailed);
   ASSERT_FALSE(ExecutionFailed) << Error;
   ASSERT_NE(PI1.Pid, 0) << "Invalid process id";
 
@@ -144,8 +144,8 @@ TEST(ProgramTest, TestExecuteNoWait) {
 
   EXPECT_EQ(LoopCount, 1u) << "LoopCount should be 1";
 
-  ProcessInfo PI2 =
-      ExecuteNoWait(Executable, argv, &envp[0], 0, 0, &Error, &ExecutionFailed);
+  ProcessInfo PI2 = ExecuteNoWait(Executable, argv, &envp[0], nullptr, 0,
+                                  &Error, &ExecutionFailed);
   ASSERT_FALSE(ExecutionFailed) << Error;
   ASSERT_NE(PI2.Pid, 0) << "Invalid process id";
 
@@ -175,32 +175,32 @@ TEST(ProgramTest, TestExecuteAndWaitTimeout) {
   const char *argv[] = {
     Executable.c_str(),
     "--gtest_filter=ProgramTest.TestExecuteAndWaitTimeout",
-    0
+    nullptr
   };
 
   // Add LLVM_PROGRAM_TEST_TIMEOUT to the environment of the child.
   std::vector<const char *> envp;
   CopyEnvironment(envp);
   envp.push_back("LLVM_PROGRAM_TEST_TIMEOUT=1");
-  envp.push_back(0);
+  envp.push_back(nullptr);
 
   std::string Error;
   bool ExecutionFailed;
   int RetCode =
-      ExecuteAndWait(Executable, argv, &envp[0], 0, /*secondsToWait=*/1, 0,
+      ExecuteAndWait(Executable, argv, &envp[0], nullptr, /*secondsToWait=*/1, 0,
                      &Error, &ExecutionFailed);
   ASSERT_EQ(-2, RetCode);
 }
 
 TEST(ProgramTest, TestExecuteNegative) {
   std::string Executable = "i_dont_exist";
-  const char *argv[] = { Executable.c_str(), 0 };
+  const char *argv[] = { Executable.c_str(), nullptr };
 
   {
     std::string Error;
     bool ExecutionFailed;
-    int RetCode =
-        ExecuteAndWait(Executable, argv, 0, 0, 0, 0, &Error, &ExecutionFailed);
+    int RetCode = ExecuteAndWait(Executable, argv, nullptr, nullptr, 0, 0,
+                                 &Error, &ExecutionFailed);
     ASSERT_TRUE(RetCode < 0) << "On error ExecuteAndWait should return 0 or "
                                 "positive value indicating the result code";
     ASSERT_TRUE(ExecutionFailed);
@@ -210,8 +210,8 @@ TEST(ProgramTest, TestExecuteNegative) {
   {
     std::string Error;
     bool ExecutionFailed;
-    ProcessInfo PI =
-        ExecuteNoWait(Executable, argv, 0, 0, 0, &Error, &ExecutionFailed);
+    ProcessInfo PI = ExecuteNoWait(Executable, argv, nullptr, nullptr, 0,
+                                   &Error, &ExecutionFailed);
     ASSERT_EQ(PI.Pid, 0)
         << "On error ExecuteNoWait should return an invalid ProcessInfo";
     ASSERT_TRUE(ExecutionFailed);

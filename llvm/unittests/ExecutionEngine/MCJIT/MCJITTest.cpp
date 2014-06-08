@@ -51,7 +51,7 @@ TEST_F(MCJITTest, global_variable) {
   GlobalValue *Global = insertGlobalInt32(M.get(), "test_global", initialValue);
   createJIT(M.release());
   void *globalPtr =  TheJIT->getPointerToGlobal(Global);
-  EXPECT_TRUE(0 != globalPtr)
+  EXPECT_TRUE(nullptr != globalPtr)
     << "Unable to get pointer to global value from JIT";
 
   EXPECT_EQ(initialValue, *(int32_t*)globalPtr)

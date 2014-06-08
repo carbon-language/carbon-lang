@@ -36,7 +36,7 @@ protected:
     ArrayType *AT = ArrayType::get(Type::getInt8PtrTy(Ctx), 3);
 
     GV = new GlobalVariable(*M.get(), AT, false /*=isConstant*/,
-                            GlobalValue::InternalLinkage, 0, "switch.bas");
+                            GlobalValue::InternalLinkage, nullptr,"switch.bas");
 
     // Global Initializer
     std::vector<Constant *> Init;
@@ -88,7 +88,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
   Builder.CreateRet(ConstantPointerNull::get(Type::getInt8PtrTy(Ctx)));
 
   Module *LinkedModule = new Module("MyModuleLinked", Ctx);
-  Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource, 0);
+  Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource, nullptr);
 
   // Delete the original module.
   M.reset();
@@ -138,16 +138,16 @@ TEST_F(LinkModuleTest, EmptyModule) {
 
   GlobalVariable *GV =
       new GlobalVariable(*InternalM, STy, false /*=isConstant*/,
-                         GlobalValue::InternalLinkage, 0, "g");
+                         GlobalValue::InternalLinkage, nullptr, "g");
 
   GV->setInitializer(ConstantStruct::get(STy, F));
 
   Module *EmptyM = new Module("EmptyModule1", Ctx);
-  Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource, 0);
+  Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource, nullptr);
 
   delete EmptyM;
   EmptyM = new Module("EmptyModule2", Ctx);
-  Linker::LinkModules(InternalM, EmptyM, Linker::PreserveSource, 0);
+  Linker::LinkModules(InternalM, EmptyM, Linker::PreserveSource, nullptr);
 
   delete EmptyM;
   delete InternalM;

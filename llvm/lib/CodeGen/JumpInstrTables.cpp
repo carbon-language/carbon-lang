@@ -263,7 +263,7 @@ bool JumpInstrTables::runOnModule(Module &M) {
     if (F.hasFnAttribute(Attribute::JumpTable)) {
       assert(F.hasUnnamedAddr() &&
              "Attribute 'jumptable' requires 'unnamed_addr'");
-      Functions[&F] = NULL;
+      Functions[&F] = nullptr;
     }
   }
 

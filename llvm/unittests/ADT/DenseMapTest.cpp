@@ -92,9 +92,9 @@ protected:
 };
 
 template <typename T>
-typename T::key_type *const DenseMapTest<T>::dummy_key_ptr = 0;
+typename T::key_type *const DenseMapTest<T>::dummy_key_ptr = nullptr;
 template <typename T>
-typename T::mapped_type *const DenseMapTest<T>::dummy_value_ptr = 0;
+typename T::mapped_type *const DenseMapTest<T>::dummy_value_ptr = nullptr;
 
 // Register these types for testing.
 typedef ::testing::Types<DenseMap<uint32_t, uint32_t>,

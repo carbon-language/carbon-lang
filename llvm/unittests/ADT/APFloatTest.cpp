@@ -1173,11 +1173,11 @@ TEST(APFloatTest, exactInverse) {
   EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(8.5070592e+37f)));
 
   // Large float, inverse is a denormal.
-  EXPECT_FALSE(APFloat(1.7014118e38f).getExactInverse(0));
+  EXPECT_FALSE(APFloat(1.7014118e38f).getExactInverse(nullptr));
   // Zero
-  EXPECT_FALSE(APFloat(0.0).getExactInverse(0));
+  EXPECT_FALSE(APFloat(0.0).getExactInverse(nullptr));
   // Denormalized float
-  EXPECT_FALSE(APFloat(1.40129846e-45f).getExactInverse(0));
+  EXPECT_FALSE(APFloat(1.40129846e-45f).getExactInverse(nullptr));
 }
 
 TEST(APFloatTest, roundToIntegral) {

@@ -18,7 +18,7 @@ namespace llvm {
 // Used to test illegal cast. If a cast doesn't match any of the "real" ones,
 // it will match this one.
 struct IllegalCast;
-template <typename T> IllegalCast *cast(...) { return 0; }
+template <typename T> IllegalCast *cast(...) { return nullptr; }
 
 // set up two example classes
 // with conversion facility
@@ -90,7 +90,7 @@ static_assert(std::is_same<simplify_type<foo *>::SimpleType, foo *>::value,
 
 namespace {
 
-const foo *null_foo = NULL;
+const foo *null_foo = nullptr;
 
 bar B;
 extern bar &B1;
@@ -175,7 +175,7 @@ TEST(CastingTest, dyn_cast_or_null) {
 const bar *B2 = &B;
 }  // anonymous namespace
 
-bar *llvm::fub() { return 0; }
+bar *llvm::fub() { return nullptr; }
 
 namespace {
 namespace inferred_upcasting {
@@ -203,7 +203,7 @@ TEST(CastingTest, UpcastIsInferred) {
   Derived D;
   EXPECT_TRUE(isa<Base>(D));
   Base *BP = dyn_cast<Base>(&D);
-  EXPECT_TRUE(BP != NULL);
+  EXPECT_TRUE(BP != nullptr);
 }
 
 

@@ -16,7 +16,7 @@ namespace {
 
 TEST(TimeValue, time_t) {
   sys::TimeValue now = sys::TimeValue::now();
-  time_t now_t = time(NULL);
+  time_t now_t = time(nullptr);
   EXPECT_TRUE(std::abs(static_cast<long>(now_t - now.toEpochTime())) < 2);
 }
 

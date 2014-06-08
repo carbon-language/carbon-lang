@@ -62,7 +62,7 @@ static bool isEmptyFunction(Function *F) {
   if (Entry.size() != 1 || !isa<ReturnInst>(Entry.front()))
     return false;
   ReturnInst &RI = cast<ReturnInst>(Entry.front());
-  return RI.getReturnValue() == NULL;
+  return RI.getReturnValue() == nullptr;
 }
 
 char GlobalDCE::ID = 0;

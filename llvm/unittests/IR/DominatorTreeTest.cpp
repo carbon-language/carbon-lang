@@ -213,7 +213,7 @@ namespace llvm {
         "}\n";
       LLVMContext &C = getGlobalContext();
       SMDiagnostic Err;
-      return ParseAssemblyString(ModuleStrig, NULL, Err, C);
+      return ParseAssemblyString(ModuleStrig, nullptr, Err, C);
     }
 
     TEST(DominatorTree, Unreachable) {

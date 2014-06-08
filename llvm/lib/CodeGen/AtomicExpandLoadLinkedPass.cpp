@@ -312,7 +312,7 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // Setup the builder so we can create any PHIs we need.
   Builder.SetInsertPoint(FailureBB, FailureBB->begin());
   BasicBlock *SuccessBB = FailureOrder == Monotonic ? BarrierBB : TryStoreBB;
-  PHINode *Success = 0, *Failure = 0;
+  PHINode *Success = nullptr, *Failure = nullptr;
 
   // Look for any users of the cmpxchg that are just comparing the loaded value
   // against the desired one, and replace them with the CFG-derived version.

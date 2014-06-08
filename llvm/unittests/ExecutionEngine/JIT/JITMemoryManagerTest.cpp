@@ -267,12 +267,12 @@ TEST(JITMemoryManagerTest, TestManyStubs) {
 
   // After allocating a bunch of stubs, we should have two.
   for (int I = 0; I < Iters; ++I)
-    MemMgr->allocateStub(NULL, Size, 8);
+    MemMgr->allocateStub(nullptr, Size, 8);
   EXPECT_EQ(2U, MemMgr->GetNumStubSlabs());
 
   // And after much more, we should have three.
   for (int I = 0; I < Iters; ++I)
-    MemMgr->allocateStub(NULL, Size, 8);
+    MemMgr->allocateStub(nullptr, Size, 8);
   EXPECT_EQ(3U, MemMgr->GetNumStubSlabs());
 }
 
@@ -286,10 +286,10 @@ TEST(JITMemoryManagerTest, AllocateSection) {
   uint8_t *data2 = MemMgr->allocateDataSection(256, 64, 4, StringRef(), false);
   uint8_t *code3 = MemMgr->allocateCodeSection(258, 64, 5, StringRef());
 
-  EXPECT_NE((uint8_t*)0, code1);
-  EXPECT_NE((uint8_t*)0, code2);
-  EXPECT_NE((uint8_t*)0, data1);
-  EXPECT_NE((uint8_t*)0, data2);
+  EXPECT_NE((uint8_t*)nullptr, code1);
+  EXPECT_NE((uint8_t*)nullptr, code2);
+  EXPECT_NE((uint8_t*)nullptr, data1);
+  EXPECT_NE((uint8_t*)nullptr, data2);
 
   // Check alignment
   EXPECT_EQ((uint64_t)code1 & 0xf, 0u);

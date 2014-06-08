@@ -25,7 +25,7 @@ namespace test1 {
   llvm::ManagedStatic<int> ms;
   void *helper(void*) {
     *ms;
-    return NULL;
+    return nullptr;
   }
 
   // Valgrind's leak checker complains glibc's stack allocation.
@@ -49,10 +49,10 @@ TEST(Initialize, MultipleThreads) {
 
   llvm_start_multithreaded();
   pthread_t t1, t2;
-  pthread_create(&t1, &a1, test1::helper, NULL);
-  pthread_create(&t2, &a2, test1::helper, NULL);
-  pthread_join(t1, NULL);
-  pthread_join(t2, NULL);
+  pthread_create(&t1, &a1, test1::helper, nullptr);
+  pthread_create(&t2, &a2, test1::helper, nullptr);
+  pthread_join(t1, nullptr);
+  pthread_join(t2, nullptr);
   free(p1);
   free(p2);
   llvm_stop_multithreaded();

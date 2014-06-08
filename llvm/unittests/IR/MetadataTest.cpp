@@ -103,7 +103,7 @@ TEST_F(MDNodeTest, Simple) {
 #endif
   EXPECT_EQ(n4, n1);
   EXPECT_EQ(n5, n2);
-  EXPECT_EQ(n6, (Value*)0);
+  EXPECT_EQ(n6, (Value*)nullptr);
 
   EXPECT_EQ(3u, n1->getNumOperands());
   EXPECT_EQ(s1, n1->getOperand(0));

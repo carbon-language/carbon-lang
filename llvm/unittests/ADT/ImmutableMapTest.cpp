@@ -36,8 +36,8 @@ TEST(ImmutableMapTest, MultiElemIntMapTest) {
   EXPECT_TRUE(S.isEmpty());
   EXPECT_FALSE(S2.isEmpty());
 
-  EXPECT_EQ(0, S.lookup(3));
-  EXPECT_EQ(0, S.lookup(9));
+  EXPECT_EQ(nullptr, S.lookup(3));
+  EXPECT_EQ(nullptr, S.lookup(9));
 
   EXPECT_EQ(10, *S2.lookup(3));
   EXPECT_EQ(11, *S2.lookup(4));

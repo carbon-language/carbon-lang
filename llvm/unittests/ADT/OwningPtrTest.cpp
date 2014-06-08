@@ -74,7 +74,7 @@ TEST_F(OwningPtrTest, Reset) {
 
 TEST_F(OwningPtrTest, Take) {
   TrackDestructor::ResetCounts();
-  TrackDestructor *T = 0;
+  TrackDestructor *T = nullptr;
   {
     OwningPtr<TrackDestructor> O(new TrackDestructor(3));
     T = O.take();
@@ -92,7 +92,7 @@ TEST_F(OwningPtrTest, Take) {
 
 TEST_F(OwningPtrTest, Release) {
   TrackDestructor::ResetCounts();
-  TrackDestructor *T = 0;
+  TrackDestructor *T = nullptr;
   {
     OwningPtr<TrackDestructor> O(new TrackDestructor(3));
     T = O.release();

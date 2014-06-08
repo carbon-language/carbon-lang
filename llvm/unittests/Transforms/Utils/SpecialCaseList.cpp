@@ -29,9 +29,9 @@ protected:
 
   GlobalVariable *makeGlobal(StringRef Name, StringRef StructName, Module &M) {
     StructType *ST =
-        StructType::create(StructName, Type::getInt32Ty(Ctx), (Type*)0);
+        StructType::create(StructName, Type::getInt32Ty(Ctx), (Type*)nullptr);
     return new GlobalVariable(
-        M, ST, false, GlobalValue::ExternalLinkage, 0, Name);
+        M, ST, false, GlobalValue::ExternalLinkage, nullptr, Name);
   }
 
   GlobalAlias *makeAlias(StringRef Name, GlobalObject *Aliasee) {
@@ -209,17 +209,17 @@ TEST_F(SpecialCaseListTest, Substring) {
 
 TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
   std::string Error;
-  EXPECT_EQ(0, makeSpecialCaseList("badline", Error));
+  EXPECT_EQ(nullptr, makeSpecialCaseList("badline", Error));
   EXPECT_EQ("Malformed line 1: 'badline'", Error);
-  EXPECT_EQ(0, makeSpecialCaseList("src:bad[a-", Error));
+  EXPECT_EQ(nullptr, makeSpecialCaseList("src:bad[a-", Error));
   EXPECT_EQ("Malformed regex in line 1: 'bad[a-': invalid character range",
             Error);
-  EXPECT_EQ(0, makeSpecialCaseList("src:a.c\n"
+  EXPECT_EQ(nullptr, makeSpecialCaseList("src:a.c\n"
                                    "fun:fun(a\n",
                                    Error));
   EXPECT_EQ("Malformed regex in line 2: 'fun(a': parentheses not balanced",
             Error);
-  EXPECT_EQ(0, SpecialCaseList::create("unexisting", Error));
+  EXPECT_EQ(nullptr, SpecialCaseList::create("unexisting", Error));
   EXPECT_EQ(0U, Error.find("Can't open file 'unexisting':"));
 }
 

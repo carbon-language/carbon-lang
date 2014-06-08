@@ -34,7 +34,7 @@ TEST(ValueTest, UsedInBasicBlock) {
                              "  ret void\n"
                              "}\n";
   SMDiagnostic Err;
-  Module *M = ParseAssemblyString(ModuleString, NULL, Err, C);
+  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
 
   Function *F = M->getFunction("f");
 
@@ -56,7 +56,7 @@ TEST(GlobalTest, CreateAddressSpace) {
                          GlobalValue::ExternalLinkage,
                          Constant::getAllOnesValue(Int32Ty),
                          "dummy",
-                         0,
+                         nullptr,
                          GlobalVariable::NotThreadLocal,
                          1);
 
@@ -74,7 +74,7 @@ TEST(GlobalTest, CreateAddressSpace) {
                          GlobalValue::ExternalLinkage,
                          Constant::getAllOnesValue(Int32Ty),
                          "dummy_cast",
-                         0,
+                         nullptr,
                          GlobalVariable::NotThreadLocal,
                          1);
 

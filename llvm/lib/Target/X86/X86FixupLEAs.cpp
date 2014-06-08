@@ -300,7 +300,7 @@ void FixupLEAPass::processInstructionForSLM(MachineBasicBlock::iterator &I,
   }
   DEBUG(dbgs() << "FixLEA: Candidate to replace:"; I->dump(););
   DEBUG(dbgs() << "FixLEA: Replaced by: ";);
-  MachineInstr *NewMI = 0;
+  MachineInstr *NewMI = nullptr;
   const MachineOperand &Dst = MI->getOperand(0);
   // Make ADD instruction for two registers writing to LEA's destination
   if (SrcR1 != 0 && SrcR2 != 0) {
