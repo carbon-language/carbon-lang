@@ -42,12 +42,15 @@ public:
   }
 
   Constructable(const Constructable & src) : constructed(true) {
+    EXPECT_TRUE(src.constructed);
     value = src.value;
     ++numConstructorCalls;
   }
 
   Constructable(Constructable && src) : constructed(true) {
+    EXPECT_TRUE(src.constructed);
     value = src.value;
+    src.value = -1;
     ++numConstructorCalls;
   }
 
@@ -59,6 +62,7 @@ public:
 
   Constructable & operator=(const Constructable & src) {
     EXPECT_TRUE(constructed);
+    EXPECT_TRUE(src.constructed);
     value = src.value;
     ++numAssignmentCalls;
     return *this;
@@ -66,7 +70,9 @@ public:
 
   Constructable & operator=(Constructable && src) {
     EXPECT_TRUE(constructed);
+    EXPECT_TRUE(src.constructed);
     value = src.value;
+    src.value = -1;
     ++numAssignmentCalls;
     return *this;
   }
@@ -409,6 +415,18 @@ TYPED_TEST(SmallVectorTest, InsertTest) {
   this->makeSequence(this->theVector, 1, 3);
   typename TypeParam::iterator I =
     this->theVector.insert(this->theVector.begin() + 1, Constructable(77));
+  EXPECT_EQ(this->theVector.begin() + 1, I);
+  this->assertValuesInOrder(this->theVector, 4u, 1, 77, 2, 3);
+}
+
+// Insert a copy of a single element.
+TYPED_TEST(SmallVectorTest, InsertCopy) {
+  SCOPED_TRACE("InsertTest");
+
+  this->makeSequence(this->theVector, 1, 3);
+  Constructable C(77);
+  typename TypeParam::iterator I =
+      this->theVector.insert(this->theVector.begin() + 1, C);
   EXPECT_EQ(this->theVector.begin() + 1, I);
   this->assertValuesInOrder(this->theVector, 4u, 1, 77, 2, 3);
 }

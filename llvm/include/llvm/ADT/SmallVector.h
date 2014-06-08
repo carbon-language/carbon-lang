@@ -516,10 +516,10 @@ public:
       this->grow();
       I = this->begin()+EltNo;
     }
-    ::new ((void*) this->end()) T(this->back());
-    this->setEnd(this->end()+1);
+    ::new ((void*) this->end()) T(std::move(this->back()));
     // Push everything else over.
     this->move_backward(I, this->end()-1, this->end());
+    this->setEnd(this->end()+1);
 
     // If we just moved the element we're inserting, be sure to update
     // the reference.
