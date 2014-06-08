@@ -8,6 +8,15 @@
 ;       A[i][j] = 1.0;
 ; }
 
+; Inst:  %val = load double* %arrayidx
+; In Loop with Header: for.j
+; AddRec: {{0,+,(%m * sizeof(double))}<%for.i>,+,sizeof(double)}<%for.j>
+; Base offset: %A
+; ArrayDecl[UnknownSize][%m] with elements of sizeof(double) bytes.
+; ArrayRef[{0,+,1}<nuw><nsw><%for.i>][{0,+,1}<nuw><nsw><%for.j>]
+
+; Inst:  store double %val, double* %arrayidx
+; In Loop with Header: for.j
 ; AddRec: {{%A,+,(8 * %m)}<%for.i>,+,8}<%for.j>
 ; CHECK: Base offset: %A
 ; CHECK: ArrayDecl[UnknownSize][%m] with elements of sizeof(double) bytes.
@@ -26,7 +35,8 @@ for.j:
   %j = phi i64 [ 0, %for.i ], [ %j.inc, %for.j ]
   %vlaarrayidx.sum = add i64 %j, %tmp
   %arrayidx = getelementptr inbounds double* %A, i64 %vlaarrayidx.sum
-  store double 1.0, double* %arrayidx
+  %val = load double* %arrayidx
+  store double %val, double* %arrayidx
   %j.inc = add nsw i64 %j, 1
   %j.exitcond = icmp eq i64 %j.inc, %m
   br i1 %j.exitcond, label %for.i.inc, label %for.j

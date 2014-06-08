@@ -7365,7 +7365,7 @@ const SCEV *ScalarEvolution::getElementSize(Instruction *Inst) {
   if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
     Ty = Store->getValueOperand()->getType();
   else if (LoadInst *Load = dyn_cast<LoadInst>(Inst))
-    Ty = Load->getPointerOperand()->getType();
+    Ty = Load->getType();
   else
     return nullptr;
 
