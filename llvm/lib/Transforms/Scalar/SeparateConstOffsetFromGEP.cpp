@@ -236,6 +236,15 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
     AU.addRequired<DataLayoutPass>();
     AU.addRequired<TargetTransformInfo>();
   }
+
+  bool doInitialization(Module &M) override {
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    if (DLP == nullptr)
+      report_fatal_error("data layout missing");
+    DL = &DLP->getDataLayout();
+    return false;
+  }
+
   bool runOnFunction(Function &F) override;
 
  private:
@@ -246,8 +255,23 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   /// function only inspects the GEP without changing it. The output
   /// NeedsExtraction indicates whether we can extract a non-zero constant
   /// offset from any index.
-  int64_t accumulateByteOffset(GetElementPtrInst *GEP, const DataLayout *DL,
-                               bool &NeedsExtraction);
+  int64_t accumulateByteOffset(GetElementPtrInst *GEP, bool &NeedsExtraction);
+  /// Canonicalize array indices to pointer-size integers. This helps to
+  /// simplify the logic of splitting a GEP. For example, if a + b is a
+  /// pointer-size integer, we have
+  ///   gep base, a + b = gep (gep base, a), b
+  /// However, this equality may not hold if the size of a + b is smaller than
+  /// the pointer size, because LLVM conceptually sign-extends GEP indices to
+  /// pointer size before computing the address
+  /// (http://llvm.org/docs/LangRef.html#id181).
+  ///
+  /// This canonicalization is very likely already done in clang and
+  /// instcombine. Therefore, the program will probably remain the same.
+  ///
+  /// Verified in @i32_add in split-gep.ll
+  bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
+
+  const DataLayout *DL;
 };
 }  // anonymous namespace
 
@@ -553,8 +577,27 @@ bool ConstantOffsetExtractor::NoCommonBits(Value *LHS, Value *RHS) const {
   return (LHSKnownZero | RHSKnownZero).isAllOnesValue();
 }
 
-int64_t SeparateConstOffsetFromGEP::accumulateByteOffset(
-    GetElementPtrInst *GEP, const DataLayout *DL, bool &NeedsExtraction) {
+bool SeparateConstOffsetFromGEP::canonicalizeArrayIndicesToPointerSize(
+    GetElementPtrInst *GEP) {
+  bool Changed = false;
+  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
+  gep_type_iterator GTI = gep_type_begin(*GEP);
+  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end();
+       I != E; ++I, ++GTI) {
+    // Skip struct member indices which must be i32.
+    if (isa<SequentialType>(*GTI)) {
+      if ((*I)->getType() != IntPtrTy) {
+        *I = CastInst::CreateIntegerCast(*I, IntPtrTy, true, "idxprom", GEP);
+        Changed = true;
+      }
+    }
+  }
+  return Changed;
+}
+
+int64_t
+SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
+                                                 bool &NeedsExtraction) {
   NeedsExtraction = false;
   int64_t AccumulativeByteOffset = 0;
   gep_type_iterator GTI = gep_type_begin(*GEP);
@@ -587,35 +630,10 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     return false;
 
   bool Changed = false;
-  // Canonicalize array indices to pointer-size integers. This helps to simplify
-  // the logic of splitting a GEP. For example, if a + b is a pointer-size
-  // integer, we have
-  //   gep base, a + b = gep (gep base, a), b
-  // However, this equality may not hold if the size of a + b is smaller than
-  // the pointer size, because LLVM conceptually sign-extends GEP indices to
-  // pointer size before computing the address
-  // (http://llvm.org/docs/LangRef.html#id181).
-  //
-  // This canonicalization is very likely already done in clang and instcombine.
-  // Therefore, the program will probably remain the same.
-  //
-  // Verified in @i32_add in split-gep.ll
-  const DataLayout *DL = &getAnalysis<DataLayoutPass>().getDataLayout();
-  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
-  gep_type_iterator GTI = gep_type_begin(*GEP);
-  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end();
-       I != E; ++I, ++GTI) {
-    if (isa<SequentialType>(*GTI)) {
-      if ((*I)->getType() != IntPtrTy) {
-        *I = CastInst::CreateIntegerCast(*I, IntPtrTy, true, "idxprom", GEP);
-        Changed = true;
-      }
-    }
-  }
+  Changed |= canonicalizeArrayIndicesToPointerSize(GEP);
 
   bool NeedsExtraction;
-  int64_t AccumulativeByteOffset =
-      accumulateByteOffset(GEP, DL, NeedsExtraction);
+  int64_t AccumulativeByteOffset = accumulateByteOffset(GEP, NeedsExtraction);
 
   if (!NeedsExtraction)
     return Changed;
@@ -631,7 +649,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 
   // Remove the constant offset in each GEP index. The resultant GEP computes
   // the variadic base.
-  GTI = gep_type_begin(*GEP);
+  gep_type_iterator GTI = gep_type_begin(*GEP);
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (isa<SequentialType>(*GTI)) {
       Value *NewIdx = nullptr;
@@ -699,6 +717,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 
   uint64_t ElementTypeSizeOfGEP =
       DL->getTypeAllocSize(GEP->getType()->getElementType());
+  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
   if (AccumulativeByteOffset % ElementTypeSizeOfGEP == 0) {
     // Very likely. As long as %gep is natually aligned, the byte offset we
     // extracted should be a multiple of sizeof(*%gep).
