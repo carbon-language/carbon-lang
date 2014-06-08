@@ -48,8 +48,6 @@ public:
 /// MCAsmParserSemaCallback - Generic Sema callback for assembly parser.
 class MCAsmParserSemaCallback {
 public:
-  typedef llvm::InlineAsmIdentifierInfo InlineAsmIdentifierInfo;
-
   virtual ~MCAsmParserSemaCallback();
   virtual void *LookupInlineAsmIdentifier(StringRef &LineBuf,
                                           InlineAsmIdentifierInfo &Info,
