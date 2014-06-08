@@ -598,7 +598,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getReadOnly());
 
-  if (T.isKnownWindowsMSVCEnvironment()) {
+  if (T.isKnownWindowsMSVCEnvironment() || T.isWindowsItaniumEnvironment()) {
     StaticCtorSection =
       Ctx->getCOFFSection(".CRT$XCU",
                           COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
