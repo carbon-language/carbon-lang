@@ -1372,7 +1372,9 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
   case PackCategoriesIntoKey(fcInfinity, fcNaN):
-    sign = false;
+    // We need to be sure to flip the sign here for subtraction because we
+    // don't have a separate negate operation so -NaN becomes 0 - NaN here.
+    sign = rhs.sign ^ subtract;
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
