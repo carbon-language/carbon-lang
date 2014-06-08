@@ -73,16 +73,16 @@ entry:
   %2 = zext i48 %1 to i64    ; zext(sext(a +nsw nuw 1)) = zext(sext(a)) + 1
   %3 = add nsw i32 %b, 2
   %4 = sext i32 %3 to i48
-  %5 = zext i48 %4 to i64    ; zext(sext(a +nsw 2)) != zext(sext(a)) + 2
-  %p1 = getelementptr inbounds [32 x [32 x float]]* @float_2d_array, i64 0, i64 %2, i64 %5
+  %5 = zext i48 %4 to i64    ; zext(sext(b +nsw 2)) != zext(sext(b)) + 2
+  %p1 = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %2, i64 %5
   store float* %p1, float** %out1
   %6 = add nuw i32 %a, 3
   %7 = zext i32 %6 to i48
-  %8 = sext i48 %7 to i64 ; sext(zext(b +nuw 3)) = zext(b +nuw 3) = zext(b) + 3
+  %8 = sext i48 %7 to i64 ; sext(zext(a +nuw 3)) = zext(a +nuw 3) = zext(a) + 3
   %9 = add nsw i32 %b, 4
   %10 = zext i32 %9 to i48
   %11 = sext i48 %10 to i64  ; sext(zext(b +nsw 4)) != zext(b) + 4
-  %p2 = getelementptr inbounds [32 x [32 x float]]* @float_2d_array, i64 0, i64 %8, i64 %11
+  %p2 = getelementptr [32 x [32 x float]]* @float_2d_array, i64 0, i64 %8, i64 %11
   store float* %p2, float** %out2
   ret void
 }
