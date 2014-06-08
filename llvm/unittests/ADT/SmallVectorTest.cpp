@@ -184,7 +184,8 @@ protected:
 typedef ::testing::Types<SmallVector<Constructable, 0>,
                          SmallVector<Constructable, 1>,
                          SmallVector<Constructable, 2>,
-                         SmallVector<Constructable, 4>
+                         SmallVector<Constructable, 4>,
+                         SmallVector<Constructable, 5>
                          > SmallVectorTestTypes;
 TYPED_TEST_CASE(SmallVectorTest, SmallVectorTestTypes);
 
@@ -465,50 +466,45 @@ TYPED_TEST(SmallVectorTest, InsertCopy) {
 TYPED_TEST(SmallVectorTest, InsertRepeatedTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
-  // FIXME: This range is too big (it's outside the "small" zone to start with,
-  // and the buffer allocated is large enough that none of these tests ever
-  // reallocate) to test all the code paths, specifically none of them test
-  // reallocation.
-  this->makeSequence(this->theVector, 10, 15);
+  this->makeSequence(this->theVector, 1, 4);
   Constructable::reset();
   auto I =
       this->theVector.insert(this->theVector.begin() + 1, 2, Constructable(16));
-  // Once this tests reallocation, there could be more move constructions here.
-  // Move construct the top two elements into newly allocated space.
-  EXPECT_EQ(2, Constructable::getNumMoveConstructorCalls());
+  // Move construct the top element into newly allocated space, and optionally
+  // reallocate the whole buffer, move constructing into it.
+  // FIXME: This is inefficient, we shouldn't move things into newly allocated
+  // space, then move them up/around, there should only be 2 or 4 move
+  // constructions here.
+  EXPECT_TRUE(Constructable::getNumMoveConstructorCalls() == 2 ||
+              Constructable::getNumMoveConstructorCalls() == 6);
   // Move assign the next two to shift them up and make a gap.
-  EXPECT_EQ(3, Constructable::getNumMoveAssignmentCalls());
+  EXPECT_EQ(1, Constructable::getNumMoveAssignmentCalls());
   // Copy construct the two new elements from the parameter.
   EXPECT_EQ(2, Constructable::getNumCopyAssignmentCalls());
   // All without any copy construction.
   EXPECT_EQ(0, Constructable::getNumCopyConstructorCalls());
   EXPECT_EQ(this->theVector.begin() + 1, I);
-  this->assertValuesInOrder(this->theVector, 8u,
-                      10, 16, 16, 11, 12, 13, 14, 15);
+  this->assertValuesInOrder(this->theVector, 6u, 1, 16, 16, 2, 3, 4);
 }
 
 
 TYPED_TEST(SmallVectorTest, InsertRepeatedAtEndTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
-  // FIXME: This range is too big (it's outside the "small" zone to start with,
-  // and the buffer allocated is large enough that none of these tests ever
-  // reallocate) to test all the code paths, specifically none of them test
-  // reallocation.
-  this->makeSequence(this->theVector, 10, 15);
+  this->makeSequence(this->theVector, 1, 4);
   Constructable::reset();
   auto I = this->theVector.insert(this->theVector.end(), 2, Constructable(16));
   // Just copy construct them into newly allocated space
   EXPECT_EQ(2, Constructable::getNumCopyConstructorCalls());
-  // Move everything across during reallocation.
-  EXPECT_EQ(0, Constructable::getNumMoveConstructorCalls());
+  // Move everything across if reallocation is needed.
+  EXPECT_TRUE(Constructable::getNumMoveConstructorCalls() == 0 ||
+              Constructable::getNumMoveConstructorCalls() == 4);
   // Without ever moving or copying anything else.
   EXPECT_EQ(0, Constructable::getNumCopyAssignmentCalls());
   EXPECT_EQ(0, Constructable::getNumMoveAssignmentCalls());
 
-  EXPECT_EQ(this->theVector.begin() + 6, I);
-  this->assertValuesInOrder(this->theVector, 8u,
-                      10, 11, 12, 13, 14, 15, 16, 16);
+  EXPECT_EQ(this->theVector.begin() + 4, I);
+  this->assertValuesInOrder(this->theVector, 6u, 1, 2, 3, 4, 16, 16);
 }
 
 TYPED_TEST(SmallVectorTest, InsertRepeatedEmptyTest) {
