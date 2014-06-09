@@ -139,6 +139,19 @@ int Constructable::numAssignmentCalls;
 int Constructable::numCopyAssignmentCalls;
 int Constructable::numMoveAssignmentCalls;
 
+struct NonCopyable {
+  NonCopyable() {}
+  NonCopyable(NonCopyable &&) {}
+  NonCopyable &operator=(NonCopyable &&) { return *this; }
+  NonCopyable(const NonCopyable &) = delete;
+  NonCopyable &operator=(const NonCopyable &) = delete;
+};
+
+LLVM_ATTRIBUTE_USED void CompileTest() {
+  SmallVector<NonCopyable, 0> V;
+  V.resize(42);
+}
+
 // Test fixture class
 template <typename VectorT>
 class SmallVectorTest : public testing::Test {
@@ -277,11 +290,24 @@ TYPED_TEST(SmallVectorTest, ResizeGrowTest) {
 
   this->theVector.resize(2);
 
-  // The extra constructor/destructor calls come from the temporary object used
-  // to initialize the contents of the resized array (via copy construction).
-  EXPECT_EQ(3, Constructable::getNumConstructorCalls());
-  EXPECT_EQ(1, Constructable::getNumDestructorCalls());
+  EXPECT_EQ(2, Constructable::getNumConstructorCalls());
+  EXPECT_EQ(0, Constructable::getNumDestructorCalls());
   EXPECT_EQ(2u, this->theVector.size());
+}
+
+TYPED_TEST(SmallVectorTest, ResizeWithElementsTest) {
+  this->theVector.resize(2);
+
+  Constructable::reset();
+
+  this->theVector.resize(4);
+
+  size_t Ctors = Constructable::getNumConstructorCalls();
+  EXPECT_TRUE(Ctors == 2 || Ctors == 4);
+  size_t MoveCtors = Constructable::getNumMoveConstructorCalls();
+  EXPECT_TRUE(MoveCtors == 0 || MoveCtors == 2);
+  size_t Dtors = Constructable::getNumDestructorCalls();
+  EXPECT_TRUE(Dtors == 0 || Dtors == 2);
 }
 
 // Resize with fill value.

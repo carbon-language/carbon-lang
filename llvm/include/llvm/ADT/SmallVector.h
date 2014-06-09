@@ -380,7 +380,8 @@ public:
     } else if (N > this->size()) {
       if (this->capacity() < N)
         this->grow(N);
-      std::uninitialized_fill(this->end(), this->begin()+N, T());
+      for (auto I = this->end(), E = this->begin() + N; I != E; ++I)
+        new (&*I) T();
       this->setEnd(this->begin()+N);
     }
   }
