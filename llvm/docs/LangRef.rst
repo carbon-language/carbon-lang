@@ -588,7 +588,7 @@ Variables and aliasaes can have a
 Syntax::
 
     [@<GlobalVarName> =] [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
-                         [AddrSpace] [unnamed_addr] [ExternallyInitialized]
+                         [unnamed_addr] [AddrSpace] [ExternallyInitialized]
                          <global | constant> <Type>
                          [, section "name"] [, align <Alignment>]
 
@@ -691,7 +691,7 @@ Aliases may have an optional :ref:`linkage type <linkage>`, an optional
 
 Syntax::
 
-    @<Name> = [Visibility] [DLLStorageClass] [ThreadLocal] alias [Linkage] <AliaseeTy> @<Aliasee>
+    @<Name> = [Visibility] [DLLStorageClass] [ThreadLocal] [unnamed_addr] alias [Linkage] <AliaseeTy> @<Aliasee>
 
 The linkage must be one of ``private``, ``internal``, ``linkonce``, ``weak``,
 ``linkonce_odr``, ``weak_odr``, ``external``. Note that some system linkers
