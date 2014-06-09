@@ -2784,8 +2784,22 @@ void SelectionDAGBuilder::visitFSub(const User &I) {
 void SelectionDAGBuilder::visitBinary(const User &I, unsigned OpCode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  setValue(&I, DAG.getNode(OpCode, getCurSDLoc(),
-                           Op1.getValueType(), Op1, Op2));
+
+  bool nuw = false;
+  bool nsw = false;
+  bool exact = false;
+  if (const OverflowingBinaryOperator *OFBinOp =
+          dyn_cast<const OverflowingBinaryOperator>(&I)) {
+    nuw = OFBinOp->hasNoUnsignedWrap();
+    nsw = OFBinOp->hasNoSignedWrap();
+  }
+  if (const PossiblyExactOperator *ExactOp =
+          dyn_cast<const PossiblyExactOperator>(&I))
+    exact = ExactOp->isExact();
+
+  SDValue BinNodeValue = DAG.getNode(OpCode, getCurSDLoc(), Op1.getValueType(),
+                                     Op1, Op2, nuw, nsw, exact);
+  setValue(&I, BinNodeValue);
 }
 
 void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
@@ -2816,8 +2830,25 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
       Op2 = DAG.getZExtOrTrunc(Op2, DL, MVT::i32);
   }
 
-  setValue(&I, DAG.getNode(Opcode, getCurSDLoc(),
-                           Op1.getValueType(), Op1, Op2));
+  bool nuw = false;
+  bool nsw = false;
+  bool exact = false;
+
+  if (Opcode == ISD::SRL || Opcode == ISD::SRA || Opcode == ISD::SHL) {
+
+    if (const OverflowingBinaryOperator *OFBinOp =
+            dyn_cast<const OverflowingBinaryOperator>(&I)) {
+      nuw = OFBinOp->hasNoUnsignedWrap();
+      nsw = OFBinOp->hasNoSignedWrap();
+    }
+    if (const PossiblyExactOperator *ExactOp =
+            dyn_cast<const PossiblyExactOperator>(&I))
+      exact = ExactOp->isExact();
+  }
+
+  SDValue Res = DAG.getNode(Opcode, getCurSDLoc(), Op1.getValueType(), Op1, Op2,
+                            nuw, nsw, exact);
+  setValue(&I, Res);
 }
 
 void SelectionDAGBuilder::visitSDiv(const User &I) {

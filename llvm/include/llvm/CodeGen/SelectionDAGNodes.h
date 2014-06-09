@@ -49,6 +49,24 @@ template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 
+/// isBinOpWithFlags - Returns true if the opcode is a binary operation
+/// with flags.
+static bool isBinOpWithFlags(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::MUL:
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::SHL:
+    return true;
+  default:
+    return false;
+  }
+}
+
 void checkForCycles(const SDNode *N, const SelectionDAG *DAG = nullptr,
                     bool force = false);
 
@@ -936,6 +954,36 @@ public:
                SDValue X, SDValue Y)
     : SDNode(Opc, Order, dl, VTs) {
     InitOperands(Ops, X, Y);
+  }
+};
+
+/// BinaryWithFlagsSDNode - This class is an extension of BinarySDNode
+/// used from those opcodes that have associated extra flags.
+class BinaryWithFlagsSDNode : public BinarySDNode {
+  enum { NUW = (1 << 0), NSW = (1 << 1), EXACT = (1 << 2) };
+
+public:
+  BinaryWithFlagsSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+                        SDValue X, SDValue Y)
+      : BinarySDNode(Opc, Order, dl, VTs, X, Y) {}
+  /// getRawSubclassData - Return the SubclassData value, which contains an
+  /// encoding of the flags.
+  /// This function should be used to add subclass data to the NodeID value.
+  unsigned getRawSubclassData() const { return SubclassData; }
+  void setHasNoUnsignedWrap(bool b) {
+    SubclassData = (SubclassData & ~NUW) | (b ? NUW : 0);
+  }
+  void setHasNoSignedWrap(bool b) {
+    SubclassData = (SubclassData & ~NSW) | (b ? NSW : 0);
+  }
+  void setIsExact(bool b) {
+    SubclassData = (SubclassData & ~EXACT) | (b ? EXACT : 0);
+  }
+  bool hasNoUnsignedWrap() const { return SubclassData & NUW; }
+  bool hasNoSignedWrap() const { return SubclassData & NSW; }
+  bool isExact() const { return SubclassData & EXACT; }
+  static bool classof(const SDNode *N) {
+    return isBinOpWithFlags(N->getOpcode());
   }
 };
 

@@ -1325,9 +1325,16 @@ SDValue DAGCombiner::combine(SDNode *N) {
 
     // Constant operands are canonicalized to RHS.
     if (isa<ConstantSDNode>(N0) || !isa<ConstantSDNode>(N1)) {
-      SDValue Ops[] = { N1, N0 };
-      SDNode *CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(),
-                                            Ops);
+      SDValue Ops[] = {N1, N0};
+      SDNode *CSENode;
+      if (const BinaryWithFlagsSDNode *BinNode =
+              dyn_cast<BinaryWithFlagsSDNode>(N)) {
+        CSENode = DAG.getNodeIfExists(
+            N->getOpcode(), N->getVTList(), Ops, BinNode->hasNoUnsignedWrap(),
+            BinNode->hasNoSignedWrap(), BinNode->isExact());
+      } else {
+        CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(), Ops);
+      }
       if (CSENode)
         return SDValue(CSENode, 0);
     }
