@@ -39,13 +39,6 @@
 
 #ifdef HAVE_FENV_H
 #include <fenv.h>
-#define USE_FENV
-#endif
-
-// FIXME: Clang's #include handling apparently doesn't work for libstdc++'s
-// fenv.h; see PR6907 for details.
-#if defined(__clang__) && defined(_GLIBCXX_FENV_H)
-#undef USE_FENV
 #endif
 
 using namespace llvm;
@@ -1329,7 +1322,7 @@ static Constant *GetConstantFoldFPValue(double V, Type *Ty) {
 namespace {
 /// llvm_fenv_clearexcept - Clear the floating-point exception state.
 static inline void llvm_fenv_clearexcept() {
-#if defined(USE_FENV) && HAVE_DECL_FE_ALL_EXCEPT
+#if defined(HAVE_FENV_H) && HAVE_DECL_FE_ALL_EXCEPT
   feclearexcept(FE_ALL_EXCEPT);
 #endif
   errno = 0;
@@ -1340,7 +1333,7 @@ static inline bool llvm_fenv_testexcept() {
   int errno_val = errno;
   if (errno_val == ERANGE || errno_val == EDOM)
     return true;
-#if defined(USE_FENV) && HAVE_DECL_FE_ALL_EXCEPT && HAVE_DECL_FE_INEXACT
+#if defined(HAVE_FENV_H) && HAVE_DECL_FE_ALL_EXCEPT && HAVE_DECL_FE_INEXACT
   if (fetestexcept(FE_ALL_EXCEPT & ~FE_INEXACT))
     return true;
 #endif
