@@ -304,8 +304,7 @@ For instance, on ``test/CodeGen/ARM``, the ``lit.local.cfg`` is:
 .. code-block:: python
 
   config.suffixes = ['.ll', '.c', '.cpp', '.test']
-  targets = set(config.root.targets_to_build.split())
-  if not 'ARM' in targets:
+  if not 'ARM' in config.root.targets:
     config.unsupported = True
 
 Other platform-specific tests are those that depend on a specific feature
