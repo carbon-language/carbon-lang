@@ -15,13 +15,13 @@
 #ifndef X86ISELLOWERING_H
 #define X86ISELLOWERING_H
 
-#include "X86Subtarget.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
+  class X86Subtarget;
   class X86TargetMachine;
 
   namespace X86ISD {
@@ -766,9 +766,7 @@ namespace llvm {
 
     /// isTargetFTOL - Return true if the target uses the MSVC _ftol2 routine
     /// for fptoui.
-    bool isTargetFTOL() const {
-      return Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->is64Bit();
-    }
+    bool isTargetFTOL() const;
 
     /// isIntegerTypeFTOL - Return true if the MSVC _ftol2 routine should be
     /// used for fptoui to the given type.

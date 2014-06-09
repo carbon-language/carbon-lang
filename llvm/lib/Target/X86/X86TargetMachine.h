@@ -18,7 +18,6 @@
 #include "X86ISelLowering.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
-#include "X86SelectionDAGInfo.h"
 #include "X86Subtarget.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -30,12 +29,6 @@ class StringRef;
 class X86TargetMachine final : public LLVMTargetMachine {
   virtual void anchor();
   X86Subtarget       Subtarget;
-  X86FrameLowering   FrameLowering;
-  const DataLayout   DL; // Calculates type size & alignment
-  X86InstrInfo       InstrInfo;
-  X86TargetLowering  TLInfo;
-  X86SelectionDAGInfo TSInfo;
-  X86JITInfo         JITInfo;
 
 public:
   X86TargetMachine(const Target &T, StringRef TT,
@@ -43,22 +36,22 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
-  const DataLayout *getDataLayout() const override { return &DL; }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
   const X86InstrInfo *getInstrInfo() const override {
-    return &InstrInfo;
+    return getSubtargetImpl()->getInstrInfo();
   }
   const TargetFrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
+    return getSubtargetImpl()->getFrameLowering();
   }
-  X86JITInfo *getJITInfo() override {
-    return &JITInfo;
-  }
+  X86JITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   const X86TargetLowering *getTargetLowering() const override {
-    return &TLInfo;
+    return getSubtargetImpl()->getTargetLowering();
   }
   const X86SelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
   const X86RegisterInfo  *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();

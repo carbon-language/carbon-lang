@@ -23,7 +23,7 @@ namespace llvm {
 
   class X86JITInfo : public TargetJITInfo {
     uintptr_t PICBase;
-    char* TLSOffset;
+    char *TLSOffset;
     bool useSSE;
   public:
     explicit X86JITInfo(bool UseSSE);

@@ -297,8 +297,47 @@ void X86Subtarget::initializeEnvironment() {
   MaxInlineSizeThreshold = 128;
 }
 
+static std::string computeDataLayout(const X86Subtarget &ST) {
+  // X86 is little endian
+  std::string Ret = "e";
+
+  Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
+  // X86 and x32 have 32 bit pointers.
+  if (ST.isTarget64BitILP32() || !ST.is64Bit())
+    Ret += "-p:32:32";
+
+  // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
+  if (ST.is64Bit() || ST.isOSWindows() || ST.isTargetNaCl())
+    Ret += "-i64:64";
+  else
+    Ret += "-f64:32:64";
+
+  // Some ABIs align long double to 128 bits, others to 32.
+  if (ST.isTargetNaCl())
+    ; // No f80
+  else if (ST.is64Bit() || ST.isTargetDarwin())
+    Ret += "-f80:128";
+  else
+    Ret += "-f80:32";
+
+  // The registers can hold 8, 16, 32 or, in x86-64, 64 bits.
+  if (ST.is64Bit())
+    Ret += "-n8:16:32:64";
+  else
+    Ret += "-n8:16:32";
+
+  // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
+  if (!ST.is64Bit() && ST.isOSWindows())  
+    Ret += "-S32";
+  else
+    Ret += "-S128";
+
+  return Ret;
+}
+
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, unsigned StackAlignOverride)
+                           const std::string &FS, X86TargetMachine &TM,
+                           unsigned StackAlignOverride)
     : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
       PICStyle(PICStyles::None), TargetTriple(TT),
       StackAlignOverride(StackAlignOverride),
@@ -306,9 +345,24 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
       In32BitMode(TargetTriple.getArch() == Triple::x86 &&
                   TargetTriple.getEnvironment() != Triple::CODE16),
       In16BitMode(TargetTriple.getArch() == Triple::x86 &&
-                  TargetTriple.getEnvironment() == Triple::CODE16) {
+                  TargetTriple.getEnvironment() == Triple::CODE16),
+      DL(computeDataLayout(*this)), TSInfo(DL) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
+  // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
+  // X86TargetLowering needs.
+  InstrInfo = new X86InstrInfo(TM);
+  TLInfo = new X86TargetLowering(TM);
+  FrameLowering = new X86FrameLowering(TargetFrameLowering::StackGrowsDown,
+                                       getStackAlignment(),
+                                       is64Bit() ? -8 : -4);
+  JITInfo = new X86JITInfo(hasSSE1());
+}
+
+X86Subtarget::~X86Subtarget() {
+  delete TLInfo;
+  delete InstrInfo;
+  delete FrameLowering;
 }
 
 bool

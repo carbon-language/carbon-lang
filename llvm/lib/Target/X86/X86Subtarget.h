@@ -14,6 +14,11 @@
 #ifndef X86SUBTARGET_H
 #define X86SUBTARGET_H
 
+#include "X86FrameLowering.h"
+#include "X86ISelLowering.h"
+#include "X86InstrInfo.h"
+#include "X86JITInfo.h"
+#include "X86SelectionDAGInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -40,6 +45,7 @@ enum Style {
 }
 
 class X86Subtarget final : public X86GenSubtargetInfo {
+
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
@@ -220,13 +226,29 @@ private:
   /// In16BitMode - True if compiling for 16-bit, false for 32-bit or 64-bit.
   bool In16BitMode;
 
+  // Calculates type size & alignment
+  const DataLayout DL;
+  X86SelectionDAGInfo TSInfo;
+  X86TargetLowering *TLInfo;
+  X86InstrInfo *InstrInfo;
+  X86FrameLowering *FrameLowering;
+  X86JITInfo *JITInfo;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
   X86Subtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS,
+               const std::string &FS, X86TargetMachine &TM,
                unsigned StackAlignOverride);
+  ~X86Subtarget();
+
+  const X86TargetLowering *getTargetLowering() const { return TLInfo; }
+  const X86InstrInfo *getInstrInfo() const { return InstrInfo; }
+  const DataLayout *getDataLayout() const { return &DL; }
+  const X86FrameLowering *getFrameLowering() const { return FrameLowering; }
+  const X86SelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
+  X86JITInfo *getJITInfo() { return JITInfo; }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

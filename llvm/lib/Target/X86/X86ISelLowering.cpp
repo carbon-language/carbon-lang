@@ -21606,3 +21606,7 @@ int X86TargetLowering::getScalingFactorCost(const AddrMode &AM,
     return AM.Scale != 0;
   return -1;
 }
+
+bool X86TargetLowering::isTargetFTOL() const {
+  return Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->is64Bit();
+}
