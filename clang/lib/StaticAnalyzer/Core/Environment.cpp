@@ -205,7 +205,8 @@ void Environment::print(raw_ostream &Out, const char *NL,
     }
     
     const Stmt *S = En.getStmt();
-    
+    assert(S != nullptr && "Expected non-null Stmt");
+
     Out << " (" << (const void*) En.getLocationContext() << ','
       << (const void*) S << ") ";
     LangOptions LO; // FIXME.

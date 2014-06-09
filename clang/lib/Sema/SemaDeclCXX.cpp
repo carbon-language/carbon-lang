@@ -11407,6 +11407,8 @@ Decl *Sema::BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
                                          StringLiteral *AssertMessage,
                                          SourceLocation RParenLoc,
                                          bool Failed) {
+  assert(AssertExpr != nullptr && AssertMessage != nullptr &&
+         "Expected non-null Expr's");
   if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent() &&
       !Failed) {
     // In a static_assert-declaration, the constant-expression shall be a

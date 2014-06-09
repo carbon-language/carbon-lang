@@ -508,10 +508,12 @@ void ObjCIvarRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void StringRegion::dumpToStream(raw_ostream &os) const {
+  assert(Str != nullptr && "Expecting non-null StringLiteral");
   Str->printPretty(os, nullptr, PrintingPolicy(getContext().getLangOpts()));
 }
 
 void ObjCStringRegion::dumpToStream(raw_ostream &os) const {
+  assert(Str != nullptr && "Expecting non-null ObjCStringLiteral");
   Str->printPretty(os, nullptr, PrintingPolicy(getContext().getLangOpts()));
 }
 

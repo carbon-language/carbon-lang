@@ -3926,7 +3926,8 @@ public:
 
   void VisitIfStmt(IfStmt *I) {
     OS << "if ";
-    I->getCond()->printPretty(OS,Helper,Policy);
+    if (Stmt *C = I->getCond())
+      C->printPretty(OS, Helper, Policy);
   }
 
   // Default case.
@@ -3974,19 +3975,22 @@ public:
   }
 
   void VisitAbstractConditionalOperator(AbstractConditionalOperator* C) {
-    C->getCond()->printPretty(OS, Helper, Policy);
+    if (Stmt *Cond = C->getCond())
+      Cond->printPretty(OS, Helper, Policy);
     OS << " ? ... : ...";
   }
 
   void VisitChooseExpr(ChooseExpr *C) {
     OS << "__builtin_choose_expr( ";
-    C->getCond()->printPretty(OS, Helper, Policy);
+    if (Stmt *Cond = C->getCond())
+      Cond->printPretty(OS, Helper, Policy);
     OS << " )";
   }
 
   void VisitIndirectGotoStmt(IndirectGotoStmt *I) {
     OS << "goto *";
-    I->getTarget()->printPretty(OS, Helper, Policy);
+    if (Stmt *T = I->getTarget())
+      T->printPretty(OS, Helper, Policy);
   }
 
   void VisitBinaryOperator(BinaryOperator* B) {
@@ -3995,7 +3999,8 @@ public:
       return;
     }
 
-    B->getLHS()->printPretty(OS, Helper, Policy);
+    if (B->getLHS())
+      B->getLHS()->printPretty(OS, Helper, Policy);
 
     switch (B->getOpcode()) {
       case BO_LOr:
@@ -4026,7 +4031,8 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper &Helper,
                        const CFGElement &E) {
   if (Optional<CFGStmt> CS = E.getAs<CFGStmt>()) {
     const Stmt *S = CS->getStmt();
-    
+    assert(S != nullptr && "Expecting non-null Stmt");
+
     // special printing for statement-expressions.
     if (const StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
       const CompoundStmt *Sub = SE->getSubStmt();
@@ -4172,8 +4178,9 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
       OS << L->getName();
     else if (CaseStmt *C = dyn_cast<CaseStmt>(Label)) {
       OS << "case ";
-      C->getLHS()->printPretty(OS, &Helper,
-                               PrintingPolicy(Helper.getLangOpts()));
+      if (C->getLHS())
+        C->getLHS()->printPretty(OS, &Helper,
+                                 PrintingPolicy(Helper.getLangOpts()));
       if (C->getRHS()) {
         OS << " ... ";
         C->getRHS()->printPretty(OS, &Helper,

@@ -593,7 +593,8 @@ FunctionProtoType::printExceptionSpecification(raw_ostream &OS,
     OS << " noexcept";
     if (getExceptionSpecType() == EST_ComputedNoexcept) {
       OS << '(';
-      getNoexceptExpr()->printPretty(OS, nullptr, Policy);
+      if (getNoexceptExpr())
+        getNoexceptExpr()->printPretty(OS, nullptr, Policy);
       OS << ')';
     }
   }
@@ -761,7 +762,8 @@ void TypePrinter::printTypedefAfter(const TypedefType *T, raw_ostream &OS) { }
 void TypePrinter::printTypeOfExprBefore(const TypeOfExprType *T,
                                         raw_ostream &OS) {
   OS << "typeof ";
-  T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
+  if (T->getUnderlyingExpr())
+    T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
   spaceBeforePlaceHolder(OS);
 }
 void TypePrinter::printTypeOfExprAfter(const TypeOfExprType *T,
@@ -777,7 +779,8 @@ void TypePrinter::printTypeOfAfter(const TypeOfType *T, raw_ostream &OS) { }
 
 void TypePrinter::printDecltypeBefore(const DecltypeType *T, raw_ostream &OS) { 
   OS << "decltype(";
-  T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
+  if (T->getUnderlyingExpr())
+    T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
   OS << ')';
   spaceBeforePlaceHolder(OS);
 }

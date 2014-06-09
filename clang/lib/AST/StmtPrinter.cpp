@@ -645,6 +645,7 @@ void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),
                                     E = Node->varlist_end();
          I != E; ++I) {
+    assert(*I && "Expected non-null Stmt");
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(*I)) {
       OS << (I == Node->varlist_begin() ? StartSym : ',');
       cast<NamedDecl>(DRE->getDecl())->printQualifiedName(OS);
@@ -2025,11 +2026,6 @@ void Stmt::printPretty(raw_ostream &OS,
                        PrinterHelper *Helper,
                        const PrintingPolicy &Policy,
                        unsigned Indentation) const {
-  if (this == nullptr) {
-    OS << "<NULL>";
-    return;
-  }
-
   StmtPrinter P(OS, Helper, Policy, Indentation);
   P.Visit(const_cast<Stmt*>(this));
 }

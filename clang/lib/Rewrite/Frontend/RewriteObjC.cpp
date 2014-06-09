@@ -216,6 +216,7 @@ namespace {
     }
 
     void ReplaceStmtWithRange(Stmt *Old, Stmt *New, SourceRange SrcRange) {
+      assert(Old != nullptr && New != nullptr && "Expected non-null Stmt's");
       if (DisableReplaceStmt)
         return;
 
@@ -1697,6 +1698,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
                                       CK, syncExpr);
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
+  assert(syncExpr != nullptr && "Expected non-null Expr");
   syncExpr->printPretty(syncExprBuf, nullptr, PrintingPolicy(LangOpts));
   syncBuf += syncExprBuf.str();
   syncBuf += ");";
@@ -2485,6 +2487,7 @@ void RewriteObjC::SynthGetMetaClassFunctionDecl() {
 }
 
 Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
+  assert(Exp != nullptr && "Expected non-null ObjCStringLiteral");
   QualType strType = getConstantStringStructType();
 
   std::string S = "__NSConstantStringImpl_";

@@ -32,6 +32,7 @@ using namespace tooling;
 namespace {
 
 void PrintStmt(raw_ostream &Out, const ASTContext *Context, const Stmt *S) {
+  assert(S != nullptr && "Expected non-null Stmt");
   PrintingPolicy Policy = Context->getPrintingPolicy();
   S->printPretty(Out, /*Helper*/ nullptr, Policy);
 }

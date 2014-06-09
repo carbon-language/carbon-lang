@@ -6181,6 +6181,8 @@ enum {
 void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
                                         Expr::NullPointerConstantKind NullKind,
                                         bool IsEqual, SourceRange Range) {
+  if (!E)
+    return;
 
   // Don't warn inside macros.
   if (E->getExprLoc().isMacroID())

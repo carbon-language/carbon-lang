@@ -403,9 +403,13 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
 
       if (const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>())
         Out << *VD;
-      else
+      else {
+        assert(Base.get<const Expr *>() != nullptr &&
+               "Expecting non-null Expr");
         Base.get<const Expr*>()->printPretty(Out, nullptr,
                                              Ctx.getPrintingPolicy());
+      }
+
       if (!O.isZero()) {
         Out << " + " << (O / S);
         if (IsReference)
@@ -426,6 +430,7 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       ElemTy = VD->getType();
     } else {
       const Expr *E = Base.get<const Expr*>();
+      assert(E != nullptr && "Expecting non-null Expr");
       E->printPretty(Out, nullptr, Ctx.getPrintingPolicy());
       ElemTy = E->getType();
     }

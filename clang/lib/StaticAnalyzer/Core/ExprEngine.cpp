@@ -2428,7 +2428,8 @@ struct DOTGraphTraits<ExplodedNode*> :
               if (const CaseStmt *C = dyn_cast<CaseStmt>(Label)) {
                 Out << "\\lcase ";
                 LangOptions LO; // FIXME.
-                C->getLHS()->printPretty(Out, nullptr, PrintingPolicy(LO));
+                if (C->getLHS())
+                  C->getLHS()->printPretty(Out, nullptr, PrintingPolicy(LO));
 
                 if (const Stmt *RHS = C->getRHS()) {
                   Out << " .. ";
@@ -2471,6 +2472,7 @@ struct DOTGraphTraits<ExplodedNode*> :
 
       default: {
         const Stmt *S = Loc.castAs<StmtPoint>().getStmt();
+        assert(S != nullptr && "Expecting non-null Stmt");
 
         Out << S->getStmtClassName() << ' ' << (const void*) S << ' ';
         LangOptions LO; // FIXME.

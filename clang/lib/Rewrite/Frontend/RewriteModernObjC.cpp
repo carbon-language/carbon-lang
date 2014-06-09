@@ -267,6 +267,7 @@ namespace {
     }
 
     void ReplaceStmtWithRange(Stmt *Old, Stmt *New, SourceRange SrcRange) {
+      assert(Old != nullptr && New != nullptr && "Expected non-null Stmt's");
       if (DisableReplaceStmt)
         return;
 
@@ -2587,6 +2588,7 @@ void RewriteModernObjC::SynthGetMetaClassFunctionDecl() {
 }
 
 Stmt *RewriteModernObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
+  assert (Exp != nullptr && "Expected non-null ObjCStringLiteral");
   QualType strType = getConstantStringStructType();
 
   std::string S = "__NSConstantStringImpl_";

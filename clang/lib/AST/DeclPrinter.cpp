@@ -536,6 +536,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
             SimpleInit->printPretty(Out, nullptr, Policy, Indentation);
           else {
             for (unsigned I = 0; I != NumArgs; ++I) {
+              assert(Args[I] != nullptr && "Expected non-null Expr");
               if (isa<CXXDefaultArgExpr>(Args[I]))
                 break;
               
@@ -586,7 +587,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     } else
       Out << ' ';
 
-    D->getBody()->printPretty(Out, nullptr, SubPolicy, Indentation);
+    if (D->getBody())
+      D->getBody()->printPretty(Out, nullptr, SubPolicy, Indentation);
     Out << '\n';
   }
 }
