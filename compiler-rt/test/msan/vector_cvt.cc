@@ -8,7 +8,7 @@ int to_int(double v) {
   int x = _mm_cvtsd_si32(t);
   return x;
   // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
-  // CHECK: #{{.*}} in to_int{{.*}}vector_cvt.cc:[[@LINE-4]]
+  // CHECK: #{{.*}} in to_int{{.*}}vector_cvt.cc:[[@LINE-3]]
 }
 
 int main() {

@@ -466,7 +466,13 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
          BI != BE; ++BI) {
       DebugLoc DL = BI->getDebugLoc();
-      if (!DL.isUnknown()) {
+      if (DL.isUnknown()) {
+        // If the inlined instruction has no line number, make it look as if it
+        // originates from the call location. This is important for
+        // ((__always_inline__, __nodebug__)) functions which must use caller
+        // location for all instructions in their function body.
+        BI->setDebugLoc(TheCallDL);
+      } else {
         BI->setDebugLoc(updateInlinedAtInfo(DL, TheCallDL, BI->getContext()));
         if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(BI)) {
           LLVMContext &Ctx = BI->getContext();

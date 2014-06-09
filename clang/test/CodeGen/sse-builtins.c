@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding -triple x86_64-apple-macosx10.8.0 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -ffreestanding -triple x86_64-apple-macosx10.8.0 -target-feature +sse4.1 -emit-llvm %s -o - | FileCheck %s
 
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -64,7 +64,7 @@ __m128 test_load1_ps(void* y) {
 
 void test_store_ss(__m128 x, void* y) {
   // CHECK-LABEL: define void @test_store_ss
-  // CHECK: store {{.*}} float* {{.*}}, align 1,
+  // CHECK: store {{.*}} float* {{.*}}, align 1{{$}}
   _mm_store_ss(y, x);
 }
 
