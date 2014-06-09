@@ -1,7 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-target datalayout =
-"e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+target datalayout = "e-p:64:64:64-p1:16:16:16-p2:32:32:32-p3:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
 define i32 @test1(i32 %X) {
 entry:
@@ -672,6 +671,49 @@ define i1 @test60_as1(i8 addrspace(1)* %foo, i64 %i, i64 %j) {
 ; CHECK: %gep1.idx = shl nuw i16 %{{.+}}, 2
 ; CHECK-NEXT: icmp sgt i16 %{{.+}}, %gep1.idx
 ; CHECK-NEXT: ret i1
+}
+
+; Same as test60, but look through an addrspacecast instead of a
+; bitcast. This uses the same sized addrspace.
+define i1 @test60_addrspacecast(i8* %foo, i64 %i, i64 %j) {
+  %bit = addrspacecast i8* %foo to i32 addrspace(3)*
+  %gep1 = getelementptr inbounds i32 addrspace(3)* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %cast1 = addrspacecast i32 addrspace(3)* %gep1 to i8*
+  %cmp = icmp ult i8* %cast1, %gep2
+  ret i1 %cmp
+; CHECK-LABEL: @test60_addrspacecast(
+; CHECK-NEXT: %gep1.idx = shl nuw i64 %i, 2
+; CHECK-NEXT: icmp slt i64 %gep1.idx, %j
+; CHECK-NEXT: ret i1
+}
+
+define i1 @test60_addrspacecast_smaller(i8* %foo, i16 %i, i64 %j) {
+  %bit = addrspacecast i8* %foo to i32 addrspace(1)*
+  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i16 %i
+  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %cast1 = addrspacecast i32 addrspace(1)* %gep1 to i8*
+  %cmp = icmp ult i8* %cast1, %gep2
+  ret i1 %cmp
+; CHECK-LABEL: @test60_addrspacecast_smaller(
+; CHECK-NEXT: %gep1.idx = shl nuw i16 %i, 2
+; CHECK-NEXT: trunc i64 %j to i16
+; CHECK-NEXT: icmp sgt i16 %1, %gep1.idx
+; CHECK-NEXT: ret i1
+}
+
+define i1 @test60_addrspacecast_larger(i8 addrspace(1)* %foo, i32 %i, i16 %j) {
+  %bit = addrspacecast i8 addrspace(1)* %foo to i32 addrspace(2)*
+  %gep1 = getelementptr inbounds i32 addrspace(2)* %bit, i32 %i
+  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i16 %j
+  %cast1 = addrspacecast i32 addrspace(2)* %gep1 to i8 addrspace(1)*
+  %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
+  ret i1 %cmp
+; CHECK-LABEL: @test60_addrspacecast_larger(
+; CHECK-NEXT:  %gep1.idx = shl nuw i32 %i, 2
+; CHECK-NEXT:  trunc i32 %gep1.idx to i16
+; CHECK-NEXT:  icmp slt i16 %1, %j
+; CHECK-NEXT:  ret i1
 }
 
 define i1 @test61(i8* %foo, i64 %i, i64 %j) {
