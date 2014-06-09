@@ -137,18 +137,17 @@ public:
                                                     &IsStore);
     bool IsSPFirstOperand = isStackPointerFirstOperand(Inst);
     if (IsMemAccess || IsSPFirstOperand) {
-      if (PendingCall)
-        report_fatal_error("Dangerous instruction in branch delay slot!");
-
       bool MaskBefore = (IsMemAccess
                          && baseRegNeedsLoadStoreMask(Inst.getOperand(AddrIdx)
                                                           .getReg()));
       bool MaskAfter = IsSPFirstOperand && !IsStore;
-      if (MaskBefore || MaskAfter)
+      if (MaskBefore || MaskAfter) {
+        if (PendingCall)
+          report_fatal_error("Dangerous instruction in branch delay slot!");
         sandboxLoadStoreStackChange(Inst, AddrIdx, STI, MaskBefore, MaskAfter);
-      else
-        MipsELFStreamer::EmitInstruction(Inst, STI);
-      return;
+        return;
+      }
+      // fallthrough
     }
 
     // Sandbox calls by aligning call and branch delay to the bundle end.

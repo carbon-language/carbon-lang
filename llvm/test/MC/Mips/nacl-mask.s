@@ -283,3 +283,37 @@ test5:
 # CHECK-NEXT:        and     $25, $25, $14
 # CHECK-NEXT:        jalr    $25
 # CHECK-NEXT:        addiu   $4, $zero, 5
+
+
+
+# Test that we can put non-dangerous loads and stores in branch delay slot.
+
+	.align	4
+test6:
+	.set	noreorder
+
+        jal func1
+        sw      $4, 0($sp)
+
+        bal func2
+        lw      $5, 0($t8)
+
+        jalr $t9
+        sw      $sp, 0($sp)
+
+# CHECK-LABEL:   test6:
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        jal
+# CHECK-NEXT:        sw      $4, 0($sp)
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        bal
+# CHECK-NEXT:        lw      $5, 0($24)
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        and     $25, $25, $14
+# CHECK-NEXT:        jalr
+# CHECK-NEXT:        sw      $sp, 0($sp)
