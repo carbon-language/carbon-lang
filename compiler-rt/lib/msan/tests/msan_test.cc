@@ -147,6 +147,12 @@ T *GetPoisonedO(int i, U4 origin, T val = 0) {
   return res;
 }
 
+template<typename T>
+T Poisoned(T v = 0, T s = (T)(-1)) {
+  __msan_partial_poison(&v, &s, sizeof(T));
+  return v;
+}
+
 template<class T> NOINLINE T ReturnPoisoned() { return *GetPoisoned<T>(); }
 
 static volatile int g_one = 1;
@@ -3527,6 +3533,8 @@ typedef U4 V4x32 __attribute__((__vector_size__(16)));
 typedef U8 V2x64 __attribute__((__vector_size__(16)));
 typedef U4 V8x32 __attribute__((__vector_size__(32)));
 typedef U8 V4x64 __attribute__((__vector_size__(32)));
+typedef U2 V4x16 __attribute__((__vector_size__(8)));
+typedef U1 V8x8 __attribute__((__vector_size__(8)));
 
 
 V8x16 shift_sse2_left_scalar(V8x16 x, U4 y) {
@@ -3538,20 +3546,19 @@ V8x16 shift_sse2_left(V8x16 x, V8x16 y) {
 }
 
 TEST(VectorShiftTest, sse2_left_scalar) {
-  V8x16 v = {(U2)(*GetPoisoned<U2>() | 3), (U2)(*GetPoisoned<U2>() | 7), 2, 3,
-             4,                            5,                            6, 7};
+  V8x16 v = {Poisoned<U2>(0, 3), Poisoned<U2>(0, 7), 2, 3, 4, 5, 6, 7};
   V8x16 u = shift_sse2_left_scalar(v, 2);
   EXPECT_POISONED(u[0]);
   EXPECT_POISONED(u[1]);
-  EXPECT_NOT_POISONED(u[0] | (~7U));
-  EXPECT_NOT_POISONED(u[1] | (~31U));
+  EXPECT_NOT_POISONED(u[0] | (3U << 2));
+  EXPECT_NOT_POISONED(u[1] | (7U << 2));
   u[0] = u[1] = 0;
   EXPECT_NOT_POISONED(u);
 }
 
 TEST(VectorShiftTest, sse2_left_scalar_by_uninit) {
   V8x16 v = {0, 1, 2, 3, 4, 5, 6, 7};
-  V8x16 u = shift_sse2_left_scalar(v, *GetPoisoned<U4>());
+  V8x16 u = shift_sse2_left_scalar(v, Poisoned<U4>());
   EXPECT_POISONED(u[0]);
   EXPECT_POISONED(u[1]);
   EXPECT_POISONED(u[2]);
@@ -3563,23 +3570,21 @@ TEST(VectorShiftTest, sse2_left_scalar_by_uninit) {
 }
 
 TEST(VectorShiftTest, sse2_left) {
-  V8x16 v = {(U2)(*GetPoisoned<U2>() | 3), (U2)(*GetPoisoned<U2>() | 7), 2, 3,
-             4,                            5,                            6, 7};
+  V8x16 v = {Poisoned<U2>(0, 3), Poisoned<U2>(0, 7), 2, 3, 4, 5, 6, 7};
   // Top 64 bits of shift count don't affect the result.
-  V2x64 s = {2, *GetPoisoned<U8>()};
+  V2x64 s = {2, Poisoned<U8>()};
   V8x16 u = shift_sse2_left(v, s);
   EXPECT_POISONED(u[0]);
   EXPECT_POISONED(u[1]);
-  EXPECT_NOT_POISONED(u[0] | (~7U));
-  EXPECT_NOT_POISONED(u[1] | (~31U));
+  EXPECT_NOT_POISONED(u[0] | (3U << 2));
+  EXPECT_NOT_POISONED(u[1] | (7U << 2));
   u[0] = u[1] = 0;
   EXPECT_NOT_POISONED(u);
 }
 
 TEST(VectorShiftTest, sse2_left_by_uninit) {
-  V8x16 v = {(U2)(*GetPoisoned<U2>() | 3), (U2)(*GetPoisoned<U2>() | 7), 2, 3,
-             4,                            5,                            6, 7};
-  V2x64 s = {*GetPoisoned<U8>(), *GetPoisoned<U8>()};
+  V8x16 v = {Poisoned<U2>(0, 3), Poisoned<U2>(0, 7), 2, 3, 4, 5, 6, 7};
+  V2x64 s = {Poisoned<U8>(), Poisoned<U8>()};
   V8x16 u = shift_sse2_left(v, s);
   EXPECT_POISONED(u[0]);
   EXPECT_POISONED(u[1]);
@@ -3598,8 +3603,8 @@ V4x32 shift_avx2_left(V4x32 x, V4x32 y) {
 // This is variable vector shift that's only available starting with AVX2.
 // V4x32 shift_avx2_left(V4x32 x, V4x32 y) {
 TEST(VectorShiftTest, avx2_left) {
-  V4x32 v = {(U2)(*GetPoisoned<U2>() | 3), (U2)(*GetPoisoned<U2>() | 7), 2, 3};
-  V4x32 s = {2, *GetPoisoned<U4>(), 3, *GetPoisoned<U4>()};
+  V4x32 v = {Poisoned<U2>(0, 3), Poisoned<U2>(0, 7), 2, 3};
+  V4x32 s = {2, Poisoned<U4>(), 3, Poisoned<U4>()};
   V4x32 u = shift_avx2_left(v, s);
   EXPECT_POISONED(u[0]);
   EXPECT_NOT_POISONED(u[0] | (~7U));
@@ -3614,11 +3619,13 @@ TEST(VectorShiftTest, avx2_left) {
 
 TEST(VectorPackTest, sse2_packssdw_128) {
   const unsigned S2_max = (1 << 15) - 1;
-  V4x32 a = {*GetPoisoned<U4>() & 0xFF0000U, *GetPoisoned<U4>() & 0xFFFF0000,
+  V4x32 a = {Poisoned<U4>(0, 0xFF0000), Poisoned<U4>(0, 0xFFFF0000),
              S2_max + 100, 4};
-  V4x32 b = {*GetPoisoned<U4>() & 0xFF, S2_max + 10000,
-             *GetPoisoned<U4>() & 0xFF00, S2_max};
+  V4x32 b = {Poisoned<U4>(0, 0xFF), S2_max + 10000, Poisoned<U4>(0, 0xFF00),
+             S2_max};
+
   V8x16 c = _mm_packs_epi32(a, b);
+
   EXPECT_POISONED(c[0]);
   EXPECT_POISONED(c[1]);
   EXPECT_NOT_POISONED(c[2]);
