@@ -285,6 +285,9 @@ static DecodeStatus DecodeExtSize(MCInst &Inst,
 static DecodeStatus DecodeSimm19Lsl2(MCInst &Inst, unsigned Insn,
                                      uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeSimm18Lsl3(MCInst &Inst, unsigned Insn,
+                                     uint64_t Address, const void *Decoder);
+
 /// INSVE_[BHWD] have an implicit operand that the generated decoder doesn't
 /// handle.
 template <typename InsnType>
@@ -1195,5 +1198,11 @@ static DecodeStatus DecodeExtSize(MCInst &Inst,
 static DecodeStatus DecodeSimm19Lsl2(MCInst &Inst, unsigned Insn,
                                      uint64_t Address, const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<19>(Insn) << 2));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSimm18Lsl3(MCInst &Inst, unsigned Insn,
+                                     uint64_t Address, const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(SignExtend32<18>(Insn) << 3));
   return MCDisassembler::Success;
 }

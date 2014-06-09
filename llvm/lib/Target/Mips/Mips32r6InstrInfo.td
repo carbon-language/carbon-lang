@@ -241,16 +241,17 @@ multiclass CMP_CC_M <FIELD_CMP_FORMAT Format, string Typestr,
 //
 //===----------------------------------------------------------------------===//
 
-class PCREL19_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class PCREL_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                      Operand ImmOpnd> {
   dag OutOperandList = (outs GPROpnd:$rs);
-  dag InOperandList = (ins simm19_lsl2:$imm);
+  dag InOperandList = (ins ImmOpnd:$imm);
   string AsmString = !strconcat(instr_asm, "\t$rs, $imm");
   list<dag> Pattern = [];
 }
 
-class ADDIUPC_DESC : PCREL19_DESC_BASE<"addiupc", GPR32Opnd>;
-class LWPC_DESC: PCREL19_DESC_BASE<"lwpc", GPR32Opnd>;
-class LWUPC_DESC: PCREL19_DESC_BASE<"lwupc", GPR32Opnd>;
+class ADDIUPC_DESC : PCREL_DESC_BASE<"addiupc", GPR32Opnd, simm19_lsl2>;
+class LWPC_DESC: PCREL_DESC_BASE<"lwpc", GPR32Opnd, simm19_lsl2>;
+class LWUPC_DESC: PCREL_DESC_BASE<"lwupc", GPR32Opnd, simm19_lsl2>;
 
 class ALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
                       Operand ImmOpnd> {

@@ -48,6 +48,11 @@ def OPCODE2_ADDIUPC : OPCODE2<0b00>;
 def OPCODE2_LWPC    : OPCODE2<0b01>;
 def OPCODE2_LWUPC   : OPCODE2<0b10>;
 
+class OPCODE3<bits<3> Val> {
+  bits<3> Value = Val;
+}
+def OPCODE3_LDPC : OPCODE3<0b110>;
+
 class OPCODE5<bits<5> Val> {
   bits<5> Value = Val;
 }
@@ -214,6 +219,18 @@ class PCREL19_FM<OPCODE2 Operation> : MipsR6Inst {
   let Inst{25-21} = rs;
   let Inst{20-19} = Operation.Value;
   let Inst{18-0} = imm;
+}
+
+class PCREL18_FM<OPCODE3 Operation> : MipsR6Inst {
+  bits<5> rs;
+  bits<18> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_PCREL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-18} = Operation.Value;
+  let Inst{17-0} = imm;
 }
 
 class SPECIAL3_2R_FM<OPCODE6 Operation> : MipsR6Inst {

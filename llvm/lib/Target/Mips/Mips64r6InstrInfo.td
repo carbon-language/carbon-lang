@@ -37,6 +37,7 @@ class DMUH_ENC    : SPECIAL_3R_FM<0b00011, 0b111000>;
 class DMUHU_ENC   : SPECIAL_3R_FM<0b00011, 0b111001>;
 class DMUL_R6_ENC : SPECIAL_3R_FM<0b00010, 0b111000>;
 class DMULU_ENC   : SPECIAL_3R_FM<0b00010, 0b111001>;
+class LDPC_ENC    : PCREL18_FM<OPCODE3_LDPC>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -64,6 +65,7 @@ class DMUH_DESC    : MUL_R6_DESC_BASE<"dmuh", GPR64Opnd>;
 class DMUHU_DESC   : MUL_R6_DESC_BASE<"dmuhu", GPR64Opnd>;
 class DMUL_R6_DESC : MUL_R6_DESC_BASE<"dmul", GPR64Opnd>;
 class DMULU_DESC   : MUL_R6_DESC_BASE<"dmulu", GPR64Opnd>;
+class LDPC_DESC    : PCREL_DESC_BASE<"ldpc", GPR64Opnd, simm18_lsl3>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -85,4 +87,4 @@ def DMUH: DMUH_ENC, DMUH_DESC, ISA_MIPS64R6;
 def DMUHU: DMUHU_ENC, DMUHU_DESC, ISA_MIPS64R6;
 def DMUL_R6: DMUL_R6_ENC, DMUL_R6_DESC, ISA_MIPS64R6;
 def DMULU: DMULU_ENC, DMULU_DESC, ISA_MIPS64R6;
-def LDPC;
+def LDPC: LDPC_ENC, LDPC_DESC, ISA_MIPS64R6;
