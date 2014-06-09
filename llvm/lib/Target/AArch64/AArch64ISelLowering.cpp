@@ -6344,15 +6344,6 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
     APInt Value = C->getAPIntValue();
     EVT VT = N->getValueType(0);
-    APInt VP1 = Value + 1;
-    if (VP1.isPowerOf2()) {
-      // Multiplying by one less than a power of two, replace with a shift
-      // and a subtract.
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
-                      DAG.getConstant(VP1.logBase2(), MVT::i64));
-      return DAG.getNode(ISD::SUB, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
-    }
     APInt VM1 = Value - 1;
     if (VM1.isPowerOf2()) {
       // Multiplying by one more than a power of two, replace with a shift
@@ -6361,6 +6352,15 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
           DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
                       DAG.getConstant(VM1.logBase2(), MVT::i64));
       return DAG.getNode(ISD::ADD, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
+    }
+    APInt VP1 = Value + 1;
+    if (VP1.isPowerOf2()) {
+      // Multiplying by one less than a power of two, replace with a shift
+      // and a subtract.
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                      DAG.getConstant(VP1.logBase2(), MVT::i64));
+      return DAG.getNode(ISD::SUB, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
     }
   }
   return SDValue();

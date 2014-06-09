@@ -260,3 +260,11 @@ define i64 @f3(i64 %a) nounwind readnone ssp {
   %res = mul nsw i64 %a, 17
   ret i64 %res
 }
+
+define i32 @f4(i32 %a) nounwind readnone ssp {
+; CHECK-LABEL: f4:
+; CHECK-NEXT: add w0, w0, w0, lsl #1
+; CHECK-NEXT: ret
+  %res = mul i32 %a, 3
+  ret i32 %res
+}
