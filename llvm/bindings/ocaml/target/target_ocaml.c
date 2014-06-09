@@ -352,8 +352,8 @@ CAMLprim value llvm_targetmachine_data_layout(value Machine) {
   CAMLreturn(DataLayout);
 }
 
-/* TargetMachine.t -> bool -> unit */
-CAMLprim value llvm_targetmachine_set_verbose_asm(value Machine, value Verb) {
+/* bool -> TargetMachine.t -> unit */
+CAMLprim value llvm_targetmachine_set_verbose_asm(value Verb, value Machine) {
   LLVMSetTargetMachineAsmVerbosity(TargetMachine_val(Machine), Bool_val(Verb));
   return Val_unit;
 }
