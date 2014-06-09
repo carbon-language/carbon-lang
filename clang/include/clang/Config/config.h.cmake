@@ -1,4 +1,8 @@
-#ifndef CONFIG_H
+/* This generated file is for internal use. Do not include it from headers. */
+
+#ifdef CONFIG_H
+#error config.h can only be included once
+#else
 #define CONFIG_H
 
 /* Bug report URL. */
