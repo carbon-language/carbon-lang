@@ -1302,10 +1302,14 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         if (!Origin) {
           Origin = OpOrigin;
         } else {
-          Value *FlatShadow = MSV->convertToShadowTyNoVec(OpShadow, IRB);
-          Value *Cond = IRB.CreateICmpNE(FlatShadow,
-                                         MSV->getCleanShadow(FlatShadow));
-          Origin = IRB.CreateSelect(Cond, OpOrigin, Origin);
+          Constant *ConstOrigin = dyn_cast<Constant>(OpOrigin);
+          // No point in adding something that might result in 0 origin value.
+          if (!ConstOrigin || !ConstOrigin->isNullValue()) {
+            Value *FlatShadow = MSV->convertToShadowTyNoVec(OpShadow, IRB);
+            Value *Cond =
+                IRB.CreateICmpNE(FlatShadow, MSV->getCleanShadow(FlatShadow));
+            Origin = IRB.CreateSelect(Cond, OpOrigin, Origin);
+          }
         }
       }
       return *this;
