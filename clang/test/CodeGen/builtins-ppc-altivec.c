@@ -5155,11 +5155,15 @@ void test6() {
   /* vec_sums */
   res_vi = vec_sums(vi, vi);
 // CHECK: @llvm.ppc.altivec.vsumsws
+// CHECK-LE: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vsumsws
+// CHECK-LE: @llvm.ppc.altivec.vperm
 
   res_vi = vec_vsumsws(vi, vi);
 // CHECK: @llvm.ppc.altivec.vsumsws
+// CHECK-LE: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vsumsws
+// CHECK-LE: @llvm.ppc.altivec.vperm
 
   /* vec_trunc */
   res_vf = vec_trunc(vf);
