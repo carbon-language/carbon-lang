@@ -235,8 +235,8 @@ File descriptors
 .. code-block:: llvm
 
   !0 = metadata !{
-    i32,       ;; Tag = 41 (DW_TAG_file_type)
-    metadata,  ;; Source directory (including trailing slash) & file pair
+    i32,      ;; Tag = 41 (DW_TAG_file_type)
+    metadata, ;; Source directory (including trailing slash) & file pair
   }
 
 These descriptors contain information for a file.  Global variables and top
@@ -269,7 +269,7 @@ Global variable descriptors
     metadata, ;; The static member declaration, if any
   }
 
-These descriptors provide debug information about globals variables.  They
+These descriptors provide debug information about global variables.  They
 provide details such as name, type and where the variable is defined.  All
 global variables are collected inside the named metadata ``!llvm.dbg.cu``.
 
@@ -297,7 +297,7 @@ Subprogram descriptors
               ;; derived class
     i32,      ;; Flags - Artificial, Private, Protected, Explicit, Prototyped.
     i1,       ;; isOptimized
-    Function * , ;; Pointer to LLVM function
+    {}*,      ;; Reference to the LLVM function
     metadata, ;; Lists function template parameters
     metadata, ;; Function declaration descriptor
     metadata, ;; List of function variables
@@ -314,13 +314,13 @@ Block descriptors
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,     ;; Tag = 11 (DW_TAG_lexical_block)
-    metadata,;; Source directory (including trailing slash) & file pair
-    metadata,;; Reference to context descriptor
-    i32,     ;; Line number
-    i32,     ;; Column number
-    i32,     ;; DWARF path discriminator value
-    i32      ;; Unique ID to identify blocks from a template function
+    i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+    metadata, ;; Source directory (including trailing slash) & file pair
+    metadata, ;; Reference to context descriptor
+    i32,      ;; Line number
+    i32,      ;; Column number
+    i32,      ;; DWARF path discriminator value
+    i32       ;; Unique ID to identify blocks from a template function
   }
 
 This descriptor provides debug information about nested blocks within a
@@ -330,9 +330,9 @@ lexical blocks at same depth.
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,     ;; Tag = 11 (DW_TAG_lexical_block)
-    metadata,;; Source directory (including trailing slash) & file pair
-    metadata ;; Reference to the scope we're annotating with a file change
+    i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+    metadata, ;; Source directory (including trailing slash) & file pair
+    metadata  ;; Reference to the scope we're annotating with a file change
   }
 
 This descriptor provides a wrapper around a lexical scope to handle file
@@ -528,9 +528,9 @@ Subrange descriptors
 .. code-block:: llvm
 
   !42 = metadata !{
-    i32,    ;; Tag = 33 (DW_TAG_subrange_type)
-    i64,    ;; Low value
-    i64     ;; High value
+    i32,      ;; Tag = 33 (DW_TAG_subrange_type)
+    i64,      ;; Low value
+    i64       ;; High value
   }
 
 These descriptors are used to define ranges of array subscripts for an array
