@@ -1312,13 +1312,13 @@ defm V_SAD_U32 : VOP3_32 <0x0000015d, "V_SAD_U32", []>;
 defm V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32", []>;
 def V_DIV_FIXUP_F64 : VOP3_64 <0x00000160, "V_DIV_FIXUP_F64", []>;
 
-def V_LSHL_B64 : VOP3_64_Shift <0x00000161, "V_LSHL_B64",
+def V_LSHL_B64 : VOP3_64_32 <0x00000161, "V_LSHL_B64",
   [(set i64:$dst, (shl i64:$src0, i32:$src1))]
 >;
-def V_LSHR_B64 : VOP3_64_Shift <0x00000162, "V_LSHR_B64",
+def V_LSHR_B64 : VOP3_64_32 <0x00000162, "V_LSHR_B64",
   [(set i64:$dst, (srl i64:$src0, i32:$src1))]
 >;
-def V_ASHR_I64 : VOP3_64_Shift <0x00000163, "V_ASHR_I64",
+def V_ASHR_I64 : VOP3_64_32 <0x00000163, "V_ASHR_I64",
   [(set i64:$dst, (sra i64:$src0, i32:$src1))]
 >;
 

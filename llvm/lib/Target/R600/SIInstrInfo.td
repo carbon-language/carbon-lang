@@ -396,7 +396,7 @@ multiclass VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3_m <
   opName#" $dst, $src0_modifiers, $src1, $src2, $clamp, $omod", pattern, opName
 >;
 
-class VOP3_64_Shift <bits <9> op, string opName, list<dag> pattern> : VOP3 <
+class VOP3_64_32 <bits <9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
   (ins VSrc_64:$src0, VSrc_32:$src1),
   opName#" $dst, $src0, $src1", pattern
