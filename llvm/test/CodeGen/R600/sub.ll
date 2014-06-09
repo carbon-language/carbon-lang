@@ -45,7 +45,7 @@ define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
 ;EG-DAG: SUB_INT
 ;EG-DAG: SUB_INT
 
-;SI: S_XOR_B64
+;SI: S_NOT_B64
 ;SI-DAG: S_ADD_I32
 ;SI-DAG: S_ADDC_U32
 ;SI-DAG: S_ADD_I32

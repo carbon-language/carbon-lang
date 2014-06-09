@@ -90,3 +90,43 @@ define void @vector_not_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 
   store i32 %result, i32 addrspace(1)* %out
   ret void
 }
+
+; SI-CHECK-LABEL: @vector_xor_i64
+; SI-CHECK: V_XOR_B32_e32
+; SI-CHECK: V_XOR_B32_e32
+; SI-CHECK: S_ENDPGM
+define void @vector_xor_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 addrspace(1)* %in1) {
+  %a = load i64 addrspace(1)* %in0
+  %b = load i64 addrspace(1)* %in1
+  %result = xor i64 %a, %b
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @scalar_xor_i64
+; SI-CHECK: S_XOR_B64
+; SI-CHECK: S_ENDPGM
+define void @scalar_xor_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
+  %result = xor i64 %a, %b
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @scalar_not_i64
+; SI-CHECK: S_NOT_B64
+define void @scalar_not_i64(i64 addrspace(1)* %out, i64 %a) {
+  %result = xor i64 %a, -1
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @vector_not_i64
+; SI-CHECK: V_NOT_B32
+; SI-CHECK: V_NOT_B32
+define void @vector_not_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 addrspace(1)* %in1) {
+  %a = load i64 addrspace(1)* %in0
+  %b = load i64 addrspace(1)* %in1
+  %result = xor i64 %a, -1
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}

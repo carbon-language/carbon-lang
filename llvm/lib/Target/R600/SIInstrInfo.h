@@ -44,8 +44,11 @@ private:
                          const TargetRegisterClass *RC,
                          const MachineOperand &Op) const;
 
-  void splitScalar64BitOp(SmallVectorImpl<MachineInstr *> & Worklist,
-                          MachineInstr *Inst, unsigned Opcode) const;
+  void splitScalar64BitUnaryOp(SmallVectorImpl<MachineInstr *> &Worklist,
+                               MachineInstr *Inst, unsigned Opcode) const;
+
+  void splitScalar64BitBinaryOp(SmallVectorImpl<MachineInstr *> &Worklist,
+                                MachineInstr *Inst, unsigned Opcode) const;
 
   void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
 
