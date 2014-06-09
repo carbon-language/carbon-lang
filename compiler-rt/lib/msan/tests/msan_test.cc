@@ -1571,15 +1571,13 @@ TEST_STRTO_INT_LOC(strtoll_l)
 TEST_STRTO_INT_LOC(strtoul_l)
 TEST_STRTO_INT_LOC(strtoull_l)
 
-// https://code.google.com/p/memory-sanitizer/issues/detail?id=36
-TEST(MemorySanitizer, DISABLED_strtoimax) {
+TEST(MemorySanitizer, strtoimax) {
   char *e;
   ASSERT_EQ(1, strtoimax("1", &e, 10));
   EXPECT_NOT_POISONED((S8) e);
 }
 
-// https://code.google.com/p/memory-sanitizer/issues/detail?id=36
-TEST(MemorySanitizer, DISABLED_strtoumax) {
+TEST(MemorySanitizer, strtoumax) {
   char *e;
   ASSERT_EQ(1U, strtoumax("1", &e, 10));
   EXPECT_NOT_POISONED((S8) e);
