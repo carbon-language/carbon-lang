@@ -195,8 +195,10 @@ public:
 
   bool runOnRegion(Region *R, RGPassManager &RGM) override {
     Out << Banner;
-    for (const auto &BB : R->blocks())
+    for (const auto &BB : R->blocks()) {
+      assert(BB != nullptr && "Expecting non-null Block");
       BB->print(Out);
+    }
 
     return false;
   }

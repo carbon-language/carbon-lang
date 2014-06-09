@@ -281,6 +281,7 @@ char *LLVMPrintTypeToString(LLVMTypeRef Ty) {
   std::string buf;
   raw_string_ostream os(buf);
 
+  assert(unwrap(Ty) != nullptr && "Expecting non-null Type");
   unwrap(Ty)->print(os);
   os.flush();
 
@@ -531,6 +532,7 @@ char* LLVMPrintValueToString(LLVMValueRef Val) {
   std::string buf;
   raw_string_ostream os(buf);
 
+  assert(unwrap(Val) != nullptr && "Expecting non-null Value");
   unwrap(Val)->print(os);
   os.flush();
 

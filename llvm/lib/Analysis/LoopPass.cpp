@@ -45,6 +45,7 @@ public:
     for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
          b != be;
          ++b) {
+      assert((*b) != nullptr && "Expecting non-null block");
       (*b)->print(Out);
     }
     return false;

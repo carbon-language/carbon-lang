@@ -352,6 +352,7 @@ private:
   }
 
   std::string getTypeName(Type *T) {
+    assert(T != nullptr && "Expecting non-null Type");
     std::string TypeName;
     raw_string_ostream TypeStream(TypeName);
     T->print(TypeStream);
