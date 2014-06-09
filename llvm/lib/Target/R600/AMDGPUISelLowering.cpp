@@ -237,6 +237,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SELECT, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::XOR,  VT, Expand);
+    setOperationAction(ISD::BSWAP, VT, Expand);
   }
 
   static const MVT::SimpleValueType FloatTypes[] = {
