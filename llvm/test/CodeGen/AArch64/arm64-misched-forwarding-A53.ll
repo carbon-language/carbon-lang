@@ -6,9 +6,10 @@
 ;
 ; CHECK: ********** MI Scheduling **********
 ; CHECK: shiftable
-; CHECK: *** Final schedule for BB#0 ***
-; CHECK: ADDXrr %vreg0, %vreg2
-; CHECK: ADDXrs %vreg0, %vreg2, 5
+; CHECK: SU(2):   %vreg2<def> = SUBXri %vreg1, 20, 0
+; CHECK:   Successors:
+; CHECK-NEXT:    val SU(4): Latency=1 Reg=%vreg2
+; CHECK-NEXT:    val SU(3): Latency=2 Reg=%vreg2
 ; CHECK: ********** INTERVALS **********
 define i64 @shiftable(i64 %A, i64 %B) {
         %tmp0 = sub i64 %B, 20
