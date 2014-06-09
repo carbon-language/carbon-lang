@@ -1738,6 +1738,10 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
                   WZR, GPR32:$src1, GPR32:$src2, 0), 5>;
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Xrs")
                   XZR, GPR64:$src1, GPR64:$src2, 0), 5>;
+  def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Wrx")
+                  WZR, GPR32sponly:$src1, GPR32:$src2, 16), 5>;
+  def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Xrx64")
+                  XZR, GPR64sponly:$src1, GPR64:$src2, 24), 5>;
 
   // Register/register aliases with no shift when SP is not used.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
