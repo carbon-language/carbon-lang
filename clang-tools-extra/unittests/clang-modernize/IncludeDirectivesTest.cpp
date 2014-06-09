@@ -41,7 +41,7 @@ namespace {
 class TestAddIncludeAction : public PreprocessOnlyAction {
 public:
   TestAddIncludeAction(StringRef Include, tooling::Replacements &Replaces,
-                       const char *HeaderToModify = 0)
+                       const char *HeaderToModify = nullptr)
       : Include(Include), Replaces(Replaces), HeaderToModify(HeaderToModify) {
     // some headers that the tests can include
     mapVirtualHeader("foo-inner.h", "#pragma once\n");

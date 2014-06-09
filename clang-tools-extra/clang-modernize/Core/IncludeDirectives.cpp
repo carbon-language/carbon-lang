@@ -32,7 +32,7 @@ class IncludeDirectivesPPCallback : public clang::PPCallbacks {
   // Struct helping the detection of header guards in the various callbacks
   struct GuardDetection {
     GuardDetection(FileID FID)
-      : FID(FID), Count(0), TheMacro(0), CountAtEndif(0) {}
+      : FID(FID), Count(0), TheMacro(nullptr), CountAtEndif(0) {}
 
     FileID FID;
     // count for relevant preprocessor directives
@@ -58,7 +58,8 @@ class IncludeDirectivesPPCallback : public clang::PPCallbacks {
   };
 
 public:
-  IncludeDirectivesPPCallback(IncludeDirectives *Self) : Self(Self), Guard(0) {}
+  IncludeDirectivesPPCallback(IncludeDirectives *Self)
+      : Self(Self), Guard(nullptr) {}
 
 private:
   virtual ~IncludeDirectivesPPCallback() {}
@@ -148,7 +149,7 @@ private:
     // If this #ifndef is the top-most directive and the symbol isn't defined
     // store those information in the guard detection, the next step will be to
     // check for the define.
-    if (Guard->Count == 1 && MD == 0) {
+    if (Guard->Count == 1 && MD == nullptr) {
       IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
 
       if (MII->hasMacroDefinition())
@@ -165,7 +166,7 @@ private:
     // If this #define is the second directive of the file and the symbol
     // defined is the same as the one checked in the #ifndef then store the
     // information about this define.
-    if (Guard->Count == 2 && Guard->TheMacro != 0) {
+    if (Guard->Count == 2 && Guard->TheMacro != nullptr) {
       IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
 
       // macro unrelated to the ifndef, doesn't look like a proper header guard

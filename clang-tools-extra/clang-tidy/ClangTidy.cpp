@@ -115,7 +115,7 @@ public:
       DiagnosticBuilder Diag =
           Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
           << Message.Message;
-      if (Fixes != NULL) {
+      if (Fixes != nullptr) {
         for (const tooling::Replacement &Fix : *Fixes) {
           SourceLocation FixLoc =
               getLocation(Fix.getFilePath(), Fix.getOffset());

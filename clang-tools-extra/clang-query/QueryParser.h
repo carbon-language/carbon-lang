@@ -37,8 +37,8 @@ public:
 
 private:
   QueryParser(StringRef Line, const QuerySession &QS)
-      : Begin(Line.data()), End(Line.data() + Line.size()), CompletionPos(0),
-        QS(QS) {}
+      : Begin(Line.data()), End(Line.data() + Line.size()),
+        CompletionPos(nullptr), QS(QS) {}
 
   StringRef lexWord();
 

@@ -411,15 +411,15 @@ std::string getMacroExpandedString(clang::Preprocessor &PP,
     int ArgNo = (II && Args ? MI->getArgumentNum(II) : -1);
     if (ArgNo == -1) {
       // This isn't an argument, just add it.
-      if (II == NULL)
+      if (II == nullptr)
         Expanded += PP.getSpelling((*I)); // Not an identifier.
       else {
         // Token is for an identifier.
         std::string Name = II->getName().str();
         // Check for nexted macro references.
         clang::MacroInfo *MacroInfo = PP.getMacroInfo(II);
-        if (MacroInfo != NULL)
-          Expanded += getMacroExpandedString(PP, Name, MacroInfo, NULL);
+        if (MacroInfo)
+          Expanded += getMacroExpandedString(PP, Name, MacroInfo, nullptr);
         else
           Expanded += Name;
       }
@@ -441,14 +441,14 @@ std::string getMacroExpandedString(clang::Preprocessor &PP,
     for (unsigned ArgumentIndex = 0; ArgumentIndex < NumToks; ++ArgumentIndex) {
       const clang::Token &AT = ResultArgToks[ArgumentIndex];
       clang::IdentifierInfo *II = AT.getIdentifierInfo();
-      if (II == NULL)
+      if (II == nullptr)
         Expanded += PP.getSpelling(AT); // Not an identifier.
       else {
         // It's an identifier.  Check for further expansion.
         std::string Name = II->getName().str();
         clang::MacroInfo *MacroInfo = PP.getMacroInfo(II);
-        if (MacroInfo != NULL)
-          Expanded += getMacroExpandedString(PP, Name, MacroInfo, NULL);
+        if (MacroInfo)
+          Expanded += getMacroExpandedString(PP, Name, MacroInfo, nullptr);
         else
           Expanded += Name;
       }
@@ -483,15 +483,15 @@ std::string getExpandedString(clang::Preprocessor &PP,
     int ArgNo = (II && Args ? MI->getArgumentNum(II) : -1);
     if (ArgNo == -1) {
       // This isn't an argument, just add it.
-      if (II == NULL)
+      if (II == nullptr)
         Expanded += PP.getSpelling((*I)); // Not an identifier.
       else {
         // Token is for an identifier.
         std::string Name = II->getName().str();
         // Check for nexted macro references.
         clang::MacroInfo *MacroInfo = PP.getMacroInfo(II);
-        if (MacroInfo != NULL)
-          Expanded += getMacroExpandedString(PP, Name, MacroInfo, NULL);
+        if (MacroInfo)
+          Expanded += getMacroExpandedString(PP, Name, MacroInfo, nullptr);
         else
           Expanded += Name;
       }
@@ -513,14 +513,14 @@ std::string getExpandedString(clang::Preprocessor &PP,
     for (unsigned ArgumentIndex = 0; ArgumentIndex < NumToks; ++ArgumentIndex) {
       const clang::Token &AT = ResultArgToks[ArgumentIndex];
       clang::IdentifierInfo *II = AT.getIdentifierInfo();
-      if (II == NULL)
+      if (II == nullptr)
         Expanded += PP.getSpelling(AT); // Not an identifier.
       else {
         // It's an identifier.  Check for further expansion.
         std::string Name = II->getName().str();
         clang::MacroInfo *MacroInfo = PP.getMacroInfo(II);
-        if (MacroInfo != NULL)
-          Expanded += getMacroExpandedString(PP, Name, MacroInfo, NULL);
+        if (MacroInfo)
+          Expanded += getMacroExpandedString(PP, Name, MacroInfo, nullptr);
         else
           Expanded += Name;
       }
@@ -701,7 +701,7 @@ public:
         return &*I; // Found.
       }
     }
-    return NULL; // Not found.
+    return nullptr; // Not found.
   }
 
   // Add a macro expansion instance.
@@ -793,7 +793,7 @@ public:
         return &*I; // Found.
       }
     }
-    return NULL; // Not found.
+    return nullptr; // Not found.
   }
 
   // Add a conditional expansion instance.
@@ -1126,7 +1126,7 @@ public:
           CondTracker.findMacroExpansionInstance(addString(MacroExpanded),
                                                  DefinitionKey);
       // If found, just add the inclusion path to the instance.
-      if (MacroInfo != NULL)
+      if (MacroInfo)
         MacroInfo->addInclusionPathHandle(InclusionPathHandle);
       else {
         // Otherwise add a new instance with the unique value.
@@ -1169,7 +1169,7 @@ public:
       ConditionalExpansionInstance *MacroInfo =
           CondTracker.findConditionalExpansionInstance(ConditionValue);
       // If found, just add the inclusion path to the instance.
-      if (MacroInfo != NULL)
+      if (MacroInfo)
         MacroInfo->addInclusionPathHandle(InclusionPathHandle);
       else {
         // Otherwise add a new instance with the unique value.
@@ -1357,7 +1357,7 @@ void PreprocessorCallbacks::FileChanged(
   case ExitFile: {
     const clang::FileEntry *F =
         PP.getSourceManager().getFileEntryForID(PrevFID);
-    if (F != NULL)
+    if (F)
       PPTracker.handleHeaderExit(F->getName());
   } break;
   case SystemHeaderPragma:
@@ -1422,7 +1422,7 @@ void PreprocessorCallbacks::Ifdef(clang::SourceLocation Loc,
                                   const clang::Token &MacroNameTok,
                                   const clang::MacroDirective *MD) {
   clang::PPCallbacks::ConditionValueKind IsDefined =
-    (MD != 0 ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
+    (MD ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(
       PP, PPTracker.getCurrentHeaderHandle(), Loc, clang::tok::pp_ifdef,
       IsDefined, PP.getSpelling(MacroNameTok),
@@ -1433,7 +1433,7 @@ void PreprocessorCallbacks::Ifndef(clang::SourceLocation Loc,
                                    const clang::Token &MacroNameTok,
                                    const clang::MacroDirective *MD) {
   clang::PPCallbacks::ConditionValueKind IsNotDefined =
-    (MD == 0 ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
+    (!MD ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(
       PP, PPTracker.getCurrentHeaderHandle(), Loc, clang::tok::pp_ifndef,
       IsNotDefined, PP.getSpelling(MacroNameTok),

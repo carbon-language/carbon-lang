@@ -54,7 +54,7 @@ public:
   ConstructorParamReplacer(unsigned &AcceptedChanges, unsigned &RejectedChanges,
                            Transform &Owner)
       : AcceptedChanges(AcceptedChanges), RejectedChanges(RejectedChanges),
-        Owner(Owner), IncludeManager(0) {}
+        Owner(Owner), IncludeManager(nullptr) {}
 
   void setIncludeDirectives(IncludeDirectives *Includes) {
     IncludeManager = Includes;

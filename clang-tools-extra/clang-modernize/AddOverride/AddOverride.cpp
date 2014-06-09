@@ -51,7 +51,7 @@ int AddOverrideTransform::apply(const CompilationDatabase &Database,
 
 bool AddOverrideTransform::handleBeginSource(clang::CompilerInstance &CI,
                                              llvm::StringRef Filename) {
-  assert(Fixer != NULL && "Fixer must be set");
+  assert(Fixer != nullptr && "Fixer must be set");
   Fixer->setPreprocessor(CI.getPreprocessor());
   return Transform::handleBeginSource(CI, Filename);
 }

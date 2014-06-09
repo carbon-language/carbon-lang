@@ -55,7 +55,7 @@ class ConstructorParamReplacer;
 class PassByValueTransform : public Transform {
 public:
   PassByValueTransform(const TransformOptions &Options)
-      : Transform("PassByValue", Options), Replacer(0) {}
+      : Transform("PassByValue", Options), Replacer(nullptr) {}
 
   /// \see Transform::apply().
   virtual int apply(const clang::tooling::CompilationDatabase &Database,

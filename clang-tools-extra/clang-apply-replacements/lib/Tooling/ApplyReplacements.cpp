@@ -67,7 +67,7 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
       continue;
     }
 
-    yaml::Input YIn(Out->getBuffer(), NULL, &eatDiagnostics);
+    yaml::Input YIn(Out->getBuffer(), nullptr, &eatDiagnostics);
     tooling::TranslationUnitReplacements TU;
     YIn >> TU;
     if (YIn.error()) {

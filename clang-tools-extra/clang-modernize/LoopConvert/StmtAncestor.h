@@ -43,7 +43,7 @@ class StmtAncestorASTVisitor :
   public clang::RecursiveASTVisitor<StmtAncestorASTVisitor> {
 public:
   StmtAncestorASTVisitor() {
-    StmtStack.push_back(NULL);
+    StmtStack.push_back(nullptr);
   }
 
   /// \brief Run the analysis on the TranslationUnitDecl.

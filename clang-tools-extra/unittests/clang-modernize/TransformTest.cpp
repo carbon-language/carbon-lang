@@ -187,7 +187,7 @@ public:
   virtual void
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) {
     const VarDecl *Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
-    ASSERT_TRUE(Decl != 0);
+    ASSERT_TRUE(Decl != nullptr);
 
     const SourceManager &SM = *Result.SourceManager;
 

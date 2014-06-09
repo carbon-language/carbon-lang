@@ -151,7 +151,7 @@ public:
                       unsigned &AcceptedChanges, Transform &Owner)
       : SM(Context.getSourceManager()), Context(Context),
         UserNullMacros(UserNullMacros), AcceptedChanges(AcceptedChanges),
-        Owner(Owner), FirstSubExpr(0), PruneSubtree(false) {}
+        Owner(Owner), FirstSubExpr(nullptr), PruneSubtree(false) {}
 
   bool TraverseStmt(Stmt *S) {
     // Stop traversing down the tree if requested.
@@ -167,7 +167,7 @@ public:
   bool VisitStmt(Stmt *S) {
     CastExpr *C = dyn_cast<CastExpr>(S);
     if (!C) {
-      FirstSubExpr = 0;
+      FirstSubExpr = nullptr;
       return true;
     } else if (!FirstSubExpr) {
       FirstSubExpr = C->getSubExpr()->IgnoreParens();

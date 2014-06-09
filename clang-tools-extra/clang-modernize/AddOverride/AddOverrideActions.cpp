@@ -88,7 +88,7 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
 
   std::string ReplacementText = " override";
   if (DetectMacros) {
-    assert(PP != 0 && "No access to Preprocessor object for macro detection");
+    assert(PP && "No access to Preprocessor object for macro detection");
     clang::TokenValue Tokens[] = { PP->getIdentifierInfo("override") };
     llvm::StringRef MacroName = PP->getLastMacroWithSpelling(StartLoc, Tokens);
     if (!MacroName.empty())

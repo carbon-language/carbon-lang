@@ -73,9 +73,9 @@ class ForLoopIndexUseVisitor
     Context(Context), IndexVar(IndexVar), EndVar(EndVar),
     ContainerExpr(ContainerExpr), ArrayBoundExpr(ArrayBoundExpr),
     ContainerNeedsDereference(ContainerNeedsDereference),
-    OnlyUsedAsIndex(true),  AliasDecl(NULL), ConfidenceLevel(RL_Safe),
-    NextStmtParent(NULL), CurrStmtParent(NULL), ReplaceWithAliasUse(false),
-    AliasFromForInit(false) {
+    OnlyUsedAsIndex(true),  AliasDecl(nullptr), ConfidenceLevel(RL_Safe),
+    NextStmtParent(nullptr), CurrStmtParent(nullptr),
+    ReplaceWithAliasUse(false), AliasFromForInit(false) {
      if (ContainerExpr) {
        addComponent(ContainerExpr);
        llvm::FoldingSetNodeID ID;
@@ -208,7 +208,7 @@ static StringRef getStringFromRange(SourceManager &SourceMgr,
                                     SourceRange Range) {
   if (SourceMgr.getFileID(Range.getBegin()) !=
       SourceMgr.getFileID(Range.getEnd()))
-    return NULL;
+    return nullptr;
 
   CharSourceRange SourceChars(Range, true);
   return Lexer::getSourceText(SourceChars, SourceMgr, LangOpts);
@@ -224,7 +224,7 @@ static const DeclRefExpr *getDeclRef(const Expr *E) {
 static const VarDecl *getReferencedVariable(const Expr *E) {
   if (const DeclRefExpr *DRE = getDeclRef(E))
     return dyn_cast<VarDecl>(DRE->getDecl());
-  return NULL;
+  return nullptr;
 }
 
 /// \brief Returns true when the given expression is a member expression
@@ -277,14 +277,14 @@ static bool areSameExpr(ASTContext *Context, const Expr *First,
 /// as being initialized from `v.begin()`
 static const Expr *digThroughConstructors(const Expr *E) {
   if (!E)
-    return NULL;
+    return nullptr;
   E = E->IgnoreParenImpCasts();
   if (const CXXConstructExpr *ConstructExpr = dyn_cast<CXXConstructExpr>(E)) {
     // The initial constructor must take exactly one parameter, but base class
     // and deferred constructors can take more.
     if (ConstructExpr->getNumArgs() != 1 ||
         ConstructExpr->getConstructionKind() != CXXConstructExpr::CK_Complete)
-      return NULL;
+      return nullptr;
     E = ConstructExpr->getArg(0);
     if (const MaterializeTemporaryExpr *Temp =
         dyn_cast<MaterializeTemporaryExpr>(E))
@@ -298,13 +298,13 @@ static const Expr *digThroughConstructors(const Expr *E) {
 /// operand. Otherwise, return NULL.
 static const Expr *getDereferenceOperand(const Expr *E) {
   if (const UnaryOperator *Uop = dyn_cast<UnaryOperator>(E))
-    return Uop->getOpcode() == UO_Deref ? Uop->getSubExpr() : NULL;
+    return Uop->getOpcode() == UO_Deref ? Uop->getSubExpr() : nullptr;
 
   if (const CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(E))
     return OpCall->getOperator() == OO_Star && OpCall->getNumArgs() == 1 ?
-        OpCall->getArg(0) : NULL;
+        OpCall->getArg(0) : nullptr;
 
-  return NULL;
+  return nullptr;
 }
 
 /// \brief Returns true when the Container contains an Expr equivalent to E.
@@ -879,19 +879,19 @@ static const Expr *getContainerFromBeginEndCall(const Expr *Init, bool IsBegin,
   const CXXMemberCallExpr *TheCall =
       dyn_cast_or_null<CXXMemberCallExpr>(digThroughConstructors(Init));
   if (!TheCall || TheCall->getNumArgs() != 0)
-      return NULL;
+      return nullptr;
 
   const MemberExpr *Member = dyn_cast<MemberExpr>(TheCall->getCallee());
   if (!Member)
-    return NULL;
+    return nullptr;
   const std::string Name = Member->getMemberDecl()->getName();
   const std::string TargetName = IsBegin ? "begin" : "end";
   if (Name != TargetName)
-    return NULL;
+    return nullptr;
 
   const Expr *SourceExpr = Member->getBase();
   if (!SourceExpr)
-    return NULL;
+    return nullptr;
 
   *IsArrow = Member->isArrow();
   return SourceExpr;
@@ -912,7 +912,7 @@ static const Expr *findContainer(ASTContext *Context, const Expr *BeginExpr,
   const Expr *BeginContainerExpr =
       getContainerFromBeginEndCall(BeginExpr, /*IsBegin=*/true, &BeginIsArrow);
   if (!BeginContainerExpr)
-      return NULL;
+      return nullptr;
 
   const Expr *EndContainerExpr =
       getContainerFromBeginEndCall(EndExpr, /*IsBegin=*/false, &EndIsArrow);
@@ -920,7 +920,7 @@ static const Expr *findContainer(ASTContext *Context, const Expr *BeginExpr,
   //  for (IteratorType It = Obj.begin(), E = Obj->end(); It != E; ++It) { }
   if (!EndContainerExpr || BeginIsArrow != EndIsArrow ||
       !areSameExpr(Context, EndContainerExpr, BeginContainerExpr))
-    return NULL;
+    return nullptr;
 
   *ContainerNeedsDereference = BeginIsArrow;
   return BeginContainerExpr;
@@ -1056,7 +1056,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
   if (FixerKind != LFK_Array && !EndVar)
     ConfidenceLevel.lowerTo(RL_Reasonable);
 
-  const Expr *ContainerExpr = NULL;
+  const Expr *ContainerExpr = nullptr;
   bool DerefByValue = false;
   bool DerefByConstRef = false;
   bool ContainerNeedsDereference = false;
@@ -1072,7 +1072,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
 
     const CXXMemberCallExpr *BeginCall =
         Nodes.getNodeAs<CXXMemberCallExpr>(BeginCallName);
-    assert(BeginCall != 0 && "Bad Callback. No begin call expression.");
+    assert(BeginCall && "Bad Callback. No begin call expression.");
     QualType CanonicalBeginType =
         BeginCall->getMethodDecl()->getReturnType().getCanonicalType();
 
@@ -1091,7 +1091,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
         return;
     }
 
-    DerefByValue = Nodes.getNodeAs<QualType>(DerefByValueResultName) != 0;
+    DerefByValue = Nodes.getNodeAs<QualType>(DerefByValueResultName) != nullptr;
     if (!DerefByValue) {
       if (const QualType *DerefType =
               Nodes.getNodeAs<QualType>(DerefByRefResultName)) {

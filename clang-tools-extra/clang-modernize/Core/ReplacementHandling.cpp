@@ -101,12 +101,12 @@ bool ReplacementHandling::applyReplacements() {
   Argv.push_back(DestinationDir.c_str());
 
   // Argv array needs to be null terminated.
-  Argv.push_back(0);
+  Argv.push_back(nullptr);
 
   std::string ErrorMsg;
   bool ExecutionFailed = false;
-  int ReturnCode = ExecuteAndWait(CARPath.c_str(), Argv.data(), /* env */ 0,
-                                  /* redirects */ 0,
+  int ReturnCode = ExecuteAndWait(CARPath.c_str(), Argv.data(),
+                                  /* env */ nullptr, /* redirects */ nullptr,
                                   /* secondsToWait */ 0, /* memoryLimit */ 0,
                                   &ErrorMsg, &ExecutionFailed);
   if (ExecutionFailed || !ErrorMsg.empty()) {

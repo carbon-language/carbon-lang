@@ -468,7 +468,7 @@ void PPCallbacksTracker::appendArgument(const char *Name, clang::FileID Value) {
   }
   const clang::FileEntry *FileEntry =
       PP.getSourceManager().getFileEntryForID(Value);
-  if (FileEntry == 0) {
+  if (!FileEntry) {
     appendArgument(Name, "(getFileEntryForID failed)");
     return;
   }
@@ -478,7 +478,7 @@ void PPCallbacksTracker::appendArgument(const char *Name, clang::FileID Value) {
 // Append a FileEntry argument to the top trace item.
 void PPCallbacksTracker::appendArgument(const char *Name,
                                         const clang::FileEntry *Value) {
-  if (Value == 0) {
+  if (!Value) {
     appendArgument(Name, "(null)");
     return;
   }

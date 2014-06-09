@@ -68,7 +68,7 @@ bool DependencyFinderASTVisitor::VisitDeclRefExpr(DeclRefExpr *DeclRef) {
 bool DependencyFinderASTVisitor::VisitVarDecl(VarDecl *V) {
   const Stmt *Curr = DeclParents->lookup(V);
   // First, see if the variable was declared within an inner scope of the loop.
-  while (Curr != NULL) {
+  while (Curr != nullptr) {
     if (Curr == ContainingStmt) {
       DependsOnInsideVariable = true;
       return false;

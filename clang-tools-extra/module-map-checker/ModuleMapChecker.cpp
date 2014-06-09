@@ -290,7 +290,7 @@ bool ModuleMapChecker::loadModuleMap() {
 
   // Because the module map parser uses a ForwardingDiagnosticConsumer,
   // which doesn't forward the BeginSourceFile call, we do it explicitly here.
-  DC.BeginSourceFile(*LangOpts, 0);
+  DC.BeginSourceFile(*LangOpts, nullptr);
 
   // Parse module.map file into module map.
   if (ModMap->parseModuleMapFile(ModuleMapEntry, false))

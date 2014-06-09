@@ -217,9 +217,9 @@ static CompilerVersions handleSupportedCompilers(const char *ProgName,
     Version *V = llvm::StringSwitch<Version *>(Compiler)
         .Case("clang", &RequiredVersions.Clang)
         .Case("gcc", &RequiredVersions.Gcc).Case("icc", &RequiredVersions.Icc)
-        .Case("msvc", &RequiredVersions.Msvc).Default(NULL);
+        .Case("msvc", &RequiredVersions.Msvc).Default(nullptr);
 
-    if (V == NULL) {
+    if (V == nullptr) {
       llvm::errs() << ProgName << ": " << Compiler
                    << ": unsupported platform\n";
       Error = true;
@@ -279,7 +279,7 @@ CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
   }
 
   ErrorMessage = "Could not determine sources to transform";
-  return 0;
+  return nullptr;
 }
 
 // Predicate definition for determining whether a file is not included.
