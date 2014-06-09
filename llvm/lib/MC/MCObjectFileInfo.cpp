@@ -584,7 +584,8 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getBSS());
   TextSection =
     Ctx->getCOFFSection(".text",
-                        (IsWoA ? COFF::IMAGE_SCN_MEM_16BIT : 0) |
+                        (IsWoA ? COFF::IMAGE_SCN_MEM_16BIT
+                               : (COFF::SectionCharacteristics)0) |
                         COFF::IMAGE_SCN_CNT_CODE |
                         COFF::IMAGE_SCN_MEM_EXECUTE |
                         COFF::IMAGE_SCN_MEM_READ,
