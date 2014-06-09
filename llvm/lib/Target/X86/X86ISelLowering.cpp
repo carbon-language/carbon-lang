@@ -10074,9 +10074,26 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     break;
   case X86::COND_G: case X86::COND_GE:
   case X86::COND_L: case X86::COND_LE:
-  case X86::COND_O: case X86::COND_NO:
-    NeedOF = true;
+  case X86::COND_O: case X86::COND_NO: {
+    // Check if we really need to set the
+    // Overflow flag. If NoSignedWrap is present
+    // that is not actually needed.
+    switch (Op->getOpcode()) {
+    case ISD::ADD:
+    case ISD::SUB:
+    case ISD::MUL:
+    case ISD::SHL: {
+      const BinaryWithFlagsSDNode *BinNode =
+          cast<BinaryWithFlagsSDNode>(Op.getNode());
+      if (BinNode->hasNoSignedWrap())
+        break;
+    }
+    default:
+      NeedOF = true;
+      break;
+    }
     break;
+  }
   }
   // See if we can use the EFLAGS value from the operand instead of
   // doing a separate TEST. TEST always sets OF and CF to 0, so unless
