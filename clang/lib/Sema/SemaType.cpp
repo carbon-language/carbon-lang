@@ -5127,7 +5127,7 @@ static bool hasVisibleDefinition(Sema &S, NamedDecl *D, NamedDecl **Suggested) {
       ED = NewED;
     if (ED->isFixed()) {
       // If the enum has a fixed underlying type, any declaration of it will do.
-      *Suggested = 0;
+      *Suggested = nullptr;
       for (auto *Redecl : ED->redecls()) {
         if (LookupResult::isVisible(S, Redecl))
           return true;
@@ -5162,7 +5162,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   NamedDecl *Def = nullptr;
   if (!T->isIncompleteType(&Def)) {
     // If we know about the definition but it is not visible, complain.
-    NamedDecl *SuggestedDef = 0;
+    NamedDecl *SuggestedDef = nullptr;
     if (!Diagnoser.Suppressed && Def &&
         !hasVisibleDefinition(*this, Def, &SuggestedDef)) {
       // Suppress this error outside of a SFINAE context if we've already

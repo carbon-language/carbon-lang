@@ -178,7 +178,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
   I.Kind                        = Function;
   I.Loc                         = LocalRangeBegin;
   I.EndLoc                      = LocalRangeEnd;
-  I.Fun.AttrList                = 0;
+  I.Fun.AttrList                = nullptr;
   I.Fun.hasPrototype            = hasProto;
   I.Fun.isVariadic              = EllipsisLoc.isValid();
   I.Fun.isAmbiguous             = isAmbiguous;
@@ -188,7 +188,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
   I.Fun.DeleteParams            = false;
   I.Fun.TypeQuals               = TypeQuals;
   I.Fun.NumParams               = NumParams;
-  I.Fun.Params                  = 0;
+  I.Fun.Params                  = nullptr;
   I.Fun.RefQualifierIsLValueRef = RefQualifierIsLvalueRef;
   I.Fun.RefQualifierLoc         = RefQualifierLoc.getRawEncoding();
   I.Fun.ConstQualifierLoc       = ConstQualifierLoc.getRawEncoding();
@@ -197,8 +197,8 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
   I.Fun.ExceptionSpecType       = ESpecType;
   I.Fun.ExceptionSpecLoc        = ESpecLoc.getRawEncoding();
   I.Fun.NumExceptions           = 0;
-  I.Fun.Exceptions              = 0;
-  I.Fun.NoexceptExpr            = 0;
+  I.Fun.Exceptions              = nullptr;
+  I.Fun.NoexceptExpr            = nullptr;
   I.Fun.HasTrailingReturnType   = TrailingReturnType.isUsable() ||
                                   TrailingReturnType.isInvalid();
   I.Fun.TrailingReturnType      = TrailingReturnType.get();
@@ -657,7 +657,7 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
   DeclRep = Rep;
   TSTLoc = TagKwLoc;
   TSTNameLoc = TagNameLoc;
-  TypeSpecOwned = Owned && Rep != 0;
+  TypeSpecOwned = Owned && Rep != nullptr;
   return false;
 }
 
@@ -1169,7 +1169,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
 
 bool DeclSpec::isMissingDeclaratorOk() {
   TST tst = getTypeSpecType();
-  return isDeclRep(tst) && getRepAsDecl() != 0 &&
+  return isDeclRep(tst) && getRepAsDecl() != nullptr &&
     StorageClassSpec != DeclSpec::SCS_typedef;
 }
 

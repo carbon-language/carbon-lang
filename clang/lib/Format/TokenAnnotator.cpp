@@ -835,7 +835,7 @@ private:
 
   /// \brief Determine whether ')' is ending a cast.
   bool rParenEndsCast(const FormatToken &Tok) {
-    FormatToken *LeftOfParens = NULL;
+    FormatToken *LeftOfParens = nullptr;
     if (Tok.MatchingParen)
       LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
     bool IsCast = false;
@@ -858,8 +858,9 @@ private:
       IsCast = true;
     // If there is an identifier after the (), it is likely a cast, unless
     // there is also an identifier before the ().
-    else if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
-                              LeftOfParens->is(tok::kw_return)) &&
+    else if (LeftOfParens &&
+             (LeftOfParens->Tok.getIdentifierInfo() == nullptr ||
+              LeftOfParens->is(tok::kw_return)) &&
              LeftOfParens->Type != TT_OverloadedOperator &&
              LeftOfParens->isNot(tok::at) &&
              LeftOfParens->Type != TT_TemplateCloser && Tok.Next) {

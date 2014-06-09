@@ -27,8 +27,8 @@ inline PartialDiagnostic Sema::PDiag(unsigned DiagID) {
 
 inline bool
 FTIHasSingleVoidParameter(const DeclaratorChunk::FunctionTypeInfo &FTI) {
-  return FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
-         FTI.Params[0].Param &&
+  return FTI.NumParams == 1 && !FTI.isVariadic &&
+         FTI.Params[0].Ident == nullptr && FTI.Params[0].Param &&
          cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType();
 }
 

@@ -1032,7 +1032,7 @@ bool OpenMPIterationSpaceChecker::CheckInit(Stmt *S) {
 /// variable (which may be the loop variable) if possible.
 static const VarDecl *GetInitVarDecl(const Expr *E) {
   if (!E)
-    return 0;
+    return nullptr;
   E = E->IgnoreParenImpCasts();
   if (auto *CE = dyn_cast_or_null<CXXConstructExpr>(E))
     if (const CXXConstructorDecl *Ctor = CE->getConstructor())

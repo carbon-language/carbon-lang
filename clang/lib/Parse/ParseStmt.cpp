@@ -1766,8 +1766,8 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts, bool OnlyStatement,
     ArgsUnion ArgHints[] = {Hint.OptionLoc, Hint.ValueLoc,
                             ArgsUnion(Hint.ValueExpr)};
     // FIXME: Replace AS_Keyword with Pragma spelling AS_Pragma.
-    TempAttrs.addNew(Hint.LoopLoc->Ident, Hint.Range, 0, Hint.LoopLoc->Loc,
-                     ArgHints, 3, AttributeList::AS_Keyword);
+    TempAttrs.addNew(Hint.LoopLoc->Ident, Hint.Range, nullptr,
+                     Hint.LoopLoc->Loc, ArgHints, 3, AttributeList::AS_Keyword);
   }
 
   // Get the next statement.

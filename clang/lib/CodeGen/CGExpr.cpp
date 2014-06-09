@@ -2276,7 +2276,7 @@ static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
   // If this isn't just an array->pointer decay, bail out.
   const auto *CE = dyn_cast<CastExpr>(E);
   if (!CE || CE->getCastKind() != CK_ArrayToPointerDecay)
-    return 0;
+    return nullptr;
 
   // If this is a decay from variable width array, bail out.
   const Expr *SubExpr = CE->getSubExpr();
