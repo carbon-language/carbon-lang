@@ -22,6 +22,16 @@ void frameSizeWarning();
 
 void frameSizeWarning(int) {}
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wframe-larger-than="
+// expected-warning@+1 {{unknown warning group '-Wframe-larger-than'}}
+#pragma GCC diagnostic ignored "-Wframe-larger-than"
+void frameSizeWarningIgnored() {
+  char buffer[80];
+  doIt(buffer);
+}
+#pragma GCC diagnostic pop
+
 void frameSizeLocalClassWarning() {
   struct S {
     S() { // expected-warning-re {{stack frame size of {{[0-9]+}} bytes in function 'frameSizeLocalClassWarning()::S::S'}}

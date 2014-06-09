@@ -686,7 +686,7 @@ def OpenMPLoopForm : DiagGroup<"openmp-loop-form">;
 
 // Backend warnings.
 def BackendInlineAsm : DiagGroup<"inline-asm">;
-def BackendFrameLargerThan : DiagGroup<"frame-larger-than">;
+def BackendFrameLargerThanEQ : DiagGroup<"frame-larger-than=">;
 def BackendPlugin : DiagGroup<"backend-plugin">;
 def RemarkBackendPlugin : DiagGroup<"remark-backend-plugin">;
 def BackendOptimizationRemark : DiagGroup<"pass">;
