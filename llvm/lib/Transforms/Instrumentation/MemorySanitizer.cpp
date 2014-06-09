@@ -1928,24 +1928,82 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOriginForNaryOp(I);
   }
 
+  // \brief Get an X86_MMX-sized vector type.
+  Type *getMMXVectorTy(unsigned EltSizeInBits) {
+    const unsigned X86_MMXSizeInBits = 64;
+    return VectorType::get(IntegerType::get(*MS.C, EltSizeInBits),
+                           X86_MMXSizeInBits / EltSizeInBits);
+  }
+
+  // \brief Returns a signed counterpart for an (un)signed-saturate-and-pack
+  // intrinsic.
+  Intrinsic::ID getSignedPackIntrinsic(Intrinsic::ID id) {
+    switch (id) {
+      case llvm::Intrinsic::x86_sse2_packsswb_128:
+      case llvm::Intrinsic::x86_sse2_packuswb_128:
+        return llvm::Intrinsic::x86_sse2_packsswb_128;
+
+      case llvm::Intrinsic::x86_sse2_packssdw_128:
+      case llvm::Intrinsic::x86_sse41_packusdw:
+        return llvm::Intrinsic::x86_sse2_packssdw_128;
+
+      case llvm::Intrinsic::x86_avx2_packsswb:
+      case llvm::Intrinsic::x86_avx2_packuswb:
+        return llvm::Intrinsic::x86_avx2_packsswb;
+
+      case llvm::Intrinsic::x86_avx2_packssdw:
+      case llvm::Intrinsic::x86_avx2_packusdw:
+        return llvm::Intrinsic::x86_avx2_packssdw;
+
+      case llvm::Intrinsic::x86_mmx_packsswb:
+      case llvm::Intrinsic::x86_mmx_packuswb:
+        return llvm::Intrinsic::x86_mmx_packsswb;
+
+      case llvm::Intrinsic::x86_mmx_packssdw:
+        return llvm::Intrinsic::x86_mmx_packssdw;
+      default:
+        llvm_unreachable("unexpected intrinsic id");
+    }
+  }
+
   // \brief Instrument vector shift instrinsic.
   //
   // This function instruments intrinsics like x86_mmx_packsswb, that
   // packs elements of 2 input vectors into half as much bits with saturation.
-  // Shadow is propagated with the same intrinsic applied to
-  // sext(Sa != zeroinitializer), sext(Sb != zeroinitializer).
-  void handleVectorPackIntrinsic(IntrinsicInst &I) {
+  // Shadow is propagated with the signed variant of the same intrinsic applied
+  // to sext(Sa != zeroinitializer), sext(Sb != zeroinitializer).
+  // EltSizeInBits is used only for x86mmx arguments.
+  void handleVectorPackIntrinsic(IntrinsicInst &I, unsigned EltSizeInBits = 0) {
     assert(I.getNumArgOperands() == 2);
+    bool isX86_MMX = I.getOperand(0)->getType()->isX86_MMXTy();
     IRBuilder<> IRB(&I);
     Value *S1 = getShadow(&I, 0);
     Value *S2 = getShadow(&I, 1);
-    Type *T = S1->getType();
+    assert(isX86_MMX || S1->getType()->isVectorTy());
+
+    // SExt and ICmpNE below must apply to individual elements of input vectors.
+    // In case of x86mmx arguments, cast them to appropriate vector types and
+    // back.
+    Type *T = isX86_MMX ? getMMXVectorTy(EltSizeInBits) : S1->getType();
+    if (isX86_MMX) {
+      S1 = IRB.CreateBitCast(S1, T);
+      S2 = IRB.CreateBitCast(S2, T);
+    }
     Value *S1_ext = IRB.CreateSExt(
         IRB.CreateICmpNE(S1, llvm::Constant::getNullValue(T)), T);
     Value *S2_ext = IRB.CreateSExt(
         IRB.CreateICmpNE(S2, llvm::Constant::getNullValue(T)), T);
-    Value *S = IRB.CreateCall2(I.getCalledValue(), S1_ext, S2_ext,
-                               "_msprop_vector_pack");
+    if (isX86_MMX) {
+      Type *X86_MMXTy = Type::getX86_MMXTy(*MS.C);
+      S1_ext = IRB.CreateBitCast(S1_ext, X86_MMXTy);
+      S2_ext = IRB.CreateBitCast(S2_ext, X86_MMXTy);
+    }
+
+    Function *ShadowFn = Intrinsic::getDeclaration(
+        F.getParent(), getSignedPackIntrinsic(I.getIntrinsicID()));
+
+    Value *S = IRB.CreateCall2(ShadowFn, S1_ext, S2_ext, "_msprop_vector_pack");
+    if (isX86_MMX) S = IRB.CreateBitCast(S, getShadowTy(&I));
     setShadow(&I, S);
     setOriginForNaryOp(I);
   }
@@ -2074,10 +2132,16 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     case llvm::Intrinsic::x86_avx2_packssdw:
     case llvm::Intrinsic::x86_avx2_packuswb:
     case llvm::Intrinsic::x86_avx2_packusdw:
-    case llvm::Intrinsic::x86_mmx_packsswb:
-    case llvm::Intrinsic::x86_mmx_packssdw:
-    case llvm::Intrinsic::x86_mmx_packuswb:
       handleVectorPackIntrinsic(I);
+      break;
+
+    case llvm::Intrinsic::x86_mmx_packsswb:
+    case llvm::Intrinsic::x86_mmx_packuswb:
+      handleVectorPackIntrinsic(I, 16);
+      break;
+
+    case llvm::Intrinsic::x86_mmx_packssdw:
+      handleVectorPackIntrinsic(I, 32);
       break;
 
     default:
