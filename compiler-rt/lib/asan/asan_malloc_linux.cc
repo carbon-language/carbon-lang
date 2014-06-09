@@ -29,18 +29,20 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
 DECLARE_REAL_AND_INTERCEPTOR(void*, calloc, uptr nmemb, uptr size)
 DECLARE_REAL_AND_INTERCEPTOR(void*, realloc, void *ptr, uptr size)
 DECLARE_REAL_AND_INTERCEPTOR(void*, memalign, uptr boundary, uptr size)
+DECLARE_REAL_AND_INTERCEPTOR(uptr, malloc_usable_size, void *mem)
 
 struct MallocDebug {
-  void* (*malloc)(uptr bytes);
-  void  (*free)(void* mem);
-  void* (*calloc)(uptr n_elements, uptr elem_size);
-  void* (*realloc)(void* oldMem, uptr bytes);
-  void* (*memalign)(uptr alignment, uptr bytes);
+  void *(*malloc)(uptr bytes);
+  void (*free)(void *mem);
+  void *(*calloc)(uptr n_elements, uptr elem_size);
+  void *(*realloc)(void *oldMem, uptr bytes);
+  void *(*memalign)(uptr alignment, uptr bytes);
+  uptr (*malloc_usable_size)(void *mem);
 };
 
-const MallocDebug asan_malloc_dispatch ALIGNED(32) = {
-  WRAP(malloc), WRAP(free), WRAP(calloc), WRAP(realloc), WRAP(memalign)
-};
+ALIGNED(32) const MallocDebug asan_malloc_dispatch = {
+    WRAP(malloc),  WRAP(free),     WRAP(calloc),
+    WRAP(realloc), WRAP(memalign), WRAP(malloc_usable_size)};
 
 namespace __asan {
 void ReplaceSystemMalloc() {
