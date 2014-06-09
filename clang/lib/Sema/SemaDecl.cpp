@@ -9111,9 +9111,11 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
         VD->isThisDeclarationADefinition()) {
       // We allow definitions of dllimport class template static data members
       // with a warning.
+      CXXRecordDecl *Context =
+        cast<CXXRecordDecl>(VD->getFirstDecl()->getDeclContext());
       bool IsClassTemplateMember =
-          cast<CXXRecordDecl>(VD->getFirstDecl()->getDeclContext())
-              ->getDescribedClassTemplate();
+          isa<ClassTemplatePartialSpecializationDecl>(Context) ||
+          Context->getDescribedClassTemplate();
 
       Diag(VD->getLocation(),
            IsClassTemplateMember
