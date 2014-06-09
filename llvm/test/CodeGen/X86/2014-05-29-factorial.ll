@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
-; CHECK: decq %rdi
-; CHECK-NOT: testq %rdi, %rdi
+; CHECK: decq [[X:%rdi|%rcx]]
+; CHECK-NOT: testq [[X]], [[X]]
 
 define i64 @fact2(i64 %x) {
 entry:
