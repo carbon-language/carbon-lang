@@ -203,7 +203,7 @@ public:
 private:
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
 
-  void add(StringRef name, const lld::Atom *atom, bool isGroupChild = false) {
+  void add(StringRef name, const lld::Atom *atom) {
     if (const lld::DefinedAtom *da = dyn_cast<DefinedAtom>(atom)) {
       if (da->isGroupParent()) {
         if (_groupMap.count(name)) {
@@ -1160,9 +1160,9 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
   for (const lld::DefinedAtom *a : file->defined()) {
     NormalizedAtom *na = (NormalizedAtom *)a;
     if (!na->_refName.empty())
-      add(na->_refName, a, na->isGroupChild());
+      add(na->_refName, a);
     else if (!na->_name.empty())
-      add(na->_name, a, na->isGroupChild());
+      add(na->_name, a);
   }
 
   for (const lld::UndefinedAtom *a : file->undefined())
