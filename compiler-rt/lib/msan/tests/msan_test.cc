@@ -3641,6 +3641,28 @@ TEST(VectorPackTest, sse2_packssdw_128) {
   EXPECT_EQ(c[7], S2_max);
 }
 
+TEST(VectorPackTest, mmx_packuswb) {
+  const unsigned U1_max = (1 << 8) - 1;
+  V4x16 a = {Poisoned<U2>(0, 0xFF00), Poisoned<U2>(0, 0xF000U), U1_max + 100,
+             4};
+  V4x16 b = {Poisoned<U2>(0, 0xFF), U1_max - 1, Poisoned<U2>(0, 0xF), U1_max};
+  V8x8 c = _mm_packs_pu16(a, b);
+
+  EXPECT_POISONED(c[0]);
+  EXPECT_POISONED(c[1]);
+  EXPECT_NOT_POISONED(c[2]);
+  EXPECT_NOT_POISONED(c[3]);
+  EXPECT_POISONED(c[4]);
+  EXPECT_NOT_POISONED(c[5]);
+  EXPECT_POISONED(c[6]);
+  EXPECT_NOT_POISONED(c[7]);
+
+  EXPECT_EQ(c[2], U1_max);
+  EXPECT_EQ(c[3], 4);
+  EXPECT_EQ(c[5], U1_max - 1);
+  EXPECT_EQ(c[7], U1_max);
+}
+
 TEST(MemorySanitizerDr, StoreInDSOTest) {
   if (!__msan_has_dynamic_component()) return;
   char* s = new char[10];
