@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Config/config.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -31,11 +32,22 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FEnv.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include <cerrno>
 #include <cmath>
+
+#ifdef HAVE_FENV_H
+#include <fenv.h>
+#define USE_FENV
+#endif
+
+// FIXME: Clang's #include handling apparently doesn't work for libstdc++'s
+// fenv.h; see PR6907 for details.
+#if defined(__clang__) && defined(_GLIBCXX_FENV_H)
+#undef USE_FENV
+#endif
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -1314,12 +1326,34 @@ static Constant *GetConstantFoldFPValue(double V, Type *Ty) {
 
 }
 
+namespace {
+/// llvm_fenv_clearexcept - Clear the floating-point exception state.
+static inline void llvm_fenv_clearexcept() {
+#if defined(USE_FENV) && HAVE_DECL_FE_ALL_EXCEPT
+  feclearexcept(FE_ALL_EXCEPT);
+#endif
+  errno = 0;
+}
+
+/// llvm_fenv_testexcept - Test if a floating-point exception was raised.
+static inline bool llvm_fenv_testexcept() {
+  int errno_val = errno;
+  if (errno_val == ERANGE || errno_val == EDOM)
+    return true;
+#if defined(USE_FENV) && HAVE_DECL_FE_ALL_EXCEPT && HAVE_DECL_FE_INEXACT
+  if (fetestexcept(FE_ALL_EXCEPT & ~FE_INEXACT))
+    return true;
+#endif
+  return false;
+}
+} // End namespace
+
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
                                 Type *Ty) {
-  sys::llvm_fenv_clearexcept();
+  llvm_fenv_clearexcept();
   V = NativeFP(V);
-  if (sys::llvm_fenv_testexcept()) {
-    sys::llvm_fenv_clearexcept();
+  if (llvm_fenv_testexcept()) {
+    llvm_fenv_clearexcept();
     return nullptr;
   }
 
@@ -1328,10 +1362,10 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
 
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       double V, double W, Type *Ty) {
-  sys::llvm_fenv_clearexcept();
+  llvm_fenv_clearexcept();
   V = NativeFP(V, W);
-  if (sys::llvm_fenv_testexcept()) {
-    sys::llvm_fenv_clearexcept();
+  if (llvm_fenv_testexcept()) {
+    llvm_fenv_clearexcept();
     return nullptr;
   }
 
