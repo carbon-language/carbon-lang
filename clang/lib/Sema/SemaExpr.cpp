@@ -5478,6 +5478,36 @@ static QualType checkConditionalPointerCompatibility(Sema &S, ExprResult &LHS,
   return ResultTy;
 }
 
+/// \brief Returns true if QT is quelified-id and implements 'NSObject' and/or
+/// 'NSCopying' protocols (and nothing else); or QT is an NSObject and optionally
+/// implements 'NSObject' and/or NSCopying' protocols (and nothing else).
+static bool isObjCPtrBlockCompatible(Sema &S, ASTContext &C, QualType QT) {
+  if (QT->isObjCIdType())
+    return true;
+  
+  const ObjCObjectPointerType *OPT = QT->getAs<ObjCObjectPointerType>();
+  if (!OPT)
+    return false;
+
+  if (ObjCInterfaceDecl *ID = OPT->getInterfaceDecl())
+    if (ID->getIdentifier() != &C.Idents.get("NSObject"))
+      return false;
+  
+  ObjCProtocolDecl* PNSCopying =
+    S.LookupProtocol(&C.Idents.get("NSCopying"), SourceLocation());
+  ObjCProtocolDecl* PNSObject =
+    S.LookupProtocol(&C.Idents.get("NSObject"), SourceLocation());
+
+  for (auto *Proto : OPT->quals()) {
+    if ((PNSCopying && declaresSameEntity(Proto, PNSCopying)) ||
+        (PNSObject && declaresSameEntity(Proto, PNSObject)))
+      ;
+    else
+      return false;
+  }
+  return true;
+}
+
 /// \brief Return the resulting type when the operands are both block pointers.
 static QualType checkConditionalBlockPointerCompatibility(Sema &S,
                                                           ExprResult &LHS,
@@ -6435,8 +6465,9 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
       return IncompatiblePointer;
     }
 
-    // T^ -> id; not T^ ->A* and not T^ -> id<P>
-    if (RHSType->isBlockPointerType() && LHSType->isObjCIdType()) {
+    // Only under strict condition T^ is compatible with an Objective-C pointer.
+    if (RHSType->isBlockPointerType() &&
+        isObjCPtrBlockCompatible(*this, Context, LHSType)) {
       maybeExtendBlockObject(*this, RHS);
       Kind = CK_BlockPointerToObjCPointerCast;
       return Compatible;

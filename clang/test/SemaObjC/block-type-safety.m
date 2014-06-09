@@ -23,6 +23,7 @@ void r1(Sub* (^f)()) { // expected-note{{passing argument to parameter 'f' here}
 }
 
 @protocol NSObject;
+@class NSObject;
 
 void r2 (id<NSObject> (^f) (void)) {
   id o = f();
@@ -177,3 +178,23 @@ NSArray* anArray1;
 aBlock = anArray1; // expected-error {{assigning to 'void (^)()' from incompatible type 'NSArray *'}}
 }
 
+void Test2() {
+  void (^aBlock)();
+  id<NSObject> anQualId1 = aBlock; // Ok
+  id<NSObject, NSCopying> anQualId2 = aBlock; // Ok
+  id<NSObject, NSCopying, NSObject, NSCopying> anQualId3 = aBlock; // Ok
+  id <P1>  anQualId4  = aBlock; // expected-error {{initializing 'id<P1>' with an expression of incompatible type 'void (^)()'}}
+  id<NSObject, P1, NSCopying> anQualId5 = aBlock; // expected-error {{initializing 'id<NSObject,P1,NSCopying>' with an expression of incompatible type 'void (^)()'}}
+  id<NSCopying> anQualId6 = aBlock; // Ok
+}
+
+void Test3() {
+  void (^aBlock)();
+  NSObject *NSO = aBlock; // Ok
+  NSObject<NSObject> *NSO1 = aBlock; // Ok
+  NSObject<NSObject, NSCopying> *NSO2 = aBlock; // Ok
+  NSObject<NSObject, NSCopying, NSObject, NSCopying> *NSO3 = aBlock; // Ok
+  NSObject <P1>  *NSO4  = aBlock; // expected-error {{initializing 'NSObject<P1> *' with an expression of incompatible type 'void (^)()'}}
+  NSObject<NSObject, P1, NSCopying> *NSO5 = aBlock; // expected-error {{initializing 'NSObject<NSObject,P1,NSCopying> *' with an expression of incompatible type 'void (^)()'}}
+  NSObject<NSCopying> *NSO6 = aBlock; // Ok
+}
