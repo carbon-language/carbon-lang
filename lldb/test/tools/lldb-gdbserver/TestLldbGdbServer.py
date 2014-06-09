@@ -49,7 +49,7 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
 
         # Uncomment this code to force only a single test to run (by name).
-        # if not re.search(r"breakpoint", self._testMethodName):
+        # if not re.search(r"(single_step|break)", self._testMethodName):
         #     self.skipTest("focusing on one test")
 
     def reset_test_sequence(self):
@@ -371,6 +371,30 @@ class LldbGdbServerTestCase(TestBase):
                         timeout_seconds, thread_count, actual_thread_count))
 
         return threads
+
+    def add_set_breakpoint_packets(self, address, do_continue=True, breakpoint_kind=1):
+        self.test_sequence.add_log_lines(
+            [# Set the breakpoint.
+             "read packet: $Z0,{0:x},{1}#00".format(address, breakpoint_kind),
+             # Verify the stub could set it.
+             "send packet: $OK#00",
+             ], True)
+        
+        if (do_continue):
+            self.test_sequence.add_log_lines(
+                [# Continue the inferior.
+                 "read packet: $c#00",
+                 # Expect a breakpoint stop report.
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                 ], True)        
+
+    def add_remove_breakpoint_packets(self, address, breakpoint_kind=1):
+        self.test_sequence.add_log_lines(
+            [# Remove the breakpoint.
+             "read packet: $z0,{0:x},{1}#00".format(address, breakpoint_kind),
+             # Verify the stub could unset it.
+             "send packet: $OK#00",
+            ], True)
 
     def run_process_then_stop(self, run_seconds=1):
         # Tell the stub to continue.
@@ -1010,8 +1034,8 @@ class LldbGdbServerTestCase(TestBase):
         self.add_threadinfo_collection_packets()
         self.test_sequence.add_log_lines(
             ["read packet: $qC#00",
-             { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} }],
-            True)
+             { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} }
+             ], True)
 
         # Run the packet stream.
         context = self.expect_gdbremote_sequence()
@@ -1310,7 +1334,7 @@ class LldbGdbServerTestCase(TestBase):
 
         # Start up the inferior.
         procs = self.prep_debug_monitor_and_inferior(
-            inferior_args=["set-message:%s" % MEMORY_CONTENTS, "get-message-address-hex:", "sleep:5"])
+            inferior_args=["set-message:%s" % MEMORY_CONTENTS, "get-data-address-hex:g_message", "sleep:5"])
 
         # Run the process
         self.test_sequence.add_log_lines(
@@ -1319,7 +1343,7 @@ class LldbGdbServerTestCase(TestBase):
              "read packet: $c#00",
              # Match output line that prints the memory address of the message buffer within the inferior. 
              # Note we require launch-only testing so we can get inferior otuput.
-             { "type":"output_match", "regex":r"^message address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"message_address"} },
+             { "type":"output_match", "regex":r"^data address: 0x([0-9a-fA-F]+)\r\n$", "capture":{ 1:"message_address"} },
              # Now stop the inferior.
              "read packet: {}".format(chr(03)),
              # And wait for the stop notification.
@@ -1616,26 +1640,15 @@ class LldbGdbServerTestCase(TestBase):
         self.assertIsNotNone(pc_lldb_reg_index)
         self.assertIsNotNone(pc_reg_info)
 
-        # Grab the address.
+        # Grab the function address.
         self.assertIsNotNone(context.get("function_address"))
         function_address = int(context.get("function_address"), 16)
 
         # Set the breakpoint.
         # Note this might need to be switched per platform (ARM, mips, etc.).
         BREAKPOINT_KIND = 1
-
         self.reset_test_sequence()
-        self.test_sequence.add_log_lines(
-            [
-             # Set the breakpoint.
-             "read packet: $Z0,{0:x},{1}#00".format(function_address, BREAKPOINT_KIND),
-             # Verify the stub could set it.
-             "send packet: $OK#00",
-             # Continue the inferior.
-             "read packet: $c#00",
-             # Expect a breakpoint stop report.
-             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
-             ], True)
+        self.add_set_breakpoint_packets(function_address, do_continue=True, breakpoint_kind=BREAKPOINT_KIND)
 
         # Run the packet stream.
         context = self.expect_gdbremote_sequence()
@@ -1708,6 +1721,166 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_launch()
         self.software_breakpoint_set_and_remove_work()
+
+    def g_c1_c2_contents_are(self, args):
+        g_c1_address = args["g_c1_address"]
+        g_c2_address = args["g_c2_address"]
+        expected_g_c1 = args["expected_g_c1"]
+        expected_g_c2 = args["expected_g_c2"]
+        
+        # Read g_c1 and g_c2 contents.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            ["read packet: $m{0:x},{1:x}#00".format(g_c1_address, 1),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"g_c1_contents"} },
+             "read packet: $m{0:x},{1:x}#00".format(g_c2_address, 1),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"g_c2_contents"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Check if what we read from inferior memory is what we are expecting.
+        self.assertIsNotNone(context.get("g_c1_contents"))
+        self.assertIsNotNone(context.get("g_c2_contents"))
+ 
+        return (context.get("g_c1_contents").decode("hex") == expected_g_c1) and (context.get("g_c2_contents").decode("hex") == expected_g_c2)
+
+    def count_single_steps_until_true(self, thread_id, predicate, args, max_step_count=100):
+        single_step_count = 0
+
+        while single_step_count < max_step_count:
+            # Single step.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                [# Set the continue thread.
+                 "read packet: $Hc{0:x}#00".format(thread_id),
+                 "send packet: $OK#00",
+                 # Single step.
+                 "read packet: $s#00",
+                 # "read packet: $vCont;s:{0:x}#00".format(thread_id),
+                 # Expect a breakpoint stop report.
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                 ], True)
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+            self.assertIsNotNone(context.get("stop_signo"))
+            self.assertEquals(int(context.get("stop_signo"), 16), signal.SIGTRAP)
+           
+            single_step_count += 1
+            
+            # See if the predicate is true.  If so, we're done.
+            if predicate(args):
+                return (True, single_step_count)
+        
+        # The predicate didn't return true within the runaway step count.
+        return (False, single_step_count)
+
+    def single_step_only_steps_one_instruction(self):
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["get-code-address-hex:swap_chars", "get-data-address-hex:g_c1", "get-data-address-hex:g_c2", "sleep:1", "call-function:swap_chars", "sleep:5"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [# Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the function call entry point.
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\n$", 
+               "capture":{ 1:"function_address", 2:"g_c1_address", 3:"g_c2_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the main thread id.
+        self.assertIsNotNone(context.get("stop_thread_id"))
+        main_thread_id = int(context.get("stop_thread_id"), 16)
+
+        # Grab the function address.
+        self.assertIsNotNone(context.get("function_address"))
+        function_address = int(context.get("function_address"), 16)
+
+        # Grab the data addresses.
+        self.assertIsNotNone(context.get("g_c1_address"))
+        g_c1_address = int(context.get("g_c1_address"), 16)
+
+        self.assertIsNotNone(context.get("g_c2_address"))
+        g_c2_address = int(context.get("g_c2_address"), 16)
+
+        # Set a breakpoint at the given address.
+        # Note this might need to be switched per platform (ARM, mips, etc.).
+        BREAKPOINT_KIND = 1
+        self.reset_test_sequence()
+        self.add_set_breakpoint_packets(function_address, do_continue=True, breakpoint_kind=BREAKPOINT_KIND)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Remove the breakpoint.
+        self.reset_test_sequence()
+        self.add_remove_breakpoint_packets(function_address, breakpoint_kind=BREAKPOINT_KIND)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Verify g_c1 and g_c2 match expected initial state.
+        args = {}
+        args["g_c1_address"] = g_c1_address
+        args["g_c2_address"] = g_c2_address
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "1"
+
+        self.assertTrue(self.g_c1_c2_contents_are(args))
+        
+        # Verify we take only a small number of steps to hit the first state.  Might need to work through function entry prologue code.
+        args["expected_g_c1"] = "1"
+        args["expected_g_c2"] = "1"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=25)
+        self.assertTrue(state_reached)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "1"
+        args["expected_g_c2"] = "0"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "0"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "1"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
+
+    @debugserver_test
+    @dsym_test
+    def test_single_step_only_steps_one_instruction_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.single_step_only_steps_one_instruction()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_single_step_only_steps_one_instruction_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.single_step_only_steps_one_instruction()
 
 
 if __name__ == '__main__':
