@@ -1,4 +1,6 @@
 ; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu -march=ppc32 -mattr=+altivec | FileCheck %s
+; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu -march=ppc64 -mattr=+altivec | FileCheck %s
+; RUN: llc < %s -mtriple=powerpc64le-unknown-linux-gnu -march=ppc64 -mattr=+altivec | FileCheck %s -check-prefix=CHECK-LE
 
 define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 	%tmp = load <4 x i32>* %X		; <<4 x i32>> [#uses=1]
@@ -9,6 +11,9 @@ define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 ; CHECK-LABEL: test_v4i32:
 ; CHECK: vmsumuhm
 ; CHECK-NOT: mullw
+; CHECK-LE-LABEL: test_v4i32:
+; CHECK-LE: vmsumuhm
+; CHECK-LE-NOT: mullw
 
 define <8 x i16> @test_v8i16(<8 x i16>* %X, <8 x i16>* %Y) {
 	%tmp = load <8 x i16>* %X		; <<8 x i16>> [#uses=1]
@@ -19,6 +24,9 @@ define <8 x i16> @test_v8i16(<8 x i16>* %X, <8 x i16>* %Y) {
 ; CHECK-LABEL: test_v8i16:
 ; CHECK: vmladduhm
 ; CHECK-NOT: mullw
+; CHECK-LE-LABEL: test_v8i16:
+; CHECK-LE: vmladduhm
+; CHECK-LE-NOT: mullw
 
 define <16 x i8> @test_v16i8(<16 x i8>* %X, <16 x i8>* %Y) {
 	%tmp = load <16 x i8>* %X		; <<16 x i8>> [#uses=1]
@@ -30,6 +38,11 @@ define <16 x i8> @test_v16i8(<16 x i8>* %X, <16 x i8>* %Y) {
 ; CHECK: vmuloub
 ; CHECK: vmuleub
 ; CHECK-NOT: mullw
+; CHECK-LE-LABEL: test_v16i8:
+; CHECK-LE: vmuloub [[REG1:[0-9]+]]
+; CHECK-LE: vmuleub [[REG2:[0-9]+]]
+; CHECK-LE: vperm {{[0-9]+}}, [[REG2]], [[REG1]]
+; CHECK-LE-NOT: mullw
 
 define <4 x float> @test_float(<4 x float>* %X, <4 x float>* %Y) {
 	%tmp = load <4 x float>* %X
@@ -44,3 +57,7 @@ define <4 x float> @test_float(<4 x float>* %X, <4 x float>* %Y) {
 ; CHECK: vspltisw [[ZNEG:[0-9]+]], -1
 ; CHECK: vslw     {{[0-9]+}}, [[ZNEG]], [[ZNEG]]
 ; CHECK: vmaddfp
+; CHECK-LE-LABEL: test_float:
+; CHECK-LE: vspltisw [[ZNEG:[0-9]+]], -1
+; CHECK-LE: vslw     {{[0-9]+}}, [[ZNEG]], [[ZNEG]]
+; CHECK-LE: vmaddfp

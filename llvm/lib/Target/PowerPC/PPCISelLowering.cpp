@@ -6059,6 +6059,7 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
                             LHS, RHS, Zero, DAG, dl);
   } else if (Op.getValueType() == MVT::v16i8) {
     SDValue LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+    bool isLittleEndian = PPCSubTarget.isLittleEndian();
 
     // Multiply the even 8-bit parts, producing 16-bit sums.
     SDValue EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleub,
@@ -6070,13 +6071,24 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
                                           LHS, RHS, DAG, dl, MVT::v8i16);
     OddParts = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OddParts);
 
-    // Merge the results together.
+    // Merge the results together.  Because vmuleub and vmuloub are
+    // instructions with a big-endian bias, we must reverse the
+    // element numbering and reverse the meaning of "odd" and "even"
+    // when generating little endian code.
     int Ops[16];
     for (unsigned i = 0; i != 8; ++i) {
-      Ops[i*2  ] = 2*i+1;
-      Ops[i*2+1] = 2*i+1+16;
+      if (isLittleEndian) {
+        Ops[i*2  ] = 2*i;
+        Ops[i*2+1] = 2*i+16;
+      } else {
+        Ops[i*2  ] = 2*i+1;
+        Ops[i*2+1] = 2*i+1+16;
+      }
     }
-    return DAG.getVectorShuffle(MVT::v16i8, dl, EvenParts, OddParts, Ops);
+    if (isLittleEndian)
+      return DAG.getVectorShuffle(MVT::v16i8, dl, OddParts, EvenParts, Ops);
+    else
+      return DAG.getVectorShuffle(MVT::v16i8, dl, EvenParts, OddParts, Ops);
   } else {
     llvm_unreachable("Unknown mul to lower!");
   }
