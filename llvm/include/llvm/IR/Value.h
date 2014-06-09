@@ -67,6 +67,13 @@ typedef StringMapEntry<Value*> ValueName;
 ///
 /// @brief LLVM Value Representation
 class Value {
+  Type *VTy;
+  Use *UseList;
+
+  friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
+  friend class ValueHandleBase;
+  ValueName *Name;
+
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
   unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
 protected:
@@ -77,6 +84,11 @@ protected:
   unsigned char SubclassOptionalData : 7;
 
 private:
+  /// SubclassData - This member is defined by this class, but is not used for
+  /// anything.  Subclasses can use it to hold whatever state they find useful.
+  /// This field is initialized to zero by the ctor.
+  unsigned short SubclassData;
+
   template <typename UseT> // UseT == 'Use' or 'const Use'
   class use_iterator_impl
       : public std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> {
@@ -166,18 +178,6 @@ private:
     /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
     unsigned getOperandNo() const { return UI->getOperandNo(); }
   };
-
-  /// SubclassData - This member is defined by this class, but is not used for
-  /// anything.  Subclasses can use it to hold whatever state they find useful.
-  /// This field is initialized to zero by the ctor.
-  unsigned short SubclassData;
-
-  Type *VTy;
-  Use *UseList;
-
-  friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
-  friend class ValueHandleBase;
-  ValueName *Name;
 
   void operator=(const Value &) LLVM_DELETED_FUNCTION;
   Value(const Value &) LLVM_DELETED_FUNCTION;

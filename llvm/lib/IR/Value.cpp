@@ -38,13 +38,12 @@ using namespace llvm;
 
 static inline Type *checkType(Type *Ty) {
   assert(Ty && "Value defined with a null type: Error!");
-  return const_cast<Type*>(Ty);
+  return Ty;
 }
 
 Value::Value(Type *ty, unsigned scid)
-  : SubclassID(scid), HasValueHandle(0),
-    SubclassOptionalData(0), SubclassData(0), VTy((Type*)checkType(ty)),
-    UseList(nullptr), Name(nullptr) {
+    : VTy(checkType(ty)), UseList(nullptr), Name(nullptr), SubclassID(scid),
+      HasValueHandle(0), SubclassOptionalData(0), SubclassData(0) {
   // FIXME: Why isn't this in the subclass gunk??
   // Note, we cannot call isa<CallInst> before the CallInst has been
   // constructed.
