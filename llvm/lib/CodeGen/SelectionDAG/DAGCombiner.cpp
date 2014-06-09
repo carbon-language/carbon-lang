@@ -9721,6 +9721,27 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     return SDValue();
   unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
 
+  // Canonicalize insert_vector_elt dag nodes.
+  // Example:
+  // (insert_vector_elt (insert_vector_elt A, Idx0), Idx1)
+  // -> (insert_vector_elt (insert_vector_elt A, Idx1), Idx0)
+  //
+  // Do this only if the child insert_vector node has one use; also
+  // do this only if indices are both constants and Idx1 < Idx0.
+  if (InVec.getOpcode() == ISD::INSERT_VECTOR_ELT && InVec.hasOneUse()
+      && isa<ConstantSDNode>(InVec.getOperand(2))) {
+    unsigned OtherElt =
+      cast<ConstantSDNode>(InVec.getOperand(2))->getZExtValue();
+    if (Elt < OtherElt) {
+      // Swap nodes.
+      SDValue NewOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(N), VT,
+                                  InVec.getOperand(0), InVal, EltNo);
+      AddToWorkList(NewOp.getNode());
+      return DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(InVec.getNode()),
+                         VT, NewOp, InVec.getOperand(1), InVec.getOperand(2));
+    }
+  }
+
   // Check that the operand is a BUILD_VECTOR (or UNDEF, which can essentially
   // be converted to a BUILD_VECTOR).  Fill in the Ops vector with the
   // vector elements.

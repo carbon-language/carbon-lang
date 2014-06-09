@@ -1560,6 +1560,7 @@ void X86TargetLowering::resetOperationActions() {
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
   setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
+  setTargetDAGCombine(ISD::BUILD_VECTOR);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::XOR);
@@ -6045,6 +6046,89 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
                          DAG.getConstant((Immediate | 1), SelectVT),
                          DAG.getConstant(Immediate, SelectVT));
   return DAG.getNode(ISD::BITCAST, dl, VT, Select);
+}
+
+static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
+                                          const X86Subtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+
+  // Try to match a horizontal ADD or SUB.
+  if (((VT == MVT::v4f32 || VT == MVT::v2f64) && Subtarget->hasSSE3()) ||
+      ((VT == MVT::v8f32 || VT == MVT::v4f64) && Subtarget->hasAVX()) ||
+      ((VT == MVT::v4i32 || VT == MVT::v8i16) && Subtarget->hasSSSE3()) ||
+      ((VT == MVT::v8i32 || VT == MVT::v16i16) && Subtarget->hasAVX2())) {
+    unsigned NumOperands = N->getNumOperands();
+    unsigned Opcode = N->getOperand(0)->getOpcode();
+    bool isCommutable = false;
+    bool CanFold = false;
+    switch (Opcode) {
+    default : break;
+    case ISD::ADD :
+    case ISD::FADD :
+      isCommutable = true;
+      // FALL-THROUGH
+    case ISD::SUB :
+    case ISD::FSUB :
+      CanFold = true;
+    }
+
+    // Verify that operands have the same opcode; also, the opcode can only
+    // be either of: ADD, FADD, SUB, FSUB.
+    SDValue InVec0, InVec1;
+    for (unsigned i = 0, e = NumOperands; i != e && CanFold; ++i) {
+      SDValue Op = N->getOperand(i);
+      CanFold = Op->getOpcode() == Opcode && Op->hasOneUse();
+
+      if (!CanFold)
+        break;
+
+      SDValue Op0 = Op.getOperand(0);
+      SDValue Op1 = Op.getOperand(1);
+
+      // Try to match the following pattern:
+      // (BINOP (extract_vector_elt A, I), (extract_vector_elt A, I+1))
+      CanFold = (Op0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+          Op1.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+          Op0.getOperand(0) == Op1.getOperand(0) &&
+          isa<ConstantSDNode>(Op0.getOperand(1)) &&
+          isa<ConstantSDNode>(Op1.getOperand(1)));
+      if (!CanFold)
+        break;
+
+      unsigned I0 = cast<ConstantSDNode>(Op0.getOperand(1))->getZExtValue();
+      unsigned I1 = cast<ConstantSDNode>(Op1.getOperand(1))->getZExtValue();
+      unsigned ExpectedIndex = (i * 2) % NumOperands;
+ 
+      if (i == 0)
+        InVec0 = Op0.getOperand(0);
+      else if (i * 2 == NumOperands)
+        InVec1 = Op0.getOperand(0);
+
+      SDValue Expected = (i * 2 < NumOperands) ? InVec0 : InVec1;
+      if (I0 == ExpectedIndex)
+        CanFold = I1 == I0 + 1 && Op0.getOperand(0) == Expected;
+      else if (isCommutable && I1 == ExpectedIndex) {
+        // Try to see if we can match the following dag sequence:
+        // (BINOP (extract_vector_elt A, I+1), (extract_vector_elt A, I))
+        CanFold = I0 == I1 + 1 && Op1.getOperand(0) == Expected;
+      }
+    }
+
+    if (CanFold) {
+      unsigned NewOpcode;
+      switch (Opcode) {
+      default : llvm_unreachable("Unexpected opcode found!");
+      case ISD::ADD : NewOpcode = X86ISD::HADD; break;
+      case ISD::FADD : NewOpcode = X86ISD::FHADD; break;
+      case ISD::SUB : NewOpcode = X86ISD::HSUB; break;
+      case ISD::FSUB : NewOpcode = X86ISD::FHSUB; break;
+      }
+ 
+      return DAG.getNode(NewOpcode, SDLoc(N), VT, InVec0, InVec1);
+    }
+  }
+
+  return SDValue();
 }
 
 SDValue
@@ -20738,6 +20822,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformINTRINSIC_WO_CHAINCombine(N, DAG, Subtarget);
   case X86ISD::INSERTPS:
     return PerformINSERTPSCombine(N, DAG, Subtarget);
+  case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DAG, Subtarget);
   }
 
   return SDValue();
