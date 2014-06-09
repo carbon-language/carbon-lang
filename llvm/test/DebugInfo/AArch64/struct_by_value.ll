@@ -1,7 +1,9 @@
 ; A by-value struct is a register-indirect value (breg).
 ; RUN: llc %s -filetype=asm -o - | FileCheck %s
 
-; CHECK: DW_OP_breg0
+; CHECK: DW_AT_location
+; CHECK-NEXT: .byte 112
+; 112 = 0x70 = DW_OP_breg0
 
 ; rdar://problem/13658587
 ;
