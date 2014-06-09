@@ -254,10 +254,19 @@ error_code processSymboledSection(DefinedAtom::ContentType atomType,
   appendSymbolsInSection(normalizedFile.globalSymbols, sectIndex, symbols);
   appendSymbolsInSection(normalizedFile.localSymbols,  sectIndex, symbols);
 
-  // Sort symbols by address.
+  // Sort symbols.
   std::sort(symbols.begin(), symbols.end(),
             [](const Symbol *lhs, const Symbol *rhs) -> bool {
-              return lhs->value < rhs->value;
+              // First by address.
+              if (lhs->value != rhs->value)
+                return lhs->value < rhs->value;
+              // If same address, one is an alias.  Sort by scope.
+              Atom::Scope lScope = atomScope(lhs->scope);
+              Atom::Scope rScope = atomScope(rhs->scope);
+              if (lScope != rScope)
+                return lScope < rScope;
+              // If same address and scope, sort by name.   
+              return (lhs->name.compare(rhs->name) < 1);
             });
 
   // Debug logging of symbols.
