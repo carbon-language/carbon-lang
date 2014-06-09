@@ -181,6 +181,9 @@ protected:
   /// SlowLEA - True if the LEA instruction with certain arguments is slow
   bool SlowLEA;
 
+  /// SlowIncDec - True if INC and DEC instructions are slow when writing to flags
+  bool SlowIncDec;
+
   /// Processor has AVX-512 PreFetch Instructions
   bool HasPFI;
   
@@ -319,6 +322,7 @@ public:
   bool callRegIndirect() const { return CallRegIndirect; }
   bool LEAusesAG() const { return LEAUsesAG; }
   bool slowLEA() const { return SlowLEA; }
+  bool slowIncDec() const { return SlowIncDec; }
   bool hasCDI() const { return HasCDI; }
   bool hasPFI() const { return HasPFI; }
   bool hasERI() const { return HasERI; }

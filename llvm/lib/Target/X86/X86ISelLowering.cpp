@@ -10139,14 +10139,14 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     if (ConstantSDNode *C =
         dyn_cast<ConstantSDNode>(ArithOp.getNode()->getOperand(1))) {
       // An add of one will be selected as an INC.
-      if (C->getAPIntValue() == 1) {
+      if (C->getAPIntValue() == 1 && !Subtarget->slowIncDec()) {
         Opcode = X86ISD::INC;
         NumOperands = 1;
         break;
       }
 
       // An add of negative one (subtract of one) will be selected as a DEC.
-      if (C->getAPIntValue().isAllOnesValue()) {
+      if (C->getAPIntValue().isAllOnesValue() && !Subtarget->slowIncDec()) {
         Opcode = X86ISD::DEC;
         NumOperands = 1;
         break;
