@@ -5093,6 +5093,19 @@ def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
   let Inst{11-0} = a;
 }
 
+// Dynamic stack allocation yields a _chkstk for Windows targets.  These calls
+// are needed to probe the stack when allocating more than
+// 4k bytes in one go. Touching the stack at 4K increments is necessary to
+// ensure that the guard pages used by the OS virtual memory manager are
+// allocated in correct sequence.
+// The main point of having separate instruction are extra unmodelled effects
+// (compared to ordinary calls) like stack pointer change.
+
+def win__chkstk : SDNode<"ARMISD::WIN__CHKSTK", SDTNone,
+                      [SDNPHasChain, SDNPSideEffect]>;
+let usesCustomInserter = 1, Uses = [R4], Defs = [R4, SP] in
+  def WIN__CHKSTK : PseudoInst<(outs), (ins), NoItinerary, [(win__chkstk)]>;
+
 //===----------------------------------------------------------------------===//
 // TLS Instructions
 //

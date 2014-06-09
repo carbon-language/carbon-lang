@@ -710,7 +710,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setExceptionSelectorRegister(ARM::R1);
   }
 
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  if (Subtarget->getTargetTriple().isWindowsItaniumEnvironment())
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
+  else
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+
   // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
   // the default expansion.
   if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only()) {
@@ -982,6 +986,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::MEMBARRIER_MCR: return "ARMISD::MEMBARRIER_MCR";
 
   case ARMISD::PRELOAD:       return "ARMISD::PRELOAD";
+
+  case ARMISD::WIN__CHKSTK:   return "ARMISD:::WIN__CHKSTK";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCEQZ:         return "ARMISD::VCEQZ";
@@ -6214,6 +6220,10 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FSINCOS:       return LowerFSINCOS(Op, DAG);
   case ISD::SDIVREM:
   case ISD::UDIVREM:       return LowerDivRem(Op, DAG);
+  case ISD::DYNAMIC_STACKALLOC:
+    if (Subtarget->getTargetTriple().isWindowsItaniumEnvironment())
+      return LowerDYNAMIC_STACKALLOC(Op, DAG);
+    llvm_unreachable("Don't know how to custom lower this!");
   }
 }
 
@@ -7113,6 +7123,73 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
 }
 
 MachineBasicBlock *
+ARMTargetLowering::EmitLowered__chkstk(MachineInstr *MI,
+                                       MachineBasicBlock *MBB) const {
+  const TargetMachine &TM = getTargetMachine();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  assert(Subtarget->isTargetWindows() &&
+         "__chkstk is only supported on Windows");
+  assert(Subtarget->isThumb2() && "Windows on ARM requires Thumb-2 mode");
+
+  // __chkstk takes the number of words to allocate on the stack in R4, and
+  // returns the stack adjustment in number of bytes in R4.  This will not
+  // clober any other registers (other than the obvious lr).
+  //
+  // Although, technically, IP should be considered a register which may be
+  // clobbered, the call itself will not touch it.  Windows on ARM is a pure
+  // thumb-2 environment, so there is no interworking required.  As a result, we
+  // do not expect a veneer to be emitted by the linker, clobbering IP.
+  //
+  // Each module recieves its own copy of __chkstk, so no import thunk is
+  // required, again, ensuring that IP is not clobbered.
+  //
+  // Finally, although some linkers may theoretically provide a trampoline for
+  // out of range calls (which is quite common due to a 32M range limitation of
+  // branches for Thumb), we can generate the long-call version via
+  // -mcmodel=large, alleviating the need for the trampoline which may clobber
+  // IP.
+
+  switch (TM.getCodeModel()) {
+  case CodeModel::Small:
+  case CodeModel::Medium:
+  case CodeModel::Default:
+  case CodeModel::Kernel:
+    BuildMI(*MBB, MI, DL, TII.get(ARM::tBL))
+      .addImm((unsigned)ARMCC::AL).addReg(0)
+      .addExternalSymbol("__chkstk")
+      .addReg(ARM::R4, RegState::Implicit | RegState::Kill)
+      .addReg(ARM::R4, RegState::Implicit | RegState::Define)
+      .addReg(ARM::R12, RegState::Implicit | RegState::Define | RegState::Dead);
+    break;
+  case CodeModel::Large:
+  case CodeModel::JITDefault: {
+    MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+    unsigned Reg = MRI.createVirtualRegister(&ARM::rGPRRegClass);
+
+    BuildMI(*MBB, MI, DL, TII.get(ARM::t2MOVi32imm), Reg)
+      .addExternalSymbol("__chkstk");
+    BuildMI(*MBB, MI, DL, TII.get(ARM::tBLXr))
+      .addImm((unsigned)ARMCC::AL).addReg(0)
+      .addReg(Reg, RegState::Kill)
+      .addReg(ARM::R4, RegState::Implicit | RegState::Kill)
+      .addReg(ARM::R4, RegState::Implicit | RegState::Define)
+      .addReg(ARM::R12, RegState::Implicit | RegState::Define | RegState::Dead);
+    break;
+  }
+  }
+
+  AddDefaultCC(AddDefaultPred(BuildMI(*MBB, MI, DL, TII.get(ARM::t2SUBrr),
+                                      ARM::SP)
+                              .addReg(ARM::SP, RegState::Define)
+                              .addReg(ARM::R4, RegState::Kill)));
+
+  MI->eraseFromParent();
+  return MBB;
+}
+
+MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -7361,6 +7438,8 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case ARM::COPY_STRUCT_BYVAL_I32:
     ++NumLoopByVals;
     return EmitStructByval(MI, BB);
+  case ARM::WIN__CHKSTK:
+    return EmitLowered__chkstk(MI, BB);
   }
 }
 
@@ -10479,6 +10558,32 @@ SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
 
   std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
   return CallInfo.first;
+}
+
+SDValue
+ARMTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
+  assert(Subtarget->isTargetWindows() && "unsupported target platform");
+  SDLoc DL(Op);
+
+  // Get the inputs.
+  SDValue Chain = Op.getOperand(0);
+  SDValue Size  = Op.getOperand(1);
+
+  SDValue Words = DAG.getNode(ISD::SRL, DL, MVT::i32, Size,
+                              DAG.getConstant(2, MVT::i32));
+
+  SDValue Flag;
+  Chain = DAG.getCopyToReg(Chain, DL, ARM::R4, Words, Flag);
+  Flag = Chain.getValue(1);
+
+  SDVTList NodeTys = DAG.getVTList(MVT::i32, MVT::Glue);
+  Chain = DAG.getNode(ARMISD::WIN__CHKSTK, DL, NodeTys, Chain, Flag);
+
+  SDValue NewSP = DAG.getCopyFromReg(Chain, DL, ARM::SP, MVT::i32);
+  Chain = NewSP.getValue(1);
+
+  SDValue Ops[2] = { NewSP, Chain };
+  return DAG.getMergeValues(Ops, DL);
 }
 
 bool

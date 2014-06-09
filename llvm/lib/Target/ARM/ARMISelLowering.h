@@ -95,6 +95,8 @@ namespace llvm {
 
       PRELOAD,      // Preload
 
+      WIN__CHKSTK,  // Windows' __chkstk call to do stack probing.
+
       VCEQ,         // Vector compare equal.
       VCEQZ,        // Vector compare equal to zero.
       VCGE,         // Vector compare greater than or equal.
@@ -470,6 +472,7 @@ namespace llvm {
                               const ARMSubtarget *ST) const;
     SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerDivRem(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
 
     unsigned getRegisterByName(const char* RegName, EVT VT) const override;
 
@@ -578,6 +581,9 @@ namespace llvm {
 
     MachineBasicBlock *EmitStructByval(MachineInstr *MI,
                                        MachineBasicBlock *MBB) const;
+
+    MachineBasicBlock *EmitLowered__chkstk(MachineInstr *MI,
+                                           MachineBasicBlock *MBB) const;
   };
 
   enum NEONModImmType {

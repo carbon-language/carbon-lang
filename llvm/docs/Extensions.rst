@@ -195,3 +195,17 @@ range via a slight deviation.  It will generate an indirect jump as follows:
   blx r12
   sub.w sp, sp, r4
 
+Variable Length Arrays
+^^^^^^^^^^^^^^^^^^^^^^
+
+The reference implementation (Microsoft Visual Studio 2012) does not permit the
+emission of Variable Length Arrays (VLAs).
+
+The Windows ARM Itanium ABI extends the base ABI by adding support for emitting
+a dynamic stack allocation.  When emitting a variable stack allocation, a call
+to ``__chkstk`` is emitted unconditionally to ensure that guard pages are setup
+properly.  The emission of this stack probe emission is handled similar to the
+standard stack probe emission.
+
+The MSVC environment does not emit code for VLAs currently.
+
