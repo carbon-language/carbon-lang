@@ -167,3 +167,20 @@ def executeCommand(command, cwd=None, env=None):
         err = str(err)
 
     return out, err, exitCode
+
+def usePlatformSdkOnDarwin(config, lit_config):
+    # On Darwin, support relocatable SDKs by providing Clang with a
+    # default system root path.
+    if 'darwin' in config.target_triple:
+        try:
+            cmd = subprocess.Popen(['xcrun', '--show-sdk-path'],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            out = out.strip()
+            res = cmd.wait()
+        except OSError:
+            res = -1
+        if res == 0 and out:
+            sdk_path = out
+            lit_config.note('using SDKROOT: %r' % sdk_path)
+            config.environment['SDKROOT'] = sdk_path
