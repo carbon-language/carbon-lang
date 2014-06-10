@@ -326,6 +326,8 @@ def MUL_UINT24_eg : R600_2OP <0xB5, "MUL_UINT24",
 def DOT4_eg : DOT4_Common<0xBE>;
 defm CUBE_eg : CUBE_Common<0xC0>;
 
+def BCNT_INT : R600_1OP_Helper <0xAA, "BCNT_INT", ctpop>;
+
 let hasSideEffects = 1 in {
   def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", [], VecALU>;
 }

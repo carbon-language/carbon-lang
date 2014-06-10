@@ -13,6 +13,8 @@ declare <16 x i32> @llvm.ctpop.v16i32(<16 x i32>) nounwind readnone
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
 ; SI: BUFFER_STORE_DWORD [[VRESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @s_ctpop_i32(i32 addrspace(1)* noalias %out, i32 %val) nounwind {
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
   store i32 %ctpop, i32 addrspace(1)* %out, align 4
@@ -26,6 +28,8 @@ define void @s_ctpop_i32(i32 addrspace(1)* noalias %out, i32 %val) nounwind {
 ; SI: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL]], [[VZERO]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
@@ -42,6 +46,9 @@ define void @v_ctpop_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noali
 ; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
+; EG: BCNT_INT
 define void @v_ctpop_add_chain_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in0, i32 addrspace(1)* noalias %in1) nounwind {
   %val0 = load i32 addrspace(1)* %in0, align 4
   %val1 = load i32 addrspace(1)* %in1, align 4
@@ -56,6 +63,9 @@ define void @v_ctpop_add_chain_i32(i32 addrspace(1)* noalias %out, i32 addrspace
 ; SI: V_BCNT_U32_B32_e32
 ; SI: V_BCNT_U32_B32_e32
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
+; EG: BCNT_INT
 define void @v_ctpop_v2i32(<2 x i32> addrspace(1)* noalias %out, <2 x i32> addrspace(1)* noalias %in) nounwind {
   %val = load <2 x i32> addrspace(1)* %in, align 8
   %ctpop = call <2 x i32> @llvm.ctpop.v2i32(<2 x i32> %val) nounwind readnone
@@ -69,6 +79,11 @@ define void @v_ctpop_v2i32(<2 x i32> addrspace(1)* noalias %out, <2 x i32> addrs
 ; SI: V_BCNT_U32_B32_e32
 ; SI: V_BCNT_U32_B32_e32
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
 define void @v_ctpop_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrspace(1)* noalias %in) nounwind {
   %val = load <4 x i32> addrspace(1)* %in, align 16
   %ctpop = call <4 x i32> @llvm.ctpop.v4i32(<4 x i32> %val) nounwind readnone
@@ -86,6 +101,15 @@ define void @v_ctpop_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrs
 ; SI: V_BCNT_U32_B32_e32
 ; SI: V_BCNT_U32_B32_e32
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
 define void @v_ctpop_v8i32(<8 x i32> addrspace(1)* noalias %out, <8 x i32> addrspace(1)* noalias %in) nounwind {
   %val = load <8 x i32> addrspace(1)* %in, align 32
   %ctpop = call <8 x i32> @llvm.ctpop.v8i32(<8 x i32> %val) nounwind readnone
@@ -111,6 +135,23 @@ define void @v_ctpop_v8i32(<8 x i32> addrspace(1)* noalias %out, <8 x i32> addrs
 ; SI: V_BCNT_U32_B32_e32
 ; SI: V_BCNT_U32_B32_e32
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
+; EG: BCNT_INT
 define void @v_ctpop_v16i32(<16 x i32> addrspace(1)* noalias %out, <16 x i32> addrspace(1)* noalias %in) nounwind {
   %val = load <16 x i32> addrspace(1)* %in, align 32
   %ctpop = call <16 x i32> @llvm.ctpop.v16i32(<16 x i32> %val) nounwind readnone
@@ -123,6 +164,8 @@ define void @v_ctpop_v16i32(<16 x i32> addrspace(1)* noalias %out, <16 x i32> ad
 ; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL]], 4
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32_add_inline_constant(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
@@ -136,6 +179,8 @@ define void @v_ctpop_i32_add_inline_constant(i32 addrspace(1)* noalias %out, i32
 ; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL]], 4
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32_add_inline_constant_inv(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
@@ -164,6 +209,8 @@ define void @v_ctpop_i32_add_literal(i32 addrspace(1)* noalias %out, i32 addrspa
 ; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL]], [[VAR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32_add_var(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 %const) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
@@ -178,6 +225,8 @@ define void @v_ctpop_i32_add_var(i32 addrspace(1)* noalias %out, i32 addrspace(1
 ; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL]], [[VAR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32_add_var_inv(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 %const) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
@@ -192,6 +241,8 @@ define void @v_ctpop_i32_add_var_inv(i32 addrspace(1)* noalias %out, i32 addrspa
 ; SI: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL]], [[VAR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
+
+; EG: BCNT_INT
 define void @v_ctpop_i32_add_vvar_inv(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 addrspace(1)* noalias %constptr) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone

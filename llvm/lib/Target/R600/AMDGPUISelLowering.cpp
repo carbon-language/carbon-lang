@@ -220,9 +220,13 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   }
 
+  if (!Subtarget->hasBCNT(32))
+    setOperationAction(ISD::CTPOP, MVT::i32, Expand);
+
+  if (!Subtarget->hasBCNT(64))
+    setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+
   for (MVT VT : { MVT::i32, MVT::i64 }) {
-    // TODO: Evergreen has BCNT_INT for CTPOP
-    setOperationAction(ISD::CTPOP, VT, Expand);
     setOperationAction(ISD::CTTZ, VT, Expand);
     setOperationAction(ISD::CTLZ, VT, Expand);
   }

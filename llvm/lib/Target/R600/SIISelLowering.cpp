@@ -211,9 +211,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FRINT, MVT::f64, Legal);
   }
 
-  setOperationAction(ISD::CTPOP, MVT::i32, Legal);
-  setOperationAction(ISD::CTPOP, MVT::i64, Legal);
-
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
