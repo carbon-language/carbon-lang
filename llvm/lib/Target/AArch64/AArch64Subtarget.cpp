@@ -36,14 +36,14 @@ AArch64Subtarget::AArch64Subtarget(const std::string &TT,
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false), HasCRC(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false), CPUString(CPU),
-      TargetTriple(TT), IsLittleEndian(LittleEndian),
+      TargetTriple(TT),
       // This nested ternary is horrible, but DL needs to be properly
       // initialized
       // before TLInfo is constructed.
       DL(isTargetMachO()
              ? "e-m:o-i64:64-i128:128-n32:64-S128"
-             : (IsLittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
-                               : "E-m:e-i64:64-i128:128-n32:64-S128")),
+             : (LittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
+                             : "E-m:e-i64:64-i128:128-n32:64-S128")),
       FrameLowering() {
   // Determine default and user-specified characteristics
 

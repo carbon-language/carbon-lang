@@ -51,9 +51,6 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
-  /// IsLittleEndian - Is the target little endian?
-  bool IsLittleEndian;
-
   const DataLayout DL;
   AArch64FrameLowering FrameLowering;
 
@@ -78,7 +75,7 @@ public:
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
 
-  bool isLittleEndian() const { return IsLittleEndian; }
+  bool isLittleEndian() const { return DL.isLittleEndian(); }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
 
