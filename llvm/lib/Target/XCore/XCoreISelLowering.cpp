@@ -98,9 +98,6 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::SUBC, MVT::i32, Expand);
   setOperationAction(ISD::SUBE, MVT::i32, Expand);
 
-  // Stop the combiner recombining select and set_cc
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
-
   // 64bit
   setOperationAction(ISD::ADD, MVT::i64, Custom);
   setOperationAction(ISD::SUB, MVT::i64, Custom);

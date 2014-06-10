@@ -4567,12 +4567,9 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
 
   // fold selects based on a setcc into other things, such as min/max/abs
   if (N0.getOpcode() == ISD::SETCC) {
-    // FIXME:
-    // Check against MVT::Other for SELECT_CC, which is a workaround for targets
-    // having to say they don't support SELECT_CC on every type the DAG knows
-    // about, since there is no way to mark an opcode illegal at all value types
-    if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other) &&
-        TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT))
+    if ((!LegalOperations &&
+         TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT)) ||
+	TLI.isOperationLegal(ISD::SELECT_CC, VT))
       return DAG.getNode(ISD::SELECT_CC, SDLoc(N), VT,
                          N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
@@ -7028,11 +7025,7 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   }
 
   // The next optimizations are desirable only if SELECT_CC can be lowered.
-  // Check against MVT::Other for SELECT_CC, which is a workaround for targets
-  // having to say they don't support SELECT_CC on every type the DAG knows
-  // about, since there is no way to mark an opcode illegal at all value types
-  // (See also visitSELECT)
-  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other)) {
+  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT) || !LegalOperations) {
     // fold (sint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
     if (N0.getOpcode() == ISD::SETCC && N0.getValueType() == MVT::i1 &&
         !VT.isVector() &&
@@ -7085,11 +7078,7 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   }
 
   // The next optimizations are desirable only if SELECT_CC can be lowered.
-  // Check against MVT::Other for SELECT_CC, which is a workaround for targets
-  // having to say they don't support SELECT_CC on every type the DAG knows
-  // about, since there is no way to mark an opcode illegal at all value types
-  // (See also visitSELECT)
-  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other)) {
+  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT) || !LegalOperations) {
     // fold (uint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
 
     if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&

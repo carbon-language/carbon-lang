@@ -287,7 +287,8 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::BR_CC,             MVT::f64,   Expand);
   setOperationAction(ISD::BR_CC,             MVT::i32,   Expand);
   setOperationAction(ISD::BR_CC,             MVT::i64,   Expand);
-  setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC,         MVT::i32,   Expand);
+  setOperationAction(ISD::SELECT_CC,         MVT::i64,   Expand);
   setOperationAction(ISD::UINT_TO_FP,        MVT::i32,   Expand);
   setOperationAction(ISD::UINT_TO_FP,        MVT::i64,   Expand);
   setOperationAction(ISD::FP_TO_UINT,        MVT::i32,   Expand);

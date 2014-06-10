@@ -130,7 +130,13 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   addRegisterClass(MVT::f64, &NVPTX::Float64RegsRegClass);
 
   // Operations not directly supported by NVPTX.
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i1, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i8, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i16, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
   setOperationAction(ISD::BR_CC, MVT::f32, Expand);
   setOperationAction(ISD::BR_CC, MVT::f64, Expand);
   setOperationAction(ISD::BR_CC, MVT::i1, Expand);

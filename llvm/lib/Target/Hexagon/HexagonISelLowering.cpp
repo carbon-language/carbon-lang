@@ -1339,18 +1339,12 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
 
       setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
       setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-      setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
 
     } else {
 
       // Hexagon has no select or setcc: expand to SELECT_CC.
       setOperationAction(ISD::SELECT, MVT::f32, Expand);
       setOperationAction(ISD::SELECT, MVT::f64, Expand);
-
-      // This is a workaround documented in DAGCombiner.cpp:2892 We don't
-      // support SELECT_CC on every type.
-      setOperationAction(ISD::SELECT_CC, MVT::Other,   Expand);
-
     }
 
     if (EmitJumpTables) {

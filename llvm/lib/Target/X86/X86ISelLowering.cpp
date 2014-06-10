@@ -440,7 +440,13 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::BR_CC            , MVT::i16,   Expand);
   setOperationAction(ISD::BR_CC            , MVT::i32,   Expand);
   setOperationAction(ISD::BR_CC            , MVT::i64,   Expand);
-  setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::f32,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::f64,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::f80,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::i8,    Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::i16,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::i32,   Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::i64,   Expand);
   if (Subtarget->is64Bit())
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Legal);
@@ -858,6 +864,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::ZERO_EXTEND, VT, Expand);
     setOperationAction(ISD::ANY_EXTEND, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
+    setOperationAction(ISD::SELECT_CC, VT, Expand);
     for (int InnerVT = MVT::FIRST_VECTOR_VALUETYPE;
              InnerVT <= MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
       setTruncStoreAction(VT,
