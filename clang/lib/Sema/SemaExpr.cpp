@@ -3341,10 +3341,21 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *E,
                                       E->getSourceRange(), ExprKind))
     return false;
 
-  if (RequireCompleteExprType(E,
-                              diag::err_sizeof_alignof_incomplete_type,
-                              ExprKind, E->getSourceRange()))
-    return true;
+  // 'alignof' applied to an expression only requires the base element type of
+  // the expression to be complete. 'sizeof' requires the expression's type to
+  // be complete (and will attempt to complete it if it's an array of unknown
+  // bound).
+  if (ExprKind == UETT_AlignOf) {
+    if (RequireCompleteType(E->getExprLoc(),
+                            Context.getBaseElementType(E->getType()),
+                            diag::err_sizeof_alignof_incomplete_type, ExprKind,
+                            E->getSourceRange()))
+      return true;
+  } else {
+    if (RequireCompleteExprType(E, diag::err_sizeof_alignof_incomplete_type,
+                                ExprKind, E->getSourceRange()))
+      return true;
+  }
 
   // Completing the expression's type may have changed it.
   ExprTy = E->getType();
