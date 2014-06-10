@@ -4167,6 +4167,12 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                "     L\"cccc\");",
                Break);
 
+  // As we break before unary operators, breaking right after them is bad.
+  verifyFormat("string foo = abc ? \"x\"\n"
+               "                   \"blah blah blah blah blah blah\"\n"
+               "                 : \"y\";",
+               Break);
+
   // Don't break if there is no column gain.
   verifyFormat("f(\"aaaa\"\n"
                "  \"bbbb\");",
