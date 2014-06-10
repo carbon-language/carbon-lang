@@ -49,26 +49,18 @@ namespace llvm {
 namespace sys {
 namespace fs {
 
-/// An "enum class" enumeration for the file system's view of the type.
-struct file_type {
-  enum Impl {
-    status_error,
-    file_not_found,
-    regular_file,
-    directory_file,
-    symlink_file,
-    block_file,
-    character_file,
-    fifo_file,
-    socket_file,
-    type_unknown
-  };
-
-  file_type(Impl V) : V(V) {}
-  operator Impl() const { return V; }
-
-private:
-  Impl V;
+/// An enumeration for the file system's view of the type.
+enum class file_type {
+  status_error,
+  file_not_found,
+  regular_file,
+  directory_file,
+  symlink_file,
+  block_file,
+  character_file,
+  fifo_file,
+  socket_file,
+  type_unknown
 };
 
 /// space_info - Self explanatory.
