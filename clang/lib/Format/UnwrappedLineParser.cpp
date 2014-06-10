@@ -891,6 +891,8 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
     if (!FormatTok->isOneOf(tok::identifier, tok::kw_this))
       return false;
     nextToken();
+    if (FormatTok->is(tok::ellipsis))
+      nextToken();
     if (FormatTok->is(tok::comma)) {
       nextToken();
     } else if (FormatTok->is(tok::r_square)) {
