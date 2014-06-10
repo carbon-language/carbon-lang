@@ -61,6 +61,12 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
+#ifndef _MSC_VER
+#define LLVM_NOEXCEPT noexcept
+#else
+#define LLVM_NOEXCEPT
+#endif
+
 /// \brief Does the compiler support r-value reference *this?
 ///
 /// Sadly, this is separate from just r-value reference support because GCC
