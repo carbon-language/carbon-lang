@@ -30,7 +30,6 @@ protected:
   AArch64Subtarget Subtarget;
 
 private:
-  const DataLayout DL;
   AArch64InstrInfo InstrInfo;
   AArch64TargetLowering TLInfo;
   AArch64SelectionDAGInfo TSInfo;
@@ -47,7 +46,9 @@ public:
   const AArch64TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
   const AArch64FrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }

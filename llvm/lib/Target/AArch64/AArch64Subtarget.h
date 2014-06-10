@@ -16,6 +16,7 @@
 
 #include "AArch64FrameLowering.h"
 #include "AArch64RegisterInfo.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
 
@@ -53,6 +54,7 @@ protected:
   /// IsLittleEndian - Is the target little endian?
   bool IsLittleEndian;
 
+  const DataLayout DL;
   AArch64FrameLowering FrameLowering;
 
 public:
@@ -64,7 +66,7 @@ public:
   const AArch64FrameLowering *getFrameLowering() const {
     return &FrameLowering;
   }
-
+  const DataLayout *getDataLayout() const { return &DL; }
   bool enableMachineScheduler() const override { return true; }
 
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }

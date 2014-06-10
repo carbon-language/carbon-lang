@@ -78,13 +78,6 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, LittleEndian),
-      // This nested ternary is horrible, but DL needs to be properly
-      // initialized
-      // before TLInfo is constructed.
-      DL(Subtarget.isTargetMachO()
-             ? "e-m:o-i64:64-i128:128-n32:64-S128"
-             : (LittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
-                             : "E-m:e-i64:64-i128:128-n32:64-S128")),
       InstrInfo(Subtarget), TLInfo(*this), TSInfo(*this) {
   initAsmInfo();
 }
