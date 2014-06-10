@@ -6061,9 +6061,9 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to match a horizontal ADD or SUB.
   if (((VT == MVT::v4f32 || VT == MVT::v2f64) && Subtarget->hasSSE3()) ||
-      ((VT == MVT::v8f32 || VT == MVT::v4f64) && Subtarget->hasAVX()) ||
       ((VT == MVT::v4i32 || VT == MVT::v8i16) && Subtarget->hasSSSE3()) ||
-      ((VT == MVT::v8i32 || VT == MVT::v16i16) && Subtarget->hasAVX2())) {
+      ((VT == MVT::v8f32 || VT == MVT::v4f64 || VT == MVT::v8i32 ||
+        VT == MVT::v16i16) && Subtarget->hasAVX())) {
     unsigned NumOperands = N->getNumOperands();
     unsigned Opcode = N->getOperand(0)->getOpcode();
     bool isCommutable = false;
@@ -6131,6 +6131,24 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
       case ISD::FSUB : NewOpcode = X86ISD::FHSUB; break;
       }
  
+      if (VT.is256BitVector()) {
+        SDLoc dl(N);
+
+        // Convert this sequence into two horizontal add/sub followed
+        // by a concat vector.
+        SDValue InVec0_LO = Extract128BitVector(InVec0, 0, DAG, dl);
+        SDValue InVec0_HI =
+          Extract128BitVector(InVec0, NumOperands/2, DAG, dl);
+        SDValue InVec1_LO = Extract128BitVector(InVec1, 0, DAG, dl);
+        SDValue InVec1_HI =
+          Extract128BitVector(InVec1, NumOperands/2, DAG, dl);
+        EVT NewVT = InVec0_LO.getValueType();
+
+        SDValue LO = DAG.getNode(NewOpcode, dl, NewVT, InVec0_LO, InVec0_HI);
+        SDValue HI = DAG.getNode(NewOpcode, dl, NewVT, InVec1_LO, InVec1_HI);
+        return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, LO, HI);
+      }
+
       return DAG.getNode(NewOpcode, SDLoc(N), VT, InVec0, InVec1);
     }
   }

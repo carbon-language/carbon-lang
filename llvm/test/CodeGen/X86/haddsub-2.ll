@@ -298,6 +298,8 @@ define <4 x double> @avx_vhadd_pd_test(<4 x double> %A, <4 x double> %B) {
 ; SSSE3: haddpd
 ; SSSE3: haddpd
 ; AVX: vhaddpd
+; AVX: vhaddpd
+; AVX2: vhaddpd
 ; AVX2: vhaddpd
 ; CHECK: ret
 
@@ -327,6 +329,8 @@ define <4 x double> @avx_vhsub_pd_test(<4 x double> %A, <4 x double> %B) {
 ; SSSE3: hsubpd
 ; SSSE3-NEXT: hsubpd
 ; AVX: vhsubpd
+; AVX: vhsubpd
+; AVX2: vhsubpd
 ; AVX2: vhsubpd
 ; CHECK: ret
 
@@ -370,7 +374,87 @@ define <8 x i32> @avx2_vphadd_d_test(<8 x i32> %A, <8 x i32> %B) {
 ; SSE3-NOT: phaddd
 ; SSSE3: phaddd
 ; SSSE3-NEXT: phaddd
-; AVX-NOT: vphaddd
+; AVX: vphaddd
+; AVX: vphaddd
+; AVX2: vphaddd
 ; AVX2: vphaddd
 ; CHECK: ret
+
+define <16 x i16> @avx2_vphadd_w_test(<16 x i16> %a, <16 x i16> %b) {
+  %vecext = extractelement <16 x i16> %a, i32 0
+  %vecext1 = extractelement <16 x i16> %a, i32 1
+  %add = add i16 %vecext, %vecext1
+  %vecinit = insertelement <16 x i16> undef, i16 %add, i32 0
+  %vecext4 = extractelement <16 x i16> %a, i32 2
+  %vecext6 = extractelement <16 x i16> %a, i32 3
+  %add8 = add i16 %vecext4, %vecext6
+  %vecinit10 = insertelement <16 x i16> %vecinit, i16 %add8, i32 1
+  %vecext11 = extractelement <16 x i16> %a, i32 4
+  %vecext13 = extractelement <16 x i16> %a, i32 5
+  %add15 = add i16 %vecext11, %vecext13
+  %vecinit17 = insertelement <16 x i16> %vecinit10, i16 %add15, i32 2
+  %vecext18 = extractelement <16 x i16> %a, i32 6
+  %vecext20 = extractelement <16 x i16> %a, i32 7
+  %add22 = add i16 %vecext18, %vecext20
+  %vecinit24 = insertelement <16 x i16> %vecinit17, i16 %add22, i32 3
+  %vecext25 = extractelement <16 x i16> %a, i32 8
+  %vecext27 = extractelement <16 x i16> %a, i32 9
+  %add29 = add i16 %vecext25, %vecext27
+  %vecinit31 = insertelement <16 x i16> %vecinit24, i16 %add29, i32 4
+  %vecext32 = extractelement <16 x i16> %a, i32 10
+  %vecext34 = extractelement <16 x i16> %a, i32 11
+  %add36 = add i16 %vecext32, %vecext34
+  %vecinit38 = insertelement <16 x i16> %vecinit31, i16 %add36, i32 5
+  %vecext39 = extractelement <16 x i16> %a, i32 12
+  %vecext41 = extractelement <16 x i16> %a, i32 13
+  %add43 = add i16 %vecext39, %vecext41
+  %vecinit45 = insertelement <16 x i16> %vecinit38, i16 %add43, i32 6
+  %vecext46 = extractelement <16 x i16> %a, i32 14
+  %vecext48 = extractelement <16 x i16> %a, i32 15
+  %add50 = add i16 %vecext46, %vecext48
+  %vecinit52 = insertelement <16 x i16> %vecinit45, i16 %add50, i32 7
+  %vecext53 = extractelement <16 x i16> %b, i32 0
+  %vecext55 = extractelement <16 x i16> %b, i32 1
+  %add57 = add i16 %vecext53, %vecext55
+  %vecinit59 = insertelement <16 x i16> %vecinit52, i16 %add57, i32 8
+  %vecext60 = extractelement <16 x i16> %b, i32 2
+  %vecext62 = extractelement <16 x i16> %b, i32 3
+  %add64 = add i16 %vecext60, %vecext62
+  %vecinit66 = insertelement <16 x i16> %vecinit59, i16 %add64, i32 9
+  %vecext67 = extractelement <16 x i16> %b, i32 4
+  %vecext69 = extractelement <16 x i16> %b, i32 5
+  %add71 = add i16 %vecext67, %vecext69
+  %vecinit73 = insertelement <16 x i16> %vecinit66, i16 %add71, i32 10
+  %vecext74 = extractelement <16 x i16> %b, i32 6
+  %vecext76 = extractelement <16 x i16> %b, i32 7
+  %add78 = add i16 %vecext74, %vecext76
+  %vecinit80 = insertelement <16 x i16> %vecinit73, i16 %add78, i32 11
+  %vecext81 = extractelement <16 x i16> %b, i32 8
+  %vecext83 = extractelement <16 x i16> %b, i32 9
+  %add85 = add i16 %vecext81, %vecext83
+  %vecinit87 = insertelement <16 x i16> %vecinit80, i16 %add85, i32 12
+  %vecext88 = extractelement <16 x i16> %b, i32 10
+  %vecext90 = extractelement <16 x i16> %b, i32 11
+  %add92 = add i16 %vecext88, %vecext90
+  %vecinit94 = insertelement <16 x i16> %vecinit87, i16 %add92, i32 13
+  %vecext95 = extractelement <16 x i16> %b, i32 12
+  %vecext97 = extractelement <16 x i16> %b, i32 13
+  %add99 = add i16 %vecext95, %vecext97
+  %vecinit101 = insertelement <16 x i16> %vecinit94, i16 %add99, i32 14
+  %vecext102 = extractelement <16 x i16> %b, i32 14
+  %vecext104 = extractelement <16 x i16> %b, i32 15
+  %add106 = add i16 %vecext102, %vecext104
+  %vecinit108 = insertelement <16 x i16> %vecinit101, i16 %add106, i32 15
+  ret <16 x i16> %vecinit108
+}
+; CHECK-LABEL: avx2_vphadd_w_test
+; SSE3-NOT: phaddw
+; SSSE3: phaddw
+; SSSE3-NEXT: phaddw
+; AVX: vphaddw
+; AVX: vphaddw
+; AVX2: vphaddw
+; AVX2: vphaddw
+; CHECK: ret
+
 
