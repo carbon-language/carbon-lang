@@ -32,7 +32,8 @@ EnableEarlyIfConvert("aarch64-early-ifcvt", cl::desc("Enable the early if "
 
 AArch64Subtarget::AArch64Subtarget(const std::string &TT,
                                    const std::string &CPU,
-                                   const std::string &FS, bool LittleEndian)
+                                   const std::string &FS, TargetMachine &TM,
+                                   bool LittleEndian)
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false), HasCRC(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false), CPUString(CPU),
@@ -51,6 +52,7 @@ AArch64Subtarget::AArch64Subtarget(const std::string &TT,
     CPUString = "generic";
 
   ParseSubtargetFeatures(CPUString, FS);
+  TLInfo = make_unique<AArch64TargetLowering>(TM);
 }
 
 /// ClassifyGlobalReference - Find the target operand flags that describe

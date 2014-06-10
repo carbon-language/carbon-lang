@@ -29,9 +29,6 @@ class AArch64TargetMachine : public LLVMTargetMachine {
 protected:
   AArch64Subtarget Subtarget;
 
-private:
-  AArch64TargetLowering TLInfo;
-
 public:
   AArch64TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
@@ -42,7 +39,7 @@ public:
     return &Subtarget;
   }
   const AArch64TargetLowering *getTargetLowering() const override {
-    return &TLInfo;
+    return getSubtargetImpl()->getTargetLowering();
   }
   const DataLayout *getDataLayout() const override {
     return getSubtargetImpl()->getDataLayout();

@@ -16,6 +16,7 @@
 
 #include "AArch64InstrInfo.h"
 #include "AArch64FrameLowering.h"
+#include "AArch64ISelLowering.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -57,16 +58,20 @@ protected:
   AArch64FrameLowering FrameLowering;
   AArch64InstrInfo InstrInfo;
   AArch64SelectionDAGInfo TSInfo;
+  std::unique_ptr<AArch64TargetLowering> TLInfo;
 
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   AArch64Subtarget(const std::string &TT, const std::string &CPU,
-                 const std::string &FS, bool LittleEndian);
+		   const std::string &FS, TargetMachine &TM, bool LittleEndian);
 
   const AArch64SelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
   const AArch64FrameLowering *getFrameLowering() const {
     return &FrameLowering;
+  }
+  const AArch64TargetLowering *getTargetLowering() const {
+    return TLInfo.get();
   }
   const AArch64InstrInfo *getInstrInfo() const { return &InstrInfo; }
   const DataLayout *getDataLayout() const { return &DL; }

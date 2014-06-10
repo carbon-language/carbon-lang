@@ -74,7 +74,7 @@ static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
   return new AArch64_ELFTargetObjectFile();
 }
 
-AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
+AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
     : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
   Subtarget = &TM.getSubtarget<AArch64Subtarget>();
 
