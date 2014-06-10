@@ -351,7 +351,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   resetSubtargetFeatures(CPU, FS);
   // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
   // X86TargetLowering needs.
-  InstrInfo = new X86InstrInfo(TM);
+  InstrInfo = new X86InstrInfo(*this);
   TLInfo = new X86TargetLowering(TM);
   FrameLowering = new X86FrameLowering(TargetFrameLowering::StackGrowsDown,
                                        getStackAlignment(),

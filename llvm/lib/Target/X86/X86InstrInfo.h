@@ -24,7 +24,7 @@
 
 namespace llvm {
   class X86RegisterInfo;
-  class X86TargetMachine;
+  class X86Subtarget;
 
 namespace X86 {
   // X86 specific condition code. These correspond to X86_*_COND in
@@ -129,7 +129,7 @@ inline static bool isMem(const MachineInstr *MI, unsigned Op) {
 }
 
 class X86InstrInfo final : public X86GenInstrInfo {
-  X86TargetMachine &TM;
+  X86Subtarget &Subtarget;
   const X86RegisterInfo RI;
 
   /// RegOp2MemOpTable3Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
@@ -156,7 +156,7 @@ class X86InstrInfo final : public X86GenInstrInfo {
   virtual void anchor();
 
 public:
-  explicit X86InstrInfo(X86TargetMachine &tm);
+  explicit X86InstrInfo(X86Subtarget &STI);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
