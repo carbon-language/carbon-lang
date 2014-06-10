@@ -72,6 +72,10 @@ public:
     return (getGeneration() >= EVERGREEN);
   }
 
+  bool hasBFI() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
   bool hasBFM() const {
     return hasBFE();
   }

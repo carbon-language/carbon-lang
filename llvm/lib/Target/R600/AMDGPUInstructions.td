@@ -365,7 +365,7 @@ class DwordAddrPat<ValueType vt, RegisterClass rc> : Pat <
 
 // BFI_INT patterns
 
-multiclass BFIPatterns <Instruction BFI_INT> {
+multiclass BFIPatterns <Instruction BFI_INT, Instruction LoadImm32> {
 
   // Definition from ISA doc:
   // (y & x) | (z & ~x)
@@ -381,6 +381,19 @@ multiclass BFIPatterns <Instruction BFI_INT> {
     (BFI_INT $x, $y, $z)
   >;
 
+  def : Pat <
+    (fcopysign f32:$src0, f32:$src1),
+    (BFI_INT (LoadImm32 0x7fffffff), $src0, $src1)
+  >;
+
+  def : Pat <
+    (f64 (fcopysign f64:$src0, f64:$src1)),
+      (INSERT_SUBREG (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
+      (i32 (EXTRACT_SUBREG $src0, sub0)), sub0),
+      (BFI_INT (LoadImm32 0x7fffffff),
+               (i32 (EXTRACT_SUBREG $src0, sub1)),
+               (i32 (EXTRACT_SUBREG $src1, sub1))), sub1)
+  >;
 }
 
 // SHA-256 Ma patterns

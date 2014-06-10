@@ -2112,7 +2112,7 @@ def : Pat <
   (V_MUL_HI_I32 $src0, $src1, (i32 0))
 >;
 
-defm : BFIPatterns <V_BFI_B32>;
+defm : BFIPatterns <V_BFI_B32, S_MOV_B32>;
 def : ROTRPattern <V_ALIGNBIT_B32>;
 
 /********** ======================= **********/
