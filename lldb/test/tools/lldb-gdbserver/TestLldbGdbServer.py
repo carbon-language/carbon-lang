@@ -1959,10 +1959,10 @@ class LldbGdbServerTestCase(TestBase):
         self.qSupported_returns_known_stub_features()
 
     def written_M_content_reads_back_correctly(self):
-        TEST_MESSAGE = "Testing: 1, 2, 3, got this?"
-        
+        TEST_MESSAGE = "Hello, memory"
+
         # Start up the stub and start/prep the inferior.
-        procs = self.prep_debug_monitor_and_inferior(inferior_args=["set-message:foo", "get-data-address-hex:g_message", "sleep:1", "print-message:"])
+        procs = self.prep_debug_monitor_and_inferior(inferior_args=["set-message:xxxxxxxxxxxxxX", "get-data-address-hex:g_message", "sleep:1", "print-message:"])
         self.test_sequence.add_log_lines(
             [
              # Start running after initial stop.
@@ -1984,12 +1984,11 @@ class LldbGdbServerTestCase(TestBase):
 
         # Hex-encode the test message, adding null termination.
         hex_encoded_message = TEST_MESSAGE.encode("hex")
-        hex_encoded_message += "00"
 
         # Write the message to the inferior.
         self.reset_test_sequence()
         self.test_sequence.add_log_lines(
-            ["read packet: $M{0:x},{1:x}:{2}#00".format(message_address, len(hex_encoded_message), hex_encoded_message),
+            ["read packet: $M{0:x},{1:x}:{2}#00".format(message_address, len(hex_encoded_message)/2, hex_encoded_message),
              "send packet: $OK#00",
              "read packet: $c#00",
              { "type":"output_match", "regex":r"^message: (.+)\r\n$", "capture":{ 1:"printed_message"} },
@@ -2001,7 +2000,7 @@ class LldbGdbServerTestCase(TestBase):
         # Ensure what we read from inferior memory is what we wrote.
         printed_message = context.get("printed_message")
         self.assertIsNotNone(printed_message)
-        self.assertEquals(printed_message, TEST_MESSAGE)
+        self.assertEquals(printed_message, TEST_MESSAGE + "X")
 
     @debugserver_test
     @dsym_test
