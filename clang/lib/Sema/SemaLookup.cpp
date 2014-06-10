@@ -4400,12 +4400,11 @@ retry_lookup:
     return TC;
   }
 
-  // If this was an unqualified lookup and we believe the callback object did
-  // not filter out possible corrections, note that no correction was found.
-  if (IsUnqualifiedLookup && !ValidatingCallback)
-    (void)UnqualifiedTyposCorrected[Typo];
-
-  return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
+  // Record the failure's location if needed and return an empty correction. If
+  // this was an unqualified lookup and we believe the callback object did not
+  // filter out possible corrections, also cache the failure for the typo.
+  return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure,
+                          IsUnqualifiedLookup && !ValidatingCallback);
 }
 
 void TypoCorrection::addCorrectionDecl(NamedDecl *CDecl) {
