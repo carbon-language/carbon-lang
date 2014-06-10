@@ -123,13 +123,9 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
       message(FATAL_ERROR "Failed to find ${fpath}")
     endif()
   endforeach()
-  add_custom_target(abilib_headers DEPENDS ${LIBCXX_CXX_ABI_DEPS})
-  set(LIBCXX_CXX_ABI_DEPS abilib_headers)
   include_directories("${CMAKE_BINARY_DIR}/include")
-  install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+  install(FILES ${LIBCXX_CXX_ABI_DEPS}
     DESTINATION include/c++/v1
-    FILES_MATCHING
-    PATTERN "*"
     )
 endmacro()
 
