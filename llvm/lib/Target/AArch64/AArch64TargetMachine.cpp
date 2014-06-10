@@ -85,7 +85,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
              ? "e-m:o-i64:64-i128:128-n32:64-S128"
              : (LittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
                              : "E-m:e-i64:64-i128:128-n32:64-S128")),
-      InstrInfo(Subtarget), TLInfo(*this), FrameLowering(), TSInfo(*this) {
+      InstrInfo(Subtarget), TLInfo(*this), TSInfo(*this) {
   initAsmInfo();
 }
 

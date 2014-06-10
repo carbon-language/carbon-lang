@@ -33,7 +33,6 @@ private:
   const DataLayout DL;
   AArch64InstrInfo InstrInfo;
   AArch64TargetLowering TLInfo;
-  AArch64FrameLowering FrameLowering;
   AArch64SelectionDAGInfo TSInfo;
 
 public:
@@ -50,7 +49,7 @@ public:
   }
   const DataLayout *getDataLayout() const override { return &DL; }
   const AArch64FrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
+    return getSubtargetImpl()->getFrameLowering();
   }
   const AArch64InstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const AArch64RegisterInfo *getRegisterInfo() const override {

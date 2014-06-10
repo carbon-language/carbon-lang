@@ -14,8 +14,9 @@
 #ifndef AArch64SUBTARGET_H
 #define AArch64SUBTARGET_H
 
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "AArch64FrameLowering.h"
 #include "AArch64RegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
@@ -52,11 +53,17 @@ protected:
   /// IsLittleEndian - Is the target little endian?
   bool IsLittleEndian;
 
+  AArch64FrameLowering FrameLowering;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   AArch64Subtarget(const std::string &TT, const std::string &CPU,
                  const std::string &FS, bool LittleEndian);
+
+  const AArch64FrameLowering *getFrameLowering() const {
+    return &FrameLowering;
+  }
 
   bool enableMachineScheduler() const override { return true; }
 

@@ -36,7 +36,7 @@ AArch64Subtarget::AArch64Subtarget(const std::string &TT,
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false), HasCRC(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false), CPUString(CPU),
-      TargetTriple(TT), IsLittleEndian(LittleEndian) {
+      TargetTriple(TT), IsLittleEndian(LittleEndian), FrameLowering() {
   // Determine default and user-specified characteristics
 
   if (CPUString.empty())
