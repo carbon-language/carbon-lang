@@ -67,10 +67,7 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
 
 let TargetPrefix = "AMDIL", isTarget = 1 in {
   def int_AMDIL_abs : GCCBuiltin<"__amdil_abs">, UnaryIntInt;
-
   def int_AMDIL_bit_reverse_u32 : GCCBuiltin<"__amdil_ubit_reverse">,
-          UnaryIntInt;
-  def int_AMDIL_bit_count_i32 : GCCBuiltin<"__amdil_count_bits">,
           UnaryIntInt;
   def int_AMDIL_bit_find_first_lo : GCCBuiltin<"__amdil_ffb_lo">,
           UnaryIntInt;

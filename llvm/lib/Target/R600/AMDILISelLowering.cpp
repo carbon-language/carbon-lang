@@ -125,11 +125,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
 
     setOperationAction(ISD::BSWAP, VT, Expand);
-
-    // GPU doesn't have any counting operators
-    setOperationAction(ISD::CTPOP, VT, Expand);
-    setOperationAction(ISD::CTTZ, VT, Expand);
-    setOperationAction(ISD::CTLZ, VT, Expand);
   }
 
   for (MVT VT : VectorTypes) {
