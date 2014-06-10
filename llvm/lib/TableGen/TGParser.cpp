@@ -787,7 +787,7 @@ Init *TGParser::ParseIDValue(Record *CurRec,
 ///
 /// Operation ::= XOperator ['<' Type '>'] '(' Args ')'
 ///
-Init *TGParser::ParseOperation(Record *CurRec) {
+Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
   switch (Lex.getCode()) {
   default:
     TokError("unknown operation");
@@ -1026,8 +1026,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     }
     Lex.Lex();  // eat the ','
 
-    Init *MHS = ParseValue(CurRec);
-    if (!MHS) return nullptr;
+    Init *MHS = ParseValue(CurRec, ItemType);
+    if (!MHS)
+      return nullptr;
 
     if (Lex.getCode() != tgtok::comma) {
       TokError("expected ',' in ternary operator");
@@ -1035,8 +1036,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     }
     Lex.Lex();  // eat the ','
 
-    Init *RHS = ParseValue(CurRec);
-    if (!RHS) return nullptr;
+    Init *RHS = ParseValue(CurRec, ItemType);
+    if (!RHS)
+      return nullptr;
 
     if (Lex.getCode() != tgtok::r_paren) {
       TokError("expected ')' in binary operator");
@@ -1446,7 +1448,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XIf:
   case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
-    return ParseOperation(CurRec);
+    return ParseOperation(CurRec, ItemType);
   }
   }
 
