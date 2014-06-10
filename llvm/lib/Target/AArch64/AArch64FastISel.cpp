@@ -1460,10 +1460,12 @@ bool AArch64FastISel::TryEmitSmallMemCpy(Address Dest, Address Src,
     bool RV;
     unsigned ResultReg;
     RV = EmitLoad(VT, ResultReg, Src);
-    assert(RV == true && "Should be able to handle this load.");
+    if (!RV)
+      return false;
+
     RV = EmitStore(VT, ResultReg, Dest);
-    assert(RV == true && "Should be able to handle this store.");
-    (void)RV;
+    if (!RV)
+      return false;
 
     int64_t Size = VT.getSizeInBits() / 8;
     Len -= Size;

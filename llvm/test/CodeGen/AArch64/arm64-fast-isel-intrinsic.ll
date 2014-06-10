@@ -133,3 +133,12 @@ define void @t8() {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 4, i32 1, i1 false)
   ret void
 }
+
+define void @test_distant_memcpy(i8* %dst) {
+; ARM64-LABEL: test_distant_memcpy:
+; ARM64: bl _memcpy
+  %array = alloca i8, i32 8192
+  %elem = getelementptr i8* %array, i32 8000
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %elem, i64 4, i32 1, i1 false)
+  ret void
+}
