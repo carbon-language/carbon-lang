@@ -1006,10 +1006,9 @@ namespace llvm {
                      SelectionDAG &DAG) const;
 
     /// Emit nodes that will be selected as "cmp Op0,Op1", or something
-    /// equivalent, possibly adjusting the condition code to a more appropriate
-    /// x86 form.
-    SDValue EmitCmp(SDValue Op0, SDValue Op1, ISD::CondCode CC, SDLoc dl,
-                    SelectionDAG &DAG, unsigned &X86CC) const;
+    /// equivalent, for use with the given x86 condition code.
+    SDValue EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC, SDLoc dl,
+                    SelectionDAG &DAG) const;
 
     /// Convert a comparison if required by the subtarget.
     SDValue ConvertCmpIfNecessary(SDValue Cmp, SelectionDAG &DAG) const;
