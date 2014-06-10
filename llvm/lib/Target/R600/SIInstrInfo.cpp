@@ -19,6 +19,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCInstrDesc.h"
 
 using namespace llvm;
@@ -187,18 +188,25 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                       int FrameIndex,
                                       const TargetRegisterClass *RC,
                                       const TargetRegisterInfo *TRI) const {
-  SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
+  MachineFunction *MF = MBB.getParent();
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
   DebugLoc DL = MBB.findDebugLoc(MI);
   unsigned KillFlag = isKill ? RegState::Kill : 0;
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
 
-  if (TRI->getCommonSubClass(RC, &AMDGPU::SGPR_32RegClass)) {
-    unsigned Lane = MFI->SpillTracker.reserveLanes(MRI, MBB.getParent());
+  if (RI.hasVGPRs(RC)) {
+    LLVMContext &Ctx = MF->getFunction()->getContext();
+    Ctx.emitError("SIInstrInfo::storeRegToStackSlot - Can't spill VGPR!");
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), AMDGPU::VGPR0)
+            .addReg(SrcReg);
+  } else if (TRI->getCommonSubClass(RC, &AMDGPU::SGPR_32RegClass)) {
+    unsigned Lane = MFI->SpillTracker.reserveLanes(MRI, MF);
+    unsigned TgtReg = MFI->SpillTracker.LaneVGPR;
 
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32), MFI->SpillTracker.LaneVGPR)
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32), TgtReg)
             .addReg(SrcReg, KillFlag)
             .addImm(Lane);
-    MFI->SpillTracker.addSpilledReg(FrameIndex, MFI->SpillTracker.LaneVGPR, Lane);
+    MFI->SpillTracker.addSpilledReg(FrameIndex, TgtReg, Lane);
   } else if (RI.isSGPRClass(RC)) {
     // We are only allowed to create one new instruction when spilling
     // registers, so we need to use pseudo instruction for vector
@@ -207,8 +215,7 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     // Reserve a spot in the spill tracker for each sub-register of
     // the vector register.
     unsigned NumSubRegs = RC->getSize() / 4;
-    unsigned FirstLane = MFI->SpillTracker.reserveLanes(MRI, MBB.getParent(),
-                                                        NumSubRegs);
+    unsigned FirstLane = MFI->SpillTracker.reserveLanes(MRI, MF, NumSubRegs);
     MFI->SpillTracker.addSpilledReg(FrameIndex, MFI->SpillTracker.LaneVGPR,
                                     FirstLane);
 
@@ -234,9 +241,16 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                        unsigned DestReg, int FrameIndex,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
-  SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
+  MachineFunction *MF = MBB.getParent();
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
   DebugLoc DL = MBB.findDebugLoc(MI);
-  if (RI.isSGPRClass(RC)){
+
+  if (RI.hasVGPRs(RC)) {
+    LLVMContext &Ctx = MF->getFunction()->getContext();
+    Ctx.emitError("SIInstrInfo::loadRegToStackSlot - Can't retrieve spilled VGPR!");
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
+            .addImm(0);
+  } else if (RI.isSGPRClass(RC)){
     unsigned Opcode;
     switch(RC->getSize() * 8) {
     case 32:  Opcode = AMDGPU::SI_SPILL_S32_RESTORE; break;
