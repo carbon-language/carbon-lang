@@ -187,6 +187,12 @@ class SOP1_64 <bits<8> op, string opName, list<dag> pattern> : SOP1 <
   opName#" $dst, $src0", pattern
 >;
 
+// 64-bit input, 32-bit output.
+class SOP1_32_64 <bits<8> op, string opName, list<dag> pattern> : SOP1 <
+  op, (outs SReg_32:$dst), (ins SSrc_64:$src0),
+  opName#" $dst, $src0", pattern
+>;
+
 class SOP2_32 <bits<7> op, string opName, list<dag> pattern> : SOP2 <
   op, (outs SReg_32:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
   opName#" $dst, $src0, $src1", pattern

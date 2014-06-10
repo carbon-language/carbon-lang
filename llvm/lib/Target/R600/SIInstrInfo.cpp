@@ -1178,6 +1178,11 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       Inst->eraseFromParent();
       continue;
 
+    case AMDGPU::S_BCNT1_I32_B64:
+      splitScalar64BitBCNT(Worklist, Inst);
+      Inst->eraseFromParent();
+      continue;
+
     case AMDGPU::S_BFE_U64:
     case AMDGPU::S_BFE_I64:
     case AMDGPU::S_BFM_B64:
@@ -1417,6 +1422,46 @@ void SIInstrInfo::splitScalar64BitBinaryOp(
   // valid.
   Worklist.push_back(LoHalf);
   Worklist.push_back(HiHalf);
+}
+
+void SIInstrInfo::splitScalar64BitBCNT(SmallVectorImpl<MachineInstr *> &Worklist,
+                                       MachineInstr *Inst) const {
+  MachineBasicBlock &MBB = *Inst->getParent();
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+
+  MachineBasicBlock::iterator MII = Inst;
+  DebugLoc DL = Inst->getDebugLoc();
+
+  MachineOperand &Dest = Inst->getOperand(0);
+  MachineOperand &Src = Inst->getOperand(1);
+
+  const MCInstrDesc &InstDesc = get(AMDGPU::V_BCNT_U32_B32_e32);
+  const TargetRegisterClass *SrcRC = Src.isReg() ?
+    MRI.getRegClass(Src.getReg()) :
+    &AMDGPU::SGPR_32RegClass;
+
+  unsigned MidReg = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+  unsigned ResultReg = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+
+  const TargetRegisterClass *SrcSubRC = RI.getSubRegClass(SrcRC, AMDGPU::sub0);
+
+  MachineOperand SrcRegSub0 = buildExtractSubRegOrImm(MII, MRI, Src, SrcRC,
+                                                      AMDGPU::sub0, SrcSubRC);
+  MachineOperand SrcRegSub1 = buildExtractSubRegOrImm(MII, MRI, Src, SrcRC,
+                                                      AMDGPU::sub1, SrcSubRC);
+
+  MachineInstr *First = BuildMI(MBB, MII, DL, InstDesc, MidReg)
+    .addOperand(SrcRegSub0)
+    .addImm(0);
+
+  MachineInstr *Second = BuildMI(MBB, MII, DL, InstDesc, ResultReg)
+    .addOperand(SrcRegSub1)
+    .addReg(MidReg);
+
+  MRI.replaceRegWith(Dest.getReg(), ResultReg);
+
+  Worklist.push_back(First);
+  Worklist.push_back(Second);
 }
 
 void SIInstrInfo::addDescImplicitUseDef(const MCInstrDesc &NewDesc,

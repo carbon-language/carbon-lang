@@ -110,7 +110,8 @@ def S_BREV_B64 : SOP1_64 <0x0000000c, "S_BREV_B64", []>;
 def S_BCNT1_I32_B32 : SOP1_32 <0x0000000f, "S_BCNT1_I32_B32",
   [(set i32:$dst, (ctpop i32:$src0))]
 >;
-////def S_BCNT1_I32_B64 : SOP1_BCNT1 <0x00000010, "S_BCNT1_I32_B64", []>;
+def S_BCNT1_I32_B64 : SOP1_32_64 <0x00000010, "S_BCNT1_I32_B64", []>;
+
 ////def S_FF0_I32_B32 : SOP1_FF0 <0x00000011, "S_FF0_I32_B32", []>;
 ////def S_FF0_I32_B64 : SOP1_FF0 <0x00000012, "S_FF0_I32_B64", []>;
 ////def S_FF1_I32_B32 : SOP1_FF1 <0x00000013, "S_FF1_I32_B32", []>;
@@ -2513,6 +2514,13 @@ def : Pat <
 def : Pat <
   (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
   (V_BCNT_U32_B32_e32 $popcnt, $val)
+>;
+
+def : Pat <
+  (i64 (ctpop i64:$src)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_BCNT1_I32_B64 $src), sub0),
+    (S_MOV_B32 0), sub1)
 >;
 
 //============================================================================//
