@@ -587,6 +587,11 @@ class Operand<ValueType ty> : DAGOperand {
   string OperandType = "OPERAND_UNKNOWN";
   dag MIOperandInfo = (ops);
 
+  // MCOperandPredicate - Optionally, a code fragment operating on
+  // const MCOperand &MCOp, and returning a bool, to indicate if
+  // the value of MCOp is valid for the specific subclass of Operand
+  code MCOperandPredicate;
+
   // ParserMatchClass - The "match class" that operands of this type fit
   // in. Match classes are used to define the order in which instructions are
   // match, to ensure that which instructions gets matched is deterministic.

@@ -2184,8 +2184,11 @@ bool AArch64AsmParser::parseCondCode(OperandVector &Operands,
     return TokError("invalid condition code");
   Parser.Lex(); // Eat identifier token.
 
-  if (invertCondCode)
+  if (invertCondCode) {
+    if (CC == AArch64CC::AL || CC == AArch64CC::NV)
+      return TokError("condition codes AL and NV are invalid for this instruction");
     CC = AArch64CC::getInvertedCondCode(AArch64CC::CondCode(CC));
+  }
 
   Operands.push_back(
       AArch64Operand::CreateCondCode(CC, S, getLoc(), getContext()));

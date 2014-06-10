@@ -963,8 +963,14 @@ def ccode : Operand<i32> {
   let ParserMatchClass = CondCode;
 }
 def inv_ccode : Operand<i32> {
+  // AL and NV are invalid in the aliases which use inv_ccode
   let PrintMethod = "printInverseCondCode";
   let ParserMatchClass = CondCode;
+  let MCOperandPredicate = [{
+    return MCOp.isImm() &&
+           MCOp.getImm() != AArch64CC::AL &&
+           MCOp.getImm() != AArch64CC::NV;
+  }];
 }
 
 // Conditional branch target. 19-bit immediate. The low two bits of the target

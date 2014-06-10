@@ -806,6 +806,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   // before it can be matched to the mnemonic.
   std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
 
+  // A list of MCOperandPredicates for all operands in use, and the reverse map
+  std::vector<const Record*> MCOpPredicates;
+  DenseMap<const Record*, unsigned> MCOpPredicateMap;
+
   for (auto &Aliases : AliasMap) {
     for (auto &Alias : Aliases.second) {
       const CodeGenInstAlias *CGA = Alias.first;
@@ -870,18 +874,30 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
               Cond = std::string("MRI.getRegClass(") + Target.getName() + "::" +
                      R->getName() + "RegClassID)"
                                     ".contains(" + Op + ".getReg())";
-              IAP->addCond(Cond);
             } else {
               Cond = Op + ".getReg() == MI->getOperand(" +
                 llvm::utostr(IAP->getOpIndex(ROName)) + ").getReg()";
-              IAP->addCond(Cond);
             }
           } else {
             // Assume all printable operands are desired for now. This can be
             // overridden in the InstAlias instantiation if necessary.
             IAP->addOperand(ROName, MIOpNum, PrintMethodIdx);
-          }
 
+            // There might be an additional predicate on the MCOperand
+            unsigned Entry = MCOpPredicateMap[Rec];
+            if (!Entry) {
+              if (!Rec->isValueUnset("MCOperandPredicate")) {
+                MCOpPredicates.push_back(Rec);
+                Entry = MCOpPredicates.size();
+                MCOpPredicateMap[Rec] = Entry;
+              } else
+                break; // No conditions on this operand at all
+            }
+            Cond = Target.getName() + ClassName + "ValidateMCOperand(" +
+                   Op + ", " + llvm::utostr(Entry) + ")";
+          }
+          // for all subcases of ResultOperand::K_Record:
+          IAP->addCond(Cond);
           break;
         }
         case CodeGenInstAlias::ResultOperand::K_Imm: {
@@ -975,6 +991,11 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     return;
   }
 
+  if (MCOpPredicates.size())
+    O << "static bool " << Target.getName() << ClassName
+      << "ValidateMCOperand(\n"
+      << "       const MCOperand &MCOp, unsigned PredicateIndex);\n";
+
   O << HeaderO.str();
   O.indent(2) << "const char *AsmString;\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
@@ -1035,6 +1056,28 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     O << "  }\n";
   }    
   O << "}\n\n";
+
+  if (MCOpPredicates.size()) {
+    O << "static bool " << Target.getName() << ClassName
+      << "ValidateMCOperand(\n"
+      << "       const MCOperand &MCOp, unsigned PredicateIndex) {\n"
+      << "  switch (PredicateIndex) {\n"
+      << "  default:\n"
+      << "    llvm_unreachable(\"Unknown MCOperandPredicate kind\");\n"
+      << "    break;\n";
+
+    for (unsigned i = 0; i < MCOpPredicates.size(); ++i) {
+      Init *MCOpPred = MCOpPredicates[i]->getValueInit("MCOperandPredicate");
+      if (StringInit *SI = dyn_cast<StringInit>(MCOpPred)) {
+        O << "  case " << i + 1 << ": {\n"
+          << SI->getValue() << "\n"
+          << "    }\n";
+      } else
+        llvm_unreachable("Unexpected MCOperandPredicate field!");
+    }
+    O << "  }\n"
+      << "}\n\n";
+  }
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
 }

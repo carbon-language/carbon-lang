@@ -1345,39 +1345,59 @@
 
         cset wsp, lt
         csetm sp, ge
+        cset w1, al
+        csetm x6, nv
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cset wsp, lt
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        csetm sp, ge
 // CHECK-ERROR-NEXT:              ^
+// CHECK-ERROR-NEXT: error: condition codes AL and NV are invalid for this instruction
+// CHECK-ERROR-NEXT:        cset w1, al
+// CHECK-ERROR-NEXT:                   ^
+// CHECK-ERROR-NEXT: error: condition codes AL and NV are invalid for this instruction
+// CHECK-ERROR-NEXT:        csetm x6, nv
+// CHECK-ERROR-NEXT:                    ^
 
         cinc w3, wsp, ne
         cinc sp, x9, eq
+        cinc x2, x0, nv
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cinc w3, wsp, ne
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cinc sp, x9, eq
 // CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: condition codes AL and NV are invalid for this instruction
+// CHECK-ERROR-NEXT:        cinc x2, x0, nv
+// CHECK-ERROR-NEXT:                       ^
 
         cinv w3, wsp, ne
         cinv sp, x9, eq
+        cinv w8, x7, nv
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cinv w3, wsp, ne
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cinv sp, x9, eq
 // CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: condition codes AL and NV are invalid for this instruction
+// CHECK-ERROR-NEXT:        cinv w8, x7, nv
+// CHECK-ERROR-NEXT:                       ^
 
         cneg w3, wsp, ne
         cneg sp, x9, eq
+        cneg x4, x5, al
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cneg w3, wsp, ne
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        cneg sp, x9, eq
 // CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: condition codes AL and NV are invalid for this instruction
+// CHECK-ERROR-NEXT:        cneg x4, x5, al
+// CHECK-ERROR-NEXT:                       ^
 
 //------------------------------------------------------------------------------
 // Data Processing (1 source)
