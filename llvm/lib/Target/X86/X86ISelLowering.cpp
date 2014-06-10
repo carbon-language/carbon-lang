@@ -3504,6 +3504,24 @@ static bool isX86CCUnsigned(unsigned X86CC) {
   llvm_unreachable("covered switch fell through?!");
 }
 
+/// Convert an integer condition code to an x86 one in the most straightforward
+/// way possible, with no optimisation attempt.
+static unsigned getSimpleX86IntCC(ISD::CondCode SetCCOpcode) {
+  switch (SetCCOpcode) {
+  default: llvm_unreachable("Invalid integer condition!");
+  case ISD::SETEQ:  return X86::COND_E;
+  case ISD::SETGT:  return X86::COND_G;
+  case ISD::SETGE:  return X86::COND_GE;
+  case ISD::SETLT:  return X86::COND_L;
+  case ISD::SETLE:  return X86::COND_LE;
+  case ISD::SETNE:  return X86::COND_NE;
+  case ISD::SETULT: return X86::COND_B;
+  case ISD::SETUGT: return X86::COND_A;
+  case ISD::SETULE: return X86::COND_BE;
+  case ISD::SETUGE: return X86::COND_AE;
+  }
+}
+
 /// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code, returning the condition code and the LHS/RHS of the
 /// comparison to make.
@@ -3527,19 +3545,7 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
       }
     }
 
-    switch (SetCCOpcode) {
-    default: llvm_unreachable("Invalid integer condition!");
-    case ISD::SETEQ:  return X86::COND_E;
-    case ISD::SETGT:  return X86::COND_G;
-    case ISD::SETGE:  return X86::COND_GE;
-    case ISD::SETLT:  return X86::COND_L;
-    case ISD::SETLE:  return X86::COND_LE;
-    case ISD::SETNE:  return X86::COND_NE;
-    case ISD::SETULT: return X86::COND_B;
-    case ISD::SETUGT: return X86::COND_A;
-    case ISD::SETULE: return X86::COND_BE;
-    case ISD::SETUGE: return X86::COND_AE;
-    }
+    return getSimpleX86IntCC(SetCCOpcode);
   }
 
   // First determine if it is required or is profitable to flip the operands.
@@ -10374,10 +10380,77 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
   return SDValue(New.getNode(), 1);
 }
 
-/// Emit nodes that will be selected as "cmp Op0,Op1", or something
-/// equivalent.
-SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
-                                   SDLoc dl, SelectionDAG &DAG) const {
+static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
+                             SelectionDAG &DAG) {
+  MVT T = Op.getSimpleValueType();
+  SDLoc DL(Op);
+  unsigned Reg = 0;
+  unsigned size = 0;
+  switch(T.SimpleTy) {
+  default: llvm_unreachable("Invalid value type!");
+  case MVT::i8:  Reg = X86::AL;  size = 1; break;
+  case MVT::i16: Reg = X86::AX;  size = 2; break;
+  case MVT::i32: Reg = X86::EAX; size = 4; break;
+  case MVT::i64:
+    assert(Subtarget->is64Bit() && "Node not type legal!");
+    Reg = X86::RAX; size = 8;
+    break;
+  }
+  SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), DL, Reg,
+                                    Op.getOperand(2), SDValue());
+  SDValue Ops[] = { cpIn.getValue(0),
+                    Op.getOperand(1),
+                    Op.getOperand(3),
+                    DAG.getTargetConstant(size, MVT::i8),
+                    cpIn.getValue(1) };
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
+  MachineMemOperand *MMO = cast<AtomicSDNode>(Op)->getMemOperand();
+  SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG_DAG, DL, Tys,
+                                           Ops, T, MMO);
+  SDValue cpOut =
+    DAG.getCopyFromReg(Result.getValue(0), DL, Reg, T, Result.getValue(1));
+  return cpOut;
+}
+
+
+/// Emit nodes that will be selected as "cmp Op0,Op1", or something equivalent
+/// and set X86CC to the needed condition code to make use of the
+/// comparison. This may not be the obvious equivalent to CC if the comparison
+/// can be achieved more efficiently using a different method.
+SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, ISD::CondCode CC,
+                                   SDLoc dl, SelectionDAG &DAG,
+                                   unsigned &X86CC) const {
+   // A cmpxchg instruction will actually perform the comparison
+  if ((Op0.getOpcode() == ISD::ATOMIC_CMP_SWAP && Op0.getOperand(2) == Op1) ||
+      (Op1.getOpcode() == ISD::ATOMIC_CMP_SWAP && Op1.getOperand(2) == Op0)) {
+    SDValue CmpSwap;
+    if (Op0.getOpcode() == ISD::ATOMIC_CMP_SWAP) {
+      // x86's cmpxchg instruction performs the equivalent of "cmp desired,
+      // loaded".
+      CmpSwap = Op0;
+      CC = getSetCCSwappedOperands(CC);
+    } else
+      CmpSwap = Op1;
+
+    // Lowering the CmpSwap node gives us a getCopyFromReg SDValue representing
+    // the value loaded. I.e. the ATOMIC_CMP_SWAP
+    X86CC = getSimpleX86IntCC(CC);
+    SDValue EFLAGS = LowerCMP_SWAP(CmpSwap, Subtarget, DAG);
+    DAG.ReplaceAllUsesOfValueWith(CmpSwap.getValue(0), EFLAGS);
+
+    // Glue on a copy from EFLAGS to be used in place of the required Cmp.
+    EFLAGS = DAG.getCopyFromReg(EFLAGS.getValue(1), dl, X86::EFLAGS,
+                                MVT::i32, EFLAGS.getValue(2));
+    DAG.ReplaceAllUsesOfValueWith(CmpSwap.getValue(1), EFLAGS.getValue(1));
+
+    return EFLAGS;
+  }
+
+  bool IsFP = Op1.getSimpleValueType().isFloatingPoint();
+  X86CC = TranslateX86CC(CC, IsFP, Op0, Op1, DAG);
+  if (X86CC == X86::COND_INVALID)
+    return SDValue();
+
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op1)) {
     if (C->getAPIntValue() == 0)
       return EmitTest(Op0, X86CC, dl, DAG);
@@ -10385,7 +10458,7 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
      if (Op0.getValueType() == MVT::i1)
        llvm_unreachable("Unexpected comparison operation for MVT::i1 operands");
   }
- 
+
   if ((Op0.getValueType() == MVT::i8 || Op0.getValueType() == MVT::i16 ||
        Op0.getValueType() == MVT::i32 || Op0.getValueType() == MVT::i64)) {
     // Do the comparison at i32 if it's smaller, besides the Atom case. 
@@ -10951,12 +11024,11 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getSetCC(dl, VT, Op0, DAG.getConstant(0, MVT::i1), NewCC);
   }
 
-  bool isFP = Op1.getSimpleValueType().isFloatingPoint();
-  unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
-  if (X86CC == X86::COND_INVALID)
+  unsigned X86CC;
+  SDValue EFLAGS = EmitCmp(Op0, Op1, CC, dl, DAG, X86CC);
+  if (!EFLAGS.getNode())
     return SDValue();
 
-  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, dl, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                               DAG.getConstant(X86CC, MVT::i8), EFLAGS);
@@ -11382,6 +11454,14 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
     unsigned Opc = Cmp.getOpcode();
     // FIXME: WHY THE SPECIAL CASING OF LogicalCmp??
     if (isX86LogicalCmp(Cmp) || Opc == X86ISD::BT) {
+      Cond = Cmp;
+      addTest = false;
+    } else if (Opc == ISD::CopyFromReg &&
+               Cmp->getOperand(0)->getOpcode() == ISD::CopyFromReg &&
+               Cmp->getOperand(0)->getOperand(0)->getOpcode() ==
+                   X86ISD::LCMPXCHG_DAG) {
+      assert(cast<RegisterSDNode>(Cmp->getOperand(1))->getReg() == X86::EFLAGS);
+      Chain = Cmp.getValue(1);
       Cond = Cmp;
       addTest = false;
     } else {
@@ -14361,38 +14441,6 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget *Subtarget,
 
   // MEMBARRIER is a compiler barrier; it codegens to a no-op.
   return DAG.getNode(X86ISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0));
-}
-
-static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
-                             SelectionDAG &DAG) {
-  MVT T = Op.getSimpleValueType();
-  SDLoc DL(Op);
-  unsigned Reg = 0;
-  unsigned size = 0;
-  switch(T.SimpleTy) {
-  default: llvm_unreachable("Invalid value type!");
-  case MVT::i8:  Reg = X86::AL;  size = 1; break;
-  case MVT::i16: Reg = X86::AX;  size = 2; break;
-  case MVT::i32: Reg = X86::EAX; size = 4; break;
-  case MVT::i64:
-    assert(Subtarget->is64Bit() && "Node not type legal!");
-    Reg = X86::RAX; size = 8;
-    break;
-  }
-  SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), DL, Reg,
-                                    Op.getOperand(2), SDValue());
-  SDValue Ops[] = { cpIn.getValue(0),
-                    Op.getOperand(1),
-                    Op.getOperand(3),
-                    DAG.getTargetConstant(size, MVT::i8),
-                    cpIn.getValue(1) };
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
-  MachineMemOperand *MMO = cast<AtomicSDNode>(Op)->getMemOperand();
-  SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG_DAG, DL, Tys,
-                                           Ops, T, MMO);
-  SDValue cpOut =
-    DAG.getCopyFromReg(Result.getValue(0), DL, Reg, T, Result.getValue(1));
-  return cpOut;
 }
 
 static SDValue LowerBITCAST(SDValue Op, const X86Subtarget *Subtarget,
