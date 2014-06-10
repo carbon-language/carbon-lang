@@ -229,10 +229,10 @@ private:
   // Calculates type size & alignment
   const DataLayout DL;
   X86SelectionDAGInfo TSInfo;
-  X86TargetLowering *TLInfo;
-  X86InstrInfo *InstrInfo;
-  X86FrameLowering *FrameLowering;
-  X86JITInfo *JITInfo;
+  std::unique_ptr<X86TargetLowering> TLInfo;
+  std::unique_ptr<X86InstrInfo> InstrInfo;
+  std::unique_ptr<X86FrameLowering> FrameLowering;
+  std::unique_ptr<X86JITInfo> JITInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -241,14 +241,15 @@ public:
   X86Subtarget(const std::string &TT, const std::string &CPU,
                const std::string &FS, X86TargetMachine &TM,
                unsigned StackAlignOverride);
-  ~X86Subtarget();
 
-  const X86TargetLowering *getTargetLowering() const { return TLInfo; }
-  const X86InstrInfo *getInstrInfo() const { return InstrInfo; }
+  const X86TargetLowering *getTargetLowering() const { return TLInfo.get(); }
+  const X86InstrInfo *getInstrInfo() const { return InstrInfo.get(); }
   const DataLayout *getDataLayout() const { return &DL; }
-  const X86FrameLowering *getFrameLowering() const { return FrameLowering; }
+  const X86FrameLowering *getFrameLowering() const {
+    return FrameLowering.get();
+  }
   const X86SelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  X86JITInfo *getJITInfo() { return JITInfo; }
+  X86JITInfo *getJITInfo() { return JITInfo.get(); }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

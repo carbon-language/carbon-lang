@@ -351,19 +351,12 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   resetSubtargetFeatures(CPU, FS);
   // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
   // X86TargetLowering needs.
-  InstrInfo = new X86InstrInfo(*this);
-  TLInfo = new X86TargetLowering(TM);
-  FrameLowering = new X86FrameLowering(TargetFrameLowering::StackGrowsDown,
-                                       getStackAlignment(),
-                                       is64Bit() ? -8 : -4);
-  JITInfo = new X86JITInfo(hasSSE1());
-}
-
-X86Subtarget::~X86Subtarget() {
-  delete TLInfo;
-  delete InstrInfo;
-  delete FrameLowering;
-  delete JITInfo;
+  InstrInfo = make_unique<X86InstrInfo>(*this);
+  TLInfo = make_unique<X86TargetLowering>(TM);
+  FrameLowering =
+      make_unique<X86FrameLowering>(TargetFrameLowering::StackGrowsDown,
+                                    getStackAlignment(), is64Bit() ? -8 : -4);
+  JITInfo = make_unique<X86JITInfo>(hasSSE1());
 }
 
 bool
