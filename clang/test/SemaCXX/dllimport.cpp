@@ -983,3 +983,11 @@ template <typename T> int S<T>::x = sizeof(T);
 template <> struct __declspec(dllimport) S<int> { static int x; }; // expected-note{{attribute is here}}
 int S<int>::x = -1; // expected-error{{definition of dllimport static field not allowed}}
 }
+
+namespace PR19988 {
+// Don't error about applying delete to dllimport member function when instantiating.
+template <typename> struct __declspec(dllimport) S {
+  void foo() = delete;
+};
+S<int> s;
+}

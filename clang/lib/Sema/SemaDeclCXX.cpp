@@ -4379,6 +4379,8 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   for (Decl *Member : Class->decls()) {
     if (!isa<CXXMethodDecl>(Member) && !isa<VarDecl>(Member))
       continue;
+    if (isa<CXXMethodDecl>(Member) && cast<CXXMethodDecl>(Member)->isDeleted())
+      continue;
 
     if (InheritableAttr *MemberAttr = getDLLAttr(Member)) {
       if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
@@ -4399,9 +4401,6 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
 
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
       if (ClassExported) {
-        if (MD->isDeleted())
-          continue;
-
         if (MD->isUserProvided()) {
           // Instantiate non-default methods.
           S.MarkFunctionReferenced(Class->getLocation(), MD);
