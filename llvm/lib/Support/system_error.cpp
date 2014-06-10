@@ -48,7 +48,7 @@ _do_message::message(int ev) const {
 
 class _generic_error_category : public _do_message {
 public:
-  const char* name() const override;
+  const char* name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
 };
 
@@ -74,7 +74,7 @@ generic_category() {
 
 class _system_error_category : public _do_message {
 public:
-  const char* name() const override;
+  const char* name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
   error_condition default_error_condition(int ev) const override;
 };

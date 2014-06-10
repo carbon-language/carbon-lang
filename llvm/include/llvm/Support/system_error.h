@@ -624,10 +624,12 @@ private:
   error_category& operator=(const error_category&) LLVM_DELETED_FUNCTION;
 
 public:
-  virtual const char* name() const = 0;
-  virtual error_condition default_error_condition(int _ev) const;
-  virtual bool equivalent(int _code, const error_condition& _condition) const;
-  virtual bool equivalent(const error_code& _code, int _condition) const;
+  virtual const char* name() const LLVM_NOEXCEPT = 0;
+  virtual error_condition default_error_condition(int _ev) const LLVM_NOEXCEPT;
+  virtual bool
+  equivalent(int _code, const error_condition &_condition) const LLVM_NOEXCEPT;
+  virtual bool equivalent(const error_code &_code,
+                          int _condition) const LLVM_NOEXCEPT;
   virtual std::string message(int _ev) const = 0;
 
   bool operator==(const error_category& _rhs) const {return this == &_rhs;}

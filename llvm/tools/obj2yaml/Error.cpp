@@ -15,9 +15,9 @@ using namespace llvm;
 namespace {
 class _obj2yaml_error_category : public error_category {
 public:
-  const char *name() const override;
+  const char *name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
-  error_condition default_error_condition(int ev) const override;
+  error_condition default_error_condition(int ev) const LLVM_NOEXCEPT override;
 };
 } // namespace
 
