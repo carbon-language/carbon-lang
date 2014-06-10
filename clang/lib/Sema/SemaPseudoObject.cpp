@@ -1359,6 +1359,8 @@ ExprResult ObjCSubscriptOpBuilder::buildGet() {
   // Arguments.
   Expr *args[] = { Index };
   assert(InstanceBase);
+  if (AtIndexGetter)
+    S.DiagnoseUseOfDecl(AtIndexGetter, GenericLoc);
   msg = S.BuildInstanceMessageImplicit(InstanceBase, receiverType,
                                        GenericLoc,
                                        AtIndexGetterSelector, AtIndexGetter,
@@ -1375,7 +1377,8 @@ ExprResult ObjCSubscriptOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                            bool captureSetValueAsResult) {
   if (!findAtIndexSetter())
     return ExprError();
-  
+  if (AtIndexSetter)
+    S.DiagnoseUseOfDecl(AtIndexSetter, GenericLoc);
   QualType receiverType = InstanceBase->getType();
   Expr *Index = InstanceKey;
   
