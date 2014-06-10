@@ -196,6 +196,8 @@ static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
   llvm_unreachable("unknown subtarget type");
 }
 
+// FIXME: This should stop caching the target machine as soon as
+// we can remove resetOperationActions et al.
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
