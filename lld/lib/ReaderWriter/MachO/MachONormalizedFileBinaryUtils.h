@@ -285,6 +285,14 @@ inline void setString16(StringRef str, char s[16]) {
   memcpy(s, str.begin(), (str.size() > 16) ? 16: str.size());
 }
 
+// Implemented in normalizedToAtoms() and used by normalizedFromAtoms() so
+// that the same table can be used to map mach-o sections to and from
+// DefinedAtom::ContentType.
+void relocatableSectionInfoForContentType(DefinedAtom::ContentType atomType,
+                                          StringRef &segmentName,
+                                          StringRef &sectionName,
+                                          SectionType &sectionType,
+                                          SectionAttr &sectionAttrs);
 
 } // namespace normalized
 } // namespace mach_o

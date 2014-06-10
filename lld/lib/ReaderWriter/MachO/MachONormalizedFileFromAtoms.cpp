@@ -21,6 +21,7 @@
 ///                    +-------+
 
 #include "MachONormalizedFile.h"
+#include "MachONormalizedFileBinaryUtils.h"
 #include "ReferenceKinds.h"
 
 #include "lld/Core/Error.h"
@@ -112,7 +113,8 @@ private:
   typedef llvm::StringMap<DylibInfo> DylibPathToInfo;
 
   SectionInfo *sectionForAtom(const DefinedAtom*);
-  SectionInfo *makeSection(DefinedAtom::ContentType);
+  SectionInfo *makeRelocatableSection(DefinedAtom::ContentType type);
+  SectionInfo *makeFinalSection(DefinedAtom::ContentType type);
   void         appendAtom(SectionInfo *sect, const DefinedAtom *atom);
   SegmentInfo *segmentForName(StringRef segName);
   void         layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr);
@@ -156,73 +158,94 @@ private:
   AtomToIndex                   _atomToSymbolIndex;
 };
 
-SectionInfo *Util::makeSection(DefinedAtom::ContentType type) {
-  switch ( type ) {
-  case DefinedAtom::typeCode:
-    return new (_allocator) SectionInfo("__TEXT", "__text",
-                             S_REGULAR, S_ATTR_PURE_INSTRUCTIONS
-                                      | S_ATTR_SOME_INSTRUCTIONS);
-  case DefinedAtom::typeCString:
-     return new (_allocator) SectionInfo("__TEXT", "__cstring",
-                             S_CSTRING_LITERALS);
-  case DefinedAtom::typeStub:
-    return new (_allocator) SectionInfo("__TEXT", "__stubs",
-                            S_SYMBOL_STUBS, S_ATTR_PURE_INSTRUCTIONS);
-  case DefinedAtom::typeStubHelper:
-    return new (_allocator) SectionInfo("__TEXT", "__stub_helper",
-                            S_REGULAR, S_ATTR_PURE_INSTRUCTIONS);
-  case DefinedAtom::typeLazyPointer:
-    return new (_allocator) SectionInfo("__DATA", "__la_symbol_ptr",
-                            S_LAZY_SYMBOL_POINTERS);
-  case DefinedAtom::typeGOT:
-     return new (_allocator) SectionInfo("__DATA", "__got",
-                            S_NON_LAZY_SYMBOL_POINTERS);
-  case DefinedAtom::typeZeroFill:
-     return new (_allocator) SectionInfo("__DATA", "__bss",
-                            S_ZEROFILL);
-  case DefinedAtom::typeInitializerPtr:
-     return new (_allocator) SectionInfo("__DATA", "__mod_init_func",
-                            S_MOD_INIT_FUNC_POINTERS);
-  case DefinedAtom::typeTerminatorPtr:
-     return new (_allocator) SectionInfo("__DATA", "__mod_term_func",
-                            S_MOD_TERM_FUNC_POINTERS);
-  case DefinedAtom::typeLiteral4:
-     return new (_allocator) SectionInfo("__TEXT", "__literal4",
-                            S_4BYTE_LITERALS);
-  case DefinedAtom::typeLiteral8:
-     return new (_allocator) SectionInfo("__TEXT", "__literal8",
-                            S_8BYTE_LITERALS);
-  case DefinedAtom::typeLiteral16:
-     return new (_allocator) SectionInfo("__TEXT", "__literal16",
-                            S_16BYTE_LITERALS);
-  case DefinedAtom::typeUTF16String:
-     return new (_allocator) SectionInfo("__TEXT", "__ustring",
-                            S_REGULAR);
-  case DefinedAtom::typeCFString:
-     return new (_allocator) SectionInfo("__DATA", "__cfstring",
-                            S_REGULAR);
-  case DefinedAtom::typeCFI:
-     return new (_allocator) SectionInfo("__TEXT", "__eh_frame",
-                            S_COALESCED);
-  case DefinedAtom::typeCompactUnwindInfo:
-     return new (_allocator) SectionInfo("__LD", "__compact_unwind",
-                            S_REGULAR);
-  case DefinedAtom::typeConstant:
-     return new (_allocator) SectionInfo("__TEXT", "__const",
-                            S_REGULAR);
-  case DefinedAtom::typeData:
-     return new (_allocator) SectionInfo("__DATA", "__data",
-                            S_REGULAR);
-  case DefinedAtom::typeConstData:
-     return new (_allocator) SectionInfo("__DATA", "__const",
-                            S_REGULAR);
-  case DefinedAtom::typeLSDA:
-     return new (_allocator) SectionInfo("__TEXT", "__gcc_except_tab",
-                            S_REGULAR);
-  default:
-    llvm_unreachable("TO DO: add support for more sections");
-    break;
+
+SectionInfo *Util::makeRelocatableSection(DefinedAtom::ContentType type) {
+  StringRef segmentName;
+  StringRef sectionName;
+  SectionType sectionType;
+  SectionAttr sectionAttrs;
+
+  // Use same table used by when parsing .o files.
+  relocatableSectionInfoForContentType(type, segmentName, sectionName,
+                                       sectionType, sectionAttrs);
+  // If we already have a SectionInfo with this name, re-use it.
+  // This can happen if two ContentType map to the same mach-o section.
+  for (auto sect : _sectionMap) {
+    if (sect.second->sectionName.equals(sectionName) &&
+        sect.second->segmentName.equals(segmentName)) {
+      return sect.second;
+    }
   }
+  // Otherwise allocate new SectionInfo object.
+  return new (_allocator) SectionInfo(segmentName, sectionName, sectionType, 
+                                      sectionAttrs);
+}
+
+#define ENTRY(seg, sect, type, atomType) \
+  {seg, sect, type, DefinedAtom::atomType }
+
+struct MachOFinalSectionFromAtomType {
+  StringRef                 segmentName;
+  StringRef                 sectionName;
+  SectionType               sectionType;
+  DefinedAtom::ContentType  atomType;
+};
+
+const MachOFinalSectionFromAtomType sectsToAtomType[] = {
+  ENTRY("__TEXT", "__text",           S_REGULAR,          typeCode),
+  ENTRY("__TEXT", "__cstring",        S_CSTRING_LITERALS, typeCString),
+  ENTRY("__TEXT", "__ustring",        S_REGULAR,          typeUTF16String),
+  ENTRY("__TEXT", "__const",          S_REGULAR,          typeConstant),
+  ENTRY("__TEXT", "__const",          S_4BYTE_LITERALS,   typeLiteral4),
+  ENTRY("__TEXT", "__const",          S_8BYTE_LITERALS,   typeLiteral8),
+  ENTRY("__TEXT", "__const",          S_16BYTE_LITERALS,  typeLiteral16),
+  ENTRY("__TEXT", "__stubs",          S_SYMBOL_STUBS,     typeStub),
+  ENTRY("__TEXT", "__stub_helper",    S_REGULAR,          typeStubHelper),
+  ENTRY("__TEXT", "__gcc_except_tab", S_REGULAR,          typeLSDA),
+  ENTRY("__TEXT", "__eh_frame",       S_COALESCED,        typeCFI),
+  ENTRY("__DATA", "__data",           S_REGULAR,          typeData),
+  ENTRY("__DATA", "__const",          S_REGULAR,          typeConstData),
+  ENTRY("__DATA", "__cfstring",       S_REGULAR,          typeCFString),
+  ENTRY("__DATA", "__la_symbol_ptr",  S_LAZY_SYMBOL_POINTERS,
+                                                          typeLazyPointer),
+  ENTRY("__DATA", "__mod_init_func",  S_MOD_INIT_FUNC_POINTERS,
+                                                          typeInitializerPtr),
+  ENTRY("__DATA", "__mod_term_func",  S_MOD_TERM_FUNC_POINTERS,
+                                                          typeTerminatorPtr),
+  ENTRY("__DATA", "___got",           S_NON_LAZY_SYMBOL_POINTERS,
+                                                          typeGOT),
+  ENTRY("__DATA", "___bss",           S_ZEROFILL,         typeZeroFill)
+};
+#undef ENTRY
+
+
+SectionInfo *Util::makeFinalSection(DefinedAtom::ContentType atomType) {
+  for (const MachOFinalSectionFromAtomType *p = sectsToAtomType ;
+                                 p->atomType != DefinedAtom::typeUnknown; ++p) {
+    if (p->atomType != atomType)
+      continue;
+    SectionAttr sectionAttrs = 0;
+    switch (atomType) {
+    case DefinedAtom::typeCode:
+    case DefinedAtom::typeStub:
+      sectionAttrs = S_ATTR_PURE_INSTRUCTIONS;
+      break;
+    default:
+      break;
+    }
+    // If we already have a SectionInfo with this name, re-use it.
+    // This can happen if two ContentType map to the same mach-o section.
+    for (auto sect : _sectionMap) {
+      if (sect.second->sectionName.equals(p->sectionName) &&
+          sect.second->segmentName.equals(p->segmentName)) {
+        return sect.second;
+      }
+    }
+    // Otherwise allocate new SectionInfo object.
+    return new (_allocator) SectionInfo(p->segmentName, p->sectionName, 
+                                        p->sectionType, sectionAttrs);
+  }
+  llvm_unreachable("content type not yet supported");
 }
 
 
@@ -234,7 +257,9 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
     auto pos = _sectionMap.find(type);
     if ( pos != _sectionMap.end() )
       return pos->second;
-    SectionInfo *si = makeSection(type);
+    bool rMode = (_context.outputFileType() == llvm::MachO::MH_OBJECT);
+    SectionInfo *si = rMode ? makeRelocatableSection(type) 
+                            : makeFinalSection(type);
     _sectionInfos.push_back(si);
     _sectionMap[type] = si;
     return si;

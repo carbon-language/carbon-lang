@@ -40,46 +40,48 @@ namespace mach_o {
 namespace { // anonymous
 
 
+#define ENTRY(seg, sect, type, atomType) \
+  {seg, sect, type, DefinedAtom::atomType }
+
+struct MachORelocatableSectionToAtomType {
+  StringRef                 segmentName;
+  StringRef                 sectionName;
+  SectionType               sectionType;
+  DefinedAtom::ContentType  atomType;
+};
+
+const MachORelocatableSectionToAtomType sectsToAtomType[] = {
+  ENTRY("__TEXT", "__text",           S_REGULAR,          typeCode),
+  ENTRY("__TEXT", "__cstring",        S_CSTRING_LITERALS, typeCString),
+  ENTRY("",       "",                 S_CSTRING_LITERALS, typeCString),
+  ENTRY("__TEXT", "__ustring",        S_REGULAR,          typeUTF16String),
+  ENTRY("__TEXT", "__const",          S_REGULAR,          typeConstant),
+  ENTRY("__TEXT", "__eh_frame",       S_COALESCED,        typeCFI),
+  ENTRY("__TEXT", "__literal4",       S_4BYTE_LITERALS,   typeLiteral4),
+  ENTRY("__TEXT", "__literal8",       S_8BYTE_LITERALS,   typeLiteral8),
+  ENTRY("__TEXT", "__literal16",      S_16BYTE_LITERALS,  typeLiteral16),
+  ENTRY("__TEXT", "__gcc_except_tab", S_REGULAR,          typeLSDA),
+  ENTRY("__DATA", "__data",           S_REGULAR,          typeData),
+  ENTRY("__DATA", "__const",          S_REGULAR,          typeConstData),
+  ENTRY("__DATA", "__cfstring",       S_REGULAR,          typeCFString),
+  ENTRY("__DATA", "__mod_init_func",  S_MOD_INIT_FUNC_POINTERS,
+                                                          typeInitializerPtr),
+  ENTRY("__DATA", "__mod_term_func",  S_MOD_TERM_FUNC_POINTERS,
+                                                          typeTerminatorPtr),
+  ENTRY("__DATA", "___got",           S_NON_LAZY_SYMBOL_POINTERS,
+                                                          typeGOT),
+  ENTRY("__DATA", "___bss",           S_ZEROFILL,         typeZeroFill),
+  ENTRY("",       "",                 S_NON_LAZY_SYMBOL_POINTERS,
+                                                          typeGOT),
+  ENTRY("__LD",   "__compact_unwind", S_REGULAR,
+                                                         typeCompactUnwindInfo),
+  ENTRY("",       "",                 S_REGULAR,          typeUnknown)
+};
+#undef ENTRY
+
+
 /// Figures out ContentType of a mach-o section.
 DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
-  struct MachORelocatableSectionToAtomType {
-    StringRef                 segmentName;
-    StringRef                 sectionName;
-    SectionType               sectionType;
-    DefinedAtom::ContentType  atomType;
-  };
-
-  #define ENTRY(seg, sect, type, atomType) \
-    {seg, sect, type, DefinedAtom::atomType }
-
-  static const MachORelocatableSectionToAtomType sectsToAtomType[] = {
-    ENTRY("__TEXT", "__text",           S_REGULAR,          typeCode),
-    ENTRY("__TEXT", "__cstring",        S_CSTRING_LITERALS, typeCString),
-    ENTRY("",       "",                 S_CSTRING_LITERALS, typeCString),
-    ENTRY("__TEXT", "__ustring",        S_REGULAR,          typeUTF16String),
-    ENTRY("__TEXT", "__const",          S_REGULAR,          typeConstant),
-    ENTRY("__TEXT", "__eh_frame",       S_COALESCED,        typeCFI),
-    ENTRY("__TEXT", "__literal4",       S_4BYTE_LITERALS,   typeLiteral4),
-    ENTRY("__TEXT", "__literal8",       S_8BYTE_LITERALS,   typeLiteral8),
-    ENTRY("__TEXT", "__literal16",      S_16BYTE_LITERALS,  typeLiteral16),
-    ENTRY("__TEXT", "__gcc_except_tab", S_REGULAR,          typeLSDA),
-    ENTRY("__DATA", "__data",           S_REGULAR,          typeData),
-    ENTRY("__DATA", "__const",          S_REGULAR,          typeConstData),
-    ENTRY("__DATA", "__cfstring",       S_REGULAR,          typeCFString),
-    ENTRY("__DATA", "__mod_init_func",  S_MOD_INIT_FUNC_POINTERS,
-                                                            typeInitializerPtr),
-    ENTRY("__DATA", "__mod_term_func",  S_MOD_TERM_FUNC_POINTERS,
-                                                            typeTerminatorPtr),
-    ENTRY("__DATA", "___got",           S_NON_LAZY_SYMBOL_POINTERS,
-                                                            typeGOT),
-    ENTRY("",       "",                 S_NON_LAZY_SYMBOL_POINTERS,
-                                                            typeGOT),
-    ENTRY("__LD",   "__compact_unwind", S_REGULAR,
-                                                         typeCompactUnwindInfo),
-    ENTRY("",       "",                 S_REGULAR,          typeUnknown)
-  };
-  #undef ENTRY
-
   // First look for match of name and type. Empty names in table are wildcards.
   for (const MachORelocatableSectionToAtomType *p = sectsToAtomType ;
                                  p->atomType != DefinedAtom::typeUnknown; ++p) {
@@ -426,6 +428,30 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
 } // anonymous namespace
 
 namespace normalized {
+
+void relocatableSectionInfoForContentType(DefinedAtom::ContentType atomType,
+                                          StringRef &segmentName,
+                                          StringRef &sectionName,
+                                          SectionType &sectionType,
+                                          SectionAttr &sectionAttrs) {
+
+  for (const MachORelocatableSectionToAtomType *p = sectsToAtomType ;
+                                 p->atomType != DefinedAtom::typeUnknown; ++p) {
+    if (p->atomType != atomType)
+      continue;
+    // Wild carded entries are ignored for reverse lookups.
+    if (p->segmentName.empty() || p->sectionName.empty())
+      continue;
+    segmentName = p->segmentName;
+    sectionName = p->sectionName;
+    sectionType = p->sectionType;
+    sectionAttrs = 0;
+    if (atomType == DefinedAtom::typeCode)
+      sectionAttrs = S_ATTR_PURE_INSTRUCTIONS;
+    return;
+  }
+  llvm_unreachable("content type not yet supported");
+}
 
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
