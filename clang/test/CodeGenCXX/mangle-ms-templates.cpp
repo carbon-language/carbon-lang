@@ -262,3 +262,17 @@ void CallFunctionDefinedWithInjectedName() {
   FunctionDefinedWithInjectedName(TypeWithFriendDefinition<int>());
 }
 // CHECK: @"\01?FunctionDefinedWithInjectedName@@YAXU?$TypeWithFriendDefinition@H@@@Z"
+
+// We need to be able to feed GUIDs through a couple rounds of template
+// substitution.
+template <const _GUID *G>
+struct UUIDType3 {
+  void foo() {}
+};
+template <const _GUID *G>
+struct UUIDType4 : UUIDType3<G> {
+  void bar() { UUIDType4::foo(); }
+};
+template struct UUIDType4<&__uuidof(uuid)>;
+// CHECK: "\01?bar@?$UUIDType4@$1?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@QAEXXZ"
+// CHECK: "\01?foo@?$UUIDType3@$1?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@QAEXXZ"

@@ -1063,6 +1063,9 @@ void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
     return;
   }
 
+  // Look through no-op casts like template parameter substitutions.
+  E = E->IgnoreParenNoopCasts(Context.getASTContext());
+
   const CXXUuidofExpr *UE = nullptr;
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
     if (UO->getOpcode() == UO_AddrOf)
