@@ -1309,7 +1309,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     if (Style.Language == FormatStyle::LK_Proto)
       return 1;
     if (Right.Type != TT_ObjCMethodExpr)
-      return 250;
+      return 500;
   }
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)

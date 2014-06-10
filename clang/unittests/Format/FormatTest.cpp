@@ -5110,6 +5110,10 @@ TEST_F(FormatTest, FormatsArrays) {
 
   verifyGoogleFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<int>\n"
                      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[aaaaaaaaaaaa];");
+  verifyFormat(
+      "aaaaaaaaaaa aaaaaaaaaaaaaaa = aaaaaaaaaaaaaaaaaaaaaaaaaa->aaaaaaaaa[0]\n"
+      "                                  .aaaaaaa[0]\n"
+      "                                  .aaaaaaaaaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
