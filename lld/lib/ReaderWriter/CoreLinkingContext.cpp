@@ -186,7 +186,7 @@ private:
 
 class TestingStubsPass : public StubsPass {
 public:
-  TestingStubsPass(const LinkingContext &ctx) : _file(TestingPassFile(ctx)) {}
+  TestingStubsPass(const LinkingContext &ctx) : _file(ctx) {}
 
   bool noTextRelocs() override { return true; }
 
@@ -214,7 +214,7 @@ private:
 
 class TestingGOTPass : public GOTPass {
 public:
-  TestingGOTPass(const LinkingContext &ctx) : _file(TestingPassFile(ctx)) {}
+  TestingGOTPass(const LinkingContext &ctx) : _file(ctx) {}
 
   bool noTextRelocs() override { return true; }
 
