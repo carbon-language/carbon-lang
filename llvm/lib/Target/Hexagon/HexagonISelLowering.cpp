@@ -1326,6 +1326,7 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
 
     // Lower SELECT_CC to SETCC and SELECT.
+    setOperationAction(ISD::SELECT_CC, MVT::i1,    Expand);
     setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
     setOperationAction(ISD::SELECT_CC, MVT::i64,   Expand);
 
