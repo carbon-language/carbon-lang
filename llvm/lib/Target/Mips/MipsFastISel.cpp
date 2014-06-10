@@ -167,9 +167,14 @@ bool MipsFastISel::EmitStore(MVT VT, unsigned SrcReg, Address &Addr,
   //
   // more cases will be handled here in following patches.
   //
-  if (VT != MVT::i32)
+  if (VT == MVT::i32)
+    EmitInstStore(Mips::SW, SrcReg, Addr.Base.Reg, Addr.Offset);
+  else if (VT == MVT::f32)
+    EmitInstStore(Mips::SWC1, SrcReg, Addr.Base.Reg, Addr.Offset);
+  else if (VT == MVT::f64)
+    EmitInstStore(Mips::SDC1, SrcReg, Addr.Base.Reg, Addr.Offset);
+  else
     return false;
-  EmitInstStore(Mips::SW, SrcReg, Addr.Base.Reg, Addr.Offset);
   return true;
 }
 
@@ -229,6 +234,22 @@ bool MipsFastISel::TargetSelectInstruction(const Instruction *I) {
 }
 
 unsigned MipsFastISel::MaterializeFP(const ConstantFP *CFP, MVT VT) {
+  int64_t Imm = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+  if (VT == MVT::f32) {
+    const TargetRegisterClass *RC = &Mips::FGR32RegClass;
+    unsigned DestReg = createResultReg(RC);
+    unsigned TempReg = Materialize32BitInt(Imm, &Mips::GPR32RegClass);
+    EmitInst(Mips::MTC1, DestReg).addReg(TempReg);
+    return DestReg;
+  } else if (VT == MVT::f64) {
+    const TargetRegisterClass *RC = &Mips::AFGR64RegClass;
+    unsigned DestReg = createResultReg(RC);
+    unsigned TempReg1 = Materialize32BitInt(Imm >> 32, &Mips::GPR32RegClass);
+    unsigned TempReg2 =
+        Materialize32BitInt(Imm & 0xFFFFFFFF, &Mips::GPR32RegClass);
+    EmitInst(Mips::BuildPairF64, DestReg).addReg(TempReg2).addReg(TempReg1);
+    return DestReg;
+  }
   return 0;
 }
 
