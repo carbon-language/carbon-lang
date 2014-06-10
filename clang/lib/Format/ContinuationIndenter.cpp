@@ -195,7 +195,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.Stack.back().FirstLessLess == 0)
     return true;
 
-  if (Current.Type == TT_ObjCSelectorName &&
+  if (Current.Type == TT_SelectorName &&
       State.Stack.back().ObjCSelectorNameFound &&
       State.Stack.back().BreakBeforeParameter)
     return true;
@@ -278,7 +278,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     Whitespaces.replaceWhitespace(Current, /*Newlines=*/0, /*IndentLevel=*/0,
                                   Spaces, State.Column + Spaces);
 
-  if (Current.Type == TT_ObjCSelectorName &&
+  if (Current.Type == TT_SelectorName &&
       !State.Stack.back().ObjCSelectorNameFound) {
     if (Current.LongestObjCSelectorName == 0)
       State.Stack.back().AlignColons = false;
@@ -373,7 +373,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   if (NextNonComment->isMemberAccess()) {
     if (State.Stack.back().CallContinuation == 0)
       State.Stack.back().CallContinuation = State.Column;
-  } else if (NextNonComment->Type == TT_ObjCSelectorName) {
+  } else if (NextNonComment->Type == TT_SelectorName) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
       if (NextNonComment->LongestObjCSelectorName == 0) {
         State.Stack.back().AlignColons = false;
@@ -524,7 +524,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
        (!Style.IndentFunctionDeclarationAfterType ||
         State.Line->StartsDefinition)))
     return std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
-  if (NextNonComment->Type == TT_ObjCSelectorName) {
+  if (NextNonComment->Type == TT_SelectorName) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
       if (NextNonComment->LongestObjCSelectorName == 0) {
         return State.Stack.back().Indent;
@@ -597,7 +597,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   if (Current.isMemberAccess())
     State.Stack.back().StartOfFunctionCall =
         Current.LastOperator ? 0 : State.Column + Current.ColumnWidth;
-  if (Current.Type == TT_ObjCSelectorName)
+  if (Current.Type == TT_SelectorName)
     State.Stack.back().ObjCSelectorNameFound = true;
   if (Current.Type == TT_CtorInitializerColon) {
     // Indent 2 from the column, so:

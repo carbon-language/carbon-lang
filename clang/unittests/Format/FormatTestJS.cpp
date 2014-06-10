@@ -88,6 +88,31 @@ TEST_F(FormatTestJS, ES6DestructuringAssignment) {
   verifyFormat("var {a, b} = {a: 1, b: 2};");
 }
 
+TEST_F(FormatTestJS, ContainerLiterals) {
+  verifyFormat("return {\n"
+               "  link: function() {\n"
+               "    f();  //\n"
+               "  }\n"
+               "};");
+  verifyFormat("return {\n"
+               "  a: a,\n"
+               "  link: function() {\n"
+               "    f();  //\n"
+               "  }\n"
+               "};");
+  verifyFormat("return {\n"
+               "  a: a,\n"
+               "  link:\n"
+               "      function() {\n"
+               "        f();  //\n"
+               "      },\n"
+               "  link:\n"
+               "      function() {\n"
+               "        f();  //\n"
+               "      }\n"
+               "};");
+}
+
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {
   verifyFormat("var arr = [1, 2, 3];");
   verifyFormat("var obj = {a: 1, b: 2, c: 3};");
