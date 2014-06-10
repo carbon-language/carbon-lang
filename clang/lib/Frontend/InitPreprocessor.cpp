@@ -491,7 +491,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__BLOCKS__");
   }
 
-  if (LangOpts.CXXExceptions)
+  if (!LangOpts.MSVCCompat && LangOpts.CXXExceptions)
     Builder.defineMacro("__EXCEPTIONS");
   if (LangOpts.RTTI)
     Builder.defineMacro("__GXX_RTTI");
