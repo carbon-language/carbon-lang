@@ -2431,6 +2431,42 @@ def : Pat <
     (S_MOV_B32 -1), sub1)
 >;
 
+class ZExt_i64_i32_Pat <SDNode ext> : Pat <
+  (i64 (ext i32:$src)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $src, sub0),
+    (S_MOV_B32 0), sub1)
+>;
+
+class ZExt_i64_i1_Pat <SDNode ext> : Pat <
+  (i64 (ext i1:$src)),
+  (INSERT_SUBREG
+    (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+      (V_CNDMASK_B32_e64 (i32 0), (i32 1), $src), sub0),
+    (S_MOV_B32 0), sub1)
+>;
+
+
+def : ZExt_i64_i32_Pat<zext>;
+def : ZExt_i64_i32_Pat<anyext>;
+def : ZExt_i64_i1_Pat<zext>;
+def : ZExt_i64_i1_Pat<anyext>;
+
+def : Pat <
+  (i64 (sext i32:$src)),
+    (INSERT_SUBREG
+      (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $src, sub0),
+      (S_ASHR_I32 $src, 31), sub1)
+>;
+
+def : Pat <
+  (i64 (sext i1:$src)),
+  (INSERT_SUBREG
+    (INSERT_SUBREG
+      (i64 (IMPLICIT_DEF)),
+      (V_CNDMASK_B32_e64 0, -1, $src), sub0),
+    (V_CNDMASK_B32_e64 0, -1, $src), sub1)
+>;
+
 def : Pat <
   (f32 (sint_to_fp i1:$src)),
   (V_CNDMASK_B32_e64 (i32 0), CONST.FP32_NEG_ONE, $src)

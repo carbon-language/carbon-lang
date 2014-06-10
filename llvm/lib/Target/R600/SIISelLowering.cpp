@@ -113,10 +113,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SETCC, MVT::v2i1, Expand);
   setOperationAction(ISD::SETCC, MVT::v4i1, Expand);
 
-  setOperationAction(ISD::ANY_EXTEND, MVT::i64, Custom);
-  setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
-  setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
-
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i1, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i1, Custom);
@@ -611,10 +607,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 
   case ISD::SELECT: return LowerSELECT(Op, DAG);
-  case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
-  case ISD::ANY_EXTEND: // Fall-through
-  case ISD::ZERO_EXTEND: return LowerZERO_EXTEND(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddress(MFI, Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntrinsicID =
@@ -902,21 +895,6 @@ SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::BITCAST, DL, MVT::i64, Res);
 }
 
-SDValue SITargetLowering::LowerSIGN_EXTEND(SDValue Op,
-                                           SelectionDAG &DAG) const {
-  EVT VT = Op.getValueType();
-  SDLoc DL(Op);
-
-  if (VT != MVT::i64) {
-    return SDValue();
-  }
-
-  SDValue Hi = DAG.getNode(ISD::SRA, DL, MVT::i32, Op.getOperand(0),
-                                                 DAG.getConstant(31, MVT::i32));
-
-  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Op.getOperand(0), Hi);
-}
-
 SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   StoreSDNode *Store = cast<StoreSDNode>(Op);
@@ -995,24 +973,6 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                         DAG.getTargetConstant(0, MVT::i32));
   }
   return Chain;
-}
-
-
-SDValue SITargetLowering::LowerZERO_EXTEND(SDValue Op,
-                                           SelectionDAG &DAG) const {
-  EVT VT = Op.getValueType();
-  SDLoc DL(Op);
-
-  if (VT != MVT::i64) {
-    return SDValue();
-  }
-
-  SDValue Src = Op.getOperand(0);
-  if (Src.getValueType() != MVT::i32)
-    Src = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, Src);
-
-  SDValue Zero = DAG.getConstant(0, MVT::i32);
-  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Src, Zero);
 }
 
 //===----------------------------------------------------------------------===//
