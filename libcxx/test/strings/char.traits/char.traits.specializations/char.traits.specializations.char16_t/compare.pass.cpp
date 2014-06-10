@@ -19,6 +19,7 @@
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
+#if __cplusplus >= 201103L
     assert(std::char_traits<char16_t>::compare(u"", u"", 0) == 0);
 
     assert(std::char_traits<char16_t>::compare(u"1", u"1", 1) == 0);
@@ -38,5 +39,6 @@ int main()
     assert(std::char_traits<char16_t>::compare(u"223", u"123", 3) > 0);
     assert(std::char_traits<char16_t>::compare(u"133", u"123", 3) > 0);
     assert(std::char_traits<char16_t>::compare(u"124", u"123", 3) > 0);
+#endif
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

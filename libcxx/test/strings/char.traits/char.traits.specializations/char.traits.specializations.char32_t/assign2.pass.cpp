@@ -19,8 +19,10 @@
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
+#if __cplusplus >= 201103L
     char32_t c = U'\0';
     std::char_traits<char32_t>::assign(c, U'a');
     assert(c == U'a');
+#endif
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

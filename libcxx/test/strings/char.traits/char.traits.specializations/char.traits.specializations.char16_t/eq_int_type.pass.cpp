@@ -19,9 +19,11 @@
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
+#if __cplusplus >= 201103L
     assert( std::char_traits<char16_t>::eq_int_type(u'a', u'a'));
     assert(!std::char_traits<char16_t>::eq_int_type(u'a', u'A'));
     assert(!std::char_traits<char16_t>::eq_int_type(std::char_traits<char16_t>::eof(), u'A'));
+#endif
     assert( std::char_traits<char16_t>::eq_int_type(std::char_traits<char16_t>::eof(),
                                                     std::char_traits<char16_t>::eof()));
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
