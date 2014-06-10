@@ -14,6 +14,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -474,8 +475,7 @@ static bool nextRealType(SmallVectorImpl<CompositeType *> &SubTypes,
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool llvm::isInTailCallPosition(ImmutableCallSite CS,
-                                const TargetLowering &TLI) {
+bool llvm::isInTailCallPosition(ImmutableCallSite CS, const SelectionDAG &DAG) {
   const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
@@ -490,7 +490,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
   // longjmp on x86), it can end up causing miscompilation that has not
   // been fully understood.
   if (!Ret &&
-      (!TLI.getTargetMachine().Options.GuaranteedTailCallOpt ||
+      (!DAG.getTarget().Options.GuaranteedTailCallOpt ||
        !isa<UnreachableInst>(Term)))
     return false;
 
@@ -509,7 +509,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
         return false;
     }
 
-  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret, TLI);
+  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret,
+                                         *DAG.getTarget().getTargetLowering());
 }
 
 bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
