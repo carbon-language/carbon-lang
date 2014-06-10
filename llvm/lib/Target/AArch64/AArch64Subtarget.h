@@ -14,6 +14,7 @@
 #ifndef AArch64SUBTARGET_H
 #define AArch64SUBTARGET_H
 
+#include "AArch64InstrInfo.h"
 #include "AArch64FrameLowering.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64SelectionDAGInfo.h"
@@ -54,6 +55,7 @@ protected:
 
   const DataLayout DL;
   AArch64FrameLowering FrameLowering;
+  AArch64InstrInfo InstrInfo;
   AArch64SelectionDAGInfo TSInfo;
 
 public:
@@ -66,6 +68,7 @@ public:
   const AArch64FrameLowering *getFrameLowering() const {
     return &FrameLowering;
   }
+  const AArch64InstrInfo *getInstrInfo() const { return &InstrInfo; }
   const DataLayout *getDataLayout() const { return &DL; }
   bool enableMachineScheduler() const override { return true; }
 

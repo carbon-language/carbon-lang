@@ -44,7 +44,7 @@ AArch64Subtarget::AArch64Subtarget(const std::string &TT,
              ? "e-m:o-i64:64-i128:128-n32:64-S128"
              : (LittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
                              : "E-m:e-i64:64-i128:128-n32:64-S128")),
-      FrameLowering(), TSInfo(&DL) {
+      FrameLowering(), InstrInfo(*this), TSInfo(&DL) {
   // Determine default and user-specified characteristics
 
   if (CPUString.empty())

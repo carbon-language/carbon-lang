@@ -30,7 +30,6 @@ protected:
   AArch64Subtarget Subtarget;
 
 private:
-  AArch64InstrInfo InstrInfo;
   AArch64TargetLowering TLInfo;
 
 public:
@@ -51,9 +50,11 @@ public:
   const AArch64FrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }
-  const AArch64InstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const AArch64InstrInfo *getInstrInfo() const override {
+    return getSubtargetImpl()->getInstrInfo();
+  }
   const AArch64RegisterInfo *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
+    return &getInstrInfo()->getRegisterInfo();
   }
   const AArch64SelectionDAGInfo *getSelectionDAGInfo() const override {
     return getSubtargetImpl()->getSelectionDAGInfo();
