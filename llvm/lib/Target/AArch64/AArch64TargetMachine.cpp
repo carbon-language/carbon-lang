@@ -78,7 +78,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, LittleEndian),
-      InstrInfo(Subtarget), TLInfo(*this), TSInfo(getDataLayout()) {
+      InstrInfo(Subtarget), TLInfo(*this) {
   initAsmInfo();
 }
 

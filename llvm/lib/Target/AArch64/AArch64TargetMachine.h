@@ -32,7 +32,6 @@ protected:
 private:
   AArch64InstrInfo InstrInfo;
   AArch64TargetLowering TLInfo;
-  AArch64SelectionDAGInfo TSInfo;
 
 public:
   AArch64TargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -57,7 +56,7 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   const AArch64SelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
 
   // Pass Pipeline Configuration

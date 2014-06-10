@@ -16,6 +16,7 @@
 
 #include "AArch64FrameLowering.h"
 #include "AArch64RegisterInfo.h"
+#include "AArch64SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -53,6 +54,7 @@ protected:
 
   const DataLayout DL;
   AArch64FrameLowering FrameLowering;
+  AArch64SelectionDAGInfo TSInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -60,6 +62,7 @@ public:
   AArch64Subtarget(const std::string &TT, const std::string &CPU,
                  const std::string &FS, bool LittleEndian);
 
+  const AArch64SelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
   const AArch64FrameLowering *getFrameLowering() const {
     return &FrameLowering;
   }
