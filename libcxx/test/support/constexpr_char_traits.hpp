@@ -24,7 +24,7 @@ struct constexpr_char_traits
     typedef std::streampos pos_type;
     typedef std::mbstate_t state_type;
 
-    static _LIBCPP_CONSTEXPR void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
+    static _LIBCPP_CONSTEXPR_AFTER_CXX11 void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
         {__c1 = __c2;}
 
     static _LIBCPP_CONSTEXPR bool eq(char_type __c1, char_type __c2) _NOEXCEPT
