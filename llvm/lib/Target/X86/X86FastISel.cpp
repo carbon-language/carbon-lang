@@ -1637,6 +1637,18 @@ bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
   return true;
 }
 
+static bool isCommutativeIntrinsic(IntrinsicInst const &I) {
+  switch (I.getIntrinsicID()) {
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
@@ -1718,47 +1730,94 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     return true;
   }
   case Intrinsic::sadd_with_overflow:
-  case Intrinsic::uadd_with_overflow: {
-    // FIXME: Should fold immediates.
-
-    // Replace "add with overflow" intrinsics with an "add" instruction followed
-    // by a seto/setc instruction.
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+  case Intrinsic::usub_with_overflow:
+  case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow: {
+    // This implements the basic lowering of the xalu with overflow intrinsics
+    // into add/sub/mul folowed by either seto or setb.
     const Function *Callee = I.getCalledFunction();
-    Type *RetTy =
-      cast<StructType>(Callee->getReturnType())->getTypeAtIndex(unsigned(0));
+    auto *Ty = cast<StructType>(Callee->getReturnType());
+    Type *RetTy = Ty->getTypeAtIndex(0U);
+    Type *CondTy = Ty->getTypeAtIndex(1);
 
     MVT VT;
     if (!isTypeLegal(RetTy, VT))
       return false;
 
-    const Value *Op1 = I.getArgOperand(0);
-    const Value *Op2 = I.getArgOperand(1);
-    unsigned Reg1 = getRegForValue(Op1);
-    unsigned Reg2 = getRegForValue(Op2);
-
-    if (Reg1 == 0 || Reg2 == 0)
-      // FIXME: Handle values *not* in registers.
+    if (VT < MVT::i8 || VT > MVT::i64)
       return false;
 
-    unsigned OpC = 0;
-    if (VT == MVT::i32)
-      OpC = X86::ADD32rr;
-    else if (VT == MVT::i64)
-      OpC = X86::ADD64rr;
-    else
+    const Value *LHS = I.getArgOperand(0);
+    const Value *RHS = I.getArgOperand(1);
+
+    // Canonicalize immediates to the RHS.
+    if (isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS) &&
+        isCommutativeIntrinsic(I))
+      std::swap(LHS, RHS);
+
+    unsigned BaseOpc, CondOpc;
+    switch (I.getIntrinsicID()) {
+    default: llvm_unreachable("Unexpected intrinsic!");
+    case Intrinsic::sadd_with_overflow:
+      BaseOpc = ISD::ADD; CondOpc = X86::SETOr; break;
+    case Intrinsic::uadd_with_overflow:
+      BaseOpc = ISD::ADD; CondOpc = X86::SETBr; break;
+    case Intrinsic::ssub_with_overflow:
+      BaseOpc = ISD::SUB; CondOpc = X86::SETOr; break;
+    case Intrinsic::usub_with_overflow:
+      BaseOpc = ISD::SUB; CondOpc = X86::SETBr; break;
+    case Intrinsic::smul_with_overflow:
+      BaseOpc = ISD::MUL; CondOpc = X86::SETOr; break;
+    case Intrinsic::umul_with_overflow:
+      BaseOpc = X86ISD::UMUL; CondOpc = X86::SETOr; break;
+    }
+
+    unsigned LHSReg = getRegForValue(LHS);
+    if (LHSReg == 0)
+      return false;
+    bool LHSIsKill = hasTrivialKill(LHS);
+
+    unsigned ResultReg = 0;
+    // Check if we have an immediate version.
+    if (auto const *C = dyn_cast<ConstantInt>(RHS)) {
+      ResultReg = FastEmit_ri(VT, VT, BaseOpc, LHSReg, LHSIsKill,
+                              C->getZExtValue());
+    }
+
+    unsigned RHSReg;
+    bool RHSIsKill;
+    if (!ResultReg) {
+      RHSReg = getRegForValue(RHS);
+      if (RHSReg == 0)
+        return false;
+      RHSIsKill = hasTrivialKill(RHS);
+      ResultReg = FastEmit_rr(VT, VT, BaseOpc, LHSReg, LHSIsKill, RHSReg,
+                              RHSIsKill);
+    }
+
+    // FastISel doesn't have a pattern for X86::MUL*r. Emit it manually.
+    if (BaseOpc == X86ISD::UMUL && !ResultReg) {
+      static const unsigned MULOpc[] =
+      { X86::MUL8r, X86::MUL16r, X86::MUL32r, X86::MUL64r };
+      static const unsigned Reg[] = { X86::AL, X86::AX, X86::EAX, X86::RAX };
+      // First copy the first operand into RAX, which is an implicit input to
+      // the X86::MUL*r instruction.
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(TargetOpcode::COPY), Reg[VT.SimpleTy-MVT::i8])
+        .addReg(LHSReg, getKillRegState(LHSIsKill));
+      ResultReg = FastEmitInst_r(MULOpc[VT.SimpleTy-MVT::i8],
+                                 TLI.getRegClassFor(VT), RHSReg, RHSIsKill);
+    }
+
+    if (!ResultReg)
       return false;
 
-    // The call to CreateRegs builds two sequential registers, to store the
-    // both the returned values.
-    unsigned ResultReg = FuncInfo.CreateRegs(I.getType());
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(OpC), ResultReg)
-      .addReg(Reg1).addReg(Reg2);
-
-    unsigned Opc = X86::SETBr;
-    if (I.getIntrinsicID() == Intrinsic::sadd_with_overflow)
-      Opc = X86::SETOr;
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc),
-            ResultReg + 1);
+    unsigned ResultReg2 = FuncInfo.CreateRegs(CondTy);
+    assert((ResultReg+1) == ResultReg2 && "Nonconsecutive result registers.");
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CondOpc),
+            ResultReg2);
 
     UpdateValueMap(&I, ResultReg, 2);
     return true;

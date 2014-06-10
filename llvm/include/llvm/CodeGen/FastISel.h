@@ -373,6 +373,9 @@ protected:
   /// - \c Add has a constant operand.
   bool canFoldAddIntoGEP(const User *GEP, const Value *Add);
 
+  /// Test whether the given value has exactly one use.
+  bool hasTrivialKill(const Value *V) const;
+
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
@@ -408,9 +411,6 @@ private:
   /// beginning of the block. It helps to avoid spilling cached variables across
   /// heavy instructions like calls.
   void flushLocalValueMap();
-
-  /// Test whether the given value has exactly one use.
-  bool hasTrivialKill(const Value *V) const;
 };
 
 }
