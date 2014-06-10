@@ -102,6 +102,8 @@ public:
   unsigned getReductionCost(unsigned Opcode, Type *Ty,
                             bool IsPairwiseForm) const override;
 
+  unsigned getIntImmCost(int64_t) const;
+
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
 
   unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
@@ -808,6 +810,19 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
   return TargetTransformInfo::getReductionCost(Opcode, ValTy, IsPairwise);
 }
 
+/// \brief Calculate the cost of materializing a 64-bit value. This helper
+/// method might only calculate a fraction of a larger immediate. Therefore it
+/// is valid to return a cost of ZERO.
+unsigned X86TTI::getIntImmCost(int64_t Val) const {
+  if (Val == 0)
+    return TCC_Free;
+
+  if (isInt<32>(Val))
+    return TCC_Basic;
+
+  return 2 * TCC_Basic;
+}
+
 unsigned X86TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
   assert(Ty->isIntegerTy());
 
@@ -825,11 +840,21 @@ unsigned X86TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
   if (Imm == 0)
     return TCC_Free;
 
-  if (Imm.getBitWidth() <= 64 &&
-      (isInt<32>(Imm.getSExtValue()) || isUInt<32>(Imm.getZExtValue())))
-    return TCC_Basic;
-  else
-    return 2 * TCC_Basic;
+  // Sign-extend all constants to a multiple of 64-bit.
+  APInt ImmVal = Imm;
+  if (BitSize & 0x3f)
+    ImmVal = Imm.sext((BitSize + 63) & ~0x3fU);
+
+  // Split the constant into 64-bit chunks and calculate the cost for each
+  // chunk.
+  unsigned Cost = 0;
+  for (unsigned ShiftVal = 0; ShiftVal < BitSize; ShiftVal += 64) {
+    APInt Tmp = ImmVal.ashr(ShiftVal).sextOrTrunc(64);
+    int64_t Val = Tmp.getSExtValue();
+    Cost += getIntImmCost(Val);
+  }
+  // We need at least one instruction to materialze the constant.
+  return std::max(1U, Cost);
 }
 
 unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
@@ -889,9 +914,11 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
     break;
   }
 
-  if ((Idx == ImmIdx) &&
-      Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
-    return TCC_Free;
+  if (Idx == ImmIdx) {
+    unsigned NumConstants = (BitSize + 63) / 64;
+    unsigned Cost = X86TTI::getIntImmCost(Imm, Ty);
+    return (Cost <= NumConstants * TCC_Basic) ? TCC_Free : Cost;
+  }
 
   return X86TTI::getIntImmCost(Imm, Ty);
 }

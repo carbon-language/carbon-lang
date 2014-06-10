@@ -25,3 +25,12 @@ define i196 @test3(i196 %a) nounwind {
   %2 = mul i196 %1, 2
   ret i196 %2
 }
+
+; Check that we don't hoist immediates with small values.
+define i96 @test4(i96 %a) nounwind {
+; CHECK-LABEL: test4
+; CHECK-NOT: %const = bitcast i96 2 to i96
+  %1 = mul i96 %a, 2
+  %2 = add i96 %1, 2
+  ret i96 %2
+}
