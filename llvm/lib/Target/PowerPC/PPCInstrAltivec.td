@@ -22,111 +22,127 @@ def vnot_ppc : PatFrag<(ops node:$in),
 
 def vpkuhum_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                               (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVPKUHUMShuffleMask(cast<ShuffleVectorSDNode>(N), false);
+  return PPC::isVPKUHUMShuffleMask(cast<ShuffleVectorSDNode>(N), false,
+                                   *CurDAG);
 }]>;
 def vpkuwum_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                               (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), false);
+  return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), false,
+                                   *CurDAG);
 }]>;
 def vpkuhum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVPKUHUMShuffleMask(cast<ShuffleVectorSDNode>(N), true);
+  return PPC::isVPKUHUMShuffleMask(cast<ShuffleVectorSDNode>(N), true,
+                                   *CurDAG);
 }]>;
 def vpkuwum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), true);
+  return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), true,
+                                   *CurDAG);
 }]>;
 
 
 def vmrglb_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 1, false);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 1, false,
+                                 *CurDAG);
 }]>;
 def vmrglh_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 2, false);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 2, false,
+                                 *CurDAG);
 }]>;
 def vmrglw_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 4, false);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 4, false,
+                                 *CurDAG);
 }]>;
 def vmrghb_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 1, false);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 1, false,
+                                 *CurDAG);
 }]>;
 def vmrghh_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 2, false);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 2, false,
+                                 *CurDAG);
 }]>;
 def vmrghw_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 4, false);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 4, false,
+                                 *CurDAG);
 }]>;
 
 
 def vmrglb_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                (vector_shuffle (v16i8 node:$lhs), node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 1, true);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 1, true,
+                                 *CurDAG);
 }]>;
 def vmrglh_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 2, true);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 2, true,
+                                 *CurDAG);
 }]>;
 def vmrglw_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 4, true);
+  return PPC::isVMRGLShuffleMask(cast<ShuffleVectorSDNode>(N), 4, true,
+                                 *CurDAG);
 }]>;
 def vmrghb_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 1, true);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 1, true,
+                                 *CurDAG);
 }]>;
 def vmrghh_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 2, true);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 2, true,
+                                 *CurDAG);
 }]>;
 def vmrghw_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 4, true);
+  return PPC::isVMRGHShuffleMask(cast<ShuffleVectorSDNode>(N), 4, true,
+                                 *CurDAG);
 }]>;
 
 
 def VSLDOI_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N, false));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, false, *CurDAG));
 }]>;
 def vsldoi_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVSLDOIShuffleMask(N, false) != -1;
+  return PPC::isVSLDOIShuffleMask(N, false, *CurDAG) != -1;
 }], VSLDOI_get_imm>;
 
 
 /// VSLDOI_unary* - These are used to match vsldoi(X,X), which is turned into
 /// vector_shuffle(X,undef,mask) by the dag combiner.
 def VSLDOI_unary_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N, true));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, true, *CurDAG));
 }]>;
 def vsldoi_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return PPC::isVSLDOIShuffleMask(N, true) != -1;
+  return PPC::isVSLDOIShuffleMask(N, true, *CurDAG) != -1;
 }], VSLDOI_unary_get_imm>;
 
 
 // VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
 def VSPLTB_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 1));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 1, *CurDAG));
 }]>;
 def vspltb_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isSplatShuffleMask(cast<ShuffleVectorSDNode>(N), 1);
 }], VSPLTB_get_imm>;
 def VSPLTH_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 2));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 2, *CurDAG));
 }]>;
 def vsplth_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isSplatShuffleMask(cast<ShuffleVectorSDNode>(N), 2);
 }], VSPLTH_get_imm>;
 def VSPLTW_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 4));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 4, *CurDAG));
 }]>;
 def vspltw_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{

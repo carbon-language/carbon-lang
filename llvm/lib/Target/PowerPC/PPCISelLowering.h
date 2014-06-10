@@ -303,25 +303,27 @@ namespace llvm {
   namespace PPC {
     /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUHUM instruction.
-    bool isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary);
+    bool isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary,
+                              SelectionDAG &DAG);
 
     /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUWUM instruction.
-    bool isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary);
+    bool isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary,
+                              SelectionDAG &DAG);
 
     /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
     bool isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
-                            bool isUnary);
+                            bool isUnary, SelectionDAG &DAG);
 
     /// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGH* instruction with the specified unit size (1,2 or 4 bytes).
     bool isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
-                            bool isUnary);
+                            bool isUnary, SelectionDAG &DAG);
 
     /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
     /// amount, otherwise return -1.
-    int isVSLDOIShuffleMask(SDNode *N, bool isUnary);
+    int isVSLDOIShuffleMask(SDNode *N, bool isUnary, SelectionDAG &DAG);
 
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
@@ -334,7 +336,7 @@ namespace llvm {
 
     /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
-    unsigned getVSPLTImmediate(SDNode *N, unsigned EltSize);
+    unsigned getVSPLTImmediate(SDNode *N, unsigned EltSize, SelectionDAG &DAG);
 
     /// get_VSPLTI_elt - If this is a build_vector of constants which can be
     /// formed by using a vspltis[bhw] instruction of the specified element
