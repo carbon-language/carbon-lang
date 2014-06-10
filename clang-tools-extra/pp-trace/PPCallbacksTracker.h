@@ -118,7 +118,7 @@ public:
   void PragmaDiagnosticPop(clang::SourceLocation Loc,
                            llvm::StringRef Namespace) override;
   void PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace,
-                        clang::diag::Mapping mapping,
+                        clang::diag::Severity mapping,
                         llvm::StringRef Str) override;
   void PragmaOpenCLExtension(clang::SourceLocation NameLoc,
                              const clang::IdentifierInfo *Name,

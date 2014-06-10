@@ -472,7 +472,7 @@ Argument Name    Argument Value Syntax                                Clang C++ 
 ==============   ==================================================   ============================== ==============================
 Loc              "(file):(line):(col)"                                SourceLocation                 The location of the directive.
 Namespace        (name)                                               StringRef                      Namespace name.
-mapping          (0|MAP_IGNORE|MAP_WARNING|MAP_ERROR|MAP_FATAL)       diag::Mapping                  Mapping type.
+mapping          (0|MAP_IGNORE|MAP_WARNING|MAP_ERROR|MAP_FATAL)       diag::Severity                 Mapping type.
 Str              (string)                                             StringRef                      Warning/error name.
 ==============   ==================================================   ============================== ==============================
 

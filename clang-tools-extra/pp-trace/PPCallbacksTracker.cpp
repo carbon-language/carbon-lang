@@ -245,7 +245,7 @@ void PPCallbacksTracker::PragmaDiagnosticPop(clang::SourceLocation Loc,
 // Callback invoked when a #pragma gcc dianostic directive is read.
 void PPCallbacksTracker::PragmaDiagnostic(clang::SourceLocation Loc,
                                           llvm::StringRef Namespace,
-                                          clang::diag::Mapping Mapping,
+                                          clang::diag::Severity Mapping,
                                           llvm::StringRef Str) {
   beginCallback("PragmaDiagnostic");
   appendArgument("Loc", Loc);
