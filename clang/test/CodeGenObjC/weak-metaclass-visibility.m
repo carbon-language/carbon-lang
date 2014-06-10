@@ -3,6 +3,7 @@
 
 @interface NSObject 
 - (void) finalize;
++ (void) class;
 @end
 
 __attribute__((availability(macosx,introduced=9876.5)))
@@ -31,3 +32,14 @@ void kit()
 // CHECK: @"OBJC_METACLASS_$_MyClass" = global %struct._class_t
 // CHECK: @"OBJC_CLASS_$_NSObject" = external global %struct._class_t
 
+// rdar://16529125
+__attribute__((weak_import))
+@interface NSURLQueryItem : NSObject
+@end
+
+@implementation NSURLQueryItem (hax)
++(void)classmethod { [super class]; }
+@end
+
+// CHECK: @"OBJC_METACLASS_$_NSURLQueryItem" = extern_weak global
+// CHECK: @"OBJC_CLASS_$_NSURLQueryItem" = extern_weak global

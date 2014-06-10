@@ -1389,7 +1389,7 @@ private:
   /// EmitMetaClassRef - Return a Value * of the address of _class_t
   /// meta-data
   llvm::Value *EmitMetaClassRef(CodeGenFunction &CGF,
-                                const ObjCInterfaceDecl *ID);
+                                const ObjCInterfaceDecl *ID, bool Weak);
 
   /// ObjCIvarOffsetVariable - Returns the ivar offset variable for
   /// the given ivar.
@@ -6702,13 +6702,15 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CodeGenFunction &CGF,
 /// meta-data
 ///
 llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CodeGenFunction &CGF,
-                                                      const ObjCInterfaceDecl *ID) {
+                                                      const ObjCInterfaceDecl *ID,
+                                                      bool Weak) {
   llvm::GlobalVariable * &Entry = MetaClassReferences[ID->getIdentifier()];
   if (!Entry) {
 
     std::string MetaClassName(getMetaclassSymbolPrefix() +
                               ID->getNameAsString());
-    llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
+    llvm::GlobalVariable *MetaClassGV =
+      GetClassGlobal(MetaClassName, Weak);
     Entry = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassnfABIPtrTy,
                                      false, llvm::GlobalValue::PrivateLinkage,
                                      MetaClassGV,
@@ -6766,7 +6768,8 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
   if (IsClassMessage)
-      Target = EmitMetaClassRef(CGF, Class);
+      Target = EmitMetaClassRef(CGF, Class,
+                                (isCategoryImpl && Class->isWeakImported()));
   else
     Target = EmitSuperClassRef(CGF, Class);
 
