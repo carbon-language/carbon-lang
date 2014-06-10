@@ -19,10 +19,6 @@
 namespace llvm {
 
 class AArch64SelectionDAGInfo : public TargetSelectionDAGInfo {
-  /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
-  /// make the right decision when generating code for different targets.
-  const AArch64Subtarget *Subtarget;
-
 public:
   explicit AArch64SelectionDAGInfo(const TargetMachine &TM);
   ~AArch64SelectionDAGInfo();

@@ -17,8 +17,7 @@ using namespace llvm;
 #define DEBUG_TYPE "aarch64-selectiondag-info"
 
 AArch64SelectionDAGInfo::AArch64SelectionDAGInfo(const TargetMachine &TM)
-    : TargetSelectionDAGInfo(TM.getDataLayout()),
-      Subtarget(&TM.getSubtarget<AArch64Subtarget>()) {}
+    : TargetSelectionDAGInfo(TM.getDataLayout()) {}
 
 AArch64SelectionDAGInfo::~AArch64SelectionDAGInfo() {}
 
@@ -30,7 +29,9 @@ SDValue AArch64SelectionDAGInfo::EmitTargetCodeForMemset(
   ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
   ConstantSDNode *SizeValue = dyn_cast<ConstantSDNode>(Size);
   const char *bzeroEntry =
-      (V && V->isNullValue()) ? Subtarget->getBZeroEntry() : nullptr;
+      (V && V->isNullValue())
+          ? DAG.getTarget().getSubtarget<AArch64Subtarget>().getBZeroEntry()
+          : nullptr;
   // For small size (< 256), it is not beneficial to use bzero
   // instead of memset.
   if (bzeroEntry && (!SizeValue || SizeValue->getZExtValue() > 256)) {
