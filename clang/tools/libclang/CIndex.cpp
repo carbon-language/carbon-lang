@@ -2556,8 +2556,8 @@ buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
 // Misc. API hooks.
 //===----------------------------------------------------------------------===//               
 
-static llvm::sys::Mutex EnableMultithreadingMutex;
-static bool EnabledMultithreading;
+static llvm::sys::Mutex LoggingMutex;
+static std::once_flag InstalledErrorHandlerFlag;
 
 static void fatal_error_handler(void *user_data, const std::string& reason,
                                 bool gen_crash_diag) {
@@ -2575,15 +2575,8 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   if (!getenv("LIBCLANG_DISABLE_CRASH_RECOVERY"))
     llvm::CrashRecoveryContext::Enable();
 
-  // Enable support for multithreading in LLVM.
-  {
-    llvm::sys::ScopedLock L(EnableMultithreadingMutex);
-    if (!EnabledMultithreading) {
-      llvm::install_fatal_error_handler(fatal_error_handler, nullptr);
-      llvm::llvm_start_multithreaded();
-      EnabledMultithreading = true;
-    }
-  }
+  std::call_once(InstalledErrorHandlerFlag,
+      []() {llvm::install_fatal_error_handler(fatal_error_handler, nullptr);});
 
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
@@ -6959,7 +6952,7 @@ Logger &cxindex::Logger::operator<<(const llvm::format_object_base &Fmt) {
 cxindex::Logger::~Logger() {
   LogOS.flush();
 
-  llvm::sys::ScopedLock L(EnableMultithreadingMutex);
+  llvm::sys::ScopedLock L(LoggingMutex);
 
   static llvm::TimeRecord sBeginTR = llvm::TimeRecord::getCurrentTime();
 
