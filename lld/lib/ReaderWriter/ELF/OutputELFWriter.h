@@ -176,7 +176,7 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
           _dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                          atom->_virtualAddr, atom);
       }
-  for (const auto sla : file.sharedLibrary()) {
+  for (const auto &sla : file.sharedLibrary()) {
     _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
     _soNeeded.insert(sla->loadName());
   }
