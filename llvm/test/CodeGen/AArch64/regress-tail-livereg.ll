@@ -17,3 +17,17 @@ define void @foo() {
 ; CHECK: br {{x([0-79]|1[0-8])}}
        ret void
 }
+
+; No matter how tempting it is, LLVM should not use x30 since that'll be
+; restored to its incoming value before the "br".
+define void @test_x30_tail() {
+; CHECK-LABEL: test_x30_tail:
+; CHECK: mov [[DEST:x[0-9]+]], x30
+; CHECK: br [[DEST]]
+  %addr = call i8* @llvm.returnaddress(i32 0)
+  %faddr = bitcast i8* %addr to void()*
+  tail call void %faddr()
+  ret void
+}
+
+declare i8* @llvm.returnaddress(i32)
