@@ -545,3 +545,12 @@ define <16 x float> @test_vpermt2ps(<16 x float>%x, <16 x float>%y, <16 x i32>%p
 }
 
 declare <16 x float> @llvm.x86.avx512.mask.vpermt.ps.512(<16 x i32>, <16 x float>, <16 x float>, i16)
+
+define <8 x i64> @test_vmovntdqa(i8 *%x) {
+; CHECK-LABEL: test_vmovntdqa:
+; CHECK: vmovntdqa (%rdi), %zmm0 ## encoding: [0x62,0xf2,0x7d,0x48,0x2a,0x07]
+  %res = call <8 x i64> @llvm.x86.avx512.movntdqa(i8* %x)
+  ret <8 x i64> %res
+}
+
+declare <8 x i64> @llvm.x86.avx512.movntdqa(i8*)

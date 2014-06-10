@@ -1788,6 +1788,17 @@ def : Pat<(v8i64 (X86Vinsert undef, GR64:$src2, (iPTR 0))),
         (SUBREG_TO_REG (i32 0), (VMOV64toPQIZrr GR64:$src2), sub_xmm)>;
 
 //===----------------------------------------------------------------------===//
+// AVX-512 - Non-temporals
+//===----------------------------------------------------------------------===//
+
+def VMOVNTDQAZrm : AVX5128I<0x2A, MRMSrcMem, (outs VR512:$dst),
+                            (ins i512mem:$src),
+                            "vmovntdqa\t{$src, $dst|$dst, $src}",
+                            [(set VR512:$dst,
+                              (int_x86_avx512_movntdqa addr:$src))]>,
+                   EVEX, EVEX_V512;
+
+//===----------------------------------------------------------------------===//
 // AVX-512 - Integer arithmetic
 //
 multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
