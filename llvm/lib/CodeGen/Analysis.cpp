@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines several CodeGen-specific LLVM IR analysis utilties.
+// This file defines several CodeGen-specific LLVM IR analysis utilities.
 //
 //===----------------------------------------------------------------------===//
 
