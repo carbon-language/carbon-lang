@@ -16,8 +16,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aarch64-selectiondag-info"
 
-AArch64SelectionDAGInfo::AArch64SelectionDAGInfo(const TargetMachine &TM)
-    : TargetSelectionDAGInfo(TM.getDataLayout()) {}
+AArch64SelectionDAGInfo::AArch64SelectionDAGInfo(const DataLayout *DL)
+    : TargetSelectionDAGInfo(DL) {}
 
 AArch64SelectionDAGInfo::~AArch64SelectionDAGInfo() {}
 
