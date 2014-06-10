@@ -96,4 +96,6 @@ AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {
   ExceptionsType = ExceptionHandling::DwarfCFI;
 
   UseIntegratedAssembler = true;
+
+  HasIdentDirective = true;
 }
