@@ -447,7 +447,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   // If we break after { or the [ of an array initializer, we should also break
   // before the corresponding } or ].
-  if (Previous.is(tok::l_brace) || Previous.Type == TT_ArrayInitializerLSquare)
+  if (PreviousNonComment &&
+      (PreviousNonComment->is(tok::l_brace) ||
+       PreviousNonComment->Type == TT_ArrayInitializerLSquare))
     State.Stack.back().BreakBeforeClosingBrace = true;
 
   if (State.Stack.back().AvoidBinPacking) {

@@ -1900,6 +1900,10 @@ TEST_F(FormatTest, FormatsEnum) {
                    "\n"
                    "  THREE\n"
                    "}"));
+  verifyFormat("enum E { // comment\n"
+               "  ONE,\n"
+               "  TWO\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
@@ -5410,7 +5414,8 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
       "             BracedList{ // comment 1 (Forcing interesting break)\n"
       "                         param1, param2,\n"
       "                         // comment 2\n"
-      "                         param3, param4 });",
+      "                         param3, param4\n"
+      "             });",
       ExtraSpaces);
   verifyFormat(
       "std::this_thread::sleep_for(\n"
