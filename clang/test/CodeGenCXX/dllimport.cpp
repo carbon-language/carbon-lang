@@ -621,4 +621,11 @@ namespace PR19933 {
   template <typename T> int C<T>::x = g();
   template struct __declspec(dllimport) C<int>;
   // MSC-DAG: @"\01?x@?$C@H@PR19933@@2HA" = available_externally dllimport global i32 42
+
+  template <int I> struct D { static int x, y; };
+  template <int I> int D<I>::x = I + 1;
+  template <int I> int D<I>::y = I + f();
+  template struct __declspec(dllimport) D<42>;
+  // MSC-DAG: @"\01?x@?$D@$0CK@@PR19933@@2HA" = available_externally dllimport global i32 43
+  // MSC-DAG: @"\01?y@?$D@$0CK@@PR19933@@2HA" = available_externally dllimport global i32 0
 }

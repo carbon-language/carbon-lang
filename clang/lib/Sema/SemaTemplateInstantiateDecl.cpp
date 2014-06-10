@@ -3671,12 +3671,6 @@ void Sema::InstantiateVariableInitializer(
     // We already have an initializer in the class.
     return;
 
-  if (Var->hasAttr<DLLImportAttr>() &&
-      !(OldVar->getInit() && OldVar->checkInitIsICE())) {
-    // Do not dynamically initialize dllimport variables.
-    return;
-  }
-
   if (OldVar->getInit()) {
     if (Var->isStaticDataMember() && !OldVar->isOutOfLine())
       PushExpressionEvaluationContext(Sema::ConstantEvaluated, OldVar);
@@ -3689,9 +3683,15 @@ void Sema::InstantiateVariableInitializer(
                          OldVar->getInitStyle() == VarDecl::CallInit);
     if (!Init.isInvalid()) {
       bool TypeMayContainAuto = true;
-      if (Init.get()) {
+      Expr *InitExpr = Init.get();
+
+      if (Var->hasAttr<DLLImportAttr>() && InitExpr &&
+          !InitExpr->isConstantInitializer(getASTContext(), false)) {
+        // Do not dynamically initialize dllimport variables.
+        return;
+      } else if (InitExpr) {
         bool DirectInit = OldVar->isDirectInit();
-        AddInitializerToDecl(Var, Init.get(), DirectInit, TypeMayContainAuto);
+        AddInitializerToDecl(Var, InitExpr, DirectInit, TypeMayContainAuto);
       } else
         ActOnUninitializedDecl(Var, TypeMayContainAuto);
     } else {
