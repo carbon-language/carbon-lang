@@ -360,8 +360,13 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
   }
 
   if (Records.getDef(IterRec->getNameInitAsString())) {
-    Error(Loc, "def already exists: " + IterRec->getNameInitAsString());
-    return true;
+    // If this record is anonymous, it's no problem, just generate a new name
+    if (IterRec->isAnonymous())
+      IterRec->setName(GetNewAnonymousName());
+    else {
+      Error(Loc, "def already exists: " + IterRec->getNameInitAsString());
+      return true;
+    }
   }
 
   Records.addDef(IterRec);
