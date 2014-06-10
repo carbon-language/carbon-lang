@@ -707,18 +707,19 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 
 
 
-#if defined(__APPLE__)
-
 // This ConnectionFileDescriptor::BytesAvailable() uses select().
 //
 // PROS:
 //  - select is consistent across most unix platforms
-//  - this Apple specific version allows for unlimited fds in the fd_sets by
+//  - The Apple specific version allows for unlimited fds in the fd_sets by
 //    setting the _DARWIN_UNLIMITED_SELECT define prior to including the
 //    required header files.
 
-// CONS:
-//  - Darwin only
+#if defined(__APPLE__)
+#define FD_SET_DATA(fds) fds.data()
+#else
+#define FD_SET_DATA(fds) &fds
+#endif
 
 ConnectionStatus
 ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
@@ -755,10 +756,16 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     if (data_fd >= 0)
     {
         const bool have_pipe_fd = pipe_fd >= 0;
+#if !defined(__APPLE__) && !defined(_MSC_VER)
+        assert (data_fd < FD_SETSIZE);
+        if (have_pipe_fd)
+            assert (pipe_fd < FD_SETSIZE);
+#endif
 
         while (data_fd == m_fd_recv)
         {
             const int nfds = std::max<int>(data_fd, pipe_fd) + 1;
+#if defined(__APPLE__)
             llvm::SmallVector<fd_set, 1> read_fds;
             read_fds.resize((nfds/FD_SETSIZE) + 1);
             for (size_t i=0; i<read_fds.size(); ++i)
@@ -766,9 +773,13 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
             // FD_SET doesn't bounds check, it just happily walks off the end
             // but we have taken care of making the extra storage with our
             // SmallVector of fd_set objects
-            FD_SET (data_fd, read_fds.data());
+#else
+            fd_set read_fds;
+            FD_ZERO (&read_fds);
+#endif
+            FD_SET (data_fd, FD_SET_DATA(read_fds));
             if (have_pipe_fd)
-                FD_SET (pipe_fd, read_fds.data());
+                FD_SET (pipe_fd, FD_SET_DATA(read_fds));
 
             Error error;
 
@@ -784,7 +795,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
                                 static_cast<void*>(tv_ptr));
             }
 
-            const int num_set_fds = ::select (nfds, read_fds.data(), NULL, NULL, tv_ptr);
+            const int num_set_fds = ::select (nfds, FD_SET_DATA(read_fds), NULL, NULL, tv_ptr);
             if (num_set_fds < 0)
                 error.SetErrorToErrno();
             else
@@ -833,11 +844,9 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
             }
             else if (num_set_fds > 0)
             {
-                // FD_ISSET is happy to deal with a something larger than
-                // a single fd_set.
-                if (FD_ISSET(data_fd, read_fds.data()))
+                if (FD_ISSET(data_fd, FD_SET_DATA(read_fds)))
                     return eConnectionStatusSuccess;
-                if (have_pipe_fd && FD_ISSET(pipe_fd, read_fds.data()))
+                if (have_pipe_fd && FD_ISSET(pipe_fd, FD_SET_DATA(read_fds)))
                 {
                     // We got a command to exit.  Read the data from that pipe:
                     char buffer[16];
@@ -869,174 +878,6 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         error_ptr->SetErrorString("not connected");
     return eConnectionStatusLostConnection;
 }
-
-#else
-
-// This ConnectionFileDescriptor::BytesAvailable() uses select().
-//
-// PROS:
-//  - select is consistent across most unix platforms
-// CONS:
-//  - only supports file descriptors up to FD_SETSIZE. This implementation
-//    will assert if it runs into that hard limit to let users know that
-//    another ConnectionFileDescriptor::BytesAvailable() should be used
-//    or a new version of ConnectionFileDescriptor::BytesAvailable() should
-//    be written for the system that is running into the limitations. MacOSX
-//    uses kqueues, and there is a poll() based implementation below.
-
-ConnectionStatus
-ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
-{
-    // Don't need to take the mutex here separately since we are only called from Read.  If we
-    // ever get used more generally we will need to lock here as well.
-
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
-    if (log)
-        log->Printf("%p ConnectionFileDescriptor::BytesAvailable (timeout_usec = %u)",
-                    static_cast<void*>(this), timeout_usec);
-    struct timeval *tv_ptr;
-    struct timeval tv;
-    if (timeout_usec == UINT32_MAX)
-    {
-        // Infinite wait...
-        tv_ptr = NULL;
-    }
-    else
-    {
-        TimeValue time_value;
-        time_value.OffsetWithMicroSeconds (timeout_usec);
-        tv.tv_sec = time_value.seconds();
-        tv.tv_usec = time_value.microseconds();
-        tv_ptr = &tv;
-    }
-
-    // Make a copy of the file descriptors to make sure we don't
-    // have another thread change these values out from under us
-    // and cause problems in the loop below where like in FS_SET()
-    const int data_fd = m_fd_recv;
-    const int pipe_fd = m_pipe_read;
-
-    if (data_fd >= 0)
-    {
-        // If this assert fires off on MacOSX, we will need to switch to using
-        // libdispatch to read from file descriptors because poll() is causing
-        // kernel panics and if we exceed FD_SETSIZE we will have no choice...
-#ifndef _MSC_VER
-        assert (data_fd < FD_SETSIZE);
-#endif
-
-        const bool have_pipe_fd = pipe_fd >= 0;
-
-        if (have_pipe_fd)
-        {
-            assert (pipe_fd < FD_SETSIZE);            
-        }
-
-        while (data_fd == m_fd_recv)
-        {
-            fd_set read_fds;
-            FD_ZERO (&read_fds);
-            FD_SET (data_fd, &read_fds);
-            if (have_pipe_fd)
-                FD_SET (pipe_fd, &read_fds);
-
-            const int nfds = std::max<int>(data_fd, pipe_fd) + 1;
-
-            Error error;
-
-            if (log)
-            {
-                if (have_pipe_fd)
-                    log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds=%i, fds={%i, %i}, NULL, NULL, timeout=%p)...",
-                                static_cast<void*>(this), nfds, data_fd, pipe_fd,
-                                static_cast<void*>(tv_ptr));
-                else
-                    log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds=%i, fds={%i}, NULL, NULL, timeout=%p)...",
-                                static_cast<void*>(this), nfds, data_fd,
-                                static_cast<void*>(tv_ptr));
-            }
-
-            const int num_set_fds = ::select (nfds, &read_fds, NULL, NULL, tv_ptr);
-            if (num_set_fds < 0)
-                error.SetErrorToErrno();
-            else
-                error.Clear();
-
-            if (log)
-            {
-                if (have_pipe_fd)
-                    log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds=%i, fds={%i, %i}, NULL, NULL, timeout=%p) => %d, error = %s",
-                                static_cast<void*>(this), nfds, data_fd, pipe_fd,
-                                static_cast<void*>(tv_ptr), num_set_fds,
-                                error.AsCString());
-                else
-                    log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds=%i, fds={%i}, NULL, NULL, timeout=%p) => %d, error = %s",
-                                static_cast<void*>(this), nfds, data_fd,
-                                static_cast<void*>(tv_ptr), num_set_fds,
-                                error.AsCString());
-            }
-
-            if (error_ptr)
-                *error_ptr = error;
-
-            if (error.Fail())
-            {
-                switch (error.GetError())
-                {
-                    case EBADF:     // One of the descriptor sets specified an invalid descriptor.
-                        return eConnectionStatusLostConnection;
-
-                    case EINVAL:    // The specified time limit is invalid. One of its components is negative or too large.
-                    default:        // Other unknown error
-                        return eConnectionStatusError;
-
-                    case EAGAIN:    // The kernel was (perhaps temporarily) unable to
-                        // allocate the requested number of file descriptors,
-                        // or we have non-blocking IO
-                    case EINTR:     // A signal was delivered before the time limit
-                        // expired and before any of the selected events
-                        // occurred.
-                        break;      // Lets keep reading to until we timeout
-                }
-            }
-            else if (num_set_fds == 0)
-            {
-                return eConnectionStatusTimedOut;
-            }
-            else if (num_set_fds > 0)
-            {
-                if (FD_ISSET(data_fd, &read_fds))
-                    return eConnectionStatusSuccess;                
-                if (have_pipe_fd && FD_ISSET(pipe_fd, &read_fds))
-                {
-                    // We got a command to exit.  Read the data from that pipe:
-                    char buffer[16];
-                    ssize_t bytes_read;
-
-                    do
-                    {
-                        bytes_read = ::read (pipe_fd, buffer, sizeof(buffer));
-                    } while (bytes_read < 0 && errno == EINTR);
-                    assert (bytes_read == 1 && buffer[0] == 'q');
-
-                    if (log)
-                        log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
-                                    static_cast<void*>(this),
-                                    static_cast<int>(bytes_read), buffer);
-
-                    return eConnectionStatusEndOfFile;
-                }
-            }
-        }
-    }
-
-    if (error_ptr)
-        error_ptr->SetErrorString("not connected");
-    return eConnectionStatusLostConnection;
-}
-
-#endif
-
 #if 0
 #include <poll.h>
 
