@@ -954,7 +954,7 @@ public:
     IdentifierInfo *II = Tok.getIdentifierInfo();
     PPCallbacks *Callbacks = PP.getPPCallbacks();
 
-    diag::Mapping Map;
+    diag::Severity Map;
     if (II->isStr("warning"))
       Map = diag::MAP_WARNING;
     else if (II->isStr("error"))

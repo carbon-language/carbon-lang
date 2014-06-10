@@ -214,8 +214,7 @@ public:
 
   /// \brief Callback invoked when a \#pragma gcc dianostic directive is read.
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                                diag::Mapping mapping, StringRef Str) {
-  }
+                                diag::Severity mapping, StringRef Str) {}
 
   /// \brief Called when an OpenCL extension is either disabled or
   /// enabled with a pragma.
@@ -411,7 +410,7 @@ public:
   }
 
   void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                        diag::Mapping mapping, StringRef Str) override {
+                        diag::Severity mapping, StringRef Str) override {
     First->PragmaDiagnostic(Loc, Namespace, mapping, Str);
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }

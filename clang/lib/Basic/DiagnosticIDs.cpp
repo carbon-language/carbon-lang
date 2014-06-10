@@ -38,7 +38,7 @@ enum {
 
 struct StaticDiagInfoRec {
   uint16_t DiagID;
-  unsigned Mapping : 3;
+  unsigned DefaultSeverity : 3;
   unsigned Class : 3;
   unsigned SFINAE : 2;
   unsigned WarnNoWerror : 1;
@@ -66,12 +66,13 @@ struct StaticDiagInfoRec {
 } // namespace anonymous
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
-             SFINAE,NOWERROR,SHOWINSYSHEADER,CATEGORY)            \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS,                           \
-    DiagnosticIDs::SFINAE,                                        \
-    NOWERROR, SHOWINSYSHEADER, CATEGORY, GROUP,                   \
-    STR_SIZE(DESC, uint16_t), DESC },
+#define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
+             SHOWINSYSHEADER, CATEGORY)                                        \
+  {                                                                            \
+    diag::ENUM, DEFAULT_SEVERITY, CLASS, DiagnosticIDs::SFINAE, NOWERROR,      \
+        SHOWINSYSHEADER, CATEGORY, GROUP, STR_SIZE(DESC, uint16_t), DESC       \
+  }                                                                            \
+  ,
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -152,15 +153,15 @@ CATEGORY(ANALYSIS, SEMA)
   return Found;
 }
 
-static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
-  DiagnosticMappingInfo Info = DiagnosticMappingInfo::Make(
-    diag::MAP_FATAL, /*IsUser=*/false, /*IsPragma=*/false);
+static DiagnosticMapping GetDefaultDiagMapping(unsigned DiagID) {
+  DiagnosticMapping Info = DiagnosticMapping::Make(
+      diag::MAP_FATAL, /*IsUser=*/false, /*IsPragma=*/false);
 
   if (const StaticDiagInfoRec *StaticInfo = GetDiagInfo(DiagID)) {
-    Info.setMapping((diag::Mapping) StaticInfo->Mapping);
+    Info.setSeverity((diag::Severity)StaticInfo->DefaultSeverity);
 
     if (StaticInfo->WarnNoWerror) {
-      assert(Info.getMapping() == diag::MAP_WARNING &&
+      assert(Info.getSeverity() == diag::MAP_WARNING &&
              "Unexpected mapping with no-Werror bit!");
       Info.setNoWarningAsError(true);
     }
@@ -192,15 +193,14 @@ namespace {
 // Unfortunately, the split between DiagnosticIDs and Diagnostic is not
 // particularly clean, but for now we just implement this method here so we can
 // access GetDefaultDiagMapping.
-DiagnosticMappingInfo &DiagnosticsEngine::DiagState::getOrAddMappingInfo(
-  diag::kind Diag)
-{
-  std::pair<iterator, bool> Result = DiagMap.insert(
-    std::make_pair(Diag, DiagnosticMappingInfo()));
+DiagnosticMapping &
+DiagnosticsEngine::DiagState::getOrAddMapping(diag::kind Diag) {
+  std::pair<iterator, bool> Result =
+      DiagMap.insert(std::make_pair(Diag, DiagnosticMapping()));
 
   // Initialize the entry if we added it.
   if (Result.second)
-    Result.first->second = GetDefaultDiagMappingInfo(Diag);
+    Result.first->second = GetDefaultDiagMapping(Diag);
 
   return Result.first->second;
 }
@@ -340,9 +340,9 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
   if (DiagID >= diag::DIAG_UPPER_LIMIT ||
       getBuiltinDiagClass(DiagID) != CLASS_EXTENSION)
     return false;
-  
+
   EnabledByDefault =
-    GetDefaultDiagMappingInfo(DiagID).getMapping() != diag::MAP_IGNORE;
+      GetDefaultDiagMapping(DiagID).getSeverity() != diag::MAP_IGNORE;
   return true;
 }
 
@@ -350,7 +350,7 @@ bool DiagnosticIDs::isDefaultMappingAsError(unsigned DiagID) {
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return false;
 
-  return GetDefaultDiagMappingInfo(DiagID).getMapping() == diag::MAP_ERROR;
+  return GetDefaultDiagMapping(DiagID).getSeverity() == diag::MAP_ERROR;
 }
 
 bool DiagnosticIDs::isRemark(unsigned DiagID) {
@@ -400,10 +400,9 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   DiagnosticsEngine::DiagState *State = Pos->State;
 
   // Get the mapping information, or compute it lazily.
-  DiagnosticMappingInfo &MappingInfo = State->getOrAddMappingInfo(
-    (diag::kind)DiagID);
+  DiagnosticMapping &Mapping = State->getOrAddMapping((diag::kind)DiagID);
 
-  switch (MappingInfo.getMapping()) {
+  switch (Mapping.getSeverity()) {
   case diag::MAP_IGNORE:
     Result = DiagnosticIDs::Ignored;
     break;
@@ -423,7 +422,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 
   // Upgrade ignored diagnostics if -Weverything is enabled.
   if (Diag.EnableAllWarnings && Result == DiagnosticIDs::Ignored &&
-      !MappingInfo.isUser())
+      !Mapping.isUser())
     Result = DiagnosticIDs::Warning;
 
   // Diagnostics of class REMARK are either printed as remarks or in case they
@@ -441,7 +440,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 
   // For extension diagnostics that haven't been explicitly mapped, check if we
   // should upgrade the diagnostic.
-  if (IsExtensionDiag && !MappingInfo.isUser()) {
+  if (IsExtensionDiag && !Mapping.isUser()) {
     switch (Diag.ExtBehavior) {
     case DiagnosticsEngine::Ext_Ignore:
       break; 
@@ -469,14 +468,14 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 
   // If -Werror is enabled, map warnings to errors unless explicitly disabled.
   if (Result == DiagnosticIDs::Warning) {
-    if (Diag.WarningsAsErrors && !MappingInfo.hasNoWarningAsError())
+    if (Diag.WarningsAsErrors && !Mapping.hasNoWarningAsError())
       Result = DiagnosticIDs::Error;
   }
 
   // If -Wfatal-errors is enabled, map errors to fatal unless explicity
   // disabled.
   if (Result == DiagnosticIDs::Error) {
-    if (Diag.ErrorsAsFatal && !MappingInfo.hasNoErrorAsFatal())
+    if (Diag.ErrorsAsFatal && !Mapping.hasNoErrorAsFatal())
       Result = DiagnosticIDs::Fatal;
   }
 

@@ -200,7 +200,7 @@ private:
   /// \brief Mapping information for diagnostics.
   ///
   /// Mapping info is packed into four bits per diagnostic.  The low three
-  /// bits are the mapping (an instance of diag::Mapping), or zero if unset.
+  /// bits are the mapping (an instance of diag::Severity), or zero if unset.
   /// The high bit is set when the mapping was established as a user mapping.
   /// If the high bit is clear, then the low bits are set to the default
   /// value, and should be mapped with -pedantic, -Werror, etc.
@@ -209,19 +209,18 @@ private:
   /// the state so that we know what is the diagnostic state at any given
   /// source location.
   class DiagState {
-    llvm::DenseMap<unsigned, DiagnosticMappingInfo> DiagMap;
+    llvm::DenseMap<unsigned, DiagnosticMapping> DiagMap;
 
   public:
-    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::iterator
-      iterator;
-    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::const_iterator
-      const_iterator;
+    typedef llvm::DenseMap<unsigned, DiagnosticMapping>::iterator iterator;
+    typedef llvm::DenseMap<unsigned, DiagnosticMapping>::const_iterator
+    const_iterator;
 
-    void setMappingInfo(diag::kind Diag, DiagnosticMappingInfo Info) {
+    void setMapping(diag::kind Diag, DiagnosticMapping Info) {
       DiagMap[Diag] = Info;
     }
 
-    DiagnosticMappingInfo &getOrAddMappingInfo(diag::kind Diag);
+    DiagnosticMapping &getOrAddMapping(diag::kind Diag);
 
     const_iterator begin() const { return DiagMap.begin(); }
     const_iterator end() const { return DiagMap.end(); }
@@ -547,7 +546,7 @@ public:
   ///
   /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the latest state.
-  void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
+  void setDiagnosticMapping(diag::kind Diag, diag::Severity Map,
                             SourceLocation Loc);
 
   /// \brief Change an entire diagnostic group (e.g. "unknown-pragmas") to
@@ -558,7 +557,7 @@ public:
   ///
   /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the state from command-line.
-  bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
+  bool setDiagnosticGroupMapping(StringRef Group, diag::Severity Map,
                                  SourceLocation Loc = SourceLocation());
 
   /// \brief Set the warning-as-error flag for the given diagnostic group.
@@ -579,8 +578,8 @@ public:
   ///
   /// Mainly to be used by -Wno-everything to disable all warnings but allow
   /// subsequent -W options to enable specific warnings.
-  void setMappingToAllDiagnostics(diag::Mapping Map,
-                                  SourceLocation Loc = SourceLocation());
+  void setMappingForAllDiagnostics(diag::Severity Map,
+                                   SourceLocation Loc = SourceLocation());
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
 
@@ -770,19 +769,19 @@ private:
   /// or modify at a particular position.
   SmallVector<FixItHint, 8> DiagFixItHints;
 
-  DiagnosticMappingInfo makeMappingInfo(diag::Mapping Map, SourceLocation L) {
+  DiagnosticMapping makeUserMapping(diag::Severity Map, SourceLocation L) {
     bool isPragma = L.isValid();
-    DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::Make(
-      Map, /*IsUser=*/true, isPragma);
+    DiagnosticMapping Mapping =
+        DiagnosticMapping::Make(Map, /*IsUser=*/true, isPragma);
 
     // If this is a pragma mapping, then set the diagnostic mapping flags so
     // that we override command line options.
     if (isPragma) {
-      MappingInfo.setNoWarningAsError(true);
-      MappingInfo.setNoErrorAsFatal(true);
+      Mapping.setNoWarningAsError(true);
+      Mapping.setNoErrorAsFatal(true);
     }
 
-    return MappingInfo;
+    return Mapping;
   }
 
   /// \brief Used to report a diagnostic that is finally fully formed.

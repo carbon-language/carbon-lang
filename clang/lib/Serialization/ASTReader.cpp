@@ -5022,9 +5022,9 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
         if (DiagID == (unsigned)-1) {
           break; // no more diag/map pairs for this location.
         }
-        diag::Mapping Map = (diag::Mapping)F.PragmaDiagMappings[Idx++];
-        DiagnosticMappingInfo MappingInfo = Diag.makeMappingInfo(Map, Loc);
-        Diag.GetCurDiagState()->setMappingInfo(DiagID, MappingInfo);
+        diag::Severity Map = (diag::Severity)F.PragmaDiagMappings[Idx++];
+        DiagnosticMapping Mapping = Diag.makeUserMapping(Map, Loc);
+        Diag.GetCurDiagState()->setMapping(DiagID, Mapping);
       }
     }
   }

@@ -106,8 +106,9 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
 
       // Figure out how this option affects the warning.  If -Wfoo, map the
       // diagnostic to a warning, if -Wno-foo, map it to ignore.
-      diag::Mapping Mapping = isPositive ? diag::MAP_WARNING : diag::MAP_IGNORE;
-      
+      diag::Severity Mapping =
+          isPositive ? diag::MAP_WARNING : diag::MAP_IGNORE;
+
       // -Wsystem-headers is a special case, not driven by the option table.  It
       // cannot be controlled with -Werror.
       if (Opt == "system-headers") {
@@ -124,7 +125,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
             Diags.setEnableAllWarnings(true);
           } else {
             Diags.setEnableAllWarnings(false);
-            Diags.setMappingToAllDiagnostics(diag::MAP_IGNORE);
+            Diags.setMappingForAllDiagnostics(diag::MAP_IGNORE);
           }
         }
         continue;
