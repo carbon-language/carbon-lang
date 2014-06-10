@@ -158,7 +158,7 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  const AArch64InstrInfo *TII = TM.getInstrInfo();
+  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   DebugLoc DL = MBB.findDebugLoc(MBBI);
 
   // Add callee saved registers to move list.
@@ -204,8 +204,9 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
-  const AArch64RegisterInfo *RegInfo = TM.getRegisterInfo();
-  const AArch64InstrInfo *TII = TM.getInstrInfo();
+  const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
+      MF.getTarget().getRegisterInfo());
+  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   bool needsFrameMoves = MMI.hasDebugInfo() || Fn->needsUnwindTableEntry();

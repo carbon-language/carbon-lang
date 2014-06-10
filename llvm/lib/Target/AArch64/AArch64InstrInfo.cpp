@@ -1726,7 +1726,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
 void llvm::emitFrameOffset(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg, int Offset,
-                           const AArch64InstrInfo *TII,
+                           const TargetInstrInfo *TII,
                            MachineInstr::MIFlag Flag, bool SetNZCV) {
   if (DestReg == SrcReg && Offset == 0)
     return;

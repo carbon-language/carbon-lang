@@ -18,18 +18,11 @@
 
 namespace llvm {
 
-class AArch64Subtarget;
-class AArch64TargetMachine;
-
 class AArch64FrameLowering : public TargetFrameLowering {
-  const AArch64TargetMachine &TM;
-
 public:
-  explicit AArch64FrameLowering(const AArch64TargetMachine &TM,
-                              const AArch64Subtarget &STI)
+  explicit AArch64FrameLowering()
       : TargetFrameLowering(StackGrowsDown, 16, 0, 16,
-                            false /*StackRealignable*/),
-        TM(TM) {}
+                            false /*StackRealignable*/) {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI,

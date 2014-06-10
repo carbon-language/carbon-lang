@@ -168,7 +168,7 @@ private:
 /// if necessary, to be replaced by the scavenger at the end of PEI.
 void emitFrameOffset(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      DebugLoc DL, unsigned DestReg, unsigned SrcReg, int Offset,
-                     const AArch64InstrInfo *TII,
+                     const TargetInstrInfo *TII,
                      MachineInstr::MIFlag = MachineInstr::NoFlags,
                      bool SetNZCV = false);
 
