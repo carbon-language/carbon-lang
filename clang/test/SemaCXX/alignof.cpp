@@ -62,3 +62,9 @@ const int test8 = __alignof__(S5::x);
 long long int test14[2];
 
 static_assert(alignof(test14) == 8, "foo"); // expected-warning {{'alignof' applied to an expression is a GNU extension}}
+
+// PR19992
+alignas(32) extern int test15[];
+static_assert(alignof(int[]) == alignof(int), ""); // ok
+// FIXME: We should accept this.
+static_assert(alignof(test15) == 32, ""); // expected-warning {{GNU extension}} expected-error {{incomplete type}}

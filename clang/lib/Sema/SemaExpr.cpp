@@ -3398,12 +3398,20 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType ExprType,
   if (ExprType->isDependentType())
     return false;
 
-  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
-  //   the result is the size of the referenced type."
-  // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
-  //   result shall be the alignment of the referenced type."
+  // C++ [expr.sizeof]p2:
+  //     When applied to a reference or a reference type, the result
+  //     is the size of the referenced type.
+  // C++11 [expr.alignof]p3:
+  //     When alignof is applied to a reference type, the result
+  //     shall be the alignment of the referenced type.
   if (const ReferenceType *Ref = ExprType->getAs<ReferenceType>())
     ExprType = Ref->getPointeeType();
+
+  // C11 6.5.3.4/3, C++11 [expr.alignof]p3:
+  //   When alignof or _Alignof is applied to an array type, the result
+  //   is the alignment of the element type.
+  if (ExprKind == UETT_AlignOf)
+    ExprType = Context.getBaseElementType(ExprType);
 
   if (ExprKind == UETT_VecStep)
     return CheckVecStepTraitOperandType(*this, ExprType, OpLoc, ExprRange);
@@ -3454,21 +3462,10 @@ static bool CheckAlignOfExpr(Sema &S, Expr *E) {
   // If it's a field, require the containing struct to have a
   // complete definition so that we can compute the layout.
   //
-  // This requires a very particular set of circumstances.  For a
-  // field to be contained within an incomplete type, we must in the
-  // process of parsing that type.  To have an expression refer to a
-  // field, it must be an id-expression or a member-expression, but
-  // the latter are always ill-formed when the base type is
-  // incomplete, including only being partially complete.  An
-  // id-expression can never refer to a field in C because fields
-  // are not in the ordinary namespace.  In C++, an id-expression
-  // can implicitly be a member access, but only if there's an
-  // implicit 'this' value, and all such contexts are subject to
-  // delayed parsing --- except for trailing return types in C++11.
-  // And if an id-expression referring to a field occurs in a
-  // context that lacks a 'this' value, it's ill-formed --- except,
-  // again, in C++11, where such references are allowed in an
-  // unevaluated context.  So C++11 introduces some new complexity.
+  // This can happen in C++11 onwards, either by naming the member
+  // in a way that is not transformed into a member access expression
+  // (in an unevaluated operand, for instance), or by naming the member
+  // in a trailing-return-type.
   //
   // For the record, since __alignof__ on expressions is a GCC
   // extension, GCC seems to permit this but always gives the
