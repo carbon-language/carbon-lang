@@ -44,8 +44,6 @@ public:
   /// always be able to get register info as well (through this method).
   const AArch64RegisterInfo &getRegisterInfo() const { return RI; }
 
-  const AArch64Subtarget &getSubTarget() const { return Subtarget; }
-
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
