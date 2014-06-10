@@ -832,6 +832,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
       unsigned MIOpNum = 0;
       for (unsigned i = 0, e = LastOpNo; i != e; ++i) {
+        std::string Op = "MI->getOperand(" + llvm::utostr(MIOpNum) + ")";
+
         const CodeGenInstAlias::ResultOperand &RO = CGA->ResultOperands[i];
 
         switch (RO.Kind) {
@@ -858,9 +860,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
           if (Rec->isSubClassOf("RegisterOperand"))
             Rec = Rec->getValueAsDef("RegClass");
           if (Rec->isSubClassOf("RegisterClass")) {
-            Cond = std::string("MI->getOperand(") + llvm::utostr(MIOpNum) +
-                   ").isReg()";
-            IAP->addCond(Cond);
+            IAP->addCond(Op + ".isReg()");
 
             if (!IAP->isOpMapped(ROName)) {
               IAP->addOperand(ROName, MIOpNum, PrintMethodIdx);
@@ -869,12 +869,10 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
                 R = R->getValueAsDef("RegClass");
               Cond = std::string("MRI.getRegClass(") + Target.getName() + "::" +
                      R->getName() + "RegClassID)"
-                                    ".contains(MI->getOperand(" +
-                     llvm::utostr(MIOpNum) + ").getReg())";
+                                    ".contains(" + Op + ".getReg())";
               IAP->addCond(Cond);
             } else {
-              Cond = std::string("MI->getOperand(") +
-                llvm::utostr(MIOpNum) + ").getReg() == MI->getOperand(" +
+              Cond = Op + ".getReg() == MI->getOperand(" +
                 llvm::utostr(IAP->getOpIndex(ROName)) + ").getReg()";
               IAP->addCond(Cond);
             }
@@ -887,8 +885,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
           break;
         }
         case CodeGenInstAlias::ResultOperand::K_Imm: {
-          std::string Op = "MI->getOperand(" + llvm::utostr(MIOpNum) + ")";
-
           // Just because the alias has an immediate result, doesn't mean the
           // MCInst will. An MCExpr could be present, for example.
           IAP->addCond(Op + ".isImm()");
@@ -906,8 +902,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
             break;
           }
 
-          Cond = std::string("MI->getOperand(") +
-            llvm::utostr(MIOpNum) + ").getReg() == " + Target.getName() +
+          Cond = Op + ".getReg() == " + Target.getName() +
             "::" + CGA->ResultOperands[i].getRegister()->getName();
           IAP->addCond(Cond);
           break;
