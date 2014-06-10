@@ -23,6 +23,10 @@ struct __attribute__((packed)) {unsigned int a;} g4;
 short chk1[__alignof__(g4) == 1 ? 1 : -1];
 short chk2[__alignof__(g4.a) == 1 ? 1 : -1];
 
+double g6[3];
+short chk1[__alignof__(g6) == 8 ? 1 : -1];
+short chk2[__alignof__(double[3]) == 8 ? 1 : -1];
+
 
 // PR5637
 
