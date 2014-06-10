@@ -136,9 +136,13 @@ define void @t8() {
 
 define void @test_distant_memcpy(i8* %dst) {
 ; ARM64-LABEL: test_distant_memcpy:
-; ARM64: bl _memcpy
+; ARM64: mov [[ARRAY:x[0-9]+]], sp
+; ARM64: movz [[OFFSET:x[0-9]+]], #0x1f40
+; ARM64: add x[[ADDR:[0-9]+]], [[ARRAY]], [[OFFSET]]
+; ARM64: ldrb [[BYTE:w[0-9]+]], [x[[ADDR]]]
+; ARM64: strb [[BYTE]], [x0]
   %array = alloca i8, i32 8192
   %elem = getelementptr i8* %array, i32 8000
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %elem, i64 4, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %elem, i64 1, i32 1, i1 false)
   ret void
 }
