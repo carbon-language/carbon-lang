@@ -111,6 +111,53 @@ error_code createELFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
 
 } // namespace llvm
 
+template <typename ELFO>
+static std::string getFullSymbolName(const ELFO &Obj,
+                                     typename ELFO::Elf_Sym_Iter Symbol) {
+  StringRef SymbolName = errorOrDefault(Obj.getSymbolName(Symbol));
+  if (!Symbol.isDynamic())
+    return SymbolName;
+
+  std::string FullSymbolName(SymbolName);
+
+  bool IsDefault;
+  ErrorOr<StringRef> Version =
+      Obj.getSymbolVersion(nullptr, &*Symbol, IsDefault);
+  if (Version) {
+    FullSymbolName += (IsDefault ? "@@" : "@");
+    FullSymbolName += *Version;
+  } else
+    error(Version.getError());
+  return FullSymbolName;
+}
+
+template <typename ELFO>
+static void
+getSectionNameIndex(const ELFO &Obj, typename ELFO::Elf_Sym_Iter Symbol,
+                    StringRef &SectionName, unsigned &SectionIndex) {
+  SectionIndex = Symbol->st_shndx;
+  if (SectionIndex == SHN_UNDEF) {
+    SectionName = "Undefined";
+  } else if (SectionIndex >= SHN_LOPROC && SectionIndex <= SHN_HIPROC) {
+    SectionName = "Processor Specific";
+  } else if (SectionIndex >= SHN_LOOS && SectionIndex <= SHN_HIOS) {
+    SectionName = "Operating System Specific";
+  } else if (SectionIndex > SHN_HIOS && SectionIndex < SHN_ABS) {
+    SectionName = "Reserved";
+  } else if (SectionIndex == SHN_ABS) {
+    SectionName = "Absolute";
+  } else if (SectionIndex == SHN_COMMON) {
+    SectionName = "Common";
+  } else {
+    if (SectionIndex == SHN_XINDEX)
+      SectionIndex = Obj.getSymbolTableIndex(&*Symbol);
+    assert(SectionIndex != SHN_XINDEX &&
+           "getSymbolTableIndex should handle this");
+    const typename ELFO::Elf_Shdr *Sec = Obj.getSection(SectionIndex);
+    SectionName = errorOrDefault(Obj.getSectionName(Sec));
+  }
+}
+
 static const EnumEntry<unsigned> ElfClass[] = {
   { "None",   ELF::ELFCLASSNONE },
   { "32-bit", ELF::ELFCLASS32   },
@@ -651,42 +698,10 @@ void ELFDumper<ELFT>::printDynamicSymbols() {
 
 template <class ELFT>
 void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
-  StringRef SymbolName = errorOrDefault(Obj->getSymbolName(Symbol));
-
-  unsigned SectionIndex = Symbol->st_shndx;
+  unsigned SectionIndex = 0;
   StringRef SectionName;
-  if (SectionIndex == SHN_UNDEF) {
-    SectionName = "Undefined";
-  } else if (SectionIndex >= SHN_LOPROC && SectionIndex <= SHN_HIPROC) {
-    SectionName = "Processor Specific";
-  } else if (SectionIndex >= SHN_LOOS && SectionIndex <= SHN_HIOS) {
-    SectionName = "Operating System Specific";
-  } else if (SectionIndex > SHN_HIOS && SectionIndex < SHN_ABS) {
-    SectionName = "Reserved";
-  } else if (SectionIndex == SHN_ABS) {
-    SectionName = "Absolute";
-  } else if (SectionIndex == SHN_COMMON) {
-    SectionName = "Common";
-  } else {
-    if (SectionIndex == SHN_XINDEX)
-      SectionIndex = Obj->getSymbolTableIndex(&*Symbol);
-    assert(SectionIndex != SHN_XINDEX &&
-           "getSymbolTableIndex should handle this");
-    const Elf_Shdr *Sec = Obj->getSection(SectionIndex);
-    SectionName = errorOrDefault(Obj->getSectionName(Sec));
-  }
-
-  std::string FullSymbolName(SymbolName);
-  if (Symbol.isDynamic()) {
-    bool IsDefault;
-    ErrorOr<StringRef> Version = Obj->getSymbolVersion(nullptr, &*Symbol,
-                                                       IsDefault);
-    if (Version) {
-      FullSymbolName += (IsDefault ? "@@" : "@");
-      FullSymbolName += *Version;
-    } else
-      error(Version.getError());
-  }
+  getSectionNameIndex(*Obj, Symbol, SectionName, SectionIndex);
+  std::string FullSymbolName = getFullSymbolName(*Obj, Symbol);
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", FullSymbolName, Symbol->st_name);
