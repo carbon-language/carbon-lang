@@ -3111,6 +3111,10 @@ def err_template_arg_must_be_type : Error<
   "template argument for template type parameter must be a type">;
 def err_template_arg_must_be_type_suggest : Error<
   "template argument for template type parameter must be a type; did you forget 'typename'?">;
+def ext_ms_template_type_arg_missing_typename : ExtWarn<
+  "template argument for template type parameter must be a type; "
+  "omitted 'typename' is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_template_arg_must_be_expr : Error<
   "template argument for non-type template parameter must be an expression">;
 def err_template_arg_nontype_ambig : Error<

@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -Wno-unused
+// RUN: %clang_cc1 -fsyntax-only -verify %s -Wno-unused -fms-compatibility -DMSVC
 namespace N {
   struct A {
     typedef int type;
@@ -136,19 +137,106 @@ class ExampleClass1 {
   };
 
   void foo() {
-    pair<ExampleItemSet::iterator, int> i; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#ifdef MSVC
+    // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+    // expected-error@+2 {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#endif
+    pair<ExampleItemSet::iterator, int> i;
     pair<this->ExampleItemSet::iterator, int> i; // expected-error-re {{template argument for template type parameter must be a type{{$}}}}
     pair<ExampleItemSet::operator[], int> i; // expected-error-re {{template argument for template type parameter must be a type{{$}}}}
   }
-  pair<ExampleItemSet::iterator, int> elt; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#ifdef MSVC
+    // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+  // expected-error@+2 {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#endif
+  pair<ExampleItemSet::iterator, int> elt;
 
 
   typedef map<int, ExampleItem*> ExampleItemMap;
 
   static void bar() {
-    pair<ExampleItemMap::iterator, int> i; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#ifdef MSVC
+    // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+    // expected-error@+2 {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#endif
+    pair<ExampleItemMap::iterator, int> i;
   }
-  pair<ExampleItemMap::iterator, int> entry; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#ifdef MSVC
+    // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+  // expected-error@+2 {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+#endif
+  pair<ExampleItemMap::iterator, int> entry;
   pair<bar, int> foobar; // expected-error {{template argument for template type parameter must be a type}}
 };
 } // namespace missing_typename
+
+namespace missing_typename_and_base {
+template <class T> struct Bar {}; // expected-note 1+ {{template parameter is declared here}}
+template <typename T>
+struct Foo : T {
+
+  // FIXME: MSVC accepts this code.
+  Bar<TypeInBase> x; // expected-error {{use of undeclared identifier 'TypeInBase'}}
+
+#ifdef MSVC
+  // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+  // expected-error@+2 {{must be a type; did you forget 'typename'?}}
+#endif
+  Bar<T::TypeInBase> y;
+
+#ifdef MSVC
+  // expected-warning@+4 {{omitted 'typename' is a Microsoft extension}}
+#else
+  // expected-error@+2 {{must be a type; did you forget 'typename'?}}
+#endif
+  Bar<T::NestedRD::TypeInNestedRD> z;
+
+};
+struct Base {
+  typedef int TypeInBase;
+  struct NestedRD {
+    typedef int TypeInNestedRD;
+  };
+};
+Foo<Base> x;
+} // namespace missing_typename_and_base
+
+namespace func_type_vs_construct_tmp {
+template <typename> struct S { typedef int type; };
+template <typename T> void f();
+template <int N> void f();
+
+// expected-error@+1 {{missing 'typename' prior to dependent type name 'S<int>::type'}}
+template <typename T> void g() { f</*typename*/ S<T>::type(int())>(); }
+
+// Adding typename does fix the diagnostic.
+template <typename T> void h() { f<typename S<T>::type(int())>(); }
+
+void j() {
+  g<int>(); // expected-note-re {{in instantiation {{.*}} requested here}}
+  h<int>();
+}
+} // namespace func_type_vs_construct_tmp
+
+namespace pointer_vs_multiply {
+int x;
+// expected-error@+1 {{missing 'typename' prior to dependent type name 'B::type_or_int'}}
+template <typename T> void g() { T::type_or_int * x; }
+// expected-error@+1 {{typename specifier refers to non-type member 'type_or_int' in 'pointer_vs_multiply::A'}}
+template <typename T> void h() { typename T::type_or_int * x; }
+
+struct A { static const int type_or_int = 5; }; // expected-note {{referenced member 'type_or_int' is declared here}}
+struct B { typedef int type_or_int; };
+
+void j() {
+  g<A>();
+  g<B>(); // expected-note-re {{in instantiation {{.*}} requested here}}
+  h<A>(); // expected-note-re {{in instantiation {{.*}} requested here}}
+  h<B>();
+}
+} // namespace pointer_vs_multiply

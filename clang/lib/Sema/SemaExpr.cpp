@@ -2181,6 +2181,17 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
     return ExprError();
   }
 
+  if (R.isSingleResult() && R.getAsSingle<TypeDecl>()) {
+    // Diagnose a missing typename if this resolved unambiguously to a type in a
+    // dependent context.
+    // FIXME: Issue a fixit and recover as though the user had written
+    // 'typename'.
+    Diag(SS.getBeginLoc(), diag::err_typename_missing)
+        << SS.getScopeRep() << NameInfo.getName().getAsString()
+        << SourceRange(SS.getBeginLoc(), NameInfo.getEndLoc());
+    return ExprError();
+  }
+
   // Defend against this resolving to an implicit member access. We usually
   // won't get here if this might be a legitimate a class member (we end up in
   // BuildMemberReferenceExpr instead), but this can be valid if we're forming

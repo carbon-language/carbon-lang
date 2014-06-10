@@ -543,6 +543,10 @@ public:
     return Arguments[I];
   }
 
+  TemplateArgumentLoc &operator[](unsigned I) {
+    return Arguments[I];
+  }
+
   void addArgument(const TemplateArgumentLoc &Loc) {
     Arguments.push_back(Loc);
   }
