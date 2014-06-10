@@ -75,4 +75,29 @@ TEST(SanitizerIoctl, Fixup) {
   EXPECT_EQ(EVIOCGKEY(0), desc->req);
 }
 
+// Test decoding KVM ioctl numbers.
+TEST(SanitizerIoctl, KVM_GET_MP_STATE) {
+  ioctl_desc desc;
+  bool res = ioctl_decode(0x8004ae98U, &desc);
+  EXPECT_TRUE(res);
+  EXPECT_EQ(ioctl_desc::WRITE, desc.type);
+  EXPECT_EQ(4U, desc.size);
+}
+
+TEST(SanitizerIoctl, KVM_GET_LAPIC) {
+  ioctl_desc desc;
+  bool res = ioctl_decode(0x8400ae8eU, &desc);
+  EXPECT_TRUE(res);
+  EXPECT_EQ(ioctl_desc::WRITE, desc.type);
+  EXPECT_EQ(1024U, desc.size);
+}
+
+TEST(SanitizerIoctl, KVM_GET_MSR_INDEX_LIST) {
+  ioctl_desc desc;
+  bool res = ioctl_decode(0xc004ae02U, &desc);
+  EXPECT_TRUE(res);
+  EXPECT_EQ(ioctl_desc::READWRITE, desc.type);
+  EXPECT_EQ(4U, desc.size);
+}
+
 #endif // SANITIZER_LINUX

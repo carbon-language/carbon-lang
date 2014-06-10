@@ -529,7 +529,7 @@ static bool ioctl_decode(unsigned req, ioctl_desc *desc) {
   desc->name = "<DECODED_IOCTL>";
   desc->size = IOC_SIZE(req);
   // Sanity check.
-  if (desc->size > 1024) return false;
+  if (desc->size > 0xFFFF) return false;
   unsigned dir = IOC_DIR(req);
   switch (dir) {
     case IOC_NONE:
@@ -547,10 +547,10 @@ static bool ioctl_decode(unsigned req, ioctl_desc *desc) {
     default:
       return false;
   }
-  if (desc->type != IOC_NONE && desc->size == 0) return false;
-  char id = IOC_TYPE(req);
+  // Size can be 0 iff type is NONE.
+  if ((desc->type == IOC_NONE) != (desc->size == 0)) return false;
   // Sanity check.
-  if (!(id >= 'a' && id <= 'z') && !(id >= 'A' && id <= 'Z')) return false;
+  if (IOC_TYPE(req) == 0) return false;
   return true;
 }
 
