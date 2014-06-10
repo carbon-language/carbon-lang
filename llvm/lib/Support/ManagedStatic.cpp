@@ -15,7 +15,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Atomic.h"
 #include <cassert>
-#include <mutex>
 using namespace llvm;
 
 static const ManagedStaticBase *StaticList = nullptr;
@@ -24,7 +23,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
   assert(Creator);
   if (llvm_is_multithreaded()) {
-    std::lock_guard<llvm::recursive_mutex> Lock(llvm_get_global_lock());
+    llvm_acquire_global_lock();
 
     if (!Ptr) {
       void* tmp = Creator();
@@ -45,6 +44,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
       StaticList = this;
     }
 
+    llvm_release_global_lock();
   } else {
     assert(!Ptr && !DeleterFn && !Next &&
            "Partially initialized ManagedStatic!?");
@@ -77,4 +77,6 @@ void ManagedStaticBase::destroy() const {
 void llvm::llvm_shutdown() {
   while (StaticList)
     StaticList->destroy();
+
+  if (llvm_is_multithreaded()) llvm_stop_multithreaded();
 }

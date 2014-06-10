@@ -84,13 +84,14 @@ static TimerGroup *getDefaultTimerGroup() {
   sys::MemoryFence();
   if (tmp) return tmp;
   
-  std::lock_guard<llvm::recursive_mutex> Lock(llvm::llvm_get_global_lock());
+  llvm_acquire_global_lock();
   tmp = DefaultTimerGroup;
   if (!tmp) {
     tmp = new TimerGroup("Miscellaneous Ungrouped Timers");
     sys::MemoryFence();
     DefaultTimerGroup = tmp;
   }
+  llvm_release_global_lock();
 
   return tmp;
 }

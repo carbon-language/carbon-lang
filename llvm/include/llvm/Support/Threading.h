@@ -14,32 +14,32 @@
 #ifndef LLVM_SUPPORT_THREADING_H
 #define LLVM_SUPPORT_THREADING_H
 
-#include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Compiler.h"
-#include <mutex>
-
 namespace llvm {
+  /// llvm_start_multithreaded - Allocate and initialize structures needed to
+  /// make LLVM safe for multithreading.  The return value indicates whether
+  /// multithreaded initialization succeeded.  LLVM will still be operational
+  /// on "failed" return, and will still be safe for hosting threading
+  /// applications in the JIT, but will not be safe for concurrent calls to the
+  /// LLVM APIs.
+  /// THIS MUST EXECUTE IN ISOLATION FROM ALL OTHER LLVM API CALLS.
+  bool llvm_start_multithreaded();
 
-#if LLVM_ENABLE_THREADS != 0
-  typedef std::mutex mutex;
-  typedef std::recursive_mutex recursive_mutex;
-#else
-  class null_mutex {
-  public:
-    void lock() { }
-    void unlock() { }
-    bool try_lock() { return true; }
-  };
-  typedef null_mutex mutex;
-  typedef null_mutex recursive_mutex;
-#endif
+  /// llvm_stop_multithreaded - Deallocate structures necessary to make LLVM
+  /// safe for multithreading.
+  /// THIS MUST EXECUTE IN ISOLATION FROM ALL OTHER LLVM API CALLS.
+  void llvm_stop_multithreaded();
 
-  /// llvm_get_global_lock() - returns the llvm global lock object.
-  llvm::recursive_mutex &llvm_get_global_lock();
-
-  /// llvm_is_multithreaded() - returns true if LLVM is compiled with support
-  /// for multiple threads, and false otherwise.
+  /// llvm_is_multithreaded - Check whether LLVM is executing in thread-safe
+  /// mode or not.
   bool llvm_is_multithreaded();
+
+  /// acquire_global_lock - Acquire the global lock.  This is a no-op if called
+  /// before llvm_start_multithreaded().
+  void llvm_acquire_global_lock();
+
+  /// release_global_lock - Release the global lock.  This is a no-op if called
+  /// before llvm_start_multithreaded().
+  void llvm_release_global_lock();
 
   /// llvm_execute_on_thread - Execute the given \p UserFn on a separate
   /// thread, passing it the provided \p UserData.
