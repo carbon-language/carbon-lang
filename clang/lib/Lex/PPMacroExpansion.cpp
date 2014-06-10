@@ -1294,6 +1294,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__DATE__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
@@ -1303,6 +1304,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
                                                  Tok.getLength()));
     return;
   } else if (II == Ident__TIME__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
     Tok.setKind(tok::string_literal);
@@ -1327,6 +1329,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     OS << Depth;
     Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__TIMESTAMP__) {
+    Diag(Tok.getLocation(), diag::warn_pp_date_time);
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
 
@@ -1347,7 +1350,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Result = "??? ??? ?? ??:??:?? ????\n";
     }
     // Surround the string with " and strip the trailing newline.
-    OS << '"' << StringRef(Result, strlen(Result)-1) << '"';
+    OS << '"' << StringRef(Result).drop_back() << '"';
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__COUNTER__) {
     // __COUNTER__ expands to a simple numeric value.
