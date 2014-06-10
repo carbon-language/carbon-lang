@@ -32,7 +32,7 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
       return ec;
     assert(parsedFiles.size() == 1);
     std::unique_ptr<File> f(parsedFiles[0].release());
-    if (auto archive = reinterpret_cast<const ArchiveLibraryFile *>(f.get())) {
+    if (const auto *archive = dyn_cast<ArchiveLibraryFile>(f.get())) {
       // Have this node own the FileArchive object.
       _archiveFile.reset(archive);
       f.release();
