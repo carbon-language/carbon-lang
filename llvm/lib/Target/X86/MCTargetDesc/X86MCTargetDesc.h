@@ -28,6 +28,7 @@ class MCSubtargetInfo;
 class MCRelocationInfo;
 class MCStreamer;
 class Target;
+class Triple;
 class StringRef;
 class raw_ostream;
 
@@ -64,7 +65,7 @@ namespace X86_MC {
 
   void DetectFamilyModel(unsigned EAX, unsigned &Family, unsigned &Model);
 
-  unsigned getDwarfRegFlavour(StringRef TT, bool isEH);
+  unsigned getDwarfRegFlavour(Triple TT, bool isEH);
 
   void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 

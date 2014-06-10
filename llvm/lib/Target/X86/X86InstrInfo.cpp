@@ -105,7 +105,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
                     (tm.getSubtarget<X86Subtarget>().is64Bit()
                      ? X86::ADJCALLSTACKUP64
                      : X86::ADJCALLSTACKUP32)),
-    TM(tm), RI(tm) {
+    TM(tm), RI(tm.getSubtarget<X86Subtarget>()) {
 
   static const X86OpTblEntry OpTbl2Addr[] = {
     { X86::ADC32ri,     X86::ADC32mi,    0 },
