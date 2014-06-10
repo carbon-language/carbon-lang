@@ -944,21 +944,6 @@ HexagonTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 }
 
 SDValue
-HexagonTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue CC = Op.getOperand(4);
-  SDValue TrueVal = Op.getOperand(2);
-  SDValue FalseVal = Op.getOperand(3);
-  SDLoc dl(Op);
-  SDNode* OpNode = Op.getNode();
-  EVT SVT = OpNode->getValueType(0);
-
-  SDValue Cond = DAG.getNode(ISD::SETCC, dl, MVT::i1, LHS, RHS, CC);
-  return DAG.getNode(ISD::SELECT, dl, SVT, Cond, TrueVal, FalseVal);
-}
-
-SDValue
 HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
   EVT ValTy = Op.getValueType();
   SDLoc dl(Op);
@@ -1341,8 +1326,8 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
 
     // Lower SELECT_CC to SETCC and SELECT.
-    setOperationAction(ISD::SELECT_CC, MVT::i32,   Custom);
-    setOperationAction(ISD::SELECT_CC, MVT::i64,   Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
+    setOperationAction(ISD::SELECT_CC, MVT::i64,   Expand);
 
     if (QRI->Subtarget.hasV5TOps()) {
 
@@ -1577,7 +1562,6 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
 
     case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
-    case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
     case ISD::SELECT:             return Op;
     case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
     case ISD::INLINEASM:          return LowerINLINEASM(Op, DAG);

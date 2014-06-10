@@ -105,10 +105,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT, MVT::f64, Promote);
   AddPromotedToType(ISD::SELECT, MVT::f64, MVT::i64);
 
-  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
-  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
-
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
   setOperationAction(ISD::SETCC, MVT::v2i1, Expand);
   setOperationAction(ISD::SETCC, MVT::v4i1, Expand);
@@ -611,7 +611,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 
   case ISD::SELECT: return LowerSELECT(Op, DAG);
-  case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::ANY_EXTEND: // Fall-through
@@ -901,19 +900,6 @@ SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v2i32, Lo, Hi);
   return DAG.getNode(ISD::BITCAST, DL, MVT::i64, Res);
-}
-
-SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue True = Op.getOperand(2);
-  SDValue False = Op.getOperand(3);
-  SDValue CC = Op.getOperand(4);
-  EVT VT = Op.getValueType();
-  SDLoc DL(Op);
-
-  SDValue Cond = DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, CC);
-  return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
 }
 
 SDValue SITargetLowering::LowerSIGN_EXTEND(SDValue Op,

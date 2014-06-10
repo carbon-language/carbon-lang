@@ -3905,13 +3905,29 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp2 = Node->getOperand(1);   // RHS
     Tmp3 = Node->getOperand(2);   // True
     Tmp4 = Node->getOperand(3);   // False
+    EVT VT = Node->getValueType(0);
     SDValue CC = Node->getOperand(4);
+    ISD::CondCode CCOp = cast<CondCodeSDNode>(CC)->get();
 
+    if (TLI.isCondCodeLegal(CCOp, Tmp1.getSimpleValueType())) {
+      // If the condition code is legal, then we need to expand this
+      // node using SETCC and SELECT.
+      EVT CmpVT = Tmp1.getValueType();
+      assert(!TLI.isOperationExpand(ISD::SELECT, VT) &&
+             "Cannot expand ISD::SELECT_CC when ISD::SELECT also needs to be "
+             "expanded.");
+      EVT CCVT = TLI.getSetCCResultType(*DAG.getContext(), CmpVT);
+      SDValue Cond = DAG.getNode(ISD::SETCC, dl, CCVT, Tmp1, Tmp2, CC);
+      Results.push_back(DAG.getSelect(dl, VT, Cond, Tmp3, Tmp4));
+      break;
+    }
+
+    // SELECT_CC is legal, so the condition code must not be.
     bool Legalized = false;
     // Try to legalize by inverting the condition.  This is for targets that
     // might support an ordered version of a condition, but not the unordered
     // version (or vice versa).
-    ISD::CondCode InvCC = ISD::getSetCCInverse(cast<CondCodeSDNode>(CC)->get(),
+    ISD::CondCode InvCC = ISD::getSetCCInverse(CCOp,
                                                Tmp1.getValueType().isInteger());
     if (TLI.isCondCodeLegal(InvCC, Tmp1.getSimpleValueType())) {
       // Use the new condition code and swap true and false

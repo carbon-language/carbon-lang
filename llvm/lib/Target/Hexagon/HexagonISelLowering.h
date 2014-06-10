@@ -124,7 +124,6 @@ namespace llvm {
                             const SmallVectorImpl<SDValue> &OutVals,
                             SDValue Callee) const;
 
-    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
