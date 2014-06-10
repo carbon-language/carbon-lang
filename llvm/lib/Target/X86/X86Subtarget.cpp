@@ -363,6 +363,7 @@ X86Subtarget::~X86Subtarget() {
   delete TLInfo;
   delete InstrInfo;
   delete FrameLowering;
+  delete JITInfo;
 }
 
 bool
