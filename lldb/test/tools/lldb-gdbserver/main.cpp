@@ -24,6 +24,7 @@ static const char *const RETVAL_PREFIX               = "retval:";
 static const char *const SLEEP_PREFIX                = "sleep:";
 static const char *const STDERR_PREFIX               = "stderr:";
 static const char *const SET_MESSAGE_PREFIX          = "set-message:";
+static const char *const PRINT_MESSAGE_COMMAND       = "print-message:";
 static const char *const GET_DATA_ADDRESS_PREFIX     = "get-data-address-hex:";
 static const char *const GET_STACK_ADDRESS_COMMAND   = "get-stack-address-hex:";
 static const char *const GET_HEAP_ADDRESS_COMMAND    = "get-heap-address-hex:";
@@ -263,6 +264,12 @@ int main (int argc, char **argv)
 			// Ensure we're null terminated.
 			g_message[sizeof (g_message) - 1] = '\0';
 
+		}
+		else if (std::strstr (argv[i], PRINT_MESSAGE_COMMAND))
+		{
+			pthread_mutex_lock (&g_print_mutex);
+            printf ("message: %s\n", g_message);
+			pthread_mutex_unlock (&g_print_mutex);
 		}
         else if (std::strstr (argv[i], GET_DATA_ADDRESS_PREFIX))
         {
