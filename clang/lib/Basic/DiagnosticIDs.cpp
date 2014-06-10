@@ -164,12 +164,6 @@ static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
              "Unexpected mapping with no-Werror bit!");
       Info.setNoWarningAsError(true);
     }
-
-    if (StaticInfo->WarnShowInSystemHeader) {
-      assert(Info.getMapping() == diag::MAP_WARNING &&
-             "Unexpected mapping with show-in-system-header bit!");
-      Info.setShowInSystemHeader(true);
-    }
   }
 
   return Info;
@@ -486,16 +480,15 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       Result = DiagnosticIDs::Fatal;
   }
 
+  // Custom diagnostics always are emitted in system headers.
+  bool ShowInSystemHeader =
+      !GetDiagInfo(DiagID) || GetDiagInfo(DiagID)->WarnShowInSystemHeader;
+
   // If we are in a system header, we ignore it. We look at the diagnostic class
   // because we also want to ignore extensions and warnings in -Werror and
   // -pedantic-errors modes, which *map* warnings/extensions to errors.
-  if (Result >= DiagnosticIDs::Warning &&
-      DiagClass != CLASS_ERROR &&
-      // Custom diagnostics always are emitted in system headers.
-      DiagID < diag::DIAG_UPPER_LIMIT &&
-      !MappingInfo.hasShowInSystemHeader() &&
-      Diag.SuppressSystemWarnings &&
-      Loc.isValid() &&
+  if (Result >= DiagnosticIDs::Warning && DiagClass != CLASS_ERROR &&
+      !ShowInSystemHeader && Diag.SuppressSystemWarnings && Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(
           Diag.getSourceManager().getExpansionLoc(Loc)))
     return DiagnosticIDs::Ignored;
