@@ -921,7 +921,8 @@ private:
 
     if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&
         PrevToken->MatchingParen->Previous &&
-        PrevToken->MatchingParen->Previous->is(tok::kw_typeof))
+        PrevToken->MatchingParen->Previous->isOneOf(tok::kw_typeof,
+                                                    tok::kw_decltype))
       return TT_PointerOrReference;
 
     if (PrevToken->Tok.isLiteral() ||
