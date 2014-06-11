@@ -73,7 +73,10 @@ void *PassRegistry::getImpl() const {
 //
 
 PassRegistry::~PassRegistry() {
-  sys::SmartScopedWriter<true> Guard(*Lock);
+  // Don't acquire the mutex here.  This is destroyed during static execution of
+  // static destructors, after llvm_shutdown() has been called, so all instances
+  // of all ManagedStatics (including the Mutex), will have been destroyed as
+  // well.
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
   delete Impl;
   pImpl = nullptr;
