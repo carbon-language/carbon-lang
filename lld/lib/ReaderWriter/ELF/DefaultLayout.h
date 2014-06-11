@@ -541,6 +541,7 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
 
 template <class ELFT>
 ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
+  using std::make_error_code;
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
     // undefined atoms can still be included in the output symbol table for

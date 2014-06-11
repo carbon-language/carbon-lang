@@ -33,6 +33,7 @@ public:
 
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
+    using std::make_error_code;
     ErrorOr<StringRef> filePath = getPath(ctx);
     if (filePath.getError() == std::errc::no_such_file_or_directory)
       return make_error_code(std::errc::no_such_file_or_directory);
