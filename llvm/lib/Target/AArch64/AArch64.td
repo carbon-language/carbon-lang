@@ -60,6 +60,7 @@ def AArch64InstrInfo : InstrInfo;
 // AArch64 Processors supported.
 //
 include "AArch64SchedA53.td"
+include "AArch64SchedA57.td"
 include "AArch64SchedCyclone.td"
 
 def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
@@ -89,7 +90,7 @@ def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8,
                                               FeatureCRC]>;
 
 def : ProcessorModel<"cortex-a53", CortexA53Model, [ProcA53]>;
-def : ProcessorModel<"cortex-a57", NoSchedModel, [ProcA57]>;
+def : ProcessorModel<"cortex-a57", CortexA57Model, [ProcA57]>;
 def : ProcessorModel<"cyclone", CycloneModel, [ProcCyclone]>;
 
 //===----------------------------------------------------------------------===//
