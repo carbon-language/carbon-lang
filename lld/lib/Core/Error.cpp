@@ -84,7 +84,7 @@ const llvm::error_category &lld::YamlReaderCategory() {
   return o;
 }
 
-class _LinkerScriptReaderErrorCategory : public llvm::_do_message {
+class _LinkerScriptReaderErrorCategory : public llvm::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.linker-script.reader";
@@ -115,7 +115,7 @@ const llvm::error_category &lld::LinkerScriptReaderCategory() {
   return o;
 }
 
-class _InputGraphErrorCategory : public llvm::_do_message {
+class _InputGraphErrorCategory : public llvm::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.inputGraph.parse";
@@ -141,7 +141,7 @@ const llvm::error_category &lld::InputGraphErrorCategory() {
   return i;
 }
 
-class _ReaderErrorCategory : public llvm::_do_message {
+class _ReaderErrorCategory : public llvm::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.inputGraph.parse";
@@ -179,7 +179,7 @@ namespace lld {
 /// Temporary class to enable make_dynamic_error_code() until
 /// llvm::ErrorOr<> is updated to work with error encapsulations 
 /// other than error_code.
-class dynamic_error_category : public llvm::_do_message {
+class dynamic_error_category : public llvm::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.dynamic_error";
