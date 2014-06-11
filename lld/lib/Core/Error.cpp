@@ -18,7 +18,7 @@
 
 using namespace lld;
 
-class _NativeReaderErrorCategory : public llvm::_do_message {
+class _NativeReaderErrorCategory : public llvm::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override {
     return "lld.native.reader";
@@ -54,7 +54,7 @@ const llvm::error_category &lld::native_reader_category() {
   return o;
 }
 
-class _YamlReaderErrorCategory : public llvm::_do_message {
+class _YamlReaderErrorCategory : public llvm::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override {
     return "lld.yaml.reader";
