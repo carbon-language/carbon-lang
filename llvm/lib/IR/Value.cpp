@@ -213,7 +213,7 @@ void Value::setName(const Twine &NewName) {
     // then reallocated.
 
     // Create the new name.
-    Name = ValueName::Create(NameRef.begin(), NameRef.end());
+    Name = ValueName::Create(NameRef);
     Name->setValue(this);
     return;
   }

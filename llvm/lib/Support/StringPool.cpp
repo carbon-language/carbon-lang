@@ -27,7 +27,7 @@ PooledStringPtr StringPool::intern(StringRef Key) {
   if (I != InternTable.end())
     return PooledStringPtr(&*I);
   
-  entry_t *S = entry_t::Create(Key.begin(), Key.end());
+  entry_t *S = entry_t::Create(Key);
   S->getValue().Pool = this;
   InternTable.insert(S);
   

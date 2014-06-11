@@ -187,7 +187,7 @@ TEST_F(StringMapTest, IterationTest) {
 TEST_F(StringMapTest, StringMapEntryTest) {
   StringMap<uint32_t>::value_type* entry =
       StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyFirst + testKeyLength, 1u);
+          StringRef(testKeyFirst, testKeyLength), 1u);
   EXPECT_STREQ(testKey, entry->first().data());
   EXPECT_EQ(1u, entry->second);
   free(entry);
@@ -198,7 +198,7 @@ TEST_F(StringMapTest, InsertTest) {
   SCOPED_TRACE("InsertTest");
   testMap.insert(
       StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyFirst + testKeyLength, 
+          StringRef(testKeyFirst, testKeyLength),
           testMap.getAllocator(), 1u));
   assertSingleItemMap();
 }
@@ -236,7 +236,7 @@ TEST_F(StringMapTest, MoveOnlyKey) {
   StringMap<MoveOnly> t;
   t.GetOrCreateValue("Test", MoveOnly(42));
   StringRef Key = "Test";
-  StringMapEntry<MoveOnly>::Create(Key.begin(), Key.end(), MoveOnly(42))
+  StringMapEntry<MoveOnly>::Create(Key, MoveOnly(42))
       ->Destroy();
 }
 

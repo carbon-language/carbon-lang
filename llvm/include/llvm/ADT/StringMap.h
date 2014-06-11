@@ -139,10 +139,10 @@ public:
   /// Create - Create a StringMapEntry for the specified key and default
   /// construct the value.
   template<typename AllocatorTy, typename InitType>
-  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
+  static StringMapEntry *Create(StringRef Key,
                                 AllocatorTy &Allocator,
                                 InitType InitVal) {
-    unsigned KeyLength = static_cast<unsigned>(KeyEnd-KeyStart);
+    unsigned KeyLength = Key.size();
 
     // Allocate a new item with space for the string at the end and a null
     // terminator.
@@ -158,27 +158,25 @@ public:
 
     // Copy the string information.
     char *StrBuffer = const_cast<char*>(NewItem->getKeyData());
-    memcpy(StrBuffer, KeyStart, KeyLength);
+    memcpy(StrBuffer, Key.data(), KeyLength);
     StrBuffer[KeyLength] = 0;  // Null terminate for convenience of clients.
     return NewItem;
   }
 
   template<typename AllocatorTy>
-  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
-                                AllocatorTy &Allocator) {
-    return Create(KeyStart, KeyEnd, Allocator, 0);
+  static StringMapEntry *Create(StringRef Key, AllocatorTy &Allocator) {
+    return Create(Key, Allocator, ValueTy());
   }
 
   /// Create - Create a StringMapEntry with normal malloc/free.
   template<typename InitType>
-  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
-                                InitType InitVal) {
+  static StringMapEntry *Create(StringRef Key, InitType InitVal) {
     MallocAllocator A;
-    return Create(KeyStart, KeyEnd, A, std::move(InitVal));
+    return Create(Key, A, std::move(InitVal));
   }
 
-  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
-    return Create(KeyStart, KeyEnd, ValueTy());
+  static StringMapEntry *Create(StringRef Key) {
+    return Create(Key, ValueTy());
   }
 
   /// GetStringMapEntryFromValue - Given a value that is known to be embedded
@@ -353,8 +351,7 @@ public:
     if (Bucket && Bucket != getTombstoneVal())
       return *static_cast<MapEntryTy*>(Bucket);
 
-    MapEntryTy *NewItem =
-        MapEntryTy::Create(Key.begin(), Key.end(), Allocator, std::move(Val));
+    MapEntryTy *NewItem = MapEntryTy::Create(Key, Allocator, std::move(Val));
 
     if (Bucket == getTombstoneVal())
       --NumTombstones;
