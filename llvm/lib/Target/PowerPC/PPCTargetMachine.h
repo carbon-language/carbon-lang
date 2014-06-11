@@ -35,7 +35,6 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
-  InstrItineraryData  InstrItins;
 
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
@@ -61,7 +60,7 @@ public:
   const DataLayout    *getDataLayout() const override    { return &DL; }
   const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
   const InstrItineraryData *getInstrItineraryData() const override {
-    return &InstrItins;
+    return &getSubtargetImpl()->getInstrItineraryData();
   }
 
   // Pass Pipeline Configuration

@@ -72,18 +72,14 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
   return Ret;
 }
 
-PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
-                                   StringRef CPU, StringRef FS,
-                                   const TargetOptions &Options,
+PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
+                                   StringRef FS, const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
-                                   CodeGenOpt::Level OL,
-                                   bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, is64Bit, OL),
-    DL(getDataLayoutString(Subtarget)), InstrInfo(*this),
-    FrameLowering(Subtarget), JITInfo(*this, is64Bit),
-    TLInfo(*this), TSInfo(*this),
-    InstrItins(Subtarget.getInstrItineraryData()) {
+                                   CodeGenOpt::Level OL, bool is64Bit)
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, is64Bit, OL), DL(getDataLayoutString(Subtarget)),
+      InstrInfo(*this), FrameLowering(Subtarget), JITInfo(*this, is64Bit),
+      TLInfo(*this), TSInfo(*this) {
   initAsmInfo();
 }
 
