@@ -1,8 +1,12 @@
-; RUN: opt < %s -reassociate -disable-output
+; RUN: opt < %s -reassociate -S | FileCheck %s
 
-define void @foo() {
-	%tmp162 = fsub <4 x float> zeroinitializer, zeroinitializer		; <<4 x float>> [#uses=1]
-	%tmp164 = fmul <4 x float> zeroinitializer, %tmp162		; <<4 x float>> [#uses=0]
-	ret void
+define <4 x float> @test1() {
+; CHECK-LABEL: test1
+; CHECK-NEXT: %tmp1 = fsub <4 x float> zeroinitializer, zeroinitializer
+; CHECK-NEXT: %tmp2 = fmul <4 x float> zeroinitializer, %tmp1
+; CHECK-NEXT: ret <4 x float> %tmp2
+
+  %tmp1 = fsub <4 x float> zeroinitializer, zeroinitializer
+  %tmp2 = fmul <4 x float> zeroinitializer, %tmp1
+  ret <4 x float> %tmp2
 }
-

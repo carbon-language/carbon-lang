@@ -1,18 +1,19 @@
 ; RUN: opt -reassociate -S < %s | FileCheck %s
 
-target triple = "armv7-apple-ios"
-
 declare void @use(float)
 
-; CHECK: test
-define void @test(float %x, float %y) {
-entry:
+define void @test1(float %x, float %y) {
+; CHECK-LABEL: test1
 ; CHECK: fmul float %x, %y
 ; CHECK: fmul float %x, %y
-  %0 = fmul float %x, %y
-  %1 = fmul float %y, %x
-  %2 = fsub float %0, %1
-  call void @use(float %0)
-  call void @use(float %2)
+; CHECK: fsub float %1, %2
+; CHECK: call void @use(float %{{.*}})
+; CHECK: call void @use(float %{{.*}})
+
+  %1 = fmul float %x, %y
+  %2 = fmul float %y, %x
+  %3 = fsub float %1, %2
+  call void @use(float %1)
+  call void @use(float %3)
   ret void
 }

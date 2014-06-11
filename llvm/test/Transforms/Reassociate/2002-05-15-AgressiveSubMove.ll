@@ -1,9 +1,10 @@
-; RUN: opt < %s -reassociate -instcombine -constprop -dce -S | not grep add
+; RUN: opt < %s -reassociate -S | FileCheck %s
 
-define i32 @test(i32 %A) {
-	%X = add i32 %A, 1		; <i32> [#uses=1]
-	%Y = add i32 %A, 1		; <i32> [#uses=1]
-	%r = sub i32 %X, %Y		; <i32> [#uses=1]
-	ret i32 %r
+define i32 @test1(i32 %A) {
+; CHECK-LABEL: test1
+; CHECK: ret i32 0
+  %X = add i32 %A, 1
+  %Y = add i32 %A, 1
+  %r = sub i32 %X, %Y
+  ret i32 %r
 }
-

@@ -18,6 +18,7 @@
 
 declare i32 @printf(i8*, ...)
 
+; FIXME: No longer works.
 define void @test(i32 %Num, i32* %Array) {
 bb0:
 	%cond221 = icmp eq i32 0, %Num		; <i1> [#uses=3]

@@ -28,4 +28,3 @@ define i64 @multistep2(i64 %a, i64 %b, i64 %c, i64 %d) {
 ; CHECK-NEXT: ret
   ret i64 %t3
 }
-
