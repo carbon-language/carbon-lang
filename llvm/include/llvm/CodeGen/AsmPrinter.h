@@ -52,7 +52,6 @@ class MCSubtargetInfo;
 class MCSymbol;
 class MDNode;
 class DwarfDebug;
-class DwarfException;
 class Mangler;
 class TargetLoweringObjectFile;
 class DataLayout;

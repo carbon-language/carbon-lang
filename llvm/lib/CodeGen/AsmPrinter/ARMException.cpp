@@ -37,8 +37,7 @@
 using namespace llvm;
 
 ARMException::ARMException(AsmPrinter *A)
-  : DwarfException(A),
-    shouldEmitCFI(false) {}
+  : EHStreamer(A), shouldEmitCFI(false) {}
 
 ARMException::~ARMException() {}
 
@@ -100,7 +99,7 @@ void ARMException::endFunction(const MachineFunction *) {
       ATS.emitHandlerData();
 
       // Emit actual exception table
-      EmitExceptionTable();
+      emitExceptionTable();
     }
   }
 
@@ -108,7 +107,7 @@ void ARMException::endFunction(const MachineFunction *) {
     ATS.emitFnEnd();
 }
 
-void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
+void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
   const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 

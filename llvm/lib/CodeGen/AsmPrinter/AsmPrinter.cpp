@@ -233,23 +233,23 @@ bool AsmPrinter::doInitialization(Module &M) {
     }
   }
 
-  DwarfException *DE = nullptr;
+  EHStreamer *ES = nullptr;
   switch (MAI->getExceptionHandlingType()) {
   case ExceptionHandling::None:
     break;
   case ExceptionHandling::SjLj:
   case ExceptionHandling::DwarfCFI:
-    DE = new DwarfCFIException(this);
+    ES = new DwarfCFIException(this);
     break;
   case ExceptionHandling::ARM:
-    DE = new ARMException(this);
+    ES = new ARMException(this);
     break;
   case ExceptionHandling::Win64:
-    DE = new Win64Exception(this);
+    ES = new Win64Exception(this);
     break;
   }
-  if (DE)
-    Handlers.push_back(HandlerInfo(DE, EHTimerName, DWARFGroupName));
+  if (ES)
+    Handlers.push_back(HandlerInfo(ES, EHTimerName, DWARFGroupName));
   return false;
 }
 

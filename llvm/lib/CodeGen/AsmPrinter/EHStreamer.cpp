@@ -1,4 +1,4 @@
-//===-- CodeGen/AsmPrinter/DwarfException.cpp - Dwarf Exception Impl ------===//
+//===-- CodeGen/AsmPrinter/EHStreamer.cpp - Exception Directive Streamer --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,45 +7,31 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing DWARF exception info into asm files.
+// This file contains support for writing exception info into assembly files.
 //
 //===----------------------------------------------------------------------===//
 
-#include "DwarfException.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/Twine.h"
+#include "EHStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Mangler.h"
-#include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+
 using namespace llvm;
 
-DwarfException::DwarfException(AsmPrinter *A)
-  : Asm(A), MMI(Asm->MMI) {}
+EHStreamer::EHStreamer(AsmPrinter *A) : Asm(A), MMI(Asm->MMI) {}
 
-DwarfException::~DwarfException() {}
+EHStreamer::~EHStreamer() {}
 
-/// SharedTypeIds - How many leading type ids two landing pads have in common.
-unsigned DwarfException::SharedTypeIds(const LandingPadInfo *L,
-                                       const LandingPadInfo *R) {
+/// How many leading type ids two landing pads have in common.
+unsigned EHStreamer::sharedTypeIDs(const LandingPadInfo *L,
+                                   const LandingPadInfo *R) {
   const std::vector<int> &LIds = L->TypeIds, &RIds = R->TypeIds;
   unsigned LSize = LIds.size(), RSize = RIds.size();
   unsigned MinSize = LSize < RSize ? LSize : RSize;
@@ -58,10 +44,10 @@ unsigned DwarfException::SharedTypeIds(const LandingPadInfo *L,
   return Count;
 }
 
-/// ComputeActionsTable - Compute the actions table and gather the first action
-/// index for each landing pad site.
-unsigned DwarfException::
-ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
+/// Compute the actions table and gather the first action index for each landing
+/// pad site.
+unsigned EHStreamer::
+computeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
                     SmallVectorImpl<ActionEntry> &Actions,
                     SmallVectorImpl<unsigned> &FirstActions) {
 
@@ -109,7 +95,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
          I = LandingPads.begin(), E = LandingPads.end(); I != E; ++I) {
     const LandingPadInfo *LPI = *I;
     const std::vector<int> &TypeIds = LPI->TypeIds;
-    unsigned NumShared = PrevLPI ? SharedTypeIds(LPI, PrevLPI) : 0;
+    unsigned NumShared = PrevLPI ? sharedTypeIDs(LPI, PrevLPI) : 0;
     unsigned SizeSiteActions = 0;
 
     if (NumShared < TypeIds.size()) {
@@ -167,9 +153,9 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   return SizeActions;
 }
 
-/// CallToNoUnwindFunction - Return `true' if this is a call to a function
-/// marked `nounwind'. Return `false' otherwise.
-bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
+/// Return `true' if this is a call to a function marked `nounwind'. Return
+/// `false' otherwise.
+bool EHStreamer::callToNoUnwindFunction(const MachineInstr *MI) {
   assert(MI->isCall() && "This should be a call instruction!");
 
   bool MarkedNoUnwind = false;
@@ -201,15 +187,14 @@ bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
   return MarkedNoUnwind;
 }
 
-/// ComputeCallSiteTable - Compute the call-site table.  The entry for an invoke
-/// has a try-range containing the call, a non-zero landing pad, and an
-/// appropriate action.  The entry for an ordinary call has a try-range
-/// containing the call and zero for the landing pad and the action.  Calls
-/// marked 'nounwind' have no entry and must not be contained in the try-range
-/// of any entry - they form gaps in the table.  Entries must be ordered by
-/// try-range address.
-void DwarfException::
-ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
+/// Compute the call-site table.  The entry for an invoke has a try-range
+/// containing the call, a non-zero landing pad, and an appropriate action.  The
+/// entry for an ordinary call has a try-range containing the call and zero for
+/// the landing pad and the action.  Calls marked 'nounwind' have no entry and
+/// must not be contained in the try-range of any entry - they form gaps in the
+/// table.  Entries must be ordered by try-range address.
+void EHStreamer::
+computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
                      const RangeMapType &PadMap,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
@@ -228,7 +213,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
     for (const auto &MI : MBB) {
       if (!MI.isEHLabel()) {
         if (MI.isCall())
-          SawPotentiallyThrowing |= !CallToNoUnwindFunction(&MI);
+          SawPotentiallyThrowing |= !callToNoUnwindFunction(&MI);
         continue;
       }
 
@@ -308,7 +293,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   }
 }
 
-/// EmitExceptionTable - Emit landing pads and actions.
+/// Emit landing pads and actions.
 ///
 /// The general organization of the table is complex, but the basic concepts are
 /// easy.  First there is a header which describes the location and organization
@@ -328,7 +313,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///     unwound and handling continues.
 ///  3. Type ID table contains references to all the C++ typeinfo for all
 ///     catches in the function.  This tables is reverse indexed base 1.
-void DwarfException::EmitExceptionTable() {
+void EHStreamer::emitExceptionTable() {
   const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
@@ -350,7 +335,8 @@ void DwarfException::EmitExceptionTable() {
   // landing pad site.
   SmallVector<ActionEntry, 32> Actions;
   SmallVector<unsigned, 64> FirstActions;
-  unsigned SizeActions=ComputeActionsTable(LandingPads, Actions, FirstActions);
+  unsigned SizeActions =
+    computeActionsTable(LandingPads, Actions, FirstActions);
 
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed
   // by try-range labels when lowered).  Ordinary calls do not, so appropriate
@@ -368,7 +354,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Compute the call-site table.
   SmallVector<CallSiteEntry, 64> CallSites;
-  ComputeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
+  computeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
 
   // Final tallies.
 
@@ -657,12 +643,12 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitSLEB128(Action.NextAction);
   }
 
-  EmitTypeInfos(TTypeEncoding);
+  emitTypeInfos(TTypeEncoding);
 
   Asm->EmitAlignment(2);
 }
 
-void DwarfException::EmitTypeInfos(unsigned TTypeEncoding) {
+void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
   const std::vector<const GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
@@ -703,19 +689,18 @@ void DwarfException::EmitTypeInfos(unsigned TTypeEncoding) {
   }
 }
 
-/// endModule - Emit all exception information that should come after the
-/// content.
-void DwarfException::endModule() {
+/// Emit all exception information that should come after the content.
+void EHStreamer::endModule() {
   llvm_unreachable("Should be implemented");
 }
 
-/// beginFunction - Gather pre-function exception information. Assumes it's
-/// being emitted immediately after the function entry point.
-void DwarfException::beginFunction(const MachineFunction *MF) {
+/// Gather pre-function exception information. Assumes it's being emitted
+/// immediately after the function entry point.
+void EHStreamer::beginFunction(const MachineFunction *MF) {
   llvm_unreachable("Should be implemented");
 }
 
-/// endFunction - Gather and emit post-function exception information.
-void DwarfException::endFunction(const MachineFunction *) {
+/// Gather and emit post-function exception information.
+void EHStreamer::endFunction(const MachineFunction *) {
   llvm_unreachable("Should be implemented");
 }

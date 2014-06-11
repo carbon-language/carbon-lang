@@ -40,9 +40,8 @@
 using namespace llvm;
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
-  : DwarfException(A),
-    shouldEmitPersonality(false), shouldEmitLSDA(false), shouldEmitMoves(false),
-    moveTypeModule(AsmPrinter::CFI_M_None) {}
+  : EHStreamer(A), shouldEmitPersonality(false), shouldEmitLSDA(false),
+    shouldEmitMoves(false), moveTypeModule(AsmPrinter::CFI_M_None) {}
 
 DwarfCFIException::~DwarfCFIException() {}
 
@@ -153,5 +152,5 @@ void DwarfCFIException::endFunction(const MachineFunction *) {
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
 
-  EmitExceptionTable();
+  emitExceptionTable();
 }

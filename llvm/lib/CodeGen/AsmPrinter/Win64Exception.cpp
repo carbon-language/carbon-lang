@@ -38,9 +38,8 @@
 using namespace llvm;
 
 Win64Exception::Win64Exception(AsmPrinter *A)
-  : DwarfException(A),
-    shouldEmitPersonality(false), shouldEmitLSDA(false), shouldEmitMoves(false)
-    {}
+  : EHStreamer(A), shouldEmitPersonality(false), shouldEmitLSDA(false),
+    shouldEmitMoves(false) {}
 
 Win64Exception::~Win64Exception() {}
 
@@ -108,7 +107,7 @@ void Win64Exception::endFunction(const MachineFunction *) {
     Asm->OutStreamer.EmitWin64EHHandlerData();
     Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(Sym, Asm->OutContext),
                                4);
-    EmitExceptionTable();
+    emitExceptionTable();
     Asm->OutStreamer.PopSection();
   }
   Asm->OutStreamer.EmitWin64EHEndProc();
