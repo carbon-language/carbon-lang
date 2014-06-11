@@ -466,48 +466,6 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   return error_code();
 }
 
-error_code get_magic(const Twine &path, uint32_t len,
-                     SmallVectorImpl<char> &result) {
-  SmallString<128> path_storage;
-  SmallVector<wchar_t, 128> path_utf16;
-  result.set_size(0);
-
-  // Convert path to UTF-16.
-  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
-                                  path_utf16))
-    return ec;
-
-  // Open file.
-  HANDLE file = ::CreateFileW(c_str(path_utf16),
-                              GENERIC_READ,
-                              FILE_SHARE_READ,
-                              NULL,
-                              OPEN_EXISTING,
-                              FILE_ATTRIBUTE_READONLY,
-                              NULL);
-  if (file == INVALID_HANDLE_VALUE)
-    return windows_error(::GetLastError());
-
-  // Allocate buffer.
-  result.reserve(len);
-
-  // Get magic!
-  DWORD bytes_read = 0;
-  BOOL read_success = ::ReadFile(file, result.data(), len, &bytes_read, NULL);
-  error_code ec = windows_error(::GetLastError());
-  ::CloseHandle(file);
-  if (!read_success || (bytes_read != len)) {
-    // Set result size to the number of bytes read if it's valid.
-    if (bytes_read <= len)
-      result.set_size(bytes_read);
-    // ERROR_HANDLE_EOF is mapped to errc::value_too_large.
-    return ec;
-  }
-
-  result.set_size(len);
-  return error_code();
-}
-
 error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   FileDescriptor = FD;
   // Make sure that the requested size fits within SIZE_T.

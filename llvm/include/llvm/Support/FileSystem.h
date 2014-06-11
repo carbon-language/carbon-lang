@@ -603,19 +603,6 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD, OpenFlags Flags,
 
 error_code openFileForRead(const Twine &Name, int &ResultFD);
 
-/// @brief Get \a path's first \a len bytes.
-///
-/// @param path Input path.
-/// @param len Number of magic bytes to get.
-/// @param result Set to the first \a len bytes in the file pointed to by
-///               \a path. Or the entire file if file_size(path) < len, in which
-///               case result.size() returns the size of the file.
-/// @returns errc::success if result has been successfully set,
-///          errc::value_too_large if len is larger then the file pointed to by
-///          \a path, otherwise a platform specific error_code.
-error_code get_magic(const Twine &path, uint32_t len,
-                     SmallVectorImpl<char> &result);
-
 /// @brief Identify the type of a binary file based on how magical it is.
 file_magic identify_magic(StringRef magic);
 

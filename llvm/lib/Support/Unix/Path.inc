@@ -622,37 +622,6 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   return error_code();
 }
 
-error_code get_magic(const Twine &path, uint32_t len,
-                     SmallVectorImpl<char> &result) {
-  SmallString<128> PathStorage;
-  StringRef Path = path.toNullTerminatedStringRef(PathStorage);
-  result.set_size(0);
-
-  // Open path.
-  std::FILE *file = std::fopen(Path.data(), "rb");
-  if (!file)
-    return error_code(errno, generic_category());
-
-  // Reserve storage.
-  result.reserve(len);
-
-  // Read magic!
-  size_t size = std::fread(result.data(), 1, len, file);
-  if (std::ferror(file) != 0) {
-    std::fclose(file);
-    return error_code(errno, generic_category());
-  } else if (size != len) {
-    if (std::feof(file) != 0) {
-      std::fclose(file);
-      result.set_size(size);
-      return make_error_code(std::errc::value_too_large);
-    }
-  }
-  std::fclose(file);
-  result.set_size(size);
-  return error_code();
-}
-
 error_code openFileForRead(const Twine &Name, int &ResultFD) {
   SmallString<128> Storage;
   StringRef P = Name.toNullTerminatedStringRef(Storage);

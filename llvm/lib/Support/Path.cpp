@@ -1022,13 +1022,17 @@ void directory_entry::replace_filename(const Twine &filename, file_status st) {
   return file_magic::unknown;
 }
 
-error_code identify_magic(const Twine &path, file_magic &result) {
-  SmallString<32> Magic;
-  error_code ec = get_magic(path, Magic.capacity(), Magic);
-  if (ec && ec != std::errc::value_too_large)
-    return ec;
+error_code identify_magic(const Twine &Path, file_magic &Result) {
+  int FD;
+  if (error_code EC = openFileForRead(Path, FD))
+    return EC;
 
-  result = identify_magic(Magic);
+  char Buffer[32];
+  int Length = read(FD, Buffer, sizeof(Buffer));
+  if (Length < 0)
+    return error_code(errno, generic_category());
+
+  Result = identify_magic(StringRef(Buffer, Length));
   return error_code();
 }
 
