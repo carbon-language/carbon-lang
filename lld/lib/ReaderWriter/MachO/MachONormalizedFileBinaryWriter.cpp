@@ -380,7 +380,7 @@ void MachOFileLayout::buildFileOffsets() {
       if (&sg1 == &sg2)
         continue;
       if (overlaps(sg1,sg2)) {
-        _ec = llvm::make_error_code(llvm::errc::executable_format_error);
+        _ec = llvm::make_error_code(std::errc::executable_format_error);
         return;
       }
     }
@@ -392,7 +392,7 @@ void MachOFileLayout::buildFileOffsets() {
       if (&s1 == &s2)
         continue;
       if (overlaps(s1,s2)) {
-        _ec = llvm::make_error_code(llvm::errc::executable_format_error);
+        _ec = llvm::make_error_code(std::errc::executable_format_error);
         return;
       }
     }
@@ -413,7 +413,7 @@ void MachOFileLayout::buildFileOffsets() {
       if ((s.address >= sg.address)
                         && (s.address+s.content.size() <= sg.address+sg.size)) {
         if (!sg.name.equals(s.segmentName)) {
-          _ec = llvm::make_error_code(llvm::errc::executable_format_error);
+          _ec = llvm::make_error_code(std::errc::executable_format_error);
           return;
         }
         _segInfo[&sg].sections.push_back(&s);

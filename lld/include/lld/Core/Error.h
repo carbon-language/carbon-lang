@@ -95,8 +95,7 @@ llvm::error_code make_dynamic_error_code(const Twine &msg);
 
 } // end namespace lld
 
-namespace llvm {
-
+namespace std {
 template <>
 struct is_error_code_enum<lld::NativeReaderError> : std::true_type {};
 template <> struct is_error_code_enum<lld::YamlReaderError> : std::true_type {};
@@ -104,6 +103,6 @@ template <>
 struct is_error_code_enum<lld::LinkerScriptReaderError> : std::true_type {};
 template <> struct is_error_code_enum<lld::InputGraphError> : std::true_type {};
 template <> struct is_error_code_enum<lld::ReaderError> : std::true_type {};
-} // end namespace llvm
+}
 
 #endif

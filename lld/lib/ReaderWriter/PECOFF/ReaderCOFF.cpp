@@ -977,7 +977,7 @@ private:
     std::string programPath = llvm::sys::FindProgramByName(program);
     if (programPath.empty()) {
       llvm::errs() << "Unable to find " << program << " in PATH\n";
-      return llvm::errc::broken_pipe;
+      return std::errc::broken_pipe;
     }
     std::vector<const char *> args;
     args.push_back(programPath.c_str());
@@ -996,7 +996,7 @@ private:
 
     if (llvm::sys::ExecuteAndWait(programPath.c_str(), &args[0]) != 0) {
       llvm::errs() << program << " failed\n";
-      return llvm::errc::broken_pipe;
+      return std::errc::broken_pipe;
     }
     return outFilePath.str().str();
   }

@@ -38,7 +38,6 @@ namespace llvm {
   template<typename T>
   class ErrorOr;
 
-  class error_code;
   class raw_ostream;
   // TODO: DenseMap, ...
 }

@@ -159,7 +159,7 @@ llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
 }
 
 std::string ELFFileNode::errStr(error_code errc) {
-  if (errc == llvm::errc::no_such_file_or_directory) {
+  if (errc == std::errc::no_such_file_or_directory) {
     if (_attributes._isDashlPrefix)
       return (Twine("Unable to find library -l") + _path).str();
     return (Twine("Unable to find file ") + _path).str();

@@ -15,7 +15,6 @@
 
 namespace llvm {
 class MemoryBuffer;
-class error_code;
 }
 
 namespace lld {
