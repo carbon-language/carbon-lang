@@ -86,12 +86,12 @@ define <4 x float> @hsub_ps_test2(<4 x float> %A, <4 x float> %B) {
   %vecext3 = extractelement <4 x float> %A, i32 1
   %sub4 = fsub float %vecext2, %vecext3
   %vecinit5 = insertelement <4 x float> %vecinit, float %sub4, i32 0
-  %vecext6 = extractelement <4 x float> %B, i32 3
-  %vecext7 = extractelement <4 x float> %B, i32 2
+  %vecext6 = extractelement <4 x float> %B, i32 2
+  %vecext7 = extractelement <4 x float> %B, i32 3
   %sub8 = fsub float %vecext6, %vecext7
   %vecinit9 = insertelement <4 x float> %vecinit5, float %sub8, i32 3
-  %vecext10 = extractelement <4 x float> %B, i32 1
-  %vecext11 = extractelement <4 x float> %B, i32 0
+  %vecext10 = extractelement <4 x float> %B, i32 0
+  %vecext11 = extractelement <4 x float> %B, i32 1
   %sub12 = fsub float %vecext10, %vecext11
   %vecinit13 = insertelement <4 x float> %vecinit9, float %sub12, i32 2
   ret <4 x float> %vecinit13
@@ -137,12 +137,12 @@ define <4 x i32> @phadd_d_test2(<4 x i32> %A, <4 x i32> %B) {
   %vecext3 = extractelement <4 x i32> %A, i32 1
   %add4 = add i32 %vecext2, %vecext3
   %vecinit5 = insertelement <4 x i32> %vecinit, i32 %add4, i32 0
-  %vecext6 = extractelement <4 x i32> %B, i32 2
-  %vecext7 = extractelement <4 x i32> %B, i32 3
+  %vecext6 = extractelement <4 x i32> %B, i32 3
+  %vecext7 = extractelement <4 x i32> %B, i32 2
   %add8 = add i32 %vecext6, %vecext7
   %vecinit9 = insertelement <4 x i32> %vecinit5, i32 %add8, i32 3
-  %vecext10 = extractelement <4 x i32> %B, i32 0
-  %vecext11 = extractelement <4 x i32> %B, i32 1
+  %vecext10 = extractelement <4 x i32> %B, i32 1
+  %vecext11 = extractelement <4 x i32> %B, i32 0
   %add12 = add i32 %vecext10, %vecext11
   %vecinit13 = insertelement <4 x i32> %vecinit9, i32 %add12, i32 2
   ret <4 x i32> %vecinit13
@@ -191,12 +191,12 @@ define <4 x i32> @phsub_d_test2(<4 x i32> %A, <4 x i32> %B) {
   %vecext3 = extractelement <4 x i32> %A, i32 1
   %sub4 = sub i32 %vecext2, %vecext3
   %vecinit5 = insertelement <4 x i32> %vecinit, i32 %sub4, i32 0
-  %vecext6 = extractelement <4 x i32> %B, i32 3
-  %vecext7 = extractelement <4 x i32> %B, i32 2
+  %vecext6 = extractelement <4 x i32> %B, i32 2
+  %vecext7 = extractelement <4 x i32> %B, i32 3
   %sub8 = sub i32 %vecext6, %vecext7
   %vecinit9 = insertelement <4 x i32> %vecinit5, i32 %sub8, i32 3
-  %vecext10 = extractelement <4 x i32> %B, i32 1
-  %vecext11 = extractelement <4 x i32> %B, i32 0
+  %vecext10 = extractelement <4 x i32> %B, i32 0
+  %vecext11 = extractelement <4 x i32> %B, i32 1
   %sub12 = sub i32 %vecext10, %vecext11
   %vecinit13 = insertelement <4 x i32> %vecinit9, i32 %sub12, i32 2
   ret <4 x i32> %vecinit13
@@ -258,14 +258,14 @@ define <2 x double> @hsub_pd_test1(<2 x double> %A, <2 x double> %B) {
 
 
 define <2 x double> @hsub_pd_test2(<2 x double> %A, <2 x double> %B) {
-  %vecext = extractelement <2 x double> %A, i32 1
-  %vecext1 = extractelement <2 x double> %A, i32 0
+  %vecext = extractelement <2 x double> %B, i32 0
+  %vecext1 = extractelement <2 x double> %B, i32 1
   %sub = fsub double %vecext, %vecext1
-  %vecinit = insertelement <2 x double> undef, double %sub, i32 0
-  %vecext2 = extractelement <2 x double> %B, i32 1
-  %vecext3 = extractelement <2 x double> %B, i32 0
+  %vecinit = insertelement <2 x double> undef, double %sub, i32 1
+  %vecext2 = extractelement <2 x double> %A, i32 0
+  %vecext3 = extractelement <2 x double> %A, i32 1
   %sub2 = fsub double %vecext2, %vecext3
-  %vecinit2 = insertelement <2 x double> %vecinit, double %sub2, i32 1
+  %vecinit2 = insertelement <2 x double> %vecinit, double %sub2, i32 0
   ret <2 x double> %vecinit2
 }
 ; CHECK-LABEL: hsub_pd_test2
@@ -457,4 +457,69 @@ define <16 x i16> @avx2_vphadd_w_test(<16 x i16> %a, <16 x i16> %b) {
 ; AVX2: vphaddw
 ; CHECK: ret
 
+
+; Verify that we don't select horizontal subs in the following functions.
+
+define <4 x i32> @not_a_hsub_1(<4 x i32> %A, <4 x i32> %B) {
+  %vecext = extractelement <4 x i32> %A, i32 0
+  %vecext1 = extractelement <4 x i32> %A, i32 1
+  %sub = sub i32 %vecext, %vecext1
+  %vecinit = insertelement <4 x i32> undef, i32 %sub, i32 0
+  %vecext2 = extractelement <4 x i32> %A, i32 2
+  %vecext3 = extractelement <4 x i32> %A, i32 3
+  %sub4 = sub i32 %vecext2, %vecext3
+  %vecinit5 = insertelement <4 x i32> %vecinit, i32 %sub4, i32 1
+  %vecext6 = extractelement <4 x i32> %B, i32 1
+  %vecext7 = extractelement <4 x i32> %B, i32 0
+  %sub8 = sub i32 %vecext6, %vecext7
+  %vecinit9 = insertelement <4 x i32> %vecinit5, i32 %sub8, i32 2
+  %vecext10 = extractelement <4 x i32> %B, i32 3
+  %vecext11 = extractelement <4 x i32> %B, i32 2
+  %sub12 = sub i32 %vecext10, %vecext11
+  %vecinit13 = insertelement <4 x i32> %vecinit9, i32 %sub12, i32 3
+  ret <4 x i32> %vecinit13
+}
+; CHECK-LABEL: not_a_hsub_1
+; CHECK-NOT: phsubd
+; CHECK: ret
+
+
+define <4 x float> @not_a_hsub_2(<4 x float> %A, <4 x float> %B) {
+  %vecext = extractelement <4 x float> %A, i32 2
+  %vecext1 = extractelement <4 x float> %A, i32 3
+  %sub = fsub float %vecext, %vecext1
+  %vecinit = insertelement <4 x float> undef, float %sub, i32 1
+  %vecext2 = extractelement <4 x float> %A, i32 0
+  %vecext3 = extractelement <4 x float> %A, i32 1
+  %sub4 = fsub float %vecext2, %vecext3
+  %vecinit5 = insertelement <4 x float> %vecinit, float %sub4, i32 0
+  %vecext6 = extractelement <4 x float> %B, i32 3
+  %vecext7 = extractelement <4 x float> %B, i32 2
+  %sub8 = fsub float %vecext6, %vecext7
+  %vecinit9 = insertelement <4 x float> %vecinit5, float %sub8, i32 3
+  %vecext10 = extractelement <4 x float> %B, i32 0
+  %vecext11 = extractelement <4 x float> %B, i32 1
+  %sub12 = fsub float %vecext10, %vecext11
+  %vecinit13 = insertelement <4 x float> %vecinit9, float %sub12, i32 2
+  ret <4 x float> %vecinit13
+}
+; CHECK-LABEL: not_a_hsub_2
+; CHECK-NOT: hsubps
+; CHECK: ret
+
+
+define <2 x double> @not_a_hsub_3(<2 x double> %A, <2 x double> %B) {
+  %vecext = extractelement <2 x double> %B, i32 0
+  %vecext1 = extractelement <2 x double> %B, i32 1
+  %sub = fsub double %vecext, %vecext1
+  %vecinit = insertelement <2 x double> undef, double %sub, i32 1
+  %vecext2 = extractelement <2 x double> %A, i32 1
+  %vecext3 = extractelement <2 x double> %A, i32 0
+  %sub2 = fsub double %vecext2, %vecext3
+  %vecinit2 = insertelement <2 x double> %vecinit, double %sub2, i32 0
+  ret <2 x double> %vecinit2
+}
+; CHECK-LABEL: not_a_hsub_3
+; CHECK-NOT: hsubpd
+; CHECK: ret
 
