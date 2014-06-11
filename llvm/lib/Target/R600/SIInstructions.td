@@ -1973,6 +1973,8 @@ def : BitConvert <v2i32, i64, VReg_64>;
 def : BitConvert <i64, v2i32, VReg_64>;
 def : BitConvert <v2f32, i64, VReg_64>;
 def : BitConvert <i64, v2f32, VReg_64>;
+def : BitConvert <v2i32, f64, VReg_64>;
+def : BitConvert <f64, v2i32, VReg_64>;
 def : BitConvert <v4f32, v4i32, VReg_128>;
 def : BitConvert <v4i32, v4f32, VReg_128>;
 
