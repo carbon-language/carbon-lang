@@ -257,6 +257,15 @@ def mskor_global : PatFrag<(ops node:$val, node:$ptr),
   return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
+def atomic_cmp_swap_32_local :
+  PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
+          (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
+  AtomicSDNode *AN = cast<AtomicSDNode>(N);
+  return AN->getMemoryVT() == MVT::i32 &&
+         AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+}]>;
+
+
 class Constants {
 int TWO_PI = 0x40c90fdb;
 int PI = 0x40490fdb;

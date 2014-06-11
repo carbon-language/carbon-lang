@@ -2250,6 +2250,21 @@ defm : DSAtomicRetPat<DS_MIN_RTN_U32, i32, atomic_load_umin_local>;
 defm : DSAtomicRetPat<DS_MAX_RTN_U32, i32, atomic_load_umax_local>;
 
 
+multiclass DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> {
+  def : Pat <
+    (frag (add i32:$ptr, (i32 IMM16bit:$offset)), vt:$cmp, vt:$swap),
+    (inst (i1 0), $ptr, $cmp, $swap, (as_i16imm $offset))
+  >;
+
+  def : Pat <
+    (frag i32:$ptr, vt:$cmp, vt:$swap),
+    (inst 0, $ptr, $cmp, $swap, 0)
+  >;
+}
+
+defm : DSAtomicCmpXChg<DS_CMPST_RTN_B32, i32, atomic_cmp_swap_32_local>;
+
+
 //===----------------------------------------------------------------------===//
 // MUBUF Patterns
 //===----------------------------------------------------------------------===//
