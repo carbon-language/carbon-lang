@@ -121,6 +121,7 @@ private:
   void         layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr);
   void         copySectionContent(SectionInfo *si, ContentBytes &content);
   uint8_t      scopeBits(const DefinedAtom* atom);
+  uint16_t     descBits(const DefinedAtom* atom);
   int          dylibOrdinal(const SharedLibraryAtom *sa);
   void         segIndexForSection(const SectionInfo *sect,
                              uint8_t &segmentIndex, uint64_t &segmentStartAddr);
@@ -589,6 +590,28 @@ uint8_t Util::scopeBits(const DefinedAtom* atom) {
   llvm_unreachable("Unknown scope");
 }
 
+uint16_t Util::descBits(const DefinedAtom* atom) {
+  uint16_t desc = 0;
+  switch (atom->merge()) {
+  case lld::DefinedAtom::mergeNo:
+  case lld::DefinedAtom::mergeAsTentative:
+    break;
+  case lld::DefinedAtom::mergeAsWeak:
+  case lld::DefinedAtom::mergeAsWeakAndAddressUsed:
+    desc |= N_WEAK_DEF;
+    break;
+  case lld::DefinedAtom::mergeSameNameAndSize:
+  case lld::DefinedAtom::mergeByLargestSection:
+  case lld::DefinedAtom::mergeByContent:
+    llvm_unreachable("Unsupported DefinedAtom::merge()");
+    break;
+  }
+  if (atom->contentType() == lld::DefinedAtom::typeResolver)
+    desc |= N_SYMBOL_RESOLVER;
+  return desc;
+}
+
+
 bool Util::AtomSorter::operator()(const AtomAndIndex &left,
                                   const AtomAndIndex &right) {
   return (left.atom->name().compare(right.atom->name()) < 0);
@@ -634,7 +657,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
     sym.type  = N_SECT;
     sym.scope = scopeBits(static_cast<const DefinedAtom*>(ai.atom));
     sym.sect  = ai.index;
-    sym.desc  = 0;
+    sym.desc  = descBits(static_cast<const DefinedAtom*>(ai.atom));
     sym.value = _atomToAddress[ai.atom];
     file.globalSymbols.push_back(sym);
   }

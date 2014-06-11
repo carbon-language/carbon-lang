@@ -52,6 +52,7 @@ struct MachORelocatableSectionToAtomType {
 
 const MachORelocatableSectionToAtomType sectsToAtomType[] = {
   ENTRY("__TEXT", "__text",           S_REGULAR,          typeCode),
+  ENTRY("__TEXT", "__text",           S_REGULAR,          typeResolver),
   ENTRY("__TEXT", "__cstring",        S_CSTRING_LITERALS, typeCString),
   ENTRY("",       "",                 S_CSTRING_LITERALS, typeCString),
   ENTRY("__TEXT", "__ustring",        S_REGULAR,          typeUTF16String),
@@ -212,7 +213,7 @@ void appendSymbolsInSection(const std::vector<Symbol> &inSymbols,
 
 void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
                     MachOFile &file, uint64_t symbolAddr, StringRef symbolName,
-                    bool symbolWeakDef, Atom::Scope symbolScope,
+                    uint16_t symbolDescFlags, Atom::Scope symbolScope,
                     uint64_t nextSymbolAddr, bool copyRefs) {
   // Mach-O symbol table does have size in it. Instead the size is the
   // difference between this and the next symbol.
@@ -222,7 +223,7 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
   } else {
     uint64_t offset = symbolAddr - section.address;
     ArrayRef<uint8_t> atomContent = section.content.slice(offset, size);
-    DefinedAtom::Merge merge = symbolWeakDef 
+    DefinedAtom::Merge merge = (symbolDescFlags & N_WEAK_DEF) 
                               ? DefinedAtom::mergeAsWeak : DefinedAtom::mergeNo;
     if (atomType == DefinedAtom::typeUnknown) {
       // Mach-O needs a segment and section name.  Concatentate those two
@@ -233,6 +234,10 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
       file.addDefinedAtomInCustomSection(symbolName, symbolScope, atomType,
                                          merge, atomContent, segSectName, true);
     } else {
+      if ((atomType == lld::DefinedAtom::typeCode) && 
+          (symbolDescFlags & N_SYMBOL_RESOLVER)) {
+       atomType = lld::DefinedAtom::typeResolver;
+      }
       file.addDefinedAtom(symbolName, symbolScope, atomType, merge,
                           atomContent, copyRefs);
     }
@@ -283,22 +288,20 @@ error_code processSymboledSection(DefinedAtom::ContentType atomType,
   if (firstSymbolAddr != section.address) {
     // Section has anonymous content before first symbol.
     atomFromSymbol(atomType, section, file, section.address, StringRef(),
-                  false, Atom::scopeTranslationUnit, firstSymbolAddr, copyRefs);
+                  0, Atom::scopeTranslationUnit, firstSymbolAddr, copyRefs);
   }
 
   const Symbol *lastSym = nullptr;
-  bool lastSymIsWeakDef;
   for (const Symbol *sym : symbols) {
     if (lastSym != nullptr) {
       atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
-                     lastSymIsWeakDef, atomScope(lastSym->scope), sym->value, copyRefs);
+                     lastSym->desc, atomScope(lastSym->scope), sym->value, copyRefs);
     }
     lastSym = sym;
-    lastSymIsWeakDef = (lastSym->desc & N_WEAK_DEF);
   }
   if (lastSym != nullptr) {
     atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
-                   lastSymIsWeakDef, atomScope(lastSym->scope),
+                   lastSym->desc, atomScope(lastSym->scope),
                    section.address + section.content.size(), copyRefs);
   }
   return error_code();
