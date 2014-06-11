@@ -4354,6 +4354,28 @@ def : Pat<(int_x86_avx512_mask_conflict_q_512 VR512:$src2, VR512:$src1,
           (VPCONFLICTQrrk VR512:$src1,
            (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)), VR512:$src2)>;
 
+let Predicates = [HasCDI] in {
+defm VPLZCNTD : avx512_conflict<0x44, "vplzcntd", VR512, VK16WM,
+                    i512mem, i32mem, "{1to16}">,
+                    EVEX_V512, EVEX_CD8<32, CD8VF>;
+
+
+defm VPLZCNTQ : avx512_conflict<0x44, "vplzcntq", VR512, VK8WM,
+                    i512mem, i64mem, "{1to8}">,
+                    EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+
+}
+
+def : Pat<(int_x86_avx512_mask_lzcnt_d_512 VR512:$src2, VR512:$src1,
+                                              GR16:$mask),
+          (VPLZCNTDrrk VR512:$src1,
+           (v16i1 (COPY_TO_REGCLASS GR16:$mask, VK16WM)), VR512:$src2)>;
+
+def : Pat<(int_x86_avx512_mask_lzcnt_q_512 VR512:$src2, VR512:$src1,
+                                              GR8:$mask),
+          (VPLZCNTQrrk VR512:$src1,
+           (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)), VR512:$src2)>;
+
 def : Pat<(store (i1 -1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  0), addr:$dst), (MOV8mi addr:$dst, (i8 0))>;

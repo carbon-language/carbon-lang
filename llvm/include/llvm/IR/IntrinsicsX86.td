@@ -3134,6 +3134,16 @@ let TargetPrefix = "x86" in {
           Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
                     llvm_v8i64_ty, llvm_i8_ty],
                     []>;
+  def int_x86_avx512_mask_lzcnt_d_512 :
+          GCCBuiltin<"__builtin_ia32_vplzcntd_512_mask">,
+          Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,
+                    llvm_v16i32_ty, llvm_i16_ty],
+                    []>;
+  def int_x86_avx512_mask_lzcnt_q_512 :
+          GCCBuiltin<"__builtin_ia32_vplzcntq_512_mask">,
+          Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
+                    llvm_v8i64_ty, llvm_i8_ty],
+                    []>;
 }
 
 // Vector blend
