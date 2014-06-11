@@ -37,3 +37,7 @@ struct A {
   bool d1 = T1<int, T1<int, int>>::V < 3, d2;
   T1<int, int()> e = T1<int, int()>();
 };
+
+struct PR19993 {
+  static int n = delete; // expected-error {{only functions can have deleted definitions}}
+};

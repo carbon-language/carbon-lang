@@ -2466,7 +2466,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
             << 1 /* delete */;
         else
           Diag(ConsumeToken(), diag::err_deleted_non_function);
-        return ExprResult();
+        return ExprError();
       }
     } else if (Tok.is(tok::kw_default)) {
       if (IsFunction)
@@ -2474,7 +2474,7 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
           << 0 /* default */;
       else
         Diag(ConsumeToken(), diag::err_default_special_members);
-      return ExprResult();
+      return ExprError();
     }
 
   }
