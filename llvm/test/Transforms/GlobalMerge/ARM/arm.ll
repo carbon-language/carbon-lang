@@ -1,9 +1,9 @@
 ; RUN: llc %s -O0 -o - | FileCheck -check-prefix=NO-MERGE %s
-; RUN: llc %s -O0 -o - -global-merge=false | FileCheck -check-prefix=NO-MERGE %s
-; RUN: llc %s -O0 -o - -global-merge=true | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O0 -o - -enable-global-merge=false | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O0 -o - -enable-global-merge=true | FileCheck -check-prefix=NO-MERGE %s
 ; RUN: llc %s -O1 -o - | FileCheck -check-prefix=MERGE %s
-; RUN: llc %s -O1 -o - -global-merge=false | FileCheck -check-prefix=NO-MERGE %s
-; RUN: llc %s -O1 -o - -global-merge=true | FileCheck -check-prefix=MERGE %s
+; RUN: llc %s -O1 -o - -enable-global-merge=false | FileCheck -check-prefix=NO-MERGE %s
+; RUN: llc %s -O1 -o - -enable-global-merge=true | FileCheck -check-prefix=MERGE %s
 
 ; MERGE-NOT: .zerofill __DATA,__bss,_bar,20,2
 ; MERGE-NOT: .zerofill __DATA,__bss,_baz,20,2
