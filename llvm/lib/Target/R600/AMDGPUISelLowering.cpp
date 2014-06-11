@@ -84,6 +84,25 @@ static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
 
 #include "AMDGPUGenCallingConv.inc"
 
+// Find a larger type to do a load / store of a vector with.
+EVT AMDGPUTargetLowering::getEquivalentMemType(LLVMContext &Ctx, EVT VT) {
+  unsigned StoreSize = VT.getStoreSizeInBits();
+  if (StoreSize <= 32)
+    return EVT::getIntegerVT(Ctx, StoreSize);
+
+  assert(StoreSize % 32 == 0 && "Store size not a multiple of 32");
+  return EVT::getVectorVT(Ctx, MVT::i32, StoreSize / 32);
+}
+
+// Type for a vector that will be loaded to.
+EVT AMDGPUTargetLowering::getEquivalentLoadRegType(LLVMContext &Ctx, EVT VT) {
+  unsigned StoreSize = VT.getStoreSizeInBits();
+  if (StoreSize <= 32)
+    return EVT::getIntegerVT(Ctx, 32);
+
+  return EVT::getVectorVT(Ctx, MVT::i32, StoreSize / 32);
+}
+
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   TargetLowering(TM, new TargetLoweringObjectFileELF()) {
 

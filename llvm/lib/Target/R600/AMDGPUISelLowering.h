@@ -46,6 +46,8 @@ private:
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
 protected:
+  static EVT getEquivalentMemType(LLVMContext &Context, EVT VT);
+  static EVT getEquivalentLoadRegType(LLVMContext &Context, EVT VT);
 
   /// \brief Helper function that adds Reg to the LiveIn list of the DAG's
   /// MachineFunction.
