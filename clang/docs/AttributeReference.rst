@@ -219,14 +219,14 @@ carries_dependency
 The ``carries_dependency`` attribute specifies dependency propagation into and
 out of functions.
 
-When specified on a function or Objective-C method, the ``carries_depedency``
+When specified on a function or Objective-C method, the ``carries_dependency``
 attribute means that the return value carries a dependency out of the function, 
 so that the implementation need not constrain ordering upon return from that
 function. Implementations of the function and its caller may choose to preserve
 dependencies instead of emitting memory ordering instructions such as fences.
 
 Note, this attribute does not change the meaning of the program, but may result
-in generatation of more efficient code.
+in generation of more efficient code.
 
 
 enable_if
@@ -310,6 +310,18 @@ only a single candidate. In a call to g(1, 1), the call is ambiguous even though
 not ODR-equivalent.
 
 Query for this feature with ``__has_attribute(enable_if)``.
+
+
+flatten (gnu::flatten)
+----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+The ``flatten`` attribute causes calls within the attributed function to
+be inlined unless it is impossible to do so, for example if the body of the
+callee is unavailable or if the callee has the ``noinline`` attribute.
 
 
 format (gnu::format)
@@ -467,6 +479,18 @@ not be inserted by ThreadSanitizer. The function is still instrumented by the
 tool to avoid false positives and provide meaningful stack traces.
 
 
+no_split_stack (gnu::no_split_stack)
+------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+The ``no_split_stack`` attribute disables the emission of the split stack
+preamble for a particular function. It has no effect if ``-fsplit-stack``
+is not specified.
+
+
 objc_method_family
 ------------------
 .. csv-table:: Supported Syntaxes
@@ -543,6 +567,24 @@ implementation of an override in a subclass does not call super.  For example:
    warning: method possibly missing a [super AnnotMeth] call
    - (void) AnnotMeth{};
                       ^
+
+
+optnone (clang::optnone)
+------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+The ``optnone`` attribute suppresses essentially all optimizations
+on a function or method, regardless of the optimization level applied to
+the compilation unit as a whole.  This is particularly useful when you
+need to debug a particular function, but it is infeasible to build the
+entire application without optimization.  Avoiding optimization on the
+specified function can improve the quality of the debugging information
+for that function.
+
+This attribute is incompatible with the ``always_inline`` attribute.
 
 
 overloadable
@@ -632,6 +674,18 @@ caveats to this use of name mangling:
 Query for this feature with ``__has_extension(attribute_overloadable)``.
 
 
+pcs (gnu::pcs)
+--------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+On ARM targets, this can attribute can be used to select calling conventions,
+similar to ``stdcall`` on x86. Valid parameter values are "aapcs" and
+"aapcs-vfp".
+
+
 release_capability (release_shared_capability, clang::release_capability, clang::release_shared_capability)
 -----------------------------------------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
@@ -659,6 +713,17 @@ Variable Attributes
 ===================
 
 
+section (gnu::section, __declspec(allocate))
+--------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","X",""
+
+The ``section`` attribute allows you to specify a specific section a
+global variable or function should be in after translation.
+
+
 tls_model (gnu::tls_model)
 --------------------------
 .. csv-table:: Supported Syntaxes
@@ -675,6 +740,26 @@ model to use. It accepts the following strings:
 * local-exec
 
 TLS models are mutually exclusive.
+
+
+thread
+------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "","","X",""
+
+The ``__declspec(thread)`` attribute declares a variable with thread local
+storage.  It is available under the ``-fms-extensions`` flag for MSVC
+compatibility.  Documentation for the Visual C++ attribute is available on MSDN_.
+
+.. _MSDN: http://msdn.microsoft.com/en-us/library/9w1sdazb.aspx
+
+In Clang, ``__declspec(thread)`` is generally equivalent in functionality to the
+GNU ``__thread`` keyword.  The variable must not have a destructor and must have
+a constant initializer, if any.  The attribute only applies to variables
+declared with static storage duration, such as globals, class static data
+members, and static locals.
 
 
 Type Attributes
