@@ -169,6 +169,10 @@ namespace {
   typedef ScopedHandle<FileHandle>              FileScopedHandle;
 }
 
+static error_code windows_error(unsigned E) {
+  return error_code(E, system_category());
+}
+
 static error_code GetFileNameFromHandle(HANDLE FileHandle,
                                         std::string& Name) {
   char Filename[MAX_PATH+1];
@@ -245,7 +249,7 @@ static std::string FindProgram(const std::string &Program, error_code &ec) {
       ec = windows_error(::GetLastError());
     else if (length > array_lengthof(PathName)) {
       // This may have been the file, return with error.
-      ec = windows_error::buffer_overflow;
+      ec = windows_error(ERROR_BUFFER_OVERFLOW);
       break;
     } else {
       // We found the path! Return it.

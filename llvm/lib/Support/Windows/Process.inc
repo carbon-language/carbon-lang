@@ -179,6 +179,10 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
   return std::string(Res.data());
 }
 
+static error_code windows_error(DWORD E) {
+  return error_code(E, system_category());
+}
+
 error_code
 Process::GetArgumentVector(SmallVectorImpl<const char *> &Args,
                            ArrayRef<const char *>,

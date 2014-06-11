@@ -44,6 +44,10 @@ using namespace llvm;
 using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
 
+static error_code windows_error(DWORD E) {
+  return error_code(E, system_category());
+}
+
 static error_code TempDir(SmallVectorImpl<char> &Result) {
   SmallVector<wchar_t, 64> Res;
 retry_temp_dir:
@@ -150,9 +154,9 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
     return ec;
 
   if (!::CreateDirectoryW(path_utf16.begin(), NULL)) {
-    error_code ec = windows_error(::GetLastError());
-    if (ec != windows_error::already_exists || !IgnoreExisting)
-      return ec;
+    DWORD LastError = ::GetLastError();
+    if (LastError != ERROR_ALREADY_EXISTS || !IgnoreExisting)
+      return windows_error(LastError);
   }
 
   return error_code();
@@ -232,8 +236,8 @@ error_code rename(const Twine &from, const Twine &to) {
     if (::MoveFileExW(wide_from.begin(), wide_to.begin(),
                       MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
       return error_code();
-    ec = windows_error(::GetLastError());
-    if (ec != windows_error::access_denied)
+    DWORD LastError = ::GetLastError();
+    if (LastError != ERROR_ACCESS_DENIED)
       break;
     // Retry MoveFile() at ACCESS_DENIED.
     // System scanners (eg. indexer) might open the source file when
@@ -276,10 +280,10 @@ error_code exists(const Twine &path, bool &result) {
 
   if (attributes == INVALID_FILE_ATTRIBUTES) {
     // See if the file didn't actually exist.
-    error_code ec = make_error_code(windows_error(::GetLastError()));
-    if (ec != windows_error::file_not_found &&
-        ec != windows_error::path_not_found)
-      return ec;
+    DWORD LastError = ::GetLastError();
+    if (LastError != ERROR_FILE_NOT_FOUND &&
+        LastError != ERROR_PATH_NOT_FOUND)
+      return windows_error(LastError);
     result = false;
   } else
     result = true;
@@ -392,15 +396,15 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
   }
 
 handle_status_error:
-  error_code EC = windows_error(::GetLastError());
-  if (EC == windows_error::file_not_found ||
-      EC == windows_error::path_not_found)
+  DWORD LastError = ::GetLastError();
+  if (LastError == ERROR_FILE_NOT_FOUND ||
+      LastError == ERROR_PATH_NOT_FOUND)
     Result = file_status(file_type::file_not_found);
-  else if (EC == windows_error::sharing_violation)
+  else if (LastError == ERROR_SHARING_VIOLATION)
     Result = file_status(file_type::type_unknown);
   else
     Result = file_status(file_type::status_error);
-  return EC;
+  return windows_error(LastError);
 }
 
 error_code status(const Twine &path, file_status &result) {
@@ -733,11 +737,11 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
          (FilenameLen == 2 && FirstFind.cFileName[0] == L'.' &&
                               FirstFind.cFileName[1] == L'.'))
     if (!::FindNextFileW(FindHandle, &FirstFind)) {
-      error_code ec = windows_error(::GetLastError());
+      DWORD LastError = ::GetLastError();
       // Check for end.
-      if (ec == windows_error::no_more_files)
+      if (LastError == ERROR_NO_MORE_FILES)
         return detail::directory_iterator_destruct(it);
-      return ec;
+      return windows_error(LastError);
     } else
       FilenameLen = ::wcslen(FirstFind.cFileName);
 
@@ -768,11 +772,11 @@ error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
 error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   WIN32_FIND_DATAW FindData;
   if (!::FindNextFileW(HANDLE(it.IterationHandle), &FindData)) {
-    error_code ec = windows_error(::GetLastError());
+    DWORD LastError = ::GetLastError();
     // Check for end.
-    if (ec == windows_error::no_more_files)
+    if (LastError == ERROR_NO_MORE_FILES)
       return detail::directory_iterator_destruct(it);
-    return ec;
+    return windows_error(LastError);
   }
 
   size_t FilenameLen = ::wcslen(FindData.cFileName);
@@ -803,11 +807,12 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
                            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (H == INVALID_HANDLE_VALUE) {
-    error_code EC = windows_error(::GetLastError());
+    DWORD LastError = ::GetLastError();
+    error_code EC = windows_error(LastError);
     // Provide a better error message when trying to open directories.
     // This only runs if we failed to open the file, so there is probably
     // no performances issues.
-    if (EC != windows_error::access_denied)
+    if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
       return make_error_code(errc::is_a_directory);
@@ -817,7 +822,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
   int FD = ::_open_osfhandle(intptr_t(H), 0);
   if (FD == -1) {
     ::CloseHandle(H);
-    return windows_error::invalid_handle;
+    return windows_error(ERROR_INVALID_HANDLE);
   }
 
   ResultFD = FD;
@@ -854,11 +859,12 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
                            CreationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
 
   if (H == INVALID_HANDLE_VALUE) {
-    error_code EC = windows_error(::GetLastError());
+    DWORD LastError = ::GetLastError();
+    error_code EC = windows_error(LastError);
     // Provide a better error message when trying to open directories.
     // This only runs if we failed to open the file, so there is probably
     // no performances issues.
-    if (EC != windows_error::access_denied)
+    if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
       return make_error_code(errc::is_a_directory);
@@ -875,7 +881,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   int FD = ::_open_osfhandle(intptr_t(H), OpenFlags);
   if (FD == -1) {
     ::CloseHandle(H);
-    return windows_error::invalid_handle;
+    return windows_error(ERROR_INVALID_HANDLE);
   }
 
   ResultFD = FD;
@@ -907,7 +913,7 @@ llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
                                     utf8.size(), utf16.begin(), 0);
 
     if (len == 0)
-      return llvm::windows_error(::GetLastError());
+      return windows_error(::GetLastError());
 
     utf16.reserve(len + 1);
     utf16.set_size(len);
@@ -916,7 +922,7 @@ llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
                                 utf8.size(), utf16.begin(), utf16.size());
 
     if (len == 0)
-      return llvm::windows_error(::GetLastError());
+      return windows_error(::GetLastError());
   }
 
   // Make utf16 null terminated.
@@ -934,7 +940,7 @@ llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
                                     0, NULL, NULL);
 
     if (len == 0)
-      return llvm::windows_error(::GetLastError());
+      return windows_error(::GetLastError());
 
     utf8.reserve(len);
     utf8.set_size(len);
@@ -944,7 +950,7 @@ llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
                                 utf8.size(), NULL, NULL);
 
     if (len == 0)
-      return llvm::windows_error(::GetLastError());
+      return windows_error(::GetLastError());
   }
 
   // Make utf8 null terminated.

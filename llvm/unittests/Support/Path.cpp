@@ -14,6 +14,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
+#ifdef LLVM_ON_WIN32
+#include <winerror.h>
+#endif
+
 using namespace llvm;
 using namespace llvm::sys;
 
@@ -393,7 +397,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
   EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
-            windows_error::path_not_found);
+            error_code(ERROR_PATH_NOT_FOUND, system_category()));
 #endif
 }
 
