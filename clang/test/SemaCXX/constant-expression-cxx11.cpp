@@ -860,6 +860,12 @@ static_assert(f(T(5)) == 5, "");
 constexpr bool b(int n) { return &n; }
 static_assert(b(0), "");
 
+struct NonLiteral {
+  NonLiteral();
+  int f();
+};
+constexpr int k = NonLiteral().f(); // expected-error {{constant expression}} expected-note {{non-literal type 'Temporaries::NonLiteral'}}
+
 }
 
 namespace Union {
