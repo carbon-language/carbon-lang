@@ -14,3 +14,22 @@ define void @lds_atomic_cmpxchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrs
   store i32 %result, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i64_offset:
+; SI: S_LOAD_DWORDX2 s{{\[}}[[LOSWAP:[0-9]+]]:[[HISWAP:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
+; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI: S_MOV_B64  s{{\[}}[[LOSCMP:[0-9]+]]:[[HISCMP:[0-9]+]]{{\]}}, 7
+; SI-DAG: V_MOV_B32_e32 v[[LOVCMP:[0-9]+]], s[[LOSCMP]]
+; SI-DAG: V_MOV_B32_e32 v[[HIVCMP:[0-9]+]], s[[HISCMP]]
+; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
+; SI-DAG: V_MOV_B32_e32 v[[LOSWAPV:[0-9]+]], s[[LOSWAP]]
+; SI-DAG: V_MOV_B32_e32 v[[HISWAPV:[0-9]+]], s[[HISWAP]]
+; SI: DS_CMPST_RTN_B64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVCMP]]:[[HIVCMP]]{{\]}}, v{{\[}}[[LOSWAPV]]:[[HISWAPV]]{{\]}}, 0x20, [M0]
+; SI: BUFFER_STORE_DWORDX2 [[RESULT]],
+; SI: S_ENDPGM
+define void @lds_atomic_cmpxchg_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %ptr, i64 %swap) nounwind {
+  %gep = getelementptr i64 addrspace(3)* %ptr, i32 4
+  %result = cmpxchg i64 addrspace(3)* %gep, i64 7, i64 %swap seq_cst monotonic
+  store i64 %result, i64 addrspace(1)* %out, align 8
+  ret void
+}

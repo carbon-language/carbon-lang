@@ -2282,6 +2282,20 @@ multiclass DSAtomicIncRetPat<DS inst, ValueType vt, PatFrag frag> {
   >;
 }
 
+multiclass DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> {
+  def : Pat <
+    (frag (add i32:$ptr, (i32 IMM16bit:$offset)), vt:$cmp, vt:$swap),
+    (inst (i1 0), $ptr, $cmp, $swap, (as_i16imm $offset))
+  >;
+
+  def : Pat <
+    (frag i32:$ptr, vt:$cmp, vt:$swap),
+    (inst 0, $ptr, $cmp, $swap, 0)
+  >;
+}
+
+
+// 32-bit atomics.
 defm : DSAtomicIncRetPat<DS_INC_RTN_U32, i32, atomic_load_add_local>;
 defm : DSAtomicIncRetPat<DS_DEC_RTN_U32, i32, atomic_load_sub_local>;
 
@@ -2296,20 +2310,24 @@ defm : DSAtomicRetPat<DS_MAX_RTN_I32, i32, atomic_load_max_local>;
 defm : DSAtomicRetPat<DS_MIN_RTN_U32, i32, atomic_load_umin_local>;
 defm : DSAtomicRetPat<DS_MAX_RTN_U32, i32, atomic_load_umax_local>;
 
-
-multiclass DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> {
-  def : Pat <
-    (frag (add i32:$ptr, (i32 IMM16bit:$offset)), vt:$cmp, vt:$swap),
-    (inst (i1 0), $ptr, $cmp, $swap, (as_i16imm $offset))
-  >;
-
-  def : Pat <
-    (frag i32:$ptr, vt:$cmp, vt:$swap),
-    (inst 0, $ptr, $cmp, $swap, 0)
-  >;
-}
-
 defm : DSAtomicCmpXChg<DS_CMPST_RTN_B32, i32, atomic_cmp_swap_32_local>;
+
+// 64-bit atomics.
+defm : DSAtomicIncRetPat<DS_INC_RTN_U64, i64, atomic_load_add_local>;
+defm : DSAtomicIncRetPat<DS_DEC_RTN_U64, i64, atomic_load_sub_local>;
+
+defm : DSAtomicRetPat<DS_WRXCHG_RTN_B64, i64, atomic_swap_local>;
+defm : DSAtomicRetPat<DS_ADD_RTN_U64, i64, atomic_load_add_local>;
+defm : DSAtomicRetPat<DS_SUB_RTN_U64, i64, atomic_load_sub_local>;
+defm : DSAtomicRetPat<DS_AND_RTN_B64, i64, atomic_load_and_local>;
+defm : DSAtomicRetPat<DS_OR_RTN_B64, i64, atomic_load_or_local>;
+defm : DSAtomicRetPat<DS_XOR_RTN_B64, i64, atomic_load_xor_local>;
+defm : DSAtomicRetPat<DS_MIN_RTN_I64, i64, atomic_load_min_local>;
+defm : DSAtomicRetPat<DS_MAX_RTN_I64, i64, atomic_load_max_local>;
+defm : DSAtomicRetPat<DS_MIN_RTN_U64, i64, atomic_load_umin_local>;
+defm : DSAtomicRetPat<DS_MAX_RTN_U64, i64, atomic_load_umax_local>;
+
+defm : DSAtomicCmpXChg<DS_CMPST_RTN_B64, i64, atomic_cmp_swap_64_local>;
 
 
 //===----------------------------------------------------------------------===//

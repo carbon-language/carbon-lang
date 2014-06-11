@@ -485,7 +485,7 @@ class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A 
 class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, u16imm:$offset),
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
   asm#" $vdst, $addr, $data0, $offset, [M0]",
   []> {
 
@@ -524,7 +524,7 @@ class DS_1A0D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
 class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1, u16imm:$offset),
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
   asm#" $vdst, $addr, $data0, $data1, $offset, [M0]",
   []> {
   let mayStore = 1;
@@ -535,7 +535,7 @@ class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
 class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1, u16imm:$offset),
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
   asm#" $addr, $data0, $data1, $offset, [M0]",
   []> {
   let mayStore = 1;
@@ -546,7 +546,7 @@ class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
 class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, u16imm:$offset),
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
   asm#" $addr, $data0, $offset, [M0]",
   []> {
 

@@ -265,6 +265,14 @@ def atomic_cmp_swap_32_local :
          AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }]>;
 
+def atomic_cmp_swap_64_local :
+  PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
+          (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
+  AtomicSDNode *AN = cast<AtomicSDNode>(N);
+  return AN->getMemoryVT() == MVT::i64 &&
+         AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+}]>;
+
 
 class Constants {
 int TWO_PI = 0x40c90fdb;
