@@ -20,6 +20,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -36,7 +37,8 @@ UnrollThreshold("unroll-threshold", cl::init(150), cl::Hidden,
 
 static cl::opt<unsigned>
 UnrollCount("unroll-count", cl::init(0), cl::Hidden,
-  cl::desc("Use this unroll count for all loops, for testing purposes"));
+  cl::desc("Use this unroll count for all loops including those with "
+           "unroll_count pragma values, for testing purposes"));
 
 static cl::opt<bool>
 UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
@@ -46,6 +48,13 @@ UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
 static cl::opt<bool>
 UnrollRuntime("unroll-runtime", cl::ZeroOrMore, cl::init(false), cl::Hidden,
   cl::desc("Unroll loops with run-time trip counts"));
+
+// Maximum allowed unroll count for a loop being fully unrolled
+// because of a pragma unroll(enable) statement (ie, metadata
+// "llvm.loopunroll.enable" is true).  This prevents unexpected
+// behavior like crashing when using this pragma on high trip count
+// loops.
+static const unsigned PragmaFullUnrollCountLimit = 1024;
 
 namespace {
   class LoopUnroll : public LoopPass {
@@ -151,6 +160,63 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
   return LoopSize;
 }
 
+// Returns the value associated with the given metadata node name (for
+// example, "llvm.loopunroll.count").  If no such named metadata node
+// exists, then nullptr is returned.
+static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
+                                                 StringRef Name) {
+  MDNode *LoopID = L->getLoopID();
+  if (!LoopID) return nullptr;
+
+  // First operand should refer to the loop id itself.
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+
+  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
+    const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+    if (!MD) continue;
+
+    const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (!S) continue;
+
+    if (Name.equals(S->getString())) {
+      assert(MD->getNumOperands() == 2 &&
+             "Unroll hint metadata should have two operands.");
+      return cast<ConstantInt>(MD->getOperand(1));
+    }
+  }
+  return nullptr;
+}
+
+// Returns true if the loop has an unroll(enable) pragma.
+static bool HasUnrollEnablePragma(const Loop *L) {
+  const ConstantInt *EnableValue =
+      GetUnrollMetadataValue(L, "llvm.loopunroll.enable");
+  return (EnableValue && EnableValue->getZExtValue());
+  return false;
+}
+
+// Returns true if the loop has an unroll(disable) pragma.
+static bool HasUnrollDisablePragma(const Loop *L) {
+  const ConstantInt *EnableValue =
+      GetUnrollMetadataValue(L, "llvm.loopunroll.enable");
+  return (EnableValue && !EnableValue->getZExtValue());
+  return false;
+}
+
+// Check for unroll_count(N) pragma.  If found, return true and set
+// Count to the integer parameter of the pragma.
+static bool HasUnrollCountPragma(const Loop *L, int &Count) {
+  const ConstantInt *CountValue =
+      GetUnrollMetadataValue(L, "llvm.loopunroll.count");
+  if (CountValue) {
+    Count = CountValue->getZExtValue();
+    assert(Count >= 1 && "Unroll count must be positive.");
+    return true;
+  }
+  return false;
+}
+
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (skipOptnoneFunction(L))
     return false;
@@ -202,12 +268,49 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
   }
 
-  bool Runtime = UserRuntime ? CurrentRuntime : UP.Runtime;
+  // User-specified count (either as a command-line option or
+  // constructor parameter) has highest precedence.
+  unsigned Count = UserCount ? CurrentCount : 0;
 
-  // Use a default unroll-count if the user doesn't specify a value
-  // and the trip count is a run-time value.  The default is different
-  // for run-time or compile-time trip count loops.
-  unsigned Count = UserCount ? CurrentCount : UP.Count;
+  // If there is no user-specified count, unroll pragmas have the next
+  // highest precendence.
+  if (Count == 0) {
+    if (HasUnrollDisablePragma(L)) {
+      // Loop has unroll(disable) pragma.
+      return false;
+    }
+
+    int PragmaCount;
+    if (HasUnrollCountPragma(L, PragmaCount)) {
+      if (PragmaCount == 1) {
+        // Nothing to do.
+        return false;
+      }
+      Count = PragmaCount;
+      Threshold = NoThreshold;
+    } else if (HasUnrollEnablePragma(L)) {
+      // Loop has unroll(enable) pragma without a unroll_count pragma,
+      // so unroll loop fully if possible.
+      if (TripCount == 0) {
+        DEBUG(dbgs() << "  Loop has unroll(enable) pragma but loop cannot be "
+                        "fully unrolled because trip count is unknown.\n");
+        // Continue with standard heuristic unrolling.
+      } else if (TripCount > PragmaFullUnrollCountLimit) {
+        DEBUG(dbgs() << "  Loop has unroll(enable) pragma but loop cannot be "
+                        "fully unrolled because loop count is greater than "
+                     << PragmaFullUnrollCountLimit);
+        // Continue with standard heuristic unrolling.
+      } else {
+        Count = TripCount;
+        Threshold = NoThreshold;
+      }
+    }
+  }
+
+  if (Count == 0)
+    Count = UP.Count;
+
+  bool Runtime = UserRuntime ? CurrentRuntime : UP.Runtime;
   if (Runtime && Count == 0 && TripCount == 0)
     Count = UnrollRuntimeCount;
 
