@@ -245,7 +245,7 @@ private:
         return false;
       if (it->size() == sym.size())
         continue;
-      StringRef suffix = it->substr(sym.size());
+      StringRef suffix = StringRef(*it).substr(sym.size());
       if (suffix.find_first_not_of("0123456789") != StringRef::npos)
         continue;
       res = *it;
