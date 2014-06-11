@@ -2168,11 +2168,20 @@ defm : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 defm : DSWritePat <DS_WRITE_B32, i32, local_store>;
 defm : DSWritePat <DS_WRITE_B64, i64, local_store>;
 
-def : Pat <(atomic_load_add_local i32:$ptr, i32:$val),
-           (DS_ADD_U32_RTN 0, $ptr, $val, 0)>;
+multiclass DSAtomicPat<DS inst, ValueType vt, PatFrag frag> {
+  def : Pat <
+    (frag (add i32:$ptr, (i32 IMM16bit:$offset)), vt:$value),
+    (inst (i1 0), $ptr, $value, (as_i16imm $offset))
+  >;
 
-def : Pat <(atomic_load_sub_local i32:$ptr, i32:$val),
-           (DS_SUB_U32_RTN 0, $ptr, $val, 0)>;
+  def : Pat <
+    (frag i32:$ptr, vt:$val),
+    (inst 0, $ptr, $val, 0)
+  >;
+}
+
+defm : DSAtomicPat<DS_ADD_U32_RTN, i32, atomic_load_add_local>;
+defm : DSAtomicPat<DS_SUB_U32_RTN, i32, atomic_load_sub_local>;
 
 //===----------------------------------------------------------------------===//
 // MUBUF Patterns
