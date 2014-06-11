@@ -539,9 +539,6 @@ TEST_F(FileSystemTest, Magic) {
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;
     file.close();
-    bool res = false;
-    ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
-    EXPECT_TRUE(res);
     EXPECT_EQ(i->magic, fs::identify_magic(magic));
     ASSERT_NO_ERROR(fs::remove(Twine(file_pathname)));
   }

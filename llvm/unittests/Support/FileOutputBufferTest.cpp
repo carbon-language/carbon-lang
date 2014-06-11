@@ -46,11 +46,7 @@ TEST(FileOutputBuffer, Test) {
     // Commit buffer.
     ASSERT_NO_ERROR(Buffer->commit());
   }
-  // Verify file exists and starts with special header.
-  bool MagicMatches = false;
-  ASSERT_NO_ERROR(fs::has_magic(Twine(File1), Twine("AABBCCDDEEFFGGHHIIJJ"),
-                                                                MagicMatches));
-  EXPECT_TRUE(MagicMatches);
+
   // Verify file is correct size.
   uint64_t File1Size;
   ASSERT_NO_ERROR(fs::file_size(Twine(File1), File1Size));
@@ -86,11 +82,7 @@ TEST(FileOutputBuffer, Test) {
     // Commit buffer, but size down to smaller size
     ASSERT_NO_ERROR(Buffer->commit(5000));
   }
-  // Verify file exists and starts with special header.
-  bool MagicMatches3 = false;
-  ASSERT_NO_ERROR(fs::has_magic(Twine(File3), Twine("AABBCCDDEEFFGGHHIIJJ"),
-                                                              MagicMatches3));
-  EXPECT_TRUE(MagicMatches3);
+
   // Verify file is correct size.
   uint64_t File3Size;
   ASSERT_NO_ERROR(fs::file_size(Twine(File3), File3Size));

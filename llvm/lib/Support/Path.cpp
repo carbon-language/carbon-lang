@@ -890,24 +890,6 @@ void directory_entry::replace_filename(const Twine &filename, file_status st) {
   Status = st;
 }
 
-error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
-  SmallString<32>  MagicStorage;
-  StringRef Magic = magic.toStringRef(MagicStorage);
-  SmallString<32> Buffer;
-
-  if (error_code ec = get_magic(path, Magic.size(), Buffer)) {
-    if (ec == std::errc::value_too_large) {
-      // Magic.size() > file_size(Path).
-      result = false;
-      return error_code();
-    }
-    return ec;
-  }
-
-  result = Magic == Buffer;
-  return error_code();
-}
-
 /// @brief Identify the magic in magic.
   file_magic identify_magic(StringRef Magic) {
   if (Magic.size() < 4)

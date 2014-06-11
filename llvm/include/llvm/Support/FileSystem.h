@@ -603,14 +603,6 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD, OpenFlags Flags,
 
 error_code openFileForRead(const Twine &Name, int &ResultFD);
 
-/// @brief Are \a path's first bytes \a magic?
-///
-/// @param path Input path.
-/// @param magic Byte sequence to compare \a path's first len(magic) bytes to.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_magic(const Twine &path, const Twine &magic, bool &result);
-
 /// @brief Get \a path's first \a len bytes.
 ///
 /// @param path Input path.
