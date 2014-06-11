@@ -1092,13 +1092,13 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
   if (isSub) {
     O << ", "
       << markup("<imm:")
-      << "#-" << -OffImm
+      << "#-" << formatImm(-OffImm)
       << markup(">");
   }
   else if (AlwaysPrintImm0 || OffImm > 0) {
     O << ", "
       << markup("<imm:")
-      << "#" << OffImm
+      << "#" << formatImm(OffImm)
       << markup(">");
   }
   O << "]" << markup(">");
