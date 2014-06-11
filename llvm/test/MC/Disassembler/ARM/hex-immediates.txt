@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 -hdis < %s | FileCheck %s
+# RUN: llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 --disassemble --print-imm-hex < %s | FileCheck %s
 # CHECK: ldr	r4, [pc, #0x20]
 0x08 0x4c
 # CHECK: sub	sp, #0x84

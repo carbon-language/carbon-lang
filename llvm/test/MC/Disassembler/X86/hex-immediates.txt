@@ -1,4 +1,4 @@
-# RUN: llvm-mc --hdis %s -triple=x86_64-apple-darwin9 2>&1 | FileCheck %s
+# RUN: llvm-mc --print-imm-hex --disassemble %s -triple=x86_64-apple-darwin9 2>&1 | FileCheck %s
 
 # CHECK: movabsq	$0x7fffffffffffffff, %rcx
 0x48 0xb9 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0x7f

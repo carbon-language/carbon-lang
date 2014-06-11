@@ -1,6 +1,6 @@
-# RUN: llvm-mc --hdis %s -triple=i686-linux-gnu-code16 | FileCheck --check-prefix=16 %s
-# RUN: llvm-mc --hdis %s -triple=i686-linux-gnu | FileCheck --check-prefix=32 %s
-# RUN: llvm-mc --hdis %s -triple=x86_64-linux-gnu | FileCheck --check-prefix=64 %s
+# RUN: llvm-mc --disassemble --print-imm-hex %s -triple=i686-linux-gnu-code16 | FileCheck --check-prefix=16 %s
+# RUN: llvm-mc --disassemble --print-imm-hex %s -triple=i686-linux-gnu | FileCheck --check-prefix=32 %s
+# RUN: llvm-mc --disassemble --print-imm-hex %s -triple=x86_64-linux-gnu | FileCheck --check-prefix=64 %s
 
 # 16: movb 0x5a5a, %al
 # 32: movb 0x5a5a5a5a, %al
