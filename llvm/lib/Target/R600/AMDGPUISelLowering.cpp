@@ -245,7 +245,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   if (!Subtarget->hasBCNT(64))
     setOperationAction(ISD::CTPOP, MVT::i64, Expand);
 
-  for (MVT VT : { MVT::i32, MVT::i64 }) {
+  MVT VTs[] = { MVT::i32, MVT::i64 };
+  for (MVT VT : VTs) {
     setOperationAction(ISD::CTTZ, VT, Expand);
     setOperationAction(ISD::CTLZ, VT, Expand);
   }
