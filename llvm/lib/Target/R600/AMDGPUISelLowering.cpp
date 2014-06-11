@@ -726,8 +726,7 @@ SDValue AMDGPUTargetLowering::LowerFrameIndex(SDValue Op,
   const AMDGPUFrameLowering *TFL =
    static_cast<const AMDGPUFrameLowering*>(getTargetMachine().getFrameLowering());
 
-  FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op);
-  assert(FIN);
+  FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(Op);
 
   unsigned FrameIndex = FIN->getIndex();
   unsigned Offset = TFL->getFrameIndexOffset(MF, FrameIndex);
@@ -921,7 +920,7 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue &Op,
 
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
                                                SelectionDAG &DAG) const {
-  StoreSDNode *Store = dyn_cast<StoreSDNode>(Op);
+  StoreSDNode *Store = cast<StoreSDNode>(Op);
   EVT MemVT = Store->getMemoryVT();
   unsigned MemBits = MemVT.getSizeInBits();
 
