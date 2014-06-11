@@ -125,7 +125,7 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
 class R600_1OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
                     InstrItinClass itin = AnyALU> :
     R600_1OP <inst, opName,
-              [(set R600_Reg32:$dst, (node R600_Reg32:$src0))]
+              [(set R600_Reg32:$dst, (node R600_Reg32:$src0))], itin
 >;
 
 // If you add or change the operands for R600_2OP instructions, you must
@@ -161,10 +161,10 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
 }
 
 class R600_2OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
-                       InstrItinClass itim = AnyALU> :
+                       InstrItinClass itin = AnyALU> :
     R600_2OP <inst, opName,
               [(set R600_Reg32:$dst, (node R600_Reg32:$src0,
-                                           R600_Reg32:$src1))]
+                                           R600_Reg32:$src1))], itin
 >;
 
 // If you add our change the operands for R600_3OP instructions, you must
