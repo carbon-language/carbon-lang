@@ -3374,20 +3374,16 @@ public:
   TypoCorrection getNextCorrection();
 
 private:
-  class SpecifierInfo {
-   public:
-    DeclContext* DeclCtx;
-    NestedNameSpecifier* NameSpecifier;
-    unsigned EditDistance;
-
-    SpecifierInfo(DeclContext *Ctx, NestedNameSpecifier *NNS, unsigned ED)
-        : DeclCtx(Ctx), NameSpecifier(NNS), EditDistance(ED) {}
-  };
-
-  typedef SmallVector<DeclContext*, 4> DeclContextList;
-  typedef SmallVector<SpecifierInfo, 16> SpecifierInfoList;
-
   class NamespaceSpecifierSet {
+    struct SpecifierInfo {
+      DeclContext* DeclCtx;
+      NestedNameSpecifier* NameSpecifier;
+      unsigned EditDistance;
+    };
+
+    typedef SmallVector<DeclContext*, 4> DeclContextList;
+    typedef SmallVector<SpecifierInfo, 16> SpecifierInfoList;
+
     ASTContext &Context;
     DeclContextList CurContextChain;
     std::string CurNameSpecifier;
@@ -3433,8 +3429,8 @@ private:
       // Add the global context as a NestedNameSpecifier
       Distances.insert(1);
       DistanceMap[1].push_back(
-          SpecifierInfo(cast<DeclContext>(Context.getTranslationUnitDecl()),
-                        NestedNameSpecifier::GlobalSpecifier(Context), 1));
+          {cast<DeclContext>(Context.getTranslationUnitDecl()),
+           NestedNameSpecifier::GlobalSpecifier(Context), 1});
     }
 
     /// \brief Add the DeclContext (a namespace or record) to the set, computing
@@ -3747,9 +3743,8 @@ void TypoCorrectionConsumer::performQualifiedLookups() {
   QualifiedResults.clear();
 }
 
-TypoCorrectionConsumer::DeclContextList
-TypoCorrectionConsumer::NamespaceSpecifierSet::buildContextChain(
-    DeclContext *Start) {
+auto TypoCorrectionConsumer::NamespaceSpecifierSet::buildContextChain(
+    DeclContext *Start) -> DeclContextList {
   assert(Start && "Building a context chain from a null context");
   DeclContextList Chain;
   for (DeclContext *DC = Start->getPrimaryContext(); DC != nullptr;
@@ -3862,7 +3857,7 @@ void TypoCorrectionConsumer::NamespaceSpecifierSet::addNameSpecifier(
 
   isSorted = false;
   Distances.insert(NumSpecifiers);
-  DistanceMap[NumSpecifiers].push_back(SpecifierInfo(Ctx, NNS, NumSpecifiers));
+  DistanceMap[NumSpecifiers].push_back({Ctx, NNS, NumSpecifiers});
 }
 
 /// \brief Perform name lookup for a possible result for typo correction.
