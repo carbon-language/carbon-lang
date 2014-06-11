@@ -24,7 +24,7 @@ public:
 const char *_obj2yaml_error_category::name() const { return "obj2yaml"; }
 
 std::string _obj2yaml_error_category::message(int ev) const {
-  switch (ev) {
+  switch (static_cast<obj2yaml_error>(ev)) {
   case obj2yaml_error::success:
     return "Success";
   case obj2yaml_error::file_not_found:
@@ -33,15 +33,14 @@ std::string _obj2yaml_error_category::message(int ev) const {
     return "Unrecognized file type.";
   case obj2yaml_error::unsupported_obj_file_format:
     return "Unsupported object file format.";
-  default:
-    llvm_unreachable("An enumerator of obj2yaml_error does not have a message "
-                     "defined.");
   }
+  llvm_unreachable("An enumerator of obj2yaml_error does not have a message "
+                   "defined.");
 }
 
 error_condition
 _obj2yaml_error_category::default_error_condition(int ev) const {
-  if (ev == obj2yaml_error::success)
+  if (static_cast<obj2yaml_error>(ev) == obj2yaml_error::success)
     return error_condition();
   return errc::invalid_argument;
 }
