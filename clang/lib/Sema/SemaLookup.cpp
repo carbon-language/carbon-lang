@@ -3395,35 +3395,14 @@ class NamespaceSpecifierSet {
   iterator end() { return Specifiers.end(); }
 };
 
-typedef SmallVector<TypoCorrection, 1> TypoResultList;
-typedef llvm::StringMap<TypoResultList, llvm::BumpPtrAllocator> TypoResultsMap;
-typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
-
 static const unsigned MaxTypoDistanceResultSets = 5;
 
 class TypoCorrectionConsumer : public VisibleDeclConsumer {
-  /// \brief The name written that is a typo in the source.
-  IdentifierInfo *Typo;
-
-  /// \brief The results found that have the smallest edit distance
-  /// found (so far) with the typo name.
-  ///
-  /// The pointer value being set to the current DeclContext indicates
-  /// whether there is a keyword with this name.
-  TypoEditDistanceMap CorrectionResults;
-
-  Sema &SemaRef;
-  Scope *S;
-  CXXScopeSpec *SS;
-  CorrectionCandidateCallback &CorrectionValidator;
-  DeclContext *MemberContext;
-  LookupResult Result;
-  NamespaceSpecifierSet Namespaces;
-  bool EnteringContext;
-  bool SearchNamespaces = false;
+  typedef SmallVector<TypoCorrection, 1> TypoResultList;
+  typedef llvm::StringMap<TypoResultList> TypoResultsMap;
+  typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
 
 public:
-  SmallVector<TypoCorrection, 16> QualifiedResults;
   explicit TypoCorrectionConsumer(Sema &SemaRef,
                                   const DeclarationNameInfo &TypoName,
                                   Sema::LookupNameKind LookupKind,
@@ -3447,12 +3426,6 @@ public:
   void addKeywordResult(StringRef Keyword);
   void addCorrection(TypoCorrection Correction);
 
-  typedef TypoResultsMap::iterator result_iterator;
-  typedef TypoEditDistanceMap::iterator distance_iterator;
-  distance_iterator begin() { return CorrectionResults.begin(); }
-  distance_iterator end()  { return CorrectionResults.end(); }
-  void erase(distance_iterator I) { CorrectionResults.erase(I); }
-  unsigned size() const { return CorrectionResults.size(); }
   bool empty() const { return CorrectionResults.empty(); }
 
   TypoResultList &operator[](StringRef Name) {
@@ -3467,10 +3440,6 @@ public:
     return Normalized ? TypoCorrection::NormalizeEditDistance(BestED) : BestED;
   }
 
-  TypoResultsMap &getBestResults() {
-    return CorrectionResults.begin()->second;
-  }
-
   void
   addNamespaces(const llvm::MapVector<NamespaceDecl *, bool> &KnownNamespaces);
 
@@ -3483,6 +3452,27 @@ private:
   bool resolveCorrection(TypoCorrection &Candidate);
 
   void performQualifiedLookups();
+
+  /// \brief The name written that is a typo in the source.
+  IdentifierInfo *Typo;
+
+  /// \brief The results found that have the smallest edit distance
+  /// found (so far) with the typo name.
+  ///
+  /// The pointer value being set to the current DeclContext indicates
+  /// whether there is a keyword with this name.
+  TypoEditDistanceMap CorrectionResults;
+
+  Sema &SemaRef;
+  Scope *S;
+  CXXScopeSpec *SS;
+  CorrectionCandidateCallback &CorrectionValidator;
+  DeclContext *MemberContext;
+  LookupResult Result;
+  NamespaceSpecifierSet Namespaces;
+  SmallVector<TypoCorrection, 2> QualifiedResults;
+  bool EnteringContext;
+  bool SearchNamespaces = false;
 };
 
 }
@@ -4343,7 +4333,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (!BestTC)
     return FailedCorrection(Typo, TypoName.getLoc(), RecordFailure);
 
-  TypoResultsMap &BestResults = Consumer.getBestResults();
   ED = BestTC.getEditDistance();
 
   if (!AllowOnlyNNSChanges && ED > 0 && TypoLen / ED < 3) {
@@ -4384,8 +4373,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     if (BestTC.getCorrection().getAsString() != "super") {
       if (SecondBestTC.getCorrection().getAsString() == "super")
         BestTC = SecondBestTC;
-      else if (BestResults["super"].front().isKeyword())
-        BestTC = BestResults["super"].front();
+      else if (Consumer["super"].front().isKeyword())
+        BestTC = Consumer["super"].front();
     }
     // Don't correct to a keyword that's the same as the typo; the keyword
     // wasn't actually in scope.
