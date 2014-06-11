@@ -2210,7 +2210,7 @@ defm : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 defm : DSWritePat <DS_WRITE_B32, i32, local_store>;
 defm : DSWritePat <DS_WRITE_B64, i64, local_store>;
 
-multiclass DSAtomicPat<DS inst, ValueType vt, PatFrag frag> {
+multiclass DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> {
   def : Pat <
     (frag (add i32:$ptr, (i32 IMM16bit:$offset)), vt:$value),
     (inst (i1 0), $ptr, $value, (as_i16imm $offset))
@@ -2222,8 +2222,17 @@ multiclass DSAtomicPat<DS inst, ValueType vt, PatFrag frag> {
   >;
 }
 
-defm : DSAtomicPat<DS_ADD_RTN_U32, i32, atomic_load_add_local>;
-defm : DSAtomicPat<DS_SUB_RTN_U32, i32, atomic_load_sub_local>;
+defm : DSAtomicRetPat<DS_WRXCHG_RTN_B32, i32, atomic_swap_local>;
+defm : DSAtomicRetPat<DS_ADD_RTN_U32, i32, atomic_load_add_local>;
+defm : DSAtomicRetPat<DS_SUB_RTN_U32, i32, atomic_load_sub_local>;
+defm : DSAtomicRetPat<DS_AND_RTN_B32, i32, atomic_load_and_local>;
+defm : DSAtomicRetPat<DS_OR_RTN_B32, i32, atomic_load_or_local>;
+defm : DSAtomicRetPat<DS_XOR_RTN_B32, i32, atomic_load_xor_local>;
+defm : DSAtomicRetPat<DS_MIN_RTN_I32, i32, atomic_load_min_local>;
+defm : DSAtomicRetPat<DS_MAX_RTN_I32, i32, atomic_load_max_local>;
+defm : DSAtomicRetPat<DS_MIN_RTN_U32, i32, atomic_load_umin_local>;
+defm : DSAtomicRetPat<DS_MAX_RTN_U32, i32, atomic_load_umax_local>;
+
 
 //===----------------------------------------------------------------------===//
 // MUBUF Patterns
