@@ -145,31 +145,31 @@ void Instruction::setFastMathFlags(FastMathFlags FMF) {
 
 /// Determine whether the unsafe-algebra flag is set.
 bool Instruction::hasUnsafeAlgebra() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasUnsafeAlgebra();
 }
 
 /// Determine whether the no-NaNs flag is set.
 bool Instruction::hasNoNaNs() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasNoNaNs();
 }
 
 /// Determine whether the no-infs flag is set.
 bool Instruction::hasNoInfs() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasNoInfs();
 }
 
 /// Determine whether the no-signed-zeros flag is set.
 bool Instruction::hasNoSignedZeros() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasNoSignedZeros();
 }
 
 /// Determine whether the allow-reciprocal flag is set.
 bool Instruction::hasAllowReciprocal() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasAllowReciprocal();
 }
 
@@ -177,7 +177,7 @@ bool Instruction::hasAllowReciprocal() const {
 /// operator which supports these flags. See LangRef.html for the meaning of
 /// these flats.
 FastMathFlags Instruction::getFastMathFlags() const {
-  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->getFastMathFlags();
 }
 
