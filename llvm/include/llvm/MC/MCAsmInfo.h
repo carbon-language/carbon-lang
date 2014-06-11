@@ -23,546 +23,477 @@
 #include <vector>
 
 namespace llvm {
-  class MCExpr;
-  class MCSection;
-  class MCStreamer;
-  class MCSymbol;
-  class MCContext;
+class MCExpr;
+class MCSection;
+class MCStreamer;
+class MCSymbol;
+class MCContext;
 
-  namespace ExceptionHandling {
-    enum ExceptionsType { None, DwarfCFI, SjLj, ARM, Win64 };
+namespace ExceptionHandling {
+enum ExceptionsType { None, DwarfCFI, SjLj, ARM, Win64 };
+}
+
+namespace LCOMM {
+enum LCOMMType { NoAlignment, ByteAlignment, Log2Alignment };
+}
+
+/// This class is intended to be used as a base class for asm
+/// properties and features specific to the target.
+class MCAsmInfo {
+protected:
+  //===------------------------------------------------------------------===//
+  // Properties to be set by the target writer, used to configure asm printer.
+  //
+
+  /// Pointer size in bytes.  Default is 4.
+  unsigned PointerSize;
+
+  /// Size of the stack slot reserved for callee-saved registers, in bytes.
+  /// Default is same as pointer size.
+  unsigned CalleeSaveStackSlotSize;
+
+  /// True if target is little endian.  Default is true.
+  bool IsLittleEndian;
+
+  /// True if target stack grow up.  Default is false.
+  bool StackGrowsUp;
+
+  /// True if this target has the MachO .subsections_via_symbols directive.
+  /// Default is false.
+  bool HasSubsectionsViaSymbols;
+
+  /// True if this is a MachO target that supports the macho-specific .zerofill
+  /// directive for emitting BSS Symbols.  Default is false.
+  bool HasMachoZeroFillDirective;
+
+  /// True if this is a MachO target that supports the macho-specific .tbss
+  /// directive for emitting thread local BSS Symbols.  Default is false.
+  bool HasMachoTBSSDirective;
+
+  /// True if the compiler should emit a ".reference .constructors_used" or
+  /// ".reference .destructors_used" directive after the a static ctor/dtor
+  /// list.  This directive is only emitted in Static relocation model.  Default
+  /// is false.
+  bool HasStaticCtorDtorReferenceInStaticMode;
+
+  /// True if the linker has a bug and requires that the debug_line section be
+  /// of a minimum size. In practice such a linker requires a non-empty line
+  /// sequence if a file is present.  Default to false.
+  bool LinkerRequiresNonEmptyDwarfLines;
+
+  /// This is the maximum possible length of an instruction, which is needed to
+  /// compute the size of an inline asm.  Defaults to 4.
+  unsigned MaxInstLength;
+
+  /// Every possible instruction length is a multiple of this value.  Factored
+  /// out in .debug_frame and .debug_line.  Defaults to 1.
+  unsigned MinInstAlignment;
+
+  /// The '$' token, when not referencing an identifier or constant, refers to
+  /// the current PC.  Defaults to false.
+  bool DollarIsPC;
+
+  /// This string, if specified, is used to separate instructions from each
+  /// other when on the same line.  Defaults to ';'
+  const char *SeparatorString;
+
+  /// This indicates the comment character used by the assembler.  Defaults to
+  /// "#"
+  const char *CommentString;
+
+  /// This is appended to emitted labels.  Defaults to ":"
+  const char *LabelSuffix;
+
+  /// This is appended to emitted labels.  Defaults to ":"
+  const char *DebugLabelSuffix;
+
+  /// This prefix is used for globals like constant pool entries that are
+  /// completely private to the .s file and should not have names in the .o
+  /// file.  Defaults to "L"
+  const char *PrivateGlobalPrefix;
+
+  /// This prefix is used for symbols that should be passed through the
+  /// assembler but be removed by the linker.  This is 'l' on Darwin, currently
+  /// used for some ObjC metadata.  The default of "" meast that for this system
+  /// a plain private symbol should be used.  Defaults to "".
+  const char *LinkerPrivateGlobalPrefix;
+
+  /// If these are nonempty, they contain a directive to emit before and after
+  /// an inline assembly statement.  Defaults to "#APP\n", "#NO_APP\n"
+  const char *InlineAsmStart;
+  const char *InlineAsmEnd;
+
+  /// These are assembly directives that tells the assembler to interpret the
+  /// following instructions differently.  Defaults to ".code16", ".code32",
+  /// ".code64".
+  const char *Code16Directive;
+  const char *Code32Directive;
+  const char *Code64Directive;
+
+  /// Which dialect of an assembler variant to use.  Defaults to 0
+  unsigned AssemblerDialect;
+
+  /// This is true if the assembler allows @ characters in symbol names.
+  /// Defaults to false.
+  bool AllowAtInName;
+
+  /// This is true if data region markers should be printed as
+  /// ".data_region/.end_data_region" directives. If false, use "$d/$a" labels
+  /// instead.
+  bool UseDataRegionDirectives;
+
+  //===--- Data Emission Directives -------------------------------------===//
+
+  /// This should be set to the directive used to get some number of zero bytes
+  /// emitted to the current section.  Common cases are "\t.zero\t" and
+  /// "\t.space\t".  If this is set to null, the Data*bitsDirective's will be
+  /// used to emit zero bytes.  Defaults to "\t.zero\t"
+  const char *ZeroDirective;
+
+  /// This directive allows emission of an ascii string with the standard C
+  /// escape characters embedded into it.  Defaults to "\t.ascii\t"
+  const char *AsciiDirective;
+
+  /// If not null, this allows for special handling of zero terminated strings
+  /// on this target.  This is commonly supported as ".asciz".  If a target
+  /// doesn't support this, it can be set to null.  Defaults to "\t.asciz\t"
+  const char *AscizDirective;
+
+  /// These directives are used to output some unit of integer data to the
+  /// current section.  If a data directive is set to null, smaller data
+  /// directives will be used to emit the large sizes.  Defaults to "\t.byte\t",
+  /// "\t.short\t", "\t.long\t", "\t.quad\t"
+  const char *Data8bitsDirective;
+  const char *Data16bitsDirective;
+  const char *Data32bitsDirective;
+  const char *Data64bitsDirective;
+
+  /// If non-null, a directive that is used to emit a word which should be
+  /// relocated as a 64-bit GP-relative offset, e.g. .gpdword on Mips.  Defaults
+  /// to NULL.
+  const char *GPRel64Directive;
+
+  /// If non-null, a directive that is used to emit a word which should be
+  /// relocated as a 32-bit GP-relative offset, e.g. .gpword on Mips or .gprel32
+  /// on Alpha.  Defaults to NULL.
+  const char *GPRel32Directive;
+
+  /// This is true if this target uses "Sun Style" syntax for section switching
+  /// ("#alloc,#write" etc) instead of the normal ELF syntax (,"a,w") in
+  /// .section directives.  Defaults to false.
+  bool SunStyleELFSectionSwitchSyntax;
+
+  /// This is true if this target uses ELF '.section' directive before the
+  /// '.bss' one. It's used for PPC/Linux which doesn't support the '.bss'
+  /// directive only.  Defaults to false.
+  bool UsesELFSectionDirectiveForBSS;
+
+  bool NeedsDwarfSectionOffsetDirective;
+
+  //===--- Alignment Information ----------------------------------------===//
+
+  /// If this is true (the default) then the asmprinter emits ".align N"
+  /// directives, where N is the number of bytes to align to.  Otherwise, it
+  /// emits ".align log2(N)", e.g. 3 to align to an 8 byte boundary.  Defaults
+  /// to true.
+  bool AlignmentIsInBytes;
+
+  /// If non-zero, this is used to fill the executable space created as the
+  /// result of a alignment directive.  Defaults to 0
+  unsigned TextAlignFillValue;
+
+  //===--- Global Variable Emission Directives --------------------------===//
+
+  /// This is the directive used to declare a global entity.  Defaults to NULL.
+  const char *GlobalDirective;
+
+  /// True if the assembler supports the .set directive.  Defaults to true.
+  bool HasSetDirective;
+
+  /// False if the assembler requires that we use
+  /// \code
+  ///   Lc = a - b
+  ///   .long Lc
+  /// \endcode
+  //
+  /// instead of
+  //
+  /// \code
+  ///   .long a - b
+  /// \endcode
+  ///
+  ///  Defaults to true.
+  bool HasAggressiveSymbolFolding;
+
+  /// True is .comm's and .lcomms optional alignment is to be specified in bytes
+  /// instead of log2(n).  Defaults to true.
+  bool COMMDirectiveAlignmentIsInBytes;
+
+  /// Describes if the .lcomm directive for the target supports an alignment
+  /// argument and how it is interpreted.  Defaults to NoAlignment.
+  LCOMM::LCOMMType LCOMMDirectiveAlignmentType;
+
+  /// True if the target has .type and .size directives, this is true for most
+  /// ELF targets.  Defaults to true.
+  bool HasDotTypeDotSizeDirective;
+
+  /// True if the target has a single parameter .file directive, this is true
+  /// for ELF targets.  Defaults to true.
+  bool HasSingleParameterDotFile;
+
+  /// True if the target has a .ident directive, this is true for ELF targets.
+  /// Defaults to false.
+  bool HasIdentDirective;
+
+  /// True if this target supports the MachO .no_dead_strip directive.  Defaults
+  /// to false.
+  bool HasNoDeadStrip;
+
+  /// This directive, if non-null, is used to declare a global as being a weak
+  /// undefined symbol.  Defaults to NULL.
+  const char *WeakRefDirective;
+
+  /// True if we have a directive to declare a global as being a weak defined
+  /// symbol.  Defaults to false.
+  bool HasWeakDefDirective;
+
+  /// True if we have a directive to declare a global as being a weak defined
+  /// symbol that can be hidden (unexported).  Defaults to false.
+  bool HasWeakDefCanBeHiddenDirective;
+
+  /// True if we have a .linkonce directive.  This is used on cygwin/mingw.
+  /// Defaults to false.
+  bool HasLinkOnceDirective;
+
+  /// This attribute, if not MCSA_Invalid, is used to declare a symbol as having
+  /// hidden visibility.  Defaults to MCSA_Hidden.
+  MCSymbolAttr HiddenVisibilityAttr;
+
+  /// This attribute, if not MCSA_Invalid, is used to declare an undefined
+  /// symbol as having hidden visibility. Defaults to MCSA_Hidden.
+  MCSymbolAttr HiddenDeclarationVisibilityAttr;
+
+  /// This attribute, if not MCSA_Invalid, is used to declare a symbol as having
+  /// protected visibility.  Defaults to MCSA_Protected
+  MCSymbolAttr ProtectedVisibilityAttr;
+
+  //===--- Dwarf Emission Directives -----------------------------------===//
+
+  /// True if target asm supports leb128 directives.  Defaults to false.
+  bool HasLEB128;
+
+  /// True if target supports emission of debugging information.  Defaults to
+  /// false.
+  bool SupportsDebugInformation;
+
+  /// True if target supports exception handling.  Defaults to None
+  ExceptionHandling::ExceptionsType ExceptionsType;
+
+  /// True if Dwarf2 output generally uses relocations for references to other
+  /// .debug_* sections.
+  bool DwarfUsesRelocationsAcrossSections;
+
+  /// True if DWARF FDE symbol reference relocations should be replaced by an
+  /// absolute difference.
+  bool DwarfFDESymbolsUseAbsDiff;
+
+  /// True if dwarf register numbers are printed instead of symbolic register
+  /// names in .cfi_* directives.  Defaults to false.
+  bool DwarfRegNumForCFI;
+
+  /// True if target uses parens to indicate the symbol variant instead of @.
+  /// For example, foo(plt) instead of foo@plt.  Defaults to false.
+  bool UseParensForSymbolVariant;
+
+  //===--- Prologue State ----------------------------------------------===//
+
+  std::vector<MCCFIInstruction> InitialFrameState;
+
+  //===--- Integrated Assembler State ----------------------------------===//
+
+  /// Should we use the integrated assembler?
+  /// The integrated assembler should be enabled by default (by the
+  /// constructors) when failing to parse a valid piece of assembly (inline
+  /// or otherwise) is considered a bug. It may then be overridden after
+  /// construction (see LLVMTargetMachine::initAsmInfo()).
+  bool UseIntegratedAssembler;
+
+  /// Compress DWARF debug sections. Defaults to false.
+  bool CompressDebugSections;
+
+public:
+  explicit MCAsmInfo();
+  virtual ~MCAsmInfo();
+
+  /// Get the pointer size in bytes.
+  unsigned getPointerSize() const { return PointerSize; }
+
+  /// Get the callee-saved register stack slot
+  /// size in bytes.
+  unsigned getCalleeSaveStackSlotSize() const {
+    return CalleeSaveStackSlotSize;
   }
 
-  namespace LCOMM {
-    enum LCOMMType { NoAlignment, ByteAlignment, Log2Alignment };
+  /// True if the target is little endian.
+  bool isLittleEndian() const { return IsLittleEndian; }
+
+  /// True if target stack grow up.
+  bool isStackGrowthDirectionUp() const { return StackGrowsUp; }
+
+  bool hasSubsectionsViaSymbols() const { return HasSubsectionsViaSymbols; }
+
+  // Data directive accessors.
+
+  const char *getData8bitsDirective() const { return Data8bitsDirective; }
+  const char *getData16bitsDirective() const { return Data16bitsDirective; }
+  const char *getData32bitsDirective() const { return Data32bitsDirective; }
+  const char *getData64bitsDirective() const { return Data64bitsDirective; }
+  const char *getGPRel64Directive() const { return GPRel64Directive; }
+  const char *getGPRel32Directive() const { return GPRel32Directive; }
+
+  /// Targets can implement this method to specify a section to switch to if the
+  /// translation unit doesn't have any trampolines that require an executable
+  /// stack.
+  virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const {
+    return nullptr;
   }
 
-  /// MCAsmInfo - This class is intended to be used as a base class for asm
-  /// properties and features specific to the target.
-  class MCAsmInfo {
-  protected:
-    //===------------------------------------------------------------------===//
-    // Properties to be set by the target writer, used to configure asm printer.
-    //
-
-    /// PointerSize - Pointer size in bytes.
-    ///               Default is 4.
-    unsigned PointerSize;
-
-    /// CalleeSaveStackSlotSize - Size of the stack slot reserved for
-    ///                           callee-saved registers, in bytes.
-    ///                           Default is same as pointer size.
-    unsigned CalleeSaveStackSlotSize;
-
-    /// IsLittleEndian - True if target is little endian.
-    ///                  Default is true.
-    bool IsLittleEndian;
-
-    /// StackGrowsUp - True if target stack grow up.
-    ///                Default is false.
-    bool StackGrowsUp;
-
-    /// HasSubsectionsViaSymbols - True if this target has the MachO
-    /// .subsections_via_symbols directive.
-    bool HasSubsectionsViaSymbols;           // Default is false.
-
-    /// HasMachoZeroFillDirective - True if this is a MachO target that supports
-    /// the macho-specific .zerofill directive for emitting BSS Symbols.
-    bool HasMachoZeroFillDirective;               // Default is false.
-
-    /// HasMachoTBSSDirective - True if this is a MachO target that supports
-    /// the macho-specific .tbss directive for emitting thread local BSS Symbols
-    bool HasMachoTBSSDirective;                 // Default is false.
-
-    /// HasStaticCtorDtorReferenceInStaticMode - True if the compiler should
-    /// emit a ".reference .constructors_used" or ".reference .destructors_used"
-    /// directive after the a static ctor/dtor list.  This directive is only
-    /// emitted in Static relocation model.
-    bool HasStaticCtorDtorReferenceInStaticMode;  // Default is false.
-
-    /// LinkerRequiresNonEmptyDwarfLines - True if the linker has a bug and
-    /// requires that the debug_line section be of a minimum size. In practice
-    /// such a linker requires a non-empty line sequence if a file is present.
-    bool LinkerRequiresNonEmptyDwarfLines; // Default to false.
-
-    /// MaxInstLength - This is the maximum possible length of an instruction,
-    /// which is needed to compute the size of an inline asm.
-    unsigned MaxInstLength;                  // Defaults to 4.
-
-    /// MinInstAlignment - Every possible instruction length is a multiple of
-    /// this value.  Factored out in .debug_frame and .debug_line.
-    unsigned MinInstAlignment;                  // Defaults to 1.
-
-    /// DollarIsPC - The '$' token, when not referencing an identifier or
-    /// constant, refers to the current PC.
-    bool DollarIsPC;                         // Defaults to false.
-
-    /// SeparatorString - This string, if specified, is used to separate
-    /// instructions from each other when on the same line.
-    const char *SeparatorString;             // Defaults to ';'
-
-    /// CommentString - This indicates the comment character used by the
-    /// assembler.
-    const char *CommentString;               // Defaults to "#"
-
-    /// LabelSuffix - This is appended to emitted labels.
-    const char *LabelSuffix;                 // Defaults to ":"
-
-    /// LabelSuffix - This is appended to emitted labels.
-    const char *DebugLabelSuffix;                 // Defaults to ":"
-
-    /// This prefix is used for globals like constant pool entries that are
-    /// completely private to the .s file and should not have names in the .o
-    /// file.
-    const char *PrivateGlobalPrefix;         // Defaults to "L"
-
-    /// This prefix is used for symbols that should be passed through the
-    /// assembler but be removed by the linker.  This is 'l' on Darwin,
-    /// currently used for some ObjC metadata.
-    /// The default of "" meast that for this system a plain private symbol
-    /// should be used.
-    const char *LinkerPrivateGlobalPrefix;    // Defaults to "".
-
-    /// InlineAsmStart/End - If these are nonempty, they contain a directive to
-    /// emit before and after an inline assembly statement.
-    const char *InlineAsmStart;              // Defaults to "#APP\n"
-    const char *InlineAsmEnd;                // Defaults to "#NO_APP\n"
-
-    /// Code16Directive, Code32Directive, Code64Directive - These are assembly
-    /// directives that tells the assembler to interpret the following
-    /// instructions differently.
-    const char *Code16Directive;             // Defaults to ".code16"
-    const char *Code32Directive;             // Defaults to ".code32"
-    const char *Code64Directive;             // Defaults to ".code64"
-
-    /// AssemblerDialect - Which dialect of an assembler variant to use.
-    unsigned AssemblerDialect;               // Defaults to 0
-
-    /// \brief This is true if the assembler allows @ characters in symbol
-    /// names. Defaults to false.
-    bool AllowAtInName;
-
-    /// UseDataRegionDirectives - This is true if data region markers should
-    /// be printed as ".data_region/.end_data_region" directives. If false,
-    /// use "$d/$a" labels instead.
-    bool UseDataRegionDirectives;
-
-    //===--- Data Emission Directives -------------------------------------===//
-
-    /// ZeroDirective - this should be set to the directive used to get some
-    /// number of zero bytes emitted to the current section.  Common cases are
-    /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
-    /// Data*bitsDirective's will be used to emit zero bytes.
-    const char *ZeroDirective;               // Defaults to "\t.zero\t"
-
-    /// AsciiDirective - This directive allows emission of an ascii string with
-    /// the standard C escape characters embedded into it.
-    const char *AsciiDirective;              // Defaults to "\t.ascii\t"
-
-    /// AscizDirective - If not null, this allows for special handling of
-    /// zero terminated strings on this target.  This is commonly supported as
-    /// ".asciz".  If a target doesn't support this, it can be set to null.
-    const char *AscizDirective;              // Defaults to "\t.asciz\t"
-
-    /// DataDirectives - These directives are used to output some unit of
-    /// integer data to the current section.  If a data directive is set to
-    /// null, smaller data directives will be used to emit the large sizes.
-    const char *Data8bitsDirective;          // Defaults to "\t.byte\t"
-    const char *Data16bitsDirective;         // Defaults to "\t.short\t"
-    const char *Data32bitsDirective;         // Defaults to "\t.long\t"
-    const char *Data64bitsDirective;         // Defaults to "\t.quad\t"
-
-    /// GPRel64Directive - if non-null, a directive that is used to emit a word
-    /// which should be relocated as a 64-bit GP-relative offset, e.g. .gpdword
-    /// on Mips.
-    const char *GPRel64Directive;            // Defaults to NULL.
-
-    /// GPRel32Directive - if non-null, a directive that is used to emit a word
-    /// which should be relocated as a 32-bit GP-relative offset, e.g. .gpword
-    /// on Mips or .gprel32 on Alpha.
-    const char *GPRel32Directive;            // Defaults to NULL.
-
-    /// SunStyleELFSectionSwitchSyntax - This is true if this target uses "Sun
-    /// Style" syntax for section switching ("#alloc,#write" etc) instead of the
-    /// normal ELF syntax (,"a,w") in .section directives.
-    bool SunStyleELFSectionSwitchSyntax;     // Defaults to false.
-
-    /// UsesELFSectionDirectiveForBSS - This is true if this target uses ELF
-    /// '.section' directive before the '.bss' one. It's used for PPC/Linux
-    /// which doesn't support the '.bss' directive only.
-    bool UsesELFSectionDirectiveForBSS;      // Defaults to false.
-
-    bool NeedsDwarfSectionOffsetDirective;
-
-    //===--- Alignment Information ----------------------------------------===//
-
-    /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
-    /// emits ".align N" directives, where N is the number of bytes to align to.
-    /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
-    /// boundary.
-    bool AlignmentIsInBytes;                 // Defaults to true
-
-    /// TextAlignFillValue - If non-zero, this is used to fill the executable
-    /// space created as the result of a alignment directive.
-    unsigned TextAlignFillValue;             // Defaults to 0
-
-    //===--- Global Variable Emission Directives --------------------------===//
-
-    /// GlobalDirective - This is the directive used to declare a global entity.
-    ///
-    const char *GlobalDirective;             // Defaults to NULL.
-
-    /// HasSetDirective - True if the assembler supports the .set directive.
-    bool HasSetDirective;                    // Defaults to true.
-
-    /// HasAggressiveSymbolFolding - False if the assembler requires that we use
-    /// Lc = a - b
-    /// .long Lc
-    /// instead of
-    /// .long a - b
-    bool HasAggressiveSymbolFolding;           // Defaults to true.
-
-    /// COMMDirectiveAlignmentIsInBytes - True is .comm's and .lcomms optional
-    /// alignment is to be specified in bytes instead of log2(n).
-    bool COMMDirectiveAlignmentIsInBytes;    // Defaults to true;
-
-    /// LCOMMDirectiveAlignment - Describes if the .lcomm directive for the
-    /// target supports an alignment argument and how it is interpreted.
-    LCOMM::LCOMMType LCOMMDirectiveAlignmentType; // Defaults to NoAlignment.
-
-    /// HasDotTypeDotSizeDirective - True if the target has .type and .size
-    /// directives, this is true for most ELF targets.
-    bool HasDotTypeDotSizeDirective;         // Defaults to true.
-
-    /// HasSingleParameterDotFile - True if the target has a single parameter
-    /// .file directive, this is true for ELF targets.
-    bool HasSingleParameterDotFile;          // Defaults to true.
-
-    /// hasIdentDirective - True if the target has a .ident directive, this is
-    /// true for ELF targets.
-    bool HasIdentDirective;                  // Defaults to false.
-
-    /// HasNoDeadStrip - True if this target supports the MachO .no_dead_strip
-    /// directive.
-    bool HasNoDeadStrip;                     // Defaults to false.
-
-    /// WeakRefDirective - This directive, if non-null, is used to declare a
-    /// global as being a weak undefined symbol.
-    const char *WeakRefDirective;            // Defaults to NULL.
-
-    /// True if we have a directive to declare a global as being a weak
-    /// defined symbol.
-    bool HasWeakDefDirective;                // Defaults to false.
-
-    /// True if we have a directive to declare a global as being a weak
-    /// defined symbol that can be hidden (unexported).
-    bool HasWeakDefCanBeHiddenDirective;     // Defaults to false.
-
-    /// True if we have a .linkonce directive.  This is used on cygwin/mingw.
-    bool HasLinkOnceDirective;               // Defaults to false.
-
-    /// HiddenVisibilityAttr - This attribute, if not MCSA_Invalid, is used to
-    /// declare a symbol as having hidden visibility.
-    MCSymbolAttr HiddenVisibilityAttr;       // Defaults to MCSA_Hidden.
-
-    /// HiddenDeclarationVisibilityAttr - This attribute, if not MCSA_Invalid,
-    /// is used to declare an undefined symbol as having hidden visibility.
-    MCSymbolAttr HiddenDeclarationVisibilityAttr;   // Defaults to MCSA_Hidden.
-
-
-    /// ProtectedVisibilityAttr - This attribute, if not MCSA_Invalid, is used
-    /// to declare a symbol as having protected visibility.
-    MCSymbolAttr ProtectedVisibilityAttr;    // Defaults to MCSA_Protected
-
-    //===--- Dwarf Emission Directives -----------------------------------===//
-
-    /// HasLEB128 - True if target asm supports leb128 directives.
-    bool HasLEB128;                          // Defaults to false.
-
-    /// SupportsDebugInformation - True if target supports emission of debugging
-    /// information.
-    bool SupportsDebugInformation;           // Defaults to false.
-
-    /// SupportsExceptionHandling - True if target supports exception handling.
-    ExceptionHandling::ExceptionsType ExceptionsType; // Defaults to None
-
-    /// DwarfUsesRelocationsAcrossSections - True if Dwarf2 output generally
-    /// uses relocations for references to other .debug_* sections.
-    bool DwarfUsesRelocationsAcrossSections;
-
-    /// DwarfFDESymbolsUseAbsDiff - true if DWARF FDE symbol reference
-    /// relocations should be replaced by an absolute difference.
-    bool DwarfFDESymbolsUseAbsDiff;
-
-    /// DwarfRegNumForCFI - True if dwarf register numbers are printed
-    /// instead of symbolic register names in .cfi_* directives.
-    bool DwarfRegNumForCFI;  // Defaults to false;
-
-    /// UseParensForSymbolVariant - True if target uses parens to indicate the
-    /// symbol variant instead of @. For example, foo(plt) instead of foo@plt.
-    bool UseParensForSymbolVariant; // Defaults to false;
-
-    //===--- Prologue State ----------------------------------------------===//
-
-    std::vector<MCCFIInstruction> InitialFrameState;
-
-    //===--- Integrated Assembler State ----------------------------------===//
-    /// Should we use the integrated assembler?
-    /// The integrated assembler should be enabled by default (by the
-    /// constructors) when failing to parse a valid piece of assembly (inline
-    /// or otherwise) is considered a bug. It may then be overridden after
-    /// construction (see LLVMTargetMachine::initAsmInfo()).
-    bool UseIntegratedAssembler;
-
-    /// Compress DWARF debug sections. Defaults to false.
-    bool CompressDebugSections;
-
-  public:
-    explicit MCAsmInfo();
-    virtual ~MCAsmInfo();
-
-    /// getPointerSize - Get the pointer size in bytes.
-    unsigned getPointerSize() const {
-      return PointerSize;
-    }
-
-    /// getCalleeSaveStackSlotSize - Get the callee-saved register stack slot
-    /// size in bytes.
-    unsigned getCalleeSaveStackSlotSize() const {
-      return CalleeSaveStackSlotSize;
-    }
-
-    /// isLittleEndian - True if the target is little endian.
-    bool isLittleEndian() const {
-      return IsLittleEndian;
-    }
-
-    /// isStackGrowthDirectionUp - True if target stack grow up.
-    bool isStackGrowthDirectionUp() const {
-      return StackGrowsUp;
-    }
-
-    bool hasSubsectionsViaSymbols() const { return HasSubsectionsViaSymbols; }
-
-    // Data directive accessors.
-    //
-    const char *getData8bitsDirective() const {
-      return Data8bitsDirective;
-    }
-    const char *getData16bitsDirective() const {
-      return Data16bitsDirective;
-    }
-    const char *getData32bitsDirective() const {
-      return Data32bitsDirective;
-    }
-    const char *getData64bitsDirective() const {
-      return Data64bitsDirective;
-    }
-    const char *getGPRel64Directive() const { return GPRel64Directive; }
-    const char *getGPRel32Directive() const { return GPRel32Directive; }
-
-    /// getNonexecutableStackSection - Targets can implement this method to
-    /// specify a section to switch to if the translation unit doesn't have any
-    /// trampolines that require an executable stack.
-    virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const{
-      return nullptr;
-    }
-
-    virtual const MCExpr *
-    getExprForPersonalitySymbol(const MCSymbol *Sym,
-                                unsigned Encoding,
-                                MCStreamer &Streamer) const;
-
-    virtual const MCExpr *
-    getExprForFDESymbol(const MCSymbol *Sym,
-                        unsigned Encoding,
-                        MCStreamer &Streamer) const;
-
-    bool usesSunStyleELFSectionSwitchSyntax() const {
-      return SunStyleELFSectionSwitchSyntax;
-    }
-
-    bool usesELFSectionDirectiveForBSS() const {
-      return UsesELFSectionDirectiveForBSS;
-    }
-
-    bool needsDwarfSectionOffsetDirective() const {
-      return NeedsDwarfSectionOffsetDirective;
-    }
-
-    // Accessors.
-    //
-    bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
-    bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
-    bool hasStaticCtorDtorReferenceInStaticMode() const {
-      return HasStaticCtorDtorReferenceInStaticMode;
-    }
-    bool getLinkerRequiresNonEmptyDwarfLines() const {
-      return LinkerRequiresNonEmptyDwarfLines;
-    }
-    unsigned getMaxInstLength() const {
-      return MaxInstLength;
-    }
-    unsigned getMinInstAlignment() const {
-      return MinInstAlignment;
-    }
-    bool getDollarIsPC() const {
-      return DollarIsPC;
-    }
-    const char *getSeparatorString() const {
-      return SeparatorString;
-    }
-
-    /// This indicates the column (zero-based) at which asm comments should be
-    /// printed.
-    unsigned getCommentColumn() const {
-      return 40;
-    }
-
-    const char *getCommentString() const {
-      return CommentString;
-    }
-    const char *getLabelSuffix() const {
-      return LabelSuffix;
-    }
-
-    const char *getDebugLabelSuffix() const {
-      return DebugLabelSuffix;
-    }
-    const char *getPrivateGlobalPrefix() const {
-      return PrivateGlobalPrefix;
-    }
-    bool hasLinkerPrivateGlobalPrefix() const {
-      return LinkerPrivateGlobalPrefix[0] != '\0';
-    }
-    const char *getLinkerPrivateGlobalPrefix() const {
-      if (hasLinkerPrivateGlobalPrefix())
-        return LinkerPrivateGlobalPrefix;
-      return getPrivateGlobalPrefix();
-    }
-    const char *getInlineAsmStart() const {
-      return InlineAsmStart;
-    }
-    const char *getInlineAsmEnd() const {
-      return InlineAsmEnd;
-    }
-    const char *getCode16Directive() const {
-      return Code16Directive;
-    }
-    const char *getCode32Directive() const {
-      return Code32Directive;
-    }
-    const char *getCode64Directive() const {
-      return Code64Directive;
-    }
-    unsigned getAssemblerDialect() const {
-      return AssemblerDialect;
-    }
-    bool doesAllowAtInName() const {
-      return AllowAtInName;
-    }
-    bool doesSupportDataRegionDirectives() const {
-      return UseDataRegionDirectives;
-    }
-    const char *getZeroDirective() const {
-      return ZeroDirective;
-    }
-    const char *getAsciiDirective() const {
-      return AsciiDirective;
-    }
-    const char *getAscizDirective() const {
-      return AscizDirective;
-    }
-    bool getAlignmentIsInBytes() const {
-      return AlignmentIsInBytes;
-    }
-    unsigned getTextAlignFillValue() const {
-      return TextAlignFillValue;
-    }
-    const char *getGlobalDirective() const {
-      return GlobalDirective;
-    }
-    bool hasSetDirective() const { return HasSetDirective; }
-    bool hasAggressiveSymbolFolding() const {
-      return HasAggressiveSymbolFolding;
-    }
-    bool getCOMMDirectiveAlignmentIsInBytes() const {
-      return COMMDirectiveAlignmentIsInBytes;
-    }
-    LCOMM::LCOMMType getLCOMMDirectiveAlignmentType() const {
-      return LCOMMDirectiveAlignmentType;
-    }
-    bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
-    bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
-    bool hasIdentDirective() const { return HasIdentDirective; }
-    bool hasNoDeadStrip() const { return HasNoDeadStrip; }
-    const char *getWeakRefDirective() const { return WeakRefDirective; }
-    bool hasWeakDefDirective() const { return HasWeakDefDirective; }
-    bool hasWeakDefCanBeHiddenDirective() const {
-      return HasWeakDefCanBeHiddenDirective;
-    }
-    bool hasLinkOnceDirective() const { return HasLinkOnceDirective; }
-
-    MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}
-    MCSymbolAttr getHiddenDeclarationVisibilityAttr() const {
-      return HiddenDeclarationVisibilityAttr;
-    }
-    MCSymbolAttr getProtectedVisibilityAttr() const {
-      return ProtectedVisibilityAttr;
-    }
-    bool hasLEB128() const {
-      return HasLEB128;
-    }
-    bool doesSupportDebugInformation() const {
-      return SupportsDebugInformation;
-    }
-    bool doesSupportExceptionHandling() const {
-      return ExceptionsType != ExceptionHandling::None;
-    }
-    ExceptionHandling::ExceptionsType getExceptionHandlingType() const {
-      return ExceptionsType;
-    }
-    bool isExceptionHandlingDwarf() const {
-      return
-        (ExceptionsType == ExceptionHandling::DwarfCFI ||
-         ExceptionsType == ExceptionHandling::ARM ||
-         ExceptionsType == ExceptionHandling::Win64);
-    }
-    bool doesDwarfUseRelocationsAcrossSections() const {
-      return DwarfUsesRelocationsAcrossSections;
-    }
-    bool doDwarfFDESymbolsUseAbsDiff() const {
-      return DwarfFDESymbolsUseAbsDiff;
-    }
-    bool useDwarfRegNumForCFI() const {
-      return DwarfRegNumForCFI;
-    }
-    bool useParensForSymbolVariant() const {
-      return UseParensForSymbolVariant;
-    }
-
-    void addInitialFrameState(const MCCFIInstruction &Inst) {
-      InitialFrameState.push_back(Inst);
-    }
-
-    const std::vector<MCCFIInstruction> &getInitialFrameState() const {
-      return InitialFrameState;
-    }
-
-    /// Return true if assembly (inline or otherwise) should be parsed.
-    bool useIntegratedAssembler() const { return UseIntegratedAssembler; }
-
-    /// Set whether assembly (inline or otherwise) should be parsed.
-    virtual void setUseIntegratedAssembler(bool Value) {
-      UseIntegratedAssembler = Value;
-    }
-
-    bool compressDebugSections() const { return CompressDebugSections; }
-
-    void setCompressDebugSections(bool CompressDebugSections) {
-      this->CompressDebugSections = CompressDebugSections;
-    }
-  };
+  virtual const MCExpr *getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                                    unsigned Encoding,
+                                                    MCStreamer &Streamer) const;
+
+  virtual const MCExpr *getExprForFDESymbol(const MCSymbol *Sym,
+                                            unsigned Encoding,
+                                            MCStreamer &Streamer) const;
+
+  bool usesSunStyleELFSectionSwitchSyntax() const {
+    return SunStyleELFSectionSwitchSyntax;
+  }
+
+  bool usesELFSectionDirectiveForBSS() const {
+    return UsesELFSectionDirectiveForBSS;
+  }
+
+  bool needsDwarfSectionOffsetDirective() const {
+    return NeedsDwarfSectionOffsetDirective;
+  }
+
+  // Accessors.
+
+  bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
+  bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
+  bool hasStaticCtorDtorReferenceInStaticMode() const {
+    return HasStaticCtorDtorReferenceInStaticMode;
+  }
+  bool getLinkerRequiresNonEmptyDwarfLines() const {
+    return LinkerRequiresNonEmptyDwarfLines;
+  }
+  unsigned getMaxInstLength() const { return MaxInstLength; }
+  unsigned getMinInstAlignment() const { return MinInstAlignment; }
+  bool getDollarIsPC() const { return DollarIsPC; }
+  const char *getSeparatorString() const { return SeparatorString; }
+
+  /// This indicates the column (zero-based) at which asm comments should be
+  /// printed.
+  unsigned getCommentColumn() const { return 40; }
+
+  const char *getCommentString() const { return CommentString; }
+  const char *getLabelSuffix() const { return LabelSuffix; }
+
+  const char *getDebugLabelSuffix() const { return DebugLabelSuffix; }
+  const char *getPrivateGlobalPrefix() const { return PrivateGlobalPrefix; }
+  bool hasLinkerPrivateGlobalPrefix() const {
+    return LinkerPrivateGlobalPrefix[0] != '\0';
+  }
+  const char *getLinkerPrivateGlobalPrefix() const {
+    if (hasLinkerPrivateGlobalPrefix())
+      return LinkerPrivateGlobalPrefix;
+    return getPrivateGlobalPrefix();
+  }
+  const char *getInlineAsmStart() const { return InlineAsmStart; }
+  const char *getInlineAsmEnd() const { return InlineAsmEnd; }
+  const char *getCode16Directive() const { return Code16Directive; }
+  const char *getCode32Directive() const { return Code32Directive; }
+  const char *getCode64Directive() const { return Code64Directive; }
+  unsigned getAssemblerDialect() const { return AssemblerDialect; }
+  bool doesAllowAtInName() const { return AllowAtInName; }
+  bool doesSupportDataRegionDirectives() const {
+    return UseDataRegionDirectives;
+  }
+  const char *getZeroDirective() const { return ZeroDirective; }
+  const char *getAsciiDirective() const { return AsciiDirective; }
+  const char *getAscizDirective() const { return AscizDirective; }
+  bool getAlignmentIsInBytes() const { return AlignmentIsInBytes; }
+  unsigned getTextAlignFillValue() const { return TextAlignFillValue; }
+  const char *getGlobalDirective() const { return GlobalDirective; }
+  bool hasSetDirective() const { return HasSetDirective; }
+  bool hasAggressiveSymbolFolding() const { return HasAggressiveSymbolFolding; }
+  bool getCOMMDirectiveAlignmentIsInBytes() const {
+    return COMMDirectiveAlignmentIsInBytes;
+  }
+  LCOMM::LCOMMType getLCOMMDirectiveAlignmentType() const {
+    return LCOMMDirectiveAlignmentType;
+  }
+  bool hasDotTypeDotSizeDirective() const { return HasDotTypeDotSizeDirective; }
+  bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
+  bool hasIdentDirective() const { return HasIdentDirective; }
+  bool hasNoDeadStrip() const { return HasNoDeadStrip; }
+  const char *getWeakRefDirective() const { return WeakRefDirective; }
+  bool hasWeakDefDirective() const { return HasWeakDefDirective; }
+  bool hasWeakDefCanBeHiddenDirective() const {
+    return HasWeakDefCanBeHiddenDirective;
+  }
+  bool hasLinkOnceDirective() const { return HasLinkOnceDirective; }
+
+  MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr; }
+  MCSymbolAttr getHiddenDeclarationVisibilityAttr() const {
+    return HiddenDeclarationVisibilityAttr;
+  }
+  MCSymbolAttr getProtectedVisibilityAttr() const {
+    return ProtectedVisibilityAttr;
+  }
+  bool hasLEB128() const { return HasLEB128; }
+  bool doesSupportDebugInformation() const { return SupportsDebugInformation; }
+  bool doesSupportExceptionHandling() const {
+    return ExceptionsType != ExceptionHandling::None;
+  }
+  ExceptionHandling::ExceptionsType getExceptionHandlingType() const {
+    return ExceptionsType;
+  }
+  bool isExceptionHandlingDwarf() const {
+    return (ExceptionsType == ExceptionHandling::DwarfCFI ||
+            ExceptionsType == ExceptionHandling::ARM ||
+            ExceptionsType == ExceptionHandling::Win64);
+  }
+  bool doesDwarfUseRelocationsAcrossSections() const {
+    return DwarfUsesRelocationsAcrossSections;
+  }
+  bool doDwarfFDESymbolsUseAbsDiff() const { return DwarfFDESymbolsUseAbsDiff; }
+  bool useDwarfRegNumForCFI() const { return DwarfRegNumForCFI; }
+  bool useParensForSymbolVariant() const { return UseParensForSymbolVariant; }
+
+  void addInitialFrameState(const MCCFIInstruction &Inst) {
+    InitialFrameState.push_back(Inst);
+  }
+
+  const std::vector<MCCFIInstruction> &getInitialFrameState() const {
+    return InitialFrameState;
+  }
+
+  /// Return true if assembly (inline or otherwise) should be parsed.
+  bool useIntegratedAssembler() const { return UseIntegratedAssembler; }
+
+  /// Set whether assembly (inline or otherwise) should be parsed.
+  virtual void setUseIntegratedAssembler(bool Value) {
+    UseIntegratedAssembler = Value;
+  }
+
+  bool compressDebugSections() const { return CompressDebugSections; }
+
+  void setCompressDebugSections(bool CompressDebugSections) {
+    this->CompressDebugSections = CompressDebugSections;
+  }
+};
 }
 
 #endif
