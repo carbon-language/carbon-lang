@@ -143,6 +143,7 @@ struct NonCopyable {
   NonCopyable() {}
   NonCopyable(NonCopyable &&) {}
   NonCopyable &operator=(NonCopyable &&) { return *this; }
+private:
   NonCopyable(const NonCopyable &) LLVM_DELETED_FUNCTION;
   NonCopyable &operator=(const NonCopyable &) LLVM_DELETED_FUNCTION;
 };
