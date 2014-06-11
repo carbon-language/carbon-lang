@@ -58,7 +58,12 @@ protected:
   AArch64FrameLowering FrameLowering;
   AArch64InstrInfo InstrInfo;
   AArch64SelectionDAGInfo TSInfo;
-  std::unique_ptr<AArch64TargetLowering> TLInfo;
+  AArch64TargetLowering TLInfo;
+private:
+  /// initializeSubtargetDependencies - Initializes using CPUString and the
+  /// passed in feature string so that we can use initializer lists for
+  /// subtarget initialization.
+  AArch64Subtarget &initializeSubtargetDependencies(StringRef FS);
 
 public:
   /// This constructor initializes the data members to match that
@@ -71,7 +76,7 @@ public:
     return &FrameLowering;
   }
   const AArch64TargetLowering *getTargetLowering() const {
-    return TLInfo.get();
+    return &TLInfo;
   }
   const AArch64InstrInfo *getInstrInfo() const { return &InstrInfo; }
   const DataLayout *getDataLayout() const { return &DL; }

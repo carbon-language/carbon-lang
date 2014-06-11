@@ -30,6 +30,17 @@ static cl::opt<bool>
 EnableEarlyIfConvert("aarch64-early-ifcvt", cl::desc("Enable the early if "
                      "converter pass"), cl::init(true), cl::Hidden);
 
+AArch64Subtarget &
+AArch64Subtarget::initializeSubtargetDependencies(StringRef FS) {
+  // Determine default and user-specified characteristics
+
+  if (CPUString.empty())
+    CPUString = "generic";
+
+  ParseSubtargetFeatures(CPUString, FS);
+  return *this;
+}
+
 AArch64Subtarget::AArch64Subtarget(const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS, TargetMachine &TM,
@@ -45,15 +56,8 @@ AArch64Subtarget::AArch64Subtarget(const std::string &TT,
              ? "e-m:o-i64:64-i128:128-n32:64-S128"
              : (LittleEndian ? "e-m:e-i64:64-i128:128-n32:64-S128"
                              : "E-m:e-i64:64-i128:128-n32:64-S128")),
-      FrameLowering(), InstrInfo(*this), TSInfo(&DL) {
-  // Determine default and user-specified characteristics
-
-  if (CPUString.empty())
-    CPUString = "generic";
-
-  ParseSubtargetFeatures(CPUString, FS);
-  TLInfo = make_unique<AArch64TargetLowering>(TM);
-}
+      FrameLowering(), InstrInfo(initializeSubtargetDependencies(FS)),
+      TSInfo(&DL), TLInfo(TM) {}
 
 /// ClassifyGlobalReference - Find the target operand flags that describe
 /// how a global value should be referenced for the current subtarget.
