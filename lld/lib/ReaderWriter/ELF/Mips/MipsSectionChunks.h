@@ -68,7 +68,7 @@ public:
         return AtomSection<ELFType>::appendAtom(atom);
       case R_MIPS_TLS_DTPMOD32:
         _hasNonLocal = true;
-        return AtomSection<ELFType>::appendAtom(atom);
+        break;
       }
     }
 
