@@ -67,10 +67,13 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
           .Case("vectorize_width", LoopHintAttr::VectorizeWidth)
           .Case("interleave", LoopHintAttr::Interleave)
           .Case("interleave_count", LoopHintAttr::InterleaveCount)
+          .Case("unroll", LoopHintAttr::Unroll)
+          .Case("unroll_count", LoopHintAttr::UnrollCount)
           .Default(LoopHintAttr::Vectorize);
 
   int ValueInt;
-  if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave) {
+  if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave ||
+      Option == LoopHintAttr::Unroll) {
     if (!ValueInfo) {
       S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword)
           << /*MissingKeyword=*/true << "";
@@ -87,7 +90,8 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
       return nullptr;
     }
   } else if (Option == LoopHintAttr::VectorizeWidth ||
-             Option == LoopHintAttr::InterleaveCount) {
+             Option == LoopHintAttr::InterleaveCount ||
+             Option == LoopHintAttr::UnrollCount) {
     // FIXME: We should support template parameters for the loop hint value.
     // See bug report #19610.
     llvm::APSInt ValueAPS;
@@ -111,9 +115,24 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
 
 static void
 CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
-  int PrevOptionValue[4] = {-1, -1, -1, -1};
-  int OptionId[4] = {LoopHintAttr::Vectorize, LoopHintAttr::VectorizeWidth,
-                     LoopHintAttr::Interleave, LoopHintAttr::InterleaveCount};
+  // There are 3 categories of loop hints: vectorize, interleave, and
+  // unroll. Each comes in two variants: an enable/disable form and a
+  // form which takes a numeric argument. For example:
+  // unroll(enable|disable) and unroll_count(N). The following array
+  // accumulate the hints encountered while iterating through the
+  // attributes to check for compatibility.
+  struct {
+    int EnableOptionId;
+    int NumericOptionId;
+    bool EnabledIsSet;
+    bool ValueIsSet;
+    bool Enabled;
+    int Value;
+  } Options[] = {
+    {LoopHintAttr::Vectorize, LoopHintAttr::VectorizeWidth},
+    {LoopHintAttr::Interleave, LoopHintAttr::InterleaveCount},
+    {LoopHintAttr::Unroll, LoopHintAttr::UnrollCount}
+  };
 
   for (const auto *I : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(I);
@@ -122,76 +141,64 @@ CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
     if (!LH)
       continue;
 
-    int State, Value;
     int Option = LH->getOption();
     int ValueInt = LH->getValue();
 
+    int Category;
     switch (Option) {
     case LoopHintAttr::Vectorize:
     case LoopHintAttr::VectorizeWidth:
-      State = 0;
-      Value = 1;
+      Category = 0;
       break;
     case LoopHintAttr::Interleave:
     case LoopHintAttr::InterleaveCount:
-      State = 2;
-      Value = 3;
+      Category = 1;
       break;
-    }
+    case LoopHintAttr::Unroll:
+    case LoopHintAttr::UnrollCount:
+      Category = 2;
+      break;
+    };
 
+    auto &CategoryState = Options[Category];
     SourceLocation ValueLoc = LH->getRange().getEnd();
-
-    // Compatibility testing is split into two cases.
-    // 1. if the current loop hint sets state (enable/disable) - check against
-    // previous state and value.
-    // 2. if the current loop hint sets a value - check against previous state
-    // and value.
-
-    if (Option == State) {
-      if (PrevOptionValue[State] != -1) {
-        // Cannot specify state twice.
-        int PrevValue = PrevOptionValue[State];
+    if (Option == LoopHintAttr::Vectorize ||
+        Option == LoopHintAttr::Interleave || Option == LoopHintAttr::Unroll) {
+      // Enable|disable hint.  For example, vectorize(enable).
+      if (CategoryState.EnabledIsSet) {
+        // Cannot specify enable/disable state twice.
         S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
             << /*Duplicate=*/true << LoopHintAttr::getOptionName(Option)
-            << LoopHintAttr::getValueName(PrevValue)
+            << LoopHintAttr::getValueName(CategoryState.Enabled)
             << LoopHintAttr::getOptionName(Option)
-            << LoopHintAttr::getValueName(Value);
+            << LoopHintAttr::getValueName(ValueInt);
       }
-
-      if (PrevOptionValue[Value] != -1) {
-        // Compare state with previous width/count.
-        int PrevOption = OptionId[Value];
-        int PrevValueInt = PrevOptionValue[Value];
-        if ((ValueInt == 0 && PrevValueInt > 1) ||
-            (ValueInt == 1 && PrevValueInt <= 1))
-          S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
-              << /*Duplicate=*/false << LoopHintAttr::getOptionName(PrevOption)
-              << PrevValueInt << LoopHintAttr::getOptionName(Option)
-              << LoopHintAttr::getValueName(ValueInt);
-      }
+      CategoryState.EnabledIsSet = true;
+      CategoryState.Enabled = ValueInt;
     } else {
-      if (PrevOptionValue[State] != -1) {
-        // Compare width/count value with previous state.
-        int PrevOption = OptionId[State];
-        int PrevValueInt = PrevOptionValue[State];
-        if ((ValueInt > 1 && PrevValueInt == 0) ||
-            (ValueInt <= 1 && PrevValueInt == 1))
-          S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
-              << /*Duplicate=*/false << LoopHintAttr::getOptionName(PrevOption)
-              << LoopHintAttr::getValueName(PrevValueInt)
-              << LoopHintAttr::getOptionName(Option) << ValueInt;
-      }
-
-      if (PrevOptionValue[Value] != -1) {
-        // Cannot specify a width/count twice.
-        int PrevValueInt = PrevOptionValue[Value];
+      // Numeric hint.  For example, unroll_count(8).
+      if (CategoryState.ValueIsSet) {
+        // Cannot specify numeric hint twice.
         S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
             << /*Duplicate=*/true << LoopHintAttr::getOptionName(Option)
-            << PrevValueInt << LoopHintAttr::getOptionName(Option) << ValueInt;
+            << CategoryState.Value << LoopHintAttr::getOptionName(Option)
+            << ValueInt;
       }
+      CategoryState.ValueIsSet = true;
+      CategoryState.Value = ValueInt;
     }
 
-    PrevOptionValue[Option] = ValueInt;
+    if (CategoryState.EnabledIsSet && !CategoryState.Enabled &&
+        CategoryState.ValueIsSet) {
+      // Disable hints are not compatible with numeric hints of the
+      // same category.
+      S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
+          << /*Duplicate=*/false
+          << LoopHintAttr::getOptionName(CategoryState.EnableOptionId)
+          << LoopHintAttr::getValueName(CategoryState.Enabled)
+          << LoopHintAttr::getOptionName(CategoryState.NumericOptionId)
+          << CategoryState.Value;
+    }
   }
 }
 

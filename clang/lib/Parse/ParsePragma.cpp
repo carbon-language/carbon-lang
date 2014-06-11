@@ -1641,8 +1641,10 @@ void PragmaOptimizeHandler::HandlePragma(Preprocessor &PP,
 ///  loop-hint:
 ///    'vectorize' '(' loop-hint-keyword ')'
 ///    'interleave' '(' loop-hint-keyword ')'
+///    'unroll' '(' loop-hint-keyword ')'
 ///    'vectorize_width' '(' loop-hint-value ')'
 ///    'interleave_count' '(' loop-hint-value ')'
+///    'unroll_count' '(' loop-hint-value ')'
 ///
 ///  loop-hint-keyword:
 ///    'enable'
@@ -1661,6 +1663,13 @@ void PragmaOptimizeHandler::HandlePragma(Preprocessor &PP,
 /// possible and profitable, and 0 is invalid. The loop vectorizer currently
 /// only works on inner loops.
 ///
+/// The unroll and unroll_count directives control the concatenation
+/// unroller. Specifying unroll(enable) instructs llvm to try to
+/// unroll the loop completely, and unroll(disable) disables unrolling
+/// for the loop. Specifying unroll_count(_value_) instructs llvm to
+/// try to unroll the loop the number of times indicated by the value.
+/// If unroll(enable) and unroll_count are both specified only
+/// unroll_count takes effect.
 void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
                                          PragmaIntroducerKind Introducer,
                                          Token &Tok) {
@@ -1679,9 +1688,15 @@ void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
     Token Option = Tok;
     IdentifierInfo *OptionInfo = Tok.getIdentifierInfo();
 
-    if (!OptionInfo->isStr("vectorize") && !OptionInfo->isStr("interleave") &&
-        !OptionInfo->isStr("vectorize_width") &&
-        !OptionInfo->isStr("interleave_count")) {
+    bool OptionValid = llvm::StringSwitch<bool>(OptionInfo->getName())
+        .Case("vectorize", true)
+        .Case("interleave", true)
+        .Case("unroll", true)
+        .Case("vectorize_width", true)
+        .Case("interleave_count", true)
+        .Case("unroll_count", true)
+        .Default(false);
+    if (!OptionValid) {
       PP.Diag(Tok.getLocation(), diag::err_pragma_loop_invalid_option)
           << /*MissingOption=*/false << OptionInfo;
       return;

@@ -550,6 +550,12 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
     case LoopHintAttr::InterleaveCount:
       MetadataName = "llvm.vectorizer.unroll";
       break;
+    case LoopHintAttr::Unroll:
+      MetadataName = "llvm.loopunroll.enable";
+      break;
+    case LoopHintAttr::UnrollCount:
+      MetadataName = "llvm.loopunroll.count";
+      break;
     }
 
     llvm::Value *Value;
@@ -569,6 +575,14 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       // Fallthrough.
     case LoopHintAttr::VectorizeWidth:
     case LoopHintAttr::InterleaveCount:
+      Name = llvm::MDString::get(Context, MetadataName);
+      Value = llvm::ConstantInt::get(Int32Ty, ValueInt);
+      break;
+    case LoopHintAttr::Unroll:
+      Name = llvm::MDString::get(Context, MetadataName);
+      Value = (ValueInt == 0) ? Builder.getFalse() : Builder.getTrue();
+      break;
+    case LoopHintAttr::UnrollCount:
       Name = llvm::MDString::get(Context, MetadataName);
       Value = llvm::ConstantInt::get(Int32Ty, ValueInt);
       break;

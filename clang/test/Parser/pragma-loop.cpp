@@ -8,23 +8,26 @@ void test(int *List, int Length) {
 
 #pragma clang loop vectorize(enable)
 #pragma clang loop interleave(enable)
+#pragma clang loop unroll(enable)
   while (i + 1 < Length) {
     List[i] = i;
   }
 
 #pragma clang loop vectorize_width(4)
 #pragma clang loop interleave_count(8)
+#pragma clang loop unroll_count(16)
   while (i < Length) {
     List[i] = i;
   }
 
 #pragma clang loop vectorize(disable)
 #pragma clang loop interleave(disable)
+#pragma clang loop unroll(disable)
   while (i - 1 < Length) {
     List[i] = i;
   }
 
-#pragma clang loop vectorize_width(4) interleave_count(8)
+#pragma clang loop vectorize_width(4) interleave_count(8) unroll_count(16)
   while (i - 2 < Length) {
     List[i] = i;
   }
@@ -35,19 +38,22 @@ void test(int *List, int Length) {
   }
 
   int VList[Length];
-#pragma clang loop vectorize(disable) interleave(disable)
+#pragma clang loop vectorize(disable) interleave(disable) unroll(disable)
   for (int j : VList) {
     VList[j] = List[j];
   }
 
 /* expected-error {{expected '('}} */ #pragma clang loop vectorize
 /* expected-error {{expected '('}} */ #pragma clang loop interleave
+/* expected-error {{expected '('}} */ #pragma clang loop unroll
 
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize(enable
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave(enable
+/* expected-error {{expected ')'}} */ #pragma clang loop unroll(enable
 
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize_width(4
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave_count(4
+/* expected-error {{expected ')'}} */ #pragma clang loop unroll_count(4
 
 /* expected-error {{missing option}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
@@ -61,24 +67,28 @@ void test(int *List, int Length) {
 
 /* expected-error {{invalid value 0; expected a positive integer value}} */ #pragma clang loop vectorize_width(0)
 /* expected-error {{invalid value 0; expected a positive integer value}} */ #pragma clang loop interleave_count(0)
+/* expected-error {{invalid value 0; expected a positive integer value}} */ #pragma clang loop unroll_count(0)
   while (i-5 < Length) {
     List[i] = i;
   }
 
 /* expected-error {{invalid value -1294967296; expected a positive integer value}} */ #pragma clang loop vectorize_width(3000000000)
 /* expected-error {{invalid value -1294967296; expected a positive integer value}} */ #pragma clang loop interleave_count(3000000000)
+/* expected-error {{invalid value -1294967296; expected a positive integer value}} */ #pragma clang loop unroll_count(3000000000)
   while (i-6 < Length) {
     List[i] = i;
   }
 
 /* expected-error {{missing value; expected a positive integer value}} */ #pragma clang loop vectorize_width(badvalue)
 /* expected-error {{missing value; expected a positive integer value}} */ #pragma clang loop interleave_count(badvalue)
+/* expected-error {{missing value; expected a positive integer value}} */ #pragma clang loop unroll_count(badvalue)
   while (i-6 < Length) {
     List[i] = i;
   }
 
 /* expected-error {{invalid keyword 'badidentifier'; expected 'enable' or 'disable'}} */ #pragma clang loop vectorize(badidentifier)
 /* expected-error {{invalid keyword 'badidentifier'; expected 'enable' or 'disable'}} */ #pragma clang loop interleave(badidentifier)
+/* expected-error {{invalid keyword 'badidentifier'; expected 'enable' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
   while (i-7 < Length) {
     List[i] = i;
   }
@@ -100,6 +110,8 @@ void test(int *List, int Length) {
 #pragma clang loop vectorize(disable)
 /* expected-error {{incompatible directives 'interleave(disable)' and 'interleave_count(4)'}} */ #pragma clang loop interleave_count(4)
 #pragma clang loop interleave(disable)
+/* expected-error {{incompatible directives 'unroll(disable)' and 'unroll_count(4)'}} */ #pragma clang loop unroll_count(4)
+#pragma clang loop unroll(disable)
   while (i-8 < Length) {
     List[i] = i;
   }
@@ -108,14 +120,18 @@ void test(int *List, int Length) {
 #pragma clang loop vectorize(disable)
 /* expected-error {{duplicate directives 'interleave(disable)' and 'interleave(enable)'}} */ #pragma clang loop interleave(enable)
 #pragma clang loop interleave(disable)
+/* expected-error {{duplicate directives 'unroll(disable)' and 'unroll(enable)'}} */ #pragma clang loop unroll(enable)
+#pragma clang loop unroll(disable)
   while (i-9 < Length) {
     List[i] = i;
   }
 
-/* expected-error {{incompatible directives 'vectorize_width(4)' and 'vectorize(disable)'}} */ #pragma clang loop vectorize(disable)
+/* expected-error {{incompatible directives 'vectorize(disable)' and 'vectorize_width(4)'}} */ #pragma clang loop vectorize(disable)
 #pragma clang loop vectorize_width(4)
-/* expected-error {{incompatible directives 'interleave_count(4)' and 'interleave(disable)'}} */ #pragma clang loop interleave(disable)
+/* expected-error {{incompatible directives 'interleave(disable)' and 'interleave_count(4)'}} */ #pragma clang loop interleave(disable)
 #pragma clang loop interleave_count(4)
+/* expected-error {{incompatible directives 'unroll(disable)' and 'unroll_count(4)'}} */ #pragma clang loop unroll(disable)
+#pragma clang loop unroll_count(4)
   while (i-10 < Length) {
     List[i] = i;
   }
@@ -124,6 +140,8 @@ void test(int *List, int Length) {
 #pragma clang loop vectorize_width(4)
 /* expected-error {{duplicate directives 'interleave_count(4)' and 'interleave_count(8)'}} */ #pragma clang loop interleave_count(8)
 #pragma clang loop interleave_count(4)
+/* expected-error {{duplicate directives 'unroll_count(4)' and 'unroll_count(8)'}} */ #pragma clang loop unroll_count(8)
+#pragma clang loop unroll_count(4)
   while (i-11 < Length) {
     List[i] = i;
   }
