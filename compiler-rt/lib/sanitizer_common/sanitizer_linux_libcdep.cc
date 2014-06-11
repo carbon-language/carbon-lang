@@ -507,7 +507,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     if (phdr->p_type == PT_LOAD) {
       uptr cur_beg = info->dlpi_addr + phdr->p_vaddr;
       uptr cur_end = cur_beg + phdr->p_memsz;
-      cur_module->addAddressRange(cur_beg, cur_end);
+      bool executable = phdr->p_flags & PF_X;
+      cur_module->addAddressRange(cur_beg, cur_end, executable);
     }
   }
   return 0;

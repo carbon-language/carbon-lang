@@ -218,10 +218,11 @@ LoadedModule::LoadedModule(const char *module_name, uptr base_address) {
   n_ranges_ = 0;
 }
 
-void LoadedModule::addAddressRange(uptr beg, uptr end) {
+void LoadedModule::addAddressRange(uptr beg, uptr end, bool executable) {
   CHECK_LT(n_ranges_, kMaxNumberOfAddressRanges);
   ranges_[n_ranges_].beg = beg;
   ranges_[n_ranges_].end = end;
+  exec_[n_ranges_] = executable;
   n_ranges_++;
 }
 

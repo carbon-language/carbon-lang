@@ -244,12 +244,12 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
                                             uptr max_modules,
                                             string_predicate_t filter) {
   Reset();
-  uptr cur_beg, cur_end, cur_offset;
+  uptr cur_beg, cur_end, cur_offset, prot;
   InternalScopedBuffer<char> module_name(kMaxPathLength);
   uptr n_modules = 0;
   for (uptr i = 0; n_modules < max_modules &&
                        Next(&cur_beg, &cur_end, &cur_offset, module_name.data(),
-                            module_name.size(), 0);
+                            module_name.size(), &prot);
        i++) {
     const char *cur_name = module_name.data();
     if (cur_name[0] == '\0')
@@ -270,7 +270,7 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
     //   first entry.
     uptr base_address = (i ? cur_beg : 0) - cur_offset;
     LoadedModule *cur_module = new(mem) LoadedModule(cur_name, base_address);
-    cur_module->addAddressRange(cur_beg, cur_end);
+    cur_module->addAddressRange(cur_beg, cur_end, prot & kProtectionExecute);
     n_modules++;
   }
   return n_modules;

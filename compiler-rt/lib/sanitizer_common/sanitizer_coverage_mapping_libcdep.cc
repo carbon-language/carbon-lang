@@ -82,12 +82,14 @@ void CovUpdateMapping(uptr caller_pc) {
   for (int i = 0; i < n_modules; ++i) {
     char *module_name = StripModuleName(modules[i].full_name());
     for (unsigned j = 0; j < modules[i].n_ranges(); ++j) {
-      uptr start = modules[i].address_range_start(j);
-      uptr end = modules[i].address_range_end(j);
-      uptr base = modules[i].base_address();
-      text.append("%zx %zx %zx %s\n", start, end, base, module_name);
-      if (caller_pc && caller_pc >= start && caller_pc < end)
-        cached_mapping.SetModuleRange(start, end);
+      if (modules[i].address_range_executable(j)) {
+        uptr start = modules[i].address_range_start(j);
+        uptr end = modules[i].address_range_end(j);
+        uptr base = modules[i].base_address();
+        text.append("%zx %zx %zx %s\n", start, end, base, module_name);
+        if (caller_pc && caller_pc >= start && caller_pc < end)
+          cached_mapping.SetModuleRange(start, end);
+      }
     }
     InternalFree(module_name);
   }
