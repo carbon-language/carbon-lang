@@ -2,6 +2,7 @@
 
 // CHECK: @a = internal thread_local global
 // CHECK: @_tlv_atexit({{.*}}@_ZN1AD1Ev
+// CHECK: define weak hidden {{.*}} @_ZTW1a
 
 struct A {
   ~A();

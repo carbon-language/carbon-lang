@@ -1575,11 +1575,21 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
 /// Get the appropriate linkage for the wrapper function. This is essentially
 /// the weak form of the variable's linkage; every translation unit which wneeds
 /// the wrapper emits a copy, and we want the linker to merge them.
-static llvm::GlobalValue::LinkageTypes getThreadLocalWrapperLinkage(
-    llvm::GlobalValue::LinkageTypes VarLinkage) {
+static llvm::GlobalValue::LinkageTypes
+getThreadLocalWrapperLinkage(const VarDecl *VD, CodeGen::CodeGenModule &CGM) {
+  llvm::GlobalValue::LinkageTypes VarLinkage =
+      CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false);
+
   // For internal linkage variables, we don't need an external or weak wrapper.
   if (llvm::GlobalValue::isLocalLinkage(VarLinkage))
     return VarLinkage;
+
+  // All accesses to the thread_local variable go through the thread wrapper.
+  // However, this means that we cannot allow the thread wrapper to get inlined
+  // into any functions.
+  if (VD->getTLSKind() == VarDecl::TLS_Dynamic &&
+      CGM.getTarget().getTriple().isMacOSX())
+    return llvm::GlobalValue::WeakAnyLinkage;
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
@@ -1602,10 +1612,9 @@ ItaniumCXXABI::getOrCreateThreadLocalWrapper(const VarDecl *VD,
     RetTy = RetTy->getPointerElementType();
 
   llvm::FunctionType *FnTy = llvm::FunctionType::get(RetTy, false);
-  llvm::Function *Wrapper = llvm::Function::Create(
-      FnTy, getThreadLocalWrapperLinkage(
-                CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false)),
-      WrapperName.str(), &CGM.getModule());
+  llvm::Function *Wrapper =
+      llvm::Function::Create(FnTy, getThreadLocalWrapperLinkage(VD, CGM),
+                             WrapperName.str(), &CGM.getModule());
   // Always resolve references to the wrapper at link time.
   if (!Wrapper->hasLocalLinkage())
     Wrapper->setVisibility(llvm::GlobalValue::HiddenVisibility);
