@@ -714,6 +714,12 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 //  - The Apple specific version allows for unlimited fds in the fd_sets by
 //    setting the _DARWIN_UNLIMITED_SELECT define prior to including the
 //    required header files.
+// CONS:
+//  - on non-Apple platforms, only supports file descriptors up to FD_SETSIZE.
+//     This implementation  will assert if it runs into that hard limit to let
+//     users know that another ConnectionFileDescriptor::BytesAvailable() should
+//     be used or a new version of ConnectionFileDescriptor::BytesAvailable()
+//     should be written for the system that is running into the limitations.
 
 #if defined(__APPLE__)
 #define FD_SET_DATA(fds) fds.data()
