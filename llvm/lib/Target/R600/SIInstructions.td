@@ -2476,7 +2476,7 @@ def : MTBUF_StoreResource <v2i32, 2, TBUFFER_STORE_FORMAT_XY>;
 def : MTBUF_StoreResource <v4i32, 3, TBUFFER_STORE_FORMAT_XYZ>;
 def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 
-let Predicates = [isCI] in {
+let SubtargetPredicate = isCI in {
 
 // Sea island new arithmetic instructinos
 let neverHasSideEffects = 1 in {
@@ -2523,7 +2523,7 @@ def V_MAD_I64_I32 : VOP3_64 <0x00000177, "V_MAD_I64_I32", []>;
 // BUFFER_LOAD_DWORDX3
 // BUFFER_STORE_DWORDX3
 
-} // End Predicates = [isCI]
+} // End iSCI
 
 
 /********** ====================== **********/
