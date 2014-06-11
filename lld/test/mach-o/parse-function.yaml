@@ -1,4 +1,5 @@
-# RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t  | FileCheck %s
+# RUN: lld -flavor darwin -arch x86_64 -r %s -o %t  
+# RUN: lld -flavor darwin -arch x86_64 -r %t -print_atoms -o %t2 | FileCheck %s
 #
 # Test parsing of mach-o functions.
 #

@@ -113,8 +113,8 @@ private:
   typedef llvm::StringMap<DylibInfo> DylibPathToInfo;
 
   SectionInfo *sectionForAtom(const DefinedAtom*);
-  SectionInfo *makeRelocatableSection(DefinedAtom::ContentType type);
-  SectionInfo *makeFinalSection(DefinedAtom::ContentType type);
+  SectionInfo *getRelocatableSection(DefinedAtom::ContentType type);
+  SectionInfo *getFinalSection(DefinedAtom::ContentType type);
   void         appendAtom(SectionInfo *sect, const DefinedAtom *atom);
   SegmentInfo *segmentForName(StringRef segName);
   void         layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr);
@@ -160,7 +160,7 @@ private:
 };
 
 
-SectionInfo *Util::makeRelocatableSection(DefinedAtom::ContentType type) {
+SectionInfo *Util::getRelocatableSection(DefinedAtom::ContentType type) {
   StringRef segmentName;
   StringRef sectionName;
   SectionType sectionType;
@@ -178,8 +178,11 @@ SectionInfo *Util::makeRelocatableSection(DefinedAtom::ContentType type) {
     }
   }
   // Otherwise allocate new SectionInfo object.
-  return new (_allocator) SectionInfo(segmentName, sectionName, sectionType, 
-                                      sectionAttrs);
+  SectionInfo *sect = new (_allocator) SectionInfo(segmentName, sectionName, 
+                                                   sectionType, sectionAttrs);
+  _sectionInfos.push_back(sect);
+  _sectionMap[type] = sect;
+  return sect;
 }
 
 #define ENTRY(seg, sect, type, atomType) \
@@ -220,7 +223,7 @@ const MachOFinalSectionFromAtomType sectsToAtomType[] = {
 #undef ENTRY
 
 
-SectionInfo *Util::makeFinalSection(DefinedAtom::ContentType atomType) {
+SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
   for (const MachOFinalSectionFromAtomType *p = sectsToAtomType ;
                                  p->atomType != DefinedAtom::typeUnknown; ++p) {
     if (p->atomType != atomType)
@@ -243,8 +246,13 @@ SectionInfo *Util::makeFinalSection(DefinedAtom::ContentType atomType) {
       }
     }
     // Otherwise allocate new SectionInfo object.
-    return new (_allocator) SectionInfo(p->segmentName, p->sectionName, 
-                                        p->sectionType, sectionAttrs);
+    SectionInfo *sect = new (_allocator) SectionInfo(p->segmentName, 
+                                                     p->sectionName, 
+                                                     p->sectionType, 
+                                                     sectionAttrs);
+    _sectionInfos.push_back(sect);
+    _sectionMap[atomType] = sect;
+    return sect;
   }
   llvm_unreachable("content type not yet supported");
 }
@@ -259,11 +267,7 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
     if ( pos != _sectionMap.end() )
       return pos->second;
     bool rMode = (_context.outputFileType() == llvm::MachO::MH_OBJECT);
-    SectionInfo *si = rMode ? makeRelocatableSection(type) 
-                            : makeFinalSection(type);
-    _sectionInfos.push_back(si);
-    _sectionMap[type] = si;
-    return si;
+    return rMode ? getRelocatableSection(type) : getFinalSection(type);
   } else {
     // This atom needs to be in a custom section.
     StringRef customName = atom->customSectionName();
@@ -619,7 +623,12 @@ bool Util::AtomSorter::operator()(const AtomAndIndex &left,
 
 
 bool Util::belongsInGlobalSymbolsSection(const DefinedAtom* atom) {
-  return (atom->scope() == Atom::scopeGlobal);
+  // ScopeLinkageUnit symbols are in globals area of symbol table
+  // in object files, but in locals area for final linked images. 
+  if (_context.outputFileType() == llvm::MachO::MH_OBJECT)
+    return (atom->scope() != Atom::scopeTranslationUnit);
+  else
+    return (atom->scope() == Atom::scopeGlobal);
 }
 
 void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
