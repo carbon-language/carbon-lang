@@ -10,10 +10,10 @@
 #include "Atoms.h"
 #include "ReaderImportHeader.h"
 
+#include "lld/Core/Alias.h"
 #include "lld/Core/File.h"
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-#include "lld/ReaderWriter/Alias.h"
 #include "lld/ReaderWriter/Reader.h"
 
 #include "llvm/ADT/ArrayRef.h"

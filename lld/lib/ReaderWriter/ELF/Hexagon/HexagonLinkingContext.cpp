@@ -14,7 +14,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"

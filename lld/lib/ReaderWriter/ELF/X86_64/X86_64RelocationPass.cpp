@@ -21,7 +21,7 @@
 
 #include "X86_64RelocationPass.h"
 
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 
 #include "llvm/ADT/DenseMap.h"
 

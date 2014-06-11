@@ -13,11 +13,11 @@
 #include "llvm/ADT/DenseMap.h"
 
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/Reference.h"
 #include "lld/Core/Pass.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Reference.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/Simple.h"
 
 #include "ReferenceKinds.h"
 #include "StubAtoms.hpp"

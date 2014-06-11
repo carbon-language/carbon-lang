@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/Simple.h - Simple implementations of Atom and File ===//
+//===- lld/Core/Simple.h - Simple implementations of Atom and File --------===//
 //
 //                             The LLVM Linker
 //
@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_SIMPLE_H
-#define LLD_READER_WRITER_SIMPLE_H
+#ifndef LLD_CORE_SIMPLE_H
+#define LLD_CORE_SIMPLE_H
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
@@ -21,6 +21,7 @@
 #include "lld/Core/UndefinedAtom.h"
 
 namespace lld {
+
 class SimpleFile : public MutableFile {
 public:
   SimpleFile(StringRef path) : MutableFile(path) {}
@@ -197,6 +198,7 @@ private:
   const File &_file;
   StringRef _name;
 };
+
 } // end namespace lld
 
 #endif

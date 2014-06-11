@@ -16,7 +16,7 @@
 
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/Resolver.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 
 using namespace lld;
 

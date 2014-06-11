@@ -10,7 +10,7 @@
 #ifndef LLD_READER_WRITER_MACHO_ATOMS_H
 #define LLD_READER_WRITER_MACHO_ATOMS_H
 
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 
 namespace lld {
 namespace mach_o {

@@ -13,11 +13,11 @@
 #include "llvm/Support/MachO.h"
 
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/Reference.h"
 #include "lld/Core/LinkingContext.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Reference.h"
+#include "lld/Core/Simple.h"
+#include "lld/Core/UndefinedAtom.h"
 
 namespace lld {
 namespace mach_o {

@@ -11,7 +11,7 @@
 #define LLD_READER_WRITER_PE_COFF_ATOMS_H
 
 #include "lld/Core/File.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 

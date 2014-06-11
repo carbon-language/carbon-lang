@@ -7,17 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Simple.h"
-#include "lld/ReaderWriter/Writer.h"
-#include "lld/ReaderWriter/YamlContext.h"
-
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
+#include "lld/Core/Simple.h"
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Writer.h"
+#include "lld/ReaderWriter/YamlContext.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"

@@ -23,7 +23,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 #include "llvm/Support/COFF.h"
 
 #include <algorithm>

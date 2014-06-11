@@ -12,7 +12,7 @@
 
 #include "Atoms.h"
 
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 
 namespace lld {
 namespace mach_o {

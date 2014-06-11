@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lld/Core/Alias.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Resolver.h"
-#include "lld/ReaderWriter/Alias.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/Triple.h"
 

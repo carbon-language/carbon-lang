@@ -16,12 +16,12 @@
 #include "SetSubsystemPass.h"
 
 #include "lld/Core/PassManager.h"
+#include "lld/Core/Simple.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Allocator.h"

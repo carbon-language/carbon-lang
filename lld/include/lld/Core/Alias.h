@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/Alias.h - Alias atoms -----------------------------===//
+//===- lld/Core/Alias.h - Alias atoms -------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -12,11 +12,11 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ALIAS_H
-#define LLD_READER_WRITER_ALIAS_H
+#ifndef LLD_CORE_ALIAS_H
+#define LLD_CORE_ALIAS_H
 
 #include "lld/Core/LLVM.h"
-#include "lld/ReaderWriter/Simple.h"
+#include "lld/Core/Simple.h"
 #include "llvm/ADT/Optional.h"
 
 #include <string>
