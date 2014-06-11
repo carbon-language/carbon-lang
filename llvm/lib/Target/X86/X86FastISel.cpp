@@ -1653,6 +1653,58 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::frameaddress: {
+    Type *RetTy = I.getCalledFunction()->getReturnType();
+
+    MVT VT;
+    if (!isTypeLegal(RetTy, VT))
+      return false;
+
+    unsigned Opc;
+    const TargetRegisterClass *RC = nullptr;
+
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Invalid result type for frameaddress.");
+    case MVT::i32: Opc = X86::MOV32rm; RC = &X86::GR32RegClass; break;
+    case MVT::i64: Opc = X86::MOV64rm; RC = &X86::GR64RegClass; break;
+    }
+
+    // This needs to be set before we call getFrameRegister, otherwise we get
+    // the wrong frame register.
+    MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
+    MFI->setFrameAddressIsTaken(true);
+
+    const X86RegisterInfo *RegInfo =
+      static_cast<const X86RegisterInfo*>(TM.getRegisterInfo());
+    unsigned FrameReg = RegInfo->getFrameRegister(*(FuncInfo.MF));
+    assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
+            (FrameReg == X86::EBP && VT == MVT::i32)) &&
+           "Invalid Frame Register!");
+
+    // Always make a copy of the frame register to to a vreg first, so that we
+    // never directly reference the frame register (the TwoAddressInstruction-
+    // Pass doesn't like that).
+    unsigned SrcReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), SrcReg).addReg(FrameReg);
+
+    // Now recursively load from the frame address.
+    // movq (%rbp), %rax
+    // movq (%rax), %rax
+    // movq (%rax), %rax
+    // ...
+    unsigned DestReg;
+    unsigned Depth = cast<ConstantInt>(I.getOperand(0))->getZExtValue();
+    while (Depth--) {
+      DestReg = createResultReg(RC);
+      addDirectMem(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                           TII.get(Opc), DestReg), SrcReg);
+      SrcReg = DestReg;
+    }
+
+    UpdateValueMap(&I, SrcReg);
+    return true;
+  }
   case Intrinsic::memcpy: {
     const MemCpyInst &MCI = cast<MemCpyInst>(I);
     // Don't handle volatile or variable length memcpys.
