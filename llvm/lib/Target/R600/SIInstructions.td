@@ -713,8 +713,8 @@ defm V_CMPX_CLASS_F64 : VOPC_64 <0x000000b8, "V_CMPX_CLASS_F64">;
 // DS Instructions
 //===----------------------------------------------------------------------===//
 
-def DS_ADD_U32_RTN : DS_1A1D_RET <0x20, "DS_ADD_U32_RTN", VReg_32>;
-def DS_SUB_U32_RTN : DS_1A1D_RET <0x21, "DS_SUB_U32_RTN", VReg_32>;
+def DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "DS_ADD_RTN_U32", VReg_32>;
+def DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "DS_SUB_RTN_U32", VReg_32>;
 def DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "DS_WRITE_B32", VReg_32>;
 def DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "DS_WRITE_B8", VReg_32>;
 def DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "DS_WRITE_B16", VReg_32>;
@@ -2180,8 +2180,8 @@ multiclass DSAtomicPat<DS inst, ValueType vt, PatFrag frag> {
   >;
 }
 
-defm : DSAtomicPat<DS_ADD_U32_RTN, i32, atomic_load_add_local>;
-defm : DSAtomicPat<DS_SUB_U32_RTN, i32, atomic_load_sub_local>;
+defm : DSAtomicPat<DS_ADD_RTN_U32, i32, atomic_load_add_local>;
+defm : DSAtomicPat<DS_SUB_RTN_U32, i32, atomic_load_sub_local>;
 
 //===----------------------------------------------------------------------===//
 // MUBUF Patterns
