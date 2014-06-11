@@ -82,6 +82,22 @@
   <p>Send discussions to the
   (<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">clang mailing list</a>).</p>
 
+  <!--=====================================================================-->
+  <h2>Frequently asked questions</h2>
+  <!--=====================================================================-->
+
+  <p>Q: Why are the destructors for the standard exception classes defined in libc++abi?
+     They're just empty, can't they be defined inline?</p>
+  <p>A: The destructors for them live in libc++abi because they are "key" functions.
+     The Itanium ABI describes a "key" function as the first virtual declared.
+     And wherever the key function is defined, that is where the <code>type_info</code> gets defined.
+     And in libc++ types are the same type if and only if they have the same <code>type_info</code>
+     (as in there must be only one type info per type in the entire application).
+     And on OS X, libstdc++ and libc++ share these exception types.
+     So to be able to throw in one dylib and catch in another (a <code>std::exception</code> for example), 
+     there must be only one <code>std::exception type_info</code> in the entire app.
+     That typeinfo gets laid down beside <code>~exception()</code> in libc++abi (for both libstdc++ and libc++).</p>
+     <p>--Howard Hinnant</p>
 
 </div>
 </body>
