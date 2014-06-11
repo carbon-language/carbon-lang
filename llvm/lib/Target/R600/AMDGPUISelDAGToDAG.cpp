@@ -256,6 +256,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     };
     return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, MVT::i64, Args);
   }
+  case ISD::SCALAR_TO_VECTOR:
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
     const AMDGPURegisterInfo *TRI =
@@ -264,7 +265,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
                    static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
     EVT VT = N->getValueType(0);
     unsigned NumVectorElts = VT.getVectorNumElements();
-    assert(VT.getVectorElementType().bitsEq(MVT::i32));
+    EVT EltVT = VT.getVectorElementType();
+    assert(EltVT.bitsEq(MVT::i32));
     if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
       bool UseVReg = true;
       for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
@@ -313,8 +315,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     SDValue RegClass = CurDAG->getTargetConstant(RegClassID, MVT::i32);
 
     if (NumVectorElts == 1) {
-      return CurDAG->SelectNodeTo(N, AMDGPU::COPY_TO_REGCLASS,
-                                  VT.getVectorElementType(),
+      return CurDAG->SelectNodeTo(N, AMDGPU::COPY_TO_REGCLASS, EltVT,
                                   N->getOperand(0), RegClass);
     }
 
@@ -323,11 +324,12 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     // 16 = Max Num Vector Elements
     // 2 = 2 REG_SEQUENCE operands per element (value, subreg index)
     // 1 = Vector Register Class
-    SmallVector<SDValue, 16 * 2 + 1> RegSeqArgs(N->getNumOperands() * 2 + 1);
+    SmallVector<SDValue, 16 * 2 + 1> RegSeqArgs(NumVectorElts * 2 + 1);
 
     RegSeqArgs[0] = CurDAG->getTargetConstant(RegClassID, MVT::i32);
     bool IsRegSeq = true;
-    for (unsigned i = 0; i < N->getNumOperands(); i++) {
+    unsigned NOps = N->getNumOperands();
+    for (unsigned i = 0; i < NOps; i++) {
       // XXX: Why is this here?
       if (dyn_cast<RegisterSDNode>(N->getOperand(i))) {
         IsRegSeq = false;
@@ -337,6 +339,20 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       RegSeqArgs[1 + (2 * i) + 1] =
               CurDAG->getTargetConstant(TRI->getSubRegFromChannel(i), MVT::i32);
     }
+
+    if (NOps != NumVectorElts) {
+      // Fill in the missing undef elements if this was a scalar_to_vector.
+      assert(Opc == ISD::SCALAR_TO_VECTOR && NOps < NumVectorElts);
+
+      MachineSDNode *ImpDef = CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                     SDLoc(N), EltVT);
+      for (unsigned i = NOps; i < NumVectorElts; ++i) {
+        RegSeqArgs[1 + (2 * i)] = SDValue(ImpDef, 0);
+        RegSeqArgs[1 + (2 * i) + 1] =
+          CurDAG->getTargetConstant(TRI->getSubRegFromChannel(i), MVT::i32);
+      }
+    }
+
     if (!IsRegSeq)
       break;
     return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, N->getVTList(),
