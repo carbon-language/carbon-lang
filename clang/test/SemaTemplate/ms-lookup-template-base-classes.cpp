@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-compatibility -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -verify %s
 
 
 template <class T>
@@ -64,7 +64,7 @@ template<class T>
 class B : public A<T> {
 public:
   void f() {
-    var = 3;
+    var = 3; // expected-warning {{use of undeclared identifier 'var'; unqualified lookup into dependent bases of class template 'B' is a Microsoft extension}}
   }
 };
 
@@ -160,7 +160,7 @@ template <class T>
 class A : public T {
 public:
   void f(int hWnd) {
-    m_hWnd = 1;
+    m_hWnd = 1; // expected-warning {{use of undeclared identifier 'm_hWnd'; unqualified lookup into dependent bases of class template 'A' is a Microsoft extension}}
   }
 };
 
@@ -204,18 +204,20 @@ struct A {
   static int sa;
 };
 template <typename T> struct B : T {
-  int     foo() { return a; }
-  int    *bar() { return &a; }
+  int     foo() { return a; }           // expected-warning {{lookup into dependent bases}}
+  int    *bar() { return &a; }          // expected-warning {{lookup into dependent bases}}
   int     baz() { return T::a; }
   int T::*qux() { return &T::a; }
   static int T::*stuff() { return &T::a; }
   static int stuff1() { return T::sa; }
   static int *stuff2() { return &T::sa; }
+  static int stuff3() { return sa; }    // expected-warning {{lookup into dependent bases}}
+  static int *stuff4() { return &sa; }  // expected-warning {{lookup into dependent bases}}
 };
 
 template <typename T> struct C : T {
-  int     foo() { return b; }      // expected-error {{no member named 'b' in 'PR16014::C<PR16014::A>'}}
-  int    *bar() { return &b; }     // expected-error {{no member named 'b' in 'PR16014::C<PR16014::A>'}}
+  int     foo() { return b; }      // expected-error {{no member named 'b' in 'PR16014::C<PR16014::A>'}} expected-warning {{lookup into dependent bases}}
+  int    *bar() { return &b; }     // expected-error {{no member named 'b' in 'PR16014::C<PR16014::A>'}} expected-warning {{lookup into dependent bases}}
   int     baz() { return T::b; }   // expected-error {{no member named 'b' in 'PR16014::A'}}
   int T::*qux() { return &T::b; }  // expected-error {{no member named 'b' in 'PR16014::A'}}
   int T::*fuz() { return &U::a; }  // expected-error {{use of undeclared identifier 'U'}}
@@ -258,4 +260,18 @@ template struct A<C>; // No error!  B is a base of A<C>, and qux is available.
 struct D { };
 template struct A<D>; // expected-note {{in instantiation of member function 'PR19233::A<PR19233::D>::baz' requested here}}
 
+}
+
+namespace nonmethod_missing_this {
+template <typename T> struct Base { int y = 42; };
+template <typename T> struct Derived : Base<T> {
+  int x = y; // expected-warning {{lookup into dependent bases}}
+  auto foo(int j) -> decltype(y * j) { // expected-warning {{lookup into dependent bases}}
+    return y * j; // expected-warning {{lookup into dependent bases}}
+  }
+  int bar() {
+    return [&] { return y; }(); // expected-warning {{lookup into dependent bases}}
+  }
+};
+template struct Derived<int>;
 }

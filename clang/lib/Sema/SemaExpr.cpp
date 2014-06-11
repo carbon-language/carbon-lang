@@ -1762,7 +1762,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
         // Actually quite difficult!
         if (getLangOpts().MSVCCompat)
-          diagnostic = diag::warn_found_via_dependent_bases_lookup;
+          diagnostic = diag::ext_found_via_dependent_bases_lookup;
         if (isInstance) {
           Diag(R.getNameLoc(), diagnostic) << Name
             << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
@@ -1927,6 +1927,54 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   return true;
 }
 
+/// In Microsoft mode, if we are inside a template class whose parent class has
+/// dependent base classes, and we can't resolve an unqualified identifier, then
+/// assume the identifier is a member of a dependent base class.  We can only
+/// recover successfully in static methods, instance methods, and other contexts
+/// where 'this' is available.  This doesn't precisely match MSVC's
+/// instantiation model, but it's close enough.
+static Expr *
+recoverFromMSUnqualifiedLookup(Sema &S, ASTContext &Context,
+                               DeclarationNameInfo &NameInfo,
+                               SourceLocation TemplateKWLoc,
+                               const TemplateArgumentListInfo *TemplateArgs) {
+  // Only try to recover from lookup into dependent bases in static methods or
+  // contexts where 'this' is available.
+  QualType ThisType = S.getCurrentThisType();
+  const CXXRecordDecl *RD = nullptr;
+  if (!ThisType.isNull())
+    RD = ThisType->getPointeeType()->getAsCXXRecordDecl();
+  else if (auto *MD = dyn_cast<CXXMethodDecl>(S.CurContext))
+    RD = MD->getParent();
+  if (!RD || !RD->hasAnyDependentBases())
+    return nullptr;
+
+  // Diagnose this as unqualified lookup into a dependent base class.  If 'this'
+  // is available, suggest inserting 'this->' as a fixit.
+  SourceLocation Loc = NameInfo.getLoc();
+  DiagnosticBuilder DB =
+      S.Diag(Loc, diag::ext_undeclared_unqual_id_with_dependent_base)
+      << NameInfo.getName() << RD;
+
+  if (!ThisType.isNull()) {
+    DB << FixItHint::CreateInsertion(Loc, "this->");
+    return CXXDependentScopeMemberExpr::Create(
+        Context, /*This=*/nullptr, ThisType, /*IsArrow=*/true,
+        /*Op=*/SourceLocation(), NestedNameSpecifierLoc(), TemplateKWLoc,
+        /*FirstQualifierInScope=*/nullptr, NameInfo, TemplateArgs);
+  }
+
+  // Synthesize a fake NNS that points to the derived class.  This will
+  // perform name lookup during template instantiation.
+  CXXScopeSpec SS;
+  auto *NNS =
+      NestedNameSpecifier::Create(Context, nullptr, true, RD->getTypeForDecl());
+  SS.MakeTrivial(Context, NNS, SourceRange(Loc, Loc));
+  return DependentScopeDeclRefExpr::Create(
+      Context, SS.getWithLocInContext(Context), TemplateKWLoc, NameInfo,
+      TemplateArgs);
+}
+
 ExprResult Sema::ActOnIdExpression(Scope *S,
                                    CXXScopeSpec &SS,
                                    SourceLocation TemplateKWLoc,
@@ -2034,28 +2082,10 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
   bool ADL = UseArgumentDependentLookup(SS, R, HasTrailingLParen);
 
   if (R.empty() && !ADL) {
-    // In Microsoft mode, if we are inside a template class member function
-    // whose parent class has dependent base classes, and we can't resolve
-    // an unqualified identifier, then assume the identifier is a member of a
-    // dependent base class.  The goal is to postpone name lookup to
-    // instantiation time to be able to search into the type dependent base
-    // classes.
-    // FIXME: If we want 100% compatibility with MSVC, we will have delay all
-    // unqualified name lookup.  Any name lookup during template parsing means
-    // clang might find something that MSVC doesn't.  For now, we only handle
-    // the common case of members of a dependent base class.
     if (SS.isEmpty() && getLangOpts().MSVCCompat) {
-      CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext);
-      if (MD && MD->isInstance() && MD->getParent()->hasAnyDependentBases()) {
-        QualType ThisType = MD->getThisType(Context);
-        // Since the 'this' expression is synthesized, we don't need to
-        // perform the double-lookup check.
-        NamedDecl *FirstQualifierInScope = nullptr;
-        return CXXDependentScopeMemberExpr::Create(
-            Context, /*This=*/nullptr, ThisType, /*IsArrow=*/true,
-            /*Op=*/SourceLocation(), SS.getWithLocInContext(Context),
-            TemplateKWLoc, FirstQualifierInScope, NameInfo, TemplateArgs);
-      }
+      if (Expr *E = recoverFromMSUnqualifiedLookup(*this, Context, NameInfo,
+                                                   TemplateKWLoc, TemplateArgs))
+        return E;
     }
 
     // Don't diagnose an empty lookup for inline assmebly.
