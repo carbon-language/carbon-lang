@@ -1156,13 +1156,16 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     QualType T = TA.getNullPtrType();
     if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
       const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
-      if (MPT->isMemberFunctionPointerType())
+      if (MPT->isMemberFunctionPointerType() && isa<ClassTemplateDecl>(TD)) {
         mangleMemberFunctionPointer(RD, nullptr);
-      else
+        return;
+      }
+      if (MPT->isMemberDataPointer()) {
         mangleMemberDataPointer(RD, nullptr);
-    } else {
-      Out << "$0A@";
+        return;
+      }
     }
+    Out << "$0A@";
     break;
   }
   case TemplateArgument::Expression:
