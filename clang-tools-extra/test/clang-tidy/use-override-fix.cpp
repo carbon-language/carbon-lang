@@ -25,6 +25,8 @@ struct Base {
   virtual void j() const;
   virtual MustUseResultObject k();
   virtual bool l() MUST_USE_RESULT;
+
+  virtual void m();
 };
 
 struct SimpleCases : public Base {
@@ -54,6 +56,9 @@ public:
   // CHECK: {{^  MustUseResultObject k\(\) override;}}
   virtual bool l() MUST_USE_RESULT; // Has an explicit attribute
   // CHECK: {{^  bool l\(\) override MUST_USE_RESULT;}}
+
+  virtual void m() override final;
+  // CHECK: {{^  void m\(\) final;}}
 };
 
 void SimpleCases::i() {}
@@ -125,6 +130,9 @@ struct Macros : public Base {
 #define F virtual void f();
   F
   // CHECK: {{^  F}}
+
+  VIRTUAL void g() OVERRIDE final;
+  // CHECK: {{^  VIRTUAL void g\(\) final;}}
 };
 
 // Tests for templates.

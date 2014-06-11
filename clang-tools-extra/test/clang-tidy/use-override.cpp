@@ -7,6 +7,8 @@ struct Base {
   virtual void b();
   virtual void c();
   virtual void d();
+  virtual void e();
+  virtual void f();
 };
 
 struct SimpleCases : public Base {
@@ -15,11 +17,15 @@ public:
   // CHECK: :[[@LINE-1]]:11: warning: Prefer using 'override' or 'final' instead of 'virtual'
 
   void a();
-  // CHECK: :[[@LINE-1]]:8: warning: Prefer using
+  // CHECK: :[[@LINE-1]]:8: warning: Use exactly
   virtual void b();
   // CHECK: :[[@LINE-1]]:16: warning: Prefer using
-  void c() override;
+  virtual void c() override;
+  // CHECK: :[[@LINE-1]]:16: warning: Use exactly
+  void d() override final;
+  // CHECK: :[[@LINE-1]]:8: warning: Use exactly
+  void e() override;
   // CHECK-NOT: :[[@LINE-1]]:{{.*}} warning:
-  void d() final;
+  void f() final;
   // CHECK-NOT: :[[@LINE-1]]:{{.*}} warning:
 };
