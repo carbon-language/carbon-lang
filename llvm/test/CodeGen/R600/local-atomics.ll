@@ -47,6 +47,25 @@ define void @lds_atomic_add_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
   ret void
 }
 
+; FUNC-LABEL: @lds_atomic_inc_ret_i32:
+; SI: DS_INC_RTN_U32
+; SI: S_ENDPGM
+define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
+  %result = atomicrmw add i32 addrspace(3)* %ptr, i32 1 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @lds_atomic_inc_ret_i32_offset:
+; SI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_ENDPGM
+define void @lds_atomic_inc_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
+  %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
+  %result = atomicrmw add i32 addrspace(3)* %gep, i32 1 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; FUNC-LABEL: @lds_atomic_sub_ret_i32:
 ; SI: DS_SUB_RTN_U32
 ; SI: S_ENDPGM
@@ -62,6 +81,25 @@ define void @lds_atomic_sub_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 define void @lds_atomic_sub_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
   %result = atomicrmw sub i32 addrspace(3)* %gep, i32 4 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @lds_atomic_dec_ret_i32:
+; SI: DS_DEC_RTN_U32
+; SI: S_ENDPGM
+define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
+  %result = atomicrmw sub i32 addrspace(3)* %ptr, i32 1 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @lds_atomic_dec_ret_i32_offset:
+; SI: DS_DEC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_ENDPGM
+define void @lds_atomic_dec_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
+  %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
+  %result = atomicrmw sub i32 addrspace(3)* %gep, i32 1 seq_cst
   store i32 %result, i32 addrspace(1)* %out, align 4
   ret void
 }

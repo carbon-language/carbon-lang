@@ -2222,6 +2222,22 @@ multiclass DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> {
   >;
 }
 
+// Special case of DSAtomicRetPat for add / sub 1 -> inc / dec
+multiclass DSAtomicIncRetPat<DS inst, ValueType vt, PatFrag frag> {
+  def : Pat <
+    (frag (add i32:$ptr, (i32 IMM16bit:$offset)), (vt 1)),
+    (inst (i1 0), $ptr, (as_i16imm $offset))
+  >;
+
+  def : Pat <
+    (frag i32:$ptr, (vt 1)),
+    (inst 0, $ptr, 0)
+  >;
+}
+
+defm : DSAtomicIncRetPat<DS_INC_RTN_U32, i32, atomic_load_add_local>;
+defm : DSAtomicIncRetPat<DS_DEC_RTN_U32, i32, atomic_load_sub_local>;
+
 defm : DSAtomicRetPat<DS_WRXCHG_RTN_B32, i32, atomic_swap_local>;
 defm : DSAtomicRetPat<DS_ADD_RTN_U32, i32, atomic_load_add_local>;
 defm : DSAtomicRetPat<DS_SUB_RTN_U32, i32, atomic_load_sub_local>;
