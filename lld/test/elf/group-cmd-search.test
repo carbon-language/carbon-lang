@@ -1,4 +1,12 @@
 /*
+  XFAIL: win32
+
+  This test does not pass on Windows because a path starting with
+  "/" is not considered as an absolute path. (It needs a drive
+  letter.)
+*/
+
+/*
   In general the linker scripts's GROUP command works like a pair
   of command line options --start-group/--end-group. But there is
   a difference in the files look up algorithm.
