@@ -3133,7 +3133,7 @@ static inline T *getObjCBridgeAttr(const TypedefType *TD) {
   if (QT->isPointerType()) {
     QT = QT->getPointeeType();
     if (const RecordType *RT = QT->getAs<RecordType>())
-      if (RecordDecl *RD = RT->getDecl())
+      if (RecordDecl *RD = RT->getDecl()->getMostRecentDecl())
         return RD->getAttr<T>();
   }
   return nullptr;
