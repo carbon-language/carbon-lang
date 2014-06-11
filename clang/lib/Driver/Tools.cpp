@@ -63,10 +63,14 @@ static void addAssemblerKPIC(const ArgList &Args, ArgStringList &CmdArgs) {
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
-  if (Arg *A = Args.getLastArg(options::OPT_C, options::OPT_CC))
-    if (!Args.hasArg(options::OPT_E) && !D.CCCIsCPP())
+  if (Arg *A = Args.getLastArg(options::OPT_C, options::OPT_CC)) {
+    if (!Args.hasArg(options::OPT_E) && !Args.hasArg(options::OPT__SLASH_P) &&
+        !Args.hasArg(options::OPT__SLASH_EP) && !D.CCCIsCPP()) {
       D.Diag(diag::err_drv_argument_only_allowed_with)
-        << A->getAsString(Args) << "-E";
+          << A->getBaseArg().getAsString(Args)
+          << (D.IsCLMode() ? "/E, /P or /EP" : "-E");
+    }
+  }
 }
 
 /// CheckCodeGenerationOptions - Perform some validation of code generation

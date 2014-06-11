@@ -7,8 +7,15 @@
 
 // Alias options:
 
-// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=C %s
-// C: -c
+// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=c %s
+// c: -c
+
+// RUN: %clang_cl /C -### -- %s 2>&1 | FileCheck -check-prefix=C %s
+// C: error: invalid argument '-C' only allowed with '/E, /P or /EP'
+
+// RUN: %clang_cl /C /P -### -- %s 2>&1 | FileCheck -check-prefix=C_P %s
+// C_P: "-E"
+// C_P: "-C"
 
 // RUN: %clang_cl /Dfoo=bar -### -- %s 2>&1 | FileCheck -check-prefix=D %s
 // RUN: %clang_cl /D foo=bar -### -- %s 2>&1 | FileCheck -check-prefix=D %s
