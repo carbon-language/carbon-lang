@@ -151,19 +151,8 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
 }
 
 char CodeGenPrepare::ID = 0;
-static void *initializeCodeGenPreparePassOnce(PassRegistry &Registry) {
-  initializeTargetLibraryInfoPass(Registry);
-  PassInfo *PI = new PassInfo(
-      "Optimize for code generation", "codegenprepare", &CodeGenPrepare::ID,
-      PassInfo::NormalCtor_t(callDefaultCtor<CodeGenPrepare>), false, false,
-      PassInfo::TargetMachineCtor_t(callTargetMachineCtor<CodeGenPrepare>));
-  Registry.registerPass(*PI, true);
-  return PI;
-}
-
-void llvm::initializeCodeGenPreparePass(PassRegistry &Registry) {
-  CALL_ONCE_INITIALIZATION(initializeCodeGenPreparePassOnce)
-}
+INITIALIZE_TM_PASS(CodeGenPrepare, "codegenprepare",
+                   "Optimize for code generation", false, false)
 
 FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
   return new CodeGenPrepare(TM);

@@ -50,22 +50,9 @@ namespace {
 
 char AtomicExpandLoadLinked::ID = 0;
 char &llvm::AtomicExpandLoadLinkedID = AtomicExpandLoadLinked::ID;
-
-static void *initializeAtomicExpandLoadLinkedPassOnce(PassRegistry &Registry) {
-  PassInfo *PI = new PassInfo(
-      "Expand Atomic calls in terms of load-linked & store-conditional",
-      "atomic-ll-sc", &AtomicExpandLoadLinked::ID,
-      PassInfo::NormalCtor_t(callDefaultCtor<AtomicExpandLoadLinked>), false,
-      false, PassInfo::TargetMachineCtor_t(
-                 callTargetMachineCtor<AtomicExpandLoadLinked>));
-  Registry.registerPass(*PI, true);
-  return PI;
-}
-
-void llvm::initializeAtomicExpandLoadLinkedPass(PassRegistry &Registry) {
-  CALL_ONCE_INITIALIZATION(initializeAtomicExpandLoadLinkedPassOnce)
-}
-
+INITIALIZE_TM_PASS(AtomicExpandLoadLinked, "atomic-ll-sc",
+    "Expand Atomic calls in terms of load-linked & store-conditional",
+    false, false)
 
 FunctionPass *llvm::createAtomicExpandLoadLinkedPass(const TargetMachine *TM) {
   return new AtomicExpandLoadLinked(TM);

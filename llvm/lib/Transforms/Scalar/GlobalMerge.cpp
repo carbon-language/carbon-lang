@@ -136,19 +136,8 @@ namespace {
 } // end anonymous namespace
 
 char GlobalMerge::ID = 0;
-
-static void *initializeGlobalMergePassOnce(PassRegistry &Registry) {
-  PassInfo *PI = new PassInfo(
-      "Merge global variables", "global-merge", &GlobalMerge::ID,
-      PassInfo::NormalCtor_t(callDefaultCtor<GlobalMerge>), false, false,
-      PassInfo::TargetMachineCtor_t(callTargetMachineCtor<GlobalMerge>));
-  Registry.registerPass(*PI, true);
-  return PI;
-}
-
-void llvm::initializeGlobalMergePass(PassRegistry &Registry) {
-  CALL_ONCE_INITIALIZATION(initializeGlobalMergePassOnce)
-}
+INITIALIZE_TM_PASS(GlobalMerge, "global-merge", "Merge global variables",
+                   false, false)
 
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
