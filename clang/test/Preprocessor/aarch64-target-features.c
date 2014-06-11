@@ -49,3 +49,13 @@
 // RUN: %clang -target arm64-none-linux-gnu -mfpu=neon -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: __ARM_NEON 1
 // CHECK-NEON: __ARM_NEON_FP 0xe
+
+// RUN: %clang -target aarch64-none-linux-gnu -mcpu=cortex-a53 -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FEATURE %s
+// RUN: %clang -target aarch64-none-linux-gnu -mcpu=cortex-a57 -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FEATURE %s
+// RUN: %clang -target aarch64-none-linux-gnu -mcpu=cyclone -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FEATURE %s
+// CHECK-FEATURE: __ARM_FEATURE_CRC32 1
+// CHECK-FEATURE: __ARM_FEATURE_CRYPTO 1
+// CHECK-FEATURE: __ARM_NEON 1
+// CHECK-FEATURE: __ARM_NEON_FP 0xe
+
+
