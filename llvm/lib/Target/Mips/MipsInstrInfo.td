@@ -232,6 +232,9 @@ class ISA_MIPS3_NOT_32R6_64R6 {
   list<Predicate> InsnPredicates = [HasMips3, NotMips32r6, NotMips64r6];
 }
 class ISA_MIPS32   { list<Predicate> InsnPredicates = [HasMips32]; }
+class ISA_MIPS32_NOT_32R6_64R6 {
+  list<Predicate> InsnPredicates = [HasMips32, NotMips32r6, NotMips64r6];
+}
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64   { list<Predicate> InsnPredicates = [HasMips64]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
@@ -1279,6 +1282,46 @@ def SSNOP : Barrier<"ssnop">, BARRIER_FM<1>;
 def EHB : Barrier<"ehb">, BARRIER_FM<3>;
 def PAUSE : Barrier<"pause">, BARRIER_FM<5>, ISA_MIPS32R2;
 
+// JR_HB and JALR_HB are defined here using the new style naming
+// scheme because some of this code is shared with Mips32r6InstrInfo.td
+// and because of that it doesn't follow the naming convention of the
+// rest of the file. To avoid a mixture of old vs new style, the new
+// style was chosen.
+class JR_HB_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins GPROpnd:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rs");
+  list<dag> Pattern = [];
+}
+
+class JALR_HB_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs");
+  list<dag> Pattern = [];
+}
+
+class JR_HB_DESC : InstSE<(outs), (ins), "", [], NoItinerary, FrmJ>,
+                   JR_HB_DESC_BASE<"jr.hb", GPR32Opnd> {
+  let isBranch=1;
+  let isIndirectBranch=1;
+  let hasDelaySlot=1;
+  let isTerminator=1;
+  let isBarrier=1;
+}
+
+class JALR_HB_DESC : InstSE<(outs), (ins), "", [], NoItinerary, FrmJ>,
+                     JALR_HB_DESC_BASE<"jalr.hb", GPR32Opnd> {
+  let isIndirectBranch=1;
+  let hasDelaySlot=1;
+}
+
+class JR_HB_ENC : JR_HB_FM<8>;
+class JALR_HB_ENC : JALR_HB_FM<9>;
+
+def JR_HB : JR_HB_DESC, JR_HB_ENC, ISA_MIPS32_NOT_32R6_64R6;
+def JALR_HB : JALR_HB_DESC, JALR_HB_ENC, ISA_MIPS32;
+
 class TLB<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
                                       FrmOther>;
 def TLBP : TLB<"tlbp">, COP0_TLB_FM<0x08>;
@@ -1307,6 +1350,7 @@ def : MipsInstAlias<"jalr $rs", (JALR RA, GPR32Opnd:$rs), 0>;
 }
 def : MipsInstAlias<"jal $rs", (JALR RA, GPR32Opnd:$rs), 0>;
 def : MipsInstAlias<"jal $rd,$rs", (JALR GPR32Opnd:$rd, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"jalr.hb $rs", (JALR_HB RA, GPR32Opnd:$rs), 1>, ISA_MIPS32;
 def : MipsInstAlias<"not $rt, $rs",
                     (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>;
 def : MipsInstAlias<"neg $rt, $rs",

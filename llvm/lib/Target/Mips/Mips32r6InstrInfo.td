@@ -120,7 +120,7 @@ class BC2NEZ_ENC : COP2_BCCZ_FM<OPCODE5_BC2NEZ>;
 
 class JIALC_ENC : JMP_IDX_COMPACT_FM<0b111110>;
 class JIC_ENC   : JMP_IDX_COMPACT_FM<0b110110>;
-
+class JR_HB_R6_ENC : JR_HB_R6_FM<OPCODE6_JALR>;
 class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
 class BLEZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BLEZ>;
 class BNVC_ENC   : CMP_BRANCH_2R_OFF16_FM<OPGROUP_DADDI>,
@@ -381,6 +381,14 @@ class JIC_DESC : JMP_IDX_COMPACT_DESC_BASE<"jic", jmpoffset16, GPR32Opnd> {
   list<Register> Defs = [AT];
 }
 
+class JR_HB_R6_DESC : JR_HB_DESC_BASE<"jr.hb", GPR32Opnd> {
+  bit isBranch = 1;
+  bit isIndirectBranch = 1;
+  bit hasDelaySlot = 1;
+  bit isTerminator=1;
+  bit isBarrier=1;
+}
+
 class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rt);
@@ -550,6 +558,7 @@ def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
 def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
 def JIALC : JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
 def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
+def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
 // def LSA; // See MSA
 def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;

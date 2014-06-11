@@ -72,6 +72,7 @@ def OPCODE6_ALIGN    : OPCODE6<0b100000>;
 def OPCODE6_DALIGN   : OPCODE6<0b100100>;
 def OPCODE6_BITSWAP  : OPCODE6<0b100000>;
 def OPCODE6_DBITSWAP : OPCODE6<0b100100>;
+def OPCODE6_JALR     : OPCODE6<0b001001>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -401,3 +402,16 @@ class COP1_CMP_CONDN_FM<FIELD_CMP_FORMAT Format,
   let Inst{4-0}   = Cond.Value;
 }
 
+class JR_HB_R6_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = 0;
+  let Inst{10} = 1;
+  let Inst{9-6} = 0;
+  let Inst{5-0} = Operation.Value;
+}

@@ -72,6 +72,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
 
+  unsigned checkTargetMatchPredicate(MCInst &Inst) override;
+
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                unsigned &ErrorInfo,
@@ -219,6 +221,14 @@ class MipsAsmParser : public MCTargetAsmParser {
   }
 
 public:
+  enum MipsMatchResultTy {
+    Match_RequiresDifferentSrcAndDst = FIRST_TARGET_MATCH_RESULT_TY
+#define GET_OPERAND_DIAGNOSTIC_TYPES
+#include "MipsGenAsmMatcher.inc"
+#undef GET_OPERAND_DIAGNOSTIC_TYPES
+
+  };
+
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII,
                 const MCTargetOptions &Options)
@@ -1157,11 +1167,24 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   TempInst.clear();
 }
 
+unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
+  // As described by the Mips32r2 spec, the registers Rd and Rs for
+  // jalr.hb must be different.
+  unsigned Opcode = Inst.getOpcode();
+
+  if (Opcode == Mips::JALR_HB &&
+      (Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg()))
+    return Match_RequiresDifferentSrcAndDst;
+
+  return Match_Success;
+}
+
 bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                             OperandVector &Operands,
                                             MCStreamer &Out,
                                             unsigned &ErrorInfo,
                                             bool MatchingInlineAsm) {
+
   MCInst Inst;
   SmallVector<MCInst, 8> Instructions;
   unsigned MatchResult =
@@ -1195,6 +1218,8 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   }
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction");
+  case Match_RequiresDifferentSrcAndDst:
+    return Error(IDLoc, "source and destination must be different");
   }
   return true;
 }

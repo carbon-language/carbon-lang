@@ -844,6 +844,34 @@ class BARRIER_FM<bits<5> op> : StdArch {
   let Inst{5-0} = 0;   // SLL
 }
 
+class JR_HB_FM<bits<6> op> : StdArch{
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0; // SPECIAL
+  let Inst{25-21} = rs;
+  let Inst{20-11} = 0;
+  let Inst{10} = 1;
+  let Inst{9-6} = 0;
+  let Inst{5-0} = op;
+}
+
+class JALR_HB_FM<bits<6> op> : StdArch {
+  bits<5> rd;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0; // SPECIAL
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = rd;
+  let Inst{10} = 1;
+  let Inst{9-6} = 0;
+  let Inst{5-0} = op;
+}
+
 class COP0_TLB_FM<bits<6> op> : StdArch {
   bits<32> Inst;
 

@@ -87,6 +87,9 @@
         floor.l.s $f12,$f5
         floor.w.d $f14,$f11
         floor.w.s $f8,$f9
+        jr.hb     $4                   # CHECK: jr.hb  $4 # encoding: [0x00,0x80,0x04,0x08]
+        jalr.hb   $4                   # CHECK: jalr.hb  $4 # encoding: [0x00,0x80,0xfc,0x09]
+        jalr.hb   $4, $5               # CHECK: jalr.hb  $4, $5 # encoding: [0x00,0xa0,0x24,0x09]
         lb        $24,-14515($10)
         lbu       $8,30195($v1)
         ld        $sp,-28645($s1)
