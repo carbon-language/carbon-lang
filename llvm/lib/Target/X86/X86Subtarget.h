@@ -229,10 +229,12 @@ private:
   // Calculates type size & alignment
   const DataLayout DL;
   X86SelectionDAGInfo TSInfo;
-  std::unique_ptr<X86TargetLowering> TLInfo;
-  std::unique_ptr<X86InstrInfo> InstrInfo;
-  std::unique_ptr<X86FrameLowering> FrameLowering;
-  std::unique_ptr<X86JITInfo> JITInfo;
+  // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
+  // X86TargetLowering needs.
+  X86InstrInfo InstrInfo;
+  X86TargetLowering TLInfo;
+  X86FrameLowering FrameLowering;
+  X86JITInfo JITInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -242,14 +244,12 @@ public:
                const std::string &FS, X86TargetMachine &TM,
                unsigned StackAlignOverride);
 
-  const X86TargetLowering *getTargetLowering() const { return TLInfo.get(); }
-  const X86InstrInfo *getInstrInfo() const { return InstrInfo.get(); }
+  const X86TargetLowering *getTargetLowering() const { return &TLInfo; }
+  const X86InstrInfo *getInstrInfo() const { return &InstrInfo; }
   const DataLayout *getDataLayout() const { return &DL; }
-  const X86FrameLowering *getFrameLowering() const {
-    return FrameLowering.get();
-  }
+  const X86FrameLowering *getFrameLowering() const { return &FrameLowering; }
   const X86SelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  X86JITInfo *getJITInfo() { return JITInfo.get(); }
+  X86JITInfo *getJITInfo() { return &JITInfo; }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
@@ -267,6 +267,9 @@ public:
   /// \brief Reset the features for the X86 target.
   void resetSubtargetFeatures(const MachineFunction *MF) override;
 private:
+  /// \brief Initialize the full set of dependencies so we can use an initializer
+  /// list for X86Subtarget.
+  X86Subtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
 public:

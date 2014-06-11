@@ -335,6 +335,13 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
   return Ret;
 }
 
+X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
+                                                            StringRef FS) {
+  initializeEnvironment();
+  resetSubtargetFeatures(CPU, FS);
+  return *this;
+}
+
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, X86TargetMachine &TM,
                            unsigned StackAlignOverride)
@@ -346,18 +353,11 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                   TargetTriple.getEnvironment() != Triple::CODE16),
       In16BitMode(TargetTriple.getArch() == Triple::x86 &&
                   TargetTriple.getEnvironment() == Triple::CODE16),
-      DL(computeDataLayout(*this)), TSInfo(DL) {
-  initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
-  // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
-  // X86TargetLowering needs.
-  InstrInfo = make_unique<X86InstrInfo>(*this);
-  TLInfo = make_unique<X86TargetLowering>(TM);
-  FrameLowering =
-      make_unique<X86FrameLowering>(TargetFrameLowering::StackGrowsDown,
-                                    getStackAlignment(), is64Bit() ? -8 : -4);
-  JITInfo = make_unique<X86JITInfo>(hasSSE1());
-}
+      DL(computeDataLayout(*this)), TSInfo(DL),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
+      FrameLowering(TargetFrameLowering::StackGrowsDown, getStackAlignment(),
+                    is64Bit() ? -8 : -4),
+      JITInfo(hasSSE1()) {}
 
 bool
 X86Subtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
