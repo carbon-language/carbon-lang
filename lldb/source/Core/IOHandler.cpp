@@ -540,7 +540,7 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
             {
                 FILE *out = GetOutputFILE();
                 if (out)
-                    ::fprintf(out, "%u", m_base_line_number + (uint32_t)lines.GetSize());
+                    ::fprintf(out, "%u%s", m_base_line_number + (uint32_t)lines.GetSize(), GetPrompt() == NULL ? " " : "");
             }
             
             bool interrupted = false;
