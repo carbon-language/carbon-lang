@@ -20,8 +20,6 @@
 #include "llvm/Support/FileSystem.h"
 
 namespace llvm {
-class error_code;
-
 /// FileOutputBuffer - This interface provides simple way to create an in-memory
 /// buffer which will be written to a file. During the lifetime of these
 /// objects, the content or existence of the specified file is undefined. That

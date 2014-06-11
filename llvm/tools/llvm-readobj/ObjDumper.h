@@ -10,6 +10,8 @@
 #ifndef LLVM_READOBJ_OBJDUMPER_H
 #define LLVM_READOBJ_OBJDUMPER_H
 
+#include "llvm/Support/system_error.h"
+
 #include <memory>
 
 namespace llvm {
@@ -17,8 +19,6 @@ namespace llvm {
 namespace object {
   class ObjectFile;
 }
-
-class error_code;
 
 class StreamWriter;
 

@@ -55,7 +55,7 @@ class InstrProfErrorCategoryType : public error_category {
   error_condition default_error_condition(int EV) const LLVM_NOEXCEPT override {
     if (static_cast<instrprof_error>(EV) == instrprof_error::success)
       return error_condition();
-    return errc::invalid_argument;
+    return std::errc::invalid_argument;
   }
 };
 }

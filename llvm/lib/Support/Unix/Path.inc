@@ -317,7 +317,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   // effectively prevents LLVM from erasing things like /dev/null, any block
   // special file, or other things that aren't "regular" files.
   if (!S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode) && !S_ISLNK(buf.st_mode))
-    return make_error_code(errc::operation_not_permitted);
+    return make_error_code(std::errc::operation_not_permitted);
 
   if (::remove(p.begin()) == -1) {
     if (errno != ENOENT || !IgnoreNonExisting)
@@ -402,7 +402,7 @@ static error_code fillStatus(int StatRet, const struct stat &Status,
                              file_status &Result) {
   if (StatRet != 0) {
     error_code ec(errno, generic_category());
-    if (ec == errc::no_such_file_or_directory)
+    if (ec == std::errc::no_such_file_or_directory)
       Result = file_status(file_type::file_not_found);
     else
       Result = file_status(file_type::status_error);
@@ -466,7 +466,7 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   return error_code();
 #else
 #warning Missing futimes() and futimens()
-  return make_error_code(errc::not_supported);
+  return make_error_code(std::errc::not_supported);
 #endif
 }
 
@@ -510,7 +510,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
   , Mapping() {
   // Make sure that the requested size fits within SIZE_T.
   if (length > std::numeric_limits<size_t>::max()) {
-    ec = make_error_code(errc::invalid_argument);
+    ec = make_error_code(std::errc::invalid_argument);
     return;
   }
 
@@ -539,7 +539,7 @@ mapped_file_region::mapped_file_region(int fd,
   , Mapping() {
   // Make sure that the requested size fits within SIZE_T.
   if (length > std::numeric_limits<size_t>::max()) {
-    ec = make_error_code(errc::invalid_argument);
+    ec = make_error_code(std::errc::invalid_argument);
     return;
   }
 
@@ -645,7 +645,7 @@ error_code get_magic(const Twine &path, uint32_t len,
     if (std::feof(file) != 0) {
       std::fclose(file);
       result.set_size(size);
-      return make_error_code(errc::value_too_large);
+      return make_error_code(std::errc::value_too_large);
     }
   }
   std::fclose(file);

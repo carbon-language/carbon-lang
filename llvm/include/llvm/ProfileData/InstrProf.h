@@ -42,8 +42,11 @@ inline error_code make_error_code(instrprof_error E) {
   return error_code(static_cast<int>(E), instrprof_category());
 }
 
-template <> struct is_error_code_enum<instrprof_error> : std::true_type {};
-
 } // end namespace llvm
+
+namespace std {
+template <>
+struct is_error_code_enum<llvm::instrprof_error> : std::true_type {};
+}
 
 #endif // LLVM_PROFILEDATA_INSTRPROF_H_

@@ -16,7 +16,7 @@ using namespace llvm;
 namespace {
 
 ErrorOr<int> t1() {return 1;}
-ErrorOr<int> t2() { return errc::invalid_argument; }
+ErrorOr<int> t2() { return std::errc::invalid_argument; }
 
 TEST(ErrorOr, SimpleValue) {
   ErrorOr<int> a = t1();
@@ -30,7 +30,7 @@ TEST(ErrorOr, SimpleValue) {
 
   a = t2();
   EXPECT_FALSE(a);
-  EXPECT_EQ(errc::invalid_argument, a.getError());
+  EXPECT_EQ(std::errc::invalid_argument, a.getError());
 #ifdef EXPECT_DEBUG_DEATH
   EXPECT_DEBUG_DEATH(*a, "Cannot get value when an error exists");
 #endif

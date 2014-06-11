@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<MemoryBuffer> GCDA_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
-    if (ec != errc::no_such_file_or_directory) {
+    if (ec != std::errc::no_such_file_or_directory) {
       errs() << InputGCDA << ": " << ec.message() << "\n";
       return 1;
     }

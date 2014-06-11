@@ -22,7 +22,6 @@ namespace object {
   class ObjectFile;
   class RelocationRef;
 }
-class error_code;
 
 extern cl::opt<std::string> TripleName;
 extern cl::opt<std::string> ArchName;

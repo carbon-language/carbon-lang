@@ -13,6 +13,7 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/WindowsError.h"
 #include <malloc.h>
 
 // The Windows.h header must be after LLVM and standard headers.
@@ -180,7 +181,7 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
 }
 
 static error_code windows_error(DWORD E) {
-  return error_code(E, system_category());
+  return mapWindowsError(E);
 }
 
 error_code

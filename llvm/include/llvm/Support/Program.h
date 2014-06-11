@@ -19,7 +19,6 @@
 #include "llvm/Support/system_error.h"
 
 namespace llvm {
-class error_code;
 namespace sys {
 
   /// This is the OS-specific separator for PATH like environment variables:

@@ -50,7 +50,7 @@ std::string _object_error_category::message(int EV) const {
 error_condition _object_error_category::default_error_condition(int EV) const {
   if (static_cast<object_error>(EV) == object_error::success)
     return error_condition();
-  return errc::invalid_argument;
+  return std::errc::invalid_argument;
 }
 
 const error_category &object::object_category() {

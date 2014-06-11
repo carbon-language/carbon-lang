@@ -114,7 +114,7 @@ LockFileManager::LockFileManager(StringRef FileName)
     if (Out.has_error()) {
       // We failed to write out PID, so make up an excuse, remove the
       // unique lock file, and fail.
-      Error = make_error_code(errc::no_space_on_device);
+      Error = make_error_code(std::errc::no_space_on_device);
       sys::fs::remove(UniqueLockFileName.c_str());
       return;
     }
@@ -127,7 +127,7 @@ LockFileManager::LockFileManager(StringRef FileName)
     if (!EC)
       return;
 
-    if (EC != errc::file_exists) {
+    if (EC != std::errc::file_exists) {
       Error = EC;
       return;
     }

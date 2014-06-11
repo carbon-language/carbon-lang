@@ -33,8 +33,10 @@ inline error_code make_error_code(readobj_error e) {
   return error_code(static_cast<int>(e), readobj_category());
 }
 
-template <> struct is_error_code_enum<readobj_error> : std::true_type { };
-
 } // namespace llvm
+
+namespace std {
+template <> struct is_error_code_enum<llvm::readobj_error> : std::true_type {};
+}
 
 #endif

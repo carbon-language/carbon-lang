@@ -311,7 +311,7 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
           getDarwinDWARFResourceForPath(Path);
       BinaryOrErr = createBinary(ResourcePath);
       error_code EC = BinaryOrErr.getError();
-      if (EC != errc::no_such_file_or_directory && !error(EC)) {
+      if (EC != std::errc::no_such_file_or_directory && !error(EC)) {
         DbgBin = BinaryOrErr.get();
         ParsedBinariesAndObjects.push_back(std::unique_ptr<Binary>(DbgBin));
       }

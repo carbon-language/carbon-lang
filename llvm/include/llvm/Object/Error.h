@@ -35,8 +35,11 @@ inline error_code make_error_code(object_error e) {
 
 } // end namespace object.
 
-template <> struct is_error_code_enum<object::object_error> : std::true_type {};
-
 } // end namespace llvm.
+
+namespace std {
+template <>
+struct is_error_code_enum<llvm::object::object_error> : std::true_type {};
+}
 
 #endif

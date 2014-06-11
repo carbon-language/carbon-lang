@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/WindowsError.h"
 #include <fcntl.h>
 #include <io.h>
 #include <sys/stat.h>
@@ -45,7 +46,7 @@ using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
 
 static error_code windows_error(DWORD E) {
-  return error_code(E, system_category());
+  return mapWindowsError(E);
 }
 
 static error_code TempDir(SmallVectorImpl<char> &Result) {
@@ -193,7 +194,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
 
   file_status ST;
   if (error_code EC = status(path, ST)) {
-    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
     return error_code();
   }
@@ -205,14 +206,14 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   if (ST.type() == file_type::directory_file) {
     if (!::RemoveDirectoryW(c_str(path_utf16))) {
       error_code EC = windows_error(::GetLastError());
-      if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+      if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
         return EC;
     }
     return error_code();
   }
   if (!::DeleteFileW(c_str(path_utf16))) {
     error_code EC = windows_error(::GetLastError());
-    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
   }
   return error_code();
@@ -516,7 +517,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
         _close(FileDescriptor);
     } else
       ::CloseHandle(FileHandle);
-    return make_error_code(errc::invalid_argument);
+    return make_error_code(std::errc::invalid_argument);
   }
 
   DWORD flprotect;
@@ -652,7 +653,7 @@ mapped_file_region::mapped_file_region(int fd,
     if (closefd)
       _close(FileDescriptor);
     FileDescriptor = 0;
-    ec = make_error_code(errc::bad_file_descriptor);
+    ec = make_error_code(std::errc::bad_file_descriptor);
     return;
   }
 
@@ -815,7 +816,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return make_error_code(errc::is_a_directory);
+      return make_error_code(std::errc::is_a_directory);
     return EC;
   }
 
@@ -867,7 +868,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return make_error_code(errc::is_a_directory);
+      return make_error_code(std::errc::is_a_directory);
     return EC;
   }
 

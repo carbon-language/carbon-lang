@@ -204,7 +204,7 @@ retry_random_path:
     if (error_code EC =
             sys::fs::openFileForWrite(Twine(ResultPath.begin()), ResultFD,
                                       sys::fs::F_RW | sys::fs::F_Excl, Mode)) {
-      if (EC == errc::file_exists)
+      if (EC == std::errc::file_exists)
         goto retry_random_path;
       return EC;
     }
@@ -224,7 +224,7 @@ retry_random_path:
 
   case FS_Dir: {
     if (error_code EC = sys::fs::create_directory(ResultPath.begin(), false)) {
-      if (EC == errc::file_exists)
+      if (EC == std::errc::file_exists)
         goto retry_random_path;
       return EC;
     }
@@ -829,7 +829,7 @@ error_code create_directories(const Twine &Path, bool IgnoreExisting) {
   error_code EC = create_directory(P, IgnoreExisting);
   // If we succeeded, or had any error other than the parent not existing, just
   // return it.
-  if (EC != errc::no_such_file_or_directory)
+  if (EC != std::errc::no_such_file_or_directory)
     return EC;
 
   // We failed because of a no_such_file_or_directory, try to create the
@@ -896,7 +896,7 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   SmallString<32> Buffer;
 
   if (error_code ec = get_magic(path, Magic.size(), Buffer)) {
-    if (ec == errc::value_too_large) {
+    if (ec == std::errc::value_too_large) {
       // Magic.size() > file_size(Path).
       result = false;
       return error_code();
@@ -1043,7 +1043,7 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
 error_code identify_magic(const Twine &path, file_magic &result) {
   SmallString<32> Magic;
   error_code ec = get_magic(path, Magic.capacity(), Magic);
-  if (ec && ec != errc::value_too_large)
+  if (ec && ec != std::errc::value_too_large)
     return ec;
 
   result = identify_magic(Magic);

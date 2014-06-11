@@ -50,7 +50,7 @@ std::string _readobj_error_category::message(int EV) const {
 error_condition _readobj_error_category::default_error_condition(int EV) const {
   if (static_cast<readobj_error>(EV) == readobj_error::success)
     return error_condition();
-  return errc::invalid_argument;
+  return std::errc::invalid_argument;
 }
 
 namespace llvm {

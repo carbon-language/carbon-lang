@@ -42,7 +42,7 @@ error_condition
 _obj2yaml_error_category::default_error_condition(int ev) const {
   if (static_cast<obj2yaml_error>(ev) == obj2yaml_error::success)
     return error_condition();
-  return errc::invalid_argument;
+  return std::errc::invalid_argument;
 }
 
 namespace llvm {

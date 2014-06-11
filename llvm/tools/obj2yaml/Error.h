@@ -27,8 +27,10 @@ inline error_code make_error_code(obj2yaml_error e) {
   return error_code(static_cast<int>(e), obj2yaml_category());
 }
 
-template <> struct is_error_code_enum<obj2yaml_error> : std::true_type { };
-
 } // namespace llvm
+
+namespace std {
+template <> struct is_error_code_enum<llvm::obj2yaml_error> : std::true_type {};
+}
 
 #endif
