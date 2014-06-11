@@ -29,8 +29,8 @@ const char *_readobj_error_category::name() const {
   return "llvm.readobj";
 }
 
-std::string _readobj_error_category::message(int ev) const {
-  switch (ev) {
+std::string _readobj_error_category::message(int EV) const {
+  switch (static_cast<readobj_error>(EV)) {
   case readobj_error::success: return "Success";
   case readobj_error::file_not_found:
     return "No such file.";
@@ -42,14 +42,13 @@ std::string _readobj_error_category::message(int ev) const {
     return "Unsupported object file format.";
   case readobj_error::unknown_symbol:
     return "Unknown symbol.";
-  default:
-    llvm_unreachable("An enumerator of readobj_error does not have a message "
-                     "defined.");
   }
+  llvm_unreachable("An enumerator of readobj_error does not have a message "
+                   "defined.");
 }
 
-error_condition _readobj_error_category::default_error_condition(int ev) const {
-  if (ev == readobj_error::success)
+error_condition _readobj_error_category::default_error_condition(int EV) const {
+  if (static_cast<readobj_error>(EV) == readobj_error::success)
     return error_condition();
   return errc::invalid_argument;
 }

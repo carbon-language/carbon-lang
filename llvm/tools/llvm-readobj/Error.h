@@ -20,20 +20,13 @@ namespace llvm {
 
 const error_category &readobj_category();
 
-struct readobj_error {
-  enum _ {
-    success = 0,
-    file_not_found,
-    unsupported_file_format,
-    unrecognized_file_format,
-    unsupported_obj_file_format,
-    unknown_symbol
-  };
-  _ v_;
-
-  readobj_error(_ v) : v_(v) {}
-  explicit readobj_error(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
+enum class readobj_error {
+  success = 0,
+  file_not_found,
+  unsupported_file_format,
+  unrecognized_file_format,
+  unsupported_obj_file_format,
+  unknown_symbol
 };
 
 inline error_code make_error_code(readobj_error e) {
@@ -41,7 +34,6 @@ inline error_code make_error_code(readobj_error e) {
 }
 
 template <> struct is_error_code_enum<readobj_error> : std::true_type { };
-template <> struct is_error_code_enum<readobj_error::_> : std::true_type { };
 
 } // namespace llvm
 
