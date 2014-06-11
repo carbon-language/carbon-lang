@@ -572,7 +572,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
         llvm::sys::fs::createUniqueFile(TempPath.str(), fd, TempPath);
 
     if (CreateMissingDirectories &&
-        EC == llvm::errc::no_such_file_or_directory) {
+        EC == std::errc::no_such_file_or_directory) {
       StringRef Parent = llvm::sys::path::parent_path(OutputPath);
       EC = llvm::sys::fs::create_directories(Parent);
       if (!EC) {

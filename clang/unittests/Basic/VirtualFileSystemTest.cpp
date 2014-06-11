@@ -35,7 +35,7 @@ public:
     std::map<std::string, vfs::Status>::iterator I =
         FilesAndDirs.find(Path.str());
     if (I == FilesAndDirs.end())
-      return make_error_code(errc::no_such_file_or_directory);
+      return make_error_code(std::errc::no_such_file_or_directory);
     return I->second;
   }
   error_code openFileForRead(const Twine &Path,
@@ -306,7 +306,8 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   EXPECT_TRUE(S->equivalent(*O->status("//root/"))); // non-volatile UniqueID
 
   // broken mapping
-  EXPECT_EQ(errc::no_such_file_or_directory, O->status("//root/file2").getError());
+  EXPECT_EQ(std::errc::no_such_file_or_directory,
+            O->status("//root/file2").getError());
   EXPECT_EQ(0, NumDiagnostics);
 }
 
@@ -370,11 +371,11 @@ TEST_F(VFSFromYAMLTest, CaseSensitive) {
   O->pushOverlay(FS);
 
   ErrorOr<vfs::Status> SS = O->status("//root/xx");
-  EXPECT_EQ(errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
   SS = O->status("//root/xX");
-  EXPECT_EQ(errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
   SS = O->status("//root/Xx");
-  EXPECT_EQ(errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
   EXPECT_EQ(0, NumDiagnostics);
 }
 

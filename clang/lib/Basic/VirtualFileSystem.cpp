@@ -198,10 +198,10 @@ ErrorOr<Status> OverlayFileSystem::status(const Twine &Path) {
   // FIXME: handle symlinks that cross file systems
   for (iterator I = overlays_begin(), E = overlays_end(); I != E; ++I) {
     ErrorOr<Status> Status = (*I)->status(Path);
-    if (Status || Status.getError() != errc::no_such_file_or_directory)
+    if (Status || Status.getError() != std::errc::no_such_file_or_directory)
       return Status;
   }
-  return make_error_code(errc::no_such_file_or_directory);
+  return make_error_code(std::errc::no_such_file_or_directory);
 }
 
 error_code OverlayFileSystem::openFileForRead(const llvm::Twine &Path,
@@ -209,10 +209,10 @@ error_code OverlayFileSystem::openFileForRead(const llvm::Twine &Path,
   // FIXME: handle symlinks that cross file systems
   for (iterator I = overlays_begin(), E = overlays_end(); I != E; ++I) {
     error_code EC = (*I)->openFileForRead(Path, Result);
-    if (!EC || EC != errc::no_such_file_or_directory)
+    if (!EC || EC != std::errc::no_such_file_or_directory)
       return EC;
   }
-  return make_error_code(errc::no_such_file_or_directory);
+  return make_error_code(std::errc::no_such_file_or_directory);
 }
 
 //===-----------------------------------------------------------------------===/
@@ -744,17 +744,17 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
     return EC;
 
   if (Path.empty())
-    return make_error_code(errc::invalid_argument);
+    return make_error_code(std::errc::invalid_argument);
 
   sys::path::const_iterator Start = sys::path::begin(Path);
   sys::path::const_iterator End = sys::path::end(Path);
   for (std::vector<Entry *>::iterator I = Roots.begin(), E = Roots.end();
        I != E; ++I) {
     ErrorOr<Entry *> Result = lookupPath(Start, End, *I);
-    if (Result || Result.getError() != errc::no_such_file_or_directory)
+    if (Result || Result.getError() != std::errc::no_such_file_or_directory)
       return Result;
   }
-  return make_error_code(errc::no_such_file_or_directory);
+  return make_error_code(std::errc::no_such_file_or_directory);
 }
 
 ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
@@ -767,7 +767,7 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
   if (CaseSensitive ? !Start->equals(From->getName())
                     : !Start->equals_lower(From->getName()))
     // failure to match
-    return make_error_code(errc::no_such_file_or_directory);
+    return make_error_code(std::errc::no_such_file_or_directory);
 
   ++Start;
 
@@ -778,16 +778,16 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
 
   DirectoryEntry *DE = dyn_cast<DirectoryEntry>(From);
   if (!DE)
-    return make_error_code(errc::not_a_directory);
+    return make_error_code(std::errc::not_a_directory);
 
   for (DirectoryEntry::iterator I = DE->contents_begin(),
                                 E = DE->contents_end();
        I != E; ++I) {
     ErrorOr<Entry *> Result = lookupPath(Start, End, *I);
-    if (Result || Result.getError() != errc::no_such_file_or_directory)
+    if (Result || Result.getError() != std::errc::no_such_file_or_directory)
       return Result;
   }
-  return make_error_code(errc::no_such_file_or_directory);
+  return make_error_code(std::errc::no_such_file_or_directory);
 }
 
 ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
@@ -820,7 +820,7 @@ error_code VFSFromYAML::openFileForRead(const Twine &Path,
 
   FileEntry *F = dyn_cast<FileEntry>(*E);
   if (!F) // FIXME: errc::not_a_file?
-    return make_error_code(errc::invalid_argument);
+    return make_error_code(std::errc::invalid_argument);
 
   if (error_code EC = ExternalFS->openFileForRead(F->getExternalContentsPath(),
                                                   Result))

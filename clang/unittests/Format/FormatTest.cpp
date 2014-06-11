@@ -8181,7 +8181,7 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
   CHECK_PARSE("Language: Cpp\n"
               "IndentWidth: 12",
               IndentWidth, 12u);
-  EXPECT_EQ(llvm::errc::not_supported,
+  EXPECT_EQ(std::errc::not_supported,
             parseConfiguration("Language: JavaScript\n"
                                "IndentWidth: 34",
                                &Style));
@@ -8194,9 +8194,9 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
               "IndentWidth: 12",
               IndentWidth, 12u);
   CHECK_PARSE("IndentWidth: 23", IndentWidth, 23u);
-  EXPECT_EQ(llvm::errc::not_supported, parseConfiguration("Language: Cpp\n"
-                                                          "IndentWidth: 34",
-                                                          &Style));
+  EXPECT_EQ(std::errc::not_supported, parseConfiguration("Language: Cpp\n"
+                                                         "IndentWidth: 34",
+                                                         &Style));
   EXPECT_EQ(23u, Style.IndentWidth);
   CHECK_PARSE("IndentWidth: 56", IndentWidth, 56u);
   EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
@@ -8254,7 +8254,7 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
   EXPECT_EQ(789u, Style.TabWidth);
 
 
-  EXPECT_EQ(llvm::errc::invalid_argument,
+  EXPECT_EQ(std::errc::invalid_argument,
             parseConfiguration("---\n"
                                "Language: JavaScript\n"
                                "IndentWidth: 56\n"
@@ -8262,7 +8262,7 @@ TEST_F(FormatTest, ParsesConfigurationWithLanguages) {
                                "IndentWidth: 78\n"
                                "...\n",
                                &Style));
-  EXPECT_EQ(llvm::errc::invalid_argument,
+  EXPECT_EQ(std::errc::invalid_argument,
             parseConfiguration("---\n"
                                "Language: JavaScript\n"
                                "IndentWidth: 56\n"
