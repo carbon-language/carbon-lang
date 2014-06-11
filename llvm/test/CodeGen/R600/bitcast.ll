@@ -42,3 +42,17 @@ define void @v2i16_to_f32(float addrspace(1)* %out, <2 x i16> addrspace(1)* %in)
   store float %bc, float addrspace(1)* %out, align 4
   ret void
 }
+
+define void @v4i8_to_i32(i32 addrspace(1)* %out, <4 x i8> addrspace(1)* %in) nounwind {
+  %load = load <4 x i8> addrspace(1)* %in, align 4
+  %bc = bitcast <4 x i8> %load to i32
+  store i32 %bc, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+define void @i32_to_v4i8(<4 x i8> addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
+  %load = load i32 addrspace(1)* %in, align 4
+  %bc = bitcast i32 %load to <4 x i8>
+  store <4 x i8> %bc, <4 x i8> addrspace(1)* %out, align 4
+  ret void
+}

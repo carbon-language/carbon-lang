@@ -43,6 +43,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
   void adjustWritemask(MachineSDNode *&N, SelectionDAG &DAG) const;
   MachineSDNode *AdjustRegClass(MachineSDNode *N, SelectionDAG &DAG) const;
 
+  static SDValue performUCharToFloatCombine(SDNode *N,
+                                            DAGCombinerInfo &DCI);
+
 public:
   SITargetLowering(TargetMachine &tm);
   bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,

@@ -205,6 +205,12 @@ enum {
   SAMPLEB,
   SAMPLED,
   SAMPLEL,
+
+  // These cvt_f32_ubyte* nodes need to remain consecutive and in order.
+  CVT_F32_UBYTE0,
+  CVT_F32_UBYTE1,
+  CVT_F32_UBYTE2,
+  CVT_F32_UBYTE3,
   FIRST_MEM_OPCODE_NUMBER = ISD::FIRST_TARGET_MEMORY_OPCODE,
   STORE_MSKOR,
   LOAD_CONSTANT,

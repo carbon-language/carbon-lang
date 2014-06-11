@@ -53,6 +53,10 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_imul24 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_imad24 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_umad24 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_AMDGPU_cvt_f32_ubyte0 : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
+  def int_AMDGPU_cvt_f32_ubyte1 : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
+  def int_AMDGPU_cvt_f32_ubyte2 : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
+  def int_AMDGPU_cvt_f32_ubyte3 : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_cube : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
   def int_AMDGPU_bfi : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_bfe_i32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;

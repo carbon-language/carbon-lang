@@ -786,6 +786,18 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::MAD_I24, DL, VT,
                          Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
 
+    case AMDGPUIntrinsic::AMDGPU_cvt_f32_ubyte0:
+      return DAG.getNode(AMDGPUISD::CVT_F32_UBYTE0, DL, VT, Op.getOperand(1));
+
+    case AMDGPUIntrinsic::AMDGPU_cvt_f32_ubyte1:
+      return DAG.getNode(AMDGPUISD::CVT_F32_UBYTE1, DL, VT, Op.getOperand(1));
+
+    case AMDGPUIntrinsic::AMDGPU_cvt_f32_ubyte2:
+      return DAG.getNode(AMDGPUISD::CVT_F32_UBYTE2, DL, VT, Op.getOperand(1));
+
+    case AMDGPUIntrinsic::AMDGPU_cvt_f32_ubyte3:
+      return DAG.getNode(AMDGPUISD::CVT_F32_UBYTE3, DL, VT, Op.getOperand(1));
+
     case AMDGPUIntrinsic::AMDGPU_bfe_i32:
       return DAG.getNode(AMDGPUISD::BFE_I32, DL, VT,
                          Op.getOperand(1),
@@ -1256,7 +1268,6 @@ SDValue AMDGPUTargetLowering::LowerUINT_TO_FP(SDValue Op,
   FloatHi = DAG.getNode(ISD::FMUL, DL, MVT::f32, FloatHi,
                         DAG.getConstantFP(4294967296.0f, MVT::f32)); // 2^32
   return DAG.getNode(ISD::FADD, DL, MVT::f32, FloatLo, FloatHi);
-
 }
 
 SDValue AMDGPUTargetLowering::ExpandSIGN_EXTEND_INREG(SDValue Op,
@@ -1582,6 +1593,10 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SAMPLEB)
   NODE_NAME_CASE(SAMPLED)
   NODE_NAME_CASE(SAMPLEL)
+  NODE_NAME_CASE(CVT_F32_UBYTE0)
+  NODE_NAME_CASE(CVT_F32_UBYTE1)
+  NODE_NAME_CASE(CVT_F32_UBYTE2)
+  NODE_NAME_CASE(CVT_F32_UBYTE3)
   NODE_NAME_CASE(STORE_MSKOR)
   NODE_NAME_CASE(TBUFFER_STORE_FORMAT)
   }

@@ -59,6 +59,17 @@ def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
 
+
+def AMDGPUcvt_f32_ubyte0 : SDNode<"AMDGPUISD::CVT_F32_UBYTE0",
+  SDTIntToFPOp, []>;
+def AMDGPUcvt_f32_ubyte1 : SDNode<"AMDGPUISD::CVT_F32_UBYTE1",
+  SDTIntToFPOp, []>;
+def AMDGPUcvt_f32_ubyte2 : SDNode<"AMDGPUISD::CVT_F32_UBYTE2",
+  SDTIntToFPOp, []>;
+def AMDGPUcvt_f32_ubyte3 : SDNode<"AMDGPUISD::CVT_F32_UBYTE3",
+  SDTIntToFPOp, []>;
+
+
 // urecip - This operation is a helper for integer division, it returns the
 // result of 1 / a as a fractional unsigned integer.
 // out = (2^32 / a) + e
