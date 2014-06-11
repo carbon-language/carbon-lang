@@ -5,6 +5,15 @@
 // attempt within a single file (which is to avoid having very broken files take
 // minutes to finally be rejected by the parser).
 
+namespace PR12951 {
+// If there are two corrections that have the same identifier and edit distance
+// and only differ by their namespaces, don't suggest either as a correction
+// since both are equally likely corrections.
+namespace foobar { struct Thing {}; }
+namespace bazquux { struct Thing {}; }
+void f() { Thing t; } // expected-error{{unknown type name 'Thing'}}
+}
+
 namespace bogus_keyword_suggestion {
 void test() {
    status = "OK";  // expected-error-re {{use of undeclared identifier 'status'{{$}}}}
