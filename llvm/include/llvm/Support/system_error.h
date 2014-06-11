@@ -650,11 +650,6 @@ public:
 const error_category& generic_category();
 const error_category& system_category();
 
-/// Get the error_category used for errno values from POSIX functions. This is
-/// the same as the system_category on POSIX systems, but is the same as the
-/// generic_category on Windows.
-const error_category& posix_category();
-
 class error_condition
 {
   int _val_;
