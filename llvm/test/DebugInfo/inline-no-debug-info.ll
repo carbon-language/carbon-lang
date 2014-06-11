@@ -24,7 +24,7 @@
 ; CHECK-DAG: [[A]] = metadata !{i32 4, i32 0, metadata !{{[01-9]+}}, null}
 
 ; Debug location of the inlined code.
-; CHECK-DAG: [[B]] = metadata !{i32 2, i32 0, metadata !{{[01-9]+}}, metadata !{{[01-9]+}}}
+; CHECK-DAG: [[B]] = metadata !{i32 2, i32 0, metadata !{{[01-9]+}}, metadata [[A]]}
 
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
