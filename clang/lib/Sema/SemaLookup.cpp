@@ -3348,6 +3348,7 @@ public:
 
   bool includeHiddenDecls() const override { return true; }
 
+  // Methods for adding potential corrections to the consumer.
   void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
                  bool InBaseClass) override;
   void FoundName(StringRef Name);
@@ -3356,10 +3357,14 @@ public:
 
   bool empty() const { return CorrectionResults.empty(); }
 
+  /// \brief Return the list of TypoCorrections for the given identifier from
+  /// the set of corrections that have the closest edit distance, if any.
   TypoResultList &operator[](StringRef Name) {
     return CorrectionResults.begin()->second[Name];
   }
 
+  /// \brief Return the edit distance of the corrections that have the
+  /// closest/best edit distance from the original typop.
   unsigned getBestEditDistance(bool Normalized) {
     if (CorrectionResults.empty())
       return (std::numeric_limits<unsigned>::max)();
@@ -3368,9 +3373,18 @@ public:
     return Normalized ? TypoCorrection::NormalizeEditDistance(BestED) : BestED;
   }
 
+  /// \brief Set-up method to add to the consumer the set of namespaces to use
+  /// in performing corrections to nested name specifiers. This method also
+  /// implicitly adds all of the known classes in the current AST context to the
+  /// to the consumer for correcting nested name specifiers.
   void
   addNamespaces(const llvm::MapVector<NamespaceDecl *, bool> &KnownNamespaces);
 
+  /// \brief Return the next typo correction that passes all internal filters
+  /// and is deemed valid by the consumer's CorrectionCandidateCallback,
+  /// starting with the corrections that have the closest edit distance. An
+  /// empty TypoCorrection is returned once no more viable corrections remain
+  /// in the consumer.
   TypoCorrection getNextCorrection();
 
 private:
@@ -3406,32 +3420,7 @@ private:
 
    public:
     NamespaceSpecifierSet(ASTContext &Context, DeclContext *CurContext,
-                          CXXScopeSpec *CurScopeSpec)
-        : Context(Context), CurContextChain(buildContextChain(CurContext)),
-          isSorted(false) {
-      if (NestedNameSpecifier *NNS =
-              CurScopeSpec ? CurScopeSpec->getScopeRep() : nullptr) {
-        llvm::raw_string_ostream SpecifierOStream(CurNameSpecifier);
-        NNS->print(SpecifierOStream, Context.getPrintingPolicy());
-
-        getNestedNameSpecifierIdentifiers(NNS, CurNameSpecifierIdentifiers);
-      }
-      // Build the list of identifiers that would be used for an absolute
-      // (from the global context) NestedNameSpecifier referring to the current
-      // context.
-      for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
-                                          CEnd = CurContextChain.rend();
-           C != CEnd; ++C) {
-        if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C))
-          CurContextIdentifiers.push_back(ND->getIdentifier());
-      }
-
-      // Add the global context as a NestedNameSpecifier
-      Distances.insert(1);
-      DistanceMap[1].push_back(
-          {cast<DeclContext>(Context.getTranslationUnitDecl()),
-           NestedNameSpecifier::GlobalSpecifier(Context), 1});
-    }
+                          CXXScopeSpec *CurScopeSpec);
 
     /// \brief Add the DeclContext (a namespace or record) to the set, computing
     /// the corresponding NestedNameSpecifier and its distance in the process.
@@ -3448,8 +3437,15 @@ private:
   void addName(StringRef Name, NamedDecl *ND,
                NestedNameSpecifier *NNS = nullptr, bool isKeyword = false);
 
+  /// \brief Find any visible decls for the given typo correction candidate.
+  /// If none are found, it to the set of candidates for which qualified lookups
+  /// will be performed to find possible nested name specifier changes.
   bool resolveCorrection(TypoCorrection &Candidate);
 
+  /// \brief Perform qualified lookups on the queued set of typo correction
+  /// candidates and add the nested name specifier changes to each candidate if
+  /// a lookup succeeds (at which point the candidate will be returned to the
+  /// main pool of potential corrections).
   void performQualifiedLookups();
 
   /// \brief The name written that is a typo in the source.
@@ -3741,6 +3737,33 @@ void TypoCorrectionConsumer::performQualifiedLookups() {
     }
   }
   QualifiedResults.clear();
+}
+
+TypoCorrectionConsumer::NamespaceSpecifierSet::NamespaceSpecifierSet(
+    ASTContext &Context, DeclContext *CurContext, CXXScopeSpec *CurScopeSpec)
+    : Context(Context), CurContextChain(buildContextChain(CurContext)),
+      isSorted(false) {
+  if (NestedNameSpecifier *NNS =
+          CurScopeSpec ? CurScopeSpec->getScopeRep() : nullptr) {
+    llvm::raw_string_ostream SpecifierOStream(CurNameSpecifier);
+    NNS->print(SpecifierOStream, Context.getPrintingPolicy());
+
+    getNestedNameSpecifierIdentifiers(NNS, CurNameSpecifierIdentifiers);
+  }
+  // Build the list of identifiers that would be used for an absolute
+  // (from the global context) NestedNameSpecifier referring to the current
+  // context.
+  for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
+                                         CEnd = CurContextChain.rend();
+       C != CEnd; ++C) {
+    if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C))
+      CurContextIdentifiers.push_back(ND->getIdentifier());
+  }
+
+  // Add the global context as a NestedNameSpecifier
+  Distances.insert(1);
+  DistanceMap[1].push_back({cast<DeclContext>(Context.getTranslationUnitDecl()),
+                            NestedNameSpecifier::GlobalSpecifier(Context), 1});
 }
 
 auto TypoCorrectionConsumer::NamespaceSpecifierSet::buildContextChain(
