@@ -365,8 +365,8 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
   coverage_data.Init();
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(uptr npcs) {
-  if (SANITIZER_ANDROID && common_flags()->coverage &&
-      common_flags()->coverage_direct) {
+  if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
+  if (SANITIZER_ANDROID) {
     // dlopen/dlclose interceptors do not work on Android, so we rely on
     // Extend() calls to update .sancov.map.
     CovUpdateMapping(GET_CALLER_PC());
