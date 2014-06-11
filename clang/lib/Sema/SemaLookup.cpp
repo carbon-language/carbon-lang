@@ -3342,7 +3342,7 @@ public:
         SS(SS), CorrectionValidator(CCC), MemberContext(MemberContext),
         Result(SemaRef, TypoName, LookupKind),
         Namespaces(SemaRef.Context, SemaRef.CurContext, SS),
-        EnteringContext(EnteringContext) {
+        EnteringContext(EnteringContext), SearchNamespaces(false) {
     Result.suppressDiagnostics();
   }
 
@@ -3467,7 +3467,7 @@ private:
   NamespaceSpecifierSet Namespaces;
   SmallVector<TypoCorrection, 2> QualifiedResults;
   bool EnteringContext;
-  bool SearchNamespaces = false;
+  bool SearchNamespaces;
 };
 
 }
@@ -3762,8 +3762,9 @@ TypoCorrectionConsumer::NamespaceSpecifierSet::NamespaceSpecifierSet(
 
   // Add the global context as a NestedNameSpecifier
   Distances.insert(1);
-  DistanceMap[1].push_back({cast<DeclContext>(Context.getTranslationUnitDecl()),
-                            NestedNameSpecifier::GlobalSpecifier(Context), 1});
+  SpecifierInfo SI = {cast<DeclContext>(Context.getTranslationUnitDecl()),
+                      NestedNameSpecifier::GlobalSpecifier(Context), 1};
+  DistanceMap[1].push_back(SI);
 }
 
 auto TypoCorrectionConsumer::NamespaceSpecifierSet::buildContextChain(
@@ -3880,7 +3881,8 @@ void TypoCorrectionConsumer::NamespaceSpecifierSet::addNameSpecifier(
 
   isSorted = false;
   Distances.insert(NumSpecifiers);
-  DistanceMap[NumSpecifiers].push_back({Ctx, NNS, NumSpecifiers});
+  SpecifierInfo SI = {Ctx, NNS, NumSpecifiers};
+  DistanceMap[NumSpecifiers].push_back(SI);
 }
 
 /// \brief Perform name lookup for a possible result for typo correction.
