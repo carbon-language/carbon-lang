@@ -3280,12 +3280,15 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
 }
 
 template <typename TB>
-static void CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
+static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
+                                  bool &HadTheAttribute, bool warn) {
   QualType T = castExpr->getType();
+  HadTheAttribute = false;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
     if (TB *ObjCBAttr = getObjCBridgeAttr<TB>(TD)) {
       if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
+        HadTheAttribute = true;
         NamedDecl *Target = nullptr;
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),
@@ -3300,23 +3303,26 @@ static void CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
                   (CastClass && ExprClass->isSuperClassOf(CastClass)))
-                return;
-              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
-                << T << Target->getName() << castType->getPointeeType();
-              return;
+                return true;
+              if (warn)
+                S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
+                  << T << Target->getName() << castType->getPointeeType();
+              return false;
             } else if (castType->isObjCIdType() ||
                        (S.Context.ObjCObjectAdoptsQTypeProtocols(
                           castType, ExprClass)))
               // ok to cast to 'id'.
               // casting to id<p-list> is ok if bridge type adopts all of
               // p-list protocols.
-              return;
+              return true;
             else {
-              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
-                << T << Target->getName() << castType;
-              S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-              S.Diag(Target->getLocStart(), diag::note_declared_at);
-              return;
+              if (warn) {
+                S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
+                  << T << Target->getName() << castType;
+                S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+                S.Diag(Target->getLocStart(), diag::note_declared_at);
+              }
+              return false;
            }
           }
         }
@@ -3325,20 +3331,25 @@ static void CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
         S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
         if (Target)
           S.Diag(Target->getLocStart(), diag::note_declared_at);
+        return true;
       }
-      return;
+      return false;
     }
     T = TDNDecl->getUnderlyingType();
   }
+  return true;
 }
 
 template <typename TB>
-static void CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
+static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr,
+                                  bool &HadTheAttribute, bool warn) {
   QualType T = castType;
+  HadTheAttribute = false;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
     if (TB *ObjCBAttr = getObjCBridgeAttr<TB>(TD)) {
       if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
+        HadTheAttribute = true;
         NamedDecl *Target = nullptr;
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),
@@ -3353,24 +3364,28 @@ static void CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
                   (ExprClass && CastClass->isSuperClassOf(ExprClass)))
-                return;
-              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
-                << castExpr->getType()->getPointeeType() << T;
-              S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-              return;
+                return true;
+              if (warn) {
+                S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
+                  << castExpr->getType()->getPointeeType() << T;
+                S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+              }
+              return false;
             } else if (castExpr->getType()->isObjCIdType() ||
                        (S.Context.QIdProtocolsAdoptObjCObjectProtocols(
                           castExpr->getType(), CastClass)))
               // ok to cast an 'id' expression to a CFtype.
               // ok to cast an 'id<plist>' expression to CFtype provided plist
               // adopts all of CFtype's ObjetiveC's class plist.
-              return;
+              return true;
             else {
-              S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
-                << castExpr->getType() << castType;
-              S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-              S.Diag(Target->getLocStart(), diag::note_declared_at);
-              return;
+              if (warn) {
+                S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
+                  << castExpr->getType() << castType;
+                S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
+                S.Diag(Target->getLocStart(), diag::note_declared_at);
+              }
+              return false;
             }
           }
         }
@@ -3379,11 +3394,13 @@ static void CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
         S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
         if (Target)
           S.Diag(Target->getLocStart(), diag::note_declared_at);
+        return true;
       }
-      return;
+      return false;
     }
     T = TDNDecl->getUnderlyingType();
   }
+  return true;
 }
 
 void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
@@ -3393,12 +3410,46 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExpr->getType());
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
   if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation) {
-    CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr);
-    CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+    bool HasObjCBridgeAttr;
+    bool ObjCBridgeAttrWillNotWarn =
+      CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, HasObjCBridgeAttr,
+                                            false);
+    if (ObjCBridgeAttrWillNotWarn && HasObjCBridgeAttr)
+      return;
+    bool HasObjCBridgeMutableAttr;
+    bool ObjCBridgeMutableAttrWillNotWarn =
+      CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr,
+                                                   HasObjCBridgeMutableAttr, false);
+    if (ObjCBridgeMutableAttrWillNotWarn && HasObjCBridgeMutableAttr)
+      return;
+    
+    if (HasObjCBridgeAttr)
+      CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, HasObjCBridgeAttr,
+                                            true);
+    else if (HasObjCBridgeMutableAttr)
+      CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr,
+                                                   HasObjCBridgeMutableAttr, true);
   }
   else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable) {
-    CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr);
-    CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+    bool HasObjCBridgeAttr;
+    bool ObjCBridgeAttrWillNotWarn =
+      CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr, HasObjCBridgeAttr,
+                                            false);
+    if (ObjCBridgeAttrWillNotWarn && HasObjCBridgeAttr)
+      return;
+    bool HasObjCBridgeMutableAttr;
+    bool ObjCBridgeMutableAttrWillNotWarn =
+      CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr,
+                                                   HasObjCBridgeMutableAttr, false);
+    if (ObjCBridgeMutableAttrWillNotWarn && HasObjCBridgeMutableAttr)
+      return;
+    
+    if (HasObjCBridgeAttr)
+      CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr, HasObjCBridgeAttr,
+                                            true);
+    else if (HasObjCBridgeMutableAttr)
+      CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr,
+                                                   HasObjCBridgeMutableAttr, true);
   }
 }
 
