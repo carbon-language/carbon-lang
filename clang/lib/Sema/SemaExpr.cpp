@@ -1952,9 +1952,8 @@ recoverFromMSUnqualifiedLookup(Sema &S, ASTContext &Context,
   // Diagnose this as unqualified lookup into a dependent base class.  If 'this'
   // is available, suggest inserting 'this->' as a fixit.
   SourceLocation Loc = NameInfo.getLoc();
-  DiagnosticBuilder DB =
-      S.Diag(Loc, diag::ext_undeclared_unqual_id_with_dependent_base)
-      << NameInfo.getName() << RD;
+  auto DB = S.Diag(Loc, diag::ext_undeclared_unqual_id_with_dependent_base);
+  DB << NameInfo.getName() << RD;
 
   if (!ThisType.isNull()) {
     DB << FixItHint::CreateInsertion(Loc, "this->");
