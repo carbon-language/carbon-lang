@@ -29,6 +29,18 @@ class MCStreamer;
 class MCSymbol;
 class MCContext;
 
+namespace WinEH {
+enum class EncodingType {
+  ET_Invalid, /// Invalid
+  ET_Alpha,   /// Windows Alpha
+  ET_Alpha64, /// Windows AXP64
+  ET_ARM,     /// Windows NT (Windows on ARM)
+  ET_CE,      /// Windows CE ARM, PowerPC, SH3, SH4
+  ET_Itanium, /// Windows x64, Windows Itanium (IA-64)
+  ET_MIPS = ET_Alpha,
+};
+}
+
 namespace ExceptionHandling {
 enum ExceptionsType { None, DwarfCFI, SjLj, ARM, Win64 };
 }
@@ -286,8 +298,11 @@ protected:
   /// false.
   bool SupportsDebugInformation;
 
-  /// True if target supports exception handling.  Defaults to None
+  /// Exception handling format for the target.  Defaults to None.
   ExceptionHandling::ExceptionsType ExceptionsType;
+
+  /// Windows exception handling data (.pdata) encoding.  Defaults to Invalid.
+  WinEH::EncodingType WinEHEncodingType;
 
   /// True if Dwarf2 output generally uses relocations for references to other
   /// .debug_* sections.
@@ -459,6 +474,9 @@ public:
   }
   ExceptionHandling::ExceptionsType getExceptionHandlingType() const {
     return ExceptionsType;
+  }
+  WinEH::EncodingType getWinEHEncodingType() const {
+    return WinEHEncodingType;
   }
   bool isExceptionHandlingDwarf() const {
     return (ExceptionsType == ExceptionHandling::DwarfCFI ||

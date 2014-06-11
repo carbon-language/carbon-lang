@@ -82,6 +82,7 @@ MCAsmInfo::MCAsmInfo() {
   HasLEB128 = false;
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
+  WinEHEncodingType = WinEH::EncodingType::ET_Invalid;
   DwarfUsesRelocationsAcrossSections = true;
   DwarfFDESymbolsUseAbsDiff = false;
   DwarfRegNumForCFI = false;
@@ -99,7 +100,7 @@ MCAsmInfo::MCAsmInfo() {
   //   - MCAsmInfoDarwin is handling this case
   // - Generic_GCC toolchains enable the integrated assembler on a per
   //   architecture basis.
-  //   - The target subclasses for AArch64, ARM, and X86  handle these cases
+  //   - The target subclasses for AArch64, ARM, and X86 handle these cases
   UseIntegratedAssembler = false;
 
   CompressDebugSections = false;
