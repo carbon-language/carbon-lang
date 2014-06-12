@@ -96,6 +96,19 @@ static inline int MCLOHIdToNbArgs(MCLOHType Kind) {
   return -1;
 }
 
+namespace {
+class raw_counting_ostream : public raw_ostream {
+  uint64_t Count = 0;
+
+  void write_impl(const char *, size_t size) override { Count += size; }
+
+  uint64_t current_pos() const override { return Count; }
+
+public:
+  ~raw_counting_ostream() { flush(); }
+};
+}
+
 /// Store Linker Optimization Hint information (LOH).
 class MCLOHDirective {
   MCLOHType Kind;
@@ -132,8 +145,7 @@ public:
   /// the given @p Layout.
   uint64_t getEmitSize(const MachObjectWriter &ObjWriter,
                        const MCAsmLayout &Layout) const {
-    std::string Buffer;
-    raw_string_ostream OutStream(Buffer);
+    raw_counting_ostream OutStream;
     Emit_impl(OutStream, ObjWriter, Layout);
     return OutStream.tell();
   }
