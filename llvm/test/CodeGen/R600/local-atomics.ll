@@ -48,7 +48,9 @@ define void @lds_atomic_add_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 }
 
 ; FUNC-LABEL: @lds_atomic_inc_ret_i32:
-; SI: DS_INC_RTN_U32
+; SI: S_MOV_B32 [[SNEGONE:s[0-9]+]], -1
+; SI: V_MOV_B32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]], 0x0
 ; SI: S_ENDPGM
 define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw add i32 addrspace(3)* %ptr, i32 1 seq_cst
@@ -57,7 +59,9 @@ define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 }
 
 ; FUNC-LABEL: @lds_atomic_inc_ret_i32_offset:
-; SI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_MOV_B32 [[SNEGONE:s[0-9]+]], -1
+; SI: V_MOV_B32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]], 0x10
 ; SI: S_ENDPGM
 define void @lds_atomic_inc_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
@@ -86,7 +90,9 @@ define void @lds_atomic_sub_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 }
 
 ; FUNC-LABEL: @lds_atomic_dec_ret_i32:
-; SI: DS_DEC_RTN_U32
+; SI: S_MOV_B32 [[SNEGONE:s[0-9]+]], -1
+; SI: V_MOV_B32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: DS_DEC_RTN_U32  v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]], 0x0
 ; SI: S_ENDPGM
 define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw sub i32 addrspace(3)* %ptr, i32 1 seq_cst
@@ -95,7 +101,9 @@ define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 }
 
 ; FUNC-LABEL: @lds_atomic_dec_ret_i32_offset:
-; SI: DS_DEC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_MOV_B32 [[SNEGONE:s[0-9]+]], -1
+; SI: V_MOV_B32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
+; SI: DS_DEC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]], 0x10
 ; SI: S_ENDPGM
 define void @lds_atomic_dec_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4

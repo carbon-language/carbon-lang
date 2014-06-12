@@ -45,7 +45,11 @@ define void @lds_atomic_add_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace
 }
 
 ; FUNC-LABEL: @lds_atomic_inc_ret_i64:
-; SI: DS_INC_RTN_U64
+; SI: S_MOV_B64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
+; SI-DAG: V_MOV_B32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
+; SI-DAG: V_MOV_B32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: DS_INC_RTN_U64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}},
+; SI: BUFFER_STORE_DWORDX2 [[RESULT]],
 ; SI: S_ENDPGM
 define void @lds_atomic_inc_ret_i64(i64 addrspace(1)* %out, i64 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw add i64 addrspace(3)* %ptr, i64 1 seq_cst
@@ -83,7 +87,11 @@ define void @lds_atomic_sub_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace
 }
 
 ; FUNC-LABEL: @lds_atomic_dec_ret_i64:
-; SI: DS_DEC_RTN_U64
+; SI: S_MOV_B64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
+; SI-DAG: V_MOV_B32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
+; SI-DAG: V_MOV_B32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: DS_DEC_RTN_U64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}},
+; SI: BUFFER_STORE_DWORDX2 [[RESULT]],
 ; SI: S_ENDPGM
 define void @lds_atomic_dec_ret_i64(i64 addrspace(1)* %out, i64 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw sub i64 addrspace(3)* %ptr, i64 1 seq_cst

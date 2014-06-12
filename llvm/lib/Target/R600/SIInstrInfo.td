@@ -494,32 +494,6 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   let mayLoad = 1;
 }
 
-// 1 address, 0 data.
-class DS_1A0D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
-  op,
-  (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, u16imm:$offset),
-  asm#" $vdst, $addr, $offset, [M0]",
-  []> {
-  let data0 = 0;
-  let data1 = 0;
-  let mayStore = 1;
-  let mayLoad = 1;
-}
-
-// 1 address, 0 data.
-class DS_1A0D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
-  op,
-  (outs ),
-  (ins i1imm:$gds, VReg_32:$addr, u16imm:$offset),
-  asm#" $addr, $offset, [M0]",
-  []> {
-  let data0 = 0;
-  let data1 = 0;
-  let mayStore = 1;
-  let mayLoad = 1;
-}
-
 // 1 address, 2 data.
 class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,

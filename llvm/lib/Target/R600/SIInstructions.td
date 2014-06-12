@@ -717,8 +717,8 @@ defm V_CMPX_CLASS_F64 : VOPC_64 <0x000000b8, "V_CMPX_CLASS_F64">;
 def DS_ADD_U32 : DS_1A1D_NORET <0x0, "DS_ADD_U32", VReg_32>;
 def DS_SUB_U32 : DS_1A1D_NORET <0x1, "DS_SUB_U32", VReg_32>;
 def DS_RSUB_U32 : DS_1A1D_NORET <0x2, "DS_RSUB_U32", VReg_32>;
-def DS_INC_U32 : DS_1A0D_NORET <0x3, "DS_INC_U32", VReg_32>;
-def DS_DEC_U32 : DS_1A0D_NORET <0x4, "DS_DEC_U32", VReg_32>;
+def DS_INC_U32 : DS_1A1D_NORET <0x3, "DS_INC_U32", VReg_32>;
+def DS_DEC_U32 : DS_1A1D_NORET <0x4, "DS_DEC_U32", VReg_32>;
 def DS_MIN_I32 : DS_1A1D_NORET <0x5, "DS_MIN_I32", VReg_32>;
 def DS_MAX_I32 : DS_1A1D_NORET <0x6, "DS_MAX_I32", VReg_32>;
 def DS_MIN_U32 : DS_1A1D_NORET <0x7, "DS_MIN_U32", VReg_32>;
@@ -735,8 +735,8 @@ def DS_MAX_F32 : DS_1A1D_NORET <0x13, "DS_MAX_F32", VReg_32>;
 def DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "DS_ADD_RTN_U32", VReg_32>;
 def DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "DS_SUB_RTN_U32", VReg_32>;
 def DS_RSUB_RTN_U32 : DS_1A1D_RET <0x22, "DS_RSUB_RTN_U32", VReg_32>;
-def DS_INC_RTN_U32 : DS_1A0D_RET <0x23, "DS_INC_RTN_U32", VReg_32>;
-def DS_DEC_RTN_U32 : DS_1A0D_RET <0x24, "DS_DEC_RTN_U32", VReg_32>;
+def DS_INC_RTN_U32 : DS_1A1D_RET <0x23, "DS_INC_RTN_U32", VReg_32>;
+def DS_DEC_RTN_U32 : DS_1A1D_RET <0x24, "DS_DEC_RTN_U32", VReg_32>;
 def DS_MIN_RTN_I32 : DS_1A1D_RET <0x25, "DS_MIN_RTN_I32", VReg_32>;
 def DS_MAX_RTN_I32 : DS_1A1D_RET <0x26, "DS_MAX_RTN_I32", VReg_32>;
 def DS_MIN_RTN_U32 : DS_1A1D_RET <0x27, "DS_MIN_RTN_U32", VReg_32>;
@@ -761,8 +761,8 @@ def DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "DS_WRAP_RTN_F32", VReg_32>;
 def DS_ADD_U64 : DS_1A1D_NORET <0x40, "DS_ADD_U64", VReg_32>;
 def DS_SUB_U64 : DS_1A1D_NORET <0x41, "DS_SUB_U64", VReg_32>;
 def DS_RSUB_U64 : DS_1A1D_NORET <0x42, "DS_RSUB_U64", VReg_32>;
-def DS_INC_U64 : DS_1A0D_NORET <0x43, "DS_INC_U64", VReg_32>;
-def DS_DEC_U64 : DS_1A0D_NORET <0x44, "DS_DEC_U64", VReg_32>;
+def DS_INC_U64 : DS_1A1D_NORET <0x43, "DS_INC_U64", VReg_32>;
+def DS_DEC_U64 : DS_1A1D_NORET <0x44, "DS_DEC_U64", VReg_32>;
 def DS_MIN_I64 : DS_1A1D_NORET <0x45, "DS_MIN_I64", VReg_64>;
 def DS_MAX_I64 : DS_1A1D_NORET <0x46, "DS_MAX_I64", VReg_64>;
 def DS_MIN_U64 : DS_1A1D_NORET <0x47, "DS_MIN_U64", VReg_64>;
@@ -779,8 +779,8 @@ def DS_MAX_F64 : DS_1A1D_NORET <0x53, "DS_MAX_F64", VReg_64>;
 def DS_ADD_RTN_U64 : DS_1A1D_RET <0x60, "DS_ADD_RTN_U64", VReg_64>;
 def DS_SUB_RTN_U64 : DS_1A1D_RET <0x61, "DS_SUB_RTN_U64", VReg_64>;
 def DS_RSUB_RTN_U64 : DS_1A1D_RET <0x62, "DS_RSUB_RTN_U64", VReg_64>;
-def DS_INC_RTN_U64 : DS_1A0D_RET <0x63, "DS_INC_RTN_U64", VReg_64>;
-def DS_DEC_RTN_U64 : DS_1A0D_RET <0x64, "DS_DEC_RTN_U64", VReg_64>;
+def DS_INC_RTN_U64 : DS_1A1D_RET <0x63, "DS_INC_RTN_U64", VReg_64>;
+def DS_DEC_RTN_U64 : DS_1A1D_RET <0x64, "DS_DEC_RTN_U64", VReg_64>;
 def DS_MIN_RTN_I64 : DS_1A1D_RET <0x65, "DS_MIN_RTN_I64", VReg_64>;
 def DS_MAX_RTN_I64 : DS_1A1D_RET <0x66, "DS_MAX_RTN_I64", VReg_64>;
 def DS_MIN_RTN_U64 : DS_1A1D_RET <0x67, "DS_MIN_RTN_U64", VReg_64>;
@@ -2272,15 +2272,25 @@ multiclass DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> {
 }
 
 // Special case of DSAtomicRetPat for add / sub 1 -> inc / dec
-multiclass DSAtomicIncRetPat<DS inst, ValueType vt, PatFrag frag> {
+//
+// We need to use something for the data0, so we set a register to
+// -1. For the non-rtn variants, the manual says it does
+// DS[A] = (DS[A] >= D0) ? 0 : DS[A] + 1, and setting D0 to uint_max
+// will always do the increment so I'm assuming it's the same.
+//
+// We also load this -1 with s_mov_b32 / s_mov_b64 even though this
+// needs to be a VGPR. The SGPR copy pass will fix this, and it's
+// easier since there is no v_mov_b64.
+multiclass DSAtomicIncRetPat<DS inst, ValueType vt,
+                             Instruction LoadImm, PatFrag frag> {
   def : Pat <
     (frag (add i32:$ptr, (i32 IMM16bit:$offset)), (vt 1)),
-    (inst (i1 0), $ptr, (as_i16imm $offset))
+    (inst (i1 0), $ptr, (LoadImm (vt -1)), (as_i16imm $offset))
   >;
 
   def : Pat <
     (frag i32:$ptr, (vt 1)),
-    (inst 0, $ptr, 0)
+    (inst 0, $ptr, (LoadImm (vt -1)), 0)
   >;
 }
 
@@ -2298,8 +2308,10 @@ multiclass DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> {
 
 
 // 32-bit atomics.
-defm : DSAtomicIncRetPat<DS_INC_RTN_U32, i32, atomic_load_add_local>;
-defm : DSAtomicIncRetPat<DS_DEC_RTN_U32, i32, atomic_load_sub_local>;
+defm : DSAtomicIncRetPat<DS_INC_RTN_U32, i32,
+                         S_MOV_B32, atomic_load_add_local>;
+defm : DSAtomicIncRetPat<DS_DEC_RTN_U32, i32,
+                         S_MOV_B32, atomic_load_sub_local>;
 
 defm : DSAtomicRetPat<DS_WRXCHG_RTN_B32, i32, atomic_swap_local>;
 defm : DSAtomicRetPat<DS_ADD_RTN_U32, i32, atomic_load_add_local>;
@@ -2315,8 +2327,10 @@ defm : DSAtomicRetPat<DS_MAX_RTN_U32, i32, atomic_load_umax_local>;
 defm : DSAtomicCmpXChg<DS_CMPST_RTN_B32, i32, atomic_cmp_swap_32_local>;
 
 // 64-bit atomics.
-defm : DSAtomicIncRetPat<DS_INC_RTN_U64, i64, atomic_load_add_local>;
-defm : DSAtomicIncRetPat<DS_DEC_RTN_U64, i64, atomic_load_sub_local>;
+defm : DSAtomicIncRetPat<DS_INC_RTN_U64, i64,
+                         S_MOV_B64, atomic_load_add_local>;
+defm : DSAtomicIncRetPat<DS_DEC_RTN_U64, i64,
+                         S_MOV_B64, atomic_load_sub_local>;
 
 defm : DSAtomicRetPat<DS_WRXCHG_RTN_B64, i64, atomic_swap_local>;
 defm : DSAtomicRetPat<DS_ADD_RTN_U64, i64, atomic_load_add_local>;
