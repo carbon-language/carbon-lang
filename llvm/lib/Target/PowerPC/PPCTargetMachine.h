@@ -29,7 +29,6 @@ namespace llvm {
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
-  PPCInstrInfo        InstrInfo;
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
@@ -40,7 +39,9 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL, bool is64Bit);
 
-  const PPCInstrInfo      *getInstrInfo() const override { return &InstrInfo; }
+  const PPCInstrInfo *getInstrInfo() const override {
+    return getSubtargetImpl()->getInstrInfo();
+  }
   const PPCFrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }
@@ -51,8 +52,8 @@ public:
   const PPCSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  const PPCRegisterInfo   *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
+  const PPCRegisterInfo *getRegisterInfo() const override {
+    return &getInstrInfo()->getRegisterInfo();
   }
 
   const DataLayout *getDataLayout() const override {
