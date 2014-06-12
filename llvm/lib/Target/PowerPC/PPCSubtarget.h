@@ -16,6 +16,7 @@
 
 #include "PPCFrameLowering.h"
 #include "PPCInstrInfo.h"
+#include "PPCJITInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -105,9 +106,10 @@ protected:
   /// OptLevel - What default optimization level we're emitting code for.
   CodeGenOpt::Level OptLevel;
 
-  PPCFrameLowering    FrameLowering;
+  PPCFrameLowering FrameLowering;
   const DataLayout DL;
   PPCInstrInfo InstrInfo;
+  PPCJITInfo JITInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -141,6 +143,7 @@ public:
   const PPCFrameLowering *getFrameLowering() const { return &FrameLowering; }
   const DataLayout *getDataLayout() const { return &DL; }
   const PPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
+  PPCJITInfo *getJITInfo() { return &JITInfo; }
 
   /// initializeSubtargetDependencies - Initializes using a CPU and feature string
   /// so that we can use initializer lists for subtarget initialization.

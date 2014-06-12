@@ -42,8 +42,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL, bool is64Bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, is64Bit, OL), JITInfo(Subtarget),
-      TLInfo(*this), TSInfo(*this) {
+      Subtarget(TT, CPU, FS, is64Bit, OL), TLInfo(*this), TSInfo(*this) {
   initAsmInfo();
 }
 

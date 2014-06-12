@@ -14,36 +14,33 @@
 #ifndef POWERPC_JITINFO_H
 #define POWERPC_JITINFO_H
 
-#include "PPCSubtarget.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
+class PPCSubtarget;
+class PPCJITInfo : public TargetJITInfo {
+protected:
+  PPCSubtarget &Subtarget;
+  bool is64Bit;
 
-  class PPCJITInfo : public TargetJITInfo {
-  protected:
-    PPCSubtarget &Subtarget;
-    bool is64Bit;
-  public:
-    PPCJITInfo(PPCSubtarget &STI)
-        : Subtarget(STI), is64Bit(STI.isPPC64()) {
-      useGOT = 0;
-    }
+public:
+  PPCJITInfo(PPCSubtarget &STI);
 
-    StubLayout getStubLayout() override;
-    void *emitFunctionStub(const Function* F, void *Fn,
-                           JITCodeEmitter &JCE) override;
-    LazyResolverFn getLazyResolverFunction(JITCompilerFn) override;
-    void relocate(void *Function, MachineRelocation *MR,
-                  unsigned NumRelocs, unsigned char* GOTBase) override;
+  StubLayout getStubLayout() override;
+  void *emitFunctionStub(const Function *F, void *Fn,
+                         JITCodeEmitter &JCE) override;
+  LazyResolverFn getLazyResolverFunction(JITCompilerFn) override;
+  void relocate(void *Function, MachineRelocation *MR, unsigned NumRelocs,
+                unsigned char *GOTBase) override;
 
-    /// replaceMachineCodeForFunction - Make it so that calling the function
-    /// whose machine code is at OLD turns into a call to NEW, perhaps by
-    /// overwriting OLD with a branch to NEW.  This is used for self-modifying
-    /// code.
-    ///
-    void replaceMachineCodeForFunction(void *Old, void *New) override;
-  };
+  /// replaceMachineCodeForFunction - Make it so that calling the function
+  /// whose machine code is at OLD turns into a call to NEW, perhaps by
+  /// overwriting OLD with a branch to NEW.  This is used for self-modifying
+  /// code.
+  ///
+  void replaceMachineCodeForFunction(void *Old, void *New) override;
+};
 }
 
 #endif

@@ -13,7 +13,7 @@
 
 #include "PPCJITInfo.h"
 #include "PPCRelocations.h"
-#include "PPCTargetMachine.h"
+#include "PPCSubtarget.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -24,6 +24,11 @@ using namespace llvm;
 #define DEBUG_TYPE "jit"
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
+
+PPCJITInfo::PPCJITInfo(PPCSubtarget &STI)
+    : Subtarget(STI), is64Bit(STI.isPPC64()) {
+  useGOT = 0;
+}
 
 #define BUILD_ADDIS(RD,RS,IMM16) \
   ((15 << 26) | ((RD) << 21) | ((RS) << 16) | ((IMM16) & 65535))
