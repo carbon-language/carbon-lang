@@ -8913,7 +8913,7 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
                                            bool IsMemset, bool ZeroMemset,
                                            bool MemcpyStrSrc,
                                            MachineFunction &MF) const {
-  if (this->Subtarget.isPPC64()) {
+  if (Subtarget.isPPC64()) {
     return MVT::i64;
   } else {
     return MVT::i32;
