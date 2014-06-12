@@ -38,7 +38,7 @@
 
 using namespace llvm;
 
-cl::OptionCategory PollyCategory("Polly Optionsa",
+cl::OptionCategory PollyCategory("Polly Options",
                                  "Configure the polly loop optimizer");
 
 static cl::opt<bool>
