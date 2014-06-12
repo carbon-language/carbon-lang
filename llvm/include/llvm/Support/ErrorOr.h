@@ -103,7 +103,7 @@ public:
     new (getErrorStorage()) error_code(make_error_code(ErrorCode));
   }
 
-  ErrorOr(llvm::error_code EC) : HasError(true) {
+  ErrorOr(std::error_code EC) : HasError(true) {
     new (getErrorStorage()) error_code(EC);
   }
 

@@ -865,7 +865,7 @@ bool home_directory(SmallVectorImpl<char> &result) {
 } // end namespace path
 
 namespace windows {
-llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
+std::error_code UTF8ToUTF16(llvm::StringRef utf8,
                              llvm::SmallVectorImpl<wchar_t> &utf16) {
   if (!utf8.empty()) {
     int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, utf8.begin(),
@@ -888,10 +888,10 @@ llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
   utf16.push_back(0);
   utf16.pop_back();
 
-  return llvm::error_code();
+  return std::error_code();
 }
 
-llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
+std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
                              llvm::SmallVectorImpl<char> &utf8) {
   if (utf16_len) {
     // Get length.
@@ -916,7 +916,7 @@ llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
   utf8.push_back(0);
   utf8.pop_back();
 
-  return llvm::error_code();
+  return std::error_code();
 }
 } // end namespace windows
 } // end namespace sys

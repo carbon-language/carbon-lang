@@ -880,7 +880,7 @@ public:
   ~Input();
 
   // Check if there was an syntax or semantic error during parsing.
-  llvm::error_code error();
+  std::error_code error();
 
 private:
   bool outputting() override;
@@ -988,7 +988,7 @@ private:
   llvm::SourceMgr                     SrcMgr; // must be before Strm
   std::unique_ptr<llvm::yaml::Stream> Strm;
   std::unique_ptr<HNode>              TopNode;
-  llvm::error_code                    EC;
+  std::error_code                     EC;
   llvm::BumpPtrAllocator              StringAllocator;
   llvm::yaml::document_iterator       DocIterator;
   std::vector<bool>                   BitValuesUsed;
