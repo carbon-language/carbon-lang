@@ -15,6 +15,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/WindowsError.h"
 
 // The Windows.h header must be the last one included.
 #include "WindowsSupport.h"
@@ -99,7 +100,7 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
       // Try again without the NearBlock hint
       return allocateMappedMemory(NumBytes, NULL, Flags, EC);
     }
-    EC = error_code(::GetLastError(), system_category());
+    EC = mapWindowsError(::GetLastError());
     return MemoryBlock();
   }
 
@@ -118,7 +119,7 @@ error_code Memory::releaseMappedMemory(MemoryBlock &M) {
     return error_code();
 
   if (!VirtualFree(M.Address, 0, MEM_RELEASE))
-    return error_code(::GetLastError(), system_category());
+    return mapWindowsError(::GetLastError());
 
   M.Address = 0;
   M.Size = 0;
@@ -135,7 +136,7 @@ error_code Memory::protectMappedMemory(const MemoryBlock &M,
 
   DWORD OldFlags;
   if (!VirtualProtect(M.Address, M.Size, Protect, &OldFlags))
-    return error_code(::GetLastError(), system_category());
+    return mapWindowsError(::GetLastError());
 
   if (Flags & MF_EXEC)
     Memory::InvalidateInstructionCache(M.Address, M.Size);
