@@ -119,16 +119,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-
-#include "lld/Core/File.h"
 #include "lld/Core/Error.h"
+#include "lld/Core/File.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/COFF.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -136,10 +134,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
+#include <cstring>
 #include <map>
 #include <vector>
-#include <cstring>
 
 using namespace lld;
 using namespace lld::pecoff;

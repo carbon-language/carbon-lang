@@ -18,6 +18,7 @@
 #include "lld/Core/Reference.h"
 #include "lld/Core/Simple.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 
 namespace lld {
 namespace mach_o {

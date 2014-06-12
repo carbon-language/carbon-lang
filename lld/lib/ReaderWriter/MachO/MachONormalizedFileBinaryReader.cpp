@@ -24,10 +24,8 @@
 #include "MachONormalizedFile.h"
 #include "MachONormalizedFileBinaryUtils.h"
 #include "ReferenceKinds.h"
-
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -40,7 +38,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
 #include <functional>
 
 using namespace llvm::MachO;

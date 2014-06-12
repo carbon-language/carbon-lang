@@ -8,13 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-
 #include "../../lib/ReaderWriter/MachO/MachONormalizedFile.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/system_error.h"
-
 #include <cassert>
 #include <memory>
 #include <vector>

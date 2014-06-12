@@ -11,12 +11,9 @@
 #define LLD_READER_WRITER_ELF_FILE_H
 
 #include "Atoms.h"
-
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -34,7 +31,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
 #include <map>
 #include <unordered_map>
 

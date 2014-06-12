@@ -8,20 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/Writer.h"
-
+#include "ExecutableAtoms.hpp"
+#include "MachONormalizedFile.h"
+#include "lld/Core/File.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
-#include "lld/Core/File.h"
-#include "lld/ReaderWriter/MachOLinkingContext.h"
-
-
-#include "MachONormalizedFile.h"
-#include "ExecutableAtoms.hpp"
 
 using lld::mach_o::normalized::NormalizedFile;
 

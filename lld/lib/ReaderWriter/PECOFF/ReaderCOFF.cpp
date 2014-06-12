@@ -9,13 +9,11 @@
 
 #include "Atoms.h"
 #include "ReaderImportHeader.h"
-
 #include "lld/Core/Alias.h"
 #include "lld/Core/File.h"
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/Casting.h"
@@ -31,7 +29,6 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
 #include <algorithm>
 #include <map>
 #include <mutex>

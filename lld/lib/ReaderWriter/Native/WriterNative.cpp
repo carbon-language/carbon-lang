@@ -8,16 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/Writer.h"
+#include "NativeFileFormat.h"
 #include "lld/Core/File.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
-#include "NativeFileFormat.h"
-
 #include <cstdint>
 #include <set>
 #include <vector>
