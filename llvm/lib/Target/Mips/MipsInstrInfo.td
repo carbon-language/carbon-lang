@@ -1050,7 +1050,7 @@ def SUBu  : MMRel, ArithLogicR<"subu", GPR32Opnd, 0, II_SUBU, sub>,
             ADD_FM<0, 0x23>;
 let Defs = [HI0, LO0] in
 def MUL   : MMRel, ArithLogicR<"mul", GPR32Opnd, 1, II_MUL, mul>,
-            ADD_FM<0x1c, 2>, ISA_MIPS32;
+            ADD_FM<0x1c, 2>, ISA_MIPS32_NOT_32R6_64R6;
 def ADD   : MMRel, ArithLogicR<"add", GPR32Opnd>, ADD_FM<0, 0x20>;
 def SUB   : MMRel, ArithLogicR<"sub", GPR32Opnd>, ADD_FM<0, 0x22>;
 def SLT   : MMRel, SetCC_R<"slt", setlt, GPR32Opnd>, ADD_FM<0, 0x2a>;
@@ -1204,20 +1204,24 @@ let Uses = [V0, V1], isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 
 /// Multiply and Divide Instructions.
 def MULT  : MMRel, Mult<"mult", II_MULT, GPR32Opnd, [HI0, LO0]>,
-            MULT_FM<0, 0x18>;
+            MULT_FM<0, 0x18>, ISA_MIPS1_NOT_32R6_64R6;
 def MULTu : MMRel, Mult<"multu", II_MULTU, GPR32Opnd, [HI0, LO0]>,
-            MULT_FM<0, 0x19>;
+            MULT_FM<0, 0x19>, ISA_MIPS1_NOT_32R6_64R6;
 def SDIV  : MMRel, Div<"div", II_DIV, GPR32Opnd, [HI0, LO0]>,
-            MULT_FM<0, 0x1a>;
+            MULT_FM<0, 0x1a>, ISA_MIPS1_NOT_32R6_64R6;
 def UDIV  : MMRel, Div<"divu", II_DIVU, GPR32Opnd, [HI0, LO0]>,
-            MULT_FM<0, 0x1b>;
+            MULT_FM<0, 0x1b>, ISA_MIPS1_NOT_32R6_64R6;
 
-def MTHI : MMRel, MoveToLOHI<"mthi", GPR32Opnd, [HI0]>, MTLO_FM<0x11>;
-def MTLO : MMRel, MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>, MTLO_FM<0x13>;
+def MTHI : MMRel, MoveToLOHI<"mthi", GPR32Opnd, [HI0]>, MTLO_FM<0x11>,
+           ISA_MIPS1_NOT_32R6_64R6;
+def MTLO : MMRel, MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>, MTLO_FM<0x13>,
+           ISA_MIPS1_NOT_32R6_64R6;
 let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably a bug
     AdditionalPredicates = [NotInMicroMips] in {
-def MFHI : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, AC0>, MFLO_FM<0x10>;
-def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, AC0>, MFLO_FM<0x12>;
+def MFHI : MMRel, MoveFromLOHI<"mfhi", GPR32Opnd, AC0>, MFLO_FM<0x10>,
+           ISA_MIPS1_NOT_32R6_64R6;
+def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, AC0>, MFLO_FM<0x12>,
+           ISA_MIPS1_NOT_32R6_64R6;
 }
 
 /// Sign Ext In Register Instructions.
@@ -1249,11 +1253,13 @@ def MSUB  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM<0x1c, 4>, ISA_MIPS32;
 def MSUBU : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM<0x1c, 5>, ISA_MIPS32;
 
 let AdditionalPredicates = [NotDSP] in {
-def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, II_MULT>;
-def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, II_MULTU>;
-def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>;
-def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>;
-def PseudoMTLOHI : PseudoMTLOHI<ACC64, GPR32>;
+def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, II_MULT>,
+                  ISA_MIPS1_NOT_32R6_64R6;
+def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, II_MULTU>,
+                  ISA_MIPS1_NOT_32R6_64R6;
+def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>, ISA_MIPS1_NOT_32R6_64R6;
+def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>, ISA_MIPS1_NOT_32R6_64R6;
+def PseudoMTLOHI : PseudoMTLOHI<ACC64, GPR32>, ISA_MIPS1_NOT_32R6_64R6;
 def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd, II_MADD>;
 def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu, II_MADDU>;
 def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub, II_MSUB>;
@@ -1261,9 +1267,9 @@ def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu, II_MSUBU>;
 }
 
 def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, II_DIV,
-                               0, 1, 1>;
+                               0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
 def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, II_DIVU,
-                               0, 1, 1>;
+                               0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
 
 def RDHWR : ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM;
 

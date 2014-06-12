@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -177,6 +178,13 @@ namespace {
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI)
         Changed |= runOnMachineBasicBlock(*FI);
+
+      // This pass invalidates liveness information when it reorders
+      // instructions to fill delay slot. Without this, -verify-machineinstrs
+      // will fail.
+      if (Changed)
+        F.getRegInfo().invalidateLiveness();
+
       return Changed;
     }
 

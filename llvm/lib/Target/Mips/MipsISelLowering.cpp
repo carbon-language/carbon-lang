@@ -816,10 +816,10 @@ addLiveIn(MachineFunction &MF, unsigned PReg, const TargetRegisterClass *RC)
   return VReg;
 }
 
-static MachineBasicBlock *expandPseudoDIV(MachineInstr *MI,
-                                          MachineBasicBlock &MBB,
-                                          const TargetInstrInfo &TII,
-                                          bool Is64Bit) {
+static MachineBasicBlock *insertDivByZeroTrap(MachineInstr *MI,
+                                              MachineBasicBlock &MBB,
+                                              const TargetInstrInfo &TII,
+                                              bool Is64Bit) {
   if (NoZeroDivCheck)
     return &MBB;
 
@@ -837,6 +837,10 @@ static MachineBasicBlock *expandPseudoDIV(MachineInstr *MI,
 
   // Clear Divisor's kill flag.
   Divisor.setIsKill(false);
+
+  // We would normally delete the original instruction here but in this case
+  // we only needed to inject an additional instruction rather than replace it.
+
   return &MBB;
 }
 
@@ -919,10 +923,20 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return emitAtomicCmpSwap(MI, BB, 8);
   case Mips::PseudoSDIV:
   case Mips::PseudoUDIV:
-    return expandPseudoDIV(MI, *BB, *getTargetMachine().getInstrInfo(), false);
+  case Mips::DIV:
+  case Mips::DIVU:
+  case Mips::MOD:
+  case Mips::MODU:
+    return insertDivByZeroTrap(MI, *BB, *getTargetMachine().getInstrInfo(),
+                               false);
   case Mips::PseudoDSDIV:
   case Mips::PseudoDUDIV:
-    return expandPseudoDIV(MI, *BB, *getTargetMachine().getInstrInfo(), true);
+  case Mips::DDIV:
+  case Mips::DDIVU:
+  case Mips::DMOD:
+  case Mips::DMODU:
+    return insertDivByZeroTrap(MI, *BB, *getTargetMachine().getInstrInfo(),
+                               true);
   }
 }
 

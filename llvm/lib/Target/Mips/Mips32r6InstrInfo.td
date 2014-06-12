@@ -31,17 +31,15 @@ include "Mips32r6InstrFormats.td"
 // Removed: bgezal
 // Removed: bltzal
 // Removed: c.cond.fmt, bc1[ft]
-// Removed: div, divu
 // Removed: jalx
 // Removed: ldxc1
 // Removed: luxc1
 // Removed: lwxc1
 // Removed: madd.[ds], nmadd.[ds], nmsub.[ds], sub.[ds]
-// Removed: mfhi, mflo, mthi, mtlo, madd, maddu, msub, msubu, mul
+// Removed: madd, maddu, msub, msubu
 // Removed: movf, movt
 // Removed: movf.fmt, movt.fmt, movn.fmt, movz.fmt
 // Removed: movn, movz
-// Removed: mult, multu
 // Removed: prefx
 // Removed: sdxc1
 // Removed: suxc1
@@ -398,17 +396,22 @@ class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 
 class BITSWAP_DESC : BITSWAP_DESC_BASE<"bitswap", GPR32Opnd>;
 
-class DIVMOD_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class DIVMOD_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                       SDPatternOperator Op=null_frag> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
-  list<dag> Pattern = [];
+  list<dag> Pattern = [(set GPROpnd:$rd, (Op GPROpnd:$rs, GPROpnd:$rt))];
+
+  // This instruction doesn't trap division by zero itself. We must insert
+  // teq instructions as well.
+  bit usesCustomInserter = 1;
 }
 
-class DIV_DESC  : DIVMOD_DESC_BASE<"div", GPR32Opnd>;
-class DIVU_DESC : DIVMOD_DESC_BASE<"divu", GPR32Opnd>;
-class MOD_DESC  : DIVMOD_DESC_BASE<"mod", GPR32Opnd>;
-class MODU_DESC : DIVMOD_DESC_BASE<"modu", GPR32Opnd>;
+class DIV_DESC  : DIVMOD_DESC_BASE<"div", GPR32Opnd, sdiv>;
+class DIVU_DESC : DIVMOD_DESC_BASE<"divu", GPR32Opnd, udiv>;
+class MOD_DESC  : DIVMOD_DESC_BASE<"mod", GPR32Opnd, srem>;
+class MODU_DESC : DIVMOD_DESC_BASE<"modu", GPR32Opnd, urem>;
 
 class BEQZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"beqzalc", brtarget, GPR32Opnd> {
   list<Register> Defs = [RA];
@@ -433,16 +436,18 @@ class BLTZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bltzalc", brtarget, GPR32Opnd> {
 class BNEZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bnezalc", brtarget, GPR32Opnd> {
   list<Register> Defs = [RA];
 }
-class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+
+class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                       SDPatternOperator Op=null_frag> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
-  list<dag> Pattern = [];
+  list<dag> Pattern = [(set GPROpnd:$rd, (Op GPROpnd:$rs, GPROpnd:$rt))];
 }
 
-class MUH_DESC    : MUL_R6_DESC_BASE<"muh", GPR32Opnd>;
-class MUHU_DESC   : MUL_R6_DESC_BASE<"muhu", GPR32Opnd>;
-class MUL_R6_DESC : MUL_R6_DESC_BASE<"mul", GPR32Opnd>;
+class MUH_DESC    : MUL_R6_DESC_BASE<"muh", GPR32Opnd, mulhs>;
+class MUHU_DESC   : MUL_R6_DESC_BASE<"muhu", GPR32Opnd, mulhu>;
+class MUL_R6_DESC : MUL_R6_DESC_BASE<"mul", GPR32Opnd, mul>;
 class MULU_DESC   : MUL_R6_DESC_BASE<"mulu", GPR32Opnd>;
 
 class COP1_4R_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {

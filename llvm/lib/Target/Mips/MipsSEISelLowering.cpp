@@ -152,6 +152,40 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::STORE, MVT::f64, Custom);
   }
 
+  if (Subtarget->hasMips32r6()) {
+    // MIPS32r6 replaces the accumulator-based multiplies with a three register
+    // instruction
+    setOperationAction(ISD::MUL, MVT::i32, Legal);
+    setOperationAction(ISD::MULHS, MVT::i32, Legal);
+    setOperationAction(ISD::MULHU, MVT::i32, Legal);
+
+    // MIPS32r6 replaces the accumulator-based division/remainder with separate
+    // three register division and remainder instructions.
+    setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
+    setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
+    setOperationAction(ISD::SDIV, MVT::i32, Legal);
+    setOperationAction(ISD::UDIV, MVT::i32, Legal);
+    setOperationAction(ISD::SREM, MVT::i32, Legal);
+    setOperationAction(ISD::UREM, MVT::i32, Legal);
+  }
+
+  if (Subtarget->hasMips64r6()) {
+    // MIPS64r6 replaces the accumulator-based multiplies with a three register
+    // instruction
+    setOperationAction(ISD::MUL, MVT::i64, Legal);
+    setOperationAction(ISD::MULHS, MVT::i64, Legal);
+    setOperationAction(ISD::MULHU, MVT::i64, Legal);
+
+    // MIPS32r6 replaces the accumulator-based division/remainder with separate
+    // three register division and remainder instructions.
+    setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
+    setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
+    setOperationAction(ISD::SDIV, MVT::i64, Legal);
+    setOperationAction(ISD::UDIV, MVT::i64, Legal);
+    setOperationAction(ISD::SREM, MVT::i64, Legal);
+    setOperationAction(ISD::UREM, MVT::i64, Legal);
+  }
+
   computeRegisterProperties();
 }
 
@@ -1178,6 +1212,9 @@ SDValue MipsSETargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,
                                           bool HasLo, bool HasHi,
                                           SelectionDAG &DAG) const {
+  // MIPS32r6/MIPS64r6 removed accumulator based multiplies.
+  assert(!Subtarget->hasMips32r6());
+
   EVT Ty = Op.getOperand(0).getValueType();
   SDLoc DL(Op);
   SDValue Mult = DAG.getNode(NewOpc, DL, MVT::Untyped,

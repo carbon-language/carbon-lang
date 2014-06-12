@@ -15,8 +15,6 @@
 // Reencoded: dclo, dclz
 // Reencoded: lld, scd
 // Removed: daddi
-// Removed: ddiv, ddivu, dmult, dmultu
-// Removed: div, divu
 
 //===----------------------------------------------------------------------===//
 //
@@ -57,13 +55,13 @@ class DAHI_DESC    : AHI_ATI_DESC_BASE<"dahi", GPR64Opnd>;
 class DATI_DESC    : AHI_ATI_DESC_BASE<"dati", GPR64Opnd>;
 class DAUI_DESC    : AUI_DESC_BASE<"daui", GPR64Opnd>;
 class DBITSWAP_DESC : BITSWAP_DESC_BASE<"dbitswap", GPR64Opnd>;
-class DDIV_DESC    : DIVMOD_DESC_BASE<"ddiv", GPR64Opnd>;
-class DDIVU_DESC   : DIVMOD_DESC_BASE<"ddivu", GPR64Opnd>;
-class DMOD_DESC    : DIVMOD_DESC_BASE<"dmod", GPR64Opnd>;
-class DMODU_DESC   : DIVMOD_DESC_BASE<"dmodu", GPR64Opnd>;
-class DMUH_DESC    : MUL_R6_DESC_BASE<"dmuh", GPR64Opnd>;
-class DMUHU_DESC   : MUL_R6_DESC_BASE<"dmuhu", GPR64Opnd>;
-class DMUL_R6_DESC : MUL_R6_DESC_BASE<"dmul", GPR64Opnd>;
+class DDIV_DESC    : DIVMOD_DESC_BASE<"ddiv", GPR64Opnd, sdiv>;
+class DDIVU_DESC   : DIVMOD_DESC_BASE<"ddivu", GPR64Opnd, udiv>;
+class DMOD_DESC    : DIVMOD_DESC_BASE<"dmod", GPR64Opnd, srem>;
+class DMODU_DESC   : DIVMOD_DESC_BASE<"dmodu", GPR64Opnd, urem>;
+class DMUH_DESC    : MUL_R6_DESC_BASE<"dmuh", GPR64Opnd, mulhs>;
+class DMUHU_DESC   : MUL_R6_DESC_BASE<"dmuhu", GPR64Opnd, mulhu>;
+class DMUL_R6_DESC : MUL_R6_DESC_BASE<"dmul", GPR64Opnd, mul>;
 class DMULU_DESC   : MUL_R6_DESC_BASE<"dmulu", GPR64Opnd>;
 class LDPC_DESC    : PCREL_DESC_BASE<"ldpc", GPR64Opnd, simm18_lsl3>;
 

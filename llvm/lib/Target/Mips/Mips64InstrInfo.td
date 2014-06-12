@@ -183,30 +183,36 @@ def TAILCALL64_R : TailCallReg<GPR64Opnd, JR, GPR32Opnd>;
 
 /// Multiply and Divide Instructions.
 def DMULT  : Mult<"dmult", II_DMULT, GPR64Opnd, [HI0_64, LO0_64]>,
-             MULT_FM<0, 0x1c>, ISA_MIPS3;
+             MULT_FM<0, 0x1c>, ISA_MIPS3_NOT_32R6_64R6;
 def DMULTu : Mult<"dmultu", II_DMULTU, GPR64Opnd, [HI0_64, LO0_64]>,
-             MULT_FM<0, 0x1d>, ISA_MIPS3;
+             MULT_FM<0, 0x1d>, ISA_MIPS3_NOT_32R6_64R6;
 def PseudoDMULT  : MultDivPseudo<DMULT, ACC128, GPR64Opnd, MipsMult,
-                                 II_DMULT>;
+                                 II_DMULT>, ISA_MIPS3_NOT_32R6_64R6;
 def PseudoDMULTu : MultDivPseudo<DMULTu, ACC128, GPR64Opnd, MipsMultu,
-                                 II_DMULTU>;
+                                 II_DMULTU>, ISA_MIPS3_NOT_32R6_64R6;
 def DSDIV : Div<"ddiv", II_DDIV, GPR64Opnd, [HI0_64, LO0_64]>,
-            MULT_FM<0, 0x1e>, ISA_MIPS3;
+            MULT_FM<0, 0x1e>, ISA_MIPS3_NOT_32R6_64R6;
 def DUDIV : Div<"ddivu", II_DDIVU, GPR64Opnd, [HI0_64, LO0_64]>,
-            MULT_FM<0, 0x1f>, ISA_MIPS3;
+            MULT_FM<0, 0x1f>, ISA_MIPS3_NOT_32R6_64R6;
 def PseudoDSDIV : MultDivPseudo<DSDIV, ACC128, GPR64Opnd, MipsDivRem,
-                                II_DDIV, 0, 1, 1>;
+                                II_DDIV, 0, 1, 1>, ISA_MIPS3_NOT_32R6_64R6;
 def PseudoDUDIV : MultDivPseudo<DUDIV, ACC128, GPR64Opnd, MipsDivRemU,
-                                II_DDIVU, 0, 1, 1>;
+                                II_DDIVU, 0, 1, 1>, ISA_MIPS3_NOT_32R6_64R6;
 
 let isCodeGenOnly = 1 in {
-def MTHI64 : MoveToLOHI<"mthi", GPR64Opnd, [HI0_64]>, MTLO_FM<0x11>;
-def MTLO64 : MoveToLOHI<"mtlo", GPR64Opnd, [LO0_64]>, MTLO_FM<0x13>;
-def MFHI64 : MoveFromLOHI<"mfhi", GPR64Opnd, AC0_64>, MFLO_FM<0x10>;
-def MFLO64 : MoveFromLOHI<"mflo", GPR64Opnd, AC0_64>, MFLO_FM<0x12>;
-def PseudoMFHI64 : PseudoMFLOHI<GPR64, ACC128, MipsMFHI>;
-def PseudoMFLO64 : PseudoMFLOHI<GPR64, ACC128, MipsMFLO>;
-def PseudoMTLOHI64 : PseudoMTLOHI<ACC128, GPR64>;
+def MTHI64 : MoveToLOHI<"mthi", GPR64Opnd, [HI0_64]>, MTLO_FM<0x11>,
+             ISA_MIPS3_NOT_32R6_64R6;
+def MTLO64 : MoveToLOHI<"mtlo", GPR64Opnd, [LO0_64]>, MTLO_FM<0x13>,
+             ISA_MIPS3_NOT_32R6_64R6;
+def MFHI64 : MoveFromLOHI<"mfhi", GPR64Opnd, AC0_64>, MFLO_FM<0x10>,
+             ISA_MIPS3_NOT_32R6_64R6;
+def MFLO64 : MoveFromLOHI<"mflo", GPR64Opnd, AC0_64>, MFLO_FM<0x12>,
+             ISA_MIPS3_NOT_32R6_64R6;
+def PseudoMFHI64 : PseudoMFLOHI<GPR64, ACC128, MipsMFHI>,
+                   ISA_MIPS3_NOT_32R6_64R6;
+def PseudoMFLO64 : PseudoMFLOHI<GPR64, ACC128, MipsMFLO>,
+                   ISA_MIPS3_NOT_32R6_64R6;
+def PseudoMTLOHI64 : PseudoMTLOHI<ACC128, GPR64>, ISA_MIPS3_NOT_32R6_64R6;
 
 /// Sign Ext In Register Instructions.
 def SEB64 : SignExtInReg<"seb", i8, GPR64Opnd, II_SEB>, SEB_FM<0x10, 0x20>,
