@@ -733,8 +733,15 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
     return ReplaceInstUsesWith(Outer, Inner);
   }
 
-  // TODO: ABS(NABS(X)) -> ABS(X)
-  // TODO: NABS(ABS(X)) -> NABS(X)
+  // ABS(NABS(X)) -> ABS(X)
+  // NABS(ABS(X)) -> NABS(X)
+  if ((SPF1 == SPF_ABS && SPF2 == SPF_NABS) ||
+      (SPF1 == SPF_NABS && SPF2 == SPF_ABS)) {
+    SelectInst *SI = cast<SelectInst>(Inner);
+    Value *NewSI = Builder->CreateSelect(
+        SI->getCondition(), SI->getFalseValue(), SI->getTrueValue());
+    return ReplaceInstUsesWith(Outer, NewSI);
+  }
   return nullptr;
 }
 
