@@ -41,3 +41,17 @@ enum class foo : uint { bar };
  
 static_assert(is_same_type<underlying_type<foo>::type, unsigned>::value,
               "foo has the wrong underlying type");
+
+namespace PR19966 {
+  void PR19966(enum Invalid) { // expected-note 2{{forward declaration of}}
+    // expected-error@-1 {{ISO C++ forbids forward references to 'enum'}}
+    // expected-error@-2 {{variable has incomplete type}}
+    __underlying_type(Invalid) dont_crash;
+    // expected-error@-1 {{cannot determine underlying type of incomplete enumeration type 'PR19966::Invalid'}}
+  }
+  enum E { // expected-note {{forward declaration of 'E'}}
+    a = (__underlying_type(E)){}
+    // expected-error@-1 {{cannot determine underlying type of incomplete enumeration type 'PR19966::E'}}
+    // expected-error@-2 {{constant expression}}
+  };
+}

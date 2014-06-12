@@ -1686,6 +1686,8 @@ def err_enum_class_reference : Error<
   "not 'enum class'">;
 def err_only_enums_have_underlying_types : Error<
   "only enumeration types have underlying types">;
+def err_underlying_type_of_incomplete_enum : Error<
+  "cannot determine underlying type of incomplete enumeration type %0">;
 
 // C++11 delegating constructors
 def err_delegating_ctor : Error<

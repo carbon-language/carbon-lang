@@ -5557,12 +5557,23 @@ QualType Sema::BuildUnaryTransformType(QualType BaseType,
     } else {
       QualType Underlying = BaseType;
       if (!BaseType->isDependentType()) {
+        // The enum could be incomplete if we're parsing its definition or
+        // recovering from an error.
+        NamedDecl *FwdDecl = nullptr;
+        if (BaseType->isIncompleteType(&FwdDecl)) {
+          Diag(Loc, diag::err_underlying_type_of_incomplete_enum) << BaseType;
+          Diag(FwdDecl->getLocation(), diag::note_forward_declaration) << FwdDecl;
+          return QualType();
+        }
+
         EnumDecl *ED = BaseType->getAs<EnumType>()->getDecl();
         assert(ED && "EnumType has no EnumDecl");
+
         DiagnoseUseOfDecl(ED, Loc);
+
         Underlying = ED->getIntegerType();
+        assert(!Underlying.isNull());
       }
-      assert(!Underlying.isNull());
       return Context.getUnaryTransformType(BaseType, Underlying,
                                         UnaryTransformType::EnumUnderlyingType);
     }
