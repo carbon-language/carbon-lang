@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only %s
-// RUN: %clang_cc1 -triple %ms_abi_triple -verify %s
+// RUN: %clang_cc1 -fexceptions -fcxx-exceptions -std=c++11 -triple %itanium_abi_triple -fsyntax-only %s
+// RUN: %clang_cc1 -fexceptions -fcxx-exceptions -std=c++11 -triple %ms_abi_triple -verify %s
 
 namespace Test1 {
 
@@ -37,11 +37,11 @@ namespace Test2 {
 // though MSVC rejects bar.
 class A {
 private:
-  ~A(); // expected-note {{declared private here}}
+  ~A();
   int a;
 };
 
-struct B : public A { // expected-error {{base class 'Test2::A' has private destructor}}
+struct B : public A { // expected-note {{destructor of 'B' is implicitly deleted because base class 'Test2::A' has an inaccessible destructor}}
   int b;
 };
 
@@ -55,7 +55,7 @@ struct D {
   C o;
 };
 
-void foo(B b) { } // expected-note {{implicit destructor for 'Test2::B' first required here}}
+void foo(B b) { } // expected-error {{attempt to use a deleted function}}
 void bar(A a) { } // no error; MSVC rejects this, but we skip the direct access check.
 void baz(D d) { } // no error
 
@@ -86,4 +86,46 @@ namespace Test4 {
 // Don't try to access the dtor of an incomplete on a function declaration.
 class A;
 void foo(A a);
+}
+
+#ifdef MSVC_ABI
+namespace Test5 {
+// Do the operator delete access control check from the context of the dtor.
+class A {
+ protected:
+  void operator delete(void *);
+};
+class B : public A {
+  virtual ~B();
+};
+B *test() {
+  // Previously, marking the vtable used here would do the operator delete
+  // lookup from this context, which doesn't have access.
+  return new B;
+}
+}
+#endif
+
+namespace Test6 {
+class A {
+protected:
+  void operator delete(void *);
+};
+class B : public A {
+  virtual ~B();
+public:
+  virtual void m_fn1();
+};
+void fn1(B *b) { b->m_fn1(); }
+}
+
+namespace Test7 {
+class A {
+protected:
+  void operator delete(void *);
+};
+struct B : public A {
+  virtual ~B();
+};
+void fn1(B b) {}
 }
