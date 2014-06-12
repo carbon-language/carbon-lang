@@ -583,6 +583,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN "*.inc"
     # Exclude include/llvm/CMakeFiles/intrinsics_gen.dir, matched by "*.def"
     PATTERN "CMakeFiles" EXCLUDE
+    PATTERN "config.h" EXCLUDE
     PATTERN ".svn" EXCLUDE
     )
 endif()
