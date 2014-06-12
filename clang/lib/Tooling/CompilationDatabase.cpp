@@ -27,8 +27,8 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
 #include <sstream>
+#include <system_error>
 
 namespace clang {
 namespace tooling {

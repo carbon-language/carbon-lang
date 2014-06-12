@@ -52,10 +52,10 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstdio>
 #include <iterator>
+#include <system_error>
 
 using namespace clang;
 using namespace clang::serialization;
