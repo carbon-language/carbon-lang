@@ -234,7 +234,7 @@ option(LLVM_USE_OPROFILE
 # If enabled, verify we are on a platform that supports oprofile.
 if( LLVM_USE_OPROFILE )
   if( NOT CMAKE_SYSTEM_NAME MATCHES "Linux" )
-    message(FATAL_ERROR "OProfile support is available on Linux only.") 
+    message(FATAL_ERROR "OProfile support is available on Linux only.")
   endif( NOT CMAKE_SYSTEM_NAME MATCHES "Linux" )
 endif( LLVM_USE_OPROFILE )
 
