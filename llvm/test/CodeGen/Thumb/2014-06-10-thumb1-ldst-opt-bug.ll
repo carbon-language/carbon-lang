@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv6m-eabi -o - | FileCheck %s
+; XFAIL: *
 
 define void @foo(i32* %A) #0 {
 entry:

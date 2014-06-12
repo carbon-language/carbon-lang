@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=thumbv6m-eabi %s -o - | FileCheck %s
+; XFAIL: *
 
 @d = external global [64 x i32]
 @s = external global [64 x i32]
