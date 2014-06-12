@@ -15,6 +15,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
+#include <set>
 using namespace llvm;
 
 void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
@@ -30,6 +31,7 @@ void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
       uint64_t HighPC = Desc.getEndAddress();
       appendRange(CUOffset, LowPC, HighPC);
     }
+    ParsedCUOffsets.insert(CUOffset);
   }
 }
 
@@ -56,69 +58,55 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
     }
   }
 
-  sortAndMinimize();
+  construct();
 }
 
 void DWARFDebugAranges::clear() {
+  Endpoints.clear();
   Aranges.clear();
   ParsedCUOffsets.clear();
 }
 
 void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,
                                     uint64_t HighPC) {
-  if (!Aranges.empty()) {
-    if (Aranges.back().CUOffset == CUOffset &&
-        Aranges.back().HighPC() == LowPC) {
-      Aranges.back().setHighPC(HighPC);
-      return;
-    }
-  }
-  Aranges.push_back(Range(LowPC, HighPC, CUOffset));
+  if (LowPC >= HighPC)
+    return;
+  Endpoints.emplace_back(LowPC, CUOffset, true);
+  Endpoints.emplace_back(HighPC, CUOffset, false);
 }
 
-void DWARFDebugAranges::sortAndMinimize() {
-  const size_t orig_arange_size = Aranges.size();
-  // Size of one? If so, no sorting is needed
-  if (orig_arange_size <= 1)
-    return;
-  // Sort our address range entries
-  std::stable_sort(Aranges.begin(), Aranges.end());
-
-  // Most address ranges are contiguous from function to function
-  // so our new ranges will likely be smaller. We calculate the size
-  // of the new ranges since although std::vector objects can be resized,
-  // the will never reduce their allocated block size and free any excesss
-  // memory, so we might as well start a brand new collection so it is as
-  // small as possible.
-
-  // First calculate the size of the new minimal arange vector
-  // so we don't have to do a bunch of re-allocations as we
-  // copy the new minimal stuff over to the new collection.
-  size_t minimal_size = 1;
-  for (size_t i = 1; i < orig_arange_size; ++i) {
-    if (!Range::SortedOverlapCheck(Aranges[i-1], Aranges[i]))
-      ++minimal_size;
-  }
-
-  // Else, make a new RangeColl that _only_ contains what we need.
-  RangeColl minimal_aranges;
-  minimal_aranges.resize(minimal_size);
-  uint32_t j = 0;
-  minimal_aranges[j] = Aranges[0];
-  for (size_t i = 1; i < orig_arange_size; ++i) {
-    if (Range::SortedOverlapCheck(minimal_aranges[j], Aranges[i])) {
-      minimal_aranges[j].setHighPC(Aranges[i].HighPC());
-    } else {
-      // Only increment j if we aren't merging
-      minimal_aranges[++j] = Aranges[i];
+void DWARFDebugAranges::construct() {
+  std::multiset<uint32_t> ValidCUs;  // Maintain the set of CUs describing
+                                     // a current address range.
+  std::sort(Endpoints.begin(), Endpoints.end());
+  uint64_t PrevAddress = -1ULL;
+  for (const auto &E : Endpoints) {
+    if (PrevAddress < E.Address && ValidCUs.size() > 0) {
+      // If the address range between two endpoints is described by some
+      // CU, first try to extend the last range in Aranges. If we can't
+      // do it, start a new range.
+      if (!Aranges.empty() && Aranges.back().HighPC() == PrevAddress &&
+          ValidCUs.find(Aranges.back().CUOffset) != ValidCUs.end()) {
+        Aranges.back().setHighPC(E.Address);
+      } else {
+        Aranges.emplace_back(PrevAddress, E.Address, *ValidCUs.begin());
+      }
     }
+    // Update the set of valid CUs.
+    if (E.IsRangeStart) {
+      ValidCUs.insert(E.CUOffset);
+    } else {
+      auto CUPos = ValidCUs.find(E.CUOffset);
+      assert(CUPos != ValidCUs.end());
+      ValidCUs.erase(CUPos);
+    }
+    PrevAddress = E.Address;
   }
-  assert(j+1 == minimal_size);
+  assert(ValidCUs.empty());
 
-  // Now swap our new minimal aranges into place. The local
-  // minimal_aranges will then contian the old big collection
-  // which will get freed.
-  minimal_aranges.swap(Aranges);
+  // Endpoints are not needed now.
+  std::vector<RangeEndpoint> EmptyEndpoints;
+  EmptyEndpoints.swap(Endpoints);
 }
 
 uint32_t DWARFDebugAranges::findAddress(uint64_t Address) const {
