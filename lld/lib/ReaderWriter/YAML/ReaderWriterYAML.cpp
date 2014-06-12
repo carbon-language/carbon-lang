@@ -26,9 +26,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <memory>
 #include <string>
+#include <system_error>
 
 using llvm::yaml::MappingTraits;
 using llvm::yaml::ScalarEnumerationTraits;

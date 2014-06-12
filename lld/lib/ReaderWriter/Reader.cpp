@@ -12,8 +12,8 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
 #include <memory>
+#include <system_error>
 
 namespace lld {
 

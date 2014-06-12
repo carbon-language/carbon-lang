@@ -37,8 +37,8 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <functional>
+#include <system_error>
 
 using namespace llvm::MachO;
 

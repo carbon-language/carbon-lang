@@ -17,7 +17,7 @@
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 using lld::mach_o::normalized::NormalizedFile;
 

@@ -14,9 +14,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <cstdint>
 #include <set>
+#include <system_error>
 #include <vector>
 
 namespace lld {

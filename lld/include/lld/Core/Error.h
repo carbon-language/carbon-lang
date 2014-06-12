@@ -15,7 +15,7 @@
 #define LLD_CORE_ERROR_H
 
 #include "lld/Core/LLVM.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace lld {
 

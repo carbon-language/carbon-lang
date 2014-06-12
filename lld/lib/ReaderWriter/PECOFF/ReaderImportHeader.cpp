@@ -133,9 +133,9 @@
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <cstring>
 #include <map>
+#include <system_error>
 #include <vector>
 
 using namespace lld;

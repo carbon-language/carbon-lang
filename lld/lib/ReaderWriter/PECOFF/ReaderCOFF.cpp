@@ -28,11 +28,11 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <map>
 #include <mutex>
 #include <set>
+#include <system_error>
 #include <vector>
 
 #define DEBUG_TYPE "ReaderCOFF"

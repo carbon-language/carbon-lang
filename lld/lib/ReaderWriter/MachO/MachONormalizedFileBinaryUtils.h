@@ -16,7 +16,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 #ifndef LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H
 #define LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H
