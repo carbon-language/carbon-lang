@@ -18,10 +18,10 @@
 #ifndef LLVM_IR_GVMATERIALIZER_H
 #define LLVM_IR_GVMATERIALIZER_H
 
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
-
+using std::error_code;
 class Function;
 class GlobalValue;
 class Module;

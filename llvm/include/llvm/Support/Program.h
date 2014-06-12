@@ -16,9 +16,10 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
+using std::error_code;
 namespace sys {
 
   /// This is the OS-specific separator for PATH like environment variables:

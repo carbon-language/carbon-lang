@@ -32,7 +32,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h" // Get build system configuration settings
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 #include <windows.h>
 #include <wincrypt.h>
 #include <cassert>

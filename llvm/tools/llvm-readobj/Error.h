@@ -14,10 +14,10 @@
 #ifndef LLVM_READOBJ_ERROR_H
 #define LLVM_READOBJ_ERROR_H
 
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
-
+using std::error_code;
 const std::error_category &readobj_category();
 
 enum class readobj_error {

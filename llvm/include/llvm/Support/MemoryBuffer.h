@@ -19,10 +19,11 @@
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/system_error.h"
 #include <memory>
+#include <system_error>
 
 namespace llvm {
+using std::error_code;
 /// MemoryBuffer - This interface provides simple read-only access to a block
 /// of memory, and provides simple methods for reading files and standard input
 /// into a memory buffer.  In addition to basic access to the characters in the

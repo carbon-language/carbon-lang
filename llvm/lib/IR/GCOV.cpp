@@ -19,8 +19,8 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
+#include <system_error>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

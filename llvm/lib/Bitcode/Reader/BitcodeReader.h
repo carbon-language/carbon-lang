@@ -22,7 +22,7 @@
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 #include <vector>
 
 namespace llvm {

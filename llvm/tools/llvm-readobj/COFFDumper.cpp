@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-readobj.h"
+#include "ARMWinEHPrinter.h"
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StreamWriter.h"
-#include "ARMWinEHPrinter.h"
 #include "Win64EHDumper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -30,9 +30,9 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstring>
+#include <system_error>
 #include <time.h>
 
 using namespace llvm;

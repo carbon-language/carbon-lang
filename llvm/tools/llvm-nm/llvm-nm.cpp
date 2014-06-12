@@ -37,11 +37,11 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <cstring>
+#include <system_error>
 #include <vector>
 using namespace llvm;
 using namespace object;

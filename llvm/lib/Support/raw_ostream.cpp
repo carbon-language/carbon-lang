@@ -22,10 +22,10 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
-#include "llvm/Support/system_error.h"
 #include <cctype>
 #include <cerrno>
 #include <sys/stat.h>
+#include <system_error>
 
 // <fcntl.h> may provide O_BINARY.
 #if defined(HAVE_FCNTL_H)

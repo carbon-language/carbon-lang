@@ -28,8 +28,8 @@
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <map>
+#include <system_error>
 
 using namespace llvm;
 using namespace llvm::object;

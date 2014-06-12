@@ -32,7 +32,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 using namespace llvm;
 
 static cl::opt<std::string>

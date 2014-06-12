@@ -16,10 +16,10 @@
 #ifndef LLVM_PROFILEDATA_INSTRPROF_H_
 #define LLVM_PROFILEDATA_INSTRPROF_H_
 
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
-
+using std::error_code;
 const std::error_category &instrprof_category();
 
 enum class instrprof_error {

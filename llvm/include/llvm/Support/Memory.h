@@ -15,10 +15,11 @@
 #define LLVM_SUPPORT_MEMORY_H
 
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/system_error.h"
 #include <string>
+#include <system_error>
 
 namespace llvm {
+using std::error_code;
 namespace sys {
 
   /// This class encapsulates the notion of a memory block which has an address

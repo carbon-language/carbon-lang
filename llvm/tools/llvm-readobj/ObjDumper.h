@@ -10,12 +10,11 @@
 #ifndef LLVM_READOBJ_OBJDUMPER_H
 #define LLVM_READOBJ_OBJDUMPER_H
 
-#include "llvm/Support/system_error.h"
-
 #include <memory>
+#include <system_error>
 
 namespace llvm {
-
+using std::error_code;
 namespace object {
   class ObjectFile;
 }

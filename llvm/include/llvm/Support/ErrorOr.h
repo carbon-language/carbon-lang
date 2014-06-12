@@ -18,11 +18,12 @@
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/AlignOf.h"
-#include "llvm/Support/system_error.h"
 #include <cassert>
+#include <system_error>
 #include <type_traits>
 
 namespace llvm {
+using std::error_code;
 template<class T, class V>
 typename std::enable_if< std::is_constructible<T, V>::value
                        , typename std::remove_reference<V>::type>::type &&

@@ -21,13 +21,13 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/system_error.h"
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <list>
 #include <plugin-api.h>
+#include <system_error>
 #include <vector>
 
 // Support Windows/MinGW crazyness.

@@ -14,7 +14,7 @@
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 using llvm::sys::fs::mapped_file_region;
 

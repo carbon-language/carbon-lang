@@ -15,7 +15,7 @@
 
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 std::error_code coff2yaml(llvm::raw_ostream &Out,
                           const llvm::object::COFFObjectFile &Obj);

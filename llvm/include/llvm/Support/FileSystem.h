@@ -33,11 +33,11 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TimeValue.h"
-#include "llvm/Support/system_error.h"
 #include <ctime>
 #include <iterator>
 #include <stack>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <vector>
 
@@ -46,6 +46,7 @@
 #endif
 
 namespace llvm {
+using std::error_code;
 namespace sys {
 namespace fs {
 

@@ -37,11 +37,11 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
+#include <system_error>
 using namespace llvm;
 
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)

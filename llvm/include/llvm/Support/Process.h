@@ -31,7 +31,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/TimeValue.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
 class StringRef;

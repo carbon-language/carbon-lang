@@ -14,9 +14,10 @@
 #ifndef LLVM_OBJECT_ERROR_H
 #define LLVM_OBJECT_ERROR_H
 
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
+using std::error_code;
 namespace object {
 
 const std::error_category &object_category();

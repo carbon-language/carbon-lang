@@ -10,10 +10,10 @@
 #ifndef LLVM_TOOLS_ERROR_H
 #define LLVM_TOOLS_ERROR_H
 
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 namespace llvm {
-
+using std::error_code;
 const std::error_category &obj2yaml_category();
 
 enum class obj2yaml_error {

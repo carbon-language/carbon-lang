@@ -22,9 +22,9 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstring>
+#include <system_error>
 
 using namespace llvm;
 using namespace object;
