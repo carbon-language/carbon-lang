@@ -368,7 +368,6 @@ StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
 
 static DiagnosticIDs::Level toLevel(diag::Severity SV) {
   switch (SV) {
-  default: llvm_unreachable("unexpected severity");
   case diag::Severity::Ignored:
     return DiagnosticIDs::Ignored;
   case diag::Severity::Remark:
@@ -380,6 +379,7 @@ static DiagnosticIDs::Level toLevel(diag::Severity SV) {
   case diag::Severity::Fatal:
     return DiagnosticIDs::Fatal;
   }
+  llvm_unreachable("unexpected severity");
 }
 
 /// getDiagnosticLevel - Based on the way the client configured the

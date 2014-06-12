@@ -272,7 +272,6 @@ const char *ParseErrorCategory::name() const LLVM_NOEXCEPT {
 
 std::string ParseErrorCategory::message(int EV) const {
   switch (static_cast<ParseError>(EV)) {
-  default: llvm_unreachable("unexpected parse error");
   case ParseError::Success:
     return "Success";
   case ParseError::Error:
@@ -280,6 +279,7 @@ std::string ParseErrorCategory::message(int EV) const {
   case ParseError::Unsuitable:
     return "Unsuitable";
   }
+  llvm_unreachable("unexpected parse error");
 }
 
 FormatStyle getLLVMStyle() {
