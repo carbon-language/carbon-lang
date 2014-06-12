@@ -41,10 +41,10 @@ public:
                      "message defined.");
   }
 
-  llvm::error_condition
+  std::error_condition
   default_error_condition(int ev) const LLVM_NOEXCEPT override {
     if (NativeReaderError(ev) == NativeReaderError::success)
-      return llvm::error_condition();
+      return std::error_condition();
     return std::errc::invalid_argument;
   }
 };
@@ -71,10 +71,10 @@ public:
                      "message defined.");
   }
 
-  llvm::error_condition
+  std::error_condition
   default_error_condition(int ev) const LLVM_NOEXCEPT override {
     if (YamlReaderError(ev) == YamlReaderError::success)
-      return llvm::error_condition();
+      return std::error_condition();
     return std::errc::invalid_argument;
   }
 };
@@ -101,11 +101,11 @@ public:
         "message defined.");
   }
 
-  llvm::error_condition
+  std::error_condition
   default_error_condition(int ev) const LLVM_NOEXCEPT override {
     LinkerScriptReaderError e = LinkerScriptReaderError(ev);
     if (e == LinkerScriptReaderError::success)
-      return llvm::error_condition();
+      return std::error_condition();
     return std::errc::invalid_argument;
   }
 };
@@ -128,10 +128,10 @@ public:
                      "message defined.");
   }
 
-  llvm::error_condition
+  std::error_condition
   default_error_condition(int ev) const LLVM_NOEXCEPT override {
     if (InputGraphError(ev) == InputGraphError::success)
-      return llvm::error_condition();
+      return std::error_condition();
     return std::errc::invalid_argument;
   }
 };
@@ -157,10 +157,10 @@ public:
                      "message defined.");
   }
 
-  llvm::error_condition
+  std::error_condition
   default_error_condition(int ev) const LLVM_NOEXCEPT override {
     if (ReaderError(ev) == ReaderError::success)
-      return llvm::error_condition();
+      return std::error_condition();
     return std::errc::invalid_argument;
   }
 };
