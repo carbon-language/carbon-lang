@@ -917,7 +917,9 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   if (Idx == ImmIdx) {
     unsigned NumConstants = (BitSize + 63) / 64;
     unsigned Cost = X86TTI::getIntImmCost(Imm, Ty);
-    return (Cost <= NumConstants * TCC_Basic) ? TCC_Free : Cost;
+    return (Cost <= NumConstants * TCC_Basic)
+      ? static_cast<unsigned>(TCC_Free)
+      : Cost;
   }
 
   return X86TTI::getIntImmCost(Imm, Ty);
