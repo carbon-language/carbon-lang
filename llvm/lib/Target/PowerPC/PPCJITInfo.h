@@ -14,20 +14,20 @@
 #ifndef POWERPC_JITINFO_H
 #define POWERPC_JITINFO_H
 
+#include "PPCSubtarget.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
-  class PPCTargetMachine;
 
   class PPCJITInfo : public TargetJITInfo {
   protected:
-    PPCTargetMachine &TM;
+    PPCSubtarget &Subtarget;
     bool is64Bit;
   public:
-    PPCJITInfo(PPCTargetMachine &tm, bool tmIs64Bit) : TM(tm) {
+    PPCJITInfo(PPCSubtarget &STI)
+        : Subtarget(STI), is64Bit(STI.isPPC64()) {
       useGOT = 0;
-      is64Bit = tmIs64Bit;
     }
 
     StubLayout getStubLayout() override;
