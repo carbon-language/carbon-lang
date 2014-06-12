@@ -94,9 +94,10 @@ private:
 
 public:
   template <class E>
-  ErrorOr(E ErrorCode, typename std::enable_if<is_error_code_enum<E>::value ||
-                                               is_error_condition_enum<E>::value,
-                                               void *>::type = 0)
+  ErrorOr(E ErrorCode,
+          typename std::enable_if<std::is_error_code_enum<E>::value ||
+                                      std::is_error_condition_enum<E>::value,
+                                  void *>::type = 0)
       : HasError(true) {
     new (getErrorStorage()) error_code(make_error_code(ErrorCode));
   }
@@ -264,10 +265,11 @@ private:
   bool HasError : 1;
 };
 
-template<class T, class E>
-typename std::enable_if<is_error_code_enum<E>::value ||
-                        is_error_condition_enum<E>::value, bool>::type
-operator ==(ErrorOr<T> &Err, E Code) {
+template <class T, class E>
+typename std::enable_if<std::is_error_code_enum<E>::value ||
+                            std::is_error_condition_enum<E>::value,
+                        bool>::type
+operator==(ErrorOr<T> &Err, E Code) {
   return error_code(Err) == Code;
 }
 } // end namespace llvm
