@@ -421,38 +421,38 @@ def SDC3 : SW_FT<"sdc3", COP3Opnd, NoItinerary, store>, LW_FM<0x3f>, ISA_MIPS2;
 // instruction mnemonic) is disallowed under NaCl.
 let AdditionalPredicates = [IsNotNaCl] in {
   def LWXC1 : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, II_LWXC1, load>, LWXC1_FM<0>,
-              INSN_MIPS4_32R2;
+              INSN_MIPS4_32R2_NOT_32R6_64R6;
   def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>, SWXC1_FM<8>,
-              INSN_MIPS4_32R2;
+              INSN_MIPS4_32R2_NOT_32R6_64R6;
 }
 
 let AdditionalPredicates = [NotInMicroMips, IsNotNaCl] in {
   def LDXC1 : LWXC1_FT<"ldxc1", AFGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>,
-              INSN_MIPS4_32R2, FGR_32;
+              INSN_MIPS4_32R2_NOT_32R6_64R6, FGR_32;
   def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>,
-              INSN_MIPS4_32R2, FGR_32;
+              INSN_MIPS4_32R2_NOT_32R6_64R6, FGR_32;
 }
 
 let DecoderNamespace="Mips64" in {
   def LDXC164 : LWXC1_FT<"ldxc1", FGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>,
-                INSN_MIPS4_32R2, FGR_64;
+                INSN_MIPS4_32R2_NOT_32R6_64R6, FGR_64;
   def SDXC164 : SWXC1_FT<"sdxc1", FGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>,
-                INSN_MIPS4_32R2, FGR_64;
+                INSN_MIPS4_32R2_NOT_32R6_64R6, FGR_64;
 }
 
 // Load/store doubleword indexed unaligned.
 let AdditionalPredicates = [IsNotNaCl] in {
   def LUXC1 : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>,
-              INSN_MIPS5_32R2, FGR_32;
+              INSN_MIPS5_32R2_NOT_32R6_64R6, FGR_32;
   def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>,
-              INSN_MIPS5_32R2, FGR_32;
+              INSN_MIPS5_32R2_NOT_32R6_64R6, FGR_32;
 }
 
 let DecoderNamespace="Mips64" in {
   def LUXC164 : LWXC1_FT<"luxc1", FGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>,
-                INSN_MIPS5_32R2, FGR_64;
+                INSN_MIPS5_32R2_NOT_32R6_64R6, FGR_64;
   def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>,
-                INSN_MIPS5_32R2, FGR_64;
+                INSN_MIPS5_32R2_NOT_32R6_64R6, FGR_64;
 }
 
 /// Floating-point Aritmetic

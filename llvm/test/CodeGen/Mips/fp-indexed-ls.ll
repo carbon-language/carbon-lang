@@ -1,6 +1,13 @@
-; RUN: llc -march=mipsel -mcpu=mips32r2 < %s | FileCheck %s
-; RUN: llc -mtriple=mipsel-none-nacl-gnu -mcpu=mips32r2 < %s \
-; RUN:  | FileCheck %s -check-prefix=CHECK-NACL
+; RUN: llc -march=mipsel   -mcpu=mips32   < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32R1
+; RUN: llc -march=mipsel   -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32R2
+; RUN: llc -march=mipsel   -mcpu=mips32r6 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32R6
+; RUN: llc -march=mips64el -mcpu=mips4    -mattr=n64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS4
+; RUN: llc -march=mips64el -mcpu=mips64   -mattr=n64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS4
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS4
+; RUN: llc -march=mips64el -mcpu=mips64r6 -mattr=n64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS64R6
+
+; Check that [ls][dwu]xc1 are not emitted for nacl.
+; RUN: llc -mtriple=mipsel-none-nacl-gnu -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=CHECK-NACL
 
 %struct.S = type <{ [4 x float] }>
 %struct.S2 = type <{ [4 x double] }>
@@ -14,8 +21,30 @@
 
 define float @foo0(float* nocapture %b, i32 %o) nounwind readonly {
 entry:
-; CHECK: lwxc1
+; ALL-LABEL: foo0:
+
+; MIPS32R1:      sll $[[T1:[0-9]+]], $5, 2
+; MIPS32R1:      addu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS32R1:      lwc1 $f0, 0($[[T3]])
+
+; MIPS32R2:      sll $[[T1:[0-9]+]], $5, 2
+; MIPS32R2:      lwxc1 $f0, $[[T1]]($4)
+
+; MIPS32R6:      sll $[[T1:[0-9]+]], $5, 2
+; MIPS32R6:      addu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS32R6:      lwc1 $f0, 0($[[T3]])
+
+; MIPS4:         sll $[[T0:[0-9]+]], $5, 0
+; MIPS4:         dsll $[[T1:[0-9]+]], $[[T0]], 2
+; MIPS4:         lwxc1 $f0, $[[T1]]($4)
+
+; MIPS64R6:      sll $[[T0:[0-9]+]], $5, 0
+; MIPS64R6:      dsll $[[T1:[0-9]+]], $[[T0]], 2
+; MIPS64R6:      daddu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS64R6:      lwc1 $f0, 0($[[T3]])
+
 ; CHECK-NACL-NOT: lwxc1
+
   %arrayidx = getelementptr inbounds float* %b, i32 %o
   %0 = load float* %arrayidx, align 4
   ret float %0
@@ -23,8 +52,30 @@ entry:
 
 define double @foo1(double* nocapture %b, i32 %o) nounwind readonly {
 entry:
-; CHECK: ldxc1
+; ALL-LABEL: foo1:
+
+; MIPS32R1:      sll $[[T1:[0-9]+]], $5, 3
+; MIPS32R1:      addu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS32R1:      ldc1 $f0, 0($[[T3]])
+
+; MIPS32R2:      sll $[[T1:[0-9]+]], $5, 3
+; MIPS32R2:      ldxc1 $f0, $[[T1]]($4)
+
+; MIPS32R6:      sll $[[T1:[0-9]+]], $5, 3
+; MIPS32R6:      addu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS32R6:      ldc1 $f0, 0($[[T3]])
+
+; MIPS4:         sll $[[T0:[0-9]+]], $5, 0
+; MIPS4:         dsll $[[T1:[0-9]+]], $[[T0]], 3
+; MIPS4:         ldxc1 $f0, $[[T1]]($4)
+
+; MIPS64R6:      sll $[[T0:[0-9]+]], $5, 0
+; MIPS64R6:      dsll $[[T1:[0-9]+]], $[[T0]], 3
+; MIPS64R6:      daddu $[[T3:[0-9]+]], $4, $[[T1]]
+; MIPS64R6:      ldc1 $f0, 0($[[T3]])
+
 ; CHECK-NACL-NOT: ldxc1
+
   %arrayidx = getelementptr inbounds double* %b, i32 %o
   %0 = load double* %arrayidx, align 8
   ret double %0
@@ -32,7 +83,23 @@ entry:
 
 define float @foo2(i32 %b, i32 %c) nounwind readonly {
 entry:
-; CHECK-NOT: luxc1
+; ALL-LABEL: foo2:
+
+; luxc1 did not exist in MIPS32r1
+; MIPS32R1-NOT:  luxc1
+
+; luxc1 is a misnomer since it aligns the given pointer downwards and performs
+; an aligned load. We mustn't use it to handle unaligned loads.
+; MIPS32R2-NOT:  luxc1
+
+; luxc1 was removed in MIPS32r6
+; MIPS32R6-NOT:  luxc1
+
+; MIPS4-NOT:     luxc1
+
+; luxc1 was removed in MIPS64r6
+; MIPS64R6-NOT:  luxc1
+
   %arrayidx1 = getelementptr inbounds [4 x %struct.S]* @s, i32 0, i32 %b, i32 0, i32 %c
   %0 = load float* %arrayidx1, align 1
   ret float %0
@@ -40,8 +107,28 @@ entry:
 
 define void @foo3(float* nocapture %b, i32 %o) nounwind {
 entry:
-; CHECK: swxc1
+; ALL-LABEL: foo3:
+
+; MIPS32R1-DAG:  lwc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R1-DAG:  addu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS32R1-DAG:  swc1 $[[T0]], 0($[[T1]])
+
+; MIPS32R2:      lwc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R2:      swxc1 $[[T0]], ${{[0-9]+}}($4)
+
+; MIPS32R6-DAG:  lwc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R6-DAG:  addu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS32R6-DAG:  swc1 $[[T0]], 0($[[T1]])
+
+; MIPS4:         lwc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS4:         swxc1 $[[T0]], ${{[0-9]+}}($4)
+
+; MIPS64R6-DAG:  lwc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS64R6-DAG:  daddu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS64R6-DAG:  swc1 $[[T0]], 0($[[T1]])
+
 ; CHECK-NACL-NOT: swxc1
+
   %0 = load float* @gf, align 4
   %arrayidx = getelementptr inbounds float* %b, i32 %o
   store float %0, float* %arrayidx, align 4
@@ -50,8 +137,28 @@ entry:
 
 define void @foo4(double* nocapture %b, i32 %o) nounwind {
 entry:
-; CHECK: sdxc1
+; ALL-LABEL: foo4:
+
+; MIPS32R1-DAG:  ldc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R1-DAG:  addu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS32R1-DAG:  sdc1 $[[T0]], 0($[[T1]])
+
+; MIPS32R2:      ldc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R2:      sdxc1 $[[T0]], ${{[0-9]+}}($4)
+
+; MIPS32R6-DAG:  ldc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS32R6-DAG:  addu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS32R6-DAG:  sdc1 $[[T0]], 0($[[T1]])
+
+; MIPS4:         ldc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS4:         sdxc1 $[[T0]], ${{[0-9]+}}($4)
+
+; MIPS64R6-DAG:  ldc1 $[[T0:f0]], 0(${{[0-9]+}})
+; MIPS64R6-DAG:  daddu $[[T1:[0-9]+]], $4, ${{[0-9]+}}
+; MIPS64R6-DAG:  sdc1 $[[T0]], 0($[[T1]])
+
 ; CHECK-NACL-NOT: sdxc1
+
   %0 = load double* @gd, align 8
   %arrayidx = getelementptr inbounds double* %b, i32 %o
   store double %0, double* %arrayidx, align 8
@@ -60,7 +167,18 @@ entry:
 
 define void @foo5(i32 %b, i32 %c) nounwind {
 entry:
-; CHECK-NOT: suxc1
+; ALL-LABEL: foo5:
+
+; MIPS32R1-NOT:  suxc1
+
+; MIPS32R2-NOT:  suxc1
+
+; MIPS32R6-NOT:  suxc1
+
+; MIPS4-NOT:     suxc1
+
+; MIPS64R6-NOT:  suxc1
+
   %0 = load float* @gf, align 4
   %arrayidx1 = getelementptr inbounds [4 x %struct.S]* @s, i32 0, i32 %b, i32 0, i32 %c
   store float %0, float* %arrayidx1, align 1
@@ -69,8 +187,18 @@ entry:
 
 define double @foo6(i32 %b, i32 %c) nounwind readonly {
 entry:
-; CHECK: foo6
-; CHECK-NOT: luxc1
+; ALL-LABEL: foo6:
+
+; MIPS32R1-NOT:  luxc1
+
+; MIPS32R2-NOT:  luxc1
+
+; MIPS32R6-NOT:  luxc1
+
+; MIPS4-NOT:     luxc1
+
+; MIPS64R6-NOT:  luxc1
+
   %arrayidx1 = getelementptr inbounds [4 x %struct.S2]* @s2, i32 0, i32 %b, i32 0, i32 %c
   %0 = load double* %arrayidx1, align 1
   ret double %0
@@ -78,8 +206,18 @@ entry:
 
 define void @foo7(i32 %b, i32 %c) nounwind {
 entry:
-; CHECK: foo7
-; CHECK-NOT: suxc1
+; ALL-LABEL: foo7:
+
+; MIPS32R1-NOT:  suxc1
+
+; MIPS32R2-NOT:  suxc1
+
+; MIPS32R6-NOT:  suxc1
+
+; MIPS4-NOT:     suxc1
+
+; MIPS64R6-NOT:  suxc1
+
   %0 = load double* @gd, align 8
   %arrayidx1 = getelementptr inbounds [4 x %struct.S2]* @s2, i32 0, i32 %b, i32 0, i32 %c
   store double %0, double* %arrayidx1, align 1
@@ -88,16 +226,36 @@ entry:
 
 define float @foo8() nounwind readonly {
 entry:
-; CHECK: foo8
-; CHECK-NOT: luxc1
+; ALL-LABEL: foo8:
+
+; MIPS32R1-NOT:  luxc1
+
+; MIPS32R2-NOT:  luxc1
+
+; MIPS32R6-NOT:  luxc1
+
+; MIPS4-NOT:     luxc1
+
+; MIPS64R6-NOT:  luxc1
+
   %0 = load float* getelementptr inbounds (%struct.S3* @s3, i32 0, i32 1), align 1
   ret float %0
 }
 
 define void @foo9(float %f) nounwind {
 entry:
-; CHECK: foo9
-; CHECK-NOT: suxc1
+; ALL-LABEL: foo9:
+
+; MIPS32R1-NOT:  suxc1
+
+; MIPS32R2-NOT:  suxc1
+
+; MIPS32R6-NOT:  suxc1
+
+; MIPS4-NOT:     suxc1
+
+; MIPS64R6-NOT:  suxc1
+
   store float %f, float* getelementptr inbounds (%struct.S3* @s3, i32 0, i32 1), align 1
   ret void
 }
