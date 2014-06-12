@@ -18,6 +18,7 @@
 #include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
 #include "PPCJITInfo.h"
+#include "PPCSelectionDAGInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -112,6 +113,7 @@ protected:
   PPCInstrInfo InstrInfo;
   PPCJITInfo JITInfo;
   PPCTargetLowering TLInfo;
+  PPCSelectionDAGInfo TSInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -147,6 +149,7 @@ public:
   const PPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
   PPCJITInfo *getJITInfo() { return &JITInfo; }
   const PPCTargetLowering *getTargetLowering() const { return &TLInfo; }
+  const PPCSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
 
   /// initializeSubtargetDependencies - Initializes using a CPU and feature string
   /// so that we can use initializer lists for subtarget initialization.

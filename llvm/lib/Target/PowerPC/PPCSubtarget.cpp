@@ -81,7 +81,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
       OptLevel(OptLevel),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
       DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this),
-      TLInfo(TM) {}
+      TLInfo(TM), TSInfo(&DL) {}
 
 /// SetJITMode - This is called to inform the subtarget info that we are
 /// producing code for the JIT.
