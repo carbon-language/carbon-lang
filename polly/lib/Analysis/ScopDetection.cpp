@@ -219,7 +219,14 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
   // Get the first error we found. Even in keep-going mode, this is the first
   // reason that caused the candidate to be rejected.
   RejectLog Errors = RejectLogs.at(R);
-  return (*Errors.begin())->getMessage();
+
+  // This can happen when we marked a region invalid, but didn't track
+  // an error for it.
+  if (Errors.size() == 0)
+    return "";
+
+  RejectReasonPtr RR = *Errors.begin();
+  return RR->getMessage();
 }
 
 bool ScopDetection::isValidCFG(BasicBlock &BB,
