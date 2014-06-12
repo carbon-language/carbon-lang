@@ -691,7 +691,7 @@ void ScheduleDAGMI::schedule() {
       }
     }
     // Notify the scheduling strategy before updating the DAG.
-    // This sets the scheduled nodes ReadyCycle to CurrCycle. When updateQueues
+    // This sets the scheduled node's ReadyCycle to CurrCycle. When updateQueues
     // runs, it can then use the accurate ReadyCycle time to determine whether
     // newly released nodes can move to the readyQ.
     SchedImpl->schedNode(SU, IsTopNode);
@@ -1747,7 +1747,11 @@ void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle) {
   assert(SU->getInstr() && "Scheduled SUnit must have instr");
 
 #ifndef NDEBUG
-  MaxObservedStall = std::max(ReadyCycle - CurrCycle, MaxObservedStall);
+  // ReadyCycle was been bumped up to the CurrCycle when this node was
+  // scheduled, but CurrCycle may have been eagerly advanced immediately after
+  // scheduling, so may now be greater than ReadyCycle.
+  if (ReadyCycle > CurrCycle)
+    MaxObservedStall = std::max(ReadyCycle - CurrCycle, MaxObservedStall);
 #endif
 
   if (ReadyCycle < MinReadyCycle)
