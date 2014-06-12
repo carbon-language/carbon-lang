@@ -37,6 +37,9 @@
  *	@(#)cclass.h	8.3 (Berkeley) 3/20/94
  */
 
+#ifndef LLVM_SUPPORT_REGCCLASS_H
+#define LLVM_SUPPORT_REGCCLASS_H
+
 /* character-class table */
 static struct cclass {
 	const char *name;
@@ -68,3 +71,5 @@ static struct cclass {
 					""} ,
 	{ NULL,		0,		"" }
 };
+
+#endif

@@ -35,6 +35,9 @@
  *	@(#)cname.h	8.3 (Berkeley) 3/20/94
  */
 
+#ifndef LLVM_SUPPORT_REGCNAME_H
+#define LLVM_SUPPORT_REGCNAME_H
+
 /* character-name table */
 static struct cname {
 	const char *name;
@@ -137,3 +140,5 @@ static struct cname {
 	{ "DEL",			'\177' },
 	{ NULL,				0 }
 };
+
+#endif
