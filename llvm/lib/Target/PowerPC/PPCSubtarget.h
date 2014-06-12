@@ -16,6 +16,7 @@
 
 #include "PPCFrameLowering.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -104,6 +105,8 @@ protected:
   CodeGenOpt::Level OptLevel;
 
   PPCFrameLowering    FrameLowering;
+  const DataLayout DL;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
@@ -134,6 +137,7 @@ public:
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
   const PPCFrameLowering *getFrameLowering() const { return &FrameLowering; }
+  const DataLayout *getDataLayout() const { return &DL; }
 
   /// initializeSubtargetDependencies - Initializes using a CPU and feature string
   /// so that we can use initializer lists for subtarget initialization.

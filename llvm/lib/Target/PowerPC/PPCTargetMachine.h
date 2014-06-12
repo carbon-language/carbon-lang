@@ -29,7 +29,6 @@ namespace llvm {
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
-  const DataLayout    DL;       // Calculates type size & alignment
   PPCInstrInfo        InstrInfo;
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
@@ -56,7 +55,9 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  const DataLayout    *getDataLayout() const override    { return &DL; }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
   const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
   const InstrItineraryData *getInstrItineraryData() const override {
     return &getSubtargetImpl()->getInstrItineraryData();
