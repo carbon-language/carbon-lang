@@ -174,6 +174,9 @@ class MipsAsmParser : public MCTargetAsmParser {
     return STI.getFeatureBits() & Mips::FeatureMicroMips;
   }
 
+  bool hasMips4() const { return STI.getFeatureBits() & Mips::FeatureMips4; }
+  bool hasMips32() const { return STI.getFeatureBits() & Mips::FeatureMips32; }
+
   bool parseRegister(unsigned &RegNum);
 
   bool eatComma(StringRef ErrorStr);
@@ -245,6 +248,9 @@ public:
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
+
+  /// True if all of $fcc0 - $fcc7 exist for the current ISA.
+  bool hasEightFccRegisters() const { return hasMips4() || hasMips32(); }
 
   /// Warn if RegNo is the current assembler temporary.
   void WarnIfAssemblerTemporary(int RegNo, SMLoc Loc);
@@ -759,7 +765,11 @@ public:
     return isRegIdx() && RegIdx.Kind & RegKind_CCR && RegIdx.Index <= 31;
   }
   bool isFCCAsmReg() const {
-    return isRegIdx() && RegIdx.Kind & RegKind_FCC && RegIdx.Index <= 7;
+    if (!(isRegIdx() && RegIdx.Kind & RegKind_FCC))
+      return false;
+    if (!AsmParser.hasEightFccRegisters())
+      return RegIdx.Index == 0;
+    return RegIdx.Index <= 7;
   }
   bool isACCAsmReg() const {
     return isRegIdx() && RegIdx.Kind & RegKind_ACC && RegIdx.Index <= 3;

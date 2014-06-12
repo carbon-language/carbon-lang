@@ -185,6 +185,8 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::SELECT, MVT::f64, Legal);
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
+    setOperationAction(ISD::BRCOND, MVT::Other, Legal);
+
     // Floating point > and >= are supported via < and <=
     setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
     setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);

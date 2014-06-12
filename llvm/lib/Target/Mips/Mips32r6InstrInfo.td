@@ -28,7 +28,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: bc1any2, bc1any4
 // Removed: bgezal
 // Removed: bltzal
-// Removed: bc1[ft]
 // Rencoded: [ls][wd]c2
 
 def brtarget21 : Operand<OtherVT> {

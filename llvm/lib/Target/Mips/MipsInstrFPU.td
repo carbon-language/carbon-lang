@@ -517,9 +517,9 @@ def MIPS_BRANCH_F  : PatLeaf<(i32 0)>;
 def MIPS_BRANCH_T  : PatLeaf<(i32 1)>;
 
 def BC1F : MMRel, BC1F_FT<"bc1f", brtarget, IIBranch, MIPS_BRANCH_F>,
-           BC1F_FM<0, 0>;
+           BC1F_FM<0, 0>, ISA_MIPS1_NOT_32R6_64R6;
 def BC1T : MMRel, BC1F_FT<"bc1t", brtarget, IIBranch, MIPS_BRANCH_T>,
-           BC1F_FM<0, 1>;
+           BC1F_FM<0, 1>, ISA_MIPS1_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Flag Conditions
@@ -583,8 +583,10 @@ def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
 //===----------------------------------------------------------------------===//
 // InstAliases.
 //===----------------------------------------------------------------------===//
-def : MipsInstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>;
-def : MipsInstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>;
+def : MipsInstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>,
+      ISA_MIPS1_NOT_32R6_64R6;
+def : MipsInstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>,
+      ISA_MIPS1_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns

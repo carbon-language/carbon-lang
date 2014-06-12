@@ -38,9 +38,9 @@ def FCMP_D32_MM : MMRel, CEQS_FT<"d", AFGR64, II_C_CC_D, MipsFPCmp>,
                   CEQS_FM_MM<1>;
 
 def BC1F_MM : MMRel, BC1F_FT<"bc1f", brtarget_mm, IIBranch, MIPS_BRANCH_F>,
-              BC1F_FM_MM<0x1c>;
+              BC1F_FM_MM<0x1c>, ISA_MIPS1_NOT_32R6_64R6;
 def BC1T_MM : MMRel, BC1F_FT<"bc1t", brtarget_mm, IIBranch, MIPS_BRANCH_T>,
-              BC1F_FM_MM<0x1d>;
+              BC1F_FM_MM<0x1d>, ISA_MIPS1_NOT_32R6_64R6;
 
 def CEIL_W_S_MM  : MMRel, ABSS_FT<"ceil.w.s", FGR32Opnd, FGR32Opnd, II_CEIL>,
                    ROUND_W_FM_MM<0, 0x6c>;
