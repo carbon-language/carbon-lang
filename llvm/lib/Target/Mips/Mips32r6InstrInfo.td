@@ -26,8 +26,6 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: sdc2
 // Reencoded: swc2
 // Removed: bc1any2, bc1any4
-// Removed: bc2[ft]
-// Removed: bc2f, bc2t
 // Removed: bgezal
 // Removed: bltzal
 // Removed: bc1[ft]
