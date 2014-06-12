@@ -250,7 +250,7 @@ void PPCallbacksTracker::PragmaDiagnostic(clang::SourceLocation Loc,
   beginCallback("PragmaDiagnostic");
   appendArgument("Loc", Loc);
   appendArgument("Namespace", Namespace);
-  appendArgument("Mapping", Mapping, MappingStrings);
+  appendArgument("Mapping", (unsigned)Mapping, MappingStrings);
   appendArgument("Str", Str);
 }
 
