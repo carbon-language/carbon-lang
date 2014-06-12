@@ -54,7 +54,7 @@ public:
 /// setting the CTR register then branching through it within a dispatch group),
 /// or storing then loading from the same address within a dispatch group.
 class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
-  const TargetMachine &TM;
+  const ScheduleDAG &DAG;
 
   unsigned NumIssued;  // Number of insts issued, including advanced cycles.
 
@@ -75,7 +75,7 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
   unsigned NumStores;
 
 public:
-  PPCHazardRecognizer970(const TargetMachine &TM);
+  PPCHazardRecognizer970(const ScheduleDAG &DAG);
   virtual HazardType getHazardType(SUnit *SU, int Stalls) override;
   virtual void EmitInstruction(SUnit *SU) override;
   virtual void AdvanceCycle() override;

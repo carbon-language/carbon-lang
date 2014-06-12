@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -60,9 +61,9 @@ cl::Hidden);
 // Pin the vtable to this file.
 void PPCInstrInfo::anchor() {}
 
-PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
-  : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
-    TM(tm), RI(*TM.getSubtargetImpl()) {}
+PPCInstrInfo::PPCInstrInfo(PPCSubtarget &STI)
+    : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+      Subtarget(STI), RI(STI) {}
 
 /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
 /// this target when scheduling the DAG.
@@ -84,7 +85,8 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
 ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   const InstrItineraryData *II,
   const ScheduleDAG *DAG) const {
-  unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+  unsigned Directive =
+      DAG->TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
   if (Directive == PPC::DIR_PWR7)
     return new PPCDispatchGroupSBHazardRecognizer(II, DAG);
@@ -92,9 +94,9 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   // Most subtargets use a PPC970 recognizer.
   if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2 &&
       Directive != PPC::DIR_E500mc && Directive != PPC::DIR_E5500) {
-    assert(TM.getInstrInfo() && "No InstrInfo?");
+    assert(DAG->TII && "No InstrInfo?");
 
-    return new PPCHazardRecognizer970(TM);
+    return new PPCHazardRecognizer970(*DAG);
   }
 
   return new ScoreboardHazardRecognizer(II, DAG);
@@ -129,7 +131,7 @@ int PPCInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 
     // On some cores, there is an additional delay between writing to a condition
     // register, and using it from a branch.
-    unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+    unsigned Directive = Subtarget.getDarwinDirective();
     switch (Directive) {
     default: break;
     case PPC::DIR_7400:
@@ -313,7 +315,7 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI) const {
   // This function is used for scheduling, and the nop wanted here is the type
   // that terminates dispatch groups on the POWER cores.
-  unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+  unsigned Directive = Subtarget.getDarwinDirective();
   unsigned Opcode;
   switch (Directive) {
   default:            Opcode = PPC::NOP; break;
@@ -332,7 +334,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond,
                                  bool AllowModify) const {
-  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+  bool isPPC64 = Subtarget.isPPC64();
 
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
@@ -538,7 +540,7 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "PPC branch conditions have two components!");
 
-  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+  bool isPPC64 = Subtarget.isPPC64();
 
   // One-way branch.
   if (!FBB) {
@@ -579,7 +581,7 @@ bool PPCInstrInfo::canInsertSelect(const MachineBasicBlock &MBB,
                 const SmallVectorImpl<MachineOperand> &Cond,
                 unsigned TrueReg, unsigned FalseReg,
                 int &CondCycles, int &TrueCycles, int &FalseCycles) const {
-  if (!TM.getSubtargetImpl()->hasISEL())
+  if (!Subtarget.hasISEL())
     return false;
 
   if (Cond.size() != 2)
@@ -623,7 +625,7 @@ void PPCInstrInfo::insertSelect(MachineBasicBlock &MBB,
   assert(Cond.size() == 2 &&
          "PPC branch conditions have two components!");
 
-  assert(TM.getSubtargetImpl()->hasISEL() &&
+  assert(Subtarget.hasISEL() &&
          "Cannot insert select on target without ISEL support");
 
   // Get the register classes.
@@ -826,7 +828,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
-    assert(TM.getSubtargetImpl()->isDarwin() &&
+    assert(Subtarget.isDarwin() &&
            "VRSAVE only needs spill/restore on Darwin");
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::SPILL_VRSAVE))
                                        .addReg(SrcReg,
@@ -921,7 +923,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
-    assert(TM.getSubtargetImpl()->isDarwin() &&
+    assert(Subtarget.isDarwin() &&
            "VRSAVE only needs spill/restore on Darwin");
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL,
                                                get(PPC::RESTORE_VRSAVE),
@@ -1035,7 +1037,7 @@ bool PPCInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
 
   unsigned ZeroReg;
   if (UseInfo->isLookupPtrRegClass()) {
-    bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+    bool isPPC64 = Subtarget.isPPC64();
     ZeroReg = isPPC64 ? PPC::ZERO8 : PPC::ZERO;
   } else {
     ZeroReg = UseInfo->RegClass == PPC::G8RC_NOX0RegClassID ?
@@ -1102,7 +1104,7 @@ bool PPCInstrInfo::PredicateInstruction(
   unsigned OpC = MI->getOpcode();
   if (OpC == PPC::BLR) {
     if (Pred[1].getReg() == PPC::CTR8 || Pred[1].getReg() == PPC::CTR) {
-      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+      bool isPPC64 = Subtarget.isPPC64();
       MI->setDesc(get(Pred[0].getImm() ?
                       (isPPC64 ? PPC::BDNZLR8 : PPC::BDNZLR) :
                       (isPPC64 ? PPC::BDZLR8  : PPC::BDZLR)));
@@ -1124,7 +1126,7 @@ bool PPCInstrInfo::PredicateInstruction(
     return true;
   } else if (OpC == PPC::B) {
     if (Pred[1].getReg() == PPC::CTR8 || Pred[1].getReg() == PPC::CTR) {
-      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+      bool isPPC64 = Subtarget.isPPC64();
       MI->setDesc(get(Pred[0].getImm() ?
                       (isPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
                       (isPPC64 ? PPC::BDZ8  : PPC::BDZ)));
@@ -1162,7 +1164,7 @@ bool PPCInstrInfo::PredicateInstruction(
       llvm_unreachable("Cannot predicate bctr[l] on the ctr register");
 
     bool setLR = OpC == PPC::BCTRL || OpC == PPC::BCTRL8;
-    bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+    bool isPPC64 = Subtarget.isPPC64();
 
     if (Pred[0].getImm() == PPC::PRED_BIT_SET) {
       MI->setDesc(get(isPPC64 ? (setLR ? PPC::BCCTRL8 : PPC::BCCTR8) :
@@ -1323,7 +1325,7 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   // for equality checks (as those don't depend on the sign). On PPC64,
   // we are restricted to equality for unsigned 64-bit comparisons and for
   // signed 32-bit comparisons the applicability is more restricted.
-  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+  bool isPPC64 = Subtarget.isPPC64();
   bool is32BitSignedCompare   = OpC ==  PPC::CMPWI || OpC == PPC::CMPW;
   bool is32BitUnsignedCompare = OpC == PPC::CMPLWI || OpC == PPC::CMPLW;
   bool is64BitUnsignedCompare = OpC == PPC::CMPLDI || OpC == PPC::CMPLD;

@@ -258,8 +258,8 @@ void PPCDispatchGroupSBHazardRecognizer::EmitNoop() {
 //   3. Handling of the esoteric cases in "Resource-based Instruction Grouping".
 //
 
-PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetMachine &TM)
-  : TM(TM) {
+PPCHazardRecognizer970::PPCHazardRecognizer970(const ScheduleDAG &DAG)
+    : DAG(DAG) {
   EndDispatchGroup();
 }
 
@@ -278,7 +278,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
                                      bool &isCracked,
                                      bool &isLoad, bool &isStore) {
-  const MCInstrDesc &MCID = TM.getInstrInfo()->get(Opcode);
+  const MCInstrDesc &MCID = DAG.TII->get(Opcode);
 
   isLoad  = MCID.mayLoad();
   isStore = MCID.mayStore();
