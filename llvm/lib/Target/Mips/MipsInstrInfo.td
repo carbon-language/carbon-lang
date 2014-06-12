@@ -1247,10 +1247,14 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
-def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>, ISA_MIPS32;
-def MADDU : MMRel, MArithR<"maddu", II_MADDU, 1>, MULT_FM<0x1c, 1>, ISA_MIPS32;
-def MSUB  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM<0x1c, 4>, ISA_MIPS32;
-def MSUBU : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM<0x1c, 5>, ISA_MIPS32;
+def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>,
+            ISA_MIPS32_NOT_32R6_64R6;
+def MADDU : MMRel, MArithR<"maddu", II_MADDU, 1>, MULT_FM<0x1c, 1>,
+            ISA_MIPS32_NOT_32R6_64R6;
+def MSUB  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM<0x1c, 4>,
+            ISA_MIPS32_NOT_32R6_64R6;
+def MSUBU : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM<0x1c, 5>,
+            ISA_MIPS32_NOT_32R6_64R6;
 
 let AdditionalPredicates = [NotDSP] in {
 def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, II_MULT>,
@@ -1260,10 +1264,14 @@ def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, II_MULTU>,
 def PseudoMFHI : PseudoMFLOHI<GPR32, ACC64, MipsMFHI>, ISA_MIPS1_NOT_32R6_64R6;
 def PseudoMFLO : PseudoMFLOHI<GPR32, ACC64, MipsMFLO>, ISA_MIPS1_NOT_32R6_64R6;
 def PseudoMTLOHI : PseudoMTLOHI<ACC64, GPR32>, ISA_MIPS1_NOT_32R6_64R6;
-def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd, II_MADD>;
-def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu, II_MADDU>;
-def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub, II_MSUB>;
-def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu, II_MSUBU>;
+def PseudoMADD  : MAddSubPseudo<MADD, MipsMAdd, II_MADD>,
+                  ISA_MIPS32_NOT_32R6_64R6;
+def PseudoMADDU : MAddSubPseudo<MADDU, MipsMAddu, II_MADDU>,
+                  ISA_MIPS32_NOT_32R6_64R6;
+def PseudoMSUB  : MAddSubPseudo<MSUB, MipsMSub, II_MSUB>,
+                  ISA_MIPS32_NOT_32R6_64R6;
+def PseudoMSUBU : MAddSubPseudo<MSUBU, MipsMSubu, II_MSUBU>,
+                  ISA_MIPS32_NOT_32R6_64R6;
 }
 
 def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, II_DIV,

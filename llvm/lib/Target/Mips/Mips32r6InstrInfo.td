@@ -36,7 +36,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: luxc1
 // Removed: lwxc1
 // Removed: madd.[ds], nmadd.[ds], nmsub.[ds], sub.[ds]
-// Removed: madd, maddu, msub, msubu
 // Removed: movf, movt
 // Removed: movf.fmt, movt.fmt, movn.fmt, movz.fmt
 // Removed: movn, movz

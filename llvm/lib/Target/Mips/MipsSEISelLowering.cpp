@@ -155,6 +155,8 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   if (Subtarget->hasMips32r6()) {
     // MIPS32r6 replaces the accumulator-based multiplies with a three register
     // instruction
+    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+    setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::MUL, MVT::i32, Legal);
     setOperationAction(ISD::MULHS, MVT::i32, Legal);
     setOperationAction(ISD::MULHU, MVT::i32, Legal);
@@ -483,8 +485,8 @@ static SDValue performADDECombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalize())
     return SDValue();
 
-  if (Subtarget->hasMips32() && N->getValueType(0) == MVT::i32 &&
-      selectMADD(N, &DAG))
+  if (Subtarget->hasMips32() && !Subtarget->hasMips32r6() &&
+      N->getValueType(0) == MVT::i32 && selectMADD(N, &DAG))
     return SDValue(N, 0);
 
   return SDValue();
