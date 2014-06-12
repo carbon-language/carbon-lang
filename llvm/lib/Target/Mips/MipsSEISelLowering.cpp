@@ -169,6 +169,32 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::UDIV, MVT::i32, Legal);
     setOperationAction(ISD::SREM, MVT::i32, Legal);
     setOperationAction(ISD::UREM, MVT::i32, Legal);
+
+    // MIPS32r6 replaces conditional moves with an equivalent that removes the
+    // need for three GPR read ports.
+    setOperationAction(ISD::SETCC, MVT::i32, Legal);
+    setOperationAction(ISD::SELECT, MVT::i32, Legal);
+    setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
+
+    setOperationAction(ISD::SETCC, MVT::f32, Legal);
+    setOperationAction(ISD::SELECT, MVT::f32, Legal);
+    setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+
+    assert(Subtarget->isFP64bit() && "FR=1 is required for MIPS32r6");
+    setOperationAction(ISD::SETCC, MVT::f64, Legal);
+    setOperationAction(ISD::SELECT, MVT::f64, Legal);
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+
+    // Floating point > and >= are supported via < and <=
+    setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
+    setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);
+    setCondCodeAction(ISD::SETUGE, MVT::f32, Expand);
+    setCondCodeAction(ISD::SETUGT, MVT::f32, Expand);
+
+    setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
+    setCondCodeAction(ISD::SETOGT, MVT::f64, Expand);
+    setCondCodeAction(ISD::SETUGE, MVT::f64, Expand);
+    setCondCodeAction(ISD::SETUGT, MVT::f64, Expand);
   }
 
   if (Subtarget->hasMips64r6()) {
@@ -186,6 +212,12 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::UDIV, MVT::i64, Legal);
     setOperationAction(ISD::SREM, MVT::i64, Legal);
     setOperationAction(ISD::UREM, MVT::i64, Legal);
+
+    // MIPS64r6 replaces conditional moves with an equivalent that removes the
+    // need for three GPR read ports.
+    setOperationAction(ISD::SETCC, MVT::i64, Legal);
+    setOperationAction(ISD::SELECT, MVT::i64, Legal);
+    setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
   }
 
   computeRegisterProperties();

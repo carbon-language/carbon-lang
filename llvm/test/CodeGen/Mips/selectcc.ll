@@ -1,5 +1,7 @@
-; RUN: llc -march=mipsel < %s
-; RUN: llc -march=mipsel -pre-RA-sched=source < %s | FileCheck %s --check-prefix=SOURCE-SCHED
+; RUN: llc -march=mipsel -mcpu=mips32 < %s
+; RUN: llc -march=mipsel -mcpu=mips32 -pre-RA-sched=source < %s | FileCheck %s --check-prefix=SOURCE-SCHED
+; RUN: llc -march=mipsel -mcpu=mips32r2 < %s
+; RUN: llc -march=mipsel -mcpu=mips32r2 -pre-RA-sched=source < %s | FileCheck %s --check-prefix=SOURCE-SCHED
 
 @gf0 = external global float
 @gf1 = external global float

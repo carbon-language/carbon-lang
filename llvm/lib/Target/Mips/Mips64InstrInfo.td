@@ -36,6 +36,9 @@ def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
 def immSExt10_64 : PatLeaf<(i64 imm),
                            [{ return isInt<10>(N->getSExtValue()); }]>;
 
+def immZExt16_64 : PatLeaf<(i64 imm),
+                           [{ return isInt<16>(N->getZExtValue()); }]>;
+
 //===----------------------------------------------------------------------===//
 // Instructions specific format
 //===----------------------------------------------------------------------===//

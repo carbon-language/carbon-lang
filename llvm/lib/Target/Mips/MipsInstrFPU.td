@@ -258,11 +258,11 @@ multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt,
   def C_NGT_#NAME : C_COND_FT<"ngt", TypeStr, RC, itin>, C_COND_FM<fmt, 15>;
 }
 
-defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>;
-defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>,
+defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>, ISA_MIPS1_NOT_32R6_64R6;
+defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
            AdditionalRequires<[NotFP64bit]>;
 let DecoderNamespace = "Mips64" in
-defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>,
+defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
            AdditionalRequires<[IsFP64bit]>;
 
 //===----------------------------------------------------------------------===//
@@ -544,12 +544,13 @@ def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
 def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
 /// Floating Point Compare
-def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>, CEQS_FM<16>;
+def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>, CEQS_FM<16>,
+               ISA_MIPS1_NOT_32R6_64R6;
 def FCMP_D32 : MMRel, CEQS_FT<"d", AFGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
-               AdditionalRequires<[NotFP64bit]>;
+               ISA_MIPS1_NOT_32R6_64R6, AdditionalRequires<[NotFP64bit]>;
 let DecoderNamespace = "Mips64" in
 def FCMP_D64 : CEQS_FT<"d", FGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
-               AdditionalRequires<[IsFP64bit]>;
+               ISA_MIPS1_NOT_32R6_64R6, AdditionalRequires<[IsFP64bit]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions

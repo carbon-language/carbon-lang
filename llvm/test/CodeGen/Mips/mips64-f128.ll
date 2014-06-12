@@ -1,7 +1,11 @@
 ; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips4 -soft-float -O1 \
-; RUN:     -disable-mips-delay-filler < %s | FileCheck %s
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=ALL -check-prefix=C_CC_FMT
 ; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips64 -soft-float -O1 \
-; RUN:     -disable-mips-delay-filler < %s | FileCheck %s
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=ALL -check-prefix=C_CC_FMT
+; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips64r2 -soft-float -O1 \
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=ALL -check-prefix=C_CC_FMT
+; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips64r6 -soft-float -O1 \
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=ALL -check-prefix=CMP_CC_FMT
 
 @gld0 = external global fp128
 @gld1 = external global fp128
@@ -9,8 +13,8 @@
 @gf1 = external global float
 @gd1 = external global double
 
-; CHECK-LABEL: addLD:
-; CHECK: ld $25, %call16(__addtf3)
+; ALL-LABEL: addLD:
+; ALL: ld $25, %call16(__addtf3)
 
 define fp128 @addLD() {
 entry:
@@ -20,8 +24,8 @@ entry:
   ret fp128 %add
 }
 
-; CHECK-LABEL: subLD:
-; CHECK: ld $25, %call16(__subtf3)
+; ALL-LABEL: subLD:
+; ALL: ld $25, %call16(__subtf3)
 
 define fp128 @subLD() {
 entry:
@@ -31,8 +35,8 @@ entry:
   ret fp128 %sub
 }
 
-; CHECK-LABEL: mulLD:
-; CHECK: ld $25, %call16(__multf3)
+; ALL-LABEL: mulLD:
+; ALL: ld $25, %call16(__multf3)
 
 define fp128 @mulLD() {
 entry:
@@ -42,8 +46,8 @@ entry:
   ret fp128 %mul
 }
 
-; CHECK-LABEL: divLD:
-; CHECK: ld $25, %call16(__divtf3)
+; ALL-LABEL: divLD:
+; ALL: ld $25, %call16(__divtf3)
 
 define fp128 @divLD() {
 entry:
@@ -53,8 +57,8 @@ entry:
   ret fp128 %div
 }
 
-; CHECK-LABEL: conv_LD_char:
-; CHECK: ld $25, %call16(__floatsitf)
+; ALL-LABEL: conv_LD_char:
+; ALL: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_char(i8 signext %a) {
 entry:
@@ -62,8 +66,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_short:
-; CHECK: ld $25, %call16(__floatsitf)
+; ALL-LABEL: conv_LD_short:
+; ALL: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_short(i16 signext %a) {
 entry:
@@ -71,8 +75,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_int:
-; CHECK: ld $25, %call16(__floatsitf)
+; ALL-LABEL: conv_LD_int:
+; ALL: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_int(i32 %a) {
 entry:
@@ -80,8 +84,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_LL:
-; CHECK: ld $25, %call16(__floatditf)
+; ALL-LABEL: conv_LD_LL:
+; ALL: ld $25, %call16(__floatditf)
 
 define fp128 @conv_LD_LL(i64 %a) {
 entry:
@@ -89,8 +93,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_UChar:
-; CHECK: ld $25, %call16(__floatunsitf)
+; ALL-LABEL: conv_LD_UChar:
+; ALL: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UChar(i8 zeroext %a) {
 entry:
@@ -98,8 +102,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_UShort:
-; CHECK: ld $25, %call16(__floatunsitf)
+; ALL-LABEL: conv_LD_UShort:
+; ALL: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UShort(i16 zeroext %a) {
 entry:
@@ -107,8 +111,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_UInt:
-; CHECK: ld $25, %call16(__floatunsitf)
+; ALL-LABEL: conv_LD_UInt:
+; ALL: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UInt(i32 %a) {
 entry:
@@ -116,8 +120,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_ULL:
-; CHECK: ld $25, %call16(__floatunditf)
+; ALL-LABEL: conv_LD_ULL:
+; ALL: ld $25, %call16(__floatunditf)
 
 define fp128 @conv_LD_ULL(i64 %a) {
 entry:
@@ -125,8 +129,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_char_LD:
-; CHECK: ld $25, %call16(__fixtfsi)
+; ALL-LABEL: conv_char_LD:
+; ALL: ld $25, %call16(__fixtfsi)
 
 define signext i8 @conv_char_LD(fp128 %a) {
 entry:
@@ -134,8 +138,8 @@ entry:
   ret i8 %conv
 }
 
-; CHECK-LABEL: conv_short_LD:
-; CHECK: ld $25, %call16(__fixtfsi)
+; ALL-LABEL: conv_short_LD:
+; ALL: ld $25, %call16(__fixtfsi)
 
 define signext i16 @conv_short_LD(fp128 %a) {
 entry:
@@ -143,8 +147,8 @@ entry:
   ret i16 %conv
 }
 
-; CHECK-LABEL: conv_int_LD:
-; CHECK: ld $25, %call16(__fixtfsi)
+; ALL-LABEL: conv_int_LD:
+; ALL: ld $25, %call16(__fixtfsi)
 
 define i32 @conv_int_LD(fp128 %a) {
 entry:
@@ -152,8 +156,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: conv_LL_LD:
-; CHECK: ld $25, %call16(__fixtfdi)
+; ALL-LABEL: conv_LL_LD:
+; ALL: ld $25, %call16(__fixtfdi)
 
 define i64 @conv_LL_LD(fp128 %a) {
 entry:
@@ -161,8 +165,8 @@ entry:
   ret i64 %conv
 }
 
-; CHECK-LABEL: conv_UChar_LD:
-; CHECK: ld $25, %call16(__fixtfsi)
+; ALL-LABEL: conv_UChar_LD:
+; ALL: ld $25, %call16(__fixtfsi)
 
 define zeroext i8 @conv_UChar_LD(fp128 %a) {
 entry:
@@ -170,8 +174,8 @@ entry:
   ret i8 %conv
 }
 
-; CHECK-LABEL: conv_UShort_LD:
-; CHECK: ld $25, %call16(__fixtfsi)
+; ALL-LABEL: conv_UShort_LD:
+; ALL: ld $25, %call16(__fixtfsi)
 
 define zeroext i16 @conv_UShort_LD(fp128 %a) {
 entry:
@@ -179,8 +183,8 @@ entry:
   ret i16 %conv
 }
 
-; CHECK-LABEL: conv_UInt_LD:
-; CHECK: ld $25, %call16(__fixunstfsi)
+; ALL-LABEL: conv_UInt_LD:
+; ALL: ld $25, %call16(__fixunstfsi)
 
 define i32 @conv_UInt_LD(fp128 %a) {
 entry:
@@ -188,8 +192,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: conv_ULL_LD:
-; CHECK: ld $25, %call16(__fixunstfdi)
+; ALL-LABEL: conv_ULL_LD:
+; ALL: ld $25, %call16(__fixunstfdi)
 
 define i64 @conv_ULL_LD(fp128 %a) {
 entry:
@@ -197,8 +201,8 @@ entry:
   ret i64 %conv
 }
 
-; CHECK-LABEL: conv_LD_float:
-; CHECK: ld $25, %call16(__extendsftf2)
+; ALL-LABEL: conv_LD_float:
+; ALL: ld $25, %call16(__extendsftf2)
 
 define fp128 @conv_LD_float(float %a) {
 entry:
@@ -206,8 +210,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_LD_double:
-; CHECK: ld $25, %call16(__extenddftf2)
+; ALL-LABEL: conv_LD_double:
+; ALL: ld $25, %call16(__extenddftf2)
 
 define fp128 @conv_LD_double(double %a) {
 entry:
@@ -215,8 +219,8 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: conv_float_LD:
-; CHECK: ld $25, %call16(__trunctfsf2)
+; ALL-LABEL: conv_float_LD:
+; ALL: ld $25, %call16(__trunctfsf2)
 
 define float @conv_float_LD(fp128 %a) {
 entry:
@@ -224,8 +228,8 @@ entry:
   ret float %conv
 }
 
-; CHECK-LABEL: conv_double_LD:
-; CHECK: ld $25, %call16(__trunctfdf2)
+; ALL-LABEL: conv_double_LD:
+; ALL: ld $25, %call16(__trunctfdf2)
 
 define double @conv_double_LD(fp128 %a) {
 entry:
@@ -233,13 +237,13 @@ entry:
   ret double %conv
 }
 
-; CHECK-LABEL:             libcall1_fabsl:
-; CHECK-DAG: ld      $[[R0:[0-9]+]], 8($[[R4:[0-9]+]])
-; CHECK-DAG: daddiu  $[[R1:[0-9]+]], $zero, 1
-; CHECK-DAG: dsll    $[[R2:[0-9]+]], $[[R1]], 63
-; CHECK-DAG: daddiu  $[[R3:[0-9]+]], $[[R2]], -1
-; CHECK-DAG: and     $4, $[[R0]], $[[R3]]
-; CHECK-DAG: ld      $2, 0($[[R4]])
+; ALL-LABEL:             libcall1_fabsl:
+; ALL-DAG: ld      $[[R0:[0-9]+]], 8($[[R4:[0-9]+]])
+; ALL-DAG: daddiu  $[[R1:[0-9]+]], $zero, 1
+; ALL-DAG: dsll    $[[R2:[0-9]+]], $[[R1]], 63
+; ALL-DAG: daddiu  $[[R3:[0-9]+]], $[[R2]], -1
+; ALL-DAG: and     $4, $[[R0]], $[[R3]]
+; ALL-DAG: ld      $2, 0($[[R4]])
 
 define fp128 @libcall1_fabsl() {
 entry:
@@ -250,8 +254,8 @@ entry:
 
 declare fp128 @fabsl(fp128) #1
 
-; CHECK-LABEL: libcall1_ceill:
-; CHECK: ld $25, %call16(ceill)
+; ALL-LABEL: libcall1_ceill:
+; ALL: ld $25, %call16(ceill)
 
 define fp128 @libcall1_ceill() {
 entry:
@@ -262,8 +266,8 @@ entry:
 
 declare fp128 @ceill(fp128) #1
 
-; CHECK-LABEL: libcall1_sinl:
-; CHECK: ld $25, %call16(sinl)
+; ALL-LABEL: libcall1_sinl:
+; ALL: ld $25, %call16(sinl)
 
 define fp128 @libcall1_sinl() {
 entry:
@@ -274,8 +278,8 @@ entry:
 
 declare fp128 @sinl(fp128) #2
 
-; CHECK-LABEL: libcall1_cosl:
-; CHECK: ld $25, %call16(cosl)
+; ALL-LABEL: libcall1_cosl:
+; ALL: ld $25, %call16(cosl)
 
 define fp128 @libcall1_cosl() {
 entry:
@@ -286,8 +290,8 @@ entry:
 
 declare fp128 @cosl(fp128) #2
 
-; CHECK-LABEL: libcall1_expl:
-; CHECK: ld $25, %call16(expl)
+; ALL-LABEL: libcall1_expl:
+; ALL: ld $25, %call16(expl)
 
 define fp128 @libcall1_expl() {
 entry:
@@ -298,8 +302,8 @@ entry:
 
 declare fp128 @expl(fp128) #2
 
-; CHECK-LABEL: libcall1_exp2l:
-; CHECK: ld $25, %call16(exp2l)
+; ALL-LABEL: libcall1_exp2l:
+; ALL: ld $25, %call16(exp2l)
 
 define fp128 @libcall1_exp2l() {
 entry:
@@ -310,8 +314,8 @@ entry:
 
 declare fp128 @exp2l(fp128) #2
 
-; CHECK-LABEL: libcall1_logl:
-; CHECK: ld $25, %call16(logl)
+; ALL-LABEL: libcall1_logl:
+; ALL: ld $25, %call16(logl)
 
 define fp128 @libcall1_logl() {
 entry:
@@ -322,8 +326,8 @@ entry:
 
 declare fp128 @logl(fp128) #2
 
-; CHECK-LABEL: libcall1_log2l:
-; CHECK: ld $25, %call16(log2l)
+; ALL-LABEL: libcall1_log2l:
+; ALL: ld $25, %call16(log2l)
 
 define fp128 @libcall1_log2l() {
 entry:
@@ -334,8 +338,8 @@ entry:
 
 declare fp128 @log2l(fp128) #2
 
-; CHECK-LABEL: libcall1_log10l:
-; CHECK: ld $25, %call16(log10l)
+; ALL-LABEL: libcall1_log10l:
+; ALL: ld $25, %call16(log10l)
 
 define fp128 @libcall1_log10l() {
 entry:
@@ -346,8 +350,8 @@ entry:
 
 declare fp128 @log10l(fp128) #2
 
-; CHECK-LABEL: libcall1_nearbyintl:
-; CHECK: ld $25, %call16(nearbyintl)
+; ALL-LABEL: libcall1_nearbyintl:
+; ALL: ld $25, %call16(nearbyintl)
 
 define fp128 @libcall1_nearbyintl() {
 entry:
@@ -358,8 +362,8 @@ entry:
 
 declare fp128 @nearbyintl(fp128) #1
 
-; CHECK-LABEL: libcall1_floorl:
-; CHECK: ld $25, %call16(floorl)
+; ALL-LABEL: libcall1_floorl:
+; ALL: ld $25, %call16(floorl)
 
 define fp128 @libcall1_floorl() {
 entry:
@@ -370,8 +374,8 @@ entry:
 
 declare fp128 @floorl(fp128) #1
 
-; CHECK-LABEL: libcall1_sqrtl:
-; CHECK: ld $25, %call16(sqrtl)
+; ALL-LABEL: libcall1_sqrtl:
+; ALL: ld $25, %call16(sqrtl)
 
 define fp128 @libcall1_sqrtl() {
 entry:
@@ -382,8 +386,8 @@ entry:
 
 declare fp128 @sqrtl(fp128) #2
 
-; CHECK-LABEL: libcall1_rintl:
-; CHECK: ld $25, %call16(rintl)
+; ALL-LABEL: libcall1_rintl:
+; ALL: ld $25, %call16(rintl)
 
 define fp128 @libcall1_rintl() {
 entry:
@@ -394,8 +398,8 @@ entry:
 
 declare fp128 @rintl(fp128) #1
 
-; CHECK-LABEL: libcall_powil:
-; CHECK: ld $25, %call16(__powitf2)
+; ALL-LABEL: libcall_powil:
+; ALL: ld $25, %call16(__powitf2)
 
 define fp128 @libcall_powil(fp128 %a, i32 %b) {
 entry:
@@ -405,18 +409,18 @@ entry:
 
 declare fp128 @llvm.powi.f128(fp128, i32) #3
 
-; CHECK-LABEL:     libcall2_copysignl:
-; CHECK-DAG: daddiu $[[R2:[0-9]+]], $zero, 1
-; CHECK-DAG: dsll   $[[R3:[0-9]+]], $[[R2]], 63
-; CHECK-DAG: ld     $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK-DAG: ld     $[[R1:[0-9]+]], 8($[[R0]])
-; CHECK-DAG: and    $[[R4:[0-9]+]], $[[R1]], $[[R3]]
-; CHECK-DAG: ld     $[[R5:[0-9]+]], %got_disp(gld0)
-; CHECK-DAG: ld     $[[R6:[0-9]+]], 8($[[R5]])
-; CHECK-DAG: daddiu $[[R7:[0-9]+]], $[[R3]], -1
-; CHECK-DAG: and    $[[R8:[0-9]+]], $[[R6]], $[[R7]]
-; CHECK-DAG: or     $4, $[[R8]], $[[R4]]
-; CHECK-DAG: ld     $2, 0($[[R5]])
+; ALL-LABEL:     libcall2_copysignl:
+; ALL-DAG: daddiu $[[R2:[0-9]+]], $zero, 1
+; ALL-DAG: dsll   $[[R3:[0-9]+]], $[[R2]], 63
+; ALL-DAG: ld     $[[R0:[0-9]+]], %got_disp(gld1)
+; ALL-DAG: ld     $[[R1:[0-9]+]], 8($[[R0]])
+; ALL-DAG: and    $[[R4:[0-9]+]], $[[R1]], $[[R3]]
+; ALL-DAG: ld     $[[R5:[0-9]+]], %got_disp(gld0)
+; ALL-DAG: ld     $[[R6:[0-9]+]], 8($[[R5]])
+; ALL-DAG: daddiu $[[R7:[0-9]+]], $[[R3]], -1
+; ALL-DAG: and    $[[R8:[0-9]+]], $[[R6]], $[[R7]]
+; ALL-DAG: or     $4, $[[R8]], $[[R4]]
+; ALL-DAG: ld     $2, 0($[[R5]])
 
 define fp128 @libcall2_copysignl() {
 entry:
@@ -428,8 +432,8 @@ entry:
 
 declare fp128 @copysignl(fp128, fp128) #1
 
-; CHECK-LABEL: libcall2_powl:
-; CHECK: ld $25, %call16(powl)
+; ALL-LABEL: libcall2_powl:
+; ALL: ld $25, %call16(powl)
 
 define fp128 @libcall2_powl() {
 entry:
@@ -441,8 +445,8 @@ entry:
 
 declare fp128 @powl(fp128, fp128) #2
 
-; CHECK-LABEL: libcall2_fmodl:
-; CHECK: ld $25, %call16(fmodl)
+; ALL-LABEL: libcall2_fmodl:
+; ALL: ld $25, %call16(fmodl)
 
 define fp128 @libcall2_fmodl() {
 entry:
@@ -454,8 +458,8 @@ entry:
 
 declare fp128 @fmodl(fp128, fp128) #2
 
-; CHECK-LABEL: libcall3_fmal:
-; CHECK: ld $25, %call16(fmal)
+; ALL-LABEL: libcall3_fmal:
+; ALL: ld $25, %call16(fmal)
 
 define fp128 @libcall3_fmal() {
 entry:
@@ -468,8 +472,8 @@ entry:
 
 declare fp128 @llvm.fma.f128(fp128, fp128, fp128) #4
 
-; CHECK-LABEL: cmp_lt:
-; CHECK: ld $25, %call16(__lttf2)
+; ALL-LABEL: cmp_lt:
+; ALL: ld $25, %call16(__lttf2)
 
 define i32 @cmp_lt(fp128 %a, fp128 %b) {
 entry:
@@ -478,8 +482,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: cmp_le:
-; CHECK: ld $25, %call16(__letf2)
+; ALL-LABEL: cmp_le:
+; ALL: ld $25, %call16(__letf2)
 
 define i32 @cmp_le(fp128 %a, fp128 %b) {
 entry:
@@ -488,8 +492,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: cmp_gt:
-; CHECK: ld $25, %call16(__gttf2)
+; ALL-LABEL: cmp_gt:
+; ALL: ld $25, %call16(__gttf2)
 
 define i32 @cmp_gt(fp128 %a, fp128 %b) {
 entry:
@@ -498,8 +502,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: cmp_ge:
-; CHECK: ld $25, %call16(__getf2)
+; ALL-LABEL: cmp_ge:
+; ALL: ld $25, %call16(__getf2)
 
 define i32 @cmp_ge(fp128 %a, fp128 %b) {
 entry:
@@ -508,8 +512,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: cmp_eq:
-; CHECK: ld $25, %call16(__eqtf2)
+; ALL-LABEL: cmp_eq:
+; ALL: ld $25, %call16(__eqtf2)
 
 define i32 @cmp_eq(fp128 %a, fp128 %b) {
 entry:
@@ -518,8 +522,8 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: cmp_ne:
-; CHECK: ld $25, %call16(__netf2)
+; ALL-LABEL: cmp_ne:
+; ALL: ld $25, %call16(__netf2)
 
 define i32 @cmp_ne(fp128 %a, fp128 %b) {
 entry:
@@ -528,10 +532,10 @@ entry:
   ret i32 %conv
 }
 
-; CHECK-LABEL: load_LD_LD:
-; CHECK: ld $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK: ld $2, 0($[[R0]])
-; CHECK: ld $4, 8($[[R0]])
+; ALL-LABEL: load_LD_LD:
+; ALL: ld $[[R0:[0-9]+]], %got_disp(gld1)
+; ALL: ld $2, 0($[[R0]])
+; ALL: ld $4, 8($[[R0]])
 
 define fp128 @load_LD_LD() {
 entry:
@@ -539,11 +543,11 @@ entry:
   ret fp128 %0
 }
 
-; CHECK-LABEL: load_LD_float:
-; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gf1)
-; CHECK: lw   $4, 0($[[R0]])
-; CHECK: ld   $25, %call16(__extendsftf2)
-; CHECK: jalr $25
+; ALL-LABEL: load_LD_float:
+; ALL: ld   $[[R0:[0-9]+]], %got_disp(gf1)
+; ALL: lw   $4, 0($[[R0]])
+; ALL: ld   $25, %call16(__extendsftf2)
+; ALL: jalr $25
 
 define fp128 @load_LD_float() {
 entry:
@@ -552,11 +556,11 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: load_LD_double:
-; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gd1)
-; CHECK: ld   $4, 0($[[R0]])
-; CHECK: ld   $25, %call16(__extenddftf2)
-; CHECK: jalr $25
+; ALL-LABEL: load_LD_double:
+; ALL: ld   $[[R0:[0-9]+]], %got_disp(gd1)
+; ALL: ld   $4, 0($[[R0]])
+; ALL: ld   $25, %call16(__extenddftf2)
+; ALL: jalr $25
 
 define fp128 @load_LD_double() {
 entry:
@@ -565,13 +569,13 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK-LABEL: store_LD_LD:
-; CHECK: ld $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK: ld $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK: ld $[[R2:[0-9]+]], 8($[[R0]])
-; CHECK: ld $[[R3:[0-9]+]], %got_disp(gld0)
-; CHECK: sd $[[R2]], 8($[[R3]])
-; CHECK: sd $[[R1]], 0($[[R3]])
+; ALL-LABEL: store_LD_LD:
+; ALL: ld $[[R0:[0-9]+]], %got_disp(gld1)
+; ALL: ld $[[R1:[0-9]+]], 0($[[R0]])
+; ALL: ld $[[R2:[0-9]+]], 8($[[R0]])
+; ALL: ld $[[R3:[0-9]+]], %got_disp(gld0)
+; ALL: sd $[[R2]], 8($[[R3]])
+; ALL: sd $[[R1]], 0($[[R3]])
 
 define void @store_LD_LD() {
 entry:
@@ -580,14 +584,14 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: store_LD_float:
-; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK: ld   $4, 0($[[R0]])
-; CHECK: ld   $5, 8($[[R0]])
-; CHECK: ld   $25, %call16(__trunctfsf2)
-; CHECK: jalr $25
-; CHECK: ld   $[[R1:[0-9]+]], %got_disp(gf1)
-; CHECK: sw   $2, 0($[[R1]])
+; ALL-LABEL: store_LD_float:
+; ALL: ld   $[[R0:[0-9]+]], %got_disp(gld1)
+; ALL: ld   $4, 0($[[R0]])
+; ALL: ld   $5, 8($[[R0]])
+; ALL: ld   $25, %call16(__trunctfsf2)
+; ALL: jalr $25
+; ALL: ld   $[[R1:[0-9]+]], %got_disp(gf1)
+; ALL: sw   $2, 0($[[R1]])
 
 define void @store_LD_float() {
 entry:
@@ -597,14 +601,14 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: store_LD_double:
-; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK: ld   $4, 0($[[R0]])
-; CHECK: ld   $5, 8($[[R0]])
-; CHECK: ld   $25, %call16(__trunctfdf2)
-; CHECK: jalr $25
-; CHECK: ld   $[[R1:[0-9]+]], %got_disp(gd1)
-; CHECK: sd   $2, 0($[[R1]])
+; ALL-LABEL: store_LD_double:
+; ALL: ld   $[[R0:[0-9]+]], %got_disp(gld1)
+; ALL: ld   $4, 0($[[R0]])
+; ALL: ld   $5, 8($[[R0]])
+; ALL: ld   $25, %call16(__trunctfdf2)
+; ALL: jalr $25
+; ALL: ld   $[[R1:[0-9]+]], %got_disp(gd1)
+; ALL: sd   $2, 0($[[R1]])
 
 define void @store_LD_double() {
 entry:
@@ -614,11 +618,22 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: select_LD:
-; CHECK: movn $8, $6, $4
-; CHECK: movn $9, $7, $4
-; CHECK: move $2, $8
-; CHECK: move $4, $9
+; ALL-LABEL: select_LD:
+; C_CC_FMT:      movn $8, $6, $4
+; C_CC_FMT:      movn $9, $7, $4
+; C_CC_FMT:      move $2, $8
+; C_CC_FMT:      move $4, $9
+
+; FIXME: This sll works around an implementation detail in the code generator
+;        (setcc's result is i32 so bits 32-63 are undefined). It's not really
+;        needed.
+; CMP_CC_FMT-DAG: sll $[[CC:[0-9]+]], $4, 0
+; CMP_CC_FMT-DAG: selnez $[[EQ1:[0-9]+]], $8, $[[CC]]
+; CMP_CC_FMT-DAG: seleqz $[[NE1:[0-9]+]], $6, $[[CC]]
+; CMP_CC_FMT-DAG: or $2, $[[EQ1]], $[[NE1]]
+; CMP_CC_FMT-DAG: selnez $[[EQ2:[0-9]+]], $9, $[[CC]]
+; CMP_CC_FMT-DAG: seleqz $[[NE2:[0-9]+]], $7, $[[CC]]
+; CMP_CC_FMT-DAG: or $4, $[[EQ2]], $[[NE2]]
 
 define fp128 @select_LD(i32 %a, i64, fp128 %b, fp128 %c) {
 entry:
@@ -627,18 +642,27 @@ entry:
   ret fp128 %cond
 }
 
-; CHECK-LABEL: selectCC_LD:
-; CHECK: move $[[R0:[0-9]+]], $11
-; CHECK: move $[[R1:[0-9]+]], $10
-; CHECK: move $[[R2:[0-9]+]], $9
-; CHECK: move $[[R3:[0-9]+]], $8
-; CHECK: ld   $25, %call16(__gttf2)($gp)
-; CHECK: jalr $25
-; CHECK: slti $1, $2, 1
-; CHECK: movz $[[R1]], $[[R3]], $1
-; CHECK: movz $[[R0]], $[[R2]], $1
-; CHECK: move $2, $[[R1]]
-; CHECK: move $4, $[[R0]]
+; ALL-LABEL: selectCC_LD:
+; ALL:           move $[[R0:[0-9]+]], $11
+; ALL:           move $[[R1:[0-9]+]], $10
+; ALL:           move $[[R2:[0-9]+]], $9
+; ALL:           move $[[R3:[0-9]+]], $8
+; ALL:           ld   $25, %call16(__gttf2)($gp)
+; ALL:           jalr $25
+
+; C_CC_FMT:      slti $[[CC:[0-9]+]], $2, 1
+; C_CC_FMT:      movz $[[R1]], $[[R3]], $[[CC]]
+; C_CC_FMT:      movz $[[R0]], $[[R2]], $[[CC]]
+; C_CC_FMT:      move $2, $[[R1]]
+; C_CC_FMT:      move $4, $[[R0]]
+
+; CMP_CC_FMT:    slt $[[CC:[0-9]+]], $zero, $2
+; CMP_CC_FMT:    seleqz $[[EQ1:[0-9]+]], $[[R1]], $[[CC]]
+; CMP_CC_FMT:    selnez $[[NE1:[0-9]+]], $[[R3]], $[[CC]]
+; CMP_CC_FMT:    or $2, $[[NE1]], $[[EQ1]]
+; CMP_CC_FMT:    seleqz $[[EQ2:[0-9]+]], $[[R0]], $[[CC]]
+; CMP_CC_FMT:    selnez $[[NE2:[0-9]+]], $[[R2]], $[[CC]]
+; CMP_CC_FMT:    or $4, $[[NE2]], $[[EQ2]]
 
 define fp128 @selectCC_LD(fp128 %a, fp128 %b, fp128 %c, fp128 %d) {
 entry:

@@ -937,6 +937,8 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::DMODU:
     return insertDivByZeroTrap(MI, *BB, *getTargetMachine().getInstrInfo(),
                                true);
+  case Mips::SEL_D:
+    return emitSEL_D(MI, BB);
   }
 }
 
@@ -1414,6 +1416,32 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
   return exitMBB;
 }
 
+MachineBasicBlock *MipsTargetLowering::emitSEL_D(MachineInstr *MI,
+                                                 MachineBasicBlock *BB) const {
+  MachineFunction *MF = BB->getParent();
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  MachineBasicBlock::iterator II(MI);
+
+  unsigned Fc = MI->getOperand(1).getReg();
+  const auto &FGR64RegClass = TRI->getRegClass(Mips::FGR64RegClassID);
+
+  unsigned Fc2 = RegInfo.createVirtualRegister(FGR64RegClass);
+
+  BuildMI(*BB, II, DL, TII->get(Mips::SUBREG_TO_REG), Fc2)
+      .addImm(0)
+      .addReg(Fc)
+      .addImm(Mips::sub_lo);
+
+  // We don't erase the original instruction, we just replace the condition
+  // register with the 64-bit super-register.
+  MI->getOperand(1).setReg(Fc2);
+
+  return BB;
+}
+
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
@@ -1454,6 +1482,7 @@ SDValue MipsTargetLowering::lowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   SDValue Dest = Op.getOperand(2);
   SDLoc DL(Op);
 
+  assert(!Subtarget->hasMips32r6() && !Subtarget->hasMips64r6());
   SDValue CondRes = createFPCmp(DAG, Op.getOperand(1));
 
   // Return if flag is not set by a floating point comparison.
@@ -1473,6 +1502,7 @@ SDValue MipsTargetLowering::lowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 SDValue MipsTargetLowering::
 lowerSELECT(SDValue Op, SelectionDAG &DAG) const
 {
+  assert(!Subtarget->hasMips32r6() && !Subtarget->hasMips64r6());
   SDValue Cond = createFPCmp(DAG, Op.getOperand(0));
 
   // Return if flag is not set by a floating point comparison.
@@ -1498,6 +1528,7 @@ lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue MipsTargetLowering::lowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  assert(!Subtarget->hasMips32r6() && !Subtarget->hasMips64r6());
   SDValue Cond = createFPCmp(DAG, Op);
 
   assert(Cond.getOpcode() == MipsISD::FPCmp &&

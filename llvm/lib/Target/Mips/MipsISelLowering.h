@@ -607,6 +607,7 @@ namespace llvm {
                                   MachineBasicBlock *BB, unsigned Size) const;
     MachineBasicBlock *emitAtomicCmpSwapPartword(MachineInstr *MI,
                                   MachineBasicBlock *BB, unsigned Size) const;
+    MachineBasicBlock *emitSEL_D(MachineInstr *MI, MachineBasicBlock *BB) const;
   };
 
   /// Create MipsTargetLowering objects.
