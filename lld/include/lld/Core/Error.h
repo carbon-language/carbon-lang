@@ -19,7 +19,7 @@
 
 namespace lld {
 
-const llvm::error_category &native_reader_category();
+const std::error_category &native_reader_category();
 
 enum class NativeReaderError {
   success = 0,
@@ -34,7 +34,7 @@ inline llvm::error_code make_error_code(NativeReaderError e) {
   return llvm::error_code(static_cast<int>(e), native_reader_category());
 }
 
-const llvm::error_category &YamlReaderCategory();
+const std::error_category &YamlReaderCategory();
 
 enum class YamlReaderError {
   success = 0,
@@ -46,7 +46,7 @@ inline llvm::error_code make_error_code(YamlReaderError e) {
   return llvm::error_code(static_cast<int>(e), YamlReaderCategory());
 }
 
-const llvm::error_category &LinkerScriptReaderCategory();
+const std::error_category &LinkerScriptReaderCategory();
 
 enum class LinkerScriptReaderError {
   success = 0,
@@ -58,7 +58,7 @@ inline llvm::error_code make_error_code(LinkerScriptReaderError e) {
 }
 
 /// \brief Errors returned by InputGraph functionality
-const llvm::error_category &InputGraphErrorCategory();
+const std::error_category &InputGraphErrorCategory();
 
 enum class InputGraphError {
   success = 0,
@@ -72,7 +72,7 @@ inline llvm::error_code make_error_code(InputGraphError e) {
 }
 
 /// \brief Errors returned by Reader.
-const llvm::error_category &ReaderErrorCategory();
+const std::error_category &ReaderErrorCategory();
 
 enum class ReaderError {
   success = 0,

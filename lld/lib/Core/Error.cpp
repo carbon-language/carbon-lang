@@ -18,7 +18,7 @@
 
 using namespace lld;
 
-class _NativeReaderErrorCategory : public llvm::error_category {
+class _NativeReaderErrorCategory : public std::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override {
     return "lld.native.reader";
@@ -49,12 +49,12 @@ public:
   }
 };
 
-const llvm::error_category &lld::native_reader_category() {
+const std::error_category &lld::native_reader_category() {
   static _NativeReaderErrorCategory o;
   return o;
 }
 
-class _YamlReaderErrorCategory : public llvm::error_category {
+class _YamlReaderErrorCategory : public std::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override {
     return "lld.yaml.reader";
@@ -79,12 +79,12 @@ public:
   }
 };
 
-const llvm::error_category &lld::YamlReaderCategory() {
+const std::error_category &lld::YamlReaderCategory() {
   static _YamlReaderErrorCategory o;
   return o;
 }
 
-class _LinkerScriptReaderErrorCategory : public llvm::error_category {
+class _LinkerScriptReaderErrorCategory : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.linker-script.reader";
@@ -110,12 +110,12 @@ public:
   }
 };
 
-const llvm::error_category &lld::LinkerScriptReaderCategory() {
+const std::error_category &lld::LinkerScriptReaderCategory() {
   static _LinkerScriptReaderErrorCategory o;
   return o;
 }
 
-class _InputGraphErrorCategory : public llvm::error_category {
+class _InputGraphErrorCategory : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.inputGraph.parse";
@@ -136,12 +136,12 @@ public:
   }
 };
 
-const llvm::error_category &lld::InputGraphErrorCategory() {
+const std::error_category &lld::InputGraphErrorCategory() {
   static _InputGraphErrorCategory i;
   return i;
 }
 
-class _ReaderErrorCategory : public llvm::error_category {
+class _ReaderErrorCategory : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.inputGraph.parse";
@@ -165,7 +165,7 @@ public:
   }
 };
 
-const llvm::error_category &lld::ReaderErrorCategory() {
+const std::error_category &lld::ReaderErrorCategory() {
   static _ReaderErrorCategory i;
   return i;
 }
@@ -179,7 +179,7 @@ namespace lld {
 /// Temporary class to enable make_dynamic_error_code() until
 /// llvm::ErrorOr<> is updated to work with error encapsulations 
 /// other than error_code.
-class dynamic_error_category : public llvm::error_category {
+class dynamic_error_category : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.dynamic_error";
