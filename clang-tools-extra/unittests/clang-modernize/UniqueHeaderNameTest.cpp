@@ -16,7 +16,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Regex.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 
 TEST(UniqueHeaderName, testUniqueHeaderName) {
   using namespace llvm::sys::path;

@@ -19,8 +19,8 @@
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/system_error.h"
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace clang {

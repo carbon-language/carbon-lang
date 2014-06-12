@@ -17,7 +17,7 @@
 #define CLANG_MODERNIZE_INCLUDEEXCLUDEINFO_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/system_error.h"
+#include <system_error>
 #include <vector>
 
 /// \brief Class encapsulating the handling of include and exclude paths

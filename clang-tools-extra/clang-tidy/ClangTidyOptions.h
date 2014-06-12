@@ -11,8 +11,8 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/system_error.h"
 #include <string>
+#include <system_error>
 #include <utility>
 #include <vector>
 
