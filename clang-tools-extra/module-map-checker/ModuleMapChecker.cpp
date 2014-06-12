@@ -134,9 +134,9 @@ int main(int Argc, const char **Argv) {
   // 0 for okay, 1 for module map warnings produced, 2 for any other error.
   error_code ReturnCode = Checker->doChecks();
 
-  if (ReturnCode == error_code(1, generic_category()))
+  if (ReturnCode == error_code(1, std::generic_category()))
     return 1; // Module map warnings were issued.
-  else if (ReturnCode == error_code(2, generic_category()))
+  else if (ReturnCode == error_code(2, std::generic_category()))
     return 2; // Some other error occurred.
   else
     return 0; // No errors or warnings.
@@ -248,21 +248,21 @@ error_code ModuleMapChecker::doChecks() {
 
   // Load the module map.
   if (!loadModuleMap())
-    return error_code(2, generic_category());
+    return error_code(2, std::generic_category());
 
   // Collect the headers referenced in the modules.
   collectModuleHeaders();
 
   // Collect the file system headers.
   if (!collectFileSystemHeaders())
-    return error_code(2, generic_category());
+    return error_code(2, std::generic_category());
 
   // Do the checks.  These save the problematic file names.
   findUnaccountedForHeaders();
 
   // Check for warnings.
   if (UnaccountedForHeaders.size())
-    returnValue = error_code(1, generic_category());
+    returnValue = error_code(1, std::generic_category());
 
   // Dump module map if requested.
   if (DumpModuleMap) {
