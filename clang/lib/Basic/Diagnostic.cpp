@@ -24,15 +24,14 @@
 using namespace clang;
 
 static void DummyArgToStringFn(DiagnosticsEngine::ArgumentKind AK, intptr_t QT,
-                               const char *Modifier, unsigned ML,
-                               const char *Argument, unsigned ArgLen,
-                               const DiagnosticsEngine::ArgumentValue *PrevArgs,
-                               unsigned NumPrevArgs,
-                               SmallVectorImpl<char> &Output,
-                               void *Cookie,
-                               ArrayRef<intptr_t> QualTypeVals) {
-  const char *Str = "<can't format argument>";
-  Output.append(Str, Str+strlen(Str));
+                            const char *Modifier, unsigned ML,
+                            const char *Argument, unsigned ArgLen,
+                            ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
+                            SmallVectorImpl<char> &Output,
+                            void *Cookie,
+                            ArrayRef<intptr_t> QualTypeVals) {
+  StringRef Str = "<can't format argument>";
+  Output.append(Str.begin(), Str.end());
 }
 
 
@@ -830,7 +829,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       getDiags()->ConvertArgToString(Kind, getRawArg(ArgNo),
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen,
-                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     FormattedArgs,
                                      OutStr, QualTypeVals);
       break;
     case DiagnosticsEngine::ak_qualtype_pair:
@@ -854,8 +853,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         getDiags()->ConvertArgToString(Kind, val,
                                        Modifier, ModifierLen,
                                        Argument, ArgumentLen,
-                                       FormattedArgs.data(),
-                                       FormattedArgs.size(),
+                                       FormattedArgs,
                                        Tree, QualTypeVals);
         // If there is no tree information, fall back to regular printing.
         if (!Tree.empty()) {
@@ -878,7 +876,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       getDiags()->ConvertArgToString(Kind, val,
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen,
-                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     FormattedArgs,
                                      OutStr, QualTypeVals);
       if (!TDT.TemplateDiffUsed)
         FormattedArgs.push_back(std::make_pair(DiagnosticsEngine::ak_qualtype,
@@ -892,7 +890,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       getDiags()->ConvertArgToString(Kind, val,
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen,
-                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     FormattedArgs,
                                      OutStr, QualTypeVals);
       if (!TDT.TemplateDiffUsed)
         FormattedArgs.push_back(std::make_pair(DiagnosticsEngine::ak_qualtype,

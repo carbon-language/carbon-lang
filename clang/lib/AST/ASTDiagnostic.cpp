@@ -162,9 +162,8 @@ break; \
 /// diagnostic message
 static std::string
 ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
-                              const DiagnosticsEngine::ArgumentValue *PrevArgs,
-                              unsigned NumPrevArgs,
-                              ArrayRef<intptr_t> QualTypeVals) {
+                            ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
+                            ArrayRef<intptr_t> QualTypeVals) {
   // FIXME: Playing with std::string is really slow.
   bool ForceAKA = false;
   QualType CanTy = Ty.getCanonicalType();
@@ -202,7 +201,7 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   // Check to see if we already desugared this type in this
   // diagnostic.  If so, don't do it again.
   bool Repeated = false;
-  for (unsigned i = 0; i != NumPrevArgs; ++i) {
+  for (unsigned i = 0, e = PrevArgs.size(); i != e; ++i) {
     // TODO: Handle ak_declcontext case.
     if (PrevArgs[i].first == DiagnosticsEngine::ak_qualtype) {
       void *Ptr = (void*)PrevArgs[i].second;
@@ -261,8 +260,7 @@ void clang::FormatASTNodeDiagnosticArgument(
     unsigned ModLen,
     const char *Argument,
     unsigned ArgLen,
-    const DiagnosticsEngine::ArgumentValue *PrevArgs,
-    unsigned NumPrevArgs,
+    ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
     SmallVectorImpl<char> &Output,
     void *Cookie,
     ArrayRef<intptr_t> QualTypeVals) {
@@ -306,8 +304,7 @@ void clang::FormatASTNodeDiagnosticArgument(
              "Invalid modifier for QualType argument");
       
       QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-      OS << ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs,
-                                          QualTypeVals);
+      OS << ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, QualTypeVals);
       NeedQuotes = false;
       break;
     }
@@ -357,8 +354,7 @@ void clang::FormatASTNodeDiagnosticArgument(
       } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
         OS << ConvertTypeToDiagnosticString(Context,
                                             Context.getTypeDeclType(Type),
-                                            PrevArgs, NumPrevArgs,
-                                            QualTypeVals);
+                                            PrevArgs, QualTypeVals);
       } else {
         // FIXME: Get these strings from some localized place
         if (isa<BlockDecl>(DC)) {

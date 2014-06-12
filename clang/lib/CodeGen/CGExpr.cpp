@@ -2101,7 +2101,7 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   SmallString<32> Buffer;
   CGM.getDiags().ConvertArgToString(DiagnosticsEngine::ak_qualtype,
                                     (intptr_t)T.getAsOpaquePtr(),
-                                    nullptr, 0, nullptr, 0, nullptr, 0, Buffer,
+                                    nullptr, 0, nullptr, 0, None, Buffer,
                                     ArrayRef<intptr_t>());
 
   llvm::Constant *Components[] = {

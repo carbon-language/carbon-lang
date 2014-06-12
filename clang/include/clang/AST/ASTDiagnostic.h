@@ -40,8 +40,7 @@ namespace clang {
       unsigned ModLen,
       const char *Argument,
       unsigned ArgLen,
-      const DiagnosticsEngine::ArgumentValue *PrevArgs,
-      unsigned NumPrevArgs,
+      ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
       SmallVectorImpl<char> &Output,
       void *Cookie,
       ArrayRef<intptr_t> QualTypeVals);
