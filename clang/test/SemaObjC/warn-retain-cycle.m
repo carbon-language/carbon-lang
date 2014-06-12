@@ -122,8 +122,8 @@ void doSomething(unsigned v);
   // Sanity check that we are really whitelisting 'addOperationWithBlock:' and not doing
   // something funny.
   [myOperationQueue addSomethingElse:^() { // expected-note {{block will be retained by an object strongly retained by the captured object}}
-    if (count > 20) { // expected-warning {{capturing 'self' strongly in this block is likely to lead to a retain cycle}}
-      doSomething(count);
+    if (count > 20) {
+      doSomething(count); // expected-warning {{capturing 'self' strongly in this block is likely to lead to a retain cycle}}
     }
   }];
 }
@@ -184,3 +184,17 @@ void testCopying(Test0 *obj) {
   })];
 }
 
+// rdar://16944538
+void func(int someCondition) {
+
+__block void(^myBlock)(void) = ^{
+        if (someCondition) {
+            doSomething(1);
+            myBlock();
+        }
+        else {
+	    myBlock = ((void*)0);
+        }
+   };
+
+}

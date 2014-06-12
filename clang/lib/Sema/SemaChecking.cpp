@@ -7286,10 +7286,12 @@ namespace {
   struct FindCaptureVisitor : EvaluatedExprVisitor<FindCaptureVisitor> {
     FindCaptureVisitor(ASTContext &Context, VarDecl *variable)
       : EvaluatedExprVisitor<FindCaptureVisitor>(Context),
-        Variable(variable), Capturer(nullptr) {}
-
+        Context(Context), Variable(variable), Capturer(nullptr),
+        VarWillBeReased(false) {}
+    ASTContext &Context;
     VarDecl *Variable;
     Expr *Capturer;
+    bool VarWillBeReased;
 
     void VisitDeclRefExpr(DeclRefExpr *ref) {
       if (ref->getDecl() == Variable && !Capturer)
@@ -7313,6 +7315,21 @@ namespace {
       if (Capturer) return;
       if (OVE->getSourceExpr())
         Visit(OVE->getSourceExpr());
+    }
+    void VisitBinaryOperator(BinaryOperator *BinOp) {
+      if (!Variable || VarWillBeReased || BinOp->getOpcode() != BO_Assign)
+        return;
+      Expr *LHS = BinOp->getLHS();
+      if (const DeclRefExpr *DRE = dyn_cast_or_null<DeclRefExpr>(LHS)) {
+        if (DRE->getDecl() != Variable)
+          return;
+        if (Expr *RHS = BinOp->getRHS()) {
+          RHS = RHS->IgnoreParenCasts();
+          llvm::APSInt Value;
+          VarWillBeReased =
+            (RHS && RHS->isIntegerConstantExpr(Value, Context) && Value == 0);
+        }
+      }
     }
   };
 }
@@ -7351,7 +7368,7 @@ static Expr *findCapturingExpr(Sema &S, Expr *e, RetainCycleOwner &owner) {
 
   FindCaptureVisitor visitor(S.Context, owner.Variable);
   visitor.Visit(block->getBlockDecl()->getBody());
-  return visitor.Capturer;
+  return visitor.VarWillBeReased ? nullptr : visitor.Capturer;
 }
 
 static void diagnoseRetainCycle(Sema &S, Expr *capturer,
