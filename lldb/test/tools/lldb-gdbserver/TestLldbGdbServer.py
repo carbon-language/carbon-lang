@@ -486,10 +486,10 @@ class LldbGdbServerTestCase(TestBase):
     def select_modifiable_register(self, reg_infos):
         """Find a register that can be read/written freely."""
         PREFERRED_REGISTER_NAMES = sets.Set(["rax",])
-        
+
         # First check for the first register from the preferred register name set.
         alternative_register_index = None
-        
+
         self.assertIsNotNone(reg_infos)
         for reg_info in reg_infos:
             if ("name" in reg_info) and (reg_info["name"] in PREFERRED_REGISTER_NAMES):
@@ -2205,7 +2205,7 @@ class LldbGdbServerTestCase(TestBase):
         self.assertIsNotNone(reg_index)
         reg_byte_size = int(reg_infos[reg_index]["bitsize"]) / 8
         self.assertTrue(reg_byte_size > 0)
-        
+
         # Run the process a bit so threads can start up, and collect register info.
         context = self.run_process_then_stop(run_seconds=1)
         self.assertIsNotNone(context)

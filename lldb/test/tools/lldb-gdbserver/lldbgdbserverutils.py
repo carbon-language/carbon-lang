@@ -351,9 +351,9 @@ def pack_register_hex(endian, value, byte_size=None):
         retval = value.encode("hex")
         if byte_size:
             # Add zero-fill to the left/front (MSB side) of the value.
-            retval = ("00" * (byte_size - len(retval)/2)) + retval 
+            retval = ("00" * (byte_size - len(retval)/2)) + retval
         return retval
-        
+
     else:
         # pdp is valid but need to add parse code once needed.
         raise Exception("unsupported endian:{}".format(endian))
