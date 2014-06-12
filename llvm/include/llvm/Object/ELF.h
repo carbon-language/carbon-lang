@@ -317,7 +317,7 @@ public:
   std::pair<const Elf_Shdr *, const Elf_Sym *>
   getRelocationSymbol(const Elf_Shdr *RelSec, const RelT *Rel) const;
 
-  ELFFile(MemoryBuffer *Object, error_code &ec);
+  ELFFile(MemoryBuffer *Object, std::error_code &ec);
 
   bool isMipsELF64() const {
     return Header->e_machine == ELF::EM_MIPS &&
@@ -621,16 +621,11 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 }
 
 template <class ELFT>
-ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
-    : Buf(Object),
-      SectionHeaderTable(nullptr),
-      dot_shstrtab_sec(nullptr),
-      dot_strtab_sec(nullptr),
-      dot_symtab_sec(nullptr),
-      SymbolTableSectionHeaderIndex(nullptr),
-      dot_gnu_version_sec(nullptr),
-      dot_gnu_version_r_sec(nullptr),
-      dot_gnu_version_d_sec(nullptr),
+ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, std::error_code &ec)
+    : Buf(Object), SectionHeaderTable(nullptr), dot_shstrtab_sec(nullptr),
+      dot_strtab_sec(nullptr), dot_symtab_sec(nullptr),
+      SymbolTableSectionHeaderIndex(nullptr), dot_gnu_version_sec(nullptr),
+      dot_gnu_version_r_sec(nullptr), dot_gnu_version_d_sec(nullptr),
       dt_soname(nullptr) {
   const uint64_t FileSize = Buf->getBufferSize();
 
@@ -748,7 +743,7 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
     }
   }
 
-  ec = error_code();
+  ec = std::error_code();
 }
 
 // Get the symbol table index in the symtab section given a symbol

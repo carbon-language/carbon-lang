@@ -46,7 +46,6 @@
 #endif
 
 namespace llvm {
-using std::error_code;
 namespace sys {
 namespace fs {
 
@@ -275,7 +274,7 @@ private:
 /// @param path A path that is modified to be an absolute path.
 /// @returns errc::success if \a path has been made absolute, otherwise a
 ///          platform specific error_code.
-error_code make_absolute(SmallVectorImpl<char> &path);
+std::error_code make_absolute(SmallVectorImpl<char> &path);
 
 /// @brief Normalize path separators in \a Path
 ///
@@ -283,7 +282,7 @@ error_code make_absolute(SmallVectorImpl<char> &path);
 /// This is particularly useful when cross-compiling Windows on Linux, but is
 /// safe to invoke on Windows, which accepts both characters as a path
 /// separator.
-error_code normalize_separators(SmallVectorImpl<char> &Path);
+std::error_code normalize_separators(SmallVectorImpl<char> &Path);
 
 /// @brief Create all the non-existent directories in path.
 ///
@@ -291,7 +290,8 @@ error_code normalize_separators(SmallVectorImpl<char> &Path);
 /// @returns errc::success if is_directory(path), otherwise a platform
 ///          specific error_code. If IgnoreExisting is false, also returns
 ///          error if the directory already existed.
-error_code create_directories(const Twine &path, bool IgnoreExisting = true);
+std::error_code create_directories(const Twine &path,
+                                   bool IgnoreExisting = true);
 
 /// @brief Create the directory in path.
 ///
@@ -299,7 +299,7 @@ error_code create_directories(const Twine &path, bool IgnoreExisting = true);
 /// @returns errc::success if is_directory(path), otherwise a platform
 ///          specific error_code. If IgnoreExisting is false, also returns
 ///          error if the directory already existed.
-error_code create_directory(const Twine &path, bool IgnoreExisting = true);
+std::error_code create_directory(const Twine &path, bool IgnoreExisting = true);
 
 /// @brief Create a link from \a from to \a to.
 ///
@@ -312,14 +312,14 @@ error_code create_directory(const Twine &path, bool IgnoreExisting = true);
 /// @param from The path to hard link from. This is created.
 /// @returns errc::success if the link was created, otherwise a platform
 /// specific error_code.
-error_code create_link(const Twine &to, const Twine &from);
+std::error_code create_link(const Twine &to, const Twine &from);
 
 /// @brief Get the current path.
 ///
 /// @param result Holds the current path on return.
 /// @returns errc::success if the current path has been stored in result,
 ///          otherwise a platform specific error_code.
-error_code current_path(SmallVectorImpl<char> &result);
+std::error_code current_path(SmallVectorImpl<char> &result);
 
 /// @brief Remove path. Equivalent to POSIX remove().
 ///
@@ -327,13 +327,13 @@ error_code current_path(SmallVectorImpl<char> &result);
 /// @returns errc::success if path has been removed or didn't exist, otherwise a
 ///          platform specific error code. If IgnoreNonExisting is false, also
 ///          returns error if the file didn't exist.
-error_code remove(const Twine &path, bool IgnoreNonExisting = true);
+std::error_code remove(const Twine &path, bool IgnoreNonExisting = true);
 
 /// @brief Rename \a from to \a to. Files are renamed as if by POSIX rename().
 ///
 /// @param from The path to rename from.
 /// @param to The path to rename to. This is created.
-error_code rename(const Twine &from, const Twine &to);
+std::error_code rename(const Twine &from, const Twine &to);
 
 /// @brief Resize path to size. File is resized as if by POSIX truncate().
 ///
@@ -341,7 +341,7 @@ error_code rename(const Twine &from, const Twine &to);
 /// @param size Size to resize to.
 /// @returns errc::success if \a path has been resized to \a size, otherwise a
 ///          platform specific error_code.
-error_code resize_file(const Twine &path, uint64_t size);
+std::error_code resize_file(const Twine &path, uint64_t size);
 
 /// @}
 /// @name Physical Observers
@@ -361,7 +361,7 @@ bool exists(file_status status);
 ///               it does not. Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code exists(const Twine &path, bool &result);
+std::error_code exists(const Twine &path, bool &result);
 
 /// @brief Simpler version of exists for clients that don't need to
 ///        differentiate between an error and false.
@@ -403,7 +403,7 @@ bool equivalent(file_status A, file_status B);
 ///               inode (or equivalent).
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code equivalent(const Twine &A, const Twine &B, bool &result);
+std::error_code equivalent(const Twine &A, const Twine &B, bool &result);
 
 /// @brief Simpler version of equivalent for clients that don't need to
 ///        differentiate between an error and false.
@@ -425,7 +425,7 @@ bool is_directory(file_status status);
 ///               Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code is_directory(const Twine &path, bool &result);
+std::error_code is_directory(const Twine &path, bool &result);
 
 /// @brief Simpler version of is_directory for clients that don't need to
 ///        differentiate between an error and false.
@@ -447,7 +447,7 @@ bool is_regular_file(file_status status);
 ///               Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code is_regular_file(const Twine &path, bool &result);
+std::error_code is_regular_file(const Twine &path, bool &result);
 
 /// @brief Simpler version of is_regular_file for clients that don't need to
 ///        differentiate between an error and false.
@@ -473,7 +473,7 @@ bool is_other(file_status status);
 ///               file, or a symlink, false if it does not. Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code is_other(const Twine &path, bool &result);
+std::error_code is_other(const Twine &path, bool &result);
 
 /// @brief Get file status as if by POSIX stat().
 ///
@@ -481,10 +481,10 @@ error_code is_other(const Twine &path, bool &result);
 /// @param result Set to the file status.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code status(const Twine &path, file_status &result);
+std::error_code status(const Twine &path, file_status &result);
 
 /// @brief A version for when a file descriptor is already available.
-error_code status(int FD, file_status &Result);
+std::error_code status(int FD, file_status &Result);
 
 /// @brief Get file size.
 ///
@@ -492,13 +492,13 @@ error_code status(int FD, file_status &Result);
 /// @param Result Set to the size of the file in \a Path.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-inline error_code file_size(const Twine &Path, uint64_t &Result) {
+inline std::error_code file_size(const Twine &Path, uint64_t &Result) {
   file_status Status;
-  error_code EC = status(Path, Status);
+  std::error_code EC = status(Path, Status);
   if (EC)
     return EC;
   Result = Status.getSize();
-  return error_code();
+  return std::error_code();
 }
 
 /// @brief Set the file modification and access time.
@@ -506,7 +506,7 @@ inline error_code file_size(const Twine &Path, uint64_t &Result) {
 /// @returns errc::success if the file times were successfully set, otherwise a
 ///          platform specific error_code or errc::not_supported on platforms
 ///          where the functionality isn't available.
-error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
+std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
 
 /// @brief Is status available?
 ///
@@ -520,7 +520,7 @@ bool status_known(file_status s);
 /// @param result Set to true if status() != status_error.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code status_known(const Twine &path, bool &result);
+std::error_code status_known(const Twine &path, bool &result);
 
 /// @brief Create a uniquely named file.
 ///
@@ -543,13 +543,13 @@ error_code status_known(const Twine &path, bool &result);
 /// @param ResultPath Set to the opened file's absolute path.
 /// @returns errc::success if Result{FD,Path} have been successfully set,
 ///          otherwise a platform specific error_code.
-error_code createUniqueFile(const Twine &Model, int &ResultFD,
-                            SmallVectorImpl<char> &ResultPath,
-                            unsigned Mode = all_read | all_write);
+std::error_code createUniqueFile(const Twine &Model, int &ResultFD,
+                                 SmallVectorImpl<char> &ResultPath,
+                                 unsigned Mode = all_read | all_write);
 
 /// @brief Simpler version for clients that don't want an open file.
-error_code createUniqueFile(const Twine &Model,
-                            SmallVectorImpl<char> &ResultPath);
+std::error_code createUniqueFile(const Twine &Model,
+                                 SmallVectorImpl<char> &ResultPath);
 
 /// @brief Create a file in the system temporary directory.
 ///
@@ -559,16 +559,16 @@ error_code createUniqueFile(const Twine &Model,
 ///
 /// This should be used for things like a temporary .s that is removed after
 /// running the assembler.
-error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
-                               int &ResultFD,
-                               SmallVectorImpl<char> &ResultPath);
+std::error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                                    int &ResultFD,
+                                    SmallVectorImpl<char> &ResultPath);
 
 /// @brief Simpler version for clients that don't want an open file.
-error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
-                               SmallVectorImpl<char> &ResultPath);
+std::error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                                    SmallVectorImpl<char> &ResultPath);
 
-error_code createUniqueDirectory(const Twine &Prefix,
-                                 SmallVectorImpl<char> &ResultPath);
+std::error_code createUniqueDirectory(const Twine &Prefix,
+                                      SmallVectorImpl<char> &ResultPath);
 
 enum OpenFlags : unsigned {
   F_None = 0,
@@ -599,10 +599,10 @@ inline OpenFlags &operator|=(OpenFlags &A, OpenFlags B) {
   return A;
 }
 
-error_code openFileForWrite(const Twine &Name, int &ResultFD, OpenFlags Flags,
-                            unsigned Mode = 0666);
+std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
+                                 OpenFlags Flags, unsigned Mode = 0666);
 
-error_code openFileForRead(const Twine &Name, int &ResultFD);
+std::error_code openFileForRead(const Twine &Name, int &ResultFD);
 
 /// @brief Identify the type of a binary file based on how magical it is.
 file_magic identify_magic(StringRef magic);
@@ -613,9 +613,9 @@ file_magic identify_magic(StringRef magic);
 /// @param result Set to the type of file, or file_magic::unknown.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code identify_magic(const Twine &path, file_magic &result);
+std::error_code identify_magic(const Twine &path, file_magic &result);
 
-error_code getUniqueID(const Twine Path, UniqueID &Result);
+std::error_code getUniqueID(const Twine Path, UniqueID &Result);
 
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
@@ -642,7 +642,7 @@ private:
   void *FileMappingHandle;
 #endif
 
-  error_code init(int FD, bool CloseFD, uint64_t Offset);
+  std::error_code init(int FD, bool CloseFD, uint64_t Offset);
 
 public:
   typedef char char_type;
@@ -664,21 +664,14 @@ public:
   ///               mapped_file_region::alignment().
   /// \param ec This is set to errc::success if the map was constructed
   ///           successfully. Otherwise it is set to a platform dependent error.
-  mapped_file_region(const Twine &path,
-                     mapmode mode,
-                     uint64_t length,
-                     uint64_t offset,
-                     error_code &ec);
+  mapped_file_region(const Twine &path, mapmode mode, uint64_t length,
+                     uint64_t offset, std::error_code &ec);
 
   /// \param fd An open file descriptor to map. mapped_file_region takes
   ///   ownership if closefd is true. It must have been opended in the correct
   ///   mode.
-  mapped_file_region(int fd,
-                     bool closefd,
-                     mapmode mode,
-                     uint64_t length,
-                     uint64_t offset,
-                     error_code &ec);
+  mapped_file_region(int fd, bool closefd, mapmode mode, uint64_t length,
+                     uint64_t offset, std::error_code &ec);
 
   ~mapped_file_region();
 
@@ -725,7 +718,7 @@ public:
   void replace_filename(const Twine &filename, file_status st = file_status());
 
   const std::string &path() const { return Path; }
-  error_code status(file_status &result) const;
+  std::error_code status(file_status &result) const;
 
   bool operator==(const directory_entry& rhs) const { return Path == rhs.Path; }
   bool operator!=(const directory_entry& rhs) const { return !(*this == rhs); }
@@ -738,9 +731,9 @@ public:
 namespace detail {
   struct DirIterState;
 
-  error_code directory_iterator_construct(DirIterState&, StringRef);
-  error_code directory_iterator_increment(DirIterState&);
-  error_code directory_iterator_destruct(DirIterState&);
+  std::error_code directory_iterator_construct(DirIterState &, StringRef);
+  std::error_code directory_iterator_increment(DirIterState &);
+  std::error_code directory_iterator_destruct(DirIterState &);
 
   /// DirIterState - Keeps state for the directory_iterator. It is reference
   /// counted in order to preserve InputIterator semantics on copy.
@@ -764,14 +757,14 @@ class directory_iterator {
   IntrusiveRefCntPtr<detail::DirIterState> State;
 
 public:
-  explicit directory_iterator(const Twine &path, error_code &ec) {
+  explicit directory_iterator(const Twine &path, std::error_code &ec) {
     State = new detail::DirIterState;
     SmallString<128> path_storage;
     ec = detail::directory_iterator_construct(*State,
             path.toStringRef(path_storage));
   }
 
-  explicit directory_iterator(const directory_entry &de, error_code &ec) {
+  explicit directory_iterator(const directory_entry &de, std::error_code &ec) {
     State = new detail::DirIterState;
     ec = detail::directory_iterator_construct(*State, de.path());
   }
@@ -780,7 +773,7 @@ public:
   directory_iterator() : State(nullptr) {}
 
   // No operator++ because we need error_code.
-  directory_iterator &increment(error_code &ec) {
+  directory_iterator &increment(std::error_code &ec) {
     ec = directory_iterator_increment(*State);
     return *this;
   }
@@ -826,14 +819,14 @@ class recursive_directory_iterator {
 
 public:
   recursive_directory_iterator() {}
-  explicit recursive_directory_iterator(const Twine &path, error_code &ec)
-    : State(new detail::RecDirIterState) {
+  explicit recursive_directory_iterator(const Twine &path, std::error_code &ec)
+      : State(new detail::RecDirIterState) {
     State->Stack.push(directory_iterator(path, ec));
     if (State->Stack.top() == directory_iterator())
       State.reset();
   }
   // No operator++ because we need error_code.
-  recursive_directory_iterator &increment(error_code &ec) {
+  recursive_directory_iterator &increment(std::error_code &ec) {
     const directory_iterator end_itr;
 
     if (State->HasNoPushRequest)
@@ -882,7 +875,7 @@ public:
     assert(State->Level > 0 && "Cannot pop an iterator with level < 1");
 
     const directory_iterator end_itr;
-    error_code ec;
+    std::error_code ec;
     do {
       if (ec)
         report_fatal_error("Error incrementing directory iterator.");

@@ -53,9 +53,9 @@ public:
     ObjectForArch getNext() const { return ObjectForArch(Parent, Index + 1); }
     uint32_t getCPUType() const { return Header.cputype; }
 
-    error_code getAsObjectFile(std::unique_ptr<ObjectFile> &Result) const;
+    std::error_code getAsObjectFile(std::unique_ptr<ObjectFile> &Result) const;
 
-    error_code getAsArchive(std::unique_ptr<Archive> &Result) const;
+    std::error_code getAsArchive(std::unique_ptr<Archive> &Result) const;
   };
 
   class object_iterator {
@@ -79,7 +79,7 @@ public:
     }
   };
 
-  MachOUniversalBinary(MemoryBuffer *Source, error_code &ec);
+  MachOUniversalBinary(MemoryBuffer *Source, std::error_code &ec);
   static ErrorOr<MachOUniversalBinary*> create(MemoryBuffer *Source);
 
   object_iterator begin_objects() const {
@@ -96,8 +96,8 @@ public:
     return V->isMachOUniversalBinary();
   }
 
-  error_code getObjectForArch(Triple::ArchType Arch,
-                              std::unique_ptr<ObjectFile> &Result) const;
+  std::error_code getObjectForArch(Triple::ArchType Arch,
+                                   std::unique_ptr<ObjectFile> &Result) const;
 };
 
 }

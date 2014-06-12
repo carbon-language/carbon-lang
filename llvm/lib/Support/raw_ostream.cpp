@@ -450,7 +450,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
     return;
   }
 
-  error_code EC = sys::fs::openFileForWrite(Filename, FD, Flags);
+  std::error_code EC = sys::fs::openFileForWrite(Filename, FD, Flags);
 
   if (EC) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "': " +

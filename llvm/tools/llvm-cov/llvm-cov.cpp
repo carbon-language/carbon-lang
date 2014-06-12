@@ -22,6 +22,7 @@
 #include "llvm/Support/Signals.h"
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
                                        cl::desc("SOURCEFILE"));

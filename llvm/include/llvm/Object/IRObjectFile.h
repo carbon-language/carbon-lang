@@ -27,10 +27,11 @@ class IRObjectFile : public SymbolicFile {
   std::unique_ptr<Mangler> Mang;
 
 public:
-  IRObjectFile(MemoryBuffer *Object, error_code &EC, LLVMContext &Context,
+  IRObjectFile(MemoryBuffer *Object, std::error_code &EC, LLVMContext &Context,
                bool BufferOwned);
   void moveSymbolNext(DataRefImpl &Symb) const override;
-  error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const override;
+  std::error_code printSymbolName(raw_ostream &OS,
+                                  DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   const GlobalValue &getSymbolGV(DataRefImpl Symb) const;
   basic_symbol_iterator symbol_begin_impl() const override;

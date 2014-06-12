@@ -21,6 +21,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 static cl::opt<bool>
 Quiet("quiet", cl::desc("Don't print unnecessary status information"),

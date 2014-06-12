@@ -19,7 +19,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 namespace sys {
 
   /// This is the OS-specific separator for PATH like environment variables:
@@ -67,8 +66,8 @@ struct ProcessInfo {
   // These functions change the specified standard stream (stdin or stdout) to
   // binary mode. They return errc::success if the specified stream
   // was changed. Otherwise a platform dependent error is returned.
-  error_code ChangeStdinToBinary();
-  error_code ChangeStdoutToBinary();
+  std::error_code ChangeStdinToBinary();
+  std::error_code ChangeStdoutToBinary();
 
   /// This function executes the program using the arguments provided.  The
   /// invoked program will inherit the stdin, stdout, and stderr file

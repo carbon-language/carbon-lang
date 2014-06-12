@@ -22,6 +22,7 @@
 #include <unistd.h>
 #endif
 using namespace llvm;
+using std::error_code;
 
 /// \brief Attempt to read the lock file with the given name, if it exists.
 ///

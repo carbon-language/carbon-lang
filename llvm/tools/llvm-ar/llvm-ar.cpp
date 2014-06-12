@@ -36,6 +36,7 @@
 #endif
 
 using namespace llvm;
+using std::error_code;
 
 // The name this program was invoked as.
 static StringRef ToolName;

@@ -22,6 +22,7 @@
 #include <fstream>
 
 using namespace llvm;
+using std::error_code;
 
 namespace {
   // OutputType - Allow the user to specify the way code should be run, to test

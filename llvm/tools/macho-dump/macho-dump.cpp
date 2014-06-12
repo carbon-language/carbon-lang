@@ -23,6 +23,7 @@
 #include <system_error>
 using namespace llvm;
 using namespace llvm::object;
+using std::error_code;
 
 static cl::opt<std::string>
 InputFile(cl::Positional, cl::desc("<input file>"), cl::init("-"));

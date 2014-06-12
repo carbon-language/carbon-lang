@@ -66,9 +66,10 @@ public:
 };
 }
 
-error_code InstrProfWriter::addFunctionCounts(StringRef FunctionName,
-                                              uint64_t FunctionHash,
-                                              ArrayRef<uint64_t> Counters) {
+std::error_code
+InstrProfWriter::addFunctionCounts(StringRef FunctionName,
+                                   uint64_t FunctionHash,
+                                   ArrayRef<uint64_t> Counters) {
   auto Where = FunctionData.find(FunctionName);
   if (Where == FunctionData.end()) {
     // If this is the first time we've seen this function, just add it.

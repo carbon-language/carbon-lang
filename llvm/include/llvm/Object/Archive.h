@@ -72,7 +72,7 @@ public:
 
     Child getNext() const;
 
-    error_code getName(StringRef &Result) const;
+    std::error_code getName(StringRef &Result) const;
     StringRef getRawName() const { return getHeader()->getName(); }
     sys::TimeValue getLastModified() const {
       return getHeader()->getLastModified();
@@ -89,11 +89,11 @@ public:
       return StringRef(Data.data() + StartOfFile, getSize());
     }
 
-    error_code getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
-                               bool FullPath = false) const;
+    std::error_code getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
+                                    bool FullPath = false) const;
 
-    error_code getAsBinary(std::unique_ptr<Binary> &Result,
-                           LLVMContext *Context = nullptr) const;
+    std::error_code getAsBinary(std::unique_ptr<Binary> &Result,
+                                LLVMContext *Context = nullptr) const;
   };
 
   class child_iterator {
@@ -137,8 +137,8 @@ public:
       : Parent(p)
       , SymbolIndex(symi)
       , StringIndex(stri) {}
-    error_code getName(StringRef &Result) const;
-    error_code getMember(child_iterator &Result) const;
+    std::error_code getName(StringRef &Result) const;
+    std::error_code getMember(child_iterator &Result) const;
     Symbol getNext() const;
   };
 
@@ -164,7 +164,7 @@ public:
     }
   };
 
-  Archive(MemoryBuffer *source, error_code &ec);
+  Archive(MemoryBuffer *source, std::error_code &ec);
   static ErrorOr<Archive *> create(MemoryBuffer *Source);
 
   enum Kind {

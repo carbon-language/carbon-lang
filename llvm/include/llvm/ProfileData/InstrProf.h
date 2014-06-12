@@ -19,7 +19,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 const std::error_category &instrprof_category();
 
 enum class instrprof_error {
@@ -38,8 +37,8 @@ enum class instrprof_error {
     counter_overflow
 };
 
-inline error_code make_error_code(instrprof_error E) {
-  return error_code(static_cast<int>(E), instrprof_category());
+inline std::error_code make_error_code(instrprof_error E) {
+  return std::error_code(static_cast<int>(E), instrprof_category());
 }
 
 } // end namespace llvm

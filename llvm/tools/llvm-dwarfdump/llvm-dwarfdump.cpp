@@ -33,6 +33,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),

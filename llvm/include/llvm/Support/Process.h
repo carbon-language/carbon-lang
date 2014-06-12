@@ -174,7 +174,7 @@ public:
   /// This function returns a SmallVector containing the arguments passed from
   /// the operating system to the program.  This function expects to be handed
   /// the vector passed in from main.
-  static error_code
+  static std::error_code
   GetArgumentVector(SmallVectorImpl<const char *> &Args,
                     ArrayRef<const char *> ArgsFromMain,
                     SpecificBumpPtrAllocator<char> &ArgAllocator);

@@ -17,7 +17,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 namespace object {
 
 const std::error_category &object_category();
@@ -30,8 +29,8 @@ enum class object_error {
   unexpected_eof
 };
 
-inline error_code make_error_code(object_error e) {
-  return error_code(static_cast<int>(e), object_category());
+inline std::error_code make_error_code(object_error e) {
+  return std::error_code(static_cast<int>(e), object_category());
 }
 
 } // end namespace object.

@@ -22,6 +22,7 @@
 #include <cstring>
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 static bool isSignedChar(char C) {
   return (C == '+' || C == '-');

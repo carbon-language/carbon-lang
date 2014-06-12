@@ -28,6 +28,7 @@
 #include <map>
 
 using namespace llvm;
+using std::error_code;
 
 MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,

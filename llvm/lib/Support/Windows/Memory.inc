@@ -19,6 +19,7 @@
 
 // The Windows.h header must be the last one included.
 #include "WindowsSupport.h"
+using std::error_code;
 
 namespace {
 

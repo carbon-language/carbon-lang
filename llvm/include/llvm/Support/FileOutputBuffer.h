@@ -37,9 +37,9 @@ public:
   /// Factory method to create an OutputBuffer object which manages a read/write
   /// buffer of the specified size. When committed, the buffer will be written
   /// to the file at the specified path.
-  static error_code create(StringRef FilePath, size_t Size,
-                           std::unique_ptr<FileOutputBuffer> &Result,
-                           unsigned Flags = 0);
+  static std::error_code create(StringRef FilePath, size_t Size,
+                                std::unique_ptr<FileOutputBuffer> &Result,
+                                unsigned Flags = 0);
 
   /// Returns a pointer to the start of the buffer.
   uint8_t *getBufferStart() {
@@ -66,7 +66,7 @@ public:
   /// is called, the file is deleted in the destructor. The optional parameter
   /// is used if it turns out you want the file size to be smaller than
   /// initially requested.
-  error_code commit(int64_t NewSmallerSize = -1);
+  std::error_code commit(int64_t NewSmallerSize = -1);
 
   /// If this object was previously committed, the destructor just deletes
   /// this object.  If this object was not committed, the destructor

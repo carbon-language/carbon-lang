@@ -53,6 +53,7 @@
 #include "llvm/Transforms/ObjCARC.h"
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 const char* LTOCodeGenerator::getVersionString() {
 #ifdef LLVM_VERSION_INFO

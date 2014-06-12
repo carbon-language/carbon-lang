@@ -21,6 +21,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 template<typename T>
 static void SwapValue(T &Value) {

@@ -21,6 +21,7 @@
 using namespace llvm;
 using namespace dwarf;
 using namespace object;
+using std::error_code;
 
 #define DEBUG_TYPE "dwarf"
 

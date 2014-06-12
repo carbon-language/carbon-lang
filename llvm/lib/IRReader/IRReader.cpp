@@ -21,6 +21,7 @@
 #include <system_error>
 
 using namespace llvm;
+using std::error_code;
 
 namespace llvm {
   extern bool TimePassesIsEnabled;

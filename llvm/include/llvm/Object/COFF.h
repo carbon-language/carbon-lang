@@ -353,65 +353,75 @@ private:
   uint32_t NumberOfImportDirectory;
   const export_directory_table_entry *ExportDirectory;
 
-  error_code getString(uint32_t offset, StringRef &Res) const;
+  std::error_code getString(uint32_t offset, StringRef &Res) const;
 
   const coff_symbol *toSymb(DataRefImpl Symb) const;
   const coff_section *toSec(DataRefImpl Sec) const;
   const coff_relocation *toRel(DataRefImpl Rel) const;
 
-  error_code initSymbolTablePtr();
-  error_code initImportTablePtr();
-  error_code initExportTablePtr();
+  std::error_code initSymbolTablePtr();
+  std::error_code initImportTablePtr();
+  std::error_code initExportTablePtr();
 
 protected:
   void moveSymbolNext(DataRefImpl &Symb) const override;
-  error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const override;
-  error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const override;
-  error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
+  std::error_code getSymbolName(DataRefImpl Symb,
+                                StringRef &Res) const override;
+  std::error_code getSymbolAddress(DataRefImpl Symb,
+                                   uint64_t &Res) const override;
+  std::error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
-  error_code getSymbolType(DataRefImpl Symb,
-                           SymbolRef::Type &Res) const override;
-  error_code getSymbolSection(DataRefImpl Symb,
-                              section_iterator &Res) const override;
+  std::error_code getSymbolType(DataRefImpl Symb,
+                                SymbolRef::Type &Res) const override;
+  std::error_code getSymbolSection(DataRefImpl Symb,
+                                   section_iterator &Res) const override;
   void moveSectionNext(DataRefImpl &Sec) const override;
-  error_code getSectionName(DataRefImpl Sec, StringRef &Res) const override;
-  error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const override;
-  error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const override;
-  error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const override;
-  error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const override;
-  error_code isSectionText(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionData(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionBSS(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionRequiredForExecution(DataRefImpl Sec,
-                                           bool &Res) const override;
-  error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
-                                   bool &Result) const override;
+  std::error_code getSectionName(DataRefImpl Sec,
+                                 StringRef &Res) const override;
+  std::error_code getSectionAddress(DataRefImpl Sec,
+                                    uint64_t &Res) const override;
+  std::error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const override;
+  std::error_code getSectionContents(DataRefImpl Sec,
+                                     StringRef &Res) const override;
+  std::error_code getSectionAlignment(DataRefImpl Sec,
+                                      uint64_t &Res) const override;
+  std::error_code isSectionText(DataRefImpl Sec, bool &Res) const override;
+  std::error_code isSectionData(DataRefImpl Sec, bool &Res) const override;
+  std::error_code isSectionBSS(DataRefImpl Sec, bool &Res) const override;
+  std::error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const override;
+  std::error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const override;
+  std::error_code isSectionReadOnlyData(DataRefImpl Sec,
+                                        bool &Res) const override;
+  std::error_code isSectionRequiredForExecution(DataRefImpl Sec,
+                                                bool &Res) const override;
+  std::error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
+                                        bool &Result) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
-  error_code getRelocationAddress(DataRefImpl Rel,
-                                  uint64_t &Res) const override;
-  error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const override;
+  std::error_code getRelocationAddress(DataRefImpl Rel,
+                                       uint64_t &Res) const override;
+  std::error_code getRelocationOffset(DataRefImpl Rel,
+                                      uint64_t &Res) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
-  error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const override;
-  error_code
+  std::error_code getRelocationType(DataRefImpl Rel,
+                                    uint64_t &Res) const override;
+  std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const override;
-  error_code
+  std::error_code
   getRelocationValueString(DataRefImpl Rel,
                            SmallVectorImpl<char> &Result) const override;
 
-  error_code getLibraryNext(DataRefImpl LibData,
-                            LibraryRef &Result) const override;
-  error_code getLibraryPath(DataRefImpl LibData,
-                            StringRef &Result) const override;
+  std::error_code getLibraryNext(DataRefImpl LibData,
+                                 LibraryRef &Result) const override;
+  std::error_code getLibraryPath(DataRefImpl LibData,
+                                 StringRef &Result) const override;
 
 public:
-  COFFObjectFile(MemoryBuffer *Object, error_code &EC, bool BufferOwned = true);
+  COFFObjectFile(MemoryBuffer *Object, std::error_code &EC,
+                 bool BufferOwned = true);
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
   library_iterator needed_library_begin() const override;
@@ -433,30 +443,33 @@ public:
   export_directory_iterator export_directory_begin() const;
   export_directory_iterator export_directory_end() const;
 
-  error_code getHeader(const coff_file_header *&Res) const;
-  error_code getCOFFHeader(const coff_file_header *&Res) const;
-  error_code getPE32Header(const pe32_header *&Res) const;
-  error_code getPE32PlusHeader(const pe32plus_header *&Res) const;
-  error_code getDataDirectory(uint32_t index, const data_directory *&Res) const;
-  error_code getSection(int32_t index, const coff_section *&Res) const;
-  error_code getSymbol(uint32_t index, const coff_symbol *&Res) const;
+  std::error_code getHeader(const coff_file_header *&Res) const;
+  std::error_code getCOFFHeader(const coff_file_header *&Res) const;
+  std::error_code getPE32Header(const pe32_header *&Res) const;
+  std::error_code getPE32PlusHeader(const pe32plus_header *&Res) const;
+  std::error_code getDataDirectory(uint32_t index,
+                                   const data_directory *&Res) const;
+  std::error_code getSection(int32_t index, const coff_section *&Res) const;
+  std::error_code getSymbol(uint32_t index, const coff_symbol *&Res) const;
   template <typename T>
-  error_code getAuxSymbol(uint32_t index, const T *&Res) const {
+  std::error_code getAuxSymbol(uint32_t index, const T *&Res) const {
     const coff_symbol *s;
-    error_code ec = getSymbol(index, s);
+    std::error_code ec = getSymbol(index, s);
     Res = reinterpret_cast<const T *>(s);
     return ec;
   }
-  error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
+  std::error_code getSymbolName(const coff_symbol *symbol,
+                                StringRef &Res) const;
   ArrayRef<uint8_t> getSymbolAuxData(const coff_symbol *symbol) const;
 
-  error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
-  error_code getSectionContents(const coff_section *Sec,
-                                ArrayRef<uint8_t> &Res) const;
+  std::error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
+  std::error_code getSectionContents(const coff_section *Sec,
+                                     ArrayRef<uint8_t> &Res) const;
 
-  error_code getVaPtr(uint64_t VA, uintptr_t &Res) const;
-  error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
-  error_code getHintName(uint32_t Rva, uint16_t &Hint, StringRef &Name) const;
+  std::error_code getVaPtr(uint64_t VA, uintptr_t &Res) const;
+  std::error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
+  std::error_code getHintName(uint32_t Rva, uint16_t &Hint,
+                              StringRef &Name) const;
 
   static inline bool classof(const Binary *v) { return v->isCOFF(); }
 };
@@ -471,12 +484,12 @@ public:
 
   bool operator==(const ImportDirectoryEntryRef &Other) const;
   void moveNext();
-  error_code getName(StringRef &Result) const;
+  std::error_code getName(StringRef &Result) const;
 
-  error_code
+  std::error_code
   getImportTableEntry(const import_directory_table_entry *&Result) const;
 
-  error_code
+  std::error_code
   getImportLookupEntry(const import_lookup_table_entry32 *&Result) const;
 
 private:
@@ -496,11 +509,11 @@ public:
   bool operator==(const ExportDirectoryEntryRef &Other) const;
   void moveNext();
 
-  error_code getDllName(StringRef &Result) const;
-  error_code getOrdinalBase(uint32_t &Result) const;
-  error_code getOrdinal(uint32_t &Result) const;
-  error_code getExportRVA(uint32_t &Result) const;
-  error_code getSymbolName(StringRef &Result) const;
+  std::error_code getDllName(StringRef &Result) const;
+  std::error_code getOrdinalBase(uint32_t &Result) const;
+  std::error_code getOrdinal(uint32_t &Result) const;
+  std::error_code getExportRVA(uint32_t &Result) const;
+  std::error_code getSymbolName(StringRef &Result) const;
 
 private:
   const export_directory_table_entry *ExportTable;

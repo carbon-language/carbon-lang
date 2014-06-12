@@ -24,6 +24,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 using support::ulittle8_t;
 using support::ulittle16_t;

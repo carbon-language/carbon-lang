@@ -18,6 +18,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 inline ObjectFile *unwrap(LLVMObjectFileRef OF) {
   return reinterpret_cast<ObjectFile*>(OF);

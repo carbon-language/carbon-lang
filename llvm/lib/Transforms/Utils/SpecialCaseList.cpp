@@ -31,6 +31,7 @@
 #include <utility>
 
 namespace llvm {
+using std::error_code;
 
 /// Represents a set of regular expressions.  Regular expressions which are
 /// "literal" (i.e. no regex metacharacters) are stored in Strings, while all

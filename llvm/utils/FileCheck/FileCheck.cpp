@@ -34,6 +34,7 @@
 #include <system_error>
 #include <vector>
 using namespace llvm;
+using std::error_code;
 
 static cl::opt<std::string>
 CheckFilename(cl::Positional, cl::desc("<check-file>"), cl::Required);

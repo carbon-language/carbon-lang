@@ -19,6 +19,7 @@
 #include "llvm/IR/Module.h"
 #include <cstring>
 using namespace llvm;
+using std::error_code;
 
 namespace {
 

@@ -14,6 +14,7 @@
 #include "llvm/Support/Win64EH.h"
 
 namespace llvm {
+using std::error_code;
 namespace object {
 class COFFObjectFile;
 class SymbolRef;

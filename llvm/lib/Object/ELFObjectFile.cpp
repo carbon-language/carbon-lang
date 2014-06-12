@@ -15,6 +15,7 @@
 #include "llvm/Support/MathExtras.h"
 
 namespace llvm {
+using std::error_code;
 using namespace object;
 
 ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,

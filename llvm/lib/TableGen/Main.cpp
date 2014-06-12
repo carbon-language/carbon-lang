@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 namespace {
   cl::opt<std::string>

@@ -28,6 +28,7 @@
 #endif
 
 using namespace llvm;
+using std::error_code;
 
 namespace {
   using llvm::StringRef;

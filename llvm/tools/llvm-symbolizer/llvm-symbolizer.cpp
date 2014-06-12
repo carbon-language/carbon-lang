@@ -29,6 +29,7 @@
 
 using namespace llvm;
 using namespace symbolize;
+using std::error_code;
 
 static cl::opt<bool>
 ClUseSymbolTable("use-symbol-table", cl::init(true),

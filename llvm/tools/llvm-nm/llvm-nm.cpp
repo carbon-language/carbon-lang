@@ -45,6 +45,7 @@
 #include <vector>
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 namespace {
 enum OutputFormatTy { bsd, sysv, posix, darwin };

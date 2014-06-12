@@ -20,6 +20,7 @@
 
 using namespace llvm;
 using namespace llvm::sys;
+using std::error_code;
 
 #define ASSERT_NO_ERROR(x) \
   if (error_code ASSERT_NO_ERROR_ec = x) { \

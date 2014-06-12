@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 IRObjectFile::IRObjectFile(MemoryBuffer *Object, error_code &EC,
                            LLVMContext &Context, bool BufferOwned)

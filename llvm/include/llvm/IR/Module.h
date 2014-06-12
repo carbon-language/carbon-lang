@@ -26,7 +26,6 @@
 #include <system_error>
 
 namespace llvm {
-
 class FunctionType;
 class GVMaterializer;
 class LLVMContext;
@@ -454,12 +453,12 @@ public:
   void Dematerialize(GlobalValue *GV);
 
   /// Make sure all GlobalValues in this Module are fully read.
-  error_code materializeAll();
+  std::error_code materializeAll();
 
   /// Make sure all GlobalValues in this Module are fully read and clear the
   /// Materializer. If the module is corrupt, this DOES NOT clear the old
   /// Materializer.
-  error_code materializeAllPermanently();
+  std::error_code materializeAllPermanently();
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 namespace llvm {
+using std::error_code;
 namespace symbolize {
 
 static bool error(error_code ec) {

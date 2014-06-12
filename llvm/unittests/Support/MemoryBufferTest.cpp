@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 using namespace llvm;
+using std::error_code;
 
 namespace {
 

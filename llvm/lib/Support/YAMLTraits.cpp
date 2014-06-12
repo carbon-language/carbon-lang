@@ -18,6 +18,7 @@
 #include <cstring>
 using namespace llvm;
 using namespace yaml;
+using std::error_code;
 
 //===----------------------------------------------------------------------===//
 //  IO

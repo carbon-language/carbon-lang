@@ -14,6 +14,7 @@
 #include <string>
 
 namespace llvm {
+using std::error_code;
   namespace object {
     class RelocationRef;
   }

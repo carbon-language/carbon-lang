@@ -28,6 +28,7 @@
 #include <system_error>
 using namespace llvm;
 using namespace llvm::object;
+using std::error_code;
 
 static cl::list<std::string>
 InputFileList(cl::Positional, cl::ZeroOrMore,

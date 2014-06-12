@@ -22,6 +22,7 @@
 #include "llvm/Support/type_traits.h"
 
 namespace llvm {
+using std::error_code;
 namespace ARM {
 namespace EHABI {
 

@@ -60,28 +60,29 @@ public:
 /// Base class and interface for reading profiling data of any known instrprof
 /// format. Provides an iterator over InstrProfRecords.
 class InstrProfReader {
-  error_code LastError;
+  std::error_code LastError;
+
 public:
   InstrProfReader() : LastError(instrprof_error::success) {}
   virtual ~InstrProfReader() {}
 
   /// Read the header.  Required before reading first record.
-  virtual error_code readHeader() = 0;
+  virtual std::error_code readHeader() = 0;
   /// Read a single record.
-  virtual error_code readNextRecord(InstrProfRecord &Record) = 0;
+  virtual std::error_code readNextRecord(InstrProfRecord &Record) = 0;
   /// Iterator over profile data.
   InstrProfIterator begin() { return InstrProfIterator(this); }
   InstrProfIterator end() { return InstrProfIterator(); }
 
 protected:
-  /// Set the current error_code and return same.
-  error_code error(error_code EC) {
+  /// Set the current std::error_code and return same.
+  std::error_code error(std::error_code EC) {
     LastError = EC;
     return EC;
   }
 
   /// Clear the current error code and return a successful one.
-  error_code success() { return error(instrprof_error::success); }
+  std::error_code success() { return error(instrprof_error::success); }
 
 public:
   /// Return true if the reader has finished reading the profile data.
@@ -89,12 +90,12 @@ public:
   /// Return true if the reader encountered an error reading profiling data.
   bool hasError() { return LastError && !isEOF(); }
   /// Get the current error code.
-  error_code getError() { return LastError; }
+  std::error_code getError() { return LastError; }
 
   /// Factory method to create an appropriately typed reader for the given
   /// instrprof file.
-  static error_code create(std::string Path,
-                           std::unique_ptr<InstrProfReader> &Result);
+  static std::error_code create(std::string Path,
+                                std::unique_ptr<InstrProfReader> &Result);
 };
 
 /// Reader for the simple text based instrprof format.
@@ -122,9 +123,9 @@ public:
       : DataBuffer(std::move(DataBuffer_)), Line(*DataBuffer, '#') {}
 
   /// Read the header.
-  error_code readHeader() override { return success(); }
+  std::error_code readHeader() override { return success(); }
   /// Read a single record.
-  error_code readNextRecord(InstrProfRecord &Record) override;
+  std::error_code readNextRecord(InstrProfRecord &Record) override;
 };
 
 /// Reader for the raw instrprof binary format from runtime.
@@ -175,12 +176,12 @@ public:
       : DataBuffer(std::move(DataBuffer)) { }
 
   static bool hasFormat(const MemoryBuffer &DataBuffer);
-  error_code readHeader() override;
-  error_code readNextRecord(InstrProfRecord &Record) override;
+  std::error_code readHeader() override;
+  std::error_code readNextRecord(InstrProfRecord &Record) override;
 
 private:
-  error_code readNextHeader(const char *CurrentPos);
-  error_code readHeader(const RawHeader &Header);
+  std::error_code readNextHeader(const char *CurrentPos);
+  std::error_code readHeader(const RawHeader &Header);
   template <class IntT>
   IntT swap(IntT Int) const {
     return ShouldSwapBytes ? sys::SwapByteOrder(Int) : Int;
@@ -281,19 +282,19 @@ public:
   static bool hasFormat(const MemoryBuffer &DataBuffer);
 
   /// Read the file header.
-  error_code readHeader() override;
+  std::error_code readHeader() override;
   /// Read a single record.
-  error_code readNextRecord(InstrProfRecord &Record) override;
+  std::error_code readNextRecord(InstrProfRecord &Record) override;
 
   /// Fill Counts with the profile data for the given function name.
-  error_code getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
-                               std::vector<uint64_t> &Counts);
+  std::error_code getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
+                                    std::vector<uint64_t> &Counts);
   /// Return the maximum of all known function counts.
   uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
 
   /// Factory method to create an indexed reader.
-  static error_code create(std::string Path,
-                           std::unique_ptr<IndexedInstrProfReader> &Result);
+  static std::error_code
+  create(std::string Path, std::unique_ptr<IndexedInstrProfReader> &Result);
 };
 
 } // end namespace llvm

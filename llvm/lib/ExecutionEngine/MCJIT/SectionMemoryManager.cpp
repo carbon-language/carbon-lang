@@ -71,7 +71,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
   //
   // FIXME: Initialize the Near member for each memory group to avoid
   // interleaving.
-  error_code ec;
+  std::error_code ec;
   sys::MemoryBlock MB = sys::Memory::allocateMappedMemory(RequiredSize,
                                                           &MemGroup.Near,
                                                           sys::Memory::MF_READ |
@@ -105,7 +105,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
 bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg)
 {
   // FIXME: Should in-progress permissions be reverted if an error occurs?
-  error_code ec;
+  std::error_code ec;
 
   // Don't allow free memory blocks to be used after setting protection flags.
   CodeMem.FreeMem.clear();
@@ -143,19 +143,20 @@ bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg)
   return false;
 }
 
-error_code SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
-                                                             unsigned Permissions) {
+std::error_code
+SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
+                                                  unsigned Permissions) {
 
   for (int i = 0, e = MemGroup.AllocatedMem.size(); i != e; ++i) {
-      error_code ec;
-      ec = sys::Memory::protectMappedMemory(MemGroup.AllocatedMem[i],
-                                            Permissions);
-      if (ec) {
-        return ec;
-      }
+    std::error_code ec;
+    ec =
+        sys::Memory::protectMappedMemory(MemGroup.AllocatedMem[i], Permissions);
+    if (ec) {
+      return ec;
+    }
   }
 
-  return error_code();
+  return std::error_code();
 }
 
 void SectionMemoryManager::invalidateInstructionCache() {

@@ -48,6 +48,8 @@
 #endif
 
 namespace llvm {
+using std::error_code;
+
 using namespace sys;
 
 ProcessInfo::ProcessInfo() : Pid(0), ReturnCode(0) {}

@@ -20,6 +20,7 @@
 #include <cstring>
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 Module *llvm::ParseAssembly(MemoryBuffer *F,
                             Module *M,

@@ -14,6 +14,7 @@
 
 using namespace llvm;
 using namespace sys;
+using std::error_code;
 
 namespace {
 

@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 static cl::list<std::string>
        InputFilenames(cl::Positional, cl::desc("<input files>"),

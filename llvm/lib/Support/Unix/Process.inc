@@ -46,7 +46,7 @@
 
 using namespace llvm;
 using namespace sys;
-
+using std::error_code;
 
 process::id_type self_process::get_id() {
   return getpid();

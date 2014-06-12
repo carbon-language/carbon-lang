@@ -44,6 +44,7 @@
 #endif
 
 using namespace llvm;
+using std::error_code;
 
 namespace {
   ld_plugin_status discard_message(int level, const char *format, ...) {

@@ -27,6 +27,7 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 using namespace llvm;
+using std::error_code;
 
 namespace llvm {
   extern cl::opt<std::string> OutputPrefix;

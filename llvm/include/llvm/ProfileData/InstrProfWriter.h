@@ -38,8 +38,9 @@ public:
   /// Add function counts for the given function. If there are already counts
   /// for this function and the hash and number of counts match, each counter is
   /// summed.
-  error_code addFunctionCounts(StringRef FunctionName, uint64_t FunctionHash,
-                               ArrayRef<uint64_t> Counters);
+  std::error_code addFunctionCounts(StringRef FunctionName,
+                                    uint64_t FunctionHash,
+                                    ArrayRef<uint64_t> Counters);
   /// Ensure that all data is written to disk.
   void write(raw_fd_ostream &OS);
 };

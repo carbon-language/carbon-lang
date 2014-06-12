@@ -28,6 +28,7 @@
 #include <cstdarg>
 #include <cstdlib>
 using namespace llvm;
+using std::error_code;
 
 //===----------------------------------------------------------------------===//
 // Methods to implement the globals and functions lists.

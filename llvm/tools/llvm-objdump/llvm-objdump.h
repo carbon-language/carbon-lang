@@ -16,6 +16,7 @@
 #include "llvm/Support/StringRefMemoryObject.h"
 
 namespace llvm {
+using std::error_code;
 
 namespace object {
   class COFFObjectFile;

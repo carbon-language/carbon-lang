@@ -99,7 +99,7 @@ public:
 
   void moveNext();
 
-  error_code printName(raw_ostream &OS) const;
+  std::error_code printName(raw_ostream &OS) const;
 
   /// Get symbol flags (bitwise OR of SymbolRef::Flags)
   uint32_t getFlags() const;
@@ -120,8 +120,8 @@ public:
   // virtual interface.
   virtual void moveSymbolNext(DataRefImpl &Symb) const = 0;
 
-  virtual error_code printSymbolName(raw_ostream &OS,
-                                     DataRefImpl Symb) const = 0;
+  virtual std::error_code printSymbolName(raw_ostream &OS,
+                                          DataRefImpl Symb) const = 0;
 
   virtual uint32_t getSymbolFlags(DataRefImpl Symb) const = 0;
 
@@ -174,7 +174,7 @@ inline void BasicSymbolRef::moveNext() {
   return OwningObject->moveSymbolNext(SymbolPimpl);
 }
 
-inline error_code BasicSymbolRef::printName(raw_ostream &OS) const {
+inline std::error_code BasicSymbolRef::printName(raw_ostream &OS) const {
   return OwningObject->printSymbolName(OS, SymbolPimpl);
 }
 

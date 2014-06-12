@@ -25,6 +25,7 @@
 #include <vector>
 
 namespace llvm {
+using std::error_code;
 
 namespace {
 

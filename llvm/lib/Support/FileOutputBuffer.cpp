@@ -17,6 +17,7 @@
 #include <system_error>
 
 using llvm::sys::fs::mapped_file_region;
+using std::error_code;
 
 namespace llvm {
 FileOutputBuffer::FileOutputBuffer(mapped_file_region * R,

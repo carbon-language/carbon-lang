@@ -20,6 +20,7 @@
 #include <cassert>
 
 using namespace llvm;
+using std::error_code;
 
 static error_code setupMemoryBuffer(std::string Path,
                                     std::unique_ptr<MemoryBuffer> &Buffer) {

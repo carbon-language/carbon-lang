@@ -35,6 +35,7 @@
 #include <fstream>
 
 using namespace llvm;
+using std::error_code;
 
 #define DEBUG_TYPE "bugpoint"
 

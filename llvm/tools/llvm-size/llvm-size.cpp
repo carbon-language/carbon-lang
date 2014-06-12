@@ -30,6 +30,7 @@
 #include <system_error>
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 enum OutputFormatTy {berkeley, sysv};
 static cl::opt<OutputFormatTy>

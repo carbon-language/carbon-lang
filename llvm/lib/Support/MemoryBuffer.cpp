@@ -33,6 +33,7 @@
 #include <io.h>
 #endif
 using namespace llvm;
+using std::error_code;
 
 //===----------------------------------------------------------------------===//
 // MemoryBuffer implementation itself.

@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
+using std::error_code;
 using namespace sys;
 
 ProcessInfo::ProcessInfo() : ProcessHandle(0), Pid(0), ReturnCode(0) {}

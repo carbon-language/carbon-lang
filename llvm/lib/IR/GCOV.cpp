@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 //===----------------------------------------------------------------------===//
 // GCOVFile implementation.

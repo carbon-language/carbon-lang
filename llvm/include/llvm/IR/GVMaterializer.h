@@ -21,7 +21,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 class Function;
 class GlobalValue;
 class Module;
@@ -43,7 +42,7 @@ public:
 
   /// Make sure the given GlobalValue is fully read.
   ///
-  virtual error_code Materialize(GlobalValue *GV) = 0;
+  virtual std::error_code Materialize(GlobalValue *GV) = 0;
 
   /// If the given GlobalValue is read in, and if the GVMaterializer supports
   /// it, release the memory for the GV, and set it up to be materialized
@@ -54,7 +53,7 @@ public:
 
   /// Make sure the entire Module has been completely read.
   ///
-  virtual error_code MaterializeModule(Module *M) = 0;
+  virtual std::error_code MaterializeModule(Module *M) = 0;
 };
 
 } // End llvm namespace

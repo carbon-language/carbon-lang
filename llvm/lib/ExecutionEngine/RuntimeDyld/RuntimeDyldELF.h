@@ -20,6 +20,7 @@
 using namespace llvm;
 
 namespace llvm {
+using std::error_code;
 
 namespace {
 // Helper for extensive error checking in debug builds.

@@ -14,6 +14,7 @@
 #include "llvm/Support/YAMLTraits.h"
 
 using namespace llvm;
+using std::error_code;
 
 namespace {
 

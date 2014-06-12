@@ -43,6 +43,7 @@
 #include <map>
 #include <system_error>
 using namespace llvm;
+using std::error_code;
 
 static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));

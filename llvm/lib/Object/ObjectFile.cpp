@@ -20,6 +20,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 void ObjectFile::anchor() { }
 

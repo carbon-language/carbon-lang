@@ -20,6 +20,7 @@
 
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 static const char *const Magic = "!<arch>\n";
 

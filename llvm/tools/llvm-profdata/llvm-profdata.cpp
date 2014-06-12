@@ -24,6 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+using std::error_code;
 
 static void exitWithError(const Twine &Message, StringRef Whence = "") {
   errs() << "error: ";

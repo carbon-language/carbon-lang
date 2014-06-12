@@ -15,6 +15,7 @@
 #include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
+using std::error_code;
 namespace ARM {
 namespace WinEH {
 class RuntimeFunction;
