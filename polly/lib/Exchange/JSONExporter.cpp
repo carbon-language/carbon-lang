@@ -20,7 +20,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/system_error.h"
 
 #include "json/reader.h"
 #include "json/writer.h"
@@ -32,6 +31,7 @@
 
 #include <memory>
 #include <string>
+#include <system_error>
 
 using namespace llvm;
 using namespace polly;
