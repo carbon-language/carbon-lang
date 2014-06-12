@@ -457,8 +457,8 @@ public:
     // Win32 does not allow rename/removing opened files.
     FileStream.reset();
 #endif
-    if (llvm::error_code ec =
-          llvm::sys::fs::rename(TempFilename.str(), Filename)) {
+    if (std::error_code ec =
+            llvm::sys::fs::rename(TempFilename.str(), Filename)) {
       AllWritten = false;
       Diagnostics.Report(clang::diag::err_unable_to_rename_temp)
         << TempFilename << Filename << ec.message();

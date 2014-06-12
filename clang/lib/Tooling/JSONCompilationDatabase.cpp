@@ -145,8 +145,8 @@ JSONCompilationDatabase *
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
                                       std::string &ErrorMessage) {
   std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer;
-  llvm::error_code Result =
-    llvm::MemoryBuffer::getFile(FilePath, DatabaseBuffer);
+  std::error_code Result =
+      llvm::MemoryBuffer::getFile(FilePath, DatabaseBuffer);
   if (Result) {
     ErrorMessage = "Error while opening JSON database: " + Result.message();
     return nullptr;

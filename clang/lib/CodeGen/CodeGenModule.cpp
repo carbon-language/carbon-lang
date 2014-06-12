@@ -141,7 +141,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   RRData = new RREntrypoints();
 
   if (!CodeGenOpts.InstrProfileInput.empty()) {
-    if (llvm::error_code EC = llvm::IndexedInstrProfReader::create(
+    if (std::error_code EC = llvm::IndexedInstrProfReader::create(
             CodeGenOpts.InstrProfileInput, PGOReader)) {
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                               "Could not read profile: %0");

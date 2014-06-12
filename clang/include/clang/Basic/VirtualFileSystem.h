@@ -89,12 +89,13 @@ public:
   /// \brief Get the status of the file.
   virtual llvm::ErrorOr<Status> status() = 0;
   /// \brief Get the contents of the file as a \p MemoryBuffer.
-  virtual llvm::error_code
-  getBuffer(const Twine &Name, std::unique_ptr<llvm::MemoryBuffer> &Result,
-            int64_t FileSize = -1, bool RequiresNullTerminator = true,
-            bool IsVolatile = false) = 0;
+  virtual std::error_code getBuffer(const Twine &Name,
+                                    std::unique_ptr<llvm::MemoryBuffer> &Result,
+                                    int64_t FileSize = -1,
+                                    bool RequiresNullTerminator = true,
+                                    bool IsVolatile = false) = 0;
   /// \brief Closes the file.
-  virtual llvm::error_code close() = 0;
+  virtual std::error_code close() = 0;
   /// \brief Sets the name to use for this file.
   virtual void setName(StringRef Name) = 0;
 };
@@ -107,16 +108,16 @@ public:
   /// \brief Get the status of the entry at \p Path, if one exists.
   virtual llvm::ErrorOr<Status> status(const Twine &Path) = 0;
   /// \brief Get a \p File object for the file at \p Path, if one exists.
-  virtual llvm::error_code openFileForRead(const Twine &Path,
-                                           std::unique_ptr<File> &Result) = 0;
+  virtual std::error_code openFileForRead(const Twine &Path,
+                                          std::unique_ptr<File> &Result) = 0;
 
   /// This is a convenience method that opens a file, gets its content and then
   /// closes the file.
-  llvm::error_code getBufferForFile(const Twine &Name,
-                                    std::unique_ptr<llvm::MemoryBuffer> &Result,
-                                    int64_t FileSize = -1,
-                                    bool RequiresNullTerminator = true,
-                                    bool IsVolatile = false);
+  std::error_code getBufferForFile(const Twine &Name,
+                                   std::unique_ptr<llvm::MemoryBuffer> &Result,
+                                   int64_t FileSize = -1,
+                                   bool RequiresNullTerminator = true,
+                                   bool IsVolatile = false);
 };
 
 /// \brief Gets an \p vfs::FileSystem for the 'real' file system, as seen by
@@ -154,8 +155,8 @@ public:
   void pushOverlay(IntrusiveRefCntPtr<FileSystem> FS);
 
   llvm::ErrorOr<Status> status(const Twine &Path) override;
-  llvm::error_code openFileForRead(const Twine &Path,
-                                   std::unique_ptr<File> &Result) override;
+  std::error_code openFileForRead(const Twine &Path,
+                                  std::unique_ptr<File> &Result) override;
 };
 
 /// \brief Get a globally unique ID for a virtual file or directory.

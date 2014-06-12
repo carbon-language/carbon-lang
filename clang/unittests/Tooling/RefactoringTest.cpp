@@ -218,7 +218,7 @@ public:
                                                 E = TemporaryFiles.end();
          I != E; ++I) {
       llvm::StringRef Name = I->second;
-      llvm::error_code EC = llvm::sys::fs::remove(Name);
+      std::error_code EC = llvm::sys::fs::remove(Name);
       (void)EC;
       assert(!EC);
     }
@@ -227,8 +227,7 @@ public:
   FileID createFile(llvm::StringRef Name, llvm::StringRef Content) {
     SmallString<1024> Path;
     int FD;
-    llvm::error_code EC =
-        llvm::sys::fs::createTemporaryFile(Name, "", FD, Path);
+    std::error_code EC = llvm::sys::fs::createTemporaryFile(Name, "", FD, Path);
     assert(!EC);
     (void)EC;
 

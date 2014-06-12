@@ -465,7 +465,7 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
   return true;
 }
 
-llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
+std::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
   assert(Style);
   FormatStyle::LanguageKind Language = Style->Language;
   assert(Language != FormatStyle::LK_None);
@@ -2025,7 +2025,7 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
 
   if (StyleName.startswith("{")) {
     // Parse YAML/JSON style from the command line.
-    if (llvm::error_code ec = parseConfiguration(StyleName, &Style)) {
+    if (std::error_code ec = parseConfiguration(StyleName, &Style)) {
       llvm::errs() << "Error parsing -style: " << ec.message() << ", using "
                    << FallbackStyle << " style\n";
     }
@@ -2066,12 +2066,12 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
 
     if (IsFile) {
       std::unique_ptr<llvm::MemoryBuffer> Text;
-      if (llvm::error_code ec =
+      if (std::error_code ec =
               llvm::MemoryBuffer::getFile(ConfigFile.c_str(), Text)) {
         llvm::errs() << ec.message() << "\n";
         break;
       }
-      if (llvm::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
+      if (std::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
         if (ec == ParseError::Unsuitable) {
           if (!UnsuitableConfigFiles.empty())
             UnsuitableConfigFiles.append(", ");

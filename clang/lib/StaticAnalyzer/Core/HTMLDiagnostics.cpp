@@ -99,7 +99,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   // Create the HTML directory if it is missing.
   if (!createdDir) {
     createdDir = true;
-    if (llvm::error_code ec = llvm::sys::fs::create_directories(Directory)) {
+    if (std::error_code ec = llvm::sys::fs::create_directories(Directory)) {
       llvm::errs() << "warning: could not create directory '"
                    << Directory << "': " << ec.message() << '\n';
 
@@ -249,7 +249,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   SmallString<128> Model, ResultPath;
   llvm::sys::path::append(Model, Directory, "report-%%%%%%.html");
 
-  if (llvm::error_code EC =
+  if (std::error_code EC =
           llvm::sys::fs::createUniqueFile(Model.str(), FD, ResultPath)) {
     llvm::errs() << "warning: could not create file in '" << Directory
                  << "': " << EC.message() << '\n';

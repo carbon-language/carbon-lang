@@ -390,7 +390,7 @@ llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
                  bool isVolatile) {
   std::unique_ptr<llvm::MemoryBuffer> Result;
-  llvm::error_code ec;
+  std::error_code ec;
 
   uint64_t FileSize = Entry->getSize();
   // If there's a high enough chance that the file have changed since we
@@ -431,7 +431,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   std::unique_ptr<llvm::MemoryBuffer> Result;
-  llvm::error_code ec;
+  std::error_code ec;
   if (FileSystemOpts.WorkingDir.empty()) {
     ec = FS->getBufferForFile(Filename, Result);
     if (ec && ErrorStr)

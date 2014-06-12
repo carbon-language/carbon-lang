@@ -110,7 +110,7 @@ void Replacement::setFromSourceLocation(const SourceManager &Sources,
     // Make FilePath absolute so replacements can be applied correctly when
     // relative paths for files are used.
     llvm::SmallString<256> FilePath(Entry->getName());
-    llvm::error_code EC = llvm::sys::fs::make_absolute(FilePath);
+    std::error_code EC = llvm::sys::fs::make_absolute(FilePath);
     this->FilePath = EC ? FilePath.c_str() : Entry->getName();
   } else {
     this->FilePath = InvalidLocation;

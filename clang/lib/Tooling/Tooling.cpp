@@ -145,7 +145,7 @@ std::string getAbsolutePath(StringRef File) {
   }
 
   SmallString<1024> AbsolutePath = RelativePath;
-  llvm::error_code EC = llvm::sys::fs::make_absolute(AbsolutePath);
+  std::error_code EC = llvm::sys::fs::make_absolute(AbsolutePath);
   assert(!EC);
   (void)EC;
   llvm::sys::path::native(AbsolutePath);

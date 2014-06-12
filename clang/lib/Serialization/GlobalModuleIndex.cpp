@@ -787,7 +787,7 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
   GlobalModuleIndexBuilder Builder(FileMgr);
   
   // Load each of the module files.
-  llvm::error_code EC;
+  std::error_code EC;
   for (llvm::sys::fs::directory_iterator D(Path, EC), DEnd;
        D != DEnd && !EC;
        D.increment(EC)) {

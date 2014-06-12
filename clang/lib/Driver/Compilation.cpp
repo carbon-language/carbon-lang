@@ -86,7 +86,7 @@ bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
   if (!llvm::sys::fs::can_write(File) || !llvm::sys::fs::is_regular_file(File))
     return true;
 
-  if (llvm::error_code EC = llvm::sys::fs::remove(File)) {
+  if (std::error_code EC = llvm::sys::fs::remove(File)) {
     // Failure is only failure if the file exists and is "regular". We checked
     // for it being regular before, and llvm::sys::fs::remove ignores ENOENT,
     // so we don't need to check again.

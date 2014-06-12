@@ -129,10 +129,10 @@ operator+=(SmallVectorImpl<char> &Includes, StringRef RHS) {
   return Includes;
 }
 
-static llvm::error_code addHeaderInclude(StringRef HeaderName,
-                                         SmallVectorImpl<char> &Includes,
-                                         const LangOptions &LangOpts,
-                                         bool IsExternC) {
+static std::error_code addHeaderInclude(StringRef HeaderName,
+                                        SmallVectorImpl<char> &Includes,
+                                        const LangOptions &LangOpts,
+                                        bool IsExternC) {
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "extern \"C\" {\n";
   if (LangOpts.ObjC1)
@@ -146,20 +146,20 @@ static llvm::error_code addHeaderInclude(StringRef HeaderName,
     Includes += HeaderName;
   } else {
     SmallString<256> Header = HeaderName;
-    if (llvm::error_code Err = llvm::sys::fs::make_absolute(Header))
+    if (std::error_code Err = llvm::sys::fs::make_absolute(Header))
       return Err;
     Includes += Header;
   }
   Includes += "\"\n";
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "}\n";
-  return llvm::error_code();
+  return std::error_code();
 }
 
-static llvm::error_code addHeaderInclude(const FileEntry *Header,
-                                         SmallVectorImpl<char> &Includes,
-                                         const LangOptions &LangOpts,
-                                         bool IsExternC) {
+static std::error_code addHeaderInclude(const FileEntry *Header,
+                                        SmallVectorImpl<char> &Includes,
+                                        const LangOptions &LangOpts,
+                                        bool IsExternC) {
   return addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
 }
 
@@ -170,19 +170,19 @@ static llvm::error_code addHeaderInclude(const FileEntry *Header,
 ///
 /// \param Includes Will be augmented with the set of \#includes or \#imports
 /// needed to load all of the named headers.
-static llvm::error_code
+static std::error_code
 collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
                             ModuleMap &ModMap, clang::Module *Module,
                             SmallVectorImpl<char> &Includes) {
   // Don't collect any headers for unavailable modules.
   if (!Module->isAvailable())
-    return llvm::error_code();
+    return std::error_code();
 
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->NormalHeaders.size(); I != N; ++I) {
     const FileEntry *Header = Module->NormalHeaders[I];
     Module->addTopHeader(Header);
-    if (llvm::error_code Err =
+    if (std::error_code Err =
             addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC))
       return Err;
   }
@@ -192,13 +192,13 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
     Module->addTopHeader(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
-      if (llvm::error_code Err = addHeaderInclude(UmbrellaHeader, Includes,
-                                                  LangOpts, Module->IsExternC))
+      if (std::error_code Err = addHeaderInclude(UmbrellaHeader, Includes,
+                                                 LangOpts, Module->IsExternC))
         return Err;
     }
   } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
-    llvm::error_code EC;
+    std::error_code EC;
     SmallString<128> DirNative;
     llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
     for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative.str(), EC), 
@@ -220,8 +220,8 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
       }
       
       // Include this header as part of the umbrella directory.
-      if (llvm::error_code Err = addHeaderInclude(Dir->path(), Includes,
-                                                  LangOpts, Module->IsExternC))
+      if (std::error_code Err = addHeaderInclude(Dir->path(), Includes,
+                                                 LangOpts, Module->IsExternC))
         return Err;
     }
 
@@ -233,11 +233,11 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
   for (clang::Module::submodule_iterator Sub = Module->submodule_begin(),
                                       SubEnd = Module->submodule_end();
        Sub != SubEnd; ++Sub)
-    if (llvm::error_code Err = collectModuleHeaderIncludes(
+    if (std::error_code Err = collectModuleHeaderIncludes(
             LangOpts, FileMgr, ModMap, *Sub, Includes))
       return Err;
 
-  return llvm::error_code();
+  return std::error_code();
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
@@ -310,7 +310,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
-  llvm::error_code Err = llvm::error_code();
+  std::error_code Err = llvm::error_code();
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
     Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
                            Module->IsExternC);
