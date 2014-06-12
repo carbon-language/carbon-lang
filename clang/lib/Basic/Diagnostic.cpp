@@ -24,8 +24,7 @@
 using namespace clang;
 
 static void DummyArgToStringFn(DiagnosticsEngine::ArgumentKind AK, intptr_t QT,
-                            const char *Modifier, unsigned ML,
-                            const char *Argument, unsigned ArgLen,
+                            StringRef Modifier, StringRef Argument,
                             ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
                             SmallVectorImpl<char> &Output,
                             void *Cookie,
@@ -827,8 +826,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
     case DiagnosticsEngine::ak_declcontext:
     case DiagnosticsEngine::ak_attr:
       getDiags()->ConvertArgToString(Kind, getRawArg(ArgNo),
-                                     Modifier, ModifierLen,
-                                     Argument, ArgumentLen,
+                                     StringRef(Modifier, ModifierLen),
+                                     StringRef(Argument, ArgumentLen),
                                      FormattedArgs,
                                      OutStr, QualTypeVals);
       break;
@@ -851,8 +850,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         TDT.PrintFromType = true;
         TDT.PrintTree = true;
         getDiags()->ConvertArgToString(Kind, val,
-                                       Modifier, ModifierLen,
-                                       Argument, ArgumentLen,
+                                       StringRef(Modifier, ModifierLen),
+                                       StringRef(Argument, ArgumentLen),
                                        FormattedArgs,
                                        Tree, QualTypeVals);
         // If there is no tree information, fall back to regular printing.
@@ -874,8 +873,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       TDT.PrintTree = false;
       TDT.PrintFromType = true;
       getDiags()->ConvertArgToString(Kind, val,
-                                     Modifier, ModifierLen,
-                                     Argument, ArgumentLen,
+                                     StringRef(Modifier, ModifierLen),
+                                     StringRef(Argument, ArgumentLen),
                                      FormattedArgs,
                                      OutStr, QualTypeVals);
       if (!TDT.TemplateDiffUsed)
@@ -888,8 +887,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       // Append second type
       TDT.PrintFromType = false;
       getDiags()->ConvertArgToString(Kind, val,
-                                     Modifier, ModifierLen,
-                                     Argument, ArgumentLen,
+                                     StringRef(Modifier, ModifierLen),
+                                     StringRef(Argument, ArgumentLen),
                                      FormattedArgs,
                                      OutStr, QualTypeVals);
       if (!TDT.TemplateDiffUsed)

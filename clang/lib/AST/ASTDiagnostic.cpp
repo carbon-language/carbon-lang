@@ -256,10 +256,8 @@ static bool FormatTemplateTypeDiff(ASTContext &Context, QualType FromType,
 void clang::FormatASTNodeDiagnosticArgument(
     DiagnosticsEngine::ArgumentKind Kind,
     intptr_t Val,
-    const char *Modifier,
-    unsigned ModLen,
-    const char *Argument,
-    unsigned ArgLen,
+    StringRef Modifier,
+    StringRef Argument,
     ArrayRef<DiagnosticsEngine::ArgumentValue> PrevArgs,
     SmallVectorImpl<char> &Output,
     void *Cookie,
@@ -295,12 +293,12 @@ void clang::FormatASTNodeDiagnosticArgument(
       // Attempting to do a template diff on non-templates.  Set the variables
       // and continue with regular type printing of the appropriate type.
       Val = TDT.PrintFromType ? TDT.FromType : TDT.ToType;
-      ModLen = 0;
-      ArgLen = 0;
+      Modifier = StringRef();
+      Argument = StringRef();
       // Fall through
     }
     case DiagnosticsEngine::ak_qualtype: {
-      assert(ModLen == 0 && ArgLen == 0 &&
+      assert(Modifier.empty() && Argument.empty() &&
              "Invalid modifier for QualType argument");
       
       QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
@@ -309,13 +307,12 @@ void clang::FormatASTNodeDiagnosticArgument(
       break;
     }
     case DiagnosticsEngine::ak_declarationname: {
-      if (ModLen == 9 && !memcmp(Modifier, "objcclass", 9) && ArgLen == 0)
+      if (Modifier == "objcclass" && Argument.empty())
         OS << '+';
-      else if (ModLen == 12 && !memcmp(Modifier, "objcinstance", 12)
-                && ArgLen==0)
+      else if (Modifier == "objcinstance" && Argument.empty())
         OS << '-';
       else
-        assert(ModLen == 0 && ArgLen == 0 &&
+        assert(Modifier.empty() && Argument.empty() &&
                "Invalid modifier for DeclarationName argument");
 
       OS << DeclarationName::getFromOpaqueInteger(Val);
@@ -323,10 +320,10 @@ void clang::FormatASTNodeDiagnosticArgument(
     }
     case DiagnosticsEngine::ak_nameddecl: {
       bool Qualified;
-      if (ModLen == 1 && Modifier[0] == 'q' && ArgLen == 0)
+      if (Modifier == "q" && Argument.empty())
         Qualified = true;
       else {
-        assert(ModLen == 0 && ArgLen == 0 &&
+        assert(Modifier.empty() && Argument.empty() &&
                "Invalid modifier for NamedDecl* argument");
         Qualified = false;
       }

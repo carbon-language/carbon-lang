@@ -323,8 +323,7 @@ private:
   /// This is a hack to avoid a layering violation between libbasic and libsema.
   typedef void (*ArgToStringFnTy)(
       ArgumentKind Kind, intptr_t Val,
-      const char *Modifier, unsigned ModifierLen,
-      const char *Argument, unsigned ArgumentLen,
+      StringRef Modifier, StringRef Argument,
       ArrayRef<ArgumentValue> PrevArgs,
       SmallVectorImpl<char> &Output,
       void *Cookie,
@@ -617,14 +616,12 @@ public:
   /// \brief Converts a diagnostic argument (as an intptr_t) into the string
   /// that represents it.
   void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
-                          const char *Modifier, unsigned ModLen,
-                          const char *Argument, unsigned ArgLen,
+                          StringRef Modifier, StringRef Argument,
                           ArrayRef<ArgumentValue> PrevArgs,
                           SmallVectorImpl<char> &Output,
                           ArrayRef<intptr_t> QualTypeVals) const {
-    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
-                  PrevArgs, Output, ArgToStringCookie,
-                  QualTypeVals);
+    ArgToStringFn(Kind, Val, Modifier, Argument, PrevArgs, Output,
+                  ArgToStringCookie, QualTypeVals);
   }
 
   void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {
