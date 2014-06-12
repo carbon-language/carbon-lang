@@ -31,7 +31,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: bgezal
 // Removed: bltzal
 // Removed: c.cond.fmt, bc1[ft]
-// Removed: jalx
 // Removed: ldxc1
 // Removed: luxc1
 // Removed: lwxc1
