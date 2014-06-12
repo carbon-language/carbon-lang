@@ -133,13 +133,14 @@ public:
   uint64_t getEmitSize(const MachObjectWriter &ObjWriter,
                        const MCAsmLayout &Layout) const {
     class raw_counting_ostream : public raw_ostream {
-      uint64_t Count = 0;
+      uint64_t Count;
 
       void write_impl(const char *, size_t size) override { Count += size; }
 
       uint64_t current_pos() const override { return Count; }
 
     public:
+      raw_counting_ostream() : Count(0) {}
       ~raw_counting_ostream() { flush(); }
     };
 
