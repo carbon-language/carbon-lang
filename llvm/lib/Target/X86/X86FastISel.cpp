@@ -1948,39 +1948,31 @@ bool X86FastISel::FastLowerArguments() {
     return false;
   
   // Only handle simple cases. i.e. Up to 6 i32/i64 scalar arguments.
-  unsigned GPRCnt = 0;
-  unsigned FPRCnt = 0;
   unsigned Idx = 1;
-  for (auto const &Arg : F->args()) {
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++Idx) {
+    if (Idx > 6)
+      return false;
+
     if (F->getAttributes().hasAttribute(Idx, Attribute::ByVal) ||
         F->getAttributes().hasAttribute(Idx, Attribute::InReg) ||
         F->getAttributes().hasAttribute(Idx, Attribute::StructRet) ||
         F->getAttributes().hasAttribute(Idx, Attribute::Nest))
       return false;
 
-    Type *ArgTy = Arg.getType();
+    Type *ArgTy = I->getType();
     if (ArgTy->isStructTy() || ArgTy->isArrayTy() || ArgTy->isVectorTy())
       return false;
 
     EVT ArgVT = TLI.getValueType(ArgTy);
     if (!ArgVT.isSimple()) return false;
     switch (ArgVT.getSimpleVT().SimpleTy) {
-    default: return false;
     case MVT::i32:
     case MVT::i64:
-      ++GPRCnt;
       break;
-    case MVT::f32:
-    case MVT::f64:
-      ++FPRCnt;
-        break;
+    default:
+      return false;
     }
-
-    if (GPRCnt > 6)
-      return false;
-
-    if (FPRCnt > 8)
-      return false;
   }
 
   static const MCPhysReg GPR32ArgRegs[] = {
@@ -1989,33 +1981,24 @@ bool X86FastISel::FastLowerArguments() {
   static const MCPhysReg GPR64ArgRegs[] = {
     X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8 , X86::R9
   };
-  static const MCPhysReg XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
-    X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
-  };
 
-  unsigned GPRIdx = 0;
-  unsigned FPRIdx = 0;
-  for (auto const &Arg : F->args()) {
-    MVT VT = TLI.getSimpleValueType(Arg.getType());
-    const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
-    unsigned SrcReg;
-    switch (VT.SimpleTy) {
-    default: llvm_unreachable("Unexpected value type.");
-    case MVT::i32: SrcReg = GPR32ArgRegs[GPRIdx++]; break;
-    case MVT::i64: SrcReg = GPR64ArgRegs[GPRIdx++]; break;
-    case MVT::f32: // fall-through
-    case MVT::f64: SrcReg = XMMArgRegs[FPRIdx++]; break;
-    }
+  Idx = 0;
+  const TargetRegisterClass *RC32 = TLI.getRegClassFor(MVT::i32);
+  const TargetRegisterClass *RC64 = TLI.getRegClassFor(MVT::i64);
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++Idx) {
+    bool is32Bit = TLI.getValueType(I->getType()) == MVT::i32;
+    const TargetRegisterClass *RC = is32Bit ? RC32 : RC64;
+    unsigned SrcReg = is32Bit ? GPR32ArgRegs[Idx] : GPR64ArgRegs[Idx];
     unsigned DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
     // FIXME: Unfortunately it's necessary to emit a copy from the livein copy.
     // Without this, EmitLiveInCopies may eliminate the livein if its only
     // use is a bitcast (which isn't turned into an instruction).
     unsigned ResultReg = createResultReg(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(TargetOpcode::COPY), ResultReg)
-      .addReg(DstReg, getKillRegState(true));
-    UpdateValueMap(&Arg, ResultReg);
+            TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(DstReg, getKillRegState(true));
+    UpdateValueMap(I, ResultReg);
   }
   return true;
 }
