@@ -16,9 +16,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "powerpc-selectiondag-info"
 
-PPCSelectionDAGInfo::PPCSelectionDAGInfo(const PPCTargetMachine &TM)
-  : TargetSelectionDAGInfo(TM.getDataLayout()) {
-}
+PPCSelectionDAGInfo::PPCSelectionDAGInfo(const DataLayout *DL)
+    : TargetSelectionDAGInfo(DL) {}
 
-PPCSelectionDAGInfo::~PPCSelectionDAGInfo() {
-}
+PPCSelectionDAGInfo::~PPCSelectionDAGInfo() {}

@@ -22,7 +22,7 @@ class PPCTargetMachine;
 
 class PPCSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  explicit PPCSelectionDAGInfo(const PPCTargetMachine &TM);
+  explicit PPCSelectionDAGInfo(const DataLayout *DL);
   ~PPCSelectionDAGInfo();
 };
 
