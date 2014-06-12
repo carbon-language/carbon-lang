@@ -137,7 +137,7 @@ public:
   /// \returns 0 if there were no errors or warnings, 1 if there
   ///   were warnings, 2 if any other problem, such as a bad
   ///   module map path argument was specified.
-  llvm::error_code doChecks();
+  std::error_code doChecks();
 
   // The following functions are called by doChecks.
 

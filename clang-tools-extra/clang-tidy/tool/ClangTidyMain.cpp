@@ -109,7 +109,7 @@ int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
   clang::tidy::ClangTidyGlobalOptions GlobalOptions;
-  if (llvm::error_code Err =
+  if (std::error_code Err =
           clang::tidy::parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);

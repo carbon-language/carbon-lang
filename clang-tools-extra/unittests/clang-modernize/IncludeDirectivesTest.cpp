@@ -66,7 +66,7 @@ public:
   /// refer to the headers by using '\<FileName\>'.
   std::string makeHeaderFileName(StringRef FileName) const {
     SmallString<128> Path;
-    llvm::error_code EC = llvm::sys::fs::current_path(Path);
+    std::error_code EC = llvm::sys::fs::current_path(Path);
     assert(!EC);
     (void)EC;
 

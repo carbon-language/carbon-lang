@@ -12,7 +12,7 @@
 
 // FIXME: copied from unittests/Support/Path.cpp
 #define ASSERT_NO_ERROR(x)                                                     \
-  if (llvm::error_code ASSERT_NO_ERROR_ec = x) {                               \
+  if (std::error_code ASSERT_NO_ERROR_ec = x) {                                \
     llvm::SmallString<128> MessageStorage;                                     \
     llvm::raw_svector_ostream Message(MessageStorage);                         \
     Message << #x ": did not return errc::success.\n"                          \

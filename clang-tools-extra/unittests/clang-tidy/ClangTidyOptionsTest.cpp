@@ -31,7 +31,7 @@ TEST(ParseLineFilter, InvalidFilter) {
 
 TEST(ParseLineFilter, ValidFilter) {
   ClangTidyGlobalOptions Options;
-  llvm::error_code Error = parseLineFilter(
+  std::error_code Error = parseLineFilter(
       "[{\"name\":\"file1.cpp\",\"lines\":[[3,15],[20,30],[42,42]]},"
       "{\"name\":\"file2.h\"},"
       "{\"name\":\"file3.cc\",\"lines\":[[100,1000]]}]",
@@ -56,10 +56,10 @@ TEST(ParseLineFilter, ValidFilter) {
 
 TEST(ParseConfiguration, ValidConfiguration) {
   ClangTidyOptions Options;
-  llvm::error_code Error = parseConfiguration("Checks: \"-*,misc-*\"\n"
-                                              "HeaderFilterRegex: \".*\"\n"
-                                              "AnalyzeTemporaryDtors: true\n",
-                                              Options);
+  std::error_code Error = parseConfiguration("Checks: \"-*,misc-*\"\n"
+                                             "HeaderFilterRegex: \".*\"\n"
+                                             "AnalyzeTemporaryDtors: true\n",
+                                             Options);
   EXPECT_FALSE(Error);
   EXPECT_EQ("-*,misc-*", Options.Checks);
   EXPECT_EQ(".*", Options.HeaderFilterRegex);

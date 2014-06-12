@@ -124,7 +124,7 @@ TEST(Transform, Timings) {
   // file anyway. What is important is that we have an absolute path with which
   // to use with mapVirtualFile().
   SmallString<128> CurrentDir;
-  llvm::error_code EC = llvm::sys::fs::current_path(CurrentDir);
+  std::error_code EC = llvm::sys::fs::current_path(CurrentDir);
   assert(!EC);
   (void)EC;
 
@@ -237,7 +237,7 @@ TEST(Transform, isFileModifiable) {
   // file anyway. What is important is that we have an absolute path with which
   // to use with mapVirtualFile().
   SmallString<128> CurrentDir;
-  llvm::error_code EC = llvm::sys::fs::current_path(CurrentDir);
+  std::error_code EC = llvm::sys::fs::current_path(CurrentDir);
   assert(!EC);
   (void)EC;
 

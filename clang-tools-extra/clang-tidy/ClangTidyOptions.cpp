@@ -62,15 +62,15 @@ namespace clang {
 namespace tidy {
 
 /// \brief Parses -line-filter option and stores it to the \c Options.
-llvm::error_code parseLineFilter(const std::string &LineFilter,
-                                 clang::tidy::ClangTidyGlobalOptions &Options) {
+std::error_code parseLineFilter(const std::string &LineFilter,
+                                clang::tidy::ClangTidyGlobalOptions &Options) {
   llvm::yaml::Input Input(LineFilter);
   Input >> Options.LineFilter;
   return Input.error();
 }
 
-llvm::error_code parseConfiguration(const std::string &Config,
-                                    clang::tidy::ClangTidyOptions &Options) {
+std::error_code parseConfiguration(const std::string &Config,
+                                   clang::tidy::ClangTidyOptions &Options) {
   llvm::yaml::Input Input(Config);
   Input >> Options;
   return Input.error();

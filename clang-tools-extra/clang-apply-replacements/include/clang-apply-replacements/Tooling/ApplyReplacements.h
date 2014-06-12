@@ -65,7 +65,7 @@ FileToReplacementsMap;
 ///
 /// \returns An error_code indicating success or failure in navigating the
 /// directory structure.
-llvm::error_code
+std::error_code
 collectReplacementsFromDirectory(const llvm::StringRef Directory,
                                  TUReplacements &TUs,
                                  TUReplacementFiles &TURFiles,

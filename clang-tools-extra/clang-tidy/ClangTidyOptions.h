@@ -89,12 +89,12 @@ private:
 };
 
 /// \brief Parses LineFilter from JSON and stores it to the \p Options.
-llvm::error_code parseLineFilter(const std::string &LineFilter,
-                                 clang::tidy::ClangTidyGlobalOptions &Options);
+std::error_code parseLineFilter(const std::string &LineFilter,
+                                clang::tidy::ClangTidyGlobalOptions &Options);
 
 /// \brief Parses configuration from JSON and stores it to the \p Options.
-llvm::error_code parseConfiguration(const std::string &Config,
-                                    clang::tidy::ClangTidyOptions &Options);
+std::error_code parseConfiguration(const std::string &Config,
+                                   clang::tidy::ClangTidyOptions &Options);
 
 } // end namespace tidy
 } // end namespace clang

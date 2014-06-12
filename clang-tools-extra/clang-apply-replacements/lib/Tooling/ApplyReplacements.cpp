@@ -36,7 +36,7 @@ static void eatDiagnostics(const SMDiagnostic &, void *) {}
 namespace clang {
 namespace replace {
 
-llvm::error_code
+std::error_code
 collectReplacementsFromDirectory(const llvm::StringRef Directory,
                                  TUReplacements &TUs,
                                  TUReplacementFiles & TURFiles,
