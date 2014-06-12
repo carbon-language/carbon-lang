@@ -37,6 +37,7 @@
 #include "llvm/Transforms/Vectorize.h"
 
 using namespace llvm;
+using namespace polly;
 
 cl::OptionCategory PollyCategory("Polly Options",
                                  "Configure the polly loop optimizer");

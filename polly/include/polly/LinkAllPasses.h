@@ -63,8 +63,6 @@ extern char &IndependentBlocksID;
 extern char &CodePreparationID;
 }
 
-using namespace polly;
-
 namespace {
 struct PollyForcePassLinking {
   PollyForcePassLinking() {
@@ -76,36 +74,36 @@ struct PollyForcePassLinking {
       return;
 
 #ifdef CLOOG_FOUND
-    createCloogExporterPass();
-    createCloogInfoPass();
-    createCodeGenerationPass();
+    polly::createCloogExporterPass();
+    polly::createCloogInfoPass();
+    polly::createCodeGenerationPass();
 #endif
-    createCodePreparationPass();
-    createDeadCodeElimPass();
-    createDependencesPass();
-    createDOTOnlyPrinterPass();
-    createDOTOnlyViewerPass();
-    createDOTPrinterPass();
-    createDOTViewerPass();
-    createIndependentBlocksPass();
-    createIndVarSimplifyPass();
-    createJSONExporterPass();
-    createJSONImporterPass();
-    createScopDetectionPass();
-    createScopInfoPass();
+    polly::createCodePreparationPass();
+    polly::createDeadCodeElimPass();
+    polly::createDependencesPass();
+    polly::createDOTOnlyPrinterPass();
+    polly::createDOTOnlyViewerPass();
+    polly::createDOTPrinterPass();
+    polly::createDOTViewerPass();
+    polly::createIndependentBlocksPass();
+    polly::createIndVarSimplifyPass();
+    polly::createJSONExporterPass();
+    polly::createJSONImporterPass();
+    polly::createScopDetectionPass();
+    polly::createScopInfoPass();
 #ifdef PLUTO_FOUND
-    createPlutoOptimizerPass();
+    polly::createPlutoOptimizerPass();
 #endif
-    createPollyCanonicalizePass();
-    createIslAstInfoPass();
-    createIslCodeGenerationPass();
-    createIslScheduleOptimizerPass();
-    createTempScopInfoPass();
+    polly::createPollyCanonicalizePass();
+    polly::createIslAstInfoPass();
+    polly::createIslCodeGenerationPass();
+    polly::createIslScheduleOptimizerPass();
+    polly::createTempScopInfoPass();
 
 #ifdef SCOPLIB_FOUND
-    createPoccPass();
-    createScopLibExporterPass();
-    createScopLibImporterPass();
+    polly::createPoccPass();
+    polly::createScopLibExporterPass();
+    polly::createScopLibImporterPass();
 #endif
   }
 } PollyForcePassLinking; // Force link by creating a global definition.
