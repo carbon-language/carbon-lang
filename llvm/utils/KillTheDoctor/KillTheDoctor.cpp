@@ -170,10 +170,10 @@ namespace {
   typedef ScopedHandle<FileHandle>              FileScopedHandle;
 }
 
-static error_code windows_error(DWORD E) { return mapWindowsError(E); }
+static std::error_code windows_error(DWORD E) { return mapWindowsError(E); }
 
-static error_code GetFileNameFromHandle(HANDLE FileHandle,
-                                        std::string& Name) {
+static std::error_code GetFileNameFromHandle(HANDLE FileHandle,
+                                             std::string &Name) {
   char Filename[MAX_PATH+1];
   bool Success = false;
   Name.clear();
@@ -213,7 +213,7 @@ static error_code GetFileNameFromHandle(HANDLE FileHandle,
     return windows_error(::GetLastError());
   else {
     Name = Filename;
-    return error_code();
+    return std::error_code();
   }
 }
 
@@ -223,7 +223,8 @@ static error_code GetFileNameFromHandle(HANDLE FileHandle,
 ///        extension is present, try all extensions in PATHEXT.
 /// @return If ec == errc::success, The absolute path to the program. Otherwise
 ///         the return value is undefined.
-static std::string FindProgram(const std::string &Program, error_code &ec) {
+static std::string FindProgram(const std::string &Program,
+                               std::error_code &ec) {
   char PathName[MAX_PATH + 1];
   typedef SmallVector<StringRef, 12> pathext_t;
   pathext_t pathext;
@@ -252,7 +253,7 @@ static std::string FindProgram(const std::string &Program, error_code &ec) {
       break;
     } else {
       // We found the path! Return it.
-      ec = error_code();
+      ec = std::error_code();
       break;
     }
   }
@@ -315,7 +316,7 @@ int main(int argc, char **argv) {
 
   std::string CommandLine(ProgramToRun);
 
-  error_code ec;
+  std::error_code ec;
   ProgramToRun = FindProgram(ProgramToRun, ec);
   if (ec) {
     errs() << ToolName << ": Failed to find program: '" << CommandLine
@@ -359,8 +360,8 @@ int main(int argc, char **argv) {
                                   &StartupInfo,
                                   &ProcessInfo);
   if (!success) {
-    errs() << ToolName << ": Failed to run program: '" << ProgramToRun
-           << "': " << error_code(windows_error(::GetLastError())).message()
+    errs() << ToolName << ": Failed to run program: '" << ProgramToRun << "': "
+           << std::error_code(windows_error(::GetLastError())).message()
            << '\n';
     return -1;
   }
