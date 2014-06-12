@@ -75,12 +75,13 @@ PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, bool is64Bit,
-                           CodeGenOpt::Level OptLevel)
+                           const std::string &FS, PPCTargetMachine &TM,
+                           bool is64Bit, CodeGenOpt::Level OptLevel)
     : PPCGenSubtargetInfo(TT, CPU, FS), IsPPC64(is64Bit), TargetTriple(TT),
       OptLevel(OptLevel),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
-      DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this) {}
+      DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this),
+      TLInfo(TM) {}
 
 /// SetJITMode - This is called to inform the subtarget info that we are
 /// producing code for the JIT.

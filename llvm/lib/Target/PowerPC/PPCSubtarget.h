@@ -16,6 +16,7 @@
 
 #include "PPCFrameLowering.h"
 #include "PPCInstrInfo.h"
+#include "PPCISelLowering.h"
 #include "PPCJITInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
@@ -110,13 +111,14 @@ protected:
   const DataLayout DL;
   PPCInstrInfo InstrInfo;
   PPCJITInfo JITInfo;
+  PPCTargetLowering TLInfo;
 
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
   PPCSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, bool is64Bit,
+               const std::string &FS, PPCTargetMachine &TM, bool is64Bit,
                CodeGenOpt::Level OptLevel);
 
   /// ParseSubtargetFeatures - Parses features string setting specified
@@ -144,6 +146,7 @@ public:
   const DataLayout *getDataLayout() const { return &DL; }
   const PPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
   PPCJITInfo *getJITInfo() { return &JITInfo; }
+  const PPCTargetLowering *getTargetLowering() const { return &TLInfo; }
 
   /// initializeSubtargetDependencies - Initializes using a CPU and feature string
   /// so that we can use initializer lists for subtarget initialization.

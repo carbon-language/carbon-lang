@@ -18,7 +18,6 @@
 #include "PPC.h"
 #include "PPCInstrInfo.h"
 #include "PPCRegisterInfo.h"
-#include "PPCSubtarget.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
@@ -345,6 +344,7 @@ namespace llvm {
     SDValue get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
   }
 
+  class PPCSubtarget;
   class PPCTargetLowering : public TargetLowering {
     const PPCSubtarget &Subtarget;
 

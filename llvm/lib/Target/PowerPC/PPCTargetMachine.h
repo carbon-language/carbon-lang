@@ -29,7 +29,6 @@ namespace llvm {
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
-  PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
 
 public:
@@ -46,7 +45,7 @@ public:
   }
   PPCJITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
   const PPCTargetLowering *getTargetLowering() const override {
-   return &TLInfo;
+    return getSubtargetImpl()->getTargetLowering();
   }
   const PPCSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
