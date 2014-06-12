@@ -249,7 +249,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
     if (::getcwd(result.data(), result.capacity()) == nullptr) {
       // See if there was a real error.
       if (errno != ENOMEM)
-        return error_code(errno, generic_category());
+        return error_code(errno, std::generic_category());
       // Otherwise there just wasn't enough space.
       result.reserve(result.capacity() * 2);
     } else
@@ -266,7 +266,7 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
 
   if (::mkdir(p.begin(), S_IRWXU | S_IRWXG) == -1) {
     if (errno != EEXIST || !IgnoreExisting)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
   }
 
   return error_code();
@@ -295,7 +295,7 @@ error_code create_link(const Twine &to, const Twine &from) {
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
   if (::symlink(t.begin(), f.begin()) == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   return error_code();
 }
@@ -307,7 +307,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   struct stat buf;
   if (lstat(p.begin(), &buf) != 0) {
     if (errno != ENOENT || !IgnoreNonExisting)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
     return error_code();
   }
 
@@ -321,7 +321,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
 
   if (::remove(p.begin()) == -1) {
     if (errno != ENOENT || !IgnoreNonExisting)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
   }
 
   return error_code();
@@ -335,7 +335,7 @@ error_code rename(const Twine &from, const Twine &to) {
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
   if (::rename(f.begin(), t.begin()) == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   return error_code();
 }
@@ -345,7 +345,7 @@ error_code resize_file(const Twine &path, uint64_t size) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::truncate(p.begin(), size) == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   return error_code();
 }
@@ -356,7 +356,7 @@ error_code exists(const Twine &path, bool &result) {
 
   if (::access(p.begin(), F_OK) == -1) {
     if (errno != ENOENT)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
     result = false;
   } else
     result = true;
@@ -401,7 +401,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
 static error_code fillStatus(int StatRet, const struct stat &Status,
                              file_status &Result) {
   if (StatRet != 0) {
-    error_code ec(errno, generic_category());
+    error_code ec(errno, std::generic_category());
     if (ec == std::errc::no_such_file_or_directory)
       Result = file_status(file_type::file_not_found);
     else
@@ -454,7 +454,7 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   Times[0].tv_nsec = 0;
   Times[1] = Times[0];
   if (::futimens(FD, Times))
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   return error_code();
 #elif defined(HAVE_FUTIMES)
   timeval Times[2];
@@ -462,7 +462,7 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   Times[0].tv_usec = 0;
   Times[1] = Times[0];
   if (::futimes(FD, Times))
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   return error_code();
 #else
 #warning Missing futimes() and futimens()
@@ -478,7 +478,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   // Figure out how large the file is.
   struct stat FileInfo;
   if (fstat(FD, &FileInfo) == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   uint64_t FileSize = FileInfo.st_size;
 
   if (Size == 0)
@@ -486,7 +486,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   else if (FileSize < Size) {
     // We need to grow the file.
     if (ftruncate(FD, Size) == -1)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
   }
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
@@ -496,7 +496,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
 #endif
   Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   return error_code();
 }
 
@@ -519,7 +519,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
   int oflags = (mode == readonly) ? O_RDONLY : O_RDWR;
   int ofd = ::open(name.begin(), oflags);
   if (ofd == -1) {
-    ec = error_code(errno, generic_category());
+    ec = error_code(errno, std::generic_category());
     return;
   }
 
@@ -588,7 +588,7 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
   SmallString<128> path_null(path);
   DIR *directory = ::opendir(path_null.c_str());
   if (!directory)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   it.IterationHandle = reinterpret_cast<intptr_t>(directory);
   // Add something for replace_filename to replace.
@@ -609,7 +609,7 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   errno = 0;
   dirent *cur_dir = ::readdir(reinterpret_cast<DIR *>(it.IterationHandle));
   if (cur_dir == nullptr && errno != 0) {
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   } else if (cur_dir != nullptr) {
     StringRef name(cur_dir->d_name, NAMLEN(cur_dir));
     if ((name.size() == 1 && name[0] == '.') ||
@@ -627,7 +627,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
   StringRef P = Name.toNullTerminatedStringRef(Storage);
   while ((ResultFD = open(P.begin(), O_RDONLY)) < 0) {
     if (errno != EINTR)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
   }
   return error_code();
 }
@@ -657,7 +657,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   StringRef P = Name.toNullTerminatedStringRef(Storage);
   while ((ResultFD = open(P.begin(), OpenFlags, Mode)) < 0) {
     if (errno != EINTR)
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
   }
   return error_code();
 }

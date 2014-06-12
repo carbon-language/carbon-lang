@@ -259,14 +259,14 @@ error_code resize_file(const Twine &path, uint64_t size) {
 
   int fd = ::_wopen(path_utf16.begin(), O_BINARY | _O_RDWR, S_IWRITE);
   if (fd == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 #ifdef HAVE__CHSIZE_S
   errno_t error = ::_chsize_s(fd, size);
 #else
   errno_t error = ::_chsize(fd, size);
 #endif
   ::close(fd);
-  return error_code(error, generic_category());
+  return error_code(error, std::generic_category());
 }
 
 error_code exists(const Twine &path, bool &result) {

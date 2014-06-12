@@ -1030,7 +1030,7 @@ error_code identify_magic(const Twine &Path, file_magic &Result) {
   char Buffer[32];
   int Length = read(FD, Buffer, sizeof(Buffer));
   if (Length < 0)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   Result = identify_magic(StringRef(Buffer, Length));
   return error_code();

@@ -95,7 +95,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
 #ifdef NEED_DEV_ZERO_FOR_MMAP
   static int zero_fd = open("/dev/zero", O_RDWR);
   if (zero_fd == -1) {
-    EC = error_code(errno, generic_category());
+    EC = error_code(errno, std::generic_category());
     return MemoryBlock();
   }
   fd = zero_fd;
@@ -123,7 +123,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
     if (NearBlock) //Try again without a near hint
       return allocateMappedMemory(NumBytes, nullptr, PFlags, EC);
 
-    EC = error_code(errno, generic_category());
+    EC = error_code(errno, std::generic_category());
     return MemoryBlock();
   }
 
@@ -143,7 +143,7 @@ Memory::releaseMappedMemory(MemoryBlock &M) {
     return error_code();
 
   if (0 != ::munmap(M.Address, M.Size))
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   M.Address = nullptr;
   M.Size = 0;
@@ -157,13 +157,13 @@ Memory::protectMappedMemory(const MemoryBlock &M, unsigned Flags) {
     return error_code();
 
   if (!Flags)
-    return error_code(EINVAL, generic_category());
+    return error_code(EINVAL, std::generic_category());
 
   int Protect = getPosixProtectionFlags(Flags);
 
   int Result = ::mprotect(M.Address, M.Size, Protect);
   if (Result != 0)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 
   if (Flags & MF_EXEC)
     Memory::InvalidateInstructionCache(M.Address, M.Size);

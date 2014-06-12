@@ -222,7 +222,7 @@ static error_code getMemoryBufferForStream(int FD,
     ReadBytes = read(FD, Buffer.end(), ChunkSize);
     if (ReadBytes == -1) {
       if (errno == EINTR) continue;
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
     }
     Buffer.set_size(Buffer.size() + ReadBytes);
   } while (ReadBytes != 0);
@@ -370,7 +370,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
   size_t BytesLeft = MapSize;
 #ifndef HAVE_PREAD
   if (lseek(FD, Offset, SEEK_SET) == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
 #endif
 
   while (BytesLeft) {
@@ -383,7 +383,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
       if (errno == EINTR)
         continue;
       // Error while reading.
-      return error_code(errno, generic_category());
+      return error_code(errno, std::generic_category());
     }
     if (NumRead == 0) {
       memset(BufPtr, 0, BytesLeft); // zero-initialize rest of the buffer.
