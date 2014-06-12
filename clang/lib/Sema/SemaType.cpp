@@ -5147,6 +5147,45 @@ static bool hasVisibleDefinition(Sema &S, NamedDecl *D, NamedDecl **Suggested) {
   return LookupResult::isVisible(S, D);
 }
 
+/// Locks in the inheritance model for the given class and all of its bases.
+static void assignInheritanceModel(Sema &S, CXXRecordDecl *RD) {
+  RD = RD->getMostRecentDecl();
+  if (!RD->hasAttr<MSInheritanceAttr>()) {
+    MSInheritanceAttr::Spelling IM;
+
+    switch (S.MSPointerToMemberRepresentationMethod) {
+    case LangOptions::PPTMK_BestCase:
+      IM = RD->calculateInheritanceModel();
+      break;
+    case LangOptions::PPTMK_FullGeneralitySingleInheritance:
+      IM = MSInheritanceAttr::Keyword_single_inheritance;
+      break;
+    case LangOptions::PPTMK_FullGeneralityMultipleInheritance:
+      IM = MSInheritanceAttr::Keyword_multiple_inheritance;
+      break;
+    case LangOptions::PPTMK_FullGeneralityVirtualInheritance:
+      IM = MSInheritanceAttr::Keyword_unspecified_inheritance;
+      break;
+    }
+
+    RD->addAttr(MSInheritanceAttr::CreateImplicit(
+        S.getASTContext(), IM,
+        /*BestCase=*/S.MSPointerToMemberRepresentationMethod ==
+            LangOptions::PPTMK_BestCase,
+        S.ImplicitMSInheritanceAttrLoc.isValid()
+            ? S.ImplicitMSInheritanceAttrLoc
+            : RD->getSourceRange()));
+  }
+
+  if (RD->hasDefinition()) {
+    // Assign inheritance models to all of the base classes, because now we can
+    // form pointers to members of base classes without calling
+    // RequireCompleteType on the pointer to member of the base class type.
+    for (const CXXBaseSpecifier &BS : RD->bases())
+      assignInheritanceModel(S, BS.getType()->getAsCXXRecordDecl());
+  }
+}
+
 /// \brief The implementation of RequireCompleteType
 bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
                                    TypeDiagnoser &Diagnoser) {
@@ -5185,36 +5224,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
       if (const MemberPointerType *MPTy = T->getAs<MemberPointerType>()) {
         if (!MPTy->getClass()->isDependentType()) {
           RequireCompleteType(Loc, QualType(MPTy->getClass(), 0), 0);
-
-          CXXRecordDecl *RD = MPTy->getMostRecentCXXRecordDecl();
-          if (!RD->hasAttr<MSInheritanceAttr>()) {
-            MSInheritanceAttr::Spelling InheritanceModel;
-
-            switch (MSPointerToMemberRepresentationMethod) {
-            case LangOptions::PPTMK_BestCase:
-              InheritanceModel = RD->calculateInheritanceModel();
-              break;
-            case LangOptions::PPTMK_FullGeneralitySingleInheritance:
-              InheritanceModel = MSInheritanceAttr::Keyword_single_inheritance;
-              break;
-            case LangOptions::PPTMK_FullGeneralityMultipleInheritance:
-              InheritanceModel =
-                  MSInheritanceAttr::Keyword_multiple_inheritance;
-              break;
-            case LangOptions::PPTMK_FullGeneralityVirtualInheritance:
-              InheritanceModel =
-                  MSInheritanceAttr::Keyword_unspecified_inheritance;
-              break;
-            }
-
-            RD->addAttr(MSInheritanceAttr::CreateImplicit(
-                getASTContext(), InheritanceModel,
-                /*BestCase=*/MSPointerToMemberRepresentationMethod ==
-                    LangOptions::PPTMK_BestCase,
-                ImplicitMSInheritanceAttrLoc.isValid()
-                    ? ImplicitMSInheritanceAttrLoc
-                    : RD->getSourceRange()));
-          }
+          assignInheritanceModel(*this, MPTy->getMostRecentCXXRecordDecl());
         }
       }
     }
