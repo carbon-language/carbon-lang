@@ -97,7 +97,6 @@ using namespace clang::tooling;
 using namespace llvm;
 using namespace llvm::opt;
 using namespace llvm::sys;
-using std::error_code;
 
 // Option for include paths.
 static cl::list<std::string>
@@ -133,11 +132,11 @@ int main(int Argc, const char **Argv) {
 
   // Do the checks.  The return value is the program return code,
   // 0 for okay, 1 for module map warnings produced, 2 for any other error.
-  error_code ReturnCode = Checker->doChecks();
+  std::error_code ReturnCode = Checker->doChecks();
 
-  if (ReturnCode == error_code(1, std::generic_category()))
+  if (ReturnCode == std::error_code(1, std::generic_category()))
     return 1; // Module map warnings were issued.
-  else if (ReturnCode == error_code(2, std::generic_category()))
+  else if (ReturnCode == std::error_code(2, std::generic_category()))
     return 2; // Some other error occurred.
   else
     return 0; // No errors or warnings.
@@ -244,26 +243,26 @@ ModuleMapChecker *ModuleMapChecker::createModuleMapChecker(
 // Returns error_code of 0 if there were no errors or warnings, 1 if there
 //   were warnings, 2 if any other problem, such as if a bad
 //   module map path argument was specified.
-error_code ModuleMapChecker::doChecks() {
-  error_code returnValue;
+std::error_code ModuleMapChecker::doChecks() {
+  std::error_code returnValue;
 
   // Load the module map.
   if (!loadModuleMap())
-    return error_code(2, std::generic_category());
+    return std::error_code(2, std::generic_category());
 
   // Collect the headers referenced in the modules.
   collectModuleHeaders();
 
   // Collect the file system headers.
   if (!collectFileSystemHeaders())
-    return error_code(2, std::generic_category());
+    return std::error_code(2, std::generic_category());
 
   // Do the checks.  These save the problematic file names.
   findUnaccountedForHeaders();
 
   // Check for warnings.
   if (UnaccountedForHeaders.size())
-    returnValue = error_code(1, std::generic_category());
+    returnValue = std::error_code(1, std::generic_category());
 
   // Dump module map if requested.
   if (DumpModuleMap) {
@@ -364,7 +363,7 @@ bool ModuleMapChecker::collectUmbrellaHeaders(StringRef UmbrellaDirName) {
   if (Directory.size() == 0)
     Directory = ".";
   // Walk the directory.
-  error_code EC;
+  std::error_code EC;
   fs::file_status Status;
   for (fs::directory_iterator I(Directory.str(), EC), E; I != E;
        I.increment(EC)) {
@@ -481,7 +480,7 @@ bool ModuleMapChecker::collectFileSystemHeaders(StringRef IncludePath) {
   }
 
   // Recursively walk the directory tree.
-  error_code EC;
+  std::error_code EC;
   fs::file_status Status;
   int Count = 0;
   for (fs::recursive_directory_iterator I(Directory.str(), EC), E; I != E;

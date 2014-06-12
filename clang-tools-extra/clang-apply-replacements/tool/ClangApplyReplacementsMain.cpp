@@ -27,7 +27,6 @@
 using namespace llvm;
 using namespace clang;
 using namespace clang::replace;
-using std::error_code;
 
 static cl::opt<std::string> Directory(cl::Positional, cl::Required,
                                       cl::desc("<Search Root Directory>"));
@@ -223,7 +222,7 @@ int main(int argc, char **argv) {
   TUReplacements TUs;
   TUReplacementFiles TURFiles;
 
-  error_code ErrorCode =
+  std::error_code ErrorCode =
       collectReplacementsFromDirectory(Directory, TUs, TURFiles, Diagnostics);
 
   if (ErrorCode) {

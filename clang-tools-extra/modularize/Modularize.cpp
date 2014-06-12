@@ -175,7 +175,6 @@ using namespace clang::tooling;
 using namespace llvm;
 using namespace llvm::opt;
 using namespace Modularize;
-using std::error_code;
 
 // Option to specify a file name for a list of header files to check.
 cl::opt<std::string>
@@ -216,9 +215,10 @@ std::string CommandLine;
 
 // Read the header list file and collect the header file names and
 // optional dependencies.
-error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
-                              DependencyMap &Dependencies,
-                              StringRef ListFileName, StringRef HeaderPrefix) {
+std::error_code
+getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
+                   DependencyMap &Dependencies, StringRef ListFileName,
+                   StringRef HeaderPrefix) {
   // By default, use the path component of the list file name.
   SmallString<256> HeaderDirectory(ListFileName);
   sys::path::remove_filename(HeaderDirectory);
@@ -231,7 +231,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
 
   // Read the header list file into a buffer.
   std::unique_ptr<MemoryBuffer> listBuffer;
-  if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
+  if (std::error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
     return ec;
   }
 
@@ -284,7 +284,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
     Dependencies[HeaderFileName.str()] = Dependents;
   }
 
-  return error_code();
+  return std::error_code();
 }
 
 // Helper function for finding the input file in an arguments list.
@@ -706,8 +706,8 @@ int main(int Argc, const char **Argv) {
   // Get header file names and dependencies.
   SmallVector<std::string, 32> Headers;
   DependencyMap Dependencies;
-  if (error_code EC = getHeaderFileNames(Headers, Dependencies, ListFileName,
-                                         HeaderPrefix)) {
+  if (std::error_code EC = getHeaderFileNames(Headers, Dependencies,
+                                              ListFileName, HeaderPrefix)) {
     errs() << Argv[0] << ": error: Unable to get header list '" << ListFileName
            << "': " << EC.message() << '\n';
     return 1;
