@@ -18,8 +18,14 @@
 #define LLVM_PASSREGISTRY_H
 
 #include "llvm-c/Core.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/PassInfo.h"
 #include "llvm/Support/CBindingWrapping.h"
+#include "llvm/Support/RWMutex.h"
+#include <vector>
 
 namespace llvm {
 
@@ -33,11 +39,26 @@ struct PassRegistrationListener;
 /// threads simultaneously, you will need to use a separate PassRegistry on
 /// each thread.
 class PassRegistry {
-  mutable void *pImpl;
-  void *getImpl() const;
+  mutable sys::SmartRWMutex<true> Lock;
+
+  /// PassInfoMap - Keep track of the PassInfo object for each registered pass.
+  typedef DenseMap<const void*, const PassInfo*> MapType;
+  MapType PassInfoMap;
+  
+  typedef StringMap<const PassInfo*> StringMapType;
+  StringMapType PassInfoStringMap;
+  
+  /// AnalysisGroupInfo - Keep track of information for each analysis group.
+  struct AnalysisGroupInfo {
+    SmallPtrSet<const PassInfo *, 8> Implementations;
+  };
+  DenseMap<const PassInfo*, AnalysisGroupInfo> AnalysisGroupInfoMap;
+  
+  std::vector<std::unique_ptr<const PassInfo>> ToFree;
+  std::vector<PassRegistrationListener*> Listeners;
    
 public:
-  PassRegistry() : pImpl(nullptr) { }
+  PassRegistry() { }
   ~PassRegistry();
   
   /// getPassRegistry - Access the global registry object, which is 

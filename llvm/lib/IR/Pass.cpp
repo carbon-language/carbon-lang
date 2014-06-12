@@ -199,14 +199,6 @@ Pass *Pass::createPass(AnalysisID ID) {
   return PI->createPass();
 }
 
-Pass *PassInfo::createPass() const {
-  assert((!isAnalysisGroup() || NormalCtor) &&
-         "No default implementation found for analysis group!");
-  assert(NormalCtor &&
-         "Cannot call createPass on PassInfo without default ctor!");
-  return NormalCtor();
-}
-
 //===----------------------------------------------------------------------===//
 //                  Analysis Group Implementation Code
 //===----------------------------------------------------------------------===//

@@ -13,14 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassRegistry.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Function.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Mutex.h"
 #include "llvm/Support/RWMutex.h"
 #include <vector>
 
@@ -36,65 +32,23 @@ PassRegistry *PassRegistry::getPassRegistry() {
   return &*PassRegistryObj;
 }
 
-static ManagedStatic<sys::SmartRWMutex<true> > Lock;
-
-//===----------------------------------------------------------------------===//
-// PassRegistryImpl
-//
-
-namespace {
-struct PassRegistryImpl {
-  /// PassInfoMap - Keep track of the PassInfo object for each registered pass.
-  typedef DenseMap<const void*, const PassInfo*> MapType;
-  MapType PassInfoMap;
-  
-  typedef StringMap<const PassInfo*> StringMapType;
-  StringMapType PassInfoStringMap;
-  
-  /// AnalysisGroupInfo - Keep track of information for each analysis group.
-  struct AnalysisGroupInfo {
-    SmallPtrSet<const PassInfo *, 8> Implementations;
-  };
-  DenseMap<const PassInfo*, AnalysisGroupInfo> AnalysisGroupInfoMap;
-  
-  std::vector<std::unique_ptr<const PassInfo>> ToFree;
-  std::vector<PassRegistrationListener*> Listeners;
-};
-} // end anonymous namespace
-
-void *PassRegistry::getImpl() const {
-  if (!pImpl)
-    pImpl = new PassRegistryImpl();
-  return pImpl;
-}
-
 //===----------------------------------------------------------------------===//
 // Accessors
 //
 
 PassRegistry::~PassRegistry() {
-  // Don't acquire the mutex here.  This is destroyed during static execution of
-  // static destructors, after llvm_shutdown() has been called, so all instances
-  // of all ManagedStatics (including the Mutex), will have been destroyed as
-  // well.
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
-  delete Impl;
-  pImpl = nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
-  sys::SmartScopedReader<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.find(TI);
-  return I != Impl->PassInfoMap.end() ? I->second : nullptr;
+  sys::SmartScopedReader<true> Guard(Lock);
+  MapType::const_iterator I = PassInfoMap.find(TI);
+  return I != PassInfoMap.end() ? I->second : nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
-  sys::SmartScopedReader<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  PassRegistryImpl::StringMapType::const_iterator
-    I = Impl->PassInfoStringMap.find(Arg);
-  return I != Impl->PassInfoStringMap.end() ? I->second : nullptr;
+  sys::SmartScopedReader<true> Guard(Lock);
+  StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
+  return I != PassInfoStringMap.end() ? I->second : nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -102,39 +56,34 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
 //
 
 void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
-  sys::SmartScopedWriter<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
+  sys::SmartScopedWriter<true> Guard(Lock);
   bool Inserted =
-    Impl->PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
+    PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
   assert(Inserted && "Pass registered multiple times!");
   (void)Inserted;
-  Impl->PassInfoStringMap[PI.getPassArgument()] = &PI;
+  PassInfoStringMap[PI.getPassArgument()] = &PI;
   
   // Notify any listeners.
   for (std::vector<PassRegistrationListener*>::iterator
-       I = Impl->Listeners.begin(), E = Impl->Listeners.end(); I != E; ++I)
+       I = Listeners.begin(), E = Listeners.end(); I != E; ++I)
     (*I)->passRegistered(&PI);
   
-  if (ShouldFree) Impl->ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
+  if (ShouldFree) ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
 }
 
 void PassRegistry::unregisterPass(const PassInfo &PI) {
-  sys::SmartScopedWriter<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  PassRegistryImpl::MapType::iterator I = 
-    Impl->PassInfoMap.find(PI.getTypeInfo());
-  assert(I != Impl->PassInfoMap.end() && "Pass registered but not in map!");
+  sys::SmartScopedWriter<true> Guard(Lock);
+  MapType::iterator I = PassInfoMap.find(PI.getTypeInfo());
+  assert(I != PassInfoMap.end() && "Pass registered but not in map!");
   
   // Remove pass from the map.
-  Impl->PassInfoMap.erase(I);
-  Impl->PassInfoStringMap.erase(PI.getPassArgument());
+  PassInfoMap.erase(I);
+  PassInfoStringMap.erase(PI.getPassArgument());
 }
 
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
-  sys::SmartScopedReader<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  for (PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.begin(),
-       E = Impl->PassInfoMap.end(); I != E; ++I)
+  sys::SmartScopedReader<true> Guard(Lock);
+  for (auto I = PassInfoMap.begin(), E = PassInfoMap.end(); I != E; ++I)
     L->passEnumerate(I->second);
 }
 
@@ -159,15 +108,13 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
-    sys::SmartScopedWriter<true> Guard(*Lock);
+    sys::SmartScopedWriter<true> Guard(Lock);
     
     // Make sure we keep track of the fact that the implementation implements
     // the interface.
     ImplementationInfo->addInterfaceImplemented(InterfaceInfo);
 
-    PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-    PassRegistryImpl::AnalysisGroupInfo &AGI =
-      Impl->AnalysisGroupInfoMap[InterfaceInfo];
+    AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
     assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
            "Cannot add a pass to the same analysis group more than once!");
     AGI.Implementations.insert(ImplementationInfo);
@@ -182,30 +129,18 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
     }
   }
   
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   if (ShouldFree)
-    Impl->ToFree.push_back(std::unique_ptr<const PassInfo>(&Registeree));
+    ToFree.push_back(std::unique_ptr<const PassInfo>(&Registeree));
 }
 
 void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
-  sys::SmartScopedWriter<true> Guard(*Lock);
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  Impl->Listeners.push_back(L);
+  sys::SmartScopedWriter<true> Guard(Lock);
+  Listeners.push_back(L);
 }
 
 void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
-  sys::SmartScopedWriter<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(Lock);
   
-  // NOTE: This is necessary, because removeRegistrationListener() can be called
-  // as part of the llvm_shutdown sequence.  Since we have no control over the
-  // order of that sequence, we need to gracefully handle the case where the
-  // PassRegistry is destructed before the object that triggers this call.
-  if (!pImpl) return;
-  
-  PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
-  std::vector<PassRegistrationListener*>::iterator I =
-    std::find(Impl->Listeners.begin(), Impl->Listeners.end(), L);
-  assert(I != Impl->Listeners.end() &&
-         "PassRegistrationListener not registered!");
-  Impl->Listeners.erase(I);
+  auto I = std::find(Listeners.begin(), Listeners.end(), L);
+  Listeners.erase(I);
 }
