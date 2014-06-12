@@ -85,7 +85,7 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
   }
 
   SmallVector<wchar_t, MAX_PATH> filenameUnicode;
-  if (error_code ec = windows::UTF8ToUTF16(filename, filenameUnicode)) {
+  if (std::error_code ec = windows::UTF8ToUTF16(filename, filenameUnicode)) {
     SetLastError(ec.value());
     MakeErrMsg(errMsg, std::string(filename) + ": Can't convert to UTF-16: ");
     return DynamicLibrary();
