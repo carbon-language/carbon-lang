@@ -178,7 +178,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
       return StringRef(*new (_allocator) std::string(path.str()));
   }
   if (!llvm::sys::fs::exists(libName))
-    return llvm::make_error_code(std::errc::no_such_file_or_directory);
+    return std::make_error_code(std::errc::no_such_file_or_directory);
 
   return libName;
 }
@@ -195,7 +195,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     return fileName;
 
   if (llvm::sys::path::is_absolute(fileName))
-    return llvm::make_error_code(std::errc::no_such_file_or_directory);
+    return std::make_error_code(std::errc::no_such_file_or_directory);
 
   for (StringRef dir : _inputSearchPaths) {
     buildSearchPath(path, dir, _sysrootPath);
@@ -203,7 +203,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     if (llvm::sys::fs::exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
-  return llvm::make_error_code(std::errc::no_such_file_or_directory);
+  return std::make_error_code(std::errc::no_such_file_or_directory);
 }
 
 void ELFLinkingContext::createInternalFiles(

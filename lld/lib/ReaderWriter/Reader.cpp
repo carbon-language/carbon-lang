@@ -44,7 +44,7 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
       return reader->parseFile(mb, *this, result);
 
   // No Reader could parse this file.
-  return llvm::make_error_code(std::errc::executable_format_error);
+  return std::make_error_code(std::errc::executable_format_error);
 }
 
 static const Registry::KindStrings kindStrings[] = {

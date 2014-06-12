@@ -1251,7 +1251,7 @@ public:
     std::string errorInfo;
     llvm::raw_fd_ostream out(outPath.data(), errorInfo, llvm::sys::fs::F_Text);
     if (!errorInfo.empty())
-      return llvm::make_error_code(std::errc::no_such_file_or_directory);
+      return std::make_error_code(std::errc::no_such_file_or_directory);
 
     // Create yaml Output writer, using yaml options for context.
     YamlContext yamlContext;
