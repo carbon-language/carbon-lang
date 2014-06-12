@@ -11,10 +11,6 @@ declare void @f()
 ; CHECK: Alias must point to a definition
 ; CHECK-NEXT: @ga
 
-; References to a global declaration from an initializer are OK.
-@gptr = global i32* @g
-@gptr_a = alias i32** @gptr
-; CHECK-NOT: Alias must point to a definition
 
 @test2_a = alias i32* @test2_b
 @test2_b = alias i32* @test2_a

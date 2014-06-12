@@ -10,6 +10,12 @@
 @foo3 = alias i32* @foo2
 @foo4 = unnamed_addr alias i32* @foo2
 
+; Make sure the verifier does not complain about references to a global
+; declaration from an initializer.
+@decl = external global i32
+@ptr = global i32* @decl
+@ptr_a = alias i32** @ptr
+
 %FunTy = type i32()
 
 define i32 @foo_f() {
