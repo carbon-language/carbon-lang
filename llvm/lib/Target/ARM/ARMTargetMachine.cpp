@@ -139,7 +139,7 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
     InstrInfo(Subtarget),
     DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
-    TSInfo(*this),
+    TSInfo(DL),
     FrameLowering(Subtarget) {
   initAsmInfo();
   if (!Subtarget.hasARMOps())
@@ -179,7 +179,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
     DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
-    TSInfo(*this),
+    TSInfo(DL),
     FrameLowering(Subtarget.hasThumb2()
               ? new ARMFrameLowering(Subtarget)
               : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {

@@ -36,12 +36,8 @@ namespace ARM_AM {
 }  // end namespace ARM_AM
 
 class ARMSelectionDAGInfo : public TargetSelectionDAGInfo {
-  /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
-  /// make the right decision when generating code for different targets.
-  const ARMSubtarget *Subtarget;
-
 public:
-  explicit ARMSelectionDAGInfo(const TargetMachine &TM);
+  explicit ARMSelectionDAGInfo(const DataLayout &DL);
   ~ARMSelectionDAGInfo();
 
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
