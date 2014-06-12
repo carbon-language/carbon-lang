@@ -2758,24 +2758,24 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
     ISD::CondCode Op1 = cast<CondCodeSDNode>(CC1)->get();
 
-    if (LR == RR && Op0 == Op1 &&
+    if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
         LL.getValueType().isInteger()) {
       // fold (and (seteq X, 0), (seteq Y, 0)) -> (seteq (or X, Y), 0)
-      if (TLI.isConstFalseVal(LR.getNode()) && Op1 == ISD::SETEQ) {
+      if (cast<ConstantSDNode>(LR)->isNullValue() && Op1 == ISD::SETEQ) {
         SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
                                      LR.getValueType(), LL, RL);
         AddToWorkList(ORNode.getNode());
         return DAG.getSetCC(SDLoc(N), VT, ORNode, LR, Op1);
       }
       // fold (and (seteq X, -1), (seteq Y, -1)) -> (seteq (and X, Y), -1)
-      if (TLI.isConstTrueVal(LR.getNode()) && Op1 == ISD::SETEQ) {
+      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETEQ) {
         SDValue ANDNode = DAG.getNode(ISD::AND, SDLoc(N0),
                                       LR.getValueType(), LL, RL);
         AddToWorkList(ANDNode.getNode());
         return DAG.getSetCC(SDLoc(N), VT, ANDNode, LR, Op1);
       }
       // fold (and (setgt X,  -1), (setgt Y,  -1)) -> (setgt (or X, Y), -1)
-      if (TLI.isConstTrueVal(LR.getNode()) && Op1 == ISD::SETGT) {
+      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETGT) {
         SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
                                      LR.getValueType(), LL, RL);
         AddToWorkList(ORNode.getNode());
