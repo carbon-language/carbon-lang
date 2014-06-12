@@ -261,8 +261,8 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transferred to the resulting File object.
-  static error_code make(std::unique_ptr<MemoryBuffer> mb,
-                         std::vector<std::unique_ptr<lld::File>> &result) {
+  static std::error_code make(std::unique_ptr<MemoryBuffer> mb,
+                              std::vector<std::unique_ptr<lld::File>> &result) {
     const uint8_t *const base =
         reinterpret_cast<const uint8_t *>(mb->getBufferStart());
     StringRef path(mb->getBufferIdentifier());
@@ -290,7 +290,7 @@ public:
 
     // process each chunk
     for (uint32_t i = 0; i < header->chunkCount; ++i) {
-      error_code ec;
+      std::error_code ec;
       const NativeChunk* chunk = &chunks[i];
       // sanity check chunk is within file
       if ( chunk->fileOffset > fileSize )
@@ -400,8 +400,8 @@ private:
   friend NativeReferenceV2;
 
   // instantiate array of DefinedAtoms from v1 ivar data in file
-  error_code processDefinedAtomsV1(const uint8_t *base,
-                                   const NativeChunk *chunk) {
+  std::error_code processDefinedAtomsV1(const uint8_t *base,
+                                        const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeDefinedAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -437,8 +437,8 @@ private:
 
 
   // set up pointers to attributes array
-  error_code processAttributesV1(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processAttributesV1(const uint8_t *base,
+                                      const NativeChunk *chunk) {
     this->_attributes = base + chunk->fileOffset;
     this->_attributesMaxOffset = chunk->fileSize;
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
@@ -450,8 +450,8 @@ private:
   }
 
   // set up pointers to attributes array
-  error_code processAbsoluteAttributesV1(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processAbsoluteAttributesV1(const uint8_t *base,
+                                              const NativeChunk *chunk) {
     this->_absAttributes = base + chunk->fileOffset;
     this->_absAbsoluteMaxOffset = chunk->fileSize;
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
@@ -463,8 +463,8 @@ private:
   }
 
   // instantiate array of UndefinedAtoms from v1 ivar data in file
-  error_code processUndefinedAtomsV1(const uint8_t *base,
-                                     const NativeChunk *chunk) {
+  std::error_code processUndefinedAtomsV1(const uint8_t *base,
+                                          const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeUndefinedAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -499,8 +499,8 @@ private:
 
 
   // instantiate array of ShareLibraryAtoms from v1 ivar data in file
-  error_code processSharedLibraryAtomsV1(const uint8_t *base,
-                                         const NativeChunk *chunk) {
+  std::error_code processSharedLibraryAtomsV1(const uint8_t *base,
+                                              const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeSharedLibraryAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -535,8 +535,8 @@ private:
 
 
    // instantiate array of AbsoluteAtoms from v1 ivar data in file
-  error_code processAbsoluteAtomsV1(const uint8_t *base,
-                                    const NativeChunk *chunk) {
+  std::error_code processAbsoluteAtomsV1(const uint8_t *base,
+                                         const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeAbsoluteAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -569,9 +569,10 @@ private:
     return make_error_code(NativeReaderError::success);
   }
 
-  template<class T, class U>
-  error_code processReferences(const uint8_t *base, const NativeChunk *chunk,
-                               uint8_t *&refsStart, uint8_t *&refsEnd) const {
+  template <class T, class U>
+  std::error_code
+  processReferences(const uint8_t *base, const NativeChunk *chunk,
+                    uint8_t *&refsStart, uint8_t *&refsEnd) const {
     if (chunk->elementCount == 0)
       return make_error_code(NativeReaderError::success);
     size_t refsArraySize = chunk->elementCount * sizeof(T);
@@ -592,11 +593,11 @@ private:
   }
 
   // instantiate array of References from v1 ivar data in file
-  error_code processReferencesV1(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processReferencesV1(const uint8_t *base,
+                                      const NativeChunk *chunk) {
     uint8_t *refsStart, *refsEnd;
-    if (error_code ec
-            = processReferences<NativeReferenceV1, NativeReferenceIvarsV1>(
+    if (std::error_code ec =
+            processReferences<NativeReferenceV1, NativeReferenceIvarsV1>(
                 base, chunk, refsStart, refsEnd))
       return ec;
     this->_referencesV1.arrayStart = refsStart;
@@ -612,11 +613,11 @@ private:
   }
 
   // instantiate array of References from v2 ivar data in file
-  error_code processReferencesV2(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processReferencesV2(const uint8_t *base,
+                                      const NativeChunk *chunk) {
     uint8_t *refsStart, *refsEnd;
-    if (error_code ec
-            = processReferences<NativeReferenceV2, NativeReferenceIvarsV2>(
+    if (std::error_code ec =
+            processReferences<NativeReferenceV2, NativeReferenceIvarsV2>(
                 base, chunk, refsStart, refsEnd))
       return ec;
     this->_referencesV2.arrayStart = refsStart;
@@ -632,8 +633,8 @@ private:
   }
 
   // set up pointers to target table
-  error_code processTargetsTable(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processTargetsTable(const uint8_t *base,
+                                      const NativeChunk *chunk) {
     const uint32_t* targetIndexes = reinterpret_cast<const uint32_t*>
                                                   (base + chunk->fileOffset);
     this->_targetsTableCount = chunk->elementCount;
@@ -682,8 +683,8 @@ private:
 
 
   // set up pointers to addend pool in file
-  error_code processAddendsTable(const uint8_t *base,
-                                 const NativeChunk *chunk) {
+  std::error_code processAddendsTable(const uint8_t *base,
+                                      const NativeChunk *chunk) {
     this->_addends = reinterpret_cast<const Reference::Addend*>
                                                   (base + chunk->fileOffset);
     this->_addendsMaxIndex = chunk->elementCount;
@@ -696,8 +697,8 @@ private:
   }
 
   // set up pointers to string pool in file
-  error_code processStrings(const uint8_t *base,
-                            const NativeChunk *chunk) {
+  std::error_code processStrings(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     this->_strings = reinterpret_cast<const char*>(base + chunk->fileOffset);
     this->_stringsMaxOffset = chunk->fileSize;
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
@@ -708,8 +709,8 @@ private:
   }
 
   // set up pointers to content area in file
-  error_code processContent(const uint8_t *base,
-                            const NativeChunk *chunk) {
+  std::error_code processContent(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     this->_contentStart = base + chunk->fileOffset;
     this->_contentEnd = base + chunk->fileOffset + chunk->fileSize;
     DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
@@ -1004,11 +1005,11 @@ public:
                    sizeof(header->magic)) == 0);
   }
 
-  virtual error_code
+  virtual std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     return lld::native::File::make(std::move(mb), result);
-    return error_code();
+    return std::error_code();
   }
 };
 }

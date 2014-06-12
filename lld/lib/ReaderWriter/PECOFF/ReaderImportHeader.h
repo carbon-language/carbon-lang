@@ -23,9 +23,10 @@ class File;
 
 namespace pecoff {
 
-error_code parseCOFFImportLibrary(const LinkingContext &context,
-                                  std::unique_ptr<MemoryBuffer> &mb,
-                                  std::vector<std::unique_ptr<File> > &result);
+std::error_code
+parseCOFFImportLibrary(const LinkingContext &context,
+                       std::unique_ptr<MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File>> &result);
 }
 }
 

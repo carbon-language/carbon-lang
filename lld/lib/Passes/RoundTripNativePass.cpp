@@ -41,7 +41,7 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   if (MemoryBuffer::getFile(tmpNativeFile.str(), mb))
     return;
 
-  error_code ec = _context.registry().parseFile(mb, _nativeFile);
+  std::error_code ec = _context.registry().parseFile(mb, _nativeFile);
   if (ec) {
     // Note: we need a way for Passes to report errors.
     llvm_unreachable("native reader not registered or read error");

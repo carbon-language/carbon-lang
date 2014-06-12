@@ -16,19 +16,19 @@
 using namespace lld;
 
 /// \brief Parse the input file to lld::File.
-error_code ELFFileNode::parse(const LinkingContext &ctx,
-                              raw_ostream &diagnostics) {
+std::error_code ELFFileNode::parse(const LinkingContext &ctx,
+                                   raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (error_code ec = filePath.getError())
+  if (std::error_code ec = filePath.getError())
     return ec;
-  if (error_code ec = getBuffer(*filePath))
+  if (std::error_code ec = getBuffer(*filePath))
     return ec;
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
   if (_attributes._isWholeArchive) {
     std::vector<std::unique_ptr<File>> parsedFiles;
-    if (error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
+    if (std::error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
       return ec;
     assert(parsedFiles.size() == 1);
     std::unique_ptr<File> f(parsedFiles[0].release());
@@ -41,18 +41,18 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
     }
     // if --whole-archive is around non-archive, just use it as normal.
     _files.push_back(std::move(f));
-    return error_code();
+    return std::error_code();
   }
   return ctx.registry().parseFile(_buffer, _files);
 }
 
 /// \brief Parse the GnuLD Script
-error_code GNULdScript::parse(const LinkingContext &ctx,
-                              raw_ostream &diagnostics) {
+std::error_code GNULdScript::parse(const LinkingContext &ctx,
+                                   raw_ostream &diagnostics) {
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (error_code ec = filePath.getError())
+  if (std::error_code ec = filePath.getError())
     return ec;
-  if (error_code ec = getBuffer(*filePath))
+  if (std::error_code ec = getBuffer(*filePath))
     return ec;
 
   if (ctx.logInputFiles())
@@ -66,7 +66,7 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
   if (!_linkerScript)
     return LinkerScriptReaderError::parse_error;
 
-  return error_code();
+  return std::error_code();
 }
 
 static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
@@ -82,10 +82,10 @@ static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
 }
 
 /// \brief Handle GnuLD script for ELF.
-error_code ELFGNULdScript::parse(const LinkingContext &ctx,
-                                 raw_ostream &diagnostics) {
+std::error_code ELFGNULdScript::parse(const LinkingContext &ctx,
+                                      raw_ostream &diagnostics) {
   ELFFileNode::Attributes attributes;
-  if (error_code ec = GNULdScript::parse(ctx, diagnostics))
+  if (std::error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
   StringRef sysRoot = _elfLinkingContext.getSysroot();
   if (!sysRoot.empty() && isPathUnderSysroot(sysRoot, *getPath(ctx)))
@@ -106,5 +106,5 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     }
     _expandElements.push_back(std::move(groupStart));
   }
-  return error_code();
+  return std::error_code();
 }

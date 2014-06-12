@@ -112,9 +112,9 @@ maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
 }
 
 // Get the Input file magic for creating appropriate InputGraph nodes.
-static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
-                               llvm::sys::fs::file_magic &magic) {
-  error_code ec = llvm::sys::fs::identify_magic(path, magic);
+static std::error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
+                                    llvm::sys::fs::file_magic &magic) {
+  std::error_code ec = llvm::sys::fs::identify_magic(path, magic);
   if (ec)
     return ec;
   switch (magic) {
@@ -122,7 +122,7 @@ static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
   case llvm::sys::fs::file_magic::elf_relocatable:
   case llvm::sys::fs::file_magic::elf_shared_object:
   case llvm::sys::fs::file_magic::unknown:
-    return error_code();
+    return std::error_code();
   default:
     break;
   }
@@ -158,7 +158,7 @@ llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   return _elfLinkingContext.searchFile(_path, _attributes._isSysRooted);
 }
 
-std::string ELFFileNode::errStr(error_code errc) {
+std::string ELFFileNode::errStr(std::error_code errc) {
   if (errc == std::errc::no_such_file_or_directory) {
     if (_attributes._isDashlPrefix)
       return (Twine("Unable to find library -l") + _path).str();
@@ -485,7 +485,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       // FIXME: Calling getFileMagic() is expensive.  It would be better to
       // wire up the LdScript parser into the registry.
       llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
-      error_code ec = getFileMagic(*ctx, resolvedInputPath, magic);
+      std::error_code ec = getFileMagic(*ctx, resolvedInputPath, magic);
       if (ec) {
         diagnostics << "lld: unknown input file format for file " << userPath
                     << "\n";

@@ -32,7 +32,7 @@ class Writer : public lld::Writer {
 public:
   Writer(const LinkingContext &context) {}
 
-  error_code writeFile(const lld::File &file, StringRef outPath) override {
+  std::error_code writeFile(const lld::File &file, StringRef outPath) override {
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
     // visit all atoms
@@ -73,11 +73,11 @@ public:
     llvm::raw_fd_ostream out(outPath.data(), errorInfo,
                              llvm::sys::fs::F_None);
     if (!errorInfo.empty())
-      return error_code(); // FIXME
+      return std::error_code(); // FIXME
 
     this->write(out);
 
-    return error_code();
+    return std::error_code();
   }
 
   virtual ~Writer() {

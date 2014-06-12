@@ -76,9 +76,9 @@ public:
     return _absoluteAtoms;
   }
 
-  error_code
+  std::error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
-    return error_code();
+    return std::error_code();
   }
 
 private:

@@ -68,12 +68,12 @@ public:
       : ELFFile<ELFT>(name, atomizeStrings) {}
 
   MipsELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-              error_code &ec)
+              std::error_code &ec)
       : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec) {}
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    error_code ec;
+    std::error_code ec;
     std::unique_ptr<MipsELFFile<ELFT>> file(
         new MipsELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
 
@@ -142,13 +142,13 @@ private:
         referenceStart, referenceEnd, referenceList);
   }
 
-  error_code readAuxData() {
+  std::error_code readAuxData() {
     typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
 
     for (const Elf_Shdr &section : this->_objFile->sections()) {
       if (!_gp0.hasValue() && section.sh_type == llvm::ELF::SHT_MIPS_REGINFO) {
         auto contents = this->getSectionContents(&section);
-        if (error_code ec = contents.getError())
+        if (std::error_code ec = contents.getError())
           return ec;
 
         ArrayRef<uint8_t> raw = contents.get();
@@ -162,7 +162,7 @@ private:
         _dtpOff = section.sh_addr + DTP_OFFSET;
       }
     }
-    return error_code();
+    return std::error_code();
   }
 
   void createRelocationReferences(const Elf_Sym &symbol,

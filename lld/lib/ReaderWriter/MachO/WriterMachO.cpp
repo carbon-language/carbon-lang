@@ -32,11 +32,11 @@ class MachOWriter : public Writer {
 public:
   MachOWriter(const MachOLinkingContext &ctxt) : _context(ctxt) { }
 
-  error_code writeFile(const lld::File &file, StringRef path) override {
+  std::error_code writeFile(const lld::File &file, StringRef path) override {
     // Construct empty normalized file from atoms.
     ErrorOr<std::unique_ptr<NormalizedFile>> nFile =
                                 normalized::normalizedFromAtoms(file, _context);
-    if (error_code ec = nFile.getError())
+    if (std::error_code ec = nFile.getError())
       return ec;
 
     // For testing, write out yaml form of normalized file.

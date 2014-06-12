@@ -32,10 +32,10 @@ public:
     _passes.push_back(std::move(pass));
   }
 
-  error_code runOnFile(std::unique_ptr<MutableFile> &file) {
+  std::error_code runOnFile(std::unique_ptr<MutableFile> &file) {
     for (std::unique_ptr<Pass> &pass : _passes)
       pass->perform(file);
-    return error_code();
+    return std::error_code();
   }
 
 private:

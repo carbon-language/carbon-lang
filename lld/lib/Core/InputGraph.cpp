@@ -84,13 +84,13 @@ void InputGraph::normalize() {
 }
 
 /// \brief Read the file into _buffer.
-error_code FileNode::getBuffer(StringRef filePath) {
+std::error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
   std::unique_ptr<MemoryBuffer> mb;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
     return ec;
   _buffer = std::move(mb);
-  return error_code();
+  return std::error_code();
 }
 
 /// \brief Return the next file that need to be processed by the resolver.

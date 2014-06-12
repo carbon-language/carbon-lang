@@ -16,18 +16,18 @@ bool isCOFFLibraryFileExtension(StringRef path) {
 }
 
 /// \brief Parse the input file to lld::File.
-error_code PECOFFFileNode::parse(const LinkingContext &ctx,
-                                 raw_ostream &diagnostics) {
+std::error_code PECOFFFileNode::parse(const LinkingContext &ctx,
+                                      raw_ostream &diagnostics) {
   if (_parsed)
-    return error_code();
+    return std::error_code();
   _parsed = true;
   ErrorOr<StringRef> filePath = getPath(ctx);
-  if (error_code ec = filePath.getError()) {
+  if (std::error_code ec = filePath.getError()) {
     diagnostics << "File not found: " << _path << "\n";
     return ec;
   }
 
-  if (error_code ec = getBuffer(*filePath)) {
+  if (std::error_code ec = getBuffer(*filePath)) {
     diagnostics << "Cannot open file: " << *filePath << "\n";
     return ec;
   }

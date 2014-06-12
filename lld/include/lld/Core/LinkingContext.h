@@ -299,7 +299,7 @@ public:
   /// Calls through to the writeFile() method on the specified Writer.
   ///
   /// \param linkedFile This is the merged/linked graph of all input file Atoms.
-  virtual error_code writeFile(const File &linkedFile) const;
+  virtual std::error_code writeFile(const File &linkedFile) const;
 
   /// Return the next ordinal and Increment it.
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }

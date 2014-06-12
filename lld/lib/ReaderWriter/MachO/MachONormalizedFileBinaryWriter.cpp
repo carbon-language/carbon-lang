@@ -63,13 +63,13 @@ public:
   /// Writes the normalized file as a binary mach-o file to the specified
   /// path.  This does not have a stream interface because the generated
   /// file may need the 'x' bit set.
-  error_code  writeBinary(StringRef path);
+  std::error_code writeBinary(StringRef path);
 
 private:
   uint32_t    loadCommandsSize(uint32_t &count);
   void        buildFileOffsets();
   void        writeMachHeader();
-  error_code  writeLoadCommands();
+  std::error_code writeLoadCommands();
   void        writeSectionContent();
   void        writeRelocations();
   void        writeSymbolTable();
@@ -103,9 +103,8 @@ private:
   };
 
   template <typename T>
-  error_code writeSingleSegmentLoadCommand(uint8_t *&lc);
-  template <typename T>
-  error_code writeSegmentLoadCommands(uint8_t *&lc);
+  std::error_code writeSingleSegmentLoadCommand(uint8_t *&lc);
+  template <typename T> std::error_code writeSegmentLoadCommands(uint8_t *&lc);
 
   uint32_t pointerAlign(uint32_t value);
   static StringRef dyldPath();
@@ -154,7 +153,7 @@ private:
   typedef std::map<const Section*, SectionExtraInfo> SectionMap;
 
   const NormalizedFile &_file;
-  error_code            _ec;
+  std::error_code _ec;
   uint8_t              *_buffer;
   const bool            _is64;
   const bool            _swap;
@@ -480,10 +479,8 @@ uint32_t MachOFileLayout::indirectSymbolElementSize(const Section &sect) {
   return sect.content.size() / sect.indirectSymbols.size();
 }
 
-
-
 template <typename T>
-error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
+std::error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
   typename T::command* seg = reinterpret_cast<typename T::command*>(lc);
   seg->cmd = T::LC;
   seg->cmdsize = sizeof(typename T::command)
@@ -524,12 +521,11 @@ error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
     ++sout;
   }
   lc = next;
-  return error_code();
+  return std::error_code();
 }
 
-
 template <typename T>
-error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
+std::error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
   uint32_t indirectSymRunningIndex = 0;
   for (const Segment &seg : _file.segments) {
     // Write segment command with trailing sections.
@@ -587,12 +583,11 @@ error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
   if (_swap)
     swapStruct(*cmd);
   lc = next;
-  return error_code();
+  return std::error_code();
 }
 
-
-error_code MachOFileLayout::writeLoadCommands() {
-  error_code ec;
+std::error_code MachOFileLayout::writeLoadCommands() {
+  std::error_code ec;
   uint8_t *lc = &_buffer[_startOfLoadCommands];
   if (_file.fileType == llvm::MachO::MH_OBJECT) {
     // Object files have one unnamed segment which holds all sections.
@@ -929,8 +924,7 @@ void MachOFileLayout::writeLinkEditContent() {
   }
 }
 
-
-error_code MachOFileLayout::writeBinary(StringRef path) {
+std::error_code MachOFileLayout::writeBinary(StringRef path) {
   // Check for pending error from constructor.
   if (_ec)
     return _ec;
@@ -939,7 +933,7 @@ error_code MachOFileLayout::writeBinary(StringRef path) {
   unsigned flags = 0;
   if (_file.fileType != llvm::MachO::MH_OBJECT)
     flags = llvm::FileOutputBuffer::F_executable;
-  error_code ec;
+  std::error_code ec;
   ec = llvm::FileOutputBuffer::create(path, size(), fob, flags);
   if (ec)
     return ec;
@@ -954,14 +948,13 @@ error_code MachOFileLayout::writeBinary(StringRef path) {
   writeLinkEditContent();
   fob->commit();
 
-  return error_code();
+  return std::error_code();
 }
 
 
 
 /// Takes in-memory normalized view and writes a mach-o object file.
-error_code
-writeBinary(const NormalizedFile &file, StringRef path) {
+std::error_code writeBinary(const NormalizedFile &file, StringRef path) {
   MachOFileLayout layout(file);
   return layout.writeBinary(path);
 }

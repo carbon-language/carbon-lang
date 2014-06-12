@@ -244,10 +244,10 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
   }
 }
 
-error_code processSymboledSection(DefinedAtom::ContentType atomType,
-                                  const Section &section,
-                                  const NormalizedFile &normalizedFile,
-                                  MachOFile &file, bool copyRefs) {
+std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
+                                       const Section &section,
+                                       const NormalizedFile &normalizedFile,
+                                       MachOFile &file, bool copyRefs) {
   // Find section's index.
   uint32_t sectIndex = 1;
   for (auto &sect : normalizedFile.sections) {
@@ -282,7 +282,7 @@ error_code processSymboledSection(DefinedAtom::ContentType atomType,
 
   // If section has no symbols and no content, there are no atoms.
   if (symbols.empty() && section.content.empty())
-    return error_code();
+    return std::error_code();
 
   const uint64_t firstSymbolAddr = symbols.front()->value;
   if (firstSymbolAddr != section.address) {
@@ -304,13 +304,13 @@ error_code processSymboledSection(DefinedAtom::ContentType atomType,
                    lastSym->desc, atomScope(lastSym->scope),
                    section.address + section.content.size(), copyRefs);
   }
-  return error_code();
+  return std::error_code();
 }
 
-error_code processSection(DefinedAtom::ContentType atomType,
-                          const Section &section,
-                          const NormalizedFile &normalizedFile,
-                          MachOFile &file, bool copyRefs) {
+std::error_code processSection(DefinedAtom::ContentType atomType,
+                               const Section &section,
+                               const NormalizedFile &normalizedFile,
+                               MachOFile &file, bool copyRefs) {
   const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
   const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
 
@@ -400,7 +400,7 @@ error_code processSection(DefinedAtom::ContentType atomType,
       offset += size;
     }
   }
-  return error_code();
+  return std::error_code();
 }
 
 ErrorOr<std::unique_ptr<lld::File>>
@@ -410,8 +410,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   // Create atoms from each section.
   for (auto &sect : normalizedFile.sections) {
     DefinedAtom::ContentType atomType = atomTypeFromSection(sect);
-    if (error_code ec = processSection(atomType, sect, normalizedFile, *file,
-                                       copyRefs))
+    if (std::error_code ec =
+            processSection(atomType, sect, normalizedFile, *file, copyRefs))
       return ec;
   }
   // Create atoms from undefined symbols.

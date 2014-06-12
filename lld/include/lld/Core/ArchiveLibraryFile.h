@@ -35,7 +35,7 @@ public:
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const = 0;
 
-  virtual error_code
+  virtual std::error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const = 0;
 
   /// Returns a set of all defined symbols in the archive, i.e. all

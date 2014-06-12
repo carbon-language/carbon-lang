@@ -50,10 +50,9 @@ namespace mach_o {
 namespace normalized {
 
 // Utility to call a lambda expression on each load command.
-static error_code
-forEachLoadCommand(StringRef lcRange, unsigned lcCount, bool swap, bool is64,
-                   std::function<bool (uint32_t cmd, uint32_t size,
-                                                      const char* lc)> func) {
+static std::error_code forEachLoadCommand(
+    StringRef lcRange, unsigned lcCount, bool swap, bool is64,
+    std::function<bool(uint32_t cmd, uint32_t size, const char *lc)> func) {
   const char* p = lcRange.begin();
   for (unsigned i=0; i < lcCount; ++i) {
     const load_command *lc = reinterpret_cast<const load_command*>(p);
@@ -68,18 +67,17 @@ forEachLoadCommand(StringRef lcRange, unsigned lcCount, bool swap, bool is64,
       return std::make_error_code(std::errc::executable_format_error);
 
     if (func(slc->cmd, slc->cmdsize, p))
-      return error_code();
+      return std::error_code();
 
     p += slc->cmdsize;
   }
 
-  return error_code();
+  return std::error_code();
 }
 
-
-static error_code
-appendRelocations(Relocations &relocs, StringRef buffer, bool swap,
-                             bool bigEndian, uint32_t reloff, uint32_t nreloc) {
+static std::error_code appendRelocations(Relocations &relocs, StringRef buffer,
+                                         bool swap, bool bigEndian,
+                                         uint32_t reloff, uint32_t nreloc) {
   if ((reloff + nreloc*8) > buffer.size())
     return std::make_error_code(std::errc::executable_format_error);
   const any_relocation_info* relocsArray =
@@ -88,10 +86,10 @@ appendRelocations(Relocations &relocs, StringRef buffer, bool swap,
   for(uint32_t i=0; i < nreloc; ++i) {
     relocs.push_back(unpackRelocation(relocsArray[i], swap, bigEndian));
   }
-  return error_code();
+  return std::error_code();
 }
 
-static error_code
+static std::error_code
 appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
                       bool bigEndian, uint32_t istOffset, uint32_t istCount,
                       uint32_t startIndex, uint32_t count) {
@@ -105,7 +103,7 @@ appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
   for(uint32_t i=0; i < count; ++i) {
     isyms.push_back(read32(swap, indirectSymbolArray[startIndex+i]));
   }
-  return error_code();
+  return std::error_code();
 }
 
 
@@ -206,8 +204,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   // Pre-scan load commands looking for indirect symbol table.
   uint32_t indirectSymbolTableOffset = 0;
   uint32_t indirectSymbolTableCount = 0;
-  error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
-                    [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
+  std::error_code ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
+                                          [&](uint32_t cmd, uint32_t size,
+                                              const char *lc) -> bool {
     if (cmd == LC_DYSYMTAB) {
       const dysymtab_command *d = reinterpret_cast<const dysymtab_command*>(lc);
       indirectSymbolTableOffset = read32(swap, d->indirectsymoff);
@@ -412,21 +411,21 @@ public:
     return true;
   }
 
-  error_code
+  std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
-            std::vector<std::unique_ptr<File> > &result) const override {
+            std::vector<std::unique_ptr<File>> &result) const override {
     // Convert binary file to normalized mach-o.
     auto normFile = readBinary(mb, _arch);
-    if (error_code ec = normFile.getError())
+    if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
     auto file = normalizedToAtoms(**normFile, mb->getBufferIdentifier(), false);
-    if (error_code ec = file.getError())
+    if (std::error_code ec = file.getError())
       return ec;
 
     result.push_back(std::move(*file));
 
-    return error_code();
+    return std::error_code();
   }
 private:
   MachOLinkingContext::Arch _arch;

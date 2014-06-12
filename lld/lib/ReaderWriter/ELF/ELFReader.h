@@ -48,7 +48,7 @@ public:
     return (magic == llvm::sys::fs::file_magic::elf_relocatable);
   }
 
-  error_code
+  std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
@@ -56,10 +56,10 @@ public:
     auto f = createELF<ELFFileCreateELFTraits>(
         llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
         _atomizeStrings);
-    if (error_code ec = f.getError())
+    if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
-    return error_code();
+    return std::error_code();
   }
 
 protected:
@@ -75,7 +75,7 @@ public:
     return (magic == llvm::sys::fs::file_magic::elf_shared_object);
   }
 
-  error_code
+  std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
@@ -83,10 +83,10 @@ public:
     auto f = createELF<DynamicFileCreateELFTraits>(
         llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
         _useUndefines);
-    if (error_code ec = f.getError())
+    if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
-    return error_code();
+    return std::error_code();
   }
 
 protected:

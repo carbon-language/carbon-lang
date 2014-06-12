@@ -35,7 +35,8 @@ public:
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
   /// \brief Parse the input file to lld::File.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
+  std::error_code parse(const LinkingContext &ctx,
+                        raw_ostream &diagnostics) override;
 
   ErrorOr<File &> getNextFile() override;
 
@@ -61,7 +62,7 @@ public:
   PECOFFGroup(PECOFFLinkingContext &ctx) : Group(), _ctx(ctx) {}
 
   /// \brief Parse the group members.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
+  std::error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
     std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
     return Group::parse(ctx, diag);
   }

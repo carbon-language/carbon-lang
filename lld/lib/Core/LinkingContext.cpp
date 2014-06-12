@@ -33,7 +33,7 @@ bool LinkingContext::validate(raw_ostream &diagnostics) {
   return validateImpl(diagnostics);
 }
 
-error_code LinkingContext::writeFile(const File &linkedFile) const {
+std::error_code LinkingContext::writeFile(const File &linkedFile) const {
   return this->writer().writeFile(linkedFile, _outputPath);
 }
 

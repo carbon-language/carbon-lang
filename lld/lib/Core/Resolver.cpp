@@ -242,7 +242,7 @@ bool Resolver::resolveUndefines() {
 
   for (;;) {
     ErrorOr<File &> file = _context.getInputGraph().getNextFile();
-    error_code ec = file.getError();
+    std::error_code ec = file.getError();
     if (ec == InputGraphError::no_more_files)
       return true;
     if (!file) {

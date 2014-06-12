@@ -635,9 +635,9 @@ template <> struct MappingTraits<const lld::File *> {
       return nullptr;
     }
 
-    virtual error_code
+    virtual std::error_code
     parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
-      return error_code();
+      return std::error_code();
     }
 
     StringRef               _path;
@@ -1246,7 +1246,7 @@ class Writer : public lld::Writer {
 public:
   Writer(const LinkingContext &context) : _context(context) {}
 
-  error_code writeFile(const lld::File &file, StringRef outPath) override {
+  std::error_code writeFile(const lld::File &file, StringRef outPath) override {
     // Create stream to path.
     std::string errorInfo;
     llvm::raw_fd_ostream out(outPath.data(), errorInfo, llvm::sys::fs::F_Text);
@@ -1263,7 +1263,7 @@ public:
     const lld::File *fileRef = &file;
     yout << fileRef;
 
-    return error_code();
+    return std::error_code();
   }
 
 private:
@@ -1307,7 +1307,7 @@ public:
     return (ext.equals(".objtxt") || ext.equals(".yaml"));
   }
 
-  error_code
+  std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     // Note: we do not take ownership of the MemoryBuffer.  That is

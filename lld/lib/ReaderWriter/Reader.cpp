@@ -29,7 +29,7 @@ void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
   _yamlHandlers.push_back(std::move(handler));
 }
 
-error_code
+std::error_code
 Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
                     std::vector<std::unique_ptr<File>> &result) const {
   // Get file type.

@@ -832,7 +832,7 @@ public:
         _imageSizeOnDisk(0) {}
 
   template <class PEHeader> void build(const File &linkedFile);
-  error_code writeFile(const File &linkedFile, StringRef path) override;
+  std::error_code writeFile(const File &linkedFile, StringRef path) override;
 
 private:
   void applyAllRelocations(uint8_t *bufferStart);
@@ -1008,7 +1008,8 @@ void PECOFFWriter::build(const File &linkedFile) {
   peHeader->setSizeOfHeaders(sectionTable->fileOffset() + sectionTable->size());
 }
 
-error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
+std::error_code PECOFFWriter::writeFile(const File &linkedFile,
+                                        StringRef path) {
   if (_ctx.is64Bit()) {
     this->build<llvm::object::pe32plus_header>(linkedFile);
   } else {
@@ -1017,7 +1018,7 @@ error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
 
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
   std::unique_ptr<llvm::FileOutputBuffer> buffer;
-  error_code ec = llvm::FileOutputBuffer::create(
+  std::error_code ec = llvm::FileOutputBuffer::create(
       path, totalSize, buffer, llvm::FileOutputBuffer::F_executable);
   if (ec)
     return ec;
