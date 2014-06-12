@@ -23,6 +23,7 @@ namespace llvm {
 class AllocaInst;
 class Constant;
 class ConstantFP;
+class CallInst;
 class DataLayout;
 class FunctionLoweringInfo;
 class Instruction;
@@ -411,6 +412,9 @@ private:
   /// beginning of the block. It helps to avoid spilling cached variables across
   /// heavy instructions like calls.
   void flushLocalValueMap();
+
+  bool addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
+                           const CallInst *CI, unsigned StartIdx);
 };
 
 }
