@@ -589,8 +589,8 @@ Syntax::
 
     [@<GlobalVarName> =] [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
                          [unnamed_addr] [AddrSpace] [ExternallyInitialized]
-                         <global | constant> <Type>
-                         [, section "name"] [, align <Alignment>]
+                         <global | constant> <Type> [<InitializerConstant>
+                         [, section "name"] [, align <Alignment>]]
 
 For example, the following defines a global in a numbered address space
 with an initializer, section, and alignment:
