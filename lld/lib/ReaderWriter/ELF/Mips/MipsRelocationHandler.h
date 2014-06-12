@@ -22,9 +22,9 @@ public:
   MipsTargetRelocationHandler(MipsTargetLayout<Mips32ElELFType> &layout)
       : _mipsTargetLayout(layout) {}
 
-  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                             const lld::AtomLayout &,
-                             const Reference &) const override;
+  std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                  const lld::AtomLayout &,
+                                  const Reference &) const override;
 
 private:
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;

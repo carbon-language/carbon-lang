@@ -118,12 +118,12 @@ public:
       : ELFFile<ELFT>(name, atomizeStrings) {}
 
   HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-                 error_code &ec)
+                 std::error_code &ec)
       : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec) {}
 
   static ErrorOr<std::unique_ptr<HexagonELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-    error_code ec;
+    std::error_code ec;
     std::unique_ptr<HexagonELFFile<ELFT>> file(
         new HexagonELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
 

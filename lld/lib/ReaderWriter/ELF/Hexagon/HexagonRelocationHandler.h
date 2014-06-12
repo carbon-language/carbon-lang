@@ -24,9 +24,9 @@ public:
   HexagonTargetRelocationHandler(HexagonTargetLayout<HexagonELFType> &layout)
       : _hexagonTargetLayout(layout) {}
 
-  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                             const lld::AtomLayout &,
-                             const Reference &) const override;
+  std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                  const lld::AtomLayout &,
+                                  const Reference &) const override;
 
 private:
   HexagonTargetLayout<HexagonELFType> &_hexagonTargetLayout;

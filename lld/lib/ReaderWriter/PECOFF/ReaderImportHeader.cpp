@@ -141,6 +141,7 @@
 using namespace lld;
 using namespace lld::pecoff;
 using namespace llvm;
+using std::error_code;
 
 #define DEBUG_TYPE "ReaderImportHeader"
 

@@ -31,10 +31,10 @@ protected:
 
   void finalizeDefaultAtomValues() override;
 
-  error_code setELFHeader() override {
+  std::error_code setELFHeader() override {
     DynamicLibraryWriter<ELFT>::setELFHeader();
     _writeHelper.setELFHeader(*this->_elfHeader);
-    return error_code();
+    return std::error_code();
   }
 
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable();

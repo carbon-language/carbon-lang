@@ -119,11 +119,11 @@ static void reloc32hi16(uint8_t *location, uint64_t S, int64_t A) {
   applyReloc(location, (S + A + 0x8000) & 0xffff0000, 0xffffffff);
 }
 
-error_code MipsTargetRelocationHandler::applyRelocation(
+std::error_code MipsTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
-    return error_code();
+    return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
   AtomLayout *gpAtom = _mipsTargetLayout.getGP();
@@ -216,5 +216,5 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code();
+  return std::error_code();
 }

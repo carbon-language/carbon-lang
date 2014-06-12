@@ -30,9 +30,9 @@ public:
                              PPCTargetLayout<PPCELFType> &layout)
       : _ppcContext(context), _ppcTargetLayout(layout) {}
 
-  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                     const lld::AtomLayout &,
-                                     const Reference &) const override;
+  virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                          const lld::AtomLayout &,
+                                          const Reference &) const override;
 
 protected:
   PPCLinkingContext &_ppcContext;

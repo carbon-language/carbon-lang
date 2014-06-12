@@ -60,7 +60,7 @@ int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
   return 0;
 }
 
-error_code X86_64TargetRelocationHandler::applyRelocation(
+std::error_code X86_64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
@@ -69,7 +69,7 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code();
+    return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   switch (ref.kindValue()) {
   case R_X86_64_NONE:
@@ -140,5 +140,5 @@ error_code X86_64TargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code();
+  return std::error_code();
 }

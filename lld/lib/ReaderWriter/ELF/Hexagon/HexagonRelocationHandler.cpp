@@ -211,7 +211,7 @@ static int relocHexGOTREL_32(uint8_t *location, uint64_t P, uint64_t S,
   return 0;
 }
 
-error_code HexagonTargetRelocationHandler::applyRelocation(
+std::error_code HexagonTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
@@ -220,7 +220,7 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code();
+    return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Hexagon);
   switch (ref.kindValue()) {
   case R_HEX_B22_PCREL:
@@ -353,7 +353,7 @@ error_code HexagonTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code();
+  return std::error_code();
 }
 
 

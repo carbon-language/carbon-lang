@@ -149,11 +149,11 @@ protected:
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  error_code handleIFUNC(const Reference &ref) {
+  std::error_code handleIFUNC(const Reference &ref) {
     auto target = dyn_cast_or_null<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver)
       const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
-    return error_code();
+    return std::error_code();
   }
 
   /// \brief Create a GOT entry for the TP offset of a TLS atom.
@@ -300,13 +300,13 @@ public:
   StaticRelocationPass(const elf::X86_64LinkingContext &ctx)
       : RelocationPass(ctx) {}
 
-  error_code handlePlain(const Reference &ref) { return handleIFUNC(ref); }
+  std::error_code handlePlain(const Reference &ref) { return handleIFUNC(ref); }
 
-  error_code handlePLT32(const Reference &ref) {
+  std::error_code handlePLT32(const Reference &ref) {
     // __tls_get_addr is handled elsewhere.
     if (ref.target() && ref.target()->name() == "__tls_get_addr") {
       const_cast<Reference &>(ref).setKindValue(R_X86_64_NONE);
-      return error_code();
+      return std::error_code();
     }
     // Static code doesn't need PLTs.
     const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
@@ -315,15 +315,15 @@ public:
             dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
         return handleIFUNC(ref);
-    return error_code();
+    return std::error_code();
   }
 
-  error_code handleGOT(const Reference &ref) {
+  std::error_code handleGOT(const Reference &ref) {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getGOT(da));
-    return error_code();
+    return std::error_code();
   }
 };
 
@@ -393,9 +393,9 @@ public:
     return oa;
   }
 
-  error_code handlePlain(const Reference &ref) {
+  std::error_code handlePlain(const Reference &ref) {
     if (!ref.target())
-      return error_code();
+      return std::error_code();
     if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
       if (sla->type() == SharedLibraryAtom::Type::Data)
         const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
@@ -403,10 +403,10 @@ public:
         const_cast<Reference &>(ref).setTarget(getPLTEntry(sla));
     } else
       return handleIFUNC(ref);
-    return error_code();
+    return std::error_code();
   }
 
-  error_code handlePLT32(const Reference &ref) {
+  std::error_code handlePLT32(const Reference &ref) {
     // Turn this into a PC32 to the PLT entry.
     const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
     // Handle IFUNC.
@@ -416,7 +416,7 @@ public:
         return handleIFUNC(ref);
     if (isa<const SharedLibraryAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
-    return error_code();
+    return std::error_code();
   }
 
   const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
@@ -435,14 +435,14 @@ public:
     return got->second;
   }
 
-  error_code handleGOT(const Reference &ref) {
+  std::error_code handleGOT(const Reference &ref) {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getGOT(da));
     else if (const auto sla = dyn_cast<const SharedLibraryAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getSharedGOT(sla));
-    return error_code();
+    return std::error_code();
   }
 };
 } // end anon namespace

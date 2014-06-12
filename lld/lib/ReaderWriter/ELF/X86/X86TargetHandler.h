@@ -33,9 +33,9 @@ public:
                              X86TargetLayout<X86ELFType> &layout)
       : _x86Context(context), _x86TargetLayout(layout) {}
 
-  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                             const lld::AtomLayout &,
-                             const Reference &) const override;
+  std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                  const lld::AtomLayout &,
+                                  const Reference &) const override;
 
   static const Registry::KindStrings kindStrings[];
 

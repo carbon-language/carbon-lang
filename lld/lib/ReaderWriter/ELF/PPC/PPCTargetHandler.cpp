@@ -35,7 +35,7 @@ static int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S,
   return 1;
 }
 
-error_code PPCTargetRelocationHandler::applyRelocation(
+std::error_code PPCTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
@@ -44,7 +44,7 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return error_code();
+    return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::PowerPC);
   switch (ref.kindValue()) {
   case R_PPC_REL24:
@@ -60,7 +60,7 @@ error_code PPCTargetRelocationHandler::applyRelocation(
   }
   }
 
-  return error_code();
+  return std::error_code();
 }
 
 PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &context)

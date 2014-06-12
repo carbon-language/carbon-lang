@@ -32,10 +32,10 @@ protected:
 
   virtual void finalizeDefaultAtomValues();
 
-  virtual error_code setELFHeader() {
+  virtual std::error_code setELFHeader() {
     ExecutableWriter<ELFT>::setELFHeader();
     HexagonELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
-    return error_code();
+    return std::error_code();
   }
 
 private:
