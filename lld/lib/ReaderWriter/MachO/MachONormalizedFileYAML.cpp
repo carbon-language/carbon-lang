@@ -34,7 +34,6 @@
 
 
 using llvm::StringRef;
-using std::error_code;
 using namespace llvm::yaml;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
@@ -691,8 +690,7 @@ readYaml(std::unique_ptr<MemoryBuffer> &mb) {
 
 
 /// Writes a yaml encoded mach-o files from an in-memory normalized view.
-error_code
-writeYaml(const NormalizedFile &file, raw_ostream &out) {
+std::error_code writeYaml(const NormalizedFile &file, raw_ostream &out) {
   // YAML I/O is not const aware, so need to cast away ;-(
   NormalizedFile *f = const_cast<NormalizedFile*>(&file);
 
@@ -704,7 +702,7 @@ writeYaml(const NormalizedFile &file, raw_ostream &out) {
   // Stream out yaml.
   yout << *f;
 
-  return error_code();
+  return std::error_code();
 }
 
 } // namespace normalized

@@ -27,7 +27,7 @@ int main(int argc, const char **argv) {
 
   {
     std::unique_ptr<MemoryBuffer> mb;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
+    if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
       llvm::errs() << ec.message() << "\n";
       return 1;
     }
@@ -42,7 +42,7 @@ int main(int argc, const char **argv) {
   }
   {
     std::unique_ptr<MemoryBuffer> mb;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
+    if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
       llvm::errs() << ec.message() << "\n";
       return 1;
     }

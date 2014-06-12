@@ -22,7 +22,6 @@ using llvm::MemoryBuffer;
 using llvm::SmallString;
 using llvm::Twine;
 using llvm::ErrorOr;
-using std::error_code;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
 
@@ -31,7 +30,7 @@ using namespace lld::mach_o::normalized;
 // Normalized file to nf parameter.
 static void fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
                        std::unique_ptr<NormalizedFile> &nf, StringRef archStr) {
-  error_code ec = MemoryBuffer::getFile(path, mb);
+  std::error_code ec = MemoryBuffer::getFile(path, mb);
   EXPECT_FALSE(ec);
 
   ErrorOr<std::unique_ptr<NormalizedFile>> r =
@@ -144,7 +143,8 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
     f.undefinedSymbols.push_back(makeUndefSymbol("_tbar"));
 
-    error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
+    std::error_code ec =
+        llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
@@ -217,7 +217,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_EQ(signed4.isExtern, true);
   EXPECT_EQ(signed4.symbol, 1U);
 
-  error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
+  std::error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
 
@@ -255,7 +255,8 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
     f.undefinedSymbols.push_back(makeUndefSymbol("_tbar"));
 
-    error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
+    std::error_code ec =
+        llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
@@ -326,7 +327,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(tlv.symbol, 1U);
 
   //llvm::errs() << "temp = " << tmpFl << "\n";
-  error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
+  std::error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
 
@@ -372,7 +373,8 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
     f.globalSymbols.push_back(makeThumbSymbol("_foo2", 0x10));
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
 
-    error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
+    std::error_code ec =
+        llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
@@ -454,7 +456,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(absPointer.symbol, 2U);
 
   //llvm::errs() << "temp = " << tmpFl << "\n";
-  error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
+  std::error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
 
@@ -527,7 +529,8 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
     f.globalSymbols.push_back(makeSymbol("_foo2", 0x28));
     f.undefinedSymbols.push_back(makeUndefSymbol("_bar"));
 
-    error_code ec = llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
+    std::error_code ec =
+        llvm::sys::fs::createTemporaryFile(Twine("xx"), "o", tmpFl);
     EXPECT_FALSE(ec);
     ec = writeBinary(f, tmpFl);
     EXPECT_FALSE(ec);
@@ -682,7 +685,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(absloa2.length, 2);
   EXPECT_EQ(absloa2.symbol, 0U);
 
-  error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
+  std::error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
 
