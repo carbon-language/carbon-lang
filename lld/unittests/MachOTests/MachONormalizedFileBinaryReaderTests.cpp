@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-#include <llvm/Support/MachO.h>
+#include "llvm/Support/MachO.h"
 #include "../../lib/ReaderWriter/MachO/MachONormalizedFile.h"
 
 #include <assert.h>
