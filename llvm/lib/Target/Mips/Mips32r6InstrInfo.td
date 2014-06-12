@@ -93,6 +93,10 @@ class BNEZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_DADDI>,
 
 class BLTZC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BGTZL>,
                   DecodeDisambiguates<"BgtzlGroupBranch">;
+class BGEC_ENC  : CMP_BRANCH_2R_OFF16_FM<OPGROUP_BLEZL>,
+                  DecodeDisambiguatedBy<"BlezlGroupBranch">;
+class BGEUC_ENC : CMP_BRANCH_2R_OFF16_FM<OPGROUP_BLEZ>,
+                  DecodeDisambiguatedBy<"BlezGroupBranch">;
 class BGEZC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BLEZL>,
                   DecodeDisambiguates<"BlezlGroupBranch">;
 class BGTZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BGTZ>,
@@ -106,7 +110,8 @@ class BGTZC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BGTZL>,
                   DecodeDisambiguatedBy<"BgtzlGroupBranch">;
 
 class BEQZC_ENC : CMP_BRANCH_OFF21_FM<0b110110>;
-class BGEZALC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BLEZ>;
+class BGEZALC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BLEZ>,
+                    DecodeDisambiguates<"BlezGroupBranch">;
 class BNEZC_ENC : CMP_BRANCH_OFF21_FM<0b111110>;
 
 class BC1EQZ_ENC : COP1_BCCZ_FM<OPCODE5_BC1EQZ>;
@@ -118,7 +123,8 @@ class JIALC_ENC : JMP_IDX_COMPACT_FM<0b111110>;
 class JIC_ENC   : JMP_IDX_COMPACT_FM<0b110110>;
 class JR_HB_R6_ENC : JR_HB_R6_FM<OPCODE6_JALR>;
 class BITSWAP_ENC : SPECIAL3_2R_FM<OPCODE6_BITSWAP>;
-class BLEZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BLEZ>;
+class BLEZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BLEZ>,
+                    DecodeDisambiguatedBy<"BlezGroupBranch">;
 class BNVC_ENC   : CMP_BRANCH_2R_OFF16_FM<OPGROUP_DADDI>,
                    DecodeDisambiguatedBy<"DaddiGroupBranch">;
 class BOVC_ENC   : CMP_BRANCH_2R_OFF16_FM<OPGROUP_ADDI>,
@@ -321,6 +327,8 @@ class BALC_DESC : BC_DESC_BASE<"balc", brtarget26> {
 }
 
 class BC_DESC : BC_DESC_BASE<"bc", brtarget26>;
+class BGEC_DESC : CMP_BC_DESC_BASE<"bgec", brtarget, GPR32Opnd>;
+class BGEUC_DESC : CMP_BC_DESC_BASE<"bgeuc", brtarget, GPR32Opnd>;
 class BEQC_DESC : CMP_BC_DESC_BASE<"beqc", brtarget, GPR32Opnd>;
 class BNEC_DESC : CMP_BC_DESC_BASE<"bnec", brtarget, GPR32Opnd>;
 
@@ -535,8 +543,8 @@ def BC : BC_ENC, BC_DESC, ISA_MIPS32R6;
 def BEQC : BEQC_ENC, BEQC_DESC, ISA_MIPS32R6;
 def BEQZALC : BEQZALC_ENC, BEQZALC_DESC, ISA_MIPS32R6;
 def BEQZC : BEQZC_ENC, BEQZC_DESC, ISA_MIPS32R6;
-def BGEC;  // Also aliased to blec with operands swapped
-def BGEUC; // Also aliased to bleuc with operands swapped
+def BGEC : BGEC_ENC, BGEC_DESC, ISA_MIPS32R6;
+def BGEUC : BGEUC_ENC, BGEUC_DESC, ISA_MIPS32R6;
 def BGEZALC : BGEZALC_ENC, BGEZALC_DESC, ISA_MIPS32R6;
 def BGEZC : BGEZC_ENC, BGEZC_DESC, ISA_MIPS32R6;
 def BGTZALC : BGTZALC_ENC, BGTZALC_DESC, ISA_MIPS32R6;

@@ -38,6 +38,8 @@
         bnec $5, $6, 256         # CHECK: bnec $5, $6, 256    # encoding: [0x60,0xa6,0x00,0x40]
         bnezalc $2, 1332         # CHECK: bnezalc $2, 1332    # encoding: [0x60,0x02,0x01,0x4d]
         beqzc $5, 72256          # CHECK: beqzc $5, 72256     # encoding: [0xd8,0xa0,0x46,0x90]
+        bgec $2, $3, 256         # CHECK: bgec $2, $3, 256    # encoding: [0x58,0x43,0x00,0x40]
+        bgeuc $2, $3, 256        # CHECK: bgeuc $2, $3, 256   # encoding: [0x18,0x43,0x00,0x40]
         bgezalc $2, 1332         # CHECK: bgezalc $2, 1332    # encoding: [0x18,0x42,0x01,0x4d]
         bnezc $5, 72256          # CHECK: bnezc $5, 72256     # encoding: [0xf8,0xa0,0x46,0x90]
         bltzc $5, 256            # CHECK: bltzc $5, 256       # encoding: [0x5c,0xa5,0x00,0x40]
