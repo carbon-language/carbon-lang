@@ -34,7 +34,6 @@ include "Mips32r6InstrFormats.td"
 // Removed: ldxc1
 // Removed: luxc1
 // Removed: lwxc1
-// Removed: prefx
 // Removed: sdxc1
 // Removed: suxc1
 // Removed: swxc1
