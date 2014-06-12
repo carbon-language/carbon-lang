@@ -14,6 +14,7 @@
 #ifndef POWERPCSUBTARGET_H
 #define POWERPCSUBTARGET_H
 
+#include "PPCFrameLowering.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -102,6 +103,7 @@ protected:
   /// OptLevel - What default optimization level we're emitting code for.
   CodeGenOpt::Level OptLevel;
 
+  PPCFrameLowering    FrameLowering;
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
@@ -130,6 +132,12 @@ public:
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
+
+  const PPCFrameLowering *getFrameLowering() const { return &FrameLowering; }
+
+  /// initializeSubtargetDependencies - Initializes using a CPU and feature string
+  /// so that we can use initializer lists for subtarget initialization.
+  PPCSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
 
   /// \brief Reset the features for the PowerPC target.
   void resetSubtargetFeatures(const MachineFunction *MF) override;

@@ -31,7 +31,6 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
   const DataLayout    DL;       // Calculates type size & alignment
   PPCInstrInfo        InstrInfo;
-  PPCFrameLowering    FrameLowering;
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
@@ -43,8 +42,8 @@ public:
                    CodeGenOpt::Level OL, bool is64Bit);
 
   const PPCInstrInfo      *getInstrInfo() const override { return &InstrInfo; }
-  const PPCFrameLowering  *getFrameLowering() const override {
-    return &FrameLowering;
+  const PPCFrameLowering *getFrameLowering() const override {
+    return getSubtargetImpl()->getFrameLowering();
   }
         PPCJITInfo        *getJITInfo() override         { return &JITInfo; }
   const PPCTargetLowering *getTargetLowering() const override {
