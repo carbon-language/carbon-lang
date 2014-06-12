@@ -16,12 +16,12 @@ void f() {
 // CHECK1: {{^        int\* i;$}}
 // CHECK2: {{^       int \*i;$}}
 // CHECK3: Unknown value for BasedOnStyle: invalid
-// CHECK3: Error parsing -style: Invalid argument, using LLVM style
+// CHECK3: Error parsing -style: {{I|i}}nvalid argument, using LLVM style
 // CHECK3: {{^  int \*i;$}}
-// CHECK4: Error parsing -style: Invalid argument, using LLVM style
+// CHECK4: Error parsing -style: {{I|i}}nvalid argument, using LLVM style
 // CHECK4: {{^  int \*i;$}}
 // CHECK5: {{^     int\* i;$}}
-// CHECK6: {{^Error reading .*\.clang-format: Invalid argument}}
+// CHECK6: {{^Error reading .*\.clang-format: (I|i)nvalid argument}}
 // CHECK6: {{^Can't find usable .clang-format, using webkit style$}}
 // CHECK6: {{^    int\* i;$}}
 // CHECK7: {{^      int\* i;$}}
