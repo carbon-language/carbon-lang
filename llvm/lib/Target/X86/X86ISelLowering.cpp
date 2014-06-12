@@ -6131,6 +6131,59 @@ static bool isHorizontalBinOp(const BuildVectorSDNode *N, unsigned Opcode,
   return CanFold;
 }
 
+/// \brief Emit a sequence of two 128-bit horizontal add/sub followed by
+/// a concat_vector. 
+///
+/// This is a helper function of PerformBUILD_VECTORCombine.
+/// This function expects two 256-bit vectors called V0 and V1.
+/// At first, each vector is split into two separate 128-bit vectors.
+/// Then, the resulting 128-bit vectors are used to implement two
+/// horizontal binary operations. 
+///
+/// The kind of horizontal binary operation is defined by \p X86Opcode.
+///
+/// \p Mode specifies how the 128-bit parts of V0 and V1 are passed in input to
+/// the two new horizontal binop.
+/// When Mode is set, the first horizontal binop dag node would take as input
+/// the lower 128-bit of V0 and the upper 128-bit of V0. The second
+/// horizontal binop dag node would take as input the lower 128-bit of V1
+/// and the upper 128-bit of V1.
+///   Example:
+///     HADD V0_LO, V0_HI
+///     HADD V1_LO, V1_HI
+///
+/// Otherwise, the first horizontal binop dag node takes as input the lower
+/// 128-bit of V0 and the lower 128-bit of V1, and the second horizontal binop
+/// dag node takes the the upper 128-bit of V0 and the upper 128-bit of V1.
+///   Example:
+///     HADD V0_LO, V1_LO
+///     HADD V0_HI, V1_HI
+static SDValue ExpandHorizontalBinOp(const SDValue &V0, const SDValue &V1,
+                                     SDLoc DL, SelectionDAG &DAG,
+                                     unsigned X86Opcode, bool Mode) {
+  EVT VT = V0.getValueType();
+  assert(VT.is256BitVector() && VT == V1.getValueType() &&
+         "Invalid nodes in input!");
+
+  unsigned NumElts = VT.getVectorNumElements();
+  SDValue V0_LO = Extract128BitVector(V0, 0, DAG, DL);
+  SDValue V0_HI = Extract128BitVector(V0, NumElts/2, DAG, DL);
+  SDValue V1_LO = Extract128BitVector(V1, 0, DAG, DL);
+  SDValue V1_HI = Extract128BitVector(V1, NumElts/2, DAG, DL);
+  EVT NewVT = V0_LO.getValueType();
+
+  SDValue LO, HI;
+  if (Mode) {
+    LO = DAG.getNode(X86Opcode, DL, NewVT, V0_LO, V0_HI);
+    HI = DAG.getNode(X86Opcode, DL, NewVT, V1_LO, V1_HI);
+  } else {
+    LO = DAG.getNode(X86Opcode, DL, NewVT, V0_LO, V1_LO);
+    HI = DAG.getNode(X86Opcode, DL, NewVT, V1_HI, V1_HI);
+  }
+
+  return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LO, HI);
+}
+
 static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
                                           const X86Subtarget *Subtarget) {
   SDLoc DL(N);
@@ -6155,6 +6208,55 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
     if (isHorizontalBinOp(BV, ISD::SUB, 0, NumElts, InVec0, InVec1))
       return DAG.getNode(X86ISD::HSUB, DL, VT, InVec0, InVec1);
   }
+  
+  if (!Subtarget->hasAVX())
+    return SDValue();
+
+  if ((VT == MVT::v8f32 || VT == MVT::v4f64)) {
+    // Try to match an AVX horizontal add/sub of packed single/double
+    // precision floating point values from 256-bit vectors.
+    SDValue InVec2, InVec3;
+    if (isHorizontalBinOp(BV, ISD::FADD, 0, NumElts/2, InVec0, InVec1) &&
+        isHorizontalBinOp(BV, ISD::FADD, NumElts/2, NumElts, InVec2, InVec3) &&
+        InVec0.getNode() == InVec2.getNode() &&
+        InVec1.getNode() == InVec3.getNode())
+      return DAG.getNode(X86ISD::FHADD, DL, VT, InVec0, InVec1);
+
+    if (isHorizontalBinOp(BV, ISD::FSUB, 0, NumElts/2, InVec0, InVec1) &&
+        isHorizontalBinOp(BV, ISD::FSUB, NumElts/2, NumElts, InVec2, InVec3) &&
+        InVec0.getNode() == InVec2.getNode() &&
+        InVec1.getNode() == InVec3.getNode())
+      return DAG.getNode(X86ISD::FHSUB, DL, VT, InVec0, InVec1);
+  } else if (VT == MVT::v8i32 || VT == MVT::v16i16) {
+    // Try to match an AVX2 horizontal add/sub of signed integers.
+    SDValue InVec2, InVec3;
+    unsigned X86Opcode;
+    bool CanFold = true;
+
+    if (isHorizontalBinOp(BV, ISD::ADD, 0, NumElts/2, InVec0, InVec1) &&
+        isHorizontalBinOp(BV, ISD::ADD, NumElts/2, NumElts, InVec2, InVec3) &&
+        InVec0.getNode() == InVec2.getNode() &&
+        InVec1.getNode() == InVec3.getNode())
+      X86Opcode = X86ISD::HADD;
+    else if (isHorizontalBinOp(BV, ISD::SUB, 0, NumElts/2, InVec0, InVec1) &&
+        isHorizontalBinOp(BV, ISD::SUB, NumElts/2, NumElts, InVec2, InVec3) &&
+        InVec0.getNode() == InVec2.getNode() &&
+        InVec1.getNode() == InVec3.getNode())
+      X86Opcode = X86ISD::HSUB;
+    else
+      CanFold = false;
+
+    if (CanFold) {
+      // Fold this build_vector into a single horizontal add/sub.
+      // Do this only if the target has AVX2.
+      if (Subtarget->hasAVX2())
+        return DAG.getNode(X86Opcode, DL, VT, InVec0, InVec1);
+ 
+      // Convert this build_vector into a pair of horizontal binop followed by
+      // a concat vector.
+      return ExpandHorizontalBinOp(InVec0, InVec1, DL, DAG, X86Opcode, false);
+    }
+  }
 
   if ((VT == MVT::v8f32 || VT == MVT::v4f64 || VT == MVT::v8i32 ||
        VT == MVT::v16i16) && Subtarget->hasAVX()) {
@@ -6172,15 +6274,7 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG,
 
     // Convert this build_vector into two horizontal add/sub followed by
     // a concat vector.
-    SDValue InVec0_LO = Extract128BitVector(InVec0, 0, DAG, DL);
-    SDValue InVec0_HI = Extract128BitVector(InVec0, NumElts/2, DAG, DL);
-    SDValue InVec1_LO = Extract128BitVector(InVec1, 0, DAG, DL);
-    SDValue InVec1_HI = Extract128BitVector(InVec1, NumElts/2, DAG, DL);
-    EVT NewVT = InVec0_LO.getValueType();
-
-    SDValue LO = DAG.getNode(X86Opcode, DL, NewVT, InVec0_LO, InVec0_HI);
-    SDValue HI = DAG.getNode(X86Opcode, DL, NewVT, InVec1_LO, InVec1_HI);
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LO, HI);
+    return ExpandHorizontalBinOp(InVec0, InVec1, DL, DAG, X86Opcode, true);
   }
 
   return SDValue();
