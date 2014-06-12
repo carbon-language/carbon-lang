@@ -24,7 +24,7 @@ using llvm::MemoryBuffer;
 using llvm::SmallString;
 using llvm::Twine;
 using llvm::ErrorOr;
-using llvm::error_code;
+using std::error_code;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
 

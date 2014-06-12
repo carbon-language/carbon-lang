@@ -61,7 +61,7 @@ namespace lld {
   using llvm::SaveAndRestore;
   using llvm::ErrorOr;
 
-  using llvm::error_code;
+  using std::error_code;
   using llvm::raw_ostream;
 } // end namespace lld.
 

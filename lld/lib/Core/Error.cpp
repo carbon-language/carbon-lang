@@ -209,13 +209,12 @@ private:
 
 static dynamic_error_category categorySingleton;
 
-
-llvm::error_code make_dynamic_error_code(StringRef msg) {
-  return llvm::error_code(categorySingleton.add(msg), categorySingleton);
+std::error_code make_dynamic_error_code(StringRef msg) {
+  return std::error_code(categorySingleton.add(msg), categorySingleton);
 }
 
-llvm::error_code make_dynamic_error_code(const Twine &msg) {
-  return llvm::error_code(categorySingleton.add(msg.str()), categorySingleton);
+std::error_code make_dynamic_error_code(const Twine &msg) {
+  return std::error_code(categorySingleton.add(msg.str()), categorySingleton);
 }
 
 }

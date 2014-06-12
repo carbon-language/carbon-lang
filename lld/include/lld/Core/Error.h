@@ -30,8 +30,8 @@ enum class NativeReaderError {
   memory_error,
 };
 
-inline llvm::error_code make_error_code(NativeReaderError e) {
-  return llvm::error_code(static_cast<int>(e), native_reader_category());
+inline std::error_code make_error_code(NativeReaderError e) {
+  return std::error_code(static_cast<int>(e), native_reader_category());
 }
 
 const std::error_category &YamlReaderCategory();
@@ -42,8 +42,8 @@ enum class YamlReaderError {
   illegal_value
 };
 
-inline llvm::error_code make_error_code(YamlReaderError e) {
-  return llvm::error_code(static_cast<int>(e), YamlReaderCategory());
+inline std::error_code make_error_code(YamlReaderError e) {
+  return std::error_code(static_cast<int>(e), YamlReaderCategory());
 }
 
 const std::error_category &LinkerScriptReaderCategory();
@@ -53,8 +53,8 @@ enum class LinkerScriptReaderError {
   parse_error
 };
 
-inline llvm::error_code make_error_code(LinkerScriptReaderError e) {
-  return llvm::error_code(static_cast<int>(e), LinkerScriptReaderCategory());
+inline std::error_code make_error_code(LinkerScriptReaderError e) {
+  return std::error_code(static_cast<int>(e), LinkerScriptReaderCategory());
 }
 
 /// \brief Errors returned by InputGraph functionality
@@ -67,8 +67,8 @@ enum class InputGraphError {
   no_more_files
 };
 
-inline llvm::error_code make_error_code(InputGraphError e) {
-  return llvm::error_code(static_cast<int>(e), InputGraphErrorCategory());
+inline std::error_code make_error_code(InputGraphError e) {
+  return std::error_code(static_cast<int>(e), InputGraphErrorCategory());
 }
 
 /// \brief Errors returned by Reader.
@@ -79,8 +79,8 @@ enum class ReaderError {
   unknown_file_format = 1
 };
 
-inline llvm::error_code make_error_code(ReaderError e) {
-  return llvm::error_code(static_cast<int>(e), ReaderErrorCategory());
+inline std::error_code make_error_code(ReaderError e) {
+  return std::error_code(static_cast<int>(e), ReaderErrorCategory());
 }
 
 
@@ -90,8 +90,8 @@ inline llvm::error_code make_error_code(ReaderError e) {
 /// supplied error string.
 /// Note:  Once ErrorOr<> is updated to work with errors other than error_code, 
 /// this can be updated to return some other kind of error.
-llvm::error_code make_dynamic_error_code(StringRef msg);
-llvm::error_code make_dynamic_error_code(const Twine &msg);
+std::error_code make_dynamic_error_code(StringRef msg);
+std::error_code make_dynamic_error_code(const Twine &msg);
 
 } // end namespace lld
 
