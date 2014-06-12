@@ -51,7 +51,7 @@ error_code FileOutputBuffer::create(StringRef FilePath,
       if (EC)
         return EC;
       else
-        return make_error_code(std::errc::operation_not_permitted);
+        return std::make_error_code(std::errc::operation_not_permitted);
   }
 
   // Delete target file.

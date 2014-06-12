@@ -361,7 +361,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
   if (!Buf) {
     // Failed to create a buffer. The only way it can fail is if
     // new(std::nothrow) returns 0.
-    return make_error_code(std::errc::not_enough_memory);
+    return std::make_error_code(std::errc::not_enough_memory);
   }
 
   std::unique_ptr<MemoryBuffer> SB(Buf);

@@ -475,7 +475,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
         _close(FileDescriptor);
     } else
       ::CloseHandle(FileHandle);
-    return make_error_code(std::errc::invalid_argument);
+    return std::make_error_code(std::errc::invalid_argument);
   }
 
   DWORD flprotect;
@@ -611,7 +611,7 @@ mapped_file_region::mapped_file_region(int fd,
     if (closefd)
       _close(FileDescriptor);
     FileDescriptor = 0;
-    ec = make_error_code(std::errc::bad_file_descriptor);
+    ec = std::make_error_code(std::errc::bad_file_descriptor);
     return;
   }
 
@@ -774,7 +774,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return make_error_code(std::errc::is_a_directory);
+      return std::make_error_code(std::errc::is_a_directory);
     return EC;
   }
 
@@ -826,7 +826,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return make_error_code(std::errc::is_a_directory);
+      return std::make_error_code(std::errc::is_a_directory);
     return EC;
   }
 

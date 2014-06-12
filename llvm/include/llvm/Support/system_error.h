@@ -18,7 +18,6 @@
 
 namespace llvm {
 using std::error_code;
-using std::make_error_code;
 }
 
 #endif

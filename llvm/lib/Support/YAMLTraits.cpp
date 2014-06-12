@@ -74,7 +74,7 @@ bool Input::setCurrentDocument() {
     Node *N = DocIterator->getRoot();
     if (!N) {
       assert(Strm->failed() && "Root is NULL iff parsing failed");
-      EC = make_error_code(std::errc::invalid_argument);
+      EC = std::make_error_code(std::errc::invalid_argument);
       return false;
     }
 
@@ -124,7 +124,7 @@ bool Input::preflightKey(const char *Key, bool Required, bool, bool &UseDefault,
   // nodes are present.
   if (!CurrentNode) {
     if (Required)
-      EC = make_error_code(std::errc::invalid_argument);
+      EC = std::make_error_code(std::errc::invalid_argument);
     return false;
   }
 
@@ -300,7 +300,7 @@ void Input::setError(HNode *hnode, const Twine &message) {
 
 void Input::setError(Node *node, const Twine &message) {
   Strm->printError(node, message);
-  EC = make_error_code(std::errc::invalid_argument);
+  EC = std::make_error_code(std::errc::invalid_argument);
 }
 
 Input::HNode *Input::createHNodes(Node *N) {
