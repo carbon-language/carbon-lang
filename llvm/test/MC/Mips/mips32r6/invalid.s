@@ -6,7 +6,5 @@
 
         .text
         .set noreorder
-        jalr.hb $31
-# ASM: :[[@LINE-1]]:9: error: source and destination must be different
-        jalr.hb $31, $31
-# ASM: :[[@LINE-1]]:9: error: source and destination must be different
+        jalr.hb $31 # ASM: :[[@LINE]]:9: error: source and destination must be different
+        jalr.hb $31, $31 # ASM: :[[@LINE]]:9: error: source and destination must be different
