@@ -258,6 +258,29 @@ template <> struct DocumentListTraits<std::vector<FormatStyle> > {
 namespace clang {
 namespace format {
 
+const std::error_category &getParestCategory() {
+  static ParseErrorCategory C;
+  return C;
+}
+std::error_code make_error_code(ParseError e) {
+  return std::error_code(static_cast<int>(e), getParestCategory());
+}
+
+const char *ParseErrorCategory::name() const LLVM_NOEXCEPT {
+  return "clang-format.parse_error";
+}
+
+std::string ParseErrorCategory::message(int EV) const {
+  switch (static_cast<ParseError>(EV)) {
+  case ParseError::Success:
+    return "Success";
+  case ParseError::Error:
+    return "Invalid argument";
+  case ParseError::Unsuitable:
+    return "Unsuitable";
+  }
+}
+
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.Language = FormatStyle::LK_Cpp;
@@ -447,7 +470,7 @@ llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
   FormatStyle::LanguageKind Language = Style->Language;
   assert(Language != FormatStyle::LK_None);
   if (Text.trim().empty())
-    return llvm::make_error_code(std::errc::invalid_argument);
+    return make_error_code(ParseError::Error);
 
   std::vector<FormatStyle> Styles;
   llvm::yaml::Input Input(Text);
@@ -463,14 +486,14 @@ llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
   for (unsigned i = 0; i < Styles.size(); ++i) {
     // Ensures that only the first configuration can skip the Language option.
     if (Styles[i].Language == FormatStyle::LK_None && i != 0)
-      return llvm::make_error_code(std::errc::invalid_argument);
+      return make_error_code(ParseError::Error);
     // Ensure that each language is configured at most once.
     for (unsigned j = 0; j < i; ++j) {
       if (Styles[i].Language == Styles[j].Language) {
         DEBUG(llvm::dbgs()
               << "Duplicate languages in the config file on positions " << j
               << " and " << i << "\n");
-        return llvm::make_error_code(std::errc::invalid_argument);
+        return make_error_code(ParseError::Error);
       }
     }
   }
@@ -482,10 +505,10 @@ llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
         Styles[i].Language == FormatStyle::LK_None) {
       *Style = Styles[i];
       Style->Language = Language;
-      return llvm::error_code();
+      return make_error_code(ParseError::Success);
     }
   }
-  return llvm::make_error_code(std::errc::not_supported);
+  return make_error_code(ParseError::Unsuitable);
 }
 
 std::string configurationAsText(const FormatStyle &Style) {
@@ -2049,7 +2072,7 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
         break;
       }
       if (llvm::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
-        if (ec == std::errc::not_supported) {
+        if (ec == ParseError::Unsuitable) {
           if (!UnsuitableConfigFiles.empty())
             UnsuitableConfigFiles.append(", ");
           UnsuitableConfigFiles.append(ConfigFile);

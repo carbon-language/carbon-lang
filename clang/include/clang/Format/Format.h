@@ -27,6 +27,15 @@ class DiagnosticConsumer;
 
 namespace format {
 
+enum class ParseError { Success = 0, Error, Unsuitable };
+class ParseErrorCategory final : public std::error_category {
+public:
+  const char *name() const LLVM_NOEXCEPT override;
+  std::string message(int EV) const override;
+};
+const std::error_category &getParestCategory();
+std::error_code make_error_code(ParseError e);
+
 /// \brief The \c FormatStyle is used to configure the formatting to follow
 /// specific guidelines.
 struct FormatStyle {
@@ -505,5 +514,10 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
 
 } // end namespace format
 } // end namespace clang
+
+namespace std {
+template <>
+struct is_error_code_enum<clang::format::ParseError> : std::true_type {};
+}
 
 #endif // LLVM_CLANG_FORMAT_FORMAT_H
