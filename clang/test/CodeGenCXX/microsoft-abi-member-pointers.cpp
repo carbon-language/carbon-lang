@@ -607,18 +607,18 @@ void (C::*getmp())() {
 
 }
 
-namespace pr2007 {
+namespace pr20007 {
 struct A {
   void f();
   void f(int);
 };
 struct B : public A {};
 void test() { void (B::*a)() = &B::f; }
-// CHECK-LABEL: define void @"\01?test@pr2007@@YAXXZ"
-// CHECK: store i8* bitcast (void (%"struct.pr2007::A"*)* @"\01?f@A@pr2007@@QAEXXZ" to i8*)
+// CHECK-LABEL: define void @"\01?test@pr20007@@YAXXZ"
+// CHECK: store i8* bitcast (void (%"struct.pr20007::A"*)* @"\01?f@A@pr20007@@QAEXXZ" to i8*)
 }
 
-namespace pr2007_kw {
+namespace pr20007_kw {
 struct A {
   void f();
   void f(int);
@@ -626,8 +626,8 @@ struct A {
 struct __single_inheritance B;
 struct B : public A {};
 void test() { void (B::*a)() = &B::f; }
-// CHECK-LABEL: define void @"\01?test@pr2007_kw@@YAXXZ"
-// CHECK: store i8* bitcast (void (%"struct.pr2007_kw::A"*)* @"\01?f@A@pr2007_kw@@QAEXXZ" to i8*)
+// CHECK-LABEL: define void @"\01?test@pr20007_kw@@YAXXZ"
+// CHECK: store i8* bitcast (void (%"struct.pr20007_kw::A"*)* @"\01?f@A@pr20007_kw@@QAEXXZ" to i8*)
 }
 
 #else
