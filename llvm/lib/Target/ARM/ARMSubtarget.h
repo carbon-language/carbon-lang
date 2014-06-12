@@ -379,7 +379,12 @@ public:
 
   bool isR9Reserved() const { return IsR9Reserved; }
 
-  bool useMovt() const { return UseMovt && !isMinSize(); }
+  bool useMovt() const {
+    // NOTE Windows on ARM needs to use mov.w/mov.t pairs to materialise 32-bit
+    // immediates as it is inherently position independent, and may be out of
+    // range otherwise.
+    return UseMovt && (isTargetWindows() || !isMinSize());
+  }
   bool supportsTailCall() const { return SupportsTailCall; }
 
   bool allowsUnalignedMem() const { return AllowsUnalignedMem; }
