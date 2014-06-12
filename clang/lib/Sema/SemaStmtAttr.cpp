@@ -128,11 +128,12 @@ CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
     bool ValueIsSet;
     bool Enabled;
     int Value;
-  } Options[] = {
-    {LoopHintAttr::Vectorize, LoopHintAttr::VectorizeWidth},
-    {LoopHintAttr::Interleave, LoopHintAttr::InterleaveCount},
-    {LoopHintAttr::Unroll, LoopHintAttr::UnrollCount}
-  };
+  } Options[] = {{LoopHintAttr::Vectorize, LoopHintAttr::VectorizeWidth, false,
+                  false, false, 0},
+                 {LoopHintAttr::Interleave, LoopHintAttr::InterleaveCount,
+                  false, false, false, 0},
+                 {LoopHintAttr::Unroll, LoopHintAttr::UnrollCount, false, false,
+                  false, 0}};
 
   for (const auto *I : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(I);
