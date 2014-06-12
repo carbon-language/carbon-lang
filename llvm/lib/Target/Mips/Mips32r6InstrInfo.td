@@ -627,11 +627,16 @@ def : MipsPat<(seto f32:$lhs, f32:$rhs),
               (NOR (CMP_UN_S f32:$lhs, f32:$rhs), ZERO)>, ISA_MIPS32R6;
 def : MipsPat<(setune f32:$lhs, f32:$rhs),
               (NOR (CMP_EQ_S f32:$lhs, f32:$rhs), ZERO)>, ISA_MIPS32R6;
-def : MipsPat<(seteq f32:$lhs, f32:$rhs), (CMP_EQ_S f32:$lhs, f32:$rhs)>, ISA_MIPS32R6;
-def : MipsPat<(setgt f32:$lhs, f32:$rhs), (CMP_LE_S f32:$rhs, f32:$lhs)>, ISA_MIPS32R6;
-def : MipsPat<(setge f32:$lhs, f32:$rhs), (CMP_LT_S f32:$rhs, f32:$lhs)>, ISA_MIPS32R6;
-def : MipsPat<(setlt f32:$lhs, f32:$rhs), (CMP_OLT_S f32:$lhs, f32:$rhs)>, ISA_MIPS32R6;
-def : MipsPat<(setlt f32:$lhs, f32:$rhs), (CMP_OLE_S f32:$lhs, f32:$rhs)>, ISA_MIPS32R6;
+def : MipsPat<(seteq f32:$lhs, f32:$rhs), (CMP_EQ_S f32:$lhs, f32:$rhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setgt f32:$lhs, f32:$rhs), (CMP_LE_S f32:$rhs, f32:$lhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setge f32:$lhs, f32:$rhs), (CMP_LT_S f32:$rhs, f32:$lhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setlt f32:$lhs, f32:$rhs), (CMP_OLT_S f32:$lhs, f32:$rhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setlt f32:$lhs, f32:$rhs), (CMP_OLE_S f32:$lhs, f32:$rhs)>,
+      ISA_MIPS32R6;
 def : MipsPat<(setne f32:$lhs, f32:$rhs),
               (NOR (CMP_EQ_S f32:$lhs, f32:$rhs), ZERO)>, ISA_MIPS32R6;
 
@@ -642,11 +647,16 @@ def : MipsPat<(seto f64:$lhs, f64:$rhs),
               (NOR (CMP_UN_D f64:$lhs, f64:$rhs), ZERO)>, ISA_MIPS32R6;
 def : MipsPat<(setune f64:$lhs, f64:$rhs),
               (NOR (CMP_EQ_D f64:$lhs, f64:$rhs), ZERO)>, ISA_MIPS32R6;
-def : MipsPat<(seteq f64:$lhs, f64:$rhs), (CMP_EQ_D f64:$lhs, f64:$rhs)>, ISA_MIPS32R6;
-def : MipsPat<(setgt f64:$lhs, f64:$rhs), (CMP_LE_D f64:$rhs, f64:$lhs)>, ISA_MIPS32R6;
-def : MipsPat<(setge f64:$lhs, f64:$rhs), (CMP_LT_D f64:$rhs, f64:$lhs)>, ISA_MIPS32R6;
-def : MipsPat<(setlt f64:$lhs, f64:$rhs), (CMP_OLT_D f64:$lhs, f64:$rhs)>, ISA_MIPS32R6;
-def : MipsPat<(setlt f64:$lhs, f64:$rhs), (CMP_OLE_D f64:$lhs, f64:$rhs)>, ISA_MIPS32R6;
+def : MipsPat<(seteq f64:$lhs, f64:$rhs), (CMP_EQ_D f64:$lhs, f64:$rhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setgt f64:$lhs, f64:$rhs), (CMP_LE_D f64:$rhs, f64:$lhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setge f64:$lhs, f64:$rhs), (CMP_LT_D f64:$rhs, f64:$lhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setlt f64:$lhs, f64:$rhs), (CMP_OLT_D f64:$lhs, f64:$rhs)>,
+      ISA_MIPS32R6;
+def : MipsPat<(setlt f64:$lhs, f64:$rhs), (CMP_OLE_D f64:$lhs, f64:$rhs)>,
+      ISA_MIPS32R6;
 def : MipsPat<(setne f64:$lhs, f64:$rhs),
               (NOR (CMP_EQ_D f64:$lhs, f64:$rhs), ZERO)>, ISA_MIPS32R6;
 
