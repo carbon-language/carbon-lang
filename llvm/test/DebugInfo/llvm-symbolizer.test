@@ -17,6 +17,7 @@ RUN: echo "%p/Inputs/macho-universal 0x1f84" >> %t.input
 RUN: echo "%p/Inputs/macho-universal:i386 0x1f67" >> %t.input
 RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 RUN: echo "%p/Inputs/llvm-symbolizer-dwo-test 0x400514" >> %t.input
+RUN: echo "%p/Inputs/fission-ranges.elf-x86_64 0x720" >> %t.input
 
 RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
@@ -89,6 +90,9 @@ CHECK:      _Z3inci
 
 CHECK: main
 CHECK-NEXT: llvm-symbolizer-dwo-test.cc:11
+
+CHECK: main
+CHECK-NEXT: {{.*}}fission-ranges.cc:6
 
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2

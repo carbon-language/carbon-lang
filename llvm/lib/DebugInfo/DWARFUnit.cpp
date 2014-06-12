@@ -225,8 +225,12 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
     setBaseAddress(BaseAddr);
     AddrOffsetSectionBase = DieArray[0].getAttributeValueAsSectionOffset(
         this, DW_AT_GNU_addr_base, 0);
-    RangeSectionBase = DieArray[0].getAttributeValueAsSectionOffset(
-        this, DW_AT_GNU_ranges_base, 0);
+    // Users of old DWARF may not know about DW_AT_ranges_base, so it is ignored
+    // for skeleton CU DIE (e.g. DW_AT_ranges are *not* relative to it).
+    if (Version > 4) {
+      RangeSectionBase = DieArray[0].getAttributeValueAsSectionOffset(
+          this, DW_AT_GNU_ranges_base, 0);
+    }
   }
 
   setDIERelations();
@@ -272,7 +276,9 @@ bool DWARFUnit::parseDWO() {
   }
   // Share .debug_addr and .debug_ranges section with compile unit in .dwo
   DWOCU->setAddrOffsetSection(AddrOffsetSection, AddrOffsetSectionBase);
-  DWOCU->setRangesSection(RangeSection, RangeSectionBase);
+  uint32_t DWORangesBase = DieArray[0].getAttributeValueAsSectionOffset(
+      this, DW_AT_GNU_ranges_base, 0);
+  DWOCU->setRangesSection(RangeSection, DWORangesBase);
   return true;
 }
 
