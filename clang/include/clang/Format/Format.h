@@ -33,7 +33,7 @@ public:
   const char *name() const LLVM_NOEXCEPT override;
   std::string message(int EV) const override;
 };
-const std::error_category &getParestCategory();
+const std::error_category &getParseCategory();
 std::error_code make_error_code(ParseError e);
 
 /// \brief The \c FormatStyle is used to configure the formatting to follow

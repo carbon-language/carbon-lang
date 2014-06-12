@@ -258,12 +258,12 @@ template <> struct DocumentListTraits<std::vector<FormatStyle> > {
 namespace clang {
 namespace format {
 
-const std::error_category &getParestCategory() {
+const std::error_category &getParseCategory() {
   static ParseErrorCategory C;
   return C;
 }
 std::error_code make_error_code(ParseError e) {
-  return std::error_code(static_cast<int>(e), getParestCategory());
+  return std::error_code(static_cast<int>(e), getParseCategory());
 }
 
 const char *ParseErrorCategory::name() const LLVM_NOEXCEPT {
