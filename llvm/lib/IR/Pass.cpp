@@ -224,17 +224,6 @@ RegisterAGBase::RegisterAGBase(const char *Name, const void *InterfaceID,
 // PassRegistrationListener implementation
 //
 
-// PassRegistrationListener ctor - Add the current object to the list of
-// PassRegistrationListeners...
-PassRegistrationListener::PassRegistrationListener() {
-  PassRegistry::getPassRegistry()->addRegistrationListener(this);
-}
-
-// dtor - Remove object from list of listeners...
-PassRegistrationListener::~PassRegistrationListener() {
-  PassRegistry::getPassRegistry()->removeRegistrationListener(this);
-}
-
 // enumeratePasses - Iterate over the registered passes, calling the
 // passEnumerate callback on each PassInfo object.
 //
@@ -242,7 +231,16 @@ void PassRegistrationListener::enumeratePasses() {
   PassRegistry::getPassRegistry()->enumerateWith(this);
 }
 
-PassNameParser::~PassNameParser() {}
+PassNameParser::PassNameParser()
+    : Opt(nullptr) {
+  PassRegistry::getPassRegistry()->addRegistrationListener(this);
+}
+
+PassNameParser::~PassNameParser() {
+  // This only gets called during static destruction, in which case the
+  // PassRegistry will have already been destroyed by llvm_shutdown().  So
+  // attempting to remove the registration listener is an error.
+}
 
 //===----------------------------------------------------------------------===//
 //   AnalysisUsage Class Implementation

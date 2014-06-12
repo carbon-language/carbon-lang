@@ -337,19 +337,12 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
 /// clients that are interested in which passes get registered and unregistered
 /// at runtime (which can be because of the RegisterPass constructors being run
 /// as the program starts up, or may be because a shared object just got
-/// loaded).  Deriving from the PassRegistrationListener class automatically
-/// registers your object to receive callbacks indicating when passes are loaded
-/// and removed.
+/// loaded).
 ///
 struct PassRegistrationListener {
 
-  /// PassRegistrationListener ctor - Add the current object to the list of
-  /// PassRegistrationListeners...
-  PassRegistrationListener();
-
-  /// dtor - Remove object from list of listeners...
-  ///
-  virtual ~PassRegistrationListener();
+  PassRegistrationListener() {}
+  virtual ~PassRegistrationListener() {}
 
   /// Callback functions - These functions are invoked whenever a pass is loaded
   /// or removed from the current executable.
