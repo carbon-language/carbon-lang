@@ -19,7 +19,6 @@
 namespace llvm {
 using std::error_code;
 using std::generic_category;
-using std::error_category;
 using std::make_error_code;
 }
 

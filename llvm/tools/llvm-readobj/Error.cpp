@@ -17,7 +17,7 @@
 using namespace llvm;
 
 namespace {
-class _readobj_error_category : public error_category {
+class _readobj_error_category : public std::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
@@ -56,7 +56,7 @@ _readobj_error_category::default_error_condition(int EV) const {
 }
 
 namespace llvm {
-const error_category &readobj_category() {
+const std::error_category &readobj_category() {
   static _readobj_error_category o;
   return o;
 }

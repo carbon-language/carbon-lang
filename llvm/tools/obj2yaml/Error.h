@@ -14,7 +14,7 @@
 
 namespace llvm {
 
-const error_category &obj2yaml_category();
+const std::error_category &obj2yaml_category();
 
 enum class obj2yaml_error {
   success = 0,

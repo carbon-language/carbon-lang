@@ -19,7 +19,7 @@
 namespace llvm {
 namespace object {
 
-const error_category &object_category();
+const std::error_category &object_category();
 
 enum class object_error {
   success = 0,

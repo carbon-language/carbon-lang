@@ -18,7 +18,7 @@
 
 namespace llvm {
 
-const error_category &readobj_category();
+const std::error_category &readobj_category();
 
 enum class readobj_error {
   success = 0,

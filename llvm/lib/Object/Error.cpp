@@ -18,7 +18,7 @@ using namespace llvm;
 using namespace object;
 
 namespace {
-class _object_error_category : public error_category {
+class _object_error_category : public std::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
@@ -55,7 +55,7 @@ _object_error_category::default_error_condition(int EV) const {
   return std::errc::invalid_argument;
 }
 
-const error_category &object::object_category() {
+const std::error_category &object::object_category() {
   static _object_error_category o;
   return o;
 }

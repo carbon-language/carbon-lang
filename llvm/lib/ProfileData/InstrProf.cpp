@@ -18,7 +18,7 @@
 using namespace llvm;
 
 namespace {
-class InstrProfErrorCategoryType : public error_category {
+class InstrProfErrorCategoryType : public std::error_category {
   const char *name() const LLVM_NOEXCEPT override { return "llvm.instrprof"; }
   std::string message(int IE) const override {
     instrprof_error E = static_cast<instrprof_error>(IE);
@@ -61,7 +61,7 @@ class InstrProfErrorCategoryType : public error_category {
 };
 }
 
-const error_category &llvm::instrprof_category() {
+const std::error_category &llvm::instrprof_category() {
   static InstrProfErrorCategoryType C;
   return C;
 }

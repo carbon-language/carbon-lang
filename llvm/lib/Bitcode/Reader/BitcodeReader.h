@@ -193,7 +193,7 @@ class BitcodeReader : public GVMaterializer {
   /// not need this flag.
   bool UseRelativeIDs;
 
-  static const error_category &BitcodeErrorCategory();
+  static const std::error_category &BitcodeErrorCategory();
 
 public:
   enum ErrorType {

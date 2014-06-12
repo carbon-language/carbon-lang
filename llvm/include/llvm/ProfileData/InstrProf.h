@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-const error_category &instrprof_category();
+const std::error_category &instrprof_category();
 
 enum class instrprof_error {
     success = 0,

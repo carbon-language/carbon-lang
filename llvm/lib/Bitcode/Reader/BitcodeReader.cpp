@@ -3300,7 +3300,7 @@ error_code BitcodeReader::InitLazyStream() {
 }
 
 namespace {
-class BitcodeErrorCategoryType : public error_category {
+class BitcodeErrorCategoryType : public std::error_category {
   const char *name() const LLVM_NOEXCEPT override {
     return "llvm.bitcode";
   }
@@ -3351,7 +3351,7 @@ class BitcodeErrorCategoryType : public error_category {
 };
 }
 
-const error_category &BitcodeReader::BitcodeErrorCategory() {
+const std::error_category &BitcodeReader::BitcodeErrorCategory() {
   static BitcodeErrorCategoryType O;
   return O;
 }
