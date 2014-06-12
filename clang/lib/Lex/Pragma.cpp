@@ -998,8 +998,8 @@ public:
       return;
     }
 
-    if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.substr(2), SV,
-                                                      DiagLoc))
+    if (PP.getDiagnostics().setSeverityForGroup(WarningName.substr(2), SV,
+                                                DiagLoc))
       PP.Diag(StringLoc, diag::warn_pragma_diagnostic_unknown_warning)
         << WarningName;
     else if (Callbacks)

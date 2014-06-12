@@ -312,8 +312,8 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
                      ARCMTMacroLocs);
   pass.setNoFinalizeRemoval(NoFinalizeRemoval);
   if (!NoNSAllocReallocError)
-    Diags->setDiagnosticMapping(diag::warn_arcmt_nsalloc_realloc,
-                                diag::Severity::Error, SourceLocation());
+    Diags->setSeverity(diag::warn_arcmt_nsalloc_realloc, diag::Severity::Error,
+                       SourceLocation());
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i)
     transforms[i](pass);

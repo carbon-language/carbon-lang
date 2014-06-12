@@ -160,9 +160,8 @@ DiagnosticsEngine::GetDiagStatePointForLoc(SourceLocation L) const {
   return Pos;
 }
 
-void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag,
-                                             diag::Severity Map,
-                                             SourceLocation L) {
+void DiagnosticsEngine::setSeverity(diag::kind Diag, diag::Severity Map,
+                                    SourceLocation L) {
   assert(Diag < diag::DIAG_UPPER_LIMIT &&
          "Can only map builtin diagnostics");
   assert((Diags->isBuiltinWarningOrExtension(Diag) ||
@@ -229,9 +228,8 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
 
-bool DiagnosticsEngine::setDiagnosticGroupMapping(StringRef Group,
-                                                  diag::Severity Map,
-                                                  SourceLocation Loc) {
+bool DiagnosticsEngine::setSeverityForGroup(StringRef Group, diag::Severity Map,
+                                            SourceLocation Loc) {
   // Get the diagnostics in this group.
   SmallVector<diag::kind, 8> GroupDiags;
   if (Diags->getDiagnosticsInGroup(Group, GroupDiags))
@@ -239,7 +237,7 @@ bool DiagnosticsEngine::setDiagnosticGroupMapping(StringRef Group,
 
   // Set the mapping.
   for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i)
-    setDiagnosticMapping(GroupDiags[i], Map, Loc);
+    setSeverity(GroupDiags[i], Map, Loc);
 
   return false;
 }
@@ -249,7 +247,7 @@ bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
   // If we are enabling this feature, just set the diagnostic mappings to map to
   // errors.
   if (Enabled)
-    return setDiagnosticGroupMapping(Group, diag::Severity::Error);
+    return setSeverityForGroup(Group, diag::Severity::Error);
 
   // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
   // potentially downgrade anything already mapped to be a warning.
@@ -278,7 +276,7 @@ bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
   // If we are enabling this feature, just set the diagnostic mappings to map to
   // fatal errors.
   if (Enabled)
-    return setDiagnosticGroupMapping(Group, diag::Severity::Fatal);
+    return setSeverityForGroup(Group, diag::Severity::Fatal);
 
   // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
   // potentially downgrade anything already mapped to be an error.
@@ -301,8 +299,8 @@ bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
   return false;
 }
 
-void DiagnosticsEngine::setMappingForAllDiagnostics(diag::Severity Map,
-                                                    SourceLocation Loc) {
+void DiagnosticsEngine::setSeverityForAll(diag::Severity Map,
+                                          SourceLocation Loc) {
   // Get all the diagnostics.
   SmallVector<diag::kind, 64> AllDiags;
   Diags->getAllDiagnostics(AllDiags);
@@ -310,7 +308,7 @@ void DiagnosticsEngine::setMappingForAllDiagnostics(diag::Severity Map,
   // Set the mapping.
   for (unsigned i = 0, e = AllDiags.size(); i != e; ++i)
     if (Diags->isBuiltinWarningOrExtension(AllDiags[i]))
-      setDiagnosticMapping(AllDiags[i], Map, Loc);
+      setSeverity(AllDiags[i], Map, Loc);
 }
 
 void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {

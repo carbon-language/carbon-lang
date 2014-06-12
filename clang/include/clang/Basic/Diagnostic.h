@@ -544,8 +544,7 @@ public:
   ///
   /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the latest state.
-  void setDiagnosticMapping(diag::kind Diag, diag::Severity Map,
-                            SourceLocation Loc);
+  void setSeverity(diag::kind Diag, diag::Severity Map, SourceLocation Loc);
 
   /// \brief Change an entire diagnostic group (e.g. "unknown-pragmas") to
   /// have the specified mapping.
@@ -555,8 +554,8 @@ public:
   ///
   /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the state from command-line.
-  bool setDiagnosticGroupMapping(StringRef Group, diag::Severity Map,
-                                 SourceLocation Loc = SourceLocation());
+  bool setSeverityForGroup(StringRef Group, diag::Severity Map,
+                           SourceLocation Loc = SourceLocation());
 
   /// \brief Set the warning-as-error flag for the given diagnostic group.
   ///
@@ -576,8 +575,8 @@ public:
   ///
   /// Mainly to be used by -Wno-everything to disable all warnings but allow
   /// subsequent -W options to enable specific warnings.
-  void setMappingForAllDiagnostics(diag::Severity Map,
-                                   SourceLocation Loc = SourceLocation());
+  void setSeverityForAll(diag::Severity Map,
+                         SourceLocation Loc = SourceLocation());
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
 

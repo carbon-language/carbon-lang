@@ -125,7 +125,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
             Diags.setEnableAllWarnings(true);
           } else {
             Diags.setEnableAllWarnings(false);
-            Diags.setMappingForAllDiagnostics(diag::Severity::Ignored);
+            Diags.setSeverityForAll(diag::Severity::Ignored);
           }
         }
         continue;
@@ -194,7 +194,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
           EmitUnknownDiagWarning(Diags, isPositive ? "-W" : "-Wno-", Opt,
                                  isPositive);
       } else {
-        Diags.setDiagnosticGroupMapping(Opt, Mapping);
+        Diags.setSeverityForGroup(Opt, Mapping);
       }
     }
   }
