@@ -34,6 +34,8 @@ def AMDGPUfmax : SDNode<"AMDGPUISD::FMAX", SDTFPBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
 
+def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPTernaryOp, []>;
+
 // out = max(a, b) a and b are signed ints
 def AMDGPUsmax : SDNode<"AMDGPUISD::SMAX", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]

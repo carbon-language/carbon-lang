@@ -743,25 +743,25 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
     default: return Op;
-    case AMDGPUIntrinsic::AMDIL_abs:
+    case AMDGPUIntrinsic::AMDGPU_abs:
+    case AMDGPUIntrinsic::AMDIL_abs: // Legacy name.
       return LowerIntrinsicIABS(Op, DAG);
-    case AMDGPUIntrinsic::AMDIL_exp:
-      return DAG.getNode(ISD::FEXP2, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDGPU_lrp:
       return LowerIntrinsicLRP(Op, DAG);
-    case AMDGPUIntrinsic::AMDIL_fraction:
+    case AMDGPUIntrinsic::AMDGPU_fract:
+    case AMDGPUIntrinsic::AMDIL_fraction: // Legacy name.
       return DAG.getNode(AMDGPUISD::FRACT, DL, VT, Op.getOperand(1));
-    case AMDGPUIntrinsic::AMDIL_max:
-      return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
+
+    case AMDGPUIntrinsic::AMDGPU_clamp:
+    case AMDGPUIntrinsic::AMDIL_clamp: // Legacy name.
+      return DAG.getNode(AMDGPUISD::CLAMP, DL, VT,
+                         Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
     case AMDGPUIntrinsic::AMDGPU_imax:
       return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
     case AMDGPUIntrinsic::AMDGPU_umax:
       return DAG.getNode(AMDGPUISD::UMAX, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
-    case AMDGPUIntrinsic::AMDIL_min:
-      return DAG.getNode(AMDGPUISD::FMIN, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
     case AMDGPUIntrinsic::AMDGPU_imin:
       return DAG.getNode(AMDGPUISD::SMIN, DL, VT, Op.getOperand(1),
@@ -821,7 +821,10 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                          Op.getOperand(1),
                          Op.getOperand(2));
 
-    case AMDGPUIntrinsic::AMDIL_round_nearest:
+    case AMDGPUIntrinsic::AMDIL_exp: // Legacy name.
+      return DAG.getNode(ISD::FEXP2, DL, VT, Op.getOperand(1));
+
+    case AMDGPUIntrinsic::AMDIL_round_nearest: // Legacy name.
       return DAG.getNode(ISD::FRINT, DL, VT, Op.getOperand(1));
   }
 }
@@ -1567,6 +1570,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   // AMDGPU DAG nodes
   NODE_NAME_CASE(DWORDADDR)
   NODE_NAME_CASE(FRACT)
+  NODE_NAME_CASE(CLAMP)
   NODE_NAME_CASE(FMAX)
   NODE_NAME_CASE(SMAX)
   NODE_NAME_CASE(UMAX)

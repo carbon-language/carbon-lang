@@ -143,8 +143,3 @@ multiclass BranchInstr2<string name> {
   def _f32 : ILFormat<(outs), (ins GPRF32:$src0, GPRF32:$src1),
       !strconcat(name, " $src0, $src1"), []>;
 }
-
-//===--------------------------------------------------------------------===//
-// Intrinsics support
-//===--------------------------------------------------------------------===//
-include "AMDILIntrinsics.td"

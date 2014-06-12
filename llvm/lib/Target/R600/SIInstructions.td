@@ -2004,7 +2004,7 @@ def FCLAMP_SI : AMDGPUShaderInst <
 }
 
 def : Pat <
-  (int_AMDIL_clamp f32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
+  (AMDGPUclamp f32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
   (FCLAMP_SI f32:$src)
 >;
 

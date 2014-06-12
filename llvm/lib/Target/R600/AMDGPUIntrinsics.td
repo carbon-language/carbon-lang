@@ -18,10 +18,12 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_reserve_reg : Intrinsic<[], [llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_store_output : Intrinsic<[], [llvm_float_ty, llvm_i32_ty], []>;
   def int_AMDGPU_swizzle : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_i32_ty], [IntrNoMem]>;
-
+  def int_AMDGPU_abs : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_arl : Intrinsic<[llvm_i32_ty], [llvm_float_ty], [IntrNoMem]>;
   def int_AMDGPU_cndlt : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty, llvm_float_ty], [IntrNoMem]>;
   def int_AMDGPU_div : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], [IntrNoMem]>;
+  def int_AMDGPU_fract : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_AMDGPU_clamp : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_AMDGPU_dp4 : Intrinsic<[llvm_float_ty], [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
   def int_AMDGPU_kill : Intrinsic<[], [llvm_float_ty], []>;
   def int_AMDGPU_kilp : Intrinsic<[], [], []>;
@@ -63,6 +65,15 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_bfe_u32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_bfm : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_barrier_local  : Intrinsic<[], [], []>;
+}
+
+// Legacy names for compatability.
+let TargetPrefix = "AMDIL", isTarget = 1 in {
+  def int_AMDIL_abs : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_AMDIL_fraction : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_AMDIL_clamp : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_AMDIL_exp : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_AMDIL_round_nearest : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 }
 
 let TargetPrefix = "TGSI", isTarget = 1 in {

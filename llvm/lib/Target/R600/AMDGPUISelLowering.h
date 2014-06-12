@@ -177,6 +177,7 @@ enum {
   // End AMDIL ISD Opcodes
   DWORDADDR,
   FRACT,
+  CLAMP,
   COS_HW,
   SIN_HW,
   FMAX,
