@@ -604,8 +604,15 @@ public:
   }
 
   ExprResult TransformAddressOfOperand(Expr *E);
+
   ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
-                                                bool IsAddressOfOperand);
+                                                bool IsAddressOfOperand,
+                                                TypeSourceInfo **RecoveryTSI);
+
+  ExprResult TransformParenDependentScopeDeclRefExpr(
+      ParenExpr *PE, DependentScopeDeclRefExpr *DRE, bool IsAddressOfOperand,
+      TypeSourceInfo **RecoveryTSI);
+
   StmtResult TransformOMPExecutableDirective(OMPExecutableDirective *S);
 
 // FIXME: We use LLVM_ATTRIBUTE_NOINLINE because inlining causes a ridiculous
@@ -2288,16 +2295,17 @@ public:
                                           SourceLocation TemplateKWLoc,
                                        const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs,
-                                          bool IsAddressOfOperand) {
+                                          bool IsAddressOfOperand,
+                                          TypeSourceInfo **RecoveryTSI) {
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
 
     if (TemplateArgs || TemplateKWLoc.isValid())
-      return getSema().BuildQualifiedTemplateIdExpr(SS, TemplateKWLoc,
-                                                    NameInfo, TemplateArgs);
+      return getSema().BuildQualifiedTemplateIdExpr(SS, TemplateKWLoc, NameInfo,
+                                                    TemplateArgs);
 
-    return getSema().BuildQualifiedDeclarationNameExpr(SS, NameInfo,
-                                                       IsAddressOfOperand);
+    return getSema().BuildQualifiedDeclarationNameExpr(
+        SS, NameInfo, IsAddressOfOperand, RecoveryTSI);
   }
 
   /// \brief Build a new template-id expression.
@@ -6708,7 +6716,7 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformAddressOfOperand(Expr *E) {
   if (DependentScopeDeclRefExpr *DRE = dyn_cast<DependentScopeDeclRefExpr>(E))
-    return getDerived().TransformDependentScopeDeclRefExpr(DRE, true);
+    return getDerived().TransformDependentScopeDeclRefExpr(DRE, true, nullptr);
   else
     return getDerived().TransformExpr(E);
 }
@@ -6853,8 +6861,22 @@ TreeTransform<Derived>::TransformUnaryExprOrTypeTraitExpr(
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated,
                                                Sema::ReuseLambdaContextDecl);
 
-  ExprResult SubExpr = getDerived().TransformExpr(E->getArgumentExpr());
-  if (SubExpr.isInvalid())
+  // Try to recover if we have something like sizeof(T::X) where X is a type.
+  // Notably, there must be *exactly* one set of parens if X is a type.
+  TypeSourceInfo *RecoveryTSI = nullptr;
+  ExprResult SubExpr;
+  auto *PE = dyn_cast<ParenExpr>(E->getArgumentExpr());
+  if (auto *DRE =
+          PE ? dyn_cast<DependentScopeDeclRefExpr>(PE->getSubExpr()) : nullptr)
+    SubExpr = getDerived().TransformParenDependentScopeDeclRefExpr(
+        PE, DRE, false, &RecoveryTSI);
+  else
+    SubExpr = getDerived().TransformExpr(E->getArgumentExpr());
+
+  if (RecoveryTSI) {
+    return getDerived().RebuildUnaryExprOrTypeTrait(
+        RecoveryTSI, E->getOperatorLoc(), E->getKind(), E->getSourceRange());
+  } else if (SubExpr.isInvalid())
     return ExprError();
 
   if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getArgumentExpr())
@@ -8234,18 +8256,37 @@ TreeTransform<Derived>::TransformExpressionTraitExpr(ExpressionTraitExpr *E) {
       E->getTrait(), E->getLocStart(), SubExpr.get(), E->getLocEnd());
 }
 
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
-                                               DependentScopeDeclRefExpr *E) {
-  return TransformDependentScopeDeclRefExpr(E, /*IsAddressOfOperand*/false);
+template <typename Derived>
+ExprResult TreeTransform<Derived>::TransformParenDependentScopeDeclRefExpr(
+    ParenExpr *PE, DependentScopeDeclRefExpr *DRE, bool AddrTaken,
+    TypeSourceInfo **RecoveryTSI) {
+  ExprResult NewDRE = getDerived().TransformDependentScopeDeclRefExpr(
+      DRE, AddrTaken, RecoveryTSI);
+
+  // Propagate both errors and recovered types, which return ExprEmpty.
+  if (!NewDRE.isUsable())
+    return NewDRE;
+
+  // We got an expr, wrap it up in parens.
+  if (!getDerived().AlwaysRebuild() && NewDRE.get() == DRE)
+    return PE;
+  return getDerived().RebuildParenExpr(NewDRE.get(), PE->getLParen(),
+                                       PE->getRParen());
+}
+
+template <typename Derived>
+ExprResult TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
+    DependentScopeDeclRefExpr *E) {
+  return TransformDependentScopeDeclRefExpr(E, /*IsAddressOfOperand=*/false,
+                                            nullptr);
 }
 
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                                DependentScopeDeclRefExpr *E,
-                                               bool IsAddressOfOperand) {
+                                               bool IsAddressOfOperand,
+                                               TypeSourceInfo **RecoveryTSI) {
   assert(E->getQualifierLoc());
   NestedNameSpecifierLoc QualifierLoc
   = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
@@ -8270,11 +8311,9 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
         NameInfo.getName() == E->getDeclName())
       return E;
 
-    return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
-                                                        TemplateKWLoc,
-                                                        NameInfo,
-                                                        /*TemplateArgs*/nullptr,
-                                                        IsAddressOfOperand);
+    return getDerived().RebuildDependentScopeDeclRefExpr(
+        QualifierLoc, TemplateKWLoc, NameInfo, /*TemplateArgs=*/nullptr,
+        IsAddressOfOperand, RecoveryTSI);
   }
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
@@ -8283,11 +8322,9 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                               TransArgs))
     return ExprError();
 
-  return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
-                                                       TemplateKWLoc,
-                                                       NameInfo,
-                                                       &TransArgs,
-                                                       IsAddressOfOperand);
+  return getDerived().RebuildDependentScopeDeclRefExpr(
+      QualifierLoc, TemplateKWLoc, NameInfo, &TransArgs, IsAddressOfOperand,
+      RecoveryTSI);
 }
 
 template<typename Derived>

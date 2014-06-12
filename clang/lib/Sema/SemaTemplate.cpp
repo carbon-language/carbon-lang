@@ -2897,7 +2897,7 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
   if (ClassTemplateDecl *Temp = R.getAsSingle<ClassTemplateDecl>()) {
     Diag(NameInfo.getLoc(), diag::err_template_kw_refers_to_class_template)
       << SS.getScopeRep()
-      << NameInfo.getName() << SS.getRange();
+      << NameInfo.getName().getAsString() << SS.getRange();
     Diag(Temp->getLocation(), diag::note_referenced_class_template);
     return ExprError();
   }

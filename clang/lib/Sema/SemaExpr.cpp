@@ -2185,7 +2185,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
                                         const DeclarationNameInfo &NameInfo,
-                                        bool IsAddressOfOperand) {
+                                        bool IsAddressOfOperand,
+                                        TypeSourceInfo **RecoveryTSI) {
   DeclContext *DC = computeDeclContext(SS, false);
   if (!DC)
     return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
@@ -2210,15 +2211,39 @@ Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
     return ExprError();
   }
 
-  if (R.isSingleResult() && R.getAsSingle<TypeDecl>()) {
-    // Diagnose a missing typename if this resolved unambiguously to a type in a
-    // dependent context.
-    // FIXME: Issue a fixit and recover as though the user had written
-    // 'typename'.
-    Diag(SS.getBeginLoc(), diag::err_typename_missing)
-        << SS.getScopeRep() << NameInfo.getName().getAsString()
-        << SourceRange(SS.getBeginLoc(), NameInfo.getEndLoc());
-    return ExprError();
+  if (const TypeDecl *TD = R.getAsSingle<TypeDecl>()) {
+    // Diagnose a missing typename if this resolved unambiguously to a type in
+    // a dependent context.  If we can recover with a type, downgrade this to
+    // a warning in Microsoft compatibility mode.
+    unsigned DiagID = diag::err_typename_missing;
+    if (RecoveryTSI && getLangOpts().MSVCCompat)
+      DiagID = diag::ext_typename_missing;
+    SourceLocation Loc = SS.getBeginLoc();
+    auto D = Diag(Loc, DiagID);
+    D << SS.getScopeRep() << NameInfo.getName().getAsString()
+      << SourceRange(Loc, NameInfo.getEndLoc());
+
+    // Don't recover if the caller isn't expecting us to or if we're in a SFINAE
+    // context.
+    if (!RecoveryTSI)
+      return ExprError();
+
+    // Only issue the fixit if we're prepared to recover.
+    D << FixItHint::CreateInsertion(Loc, "typename ");
+
+    // Recover by pretending this was an elaborated type.
+    QualType Ty = Context.getTypeDeclType(TD);
+    TypeLocBuilder TLB;
+    TLB.pushTypeSpec(Ty).setNameLoc(NameInfo.getLoc());
+
+    QualType ET = getElaboratedType(ETK_None, SS, Ty);
+    ElaboratedTypeLoc QTL = TLB.push<ElaboratedTypeLoc>(ET);
+    QTL.setElaboratedKeywordLoc(SourceLocation());
+    QTL.setQualifierLoc(SS.getWithLocInContext(Context));
+
+    *RecoveryTSI = TLB.getTypeSourceInfo(Context, ET);
+
+    return ExprEmpty();
   }
 
   // Defend against this resolving to an implicit member access. We usually

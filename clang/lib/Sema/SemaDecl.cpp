@@ -517,7 +517,7 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
   else if (isDependentScopeSpecifier(*SS)) {
     unsigned DiagID = diag::err_typename_missing;
     if (getLangOpts().MSVCCompat && isMicrosoftMissingTypename(SS, S))
-      DiagID = diag::warn_typename_missing;
+      DiagID = diag::ext_typename_missing;
 
     Diag(SS->getRange().getBegin(), DiagID)
       << SS->getScopeRep() << II->getName()
