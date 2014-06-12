@@ -377,6 +377,9 @@ protected:
   /// Test whether the given value has exactly one use.
   bool hasTrivialKill(const Value *V) const;
 
+  /// \brief Create a machine mem operand from the given instruction.
+  MachineMemOperand *createMachineMemOperandFor(const Instruction *I) const;
+
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
