@@ -97,6 +97,7 @@ using namespace clang::tooling;
 using namespace llvm;
 using namespace llvm::opt;
 using namespace llvm::sys;
+using std::error_code;
 
 // Option for include paths.
 static cl::list<std::string>

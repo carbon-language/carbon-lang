@@ -29,6 +29,7 @@
 
 using namespace llvm;
 using namespace clang;
+using std::error_code;
 
 
 static void eatDiagnostics(const SMDiagnostic &, void *) {}

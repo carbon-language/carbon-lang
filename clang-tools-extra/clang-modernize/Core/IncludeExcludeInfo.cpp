@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+using std::error_code;
 
 /// A string type to represent paths.
 typedef SmallString<64> PathString;

@@ -175,6 +175,7 @@ using namespace clang::tooling;
 using namespace llvm;
 using namespace llvm::opt;
 using namespace Modularize;
+using std::error_code;
 
 // Option to specify a file name for a list of header files to check.
 cl::opt<std::string>

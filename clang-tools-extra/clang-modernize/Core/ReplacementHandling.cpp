@@ -23,6 +23,7 @@
 using namespace llvm;
 using namespace llvm::sys;
 using namespace clang::tooling;
+using std::error_code;
 
 bool ReplacementHandling::findClangApplyReplacements(const char *Argv0) {
   CARPath = FindProgramByName("clang-apply-replacements");

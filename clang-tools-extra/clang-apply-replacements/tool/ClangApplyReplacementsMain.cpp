@@ -27,6 +27,7 @@
 using namespace llvm;
 using namespace clang;
 using namespace clang::replace;
+using std::error_code;
 
 static cl::opt<std::string> Directory(cl::Positional, cl::Required,
                                       cl::desc("<Search Root Directory>"));
