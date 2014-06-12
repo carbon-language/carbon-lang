@@ -542,20 +542,31 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
   const MCInstrDesc& Mtc1Tdd = get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
   const TargetRegisterInfo &TRI = getRegisterInfo();
+  bool HasMTHC1 = TM.getSubtarget<MipsSubtarget>().hasMips32r2() ||
+                  TM.getSubtarget<MipsSubtarget>().hasMips32r6();
 
-  // For FP32 mode:
-  //   mtc1 Lo, $fp
-  //   mtc1 Hi, $fp + 1
-  // For FP64 mode:
+  // When mthc1 is available, use:
   //   mtc1 Lo, $fp
   //   mthc1 Hi, $fp
+  //
+  // Otherwise, for FP64:
+  //   spill + reload via ldc1
+  // This has not been implemented since FP64 on MIPS32 and earlier is not
+  // supported.
+  //
+  // Otherwise, for FP32:
+  //   mtc1 Lo, $fp
+  //   mtc1 Hi, $fp + 1
 
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_lo))
     .addReg(LoReg);
 
-  if (FP64) {
-    // FIXME: The .addReg(DstReg, RegState::Implicit) is a white lie used to
-    //        temporarily work around a widespread bug in the -mfp64 support.
+  if (HasMTHC1 || FP64) {
+    assert(TM.getSubtarget<MipsSubtarget>().hasMips32r2() &&
+           "MTHC1 requires MIPS32r2");
+
+    // FIXME: The .addReg(DstReg) is a white lie used to temporarily work
+    //        around a widespread bug in the -mfp64 support.
     //        The problem is that none of the 32-bit fpu ops mention the fact
     //        that they clobber the upper 32-bits of the 64-bit FPR. Fixing that
     //        requires a major overhaul of the FPU implementation which can't
@@ -565,9 +576,9 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
     //        We therefore pretend that it reads the bottom 32-bits to
     //        artificially create a dependency and prevent the scheduler
     //        changing the behaviour of the code.
-    BuildMI(MBB, I, dl, get(Mips::MTHC1), TRI.getSubReg(DstReg, Mips::sub_hi))
-        .addReg(HiReg)
-        .addReg(DstReg, RegState::Implicit);
+    BuildMI(MBB, I, dl, get(FP64 ? Mips::MTHC1_D64 : Mips::MTHC1_D32), DstReg)
+        .addReg(DstReg)
+        .addReg(HiReg);
   } else
     BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))
       .addReg(HiReg);

@@ -13,7 +13,7 @@
 ; LE-PIC-DAG: lw $[[R0:[0-9]+]], 0(${{[0-9]+}})
 ; LE-PIC-DAG: lw $[[R1:[0-9]+]], 4(${{[0-9]+}})
 ; LE-PIC-DAG: mtc1 $[[R0]], $f0
-; LE-PIC-DAG: mtc1 $[[R1]], $f1
+; LE-PIC-DAG: mthc1 $[[R1]], $f0
 ; LE-STATIC-LABEL: test_ldc1:
 ; LE-STATIC-DAG: lui $[[R0:[0-9]+]], %hi(g0)
 ; LE-STATIC-DAG: lw $[[R1:[0-9]+]], %lo(g0)($[[R0]])
@@ -66,7 +66,7 @@ entry:
 ; LE-PIC-DAG: lw $[[R0:[0-9]+]], 0(${{[0-9]+}})
 ; LE-PIC-DAG: lw $[[R1:[0-9]+]], 4(${{[0-9]+}})
 ; LE-PIC-DAG: mtc1 $[[R0]], $f0
-; LE-PIC-DAG: mtc1 $[[R1]], $f1
+; LE-PIC-DAG: mthc1 $[[R1]], $f0
 ; CHECK-LDC1-SDC1-LABEL: test_ldxc1:
 ; CHECK-LDC1-SDC1: ldxc1 $f{{[0-9]+}}
 

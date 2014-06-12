@@ -153,6 +153,15 @@ class MTC1_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
   InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
          [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR, opstr>;
 
+class MTC1_64_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
+                 InstrItinClass Itin> :
+  InstSE<(outs DstRC:$fs), (ins DstRC:$fs_in, SrcRC:$rt),
+         !strconcat(opstr, "\t$rt, $fs"), [], Itin, FrmFR, opstr> {
+  // $fs_in is part of a white lie to work around a widespread bug in the FPU
+  // implementation. See expandBuildPairF64 for details.
+  let Constraints = "$fs = $fs_in";
+}
+
 class LW_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
             SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
@@ -355,8 +364,12 @@ def MTC1 : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, II_MTC1,
                           bitconvert>, MFC1_FM<4>;
 def MFHC1 : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, II_MFHC1>,
             MFC1_FM<3>, ISA_MIPS32R2;
-def MTHC1 : MMRel, MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, II_MTHC1>,
-            MFC1_FM<7>, ISA_MIPS32R2;
+def MTHC1_D32 : MMRel, MTC1_64_FT<"mthc1", FGR64Opnd, GPR32Opnd, II_MTHC1>,
+                MFC1_FM<7>, ISA_MIPS32R2, AdditionalRequires<[NotFP64bit]>;
+def MTHC1_D64 : MTC1_64_FT<"mthc1", AFGR64Opnd, GPR32Opnd, II_MTHC1>,
+                MFC1_FM<7>, ISA_MIPS32R2, AdditionalRequires<[IsFP64bit]> {
+  let DecoderNamespace = "Mips64";
+}
 def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, II_DMFC1,
             bitconvert>, MFC1_FM<1>, ISA_MIPS3;
 def DMTC1 : MTC1_FT<"dmtc1", FGR64Opnd, GPR64Opnd, II_DMTC1,

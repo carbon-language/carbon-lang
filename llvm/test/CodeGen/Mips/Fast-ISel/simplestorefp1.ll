@@ -28,9 +28,9 @@ entry:
 ; CHECK:  ori  $[[REG2a:[0-9]+]], $[[REG1a]], 49353
 ; CHECK:  lui  $[[REG1b:[0-9]+]], 21403
 ; CHECK:  ori  $[[REG2b:[0-9]+]], $[[REG1b]], 34951
-; CHECK:  mtc1  $[[REG2b]], $f[[REG3b:[0-9]+]]
-; CHECK:  mtc1  $[[REG2a]], $f[[REG3a:[0-9]+]]
-; CHECK:  sdc1  $f[[REG3b]], 0(${{[0-9]+}})
+; CHECK:  mtc1  $[[REG2b]], $f[[REG3:[0-9]+]]
+; CHECK:  mthc1  $[[REG2a]], $f[[REG3]]
+; CHECK:  sdc1  $f[[REG3]], 0(${{[0-9]+}})
 ; CHECK:  .end  d1
   ret void
 }

@@ -1,7 +1,7 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=FP32 -check-prefix=CHECK
 ; RUN: llc -march=mips  < %s | FileCheck %s -check-prefix=FP32 -check-prefix=CHECK
-; RUN: llc -march=mipsel -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
-; RUN: llc -march=mips -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
+; RUN: llc -march=mipsel -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
+; RUN: llc -march=mips -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
 
 @a = external global i32
 

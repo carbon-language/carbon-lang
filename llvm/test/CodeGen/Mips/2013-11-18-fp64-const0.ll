@@ -1,5 +1,5 @@
 ; RUN: llc -march=mips -mattr=-fp64 < %s | FileCheck -check-prefix=CHECK-FP32 %s
-; RUN: llc -march=mips -mattr=+fp64 < %s | FileCheck -check-prefix=CHECK-FP64 %s
+; RUN: llc -march=mips -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck -check-prefix=CHECK-FP64 %s
 
 ; This test case is a simplified version of an llvm-stress generated test with
 ; seed=3718491962.
