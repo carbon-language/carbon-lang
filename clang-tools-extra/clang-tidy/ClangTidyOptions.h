@@ -34,8 +34,8 @@ struct FileFilter {
 /// \brief Global options. These options are neither stored nor read from
 /// configuration files.
 struct ClangTidyGlobalOptions {
-  /// \brief Output warnings from certain line ranges of certain files only. If
-  /// this list is emtpy, it won't be applied.
+  /// \brief Output warnings from certain line ranges of certain files only.
+  /// If empty, no warnings will be filtered.
   std::vector<FileFilter> LineFilter;
 };
 
