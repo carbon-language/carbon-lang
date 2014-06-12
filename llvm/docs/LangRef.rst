@@ -519,11 +519,13 @@ Global Variables
 Global variables define regions of memory allocated at compilation time
 instead of run-time.
 
-Global variables definitions must be initialized, may have an explicit section
-to be placed in, and may have an optional explicit alignment specified.
+Global variables definitions must be initialized.
 
 Global variables in other translation units can also be declared, in which
 case they don't have an initializer.
+
+Either global variable definitions or declarations may have an explicit section
+to be placed in and may have an optional explicit alignment specified.
 
 A variable may be defined as a global ``constant``, which indicates that
 the contents of the variable will **never** be modified (enabling better
@@ -589,8 +591,8 @@ Syntax::
 
     [@<GlobalVarName> =] [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
                          [unnamed_addr] [AddrSpace] [ExternallyInitialized]
-                         <global | constant> <Type> [<InitializerConstant>
-                         [, section "name"] [, align <Alignment>]]
+                         <global | constant> <Type> [<InitializerConstant>]
+                         [, section "name"] [, align <Alignment>]
 
 For example, the following defines a global in a numbered address space
 with an initializer, section, and alignment:
