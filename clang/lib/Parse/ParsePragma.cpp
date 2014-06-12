@@ -1216,7 +1216,7 @@ PragmaNoOpenMPHandler::HandlePragma(Preprocessor &PP,
       DiagnosticsEngine::Ignored) {
     PP.Diag(FirstTok, diag::warn_pragma_omp_ignored);
     PP.getDiagnostics().setDiagnosticMapping(diag::warn_pragma_omp_ignored,
-                                             diag::MAP_IGNORE,
+                                             diag::Severity::Ignored,
                                              SourceLocation());
   }
   PP.DiscardUntilEndOfDirective();

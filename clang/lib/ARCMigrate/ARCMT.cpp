@@ -313,7 +313,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   pass.setNoFinalizeRemoval(NoFinalizeRemoval);
   if (!NoNSAllocReallocError)
     Diags->setDiagnosticMapping(diag::warn_arcmt_nsalloc_realloc,
-                                diag::MAP_ERROR, SourceLocation());
+                                diag::Severity::Error, SourceLocation());
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i)
     transforms[i](pass);

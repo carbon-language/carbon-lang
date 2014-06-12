@@ -155,13 +155,13 @@ CATEGORY(ANALYSIS, SEMA)
 
 static DiagnosticMapping GetDefaultDiagMapping(unsigned DiagID) {
   DiagnosticMapping Info = DiagnosticMapping::Make(
-      diag::MAP_FATAL, /*IsUser=*/false, /*IsPragma=*/false);
+      diag::Severity::Fatal, /*IsUser=*/false, /*IsPragma=*/false);
 
   if (const StaticDiagInfoRec *StaticInfo = GetDiagInfo(DiagID)) {
     Info.setSeverity((diag::Severity)StaticInfo->DefaultSeverity);
 
     if (StaticInfo->WarnNoWerror) {
-      assert(Info.getSeverity() == diag::MAP_WARNING &&
+      assert(Info.getSeverity() == diag::Severity::Warning &&
              "Unexpected mapping with no-Werror bit!");
       Info.setNoWarningAsError(true);
     }
@@ -342,7 +342,7 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
     return false;
 
   EnabledByDefault =
-      GetDefaultDiagMapping(DiagID).getSeverity() != diag::MAP_IGNORE;
+      GetDefaultDiagMapping(DiagID).getSeverity() != diag::Severity::Ignored;
   return true;
 }
 
@@ -350,7 +350,7 @@ bool DiagnosticIDs::isDefaultMappingAsError(unsigned DiagID) {
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return false;
 
-  return GetDefaultDiagMapping(DiagID).getSeverity() == diag::MAP_ERROR;
+  return GetDefaultDiagMapping(DiagID).getSeverity() == diag::Severity::Error;
 }
 
 bool DiagnosticIDs::isRemark(unsigned DiagID) {
@@ -366,6 +366,21 @@ StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
   return CustomDiagInfo->getDescription(DiagID);
 }
 
+static DiagnosticIDs::Level toLevel(diag::Severity SV) {
+  switch (SV) {
+  case diag::Severity::Ignored:
+    return DiagnosticIDs::Ignored;
+  case diag::Severity::Remark:
+    return DiagnosticIDs::Remark;
+  case diag::Severity::Warning:
+    return DiagnosticIDs::Warning;
+  case diag::Severity::Error:
+    return DiagnosticIDs::Error;
+  case diag::Severity::Fatal:
+    return DiagnosticIDs::Fatal;
+  }
+}
+
 /// getDiagnosticLevel - Based on the way the client configured the
 /// DiagnosticsEngine object, classify the specified diagnostic ID into a Level,
 /// by consumable the DiagnosticClient.
@@ -378,7 +393,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
   if (DiagClass == CLASS_NOTE) return DiagnosticIDs::Note;
-  return getDiagnosticLevel(DiagID, DiagClass, Loc, Diag);
+  return toLevel(getDiagnosticSeverity(DiagID, DiagClass, Loc, Diag));
 }
 
 /// \brief Based on the way the client configured the Diagnostic
@@ -387,13 +402,15 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 ///
 /// \param Loc The source location we are interested in finding out the
 /// diagnostic state. Can be null in order to query the latest state.
-DiagnosticIDs::Level
-DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
-                                  SourceLocation Loc,
-                                  const DiagnosticsEngine &Diag) const {
+diag::Severity
+DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass,
+                                     SourceLocation Loc,
+                                     const DiagnosticsEngine &Diag) const {
+  assert(DiagClass != CLASS_NOTE);
+
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
-  DiagnosticIDs::Level Result = DiagnosticIDs::Fatal;
+  diag::Severity Result = diag::Severity::Fatal;
 
   DiagnosticsEngine::DiagStatePointsTy::iterator
     Pos = Diag.GetDiagStatePointForLoc(Loc);
@@ -402,33 +419,19 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   // Get the mapping information, or compute it lazily.
   DiagnosticMapping &Mapping = State->getOrAddMapping((diag::kind)DiagID);
 
-  switch (Mapping.getSeverity()) {
-  case diag::MAP_IGNORE:
-    Result = DiagnosticIDs::Ignored;
-    break;
-  case diag::MAP_REMARK:
-    Result = DiagnosticIDs::Remark;
-    break;
-  case diag::MAP_WARNING:
-    Result = DiagnosticIDs::Warning;
-    break;
-  case diag::MAP_ERROR:
-    Result = DiagnosticIDs::Error;
-    break;
-  case diag::MAP_FATAL:
-    Result = DiagnosticIDs::Fatal;
-    break;
-  }
+  // TODO: Can a null severity really get here?
+  if (Mapping.getSeverity() != diag::Severity())
+    Result = Mapping.getSeverity();
 
   // Upgrade ignored diagnostics if -Weverything is enabled.
-  if (Diag.EnableAllWarnings && Result == DiagnosticIDs::Ignored &&
+  if (Diag.EnableAllWarnings && Result == diag::Severity::Ignored &&
       !Mapping.isUser())
-    Result = DiagnosticIDs::Warning;
+    Result = diag::Severity::Warning;
 
   // Diagnostics of class REMARK are either printed as remarks or in case they
   // have been added to -Werror they are printed as errors.
-  if (DiagClass == CLASS_REMARK && Result == DiagnosticIDs::Warning)
-    Result = DiagnosticIDs::Remark;
+  if (DiagClass == CLASS_REMARK && Result == diag::Severity::Warning)
+    Result = diag::Severity::Remark;
 
   // Ignore -pedantic diagnostics inside __extension__ blocks.
   // (The diagnostics controlled by -pedantic are the extension diagnostics
@@ -436,7 +439,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   bool EnabledByDefault = false;
   bool IsExtensionDiag = isBuiltinExtensionDiag(DiagID, EnabledByDefault);
   if (Diag.AllExtensionsSilenced && IsExtensionDiag && !EnabledByDefault)
-    return DiagnosticIDs::Ignored;
+    return diag::Severity::Ignored;
 
   // For extension diagnostics that haven't been explicitly mapped, check if we
   // should upgrade the diagnostic.
@@ -446,37 +449,38 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       break; 
     case DiagnosticsEngine::Ext_Warn:
       // Upgrade ignored diagnostics to warnings.
-      if (Result == DiagnosticIDs::Ignored)
-        Result = DiagnosticIDs::Warning;
+      if (Result == diag::Severity::Ignored)
+        Result = diag::Severity::Warning;
       break;
     case DiagnosticsEngine::Ext_Error:
       // Upgrade ignored or warning diagnostics to errors.
-      if (Result == DiagnosticIDs::Ignored || Result == DiagnosticIDs::Warning)
-        Result = DiagnosticIDs::Error;
+      if (Result == diag::Severity::Ignored ||
+          Result == diag::Severity::Warning)
+        Result = diag::Severity::Error;
       break;
     }
   }
 
   // At this point, ignored errors can no longer be upgraded.
-  if (Result == DiagnosticIDs::Ignored)
+  if (Result == diag::Severity::Ignored)
     return Result;
 
   // Honor -w, which is lower in priority than pedantic-errors, but higher than
   // -Werror.
-  if (Result == DiagnosticIDs::Warning && Diag.IgnoreAllWarnings)
-    return DiagnosticIDs::Ignored;
+  if (Result == diag::Severity::Warning && Diag.IgnoreAllWarnings)
+    return diag::Severity::Ignored;
 
   // If -Werror is enabled, map warnings to errors unless explicitly disabled.
-  if (Result == DiagnosticIDs::Warning) {
+  if (Result == diag::Severity::Warning) {
     if (Diag.WarningsAsErrors && !Mapping.hasNoWarningAsError())
-      Result = DiagnosticIDs::Error;
+      Result = diag::Severity::Error;
   }
 
   // If -Wfatal-errors is enabled, map errors to fatal unless explicity
   // disabled.
-  if (Result == DiagnosticIDs::Error) {
+  if (Result == diag::Severity::Error) {
     if (Diag.ErrorsAsFatal && !Mapping.hasNoErrorAsFatal())
-      Result = DiagnosticIDs::Fatal;
+      Result = diag::Severity::Fatal;
   }
 
   // Custom diagnostics always are emitted in system headers.
@@ -486,11 +490,11 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   // If we are in a system header, we ignore it. We look at the diagnostic class
   // because we also want to ignore extensions and warnings in -Werror and
   // -pedantic-errors modes, which *map* warnings/extensions to errors.
-  if (Result >= DiagnosticIDs::Warning && DiagClass != CLASS_ERROR &&
+  if (Result >= diag::Severity::Warning && DiagClass != CLASS_ERROR &&
       !ShowInSystemHeader && Diag.SuppressSystemWarnings && Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(
           Diag.getSourceManager().getExpansionLoc(Loc)))
-    return DiagnosticIDs::Ignored;
+    return diag::Severity::Ignored;
 
   return Result;
 }

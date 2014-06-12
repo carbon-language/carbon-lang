@@ -2542,7 +2542,7 @@ void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
              I = point.State->begin(), E = point.State->end(); I != E; ++I) {
         if (I->second.isPragma()) {
           Record.push_back(I->first);
-          Record.push_back(I->second.getSeverity());
+          Record.push_back((unsigned)I->second.getSeverity());
         }
       }
       Record.push_back(-1); // mark the end of the diag/map pairs for this

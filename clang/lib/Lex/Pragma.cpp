@@ -954,16 +954,7 @@ public:
     IdentifierInfo *II = Tok.getIdentifierInfo();
     PPCallbacks *Callbacks = PP.getPPCallbacks();
 
-    diag::Severity Map;
-    if (II->isStr("warning"))
-      Map = diag::MAP_WARNING;
-    else if (II->isStr("error"))
-      Map = diag::MAP_ERROR;
-    else if (II->isStr("ignored"))
-      Map = diag::MAP_IGNORE;
-    else if (II->isStr("fatal"))
-      Map = diag::MAP_FATAL;
-    else if (II->isStr("pop")) {
+    if (II->isStr("pop")) {
       if (!PP.getDiagnostics().popMappings(DiagLoc))
         PP.Diag(Tok, diag::warn_pragma_diagnostic_cannot_pop);
       else if (Callbacks)
@@ -974,7 +965,16 @@ public:
       if (Callbacks)
         Callbacks->PragmaDiagnosticPush(DiagLoc, Namespace);
       return;
-    } else {
+    }
+
+    diag::Severity SV = llvm::StringSwitch<diag::Severity>(II->getName())
+                            .Case("ignored", diag::Severity::Ignored)
+                            .Case("warning", diag::Severity::Warning)
+                            .Case("error", diag::Severity::Error)
+                            .Case("fatal", diag::Severity::Fatal)
+                            .Default(diag::Severity());
+
+    if (SV == diag::Severity()) {
       PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
       return;
     }
@@ -998,12 +998,12 @@ public:
       return;
     }
 
-    if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.substr(2),
-                                                      Map, DiagLoc))
+    if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.substr(2), SV,
+                                                      DiagLoc))
       PP.Diag(StringLoc, diag::warn_pragma_diagnostic_unknown_warning)
         << WarningName;
     else if (Callbacks)
-      Callbacks->PragmaDiagnostic(DiagLoc, Namespace, Map, WarningName);
+      Callbacks->PragmaDiagnostic(DiagLoc, Namespace, SV, WarningName);
   }
 };
 

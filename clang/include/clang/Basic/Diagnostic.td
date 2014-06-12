@@ -12,13 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Define the diagnostic mappings.
-class DiagMapping;
-def MAP_IGNORE  : DiagMapping;
-def MAP_REMARK  : DiagMapping;
-def MAP_WARNING : DiagMapping;
-def MAP_ERROR   : DiagMapping;
-def MAP_FATAL   : DiagMapping;
+// Define the diagnostic severities.
+class Severity<string N> {
+  string Name = N;
+}
+def SEV_Ignored : Severity<"Ignored">;
+def SEV_Remark  : Severity<"Remark">;
+def SEV_Warning : Severity<"Warning">;
+def SEV_Error   : Severity<"Error">;
+def SEV_Fatal   : Severity<"Fatal">;
 
 // Define the diagnostic classes.
 class DiagClass;
@@ -59,7 +61,7 @@ include "DiagnosticGroups.td"
 
 
 // All diagnostics emitted by the compiler are an indirect subclass of this.
-class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
+class Diagnostic<string text, DiagClass DC, Severity defaultmapping> {
   /// Component is specified by the file with a big let directive.
   string         Component = ?;
   string         Text = text;
@@ -68,7 +70,7 @@ class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
   bit            AccessControl = 0;
   bit            WarningNoWerror = 0;
   bit            WarningShowInSystemHeader = 0;
-  DiagMapping    DefaultMapping = defaultmapping;
+  Severity       DefaultSeverity = defaultmapping;
   DiagGroup      Group;
   string         CategoryName = "";
 }
@@ -84,25 +86,25 @@ class AccessControl {
 }
 
 // FIXME: ExtWarn and Extension should also be SFINAEFailure by default.
-class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>, SFINAEFailure;
-class Warning<string str>   : Diagnostic<str, CLASS_WARNING, MAP_WARNING>;
-class Remark<string str>    : Diagnostic<str, CLASS_REMARK, MAP_IGNORE>;
-class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, MAP_IGNORE>;
-class ExtWarn<string str>   : Diagnostic<str, CLASS_EXTENSION, MAP_WARNING>;
-class Note<string str>      : Diagnostic<str, CLASS_NOTE, MAP_FATAL/*ignored*/>;
+class Error<string str>     : Diagnostic<str, CLASS_ERROR, SEV_Error>, SFINAEFailure;
+class Warning<string str>   : Diagnostic<str, CLASS_WARNING, SEV_Warning>;
+class Remark<string str>    : Diagnostic<str, CLASS_REMARK, SEV_Ignored>;
+class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, SEV_Ignored>;
+class ExtWarn<string str>   : Diagnostic<str, CLASS_EXTENSION, SEV_Warning>;
+class Note<string str>      : Diagnostic<str, CLASS_NOTE, SEV_Fatal/*ignored*/>;
 
 
-class DefaultIgnore { DiagMapping DefaultMapping = MAP_IGNORE; }
-class DefaultWarn   { DiagMapping DefaultMapping = MAP_WARNING; }
-class DefaultError  { DiagMapping DefaultMapping = MAP_ERROR; }
-class DefaultFatal  { DiagMapping DefaultMapping = MAP_FATAL; }
+class DefaultIgnore { Severity DefaultSeverity = SEV_Ignored; }
+class DefaultWarn   { Severity DefaultSeverity = SEV_Warning; }
+class DefaultError  { Severity DefaultSeverity = SEV_Error; }
+class DefaultFatal  { Severity DefaultSeverity = SEV_Fatal; }
 class DefaultWarnNoWerror {
   bit WarningNoWerror = 1;
 }
 class DefaultWarnShowInSystemHeader {
   bit WarningShowInSystemHeader = 1;
 }
-class DefaultRemark { DiagMapping DefaultMapping = MAP_REMARK; }
+class DefaultRemark { Severity DefaultSeverity = SEV_Remark; }
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"

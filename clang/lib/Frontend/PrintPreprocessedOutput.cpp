@@ -447,19 +447,19 @@ void PrintPPOutputPPCallbacks::PragmaDiagnostic(SourceLocation Loc,
   MoveToLine(Loc);
   OS << "#pragma " << Namespace << " diagnostic ";
   switch (Map) {
-  case diag::MAP_REMARK:
+  case diag::Severity::Remark:
     OS << "remark";
     break;
-  case diag::MAP_WARNING:
+  case diag::Severity::Warning:
     OS << "warning";
     break;
-  case diag::MAP_ERROR:
+  case diag::Severity::Error:
     OS << "error";
     break;
-  case diag::MAP_IGNORE:
+  case diag::Severity::Ignored:
     OS << "ignored";
     break;
-  case diag::MAP_FATAL:
+  case diag::Severity::Fatal:
     OS << "fatal";
     break;
   }

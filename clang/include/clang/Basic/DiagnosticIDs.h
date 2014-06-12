@@ -56,17 +56,16 @@ namespace clang {
     };
 
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
-    /// to either MAP_IGNORE (nothing), MAP_REMARK (emit a remark), MAP_WARNING
-    /// (emit a warning), MAP_ERROR (emit as an error).  It allows clients to
-    /// map errors to MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop emitting
-    /// diagnostics after this one).
-    enum Severity {
+    /// to either Ignore (nothing), Remark (emit a remark), Warning
+    /// (emit a warning) or Error (emit as an error).  It allows clients to
+    /// map ERRORs to Error or Fatal (stop emitting diagnostics after this one).
+    enum class Severity {
       // NOTE: 0 means "uncomputed".
-      MAP_IGNORE = 1,  ///< Map this diagnostic to nothing, ignore it.
-      MAP_REMARK = 2,  ///< Map this diagnostic to a remark.
-      MAP_WARNING = 3, ///< Map this diagnostic to a warning.
-      MAP_ERROR = 4,   ///< Map this diagnostic to an error.
-      MAP_FATAL = 5    ///< Map this diagnostic to a fatal error.
+      Ignored = 1, ///< Do not present this diagnostic, ignore it.
+      Remark = 2,  ///< Present this diagnostic as a remark.
+      Warning = 3, ///< Present this diagnostic as a warning.
+      Error = 4,   ///< Present this diagnostic as an error.
+      Fatal = 5    ///< Present this diagnostic as a fatal error.
     };
   }
 
@@ -81,7 +80,7 @@ public:
   static DiagnosticMapping Make(diag::Severity Severity, bool IsUser,
                                 bool IsPragma) {
     DiagnosticMapping Result;
-    Result.Severity = Severity;
+    Result.Severity = (unsigned)Severity;
     Result.IsUser = IsUser;
     Result.IsPragma = IsPragma;
     Result.HasNoWarningAsError = 0;
@@ -89,8 +88,8 @@ public:
     return Result;
   }
 
-  diag::Severity getSeverity() const { return diag::Severity(Severity); }
-  void setSeverity(diag::Severity Value) { Severity = Value; }
+  diag::Severity getSeverity() const { return (diag::Severity)Severity; }
+  void setSeverity(diag::Severity Value) { Severity = (unsigned)Value; }
 
   bool isUser() const { return IsUser; }
   bool isPragma() const { return IsPragma; }
@@ -257,9 +256,9 @@ private:
 
   /// \brief An internal implementation helper used when \p DiagClass is
   /// already known.
-  DiagnosticIDs::Level
-  getDiagnosticLevel(unsigned DiagID, unsigned DiagClass, SourceLocation Loc,
-                     const DiagnosticsEngine &Diag) const LLVM_READONLY;
+  diag::Severity
+  getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass, SourceLocation Loc,
+                        const DiagnosticsEngine &Diag) const LLVM_READONLY;
 
   /// \brief Used to report a diagnostic that is finally fully formed.
   ///
