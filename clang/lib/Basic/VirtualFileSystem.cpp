@@ -140,7 +140,7 @@ error_code RealFile::getBuffer(const Twine &Name,
 #endif
 error_code RealFile::close() {
   if (::close(FD))
-    return error_code(errno, system_category());
+    return error_code(errno, generic_category());
   FD = -1;
   return error_code();
 }
