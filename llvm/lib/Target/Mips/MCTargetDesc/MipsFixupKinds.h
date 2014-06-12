@@ -128,6 +128,9 @@ namespace Mips {
     // resulting in - R_MIPS_CALL_LO16
     fixup_Mips_CALL_LO16,
 
+    // resulting in - R_MIPS_PC19_S2
+    fixup_MIPS_PC19_S2,
+
     // resulting in - R_MIPS_PC21_S2
     fixup_MIPS_PC21_S2,
 

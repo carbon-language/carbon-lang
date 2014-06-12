@@ -5,6 +5,9 @@
 #------------------------------------------------------------------------------
 # Check that the assembler can handle the documented syntax for fixups.
 #------------------------------------------------------------------------------
+# CHECK-FIXUP: addiupc $2, bar  # encoding: [0xec,0b01000AAA,A,A]
+# CHECK-FIXUP:                  # fixup A - offset: 0,
+# CHECK-FIXUP:                    value: bar, kind: fixup_MIPS_PC19_S2
 # CHECK-FIXUP: beqc $5, $6, bar # encoding: [0x20,0xa6,A,A]
 # CHECK-FIXUP:                  #   fixup A - offset: 0,
 # CHECK-FIXUP:                      value: bar, kind: fixup_Mips_PC16
@@ -31,20 +34,30 @@
 # CHECK-FIXUP:                              #   fixup A - offset: 0,
 # CHECK-FIXUP:                                  value: bar@PCREL_LO16,
 # CHECK-FIXUP:                                  kind: fixup_MIPS_PCLO16
+# CHECK-FIXUP: lwpc    $2, bar  # encoding: [0xec,0b01001AAA,A,A]
+# CHECK-FIXUP:                  #   fixup A - offset: 0,
+# CHECK-FIXUP:                      value: bar, kind: fixup_MIPS_PC19_S2
+# CHECK-FIXUP: lwupc   $2, bar  # encoding: [0xec,0b01010AAA,A,A]
+# CHECK-FIXUP:                  #   fixup A - offset: 0,
+# CHECK-FIXUP:                      value: bar, kind: fixup_MIPS_PC19_S2
 #------------------------------------------------------------------------------
 # Check that the appropriate relocations were created.
 #------------------------------------------------------------------------------
 # CHECK-ELF: Relocations [
-# CHECK-ELF:     0x0 R_MIPS_PC16 bar 0x0
+# CHECK-ELF:     0x0 R_MIPS_PC19_S2 bar 0x0
 # CHECK-ELF:     0x4 R_MIPS_PC16 bar 0x0
-# CHECK-ELF:     0x8 R_MIPS_PC21_S2 bar 0x0
+# CHECK-ELF:     0x8 R_MIPS_PC16 bar 0x0
 # CHECK-ELF:     0xC R_MIPS_PC21_S2 bar 0x0
-# CHECK-ELF:     0x10 R_MIPS_PC26_S2 bar 0x0
+# CHECK-ELF:     0x10 R_MIPS_PC21_S2 bar 0x0
 # CHECK-ELF:     0x14 R_MIPS_PC26_S2 bar 0x0
-# CHECK-ELF:     0x18 R_MIPS_PCHI16 bar 0x0
-# CHECK-ELF:     0x1C R_MIPS_PCLO16 bar 0x0
+# CHECK-ELF:     0x18 R_MIPS_PC26_S2 bar 0x0
+# CHECK-ELF:     0x1C R_MIPS_PCHI16 bar 0x0
+# CHECK-ELF:     0x20 R_MIPS_PCLO16 bar 0x0
+# CHECK-ELF:     0x24 R_MIPS_PC19_S2 bar 0x0
+# CHECK-ELF:     0x28 R_MIPS_PC19_S2 bar 0x0
 # CHECK-ELF: ]
 
+  addiupc   $2,bar
   beqc  $5, $6, bar
   bnec  $5, $6, bar
   beqzc $9, bar
@@ -53,3 +66,5 @@
   bc    bar
   aluipc $2, %pcrel_hi(bar)
   addiu  $2, $2, %pcrel_lo(bar)
+  lwpc      $2,bar
+  lwupc     $2,bar

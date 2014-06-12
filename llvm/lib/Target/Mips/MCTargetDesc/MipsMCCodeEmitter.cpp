@@ -621,11 +621,21 @@ unsigned
 MipsMCCodeEmitter::getSimm19Lsl2Encoding(const MCInst &MI, unsigned OpNo,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
-  assert(MI.getOperand(OpNo).isImm());
-  // The immediate is encoded as 'immediate << 2'.
-  unsigned Res = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
-  assert((Res & 3) == 0);
-  return Res >> 2;
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm()) {
+    // The immediate is encoded as 'immediate << 2'.
+    unsigned Res = getMachineOpValue(MI, MO, Fixups, STI);
+    assert((Res & 3) == 0);
+    return Res >> 2;
+  }
+
+  assert(MO.isExpr() &&
+         "getSimm19Lsl2Encoding expects only expressions or an immediate");
+
+  const MCExpr *Expr = MO.getExpr();
+  Fixups.push_back(MCFixup::Create(0, Expr,
+                                   MCFixupKind(Mips::fixup_MIPS_PC19_S2)));
+  return 0;
 }
 
 unsigned
