@@ -42,6 +42,16 @@ class Region;
 }
 
 namespace polly {
+
+/// @brief Get the location of a region from the debug info.
+///
+/// @param R The region to get debug info for.
+/// @param LineBegin The first line in the region.
+/// @param LineEnd The last line in the region.
+/// @param FileName The filename where the region was defined.
+void getDebugLocation(const Region *R, unsigned &LineBegin, unsigned &LineEnd,
+                      std::string &FileName);
+
 //===----------------------------------------------------------------------===//
 /// @brief Base class of all reject reasons found during Scop detection.
 ///

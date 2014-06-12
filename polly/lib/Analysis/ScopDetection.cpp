@@ -762,29 +762,6 @@ bool ScopDetection::isValidFunction(llvm::Function &F) {
   return !InvalidFunctions.count(&F);
 }
 
-void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
-                                     unsigned &LineEnd, std::string &FileName) {
-  LineBegin = -1;
-  LineEnd = 0;
-
-  for (const BasicBlock *BB : R->blocks())
-    for (const Instruction &Inst : *BB) {
-      DebugLoc DL = Inst.getDebugLoc();
-      if (DL.isUnknown())
-        continue;
-
-      DIScope Scope(DL.getScope(Inst.getContext()));
-
-      if (FileName.empty())
-        FileName = Scope.getFilename();
-
-      unsigned NewLine = DL.getLine();
-
-      LineBegin = std::min(LineBegin, NewLine);
-      LineEnd = std::max(LineEnd, NewLine);
-    }
-}
-
 void ScopDetection::printLocations(llvm::Function &F) {
   for (const Region *R : *this) {
     unsigned LineEntry, LineExit;
