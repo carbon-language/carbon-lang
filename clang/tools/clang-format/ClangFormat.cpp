@@ -210,7 +210,7 @@ static bool format(StringRef FileName) {
       new DiagnosticOptions);
   SourceManager Sources(Diagnostics, Files);
   std::unique_ptr<MemoryBuffer> Code;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
     llvm::errs() << ec.message() << "\n";
     return true;
   }

@@ -282,7 +282,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     return Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
 
   std::unique_ptr<MemoryBuffer> Buffer;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, Buffer)) {
+  if (std::error_code ec =
+          MemoryBuffer::getFileOrSTDIN(Opts.InputFile, Buffer)) {
     Error = ec.message();
     return Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
   }

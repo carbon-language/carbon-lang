@@ -310,7 +310,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
-  std::error_code Err = llvm::error_code();
+  std::error_code Err = std::error_code();
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
     Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
                            Module->IsExternC);
