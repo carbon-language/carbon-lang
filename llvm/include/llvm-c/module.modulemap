@@ -1,5 +1,4 @@
 module LLVM_C {
-  requires cplusplus
   umbrella "."
   module * { export * }
 }
