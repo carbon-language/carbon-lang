@@ -17,11 +17,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifdef _MSC_VER
+
+#include "llvm/Support/WindowsError.h"
+
+#include "llvm/Config/llvm-config.h"
+
+#ifdef LLVM_ON_WIN32
 
 #include <winerror.h>
 
-#include "llvm/Support/WindowsError.h"
 
 // I'd rather not double the line count of the following.
 #define MAP_ERR_TO_COND(x, y)                                                  \
@@ -49,7 +53,6 @@ std::error_code llvm::mapWindowsError(unsigned EV) {
     MAP_ERR_TO_COND(ERROR_FILE_EXISTS, file_exists);
     MAP_ERR_TO_COND(ERROR_FILE_NOT_FOUND, no_such_file_or_directory);
     MAP_ERR_TO_COND(ERROR_HANDLE_DISK_FULL, no_space_on_device);
-    MAP_ERR_TO_COND(ERROR_HANDLE_EOF, value_too_large);
     MAP_ERR_TO_COND(ERROR_INVALID_ACCESS, permission_denied);
     MAP_ERR_TO_COND(ERROR_INVALID_DRIVE, no_such_device);
     MAP_ERR_TO_COND(ERROR_INVALID_FUNCTION, function_not_supported);
@@ -61,10 +64,8 @@ std::error_code llvm::mapWindowsError(unsigned EV) {
     MAP_ERR_TO_COND(ERROR_NOACCESS, permission_denied);
     MAP_ERR_TO_COND(ERROR_NOT_ENOUGH_MEMORY, not_enough_memory);
     MAP_ERR_TO_COND(ERROR_NOT_READY, resource_unavailable_try_again);
-    MAP_ERR_TO_COND(ERROR_NOT_SAME_DEVICE, cross_device_link);
     MAP_ERR_TO_COND(ERROR_OPEN_FAILED, io_error);
     MAP_ERR_TO_COND(ERROR_OPEN_FILES, device_or_resource_busy);
-    MAP_ERR_TO_COND(ERROR_OPERATION_ABORTED, operation_canceled);
     MAP_ERR_TO_COND(ERROR_OUTOFMEMORY, not_enough_memory);
     MAP_ERR_TO_COND(ERROR_PATH_NOT_FOUND, no_such_file_or_directory);
     MAP_ERR_TO_COND(ERROR_BAD_NETPATH, no_such_file_or_directory);
@@ -75,38 +76,13 @@ std::error_code llvm::mapWindowsError(unsigned EV) {
     MAP_ERR_TO_COND(ERROR_TOO_MANY_OPEN_FILES, too_many_files_open);
     MAP_ERR_TO_COND(ERROR_WRITE_FAULT, io_error);
     MAP_ERR_TO_COND(ERROR_WRITE_PROTECT, permission_denied);
-    MAP_ERR_TO_COND(ERROR_SEM_TIMEOUT, timed_out);
     MAP_ERR_TO_COND(WSAEACCES, permission_denied);
-    MAP_ERR_TO_COND(WSAEADDRINUSE, address_in_use);
-    MAP_ERR_TO_COND(WSAEADDRNOTAVAIL, address_not_available);
-    MAP_ERR_TO_COND(WSAEAFNOSUPPORT, address_family_not_supported);
-    MAP_ERR_TO_COND(WSAEALREADY, connection_already_in_progress);
     MAP_ERR_TO_COND(WSAEBADF, bad_file_descriptor);
-    MAP_ERR_TO_COND(WSAECONNABORTED, connection_aborted);
-    MAP_ERR_TO_COND(WSAECONNREFUSED, connection_refused);
-    MAP_ERR_TO_COND(WSAECONNRESET, connection_reset);
-    MAP_ERR_TO_COND(WSAEDESTADDRREQ, destination_address_required);
     MAP_ERR_TO_COND(WSAEFAULT, bad_address);
-    MAP_ERR_TO_COND(WSAEHOSTUNREACH, host_unreachable);
-    MAP_ERR_TO_COND(WSAEINPROGRESS, operation_in_progress);
     MAP_ERR_TO_COND(WSAEINTR, interrupted);
     MAP_ERR_TO_COND(WSAEINVAL, invalid_argument);
-    MAP_ERR_TO_COND(WSAEISCONN, already_connected);
     MAP_ERR_TO_COND(WSAEMFILE, too_many_files_open);
-    MAP_ERR_TO_COND(WSAEMSGSIZE, message_size);
     MAP_ERR_TO_COND(WSAENAMETOOLONG, filename_too_long);
-    MAP_ERR_TO_COND(WSAENETDOWN, network_down);
-    MAP_ERR_TO_COND(WSAENETRESET, network_reset);
-    MAP_ERR_TO_COND(WSAENETUNREACH, network_unreachable);
-    MAP_ERR_TO_COND(WSAENOBUFS, no_buffer_space);
-    MAP_ERR_TO_COND(WSAENOPROTOOPT, no_protocol_option);
-    MAP_ERR_TO_COND(WSAENOTCONN, not_connected);
-    MAP_ERR_TO_COND(WSAENOTSOCK, not_a_socket);
-    MAP_ERR_TO_COND(WSAEOPNOTSUPP, operation_not_supported);
-    MAP_ERR_TO_COND(WSAEPROTONOSUPPORT, protocol_not_supported);
-    MAP_ERR_TO_COND(WSAEPROTOTYPE, wrong_protocol_type);
-    MAP_ERR_TO_COND(WSAETIMEDOUT, timed_out);
-    MAP_ERR_TO_COND(WSAEWOULDBLOCK, operation_would_block);
   default:
     return std::error_code(EV, std::system_category());
   }
