@@ -425,14 +425,14 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
 error_code sys::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
   if (result == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   return error_code();
 }
 
 error_code sys::ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
   if (result == -1)
-    return error_code(errno, generic_category());
+    return error_code(errno, std::generic_category());
   return error_code();
 }
 
