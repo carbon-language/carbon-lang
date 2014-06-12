@@ -5,6 +5,7 @@ Test lldb-gdbserver operation
 import unittest2
 import pexpect
 import platform
+import sets
 import signal
 import socket
 import subprocess
@@ -49,8 +50,8 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
 
         # Uncomment this code to force only a single test to run (by name).
-        # if not re.search(r"P_writes", self._testMethodName):
-        #     self.skipTest("focusing on one test")
+        #if not re.search(r"P_", self._testMethodName):
+        #    self.skipTest("focusing on one test")
 
     def reset_test_sequence(self):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
@@ -203,6 +204,12 @@ class LldbGdbServerTestCase(TestBase):
              "read packet: $qLaunchSuccess#a5",
              "send packet: $OK#00"],
             True)
+
+    def add_thread_suffix_request_packets(self):
+        self.test_sequence.add_log_lines(
+            ["read packet: $QThreadSuffixSupported#00",
+             "send packet: $OK#00",
+            ], True)
 
     def add_process_info_collection_packets(self):
         self.test_sequence.add_log_lines(
@@ -475,6 +482,26 @@ class LldbGdbServerTestCase(TestBase):
         self.assertIsNotNone(context.get("stop_result"))
         
         return context
+
+    def select_modifiable_register(self, reg_infos):
+        """Find a register that can be read/written freely."""
+        PREFERRED_REGISTER_NAMES = sets.Set(["rax",])
+        
+        # First check for the first register from the preferred register name set.
+        alternative_register_index = None
+        
+        self.assertIsNotNone(reg_infos)
+        for reg_info in reg_infos:
+            if ("name" in reg_info) and (reg_info["name"] in PREFERRED_REGISTER_NAMES):
+                # We found a preferred register.  Use it.
+                return reg_info["lldb_register_index"]
+            if ("generic" in reg_info) and (reg_info["generic"] == "fp"):
+                # A frame pointer register will do as a register to modify temporarily.
+                alternative_register_index = reg_info["lldb_register_index"]
+
+        # We didn't find a preferred register.  Return whatever alternative register
+        # we found, if any.
+        return alternative_register_index
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
@@ -2032,7 +2059,7 @@ class LldbGdbServerTestCase(TestBase):
         self.set_inferior_startup_launch()
         self.written_M_content_reads_back_correctly()
 
-    def flip_all_bits_in_each_register_value(self, reg_infos):
+    def flip_all_bits_in_each_register_value(self, reg_infos, endian):
         self.assertIsNotNone(reg_infos)
 
         successful_writes = 0
@@ -2043,6 +2070,9 @@ class LldbGdbServerTestCase(TestBase):
             # working off a full set of register infos, so an inferred register index could be wrong. 
             reg_index = reg_info["lldb_register_index"]
             self.assertIsNotNone(reg_index)
+
+            reg_byte_size = int(reg_info["bitsize"])/8
+            self.assertTrue(reg_byte_size > 0)
 
             # Read the existing value.
             self.reset_test_sequence()
@@ -2056,23 +2086,25 @@ class LldbGdbServerTestCase(TestBase):
             # Verify the response length.
             p_response = context.get("p_response")
             self.assertIsNotNone(p_response)
-            self.assertEquals(len(p_response), 2 * int(reg_info["bitsize"]) / 8)
+            initial_reg_value = unpack_register_hex_unsigned(endian, p_response)
 
             # Flip the value by xoring with all 1s
             all_one_bits_raw = "ff" * (int(reg_info["bitsize"]) / 8)
-            flipped_bits_int = int(p_response, 16) ^ int(all_one_bits_raw, 16)
-            # print "reg (index={}, name={}): val={}, flipped bits (int={}, hex={:x})".format(reg_index, reg_info["name"], p_response, flipped_bits_int, flipped_bits_int)
+            flipped_bits_int = initial_reg_value ^ int(all_one_bits_raw, 16)
+            # print "reg (index={}, name={}): val={}, flipped bits (int={}, hex={:x})".format(reg_index, reg_info["name"], initial_reg_value, flipped_bits_int, flipped_bits_int)
 
             # Write the flipped value to the register.
             self.reset_test_sequence()
             self.test_sequence.add_log_lines(
-                ["read packet: $P{0:x}={1:x}#00".format(reg_index, flipped_bits_int),
+                ["read packet: $P{0:x}={1}#00".format(reg_index, pack_register_hex(endian, flipped_bits_int, byte_size=reg_byte_size)),
                 { "direction":"send", "regex":r"^\$(OK|E[0-9a-fA-F]+)#[0-9a-fA-F]{2}", "capture":{1:"P_response"} },
                 ], True)
             context = self.expect_gdbremote_sequence()
             self.assertIsNotNone(context)
 
-            # Determine if the write succeeded.  There are a handful of registers that can fail.
+            # Determine if the write succeeded.  There are a handful of registers that can fail, or partially fail
+            # (e.g. flags, segment selectors, etc.) due to register value restrictions.  Don't worry about them
+            # all flipping perfectly.
             P_response = context.get("P_response")
             self.assertIsNotNone(P_response)
             if P_response == "OK":
@@ -2091,11 +2123,13 @@ class LldbGdbServerTestCase(TestBase):
                 context = self.expect_gdbremote_sequence()
                 self.assertIsNotNone(context)
 
-                verify_p_response = context.get("p_response")
-                self.assertIsNotNone(verify_p_response)
-                if verify_p_response != "{:x}".format(flipped_bits_int):
+                verify_p_response_raw = context.get("p_response")
+                self.assertIsNotNone(verify_p_response_raw)
+                verify_bits = unpack_register_hex_unsigned(endian, verify_p_response_raw)
+
+                if verify_bits != flipped_bits_int:
                     # Some registers, like mxcsrmask and others, will permute what's written.  Adjust succeed/fail counts.
-                    # print "reg (index={}, name={}): read verify FAILED: wrote {:x}, verify read back {}".format(reg_index, reg_info["name"], flipped_bits_int, verify_p_response)
+                    # print "reg (index={}, name={}): read verify FAILED: wrote {:x}, verify read back {:x}".format(reg_index, reg_info["name"], flipped_bits_int, verify_bits)
                     successful_writes -= 1
                     failed_writes +=1
 
@@ -2105,26 +2139,27 @@ class LldbGdbServerTestCase(TestBase):
         # Start inferior debug session, grab all register info.
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["sleep:2"])
         self.add_register_info_collection_packets()
-        self.test_sequence.add_log_lines(
-            [# Start running for a bit.
-             "read packet: $c#00",
-             "read packet: {}".format(chr(03)),
-             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
-            True)
+        self.add_process_info_collection_packets()
 
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
 
+        # Process register infos.
         reg_infos = self.parse_register_info_packets(context)
         self.assertIsNotNone(reg_infos)
         self.add_lldb_register_index(reg_infos)
 
-        # Pull out the general purpose register infos
-        gpr_reg_infos = [reg_info for reg_info in reg_infos if reg_info["set"] == "General Purpose Registers"]
+        # Process endian.
+        process_info = self.parse_process_info_response(context)
+        endian = process_info.get("endian")
+        self.assertIsNotNone(endian)
+
+        # Pull out the general purpose register infos that are not contained in other registers.
+        gpr_reg_infos = [reg_info for reg_info in reg_infos if ("set" in reg_info) and (reg_info["set"] == "General Purpose Registers") and ("container-regs" not in reg_info)]
         self.assertIsNotNone(len(gpr_reg_infos) > 0)
 
         # Write flipped bit pattern of existing value to each register.
-        (successful_writes, failed_writes) = self.flip_all_bits_in_each_register_value(gpr_reg_infos)
+        (successful_writes, failed_writes) = self.flip_all_bits_in_each_register_value(gpr_reg_infos, endian)
         # print "successful writes: {}, failed writes: {}".format(successful_writes, failed_writes)
         self.assertTrue(successful_writes > 0)
 
@@ -2146,6 +2181,115 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.set_inferior_startup_launch()
         self.P_writes_all_gpr_registers()
+
+    def P_and_p_thread_suffix_work(self):
+        # Startup the inferior with three threads.
+        procs = self.prep_debug_monitor_and_inferior(inferior_args=["thread:new", "thread:new"])
+        self.add_thread_suffix_request_packets()
+        self.add_register_info_collection_packets()
+        self.add_process_info_collection_packets()
+
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+        endian = process_info.get("endian")
+        self.assertIsNotNone(endian)
+
+        reg_infos = self.parse_register_info_packets(context)
+        self.assertIsNotNone(reg_infos)
+        self.add_lldb_register_index(reg_infos)
+
+        reg_index = self.select_modifiable_register(reg_infos)
+        self.assertIsNotNone(reg_index)
+        reg_byte_size = int(reg_infos[reg_index]["bitsize"]) / 8
+        self.assertTrue(reg_byte_size > 0)
+        
+        # Run the process a bit so threads can start up, and collect register info.
+        context = self.run_process_then_stop(run_seconds=1)
+        self.assertIsNotNone(context)
+
+        # Wait for 3 threads to be present.
+        threads = self.wait_for_thread_count(3, timeout_seconds=5)
+        self.assertEquals(len(threads), 3)
+
+        expected_reg_values = []
+        register_increment = 1
+        next_value = None
+
+        # Set the same register in each of 3 threads to a different value.
+        # Verify each one has the unique value.
+        for thread in threads:
+            # If we don't have a next value yet, start it with the initial read value + 1
+            if not next_value:
+                # Read pre-existing register value.
+                self.reset_test_sequence()
+                self.test_sequence.add_log_lines(
+                    ["read packet: $p{0:x};thread:{1:x}#00".format(reg_index, thread),
+                     { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} },
+                    ], True)
+                context = self.expect_gdbremote_sequence()
+                self.assertIsNotNone(context)
+
+                # Set the next value to use for writing as the increment plus current value.
+                p_response = context.get("p_response")
+                self.assertIsNotNone(p_response)
+                next_value = unpack_register_hex_unsigned(endian, p_response)
+
+            # Set new value using P and thread suffix.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                ["read packet: $P{0:x}={1};thread:{2:x}#00".format(reg_index, pack_register_hex(endian, next_value, byte_size=reg_byte_size), thread),
+                 "send packet: $OK#00",
+                ], True)
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            # Save the value we set.
+            expected_reg_values.append(next_value)
+
+            # Increment value for next thread to use (we want them all different so we can verify they wrote to each thread correctly next.)
+            next_value += register_increment
+
+        # Revisit each thread and verify they have the expected value set for the register we wrote.
+        thread_index = 0
+        for thread in threads:
+            # Read pre-existing register value.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines(
+                ["read packet: $p{0:x};thread:{1:x}#00".format(reg_index, thread),
+                 { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} },
+                ], True)
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            # Get the register value.
+            p_response = context.get("p_response")
+            self.assertIsNotNone(p_response)
+            read_value = unpack_register_hex_unsigned(endian, p_response)
+
+            # Make sure we read back what we wrote.
+            self.assertEquals(read_value, expected_reg_values[thread_index])
+            thread_index += 1
+
+    # Note: as of this moment, a hefty number of the GPR writes are failing with E32 (everything except rax-rdx, rdi, rsi, rbp).
+    @debugserver_test
+    @dsym_test
+    def test_P_and_p_thread_suffix_work_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.P_and_p_thread_suffix_work()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_P_and_p_thread_suffix_work_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.P_and_p_thread_suffix_work()
 
 
 if __name__ == '__main__':

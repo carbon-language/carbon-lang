@@ -331,6 +331,32 @@ def unpack_register_hex_unsigned(endian, value_string):
         # pdp is valid but need to add parse code once needed.
         raise Exception("unsupported endian:{}".format(endian))
 
+def pack_register_hex(endian, value, byte_size=None):
+    """Unpack a gdb-remote $p-style response to an unsigned int given endianness of inferior."""
+    if not endian:
+        raise Exception("endian cannot be None")
+
+    if endian == 'little':
+        # Create the litt-endian return value.
+        retval = ""
+        while value != 0:
+            retval = retval + "{:02x}".format(value & 0xff)
+            value = value >> 8
+        if byte_size:
+            # Add zero-fill to the right/end (MSB side) of the value.
+            retval += "00" * (byte_size - len(retval)/2)
+        return retval
+
+    elif endian == 'big':
+        retval = value.encode("hex")
+        if byte_size:
+            # Add zero-fill to the left/front (MSB side) of the value.
+            retval = ("00" * (byte_size - len(retval)/2)) + retval 
+        return retval
+        
+    else:
+        # pdp is valid but need to add parse code once needed.
+        raise Exception("unsupported endian:{}".format(endian))
 
 class GdbRemoteEntryBase(object):
     def is_output_matcher(self):
