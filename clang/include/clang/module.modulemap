@@ -1,0 +1,109 @@
+module Clang_Analysis {
+  requires cplusplus
+  umbrella "Analysis"
+
+  // This file is intended for repeated textual inclusion.
+  exclude header "Analysis/Analyses/ThreadSafetyOps.def"
+
+  module * { export * }
+}
+
+module Clang_AST {
+  requires cplusplus
+  umbrella "AST"
+
+  // These files are intended for repeated textual inclusion.
+  exclude header "AST/BuiltinTypes.def"
+  exclude header "AST/TypeLocNodes.def"
+  exclude header "AST/TypeNodes.def"
+
+  module * { export * }
+}
+
+module Clang_ASTMatchers { requires cplusplus umbrella "ASTMatchers" module * { export * } }
+
+module Clang_Basic {
+  requires cplusplus
+  umbrella "Basic"
+
+  // These files are intended for repeated textual inclusion.
+  exclude header "Basic/BuiltinsAArch64.def"
+  exclude header "Basic/BuiltinsARM64.def"
+  exclude header "Basic/BuiltinsARM.def"
+  exclude header "Basic/Builtins.def"
+  exclude header "Basic/BuiltinsHexagon.def"
+  exclude header "Basic/BuiltinsMips.def"
+  exclude header "Basic/BuiltinsNEON.def"
+  exclude header "Basic/BuiltinsNVPTX.def"
+  exclude header "Basic/BuiltinsPPC.def"
+  exclude header "Basic/BuiltinsX86.def"
+  exclude header "Basic/BuiltinsXCore.def"
+  exclude header "Basic/DiagnosticOptions.def"
+  exclude header "Basic/LangOptions.def"
+  exclude header "Basic/OpenCLExtensions.def"
+  exclude header "Basic/OpenMPKinds.def"
+  exclude header "Basic/OperatorKinds.def"
+  exclude header "Basic/Sanitizers.def"
+  exclude header "Basic/TokenKinds.def"
+
+  // This file is one big layering violation.
+  exclude header "Basic/AllDiagnostics.h"
+
+  // This file includes a header from Lex.
+  exclude header "Basic/PlistSupport.h"
+
+  // FIXME: This is logically a part of Basic, but has been put in the wrong place.
+  header "StaticAnalyzer/Core/AnalyzerOptions.h"
+
+  module * { export * }
+}
+
+module Clang_CodeGen { requires cplusplus umbrella "CodeGen" module * { export * } }
+module Clang_Config { requires cplusplus umbrella "Config" module * { export * } }
+
+module Clang_Driver {
+  requires cplusplus
+  umbrella "Driver"
+
+  // This file is intended for repeated textual inclusion.
+  exclude header "Driver/Types.def"
+
+  module * { export * }
+}
+
+module Clang_Edit { requires cplusplus umbrella "Edit" module * { export * } }
+module Clang_Format { requires cplusplus umbrella "Format" module * { export * } }
+
+module Clang_Frontend {
+  requires cplusplus
+  umbrella "Frontend"
+
+  // These files are intended for repeated textual inclusion.
+  exclude header "Frontend/CodeGenOptions.def"
+  exclude header "Frontend/LangStandards.def"
+
+  module * { export * }
+}
+
+module Clang_FrontendTool { requires cplusplus umbrella "FrontendTool" module * { export * } }
+module Clang_Index { requires cplusplus umbrella "Index" module * { export * } }
+module Clang_Lex { requires cplusplus umbrella "Lex" module * { export * } }
+module Clang_Parse { requires cplusplus umbrella "Parse" module * { export * } }
+module Clang_Rewrite { requires cplusplus umbrella "Rewrite" module * { export * } }
+module Clang_Sema { requires cplusplus umbrella "Sema" module * { export * } }
+module Clang_Serialization { requires cplusplus umbrella "Serialization" module * { export * } }
+
+module Clang_StaticAnalyzer {
+  requires cplusplus
+  umbrella "StaticAnalyzer"
+
+  // This file is intended for repeated textual inclusion.
+  exclude header "StaticAnalyzer/Core/Analyses.def"
+
+  // FIXME: This is logically a part of Basic, but has been put in the wrong place.
+  exclude header "StaticAnalyzer/Core/AnalyzerOptions.h"
+
+  module * { export * }
+}
+
+module Clang_Tooling { requires cplusplus umbrella "Tooling" module * { export * } }

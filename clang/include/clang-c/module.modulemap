@@ -1,0 +1,5 @@
+module Clang_C {
+  requires cplusplus
+  umbrella "."
+  module * { export * }
+}
