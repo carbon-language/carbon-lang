@@ -370,6 +370,29 @@ AggExprEmitter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
   }
 }
 
+/// \brief Determine if E is a trivial array filler, that is, one that is
+/// equivalent to zero-initialization.
+static bool isTrivialFiller(Expr *E) {
+  if (!E)
+    return true;
+
+  if (isa<ImplicitValueInitExpr>(E))
+    return true;
+
+  if (auto *ILE = dyn_cast<InitListExpr>(E)) {
+    if (ILE->getNumInits())
+      return false;
+    return isTrivialFiller(ILE->getArrayFiller());
+  }
+
+  if (auto *Cons = dyn_cast_or_null<CXXConstructExpr>(E))
+    return Cons->getConstructor()->isDefaultConstructor() &&
+           Cons->getConstructor()->isTrivial();
+
+  // FIXME: Are there other cases where we can avoid emitting an initializer?
+  return false;
+}
+
 /// \brief Emit initialization of an array from an initializer list.
 void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
                                    QualType elementType, InitListExpr *E) {
@@ -435,13 +458,8 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
   }
 
   // Check whether there's a non-trivial array-fill expression.
-  // Note that this will be a CXXConstructExpr even if the element
-  // type is an array (or array of array, etc.) of class type.
   Expr *filler = E->getArrayFiller();
-  bool hasTrivialFiller = true;
-  if (CXXConstructExpr *cons = dyn_cast_or_null<CXXConstructExpr>(filler))
-    hasTrivialFiller = cons->getConstructor()->isDefaultConstructor() &&
-                       cons->getConstructor()->isTrivial();
+  bool hasTrivialFiller = isTrivialFiller(filler);
 
   // Any remaining elements need to be zero-initialized, possibly
   // using the filler expression.  We can skip this if the we're

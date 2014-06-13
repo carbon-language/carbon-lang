@@ -23,3 +23,22 @@ int &fn2(int &v) {
   // CHECK: call nonnull i32* @_ZN1B1fEv(%struct.B* %[[INITLIST2:.*]])
   return B{v}.f();
 }
+
+// CHECK: define {{.*}}@__cxx_global_var_init(
+//
+// CHECK: call {{.*}}@_ZN14NonTrivialInit1AC1Ev(
+// CHECK: getelementptr inbounds {{.*}}, i64 1
+// CHECK: br i1
+//
+// CHECK: getelementptr inbounds {{.*}}, i64 1
+// CHECK: icmp eq {{.*}}, i64 30
+// CHECK: br i1
+//
+// CHECK: call i32 @__cxa_atexit(
+namespace NonTrivialInit {
+  struct A { A(); A(const A&) = delete; ~A(); };
+  struct B { A a[20]; };
+  // NB, this must be large enough to be worth memsetting for this test to be
+  // meaningful.
+  B b[30] = {};
+}
