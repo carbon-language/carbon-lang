@@ -16,6 +16,7 @@
 
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -247,7 +248,16 @@ protected:
 
   /// \brief Reset the features for the ARM target.
   void resetSubtargetFeatures(const MachineFunction *MF) override;
+
+  /// initializeSubtargetDependencies - Initializes using a CPU and feature string
+  /// so that we can use initializer lists for subtarget initialization.
+  ARMSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
+
+  const DataLayout *getDataLayout() const { return &DL; }
+
 private:
+  const DataLayout DL;
+
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
 public:

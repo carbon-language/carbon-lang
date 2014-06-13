@@ -73,62 +73,6 @@ void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 
 void ARMTargetMachine::anchor() { }
 
-static std::string computeDataLayout(ARMSubtarget &ST) {
-  std::string Ret = "";
-
-  if (ST.isLittle())
-    // Little endian.
-    Ret += "e";
-  else
-    // Big endian.
-    Ret += "E";
-
-  Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
-
-  // Pointers are 32 bits and aligned to 32 bits.
-  Ret += "-p:32:32";
-
-  // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
-  // align to 32.
-  if (ST.isThumb())
-    Ret += "-i1:8:32-i8:8:32-i16:16:32";
-
-  // ABIs other than APCS have 64 bit integers with natural alignment.
-  if (!ST.isAPCS_ABI())
-    Ret += "-i64:64";
-
-  // We have 64 bits floats. The APCS ABI requires them to be aligned to 32
-  // bits, others to 64 bits. We always try to align to 64 bits.
-  if (ST.isAPCS_ABI())
-    Ret += "-f64:32:64";
-
-  // We have 128 and 64 bit vectors. The APCS ABI aligns them to 32 bits, others
-  // to 64. We always ty to give them natural alignment.
-  if (ST.isAPCS_ABI())
-    Ret += "-v64:32:64-v128:32:128";
-  else
-    Ret += "-v128:64:128";
-
-  // On thumb and APCS, only try to align aggregates to 32 bits (the default is
-  // 64 bits).
-  if (ST.isThumb() || ST.isAPCS_ABI())
-    Ret += "-a:0:32";
-
-  // Integer registers are 32 bits.
-  Ret += "-n32";
-
-  // The stack is 128 bit aligned on NaCl, 64 bit aligned on AAPCS and 32 bit
-  // aligned everywhere else.
-  if (ST.isTargetNaCl())
-    Ret += "-S128";
-  else if (ST.isAAPCS_ABI())
-    Ret += "-S64";
-  else
-    Ret += "-S32";
-
-  return Ret;
-}
-
 ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
@@ -137,9 +81,8 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    bool isLittle)
   : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle),
     InstrInfo(Subtarget),
-    DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
-    TSInfo(DL),
+    TSInfo(*getDataLayout()),
     FrameLowering(Subtarget) {
   initAsmInfo();
   if (!Subtarget.hasARMOps())
@@ -177,9 +120,8 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
-    DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
-    TSInfo(DL),
+    TSInfo(*getDataLayout()),
     FrameLowering(Subtarget.hasThumb2()
               ? new ARMFrameLowering(Subtarget)
               : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {

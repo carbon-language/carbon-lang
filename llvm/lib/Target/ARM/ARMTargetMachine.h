@@ -68,7 +68,6 @@ public:
 class ARMTargetMachine : public ARMBaseTargetMachine {
   virtual void anchor();
   ARMInstrInfo        InstrInfo;
-  const DataLayout    DL;       // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
   ARMFrameLowering    FrameLowering;
@@ -95,7 +94,9 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
     return &FrameLowering;
   }
   const ARMInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const DataLayout *getDataLayout() const override { return &DL; }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
 };
 
 /// ARMLETargetMachine - ARM little endian target machine.
@@ -128,7 +129,6 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   virtual void anchor();
   // Either Thumb1InstrInfo or Thumb2InstrInfo.
   std::unique_ptr<ARMBaseInstrInfo> InstrInfo;
-  const DataLayout    DL;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
   // Either Thumb1FrameLowering or ARMFrameLowering.
@@ -162,7 +162,9 @@ public:
   const ARMFrameLowering *getFrameLowering() const override {
     return FrameLowering.get();
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
 };
 
 /// ThumbLETargetMachine - Thumb little endian target machine.
