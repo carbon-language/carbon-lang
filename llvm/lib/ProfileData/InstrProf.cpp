@@ -52,12 +52,6 @@ class InstrProfErrorCategoryType : public std::error_category {
     }
     llvm_unreachable("A value of instrprof_error has no message.");
   }
-  std::error_condition
-  default_error_condition(int EV) const LLVM_NOEXCEPT override {
-    if (static_cast<instrprof_error>(EV) == instrprof_error::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
-  }
 };
 }
 

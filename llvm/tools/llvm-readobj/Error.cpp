@@ -21,8 +21,6 @@ class _readobj_error_category : public std::error_category {
 public:
   const char* name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override;
 };
 } // namespace
 
@@ -46,13 +44,6 @@ std::string _readobj_error_category::message(int EV) const {
   }
   llvm_unreachable("An enumerator of readobj_error does not have a message "
                    "defined.");
-}
-
-std::error_condition
-_readobj_error_category::default_error_condition(int EV) const {
-  if (static_cast<readobj_error>(EV) == readobj_error::success)
-    return std::error_condition();
-  return std::errc::invalid_argument;
 }
 
 namespace llvm {

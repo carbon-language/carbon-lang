@@ -17,8 +17,6 @@ class _obj2yaml_error_category : public std::error_category {
 public:
   const char *name() const LLVM_NOEXCEPT override;
   std::string message(int ev) const override;
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override;
 };
 } // namespace
 
@@ -37,13 +35,6 @@ std::string _obj2yaml_error_category::message(int ev) const {
   }
   llvm_unreachable("An enumerator of obj2yaml_error does not have a message "
                    "defined.");
-}
-
-std::error_condition
-_obj2yaml_error_category::default_error_condition(int ev) const {
-  if (static_cast<obj2yaml_error>(ev) == obj2yaml_error::success)
-    return std::error_condition();
-  return std::errc::invalid_argument;
 }
 
 namespace llvm {
