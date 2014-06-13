@@ -170,7 +170,8 @@ public:
     if (DisableSchedCycles || !NeedLatency)
       HazardRec = new ScheduleHazardRecognizer();
     else
-      HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
+      HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(
+          tm.getSubtargetImpl(), this);
   }
 
   ~ScheduleDAGRRList() {

@@ -103,14 +103,15 @@ ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
 
 // Use a ScoreboardHazardRecognizer for prepass ARM scheduling. TargetInstrImpl
 // currently defaults to no prepass hazard recognizer.
-ScheduleHazardRecognizer *ARMBaseInstrInfo::
-CreateTargetHazardRecognizer(const TargetMachine *TM,
-                             const ScheduleDAG *DAG) const {
+ScheduleHazardRecognizer *
+ARMBaseInstrInfo::CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
+                                               const ScheduleDAG *DAG) const {
   if (usePreRAHazardRecognizer()) {
-    const InstrItineraryData *II = TM->getInstrItineraryData();
+    const InstrItineraryData *II =
+        &static_cast<const ARMSubtarget *>(STI)->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG, "pre-RA-sched");
   }
-  return TargetInstrInfo::CreateTargetHazardRecognizer(TM, DAG);
+  return TargetInstrInfo::CreateTargetHazardRecognizer(STI, DAG);
 }
 
 ScheduleHazardRecognizer *ARMBaseInstrInfo::

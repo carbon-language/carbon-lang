@@ -73,7 +73,8 @@ public:
     : ScheduleDAGSDNodes(mf), AvailableQueue(availqueue), AA(aa) {
 
     const TargetMachine &tm = mf.getTarget();
-    HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
+    HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(
+        tm.getSubtargetImpl(), this);
   }
 
   ~ScheduleDAGVLIW() {

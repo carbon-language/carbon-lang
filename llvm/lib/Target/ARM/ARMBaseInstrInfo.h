@@ -50,7 +50,7 @@ public:
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
   ScheduleHazardRecognizer *
-  CreateTargetHazardRecognizer(const TargetMachine *TM,
+  CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                                const ScheduleDAG *DAG) const override;
 
   ScheduleHazardRecognizer *

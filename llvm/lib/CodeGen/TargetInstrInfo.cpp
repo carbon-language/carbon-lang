@@ -671,7 +671,7 @@ bool TargetInstrInfo::usePreRAHazardRecognizer() const {
 
 // Default implementation of CreateTargetRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfo::
-CreateTargetHazardRecognizer(const TargetMachine *TM,
+CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                              const ScheduleDAG *DAG) const {
   // Dummy hazard recognizer allows all instructions to issue.
   return new ScheduleHazardRecognizer();

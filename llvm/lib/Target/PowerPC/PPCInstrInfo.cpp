@@ -67,17 +67,19 @@ PPCInstrInfo::PPCInstrInfo(PPCSubtarget &STI)
 
 /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
 /// this target when scheduling the DAG.
-ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
-  const TargetMachine *TM,
-  const ScheduleDAG *DAG) const {
-  unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
+ScheduleHazardRecognizer *
+PPCInstrInfo::CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
+                                           const ScheduleDAG *DAG) const {
+  unsigned Directive =
+      static_cast<const PPCSubtarget *>(STI)->getDarwinDirective();
   if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2 ||
       Directive == PPC::DIR_E500mc || Directive == PPC::DIR_E5500) {
-    const InstrItineraryData *II = TM->getInstrItineraryData();
+    const InstrItineraryData *II =
+        &static_cast<const PPCSubtarget *>(STI)->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG);
   }
 
-  return TargetInstrInfo::CreateTargetHazardRecognizer(TM, DAG);
+  return TargetInstrInfo::CreateTargetHazardRecognizer(STI, DAG);
 }
 
 /// CreateTargetPostRAHazardRecognizer - Return the postRA hazard recognizer

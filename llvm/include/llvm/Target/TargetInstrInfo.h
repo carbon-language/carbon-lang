@@ -37,6 +37,7 @@ class ScheduleDAG;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 class BranchProbability;
+class TargetSubtargetInfo;
 
 template<class T> class SmallVectorImpl;
 
@@ -743,7 +744,7 @@ public:
   /// use for this target when scheduling the machine instructions before
   /// register allocation.
   virtual ScheduleHazardRecognizer*
-  CreateTargetHazardRecognizer(const TargetMachine *TM,
+  CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                                const ScheduleDAG *DAG) const;
 
   /// CreateTargetMIHazardRecognizer - Allocate and return a hazard recognizer
