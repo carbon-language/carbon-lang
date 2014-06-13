@@ -1066,7 +1066,7 @@ void DwarfDebug::endModule() {
 }
 
 // Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::getExistingAbstractVariable(DIVariable &DV,
+DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV,
                                                      DIVariable &Cleansed) {
   LLVMContext &Ctx = DV->getContext();
   // More then one inlined variable corresponds to one abstract variable.
