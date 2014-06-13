@@ -1067,7 +1067,8 @@ unsigned int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 void  R600InstrInfo::reserveIndirectRegisters(BitVector &Reserved,
                                              const MachineFunction &MF) const {
   const AMDGPUFrameLowering *TFL =
-                 static_cast<const AMDGPUFrameLowering*>(TM.getFrameLowering());
+    static_cast<const AMDGPUFrameLowering*>(
+    MF.getTarget().getFrameLowering());
 
   unsigned StackWidth = TFL->getStackWidth(MF);
   int End = getIndirectIndexEnd(MF);
