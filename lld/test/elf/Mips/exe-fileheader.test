@@ -1,15 +1,13 @@
-# REQUIRES: mips
-
 # Check ELF Header for non-pic executable file.
 
 # Build shared library
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe %t-obj %t-so
-# RUN: llvm-readobj -file-headers %t-exe | FileCheck %s
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
 
 # CHECK: Format: ELF32-mips
 # CHECK: Arch: mipsel
@@ -30,7 +28,7 @@
 # CHECK:   Version: 1
 # CHECK:   Entry: 0x4001A0
 # CHECK:   ProgramHeaderOffset: 0x34
-# CHECK:   SectionHeaderOffset: 0x2288
+# CHECK:   SectionHeaderOffset: 0x2280
 # CHECK:   Flags [ (0x70001005)
 # CHECK:     EF_MIPS_ABI_O32 (0x1000)
 # CHECK:     EF_MIPS_ARCH_32R2 (0x70000000)
@@ -41,13 +39,66 @@
 # CHECK:   ProgramHeaderEntrySize: 32
 # CHECK:   ProgramHeaderCount: 6
 # CHECK:   SectionHeaderEntrySize: 40
-# CHECK:   SectionHeaderCount: 16
-# CHECK:   StringTableSectionIndex: 13
+# CHECK:   SectionHeaderCount: 14
+# CHECK:   StringTableSectionIndex: 11
 # CHECK: }
 
-    .abicalls
-    .global glob
-    .ent    glob
-glob:
-    jal     T1
-    .end    glob
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x0C
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name:    T1
+      Section: .text
+      Type:    STT_FUNC
+      Value:   0x0
+      Size:    4
+
+# o.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x08
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          T1
+        Type:            R_MIPS_26
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+  Global:
+    - Name:            glob
+      Section:         .text
+    - Name:            T1
+...
