@@ -517,10 +517,12 @@ def rr : AVX512XS8I<opc, MRMDestReg, (outs DstRC:$dst), (ins KRC:$src),
                   []>, EVEX;
 }
 
+let Predicates = [HasCDI] in {
 defm VPBROADCASTMW2D : avx512_mask_broadcast<0x3A, "vpbroadcastmw2d", VR512,
                                              VK16, v16i32, v16i1>, EVEX_V512;
 defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q", VR512,
                                             VK8, v8i64, v8i1>, EVEX_V512, VEX_W;
+}
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - VPERM
