@@ -25,6 +25,11 @@
 // E: "-E"
 // E: "-o" "-"
 
+// RUN: %clang_cl /EP -### -- %s 2>&1 | FileCheck -check-prefix=EP %s
+// EP: "-E"
+// EP: "-P"
+// EP: "-o" "-"
+
 // RTTI is on by default; just check that we don't error.
 // RUN: %clang_cl /Zs /GR -- %s 2>&1
 
@@ -196,7 +201,6 @@
 // RUN:     /docname \
 // RUN:     /d2Zi+ \
 // RUN:     /EHsc \
-// RUN:     /EP \
 // RUN:     /F \
 // RUN:     /FA \
 // RUN:     /FAc \

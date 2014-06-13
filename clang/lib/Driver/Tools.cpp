@@ -4363,6 +4363,12 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (!Args.hasArg(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
+  // /EP should expand to -E -P.
+  if (Args.hasArg(options::OPT__SLASH_EP)) {
+    CmdArgs.push_back("-E");
+    CmdArgs.push_back("-P");
+  }
+
   const Driver &D = getToolChain().getDriver();
   Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
   Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
