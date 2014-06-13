@@ -5083,10 +5083,10 @@ to modify the number or order of execution of this ``cmpxchg`` with
 other :ref:`volatile operations <volatile>`.
 
 The success and failure :ref:`ordering <ordering>` arguments specify how this
-``cmpxchg`` synchronizes with other atomic operations. The both ordering
-parameters must be at least ``monotonic``, the ordering constraint on failure
-must be no stronger than that on success, and the failure ordering cannot be
-either ``release`` or ``acq_rel``.
+``cmpxchg`` synchronizes with other atomic operations. Both ordering parameters
+must be at least ``monotonic``, the ordering constraint on failure must be no
+stronger than that on success, and the failure ordering cannot be either
+``release`` or ``acq_rel``.
 
 The optional "``singlethread``" argument declares that the ``cmpxchg``
 is only atomic with respect to code (usually signal handlers) running in
