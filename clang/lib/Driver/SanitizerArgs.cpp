@@ -113,14 +113,6 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // -f(-no)sanitize=leak should change whether leak detection is enabled by
   // default in ASan?
 
-  // If -fsanitize contains extra features of ASan, it should also
-  // explicitly contain -fsanitize=address (probably, turned off later in the
-  // command line).
-  if ((Kind & AddressFull) != 0 && (AllAdd & Address) == 0)
-    D.Diag(diag::warn_drv_unused_sanitizer)
-     << lastArgumentForKind(D, Args, AddressFull)
-     << "-fsanitize=address";
-
   // Parse -f(no-)sanitize-blacklist options.
   if (Arg *BLArg = Args.getLastArg(options::OPT_fsanitize_blacklist,
                                    options::OPT_fno_sanitize_blacklist)) {
@@ -210,11 +202,6 @@ unsigned SanitizerArgs::parse(const char *Value) {
 #define SANITIZER_GROUP(NAME, ID, ALIAS) .Case(NAME, ID##Group)
 #include "clang/Basic/Sanitizers.def"
     .Default(SanitizeKind());
-  // Assume -fsanitize=address implies -fsanitize=init-order,use-after-return.
-  // FIXME: This should be either specified in Sanitizers.def, or go away when
-  // we get rid of "-fsanitize=init-order,use-after-return" flags at all.
-  if (ParsedKind & Address)
-    ParsedKind |= InitOrder | UseAfterReturn;
   return ParsedKind;
 }
 

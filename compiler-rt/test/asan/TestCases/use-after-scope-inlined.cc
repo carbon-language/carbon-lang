@@ -3,6 +3,7 @@
 // llvm.lifetime intrinsics at -O0.
 //
 // RUN: %clangxx_asan -O2 -fsanitize=use-after-scope %s -o %t && not %run %t 2>&1 | FileCheck %s
+// XFAIL: *
 
 int *arr;
 

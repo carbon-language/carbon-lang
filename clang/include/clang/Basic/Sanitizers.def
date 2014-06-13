@@ -40,13 +40,6 @@
 
 // AddressSanitizer
 SANITIZER("address", Address)
-// More features of AddressSanitizer that should be turned on explicitly.
-SANITIZER("init-order", InitOrder)
-SANITIZER("use-after-return", UseAfterReturn)
-SANITIZER("use-after-scope", UseAfterScope)
-
-SANITIZER_GROUP("address-full", AddressFull,
-                Address | InitOrder | UseAfterReturn | UseAfterScope)
 
 // MemorySanitizer
 SANITIZER("memory", Memory)

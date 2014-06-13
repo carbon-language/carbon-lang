@@ -1,4 +1,5 @@
 // RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && %run %t
+// XFAIL: *
 
 #include <stdio.h>
 

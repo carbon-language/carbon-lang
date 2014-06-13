@@ -128,9 +128,8 @@ static cl::opt<int> ClMaxInsnsToInstrumentPerBB("asan-max-ins-per-bb",
 // This flag may need to be replaced with -f[no]asan-stack.
 static cl::opt<bool> ClStack("asan-stack",
        cl::desc("Handle stack memory"), cl::Hidden, cl::init(true));
-// This flag may need to be replaced with -f[no]asan-use-after-return.
 static cl::opt<bool> ClUseAfterReturn("asan-use-after-return",
-       cl::desc("Check return-after-free"), cl::Hidden, cl::init(false));
+       cl::desc("Check return-after-free"), cl::Hidden, cl::init(true));
 // This flag may need to be replaced with -f[no]asan-globals.
 static cl::opt<bool> ClGlobals("asan-globals",
        cl::desc("Handle global objects"), cl::Hidden, cl::init(true));
@@ -142,7 +141,7 @@ static cl::opt<int> ClCoverageBlockThreshold("asan-coverage-block-threshold",
                 "are more than this number of blocks."),
        cl::Hidden, cl::init(1500));
 static cl::opt<bool> ClInitializers("asan-initialization-order",
-       cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
+       cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(true));
 static cl::opt<bool> ClInvalidPointerPairs("asan-detect-invalid-pointer-pair",
        cl::desc("Instrument <, <=, >, >=, - with pointer operands"),
        cl::Hidden, cl::init(false));
@@ -305,13 +304,7 @@ static size_t RedzoneSizeForScale(int MappingScale) {
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public FunctionPass {
-  AddressSanitizer(bool CheckInitOrder = true,
-                   bool CheckUseAfterReturn = false,
-                   bool CheckLifetime = false)
-      : FunctionPass(ID),
-        CheckInitOrder(CheckInitOrder || ClInitializers),
-        CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
-        CheckLifetime(CheckLifetime || ClCheckLifetime) {}
+  AddressSanitizer() : FunctionPass(ID) {}
   const char *getPassName() const override {
     return "AddressSanitizerFunctionPass";
   }
@@ -340,10 +333,6 @@ struct AddressSanitizer : public FunctionPass {
   bool InjectCoverage(Function &F, const ArrayRef<BasicBlock*> AllBlocks);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
 
-  bool CheckInitOrder;
-  bool CheckUseAfterReturn;
-  bool CheckLifetime;
-
   LLVMContext *C;
   const DataLayout *DL;
   int LongSize;
@@ -369,12 +358,9 @@ struct AddressSanitizer : public FunctionPass {
 
 class AddressSanitizerModule : public ModulePass {
  public:
-  AddressSanitizerModule(bool CheckInitOrder = true,
-                         StringRef BlacklistFile = StringRef())
-      : ModulePass(ID),
-        CheckInitOrder(CheckInitOrder || ClInitializers),
-        BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile) {}
+  AddressSanitizerModule(StringRef BlacklistFile = StringRef())
+      : ModulePass(ID), BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
+                                                            : BlacklistFile) {}
   bool runOnModule(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
   const char *getPassName() const override {
@@ -392,7 +378,6 @@ class AddressSanitizerModule : public ModulePass {
     return RedzoneSizeForScale(Mapping.Scale);
   }
 
-  bool CheckInitOrder;
   SmallString<64> BlacklistFile;
 
   std::unique_ptr<SpecialCaseList> BL;
@@ -493,7 +478,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   /// \brief Collect lifetime intrinsic calls to check for use-after-scope
   /// errors.
   void visitIntrinsicInst(IntrinsicInst &II) {
-    if (!ASan.CheckLifetime) return;
+    if (!ClCheckLifetime) return;
     Intrinsic::ID ID = II.getIntrinsicID();
     if (ID != Intrinsic::lifetime_start &&
         ID != Intrinsic::lifetime_end)
@@ -548,19 +533,16 @@ char AddressSanitizer::ID = 0;
 INITIALIZE_PASS(AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.",
     false, false)
-FunctionPass *llvm::createAddressSanitizerFunctionPass(
-    bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime) {
-  return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
-                              CheckLifetime);
+FunctionPass *llvm::createAddressSanitizerFunctionPass() {
+  return new AddressSanitizer();
 }
 
 char AddressSanitizerModule::ID = 0;
 INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
-ModulePass *llvm::createAddressSanitizerModulePass(
-    bool CheckInitOrder, StringRef BlacklistFile) {
-  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile);
+ModulePass *llvm::createAddressSanitizerModulePass(StringRef BlacklistFile) {
+  return new AddressSanitizerModule(BlacklistFile);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -701,7 +683,7 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
     if (GlobalVariable *G = dyn_cast<GlobalVariable>(Addr)) {
       // If initialization order checking is disabled, a simple access to a
       // dynamically initialized global is always valid.
-      if (!CheckInitOrder || GlobalIsLinkerInitialized(G)) {
+      if (!ClInitializers || GlobalIsLinkerInitialized(G)) {
         NumOptimizedAccessesToGlobalVar++;
         return;
       }
@@ -1077,7 +1059,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
         NULL);
 
     // Populate the first and last globals declared in this TU.
-    if (CheckInitOrder && GlobalHasDynamicInitializer)
+    if (ClInitializers && GlobalHasDynamicInitializer)
       HasDynamicallyInitializedGlobals = true;
 
     DEBUG(dbgs() << "NEW GLOBAL: " << *NewGlobal << "\n");
@@ -1089,7 +1071,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
       ConstantArray::get(ArrayOfGlobalStructTy, Initializers), "");
 
   // Create calls for poisoning before initializers run and unpoisoning after.
-  if (CheckInitOrder && HasDynamicallyInitializedGlobals)
+  if (HasDynamicallyInitializedGlobals)
     createInitializerPoisonCalls(M, ModuleName);
   IRB.CreateCall2(AsanRegisterGlobals,
                   IRB.CreatePointerCast(AllGlobals, IntptrTy),
@@ -1559,7 +1541,7 @@ void FunctionStackPoisoner::poisonStack() {
   DEBUG(dbgs() << L.DescriptionString << " --- " << L.FrameSize << "\n");
   uint64_t LocalStackSize = L.FrameSize;
   bool DoStackMalloc =
-      ASan.CheckUseAfterReturn && LocalStackSize <= kMaxStackMallocSize;
+      ClUseAfterReturn && LocalStackSize <= kMaxStackMallocSize;
 
   Type *ByteArrayTy = ArrayType::get(IRB.getInt8Ty(), LocalStackSize);
   AllocaInst *MyAlloca =

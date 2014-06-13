@@ -1,5 +1,6 @@
 // RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && \
 // RUN:     not %run %t 2>&1 | FileCheck %s
+// XFAIL: *
 #include <stdio.h>
 
 struct IntHolder {

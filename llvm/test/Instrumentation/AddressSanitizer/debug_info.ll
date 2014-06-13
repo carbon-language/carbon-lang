@@ -1,4 +1,4 @@
-; RUN: opt < %s -asan -asan-module -S | FileCheck %s
+; RUN: opt < %s -asan -asan-module -asan-use-after-return=0 -S | FileCheck %s
 
 ; Checks that llvm.dbg.declare instructions are updated 
 ; accordingly as we merge allocas.

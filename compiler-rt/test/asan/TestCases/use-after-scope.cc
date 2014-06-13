@@ -1,6 +1,7 @@
 // RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && \
 // RUN: not %run %t 2>&1 | FileCheck %s
 // RUN: env ASAN_OPTIONS="detect_stack_use_after_return=1" not %run %t 2>&1 | FileCheck %s
+// XFAIL: *
 
 int main() {
   int *p = 0;

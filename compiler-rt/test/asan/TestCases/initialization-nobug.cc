@@ -1,13 +1,13 @@
 // A collection of various initializers which shouldn't trip up initialization
 // order checking.  If successful, this will just return 0.
 
-// RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-nobug-extra.cc -o %t
 // RUN: env ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
-// RUN: %clangxx_asan -O1 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -O1 %s %p/Helpers/initialization-nobug-extra.cc -o %t
 // RUN: env ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
-// RUN: %clangxx_asan -O2 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -O2 %s %p/Helpers/initialization-nobug-extra.cc -o %t
 // RUN: env ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
-// RUN: %clangxx_asan -O3 %s %p/Helpers/initialization-nobug-extra.cc -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -O3 %s %p/Helpers/initialization-nobug-extra.cc -o %t
 // RUN: env ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 
 // Simple access:
