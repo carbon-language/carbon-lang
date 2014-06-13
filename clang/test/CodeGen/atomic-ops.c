@@ -15,13 +15,13 @@ typedef enum memory_order {
 } memory_order;
 
 int fi1(_Atomic(int) *i) {
-  // CHECK: @fi1
+  // CHECK-LABEL: @fi1
   // CHECK: load atomic i32* {{.*}} seq_cst
   return __c11_atomic_load(i, memory_order_seq_cst);
 }
 
 int fi1a(int *i) {
-  // CHECK: @fi1a
+  // CHECK-LABEL: @fi1a
   // CHECK: load atomic i32* {{.*}} seq_cst
   int v;
   __atomic_load(i, &v, memory_order_seq_cst);
@@ -29,60 +29,60 @@ int fi1a(int *i) {
 }
 
 int fi1b(int *i) {
-  // CHECK: @fi1b
+  // CHECK-LABEL: @fi1b
   // CHECK: load atomic i32* {{.*}} seq_cst
   return __atomic_load_n(i, memory_order_seq_cst);
 }
 
 void fi2(_Atomic(int) *i) {
-  // CHECK: @fi2
+  // CHECK-LABEL: @fi2
   // CHECK: store atomic i32 {{.*}} seq_cst
   __c11_atomic_store(i, 1, memory_order_seq_cst);
 }
 
 void fi2a(int *i) {
-  // CHECK: @fi2a
+  // CHECK-LABEL: @fi2a
   // CHECK: store atomic i32 {{.*}} seq_cst
   int v = 1;
   __atomic_store(i, &v, memory_order_seq_cst);
 }
 
 void fi2b(int *i) {
-  // CHECK: @fi2b
+  // CHECK-LABEL: @fi2b
   // CHECK: store atomic i32 {{.*}} seq_cst
   __atomic_store_n(i, 1, memory_order_seq_cst);
 }
 
 int fi3(_Atomic(int) *i) {
-  // CHECK: @fi3
+  // CHECK-LABEL: @fi3
   // CHECK: atomicrmw and
   // CHECK-NOT: and
   return __c11_atomic_fetch_and(i, 1, memory_order_seq_cst);
 }
 
 int fi3a(int *i) {
-  // CHECK: @fi3a
+  // CHECK-LABEL: @fi3a
   // CHECK: atomicrmw xor
   // CHECK-NOT: xor
   return __atomic_fetch_xor(i, 1, memory_order_seq_cst);
 }
 
 int fi3b(int *i) {
-  // CHECK: @fi3b
+  // CHECK-LABEL: @fi3b
   // CHECK: atomicrmw add
   // CHECK: add
   return __atomic_add_fetch(i, 1, memory_order_seq_cst);
 }
 
 int fi3c(int *i) {
-  // CHECK: @fi3c
+  // CHECK-LABEL: @fi3c
   // CHECK: atomicrmw nand
   // CHECK-NOT: and
   return __atomic_fetch_nand(i, 1, memory_order_seq_cst);
 }
 
 int fi3d(int *i) {
-  // CHECK: @fi3d
+  // CHECK-LABEL: @fi3d
   // CHECK: atomicrmw nand
   // CHECK: and
   // CHECK: xor
@@ -90,7 +90,7 @@ int fi3d(int *i) {
 }
 
 _Bool fi4(_Atomic(int) *i) {
-  // CHECK: @fi4
+  // CHECK-LABEL: @fi4
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
   // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
@@ -100,7 +100,7 @@ _Bool fi4(_Atomic(int) *i) {
 }
 
 _Bool fi4a(int *i) {
-  // CHECK: @fi4
+  // CHECK-LABEL: @fi4
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
   // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
@@ -111,7 +111,7 @@ _Bool fi4a(int *i) {
 }
 
 _Bool fi4b(int *i) {
-  // CHECK: @fi4
+  // CHECK-LABEL: @fi4
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
   // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
@@ -121,13 +121,13 @@ _Bool fi4b(int *i) {
 }
 
 float ff1(_Atomic(float) *d) {
-  // CHECK: @ff1
+  // CHECK-LABEL: @ff1
   // CHECK: load atomic i32* {{.*}} monotonic
   return __c11_atomic_load(d, memory_order_relaxed);
 }
 
 void ff2(_Atomic(float) *d) {
-  // CHECK: @ff2
+  // CHECK-LABEL: @ff2
   // CHECK: store atomic i32 {{.*}} release
   __c11_atomic_store(d, 1, memory_order_release);
 }
@@ -137,20 +137,20 @@ float ff3(_Atomic(float) *d) {
 }
 
 int* fp1(_Atomic(int*) *p) {
-  // CHECK: @fp1
+  // CHECK-LABEL: @fp1
   // CHECK: load atomic i32* {{.*}} seq_cst
   return __c11_atomic_load(p, memory_order_seq_cst);
 }
 
 int* fp2(_Atomic(int*) *p) {
-  // CHECK: @fp2
+  // CHECK-LABEL: @fp2
   // CHECK: store i32 4
   // CHECK: atomicrmw add {{.*}} monotonic
   return __c11_atomic_fetch_add(p, 1, memory_order_relaxed);
 }
 
 int *fp2a(int **p) {
-  // CHECK: @fp2a
+  // CHECK-LABEL: @fp2a
   // CHECK: store i32 4
   // CHECK: atomicrmw sub {{.*}} monotonic
   // Note, the GNU builtins do not multiply by sizeof(T)!
@@ -158,20 +158,20 @@ int *fp2a(int **p) {
 }
 
 _Complex float fc(_Atomic(_Complex float) *c) {
-  // CHECK: @fc
+  // CHECK-LABEL: @fc
   // CHECK: atomicrmw xchg i64*
   return __c11_atomic_exchange(c, 2, memory_order_seq_cst);
 }
 
 typedef struct X { int x; } X;
 X fs(_Atomic(X) *c) {
-  // CHECK: @fs
+  // CHECK-LABEL: @fs
   // CHECK: atomicrmw xchg i32*
   return __c11_atomic_exchange(c, (X){2}, memory_order_seq_cst);
 }
 
 X fsa(X *c, X *d) {
-  // CHECK: @fsa
+  // CHECK-LABEL: @fsa
   // CHECK: atomicrmw xchg i32*
   X ret;
   __atomic_exchange(c, d, &ret, memory_order_seq_cst);
@@ -179,7 +179,7 @@ X fsa(X *c, X *d) {
 }
 
 _Bool fsb(_Bool *c) {
-  // CHECK: @fsb
+  // CHECK-LABEL: @fsb
   // CHECK: atomicrmw xchg i8*
   return __atomic_exchange_n(c, 1, memory_order_seq_cst);
 }
@@ -205,7 +205,7 @@ struct Seventeen {
 } seventeen;
 
 int lock_free(struct Incomplete *incomplete) {
-  // CHECK: @lock_free
+  // CHECK-LABEL: @lock_free
 
   // CHECK: call i32 @__atomic_is_lock_free(i32 3, i8* null)
   __c11_atomic_is_lock_free(3);
@@ -253,7 +253,7 @@ struct foo bigThing;
 _Atomic(struct foo) bigAtomic;
 
 void structAtomicStore() {
-  // CHECK: @structAtomicStore
+  // CHECK-LABEL: @structAtomicStore
   struct foo f = {0};
   struct bar b = {0};
   __atomic_store(&smallThing, &b, 5);
@@ -263,7 +263,7 @@ void structAtomicStore() {
   // CHECK: call void @__atomic_store(i32 512, i8* {{.*}} @bigThing
 }
 void structAtomicLoad() {
-  // CHECK: @structAtomicLoad
+  // CHECK-LABEL: @structAtomicLoad
   struct bar b;
   __atomic_load(&smallThing, &b, 5);
   // CHECK: call void @__atomic_load(i32 3, i8* {{.*}} @smallThing
@@ -273,7 +273,7 @@ void structAtomicLoad() {
   // CHECK: call void @__atomic_load(i32 512, i8* {{.*}} @bigThing
 }
 struct foo structAtomicExchange() {
-  // CHECK: @structAtomicExchange
+  // CHECK-LABEL: @structAtomicExchange
   struct foo f = {0};
   struct foo old;
   __atomic_exchange(&f, &bigThing, &old, 5);
@@ -283,7 +283,7 @@ struct foo structAtomicExchange() {
   // CHECK: call void @__atomic_exchange(i32 512, i8* bitcast ({{.*}} @bigAtomic to i8*),
 }
 int structAtomicCmpExchange() {
-  // CHECK: @structAtomicCmpExchange
+  // CHECK-LABEL: @structAtomicCmpExchange
   _Bool x = __atomic_compare_exchange(&smallThing, &thing1, &thing2, 1, 5, 5);
   // CHECK: call zeroext i1 @__atomic_compare_exchange(i32 3, {{.*}} @smallThing{{.*}} @thing1{{.*}} @thing2
 
@@ -298,7 +298,7 @@ int structAtomicCmpExchange() {
 // types.
 _Atomic(int) atomic_init_i = 42;
 
-// CHECK: @atomic_init_foo
+// CHECK-LABEL: @atomic_init_foo
 void atomic_init_foo()
 {
   // CHECK-NOT: }
