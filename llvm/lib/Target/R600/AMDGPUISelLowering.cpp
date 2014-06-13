@@ -241,23 +241,32 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   }
 
+  const MVT ScalarIntVTs[] = { MVT::i32, MVT::i64 };
+  for (MVT VT : ScalarIntVTs) {
+    // GPU does not have divrem function for signed or unsigned.
+    setOperationAction(ISD::SDIVREM, VT, Expand);
+
+    // GPU does not have [S|U]MUL_LOHI functions as a single instruction.
+    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
+
+    setOperationAction(ISD::BSWAP, VT, Expand);
+    setOperationAction(ISD::CTTZ, VT, Expand);
+    setOperationAction(ISD::CTLZ, VT, Expand);
+  }
+
   if (!Subtarget->hasBCNT(32))
     setOperationAction(ISD::CTPOP, MVT::i32, Expand);
 
   if (!Subtarget->hasBCNT(64))
     setOperationAction(ISD::CTPOP, MVT::i64, Expand);
 
-  MVT VTs[] = { MVT::i32, MVT::i64 };
-  for (MVT VT : VTs) {
-    setOperationAction(ISD::CTTZ, VT, Expand);
-    setOperationAction(ISD::CTLZ, VT, Expand);
-  }
 
-  static const MVT::SimpleValueType IntTypes[] = {
+  static const MVT::SimpleValueType VectorIntTypes[] = {
     MVT::v2i32, MVT::v4i32
   };
 
-  for (MVT VT : IntTypes) {
+  for (MVT VT : VectorIntTypes) {
     // Expand the following operations for the current type by default.
     setOperationAction(ISD::ADD,  VT, Expand);
     setOperationAction(ISD::AND,  VT, Expand);
@@ -274,7 +283,12 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SINT_TO_FP, VT, Expand);
     setOperationAction(ISD::UINT_TO_FP, VT, Expand);
+    // TODO: Implement custom UREM / SREM routines.
+    setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::SDIVREM, VT, Expand);
+    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     setOperationAction(ISD::SELECT, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::XOR,  VT, Expand);
@@ -284,11 +298,11 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::CTLZ, VT, Expand);
   }
 
-  static const MVT::SimpleValueType FloatTypes[] = {
+  static const MVT::SimpleValueType FloatVectorTypes[] = {
     MVT::v2f32, MVT::v4f32
   };
 
-  for (MVT VT : FloatTypes) {
+  for (MVT VT : FloatVectorTypes) {
     setOperationAction(ISD::FABS, VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FCOS, VT, Expand);
@@ -309,6 +323,14 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::SELECT_CC);
+
+  setSchedulingPreference(Sched::RegPressure);
+  setJumpIsExpensive(true);
+
+  // FIXME: Need to really handle these.
+  MaxStoresPerMemcpy  = 4096;
+  MaxStoresPerMemmove = 4096;
+  MaxStoresPerMemset  = 4096;
 }
 
 //===----------------------------------------------------------------------===//

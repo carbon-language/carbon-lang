@@ -40,29 +40,14 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 void AMDGPUTargetLowering::InitAMDILLowering() {
   static const MVT::SimpleValueType types[] = {
-    MVT::i8,
-    MVT::i16,
     MVT::i32,
     MVT::f32,
     MVT::f64,
     MVT::i64,
-    MVT::v2i8,
-    MVT::v4i8,
-    MVT::v2i16,
-    MVT::v4i16,
     MVT::v4f32,
     MVT::v4i32,
     MVT::v2f32,
-    MVT::v2i32,
-    MVT::v2f64,
-    MVT::v2i64
-  };
-
-  static const MVT::SimpleValueType IntTypes[] = {
-    MVT::i8,
-    MVT::i16,
-    MVT::i32,
-    MVT::i64
+    MVT::v2i32
   };
 
   static const MVT::SimpleValueType FloatTypes[] = {
@@ -71,21 +56,13 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   };
 
   static const MVT::SimpleValueType VectorTypes[] = {
-    MVT::v2i8,
-    MVT::v4i8,
-    MVT::v2i16,
-    MVT::v4i16,
     MVT::v4f32,
     MVT::v4i32,
     MVT::v2f32,
-    MVT::v2i32,
-    MVT::v2f64,
-    MVT::v2i64
+    MVT::v2i32
   };
 
   const AMDGPUSubtarget &STM = getTargetMachine().getSubtarget<AMDGPUSubtarget>();
-  // These are the current register classes that are
-  // supported
 
   for (MVT VT : types) {
     setOperationAction(ISD::SUBE, VT, Expand);
@@ -99,70 +76,26 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
-    if (VT != MVT::i64 && VT != MVT::v2i64) {
+    if (VT != MVT::i64)
       setOperationAction(ISD::SDIV, VT, Custom);
-    }
   }
+
   for (MVT VT : FloatTypes) {
-    // IL does not have these operations for floating point types
     setOperationAction(ISD::FP_ROUND_INREG, VT, Expand);
-  }
-
-  for (MVT VT : IntTypes) {
-    // GPU also does not have divrem function for signed or unsigned
-    setOperationAction(ISD::SDIVREM, VT, Expand);
-
-    // GPU does not have [S|U]MUL_LOHI functions as a single instruction
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
-
-    setOperationAction(ISD::BSWAP, VT, Expand);
   }
 
   for (MVT VT : VectorTypes) {
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
-    setOperationAction(ISD::SDIVREM, VT, Expand);
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    // setOperationAction(ISD::VSETCC, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
+  }
 
-  }
   setOperationAction(ISD::MULHU, MVT::i64, Expand);
-  setOperationAction(ISD::MULHU, MVT::v2i64, Expand);
   setOperationAction(ISD::MULHS, MVT::i64, Expand);
-  setOperationAction(ISD::MULHS, MVT::v2i64, Expand);
-  setOperationAction(ISD::ADD, MVT::v2i64, Expand);
-  setOperationAction(ISD::SREM, MVT::v2i64, Expand);
-  setOperationAction(ISD::Constant          , MVT::i64  , Legal);
-  setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
-  setOperationAction(ISD::TRUNCATE, MVT::v2i64, Expand);
-  setOperationAction(ISD::SIGN_EXTEND, MVT::v2i64, Expand);
-  setOperationAction(ISD::ZERO_EXTEND, MVT::v2i64, Expand);
-  setOperationAction(ISD::ANY_EXTEND, MVT::v2i64, Expand);
   if (STM.hasHWFP64()) {
-    // we support loading/storing v2f64 but not operations on the type
-    setOperationAction(ISD::FADD, MVT::v2f64, Expand);
-    setOperationAction(ISD::FSUB, MVT::v2f64, Expand);
-    setOperationAction(ISD::FMUL, MVT::v2f64, Expand);
-    setOperationAction(ISD::FP_ROUND_INREG, MVT::v2f64, Expand);
-    setOperationAction(ISD::FP_EXTEND, MVT::v2f64, Expand);
-    setOperationAction(ISD::ConstantFP        , MVT::f64  , Legal);
-    // We want to expand vector conversions into their scalar
-    // counterparts.
-    setOperationAction(ISD::TRUNCATE, MVT::v2f64, Expand);
-    setOperationAction(ISD::SIGN_EXTEND, MVT::v2f64, Expand);
-    setOperationAction(ISD::ZERO_EXTEND, MVT::v2f64, Expand);
-    setOperationAction(ISD::ANY_EXTEND, MVT::v2f64, Expand);
+    setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
     setOperationAction(ISD::FABS, MVT::f64, Expand);
-    setOperationAction(ISD::FABS, MVT::v2f64, Expand);
   }
-  // TODO: Fix the UDIV24 algorithm so it works for these
-  // types correctly. This needs vector comparisons
-  // for this to work correctly.
-  setOperationAction(ISD::UDIV, MVT::v2i8, Expand);
-  setOperationAction(ISD::UDIV, MVT::v4i8, Expand);
-  setOperationAction(ISD::UDIV, MVT::v2i16, Expand);
-  setOperationAction(ISD::UDIV, MVT::v4i16, Expand);
+
   setOperationAction(ISD::SUBC, MVT::Other, Expand);
   setOperationAction(ISD::ADDE, MVT::Other, Expand);
   setOperationAction(ISD::ADDC, MVT::Other, Expand);
@@ -170,20 +103,12 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
 
+  setOperationAction(ISD::Constant, MVT::i32, Legal);
+  setOperationAction(ISD::Constant, MVT::i64, Legal);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
 
-  // Use the default implementation.
-  setOperationAction(ISD::ConstantFP        , MVT::f32    , Legal);
-  setOperationAction(ISD::Constant          , MVT::i32    , Legal);
-
-  setSchedulingPreference(Sched::RegPressure);
   setPow2DivIsCheap(false);
-  setSelectIsExpensive(true);
-  setJumpIsExpensive(true);
-
-  MaxStoresPerMemcpy  = 4096;
-  MaxStoresPerMemmove = 4096;
-  MaxStoresPerMemset  = 4096;
-
+  setSelectIsExpensive(true); // FIXME: This makes no sense at all
 }
 
 bool
