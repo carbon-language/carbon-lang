@@ -30,8 +30,8 @@ using namespace llvm;
 // Pin the vtable to this file.
 void AMDGPUInstrInfo::anchor() {}
 
-AMDGPUInstrInfo::AMDGPUInstrInfo(TargetMachine &tm)
-  : AMDGPUGenInstrInfo(-1,-1), RI(tm), TM(tm) { }
+AMDGPUInstrInfo::AMDGPUInstrInfo(const AMDGPUSubtarget &st)
+  : AMDGPUGenInstrInfo(-1,-1), RI(st), ST(st) { }
 
 const AMDGPURegisterInfo &AMDGPUInstrInfo::getRegisterInfo() const {
   return RI;

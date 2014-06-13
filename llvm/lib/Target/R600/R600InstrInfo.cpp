@@ -28,10 +28,9 @@ using namespace llvm;
 #define GET_INSTRINFO_CTOR_DTOR
 #include "AMDGPUGenDFAPacketizer.inc"
 
-R600InstrInfo::R600InstrInfo(AMDGPUTargetMachine &tm)
-  : AMDGPUInstrInfo(tm),
-    RI(tm),
-    ST(tm.getSubtarget<AMDGPUSubtarget>())
+R600InstrInfo::R600InstrInfo(const AMDGPUSubtarget &st)
+  : AMDGPUInstrInfo(st),
+    RI(st)
   { }
 
 const R600RegisterInfo &R600InstrInfo::getRegisterInfo() const {
@@ -1221,7 +1220,6 @@ MachineInstr *R600InstrInfo::buildSlotOfVectorInstruction(
     const {
   assert (MI->getOpcode() == AMDGPU::DOT_4 && "Not Implemented");
   unsigned Opcode;
-  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
   if (ST.getGeneration() <= AMDGPUSubtarget::R700)
     Opcode = AMDGPU::DOT4_r600;
   else

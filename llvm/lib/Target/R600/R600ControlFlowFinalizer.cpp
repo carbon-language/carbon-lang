@@ -14,6 +14,7 @@
 
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"

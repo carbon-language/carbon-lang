@@ -80,10 +80,8 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
   InstrItins(&Subtarget.getInstrItineraryData()) {
   // TLInfo uses InstrInfo so it must be initialized after.
   if (Subtarget.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    InstrInfo.reset(new R600InstrInfo(*this));
     TLInfo.reset(new R600TargetLowering(*this));
   } else {
-    InstrInfo.reset(new SIInstrInfo(*this));
     TLInfo.reset(new SITargetLowering(*this));
   }
   setRequiresStructuredCFG(true);

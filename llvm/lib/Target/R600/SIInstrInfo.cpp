@@ -24,9 +24,9 @@
 
 using namespace llvm;
 
-SIInstrInfo::SIInstrInfo(AMDGPUTargetMachine &tm)
-  : AMDGPUInstrInfo(tm),
-    RI(tm) { }
+SIInstrInfo::SIInstrInfo(const AMDGPUSubtarget &st)
+  : AMDGPUInstrInfo(st),
+    RI(st) { }
 
 //===----------------------------------------------------------------------===//
 // TargetInstrInfo callbacks

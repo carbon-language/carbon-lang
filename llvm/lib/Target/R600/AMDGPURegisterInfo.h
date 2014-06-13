@@ -25,14 +25,14 @@
 
 namespace llvm {
 
-class AMDGPUTargetMachine;
+class AMDGPUSubtarget;
 class TargetInstrInfo;
 
 struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
-  TargetMachine &TM;
   static const MCPhysReg CalleeSavedReg;
+  const AMDGPUSubtarget &ST;
 
-  AMDGPURegisterInfo(TargetMachine &tm);
+  AMDGPURegisterInfo(const AMDGPUSubtarget &st);
 
   BitVector getReservedRegs(const MachineFunction &MF) const override {
     assert(!"Unimplemented");  return BitVector();

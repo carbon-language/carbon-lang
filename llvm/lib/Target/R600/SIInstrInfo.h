@@ -56,7 +56,7 @@ private:
   void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
 
 public:
-  explicit SIInstrInfo(AMDGPUTargetMachine &tm);
+  explicit SIInstrInfo(const AMDGPUSubtarget &st);
 
   const SIRegisterInfo &getRegisterInfo() const override {
     return RI;

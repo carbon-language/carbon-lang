@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUSubtarget.h"
+#include "R600InstrInfo.h"
+#include "SIInstrInfo.h"
 
 using namespace llvm;
 
@@ -41,6 +43,12 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   CFALUBug = false;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
+
+  if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
+    InstrInfo.reset(new R600InstrInfo(*this));
+  } else {
+    InstrInfo.reset(new SIInstrInfo(*this));
+  }
 }
 
 bool

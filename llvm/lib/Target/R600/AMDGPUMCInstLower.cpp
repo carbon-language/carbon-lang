@@ -15,6 +15,7 @@
 
 #include "AMDGPUMCInstLower.h"
 #include "AMDGPUAsmPrinter.h"
+#include "AMDGPUTargetMachine.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "R600InstrInfo.h"
 #include "SIInstrInfo.h"

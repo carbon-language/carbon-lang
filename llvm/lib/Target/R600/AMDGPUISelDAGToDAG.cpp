@@ -14,6 +14,7 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUISelLowering.h" // For AMDGPUISD
 #include "AMDGPURegisterInfo.h"
+#include "AMDGPUSubtarget.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"

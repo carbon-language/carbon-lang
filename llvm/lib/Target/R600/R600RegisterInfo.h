@@ -16,17 +16,15 @@
 #define R600REGISTERINFO_H_
 
 #include "AMDGPURegisterInfo.h"
-#include "AMDGPUTargetMachine.h"
 
 namespace llvm {
 
-class R600TargetMachine;
+class AMDGPUSubtarget;
 
 struct R600RegisterInfo : public AMDGPURegisterInfo {
-  AMDGPUTargetMachine &TM;
   RegClassWeight RCW;
 
-  R600RegisterInfo(AMDGPUTargetMachine &tm);
+  R600RegisterInfo(const AMDGPUSubtarget &st);
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 

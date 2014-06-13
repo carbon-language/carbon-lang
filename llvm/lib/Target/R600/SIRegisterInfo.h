@@ -20,12 +20,9 @@
 
 namespace llvm {
 
-class AMDGPUTargetMachine;
-
 struct SIRegisterInfo : public AMDGPURegisterInfo {
-  AMDGPUTargetMachine &TM;
 
-  SIRegisterInfo(AMDGPUTargetMachine &tm);
+  SIRegisterInfo(const AMDGPUSubtarget &st);
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 

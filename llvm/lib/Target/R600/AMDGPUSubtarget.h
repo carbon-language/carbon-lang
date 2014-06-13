@@ -15,6 +15,7 @@
 #ifndef AMDGPUSUBTARGET_H
 #define AMDGPUSUBTARGET_H
 #include "AMDGPU.h"
+#include "AMDGPUInstrInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -27,6 +28,9 @@
 namespace llvm {
 
 class AMDGPUSubtarget : public AMDGPUGenSubtargetInfo {
+
+  std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
+
 public:
   enum Generation {
     R600 = 0,
@@ -58,6 +62,9 @@ private:
 public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS);
 
+  const AMDGPUInstrInfo *getInstrInfo() const {
+    return InstrInfo.get();
+  }
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 

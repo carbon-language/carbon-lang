@@ -33,7 +33,7 @@
 
 namespace llvm {
 
-class AMDGPUTargetMachine;
+class AMDGPUSubtarget;
 class MachineFunction;
 class MachineInstr;
 class MachineInstrBuilder;
@@ -45,9 +45,9 @@ private:
                           MachineBasicBlock &MBB) const;
   virtual void anchor();
 protected:
-  TargetMachine &TM;
+  const AMDGPUSubtarget &ST;
 public:
-  explicit AMDGPUInstrInfo(TargetMachine &tm);
+  explicit AMDGPUInstrInfo(const AMDGPUSubtarget &st);
 
   virtual const AMDGPURegisterInfo &getRegisterInfo() const = 0;
 

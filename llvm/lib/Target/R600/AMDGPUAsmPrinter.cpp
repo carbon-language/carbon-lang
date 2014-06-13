@@ -19,6 +19,7 @@
 
 #include "AMDGPUAsmPrinter.h"
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "R600Defines.h"
 #include "R600MachineFunctionInfo.h"
 #include "R600RegisterInfo.h"

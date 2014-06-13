@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "R600InstrInfo.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineDominators.h"

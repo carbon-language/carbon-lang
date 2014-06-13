@@ -30,7 +30,6 @@ class AMDGPUTargetMachine : public LLVMTargetMachine {
   const DataLayout Layout;
   AMDGPUFrameLowering FrameLowering;
   AMDGPUIntrinsicInfo IntrinsicInfo;
-  std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   const InstrItineraryData *InstrItins;
 
@@ -46,13 +45,13 @@ public:
     return &IntrinsicInfo;
   }
   const AMDGPUInstrInfo *getInstrInfo() const override {
-    return InstrInfo.get();
+    return getSubtargetImpl()->getInstrInfo();
   }
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
   const AMDGPURegisterInfo *getRegisterInfo() const override {
-    return &InstrInfo->getRegisterInfo();
+    return &getInstrInfo()->getRegisterInfo();
   }
   AMDGPUTargetLowering *getTargetLowering() const override {
     return TLInfo.get();
