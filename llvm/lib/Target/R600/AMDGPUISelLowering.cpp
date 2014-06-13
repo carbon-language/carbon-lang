@@ -126,8 +126,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FROUND, MVT::f32, Legal);
   setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
 
-  // The hardware supports ROTR, but not ROTL
+  // The hardware supports 32-bit ROTR, but not ROTL.
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
+  setOperationAction(ISD::ROTL, MVT::i64, Expand);
+  setOperationAction(ISD::ROTR, MVT::i64, Expand);
 
   // Lower floating point store/load to integer store/load to reduce the number
   // of patterns in tablegen.
@@ -264,11 +266,13 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::MUL,  VT, Expand);
     setOperationAction(ISD::OR,   VT, Expand);
     setOperationAction(ISD::SHL,  VT, Expand);
-    setOperationAction(ISD::SINT_TO_FP, VT, Expand);
-    setOperationAction(ISD::SRL,  VT, Expand);
     setOperationAction(ISD::SRA,  VT, Expand);
+    setOperationAction(ISD::SRL,  VT, Expand);
+    setOperationAction(ISD::ROTL, VT, Expand);
+    setOperationAction(ISD::ROTR, VT, Expand);
     setOperationAction(ISD::SUB,  VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
+    setOperationAction(ISD::SINT_TO_FP, VT, Expand);
     setOperationAction(ISD::UINT_TO_FP, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
     setOperationAction(ISD::SELECT, VT, Expand);

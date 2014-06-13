@@ -52,9 +52,6 @@ private:
       MachineRegisterInfo & MRI, unsigned dword_offset) const;
   SDValue OptimizeSwizzle(SDValue BuildVector, SDValue Swz[], SelectionDAG &DAG) const;
 
-  /// \brief Lower ROTL opcode to BITALIGN
-  SDValue LowerROTL(SDValue Op, SelectionDAG &DAG) const;
-
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;
