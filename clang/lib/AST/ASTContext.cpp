@@ -8159,10 +8159,12 @@ namespace {
       if (!Node)
         return true;
       if (ParentStack.size() > 0) {
-        // FIXME: Currently we add the same parent multiple times, for example
-        // when we visit all subexpressions of template instantiations; this is
-        // suboptimal, bug benign: the only way to visit those is with
-        // hasAncestor / hasParent, and those do not create new matches.
+        // FIXME: Currently we add the same parent multiple times, but only
+        // when no memoization data is available for the type.
+        // For example when we visit all subexpressions of template
+        // instantiations; this is suboptimal, but benign: the only way to
+        // visit those is with hasAncestor / hasParent, and those do not create
+        // new matches.
         // The plan is to enable DynTypedNode to be storable in a map or hash
         // map. The main problem there is to implement hash functions /
         // comparison operators for all types that DynTypedNode supports that
@@ -8170,18 +8172,27 @@ namespace {
         auto &NodeOrVector = (*Parents)[Node];
         if (NodeOrVector.isNull()) {
           NodeOrVector = new ast_type_traits::DynTypedNode(ParentStack.back());
-        } else if (NodeOrVector
-                       .template is<ast_type_traits::DynTypedNode *>()) {
-          auto *Node =
-              NodeOrVector.template get<ast_type_traits::DynTypedNode *>();
-          auto *Vector = new ASTContext::ParentVector(1, *Node);
-          Vector->push_back(ParentStack.back());
-          NodeOrVector = Vector;
-          delete Node;
         } else {
+          if (NodeOrVector.template is<ast_type_traits::DynTypedNode *>()) {
+            auto *Node =
+                NodeOrVector.template get<ast_type_traits::DynTypedNode *>();
+            auto *Vector = new ASTContext::ParentVector(1, *Node);
+            NodeOrVector = Vector;
+            delete Node;
+          }
           assert(NodeOrVector.template is<ASTContext::ParentVector *>());
-          NodeOrVector.template get<ASTContext::ParentVector *>()->push_back(
-              ParentStack.back());
+
+          auto *Vector =
+              NodeOrVector.template get<ASTContext::ParentVector *>();
+          // Skip duplicates for types that have memoization data.
+          // We must check that the type has memoization data before calling
+          // std::find() because DynTypedNode::operator== can't compare all
+          // types.
+          bool Found = ParentStack.back().getMemoizationData() &&
+                       std::find(Vector->begin(), Vector->end(),
+                                 ParentStack.back()) != Vector->end();
+          if (!Found)
+            Vector->push_back(ParentStack.back());
         }
       }
       ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));

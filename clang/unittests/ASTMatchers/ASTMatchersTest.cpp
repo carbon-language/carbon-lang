@@ -3623,6 +3623,27 @@ TEST(HasParent, MatchesAllParents) {
                  compoundStmt(hasParent(recordDecl()))));
 }
 
+TEST(HasParent, NoDuplicateParents) {
+  class HasDuplicateParents : public BoundNodesCallback {
+  public:
+    bool run(const BoundNodes *Nodes) override { return false; }
+    bool run(const BoundNodes *Nodes, ASTContext *Context) override {
+      const Stmt *Node = Nodes->getNodeAs<Stmt>("node");
+      std::set<const void *> Parents;
+      for (const auto &Parent : Context->getParents(*Node)) {
+        if (!Parents.insert(Parent.getMemoizationData()).second) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+  EXPECT_FALSE(matchAndVerifyResultTrue(
+      "template <typename T> int Foo() { return 1 + 2; }\n"
+      "int x = Foo<int>() + Foo<unsigned>();",
+      stmt().bind("node"), new HasDuplicateParents()));
+}
+
 TEST(TypeMatching, MatchesTypes) {
   EXPECT_TRUE(matches("struct S {};", qualType().bind("loc")));
 }
