@@ -271,13 +271,13 @@ public:
 
     bool                    ProcessUsingSpringBoard() const { return (m_flags & eMachProcessFlagsUsingSBS) != 0; }
     bool                    ProcessUsingBackBoard() const { return (m_flags & eMachProcessFlagsUsingBKS) != 0; }
-    
+
     Genealogy::ThreadActivitySP GetGenealogyInfoForThread (nub_thread_t tid, bool &timed_out);
 
     Genealogy::ProcessExecutableInfoSP GetGenealogyImageInfo (size_t idx);
-    
+
     DNBProfileDataScanType  GetProfileScanType () { return m_profile_scan_type; }
-    
+
 private:
     enum
     {
