@@ -462,6 +462,9 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief Whether this class describes a C++ lambda.
     bool IsLambda : 1;
 
+    /// \brief Whether we are currently parsing base specifiers.
+    bool IsParsingBaseSpecifiers : 1;
+
     /// \brief The number of base class specifiers in Bases.
     unsigned NumBases;
 
@@ -683,6 +686,12 @@ public:
 
   bool isDynamicClass() const {
     return data().Polymorphic || data().NumVBases != 0;
+  }
+
+  void setIsParsingBaseSpecifiers() { data().IsParsingBaseSpecifiers = true; }
+
+  bool isParsingBaseSpecifiers() const {
+    return data().IsParsingBaseSpecifiers;
   }
 
   /// \brief Sets the base classes of this struct or class.

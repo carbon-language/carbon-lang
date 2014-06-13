@@ -1431,6 +1431,9 @@ Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
   if (!Class)
     return true;
 
+  // We haven't yet attached the base specifiers.
+  Class->setIsParsingBaseSpecifiers();
+
   // We do not support any C++11 attributes on base-specifiers yet.
   // Diagnose any attributes we see.
   if (!Attributes.empty()) {

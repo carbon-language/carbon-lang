@@ -70,7 +70,8 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     ImplicitCopyAssignmentHasConstParam(true),
     HasDeclaredCopyConstructorWithConstParam(false),
     HasDeclaredCopyAssignmentWithConstParam(false),
-    IsLambda(false), NumBases(0), NumVBases(0), Bases(), VBases(),
+    IsLambda(false), IsParsingBaseSpecifiers(false), NumBases(0), NumVBases(0),
+    Bases(), VBases(),
     Definition(D), FirstFriend() {
 }
 
@@ -334,8 +335,10 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     addedClassSubobject(BaseClassDecl);
   }
   
-  if (VBases.empty())
+  if (VBases.empty()) {
+    data().IsParsingBaseSpecifiers = false;
     return;
+  }
 
   // Create base specifier for any direct or indirect virtual bases.
   data().VBases = new (C) CXXBaseSpecifier[VBases.size()];
@@ -346,6 +349,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       addedClassSubobject(Type->getAsCXXRecordDecl());
     data().getVBases()[I] = *VBases[I];
   }
+
+  data().IsParsingBaseSpecifiers = false;
 }
 
 void CXXRecordDecl::addedClassSubobject(CXXRecordDecl *Subobj) {

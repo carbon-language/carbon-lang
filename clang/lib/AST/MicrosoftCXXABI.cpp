@@ -93,7 +93,7 @@ static bool usesMultipleInheritanceModel(const CXXRecordDecl *RD) {
 }
 
 MSInheritanceAttr::Spelling CXXRecordDecl::calculateInheritanceModel() const {
-  if (!hasDefinition())
+  if (!hasDefinition() || isParsingBaseSpecifiers())
     return MSInheritanceAttr::Keyword_unspecified_inheritance;
   if (getNumVBases() > 0)
     return MSInheritanceAttr::Keyword_virtual_inheritance;
