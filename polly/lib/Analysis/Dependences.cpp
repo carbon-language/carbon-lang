@@ -298,24 +298,20 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   return IsParallel;
 }
 
+static void printDependencyMap(raw_ostream &OS, __isl_keep isl_union_map *DM) {
+  if (DM)
+    OS << DM << "\n";
+  else
+    OS << "n/a\n";
+}
+
 void Dependences::printScop(raw_ostream &OS) const {
   OS << "\tRAW dependences:\n\t\t";
-  if (RAW)
-    OS << RAW << "\n";
-  else
-    OS << "n/a\n";
-
+  printDependencyMap(OS, RAW);
   OS << "\tWAR dependences:\n\t\t";
-  if (WAR)
-    OS << WAR << "\n";
-  else
-    OS << "n/a\n";
-
+  printDependencyMap(OS, WAR);
   OS << "\tWAW dependences:\n\t\t";
-  if (WAW)
-    OS << WAW << "\n";
-  else
-    OS << "n/a\n";
+  printDependencyMap(OS, WAW);
 }
 
 void Dependences::releaseMemory() {
