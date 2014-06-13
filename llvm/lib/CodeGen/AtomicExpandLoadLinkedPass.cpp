@@ -243,19 +243,26 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   //     %loaded = @load.linked(%addr)
   //     %should_store = icmp eq %loaded, %desired
   //     br i1 %should_store, label %cmpxchg.trystore,
-  //                          label %cmpxchg.end/%cmpxchg.barrier
+  //                          label %cmpxchg.failure
   // cmpxchg.trystore:
   //     %stored = @store_conditional(%new, %addr)
-  //     %try_again = icmp i32 ne %stored, 0
-  //     br i1 %try_again, label %loop, label %cmpxchg.end
-  // cmpxchg.barrier:
+  //     %success = icmp eq i32 %stored, 0
+  //     br i1 %success, label %cmpxchg.success, label %loop/%cmpxchg.failure
+  // cmpxchg.success:
+  //     fence?
+  //     br label %cmpxchg.end
+  // cmpxchg.failure:
   //     fence?
   //     br label %cmpxchg.end
   // cmpxchg.end:
+  //     %success = phi i1 [true, %cmpxchg.success], [false, %cmpxchg.failure]
+  //     %restmp = insertvalue { iN, i1 } undef, iN %loaded, 0
+  //     %res = insertvalue { iN, i1 } %restmp, i1 %success, 1
   //     [...]
   BasicBlock *ExitBB = BB->splitBasicBlock(CI, "cmpxchg.end");
-  auto BarrierBB = BasicBlock::Create(Ctx, "cmpxchg.barrier", F, ExitBB);
-  auto TryStoreBB = BasicBlock::Create(Ctx, "cmpxchg.trystore", F, BarrierBB);
+  auto FailureBB = BasicBlock::Create(Ctx, "cmpxchg.failure", F, ExitBB);
+  auto SuccessBB = BasicBlock::Create(Ctx, "cmpxchg.success", F, FailureBB);
+  auto TryStoreBB = BasicBlock::Create(Ctx, "cmpxchg.trystore", F, SuccessBB);
   auto LoopBB = BasicBlock::Create(Ctx, "cmpxchg.start", F, TryStoreBB);
 
   // This grabs the DebugLoc from CI
@@ -277,7 +284,6 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   // If the the cmpxchg doesn't actually need any ordering when it fails, we can
   // jump straight past that fence instruction (if it exists).
-  BasicBlock *FailureBB = FailureOrder == Monotonic ? ExitBB : BarrierBB;
   Builder.CreateCondBr(ShouldStore, TryStoreBB, FailureBB);
 
   Builder.SetInsertPoint(TryStoreBB);
@@ -285,11 +291,16 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
       Builder, CI->getNewValOperand(), Addr, MemOpOrder);
   StoreSuccess = Builder.CreateICmpEQ(
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
-  Builder.CreateCondBr(StoreSuccess, BarrierBB, LoopBB);
+  Builder.CreateCondBr(StoreSuccess, SuccessBB,
+                       CI->isWeak() ? FailureBB : LoopBB);
 
   // Make sure later instructions don't get reordered with a fence if necessary.
-  Builder.SetInsertPoint(BarrierBB);
+  Builder.SetInsertPoint(SuccessBB);
   insertTrailingFence(Builder, SuccessOrder);
+  Builder.CreateBr(ExitBB);
+
+  Builder.SetInsertPoint(FailureBB);
+  insertTrailingFence(Builder, FailureOrder);
   Builder.CreateBr(ExitBB);
 
   // Finally, we have control-flow based knowledge of whether the cmpxchg
@@ -297,11 +308,10 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // subsequent "icmp eq/ne %loaded, %oldval" into a use of an appropriate PHI.
 
   // Setup the builder so we can create any PHIs we need.
-  Builder.SetInsertPoint(FailureBB, FailureBB->begin());
-  BasicBlock *SuccessBB = FailureOrder == Monotonic ? BarrierBB : TryStoreBB;
+  Builder.SetInsertPoint(ExitBB, ExitBB->begin());
   PHINode *Success = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
   Success->addIncoming(ConstantInt::getTrue(Ctx), SuccessBB);
-  Success->addIncoming(ConstantInt::getFalse(Ctx), LoopBB);
+  Success->addIncoming(ConstantInt::getFalse(Ctx), FailureBB);
 
   // Look for any users of the cmpxchg that are just comparing the loaded value
   // against the desired one, and replace them with the CFG-derived version.
