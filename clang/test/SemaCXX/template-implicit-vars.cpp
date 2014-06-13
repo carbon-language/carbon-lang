@@ -8,7 +8,7 @@ void f(T t) {
 void g() {
   f(1);
 }
-// CHECK: VarDecl {{.*}} implicit __range
-// CHECK: VarDecl {{.*}} implicit __range
-// CHECK: VarDecl {{.*}} implicit __begin
-// CHECK: VarDecl {{.*}} implicit __end
+// CHECK: VarDecl {{.*}} implicit used __range
+// CHECK: VarDecl {{.*}} implicit used __range
+// CHECK: VarDecl {{.*}} implicit used __begin
+// CHECK: VarDecl {{.*}} implicit used __end
