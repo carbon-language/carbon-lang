@@ -114,7 +114,7 @@ _Bool fi4a(int *i) {
 
 _Bool fi4b(int *i) {
   // CHECK-LABEL: @fi4
-  // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
+  // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg weak i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 0
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 1
   // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
@@ -324,7 +324,7 @@ void failureOrder(_Atomic(int) *ptr, int *ptr2) {
   // CHECK: cmpxchg i32* {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z_.]+}} acquire monotonic
 
   __c11_atomic_compare_exchange_weak(ptr, ptr2, 43, memory_order_seq_cst, memory_order_acquire);
-  // CHECK: cmpxchg i32* {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z_.]+}} seq_cst acquire
+  // CHECK: cmpxchg weak i32* {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z_.]+}} seq_cst acquire
 
   // Unknown ordering: conservatively pick strongest valid option (for now!).
   __atomic_compare_exchange(ptr2, ptr2, ptr2, 0, memory_order_acq_rel, *ptr2);
@@ -333,7 +333,7 @@ void failureOrder(_Atomic(int) *ptr, int *ptr2) {
   // Undefined behaviour: don't really care what that last ordering is so leave
   // it out:
   __atomic_compare_exchange_n(ptr2, ptr2, 43, 1, memory_order_seq_cst, 42);
-  // CHECK: cmpxchg i32* {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z_.]+}} seq_cst
+  // CHECK: cmpxchg weak i32* {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z._]+}}, i32 {{%[0-9A-Za-z_.]+}} seq_cst
 }
 
 // CHECK-LABEL: @generalFailureOrder
@@ -404,6 +404,47 @@ void generalFailureOrder(_Atomic(int) *ptr, int *ptr2, int success, int fail) {
   // CHECK: [[SEQCST_SEQCST]]
   // CHECK: cmpxchg {{.*}} seq_cst seq_cst
   // CHECK: br
+}
+
+void generalWeakness(int *ptr, int *ptr2, _Bool weak) {
+  __atomic_compare_exchange_n(ptr, ptr2, 42, weak, memory_order_seq_cst, memory_order_seq_cst);
+  // CHECK: switch i1 {{.*}}, label %[[WEAK:[0-9a-zA-Z._]+]] [
+  // CHECK-NEXT: i1 false, label %[[STRONG:[0-9a-zA-Z._]+]]
+
+  // CHECK: [[STRONG]]:
+  // CHECK-NOT: br
+  // CHECK: cmpxchg {{.*}} seq_cst seq_cst
+  // CHECK: br
+
+  // CHECK: [[WEAK]]:
+  // CHECK-NOT: br
+  // CHECK: cmpxchg weak {{.*}} seq_cst seq_cst
+  // CHECK: br
+}
+
+// Having checked the flow in the previous two cases, we'll trust clang to
+// combine them sanely.
+void EMIT_ALL_THE_THINGS(int *ptr, int *ptr2, int new, _Bool weak, int success, int fail) {
+  __atomic_compare_exchange(ptr, ptr2, &new, weak, success, fail);
+
+  // CHECK: = cmpxchg {{.*}} monotonic monotonic
+  // CHECK: = cmpxchg weak {{.*}} monotonic monotonic
+  // CHECK: = cmpxchg {{.*}} acquire monotonic
+  // CHECK: = cmpxchg {{.*}} acquire acquire
+  // CHECK: = cmpxchg weak {{.*}} acquire monotonic
+  // CHECK: = cmpxchg weak {{.*}} acquire acquire
+  // CHECK: = cmpxchg {{.*}} release monotonic
+  // CHECK: = cmpxchg weak {{.*}} release monotonic
+  // CHECK: = cmpxchg {{.*}} acq_rel monotonic
+  // CHECK: = cmpxchg {{.*}} acq_rel acquire
+  // CHECK: = cmpxchg weak {{.*}} acq_rel monotonic
+  // CHECK: = cmpxchg weak {{.*}} acq_rel acquire
+  // CHECK: = cmpxchg {{.*}} seq_cst monotonic
+  // CHECK: = cmpxchg {{.*}} seq_cst acquire
+  // CHECK: = cmpxchg {{.*}} seq_cst seq_cst
+  // CHECK: = cmpxchg weak {{.*}} seq_cst monotonic
+  // CHECK: = cmpxchg weak {{.*}} seq_cst acquire
+  // CHECK: = cmpxchg weak {{.*}} seq_cst seq_cst
 }
 
 #endif

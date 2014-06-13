@@ -106,7 +106,7 @@ _Bool fi4a(int *i) {
 
 _Bool fi4b(int *i) {
   // CHECK: @fi4
-  // CHECK: cmpxchg i32*
+  // CHECK: cmpxchg weak i32*
   int cmp = 0;
   return __atomic_compare_exchange_n(i, &cmp, 1, 1, memory_order_acquire, memory_order_acquire);
 }
