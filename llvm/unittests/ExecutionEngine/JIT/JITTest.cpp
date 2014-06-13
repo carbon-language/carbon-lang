@@ -31,7 +31,6 @@
 #include <vector>
 
 using namespace llvm;
-using std::error_code;
 
 // This variable is intentionally defined differently in the statically-compiled
 // program from the IR input to the JIT to assert that the JIT doesn't use its
@@ -634,7 +633,7 @@ ExecutionEngine *getJITFromBitcode(
   MemoryBuffer *BitcodeBuffer =
     MemoryBuffer::getMemBuffer(Bitcode, "Bitcode for test");
   ErrorOr<Module*> ModuleOrErr = getLazyBitcodeModule(BitcodeBuffer, Context);
-  if (error_code EC = ModuleOrErr.getError()) {
+  if (std::error_code EC = ModuleOrErr.getError()) {
     ADD_FAILURE() << EC.message();
     delete BitcodeBuffer;
     return nullptr;

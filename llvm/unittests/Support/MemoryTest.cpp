@@ -14,7 +14,6 @@
 
 using namespace llvm;
 using namespace sys;
-using std::error_code;
 
 namespace {
 
@@ -58,9 +57,9 @@ protected:
 };
 
 TEST_P(MappedMemoryTest, AllocAndRelease) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(sizeof(int), nullptr, Flags,EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(sizeof(int), M1.size());
@@ -69,13 +68,13 @@ TEST_P(MappedMemoryTest, AllocAndRelease) {
 }
 
 TEST_P(MappedMemoryTest, MultipleAllocAndRelease) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(16, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(64, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(32, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(16U, M1.size());
@@ -91,7 +90,7 @@ TEST_P(MappedMemoryTest, MultipleAllocAndRelease) {
   EXPECT_FALSE(Memory::releaseMappedMemory(M1));
   EXPECT_FALSE(Memory::releaseMappedMemory(M3));
   MemoryBlock M4 = Memory::allocateMappedMemory(16, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   EXPECT_NE((void*)nullptr, M4.base());
   EXPECT_LE(16U, M4.size());
   EXPECT_FALSE(Memory::releaseMappedMemory(M4));
@@ -104,9 +103,9 @@ TEST_P(MappedMemoryTest, BasicWrite) {
       !((Flags & Memory::MF_READ) && (Flags & Memory::MF_WRITE)))
     return;
 
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(sizeof(int), nullptr, Flags,EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(sizeof(int), M1.size());
@@ -123,16 +122,16 @@ TEST_P(MappedMemoryTest, MultipleWrite) {
   if (Flags &&
       !((Flags & Memory::MF_READ) && (Flags & Memory::MF_WRITE)))
     return;
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(8 * sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(4 * sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_FALSE(doesOverlap(M1, M2));
   EXPECT_FALSE(doesOverlap(M2, M3));
@@ -165,7 +164,7 @@ TEST_P(MappedMemoryTest, MultipleWrite) {
 
   MemoryBlock M4 = Memory::allocateMappedMemory(64 * sizeof(int), nullptr,
                                                 Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   EXPECT_NE((void*)nullptr, M4.base());
   EXPECT_LE(64U * sizeof(int), M4.size());
   x = (int*)M4.base();
@@ -181,16 +180,16 @@ TEST_P(MappedMemoryTest, MultipleWrite) {
 }
 
 TEST_P(MappedMemoryTest, EnabledWrite) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(2 * sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(8 * sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(4 * sizeof(int), nullptr, Flags,
                                                 EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(2U * sizeof(int), M1.size());
@@ -225,10 +224,11 @@ TEST_P(MappedMemoryTest, EnabledWrite) {
   EXPECT_EQ(6, y[6]);
 
   MemoryBlock M4 = Memory::allocateMappedMemory(16, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   EXPECT_NE((void*)nullptr, M4.base());
   EXPECT_LE(16U, M4.size());
-  EXPECT_EQ(error_code(), Memory::protectMappedMemory(M4, getTestableEquivalent(Flags)));
+  EXPECT_EQ(std::error_code(),
+            Memory::protectMappedMemory(M4, getTestableEquivalent(Flags)));
   x = (int*)M4.base();
   *x = 4;
   EXPECT_EQ(4, *x);
@@ -237,13 +237,13 @@ TEST_P(MappedMemoryTest, EnabledWrite) {
 }
 
 TEST_P(MappedMemoryTest, SuccessiveNear) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(16, nullptr, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(64, &M1, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(32, &M2, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(16U, M1.size());
@@ -262,14 +262,14 @@ TEST_P(MappedMemoryTest, SuccessiveNear) {
 }
 
 TEST_P(MappedMemoryTest, DuplicateNear) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock Near((void*)(3*PageSize), 16);
   MemoryBlock M1 = Memory::allocateMappedMemory(16, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(64, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(32, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(16U, M1.size());
@@ -284,14 +284,14 @@ TEST_P(MappedMemoryTest, DuplicateNear) {
 }
 
 TEST_P(MappedMemoryTest, ZeroNear) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock Near(nullptr, 0);
   MemoryBlock M1 = Memory::allocateMappedMemory(16, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(64, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(32, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(16U, M1.size());
@@ -310,14 +310,14 @@ TEST_P(MappedMemoryTest, ZeroNear) {
 }
 
 TEST_P(MappedMemoryTest, ZeroSizeNear) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock Near((void*)(4*PageSize), 0);
   MemoryBlock M1 = Memory::allocateMappedMemory(16, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M2 = Memory::allocateMappedMemory(64, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
   MemoryBlock M3 = Memory::allocateMappedMemory(32, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(16U, M1.size());
@@ -336,10 +336,10 @@ TEST_P(MappedMemoryTest, ZeroSizeNear) {
 }
 
 TEST_P(MappedMemoryTest, UnalignedNear) {
-  error_code EC;
+  std::error_code EC;
   MemoryBlock Near((void*)(2*PageSize+5), 0);
   MemoryBlock M1 = Memory::allocateMappedMemory(15, &Near, Flags, EC);
-  EXPECT_EQ(error_code(), EC);
+  EXPECT_EQ(std::error_code(), EC);
 
   EXPECT_NE((void*)nullptr, M1.base());
   EXPECT_LE(sizeof(int), M1.size());

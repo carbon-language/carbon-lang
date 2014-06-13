@@ -17,7 +17,6 @@
 #include "gtest/gtest.h"
 
 using namespace llvm;
-using std::error_code;
 
 namespace {
 
@@ -79,7 +78,7 @@ TEST_F(MemoryBufferTest, NullTerminator4K) {
   OF.close();
 
   OwningBuffer MB;
-  error_code EC = MemoryBuffer::getFile(TestPath.c_str(), MB);
+  std::error_code EC = MemoryBuffer::getFile(TestPath.c_str(), MB);
   ASSERT_FALSE(EC);
 
   const char *BufData = MB->getBufferStart();
@@ -148,10 +147,11 @@ void MemoryBufferTest::testGetOpenFileSlice(bool Reopen) {
   }
 
   OwningBuffer Buf;
-  error_code EC = MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(), Buf,
-                                                 40000, // Size
-                                                 80000  // Offset
-                                                 );
+  std::error_code EC =
+      MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(), Buf,
+                                     40000, // Size
+                                     80000  // Offset
+                                     );
   EXPECT_FALSE(EC);
 
   StringRef BufData = Buf->getBuffer();

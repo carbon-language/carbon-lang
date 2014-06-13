@@ -34,7 +34,6 @@
 #include <system_error>
 #include <vector>
 using namespace llvm;
-using std::error_code;
 
 static cl::opt<std::string>
 CheckFilename(cl::Positional, cl::desc("<check-file>"), cl::Required);
@@ -822,8 +821,7 @@ static StringRef FindFirstMatchingPrefix(StringRef &Buffer,
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
   std::unique_ptr<MemoryBuffer> File;
-  if (error_code ec =
-        MemoryBuffer::getFileOrSTDIN(CheckFilename, File)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(CheckFilename, File)) {
     errs() << "Could not open check file '" << CheckFilename << "': "
            << ec.message() << '\n';
     return true;
@@ -1226,8 +1224,7 @@ int main(int argc, char **argv) {
 
   // Open the file to check and add it to SourceMgr.
   std::unique_ptr<MemoryBuffer> File;
-  if (error_code ec =
-        MemoryBuffer::getFileOrSTDIN(InputFilename, File)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, File)) {
     errs() << "Could not open input file '" << InputFilename << "': "
            << ec.message() << '\n';
     return 2;

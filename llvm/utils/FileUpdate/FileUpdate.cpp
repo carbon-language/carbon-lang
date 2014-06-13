@@ -21,7 +21,6 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 static cl::opt<bool>
 Quiet("quiet", cl::desc("Don't print unnecessary status information"),
@@ -46,7 +45,7 @@ int main(int argc, char **argv) {
 
   // Get the input data.
   std::unique_ptr<MemoryBuffer> In;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, In)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, In)) {
     errs() << argv[0] << ": error: Unable to get input '"
            << InputFilename << "': " << ec.message() << '\n';
     return 1;
