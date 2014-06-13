@@ -344,9 +344,9 @@ define <8 x i64> @test_lzcnt_q(<8 x i64> %a) {
 declare <8 x i64> @llvm.x86.avx512.mask.lzcnt.q.512(<8 x i64>, <8 x i64>, i8) nounwind readonly
 
 
-define <16 x i32> @test_maskz_lzcnt_d(<16 x i32> %a, i16 %mask) {
+define <16 x i32> @test_mask_lzcnt_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
   ; CHECK: vplzcntd
-  %res = call <16 x i32> @llvm.x86.avx512.mask.lzcnt.d.512(<16 x i32> %a, <16 x i32> zeroinitializer, i16 %mask)
+  %res = call <16 x i32> @llvm.x86.avx512.mask.lzcnt.d.512(<16 x i32> %a, <16 x i32> %b, i16 %mask)
   ret <16 x i32> %res
 }
 
