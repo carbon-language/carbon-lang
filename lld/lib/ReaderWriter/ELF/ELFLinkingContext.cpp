@@ -19,6 +19,7 @@
 #include "lld/Passes/RoundTripYAMLPass.h"
 
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -178,7 +179,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
       return StringRef(*new (_allocator) std::string(path.str()));
   }
   if (!llvm::sys::fs::exists(libName))
-    return std::make_error_code(std::errc::no_such_file_or_directory);
+    return make_error_code(llvm::errc::no_such_file_or_directory);
 
   return libName;
 }
@@ -195,7 +196,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     return fileName;
 
   if (llvm::sys::path::is_absolute(fileName))
-    return std::make_error_code(std::errc::no_such_file_or_directory);
+    return make_error_code(llvm::errc::no_such_file_or_directory);
 
   for (StringRef dir : _inputSearchPaths) {
     buildSearchPath(path, dir, _sysrootPath);
@@ -203,7 +204,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     if (llvm::sys::fs::exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
-  return std::make_error_code(std::errc::no_such_file_or_directory);
+  return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
 void ELFLinkingContext::createInternalFiles(

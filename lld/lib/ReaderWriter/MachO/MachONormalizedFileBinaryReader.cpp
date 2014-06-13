@@ -31,6 +31,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Host.h"
@@ -61,7 +62,7 @@ static std::error_code forEachLoadCommand(
       slc = &lcCopy;
     }
     if ( (p + slc->cmdsize) > lcRange.end() )
-      return std::make_error_code(std::errc::executable_format_error);
+      return make_error_code(llvm::errc::executable_format_error);
 
     if (func(slc->cmd, slc->cmdsize, p))
       return std::error_code();
@@ -76,7 +77,7 @@ static std::error_code appendRelocations(Relocations &relocs, StringRef buffer,
                                          bool swap, bool bigEndian,
                                          uint32_t reloff, uint32_t nreloc) {
   if ((reloff + nreloc*8) > buffer.size())
-    return std::make_error_code(std::errc::executable_format_error);
+    return make_error_code(llvm::errc::executable_format_error);
   const any_relocation_info* relocsArray =
             reinterpret_cast<const any_relocation_info*>(buffer.begin()+reloff);
 
@@ -91,9 +92,9 @@ appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
                       bool bigEndian, uint32_t istOffset, uint32_t istCount,
                       uint32_t startIndex, uint32_t count) {
   if ((istOffset + istCount*4) > buffer.size())
-    return std::make_error_code(std::errc::executable_format_error);
+    return make_error_code(llvm::errc::executable_format_error);
   if (startIndex+count  > istCount)
-    return std::make_error_code(std::errc::executable_format_error);
+    return make_error_code(llvm::errc::executable_format_error);
   const uint32_t *indirectSymbolArray =
             reinterpret_cast<const uint32_t*>(buffer.begin()+istOffset);
 
@@ -141,12 +142,12 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       fa++;
     }
     if (!foundArch) {
-      return std::make_error_code(std::errc::executable_format_error);
+      return make_error_code(llvm::errc::executable_format_error);
     }
     objSize = readBigEndian(fa->size);
     uint32_t offset = readBigEndian(fa->offset);
     if ((offset + objSize) > mb->getBufferSize())
-      return std::make_error_code(std::errc::executable_format_error);
+      return make_error_code(llvm::errc::executable_format_error);
     start += offset;
     mh = reinterpret_cast<const mach_header *>(start);
   }
@@ -170,7 +171,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     swap = true;
     break;
   default:
-    return std::make_error_code(std::errc::executable_format_error);
+    return make_error_code(llvm::errc::executable_format_error);
   }
 
   // Endian swap header, if needed.
@@ -188,7 +189,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       start + (is64 ? sizeof(mach_header_64) : sizeof(mach_header));
   StringRef lcRange(lcStart, smh->sizeofcmds);
   if (lcRange.end() > (start + objSize))
-    return std::make_error_code(std::errc::executable_format_error);
+    return make_error_code(llvm::errc::executable_format_error);
 
   // Normalize architecture
   f->arch = MachOLinkingContext::archFromCpuType(smh->cputype, smh->cpusubtype);

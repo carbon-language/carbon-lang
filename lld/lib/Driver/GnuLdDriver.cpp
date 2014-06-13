@@ -24,6 +24,7 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -159,7 +160,7 @@ llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
 }
 
 std::string ELFFileNode::errStr(std::error_code errc) {
-  if (errc == std::errc::no_such_file_or_directory) {
+  if (errc == llvm::errc::no_such_file_or_directory) {
     if (_attributes._isDashlPrefix)
       return (Twine("Unable to find library -l") + _path).str();
     return (Twine("Unable to find file ") + _path).str();

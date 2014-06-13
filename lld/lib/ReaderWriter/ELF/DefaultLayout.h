@@ -27,6 +27,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Format.h"
 
 #include <map>
@@ -541,13 +542,12 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
 
 template <class ELFT>
 ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
-  using std::make_error_code;
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
     // undefined atoms can still be included in the output symbol table for
     // -noinhibit-exec.
     if (definedAtom->contentType() == DefinedAtom::typeUnknown)
-      return make_error_code(std::errc::invalid_argument);
+      return make_error_code(llvm::errc::invalid_argument);
     const DefinedAtom::ContentPermissions permissions =
         definedAtom->permissions();
     const DefinedAtom::ContentType contentType = definedAtom->contentType();

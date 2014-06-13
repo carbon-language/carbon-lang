@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -1249,7 +1250,7 @@ public:
     std::string errorInfo;
     llvm::raw_fd_ostream out(outPath.data(), errorInfo, llvm::sys::fs::F_Text);
     if (!errorInfo.empty())
-      return std::make_error_code(std::errc::no_such_file_or_directory);
+      return make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create yaml Output writer, using yaml options for context.
     YamlContext yamlContext;
