@@ -106,14 +106,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   for (MVT VT : FloatTypes) {
     // IL does not have these operations for floating point types
     setOperationAction(ISD::FP_ROUND_INREG, VT, Expand);
-    setOperationAction(ISD::SETOLT, VT, Expand);
-    setOperationAction(ISD::SETOGE, VT, Expand);
-    setOperationAction(ISD::SETOGT, VT, Expand);
-    setOperationAction(ISD::SETOLE, VT, Expand);
-    setOperationAction(ISD::SETULT, VT, Expand);
-    setOperationAction(ISD::SETUGE, VT, Expand);
-    setOperationAction(ISD::SETUGT, VT, Expand);
-    setOperationAction(ISD::SETULE, VT, Expand);
   }
 
   for (MVT VT : IntTypes) {
