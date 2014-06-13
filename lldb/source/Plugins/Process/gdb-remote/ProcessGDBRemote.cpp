@@ -56,6 +56,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
+#include "lldb/Target/SystemRuntime.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
 // Project includes
@@ -3147,6 +3148,50 @@ ProcessGDBRemote::GetAuxvData()
             buf.reset(new DataBufferHeap(response_string.c_str(), response_string.length()));
     }
     return buf;
+}
+
+StructuredData::ObjectSP
+ProcessGDBRemote::GetExtendedInfoForThread (lldb::tid_t tid)
+{
+    StructuredData::ObjectSP object_sp;
+
+    if (m_gdb_comm.GetThreadExtendedInfoSupported())
+    {
+        StructuredData::ObjectSP args_dict(new StructuredData::Dictionary());
+        SystemRuntime *runtime = GetSystemRuntime();
+        if (runtime)
+        {
+            runtime->AddThreadExtendedInfoPacketHints (args_dict);
+        }
+        args_dict->GetAsDictionary()->AddIntegerItem ("thread", tid);
+
+        StreamString packet;
+        packet << "jThreadExtendedInfo:";
+        args_dict->Dump (packet);
+
+        // FIXME the final character of a JSON dictionary, '}', is the escape
+        // character in gdb-remote binary mode.  lldb currently doesn't escape
+        // these characters in its packet output -- so we add the quoted version
+        // of the } character here manually in case we talk to a debugserver which
+        // un-escapes the chracters at packet read time.
+        packet << (char) (0x7d ^ 0x20);
+
+        StringExtractorGDBRemote response;
+        if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, false) == GDBRemoteCommunication::PacketResult::Success)
+        {
+            StringExtractorGDBRemote::ResponseType response_type = response.GetResponseType();
+            if (response_type == StringExtractorGDBRemote::eResponse)
+            {
+                if (!response.Empty())
+                {
+                    // The packet has already had the 0x7d xor quoting stripped out at the
+                    // GDBRemoteCommunication packet receive level.
+                    object_sp = StructuredData::ParseJSON (response.GetStringRef());
+                }
+            }
+        }
+    }
+    return object_sp;
 }
 
 // Establish the largest memory read/write payloads we should use.

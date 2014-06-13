@@ -31,6 +31,7 @@ add_lldb_executable(debugserver
   CFBundle.cpp
   CFData.cpp
   CFString.cpp
+  Genealogy.cpp
   MachException.cpp
   MachProcess.mm
   MachTask.mm

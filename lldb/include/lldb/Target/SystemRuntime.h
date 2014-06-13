@@ -20,6 +20,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Target/QueueList.h"
 #include "lldb/Target/QueueItem.h"
 #include "lldb/lldb-private.h"
@@ -310,6 +311,20 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Add key-value pairs to the StructuredData dictionary object with
+    /// information debugserver  may need when constructing the jThreadExtendedInfo 
+    /// packet.
+    ///
+    /// @param [out] dict
+    ///     Dictionary to which key-value pairs should be added; they will
+    ///     be sent to the remote gdb server stub as arguments in the 
+    ///     jThreadExtendedInfo request.
+    //------------------------------------------------------------------
+    virtual void
+    AddThreadExtendedInfoPacketHints (lldb_private::StructuredData::ObjectSP dict)
+    {
+    }
+
     /// Determine whether it is safe to run an expression on a given thread
     ///
     /// If a system must not run functions on a thread in some particular state,

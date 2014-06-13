@@ -99,6 +99,7 @@ public:
         query_host_info,                // 'qHostInfo'
         query_gdb_server_version,       // 'qGDBServerVersion'
         query_process_info,             // 'qProcessInfo'
+        json_query_thread_extended_info,// 'jThreadExtendedInfo'
         pass_signals_to_inferior,       // 'QPassSignals'
         start_noack_mode,               // 'QStartNoAckMode'
         prefix_reg_packets_with_tid,    // 'QPrefixRegisterPacketsWithThreadID
@@ -181,6 +182,7 @@ public:
     rnb_err_t HandlePacket_qVAttachOrWaitSupported (const char *p);
     rnb_err_t HandlePacket_qSyncThreadStateSupported (const char *p);
     rnb_err_t HandlePacket_qThreadInfo (const char *p);
+    rnb_err_t HandlePacket_jThreadExtendedInfo (const char *p);
     rnb_err_t HandlePacket_qThreadExtraInfo (const char *p);
     rnb_err_t HandlePacket_qThreadStopInfo (const char *p);
     rnb_err_t HandlePacket_qHostInfo (const char *p);

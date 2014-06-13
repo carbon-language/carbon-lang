@@ -126,6 +126,7 @@ MachProcess::MachProcess() :
     m_profile_data_mutex(PTHREAD_MUTEX_RECURSIVE),
     m_profile_data      (),
     m_thread_list        (),
+    m_activities         (),
     m_exception_messages (),
     m_exception_messages_mutex (PTHREAD_MUTEX_RECURSIVE),
     m_state             (eStateUnloaded),
@@ -217,6 +218,30 @@ MachProcess::SyncThreadState (nub_thread_t tid)
     else
         return false;
     
+}
+
+ThreadInfo::QoS
+MachProcess::GetRequestedQoS (nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index)
+{
+    return m_thread_list.GetRequestedQoS (tid, tsd, dti_qos_class_index);
+}
+
+nub_addr_t
+MachProcess::GetPThreadT (nub_thread_t tid)
+{
+    return m_thread_list.GetPThreadT (tid);
+}
+
+nub_addr_t
+MachProcess::GetDispatchQueueT (nub_thread_t tid)
+{
+    return m_thread_list.GetDispatchQueueT (tid);
+}
+
+nub_addr_t
+MachProcess::GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size)
+{
+    return m_thread_list.GetTSDAddressForThread (tid, plo_pthread_tsd_base_address_offset, plo_pthread_tsd_base_offset, plo_pthread_tsd_entry_size);
 }
 
 nub_thread_t
@@ -365,6 +390,7 @@ MachProcess::Clear(bool detaching)
         PTHREAD_MUTEX_LOCKER(locker, m_exception_messages_mutex);
         m_exception_messages.clear();
     }
+    m_activities.Clear();
     if (m_profile_thread)
     {
         pthread_join(m_profile_thread, NULL);
@@ -605,6 +631,7 @@ MachProcess::Detach()
 
     {
         m_thread_actions.Clear();
+        m_activities.Clear();
         DNBThreadResumeAction thread_action;
         thread_action.tid = m_thread_list.ThreadIDAtIndex (thread_idx);
         thread_action.state = eStateRunning;
@@ -1250,6 +1277,7 @@ MachProcess::ExceptionMessageBundleComplete()
                     DNBArchProtocol::SetArchitecture (process_cpu_type);
                 }
                 m_thread_list.Clear();
+                m_activities.Clear();
                 m_breakpoints.DisableAll();
             }
             
@@ -1288,6 +1316,7 @@ MachProcess::ExceptionMessageBundleComplete()
         // Let all threads recover from stopping and do any clean up based
         // on the previous thread state (if any).
         m_thread_list.ProcessDidStop(this);
+        m_activities.Clear();
 
         // Let each thread know of any exceptions
         for (i=0; i<m_exception_messages.size(); ++i)
@@ -1664,6 +1693,18 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         }
     }
     return INVALID_NUB_PROCESS;
+}
+
+Genealogy::ThreadActivitySP 
+MachProcess::GetGenealogyInfoForThread (nub_thread_t tid, bool &timed_out)
+{
+    return m_activities.GetGenealogyInfoForThread (m_pid, tid, m_thread_list, m_task.TaskPort(), timed_out);
+}
+
+Genealogy::ProcessExecutableInfoSP
+MachProcess::GetGenealogyImageInfo (size_t idx)
+{
+    return m_activities.GetProcessExecutableInfosAtIndex (idx);
 }
 
 // Do the process specific setup for attach.  If this returns NULL, then there's no

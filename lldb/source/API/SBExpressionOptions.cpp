@@ -150,6 +150,12 @@ SBExpressionOptions::SetTrapExceptions (bool trap_exceptions)
 }
 
 void
+SBExpressionOptions::SetLanguage (lldb::LanguageType language)
+{
+    m_opaque_ap->SetLanguage(language);
+}
+
+void
 SBExpressionOptions::SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton)
 {
     m_opaque_ap->SetCancelCallback (callback, baton);

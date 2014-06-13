@@ -292,7 +292,9 @@ Thread::Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id) :
     m_temporary_resume_state (eStateRunning),
     m_unwinder_ap (),
     m_destroy_called (false),
-    m_override_should_notify (eLazyBoolCalculate)
+    m_override_should_notify (eLazyBoolCalculate),
+    m_extended_info_fetched (false),
+    m_extended_info ()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -1709,6 +1711,9 @@ Thread::ClearStackFrames ()
     if (m_curr_frames_sp && m_curr_frames_sp->GetAllFramesFetched())
         m_prev_frames_sp.swap (m_curr_frames_sp);
     m_curr_frames_sp.reset();
+
+    m_extended_info.reset();
+    m_extended_info_fetched = false;
 }
 
 lldb::StackFrameSP
@@ -2066,6 +2071,82 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
         strm.IndentLess();
     }
     return num_frames_shown;
+}
+
+bool
+Thread::GetDescription (Stream &strm, lldb::DescriptionLevel level, bool print_json)
+{
+    DumpUsingSettingsFormat (strm, 0);
+    strm.Printf("\n");
+
+    StructuredData::ObjectSP thread_info = GetExtendedInfo();
+
+    if (thread_info && print_json)
+    {
+        thread_info->Dump (strm);
+        strm.Printf("\n");
+        return true;
+    }
+
+    if (thread_info)
+    {
+        StructuredData::ObjectSP activity = thread_info->GetObjectForDotSeparatedPath("activity");
+        StructuredData::ObjectSP breadcrumb = thread_info->GetObjectForDotSeparatedPath("breadcrumb");
+        StructuredData::ObjectSP messages = thread_info->GetObjectForDotSeparatedPath("trace_messages");
+
+        bool printed_activity = false;
+        if (activity && activity->GetType() == StructuredData::Type::eTypeDictionary)
+        {
+            StructuredData::Dictionary *activity_dict = activity->GetAsDictionary();
+            StructuredData::ObjectSP id = activity_dict->GetValueForKey("id");
+            StructuredData::ObjectSP name = activity_dict->GetValueForKey("name");
+            if (name && name->GetType() == StructuredData::Type::eTypeString
+                && id && id->GetType() == StructuredData::Type::eTypeInteger)
+            {
+                strm.Printf("  Activity '%s', 0x%" PRIx64 "\n", name->GetAsString()->GetValue().c_str(), id->GetAsInteger()->GetValue());
+            }
+            printed_activity = true;
+        }
+        bool printed_breadcrumb = false;
+        if (breadcrumb && breadcrumb->GetType() == StructuredData::Type::eTypeDictionary)
+        {
+            if (printed_activity)
+                strm.Printf ("\n");
+            StructuredData::Dictionary *breadcrumb_dict = breadcrumb->GetAsDictionary();
+            StructuredData::ObjectSP breadcrumb_text = breadcrumb_dict->GetValueForKey ("name");
+            if (breadcrumb_text && breadcrumb_text->GetType() == StructuredData::Type::eTypeString)
+            {
+                strm.Printf ("  Current Breadcrumb: %s\n", breadcrumb_text->GetAsString()->GetValue().c_str());
+            }
+            printed_breadcrumb = true;
+        }
+        if (messages && messages->GetType() == StructuredData::Type::eTypeArray)
+        {
+            if (printed_breadcrumb)
+                strm.Printf("\n");
+            StructuredData::Array *messages_array = messages->GetAsArray();
+            const size_t msg_count = messages_array->GetSize();
+            if (msg_count > 0)
+            {
+                strm.Printf ("  %zu trace messages:\n", msg_count);
+                for (size_t i = 0; i < msg_count; i++)
+                {
+                    StructuredData::ObjectSP message = messages_array->GetItemAtIndex(i);
+                    if (message && message->GetType() == StructuredData::Type::eTypeDictionary)
+                    {
+                        StructuredData::Dictionary *message_dict = message->GetAsDictionary();
+                        StructuredData::ObjectSP message_text = message_dict->GetValueForKey ("message");
+                        if (message_text && message_text->GetType() == StructuredData::Type::eTypeString)
+                        {
+                            strm.Printf ("    %s\n", message_text->GetAsString()->GetValue().c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 size_t

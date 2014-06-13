@@ -243,66 +243,9 @@ MachVMMemory::GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t 
     kern_return_t kr;
     
     info_count = TASK_VM_INFO_COUNT;
-#ifdef TASK_VM_INFO_PURGEABLE
     kr = task_info(task, TASK_VM_INFO_PURGEABLE, (task_info_t)&vm_info, &info_count);
-#else
-    kr = task_info(task, TASK_VM_INFO, (task_info_t)&vm_info, &info_count);
-#endif
     if (kr == KERN_SUCCESS)
         dirty_size = vm_info.internal;
-    
-#else
-    mach_vm_address_t address = 0;
-    mach_vm_size_t size;
-    kern_return_t err = 0;
-    unsigned nestingDepth = 0;
-    mach_vm_size_t pages_resident = 0;
-    mach_vm_size_t pages_dirtied = 0;
-    
-    while (1)
-    {
-        mach_msg_type_number_t count;
-        struct vm_region_submap_info_64 info;
-        
-        count = VM_REGION_SUBMAP_INFO_COUNT_64;
-        err = mach_vm_region_recurse(task, &address, &size, &nestingDepth, (vm_region_info_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS)
-        {
-            // It seems like this is a good break too.
-            break;
-        }
-        else if (err)
-        {
-            mach_error("vm_region",err);
-            break; // reached last region
-        }
-        
-        bool should_count = true;
-        if (info.is_submap)
-        { // is it a submap?
-            nestingDepth++;
-            should_count = false;
-        }
-        else
-        {
-            // Don't count malloc stack logging data in the TOTAL VM usage lines.
-            if (info.user_tag == VM_MEMORY_ANALYSIS_TOOL)
-                should_count = false;
-            
-            address = address+size;
-        }
-        
-        if (should_count)
-        {
-            pages_resident += info.pages_resident;
-            pages_dirtied += info.pages_dirtied;
-        }
-    }
-    
-    vm_size_t pagesize = PageSize (task);
-    rsize = pages_resident * pagesize;
-    dirty_size = pages_dirtied * pagesize;
-    
 #endif
 }
 
@@ -443,78 +386,21 @@ MachVMMemory::GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid,
     rprvt += aliased;
 }
 
-#if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
-#ifndef TASK_VM_INFO_PURGEABLE
-// cribbed from sysmond
-static uint64_t
-SumVMPurgeableInfo(const vm_purgeable_info_t info)
-{
-    uint64_t sum = 0;
-    int i;
-    
-    for (i = 0; i < 8; i++)
-    {
-        sum += info->fifo_data[i].size;
-    }
-    sum += info->obsolete_data.size;
-    for (i = 0; i < 8; i++)
-    {
-        sum += info->lifo_data[i].size;
-    }
-    
-    return sum;
-}
-#endif /* !TASK_VM_INFO_PURGEABLE */
-#endif
-
 static void
 GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
 {
 #if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
 
     kern_return_t kr;
-#ifndef TASK_VM_INFO_PURGEABLE
-    task_purgable_info_t purgeable_info;
-    uint64_t purgeable_sum = 0;
-#endif /* !TASK_VM_INFO_PURGEABLE */
     mach_msg_type_number_t info_count;
     task_vm_info_data_t vm_info;
     
-#ifndef TASK_VM_INFO_PURGEABLE
-    typedef kern_return_t (*task_purgable_info_type) (task_t, task_purgable_info_t *);
-    task_purgable_info_type task_purgable_info_ptr = NULL;
-    task_purgable_info_ptr = (task_purgable_info_type)dlsym(RTLD_NEXT, "task_purgable_info");
-    if (task_purgable_info_ptr != NULL)
-    {
-        kr = (*task_purgable_info_ptr)(task, &purgeable_info);
-        if (kr == KERN_SUCCESS) {
-            purgeable_sum = SumVMPurgeableInfo(&purgeable_info);
-            purgeable = purgeable_sum;
-        }
-    }
-#endif /* !TASK_VM_INFO_PURGEABLE */
-
     info_count = TASK_VM_INFO_COUNT;
-#ifdef TASK_VM_INFO_PURGEABLE
     kr = task_info(task, TASK_VM_INFO_PURGEABLE, (task_info_t)&vm_info, &info_count);
-#else
-    kr = task_info(task, TASK_VM_INFO, (task_info_t)&vm_info, &info_count);
-#endif
     if (kr == KERN_SUCCESS)
     {
-#ifdef TASK_VM_INFO_PURGEABLE
         purgeable = vm_info.purgeable_volatile_resident;
         anonymous = vm_info.internal - vm_info.purgeable_volatile_pmap;
-#else
-        if (purgeable_sum < vm_info.internal)
-        {
-            anonymous = vm_info.internal - purgeable_sum;
-        }
-        else
-        {
-            anonymous = 0;
-        }
-#endif
     }
 
 #endif

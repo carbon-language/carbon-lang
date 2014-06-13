@@ -14,6 +14,7 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Event.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -306,6 +307,28 @@ public:
         return NULL;
     }
 
+    //------------------------------------------------------------------
+    /// Retrieve a dictionary of information about this thread 
+    ///
+    /// On Mac OS X systems there may be voucher information.
+    /// The top level dictionary returned will have an "activity" key and the
+    /// value of the activity is a dictionary.  Keys in that dictionary will 
+    /// be "name" and "id", among others.
+    /// There may also be "trace_messages" (an array) with each entry in that array
+    /// being a dictionary (keys include "message" with the text of the trace
+    /// message).
+    //------------------------------------------------------------------
+    StructuredData::ObjectSP
+    GetExtendedInfo ()
+    {
+        if (m_extended_info_fetched == false)
+        {
+            m_extended_info = FetchThreadExtendedInfo ();
+            m_extended_info_fetched = true;
+        }
+        return m_extended_info;
+    }
+
     virtual const char *
     GetName ()
     {
@@ -510,6 +533,9 @@ public:
 
     void
     DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx);
+
+    bool
+    GetDescription (Stream &s, lldb::DescriptionLevel level, bool json_output);
 
     //------------------------------------------------------------------
     /// Default implementation for stepping into.
@@ -1238,6 +1264,13 @@ protected:
         return false;
     }
     
+    // Subclasses that have a way to get an extended info dictionary for this thread should
+    // fill 
+    virtual lldb_private::StructuredData::ObjectSP
+    FetchThreadExtendedInfo ()
+    {
+        return StructuredData::ObjectSP();
+    }
 
     lldb::StackFrameListSP
     GetStackFrameList ();
@@ -1268,6 +1301,8 @@ protected:
     bool                m_destroy_called;       // This is used internally to make sure derived Thread classes call DestroyThread.
     LazyBool            m_override_should_notify;
 private:
+    bool                m_extended_info_fetched;  // Have we tried to retrieve the m_extended_info for this thread?
+    StructuredData::ObjectSP m_extended_info;     // The extended info for this thread
     //------------------------------------------------------------------
     // For Thread only
     //------------------------------------------------------------------

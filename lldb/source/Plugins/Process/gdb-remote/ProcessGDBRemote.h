@@ -23,6 +23,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -306,6 +307,9 @@ protected:
 
     virtual const lldb::DataBufferSP
     GetAuxvData();
+
+    lldb_private::StructuredData::ObjectSP
+    GetExtendedInfoForThread (lldb::tid_t tid);
 
     void
     GetMaxMemorySize();

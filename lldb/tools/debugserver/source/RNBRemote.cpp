@@ -28,9 +28,11 @@
 #include "RNBServices.h"
 #include "RNBSocket.h"
 #include "Utility/StringExtractor.h"
+#include "MacOSX/Genealogy.h"
 
 #include <iomanip>
 #include <sstream>
+#include <unordered_set>
 #include <TargetConditionals.h> // for endianness predefines
 
 //----------------------------------------------------------------------
@@ -175,6 +177,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_gdb_server_version,      &RNBRemote::HandlePacket_qGDBServerVersion,       NULL, "qGDBServerVersion", "Replies with multiple 'key:value;' tuples appended to each other."));
     t.push_back (Packet (query_process_info,            &RNBRemote::HandlePacket_qProcessInfo,     NULL, "qProcessInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
+    t.push_back (Packet (json_query_thread_extended_info,          &RNBRemote::HandlePacket_jThreadExtendedInfo,     NULL, "jThreadExtendedInfo", "Replies with JSON data of thread extended information."));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
     t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specifc packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
     t.push_back (Packet (set_logging_mode,              &RNBRemote::HandlePacket_QSetLogging            , NULL, "QSetLogging:", "Check if register packets ('g', 'G', 'p', and 'P' support having the thread ID prefix"));
@@ -848,6 +851,57 @@ decode_binary_data (const char *str, size_t len)
         bytes.push_back (c);
     }
     return bytes;
+}
+
+// Quote any meta characters in a std::string as per the binary
+// packet convention in the gdb-remote protocol.
+
+std::string
+binary_encode_string (const std::string &s)
+{
+    std::string output;
+    const size_t s_size = s.size();
+    const char *s_chars = s.c_str();
+
+    for (size_t i = 0; i < s_size; i++)
+    {
+        unsigned char ch = *(s_chars + i);
+        if (ch == '#' || ch == '$' || ch == '}' || ch == '*')
+        {
+            output.push_back ('}');         // 0x7d
+            output.push_back (ch ^ 0x20);
+        }
+        else
+        {
+            output.push_back (ch);
+        }
+    }
+    return output;
+}
+
+// If the value side of a key-value pair in JSON is a string,
+// and that string has a " character in it, the " character must
+// be escaped.
+
+std::string
+json_string_quote_metachars (const std::string &s)
+{
+    if (s.find('"') == std::string::npos)
+        return s;
+
+    std::string output;
+    const size_t s_size = s.size();
+    const char *s_chars = s.c_str();
+    for (size_t i = 0; i < s_size; i++)
+    {
+        unsigned char ch = *(s_chars + i);
+        if (ch == '"')
+        {
+            output.push_back ('\\');
+        }
+        output.push_back (ch);
+    }
+    return output;
 }
 
 typedef struct register_map_entry
@@ -2134,6 +2188,18 @@ append_hex_value (std::ostream& ostrm, const uint8_t* buf, size_t buf_size, bool
             ostrm << RAWHEX8(buf[i]);
     }
 }
+
+void
+append_hexified_string (std::ostream& ostrm, const std::string &string)
+{
+    size_t string_size = string.size();
+    const char *string_buf = string.c_str();
+    for (size_t i = 0; i < string_size; i++)
+    {
+            ostrm << RAWHEX8(*(string_buf + i));
+    }
+}
+
 
 
 void
@@ -3961,6 +4027,274 @@ RNBRemote::HandlePacket_qGDBServerVersion (const char *p)
     strm << "version:" << DEBUGSERVER_VERSION_STR << ";";
 
     return SendPacket (strm.str());
+}
+
+// A helper function that retrieves a single integer value from
+// a one-level-deep JSON dictionary of key-value pairs.  e.g.
+// jThreadExtendedInfo:{"plo_pthread_tsd_base_address_offset":0,"plo_pthread_tsd_base_offset":224,"plo_pthread_tsd_entry_size":8,"thread":144305}]
+//
+uint64_t
+get_integer_value_for_key_name_from_json (const char *key, const char *json_string)
+{
+    uint64_t retval = INVALID_NUB_ADDRESS;
+    std::string key_with_quotes = "\"";
+    key_with_quotes += key;
+    key_with_quotes += "\":";
+    const char *c = strstr (json_string, key_with_quotes.c_str());
+    if (c)
+    {
+        c += key_with_quotes.size();
+        errno = 0;
+        retval = strtoul (c, NULL, 10);
+        if (errno != 0)
+        {
+            retval = INVALID_NUB_ADDRESS;
+        }
+    }
+    return retval;
+
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_jThreadExtendedInfo (const char *p)
+{
+    nub_process_t pid;
+    std::ostringstream json;
+    std::ostringstream reply_strm;
+    // If we haven't run the process yet, return an error.
+    if (!m_ctx.HasValidProcessID())
+    {
+        return SendPacket ("E81");
+    }
+
+    pid = m_ctx.ProcessID();
+
+    const char thread_extended_info_str[] = { "jThreadExtendedInfo:{" };
+    if (strncmp (p, thread_extended_info_str, sizeof (thread_extended_info_str) - 1) == 0)
+    {
+        p += strlen (thread_extended_info_str);
+
+        uint64_t tid = get_integer_value_for_key_name_from_json ("thread", p);
+        uint64_t plo_pthread_tsd_base_address_offset = get_integer_value_for_key_name_from_json ("plo_pthread_tsd_base_address_offset", p);
+        uint64_t plo_pthread_tsd_base_offset = get_integer_value_for_key_name_from_json ("plo_pthread_tsd_base_offset", p);
+        uint64_t plo_pthread_tsd_entry_size = get_integer_value_for_key_name_from_json ("plo_pthread_tsd_entry_size", p);
+        uint64_t dti_qos_class_index = get_integer_value_for_key_name_from_json ("dti_qos_class_index", p);
+        // Commented out the two variables below as they are not being used
+//        uint64_t dti_queue_index = get_integer_value_for_key_name_from_json ("dti_queue_index", p);
+//        uint64_t dti_voucher_index = get_integer_value_for_key_name_from_json ("dti_voucher_index", p);
+
+        if (tid != INVALID_NUB_ADDRESS)
+        {
+            nub_addr_t pthread_t_value = DNBGetPThreadT (pid, tid);
+
+            uint64_t tsd_address = INVALID_NUB_ADDRESS;
+            if (plo_pthread_tsd_entry_size != INVALID_NUB_ADDRESS 
+                && plo_pthread_tsd_base_offset != INVALID_NUB_ADDRESS 
+                && plo_pthread_tsd_entry_size != INVALID_NUB_ADDRESS)
+            {
+                tsd_address = DNBGetTSDAddressForThread (pid, tid, plo_pthread_tsd_base_address_offset, plo_pthread_tsd_base_offset, plo_pthread_tsd_entry_size);
+            }
+
+            bool timed_out = false;
+            Genealogy::ThreadActivitySP thread_activity_sp;
+
+            // If the pthread_t value is invalid, or if we were able to fetch the thread's TSD base
+            // and got an invalid value back, then we have a thread in early startup or shutdown and
+            // it's possible that gathering the genealogy information for this thread go badly.
+            // Ideally fetching this info for a thread in these odd states shouldn't matter - but 
+            // we've seen some problems with these new SPI and threads in edge-casey states.
+
+            double genealogy_fetch_time = 0;
+            if (pthread_t_value != INVALID_NUB_ADDRESS && tsd_address != INVALID_NUB_ADDRESS)
+            {
+                DNBTimer timer(false);
+                thread_activity_sp = DNBGetGenealogyInfoForThread (pid, tid, timed_out);
+                genealogy_fetch_time = timer.ElapsedMicroSeconds(false) / 1000000.0;
+            }
+
+            std::unordered_set<uint32_t> process_info_indexes; // an array of the process info #'s seen 
+
+            json << "{";
+
+            bool need_to_print_comma = false;
+
+            if (thread_activity_sp && timed_out == false)
+            {
+                const Genealogy::Activity *activity = &thread_activity_sp->current_activity;
+                bool need_vouchers_comma_sep = false;
+                json << "\"activity_query_timed_out\":false,";
+                if (genealogy_fetch_time != 0)
+                {
+                    //  If we append the floating point value with << we'll get it in scientific
+                    //  notation.
+                    char floating_point_ascii_buffer[64];
+                    floating_point_ascii_buffer[0] = '\0';
+                    snprintf (floating_point_ascii_buffer, sizeof (floating_point_ascii_buffer), "%f", genealogy_fetch_time);
+                    if (strlen (floating_point_ascii_buffer) > 0)
+                    {
+                        if (need_to_print_comma)
+                            json << ",";
+                        need_to_print_comma = true;
+                        json << "\"activity_query_duration\":" << floating_point_ascii_buffer;
+                    }
+                }
+                if (activity->activity_id != 0)
+                {
+                    if (need_to_print_comma)
+                        json << ",";
+                    need_to_print_comma = true;
+                    need_vouchers_comma_sep = true;
+                    json << "\"activity\":{";
+                    json <<    "\"start\":" << activity->activity_start << ",";
+                    json <<    "\"id\":" << activity->activity_id << ",";
+                    json <<    "\"parent_id\":" << activity->parent_id << ",";
+                    json <<    "\"name\":\"" << json_string_quote_metachars (activity->activity_name) << "\",";
+                    json <<    "\"reason\":\"" << json_string_quote_metachars (activity->reason) << "\"";
+                    json << "}";
+                }
+                if (thread_activity_sp->messages.size() > 0)
+                {
+                    need_to_print_comma = true;
+                    if (need_vouchers_comma_sep)
+                        json << ",";
+                    need_vouchers_comma_sep = true;
+                    json << "\"trace_messages\":[";
+                    bool printed_one_message = false;
+                    for (auto iter = thread_activity_sp->messages.begin() ; iter != thread_activity_sp->messages.end(); ++iter)
+                    {
+                        if (printed_one_message)
+                            json << ",";
+                        else
+                            printed_one_message = true;
+                        json << "{";
+                        json <<   "\"timestamp\":" << iter->timestamp << ",";
+                        json <<   "\"activity_id\":" << iter->activity_id << ",";
+                        json <<   "\"trace_id\":" << iter->trace_id << ",";
+                        json <<   "\"thread\":" << iter->thread << ",";
+                        json <<   "\"type\":" << (int) iter->type << ",";
+                        json <<   "\"process_info_index\":" << iter->process_info_index << ",";
+                        process_info_indexes.insert (iter->process_info_index);
+                        json <<   "\"message\":\"" << json_string_quote_metachars (iter->message) << "\"";
+                        json << "}";
+                    }
+                    json << "]";
+                }
+                if (thread_activity_sp->breadcrumbs.size() == 1)
+                {
+                    need_to_print_comma = true;
+                    if (need_vouchers_comma_sep)
+                        json << ",";
+                    need_vouchers_comma_sep = true;
+                    json << "\"breadcrumb\":{";
+                    for (auto iter = thread_activity_sp->breadcrumbs.begin() ; iter != thread_activity_sp->breadcrumbs.end(); ++iter)
+                    {
+                        json <<   "\"breadcrumb_id\":" << iter->breadcrumb_id << ",";
+                        json <<   "\"activity_id\":" << iter->activity_id << ",";
+                        json <<   "\"timestamp\":" << iter->timestamp << ",";
+                        json <<   "\"name\":\"" << json_string_quote_metachars (iter->name) << "\"";
+                    }
+                    json << "}";
+                }
+                if (process_info_indexes.size() > 0)
+                {
+                    need_to_print_comma = true;
+                    if (need_vouchers_comma_sep)
+                        json << ",";
+                    need_vouchers_comma_sep = true;
+                    json << "\"process_infos\":[";
+                    bool printed_one_process_info = false;
+                    for (auto iter = process_info_indexes.begin(); iter != process_info_indexes.end(); ++iter)
+                    {
+                        if (printed_one_process_info)
+                            json << ",";
+                        else
+                            printed_one_process_info = true;
+                        Genealogy::ProcessExecutableInfoSP image_info_sp;
+                        uint32_t idx = *iter;
+                        image_info_sp = DNBGetGenealogyImageInfo (pid, idx);
+                        json << "{";
+                        char uuid_buf[37];
+                        uuid_unparse_upper (image_info_sp->image_uuid, uuid_buf);
+                        json <<   "\"process_info_index\":" << idx << ",";
+                        json <<  "\"image_path\":\"" << json_string_quote_metachars (image_info_sp->image_path) << "\",";
+                        json <<  "\"image_uuid\":\"" << uuid_buf <<"\"";
+                        json << "}";
+                    }
+                    json << "]";
+                }
+            }
+            else
+            {
+                if (timed_out)
+                {
+                    if (need_to_print_comma)
+                        json << ",";
+                    need_to_print_comma = true;
+                    json << "\"activity_query_timed_out\":true";
+                    if (genealogy_fetch_time != 0)
+                    {
+                        //  If we append the floating point value with << we'll get it in scientific
+                        //  notation.
+                        char floating_point_ascii_buffer[64];
+                        floating_point_ascii_buffer[0] = '\0';
+                        snprintf (floating_point_ascii_buffer, sizeof (floating_point_ascii_buffer), "%f", genealogy_fetch_time);
+                        if (strlen (floating_point_ascii_buffer) > 0)
+                        {
+                            json << ",";
+                            json << "\"activity_query_duration\":" << floating_point_ascii_buffer;
+                        }
+                    }
+                }
+            }
+
+            if (tsd_address != INVALID_NUB_ADDRESS)
+            {
+                if (need_to_print_comma)
+                    json << ",";
+                need_to_print_comma = true;
+                json << "\"tsd_address\":" << tsd_address;
+
+                if (dti_qos_class_index != 0 && dti_qos_class_index != UINT64_MAX)
+                {
+                    ThreadInfo::QoS requested_qos = DNBGetRequestedQoSForThread (pid, tid, tsd_address, dti_qos_class_index);
+                    if (requested_qos.IsValid())
+                    {
+                        if (need_to_print_comma)
+                            json << ",";
+                        need_to_print_comma = true;
+                        json << "\"requested_qos\":{";
+                        json <<    "\"enum_value\":" << requested_qos.enum_value << ",";
+                        json <<    "\"constant_name\":\"" << json_string_quote_metachars (requested_qos.constant_name) << "\",";
+                        json <<    "\"printable_name\":\"" << json_string_quote_metachars (requested_qos.printable_name) << "\"";
+                        json << "}";
+                    }
+                }
+            }
+
+            if (pthread_t_value != INVALID_NUB_ADDRESS)
+            {
+                if (need_to_print_comma)
+                    json << ",";
+                need_to_print_comma = true;
+                json << "\"pthread_t\":" << pthread_t_value;
+            }
+
+            nub_addr_t dispatch_queue_t_value = DNBGetDispatchQueueT (pid, tid);
+            if (dispatch_queue_t_value != INVALID_NUB_ADDRESS)
+            {
+                if (need_to_print_comma)
+                    json << ",";
+                need_to_print_comma = true;
+                json << "\"dispatch_queue_t\":" << dispatch_queue_t_value;
+            }
+
+            json << "}";
+            std::string json_quoted = binary_encode_string (json.str());
+            reply_strm << json_quoted;
+            return SendPacket (reply_strm.str());
+        }
+    }
+    return SendPacket ("OK");
 }
 
 // Note that all numeric values returned by qProcessInfo are hex encoded,

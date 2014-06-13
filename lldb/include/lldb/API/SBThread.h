@@ -100,6 +100,9 @@ public:
     lldb::queue_id_t
     GetQueueID() const;
 
+    bool
+    GetInfoItemByPathAsString ( const char *path, SBStream &strm);
+
     void
     StepOver (lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 

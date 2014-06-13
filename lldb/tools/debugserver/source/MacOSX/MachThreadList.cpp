@@ -22,7 +22,8 @@
 
 MachThreadList::MachThreadList() :
     m_threads(),
-    m_threads_mutex(PTHREAD_MUTEX_RECURSIVE)
+    m_threads_mutex(PTHREAD_MUTEX_RECURSIVE),
+    m_is_64_bit(false)
 {
 }
 
@@ -46,6 +47,42 @@ MachThreadList::GetName (nub_thread_t tid)
     if (thread_sp)
         return thread_sp->GetName();
     return NULL;
+}
+
+ThreadInfo::QoS
+MachThreadList::GetRequestedQoS (nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetRequestedQoS(tsd, dti_qos_class_index);
+    return ThreadInfo::QoS();
+}
+
+nub_addr_t
+MachThreadList::GetPThreadT (nub_thread_t tid)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetPThreadT();
+    return INVALID_NUB_ADDRESS;
+}
+
+nub_addr_t
+MachThreadList::GetDispatchQueueT (nub_thread_t tid)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetDispatchQueueT();
+    return INVALID_NUB_ADDRESS;
+}
+
+nub_addr_t
+MachThreadList::GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size)
+{
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetTSDAddressForThread(plo_pthread_tsd_base_address_offset, plo_pthread_tsd_base_offset, plo_pthread_tsd_entry_size);
+    return INVALID_NUB_ADDRESS;
 }
 
 nub_thread_t
@@ -276,19 +313,18 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
         int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, process->ProcessID() };
         struct kinfo_proc processInfo;
         size_t bufsize = sizeof(processInfo);
-        bool is_64_bit = false;
         if (sysctl(mib, (unsigned)(sizeof(mib)/sizeof(int)), &processInfo, &bufsize, NULL, 0) == 0 && bufsize > 0)
         {
             if (processInfo.kp_proc.p_flag & P_LP64)
-                is_64_bit = true;
+                m_is_64_bit = true;
         }
 #if defined (__i386__) || defined (__x86_64__)
-        if (is_64_bit)
+        if (m_is_64_bit)
             DNBArchProtocol::SetArchitecture(CPU_TYPE_X86_64);
         else
             DNBArchProtocol::SetArchitecture(CPU_TYPE_I386);
 #elif defined (__arm__) || defined (__arm64__)
-        if (is_64_bit)
+        if (m_is_64_bit)
             DNBArchProtocol::SetArchitecture(CPU_TYPE_ARM64);
         else
             DNBArchProtocol::SetArchitecture(CPU_TYPE_ARM);
@@ -326,7 +362,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
                 else
                 {
                     // We don't have this thread, lets add it.
-                    thread_sp.reset(new MachThread(process, unique_thread_id, mach_port_num));
+                    thread_sp.reset(new MachThread(process, m_is_64_bit, unique_thread_id, mach_port_num));
 
                     // Add the new thread regardless of its is user ready state...
                     // Make sure the thread is ready to be displayed and shown to users

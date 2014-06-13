@@ -19,10 +19,11 @@
 // Other libraries and framework includes
 
 #include "lldb/Target/SystemRuntime.h"
-#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/QueueItem.h"
@@ -108,6 +109,9 @@ public:
     virtual lldb::QueueKind
     GetQueueKind (lldb::addr_t dispatch_queue_addr);
 
+    virtual void
+    AddThreadExtendedInfoPacketHints (lldb_private::StructuredData::ObjectSP dict);
+
     virtual bool
     SafeToCallFunctionsOnThisThread (lldb::ThreadSP thread_sp);
 
@@ -176,6 +180,13 @@ private:
         uint16_t dqo_running;
         uint16_t dqo_running_size;
 
+        uint16_t dqo_suspend_cnt;         // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_suspend_cnt_size;    // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_target_queue;        // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_target_queue_size;   // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_priority;            // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_priority_size;       // version 5 and later, starting with Mac OS X 10.10/iOS 8
+
         LibdispatchOffsets ()
         {
             dqo_version = UINT16_MAX;
@@ -184,6 +195,10 @@ private:
             dqo_label = UINT16_MAX;
             dqo_width = UINT16_MAX;
             dqo_running = UINT16_MAX;
+            dqo_suspend_cnt = UINT16_MAX;
+            dqo_target_queue = UINT16_MAX;
+            dqo_target_queue = UINT16_MAX;
+            dqo_priority = UINT16_MAX;
         };
 
         bool
@@ -199,6 +214,62 @@ private:
         }
     };
 
+    struct LibdispatchVoucherOffsets
+    {
+        uint16_t vo_version;
+        uint16_t vo_activity_ids_count;
+        uint16_t vo_activity_ids_count_size;
+        uint16_t vo_activity_ids_array;
+        uint16_t vo_activity_ids_array_entry_size;
+
+        LibdispatchVoucherOffsets () :
+            vo_version (UINT16_MAX),
+            vo_activity_ids_count (UINT16_MAX),
+            vo_activity_ids_count_size (UINT16_MAX),
+            vo_activity_ids_array (UINT16_MAX),
+            vo_activity_ids_array_entry_size (UINT16_MAX)
+        { }
+
+        bool IsValid () { return vo_version != UINT16_MAX; }
+    };
+
+    struct LibdispatchTSDIndexes
+    {
+        uint16_t dti_version;
+        uint64_t dti_queue_index;
+        uint64_t dti_voucher_index;
+        uint64_t dti_qos_class_index;
+
+        LibdispatchTSDIndexes () :
+            dti_version (UINT16_MAX),
+            dti_queue_index (UINT64_MAX),
+            dti_voucher_index (UINT64_MAX),
+            dti_qos_class_index (UINT64_MAX)
+        { }
+
+        bool IsValid () { return dti_version != UINT16_MAX; }
+    };
+
+    struct LibpthreadOffsets
+    {
+        uint16_t    plo_version;
+        uint16_t    plo_pthread_tsd_base_offset;
+        uint16_t    plo_pthread_tsd_base_address_offset;
+        uint16_t    plo_pthread_tsd_entry_size;
+
+        LibpthreadOffsets () :
+            plo_version (UINT16_MAX),
+            plo_pthread_tsd_base_offset (UINT16_MAX),
+            plo_pthread_tsd_base_address_offset (UINT16_MAX),
+            plo_pthread_tsd_entry_size (UINT16_MAX)
+        {
+        }
+
+        bool IsValid ()
+        {
+            return plo_version != UINT16_MAX;
+        }
+    };
 
     // The libBacktraceRecording function __introspection_dispatch_queue_get_pending_items has
     // two forms.  It can either return a simple array of item_refs (void *) size or it can return
@@ -225,6 +296,18 @@ private:
     void
     ReadLibdispatchOffsets ();
 
+    void
+    ReadLibpthreadOffsetsAddress();
+
+    void
+    ReadLibpthreadOffsets ();
+
+    void
+    ReadLibdispatchTSDIndexesAddress ();
+
+    void
+    ReadLibdispatchTSDIndexes ();
+
     PendingItemsForQueue
     GetPendingItemRefsForQueue (lldb::addr_t queue);
 
@@ -239,8 +322,18 @@ private:
     lldb::addr_t                        m_page_to_free;
     uint64_t                            m_page_to_free_size;
     libBacktraceRecording_info          m_lib_backtrace_recording_info;
+
     lldb::addr_t                        m_dispatch_queue_offsets_addr;
     struct LibdispatchOffsets           m_libdispatch_offsets;
+
+    lldb::addr_t                        m_libpthread_layout_offsets_addr;
+    struct LibpthreadOffsets            m_libpthread_offsets;
+
+    lldb::addr_t                        m_dispatch_tsd_indexes_addr;
+    struct LibdispatchTSDIndexes        m_libdispatch_tsd_indexes;
+
+    lldb::addr_t                        m_dispatch_voucher_offsets_addr;
+    struct LibdispatchVoucherOffsets    m_libdispatch_voucher_offsets;
 
     DISALLOW_COPY_AND_ASSIGN (SystemRuntimeMacOSX);
 };

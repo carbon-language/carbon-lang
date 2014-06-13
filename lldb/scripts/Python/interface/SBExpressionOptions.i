@@ -92,6 +92,10 @@ public:
     void
     SetTrapExceptions (bool trap_exceptions = true);
     
+    %feature ("docstring", "Sets the language that LLDB should assume the expression is written in") SetLanguage;
+    void
+    SetLanguage (lldb::LanguageType language);
+    
 protected:
 
     SBExpressionOptions (lldb_private::EvaluateExpressionOptions &expression_options);

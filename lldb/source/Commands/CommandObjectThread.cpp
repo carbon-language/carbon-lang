@@ -1332,6 +1332,193 @@ protected:
 };
 
 //-------------------------------------------------------------------------
+// CommandObjectThreadInfo
+//-------------------------------------------------------------------------
+
+class CommandObjectThreadInfo : public CommandObjectParsed
+{
+public:
+
+    CommandObjectThreadInfo (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter, 
+                             "thread info",
+                             "Show an extended summary of information about thread(s) in a process.",
+                             "thread info",
+                             eFlagRequiresProcess       |
+                             eFlagTryTargetAPILock      |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused),
+        m_options (interpreter)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData thread_idx_arg;
+        
+        thread_idx_arg.arg_type = eArgTypeThreadIndex;
+        thread_idx_arg.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (thread_idx_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+    }
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
+        {
+            OptionParsingStarting ();
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_json = false;
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            const int short_option = m_getopt_table[option_idx].val;
+            Error error;
+
+            switch (short_option)
+            {
+                case 'j':
+                    m_json = true;
+                    break;
+
+                 default:
+                    return Error("invalid short option character '%c'", short_option);
+
+            }
+            return error;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        bool m_json;
+
+        static OptionDefinition g_option_table[];
+    };
+
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+
+    virtual
+    ~CommandObjectThreadInfo ()
+    {
+    }
+
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        Stream &strm = result.GetOutputStream();
+
+        if (command.GetArgumentCount() == 0)
+        {
+            Thread *thread = m_exe_ctx.GetThreadPtr();
+            if (thread->GetDescription (strm, eDescriptionLevelFull, m_options.m_json))
+            {
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+            }
+        }
+        else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
+        {
+            Process *process = m_exe_ctx.GetProcessPtr();
+            uint32_t idx = 0;
+            for (ThreadSP thread_sp : process->Threads())
+            {
+                if (idx != 0)
+                    result.AppendMessage("");
+                if (!thread_sp->GetDescription (strm, eDescriptionLevelFull, m_options.m_json))
+                {
+                    result.AppendErrorWithFormat ("error displaying info for thread: \"0x%4.4x\"\n", idx);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                ++idx;
+            }
+        }
+        else
+        {
+            const size_t num_args = command.GetArgumentCount();
+            Process *process = m_exe_ctx.GetProcessPtr();
+            Mutex::Locker locker (process->GetThreadList().GetMutex());
+            std::vector<ThreadSP> thread_sps;
+
+            for (size_t i = 0; i < num_args; i++)
+            {
+                bool success;
+                
+                uint32_t thread_idx = Args::StringToUInt32(command.GetArgumentAtIndex(i), 0, 0, &success);
+                if (!success)
+                {
+                    result.AppendErrorWithFormat ("invalid thread specification: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+                thread_sps.push_back(process->GetThreadList().FindThreadByIndexID(thread_idx));
+                
+                if (!thread_sps[i])
+                {
+                    result.AppendErrorWithFormat ("no thread with index: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+            }
+            
+            for (uint32_t i = 0; i < num_args; i++)
+            {
+                if (!thread_sps[i]->GetDescription (strm, eDescriptionLevelFull, m_options.m_json))
+                {
+                    result.AppendErrorWithFormat ("error displaying info for thread: \"%s\"\n", command.GetArgumentAtIndex(i));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+                if (i < num_args - 1)
+                    result.AppendMessage("");
+            }
+
+        }
+        return result.Succeeded();
+    }
+
+    CommandOptions m_options;
+
+};
+
+OptionDefinition
+CommandObjectThreadInfo::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "json",'j', OptionParser::eNoArgument, NULL, 0, eArgTypeNone, "Display the thread info in JSON format."},
+
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+
+//-------------------------------------------------------------------------
 // CommandObjectThreadReturn
 //-------------------------------------------------------------------------
 
@@ -1764,6 +1951,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
     LoadSubCommand ("jump",       CommandObjectSP (new CommandObjectThreadJump (interpreter)));
     LoadSubCommand ("select",     CommandObjectSP (new CommandObjectThreadSelect (interpreter)));
     LoadSubCommand ("until",      CommandObjectSP (new CommandObjectThreadUntil (interpreter)));
+    LoadSubCommand ("info",       CommandObjectSP (new CommandObjectThreadInfo (interpreter)));
     LoadSubCommand ("step-in",    CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
                                                     interpreter,
                                                     "thread step-in",

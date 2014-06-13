@@ -12,10 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include <inttypes.h>
+#include <mach/thread_policy.h>
+#include <dlfcn.h>
 #include "MachThread.h"
 #include "MachProcess.h"
 #include "DNBLog.h"
 #include "DNB.h"
+#include "ThreadInfo.h"
 
 static uint32_t
 GetSequenceID()
@@ -24,7 +27,7 @@ GetSequenceID()
     return ++g_nextID;
 }
 
-MachThread::MachThread (MachProcess *process, uint64_t unique_thread_id, thread_t mach_port_num) :
+MachThread::MachThread (MachProcess *process, bool is_64_bit, uint64_t unique_thread_id, thread_t mach_port_num) :
     m_process (process),
     m_unique_id (unique_thread_id),
     m_mach_port_number (mach_port_num),
@@ -38,11 +41,15 @@ MachThread::MachThread (MachProcess *process, uint64_t unique_thread_id, thread_
     m_num_reg_sets (0), 
     m_ident_info(),
     m_proc_threadinfo(),
-    m_dispatch_queue_name()
+    m_dispatch_queue_name(),
+    m_is_64_bit(is_64_bit),
+    m_pthread_qos_class_decode (nullptr)
 {
     nub_size_t num_reg_sets = 0;
     m_reg_sets = m_arch_ap->GetRegisterSetInfo (&num_reg_sets);
     m_num_reg_sets = num_reg_sets;
+
+    m_pthread_qos_class_decode = (unsigned int (*)(unsigned long, int*, unsigned long*)) dlsym (RTLD_DEFAULT, "_pthread_qos_class_decode");
 
     // Get the thread state so we know if a thread is in a state where we can't
     // muck with it and also so we get the suspend count correct in case it was
@@ -718,4 +725,198 @@ MachThread::GetGloballyUniqueThreadIDForMachPortID (thread_t mach_port_id)
         return mach_port_id;
     }
     return tident.thread_id;
+}
+
+nub_addr_t
+MachThread::GetPThreadT ()
+{
+    nub_addr_t pthread_t_value = INVALID_NUB_ADDRESS;
+    if (MachPortNumberIsValid (m_mach_port_number))
+    {
+        kern_return_t kr;
+        thread_identifier_info_data_t tident;
+        mach_msg_type_number_t tident_count = THREAD_IDENTIFIER_INFO_COUNT;
+        kr = thread_info (m_mach_port_number, THREAD_IDENTIFIER_INFO,
+                        (thread_info_t) &tident, &tident_count);
+        if (kr == KERN_SUCCESS)
+        {
+            // Dereference thread_handle to get the pthread_t value for this thread.
+            if (m_is_64_bit)
+            {
+                uint64_t addr;
+                if (m_process->ReadMemory (tident.thread_handle, 8, &addr) == 8)
+                {
+                    if (addr != 0)
+                    {
+                        pthread_t_value = addr;
+                    }
+                }
+            }
+            else
+            {
+                uint32_t addr;
+                if (m_process->ReadMemory (tident.thread_handle, 4, &addr) == 4)
+                {
+                    if (addr != 0)
+                    {
+                        pthread_t_value = addr;
+                    }
+                }
+            }
+        }
+    }
+    return pthread_t_value;
+}
+
+// Return this thread's TSD (Thread Specific Data) address.
+// This is computed based on this thread's pthread_t value.
+//
+// We compute the TSD from the pthread_t by one of two methods.
+// 
+// If plo_pthread_tsd_base_offset is non-zero, this is a simple offset that we add to
+// the pthread_t to get the TSD base address.
+//
+// Else we read a pointer from memory at pthread_t + plo_pthread_tsd_base_address_offset and
+// that gives us the TSD address.
+//
+// These plo_pthread_tsd_base values must be read out of libpthread by lldb & provided to debugserver.
+
+nub_addr_t
+MachThread::GetTSDAddressForThread (uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size)
+{
+    nub_addr_t tsd_addr = INVALID_NUB_ADDRESS;
+    nub_addr_t pthread_t_value = GetPThreadT();
+    if (plo_pthread_tsd_base_offset != 0 && plo_pthread_tsd_base_offset != INVALID_NUB_ADDRESS)
+    {
+        tsd_addr = pthread_t_value + plo_pthread_tsd_base_offset;
+    }
+    else
+    {
+        if (plo_pthread_tsd_entry_size == 4)
+        {
+            uint32_t addr = 0;
+            if (m_process->ReadMemory (pthread_t_value + plo_pthread_tsd_base_address_offset, 4, &addr) == 4)
+            {
+                if (addr != 0)
+                {
+                    tsd_addr = addr;
+                }
+            }
+        }
+        if (plo_pthread_tsd_entry_size == 4)
+        {
+            uint64_t addr = 0;
+            if (m_process->ReadMemory (pthread_t_value + plo_pthread_tsd_base_address_offset, 8, &addr) == 8)
+            {
+                if (addr != 0)
+                {
+                    tsd_addr = addr;
+                }
+            }
+        }
+    }
+    return tsd_addr;
+}
+
+
+nub_addr_t
+MachThread::GetDispatchQueueT ()
+{
+    nub_addr_t dispatch_queue_t_value = INVALID_NUB_ADDRESS;
+    if (MachPortNumberIsValid (m_mach_port_number))
+    {
+        kern_return_t kr;
+        thread_identifier_info_data_t tident;
+        mach_msg_type_number_t tident_count = THREAD_IDENTIFIER_INFO_COUNT;
+        kr = thread_info (m_mach_port_number, THREAD_IDENTIFIER_INFO,
+                        (thread_info_t) &tident, &tident_count);
+        if (kr == KERN_SUCCESS && tident.dispatch_qaddr != 0 && tident.dispatch_qaddr != INVALID_NUB_ADDRESS)
+        {
+            // Dereference dispatch_qaddr to get the dispatch_queue_t value for this thread's queue, if any.
+            if (m_is_64_bit)
+            {
+                uint64_t addr;
+                if (m_process->ReadMemory (tident.dispatch_qaddr, 8, &addr) == 8)
+                {
+                    if (addr != 0)
+                        dispatch_queue_t_value = addr;
+                }
+            }
+            else
+            {
+                uint32_t addr;
+                if (m_process->ReadMemory (tident.dispatch_qaddr, 4, &addr) == 4)
+                {
+                    if (addr != 0)
+                        dispatch_queue_t_value = addr;
+                }
+            }
+        }
+    }
+    return dispatch_queue_t_value;
+}
+
+
+ThreadInfo::QoS
+MachThread::GetRequestedQoS (nub_addr_t tsd, uint64_t dti_qos_class_index)
+{
+    ThreadInfo::QoS qos_value;
+    if (MachPortNumberIsValid (m_mach_port_number) && m_pthread_qos_class_decode != nullptr)
+    {
+        uint64_t pthread_priority_value = 0;
+        if (m_is_64_bit)
+        {
+            uint64_t pri;
+            if (m_process->ReadMemory (tsd + (dti_qos_class_index * 8), 8, &pri) == 8)
+            {
+                pthread_priority_value = pri;
+            }
+        }
+        else
+        {
+            uint32_t pri;
+            if (m_process->ReadMemory (tsd + (dti_qos_class_index * 4), 4, &pri) == 4)
+            {
+                pthread_priority_value = pri;
+            }
+        }
+
+        uint32_t requested_qos = m_pthread_qos_class_decode (pthread_priority_value, NULL, NULL);
+
+        switch (requested_qos)
+        {
+            // These constants from <pthread/qos.h>
+            case 0x21:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_USER_INTERACTIVE";
+                qos_value.printable_name = "User Interactive";
+                break;
+            case 0x19:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_USER_INITIATED";
+                qos_value.printable_name = "User Initiated";
+                break;
+            case 0x15:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_DEFAULT";
+                qos_value.printable_name = "Default";
+                break;
+            case 0x11:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_UTILITY";
+                qos_value.printable_name = "Utility";
+                break;
+            case 0x09:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_BACKGROUND";
+                qos_value.printable_name = "Background";
+                break;
+            case 0x00:
+                qos_value.enum_value = requested_qos;
+                qos_value.constant_name = "QOS_CLASS_UNSPECIFIED";
+                qos_value.printable_name = "Unspecified";
+                break;
+        }
+    }
+    return qos_value;
 }

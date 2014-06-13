@@ -25,6 +25,8 @@
 #include "PThreadCondition.h"
 #include "PThreadEvent.h"
 #include "PThreadMutex.h"
+#include "Genealogy.h"
+#include "ThreadInfo.h"
 
 #include <mach/mach.h>
 #include <sys/signal.h>
@@ -179,6 +181,11 @@ public:
     nub_bool_t              SyncThreadState (nub_thread_t tid);
     const char *            ThreadGetName (nub_thread_t tid);
     nub_state_t             ThreadGetState (nub_thread_t tid);
+    ThreadInfo::QoS         GetRequestedQoS (nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index);
+    nub_addr_t              GetPThreadT (nub_thread_t tid);
+    nub_addr_t              GetDispatchQueueT (nub_thread_t tid);
+    nub_addr_t              GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size);
+
     nub_size_t              GetNumThreads () const;
     nub_thread_t            GetThreadAtIndex (nub_size_t thread_idx) const;
     nub_thread_t            GetCurrentThread ();
@@ -265,6 +272,10 @@ public:
     bool                    ProcessUsingSpringBoard() const { return (m_flags & eMachProcessFlagsUsingSBS) != 0; }
     bool                    ProcessUsingBackBoard() const { return (m_flags & eMachProcessFlagsUsingBKS) != 0; }
     
+    Genealogy::ThreadActivitySP GetGenealogyInfoForThread (nub_thread_t tid, bool &timed_out);
+
+    Genealogy::ProcessExecutableInfoSP GetGenealogyImageInfo (size_t idx);
+    
     DNBProfileDataScanType  GetProfileScanType () { return m_profile_scan_type; }
     
 private:
@@ -311,6 +322,7 @@ private:
     PThreadMutex                m_exception_messages_mutex; // Multithreaded protection for m_exception_messages
 
     MachThreadList              m_thread_list;               // A list of threads that is maintained/updated after each stop
+    Genealogy                   m_activities;               // A list of activities that is updated after every stop lazily
     nub_state_t                 m_state;                    // The state of our process
     PThreadMutex                m_state_mutex;              // Multithreaded protection for m_state
     PThreadEvent                m_events;                   // Process related events in the child processes lifetime can be waited upon

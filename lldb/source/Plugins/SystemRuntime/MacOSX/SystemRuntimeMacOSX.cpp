@@ -16,6 +16,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Host/FileSpec.h"
@@ -27,7 +28,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Process.h"
-
 
 #include "SystemRuntimeMacOSX.h"
 
@@ -93,7 +93,13 @@ SystemRuntimeMacOSX::SystemRuntimeMacOSX (Process* process) :
     m_page_to_free_size(0),
     m_lib_backtrace_recording_info(),
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
-    m_libdispatch_offsets()
+    m_libdispatch_offsets(),
+    m_libpthread_layout_offsets_addr (LLDB_INVALID_ADDRESS),
+    m_libpthread_offsets(),
+    m_dispatch_tsd_indexes_addr (LLDB_INVALID_ADDRESS),
+    m_libdispatch_tsd_indexes(),
+    m_dispatch_voucher_offsets_addr (LLDB_INVALID_ADDRESS),
+    m_libdispatch_voucher_offsets()
 {
 }
 
@@ -214,6 +220,30 @@ SystemRuntimeMacOSX::GetQueueKind (addr_t dispatch_queue_addr)
     return kind;
 }
 
+void
+SystemRuntimeMacOSX::AddThreadExtendedInfoPacketHints (lldb_private::StructuredData::ObjectSP dict_sp)
+{
+    StructuredData::Dictionary *dict = dict_sp->GetAsDictionary();
+    if (dict)
+    {
+        ReadLibpthreadOffsets();
+        if (m_libpthread_offsets.IsValid())
+        {
+            dict->AddIntegerItem ("plo_pthread_tsd_base_offset", m_libpthread_offsets.plo_pthread_tsd_base_offset);
+            dict->AddIntegerItem ("plo_pthread_tsd_base_address_offset", m_libpthread_offsets.plo_pthread_tsd_base_address_offset);
+            dict->AddIntegerItem ("plo_pthread_tsd_entry_size", m_libpthread_offsets.plo_pthread_tsd_entry_size);
+        }
+    
+        ReadLibdispatchTSDIndexes ();
+        if (m_libdispatch_tsd_indexes.IsValid())
+        {
+            dict->AddIntegerItem ("dti_queue_index", m_libdispatch_tsd_indexes.dti_queue_index);
+            dict->AddIntegerItem ("dti_voucher_index", m_libdispatch_tsd_indexes.dti_voucher_index);
+            dict->AddIntegerItem ("dti_qos_class_index", m_libdispatch_tsd_indexes.dti_qos_class_index);
+        }
+    }
+}
+
 bool
 SystemRuntimeMacOSX::SafeToCallFunctionsOnThisThread (ThreadSP thread_sp)
 {
@@ -309,6 +339,152 @@ SystemRuntimeMacOSX::ReadLibdispatchOffsets ()
         // The struct LibdispatchOffsets is a series of uint16_t's - extract them all
         // in one big go.
         data.GetU16 (&data_offset, &m_libdispatch_offsets.dqo_version, sizeof (struct LibdispatchOffsets) / sizeof (uint16_t));
+    }
+}
+
+void
+SystemRuntimeMacOSX::ReadLibpthreadOffsetsAddress ()
+{
+    if (m_libpthread_layout_offsets_addr != LLDB_INVALID_ADDRESS)
+        return;
+
+    static ConstString g_libpthread_layout_offsets_symbol_name ("pthread_layout_offsets");
+    const Symbol *libpthread_layout_offsets_symbol = NULL;
+
+    ModuleSpec libpthread_module_spec (FileSpec("libsystem_pthread.dylib", false));
+    ModuleSP module_sp (m_process->GetTarget().GetImages().FindFirstModule (libpthread_module_spec));
+    if (module_sp)
+    {
+        libpthread_layout_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType 
+                                                           (g_libpthread_layout_offsets_symbol_name, eSymbolTypeData);
+        if (libpthread_layout_offsets_symbol)
+        {
+            m_libpthread_layout_offsets_addr =  libpthread_layout_offsets_symbol->GetAddress().GetLoadAddress(&m_process->GetTarget());
+        }
+    }
+}
+
+void
+SystemRuntimeMacOSX::ReadLibpthreadOffsets ()
+{
+    if (m_libpthread_offsets.IsValid())
+        return;
+
+    ReadLibpthreadOffsetsAddress ();
+
+    if (m_libpthread_layout_offsets_addr != LLDB_INVALID_ADDRESS)
+    {
+        uint8_t memory_buffer[sizeof (struct LibpthreadOffsets)];
+        DataExtractor data (memory_buffer, 
+                            sizeof(memory_buffer), 
+                            m_process->GetByteOrder(), 
+                            m_process->GetAddressByteSize());
+        Error error;
+        if (m_process->ReadMemory (m_libpthread_layout_offsets_addr, memory_buffer, sizeof(memory_buffer), error) == sizeof(memory_buffer))
+        {
+            lldb::offset_t data_offset = 0;
+    
+            // The struct LibpthreadOffsets is a series of uint16_t's - extract them all
+            // in one big go.
+            data.GetU16 (&data_offset, &m_libpthread_offsets.plo_version, sizeof (struct LibpthreadOffsets) / sizeof (uint16_t));
+        }
+    }
+}
+
+void
+SystemRuntimeMacOSX::ReadLibdispatchTSDIndexesAddress ()
+{
+    if (m_dispatch_tsd_indexes_addr != LLDB_INVALID_ADDRESS)
+        return;
+
+    static ConstString g_libdispatch_tsd_indexes_symbol_name ("dispatch_tsd_indexes");
+    const Symbol *libdispatch_tsd_indexes_symbol = NULL;
+
+    ModuleSpec libpthread_module_spec (FileSpec("libdispatch.dylib", false));
+    ModuleSP module_sp (m_process->GetTarget().GetImages().FindFirstModule (libpthread_module_spec));
+    if (module_sp)
+    {
+        libdispatch_tsd_indexes_symbol = module_sp->FindFirstSymbolWithNameAndType 
+                                                           (g_libdispatch_tsd_indexes_symbol_name, eSymbolTypeData);
+        if (libdispatch_tsd_indexes_symbol)
+        {
+            m_dispatch_tsd_indexes_addr =  libdispatch_tsd_indexes_symbol->GetAddress().GetLoadAddress(&m_process->GetTarget());
+        }
+    }
+}
+
+void
+SystemRuntimeMacOSX::ReadLibdispatchTSDIndexes ()
+{
+    if (m_libdispatch_tsd_indexes.IsValid())
+        return;
+
+    ReadLibdispatchTSDIndexesAddress ();
+
+    if (m_dispatch_tsd_indexes_addr != LLDB_INVALID_ADDRESS)
+    {
+        size_t maximum_tsd_indexes_struct_size;
+        Address dti_struct_addr;
+        uint16_t dti_version = 2;
+        if (m_process->GetTarget().ResolveLoadAddress(m_dispatch_tsd_indexes_addr, dti_struct_addr))
+        {
+            Error error;
+            uint16_t version = m_process->GetTarget().ReadUnsignedIntegerFromMemory (dti_struct_addr, false, 2, UINT16_MAX, error);
+            if (error.Success() && dti_version != UINT16_MAX)
+            {
+                dti_version = version;
+            }
+        }
+        if (dti_version == 1)
+        {
+            if (m_process->GetAddressByteSize() == 4)
+            {
+                maximum_tsd_indexes_struct_size = 4 + 4 + 4 + 4;
+            }
+            else
+            {
+                maximum_tsd_indexes_struct_size = 8 + 8 + 8 + 8;
+            }
+        }
+        else
+        {
+            maximum_tsd_indexes_struct_size = 2 + 2 + 2 + 2;
+        }
+
+        uint8_t memory_buffer[maximum_tsd_indexes_struct_size];
+        DataExtractor data (memory_buffer, 
+                            sizeof(memory_buffer), 
+                            m_process->GetByteOrder(), 
+                            m_process->GetAddressByteSize());
+        Error error;
+        if (m_process->ReadMemory (m_dispatch_tsd_indexes_addr, memory_buffer, sizeof(memory_buffer), error) == sizeof(memory_buffer))
+        {
+            lldb::offset_t offset = 0;
+    
+            if (dti_version == 1)
+            {
+                m_libdispatch_tsd_indexes.dti_version = data.GetU16 (&offset);
+                // word alignment to next item
+                if (m_process->GetAddressByteSize() == 4)
+                {
+                    offset += 2;
+                }
+                else
+                {
+                    offset += 6;
+                }
+                m_libdispatch_tsd_indexes.dti_queue_index = data.GetPointer (&offset);
+                m_libdispatch_tsd_indexes.dti_voucher_index = data.GetPointer (&offset);
+                m_libdispatch_tsd_indexes.dti_qos_class_index = data.GetPointer (&offset);
+            }
+            else
+            {
+                m_libdispatch_tsd_indexes.dti_version = data.GetU16 (&offset);
+                m_libdispatch_tsd_indexes.dti_queue_index = data.GetU16 (&offset);
+                m_libdispatch_tsd_indexes.dti_voucher_index = data.GetU16 (&offset);
+                m_libdispatch_tsd_indexes.dti_qos_class_index = data.GetU16 (&offset);
+            }
+        }
     }
 }
 

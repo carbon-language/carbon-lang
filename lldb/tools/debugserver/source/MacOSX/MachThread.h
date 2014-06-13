@@ -28,6 +28,8 @@
 #include "DNBArch.h"
 #include "DNBRegisterInfo.h"
 
+#include "ThreadInfo.h"
+
 class DNBBreakpoint;
 class MachProcess;
 class MachThreadList;
@@ -36,7 +38,7 @@ class MachThread
 {
 public:
 
-                    MachThread (MachProcess *process, uint64_t unique_thread_id = 0, thread_t mach_port_number = 0);
+                    MachThread (MachProcess *process, bool is_64_bit, uint64_t unique_thread_id = 0, thread_t mach_port_number = 0);
                     ~MachThread ();
 
     MachProcess *   Process() { return m_process; }
@@ -111,6 +113,11 @@ public:
         return m_arch_ap.get();
     }
 
+    ThreadInfo::QoS GetRequestedQoS (nub_addr_t tsd, uint64_t dti_qos_class_index);
+    nub_addr_t      GetPThreadT();
+    nub_addr_t      GetDispatchQueueT();
+    nub_addr_t      GetTSDAddressForThread (uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size);
+
     static uint64_t GetGloballyUniqueThreadIDForMachPortID (thread_t mach_port_id);
 
 protected:
@@ -138,6 +145,10 @@ protected:
     thread_identifier_info_data_t   m_ident_info;
     struct proc_threadinfo          m_proc_threadinfo;
     std::string                     m_dispatch_queue_name;
+    bool                            m_is_64_bit;
+
+    // qos_class_t _pthread_qos_class_decode(pthread_priority_t priority, int *, unsigned long *);
+    unsigned int                    (*m_pthread_qos_class_decode) (unsigned long priority, int*, unsigned long *);
 
 private:
     friend class MachThreadList;

@@ -88,6 +88,9 @@ public:
     SetTrapExceptions (bool trap_exceptions = true);
     
     void
+    SetLanguage (lldb::LanguageType language);
+
+    void
     SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton);
 
 protected:

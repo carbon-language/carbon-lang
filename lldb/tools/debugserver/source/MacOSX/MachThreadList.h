@@ -15,6 +15,7 @@
 #define __MachThreadList_h__
 
 #include "MachThread.h"
+#include "ThreadInfo.h"
 
 class DNBThreadResumeActions;
 
@@ -40,6 +41,12 @@ public:
     const char *    GetName (nub_thread_t tid);
     nub_state_t     GetState (nub_thread_t tid);
     nub_thread_t    SetCurrentThread (nub_thread_t tid);
+
+    ThreadInfo::QoS GetRequestedQoS (nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index);
+    nub_addr_t      GetPThreadT (nub_thread_t tid);
+    nub_addr_t      GetDispatchQueueT (nub_thread_t tid);
+    nub_addr_t      GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size);
+
     bool            GetThreadStoppedReason (nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const;
     void            DumpThreadStoppedReason (nub_thread_t tid) const;
     bool            GetIdentifierInfo (nub_thread_t tid, thread_identifier_info_data_t *ident_info);
@@ -73,6 +80,7 @@ protected:
     collection      m_threads;
     mutable PThreadMutex m_threads_mutex;
     MachThreadSP    m_current_thread;
+    bool            m_is_64_bit;
 };
 
 #endif // #ifndef __MachThreadList_h__

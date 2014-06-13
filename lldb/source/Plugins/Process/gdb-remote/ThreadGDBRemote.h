@@ -12,6 +12,7 @@
 
 #include <string>
 
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
@@ -85,6 +86,9 @@ public:
     {
         m_thread_dispatch_qaddr = thread_dispatch_qaddr;
     }
+
+    lldb_private::StructuredData::ObjectSP
+    FetchThreadExtendedInfo ();
 
 protected:
     

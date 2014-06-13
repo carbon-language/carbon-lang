@@ -19,6 +19,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
@@ -588,6 +589,74 @@ SBThread::GetQueueID () const
 
     return id;
 }
+
+bool
+SBThread::GetInfoItemByPathAsString (const char *path, SBStream &strm)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    bool success = false;
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
+    if (exe_ctx.HasThreadScope())
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Thread *thread = exe_ctx.GetThreadPtr();
+            StructuredData::ObjectSP info_root_sp = thread->GetExtendedInfo();
+            if (info_root_sp)
+            {
+                StructuredData::ObjectSP node = info_root_sp->GetObjectForDotSeparatedPath (path);
+                if (node)
+                {
+                    if (node->GetType() == StructuredData::Type::eTypeString)
+                    {
+                        strm.Printf ("%s", node->GetAsString()->GetValue().c_str());
+                        success = true;
+                    }
+                    if (node->GetType() == StructuredData::Type::eTypeInteger)
+                    {
+                        strm.Printf ("0x%" PRIx64, node->GetAsInteger()->GetValue());
+                        success = true;
+                    }
+                    if (node->GetType() == StructuredData::Type::eTypeFloat)
+                    {
+                        strm.Printf ("0x%f", node->GetAsFloat()->GetValue());
+                        success = true;
+                    }
+                    if (node->GetType() == StructuredData::Type::eTypeBoolean)
+                    {
+                        if (node->GetAsBoolean()->GetValue() == true)
+                            strm.Printf ("true");
+                        else
+                            strm.Printf ("false");
+                        success = true;
+                    }
+                    if (node->GetType() == StructuredData::Type::eTypeNull)
+                    {
+                        strm.Printf ("null");
+                        success = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetInfoItemByPathAsString() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
+        }
+    }
+
+    if (log)
+        log->Printf ("SBThread(%p)::GetInfoItemByPathAsString () => %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     strm.GetData());
+
+    return success;
+}
+
 
 SBError
 SBThread::ResumeNewPlan (ExecutionContext &exe_ctx, ThreadPlan *new_plan)

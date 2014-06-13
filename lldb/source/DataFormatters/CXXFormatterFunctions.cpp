@@ -20,7 +20,6 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
 #include <algorithm>
@@ -966,6 +965,61 @@ ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
 }
 
 bool
+lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream)
+{
+    if (!descriptor)
+        return false;
+    uint64_t len_bits = 0, data_bits = 0;
+    if (!descriptor->GetTaggedPointerInfo(&len_bits,&data_bits,nullptr))
+        return false;
+    
+    static const int g_MaxNonBitmaskedLen = 7; //TAGGED_STRING_UNPACKED_MAXLEN
+    static const int g_SixbitMaxLen = 9;
+    static const int g_fiveBitMaxLen = 11;
+    
+    static const char *sixBitToCharLookup = "eilotrm.apdnsIc ufkMShjTRxgC4013" "bDNvwyUL2O856P-B79AFKEWV_zGJ/HYX";
+    
+    if (len_bits > g_fiveBitMaxLen)
+        return false;
+    
+    // this is a fairly ugly trick - pretend that the numeric value is actually a char*
+    // this works under a few assumptions:
+    // little endian architecture
+    // sizeof(uint64_t) > g_MaxNonBitmaskedLen
+    if (len_bits <= g_MaxNonBitmaskedLen)
+    {
+        stream.Printf("@\"%s\"",(const char*)&data_bits);
+        return true;
+    }
+    
+    // if the data is bitmasked, we need to actually process the bytes
+    uint8_t bitmask = 0;
+    uint8_t shift_offset = 0;
+    
+    if (len_bits <= g_SixbitMaxLen)
+    {
+        bitmask = 0x03f;
+        shift_offset = 6;
+    }
+    else
+    {
+        bitmask = 0x01f;
+        shift_offset = 5;
+    }
+    
+    std::vector<uint8_t> bytes;
+    bytes.resize(len_bits);
+    for (; len_bits > 0; data_bits >>= shift_offset, --len_bits)
+    {
+        uint8_t packed = data_bits & bitmask;
+        bytes.insert(bytes.begin(), sixBitToCharLookup[packed]);
+    }
+    
+    stream.Printf("@\"%s\"",&bytes[0]);
+    return true;
+}
+
+bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     ProcessSP process_sp = valobj.GetProcessSP();
@@ -994,6 +1048,12 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     if (!class_name || !*class_name)
         return false;
     
+    bool is_tagged_ptr = (0 == strcmp(class_name,"NSTaggedPointerString")) && descriptor->GetTaggedPointerInfo();
+    // for a tagged pointer, the descriptor has everything we need
+    if (is_tagged_ptr)
+        return NSTaggedString_SummaryProvider(descriptor, stream);
+    
+    // if not a tagged pointer that we know about, try the normal route
     uint64_t info_bits_location = valobj_addr + ptr_size;
     if (process_sp->GetByteOrder() != lldb::eByteOrderLittle)
         info_bits_location += 3;

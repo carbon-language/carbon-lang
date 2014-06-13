@@ -38,6 +38,8 @@
 
 #include "MacOSX/MachProcess.h"
 #include "MacOSX/MachTask.h"
+#include "MacOSX/Genealogy.h"
+#include "MacOSX/ThreadInfo.h"
 #include "CFString.h"
 #include "DNBLog.h"
 #include "DNBDataRef.h"
@@ -976,6 +978,73 @@ DNBStateAsString(nub_state_t state)
     }
     return "nub_state_t ???";
 }
+
+Genealogy::ThreadActivitySP
+DNBGetGenealogyInfoForThread (nub_process_t pid, nub_thread_t tid, bool &timed_out)
+{
+    Genealogy::ThreadActivitySP thread_activity_sp;
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        thread_activity_sp = procSP->GetGenealogyInfoForThread (tid, timed_out);
+    return thread_activity_sp;
+}
+
+Genealogy::ProcessExecutableInfoSP
+DNBGetGenealogyImageInfo (nub_process_t pid, size_t idx)
+{
+    Genealogy::ProcessExecutableInfoSP image_info_sp;
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        image_info_sp = procSP->GetGenealogyImageInfo (idx);
+    }
+    return image_info_sp;
+}
+
+ThreadInfo::QoS
+DNBGetRequestedQoSForThread (nub_process_t pid, nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetRequestedQoS (tid, tsd, dti_qos_class_index);
+    }
+    return ThreadInfo::QoS();
+}
+
+nub_addr_t
+DNBGetPThreadT (nub_process_t pid, nub_thread_t tid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetPThreadT (tid);
+    }
+    return INVALID_NUB_ADDRESS;
+}
+
+nub_addr_t
+DNBGetDispatchQueueT (nub_process_t pid, nub_thread_t tid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetDispatchQueueT (tid);
+    }
+    return INVALID_NUB_ADDRESS;
+}
+
+nub_addr_t
+DNBGetTSDAddressForThread (nub_process_t pid, nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetTSDAddressForThread (tid, plo_pthread_tsd_base_address_offset, plo_pthread_tsd_base_offset, plo_pthread_tsd_entry_size);
+    }
+    return INVALID_NUB_ADDRESS;
+}
+
 
 const char *
 DNBProcessGetExecutablePath (nub_process_t pid)

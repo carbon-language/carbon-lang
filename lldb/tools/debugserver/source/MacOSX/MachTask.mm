@@ -54,6 +54,15 @@ extern "C"
 }
 #endif
 
+#include <AvailabilityMacros.h>
+
+#ifdef LLDB_ENERGY
+#include <mach/mach_time.h>
+#include <pmenergy.h>
+#include <pmsample.h>
+#endif
+
+
 //----------------------------------------------------------------------
 // MachTask constructor
 //----------------------------------------------------------------------
@@ -330,6 +339,8 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
     if (task == TASK_NULL)
         return result;
     
+    pid_t pid = m_process->ProcessID();
+    
     struct task_basic_info task_info;
     DNBError err;
     err = BasicInfo(task, &task_info);
@@ -363,7 +374,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
 
     if (scanType & eProfileThreadsCPU)
     {
-        get_threads_profile_data(scanType, task, m_process->ProcessID(), threads_id, threads_name, threads_used_usec);
+        get_threads_profile_data(scanType, task, pid, threads_id, threads_name, threads_used_usec);
     }
     
     struct vm_statistics vm_stats;
@@ -375,7 +386,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
     mach_vm_size_t dirty_size = 0;
     mach_vm_size_t purgeable = 0;
     mach_vm_size_t anonymous = 0;
-    if (m_vm_memory.GetMemoryProfile(scanType, task, task_info, m_process->GetCPUType(), m_process->ProcessID(), vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size, purgeable, anonymous))
+    if (m_vm_memory.GetMemoryProfile(scanType, task, task_info, m_process->GetCPUType(), pid, vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size, purgeable, anonymous))
     {
         std::ostringstream profile_data_stream;
         
@@ -436,17 +447,23 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
                 pagesize = PageSize();
             }
             
+            /* Unused values. Optimized out for transfer performance.
             profile_data_stream << "wired:" << vm_stats.wire_count * pagesize << ';';
             profile_data_stream << "active:" << vm_stats.active_count * pagesize << ';';
             profile_data_stream << "inactive:" << vm_stats.inactive_count * pagesize << ';';
+             */
             uint64_t total_used_count = vm_stats.wire_count + vm_stats.inactive_count + vm_stats.active_count;
             profile_data_stream << "used:" << total_used_count * pagesize << ';';
+            /* Unused values. Optimized out for transfer performance.
             profile_data_stream << "free:" << vm_stats.free_count * pagesize << ';';
+             */
             
             profile_data_stream << "rprvt:" << rprvt << ';';
+            /* Unused values. Optimized out for transfer performance.
             profile_data_stream << "rsize:" << rsize << ';';
             profile_data_stream << "vprvt:" << vprvt << ';';
             profile_data_stream << "vsize:" << vsize << ';';
+             */
             
             if (scanType & eProfileMemoryDirtyPage)
                 profile_data_stream << "dirty:" << dirty_size << ';';
@@ -457,6 +474,39 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
                 profile_data_stream << "anonymous:" << anonymous << ';';
             }
         }
+        
+        // proc_pid_rusage pm_sample_task_and_pid pm_energy_impact needs to be tested for weakness in Cab
+#ifdef LLDB_ENERGY
+        if ((scanType & eProfileEnergy) && (pm_sample_task_and_pid != NULL))
+        {
+            struct rusage_info_v2 info;
+            int rc = proc_pid_rusage(pid, RUSAGE_INFO_V2, (rusage_info_t *)&info);
+            if (rc == 0)
+            {
+                uint64_t now = mach_absolute_time();
+                pm_task_energy_data_t pm_energy;
+                memset(&pm_energy, 0, sizeof(pm_energy));
+                /*
+                 * Disable most features of pm_sample_pid. It will gather
+                 * network/GPU/WindowServer information; fill in the rest.
+                 */
+                pm_sample_task_and_pid(task, pid, &pm_energy, now, PM_SAMPLE_ALL & ~PM_SAMPLE_NAME & ~PM_SAMPLE_INTERVAL & ~PM_SAMPLE_CPU & ~PM_SAMPLE_DISK);
+                pm_energy.sti.total_user = info.ri_user_time;
+                pm_energy.sti.total_system = info.ri_system_time;
+                pm_energy.sti.task_interrupt_wakeups = info.ri_interrupt_wkups;
+                pm_energy.sti.task_platform_idle_wakeups = info.ri_pkg_idle_wkups;
+                pm_energy.diskio_bytesread = info.ri_diskio_bytesread;
+                pm_energy.diskio_byteswritten = info.ri_diskio_byteswritten;
+                pm_energy.pageins = info.ri_pageins;
+                
+                uint64_t total_energy = (uint64_t)(pm_energy_impact(&pm_energy) * NSEC_PER_SEC);
+                //uint64_t process_age = now - info.ri_proc_start_abstime;
+                //uint64_t avg_energy = 100.0 * (double)total_energy / (double)process_age;
+                
+                profile_data_stream << "energy:" << total_energy << ';';
+            }
+        }
+#endif
         
         profile_data_stream << "--end--;";
         

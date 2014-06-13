@@ -14,6 +14,8 @@
 #ifndef __DNB_h__
 #define __DNB_h__
 
+#include "MacOSX/Genealogy.h"
+#include "MacOSX/ThreadInfo.h"
 #include "DNBDefs.h"
 #include <mach/thread_info.h>
 #include <string>
@@ -129,6 +131,13 @@ nub_bool_t      DNBThreadRestoreRegisterState   (nub_process_t pid, nub_thread_t
 nub_bool_t      DNBThreadGetRegisterValueByName (nub_process_t pid, nub_thread_t tid, uint32_t set, const char *name, DNBRegisterValue *value);
 nub_bool_t      DNBThreadGetStopReason          (nub_process_t pid, nub_thread_t tid, DNBThreadStopInfo *stop_info);
 const char *    DNBThreadGetInfo                (nub_process_t pid, nub_thread_t tid);
+Genealogy::ThreadActivitySP DNBGetGenealogyInfoForThread (nub_process_t pid, nub_thread_t tid, bool &timed_out);
+Genealogy::ProcessExecutableInfoSP DNBGetGenealogyImageInfo (nub_process_t pid, size_t idx);
+ThreadInfo::QoS DNBGetRequestedQoSForThread     (nub_process_t pid, nub_thread_t tid, nub_addr_t tsd, uint64_t dti_qos_class_index);
+nub_addr_t      DNBGetPThreadT                  (nub_process_t pid, nub_thread_t tid);
+nub_addr_t      DNBGetDispatchQueueT            (nub_process_t pid, nub_thread_t tid);
+nub_addr_t      DNBGetTSDAddressForThread       (nub_process_t pid, nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size);
+//
 //----------------------------------------------------------------------
 // Breakpoint functions
 //----------------------------------------------------------------------
