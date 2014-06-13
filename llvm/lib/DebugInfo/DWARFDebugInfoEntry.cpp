@@ -210,6 +210,16 @@ uint64_t DWARFDebugInfoEntryMinimal::getAttributeValueAsSectionOffset(
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
+uint64_t
+DWARFDebugInfoEntryMinimal::getRangesBaseAttribute(const DWARFUnit *U,
+                                                   uint64_t FailValue) const {
+  uint64_t Result =
+      getAttributeValueAsSectionOffset(U, DW_AT_ranges_base, -1ULL);
+  if (Result != -1ULL)
+    return Result;
+  return getAttributeValueAsSectionOffset(U, DW_AT_GNU_ranges_base, FailValue);
+}
+
 bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
                                                  uint64_t &LowPC,
                                                  uint64_t &HighPC) const {

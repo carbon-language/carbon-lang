@@ -106,6 +106,8 @@ public:
                                             const uint16_t Attr,
                                             uint64_t FailValue) const;
 
+  uint64_t getRangesBaseAttribute(const DWARFUnit *U, uint64_t FailValue) const;
+
   /// Retrieves DW_AT_low_pc and DW_AT_high_pc from CU.
   /// Returns true if both attributes are present.
   bool getLowAndHighPC(const DWARFUnit *U, uint64_t &LowPC,
