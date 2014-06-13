@@ -1962,6 +1962,72 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     UpdateValueMap(&I, ResultReg, 2);
     return true;
   }
+  case Intrinsic::x86_sse_cvttss2si:
+  case Intrinsic::x86_sse_cvttss2si64:
+  case Intrinsic::x86_sse2_cvttsd2si:
+  case Intrinsic::x86_sse2_cvttsd2si64: {
+    bool IsInputDouble;
+    switch (I.getIntrinsicID()) {
+    default: llvm_unreachable("Unexpected intrinsic.");
+    case Intrinsic::x86_sse_cvttss2si:
+    case Intrinsic::x86_sse_cvttss2si64:
+      if (!Subtarget->hasSSE1())
+        return false;
+      IsInputDouble = false;
+      break;
+    case Intrinsic::x86_sse2_cvttsd2si:
+    case Intrinsic::x86_sse2_cvttsd2si64:
+      if (!Subtarget->hasSSE2())
+        return false;
+      IsInputDouble = true;
+      break;
+    }
+
+    Type *RetTy = I.getCalledFunction()->getReturnType();
+    MVT VT;
+    if (!isTypeLegal(RetTy, VT))
+      return false;
+
+    static const unsigned CvtOpc[2][2][2] = {
+      { { X86::CVTTSS2SIrr,   X86::VCVTTSS2SIrr   },
+        { X86::CVTTSS2SI64rr, X86::VCVTTSS2SI64rr }  },
+      { { X86::CVTTSD2SIrr,   X86::VCVTTSD2SIrr   },
+        { X86::CVTTSD2SI64rr, X86::VCVTTSD2SI64rr }  }
+    };
+    bool HasAVX = Subtarget->hasAVX();
+    unsigned Opc;
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected result type.");
+    case MVT::i32: Opc = CvtOpc[IsInputDouble][0][HasAVX]; break;
+    case MVT::i64: Opc = CvtOpc[IsInputDouble][1][HasAVX]; break;
+    }
+
+    // Check if we can fold insertelement instructions into the convert.
+    const Value *Op = I.getArgOperand(0);
+    while (auto *IE = dyn_cast<InsertElementInst>(Op)) {
+      const Value *Index = IE->getOperand(2);
+      if (!isa<ConstantInt>(Index))
+        break;
+      unsigned Idx = cast<ConstantInt>(Index)->getZExtValue();
+
+      if (Idx == 0) {
+        Op = IE->getOperand(1);
+        break;
+      }
+      Op = IE->getOperand(0);
+    }
+
+    unsigned Reg = getRegForValue(Op);
+    if (Reg == 0)
+      return false;
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+      .addReg(Reg);
+
+    UpdateValueMap(&I, ResultReg);
+    return true;
+  }
   }
 }
 
