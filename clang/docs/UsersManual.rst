@@ -1298,7 +1298,7 @@ below. If multiple flags are present, the last one is used.
   doesn't contain any other data (e.g. description of local variables or
   function parameters).
 
-.. option:: -fstandalone-debug -fno-standalone-debug
+.. option:: -fstandalone-debug **-fno-standalone-debug**
 
   Clang supports a number of optimizations to reduce the size of debug
   information in the binary. They work based on the assumption that
