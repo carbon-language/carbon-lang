@@ -56,8 +56,9 @@
 ; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]}
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}
 ; CHECK:     DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}
 
 
 @i = external global i32

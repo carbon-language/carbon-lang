@@ -28,8 +28,9 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_name {{.*}} "i"
 ; CHECK:     DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "i"
 
 
 %struct.S = type { i32 }

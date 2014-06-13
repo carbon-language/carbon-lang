@@ -20,22 +20,23 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_name{{.*}}.block_descriptor
-; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}.block_descriptor
 
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_TAG_variable
-; CHECK-NEXT: DW_AT_name{{.*}}"self"
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_type{{.*}}{[[APTR:.*]]}
-; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_artificial
 ; CHECK-NOT: DW_TAG
 ; 0x06 = DW_OP_deref
 ; 0x23 = DW_OP_uconst
 ; 0x91 = DW_OP_fbreg
 ; CHECK: DW_AT_location{{.*}}91 {{[0-9]+}} 06 23 {{[0-9]+}} )
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"self"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_type{{.*}}{[[APTR:.*]]}
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_artificial
 
 ; CHECK: [[APTR]]:   DW_TAG_pointer_type
 ; CHECK-NEXT: {[[A]]}

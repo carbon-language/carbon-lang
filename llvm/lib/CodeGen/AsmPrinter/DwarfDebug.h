@@ -209,6 +209,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   // Collection of abstract variables.
   DenseMap<const MDNode *, std::unique_ptr<DbgVariable>> AbstractVariables;
+  SmallVector<std::unique_ptr<DbgVariable>, 64> ConcreteVariables;
 
   // Collection of DebugLocEntry. Stored in a linked list so that DIELocLists
   // can refer to them in spite of insertions into this list.
@@ -401,6 +402,8 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Collect info for variables that were optimized out.
   void collectDeadVariables();
+
+  void finishVariableDefinitions();
 
   void finishSubprogramDefinitions();
 

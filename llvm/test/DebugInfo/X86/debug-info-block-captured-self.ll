@@ -7,17 +7,19 @@
 ; This test is split into two parts, the frontend part can be found at
 ; llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m
 ;
-; CHECK:      {{.*}}DW_AT_name{{.*}}_block_invoke{{.*}}
-; CHECK:      DW_TAG_variable
-; CHECK:      {{.*}}DW_AT_name{{.*}}"self"{{.*}}
+; CHECK: {{.*}}DW_AT_name{{.*}}_block_invoke{{.*}}
+; CHECK: DW_TAG_variable
 ; CHECK-NOT:  DW_TAG
-; CHECK:      DW_AT_location
+; CHECK:   DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_name{{.*}}"self"{{.*}}
 ;
-; CHECK:      {{.*}}DW_AT_name{{.*}}_block_invoke{{.*}}
-; CHECK:      DW_TAG_variable
-; CHECK:      {{.*}}DW_AT_name{{.*}}"self"{{.*}}
+; CHECK: {{.*}}DW_AT_name{{.*}}_block_invoke{{.*}}
+; CHECK: DW_TAG_variable
 ; CHECK-NOT:  DW_TAG
-; CHECK:      DW_AT_location
+; CHECK:   DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:   DW_AT_name{{.*}}"self"{{.*}}
 ;
 ; Generated (and then reduced) from
 ; ----------------------------------------------------------------------

@@ -1514,6 +1514,17 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
     addFlag(SPDie, dwarf::DW_AT_explicit);
 }
 
+void DwarfUnit::applyVariableAttributes(const DbgVariable &Var,
+                                        DIE &VariableDie) {
+  StringRef Name = Var.getName();
+  if (!Name.empty())
+    addString(VariableDie, dwarf::DW_AT_name, Name);
+  addSourceLine(VariableDie, Var.getVariable());
+  addType(VariableDie, Var.getType());
+  if (Var.isArtificial())
+    addFlag(VariableDie, dwarf::DW_AT_artificial);
+}
+
 // Return const expression if value is a GEP to access merged global
 // constant. e.g.
 // i8* getelementptr ({ i8, i8, i8, i8 }* @_MergedGlobals, i32 0, i32 0)
@@ -1787,24 +1798,13 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIE(DbgVariable &DV,
 
 std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
                                                          bool Abstract) {
-  StringRef Name = DV.getName();
-
   // Define variable debug information entry.
   auto VariableDie = make_unique<DIE>(DV.getTag());
-  DbgVariable *AbsVar = DV.getAbstractVariable();
-  if (AbsVar && AbsVar->getDIE()) {
-    addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsVar->getDIE());
-  } else {
-    if (!Name.empty())
-      addString(*VariableDie, dwarf::DW_AT_name, Name);
-    addSourceLine(*VariableDie, DV.getVariable());
-    addType(*VariableDie, DV.getType());
-    if (DV.isArtificial())
-      addFlag(*VariableDie, dwarf::DW_AT_artificial);
-  }
 
-  if (Abstract)
+  if (Abstract) {
+    applyVariableAttributes(DV, *VariableDie);
     return VariableDie;
+  }
 
   // Add variable address.
 

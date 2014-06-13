@@ -20,9 +20,10 @@
 ;
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_variable
-; CHECK-NEXT: DW_AT_name{{.*}}"i"
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_location [DW_FORM_data4]	([[LOC:.*]])
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"i"
 ; CHECK: .debug_loc contents:
 ; CHECK: [[LOC]]:
 ;        consts 0x00000003

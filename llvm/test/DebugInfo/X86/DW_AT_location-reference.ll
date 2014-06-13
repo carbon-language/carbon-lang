@@ -31,11 +31,11 @@
 ; // The 'x' variable and its symbol reference location
 ; CHECK: .debug_info contents:
 ; CHECK:      DW_TAG_variable
+; CHECK-NEXT:   DW_AT_location [DW_FORM_sec_offset] (0x00000000)
 ; CHECK-NEXT:   DW_AT_name {{.*}} "x"
 ; CHECK-NEXT:   DW_AT_decl_file
 ; CHECK-NEXT:   DW_AT_decl_line
 ; CHECK-NEXT:   DW_AT_type
-; CHECK-NEXT:   DW_AT_location [DW_FORM_sec_offset] (0x00000000)
 
 ; Check that the location contains only 4 ranges - this verifies that the 4th
 ; and 5th ranges were successfully merged into a single range.

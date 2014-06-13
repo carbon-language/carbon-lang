@@ -6,20 +6,33 @@
 ; function parameters.
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
-; CHECK: DW_TAG_subprogram
-; CHECK: Proc8
-; CHECK: DW_TAG_formal_parameter
-; CHECK: Array1Par
-; CHECK: DW_AT_location
-; CHECK: DW_TAG_formal_parameter
-; CHECK: Array2Par
-; CHECK: DW_AT_location
-; CHECK: DW_TAG_formal_parameter
-; CHECK: IntParI1
-; CHECK: DW_AT_location
-; CHECK: DW_TAG_formal_parameter
-; CHECK: IntParI2
-; CHECK: DW_AT_location
+; CHECK:   DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "Proc8"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:     DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_name {{.*}} "Array1Par"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:     DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_name {{.*}} "Array2Par"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:     DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_name {{.*}} "IntParI1"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:     DW_TAG_formal_parameter
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_location
+; CHECK-NOT: DW_TAG
+; CHECK:       DW_AT_name {{.*}} "IntParI2"
 
 %struct.Record = type { %struct.Record*, i32, i32, i32, [31 x i8] }
 

@@ -6,11 +6,11 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; rdar://8950491
 
 ;CHECK: DW_TAG_formal_parameter
+;CHECK-NEXT: DW_AT_location
 ;CHECK-NEXT: DW_AT_name {{.*}} "var"
 ;CHECK-NEXT: DW_AT_decl_file
 ;CHECK-NEXT: DW_AT_decl_line
 ;CHECK-NEXT: DW_AT_type
-;CHECK-NEXT: DW_AT_location
 
 @dfm = external global i32, align 4
 

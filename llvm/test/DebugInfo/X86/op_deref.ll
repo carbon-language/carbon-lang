@@ -1,17 +1,20 @@
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DW-CHECK
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj -dwarf-version=3
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DWARF3
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s -filetype=obj \
+; RUN:     | llvm-dwarfdump -debug-dump=info - \
+; RUN:     | FileCheck %s -check-prefix=CHECK -check-prefix=DWARF4
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s -filetype=obj -dwarf-version=3 \
+; RUN:     | llvm-dwarfdump -debug-dump=info - \
+; RUN:     | FileCheck %s -check-prefix=CHECK -check-prefix=DWARF3
 
-; DW-CHECK: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000067] = "vla")
 ; FIXME: The location here needs to be fixed, but llvm-dwarfdump doesn't handle
 ; DW_AT_location lists yet.
-; DW-CHECK: DW_AT_location [DW_FORM_sec_offset]                      (0x00000000)
+; DWARF4: DW_AT_location [DW_FORM_sec_offset]                      (0x00000000)
 
-; DWARF3: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000067] = "vla")
 ; FIXME: The location here needs to be fixed, but llvm-dwarfdump doesn't handle
 ; DW_AT_location lists yet.
 ; DWARF3: DW_AT_location [DW_FORM_data4]                      (0x00000000)
+
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000067] = "vla")
 
 ; Unfortunately llvm-dwarfdump can't unparse a list of DW_AT_locations
 ; right now, so we check the asm output:

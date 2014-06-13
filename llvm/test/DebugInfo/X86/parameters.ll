@@ -23,13 +23,15 @@
 ; }
 
 ; CHECK: debug_info contents
-; CHECK: DW_AT_name{{.*}} = "f"
 ; 0x74 is DW_OP_breg4, showing that the parameter is accessed indirectly
 ; (with a zero offset) from the register parameter
 ; CHECK: DW_AT_location{{.*}}(<0x0{{.}}> 74 00
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}} = "f"
 
-; CHECK: DW_AT_name{{.*}} = "g"
 ; CHECK: DW_AT_location{{.*}}([[G_LOC:0x[0-9]*]])
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}} = "g"
 ; CHECK: debug_loc contents
 ; CHECK-NEXT: [[G_LOC]]: Beginning
 ; CHECK-NEXT:               Ending
