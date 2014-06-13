@@ -30,7 +30,6 @@
 #include <system_error>
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 enum OutputFormatTy {berkeley, sysv};
 static cl::opt<OutputFormatTy>
@@ -69,7 +68,7 @@ static cl::list<std::string>
 static std::string ToolName;
 
 ///  @brief If ec is not success, print the error and return true.
-static bool error(error_code ec) {
+static bool error(std::error_code ec) {
   if (!ec) return false;
 
   outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
@@ -236,7 +235,7 @@ static void PrintFileSectionSizes(StringRef file) {
 
   // Attempt to open the binary.
   ErrorOr<Binary *> BinaryOrErr = createBinary(file);
-  if (error_code EC = BinaryOrErr.getError()) {
+  if (std::error_code EC = BinaryOrErr.getError()) {
     errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
     return;
   }
@@ -247,7 +246,7 @@ static void PrintFileSectionSizes(StringRef file) {
     for (object::Archive::child_iterator i = a->child_begin(),
                                          e = a->child_end(); i != e; ++i) {
       std::unique_ptr<Binary> child;
-      if (error_code ec = i->getAsBinary(child)) {
+      if (std::error_code ec = i->getAsBinary(child)) {
         errs() << ToolName << ": " << file << ": " << ec.message() << ".\n";
         continue;
       }

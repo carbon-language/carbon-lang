@@ -34,7 +34,6 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
@@ -138,7 +137,7 @@ int main(int argc, char **argv) {
     M.reset(getStreamedBitcodeModule(DisplayFilename, streamer, Context,
                                      &ErrorMessage));
     if(M.get()) {
-      if (error_code EC = M->materializeAllPermanently()) {
+      if (std::error_code EC = M->materializeAllPermanently()) {
         ErrorMessage = EC.message();
         M.reset();
       }

@@ -44,7 +44,6 @@
 #endif
 
 using namespace llvm;
-using std::error_code;
 
 namespace {
   ld_plugin_status discard_message(int level, const char *format, ...) {
@@ -259,7 +258,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     if (file->offset) {
       offset = file->offset;
     }
-    if (error_code ec = MemoryBuffer::getOpenFileSlice(
+    if (std::error_code ec = MemoryBuffer::getOpenFileSlice(
             file->fd, file->name, buffer, file->filesize, offset)) {
       (*message)(LDPL_ERROR, ec.message().c_str());
       return LDPS_ERR;
@@ -485,7 +484,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
 static ld_plugin_status cleanup_hook(void) {
   for (int i = 0, e = Cleanup.size(); i != e; ++i) {
-    error_code EC = sys::fs::remove(Cleanup[i]);
+    std::error_code EC = sys::fs::remove(Cleanup[i]);
     if (EC)
       (*message)(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
                  EC.message().c_str());

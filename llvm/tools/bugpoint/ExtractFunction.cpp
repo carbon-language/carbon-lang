@@ -33,7 +33,6 @@
 #include "llvm/Transforms/Utils/CodeExtractor.h"
 #include <set>
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "bugpoint"
 
@@ -367,7 +366,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  Module *M) {
   SmallString<128> Filename;
   int FD;
-  error_code EC = sys::fs::createUniqueFile(
+  std::error_code EC = sys::fs::createUniqueFile(
       OutputPrefix + "-extractblocks%%%%%%%", FD, Filename);
   if (EC) {
     outs() << "*** Basic Block extraction failed!\n";

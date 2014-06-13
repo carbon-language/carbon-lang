@@ -35,7 +35,6 @@
 #include <fstream>
 
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "bugpoint"
 
@@ -130,7 +129,7 @@ bool BugDriver::runPasses(Module *Program,
   // setup the output file name
   outs().flush();
   SmallString<128> UniqueFilename;
-  error_code EC = sys::fs::createUniqueFile(
+  std::error_code EC = sys::fs::createUniqueFile(
       OutputPrefix + "-output-%%%%%%%.bc", UniqueFilename);
   if (EC) {
     errs() << getToolName() << ": Error making unique filename: "

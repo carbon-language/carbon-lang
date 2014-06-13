@@ -21,7 +21,6 @@
 
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 namespace {
 
@@ -55,9 +54,9 @@ private:
 
 namespace llvm {
 
-error_code createMachODumper(const object::ObjectFile *Obj,
-                             StreamWriter &Writer,
-                             std::unique_ptr<ObjDumper> &Result) {
+std::error_code createMachODumper(const object::ObjectFile *Obj,
+                                  StreamWriter &Writer,
+                                  std::unique_ptr<ObjDumper> &Result) {
   const MachOObjectFile *MachOObj = dyn_cast<MachOObjectFile>(Obj);
   if (!MachOObj)
     return readobj_error::unsupported_obj_file_format;
@@ -278,7 +277,7 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
 void MachODumper::printRelocations() {
   ListScope D(W, "Relocations");
 
-  error_code EC;
+  std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
     if (error(Section.getName(Name)))

@@ -42,7 +42,6 @@
 #include <system_error>
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 static cl::opt<bool>
   UseDbg("g", cl::desc("Print line information from debug info if available"));
@@ -198,7 +197,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 void llvm::DisassembleInputMachO(StringRef Filename) {
   std::unique_ptr<MemoryBuffer> Buff;
 
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
     errs() << "llvm-objdump: " << Filename << ": " << ec.message() << "\n";
     return;
   }
@@ -290,7 +289,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     // get the sections and supply it to the section name parsing machinery.
     if (!DSYMFile.empty()) {
       std::unique_ptr<MemoryBuffer> Buf;
-      if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile, Buf)) {
+      if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile, Buf)) {
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;
       }

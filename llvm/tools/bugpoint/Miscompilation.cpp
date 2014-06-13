@@ -27,7 +27,6 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 using namespace llvm;
-using std::error_code;
 
 namespace llvm {
   extern cl::opt<std::string> OutputPrefix;
@@ -965,8 +964,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
 
   SmallString<128> TestModuleBC;
   int TestModuleFD;
-  error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
-                                               TestModuleFD, TestModuleBC);
+  std::error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
+                                                    TestModuleFD, TestModuleBC);
   if (EC) {
     errs() << BD.getToolName() << "Error making unique filename: "
            << EC.message() << "\n";
@@ -1059,8 +1058,8 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
 
   SmallString<128> TestModuleBC;
   int TestModuleFD;
-  error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
-                                               TestModuleFD, TestModuleBC);
+  std::error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
+                                                    TestModuleFD, TestModuleBC);
   if (EC) {
     errs() << getToolName() << "Error making unique filename: "
            << EC.message() << "\n";

@@ -16,7 +16,6 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::Win64EH;
-using std::error_code;
 
 static const EnumEntry<unsigned> UnwindFlags[] = {
   { "ExceptionHandler", UNW_ExceptionHandler },
@@ -135,20 +134,21 @@ static std::string formatSymbol(const Dumper::Context &Ctx,
   return OS.str();
 }
 
-static error_code resolveRelocation(const Dumper::Context &Ctx,
-                                    const coff_section *Section,
-                                    uint64_t Offset,
-                                    const coff_section *&ResolvedSection,
-                                    uint64_t &ResolvedAddress) {
+static std::error_code resolveRelocation(const Dumper::Context &Ctx,
+                                         const coff_section *Section,
+                                         uint64_t Offset,
+                                         const coff_section *&ResolvedSection,
+                                         uint64_t &ResolvedAddress) {
   SymbolRef Symbol;
-  if (error_code EC = Ctx.ResolveSymbol(Section, Offset, Symbol, Ctx.UserData))
+  if (std::error_code EC =
+          Ctx.ResolveSymbol(Section, Offset, Symbol, Ctx.UserData))
     return EC;
 
-  if (error_code EC = Symbol.getAddress(ResolvedAddress))
+  if (std::error_code EC = Symbol.getAddress(ResolvedAddress))
     return EC;
 
   section_iterator SI = Ctx.COFF.section_begin();
-  if (error_code EC = Symbol.getSection(SI))
+  if (std::error_code EC = Symbol.getSection(SI))
     return EC;
 
   ResolvedSection = Ctx.COFF.getCOFFSection(*SI);

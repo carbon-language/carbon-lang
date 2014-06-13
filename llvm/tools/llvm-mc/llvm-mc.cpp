@@ -40,7 +40,6 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 using namespace llvm;
-using std::error_code;
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
@@ -368,7 +367,8 @@ int main(int argc, char **argv) {
     return 1;
 
   std::unique_ptr<MemoryBuffer> BufferPtr;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)) {
+  if (std::error_code ec =
+          MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)) {
     errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }

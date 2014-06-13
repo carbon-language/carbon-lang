@@ -38,7 +38,6 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::Win64EH;
-using std::error_code;
 
 namespace {
 
@@ -70,10 +69,10 @@ private:
 
   void cacheRelocations();
 
-  error_code resolveSymbol(const coff_section *Section, uint64_t Offset,
-                           SymbolRef &Sym);
-  error_code resolveSymbolName(const coff_section *Section, uint64_t Offset,
-                               StringRef &Name);
+  std::error_code resolveSymbol(const coff_section *Section, uint64_t Offset,
+                                SymbolRef &Sym);
+  std::error_code resolveSymbolName(const coff_section *Section,
+                                    uint64_t Offset, StringRef &Name);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -86,8 +85,9 @@ private:
 
 namespace llvm {
 
-error_code createCOFFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
-                            std::unique_ptr<ObjDumper> &Result) {
+std::error_code createCOFFDumper(const object::ObjectFile *Obj,
+                                 StreamWriter &Writer,
+                                 std::unique_ptr<ObjDumper> &Result) {
   const COFFObjectFile *COFFObj = dyn_cast<COFFObjectFile>(Obj);
   if (!COFFObj)
     return readobj_error::unsupported_obj_file_format;
@@ -100,12 +100,12 @@ error_code createCOFFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
 
 // Given a a section and an offset into this section the function returns the
 // symbol used for the relocation at the offset.
-error_code COFFDumper::resolveSymbol(const coff_section *Section,
-                                     uint64_t Offset, SymbolRef &Sym) {
+std::error_code COFFDumper::resolveSymbol(const coff_section *Section,
+                                          uint64_t Offset, SymbolRef &Sym) {
   const auto &Relocations = RelocMap[Section];
   for (const auto &Relocation : Relocations) {
     uint64_t RelocationOffset;
-    if (error_code EC = Relocation.getOffset(RelocationOffset))
+    if (std::error_code EC = Relocation.getOffset(RelocationOffset))
       return EC;
 
     if (RelocationOffset == Offset) {
@@ -118,12 +118,13 @@ error_code COFFDumper::resolveSymbol(const coff_section *Section,
 
 // Given a section and an offset into this section the function returns the name
 // of the symbol used for the relocation at the offset.
-error_code COFFDumper::resolveSymbolName(const coff_section *Section,
-                                         uint64_t Offset, StringRef &Name) {
+std::error_code COFFDumper::resolveSymbolName(const coff_section *Section,
+                                              uint64_t Offset,
+                                              StringRef &Name) {
   SymbolRef Symbol;
-  if (error_code EC = resolveSymbol(Section, Offset, Symbol))
+  if (std::error_code EC = resolveSymbol(Section, Offset, Symbol))
     return EC;
-  if (error_code EC = Symbol.getName(Name))
+  if (std::error_code EC = Symbol.getName(Name))
     return EC;
   return object_error::success;
 }
@@ -308,9 +309,10 @@ WeakExternalCharacteristics[] = {
   { "Alias"    , COFF::IMAGE_WEAK_EXTERN_SEARCH_ALIAS     }
 };
 
-template<typename T>
-static error_code getSymbolAuxData(const COFFObjectFile *Obj,
-                                   const coff_symbol *Symbol, const T* &Aux) {
+template <typename T>
+static std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
+                                        const coff_symbol *Symbol,
+                                        const T *&Aux) {
   ArrayRef<uint8_t> AuxData = Obj->getSymbolAuxData(Symbol);
   Aux = reinterpret_cast<const T*>(AuxData.data());
   return readobj_error::success;
@@ -720,7 +722,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
   const coff_symbol *Symbol = Obj->getCOFFSymbol(Sym);
   const coff_section *Section;
-  if (error_code EC = Obj->getSection(Symbol->SectionNumber, Section)) {
+  if (std::error_code EC = Obj->getSection(Symbol->SectionNumber, Section)) {
     W.startLine() << "Invalid section number: " << EC.message() << "\n";
     W.flush();
     return;
@@ -764,7 +766,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
       const coff_symbol *Linked;
       StringRef LinkedName;
-      error_code EC;
+      std::error_code EC;
       if ((EC = Obj->getSymbol(Aux->TagIndex, Linked)) ||
           (EC = Obj->getSymbolName(Linked, LinkedName))) {
         LinkedName = "";
@@ -806,7 +808,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
           && Aux->Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
         const coff_section *Assoc;
         StringRef AssocName;
-        error_code EC;
+        std::error_code EC;
         if ((EC = Obj->getSection(Aux->Number, Assoc)) ||
             (EC = Obj->getSectionName(Assoc, AssocName))) {
           AssocName = "";
@@ -822,7 +824,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
       const coff_symbol *ReferredSym;
       StringRef ReferredName;
-      error_code EC;
+      std::error_code EC;
       if ((EC = Obj->getSymbol(Aux->SymbolTableIndex, ReferredSym)) ||
           (EC = Obj->getSymbolName(ReferredSym, ReferredName))) {
         ReferredName = "";
@@ -850,12 +852,12 @@ void COFFDumper::printUnwindInfo() {
   switch (Header->Machine) {
   case COFF::IMAGE_FILE_MACHINE_AMD64: {
     Win64EH::Dumper Dumper(W);
-    Win64EH::Dumper::SymbolResolver Resolver =
-      [](const object::coff_section *Section, uint64_t Offset,
-         SymbolRef &Symbol, void *user_data) -> error_code {
-        COFFDumper *Dumper = reinterpret_cast<COFFDumper*>(user_data);
-        return Dumper->resolveSymbol(Section, Offset, Symbol);
-      };
+    Win64EH::Dumper::SymbolResolver
+    Resolver = [](const object::coff_section *Section, uint64_t Offset,
+                  SymbolRef &Symbol, void *user_data) -> std::error_code {
+      COFFDumper *Dumper = reinterpret_cast<COFFDumper *>(user_data);
+      return Dumper->resolveSymbol(Section, Offset, Symbol);
+    };
     Win64EH::Dumper::Context Ctx(*Obj, Resolver, this);
     Dumper.printData(Ctx);
     break;

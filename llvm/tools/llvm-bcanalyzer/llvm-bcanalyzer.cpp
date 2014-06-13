@@ -43,7 +43,6 @@
 #include <map>
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
@@ -481,8 +480,7 @@ static int AnalyzeBitcode() {
   // Read the input file.
   std::unique_ptr<MemoryBuffer> MemBuf;
 
-  if (error_code ec =
-        MemoryBuffer::getFileOrSTDIN(InputFilename, MemBuf))
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, MemBuf))
     return Error("Error reading '" + InputFilename + "': " + ec.message());
 
   if (MemBuf->getBufferSize() & 3)

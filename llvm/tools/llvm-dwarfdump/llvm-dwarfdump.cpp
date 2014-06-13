@@ -33,7 +33,6 @@
 
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),
@@ -69,13 +68,13 @@ DumpType("debug-dump", cl::init(DIDT_All),
 static void DumpInput(const StringRef &Filename) {
   std::unique_ptr<MemoryBuffer> Buff;
 
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
     errs() << Filename << ": " << ec.message() << "\n";
     return;
   }
 
   ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(Buff.release()));
-  if (error_code EC = ObjOrErr.getError()) {
+  if (std::error_code EC = ObjOrErr.getError()) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;
   }

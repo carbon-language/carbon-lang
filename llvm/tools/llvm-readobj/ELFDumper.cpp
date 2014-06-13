@@ -30,7 +30,6 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace ELF;
-using std::error_code;
 
 #define LLVM_READOBJ_ENUM_CASE(ns, enum) \
   case ns::enum: return #enum;
@@ -82,15 +81,16 @@ template <class T> T errorOrDefault(ErrorOr<T> Val, T Default = T()) {
 namespace llvm {
 
 template <class ELFT>
-static error_code createELFDumper(const ELFFile<ELFT> *Obj,
-                                  StreamWriter &Writer,
-                                  std::unique_ptr<ObjDumper> &Result) {
+static std::error_code createELFDumper(const ELFFile<ELFT> *Obj,
+                                       StreamWriter &Writer,
+                                       std::unique_ptr<ObjDumper> &Result) {
   Result.reset(new ELFDumper<ELFT>(Obj, Writer));
   return readobj_error::success;
 }
 
-error_code createELFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
-                           std::unique_ptr<ObjDumper> &Result) {
+std::error_code createELFDumper(const object::ObjectFile *Obj,
+                                StreamWriter &Writer,
+                                std::unique_ptr<ObjDumper> &Result) {
   // Little-endian 32-bit
   if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return createELFDumper(ELFObj->getELFFile(), Writer, Result);

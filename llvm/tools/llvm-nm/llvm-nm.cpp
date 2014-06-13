@@ -45,7 +45,6 @@
 #include <vector>
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 namespace {
 enum OutputFormatTy { bsd, sysv, posix, darwin };
@@ -133,7 +132,7 @@ static void error(Twine Message, Twine Path = Twine()) {
   errs() << ToolName << ": " << Path << ": " << Message << ".\n";
 }
 
-static bool error(error_code EC, Twine Path = Twine()) {
+static bool error(std::error_code EC, Twine Path = Twine()) {
   if (EC) {
     error(EC.message(), Path);
     return true;

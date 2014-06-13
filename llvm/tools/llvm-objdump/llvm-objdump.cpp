@@ -64,7 +64,6 @@
 
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),cl::ZeroOrMore);
@@ -149,7 +148,7 @@ YAMLCFG("yaml-cfg",
 
 static StringRef ToolName;
 
-bool llvm::error(error_code EC) {
+bool llvm::error(std::error_code EC) {
   if (!EC)
     return false;
 
@@ -396,7 +395,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
   // Create a mapping, RelocSecs = SectionRelocMap[S], where sections
   // in RelocSecs contain the relocations for section S.
-  error_code EC;
+  std::error_code EC;
   std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
   for (const SectionRef &Section : Obj->sections()) {
     section_iterator Sec2 = Section.getRelocatedSection();
@@ -621,7 +620,7 @@ static void PrintSectionHeaders(const ObjectFile *Obj) {
 }
 
 static void PrintSectionContents(const ObjectFile *Obj) {
-  error_code EC;
+  std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
     StringRef Contents;
@@ -852,7 +851,7 @@ static void DumpArchive(const Archive *a) {
   for (Archive::child_iterator i = a->child_begin(), e = a->child_end(); i != e;
        ++i) {
     std::unique_ptr<Binary> child;
-    if (error_code EC = i->getAsBinary(child)) {
+    if (std::error_code EC = i->getAsBinary(child)) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
         errs() << ToolName << ": '" << a->getFileName() << "': " << EC.message()
@@ -882,7 +881,7 @@ static void DumpInput(StringRef file) {
 
   // Attempt to open the binary.
   ErrorOr<Binary *> BinaryOrErr = createBinary(file);
-  if (error_code EC = BinaryOrErr.getError()) {
+  if (std::error_code EC = BinaryOrErr.getError()) {
     errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
     return;
   }

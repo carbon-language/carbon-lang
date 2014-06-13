@@ -21,7 +21,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 static cl::list<std::string>
        InputFilenames(cl::Positional, cl::desc("<input files>"),
@@ -137,7 +136,7 @@ MarkupTag MarkupParser::parseTag() {
 
 static void parseMCMarkup(StringRef Filename) {
   std::unique_ptr<MemoryBuffer> BufferPtr;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, BufferPtr)) {
+  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, BufferPtr)) {
     errs() << ToolName << ": " << ec.message() << '\n';
     return;
   }

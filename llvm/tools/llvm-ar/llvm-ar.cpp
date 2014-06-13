@@ -36,7 +36,6 @@
 #endif
 
 using namespace llvm;
-using std::error_code;
 
 // The name this program was invoked as.
 static StringRef ToolName;
@@ -54,7 +53,7 @@ LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   exit(1);
 }
 
-static void failIfError(error_code EC, Twine Context = "") {
+static void failIfError(std::error_code EC, Twine Context = "") {
   if (!EC)
     return;
 
@@ -939,7 +938,7 @@ int ar_main(char **argv) {
 static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
   std::unique_ptr<MemoryBuffer> Buf;
-  error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
+  std::error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
   if (EC && EC != std::errc::no_such_file_or_directory) {
     errs() << ToolName << ": error opening '" << ArchiveName
            << "': " << EC.message() << "!\n";

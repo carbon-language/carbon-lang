@@ -19,7 +19,6 @@
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "lli"
 
@@ -62,7 +61,7 @@ allocateDataSection(uintptr_t Size, unsigned Alignment,
 }
 
 sys::MemoryBlock RemoteMemoryManager::allocateSection(uintptr_t Size) {
-  error_code ec;
+  std::error_code ec;
   sys::MemoryBlock MB = sys::Memory::allocateMappedMemory(Size,
                                                           &Near,
                                                           sys::Memory::MF_READ |

@@ -22,7 +22,6 @@
 #include <fstream>
 #include <sstream>
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "toolrunner"
 
@@ -143,7 +142,7 @@ static std::string ProcessFailure(StringRef ProgPath, const char** Args,
   // Rerun the compiler, capturing any error messages to print them.
   SmallString<128> ErrorFilename;
   int ErrorFD;
-  error_code EC = sys::fs::createTemporaryFile(
+  std::error_code EC = sys::fs::createTemporaryFile(
       "bugpoint.program_error_messages", "", ErrorFD, ErrorFilename);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
@@ -479,7 +478,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
   const char *Suffix = (UseIntegratedAssembler ? ".llc.o" : ".llc.s");
 
   SmallString<128> UniqueFile;
-  error_code EC =
+  std::error_code EC =
       sys::fs::createUniqueFile(Bitcode + "-%%%%%%%" + Suffix, UniqueFile);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
@@ -716,7 +715,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back("-o");
 
   SmallString<128> OutputBinary;
-  error_code EC =
+  std::error_code EC =
       sys::fs::createUniqueFile(ProgramFile + "-%%%%%%%.gcc.exe", OutputBinary);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
@@ -826,7 +825,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           const std::vector<std::string> &ArgsForGCC,
                           std::string &Error) {
   SmallString<128> UniqueFilename;
-  error_code EC = sys::fs::createUniqueFile(
+  std::error_code EC = sys::fs::createUniqueFile(
       InputFile + "-%%%%%%%" + LTDL_SHLIB_EXT, UniqueFilename);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
