@@ -24,6 +24,7 @@ namespace lldb_private
     typedef size_t (*ObjectFileGetModuleSpecifications) (const FileSpec &file, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, lldb::offset_t file_offset, lldb::offset_t length, ModuleSpecList &module_specs);
     typedef ObjectFile* (*ObjectFileCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, const FileSpec* file, lldb::offset_t file_offset, lldb::offset_t length);
     typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
+    typedef bool (*ObjectFileSaveCore) (const lldb::ProcessSP &process_sp, const FileSpec &outfile, Error &error);
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);

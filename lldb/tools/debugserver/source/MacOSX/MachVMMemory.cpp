@@ -99,10 +99,11 @@ MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo
             if (address < start_addr)
                 region_info->size = start_addr - address;
         }
-        // If we can't get any infor about the size from the next region, just fill
-        // 1 in as the byte size
+        // If we can't get any info about the size from the next region it means
+        // we asked about an address that was past all mappings, so the size
+        // of this region will take up all remaining address space.
         if (region_info->size == 0)
-            region_info->size = 1;
+            region_info->size = INVALID_NUB_ADDRESS - region_info->addr;
 
         // Not readable, writeable or executable
         region_info->permissions = 0;

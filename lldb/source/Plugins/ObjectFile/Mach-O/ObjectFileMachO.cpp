@@ -13,6 +13,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -33,6 +34,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadList.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
@@ -124,6 +127,128 @@ public:
             }
         }
     }
+    
+    
+    static size_t
+    WriteRegister (RegisterContext *reg_ctx, const char *name, const char *alt_name, size_t reg_byte_size, Stream &data)
+    {
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName(name);
+        if (reg_info == NULL)
+            reg_info = reg_ctx->GetRegisterInfoByName(alt_name);
+        if (reg_info)
+        {
+            lldb_private::RegisterValue reg_value;
+            if (reg_ctx->ReadRegister(reg_info, reg_value))
+            {
+                if (reg_info->byte_size >= reg_byte_size)
+                    data.Write(reg_value.GetBytes(), reg_byte_size);
+                else
+                {
+                    data.Write(reg_value.GetBytes(), reg_info->byte_size);
+                    for (size_t i=0, n = reg_byte_size - reg_info->byte_size; i<n; ++ i)
+                        data.PutChar(0);
+                }
+                return reg_byte_size;
+            }
+        }
+        // Just write zeros if all else fails
+        for (size_t i=0; i<reg_byte_size; ++ i)
+            data.PutChar(0);
+        return reg_byte_size;
+    }
+    
+    static bool
+    Create_LC_THREAD (Thread *thread, Stream &data)
+    {
+        RegisterContextSP reg_ctx_sp (thread->GetRegisterContext());
+        if (reg_ctx_sp)
+        {
+            RegisterContext *reg_ctx = reg_ctx_sp.get();
+
+            data.PutHex32 (GPRRegSet);  // Flavor
+            data.PutHex32 (sizeof(GPR)/sizeof(uint64_t));   // Number of uint64_t values that follow
+            WriteRegister (reg_ctx, "rax", NULL, 8, data);
+            WriteRegister (reg_ctx, "rbx", NULL, 8, data);
+            WriteRegister (reg_ctx, "rcx", NULL, 8, data);
+            WriteRegister (reg_ctx, "rdx", NULL, 8, data);
+            WriteRegister (reg_ctx, "rdi", NULL, 8, data);
+            WriteRegister (reg_ctx, "rsi", NULL, 8, data);
+            WriteRegister (reg_ctx, "rbp", NULL, 8, data);
+            WriteRegister (reg_ctx, "rsp", NULL, 8, data);
+            WriteRegister (reg_ctx, "r8", NULL, 8, data);
+            WriteRegister (reg_ctx, "r9", NULL, 8, data);
+            WriteRegister (reg_ctx, "r10", NULL, 8, data);
+            WriteRegister (reg_ctx, "r11", NULL, 8, data);
+            WriteRegister (reg_ctx, "r12", NULL, 8, data);
+            WriteRegister (reg_ctx, "r13", NULL, 8, data);
+            WriteRegister (reg_ctx, "r14", NULL, 8, data);
+            WriteRegister (reg_ctx, "r15", NULL, 8, data);
+            WriteRegister (reg_ctx, "rip", NULL, 8, data);
+            WriteRegister (reg_ctx, "rflags", NULL, 8, data);
+            WriteRegister (reg_ctx, "cs", NULL, 8, data);
+            WriteRegister (reg_ctx, "fs", NULL, 8, data);
+            WriteRegister (reg_ctx, "gs", NULL, 8, data);
+
+//            // Write out the FPU registers
+//            const size_t fpu_byte_size = sizeof(FPU);
+//            size_t bytes_written = 0;
+//            data.PutHex32 (FPURegSet);
+//            data.PutHex32 (fpu_byte_size/sizeof(uint64_t));
+//            bytes_written += data.PutHex32(0);                                   // uint32_t pad[0]
+//            bytes_written += data.PutHex32(0);                                   // uint32_t pad[1]
+//            bytes_written += WriteRegister (reg_ctx, "fcw", "fctrl", 2, data);   // uint16_t    fcw;    // "fctrl"
+//            bytes_written += WriteRegister (reg_ctx, "fsw" , "fstat", 2, data);  // uint16_t    fsw;    // "fstat"
+//            bytes_written += WriteRegister (reg_ctx, "ftw" , "ftag", 1, data);   // uint8_t     ftw;    // "ftag"
+//            bytes_written += data.PutHex8  (0);                                  // uint8_t pad1;
+//            bytes_written += WriteRegister (reg_ctx, "fop" , NULL, 2, data);     // uint16_t    fop;    // "fop"
+//            bytes_written += WriteRegister (reg_ctx, "fioff", "ip", 4, data);    // uint32_t    ip;     // "fioff"
+//            bytes_written += WriteRegister (reg_ctx, "fiseg", NULL, 2, data);    // uint16_t    cs;     // "fiseg"
+//            bytes_written += data.PutHex16 (0);                                  // uint16_t    pad2;
+//            bytes_written += WriteRegister (reg_ctx, "dp", "fooff" , 4, data);   // uint32_t    dp;     // "fooff"
+//            bytes_written += WriteRegister (reg_ctx, "foseg", NULL, 2, data);    // uint16_t    ds;     // "foseg"
+//            bytes_written += data.PutHex16 (0);                                  // uint16_t    pad3;
+//            bytes_written += WriteRegister (reg_ctx, "mxcsr", NULL, 4, data);    // uint32_t    mxcsr;
+//            bytes_written += WriteRegister (reg_ctx, "mxcsrmask", NULL, 4, data);// uint32_t    mxcsrmask;
+//            bytes_written += WriteRegister (reg_ctx, "stmm0", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm1", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm2", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm3", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm4", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm5", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm6", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "stmm7", NULL, sizeof(MMSReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm0" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm1" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm2" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm3" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm4" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm5" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm6" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm7" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm8" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm9" , NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm10", NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm11", NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm12", NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm13", NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm14", NULL, sizeof(XMMReg), data);
+//            bytes_written += WriteRegister (reg_ctx, "xmm15", NULL, sizeof(XMMReg), data);
+//            
+//            // Fill rest with zeros
+//            for (size_t i=0, n = fpu_byte_size - bytes_written; i<n; ++ i)
+//                data.PutChar(0);
+            
+            // Write out the EXC registers
+            data.PutHex32 (EXCRegSet);
+            data.PutHex32 (sizeof(EXC)/sizeof(uint64_t));
+            WriteRegister (reg_ctx, "trapno", NULL, 4, data);
+            WriteRegister (reg_ctx, "err", NULL, 4, data);
+            WriteRegister (reg_ctx, "faultvaddr", NULL, 8, data);
+            return true;
+        }
+        return false;
+    }
+
 protected:
     virtual int
     DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
@@ -552,7 +677,8 @@ ObjectFileMachO::Initialize()
                                    GetPluginDescriptionStatic(),
                                    CreateInstance,
                                    CreateMemoryInstance,
-                                   GetModuleSpecifications);
+                                   GetModuleSpecifications,
+                                   SaveCore);
 }
 
 void
@@ -5023,5 +5149,292 @@ ObjectFileMachO::SetLoadAddress (Target &target,
         return num_loaded_sections > 0;
     }
     return changed;
+}
+
+bool
+ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
+                           const FileSpec &outfile,
+                           Error &error)
+{
+    if (process_sp)
+    {
+        Target &target = process_sp->GetTarget();
+        const ArchSpec target_arch = target.GetArchitecture();
+        const llvm::Triple &target_triple = target_arch.GetTriple();
+        if (target_triple.getVendor() == llvm::Triple::Apple &&
+            (target_triple.getOS() == llvm::Triple::MacOSX ||
+             target_triple.getOS() == llvm::Triple::IOS))
+        {
+            bool make_core = false;
+            switch (target_arch.GetMachine())
+            {
+                case llvm::Triple::arm:
+                case llvm::Triple::x86:
+                case llvm::Triple::x86_64:
+                    make_core = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unsupported core architecture: %s", target_triple.str().c_str());
+                    break;
+            }
+            
+            if (make_core)
+            {
+                std::vector<segment_command_64> segment_load_commands;
+                uint32_t range_info_idx = 0;
+                MemoryRegionInfo range_info;
+                Error range_error = process_sp->GetMemoryRegionInfo(0, range_info);
+                if (range_error.Success())
+                {
+                    while (range_info.GetRange().GetRangeBase() != LLDB_INVALID_ADDRESS)
+                    {
+                        const addr_t addr = range_info.GetRange().GetRangeBase();
+                        const addr_t size = range_info.GetRange().GetByteSize();
+
+                        if (size == 0)
+                            break;
+
+                        // Calculate correct protections
+                        uint32_t prot = 0;
+                        if (range_info.GetReadable() == MemoryRegionInfo::eYes)
+                            prot |= VM_PROT_READ;
+                        if (range_info.GetWritable() == MemoryRegionInfo::eYes)
+                            prot |= VM_PROT_WRITE;
+                        if (range_info.GetExecutable() == MemoryRegionInfo::eYes)
+                            prot |= VM_PROT_EXECUTE;
+
+//                        printf ("[%3u] [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") %c%c%c\n",
+//                                range_info_idx,
+//                                addr,
+//                                size,
+//                                (prot & VM_PROT_READ   ) ? 'r' : '-',
+//                                (prot & VM_PROT_WRITE  ) ? 'w' : '-',
+//                                (prot & VM_PROT_EXECUTE) ? 'x' : '-');
+
+                        if (prot != 0)
+                        {
+                            segment_command_64 segment = {
+                                LC_SEGMENT_64,      // uint32_t cmd;
+                                sizeof(segment),    // uint32_t cmdsize;
+                                {0},                // char segname[16];
+                                addr,               // uint64_t vmaddr;
+                                size,               // uint64_t vmsize;
+                                0,                  // uint64_t fileoff;
+                                size,               // uint64_t filesize;
+                                prot,               // uint32_t maxprot;
+                                prot,               // uint32_t initprot;
+                                0,                  // uint32_t nsects;
+                                0 };                // uint32_t flags;
+                            segment_load_commands.push_back(segment);
+                        }
+                        else
+                        {
+                            // No protections and a size of 1 used to be returned from old
+                            // debugservers when we asked about a region that was past the
+                            // last memory region and it indicates the end...
+                            if (size == 1)
+                                break;
+                        }
+                        
+                        range_error = process_sp->GetMemoryRegionInfo(range_info.GetRange().GetRangeEnd(), range_info);
+                        if (range_error.Fail())
+                            break;
+                    }
+                    
+                    const uint32_t addr_byte_size = target_arch.GetAddressByteSize();
+                    const ByteOrder byte_order = target_arch.GetByteOrder();
+                    StreamString buffer (Stream::eBinary,
+                                         addr_byte_size,
+                                         byte_order);
+
+                    mach_header_64 mach_header;
+                    mach_header.magic = MH_MAGIC_64;
+                    mach_header.cputype = target_arch.GetMachOCPUType();
+                    mach_header.cpusubtype = target_arch.GetMachOCPUSubType();
+                    mach_header.filetype = MH_CORE;
+                    mach_header.ncmds = segment_load_commands.size();
+                    mach_header.flags = 0;
+                    mach_header.reserved = 0;
+                    ThreadList &thread_list = process_sp->GetThreadList();
+                    const uint32_t num_threads = thread_list.GetSize();
+
+                    // Make an array of LC_THREAD data items. Each one contains
+                    // the contents of the LC_THREAD load command. The data doesn't
+                    // contain the load command + load command size, we will
+                    // add the load command and load command size as we emit the data.
+                    std::vector<StreamString> LC_THREAD_datas(num_threads);
+                    for (auto &LC_THREAD_data : LC_THREAD_datas)
+                    {
+                        LC_THREAD_data.GetFlags().Set(Stream::eBinary);
+                        LC_THREAD_data.SetAddressByteSize(addr_byte_size);
+                        LC_THREAD_data.SetByteOrder(byte_order);
+                    }
+                    for (uint32_t thread_idx = 0; thread_idx < num_threads; ++thread_idx)
+                    {
+                        ThreadSP thread_sp (thread_list.GetThreadAtIndex(thread_idx));
+                        if (thread_sp)
+                        {
+                            switch (mach_header.cputype)
+                            {
+                                case llvm::MachO::CPU_TYPE_ARM:
+                                    //RegisterContextDarwin_arm_Mach::Create_LC_THREAD (thread_sp.get(), thread_load_commands);
+                                    break;
+                                    
+                                case llvm::MachO::CPU_TYPE_I386:
+                                    //RegisterContextDarwin_i386_Mach::Create_LC_THREAD (thread_sp.get(), thread_load_commands);
+                                    break;
+                                    
+                                case llvm::MachO::CPU_TYPE_X86_64:
+                                    RegisterContextDarwin_x86_64_Mach::Create_LC_THREAD (thread_sp.get(), LC_THREAD_datas[thread_idx]);
+                                    break;
+                            }
+                            
+                        }
+                    }
+                    
+                    // The size of the load command is the size of the segments...
+                    mach_header.sizeofcmds = segment_load_commands.size() * segment_load_commands[0].cmdsize;
+                    
+                    // and the size of all LC_THREAD load command
+                    for (const auto &LC_THREAD_data : LC_THREAD_datas)
+                    {
+                        mach_header.sizeofcmds += 8 + LC_THREAD_data.GetSize();
+                    }
+
+                    printf ("mach_header: 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x\n",
+                            mach_header.magic,
+                            mach_header.cputype,
+                            mach_header.cpusubtype,
+                            mach_header.filetype,
+                            mach_header.ncmds,
+                            mach_header.sizeofcmds,
+                            mach_header.flags,
+                            mach_header.reserved);
+
+                    // Write the mach header
+                    buffer.PutHex32(mach_header.magic);
+                    buffer.PutHex32(mach_header.cputype);
+                    buffer.PutHex32(mach_header.cpusubtype);
+                    buffer.PutHex32(mach_header.filetype);
+                    buffer.PutHex32(mach_header.ncmds);
+                    buffer.PutHex32(mach_header.sizeofcmds);
+                    buffer.PutHex32(mach_header.flags);
+                    buffer.PutHex32(mach_header.reserved);
+                    
+                    // Skip the mach header and all load commands and align to the next
+                    // 0x1000 byte boundary
+                    addr_t file_offset = buffer.GetSize() + mach_header.sizeofcmds;
+                    if (file_offset & 0x00000fff)
+                    {
+                        file_offset += 0x00001000ull;
+                        file_offset &= (~0x00001000ull + 1);
+                    }
+                    
+                    for (auto &segment : segment_load_commands)
+                    {
+                        segment.fileoff = file_offset;
+                        file_offset += segment.filesize;
+                    }
+                    
+                    // Write out all of the LC_THREAD load commands
+                    for (const auto &LC_THREAD_data : LC_THREAD_datas)
+                    {
+                        const size_t LC_THREAD_data_size = LC_THREAD_data.GetSize();
+                        buffer.PutHex32(LC_THREAD);
+                        buffer.PutHex32(8 + LC_THREAD_data_size); // cmd + cmdsize + data
+                        buffer.Write(LC_THREAD_data.GetData(), LC_THREAD_data_size);
+                    }
+
+                    // Write out all of the segment load commands
+                    for (const auto &segment : segment_load_commands)
+                    {
+                        printf ("0x%8.8x 0x%8.8x [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") [0x%16.16" PRIx64 " 0x%16.16" PRIx64 ") 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x]\n",
+                                segment.cmd,
+                                segment.cmdsize,
+                                segment.vmaddr,
+                                segment.vmaddr + segment.vmsize,
+                                segment.fileoff,
+                                segment.filesize,
+                                segment.maxprot,
+                                segment.initprot,
+                                segment.nsects,
+                                segment.flags);
+                        
+                        buffer.PutHex32(segment.cmd);
+                        buffer.PutHex32(segment.cmdsize);
+                        buffer.PutRawBytes(segment.segname, sizeof(segment.segname));
+                        buffer.PutHex64(segment.vmaddr);
+                        buffer.PutHex64(segment.vmsize);
+                        buffer.PutHex64(segment.fileoff);
+                        buffer.PutHex64(segment.filesize);
+                        buffer.PutHex32(segment.maxprot);
+                        buffer.PutHex32(segment.initprot);
+                        buffer.PutHex32(segment.nsects);
+                        buffer.PutHex32(segment.flags);
+                    }
+                    
+                    File core_file;
+                    std::string core_file_path(outfile.GetPath());
+                    error = core_file.Open(core_file_path.c_str(),
+                                           File::eOpenOptionWrite    |
+                                           File::eOpenOptionTruncate |
+                                           File::eOpenOptionCanCreate);
+                    if (error.Success())
+                    {
+                        // Read 1 page at a time
+                        uint8_t bytes[0x1000];
+                        // Write the mach header and load commands out to the core file
+                        size_t bytes_written = buffer.GetString().size();
+                        error = core_file.Write(buffer.GetString().data(), bytes_written);
+                        if (error.Success())
+                        {
+                            // Now write the file data for all memory segments in the process
+                            for (const auto &segment : segment_load_commands)
+                            {
+                                if (segment.fileoff != core_file.SeekFromStart(segment.fileoff))
+                                {
+                                    error.SetErrorStringWithFormat("unable to seek to offset 0x%" PRIx64 " in '%s'", segment.fileoff, core_file_path.c_str());
+                                    break;
+                                }
+                                
+                                printf ("Saving data for segment at 0x%llx\n", segment.vmaddr);
+                                addr_t bytes_left = segment.vmsize;
+                                addr_t addr = segment.vmaddr;
+                                Error memory_read_error;
+                                while (bytes_left > 0 && error.Success())
+                                {
+                                    const size_t bytes_to_read = bytes_left > sizeof(bytes) ? sizeof(bytes) : bytes_left;
+                                    const size_t bytes_read = process_sp->ReadMemory(addr, bytes, bytes_to_read, memory_read_error);
+                                    if (bytes_read == bytes_to_read)
+                                    {
+                                        size_t bytes_written = bytes_read;
+                                        error = core_file.Write(bytes, bytes_written);
+                                        bytes_left -= bytes_read;
+                                        addr += bytes_read;
+                                    }
+                                    else
+                                    {
+                                        // Some pages within regions are not readable, those
+                                        // should be zero filled
+                                        memset (bytes, 0, bytes_to_read);
+                                        size_t bytes_written = bytes_to_read;
+                                        error = core_file.Write(bytes, bytes_written);
+                                        bytes_left -= bytes_to_read;
+                                        addr += bytes_to_read;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    error.SetErrorString("process doesn't support getting memory region info");
+                }
+            }
+            return true; // This is the right plug to handle saving core files for this process
+        }
+    }
+    return false;
 }
 

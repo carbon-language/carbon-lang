@@ -1078,7 +1078,8 @@ struct ObjectFileInstance
         description(),
         create_callback(NULL),
         create_memory_callback (NULL),
-        get_module_specifications (NULL)
+        get_module_specifications (NULL),
+        save_core (NULL)
     {
     }
 
@@ -1087,6 +1088,7 @@ struct ObjectFileInstance
     ObjectFileCreateInstance create_callback;
     ObjectFileCreateMemoryInstance create_memory_callback;
     ObjectFileGetModuleSpecifications get_module_specifications;
+    ObjectFileSaveCore save_core;
 };
 
 typedef std::vector<ObjectFileInstance> ObjectFileInstances;
@@ -1111,7 +1113,8 @@ PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
                                ObjectFileCreateInstance create_callback,
                                ObjectFileCreateMemoryInstance create_memory_callback,
-                               ObjectFileGetModuleSpecifications get_module_specifications)
+                               ObjectFileGetModuleSpecifications get_module_specifications,
+                               ObjectFileSaveCore save_core)
 {
     if (create_callback)
     {
@@ -1122,6 +1125,7 @@ PluginManager::RegisterPlugin (const ConstString &name,
             instance.description = description;
         instance.create_callback = create_callback;
         instance.create_memory_callback = create_memory_callback;
+        instance.save_core = save_core;
         instance.get_module_specifications = get_module_specifications;
         Mutex::Locker locker (GetObjectFileMutex ());
         GetObjectFileInstances ().push_back (instance);
@@ -1218,7 +1222,22 @@ PluginManager::GetObjectFileCreateMemoryCallbackForPluginName (const ConstString
     return NULL;
 }
 
-
+Error
+PluginManager::SaveCore (const lldb::ProcessSP &process_sp, const FileSpec &outfile)
+{
+    Error error;
+    Mutex::Locker locker (GetObjectFileMutex ());
+    ObjectFileInstances &instances = GetObjectFileInstances ();
+    
+    ObjectFileInstances::iterator pos, end = instances.end();
+    for (pos = instances.begin(); pos != end; ++ pos)
+    {
+        if (pos->save_core && pos->save_core (process_sp, outfile, error))
+            return error;
+    }
+    error.SetErrorString("no ObjectFile plugins were able to save a core for this process");
+    return error;
+}
 
 #pragma mark ObjectContainer
 

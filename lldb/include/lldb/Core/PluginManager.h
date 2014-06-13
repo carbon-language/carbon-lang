@@ -175,7 +175,8 @@ public:
                     const char *description,
                     ObjectFileCreateInstance create_callback,
                     ObjectFileCreateMemoryInstance create_memory_callback,
-                    ObjectFileGetModuleSpecifications get_module_specifications);
+                    ObjectFileGetModuleSpecifications get_module_specifications,
+                    ObjectFileSaveCore save_core = NULL);
 
     static bool
     UnregisterPlugin (ObjectFileCreateInstance create_callback);
@@ -195,6 +196,8 @@ public:
     static ObjectFileCreateMemoryInstance
     GetObjectFileCreateMemoryCallbackForPluginName (const ConstString &name);
 
+    static Error
+    SaveCore (const lldb::ProcessSP &process_sp, const FileSpec &outfile);
 
     //------------------------------------------------------------------
     // ObjectContainer
