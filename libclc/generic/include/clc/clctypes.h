@@ -7,6 +7,18 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
+#define __stdint_join3(a,b,c) a ## b ## c
+
+#define  __intn_t(n) __stdint_join3(__INT, n, _TYPE__)
+#define __uintn_t(n) __stdint_join3(unsigned __INT, n, _TYPE__)
+
+typedef  __intn_t(__INTPTR_WIDTH__)  intptr_t;
+typedef __uintn_t(__INTPTR_WIDTH__) uintptr_t;
+
+#undef __uintn_t
+#undef __intn_t
+#undef __stdint_join3
+
 /* 6.1.2 Built-in Vector Data Types */
 
 typedef __attribute__((ext_vector_type(2))) char char2;
