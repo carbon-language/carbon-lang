@@ -2393,7 +2393,6 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
             std::string triple;
             uint32_t pointer_byte_size = 0;
             StringExtractor extractor;
-            ByteOrder byte_order = eByteOrderInvalid;
             uint32_t num_keys_decoded = 0;
             lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
             while (response.GetNameColonValue(name, value))
@@ -2422,15 +2421,10 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                 }
                 else if (name.compare("endian") == 0)
                 {
-                    ++num_keys_decoded;
-                    if (value.compare("little") == 0)
-                        byte_order = eByteOrderLittle;
-                    else if (value.compare("big") == 0)
-                        byte_order = eByteOrderBig;
-                    else if (value.compare("pdp") == 0)
-                        byte_order = eByteOrderPDP;
-                    else
-                        --num_keys_decoded;
+                    if (value.compare("little") == 0 ||
+                        value.compare("big") == 0 ||
+                        value.compare("pdp") == 0)
+                        ++num_keys_decoded;
                 }
                 else if (name.compare("ptrsize") == 0)
                 {

@@ -5181,7 +5181,7 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
             if (make_core)
             {
                 std::vector<segment_command_64> segment_load_commands;
-                uint32_t range_info_idx = 0;
+//                uint32_t range_info_idx = 0;
                 MemoryRegionInfo range_info;
                 Error range_error = process_sp->GetMemoryRegionInfo(0, range_info);
                 if (range_error.Success())

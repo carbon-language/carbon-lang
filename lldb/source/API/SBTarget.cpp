@@ -2439,10 +2439,6 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
                 else
                 {
                     ProcessSP process_sp (target_sp->GetProcessSP());
-                    uint32_t stop_id = 0;
-                    if (process_sp)
-                        stop_id = process_sp->GetStopID();
-
                     if (target_sp->SetSectionLoadAddress (section_sp, section_base_addr))
                     {
                         // Flush info in the process (stack frames, etc)
@@ -2475,10 +2471,6 @@ SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
         else
         {
             ProcessSP process_sp (target_sp->GetProcessSP());
-            uint32_t stop_id = 0;
-            if (process_sp)
-                stop_id = process_sp->GetStopID();
-
             if (target_sp->SetSectionUnloaded (section.GetSP()))
             {
                 // Flush info in the process (stack frames, etc)
@@ -2554,9 +2546,6 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
                 if (section_list)
                 {
                     ProcessSP process_sp (target_sp->GetProcessSP());
-                    uint32_t stop_id = 0;
-                    if (process_sp)
-                        stop_id = process_sp->GetStopID();
 
                     bool changed = false;
                     const size_t num_sections = section_list->GetSize();
