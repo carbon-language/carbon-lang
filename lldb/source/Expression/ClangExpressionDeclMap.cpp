@@ -1376,7 +1376,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     }
                     else if (sym_ctx.symbol)
                     {
-                        if (sym_ctx.symbol->GetType() == eSymbolTypeReExported)
+                        if (sym_ctx.symbol->GetType() == eSymbolTypeReExported && target)
                         {
                             sym_ctx.symbol = sym_ctx.symbol->ResolveReExportedSymbol(*target);
                             if (sym_ctx.symbol == NULL)
