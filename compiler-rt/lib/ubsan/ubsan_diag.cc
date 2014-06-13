@@ -49,7 +49,6 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
 Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
   if (!Loc)
     return Location();
-  // FIXME: We may need to run initialization earlier.
   InitializeSanitizerCommon();
 
   AddressInfo Info;
@@ -265,7 +264,8 @@ static void renderMemorySnippet(const __sanitizer::AnsiColorDecorator &Decor,
 }
 
 Diag::~Diag() {
-  __sanitizer::AnsiColorDecorator Decor(PrintsToTty());
+  InitializeSanitizerCommon();
+  __sanitizer::AnsiColorDecorator Decor(ColorizeReports());
   SpinMutexLock l(&CommonSanitizerReportMutex);
   Printf(Decor.Bold());
 
