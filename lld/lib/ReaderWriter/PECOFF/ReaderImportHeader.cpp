@@ -141,7 +141,6 @@
 using namespace lld;
 using namespace lld::pecoff;
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "ReaderImportHeader"
 
@@ -172,7 +171,7 @@ public:
 
 class FileImportLibrary : public File {
 public:
-  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
+  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
       : File(mb->getBufferIdentifier(), kindSharedLibrary) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();
@@ -209,7 +208,7 @@ public:
     if (type == llvm::COFF::IMPORT_CODE)
       addDefinedAtom(symbolName, dllName, dataAtom);
 
-    ec = error_code();
+    ec = std::error_code();
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
@@ -297,15 +296,15 @@ public:
     return (magic == llvm::sys::fs::file_magic::coff_import_library);
   }
 
-  error_code
+  std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File> > &result) const override {
-    error_code ec;
+    std::error_code ec;
     auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
     if (ec)
       return ec;
     result.push_back(std::move(file));
-    return error_code();
+    return std::error_code();
   }
 };
 
@@ -313,9 +312,10 @@ public:
 
 namespace pecoff {
 
-error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
-                                  std::unique_ptr<MemoryBuffer> &mb,
-                                  std::vector<std::unique_ptr<File> > &result) {
+std::error_code
+parseCOFFImportLibrary(const LinkingContext &targetInfo,
+                       std::unique_ptr<MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File>> &result) {
   // Check the file magic.
   const char *buf = mb->getBufferStart();
   const char *end = mb->getBufferEnd();
@@ -324,12 +324,12 @@ error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
       memcmp(buf, "\0\0\xFF\xFF", 4))
     return make_error_code(NativeReaderError::unknown_file_format);
 
-  error_code ec;
+  std::error_code ec;
   auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
   if (ec)
     return ec;
   result.push_back(std::move(file));
-  return error_code();
+  return std::error_code();
 }
 
 } // end namespace pecoff
