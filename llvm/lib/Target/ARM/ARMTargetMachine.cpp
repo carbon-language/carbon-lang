@@ -53,7 +53,6 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, isLittle, Options),
-    JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
   // Default to triple-appropriate float ABI

@@ -148,7 +148,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
       ARMProcClass(None), stackAlignment(4), CPUString(CPU), IsLittle(IsLittle),
       TargetTriple(TT), Options(Options), TargetABI(ARM_ABI_UNKNOWN),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS))),
-      TSInfo(DL) {}
+      TSInfo(DL), JITInfo() {}
 
 void ARMSubtarget::initializeEnvironment() {
   HasV4TOps = false;

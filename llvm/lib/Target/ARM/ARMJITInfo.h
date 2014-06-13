@@ -14,7 +14,6 @@
 #ifndef ARMJITINFO_H
 #define ARMJITINFO_H
 
-#include "ARMMachineFunctionInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -103,12 +102,7 @@ namespace llvm {
     /// Resize constant pool ids to CONSTPOOL_ENTRY addresses map; resize
     /// jump table ids to jump table bases map; remember if codegen relocation
     /// model is PIC.
-    void Initialize(const MachineFunction &MF, bool isPIC) {
-      const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-      ConstPoolId2AddrMap.resize(AFI->getNumPICLabels());
-      JumpTableId2AddrMap.resize(AFI->getNumJumpTables());
-      IsPIC = isPIC;
-    }
+    void Initialize(const MachineFunction &MF, bool isPIC);
 
     /// getConstantPoolEntryAddr - The ARM target puts all constant
     /// pool entries into constant islands. This returns the address of the

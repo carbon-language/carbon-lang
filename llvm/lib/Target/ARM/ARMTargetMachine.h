@@ -33,7 +33,6 @@ class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
   ARMSubtarget        Subtarget;
 private:
-  ARMJITInfo          JITInfo;
   InstrItineraryData  InstrItins;
 
 public:
@@ -44,7 +43,6 @@ public:
                        CodeGenOpt::Level OL,
                        bool isLittle);
 
-  ARMJITInfo *getJITInfo() override { return &JITInfo; }
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const ARMTargetLowering *getTargetLowering() const override {
     // Implemented by derived classes
