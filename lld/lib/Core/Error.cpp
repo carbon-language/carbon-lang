@@ -40,13 +40,6 @@ public:
     llvm_unreachable("An enumerator of NativeReaderError does not have a "
                      "message defined.");
   }
-
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override {
-    if (NativeReaderError(ev) == NativeReaderError::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
-  }
 };
 
 const std::error_category &lld::native_reader_category() {
@@ -69,13 +62,6 @@ public:
       return "Bad value found in yaml file";
     llvm_unreachable("An enumerator of YamlReaderError does not have a "
                      "message defined.");
-  }
-
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override {
-    if (YamlReaderError(ev) == YamlReaderError::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
   }
 };
 
@@ -100,14 +86,6 @@ public:
         "An enumerator of LinkerScriptReaderError does not have a "
         "message defined.");
   }
-
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override {
-    LinkerScriptReaderError e = LinkerScriptReaderError(ev);
-    if (e == LinkerScriptReaderError::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
-  }
 };
 
 const std::error_category &lld::LinkerScriptReaderCategory() {
@@ -126,13 +104,6 @@ public:
       return "Success";
     llvm_unreachable("An enumerator of InputGraphError does not have a "
                      "message defined.");
-  }
-
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override {
-    if (InputGraphError(ev) == InputGraphError::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
   }
 };
 
@@ -155,13 +126,6 @@ public:
 
     llvm_unreachable("An enumerator of ReaderError does not have a "
                      "message defined.");
-  }
-
-  std::error_condition
-  default_error_condition(int ev) const LLVM_NOEXCEPT override {
-    if (ReaderError(ev) == ReaderError::success)
-      return std::error_condition();
-    return std::errc::invalid_argument;
   }
 };
 
