@@ -1205,7 +1205,7 @@ ARMTargetLowering::getEffectiveCallingConv(CallingConv::ID CC,
   case CallingConv::C:
     if (!Subtarget->isAAPCS_ABI())
       return CallingConv::ARM_APCS;
-    else if (Subtarget->hasVFP2() &&
+    else if (Subtarget->hasVFP2() && !Subtarget->isThumb1Only() &&
              getTargetMachine().Options.FloatABIType == FloatABI::Hard &&
              !isVarArg)
       return CallingConv::ARM_AAPCS_VFP;
@@ -1213,10 +1213,10 @@ ARMTargetLowering::getEffectiveCallingConv(CallingConv::ID CC,
       return CallingConv::ARM_AAPCS;
   case CallingConv::Fast:
     if (!Subtarget->isAAPCS_ABI()) {
-      if (Subtarget->hasVFP2() && !isVarArg)
+      if (Subtarget->hasVFP2() && !Subtarget->isThumb1Only() && !isVarArg)
         return CallingConv::Fast;
       return CallingConv::ARM_APCS;
-    } else if (Subtarget->hasVFP2() && !isVarArg)
+    } else if (Subtarget->hasVFP2() && !Subtarget->isThumb1Only() && !isVarArg)
       return CallingConv::ARM_AAPCS_VFP;
     else
       return CallingConv::ARM_AAPCS;
