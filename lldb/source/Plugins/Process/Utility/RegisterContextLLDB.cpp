@@ -594,7 +594,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                 repeating_frames = true;
             }
         }
-        if (repeating_frames && abi->FunctionCallsChangeCFA())
+        if (repeating_frames && abi && abi->FunctionCallsChangeCFA())
         {
             UnwindLogMsg ("same CFA address as next frame, assuming the unwind is looping - stopping");
             m_frame_type = eNotAValidFrame;
