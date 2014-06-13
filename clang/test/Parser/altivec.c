@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -triple=powerpc-apple-darwin8 -faltivec -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple=powerpc64-unknown-linux-gnu -faltivec -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple=powerpc64le-unknown-linux-gnu -faltivec -fsyntax-only -verify %s
 
 __vector char vv_c;
 __vector signed char vv_sc;

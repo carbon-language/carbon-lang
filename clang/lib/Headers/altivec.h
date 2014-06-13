@@ -4194,7 +4194,7 @@ static vector bool short __ATTRS_o_ai
 vec_pack(vector bool int __a, vector bool int __b)
 {
 #ifdef __LITTLE_ENDIAN__
-  return (vector unsigned short)vec_perm(__a, __b, (vector unsigned char)
+  return (vector bool short)vec_perm(__a, __b, (vector unsigned char)
     (0x00, 0x01, 0x04, 0x05, 0x08, 0x09, 0x0C, 0x0D,
      0x10, 0x11, 0x14, 0x15, 0x18, 0x19, 0x1C, 0x1D));
 #else
