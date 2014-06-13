@@ -25,7 +25,6 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: sdbbp
 // Reencoded: sdc2
 // Reencoded: swc2
-// Removed: bc1any2, bc1any4
 // Rencoded: [ls][wd]c2
 
 def brtarget21 : Operand<OtherVT> {

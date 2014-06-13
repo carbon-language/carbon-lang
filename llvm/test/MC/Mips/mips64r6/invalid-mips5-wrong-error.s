@@ -1,4 +1,4 @@
-# Instructions that are invalid
+# Instructions that are invalid but currently emit the wrong error message.
 #
 # RUN: not llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r6 \
 # RUN:     2>%t1
@@ -8,6 +8,10 @@
         abs.ps          $f22,$f8            # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
         add.ps          $f25,$f27,$f13      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
         alnv.ps         $f12,$f18,$f30,$12  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
+        bc1any2f        $fcc2,4             # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
+        bc1any2t        $fcc2,4             # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
+        bc1any4f        $fcc2,4             # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
+        bc1any4t        $fcc2,4             # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
         c.eq.ps         $fcc5,$f0,$f9       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
         c.f.ps          $fcc6,$f11,$f11     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
         c.le.ps         $fcc1,$f7,$f20      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
