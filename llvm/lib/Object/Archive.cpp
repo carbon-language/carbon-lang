@@ -20,7 +20,6 @@
 
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 static const char *const Magic = "!<arch>\n";
 
@@ -116,7 +115,7 @@ Archive::Child Archive::Child::getNext() const {
   return Child(Parent, NextLoc);
 }
 
-error_code Archive::Child::getName(StringRef &Result) const {
+std::error_code Archive::Child::getName(StringRef &Result) const {
   StringRef name = getRawName();
   // Check if it's a special name.
   if (name[0] == '/') {
@@ -169,10 +168,11 @@ error_code Archive::Child::getName(StringRef &Result) const {
   return object_error::success;
 }
 
-error_code Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
-                                           bool FullPath) const {
+std::error_code
+Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
+                                bool FullPath) const {
   StringRef Name;
-  if (error_code ec = getName(Name))
+  if (std::error_code ec = getName(Name))
     return ec;
   SmallString<128> Path;
   Result.reset(MemoryBuffer::getMemBuffer(
@@ -180,32 +180,32 @@ error_code Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result
                                   .toStringRef(Path)
                             : Name,
       false));
-  return error_code();
+  return std::error_code();
 }
 
-error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
-                                       LLVMContext *Context) const {
+std::error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
+                                            LLVMContext *Context) const {
   std::unique_ptr<Binary> ret;
   std::unique_ptr<MemoryBuffer> Buff;
-  if (error_code ec = getMemoryBuffer(Buff))
+  if (std::error_code ec = getMemoryBuffer(Buff))
     return ec;
   ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.release(), Context);
-  if (error_code EC = BinaryOrErr.getError())
+  if (std::error_code EC = BinaryOrErr.getError())
     return EC;
   Result.reset(BinaryOrErr.get());
   return object_error::success;
 }
 
 ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {
-  error_code EC;
+  std::error_code EC;
   std::unique_ptr<Archive> Ret(new Archive(Source, EC));
   if (EC)
     return EC;
   return Ret.release();
 }
 
-Archive::Archive(MemoryBuffer *source, error_code &ec)
-  : Binary(Binary::ID_Archive, source), SymbolTable(child_end()) {
+Archive::Archive(MemoryBuffer *source, std::error_code &ec)
+    : Binary(Binary::ID_Archive, source), SymbolTable(child_end()) {
   // Check for sufficient magic.
   assert(source);
   if (source->getBufferSize() < 8 ||
@@ -336,12 +336,12 @@ Archive::child_iterator Archive::child_end() const {
   return Child(this, nullptr);
 }
 
-error_code Archive::Symbol::getName(StringRef &Result) const {
+std::error_code Archive::Symbol::getName(StringRef &Result) const {
   Result = StringRef(Parent->SymbolTable->getBuffer().begin() + StringIndex);
   return object_error::success;
 }
 
-error_code Archive::Symbol::getMember(child_iterator &Result) const {
+std::error_code Archive::Symbol::getMember(child_iterator &Result) const {
   const char *Buf = Parent->SymbolTable->getBuffer().begin();
   const char *Offsets = Buf + 4;
   uint32_t Offset = 0;

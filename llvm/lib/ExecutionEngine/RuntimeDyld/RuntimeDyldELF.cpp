@@ -27,13 +27,12 @@
 
 using namespace llvm;
 using namespace llvm::object;
-using std::error_code;
 
 #define DEBUG_TYPE "dyld"
 
 namespace {
 
-static inline error_code check(error_code Err) {
+static inline std::error_code check(std::error_code Err) {
   if (Err) {
     report_fatal_error(Err.message());
   }
@@ -56,9 +55,9 @@ template <class ELFT> class DyldELFObject : public ELFObjectFile<ELFT> {
 
 public:
   DyldELFObject(std::unique_ptr<ObjectFile> UnderlyingFile,
-                MemoryBuffer *Wrapper, error_code &ec);
+                MemoryBuffer *Wrapper, std::error_code &ec);
 
-  DyldELFObject(MemoryBuffer *Wrapper, error_code &ec);
+  DyldELFObject(MemoryBuffer *Wrapper, std::error_code &ec);
 
   void updateSectionAddress(const SectionRef &Sec, uint64_t Addr);
   void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr);
@@ -110,14 +109,14 @@ public:
 // actual memory.  Ultimately, the Binary parent class will take ownership of
 // this MemoryBuffer object but not the underlying memory.
 template <class ELFT>
-DyldELFObject<ELFT>::DyldELFObject(MemoryBuffer *Wrapper, error_code &ec)
+DyldELFObject<ELFT>::DyldELFObject(MemoryBuffer *Wrapper, std::error_code &ec)
     : ELFObjectFile<ELFT>(Wrapper, ec) {
   this->isDyldELFObject = true;
 }
 
 template <class ELFT>
 DyldELFObject<ELFT>::DyldELFObject(std::unique_ptr<ObjectFile> UnderlyingFile,
-                                   MemoryBuffer *Wrapper, error_code &ec)
+                                   MemoryBuffer *Wrapper, std::error_code &ec)
     : ELFObjectFile<ELFT>(Wrapper, ec),
       UnderlyingFile(std::move(UnderlyingFile)) {
   this->isDyldELFObject = true;
@@ -183,7 +182,7 @@ RuntimeDyldELF::createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Ob
   if (!ObjFile)
     return nullptr;
 
-  error_code ec;
+  std::error_code ec;
   MemoryBuffer *Buffer =
       MemoryBuffer::getMemBuffer(ObjFile->getData(), "", false);
 
@@ -219,7 +218,7 @@ ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
   std::pair<unsigned char, unsigned char> Ident =
       std::make_pair((uint8_t)Buffer->getBufferStart()[ELF::EI_CLASS],
                      (uint8_t)Buffer->getBufferStart()[ELF::EI_DATA]);
-  error_code ec;
+  std::error_code ec;
 
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB) {
     auto Obj =

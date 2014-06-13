@@ -18,7 +18,6 @@
 #include <cstring>
 using namespace llvm;
 using namespace yaml;
-using std::error_code;
 
 //===----------------------------------------------------------------------===//
 //  IO
@@ -57,9 +56,7 @@ Input::Input(StringRef InputContent,
 Input::~Input() {
 }
 
-error_code Input::error() {
-  return EC;
-}
+std::error_code Input::error() { return EC; }
 
 // Pin the vtables to this file.
 void Input::HNode::anchor() {}

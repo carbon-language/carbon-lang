@@ -31,7 +31,6 @@
 #include <utility>
 
 namespace llvm {
-using std::error_code;
 
 /// Represents a set of regular expressions.  Regular expressions which are
 /// "literal" (i.e. no regex metacharacters) are stored in Strings, while all
@@ -56,7 +55,7 @@ SpecialCaseList *SpecialCaseList::create(
   if (Path.empty())
     return new SpecialCaseList();
   std::unique_ptr<MemoryBuffer> File;
-  if (error_code EC = MemoryBuffer::getFile(Path, File)) {
+  if (std::error_code EC = MemoryBuffer::getFile(Path, File)) {
     Error = (Twine("Can't open file '") + Path + "': " + EC.message()).str();
     return nullptr;
   }

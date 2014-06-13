@@ -23,7 +23,6 @@
 
 using namespace llvm;
 using namespace llvm::object;
-using std::error_code;
 
 #define DEBUG_TYPE "dyld"
 
@@ -74,9 +73,9 @@ void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
-static error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
+static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
   uint64_t Address;
-  if (error_code EC = Sym.getAddress(Address))
+  if (std::error_code EC = Sym.getAddress(Address))
     return EC;
 
   if (Address == UnknownAddressOrSize) {
@@ -86,7 +85,7 @@ static error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
 
   const ObjectFile *Obj = Sym.getObject();
   section_iterator SecI(Obj->section_begin());
-  if (error_code EC = Sym.getSection(SecI))
+  if (std::error_code EC = Sym.getSection(SecI))
     return EC;
 
  if (SecI == Obj->section_end()) {
@@ -95,7 +94,7 @@ static error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
  }
 
   uint64_t SectionAddress;
-  if (error_code EC = SecI->getAddress(SectionAddress))
+  if (std::error_code EC = SecI->getAddress(SectionAddress))
     return EC;
 
   Result = Address - SectionAddress;

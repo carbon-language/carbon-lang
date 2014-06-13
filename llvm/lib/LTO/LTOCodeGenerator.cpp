@@ -53,7 +53,6 @@
 #include "llvm/Transforms/ObjCARC.h"
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 const char* LTOCodeGenerator::getVersionString() {
 #ifdef LLVM_VERSION_INFO
@@ -209,7 +208,8 @@ bool LTOCodeGenerator::compile_to_file(const char** name,
   // make unique temp .o file to put generated object file
   SmallString<128> Filename;
   int FD;
-  error_code EC = sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
+  std::error_code EC =
+      sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
   if (EC) {
     errMsg = EC.message();
     return false;
@@ -253,7 +253,7 @@ const void* LTOCodeGenerator::compile(size_t* length,
 
   // read .o file into memory buffer
   std::unique_ptr<MemoryBuffer> BuffPtr;
-  if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
+  if (std::error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
     sys::fs::remove(NativeObjectPath);
     return nullptr;

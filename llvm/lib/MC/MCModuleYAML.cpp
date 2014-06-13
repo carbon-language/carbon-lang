@@ -25,7 +25,6 @@
 #include <vector>
 
 namespace llvm {
-using std::error_code;
 
 namespace {
 
@@ -454,7 +453,7 @@ StringRef yaml2mcmodule(std::unique_ptr<MCModule> &MCM, StringRef YamlContent,
   InstrRegInfoHolder IRI(MII, MRI);
   yaml::Input YIn(YamlContent, (void *)&IRI);
   YIn >> YAMLModule;
-  if (error_code ec = YIn.error())
+  if (std::error_code ec = YIn.error())
     return ec.message();
   StringRef err = Parser.parse(YAMLModule);
   if (!err.empty())

@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <system_error>
 using namespace llvm;
-using std::error_code;
 
 //===----------------------------------------------------------------------===//
 // GCOVFile implementation.
@@ -439,7 +438,7 @@ class LineConsumer {
   StringRef Remaining;
 public:
   LineConsumer(StringRef Filename) {
-    if (error_code EC = MemoryBuffer::getFileOrSTDIN(Filename, Buffer)) {
+    if (std::error_code EC = MemoryBuffer::getFileOrSTDIN(Filename, Buffer)) {
       errs() << Filename << ": " << EC.message() << "\n";
       Remaining = "";
     } else

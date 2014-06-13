@@ -51,7 +51,6 @@
 #include <cctype>
 
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "sample-profile"
 
@@ -452,7 +451,7 @@ void SampleModuleProfile::dump() {
 /// \returns true if the file was loaded successfully, false otherwise.
 bool SampleModuleProfile::loadText() {
   std::unique_ptr<MemoryBuffer> Buffer;
-  error_code EC = MemoryBuffer::getFile(Filename, Buffer);
+  std::error_code EC = MemoryBuffer::getFile(Filename, Buffer);
   if (EC) {
     std::string Msg(EC.message());
     M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));

@@ -19,9 +19,8 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
-IRObjectFile::IRObjectFile(MemoryBuffer *Object, error_code &EC,
+IRObjectFile::IRObjectFile(MemoryBuffer *Object, std::error_code &EC,
                            LLVMContext &Context, bool BufferOwned)
     : SymbolicFile(Binary::ID_IR, Object, BufferOwned) {
   ErrorOr<Module*> MOrErr = parseBitcodeFile(Object, Context);
@@ -93,8 +92,8 @@ void IRObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
   Symb.p = Res;
 }
 
-error_code IRObjectFile::printSymbolName(raw_ostream &OS,
-                                         DataRefImpl Symb) const {
+std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
+                                              DataRefImpl Symb) const {
   const GlobalValue &GV = getGV(Symb);
 
   if (Mang)
@@ -143,7 +142,7 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
 
 ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
     MemoryBuffer *Object, LLVMContext &Context, bool BufferOwned) {
-  error_code EC;
+  std::error_code EC;
   std::unique_ptr<IRObjectFile> Ret(
       new IRObjectFile(Object, EC, Context, BufferOwned));
   if (EC)

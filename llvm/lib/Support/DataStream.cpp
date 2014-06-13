@@ -28,7 +28,6 @@
 #include <io.h>
 #endif
 using namespace llvm;
-using std::error_code;
 
 #define DEBUG_TYPE "Data-stream"
 
@@ -65,11 +64,11 @@ public:
     return read(Fd, buf, len);
   }
 
-  error_code OpenFile(const std::string &Filename) {
+  std::error_code OpenFile(const std::string &Filename) {
     if (Filename == "-") {
       Fd = 0;
       sys::ChangeStdinToBinary();
-      return error_code();
+      return std::error_code();
     }
 
     return sys::fs::openFileForRead(Filename, Fd);
@@ -82,7 +81,7 @@ namespace llvm {
 DataStreamer *getDataFileStreamer(const std::string &Filename,
                                   std::string *StrError) {
   DataFileStreamer *s = new DataFileStreamer();
-  if (error_code e = s->OpenFile(Filename)) {
+  if (std::error_code e = s->OpenFile(Filename)) {
     *StrError = std::string("Could not open ") + Filename + ": " +
         e.message() + "\n";
     return nullptr;

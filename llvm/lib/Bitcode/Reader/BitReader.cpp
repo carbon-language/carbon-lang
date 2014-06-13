@@ -16,7 +16,6 @@
 #include <string>
 
 using namespace llvm;
-using std::error_code;
 
 /* Builds a module from the bitcode in the specified memory buffer, returning a
    reference to the module via the OutModule parameter. Returns 0 on success.
@@ -33,7 +32,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
                                    char **OutMessage) {
   ErrorOr<Module *> ModuleOrErr =
       parseBitcodeFile(unwrap(MemBuf), *unwrap(ContextRef));
-  if (error_code EC = ModuleOrErr.getError()) {
+  if (std::error_code EC = ModuleOrErr.getError()) {
     if (OutMessage)
       *OutMessage = strdup(EC.message().c_str());
     *OutModule = wrap((Module*)nullptr);
@@ -55,7 +54,7 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
   ErrorOr<Module *> ModuleOrErr =
       getLazyBitcodeModule(unwrap(MemBuf), *unwrap(ContextRef));
 
-  if (error_code EC = ModuleOrErr.getError()) {
+  if (std::error_code EC = ModuleOrErr.getError()) {
     *OutM = wrap((Module *)nullptr);
     if (OutMessage)
       *OutMessage = strdup(EC.message().c_str());

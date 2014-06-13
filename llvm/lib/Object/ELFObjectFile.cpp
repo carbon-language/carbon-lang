@@ -15,7 +15,6 @@
 #include "llvm/Support/MathExtras.h"
 
 namespace llvm {
-using std::error_code;
 using namespace object;
 
 ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
@@ -24,7 +23,7 @@ ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
   std::size_t MaxAlignment =
     1ULL << countTrailingZeros(uintptr_t(Obj->getBufferStart()));
 
-  error_code EC;
+  std::error_code EC;
   std::unique_ptr<ObjectFile> R;
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST

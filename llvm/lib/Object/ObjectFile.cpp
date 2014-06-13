@@ -20,7 +20,6 @@
 
 using namespace llvm;
 using namespace object;
-using std::error_code;
 
 void ObjectFile::anchor() { }
 
@@ -28,17 +27,17 @@ ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *Source,
                        bool BufferOwned)
     : SymbolicFile(Type, Source, BufferOwned) {}
 
-error_code ObjectFile::printSymbolName(raw_ostream &OS,
-                                       DataRefImpl Symb) const {
+std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
+                                            DataRefImpl Symb) const {
   StringRef Name;
-  if (error_code EC = getSymbolName(Symb, Name))
+  if (std::error_code EC = getSymbolName(Symb, Name))
     return EC;
   OS << Name;
   return object_error::success;
 }
 
-error_code ObjectFile::getSymbolAlignment(DataRefImpl DRI,
-                                          uint32_t &Result) const {
+std::error_code ObjectFile::getSymbolAlignment(DataRefImpl DRI,
+                                               uint32_t &Result) const {
   Result = 0;
   return object_error::success;
 }
@@ -88,7 +87,7 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
 
 ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
   std::unique_ptr<MemoryBuffer> File;
-  if (error_code EC = MemoryBuffer::getFile(ObjectPath, File))
+  if (std::error_code EC = MemoryBuffer::getFile(ObjectPath, File))
     return EC;
   return createObjectFile(File.release());
 }

@@ -28,7 +28,6 @@ using namespace llvm;
 using namespace object;
 
 namespace llvm {
-using std::error_code;
 
 namespace object {
 

@@ -87,7 +87,7 @@ namespace {
   };
 }
 
-static error_code TempDir(SmallVectorImpl<char> &result) {
+static std::error_code TempDir(SmallVectorImpl<char> &result) {
   // FIXME: Don't use TMPDIR if program is SUID or SGID enabled.
   const char *dir = nullptr;
   (dir = std::getenv("TMPDIR")) || (dir = std::getenv("TMP")) ||
@@ -100,7 +100,7 @@ static error_code TempDir(SmallVectorImpl<char> &result) {
   result.clear();
   StringRef d(dir);
   result.append(d.begin(), d.end());
-  return error_code();
+  return std::error_code();
 }
 
 namespace llvm {
@@ -225,7 +225,7 @@ UniqueID file_status::getUniqueID() const {
   return UniqueID(fs_st_dev, fs_st_ino);
 }
 
-error_code current_path(SmallVectorImpl<char> &result) {
+std::error_code current_path(SmallVectorImpl<char> &result) {
   result.clear();
 
   const char *pwd = ::getenv("PWD");
@@ -235,7 +235,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
       !llvm::sys::fs::status(".", DotStatus) &&
       PWDStatus.getUniqueID() == DotStatus.getUniqueID()) {
     result.append(pwd, pwd + strlen(pwd));
-    return error_code();
+    return std::error_code();
   }
 
 #ifdef MAXPATHLEN
@@ -249,7 +249,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
     if (::getcwd(result.data(), result.capacity()) == nullptr) {
       // See if there was a real error.
       if (errno != ENOMEM)
-        return error_code(errno, std::generic_category());
+        return std::error_code(errno, std::generic_category());
       // Otherwise there just wasn't enough space.
       result.reserve(result.capacity() * 2);
     } else
@@ -257,22 +257,22 @@ error_code current_path(SmallVectorImpl<char> &result) {
   }
 
   result.set_size(strlen(result.data()));
-  return error_code();
+  return std::error_code();
 }
 
-error_code create_directory(const Twine &path, bool IgnoreExisting) {
+std::error_code create_directory(const Twine &path, bool IgnoreExisting) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::mkdir(p.begin(), S_IRWXU | S_IRWXG) == -1) {
     if (errno != EEXIST || !IgnoreExisting)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
   }
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code normalize_separators(SmallVectorImpl<char> &Path) {
+std::error_code normalize_separators(SmallVectorImpl<char> &Path) {
   for (auto PI = Path.begin(), PE = Path.end(); PI < PE; ++PI) {
     if (*PI == '\\') {
       auto PN = PI + 1;
@@ -282,12 +282,12 @@ error_code normalize_separators(SmallVectorImpl<char> &Path) {
         *PI = '/';
     }
   }
-  return error_code();
+  return std::error_code();
 }
 
 // Note that we are using symbolic link because hard links are not supported by
 // all filesystems (SMB doesn't).
-error_code create_link(const Twine &to, const Twine &from) {
+std::error_code create_link(const Twine &to, const Twine &from) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;
@@ -295,20 +295,20 @@ error_code create_link(const Twine &to, const Twine &from) {
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
   if (::symlink(t.begin(), f.begin()) == -1)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code remove(const Twine &path, bool IgnoreNonExisting) {
+std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   struct stat buf;
   if (lstat(p.begin(), &buf) != 0) {
     if (errno != ENOENT || !IgnoreNonExisting)
-      return error_code(errno, std::generic_category());
-    return error_code();
+      return std::error_code(errno, std::generic_category());
+    return std::error_code();
   }
 
   // Note: this check catches strange situations. In all cases, LLVM should
@@ -321,13 +321,13 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
 
   if (::remove(p.begin()) == -1) {
     if (errno != ENOENT || !IgnoreNonExisting)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
   }
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code rename(const Twine &from, const Twine &to) {
+std::error_code rename(const Twine &from, const Twine &to) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;
@@ -335,33 +335,33 @@ error_code rename(const Twine &from, const Twine &to) {
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
   if (::rename(f.begin(), t.begin()) == -1)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code resize_file(const Twine &path, uint64_t size) {
+std::error_code resize_file(const Twine &path, uint64_t size) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::truncate(p.begin(), size) == -1)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code exists(const Twine &path, bool &result) {
+std::error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::access(p.begin(), F_OK) == -1) {
     if (errno != ENOENT)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
     result = false;
   } else
     result = true;
 
-  return error_code();
+  return std::error_code();
 }
 
 bool can_write(const Twine &Path) {
@@ -390,18 +390,20 @@ bool equivalent(file_status A, file_status B) {
          A.fs_st_ino == B.fs_st_ino;
 }
 
-error_code equivalent(const Twine &A, const Twine &B, bool &result) {
+std::error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   file_status fsA, fsB;
-  if (error_code ec = status(A, fsA)) return ec;
-  if (error_code ec = status(B, fsB)) return ec;
+  if (std::error_code ec = status(A, fsA))
+    return ec;
+  if (std::error_code ec = status(B, fsB))
+    return ec;
   result = equivalent(fsA, fsB);
-  return error_code();
+  return std::error_code();
 }
 
-static error_code fillStatus(int StatRet, const struct stat &Status,
+static std::error_code fillStatus(int StatRet, const struct stat &Status,
                              file_status &Result) {
   if (StatRet != 0) {
-    error_code ec(errno, std::generic_category());
+    std::error_code ec(errno, std::generic_category());
     if (ec == std::errc::no_such_file_or_directory)
       Result = file_status(file_type::file_not_found);
     else
@@ -429,10 +431,10 @@ static error_code fillStatus(int StatRet, const struct stat &Status,
       file_status(Type, Perms, Status.st_dev, Status.st_ino, Status.st_mtime,
                   Status.st_uid, Status.st_gid, Status.st_size);
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code status(const Twine &Path, file_status &Result) {
+std::error_code status(const Twine &Path, file_status &Result) {
   SmallString<128> PathStorage;
   StringRef P = Path.toNullTerminatedStringRef(PathStorage);
 
@@ -441,36 +443,36 @@ error_code status(const Twine &Path, file_status &Result) {
   return fillStatus(StatRet, Status, Result);
 }
 
-error_code status(int FD, file_status &Result) {
+std::error_code status(int FD, file_status &Result) {
   struct stat Status;
   int StatRet = ::fstat(FD, &Status);
   return fillStatus(StatRet, Status, Result);
 }
 
-error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
+std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
 #if defined(HAVE_FUTIMENS)
   timespec Times[2];
   Times[0].tv_sec = Time.toEpochTime();
   Times[0].tv_nsec = 0;
   Times[1] = Times[0];
   if (::futimens(FD, Times))
-    return error_code(errno, std::generic_category());
-  return error_code();
+    return std::error_code(errno, std::generic_category());
+  return std::error_code();
 #elif defined(HAVE_FUTIMES)
   timeval Times[2];
   Times[0].tv_sec = Time.toEpochTime();
   Times[0].tv_usec = 0;
   Times[1] = Times[0];
   if (::futimes(FD, Times))
-    return error_code(errno, std::generic_category());
-  return error_code();
+    return std::error_code(errno, std::generic_category());
+  return std::error_code();
 #else
 #warning Missing futimes() and futimens()
   return make_error_code(std::errc::not_supported);
 #endif
 }
 
-error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
+std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   AutoFD ScopedFD(FD);
   if (!CloseFD)
     ScopedFD.take();
@@ -478,7 +480,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   // Figure out how large the file is.
   struct stat FileInfo;
   if (fstat(FD, &FileInfo) == -1)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
   uint64_t FileSize = FileInfo.st_size;
 
   if (Size == 0)
@@ -486,7 +488,7 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   else if (FileSize < Size) {
     // We need to grow the file.
     if (ftruncate(FD, Size) == -1)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
   }
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
@@ -496,15 +498,15 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
 #endif
   Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
-    return error_code(errno, std::generic_category());
-  return error_code();
+    return std::error_code(errno, std::generic_category());
+  return std::error_code();
 }
 
 mapped_file_region::mapped_file_region(const Twine &path,
                                        mapmode mode,
                                        uint64_t length,
                                        uint64_t offset,
-                                       error_code &ec)
+                                       std::error_code &ec)
   : Mode(mode)
   , Size(length)
   , Mapping() {
@@ -519,7 +521,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
   int oflags = (mode == readonly) ? O_RDONLY : O_RDWR;
   int ofd = ::open(name.begin(), oflags);
   if (ofd == -1) {
-    ec = error_code(errno, std::generic_category());
+    ec = std::error_code(errno, std::generic_category());
     return;
   }
 
@@ -533,7 +535,7 @@ mapped_file_region::mapped_file_region(int fd,
                                        mapmode mode,
                                        uint64_t length,
                                        uint64_t offset,
-                                       error_code &ec)
+                                       std::error_code &ec)
   : Mode(mode)
   , Size(length)
   , Mapping() {
@@ -583,12 +585,12 @@ int mapped_file_region::alignment() {
   return process::get_self()->page_size();
 }
 
-error_code detail::directory_iterator_construct(detail::DirIterState &it,
+std::error_code detail::directory_iterator_construct(detail::DirIterState &it,
                                                 StringRef path){
   SmallString<128> path_null(path);
   DIR *directory = ::opendir(path_null.c_str());
   if (!directory)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
 
   it.IterationHandle = reinterpret_cast<intptr_t>(directory);
   // Add something for replace_filename to replace.
@@ -597,19 +599,19 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
   return directory_iterator_increment(it);
 }
 
-error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
+std::error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
   if (it.IterationHandle)
     ::closedir(reinterpret_cast<DIR *>(it.IterationHandle));
   it.IterationHandle = 0;
   it.CurrentEntry = directory_entry();
-  return error_code();
+  return std::error_code();
 }
 
-error_code detail::directory_iterator_increment(detail::DirIterState &it) {
+std::error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   errno = 0;
   dirent *cur_dir = ::readdir(reinterpret_cast<DIR *>(it.IterationHandle));
   if (cur_dir == nullptr && errno != 0) {
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
   } else if (cur_dir != nullptr) {
     StringRef name(cur_dir->d_name, NAMLEN(cur_dir));
     if ((name.size() == 1 && name[0] == '.') ||
@@ -619,20 +621,20 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   } else
     return directory_iterator_destruct(it);
 
-  return error_code();
+  return std::error_code();
 }
 
-error_code openFileForRead(const Twine &Name, int &ResultFD) {
+std::error_code openFileForRead(const Twine &Name, int &ResultFD) {
   SmallString<128> Storage;
   StringRef P = Name.toNullTerminatedStringRef(Storage);
   while ((ResultFD = open(P.begin(), O_RDONLY)) < 0) {
     if (errno != EINTR)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
   }
-  return error_code();
+  return std::error_code();
 }
 
-error_code openFileForWrite(const Twine &Name, int &ResultFD,
+std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
                             sys::fs::OpenFlags Flags, unsigned Mode) {
   // Verify that we don't have both "append" and "excl".
   assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
@@ -657,9 +659,9 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   StringRef P = Name.toNullTerminatedStringRef(Storage);
   while ((ResultFD = open(P.begin(), OpenFlags, Mode)) < 0) {
     if (errno != EINTR)
-      return error_code(errno, std::generic_category());
+      return std::error_code(errno, std::generic_category());
   }
-  return error_code();
+  return std::error_code();
 }
 
 } // end namespace fs

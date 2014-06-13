@@ -28,7 +28,6 @@
 #include <map>
 
 using namespace llvm;
-using std::error_code;
 
 MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,
@@ -40,7 +39,7 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
       AllowTemporaryLabels(true), DwarfCompileUnitID(0),
       AutoReset(DoAutoReset) {
 
-  error_code EC = llvm::sys::fs::current_path(CompilationDir);
+  std::error_code EC = llvm::sys::fs::current_path(CompilationDir);
   if (EC)
     CompilationDir.clear();
 

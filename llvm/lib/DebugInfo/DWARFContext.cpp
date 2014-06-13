@@ -21,7 +21,6 @@
 using namespace llvm;
 using namespace dwarf;
 using namespace object;
-using std::error_code;
 
 #define DEBUG_TYPE "dwarf"
 
@@ -735,7 +734,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
         object::RelocToApply R(V.visit(Type, Reloc, 0, SymAddr));
         if (V.error()) {
           SmallString<32> Name;
-          error_code ec(Reloc.getTypeName(Name));
+          std::error_code ec(Reloc.getTypeName(Name));
           if (ec) {
             errs() << "Aaaaaa! Nameless relocation! Aaaaaa!\n";
           }
