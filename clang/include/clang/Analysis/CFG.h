@@ -641,6 +641,8 @@ public:
 
   CFG *getParent() const { return Parent; }
 
+  void dump() const;
+
   void dump(const CFG *cfg, const LangOptions &LO, bool ShowColors = false) const;
   void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO,
              bool ShowColors) const;

@@ -4356,6 +4356,10 @@ void CFGBlock::dump(const CFG* cfg, const LangOptions &LO,
   print(llvm::errs(), cfg, LO, ShowColors);
 }
 
+void CFGBlock::dump() const {
+  dump(getParent(), LangOptions(), false);
+}
+
 /// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
 ///   Generally this will only be called from CFG::print.
 void CFGBlock::print(raw_ostream &OS, const CFG* cfg,

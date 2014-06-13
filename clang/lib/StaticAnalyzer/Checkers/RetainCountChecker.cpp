@@ -2340,14 +2340,27 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
 
   // Get the SourceLocation for the allocation site.
   // FIXME: This will crash the analyzer if an allocation comes from an
-  // implicit call. (Currently there are no such allocations in Cocoa, though.)
-  const Stmt *AllocStmt;
+  // implicit call (ex: a destructor call).
+  // (Currently there are no such allocations in Cocoa, though.)
+  const Stmt *AllocStmt = 0;
   ProgramPoint P = AllocNode->getLocation();
   if (Optional<CallExitEnd> Exit = P.getAs<CallExitEnd>())
     AllocStmt = Exit->getCalleeContext()->getCallSite();
-  else
-    AllocStmt = P.castAs<PostStmt>().getStmt();
-  assert(AllocStmt && "All allocations must come from explicit calls");
+  else {
+    // We are going to get a BlockEdge when the leak and allocation happen in
+    // different, non-nested frames (contexts). For example, the case where an
+    // allocation happens in a block that captures a reference to it and
+    // that reference is overwritten/dropped by another call to the block.
+    if (Optional<BlockEdge> Edge = P.getAs<BlockEdge>()) {
+      if (Optional<CFGStmt> St = Edge->getDst()->front().getAs<CFGStmt>()) {
+        AllocStmt = St->getStmt();
+      }
+    }
+    else {
+      AllocStmt = P.castAs<PostStmt>().getStmt();
+    }
+  }
+  assert(AllocStmt && "Cannot find allocation statement");
 
   PathDiagnosticLocation AllocLocation =
     PathDiagnosticLocation::createBegin(AllocStmt, SMgr,
