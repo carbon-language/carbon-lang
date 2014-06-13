@@ -101,11 +101,13 @@ entry:
 	%neg1 = sub i32 0, 10		; <i32> [#uses=1]
         ; CHECK: lock
         ; CHECK: cmpxchgl
-  %16 = cmpxchg i32* %val2, i32 %neg1, i32 1 monotonic monotonic
+  %pair16 = cmpxchg i32* %val2, i32 %neg1, i32 1 monotonic monotonic
+  %16 = extractvalue { i32, i1 } %pair16, 0
 	store i32 %16, i32* %old
         ; CHECK: lock
         ; CHECK: cmpxchgl
-  %17 = cmpxchg i32* %val2, i32 1976, i32 1 monotonic monotonic
+  %pair17 = cmpxchg i32* %val2, i32 1976, i32 1 monotonic monotonic
+  %17 = extractvalue { i32, i1 } %pair17, 0
 	store i32 %17, i32* %old
         ; CHECK: movl  [[R17atomic:.*]], %eax
         ; CHECK: movl	$1401, %[[R17mask:[a-z]*]]
@@ -133,6 +135,7 @@ entry:
 ; CHECK: lock
 ; CHECK:	cmpxchgl	%{{.*}}, %gs:(%{{.*}})
 
-  %0 = cmpxchg i32 addrspace(256)* %P, i32 0, i32 1 monotonic monotonic
+  %pair0 = cmpxchg i32 addrspace(256)* %P, i32 0, i32 1 monotonic monotonic
+  %0 = extractvalue { i32, i1 } %pair0, 0
   ret void
 }

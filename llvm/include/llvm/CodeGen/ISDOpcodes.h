@@ -619,6 +619,12 @@ namespace ISD {
     /// This corresponds to the cmpxchg instruction.
     ATOMIC_CMP_SWAP,
 
+    /// Val, Success, OUTCHAIN
+    ///     = ATOMIC_CMP_SWAP_WITH_SUCCESS(INCHAIN, ptr, cmp, swap)
+    /// N.b. this is still a strong cmpxchg operation, so
+    /// Success == "Val == cmp".
+    ATOMIC_CMP_SWAP_WITH_SUCCESS,
+
     /// Val, OUTCHAIN = ATOMIC_SWAP(INCHAIN, ptr, amt)
     /// Val, OUTCHAIN = ATOMIC_LOAD_[OpName](INCHAIN, ptr, amt)
     /// For double-word atomic operations:

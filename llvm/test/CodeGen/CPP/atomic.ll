@@ -65,11 +65,25 @@ define void @test_cmpxchg(i32* %addr, i32 %desired, i32 %new) {
   ; CHECK: AtomicCmpXchgInst* [[INST:[a-zA-Z0-9_]+]] = new AtomicCmpXchgInst({{.*}}, SequentiallyConsistent, Monotonic, CrossThread
   ; CHECK: [[INST]]->setName("inst0");
   ; CHECK: [[INST]]->setVolatile(false);
+  ; CHECK: [[INST]]->setWeak(false);
 
   %inst1 = cmpxchg volatile i32* %addr, i32 %desired, i32 %new singlethread acq_rel acquire
   ; CHECK: AtomicCmpXchgInst* [[INST:[a-zA-Z0-9_]+]] = new AtomicCmpXchgInst({{.*}}, AcquireRelease, Acquire, SingleThread
   ; CHECK: [[INST]]->setName("inst1");
   ; CHECK: [[INST]]->setVolatile(true);
+  ; CHECK: [[INST]]->setWeak(false);
+
+  %inst2 = cmpxchg weak i32* %addr, i32 %desired, i32 %new seq_cst monotonic
+  ; CHECK: AtomicCmpXchgInst* [[INST:[a-zA-Z0-9_]+]] = new AtomicCmpXchgInst({{.*}}, SequentiallyConsistent, Monotonic, CrossThread
+  ; CHECK: [[INST]]->setName("inst2");
+  ; CHECK: [[INST]]->setVolatile(false);
+  ; CHECK: [[INST]]->setWeak(true);
+
+  %inst3 = cmpxchg weak volatile i32* %addr, i32 %desired, i32 %new singlethread acq_rel acquire
+  ; CHECK: AtomicCmpXchgInst* [[INST:[a-zA-Z0-9_]+]] = new AtomicCmpXchgInst({{.*}}, AcquireRelease, Acquire, SingleThread
+  ; CHECK: [[INST]]->setName("inst3");
+  ; CHECK: [[INST]]->setVolatile(true);
+  ; CHECK: [[INST]]->setWeak(true);
 
   ret void
 }

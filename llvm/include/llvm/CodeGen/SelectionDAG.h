@@ -700,20 +700,22 @@ public:
   SDValue getVAArg(EVT VT, SDLoc dl, SDValue Chain, SDValue Ptr,
                    SDValue SV, unsigned Align);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain and
-  /// takes 3 operands
-  SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDValue Chain,
-                    SDValue Ptr, SDValue Cmp, SDValue Swp,
-                    MachinePointerInfo PtrInfo, unsigned Alignment,
-                    AtomicOrdering SuccessOrdering,
-                    AtomicOrdering FailureOrdering,
-                    SynchronizationScope SynchScope);
-  SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDValue Chain,
-                    SDValue Ptr, SDValue Cmp, SDValue Swp,
-                    MachineMemOperand *MMO,
-                    AtomicOrdering SuccessOrdering,
-                    AtomicOrdering FailureOrdering,
-                    SynchronizationScope SynchScope);
+  /// getAtomicCmpSwap - Gets a node for an atomic cmpxchg op. There are two
+  /// valid Opcodes. ISD::ATOMIC_CMO_SWAP produces a the value loaded and a
+  /// chain result. ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS produces the value loaded,
+  /// a success flag (initially i1), and a chain.
+  SDValue getAtomicCmpSwap(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTs,
+                           SDValue Chain, SDValue Ptr, SDValue Cmp, SDValue Swp,
+                           MachinePointerInfo PtrInfo, unsigned Alignment,
+                           AtomicOrdering SuccessOrdering,
+                           AtomicOrdering FailureOrdering,
+                           SynchronizationScope SynchScope);
+  SDValue getAtomicCmpSwap(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTs,
+                           SDValue Chain, SDValue Ptr, SDValue Cmp, SDValue Swp,
+                           MachineMemOperand *MMO,
+                           AtomicOrdering SuccessOrdering,
+                           AtomicOrdering FailureOrdering,
+                           SynchronizationScope SynchScope);
 
   /// getAtomic - Gets a node for an atomic op, produces result (if relevant)
   /// and chain and takes 2 operands.

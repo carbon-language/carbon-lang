@@ -100,13 +100,15 @@ define i8 @test_cmpxchg_i8_seqcst_seqcst(i8* %ptr, i8 %desired, i8 %newval) {
 ; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
 
 ; CHECK: [[BARRIER]]:
+; CHECK: [[SUCCESS:%.*]] = phi i1 [ true, %[[TRY_STORE]] ], [ false, %[[LOOP]] ]
 ; CHECK-NOT: fence
 ; CHECK: br label %[[DONE:.*]]
 
 ; CHECK: [[DONE]]:
 ; CHECK: ret i8 [[OLDVAL]]
 
-  %old = cmpxchg i8* %ptr, i8 %desired, i8 %newval seq_cst seq_cst
+  %pairold = cmpxchg i8* %ptr, i8 %desired, i8 %newval seq_cst seq_cst
+  %old = extractvalue { i8, i1 } %pairold, 0
   ret i8 %old
 }
 
@@ -132,9 +134,11 @@ define i16 @test_cmpxchg_i16_seqcst_monotonic(i16* %ptr, i16 %desired, i16 %newv
 ; CHECK: br label %[[DONE:.*]]
 
 ; CHECK: [[DONE]]:
+; CHECK: [[SUCCESS:%.*]] = phi i1 [ true, %[[BARRIER]] ], [ false, %[[LOOP]] ]
 ; CHECK: ret i16 [[OLDVAL]]
 
-  %old = cmpxchg i16* %ptr, i16 %desired, i16 %newval seq_cst monotonic
+  %pairold = cmpxchg i16* %ptr, i16 %desired, i16 %newval seq_cst monotonic
+  %old = extractvalue { i16, i1 } %pairold, 0
   ret i16 %old
 }
 
@@ -154,13 +158,15 @@ define i32 @test_cmpxchg_i32_acquire_acquire(i32* %ptr, i32 %desired, i32 %newva
 ; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
 
 ; CHECK: [[BARRIER]]:
+; CHECK: [[SUCCESS:%.*]] = phi i1 [ true, %[[TRY_STORE]] ], [ false, %[[LOOP]] ]
 ; CHECK-NOT: fence
 ; CHECK: br label %[[DONE:.*]]
 
 ; CHECK: [[DONE]]:
 ; CHECK: ret i32 [[OLDVAL]]
 
-  %old = cmpxchg i32* %ptr, i32 %desired, i32 %newval acquire acquire
+  %pairold = cmpxchg i32* %ptr, i32 %desired, i32 %newval acquire acquire
+  %old = extractvalue { i32, i1 } %pairold, 0
   ret i32 %old
 }
 
@@ -197,6 +203,7 @@ define i64 @test_cmpxchg_i64_monotonic_monotonic(i64* %ptr, i64 %desired, i64 %n
 ; CHECK: [[DONE]]:
 ; CHECK: ret i64 [[OLDVAL]]
 
-  %old = cmpxchg i64* %ptr, i64 %desired, i64 %newval monotonic monotonic
+  %pairold = cmpxchg i64* %ptr, i64 %desired, i64 %newval monotonic monotonic
+  %old = extractvalue { i64, i1 } %pairold, 0
   ret i64 %old
 }

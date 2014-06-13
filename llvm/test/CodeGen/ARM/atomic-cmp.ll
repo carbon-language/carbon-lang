@@ -11,5 +11,6 @@ define i8 @t(i8* %a, i8 %b, i8 %c) nounwind {
 ; T2: ldrexb
 ; T2: strexb
   %tmp0 = cmpxchg i8* %a, i8 %b, i8 %c monotonic monotonic
-  ret i8 %tmp0
+  %tmp1 = extractvalue { i8, i1 } %tmp0, 0
+  ret i8 %tmp1
 }

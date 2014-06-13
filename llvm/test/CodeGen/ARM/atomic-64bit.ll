@@ -198,7 +198,8 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK-THUMB: bne
 ; CHECK-THUMB: dmb {{ish$}}
 
-  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst seq_cst
+  %pair = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst seq_cst
+  %r = extractvalue { i64, i1 } %pair, 0
   ret i64 %r
 }
 

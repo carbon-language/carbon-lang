@@ -500,6 +500,16 @@ public:
                                 (unsigned)V);
   }
 
+  /// Return true if this cmpxchg may spuriously fail.
+  bool isWeak() const {
+    return getSubclassDataFromInstruction() & 0x100;
+  }
+
+  void setWeak(bool IsWeak) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~0x100) |
+                               (IsWeak << 8));
+  }
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 

@@ -10,7 +10,8 @@ define i32 @val_compare_and_swap(i32* %p) {
 ; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], [[NEWVAL_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: [[LABEL2]]:
-  %val = cmpxchg i32* %p, i32 7, i32 4 acquire acquire
+  %pair = cmpxchg i32* %p, i32 7, i32 4 acquire acquire
+  %val = extractvalue { i32, i1 } %pair, 0
   ret i32 %val
 }
 
@@ -25,7 +26,8 @@ define i64 @val_compare_and_swap_64(i64* %p) {
 ; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], x[[NEWVAL_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: [[LABEL2]]:
-  %val = cmpxchg i64* %p, i64 7, i64 4 monotonic monotonic
+  %pair = cmpxchg i64* %p, i64 7, i64 4 monotonic monotonic
+  %val = extractvalue { i64, i1 } %pair, 0
   ret i64 %val
 }
 

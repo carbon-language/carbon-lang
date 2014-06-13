@@ -1251,10 +1251,11 @@ AtomicCmpXchgInst::AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
                                      AtomicOrdering FailureOrdering,
                                      SynchronizationScope SynchScope,
                                      Instruction *InsertBefore)
-  : Instruction(Cmp->getType(), AtomicCmpXchg,
-                OperandTraits<AtomicCmpXchgInst>::op_begin(this),
-                OperandTraits<AtomicCmpXchgInst>::operands(this),
-                InsertBefore) {
+    : Instruction(
+          StructType::get(Cmp->getType(), Type::getInt1Ty(Cmp->getContext()),
+                          nullptr),
+          AtomicCmpXchg, OperandTraits<AtomicCmpXchgInst>::op_begin(this),
+          OperandTraits<AtomicCmpXchgInst>::operands(this), InsertBefore) {
   Init(Ptr, Cmp, NewVal, SuccessOrdering, FailureOrdering, SynchScope);
 }
 
@@ -1263,13 +1264,14 @@ AtomicCmpXchgInst::AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
                                      AtomicOrdering FailureOrdering,
                                      SynchronizationScope SynchScope,
                                      BasicBlock *InsertAtEnd)
-  : Instruction(Cmp->getType(), AtomicCmpXchg,
-                OperandTraits<AtomicCmpXchgInst>::op_begin(this),
-                OperandTraits<AtomicCmpXchgInst>::operands(this),
-                InsertAtEnd) {
+    : Instruction(
+          StructType::get(Cmp->getType(), Type::getInt1Ty(Cmp->getContext()),
+                          nullptr),
+          AtomicCmpXchg, OperandTraits<AtomicCmpXchgInst>::op_begin(this),
+          OperandTraits<AtomicCmpXchgInst>::operands(this), InsertAtEnd) {
   Init(Ptr, Cmp, NewVal, SuccessOrdering, FailureOrdering, SynchScope);
 }
- 
+
 //===----------------------------------------------------------------------===//
 //                       AtomicRMWInst Implementation
 //===----------------------------------------------------------------------===//
@@ -3604,6 +3606,7 @@ AtomicCmpXchgInst *AtomicCmpXchgInst::clone_impl() const {
                           getSuccessOrdering(), getFailureOrdering(),
                           getSynchScope());
   Result->setVolatile(isVolatile());
+  Result->setWeak(isWeak());
   return Result;
 }
 

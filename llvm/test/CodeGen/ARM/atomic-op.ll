@@ -198,7 +198,8 @@ entry:
 define i32 @test_cmpxchg_fail_order(i32 *%addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: test_cmpxchg_fail_order:
 
-  %oldval = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst monotonic
+  %pair = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst monotonic
+  %oldval = extractvalue { i32, i1 } %pair, 0
 ; CHECK:     dmb ish
 ; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
 ; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
@@ -216,7 +217,8 @@ define i32 @test_cmpxchg_fail_order(i32 *%addr, i32 %desired, i32 %new) {
 define i32 @test_cmpxchg_fail_order1(i32 *%addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: test_cmpxchg_fail_order1:
 
-  %oldval = cmpxchg i32* %addr, i32 %desired, i32 %new acquire acquire
+  %pair = cmpxchg i32* %addr, i32 %desired, i32 %new acquire acquire
+  %oldval = extractvalue { i32, i1 } %pair, 0
 ; CHECK-NOT:     dmb ish
 ; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
 ; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]

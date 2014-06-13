@@ -32,7 +32,8 @@ define i16 @f1(i16 %dummy, i16 *%src, i16 %cmp, i16 %swap) {
 ; CHECK-SHIFT: lcr [[NEGSHIFT:%r[1-9]+]], [[SHIFT]]
 ; CHECK-SHIFT: rll
 ; CHECK-SHIFT: rll {{%r[0-9]+}}, %r5, -16([[NEGSHIFT]])
-  %res = cmpxchg i16 *%src, i16 %cmp, i16 %swap seq_cst seq_cst
+  %pair = cmpxchg i16 *%src, i16 %cmp, i16 %swap seq_cst seq_cst
+  %res = extractvalue { i16, i1 } %pair, 0
   ret i16 %res
 }
 
@@ -50,6 +51,7 @@ define i16 @f2(i16 *%src) {
 ; CHECK-SHIFT: risbg
 ; CHECK-SHIFT: risbg [[SWAP]], {{%r[0-9]+}}, 32, 47, 0
 ; CHECK-SHIFT: br %r14
-  %res = cmpxchg i16 *%src, i16 42, i16 88 seq_cst seq_cst
+  %pair = cmpxchg i16 *%src, i16 42, i16 88 seq_cst seq_cst
+  %res = extractvalue { i16, i1 } %pair, 0
   ret i16 %res
 }

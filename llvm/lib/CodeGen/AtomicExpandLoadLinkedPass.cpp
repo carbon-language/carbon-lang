@@ -299,41 +299,44 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // Setup the builder so we can create any PHIs we need.
   Builder.SetInsertPoint(FailureBB, FailureBB->begin());
   BasicBlock *SuccessBB = FailureOrder == Monotonic ? BarrierBB : TryStoreBB;
-  PHINode *Success = nullptr, *Failure = nullptr;
+  PHINode *Success = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
+  Success->addIncoming(ConstantInt::getTrue(Ctx), SuccessBB);
+  Success->addIncoming(ConstantInt::getFalse(Ctx), LoopBB);
 
   // Look for any users of the cmpxchg that are just comparing the loaded value
   // against the desired one, and replace them with the CFG-derived version.
+  SmallVector<ExtractValueInst *, 2> PrunedInsts;
   for (auto User : CI->users()) {
-    ICmpInst *ICmp = dyn_cast<ICmpInst>(User);
-    if (!ICmp)
+    ExtractValueInst *EV = dyn_cast<ExtractValueInst>(User);
+    if (!EV)
       continue;
 
-    // Because we know ICmp uses CI, we only need one operand to be the old
-    // value.
-    if (ICmp->getOperand(0) != CI->getCompareOperand() &&
-        ICmp->getOperand(1) != CI->getCompareOperand())
-      continue;
+    assert(EV->getNumIndices() == 1 && EV->getIndices()[0] <= 1 &&
+           "weird extraction from { iN, i1 }");
 
-    if (ICmp->getPredicate() == CmpInst::ICMP_EQ) {
-      if (!Success) {
-        Success = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
-        Success->addIncoming(ConstantInt::getTrue(Ctx), SuccessBB);
-        Success->addIncoming(ConstantInt::getFalse(Ctx), LoopBB);
-      }
-      ICmp->replaceAllUsesWith(Success);
-    } else if (ICmp->getPredicate() == CmpInst::ICMP_NE) {
-      if (!Failure) {
-        Failure = Builder.CreatePHI(Type::getInt1Ty(Ctx), 2);
-        Failure->addIncoming(ConstantInt::getFalse(Ctx), SuccessBB);
-        Failure->addIncoming(ConstantInt::getTrue(Ctx), LoopBB);
-      }
-      ICmp->replaceAllUsesWith(Failure);
-    }
+    if (EV->getIndices()[0] == 0)
+      EV->replaceAllUsesWith(Loaded);
+    else
+      EV->replaceAllUsesWith(Success);
+
+    PrunedInsts.push_back(EV);
   }
 
-  CI->replaceAllUsesWith(Loaded);
-  CI->eraseFromParent();
+  // We can remove the instructions now we're no longer iterating through them.
+  for (auto EV : PrunedInsts)
+    EV->eraseFromParent();
 
+  if (!CI->use_empty()) {
+    // Some use of the full struct return that we don't understand has happened,
+    // so we've got to reconstruct it properly.
+    Value *Res;
+    Res = Builder.CreateInsertValue(UndefValue::get(CI->getType()), Loaded, 0);
+    Res = Builder.CreateInsertValue(Res, Success, 1);
+
+    CI->replaceAllUsesWith(Res);
+  }
+
+  CI->eraseFromParent();
   return true;
 }
 

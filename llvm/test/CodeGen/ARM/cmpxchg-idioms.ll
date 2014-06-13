@@ -25,8 +25,8 @@ define i32 @test_return(i32* %p, i32 %oldval, i32 %newval) {
 ; CHECK: dmb ish
 ; CHECK: bx lr
 
-  %loaded = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
-  %success = icmp eq i32 %loaded, %oldval
+  %pair = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
+  %success = extractvalue { i32, i1 } %pair, 1
   %conv = zext i1 %success to i32
   ret i32 %conv
 }
@@ -40,21 +40,27 @@ define i1 @test_return_bool(i8* %value, i8 %oldValue, i8 %newValue) {
 ; CHECK: [[LOOP:LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldrexb [[LOADED:r[0-9]+]], [r0]
 ; CHECK: cmp [[LOADED]], [[OLDBYTE]]
-
-; CHECK: itt ne
-; CHECK: movne r0, #1
-; CHECK: bxne lr
+; CHECK: bne [[FAIL:LBB[0-9]+_[0-9]+]]
 
 ; CHECK: strexb [[STATUS:r[0-9]+]], {{r[0-9]+}}, [r0]
 ; CHECK: cmp [[STATUS]], #0
 ; CHECK: bne [[LOOP]]
 
+  ; FIXME: this eor is redundant. Need to teach DAG combine that.
 ; CHECK-NOT: cmp {{r[0-9]+}}, {{r[0-9]+}}
-; CHECK: movs r0, #0
+; CHECK: movs [[TMP:r[0-9]+]], #1
+; CHECK: eor r0, [[TMP]], #1
 ; CHECK: bx lr
 
-  %loaded = cmpxchg i8* %value, i8 %oldValue, i8 %newValue acq_rel monotonic
-  %failure = icmp ne i8 %loaded, %oldValue
+; CHECK: [[FAIL]]:
+; CHECK: movs [[TMP:r[0-9]+]], #0
+; CHECK: eor r0, [[TMP]], #1
+; CHECK: bx lr
+
+
+  %pair = cmpxchg i8* %value, i8 %oldValue, i8 %newValue acq_rel monotonic
+  %success = extractvalue { i8, i1 } %pair, 1
+  %failure = xor i1 %success, 1
   ret i1 %failure
 }
 
@@ -81,8 +87,8 @@ define void @test_conditional(i32* %p, i32 %oldval, i32 %newval) {
 ; CHECK: dmb ish
 ; CHECK: b.w _baz
 
-  %loaded = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
-  %success = icmp eq i32 %loaded, %oldval
+  %pair = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
+  %success = extractvalue { i32, i1 } %pair, 1
   br i1 %success, label %true, label %false
 
 true:

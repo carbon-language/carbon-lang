@@ -490,7 +490,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(available_externally);
   KEYWORD(linkonce);
   KEYWORD(linkonce_odr);
-  KEYWORD(weak);
+  KEYWORD(weak); // Use as a linkage, and a modifier for "cmpxchg".
   KEYWORD(weak_odr);
   KEYWORD(appending);
   KEYWORD(dllimport);

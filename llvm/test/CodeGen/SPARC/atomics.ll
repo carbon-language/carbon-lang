@@ -38,7 +38,8 @@ entry:
 
 define i32 @test_cmpxchg_i32(i32 %a, i32* %ptr) {
 entry:
-  %b = cmpxchg i32* %ptr, i32 %a, i32 123 monotonic monotonic
+  %pair = cmpxchg i32* %ptr, i32 %a, i32 123 monotonic monotonic
+  %b = extractvalue { i32, i1 } %pair, 0
   ret i32 %b
 }
 
@@ -48,7 +49,8 @@ entry:
 
 define i64 @test_cmpxchg_i64(i64 %a, i64* %ptr) {
 entry:
-  %b = cmpxchg i64* %ptr, i64 %a, i64 123 monotonic monotonic
+  %pair = cmpxchg i64* %ptr, i64 %a, i64 123 monotonic monotonic
+  %b = extractvalue { i64, i1 } %pair, 0
   ret i64 %b
 }
 

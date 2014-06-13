@@ -1579,6 +1579,8 @@ void CppWriter::printInstruction(const Instruction *I,
     Out << "\");";
     nl(Out) << iName << "->setVolatile("
             << (cxi->isVolatile() ? "true" : "false") << ");";
+    nl(Out) << iName << "->setWeak("
+            << (cxi->isWeak() ? "true" : "false") << ");";
     break;
   }
   case Instruction::AtomicRMW: {

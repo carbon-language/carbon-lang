@@ -20,8 +20,8 @@ define i32 @test_return(i32* %p, i32 %oldval, i32 %newval) {
 ; CHECK: mov w0, wzr
 ; CHECK: ret
 
-  %loaded = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
-  %success = icmp eq i32 %loaded, %oldval
+  %pair = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
+  %success = extractvalue { i32, i1 } %pair, 1
   %conv = zext i1 %success to i32
   ret i32 %conv
 }
@@ -38,16 +38,20 @@ define i1 @test_return_bool(i8* %value, i8 %oldValue, i8 %newValue) {
 ; CHECK: cbnz [[STATUS]], [[LOOP]]
 
 ; CHECK-NOT: cmp {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: mov w0, wzr
+  ; FIXME: DAG combine should be able to deal with this.
+; CHECK: orr [[TMP:w[0-9]+]], wzr, #0x1
+; CHECK: eor w0, [[TMP]], #0x1
 ; CHECK: ret
 
 ; CHECK: [[FAILED]]:
 ; CHECK-NOT: cmp {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: orr w0, wzr, #0x1
+; CHECK: mov [[TMP:w[0-9]+]], wzr
+; CHECK: eor w0, [[TMP]], #0x1
 ; CHECK: ret
 
-  %loaded = cmpxchg i8* %value, i8 %oldValue, i8 %newValue acq_rel monotonic
-  %failure = icmp ne i8 %loaded, %oldValue
+  %pair = cmpxchg i8* %value, i8 %oldValue, i8 %newValue acq_rel monotonic
+  %success = extractvalue { i8, i1 } %pair, 1
+  %failure = xor i1 %success, 1
   ret i1 %failure
 }
 
@@ -69,8 +73,8 @@ define void @test_conditional(i32* %p, i32 %oldval, i32 %newval) {
 ; CHECK-NOT: cmp {{w[0-9]+}}, {{w[0-9]+}}
 ; CHECK: b _baz
 
-  %loaded = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
-  %success = icmp eq i32 %loaded, %oldval
+  %pair = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
+  %success = extractvalue { i32, i1 } %pair, 1
   br i1 %success, label %true, label %false
 
 true:

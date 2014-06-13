@@ -5059,14 +5059,14 @@ Syntax:
 
 ::
 
-      cmpxchg [volatile] <ty>* <pointer>, <ty> <cmp>, <ty> <new> [singlethread] <success ordering> <failure ordering> ; yields {ty}
+      cmpxchg [weak] [volatile] <ty>* <pointer>, <ty> <cmp>, <ty> <new> [singlethread] <success ordering> <failure ordering> ; yields { <ty>, i1 }
 
 Overview:
 """""""""
 
 The '``cmpxchg``' instruction is used to atomically modify memory. It
 loads a value in memory and compares it to a given value. If they are
-equal, it stores a new value into the memory.
+equal, it tries to store a new value into the memory.
 
 Arguments:
 """"""""""
@@ -5099,10 +5099,17 @@ equal to the size in memory of the operand.
 Semantics:
 """"""""""
 
-The contents of memory at the location specified by the '``<pointer>``'
-operand is read and compared to '``<cmp>``'; if the read value is the
-equal, '``<new>``' is written. The original value at the location is
-returned.
+The contents of memory at the location specified by the '``<pointer>``' operand
+is read and compared to '``<cmp>``'; if the read value is the equal, the
+'``<new>``' is written. The original value at the location is returned, together
+with a flag indicating success (true) or failure (false).
+
+If the cmpxchg operation is marked as ``weak`` then a spurious failure is
+permitted: the operation may not write ``<new>`` even if the comparison
+matched.
+
+If the cmpxchg operation is strong (the default), the i1 value is 1 if and only
+if the value loaded equals ``cmp``.
 
 A successful ``cmpxchg`` is a read-modify-write instruction for the purpose of
 identifying release sequences. A failed ``cmpxchg`` is equivalent to an atomic
@@ -5114,14 +5121,15 @@ Example:
 .. code-block:: llvm
 
     entry:
-      %orig = atomic load i32* %ptr unordered                   ; yields {i32}
+      %orig = atomic load i32* %ptr unordered                   ; yields i32
       br label %loop
 
     loop:
       %cmp = phi i32 [ %orig, %entry ], [%old, %loop]
       %squared = mul i32 %cmp, %cmp
-      %old = cmpxchg i32* %ptr, i32 %cmp, i32 %squared acq_rel monotonic ; yields {i32}
-      %success = icmp eq i32 %cmp, %old
+      %val_success = cmpxchg i32* %ptr, i32 %cmp, i32 %squared acq_rel monotonic ; yields { i32, i1 }
+      %value_loaded = extractvalue { i32, i1 } %val_success, 0
+      %success = extractvalue { i32, i1 } %val_success, 1
       br i1 %success, label %done, label %loop
 
     done:

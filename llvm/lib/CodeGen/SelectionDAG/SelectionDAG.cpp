@@ -502,6 +502,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
+  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
   case ISD::ATOMIC_SWAP:
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
@@ -4327,51 +4328,47 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
                    Ordering, SynchScope);
 }
 
-SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDValue Chain, SDValue Ptr, SDValue Cmp,
-                                SDValue Swp, MachinePointerInfo PtrInfo,
-                                unsigned Alignment,
-                                AtomicOrdering SuccessOrdering,
-                                AtomicOrdering FailureOrdering,
-                                SynchronizationScope SynchScope) {
+SDValue SelectionDAG::getAtomicCmpSwap(
+    unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTs, SDValue Chain,
+    SDValue Ptr, SDValue Cmp, SDValue Swp, MachinePointerInfo PtrInfo,
+    unsigned Alignment, AtomicOrdering SuccessOrdering,
+    AtomicOrdering FailureOrdering, SynchronizationScope SynchScope) {
+  assert(Opcode == ISD::ATOMIC_CMP_SWAP ||
+         Opcode == ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS);
+  assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
 
   MachineFunction &MF = getMachineFunction();
 
-  // All atomics are load and store, except for ATMOIC_LOAD and ATOMIC_STORE.
-  // For now, atomics are considered to be volatile always.
   // FIXME: Volatile isn't really correct; we should keep track of atomic
   // orderings in the memoperand.
   unsigned Flags = MachineMemOperand::MOVolatile;
-  if (Opcode != ISD::ATOMIC_STORE)
-    Flags |= MachineMemOperand::MOLoad;
-  if (Opcode != ISD::ATOMIC_LOAD)
-    Flags |= MachineMemOperand::MOStore;
+  Flags |= MachineMemOperand::MOLoad;
+  Flags |= MachineMemOperand::MOStore;
 
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment);
 
-  return getAtomic(Opcode, dl, MemVT, Chain, Ptr, Cmp, Swp, MMO,
-                   SuccessOrdering, FailureOrdering, SynchScope);
+  return getAtomicCmpSwap(Opcode, dl, MemVT, VTs, Chain, Ptr, Cmp, Swp, MMO,
+                          SuccessOrdering, FailureOrdering, SynchScope);
 }
 
-SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDValue Chain,
-                                SDValue Ptr, SDValue Cmp,
-                                SDValue Swp, MachineMemOperand *MMO,
-                                AtomicOrdering SuccessOrdering,
-                                AtomicOrdering FailureOrdering,
-                                SynchronizationScope SynchScope) {
-  assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
+SDValue SelectionDAG::getAtomicCmpSwap(unsigned Opcode, SDLoc dl, EVT MemVT,
+                                       SDVTList VTs, SDValue Chain, SDValue Ptr,
+                                       SDValue Cmp, SDValue Swp,
+                                       MachineMemOperand *MMO,
+                                       AtomicOrdering SuccessOrdering,
+                                       AtomicOrdering FailureOrdering,
+                                       SynchronizationScope SynchScope) {
+  assert(Opcode == ISD::ATOMIC_CMP_SWAP ||
+         Opcode == ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS);
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
 
-  EVT VT = Cmp.getValueType();
-
-  SDVTList VTs = getVTList(VT, MVT::Other);
   SDValue Ops[] = {Chain, Ptr, Cmp, Swp};
-  return getAtomic(Opcode, dl, MemVT, VTs, Ops, MMO, SuccessOrdering,
-                   FailureOrdering, SynchScope);
+  return getAtomic(Opcode, dl, MemVT, VTs, Ops, MMO,
+                   SuccessOrdering, FailureOrdering, SynchScope);
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,

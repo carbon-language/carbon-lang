@@ -223,68 +223,88 @@ define void @cmpxchg(i32* %ptr,i32 %cmp,i32 %new){
 entry:
   ;cmpxchg [volatile] <ty>* <pointer>, <ty> <cmp>, <ty> <new> [singlethread] <ordering>
 
-; CHECK: %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+; CHECK: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+; CHECK-NEXT: %res1 = extractvalue { i32, i1 } [[TMP]], 0
   %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
   
-; CHECK-NEXT: %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+; CHECK-NEXT: %res2 = extractvalue { i32, i1 } [[TMP]], 0
   %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
   
-; CHECK-NEXT: %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+; CHECK-NEXT: %res3 = extractvalue { i32, i1 } [[TMP]], 0
   %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
   
-; CHECK-NEXT: %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+; CHECK-NEXT: %res4 = extractvalue { i32, i1 } [[TMP]], 0
   %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
   
   
-; CHECK-NEXT: %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire acquire
+; CHECK-NEXT: %res5 = extractvalue { i32, i1 } [[TMP]], 0
   %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire acquire
   
-; CHECK-NEXT: %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire acquire
+; CHECK-NEXT: %res6 = extractvalue { i32, i1 } [[TMP]], 0
   %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire acquire
   
-; CHECK-NEXT: %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+; CHECK-NEXT: %res7 = extractvalue { i32, i1 } [[TMP]], 0
   %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
   
-; CHECK-NEXT: %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+; CHECK-NEXT: %res8 = extractvalue { i32, i1 } [[TMP]], 0
   %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
   
   
-; CHECK-NEXT: %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new release monotonic
+; CHECK-NEXT: %res9 = extractvalue { i32, i1 } [[TMP]], 0
   %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release monotonic
   
-; CHECK-NEXT: %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release monotonic
+; CHECK-NEXT: %res10 = extractvalue { i32, i1 } [[TMP]], 0
   %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release monotonic
   
-; CHECK-NEXT: %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+; CHECK-NEXT: %res11 = extractvalue { i32, i1 } [[TMP]], 0
   %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
   
-; CHECK-NEXT: %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+; CHECK-NEXT: %res12 = extractvalue { i32, i1 } [[TMP]], 0
   %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
   
   
-; CHECK-NEXT: %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+; CHECK-NEXT: %res13 = extractvalue { i32, i1 } [[TMP]], 0
   %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
   
-; CHECK-NEXT: %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+; CHECK-NEXT: %res14 = extractvalue { i32, i1 } [[TMP]], 0
   %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
   
-; CHECK-NEXT: %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+; CHECK-NEXT: %res15 = extractvalue { i32, i1 } [[TMP]], 0
   %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
   
-; CHECK-NEXT: %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+; CHECK-NEXT: %res16 = extractvalue { i32, i1 } [[TMP]], 0
   %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
   
   
-; CHECK-NEXT: %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+; CHECK-NEXT: %res17 = extractvalue { i32, i1 } [[TMP]], 0
   %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
   
-; CHECK-NEXT: %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+; CHECK-NEXT: %res18 = extractvalue { i32, i1 } [[TMP]], 0
   %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
   
-; CHECK-NEXT: %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+; CHECK-NEXT: %res19 = extractvalue { i32, i1 } [[TMP]], 0
   %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
   
-; CHECK-NEXT: %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+; CHECK-NEXT: [[TMP:%[a-z0-9]+]] = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+; CHECK-NEXT: %res20 = extractvalue { i32, i1 } [[TMP]], 0
   %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
 
   ret void

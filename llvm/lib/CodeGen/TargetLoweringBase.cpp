@@ -730,6 +730,10 @@ void TargetLoweringBase::initActions() {
       setIndexedStoreAction(IM, (MVT::SimpleValueType)VT, Expand);
     }
 
+    // Most backends expect to see the node which just returns the value loaded.
+    setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS,
+                       (MVT::SimpleValueType)VT, Expand);
+
     // These operations default to expand.
     setOperationAction(ISD::FGETSIGN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::CONCAT_VECTORS, (MVT::SimpleValueType)VT, Expand);

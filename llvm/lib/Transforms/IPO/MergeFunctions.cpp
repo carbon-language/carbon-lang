@@ -847,6 +847,9 @@ int FunctionComparator::cmpOperation(const Instruction *L,
     if (int Res = cmpNumbers(CXI->isVolatile(),
                              cast<AtomicCmpXchgInst>(R)->isVolatile()))
       return Res;
+    if (int Res = cmpNumbers(CXI->isWeak(),
+                             cast<AtomicCmpXchgInst>(R)->isWeak()))
+      return Res;
     if (int Res = cmpNumbers(CXI->getSuccessOrdering(),
                              cast<AtomicCmpXchgInst>(R)->getSuccessOrdering()))
       return Res;

@@ -532,8 +532,14 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
                      IRB.CreateIntCast(CASI->getNewValOperand(), Ty, false),
                      createOrdering(&IRB, CASI->getSuccessOrdering()),
                      createOrdering(&IRB, CASI->getFailureOrdering())};
-    CallInst *C = CallInst::Create(TsanAtomicCAS[Idx], ArrayRef<Value*>(Args));
-    ReplaceInstWithInst(I, C);
+    CallInst *C = IRB.CreateCall(TsanAtomicCAS[Idx], Args);
+    Value *Success = IRB.CreateICmpEQ(C, CASI->getCompareOperand());
+
+    Value *Res = IRB.CreateInsertValue(UndefValue::get(CASI->getType()), C, 0);
+    Res = IRB.CreateInsertValue(Res, Success, 1);
+
+    I->replaceAllUsesWith(Res);
+    I->eraseFromParent();
   } else if (FenceInst *FI = dyn_cast<FenceInst>(I)) {
     Value *Args[] = {createOrdering(&IRB, FI->getOrdering())};
     Function *F = FI->getSynchScope() == SingleThread ?

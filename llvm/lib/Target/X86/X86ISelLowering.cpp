@@ -14813,13 +14813,14 @@ static void ReplaceATOMIC_LOAD(SDNode *Node,
   //        (The only way to get a 16-byte load is cmpxchg16b)
   // FIXME: 16-byte ATOMIC_CMP_SWAP isn't actually hooked up at the moment.
   SDValue Zero = DAG.getConstant(0, VT);
-  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl, VT,
-                               Node->getOperand(0),
-                               Node->getOperand(1), Zero, Zero,
-                               cast<AtomicSDNode>(Node)->getMemOperand(),
-                               cast<AtomicSDNode>(Node)->getOrdering(),
-                               cast<AtomicSDNode>(Node)->getOrdering(),
-                               cast<AtomicSDNode>(Node)->getSynchScope());
+  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
+  SDValue Swap =
+      DAG.getAtomicCmpSwap(ISD::ATOMIC_CMP_SWAP, dl, VT, VTs,
+                           Node->getOperand(0), Node->getOperand(1), Zero, Zero,
+                           cast<AtomicSDNode>(Node)->getMemOperand(),
+                           cast<AtomicSDNode>(Node)->getOrdering(),
+                           cast<AtomicSDNode>(Node)->getOrdering(),
+                           cast<AtomicSDNode>(Node)->getSynchScope());
   Results.push_back(Swap.getValue(0));
   Results.push_back(Swap.getValue(1));
 }

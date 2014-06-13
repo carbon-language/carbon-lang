@@ -3629,19 +3629,17 @@ void SelectionDAGBuilder::visitAtomicCmpXchg(const AtomicCmpXchgInst &I) {
     InChain = InsertFenceForAtomic(InChain, SuccessOrder, Scope, true, dl,
                                    DAG, *TLI);
 
-  SDValue L =
-    DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
-                  getValue(I.getCompareOperand()).getSimpleValueType(),
-                  InChain,
-                  getValue(I.getPointerOperand()),
-                  getValue(I.getCompareOperand()),
-                  getValue(I.getNewValOperand()),
-                  MachinePointerInfo(I.getPointerOperand()), 0 /* Alignment */,
-                  TLI->getInsertFencesForAtomic() ? Monotonic : SuccessOrder,
-                  TLI->getInsertFencesForAtomic() ? Monotonic : FailureOrder,
-                  Scope);
+  MVT MemVT = getValue(I.getCompareOperand()).getSimpleValueType();
+  SDVTList VTs = DAG.getVTList(MemVT, MVT::i1, MVT::Other);
+  SDValue L = DAG.getAtomicCmpSwap(
+      ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, dl, MemVT, VTs, InChain,
+      getValue(I.getPointerOperand()), getValue(I.getCompareOperand()),
+      getValue(I.getNewValOperand()), MachinePointerInfo(I.getPointerOperand()),
+      0 /* Alignment */,
+      TLI->getInsertFencesForAtomic() ? Monotonic : SuccessOrder,
+      TLI->getInsertFencesForAtomic() ? Monotonic : FailureOrder, Scope);
 
-  SDValue OutChain = L.getValue(1);
+  SDValue OutChain = L.getValue(2);
 
   if (TLI->getInsertFencesForAtomic())
     OutChain = InsertFenceForAtomic(OutChain, SuccessOrder, Scope, false, dl,

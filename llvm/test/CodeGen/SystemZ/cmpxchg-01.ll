@@ -32,7 +32,8 @@ define i8 @f1(i8 %dummy, i8 *%src, i8 %cmp, i8 %swap) {
 ; CHECK-SHIFT: lcr [[NEGSHIFT:%r[1-9]+]], [[SHIFT]]
 ; CHECK-SHIFT: rll
 ; CHECK-SHIFT: rll {{%r[0-9]+}}, %r5, -8([[NEGSHIFT]])
-  %res = cmpxchg i8 *%src, i8 %cmp, i8 %swap seq_cst seq_cst
+  %pair = cmpxchg i8 *%src, i8 %cmp, i8 %swap seq_cst seq_cst
+  %res = extractvalue { i8, i1 } %pair, 0
   ret i8 %res
 }
 
@@ -50,6 +51,7 @@ define i8 @f2(i8 *%src) {
 ; CHECK-SHIFT: risbg
 ; CHECK-SHIFT: risbg [[SWAP]], {{%r[0-9]+}}, 32, 55, 0
 ; CHECK-SHIFT: br %r14
-  %res = cmpxchg i8 *%src, i8 42, i8 88 seq_cst seq_cst
+  %pair = cmpxchg i8 *%src, i8 42, i8 88 seq_cst seq_cst
+  %res = extractvalue { i8, i1 } %pair, 0
   ret i8 %res
 }

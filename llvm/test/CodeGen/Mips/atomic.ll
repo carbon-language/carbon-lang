@@ -78,7 +78,8 @@ entry:
   store i32 %newval, i32* %newval.addr, align 4
   %tmp = load i32* %newval.addr, align 4
   %0 = cmpxchg i32* @x, i32 %oldval, i32 %tmp monotonic monotonic
-  ret i32 %0
+  %1 = extractvalue { i32, i1 } %0, 0
+  ret i32 %1
 
 ; CHECK-EL-LABEL:   AtomicCmpSwap32:
 ; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(x)
@@ -333,7 +334,8 @@ entry:
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
 entry:
-  %0 = cmpxchg i8* @y, i8 %oldval, i8 %newval monotonic monotonic
+  %pair0 = cmpxchg i8* @y, i8 %oldval, i8 %newval monotonic monotonic
+  %0 = extractvalue { i8, i1 } %pair0, 0
   ret i8 %0
 
 ; CHECK-EL-LABEL:   AtomicCmpSwap8:
@@ -429,7 +431,8 @@ entry:
 
 define i32 @zeroreg() nounwind {
 entry:
-  %0 = cmpxchg i32* @a, i32 1, i32 0 seq_cst seq_cst
+  %pair0 = cmpxchg i32* @a, i32 1, i32 0 seq_cst seq_cst
+  %0 = extractvalue { i32, i1 } %pair0, 0
   %1 = icmp eq i32 %0, 1
   %conv = zext i1 %1 to i32
   ret i32 %conv

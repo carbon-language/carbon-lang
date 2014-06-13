@@ -11,7 +11,8 @@ define i64 @exchange_and_add(i64* %mem, i64 %val) nounwind {
 define i64 @exchange_and_cmp(i64* %mem) nounwind {
 ; CHECK-LABEL: exchange_and_cmp:
 ; CHECK: ldarx
-  %tmp = cmpxchg i64* %mem, i64 0, i64 1 monotonic monotonic
+  %tmppair = cmpxchg i64* %mem, i64 0, i64 1 monotonic monotonic
+  %tmp = extractvalue { i64, i1 } %tmppair, 0
 ; CHECK: stdcx.
 ; CHECK: stdcx.
   ret i64 %tmp

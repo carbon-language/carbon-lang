@@ -2923,7 +2923,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
     }
     case bitc::FUNC_CODE_INST_CMPXCHG: {
       // CMPXCHG:[ptrty, ptr, cmp, new, vol, successordering, synchscope,
-      //          failureordering]
+      //          failureordering?, isweak?]
       unsigned OpNum = 0;
       Value *Ptr, *Cmp, *New;
       if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
@@ -2931,7 +2931,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
                     cast<PointerType>(Ptr->getType())->getElementType(), Cmp) ||
           popValue(Record, OpNum, NextValueNo,
                     cast<PointerType>(Ptr->getType())->getElementType(), New) ||
-          (OpNum + 3 != Record.size() && OpNum + 4 != Record.size()))
+          (Record.size() < OpNum + 3 || Record.size() > OpNum + 5))
         return Error(InvalidRecord);
       AtomicOrdering SuccessOrdering = GetDecodedOrdering(Record[OpNum+1]);
       if (SuccessOrdering == NotAtomic || SuccessOrdering == Unordered)
@@ -2948,6 +2948,17 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       I = new AtomicCmpXchgInst(Ptr, Cmp, New, SuccessOrdering, FailureOrdering,
                                 SynchScope);
       cast<AtomicCmpXchgInst>(I)->setVolatile(Record[OpNum]);
+
+      if (Record.size() < 8) {
+        // Before weak cmpxchgs existed, the instruction simply returned the
+        // value loaded from memory, so bitcode files from that era will be
+        // expecting the first component of a modern cmpxchg.
+        CurBB->getInstList().push_back(I);
+        I = ExtractValueInst::Create(I, 0);
+      } else {
+        cast<AtomicCmpXchgInst>(I)->setWeak(Record[OpNum+4]);
+      }
+
       InstructionList.push_back(I);
       break;
     }

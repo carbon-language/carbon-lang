@@ -13,7 +13,8 @@ define i128 @val_compare_and_swap(i128* %p, i128 %oldval, i128 %newval) {
 ; CHECK: stxp   [[SCRATCH_RES:w[0-9]+]], x4, x5, [x[[ADDR]]]
 ; CHECK: cbnz   [[SCRATCH_RES]], [[LABEL]]
 ; CHECK: [[DONE]]:
-  %val = cmpxchg i128* %p, i128 %oldval, i128 %newval acquire acquire
+  %pair = cmpxchg i128* %p, i128 %oldval, i128 %newval acquire acquire
+  %val = extractvalue { i128, i1 } %pair, 0
   ret i128 %val
 }
 

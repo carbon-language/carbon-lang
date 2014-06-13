@@ -1449,6 +1449,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
                      cast<AtomicCmpXchgInst>(I).getSynchScope()));
     Vals.push_back(GetEncodedOrdering(
                      cast<AtomicCmpXchgInst>(I).getFailureOrdering()));
+    Vals.push_back(cast<AtomicCmpXchgInst>(I).isWeak());
     break;
   case Instruction::AtomicRMW:
     Code = bitc::FUNC_CODE_INST_ATOMICRMW;

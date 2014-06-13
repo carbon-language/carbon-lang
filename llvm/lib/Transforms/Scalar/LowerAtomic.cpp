@@ -32,7 +32,10 @@ static bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
   Value *Res = Builder.CreateSelect(Equal, Val, Orig);
   Builder.CreateStore(Res, Ptr);
 
-  CXI->replaceAllUsesWith(Orig);
+  Res = Builder.CreateInsertValue(UndefValue::get(CXI->getType()), Orig, 0);
+  Res = Builder.CreateInsertValue(Res, Equal, 1);
+
+  CXI->replaceAllUsesWith(Res);
   CXI->eraseFromParent();
   return true;
 }

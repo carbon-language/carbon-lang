@@ -4256,8 +4256,8 @@ int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseCmpXchg
-///   ::= 'cmpxchg' 'volatile'? TypeAndValue ',' TypeAndValue ',' TypeAndValue
-///       'singlethread'? AtomicOrdering AtomicOrdering
+///   ::= 'cmpxchg' 'weak'? 'volatile'? TypeAndValue ',' TypeAndValue ','
+///       TypeAndValue 'singlethread'? AtomicOrdering AtomicOrdering
 int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Cmp, *New; LocTy PtrLoc, CmpLoc, NewLoc;
   bool AteExtraComma = false;
@@ -4265,6 +4265,10 @@ int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
   AtomicOrdering FailureOrdering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
   bool isVolatile = false;
+  bool isWeak = false;
+
+  if (EatIfPresent(lltok::kw_weak))
+    isWeak = true;
 
   if (EatIfPresent(lltok::kw_volatile))
     isVolatile = true;
@@ -4297,9 +4301,10 @@ int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(NewLoc, "cmpxchg operand must be power-of-two byte-sized"
                          " integer");
 
-  AtomicCmpXchgInst *CXI = new AtomicCmpXchgInst(Ptr, Cmp, New, SuccessOrdering,
-                                                 FailureOrdering, Scope);
+  AtomicCmpXchgInst *CXI = new AtomicCmpXchgInst(
+      Ptr, Cmp, New, SuccessOrdering, FailureOrdering, Scope);
   CXI->setVolatile(isVolatile);
+  CXI->setWeak(isWeak);
   Inst = CXI;
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
