@@ -196,7 +196,7 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
 
   file_status ST;
   if (std::error_code EC = status(path, ST)) {
-    if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
     return std::error_code();
   }
@@ -208,14 +208,14 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
   if (ST.type() == file_type::directory_file) {
     if (!::RemoveDirectoryW(c_str(path_utf16))) {
       std::error_code EC = windows_error(::GetLastError());
-      if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
+      if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
         return EC;
     }
     return std::error_code();
   }
   if (!::DeleteFileW(c_str(path_utf16))) {
     std::error_code EC = windows_error(::GetLastError());
-    if (EC != std::errc::no_such_file_or_directory || !IgnoreNonExisting)
+    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return EC;
   }
   return std::error_code();
@@ -481,7 +481,7 @@ std::error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) 
         _close(FileDescriptor);
     } else
       ::CloseHandle(FileHandle);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   DWORD flprotect;
@@ -617,7 +617,7 @@ mapped_file_region::mapped_file_region(int fd,
     if (closefd)
       _close(FileDescriptor);
     FileDescriptor = 0;
-    ec = std::make_error_code(std::errc::bad_file_descriptor);
+    ec = make_error_code(errc::bad_file_descriptor);
     return;
   }
 
@@ -779,7 +779,7 @@ std::error_code openFileForRead(const Twine &Name, int &ResultFD) {
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return std::make_error_code(std::errc::is_a_directory);
+      return make_error_code(errc::is_a_directory);
     return EC;
   }
 
@@ -831,7 +831,7 @@ std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
     if (LastError != ERROR_ACCESS_DENIED)
       return EC;
     if (is_directory(Name))
-      return std::make_error_code(std::errc::is_a_directory);
+      return make_error_code(errc::is_a_directory);
     return EC;
   }
 

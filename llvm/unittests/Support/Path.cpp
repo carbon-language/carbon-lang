@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -355,10 +356,10 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
   ASSERT_EQ(fs::remove(Twine(TempPath2), false),
-            std::errc::no_such_file_or_directory);
+            errc::no_such_file_or_directory);
 
   std::error_code EC = fs::status(TempPath2.c_str(), B);
-  EXPECT_EQ(EC, std::errc::no_such_file_or_directory);
+  EXPECT_EQ(EC, errc::no_such_file_or_directory);
   EXPECT_EQ(B.type(), fs::file_type::file_not_found);
 
   // Make sure Temp2 doesn't exist.
@@ -398,7 +399,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
   EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
-            std::errc::no_such_file_or_directory);
+            errc::no_such_file_or_directory);
 #endif
 }
 
@@ -406,7 +407,7 @@ TEST_F(FileSystemTest, CreateDir) {
   ASSERT_NO_ERROR(fs::create_directory(Twine(TestDirectory) + "foo"));
   ASSERT_NO_ERROR(fs::create_directory(Twine(TestDirectory) + "foo"));
   ASSERT_EQ(fs::create_directory(Twine(TestDirectory) + "foo", false),
-            std::errc::file_exists);
+            errc::file_exists);
   ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "foo"));
 }
 

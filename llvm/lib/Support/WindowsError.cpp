@@ -12,12 +12,12 @@
 //  errors to generic ones. The one implemented in msvc is too conservative
 //  for llvm, so we do an extra mapping when constructing an error_code
 //  from an windows error. This allows the rest of llvm to simple checks
-//  like "EC == std::errc::file_exists" and have it work on both posix and
+//  like "EC == errc::file_exists" and have it work on both posix and
 //  windows.
 //
 //===----------------------------------------------------------------------===//
 
-
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/WindowsError.h"
 
 #include "llvm/Config/llvm-config.h"
@@ -30,7 +30,7 @@
 // I'd rather not double the line count of the following.
 #define MAP_ERR_TO_COND(x, y)                                                  \
   case x:                                                                      \
-    return std::make_error_code(std::errc::y)
+    return make_error_code(errc::y)
 
 std::error_code llvm::mapWindowsError(unsigned EV) {
   switch (EV) {

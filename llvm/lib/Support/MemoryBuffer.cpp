@@ -14,6 +14,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
@@ -364,7 +365,7 @@ static std::error_code getOpenFileImpl(int FD, const char *Filename,
   if (!Buf) {
     // Failed to create a buffer. The only way it can fail is if
     // new(std::nothrow) returns 0.
-    return std::make_error_code(std::errc::not_enough_memory);
+    return make_error_code(errc::not_enough_memory);
   }
 
   std::unique_ptr<MemoryBuffer> SB(Buf);

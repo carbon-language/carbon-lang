@@ -17,6 +17,7 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -453,7 +454,7 @@ int NewArchiveIterator::getFD() const {
   // Linux cannot open directories with open(2), although
   // cygwin and *bsd can.
   if (NewStatus.type() == sys::fs::file_type::directory_file)
-    failIfError(std::make_error_code(std::errc::is_a_directory), NewFilename);
+    failIfError(make_error_code(errc::is_a_directory), NewFilename);
 
   return NewFD;
 }
@@ -939,7 +940,7 @@ static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
   std::unique_ptr<MemoryBuffer> Buf;
   std::error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
-  if (EC && EC != std::errc::no_such_file_or_directory) {
+  if (EC && EC != errc::no_such_file_or_directory) {
     errs() << ToolName << ": error opening '" << ArchiveName
            << "': " << EC.message() << "!\n";
     return 1;
@@ -957,7 +958,7 @@ static int performOperation(ArchiveOperation Operation) {
     return 0;
   }
 
-  assert(EC == std::errc::no_such_file_or_directory);
+  assert(EC == errc::no_such_file_or_directory);
 
   if (!shouldCreateArchive(Operation)) {
     failIfError(EC, Twine("error loading '") + ArchiveName + "'");

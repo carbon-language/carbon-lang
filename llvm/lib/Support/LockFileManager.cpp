@@ -9,6 +9,7 @@
 #include "llvm/Support/LockFileManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -112,7 +113,7 @@ LockFileManager::LockFileManager(StringRef FileName)
     if (Out.has_error()) {
       // We failed to write out PID, so make up an excuse, remove the
       // unique lock file, and fail.
-      Error = std::make_error_code(std::errc::no_space_on_device);
+      Error = make_error_code(errc::no_space_on_device);
       sys::fs::remove(UniqueLockFileName.c_str());
       return;
     }
@@ -125,7 +126,7 @@ LockFileManager::LockFileManager(StringRef FileName)
     if (!EC)
       return;
 
-    if (EC != std::errc::file_exists) {
+    if (EC != errc::file_exists) {
       Error = EC;
       return;
     }

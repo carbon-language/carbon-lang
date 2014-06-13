@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -204,7 +205,7 @@ retry_random_path:
     if (std::error_code EC =
             sys::fs::openFileForWrite(Twine(ResultPath.begin()), ResultFD,
                                       sys::fs::F_RW | sys::fs::F_Excl, Mode)) {
-      if (EC == std::errc::file_exists)
+      if (EC == errc::file_exists)
         goto retry_random_path;
       return EC;
     }
@@ -225,7 +226,7 @@ retry_random_path:
   case FS_Dir: {
     if (std::error_code EC =
             sys::fs::create_directory(ResultPath.begin(), false)) {
-      if (EC == std::errc::file_exists)
+      if (EC == errc::file_exists)
         goto retry_random_path;
       return EC;
     }
@@ -830,7 +831,7 @@ std::error_code create_directories(const Twine &Path, bool IgnoreExisting) {
   std::error_code EC = create_directory(P, IgnoreExisting);
   // If we succeeded, or had any error other than the parent not existing, just
   // return it.
-  if (EC != std::errc::no_such_file_or_directory)
+  if (EC != errc::no_such_file_or_directory)
     return EC;
 
   // We failed because of a no_such_file_or_directory, try to create the

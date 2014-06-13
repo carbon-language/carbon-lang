@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/Errc.h"
 #include "gtest/gtest.h"
 #include <memory>
 
@@ -16,7 +17,7 @@ using namespace llvm;
 namespace {
 
 ErrorOr<int> t1() {return 1;}
-ErrorOr<int> t2() { return std::errc::invalid_argument; }
+ErrorOr<int> t2() { return errc::invalid_argument; }
 
 TEST(ErrorOr, SimpleValue) {
   ErrorOr<int> a = t1();
@@ -30,7 +31,7 @@ TEST(ErrorOr, SimpleValue) {
 
   a = t2();
   EXPECT_FALSE(a);
-  EXPECT_EQ(std::errc::invalid_argument, a.getError());
+  EXPECT_EQ(a.getError(), errc::invalid_argument);
 #ifdef EXPECT_DEBUG_DEATH
   EXPECT_DEBUG_DEATH(*a, "Cannot get value when an error exists");
 #endif

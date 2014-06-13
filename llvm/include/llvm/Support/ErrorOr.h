@@ -99,7 +99,6 @@ public:
                                       std::is_error_condition_enum<E>::value,
                                   void *>::type = 0)
       : HasError(true) {
-    using std::make_error_code;
     new (getErrorStorage()) std::error_code(make_error_code(ErrorCode));
   }
 
