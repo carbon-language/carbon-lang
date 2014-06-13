@@ -1732,11 +1732,12 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
   if (atomicPHI) {
     llvm::BasicBlock *opBB = Builder.GetInsertBlock();
     llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
-    llvm::Value *old = Builder.CreateAtomicCmpXchg(
+    llvm::Value *pair = Builder.CreateAtomicCmpXchg(
         LV.getAddress(), atomicPHI, CGF.EmitToMemory(value, type),
         llvm::SequentiallyConsistent, llvm::SequentiallyConsistent);
+    llvm::Value *old = Builder.CreateExtractValue(pair, 0);
+    llvm::Value *success = Builder.CreateExtractValue(pair, 1);
     atomicPHI->addIncoming(old, opBB);
-    llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
     Builder.CreateCondBr(success, contBB, opBB);
     Builder.SetInsertPoint(contBB);
     return isPre ? value : input;
@@ -2075,11 +2076,12 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   if (atomicPHI) {
     llvm::BasicBlock *opBB = Builder.GetInsertBlock();
     llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
-    llvm::Value *old = Builder.CreateAtomicCmpXchg(
+    llvm::Value *pair = Builder.CreateAtomicCmpXchg(
         LHSLV.getAddress(), atomicPHI, CGF.EmitToMemory(Result, LHSTy),
         llvm::SequentiallyConsistent, llvm::SequentiallyConsistent);
+    llvm::Value *old = Builder.CreateExtractValue(pair, 0);
+    llvm::Value *success = Builder.CreateExtractValue(pair, 1);
     atomicPHI->addIncoming(old, opBB);
-    llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
     Builder.CreateCondBr(success, contBB, opBB);
     Builder.SetInsertPoint(contBB);
     return LHSLV;

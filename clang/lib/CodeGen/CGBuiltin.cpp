@@ -975,6 +975,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Result = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
                                                 llvm::SequentiallyConsistent,
                                                 llvm::SequentiallyConsistent);
+    Result = Builder.CreateExtractValue(Result, 0);
     Result = EmitFromInt(*this, Result, T, ValueType);
     return RValue::get(Result);
   }
@@ -998,11 +999,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Args[1] = EmitToInt(*this, EmitScalarExpr(E->getArg(1)), T, IntType);
     Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
 
-    Value *OldVal = Args[1];
-    Value *PrevVal = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
-                                                 llvm::SequentiallyConsistent,
-                                                 llvm::SequentiallyConsistent);
-    Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
+    Value *Pair = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                              llvm::SequentiallyConsistent,
+                                              llvm::SequentiallyConsistent);
+    Value *Result = Builder.CreateExtractValue(Pair, 1);
     // zext bool to int.
     Result = Builder.CreateZExt(Result, ConvertType(E->getType()));
     return RValue::get(Result);
@@ -1524,7 +1524,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         SequentiallyConsistent,
         SequentiallyConsistent);
       CXI->setVolatile(true);
-      return RValue::get(CXI);
+      return RValue::get(Builder.CreateExtractValue(CXI, 0));
   }
   case Builtin::BI_InterlockedIncrement: {
     AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(

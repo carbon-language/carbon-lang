@@ -160,23 +160,70 @@ void test_op_and_fetch (void)
 
 void test_compare_and_swap (void)
 {
-  sc = __sync_val_compare_and_swap (&sc, uc, sc); // CHECK: cmpxchg i8
-  uc = __sync_val_compare_and_swap (&uc, uc, sc); // CHECK: cmpxchg i8
-  ss = __sync_val_compare_and_swap (&ss, uc, sc); // CHECK: cmpxchg i16
-  us = __sync_val_compare_and_swap (&us, uc, sc); // CHECK: cmpxchg i16
-  si = __sync_val_compare_and_swap (&si, uc, sc); // CHECK: cmpxchg i32
-  ui = __sync_val_compare_and_swap (&ui, uc, sc); // CHECK: cmpxchg i32
-  sll = __sync_val_compare_and_swap (&sll, uc, sc); // CHECK: cmpxchg i64
-  ull = __sync_val_compare_and_swap (&ull, uc, sc); // CHECK: cmpxchg i64
+  sc = __sync_val_compare_and_swap (&sc, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i8
+  // CHECK: extractvalue { i8, i1 } [[PAIR]], 0
 
-  ui = __sync_bool_compare_and_swap (&sc, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&uc, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&ss, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&us, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&si, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&ui, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&sll, uc, sc); // CHECK: cmpxchg
-  ui = __sync_bool_compare_and_swap (&ull, uc, sc); // CHECK: cmpxchg
+  uc = __sync_val_compare_and_swap (&uc, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i8
+  // CHECK: extractvalue { i8, i1 } [[PAIR]], 0
+
+  ss = __sync_val_compare_and_swap (&ss, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i16
+  // CHECK: extractvalue { i16, i1 } [[PAIR]], 0
+
+  us = __sync_val_compare_and_swap (&us, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i16
+  // CHECK: extractvalue { i16, i1 } [[PAIR]], 0
+
+  si = __sync_val_compare_and_swap (&si, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i32
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 0
+
+  ui = __sync_val_compare_and_swap (&ui, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i32
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 0
+
+  sll = __sync_val_compare_and_swap (&sll, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i64
+  // CHECK: extractvalue { i64, i1 } [[PAIR]], 0
+
+  ull = __sync_val_compare_and_swap (&ull, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i64
+  // CHECK: extractvalue { i64, i1 } [[PAIR]], 0
+
+
+  ui = __sync_bool_compare_and_swap (&sc, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i8
+  // CHECK: extractvalue { i8, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&uc, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i8
+  // CHECK: extractvalue { i8, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&ss, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i16
+  // CHECK: extractvalue { i16, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&us, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i16
+  // CHECK: extractvalue { i16, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&si, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i32
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&ui, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i32
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&sll, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i64
+  // CHECK: extractvalue { i64, i1 } [[PAIR]], 1
+
+  ui = __sync_bool_compare_and_swap (&ull, uc, sc);
+  // CHECK: [[PAIR:%[a-z0-9._]+]] = cmpxchg i64
+  // CHECK: extractvalue { i64, i1 } [[PAIR]], 1
 }
 
 void test_lock (void)

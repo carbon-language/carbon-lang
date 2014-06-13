@@ -186,13 +186,14 @@ static void emitAtomicCmpXchg(CodeGenFunction &CGF, AtomicExpr *E,
   llvm::LoadInst *Desired = CGF.Builder.CreateLoad(Val2);
   Desired->setAlignment(Align);
 
-  llvm::AtomicCmpXchgInst *Old = CGF.Builder.CreateAtomicCmpXchg(
+  llvm::AtomicCmpXchgInst *Pair = CGF.Builder.CreateAtomicCmpXchg(
       Ptr, Expected, Desired, SuccessOrder, FailureOrder);
-  Old->setVolatile(E->isVolatile());
+  Pair->setVolatile(E->isVolatile());
 
   // Cmp holds the result of the compare-exchange operation: true on success,
   // false on failure.
-  llvm::Value *Cmp = CGF.Builder.CreateICmpEQ(Old, Expected);
+  llvm::Value *Old = CGF.Builder.CreateExtractValue(Pair, 0);
+  llvm::Value *Cmp = CGF.Builder.CreateExtractValue(Pair, 1);
 
   // This basic block is used to hold the store instruction if the operation
   // failed.
