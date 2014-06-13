@@ -96,8 +96,8 @@ define i8 @test_cmpxchg_i8_seqcst_seqcst(i8* %ptr, i8 %desired, i8 %newval) {
 ; CHECK: [[TRY_STORE]]:
 ; CHECK: [[NEWVAL32:%.*]] = zext i8 %newval to i32
 ; CHECK: [[TRYAGAIN:%.*]] =  call i32 @llvm.arm.stlex.p0i8(i32 [[NEWVAL32]], i8* %ptr)
-; CHECK: [[TST:%.*]] = icmp ne i32 [[TRYAGAIN]], 0
-; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
+; CHECK: [[TST:%.*]] = icmp eq i32 [[TRYAGAIN]], 0
+; CHECK: br i1 [[TST]], label %[[BARRIER:.*]], label %[[LOOP]]
 
 ; CHECK: [[BARRIER]]:
 ; CHECK: [[SUCCESS:%.*]] = phi i1 [ true, %[[TRY_STORE]] ], [ false, %[[LOOP]] ]
@@ -126,8 +126,8 @@ define i16 @test_cmpxchg_i16_seqcst_monotonic(i16* %ptr, i16 %desired, i16 %newv
 ; CHECK: [[TRY_STORE]]:
 ; CHECK: [[NEWVAL32:%.*]] = zext i16 %newval to i32
 ; CHECK: [[TRYAGAIN:%.*]] =  call i32 @llvm.arm.stlex.p0i16(i32 [[NEWVAL32]], i16* %ptr)
-; CHECK: [[TST:%.*]] = icmp ne i32 [[TRYAGAIN]], 0
-; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
+; CHECK: [[TST:%.*]] = icmp eq i32 [[TRYAGAIN]], 0
+; CHECK: br i1 [[TST]], label %[[BARRIER:.*]], label %[[LOOP]]
 
 ; CHECK: [[BARRIER]]:
 ; CHECK-NOT: fence
@@ -154,8 +154,8 @@ define i32 @test_cmpxchg_i32_acquire_acquire(i32* %ptr, i32 %desired, i32 %newva
 
 ; CHECK: [[TRY_STORE]]:
 ; CHECK: [[TRYAGAIN:%.*]] =  call i32 @llvm.arm.strex.p0i32(i32 %newval, i32* %ptr)
-; CHECK: [[TST:%.*]] = icmp ne i32 [[TRYAGAIN]], 0
-; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
+; CHECK: [[TST:%.*]] = icmp eq i32 [[TRYAGAIN]], 0
+; CHECK: br i1 [[TST]], label %[[BARRIER:.*]], label %[[LOOP]]
 
 ; CHECK: [[BARRIER]]:
 ; CHECK: [[SUCCESS:%.*]] = phi i1 [ true, %[[TRY_STORE]] ], [ false, %[[LOOP]] ]
@@ -193,8 +193,8 @@ define i64 @test_cmpxchg_i64_monotonic_monotonic(i64* %ptr, i64 %desired, i64 %n
 ; CHECK: [[NEWHI:%.*]] = trunc i64 [[NEWHI_TMP]] to i32
 ; CHECK: [[PTR8:%.*]] = bitcast i64* %ptr to i8*
 ; CHECK: [[TRYAGAIN:%.*]] = call i32 @llvm.arm.strexd(i32 [[NEWLO]], i32 [[NEWHI]], i8* [[PTR8]])
-; CHECK: [[TST:%.*]] = icmp ne i32 [[TRYAGAIN]], 0
-; CHECK: br i1 [[TST]], label %[[LOOP]], label %[[BARRIER:.*]]
+; CHECK: [[TST:%.*]] = icmp eq i32 [[TRYAGAIN]], 0
+; CHECK: br i1 [[TST]], label %[[BARRIER:.*]], label %[[LOOP]]
 
 ; CHECK: [[BARRIER]]:
 ; CHECK-NOT: fence

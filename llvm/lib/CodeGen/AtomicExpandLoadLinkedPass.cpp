@@ -283,9 +283,9 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   Builder.SetInsertPoint(TryStoreBB);
   Value *StoreSuccess = TLI->emitStoreConditional(
       Builder, CI->getNewValOperand(), Addr, MemOpOrder);
-  Value *TryAgain = Builder.CreateICmpNE(
+  StoreSuccess = Builder.CreateICmpEQ(
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
-  Builder.CreateCondBr(TryAgain, LoopBB, BarrierBB);
+  Builder.CreateCondBr(StoreSuccess, BarrierBB, LoopBB);
 
   // Make sure later instructions don't get reordered with a fence if necessary.
   Builder.SetInsertPoint(BarrierBB);
