@@ -140,7 +140,7 @@ public:
   ///
   unsigned getDarwinDirective() const { return DarwinDirective; }
 
-  /// getInstrItins - Return the instruction itineraies based on subtarget
+  /// getInstrItins - Return the instruction itineraries based on subtarget
   /// selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
