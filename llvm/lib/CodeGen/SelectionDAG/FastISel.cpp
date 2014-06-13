@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
@@ -981,7 +982,6 @@ FastISel::SelectInstruction(const Instruction *I) {
 /// the CFG.
 void
 FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
-
   if (FuncInfo.MBB->getBasicBlock()->size() > 1 &&
       FuncInfo.MBB->isLayoutSuccessor(MSucc)) {
     // For more accurate line information if this is the only instruction
@@ -992,7 +992,11 @@ FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
     TII.InsertBranch(*FuncInfo.MBB, MSucc, nullptr,
                      SmallVector<MachineOperand, 0>(), DbgLoc);
   }
-  FuncInfo.MBB->addSuccessor(MSucc);
+  uint32_t BranchWeight = 0;
+  if (FuncInfo.BPI)
+    BranchWeight = FuncInfo.BPI->getEdgeWeight(FuncInfo.MBB->getBasicBlock(),
+                                               MSucc->getBasicBlock());
+  FuncInfo.MBB->addSuccessor(MSucc, BranchWeight);
 }
 
 /// SelectFNeg - Emit an FNeg operation.

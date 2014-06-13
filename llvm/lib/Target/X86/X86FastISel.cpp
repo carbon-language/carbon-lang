@@ -20,6 +20,7 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
@@ -1206,7 +1207,11 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       }
 
       FastEmitBranch(FalseMBB, DbgLoc);
-      FuncInfo.MBB->addSuccessor(TrueMBB);
+      uint32_t BranchWeight = 0;
+      if (FuncInfo.BPI)
+        BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
+                                                   TrueMBB->getBasicBlock());
+      FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
       return true;
     }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
@@ -1238,7 +1243,11 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(JmpOpc))
           .addMBB(TrueMBB);
         FastEmitBranch(FalseMBB, DbgLoc);
-        FuncInfo.MBB->addSuccessor(TrueMBB);
+        uint32_t BranchWeight = 0;
+        if (FuncInfo.BPI)
+          BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
+                                                     TrueMBB->getBasicBlock());
+        FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
         return true;
       }
     }
@@ -1255,7 +1264,11 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_4))
     .addMBB(TrueMBB);
   FastEmitBranch(FalseMBB, DbgLoc);
-  FuncInfo.MBB->addSuccessor(TrueMBB);
+  uint32_t BranchWeight = 0;
+  if (FuncInfo.BPI)
+    BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
+                                               TrueMBB->getBasicBlock());
+  FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
   return true;
 }
 
