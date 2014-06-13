@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/VirtualFileSystem.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
@@ -35,7 +36,7 @@ public:
     std::map<std::string, vfs::Status>::iterator I =
         FilesAndDirs.find(Path.str());
     if (I == FilesAndDirs.end())
-      return std::make_error_code(std::errc::no_such_file_or_directory);
+      return make_error_code(llvm::errc::no_such_file_or_directory);
     return I->second;
   }
   std::error_code openFileForRead(const Twine &Path,
@@ -307,8 +308,8 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   EXPECT_TRUE(S->equivalent(*O->status("//root/"))); // non-volatile UniqueID
 
   // broken mapping
-  EXPECT_EQ(std::errc::no_such_file_or_directory,
-            O->status("//root/file2").getError());
+  EXPECT_EQ(O->status("//root/file2").getError(),
+            llvm::errc::no_such_file_or_directory);
   EXPECT_EQ(0, NumDiagnostics);
 }
 
@@ -372,11 +373,11 @@ TEST_F(VFSFromYAMLTest, CaseSensitive) {
   O->pushOverlay(FS);
 
   ErrorOr<vfs::Status> SS = O->status("//root/xx");
-  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(SS.getError(), llvm::errc::no_such_file_or_directory);
   SS = O->status("//root/xX");
-  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(SS.getError(), llvm::errc::no_such_file_or_directory);
   SS = O->status("//root/Xx");
-  EXPECT_EQ(std::errc::no_such_file_or_directory, SS.getError());
+  EXPECT_EQ(SS.getError(), llvm::errc::no_such_file_or_directory);
   EXPECT_EQ(0, NumDiagnostics);
 }
 

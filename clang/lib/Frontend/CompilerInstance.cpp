@@ -35,6 +35,7 @@
 #include "clang/Serialization/GlobalModuleIndex.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CrashRecoveryContext.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/LockFileManager.h"
@@ -572,7 +573,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
         llvm::sys::fs::createUniqueFile(TempPath.str(), fd, TempPath);
 
     if (CreateMissingDirectories &&
-        EC == std::errc::no_such_file_or_directory) {
+        EC == llvm::errc::no_such_file_or_directory) {
       StringRef Parent = llvm::sys::path::parent_path(OutputPath);
       EC = llvm::sys::fs::create_directories(Parent);
       if (!EC) {
