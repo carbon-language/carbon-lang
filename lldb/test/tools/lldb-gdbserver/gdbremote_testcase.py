@@ -2,6 +2,7 @@
 Base class for gdb-remote test cases.
 """
 
+import errno
 import unittest2
 import pexpect
 import platform
@@ -60,7 +61,7 @@ class GdbRemoteTestCaseBase(TestBase):
         self.debug_monitor_exe = get_lldb_gdbserver_exe()
         if not self.debug_monitor_exe:
             self.skipTest("lldb_gdbserver exe not found")
-        self.debug_monitor_extra_args = ""
+        self.debug_monitor_extra_args = " -c 'log enable -T -f process-{}.log lldb break process thread' -c 'log enable -T -f packets-{}.log gdb-remote packets'".format(self.id(), self.id(), self.id())
 
     def init_debugserver_test(self):
         self.debug_monitor_exe = get_debugserver_exe()
@@ -96,18 +97,26 @@ class GdbRemoteTestCaseBase(TestBase):
     def set_inferior_startup_attach(self):
         self._inferior_startup = self._STARTUP_ATTACH
 
-    def start_server(self, attach_pid=None):
-        # Create the command line
+    def launch_debug_monitor(self, attach_pid=None):
+        # Create the command line.
         commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
             commandline += " --attach=%d" % attach_pid
 
-        # start the server
+        # Start the server.
         server = pexpect.spawn(commandline)
 
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             server.logfile_read = sys.stdout
+
+        return server
+
+    def connect_to_debug_monitor(self, attach_pid=None):
+        server = self.launch_debug_monitor(attach_pid=attach_pid)
+
+        # Wait until we receive the server ready message before continuing.
+        server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
 
         # Schedule debug monitor to be shut down during teardown.
         logger = self.logger
@@ -116,16 +125,29 @@ class GdbRemoteTestCaseBase(TestBase):
                 server.close()
             except:
                 logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
-
         self.addTearDownHook(shutdown_debug_monitor)
 
-        # Wait until we receive the server ready message before continuing.
-        server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
+        attempts = 0
+        MAX_ATTEMPTS = 20
 
-        # Create a socket to talk to the server
-        self.sock = self.create_socket()
+        while attempts < MAX_ATTEMPTS:
+            # Create a socket to talk to the server
+            try:
+                self.sock = self.create_socket()
+                return server
+            except socket.error as serr:
+                # We're only trying to handle connection refused
+                if serr.errno != errno.ECONNREFUSED:
+                    raise serr
 
-        return server
+                # Increment attempts.
+                print("connect to debug monitor on port %d failed, attempt #%d of %d" % (self.port, attempts + 1, MAX_ATTEMPTS))
+                attempts += 1
+
+                # And wait a second before next attempt.
+                time.sleep(1)
+
+        raise Exception("failed to create a socket to the launched debug monitor after %d tries" % attempts)
 
     def launch_process_for_attach(self,inferior_args=None, sleep_seconds=3):
         # We're going to start a child process that the debug monitor stub can later attach to.
@@ -172,7 +194,7 @@ class GdbRemoteTestCaseBase(TestBase):
             attach_pid = inferior.pid
 
         # Launch the debug monitor stub, attaching to the inferior.
-        server = self.start_server(attach_pid=attach_pid)
+        server = self.connect_to_debug_monitor(attach_pid=attach_pid)
         self.assertIsNotNone(server)
 
         if self._inferior_startup == self._STARTUP_LAUNCH:
@@ -214,7 +236,7 @@ class GdbRemoteTestCaseBase(TestBase):
     def add_process_info_collection_packets(self):
         self.test_sequence.add_log_lines(
             ["read packet: $qProcessInfo#00",
-              { "direction":"send", "regex":r"^\$(.+)#00", "capture":{1:"process_info_raw"} }],
+              { "direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"process_info_raw"} }],
             True)
 
     _KNOWN_PROCESS_INFO_KEYS = [
@@ -263,8 +285,10 @@ class GdbRemoteTestCaseBase(TestBase):
         # Parse register infos.
         return [parse_reg_info_response(reg_info_response) for reg_info_response in reg_info_responses]
 
-    def expect_gdbremote_sequence(self):
-        return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
+    def expect_gdbremote_sequence(self, timeout_seconds =None):
+        if not timeout_seconds:
+            timeout_seconds = self._TIMEOUT_SECONDS
+        return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, timeout_seconds, self.logger)
 
     _KNOWN_REGINFO_KEYS = [
         "name",
@@ -433,6 +457,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "augmented-libraries-svr4-read",
         "PacketSize",
         "QStartNoAckMode",
+        "QThreadSuffixSupported",
         "qXfer:auxv:read",
         "qXfer:libraries:read",
         "qXfer:libraries-svr4:read",

@@ -10,26 +10,26 @@ gdb remote packet functional areas.  For now it contains
 the initial set of tests implemented.
 """
 
+import gdbremote_testcase
 import lldbgdbserverutils
+import platform
 import unittest2
 from lldbtest import *
-
-import gdbremote_testcase
 
 class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
         self.init_debugserver_test()
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
 
     @llgs_test
     def test_exe_starts_llgs(self):
         self.init_llgs_test()
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
 
     def start_no_ack_mode(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         self.add_no_ack_remote_stream()
@@ -46,7 +46,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.start_no_ack_mode()
 
     def thread_suffix_supported(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         self.add_no_ack_remote_stream()
@@ -69,7 +69,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.thread_suffix_supported()
 
     def list_threads_in_stop_reply_supported(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         self.add_no_ack_remote_stream()
@@ -91,7 +91,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.list_threads_in_stop_reply_supported()
 
     def start_inferior(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # build launch args
@@ -119,7 +119,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.start_inferior()
 
     def inferior_exit_0(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # build launch args
@@ -150,7 +150,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.inferior_exit_0()
 
     def inferior_exit_42(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         RETVAL = 42
@@ -182,8 +182,39 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.buildDwarf()
         self.inferior_exit_42()
 
+    def c_packet_works(self):
+        server = self.connect_to_debug_monitor()
+        self.assertIsNotNone(server)
+
+        # build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.test_sequence.add_log_lines(
+            ["read packet: $c#00",
+             "send packet: $W00#00"],
+            True)
+
+        self.expect_gdbremote_sequence()
+
+    @debugserver_test
+    @dsym_test
+    def test_c_packet_works_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.c_packet_works()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_c_packet_works_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.c_packet_works()
+
     def inferior_print_exit(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # build launch args
@@ -216,7 +247,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.inferior_print_exit()
 
     def first_launch_stop_reply_thread_matches_first_qC(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # build launch args
@@ -359,6 +390,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             True)
         self.expect_gdbremote_sequence()
 
+        # Wait a moment for completed and now-detached inferior process to clear.
+        time.sleep(1)
+
         # Process should be dead now.  Reap results.
         poll_result = procs["inferior"].poll()
         self.assertIsNotNone(poll_result)
@@ -391,6 +425,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             True)
         self.expect_gdbremote_sequence()
 
+        # Wait a moment for completed and now-detached inferior process to clear.
+        time.sleep(1)
+
         # Process should be dead now.  Reap results.
         poll_result = procs["inferior"].poll()
         self.assertIsNotNone(poll_result)
@@ -416,7 +453,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.attach_commandline_kill_after_initial_stop()
 
     def qRegisterInfo_returns_one_valid_result(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # Build launch args
@@ -427,7 +464,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
             ["read packet: $qRegisterInfo0#00",
-             { "direction":"send", "regex":r"^\$(.+);#\d{2}", "capture":{1:"reginfo_0"} }],
+             { "direction":"send", "regex":r"^\$(.+);#[0-9A-Fa-f]{2}", "capture":{1:"reginfo_0"} }],
             True)
 
         # Run the stream
@@ -454,7 +491,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.qRegisterInfo_returns_one_valid_result()
 
     def qRegisterInfo_returns_all_valid_results(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # Build launch args.
@@ -489,7 +526,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.qRegisterInfo_returns_all_valid_results()
 
     def qRegisterInfo_contains_required_generics(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # Build launch args
@@ -538,7 +575,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.qRegisterInfo_contains_required_generics()
 
     def qRegisterInfo_contains_at_least_one_register_set(self):
-        server = self.start_server()
+        server = self.connect_to_debug_monitor()
         self.assertIsNotNone(server)
 
         # Build launch args
@@ -574,6 +611,42 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qRegisterInfo_contains_at_least_one_register_set()
+
+    def qRegisterInfo_contains_avx_registers_on_linux_x86_64(self):
+        server = self.connect_to_debug_monitor()
+        self.assertIsNotNone(server)
+
+        # Build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.add_register_info_collection_packets()
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather register info entries.
+        reg_infos = self.parse_register_info_packets(context)
+
+        # Collect all generics found.
+        register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
+        self.assertTrue("Advanced Vector Extensions" in register_sets)
+
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qRegisterInfo_contains_avx_registers_on_linux_x86_64_llgs_dwarf(self):
+        # Skip this test if not Linux x86_64.
+        if platform.system() != "Linux" or platform.processor() != "x86_64":
+            self.skipTest("linux x86_64 test")
+
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qRegisterInfo_contains_avx_registers_on_linux_x86_64()
 
     def qThreadInfo_contains_thread(self):
         procs = self.prep_debug_monitor_and_inferior()
@@ -702,6 +775,12 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Read value for each register.
         reg_index = 0
         for reg_info in reg_infos:
+            # Skip registers that don't have a register set.  For x86, these are
+            # the DRx registers, which have no LLDB-kind register number and thus
+            # cannot be read via normal NativeRegisterContext::ReadRegister(reg_info,...) calls.
+            if not "set" in reg_info:
+                continue
+
             # Clear existing packet expectations.
             self.reset_test_sequence()
 
@@ -717,7 +796,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             p_response = context.get("p_response")
             self.assertIsNotNone(p_response)
             self.assertEquals(len(p_response), 2 * int(reg_info["bitsize"]) / 8)
-            # print "register {} ({}): {}".format(reg_index, reg_info["name"], p_response)
 
             # Increment loop
             reg_index += 1
@@ -848,17 +926,17 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         # self.assertEquals(len(threads), NUM_THREADS)
 
         signaled_tids = {}
+        print_thread_ids = {}
 
         # Switch to each thread, deliver a signal, and verify signal delivery
         for i in range(NUM_THREADS - 1):
             # Run until SIGSEGV comes in.
             self.reset_test_sequence()
             self.test_sequence.add_log_lines(
-                [ # "read packet: $c#00",
-                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"signo", 2:"thread_id"} }
+                [{"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"signo", 2:"thread_id"} }
                  ], True)
-            context = self.expect_gdbremote_sequence()
 
+            context = self.expect_gdbremote_sequence(timeout_seconds=10)
             self.assertIsNotNone(context)
             signo = context.get("signo")
             self.assertEqual(int(signo, 16), self.TARGET_EXC_BAD_ACCESS)
@@ -872,39 +950,54 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             self.reset_test_sequence()
             self.test_sequence.add_log_lines(
                 [
+                # Set the continue thread.
                  "read packet: $Hc{0:x}#00".format(thread_id),  # Set current thread.
                  "send packet: $OK#00",
+
+                 # Continue sending the signal number to the continue thread.
+                 # The commented out packet is a way to do this same operation without using
+                 # a $Hc (but this test is testing $Hc, so we'll stick with the former).
                  "read packet: $C{0:x}#00".format(signal.SIGUSR1),
                  # "read packet: $vCont;C{0:x}:{1:x};c#00".format(signal.SIGUSR1, thread_id),
-                 # "read packet: $c#00",
-                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
-                  "read packet: $c#00",
-                 # { "type":"output_match", "regex":r"^received SIGUSR1 on thread id: ([0-9a-fA-F]+)\r\n$", "capture":{ 1:"print_thread_id"} },
-                 # "read packet: {}".format(chr(03)),
+
+                 # FIXME: Linux does not report the thread stop on the delivered signal (SIGUSR1 here).  MacOSX debugserver does.
+                 # But MacOSX debugserver isn't guaranteeing the thread the signal handler runs on, so currently its an XFAIL.
+                 # Need to rectify behavior here.  The linux behavior is more intuitive to me since we're essentially swapping out
+                 # an about-to-be-delivered signal (for which we already sent a stop packet) to a different signal.
+                 # {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                 #  "read packet: $c#00",
+                 { "type":"output_match", "regex":r"^received SIGUSR1 on thread id: ([0-9a-fA-F]+)\r\nthread ([0-9a-fA-F]+): past SIGSEGV\r\n", "capture":{ 1:"print_thread_id", 2:"post_handle_thread_id" } },
                 ],
                 True)
 
             # Run the sequence.
-            context = self.expect_gdbremote_sequence()
+            context = self.expect_gdbremote_sequence(timeout_seconds=10)
             self.assertIsNotNone(context)
 
             # Ensure the stop signal is the signal we delivered.
-            stop_signo = context.get("stop_signo")
-            self.assertIsNotNone(stop_signo)
-            self.assertEquals(int(stop_signo,16), signal.SIGUSR1)
-
+            # stop_signo = context.get("stop_signo")
+            # self.assertIsNotNone(stop_signo)
+            # self.assertEquals(int(stop_signo,16), signal.SIGUSR1)
+            
             # Ensure the stop thread is the thread to which we delivered the signal.
-            stop_thread_id = context.get("stop_thread_id")
-            self.assertIsNotNone(stop_thread_id)
-            self.assertEquals(int(stop_thread_id,16), thread_id)
+            # stop_thread_id = context.get("stop_thread_id")
+            # self.assertIsNotNone(stop_thread_id)
+            # self.assertEquals(int(stop_thread_id,16), thread_id)
 
             # Ensure we haven't seen this thread id yet.  The inferior's self-obtained thread ids are not guaranteed to match the stub tids (at least on MacOSX).
-            # print_thread_id = context.get("print_thread_id")
-            # self.assertIsNotNone(print_thread_id)
-            # self.assertFalse(print_thread_id in print_thread_ids)
-
+            print_thread_id = context.get("print_thread_id")
+            self.assertIsNotNone(print_thread_id)
+            print_thread_id = int(print_thread_id, 16)
+            self.assertFalse(print_thread_id in print_thread_ids)
+            
             # Now remember this print (i.e. inferior-reflected) thread id and ensure we don't hit it again.
-            # print_thread_ids[print_thread_id] = 1
+            print_thread_ids[print_thread_id] = 1
+
+            # Ensure post signal-handle thread id matches the thread that initially raised the SIGSEGV.
+            post_handle_thread_id = context.get("post_handle_thread_id")
+            self.assertIsNotNone(post_handle_thread_id)
+            post_handle_thread_id = int(post_handle_thread_id, 16)
+            self.assertEquals(post_handle_thread_id, print_thread_id)
 
     @debugserver_test
     @dsym_test
@@ -1051,6 +1144,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(context)
         mem_region_dict = self.parse_memory_region_packet(context)
 
+        # Ensure there are no errors reported.
+        self.assertFalse("error" in mem_region_dict)
+
         # Ensure code address is readable and executable.
         self.assertTrue("permissions" in mem_region_dict)
         self.assertTrue("r" in mem_region_dict["permissions"])
@@ -1112,6 +1208,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(context)
         mem_region_dict = self.parse_memory_region_packet(context)
 
+        # Ensure there are no errors reported.
+        self.assertFalse("error" in mem_region_dict)
+
         # Ensure address is readable and executable.
         self.assertTrue("permissions" in mem_region_dict)
         self.assertTrue("r" in mem_region_dict["permissions"])
@@ -1172,6 +1271,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
         mem_region_dict = self.parse_memory_region_packet(context)
+
+        # Ensure there are no errors reported.
+        self.assertFalse("error" in mem_region_dict)
 
         # Ensure address is readable and executable.
         self.assertTrue("permissions" in mem_region_dict)
@@ -1268,10 +1370,10 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
              # Capture $p results.
              { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} },
              ], True)
-
+ 
         context = self.expect_gdbremote_sequence()
         self.assertIsNotNone(context)
-
+         
         # Verify the PC is where we expect.  Note response is in endianness of the inferior.
         p_response = context.get("p_response")
         self.assertIsNotNone(p_response)
@@ -1293,7 +1395,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             # We should now receive the output from the call.
             { "type":"output_match", "regex":r"^hello, world\r\n$" },
             # And wait for program completion.
-            {"direction":"send", "regex":r"^\$W00(.*)#00" },
+            {"direction":"send", "regex":r"^\$W00(.*)#[0-9a-fA-F]{2}$" },
             ], True)
 
         context = self.expect_gdbremote_sequence()
@@ -1644,6 +1746,23 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         return (successful_writes, failed_writes)
 
+    def is_bit_flippable_register(self, reg_info):
+        if not reg_info:
+            return False
+        if not "set" in reg_info:
+            return False
+        if reg_info["set"] != "General Purpose Registers":
+            return False
+        if ("container-regs" in reg_info) and (len(reg_info["container-regs"]) > 0):
+            # Don't try to bit flip registers contained in another register.
+            return False
+        if re.match("^.s$", reg_info["name"]):
+            # This is a 2-letter register name that ends in "s", like a segment register.
+            # Don't try to bit flip these.
+            return False
+        # Okay, this looks fine-enough.
+        return True
+
     def P_writes_all_gpr_registers(self):
         # Start inferior debug session, grab all register info.
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["sleep:2"])
@@ -1663,8 +1782,8 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         endian = process_info.get("endian")
         self.assertIsNotNone(endian)
 
-        # Pull out the general purpose register infos that are not contained in other registers.
-        gpr_reg_infos = [reg_info for reg_info in reg_infos if ("set" in reg_info) and (reg_info["set"] == "General Purpose Registers") and ("container-regs" not in reg_info)]
+        # Pull out the register infos that we think we can bit flip successfully,.
+        gpr_reg_infos = [reg_info for reg_info in reg_infos if self.is_bit_flippable_register(reg_info)]
         self.assertIsNotNone(len(gpr_reg_infos) > 0)
 
         # Write flipped bit pattern of existing value to each register.
