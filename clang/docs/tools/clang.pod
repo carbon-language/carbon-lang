@@ -324,8 +324,9 @@ C++ class in the module that contains the vtable for the class.
 
 The B<-fstandalone-debug> option turns off these optimizations.  This
 is useful when working with 3rd-party libraries that don't come with
-debug information.  Note that Clang will never emit type information
-for types that are not referenced at all by the program.
+debug information.  This is the default on Darwin.  Note that Clang
+will never emit type information for types that are not referenced at
+all by the program.
 
 =item B<-fexceptions>
 

@@ -1298,7 +1298,7 @@ below. If multiple flags are present, the last one is used.
   doesn't contain any other data (e.g. description of local variables or
   function parameters).
 
-.. option:: -fstandalone-debug **-fno-standalone-debug**
+.. option:: -fstandalone-debug
 
   Clang supports a number of optimizations to reduce the size of debug
   information in the binary. They work based on the assumption that
@@ -1309,10 +1309,16 @@ below. If multiple flags are present, the last one is used.
   type info for a dynamic C++ class in the module that contains the
   vtable for the class.
 
-  The ``-fstandalone-debug`` option turns off these optimizations.
+  The **-fstandalone-debug** option turns off these optimizations.
   This is useful when working with 3rd-party libraries that don't come
   with debug information.  Note that Clang will never emit type
   information for types that are not referenced at all by the program.
+
+.. option:: -fno-standalone-debug
+
+   On Darwin **-fstandalone-debug** is enabled by default. The
+   **-fno-standalone-debug** option can be used to get to turn on the
+   vtable-based optimization described above.
 
 .. option:: -g
 
