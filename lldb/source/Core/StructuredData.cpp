@@ -286,9 +286,11 @@ StructuredData::ParseJSON (std::string json_text)
     {
         const char *start_of_json_text = json_text.c_str();
         const char *c = json_text.c_str();
-        while (*c != '\0' && c - start_of_json_text <= json_text_size)
+        while (*c != '\0' &&
+               static_cast<size_t>(c - start_of_json_text) <= json_text_size)
         {
-            while (isspace (*c) && c - start_of_json_text < json_text_size)
+            while (isspace (*c) &&
+                   static_cast<size_t>(c - start_of_json_text) < json_text_size)
                 c++;
             if (*c == '{')
             {
