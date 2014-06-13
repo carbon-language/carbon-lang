@@ -157,7 +157,6 @@ bool AMDGPUPassConfig::addInstSelector() {
 }
 
 bool AMDGPUPassConfig::addPreRegAlloc() {
-  addPass(createAMDGPUConvertToISAPass(*TM));
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {

@@ -7,8 +7,7 @@
 //
 //==-----------------------------------------------------------------------===//
 
-// Include AMDIL TD files
-include "AMDILBase.td"
+include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
 // Subtarget Features
@@ -119,6 +118,10 @@ def AMDGPU : Target {
   // Pull in Instruction Info:
   let InstructionSet = AMDGPUInstrInfo;
 }
+
+// Dummy Instruction itineraries for pseudo instructions
+def ALU_NULL : FuncUnit;
+def NullALU : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Predicate helper class

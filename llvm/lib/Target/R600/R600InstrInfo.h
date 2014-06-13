@@ -33,7 +33,6 @@ namespace llvm {
   private:
   const R600RegisterInfo RI;
 
-  int getBranchInstr(const MachineOperand &op) const;
   std::vector<std::pair<int, unsigned> >
   ExtractSrcs(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV, unsigned &ConstCount) const;
 

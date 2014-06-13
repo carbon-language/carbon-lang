@@ -1266,13 +1266,6 @@ defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 
 
 //===----------------------------------------------------------------------===//
-// Branch Instructions
-//===----------------------------------------------------------------------===//
-
-def IF_PREDICATE_SET  : ILFormat<(outs), (ins GPRI32:$src),
-  "IF_PREDICATE_SET $src", []>;
-
-//===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
 
@@ -1344,15 +1337,6 @@ def TXD_SHADOW: InstR600 <
 }
 } // End isPseudo = 1
 } // End usesCustomInserter = 1
-
-//===---------------------------------------------------------------------===//
-// Return instruction
-//===---------------------------------------------------------------------===//
-let isTerminator = 1, isReturn = 1, hasCtrlDep = 1,
-    usesCustomInserter = 1 in {
-  def RETURN          : ILFormat<(outs), (ins variable_ops),
-      "RETURN", [(IL_retflag)]>;
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -1480,11 +1464,52 @@ let Inst{63-32} = Word1;
   let VTXInst = 1;
 }
 
+//===---------------------------------------------------------------------===//
+// Flow and Program control Instructions
+//===---------------------------------------------------------------------===//
+class ILFormat<dag outs, dag ins, string asmstr, list<dag> pattern>
+: Instruction {
 
+     let Namespace = "AMDGPU";
+     dag OutOperandList = outs;
+     dag InOperandList = ins;
+     let Pattern = pattern;
+     let AsmString = !strconcat(asmstr, "\n");
+     let isPseudo = 1;
+     let Itinerary = NullALU;
+     bit hasIEEEFlag = 0;
+     bit hasZeroOpFlag = 0;
+     let mayLoad = 0;
+     let mayStore = 0;
+     let hasSideEffects = 0;
+}
 
-//===--------------------------------------------------------------------===//
-// Instructions support
-//===--------------------------------------------------------------------===//
+multiclass BranchConditional<SDNode Op, RegisterClass rci, RegisterClass rcf> {
+    def _i32 : ILFormat<(outs),
+  (ins brtarget:$target, rci:$src0),
+        "; i32 Pseudo branch instruction",
+  [(Op bb:$target, (i32 rci:$src0))]>;
+    def _f32 : ILFormat<(outs),
+  (ins brtarget:$target, rcf:$src0),
+        "; f32 Pseudo branch instruction",
+  [(Op bb:$target, (f32 rcf:$src0))]>;
+}
+
+// Only scalar types should generate flow control
+multiclass BranchInstr<string name> {
+  def _i32 : ILFormat<(outs), (ins R600_Reg32:$src),
+      !strconcat(name, " $src"), []>;
+  def _f32 : ILFormat<(outs), (ins R600_Reg32:$src),
+      !strconcat(name, " $src"), []>;
+}
+// Only scalar types should generate flow control
+multiclass BranchInstr2<string name> {
+  def _i32 : ILFormat<(outs), (ins R600_Reg32:$src0, R600_Reg32:$src1),
+      !strconcat(name, " $src0, $src1"), []>;
+  def _f32 : ILFormat<(outs), (ins R600_Reg32:$src0, R600_Reg32:$src1),
+      !strconcat(name, " $src0, $src1"), []>;
+}
+
 //===---------------------------------------------------------------------===//
 // Custom Inserter for Branches and returns, this eventually will be a
 // separate pass
@@ -1497,13 +1522,22 @@ let isTerminator = 1, usesCustomInserter = 1, isBranch = 1, isBarrier = 1 in {
 }
 
 //===---------------------------------------------------------------------===//
-// Flow and Program control Instructions
+// Return instruction
 //===---------------------------------------------------------------------===//
+let isTerminator = 1, isReturn = 1, hasCtrlDep = 1,
+    usesCustomInserter = 1 in {
+  def RETURN          : ILFormat<(outs), (ins variable_ops),
+      "RETURN", [(IL_retflag)]>;
+}
+
+//===----------------------------------------------------------------------===//
+// Branch Instructions
+//===----------------------------------------------------------------------===//
+
+def IF_PREDICATE_SET  : ILFormat<(outs), (ins R600_Reg32:$src),
+  "IF_PREDICATE_SET $src", []>;
+
 let isTerminator=1 in {
-  def SWITCH      : ILFormat< (outs), (ins GPRI32:$src),
-  !strconcat("SWITCH", " $src"), []>;
-  def CASE        : ILFormat< (outs), (ins GPRI32:$src),
-      !strconcat("CASE", " $src"), []>;
   def BREAK       : ILFormat< (outs), (ins),
       "BREAK", []>;
   def CONTINUE    : ILFormat< (outs), (ins),

@@ -28,12 +28,6 @@ struct R600RegisterInfo : public AMDGPURegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
-  /// \param RC is an AMDIL reg class.
-  ///
-  /// \returns the R600 reg class that is equivalent to \p RC.
-  const TargetRegisterClass *getISARegClass(
-    const TargetRegisterClass *RC) const override;
-
   /// \brief get the HW encoding for a register's channel.
   unsigned getHWRegChan(unsigned reg) const;
 

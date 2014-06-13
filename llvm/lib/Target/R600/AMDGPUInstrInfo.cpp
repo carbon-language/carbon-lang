@@ -325,28 +325,6 @@ int AMDGPUInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
   return getIndirectIndexBegin(MF) + Offset;
 }
 
-
-void AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
-    DebugLoc DL) const {
-  MachineRegisterInfo &MRI = MF.getRegInfo();
-  const AMDGPURegisterInfo & RI = getRegisterInfo();
-
-  for (unsigned i = 0; i < MI.getNumOperands(); i++) {
-    MachineOperand &MO = MI.getOperand(i);
-    // Convert dst regclass to one that is supported by the ISA
-    if (MO.isReg() && MO.isDef()) {
-      if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-        const TargetRegisterClass * oldRegClass = MRI.getRegClass(MO.getReg());
-        const TargetRegisterClass * newRegClass = RI.getISARegClass(oldRegClass);
-
-        assert(newRegClass);
-
-        MRI.setRegClass(MO.getReg(), newRegClass);
-      }
-    }
-  }
-}
-
 int AMDGPUInstrInfo::getMaskedMIMGOp(uint16_t Opcode, unsigned Channels) const {
   switch (Channels) {
   default: return Opcode;

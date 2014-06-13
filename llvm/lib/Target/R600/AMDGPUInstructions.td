@@ -49,6 +49,11 @@ def u8imm : Operand<i8> {
   let PrintMethod = "printU8ImmOperand";
 }
 
+//===--------------------------------------------------------------------===//
+// Custom Operands
+//===--------------------------------------------------------------------===//
+def brtarget   : Operand<OtherVT>;
+
 //===----------------------------------------------------------------------===//
 // PatLeafs for floating-point comparisons
 //===----------------------------------------------------------------------===//
@@ -126,6 +131,21 @@ def COND_NULL : PatLeaf <
 //===----------------------------------------------------------------------===//
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
+
+def global_store : PatFrag<(ops node:$val, node:$ptr),
+    (store node:$val, node:$ptr), [{
+        return isGlobalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+// Global address space loads
+def global_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return isGlobalLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+// Constant address space loads
+def constant_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
+}]>;
 
 def az_extload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
   LoadSDNode *L = cast<LoadSDNode>(N);

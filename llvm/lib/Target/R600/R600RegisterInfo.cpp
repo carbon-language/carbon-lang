@@ -54,16 +54,6 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-const TargetRegisterClass *
-R600RegisterInfo::getISARegClass(const TargetRegisterClass * rc) const {
-  switch (rc->getID()) {
-  case AMDGPU::GPRF32RegClassID:
-  case AMDGPU::GPRI32RegClassID:
-    return &AMDGPU::R600_Reg32RegClass;
-  default: return rc;
-  }
-}
-
 unsigned R600RegisterInfo::getHWRegChan(unsigned reg) const {
   return this->getEncodingValue(reg) >> HW_CHAN_SHIFT;
 }

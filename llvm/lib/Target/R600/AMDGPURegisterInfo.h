@@ -38,14 +38,6 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
     assert(!"Unimplemented");  return BitVector();
   }
 
-  /// \param RC is an AMDIL reg class.
-  ///
-  /// \returns The ISA reg class that is equivalent to \p RC.
-  virtual const TargetRegisterClass * getISARegClass(
-                                         const TargetRegisterClass * RC) const {
-    assert(!"Unimplemented"); return nullptr;
-  }
-
   virtual const TargetRegisterClass* getCFGStructurizerRegClass(MVT VT) const {
     assert(!"Unimplemented"); return nullptr;
   }

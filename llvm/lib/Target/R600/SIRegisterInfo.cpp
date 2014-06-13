@@ -37,15 +37,6 @@ unsigned SIRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   return RC->getNumRegs();
 }
 
-const TargetRegisterClass *
-SIRegisterInfo::getISARegClass(const TargetRegisterClass * rc) const {
-  switch (rc->getID()) {
-  case AMDGPU::GPRF32RegClassID:
-    return &AMDGPU::VReg_32RegClass;
-  default: return rc;
-  }
-}
-
 const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
                                                                    MVT VT) const {
   switch(VT.SimpleTy) {

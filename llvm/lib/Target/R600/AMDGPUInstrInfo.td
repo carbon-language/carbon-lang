@@ -120,3 +120,22 @@ def AMDGPUmad_u24 : SDNode<"AMDGPUISD::MAD_U24", AMDGPUDTIntTernaryOp,
 def AMDGPUmad_i24 : SDNode<"AMDGPUISD::MAD_I24", AMDGPUDTIntTernaryOp,
   []
 >;
+
+//===----------------------------------------------------------------------===//
+// Flow Control Profile Types
+//===----------------------------------------------------------------------===//
+// Branch instruction where second and third are basic blocks
+def SDTIL_BRCond : SDTypeProfile<0, 2, [
+    SDTCisVT<0, OtherVT>
+    ]>;
+
+//===----------------------------------------------------------------------===//
+// Flow Control DAG Nodes
+//===----------------------------------------------------------------------===//
+def IL_brcond      : SDNode<"AMDGPUISD::BRANCH_COND", SDTIL_BRCond, [SDNPHasChain]>;
+
+//===----------------------------------------------------------------------===//
+// Call/Return DAG Nodes
+//===----------------------------------------------------------------------===//
+def IL_retflag       : SDNode<"AMDGPUISD::RET_FLAG", SDTNone,
+    [SDNPHasChain, SDNPOptInGlue]>;

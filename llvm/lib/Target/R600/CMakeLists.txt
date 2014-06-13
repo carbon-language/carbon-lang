@@ -24,7 +24,6 @@ add_llvm_target(R600CodeGen
   AMDGPUTargetMachine.cpp
   AMDGPUTargetTransformInfo.cpp
   AMDGPUISelLowering.cpp
-  AMDGPUConvertToISA.cpp
   AMDGPUInstrInfo.cpp
   AMDGPURegisterInfo.cpp
   R600ClauseMergePass.cpp

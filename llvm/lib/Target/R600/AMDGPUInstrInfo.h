@@ -185,11 +185,6 @@ public:
                                     unsigned ValueReg, unsigned Address,
                                     unsigned OffsetReg) const = 0;
 
-
-  /// \brief Convert the AMDIL MachineInstr to a supported ISA
-  /// MachineInstr
-  void convertToISA(MachineInstr & MI, MachineFunction &MF, DebugLoc DL) const;
-
   /// \brief Build a MOV instruction.
   virtual MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator I,

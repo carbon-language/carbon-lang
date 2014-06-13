@@ -1659,7 +1659,7 @@ def : Pat <
 
 /* int_SI_vs_load_input */
 def : Pat<
-  (SIload_input v4i32:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
+  (SIload_input v4i32:$tlst, imm:$attr_offset, i32:$buf_idx_vgpr),
   (BUFFER_LOAD_FORMAT_XYZW_IDXEN $tlst, $buf_idx_vgpr, imm:$attr_offset, 0, 0, 0, 0)
 >;
 

@@ -767,16 +767,6 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   return true;
 }
 
-int R600InstrInfo::getBranchInstr(const MachineOperand &op) const {
-  const MachineInstr *MI = op.getParent();
-
-  switch (MI->getDesc().OpInfo->RegClass) {
-  default: // FIXME: fallthrough??
-  case AMDGPU::GPRI32RegClassID: return AMDGPU::BRANCH_COND_i32;
-  case AMDGPU::GPRF32RegClassID: return AMDGPU::BRANCH_COND_f32;
-  };
-}
-
 static
 MachineBasicBlock::iterator FindLastAluClause(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::reverse_iterator It = MBB.rbegin(), E = MBB.rend();
