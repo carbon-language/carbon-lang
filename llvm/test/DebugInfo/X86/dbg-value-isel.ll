@@ -92,7 +92,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !8 = metadata !{i32 786689, metadata !0, metadata !"ip", metadata !1, i32 1, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !9 = metadata !{i32 1, i32 32, metadata !0, null}
 !10 = metadata !{i32 786688, metadata !11, metadata !"tid", metadata !1, i32 3, metadata !6, i32 0, null} ; [ DW_TAG_auto_variable ]
-!11 = metadata !{i32 786443, metadata !0, i32 2, i32 1, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
+!11 = metadata !{i32 786443, metadata !1, metadata !0, i32 2, i32 1, i32 1} ; [ DW_TAG_lexical_block ]
 !12 = metadata !{i32 5, i32 24, metadata !11, null}
 !13 = metadata !{i32 786688, metadata !11, metadata !"gid", metadata !1, i32 3, metadata !6, i32 0, null} ; [ DW_TAG_auto_variable ]
 !14 = metadata !{i32 6, i32 25, metadata !11, null}
