@@ -32,9 +32,6 @@ namespace llvm {
 class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
   ARMSubtarget        Subtarget;
-private:
-  InstrItineraryData  InstrItins;
-
 public:
   ARMBaseTargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,
@@ -49,7 +46,7 @@ public:
     llvm_unreachable("getTargetLowering not implemented");
   }
   const InstrItineraryData *getInstrItineraryData() const override {
-    return &InstrItins;
+    return &getSubtargetImpl()->getInstrItineraryData();
   }
 
   /// \brief Register ARM analysis passes with a pass manager.
