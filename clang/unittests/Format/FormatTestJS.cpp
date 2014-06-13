@@ -138,7 +138,7 @@ TEST_F(FormatTestJS, GoogScopes) {
                "});  // goog.scope");
 }
 
-TEST_F(FormatTestJS, Closures) {
+TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("doFoo(function() { return 1; });");
   verifyFormat("var func = function() { return 1; };");
   verifyFormat("return {\n"
@@ -177,6 +177,13 @@ TEST_F(FormatTestJS, Closures) {
                "  a: function() { return 1; }\n"
                "};",
                getGoogleJSStyleWithColumns(37));
+
+  verifyFormat("return {\n"
+               "  a: function SomeFunction() {\n"
+               "    // ...\n"
+               "    return 1;\n"
+               "  }\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, MultipleFunctionLiterals) {

@@ -907,6 +907,11 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
 
 void UnwrappedLineParser::tryToParseJSFunction() {
   nextToken();
+
+  // Consume function name.
+  if (FormatTok->is(tok::identifier))
+      nextToken();
+
   if (FormatTok->isNot(tok::l_paren))
     return;
   nextToken();
