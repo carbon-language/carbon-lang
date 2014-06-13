@@ -1,4 +1,9 @@
 #undef exp
 
-// exp(x) = exp2(x * log2(e)
-#define exp(val) (__clc_exp2((val) * 1.44269504f))
+#define __CLC_BODY <clc/math/unary_decl.inc>
+#define __CLC_FUNCTION exp
+
+#include <clc/math/gentype.inc>
+
+#undef __CLC_BODY
+#undef __CLC_FUNCTION

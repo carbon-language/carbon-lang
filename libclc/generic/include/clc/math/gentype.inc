@@ -1,4 +1,5 @@
 #define __CLC_SCALAR_GENTYPE float
+#define __CLC_FPSIZE 32
 
 #define __CLC_GENTYPE float
 #define __CLC_SCALAR
@@ -26,10 +27,12 @@
 #include __CLC_BODY
 #undef __CLC_GENTYPE
 
+#undef __CLC_FPSIZE
 #undef __CLC_SCALAR_GENTYPE
 
 #ifdef cl_khr_fp64
 #define __CLC_SCALAR_GENTYPE double
+#define __CLC_FPSIZE 64
 
 #define __CLC_SCALAR
 #define __CLC_GENTYPE double
@@ -57,6 +60,7 @@
 #include __CLC_BODY
 #undef __CLC_GENTYPE
 
+#undef __CLC_FPSIZE
 #undef __CLC_SCALAR_GENTYPE
 #endif
 
