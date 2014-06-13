@@ -20,12 +20,16 @@
 #include "sanitizer_common.h"
 
 namespace __sanitizer {
-class AnsiColorDecorator {
+class SanitizerCommonDecorator {
   // FIXME: This is not portable. It assumes the special strings are printed to
   // stdout, which is not the case on Windows (see SetConsoleTextAttribute()).
  public:
-  explicit AnsiColorDecorator(bool use_ansi_colors) : ansi_(use_ansi_colors) { }
+  SanitizerCommonDecorator() : ansi_(ColorizeReports()) {}
   const char *Bold()    const { return ansi_ ? "\033[1m" : ""; }
+  const char *Default() const { return ansi_ ? "\033[1m\033[0m"  : ""; }
+  const char *Warning()    { return Red(); }
+  const char *EndWarning() { return Default(); }
+ protected:
   const char *Black()   const { return ansi_ ? "\033[1m\033[30m" : ""; }
   const char *Red()     const { return ansi_ ? "\033[1m\033[31m" : ""; }
   const char *Green()   const { return ansi_ ? "\033[1m\033[32m" : ""; }
@@ -34,17 +38,8 @@ class AnsiColorDecorator {
   const char *Magenta() const { return ansi_ ? "\033[1m\033[35m" : ""; }
   const char *Cyan()    const { return ansi_ ? "\033[1m\033[36m" : ""; }
   const char *White()   const { return ansi_ ? "\033[1m\033[37m" : ""; }
-  const char *Default() const { return ansi_ ? "\033[1m\033[0m"  : ""; }
  private:
   bool ansi_;
-};
-
-class SanitizerCommonDecorator: protected AnsiColorDecorator {
- public:
-  SanitizerCommonDecorator()
-      : __sanitizer::AnsiColorDecorator(ColorizeReports()) { }
-  const char *Warning()    { return Red(); }
-  const char *EndWarning() { return Default(); }
 };
 
 }  // namespace __sanitizer
