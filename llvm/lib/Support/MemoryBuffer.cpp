@@ -373,7 +373,7 @@ static std::error_code getOpenFileImpl(int FD, const char *Filename,
   size_t BytesLeft = MapSize;
 #ifndef HAVE_PREAD
   if (lseek(FD, Offset, SEEK_SET) == -1)
-    return error_code(errno, std::generic_category());
+    return std::error_code(errno, std::generic_category());
 #endif
 
   while (BytesLeft) {
