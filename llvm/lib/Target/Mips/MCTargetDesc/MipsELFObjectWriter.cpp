@@ -196,6 +196,9 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_MIPS_PC19_S2:
     Type = ELF::R_MIPS_PC19_S2;
     break;
+  case Mips::fixup_MIPS_PC18_S3:
+    Type = ELF::R_MIPS_PC18_S3;
+    break;
   case Mips::fixup_MIPS_PC21_S2:
     Type = ELF::R_MIPS_PC21_S2;
     break;

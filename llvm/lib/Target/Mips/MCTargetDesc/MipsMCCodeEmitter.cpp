@@ -642,11 +642,21 @@ unsigned
 MipsMCCodeEmitter::getSimm18Lsl3Encoding(const MCInst &MI, unsigned OpNo,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
-  assert(MI.getOperand(OpNo).isImm());
-  // The immediate is encoded as 'immediate << 3'.
-  unsigned Res = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
-  assert((Res & 7) == 0);
-  return Res >> 3;
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm()) {
+    // The immediate is encoded as 'immediate << 3'.
+    unsigned Res = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
+    assert((Res & 7) == 0);
+    return Res >> 3;
+  }
+
+  assert(MO.isExpr() &&
+         "getSimm18Lsl2Encoding expects only expressions or an immediate");
+
+  const MCExpr *Expr = MO.getExpr();
+  Fixups.push_back(MCFixup::Create(0, Expr,
+                                   MCFixupKind(Mips::fixup_MIPS_PC18_S3)));
+  return 0;
 }
 
 #include "MipsGenMCCodeEmitter.inc"

@@ -365,6 +365,7 @@ def simm19_lsl2 : Operand<i32> {
 def simm18_lsl3 : Operand<i32> {
   let EncoderMethod = "getSimm18Lsl3Encoding";
   let DecoderMethod = "DecodeSimm18Lsl3";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
 def simm20      : Operand<i32> {

@@ -34,6 +34,10 @@
 # CHECK-FIXUP:                              #   fixup A - offset: 0,
 # CHECK-FIXUP:                                  value: bar@PCREL_LO16,
 # CHECK-FIXUP:                                  kind: fixup_MIPS_PCLO16
+# CHECK-FIXUP: ldpc    $2, bar  # encoding: [0xec,0b010110AA,A,A]
+# CHECK-FIXUP:                  # fixup A - offset: 0,
+# CHECK-FIXUP:                      value: bar,
+# CHECK-FIXUP:                      kind: fixup_Mips_PC18_S3
 # CHECK-FIXUP: lwpc    $2, bar  # encoding: [0xec,0b01001AAA,A,A]
 # CHECK-FIXUP:                  #   fixup A - offset: 0,
 # CHECK-FIXUP:                      value: bar, kind: fixup_MIPS_PC19_S2
@@ -53,8 +57,9 @@
 # CHECK-ELF:     0x18 R_MIPS_PC26_S2 bar 0x0
 # CHECK-ELF:     0x1C R_MIPS_PCHI16 bar 0x0
 # CHECK-ELF:     0x20 R_MIPS_PCLO16 bar 0x0
-# CHECK-ELF:     0x24 R_MIPS_PC19_S2 bar 0x0
+# CHECK-ELF:     0x24 R_MIPS_PC18_S3 bar 0x0
 # CHECK-ELF:     0x28 R_MIPS_PC19_S2 bar 0x0
+# CHECK-ELF:     0x2C R_MIPS_PC19_S2 bar 0x0
 # CHECK-ELF: ]
 
   addiupc   $2,bar
@@ -66,5 +71,6 @@
   bc    bar
   aluipc $2, %pcrel_hi(bar)
   addiu  $2, $2, %pcrel_lo(bar)
+  ldpc  $2,bar
   lwpc  $2,bar
   lwupc $2,bar

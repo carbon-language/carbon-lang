@@ -111,6 +111,13 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     if (!isIntN(16, Value) && Ctx)
       Ctx->FatalError(Fixup.getLoc(), "out of range PC16 fixup");
     break;
+  case Mips::fixup_MIPS_PC18_S3:
+    // Forcing a signed division because Value can be negative.
+    Value = (int64_t)Value / 8;
+    // We now check if Value can be encoded as a 18-bit signed immediate.
+    if (!isIntN(18, Value) && Ctx)
+      Ctx->FatalError(Fixup.getLoc(), "out of range PC18 fixup");
+    break;
   case Mips::fixup_MIPS_PC21_S2:
     Value -= 4;
     // Forcing a signed division because Value can be negative.
@@ -254,6 +261,7 @@ getFixupKindInfo(MCFixupKind Kind) const {
     { "fixup_Mips_GOT_LO16",     0,     16,   0 },
     { "fixup_Mips_CALL_HI16",    0,     16,   0 },
     { "fixup_Mips_CALL_LO16",    0,     16,   0 },
+    { "fixup_Mips_PC18_S3",      0,     18,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC19_S2",      0,     19,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC21_S2",      0,     21,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC26_S2",      0,     26,  MCFixupKindInfo::FKF_IsPCRel },
@@ -316,6 +324,7 @@ getFixupKindInfo(MCFixupKind Kind) const {
     { "fixup_Mips_GOT_LO16",    16,     16,   0 },
     { "fixup_Mips_CALL_HI16",   16,     16,   0 },
     { "fixup_Mips_CALL_LO16",   16,     16,   0 },
+    { "fixup_Mips_PC18_S3",     14,     18,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC19_S2",     13,     19,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC21_S2",     11,     21,  MCFixupKindInfo::FKF_IsPCRel },
     { "fixup_MIPS_PC26_S2",      6,     26,  MCFixupKindInfo::FKF_IsPCRel },
