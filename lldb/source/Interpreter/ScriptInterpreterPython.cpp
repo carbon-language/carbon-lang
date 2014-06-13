@@ -1047,10 +1047,7 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
             PyCodeObject *compiled_code = PyNode_Compile (compiled_node, "temp.py");
             if (compiled_code)
             {
-                { // scope for PythonInputReaderManager
-                    //PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
-                    return_value.Reset(PyEval_EvalCode (compiled_code, globals.get(), locals.get()));
-                }
+              return_value.Reset(PyEval_EvalCode (compiled_code, globals.get(), locals.get()));
             }
         }
     }
