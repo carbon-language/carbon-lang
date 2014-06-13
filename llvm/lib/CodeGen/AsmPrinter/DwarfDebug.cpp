@@ -791,7 +791,7 @@ void DwarfDebug::finishVariableDefinitions() {
     // DIE::getUnit isn't simple - it walks parent pointers, etc.
     DwarfCompileUnit *Unit = lookupUnit(VariableDie->getUnit());
     assert(Unit);
-    DbgVariable *AbsVar = Var->getAbstractVariable();
+    DbgVariable *AbsVar = getExistingAbstractVariable(Var->getVariable());
     if (AbsVar && AbsVar->getDIE()) {
       Unit->addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin,
                         *AbsVar->getDIE());
@@ -1079,6 +1079,11 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV,
   if (I != AbstractVariables.end())
     return I->second.get();
   return nullptr;
+}
+
+DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
+  DIVariable Cleansed;
+  return getExistingAbstractVariable(DV, Cleansed);
 }
 
 DbgVariable *DwarfDebug::createAbstractVariable(DIVariable &Var,

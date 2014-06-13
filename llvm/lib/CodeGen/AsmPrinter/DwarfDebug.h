@@ -346,6 +346,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Find abstract variable associated with Var.
   DbgVariable *getExistingAbstractVariable(const DIVariable &DV,
                                            DIVariable &Cleansed);
+  DbgVariable *getExistingAbstractVariable(const DIVariable &DV);
   DbgVariable *createAbstractVariable(DIVariable &DV, LexicalScope *Scope);
   DbgVariable *getOrCreateAbstractVariable(DIVariable &Var,
                                            const MDNode *Scope);

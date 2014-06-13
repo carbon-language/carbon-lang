@@ -7,22 +7,20 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK:   DW_AT_abstract_origin {{.*}}{[[ABS:.*]]}
-; FIXME: An out of line definition preceding an inline usage doesn't properly
-; reference abstract variables.
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_name {{.*}} "sp"
+; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_SP:.*]]}
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_name {{.*}} "nums"
+; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_NUMS:.*]]}
 
 ; CHECK: [[ABS]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "foo"
-; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
+; CHECK: [[ABS_SP]]:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "sp"
-; CHECK: [[ABS_NUMS:.*]]:  DW_TAG_formal_parameter
+; CHECK: [[ABS_NUMS]]:  DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "nums"
 
