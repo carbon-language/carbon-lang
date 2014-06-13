@@ -37,6 +37,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
@@ -424,9 +425,10 @@ int main(int argc, char **argv) {
     success = WaitForDebugEvent(&DebugEvent, TimeLeft);
 
     if (!success) {
-      ec = windows_error(::GetLastError());
+      DWORD LastError = ::GetLastError();
+      ec = windows_error(LastError);
 
-      if (ec == std::errc::timed_out) {
+      if (LastError == ERROR_SEM_TIMEOUT || LastError == WSAETIMEDOUT) {
         errs() << ToolName << ": Process timed out.\n";
         ::TerminateProcess(ProcessInfo.hProcess, -1);
         // Otherwise other stuff starts failing...
