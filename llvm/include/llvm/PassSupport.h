@@ -53,18 +53,6 @@ class TargetMachine;
   } \
   TsanHappensAfter(&initialized);
 
-#define INITIALIZE_TM_PASS(passName, arg, name, cfg, analysis) \
-  static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
-    PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
-      PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis, \
-      PassInfo::TargetMachineCtor_t(callTargetMachineCtor< passName >)); \
-    Registry.registerPass(*PI, true); \
-    return PI; \
-  } \
-  void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
-    CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
-  }
-
 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
   static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \

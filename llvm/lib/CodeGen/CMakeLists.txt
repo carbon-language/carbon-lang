@@ -22,6 +22,7 @@ add_llvm_library(LLVMCodeGen
   GCMetadata.cpp
   GCMetadataPrinter.cpp
   GCStrategy.cpp
+  GlobalMerge.cpp
   IfConversion.cpp
   InlineSpiller.cpp
   InterferenceCache.cpp
