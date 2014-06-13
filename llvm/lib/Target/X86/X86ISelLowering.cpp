@@ -580,7 +580,7 @@ void X86TargetLowering::resetOperationActions() {
   // Expand certain atomics
   for (unsigned i = 0; i != array_lengthof(IntVTs); ++i) {
     MVT VT = IntVTs[i];
-    setOperationAction(ISD::ATOMIC_CMP_SWAP, VT, Custom);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, VT, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
     setOperationAction(ISD::ATOMIC_STORE, VT, Custom);
   }
@@ -601,7 +601,7 @@ void X86TargetLowering::resetOperationActions() {
   }
 
   if (Subtarget->hasCmpxchg16b()) {
-    setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i128, Custom);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, MVT::i128, Custom);
   }
 
   // FIXME - use subtarget debug flags
@@ -14529,7 +14529,7 @@ static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
     break;
   }
   SDValue cpIn = DAG.getCopyToReg(Op.getOperand(0), DL, Reg,
-                                    Op.getOperand(2), SDValue());
+                                  Op.getOperand(2), SDValue());
   SDValue Ops[] = { cpIn.getValue(0),
                     Op.getOperand(1),
                     Op.getOperand(3),
@@ -14539,9 +14539,18 @@ static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
   MachineMemOperand *MMO = cast<AtomicSDNode>(Op)->getMemOperand();
   SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG_DAG, DL, Tys,
                                            Ops, T, MMO);
+
   SDValue cpOut =
     DAG.getCopyFromReg(Result.getValue(0), DL, Reg, T, Result.getValue(1));
-  return cpOut;
+  SDValue EFLAGS = DAG.getCopyFromReg(cpOut.getValue(1), DL, X86::EFLAGS,
+                                      MVT::i32, cpOut.getValue(2));
+  SDValue Success = DAG.getNode(X86ISD::SETCC, DL, Op->getValueType(1),
+                                DAG.getConstant(X86::COND_E, MVT::i8), EFLAGS);
+
+  DAG.ReplaceAllUsesOfValueWith(Op.getValue(0), cpOut);
+  DAG.ReplaceAllUsesOfValueWith(Op.getValue(1), Success);
+  DAG.ReplaceAllUsesOfValueWith(Op.getValue(2), EFLAGS.getValue(1));
+  return SDValue();
 }
 
 static SDValue LowerBITCAST(SDValue Op, const X86Subtarget *Subtarget,
@@ -14721,7 +14730,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   default: llvm_unreachable("Should not custom lower this!");
   case ISD::SIGN_EXTEND_INREG:  return LowerSIGN_EXTEND_INREG(Op,DAG);
   case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, Subtarget, DAG);
-  case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op, Subtarget, DAG);
+  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
+    return LowerCMP_SWAP(Op, Subtarget, DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
   case ISD::ATOMIC_STORE:       return LowerATOMIC_STORE(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
@@ -14803,8 +14813,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 }
 
 static void ReplaceATOMIC_LOAD(SDNode *Node,
-                                  SmallVectorImpl<SDValue> &Results,
-                                  SelectionDAG &DAG) {
+                               SmallVectorImpl<SDValue> &Results,
+                               SelectionDAG &DAG) {
   SDLoc dl(Node);
   EVT VT = cast<AtomicSDNode>(Node)->getMemoryVT();
 
@@ -14813,16 +14823,16 @@ static void ReplaceATOMIC_LOAD(SDNode *Node,
   //        (The only way to get a 16-byte load is cmpxchg16b)
   // FIXME: 16-byte ATOMIC_CMP_SWAP isn't actually hooked up at the moment.
   SDValue Zero = DAG.getConstant(0, VT);
-  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
+  SDVTList VTs = DAG.getVTList(VT, MVT::i1, MVT::Other);
   SDValue Swap =
-      DAG.getAtomicCmpSwap(ISD::ATOMIC_CMP_SWAP, dl, VT, VTs,
+      DAG.getAtomicCmpSwap(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, dl, VT, VTs,
                            Node->getOperand(0), Node->getOperand(1), Zero, Zero,
                            cast<AtomicSDNode>(Node)->getMemOperand(),
                            cast<AtomicSDNode>(Node)->getOrdering(),
                            cast<AtomicSDNode>(Node)->getOrdering(),
                            cast<AtomicSDNode>(Node)->getSynchScope());
   Results.push_back(Swap.getValue(0));
-  Results.push_back(Swap.getValue(1));
+  Results.push_back(Swap.getValue(2));
 }
 
 static void
@@ -14938,7 +14948,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return getReadTimeStampCounter(N, dl, X86ISD::RDTSC_DAG, DAG, Subtarget,
                                    Results);
   }
-  case ISD::ATOMIC_CMP_SWAP: {
+  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS: {
     EVT T = N->getValueType(0);
     assert((T == MVT::i64 || T == MVT::i128) && "can only expand cmpxchg pair");
     bool Regs64bit = T == MVT::i128;
@@ -14980,8 +14990,17 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                         Regs64bit ? X86::RDX : X86::EDX,
                                         HalfT, cpOutL.getValue(2));
     SDValue OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
+
+    SDValue EFLAGS = DAG.getCopyFromReg(cpOutH.getValue(1), dl, X86::EFLAGS,
+                                        MVT::i32, cpOutH.getValue(2));
+    SDValue Success =
+        DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                    DAG.getConstant(X86::COND_E, MVT::i8), EFLAGS);
+    Success = DAG.getZExtOrTrunc(Success, dl, N->getValueType(1));
+
     Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, T, OpsF));
-    Results.push_back(cpOutH.getValue(1));
+    Results.push_back(Success);
+    Results.push_back(EFLAGS.getValue(1));
     return;
   }
   case ISD::ATOMIC_LOAD_ADD:
