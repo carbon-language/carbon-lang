@@ -19,7 +19,8 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; rdar://problem/14874886
 ;
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name {{.*}}map
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}}map
 ; CHECK-NOT: DW_AT_name {{.*}}map
 
 ; Function Attrs: nounwind ssp uwtable

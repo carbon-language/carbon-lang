@@ -37,13 +37,19 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !20 = metadata !{metadata !"test.c", metadata !"/work/llvm/vanilla/test/DebugInfo"}
 
 ; CHECK: DW_TAG_variable
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]       ( .debug_str[0x{{[0-9a-f]*}}] = "GLB")
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name [DW_FORM_strp]       ( .debug_str[0x{{[0-9a-f]*}}] = "GLB")
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
 
 ; CHECK: DW_TAG_variable
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]   ( .debug_str[0x{{[0-9a-f]*}}] = "LOC")
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name [DW_FORM_strp]   ( .debug_str[0x{{[0-9a-f]*}}] = "LOC")
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_file [DW_FORM_data1]     (0x01)
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_line [DW_FORM_data1]     (0x04)
 
 !21 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

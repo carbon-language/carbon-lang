@@ -19,10 +19,12 @@
 ; CHECK: DW_AT_MIPS_linkage_name{{.*}}"_Z4func3fooS_"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"f"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"f"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"g"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"g"
 
 %struct.foo = type { i32 }
 

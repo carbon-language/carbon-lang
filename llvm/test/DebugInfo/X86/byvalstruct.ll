@@ -6,7 +6,8 @@
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name {{.*}} "info"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "info"
 ;
 ; generated from
 ;

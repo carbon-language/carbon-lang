@@ -10,16 +10,21 @@
 ; FIXME: An out of line definition preceding an inline usage doesn't properly
 ; reference abstract variables.
 ; CHECK:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "sp"
 ; CHECK:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "nums"
 
 ; CHECK: [[ABS]]: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "foo"
 ; CHECK: [[ABS_SP:.*]]:   DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "sp"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "sp"
 ; CHECK: [[ABS_NUMS:.*]]:  DW_TAG_formal_parameter
-; CHECK-NEXT:     DW_AT_name {{.*}} "nums"
+; CHECK-NOT: DW_TAG
+; CHECK:     DW_AT_name {{.*}} "nums"
 
 ;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS]]}
@@ -30,9 +35,10 @@
 
 ;CHECK: DW_TAG_formal_parameter
 ;FIXME: Linux shouldn't drop this parameter either...
-;DARWIN-NEXT:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
+;CHECK-NOT: DW_TAG
+;DARWIN:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
 ;DARWIN: DW_TAG_formal_parameter
-;CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
+;CHECK: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
 ;CHECK-NOT: DW_TAG_formal_parameter
 
 %struct.S1 = type { float*, i32 }

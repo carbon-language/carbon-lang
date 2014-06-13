@@ -16,9 +16,11 @@
 
 ; CHECK: DW_AT_name{{.*}}"f1"
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"x"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"x"
 ; CHECK: DW_TAG_formal_parameter
-; CHECK-NEXT: DW_AT_name{{.*}}"y"
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name{{.*}}"y"
 
 ; Function Attrs: uwtable
 define void @_Z2f2v() #0 {

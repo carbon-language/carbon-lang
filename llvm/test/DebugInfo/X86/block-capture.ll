@@ -6,13 +6,13 @@
 ; Checks that we emit debug info for the block variable declare.
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_variable
-; CHECK: DW_AT_name {{.*}} "block"
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]
+; CHECK: DW_AT_name {{.*}} "block"
 
 ; DWARF3: DW_TAG_subprogram
 ; DWARF3: DW_TAG_variable
-; DWARF3: DW_AT_name {{.*}} "block"
 ; DWARF3: DW_AT_location [DW_FORM_data4]
+; DWARF3: DW_AT_name {{.*}} "block"
 
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }
