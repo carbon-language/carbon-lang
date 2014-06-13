@@ -1188,8 +1188,10 @@ let AdditionalPredicates = [NotInMicroMips] in {
 
 // FIXME: JALX really requires either MIPS16 or microMIPS in addition to MIPS32.
 def JALX  : JumpLink<"jalx", calltarget>, FJ<0x1D>, ISA_MIPS32_NOT_32R6_64R6;
-def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
-def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>;
+def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>,
+             ISA_MIPS1_NOT_32R6_64R6;
+def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>,
+             ISA_MIPS1_NOT_32R6_64R6;
 def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
 def TAILCALL : TailCall<J>;
 def TAILCALL_R : TailCallReg<GPR32Opnd, JR>;
@@ -1366,7 +1368,8 @@ def : MipsInstAlias<"move $dst, $src",
       GPR_32 {
   let AdditionalPredicates = [NotInMicroMips];
 }
-def : MipsInstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
+def : MipsInstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>,
+      ISA_MIPS1_NOT_32R6_64R6;
 def : MipsInstAlias<"addu $rs, $rt, $imm",
                     (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
 def : MipsInstAlias<"add $rs, $rt, $imm",

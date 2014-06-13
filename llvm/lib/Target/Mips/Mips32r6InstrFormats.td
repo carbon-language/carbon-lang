@@ -64,6 +64,7 @@ def OPCODE5_BC1EQZ : OPCODE5<0b01001>;
 def OPCODE5_BC1NEZ : OPCODE5<0b01101>;
 def OPCODE5_BC2EQZ : OPCODE5<0b01001>;
 def OPCODE5_BC2NEZ : OPCODE5<0b01101>;
+def OPCODE5_BGEZAL : OPCODE5<0b10001>;
 
 class OPCODE6<bits<6> Val> {
   bits<6> Value = Val;
@@ -143,6 +144,17 @@ class AUI_FM : MipsR6Inst {
 
 class DAUI_FM : AUI_FM {
   let Inst{31-26} = OPGROUP_DAUI.Value;
+}
+
+class BAL_FM : MipsR6Inst {
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_REGIMM.Value;
+  let Inst{25-21} = 0b00000;
+  let Inst{20-16} = OPCODE5_BGEZAL.Value;
+  let Inst{15-0} = offset;
 }
 
 class COP1_2R_FM<bits<6> funct, FIELD_FMT Format> : MipsR6Inst {

@@ -64,6 +64,7 @@ private:
       return false;
 
     case Mips::JAL:
+    case Mips::BAL:
     case Mips::BAL_BR:
     case Mips::BLTZAL:
     case Mips::BGEZAL:

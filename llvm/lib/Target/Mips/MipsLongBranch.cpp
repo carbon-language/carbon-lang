@@ -266,6 +266,13 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     LongBrMBB->addSuccessor(BalTgtMBB);
     BalTgtMBB->addSuccessor(TgtMBB);
 
+    // We must select between the MIPS32r6/MIPS64r6 BAL (which is a normal
+    // instruction) and the pre-MIPS32r6/MIPS64r6 definition (which is an
+    // pseudo-instruction wrapping BGEZAL).
+
+    const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
+    unsigned BalOp = Subtarget.hasMips32r6() ? Mips::BAL : Mips::BAL_BR;
+
     if (ABI != MipsSubtarget::N64) {
       // $longbr:
       //  addiu $sp, $sp, -8
@@ -307,9 +314,11 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_LUi), Mips::AT)
         .addMBB(TgtMBB).addMBB(BalTgtMBB);
       MIBundleBuilder(*LongBrMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_ADDiu), Mips::AT)
-                  .addReg(Mips::AT).addMBB(TgtMBB).addMBB(BalTgtMBB));
+          .append(BuildMI(*MF, DL, TII->get(BalOp)).addMBB(BalTgtMBB))
+          .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_ADDiu), Mips::AT)
+                      .addReg(Mips::AT)
+                      .addMBB(TgtMBB)
+                      .addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 
@@ -379,11 +388,12 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::AT_64).addImm(16);
 
       MIBundleBuilder(*LongBrMBB, Pos)
-        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
-                        Mips::AT_64).addReg(Mips::AT_64)
-                                    .addMBB(TgtMBB, MipsII::MO_ABS_LO)
-                                    .addMBB(BalTgtMBB));
+          .append(BuildMI(*MF, DL, TII->get(BalOp)).addMBB(BalTgtMBB))
+          .append(
+              BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_DADDiu), Mips::AT_64)
+                  .addReg(Mips::AT_64)
+                  .addMBB(TgtMBB, MipsII::MO_ABS_LO)
+                  .addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 

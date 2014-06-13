@@ -26,8 +26,6 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: sdc2
 // Reencoded: swc2
 // Removed: bc1any2, bc1any4
-// Removed: bgezal
-// Removed: bltzal
 // Rencoded: [ls][wd]c2
 
 def brtarget21 : Operand<OtherVT> {
@@ -66,6 +64,7 @@ class ALUIPC_ENC : PCREL16_FM<OPCODE5_ALUIPC>;
 class AUI_ENC    : AUI_FM;
 class AUIPC_ENC  : PCREL16_FM<OPCODE5_AUIPC>;
 
+class BAL_ENC   : BAL_FM;
 class BALC_ENC  : BRANCH_OFF26_FM<0b111010>;
 class BC_ENC    : BRANCH_OFF26_FM<0b110010>;
 class BEQC_ENC  : CMP_BRANCH_2R_OFF16_FM<OPGROUP_ADDI>,
@@ -309,6 +308,12 @@ class CMP_CBR_RT_Z_DESC_BASE<string instr_asm, DAGOperand opnd,
   list<Register> Defs = [AT];
 }
 
+class BAL_DESC : BC_DESC_BASE<"bal", brtarget> {
+  bit isCall = 1;
+  bit hasDelaySlot = 1;
+  list<Register> Defs = [RA];
+}
+
 class BALC_DESC : BC_DESC_BASE<"balc", brtarget26> {
   bit isCall = 1;
   list<Register> Defs = [RA];
@@ -535,6 +540,7 @@ def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
 def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
 def AUIPC : AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
+def BAL : BAL_ENC, BAL_DESC, ISA_MIPS32R6;
 def BALC : BALC_ENC, BALC_DESC, ISA_MIPS32R6;
 def BC1EQZ : BC1EQZ_ENC, BC1EQZ_DESC, ISA_MIPS32R6;
 def BC1NEZ : BC1NEZ_ENC, BC1NEZ_DESC, ISA_MIPS32R6;
