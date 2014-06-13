@@ -623,8 +623,8 @@ LoopHint Parser::HandlePragmaLoopHint() {
   Hint.Range =
       SourceRange(Info->Option.getLocation(), Info->Value.getLocation());
 
-  // FIXME: We should support template parameters for the loop hint value.
-  // See bug report #19610
+  // FIXME: We should allow non-type template parameters for the loop hint
+  // value. See bug report #19610
   if (Info->Value.is(tok::numeric_constant))
     Hint.ValueExpr = Actions.ActOnNumericConstant(Info->Value).get();
   else
