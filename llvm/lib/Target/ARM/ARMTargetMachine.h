@@ -69,7 +69,6 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   virtual void anchor();
   ARMInstrInfo        InstrInfo;
   ARMTargetLowering   TLInfo;
-  ARMSelectionDAGInfo TSInfo;
   ARMFrameLowering    FrameLowering;
  public:
   ARMTargetMachine(const Target &T, StringRef TT,
@@ -88,7 +87,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   }
 
   const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
   const ARMFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
@@ -130,7 +129,6 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   // Either Thumb1InstrInfo or Thumb2InstrInfo.
   std::unique_ptr<ARMBaseInstrInfo> InstrInfo;
   ARMTargetLowering   TLInfo;
-  ARMSelectionDAGInfo TSInfo;
   // Either Thumb1FrameLowering or ARMFrameLowering.
   std::unique_ptr<ARMFrameLowering> FrameLowering;
 public:
@@ -151,7 +149,7 @@ public:
   }
 
   const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
 
   /// returns either Thumb1InstrInfo or Thumb2InstrInfo
