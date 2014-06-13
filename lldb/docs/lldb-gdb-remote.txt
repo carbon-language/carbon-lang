@@ -1250,3 +1250,62 @@ for this region.
 //  however, so if you want to support this behavior it is better to
 //  support this packet.
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "jThreadExtendedInfo"
+//
+// BRIEF
+//  This packet, which takes its arguments as JSON and sends its reply as
+//  JSON, allows the gdb remote stub to provide additional information 
+//  about a given thread.
+//
+// PRIORITY TO IMPLEMENT
+//  Low.  This packet is only needed if the gdb remote stub wants to 
+//  provide interesting additional information about a thread for the
+//  user.
+//
+// This packet takes its arguments in JSON form ( http://www.json.org ).
+// At a minimum, a thread must be specified, for example:
+//
+//  jThreadExtendedInfo:{"thread":612910}
+//
+// Because this is a JSON string, the thread number is provided in base10.
+// Additional key-value pairs may be provided by lldb to the gdb remote
+// stub.  For instance, on some versions of Mac OS X, lldb can read offset
+// information out of the system libraries.  Using those offsets, debugserver
+// is able to find the Thread Specific Address (TSD) for a thread and include
+// that in the return information.  So lldb will send these additional fields
+// like so:
+//
+//   jThreadExtendedInfo:{"plo_pthread_tsd_base_address_offset":0,"plo_pthread_tsd_base_offset":224,"plo_pthread_tsd_entry_size":8,"thread":612910}
+//
+// There are no requirements for what is included in the response.  A simple 
+// reply on a Mac OS X Yosemite / iOS 8 may include the pthread_t value, the
+// Thread Specific Data (TSD) address, the dispatch_queue_t value if the thread
+// is associated with a GCD queue, and the requested Quality of Service (QoS)
+// information about that thread.  For instance, a reply may look like:
+//
+//  {"tsd_address":4371349728,"requested_qos":{"enum_value":33,"constant_name":"QOS_CLASS_USER_INTERACTIVE","printable_name":"User Interactive"},"pthread_t":4371349504,"dispatch_queue_t":140735087127872}
+//
+// tsd_address, pthread_t, and dispatch_queue_t are all simple key-value pairs.  
+// The JSON standard requires that numbers be expressed in base 10 - so all of 
+// these are.  requested_qos is a dictionary with three key-value pairs in it - 
+// so the UI layer may choose the form most appropriate for displaying to the user.
+//
+// Sending JSON over gdb-remote protocol introduces some problems.  We may be 
+// sending strings with arbitrary contents in them, including the '#', '$', and '*'
+// characters that have special meaning in gdb-remote protocol and cannot occur
+// in the middle of the string.  The standard solution for this would be to require
+// ascii-hex encoding of all strings, or ascii-hex encode the entier JSON payload.
+//
+// Instead, the binary escaping convention is used for JSON data.  This convention
+// (e.g. used for the X packet) says that if '#', '$', '*', or '}' are to occur in
+// the payload, the character '}' (0x7d) is emitted, then the metacharacter is emitted
+// xor'ed by 0x20.  The '}' character occurs in every JSON payload at least once, and
+// '}' ^ 0x20 happens to be ']' so the raw packet characters for a request will look
+// like
+//
+//  jThreadExtendedInfo:{"thread":612910}]
+//
+// on the wire.
+//----------------------------------------------------------------------
