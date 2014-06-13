@@ -19,6 +19,8 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
@@ -37,17 +39,20 @@ using namespace llvm;
 static fatal_error_handler_t ErrorHandler = nullptr;
 static void *ErrorHandlerUserData = nullptr;
 
+static sys::Mutex ErrorHandlerMutex;
+
 void llvm::install_fatal_error_handler(fatal_error_handler_t handler,
                                        void *user_data) {
-  assert(!llvm_is_multithreaded() &&
-         "Cannot register error handlers after starting multithreaded mode!\n");
+  llvm::MutexGuard Lock(ErrorHandlerMutex);
   assert(!ErrorHandler && "Error handler already registered!\n");
   ErrorHandler = handler;
   ErrorHandlerUserData = user_data;
 }
 
 void llvm::remove_fatal_error_handler() {
+  llvm::MutexGuard Lock(ErrorHandlerMutex);
   ErrorHandler = nullptr;
+  ErrorHandlerUserData = nullptr;
 }
 
 void llvm::report_fatal_error(const char *Reason, bool GenCrashDiag) {
@@ -63,8 +68,18 @@ void llvm::report_fatal_error(StringRef Reason, bool GenCrashDiag) {
 }
 
 void llvm::report_fatal_error(const Twine &Reason, bool GenCrashDiag) {
-  if (ErrorHandler) {
-    ErrorHandler(ErrorHandlerUserData, Reason.str(), GenCrashDiag);
+  llvm::fatal_error_handler_t handler = nullptr;
+  void* handlerData = nullptr;
+  {
+    // Only acquire the mutex while reading the handler, so as not to invoke a
+    // user-supplied callback under a lock.
+    llvm::MutexGuard Lock(ErrorHandlerMutex);
+    handler = ErrorHandler;
+    handlerData = ErrorHandlerUserData;
+  }
+
+  if (handler) {
+    handler(handlerData, Reason.str(), GenCrashDiag);
   } else {
     // Blast the result out to stderr.  We don't try hard to make sure this
     // succeeds (e.g. handling EINTR) and we can't use errs() here because

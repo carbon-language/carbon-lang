@@ -30,9 +30,6 @@ namespace llvm {
   /// install_fatal_error_handler - Installs a new error handler to be used
   /// whenever a serious (non-recoverable) error is encountered by LLVM.
   ///
-  /// If you are using llvm_start_multithreaded, you should register the handler
-  /// before doing that.
-  ///
   /// If no error handler is installed the default is to print the error message
   /// to stderr, and call exit(1).  If an error handler is installed then it is
   /// the handler's responsibility to log the message, it will no longer be
@@ -50,8 +47,6 @@ namespace llvm {
                                    void *user_data = nullptr);
 
   /// Restores default error handling behaviour.
-  /// This must not be called between llvm_start_multithreaded() and
-  /// llvm_stop_multithreaded().
   void remove_fatal_error_handler();
 
   /// ScopedFatalErrorHandler - This is a simple helper class which just
