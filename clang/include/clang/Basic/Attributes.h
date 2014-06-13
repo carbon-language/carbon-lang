@@ -25,7 +25,9 @@ enum class AttrSyntax {
   /// Is the identifier known as a __declspec-style attribute?
   Declspec,
   // Is the identifier known as a C++-style attribute?
-  CXX
+  CXX,
+  // Is the identifier known as a pragma attribute?
+  Pragma
 };
 
 /// \brief Return true if we recognize and implement the attribute specified by

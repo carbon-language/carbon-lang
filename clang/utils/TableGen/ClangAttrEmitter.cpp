@@ -41,7 +41,7 @@ public:
 
     assert(V != "GCC" && "Given a GCC spelling, which means this hasn't been"
            "flattened!");
-    if (V == "CXX11")
+    if (V == "CXX11" || V == "Pragma")
       NS = Spelling.getValueAsString("Namespace");
     bool Unset;
     K = Spelling.getValueAsBitOrUnset("KnownToGCC", Unset);
@@ -1055,7 +1055,7 @@ writePrettyPrintFunction(Record &R,
   OS << "void " << R.getName() << "Attr::printPretty("
     << "raw_ostream &OS, const PrintingPolicy &Policy) const {\n";
 
-  if (Spellings.size() == 0) {
+  if (Spellings.empty()) {
     OS << "}\n\n";
     return;
   }
@@ -1082,7 +1082,7 @@ writePrettyPrintFunction(Record &R,
       Prefix = " [[";
       Suffix = "]]";
       std::string Namespace = Spellings[I].nameSpace();
-      if (Namespace != "") {
+      if (!Namespace.empty()) {
         Spelling += Namespace;
         Spelling += "::";
       }
@@ -1092,6 +1092,14 @@ writePrettyPrintFunction(Record &R,
     } else if (Variety == "Keyword") {
       Prefix = " ";
       Suffix = "";
+    } else if (Variety == "Pragma") {
+      Prefix = "#pragma ";
+      Suffix = "\n";
+      std::string Namespace = Spellings[I].nameSpace();
+      if (!Namespace.empty()) {
+        Spelling += Namespace;
+        Spelling += " ";
+      }
     } else {
       llvm_unreachable("Unknown attribute syntax variety!");
     }
@@ -1101,6 +1109,14 @@ writePrettyPrintFunction(Record &R,
     OS <<
       "  case " << I << " : {\n"
       "    OS << \"" + Prefix.str() + Spelling.str();
+
+    if (Variety == "Pragma") {
+      OS << " \";\n";
+      OS << "    printPrettyPragma(OS, Policy);\n";
+      OS << "    break;\n";
+      OS << "  }\n";
+      continue;
+    }
 
     if (!Args.empty())
       OS << "(";
@@ -1782,7 +1798,7 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   // Separate all of the attributes out into four group: generic, C++11, GNU,
   // and declspecs. Then generate a big switch statement for each of them.
   std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
-  std::vector<Record *> Declspec, GNU;
+  std::vector<Record *> Declspec, GNU, Pragma;
   std::map<std::string, std::vector<Record *>> CXX;
 
   // Walk over the list of all attributes, and split them out based on the
@@ -1795,9 +1811,10 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
         GNU.push_back(R);
       else if (Variety == "Declspec")
         Declspec.push_back(R);
-      else if (Variety == "CXX11") {
+      else if (Variety == "CXX11")
         CXX[SI.nameSpace()].push_back(R);
-      }
+      else if (Variety == "Pragma")
+        Pragma.push_back(R);
     }
   }
 
@@ -1811,6 +1828,9 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   OS << "case AttrSyntax::Declspec:\n";
   OS << "  return llvm::StringSwitch<bool>(Name)\n";
   GenerateHasAttrSpellingStringSwitch(Declspec, OS, "Declspec");
+  OS << "case AttrSyntax::Pragma:\n";
+  OS << "  return llvm::StringSwitch<bool>(Name)\n";
+  GenerateHasAttrSpellingStringSwitch(Pragma, OS, "Pragma");
   OS << "case AttrSyntax::CXX: {\n";
   // C++11-style attributes are further split out based on the Scope.
   for (std::map<std::string, std::vector<Record *>>::iterator I = CXX.begin(),
@@ -1846,17 +1866,17 @@ void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS) {
     std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(R);
     OS << "  case AT_" << I.first << ": {\n";
     for (unsigned I = 0; I < Spellings.size(); ++ I) {
-      OS << "    if (Name == \""
-        << Spellings[I].name() << "\" && "
-        << "SyntaxUsed == "
-        << StringSwitch<unsigned>(Spellings[I].variety())
-          .Case("GNU", 0)
-          .Case("CXX11", 1)
-          .Case("Declspec", 2)
-          .Case("Keyword", 3)
-          .Default(0)
-        << " && Scope == \"" << Spellings[I].nameSpace() << "\")\n"
-        << "        return " << I << ";\n";
+      OS << "    if (Name == \"" << Spellings[I].name() << "\" && "
+         << "SyntaxUsed == "
+         << StringSwitch<unsigned>(Spellings[I].variety())
+                .Case("GNU", 0)
+                .Case("CXX11", 1)
+                .Case("Declspec", 2)
+                .Case("Keyword", 3)
+                .Case("Pragma", 4)
+                .Default(0)
+         << " && Scope == \"" << Spellings[I].nameSpace() << "\")\n"
+         << "        return " << I << ";\n";
     }
 
     OS << "    break;\n";
@@ -2476,7 +2496,7 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Attribute name matcher", OS);
 
   std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
-  std::vector<StringMatcher::StringPair> GNU, Declspec, CXX11, Keywords;
+  std::vector<StringMatcher::StringPair> GNU, Declspec, CXX11, Keywords, Pragma;
   std::set<std::string> Seen;
   for (const auto *A : Attrs) {
     const Record &Attr = *A;
@@ -2519,6 +2539,8 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
           Matches = &Declspec;
         else if (Variety == "Keyword")
           Matches = &Keywords;
+        else if (Variety == "Pragma")
+          Matches = &Pragma;
 
         assert(Matches && "Unsupported spelling variety found");
 
@@ -2543,6 +2565,8 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
   StringMatcher("Name", CXX11, OS).Emit();
   OS << "  } else if (AttributeList::AS_Keyword == Syntax) {\n";
   StringMatcher("Name", Keywords, OS).Emit();
+  OS << "  } else if (AttributeList::AS_Pragma == Syntax) {\n";
+  StringMatcher("Name", Pragma, OS).Emit();
   OS << "  }\n";
   OS << "  return AttributeList::UnknownAttribute;\n"
      << "}\n";
@@ -2648,7 +2672,8 @@ enum SpellingKind {
   GNU = 1 << 0,
   CXX11 = 1 << 1,
   Declspec = 1 << 2,
-  Keyword = 1 << 3
+  Keyword = 1 << 3,
+  Pragma = 1 << 4
 };
 
 static void WriteDocumentation(const DocumentationData &Doc,
@@ -2693,10 +2718,11 @@ static void WriteDocumentation(const DocumentationData &Doc,
   unsigned SupportedSpellings = 0;
   for (const auto &I : Spellings) {
     SpellingKind Kind = StringSwitch<SpellingKind>(I.variety())
-      .Case("GNU", GNU)
-      .Case("CXX11", CXX11)
-      .Case("Declspec", Declspec)
-      .Case("Keyword", Keyword);
+                            .Case("GNU", GNU)
+                            .Case("CXX11", CXX11)
+                            .Case("Declspec", Declspec)
+                            .Case("Keyword", Keyword)
+                            .Case("Pragma", Pragma);
 
     // Mask in the supported spelling.
     SupportedSpellings |= Kind;
@@ -2731,7 +2757,8 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   // List what spelling syntaxes the attribute supports.
   OS << ".. csv-table:: Supported Syntaxes\n";
-  OS << "   :header: \"GNU\", \"C++11\", \"__declspec\", \"Keyword\"\n\n";
+  OS << "   :header: \"GNU\", \"C++11\", \"__declspec\", \"Keyword\",";
+  OS << " \"Pragma\"\n\n";
   OS << "   \"";
   if (SupportedSpellings & GNU) OS << "X";
   OS << "\",\"";
@@ -2740,6 +2767,8 @@ static void WriteDocumentation(const DocumentationData &Doc,
   if (SupportedSpellings & Declspec) OS << "X";
   OS << "\",\"";
   if (SupportedSpellings & Keyword) OS << "X";
+  OS << "\"\n\n";
+  if (SupportedSpellings & Pragma) OS << "X";
   OS << "\"\n\n";
 
   // If the attribute is deprecated, print a message about it, and possibly

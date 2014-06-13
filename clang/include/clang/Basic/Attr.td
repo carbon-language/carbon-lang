@@ -190,6 +190,9 @@ class CXX11<string namespace, string name> : Spelling<name, "CXX11"> {
   string Namespace = namespace;
 }
 class Keyword<string name> : Spelling<name, "Keyword">;
+class Pragma<string namespace, string name> : Spelling<name, "Pragma"> {
+  string Namespace = namespace;
+}
 
 // The GCC spelling implies GNU<name, "GNU"> and CXX11<"gnu", name> and also
 // sets KnownToGCC to 1. This spelling should be used for any GCC-compatible
@@ -1769,9 +1772,7 @@ def LoopHint : Attr {
   /// unroll: unroll loop if 'value != 0'.
   /// unroll_count: unrolls loop 'value' times.
 
-  /// FIXME: Add Pragma spelling to tablegen and
-  /// use it here.
-  let Spellings = [Keyword<"loop">];
+  let Spellings = [Pragma<"clang", "loop">];
 
   /// State of the loop optimization specified by the spelling.
   let Args = [EnumArgument<"Option", "OptionType",
@@ -1800,9 +1801,8 @@ def LoopHint : Attr {
     return "disable";
   }
 
-  // FIXME: Modify pretty printer to print this pragma.
-  void print(raw_ostream &OS, const PrintingPolicy &Policy) const {
-    OS << "#pragma clang loop " << getOptionName(option) << "(";
+  void printPrettyPragma(raw_ostream &OS, const PrintingPolicy &Policy) const {
+    OS << getOptionName(option) << "(";
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
       OS << value;

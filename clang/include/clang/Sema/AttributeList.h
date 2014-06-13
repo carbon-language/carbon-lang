@@ -80,7 +80,9 @@ public:
     /// __declspec(...)
     AS_Declspec,
     /// __ptr16, alignas(...), etc.
-    AS_Keyword
+    AS_Keyword,
+    /// #pragma ...
+    AS_Pragma
   };
 
 private:
