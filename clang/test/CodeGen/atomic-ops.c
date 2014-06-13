@@ -411,12 +411,12 @@ void generalWeakness(int *ptr, int *ptr2, _Bool weak) {
   // CHECK: switch i1 {{.*}}, label %[[WEAK:[0-9a-zA-Z._]+]] [
   // CHECK-NEXT: i1 false, label %[[STRONG:[0-9a-zA-Z._]+]]
 
-  // CHECK: [[STRONG]]:
+  // CHECK: [[STRONG]]
   // CHECK-NOT: br
   // CHECK: cmpxchg {{.*}} seq_cst seq_cst
   // CHECK: br
 
-  // CHECK: [[WEAK]]:
+  // CHECK: [[WEAK]]
   // CHECK-NOT: br
   // CHECK: cmpxchg weak {{.*}} seq_cst seq_cst
   // CHECK: br
