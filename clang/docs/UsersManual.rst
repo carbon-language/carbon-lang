@@ -1298,6 +1298,22 @@ below. If multiple flags are present, the last one is used.
   doesn't contain any other data (e.g. description of local variables or
   function parameters).
 
+.. option:: -fstandalone-debug -fno-standalone-debug
+
+  Clang supports a number of optimizations to reduce the size of debug
+  information in the binary. They work based on the assumption that
+  the debug type information can be spread out over multiple
+  compilation units.  For instance, Clang will not emit type
+  definitions for types that are not needed by a module and could be
+  replaced with a forward declaration.  Further, Clang will only emit
+  type info for a dynamic C++ class in the module that contains the
+  vtable for the class.
+
+  The ``-fstandalone-debug`` option turns off these optimizations.
+  This is useful when working with 3rd-party libraries that don't come
+  with debug information.  Note that Clang will never emit type
+  information for types that are not referenced at all by the program.
+
 .. option:: -g
 
   Generate complete debug info.
