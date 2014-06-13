@@ -30,6 +30,7 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace ELF;
+using std::error_code;
 
 #define LLVM_READOBJ_ENUM_CASE(ns, enum) \
   case ns::enum: return #enum;

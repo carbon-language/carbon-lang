@@ -38,6 +38,7 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::Win64EH;
+using std::error_code;
 
 namespace {
 

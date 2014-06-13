@@ -26,7 +26,6 @@
 #include <vector>
 
 namespace llvm {
-using std::error_code;
   class MemoryBuffer;
   class LLVMContext;
 
@@ -220,8 +219,8 @@ public:
     InvalidValue // Invalid version, inst number, attr number, etc
   };
 
-  error_code Error(ErrorType E) {
-    return error_code(E, BitcodeErrorCategory());
+  std::error_code Error(ErrorType E) {
+    return std::error_code(E, BitcodeErrorCategory());
   }
 
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
@@ -250,17 +249,17 @@ public:
 
   bool isMaterializable(const GlobalValue *GV) const override;
   bool isDematerializable(const GlobalValue *GV) const override;
-  error_code Materialize(GlobalValue *GV) override;
-  error_code MaterializeModule(Module *M) override;
+  std::error_code Materialize(GlobalValue *GV) override;
+  std::error_code MaterializeModule(Module *M) override;
   void Dematerialize(GlobalValue *GV) override;
 
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
-  error_code ParseBitcodeInto(Module *M);
+  std::error_code ParseBitcodeInto(Module *M);
 
   /// @brief Cheap mechanism to just extract module triple
   /// @returns true if an error occurred.
-  error_code ParseTriple(std::string &Triple);
+  std::error_code ParseTriple(std::string &Triple);
 
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
@@ -347,28 +346,29 @@ private:
     return getFnValueByID(ValNo, Ty);
   }
 
-  error_code ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind);
-  error_code ParseModule(bool Resume);
-  error_code ParseAttributeBlock();
-  error_code ParseAttributeGroupBlock();
-  error_code ParseTypeTable();
-  error_code ParseTypeTableBody();
+  std::error_code ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind);
+  std::error_code ParseModule(bool Resume);
+  std::error_code ParseAttributeBlock();
+  std::error_code ParseAttributeGroupBlock();
+  std::error_code ParseTypeTable();
+  std::error_code ParseTypeTableBody();
 
-  error_code ParseValueSymbolTable();
-  error_code ParseConstants();
-  error_code RememberAndSkipFunctionBody();
-  error_code ParseFunctionBody(Function *F);
-  error_code GlobalCleanup();
-  error_code ResolveGlobalAndAliasInits();
-  error_code ParseMetadata();
-  error_code ParseMetadataAttachment();
-  error_code ParseModuleTriple(std::string &Triple);
-  error_code ParseUseLists();
-  error_code InitStream();
-  error_code InitStreamFromBuffer();
-  error_code InitLazyStream();
-  error_code FindFunctionInStream(Function *F,
-         DenseMap<Function*, uint64_t>::iterator DeferredFunctionInfoIterator);
+  std::error_code ParseValueSymbolTable();
+  std::error_code ParseConstants();
+  std::error_code RememberAndSkipFunctionBody();
+  std::error_code ParseFunctionBody(Function *F);
+  std::error_code GlobalCleanup();
+  std::error_code ResolveGlobalAndAliasInits();
+  std::error_code ParseMetadata();
+  std::error_code ParseMetadataAttachment();
+  std::error_code ParseModuleTriple(std::string &Triple);
+  std::error_code ParseUseLists();
+  std::error_code InitStream();
+  std::error_code InitStreamFromBuffer();
+  std::error_code InitLazyStream();
+  std::error_code FindFunctionInStream(
+      Function *F,
+      DenseMap<Function *, uint64_t>::iterator DeferredFunctionInfoIterator);
 };
 
 } // End llvm namespace

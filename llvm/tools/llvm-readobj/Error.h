@@ -17,7 +17,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 const std::error_category &readobj_category();
 
 enum class readobj_error {
@@ -29,8 +28,8 @@ enum class readobj_error {
   unknown_symbol
 };
 
-inline error_code make_error_code(readobj_error e) {
-  return error_code(static_cast<int>(e), readobj_category());
+inline std::error_code make_error_code(readobj_error e) {
+  return std::error_code(static_cast<int>(e), readobj_category());
 }
 
 } // namespace llvm

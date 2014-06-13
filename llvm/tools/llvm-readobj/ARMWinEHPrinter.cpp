@@ -189,9 +189,9 @@ Decoder::getSectionContaining(const COFFObjectFile &COFF, uint64_t VA) {
     uint64_t Address;
     uint64_t Size;
 
-    if (error_code EC = Section.getAddress(Address))
+    if (std::error_code EC = Section.getAddress(Address))
       return EC;
-    if (error_code EC = Section.getSize(Size))
+    if (std::error_code EC = Section.getSize(Size))
       return EC;
 
     if (VA >= Address && (VA - Address) <= Size)
@@ -205,14 +205,14 @@ ErrorOr<object::SymbolRef> Decoder::getSymbol(const COFFObjectFile &COFF,
   for (const auto &Symbol : COFF.symbols()) {
     if (FunctionOnly) {
       SymbolRef::Type Type;
-      if (error_code EC = Symbol.getType(Type))
+      if (std::error_code EC = Symbol.getType(Type))
         return EC;
       if (Type != SymbolRef::ST_Function)
         continue;
     }
 
     uint64_t Address;
-    if (error_code EC = Symbol.getAddress(Address))
+    if (std::error_code EC = Symbol.getAddress(Address))
       return EC;
     if (Address == VA)
       return Symbol;
@@ -728,17 +728,17 @@ void Decoder::dumpProcedureData(const COFFObjectFile &COFF,
       break;
 }
 
-error_code Decoder::dumpProcedureData(const COFFObjectFile &COFF) {
+std::error_code Decoder::dumpProcedureData(const COFFObjectFile &COFF) {
   for (const auto &Section : COFF.sections()) {
     StringRef SectionName;
-    if (error_code EC = COFF.getSectionName(COFF.getCOFFSection(Section),
-                                            SectionName))
+    if (std::error_code EC =
+            COFF.getSectionName(COFF.getCOFFSection(Section), SectionName))
       return EC;
 
     if (SectionName.startswith(".pdata"))
       dumpProcedureData(COFF, Section);
   }
-  return error_code();
+  return std::error_code();
 }
 }
 }

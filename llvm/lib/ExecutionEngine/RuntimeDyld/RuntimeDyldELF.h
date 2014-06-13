@@ -20,11 +20,9 @@
 using namespace llvm;
 
 namespace llvm {
-using std::error_code;
-
 namespace {
 // Helper for extensive error checking in debug builds.
-error_code Check(error_code Err) {
+std::error_code Check(std::error_code Err) {
   if (Err) {
     report_fatal_error(Err.message());
   }

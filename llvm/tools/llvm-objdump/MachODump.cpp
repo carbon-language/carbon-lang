@@ -42,6 +42,7 @@
 #include <system_error>
 using namespace llvm;
 using namespace object;
+using std::error_code;
 
 static cl::opt<bool>
   UseDbg("g", cl::desc("Print line information from debug info if available"));

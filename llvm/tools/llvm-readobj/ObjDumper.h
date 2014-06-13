@@ -14,7 +14,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 namespace object {
   class ObjectFile;
 }
@@ -45,15 +44,17 @@ protected:
   StreamWriter& W;
 };
 
-error_code createCOFFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
-                            std::unique_ptr<ObjDumper> &Result);
+std::error_code createCOFFDumper(const object::ObjectFile *Obj,
+                                 StreamWriter &Writer,
+                                 std::unique_ptr<ObjDumper> &Result);
 
-error_code createELFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
-                           std::unique_ptr<ObjDumper> &Result);
+std::error_code createELFDumper(const object::ObjectFile *Obj,
+                                StreamWriter &Writer,
+                                std::unique_ptr<ObjDumper> &Result);
 
-error_code createMachODumper(const object::ObjectFile *Obj,
-                             StreamWriter &Writer,
-                             std::unique_ptr<ObjDumper> &Result);
+std::error_code createMachODumper(const object::ObjectFile *Obj,
+                                  StreamWriter &Writer,
+                                  std::unique_ptr<ObjDumper> &Result);
 
 } // namespace llvm
 

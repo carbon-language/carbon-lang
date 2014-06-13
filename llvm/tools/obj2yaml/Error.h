@@ -13,7 +13,6 @@
 #include <system_error>
 
 namespace llvm {
-using std::error_code;
 const std::error_category &obj2yaml_category();
 
 enum class obj2yaml_error {
@@ -23,8 +22,8 @@ enum class obj2yaml_error {
   unsupported_obj_file_format
 };
 
-inline error_code make_error_code(obj2yaml_error e) {
-  return error_code(static_cast<int>(e), obj2yaml_category());
+inline std::error_code make_error_code(obj2yaml_error e) {
+  return std::error_code(static_cast<int>(e), obj2yaml_category());
 }
 
 } // namespace llvm

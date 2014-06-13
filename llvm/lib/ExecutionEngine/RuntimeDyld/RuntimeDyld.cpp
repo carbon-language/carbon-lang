@@ -23,6 +23,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using std::error_code;
 
 #define DEBUG_TYPE "dyld"
 

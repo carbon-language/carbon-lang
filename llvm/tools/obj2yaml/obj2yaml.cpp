@@ -18,6 +18,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using std::error_code;
 
 static error_code dumpObject(const ObjectFile &Obj) {
   if (Obj.isCOFF())

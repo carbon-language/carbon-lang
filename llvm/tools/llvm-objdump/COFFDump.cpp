@@ -29,6 +29,7 @@
 using namespace llvm;
 using namespace object;
 using namespace llvm::Win64EH;
+using std::error_code;
 
 // Returns the name of the unwind code.
 static StringRef getUnwindCodeTypeName(uint8_t Code) {

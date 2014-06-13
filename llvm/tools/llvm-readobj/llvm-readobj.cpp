@@ -41,6 +41,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using std::error_code;
 
 namespace opts {
   cl::list<std::string> InputFilenames(cl::Positional,
