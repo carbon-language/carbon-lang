@@ -40,7 +40,11 @@
         cvt.w.d   $f20,$f14
         cvt.w.s   $f20,$f24
         dadd      $s3,$at,$ra
+        dadd      $sp,$s4,-27705       # CHECK: daddi $sp, $20, -27705 # encoding: [0x62,0x9d,0x93,0xc7]
+        dadd      $sp,-27705           # CHECK: daddi $sp, $sp, -27705 # encoding: [0x63,0xbd,0x93,0xc7]
         daddi     $sp,$s4,-27705
+        daddi     $sp,$s4,-27705       # CHECK: daddi $sp, $20, -27705 # encoding: [0x62,0x9d,0x93,0xc7]
+        daddi     $sp,-27705           # CHECK: daddi $sp, $sp, -27705 # encoding: [0x63,0xbd,0x93,0xc7]
         daddiu    $k0,$s6,-4586
         daddu     $s3,$at,$ra
         dclo      $s2,$a2
@@ -75,8 +79,10 @@
         dsrl32    $s3,$6,23            # CHECK: dsrl32 $19, $6, 23          # encoding: [0x00,0x06,0x9d,0xfe]
         dsrlv     $s3,$6,$s4           # CHECK: dsrlv $19, $6, $20          # encoding: [0x02,0x86,0x98,0x16]
         dsub      $a3,$s6,$8
-        dsubu     $a1,$a1,$k0
-        dsub      $a3,$s6,$8
+        dsub      $sp,$s4,-27705       # CHECK: daddi $sp, $20, 27705  # encoding: [0x62,0x9d,0x6c,0x39]
+        dsub      $sp,-27705           # CHECK: daddi $sp, $sp, 27705  # encoding: [0x63,0xbd,0x6c,0x39]
+        dsubi     $sp,$s4,-27705       # CHECK: daddi $sp, $20, 27705  # encoding: [0x62,0x9d,0x6c,0x39]
+        dsubi     $sp,-27705           # CHECK: daddi $sp, $sp, 27705  # encoding: [0x63,0xbd,0x6c,0x39]
         dsubu     $a1,$a1,$k0
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
         eret

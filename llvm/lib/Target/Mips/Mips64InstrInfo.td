@@ -65,7 +65,7 @@ let isPseudo = 1, isCodeGenOnly = 1 in {
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
 def DADDi   : ArithLogicI<"daddi", simm16_64, GPR64Opnd>, ADDI_FM<0x18>,
-              ISA_MIPS3;
+              ISA_MIPS3_NOT_32R6_64R6;
 def DADDiu  : ArithLogicI<"daddiu", simm16_64, GPR64Opnd, II_DADDIU,
                           immSExt16, add>,
               ADDI_FM<0x19>, IsAsCheapAsAMove, ISA_MIPS3;
@@ -440,13 +440,13 @@ def : MipsInstAlias<"daddu $rs, $rt, $imm",
                     0>;
 def : MipsInstAlias<"dadd $rs, $rt, $imm",
                     (DADDi GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
-                    0>;
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
 def : MipsInstAlias<"daddu $rs, $imm",
                     (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
                     0>;
 def : MipsInstAlias<"dadd $rs, $imm",
                     (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
-                    0>;
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
 def : MipsInstAlias<"add $rs, $imm",
                     (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                     0>;
@@ -459,10 +459,22 @@ def : MipsInstAlias<"dsll $rd, $rt, $rs",
 def : MipsInstAlias<"dsubu $rt, $rs, $imm",
                     (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
                             InvertedImOperand64:$imm), 0>;
+def : MipsInstAlias<"dsubi $rs, $rt, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rt,
+                           InvertedImOperand64:$imm),
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
+def : MipsInstAlias<"dsubi $rs, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs,
+                           InvertedImOperand64:$imm),
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
+def : MipsInstAlias<"dsub $rs, $rt, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rt,
+                           InvertedImOperand64:$imm),
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
 def : MipsInstAlias<"dsub $rs, $imm",
                     (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs,
                            InvertedImOperand64:$imm),
-                    0>;
+                    0>, ISA_MIPS3_NOT_32R6_64R6;
 def : MipsInstAlias<"dsubu $rs, $imm",
                     (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs,
                             InvertedImOperand64:$imm),

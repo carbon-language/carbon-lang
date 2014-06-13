@@ -14,7 +14,6 @@
 // Notes about removals/changes from MIPS32r6:
 // Reencoded: dclo, dclz
 // Reencoded: lld, scd
-// Removed: daddi
 
 //===----------------------------------------------------------------------===//
 //

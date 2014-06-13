@@ -7,7 +7,6 @@
 
 	.set noat
         dmult     $s7,$a5           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        dsub      $a3,$s6,$a4       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ld        $sp,-28645($s1)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ldl       $t8,-4167($t8)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ldr       $t2,-30358($s4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
