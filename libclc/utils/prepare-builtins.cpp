@@ -15,6 +15,15 @@
 
 using namespace llvm;
 
+#define LLVM_350_AND_NEWER \
+  (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5))
+
+#if LLVM_350_AND_NEWER
+#define ERROR_CODE std::error_code
+#else
+#define ERROR_CODE error_code
+#endif
+
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
@@ -37,12 +46,12 @@ int main(int argc, char **argv) {
 #else
     OwningPtr<MemoryBuffer> BufferPtr;
 #endif
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
+    if (ERROR_CODE ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
       ErrorMessage = ec.message();
     else {
 #if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
       ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(BufferPtr.get(), Context);
-      if (error_code ec = ModuleOrErr.getError())
+      if (ERROR_CODE ec = ModuleOrErr.getError())
         ErrorMessage = ec.message();
       M.reset(ModuleOrErr.get());
 #else
