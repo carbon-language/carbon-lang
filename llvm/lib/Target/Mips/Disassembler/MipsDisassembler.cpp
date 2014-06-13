@@ -57,17 +57,23 @@ class MipsDisassembler : public MipsDisassemblerBase {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  MipsDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
-                   bool bigEndian) :
-    MipsDisassemblerBase(STI, Ctx, bigEndian) {
-      IsMicroMips = STI.getFeatureBits() & Mips::FeatureMicroMips;
-    }
+  MipsDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool bigEndian)
+      : MipsDisassemblerBase(STI, Ctx, bigEndian) {
+    IsMicroMips = STI.getFeatureBits() & Mips::FeatureMicroMips;
+  }
 
-  bool isMips32r6() const {
+  bool hasMips3() const { return STI.getFeatureBits() & Mips::FeatureMips3; }
+  bool hasMips32() const { return STI.getFeatureBits() & Mips::FeatureMips32; }
+  bool hasMips32r6() const {
     return STI.getFeatureBits() & Mips::FeatureMips32r6;
   }
 
   bool isGP64() const { return STI.getFeatureBits() & Mips::FeatureGP64Bit; }
+
+  bool hasCOP3() const {
+    // Only present in MIPS-I and MIPS-II
+    return !hasMips32() && !hasMips3();
+  }
 
   /// getInstruction - See MCDisassembler.
   DecodeStatus getInstruction(MCInst &instr,
@@ -744,7 +750,17 @@ MipsDisassembler::getInstruction(MCInst &instr,
     return MCDisassembler::Fail;
   }
 
-  if (isMips32r6() && isGP64()) {
+  if (hasCOP3()) {
+    DEBUG(dbgs() << "Trying COP3_ table (32-bit opcodes):\n");
+    Result =
+        decodeInstruction(DecoderTableCOP3_32, instr, Insn, Address, this, STI);
+    if (Result != MCDisassembler::Fail) {
+      Size = 4;
+      return Result;
+    }
+  }
+
+  if (hasMips32r6() && isGP64()) {
     DEBUG(dbgs() << "Trying Mips32r6_64r6 (GPR64) table (32-bit opcodes):\n");
     Result = decodeInstruction(DecoderTableMips32r6_64r6_GP6432, instr, Insn,
                                Address, this, STI);
@@ -754,7 +770,7 @@ MipsDisassembler::getInstruction(MCInst &instr,
     }
   }
 
-  if (isMips32r6()) {
+  if (hasMips32r6()) {
     DEBUG(dbgs() << "Trying Mips32r6_64r6 table (32-bit opcodes):\n");
     Result = decodeInstruction(DecoderTableMips32r6_64r632, instr, Insn,
                                Address, this, STI);

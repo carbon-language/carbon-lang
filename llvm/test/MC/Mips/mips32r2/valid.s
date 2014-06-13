@@ -21,6 +21,7 @@
         bgezal    $0, 21100            # CHECK: bal 21100     # encoding: [0x04,0x11,0x14,0x9b]
         bgezal    $6, 21100            # CHECK: bgezal $6, 21100 # encoding: [0x04,0xd1,0x14,0x9b]
         bltzal    $6, 21100            # CHECK: bltzal $6, 21100 # encoding: [0x04,0xd0,0x14,0x9b]
+        cache     1, 8($5)             # CHECK: cache 1, 8($5)   # encoding: [0xbc,0xa1,0x00,0x08]
         c.ngl.d   $f29,$f29
         c.ngle.d  $f0,$f16
         c.sf.d    $f30,$f0
@@ -127,6 +128,7 @@
         nor       $a3,$zero,$a3
         or        $12,$s0,$sp
         pause                          # CHECK: pause # encoding:  [0x00,0x00,0x01,0x40]
+        pref      1, 8($5)             # CHECK: pref 1, 8($5)           # encoding: [0xcc,0xa1,0x00,0x08]
         rdhwr     $sp,$11              
         rotr      $1,15                # CHECK: rotr $1, $1, 15         # encoding: [0x00,0x21,0x0b,0xc2]
         rotr      $1,$14,15            # CHECK: rotr $1, $14, 15        # encoding: [0x00,0x2e,0x0b,0xc2]

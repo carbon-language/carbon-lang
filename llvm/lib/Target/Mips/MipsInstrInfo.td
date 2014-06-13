@@ -247,6 +247,12 @@ class ISA_MIPS64R6 { list<Predicate> InsnPredicates = [HasMips64r6]; }
 // The portions of MIPS-III that were also added to MIPS32
 class INSN_MIPS3_32 { list<Predicate> InsnPredicates = [HasMips3_32]; }
 
+// The portions of MIPS-III that were also added to MIPS32 but were removed in
+// MIPS32r6 and MIPS64r6.
+class INSN_MIPS3_32_NOT_32R6_64R6 {
+  list<Predicate> InsnPredicates = [HasMips3_32, NotMips32r6, NotMips64r6];
+}
+
 // The portions of MIPS-III that were also added to MIPS32
 class INSN_MIPS3_32R2 { list<Predicate> InsnPredicates = [HasMips3_32r2]; }
 
@@ -343,6 +349,7 @@ def calltarget  : Operand<iPTR> {
   let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
+def simm9 : Operand<i32>;
 def simm10 : Operand<i32>;
 
 def simm16      : Operand<i32> {
@@ -436,6 +443,11 @@ def mem : mem_generic;
 def mem_msa : mem_generic {
   let MIOperandInfo = (ops ptr_rc, simm10);
   let EncoderMethod = "getMSAMemEncoding";
+}
+
+def mem_simm9 : mem_generic {
+  let MIOperandInfo = (ops ptr_rc, simm9);
+  let EncoderMethod = "getMemEncoding";
 }
 
 def mem_ea : Operand<iPTR> {
@@ -1359,6 +1371,15 @@ def TLBP : TLB<"tlbp">, COP0_TLB_FM<0x08>;
 def TLBR : TLB<"tlbr">, COP0_TLB_FM<0x01>;
 def TLBWI : TLB<"tlbwi">, COP0_TLB_FM<0x02>;
 def TLBWR : TLB<"tlbwr">, COP0_TLB_FM<0x06>;
+
+class CacheOp<string instr_asm, Operand MemOpnd, RegisterOperand GPROpnd> :
+    InstSE<(outs), (ins  MemOpnd:$addr, uimm5:$hint),
+           !strconcat(instr_asm, "\t$hint, $addr"), [], NoItinerary, FrmOther>;
+
+def CACHE : CacheOp<"cache", mem, GPR32Opnd>, CACHEOP_FM<0b101111>,
+            INSN_MIPS3_32_NOT_32R6_64R6;
+def PREF :  CacheOp<"pref", mem, GPR32Opnd>, CACHEOP_FM<0b110011>,
+            INSN_MIPS3_32_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases

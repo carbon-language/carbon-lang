@@ -74,6 +74,8 @@ def OPCODE6_DALIGN   : OPCODE6<0b100100>;
 def OPCODE6_BITSWAP  : OPCODE6<0b100000>;
 def OPCODE6_DBITSWAP : OPCODE6<0b100100>;
 def OPCODE6_JALR     : OPCODE6<0b001001>;
+def OPCODE6_CACHE    : OPCODE6<0b100101>;
+def OPCODE6_PREF     : OPCODE6<0b110101>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -257,6 +259,22 @@ class SPECIAL3_2R_FM<OPCODE6 Operation> : MipsR6Inst {
   let Inst{20-16} = rt;
   let Inst{15-11} = rd;
   let Inst{10-6}  = 0b00000;
+  let Inst{5-0}   = Operation.Value;
+}
+
+class SPECIAL3_MEM_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<21> addr;
+  bits<5> hint;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL3.Value;
+  let Inst{25-21} = base;
+  let Inst{20-16} = hint;
+  let Inst{15-7}  = offset;
+  let Inst{6}     = 0;
   let Inst{5-0}   = Operation.Value;
 }
 
