@@ -77,15 +77,13 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
   *Schedule = isl_union_map_empty(Space);
 
   for (ScopStmt *Stmt : S) {
-    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-                                   ME = Stmt->memacc_end();
-         MI != ME; ++MI) {
+    for (MemoryAccess *MA : *Stmt) {
       isl_set *domcp = Stmt->getDomain();
-      isl_map *accdom = (*MI)->getAccessRelation();
+      isl_map *accdom = MA->getAccessRelation();
 
       accdom = isl_map_intersect_domain(accdom, domcp);
 
-      if ((*MI)->isRead())
+      if (MA->isRead())
         *Read = isl_union_map_add_map(*Read, accdom);
       else
         *Write = isl_union_map_add_map(*Write, accdom);

@@ -354,9 +354,13 @@ public:
 
   void setBasicBlock(BasicBlock *Block) { BB = Block; }
 
-  typedef MemoryAccessVec::iterator memacc_iterator;
-  memacc_iterator memacc_begin() { return MemAccs.begin(); }
-  memacc_iterator memacc_end() { return MemAccs.end(); }
+  typedef MemoryAccessVec::iterator iterator;
+  typedef MemoryAccessVec::const_iterator const_iterator;
+
+  iterator begin() { return MemAccs.begin(); }
+  iterator end() { return MemAccs.end(); }
+  const_iterator begin() const { return MemAccs.begin(); }
+  const_iterator end() const { return MemAccs.end(); }
 
   unsigned getNumParams() const;
   unsigned getNumIterators() const;

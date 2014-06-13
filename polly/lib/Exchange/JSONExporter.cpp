@@ -104,13 +104,11 @@ Json::Value JSONExporter::getJSON(Scop &scop) const {
     statement["schedule"] = Stmt->getScatteringStr();
     statement["accesses"];
 
-    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-                                   ME = Stmt->memacc_end();
-         MI != ME; ++MI) {
+    for (MemoryAccess *MA : *Stmt) {
       Json::Value access;
 
-      access["kind"] = (*MI)->isRead() ? "read" : "write";
-      access["relation"] = (*MI)->getAccessRelationStr();
+      access["kind"] = MA->isRead() ? "read" : "write";
+      access["relation"] = MA->getAccessRelationStr();
 
       statement["accesses"].append(access);
     }
@@ -263,14 +261,12 @@ bool JSONImporter::runOnScop(Scop &scop) {
     ScopStmt *Stmt = *SI;
 
     int memoryAccessIdx = 0;
-    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-                                   ME = Stmt->memacc_end();
-         MI != ME; ++MI) {
+    for (MemoryAccess *MA : *Stmt) {
       Json::Value accesses = jscop["statements"][statementIdx]["accesses"]
                                   [memoryAccessIdx]["relation"];
       isl_map *newAccessMap =
           isl_map_read_from_str(S->getIslCtx(), accesses.asCString());
-      isl_map *currentAccessMap = (*MI)->getAccessRelation();
+      isl_map *currentAccessMap = MA->getAccessRelation();
 
       if (isl_map_dim(newAccessMap, isl_dim_param) !=
           isl_map_dim(currentAccessMap, isl_dim_param)) {
@@ -311,7 +307,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
         // Statistics.
         ++NewAccessMapFound;
         newAccessStrings.push_back(accesses.asCString());
-        (*MI)->setNewAccessRelation(newAccessMap);
+        MA->setNewAccessRelation(newAccessMap);
       } else {
         isl_map_free(newAccessMap);
       }
