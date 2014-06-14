@@ -787,7 +787,7 @@ void MachOFileLayout::writeSymbolTable() {
     for (const Section &section : _file.sections) {
       for (uint32_t index : section.indirectSymbols) {
         if (_swap)
-          *indirects++ = SwapByteOrder(index);
+          *indirects++ = llvm::sys::getSwappedBytes(index);
         else
           *indirects++ = index;
       }
@@ -799,7 +799,7 @@ void MachOFileLayout::writeSymbolTable() {
       for (const Section *section : segInfo.sections) {
         for (uint32_t index : section->indirectSymbols) {
           if (_swap)
-            *indirects++ = SwapByteOrder(index);
+            *indirects++ = llvm::sys::getSwappedBytes(index);
           else
             *indirects++ = index;
         }
