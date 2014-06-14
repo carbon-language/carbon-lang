@@ -125,4 +125,52 @@ TEST(getSwappedBytes, int64_t) {
     sys::getSwappedBytes(int64_t(0x8877665544332211LL)));
 }
 
+TEST(swapByteOrder, uint8_t) {
+  uint8_t value = 0x11;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(uint8_t(0x11), value);
+}
+
+TEST(swapByteOrder, uint16_t) {
+  uint16_t value = 0x2211;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(uint16_t(0x1122), value);
+}
+
+TEST(swapByteOrder, uint32_t) {
+  uint32_t value = 0x44332211;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(uint32_t(0x11223344), value);
+}
+
+TEST(swapByteOrder, uint64_t) {
+  uint64_t value = 0x8877665544332211ULL;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(uint64_t(0x1122334455667788ULL), value);
+}
+
+TEST(swapByteOrder, int8_t) {
+  int8_t value = 0x11;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(int8_t(0x11), value);
+}
+
+TEST(swapByteOrder, int16_t) {
+  int16_t value = 0x2211;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(int16_t(0x1122), value);
+}
+
+TEST(swapByteOrder, int32_t) {
+  int32_t value = 0x44332211;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(int32_t(0x11223344), value);
+}
+
+TEST(swapByteOrder, int64_t) {
+  int64_t value = 0x8877665544332211LL;
+  sys::swapByteOrder(value);
+  EXPECT_EQ(int64_t(0x1122334455667788LL), value);
+}
+
 }

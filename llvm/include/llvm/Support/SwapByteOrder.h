@@ -95,6 +95,11 @@ inline signed long long getSwappedBytes(signed long long C) {
   return SwapByteOrder_64(C);
 }
 
+template<typename T>
+inline void swapByteOrder(T &Value) {
+  Value = getSwappedBytes(Value);
+}
+
 } // end namespace sys
 } // end namespace llvm
 
