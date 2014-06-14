@@ -655,6 +655,14 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
     return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
   }
 
+  if (isa<UndefValue>(Init)) {
+    EVT VT = EVT::getEVT(InitTy);
+    PointerType *PtrTy = PointerType::get(InitTy, AMDGPUAS::PRIVATE_ADDRESS);
+    return DAG.getStore(Chain, DL, DAG.getUNDEF(VT), InitPtr,
+                        MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
+                        TD->getPrefTypeAlignment(InitTy));
+  }
+
   Init->dump();
   llvm_unreachable("Unhandled constant initializer");
 }
@@ -694,11 +702,19 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
     unsigned Size = TD->getTypeAllocSize(EltType);
     unsigned Alignment = TD->getPrefTypeAlignment(EltType);
 
-    const GlobalVariable *Var = cast<GlobalVariable>(GV);
-    const Constant *Init = Var->getInitializer();
+    MVT PrivPtrVT = getPointerTy(AMDGPUAS::PRIVATE_ADDRESS);
+    MVT ConstPtrVT = getPointerTy(AMDGPUAS::CONSTANT_ADDRESS);
+
     int FI = FrameInfo->CreateStackObject(Size, Alignment, false);
-    SDValue InitPtr = DAG.getFrameIndex(FI,
-        getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
+    SDValue InitPtr = DAG.getFrameIndex(FI, PrivPtrVT);
+
+    const GlobalVariable *Var = cast<GlobalVariable>(GV);
+    if (!Var->hasInitializer()) {
+      // This has no use, but bugpoint will hit it.
+      return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op), ConstPtrVT);
+    }
+
+    const Constant *Init = Var->getInitializer();
     SmallVector<SDNode*, 8> WorkList;
 
     for (SDNode::use_iterator I = DAG.getEntryNode()->use_begin(),
@@ -717,8 +733,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
       }
       DAG.UpdateNodeOperands(*I, Ops);
     }
-    return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op),
-        getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
+    return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op), ConstPtrVT);
   }
   }
 }
