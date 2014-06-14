@@ -285,7 +285,7 @@ class GdbRemoteTestCaseBase(TestBase):
         # Parse register infos.
         return [parse_reg_info_response(reg_info_response) for reg_info_response in reg_info_responses]
 
-    def expect_gdbremote_sequence(self, timeout_seconds =None):
+    def expect_gdbremote_sequence(self, timeout_seconds=None):
         if not timeout_seconds:
             timeout_seconds = self._TIMEOUT_SECONDS
         return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, timeout_seconds, self.logger)
