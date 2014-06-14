@@ -61,9 +61,10 @@ g_gpr_regnums_i386[] =
     gpr_al_i386,
     gpr_bl_i386,
     gpr_cl_i386,
-    gpr_dl_i386
+    gpr_dl_i386,
+    LLDB_INVALID_REGNUM, // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_gpr_regnums_i386) / sizeof(g_gpr_regnums_i386[0])) == k_num_gpr_registers_i386,
+static_assert((sizeof(g_gpr_regnums_i386) / sizeof(g_gpr_regnums_i386[0])) - 1 == k_num_gpr_registers_i386,
     "g_gpr_regnums_i386 has wrong number of register infos");
 
 const uint32_t
@@ -102,9 +103,10 @@ g_fpu_regnums_i386[] =
     fpu_xmm4_i386,
     fpu_xmm5_i386,
     fpu_xmm6_i386,
-    fpu_xmm7_i386
+    fpu_xmm7_i386,
+    LLDB_INVALID_REGNUM // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_fpu_regnums_i386) / sizeof(g_fpu_regnums_i386[0])) == k_num_fpr_registers_i386,
+static_assert((sizeof(g_fpu_regnums_i386) / sizeof(g_fpu_regnums_i386[0])) - 1 == k_num_fpr_registers_i386,
     "g_fpu_regnums_i386 has wrong number of register infos");
 
 const uint32_t
@@ -117,9 +119,10 @@ g_avx_regnums_i386[] =
     fpu_ymm4_i386,
     fpu_ymm5_i386,
     fpu_ymm6_i386,
-    fpu_ymm7_i386
+    fpu_ymm7_i386,
+    LLDB_INVALID_REGNUM // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_avx_regnums_i386) / sizeof(g_avx_regnums_i386[0])) == k_num_avx_registers_i386,
+static_assert((sizeof(g_avx_regnums_i386) / sizeof(g_avx_regnums_i386[0])) - 1 == k_num_avx_registers_i386,
     " g_avx_regnums_i386 has wrong number of register infos");
 
 static const
@@ -201,8 +204,9 @@ uint32_t g_gpr_regnums_x86_64[] =
     gpr_r13l_x86_64,   // Low 8 bits or r13
     gpr_r14l_x86_64,   // Low 8 bits or r14
     gpr_r15l_x86_64,   // Low 8 bits or r15
+    LLDB_INVALID_REGNUM // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_gpr_regnums_x86_64) / sizeof(g_gpr_regnums_x86_64[0])) == k_num_gpr_registers_x86_64,
+static_assert((sizeof(g_gpr_regnums_x86_64) / sizeof(g_gpr_regnums_x86_64[0])) - 1 == k_num_gpr_registers_x86_64,
     "g_gpr_regnums_x86_64 has wrong number of register infos");
 
 static const uint32_t
@@ -249,9 +253,10 @@ g_fpu_regnums_x86_64[] =
     fpu_xmm12_x86_64,
     fpu_xmm13_x86_64,
     fpu_xmm14_x86_64,
-    fpu_xmm15_x86_64
+    fpu_xmm15_x86_64,
+    LLDB_INVALID_REGNUM // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_fpu_regnums_x86_64) / sizeof(g_fpu_regnums_x86_64[0])) == k_num_fpr_registers_x86_64,
+static_assert((sizeof(g_fpu_regnums_x86_64) / sizeof(g_fpu_regnums_x86_64[0])) - 1 == k_num_fpr_registers_x86_64,
     "g_fpu_regnums_x86_64 has wrong number of register infos");
 
 static const uint32_t
@@ -272,9 +277,10 @@ g_avx_regnums_x86_64[] =
     fpu_ymm12_x86_64,
     fpu_ymm13_x86_64,
     fpu_ymm14_x86_64,
-    fpu_ymm15_x86_64
+    fpu_ymm15_x86_64,
+    LLDB_INVALID_REGNUM // Register sets must be terminated with LLDB_INVALID_REGNUM.
 };
-static_assert((sizeof(g_avx_regnums_x86_64) / sizeof(g_avx_regnums_x86_64[0])) == k_num_avx_registers_x86_64,
+static_assert((sizeof(g_avx_regnums_x86_64) / sizeof(g_avx_regnums_x86_64[0])) - 1 == k_num_avx_registers_x86_64,
     "g_avx_regnums_x86_64 has wrong number of register infos");
 
 uint32_t RegisterContextPOSIX_x86::g_contained_eax[] = { gpr_eax_i386, LLDB_INVALID_REGNUM };
