@@ -596,12 +596,14 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                                                        SelectionDAG &DAG) const {
   const DataLayout *TD = getTargetMachine().getDataLayout();
   SDLoc DL(InitPtr);
+  Type *InitTy = Init->getType();
+
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(Init)) {
-    EVT VT = EVT::getEVT(CI->getType());
-    PointerType *PtrTy = PointerType::get(CI->getType(), 0);
-    return DAG.getStore(Chain, DL,  DAG.getConstant(*CI, VT), InitPtr,
-                 MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
-                 TD->getPrefTypeAlignment(CI->getType()));
+    EVT VT = EVT::getEVT(InitTy);
+    PointerType *PtrTy = PointerType::get(InitTy, AMDGPUAS::PRIVATE_ADDRESS);
+    return DAG.getStore(Chain, DL, DAG.getConstant(*CI, VT), InitPtr,
+                        MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
+                        TD->getPrefTypeAlignment(InitTy));
   }
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(Init)) {
@@ -612,7 +614,6 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                  TD->getPrefTypeAlignment(CFP->getType()));
   }
 
-  Type *InitTy = Init->getType();
   if (StructType *ST = dyn_cast<StructType>(InitTy)) {
     const StructLayout *SL = TD->getStructLayout(ST);
 
