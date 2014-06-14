@@ -112,7 +112,7 @@ namespace {
     /// the variable involved in the comparion is returned. This function will
     /// be called to see if the precondition and postcondition of the loop
     /// are in desirable form.
-    Value *matchCondition (BranchInst *Br, BasicBlock *NonZeroTarget) const;
+    Value *matchCondition(BranchInst *Br, BasicBlock *NonZeroTarget) const;
 
     /// Return true iff the idiom is detected in the loop. and 1) \p CntInst
     /// is set to the instruction counting the population bit. 2) \p CntPhi
@@ -122,7 +122,7 @@ namespace {
       (Instruction *&CntInst, PHINode *&CntPhi, Value *&Var) const;
 
     /// Insert ctpop intrinsic function and some obviously dead instructions.
-    void transform (Instruction *CntInst, PHINode *CntPhi, Value *Var);
+    void transform(Instruction *CntInst, PHINode *CntPhi, Value *Var);
 
     /// Create llvm.ctpop.* intrinsic function.
     CallInst *createPopcntIntrinsic(IRBuilderTy &IRB, Value *Val, DebugLoc DL);
