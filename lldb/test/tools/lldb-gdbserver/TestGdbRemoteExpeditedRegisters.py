@@ -32,6 +32,8 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
     def stop_notification_contains_generic_register(self, generic_register_name):
         # Generate a stop reply, parse out expedited registers from stop notification.
         expedited_registers = self.gather_expedited_registers()
+        self.assertIsNotNone(expedited_registers)
+        self.assertTrue(len(expedited_registers) > 0)
 
         # Gather target register infos.
         reg_infos = self.gather_register_infos()
@@ -66,6 +68,31 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.buildDwarf()
         self.set_inferior_startup_launch()
         self.stop_notification_contains_any_registers()
+
+    def stop_notification_contains_no_duplicate_registers(self):
+        # Generate a stop reply, parse out expedited registers from stop notification.
+        expedited_registers = self.gather_expedited_registers()
+        # Verify no expedited register was specified multiple times.
+        for (reg_num, value) in expedited_registers.items():
+            if (type(value) == list) and (len(value) > 0):
+                self.fail("expedited register number {} specified more than once ({} times)".format(reg_num, len(value)))
+
+    @debugserver_test
+    @dsym_test
+    def test_stop_notification_contains_no_duplicate_registers_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.stop_notification_contains_no_duplicate_registers()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_stop_notification_contains_no_duplicate_registers_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.stop_notification_contains_no_duplicate_registers()
 
     def stop_notification_contains_pc_register(self):
         self.stop_notification_contains_generic_register("pc")

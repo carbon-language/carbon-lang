@@ -345,11 +345,23 @@ class GdbRemoteTestCaseBase(TestBase):
              {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"memory_region_response"} }],
             True)
 
-    def parse_key_val_dict(self, key_val_text):
+    def parse_key_val_dict(self, key_val_text, allow_dupes=True):
         self.assertIsNotNone(key_val_text)
         kv_dict = {}
         for match in re.finditer(r";?([^:]+):([^;]+)", key_val_text):
-            kv_dict[match.group(1)] = match.group(2)
+            key = match.group(1)
+            val = match.group(2)
+            if key in kv_dict:
+                if allow_dupes:
+                    if type(kv_dict[key]) == list:
+                        kv_dict[key].append(val)
+                    else:
+                        # Promote to list
+                        kv_dict[key] = [kv_dict[key], val]
+                else:
+                    self.fail("key '{}' already present when attempting to add value '{}' (text='{}', dict={})".format(key, val, key_val_text, kv_dict))
+            else:
+                kv_dict[key] = val
         return kv_dict
 
     def parse_memory_region_packet(self, context):
