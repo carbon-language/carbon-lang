@@ -107,7 +107,7 @@ appendIndirectSymbols(IndirectSymbols &isyms, StringRef buffer, bool swap,
 
 template <typename T> static T readBigEndian(T t) {
   if (llvm::sys::IsLittleEndianHost)
-    return llvm::sys::getSwappedBytes(t);
+    llvm::sys::swapByteOrder(t);
   return t;
 }
 
@@ -223,8 +223,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       if (cmd == LC_SEGMENT_64) {
         const segment_command_64 *seg =
                               reinterpret_cast<const segment_command_64*>(lc);
-        const unsigned sectionCount = (swap ? llvm::sys::getSwappedBytes(seg->nsects)
-                                            : seg->nsects);
+        const unsigned sectionCount = (swap
+                                       ? llvm::sys::getSwappedBytes(seg->nsects)
+                                       : seg->nsects);
         const section_64 *sects = reinterpret_cast<const section_64*>
                                   (lc + sizeof(segment_command_64));
         const unsigned lcSize = sizeof(segment_command_64)
@@ -265,8 +266,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       if (cmd == LC_SEGMENT) {
         const segment_command *seg =
                               reinterpret_cast<const segment_command*>(lc);
-        const unsigned sectionCount = (swap ? llvm::sys::getSwappedBytes(seg->nsects)
-                                            : seg->nsects);
+        const unsigned sectionCount = (swap
+                                       ? llvm::sys::getSwappedBytes(seg->nsects)
+                                       : seg->nsects);
         const section *sects = reinterpret_cast<const section*>
                                   (lc + sizeof(segment_command));
         const unsigned lcSize = sizeof(segment_command)

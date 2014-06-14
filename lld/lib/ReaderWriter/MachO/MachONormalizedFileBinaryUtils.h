@@ -25,158 +25,159 @@ namespace lld {
 namespace mach_o {
 namespace normalized {
 
+using llvm::sys::swapByteOrder;
 using llvm::sys::getSwappedBytes;
 
 inline void swapStruct(llvm::MachO::mach_header &mh) {
-  mh.magic      = getSwappedBytes(mh.magic);
-  mh.cputype    = getSwappedBytes(mh.cputype);
-  mh.cpusubtype = getSwappedBytes(mh.cpusubtype);
-  mh.filetype   = getSwappedBytes(mh.filetype);
-  mh.ncmds      = getSwappedBytes(mh.ncmds);
-  mh.sizeofcmds = getSwappedBytes(mh.sizeofcmds);
-  mh.flags      = getSwappedBytes(mh.flags);
+  swapByteOrder(mh.magic);
+  swapByteOrder(mh.cputype);
+  swapByteOrder(mh.cpusubtype);
+  swapByteOrder(mh.filetype);
+  swapByteOrder(mh.ncmds);
+  swapByteOrder(mh.sizeofcmds);
+  swapByteOrder(mh.flags);
 }
 
 inline void swapStruct(llvm::MachO::load_command &lc) {
-  lc.cmd      = getSwappedBytes(lc.cmd);
-  lc.cmdsize  = getSwappedBytes(lc.cmdsize);
+  swapByteOrder(lc.cmd);
+  swapByteOrder(lc.cmdsize);
 }
 
 inline void swapStruct(llvm::MachO::symtab_command &lc) {
-  lc.cmd      = getSwappedBytes(lc.cmd);
-  lc.cmdsize  = getSwappedBytes(lc.cmdsize);
-  lc.symoff   = getSwappedBytes(lc.symoff);
-  lc.nsyms    = getSwappedBytes(lc.nsyms);
-  lc.stroff   = getSwappedBytes(lc.stroff);
-  lc.strsize  = getSwappedBytes(lc.strsize);
+  swapByteOrder(lc.cmd);
+  swapByteOrder(lc.cmdsize);
+  swapByteOrder(lc.symoff);
+  swapByteOrder(lc.nsyms);
+  swapByteOrder(lc.stroff);
+  swapByteOrder(lc.strsize);
 }
 
 inline void swapStruct(llvm::MachO::segment_command_64 &seg) {
-  seg.cmd      = getSwappedBytes(seg.cmd);
-  seg.cmdsize  = getSwappedBytes(seg.cmdsize);
-  seg.vmaddr   = getSwappedBytes(seg.vmaddr);
-  seg.vmsize   = getSwappedBytes(seg.vmsize);
-  seg.fileoff  = getSwappedBytes(seg.fileoff);
-  seg.filesize = getSwappedBytes(seg.filesize);
-  seg.maxprot  = getSwappedBytes(seg.maxprot);
-  seg.initprot = getSwappedBytes(seg.initprot);
-  seg.nsects   = getSwappedBytes(seg.nsects);
-  seg.flags    = getSwappedBytes(seg.flags);
+  swapByteOrder(seg.cmd);
+  swapByteOrder(seg.cmdsize);
+  swapByteOrder(seg.vmaddr);
+  swapByteOrder(seg.vmsize);
+  swapByteOrder(seg.fileoff);
+  swapByteOrder(seg.filesize);
+  swapByteOrder(seg.maxprot);
+  swapByteOrder(seg.initprot);
+  swapByteOrder(seg.nsects);
+  swapByteOrder(seg.flags);
 }
 
 inline void swapStruct(llvm::MachO::segment_command &seg) {
-  seg.cmd      = getSwappedBytes(seg.cmd);
-  seg.cmdsize  = getSwappedBytes(seg.cmdsize);
-  seg.vmaddr   = getSwappedBytes(seg.vmaddr);
-  seg.vmsize   = getSwappedBytes(seg.vmsize);
-  seg.fileoff  = getSwappedBytes(seg.fileoff);
-  seg.filesize = getSwappedBytes(seg.filesize);
-  seg.maxprot  = getSwappedBytes(seg.maxprot);
-  seg.initprot = getSwappedBytes(seg.initprot);
-  seg.nsects   = getSwappedBytes(seg.nsects);
-  seg.flags    = getSwappedBytes(seg.flags);
+  swapByteOrder(seg.cmd);
+  swapByteOrder(seg.cmdsize);
+  swapByteOrder(seg.vmaddr);
+  swapByteOrder(seg.vmsize);
+  swapByteOrder(seg.fileoff);
+  swapByteOrder(seg.filesize);
+  swapByteOrder(seg.maxprot);
+  swapByteOrder(seg.initprot);
+  swapByteOrder(seg.nsects);
+  swapByteOrder(seg.flags);
 }
 
 inline void swapStruct(llvm::MachO::section_64 &sect) {
-  sect.addr      = getSwappedBytes(sect.addr);
-  sect.size      = getSwappedBytes(sect.size);
-  sect.offset    = getSwappedBytes(sect.offset);
-  sect.align     = getSwappedBytes(sect.align);
-  sect.reloff    = getSwappedBytes(sect.reloff);
-  sect.nreloc    = getSwappedBytes(sect.nreloc);
-  sect.flags     = getSwappedBytes(sect.flags);
-  sect.reserved1 = getSwappedBytes(sect.reserved1);
-  sect.reserved2 = getSwappedBytes(sect.reserved2);
+  swapByteOrder(sect.addr);
+  swapByteOrder(sect.size);
+  swapByteOrder(sect.offset);
+  swapByteOrder(sect.align);
+  swapByteOrder(sect.reloff);
+  swapByteOrder(sect.nreloc);
+  swapByteOrder(sect.flags);
+  swapByteOrder(sect.reserved1);
+  swapByteOrder(sect.reserved2);
 }
 
 inline void swapStruct(llvm::MachO::section &sect) {
-  sect.addr      = getSwappedBytes(sect.addr);
-  sect.size      = getSwappedBytes(sect.size);
-  sect.offset    = getSwappedBytes(sect.offset);
-  sect.align     = getSwappedBytes(sect.align);
-  sect.reloff    = getSwappedBytes(sect.reloff);
-  sect.nreloc    = getSwappedBytes(sect.nreloc);
-  sect.flags     = getSwappedBytes(sect.flags);
-  sect.reserved1 = getSwappedBytes(sect.reserved1);
-  sect.reserved2 = getSwappedBytes(sect.reserved2);
+  swapByteOrder(sect.addr);
+  swapByteOrder(sect.size);
+  swapByteOrder(sect.offset);
+  swapByteOrder(sect.align);
+  swapByteOrder(sect.reloff);
+  swapByteOrder(sect.nreloc);
+  swapByteOrder(sect.flags);
+  swapByteOrder(sect.reserved1);
+  swapByteOrder(sect.reserved2);
 }
 
 inline void swapStruct(llvm::MachO::dyld_info_command &info) {
-  info.cmd            = getSwappedBytes(info.cmd);
-  info.cmdsize        = getSwappedBytes(info.cmdsize);
-  info.rebase_off     = getSwappedBytes(info.rebase_off);
-  info.rebase_size    = getSwappedBytes(info.rebase_size);
-  info.bind_off       = getSwappedBytes(info.bind_off);
-  info.bind_size      = getSwappedBytes(info.bind_size);
-  info.weak_bind_off  = getSwappedBytes(info.weak_bind_off);
-  info.weak_bind_size = getSwappedBytes(info.weak_bind_size);
-  info.lazy_bind_off  = getSwappedBytes(info.lazy_bind_off);
-  info.lazy_bind_size = getSwappedBytes(info.lazy_bind_size);
-  info.export_off     = getSwappedBytes(info.export_off);
-  info.export_size    = getSwappedBytes(info.export_size);
+  swapByteOrder(info.cmd);
+  swapByteOrder(info.cmdsize);
+  swapByteOrder(info.rebase_off);
+  swapByteOrder(info.rebase_size);
+  swapByteOrder(info.bind_off);
+  swapByteOrder(info.bind_size);
+  swapByteOrder(info.weak_bind_off);
+  swapByteOrder(info.weak_bind_size);
+  swapByteOrder(info.lazy_bind_off);
+  swapByteOrder(info.lazy_bind_size);
+  swapByteOrder(info.export_off);
+  swapByteOrder(info.export_size);
 }
 
 inline void swapStruct(llvm::MachO::dylib_command &d) {
-  d.cmd                         = getSwappedBytes(d.cmd);
-  d.cmdsize                     = getSwappedBytes(d.cmdsize);
-  d.dylib.name                  = getSwappedBytes(d.dylib.name);
-  d.dylib.timestamp             = getSwappedBytes(d.dylib.timestamp);
-  d.dylib.current_version       = getSwappedBytes(d.dylib.current_version);
-  d.dylib.compatibility_version = getSwappedBytes(d.dylib.compatibility_version);
+  swapByteOrder(d.cmd);
+  swapByteOrder(d.cmdsize);
+  swapByteOrder(d.dylib.name);
+  swapByteOrder(d.dylib.timestamp);
+  swapByteOrder(d.dylib.current_version);
+  swapByteOrder(d.dylib.compatibility_version);
 }
 
 inline void swapStruct(llvm::MachO::dylinker_command &d) {
-  d.cmd       = getSwappedBytes(d.cmd);
-  d.cmdsize   = getSwappedBytes(d.cmdsize);
-  d.name      = getSwappedBytes(d.name);
+  swapByteOrder(d.cmd);
+  swapByteOrder(d.cmdsize);
+  swapByteOrder(d.name);
 }
 
 inline void swapStruct(llvm::MachO::entry_point_command &e) {
-  e.cmd        = getSwappedBytes(e.cmd);
-  e.cmdsize    = getSwappedBytes(e.cmdsize);
-  e.entryoff   = getSwappedBytes(e.entryoff);
-  e.stacksize  = getSwappedBytes(e.stacksize);
+  swapByteOrder(e.cmd);
+  swapByteOrder(e.cmdsize);
+  swapByteOrder(e.entryoff);
+  swapByteOrder(e.stacksize);
 }
 
 inline void swapStruct(llvm::MachO::dysymtab_command &dst) {
-  dst.cmd             = getSwappedBytes(dst.cmd);
-  dst.cmdsize         = getSwappedBytes(dst.cmdsize);
-  dst.ilocalsym       = getSwappedBytes(dst.ilocalsym);
-  dst.nlocalsym       = getSwappedBytes(dst.nlocalsym);
-  dst.iextdefsym      = getSwappedBytes(dst.iextdefsym);
-  dst.nextdefsym      = getSwappedBytes(dst.nextdefsym);
-  dst.iundefsym       = getSwappedBytes(dst.iundefsym);
-  dst.nundefsym       = getSwappedBytes(dst.nundefsym);
-  dst.tocoff          = getSwappedBytes(dst.tocoff);
-  dst.ntoc            = getSwappedBytes(dst.ntoc);
-  dst.modtaboff       = getSwappedBytes(dst.modtaboff);
-  dst.nmodtab         = getSwappedBytes(dst.nmodtab);
-  dst.extrefsymoff    = getSwappedBytes(dst.extrefsymoff);
-  dst.nextrefsyms     = getSwappedBytes(dst.nextrefsyms);
-  dst.indirectsymoff  = getSwappedBytes(dst.indirectsymoff);
-  dst.nindirectsyms   = getSwappedBytes(dst.nindirectsyms);
-  dst.extreloff       = getSwappedBytes(dst.extreloff);
-  dst.nextrel         = getSwappedBytes(dst.nextrel);
-  dst.locreloff       = getSwappedBytes(dst.locreloff);
-  dst.nlocrel         = getSwappedBytes(dst.nlocrel);
+  swapByteOrder(dst.cmd);
+  swapByteOrder(dst.cmdsize);
+  swapByteOrder(dst.ilocalsym);
+  swapByteOrder(dst.nlocalsym);
+  swapByteOrder(dst.iextdefsym);
+  swapByteOrder(dst.nextdefsym);
+  swapByteOrder(dst.iundefsym);
+  swapByteOrder(dst.nundefsym);
+  swapByteOrder(dst.tocoff);
+  swapByteOrder(dst.ntoc);
+  swapByteOrder(dst.modtaboff);
+  swapByteOrder(dst.nmodtab);
+  swapByteOrder(dst.extrefsymoff);
+  swapByteOrder(dst.nextrefsyms);
+  swapByteOrder(dst.indirectsymoff);
+  swapByteOrder(dst.nindirectsyms);
+  swapByteOrder(dst.extreloff);
+  swapByteOrder(dst.nextrel);
+  swapByteOrder(dst.locreloff);
+  swapByteOrder(dst.nlocrel);
 }
 
 
 inline void swapStruct(llvm::MachO::any_relocation_info &reloc) {
-  reloc.r_word0 = getSwappedBytes(reloc.r_word0);
-  reloc.r_word1 = getSwappedBytes(reloc.r_word1);
+  swapByteOrder(reloc.r_word0);
+  swapByteOrder(reloc.r_word1);
 }
 
 inline void swapStruct(llvm::MachO::nlist &sym) {
-  sym.n_strx = getSwappedBytes(sym.n_strx);
-  sym.n_desc = getSwappedBytes(sym.n_desc);
-  sym.n_value = getSwappedBytes(sym.n_value);
+  swapByteOrder(sym.n_strx);
+  swapByteOrder(sym.n_desc);
+  swapByteOrder(sym.n_value);
 }
 
 inline void swapStruct(llvm::MachO::nlist_64 &sym) {
-  sym.n_strx = getSwappedBytes(sym.n_strx);
-  sym.n_desc = getSwappedBytes(sym.n_desc);
-  sym.n_value = getSwappedBytes(sym.n_value);
+  swapByteOrder(sym.n_strx);
+  swapByteOrder(sym.n_desc);
+  swapByteOrder(sym.n_value);
 }
 
 
