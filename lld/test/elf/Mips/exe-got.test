@@ -5,14 +5,14 @@
 # entry in the local GOT section.
 #
 # Build shared library
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
 # RUN: lld -flavor gnu -target mipsel -e glob \
-# RUN:     --output-filetype=yaml -o %t4 %t3 %t-so
-# RUN: FileCheck -check-prefix=GOT %s < %t4
+# RUN:     --output-filetype=yaml -o %t.exe %t-o.o %t.so
+# RUN: FileCheck -check-prefix=GOT %s < %t.exe
 
 # GOT header
 # GOT:   - type:            got
@@ -52,10 +52,67 @@
 # GOT:         offset:          0
 # GOT:         target:          T1
 
-    .abicalls
-    .global glob
-    .ent    glob
-glob:
-    lw      $4,%call16(glob)($28)
-    lw      $4,%call16(T1)($28)
-    .end    glob
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+  - Name:         .text
+    Type:         SHT_PROGBITS
+    Size:         0x0C
+    AddressAlign: 16
+    Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name:    T1
+      Section: .text
+      Type:    STT_FUNC
+      Value:   0x0
+      Size:    4
+
+# o.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x08
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          glob
+        Type:            R_MIPS_CALL16
+        Addend:          0
+      - Offset:          0x04
+        Symbol:          T1
+        Type:            R_MIPS_CALL16
+        Addend:          0
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+  Global:
+    - Name:            glob
+      Section:         .text
+    - Name:            T1
+...
