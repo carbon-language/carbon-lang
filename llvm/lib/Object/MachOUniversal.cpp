@@ -23,26 +23,21 @@ using namespace llvm;
 using namespace object;
 
 template<typename T>
-static void SwapValue(T &Value) {
-  Value = sys::getSwappedBytes(Value);
-}
-
-template<typename T>
 static void SwapStruct(T &Value);
 
 template<>
 void SwapStruct(MachO::fat_header &H) {
-  SwapValue(H.magic);
-  SwapValue(H.nfat_arch);
+  sys::swapByteOrder(H.magic);
+  sys::swapByteOrder(H.nfat_arch);
 }
 
 template<>
 void SwapStruct(MachO::fat_arch &H) {
-  SwapValue(H.cputype);
-  SwapValue(H.cpusubtype);
-  SwapValue(H.offset);
-  SwapValue(H.size);
-  SwapValue(H.align);
+  sys::swapByteOrder(H.cputype);
+  sys::swapByteOrder(H.cpusubtype);
+  sys::swapByteOrder(H.offset);
+  sys::swapByteOrder(H.size);
+  sys::swapByteOrder(H.align);
 }
 
 template<typename T>

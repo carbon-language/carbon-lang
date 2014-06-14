@@ -44,200 +44,195 @@ struct section_base {
 };
 
 template<typename T>
-static void SwapValue(T &Value) {
-  Value = sys::getSwappedBytes(Value);
-}
-
-template<typename T>
 static void SwapStruct(T &Value);
 
 template<>
 void SwapStruct(MachO::any_relocation_info &H) {
-  SwapValue(H.r_word0);
-  SwapValue(H.r_word1);
+  sys::swapByteOrder(H.r_word0);
+  sys::swapByteOrder(H.r_word1);
 }
 
 template<>
 void SwapStruct(MachO::load_command &L) {
-  SwapValue(L.cmd);
-  SwapValue(L.cmdsize);
+  sys::swapByteOrder(L.cmd);
+  sys::swapByteOrder(L.cmdsize);
 }
 
 template<>
 void SwapStruct(nlist_base &S) {
-  SwapValue(S.n_strx);
-  SwapValue(S.n_desc);
+  sys::swapByteOrder(S.n_strx);
+  sys::swapByteOrder(S.n_desc);
 }
 
 template<>
 void SwapStruct(MachO::section &S) {
-  SwapValue(S.addr);
-  SwapValue(S.size);
-  SwapValue(S.offset);
-  SwapValue(S.align);
-  SwapValue(S.reloff);
-  SwapValue(S.nreloc);
-  SwapValue(S.flags);
-  SwapValue(S.reserved1);
-  SwapValue(S.reserved2);
+  sys::swapByteOrder(S.addr);
+  sys::swapByteOrder(S.size);
+  sys::swapByteOrder(S.offset);
+  sys::swapByteOrder(S.align);
+  sys::swapByteOrder(S.reloff);
+  sys::swapByteOrder(S.nreloc);
+  sys::swapByteOrder(S.flags);
+  sys::swapByteOrder(S.reserved1);
+  sys::swapByteOrder(S.reserved2);
 }
 
 template<>
 void SwapStruct(MachO::section_64 &S) {
-  SwapValue(S.addr);
-  SwapValue(S.size);
-  SwapValue(S.offset);
-  SwapValue(S.align);
-  SwapValue(S.reloff);
-  SwapValue(S.nreloc);
-  SwapValue(S.flags);
-  SwapValue(S.reserved1);
-  SwapValue(S.reserved2);
-  SwapValue(S.reserved3);
+  sys::swapByteOrder(S.addr);
+  sys::swapByteOrder(S.size);
+  sys::swapByteOrder(S.offset);
+  sys::swapByteOrder(S.align);
+  sys::swapByteOrder(S.reloff);
+  sys::swapByteOrder(S.nreloc);
+  sys::swapByteOrder(S.flags);
+  sys::swapByteOrder(S.reserved1);
+  sys::swapByteOrder(S.reserved2);
+  sys::swapByteOrder(S.reserved3);
 }
 
 template<>
 void SwapStruct(MachO::nlist &S) {
-  SwapValue(S.n_strx);
-  SwapValue(S.n_desc);
-  SwapValue(S.n_value);
+  sys::swapByteOrder(S.n_strx);
+  sys::swapByteOrder(S.n_desc);
+  sys::swapByteOrder(S.n_value);
 }
 
 template<>
 void SwapStruct(MachO::nlist_64 &S) {
-  SwapValue(S.n_strx);
-  SwapValue(S.n_desc);
-  SwapValue(S.n_value);
+  sys::swapByteOrder(S.n_strx);
+  sys::swapByteOrder(S.n_desc);
+  sys::swapByteOrder(S.n_value);
 }
 
 template<>
 void SwapStruct(MachO::mach_header &H) {
-  SwapValue(H.magic);
-  SwapValue(H.cputype);
-  SwapValue(H.cpusubtype);
-  SwapValue(H.filetype);
-  SwapValue(H.ncmds);
-  SwapValue(H.sizeofcmds);
-  SwapValue(H.flags);
+  sys::swapByteOrder(H.magic);
+  sys::swapByteOrder(H.cputype);
+  sys::swapByteOrder(H.cpusubtype);
+  sys::swapByteOrder(H.filetype);
+  sys::swapByteOrder(H.ncmds);
+  sys::swapByteOrder(H.sizeofcmds);
+  sys::swapByteOrder(H.flags);
 }
 
 template<>
 void SwapStruct(MachO::mach_header_64 &H) {
-  SwapValue(H.magic);
-  SwapValue(H.cputype);
-  SwapValue(H.cpusubtype);
-  SwapValue(H.filetype);
-  SwapValue(H.ncmds);
-  SwapValue(H.sizeofcmds);
-  SwapValue(H.flags);
-  SwapValue(H.reserved);
+  sys::swapByteOrder(H.magic);
+  sys::swapByteOrder(H.cputype);
+  sys::swapByteOrder(H.cpusubtype);
+  sys::swapByteOrder(H.filetype);
+  sys::swapByteOrder(H.ncmds);
+  sys::swapByteOrder(H.sizeofcmds);
+  sys::swapByteOrder(H.flags);
+  sys::swapByteOrder(H.reserved);
 }
 
 template<>
 void SwapStruct(MachO::symtab_command &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.symoff);
-  SwapValue(C.nsyms);
-  SwapValue(C.stroff);
-  SwapValue(C.strsize);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.symoff);
+  sys::swapByteOrder(C.nsyms);
+  sys::swapByteOrder(C.stroff);
+  sys::swapByteOrder(C.strsize);
 }
 
 template<>
 void SwapStruct(MachO::dysymtab_command &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.ilocalsym);
-  SwapValue(C.nlocalsym);
-  SwapValue(C.iextdefsym);
-  SwapValue(C.nextdefsym);
-  SwapValue(C.iundefsym);
-  SwapValue(C.nundefsym);
-  SwapValue(C.tocoff);
-  SwapValue(C.ntoc);
-  SwapValue(C.modtaboff);
-  SwapValue(C.nmodtab);
-  SwapValue(C.extrefsymoff);
-  SwapValue(C.nextrefsyms);
-  SwapValue(C.indirectsymoff);
-  SwapValue(C.nindirectsyms);
-  SwapValue(C.extreloff);
-  SwapValue(C.nextrel);
-  SwapValue(C.locreloff);
-  SwapValue(C.nlocrel);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.ilocalsym);
+  sys::swapByteOrder(C.nlocalsym);
+  sys::swapByteOrder(C.iextdefsym);
+  sys::swapByteOrder(C.nextdefsym);
+  sys::swapByteOrder(C.iundefsym);
+  sys::swapByteOrder(C.nundefsym);
+  sys::swapByteOrder(C.tocoff);
+  sys::swapByteOrder(C.ntoc);
+  sys::swapByteOrder(C.modtaboff);
+  sys::swapByteOrder(C.nmodtab);
+  sys::swapByteOrder(C.extrefsymoff);
+  sys::swapByteOrder(C.nextrefsyms);
+  sys::swapByteOrder(C.indirectsymoff);
+  sys::swapByteOrder(C.nindirectsyms);
+  sys::swapByteOrder(C.extreloff);
+  sys::swapByteOrder(C.nextrel);
+  sys::swapByteOrder(C.locreloff);
+  sys::swapByteOrder(C.nlocrel);
 }
 
 template<>
 void SwapStruct(MachO::linkedit_data_command &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.dataoff);
-  SwapValue(C.datasize);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.dataoff);
+  sys::swapByteOrder(C.datasize);
 }
 
 template<>
 void SwapStruct(MachO::segment_command &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.vmaddr);
-  SwapValue(C.vmsize);
-  SwapValue(C.fileoff);
-  SwapValue(C.filesize);
-  SwapValue(C.maxprot);
-  SwapValue(C.initprot);
-  SwapValue(C.nsects);
-  SwapValue(C.flags);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.vmaddr);
+  sys::swapByteOrder(C.vmsize);
+  sys::swapByteOrder(C.fileoff);
+  sys::swapByteOrder(C.filesize);
+  sys::swapByteOrder(C.maxprot);
+  sys::swapByteOrder(C.initprot);
+  sys::swapByteOrder(C.nsects);
+  sys::swapByteOrder(C.flags);
 }
 
 template<>
 void SwapStruct(MachO::segment_command_64 &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.vmaddr);
-  SwapValue(C.vmsize);
-  SwapValue(C.fileoff);
-  SwapValue(C.filesize);
-  SwapValue(C.maxprot);
-  SwapValue(C.initprot);
-  SwapValue(C.nsects);
-  SwapValue(C.flags);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.vmaddr);
+  sys::swapByteOrder(C.vmsize);
+  sys::swapByteOrder(C.fileoff);
+  sys::swapByteOrder(C.filesize);
+  sys::swapByteOrder(C.maxprot);
+  sys::swapByteOrder(C.initprot);
+  sys::swapByteOrder(C.nsects);
+  sys::swapByteOrder(C.flags);
 }
 
 template<>
 void SwapStruct(uint32_t &C) {
-  SwapValue(C);
+  sys::swapByteOrder(C);
 }
 
 template<>
 void SwapStruct(MachO::linker_options_command &C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.count);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.count);
 }
 
 template<>
 void SwapStruct(MachO::version_min_command&C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.version);
-  SwapValue(C.reserved);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.version);
+  sys::swapByteOrder(C.reserved);
 }
 
 template<>
 void SwapStruct(MachO::dylib_command&C) {
-  SwapValue(C.cmd);
-  SwapValue(C.cmdsize);
-  SwapValue(C.dylib.name);
-  SwapValue(C.dylib.timestamp);
-  SwapValue(C.dylib.current_version);
-  SwapValue(C.dylib.compatibility_version);
+  sys::swapByteOrder(C.cmd);
+  sys::swapByteOrder(C.cmdsize);
+  sys::swapByteOrder(C.dylib.name);
+  sys::swapByteOrder(C.dylib.timestamp);
+  sys::swapByteOrder(C.dylib.current_version);
+  sys::swapByteOrder(C.dylib.compatibility_version);
 }
 
 template<>
 void SwapStruct(MachO::data_in_code_entry &C) {
-  SwapValue(C.offset);
-  SwapValue(C.length);
-  SwapValue(C.kind);
+  sys::swapByteOrder(C.offset);
+  sys::swapByteOrder(C.length);
+  sys::swapByteOrder(C.kind);
 }
 
 template<typename T>
