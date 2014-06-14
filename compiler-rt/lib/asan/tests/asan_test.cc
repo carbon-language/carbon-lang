@@ -116,7 +116,8 @@ TEST(AddressSanitizer, CallocReturnsZeroMem) {
   }
 }
 
-#if !defined(_WIN32)  // No valloc on Windows.
+// No valloc on Windows or Android.
+#if !defined(_WIN32) && !defined(ANDROID) && !defined(__ANDROID__)
 TEST(AddressSanitizer, VallocTest) {
   void *a = valloc(100);
   EXPECT_EQ(0U, (uintptr_t)a % kPageSize);

@@ -101,7 +101,8 @@ static inline uint32_t my_rand() {
 # define SANITIZER_TEST_HAS_POSIX_MEMALIGN 0
 #endif
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(_WIN32)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(ANDROID) && \
+    !defined(__ANDROID__) && !defined(_WIN32)
 # define SANITIZER_TEST_HAS_MEMALIGN 1
 # define SANITIZER_TEST_HAS_PVALLOC 1
 # define SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE 1
