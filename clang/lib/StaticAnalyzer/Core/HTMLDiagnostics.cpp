@@ -240,6 +240,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
 
+    os << "\n<!-- FILENAME " << llvm::sys::path::filename(Entry->getName()) << " -->\n";
+
+    os  << "\n<!-- FUNCTIONNAME " <<  declName << " -->\n";
+
     os << "\n<!-- BUGLINE "
        << LineNumber
        << " -->\n";

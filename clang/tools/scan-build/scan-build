@@ -368,6 +368,7 @@ sub ScanFile {
 
   my $BugType        = "";
   my $BugFile        = "";
+  my $BugFunction    = "";
   my $BugCategory    = "";
   my $BugDescription = "";
   my $BugPathLength  = 1;
@@ -395,7 +396,12 @@ sub ScanFile {
     elsif (/<!-- BUGDESC (.*) -->$/) {
       $BugDescription = $1;
     }
+    elsif (/<!-- FUNCTIONNAME (.*) -->$/) {
+      $BugFunction = $1;
+    }
+
   }
+
 
   close(IN);
 
@@ -409,7 +415,7 @@ sub ScanFile {
     return;
   }
 
-  push @$Index,[ $FName, $BugCategory, $BugType, $BugFile, $BugLine,
+  push @$Index,[ $FName, $BugCategory, $BugType, $BugFile, $BugFunction, $BugLine,
                  $BugPathLength ];
 }
 
@@ -701,6 +707,7 @@ print OUT <<ENDTEXT;
   <td>Bug Group</td>
   <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span></td>
   <td>File</td>
+  <td>Function/Method</td>
   <td class="Q">Line</td>
   <td class="Q">Path Length</td>
   <td class="sorttable_nosort"></td>
@@ -758,13 +765,17 @@ ENDTEXT
       }
       print OUT "</td>";
 
+      print OUT "<td class=\"DESC\">";
+      print OUT $row->[4];
+      print OUT "</td>";
+
       # Print out the quantities.
-      for my $j ( 4 .. 5 ) {
+      for my $j ( 5 .. 6 ) {
         print OUT "<td class=\"Q\">$row->[$j]</td>";
       }
 
       # Print the rest of the columns.
-      for (my $j = 6; $j <= $#{$row}; ++$j) {
+      for (my $j = 7; $j <= $#{$row}; ++$j) {
         print OUT "<td>$row->[$j]</td>"
       }
 
