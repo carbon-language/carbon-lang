@@ -26,6 +26,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include <sstream>
 
 using namespace clang;
 using namespace ento;
@@ -292,14 +293,15 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       std::error_code EC;
       do {
           // Find a filename which is not already used
+          std::stringstream filename;
           Model = "";
+          filename << "report-"
+                   << llvm::sys::path::filename(Entry->getName()).str()
+                   << "-" << declName.c_str()
+                   << "-" << offsetDecl
+                   << "-" << i << ".html";
           llvm::sys::path::append(Model, Directory,
-                                  "report-" +
-                                  llvm::sys::path::filename(Entry->getName()) +
-                                  "-" +
-                                  declName.c_str() +
-                                  "-" + std::to_string(offsetDecl) +
-                                  "-" + std::to_string(i) + ".html");
+                                  filename.str());
           EC = llvm::sys::fs::openFileForWrite(Model.str(),
                                                FD,
                                                llvm::sys::fs::F_RW |
