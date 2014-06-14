@@ -20,6 +20,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/HTMLRewrite.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -39,8 +40,9 @@ class HTMLDiagnostics : public PathDiagnosticConsumer {
   std::string Directory;
   bool createdDir, noDir;
   const Preprocessor &PP;
+  AnalyzerOptions &AnalyzerOpts;
 public:
-  HTMLDiagnostics(const std::string& prefix, const Preprocessor &pp);
+  HTMLDiagnostics(AnalyzerOptions &AnalyzerOpts, const std::string& prefix, const Preprocessor &pp);
 
   virtual ~HTMLDiagnostics() { FlushDiagnostics(nullptr); }
 
@@ -68,16 +70,17 @@ public:
 
 } // end anonymous namespace
 
-HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
+HTMLDiagnostics::HTMLDiagnostics(AnalyzerOptions &AnalyzerOpts,
+                                 const std::string& prefix,
                                  const Preprocessor &pp)
-  : Directory(prefix), createdDir(false), noDir(false), PP(pp) {
+    : Directory(prefix), createdDir(false), noDir(false), PP(pp), AnalyzerOpts(AnalyzerOpts) {
 }
 
 void ento::createHTMLDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
                                         PathDiagnosticConsumers &C,
                                         const std::string& prefix,
                                         const Preprocessor &PP) {
-  C.push_back(new HTMLDiagnostics(prefix, PP));
+  C.push_back(new HTMLDiagnostics(AnalyzerOpts, prefix, PP));
 }
 
 //===----------------------------------------------------------------------===//
@@ -95,7 +98,7 @@ void HTMLDiagnostics::FlushDiagnosticsImpl(
 
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
                                  FilesMade *filesMade) {
-    
+
   // Create the HTML directory if it is missing.
   if (!createdDir) {
     createdDir = true;
@@ -126,11 +129,30 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   // Create a new rewriter to generate HTML.
   Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOpts());
 
+  // Get the function/method name
+  SmallString<128> declName("unknown");
+  int offsetDecl = 0;
+  if (const Decl *DeclWithIssue = D.getDeclWithIssue()) {
+      if (const NamedDecl *ND = dyn_cast<NamedDecl>(DeclWithIssue)) {
+          declName = ND->getDeclName().getAsString();
+      }
+
+      if (const Stmt *Body = DeclWithIssue->getBody()) {
+          // Retrieve the relative position of the declaration which will be used
+          // for the file name
+          FullSourceLoc L(
+              SMgr.getExpansionLoc((*path.rbegin())->getLocation().asLocation()),
+              SMgr);
+          FullSourceLoc FunL(SMgr.getExpansionLoc(Body->getLocStart()), SMgr);
+          offsetDecl = L.getExpansionLineNumber() - FunL.getExpansionLineNumber();
+      }
+  }
+
   // Process the path.
   unsigned n = path.size();
   unsigned max = n;
 
-  for (PathPieces::const_reverse_iterator I = path.rbegin(), 
+  for (PathPieces::const_reverse_iterator I = path.rbegin(),
        E = path.rend();
         I != E; ++I, --n)
     HandlePiece(R, FID, **I, n, max);
@@ -163,6 +185,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     DirName += '/';
   }
 
+  int LineNumber = (*path.rbegin())->getLocation().asLocation().getExpansionLineNumber();
+  int ColumnNumber = (*path.rbegin())->getLocation().asLocation().getExpansionColumnNumber();
+
   // Add the name of the file as an <h1> tag.
 
   {
@@ -176,9 +201,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       << html::EscapeText(Entry->getName())
       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
          "<a href=\"#EndPath\">line "
-      << (*path.rbegin())->getLocation().asLocation().getExpansionLineNumber()
+      << LineNumber
       << ", column "
-      << (*path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
+      << ColumnNumber
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
       << D.getVerboseDescription() << "</td></tr>\n";
@@ -216,11 +241,11 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
 
     os << "\n<!-- BUGLINE "
-       << path.back()->getLocation().asLocation().getExpansionLineNumber()
+       << LineNumber
        << " -->\n";
 
     os << "\n<!-- BUGCOLUMN "
-      << path.back()->getLocation().asLocation().getExpansionColumnNumber()
+      << ColumnNumber
       << " -->\n";
 
     os << "\n<!-- BUGPATHLENGTH " << path.size() << " -->\n";
@@ -247,13 +272,41 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   // Create a path for the target HTML file.
   int FD;
   SmallString<128> Model, ResultPath;
-  llvm::sys::path::append(Model, Directory, "report-%%%%%%.html");
 
-  if (std::error_code EC =
+  if (!AnalyzerOpts.shouldWriteStableReportFilename()) {
+      llvm::sys::path::append(Model, Directory, "report-%%%%%%.html");
+
+      if (std::error_code EC =
           llvm::sys::fs::createUniqueFile(Model.str(), FD, ResultPath)) {
-    llvm::errs() << "warning: could not create file in '" << Directory
-                 << "': " << EC.message() << '\n';
-    return;
+          llvm::errs() << "warning: could not create file in '" << Directory
+                       << "': " << EC.message() << '\n';
+          return;
+      }
+
+  } else {
+      int i = 1;
+      std::error_code EC;
+      do {
+          // Find a filename which is not already used
+          Model = "";
+          llvm::sys::path::append(Model, Directory,
+                                  "report-" +
+                                  llvm::sys::path::filename(Entry->getName()) +
+                                  "-" +
+                                  declName.c_str() +
+                                  "-" + std::to_string(offsetDecl) +
+                                  "-" + std::to_string(i) + ".html");
+          EC = llvm::sys::fs::openFileForWrite(Model.str(),
+                                               FD,
+                                               llvm::sys::fs::F_RW |
+                                               llvm::sys::fs::F_Excl);
+          if (EC && EC != std::errc::file_exists) {
+              llvm::errs() << "warning: could not create file '" << Model.str()
+                           << "': " << EC.message() << '\n';
+              return;
+          }
+          i++;
+      } while (EC);
   }
 
   llvm::raw_fd_ostream os(FD, true);
@@ -458,7 +511,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
            << (num + 1)
            << ")\">&#x2192;</a></div></td>";
       }
-      
+
       os << "</tr></table>";
     }
   }

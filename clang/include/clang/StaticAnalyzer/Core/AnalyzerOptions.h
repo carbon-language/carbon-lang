@@ -141,7 +141,7 @@ public:
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
-  
+
   /// \brief The flag regulates if we should eagerly assume evaluations of
   /// conditionals, thus, bifurcating the path.
   ///
@@ -232,6 +232,9 @@ private:
 
   /// \sa reportIssuesInMainSourceFile
   Optional<bool> ReportIssuesInMainSourceFile;
+
+  /// \sa StableReportFilename
+  Optional<bool> StableReportFilename;
 
   /// \sa getGraphTrimInterval
   Optional<unsigned> GraphTrimInterval;
@@ -358,6 +361,12 @@ public:
   /// This is controlled by the 'report-in-main-source-file' config option,
   /// which accepts the values "true" and "false".
   bool shouldReportIssuesInMainSourceFile();
+
+  /// Returns whether or not the report filename should be random or not.
+  ///
+  /// This is controlled by the 'stable-report-filename' config option,
+  /// which accepts the values "true" and "false". Default = false
+  bool shouldWriteStableReportFilename();
 
   /// Returns whether irrelevant parts of a bug report path should be pruned
   /// out of the final output.

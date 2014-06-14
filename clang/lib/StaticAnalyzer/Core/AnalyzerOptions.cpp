@@ -189,6 +189,13 @@ bool AnalyzerOptions::shouldReportIssuesInMainSourceFile() {
                           /* Default = */ false);
 }
 
+
+bool AnalyzerOptions::shouldWriteStableReportFilename() {
+  return getBooleanOption(StableReportFilename,
+                          "stable-report-filename",
+                          /* Default = */ false);
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);
