@@ -158,7 +158,7 @@ bool RawInstrProfReader<IntPtrT>::hasFormat(const MemoryBuffer &DataBuffer) {
   uint64_t Magic =
     *reinterpret_cast<const uint64_t *>(DataBuffer.getBufferStart());
   return getRawMagic<IntPtrT>() == Magic ||
-    sys::SwapByteOrder(getRawMagic<IntPtrT>()) == Magic;
+    sys::getSwappedBytes(getRawMagic<IntPtrT>()) == Magic;
 }
 
 template <class IntPtrT>

@@ -1179,7 +1179,7 @@ prependCompressionHeader(uint64_t Size,
   if (Size <= Magic.size() + sizeof(Size) + CompressedContents.size())
     return false;
   if (sys::IsLittleEndianHost)
-    Size = sys::SwapByteOrder(Size);
+    Size = sys::getSwappedBytes(Size);
   CompressedContents.insert(CompressedContents.begin(),
                             Magic.size() + sizeof(Size), 0);
   std::copy(Magic.begin(), Magic.end(), CompressedContents.begin());

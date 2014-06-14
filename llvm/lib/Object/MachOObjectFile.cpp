@@ -45,7 +45,7 @@ struct section_base {
 
 template<typename T>
 static void SwapValue(T &Value) {
-  Value = sys::SwapByteOrder(Value);
+  Value = sys::getSwappedBytes(Value);
 }
 
 template<typename T>

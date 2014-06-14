@@ -184,7 +184,7 @@ private:
   std::error_code readHeader(const RawHeader &Header);
   template <class IntT>
   IntT swap(IntT Int) const {
-    return ShouldSwapBytes ? sys::SwapByteOrder(Int) : Int;
+    return ShouldSwapBytes ? sys::getSwappedBytes(Int) : Int;
   }
   const uint64_t *getCounter(IntPtrT CounterPtr) const {
     ptrdiff_t Offset = (swap(CounterPtr) - CountersDelta) / sizeof(uint64_t);

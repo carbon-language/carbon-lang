@@ -152,7 +152,7 @@ inline uint64_t fetch64(const char *p) {
   uint64_t result;
   memcpy(&result, p, sizeof(result));
   if (sys::IsBigEndianHost)
-    return sys::SwapByteOrder(result);
+    return sys::getSwappedBytes(result);
   return result;
 }
 
@@ -160,7 +160,7 @@ inline uint32_t fetch32(const char *p) {
   uint32_t result;
   memcpy(&result, p, sizeof(result));
   if (sys::IsBigEndianHost)
-    return sys::SwapByteOrder(result);
+    return sys::getSwappedBytes(result);
   return result;
 }
 

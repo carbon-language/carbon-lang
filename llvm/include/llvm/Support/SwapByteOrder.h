@@ -68,30 +68,30 @@ inline uint64_t SwapByteOrder_64(uint64_t value) {
 #endif
 }
 
-inline unsigned char  SwapByteOrder(unsigned char C) { return C; }
-inline   signed char  SwapByteOrder(signed char C) { return C; }
-inline          char  SwapByteOrder(char C) { return C; }
+inline unsigned char  getSwappedBytes(unsigned char C) { return C; }
+inline   signed char  getSwappedBytes(signed char C) { return C; }
+inline          char  getSwappedBytes(char C) { return C; }
 
-inline unsigned short SwapByteOrder(unsigned short C) { return SwapByteOrder_16(C); }
-inline   signed short SwapByteOrder(  signed short C) { return SwapByteOrder_16(C); }
+inline unsigned short getSwappedBytes(unsigned short C) { return SwapByteOrder_16(C); }
+inline   signed short getSwappedBytes(  signed short C) { return SwapByteOrder_16(C); }
 
-inline unsigned int   SwapByteOrder(unsigned int   C) { return SwapByteOrder_32(C); }
-inline   signed int   SwapByteOrder(  signed int   C) { return SwapByteOrder_32(C); }
+inline unsigned int   getSwappedBytes(unsigned int   C) { return SwapByteOrder_32(C); }
+inline   signed int   getSwappedBytes(  signed int   C) { return SwapByteOrder_32(C); }
 
 #if __LONG_MAX__ == __INT_MAX__
-inline unsigned long  SwapByteOrder(unsigned long  C) { return SwapByteOrder_32(C); }
-inline   signed long  SwapByteOrder(  signed long  C) { return SwapByteOrder_32(C); }
+inline unsigned long  getSwappedBytes(unsigned long  C) { return SwapByteOrder_32(C); }
+inline   signed long  getSwappedBytes(  signed long  C) { return SwapByteOrder_32(C); }
 #elif __LONG_MAX__ == __LONG_LONG_MAX__
-inline unsigned long  SwapByteOrder(unsigned long  C) { return SwapByteOrder_64(C); }
-inline   signed long  SwapByteOrder(  signed long  C) { return SwapByteOrder_64(C); }
+inline unsigned long  getSwappedBytes(unsigned long  C) { return SwapByteOrder_64(C); }
+inline   signed long  getSwappedBytes(  signed long  C) { return SwapByteOrder_64(C); }
 #else
 #error "Unknown long size!"
 #endif
 
-inline unsigned long long SwapByteOrder(unsigned long long C) {
+inline unsigned long long getSwappedBytes(unsigned long long C) {
   return SwapByteOrder_64(C);
 }
-inline signed long long SwapByteOrder(signed long long C) {
+inline signed long long getSwappedBytes(signed long long C) {
   return SwapByteOrder_64(C);
 }
 
