@@ -1387,24 +1387,22 @@ static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   EVT InVT = Op.getOperand(0).getValueType();
   EVT VT = Op.getValueType();
 
-  // FP_TO_XINT conversion from the same type are legal.
-  if (VT.getSizeInBits() == InVT.getSizeInBits())
-    return Op;
-
-  if (InVT == MVT::v2f64 || InVT == MVT::v4f32) {
+  if (VT.getSizeInBits() < InVT.getSizeInBits()) {
     SDLoc dl(Op);
     SDValue Cv =
         DAG.getNode(Op.getOpcode(), dl, InVT.changeVectorElementTypeToInteger(),
                     Op.getOperand(0));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Cv);
-  } else if (InVT == MVT::v2f32) {
+  }
+
+  if (VT.getSizeInBits() > InVT.getSizeInBits()) {
     SDLoc dl(Op);
     SDValue Ext = DAG.getNode(ISD::FP_EXTEND, dl, MVT::v2f64, Op.getOperand(0));
     return DAG.getNode(Op.getOpcode(), dl, VT, Ext);
   }
 
   // Type changing conversions are illegal.
-  return SDValue();
+  return Op;
 }
 
 SDValue AArch64TargetLowering::LowerFP_TO_INT(SDValue Op,

@@ -315,8 +315,10 @@ unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     // Complex: to v2f32
     { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i8,  3 },
     { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i16, 3 },
+    { ISD::SINT_TO_FP, MVT::v2f32, MVT::v2i64, 2 },
     { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i8,  3 },
     { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i16, 3 },
+    { ISD::UINT_TO_FP, MVT::v2f32, MVT::v2i64, 2 },
 
     // Complex: to v4f32
     { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i8,  4 },
@@ -341,12 +343,27 @@ unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     { ISD::FP_TO_UINT, MVT::v4i32, MVT::v4f32, 1 },
     { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f64, 1 },
 
-    { ISD::FP_TO_SINT, MVT::v2i32, MVT::v2f64, 2 },
+    // Complex, from v2f32: legal type is v2i32 (no cost) or v2i64 (1 ext).
     { ISD::FP_TO_SINT, MVT::v2i64, MVT::v2f32, 2 },
-    { ISD::FP_TO_SINT, MVT::v4i16, MVT::v4f32, 2 },
-    { ISD::FP_TO_UINT, MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i16, MVT::v2f32, 1 },
+    { ISD::FP_TO_SINT, MVT::v2i8,  MVT::v2f32, 1 },
     { ISD::FP_TO_UINT, MVT::v2i64, MVT::v2f32, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i16, MVT::v2f32, 1 },
+    { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f32, 1 },
+
+    // Complex, from v4f32: legal type is v4i16, 1 narrowing => ~2
+    { ISD::FP_TO_SINT, MVT::v4i16, MVT::v4f32, 2 },
+    { ISD::FP_TO_SINT, MVT::v4i8,  MVT::v4f32, 2 },
     { ISD::FP_TO_UINT, MVT::v4i16, MVT::v4f32, 2 },
+    { ISD::FP_TO_UINT, MVT::v4i8,  MVT::v4f32, 2 },
+
+    // Complex, from v2f64: legal type is v2i32, 1 narrowing => ~2.
+    { ISD::FP_TO_SINT, MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i16, MVT::v2f64, 2 },
+    { ISD::FP_TO_SINT, MVT::v2i8,  MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i16, MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f64, 2 },
   };
 
   int Idx = ConvertCostTableLookup<MVT>(
