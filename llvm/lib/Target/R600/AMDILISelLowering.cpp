@@ -55,12 +55,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::BRCOND, VT, Custom);
     setOperationAction(ISD::BR_JT, VT, Expand);
     setOperationAction(ISD::BRIND, VT, Expand);
-    // TODO: Implement custom UREM/SREM routines
-    setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
-    if (VT != MVT::i64)
-      setOperationAction(ISD::SDIV, VT, Custom);
   }
 
   for (MVT VT : FloatTypes) {
@@ -72,8 +66,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::SELECT_CC, VT, Expand);
   }
 
-  setOperationAction(ISD::MULHU, MVT::i64, Expand);
-  setOperationAction(ISD::MULHS, MVT::i64, Expand);
   if (STM.hasHWFP64()) {
     setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
     setOperationAction(ISD::FABS, MVT::f64, Expand);
