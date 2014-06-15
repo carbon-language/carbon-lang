@@ -167,41 +167,14 @@ AMDGPUTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const {
   EVT OVT = Op.getValueType();
-  SDValue DST;
-  if (OVT.getScalarType() == MVT::i64) {
-    DST = LowerSREM64(Op, DAG);
-  } else if (OVT.getScalarType() == MVT::i32) {
-    DST = LowerSREM32(Op, DAG);
-  } else if (OVT.getScalarType() == MVT::i16) {
-    DST = LowerSREM16(Op, DAG);
-  } else if (OVT.getScalarType() == MVT::i8) {
-    DST = LowerSREM8(Op, DAG);
-  } else {
-    DST = SDValue(Op.getNode(), 0);
-  }
-  return DST;
-}
 
-EVT
-AMDGPUTargetLowering::genIntType(uint32_t size, uint32_t numEle) const {
-  int iSize = (size * numEle);
-  int vEle = (iSize >> ((size == 64) ? 6 : 5));
-  if (!vEle) {
-    vEle = 1;
-  }
-  if (size == 64) {
-    if (vEle == 1) {
-      return EVT(MVT::i64);
-    } else {
-      return EVT(MVT::getVectorVT(MVT::i64, vEle));
-    }
-  } else {
-    if (vEle == 1) {
-      return EVT(MVT::i32);
-    } else {
-      return EVT(MVT::getVectorVT(MVT::i32, vEle));
-    }
-  }
+  if (OVT.getScalarType() == MVT::i64)
+    return LowerSREM64(Op, DAG);
+
+  if (OVT.getScalarType() == MVT::i32)
+    return LowerSREM32(Op, DAG);
+
+  return SDValue(Op.getNode(), 0);
 }
 
 SDValue
@@ -241,7 +214,7 @@ AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const {
   SDValue jq = DAG.getNode(ISD::XOR, DL, OVT, LHS, RHS);
 
   // jq = jq >> (bitsize - 2)
-  jq = DAG.getNode(ISD::SRA, DL, OVT, jq, DAG.getConstant(bitsize - 2, OVT)); 
+  jq = DAG.getNode(ISD::SRA, DL, OVT, jq, DAG.getConstant(bitsize - 2, OVT));
 
   // jq = jq | 0x1
   jq = DAG.getNode(ISD::OR, DL, OVT, jq, DAG.getConstant(1, OVT));
@@ -291,7 +264,7 @@ AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const {
     cv = DAG.getSetCC(DL, INTTY, fr, fb, ISD::SETOGE);
   }
   // jq = (cv ? jq : 0);
-  jq = DAG.getNode(ISD::SELECT, DL, OVT, cv, jq, 
+  jq = DAG.getNode(ISD::SELECT, DL, OVT, cv, jq,
       DAG.getConstant(0, OVT));
   // dst = iq + jq;
   iq = DAG.getSExtOrTrunc(iq, DL, OVT);
@@ -361,47 +334,13 @@ AMDGPUTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const {
   r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
 
   // ixor DST, r0, r10
-  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10); 
+  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
   return DST;
 }
 
 SDValue
 AMDGPUTargetLowering::LowerSDIV64(SDValue Op, SelectionDAG &DAG) const {
   return SDValue(Op.getNode(), 0);
-}
-
-SDValue
-AMDGPUTargetLowering::LowerSREM8(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  EVT OVT = Op.getValueType();
-  MVT INTTY = MVT::i32;
-  if (OVT == MVT::v2i8) {
-    INTTY = MVT::v2i32;
-  } else if (OVT == MVT::v4i8) {
-    INTTY = MVT::v4i32;
-  }
-  SDValue LHS = DAG.getSExtOrTrunc(Op.getOperand(0), DL, INTTY);
-  SDValue RHS = DAG.getSExtOrTrunc(Op.getOperand(1), DL, INTTY);
-  LHS = DAG.getNode(ISD::SREM, DL, INTTY, LHS, RHS);
-  LHS = DAG.getSExtOrTrunc(LHS, DL, OVT);
-  return LHS;
-}
-
-SDValue
-AMDGPUTargetLowering::LowerSREM16(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  EVT OVT = Op.getValueType();
-  MVT INTTY = MVT::i32;
-  if (OVT == MVT::v2i16) {
-    INTTY = MVT::v2i32;
-  } else if (OVT == MVT::v4i16) {
-    INTTY = MVT::v4i32;
-  }
-  SDValue LHS = DAG.getSExtOrTrunc(Op.getOperand(0), DL, INTTY);
-  SDValue RHS = DAG.getSExtOrTrunc(Op.getOperand(1), DL, INTTY);
-  LHS = DAG.getNode(ISD::SREM, DL, INTTY, LHS, RHS);
-  LHS = DAG.getSExtOrTrunc(LHS, DL, OVT);
-  return LHS;
 }
 
 SDValue
@@ -462,7 +401,7 @@ AMDGPUTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const {
   r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
 
   // ixor DST, r0, r10
-  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10); 
+  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
   return DST;
 }
 

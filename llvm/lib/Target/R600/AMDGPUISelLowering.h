@@ -147,8 +147,6 @@ public:
 private:
   void InitAMDILLowering();
   SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM8(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM16(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) const;
@@ -160,7 +158,6 @@ private:
                                   unsigned BitsDiff,
                                   SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
-  EVT genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 };
 
