@@ -14,7 +14,6 @@
 #ifndef ARMSUBTARGET_H
 #define ARMSUBTARGET_H
 
-#include "ARMJITInfo.h"
 #include "ARMSelectionDAGInfo.h"
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/Triple.h"
@@ -257,12 +256,10 @@ protected:
 
   const DataLayout *getDataLayout() const { return &DL; }
   const ARMSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  ARMJITInfo *getJITInfo() { return &JITInfo; }
 
 private:
   const DataLayout DL;
   ARMSelectionDAGInfo TSInfo;
-  ARMJITInfo JITInfo;
 
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);

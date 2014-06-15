@@ -32,6 +32,10 @@ namespace llvm {
 class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
   ARMSubtarget        Subtarget;
+
+private:
+  ARMJITInfo          JITInfo;
+
 public:
   ARMBaseTargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,
@@ -40,6 +44,7 @@ public:
                        CodeGenOpt::Level OL,
                        bool isLittle);
 
+  ARMJITInfo *getJITInfo() override { return &JITInfo; }
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const ARMTargetLowering *getTargetLowering() const override {
     // Implemented by derived classes

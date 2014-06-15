@@ -52,7 +52,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL,
                                            bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, isLittle, Options) {
+    Subtarget(TT, CPU, FS, isLittle, Options), JITInfo() {
 
   // Default to triple-appropriate float ABI
   if (Options.FloatABIType == FloatABI::Default)

@@ -15,7 +15,6 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMConstantPoolValue.h"
-#include "ARMMachineFunctionInfo.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
