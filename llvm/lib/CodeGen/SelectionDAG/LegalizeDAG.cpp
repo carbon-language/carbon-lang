@@ -2650,12 +2650,15 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
     NewOutTy = (MVT::SimpleValueType)(NewOutTy.getSimpleVT().SimpleTy+1);
     assert(NewOutTy.isInteger() && "Ran out of possibilities!");
 
+    // A larger signed type can hold all unsigned values of the requested type,
+    // so using FP_TO_SINT is valid
     if (TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NewOutTy)) {
       OpToUse = ISD::FP_TO_SINT;
       break;
     }
 
-    if (TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NewOutTy)) {
+    // However, if the value may be < 0.0, we *must* use some FP_TO_SINT.
+    if (!isSigned && TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NewOutTy)) {
       OpToUse = ISD::FP_TO_UINT;
       break;
     }
