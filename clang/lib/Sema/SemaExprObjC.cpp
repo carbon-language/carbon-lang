@@ -1004,9 +1004,7 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
 
 static void DiagnoseMismatchedSelectors(Sema &S, SourceLocation AtLoc,
                                         ObjCMethodDecl *Method) {
-  if (S.Diags.getDiagnosticLevel(diag::warning_multiple_selectors,
-                                 SourceLocation())
-        == DiagnosticsEngine::Ignored)
+  if (S.Diags.isIgnored(diag::warning_multiple_selectors, SourceLocation()))
     return;
   bool Warned = false;
   for (Sema::GlobalMethodPool::iterator b = S.MethodPool.begin(),
@@ -1989,7 +1987,7 @@ static void applyCocoaAPICheck(Sema &S, const ObjCMessageExpr *Msg,
                                bool (*refactor)(const ObjCMessageExpr *,
                                               const NSAPI &, edit::Commit &)) {
   SourceLocation MsgLoc = Msg->getExprLoc();
-  if (S.Diags.getDiagnosticLevel(DiagID, MsgLoc) == DiagnosticsEngine::Ignored)
+  if (S.Diags.isIgnored(DiagID, MsgLoc))
     return;
 
   SourceManager &SM = S.SourceMgr;
@@ -2668,15 +2666,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak;
         if (!IsWeak && Sel.isUnarySelector())
           IsWeak = ReturnType.getObjCLifetime() & Qualifiers::OCL_Weak;
-
-        if (IsWeak) {
-          DiagnosticsEngine::Level Level =
-            Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
-                                     LBracLoc);
-          if (Level != DiagnosticsEngine::Ignored)
-            getCurFunction()->recordUseOfWeak(Result, Prop);
-
-        }
+        if (IsWeak &&
+            !Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, LBracLoc))
+          getCurFunction()->recordUseOfWeak(Result, Prop);
       }
     }
   }

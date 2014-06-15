@@ -1211,9 +1211,8 @@ void
 PragmaNoOpenMPHandler::HandlePragma(Preprocessor &PP,
                                     PragmaIntroducerKind Introducer,
                                     Token &FirstTok) {
-  if (PP.getDiagnostics().getDiagnosticLevel(diag::warn_pragma_omp_ignored,
-                                             FirstTok.getLocation()) !=
-      DiagnosticsEngine::Ignored) {
+  if (!PP.getDiagnostics().isIgnored(diag::warn_pragma_omp_ignored,
+                                     FirstTok.getLocation())) {
     PP.Diag(FirstTok, diag::warn_pragma_omp_ignored);
     PP.getDiagnostics().setSeverity(diag::warn_pragma_omp_ignored,
                                     diag::Severity::Ignored, SourceLocation());

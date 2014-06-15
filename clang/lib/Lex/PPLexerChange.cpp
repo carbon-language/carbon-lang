@@ -449,9 +449,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       SourceLocation StartLoc
         = SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
 
-      if (getDiagnostics().getDiagnosticLevel(
-            diag::warn_uncovered_module_header, 
-            StartLoc) != DiagnosticsEngine::Ignored) {
+      if (!getDiagnostics().isIgnored(diag::warn_uncovered_module_header,
+                                      StartLoc)) {
         ModuleMap &ModMap = getHeaderSearchInfo().getModuleMap();
         typedef llvm::sys::fs::recursive_directory_iterator
           recursive_directory_iterator;
@@ -486,9 +485,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     // mentioned at all in the module map. Such headers 
     SourceLocation StartLoc
       = SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
-    if (getDiagnostics().getDiagnosticLevel(diag::warn_forgotten_module_header,
-                                            StartLoc)
-          != DiagnosticsEngine::Ignored) {
+    if (!getDiagnostics().isIgnored(diag::warn_forgotten_module_header,
+                                    StartLoc)) {
       ModuleMap &ModMap = getHeaderSearchInfo().getModuleMap();
       for (unsigned I = 0, N = SourceMgr.local_sloc_entry_size(); I != N; ++I) {
         // We only care about file entries.

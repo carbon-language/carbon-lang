@@ -642,9 +642,26 @@ public:
   // DiagnosticsEngine classification and reporting interfaces.
   //
 
+  /// \brief Determine whether the diagnostic is known to be ignored.
+  ///
+  /// This can be used to opportunistically avoid expensive checks when it's
+  /// known for certain that the diagnostic has been suppressed at the
+  /// specified location \p Loc.
+  ///
+  /// \param Loc The source location we are interested in finding out the
+  /// diagnostic state. Can be null in order to query the latest state.
+  bool isIgnored(unsigned DiagID, SourceLocation Loc) const {
+    return Diags->getDiagnosticLevel(DiagID, Loc, *this) ==
+           DiagnosticIDs::Ignored;
+  }
+
   /// \brief Based on the way the client configured the DiagnosticsEngine
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticConsumer.
+  ///
+  /// To preserve invariant assumptions, this function should not be used to
+  /// influence parse or semantic analysis actions. Instead consider using
+  /// \c isIgnored().
   ///
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.

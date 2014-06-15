@@ -1365,9 +1365,7 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
 
     if (S.getLangOpts().ObjCAutoRefCount) {
       if (IV->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
-        DiagnosticsEngine::Level Level = S.Diags.getDiagnosticLevel(
-            diag::warn_arc_repeated_use_of_weak, MemberLoc);
-        if (Level != DiagnosticsEngine::Ignored)
+        if (!S.Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, MemberLoc))
           S.recordUseOfEvaluatedWeak(Result);
       }
     }

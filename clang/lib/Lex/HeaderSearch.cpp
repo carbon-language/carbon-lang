@@ -666,9 +666,7 @@ const FileEntry *HeaderSearch::LookupFile(
         // Otherwise, we found the path via MSVC header search rules.  If
         // -Wmsvc-include is enabled, we have to keep searching to see if we
         // would've found this header in -I or -isystem directories.
-        if (Diags.getDiagnosticLevel(diag::ext_pp_include_search_ms,
-                                     IncludeLoc) ==
-            DiagnosticsEngine::Ignored) {
+        if (Diags.isIgnored(diag::ext_pp_include_search_ms, IncludeLoc)) {
           return FE;
         } else {
           MSFE = FE;

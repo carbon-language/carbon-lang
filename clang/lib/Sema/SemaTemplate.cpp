@@ -4161,12 +4161,17 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //
   // C++11 allows these, and even in C++03 we allow them as an extension with
   // a warning.
-  if (LangOpts.CPlusPlus11 ?
-     Diags.getDiagnosticLevel(diag::warn_cxx98_compat_template_arg_unnamed_type,
-                              SR.getBegin()) != DiagnosticsEngine::Ignored ||
-      Diags.getDiagnosticLevel(diag::warn_cxx98_compat_template_arg_local_type,
-                               SR.getBegin()) != DiagnosticsEngine::Ignored :
-      Arg->hasUnnamedOrLocalType()) {
+  bool NeedsCheck;
+  if (LangOpts.CPlusPlus11)
+    NeedsCheck =
+        !Diags.isIgnored(diag::warn_cxx98_compat_template_arg_unnamed_type,
+                         SR.getBegin()) ||
+        !Diags.isIgnored(diag::warn_cxx98_compat_template_arg_local_type,
+                         SR.getBegin());
+  else
+    NeedsCheck = Arg->hasUnnamedOrLocalType();
+
+  if (NeedsCheck) {
     UnnamedLocalNoLinkageFinder Finder(*this, SR);
     (void)Finder.Visit(Context.getCanonicalType(Arg));
   }

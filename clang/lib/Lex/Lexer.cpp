@@ -1399,8 +1399,7 @@ static inline CharSourceRange makeCharRange(Lexer &L, const char *Begin,
 static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
                                       CharSourceRange Range, bool IsFirst) {
   // Check C99 compatibility.
-  if (Diags.getDiagnosticLevel(diag::warn_c99_compat_unicode_id,
-                               Range.getBegin()) > DiagnosticsEngine::Ignored) {
+  if (!Diags.isIgnored(diag::warn_c99_compat_unicode_id, Range.getBegin())) {
     enum {
       CannotAppearInIdentifier = 0,
       CannotStartIdentifier
@@ -1422,8 +1421,7 @@ static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
   }
 
   // Check C++98 compatibility.
-  if (Diags.getDiagnosticLevel(diag::warn_cxx98_compat_unicode_id,
-                               Range.getBegin()) > DiagnosticsEngine::Ignored) {
+  if (!Diags.isIgnored(diag::warn_cxx98_compat_unicode_id, Range.getBegin())) {
     static const llvm::sys::UnicodeCharSet CXX03AllowedIDChars(
         CXX03AllowedIDCharRanges);
     if (!CXX03AllowedIDChars.contains(C)) {
@@ -2522,8 +2520,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
       // C++11 [lex.phases] 2.2 p2
       // Prefer the C++98 pedantic compatibility warning over the generic,
       // non-extension, user-requested "missing newline at EOF" warning.
-      if (Diags.getDiagnosticLevel(diag::warn_cxx98_compat_no_newline_eof,
-                                   EndLoc) != DiagnosticsEngine::Ignored) {
+      if (!Diags.isIgnored(diag::warn_cxx98_compat_no_newline_eof, EndLoc)) {
         DiagID = diag::warn_cxx98_compat_no_newline_eof;
       } else {
         DiagID = diag::warn_no_newline_eof;

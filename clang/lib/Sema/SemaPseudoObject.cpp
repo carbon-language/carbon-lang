@@ -931,14 +931,11 @@ ObjCPropertyOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
 }
 
 ExprResult ObjCPropertyOpBuilder::complete(Expr *SyntacticForm) {
-  if (S.getLangOpts().ObjCAutoRefCount && isWeakProperty()) {
-    DiagnosticsEngine::Level Level =
-      S.Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
-                                 SyntacticForm->getLocStart());
-    if (Level != DiagnosticsEngine::Ignored)
+  if (S.getLangOpts().ObjCAutoRefCount && isWeakProperty() &&
+      !S.Diags.isIgnored(diag::warn_arc_repeated_use_of_weak,
+                         SyntacticForm->getLocStart()))
       S.recordUseOfEvaluatedWeak(SyntacticRefExpr,
                                  SyntacticRefExpr->isMessagingGetter());
-  }
 
   return PseudoOpBuilder::complete(SyntacticForm);
 }

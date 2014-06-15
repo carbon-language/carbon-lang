@@ -1666,13 +1666,9 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
   MarkDeclRefReferenced(E);
 
   if (getLangOpts().ObjCARCWeak && isa<VarDecl>(D) &&
-      Ty.getObjCLifetime() == Qualifiers::OCL_Weak) {
-    DiagnosticsEngine::Level Level =
-      Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
-                               E->getLocStart());
-    if (Level != DiagnosticsEngine::Ignored)
+      Ty.getObjCLifetime() == Qualifiers::OCL_Weak &&
+      !Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, E->getLocStart()))
       recordUseOfEvaluatedWeak(E);
-  }
 
   // Just in case we're building an illegal pointer-to-member.
   FieldDecl *FD = dyn_cast<FieldDecl>(D);
@@ -2352,9 +2348,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
 
       if (getLangOpts().ObjCAutoRefCount) {
         if (IV->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
-          DiagnosticsEngine::Level Level =
-            Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak, Loc);
-          if (Level != DiagnosticsEngine::Ignored)
+          if (!Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, Loc))
             recordUseOfEvaluatedWeak(Result);
         }
         if (CurContext->isClosure())
@@ -8664,10 +8658,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
         // we do not warn to warn spuriously when 'x' and 'y' are on separate
         // paths through the function. This should be revisited if
         // -Wrepeated-use-of-weak is made flow-sensitive.
-        DiagnosticsEngine::Level Level =
-          Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
-                                   RHS.get()->getLocStart());
-        if (Level != DiagnosticsEngine::Ignored)
+        if (!Diags.isIgnored(diag::warn_arc_repeated_use_of_weak,
+                             RHS.get()->getLocStart()))
           getCurFunction()->markSafeWeakUse(RHS.get());
 
       } else if (getLangOpts().ObjCAutoRefCount) {

@@ -1606,10 +1606,8 @@ void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
                         diag::warn_pointer_indirection_from_incompatible_type :
                         diag::warn_undefined_reinterpret_cast;
 
-  if (Diags.getDiagnosticLevel(DiagID, Range.getBegin()) ==
-          DiagnosticsEngine::Ignored) {
+  if (Diags.isIgnored(DiagID, Range.getBegin()))
     return;
-  }
 
   QualType SrcTy, DestTy;
   if (IsDereference) {
@@ -2127,9 +2125,8 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
 /// pointer; etc. Cast to 'void' is an exception.
 static void DiagnoseBadFunctionCast(Sema &Self, const ExprResult &SrcExpr,
                                   QualType DestType) {
-  if (Self.Diags.getDiagnosticLevel(diag::warn_bad_function_cast,
-                                    SrcExpr.get()->getExprLoc()) 
-        == DiagnosticsEngine::Ignored)
+  if (Self.Diags.isIgnored(diag::warn_bad_function_cast,
+                           SrcExpr.get()->getExprLoc()))
     return;
   
   if (!isa<CallExpr>(SrcExpr.get()))

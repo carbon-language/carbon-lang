@@ -5078,8 +5078,7 @@ static void CheckCXX98CompatAccessibleCopy(Sema &S,
     return;
 
   SourceLocation Loc = getInitializationLoc(Entity, CurInitExpr);
-  if (S.Diags.getDiagnosticLevel(diag::warn_cxx98_compat_temp_copy, Loc)
-        == DiagnosticsEngine::Ignored)
+  if (S.Diags.isIgnored(diag::warn_cxx98_compat_temp_copy, Loc))
     return;
 
   // Find constructors which would have been considered.
