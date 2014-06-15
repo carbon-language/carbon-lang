@@ -794,6 +794,14 @@ template<typename T> struct FoldingSetTrait<T*> {
     ID.AddPointer(X);
   }
 };
+template <typename T1, typename T2>
+struct FoldingSetTrait<std::pair<T1, T2>> {
+  static inline void Profile(const std::pair<T1, T2> &P,
+                             llvm::FoldingSetNodeID &ID) {
+    ID.Add(P.first);
+    ID.Add(P.second);
+  }
+};
 } // End of namespace llvm.
 
 #endif
