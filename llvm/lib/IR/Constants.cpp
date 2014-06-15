@@ -1698,6 +1698,19 @@ Constant *ConstantExpr::getAddrSpaceCast(Constant *C, Type *DstTy) {
   assert(CastInst::castIsValid(Instruction::AddrSpaceCast, C, DstTy) &&
          "Invalid constantexpr addrspacecast!");
 
+  // Canonicalize addrspacecasts between different pointer types by first
+  // bitcasting the pointer type and then converting the address space.
+  PointerType *SrcScalarTy = cast<PointerType>(C->getType()->getScalarType());
+  PointerType *DstScalarTy = cast<PointerType>(DstTy->getScalarType());
+  Type *DstElemTy = DstScalarTy->getElementType();
+  if (SrcScalarTy->getElementType() != DstElemTy) {
+    Type *MidTy = PointerType::get(DstElemTy, SrcScalarTy->getAddressSpace());
+    if (VectorType *VT = dyn_cast<VectorType>(DstTy)) {
+      // Handle vectors of pointers.
+      MidTy = VectorType::get(MidTy, VT->getNumElements());
+    }
+    C = getBitCast(C, MidTy);
+  }
   return getFoldedCast(Instruction::AddrSpaceCast, C, DstTy);
 }
 

@@ -74,13 +74,13 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
   ret float %sum5
 }
 
-; Verifies nvptx-favor-non-generic keeps addrspacecasts between pointers of
-; different element types.
+; When hoisting an addrspacecast between different pointer types, replace the
+; addrspacecast with a bitcast.
 define i32 @ld_int_from_float() {
 ; IR-LABEL: @ld_int_from_float
-; IR: addrspacecast
+; IR: load i32 addrspace(3)* bitcast (float addrspace(3)* @scalar to i32 addrspace(3)*)
 ; PTX-LABEL: ld_int_from_float(
-; PTX: cvta.shared.u{{(32|64)}}
+; PTX: ld.shared.u{{(32|64)}}
   %1 = load i32* addrspacecast(float addrspace(3)* @scalar to i32*), align 4
   ret i32 %1
 }

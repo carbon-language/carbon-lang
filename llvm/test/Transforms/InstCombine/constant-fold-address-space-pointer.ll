@@ -230,3 +230,13 @@ define i32 @constant_through_array_as_ptrs() {
   %b = load i32 addrspace(1)* %a, align 4
   ret i32 %b
 }
+
+@shared_mem = external addrspace(3) global [0 x i8]
+
+define float @canonicalize_addrspacecast(i32 %i) {
+; CHECK-LABEL: @canonicalize_addrspacecast
+; CHECK-NEXT: getelementptr inbounds float* addrspacecast (float addrspace(3)* bitcast ([0 x i8] addrspace(3)* @shared_mem to float addrspace(3)*) to float*), i32 %i
+  %p = getelementptr inbounds float* addrspacecast ([0 x i8] addrspace(3)* @shared_mem to float*), i32 %i
+  %v = load float* %p
+  ret float %v
+}

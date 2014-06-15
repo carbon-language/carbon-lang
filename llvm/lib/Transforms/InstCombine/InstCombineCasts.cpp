@@ -1919,8 +1919,10 @@ Instruction *InstCombiner::visitAddrSpaceCast(AddrSpaceCastInst &CI) {
   Type *DestElemTy = DestTy->getElementType();
   if (SrcTy->getElementType() != DestElemTy) {
     Type *MidTy = PointerType::get(DestElemTy, SrcTy->getAddressSpace());
-    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
-      MidTy = VectorType::get(MidTy, CI.getType()->getVectorNumElements());
+    if (VectorType *VT = dyn_cast<VectorType>(CI.getType())) {
+      // Handle vectors of pointers.
+      MidTy = VectorType::get(MidTy, VT->getNumElements());
+    }
 
     Value *NewBitCast = Builder->CreateBitCast(Src, MidTy);
     return new AddrSpaceCastInst(NewBitCast, CI.getType());
