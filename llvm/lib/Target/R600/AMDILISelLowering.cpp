@@ -13,27 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUISelLowering.h"
-#include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
-#include "AMDILIntrinsicInfo.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
-#include "llvm/IR/CallingConv.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
-//===----------------------------------------------------------------------===//
-// TargetLowering Implementation Help Functions End
-//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 // TargetLowering Class Implementation Begins
@@ -110,37 +93,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   setPow2DivIsCheap(false);
   setSelectIsExpensive(true); // FIXME: This makes no sense at all
 }
-
-bool
-AMDGPUTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
-    const CallInst &I, unsigned Intrinsic) const {
-  return false;
-}
-
-// The backend supports 32 and 64 bit floating point immediates
-bool
-AMDGPUTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
-  if (VT.getScalarType().getSimpleVT().SimpleTy == MVT::f32
-      || VT.getScalarType().getSimpleVT().SimpleTy == MVT::f64) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool
-AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const {
-  if (VT.getScalarType().getSimpleVT().SimpleTy == MVT::f32
-      || VT.getScalarType().getSimpleVT().SimpleTy == MVT::f64) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
-//===----------------------------------------------------------------------===//
-//                           Other Lowering Hooks
-//===----------------------------------------------------------------------===//
 
 SDValue AMDGPUTargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain = Op.getOperand(0);

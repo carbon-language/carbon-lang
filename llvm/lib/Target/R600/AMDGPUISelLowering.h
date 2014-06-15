@@ -53,6 +53,11 @@ private:
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
+                                  unsigned BitsDiff,
+                                  SelectionDAG &DAG) const;
+  SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
+
 protected:
   static EVT getEquivalentMemType(LLVMContext &Context, EVT VT);
   static EVT getEquivalentLoadRegType(LLVMContext &Context, EVT VT);
@@ -101,6 +106,10 @@ public:
   bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
 
   MVT getVectorIdxTy() const override;
+
+  bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
+  bool ShouldShrinkFPConstant(EVT VT) const override;
+
   bool isLoadBitCastBeneficial(EVT, EVT) const override;
   SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                       bool isVarArg,
@@ -111,6 +120,7 @@ public:
                     SmallVectorImpl<SDValue> &InVals) const override;
 
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
   void ReplaceNodeResults(SDNode * N,
                           SmallVectorImpl<SDValue> &Results,
                           SelectionDAG &DAG) const override;
@@ -139,26 +149,9 @@ public:
     const SelectionDAG &DAG,
     unsigned Depth = 0) const override;
 
-// Functions defined in AMDILISelLowering.cpp
-public:
-  bool getTgtMemIntrinsic(IntrinsicInfo &Info,
-                          const CallInst &I, unsigned Intrinsic) const override;
-
-  /// We want to mark f32/f64 floating point values as legal.
-  bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
-
-  /// We don't want to shrink f64/f32 constants.
-  bool ShouldShrinkFPConstant(EVT VT) const override;
-
-  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
-
 private:
+  // Functions defined in AMDILISelLowering.cpp
   void InitAMDILLowering();
-
-  SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
-                                  unsigned BitsDiff,
-                                  SelectionDAG &DAG) const;
-  SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 };
 

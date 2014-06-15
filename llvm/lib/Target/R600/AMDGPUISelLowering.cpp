@@ -348,6 +348,19 @@ MVT AMDGPUTargetLowering::getVectorIdxTy() const {
   return MVT::i32;
 }
 
+// The backend supports 32 and 64 bit floating point immediates.
+// FIXME: Why are we reporting vectors of FP immediates as legal?
+bool AMDGPUTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
+  EVT ScalarVT = VT.getScalarType();
+  return (ScalarVT == MVT::f32 || MVT::f64);
+}
+
+// We don't want to shrink f64 / f32 constants.
+bool AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const {
+  EVT ScalarVT = VT.getScalarType();
+  return (ScalarVT != MVT::f32 && ScalarVT != MVT::f64);
+}
+
 bool AMDGPUTargetLowering::isLoadBitCastBeneficial(EVT LoadTy,
                                                    EVT CastTy) const {
   if (LoadTy.getSizeInBits() != CastTy.getSizeInBits())
@@ -455,18 +468,16 @@ SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
   return SDValue();
 }
 
-SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
-    const {
+SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
+                                             SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
     Op.getNode()->dump();
     llvm_unreachable("Custom lowering code for this"
                      "instruction is not implemented yet!");
     break;
-  // AMDIL DAG lowering
+  // AMDGPU DAG lowering.
   case ISD::SIGN_EXTEND_INREG: return LowerSIGN_EXTEND_INREG(Op, DAG);
-  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
-  // AMDGPU DAG lowering
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
   case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
@@ -475,6 +486,9 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
+
+  // AMDIL DAG lowering.
+  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   }
   return Op;
 }
