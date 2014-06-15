@@ -1321,15 +1321,15 @@ SDValue AMDGPUTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const {
   // ilt r10, r0, 0
   SDValue r10 = DAG.getSelectCC(DL,
       r0, DAG.getConstant(0, OVT),
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
+      DAG.getConstant(-1, OVT),
+      DAG.getConstant(0, OVT),
       ISD::SETLT);
 
   // ilt r11, r1, 0
   SDValue r11 = DAG.getSelectCC(DL,
       r1, DAG.getConstant(0, OVT),
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
+      DAG.getConstant(-1, OVT),
+      DAG.getConstant(0, OVT),
       ISD::SETLT);
 
   // iadd r0, r0, r10
