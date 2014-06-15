@@ -1,4 +1,5 @@
 ; XFAIL: *
+; REQUIRES: asserts
 ; RUN: llc -march=r600 -mcpu=SI < %s
 
 define void @large_alloca(i32 addrspace(1)* %out, i32 %x) nounwind {
