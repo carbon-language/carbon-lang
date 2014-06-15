@@ -43,9 +43,10 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(threads)
         self.assertEquals(len(threads), thread_count)
 
-        # Stop the process, grab the stop reply content.
+        # Run, then stop the process, grab the stop reply content.
         self.reset_test_sequence()
         self.test_sequence.add_log_lines([
+            "read packet: $c#00",
             "read packet: {}".format(chr(03)),
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result", 2:"key_vals_text"} },
             ], True)
@@ -111,18 +112,18 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_launch()
         self.stop_reply_reports_multiple_threads(5)
 
-    def no_QThreadsInStopReply_supplies_no_threads(self, thread_count):
+    def no_QListThreadsInStopReply_supplies_no_threads(self, thread_count):
         # Gather threads from stop notification when QThreadsInStopReply is not enabled.
         stop_reply_threads = self.gather_stop_reply_threads(None, thread_count)
         self.assertEquals(len(stop_reply_threads), 0)
 
     @debugserver_test
     @dsym_test
-    def test_no_QThreadsInStopReply_supplies_no_threads_debugserver_dsym(self):
+    def test_no_QListThreadsInStopReply_supplies_no_threads_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
         self.set_inferior_startup_launch()
-        self.no_QThreadsInStopReply_supplies_no_threads(5)
+        self.no_QListThreadsInStopReply_supplies_no_threads(5)
 
     @llgs_test
     @dwarf_test
@@ -131,7 +132,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.set_inferior_startup_launch()
-        self.no_QThreadsInStopReply_supplies_no_threads(5)
+        self.no_QListThreadsInStopReply_supplies_no_threads(5)
 
     def stop_reply_reports_correct_threads(self, thread_count):
         # Gather threads from stop notification when QThreadsInStopReply is enabled.

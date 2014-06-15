@@ -470,6 +470,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "PacketSize",
         "QStartNoAckMode",
         "QThreadSuffixSupported",
+        "QListThreadsInStopReply",
         "qXfer:auxv:read",
         "qXfer:libraries:read",
         "qXfer:libraries-svr4:read",
