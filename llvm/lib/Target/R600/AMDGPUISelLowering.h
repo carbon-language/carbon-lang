@@ -42,6 +42,14 @@ private:
   SDValue MergeVectorStore(const SDValue &Op, SelectionDAG &DAG) const;
   /// \brief Split a vector store into multiple scalar stores.
   /// \returns The resulting chain.
+
+  SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSDIV24(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSDIV32(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
@@ -146,13 +154,6 @@ public:
 
 private:
   void InitAMDILLowering();
-  SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV24(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV32(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
                                   unsigned BitsDiff,
