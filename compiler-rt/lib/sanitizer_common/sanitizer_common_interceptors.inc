@@ -1812,7 +1812,7 @@ INTERCEPTOR(int, getsockopt, int sockfd, int level, int optname, void *optval,
 INTERCEPTOR(int, accept, int fd, void *addr, unsigned *addrlen) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, accept, fd, addr, addrlen);
-  unsigned addrlen0;
+  unsigned addrlen0 = 0;
   if (addrlen) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, addrlen, sizeof(*addrlen));
     addrlen0 = *addrlen;
@@ -1834,7 +1834,7 @@ INTERCEPTOR(int, accept, int fd, void *addr, unsigned *addrlen) {
 INTERCEPTOR(int, accept4, int fd, void *addr, unsigned *addrlen, int f) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, accept4, fd, addr, addrlen, f);
-  unsigned addrlen0;
+  unsigned addrlen0 = 0;
   if (addrlen) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, addrlen, sizeof(*addrlen));
     addrlen0 = *addrlen;
