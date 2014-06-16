@@ -29,8 +29,8 @@
         ceil.w.d  $f11,$f25
         ceil.w.s  $f6,$f20
         cfc1      $s1,$21
-        clo       $11,$a1
-        clz       $sp,$gp
+        clo       $11,$a1              # CHECK: clo $11, $5   # encoding: [0x70,0xab,0x58,0x21]
+        clz       $sp,$gp              # CHECK: clz $sp, $gp  # encoding: [0x73,0x9d,0xe8,0x20]
         ctc1      $a2,$26
         cvt.d.s   $f22,$f28
         cvt.d.w   $f26,$f11

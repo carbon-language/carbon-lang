@@ -31,8 +31,8 @@
         ceil.w.d  $f11,$f25
         ceil.w.s  $f6,$f20
         cfc1      $s1,$21
-        clo       $11,$a1
-        clz       $sp,$gp
+        clo       $11,$a1              # CHECK: clo $11, $5   # encoding: [0x70,0xab,0x58,0x21]
+        clz       $sp,$gp              # CHECK: clz $sp, $gp  # encoding: [0x73,0x9d,0xe8,0x20]
         ctc1      $a2,$26
         cvt.d.l   $f4,$f16
         cvt.d.s   $f22,$f28
@@ -52,8 +52,8 @@
         daddi     $sp,-27705           # CHECK: daddi $sp, $sp, -27705 # encoding: [0x63,0xbd,0x93,0xc7]
         daddiu    $k0,$s6,-4586
         daddu     $s3,$at,$ra
-        dclo      $s2,$a2
-        dclz      $s0,$25
+        dclo      $s2,$a2              # CHECK: dclo $18, $6   # encoding: [0x70,0xd2,0x90,0x25]
+        dclz      $s0,$25              # CHECK: dclz $16, $25  # encoding: [0x73,0x30,0x80,0x24]
         deret
         ddiv      $zero,$k0,$s3
         ddivu     $zero,$s0,$s1

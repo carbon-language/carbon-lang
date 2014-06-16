@@ -15,7 +15,6 @@ include "Mips32r6InstrFormats.td"
 
 // Notes about removals/changes from MIPS32r6:
 // Unclear: ssnop
-// Reencoded: clo, clz
 // Reencoded: jr -> jalr
 // Reencoded: jr.hb -> jalr.hb
 // Reencoded: sdbbp
@@ -159,6 +158,9 @@ class SWC2_R6_ENC : COP2LDST_FM<OPCODE5_SWC2>;
 
 class LL_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_LL>;
 class SC_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_SC>;
+
+class CLO_R6_ENC : SPECIAL_2R_FM<OPCODE6_CLO>;
+class CLZ_R6_ENC : SPECIAL_2R_FM<OPCODE6_CLZ>;
 
 class CMP_CONDN_DESC_BASE<string CondStr, string Typestr,
                           RegisterOperand FGROpnd,
@@ -586,6 +588,25 @@ class SC_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 
 class SC_R6_DESC : SC_R6_DESC_BASE<"sc", GPR32Opnd>;
 
+class CLO_CLZ_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs");
+}
+
+class CLO_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> :
+    CLO_CLZ_R6_DESC_BASE<instr_asm, GPROpnd> {
+  list<dag> Pattern = [(set GPROpnd:$rd, (ctlz (not GPROpnd:$rs)))];
+}
+
+class CLZ_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> :
+    CLO_CLZ_R6_DESC_BASE<instr_asm, GPROpnd> {
+  list<dag> Pattern = [(set GPROpnd:$rd, (ctlz GPROpnd:$rs))];
+}
+
+class CLO_R6_DESC : CLO_R6_DESC_BASE<"clo", GPR32Opnd>;
+class CLZ_R6_DESC : CLZ_R6_DESC_BASE<"clz", GPR32Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -628,6 +649,8 @@ def BOVC : BOVC_ENC, BOVC_DESC, ISA_MIPS32R6;
 def CACHE_R6 : CACHE_ENC, CACHE_DESC, ISA_MIPS32R6;
 def CLASS_D : CLASS_D_ENC, CLASS_D_DESC, ISA_MIPS32R6;
 def CLASS_S : CLASS_S_ENC, CLASS_S_DESC, ISA_MIPS32R6;
+def CLO_R6 : CLO_R6_ENC, CLO_R6_DESC, ISA_MIPS32R6;
+def CLZ_R6 : CLZ_R6_ENC, CLZ_R6_DESC, ISA_MIPS32R6;
 defm S : CMP_CC_M<FIELD_CMP_FORMAT_S, "s", FGR32Opnd>;
 defm D : CMP_CC_M<FIELD_CMP_FORMAT_D, "d", FGR64Opnd>;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;

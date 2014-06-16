@@ -158,7 +158,10 @@ public:
   bool hasMips3() const { return MipsArchVersion >= Mips3; }
   bool hasMips4_32() const { return HasMips4_32; }
   bool hasMips4_32r2() const { return HasMips4_32r2; }
-  bool hasMips32() const { return MipsArchVersion >= Mips32; }
+  bool hasMips32() const {
+    return MipsArchVersion >= Mips32 && MipsArchVersion != Mips3 &&
+           MipsArchVersion != Mips4 && MipsArchVersion != Mips5;
+  }
   bool hasMips32r2() const {
     return MipsArchVersion == Mips32r2 || MipsArchVersion == Mips32r6 ||
            MipsArchVersion == Mips64r2 || MipsArchVersion == Mips64r6;

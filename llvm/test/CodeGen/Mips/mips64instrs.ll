@@ -1,5 +1,7 @@
-; RUN: llc -march=mips64el -mcpu=mips4 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=MIPS4 %s
-; RUN: llc -march=mips64el -mcpu=mips64 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=MIPS64 %s
+; RUN: llc -march=mips64el -mcpu=mips4 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=MIPS4 -check-prefix=ACCMULDIV %s
+; RUN: llc -march=mips64el -mcpu=mips64 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=HAS-DCLO -check-prefix=ACCMULDIV %s
+; RUN: llc -march=mips64el -mcpu=mips64r2 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=HAS-DCLO -check-prefix=ACCMULDIV %s
+; RUN: llc -march=mips64el -mcpu=mips64r6 -verify-machineinstrs < %s | FileCheck -check-prefix=ALL -check-prefix=HAS-DCLO -check-prefix=GPRMULDIV %s
 
 @gll0 = common global i64 0, align 8
 @gll1 = common global i64 0, align 8
@@ -87,7 +89,10 @@ entry:
 define i64 @f12(i64 %a, i64 %b) nounwind readnone {
 entry:
 ; ALL-LABEL: f12:
-; ALL:           mult ${{[45]}}, ${{[45]}}
+
+; ACCMULDIV:     mult ${{[45]}}, ${{[45]}}
+; GPRMULDIV:     dmul $2, ${{[45]}}, ${{[45]}}
+
   %mul = mul nsw i64 %b, %a
   ret i64 %mul
 }
@@ -95,7 +100,10 @@ entry:
 define i64 @f13(i64 %a, i64 %b) nounwind readnone {
 entry:
 ; ALL-LABEL: f13:
-; ALL:           mult ${{[45]}}, ${{[45]}}
+
+; ACCMULDIV:     mult ${{[45]}}, ${{[45]}}
+; GPRMULDIV:     dmul $2, ${{[45]}}, ${{[45]}}
+
   %mul = mul i64 %b, %a
   ret i64 %mul
 }
@@ -107,9 +115,14 @@ entry:
 ; ALL-DAG:       ld $[[P1:[0-9]+]], %got_disp(gll1)(
 ; ALL-DAG:       ld $[[T0:[0-9]+]], 0($[[P0]])
 ; ALL-DAG:       ld $[[T1:[0-9]+]], 0($[[P1]])
-; ALL:           ddiv $zero, $[[T0]], $[[T1]]
-; ALL:           teq $[[T1]], $zero, 7
-; ALL:           mflo $2
+
+; ACCMULDIV:     ddiv $zero, $[[T0]], $[[T1]]
+; ACCMULDIV:     teq $[[T1]], $zero, 7
+; ACCMULDIV:     mflo $2
+
+; GPRMULDIV:     ddiv $2, $[[T0]], $[[T1]]
+; GPRMULDIV:     teq $[[T1]], $zero, 7
+
   %0 = load i64* @gll0, align 8
   %1 = load i64* @gll1, align 8
   %div = sdiv i64 %0, %1
@@ -123,9 +136,14 @@ entry:
 ; ALL-DAG:       ld $[[P1:[0-9]+]], %got_disp(gll1)(
 ; ALL-DAG:       ld $[[T0:[0-9]+]], 0($[[P0]])
 ; ALL-DAG:       ld $[[T1:[0-9]+]], 0($[[P1]])
-; ALL:           ddivu $zero, $[[T0]], $[[T1]]
-; ALL:           teq $[[T1]], $zero, 7
-; ALL:           mflo $2
+
+; ACCMULDIV:     ddivu $zero, $[[T0]], $[[T1]]
+; ACCMULDIV:     teq $[[T1]], $zero, 7
+; ACCMULDIV:     mflo $2
+
+; GPRMULDIV:     ddivu $2, $[[T0]], $[[T1]]
+; GPRMULDIV:     teq $[[T1]], $zero, 7
+
   %0 = load i64* @gll0, align 8
   %1 = load i64* @gll1, align 8
   %div = udiv i64 %0, %1
@@ -135,9 +153,14 @@ entry:
 define i64 @f16(i64 %a, i64 %b) nounwind readnone {
 entry:
 ; ALL-LABEL: f16:
-; ALL:           ddiv $zero, $4, $5
-; ALL:           teq $5, $zero, 7
-; ALL:           mfhi $2
+
+; ACCMULDIV:     ddiv $zero, $4, $5
+; ACCMULDIV:     teq $5, $zero, 7
+; ACCMULDIV:     mfhi $2
+
+; GPRMULDIV:     dmod $2, $4, $5
+; GPRMULDIV:     teq $5, $zero, 7
+
   %rem = srem i64 %a, %b
   ret i64 %rem
 }
@@ -145,9 +168,14 @@ entry:
 define i64 @f17(i64 %a, i64 %b) nounwind readnone {
 entry:
 ; ALL-LABEL: f17:
-; ALL:           ddivu $zero, $4, $5
-; ALL:           teq $5, $zero, 7
-; ALL:           mfhi $2
+
+; ACCMULDIV:     ddivu $zero, $4, $5
+; ACCMULDIV:     teq $5, $zero, 7
+; ACCMULDIV:     mfhi $2
+
+; GPRMULDIV:     dmodu $2, $4, $5
+; GPRMULDIV:     teq $5, $zero, 7
+
   %rem = urem i64 %a, %b
   ret i64 %rem
 }
@@ -161,7 +189,8 @@ entry:
 ; The MIPS4 version is too long to reasonably test. At least check we don't get dclz
 ; MIPS4-NOT:     dclz
 
-; MIPS64:        dclz $2, $4
+; HAS-DCLO:      dclz $2, $4
+
   %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %X, i1 true)
   ret i64 %tmp1
 }
@@ -173,7 +202,8 @@ entry:
 ; The MIPS4 version is too long to reasonably test. At least check we don't get dclo
 ; MIPS4-NOT:     dclo
 
-; MIPS64:        dclo $2, $4
+; HAS-DCLO:      dclo $2, $4
+
   %neg = xor i64 %X, -1
   %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %neg, i1 true)
   ret i64 %tmp1

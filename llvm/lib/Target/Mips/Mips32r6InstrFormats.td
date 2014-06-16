@@ -91,6 +91,10 @@ def OPCODE6_LL       : OPCODE6<0b110110>;
 def OPCODE6_LLD      : OPCODE6<0b110111>;
 def OPCODE6_SC       : OPCODE6<0b100110>;
 def OPCODE6_SCD      : OPCODE6<0b100111>;
+def OPCODE6_CLO      : OPCODE6<0b010001>;
+def OPCODE6_CLZ      : OPCODE6<0b010000>;
+def OPCODE6_DCLO     : OPCODE6<0b010011>;
+def OPCODE6_DCLZ     : OPCODE6<0b010010>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -290,6 +294,20 @@ class SPECIAL3_MEM_FM<OPCODE6 Operation> : MipsR6Inst {
   let Inst{20-16} = hint;
   let Inst{15-7}  = offset;
   let Inst{6}     = 0;
+  let Inst{5-0}   = Operation.Value;
+}
+
+class SPECIAL_2R_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0b00000;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0b00001;
   let Inst{5-0}   = Operation.Value;
 }
 
