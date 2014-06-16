@@ -8088,7 +8088,10 @@ void ASTReader::finishPendingActions() {
     }
 
     // Perform any pending declaration updates.
-    while (!PendingUpdateRecords.empty()) {
+    //
+    // Don't do this if we have known-incomplete redecl chains: it relies on
+    // being able to walk redeclaration chains.
+    while (PendingDeclChains.empty() && !PendingUpdateRecords.empty()) {
       auto Update = PendingUpdateRecords.pop_back_val();
       ReadingKindTracker ReadingKind(Read_Decl, *this);
       loadDeclUpdateRecords(Update.first, Update.second);

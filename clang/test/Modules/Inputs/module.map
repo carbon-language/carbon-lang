@@ -238,6 +238,10 @@ module cxx_decls {
   }
 }
 
+module cxx_decls_merged {
+  header "cxx-decls-merged.h"
+}
+
 module config {
   header "config.h"
   config_macros [exhaustive] WANT_FOO, WANT_BAR

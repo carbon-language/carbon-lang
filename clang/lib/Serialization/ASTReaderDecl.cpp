@@ -2492,6 +2492,11 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
       Previous->IdentifierNamespace &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
 
+  // If the previous declaration is marked as used, then this declaration should
+  // be too.
+  if (Previous->Used)
+    D->Used = true;
+
   // If the previous declaration is an inline function declaration, then this
   // declaration is too.
   if (auto *FD = dyn_cast<FunctionDecl>(D)) {
@@ -3280,7 +3285,14 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_DECL_MARKED_USED: {
       // FIXME: This doesn't send the right notifications if there are
       // ASTMutationListeners other than an ASTWriter.
-      D->Used = true;
+
+      // Maintain AST consistency: any later redeclarations are used too.
+      for (auto *Redecl = D->getMostRecentDecl(); /**/;
+           Redecl = Redecl->getPreviousDecl()) {
+        Redecl->Used = true;
+        if (Redecl == D)
+          break;
+      }
       break;
     }
 
