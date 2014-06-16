@@ -19,7 +19,8 @@ ADD_CUSTOM_TARGET(swig_wrapper ALL echo -n
 
 # Install the LLDB python module on all operating systems (except Windows)
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
-  install(SCRIPT lldb_python_module.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BUILD_DIR=\"${CMAKE_BUILD_DIR}\")
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
+    DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endif()
 
 # build Python modules
