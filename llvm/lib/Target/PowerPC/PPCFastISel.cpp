@@ -1858,7 +1858,6 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
   // FIXME: Jump tables are not yet required because fast-isel doesn't
   // handle switches; if that changes, we need them as well.  For now,
   // what follows assumes everything's a generic (or TLS) global address.
-  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
 
   // FIXME: We don't yet handle the complexity of TLS.
   if (GV->isThreadLocal())
@@ -1871,8 +1870,8 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
         .addGlobalAddress(GV)
         .addReg(PPC::X2);
   else {
-    // If the address is an externally defined symbol, a symbol with
-    // common or externally available linkage, a function address, or a
+    // If the address is an externally defined symbol, a symbol with common
+    // or externally available linkage, a non-local function address, or a
     // jump table address (not yet needed), or if we are generating code
     // for large code model, we generate:
     //       LDtocL(GV, ADDIStocHA(%X2, GV))
@@ -1883,12 +1882,13 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::ADDIStocHA),
             HighPartReg).addReg(PPC::X2).addGlobalAddress(GV);
 
-    // !GVar implies a function address.  An external variable is one
-    // without an initializer.
     // If/when switches are implemented, jump tables should be handled
     // on the "if" path here.
-    if (CModel == CodeModel::Large || !GVar || !GVar->hasInitializer() ||
-        GVar->hasCommonLinkage() || GVar->hasAvailableExternallyLinkage())
+    if (CModel == CodeModel::Large ||
+        (GV->getType()->getElementType()->isFunctionTy() &&
+         (GV->isDeclaration() || GV->isWeakForLinker())) ||
+        GV->isDeclaration() || GV->hasCommonLinkage() ||
+        GV->hasAvailableExternallyLinkage())
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::LDtocL),
               DestReg).addGlobalAddress(GV).addReg(HighPartReg);
     else

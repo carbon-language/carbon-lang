@@ -365,8 +365,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Transform %Xd = ADDIStocHA %X2, <ga:@sym>
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
-    // Change the opcode to ADDIS8.  If the global address is external,
-    // has common linkage, is a function address, or is a jump table
+    // Change the opcode to ADDIS8.  If the global address is external, has
+    // common linkage, is a non-local function address, or is a jump table
     // address, then generate a TOC entry and reference that.  Otherwise
     // reference the symbol directly.
     TmpInst.setOpcode(PPC::ADDIS8);
@@ -375,7 +375,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
            "Invalid operand for ADDIStocHA!");
     MCSymbol *MOSymbol = nullptr;
     bool IsExternal = false;
-    bool IsFunction = false;
+    bool IsNonLocalFunction = false;
     bool IsCommon = false;
     bool IsAvailExt = false;
 
@@ -384,15 +384,16 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MOSymbol = getSymbol(GV);
       IsExternal = GV->isDeclaration();
       IsCommon = GV->hasCommonLinkage();
-      IsFunction = GV->getType()->getElementType()->isFunctionTy();
+      IsNonLocalFunction = GV->getType()->getElementType()->isFunctionTy() &&
+        (GV->isDeclaration() || GV->isWeakForLinker());
       IsAvailExt = GV->hasAvailableExternallyLinkage();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
     else if (MO.isJTI())
       MOSymbol = GetJTISymbol(MO.getIndex());
 
-    if (IsExternal || IsFunction || IsCommon || IsAvailExt || MO.isJTI() ||
-        TM.getCodeModel() == CodeModel::Large)
+    if (IsExternal || IsNonLocalFunction || IsCommon || IsAvailExt ||
+        MO.isJTI() || TM.getCodeModel() == CodeModel::Large)
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
@@ -451,17 +452,19 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     assert((MO.isGlobal() || MO.isCPI()) && "Invalid operand for ADDItocL");
     MCSymbol *MOSymbol = nullptr;
     bool IsExternal = false;
-    bool IsFunction = false;
+    bool IsNonLocalFunction = false;
 
     if (MO.isGlobal()) {
       const GlobalValue *GV = MO.getGlobal();
       MOSymbol = getSymbol(GV);
       IsExternal = GV->isDeclaration();
-      IsFunction = GV->getType()->getElementType()->isFunctionTy();
+      IsNonLocalFunction = GV->getType()->getElementType()->isFunctionTy() &&
+        (GV->isDeclaration() || GV->isWeakForLinker());
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
 
-    if (IsFunction || IsExternal || TM.getCodeModel() == CodeModel::Large)
+    if (IsNonLocalFunction || IsExternal ||
+        TM.getCodeModel() == CodeModel::Large)
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
