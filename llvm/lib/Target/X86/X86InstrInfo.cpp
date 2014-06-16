@@ -2670,8 +2670,7 @@ static X86::CondCode getSwappedCondition(X86::CondCode CC) {
 
 /// getSETFromCond - Return a set opcode for the given condition and
 /// whether it has memory operand.
-static unsigned getSETFromCond(X86::CondCode CC,
-                               bool HasMemoryOperand) {
+unsigned X86::getSETFromCond(CondCode CC, bool HasMemoryOperand) {
   static const uint16_t Opc[16][2] = {
     { X86::SETAr,  X86::SETAm  },
     { X86::SETAEr, X86::SETAEm },
@@ -2691,7 +2690,7 @@ static unsigned getSETFromCond(X86::CondCode CC,
     { X86::SETSr,  X86::SETSm  }
   };
 
-  assert(CC < 16 && "Can only handle standard cond codes");
+  assert(CC <= LAST_VALID_COND && "Can only handle standard cond codes");
   return Opc[CC][HasMemoryOperand ? 1 : 0];
 }
 

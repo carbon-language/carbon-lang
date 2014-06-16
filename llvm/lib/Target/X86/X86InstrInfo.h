@@ -46,6 +46,7 @@ namespace X86 {
     COND_O  = 13,
     COND_P  = 14,
     COND_S  = 15,
+    LAST_VALID_COND = COND_S,
 
     // Artificial condition codes. These are used by AnalyzeBranch
     // to indicate a block terminated with two conditional branches to
@@ -61,12 +62,16 @@ namespace X86 {
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
 
+  /// \brief Return a set opcode for the given condition and whether it has
+  /// a memory operand.
+  unsigned getSETFromCond(CondCode CC, bool HasMemoryOperand = false);
+
   // Turn CMov opcode into condition code.
   CondCode getCondFromCMovOpc(unsigned Opc);
 
   /// GetOppositeBranchCondition - Return the inverse of the specified cond,
   /// e.g. turning COND_E to COND_NE.
-  CondCode GetOppositeBranchCondition(X86::CondCode CC);
+  CondCode GetOppositeBranchCondition(CondCode CC);
 }  // end namespace X86;
 
 

@@ -16,6 +16,7 @@
 #include "X86.h"
 #include "X86CallingConv.h"
 #include "X86InstrBuilder.h"
+#include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
@@ -153,6 +154,44 @@ private:
 };
 
 } // end anonymous namespace.
+
+static std::pair<X86::CondCode, bool>
+getX86ConditonCode(CmpInst::Predicate Predicate) {
+  X86::CondCode CC = X86::COND_INVALID;
+  bool NeedSwap = false;
+  switch (Predicate) {
+  default: break;
+  // Floating-point Predicates
+  case CmpInst::FCMP_UEQ: CC = X86::COND_E;       break;
+  case CmpInst::FCMP_OLT: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_OGT: CC = X86::COND_A;       break;
+  case CmpInst::FCMP_OLE: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_OGE: CC = X86::COND_AE;      break;
+  case CmpInst::FCMP_UGT: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_ULT: CC = X86::COND_B;       break;
+  case CmpInst::FCMP_UGE: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_ULE: CC = X86::COND_BE;      break;
+  case CmpInst::FCMP_ONE: CC = X86::COND_NE;      break;
+  case CmpInst::FCMP_UNO: CC = X86::COND_P;       break;
+  case CmpInst::FCMP_ORD: CC = X86::COND_NP;      break;
+  case CmpInst::FCMP_OEQ: // fall-through
+  case CmpInst::FCMP_UNE: CC = X86::COND_INVALID; break;
+
+  // Integer Predicates
+  case CmpInst::ICMP_EQ:  CC = X86::COND_E;       break;
+  case CmpInst::ICMP_NE:  CC = X86::COND_NE;      break;
+  case CmpInst::ICMP_UGT: CC = X86::COND_A;       break;
+  case CmpInst::ICMP_UGE: CC = X86::COND_AE;      break;
+  case CmpInst::ICMP_ULT: CC = X86::COND_B;       break;
+  case CmpInst::ICMP_ULE: CC = X86::COND_BE;      break;
+  case CmpInst::ICMP_SGT: CC = X86::COND_G;       break;
+  case CmpInst::ICMP_SGE: CC = X86::COND_GE;      break;
+  case CmpInst::ICMP_SLT: CC = X86::COND_L;       break;
+  case CmpInst::ICMP_SLE: CC = X86::COND_LE;      break;
+  }
+
+  return std::make_pair(CC, NeedSwap);
+}
 
 bool X86FastISel::isTypeLegal(Type *Ty, MVT &VT, bool AllowI1) {
   EVT evt = TLI.getValueType(Ty, /*HandleUnknown=*/true);
@@ -1009,73 +1048,51 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
   if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
 
-  unsigned ResultReg = createResultReg(&X86::GR8RegClass);
-  unsigned SetCCOpc;
-  bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
+  // FCMP_OEQ and FCMP_UNE cannot be checked with a single instruction.
+  static unsigned SETFOpcTable[2][2] = {
+    { X86::SETEr,  X86::SETNPr },
+    { X86::SETNEr, X86::SETPr  }
+  };
+  unsigned *SETFOpc = nullptr;
   switch (CI->getPredicate()) {
-  case CmpInst::FCMP_OEQ: {
+  default: break;
+  case CmpInst::FCMP_OEQ: SETFOpc = &SETFOpcTable[0][0]; break;
+  case CmpInst::FCMP_UNE: SETFOpc = &SETFOpcTable[1][0]; break;
+  }
+
+  unsigned ResultReg = createResultReg(&X86::GR8RegClass);
+  if (SETFOpc) {
     if (!X86FastEmitCompare(CI->getOperand(0), CI->getOperand(1), VT))
       return false;
 
-    unsigned EReg = createResultReg(&X86::GR8RegClass);
-    unsigned NPReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::SETEr), EReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(X86::SETNPr), NPReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(X86::AND8rr), ResultReg).addReg(NPReg).addReg(EReg);
+    unsigned FlagReg1 = createResultReg(&X86::GR8RegClass);
+    unsigned FlagReg2 = createResultReg(&X86::GR8RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[0]),
+            FlagReg1);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[1]),
+            FlagReg2);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::AND8rr),
+            ResultReg).addReg(FlagReg1).addReg(FlagReg2);
     UpdateValueMap(I, ResultReg);
     return true;
   }
-  case CmpInst::FCMP_UNE: {
-    if (!X86FastEmitCompare(CI->getOperand(0), CI->getOperand(1), VT))
-      return false;
 
-    unsigned NEReg = createResultReg(&X86::GR8RegClass);
-    unsigned PReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::SETNEr), NEReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::SETPr), PReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::OR8rr),ResultReg)
-      .addReg(PReg).addReg(NEReg);
-    UpdateValueMap(I, ResultReg);
-    return true;
-  }
-  case CmpInst::FCMP_OGT: SwapArgs = false; SetCCOpc = X86::SETAr;  break;
-  case CmpInst::FCMP_OGE: SwapArgs = false; SetCCOpc = X86::SETAEr; break;
-  case CmpInst::FCMP_OLT: SwapArgs = true;  SetCCOpc = X86::SETAr;  break;
-  case CmpInst::FCMP_OLE: SwapArgs = true;  SetCCOpc = X86::SETAEr; break;
-  case CmpInst::FCMP_ONE: SwapArgs = false; SetCCOpc = X86::SETNEr; break;
-  case CmpInst::FCMP_ORD: SwapArgs = false; SetCCOpc = X86::SETNPr; break;
-  case CmpInst::FCMP_UNO: SwapArgs = false; SetCCOpc = X86::SETPr;  break;
-  case CmpInst::FCMP_UEQ: SwapArgs = false; SetCCOpc = X86::SETEr;  break;
-  case CmpInst::FCMP_UGT: SwapArgs = true;  SetCCOpc = X86::SETBr;  break;
-  case CmpInst::FCMP_UGE: SwapArgs = true;  SetCCOpc = X86::SETBEr; break;
-  case CmpInst::FCMP_ULT: SwapArgs = false; SetCCOpc = X86::SETBr;  break;
-  case CmpInst::FCMP_ULE: SwapArgs = false; SetCCOpc = X86::SETBEr; break;
+  X86::CondCode CC;
+  bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
+  std::tie(CC, SwapArgs) = getX86ConditonCode(CI->getPredicate());
+  assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
+  unsigned Opc = X86::getSETFromCond(CC);
 
-  case CmpInst::ICMP_EQ:  SwapArgs = false; SetCCOpc = X86::SETEr;  break;
-  case CmpInst::ICMP_NE:  SwapArgs = false; SetCCOpc = X86::SETNEr; break;
-  case CmpInst::ICMP_UGT: SwapArgs = false; SetCCOpc = X86::SETAr;  break;
-  case CmpInst::ICMP_UGE: SwapArgs = false; SetCCOpc = X86::SETAEr; break;
-  case CmpInst::ICMP_ULT: SwapArgs = false; SetCCOpc = X86::SETBr;  break;
-  case CmpInst::ICMP_ULE: SwapArgs = false; SetCCOpc = X86::SETBEr; break;
-  case CmpInst::ICMP_SGT: SwapArgs = false; SetCCOpc = X86::SETGr;  break;
-  case CmpInst::ICMP_SGE: SwapArgs = false; SetCCOpc = X86::SETGEr; break;
-  case CmpInst::ICMP_SLT: SwapArgs = false; SetCCOpc = X86::SETLr;  break;
-  case CmpInst::ICMP_SLE: SwapArgs = false; SetCCOpc = X86::SETLEr; break;
-  default:
-    return false;
-  }
-
-  const Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
+  const Value *LHS = CI->getOperand(0);
+  const Value *RHS = CI->getOperand(1);
   if (SwapArgs)
-    std::swap(Op0, Op1);
+    std::swap(LHS, RHS);
 
   // Emit a compare of Op0/Op1.
-  if (!X86FastEmitCompare(Op0, Op1, VT))
+  if (!X86FastEmitCompare(LHS, RHS, VT))
     return false;
 
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SetCCOpc), ResultReg);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg);
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -1152,66 +1169,59 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         Predicate = CmpInst::getInversePredicate(Predicate);
       }
 
-      bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
-      unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
-
+      // FCMP_OEQ and FCMP_UNE cannot be expressed with a single flag/conditon
+      // code check. Instead two branch instructions are required to check all
+      // the flags. First we change the predicate to a supported conditon code,
+      // which will be the first branch. Later one we will emit the second
+      // branch.
+      bool NeedExtraBranch = false;
       switch (Predicate) {
+      default: break;
       case CmpInst::FCMP_OEQ:
-        std::swap(TrueMBB, FalseMBB);
-        Predicate = CmpInst::FCMP_UNE;
-        // FALL THROUGH
-      case CmpInst::FCMP_UNE: SwapArgs = false; BranchOpc = X86::JNE_4; break;
-      case CmpInst::FCMP_OGT: SwapArgs = false; BranchOpc = X86::JA_4;  break;
-      case CmpInst::FCMP_OGE: SwapArgs = false; BranchOpc = X86::JAE_4; break;
-      case CmpInst::FCMP_OLT: SwapArgs = true;  BranchOpc = X86::JA_4;  break;
-      case CmpInst::FCMP_OLE: SwapArgs = true;  BranchOpc = X86::JAE_4; break;
-      case CmpInst::FCMP_ONE: SwapArgs = false; BranchOpc = X86::JNE_4; break;
-      case CmpInst::FCMP_ORD: SwapArgs = false; BranchOpc = X86::JNP_4; break;
-      case CmpInst::FCMP_UNO: SwapArgs = false; BranchOpc = X86::JP_4;  break;
-      case CmpInst::FCMP_UEQ: SwapArgs = false; BranchOpc = X86::JE_4;  break;
-      case CmpInst::FCMP_UGT: SwapArgs = true;  BranchOpc = X86::JB_4;  break;
-      case CmpInst::FCMP_UGE: SwapArgs = true;  BranchOpc = X86::JBE_4; break;
-      case CmpInst::FCMP_ULT: SwapArgs = false; BranchOpc = X86::JB_4;  break;
-      case CmpInst::FCMP_ULE: SwapArgs = false; BranchOpc = X86::JBE_4; break;
-
-      case CmpInst::ICMP_EQ:  SwapArgs = false; BranchOpc = X86::JE_4;  break;
-      case CmpInst::ICMP_NE:  SwapArgs = false; BranchOpc = X86::JNE_4; break;
-      case CmpInst::ICMP_UGT: SwapArgs = false; BranchOpc = X86::JA_4;  break;
-      case CmpInst::ICMP_UGE: SwapArgs = false; BranchOpc = X86::JAE_4; break;
-      case CmpInst::ICMP_ULT: SwapArgs = false; BranchOpc = X86::JB_4;  break;
-      case CmpInst::ICMP_ULE: SwapArgs = false; BranchOpc = X86::JBE_4; break;
-      case CmpInst::ICMP_SGT: SwapArgs = false; BranchOpc = X86::JG_4;  break;
-      case CmpInst::ICMP_SGE: SwapArgs = false; BranchOpc = X86::JGE_4; break;
-      case CmpInst::ICMP_SLT: SwapArgs = false; BranchOpc = X86::JL_4;  break;
-      case CmpInst::ICMP_SLE: SwapArgs = false; BranchOpc = X86::JLE_4; break;
-      default:
-        return false;
+        std::swap(TrueMBB, FalseMBB); // fall-through
+      case CmpInst::FCMP_UNE:
+        NeedExtraBranch = true;
+        Predicate = CmpInst::FCMP_ONE;
+        break;
       }
 
-      const Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
+      X86::CondCode CC;
+      bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
+      unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
+      std::tie(CC, SwapArgs) = getX86ConditonCode(Predicate);
+      assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
+
+      BranchOpc = X86::GetCondBranchFromCond(CC);
+      const Value *CmpLHS = CI->getOperand(0);
+      const Value *CmpRHS = CI->getOperand(1);
       if (SwapArgs)
-        std::swap(Op0, Op1);
+        std::swap(CmpLHS, CmpRHS);
 
       // Emit a compare of the LHS and RHS, setting the flags.
-      if (!X86FastEmitCompare(Op0, Op1, VT))
+      if (!X86FastEmitCompare(CmpLHS, CmpRHS, VT))
         return false;
 
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
         .addMBB(TrueMBB);
 
-      if (Predicate == CmpInst::FCMP_UNE) {
-        // X86 requires a second branch to handle UNE (and OEQ,
-        // which is mapped to UNE above).
+      // X86 requires a second branch to handle UNE (and OEQ, which is mapped
+      // to UNE above).
+      if (NeedExtraBranch) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JP_4))
           .addMBB(TrueMBB);
       }
 
-      FastEmitBranch(FalseMBB, DbgLoc);
+      // Obtain the branch weight and add the TrueBB to the successor list.
       uint32_t BranchWeight = 0;
       if (FuncInfo.BPI)
         BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
                                                    TrueMBB->getBasicBlock());
       FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+
+      // Emits an unconditional branch to the FalseBB, obtains the branch
+      // weight, andd adds it to the successor list.
+      FastEmitBranch(FalseMBB, DbgLoc);
+
       return true;
     }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
