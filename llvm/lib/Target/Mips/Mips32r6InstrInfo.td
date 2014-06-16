@@ -18,7 +18,6 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: clo, clz
 // Reencoded: jr -> jalr
 // Reencoded: jr.hb -> jalr.hb
-// Reencoded: ll, sc
 // Reencoded: sdbbp
 
 def brtarget21 : Operand<OtherVT> {
@@ -157,6 +156,9 @@ class LDC2_R6_ENC : COP2LDST_FM<OPCODE5_LDC2>;
 class LWC2_R6_ENC : COP2LDST_FM<OPCODE5_LWC2>;
 class SDC2_R6_ENC : COP2LDST_FM<OPCODE5_SDC2>;
 class SWC2_R6_ENC : COP2LDST_FM<OPCODE5_SWC2>;
+
+class LL_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_LL>;
+class SC_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_SC>;
 
 class CMP_CONDN_DESC_BASE<string CondStr, string Typestr,
                           RegisterOperand FGROpnd,
@@ -563,6 +565,27 @@ class COP2ST_DESC_BASE<string instr_asm, RegisterOperand COPOpnd> {
 class SDC2_R6_DESC : COP2ST_DESC_BASE<"sdc2", COP2Opnd>;
 class SWC2_R6_DESC : COP2ST_DESC_BASE<"swc2", COP2Opnd>;
 
+class LL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rt);
+  dag InOperandList = (ins mem_simm9:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  list<dag> Pattern = [];
+  bit mayLoad = 1;
+}
+
+class LL_R6_DESC : LL_R6_DESC_BASE<"ll", GPR32Opnd>;
+
+class SC_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$dst);
+  dag InOperandList = (ins GPROpnd:$rt, mem_simm9:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  list<dag> Pattern = [];
+  bit mayStore = 1;
+  string Constraints = "$rt = $dst";
+}
+
+class SC_R6_DESC : SC_R6_DESC_BASE<"sc", GPR32Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -613,6 +636,7 @@ def JIALC : JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
 def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
 def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
+def LL_R6 : LL_R6_ENC, LL_R6_DESC, ISA_MIPS32R6;
 // def LSA; // See MSA
 def LWC2_R6 : LWC2_R6_ENC, LWC2_R6_DESC, ISA_MIPS32R6;
 def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
@@ -639,6 +663,7 @@ def NAL; // BAL with rd=0
 def PREF_R6 : PREF_ENC, PREF_DESC, ISA_MIPS32R6;
 def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
 def RINT_S : RINT_S_ENC, RINT_S_DESC, ISA_MIPS32R6;
+def SC_R6 : SC_R6_ENC, SC_R6_DESC, ISA_MIPS32R6;
 def SDC2_R6 : SDC2_R6_ENC, SDC2_R6_DESC, ISA_MIPS32R6;
 def SELEQZ : SELEQZ_ENC, SELEQZ_DESC, ISA_MIPS32R6, GPR_32;
 def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;

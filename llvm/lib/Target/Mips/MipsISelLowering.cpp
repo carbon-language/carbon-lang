@@ -958,16 +958,20 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned LL, SC, AND, NOR, ZERO, BEQ;
 
   if (Size == 4) {
-    LL = isMicroMips ? Mips::LL_MM : Mips::LL;
-    SC = isMicroMips ? Mips::SC_MM : Mips::SC;
+    if (isMicroMips) {
+      LL = Mips::LL_MM;
+      SC = Mips::SC_MM;
+    } else {
+      LL = Subtarget->hasMips32r6() ? Mips::LL : Mips::LL_R6;
+      SC = Subtarget->hasMips32r6() ? Mips::SC : Mips::SC_R6;
+    }
     AND = Mips::AND;
     NOR = Mips::NOR;
     ZERO = Mips::ZERO;
     BEQ = Mips::BEQ;
-  }
-  else {
-    LL = Mips::LLD;
-    SC = Mips::SCD;
+  } else {
+    LL = Subtarget->hasMips64r6() ? Mips::LLD : Mips::LLD_R6;
+    SC = Subtarget->hasMips64r6() ? Mips::SCD : Mips::SCD_R6;
     AND = Mips::AND64;
     NOR = Mips::NOR64;
     ZERO = Mips::ZERO_64;
@@ -1029,11 +1033,39 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   return exitMBB;
 }
 
-MachineBasicBlock *
-MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
-                                             MachineBasicBlock *BB,
-                                             unsigned Size, unsigned BinOpcode,
-                                             bool Nand) const {
+MachineBasicBlock *MipsTargetLowering::emitSignExtendToI32InReg(
+    MachineInstr *MI, MachineBasicBlock *BB, unsigned Size, unsigned DstReg,
+    unsigned SrcReg) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  if (Subtarget->hasMips32r2() && Size == 1) {
+    BuildMI(BB, DL, TII->get(Mips::SEB), DstReg).addReg(SrcReg);
+    return BB;
+  }
+
+  if (Subtarget->hasMips32r2() && Size == 2) {
+    BuildMI(BB, DL, TII->get(Mips::SEH), DstReg).addReg(SrcReg);
+    return BB;
+  }
+
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
+  unsigned ScrReg = RegInfo.createVirtualRegister(RC);
+
+  assert(Size < 32);
+  int64_t ShiftImm = 32 - (Size * 8);
+
+  BuildMI(BB, DL, TII->get(Mips::SLL), ScrReg).addReg(SrcReg).addImm(ShiftImm);
+  BuildMI(BB, DL, TII->get(Mips::SRA), DstReg).addReg(ScrReg).addImm(ShiftImm);
+
+  return BB;
+}
+
+MachineBasicBlock *MipsTargetLowering::emitAtomicBinaryPartword(
+    MachineInstr *MI, MachineBasicBlock *BB, unsigned Size, unsigned BinOpcode,
+    bool Nand) const {
   assert((Size == 1 || Size == 2) &&
          "Unsupported size for EmitAtomicBinaryPartial.");
 
@@ -1063,7 +1095,6 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
   unsigned StoreVal = RegInfo.createVirtualRegister(RC);
   unsigned MaskedOldVal1 = RegInfo.createVirtualRegister(RC);
   unsigned SrlRes = RegInfo.createVirtualRegister(RC);
-  unsigned SllRes = RegInfo.createVirtualRegister(RC);
   unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
@@ -1169,19 +1200,14 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
   //  sinkMBB:
   //    and     maskedoldval1,oldval,mask
   //    srl     srlres,maskedoldval1,shiftamt
-  //    sll     sllres,srlres,24
-  //    sra     dest,sllres,24
+  //    sign_extend dest,srlres
   BB = sinkMBB;
-  int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
   BuildMI(BB, DL, TII->get(Mips::AND), MaskedOldVal1)
     .addReg(OldVal).addReg(Mask);
   BuildMI(BB, DL, TII->get(Mips::SRLV), SrlRes)
       .addReg(MaskedOldVal1).addReg(ShiftAmt);
-  BuildMI(BB, DL, TII->get(Mips::SLL), SllRes)
-      .addReg(SrlRes).addImm(ShiftImm);
-  BuildMI(BB, DL, TII->get(Mips::SRA), Dest)
-      .addReg(SllRes).addImm(ShiftImm);
+  BB = emitSignExtendToI32InReg(MI, BB, Size, Dest, SrlRes);
 
   MI->eraseFromParent(); // The instruction is gone now.
 
@@ -1302,7 +1328,6 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
   unsigned MaskedOldVal1 = RegInfo.createVirtualRegister(RC);
   unsigned StoreVal = RegInfo.createVirtualRegister(RC);
   unsigned SrlRes = RegInfo.createVirtualRegister(RC);
-  unsigned SllRes = RegInfo.createVirtualRegister(RC);
   unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
@@ -1399,17 +1424,12 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
 
   //  sinkMBB:
   //    srl     srlres,maskedoldval0,shiftamt
-  //    sll     sllres,srlres,24
-  //    sra     dest,sllres,24
+  //    sign_extend dest,srlres
   BB = sinkMBB;
-  int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
   BuildMI(BB, DL, TII->get(Mips::SRLV), SrlRes)
       .addReg(MaskedOldVal0).addReg(ShiftAmt);
-  BuildMI(BB, DL, TII->get(Mips::SLL), SllRes)
-      .addReg(SrlRes).addImm(ShiftImm);
-  BuildMI(BB, DL, TII->get(Mips::SRA), Dest)
-      .addReg(SllRes).addImm(ShiftImm);
+  BB = emitSignExtendToI32InReg(MI, BB, Size, Dest, SrlRes);
 
   MI->eraseFromParent();   // The instruction is gone now.
 

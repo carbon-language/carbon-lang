@@ -121,8 +121,8 @@
         lhu       $s3,-22851($v0)
         li        $at,-29773
         li        $zero,-29889
-        ll        $v0,-7321($s2)
-        lld       $zero,-14736($ra)
+        ll        $v0,-7321($s2)       # CHECK: ll $2, -7321($18)     # encoding: [0xc2,0x42,0xe3,0x67]
+        lld       $zero,-14736($ra)    # CHECK: lld $zero, -14736($ra) # encoding: [0xd3,0xe0,0xc6,0x70]
         luxc1     $f19,$s6($s5)
         lw        $8,5674($a1)
         lwc1      $f16,10225($k0)
@@ -196,8 +196,8 @@
         round.w.d $f6,$f4
         round.w.s $f27,$f28
         sb        $s6,-19857($14)
-        sc        $15,18904($s3)
-        scd       $15,-8243($sp)
+        sc        $15,18904($s3)       # CHECK: sc $15, 18904($19)     # encoding: [0xe2,0x6f,0x49,0xd8]
+        scd       $15,-8243($sp)       # CHECK: scd $15, -8243($sp)    # encoding: [0xf3,0xaf,0xdf,0xcd]
         sd        $12,5835($10)
         sdc1      $f31,30574($13)
         sdc2      $20,23157($s2)       # CHECK: sdc2 $20, 23157($18)   # encoding: [0xfa,0x54,0x5a,0x75]

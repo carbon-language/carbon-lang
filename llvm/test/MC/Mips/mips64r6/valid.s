@@ -150,3 +150,7 @@
         lwc2    $18,-841($a2)    # CHECK: lwc2 $18, -841($6)     # encoding: [0x49,0x52,0x34,0xb7]
         sdc2    $20,629($s2)     # CHECK: sdc2 $20, 629($18)     # encoding: [0x49,0xf4,0x92,0x75]
         swc2    $25,304($s0)     # CHECK: swc2 $25, 304($16)     # encoding: [0x49,0x79,0x81,0x30]
+        ll      $v0,-153($s2)    # CHECK: ll $2, -153($18)       # encoding: [0x7e,0x42,0xb3,0xb6]
+        lld     $zero,112($ra)   # CHECK: lld $zero, 112($ra)    # encoding: [0x7f,0xe0,0x38,0x37]
+        sc      $15,-40($s3)     # CHECK: sc $15, -40($19)       # encoding: [0x7e,0x6f,0xec,0x26]
+        scd     $15,-51($sp)     # CHECK: scd $15, -51($sp)      # encoding: [0x7f,0xaf,0xe6,0xa7]

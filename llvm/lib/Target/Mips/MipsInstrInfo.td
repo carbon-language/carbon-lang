@@ -1189,8 +1189,8 @@ let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably 
 def WAIT : WAIT_FT<"wait">, WAIT_FM;
 
 /// Load-linked, Store-conditional
-def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>, ISA_MIPS2;
-def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>, ISA_MIPS2;
+def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>, ISA_MIPS2_NOT_32R6_64R6;
+def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>, ISA_MIPS2_NOT_32R6_64R6;
 }
 
 /// Jump and Branch Instructions

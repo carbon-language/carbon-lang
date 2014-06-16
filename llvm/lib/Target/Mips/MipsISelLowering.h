@@ -598,6 +598,12 @@ namespace llvm {
 
     unsigned getJumpTableEncoding() const override;
 
+    /// Emit a sign-extension using sll/sra, seb, or seh appropriately.
+    MachineBasicBlock *emitSignExtendToI32InReg(MachineInstr *MI,
+                                                MachineBasicBlock *BB,
+                                                unsigned Size, unsigned DstReg,
+                                                unsigned SrcRec) const;
+
     MachineBasicBlock *emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                     unsigned Size, unsigned BinOpcode, bool Nand = false) const;
     MachineBasicBlock *emitAtomicBinaryPartword(MachineInstr *MI,

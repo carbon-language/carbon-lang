@@ -1,5 +1,14 @@
-; RUN: llc -march=mipsel --disable-machine-licm < %s | FileCheck %s -check-prefix=ALL -check-prefix=CHECK-EL
-; RUN: llc -march=mips   --disable-machine-licm < %s | FileCheck %s -check-prefix=ALL -check-prefix=CHECK-EB
+; RUN: llc -march=mipsel --disable-machine-licm -mcpu=mips32   < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=NO-SEB-SEH  -check-prefix=CHECK-EL
+; RUN: llc -march=mipsel --disable-machine-licm -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=HAS-SEB-SEH -check-prefix=CHECK-EL
+; RUN: llc -march=mipsel --disable-machine-licm -mcpu=mips32r6 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=HAS-SEB-SEH -check-prefix=CHECK-EL
+; RUN: llc -march=mips64el --disable-machine-licm -mcpu=mips4    < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS64-ANY -check-prefix=NO-SEB-SEH  -check-prefix=CHECK-EL
+; RUN: llc -march=mips64el --disable-machine-licm -mcpu=mips64   < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS64-ANY -check-prefix=NO-SEB-SEH  -check-prefix=CHECK-EL
+; RUN: llc -march=mips64el --disable-machine-licm -mcpu=mips64r2 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS64-ANY -check-prefix=HAS-SEB-SEH -check-prefix=CHECK-EL
+; RUN: llc -march=mips64el --disable-machine-licm -mcpu=mips64r6 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS64-ANY -check-prefix=HAS-SEB-SEH -check-prefix=CHECK-EL
+
+; Keep one big-endian check so that we don't reduce testing, but don't add more
+; since endianness doesn't affect the body of the atomic operations.
+; RUN: llc -march=mips   --disable-machine-licm -mcpu=mips32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=CHECK-EB
 
 @x = common global i32 0, align 4
 
@@ -10,7 +19,9 @@ entry:
 
 ; ALL-LABEL: AtomicLoadAdd32:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(x)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(x)(
+
 ; ALL:       $[[BB0:[A-Z_0-9]+]]:
 ; ALL:           ll      $[[R1:[0-9]+]], 0($[[R0]])
 ; ALL:           addu    $[[R2:[0-9]+]], $[[R1]], $4
@@ -25,7 +36,9 @@ entry:
 
 ; ALL-LABEL: AtomicLoadNand32:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(x)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(x)(
+
 ; ALL:       $[[BB0:[A-Z_0-9]+]]:
 ; ALL:           ll      $[[R1:[0-9]+]], 0($[[R0]])
 ; ALL:           and     $[[R3:[0-9]+]], $[[R1]], $4
@@ -44,7 +57,9 @@ entry:
 
 ; ALL-LABEL: AtomicSwap32:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(x)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(x)
+
 ; ALL:       $[[BB0:[A-Z_0-9]+]]:
 ; ALL:           ll      ${{[0-9]+}}, 0($[[R0]])
 ; ALL:           sc      $[[R2:[0-9]+]], 0($[[R0]])
@@ -62,7 +77,9 @@ entry:
 
 ; ALL-LABEL: AtomicCmpSwap32:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(x)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(x)(
+
 ; ALL:       $[[BB0:[A-Z_0-9]+]]:
 ; ALL:           ll      $2, 0($[[R0]])
 ; ALL:           bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
@@ -82,7 +99,9 @@ entry:
 
 ; ALL-LABEL: AtomicLoadAdd8:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(y)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(y)(
+
 ; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
 ; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
 ; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
@@ -105,8 +124,11 @@ entry:
 
 ; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
-; ALL:           sra     $2, $[[R17]], 24
+
+; NO-SEB-SEH:    sll     $[[R17:[0-9]+]], $[[R16]], 24
+; NO-SEB-SEH:    sra     $2, $[[R17]], 24
+
+; HAS-SEB-SEH:   seb     $2, $[[R16]]
 }
 
 define signext i8 @AtomicLoadSub8(i8 signext %incr) nounwind {
@@ -116,7 +138,9 @@ entry:
 
 ; ALL-LABEL: AtomicLoadSub8:
 
-; ALL:        lw      $[[R0:[0-9]+]], %got(y)
+; MIPS32-ANY: lw      $[[R0:[0-9]+]], %got(y)
+; MIPS64-ANY: ld      $[[R0:[0-9]+]], %got_disp(y)(
+
 ; ALL:        addiu   $[[R1:[0-9]+]], $zero, -4
 ; ALL:        and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
 ; ALL:        andi    $[[R3:[0-9]+]], $[[R0]], 3
@@ -139,8 +163,11 @@ entry:
 
 ; ALL:        and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; ALL:        srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; ALL:        sll     $[[R17:[0-9]+]], $[[R16]], 24
-; ALL:        sra     $2, $[[R17]], 24
+
+; NO-SEB-SEH: sll     $[[R17:[0-9]+]], $[[R16]], 24
+; NO-SEB-SEH: sra     $2, $[[R17]], 24
+
+; HAS-SEB-SEH:seb     $2, $[[R16]]
 }
 
 define signext i8 @AtomicLoadNand8(i8 signext %incr) nounwind {
@@ -150,7 +177,9 @@ entry:
 
 ; ALL-LABEL: AtomicLoadNand8:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(y)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(y)(
+
 ; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
 ; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
 ; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
@@ -174,8 +203,11 @@ entry:
 
 ; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
-; ALL:           sra     $2, $[[R17]], 24
+
+; NO-SEB-SEH:    sll     $[[R17:[0-9]+]], $[[R16]], 24
+; NO-SEB-SEH:    sra     $2, $[[R17]], 24
+
+; HAS-SEB-SEH:   seb     $2, $[[R16]]
 }
 
 define signext i8 @AtomicSwap8(i8 signext %newval) nounwind {
@@ -185,7 +217,9 @@ entry:
 
 ; ALL-LABEL: AtomicSwap8:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(y)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(y)(
+
 ; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
 ; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
 ; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
@@ -207,8 +241,11 @@ entry:
 
 ; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
-; ALL:           sra     $2, $[[R17]], 24
+
+; NO-SEB-SEH:    sll     $[[R17:[0-9]+]], $[[R16]], 24
+; NO-SEB-SEH:    sra     $2, $[[R17]], 24
+
+; HAS-SEB-SEH:   seb     $2, $[[R16]]
 }
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
@@ -219,7 +256,9 @@ entry:
 
 ; ALL-LABEL: AtomicCmpSwap8:
 
-; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(y)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(y)(
+
 ; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
 ; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
 ; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
@@ -246,9 +285,55 @@ entry:
 
 ; ALL:       $[[BB1]]:
 ; ALL:           srlv    $[[R17:[0-9]+]], $[[R14]], $[[R5]]
-; ALL:           sll     $[[R18:[0-9]+]], $[[R17]], 24
-; ALL:           sra     $2, $[[R18]], 24
+
+; NO-SEB-SEH:    sll     $[[R18:[0-9]+]], $[[R17]], 24
+; NO-SEB-SEH:    sra     $2, $[[R18]], 24
+
+; HAS-SEB-SEH:   seb     $2, $[[R17]]
 }
+
+; Check one i16 so that we cover the seh sign extend
+@z = common global i16 0, align 1
+
+define signext i16 @AtomicLoadAdd16(i16 signext %incr) nounwind {
+entry:
+  %0 = atomicrmw add i16* @z, i16 %incr monotonic
+  ret i16 %0
+
+; ALL-LABEL: AtomicLoadAdd16:
+
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(z)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(z)(
+
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 2
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 65535
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           sllv    $[[R9:[0-9]+]], $4, $[[R5]]
+
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R10:[0-9]+]], 0($[[R2]])
+; ALL:           addu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
+; ALL:           and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
+; ALL:           and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
+; ALL:           or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
+; ALL:           sc      $[[R14]], 0($[[R2]])
+; ALL:           beqz    $[[R14]], $[[BB0]]
+
+; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
+; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
+
+; NO-SEB-SEH:    sll     $[[R17:[0-9]+]], $[[R16]], 16
+; NO-SEB-SEH:    sra     $2, $[[R17]], 16
+
+; MIPS32R2:      seh     $2, $[[R16]]
+}
+
 
 @countsint = common global i32 0, align 4
 
@@ -282,4 +367,24 @@ entry:
   %1 = icmp eq i32 %0, 1
   %conv = zext i1 %1 to i32
   ret i32 %conv
+}
+
+; Check that MIPS32R6 has the correct offset range.
+; FIXME: At the moment, we don't seem to do addr+offset for any atomic load/store.
+define i32 @AtomicLoadAdd32_OffGt9Bit(i32 %incr) nounwind {
+entry:
+  %0 = atomicrmw add i32* getelementptr(i32* @x, i32 256), i32 %incr monotonic
+  ret i32 %0
+
+; ALL-LABEL: AtomicLoadAdd32_OffGt9Bit:
+
+; MIPS32-ANY:    lw      $[[R0:[0-9]+]], %got(x)
+; MIPS64-ANY:    ld      $[[R0:[0-9]+]], %got_disp(x)(
+
+; ALL:           addiu   $[[PTR:[0-9]+]], $[[R0]], 1024
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R1:[0-9]+]], 0($[[PTR]])
+; ALL:           addu    $[[R2:[0-9]+]], $[[R1]], $4
+; ALL:           sc      $[[R2]], 0($[[PTR]])
+; ALL:           beqz    $[[R2]], $[[BB0]]
 }
