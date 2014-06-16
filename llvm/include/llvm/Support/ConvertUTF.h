@@ -136,7 +136,19 @@ ConversionResult ConvertUTF8toUTF16 (
   const UTF8** sourceStart, const UTF8* sourceEnd,
   UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags);
 
-ConversionResult ConvertUTF8toUTF32 (
+/**
+ * Convert a partial UTF8 sequence to UTF32.  If the sequence ends in an
+ * incomplete code unit sequence, returns \c sourceExhausted.
+ */
+ConversionResult ConvertUTF8toUTF32Partial(
+  const UTF8** sourceStart, const UTF8* sourceEnd,
+  UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
+
+/**
+ * Convert a partial UTF8 sequence to UTF32.  If the sequence ends in an
+ * incomplete code unit sequence, returns \c sourceIllegal.
+ */
+ConversionResult ConvertUTF8toUTF32(
   const UTF8** sourceStart, const UTF8* sourceEnd,
   UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
 

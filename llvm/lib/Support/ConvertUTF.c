@@ -51,6 +51,7 @@
 #ifdef CVTUTF_DEBUG
 #include <stdio.h>
 #endif
+#include <assert.h>
 
 static const int halfShift  = 10; /* used for shifting by 10 bits */
 
@@ -392,6 +393,97 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /* --------------------------------------------------------------------- */
 
+static unsigned
+findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
+                                          const UTF8 *sourceEnd) {
+  assert(!isLegalUTF8Sequence(source, sourceEnd));
+
+  /*
+   * Unicode 6.3.0, D93b:
+   *
+   *   Maximal subpart of an ill-formed subsequence: The longest code unit
+   *   subsequence starting at an unconvertible offset that is either:
+   *   a. the initial subsequence of a well-formed code unit sequence, or
+   *   b. a subsequence of length one.
+   */
+
+  if (source == sourceEnd)
+    return 0;
+
+  /*
+   * Perform case analysis.  See Unicode 6.3.0, Table 3-7. Well-Formed UTF-8
+   * Byte Sequences.
+   */
+
+  UTF8 b1 = *source;
+  ++source;
+  if (b1 >= 0xC2 && b1 <= 0xDF) {
+    /*
+     * First byte is valid, but we know that this code unit sequence is
+     * invalid, so the maximal subpart has to end after the first byte.
+     */
+    return 1;
+  }
+
+  if (source == sourceEnd)
+    return 1;
+
+  UTF8 b2 = *source;
+  ++source;
+
+  if (b1 == 0xE0) {
+    return (b2 >= 0xA0 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 >= 0xE1 && b1 <= 0xEC) {
+    return (b2 >= 0x80 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 == 0xED) {
+    return (b2 >= 0x80 && b2 <= 0x9F) ? 2 : 1;
+  }
+  if (b1 >= 0xEE && b1 <= 0xEF) {
+    return (b2 >= 0x80 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 == 0xF0) {
+    if (b2 >= 0x90 && b2 <= 0xBF) {
+      if (source == sourceEnd)
+        return 2;
+
+      UTF8 b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+  if (b1 >= 0xF1 && b1 <= 0xF3) {
+    if (b2 >= 0x80 && b2 <= 0xBF) {
+      if (source == sourceEnd)
+        return 2;
+
+      UTF8 b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+  if (b1 == 0xF4) {
+    if (b2 >= 0x80 && b2 <= 0x8F) {
+      if (source == sourceEnd)
+        return 2;
+
+      UTF8 b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+
+  assert((b1 >= 0x80 && b1 <= 0xC1) || b1 >= 0xF5);
+  /*
+   * There are no valid sequences that start with these bytes.  Maximal subpart
+   * is defined to have length 1 in these cases.
+   */
+  return 1;
+}
+
+/* --------------------------------------------------------------------- */
+
 /*
  * Exported function to return the total number of bytes in a codepoint
  * represented in UTF-8, given the value of the first byte.
@@ -491,9 +583,10 @@ ConversionResult ConvertUTF8toUTF16 (
 
 /* --------------------------------------------------------------------- */
 
-ConversionResult ConvertUTF8toUTF32 (
+static ConversionResult ConvertUTF8toUTF32Impl(
         const UTF8** sourceStart, const UTF8* sourceEnd, 
-        UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags) {
+        UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags,
+        Boolean InputIsPartial) {
     ConversionResult result = conversionOK;
     const UTF8* source = *sourceStart;
     UTF32* target = *targetStart;
@@ -501,12 +594,42 @@ ConversionResult ConvertUTF8toUTF32 (
         UTF32 ch = 0;
         unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
         if (extraBytesToRead >= sourceEnd - source) {
-            result = sourceExhausted; break;
+            if (flags == strictConversion || InputIsPartial) {
+                result = sourceExhausted;
+                break;
+            } else {
+                result = sourceIllegal;
+
+                /*
+                 * Replace the maximal subpart of ill-formed sequence with
+                 * replacement character.
+                 */
+                source += findMaximalSubpartOfIllFormedUTF8Sequence(source,
+                                                                    sourceEnd);
+                *target++ = UNI_REPLACEMENT_CHAR;
+                continue;
+            }
         }
+        if (target >= targetEnd) {
+            result = targetExhausted; break;
+        }
+
         /* Do this check whether lenient or strict */
         if (!isLegalUTF8(source, extraBytesToRead+1)) {
             result = sourceIllegal;
-            break;
+            if (flags == strictConversion) {
+                /* Abort conversion. */
+                break;
+            } else {
+                /*
+                 * Replace the maximal subpart of ill-formed sequence with
+                 * replacement character.
+                 */
+                source += findMaximalSubpartOfIllFormedUTF8Sequence(source,
+                                                                    sourceEnd);
+                *target++ = UNI_REPLACEMENT_CHAR;
+                continue;
+            }
         }
         /*
          * The cases all fall through. See "Note A" below.
@@ -521,10 +644,6 @@ ConversionResult ConvertUTF8toUTF32 (
         }
         ch -= offsetsFromUTF8[extraBytesToRead];
 
-        if (target >= targetEnd) {
-            source -= (extraBytesToRead+1); /* Back up the source pointer! */
-            result = targetExhausted; break;
-        }
         if (ch <= UNI_MAX_LEGAL_UTF32) {
             /*
              * UTF-16 surrogate values are illegal in UTF-32, and anything
@@ -549,6 +668,22 @@ ConversionResult ConvertUTF8toUTF32 (
     *sourceStart = source;
     *targetStart = target;
     return result;
+}
+
+ConversionResult ConvertUTF8toUTF32Partial(const UTF8 **sourceStart,
+                                           const UTF8 *sourceEnd,
+                                           UTF32 **targetStart,
+                                           UTF32 *targetEnd,
+                                           ConversionFlags flags) {
+  return ConvertUTF8toUTF32Impl(sourceStart, sourceEnd, targetStart, targetEnd,
+                                flags, /*InputIsPartial=*/true);
+}
+
+ConversionResult ConvertUTF8toUTF32(const UTF8 **sourceStart,
+                                    const UTF8 *sourceEnd, UTF32 **targetStart,
+                                    UTF32 *targetEnd, ConversionFlags flags) {
+  return ConvertUTF8toUTF32Impl(sourceStart, sourceEnd, targetStart, targetEnd,
+                                flags, /*InputIsPartial=*/false);
 }
 
 /* ---------------------------------------------------------------------
