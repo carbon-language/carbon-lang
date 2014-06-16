@@ -1703,6 +1703,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_shared:
     C = OMPSharedClause::CreateEmpty(Context, Record[Idx++]);
     break;
+  case OMPC_reduction:
+    C = OMPReductionClause::CreateEmpty(Context, Record[Idx++]);
+    break;
   case OMPC_linear:
     C = OMPLinearClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1786,6 +1789,24 @@ void OMPClauseReader::VisitOMPLastprivateClause(OMPLastprivateClause *C) {
 
 void OMPClauseReader::VisitOMPSharedClause(OMPSharedClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  unsigned NumVars = C->varlist_size();
+  SmallVector<Expr *, 16> Vars;
+  Vars.reserve(NumVars);
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setVarRefs(Vars);
+}
+
+void OMPClauseReader::VisitOMPReductionClause(OMPReductionClause *C) {
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setColonLoc(Reader->ReadSourceLocation(Record, Idx));
+  NestedNameSpecifierLoc NNSL =
+    Reader->Reader.ReadNestedNameSpecifierLoc(Reader->F, Record, Idx);
+  DeclarationNameInfo DNI;
+  Reader->ReadDeclarationNameInfo(DNI, Record, Idx);
+  C->setQualifierLoc(NNSL);
+  C->setNameInfo(DNI);
+
   unsigned NumVars = C->varlist_size();
   SmallVector<Expr *, 16> Vars;
   Vars.reserve(NumVars);

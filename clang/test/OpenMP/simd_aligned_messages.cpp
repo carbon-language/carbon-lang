@@ -52,13 +52,14 @@ template<int L, class T, class N> T test_template(T* arr, N num) {
   // expected-error@+1 {{argument to 'aligned' clause must be a positive integer value}}
   #pragma omp simd aligned(arr:L)
   for (i = 0; i < num; ++i) {
-    T cur = arr[ind2];
+    T cur = arr[(int)ind2];
     ind2 += L;
     sum += cur;
   }
   // expected-error@+1 {{argument of aligned clause should be array, pointer, reference to array or reference to pointer, not 'int'}}
   #pragma omp simd aligned(num:4)
   for (i = 0; i < num; ++i);
+  return T();
 }
 
 template<int LEN> int test_warn() {

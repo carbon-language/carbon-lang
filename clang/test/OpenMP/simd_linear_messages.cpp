@@ -50,10 +50,11 @@ template<int L, class T, class N> T test_template(T* arr, N num) {
   // expected-error@+1 {{argument of a linear clause should be of integral or pointer type}}
 #pragma omp simd linear(ind2:L)
   for (i = 0; i < num; ++i) {
-    T cur = arr[ind2];
+    T cur = arr[(int)ind2];
     ind2 += L;
     sum += cur;
   }
+  return T();
 }
 
 template<int LEN> int test_warn() {

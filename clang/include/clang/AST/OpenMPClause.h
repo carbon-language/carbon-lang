@@ -431,7 +431,8 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
-/// \brief This represents 'proc_bind' clause in the '#pragma omp ...' directive.
+/// \brief This represents 'proc_bind' clause in the '#pragma omp ...'
+/// directive.
 ///
 /// \code
 /// #pragma omp parallel proc_bind(master)
@@ -471,8 +472,8 @@ public:
   /// \param EndLoc Ending location of the clause.
   ///
   OMPProcBindClause(OpenMPProcBindClauseKind A, SourceLocation ALoc,
-                   SourceLocation StartLoc, SourceLocation LParenLoc,
-                   SourceLocation EndLoc)
+                    SourceLocation StartLoc, SourceLocation LParenLoc,
+                    SourceLocation EndLoc)
       : OMPClause(OMPC_proc_bind, StartLoc, EndLoc), LParenLoc(LParenLoc),
         Kind(A), KindKwLoc(ALoc) {}
 
@@ -736,6 +737,99 @@ public:
 
   static bool classof(const OMPClause *T) {
     return T->getClauseKind() == OMPC_shared;
+  }
+};
+
+/// \brief This represents clause 'reduction' in the '#pragma omp ...'
+/// directives.
+///
+/// \code
+/// #pragma omp parallel reduction(+:a,b)
+/// \endcode
+/// In this example directive '#pragma omp parallel' has clause 'reduction'
+/// with operator '+' and the variables 'a' and 'b'.
+///
+class OMPReductionClause : public OMPVarListClause<OMPReductionClause> {
+  friend class OMPClauseReader;
+  /// \brief Location of ':'.
+  SourceLocation ColonLoc;
+  /// \brief Nested name specifier for C++.
+  NestedNameSpecifierLoc QualifierLoc;
+  /// \brief Name of custom operator.
+  DeclarationNameInfo NameInfo;
+
+  /// \brief Build clause with number of variables \a N.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param ColonLoc Location of ':'.
+  /// \param N Number of the variables in the clause.
+  /// \param QualifierLoc The nested-name qualifier with location information
+  /// \param NameInfo The full name info for reduction identifier.
+  ///
+  OMPReductionClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                     SourceLocation ColonLoc, SourceLocation EndLoc, unsigned N,
+                     NestedNameSpecifierLoc QualifierLoc,
+                     const DeclarationNameInfo &NameInfo)
+      : OMPVarListClause<OMPReductionClause>(OMPC_reduction, StartLoc,
+                                             LParenLoc, EndLoc, N),
+        ColonLoc(ColonLoc), QualifierLoc(QualifierLoc), NameInfo(NameInfo) {}
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param N Number of variables.
+  ///
+  explicit OMPReductionClause(unsigned N)
+      : OMPVarListClause<OMPReductionClause>(OMPC_reduction, SourceLocation(),
+                                             SourceLocation(), SourceLocation(),
+                                             N),
+        ColonLoc(), QualifierLoc(), NameInfo() {}
+
+  /// \brief Sets location of ':' symbol in clause.
+  void setColonLoc(SourceLocation CL) { ColonLoc = CL; }
+  /// \brief Sets the name info for specified reduction identifier.
+  void setNameInfo(DeclarationNameInfo DNI) { NameInfo = DNI; }
+  /// \brief Sets the nested name specifier.
+  void setQualifierLoc(NestedNameSpecifierLoc NSL) { QualifierLoc = NSL; }
+
+public:
+  /// \brief Creates clause with a list of variables \a VL.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param ColonLoc Location of ':'.
+  /// \param EndLoc Ending location of the clause.
+  /// \param N Number of the variables in the clause.
+  /// \param QualifierLoc The nested-name qualifier with location information
+  /// \param NameInfo The full name info for reduction identifier.
+  ///
+  static OMPReductionClause *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+         SourceLocation ColonLoc, SourceLocation EndLoc, ArrayRef<Expr *> VL,
+         NestedNameSpecifierLoc QualifierLoc,
+         const DeclarationNameInfo &NameInfo);
+  /// \brief Creates an empty clause with the place for \a N variables.
+  ///
+  /// \param C AST context.
+  /// \param N The number of variables.
+  ///
+  static OMPReductionClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  /// \brief Gets location of ':' symbol in clause.
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  /// \brief Gets the name info for specified reduction identifier.
+  const DeclarationNameInfo &getNameInfo() const { return NameInfo; }
+  /// \brief Gets the nested name specifier.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_reduction;
   }
 };
 

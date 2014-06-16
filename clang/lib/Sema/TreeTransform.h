@@ -1425,6 +1425,22 @@ public:
                                              EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'reduction' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPReductionClause(ArrayRef<Expr *> VarList,
+                                       SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation ColonLoc,
+                                       SourceLocation EndLoc,
+                                       CXXScopeSpec &ReductionIdScopeSpec,
+                                       const DeclarationNameInfo &ReductionId) {
+    return getSema().ActOnOpenMPReductionClause(
+        VarList, StartLoc, LParenLoc, ColonLoc, EndLoc, ReductionIdScopeSpec,
+        ReductionId);
+  }
+
   /// \brief Build a new OpenMP 'linear' clause.
   ///
   /// By default, performs semantic analysis to build the new OpenMP clause.
@@ -6348,10 +6364,8 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
        I != E; ++I) {
     if (*I) {
       OMPClause *Clause = getDerived().TransformOMPClause(*I);
-      if (!Clause) {
-        return StmtError();
-      }
-      TClauses.push_back(Clause);
+      if (Clause)
+        TClauses.push_back(Clause);
     } else {
       TClauses.push_back(nullptr);
     }
@@ -6361,7 +6375,7 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
   }
   StmtResult AssociatedStmt =
       getDerived().TransformStmt(D->getAssociatedStmt());
-  if (AssociatedStmt.isInvalid()) {
+  if (AssociatedStmt.isInvalid() || TClauses.size() != Clauses.size()) {
     return StmtError();
   }
 
@@ -6506,6 +6520,31 @@ TreeTransform<Derived>::TransformOMPSharedClause(OMPSharedClause *C) {
   }
   return getDerived().RebuildOMPSharedClause(Vars, C->getLocStart(),
                                              C->getLParenLoc(), C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPReductionClause(OMPReductionClause *C) {
+  llvm::SmallVector<Expr *, 16> Vars;
+  Vars.reserve(C->varlist_size());
+  for (auto *VE : C->varlists()) {
+    ExprResult EVar = getDerived().TransformExpr(cast<Expr>(VE));
+    if (EVar.isInvalid())
+      return nullptr;
+    Vars.push_back(EVar.get());
+  }
+  CXXScopeSpec ReductionIdScopeSpec;
+  ReductionIdScopeSpec.Adopt(C->getQualifierLoc());
+
+  DeclarationNameInfo NameInfo = C->getNameInfo();
+  if (NameInfo.getName()) {
+    NameInfo = getDerived().TransformDeclarationNameInfo(NameInfo);
+    if (!NameInfo.getName())
+      return nullptr;
+  }
+  return getDerived().RebuildOMPReductionClause(
+      Vars, C->getLocStart(), C->getLParenLoc(), C->getColonLoc(),
+      C->getLocEnd(), ReductionIdScopeSpec, NameInfo);
 }
 
 template <typename Derived>
@@ -10017,7 +10056,11 @@ TreeTransform<Derived>::TransformCapturedStmt(CapturedStmt *S) {
   }
   getSema().ActOnCapturedRegionStart(Loc, /*CurScope*/nullptr,
                                      S->getCapturedRegionKind(), Params);
-  StmtResult Body = getDerived().TransformStmt(S->getCapturedStmt());
+  StmtResult Body;
+  {
+    Sema::CompoundScopeRAII CompoundScope(getSema());
+    Body = getDerived().TransformStmt(S->getCapturedStmt());
+  }
 
   if (Body.isInvalid()) {
     getSema().ActOnCapturedRegionError();

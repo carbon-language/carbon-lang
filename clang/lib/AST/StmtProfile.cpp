@@ -308,6 +308,13 @@ OMPClauseProfiler::VisitOMPLastprivateClause(const OMPLastprivateClause *C) {
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPReductionClause(
+                                         const OMPReductionClause *C) {
+  Profiler->VisitNestedNameSpecifier(
+      C->getQualifierLoc().getNestedNameSpecifier());
+  Profiler->VisitName(C->getNameInfo().getName());
+  VisitOMPClauseList(C);
+}
 void OMPClauseProfiler::VisitOMPLinearClause(const OMPLinearClause *C) {
   VisitOMPClauseList(C);
   Profiler->VisitStmt(C->getStep());

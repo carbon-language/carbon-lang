@@ -1963,6 +1963,9 @@ void OMPClauseEnqueue::VisitOMPLastprivateClause(
 void OMPClauseEnqueue::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPReductionClause(const OMPReductionClause *C) {
+  VisitOMPClauseList(C);
+}
 void OMPClauseEnqueue::VisitOMPLinearClause(const OMPLinearClause *C) {
   VisitOMPClauseList(C);
   Visitor->AddStmt(C->getStep());

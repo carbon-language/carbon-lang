@@ -2393,6 +2393,15 @@ bool RecursiveASTVisitor<Derived>::VisitOMPSharedClause(OMPSharedClause *C) {
 }
 
 template <typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPReductionClause(
+                                                    OMPReductionClause *C) {
+  TRY_TO(TraverseNestedNameSpecifierLoc(C->getQualifierLoc()));
+  TRY_TO(TraverseDeclarationNameInfo(C->getNameInfo()));
+  VisitOMPClauseList(C);
+  return true;
+}
+
+template<typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPLinearClause(OMPLinearClause *C) {
   VisitOMPClauseList(C);
   TraverseStmt(C->getStep());

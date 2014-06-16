@@ -6965,6 +6965,8 @@ def err_omp_firstprivate_incomplete_type : Error<
   "a firstprivate variable with incomplete type %0">;
 def err_omp_lastprivate_incomplete_type : Error<
   "a lastprivate variable with incomplete type %0">;
+def err_omp_reduction_incomplete_type : Error<
+  "a reduction variable with incomplete type %0">;
 def err_omp_unexpected_clause_value : Error<
   "expected %0 in OpenMP clause '%1'">;
 def err_omp_expected_var_name : Error<
@@ -7044,6 +7046,24 @@ def err_omp_loop_cannot_use_stmt : Error<
   "'%0' statement cannot be used in OpenMP for loop">;
 def err_omp_simd_region_cannot_use_stmt : Error<
   "'%0' statement cannot be used in OpenMP simd region">;
+def err_omp_unknown_reduction_identifier : Error<
+  "incorrect reduction identifier, expected one of '+', '-', '*', '&', '|', '^', '&&', '||', 'min' or 'max'">;
+def err_omp_reduction_type_array : Error<
+  "a reduction variable with array type %0">;
+def err_omp_reduction_ref_type_arg : Error<
+  "argument of OpenMP clause 'reduction' must reference the same object in all threads">;
+def err_omp_clause_not_arithmetic_type_arg : Error<
+  "arguments of OpenMP clause 'reduction' for 'min' or 'max' must be of %select{scalar|arithmetic}0 type">;
+def err_omp_clause_floating_type_arg : Error<
+  "arguments of OpenMP clause 'reduction' with bitwise operators cannot be of floating type">;
+def err_omp_once_referenced : Error<
+  "variable can appear only once in OpenMP '%0' clause">;
+def note_omp_referenced : Note<
+  "previously referenced here">;
+def err_omp_reduction_in_task : Error<
+  "reduction variables may not be accessed in an explicit task">;
+def err_omp_reduction_id_not_compatible : Error<
+  "variable of type %0 is not valid for specified reduction operation">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

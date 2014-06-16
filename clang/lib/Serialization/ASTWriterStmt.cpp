@@ -1735,6 +1735,16 @@ void OMPClauseWriter::VisitOMPSharedClause(OMPSharedClause *C) {
     Writer->Writer.AddStmt(VE);
 }
 
+void OMPClauseWriter::VisitOMPReductionClause(OMPReductionClause *C) {
+  Record.push_back(C->varlist_size());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+  Writer->Writer.AddSourceLocation(C->getColonLoc(), Record);
+  Writer->Writer.AddNestedNameSpecifierLoc(C->getQualifierLoc(), Record);
+  Writer->Writer.AddDeclarationNameInfo(C->getNameInfo(), Record);
+  for (auto *VE : C->varlists())
+    Writer->Writer.AddStmt(VE);
+}
+
 void OMPClauseWriter::VisitOMPLinearClause(OMPLinearClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

@@ -1286,6 +1286,27 @@ void OMPExecutableDirective::setClauses(ArrayRef<OMPClause *> Clauses) {
   std::copy(Clauses.begin(), Clauses.end(), getClauses().begin());
 }
 
+OMPReductionClause *OMPReductionClause::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+    SourceLocation EndLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL,
+    NestedNameSpecifierLoc QualifierLoc, const DeclarationNameInfo &NameInfo) {
+  void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
+                                                  llvm::alignOf<Expr *>()) +
+                         sizeof(Expr *) * VL.size());
+  OMPReductionClause *Clause = new (Mem) OMPReductionClause(
+      StartLoc, LParenLoc, EndLoc, ColonLoc, VL.size(), QualifierLoc, NameInfo);
+  Clause->setVarRefs(VL);
+  return Clause;
+}
+
+OMPReductionClause *OMPReductionClause::CreateEmpty(const ASTContext &C,
+                                                    unsigned N) {
+  void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
+                                                  llvm::alignOf<Expr *>()) +
+                         sizeof(Expr *) * N);
+  return new (Mem) OMPReductionClause(N);
+}
+
 OMPParallelDirective *OMPParallelDirective::Create(
                                               const ASTContext &C,
                                               SourceLocation StartLoc,

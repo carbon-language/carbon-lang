@@ -258,7 +258,8 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///    clause:
 ///       if-clause | num_threads-clause | safelen-clause | default-clause |
 ///       private-clause | firstprivate-clause | shared-clause | linear-clause |
-///       aligned-clause | collapse-clause | lastprivate-clause
+///       aligned-clause | collapse-clause | lastprivate-clause |
+///       reduction-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -307,6 +308,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_firstprivate:
   case OMPC_lastprivate:
   case OMPC_shared:
+  case OMPC_reduction:
   case OMPC_linear:
   case OMPC_aligned:
   case OMPC_copyin:
@@ -394,6 +396,52 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
                                          Tok.getLocation());
 }
 
+static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,
+                             UnqualifiedId &ReductionId) {
+  SourceLocation TemplateKWLoc;
+  if (ReductionIdScopeSpec.isEmpty()) {
+    auto OOK = OO_None;
+    switch (P.getCurToken().getKind()) {
+    case tok::plus:
+      OOK = OO_Plus;
+      break;
+    case tok::minus:
+      OOK = OO_Minus;
+      break;
+    case tok::star:
+      OOK = OO_Star;
+      break;
+    case tok::amp:
+      OOK = OO_Amp;
+      break;
+    case tok::pipe:
+      OOK = OO_Pipe;
+      break;
+    case tok::caret:
+      OOK = OO_Caret;
+      break;
+    case tok::ampamp:
+      OOK = OO_AmpAmp;
+      break;
+    case tok::pipepipe:
+      OOK = OO_PipePipe;
+      break;
+    default:
+      break;
+    }
+    if (OOK != OO_None) {
+      SourceLocation OpLoc = P.ConsumeToken();
+      SourceLocation SymbolLocations[] = { OpLoc, OpLoc, SourceLocation() };
+      ReductionId.setOperatorFunctionId(OpLoc, OOK, SymbolLocations);
+      return false;
+    }
+  }
+  return P.ParseUnqualifiedId(ReductionIdScopeSpec, /*EnteringContext*/ false,
+                              /*AllowDestructorName*/ false,
+                              /*AllowConstructorName*/ false, ParsedType(),
+                              TemplateKWLoc, ReductionId);
+}
+
 /// \brief Parsing of OpenMP clause 'private', 'firstprivate', 'lastprivate',
 /// 'shared', 'copyin', or 'reduction'.
 ///
@@ -409,19 +457,44 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///       'linear' '(' list [ ':' linear-step ] ')'
 ///    aligned-clause:
 ///       'aligned' '(' list [ ':' alignment ] ')'
+///    reduction-clause:
+///       'reduction' '(' reduction-identifier ':' list ')'
 ///
 OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();
   SourceLocation LOpen = ConsumeToken();
   SourceLocation ColonLoc = SourceLocation();
+  // Optional scope specifier and unqualified id for reduction identifier.
+  CXXScopeSpec ReductionIdScopeSpec;
+  UnqualifiedId ReductionId;
+  bool InvalidReductionId = false;
   // Parse '('.
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
   if (T.expectAndConsume(diag::err_expected_lparen_after,
                          getOpenMPClauseName(Kind)))
     return nullptr;
 
+  // Handle reduction-identifier for reduction clause.
+  if (Kind == OMPC_reduction) {
+    ColonProtectionRAIIObject ColonRAII(*this);
+    if (getLangOpts().CPlusPlus) {
+      ParseOptionalCXXScopeSpecifier(ReductionIdScopeSpec, ParsedType(), false);
+    }
+    InvalidReductionId =
+        ParseReductionId(*this, ReductionIdScopeSpec, ReductionId);
+    if (InvalidReductionId) {
+      SkipUntil(tok::colon, tok::r_paren, tok::annot_pragma_openmp_end,
+                StopBeforeMatch);
+    }
+    if (Tok.is(tok::colon)) {
+      ColonLoc = ConsumeToken();
+    } else {
+      Diag(Tok, diag::warn_pragma_expected_colon) << "reduction identifier";
+    }
+  }
+
   SmallVector<Expr *, 5> Vars;
-  bool IsComma = true;
+  bool IsComma = !InvalidReductionId;
   const bool MayHaveTail = (Kind == OMPC_linear || Kind == OMPC_aligned);
   while (IsComma || (Tok.isNot(tok::r_paren) && Tok.isNot(tok::colon) &&
                      Tok.isNot(tok::annot_pragma_openmp_end))) {
@@ -460,10 +533,13 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
 
   // Parse ')'.
   T.consumeClose();
-  if (Vars.empty() || (MustHaveTail && !TailExpr))
+  if (Vars.empty() || (MustHaveTail && !TailExpr) || InvalidReductionId)
     return nullptr;
 
-  return Actions.ActOnOpenMPVarListClause(Kind, Vars, TailExpr, Loc, LOpen,
-                                          ColonLoc, Tok.getLocation());
+  return Actions.ActOnOpenMPVarListClause(
+      Kind, Vars, TailExpr, Loc, LOpen, ColonLoc, Tok.getLocation(),
+      ReductionIdScopeSpec,
+      ReductionId.isValid() ? Actions.GetNameFromUnqualifiedId(ReductionId)
+                            : DeclarationNameInfo());
 }
 

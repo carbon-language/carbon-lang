@@ -88,6 +88,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
   case OMPC_firstprivate:
   case OMPC_lastprivate:
   case OMPC_shared:
+  case OMPC_reduction:
   case OMPC_linear:
   case OMPC_aligned:
   case OMPC_copyin:
@@ -127,6 +128,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
   case OMPC_firstprivate:
   case OMPC_lastprivate:
   case OMPC_shared:
+  case OMPC_reduction:
   case OMPC_linear:
   case OMPC_aligned:
   case OMPC_copyin:
