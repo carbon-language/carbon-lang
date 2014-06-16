@@ -1,7 +1,7 @@
-# RUN: yaml2obj -format=elf -o %t1.o %s
-# RUN: yaml2obj -format=elf -o %t2.o %S/Inputs/pic-obj.yaml
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t2.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t1.o %t.so 2>&1 \
+# RUN: yaml2obj -format=elf -o %t-so.o -docnum 1 %s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: yaml2obj -format=elf -o %t-o.o -docnum 2 %s
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so 2>&1 \
 # RUN:   | FileCheck -check-prefix=DIAG %s
 # RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=DATA %s
 
@@ -11,8 +11,38 @@
 # DATA:      Contents of section .data:
 # DATA-NEXT:  402000 40000000 10200000 40000000  @.... ..@...
 
-!ELF
-FileHeader: !FileHeader
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+  - Name:         .data
+    Type:         SHT_PROGBITS
+    Size:         0x0C
+    AddressAlign: 16
+    Flags:        [SHF_WRITE, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name: D1
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x0
+      Size: 4
+    - Name: D2
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x4
+      Size: 4
+
+# o.o
+---
+FileHeader:
   Class: ELFCLASS32
   Data: ELFDATA2LSB
   Type: ET_REL
@@ -67,3 +97,4 @@ Symbols:
       Size: 4
     - Name: D1
     - Name: D2
+...
