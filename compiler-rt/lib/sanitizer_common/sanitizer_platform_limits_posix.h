@@ -678,6 +678,7 @@ namespace __sanitizer {
   extern int ptrace_setsiginfo;
   extern int ptrace_getregset;
   extern int ptrace_setregset;
+  extern int ptrace_geteventmsg;
 #endif
 
 #if (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
