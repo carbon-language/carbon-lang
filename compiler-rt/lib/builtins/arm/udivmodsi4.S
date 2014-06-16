@@ -99,9 +99,16 @@ DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
 
 #define	IMM	#
 
-#define block(shift) \
-	cmp	r0, r1, lsl IMM shift; \
-	addhs	r3, r3, IMM (1 << shift); \
+#if __ARM_ARCH_ISA_THUMB == 2
+#define ITT itt
+#else
+#define ITT @
+#endif
+
+#define block(shift)                                                           \
+	cmp	r0, r1, lsl IMM shift;                                         \
+	ITT hs;                                                                \
+	addhs	r3, r3, IMM (1 << shift);                                      \
 	subhs	r0, r0, r1, lsl IMM shift
 
 	block(31)
