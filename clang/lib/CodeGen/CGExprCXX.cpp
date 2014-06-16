@@ -1913,7 +1913,7 @@ MSDynamicCastBuilder::MSDynamicCastBuilder(CodeGenFunction &CGF,
   SrcTy = IsPtrCast ? SrcTy->castAs<PointerType>()->getPointeeType() : SrcTy;
   SrcDecl = SrcTy->getAsCXXRecordDecl();
   // If we don't need a base adjustment, we don't need a SrcDecl so clear it
-  // here.  Later we use the existance of the SrcDecl to determine the need for
+  // here.  Later we use the existence of the SrcDecl to determine the need for
   // a base adjustment.
   if (CGF.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr())
     SrcDecl = nullptr;

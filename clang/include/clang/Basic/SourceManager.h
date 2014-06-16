@@ -1287,7 +1287,7 @@ public:
   /// an expansion location, not at the spelling location.
   ///
   /// \returns The presumed location of the specified SourceLocation. If the
-  /// presumed location cannot be calculate (e.g., because \p Loc is invalid
+  /// presumed location cannot be calculated (e.g., because \p Loc is invalid
   /// or the file containing \p Loc has changed on disk), returns an invalid
   /// presumed location.
   PresumedLoc getPresumedLoc(SourceLocation Loc,
