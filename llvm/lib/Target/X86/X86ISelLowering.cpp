@@ -1439,6 +1439,11 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::OR,                 MVT::v16i32, Legal);
     setOperationAction(ISD::XOR,                MVT::v16i32, Legal);
 
+    if (Subtarget->hasCDI()) {
+      setOperationAction(ISD::CTLZ,             MVT::v8i64, Legal);
+      setOperationAction(ISD::CTLZ,             MVT::v16i32, Legal);
+    }
+
     // Custom lower several nodes.
     for (int i = MVT::FIRST_VECTOR_VALUETYPE;
              i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {

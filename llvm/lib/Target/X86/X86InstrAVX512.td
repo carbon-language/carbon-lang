@@ -4378,6 +4378,15 @@ def : Pat<(int_x86_avx512_mask_lzcnt_q_512 VR512:$src2, VR512:$src1,
           (VPLZCNTQrrk VR512:$src1,
            (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)), VR512:$src2)>;
 
+def : Pat<(v16i32 (ctlz (memopv16i32 addr:$src))),
+          (VPLZCNTDrm addr:$src)>;
+def : Pat<(v16i32 (ctlz (v16i32 VR512:$src))),
+          (VPLZCNTDrr VR512:$src)>;
+def : Pat<(v8i64 (ctlz (memopv8i64 addr:$src))),
+          (VPLZCNTQrm addr:$src)>;
+def : Pat<(v8i64 (ctlz (v8i64 VR512:$src))),
+          (VPLZCNTQrr VR512:$src)>;
+
 def : Pat<(store (i1 -1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  0), addr:$dst), (MOV8mi addr:$dst, (i8 0))>;
