@@ -800,7 +800,7 @@ public:
   /// \param LParenLoc Location of '('.
   /// \param ColonLoc Location of ':'.
   /// \param EndLoc Ending location of the clause.
-  /// \param N Number of the variables in the clause.
+  /// \param VL The variables in the clause.
   /// \param QualifierLoc The nested-name qualifier with location information
   /// \param NameInfo The full name info for reduction identifier.
   ///
