@@ -25,7 +25,8 @@ DelayedDiagnostic::makeAvailability(Sema::AvailabilityDiagnostic AD,
                                     const NamedDecl *D,
                                     const ObjCInterfaceDecl *UnknownObjCClass,
                                     const ObjCPropertyDecl  *ObjCProperty,
-                                    StringRef Msg) {
+                                    StringRef Msg,
+                                    bool ObjCPropertyAccess) {
   DelayedDiagnostic DD;
   switch (AD) {
     case Sema::AD_Deprecation:
@@ -48,6 +49,7 @@ DelayedDiagnostic::makeAvailability(Sema::AvailabilityDiagnostic AD,
 
   DD.DeprecationData.Message = MessageData;
   DD.DeprecationData.MessageLen = Msg.size();
+  DD.DeprecationData.ObjCPropertyAccess = ObjCPropertyAccess;
   return DD;
 }
 

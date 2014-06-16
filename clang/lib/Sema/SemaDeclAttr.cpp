@@ -4850,7 +4850,8 @@ DoEmitAvailabilityWarning(Sema &S,
                           StringRef Message,
                           SourceLocation Loc,
                           const ObjCInterfaceDecl *UnknownObjCClass,
-                          const ObjCPropertyDecl *ObjCProperty) {
+                          const ObjCPropertyDecl *ObjCProperty,
+                          bool ObjCPropertyAccess) {
 
   // Diagnostics for deprecated or unavailable.
   unsigned diag, diag_message, diag_fwdclass_message;
@@ -4866,7 +4867,8 @@ DoEmitAvailabilityWarning(Sema &S,
     case DelayedDiagnostic::Deprecation:
       if (isDeclDeprecated(Ctx))
         return;
-      diag = diag::warn_deprecated;
+      diag = !ObjCPropertyAccess ? diag::warn_deprecated
+                                 : diag::warn_property_method_deprecated;
       diag_message = diag::warn_deprecated_message;
       diag_fwdclass_message = diag::warn_deprecated_fwdclass_message;
       property_note_select = /* deprecated */ 0;
@@ -4876,7 +4878,8 @@ DoEmitAvailabilityWarning(Sema &S,
     case DelayedDiagnostic::Unavailable:
       if (isDeclUnavailable(Ctx))
         return;
-      diag = diag::err_unavailable;
+      diag = !ObjCPropertyAccess ? diag::err_unavailable
+                                 : diag::err_property_method_unavailable;
       diag_message = diag::err_unavailable_message;
       diag_fwdclass_message = diag::warn_unavailable_fwdclass_message;
       property_note_select = /* unavailable */ 1;
@@ -4917,20 +4920,22 @@ void Sema::HandleDelayedAvailabilityCheck(DelayedDiagnostic &DD,
                             DD.getDeprecationMessage(),
                             DD.Loc,
                             DD.getUnknownObjCClass(),
-                            DD.getObjCProperty());
+                            DD.getObjCProperty(), false);
 }
 
 void Sema::EmitAvailabilityWarning(AvailabilityDiagnostic AD,
                                    NamedDecl *D, StringRef Message,
                                    SourceLocation Loc,
                                    const ObjCInterfaceDecl *UnknownObjCClass,
-                                   const ObjCPropertyDecl  *ObjCProperty) {
+                                   const ObjCPropertyDecl  *ObjCProperty,
+                                   bool ObjCPropertyAccess) {
   // Delay if we're currently parsing a declaration.
   if (DelayedDiagnostics.shouldDelayDiagnostics()) {
     DelayedDiagnostics.add(DelayedDiagnostic::makeAvailability(AD, Loc, D,
                                                                UnknownObjCClass,
                                                                ObjCProperty,
-                                                               Message));
+                                                               Message,
+                                                               ObjCPropertyAccess));
     return;
   }
 
@@ -4946,5 +4951,5 @@ void Sema::EmitAvailabilityWarning(AvailabilityDiagnostic AD,
   }
 
   DoEmitAvailabilityWarning(*this, K, Ctx, D, Message, Loc,
-                            UnknownObjCClass, ObjCProperty);
+                            UnknownObjCClass, ObjCProperty, ObjCPropertyAccess);
 }

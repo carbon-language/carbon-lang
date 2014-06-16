@@ -696,7 +696,8 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
     assert(InstanceReceiver);
     receiverType = InstanceReceiver->getType();
   }
-
+  if (!Getter->isImplicit())
+    S.DiagnoseUseOfDecl(Getter, GenericLoc, nullptr, true);
   // Build a message-send.
   ExprResult msg;
   if ((Getter->isInstanceMethod() && !RefExpr->isClassReceiver()) ||
@@ -771,6 +772,8 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
 
   // Build a message-send.
   ExprResult msg;
+  if (!Setter->isImplicit())
+    S.DiagnoseUseOfDecl(Setter, GenericLoc, nullptr, true);
   if ((Setter->isInstanceMethod() && !RefExpr->isClassReceiver()) ||
       RefExpr->isObjectReceiver()) {
     msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,

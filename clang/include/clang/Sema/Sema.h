@@ -3211,7 +3211,8 @@ public:
                                NamedDecl *D, StringRef Message,
                                SourceLocation Loc,
                                const ObjCInterfaceDecl *UnknownObjCClass,
-                               const ObjCPropertyDecl  *ObjCProperty);
+                               const ObjCPropertyDecl  *ObjCProperty,
+                               bool ObjCPropertyAccess);
 
   void HandleDelayedAvailabilityCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
@@ -3223,7 +3224,8 @@ public:
 
   bool CanUseDecl(NamedDecl *D);
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
-                         const ObjCInterfaceDecl *UnknownObjCClass=nullptr);
+                         const ObjCInterfaceDecl *UnknownObjCClass=nullptr,
+                         bool ObjCPropertyAccess=false);
   void NoteDeletedFunction(FunctionDecl *FD);
   std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,

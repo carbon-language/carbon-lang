@@ -127,7 +127,8 @@ public:
                                             const NamedDecl *D,
                                             const ObjCInterfaceDecl *UnknownObjCClass,
                                             const ObjCPropertyDecl  *ObjCProperty,
-                                            StringRef Msg);
+                                            StringRef Msg,
+                                            bool ObjCPropertyAccess);
 
 
   static DelayedDiagnostic makeAccess(SourceLocation Loc,
@@ -202,6 +203,10 @@ public:
   const ObjCPropertyDecl *getObjCProperty() const {
     return DeprecationData.ObjCProperty;
   }
+    
+  bool getObjCPropertyAccess() const {
+    return DeprecationData.ObjCPropertyAccess;
+  }
   
 private:
 
@@ -211,6 +216,7 @@ private:
     const ObjCPropertyDecl  *ObjCProperty;
     const char *Message;
     size_t MessageLen;
+    bool ObjCPropertyAccess;
   };
 
   struct FTD {

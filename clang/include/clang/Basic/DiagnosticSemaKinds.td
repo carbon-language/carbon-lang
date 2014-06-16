@@ -3680,6 +3680,9 @@ def note_not_found_by_two_phase_lookup : Note<"%0 should be declared prior to th
 def err_undeclared_use : Error<"use of undeclared %0">;
 def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DeprecatedDeclarations>;
+def warn_property_method_deprecated :
+    Warning<"property access is using %0 method which is deprecated">,
+    InGroup<DeprecatedDeclarations>;
 def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
     InGroup<DeprecatedDeclarations>;
 def warn_deprecated_fwdclass_message : Warning<
@@ -3689,6 +3692,8 @@ def warn_deprecated_def : Warning<
     "Implementing deprecated %select{method|class|category}0">,
     InGroup<DeprecatedImplementations>, DefaultIgnore;
 def err_unavailable : Error<"%0 is unavailable">;
+def err_property_method_unavailable :
+    Error<"property access is using %0 method which is unavailable">;
 def err_unavailable_message : Error<"%0 is unavailable: %1">;
 def warn_unavailable_fwdclass_message : Warning<
     "%0 may be unavailable because the receiver type is unknown">,
