@@ -47,6 +47,7 @@ TEST(Initialize, MultipleThreads) {
   void *p1 = test1::allocate_stack(a1);
   void *p2 = test1::allocate_stack(a2);
 
+  llvm_start_multithreaded();
   pthread_t t1, t2;
   pthread_create(&t1, &a1, test1::helper, nullptr);
   pthread_create(&t2, &a2, test1::helper, nullptr);
@@ -54,6 +55,7 @@ TEST(Initialize, MultipleThreads) {
   pthread_join(t2, nullptr);
   free(p1);
   free(p2);
+  llvm_stop_multithreaded();
 }
 #endif
 

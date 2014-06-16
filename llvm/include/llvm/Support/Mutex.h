@@ -15,13 +15,11 @@
 #define LLVM_SUPPORT_MUTEX_H
 
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Threading.h"
 #include <cassert>
 
 namespace llvm
 {
-  // Forward declare.
-  bool llvm_is_multithreaded();
-
   namespace sys
   {
     /// @brief Platform agnostic Mutex class.

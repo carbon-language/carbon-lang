@@ -14,36 +14,17 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Atomic.h"
-#include "llvm/Support/MutexGuard.h"
 #include <cassert>
-#include <mutex>
 using namespace llvm;
 
 static const ManagedStaticBase *StaticList = nullptr;
-
-// ManagedStatics can get created during execution of static constructors.  As a
-// result, we cannot use a global static std::mutex object for the lock since it
-// may not have been constructed.  Instead, we do a call-once initialization of
-// a pointer to a mutex.  This also means that we must not "initialize" the
-// mutex with nullptr, otherwise it might get reset to nullptr after being
-// initialized by std::call_once.
-static std::once_flag MutexInitializationFlag;
-static std::recursive_mutex *ManagedStaticMutex;
-
-namespace {
-  void InitializeManagedStaticMutex() {
-    std::call_once(MutexInitializationFlag,
-        []() { ManagedStaticMutex = new std::recursive_mutex(); });
-  }
-}
 
 void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
   assert(Creator);
   if (llvm_is_multithreaded()) {
-    InitializeManagedStaticMutex();
+    llvm_acquire_global_lock();
 
-    std::lock_guard<std::recursive_mutex> Lock(*ManagedStaticMutex);
     if (!Ptr) {
       void* tmp = Creator();
 
@@ -62,6 +43,8 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
       Next = StaticList;
       StaticList = this;
     }
+
+    llvm_release_global_lock();
   } else {
     assert(!Ptr && !DeleterFn && !Next &&
            "Partially initialized ManagedStatic!?");
@@ -92,9 +75,8 @@ void ManagedStaticBase::destroy() const {
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm::llvm_shutdown() {
-  InitializeManagedStaticMutex();
-  std::lock_guard<std::recursive_mutex> Lock(*ManagedStaticMutex);
-
   while (StaticList)
     StaticList->destroy();
+
+  if (llvm_is_multithreaded()) llvm_stop_multithreaded();
 }
