@@ -1,3 +1,7 @@
+#define INFINITY __builtin_inff()
+#define NAN __builtin_nanf("")
+#define HUGE_VALF __builtin_huge_valf()
+
 #define FLT_DIG         6
 #define FLT_MANT_DIG    24
 #define FLT_MAX_10_EXP  +38
@@ -24,6 +28,8 @@
 #define M_SQRT1_2_F     0x1.6a09e6p-1f
 
 #ifdef cl_khr_fp64
+
+#define HUGE_VAL __builtin_huge_val()
 
 #define DBL_DIG         15
 #define DBL_MANT_DIG    53
