@@ -59,3 +59,8 @@
 // CHECK-MIPS64-PIC: as{{.*}}" "-mabi" "64" "-EB" "-KPIC"
 // CHECK-MIPS64EL: as{{.*}}" "-mabi" "64" "-EL"
 // CHECK-MIPS64EL-PIC: as{{.*}}" "-mabi" "64" "-EL" "-KPIC"
+
+// Check that the integrated assembler is enabled for PowerPC
+// RUN: %clang -target powerpc-unknown-openbsd -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-POWERPC-AS %s
+// CHECK-POWERPC-AS-NOT: "-no-integrated-as"

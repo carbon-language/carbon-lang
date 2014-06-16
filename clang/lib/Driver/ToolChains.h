@@ -537,6 +537,12 @@ public:
     return 2;
   }
 
+  virtual bool IsIntegratedAssemblerDefault() const {
+    if (getTriple().getArch() == llvm::Triple::ppc)
+      return true;
+    return Generic_ELF::IsIntegratedAssemblerDefault();
+  }
+
 protected:
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
