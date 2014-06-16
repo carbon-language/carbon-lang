@@ -396,6 +396,8 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 static unsigned
 findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
                                           const UTF8 *sourceEnd) {
+  UTF8 b1, b2, b3;
+
   assert(!isLegalUTF8Sequence(source, sourceEnd));
 
   /*
@@ -415,7 +417,7 @@ findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
    * Byte Sequences.
    */
 
-  UTF8 b1 = *source;
+  b1 = *source;
   ++source;
   if (b1 >= 0xC2 && b1 <= 0xDF) {
     /*
@@ -428,7 +430,7 @@ findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
   if (source == sourceEnd)
     return 1;
 
-  UTF8 b2 = *source;
+  b2 = *source;
   ++source;
 
   if (b1 == 0xE0) {
@@ -448,7 +450,7 @@ findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
       if (source == sourceEnd)
         return 2;
 
-      UTF8 b3 = *source;
+      b3 = *source;
       return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
     }
     return 1;
@@ -458,7 +460,7 @@ findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
       if (source == sourceEnd)
         return 2;
 
-      UTF8 b3 = *source;
+      b3 = *source;
       return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
     }
     return 1;
@@ -468,7 +470,7 @@ findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
       if (source == sourceEnd)
         return 2;
 
-      UTF8 b3 = *source;
+      b3 = *source;
       return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
     }
     return 1;
