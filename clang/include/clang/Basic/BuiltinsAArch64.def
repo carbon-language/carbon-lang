@@ -21,6 +21,10 @@ BUILTIN(__builtin_arm_ldrex, "v.", "t")
 BUILTIN(__builtin_arm_strex, "i.", "t")
 BUILTIN(__builtin_arm_clrex, "v", "")
 
+// Bit manipulation
+BUILTIN(__builtin_arm_rbit, "UiUi", "nc")
+BUILTIN(__builtin_arm_rbit64, "LUiLUi", "nc")
+
 // CRC32
 BUILTIN(__builtin_arm_crc32b, "UiUiUc", "nc")
 BUILTIN(__builtin_arm_crc32cb, "UiUiUc", "nc")
