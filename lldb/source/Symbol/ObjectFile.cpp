@@ -605,7 +605,10 @@ ObjectFile::GetSectionList()
     {
         ModuleSP module_sp(GetModule());
         if (module_sp)
+        {
+            lldb_private::Mutex::Locker locker(module_sp->GetMutex());
             CreateSections(*module_sp->GetUnifiedSectionList());
+        }
     }
     return m_sections_ap.get();
 }
