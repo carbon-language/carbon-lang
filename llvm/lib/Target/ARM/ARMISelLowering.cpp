@@ -8464,7 +8464,8 @@ static SDValue PerformSTORECombine(SDNode *N,
     SDLoc DL(St);
     SDValue WideVec = DAG.getNode(ISD::BITCAST, DL, WideVecVT, StVal);
     SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
-    for (unsigned i = 0; i < NumElems; ++i) ShuffleVec[i] = i * SizeRatio;
+    for (unsigned i = 0; i < NumElems; ++i)
+      ShuffleVec[i] = TLI.isBigEndian() ? (i+1) * SizeRatio - 1 : i * SizeRatio;
 
     // Can't shuffle using an illegal type.
     if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
