@@ -84,7 +84,7 @@ static TimerGroup *getDefaultTimerGroup() {
   sys::MemoryFence();
   if (tmp) return tmp;
   
-  llvm::MutexGuard Lock(llvm::llvm_get_global_lock());
+  sys::SmartScopedLock<true> Lock(*TimerLock);
   tmp = DefaultTimerGroup;
   if (!tmp) {
     tmp = new TimerGroup("Miscellaneous Ungrouped Timers");

@@ -20,11 +20,6 @@
 
 using namespace llvm;
 
-sys::Mutex& llvm::llvm_get_global_lock() {
-  static sys::Mutex global_lock;
-  return global_lock;
-}
-
 bool llvm::llvm_is_multithreaded() {
 #if LLVM_ENABLE_THREADS != 0
   return true;

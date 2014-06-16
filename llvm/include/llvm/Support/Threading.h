@@ -18,9 +18,6 @@
 #include "llvm/Support/Mutex.h"
 
 namespace llvm {
-  /// llvm_get_global_lock - returns the llvm global lock object.
-  sys::Mutex &llvm_get_global_lock();
-
   /// llvm_is_multithreaded - returns true if LLVM is compiled with support
   /// for multiple threads, and false otherwise.
   bool llvm_is_multithreaded();
