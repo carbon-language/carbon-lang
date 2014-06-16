@@ -1,5 +1,5 @@
-; RUN: llc -march=mipsel --disable-machine-licm < %s | FileCheck %s -check-prefix=CHECK-EL
-; RUN: llc -march=mips   --disable-machine-licm < %s | FileCheck %s -check-prefix=CHECK-EB
+; RUN: llc -march=mipsel --disable-machine-licm < %s | FileCheck %s -check-prefix=ALL -check-prefix=CHECK-EL
+; RUN: llc -march=mips   --disable-machine-licm < %s | FileCheck %s -check-prefix=ALL -check-prefix=CHECK-EB
 
 @x = common global i32 0, align 4
 
@@ -8,21 +8,14 @@ entry:
   %0 = atomicrmw add i32* @x, i32 %incr monotonic
   ret i32 %0
 
-; CHECK-EL-LABEL:   AtomicLoadAdd32:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   addu    $[[R2:[0-9]+]], $[[R1]], $4
-; CHECK-EL:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
+; ALL-LABEL: AtomicLoadAdd32:
 
-; CHECK-EB-LABEL:   AtomicLoadAdd32:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   addu    $[[R2:[0-9]+]], $[[R1]], $4
-; CHECK-EB:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R1:[0-9]+]], 0($[[R0]])
+; ALL:           addu    $[[R2:[0-9]+]], $[[R1]], $4
+; ALL:           sc      $[[R2]], 0($[[R0]])
+; ALL:           beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicLoadNand32(i32 %incr) nounwind {
@@ -30,23 +23,15 @@ entry:
   %0 = atomicrmw nand i32* @x, i32 %incr monotonic
   ret i32 %0
 
-; CHECK-EL-LABEL:   AtomicLoadNand32:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   and     $[[R3:[0-9]+]], $[[R1]], $4
-; CHECK-EL:   nor     $[[R2:[0-9]+]], $zero, $[[R3]]
-; CHECK-EL:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
+; ALL-LABEL: AtomicLoadNand32:
 
-; CHECK-EB-LABEL:   AtomicLoadNand32:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   and     $[[R3:[0-9]+]], $[[R1]], $4
-; CHECK-EB:   nor     $[[R2:[0-9]+]], $zero, $[[R3]]
-; CHECK-EB:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R1:[0-9]+]], 0($[[R0]])
+; ALL:           and     $[[R3:[0-9]+]], $[[R1]], $4
+; ALL:           nor     $[[R2:[0-9]+]], $zero, $[[R3]]
+; ALL:           sc      $[[R2]], 0($[[R0]])
+; ALL:           beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicSwap32(i32 %newval) nounwind {
@@ -57,19 +42,13 @@ entry:
   %0 = atomicrmw xchg i32* @x, i32 %tmp monotonic
   ret i32 %0
 
-; CHECK-EL-LABEL:   AtomicSwap32:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      ${{[0-9]+}}, 0($[[R0]])
-; CHECK-EL:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
+; ALL-LABEL: AtomicSwap32:
 
-; CHECK-EB-LABEL:   AtomicSwap32:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      ${{[0-9]+}}, 0($[[R0]])
-; CHECK-EB:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      ${{[0-9]+}}, 0($[[R0]])
+; ALL:           sc      $[[R2:[0-9]+]], 0($[[R0]])
+; ALL:           beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicCmpSwap32(i32 %oldval, i32 %newval) nounwind {
@@ -81,23 +60,15 @@ entry:
   %1 = extractvalue { i32, i1 } %0, 0
   ret i32 %1
 
-; CHECK-EL-LABEL:   AtomicCmpSwap32:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $2, 0($[[R0]])
-; CHECK-EL:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
-; CHECK-EL:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
-; CHECK-EL:   $[[BB1]]:
+; ALL-LABEL: AtomicCmpSwap32:
 
-; CHECK-EB-LABEL:   AtomicCmpSwap32:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $2, 0($[[R0]])
-; CHECK-EB:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
-; CHECK-EB:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
-; CHECK-EB:   $[[BB1]]:
+; ALL:           lw      $[[R0:[0-9]+]], %got(x)
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $2, 0($[[R0]])
+; ALL:           bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
+; ALL:           sc      $[[R2:[0-9]+]], 0($[[R0]])
+; ALL:           beqz    $[[R2]], $[[BB0]]
+; ALL:       $[[BB1]]:
 }
 
 
@@ -109,56 +80,33 @@ entry:
   %0 = atomicrmw add i8* @y, i8 %incr monotonic
   ret i8 %0
 
-; CHECK-EL-LABEL:   AtomicLoadAdd8:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EL:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EL:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EL:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EL:   sll     $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EL:   ori     $[[R5:[0-9]+]], $zero, 255
-; CHECK-EL:   sllv    $[[R6:[0-9]+]], $[[R5]], $[[R4]]
-; CHECK-EL:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK-EL:   sllv    $[[R9:[0-9]+]], $4, $[[R4]]
+; ALL-LABEL: AtomicLoadAdd8:
 
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EL:   addu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EL:   and     $[[R12:[0-9]+]], $[[R11]], $[[R6]]
-; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           sllv    $[[R9:[0-9]+]], $4, $[[R5]]
 
-; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
-; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
-; CHECK-EL:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EL:   sra     $2, $[[R17]], 24
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R10:[0-9]+]], 0($[[R2]])
+; ALL:           addu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
+; ALL:           and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
+; ALL:           and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
+; ALL:           or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
+; ALL:           sc      $[[R14]], 0($[[R2]])
+; ALL:           beqz    $[[R14]], $[[BB0]]
 
-; CHECK-EB-LABEL:   AtomicLoadAdd8:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EB:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EB:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EB:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EB:   xori    $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EB:   sll     $[[R5:[0-9]+]], $[[R4]], 3
-; CHECK-EB:   ori     $[[R6:[0-9]+]], $zero, 255
-; CHECK-EB:   sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
-; CHECK-EB:   nor     $[[R8:[0-9]+]], $zero, $[[R7]]
-; CHECK-EB:   sllv    $[[R9:[0-9]+]], $4, $[[R5]]
-
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EB:   addu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EB:   and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
-; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
-; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
-
-; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; CHECK-EB:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EB:   sra     $2, $[[R17]], 24
+; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
+; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
+; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
+; ALL:           sra     $2, $[[R17]], 24
 }
 
 define signext i8 @AtomicLoadSub8(i8 signext %incr) nounwind {
@@ -166,56 +114,33 @@ entry:
   %0 = atomicrmw sub i8* @y, i8 %incr monotonic
   ret i8 %0
 
-; CHECK-EL-LABEL:   AtomicLoadSub8:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EL:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EL:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EL:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EL:   sll     $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EL:   ori     $[[R5:[0-9]+]], $zero, 255
-; CHECK-EL:   sllv    $[[R6:[0-9]+]], $[[R5]], $[[R4]]
-; CHECK-EL:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK-EL:   sllv     $[[R9:[0-9]+]], $4, $[[R4]]
+; ALL-LABEL: AtomicLoadSub8:
 
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EL:   subu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EL:   and     $[[R12:[0-9]+]], $[[R11]], $[[R6]]
-; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
-
-; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
-; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
-; CHECK-EL:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EL:   sra     $2, $[[R17]], 24
-
-; CHECK-EB-LABEL:   AtomicLoadSub8:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EB:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EB:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EB:   andi    $[[R3:[0-9]+]], $[[R0]], 3
+; ALL:        lw      $[[R0:[0-9]+]], %got(y)
+; ALL:        addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:        and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:        andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EL:   sll     $[[R5:[0-9]+]], $[[R3]], 3
 ; CHECK-EB:   xori    $[[R4:[0-9]+]], $[[R3]], 3
 ; CHECK-EB:   sll     $[[R5:[0-9]+]], $[[R4]], 3
-; CHECK-EB:   ori     $[[R6:[0-9]+]], $zero, 255
-; CHECK-EB:   sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
-; CHECK-EB:   nor     $[[R8:[0-9]+]], $zero, $[[R7]]
-; CHECK-EB:   sllv    $[[R9:[0-9]+]], $4, $[[R5]]
+; ALL:        ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:        sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:        nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:        sllv    $[[R9:[0-9]+]], $4, $[[R5]]
 
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EB:   subu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EB:   and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
-; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
-; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
+; ALL:    $[[BB0:[A-Z_0-9]+]]:
+; ALL:        ll      $[[R10:[0-9]+]], 0($[[R2]])
+; ALL:        subu    $[[R11:[0-9]+]], $[[R10]], $[[R9]]
+; ALL:        and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
+; ALL:        and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
+; ALL:        or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
+; ALL:        sc      $[[R14]], 0($[[R2]])
+; ALL:        beqz    $[[R14]], $[[BB0]]
 
-; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; CHECK-EB:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EB:   sra     $2, $[[R17]], 24
+; ALL:        and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
+; ALL:        srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
+; ALL:        sll     $[[R17:[0-9]+]], $[[R16]], 24
+; ALL:        sra     $2, $[[R17]], 24
 }
 
 define signext i8 @AtomicLoadNand8(i8 signext %incr) nounwind {
@@ -223,58 +148,34 @@ entry:
   %0 = atomicrmw nand i8* @y, i8 %incr monotonic
   ret i8 %0
 
-; CHECK-EL-LABEL:   AtomicLoadNand8:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EL:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EL:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EL:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EL:   sll     $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EL:   ori     $[[R5:[0-9]+]], $zero, 255
-; CHECK-EL:   sllv    $[[R6:[0-9]+]], $[[R5]], $[[R4]]
-; CHECK-EL:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK-EL:   sllv    $[[R9:[0-9]+]], $4, $[[R4]]
+; ALL-LABEL: AtomicLoadNand8:
 
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EL:   and     $[[R18:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EL:   nor     $[[R11:[0-9]+]], $zero, $[[R18]]
-; CHECK-EL:   and     $[[R12:[0-9]+]], $[[R11]], $[[R6]]
-; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           sllv    $[[R9:[0-9]+]], $4, $[[R5]]
 
-; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
-; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
-; CHECK-EL:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EL:   sra     $2, $[[R17]], 24
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R10:[0-9]+]], 0($[[R2]])
+; ALL:           and     $[[R18:[0-9]+]], $[[R10]], $[[R9]]
+; ALL:           nor     $[[R11:[0-9]+]], $zero, $[[R18]]
+; ALL:           and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
+; ALL:           and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
+; ALL:           or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
+; ALL:           sc      $[[R14]], 0($[[R2]])
+; ALL:           beqz    $[[R14]], $[[BB0]]
 
-; CHECK-EB-LABEL:   AtomicLoadNand8:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EB:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EB:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EB:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EB:   xori    $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EB:   sll     $[[R5:[0-9]+]], $[[R4]], 3
-; CHECK-EB:   ori     $[[R6:[0-9]+]], $zero, 255
-; CHECK-EB:   sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
-; CHECK-EB:   nor     $[[R8:[0-9]+]], $zero, $[[R7]]
-; CHECK-EB:   sllv    $[[R9:[0-9]+]], $4, $[[R5]]
-
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EB:   and     $[[R18:[0-9]+]], $[[R10]], $[[R9]]
-; CHECK-EB:   nor     $[[R11:[0-9]+]], $zero, $[[R18]]
-; CHECK-EB:   and     $[[R12:[0-9]+]], $[[R11]], $[[R7]]
-; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
-; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
-; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
-
-; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; CHECK-EB:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EB:   sra     $2, $[[R17]], 24
+; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
+; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
+; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
+; ALL:           sra     $2, $[[R17]], 24
 }
 
 define signext i8 @AtomicSwap8(i8 signext %newval) nounwind {
@@ -282,54 +183,32 @@ entry:
   %0 = atomicrmw xchg i8* @y, i8 %newval monotonic
   ret i8 %0
 
-; CHECK-EL-LABEL:   AtomicSwap8:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EL:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EL:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EL:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EL:   sll     $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EL:   ori     $[[R5:[0-9]+]], $zero, 255
-; CHECK-EL:   sllv    $[[R6:[0-9]+]], $[[R5]], $[[R4]]
-; CHECK-EL:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK-EL:   sllv    $[[R9:[0-9]+]], $4, $[[R4]]
+; ALL-LABEL: AtomicSwap8:
 
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EL:   and     $[[R18:[0-9]+]], $[[R9]], $[[R6]]
-; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
-; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           sllv    $[[R9:[0-9]+]], $4, $[[R5]]
 
-; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
-; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
-; CHECK-EL:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EL:   sra     $2, $[[R17]], 24
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R10:[0-9]+]], 0($[[R2]])
+; ALL:           and     $[[R18:[0-9]+]], $[[R9]], $[[R7]]
+; ALL:           and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
+; ALL:           or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
+; ALL:           sc      $[[R14]], 0($[[R2]])
+; ALL:           beqz    $[[R14]], $[[BB0]]
 
-; CHECK-EB-LABEL:   AtomicSwap8:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EB:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EB:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EB:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EB:   xori    $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EB:   sll     $[[R5:[0-9]+]], $[[R4]], 3
-; CHECK-EB:   ori     $[[R6:[0-9]+]], $zero, 255
-; CHECK-EB:   sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
-; CHECK-EB:   nor     $[[R8:[0-9]+]], $zero, $[[R7]]
-; CHECK-EB:   sllv    $[[R9:[0-9]+]], $4, $[[R5]]
-
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK-EB:   and     $[[R18:[0-9]+]], $[[R9]], $[[R7]]
-; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
-; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
-; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
-
-; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
-; CHECK-EB:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EB:   sra     $2, $[[R17]], 24
+; ALL:           and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
+; ALL:           srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
+; ALL:           sll     $[[R17:[0-9]+]], $[[R16]], 24
+; ALL:           sra     $2, $[[R17]], 24
 }
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
@@ -338,64 +217,37 @@ entry:
   %0 = extractvalue { i8, i1 } %pair0, 0
   ret i8 %0
 
-; CHECK-EL-LABEL:   AtomicCmpSwap8:
-; CHECK-EL:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EL:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EL:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EL:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EL:   sll     $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EL:   ori     $[[R5:[0-9]+]], $zero, 255
-; CHECK-EL:   sllv    $[[R6:[0-9]+]], $[[R5]], $[[R4]]
-; CHECK-EL:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK-EL:   andi    $[[R8:[0-9]+]], $4, 255
-; CHECK-EL:   sllv    $[[R9:[0-9]+]], $[[R8]], $[[R4]]
-; CHECK-EL:   andi    $[[R10:[0-9]+]], $5, 255
-; CHECK-EL:   sllv    $[[R11:[0-9]+]], $[[R10]], $[[R4]]
+; ALL-LABEL: AtomicCmpSwap8:
 
-; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EL:   ll      $[[R12:[0-9]+]], 0($[[R2]])
-; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R12]], $[[R6]]
-; CHECK-EL:   bne     $[[R13]], $[[R9]], $[[BB1:[A-Z_0-9]+]]
+; ALL:           lw      $[[R0:[0-9]+]], %got(y)
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $[[R0]], 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           andi    $[[R9:[0-9]+]], $4, 255
+; ALL:           sllv    $[[R10:[0-9]+]], $[[R9]], $[[R5]]
+; ALL:           andi    $[[R11:[0-9]+]], $5, 255
+; ALL:           sllv    $[[R12:[0-9]+]], $[[R11]], $[[R5]]
 
-; CHECK-EL:   and     $[[R14:[0-9]+]], $[[R12]], $[[R7]]
-; CHECK-EL:   or      $[[R15:[0-9]+]], $[[R14]], $[[R11]]
-; CHECK-EL:   sc      $[[R15]], 0($[[R2]])
-; CHECK-EL:   beqz    $[[R15]], $[[BB0]]
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R13:[0-9]+]], 0($[[R2]])
+; ALL:           and     $[[R14:[0-9]+]], $[[R13]], $[[R7]]
+; ALL:           bne     $[[R14]], $[[R10]], $[[BB1:[A-Z_0-9]+]]
 
-; CHECK-EL:   $[[BB1]]:
-; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R13]], $[[R4]]
-; CHECK-EL:   sll     $[[R17:[0-9]+]], $[[R16]], 24
-; CHECK-EL:   sra     $2, $[[R17]], 24
+; ALL:           and     $[[R15:[0-9]+]], $[[R13]], $[[R8]]
+; ALL:           or      $[[R16:[0-9]+]], $[[R15]], $[[R12]]
+; ALL:           sc      $[[R16]], 0($[[R2]])
+; ALL:           beqz    $[[R16]], $[[BB0]]
 
-; CHECK-EB-LABEL:   AtomicCmpSwap8:
-; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(y)
-; CHECK-EB:   addiu   $[[R1:[0-9]+]], $zero, -4
-; CHECK-EB:   and     $[[R2:[0-9]+]], $[[R0]], $[[R1]]
-; CHECK-EB:   andi    $[[R3:[0-9]+]], $[[R0]], 3
-; CHECK-EB:   xori    $[[R4:[0-9]+]], $[[R3]], 3
-; CHECK-EB:   sll     $[[R5:[0-9]+]], $[[R4]], 3
-; CHECK-EB:   ori     $[[R6:[0-9]+]], $zero, 255
-; CHECK-EB:   sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
-; CHECK-EB:   nor     $[[R8:[0-9]+]], $zero, $[[R7]]
-; CHECK-EB:   andi    $[[R9:[0-9]+]], $4, 255
-; CHECK-EB:   sllv    $[[R10:[0-9]+]], $[[R9]], $[[R5]]
-; CHECK-EB:   andi    $[[R11:[0-9]+]], $5, 255
-; CHECK-EB:   sllv    $[[R12:[0-9]+]], $[[R11]], $[[R5]]
-
-; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK-EB:   ll      $[[R13:[0-9]+]], 0($[[R2]])
-; CHECK-EB:   and     $[[R14:[0-9]+]], $[[R13]], $[[R7]]
-; CHECK-EB:   bne     $[[R14]], $[[R10]], $[[BB1:[A-Z_0-9]+]]
-
-; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R13]], $[[R8]]
-; CHECK-EB:   or      $[[R16:[0-9]+]], $[[R15]], $[[R12]]
-; CHECK-EB:   sc      $[[R16]], 0($[[R2]])
-; CHECK-EB:   beqz    $[[R16]], $[[BB0]]
-
-; CHECK-EB:   $[[BB1]]:
-; CHECK-EB:   srlv    $[[R17:[0-9]+]], $[[R14]], $[[R5]]
-; CHECK-EB:   sll     $[[R18:[0-9]+]], $[[R17]], 24
-; CHECK-EB:   sra     $2, $[[R18]], 24
+; ALL:       $[[BB1]]:
+; ALL:           srlv    $[[R17:[0-9]+]], $[[R14]], $[[R5]]
+; ALL:           sll     $[[R18:[0-9]+]], $[[R17]], 24
+; ALL:           sra     $2, $[[R18]], 24
 }
 
 @countsint = common global i32 0, align 4
@@ -405,19 +257,13 @@ entry:
   %0 = atomicrmw add i32* @countsint, i32 %v seq_cst
   ret i32 %0 
 
-; CHECK-EL-LABEL:   CheckSync:
-; CHECK-EL:   sync 0
-; CHECK-EL:   ll
-; CHECK-EL:   sc
-; CHECK-EL:   beq
-; CHECK-EL:   sync 0
+; ALL-LABEL: CheckSync:
 
-; CHECK-EB-LABEL:   CheckSync:
-; CHECK-EB:   sync 0
-; CHECK-EB:   ll
-; CHECK-EB:   sc
-; CHECK-EB:   beq
-; CHECK-EB:   sync 0
+; ALL:           sync 0
+; ALL:           ll
+; ALL:           sc
+; ALL:           beq
+; ALL:           sync 0
 }
 
 ; make sure that this assertion in
