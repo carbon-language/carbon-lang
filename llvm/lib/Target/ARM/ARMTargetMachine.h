@@ -53,7 +53,9 @@ public:
   const InstrItineraryData *getInstrItineraryData() const override {
     return &getSubtargetImpl()->getInstrItineraryData();
   }
-
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
 
@@ -93,9 +95,6 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
     return &FrameLowering;
   }
   const ARMInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
 };
 
 /// ARMLETargetMachine - ARM little endian target machine.
@@ -159,9 +158,6 @@ public:
   /// returns either Thumb1FrameLowering or ARMFrameLowering
   const ARMFrameLowering *getFrameLowering() const override {
     return FrameLowering.get();
-  }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
   }
 };
 
