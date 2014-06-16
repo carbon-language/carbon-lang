@@ -7007,7 +7007,7 @@ static SDValue tryCombineShiftImm(unsigned IID, SDNode *N, SelectionDAG &DAG) {
   if (IsRightShift && ShiftAmount <= -1 && ShiftAmount >= -(int)ElemBits)
     return DAG.getNode(Opcode, SDLoc(N), N->getValueType(0), N->getOperand(1),
                        DAG.getConstant(-ShiftAmount, MVT::i32));
-  else if (!IsRightShift && ShiftAmount >= 0 && ShiftAmount <= ElemBits)
+  else if (!IsRightShift && ShiftAmount >= 0 && ShiftAmount < ElemBits)
     return DAG.getNode(Opcode, SDLoc(N), N->getValueType(0), N->getOperand(1),
                        DAG.getConstant(ShiftAmount, MVT::i32));
 
