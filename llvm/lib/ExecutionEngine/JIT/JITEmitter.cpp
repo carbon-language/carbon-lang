@@ -1236,7 +1236,7 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   return JE->getJITResolver().getLazyFunctionStub(F);
 }
 
-void JIT::updateFunctionStub(Function *F) {
+void JIT::updateFunctionStubUnlocked(Function *F) {
   // Get the empty stub we generated earlier.
   JITEmitter *JE = static_cast<JITEmitter*>(getCodeEmitter());
   void *Stub = JE->getJITResolver().getLazyFunctionStub(F);
