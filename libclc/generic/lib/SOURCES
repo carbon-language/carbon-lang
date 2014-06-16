@@ -32,6 +32,7 @@ math/fmax.cl
 math/fmin.cl
 math/hypot.cl
 math/mad.cl
+math/mix.cl
 math/clc_nextafter.cl
 math/nextafter.cl
 math/sincos.cl

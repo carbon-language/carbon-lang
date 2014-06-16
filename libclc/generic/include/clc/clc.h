@@ -45,6 +45,7 @@
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
+#include <clc/math/mix.h>
 #include <clc/math/nextafter.h>
 #include <clc/math/pow.h>
 #include <clc/math/rint.h>
