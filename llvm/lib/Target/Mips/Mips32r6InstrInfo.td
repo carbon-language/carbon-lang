@@ -14,7 +14,6 @@
 include "Mips32r6InstrFormats.td"
 
 // Notes about removals/changes from MIPS32r6:
-// Unclear: ssnop
 // Reencoded: jr -> jalr
 // Reencoded: jr.hb -> jalr.hb
 // Reencoded: sdbbp
