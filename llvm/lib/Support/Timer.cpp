@@ -18,7 +18,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/support/MutexGuard.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
