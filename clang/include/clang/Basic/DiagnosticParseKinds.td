@@ -566,6 +566,13 @@ def err_expected_comma_greater : Error<
   "expected ',' or '>' in template-parameter-list">;
 def err_class_on_template_template_param : Error<
   "template template parameter requires 'class' after the parameter list">;
+def ext_template_template_param_typename : ExtWarn<
+  "template template parameter using 'typename' is a C++1z extension">,
+  InGroup<CXX1z>;
+def warn_cxx1y_compat_template_template_param_typename : Warning<
+  "template template parameter using 'typename' is "
+  "incompatible with C++ standards before C++1z">,
+  InGroup<CXXPre1zCompat>, DefaultIgnore;
 def err_template_spec_syntax_non_template : Error<
   "identifier followed by '<' indicates a class template specialization but "
   "%0 %select{does not refer to a template|refers to a function template|"

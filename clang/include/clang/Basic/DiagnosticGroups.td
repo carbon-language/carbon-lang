@@ -121,6 +121,9 @@ def FormatZeroLength : DiagGroup<"format-zero-length">;
 def CXXPre1yCompat : DiagGroup<"c++98-c++11-compat">;
 def CXXPre1yCompatPedantic : DiagGroup<"c++98-c++11-compat-pedantic",
                                        [CXXPre1yCompat]>;
+def CXXPre1zCompat : DiagGroup<"c++98-c++11-c++14-compat">;
+def CXXPre1zCompatPedantic : DiagGroup<"c++98-c++11-c++14-compat-pedantic",
+                                       [CXXPre1zCompat]>;
 
 def CXX98CompatBindToTemporaryCopy :
   DiagGroup<"c++98-compat-bind-to-temporary-copy">;
@@ -133,11 +136,13 @@ def CXX98Compat : DiagGroup<"c++98-compat",
                             [CXX98CompatBindToTemporaryCopy,
                              CXX98CompatLocalTypeTemplateArgs,
                              CXX98CompatUnnamedTypeTemplateArgs,
-                             CXXPre1yCompat]>;
+                             CXXPre1yCompat,
+                             CXXPre1zCompat]>;
 // Warnings for C++11 features which are Extensions in C++98 mode.
 def CXX98CompatPedantic : DiagGroup<"c++98-compat-pedantic",
                                     [CXX98Compat,
-                                     CXXPre1yCompatPedantic]>;
+                                     CXXPre1yCompatPedantic,
+                                     CXXPre1zCompatPedantic]>;
 
 def CXX11Narrowing : DiagGroup<"c++11-narrowing">;
 
@@ -157,10 +162,16 @@ def CXX11Compat : DiagGroup<"c++11-compat",
                             [CXX11Narrowing,
                              CXX11CompatReservedUserDefinedLiteral,
                              CXX11CompatDeprecatedWritableStr,
-                             CXXPre1yCompat]>;
+                             CXXPre1yCompat,
+                             CXXPre1zCompat]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 def CXX11CompatPedantic : DiagGroup<"c++11-compat-pedantic",
-                                    [CXXPre1yCompatPedantic]>;
+                                    [CXXPre1yCompatPedantic,
+                                     CXXPre1zCompatPedantic]>;
+
+def CXX14Compat : DiagGroup<"c++14-compat", [CXXPre1zCompat]>;
+def CXX14CompatPedantic : DiagGroup<"c++14-compat-pedantic",
+                                    [CXXPre1zCompatPedantic]>;
 
 def : DiagGroup<"effc++">;
 def DivZero : DiagGroup<"division-by-zero">;
@@ -619,6 +630,10 @@ def CXX11 : DiagGroup<"c++11-extensions", [CXX11ExtraSemi, CXX11LongLong]>;
 // A warning group for warnings about using C++1y features as extensions in
 // earlier C++ versions.
 def CXX1y : DiagGroup<"c++1y-extensions">;
+
+// A warning group for warnings about using C++1z features as extensions in
+// earlier C++ versions.
+def CXX1z : DiagGroup<"c++1z-extensions">;
 
 def : DiagGroup<"c++0x-extensions", [CXX11]>;
 def DelegatingCtorCycles :

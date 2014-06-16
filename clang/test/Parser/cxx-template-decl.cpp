@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -fsyntax-only -verify %s -fdelayed-template-parsing -DDELAYED_TEMPLATE_PARSING
+// RUN: %clang_cc1 -fsyntax-only -verify -std=gnu++1z %s
 
 
 
@@ -23,6 +24,11 @@ template <template X> struct Err1; // expected-error {{expected '<' after 'templ
 // expected-error{{extraneous}}
 template <template <typename> > struct Err2;       // expected-error {{template template parameter requires 'class' after the parameter list}}
 template <template <typename> Foo> struct Err3;    // expected-error {{template template parameter requires 'class' after the parameter list}}
+
+template <template <typename> typename Foo> struct Cxx1z;
+#if __cplusplus <= 201402L
+// expected-warning@-2 {{extension}}
+#endif
 
 // Template function declarations
 template <typename T> void foo();

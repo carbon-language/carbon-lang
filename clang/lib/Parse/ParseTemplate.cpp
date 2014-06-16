@@ -519,10 +519,13 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
 /// template parameters.
 ///
 ///       type-parameter:    [C++ temp.param]
-///         'template' '<' template-parameter-list '>' 'class' 
+///         'template' '<' template-parameter-list '>' type-parameter-key
 ///                  ...[opt] identifier[opt]
-///         'template' '<' template-parameter-list '>' 'class' identifier[opt] 
-///                  = id-expression
+///         'template' '<' template-parameter-list '>' type-parameter-key
+///                  identifier[opt] = id-expression
+///       type-parameter-key:
+///         'class'
+///         'typename'       [C++1z]
 Decl *
 Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   assert(Tok.is(tok::kw_template) && "Expected 'template' keyword");
@@ -539,20 +542,29 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     }
   }
 
+  // Provide an ExtWarn if the C++1z feature of using 'typename' here is used.
   // Generate a meaningful error if the user forgot to put class before the
   // identifier, comma, or greater. Provide a fixit if the identifier, comma,
-  // or greater appear immediately or after 'typename' or 'struct'. In the
-  // latter case, replace the keyword with 'class'.
+  // or greater appear immediately or after 'struct'. In the latter case,
+  // replace the keyword with 'class'.
   if (!TryConsumeToken(tok::kw_class)) {
     bool Replace = Tok.is(tok::kw_typename) || Tok.is(tok::kw_struct);
-    const Token& Next = Replace ? NextToken() : Tok;
-    if (Next.is(tok::identifier) || Next.is(tok::comma) ||
-        Next.is(tok::greater) || Next.is(tok::greatergreater) ||
-        Next.is(tok::ellipsis))
+    const Token &Next = Tok.is(tok::kw_struct) ? NextToken() : Tok;
+    if (Tok.is(tok::kw_typename)) {
+      Diag(Tok.getLocation(),
+           getLangOpts().CPlusPlus1z
+               ? diag::warn_cxx1y_compat_template_template_param_typename
+               : diag::ext_template_template_param_typename)
+        << (!getLangOpts().CPlusPlus1z
+                ? FixItHint::CreateReplacement(Tok.getLocation(), "class")
+                : FixItHint());
+    } else if (Next.is(tok::identifier) || Next.is(tok::comma) ||
+               Next.is(tok::greater) || Next.is(tok::greatergreater) ||
+               Next.is(tok::ellipsis)) {
       Diag(Tok.getLocation(), diag::err_class_on_template_template_param)
         << (Replace ? FixItHint::CreateReplacement(Tok.getLocation(), "class")
                     : FixItHint::CreateInsertion(Tok.getLocation(), "class "));
-    else
+    } else
       Diag(Tok.getLocation(), diag::err_class_on_template_template_param);
 
     if (Replace)
