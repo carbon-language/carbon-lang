@@ -102,6 +102,7 @@
 #include <clc/geometric/normalize.h>
 
 /* 6.11.6 Relational Functions */
+#include <clc/relational/all.h>
 #include <clc/relational/any.h>
 #include <clc/relational/bitselect.h>
 #include <clc/relational/isnan.h>
