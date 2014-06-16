@@ -1734,6 +1734,10 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   isThumb2 = AFI->isThumb2Function();
   isThumb1 = AFI->isThumbFunction() && !isThumb2;
 
+  // FIXME: Temporarily disabling for Thumb-1 due to miscompiles
+  if (isThumb1)
+    return false;
+
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
        ++MFI) {

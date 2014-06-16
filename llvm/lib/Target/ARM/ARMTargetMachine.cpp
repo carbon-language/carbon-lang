@@ -203,8 +203,7 @@ bool ARMPassConfig::addInstSelector() {
 }
 
 bool ARMPassConfig::addPreRegAlloc() {
-  // FIXME: Temporarily disabling Thumb-1 pre-RA Load/Store optimization pass
-  if (getOptLevel() != CodeGenOpt::None && !getARMSubtarget().isThumb1Only())
+  if (getOptLevel() != CodeGenOpt::None)
     addPass(createARMLoadStoreOptimizationPass(true));
   if (getOptLevel() != CodeGenOpt::None && getARMSubtarget().isCortexA9())
     addPass(createMLxExpansionPass());
@@ -219,11 +218,8 @@ bool ARMPassConfig::addPreRegAlloc() {
 
 bool ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
-    // FIXME: Temporarily disabling Thumb-1 post-RA Load/Store optimization pass
-    if (!getARMSubtarget().isThumb1Only()) {
-      addPass(createARMLoadStoreOptimizationPass());
-      printAndVerify("After ARM load / store optimizer");
-    }
+    addPass(createARMLoadStoreOptimizationPass());
+    printAndVerify("After ARM load / store optimizer");
 
     if (getARMSubtarget().hasNEON())
       addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
