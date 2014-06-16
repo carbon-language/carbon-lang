@@ -105,6 +105,7 @@
 #include <clc/relational/all.h>
 #include <clc/relational/any.h>
 #include <clc/relational/bitselect.h>
+#include <clc/relational/isequal.h>
 #include <clc/relational/isnan.h>
 #include <clc/relational/select.h>
 

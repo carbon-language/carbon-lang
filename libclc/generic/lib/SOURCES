@@ -37,6 +37,7 @@ math/nextafter.cl
 math/sincos.cl
 relational/all.cl
 relational/any.cl
+relational/isequal.cl
 relational/isnan.cl
 shared/clamp.cl
 shared/max.cl
