@@ -3054,6 +3054,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, HintID));
   }
 
+  if (BuiltinID == ARM::BI__builtin_arm_rbit) {
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_rbit),
+                                               EmitScalarExpr(E->getArg(0)),
+                              "rbit");
+  }
+
   if (BuiltinID == ARM::BI__clear_cache) {
     assert(E->getNumArgs() == 2 && "__clear_cache takes 2 arguments");
     const FunctionDecl *FD = E->getDirectCallee();

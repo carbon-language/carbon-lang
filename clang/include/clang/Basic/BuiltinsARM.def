@@ -24,6 +24,9 @@ BUILTIN(__builtin_arm_qsub, "iii", "nc")
 BUILTIN(__builtin_arm_ssat, "iiUi", "nc")
 BUILTIN(__builtin_arm_usat, "UiUiUi", "nc")
 
+// Bit manipulation
+BUILTIN(__builtin_arm_rbit, "UiUi", "nc")
+
 // Store and load exclusive
 BUILTIN(__builtin_arm_ldrexd, "LLUiv*", "")
 BUILTIN(__builtin_arm_strexd, "iLLUiv*", "")
