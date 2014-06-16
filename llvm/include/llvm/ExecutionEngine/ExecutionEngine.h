@@ -54,7 +54,7 @@ namespace object {
 }
 
 /// \brief Helper class for helping synchronize access to the global address map
-/// table.
+/// table.  Access to this class should be serialized under a mutex.
 class ExecutionEngineState {
 public:
   struct AddressMapConfig : public ValueMapConfig<const GlobalValue*> {
@@ -84,19 +84,19 @@ private:
 public:
   ExecutionEngineState(ExecutionEngine &EE);
 
-  GlobalAddressMapTy &getGlobalAddressMap(const MutexGuard &) {
+  GlobalAddressMapTy &getGlobalAddressMap() {
     return GlobalAddressMap;
   }
 
   std::map<void*, AssertingVH<const GlobalValue> > &
-  getGlobalAddressReverseMap(const MutexGuard &) {
+  getGlobalAddressReverseMap() {
     return GlobalAddressReverseMap;
   }
 
   /// \brief Erase an entry from the mapping table.
   ///
   /// \returns The address that \p ToUnmap was happed to.
-  void *RemoveMapping(const MutexGuard &, const GlobalValue *ToUnmap);
+  void *RemoveMapping(const GlobalValue *ToUnmap);
 };
 
 /// \brief Abstract interface for implementation execution of LLVM modules,
