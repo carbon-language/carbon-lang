@@ -24,7 +24,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
   assert(Creator);
   if (llvm_is_multithreaded()) {
-    llvm::MutexGuard Lock(llvm_get_global_lock());
+    llvm::MutexGuard Lock(llvm::llvm_get_global_lock());
 
     if (!Ptr) {
       void* tmp = Creator();
