@@ -255,7 +255,7 @@ class SymbolizerProcess : public ExternalSymbolizerInterface {
       internal_close(outfd[1]);
       internal_close(infd[0]);
       internal_close(infd[1]);
-      for (int fd = getdtablesize(); fd > 2; fd--)
+      for (int fd = sysconf(_SC_OPEN_MAX); fd > 2; fd--)
         internal_close(fd);
       ExecuteWithDefaultArgs(path_);
       internal__exit(1);
