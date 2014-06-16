@@ -57,10 +57,11 @@ public:
       return nullptr;
 
     if (dataSymbolOnly) {
-      std::unique_ptr<MemoryBuffer> buff;
-      if (ci->getMemoryBuffer(buff, true))
+      ErrorOr<std::unique_ptr<MemoryBuffer>> buffOrErr =
+          ci->getMemoryBuffer(true);
+      if (buffOrErr.getError())
         return nullptr;
-      if (isDataSymbol(std::move(buff), name))
+      if (isDataSymbol(std::move(buffOrErr.get()), name))
         return nullptr;
     }
 
@@ -109,12 +110,11 @@ public:
                                        << _archive->getFileName() << "':\n");
     for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
          i != e; ++i) {
-      StringRef name;
-      Archive::child_iterator member;
-      if (std::error_code ec = i->getName(name))
+      StringRef name = i->getName();
+      ErrorOr<Archive::child_iterator> memberOrErr = i->getMember();
+      if (std::error_code ec = memberOrErr.getError())
         return ec;
-      if (std::error_code ec = i->getMember(member))
-        return ec;
+      Archive::child_iterator member = memberOrErr.get();
       DEBUG_WITH_TYPE(
           "FileArchive",
           llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
@@ -136,9 +136,11 @@ protected:
   std::error_code
   instantiateMember(Archive::child_iterator member,
                     std::vector<std::unique_ptr<File>> &result) const {
-    std::unique_ptr<MemoryBuffer> mb;
-    if (std::error_code ec = member->getMemoryBuffer(mb, true))
+    ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
+        member->getMemoryBuffer(true);
+    if (std::error_code ec = mbOrErr.getError())
       return ec;
+    std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
     if (_logLoading)
       llvm::outs() << mb->getBufferIdentifier() << "\n";
     _registry.parseFile(mb, result);
