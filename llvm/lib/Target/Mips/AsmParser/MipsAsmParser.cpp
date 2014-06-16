@@ -620,6 +620,12 @@ public:
     return Kind == k_Token;
   }
   bool isMem() const override { return Kind == k_Memory; }
+  bool isConstantMemOff() const {
+    return isMem() && dyn_cast<MCConstantExpr>(getMemOff());
+  }
+  template <unsigned Bits> bool isMemWithSimmOffset() const {
+    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff());
+  }
   bool isInvNum() const { return Kind == k_Immediate; }
   bool isLSAImm() const {
     if (!isConstantImm())
@@ -662,6 +668,10 @@ public:
   const MCExpr *getMemOff() const {
     assert((Kind == k_Memory) && "Invalid access!");
     return Mem.Off;
+  }
+
+  int64_t getConstantMemOff() const {
+    return static_cast<const MCConstantExpr *>(getMemOff())->getValue();
   }
 
   static std::unique_ptr<MipsOperand> CreateToken(StringRef Str, SMLoc S,

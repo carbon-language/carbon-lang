@@ -403,10 +403,14 @@ def SDC1 : MMRel, SW_FT<"sdc1", AFGR64Opnd, II_SDC1, store>, LW_FM<0x3d>,
 // Cop2 Memory Instructions
 // FIXME: These aren't really FPU instructions and as such don't belong in this
 //        file
-def LWC2 : LW_FT<"lwc2", COP2Opnd, NoItinerary, load>, LW_FM<0x32>;
-def SWC2 : SW_FT<"swc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3a>;
-def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>, ISA_MIPS2;
-def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>, ISA_MIPS2;
+def LWC2 : LW_FT<"lwc2", COP2Opnd, NoItinerary, load>, LW_FM<0x32>,
+           ISA_MIPS1_NOT_32R6_64R6;
+def SWC2 : SW_FT<"swc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3a>,
+           ISA_MIPS1_NOT_32R6_64R6;
+def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>,
+           ISA_MIPS2_NOT_32R6_64R6;
+def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>,
+           ISA_MIPS2_NOT_32R6_64R6;
 
 // Cop3 Memory Instructions
 // FIXME: These aren't really FPU instructions and as such don't belong in this

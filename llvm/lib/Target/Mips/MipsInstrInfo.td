@@ -351,6 +351,7 @@ def calltarget  : Operand<iPTR> {
 
 def simm9 : Operand<i32>;
 def simm10 : Operand<i32>;
+def simm11 : Operand<i32>;
 
 def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
@@ -415,6 +416,15 @@ def MipsMemAsmOperand : AsmOperandClass {
   let ParserMethod = "parseMemOperand";
 }
 
+def MipsMemSimm11AsmOperand : AsmOperandClass {
+  let Name = "MemOffsetSimm11";
+  let SuperClasses = [MipsMemAsmOperand];
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithSimmOffset<11>";
+  //let DiagnosticType = "Simm11";
+}
+
 def MipsInvertedImmoperand : AsmOperandClass {
   let Name = "InvNum";
   let RenderMethod = "addImmOperands";
@@ -449,6 +459,12 @@ def mem_msa : mem_generic {
 def mem_simm9 : mem_generic {
   let MIOperandInfo = (ops ptr_rc, simm9);
   let EncoderMethod = "getMemEncoding";
+}
+
+def mem_simm11 : mem_generic {
+  let MIOperandInfo = (ops ptr_rc, simm11);
+  let EncoderMethod = "getMemEncoding";
+  let ParserMatchClass = MipsMemSimm11AsmOperand;
 }
 
 def mem_ea : Operand<iPTR> {

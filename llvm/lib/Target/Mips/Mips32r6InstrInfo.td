@@ -18,13 +18,8 @@ include "Mips32r6InstrFormats.td"
 // Reencoded: clo, clz
 // Reencoded: jr -> jalr
 // Reencoded: jr.hb -> jalr.hb
-// Reencoded: ldc2
 // Reencoded: ll, sc
-// Reencoded: lwc2
 // Reencoded: sdbbp
-// Reencoded: sdc2
-// Reencoded: swc2
-// Rencoded: [ls][wd]c2
 
 def brtarget21 : Operand<OtherVT> {
   let EncoderMethod = "getBranchTarget21OpValue";
@@ -157,6 +152,11 @@ class CLASS_D_ENC : COP1_2R_FM<0b011011, FIELD_FMT_D>;
 
 class CACHE_ENC : SPECIAL3_MEM_FM<OPCODE6_CACHE>;
 class PREF_ENC : SPECIAL3_MEM_FM<OPCODE6_PREF>;
+
+class LDC2_R6_ENC : COP2LDST_FM<OPCODE5_LDC2>;
+class LWC2_R6_ENC : COP2LDST_FM<OPCODE5_LWC2>;
+class SDC2_R6_ENC : COP2LDST_FM<OPCODE5_SDC2>;
+class SWC2_R6_ENC : COP2LDST_FM<OPCODE5_SWC2>;
 
 class CMP_CONDN_DESC_BASE<string CondStr, string Typestr,
                           RegisterOperand FGROpnd,
@@ -541,6 +541,28 @@ class CACHE_HINT_DESC<string instr_asm, Operand MemOpnd,
 class CACHE_DESC : CACHE_HINT_DESC<"cache", mem_simm9, GPR32Opnd>;
 class PREF_DESC : CACHE_HINT_DESC<"pref", mem_simm9, GPR32Opnd>;
 
+class COP2LD_DESC_BASE<string instr_asm, RegisterOperand COPOpnd> {
+  dag OutOperandList = (outs COPOpnd:$rt);
+  dag InOperandList = (ins mem_simm11:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  list<dag> Pattern = [];
+  bit mayLoad = 1;
+}
+
+class LDC2_R6_DESC : COP2LD_DESC_BASE<"ldc2", COP2Opnd>;
+class LWC2_R6_DESC : COP2LD_DESC_BASE<"lwc2", COP2Opnd>;
+
+class COP2ST_DESC_BASE<string instr_asm, RegisterOperand COPOpnd> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins COPOpnd:$rt, mem_simm11:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  list<dag> Pattern = [];
+  bit mayStore = 1;
+}
+
+class SDC2_R6_DESC : COP2ST_DESC_BASE<"sdc2", COP2Opnd>;
+class SWC2_R6_DESC : COP2ST_DESC_BASE<"swc2", COP2Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -590,7 +612,9 @@ def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
 def JIALC : JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
 def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
+def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
 // def LSA; // See MSA
+def LWC2_R6 : LWC2_R6_ENC, LWC2_R6_DESC, ISA_MIPS32R6;
 def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;
 def MADDF_S : MADDF_S_ENC, MADDF_S_DESC, ISA_MIPS32R6;
@@ -615,6 +639,7 @@ def NAL; // BAL with rd=0
 def PREF_R6 : PREF_ENC, PREF_DESC, ISA_MIPS32R6;
 def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
 def RINT_S : RINT_S_ENC, RINT_S_DESC, ISA_MIPS32R6;
+def SDC2_R6 : SDC2_R6_ENC, SDC2_R6_DESC, ISA_MIPS32R6;
 def SELEQZ : SELEQZ_ENC, SELEQZ_DESC, ISA_MIPS32R6, GPR_32;
 def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;
 def SELEQZ_S : SELEQZ_S_ENC, SELEQZ_S_DESC, ISA_MIPS32R6;
@@ -623,6 +648,7 @@ def SELNEZ_D : SELNEZ_D_ENC, SELNEZ_D_DESC, ISA_MIPS32R6;
 def SELNEZ_S : SELNEZ_S_ENC, SELNEZ_S_DESC, ISA_MIPS32R6;
 def SEL_D : SEL_D_ENC, SEL_D_DESC, ISA_MIPS32R6;
 def SEL_S : SEL_S_ENC, SEL_S_DESC, ISA_MIPS32R6;
+def SWC2_R6 : SWC2_R6_ENC, SWC2_R6_DESC, ISA_MIPS32R6;
 
 //===----------------------------------------------------------------------===//
 //

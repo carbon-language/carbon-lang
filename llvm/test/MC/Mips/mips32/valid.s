@@ -50,7 +50,7 @@
         lb        $24,-14515($10)
         lbu       $8,30195($v1)
         ldc1      $f11,16391($s0)
-        ldc2      $8,-21181($at)
+        ldc2      $8,-21181($at)        # CHECK: ldc2 $8, -21181($1)   # encoding: [0xd8,0x28,0xad,0x43]
         lh        $11,-8556($s5)
         lhu       $s3,-22851($v0)
         li        $at,-29773
@@ -58,7 +58,7 @@
         ll        $v0,-7321($s2)
         lw        $8,5674($a1)
         lwc1      $f16,10225($k0)
-        lwc2      $18,-841($a2)
+        lwc2      $18,-841($a2)        # CHECK: lwc2 $18, -841($6)     # encoding: [0xc8,0xd2,0xfc,0xb7]
         lwl       $s4,-4231($15)
         lwr       $zero,-19147($gp)
         madd      $s6,$13
@@ -113,7 +113,7 @@
         sb        $s6,-19857($14)
         sc        $15,18904($s3)
         sdc1      $f31,30574($13)
-        sdc2      $20,23157($s2)
+        sdc2      $20,23157($s2)       # CHECK: sdc2 $20, 23157($18)   # encoding: [0xfa,0x54,0x5a,0x75]
         sh        $14,-6704($15)
         sll       $a3,18               # CHECK: sll $7, $7, 18         # encoding: [0x00,0x07,0x3c,0x80]
         sll       $a3,$zero,18         # CHECK: sll $7, $zero, 18      # encoding: [0x00,0x00,0x3c,0x80]
@@ -141,7 +141,7 @@
         subu      $sp,$s6,$s6
         sw        $ra,-10160($sp)
         swc1      $f6,-8465($24)
-        swc2      $25,24880($s0)
+        swc2      $25,24880($s0)       # CHECK: swc2 $25, 24880($16)   # encoding: [0xea,0x19,0x61,0x30]
         swl       $15,13694($s3)
         swr       $s1,-26590($14)
         teqi      $s5,-17504
