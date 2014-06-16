@@ -208,7 +208,7 @@ sub GetHTMLRunDir {
   }
 
   # Make sure that the directory does not exist in order to avoid hijack.
-  if (-d $NewDir) {
+  if (-e $NewDir) {
       DieDiag("The directory '$NewDir' already exists.\n");
   }
 
