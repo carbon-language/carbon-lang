@@ -126,6 +126,11 @@ def int_arm_crc32cw : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
 def int_arm_hint : Intrinsic<[], [llvm_i32_ty]>;
 
 //===----------------------------------------------------------------------===//
+// RBIT
+
+def int_arm_rbit : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+
+//===----------------------------------------------------------------------===//
 // UND (reserved undefined sequence)
 
 def int_arm_undefined : Intrinsic<[], [llvm_i32_ty]>;
