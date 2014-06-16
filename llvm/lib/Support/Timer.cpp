@@ -18,7 +18,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Mutex.h"
+#include "llvm/support/MutexGuard.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -84,14 +84,13 @@ static TimerGroup *getDefaultTimerGroup() {
   sys::MemoryFence();
   if (tmp) return tmp;
   
-  llvm_acquire_global_lock();
+  llvm::MutexGuard Lock(llvm::llvm_get_global_lock());
   tmp = DefaultTimerGroup;
   if (!tmp) {
     tmp = new TimerGroup("Miscellaneous Ungrouped Timers");
     sys::MemoryFence();
     DefaultTimerGroup = tmp;
   }
-  llvm_release_global_lock();
 
   return tmp;
 }

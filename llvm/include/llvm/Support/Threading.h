@@ -14,7 +14,12 @@
 #ifndef LLVM_SUPPORT_THREADING_H
 #define LLVM_SUPPORT_THREADING_H
 
+#include "llvm/Support/Mutex.h"
+
 namespace llvm {
+  /// llvm_get_global_lock - returns the llvm global lock object.
+  sys::Mutex& llvm_get_global_lock();
+
   /// llvm_start_multithreaded - Allocate and initialize structures needed to
   /// make LLVM safe for multithreading.  The return value indicates whether
   /// multithreaded initialization succeeded.  LLVM will still be operational
@@ -32,14 +37,6 @@ namespace llvm {
   /// llvm_is_multithreaded - Check whether LLVM is executing in thread-safe
   /// mode or not.
   bool llvm_is_multithreaded();
-
-  /// acquire_global_lock - Acquire the global lock.  This is a no-op if called
-  /// before llvm_start_multithreaded().
-  void llvm_acquire_global_lock();
-
-  /// release_global_lock - Release the global lock.  This is a no-op if called
-  /// before llvm_start_multithreaded().
-  void llvm_release_global_lock();
 
   /// llvm_execute_on_thread - Execute the given \p UserFn on a separate
   /// thread, passing it the provided \p UserData.
