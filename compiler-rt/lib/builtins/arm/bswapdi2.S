@@ -11,6 +11,9 @@
 
 	.syntax unified
 	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
 
 //
 // extern uint64_t __bswapdi2(uint64_t);

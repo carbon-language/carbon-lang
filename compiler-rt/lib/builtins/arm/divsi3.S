@@ -22,6 +22,9 @@
 
 	.syntax unified
 	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
 
 	.p2align 3
 // Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.

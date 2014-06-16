@@ -15,6 +15,10 @@
 
 	.syntax unified
 	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
+
 
 	.p2align	2
 DEFINE_COMPILERRT_FUNCTION(__clzdi2)

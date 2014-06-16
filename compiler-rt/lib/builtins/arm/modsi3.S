@@ -22,6 +22,9 @@
 
 	.syntax unified
 	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
 
 	.p2align 3
 DEFINE_COMPILERRT_FUNCTION(__modsi3)

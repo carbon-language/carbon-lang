@@ -16,6 +16,9 @@
 
 	.syntax unified
 	.text
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
 
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
