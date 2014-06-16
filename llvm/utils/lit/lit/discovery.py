@@ -200,7 +200,9 @@ def find_tests_for_inputs(lit_config, inputs):
     # Expand '@...' form in inputs.
     actual_inputs = []
     for input in inputs:
-        if input.startswith('@'):
+        if os.path.exists(input) or not input.startswith('@'):
+            actual_inputs.append(input)
+        else:
             f = open(input[1:])
             try:
                 for ln in f:
@@ -209,10 +211,6 @@ def find_tests_for_inputs(lit_config, inputs):
                         actual_inputs.append(ln)
             finally:
                 f.close()
-        elif os.path.exists(input):
-            actual_inputs.append(input)
-        else:
-            lit_config.warning('no such file or directory: %r' % input)
                     
     # Load the tests from the inputs.
     tests = []
