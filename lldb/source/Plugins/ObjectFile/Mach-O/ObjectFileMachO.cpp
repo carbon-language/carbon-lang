@@ -1485,114 +1485,120 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                 }
                                 assert (segment_sp.get());
 
-                                uint32_t mach_sect_type = sect64.flags & SECTION_TYPE;
-                                static ConstString g_sect_name_objc_data ("__objc_data");
-                                static ConstString g_sect_name_objc_msgrefs ("__objc_msgrefs");
-                                static ConstString g_sect_name_objc_selrefs ("__objc_selrefs");
-                                static ConstString g_sect_name_objc_classrefs ("__objc_classrefs");
-                                static ConstString g_sect_name_objc_superrefs ("__objc_superrefs");
-                                static ConstString g_sect_name_objc_const ("__objc_const");
-                                static ConstString g_sect_name_objc_classlist ("__objc_classlist");
-                                static ConstString g_sect_name_cfstring ("__cfstring");
-
-                                static ConstString g_sect_name_dwarf_debug_abbrev ("__debug_abbrev");
-                                static ConstString g_sect_name_dwarf_debug_aranges ("__debug_aranges");
-                                static ConstString g_sect_name_dwarf_debug_frame ("__debug_frame");
-                                static ConstString g_sect_name_dwarf_debug_info ("__debug_info");
-                                static ConstString g_sect_name_dwarf_debug_line ("__debug_line");
-                                static ConstString g_sect_name_dwarf_debug_loc ("__debug_loc");
-                                static ConstString g_sect_name_dwarf_debug_macinfo ("__debug_macinfo");
-                                static ConstString g_sect_name_dwarf_debug_pubnames ("__debug_pubnames");
-                                static ConstString g_sect_name_dwarf_debug_pubtypes ("__debug_pubtypes");
-                                static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
-                                static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
-                                static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
-                                static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
-                                static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
-                                static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
-                                static ConstString g_sect_name_eh_frame ("__eh_frame");
-                                static ConstString g_sect_name_DATA ("__DATA");
-                                static ConstString g_sect_name_TEXT ("__TEXT");
-
                                 lldb::SectionType sect_type = eSectionTypeOther;
 
-                                if (section_name == g_sect_name_dwarf_debug_abbrev)
-                                    sect_type = eSectionTypeDWARFDebugAbbrev;
-                                else if (section_name == g_sect_name_dwarf_debug_aranges)
-                                    sect_type = eSectionTypeDWARFDebugAranges;
-                                else if (section_name == g_sect_name_dwarf_debug_frame)
-                                    sect_type = eSectionTypeDWARFDebugFrame;
-                                else if (section_name == g_sect_name_dwarf_debug_info)
-                                    sect_type = eSectionTypeDWARFDebugInfo;
-                                else if (section_name == g_sect_name_dwarf_debug_line)
-                                    sect_type = eSectionTypeDWARFDebugLine;
-                                else if (section_name == g_sect_name_dwarf_debug_loc)
-                                    sect_type = eSectionTypeDWARFDebugLoc;
-                                else if (section_name == g_sect_name_dwarf_debug_macinfo)
-                                    sect_type = eSectionTypeDWARFDebugMacInfo;
-                                else if (section_name == g_sect_name_dwarf_debug_pubnames)
-                                    sect_type = eSectionTypeDWARFDebugPubNames;
-                                else if (section_name == g_sect_name_dwarf_debug_pubtypes)
-                                    sect_type = eSectionTypeDWARFDebugPubTypes;
-                                else if (section_name == g_sect_name_dwarf_debug_ranges)
-                                    sect_type = eSectionTypeDWARFDebugRanges;
-                                else if (section_name == g_sect_name_dwarf_debug_str)
-                                    sect_type = eSectionTypeDWARFDebugStr;
-                                else if (section_name == g_sect_name_dwarf_apple_names)
-                                    sect_type = eSectionTypeDWARFAppleNames;
-                                else if (section_name == g_sect_name_dwarf_apple_types)
-                                    sect_type = eSectionTypeDWARFAppleTypes;
-                                else if (section_name == g_sect_name_dwarf_apple_namespaces)
-                                    sect_type = eSectionTypeDWARFAppleNamespaces;
-                                else if (section_name == g_sect_name_dwarf_apple_objc)
-                                    sect_type = eSectionTypeDWARFAppleObjC;
-                                else if (section_name == g_sect_name_objc_selrefs)
-                                    sect_type = eSectionTypeDataCStringPointers;
-                                else if (section_name == g_sect_name_objc_msgrefs)
-                                    sect_type = eSectionTypeDataObjCMessageRefs;
-                                else if (section_name == g_sect_name_eh_frame)
-                                    sect_type = eSectionTypeEHFrame;
-                                else if (section_name == g_sect_name_cfstring)
-                                    sect_type = eSectionTypeDataObjCCFStrings;
-                                else if (section_name == g_sect_name_objc_data ||
-                                         section_name == g_sect_name_objc_classrefs ||
-                                         section_name == g_sect_name_objc_superrefs ||
-                                         section_name == g_sect_name_objc_const ||
-                                         section_name == g_sect_name_objc_classlist)
+                                if (sect64.flags & (S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS))
+                                    sect_type = eSectionTypeCode;
+                                else
                                 {
-                                    sect_type = eSectionTypeDataPointers;
-                                }
+                                    uint32_t mach_sect_type = sect64.flags & SECTION_TYPE;
+                                    static ConstString g_sect_name_objc_data ("__objc_data");
+                                    static ConstString g_sect_name_objc_msgrefs ("__objc_msgrefs");
+                                    static ConstString g_sect_name_objc_selrefs ("__objc_selrefs");
+                                    static ConstString g_sect_name_objc_classrefs ("__objc_classrefs");
+                                    static ConstString g_sect_name_objc_superrefs ("__objc_superrefs");
+                                    static ConstString g_sect_name_objc_const ("__objc_const");
+                                    static ConstString g_sect_name_objc_classlist ("__objc_classlist");
+                                    static ConstString g_sect_name_cfstring ("__cfstring");
 
-                                if (sect_type == eSectionTypeOther)
-                                {
-                                    switch (mach_sect_type)
+                                    static ConstString g_sect_name_dwarf_debug_abbrev ("__debug_abbrev");
+                                    static ConstString g_sect_name_dwarf_debug_aranges ("__debug_aranges");
+                                    static ConstString g_sect_name_dwarf_debug_frame ("__debug_frame");
+                                    static ConstString g_sect_name_dwarf_debug_info ("__debug_info");
+                                    static ConstString g_sect_name_dwarf_debug_line ("__debug_line");
+                                    static ConstString g_sect_name_dwarf_debug_loc ("__debug_loc");
+                                    static ConstString g_sect_name_dwarf_debug_macinfo ("__debug_macinfo");
+                                    static ConstString g_sect_name_dwarf_debug_pubnames ("__debug_pubnames");
+                                    static ConstString g_sect_name_dwarf_debug_pubtypes ("__debug_pubtypes");
+                                    static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
+                                    static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
+                                    static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
+                                    static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
+                                    static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
+                                    static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
+                                    static ConstString g_sect_name_eh_frame ("__eh_frame");
+                                    static ConstString g_sect_name_text ("__text");
+                                    static ConstString g_sect_name_data ("__data");
+
+
+                                    if (section_name == g_sect_name_dwarf_debug_abbrev)
+                                        sect_type = eSectionTypeDWARFDebugAbbrev;
+                                    else if (section_name == g_sect_name_dwarf_debug_aranges)
+                                        sect_type = eSectionTypeDWARFDebugAranges;
+                                    else if (section_name == g_sect_name_dwarf_debug_frame)
+                                        sect_type = eSectionTypeDWARFDebugFrame;
+                                    else if (section_name == g_sect_name_dwarf_debug_info)
+                                        sect_type = eSectionTypeDWARFDebugInfo;
+                                    else if (section_name == g_sect_name_dwarf_debug_line)
+                                        sect_type = eSectionTypeDWARFDebugLine;
+                                    else if (section_name == g_sect_name_dwarf_debug_loc)
+                                        sect_type = eSectionTypeDWARFDebugLoc;
+                                    else if (section_name == g_sect_name_dwarf_debug_macinfo)
+                                        sect_type = eSectionTypeDWARFDebugMacInfo;
+                                    else if (section_name == g_sect_name_dwarf_debug_pubnames)
+                                        sect_type = eSectionTypeDWARFDebugPubNames;
+                                    else if (section_name == g_sect_name_dwarf_debug_pubtypes)
+                                        sect_type = eSectionTypeDWARFDebugPubTypes;
+                                    else if (section_name == g_sect_name_dwarf_debug_ranges)
+                                        sect_type = eSectionTypeDWARFDebugRanges;
+                                    else if (section_name == g_sect_name_dwarf_debug_str)
+                                        sect_type = eSectionTypeDWARFDebugStr;
+                                    else if (section_name == g_sect_name_dwarf_apple_names)
+                                        sect_type = eSectionTypeDWARFAppleNames;
+                                    else if (section_name == g_sect_name_dwarf_apple_types)
+                                        sect_type = eSectionTypeDWARFAppleTypes;
+                                    else if (section_name == g_sect_name_dwarf_apple_namespaces)
+                                        sect_type = eSectionTypeDWARFAppleNamespaces;
+                                    else if (section_name == g_sect_name_dwarf_apple_objc)
+                                        sect_type = eSectionTypeDWARFAppleObjC;
+                                    else if (section_name == g_sect_name_objc_selrefs)
+                                        sect_type = eSectionTypeDataCStringPointers;
+                                    else if (section_name == g_sect_name_objc_msgrefs)
+                                        sect_type = eSectionTypeDataObjCMessageRefs;
+                                    else if (section_name == g_sect_name_eh_frame)
+                                        sect_type = eSectionTypeEHFrame;
+                                    else if (section_name == g_sect_name_cfstring)
+                                        sect_type = eSectionTypeDataObjCCFStrings;
+                                    else if (section_name == g_sect_name_objc_data ||
+                                             section_name == g_sect_name_objc_classrefs ||
+                                             section_name == g_sect_name_objc_superrefs ||
+                                             section_name == g_sect_name_objc_const ||
+                                             section_name == g_sect_name_objc_classlist)
                                     {
-                                    // TODO: categorize sections by other flags for regular sections
-                                    case S_REGULAR:
-                                        if (segment_sp->GetName() == g_sect_name_TEXT)
-                                            sect_type = eSectionTypeCode;
-                                        else if (segment_sp->GetName() == g_sect_name_DATA)
-                                            sect_type = eSectionTypeData;
-                                        else
-                                            sect_type = eSectionTypeOther;
-                                        break;
-                                    case S_ZEROFILL:                   sect_type = eSectionTypeZeroFill; break;
-                                    case S_CSTRING_LITERALS:           sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
-                                    case S_4BYTE_LITERALS:             sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
-                                    case S_8BYTE_LITERALS:             sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
-                                    case S_LITERAL_POINTERS:           sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
-                                    case S_NON_LAZY_SYMBOL_POINTERS:   sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
-                                    case S_LAZY_SYMBOL_POINTERS:       sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
-                                    case S_SYMBOL_STUBS:               sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
-                                    case S_MOD_INIT_FUNC_POINTERS:     sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
-                                    case S_MOD_TERM_FUNC_POINTERS:     sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
-                                    case S_COALESCED:                  sect_type = eSectionTypeOther; break;
-                                    case S_GB_ZEROFILL:                sect_type = eSectionTypeZeroFill; break;
-                                    case S_INTERPOSING:                sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
-                                    case S_16BYTE_LITERALS:            sect_type = eSectionTypeData16; break; // section with only 16 byte literals
-                                    case S_DTRACE_DOF:                 sect_type = eSectionTypeDebug; break;
-                                    case S_LAZY_DYLIB_SYMBOL_POINTERS: sect_type = eSectionTypeDataPointers;  break;
-                                    default: break;
+                                        sect_type = eSectionTypeDataPointers;
+                                    }
+
+                                    if (sect_type == eSectionTypeOther)
+                                    {
+                                        switch (mach_sect_type)
+                                        {
+                                        // TODO: categorize sections by other flags for regular sections
+                                        case S_REGULAR:
+                                            if (section_name == g_sect_name_text)
+                                                sect_type = eSectionTypeCode;
+                                            else if (section_name == g_sect_name_data)
+                                                sect_type = eSectionTypeData;
+                                            else
+                                                sect_type = eSectionTypeOther;
+                                            break;
+                                        case S_ZEROFILL:                   sect_type = eSectionTypeZeroFill; break;
+                                        case S_CSTRING_LITERALS:           sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
+                                        case S_4BYTE_LITERALS:             sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
+                                        case S_8BYTE_LITERALS:             sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
+                                        case S_LITERAL_POINTERS:           sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
+                                        case S_NON_LAZY_SYMBOL_POINTERS:   sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
+                                        case S_LAZY_SYMBOL_POINTERS:       sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
+                                        case S_SYMBOL_STUBS:               sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
+                                        case S_MOD_INIT_FUNC_POINTERS:     sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
+                                        case S_MOD_TERM_FUNC_POINTERS:     sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
+                                        case S_COALESCED:                  sect_type = eSectionTypeOther; break;
+                                        case S_GB_ZEROFILL:                sect_type = eSectionTypeZeroFill; break;
+                                        case S_INTERPOSING:                sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
+                                        case S_16BYTE_LITERALS:            sect_type = eSectionTypeData16; break; // section with only 16 byte literals
+                                        case S_DTRACE_DOF:                 sect_type = eSectionTypeDebug; break;
+                                        case S_LAZY_DYLIB_SYMBOL_POINTERS: sect_type = eSectionTypeDataPointers;  break;
+                                        default: break;
+                                        }
                                     }
                                 }
 
@@ -2926,8 +2932,6 @@ ObjectFileMachO::ParseSymtab ()
 
                                                                 switch (section_type)
                                                                 {
-                                                                    case S_REGULAR:                    break; // regular section
-                                                                                                                                                  //case S_ZEROFILL:                   type = eSymbolTypeData;    break; // zero fill on demand section
                                                                     case S_CSTRING_LITERALS:           type = eSymbolTypeData;    break; // section with only literal C strings
                                                                     case S_4BYTE_LITERALS:             type = eSymbolTypeData;    break; // section with only 4 byte literals
                                                                     case S_8BYTE_LITERALS:             type = eSymbolTypeData;    break; // section with only 8 byte literals
@@ -2937,13 +2941,30 @@ ObjectFileMachO::ParseSymtab ()
                                                                     case S_SYMBOL_STUBS:               type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
                                                                     case S_MOD_INIT_FUNC_POINTERS:     type = eSymbolTypeCode;    break; // section with only function pointers for initialization
                                                                     case S_MOD_TERM_FUNC_POINTERS:     type = eSymbolTypeCode;    break; // section with only function pointers for termination
-                                                                                                                                                  //case S_COALESCED:                  type = eSymbolType;    break; // section contains symbols that are to be coalesced
-                                                                                                                                                  //case S_GB_ZEROFILL:                type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
                                                                     case S_INTERPOSING:                type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
                                                                     case S_16BYTE_LITERALS:            type = eSymbolTypeData;    break; // section with only 16 byte literals
                                                                     case S_DTRACE_DOF:                 type = eSymbolTypeInstrumentation; break;
                                                                     case S_LAZY_DYLIB_SYMBOL_POINTERS: type = eSymbolTypeTrampoline; break;
-                                                                    default: break;
+                                                                    default:
+                                                                        switch (symbol_section->GetType())
+                                                                        {
+                                                                            case lldb::eSectionTypeCode:
+                                                                                type = eSymbolTypeCode;
+                                                                                break;
+                                                                            case eSectionTypeData:
+                                                                            case eSectionTypeDataCString:            // Inlined C string data
+                                                                            case eSectionTypeDataCStringPointers:    // Pointers to C string data
+                                                                            case eSectionTypeDataSymbolAddress:      // Address of a symbol in the symbol table
+                                                                            case eSectionTypeData4:
+                                                                            case eSectionTypeData8:
+                                                                            case eSectionTypeData16:
+                                                                            case eSectionTypeDataPointers:
+                                                                                type = eSymbolTypeData;
+                                                                                break;
+                                                                            default:
+                                                                                break;
+                                                                        }
+                                                                        break;
                                                                 }
 
                                                                 if (type == eSymbolTypeInvalid)
@@ -3692,8 +3713,6 @@ ObjectFileMachO::ParseSymtab ()
 
                                 switch (section_type)
                                 {
-                                case S_REGULAR:                    break; // regular section
-                                //case S_ZEROFILL:                 type = eSymbolTypeData;    break; // zero fill on demand section
                                 case S_CSTRING_LITERALS:           type = eSymbolTypeData;    break; // section with only literal C strings
                                 case S_4BYTE_LITERALS:             type = eSymbolTypeData;    break; // section with only 4 byte literals
                                 case S_8BYTE_LITERALS:             type = eSymbolTypeData;    break; // section with only 8 byte literals
@@ -3703,13 +3722,30 @@ ObjectFileMachO::ParseSymtab ()
                                 case S_SYMBOL_STUBS:               type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
                                 case S_MOD_INIT_FUNC_POINTERS:     type = eSymbolTypeCode;    break; // section with only function pointers for initialization
                                 case S_MOD_TERM_FUNC_POINTERS:     type = eSymbolTypeCode;    break; // section with only function pointers for termination
-                                //case S_COALESCED:                type = eSymbolType;    break; // section contains symbols that are to be coalesced
-                                //case S_GB_ZEROFILL:              type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
                                 case S_INTERPOSING:                type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
                                 case S_16BYTE_LITERALS:            type = eSymbolTypeData;    break; // section with only 16 byte literals
                                 case S_DTRACE_DOF:                 type = eSymbolTypeInstrumentation; break;
                                 case S_LAZY_DYLIB_SYMBOL_POINTERS: type = eSymbolTypeTrampoline; break;
-                                default: break;
+                                default:
+                                    switch (symbol_section->GetType())
+                                    {
+                                        case lldb::eSectionTypeCode:
+                                            type = eSymbolTypeCode;
+                                            break;
+                                        case eSectionTypeData:
+                                        case eSectionTypeDataCString:            // Inlined C string data
+                                        case eSectionTypeDataCStringPointers:    // Pointers to C string data
+                                        case eSectionTypeDataSymbolAddress:      // Address of a symbol in the symbol table
+                                        case eSectionTypeData4:
+                                        case eSectionTypeData8:
+                                        case eSectionTypeData16:
+                                        case eSectionTypeDataPointers:
+                                            type = eSymbolTypeData;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    break;
                                 }
 
                                 if (type == eSymbolTypeInvalid)
