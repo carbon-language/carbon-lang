@@ -9,7 +9,7 @@
 ; }
 ; with "clang++ -S -emit-llvm -fsanitize=address -O0 -g test.cc"
 
-; First, argument variable "y" resides in %rdi:
+; First, argument variable "y" resides in %rdx:
 ; CHECK: DEBUG_VALUE: bar:y <- RDX
 
 ; Then its address is stored in a location on a stack:
@@ -21,7 +21,7 @@
 ; CHECK: .Ldebug_loc{{[0-9]+}}:
 ; We expect two location ranges for the variable.
 
-; First, it is stored in %rdi:
+; First, it is stored in %rdx:
 ; CHECK:      .Lset{{[0-9]+}} = .Lfunc_begin0-.Lfunc_begin0
 ; CHECK-NEXT: .quad .Lset{{[0-9]+}}
 ; CHECK-NEXT: .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0

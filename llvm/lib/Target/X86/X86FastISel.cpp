@@ -2709,7 +2709,10 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
 
   // Materialize addresses with LEA instructions.
   if (isa<GlobalValue>(C)) {
-    //LEA can only handle 32 bit immediates
+    // LEA can only handle 32 bit immediates. Currently this happens pretty
+    // rarely, so rather than deal with it just bail out of fast isel. If any
+    // architectures endis up needing to use this path a lot then fast isel
+    // could get the address with a MOV64ri and use that to load the value.
     if (TM.getRelocationModel() == Reloc::Static && Subtarget->is64Bit())
       return false;
 
