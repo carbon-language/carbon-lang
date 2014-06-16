@@ -206,6 +206,12 @@ sub GetHTMLRunDir {
   else {
     $NewDir = "$Dir/$DateString-$RunNumber";
   }
+
+  # Make sure that the directory does not exist in order to avoid hijack.
+  if (-d $NewDir) {
+      DieDiag("The directory '$NewDir' already exists.\n");
+  }
+
   mkpath($NewDir);
   return $NewDir;
 }
