@@ -733,16 +733,14 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       if (I != E) {
         outs() << "Archive map\n";
         for (; I != E; ++I) {
-          Archive::child_iterator C;
-          StringRef SymName;
-          StringRef FileName;
-          if (error(I->getMember(C)))
+          ErrorOr<Archive::child_iterator> C = I->getMember();
+          if (error(C.getError()))
             return;
-          if (error(I->getName(SymName)))
+          ErrorOr<StringRef> FileNameOrErr = C.get()->getName();
+          if (error(FileNameOrErr.getError()))
             return;
-          if (error(C->getName(FileName)))
-            return;
-          outs() << SymName << " in " << FileName << "\n";
+          StringRef SymName = I->getName();
+          outs() << SymName << " in " << FileNameOrErr.get() << "\n";
         }
         outs() << "\n";
       }
@@ -750,10 +748,10 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
 
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
-      std::unique_ptr<Binary> Child;
-      if (I->getAsBinary(Child, &Context))
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = I->getAsBinary(&Context);
+      if (ChildOrErr.getError())
         continue;
-      if (SymbolicFile *O = dyn_cast<SymbolicFile>(Child.get())) {
+      if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
         outs() << O->getFileName() << ":\n";
         dumpSymbolNamesFromObject(O);
       }
@@ -773,10 +771,11 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       else if (!I->getAsArchive(A)) {
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
-          std::unique_ptr<Binary> Child;
-          if (AI->getAsBinary(Child, &Context))
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr =
+              AI->getAsBinary(&Context);
+          if (ChildOrErr.getError())
             continue;
-          if (SymbolicFile *O = dyn_cast<SymbolicFile>(Child.get())) {
+          if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
             outs() << A->getFileName() << ":";
             outs() << O->getFileName() << ":\n";
             dumpSymbolNamesFromObject(O);

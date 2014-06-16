@@ -242,15 +242,15 @@ static void dumpArchive(const Archive *Arc) {
   for (Archive::child_iterator ArcI = Arc->child_begin(),
                                ArcE = Arc->child_end();
                                ArcI != ArcE; ++ArcI) {
-    std::unique_ptr<Binary> child;
-    if (std::error_code EC = ArcI->getAsBinary(child)) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcI->getAsBinary();
+    if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
         reportError(Arc->getFileName(), EC.message());
       continue;
     }
 
-    if (ObjectFile *Obj = dyn_cast<ObjectFile>(child.get()))
+    if (ObjectFile *Obj = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
       dumpObject(Obj);
     else
       reportError(Arc->getFileName(), readobj_error::unrecognized_file_format);

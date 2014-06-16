@@ -850,15 +850,15 @@ static void DumpObject(const ObjectFile *o) {
 static void DumpArchive(const Archive *a) {
   for (Archive::child_iterator i = a->child_begin(), e = a->child_end(); i != e;
        ++i) {
-    std::unique_ptr<Binary> child;
-    if (std::error_code EC = i->getAsBinary(child)) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+    if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
         errs() << ToolName << ": '" << a->getFileName() << "': " << EC.message()
                << ".\n";
       continue;
     }
-    if (ObjectFile *o = dyn_cast<ObjectFile>(child.get()))
+    if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
       DumpObject(o);
     else
       errs() << ToolName << ": '" << a->getFileName() << "': "

@@ -115,18 +115,14 @@ Archive::Child Archive::Child::getNext() const {
   return Child(Parent, NextLoc);
 }
 
-std::error_code Archive::Child::getName(StringRef &Result) const {
+ErrorOr<StringRef> Archive::Child::getName() const {
   StringRef name = getRawName();
   // Check if it's a special name.
   if (name[0] == '/') {
-    if (name.size() == 1) { // Linker member.
-      Result = name;
-      return object_error::success;
-    }
-    if (name.size() == 2 && name[1] == '/') { // String table.
-      Result = name;
-      return object_error::success;
-    }
+    if (name.size() == 1) // Linker member.
+      return name;
+    if (name.size() == 2 && name[1] == '/') // String table.
+      return name;
     // It's a long name.
     // Get the offset.
     std::size_t offset;
@@ -147,53 +143,45 @@ std::error_code Archive::Child::getName(StringRef &Result) const {
     // GNU long file names end with a /.
     if (Parent->kind() == K_GNU) {
       StringRef::size_type End = StringRef(addr).find('/');
-      Result = StringRef(addr, End);
-    } else {
-      Result = addr;
+      return StringRef(addr, End);
     }
-    return object_error::success;
+    return StringRef(addr);
   } else if (name.startswith("#1/")) {
     uint64_t name_size;
     if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
       llvm_unreachable("Long name length is not an ingeter");
-    Result = Data.substr(sizeof(ArchiveMemberHeader), name_size)
+    return Data.substr(sizeof(ArchiveMemberHeader), name_size)
         .rtrim(StringRef("\0", 1));
-    return object_error::success;
   }
   // It's a simple name.
   if (name[name.size() - 1] == '/')
-    Result = name.substr(0, name.size() - 1);
-  else
-    Result = name;
-  return object_error::success;
+    return name.substr(0, name.size() - 1);
+  return name;
 }
 
-std::error_code
-Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
-                                bool FullPath) const {
-  StringRef Name;
-  if (std::error_code ec = getName(Name))
-    return ec;
-  SmallString<128> Path;
-  Result.reset(MemoryBuffer::getMemBuffer(
-      getBuffer(), FullPath ? (Twine(Parent->getFileName()) + "(" + Name + ")")
-                                  .toStringRef(Path)
-                            : Name,
-      false));
-  return std::error_code();
-}
-
-std::error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
-                                            LLVMContext *Context) const {
-  std::unique_ptr<Binary> ret;
-  std::unique_ptr<MemoryBuffer> Buff;
-  if (std::error_code ec = getMemoryBuffer(Buff))
-    return ec;
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.release(), Context);
-  if (std::error_code EC = BinaryOrErr.getError())
+ErrorOr<std::unique_ptr<MemoryBuffer>>
+Archive::Child::getMemoryBuffer(bool FullPath) const {
+  ErrorOr<StringRef> NameOrErr = getName();
+  if (std::error_code EC = NameOrErr.getError())
     return EC;
-  Result.reset(BinaryOrErr.get());
-  return object_error::success;
+  StringRef Name = NameOrErr.get();
+  SmallString<128> Path;
+  std::unique_ptr<MemoryBuffer> Ret(MemoryBuffer::getMemBuffer(
+      getBuffer(),
+      FullPath
+          ? (Twine(Parent->getFileName()) + "(" + Name + ")").toStringRef(Path)
+          : Name,
+      false));
+  return std::move(Ret);
+}
+
+ErrorOr<std::unique_ptr<Binary>>
+Archive::Child::getAsBinary(LLVMContext *Context) const {
+  std::unique_ptr<Binary> ret;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr = getMemoryBuffer();
+  if (std::error_code EC = BuffOrErr.getError())
+    return EC;
+  return createBinary(BuffOrErr.get().release(), Context);
 }
 
 ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {
@@ -256,9 +244,11 @@ Archive::Archive(MemoryBuffer *source, std::error_code &ec)
   if (Name.startswith("#1/")) {
     Format = K_BSD;
     // We know this is BSD, so getName will work since there is no string table.
-    ec = i->getName(Name);
+    ErrorOr<StringRef> NameOrErr = i->getName();
+    ec = NameOrErr.getError();
     if (ec)
       return;
+    Name = NameOrErr.get();
     if (Name == "__.SYMDEF SORTED") {
       SymbolTable = i;
       ++i;
@@ -336,12 +326,11 @@ Archive::child_iterator Archive::child_end() const {
   return Child(this, nullptr);
 }
 
-std::error_code Archive::Symbol::getName(StringRef &Result) const {
-  Result = StringRef(Parent->SymbolTable->getBuffer().begin() + StringIndex);
-  return object_error::success;
+StringRef Archive::Symbol::getName() const {
+  return Parent->SymbolTable->getBuffer().begin() + StringIndex;
 }
 
-std::error_code Archive::Symbol::getMember(child_iterator &Result) const {
+ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
   const char *Buf = Parent->SymbolTable->getBuffer().begin();
   const char *Offsets = Buf + 4;
   uint32_t Offset = 0;
@@ -381,9 +370,8 @@ std::error_code Archive::Symbol::getMember(child_iterator &Result) const {
   }
 
   const char *Loc = Parent->getData().begin() + Offset;
-  Result = Child(Parent, Loc);
-
-  return object_error::success;
+  child_iterator Iter(Child(Parent, Loc));
+  return Iter;
 }
 
 Archive::Symbol Archive::Symbol::getNext() const {
@@ -441,16 +429,15 @@ Archive::symbol_iterator Archive::symbol_end() const {
 Archive::child_iterator Archive::findSym(StringRef name) const {
   Archive::symbol_iterator bs = symbol_begin();
   Archive::symbol_iterator es = symbol_end();
-  Archive::child_iterator result;
-  
-  StringRef symname;
+
   for (; bs != es; ++bs) {
-    if (bs->getName(symname))
+    StringRef SymName = bs->getName();
+    if (SymName == name) {
+      ErrorOr<Archive::child_iterator> ResultOrErr = bs->getMember();
+      // FIXME: Should we really eat the error?
+      if (ResultOrErr.getError())
         return child_end();
-    if (symname == name) {
-      if (bs->getMember(result))
-        return child_end();
-      return result;
+      return ResultOrErr.get();
     }
   }
   return child_end();

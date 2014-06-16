@@ -305,9 +305,13 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {
-      std::unique_ptr<object::Binary> ChildBin;
       // FIXME: Support nested archives?
-      if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {
+      ErrorOr<std::unique_ptr<object::Binary>> ChildBinOrErr =
+          ChildIt->getAsBinary();
+      if (ChildBinOrErr.getError())
+        continue;
+      std::unique_ptr<object::Binary> ChildBin = std::move(ChildBinOrErr.get());
+      if (ChildBin->isObject()) {
         std::unique_ptr<object::ObjectFile> OF(
             static_cast<object::ObjectFile *>(ChildBin.release()));
         // This causes the object file to be loaded.

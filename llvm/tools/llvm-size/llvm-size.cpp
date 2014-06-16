@@ -245,12 +245,12 @@ static void PrintFileSectionSizes(StringRef file) {
     // This is an archive. Iterate over each member and display its sizes.
     for (object::Archive::child_iterator i = a->child_begin(),
                                          e = a->child_end(); i != e; ++i) {
-      std::unique_ptr<Binary> child;
-      if (std::error_code ec = i->getAsBinary(child)) {
-        errs() << ToolName << ": " << file << ": " << ec.message() << ".\n";
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+      if (std::error_code EC = ChildOrErr.getError()) {
+        errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
         continue;
       }
-      if (ObjectFile *o = dyn_cast<ObjectFile>(child.get())) {
+      if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
         if (OutputFormat == sysv)
           outs() << o->getFileName() << "   (ex " << a->getFileName()
                   << "):\n";

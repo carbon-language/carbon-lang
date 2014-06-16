@@ -369,8 +369,9 @@ static void performReadOperation(ArchiveOperation Operation,
   for (object::Archive::child_iterator I = OldArchive->child_begin(),
                                        E = OldArchive->child_end();
        I != E; ++I) {
-    StringRef Name;
-    failIfError(I->getName(Name));
+    ErrorOr<StringRef> NameOrErr = I->getName();
+    failIfError(NameOrErr.getError());
+    StringRef Name = NameOrErr.get();
 
     if (!Members.empty() &&
         std::find(Members.begin(), Members.end(), Name) == Members.end())
@@ -544,8 +545,9 @@ computeNewArchiveMembers(ArchiveOperation Operation,
                                          E = OldArchive->child_end();
          I != E; ++I) {
       int Pos = Ret.size();
-      StringRef Name;
-      failIfError(I->getName(Name));
+      ErrorOr<StringRef> NameOrErr = I->getName();
+      failIfError(NameOrErr.getError());
+      StringRef Name = NameOrErr.get();
       if (Name == PosName) {
         assert(AddAfter || AddBefore);
         if (AddBefore)
@@ -783,7 +785,10 @@ static void performWriteOperation(ArchiveOperation Operation,
 
     } else {
       object::Archive::child_iterator OldMember = Member.getOld();
-      failIfError(OldMember->getMemoryBuffer(MemberBuffer));
+      ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
+          OldMember->getMemoryBuffer();
+      failIfError(MemberBufferOrErr.getError());
+      MemberBuffer = std::move(MemberBufferOrErr.get());
     }
     MemberBuffers[I] = MemberBuffer.release();
   }
