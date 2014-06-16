@@ -744,6 +744,9 @@ ReadThreadPointerOperation::Execute(ProcessMonitor *monitor)
     const ArchSpec& arch = monitor->GetProcess().GetTarget().GetArchitecture();
     switch(arch.GetMachine())
     {
+#if defined(__i386__) || defined(__x86_64__)
+    // Note that struct user below has a field named i387 which is x86-specific.
+    // Therefore, this case should be compiled only for x86-based systems.
     case llvm::Triple::x86:
     {
         // Find the GS register location for our host architecture.
@@ -770,6 +773,7 @@ ReadThreadPointerOperation::Execute(ProcessMonitor *monitor)
         *m_addr = tmp[1];
         break;
     }
+#endif
     case llvm::Triple::x86_64:
         // Read the FS register base.
         m_result = (PTRACE(PTRACE_ARCH_PRCTL, m_tid, m_addr, (void *)ARCH_GET_FS, 0) == 0);
