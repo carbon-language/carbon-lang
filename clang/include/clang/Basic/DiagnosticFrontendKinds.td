@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-class BackendInfo : CatBackend, DefaultWarnShowInSystemHeader;
+class BackendInfo : CatBackend, ShowInSystemHeader;
 
 let Component = "Frontend" in {
 

@@ -69,7 +69,7 @@ class Diagnostic<string text, DiagClass DC, Severity defaultmapping> {
   SFINAEResponse SFINAE = SFINAE_Suppress;
   bit            AccessControl = 0;
   bit            WarningNoWerror = 0;
-  bit            WarningShowInSystemHeader = 0;
+  bit            ShowInSystemHeader = 0;
   Severity       DefaultSeverity = defaultmapping;
   DiagGroup      Group;
   string         CategoryName = "";
@@ -85,8 +85,14 @@ class AccessControl {
   SFINAEResponse SFINAE = SFINAE_AccessControl;
 }
 
+class ShowInSystemHeader {
+  bit ShowInSystemHeader = 1;
+}
+
 // FIXME: ExtWarn and Extension should also be SFINAEFailure by default.
-class Error<string str>     : Diagnostic<str, CLASS_ERROR, SEV_Error>, SFINAEFailure;
+class Error<string str>     : Diagnostic<str, CLASS_ERROR, SEV_Error>, SFINAEFailure {
+  bit ShowInSystemHeader = 1;
+}
 class Warning<string str>   : Diagnostic<str, CLASS_WARNING, SEV_Warning>;
 class Remark<string str>    : Diagnostic<str, CLASS_REMARK, SEV_Ignored>;
 class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, SEV_Ignored>;
@@ -100,9 +106,6 @@ class DefaultError  { Severity DefaultSeverity = SEV_Error; }
 class DefaultFatal  { Severity DefaultSeverity = SEV_Fatal; }
 class DefaultWarnNoWerror {
   bit WarningNoWerror = 1;
-}
-class DefaultWarnShowInSystemHeader {
-  bit WarningShowInSystemHeader = 1;
 }
 class DefaultRemark { Severity DefaultSeverity = SEV_Remark; }
 

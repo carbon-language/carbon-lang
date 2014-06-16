@@ -254,10 +254,8 @@ private:
   getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
                      const DiagnosticsEngine &Diag) const LLVM_READONLY;
 
-  /// \brief An internal implementation helper used when \p DiagClass is
-  /// already known.
   diag::Severity
-  getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass, SourceLocation Loc,
+  getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
                         const DiagnosticsEngine &Diag) const LLVM_READONLY;
 
   /// \brief Used to report a diagnostic that is finally fully formed.

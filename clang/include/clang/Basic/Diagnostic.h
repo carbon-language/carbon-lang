@@ -651,8 +651,8 @@ public:
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.
   bool isIgnored(unsigned DiagID, SourceLocation Loc) const {
-    return Diags->getDiagnosticLevel(DiagID, Loc, *this) ==
-           DiagnosticIDs::Ignored;
+    return Diags->getDiagnosticSeverity(DiagID, Loc, *this) ==
+           diag::Severity::Ignored;
   }
 
   /// \brief Based on the way the client configured the DiagnosticsEngine

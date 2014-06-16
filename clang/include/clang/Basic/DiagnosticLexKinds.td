@@ -247,7 +247,7 @@ def err_invalid_pth_file : Error<
 
 let CategoryName = "User Defined Issues" in {
 def pp_hash_warning : Warning<"%0">,
-  InGroup<PoundWarning>, DefaultWarnShowInSystemHeader;
+  InGroup<PoundWarning>, ShowInSystemHeader;
 def err_pp_hash_error : Error<"%0">;
 }
 
@@ -544,7 +544,7 @@ def err_pp_eof_in_arc_cf_code_audited : Error<
 
 def warn_pp_date_time : Warning<
   "expansion of date or time macro is not reproducible">,
-  DefaultWarnShowInSystemHeader, DefaultIgnore, InGroup<DiagGroup<"date-time">>;
+  ShowInSystemHeader, DefaultIgnore, InGroup<DiagGroup<"date-time">>;
 
 // Module map parsing
 def err_mmap_unknown_token : Error<"skipping stray token">;

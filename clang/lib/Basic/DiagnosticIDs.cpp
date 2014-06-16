@@ -394,7 +394,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
   if (DiagClass == CLASS_NOTE) return DiagnosticIDs::Note;
-  return toLevel(getDiagnosticSeverity(DiagID, DiagClass, Loc, Diag));
+  return toLevel(getDiagnosticSeverity(DiagID, Loc, Diag));
 }
 
 /// \brief Based on the way the client configured the Diagnostic
@@ -404,10 +404,9 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 /// \param Loc The source location we are interested in finding out the
 /// diagnostic state. Can be null in order to query the latest state.
 diag::Severity
-DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass,
-                                     SourceLocation Loc,
+DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
                                      const DiagnosticsEngine &Diag) const {
-  assert(DiagClass != CLASS_NOTE);
+  assert(getBuiltinDiagClass(DiagID) != CLASS_NOTE);
 
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
@@ -431,7 +430,9 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass,
 
   // Diagnostics of class REMARK are either printed as remarks or in case they
   // have been added to -Werror they are printed as errors.
-  if (DiagClass == CLASS_REMARK && Result == diag::Severity::Warning)
+  // FIXME: Disregarding user-requested remark mappings like this is bogus.
+  if (Result == diag::Severity::Warning &&
+      getBuiltinDiagClass(DiagID) == CLASS_REMARK)
     Result = diag::Severity::Remark;
 
   // Ignore -pedantic diagnostics inside __extension__ blocks.
@@ -491,8 +492,7 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, unsigned DiagClass,
   // If we are in a system header, we ignore it. We look at the diagnostic class
   // because we also want to ignore extensions and warnings in -Werror and
   // -pedantic-errors modes, which *map* warnings/extensions to errors.
-  if (Result >= diag::Severity::Warning && DiagClass != CLASS_ERROR &&
-      !ShowInSystemHeader && Diag.SuppressSystemWarnings && Loc.isValid() &&
+  if (Diag.SuppressSystemWarnings && !ShowInSystemHeader && Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(
           Diag.getSourceManager().getExpansionLoc(Loc)))
     return diag::Severity::Ignored;

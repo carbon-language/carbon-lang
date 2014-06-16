@@ -571,8 +571,7 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
     else
       OS << ", false";
 
-    // Default warning show in system header bit.
-    if (R.getValueAsBit("WarningShowInSystemHeader"))
+    if (R.getValueAsBit("ShowInSystemHeader"))
       OS << ", true";
     else
       OS << ", false";
