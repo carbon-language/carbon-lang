@@ -10,10 +10,10 @@
 ; with "clang++ -S -emit-llvm -fsanitize=address -O0 -g test.cc"
 
 ; First, argument variable "y" resides in %rdi:
-; CHECK: DEBUG_VALUE: bar:y <- RDI
+; CHECK: DEBUG_VALUE: bar:y <- RDX
 
 ; Then its address is stored in a location on a stack:
-; CHECK: movq %rdi, [[OFFSET:[0-9]+]](%rsp)
+; CHECK: movq %rdx, [[OFFSET:[0-9]+]](%rsp)
 ; CHECK-NEXT: [[START_LABEL:.Ltmp[0-9]+]]
 ; CHECK-NEXT: DEBUG_VALUE: bar:y <- [RSP+[[OFFSET]]]
 ; This location should be valid until the end of the function.
@@ -26,7 +26,7 @@
 ; CHECK-NEXT: .quad .Lset{{[0-9]+}}
 ; CHECK-NEXT: .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0
 ; CHECK-NEXT: .quad .Lset{{[0-9]+}}
-; CHECK: DW_OP_reg5
+; CHECK: DW_OP_reg1
 
 ; Then it's addressed via %rsp:
 ; CHECK:      .Lset{{[0-9]+}} = [[START_LABEL]]-.Lfunc_begin0

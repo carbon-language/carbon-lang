@@ -2709,6 +2709,10 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
 
   // Materialize addresses with LEA instructions.
   if (isa<GlobalValue>(C)) {
+    //LEA can only handle 32 bit immediates
+    if (TM.getRelocationModel() == Reloc::Static && Subtarget->is64Bit())
+      return false;
+
     X86AddressMode AM;
     if (X86SelectAddress(C, AM)) {
       // If the expression is just a basereg, then we're done, otherwise we need
