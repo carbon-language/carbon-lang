@@ -17,7 +17,7 @@ define void @setup() {
 done:
   ret void
 
-  ; CHECK: movl $_NO_MATCH, {{.*}}
+  ; CHECK: movabsq $_NO_MATCH, {{.*}}
 }
 
 ; Function Attrs: nounwind

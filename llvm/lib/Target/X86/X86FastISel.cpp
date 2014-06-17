@@ -2813,15 +2813,8 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
     return 0;
   }
 
-  // Materialize addresses with LEA instructions.
+  // Materialize addresses with LEA/MOV instructions.
   if (isa<GlobalValue>(C)) {
-    // LEA can only handle 32 bit immediates. Currently this happens pretty
-    // rarely, so rather than deal with it just bail out of fast isel. If any
-    // architectures endis up needing to use this path a lot then fast isel
-    // could get the address with a MOV64ri and use that to load the value.
-    if (TM.getRelocationModel() == Reloc::Static && Subtarget->is64Bit())
-      return false;
-
     X86AddressMode AM;
     if (X86SelectAddress(C, AM)) {
       // If the expression is just a basereg, then we're done, otherwise we need
@@ -2830,10 +2823,19 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
           AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == nullptr)
         return AM.Base.Reg;
 
-      Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
       unsigned ResultReg = createResultReg(RC);
-      addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+      if (TM.getRelocationModel() == Reloc::Static &&
+          TLI.getPointerTy() == MVT::i64) {
+        // The displacement code be more than 32 bits away so we need to use
+        // an instruction with a 64 bit immediate
+        Opc = X86::MOV64ri;
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(Opc), ResultReg).addGlobalAddress(cast<GlobalValue>(C));
+      } else {
+        Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
+        addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                              TII.get(Opc), ResultReg), AM);
+      }
       return ResultReg;
     }
     return 0;
