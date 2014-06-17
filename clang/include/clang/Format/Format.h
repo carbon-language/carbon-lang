@@ -85,12 +85,22 @@ struct FormatStyle {
   /// \brief The penalty for breaking a function call after "call(".
   unsigned PenaltyBreakBeforeFirstCallParameter;
 
-  /// \brief Set whether & and * bind to the type as opposed to the variable.
-  bool PointerBindsToType;
+  /// \brief The & and * alignment style.
+  enum PointerAlignmentStyle {
+    /// Align pointer to the left.
+    PAS_Left,
+    /// Align pointer to the right.
+    PAS_Right,
+    /// Align pointer in the middle.
+    PAS_Middle
+  };
 
-  /// \brief If \c true, analyze the formatted file for the most common binding
-  /// and use \c PointerBindsToType only as fallback.
-  bool DerivePointerBinding;
+  /// Pointer and reference alignment style.
+  PointerAlignmentStyle PointerAlignment;
+
+  /// \brief If \c true, analyze the formatted file for the most common
+  /// alignment of & and *. \c PointerAlignment is then used only as fallback.
+  bool DerivePointerAlignment;
 
   /// \brief The extra indent or outdent of access modifiers, e.g. \c public:.
   int AccessModifierOffset;
@@ -373,7 +383,7 @@ struct FormatStyle {
            ColumnLimit == R.ColumnLimit &&
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
-           DerivePointerBinding == R.DerivePointerBinding &&
+           DerivePointerAlignment == R.DerivePointerAlignment &&
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
            IndentCaseLabels == R.IndentCaseLabels &&
@@ -391,7 +401,7 @@ struct FormatStyle {
            PenaltyBreakString == R.PenaltyBreakString &&
            PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
            PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
-           PointerBindsToType == R.PointerBindsToType &&
+           PointerAlignment == R.PointerAlignment &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
            Standard == R.Standard && TabWidth == R.TabWidth &&

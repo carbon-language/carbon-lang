@@ -97,6 +97,20 @@ struct ScalarEnumerationTraits<FormatStyle::NamespaceIndentationKind> {
 };
 
 template <>
+struct ScalarEnumerationTraits<FormatStyle::PointerAlignmentStyle> {
+  static void enumeration(IO &IO,
+                          FormatStyle::PointerAlignmentStyle &Value) {
+    IO.enumCase(Value, "Middle", FormatStyle::PAS_Middle);
+    IO.enumCase(Value, "Left", FormatStyle::PAS_Left);
+    IO.enumCase(Value, "Right", FormatStyle::PAS_Right);
+
+    // For backward compability.
+    IO.enumCase(Value, "true", FormatStyle::PAS_Left);
+    IO.enumCase(Value, "false", FormatStyle::PAS_Right);
+  }
+};
+
+template <>
 struct ScalarEnumerationTraits<FormatStyle::SpaceBeforeParensOptions> {
   static void enumeration(IO &IO,
                           FormatStyle::SpaceBeforeParensOptions &Value) {
@@ -173,7 +187,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("ColumnLimit", Style.ColumnLimit);
     IO.mapOptional("ConstructorInitializerAllOnOneLineOrOnePerLine",
                    Style.ConstructorInitializerAllOnOneLineOrOnePerLine);
-    IO.mapOptional("DerivePointerBinding", Style.DerivePointerBinding);
+    IO.mapOptional("DerivePointerAlignment", Style.DerivePointerAlignment);
     IO.mapOptional("ExperimentalAutoDetectBinPacking",
                    Style.ExperimentalAutoDetectBinPacking);
     IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
@@ -193,7 +207,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("PenaltyExcessCharacter", Style.PenaltyExcessCharacter);
     IO.mapOptional("PenaltyReturnTypeOnItsOwnLine",
                    Style.PenaltyReturnTypeOnItsOwnLine);
-    IO.mapOptional("PointerBindsToType", Style.PointerBindsToType);
+    IO.mapOptional("PointerAlignment", Style.PointerAlignment);
     IO.mapOptional("SpacesBeforeTrailingComments",
                    Style.SpacesBeforeTrailingComments);
     IO.mapOptional("Cpp11BracedListStyle", Style.Cpp11BracedListStyle);
@@ -221,6 +235,8 @@ template <> struct MappingTraits<FormatStyle> {
     if (!IO.outputting()) {
       IO.mapOptional("SpaceAfterControlStatementKeyword",
                      Style.SpaceBeforeParens);
+      IO.mapOptional("PointerBindsToType", Style.PointerAlignment);
+      IO.mapOptional("DerivePointerBinding", Style.DerivePointerAlignment);
     }
     IO.mapOptional("SpaceBeforeParens", Style.SpaceBeforeParens);
     IO.mapOptional("DisableFormat", Style.DisableFormat);
@@ -306,7 +322,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ConstructorInitializerIndentWidth = 4;
   LLVMStyle.ContinuationIndentWidth = 4;
   LLVMStyle.Cpp11BracedListStyle = true;
-  LLVMStyle.DerivePointerBinding = false;
+  LLVMStyle.DerivePointerAlignment = false;
   LLVMStyle.ExperimentalAutoDetectBinPacking = false;
   LLVMStyle.ForEachMacros.push_back("foreach");
   LLVMStyle.ForEachMacros.push_back("Q_FOREACH");
@@ -320,7 +336,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.NamespaceIndentation = FormatStyle::NI_None;
   LLVMStyle.ObjCSpaceAfterProperty = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
-  LLVMStyle.PointerBindsToType = false;
+  LLVMStyle.PointerAlignment = FormatStyle::PAS_Right;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.Standard = FormatStyle::LS_Cpp11;
   LLVMStyle.UseTab = FormatStyle::UT_Never;
@@ -355,13 +371,13 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   GoogleStyle.AlwaysBreakBeforeMultilineStrings = true;
   GoogleStyle.AlwaysBreakTemplateDeclarations = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
-  GoogleStyle.DerivePointerBinding = true;
+  GoogleStyle.DerivePointerAlignment = true;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.IndentFunctionDeclarationAfterType = true;
   GoogleStyle.KeepEmptyLinesAtTheStartOfBlocks = false;
   GoogleStyle.ObjCSpaceAfterProperty = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
-  GoogleStyle.PointerBindsToType = true;
+  GoogleStyle.PointerAlignment = FormatStyle::PAS_Left;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
 
@@ -387,7 +403,7 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
   ChromiumStyle.AllowShortLoopsOnASingleLine = false;
   ChromiumStyle.BinPackParameters = false;
-  ChromiumStyle.DerivePointerBinding = false;
+  ChromiumStyle.DerivePointerAlignment = false;
   ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   return ChromiumStyle;
 }
@@ -397,12 +413,12 @@ FormatStyle getMozillaStyle() {
   MozillaStyle.AllowAllParametersOfDeclarationOnNextLine = false;
   MozillaStyle.Cpp11BracedListStyle = false;
   MozillaStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
-  MozillaStyle.DerivePointerBinding = true;
+  MozillaStyle.DerivePointerAlignment = true;
   MozillaStyle.IndentCaseLabels = true;
   MozillaStyle.ObjCSpaceAfterProperty = true;
   MozillaStyle.ObjCSpaceBeforeProtocolList = false;
   MozillaStyle.PenaltyReturnTypeOnItsOwnLine = 200;
-  MozillaStyle.PointerBindsToType = true;
+  MozillaStyle.PointerAlignment = FormatStyle::PAS_Left;
   MozillaStyle.Standard = FormatStyle::LS_Cpp03;
   return MozillaStyle;
 }
@@ -419,7 +435,7 @@ FormatStyle getWebKitStyle() {
   Style.IndentWidth = 4;
   Style.NamespaceIndentation = FormatStyle::NI_Inner;
   Style.ObjCSpaceAfterProperty = true;
-  Style.PointerBindsToType = true;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
   Style.Standard = FormatStyle::LS_Cpp03;
   return Style;
 }
@@ -1906,11 +1922,11 @@ private:
         Tok = Tok->Next;
       }
     }
-    if (Style.DerivePointerBinding) {
+    if (Style.DerivePointerAlignment) {
       if (CountBoundToType > CountBoundToVariable)
-        Style.PointerBindsToType = true;
+        Style.PointerAlignment = FormatStyle::PAS_Left;
       else if (CountBoundToType < CountBoundToVariable)
-        Style.PointerBindsToType = false;
+        Style.PointerAlignment = FormatStyle::PAS_Right;
     }
     if (Style.Standard == FormatStyle::LS_Auto) {
       Style.Standard = HasCpp03IncompatibleFormat ? FormatStyle::LS_Cpp11

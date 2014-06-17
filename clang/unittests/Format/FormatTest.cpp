@@ -4587,7 +4587,7 @@ TEST_F(FormatTest, UnderstandsPointersToMembers) {
                "      aaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb);\n"
                "}");
   FormatStyle Style = getLLVMStyle();
-  Style.PointerBindsToType = true;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
   verifyFormat("typedef bool* (Class::*Member)() const;", Style);
 }
 
@@ -4823,7 +4823,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("T** t = new T*();");
 
   FormatStyle PointerLeft = getLLVMStyle();
-  PointerLeft.PointerBindsToType = true;
+  PointerLeft.PointerAlignment = FormatStyle::PAS_Left;
   verifyFormat("delete *x;", PointerLeft);
   verifyFormat("STATIC_ASSERT((a & b) == 0);");
   verifyFormat("STATIC_ASSERT(0 == (a & b));");
@@ -4857,6 +4857,22 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   // FIXME: We cannot handle this case yet; we might be able to figure out that
   // foo<x> d > v; doesn't make sense.
   verifyFormat("foo<a < b && c> d > v;");
+
+  FormatStyle PointerMiddle = getLLVMStyle();
+  PointerMiddle.PointerAlignment = FormatStyle::PAS_Middle;
+  verifyFormat("delete *x;", PointerMiddle);
+  verifyFormat("int * x;", PointerMiddle);
+  verifyFormat("template <int * y> f() {}", PointerMiddle);
+  verifyFormat("int * f(int * a) {}", PointerMiddle);
+  verifyFormat("int main(int argc, char ** argv) {}", PointerMiddle);
+  verifyFormat("Test::Test(int b) : a(b * b) {}", PointerMiddle);
+  verifyFormat("A<int *> a;", PointerMiddle);
+  verifyFormat("A<int **> a;", PointerMiddle);
+  verifyFormat("A<int *, int *> a;", PointerMiddle);
+  verifyFormat("A<int * []> a;", PointerMiddle);
+  verifyFormat("A = new SomeType * [Length]();", PointerMiddle);
+  verifyFormat("A = new SomeType * [Length];", PointerMiddle);
+  verifyFormat("T ** t = new T *;", PointerMiddle);
 }
 
 TEST_F(FormatTest, UnderstandsAttributes) {
@@ -4871,7 +4887,7 @@ TEST_F(FormatTest, UnderstandsEllipsis) {
   verifyFormat("template <class... Ts> void Foo(Ts *... ts) {}");
 
   FormatStyle PointersLeft = getLLVMStyle();
-  PointersLeft.PointerBindsToType = true;
+  PointersLeft.PointerAlignment = FormatStyle::PAS_Left;
   verifyFormat("template <class... Ts> void Foo(Ts*... ts) {}", PointersLeft);
 }
 
@@ -8071,12 +8087,11 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(BreakBeforeTernaryOperators);
   CHECK_PARSE_BOOL(BreakConstructorInitializersBeforeComma);
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);
-  CHECK_PARSE_BOOL(DerivePointerBinding);
+  CHECK_PARSE_BOOL(DerivePointerAlignment);
   CHECK_PARSE_BOOL(IndentCaseLabels);
   CHECK_PARSE_BOOL(KeepEmptyLinesAtTheStartOfBlocks);
   CHECK_PARSE_BOOL(ObjCSpaceAfterProperty);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);
-  CHECK_PARSE_BOOL(PointerBindsToType);
   CHECK_PARSE_BOOL(Cpp11BracedListStyle);
   CHECK_PARSE_BOOL(IndentFunctionDeclarationAfterType);
   CHECK_PARSE_BOOL(SpacesInParentheses);
@@ -8100,6 +8115,11 @@ TEST_F(FormatTest, ParsesConfiguration) {
               SpacesBeforeTrailingComments, 1234u);
   CHECK_PARSE("IndentWidth: 32", IndentWidth, 32u);
   CHECK_PARSE("ContinuationIndentWidth: 11", ContinuationIndentWidth, 11u);
+
+  Style.PointerAlignment = FormatStyle::PAS_Middle;
+  CHECK_PARSE("PointerAlignment: Left", PointerAlignment, FormatStyle::PAS_Left);
+  CHECK_PARSE("PointerAlignment: Right", PointerAlignment, FormatStyle::PAS_Right);
+  CHECK_PARSE("PointerAlignment: Middle", PointerAlignment, FormatStyle::PAS_Middle);
 
   Style.Standard = FormatStyle::LS_Auto;
   CHECK_PARSE("Standard: Cpp03", Standard, FormatStyle::LS_Cpp03);

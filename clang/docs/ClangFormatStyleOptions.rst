@@ -211,9 +211,12 @@ the configuration (without a prefix: ``Auto``).
   the parentheses of a function call with that name. If there is no name,
   a zero-length name is assumed.
 
-**DerivePointerBinding** (``bool``)
-  If ``true``, analyze the formatted file for the most common binding
-  and use ``PointerBindsToType`` only as fallback.
+**DerivePointerAlignment** (``bool``)
+  If ``true``, analyze the formatted file for the most common
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
+
+**DisableFormat** (``bool``)
+  Disables formatting at all.
 
 **ExperimentalAutoDetectBinPacking** (``bool``)
   If ``true``, clang-format detects whether function calls and
@@ -314,8 +317,18 @@ the configuration (without a prefix: ``Auto``).
   Penalty for putting the return type of a function onto its own
   line.
 
-**PointerBindsToType** (``bool``)
-  Set whether & and * bind to the type as opposed to the variable.
+**PointerAlignment** (``PointerAlignmentStyle``)
+  Pointer and reference alignment style.
+
+  Possible values:
+
+  * ``PAS_Left`` (in configuration: ``Left``)
+    Align pointer to the left.
+  * ``PAS_Right`` (in configuration: ``Right``)
+    Align pointer to the right.
+  * ``PAS_Middle`` (in configuration: ``Middle``)
+    Align pointer in the middle.
+
 
 **SpaceBeforeAssignmentOperators** (``bool``)
   If ``false``, spaces will be removed before assignment operators.
