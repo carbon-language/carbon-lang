@@ -764,6 +764,11 @@ void StmtPrinter::VisitOMPSimdDirective(OMPSimdDirective *Node) {
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPForDirective(OMPForDirective *Node) {
+  Indent() << "#pragma omp for ";
+  PrintOMPExecutableDirective(Node);
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//
