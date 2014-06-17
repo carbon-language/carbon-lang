@@ -1119,22 +1119,35 @@ are listed below.
    only. This only applies to the AArch64 architecture.
 
 
-Using Sampling Profilers for Optimization
------------------------------------------
+Profile Guided Optimization
+---------------------------
+
+Profile information enables better optimization. For example, knowing that a
+branch is taken very frequently helps the compiler make better decisions when
+ordering basic blocks. Knowing that a function ``foo`` is called more
+frequently than another function ``bar`` helps the inliner.
+
+Clang supports profile guided optimization with two different kinds of
+profiling. A sampling profiler can generate a profile with very low runtime
+overhead, or you can build an instrumented version of the code that collects
+more detailed profile information. Both kinds of profiles can provide execution
+counts for instructions in the code and information on branches taken and
+function invocation.
+
+Regardless of which kind of profiling you use, be careful to collect profiles
+by running your code with inputs that are representative of the typical
+behavior. Code that is not exercised in the profile will be optimized as if it
+is unimportant, and the compiler may make poor optimization choices for code
+that is disproportionately used while profiling.
+
+Using Sampling Profilers
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sampling profilers are used to collect runtime information, such as
 hardware counters, while your application executes. They are typically
 very efficient and do not incur a large runtime overhead. The
 sample data collected by the profiler can be used during compilation
 to determine what the most executed areas of the code are.
-
-In particular, sample profilers can provide execution counts for all
-instructions in the code and information on branches taken and function
-invocation. The compiler can use this information in its optimization
-cost models. For example, knowing that a branch is taken very
-frequently helps the compiler make better decisions when ordering
-basic blocks. Knowing that a function ``foo`` is called more
-frequently than another function ``bar`` helps the inliner.
 
 Using the data from a sample profiler requires some changes in the way
 a program is built. Before the compiler can use profiling information,
@@ -1195,7 +1208,7 @@ usual build cycle when using sample profilers for optimization:
 
 
 Sample Profile Format
-^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 If you are not using Linux Perf to collect profiles, you will need to
 write a conversion tool from your profiler to LLVM's format. This section
@@ -1277,6 +1290,60 @@ d. [OPTIONAL] Potential call targets and samples. If present, this
    The above means that at relative line offset 130 there is a call
    instruction that calls one of ``foo()``, ``bar()`` and ``baz()``,
    with ``baz()`` being the relatively more frequently called target.
+
+
+Profiling with Instrumentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clang also supports profiling via instrumentation. This requires building a
+special instrumented version of the code and has some runtime
+overhead during the profiling, but it provides more detailed results than a
+sampling profiler. It also provides reproducible results, at least to the
+extent that the code behaves consistently across runs.
+
+Here are the steps for using profile guided optimization with
+instrumentation:
+
+1. Build an instrumented version of the code by compiling and linking with the
+   ``-fprofile-instr-generate`` option.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -fprofile-instr-generate code.cc -o code
+
+2. Run the instrumented executable with inputs that reflect the typical usage.
+   By default, the profile data will be written to a ``default.profraw`` file
+   in the current directory. You can override that default by setting the
+   ``LLVM_PROFILE_FILE`` environment variable to specify an alternate file.
+   Any instance of ``%p`` in that file name will be replaced by the process
+   ID, so that you can easily distinguish the profile output from multiple
+   runs.
+
+   .. code-block:: console
+
+     $ LLVM_PROFILE_FILE="code-%p.profraw" ./code
+
+3. Combine profiles from multiple runs and convert the "raw" profile format to
+   the input expected by clang. Use the ``merge`` command of the llvm-profdata
+   tool to do this.
+
+   .. code-block:: console
+
+     $ llvm-profdata merge -output=code.profdata code-*.profraw
+
+   Note that this step is necessary even when there is only one "raw" profile,
+   since the merge operation also changes the file format.
+
+4. Build the code again using the ``-fprofile-instr-use`` option to specify the
+   collected profile data.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -fprofile-instr-use=code.profdata code.cc -o code
+
+   You can repeat step 4 as often as you like without regenerating the
+   profile. As you make changes to your code, clang may no longer be able to
+   use the profile data. It will warn you when this happens.
 
 
 Controlling Size of Debug Information
