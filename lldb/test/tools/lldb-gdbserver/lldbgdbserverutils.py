@@ -309,6 +309,30 @@ def parse_threadinfo_response(response_packet):
     # Return list of thread ids
     return [int(thread_id_hex,16) for thread_id_hex in response_packet.split(",") if len(thread_id_hex) > 0]
 
+def unpack_endian_binary_string(endian, value_string):
+    """Unpack a gdb-remote binary (post-unescaped, i.e. not escaped) response to an unsigned int given endianness of the inferior."""
+    if not endian:
+        raise Exception("endian cannot be None")
+    if not value_string or len(value_string) < 1:
+        raise Exception("value_string cannot be None or empty")
+
+    if endian == 'little':
+        value = 0
+        i = 0
+        while len(value_string) > 0:
+            value += (ord(value_string[0]) << i)
+            value_string = value_string[1:]
+            i += 8
+        return value
+    elif endian == 'big':
+        value = 0
+        while len(value_string) > 0:
+            value = (value << 8) + ord(value_string[0])
+            value_string = value_string[1:]
+        return value
+    else:
+        # pdp is valid but need to add parse code once needed.
+        raise Exception("unsupported endian:{}".format(endian))
 
 def unpack_register_hex_unsigned(endian, value_string):
     """Unpack a gdb-remote $p-style response to an unsigned int given endianness of inferior."""
@@ -316,7 +340,7 @@ def unpack_register_hex_unsigned(endian, value_string):
         raise Exception("endian cannot be None")
     if not value_string or len(value_string) < 1:
         raise Exception("value_string cannot be None or empty")
-    
+
     if endian == 'little':
         value = 0
         i = 0
@@ -623,10 +647,10 @@ class MatchRemoteOutputEntry(GdbRemoteEntryBase):
         self._regex_mode = regex_mode
         self._capture = capture
         self._matched = False
-        
+
         if not self._regex:
             raise Exception("regex cannot be None")
-        
+
         if not self._regex_mode in ["match", "search"]:
             raise Exception("unsupported regex mode \"{}\": must be \"match\" or \"search\"".format(self._regex_mode))
 
@@ -654,7 +678,7 @@ class MatchRemoteOutputEntry(GdbRemoteEntryBase):
         # If we don't have any content yet, we don't match.
         if len(accumulated_output) < 1:
             return context
-        
+
         # Check if we match
         if self._regex_mode == "match":
             match = self._regex.match(accumulated_output)
@@ -662,16 +686,16 @@ class MatchRemoteOutputEntry(GdbRemoteEntryBase):
             match = self._regex.search(accumulated_output)
         else:
             raise Exception("Unexpected regex mode: {}".format(self._regex_mode))
-        
+
         # If we don't match, wait to try again after next $O content, or time out.
         if not match:
             # print "re pattern \"{}\" did not match against \"{}\"".format(self._regex.pattern, accumulated_output)
             return context
-        
+
         # We do match.
         self._matched = True
         # print "re pattern \"{}\" matched against \"{}\"".format(self._regex.pattern, accumulated_output)
-        
+
         # Collect up any captures into the context.
         if self._capture:
             # Handle captures.

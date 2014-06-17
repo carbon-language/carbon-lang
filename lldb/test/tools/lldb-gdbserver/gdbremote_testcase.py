@@ -578,4 +578,55 @@ class GdbRemoteTestCaseBase(TestBase):
                 return reg_info
         return None
 
-        
+    def decode_gdbremote_binary(self, encoded_bytes):
+        decoded_bytes = ""
+        i = 0
+        while i < len(encoded_bytes):
+            if encoded_bytes[i] == "}":
+                # Handle escaped char.
+                self.assertTrue(i + 1 < len(encoded_bytes))
+                decoded_bytes += chr(ord(encoded_bytes[i+1]) ^ 0x20)
+                i +=2
+            elif encoded_bytes[i] == "*":
+                # Handle run length encoding.
+                self.assertTrue(len(decoded_bytes) > 0)
+                self.assertTrue(i + 1 < len(encoded_bytes))
+                repeat_count = ord(encoded_bytes[i+1]) - 29
+                decoded_bytes += decoded_bytes[-1] * repeat_count
+                i += 2
+            else:
+                decoded_bytes += encoded_bytes[i]
+                i += 1
+        return decoded_bytes
+
+    def build_auxv_dict(self, endian, word_size, auxv_data):
+        self.assertIsNotNone(endian)
+        self.assertIsNotNone(word_size)
+        self.assertIsNotNone(auxv_data)
+
+        auxv_dict = {}
+
+        while len(auxv_data) > 0:
+            # Chop off key.
+            raw_key = auxv_data[:word_size]
+            auxv_data = auxv_data[word_size:]
+
+            # Chop of value.
+            raw_value = auxv_data[:word_size]
+            auxv_data = auxv_data[word_size:]
+
+            # Convert raw text from target endian.
+            key = unpack_endian_binary_string(endian, raw_key)
+            value = unpack_endian_binary_string(endian, raw_value)
+
+            # Handle ending entry.
+            if key == 0:
+                self.assertEquals(value, 0)
+                return auxv_dict
+
+            # The key should not already be present.
+            self.assertFalse(key in auxv_dict)
+            auxv_dict[key] = value
+
+        self.fail("should not reach here - implies required double zero entry not found")
+        return auxv_dict
