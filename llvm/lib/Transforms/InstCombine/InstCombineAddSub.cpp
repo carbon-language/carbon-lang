@@ -965,6 +965,21 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   return false;
 }
 
+/// WillNotOverflowUnsignedAdd - Return true if we can prove that:
+///    (zext (add LHS, RHS))  === (add (zext LHS), (zext RHS))
+bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
+  // There are different heuristics we can use for this. Here is a simple one.
+  // If the sign bit of LHS and that of RHS are both zero, no unsigned wrap.
+  bool LHSKnownNonNegative, LHSKnownNegative;
+  bool RHSKnownNonNegative, RHSKnownNegative;
+  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, DL, 0);
+  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, DL, 0);
+  if (LHSKnownNonNegative && RHSKnownNonNegative)
+    return true;
+
+  return false;
+}
+
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
@@ -1240,9 +1255,16 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return BinaryOperator::CreateOr(A, B);
   }
 
+  // TODO(jingyue): Consider WillNotOverflowSignedAdd and
+  // WillNotOverflowUnsignedAdd to reduce the number of invocations of
+  // computeKnownBits.
   if (!I.hasNoSignedWrap() && WillNotOverflowSignedAdd(LHS, RHS)) {
     Changed = true;
     I.setHasNoSignedWrap(true);
+  }
+  if (!I.hasNoUnsignedWrap() && WillNotOverflowUnsignedAdd(LHS, RHS)) {
+    Changed = true;
+    I.setHasNoUnsignedWrap(true);
   }
 
   return Changed ? &I : nullptr;

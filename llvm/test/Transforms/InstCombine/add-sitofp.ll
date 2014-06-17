@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep "add nsw i32"
+; RUN: opt < %s -instcombine -S | grep "add nuw nsw i32"
 
 define double @x(i32 %a, i32 %b) nounwind {
   %m = lshr i32 %a, 24
