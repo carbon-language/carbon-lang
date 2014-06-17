@@ -35,8 +35,14 @@ AArch64InstrInfo::AArch64InstrInfo(const AArch64Subtarget &STI)
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
 unsigned AArch64InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
-  const MCInstrDesc &Desc = MI->getDesc();
+  const MachineBasicBlock &MBB = *MI->getParent();
+  const MachineFunction *MF = MBB.getParent();
+  const MCAsmInfo *MAI = MF->getTarget().getMCAsmInfo();
 
+  if (MI->getOpcode() == AArch64::INLINEASM)
+    return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
+
+  const MCInstrDesc &Desc = MI->getDesc();
   switch (Desc.getOpcode()) {
   default:
     // Anything not explicitly designated otherwise is a nomal 4-byte insn.
