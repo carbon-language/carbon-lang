@@ -61,6 +61,9 @@ void EmitClangCommentCommandList(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeon(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeonSema(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeonTest(RecordKeeper &Records, raw_ostream &OS);
+void EmitNeon2(RecordKeeper &Records, raw_ostream &OS);
+void EmitNeonSema2(RecordKeeper &Records, raw_ostream &OS);
+void EmitNeonTest2(RecordKeeper &Records, raw_ostream &OS);
 
 void EmitClangAttrDocs(RecordKeeper &Records, raw_ostream &OS);
 

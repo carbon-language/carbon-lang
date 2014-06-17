@@ -5,7 +5,7 @@
 
 // rdar://13527900
 void vcopy_reject(float32x4_t vOut0, float32x4_t vAlpha, int t) {
-  vcopyq_laneq_f32(vOut0, 1, vAlpha, t); // expected-error {{argument to '__builtin_neon_vgetq_lane_f32' must be a constant integer}} expected-error {{initializing 'float32_t' (aka 'float') with an expression of incompatible type 'void'}}
+  vcopyq_laneq_f32(vOut0, 1, vAlpha, t); // expected-error {{argument to '__builtin_neon_vgetq_lane_f32' must be a constant integer}}
 }
 
 // rdar://problem/15256199

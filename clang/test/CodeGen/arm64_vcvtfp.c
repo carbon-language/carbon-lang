@@ -44,5 +44,5 @@ float32x4_t test_vcvtx_high_f32_f64(float32x2_t x, float64x2_t v) {
   return vcvtx_high_f32_f64(x, v);
   // CHECK: llvm.aarch64.neon.fcvtxn.v2f32.v2f64
   // CHECK: shufflevector
-  // CHECK-NEXT: ret
+  // CHECK: ret
 }
