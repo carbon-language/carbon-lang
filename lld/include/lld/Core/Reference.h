@@ -91,6 +91,7 @@ public:
     kindLayoutBefore = 3,
     // kindGroupChild is treated as a bidirected edge too.
     kindGroupChild = 4,
+    kindAssociate = 5,
   };
 
   // A value to be added to the value of a target

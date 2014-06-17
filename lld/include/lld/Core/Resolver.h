@@ -105,6 +105,7 @@ private:
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;
   llvm::DenseSet<const Atom *>  _liveAtoms;
+  llvm::DenseSet<const Atom *>  _deadAtoms;
   std::unique_ptr<MergedFile>   _result;
   llvm::DenseMap<const Atom *, llvm::DenseSet<const Atom *>> _reverseRef;
 };

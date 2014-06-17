@@ -174,6 +174,9 @@ private:
   // A map to get whether the section allows its contents to be merged or not.
   std::map<const coff_section *, DefinedAtom::Merge> _merge;
 
+  // COMDAT associative sections
+  std::map<const coff_section *, std::set<const coff_section *>> _association;
+
   // A sorted map to find an atom from a section and an offset within
   // the section.
   std::map<const coff_section *,
@@ -544,6 +547,7 @@ std::error_code FileCOFF::cacheSectionAttributes() {
   // section. It feels to me that it's unnecessarily complicated, but this is
   // how COFF works.
   for (auto i : _auxSymbol) {
+    // Read a section from the file
     const coff_symbol *sym = i.first;
     if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
         sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
@@ -552,19 +556,22 @@ std::error_code FileCOFF::cacheSectionAttributes() {
     const coff_section *sec;
     if (std::error_code ec = _obj->getSection(sym->SectionNumber, sec))
       return ec;
-
-    if (_merge.count(sec))
-      continue;
-    if (!(sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_COMDAT))
-      continue;
-
-    _comdatSections.insert(sec);
-
-    if (sym->NumberOfAuxSymbols == 0)
-      return llvm::object::object_error::parse_failed;
     const coff_aux_section_definition *aux =
         reinterpret_cast<const coff_aux_section_definition *>(i.second);
-    _merge[sec] = getMerge(aux);
+
+    if (sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_COMDAT) {
+      // Read aux symbol data.
+      _comdatSections.insert(sec);
+      _merge[sec] = getMerge(aux);
+    }
+
+    // Handle associative sections.
+    if (aux->Selection == llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+      const coff_section *parent;
+      if (std::error_code ec = _obj->getSection(aux->Number, parent))
+        return ec;
+      _association[parent].insert(sec);
+    }
   }
 
   // The sections that does not have auxiliary symbol are regular sections, in
@@ -699,6 +706,29 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
       definedAtoms.push_back(atom);
     }
   }
+
+  // A COMDAT section with SELECT_ASSOCIATIVE attribute refer to other
+  // section. If the referred section is linked to a binary, the
+  // referring section needs to be linked too. A typical use case of
+  // this attribute is a static initializer; a parent is a comdat BSS
+  // section, and a child is a static initializer code for the data.
+  //
+  // We add referring section contents to the referred section's
+  // associate list, so that Resolver takes care of them.
+  for (auto i : _association) {
+    const coff_section *parent = i.first;
+    const std::set<const coff_section *> &childSections = i.second;
+    assert(_sectionAtoms[parent].size() > 0);
+
+    COFFDefinedFileAtom *p = _sectionAtoms[parent][0];
+    for (const coff_section *sec : childSections) {
+      if (_sectionAtoms.count(sec)) {
+        assert(_sectionAtoms[sec].size() > 0);
+        p->addAssociate(_sectionAtoms[sec][0]);
+      }
+    }
+  }
+
   return std::error_code();
 }
 

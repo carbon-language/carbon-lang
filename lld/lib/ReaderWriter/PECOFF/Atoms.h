@@ -158,7 +158,6 @@ public:
   }
 
   void setAlignment(Alignment val) { _alignment = val; }
-
   SectionChoice sectionChoice() const override { return sectionCustomRequired; }
   StringRef customSectionName() const override { return _sectionName; }
   Scope scope() const override { return _scope; }
@@ -166,6 +165,13 @@ public:
   ContentPermissions permissions() const override { return _permissions; }
   uint64_t ordinal() const override { return _ordinal; }
   Alignment alignment() const override { return _alignment; }
+
+  void addAssociate(const DefinedAtom *other) {
+    auto *ref = new COFFReference(other, 0, lld::Reference::kindAssociate,
+                                  Reference::KindNamespace::all,
+                                  Reference::KindArch::all);
+    addReference(std::unique_ptr<COFFReference>(ref));
+  }
 
 private:
   StringRef _sectionName;

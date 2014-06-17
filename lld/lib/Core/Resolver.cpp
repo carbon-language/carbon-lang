@@ -277,6 +277,16 @@ void Resolver::updateReferences() {
   for (const Atom *atom : _atoms) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
       for (const Reference *ref : *defAtom) {
+        // A reference of type kindAssociate should't be updated.
+        // Instead, an atom having such reference will be removed
+        // if the target atom is coalesced away, so that they will
+        // go away as a group.
+        if (ref->kindNamespace() == lld::Reference::KindNamespace::all &&
+            ref->kindValue() == lld::Reference::kindAssociate) {
+          if (_symbolTable.isCoalescedAway(atom))
+            _deadAtoms.insert(ref->target());
+          continue;
+        }
         const Atom *newTarget = _symbolTable.replacement(ref->target());
         const_cast<Reference *>(ref)->setTarget(newTarget);
       }
@@ -399,7 +409,7 @@ bool Resolver::checkUndefines() {
 void Resolver::removeCoalescedAwayAtoms() {
   ScopedTask task(getDefaultDomain(), "removeCoalescedAwayAtoms");
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(), [&](const Atom *a) {
-                 return _symbolTable.isCoalescedAway(a);
+                 return _symbolTable.isCoalescedAway(a) || _deadAtoms.count(a);
                }),
                _atoms.end());
 }
