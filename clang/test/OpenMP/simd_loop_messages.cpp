@@ -243,10 +243,7 @@ int test_iteration_spaces() {
   for (ii = 0; ii < 10; ii++)
     c[ii] = a[ii];
 
-  #pragma omp simd lastprivate(ii)
-  for (ii = 0; ii < 10; ii++)
-    c[ii] = a[ii];
-
+  // TODO: Add test for lastprivate.
 
   #pragma omp parallel
   {

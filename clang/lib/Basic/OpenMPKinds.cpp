@@ -160,15 +160,6 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
       break;
     }
     break;
-  case OMPD_for:
-    switch (CKind) {
-#define OPENMP_FOR_CLAUSE(Name) \
-    case OMPC_##Name: return true;
-#include "clang/Basic/OpenMPKinds.def"
-    default:
-      break;
-    }
-    break;
   case OMPD_unknown:
   case OMPD_threadprivate:
   case OMPD_task:
@@ -176,31 +167,3 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
   }
   return false;
 }
-
-bool clang::isOpenMPLoopDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_simd || DKind == OMPD_for; // TODO add next directives.
-}
-
-bool clang::isOpenMPWorksharingDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_for; // TODO add next directives.
-}
-
-bool clang::isOpenMPParallelDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_parallel; // TODO add next directives.
-}
-
-bool clang::isOpenMPSimdDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_simd; // TODO || DKind == OMPD_for_simd || ...
-}
-
-bool clang::isOpenMPPrivate(OpenMPClauseKind Kind) {
-  return Kind == OMPC_private || Kind == OMPC_firstprivate ||
-         Kind == OMPC_lastprivate || Kind == OMPC_linear ||
-         Kind == OMPC_reduction; // TODO add next clauses like 'reduction'.
-}
-
-bool clang::isOpenMPThreadPrivate(OpenMPClauseKind Kind) {
-  return Kind == OMPC_threadprivate ||
-         Kind == OMPC_copyin; // TODO add next clauses like 'copyprivate'.
-}
-

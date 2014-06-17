@@ -179,9 +179,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPSimdDirectiveClass:
     EmitOMPSimdDirective(cast<OMPSimdDirective>(*S));
     break;
-  case Stmt::OMPForDirectiveClass:
-    EmitOMPForDirective(cast<OMPForDirective>(*S));
-    break;
   }
 }
 

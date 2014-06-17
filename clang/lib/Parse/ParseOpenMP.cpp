@@ -62,7 +62,6 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_parallel:
   case OMPD_simd:
   case OMPD_task:
-  case OMPD_for:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
     break;
@@ -115,15 +114,9 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
     SkipUntil(tok::annot_pragma_openmp_end);
     break;
   case OMPD_parallel:
-  case OMPD_simd:
-  case OMPD_for: {
+  case OMPD_simd: {
     ConsumeToken();
 
-    if (isOpenMPLoopDirective(DKind))
-      ScopeFlags |= Scope::OpenMPLoopDirectiveScope;
-    if (isOpenMPSimdDirective(DKind))
-      ScopeFlags |= Scope::OpenMPSimdDirectiveScope;
-    ParseScope OMPDirectiveScope(this, ScopeFlags);
     Actions.StartOpenMPDSABlock(DKind, DirName, Actions.getCurScope());
 
     while (Tok.isNot(tok::annot_pragma_openmp_end)) {
@@ -149,6 +142,10 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
 
     StmtResult AssociatedStmt;
     bool CreateDirective = true;
+    if (DKind == OMPD_simd)
+      ScopeFlags |=
+          Scope::OpenMPLoopDirectiveScope | Scope::OpenMPSimdDirectiveScope;
+    ParseScope OMPDirectiveScope(this, ScopeFlags);
     {
       // The body is a block scope like in Lambdas and Blocks.
       Sema::CompoundScopeRAII CompoundScope(Actions);
