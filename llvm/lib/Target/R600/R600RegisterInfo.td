@@ -18,18 +18,28 @@ class R600RegWithChan <string name, bits<9> sel, string chan> :
 
 class R600Reg_128<string n, list<Register> subregs, bits<16> encoding> :
     RegisterWithSubRegs<n, subregs> {
+  field bits<2> chan_encoding = 0;
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1, sub2, sub3];
-  let HWEncoding = encoding;
+  let HWEncoding{8-0} = encoding{8-0};
+  let HWEncoding{10-9} = chan_encoding;
 }
 
 class R600Reg_64<string n, list<Register> subregs, bits<16> encoding> :
     RegisterWithSubRegs<n, subregs> {
+  field bits<2> chan_encoding = 0;
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = encoding;
+  let HWEncoding{8-0} = encoding{8-0};
+  let HWEncoding{10-9} = chan_encoding;
 }
 
+class R600Reg_64Vertical<int lo, int hi, string chan> : R600Reg_64 <
+  "V"#lo#hi#"_"#chan,
+  [!cast<Register>("T"#lo#"_"#chan), !cast<Register>("T"#hi#"_"#chan)],
+  lo
+>;
 
 foreach Index = 0-127 in {
   foreach Chan = [ "X", "Y", "Z", "W" ] in {
@@ -53,6 +63,24 @@ foreach Index = 0-127 in {
                                     !cast<Register>("T"#Index#"_Y")],
                                    Index>;
 }
+
+foreach Chan = [ "X", "Y", "Z", "W"] in {
+
+  let chan_encoding = !if(!eq(Chan, "X"), 0,
+                      !if(!eq(Chan, "Y"), 1,
+                      !if(!eq(Chan, "Z"), 2,
+                      !if(!eq(Chan, "W"), 3, 0)))) in {
+    def V0123_#Chan : R600Reg_128 <"V0123_"#Chan,
+                                   [!cast<Register>("T0_"#Chan),
+                                    !cast<Register>("T1_"#Chan),
+                                    !cast<Register>("T2_"#Chan),
+                                    !cast<Register>("T3_"#Chan)],
+                                    0>;
+    def V01_#Chan : R600Reg_64Vertical<0, 1, Chan>;
+    def V23_#Chan : R600Reg_64Vertical<2, 3, Chan>;
+  }
+}
+
 
 // KCACHE_BANK0
 foreach Index = 159-128 in {
@@ -130,8 +158,14 @@ def ALU_PARAM : R600Reg<"Param", 0>;
 
 let isAllocatable = 0 in {
 
-// XXX: Only use the X channel, until we support wider stack widths
-def R600_Addr : RegisterClass <"AMDGPU", [i32], 127, (add (sequence "Addr%u_X", 0, 127))>;
+def R600_Addr : RegisterClass <"AMDGPU", [i32], 32, (add (sequence "Addr%u_X", 0, 127))>;
+
+// We only use Addr_[YZW] for vertical vectors.
+// FIXME if we add more vertical vector registers we will need to ad more
+// registers to these classes.
+def R600_Addr_Y : RegisterClass <"AMDGPU", [i32], 32, (add Addr0_Y)>;
+def R600_Addr_Z : RegisterClass <"AMDGPU", [i32], 32, (add Addr0_Z)>;
+def R600_Addr_W : RegisterClass <"AMDGPU", [i32], 32, (add Addr0_W)>;
 
 def R600_LDS_SRC_REG : RegisterClass<"AMDGPU", [i32], 32,
   (add OQA, OQB, OQAP, OQBP, LDS_DIRECT_A, LDS_DIRECT_B)>;
@@ -206,5 +240,13 @@ def R600_Reg128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128,
   let CopyCost = -1;
 }
 
+def R600_Reg128Vertical : RegisterClass<"AMDGPU", [v4f32, v4i32], 128,
+  (add V0123_W, V0123_Z, V0123_Y, V0123_X)
+>;
+
 def R600_Reg64 : RegisterClass<"AMDGPU", [v2f32, v2i32], 64,
                                 (add (sequence "T%u_XY", 0, 63))>;
+
+def R600_Reg64Vertical : RegisterClass<"AMDGPU", [v2f32, v2i32], 64,
+                                      (add V01_X, V01_Y, V01_Z, V01_W,
+                                           V23_X, V23_Y, V23_Z, V23_W)>;

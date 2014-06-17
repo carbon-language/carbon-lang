@@ -51,7 +51,10 @@ private:
   void lowerImplicitParameter(MachineInstr *MI, MachineBasicBlock &BB,
       MachineRegisterInfo & MRI, unsigned dword_offset) const;
   SDValue OptimizeSwizzle(SDValue BuildVector, SDValue Swz[], SelectionDAG &DAG) const;
+  SDValue vectorToVerticalVector(SelectionDAG &DAG, SDValue Vector) const;
 
+  SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;

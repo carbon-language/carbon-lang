@@ -17,6 +17,7 @@
 namespace llvm {
 
 class AMDGPUInstrPrinter;
+class AMDGPUSubtarget;
 class AMDGPUTargetMachine;
 class FunctionPass;
 class MCAsmInfo;
@@ -47,6 +48,7 @@ void initializeSILowerI1CopiesPass(PassRegistry &);
 extern char &SILowerI1CopiesID;
 
 // Passes common to R600 and SI
+FunctionPass *createAMDGPUPromoteAlloca(const AMDGPUSubtarget &ST);
 Pass *createAMDGPUStructurizeCFGPass();
 FunctionPass *createAMDGPUISelDag(TargetMachine &tm);
 

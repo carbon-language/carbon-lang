@@ -25,6 +25,7 @@ add_llvm_target(R600CodeGen
   AMDGPUTargetTransformInfo.cpp
   AMDGPUISelLowering.cpp
   AMDGPUInstrInfo.cpp
+  AMDGPUPromoteAlloca.cpp
   AMDGPURegisterInfo.cpp
   R600ClauseMergePass.cpp
   R600ControlFlowFinalizer.cpp

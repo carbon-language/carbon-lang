@@ -36,6 +36,18 @@ namespace llvm {
   std::vector<std::pair<int, unsigned> >
   ExtractSrcs(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV, unsigned &ConstCount) const;
 
+
+  MachineInstrBuilder buildIndirectRead(MachineBasicBlock *MBB,
+                                        MachineBasicBlock::iterator I,
+                                        unsigned ValueReg, unsigned Address,
+                                        unsigned OffsetReg,
+                                        unsigned AddrChan) const;
+
+  MachineInstrBuilder buildIndirectWrite(MachineBasicBlock *MBB,
+                                        MachineBasicBlock::iterator I,
+                                        unsigned ValueReg, unsigned Address,
+                                        unsigned OffsetReg,
+                                        unsigned AddrChan) const;
   public:
   enum BankSwizzle {
     ALU_VEC_012_SCL_210 = 0,
@@ -194,6 +206,8 @@ namespace llvm {
 
   int getInstrLatency(const InstrItineraryData *ItinData,
                       SDNode *Node) const override { return 1;}
+
+  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
 
   /// \brief Reserve the registers that may be accesed using indirect addressing.
   void reserveIndirectRegisters(BitVector &Reserved,

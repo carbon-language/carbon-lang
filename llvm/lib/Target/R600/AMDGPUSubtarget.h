@@ -56,6 +56,7 @@ private:
   bool EnableIfCvt;
   unsigned WavefrontSize;
   bool CFALUBug;
+  int LocalMemorySize;
 
   InstrItineraryData InstrItins;
 
@@ -109,6 +110,7 @@ public:
   unsigned getWavefrontSize() const;
   unsigned getStackEntrySize() const;
   bool hasCFAluBug() const;
+  int getLocalMemorySize() const;
 
   bool enableMachineScheduler() const override {
     return getGeneration() <= NORTHERN_ISLANDS;

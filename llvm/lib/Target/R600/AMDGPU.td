@@ -86,28 +86,40 @@ def FeatureWavefrontSize16 : SubtargetFeatureWavefrontSize<16>;
 def FeatureWavefrontSize32 : SubtargetFeatureWavefrontSize<32>;
 def FeatureWavefrontSize64 : SubtargetFeatureWavefrontSize<64>;
 
+class SubtargetFeatureLocalMemorySize <int Value> : SubtargetFeature<
+        "localmemorysize"#Value,
+        "LocalMemorySize",
+        !cast<string>(Value),
+        "The size of local memory in bytes">;
+
 class SubtargetFeatureGeneration <string Value,
                                   list<SubtargetFeature> Implies> :
         SubtargetFeature <Value, "Gen", "AMDGPUSubtarget::"#Value,
                           Value#" GPU generation", Implies>;
 
+def FeatureLocalMemorySize0 : SubtargetFeatureLocalMemorySize<0>;
+def FeatureLocalMemorySize32768 : SubtargetFeatureLocalMemorySize<32768>;
+def FeatureLocalMemorySize65536 : SubtargetFeatureLocalMemorySize<65536>;
+
 def FeatureR600 : SubtargetFeatureGeneration<"R600",
-        [FeatureR600ALUInst, FeatureFetchLimit8]>;
+        [FeatureR600ALUInst, FeatureFetchLimit8, FeatureLocalMemorySize0]>;
 
 def FeatureR700 : SubtargetFeatureGeneration<"R700",
-        [FeatureFetchLimit16]>;
+        [FeatureFetchLimit16, FeatureLocalMemorySize0]>;
 
 def FeatureEvergreen : SubtargetFeatureGeneration<"EVERGREEN",
-        [FeatureFetchLimit16]>;
+        [FeatureFetchLimit16, FeatureLocalMemorySize32768]>;
 
 def FeatureNorthernIslands : SubtargetFeatureGeneration<"NORTHERN_ISLANDS",
-        [FeatureFetchLimit16, FeatureWavefrontSize64]>;
+        [FeatureFetchLimit16, FeatureWavefrontSize64,
+         FeatureLocalMemorySize32768]
+>;
 
 def FeatureSouthernIslands : SubtargetFeatureGeneration<"SOUTHERN_ISLANDS",
-        [Feature64BitPtr, FeatureFP64]>;
+        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize32768]>;
 
 def FeatureSeaIslands : SubtargetFeatureGeneration<"SEA_ISLANDS",
-        [Feature64BitPtr, FeatureFP64]>;
+        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize65536]>;
 //===----------------------------------------------------------------------===//
 
 def AMDGPUInstrInfo : InstrInfo {

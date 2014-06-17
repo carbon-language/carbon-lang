@@ -109,6 +109,7 @@ public:
     return nullptr;
   }
 
+  virtual void addCodeGenPrepare();
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addPreRegAlloc() override;
@@ -132,6 +133,13 @@ void AMDGPUTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
   // appropriate.
   PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createAMDGPUTargetTransformInfoPass(this));
+}
+
+void AMDGPUPassConfig::addCodeGenPrepare() {
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
+  addPass(createAMDGPUPromoteAlloca(ST));
+  addPass(createSROAPass());
+  TargetPassConfig::addCodeGenPrepare();
 }
 
 bool

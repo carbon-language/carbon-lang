@@ -258,6 +258,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, MVT::i64, Args);
   }
   case ISD::SCALAR_TO_VECTOR:
+  case AMDGPUISD::BUILD_VERTICAL_VECTOR:
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
     const AMDGPURegisterInfo *TRI =
@@ -308,7 +309,12 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       // can't be bundled by our scheduler.
       switch(NumVectorElts) {
       case 2: RegClassID = AMDGPU::R600_Reg64RegClassID; break;
-      case 4: RegClassID = AMDGPU::R600_Reg128RegClassID; break;
+      case 4:
+        if (Opc == AMDGPUISD::BUILD_VERTICAL_VECTOR)
+          RegClassID = AMDGPU::R600_Reg128VerticalRegClassID;
+        else
+          RegClassID = AMDGPU::R600_Reg128RegClassID;
+        break;
       default: llvm_unreachable("Do not know how to lower this BUILD_VECTOR");
       }
     }

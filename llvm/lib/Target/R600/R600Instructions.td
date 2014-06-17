@@ -1582,6 +1582,60 @@ let isTerminator=1 in {
 }
 
 //===----------------------------------------------------------------------===//
+// Indirect addressing pseudo instructions
+//===----------------------------------------------------------------------===//
+
+let isPseudo = 1 in {
+
+class ExtractVertical <RegisterClass vec_rc> : InstR600 <
+  (outs R600_Reg32:$dst),
+  (ins vec_rc:$vec, R600_Reg32:$index), "",
+  [],
+  AnyALU
+>;
+
+let Constraints = "$dst = $vec" in {
+
+class InsertVertical <RegisterClass vec_rc> : InstR600 <
+  (outs vec_rc:$dst),
+  (ins vec_rc:$vec, R600_Reg32:$value, R600_Reg32:$index), "",
+  [],
+  AnyALU
+>;
+
+} // End Constraints = "$dst = $vec"
+
+} // End isPseudo = 1
+
+def R600_EXTRACT_ELT_V2 : ExtractVertical <R600_Reg64Vertical>;
+def R600_EXTRACT_ELT_V4 : ExtractVertical <R600_Reg128Vertical>;
+
+def R600_INSERT_ELT_V2 : InsertVertical <R600_Reg64Vertical>;
+def R600_INSERT_ELT_V4 : InsertVertical <R600_Reg128Vertical>;
+
+class ExtractVerticalPat <Instruction inst, ValueType vec_ty,
+                          ValueType scalar_ty> : Pat <
+  (scalar_ty (extractelt vec_ty:$vec, i32:$index)),
+  (inst $vec, $index)
+>;
+
+def : ExtractVerticalPat <R600_EXTRACT_ELT_V2, v2i32, i32>;
+def : ExtractVerticalPat <R600_EXTRACT_ELT_V2, v2f32, f32>;
+def : ExtractVerticalPat <R600_EXTRACT_ELT_V4, v4i32, i32>;
+def : ExtractVerticalPat <R600_EXTRACT_ELT_V4, v4f32, f32>;
+
+class InsertVerticalPat <Instruction inst, ValueType vec_ty,
+                         ValueType scalar_ty> : Pat <
+  (vec_ty (insertelt vec_ty:$vec, scalar_ty:$value, i32:$index)),
+  (inst $vec, $value, $index)
+>;
+
+def : InsertVerticalPat <R600_INSERT_ELT_V2, v2i32, i32>;
+def : InsertVerticalPat <R600_INSERT_ELT_V2, v2f32, f32>;
+def : InsertVerticalPat <R600_INSERT_ELT_V4, v4i32, i32>;
+def : InsertVerticalPat <R600_INSERT_ELT_V4, v4f32, f32>;
+
+//===----------------------------------------------------------------------===//
 // ISel Patterns
 //===----------------------------------------------------------------------===//
 

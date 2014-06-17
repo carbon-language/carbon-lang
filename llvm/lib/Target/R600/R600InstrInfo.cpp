@@ -51,11 +51,15 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const {
   unsigned VectorComponents = 0;
-  if (AMDGPU::R600_Reg128RegClass.contains(DestReg) &&
-      AMDGPU::R600_Reg128RegClass.contains(SrcReg)) {
+  if ((AMDGPU::R600_Reg128RegClass.contains(DestReg) ||
+      AMDGPU::R600_Reg128VerticalRegClass.contains(DestReg)) &&
+      (AMDGPU::R600_Reg128RegClass.contains(SrcReg) ||
+       AMDGPU::R600_Reg128VerticalRegClass.contains(SrcReg))) {
     VectorComponents = 4;
-  } else if(AMDGPU::R600_Reg64RegClass.contains(DestReg) &&
-            AMDGPU::R600_Reg64RegClass.contains(SrcReg)) {
+  } else if((AMDGPU::R600_Reg64RegClass.contains(DestReg) ||
+            AMDGPU::R600_Reg64VerticalRegClass.contains(DestReg)) &&
+            (AMDGPU::R600_Reg64RegClass.contains(SrcReg) ||
+             AMDGPU::R600_Reg64VerticalRegClass.contains(SrcReg))) {
     VectorComponents = 2;
   }
 
@@ -1053,6 +1057,29 @@ unsigned int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   return 2;
 }
 
+bool R600InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+
+  switch(MI->getOpcode()) {
+  default: return AMDGPUInstrInfo::expandPostRAPseudo(MI);
+  case AMDGPU::R600_EXTRACT_ELT_V2:
+  case AMDGPU::R600_EXTRACT_ELT_V4:
+    buildIndirectRead(MI->getParent(), MI, MI->getOperand(0).getReg(),
+                      RI.getHWRegIndex(MI->getOperand(1).getReg()), //  Address
+                      MI->getOperand(2).getReg(),
+                      RI.getHWRegChan(MI->getOperand(1).getReg()));
+    break;
+  case AMDGPU::R600_INSERT_ELT_V2:
+  case AMDGPU::R600_INSERT_ELT_V4:
+    buildIndirectWrite(MI->getParent(), MI, MI->getOperand(2).getReg(), // Value
+                       RI.getHWRegIndex(MI->getOperand(1).getReg()),  // Address
+                       MI->getOperand(3).getReg(),                    // Offset
+                       RI.getHWRegChan(MI->getOperand(1).getReg()));  // Channel
+    break;
+  }
+  MI->eraseFromParent();
+  return true;
+}
+
 void  R600InstrInfo::reserveIndirectRegisters(BitVector &Reserved,
                                              const MachineFunction &MF) const {
   const AMDGPUFrameLowering *TFL =
@@ -1090,7 +1117,22 @@ MachineInstrBuilder R600InstrInfo::buildIndirectWrite(MachineBasicBlock *MBB,
                                        MachineBasicBlock::iterator I,
                                        unsigned ValueReg, unsigned Address,
                                        unsigned OffsetReg) const {
-  unsigned AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address);
+  return buildIndirectWrite(MBB, I, ValueReg, Address, OffsetReg, 0);
+}
+
+MachineInstrBuilder R600InstrInfo::buildIndirectWrite(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned ValueReg, unsigned Address,
+                                       unsigned OffsetReg,
+                                       unsigned AddrChan) const {
+  unsigned AddrReg;
+  switch (AddrChan) {
+    default: llvm_unreachable("Invalid Channel");
+    case 0: AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address); break;
+    case 1: AddrReg = AMDGPU::R600_Addr_YRegClass.getRegister(Address); break;
+    case 2: AddrReg = AMDGPU::R600_Addr_ZRegClass.getRegister(Address); break;
+    case 3: AddrReg = AMDGPU::R600_Addr_WRegClass.getRegister(Address); break;
+  }
   MachineInstr *MOVA = buildDefaultInstruction(*MBB, I, AMDGPU::MOVA_INT_eg,
                                                AMDGPU::AR_X, OffsetReg);
   setImmOperand(MOVA, AMDGPU::OpName::write, 0);
@@ -1107,7 +1149,22 @@ MachineInstrBuilder R600InstrInfo::buildIndirectRead(MachineBasicBlock *MBB,
                                        MachineBasicBlock::iterator I,
                                        unsigned ValueReg, unsigned Address,
                                        unsigned OffsetReg) const {
-  unsigned AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address);
+  return buildIndirectRead(MBB, I, ValueReg, Address, OffsetReg, 0);
+}
+
+MachineInstrBuilder R600InstrInfo::buildIndirectRead(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned ValueReg, unsigned Address,
+                                       unsigned OffsetReg,
+                                       unsigned AddrChan) const {
+  unsigned AddrReg;
+  switch (AddrChan) {
+    default: llvm_unreachable("Invalid Channel");
+    case 0: AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address); break;
+    case 1: AddrReg = AMDGPU::R600_Addr_YRegClass.getRegister(Address); break;
+    case 2: AddrReg = AMDGPU::R600_Addr_ZRegClass.getRegister(Address); break;
+    case 3: AddrReg = AMDGPU::R600_Addr_WRegClass.getRegister(Address); break;
+  }
   MachineInstr *MOVA = buildDefaultInstruction(*MBB, I, AMDGPU::MOVA_INT_eg,
                                                        AMDGPU::AR_X,
                                                        OffsetReg);

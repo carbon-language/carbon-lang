@@ -136,6 +136,16 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
 
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i32, Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f32, Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
+
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v2i32, Custom);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v2f32, Custom);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4i32, Custom);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Custom);
+
   setTargetDAGCombine(ISD::FP_ROUND);
   setTargetDAGCombine(ISD::FP_TO_SINT);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
@@ -540,6 +550,8 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
+  case ISD::INSERT_VECTOR_ELT: return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::FCOS:
   case ISD::FSIN: return LowerTrig(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
@@ -810,6 +822,56 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(SDValue(Node, 0));
     return;
   }
+}
+
+SDValue R600TargetLowering::vectorToVerticalVector(SelectionDAG &DAG,
+                                                   SDValue Vector) const {
+
+  SDLoc DL(Vector);
+  EVT VecVT = Vector.getValueType();
+  EVT EltVT = VecVT.getVectorElementType();
+  SmallVector<SDValue, 8> Args;
+
+  for (unsigned i = 0, e = VecVT.getVectorNumElements();
+                                                           i != e; ++i) {
+    Args.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT,
+                               Vector, DAG.getConstant(i, getVectorIdxTy())));
+  }
+
+  return DAG.getNode(AMDGPUISD::BUILD_VERTICAL_VECTOR, DL, VecVT, Args);
+}
+
+SDValue R600TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+
+  SDLoc DL(Op);
+  SDValue Vector = Op.getOperand(0);
+  SDValue Index = Op.getOperand(1);
+
+  if (isa<ConstantSDNode>(Index) ||
+      Vector.getOpcode() == AMDGPUISD::BUILD_VERTICAL_VECTOR)
+    return Op;
+
+  Vector = vectorToVerticalVector(DAG, Vector);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, Op.getValueType(),
+                     Vector, Index);
+}
+
+SDValue R600TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
+                                                   SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Vector = Op.getOperand(0);
+  SDValue Value = Op.getOperand(1);
+  SDValue Index = Op.getOperand(2);
+
+  if (isa<ConstantSDNode>(Index) ||
+      Vector.getOpcode() == AMDGPUISD::BUILD_VERTICAL_VECTOR)
+    return Op;
+
+  Vector = vectorToVerticalVector(DAG, Vector);
+  SDValue Insert = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, Op.getValueType(),
+                               Vector, Value, Index);
+  return vectorToVerticalVector(DAG, Insert);
 }
 
 SDValue R600TargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {

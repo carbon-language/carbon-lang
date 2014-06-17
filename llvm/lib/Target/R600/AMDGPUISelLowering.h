@@ -203,6 +203,15 @@ enum {
   CVT_F32_UBYTE1,
   CVT_F32_UBYTE2,
   CVT_F32_UBYTE3,
+  /// This node is for VLIW targets and it is used to represent a vector
+  /// that is stored in consecutive registers with the same channel.
+  /// For example:
+  ///   |X  |Y|Z|W|
+  /// T0|v.x| | | |
+  /// T1|v.y| | | |
+  /// T2|v.z| | | |
+  /// T3|v.w| | | |
+  BUILD_VERTICAL_VECTOR,
   FIRST_MEM_OPCODE_NUMBER = ISD::FIRST_TARGET_MEMORY_OPCODE,
   STORE_MSKOR,
   LOAD_CONSTANT,

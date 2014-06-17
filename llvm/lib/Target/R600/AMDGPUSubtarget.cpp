@@ -41,6 +41,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   EnableIfCvt = true;
   WavefrontSize = 0;
   CFALUBug = false;
+  LocalMemorySize = 0;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
 
@@ -108,6 +109,10 @@ bool
 AMDGPUSubtarget::hasCFAluBug() const {
   assert(getGeneration() <= NORTHERN_ISLANDS);
   return CFALUBug;
+}
+int
+AMDGPUSubtarget::getLocalMemorySize() const {
+  return LocalMemorySize;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {
