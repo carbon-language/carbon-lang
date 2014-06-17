@@ -1049,9 +1049,9 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
     return false;
 
   // FCMP_OEQ and FCMP_UNE cannot be checked with a single instruction.
-  static unsigned SETFOpcTable[2][2] = {
-    { X86::SETEr,  X86::SETNPr },
-    { X86::SETNEr, X86::SETPr  }
+  static unsigned SETFOpcTable[2][3] = {
+    { X86::SETEr,  X86::SETNPr, X86::AND8rr },
+    { X86::SETNEr, X86::SETPr,  X86::OR8rr  }
   };
   unsigned *SETFOpc = nullptr;
   switch (CI->getPredicate()) {
@@ -1071,7 +1071,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
             FlagReg1);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[1]),
             FlagReg2);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::AND8rr),
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[2]),
             ResultReg).addReg(FlagReg1).addReg(FlagReg2);
     UpdateValueMap(I, ResultReg);
     return true;

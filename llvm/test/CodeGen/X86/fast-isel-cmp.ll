@@ -155,7 +155,7 @@ define zeroext i1 @fcmp_une(float %x, float %y) {
 ; FAST:       ucomiss  %xmm1, %xmm0
 ; FAST-NEXT:  setne    %al
 ; FAST-NEXT:  setp     %cl
-; FAST-NEXT:  andb     %al, %cl
+; FAST-NEXT:  orb      %al, %cl
   %1 = fcmp une float %x, %y
   ret i1 %1
 }
