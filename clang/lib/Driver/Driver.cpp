@@ -1615,7 +1615,10 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if (C.getArgs().hasArg(options::OPT__SLASH_P)) {
     assert(AtTopLevel && isa<PreprocessJobAction>(JA));
     StringRef BaseName = llvm::sys::path::filename(BaseInput);
-    return C.addResultFile(MakeCLOutputFilename(C.getArgs(), "", BaseName,
+    StringRef NameArg;
+    if (Arg *A = C.getArgs().getLastArg(options::OPT__SLASH_Fi))
+      NameArg = A->getValue();
+    return C.addResultFile(MakeCLOutputFilename(C.getArgs(), NameArg, BaseName,
                                                 types::TY_PP_C), &JA);
   }
 

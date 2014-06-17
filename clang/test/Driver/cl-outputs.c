@@ -109,3 +109,11 @@
 // RUN: %clang_cl /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s
 // P: "-E"
 // P: "-o" "cl-outputs.i"
+
+// RUN: %clang_cl /P /Fifoo -### -- %s 2>&1 | FileCheck -check-prefix=Fi1 %s
+// Fi1: "-E"
+// Fi1: "-o" "foo.i"
+
+// RUN: %clang_cl /P /Fifoo.x -### -- %s 2>&1 | FileCheck -check-prefix=Fi2 %s
+// Fi2: "-E"
+// Fi2: "-o" "foo.x"

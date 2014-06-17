@@ -154,6 +154,9 @@ def _SLASH_FI : CLJoinedOrSeparate<"FI">,
 def _SLASH_Fe : CLJoined<"Fe">,
   HelpText<"Set output executable file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
+def _SLASH_Fi : CLCompileJoined<"Fi">,
+  HelpText<"Set preprocess output file name">,
+  MetaVarName<"<file>">;
 def _SLASH_Fo : CLCompileJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
@@ -212,7 +215,6 @@ def _SLASH_favor : CLJoined<"favor">;
 def _SLASH_FC : CLFlag<"FC">;
 def _SLASH_F : CLFlag<"F">;
 def _SLASH_Fd : CLJoined<"Fd">;
-def _SLASH_Fi : CLJoined<"Fi">;
 def _SLASH_Fm : CLJoined<"Fm">;
 def _SLASH_fp : CLJoined<"fp">;
 def _SLASH_Fp : CLJoined<"Fp">;
