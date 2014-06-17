@@ -2640,7 +2640,14 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   }
 
   if (getLangOpts().ObjCAutoRefCount) {
-    DiagnoseARCUseOfWeakReceiver(*this, Receiver);
+    // Do not warn about IBOutlet weak property receivers being set to null
+    // as this cannot asynchronously happen.
+    bool WarnWeakReceiver = true;
+    if (isImplicit && Method)
+      if (const ObjCPropertyDecl *PropertyDecl = Method->findPropertyDecl())
+        WarnWeakReceiver = !PropertyDecl->hasAttr<IBOutletAttr>();
+    if (WarnWeakReceiver)
+      DiagnoseARCUseOfWeakReceiver(*this, Receiver);
     
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&

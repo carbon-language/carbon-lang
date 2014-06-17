@@ -542,7 +542,7 @@ bool ObjCPropertyOpBuilder::isWeakProperty() const {
   if (RefExpr->isExplicitProperty()) {
     const ObjCPropertyDecl *Prop = RefExpr->getExplicitProperty();
     if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
-      return true;
+      return !Prop->hasAttr<IBOutletAttr>();
 
     T = Prop->getType();
   } else if (Getter) {
@@ -816,13 +816,20 @@ ExprResult ObjCPropertyOpBuilder::buildRValueOperation(Expr *op) {
 
   // As a special case, if the method returns 'id', try to get
   // a better type from the property.
-  if (RefExpr->isExplicitProperty() && result.get()->isRValue() &&
-      result.get()->getType()->isObjCIdType()) {
+  if (RefExpr->isExplicitProperty() && result.get()->isRValue()) {
     QualType propType = RefExpr->getExplicitProperty()->getType();
-    if (const ObjCObjectPointerType *ptr
-          = propType->getAs<ObjCObjectPointerType>()) {
-      if (!ptr->isObjCIdType())
-        result = S.ImpCastExprToType(result.get(), propType, CK_BitCast);
+    if (result.get()->getType()->isObjCIdType()) {
+      if (const ObjCObjectPointerType *ptr
+            = propType->getAs<ObjCObjectPointerType>()) {
+        if (!ptr->isObjCIdType())
+          result = S.ImpCastExprToType(result.get(), propType, CK_BitCast);
+      }
+    }
+    if (S.getLangOpts().ObjCAutoRefCount) {
+      Qualifiers::ObjCLifetime LT = propType.getObjCLifetime();
+      if (LT == Qualifiers::OCL_Weak)
+        if (!S.Diags.isIgnored(diag::warn_arc_repeated_use_of_weak, RefExpr->getLocation()))
+              S.getCurFunction()->markSafeWeakUse(RefExpr);
     }
   }
 

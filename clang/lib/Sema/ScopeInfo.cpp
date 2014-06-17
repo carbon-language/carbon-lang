@@ -158,8 +158,14 @@ void FunctionScopeInfo::markSafeWeakUse(const Expr *E) {
 
   // Has this weak object been seen before?
   FunctionScopeInfo::WeakObjectUseMap::iterator Uses;
-  if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E))
-    Uses = WeakObjectUses.find(WeakObjectProfileTy(RefExpr));
+  if (const ObjCPropertyRefExpr *RefExpr = dyn_cast<ObjCPropertyRefExpr>(E)) {
+    if (isa<OpaqueValueExpr>(RefExpr->getBase()))
+     Uses = WeakObjectUses.find(WeakObjectProfileTy(RefExpr));
+    else {
+      markSafeWeakUse(RefExpr->getBase());
+      return;
+    }
+  }
   else if (const ObjCIvarRefExpr *IvarE = dyn_cast<ObjCIvarRefExpr>(E))
     Uses = WeakObjectUses.find(WeakObjectProfileTy(IvarE));
   else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
