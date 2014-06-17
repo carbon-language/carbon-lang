@@ -155,6 +155,46 @@ private:
 
 } // end anonymous namespace.
 
+static CmpInst::Predicate optimizeCmpPredicate(const CmpInst *CI) {
+  // If both operands are the same, then try to optimize or fold the cmp.
+  CmpInst::Predicate Predicate = CI->getPredicate();
+  if (CI->getOperand(0) != CI->getOperand(1))
+    return Predicate;
+
+  switch (Predicate) {
+  default: llvm_unreachable("Invalid predicate!");
+  case CmpInst::FCMP_FALSE: Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::FCMP_OEQ:   Predicate = CmpInst::FCMP_ORD;   break;
+  case CmpInst::FCMP_OGT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::FCMP_OGE:   Predicate = CmpInst::FCMP_ORD;   break;
+  case CmpInst::FCMP_OLT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::FCMP_OLE:   Predicate = CmpInst::FCMP_ORD;   break;
+  case CmpInst::FCMP_ONE:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::FCMP_ORD:   Predicate = CmpInst::FCMP_ORD;   break;
+  case CmpInst::FCMP_UNO:   Predicate = CmpInst::FCMP_UNO;   break;
+  case CmpInst::FCMP_UEQ:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::FCMP_UGT:   Predicate = CmpInst::FCMP_UNO;   break;
+  case CmpInst::FCMP_UGE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::FCMP_ULT:   Predicate = CmpInst::FCMP_UNO;   break;
+  case CmpInst::FCMP_ULE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::FCMP_UNE:   Predicate = CmpInst::FCMP_UNO;   break;
+  case CmpInst::FCMP_TRUE:  Predicate = CmpInst::FCMP_TRUE;  break;
+
+  case CmpInst::ICMP_EQ:    Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::ICMP_NE:    Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::ICMP_UGT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::ICMP_UGE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::ICMP_ULT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::ICMP_ULE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::ICMP_SGT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::ICMP_SGE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  case CmpInst::ICMP_SLT:   Predicate = CmpInst::FCMP_FALSE; break;
+  case CmpInst::ICMP_SLE:   Predicate = CmpInst::FCMP_TRUE;  break;
+  }
+
+  return Predicate;
+}
+
 static std::pair<X86::CondCode, bool>
 getX86ConditonCode(CmpInst::Predicate Predicate) {
   X86::CondCode CC = X86::COND_INVALID;
@@ -1048,21 +1088,61 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
   if (!isTypeLegal(I->getOperand(0)->getType(), VT))
     return false;
 
+  // Try to optimize or fold the cmp.
+  CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+  unsigned ResultReg = 0;
+  switch (Predicate) {
+  default: break;
+  case CmpInst::FCMP_FALSE: {
+    ResultReg = createResultReg(&X86::GR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV32r0),
+            ResultReg);
+    ResultReg = FastEmitInst_extractsubreg(MVT::i8, ResultReg, /*Kill=*/true,
+                                           X86::sub_8bit);
+    if (!ResultReg)
+      return false;
+    break;
+  }
+  case CmpInst::FCMP_TRUE: {
+    ResultReg = createResultReg(&X86::GR8RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV8ri),
+            ResultReg).addImm(1);
+    break;
+  }
+  }
+
+  if (ResultReg) {
+    UpdateValueMap(I, ResultReg);
+    return true;
+  }
+
+  const Value *LHS = CI->getOperand(0);
+  const Value *RHS = CI->getOperand(1);
+
+  // The optimizer might have replaced fcmp oeq %x, %x with fcmp ord %x, 0.0.
+  // We don't have to materialize a zero constant for this case and can just use
+  // %x again on the RHS.
+  if (Predicate == CmpInst::FCMP_ORD || Predicate == CmpInst::FCMP_UNO) {
+    const auto *RHSC = dyn_cast<ConstantFP>(RHS);
+    if (RHSC && RHSC->isNullValue())
+      RHS = LHS;
+  }
+
   // FCMP_OEQ and FCMP_UNE cannot be checked with a single instruction.
   static unsigned SETFOpcTable[2][3] = {
     { X86::SETEr,  X86::SETNPr, X86::AND8rr },
     { X86::SETNEr, X86::SETPr,  X86::OR8rr  }
   };
   unsigned *SETFOpc = nullptr;
-  switch (CI->getPredicate()) {
+  switch (Predicate) {
   default: break;
   case CmpInst::FCMP_OEQ: SETFOpc = &SETFOpcTable[0][0]; break;
   case CmpInst::FCMP_UNE: SETFOpc = &SETFOpcTable[1][0]; break;
   }
 
-  unsigned ResultReg = createResultReg(&X86::GR8RegClass);
+  ResultReg = createResultReg(&X86::GR8RegClass);
   if (SETFOpc) {
-    if (!X86FastEmitCompare(CI->getOperand(0), CI->getOperand(1), VT))
+    if (!X86FastEmitCompare(LHS, RHS, VT))
       return false;
 
     unsigned FlagReg1 = createResultReg(&X86::GR8RegClass);
@@ -1078,17 +1158,15 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
   }
 
   X86::CondCode CC;
-  bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
-  std::tie(CC, SwapArgs) = getX86ConditonCode(CI->getPredicate());
+  bool SwapArgs;
+  std::tie(CC, SwapArgs) = getX86ConditonCode(Predicate);
   assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
   unsigned Opc = X86::getSETFromCond(CC);
 
-  const Value *LHS = CI->getOperand(0);
-  const Value *RHS = CI->getOperand(1);
   if (SwapArgs)
     std::swap(LHS, RHS);
 
-  // Emit a compare of Op0/Op1.
+  // Emit a compare of LHS/RHS.
   if (!X86FastEmitCompare(LHS, RHS, VT))
     return false;
 
@@ -1162,8 +1240,28 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
     if (CI->hasOneUse() && CI->getParent() == I->getParent()) {
       EVT VT = TLI.getValueType(CI->getOperand(0)->getType());
 
+      // Try to optimize or fold the cmp.
+      CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+      switch (Predicate) {
+      default: break;
+      case CmpInst::FCMP_FALSE: FastEmitBranch(FalseMBB, DbgLoc); return true;
+      case CmpInst::FCMP_TRUE:  FastEmitBranch(TrueMBB, DbgLoc); return true;
+      }
+
+      const Value *CmpLHS = CI->getOperand(0);
+      const Value *CmpRHS = CI->getOperand(1);
+
+      // The optimizer might have replaced fcmp oeq %x, %x with fcmp ord %x,
+      // 0.0.
+      // We don't have to materialize a zero constant for this case and can just
+      // use %x again on the RHS.
+      if (Predicate == CmpInst::FCMP_ORD || Predicate == CmpInst::FCMP_UNO) {
+        const auto *CmpRHSC = dyn_cast<ConstantFP>(CmpRHS);
+        if (CmpRHSC && CmpRHSC->isNullValue())
+          CmpRHS = CmpLHS;
+      }
+
       // Try to take advantage of fallthrough opportunities.
-      CmpInst::Predicate Predicate = CI->getPredicate();
       if (FuncInfo.MBB->isLayoutSuccessor(TrueMBB)) {
         std::swap(TrueMBB, FalseMBB);
         Predicate = CmpInst::getInversePredicate(Predicate);
@@ -1186,14 +1284,12 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       }
 
       X86::CondCode CC;
-      bool SwapArgs;  // false -> compare Op0, Op1.  true -> compare Op1, Op0.
-      unsigned BranchOpc; // Opcode to jump on, e.g. "X86::JA"
+      bool SwapArgs;
+      unsigned BranchOpc;
       std::tie(CC, SwapArgs) = getX86ConditonCode(Predicate);
       assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
 
       BranchOpc = X86::GetCondBranchFromCond(CC);
-      const Value *CmpLHS = CI->getOperand(0);
-      const Value *CmpRHS = CI->getOperand(1);
       if (SwapArgs)
         std::swap(CmpLHS, CmpRHS);
 
