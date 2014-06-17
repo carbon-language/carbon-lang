@@ -210,14 +210,7 @@ kqueue_thread (void *arg)
             if (exited)
             {
                 if (death_event.data & NOTE_EXIT_MEMORY)
-                {
-                    if (death_event.data & NOTE_VM_PRESSURE)
-                        DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Pressure");
-                    else if (death_event.data & NOTE_VM_ERROR)
-                        DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Error");
-                    else
-                        DNBProcessSetExitInfo (child_pid, "Terminated due to unknown Memory condition");
-                }
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to memory issue");
                 else if (death_event.data & NOTE_EXIT_DECRYPTFAIL)
                     DNBProcessSetExitInfo (child_pid, "Terminated due to decrypt failure");
                 else if (death_event.data & NOTE_EXIT_CSERROR)
