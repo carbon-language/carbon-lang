@@ -896,23 +896,28 @@ static void compileModuleImpl(CompilerInstance &ImportingInstance,
   }
 }
 
-static void compileModule(CompilerInstance &ImportingInstance,
-                          SourceLocation ImportLoc,
-                          Module *Module,
-                          StringRef ModuleFileName) {
+static bool compileAndLoadModule(CompilerInstance &ImportingInstance,
+                                 SourceLocation ImportLoc,
+                                 SourceLocation ModuleNameLoc,
+                                 Module *Module,
+                                 StringRef ModuleFileName) {
   // FIXME: have LockFileManager return an error_code so that we can
   // avoid the mkdir when the directory already exists.
   StringRef Dir = llvm::sys::path::parent_path(ModuleFileName);
   llvm::sys::fs::create_directories(Dir);
 
   while (1) {
+    unsigned ModuleLoadCapabilities = ASTReader::ARR_Missing;
     llvm::LockFileManager Locked(ModuleFileName);
     switch (Locked) {
     case llvm::LockFileManager::LFS_Error:
-      return;
+      return false;
 
     case llvm::LockFileManager::LFS_Owned:
-      // We're responsible for building the module ourselves. Do so below.
+      // We're responsible for building the module ourselves.
+      // FIXME: if there are errors, don't attempt to load the module.
+      compileModuleImpl(ImportingInstance, ModuleNameLoc, Module,
+                        ModuleFileName);
       break;
 
     case llvm::LockFileManager::LFS_Shared:
@@ -920,11 +925,28 @@ static void compileModule(CompilerInstance &ImportingInstance,
       // finish.
       if (Locked.waitForUnlock() == llvm::LockFileManager::Res_OwnerDied)
         continue; // try again to get the lock.
-      return;
+      ModuleLoadCapabilities |= ASTReader::ARR_OutOfDate;
+      break;
     }
 
-    return compileModuleImpl(ImportingInstance, ImportLoc, Module,
-                             ModuleFileName);
+    // Try to read the module file, now that we've compiled it.
+    ASTReader::ASTReadResult ReadResult =
+        ImportingInstance.getModuleManager()->ReadAST(
+            ModuleFileName, serialization::MK_Module, ImportLoc,
+            ModuleLoadCapabilities);
+
+    if (ReadResult == ASTReader::OutOfDate &&
+        Locked == llvm::LockFileManager::LFS_Shared) {
+      // The module may be out of date in the presence of file system races,
+      // or if one of its imports depends on header search paths that are not
+      // consistent with this ImportingInstance.  Try again...
+      continue;
+    } else if (ReadResult == ASTReader::Missing) {
+      ImportingInstance.getDiagnostics().Report(ModuleNameLoc,
+                                                diag::err_module_not_built)
+          << Module->Name << SourceRange(ImportLoc, ModuleNameLoc);
+    }
+    return ReadResult == ASTReader::Success;
   }
 }
 
@@ -1235,23 +1257,9 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         return ModuleLoadResult();
       }
 
-      // Try to compile the module.
-      compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
-
-      // Try to read the module file, now that we've compiled it.
-      ASTReader::ASTReadResult ReadResult
-        = ModuleManager->ReadAST(ModuleFileName,
-                                 serialization::MK_Module, ImportLoc,
-                                 ASTReader::ARR_Missing);
-      if (ReadResult != ASTReader::Success) {
-        if (ReadResult == ASTReader::Missing) {
-          getDiagnostics().Report(ModuleNameLoc,
-                                  Module? diag::err_module_not_built
-                                        : diag::err_module_not_found)
-            << ModuleName
-            << SourceRange(ImportLoc, ModuleNameLoc);
-        }
-
+      // Try to compile and then load the module.
+      if (!compileAndLoadModule(*this, ImportLoc, ModuleNameLoc, Module,
+                                ModuleFileName)) {
         if (getPreprocessorOpts().FailedModules)
           getPreprocessorOpts().FailedModules->addFailed(ModuleName);
         KnownModules[Path[0].first] = nullptr;
