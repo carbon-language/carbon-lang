@@ -266,7 +266,7 @@ class SIMCInstr <string pseudo, int subtarget> {
 multiclass VOP3_m <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern,
                    string opName> {
 
-  def "" : InstSI <outs, ins, "", pattern>, VOP <opName>,
+  def "" : VOP3Common <outs, ins, "", pattern>, VOP <opName>,
            SIMCInstr<OpName, SISubtarget.NONE> {
     let isPseudo = 1;
   }

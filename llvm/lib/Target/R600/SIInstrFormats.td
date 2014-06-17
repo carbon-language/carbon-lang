@@ -51,6 +51,16 @@ class Enc64 <dag outs, dag ins, string asm, list<dag> pattern> :
   let Size = 8;
 }
 
+class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
+    Enc64 <outs, ins, asm, pattern> {
+
+  let mayLoad = 0;
+  let mayStore = 0;
+  let hasSideEffects = 0;
+  let UseNamedOperandTable = 1;
+  let VOP3 = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Scalar operations
 //===----------------------------------------------------------------------===//
@@ -207,7 +217,7 @@ class VOP2 <bits<6> op, dag outs, dag ins, string asm, list<dag> pattern> :
 }
 
 class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    Enc64 <outs, ins, asm, pattern> {
+    VOP3Common <outs, ins, asm, pattern> {
 
   bits<8> dst;
   bits<2> src0_modifiers;
@@ -233,16 +243,11 @@ class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{61} = src0_modifiers{0};
   let Inst{62} = src1_modifiers{0};
   let Inst{63} = src2_modifiers{0};
-  
-  let mayLoad = 0;
-  let mayStore = 0;
-  let hasSideEffects = 0;
-  let UseNamedOperandTable = 1;
-  let VOP3 = 1;
+
 }
 
 class VOP3b <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    Enc64 <outs, ins, asm, pattern> {
+    VOP3Common <outs, ins, asm, pattern> {
 
   bits<8> dst;
   bits<2> src0_modifiers;
@@ -266,11 +271,6 @@ class VOP3b <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{62} = src1_modifiers{0};
   let Inst{63} = src2_modifiers{0};
 
-  let mayLoad = 0;
-  let mayStore = 0;
-  let hasSideEffects = 0;
-  let UseNamedOperandTable = 1;
-  let VOP3 = 1;
 }
 
 class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
