@@ -157,6 +157,13 @@ public:
                     ArrayRef<SMFixIt> FixIts = None,
                     bool ShowColors = true) const;
 
+  /// Emits a manually-constructed diagnostic to the given output stream.
+  ///
+  /// \param ShowColors Display colored messages if output is a terminal and
+  /// the default error handler is used.
+  void PrintMessage(raw_ostream &OS, const SMDiagnostic &Diagnostic,
+                    bool ShowColors = true) const;
+
   /// Return an SMDiagnostic at the specified location with the specified
   /// string.
   ///
