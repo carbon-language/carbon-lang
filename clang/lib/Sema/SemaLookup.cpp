@@ -4384,7 +4384,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     TypoCorrection TC = Result;
     TC.setCorrectionRange(SS, TypoName);
-    checkCorrectionVisibility(*this, TC, TypoName.getName());
+    checkCorrectionVisibility(*this, TC);
     return TC;
   }
   // Ugly hack equivalent to CTC == CTC_ObjCMessageReceiver;
