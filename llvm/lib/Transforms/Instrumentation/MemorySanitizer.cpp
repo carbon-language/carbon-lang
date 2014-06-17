@@ -1397,13 +1397,61 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     SC.Done(&I);
   }
 
+  // \brief Handle multiplication by constant.
+  //
+  // Handle a special case of multiplication by constant that may have one or
+  // more zeros in the lower bits. This makes corresponding number of lower bits
+  // of the result zero as well. We model it by shifting the other operand
+  // shadow left by the required number of bits. Effectively, we transform
+  // (X * (A * 2**B)) to ((X << B) * A) and instrument (X << B) as (Sx << B).
+  // We use multiplication by 2**N instead of shift to cover the case of
+  // multiplication by 0, which may occur in some elements of a vector operand.
+  void handleMulByConstant(BinaryOperator &I, Constant *ConstArg,
+                           Value *OtherArg) {
+    Constant *ShadowMul;
+    Type *Ty = ConstArg->getType();
+    if (Ty->isVectorTy()) {
+      unsigned NumElements = Ty->getVectorNumElements();
+      Type *EltTy = Ty->getSequentialElementType();
+      SmallVector<Constant *, 16> Elements;
+      for (unsigned Idx = 0; Idx < NumElements; ++Idx) {
+        ConstantInt *Elt =
+            dyn_cast<ConstantInt>(ConstArg->getAggregateElement(Idx));
+        APInt V = Elt->getValue();
+        APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
+        Elements.push_back(ConstantInt::get(EltTy, V2));
+      }
+      ShadowMul = ConstantVector::get(Elements);
+    } else {
+      ConstantInt *Elt = dyn_cast<ConstantInt>(ConstArg);
+      APInt V = Elt->getValue();
+      APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
+      ShadowMul = ConstantInt::get(Elt->getType(), V2);
+    }
+
+    IRBuilder<> IRB(&I);
+    setShadow(&I,
+              IRB.CreateMul(getShadow(OtherArg), ShadowMul, "msprop_mul_cst"));
+    setOrigin(&I, getOrigin(OtherArg));
+  }
+
+  void visitMul(BinaryOperator &I) {
+    Constant *constOp0 = dyn_cast<Constant>(I.getOperand(0));
+    Constant *constOp1 = dyn_cast<Constant>(I.getOperand(1));
+    if (constOp0 && !constOp1)
+      handleMulByConstant(I, constOp0, I.getOperand(1));
+    else if (constOp1 && !constOp0)
+      handleMulByConstant(I, constOp1, I.getOperand(0));
+    else
+      handleShadowOr(I);
+  }
+
   void visitFAdd(BinaryOperator &I) { handleShadowOr(I); }
   void visitFSub(BinaryOperator &I) { handleShadowOr(I); }
   void visitFMul(BinaryOperator &I) { handleShadowOr(I); }
   void visitAdd(BinaryOperator &I) { handleShadowOr(I); }
   void visitSub(BinaryOperator &I) { handleShadowOr(I); }
   void visitXor(BinaryOperator &I) { handleShadowOr(I); }
-  void visitMul(BinaryOperator &I) { handleShadowOr(I); }
 
   void handleDiv(Instruction &I) {
     IRBuilder<> IRB(&I);
