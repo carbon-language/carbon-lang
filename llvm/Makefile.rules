@@ -377,6 +377,7 @@ ifeq ($(ENABLE_COVERAGE),1)
   BuildMode := $(BuildMode)+Coverage
   CXX.Flags += -ftest-coverage -fprofile-arcs
   C.Flags   += -ftest-coverage -fprofile-arcs
+  LD.Flags   += -ftest-coverage -fprofile-arcs
 endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
