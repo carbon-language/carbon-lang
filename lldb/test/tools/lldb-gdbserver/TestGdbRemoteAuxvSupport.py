@@ -145,6 +145,54 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_launch()
         self.auxv_keys_look_valid()
 
+    def auxv_chunked_reads_work(self):
+        # Verify that multiple smaller offset,length reads of auxv data
+        # return the same data as a single larger read.
+
+        # Grab the auxv data with a single large read here.
+        (word_size, auxv_data) = self.get_raw_auxv_data(inferior_args=["sleep:1"])
+        self.assertIsNotNone(auxv_data)
+
+        # Grab endian.
+        self.reset_test_sequence()
+        self.add_process_info_collection_packets()
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+        endian = process_info.get("endian")
+        self.assertIsNotNone(endian)
+
+        auxv_dict = self.build_auxv_dict(endian, word_size, auxv_data)
+        self.assertIsNotNone(auxv_dict)
+
+        iterated_auxv_data = self.read_binary_data_in_chunks("qXfer:auxv:read::", 2*word_size)
+        self.assertIsNotNone(iterated_auxv_data)
+
+        auxv_dict_iterated = self.build_auxv_dict(endian, word_size, iterated_auxv_data)
+        self.assertIsNotNone(auxv_dict_iterated)
+
+        # Verify both types of data collection returned same content.
+        self.assertEquals(auxv_dict_iterated, auxv_dict)
+
+    @debugserver_test
+    @dsym_test
+    def test_auxv_chunked_reads_work_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.auxv_chunked_reads_work()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_auxv_chunked_reads_work_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.auxv_chunked_reads_work()
+
 
 if __name__ == '__main__':
     unittest2.main()

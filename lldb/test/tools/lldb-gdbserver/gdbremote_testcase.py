@@ -630,3 +630,37 @@ class GdbRemoteTestCaseBase(TestBase):
 
         self.fail("should not reach here - implies required double zero entry not found")
         return auxv_dict
+
+    def read_binary_data_in_chunks(self, command_prefix, chunk_length):
+        """Collect command_prefix{offset:x},{chunk_length:x} until a single 'l' or 'l' with data is returned."""
+        offset = 0
+        done = False
+        decoded_data = ""
+
+        while not done:
+            # Grab the next iteration of data.
+            self.reset_test_sequence()
+            self.test_sequence.add_log_lines([
+                "read packet: ${}{:x},{:x}:#00".format(command_prefix, offset, chunk_length),
+                {"direction":"send", "regex":r"^\$([^E])(.*)#[0-9a-fA-F]{2}$", "capture":{1:"response_type", 2:"content_raw"} }
+                ], True)
+
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+
+            response_type = context.get("response_type")
+            self.assertIsNotNone(response_type)
+            self.assertTrue(response_type in ["l", "m"])
+
+            # Move offset along.
+            offset += chunk_length
+
+            # Figure out if we're done.  We're done if the response type is l.
+            done = response_type == "l"
+
+            # Decode binary data.
+            content_raw = context.get("content_raw")
+            if content_raw and len(content_raw) > 0:
+                self.assertIsNotNone(content_raw)
+                decoded_data += self.decode_gdbremote_binary(content_raw)
+        return decoded_data
