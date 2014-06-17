@@ -15,7 +15,6 @@
 #ifndef CODEGEN_REGISTERS_H
 #define CODEGEN_REGISTERS_H
 
-#include "SetTheory.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -23,6 +22,7 @@
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/SetTheory.h"
 #include <cstdlib>
 #include <map>
 #include <set>

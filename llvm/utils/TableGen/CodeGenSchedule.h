@@ -15,11 +15,11 @@
 #ifndef CODEGEN_SCHEDULE_H
 #define CODEGEN_SCHEDULE_H
 
-#include "SetTheory.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/SetTheory.h"
 
 namespace llvm {
 

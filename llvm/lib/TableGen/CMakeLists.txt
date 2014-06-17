@@ -2,6 +2,7 @@ add_llvm_library(LLVMTableGen
   Error.cpp
   Main.cpp
   Record.cpp
+  SetTheory.cpp
   StringMatcher.cpp
   TableGenBackend.cpp
   TGLexer.cpp
