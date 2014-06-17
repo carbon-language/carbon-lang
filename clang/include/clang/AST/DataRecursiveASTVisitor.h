@@ -2392,8 +2392,8 @@ bool RecursiveASTVisitor<Derived>::VisitOMPCopyinClause(OMPCopyinClause *C) {
 }
 
 template <typename Derived>
-bool DataRecursiveASTVisitor<Derived>::VisitOMPReductionClause(
-    OMPReductionClause *C) {
+bool
+RecursiveASTVisitor<Derived>::VisitOMPReductionClause(OMPReductionClause *C) {
   TRY_TO(TraverseNestedNameSpecifierLoc(C->getQualifierLoc()));
   TRY_TO(TraverseDeclarationNameInfo(C->getNameInfo()));
   VisitOMPClauseList(C);
