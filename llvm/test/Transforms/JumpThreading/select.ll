@@ -127,7 +127,7 @@ L4:
 ; CHECK: test_switch_default
 ; CHECK: entry:
 ; CHECK: load
-; CHECK: switch
+; CHECK: icmp
 ; CHECK: [[THREADED:[A-Za-z.0-9]+]]:
 ; CHECK: store
 ; CHECK: br

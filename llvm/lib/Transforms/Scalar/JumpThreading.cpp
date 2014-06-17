@@ -158,6 +158,9 @@ bool JumpThreading::runOnFunction(Function &F) {
   TLI = &getAnalysis<TargetLibraryInfo>();
   LVI = &getAnalysis<LazyValueInfo>();
 
+  // Remove unreachable blocks from function as they may result in infinite loop.
+  removeUnreachableBlocks(F);
+
   FindLoopHeaders(F);
 
   bool Changed, EverChanged = false;
