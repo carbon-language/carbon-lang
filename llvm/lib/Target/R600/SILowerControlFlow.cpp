@@ -86,6 +86,7 @@ private:
   void Kill(MachineInstr &MI);
   void Branch(MachineInstr &MI);
 
+  void InitM0ForLDS(MachineBasicBlock::iterator MI);
   void LoadM0(MachineInstr &MI, MachineInstr *MovRel);
   void IndirectSrc(MachineInstr &MI);
   void IndirectDst(MachineInstr &MI);
@@ -320,6 +321,14 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
   MI.eraseFromParent();
 }
 
+/// The m0 register stores the maximum allowable address for LDS reads and
+/// writes.  Its value must be at least the size in bytes of LDS allocated by
+/// the shader.  For simplicity, we set it to the maximum possible value.
+void SILowerControlFlowPass::InitM0ForLDS(MachineBasicBlock::iterator MI) {
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),  TII->get(AMDGPU::S_MOV_B32),
+            AMDGPU::M0).addImm(0xffffffff);
+}
+
 void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
 
   MachineBasicBlock &MBB = *MI.getParent();
@@ -333,52 +342,57 @@ void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
     BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
             .addReg(Idx);
     MBB.insert(I, MovRel);
-    MI.eraseFromParent();
-    return;
+  } else {
+
+    assert(AMDGPU::SReg_64RegClass.contains(Save));
+    assert(AMDGPU::VReg_32RegClass.contains(Idx));
+
+    // Save the EXEC mask
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), Save)
+            .addReg(AMDGPU::EXEC);
+
+    // Read the next variant into VCC (lower 32 bits) <- also loop target
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32),
+            AMDGPU::VCC_LO)
+            .addReg(Idx);
+
+    // Move index from VCC into M0
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
+            .addReg(AMDGPU::VCC_LO);
+
+    // Compare the just read M0 value to all possible Idx values
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMP_EQ_U32_e32), AMDGPU::VCC)
+            .addReg(AMDGPU::M0)
+            .addReg(Idx);
+
+    // Update EXEC, save the original EXEC value to VCC
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_AND_SAVEEXEC_B64), AMDGPU::VCC)
+            .addReg(AMDGPU::VCC);
+
+    // Do the actual move
+    MBB.insert(I, MovRel);
+
+    // Update EXEC, switch all done bits to 0 and all todo bits to 1
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_XOR_B64), AMDGPU::EXEC)
+            .addReg(AMDGPU::EXEC)
+            .addReg(AMDGPU::VCC);
+
+    // Loop back to V_READFIRSTLANE_B32 if there are still variants to cover
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_CBRANCH_EXECNZ))
+            .addImm(-7)
+            .addReg(AMDGPU::EXEC);
+
+    // Restore EXEC
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), AMDGPU::EXEC)
+            .addReg(Save);
+
   }
-
-  assert(AMDGPU::SReg_64RegClass.contains(Save));
-  assert(AMDGPU::VReg_32RegClass.contains(Idx));
-
-  // Save the EXEC mask
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), Save)
-          .addReg(AMDGPU::EXEC);
-
-  // Read the next variant into VCC (lower 32 bits) <- also loop target
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32),
-          AMDGPU::VCC_LO)
-          .addReg(Idx);
-
-  // Move index from VCC into M0
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
-          .addReg(AMDGPU::VCC_LO);
-
-  // Compare the just read M0 value to all possible Idx values
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMP_EQ_U32_e32), AMDGPU::VCC)
-          .addReg(AMDGPU::M0)
-          .addReg(Idx);
-
-  // Update EXEC, save the original EXEC value to VCC
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_AND_SAVEEXEC_B64), AMDGPU::VCC)
-          .addReg(AMDGPU::VCC);
-
-  // Do the actual move
-  MBB.insert(I, MovRel);
-
-  // Update EXEC, switch all done bits to 0 and all todo bits to 1
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_XOR_B64), AMDGPU::EXEC)
-          .addReg(AMDGPU::EXEC)
-          .addReg(AMDGPU::VCC);
-
-  // Loop back to V_READFIRSTLANE_B32 if there are still variants to cover
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_CBRANCH_EXECNZ))
-          .addImm(-7)
-          .addReg(AMDGPU::EXEC);
-
-  // Restore EXEC
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), AMDGPU::EXEC)
-          .addReg(Save);
-
+  // FIXME: Are there any values other than the LDS address clamp that need to
+  // be stored in the m0 register and may be live for more than a few
+  // instructions?  If so, we should save the m0 register at the beginning
+  // of this function and restore it here.
+  // FIXME: Add support for LDS direct loads.
+  InitM0ForLDS(&MI);
   MI.eraseFromParent();
 }
 
@@ -523,8 +537,7 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
     MachineBasicBlock &MBB = MF.front();
     // Initialize M0 to a value that won't cause LDS access to be discarded
     // due to offset clamping
-    BuildMI(MBB, MBB.getFirstNonPHI(), DebugLoc(), TII->get(AMDGPU::S_MOV_B32),
-            AMDGPU::M0).addImm(0xffffffff);
+    InitM0ForLDS(MBB.getFirstNonPHI());
   }
 
   if (NeedWQM && MFI->ShaderType == ShaderType::PIXEL) {
