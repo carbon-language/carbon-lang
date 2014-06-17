@@ -143,10 +143,31 @@ inline S &getS() {
 //   init.end:
 // CHECK: ret %struct.S* @"\01?TheS@?1??getS@@YAAAUS@@XZ@4U2@A"
 
+inline int enum_in_function() {
+  // CHECK-LABEL: define linkonce_odr i32 @"\01?enum_in_function@@YAHXZ"()
+  static enum e { foo, bar, baz } x;
+  // CHECK: @"\01?x@?1??enum_in_function@@YAHXZ@4W4e@?1??1@YAHXZ@A"
+  static int y;
+  // CHECK: @"\01?y@?1??enum_in_function@@YAHXZ@4HA"
+  return x + y;
+};
+
+struct T {
+  enum e { foo, bar, baz };
+  int enum_in_struct() {
+    // CHECK-LABEL: define linkonce_odr x86_thiscallcc i32 @"\01?enum_in_struct@T@@QAEHXZ"
+    static int x;
+    // CHECK: @"\01?x@?1??enum_in_struct@T@@QAEHXZ@4HA"
+    return x++;
+  }
+};
+
 void force_usage() {
   UnreachableStatic();
   getS();
   (void)B<int>::foo;  // (void) - force usage
+  enum_in_function();
+  (void)&T::enum_in_struct;
 }
 
 // CHECK: define linkonce_odr void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"()

@@ -67,6 +67,7 @@ void Scope::Init(Scope *parent, unsigned flags) {
 
   // If this is a prototype scope, record that.
   if (flags & FunctionPrototypeScope) PrototypeDepth++;
+
   if (flags & DeclScope) {
     if (flags & FunctionPrototypeScope)
       ; // Prototype scopes are uninteresting.
@@ -74,6 +75,8 @@ void Scope::Init(Scope *parent, unsigned flags) {
       ; // Nested class scopes aren't ambiguous.
     else if ((flags & ClassScope) && getParent()->getFlags() == DeclScope)
       ; // Classes inside of namespaces aren't ambiguous.
+    else if ((flags & EnumScope))
+      ; // Don't increment for enum scopes.
     else
       incrementMSLocalManglingNumber();
   }
