@@ -2018,10 +2018,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     }
   }
 
-  // \brief Instrument vector shift instrinsic.
+  // \brief Instrument vector pack instrinsic.
   //
   // This function instruments intrinsics like x86_mmx_packsswb, that
-  // packs elements of 2 input vectors into half as much bits with saturation.
+  // packs elements of 2 input vectors into half as many bits with saturation.
   // Shadow is propagated with the signed variant of the same intrinsic applied
   // to sext(Sa != zeroinitializer), sext(Sb != zeroinitializer).
   // EltSizeInBits is used only for x86mmx arguments.
