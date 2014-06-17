@@ -73,37 +73,34 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
 
   // Enumerate types used by function bodies and argument lists.
-  for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
+  for (const Function &F : *M) {
+    for (const Argument &A : F.args())
+      EnumerateType(A.getType());
 
-    for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-         I != E; ++I)
-      EnumerateType(I->getType());
-
-    for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
-        for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
-             OI != E; ++OI) {
-          if (MDNode *MD = dyn_cast<MDNode>(*OI))
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB) {
+        for (const Use &Op : I.operands()) {
+          if (MDNode *MD = dyn_cast<MDNode>(&Op))
             if (MD->isFunctionLocal() && MD->getFunction())
               // These will get enumerated during function-incorporation.
               continue;
-          EnumerateOperandType(*OI);
+          EnumerateOperandType(Op);
         }
-        EnumerateType(I->getType());
-        if (const CallInst *CI = dyn_cast<CallInst>(I))
+        EnumerateType(I.getType());
+        if (const CallInst *CI = dyn_cast<CallInst>(&I))
           EnumerateAttributes(CI->getAttributes());
-        else if (const InvokeInst *II = dyn_cast<InvokeInst>(I))
+        else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I))
           EnumerateAttributes(II->getAttributes());
 
         // Enumerate metadata attached with this instruction.
         MDs.clear();
-        I->getAllMetadataOtherThanDebugLoc(MDs);
+        I.getAllMetadataOtherThanDebugLoc(MDs);
         for (unsigned i = 0, e = MDs.size(); i != e; ++i)
           EnumerateMetadata(MDs[i].second);
 
-        if (!I->getDebugLoc().isUnknown()) {
+        if (!I.getDebugLoc().isUnknown()) {
           MDNode *Scope, *IA;
-          I->getDebugLoc().getScopeAndInlinedAt(Scope, IA, I->getContext());
+          I.getDebugLoc().getScopeAndInlinedAt(Scope, IA, I.getContext());
           if (Scope) EnumerateMetadata(Scope);
           if (IA) EnumerateMetadata(IA);
         }
