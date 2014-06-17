@@ -180,7 +180,7 @@ TYPED_TEST(ValueMapTest, ConfiguredCollisionBehavior) {
 template<typename KeyT, typename MutexT>
 struct LockMutex : ValueMapConfig<KeyT, MutexT> {
   struct ExtraData {
-    mutex_type *M;
+    MutexT *M;
     bool *CalledRAUW;
     bool *CalledDeleted;
   };
@@ -192,7 +192,7 @@ struct LockMutex : ValueMapConfig<KeyT, MutexT> {
     *Data.CalledDeleted = true;
     EXPECT_FALSE(Data.M->tryacquire()) << "Mutex should already be locked.";
   }
-  static mutex_type *getMutex(const ExtraData &Data) { return Data.M; }
+  static MutexT *getMutex(const ExtraData &Data) { return Data.M; }
 };
 #if LLVM_ENABLE_THREADS
 TYPED_TEST(ValueMapTest, LocksMutex) {
