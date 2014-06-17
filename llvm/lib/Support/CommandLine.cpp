@@ -1699,7 +1699,7 @@ public:
     OS << "LLVM (http://llvm.org/):\n"
        << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
-    OS << LLVM_VERSION_INFO;
+    OS << " " << LLVM_VERSION_INFO;
 #endif
     OS << "\n  ";
 #ifndef __OPTIMIZE__
