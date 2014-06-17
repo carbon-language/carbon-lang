@@ -17,3 +17,7 @@ include $(LEVEL)/Makefile.common
 
 CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
 CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
+
+ifdef LLVM_VERSION_INFO
+CompileCommonOpts += -DLLVM_VERSION_INFO='"$(LLVM_VERSION_INFO)"'
+endif
