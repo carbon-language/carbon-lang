@@ -121,21 +121,16 @@ namespace {
 #endif
     }
 
-    FunctionToLazyStubMapTy& getFunctionToLazyStubMap(
-      const MutexGuard& locked) {
-      assert(locked.holds(TheJIT->lock));
+    FunctionToLazyStubMapTy& getFunctionToLazyStubMap() {
       return FunctionToLazyStubMap;
     }
 
-    GlobalToIndirectSymMapTy& getGlobalToIndirectSymMap(const MutexGuard& lck) {
-      assert(lck.holds(TheJIT->lock));
+    GlobalToIndirectSymMapTy& getGlobalToIndirectSymMap() {
       return GlobalToIndirectSymMap;
     }
 
     std::pair<void *, Function *> LookupFunctionFromCallSite(
-        const MutexGuard &locked, void *CallSite) const {
-      assert(locked.holds(TheJIT->lock));
-
+        void *CallSite) const {
       // The address given to us for the stub may not be exactly right, it
       // might be a little bit after the stub.  As such, use upper_bound to
       // find it.
@@ -147,9 +142,7 @@ namespace {
       return *I;
     }
 
-    void AddCallSite(const MutexGuard &locked, void *CallSite, Function *F) {
-      assert(locked.holds(TheJIT->lock));
-
+    void AddCallSite(void *CallSite, Function *F) {
       bool Inserted = CallSiteToFunctionMap.insert(
           std::make_pair(CallSite, F)).second;
       (void)Inserted;
@@ -504,7 +497,7 @@ void *JITResolver::getLazyFunctionStubIfAvailable(Function *F) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a stub for this function, recycle it.
-  return state.getFunctionToLazyStubMap(locked).lookup(F);
+  return state.getFunctionToLazyStubMap().lookup(F);
 }
 
 /// getFunctionStub - This returns a pointer to a function stub, creating
@@ -513,7 +506,7 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a lazy stub for this function, recycle it.
-  void *&Stub = state.getFunctionToLazyStubMap(locked)[F];
+  void *&Stub = state.getFunctionToLazyStubMap()[F];
   if (Stub) return Stub;
 
   // Call the lazy resolver function if we are JIT'ing lazily.  Otherwise we
@@ -555,7 +548,7 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
 
     // Finally, keep track of the stub-to-Function mapping so that the
     // JITCompilerFn knows which function to compile!
-    state.AddCallSite(locked, Stub, F);
+    state.AddCallSite(Stub, F);
   } else if (!Actual) {
     // If we are JIT'ing non-lazily but need to call a function that does not
     // exist yet, add it to the JIT's work list so that we can fill in the
@@ -574,7 +567,7 @@ void *JITResolver::getGlobalValueIndirectSym(GlobalValue *GV, void *GVAddress) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a stub for this global variable, recycle it.
-  void *&IndirectSym = state.getGlobalToIndirectSymMap(locked)[GV];
+  void *&IndirectSym = state.getGlobalToIndirectSymMap()[GV];
   if (IndirectSym) return IndirectSym;
 
   // Otherwise, codegen a new indirect symbol.
@@ -634,7 +627,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     // The address given to us for the stub may not be exactly right, it might
     // be a little bit after the stub.  As such, use upper_bound to find it.
     std::pair<void*, Function*> I =
-      JR->state.LookupFunctionFromCallSite(locked, Stub);
+      JR->state.LookupFunctionFromCallSite(Stub);
     F = I.second;
     ActualPtr = I.first;
   }
