@@ -20,6 +20,7 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
+#include "polly/Options.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
@@ -30,7 +31,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 #include "isl/constraint.h"
@@ -54,6 +54,15 @@ using namespace polly;
 
 STATISTIC(ScopFound, "Number of valid Scops");
 STATISTIC(RichScopFound, "Number of Scops containing a loop");
+
+// Multiplicative reductions can be disabled seperately as these kind of
+// operations can overflow easily. Additive reductions and bit operations
+// are in contrast pretty stable.
+static cl::opt<bool>
+DisableMultiplicativeReductions("polly-disable-multiplicative-reductions",
+                                cl::desc("Disable multiplicative reductions"),
+                                cl::Hidden, cl::ZeroOrMore, cl::init(false),
+                                cl::cat(PollyCategory));
 
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
@@ -696,6 +705,44 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   Domain = buildDomain(tempScop, CurRegion);
   buildScattering(Scatter);
   buildAccesses(tempScop, CurRegion);
+  checkForReduction();
+}
+
+void ScopStmt::checkForReduction() {
+  // Skip statements with more than one binary reduction
+  if (MemAccs.size() != 2)
+    return;
+
+  // Skip if there is not exactly one load and one store
+  unsigned LoadIdx = MemAccs[0]->isRead() ? 0 : 1;
+  auto *Load = dyn_cast<LoadInst>(MemAccs[LoadIdx]->getAccessInstruction());
+  auto *Store =
+      dyn_cast<StoreInst>(MemAccs[1 - LoadIdx]->getAccessInstruction());
+  if (!Load || !Store ||
+      Load->getPointerOperand() != Store->getPointerOperand())
+    return;
+
+  // Skip if there is not one binary operator between the load and the store
+  auto *BinOp = dyn_cast<BinaryOperator>(Store->getValueOperand());
+  if (!BinOp || (BinOp->getOperand(0) != Load && BinOp->getOperand(1) != Load))
+    return;
+
+  // Skip if the opcode of the binary operator is not commutative/associative
+  if (!BinOp->isCommutative() || !BinOp->isAssociative())
+    return;
+
+  // Skip if the load has multiple uses
+  if (Load->getNumUses() != 1)
+    return;
+
+  // Skip if it is a multiplicative reduction and we disabled them
+  if (DisableMultiplicativeReductions &&
+      (BinOp->getOpcode() == Instruction::Mul ||
+       BinOp->getOpcode() == Instruction::FMul))
+    return;
+
+  // Valid reduction like statement
+  IsReductionLike = true;
 }
 
 std::string ScopStmt::getDomainStr() const { return stringFromIslObj(Domain); }
@@ -751,6 +798,7 @@ ScopStmt::~ScopStmt() {
 
 void ScopStmt::print(raw_ostream &OS) const {
   OS << "\t" << getBaseName() << "\n";
+  OS.indent(8) << "Reduction like: " << isReductionLike() << "\n";
 
   OS.indent(12) << "Domain :=\n";
 
