@@ -45,8 +45,10 @@ class ValueMapConstIterator;
 /// This class defines the default behavior for configurable aspects of
 /// ValueMap<>.  User Configs should inherit from this class to be as compatible
 /// as possible with future versions of ValueMap.
-template<typename KeyT>
+template<typename KeyT, typename MutexT = sys::Mutex>
 struct ValueMapConfig {
+  typedef MutexT mutex_type;
+
   /// If FollowRAUW is true, the ValueMap will update mappings on RAUW. If it's
   /// false, the ValueMap will leave the original mapping in place.
   enum { FollowRAUW = true };
@@ -67,7 +69,7 @@ struct ValueMapConfig {
   /// and onDelete) and not inside other ValueMap methods.  NULL means that no
   /// mutex is necessary.
   template<typename ExtraDataT>
-  static sys::Mutex *getMutex(const ExtraDataT &/*Data*/) { return nullptr; }
+  static mutex_type *getMutex(const ExtraDataT &/*Data*/) { return nullptr; }
 };
 
 /// See the file comment.
@@ -212,7 +214,7 @@ public:
   void deleted() override {
     // Make a copy that won't get changed even when *this is destroyed.
     ValueMapCallbackVH Copy(*this);
-    sys::Mutex *M = Config::getMutex(Copy.Map->Data);
+    typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
       M->acquire();
     Config::onDelete(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
@@ -225,7 +227,7 @@ public:
            "Invalid RAUW on key of ValueMap<>");
     // Make a copy that won't get changed even when *this is destroyed.
     ValueMapCallbackVH Copy(*this);
-    sys::Mutex *M = Config::getMutex(Copy.Map->Data);
+    typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
       M->acquire();
 
