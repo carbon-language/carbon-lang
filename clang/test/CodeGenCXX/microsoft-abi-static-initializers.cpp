@@ -162,12 +162,41 @@ struct T {
   }
 };
 
+inline int switch_test(int x) {
+  // CHECK-LABEL: define linkonce_odr i32 @"\01?switch_test@@YAHH@Z"(i32 %x)
+  switch (x) {
+    static int a;
+    // CHECK: @"\01?a@?3??switch_test@@YAHH@Z@4HA"
+    case 0:
+      a++;
+      return 1;
+    case 1:
+      static int b;
+      // CHECK: @"\01?b@?3??switch_test@@YAHH@Z@4HA"
+      return b++;
+    case 2: {
+      static int c;
+      // CHECK: @"\01?c@?4??switch_test@@YAHH@Z@4HA"
+      return b + c++;
+    }
+  };
+}
+
+int f();
+inline void switch_test2() {
+  // CHECK-LABEL: define linkonce_odr void @"\01?switch_test2@@YAXXZ"()
+  // CHECK: @"\01?x@?2??switch_test2@@YAXXZ@4HA"
+  switch (1) default: static int x = f();
+}
+
 void force_usage() {
   UnreachableStatic();
   getS();
   (void)B<int>::foo;  // (void) - force usage
   enum_in_function();
   (void)&T::enum_in_struct;
+  switch_test(1);
+  switch_test2();
 }
 
 // CHECK: define linkonce_odr void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"()

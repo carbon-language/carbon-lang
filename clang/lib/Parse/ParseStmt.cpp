@@ -1233,6 +1233,11 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   getCurScope()->AddFlags(Scope::BreakScope);
   ParseScope InnerScope(this, Scope::DeclScope, C99orCXX, Tok.is(tok::l_brace));
 
+  // We have incremented the mangling number for the SwitchScope and the
+  // InnerScope, which is one too many.
+  if (C99orCXX)
+    getCurScope()->decrementMSLocalManglingNumber();
+
   // Read the body statement.
   StmtResult Body(ParseStatement(TrailingElseLoc));
 
