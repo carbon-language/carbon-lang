@@ -218,7 +218,8 @@ macro(add_lldb_library name)
   endif ()
 
   if(LLDB_USED_LIBS)
-    if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
+    # The Darwin linker doesn't understand --start-group/--end-group.
+    if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
       target_link_libraries(${name} ${cmake_2_8_12_PUBLIC}
                             -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
     else()
