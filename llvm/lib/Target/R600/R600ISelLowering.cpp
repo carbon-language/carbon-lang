@@ -160,6 +160,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   // We don't have 64-bit shifts. Thus we need either SHX i64 or SHX_PARTS i32
   //  to be Legal/Custom in order to avoid library calls.
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
+  setOperationAction(ISD::SRL_PARTS, MVT::i32, Custom);
 
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
@@ -557,6 +558,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::INSERT_VECTOR_ELT: return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::SHL_PARTS: return LowerSHLParts(Op, DAG);
+  case ISD::SRL_PARTS: return LowerSRXParts(Op, DAG);
   case ISD::FCOS:
   case ISD::FSIN: return LowerTrig(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
@@ -939,6 +941,44 @@ SDValue R600TargetLowering::LowerSHLParts(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue HiBig = DAG.getNode(ISD::SHL, DL, VT, Lo, BigShift);
   SDValue LoBig = Zero;
+
+  Hi = DAG.getSelectCC(DL, Shift, Width, HiSmall, HiBig, ISD::SETULT);
+  Lo = DAG.getSelectCC(DL, Shift, Width, LoSmall, LoBig, ISD::SETULT);
+
+  return DAG.getNode(ISD::MERGE_VALUES, DL, DAG.getVTList(VT,VT), Lo, Hi);
+}
+
+SDValue R600TargetLowering::LowerSRXParts(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+
+  SDValue Lo = Op.getOperand(0);
+  SDValue Hi = Op.getOperand(1);
+  SDValue Shift = Op.getOperand(2);
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue One  = DAG.getConstant(1, VT);
+
+  SDValue Width  = DAG.getConstant(VT.getSizeInBits(), VT);
+  SDValue Width1 = DAG.getConstant(VT.getSizeInBits() - 1, VT);
+  SDValue BigShift  = DAG.getNode(ISD::SUB, DL, VT, Shift, Width);
+  SDValue CompShift = DAG.getNode(ISD::SUB, DL, VT, Width1, Shift);
+
+  // The dance around Width1 is necessary for 0 special case.
+  // Without it the CompShift might be 32, producing incorrect results in
+  // Overflow. So we do the shift in two steps, the alternative is to
+  // add a conditional to filter the special case.
+
+  SDValue Overflow = DAG.getNode(ISD::SHL, DL, VT, Hi, CompShift);
+  Overflow = DAG.getNode(ISD::SHL, DL, VT, Overflow, One);
+
+  // TODO: SRA support here
+  SDValue HiSmall = DAG.getNode(ISD::SRL, DL, VT, Hi, Shift);
+  SDValue LoSmall = DAG.getNode(ISD::SRL, DL, VT, Lo, Shift);
+  LoSmall = DAG.getNode(ISD::OR, DL, VT, LoSmall, Overflow);
+
+  // TODO: SRA support here
+  SDValue LoBig = DAG.getNode(ISD::SRL, DL, VT, Hi, BigShift);
+  SDValue HiBig = Zero;
 
   Hi = DAG.getSelectCC(DL, Shift, Width, HiSmall, HiBig, ISD::SETULT);
   Lo = DAG.getSelectCC(DL, Shift, Width, LoSmall, LoBig, ISD::SETULT);
