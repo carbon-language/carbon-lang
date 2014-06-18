@@ -23,6 +23,7 @@
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/types.h>
+#include <crt_externs.h> // for _NSGetEnviron()
 
 #include "CFString.h"
 #include "DNB.h"
@@ -862,6 +863,8 @@ static struct option g_long_options[] =
     { "unix-socket",        required_argument,  NULL,               'u' },  // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
     { "named-pipe",         required_argument,  NULL,               'P' },
     { "reverse-connect",    no_argument,        NULL,               'R' },
+    { "env",                required_argument,  NULL,               'e' },  // When debugserver launches the process, set a single environment entry as specified by the option value ("./debugserver -e FOO=1 -e BAR=2 localhost:1234 -- /bin/ls")
+    { "forward-env",        no_argument,        NULL,               'F' },  // When debugserver launches the process, forward debugserver's current environment variables to the child process ("./debugserver -F localhost:1234 -- /bin/ls"
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -1193,6 +1196,21 @@ main (int argc, char *argv[])
                 named_pipe_path.assign (optarg);
                 break;
                 
+            case 'e':
+                // Pass a single specified environment variable down to the process that gets launched
+                remote->Context().PushEnvironment(optarg);
+                break;
+            
+            case 'F':
+                // Pass the current environment down to the process that gets launched
+                {
+                    char **host_env = *_NSGetEnviron();
+                    char *env_entry;
+                    size_t i;
+                    for (i=0; (env_entry = host_env[i]) != NULL; ++i)
+                        remote->Context().PushEnvironment(env_entry);
+                }
+                break;
         }
     }
     
