@@ -3294,19 +3294,26 @@ INTERCEPTOR(int, random_r, void *buf, u32 *result) {
 // FIXME: under ASan the REAL() call below may write to freed memory and corrupt
 // its metadata. See
 // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-#if SANITIZER_INTERCEPT_PTHREAD_ATTR_GET || \
-    SANITIZER_INTERCEPT_PTHREAD_ATTR_GETINHERITSSCHED
-#define INTERCEPTOR_PTHREAD_ATTR_GET(what, sz)                      \
-  INTERCEPTOR(int, pthread_attr_get##what, void *attr, void *r) {   \
-    void *ctx;                                                      \
-    COMMON_INTERCEPTOR_ENTER(ctx, pthread_attr_get##what, attr, r); \
-    int res = REAL(pthread_attr_get##what)(attr, r);                \
-    if (!res && r) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, r, sz);      \
-    return res;                                                     \
+#if SANITIZER_INTERCEPT_PTHREAD_ATTR_GET ||              \
+    SANITIZER_INTERCEPT_PTHREAD_ATTR_GETINHERITSSCHED || \
+    SANITIZER_INTERCEPT_PTHREAD_MUTEXATTR_GET ||         \
+    SANITIZER_INTERCEPT_PTHREAD_RWLOCKATTR_GET ||        \
+    SANITIZER_INTERCEPT_PTHREAD_CONDATTR_GET ||          \
+    SANITIZER_INTERCEPT_PTHREAD_BARRIERATTR_GET
+#define INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(fn, sz)            \
+  INTERCEPTOR(int, fn, void *attr, void *r) {                  \
+    void *ctx;                                                 \
+    COMMON_INTERCEPTOR_ENTER(ctx, fn, attr, r);                \
+    int res = REAL(fn)(attr, r);                               \
+    if (!res && r) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, r, sz); \
+    return res;                                                \
   }
 #endif
 
+
 #if SANITIZER_INTERCEPT_PTHREAD_ATTR_GET
+#define INTERCEPTOR_PTHREAD_ATTR_GET(what, sz) \
+  INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(pthread_attr_get##what, sz)
 INTERCEPTOR_PTHREAD_ATTR_GET(detachstate, sizeof(int))
 INTERCEPTOR_PTHREAD_ATTR_GET(guardsize, sizeof(SIZE_T))
 INTERCEPTOR_PTHREAD_ATTR_GET(schedparam, struct_sched_param_sz)
@@ -3378,6 +3385,60 @@ INTERCEPTOR(int, pthread_attr_getaffinity_np, void *attr, SIZE_T cpusetsize,
   COMMON_INTERCEPT_FUNCTION(pthread_attr_getaffinity_np);
 #else
 #define INIT_PTHREAD_ATTR_GETAFFINITY_NP
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_MUTEXATTR_GET
+#define INTERCEPTOR_PTHREAD_MUTEXATTR_GET(what, sz) \
+  INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(pthread_mutexattr_get##what, sz)
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(pshared, sizeof(int))
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(type, sizeof(int))
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(protocol, sizeof(int))
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(prioceiling, sizeof(int))
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(robust, sizeof(int))
+INTERCEPTOR_PTHREAD_MUTEXATTR_GET(robust_np, sizeof(int))
+#define INIT_PTHREAD_MUTEXATTR_GET                             \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_getpshared);     \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_gettype);        \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_getprotocol);    \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_getprioceiling); \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_getrobust);      \
+  COMMON_INTERCEPT_FUNCTION(pthread_mutexattr_getrobust_np);
+#else
+#define INIT_PTHREAD_MUTEXATTR_GET
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_RWLOCKATTR_GET
+#define INTERCEPTOR_PTHREAD_RWLOCKATTR_GET(what, sz) \
+  INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(pthread_rwlockattr_get##what, sz)
+INTERCEPTOR_PTHREAD_RWLOCKATTR_GET(pshared, sizeof(int))
+INTERCEPTOR_PTHREAD_RWLOCKATTR_GET(kind_np, sizeof(int))
+#define INIT_PTHREAD_RWLOCKATTR_GET                         \
+  COMMON_INTERCEPT_FUNCTION(pthread_rwlockattr_getpshared); \
+  COMMON_INTERCEPT_FUNCTION(pthread_rwlockattr_getkind_np);
+#else
+#define INIT_PTHREAD_RWLOCKATTR_GET
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_CONDATTR_GET
+#define INTERCEPTOR_PTHREAD_CONDATTR_GET(what, sz) \
+  INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(pthread_condattr_get##what, sz)
+INTERCEPTOR_PTHREAD_CONDATTR_GET(pshared, sizeof(int))
+INTERCEPTOR_PTHREAD_CONDATTR_GET(clock, sizeof(__sanitizer_clockid_t))
+#define INIT_PTHREAD_CONDATTR_GET                         \
+  COMMON_INTERCEPT_FUNCTION(pthread_condattr_getpshared); \
+  COMMON_INTERCEPT_FUNCTION(pthread_condattr_getclock);
+#else
+#define INIT_PTHREAD_CONDATTR_GET
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_BARRIERATTR_GET
+#define INTERCEPTOR_PTHREAD_BARRIERATTR_GET(what, sz) \
+  INTERCEPTOR_PTHREAD_OBJECT_ATTR_GET(pthread_barrierattr_get##what, sz)
+INTERCEPTOR_PTHREAD_BARRIERATTR_GET(pshared, sizeof(int))
+#define INIT_PTHREAD_BARRIERATTR_GET \
+  COMMON_INTERCEPT_FUNCTION(pthread_barrierattr_getpshared);
+#else
+#define INIT_PTHREAD_BARRIERATTR_GET
 #endif
 
 #if SANITIZER_INTERCEPT_TMPNAM
@@ -4606,6 +4667,10 @@ static void InitializeCommonInterceptors() {
   INIT_PTHREAD_ATTR_GET;
   INIT_PTHREAD_ATTR_GETINHERITSCHED;
   INIT_PTHREAD_ATTR_GETAFFINITY_NP;
+  INIT_PTHREAD_MUTEXATTR_GET;
+  INIT_PTHREAD_RWLOCKATTR_GET;
+  INIT_PTHREAD_CONDATTR_GET;
+  INIT_PTHREAD_BARRIERATTR_GET;
   INIT_TMPNAM;
   INIT_TMPNAM_R;
   INIT_TEMPNAM;

@@ -47,7 +47,7 @@ DECLARE_REAL(int, pthread_attr_getdetachstate, void *, void *)
 extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
 extern "C" int pthread_key_create(unsigned *key, void (*destructor)(void* v));
 extern "C" int pthread_setspecific(unsigned key, const void *v);
-extern "C" int pthread_mutexattr_gettype(void *a, int *type);
+DECLARE_REAL(int, pthread_mutexattr_gettype, void *, void *)
 extern "C" int pthread_yield();
 extern "C" int pthread_sigmask(int how, const __sanitizer_sigset_t *set,
                                __sanitizer_sigset_t *oldset);
@@ -1029,7 +1029,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_init, void *m, void *a) {
     bool recursive = false;
     if (a) {
       int type = 0;
-      if (pthread_mutexattr_gettype(a, &type) == 0)
+      if (REAL(pthread_mutexattr_gettype)(a, &type) == 0)
         recursive = (type == PTHREAD_MUTEX_RECURSIVE
             || type == PTHREAD_MUTEX_RECURSIVE_NP);
     }
