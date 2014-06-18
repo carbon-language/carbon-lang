@@ -102,17 +102,45 @@ public:
 
     // Output the constant in big/little endian byte order.
     unsigned Size = Desc.getSize();
-    if (IsLittleEndian) {
-      for (unsigned i = 0; i != Size; ++i) {
-        OS << (char)Bits;
-        Bits >>= 8;
+    switch (Size) {
+    case 4:
+      if (IsLittleEndian) {
+        OS << (char)(Bits);
+        OS << (char)(Bits >> 8);
+        OS << (char)(Bits >> 16);
+        OS << (char)(Bits >> 24);
+      } else {
+        OS << (char)(Bits >> 24);
+        OS << (char)(Bits >> 16);
+        OS << (char)(Bits >> 8);
+        OS << (char)(Bits);
       }
-    } else {
-      int ShiftValue = (Size * 8) - 8;
-      for (unsigned i = 0; i != Size; ++i) {
-        OS << (char)(Bits >> ShiftValue);
-        Bits <<= 8;
+      break;
+    case 8:
+      // If we emit a pair of instructions, the first one is
+      // always in the top 32 bits, even on little-endian.
+      if (IsLittleEndian) {
+        OS << (char)(Bits >> 32);
+        OS << (char)(Bits >> 40);
+        OS << (char)(Bits >> 48);
+        OS << (char)(Bits >> 56);
+        OS << (char)(Bits);
+        OS << (char)(Bits >> 8);
+        OS << (char)(Bits >> 16);
+        OS << (char)(Bits >> 24);
+      } else {
+        OS << (char)(Bits >> 56);
+        OS << (char)(Bits >> 48);
+        OS << (char)(Bits >> 40);
+        OS << (char)(Bits >> 32);
+        OS << (char)(Bits >> 24);
+        OS << (char)(Bits >> 16);
+        OS << (char)(Bits >> 8);
+        OS << (char)(Bits);
       }
+      break;
+    default:
+      llvm_unreachable ("Invalid instruction size");
     }
     
     ++MCNumEmitted;  // Keep track of the # of mi's emitted.
