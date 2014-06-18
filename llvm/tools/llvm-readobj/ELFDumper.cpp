@@ -1040,7 +1040,7 @@ public:
 
   MipsGOTParser(const ObjectFile *Obj, StreamWriter &W) : Obj(Obj), W(W) {}
 
-  void ParseGOT(const Elf_Shdr &GOTShdr);
+  void parseGOT(const Elf_Shdr &GOTShdr);
 
 private:
   typedef typename ObjectFile::Elf_Sym_Iter Elf_Sym_Iter;
@@ -1051,8 +1051,8 @@ private:
   const ObjectFile *Obj;
   StreamWriter &W;
 
-  std::size_t GetGOTTotal(ArrayRef<uint8_t> GOT) const;
-  GOTIter MakeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
+  std::size_t getGOTTotal(ArrayRef<uint8_t> GOT) const;
+  GOTIter makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
 
   bool getGOTTags(uint64_t &LocalGotNum, uint64_t &GotSym);
   void printGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It);
@@ -1062,7 +1062,7 @@ private:
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
+void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
   // See "Global Offset Table" in Chapter 5 in the following document
   // for detailed GOT description.
   // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
@@ -1078,7 +1078,7 @@ void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
   if (!getGOTTags(DtLocalGotNum, DtGotSym))
     return;
 
-  if (DtLocalGotNum > GetGOTTotal(*GOT)) {
+  if (DtLocalGotNum > getGOTTotal(*GOT)) {
     W.startLine() << "MIPS_LOCAL_GOTNO exceeds a number of GOT entries.\n";
     return;
   }
@@ -1094,13 +1094,13 @@ void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
 
   std::size_t GlobalGotNum = DynSymTotal - DtGotSym;
 
-  if (DtLocalGotNum + GlobalGotNum > GetGOTTotal(*GOT)) {
+  if (DtLocalGotNum + GlobalGotNum > getGOTTotal(*GOT)) {
     W.startLine() << "Number of global GOT entries exceeds the size of GOT.\n";
     return;
   }
 
-  GOTIter GotBegin = MakeGOTIter(*GOT, 0);
-  GOTIter GotLocalEnd = MakeGOTIter(*GOT, DtLocalGotNum);
+  GOTIter GotBegin = makeGOTIter(*GOT, 0);
+  GOTIter GotLocalEnd = makeGOTIter(*GOT, DtLocalGotNum);
   GOTIter It = GotBegin;
 
   DictScope GS(W, "Primary GOT");
@@ -1131,7 +1131,7 @@ void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
   {
     ListScope GS(W, "Global entries");
 
-    GOTIter GotGlobalEnd = MakeGOTIter(*GOT, DtLocalGotNum + GlobalGotNum);
+    GOTIter GotGlobalEnd = makeGOTIter(*GOT, DtLocalGotNum + GlobalGotNum);
     Elf_Sym_Iter GotDynSym = DynSymBegin + DtGotSym;
     for (; It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
@@ -1139,18 +1139,18 @@ void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
     }
   }
 
-  std::size_t SpecGotNum = GetGOTTotal(*GOT) - DtLocalGotNum - GlobalGotNum;
+  std::size_t SpecGotNum = getGOTTotal(*GOT) - DtLocalGotNum - GlobalGotNum;
   W.printNumber("Number of TLS and multi-GOT entries", uint64_t(SpecGotNum));
 }
 
 template <class ELFT>
-std::size_t MipsGOTParser<ELFT>::GetGOTTotal(ArrayRef<uint8_t> GOT) const {
+std::size_t MipsGOTParser<ELFT>::getGOTTotal(ArrayRef<uint8_t> GOT) const {
   return GOT.size() / sizeof(GOTEntry);
 }
 
 template <class ELFT>
 typename MipsGOTParser<ELFT>::GOTIter
-MipsGOTParser<ELFT>::MakeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum) {
+MipsGOTParser<ELFT>::makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum) {
   const char *Data = reinterpret_cast<const char *>(GOT.data());
   return GOTIter(sizeof(GOTEntry), Data + EntryNum * sizeof(GOTEntry));
 }
@@ -1236,5 +1236,5 @@ template <class ELFT> void ELFDumper<ELFT>::printMipsPLTGOT() {
     return;
   }
 
-  MipsGOTParser<ELFT>(Obj, W).ParseGOT(*GotShdr);
+  MipsGOTParser<ELFT>(Obj, W).parseGOT(*GotShdr);
 }
