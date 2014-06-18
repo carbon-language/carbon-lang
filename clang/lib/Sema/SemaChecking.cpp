@@ -5385,7 +5385,7 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
         // comparisons will be tautological.
         EqualityOnly = true;
       } else { // OtherSigned && ConstantSigned
-        assert(0 && "Two signed types converted to unsigned types.");
+        llvm_unreachable("Two signed types converted to unsigned types.");
       }
     }
 

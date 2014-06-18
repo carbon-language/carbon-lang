@@ -562,14 +562,14 @@ std::string Type::builtin_str() const {
     case 32: S += "i"; break;
     case 64: S += "Wi"; break;
     case 128: S += "LLLi"; break;
-    default: assert(0 && "Unhandled case!");
+    default: llvm_unreachable("Unhandled case!");
     }
   else
     switch (ElementBitwidth) {
     case 16: S += "h"; break;
     case 32: S += "f"; break;
     case 64: S += "d"; break;
-    default: assert(0 && "Unhandled case!");
+    default: llvm_unreachable("Unhandled case!");
     }
 
   if (isChar() && !Pointer)
@@ -742,7 +742,7 @@ void Type::applyTypespec(bool &Quad) {
         NumVectors = 0;
       break;
     default:
-      assert(0 && "Unhandled type code!");
+      llvm_unreachable("Unhandled type code!");
     }
   }
   assert(ElementBitwidth != ~0U && "Bad element bitwidth!");
@@ -907,7 +907,7 @@ void Type::applyModifier(char Mod) {
       Bitwidth *= 2;
     break;
   default:
-    assert(0 && "Unhandled character!");
+    llvm_unreachable("Unhandled character!");
   }
 }
 
@@ -1061,7 +1061,7 @@ std::string Intrinsic::mangleName(std::string Name, ClassKind LocalCK) {
     case 16: Suffix = 'h'; break;
     case 32: Suffix = 's'; break;
     case 64: Suffix = 'd'; break;
-    default: assert(0 && "Bad suffix!");
+    default: llvm_unreachable("Bad suffix!");
     }
   }
   if (Suffix != '\0') {
@@ -2282,6 +2282,6 @@ void EmitNeonSema(RecordKeeper &Records, raw_ostream &OS) {
   NeonEmitter(Records).runHeader(OS);
 }
 void EmitNeonTest(RecordKeeper &Records, raw_ostream &OS) {
-  assert(0 && "Neon test generation no longer implemented!");
+  llvm_unreachable("Neon test generation no longer implemented!");
 }
 } // End namespace clang
