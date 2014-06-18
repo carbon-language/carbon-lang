@@ -42,6 +42,22 @@ define void @test_indirect(void ()* nocapture %fp) nounwind {
   ret void
 }
 
+; Absolute values must use the regular indirect call sequence
+; The main purpose of this test is to ensure that BLA is not
+; used on 64-bit SVR4 (as e.g. on Darwin).
+define void @test_abs() nounwind {
+; CHECK-LABEL: test_abs:
+  tail call void inttoptr (i64 1024 to void ()*)() nounwind
+; CHECK: ld [[FP:[0-9]+]], 1024(0)
+; CHECK: ld 11, 1040(0)
+; CHECK: mtctr [[FP]]
+; CHECK: li [[FD:[0-9]+]], 1024
+; CHECK: ld 2, 8([[FD]])
+; CHECK: bctrl
+; CHECK-NEXT: ld 2, 40(1)
+  ret void
+}
+
 declare double @sin(double) nounwind
 
 ; External functions call should also have a 'nop'
