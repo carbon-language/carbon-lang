@@ -11,6 +11,7 @@
         addi      $13,$9,26322
         addu      $9,$a0,$a2
         and       $s7,$v0,$12
+        and       $2,4                 # CHECK: andi $2, $2, 4 # encoding: [0x30,0x42,0x00,0x04]
         bc1f      $fcc0, 4             # CHECK: bc1f 4        # encoding: [0x45,0x00,0x00,0x01]
         bc1f      4                    # CHECK: bc1f 4        # encoding: [0x45,0x00,0x00,0x01]
         bc1t      $fcc0, 4             # CHECK: bc1t 4        # encoding: [0x45,0x01,0x00,0x01]
@@ -73,6 +74,7 @@
         nop
         nor       $a3,$zero,$a3
         or        $12,$s0,$sp
+        or        $2, 4                # CHECK: ori $2, $2, 4          # encoding: [0x34,0x42,0x00,0x04]
         sb        $s6,-19857($14)
         sh        $14,-6704($15)
         sll       $a3,18               # CHECK: sll $7, $7, 18         # encoding: [0x00,0x07,0x3c,0x80]
