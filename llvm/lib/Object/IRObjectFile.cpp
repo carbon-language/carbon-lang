@@ -23,7 +23,8 @@ using namespace object;
 IRObjectFile::IRObjectFile(MemoryBuffer *Object, std::error_code &EC,
                            LLVMContext &Context, bool BufferOwned)
     : SymbolicFile(Binary::ID_IR, Object, BufferOwned) {
-  ErrorOr<Module*> MOrErr = parseBitcodeFile(Object, Context);
+  ErrorOr<Module *> MOrErr =
+      getLazyBitcodeModule(Object, Context, /*BufferOwned*/ false);
   if ((EC = MOrErr.getError()))
     return;
 
@@ -104,11 +105,21 @@ std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
   return object_error::success;
 }
 
+static bool isDeclaration(const GlobalValue &V) {
+  if (V.hasAvailableExternallyLinkage())
+    return true;
+
+  if (V.isMaterializable())
+    return false;
+
+  return V.isDeclaration();
+}
+
 uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   const GlobalValue &GV = getGV(Symb);
 
   uint32_t Res = BasicSymbolRef::SF_None;
-  if (GV.isDeclaration() || GV.hasAvailableExternallyLinkage())
+  if (isDeclaration(GV))
     Res |= BasicSymbolRef::SF_Undefined;
   if (GV.hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
