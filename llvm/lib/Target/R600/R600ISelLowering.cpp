@@ -161,6 +161,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   //  to be Legal/Custom in order to avoid library calls.
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
   setOperationAction(ISD::SRL_PARTS, MVT::i32, Custom);
+  setOperationAction(ISD::SRA_PARTS, MVT::i32, Custom);
 
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
@@ -558,6 +559,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::INSERT_VECTOR_ELT: return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::SHL_PARTS: return LowerSHLParts(Op, DAG);
+  case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: return LowerSRXParts(Op, DAG);
   case ISD::FCOS:
   case ISD::FSIN: return LowerTrig(Op, DAG);
@@ -958,6 +960,8 @@ SDValue R600TargetLowering::LowerSRXParts(SDValue Op, SelectionDAG &DAG) const {
   SDValue Zero = DAG.getConstant(0, VT);
   SDValue One  = DAG.getConstant(1, VT);
 
+  const bool SRA = Op.getOpcode() == ISD::SRA_PARTS;
+
   SDValue Width  = DAG.getConstant(VT.getSizeInBits(), VT);
   SDValue Width1 = DAG.getConstant(VT.getSizeInBits() - 1, VT);
   SDValue BigShift  = DAG.getNode(ISD::SUB, DL, VT, Shift, Width);
@@ -971,14 +975,12 @@ SDValue R600TargetLowering::LowerSRXParts(SDValue Op, SelectionDAG &DAG) const {
   SDValue Overflow = DAG.getNode(ISD::SHL, DL, VT, Hi, CompShift);
   Overflow = DAG.getNode(ISD::SHL, DL, VT, Overflow, One);
 
-  // TODO: SRA support here
-  SDValue HiSmall = DAG.getNode(ISD::SRL, DL, VT, Hi, Shift);
+  SDValue HiSmall = DAG.getNode(SRA ? ISD::SRA : ISD::SRL, DL, VT, Hi, Shift);
   SDValue LoSmall = DAG.getNode(ISD::SRL, DL, VT, Lo, Shift);
   LoSmall = DAG.getNode(ISD::OR, DL, VT, LoSmall, Overflow);
 
-  // TODO: SRA support here
-  SDValue LoBig = DAG.getNode(ISD::SRL, DL, VT, Hi, BigShift);
-  SDValue HiBig = Zero;
+  SDValue LoBig = DAG.getNode(SRA ? ISD::SRA : ISD::SRL, DL, VT, Hi, BigShift);
+  SDValue HiBig = SRA ? DAG.getNode(ISD::SRA, DL, VT, Hi, Width1) : Zero;
 
   Hi = DAG.getSelectCC(DL, Shift, Width, HiSmall, HiBig, ISD::SETULT);
   Lo = DAG.getSelectCC(DL, Shift, Width, LoSmall, LoBig, ISD::SETULT);
