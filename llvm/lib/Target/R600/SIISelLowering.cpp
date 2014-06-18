@@ -212,6 +212,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FRINT, MVT::f64, Legal);
   }
 
+  // FIXME: This should be removed and handled the same was as f32 fneg. Source
+  // modifiers also work for the double instructions.
+  setOperationAction(ISD::FNEG, MVT::f64, Expand);
+
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
