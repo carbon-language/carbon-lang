@@ -1800,6 +1800,35 @@ def VMOVNTDQAZrm : AVX5128I<0x2A, MRMSrcMem, (outs VR512:$dst),
                               (int_x86_avx512_movntdqa addr:$src))]>,
                    EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
+// Prefer non-temporal over temporal versions
+let AddedComplexity = 400, SchedRW = [WriteStore] in {
+
+def VMOVNTPSZmr : AVX512PSI<0x2B, MRMDestMem, (outs),
+                            (ins f512mem:$dst, VR512:$src),
+                            "vmovntps\t{$src, $dst|$dst, $src}",
+                            [(alignednontemporalstore (v16f32 VR512:$src),
+                                                      addr:$dst)],
+                            IIC_SSE_MOVNT>,
+                  EVEX, EVEX_V512, EVEX_CD8<32, CD8VF>;
+
+def VMOVNTPDZmr : AVX512PDI<0x2B, MRMDestMem, (outs),
+                            (ins f512mem:$dst, VR512:$src),
+                            "vmovntpd\t{$src, $dst|$dst, $src}",
+                            [(alignednontemporalstore (v8f64 VR512:$src),
+                                                      addr:$dst)],
+			    IIC_SSE_MOVNT>,
+                  EVEX, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+
+
+def VMOVNTDQZmr : AVX512BI<0xE7, MRMDestMem, (outs),
+                           (ins i512mem:$dst, VR512:$src),
+                           "vmovntdq\t{$src, $dst|$dst, $src}",
+                           [(alignednontemporalstore (v8i64 VR512:$src),
+                                                     addr:$dst)],
+                           IIC_SSE_MOVNT>,
+                  EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - Integer arithmetic
 //
