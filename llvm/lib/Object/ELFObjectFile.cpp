@@ -17,8 +17,8 @@
 namespace llvm {
 using namespace object;
 
-ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
-                                                      bool BufferOwned) {
+static ErrorOr<ObjectFile *> createELFObjectFileAux(MemoryBuffer *Obj,
+                                                    bool BufferOwned) {
   std::pair<unsigned char, unsigned char> Ident = getElfArchType(Obj);
   std::size_t MaxAlignment =
     1ULL << countTrailingZeros(uintptr_t(Obj->getBufferStart()));
@@ -80,6 +80,14 @@ ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
   if (EC)
     return EC;
   return R.release();
+}
+
+ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
+                                                      bool BufferOwned) {
+  ErrorOr<ObjectFile *> Ret = createELFObjectFileAux(Obj, BufferOwned);
+  if (BufferOwned && Ret.getError())
+    delete Obj;
+  return Ret;
 }
 
 } // end namespace llvm
