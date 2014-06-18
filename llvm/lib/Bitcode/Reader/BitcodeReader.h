@@ -224,20 +224,16 @@ public:
   }
 
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
-    : Context(C), TheModule(nullptr), Buffer(buffer), BufferOwned(false),
-      LazyStreamer(nullptr), NextUnreadBit(0), SeenValueSymbolTable(false),
-      ValueList(C), MDValueList(C),
-      SeenFirstFunctionBody(false), UseRelativeIDs(false) {
-  }
+      : Context(C), TheModule(nullptr), Buffer(buffer), BufferOwned(false),
+        LazyStreamer(nullptr), NextUnreadBit(0), SeenValueSymbolTable(false),
+        ValueList(C), MDValueList(C), SeenFirstFunctionBody(false),
+        UseRelativeIDs(false) {}
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
-    : Context(C), TheModule(nullptr), Buffer(nullptr), BufferOwned(false),
-      LazyStreamer(streamer), NextUnreadBit(0), SeenValueSymbolTable(false),
-      ValueList(C), MDValueList(C),
-      SeenFirstFunctionBody(false), UseRelativeIDs(false) {
-  }
-  ~BitcodeReader() {
-    FreeState();
-  }
+      : Context(C), TheModule(nullptr), Buffer(nullptr), BufferOwned(false),
+        LazyStreamer(streamer), NextUnreadBit(0), SeenValueSymbolTable(false),
+        ValueList(C), MDValueList(C), SeenFirstFunctionBody(false),
+        UseRelativeIDs(false) {}
+  ~BitcodeReader() { FreeState(); }
 
   void materializeForwardReferencedFunctions();
 
