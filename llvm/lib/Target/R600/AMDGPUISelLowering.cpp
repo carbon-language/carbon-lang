@@ -1664,14 +1664,17 @@ SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
 
   assert(Op.getValueType() == MVT::f64);
 
-  SDValue C1 = DAG.getConstantFP(0x1.0p+52, MVT::f64);
+  APFloat C1Val(APFloat::IEEEdouble, "0x1.0p+52");
+  SDValue C1 = DAG.getConstantFP(C1Val, MVT::f64);
   SDValue CopySign = DAG.getNode(ISD::FCOPYSIGN, SL, MVT::f64, C1, Src);
 
   SDValue Tmp1 = DAG.getNode(ISD::FADD, SL, MVT::f64, Src, CopySign);
   SDValue Tmp2 = DAG.getNode(ISD::FSUB, SL, MVT::f64, Tmp1, CopySign);
 
   SDValue Fabs = DAG.getNode(ISD::FABS, SL, MVT::f64, Src);
-  SDValue C2 = DAG.getConstantFP(0x1.fffffffffffffp+51, MVT::f64);
+
+  APFloat C2Val(APFloat::IEEEdouble, "0x1.fffffffffffffp+51");
+  SDValue C2 = DAG.getConstantFP(C2Val, MVT::f64);
 
   EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
   SDValue Cond = DAG.getSetCC(SL, SetCCVT, Fabs, C2, ISD::SETOGT);
