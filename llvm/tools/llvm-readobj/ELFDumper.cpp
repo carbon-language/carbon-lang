@@ -1140,7 +1140,7 @@ void MipsGOTParser<ELFT>::ParseGOT(const Elf_Shdr &GOTShdr) {
   }
 
   std::size_t SpecGotNum = GetGOTTotal(*GOT) - DtLocalGotNum - GlobalGotNum;
-  W.printNumber("Number of TLS and multi-GOT entries", SpecGotNum);
+  W.printNumber("Number of TLS and multi-GOT entries", uint64_t(SpecGotNum));
 }
 
 template <class ELFT>
