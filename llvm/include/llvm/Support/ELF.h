@@ -124,6 +124,8 @@ enum {
 };
 
 // Machine architectures
+// See current registered ELF machine architectures at:
+//    http://www.uxsglobal.com/developers/gabi/latest/ch4.eheader.html
 enum {
   EM_NONE          = 0, // No machine
   EM_M32           = 1, // AT&T WE 32100
@@ -287,7 +289,26 @@ enum {
   EM_RL78          = 197, // Renesas RL78 family
   EM_VIDEOCORE5    = 198, // Broadcom VideoCore V processor
   EM_78KOR         = 199, // Renesas 78KOR family
-  EM_56800EX       = 200  // Freescale 56800EX Digital Signal Controller (DSC)
+  EM_56800EX       = 200, // Freescale 56800EX Digital Signal Controller (DSC)
+  EM_BA1           = 201, // Beyond BA1 CPU architecture
+  EM_BA2           = 202, // Beyond BA2 CPU architecture
+  EM_XCORE         = 203, // XMOS xCORE processor family
+  EM_MCHP_PIC      = 204, // Microchip 8-bit PIC(r) family
+  EM_INTEL205      = 205, // Reserved by Intel
+  EM_INTEL206      = 206, // Reserved by Intel
+  EM_INTEL207      = 207, // Reserved by Intel
+  EM_INTEL208      = 208, // Reserved by Intel
+  EM_INTEL209      = 209, // Reserved by Intel
+  EM_KM32          = 210, // KM211 KM32 32-bit processor
+  EM_KMX32         = 211, // KM211 KMX32 32-bit processor
+  EM_KMX16         = 212, // KM211 KMX16 16-bit processor
+  EM_KMX8          = 213, // KM211 KMX8 8-bit processor
+  EM_KVARC         = 214, // KM211 KVARC processor
+  EM_CDP           = 215, // Paneve CDP architecture family
+  EM_COGE          = 216, // Cognitive Smart Memory Processor
+  EM_COOL          = 217, // iCelero CoolEngine
+  EM_NORC          = 218, // Nanoradio Optimized RISC
+  EM_CSR_KALIMBA   = 219  // CSR Kalimba architecture family
 };
 
 // Object file classes.
