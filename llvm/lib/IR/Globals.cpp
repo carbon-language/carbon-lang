@@ -59,7 +59,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setDLLStorageClass(Src->getDLLStorageClass());
 }
 
-const GlobalObject *getBaseObject(const Constant &C) {
+static const GlobalObject *getBaseObject(const Constant &C) {
   // FIXME: We should probably return a base + offset pair for non-zero GEPs.
   return dyn_cast<GlobalObject>(C.stripPointerCasts());
 }
