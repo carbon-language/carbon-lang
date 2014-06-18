@@ -189,6 +189,23 @@ inline void switch_test2() {
   switch (1) default: static int x = f();
 }
 
+namespace DynamicDLLImportInitVSMangling {
+  // Failing to pop the ExprEvalContexts when instantiating a dllimport var with
+  // dynamic initializer would cause subsequent static local numberings to be
+  // incorrect.
+  struct NonPOD { NonPOD(); };
+  template <typename T> struct A { static NonPOD x; };
+  template <typename T> NonPOD A<T>::x;
+  template struct __declspec(dllimport) A<int>;
+
+  inline int switch_test3() {
+    // CHECK-LABEL: define linkonce_odr i32 @"\01?switch_test3@DynamicDLLImportInitVSMangling@@YAHXZ"
+    static int local;
+    // CHECK: @"\01?local@?1??switch_test3@DynamicDLLImportInitVSMangling@@YAHXZ@4HA"
+    return local++;
+  }
+}
+
 void force_usage() {
   UnreachableStatic();
   getS();
@@ -197,6 +214,7 @@ void force_usage() {
   (void)&T::enum_in_struct;
   switch_test(1);
   switch_test2();
+  DynamicDLLImportInitVSMangling::switch_test3();
 }
 
 // CHECK: define linkonce_odr void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"()

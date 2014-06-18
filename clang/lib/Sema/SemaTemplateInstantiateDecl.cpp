@@ -3688,7 +3688,6 @@ void Sema::InstantiateVariableInitializer(
       if (Var->hasAttr<DLLImportAttr>() && InitExpr &&
           !InitExpr->isConstantInitializer(getASTContext(), false)) {
         // Do not dynamically initialize dllimport variables.
-        return;
       } else if (InitExpr) {
         bool DirectInit = OldVar->isDirectInit();
         AddInitializerToDecl(Var, InitExpr, DirectInit, TypeMayContainAuto);
