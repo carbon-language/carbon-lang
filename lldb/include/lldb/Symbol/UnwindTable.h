@@ -14,6 +14,7 @@
 #include <map>
 
 #include "lldb/lldb-private.h" 
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -59,6 +60,7 @@ private:
     collection          m_unwinds;
 
     bool                m_initialized;  // delay some initialization until ObjectFile is set up
+    Mutex               m_mutex;
 
     DWARFCallFrameInfo* m_eh_frame;
     

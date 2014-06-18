@@ -29,6 +29,7 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_object_file (objfile), 
     m_unwinds (),
     m_initialized (false),
+    m_mutex (),
     m_eh_frame (nullptr)
 {
 }
@@ -40,6 +41,11 @@ void
 UnwindTable::Initialize ()
 {
     if (m_initialized)
+        return;
+
+    Mutex::Locker locker(m_mutex);
+
+    if (m_initialized) // check again once we've acquired the lock
         return;
 
     SectionList* sl = m_object_file.GetSectionList ();
@@ -67,6 +73,8 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     FuncUnwindersSP no_unwind_found;
 
     Initialize();
+
+    Mutex::Locker locker(m_mutex);
 
     // There is an UnwindTable per object file, so we can safely use file handles
     addr_t file_addr = addr.GetFileAddress();
@@ -128,6 +136,7 @@ UnwindTable::GetUncachedFuncUnwindersContainingAddress (const Address& addr, Sym
 void
 UnwindTable::Dump (Stream &s)
 {
+    Mutex::Locker locker(m_mutex);
     s.Printf("UnwindTable for '%s':\n", m_object_file.GetFileSpec().GetPath().c_str());
     const_iterator begin = m_unwinds.begin();
     const_iterator end = m_unwinds.end();

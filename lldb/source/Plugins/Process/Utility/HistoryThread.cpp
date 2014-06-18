@@ -78,7 +78,7 @@ HistoryThread::CreateRegisterContextForFrame (StackFrame *frame)
 lldb::StackFrameListSP
 HistoryThread::GetStackFrameList ()
 {
-    Mutex::Locker (m_framelist_mutex);
+    Mutex::Locker locker(m_framelist_mutex);
     if (m_framelist.get() == NULL)
     {
         m_framelist.reset (new StackFrameList (*this, StackFrameListSP(), true));
