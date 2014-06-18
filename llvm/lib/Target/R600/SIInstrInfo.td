@@ -426,9 +426,11 @@ class VOP3_64_32 <bits <9> op, string opName, list<dag> pattern> : VOP3 <
 
 class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
-  (ins VSrc_64:$src0, VSrc_64:$src1, VSrc_64:$src2,
-   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
-  opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
+  (ins InputMods:$src0_modifiers, VSrc_64:$src0,
+       InputMods:$src1_modifiers, VSrc_64:$src1,
+       InputMods:$src2_modifiers, VSrc_64:$src2,
+       InstFlag:$clamp, InstFlag:$omod),
+  opName#" $dst, $src0_modifiers, $src1_modifiers, $src2_modifiers, $clamp, $omod", pattern
 >, VOP <opName>;
 
 //===----------------------------------------------------------------------===//
