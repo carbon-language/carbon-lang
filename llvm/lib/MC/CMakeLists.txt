@@ -1,4 +1,5 @@
 add_llvm_library(LLVMMC
+  ConstantPools.cpp
   ELFObjectWriter.cpp
   MCAsmBackend.cpp
   MCAsmInfo.cpp
