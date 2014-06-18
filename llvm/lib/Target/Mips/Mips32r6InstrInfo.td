@@ -77,6 +77,11 @@ class BGEZC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BLEZL>,
 class BGTZALC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BGTZ>,
                     DecodeDisambiguatedBy<"BgtzGroupBranch">;
 
+class BLTC_ENC : CMP_BRANCH_2R_OFF16_FM<OPGROUP_BGTZL>,
+                 DecodeDisambiguatedBy<"BgtzlGroupBranch">;
+class BLTUC_ENC : CMP_BRANCH_2R_OFF16_FM<OPGROUP_BGTZ>,
+                  DecodeDisambiguatedBy<"BgtzGroupBranch">;
+
 class BLEZC_ENC : CMP_BRANCH_1R_RT_OFF16_FM<OPGROUP_BLEZL>,
                   DecodeDisambiguatedBy<"BlezlGroupBranch">;
 class BLTZALC_ENC : CMP_BRANCH_1R_BOTH_OFF16_FM<OPGROUP_BGTZ>,
@@ -328,6 +333,9 @@ class BGEC_DESC : CMP_BC_DESC_BASE<"bgec", brtarget, GPR32Opnd>;
 class BGEUC_DESC : CMP_BC_DESC_BASE<"bgeuc", brtarget, GPR32Opnd>;
 class BEQC_DESC : CMP_BC_DESC_BASE<"beqc", brtarget, GPR32Opnd>;
 class BNEC_DESC : CMP_BC_DESC_BASE<"bnec", brtarget, GPR32Opnd>;
+
+class BLTC_DESC : CMP_BC_DESC_BASE<"bltc", brtarget, GPR32Opnd>;
+class BLTUC_DESC : CMP_BC_DESC_BASE<"bltuc", brtarget, GPR32Opnd>;
 
 class BLTZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bltzc", brtarget, GPR32Opnd>;
 class BGEZC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bgezc", brtarget, GPR32Opnd>;
@@ -636,8 +644,8 @@ def BGTZC : BGTZC_ENC, BGTZC_DESC, ISA_MIPS32R6;
 def BITSWAP : BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
 def BLEZALC : BLEZALC_ENC, BLEZALC_DESC, ISA_MIPS32R6;
 def BLEZC : BLEZC_ENC, BLEZC_DESC, ISA_MIPS32R6;
-def BLTC; // Also aliased to bgtc with operands swapped
-def BLTUC; // Also aliased to bgtuc with operands swapped
+def BLTC : BLTC_ENC, BLTC_DESC, ISA_MIPS32R6;
+def BLTUC : BLTUC_ENC, BLTUC_DESC, ISA_MIPS32R6;
 def BLTZALC : BLTZALC_ENC, BLTZALC_DESC, ISA_MIPS32R6;
 def BLTZC : BLTZC_ENC, BLTZC_DESC, ISA_MIPS32R6;
 def BNEC : BNEC_ENC, BNEC_DESC, ISA_MIPS32R6;

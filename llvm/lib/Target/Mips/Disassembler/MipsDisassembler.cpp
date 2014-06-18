@@ -576,6 +576,8 @@ static DecodeStatus DecodeBgtzlGroupBranch(MCInst &MI, InsnType insn,
   //      BLTZC   if rs == rt && rt != 0
   //      BLTC    if rs != rt && rs != 0  && rt != 0
 
+  bool HasRs = false;
+
   InsnType Rs = fieldFromInstruction(insn, 21, 5);
   InsnType Rt = fieldFromInstruction(insn, 16, 5);
   InsnType Imm = SignExtend64(fieldFromInstruction(insn, 0, 16), 16) << 2;
@@ -586,8 +588,14 @@ static DecodeStatus DecodeBgtzlGroupBranch(MCInst &MI, InsnType insn,
     MI.setOpcode(Mips::BGTZC);
   else if (Rs == Rt)
     MI.setOpcode(Mips::BLTZC);
-  else
-    return MCDisassembler::Fail; // FIXME: BLTC is not implemented yet.
+  else {
+    MI.setOpcode(Mips::BLTC);
+    HasRs = true;
+  }
+
+  if (HasRs)
+    MI.addOperand(MCOperand::CreateReg(getReg(Decoder, Mips::GPR32RegClassID,
+                                              Rs)));
 
   MI.addOperand(MCOperand::CreateReg(getReg(Decoder, Mips::GPR32RegClassID,
                                      Rt)));
@@ -627,8 +635,11 @@ static DecodeStatus DecodeBgtzGroupBranch(MCInst &MI, InsnType insn,
   } else if (Rs == Rt) {
     MI.setOpcode(Mips::BLTZALC);
     HasRs = true;
-  } else
-    return MCDisassembler::Fail; // BLTUC not implemented yet
+  } else {
+    MI.setOpcode(Mips::BLTUC);
+    HasRs = true;
+    HasRt = true;
+  }
 
   if (HasRs)
     MI.addOperand(MCOperand::CreateReg(getReg(Decoder, Mips::GPR32RegClassID,
