@@ -211,7 +211,7 @@ void AArch64AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNum,
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   default:
-    assert(0 && "<unknown operand type>");
+    llvm_unreachable("<unknown operand type>");
   case MachineOperand::MO_Register: {
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));

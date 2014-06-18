@@ -380,7 +380,7 @@ static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
       case 3: TypeSig.push_back(IIT_STRUCT3); break;
       case 4: TypeSig.push_back(IIT_STRUCT4); break;
       case 5: TypeSig.push_back(IIT_STRUCT5); break;
-      default: assert(0 && "Unhandled case in struct");
+      default: llvm_unreachable("Unhandled case in struct");
     }
 
     for (unsigned i = 0, e = Int.IS.RetVTs.size(); i != e; ++i)

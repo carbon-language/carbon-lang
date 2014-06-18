@@ -97,7 +97,7 @@ void BitstreamCursor::readAbbreviatedField(const BitCodeAbbrevOp &Op,
   switch (Op.getEncoding()) {
   case BitCodeAbbrevOp::Array:
   case BitCodeAbbrevOp::Blob:
-    assert(0 && "Should not reach here");
+    llvm_unreachable("Should not reach here");
   case BitCodeAbbrevOp::Fixed:
     Vals.push_back(Read((unsigned)Op.getEncodingData()));
     break;
@@ -117,7 +117,7 @@ void BitstreamCursor::skipAbbreviatedField(const BitCodeAbbrevOp &Op) {
   switch (Op.getEncoding()) {
   case BitCodeAbbrevOp::Array:
   case BitCodeAbbrevOp::Blob:
-    assert(0 && "Should not reach here");
+    llvm_unreachable("Should not reach here");
   case BitCodeAbbrevOp::Fixed:
     (void)Read((unsigned)Op.getEncodingData());
     break;

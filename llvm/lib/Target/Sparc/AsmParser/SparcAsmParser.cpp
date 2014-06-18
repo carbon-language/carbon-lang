@@ -330,7 +330,7 @@ public:
     unsigned Reg = Op.getReg();
     unsigned regIdx = 0;
     switch (Op.Reg.Kind) {
-    default: assert(0 && "Unexpected register kind!");
+    default: llvm_unreachable("Unexpected register kind!");
     case rk_FloatReg:
       regIdx = Reg - Sparc::F0;
       if (regIdx % 4 || regIdx > 31)

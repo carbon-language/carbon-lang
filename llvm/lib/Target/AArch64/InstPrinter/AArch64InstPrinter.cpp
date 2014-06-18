@@ -918,7 +918,7 @@ void AArch64InstPrinter::printPostIncOperand(const MCInst *MI, unsigned OpNo,
     else
       O << getRegisterName(Reg);
   } else
-    assert(0 && "unknown operand kind in printPostIncOperand64");
+    llvm_unreachable("unknown operand kind in printPostIncOperand64");
 }
 
 void AArch64InstPrinter::printVRegOperand(const MCInst *MI, unsigned OpNo,
@@ -1109,7 +1109,7 @@ static unsigned getNextVectorRegister(unsigned Reg, unsigned Stride = 1) {
   while (Stride--) {
     switch (Reg) {
     default:
-      assert(0 && "Vector register expected!");
+      llvm_unreachable("Vector register expected!");
     case AArch64::Q0:  Reg = AArch64::Q1;  break;
     case AArch64::Q1:  Reg = AArch64::Q2;  break;
     case AArch64::Q2:  Reg = AArch64::Q3;  break;

@@ -1273,7 +1273,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
   bool ExtraOp = false;
   switch (Op.getOpcode()) {
   default:
-    assert(0 && "Invalid code");
+    llvm_unreachable("Invalid code");
   case ISD::ADDC:
     Opc = AArch64ISD::ADDS;
     break;
@@ -6674,7 +6674,7 @@ static SDValue tryCombineFixedPointConvert(SDNode *N,
     else if (Vec.getValueType() == MVT::v2i64)
       VecResTy = MVT::v2f64;
     else
-      assert(0 && "unexpected vector type!");
+      llvm_unreachable("unexpected vector type!");
 
     SDValue Convert =
         DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VecResTy, IID, Vec, Shift);

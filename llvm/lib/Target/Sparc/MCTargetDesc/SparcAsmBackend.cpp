@@ -201,7 +201,7 @@ namespace {
     }
     void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {
       // FIXME.
-      assert(0 && "relaxInstruction() unimplemented");
+      llvm_unreachable("relaxInstruction() unimplemented");
     }
 
     bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {

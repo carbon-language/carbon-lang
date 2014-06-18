@@ -1438,7 +1438,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
         O << "linear";
         break;
       case 2:
-        assert(0 && "Anisotropic filtering is not supported");
+        llvm_unreachable("Anisotropic filtering is not supported");
       default:
         O << "nearest";
         break;
@@ -1562,7 +1562,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       }
       break;
     default:
-      assert(0 && "type not supported yet");
+      llvm_unreachable("type not supported yet");
     }
 
   }
@@ -1682,7 +1682,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
     O << "]";
     break;
   default:
-    assert(0 && "type not supported yet");
+    llvm_unreachable("type not supported yet");
   }
   return;
 }

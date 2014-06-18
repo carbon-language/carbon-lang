@@ -1841,7 +1841,7 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
     *OutUnscaledOp = 0;
   switch (MI.getOpcode()) {
   default:
-    assert(0 && "unhandled opcode in rewriteAArch64FrameIndex");
+    llvm_unreachable("unhandled opcode in rewriteAArch64FrameIndex");
   // Vector spills/fills can't take an immediate offset.
   case AArch64::LD1Twov2d:
   case AArch64::LD1Threev2d:

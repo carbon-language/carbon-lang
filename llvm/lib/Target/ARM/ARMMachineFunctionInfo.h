@@ -220,7 +220,7 @@ public:
 
   void recordCPEClone(unsigned CPIdx, unsigned CPCloneIdx) {
     if (!CPEClones.insert(std::make_pair(CPCloneIdx, CPIdx)).second)
-      assert(0 && "Duplicate entries!");
+      llvm_unreachable("Duplicate entries!");
   }
 
   unsigned getOriginalCPIdx(unsigned CloneIdx) const {

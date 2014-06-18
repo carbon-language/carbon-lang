@@ -86,7 +86,7 @@ public:
 static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default:
-    assert(0 && "Unknown fixup kind!");
+    llvm_unreachable("Unknown fixup kind!");
 
   case AArch64::fixup_aarch64_tlsdesc_call:
     return 0;

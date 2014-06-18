@@ -213,7 +213,8 @@ extern "C" void *SparcCompilationCallbackC(intptr_t StubAddr) {
 
 
 void SparcJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  assert(0 && "FIXME: Implement SparcJITInfo::replaceMachineCodeForFunction");
+  llvm_unreachable("FIXME: Implement SparcJITInfo::"
+                   "replaceMachineCodeForFunction");
 }
 
 

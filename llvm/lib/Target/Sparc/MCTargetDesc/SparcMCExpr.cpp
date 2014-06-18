@@ -124,7 +124,7 @@ SparcMCExpr::VariantKind SparcMCExpr::parseVariantKind(StringRef name)
 
 Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
   switch (Kind) {
-  default:           assert(0 && "Unhandled SparcMCExpr::VariantKind");
+  default: llvm_unreachable("Unhandled SparcMCExpr::VariantKind");
   case VK_Sparc_LO:       return Sparc::fixup_sparc_lo10;
   case VK_Sparc_HI:       return Sparc::fixup_sparc_hi22;
   case VK_Sparc_H44:      return Sparc::fixup_sparc_h44;

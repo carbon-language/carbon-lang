@@ -2108,7 +2108,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
                 .getVectorElementType()
                 .getSizeInBits()) {
     default:
-      assert(0 && "Unexpected vector element type!");
+      llvm_unreachable("Unexpected vector element type!");
     case 64:
       SubReg = AArch64::dsub;
       break;

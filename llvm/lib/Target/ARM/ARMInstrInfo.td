@@ -493,7 +493,7 @@ def neon_vcvt_imm32 : Operand<i32> {
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
 def rot_imm_XFORM: SDNodeXForm<imm, [{
   switch (N->getZExtValue()){
-  default: assert(0);
+  default: llvm_unreachable(nullptr);
   case 0:  return CurDAG->getTargetConstant(0, MVT::i32);
   case 8:  return CurDAG->getTargetConstant(1, MVT::i32);
   case 16: return CurDAG->getTargetConstant(2, MVT::i32);

@@ -1141,7 +1141,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     // Perform the merge for standard behavior types.
     switch (SrcBehaviorValue) {
     case Module::Require:
-    case Module::Override: assert(0 && "not possible"); break;
+    case Module::Override: llvm_unreachable("not possible");
     case Module::Error: {
       // Emit an error if the values differ.
       if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
