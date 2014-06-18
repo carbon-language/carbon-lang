@@ -1671,8 +1671,7 @@ void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS) {
 
   OS << "  switch (Kind) {\n";
   OS << "  default:\n";
-  OS << "    assert(0 && \"Unknown attribute!\");\n";
-  OS << "    break;\n";
+  OS << "    llvm_unreachable(\"Unknown attribute!\");\n";
   for (const auto *Attr : Attrs) {
     const Record &R = *Attr;
     if (!R.getValueAsBit("ASTNode"))

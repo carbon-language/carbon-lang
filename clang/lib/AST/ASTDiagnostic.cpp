@@ -1132,7 +1132,7 @@ class TemplateDiff {
           ArgExpr = Iter.getDesugar().getAsExpr();
           return ArgExpr->EvaluateKnownConstInt(Context);
         default:
-          assert(0 && "Unexpected template argument kind");
+          llvm_unreachable("Unexpected template argument kind");
       }
     return ArgExpr->EvaluateKnownConstInt(Context);
   }
@@ -1150,7 +1150,7 @@ class TemplateDiff {
           ArgExpr = Iter.getDesugar().getAsExpr();
           return cast<DeclRefExpr>(ArgExpr)->getDecl();
         default:
-          assert(0 && "Unexpected template argument kind");
+          llvm_unreachable("Unexpected template argument kind");
       }
     DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ArgExpr);
     if (!DRE) {
