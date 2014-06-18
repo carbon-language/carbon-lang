@@ -219,7 +219,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::BR_CC, MVT::i1, Expand);
 
   if (Subtarget->getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
+    setOperationAction(ISD::FCEIL, MVT::f64, Custom);
+    setOperationAction(ISD::FTRUNC, MVT::f64, Custom);
     setOperationAction(ISD::FRINT, MVT::f64, Custom);
+    setOperationAction(ISD::FFLOOR, MVT::f64, Custom);
   }
 
   if (!Subtarget->hasBFI()) {
@@ -494,7 +497,10 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::SDIV: return LowerSDIV(Op, DAG);
   case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
+  case ISD::FCEIL: return LowerFCEIL(Op, DAG);
+  case ISD::FTRUNC: return LowerFTRUNC(Op, DAG);
   case ISD::FRINT: return LowerFRINT(Op, DAG);
+  case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
 
   // AMDIL DAG lowering.
@@ -1571,6 +1577,84 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   return DAG.getMergeValues(Ops, DL);
 }
 
+SDValue AMDGPUTargetLowering::LowerFCEIL(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue Src = Op.getOperand(0);
+
+  // result = trunc(src)
+  // if (src > 0.0 && src != result)
+  //   result += 1.0
+
+  SDValue Trunc = DAG.getNode(ISD::FTRUNC, SL, MVT::f64, Src);
+
+  const SDValue Zero = DAG.getConstantFP(0.0, MVT::f64);
+  const SDValue One = DAG.getConstantFP(1.0, MVT::f64);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+
+  SDValue Lt0 = DAG.getSetCC(SL, SetCCVT, Src, Zero, ISD::SETOGT);
+  SDValue NeTrunc = DAG.getSetCC(SL, SetCCVT, Src, Trunc, ISD::SETONE);
+  SDValue And = DAG.getNode(ISD::AND, SL, SetCCVT, Lt0, NeTrunc);
+
+  SDValue Add = DAG.getNode(ISD::SELECT, SL, MVT::f64, And, One, Zero);
+  return DAG.getNode(ISD::FADD, SL, MVT::f64, Trunc, Add);
+}
+
+SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue Src = Op.getOperand(0);
+
+  assert(Op.getValueType() == MVT::f64);
+
+  const SDValue Zero = DAG.getConstant(0, MVT::i32);
+  const SDValue One = DAG.getConstant(1, MVT::i32);
+
+  SDValue VecSrc = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, Src);
+
+  // Extract the upper half, since this is where we will find the sign and
+  // exponent.
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, VecSrc, One);
+
+  const unsigned FractBits = 52;
+  const unsigned ExpBits = 11;
+
+  // Extract the exponent.
+  SDValue ExpPart = DAG.getNode(AMDGPUISD::BFE_I32, SL, MVT::i32,
+                                Hi,
+                                DAG.getConstant(FractBits - 32, MVT::i32),
+                                DAG.getConstant(ExpBits, MVT::i32));
+  SDValue Exp = DAG.getNode(ISD::SUB, SL, MVT::i32, ExpPart,
+                            DAG.getConstant(1023, MVT::i32));
+
+  // Extract the sign bit.
+  const SDValue SignBitMask = DAG.getConstant(1ul << 31, MVT::i32);
+  SDValue SignBit = DAG.getNode(ISD::AND, SL, MVT::i32, Hi, SignBitMask);
+
+  // Extend back to to 64-bits.
+  SDValue SignBit64 = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32,
+                                  Zero, SignBit);
+  SignBit64 = DAG.getNode(ISD::BITCAST, SL, MVT::i64, SignBit64);
+
+  SDValue BcInt = DAG.getNode(ISD::BITCAST, SL, MVT::i64, Src);
+  const SDValue FractMask = DAG.getConstant((1L << FractBits) - 1, MVT::i64);
+
+  SDValue Shr = DAG.getNode(ISD::SRA, SL, MVT::i64, FractMask, Exp);
+  SDValue Not = DAG.getNOT(SL, Shr, MVT::i64);
+  SDValue Tmp0 = DAG.getNode(ISD::AND, SL, MVT::i64, BcInt, Not);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::i32);
+
+  const SDValue FiftyOne = DAG.getConstant(FractBits - 1, MVT::i32);
+
+  SDValue ExpLt0 = DAG.getSetCC(SL, SetCCVT, Exp, Zero, ISD::SETLT);
+  SDValue ExpGt51 = DAG.getSetCC(SL, SetCCVT, Exp, FiftyOne, ISD::SETGT);
+
+  SDValue Tmp1 = DAG.getNode(ISD::SELECT, SL, MVT::i64, ExpLt0, SignBit64, Tmp0);
+  SDValue Tmp2 = DAG.getNode(ISD::SELECT, SL, MVT::i64, ExpGt51, BcInt, Tmp1);
+
+  return DAG.getNode(ISD::BITCAST, SL, MVT::f64, Tmp2);
+}
+
 SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
   SDLoc SL(Op);
   SDValue Src = Op.getOperand(0);
@@ -1590,6 +1674,29 @@ SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = DAG.getSetCC(SL, SetCCVT, Fabs, C2, ISD::SETOGT);
 
   return DAG.getSelect(SL, MVT::f64, Cond, Src, Tmp2);
+}
+
+SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue Src = Op.getOperand(0);
+
+  // result = trunc(src);
+  // if (src < 0.0 && src != result)
+  //   result += -1.0.
+
+  SDValue Trunc = DAG.getNode(ISD::FTRUNC, SL, MVT::f64, Src);
+
+  const SDValue Zero = DAG.getConstantFP(0.0, MVT::f64);
+  const SDValue NegOne = DAG.getConstantFP(-1.0, MVT::f64);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+
+  SDValue Lt0 = DAG.getSetCC(SL, SetCCVT, Src, Zero, ISD::SETOLT);
+  SDValue NeTrunc = DAG.getSetCC(SL, SetCCVT, Src, Trunc, ISD::SETONE);
+  SDValue And = DAG.getNode(ISD::AND, SL, SetCCVT, Lt0, NeTrunc);
+
+  SDValue Add = DAG.getNode(ISD::SELECT, SL, MVT::f64, And, NegOne, Zero);
+  return DAG.getNode(ISD::FADD, SL, MVT::f64, Trunc, Add);
 }
 
 SDValue AMDGPUTargetLowering::LowerUINT_TO_FP(SDValue Op,
