@@ -1144,10 +1144,35 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
     ExprOffset = Inst.getOperand(2).getExpr();
   // All instructions will have the same location.
   TempInst.setLoc(IDLoc);
-  // 1st instruction in expansion is LUi. For load instruction we can use
-  // the dst register as a temporary if base and dst are different,
-  // but for stores we must use $at.
-  if (isLoad && (BaseRegNum != RegOpNum))
+  // These are some of the types of expansions we perform here:
+  // 1) lw $8, sym        => lui $8, %hi(sym)
+  //                         lw $8, %lo(sym)($8)
+  // 2) lw $8, offset($9) => lui $8, %hi(offset)
+  //                         add $8, $8, $9
+  //                         lw $8, %lo(offset)($9)
+  // 3) lw $8, offset($8) => lui $at, %hi(offset)
+  //                         add $at, $at, $8
+  //                         lw $8, %lo(offset)($at)
+  // 4) sw $8, sym        => lui $at, %hi(sym)
+  //                         sw $8, %lo(sym)($at)
+  // 5) sw $8, offset($8) => lui $at, %hi(offset)
+  //                         add $at, $at, $8
+  //                         sw $8, %lo(offset)($at)
+  // 6) ldc1 $f0, sym     => lui $at, %hi(sym)
+  //                         ldc1 $f0, %lo(sym)($at)
+  //
+  // For load instructions we can use the destination register as a temporary
+  // if base and dst are different (examples 1 and 2) and if the base register
+  // is general purpose otherwise we must use $at (example 6) and error if it's
+  // not available. For stores we must use $at (examples 4 and 5) because we
+  // must not clobber the source register setting up the offset.
+  const MCInstrDesc &Desc = getInstDesc(Inst.getOpcode());
+  int16_t RegClassOp0 = Desc.OpInfo[0].RegClass;
+  unsigned RegClassIDOp0 =
+      getContext().getRegisterInfo()->getRegClass(RegClassOp0).getID();
+  bool IsGPR = (RegClassIDOp0 == Mips::GPR32RegClassID) ||
+               (RegClassIDOp0 == Mips::GPR64RegClassID);
+  if (isLoad && IsGPR && (BaseRegNum != RegOpNum))
     TmpRegNum = RegOpNum;
   else {
     int AT = getATReg(IDLoc);

@@ -34,6 +34,11 @@
 # CHECK: addu    $1, $1, $9              # encoding: [0x21,0x08,0x29,0x00]
 # CHECK: sw      $10, 57920($1)          # encoding: [0x40,0xe2,0x2a,0xac]
 
+# CHECK: lui     $1, %hi(symbol)
+# CHECK: ldc1    $f0, %lo(symbol)($1)
+# CHECK: lui     $1, %hi(symbol)
+# CHECK: sdc1    $f0, %lo(symbol)($1)
+
     li $5,123
     li $6,-2345
     li $7,65538
@@ -51,3 +56,6 @@
 
     lw  $t2, 655483($a0)
     sw  $t2, 123456($t1)
+
+    ldc1 $f0, symbol
+    sdc1 $f0, symbol
