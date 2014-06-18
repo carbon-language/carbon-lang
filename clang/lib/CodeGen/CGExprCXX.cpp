@@ -1642,11 +1642,44 @@ static llvm::Value *getPolymorphicOffset(CodeGenFunction &CGF,
   llvm_unreachable("One of our vbases should be polymorphic.");
 }
 
-static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF,
-                                         const Expr *E, 
+static llvm::Value *emitRTtypeidCall(CodeGenFunction &CGF,
+                                     llvm::Value *Argument) {
+  llvm::Type *ArgTypes[] = {CGF.Int8PtrTy};
+  llvm::Constant *Function = CGF.CGM.CreateRuntimeFunction(
+      llvm::FunctionType::get(CGF.Int8PtrTy, ArgTypes, false), "__RTtypeid");
+  llvm::Value *Args[] = {Argument};
+  return CGF.EmitRuntimeCall(Function, Args);
+}
+
+static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF, const Expr *E,
                                          llvm::Type *StdTypeInfoPtrTy) {
   // Get the vtable pointer.
   llvm::Value *ThisPtr = CGF.EmitLValue(E).getAddress();
+
+  if (CGF.getTarget().getCXXABI().isMicrosoft()) {
+    llvm::Value *CastPtr = CGF.Builder.CreateBitCast(ThisPtr, CGF.Int8PtrTy);
+    const CXXRecordDecl *RD = E->getType()->getAsCXXRecordDecl();
+    if (CGF.getContext().getASTRecordLayout(RD).hasExtendableVFPtr())
+      return CGF.Builder.CreateBitCast(emitRTtypeidCall(CGF, CastPtr),
+                                       StdTypeInfoPtrTy);
+    llvm::BasicBlock *EntryBlock = CGF.Builder.GetInsertBlock();
+    llvm::BasicBlock *AdjustBlock = CGF.createBasicBlock("type_id.valid");
+    llvm::BasicBlock *ExitBlock = CGF.createBasicBlock("type_id.call");
+    CGF.Builder.CreateCondBr(CGF.Builder.CreateIsNull(CastPtr), ExitBlock,
+                             AdjustBlock);
+    // Emit the call block and code for it.
+    CGF.EmitBlock(AdjustBlock);
+    llvm::Value *AdjustedThisPtr = CGF.Builder.CreateInBoundsGEP(
+        CastPtr, getPolymorphicOffset(CGF, RD, CastPtr));
+    // Emit the call block and the phi nodes for it.
+    CGF.EmitBlock(ExitBlock);
+    llvm::PHINode *ValuePHI = CGF.Builder.CreatePHI(CGF.Int8PtrTy, 2);
+    ValuePHI->addIncoming(AdjustedThisPtr, AdjustBlock);
+    ValuePHI->addIncoming(llvm::Constant::getNullValue(CGF.Int8PtrTy),
+                          EntryBlock);
+    return CGF.Builder.CreateBitCast(emitRTtypeidCall(CGF, ValuePHI),
+                                     StdTypeInfoPtrTy);
+  }
 
   // C++ [expr.typeid]p2:
   //   If the glvalue expression is obtained by applying the unary * operator to
