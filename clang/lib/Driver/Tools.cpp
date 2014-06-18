@@ -3479,7 +3479,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                  options::OPT_mno_long_calls)) {
       if (A->getOption().matches(options::OPT_mlong_calls)) {
         CmdArgs.push_back("-backend-option");
-        CmdArgs.push_back("-enable-arm-long-calls");
+        CmdArgs.push_back("-arm-long-calls");
       }
     }
   }
