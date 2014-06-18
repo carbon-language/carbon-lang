@@ -1,4 +1,3 @@
-
 #define _CLC_ALL_DECL(TYPE) \
   _CLC_OVERLOAD _CLC_DECL int all(TYPE v);
 
@@ -14,3 +13,6 @@ _CLC_VECTOR_ALL_DECL(char)
 _CLC_VECTOR_ALL_DECL(short)
 _CLC_VECTOR_ALL_DECL(int)
 _CLC_VECTOR_ALL_DECL(long)
+
+#undef _CLC_ALL_DECL
+#undef _CLC_VECTOR_ALL_DECL
