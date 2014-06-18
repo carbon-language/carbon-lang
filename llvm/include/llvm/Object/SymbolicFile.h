@@ -136,6 +136,10 @@ public:
   basic_symbol_iterator symbol_end() const {
     return symbol_end_impl();
   }
+  typedef iterator_range<basic_symbol_iterator> basic_symbol_iterator_range;
+  basic_symbol_iterator_range symbols() const {
+    return basic_symbol_iterator_range(symbol_begin(), symbol_end());
+  }
 
   // construction aux.
   static ErrorOr<SymbolicFile *> createIRObjectFile(MemoryBuffer *Object,
