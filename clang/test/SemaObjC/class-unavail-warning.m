@@ -15,7 +15,7 @@ __attribute__((unavailable("not available")))
 
 @end
 
-@interface Foo {
+@interface Gorf {
   MyClass *ivar; // expected-error {{unavailable}}
 }
 - (MyClass *)meth; // expected-error {{unavailable}}
@@ -39,4 +39,31 @@ int main() {
  MyClass *foo = [MyClass new]; // expected-error 2 {{'MyClass' is unavailable: not available}}
 
  return 0;
+}
+
+// rdar://16681279
+@interface NSObject @end
+
+__attribute__((visibility("default"))) __attribute__((availability(macosx,unavailable)))
+@interface Foo : NSObject @end // expected-note 3 {{'Foo' has been explicitly marked unavailable here}}
+@interface AppDelegate  : NSObject
+@end
+
+@class Foo;
+
+@implementation AppDelegate
+- (void) applicationDidFinishLaunching
+{
+  Foo *foo = 0; // expected-error {{'Foo' is unavailable}}
+}
+@end
+
+@class Foo;
+Foo *g_foo = 0; // expected-error {{'Foo' is unavailable}}
+
+@class Foo;
+@class Foo;
+@class Foo;
+Foo * f_func() { // expected-error {{'Foo' is unavailable}}
+  return 0; 
 }

@@ -87,6 +87,12 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
                               bool ObjCPropertyAccess) {
   // See if this declaration is unavailable or deprecated.
   std::string Message;
+    
+  // Forward class declarations get their attributes from their definition.
+  if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
+    if (IDecl->getDefinition())
+      D = IDecl->getDefinition();
+  }
   AvailabilityResult Result = D->getAvailability(&Message);
   if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D))
     if (Result == AR_Available) {
