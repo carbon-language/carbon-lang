@@ -13,6 +13,7 @@
 
 #include "ARMJITInfo.h"
 #include "ARMConstantPoolValue.h"
+#include "ARMMachineFunctionInfo.h"
 #include "ARMRelocations.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
@@ -333,4 +334,11 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     }
     }
   }
+}
+
+void ARMJITInfo::Initialize(const MachineFunction &MF, bool isPIC) {
+  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  ConstPoolId2AddrMap.resize(AFI->getNumPICLabels());
+  JumpTableId2AddrMap.resize(AFI->getNumJumpTables());
+  IsPIC = isPIC;
 }
