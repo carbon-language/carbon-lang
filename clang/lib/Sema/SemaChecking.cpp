@@ -5370,7 +5370,9 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
       if (OtherRange.NonNegative) {
         if (OtherWidth >= Value.getActiveBits())
           return;
-      } else if (!OtherRange.NonNegative && !ConstantSigned) {
+      } else { // OtherSigned
+        assert(!ConstantSigned &&
+               "Two signed types converted to unsigned types.");
         // Check to see if the constant is representable in OtherT.
         if (OtherWidth > Value.getActiveBits())
           return;
@@ -5384,8 +5386,6 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
         // after conversion.  Relational comparison still works, but equality
         // comparisons will be tautological.
         EqualityOnly = true;
-      } else { // OtherSigned && ConstantSigned
-        llvm_unreachable("Two signed types converted to unsigned types.");
       }
     }
 
