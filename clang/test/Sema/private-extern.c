@@ -13,10 +13,10 @@ __private_extern__ int g2;
 int g3; // expected-note{{previous definition}}
 static int g3; // expected-error{{static declaration of 'g3' follows non-static declaration}}
 
-extern int g4; // expected-note{{previous definition}}
+extern int g4; // expected-note{{previous declaration}}
 static int g4; // expected-error{{static declaration of 'g4' follows non-static declaration}}
 
-__private_extern__ int g5; // expected-note{{previous definition}}
+__private_extern__ int g5; // expected-note{{previous declaration}}
 static int g5; // expected-error{{static declaration of 'g5' follows non-static declaration}}
 
 void f0() {
@@ -30,12 +30,12 @@ void f1() {
 }
 
 void f2() {
-  extern int g8; // expected-note{{previous definition}}
+  extern int g8; // expected-note{{previous declaration}}
   int g8; // expected-error {{non-extern declaration of 'g8' follows extern declaration}}
 }
 
 void f3() {
-  __private_extern__ int g9; // expected-note{{previous definition}}
+  __private_extern__ int g9; // expected-note{{previous declaration}}
   int g9; // expected-error {{non-extern declaration of 'g9' follows extern declaration}}
 }
 

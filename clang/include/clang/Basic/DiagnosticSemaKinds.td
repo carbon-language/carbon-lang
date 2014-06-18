@@ -3814,8 +3814,8 @@ def note_extern_c_global_conflict : Note<
   "declared %select{in global scope|with C language linkage}0 here">;
 def warn_weak_import : Warning <
   "an already-declared variable is made a weak_import declaration %0">;
-def warn_static_non_static : ExtWarn<
-  "static declaration of %0 follows non-static declaration">;
+def ext_static_non_static : Extension<
+  "redeclaring non-static %0 as static is a Microsoft extension">, InGroup<Microsoft>;
 def err_non_static_static : Error<
   "non-static declaration of %0 follows static declaration">;
 def err_extern_non_extern : Error<

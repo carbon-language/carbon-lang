@@ -144,10 +144,13 @@ extern void static_func();
 void static_func(); // expected-note {{previous declaration is here}}
 
 
-static void static_func() // expected-warning {{static declaration of 'static_func' follows non-static declaration}}
+static void static_func() // expected-warning {{redeclaring non-static 'static_func' as static is a Microsoft extension}}
 {
 
 }
+
+extern const int static_var; // expected-note {{previous declaration is here}}
+static const int static_var = 3; // expected-warning {{redeclaring non-static 'static_var' as static is a Microsoft extension}}
 
 long function_prototype(int a);
 long (*function_ptr)(int a);

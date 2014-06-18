@@ -2253,6 +2253,24 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   return Sema::CXXInvalid;
 }
 
+// Determine whether the previous declaration was a definition, implicit
+// declaration, or a declaration.
+template <typename T>
+static std::pair<diag::kind, SourceLocation>
+getNoteDiagForInvalidRedeclaration(const T *Old, const T *New) {
+  diag::kind PrevDiag;
+  SourceLocation OldLocation = Old->getLocation();
+  if (Old->isThisDeclarationADefinition())
+    PrevDiag = diag::note_previous_definition;
+  else if (Old->isImplicit()) {
+    PrevDiag = diag::note_previous_implicit_declaration;
+    if (OldLocation.isInvalid())
+      OldLocation = New->getLocation();
+  } else
+    PrevDiag = diag::note_previous_declaration;
+  return std::make_pair(PrevDiag, OldLocation);
+}
+
 /// canRedefineFunction - checks if a function can be redefined. Currently,
 /// only extern inline functions can be redefined, and even then only in
 /// GNU89 mode.
@@ -2345,18 +2363,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
   if (Old->isInvalidDecl())
     return true;
 
-  // Determine whether the previous declaration was a definition,
-  // implicit declaration, or a declaration.
   diag::kind PrevDiag;
-  SourceLocation OldLocation = Old->getLocation();
-  if (Old->isThisDeclarationADefinition())
-    PrevDiag = diag::note_previous_definition;
-  else if (Old->isImplicit()) {
-    PrevDiag = diag::note_previous_implicit_declaration;
-    if (OldLocation.isInvalid())
-      OldLocation = New->getLocation();
-  } else
-    PrevDiag = diag::note_previous_declaration;
+  SourceLocation OldLocation;
+  std::tie(PrevDiag, OldLocation) =
+      getNoteDiagForInvalidRedeclaration(Old, New);
 
   // Don't complain about this if we're in GNU89 mode and the old function
   // is an extern inline function.
@@ -2368,7 +2378,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
       !New->getTemplateSpecializationInfo() &&
       !canRedefineFunction(Old, getLangOpts())) {
     if (getLangOpts().MicrosoftExt) {
-      Diag(New->getLocation(), diag::warn_static_non_static) << New;
+      Diag(New->getLocation(), diag::ext_static_non_static) << New;
       Diag(OldLocation, PrevDiag);
     } else {
       Diag(New->getLocation(), diag::err_static_non_static) << New;
@@ -3069,13 +3079,25 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   if (New->isInvalidDecl())
     return;
 
+  diag::kind PrevDiag;
+  SourceLocation OldLocation;
+  std::tie(PrevDiag, OldLocation) =
+      getNoteDiagForInvalidRedeclaration(Old, New);
+
   // [dcl.stc]p8: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() == SC_Static &&
       !New->isStaticDataMember() &&
       Old->hasExternalFormalLinkage()) {
-    Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
-    return New->setInvalidDecl();
+    if (getLangOpts().MicrosoftExt) {
+      Diag(New->getLocation(), diag::ext_static_non_static)
+          << New->getDeclName();
+      Diag(OldLocation, PrevDiag);
+    } else {
+      Diag(New->getLocation(), diag::err_static_non_static)
+          << New->getDeclName();
+      Diag(OldLocation, PrevDiag);
+      return New->setInvalidDecl();
+    }
   }
   // C99 6.2.2p4:
   //   For an identifier declared with the storage-class specifier
@@ -3092,7 +3114,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
            !New->isStaticDataMember() &&
            Old->getCanonicalDecl()->getStorageClass() == SC_Static) {
     Diag(New->getLocation(), diag::err_non_static_static) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
 
@@ -3100,13 +3122,13 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   if (New->hasExternalStorage() &&
       !Old->hasLinkage() && Old->isLocalVarDecl()) {
     Diag(New->getLocation(), diag::err_extern_non_extern) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
   if (Old->hasLinkage() && New->isLocalVarDecl() &&
       !New->hasExternalStorage()) {
     Diag(New->getLocation(), diag::err_non_extern_extern) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
 
@@ -3119,17 +3141,17 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
       !(Old->getLexicalDeclContext()->isRecord() &&
         !New->getLexicalDeclContext()->isRecord())) {
     Diag(New->getLocation(), diag::err_redefinition) << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
 
   if (New->getTLSKind() != Old->getTLSKind()) {
     if (!Old->getTLSKind()) {
       Diag(New->getLocation(), diag::err_thread_non_thread) << New->getDeclName();
-      Diag(Old->getLocation(), diag::note_previous_declaration);
+      Diag(OldLocation, PrevDiag);
     } else if (!New->getTLSKind()) {
       Diag(New->getLocation(), diag::err_non_thread_thread) << New->getDeclName();
-      Diag(Old->getLocation(), diag::note_previous_declaration);
+      Diag(OldLocation, PrevDiag);
     } else {
       // Do not allow redeclaration to change the variable between requiring
       // static and dynamic initialization.
@@ -3137,7 +3159,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
       // declaration to determine the kind. Do we need to be compatible here?
       Diag(New->getLocation(), diag::err_thread_thread_different_kind)
         << New->getDeclName() << (New->getTLSKind() == VarDecl::TLS_Dynamic);
-      Diag(Old->getLocation(), diag::note_previous_declaration);
+      Diag(OldLocation, PrevDiag);
     }
   }
 
@@ -3154,7 +3176,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
   if (haveIncompatibleLanguageLinkages(Old, New)) {
     Diag(New->getLocation(), diag::err_different_language_linkage) << New;
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(OldLocation, PrevDiag);
     New->setInvalidDecl();
     return;
   }

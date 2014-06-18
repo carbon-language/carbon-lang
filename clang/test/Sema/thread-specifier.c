@@ -58,7 +58,7 @@ int f(__thread int t7) { // expected-error {{' is only allowed on variable decla
 }
 
 __thread typedef int t14; // expected-error-re {{cannot combine with previous '{{__thread|_Thread_local|thread_local}}' declaration specifier}}
-__thread int t15; // expected-note {{previous declaration is here}}
+__thread int t15; // expected-note {{previous definition is here}}
 extern int t15; // expected-error {{non-thread-local declaration of 't15' follows thread-local declaration}}
 extern int t16; // expected-note {{previous declaration is here}}
 __thread int t16; // expected-error {{thread-local declaration of 't16' follows non-thread-local declaration}}

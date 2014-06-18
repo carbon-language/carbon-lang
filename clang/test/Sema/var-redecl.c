@@ -58,5 +58,5 @@ int *p=&g19; // expected-error{{use of undeclared identifier 'g19'}} \
 
 // PR3645
 static int a;
-extern int a; // expected-note {{previous definition is here}}
+extern int a; // expected-note {{previous declaration is here}}
 int a;	// expected-error {{non-static declaration of 'a' follows static declaration}}
