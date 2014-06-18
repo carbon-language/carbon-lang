@@ -9,6 +9,7 @@
         add.d     $f1,$f7,$f29
         add.s     $f8,$f21,$f24
         addi      $13,$9,26322
+        addi      $8,$8,~1             # CHECK: addi $8, $8, -2 # encoding: [0x21,0x08,0xff,0xfe]
         addu      $9,$a0,$a2
         and       $s7,$v0,$12
         and       $2,4                 # CHECK: andi $2, $2, 4 # encoding: [0x30,0x42,0x00,0x04]

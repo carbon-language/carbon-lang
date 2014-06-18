@@ -1480,6 +1480,7 @@ bool MipsAsmParser::ParseOperand(OperandVector &Operands, StringRef Mnemonic) {
   case AsmToken::Minus:
   case AsmToken::Plus:
   case AsmToken::Integer:
+  case AsmToken::Tilde:
   case AsmToken::String: {
     DEBUG(dbgs() << ".. generic integer\n");
     OperandMatchResultTy ResTy = ParseImm(Operands);
@@ -1904,6 +1905,7 @@ MipsAsmParser::ParseImm(OperandVector &Operands) {
   case AsmToken::Minus:
   case AsmToken::Plus:
   case AsmToken::Integer:
+  case AsmToken::Tilde:
   case AsmToken::String:
     break;
   }

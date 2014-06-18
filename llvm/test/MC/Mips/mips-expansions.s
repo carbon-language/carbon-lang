@@ -8,6 +8,8 @@
 # CHECK: addiu   $6, $zero, -2345    # encoding: [0xd7,0xf6,0x06,0x24]
 # CHECK: lui     $7, 1               # encoding: [0x01,0x00,0x07,0x3c]
 # CHECK: ori     $7, $7, 2           # encoding: [0x02,0x00,0xe7,0x34]
+# CHECK: addiu   $8, $zero, -8       # encoding: [0xf8,0xff,0x08,0x24]
+
 # CHECK: addiu   $4, $zero, 20       # encoding: [0x14,0x00,0x04,0x24]
 # CHECK: lui     $7, 1               # encoding: [0x01,0x00,0x07,0x3c]
 # CHECK: ori     $7, $7, 2           # encoding: [0x02,0x00,0xe7,0x34]
@@ -35,6 +37,7 @@
     li $5,123
     li $6,-2345
     li $7,65538
+    li $8, ~7
 
     la $a0, 20
     la $7,65538
