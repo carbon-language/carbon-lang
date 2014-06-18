@@ -96,7 +96,17 @@ LineTable::AppendLineEntryToSequence
     assert(sequence != nullptr);
     LineSequenceImpl* seq = reinterpret_cast<LineSequenceImpl*>(sequence);
     Entry entry(file_addr, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
-    seq->m_entries.push_back (entry);
+    entry_collection &entries = seq->m_entries;
+    // Replace the last entry if the address is the same, otherwise append it. If we have multiple
+    // line entries at the same address, this indicates illegal DWARF so this "fixes" the line table
+    // to be correct. If not fixed this can cause a line entry's address that when resolved back to
+    // a symbol context, could resolve to a different line entry. We really want a 1 to 1 mapping
+    // here to avoid these kinds of inconsistencies. We will need tor revisit this if the DWARF line
+    // tables are updated to allow multiple entries at the same address legally.
+    if (!entries.empty() && entries.back().file_addr == file_addr)
+        entries.back() = entry;
+    else
+        entries.push_back (entry);
 }
 
 void
