@@ -3380,6 +3380,7 @@ ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
   BitcodeReader *R = new BitcodeReader(Buffer, Context, BufferOwned);
   M->setMaterializer(R);
   if (std::error_code EC = R->ParseBitcodeInto(M)) {
+    R->releaseBuffer(); // Never take ownership on error.
     delete M;  // Also deletes R.
     return EC;
   }

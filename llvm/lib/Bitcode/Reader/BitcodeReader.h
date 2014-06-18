@@ -239,6 +239,10 @@ public:
 
   void FreeState();
 
+  void releaseBuffer() {
+    Buffer = nullptr;
+  }
+
   bool isMaterializable(const GlobalValue *GV) const override;
   bool isDematerializable(const GlobalValue *GV) const override;
   std::error_code Materialize(GlobalValue *GV) override;
