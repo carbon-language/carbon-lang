@@ -3431,11 +3431,12 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
   unsigned CallOpc = PPCISD::CALL;
 
   bool needIndirectCall = true;
-  if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG)) {
-    // If this is an absolute destination address, use the munged value.
-    Callee = SDValue(Dest, 0);
-    needIndirectCall = false;
-  }
+  if (!isSVR4ABI || !isPPC64)
+    if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG)) {
+      // If this is an absolute destination address, use the munged value.
+      Callee = SDValue(Dest, 0);
+      needIndirectCall = false;
+    }
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     // XXX Work around for http://llvm.org/bugs/show_bug.cgi?id=5201
@@ -4383,8 +4384,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // pointers in the 64-bit SVR4 ABI.
   if (!isTailCall &&
       !dyn_cast<GlobalAddressSDNode>(Callee) &&
-      !dyn_cast<ExternalSymbolSDNode>(Callee) &&
-      !isBLACompatibleAddress(Callee, DAG)) {
+      !dyn_cast<ExternalSymbolSDNode>(Callee)) {
     // Load r2 into a virtual register and store it to the TOC save area.
     SDValue Val = DAG.getCopyFromReg(Chain, dl, PPC::X2, MVT::i64);
     // TOC save area offset.

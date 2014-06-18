@@ -42,15 +42,6 @@ define void @test_indirect(void ()* nocapture %fp) nounwind {
   ret void
 }
 
-; Absolute vales should be have the TOC restore 'nop'
-define void @test_abs() nounwind {
-; CHECK-LABEL: test_abs:
-  tail call void inttoptr (i64 1024 to void ()*)() nounwind
-; CHECK: bla 1024
-; CHECK-NEXT: nop
-  ret void
-}
-
 declare double @sin(double) nounwind
 
 ; External functions call should also have a 'nop'
