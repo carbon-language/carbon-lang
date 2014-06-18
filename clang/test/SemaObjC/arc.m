@@ -285,7 +285,7 @@ void test11(id op, void *vp) {
   b = (nil == vp);
 
   b = (vp == op); // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgingRetain call}}
-  b = (op == vp); // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgingRelease call}}
+  b = (op == vp);
 }
 
 void test12(id collection) {
@@ -781,4 +781,20 @@ void foo(NSArray *array) {
     for (string in @[@"blah", @"more blah", string]) { // expected-error {{selector element of type 'NSString *const __strong' cannot be a constant l-value}}
     }
   }
+}
+
+// rdar://16627903
+extern void abort();
+#define TKAssertEqual(a, b) do{\
+    __typeof(a) a_res = (a);\
+    __typeof(b) b_res = (b);\
+    if ((a_res) != (b_res)) {\
+        abort();\
+    }\
+}while(0)
+
+int garf() {
+  id object;
+  TKAssertEqual(object, nil);
+  TKAssertEqual(object, (id)nil);
 }

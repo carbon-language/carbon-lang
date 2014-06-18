@@ -3624,7 +3624,8 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
 Sema::ARCConversionResult
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
                              Expr *&castExpr, CheckedConversionKind CCK,
-                             bool DiagnoseCFAudited) {
+                             bool DiagnoseCFAudited,
+                             BinaryOperatorKind Opc) {
   QualType castExprType = castExpr->getType();
 
   // For the purposes of the classification, we assume reference types
@@ -3718,8 +3719,10 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   // instead.
   if (!DiagnoseCFAudited || exprACTC != ACTC_retainable ||
       castACTC != ACTC_coreFoundation)
-    diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
-                              castExpr, castExpr, exprACTC, CCK);
+    if (!(exprACTC == ACTC_voidPtr && castACTC == ACTC_retainable &&
+          (Opc == BO_NE || Opc == BO_EQ)))
+      diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
+                                castExpr, castExpr, exprACTC, CCK);
   return ACR_okay;
 }
 
