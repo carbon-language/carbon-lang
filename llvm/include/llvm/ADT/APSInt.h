@@ -56,7 +56,7 @@ public:
     APInt::toString(Str, Radix, isSigned());
   }
   /// toString - Converts an APInt to a std::string.  This is an inefficient
-  /// method, your should prefer passing in a SmallString instead.
+  /// method; you should prefer passing in a SmallString instead.
   std::string toString(unsigned Radix) const {
     return APInt::toString(Radix, isSigned());
   }
