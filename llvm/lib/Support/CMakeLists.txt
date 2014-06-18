@@ -41,7 +41,6 @@ add_llvm_library(LLVMSupport
   MD5.cpp
   PluginLoader.cpp
   PrettyStackTrace.cpp
-  RandomNumberGenerator.cpp
   Regex.cpp
   SmallPtrSet.cpp
   SmallVector.cpp
