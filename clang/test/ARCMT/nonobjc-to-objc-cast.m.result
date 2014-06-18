@@ -36,7 +36,7 @@ void f(BOOL b, id p) {
   CFUUIDRef   _uuid;
   NSString *_uuidString = (NSString *)CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, _uuid));
   _uuidString = (NSString *)CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, _uuid));
-  _uuidString = CFBridgingRelease(CFRetain(_uuid));
+  _uuidString = CFRetain(_uuid);
 }
 
 @implementation NSString (StrExt)
