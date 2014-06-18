@@ -10,6 +10,10 @@ RUN: llvm-size -format darwin %p/Inputs/macho-archive-x86_64.a \
 RUN:         | FileCheck %s -check-prefix mAR
 RUN: llvm-size -format darwin -x -l %p/Inputs/hello-world.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix mxl
+RUN: llvm-size %p/Inputs/macho-universal.x86_64.i386 \
+RUN:         | FileCheck %s -check-prefix u
+RUN: llvm-size %p/Inputs/macho-universal-archive.x86_64.i386 \
+RUN:         | FileCheck %s -check-prefix uAR
 
 A: section              size   addr
 A: __text                 12      0
@@ -65,3 +69,11 @@ mxl: 	Section __la_symbol_ptr: 0x8 (addr 0x100001010 offset 4112)
 mxl: 	total 0x18
 mxl: Segment __LINKEDIT: 0x1000 (vmaddr 0x100002000 fileoff 8192)
 mxl: total 0x100003000
+
+u: __TEXT	__DATA	__OBJC	others	dec	hex
+u: 4096	0	0	4294971392	4294975488	100002000	{{.*}}/macho-universal.x86_64.i386:x86_64
+u: 4096	0	0	8192	12288	3000	{{.*}}/macho-universal.x86_64.i386:i386
+
+uAR: __TEXT	__DATA	__OBJC	others	dec	hex
+uAR: 136	0	0	32	168	a8	{{.*}}/macho-universal-archive.x86_64.i386:x86_64(hello.o)
+uAR: 5	4	0	0	9	9	{{.*}}/macho-universal-archive.x86_64.i386:i386(foo.o)

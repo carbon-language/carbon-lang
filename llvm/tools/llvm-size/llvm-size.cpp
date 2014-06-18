@@ -17,6 +17,7 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/Object/MachOUniversal.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -453,6 +454,57 @@ static void PrintFileSectionSizes(StringRef file) {
             outs() << a->getFileName() << "(" << o->getFileName() << ")\n";
           else
             outs() << o->getFileName() << " (ex " << a->getFileName() << ")\n";
+        }
+      }
+    }
+  } else if (MachOUniversalBinary *UB =
+             dyn_cast<MachOUniversalBinary>(binary.get())) {
+    // This is a Mach-O universal binary. Iterate over each object and
+    // display its sizes.
+    bool moreThanOneArch = UB->getNumberOfObjects() > 1;
+    for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
+                                               E = UB->end_objects();
+         I != E; ++I) {
+      std::unique_ptr<ObjectFile> UO;
+      std::unique_ptr<Archive> UA;
+      if (!I->getAsObjectFile(UO)) {
+        if (ObjectFile *o = dyn_cast<ObjectFile>(&*UO.get())) {
+          if (OutputFormat == sysv)
+            outs() << o->getFileName() << "  :\n";
+          PrintObjectSectionSizes(o);
+          if (OutputFormat == berkeley) {
+            MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o);
+            if (!MachO || moreThanOneFile || moreThanOneArch)
+              outs() << o->getFileName();
+            outs() << "\n";
+          }
+        }
+      }
+      else if (!I->getAsArchive(UA)) {
+        // This is an archive. Iterate over each member and display its sizes.
+        for (object::Archive::child_iterator i = UA->child_begin(),
+                                             e = UA->child_end(); i != e; ++i) {
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+          if (std::error_code EC = ChildOrErr.getError()) {
+            errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
+            continue;
+          }
+          if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get())) {
+            MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o);
+            if (OutputFormat == sysv)
+              outs() << o->getFileName() << "   (ex " << UA->getFileName()
+                     << "):\n";
+            else if(MachO && OutputFormat == darwin)
+              outs() << UA->getFileName() << "(" << o->getFileName() << "):\n";
+            PrintObjectSectionSizes(o);
+            if (OutputFormat == berkeley) {
+              if (MachO)
+                outs() << UA->getFileName() << "(" << o->getFileName() << ")\n";
+              else
+                outs() << o->getFileName() << " (ex " << UA->getFileName()
+                       << ")\n";
+            }
+          }
         }
       }
     }
