@@ -987,31 +987,31 @@ defm IMAGE_SAMPLE_C_B : MIMG_Sampler <0x0000002d, "IMAGE_SAMPLE_C_B">;
 //def IMAGE_SAMPLE_C_B_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_O", 0x0000003d>;
 //def IMAGE_SAMPLE_C_B_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_CL_O", 0x0000003e>;
 //def IMAGE_SAMPLE_C_LZ_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_LZ_O", 0x0000003f>;
-//def IMAGE_GATHER4 : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4", 0x00000040>;
-//def IMAGE_GATHER4_CL : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_CL", 0x00000041>;
-//def IMAGE_GATHER4_L : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_L", 0x00000044>;
-//def IMAGE_GATHER4_B : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_B", 0x00000045>;
-//def IMAGE_GATHER4_B_CL : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_B_CL", 0x00000046>;
-//def IMAGE_GATHER4_LZ : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_LZ", 0x00000047>;
-//def IMAGE_GATHER4_C : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C", 0x00000048>;
-//def IMAGE_GATHER4_C_CL : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_CL", 0x00000049>;
-//def IMAGE_GATHER4_C_L : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_L", 0x0000004c>;
-//def IMAGE_GATHER4_C_B : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_B", 0x0000004d>;
-//def IMAGE_GATHER4_C_B_CL : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_B_CL", 0x0000004e>;
-//def IMAGE_GATHER4_C_LZ : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_LZ", 0x0000004f>;
-//def IMAGE_GATHER4_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_O", 0x00000050>;
-//def IMAGE_GATHER4_CL_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_CL_O", 0x00000051>;
-//def IMAGE_GATHER4_L_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_L_O", 0x00000054>;
-//def IMAGE_GATHER4_B_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_B_O", 0x00000055>;
-//def IMAGE_GATHER4_B_CL_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_B_CL_O", 0x00000056>;
-//def IMAGE_GATHER4_LZ_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_LZ_O", 0x00000057>;
-//def IMAGE_GATHER4_C_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_O", 0x00000058>;
-//def IMAGE_GATHER4_C_CL_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_CL_O", 0x00000059>;
-//def IMAGE_GATHER4_C_L_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_L_O", 0x0000005c>;
-//def IMAGE_GATHER4_C_B_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_B_O", 0x0000005d>;
-//def IMAGE_GATHER4_C_B_CL_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_B_CL_O", 0x0000005e>;
-//def IMAGE_GATHER4_C_LZ_O : MIMG_NoPattern_GATHER4 <"IMAGE_GATHER4_C_LZ_O", 0x0000005f>;
-//def IMAGE_GET_LOD : MIMG_NoPattern_ <"IMAGE_GET_LOD", 0x00000060>;
+defm IMAGE_GATHER4          : MIMG_Gather <0x00000040, "IMAGE_GATHER4">;
+defm IMAGE_GATHER4_CL       : MIMG_Gather <0x00000041, "IMAGE_GATHER4_CL">;
+defm IMAGE_GATHER4_L        : MIMG_Gather <0x00000044, "IMAGE_GATHER4_L">;
+defm IMAGE_GATHER4_B        : MIMG_Gather <0x00000045, "IMAGE_GATHER4_B">;
+defm IMAGE_GATHER4_B_CL     : MIMG_Gather <0x00000046, "IMAGE_GATHER4_B_CL">;
+defm IMAGE_GATHER4_LZ       : MIMG_Gather <0x00000047, "IMAGE_GATHER4_LZ">;
+defm IMAGE_GATHER4_C        : MIMG_Gather <0x00000048, "IMAGE_GATHER4_C">;
+defm IMAGE_GATHER4_C_CL     : MIMG_Gather <0x00000049, "IMAGE_GATHER4_C_CL">;
+defm IMAGE_GATHER4_C_L      : MIMG_Gather <0x0000004c, "IMAGE_GATHER4_C_L">;
+defm IMAGE_GATHER4_C_B      : MIMG_Gather <0x0000004d, "IMAGE_GATHER4_C_B">;
+defm IMAGE_GATHER4_C_B_CL   : MIMG_Gather <0x0000004e, "IMAGE_GATHER4_C_B_CL">;
+defm IMAGE_GATHER4_C_LZ     : MIMG_Gather <0x0000004f, "IMAGE_GATHER4_C_LZ">;
+defm IMAGE_GATHER4_O        : MIMG_Gather <0x00000050, "IMAGE_GATHER4_O">;
+defm IMAGE_GATHER4_CL_O     : MIMG_Gather <0x00000051, "IMAGE_GATHER4_CL_O">;
+defm IMAGE_GATHER4_L_O      : MIMG_Gather <0x00000054, "IMAGE_GATHER4_L_O">;
+defm IMAGE_GATHER4_B_O      : MIMG_Gather <0x00000055, "IMAGE_GATHER4_B_O">;
+defm IMAGE_GATHER4_B_CL_O   : MIMG_Gather <0x00000056, "IMAGE_GATHER4_B_CL_O">;
+defm IMAGE_GATHER4_LZ_O     : MIMG_Gather <0x00000057, "IMAGE_GATHER4_LZ_O">;
+defm IMAGE_GATHER4_C_O      : MIMG_Gather <0x00000058, "IMAGE_GATHER4_C_O">;
+defm IMAGE_GATHER4_C_CL_O   : MIMG_Gather <0x00000059, "IMAGE_GATHER4_C_CL_O">;
+defm IMAGE_GATHER4_C_L_O    : MIMG_Gather <0x0000005c, "IMAGE_GATHER4_C_L_O">;
+defm IMAGE_GATHER4_C_B_O    : MIMG_Gather <0x0000005d, "IMAGE_GATHER4_C_B_O">;
+defm IMAGE_GATHER4_C_B_CL_O : MIMG_Gather <0x0000005e, "IMAGE_GATHER4_C_B_CL_O">;
+defm IMAGE_GATHER4_C_LZ_O   : MIMG_Gather <0x0000005f, "IMAGE_GATHER4_C_LZ_O">;
+defm IMAGE_GET_LOD : MIMG_Sampler <0x00000060, "IMAGE_GET_LOD">;
 //def IMAGE_SAMPLE_CD : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD", 0x00000068>;
 //def IMAGE_SAMPLE_CD_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD_CL", 0x00000069>;
 //def IMAGE_SAMPLE_C_CD : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CD", 0x0000006a>;
@@ -1772,6 +1772,58 @@ def : SextInReg <i16, 16>;
 /********** ======================= **********/
 /********** Image sampling patterns **********/
 /********** ======================= **********/
+
+class SampleRawPattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat <
+  (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, i32:$dmask, i32:$unorm,
+        i32:$r128, i32:$da, i32:$glc, i32:$slc, i32:$tfe, i32:$lwe),
+  (opcode (as_i32imm $dmask), (as_i1imm $unorm), (as_i1imm $glc), (as_i1imm $da),
+          (as_i1imm $r128), (as_i1imm $tfe), (as_i1imm $lwe), (as_i1imm $slc),
+          $addr, $rsrc, $sampler)
+>;
+
+// Only the variants which make sense are defined.
+def : SampleRawPattern<int_SI_gather4,           IMAGE_GATHER4_V4_V2,        v2i32>;
+def : SampleRawPattern<int_SI_gather4,           IMAGE_GATHER4_V4_V4,        v4i32>;
+def : SampleRawPattern<int_SI_gather4_cl,        IMAGE_GATHER4_CL_V4_V4,     v4i32>;
+def : SampleRawPattern<int_SI_gather4_l,         IMAGE_GATHER4_L_V4_V4,      v4i32>;
+def : SampleRawPattern<int_SI_gather4_b,         IMAGE_GATHER4_B_V4_V4,      v4i32>;
+def : SampleRawPattern<int_SI_gather4_b_cl,      IMAGE_GATHER4_B_CL_V4_V4,   v4i32>;
+def : SampleRawPattern<int_SI_gather4_b_cl,      IMAGE_GATHER4_B_CL_V4_V8,   v8i32>;
+def : SampleRawPattern<int_SI_gather4_lz,        IMAGE_GATHER4_LZ_V4_V2,     v2i32>;
+def : SampleRawPattern<int_SI_gather4_lz,        IMAGE_GATHER4_LZ_V4_V4,     v4i32>;
+
+def : SampleRawPattern<int_SI_gather4_c,         IMAGE_GATHER4_C_V4_V4,      v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_cl,      IMAGE_GATHER4_C_CL_V4_V4,   v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_cl,      IMAGE_GATHER4_C_CL_V4_V8,   v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_l,       IMAGE_GATHER4_C_L_V4_V4,    v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_l,       IMAGE_GATHER4_C_L_V4_V8,    v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_b,       IMAGE_GATHER4_C_B_V4_V4,    v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_b,       IMAGE_GATHER4_C_B_V4_V8,    v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_b_cl,    IMAGE_GATHER4_C_B_CL_V4_V8, v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_lz,      IMAGE_GATHER4_C_LZ_V4_V4,   v4i32>;
+
+def : SampleRawPattern<int_SI_gather4_o,         IMAGE_GATHER4_O_V4_V4,      v4i32>;
+def : SampleRawPattern<int_SI_gather4_cl_o,      IMAGE_GATHER4_CL_O_V4_V4,   v4i32>;
+def : SampleRawPattern<int_SI_gather4_cl_o,      IMAGE_GATHER4_CL_O_V4_V8,   v8i32>;
+def : SampleRawPattern<int_SI_gather4_l_o,       IMAGE_GATHER4_L_O_V4_V4,    v4i32>;
+def : SampleRawPattern<int_SI_gather4_l_o,       IMAGE_GATHER4_L_O_V4_V8,    v8i32>;
+def : SampleRawPattern<int_SI_gather4_b_o,       IMAGE_GATHER4_B_O_V4_V4,    v4i32>;
+def : SampleRawPattern<int_SI_gather4_b_o,       IMAGE_GATHER4_B_O_V4_V8,    v8i32>;
+def : SampleRawPattern<int_SI_gather4_b_cl_o,    IMAGE_GATHER4_B_CL_O_V4_V8, v8i32>;
+def : SampleRawPattern<int_SI_gather4_lz_o,      IMAGE_GATHER4_LZ_O_V4_V4,   v4i32>;
+
+def : SampleRawPattern<int_SI_gather4_c_o,       IMAGE_GATHER4_C_O_V4_V4,    v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_o,       IMAGE_GATHER4_C_O_V4_V8,    v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_cl_o,    IMAGE_GATHER4_C_CL_O_V4_V8, v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_l_o,     IMAGE_GATHER4_C_L_O_V4_V8,  v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_b_o,     IMAGE_GATHER4_C_B_O_V4_V8,  v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_b_cl_o,  IMAGE_GATHER4_C_B_CL_O_V4_V8, v8i32>;
+def : SampleRawPattern<int_SI_gather4_c_lz_o,    IMAGE_GATHER4_C_LZ_O_V4_V4, v4i32>;
+def : SampleRawPattern<int_SI_gather4_c_lz_o,    IMAGE_GATHER4_C_LZ_O_V4_V8, v8i32>;
+
+def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V1, i32>;
+def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V2, v2i32>;
+def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V4, v4i32>;
 
 /* SIsample for simple 1D texture lookup */
 def : Pat <

@@ -56,10 +56,60 @@ let TargetPrefix = "SI", isTarget = 1 in {
 
   class Sample : Intrinsic <[llvm_v4f32_ty], [llvm_anyvector_ty, llvm_v32i8_ty, llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
 
+  // Fully-flexible SAMPLE instruction.
+  class SampleRaw : Intrinsic <
+    [llvm_v4f32_ty],    // vdata(VGPR)
+    [llvm_anyint_ty,    // vaddr(VGPR)
+     llvm_v32i8_ty,     // rsrc(SGPR)
+     llvm_v16i8_ty,     // sampler(SGPR)
+     llvm_i32_ty,       // dmask(imm)
+     llvm_i32_ty,       // unorm(imm)
+     llvm_i32_ty,       // r128(imm)
+     llvm_i32_ty,       // da(imm)
+     llvm_i32_ty,       // glc(imm)
+     llvm_i32_ty,       // slc(imm)
+     llvm_i32_ty,       // tfe(imm)
+     llvm_i32_ty],      // lwe(imm)
+    [IntrNoMem]>;
+
   def int_SI_sample : Sample;
   def int_SI_sampleb : Sample;
   def int_SI_sampled : Sample;
   def int_SI_samplel : Sample;
+
+  // Basic gather4
+  def int_SI_gather4 : SampleRaw;
+  def int_SI_gather4_cl : SampleRaw;
+  def int_SI_gather4_l : SampleRaw;
+  def int_SI_gather4_b : SampleRaw;
+  def int_SI_gather4_b_cl : SampleRaw;
+  def int_SI_gather4_lz : SampleRaw;
+
+  // Gather4 with comparison
+  def int_SI_gather4_c : SampleRaw;
+  def int_SI_gather4_c_cl : SampleRaw;
+  def int_SI_gather4_c_l : SampleRaw;
+  def int_SI_gather4_c_b : SampleRaw;
+  def int_SI_gather4_c_b_cl : SampleRaw;
+  def int_SI_gather4_c_lz : SampleRaw;
+
+  // Gather4 with offsets
+  def int_SI_gather4_o : SampleRaw;
+  def int_SI_gather4_cl_o : SampleRaw;
+  def int_SI_gather4_l_o : SampleRaw;
+  def int_SI_gather4_b_o : SampleRaw;
+  def int_SI_gather4_b_cl_o : SampleRaw;
+  def int_SI_gather4_lz_o : SampleRaw;
+
+  // Gather4 with comparison and offsets
+  def int_SI_gather4_c_o : SampleRaw;
+  def int_SI_gather4_c_cl_o : SampleRaw;
+  def int_SI_gather4_c_l_o : SampleRaw;
+  def int_SI_gather4_c_b_o : SampleRaw;
+  def int_SI_gather4_c_b_cl_o : SampleRaw;
+  def int_SI_gather4_c_lz_o : SampleRaw;
+
+  def int_SI_getlod : SampleRaw;
 
   def int_SI_imageload : Intrinsic <[llvm_v4i32_ty], [llvm_anyvector_ty, llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
 

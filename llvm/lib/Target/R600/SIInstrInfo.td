@@ -712,6 +712,53 @@ multiclass MIMG_Sampler <bits<7> op, string asm> {
   defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4>;
 }
 
+class MIMG_Gather_Helper <bits<7> op, string asm,
+                          RegisterClass dst_rc,
+                          RegisterClass src_rc> : MIMG <
+  op,
+  (outs dst_rc:$vdata),
+  (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
+       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, src_rc:$vaddr,
+       SReg_256:$srsrc, SReg_128:$ssamp),
+  asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
+     #" $tfe, $lwe, $slc, $vaddr, $srsrc, $ssamp",
+  []> {
+  let mayLoad = 1;
+  let mayStore = 0;
+
+  // DMASK was repurposed for GATHER4. 4 components are always
+  // returned and DMASK works like a swizzle - it selects
+  // the component to fetch. The only useful DMASK values are
+  // 1=red, 2=green, 4=blue, 8=alpha. (e.g. 1 returns
+  // (red,red,red,red) etc.) The ISA document doesn't mention
+  // this.
+  // Therefore, disable all code which updates DMASK by setting these two:
+  let MIMG = 0;
+  let hasPostISelHook = 0;
+}
+
+multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
+                                    RegisterClass dst_rc,
+                                    int channels> {
+  def _V1 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_32>,
+            MIMG_Mask<asm#"_V1", channels>;
+  def _V2 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_64>,
+            MIMG_Mask<asm#"_V2", channels>;
+  def _V4 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_128>,
+            MIMG_Mask<asm#"_V4", channels>;
+  def _V8 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_256>,
+            MIMG_Mask<asm#"_V8", channels>;
+  def _V16 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_512>,
+            MIMG_Mask<asm#"_V16", channels>;
+}
+
+multiclass MIMG_Gather <bits<7> op, string asm> {
+  defm _V1 : MIMG_Gather_Src_Helper<op, asm, VReg_32, 1>;
+  defm _V2 : MIMG_Gather_Src_Helper<op, asm, VReg_64, 2>;
+  defm _V3 : MIMG_Gather_Src_Helper<op, asm, VReg_96, 3>;
+  defm _V4 : MIMG_Gather_Src_Helper<op, asm, VReg_128, 4>;
+}
+
 //===----------------------------------------------------------------------===//
 // Vector instruction mappings
 //===----------------------------------------------------------------------===//
