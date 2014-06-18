@@ -128,7 +128,7 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
 }
 
 bool DiagnosticInfoOptimizationRemarkBase::isLocationAvailable() const {
-  return getFunction().getParent()->getNamedMetadata("llvm.dbg.cu") != nullptr;
+  return getDebugLoc().isUnknown() == false;
 }
 
 void DiagnosticInfoOptimizationRemarkBase::getLocation(StringRef *Filename,
