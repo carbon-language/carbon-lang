@@ -1125,8 +1125,6 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   unsigned ImmOffset, HiOffset, LoOffset;
   const MCExpr *ExprOffset;
   unsigned TmpRegNum;
-  unsigned AtRegNum = getReg(
-      (isGP64()) ? Mips::GPR64RegClassID : Mips::GPR32RegClassID, getATReg());
   // 1st operand is either the source or destination register.
   assert(Inst.getOperand(0).isReg() && "expected register operand kind");
   unsigned RegOpNum = Inst.getOperand(0).getReg();
@@ -1149,7 +1147,12 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   // 1st instruction in expansion is LUi. For load instruction we can use
   // the dst register as a temporary if base and dst are different,
   // but for stores we must use $at.
-  TmpRegNum = (isLoad && (BaseRegNum != RegOpNum)) ? RegOpNum : AtRegNum;
+  if (isLoad && (BaseRegNum != RegOpNum))
+    TmpRegNum = RegOpNum;
+  else
+    TmpRegNum = getReg(
+      (isGP64()) ? Mips::GPR64RegClassID : Mips::GPR32RegClassID, getATReg());
+
   TempInst.setOpcode(Mips::LUi);
   TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
   if (isImmOpnd)

@@ -44,7 +44,9 @@
     la $a0, 20($a1)
     la $7,65538($8)
 
+    .set noat
     lw  $t2, symbol($a0)
+    .set at
     sw  $t2, symbol($t1)
 
     lw  $t2, 655483($a0)
