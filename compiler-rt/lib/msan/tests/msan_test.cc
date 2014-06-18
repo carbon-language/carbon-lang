@@ -3526,11 +3526,13 @@ TEST(MemorySanitizer, UnalignedStore64_precise2) {
 }
 
 namespace {
+typedef U1 V16x8 __attribute__((__vector_size__(16)));
 typedef U2 V8x16 __attribute__((__vector_size__(16)));
 typedef U4 V4x32 __attribute__((__vector_size__(16)));
 typedef U8 V2x64 __attribute__((__vector_size__(16)));
 typedef U4 V8x32 __attribute__((__vector_size__(32)));
 typedef U8 V4x64 __attribute__((__vector_size__(32)));
+typedef U4 V2x32 __attribute__((__vector_size__(8)));
 typedef U2 V4x16 __attribute__((__vector_size__(8)));
 typedef U1 V8x8 __attribute__((__vector_size__(8)));
 
@@ -3659,6 +3661,29 @@ TEST(VectorPackTest, mmx_packuswb) {
   EXPECT_EQ(c[3], 4);
   EXPECT_EQ(c[5], U1_max - 1);
   EXPECT_EQ(c[7], U1_max);
+}
+
+TEST(VectorSadTest, sse2_psad_bw) {
+  V16x8 a = {Poisoned<U1>(), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  V16x8 b = {100, 101, 102, 103, 104, 105, 106, 107,
+             108, 109, 110, 111, 112, 113, 114, 115};
+  V2x64 c = _mm_sad_epu8(a, b);
+
+  EXPECT_POISONED(c[0]);
+  EXPECT_NOT_POISONED(c[1]);
+
+  EXPECT_EQ(800U, c[1]);
+}
+
+TEST(VectorMaddTest, mmx_pmadd_wd) {
+  V4x16 a = {Poisoned<U2>(), 1, 2, 3};
+  V4x16 b = {100, 101, 102, 103};
+  V2x32 c = _mm_madd_pi16(a, b);
+
+  EXPECT_POISONED(c[0]);
+  EXPECT_NOT_POISONED(c[1]);
+
+  EXPECT_EQ((unsigned)(2 * 102 + 3 * 103), c[1]);
 }
 
 TEST(MemorySanitizerDr, StoreInDSOTest) {

@@ -2060,6 +2060,40 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOriginForNaryOp(I);
   }
 
+  // \brief Instrument sum-of-absolute-differencies intrinsic.
+  void handleVectorSadIntrinsic(IntrinsicInst &I) {
+    const unsigned SignificantBitsPerResultElement = 16;
+    bool isX86_MMX = I.getOperand(0)->getType()->isX86_MMXTy();
+    Type *ResTy = isX86_MMX ? IntegerType::get(*MS.C, 64) : I.getType();
+    unsigned ZeroBitsPerResultElement =
+        ResTy->getScalarSizeInBits() - SignificantBitsPerResultElement;
+
+    IRBuilder<> IRB(&I);
+    Value *S = IRB.CreateOr(getShadow(&I, 0), getShadow(&I, 1));
+    S = IRB.CreateBitCast(S, ResTy);
+    S = IRB.CreateSExt(IRB.CreateICmpNE(S, Constant::getNullValue(ResTy)),
+                       ResTy);
+    S = IRB.CreateLShr(S, ZeroBitsPerResultElement);
+    S = IRB.CreateBitCast(S, getShadowTy(&I));
+    setShadow(&I, S);
+    setOriginForNaryOp(I);
+  }
+
+  // \brief Instrument multiply-add intrinsic.
+  void handleVectorPmaddIntrinsic(IntrinsicInst &I,
+                                  unsigned EltSizeInBits = 0) {
+    bool isX86_MMX = I.getOperand(0)->getType()->isX86_MMXTy();
+    Type *ResTy = isX86_MMX ? getMMXVectorTy(EltSizeInBits * 2) : I.getType();
+    IRBuilder<> IRB(&I);
+    Value *S = IRB.CreateOr(getShadow(&I, 0), getShadow(&I, 1));
+    S = IRB.CreateBitCast(S, ResTy);
+    S = IRB.CreateSExt(IRB.CreateICmpNE(S, Constant::getNullValue(ResTy)),
+                       ResTy);
+    S = IRB.CreateBitCast(S, getShadowTy(&I));
+    setShadow(&I, S);
+    setOriginForNaryOp(I);
+  }
+
   void visitIntrinsicInst(IntrinsicInst &I) {
     switch (I.getIntrinsicID()) {
     case llvm::Intrinsic::bswap:
@@ -2194,6 +2228,27 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     case llvm::Intrinsic::x86_mmx_packssdw:
       handleVectorPackIntrinsic(I, 32);
+      break;
+
+    case llvm::Intrinsic::x86_mmx_psad_bw:
+    case llvm::Intrinsic::x86_sse2_psad_bw:
+    case llvm::Intrinsic::x86_avx2_psad_bw:
+      handleVectorSadIntrinsic(I);
+      break;
+
+    case llvm::Intrinsic::x86_sse2_pmadd_wd:
+    case llvm::Intrinsic::x86_avx2_pmadd_wd:
+    case llvm::Intrinsic::x86_ssse3_pmadd_ub_sw_128:
+    case llvm::Intrinsic::x86_avx2_pmadd_ub_sw:
+      handleVectorPmaddIntrinsic(I);
+      break;
+
+    case llvm::Intrinsic::x86_ssse3_pmadd_ub_sw:
+      handleVectorPmaddIntrinsic(I, 8);
+      break;
+
+    case llvm::Intrinsic::x86_mmx_pmadd_wd:
+      handleVectorPmaddIntrinsic(I, 16);
       break;
 
     default:
