@@ -345,8 +345,9 @@ private:
     DK_REFERENCE, DK_WEAK_DEFINITION, DK_WEAK_REFERENCE,
     DK_WEAK_DEF_CAN_BE_HIDDEN, DK_COMM, DK_COMMON, DK_LCOMM, DK_ABORT,
     DK_INCLUDE, DK_INCBIN, DK_CODE16, DK_CODE16GCC, DK_REPT, DK_IRP, DK_IRPC,
-    DK_IF, DK_IFNE, DK_IFB, DK_IFNB, DK_IFC, DK_IFEQS, DK_IFNC, DK_IFDEF,
-    DK_IFNDEF, DK_IFNOTDEF, DK_ELSEIF, DK_ELSE, DK_ENDIF,
+    DK_IF, DK_IFEQ, DK_IFGE, DK_IFGT, DK_IFLE, DK_IFLT, DK_IFNE, DK_IFB,
+    DK_IFNB, DK_IFC, DK_IFEQS, DK_IFNC, DK_IFDEF, DK_IFNDEF, DK_IFNOTDEF,
+    DK_ELSEIF, DK_ELSE, DK_ENDIF,
     DK_SPACE, DK_SKIP, DK_FILE, DK_LINE, DK_LOC, DK_STABS,
     DK_CFI_SECTIONS, DK_CFI_STARTPROC, DK_CFI_ENDPROC, DK_CFI_DEF_CFA,
     DK_CFI_DEF_CFA_OFFSET, DK_CFI_ADJUST_CFA_OFFSET, DK_CFI_DEF_CFA_REGISTER,
@@ -433,8 +434,8 @@ private:
   bool parseDirectiveInclude(); // ".include"
   bool parseDirectiveIncbin(); // ".incbin"
 
-  // ".if" or ".ifne"
-  bool parseDirectiveIf(SMLoc DirectiveLoc);
+  // ".if", ".ifeq", ".ifge", ".ifgt" , ".ifle", ".iflt" or ".ifne"
+  bool parseDirectiveIf(SMLoc DirectiveLoc, DirectiveKind DirKind);
   // ".ifb" or ".ifnb", depending on ExpectBlank.
   bool parseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank);
   // ".ifc" or ".ifnc", depending on ExpectEqual.
@@ -1229,8 +1230,13 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
   default:
     break;
   case DK_IF:
+  case DK_IFEQ:
+  case DK_IFGE:
+  case DK_IFGT:
+  case DK_IFLE:
+  case DK_IFLT:
   case DK_IFNE:
-    return parseDirectiveIf(IDLoc);
+    return parseDirectiveIf(IDLoc, DirKind);
   case DK_IFB:
     return parseDirectiveIfb(IDLoc, true);
   case DK_IFNB:
@@ -3792,9 +3798,8 @@ bool AsmParser::parseDirectiveIncbin() {
 }
 
 /// parseDirectiveIf
-/// ::= .if expression
-/// ::= .ifne expression
-bool AsmParser::parseDirectiveIf(SMLoc DirectiveLoc) {
+/// ::= .if{,eq,ge,gt,le,lt,ne} expression
+bool AsmParser::parseDirectiveIf(SMLoc DirectiveLoc, DirectiveKind DirKind) {
   TheCondStack.push_back(TheCondState);
   TheCondState.TheCond = AsmCond::IfCond;
   if (TheCondState.Ignore) {
@@ -3808,6 +3813,29 @@ bool AsmParser::parseDirectiveIf(SMLoc DirectiveLoc) {
       return TokError("unexpected token in '.if' directive");
 
     Lex();
+
+    switch (DirKind) {
+    default:
+      llvm_unreachable("unsupported directive");
+    case DK_IF:
+    case DK_IFNE:
+      break;
+    case DK_IFEQ:
+      ExprValue = ExprValue == 0;
+      break;
+    case DK_IFGE:
+      ExprValue = ExprValue >= 0;
+      break;
+    case DK_IFGT:
+      ExprValue = ExprValue > 0;
+      break;
+    case DK_IFLE:
+      ExprValue = ExprValue <= 0;
+      break;
+    case DK_IFLT:
+      ExprValue = ExprValue < 0;
+      break;
+    }
 
     TheCondState.CondMet = ExprValue;
     TheCondState.Ignore = !TheCondState.CondMet;
@@ -4111,6 +4139,11 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".bundle_lock"] = DK_BUNDLE_LOCK;
   DirectiveKindMap[".bundle_unlock"] = DK_BUNDLE_UNLOCK;
   DirectiveKindMap[".if"] = DK_IF;
+  DirectiveKindMap[".ifeq"] = DK_IFEQ;
+  DirectiveKindMap[".ifge"] = DK_IFGE;
+  DirectiveKindMap[".ifgt"] = DK_IFGT;
+  DirectiveKindMap[".ifle"] = DK_IFLE;
+  DirectiveKindMap[".iflt"] = DK_IFLT;
   DirectiveKindMap[".ifne"] = DK_IFNE;
   DirectiveKindMap[".ifb"] = DK_IFB;
   DirectiveKindMap[".ifnb"] = DK_IFNB;
