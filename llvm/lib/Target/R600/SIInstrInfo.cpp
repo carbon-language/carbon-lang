@@ -664,6 +664,7 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_SEXT_I32_I16: return AMDGPU::V_BFE_I32;
   case AMDGPU::S_BFE_U32: return AMDGPU::V_BFE_U32;
   case AMDGPU::S_BFE_I32: return AMDGPU::V_BFE_I32;
+  case AMDGPU::S_BREV_B32: return AMDGPU::V_BFREV_B32_e32;
   case AMDGPU::S_NOT_B32: return AMDGPU::V_NOT_B32_e32;
   case AMDGPU::S_NOT_B64: return AMDGPU::V_NOT_B32_e32;
   case AMDGPU::S_CMP_EQ_I32: return AMDGPU::V_CMP_EQ_I32_e32;

@@ -900,6 +900,9 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                          Op.getOperand(1),
                          Op.getOperand(2));
 
+    case AMDGPUIntrinsic::AMDGPU_brev:
+      return DAG.getNode(AMDGPUISD::BREV, DL, VT, Op.getOperand(1));
+
     case AMDGPUIntrinsic::AMDIL_exp: // Legacy name.
       return DAG.getNode(ISD::FEXP2, DL, VT, Op.getOperand(1));
 
@@ -2026,6 +2029,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(BFE_I32)
   NODE_NAME_CASE(BFI)
   NODE_NAME_CASE(BFM)
+  NODE_NAME_CASE(BREV)
   NODE_NAME_CASE(MUL_U24)
   NODE_NAME_CASE(MUL_I24)
   NODE_NAME_CASE(MAD_U24)
