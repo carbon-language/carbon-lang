@@ -692,7 +692,6 @@ static void writeSymbolTable(
   std::string NameBuf;
   raw_string_ostream NameOS(NameBuf);
   unsigned NumSyms = 0;
-  std::vector<object::SymbolicFile *> DeleteIt;
   LLVMContext &Context = getGlobalContext();
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
@@ -703,9 +702,8 @@ static void writeSymbolTable(
             MemberBuffer, false, sys::fs::file_magic::unknown, &Context);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
-    object::SymbolicFile *Obj = ObjOrErr.get();
+    std::unique_ptr<object::SymbolicFile> Obj(ObjOrErr.get());
 
-    DeleteIt.push_back(Obj);
     if (!StartOffset) {
       printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
       StartOffset = Out.tell();
@@ -730,13 +728,6 @@ static void writeSymbolTable(
     }
   }
   Out << NameOS.str();
-
-  for (std::vector<object::SymbolicFile *>::iterator I = DeleteIt.begin(),
-                                                     E = DeleteIt.end();
-       I != E; ++I) {
-    object::SymbolicFile *O = *I;
-    delete O;
-  }
 
   if (StartOffset == 0)
     return;
