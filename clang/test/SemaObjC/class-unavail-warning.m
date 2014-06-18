@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -fsyntax-only  -triple x86_64-apple-darwin10 -verify %s
 // rdar://9092208
 
 __attribute__((unavailable("not available")))
