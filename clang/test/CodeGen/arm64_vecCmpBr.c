@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -S -ffreestanding %s -o - -target-cpu cyclone | FileCheck %s
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // test code generation for <rdar://problem/11487757>
 #include <arm_neon.h>
 

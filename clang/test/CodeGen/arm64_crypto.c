@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple arm64-apple-ios7.0 -target-feature +neon -target-feature +crypto -ffreestanding -Os -S -o - %s | FileCheck %s
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 
 #include <arm_neon.h>
 

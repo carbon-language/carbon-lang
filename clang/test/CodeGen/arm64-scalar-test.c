@@ -1,4 +1,4 @@
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple arm64-apple-ios7.0 -target-feature +neon  \
 // RUN:   -S -O1 -o - -ffreestanding %s | FileCheck %s
 

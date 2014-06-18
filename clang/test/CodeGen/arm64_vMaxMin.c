@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -O1 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - -emit-llvm %s | FileCheck %s
 // RUN: %clang_cc1 -O1 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | FileCheck -check-prefix=CHECK-CODEGEN %s
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // Test ARM64 SIMD max/min intrinsics
 
 #include <arm_neon.h>

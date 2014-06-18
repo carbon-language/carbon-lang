@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -O1 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - -emit-llvm %s | FileCheck %s
 // RUN: %clang_cc1 -O1 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | \
 // RUN:   FileCheck -check-prefix=CHECK_CODEGEN %s
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // Test
 
 #include <arm_neon.h>

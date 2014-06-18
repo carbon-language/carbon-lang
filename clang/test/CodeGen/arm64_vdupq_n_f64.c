@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - -emit-llvm %s | \
 // RUN:   FileCheck -check-prefix=CHECK-IR %s
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 
 /// Test vdupq_n_f64 and vmovq_nf64 ARM64 intrinsics
 // <rdar://problem/11778405> ARM64: vdupq_n_f64 and vdupq_lane_f64 intrinsics

@@ -1,4 +1,4 @@
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix CHECK-COMMON --check-prefix CHECK-ARM64
 

@@ -1,4 +1,4 @@
-// REQUIRES: arm64-registered-target
+// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon %s -emit-llvm -o - | FileCheck %s
 
 typedef unsigned char uint8_t;
