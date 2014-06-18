@@ -218,6 +218,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::BR_CC, MVT::i1, Expand);
 
+  if (Subtarget->getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
+    setOperationAction(ISD::FRINT, MVT::f64, Custom);
+  }
+
   if (!Subtarget->hasBFI()) {
     // fcopysign can be done in a single instruction with BFI.
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
@@ -490,6 +494,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::SDIV: return LowerSDIV(Op, DAG);
   case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
+  case ISD::FRINT: return LowerFRINT(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
 
   // AMDIL DAG lowering.
@@ -1564,6 +1569,27 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
     Rem
   };
   return DAG.getMergeValues(Ops, DL);
+}
+
+SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue Src = Op.getOperand(0);
+
+  assert(Op.getValueType() == MVT::f64);
+
+  SDValue C1 = DAG.getConstantFP(0x1.0p+52, MVT::f64);
+  SDValue CopySign = DAG.getNode(ISD::FCOPYSIGN, SL, MVT::f64, C1, Src);
+
+  SDValue Tmp1 = DAG.getNode(ISD::FADD, SL, MVT::f64, Src, CopySign);
+  SDValue Tmp2 = DAG.getNode(ISD::FSUB, SL, MVT::f64, Tmp1, CopySign);
+
+  SDValue Fabs = DAG.getNode(ISD::FABS, SL, MVT::f64, Src);
+  SDValue C2 = DAG.getConstantFP(0x1.fffffffffffffp+51, MVT::f64);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+  SDValue Cond = DAG.getSetCC(SL, SetCCVT, Fabs, C2, ISD::SETOGT);
+
+  return DAG.getSelect(SL, MVT::f64, Cond, Src, Tmp2);
 }
 
 SDValue AMDGPUTargetLowering::LowerUINT_TO_FP(SDValue Op,

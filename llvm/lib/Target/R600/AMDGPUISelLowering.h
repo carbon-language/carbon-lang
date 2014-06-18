@@ -51,6 +51,7 @@ private:
   SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFRINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
