@@ -158,8 +158,8 @@ void * cvt(id arg)
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;
   (void)(void**)arg; // expected-error {{disallowed}}
-  cvt((void*)arg); // expected-error 1 {{requires a bridged cast}} \
-                   // expected-note 1 {{use __bridge to}} expected-note {{use CFBridgingRetain call}}
+  cvt((void*)arg); // expected-error 2 {{requires a bridged cast}} \
+                   // expected-note 2 {{use __bridge to}} expected-note {{use CFBridgingRelease call}} expected-note {{use CFBridgingRetain call}}
   cvt(0);
   (void)(__strong id**)(0);
   return arg; // expected-error {{requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgingRetain call}}

@@ -16,8 +16,10 @@ void * cvt(id arg)
   (void)(void*)voidp_val;
   (void)(void**)arg; // expected-error {{cast of an Objective-C pointer to 'void **' is disallowed with ARC}}
   cvt((void*)arg); // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} \
-                   // expected-note 1 {{use __bridge to convert directly (no change in ownership)}} \
+                   // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} \
+                   // expected-note 2 {{use __bridge to convert directly (no change in ownership)}} \
                    // expected-note {{use CFBridgingRetain call to make an ARC object available as a +1 'void *'}} \
+                   // expected-note {{use CFBridgingRelease call to transfer ownership of a +1 'void *' into ARC}}
   cvt(0);
   (void)(__strong id**)(0);
   return arg; // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} \

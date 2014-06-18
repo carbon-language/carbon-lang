@@ -3168,9 +3168,7 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
   if ((castACTC == ACTC_coreFoundation &&  exprACTC == ACTC_retainable &&
        ObjCBridgeRelatedAttrFromType(castType, TDNDecl)) ||
       (exprACTC == ACTC_coreFoundation && castACTC == ACTC_retainable &&
-       ObjCBridgeRelatedAttrFromType(castExprType, TDNDecl)) ||
-      (exprACTC ==ACTC_voidPtr && castACTC == ACTC_retainable &&
-       CCK == Sema::CCK_ImplicitConversion))
+       ObjCBridgeRelatedAttrFromType(castExprType, TDNDecl)))
     return;
   
   unsigned srcKind = 0;
