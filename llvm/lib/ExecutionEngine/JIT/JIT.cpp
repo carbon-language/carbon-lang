@@ -96,18 +96,18 @@ namespace {
 /// bugpoint or gdb users to search for a function by name without any context.
 class JitPool {
   SmallPtrSet<JIT*, 1> JITs;  // Optimize for process containing just 1 JIT.
-  mutable sys::Mutex Lock;
+  mutable std::recursive_mutex Lock;
 public:
   void Add(JIT *jit) {
-    MutexGuard guard(Lock);
+    std::lock_guard<std::recursive_mutex> guard(Lock);
     JITs.insert(jit);
   }
   void Remove(JIT *jit) {
-    MutexGuard guard(Lock);
+    std::lock_guard<std::recursive_mutex> guard(Lock);
     JITs.erase(jit);
   }
   void *getPointerToNamedFunction(const char *Name) const {
-    MutexGuard guard(Lock);
+    std::lock_guard<std::recursive_mutex> guard(Lock);
     assert(JITs.size() != 0 && "No Jit registered");
     //search function in every instance of JIT
     for (SmallPtrSet<JIT*, 1>::const_iterator Jit = JITs.begin(),
@@ -150,7 +150,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   AllJits->Add(this);
 
   // Add target data
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   FunctionPassManager &PM = jitstate->getPM();
   M->setDataLayout(TM.getDataLayout());
   PM.add(new DataLayoutPass(M));
@@ -177,7 +177,7 @@ JIT::~JIT() {
 /// addModule - Add a new Module to the JIT.  If we previously removed the last
 /// Module, we need re-initialize jitstate with a valid Module.
 void JIT::addModule(Module *M) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   if (Modules.empty()) {
     assert(!jitstate && "jitstate should be NULL if Modules vector is empty!");
@@ -206,7 +206,7 @@ void JIT::addModule(Module *M) {
 bool JIT::removeModule(Module *M) {
   bool result = ExecutionEngine::removeModule(M);
 
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   if (jitstate && jitstate->getModule() == M) {
     delete jitstate;
@@ -408,13 +408,13 @@ GenericValue JIT::runFunction(Function *F,
 void JIT::RegisterJITEventListener(JITEventListener *L) {
   if (!L)
     return;
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   EventListeners.push_back(L);
 }
 void JIT::UnregisterJITEventListener(JITEventListener *L) {
   if (!L)
     return;
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   std::vector<JITEventListener*>::reverse_iterator I=
       std::find(EventListeners.rbegin(), EventListeners.rend(), L);
   if (I != EventListeners.rend()) {
@@ -426,14 +426,14 @@ void JIT::NotifyFunctionEmitted(
     const Function &F,
     void *Code, size_t Size,
     const JITEvent_EmittedFunctionDetails &Details) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
     EventListeners[I]->NotifyFunctionEmitted(F, Code, Size, Details);
   }
 }
 
 void JIT::NotifyFreeingMachineCode(void *OldPtr) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
     EventListeners[I]->NotifyFreeingMachineCode(OldPtr);
   }
@@ -444,7 +444,7 @@ void JIT::NotifyFreeingMachineCode(void *OldPtr) {
 /// GlobalAddress[F] with the address of F's machine code.
 ///
 void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   class MCIListener : public JITEventListener {
     MachineCodeInfo *const MCI;
@@ -505,7 +505,7 @@ void *JIT::getPointerToFunction(Function *F) {
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;   // Check if function already code gen'd
 
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   // Now that this thread owns the lock, make sure we read in the function if it
   // exists in this Module.
@@ -534,7 +534,7 @@ void *JIT::getPointerToFunction(Function *F) {
 }
 
 void JIT::addPointerToBasicBlock(const BasicBlock *BB, void *Addr) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   BasicBlockAddressMapTy::iterator I =
     getBasicBlockAddressMap().find(BB);
@@ -546,7 +546,7 @@ void JIT::addPointerToBasicBlock(const BasicBlock *BB, void *Addr) {
 }
 
 void JIT::clearPointerToBasicBlock(const BasicBlock *BB) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   getBasicBlockAddressMap().erase(BB);
 }
 
@@ -555,7 +555,7 @@ void *JIT::getPointerToBasicBlock(BasicBlock *BB) {
   (void)getPointerToFunction(BB->getParent());
 
   // resolve basic block address
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   BasicBlockAddressMapTy::iterator I =
     getBasicBlockAddressMap().find(BB);
@@ -592,7 +592,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
 /// variable, possibly emitting it to memory if needed.  This is used by the
 /// Emitter.
 void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
 
   void *Ptr = getPointerToGlobalIfAvailable(GV);
   if (Ptr) return Ptr;
@@ -666,7 +666,7 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   size_t S = getDataLayout()->getTypeAllocSize(GlobalType);
   size_t A = getDataLayout()->getPreferredAlignment(GV);
   if (GV->isThreadLocal()) {
-    MutexGuard locked(lock);
+    std::lock_guard<std::recursive_mutex> locked(lock);
     Ptr = TJI.allocateThreadLocalMemory(S);
   } else if (TJI.allocateSeparateGVMemory()) {
     if (A <= 8) {
@@ -687,7 +687,7 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
 }
 
 void JIT::addPendingFunction(Function *F) {
-  MutexGuard locked(lock);
+  std::lock_guard<std::recursive_mutex> locked(lock);
   jitstate->getPendingFunctions().push_back(F);
 }
 
