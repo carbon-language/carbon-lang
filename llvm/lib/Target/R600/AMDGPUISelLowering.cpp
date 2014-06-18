@@ -325,6 +325,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FTRUNC, VT, Expand);
     setOperationAction(ISD::FMUL, VT, Expand);
     setOperationAction(ISD::FRINT, VT, Expand);
+    setOperationAction(ISD::FNEARBYINT, VT, Expand);
     setOperationAction(ISD::FSQRT, VT, Expand);
     setOperationAction(ISD::FSIN, VT, Expand);
     setOperationAction(ISD::FSUB, VT, Expand);
@@ -333,6 +334,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::FCOPYSIGN, VT, Expand);
   }
+
+  setOperationAction(ISD::FNEARBYINT, MVT::f32, Custom);
+  setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
 
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::SELECT_CC);
@@ -501,6 +505,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::FCEIL: return LowerFCEIL(Op, DAG);
   case ISD::FTRUNC: return LowerFTRUNC(Op, DAG);
   case ISD::FRINT: return LowerFRINT(Op, DAG);
+  case ISD::FNEARBYINT: return LowerFNEARBYINT(Op, DAG);
   case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
 
@@ -1681,6 +1686,13 @@ SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = DAG.getSetCC(SL, SetCCVT, Fabs, C2, ISD::SETOGT);
 
   return DAG.getSelect(SL, MVT::f64, Cond, Src, Tmp2);
+}
+
+SDValue AMDGPUTargetLowering::LowerFNEARBYINT(SDValue Op, SelectionDAG &DAG) const {
+  // FNEARBYINT and FRINT are the same, except in their handling of FP
+  // exceptions. Those aren't really meaningful for us, and OpenCL only has
+  // rint, so just treat them as equivalent.
+  return DAG.getNode(ISD::FRINT, SDLoc(Op), Op.getValueType(), Op.getOperand(0));
 }
 
 SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {

@@ -54,6 +54,7 @@ private:
   SDValue LowerFCEIL(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFRINT(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFNEARBYINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
