@@ -599,7 +599,7 @@ unsigned Type::getNeonEnum() const {
   case 32: Addend = 2; break;
   case 64: Addend = 3; break;
   case 128: Addend = 4; break;
-  default: assert(0 && "Unhandled element bitwidth!");
+  default: llvm_unreachable("Unhandled element bitwidth!");
   }
 
   unsigned Base = (unsigned)NeonTypeFlags::Int8 + Addend;
