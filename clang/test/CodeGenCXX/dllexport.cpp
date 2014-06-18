@@ -72,6 +72,22 @@ namespace ns { __declspec(dllexport) int ExternalGlobal; }
 // GNU-DAG: @ExternalAutoTypeGlobal                      = dllexport global %struct.External zeroinitializer, align 4
 __declspec(dllexport) auto ExternalAutoTypeGlobal = External();
 
+int f();
+// MSC-DAG: @"\01?x@?0??nonInlineStaticLocalsFunc@@YAHXZ@4HA" = internal {{(unnamed_addr )*}}global i32 0
+// MSC-DAG: @"\01?$S1@?0??nonInlineStaticLocalsFunc@@YAHXZ@4IA" = internal {{(unnamed_addr )*}}global i32 0
+int __declspec(dllexport) nonInlineStaticLocalsFunc() {
+  static int x = f();
+  return x++;
+};
+
+// MSC-DAG: @"\01?x@?1??inlineStaticLocalsFunc@@YAHXZ@4HA" = weak_odr dllexport global i32 0
+// MSC-DAG: @"\01??_B?1??inlineStaticLocalsFunc@@YAHXZ@51" = weak_odr dllexport global i32 0
+// Note: MinGW doesn't seem to export the static local here.
+inline int __declspec(dllexport) inlineStaticLocalsFunc() {
+  static int x = f();
+  return x++;
+}
+
 
 
 //===----------------------------------------------------------------------===//

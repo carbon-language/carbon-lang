@@ -9097,6 +9097,18 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
 
   checkAttributesAfterMerging(*this, *VD);
 
+  // Static locals inherit dll attributes from their function.
+  if (VD->isStaticLocal()) {
+    if (FunctionDecl *FD =
+            dyn_cast<FunctionDecl>(VD->getParentFunctionOrMethod())) {
+      if (Attr *A = getDLLAttr(FD)) {
+        auto *NewAttr = cast<InheritableAttr>(A->clone(getASTContext()));
+        NewAttr->setInherited(true);
+        VD->addAttr(NewAttr);
+      }
+    }
+  }
+
   // Imported static data members cannot be defined out-of-line.
   if (const DLLImportAttr *IA = VD->getAttr<DLLImportAttr>()) {
     if (VD->isStaticDataMember() && VD->isOutOfLine() &&

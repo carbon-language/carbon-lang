@@ -85,6 +85,15 @@ USEVAR(GlobalRedecl3)
 namespace ns { __declspec(dllimport) int ExternalGlobal; }
 USEVAR(ns::ExternalGlobal)
 
+int f();
+// MO1-DAG: @"\01?x@?1??inlineStaticLocalsFunc@@YAHXZ@4HA" = available_externally dllimport global i32 0
+// MO1-DAG: @"\01??_B?1??inlineStaticLocalsFunc@@YAHXZ@51" = available_externally dllimport global i32 0
+inline int __declspec(dllimport) inlineStaticLocalsFunc() {
+  static int x = f();
+  return x++;
+};
+USE(inlineStaticLocalsFunc);
+
 
 
 //===----------------------------------------------------------------------===//

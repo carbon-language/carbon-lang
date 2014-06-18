@@ -201,6 +201,13 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   if (D.getTLSKind())
     CGM.setTLSMode(GV, D);
 
+  if (D.isExternallyVisible()) {
+    if (D.hasAttr<DLLImportAttr>())
+      GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
+    else if (D.hasAttr<DLLExportAttr>())
+      GV->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
+  }
+
   // Make sure the result is of the correct type.
   unsigned ExpectedAddrSpace = CGM.getContext().getTargetAddressSpace(Ty);
   if (AddrSpace != ExpectedAddrSpace) {

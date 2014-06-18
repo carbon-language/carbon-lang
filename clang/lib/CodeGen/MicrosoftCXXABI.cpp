@@ -1425,12 +1425,13 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
       Out.flush();
     }
 
-    // Create the guard variable with a zero-initializer.  Just absorb linkage
-    // and visibility from the guarded variable.
+    // Create the guard variable with a zero-initializer. Just absorb linkage,
+    // visibility and dll storage class from the guarded variable.
     GI->Guard =
         new llvm::GlobalVariable(CGM.getModule(), GuardTy, false,
                                  GV->getLinkage(), Zero, GuardName.str());
     GI->Guard->setVisibility(GV->getVisibility());
+    GI->Guard->setDLLStorageClass(GV->getDLLStorageClass());
   } else {
     assert(GI->Guard->getLinkage() == GV->getLinkage() &&
            "static local from the same function had different linkage");

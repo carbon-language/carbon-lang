@@ -74,6 +74,18 @@ inline void MarkVarDeclODRUsed(VarDecl *Var,
 
   Var->markUsed(SemaRef.Context);
 }
+
+/// Return a DLL attribute from the declaration.
+inline InheritableAttr *getDLLAttr(Decl *D) {
+  assert(!(D->hasAttr<DLLImportAttr>() && D->hasAttr<DLLExportAttr>()) &&
+         "A declaration cannot be both dllimport and dllexport.");
+  if (auto *Import = D->getAttr<DLLImportAttr>())
+    return Import;
+  if (auto *Export = D->getAttr<DLLExportAttr>())
+    return Export;
+  return nullptr;
+}
+
 }
 
 #endif

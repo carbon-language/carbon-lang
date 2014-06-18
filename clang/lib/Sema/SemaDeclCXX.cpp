@@ -4347,17 +4347,6 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
   }
 }
 
-/// \brief Return a DLL attribute from the declaration.
-static InheritableAttr *getDLLAttr(Decl *D) {
-  assert(!(D->hasAttr<DLLImportAttr>() && D->hasAttr<DLLExportAttr>()) &&
-         "A declaration cannot be both dllimport and dllexport.");
-  if (auto *Import = D->getAttr<DLLImportAttr>())
-    return Import;
-  if (auto *Export = D->getAttr<DLLExportAttr>())
-    return Export;
-  return nullptr;
-}
-
 /// \brief Check class-level dllimport/dllexport attribute.
 static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   Attr *ClassAttr = getDLLAttr(Class);
