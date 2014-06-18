@@ -168,8 +168,8 @@ private:
   const char *NamesStart;
   const char *ProfileEnd;
 
-  RawInstrProfReader(const TextInstrProfReader &) LLVM_DELETED_FUNCTION;
-  RawInstrProfReader &operator=(const TextInstrProfReader &)
+  RawInstrProfReader(const RawInstrProfReader &) LLVM_DELETED_FUNCTION;
+  RawInstrProfReader &operator=(const RawInstrProfReader &)
     LLVM_DELETED_FUNCTION;
 public:
   RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
