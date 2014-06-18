@@ -223,8 +223,7 @@ static __inline__
 long __cdecl _InterlockedDecrement(long volatile *_Addend);
 static __inline__
 short _InterlockedDecrement16(short volatile *_Addend);
-static __inline__
-long __cdecl _InterlockedExchange(long volatile *_Target, long _Value);
+long _InterlockedExchange(long volatile *_Target, long _Value);
 static __inline__
 short _InterlockedExchange16(short volatile *_Target, short _Value);
 static __inline__
@@ -411,7 +410,6 @@ __int64 _InterlockedCompareExchange64_HLERelease(__int64 volatile *, __int64,
                                                  __int64);
 __int64 _InterlockedCompareExchange64_np(__int64 volatile *_Destination,
                                          __int64 _Exchange, __int64 _Comparand);
-static __inline__
 void *_InterlockedCompareExchangePointer(void *volatile *_Destination,
                                          void *_Exchange, void *_Comparand);
 void *_InterlockedCompareExchangePointer_np(void *volatile *_Destination,
@@ -422,7 +420,6 @@ static __inline__
 __int64 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value);
 static __inline__
 __int64 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value);
-static __inline__
 void *_InterlockedExchangePointer(void *volatile *_Target, void *_Value);
 static __inline__
 __int64 _InterlockedIncrement64(__int64 volatile *_Addend);
@@ -785,19 +782,9 @@ _InterlockedExchange16(short volatile *_Target, short _Value) {
   __atomic_exchange(_Target, &_Value, &_Value, 0);
   return _Value;
 }
-static __inline__ long __attribute__((__always_inline__, __nodebug__))
-_InterlockedExchange(long volatile *_Target, long _Value) {
-  __atomic_exchange(_Target, &_Value, &_Value, 0);
-  return _Value;
-}
 #ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value) {
-  __atomic_exchange(_Target, &_Value, &_Value, 0);
-  return _Value;
-}
-static __inline__ void *__attribute__((__always_inline__, __nodebug__))
-_InterlockedExchangePointer(void *volatile *_Target, void *_Value) {
   __atomic_exchange(_Target, &_Value, &_Value, 0);
   return _Value;
 }
@@ -817,14 +804,6 @@ _InterlockedCompareExchange16(short volatile *_Destination,
   __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
   return _Comparand;
 }
-#ifdef __x86_64__
-static __inline__ void *__attribute__((__always_inline__, __nodebug__))
-_InterlockedCompareExchangePointer(void *volatile *_Destination,
-                                   void *_Exchange, void *_Comparand) {
-  __atomic_compare_exchange(_Destination, &_Comparand, &_Exchange, 0, 0, 0);
-  return _Comparand;
-}
-#endif
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedCompareExchange64(__int64 volatile *_Destination,
                               __int64 _Exchange, __int64 _Comparand) {

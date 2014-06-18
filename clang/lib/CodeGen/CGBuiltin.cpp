@@ -1516,6 +1516,35 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                     E->getArg(0), true);
   case Builtin::BI__noop:
     return RValue::get(nullptr);
+  case Builtin::BI_InterlockedExchange:
+  case Builtin::BI_InterlockedExchangePointer:
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
+  case Builtin::BI_InterlockedCompareExchangePointer: {
+    llvm::Type *RTy;
+    llvm::IntegerType *IntType =
+      IntegerType::get(getLLVMContext(),
+                       getContext().getTypeSize(E->getType()));
+    llvm::Type *IntPtrType = IntType->getPointerTo();
+
+    llvm::Value *Destination =
+      Builder.CreateBitCast(EmitScalarExpr(E->getArg(0)), IntPtrType);
+
+    llvm::Value *Exchange = EmitScalarExpr(E->getArg(1));
+    RTy = Exchange->getType();
+    Exchange = Builder.CreatePtrToInt(Exchange, IntType);
+
+    llvm::Value *Comparand =
+      Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(2)), IntType);
+
+    auto Result = Builder.CreateAtomicCmpXchg(Destination, Comparand, Exchange,
+                                              SequentiallyConsistent,
+                                              SequentiallyConsistent);
+    Result->setVolatile(true);
+
+    return RValue::get(Builder.CreateIntToPtr(Builder.CreateExtractValue(Result,
+                                                                         0),
+                                              RTy));
+  }
   case Builtin::BI_InterlockedCompareExchange: {
     AtomicCmpXchgInst *CXI = Builder.CreateAtomicCmpXchg(
         EmitScalarExpr(E->getArg(0)),

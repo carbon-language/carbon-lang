@@ -683,9 +683,12 @@ LANGBUILTIN(__noop,       "v.",  "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(__debugbreak, "v",   "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(__va_start,   "vc**.", "nt", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedCompareExchange, "LiLiD*LiLi", "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(_InterlockedCompareExchangePointer, "v*v*D*v*v*", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedIncrement, "LiLiD*", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedDecrement, "LiLiD*", "n", ALL_MS_LANGUAGES)
 LANGBUILTIN(_InterlockedExchangeAdd, "LiLiD*Li", "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(_InterlockedExchangePointer, "v*v*D*v*", "n", ALL_MS_LANGUAGES)
+LANGBUILTIN(_InterlockedExchange, "LiLiD*Li", "n", ALL_MS_LANGUAGES)
 
 // C99 library functions
 // C99 stdlib.h
