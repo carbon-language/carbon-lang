@@ -183,8 +183,6 @@ class MipsAsmParser : public MCTargetAsmParser {
     return STI.getFeatureBits() & Mips::FeatureMips64r6;
   }
 
-  bool parseRegister(unsigned &RegNum);
-
   bool eatComma(StringRef ErrorStr);
 
   int matchCPURegisterName(StringRef Symbol);
@@ -2342,25 +2340,6 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
   return false;
 }
 
-bool MipsAsmParser::parseRegister(unsigned &RegNum) {
-  if (!getLexer().is(AsmToken::Dollar))
-    return false;
-
-  Parser.Lex();
-
-  const AsmToken &Reg = Parser.getTok();
-  if (Reg.is(AsmToken::Identifier)) {
-    RegNum = matchCPURegisterName(Reg.getIdentifier());
-  } else if (Reg.is(AsmToken::Integer)) {
-    RegNum = Reg.getIntVal();
-  } else {
-    return false;
-  }
-
-  Parser.Lex();
-  return true;
-}
-
 bool MipsAsmParser::eatComma(StringRef ErrorStr) {
   if (getLexer().isNot(AsmToken::Comma)) {
     SMLoc Loc = getLexer().getLoc();
@@ -2400,23 +2379,48 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   unsigned Save;
   bool SaveIsReg = true;
 
-  if (!parseRegister(FuncReg))
-    return reportParseError("expected register containing function address");
-  FuncReg = getGPR(FuncReg);
+  SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> TmpReg;
+  OperandMatchResultTy ResTy = ParseAnyRegister(TmpReg);
+  if (ResTy == MatchOperand_NoMatch) {
+    reportParseError("expected register containing function address");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  MipsOperand &FuncRegOpnd = static_cast<MipsOperand &>(*TmpReg[0]);
+  if (!FuncRegOpnd.isGPRAsmReg()) {
+    reportParseError(FuncRegOpnd.getStartLoc(), "invalid register");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  FuncReg = FuncRegOpnd.getGPR32Reg();
+  TmpReg.clear();
 
   if (!eatComma("expected comma parsing directive"))
     return true;
 
-  if (!parseRegister(Save)) {
+  ResTy = ParseAnyRegister(TmpReg);
+  if (ResTy == MatchOperand_NoMatch) {
     const AsmToken &Tok = Parser.getTok();
     if (Tok.is(AsmToken::Integer)) {
       Save = Tok.getIntVal();
       SaveIsReg = false;
       Parser.Lex();
-    } else
-      return reportParseError("expected save register or stack offset");
-  } else
-    Save = getGPR(Save);
+    } else {
+      reportParseError("expected save register or stack offset");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+  } else {
+    MipsOperand &SaveOpnd = static_cast<MipsOperand &>(*TmpReg[0]);
+    if (!SaveOpnd.isGPRAsmReg()) {
+      reportParseError(SaveOpnd.getStartLoc(), "invalid register");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+    Save = SaveOpnd.getGPR32Reg();
+  }
 
   if (!eatComma("expected comma parsing directive"))
     return true;
