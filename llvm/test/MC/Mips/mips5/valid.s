@@ -200,6 +200,7 @@
         swl       $15,13694($s3)
         swr       $s1,-26590($14)
         swxc1     $f19,$12($k0)
+        sync                           # CHECK: sync                   # encoding: [0x00,0x00,0x00,0x0f]
         teqi      $s5,-17504
         tgei      $s1,5025
         tgeiu     $sp,-28621

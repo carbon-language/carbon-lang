@@ -147,6 +147,8 @@
         swc2      $25,24880($s0)       # CHECK: swc2 $25, 24880($16)   # encoding: [0xea,0x19,0x61,0x30]
         swl       $15,13694($s3)
         swr       $s1,-26590($14)
+        sync                           # CHECK: sync                   # encoding: [0x00,0x00,0x00,0x0f]
+        sync      1                    # CHECK: sync 1                 # encoding: [0x00,0x00,0x00,0x4f]
         teqi      $s5,-17504
         tgei      $s1,5025
         tgeiu     $sp,-28621

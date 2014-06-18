@@ -344,11 +344,11 @@ entry:
 
 ; ALL-LABEL: CheckSync:
 
-; ALL:           sync 0
+; ALL:           sync
 ; ALL:           ll
 ; ALL:           sc
 ; ALL:           beq
-; ALL:           sync 0
+; ALL:           sync
 }
 
 ; make sure that this assertion in
