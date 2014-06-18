@@ -192,6 +192,14 @@ define <16 x double> @uitof64(<16 x i32> %a) nounwind {
   ret <16 x double> %b
 }
 
+; CHECK-LABEL: uitof64_256
+; CHECK: vcvtudq2pd
+; CHECK: ret
+define <4 x double> @uitof64_256(<4 x i32> %a) nounwind {
+  %b = uitofp <4 x i32> %a to <4 x double>
+  ret <4 x double> %b
+}
+
 ; CHECK-LABEL: uitof32
 ; CHECK: vcvtudq2ps
 ; CHECK: ret
