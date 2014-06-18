@@ -19,6 +19,7 @@
 
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
 #include "lldb/Breakpoint/BreakpointLocationCollection.h"
@@ -277,6 +278,7 @@ private:
     // Consider adding an optimization where if there is only one
     // owner, we don't store a list.  The usual case will be only one owner...
     BreakpointLocationCollection m_owners; ///< This has the BreakpointLocations that share this breakpoint site.
+    Mutex m_owners_mutex;      ///< This mutex protects the owners collection. 
 
     static lldb::break_id_t
     GetNextID();
