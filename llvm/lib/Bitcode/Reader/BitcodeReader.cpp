@@ -3374,16 +3374,15 @@ const std::error_category &BitcodeReader::BitcodeErrorCategory() {
 /// getLazyBitcodeModule - lazy function-at-a-time loading from a file.
 ///
 ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
-                                             LLVMContext &Context) {
+                                             LLVMContext &Context,
+                                             bool BufferOwned) {
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
-  BitcodeReader *R = new BitcodeReader(Buffer, Context);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context, BufferOwned);
   M->setMaterializer(R);
   if (std::error_code EC = R->ParseBitcodeInto(M)) {
     delete M;  // Also deletes R.
     return EC;
   }
-  // Have the BitcodeReader dtor delete 'Buffer'.
-  R->setBufferOwned(true);
 
   R->materializeForwardReferencedFunctions();
 
@@ -3404,20 +3403,15 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
     delete M;  // Also deletes R.
     return nullptr;
   }
-  R->setBufferOwned(false); // no buffer to delete
   return M;
 }
 
 ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
                                          LLVMContext &Context) {
-  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context, false);
   if (!ModuleOrErr)
     return ModuleOrErr;
   Module *M = ModuleOrErr.get();
-
-  // Don't let the BitcodeReader dtor delete 'Buffer', regardless of whether
-  // there was an error.
-  static_cast<BitcodeReader*>(M->getMaterializer())->setBufferOwned(false);
 
   // Read in the entire module, and destroy the BitcodeReader.
   if (std::error_code EC = M->materializeAllPermanently()) {
@@ -3434,9 +3428,7 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
 std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
                                          LLVMContext& Context,
                                          std::string *ErrMsg) {
-  BitcodeReader *R = new BitcodeReader(Buffer, Context);
-  // Don't let the BitcodeReader dtor delete 'Buffer'.
-  R->setBufferOwned(false);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context, /*BufferOwned*/ false);
 
   std::string Triple("");
   if (std::error_code EC = R->ParseTriple(Triple))
