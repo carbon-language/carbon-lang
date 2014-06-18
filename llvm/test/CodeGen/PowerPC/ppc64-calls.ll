@@ -50,10 +50,9 @@ define void @test_abs() nounwind {
   tail call void inttoptr (i64 1024 to void ()*)() nounwind
 ; CHECK: ld [[FP:[0-9]+]], 1024(0)
 ; CHECK: ld 11, 1040(0)
-; CHECK: mtctr [[FP]]
-; CHECK: li [[FD:[0-9]+]], 1024
-; CHECK: ld 2, 8([[FD]])
-; CHECK: bctrl
+; CHECK: ld 2, 1032(0)
+; CHECK-NEXT: mtctr [[FP]]
+; CHECK-NEXT: bctrl
 ; CHECK-NEXT: ld 2, 40(1)
   ret void
 }

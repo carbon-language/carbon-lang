@@ -802,17 +802,11 @@ def LDtocCPT: Pseudo<(outs g8rc:$rD), (ins tocentry:$disp, g8rc:$reg),
                   [(set i64:$rD,
                      (PPCtoc_entry tconstpool:$disp, i64:$reg))]>, isPPC64;
 
-let hasSideEffects = 1, isCodeGenOnly = 1 in {
-let RST = 2, DS = 2 in
-def LDinto_toc: DSForm_1a<58, 0, (outs), (ins g8rc:$reg),
-                    "ld 2, 8($reg)", IIC_LdStLD,
-                    [(PPCload_toc i64:$reg)]>, isPPC64;
-                    
-let RST = 2, DS = 10, RA = 1 in
-def LDtoc_restore : DSForm_1a<58, 0, (outs), (ins),
-                    "ld 2, 40(1)", IIC_LdStLD,
-                    [(PPCtoc_restore)]>, isPPC64;
-}
+let hasSideEffects = 1, isCodeGenOnly = 1, RST = 2 in
+def LDinto_toc: DSForm_1<58, 0, (outs), (ins memrix:$src),
+                    "ld 2, $src", IIC_LdStLD,
+                    [(PPCload_toc ixaddr:$src)]>, isPPC64;
+
 def LDX  : XForm_1<31,  21, (outs g8rc:$rD), (ins memrr:$src),
                    "ldx $rD, $src", IIC_LdStLD,
                    [(set i64:$rD, (load xaddr:$src))]>, isPPC64;

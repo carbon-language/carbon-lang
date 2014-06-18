@@ -773,7 +773,6 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::Hi:              return "PPCISD::Hi";
   case PPCISD::Lo:              return "PPCISD::Lo";
   case PPCISD::TOC_ENTRY:       return "PPCISD::TOC_ENTRY";
-  case PPCISD::TOC_RESTORE:     return "PPCISD::TOC_RESTORE";
   case PPCISD::LOAD:            return "PPCISD::LOAD";
   case PPCISD::LOAD_TOC:        return "PPCISD::LOAD_TOC";
   case PPCISD::DYNALLOC:        return "PPCISD::DYNALLOC";
@@ -3544,8 +3543,10 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       // additional register being allocated and an unnecessary move instruction
       // being generated.
       VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+      SDValue TOCOff = DAG.getIntPtrConstant(8);
+      SDValue AddTOC = DAG.getNode(ISD::ADD, dl, MVT::i64, Callee, TOCOff);
       SDValue LoadTOCPtr = DAG.getNode(PPCISD::LOAD_TOC, dl, VTs, Chain,
-                                       Callee, InFlag);
+                                       AddTOC, InFlag);
       Chain = LoadTOCPtr.getValue(0);
       InFlag = LoadTOCPtr.getValue(1);
 
@@ -3729,7 +3730,12 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
 
   if (needsTOCRestore) {
     SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
-    Chain = DAG.getNode(PPCISD::TOC_RESTORE, dl, VTs, Chain, InFlag);
+    EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+    SDValue StackPtr = DAG.getRegister(PPC::X1, PtrVT);
+    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset();
+    SDValue TOCOff = DAG.getIntPtrConstant(TOCSaveOffset);
+    SDValue AddTOC = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr, TOCOff);
+    Chain = DAG.getNode(PPCISD::LOAD_TOC, dl, VTs, Chain, AddTOC, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -4388,7 +4394,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     // Load r2 into a virtual register and store it to the TOC save area.
     SDValue Val = DAG.getCopyFromReg(Chain, dl, PPC::X2, MVT::i64);
     // TOC save area offset.
-    SDValue PtrOff = DAG.getIntPtrConstant(40);
+    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset();
+    SDValue PtrOff = DAG.getIntPtrConstant(TOCSaveOffset);
     SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
     Chain = DAG.getStore(Val.getValue(1), dl, Val, AddPtr, MachinePointerInfo(),
                          false, false, 0);

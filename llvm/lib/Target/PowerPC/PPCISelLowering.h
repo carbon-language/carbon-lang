@@ -70,19 +70,14 @@ namespace llvm {
 
       TOC_ENTRY,
 
-      /// The following three target-specific nodes are used for calls through
+      /// The following two target-specific nodes are used for calls through
       /// function pointers in the 64-bit SVR4 ABI.
-
-      /// Restore the TOC from the TOC save area of the current stack frame.
-      /// This is basically a hard coded load instruction which additionally
-      /// takes/produces a flag.
-      TOC_RESTORE,
 
       /// Like a regular LOAD but additionally taking/producing a flag.
       LOAD,
 
-      /// LOAD into r2 (also taking/producing a flag). Like TOC_RESTORE, this is
-      /// a hard coded load instruction.
+      /// Like LOAD (taking/producing a flag), but using r2 as hard-coded
+      /// destination.
       LOAD_TOC,
 
       /// OPRC, CHAIN = DYNALLOC(CHAIN, NEGSIZE, FRAME_INDEX)
