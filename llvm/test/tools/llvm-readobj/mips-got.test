@@ -1,0 +1,306 @@
+RUN: llvm-readobj -mips-plt-got %p/Inputs/relocs.obj.elf-mips | \
+RUN:   FileCheck %s -check-prefix GOT-OBJ
+RUN: llvm-readobj -mips-plt-got %p/Inputs/dynamic-table-exe.mips | \
+RUN:   FileCheck %s -check-prefix GOT-EXE
+RUN: llvm-readobj -mips-plt-got %p/Inputs/dynamic-table-so.mips | \
+RUN:   FileCheck %s -check-prefix GOT-SO
+RUN: llvm-readobj -mips-plt-got %p/Inputs/got-tls.so.elf-mips64el | \
+RUN:   FileCheck %s -check-prefix GOT-TLS
+
+GOT-OBJ: Cannot find PLTGOT dynamic table tag.
+
+GOT-EXE:      Primary GOT {
+GOT-EXE-NEXT:   Canonical gp value: 0x418880
+GOT-EXE-NEXT:   Reserved entries [
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x410890
+GOT-EXE-NEXT:       Access: -32752
+GOT-EXE-NEXT:       Initial: 0x0
+GOT-EXE-NEXT:       Purpose: Lazy resolver
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x410894
+GOT-EXE-NEXT:       Access: -32748
+GOT-EXE-NEXT:       Initial: 0x80000000
+GOT-EXE-NEXT:       Purpose: Module pointer (GNU extension)
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:   ]
+GOT-EXE-NEXT:   Local entries [
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x410898
+GOT-EXE-NEXT:       Access: -32744
+GOT-EXE-NEXT:       Initial: 0x400418
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x41089C
+GOT-EXE-NEXT:       Access: -32740
+GOT-EXE-NEXT:       Initial: 0x410840
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x4108A0
+GOT-EXE-NEXT:       Access: -32736
+GOT-EXE-NEXT:       Initial: 0x0
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:   ]
+GOT-EXE-NEXT:   Global entries [
+GOT-EXE-NEXT:     Entry {
+GOT-EXE-NEXT:       Address: 0x4108A4
+GOT-EXE-NEXT:       Access: -32732
+GOT-EXE-NEXT:       Initial: 0x0
+GOT-EXE-NEXT:       Value: 0x0
+GOT-EXE-NEXT:       Type: Function (0x2)
+GOT-EXE-NEXT:       Section: Undefined (0x0)
+GOT-EXE-NEXT:       Name: __gmon_start__@ (1)
+GOT-EXE-NEXT:     }
+GOT-EXE-NEXT:   ]
+GOT-EXE-NEXT:   Number of TLS and multi-GOT entries: 0
+GOT-EXE-NEXT: }
+
+GOT-SO:      Primary GOT {
+GOT-SO-NEXT:   Canonical gp value: 0x188D0
+GOT-SO-NEXT:   Reserved entries [
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108E0
+GOT-SO-NEXT:       Access: -32752
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Purpose: Lazy resolver
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108E4
+GOT-SO-NEXT:       Access: -32748
+GOT-SO-NEXT:       Initial: 0x80000000
+GOT-SO-NEXT:       Purpose: Module pointer (GNU extension)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:   ]
+GOT-SO-NEXT:   Local entries [
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108E8
+GOT-SO-NEXT:       Access: -32744
+GOT-SO-NEXT:       Initial: 0x108E0
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108EC
+GOT-SO-NEXT:       Access: -32740
+GOT-SO-NEXT:       Initial: 0x10000
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108F0
+GOT-SO-NEXT:       Access: -32736
+GOT-SO-NEXT:       Initial: 0x10920
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108F4
+GOT-SO-NEXT:       Access: -32732
+GOT-SO-NEXT:       Initial: 0x108CC
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108F8
+GOT-SO-NEXT:       Access: -32728
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x108FC
+GOT-SO-NEXT:       Access: -32724
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10900
+GOT-SO-NEXT:       Access: -32720
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10904
+GOT-SO-NEXT:       Access: -32716
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:   ]
+GOT-SO-NEXT:   Global entries [
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10908
+GOT-SO-NEXT:       Access: -32712
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Value: 0x0
+GOT-SO-NEXT:       Type: None (0x0)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: _ITM_registerTMCloneTable@ (87)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x1090C
+GOT-SO-NEXT:       Access: -32708
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Value: 0x0
+GOT-SO-NEXT:       Type: None (0x0)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: _Jv_RegisterClasses@ (128)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10910
+GOT-SO-NEXT:       Access: -32704
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Value: 0x0
+GOT-SO-NEXT:       Type: Function (0x2)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: __gmon_start__@ (23)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10914
+GOT-SO-NEXT:       Access: -32700
+GOT-SO-NEXT:       Initial: 0x840
+GOT-SO-NEXT:       Value: 0x840
+GOT-SO-NEXT:       Type: Function (0x2)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: puts@GLIBC_2.0 (162)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x10918
+GOT-SO-NEXT:       Access: -32696
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Value: 0x0
+GOT-SO-NEXT:       Type: None (0x0)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: _ITM_deregisterTMCloneTable@ (59)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:     Entry {
+GOT-SO-NEXT:       Address: 0x1091C
+GOT-SO-NEXT:       Access: -32692
+GOT-SO-NEXT:       Initial: 0x0
+GOT-SO-NEXT:       Value: 0x0
+GOT-SO-NEXT:       Type: Function (0x2)
+GOT-SO-NEXT:       Section: Undefined (0x0)
+GOT-SO-NEXT:       Name: __cxa_finalize@GLIBC_2.2 (113)
+GOT-SO-NEXT:     }
+GOT-SO-NEXT:   ]
+GOT-SO-NEXT:   Number of TLS and multi-GOT entries: 0
+GOT-SO-NEXT: }
+
+GOT-TLS:      Primary GOT {
+GOT-TLS-NEXT:   Canonical gp value: 0x18BF0
+GOT-TLS-NEXT:   Reserved entries [
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C00
+GOT-TLS-NEXT:       Access: -32752
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Purpose: Lazy resolver
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C08
+GOT-TLS-NEXT:       Access: -32744
+GOT-TLS-NEXT:       Initial: 0x8000000000000000
+GOT-TLS-NEXT:       Purpose: Module pointer (GNU extension)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:   ]
+GOT-TLS-NEXT:   Local entries [
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C10
+GOT-TLS-NEXT:       Access: -32736
+GOT-TLS-NEXT:       Initial: 0x10000
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C18
+GOT-TLS-NEXT:       Access: -32728
+GOT-TLS-NEXT:       Initial: 0x10C00
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C20
+GOT-TLS-NEXT:       Access: -32720
+GOT-TLS-NEXT:       Initial: 0x10CB8
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C28
+GOT-TLS-NEXT:       Access: -32712
+GOT-TLS-NEXT:       Initial: 0x10BF0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C30
+GOT-TLS-NEXT:       Access: -32704
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C38
+GOT-TLS-NEXT:       Access: -32696
+GOT-TLS-NEXT:       Initial: 0x948
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C40
+GOT-TLS-NEXT:       Access: -32688
+GOT-TLS-NEXT:       Initial: 0xA20
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C48
+GOT-TLS-NEXT:       Access: -32680
+GOT-TLS-NEXT:       Initial: 0xAF0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C50
+GOT-TLS-NEXT:       Access: -32672
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C58
+GOT-TLS-NEXT:       Access: -32664
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C60
+GOT-TLS-NEXT:       Access: -32656
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:   ]
+GOT-TLS-NEXT:   Global entries [
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C68
+GOT-TLS-NEXT:       Access: -32648
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Value: 0x0
+GOT-TLS-NEXT:       Type: None (0x0)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: _ITM_registerTMCloneTable@ (78)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C70
+GOT-TLS-NEXT:       Access: -32640
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Value: 0x0
+GOT-TLS-NEXT:       Type: None (0x0)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: _Jv_RegisterClasses@ (119)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C78
+GOT-TLS-NEXT:       Access: -32632
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Value: 0x0
+GOT-TLS-NEXT:       Type: Function (0x2)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: __gmon_start__@ (23)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C80
+GOT-TLS-NEXT:       Access: -32624
+GOT-TLS-NEXT:       Initial: 0xB60
+GOT-TLS-NEXT:       Value: 0xB60
+GOT-TLS-NEXT:       Type: Function (0x2)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: __tls_get_addr@GLIBC_2.3 (150)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C88
+GOT-TLS-NEXT:       Access: -32616
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Value: 0x0
+GOT-TLS-NEXT:       Type: None (0x0)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: _ITM_deregisterTMCloneTable@ (50)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:     Entry {
+GOT-TLS-NEXT:       Address: 0x10C90
+GOT-TLS-NEXT:       Access: -32608
+GOT-TLS-NEXT:       Initial: 0x0
+GOT-TLS-NEXT:       Value: 0x0
+GOT-TLS-NEXT:       Type: Function (0x2)
+GOT-TLS-NEXT:       Section: Undefined (0x0)
+GOT-TLS-NEXT:       Name: __cxa_finalize@GLIBC_2.2 (104)
+GOT-TLS-NEXT:     }
+GOT-TLS-NEXT:   ]
+GOT-TLS-NEXT:   Number of TLS and multi-GOT entries: 4
+GOT-TLS-NEXT: }

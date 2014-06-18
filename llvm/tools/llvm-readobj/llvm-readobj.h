@@ -38,6 +38,7 @@ namespace opts {
   extern llvm::cl::opt<bool> ExpandRelocs;
   extern llvm::cl::opt<bool> CodeViewLineTables;
   extern llvm::cl::opt<bool> ARMAttributes;
+  extern llvm::cl::opt<bool> MipsPLTGOT;
 } // namespace opts
 
 #define LLVM_READOBJ_ENUM_ENT(ns, enum) \
