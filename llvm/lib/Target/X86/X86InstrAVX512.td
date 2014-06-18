@@ -1798,7 +1798,7 @@ def VMOVNTDQAZrm : AVX5128I<0x2A, MRMSrcMem, (outs VR512:$dst),
                             "vmovntdqa\t{$src, $dst|$dst, $src}",
                             [(set VR512:$dst,
                               (int_x86_avx512_movntdqa addr:$src))]>,
-                   EVEX, EVEX_V512;
+                   EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - Integer arithmetic
