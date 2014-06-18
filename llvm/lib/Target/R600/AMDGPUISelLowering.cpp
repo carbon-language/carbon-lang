@@ -1640,7 +1640,7 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   SignBit64 = DAG.getNode(ISD::BITCAST, SL, MVT::i64, SignBit64);
 
   SDValue BcInt = DAG.getNode(ISD::BITCAST, SL, MVT::i64, Src);
-  const SDValue FractMask = DAG.getConstant((1L << FractBits) - 1, MVT::i64);
+  const SDValue FractMask = DAG.getConstant((1LL << FractBits) - 1, MVT::i64);
 
   SDValue Shr = DAG.getNode(ISD::SRA, SL, MVT::i64, FractMask, Exp);
   SDValue Not = DAG.getNOT(SL, Shr, MVT::i64);
