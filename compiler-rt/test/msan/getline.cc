@@ -1,4 +1,9 @@
 // RUN: %clangxx_msan -O0 %s -o %t && %run %t %p
+// RUN: %clangxx_msan -O2 %s -o %t && %run %t %p
+// RUN: %clang_msan -O0 -xc %s -o %t && %run %t %p
+// RUN: %clang_msan -O2 -xc %s -o %t && %run %t %p
+// RUN: %clang_msan -O0 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %p
+// RUN: %clang_msan -O2 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %p
 
 #include <assert.h>
 #include <stdio.h>

@@ -3647,14 +3647,14 @@ INTERCEPTOR(SSIZE_T, getline, char **lineptr, SIZE_T *n, void *stream) {
   }
   return res;
 }
-INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
+INTERCEPTOR(SSIZE_T, __getdelim, char **lineptr, SIZE_T *n, int delim,
             void *stream) {
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, getdelim, lineptr, n, delim, stream);
+  COMMON_INTERCEPTOR_ENTER(ctx, __getdelim, lineptr, n, delim, stream);
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-  SSIZE_T res = REAL(getdelim)(lineptr, n, delim, stream);
+  SSIZE_T res = REAL(__getdelim)(lineptr, n, delim, stream);
   if (res > 0) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lineptr, sizeof(*lineptr));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, n, sizeof(*n));
@@ -3662,8 +3662,13 @@ INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
   }
   return res;
 }
-#define INIT_GETLINE                  \
-  COMMON_INTERCEPT_FUNCTION(getline); \
+INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
+            void *stream) {
+  return __getdelim(lineptr, n, delim, stream);
+}
+#define INIT_GETLINE                     \
+  COMMON_INTERCEPT_FUNCTION(getline);    \
+  COMMON_INTERCEPT_FUNCTION(__getdelim); \
   COMMON_INTERCEPT_FUNCTION(getdelim);
 #else
 #define INIT_GETLINE
