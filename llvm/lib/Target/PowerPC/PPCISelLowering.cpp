@@ -4399,10 +4399,6 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
     Chain = DAG.getStore(Val.getValue(1), dl, Val, AddPtr, MachinePointerInfo(),
                          false, false, 0);
-    // R12 must contain the address of an indirect callee.  This does not
-    // mean the MTCTR instruction must use R12; it's easier to model this
-    // as an extra parameter, so do that.
-    RegsToPass.push_back(std::make_pair((unsigned)PPC::X12, Callee));
   }
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
