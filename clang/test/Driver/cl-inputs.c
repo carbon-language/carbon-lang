@@ -41,12 +41,12 @@
 // STDINTc: "-x" "c"
 
 // RUN: env LIB=%S/Inputs/cl-libs %clang_cl -### -- %s cl-test.lib 2>&1 | FileCheck -check-prefix=LIBINPUT %s
-// LIBINPUT: "link.exe"
+// LIBINPUT: link.exe"
 // LIBINPUT: "cl-test.lib"
 
 // RUN: env LIB=%S/Inputs/cl-libs %clang_cl -### -- %s cl-test2.lib 2>&1 | FileCheck -check-prefix=LIBINPUT2 %s
 // LIBINPUT2: error: no such file or directory: 'cl-test2.lib'
-// LIBINPUT2: "link.exe"
+// LIBINPUT2: link.exe"
 // LIBINPUT2-NOT: "cl-test2.lib"
 
 void f();
