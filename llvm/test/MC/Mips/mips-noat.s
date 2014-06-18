@@ -10,11 +10,10 @@
 test1:
         lw      $2, 65536($2)
 
-# FIXME: It would be better if the error pointed at the mnemonic instead of the newline
-# ERROR: mips-noat.s:[[@LINE+4]]:1: error: Pseudo instruction requires $at, which is not available
 test2:
         .set noat
-        lw      $2, 65536($2)
+        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: Pseudo instruction requires $at, which is not available
+
 
 # Can we switch it back on successfully?
 # CHECK-LABEL: test3:
@@ -25,10 +24,6 @@ test3:
         .set at
         lw      $2, 65536($2)
 
-# FIXME: It would be better if the error pointed at the mnemonic instead of the newline
-# ERROR: mips-noat.s:[[@LINE+4]]:1: error: Pseudo instruction requires $at, which is not available
 test4:
         .set at=$0
-        lw      $2, 65536($2)
-
-# ERROR-NOT: error
+        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: Pseudo instruction requires $at, which is not available

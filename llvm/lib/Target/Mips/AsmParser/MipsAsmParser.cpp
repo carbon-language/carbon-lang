@@ -203,7 +203,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   unsigned getGPR(int RegNo);
 
-  int getATReg();
+  int getATReg(SMLoc Loc);
 
   bool processInstruction(MCInst &Inst, SMLoc IDLoc,
                           SmallVectorImpl<MCInst> &Instructions);
@@ -1149,9 +1149,15 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   // but for stores we must use $at.
   if (isLoad && (BaseRegNum != RegOpNum))
     TmpRegNum = RegOpNum;
-  else
-    TmpRegNum = getReg(
-      (isGP64()) ? Mips::GPR64RegClassID : Mips::GPR32RegClassID, getATReg());
+  else {
+    int AT = getATReg(IDLoc);
+    // At this point we need AT to perform the expansions and we exit if it is
+    // not available.
+    if (!AT)
+      return;
+    TmpRegNum =
+        getReg((isGP64()) ? Mips::GPR64RegClassID : Mips::GPR32RegClassID, AT);
+  }
 
   TempInst.setOpcode(Mips::LUi);
   TempInst.addOperand(MCOperand::CreateReg(TmpRegNum));
@@ -1408,10 +1414,11 @@ bool MipsAssemblerOptions::setATReg(unsigned Reg) {
   return true;
 }
 
-int MipsAsmParser::getATReg() {
+int MipsAsmParser::getATReg(SMLoc Loc) {
   int AT = Options.getATRegNum();
   if (AT == 0)
-    TokError("Pseudo instruction requires $at, which is not available");
+    reportParseError(Loc,
+                     "Pseudo instruction requires $at, which is not available");
   return AT;
 }
 
