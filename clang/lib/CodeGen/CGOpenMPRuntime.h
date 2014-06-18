@@ -31,7 +31,7 @@ class FunctionType;
 class StructType;
 class Type;
 class Value;
-}
+} // namespace llvm
 
 namespace clang {
 
@@ -136,7 +136,7 @@ private:
   OpenMPGtidMapTy OpenMPGtidMap;
 
 public:
-  CGOpenMPRuntime(CodeGenModule &CGM);
+  explicit CGOpenMPRuntime(CodeGenModule &CGM);
   ~CGOpenMPRuntime() {}
 
   /// \brief Cleans up references to the objects in finished function.
@@ -171,7 +171,7 @@ public:
   /// \return Specified function.
   llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
 };
-}
-}
+} // namespace CodeGen
+} // namespace clang
 
 #endif

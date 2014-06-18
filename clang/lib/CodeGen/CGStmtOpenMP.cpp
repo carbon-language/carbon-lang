@@ -38,13 +38,12 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
 
   // Build call __kmpc_fork_call(loc, 1, microtask, captured_struct/*context*/)
   llvm::Value *Args[] = {
-    CGM.getOpenMPRuntime().EmitOpenMPUpdateLocation(*this, S.getLocStart()),
-    Builder.getInt32(1), // Number of arguments after 'microtask' argument
-                         // (there is only one additional argument - 'context')
-    Builder.CreateBitCast(OutlinedFn,
-                          CGM.getOpenMPRuntime().getKmpc_MicroPointerTy()),
-    EmitCastToVoidPtr(CapturedStruct)
-  };
+      CGM.getOpenMPRuntime().EmitOpenMPUpdateLocation(*this, S.getLocStart()),
+      Builder.getInt32(1), // Number of arguments after 'microtask' argument
+      // (there is only one additional argument - 'context')
+      Builder.CreateBitCast(OutlinedFn,
+                            CGM.getOpenMPRuntime().getKmpc_MicroPointerTy()),
+      EmitCastToVoidPtr(CapturedStruct)};
   llvm::Constant *RTLFn = CGM.getOpenMPRuntime().CreateRuntimeFunction(
       CGOpenMPRuntime::OMPRTL__kmpc_fork_call);
   EmitRuntimeCall(RTLFn, Args);

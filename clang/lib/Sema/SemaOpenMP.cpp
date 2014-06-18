@@ -40,7 +40,7 @@ enum DefaultDataSharingAttributes {
   DSA_shared = 1 << 1  /// \brief Default data sharing attribute 'shared'.
 };
 template <class T> struct MatchesAny {
-  MatchesAny(ArrayRef<T> Arr) : Arr(Arr) {}
+  explicit MatchesAny(ArrayRef<T> Arr) : Arr(std::move(Arr)) {}
   bool operator()(T Kind) {
     for (auto KindEl : Arr)
       if (KindEl == Kind)
@@ -51,15 +51,14 @@ template <class T> struct MatchesAny {
 private:
   ArrayRef<T> Arr;
 };
-template <class T> struct MatchesAlways {
+struct MatchesAlways {
   MatchesAlways() {}
+  template <class T>
   bool operator()(T) { return true; }
 };
 
 typedef MatchesAny<OpenMPClauseKind> MatchesAnyClause;
 typedef MatchesAny<OpenMPDirectiveKind> MatchesAnyDirective;
-typedef MatchesAlways<OpenMPClauseKind> MatchesAlwaysClause;
-typedef MatchesAlways<OpenMPDirectiveKind> MatchesAlwaysDirective;
 
 /// \brief Stack for tracking declarations used in OpenMP directives and
 /// clauses and their data-sharing attributes.
@@ -355,7 +354,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
     // Variables with const-qualified type having no mutable member may be
     // listed in a firstprivate clause, even if they are static data members.
     DSAVarData DVarTemp = hasDSA(D, MatchesAnyClause(OMPC_firstprivate),
-                                 MatchesAlwaysDirective());
+                                 MatchesAlways());
     if (DVarTemp.CKind == OMPC_firstprivate && DVarTemp.RefExpr)
       return DVar;
 
@@ -380,7 +379,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
     // Variables with const-qualified type having no mutable member may be
     // listed in a firstprivate clause, even if they are static data members.
     DSAVarData DVarTemp = hasDSA(D, MatchesAnyClause(OMPC_firstprivate),
-                                 MatchesAlwaysDirective());
+                                 MatchesAlways());
     if (DVarTemp.CKind == OMPC_firstprivate && DVarTemp.RefExpr)
       return DVar;
 
@@ -476,7 +475,9 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             if (Type->isArrayType())
               Type = QualType(Type->getArrayElementTypeNoTypeQual(), 0);
             CXXRecordDecl *RD =
-                getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : 0;
+                getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
+            // FIXME This code must be replaced by actual constructing of the
+            // lastprivate variable.
             if (RD) {
               CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
               PartialDiagnostic PD =
@@ -517,7 +518,7 @@ private:
   Sema &Actions;
 
 public:
-  VarDeclFilterCCC(Sema &S) : Actions(S) {}
+  explicit VarDeclFilterCCC(Sema &S) : Actions(S) {}
   bool ValidateCandidate(const TypoCorrection &Candidate) override {
     NamedDecl *ND = Candidate.getCorrectionDecl();
     if (VarDecl *VD = dyn_cast_or_null<VarDecl>(ND)) {
@@ -690,7 +691,7 @@ public:
     }
     return false;
   }
-  LocalVarRefChecker(Sema &SemaRef) : SemaRef(SemaRef) {}
+  explicit LocalVarRefChecker(Sema &SemaRef) : SemaRef(SemaRef) {}
 };
 } // namespace
 
@@ -794,7 +795,7 @@ public:
       //  enclosing worksharing or parallel construct may not be accessed in an
       //  explicit task.
       DVar = Stack->hasInnermostDSA(VD, MatchesAnyClause(OMPC_reduction),
-                                    MatchesAlwaysDirective());
+                                    MatchesAlways());
       if (DKind == OMPD_task && DVar.CKind == OMPC_reduction) {
         ErrorFound = true;
         Actions.Diag(ELoc, diag::err_omp_reduction_in_task);
@@ -1135,7 +1136,7 @@ bool OpenMPIterationSpaceChecker::CheckInit(Stmt *S) {
   return true;
 }
 
-/// \brief Ignore parenthesises, implicit casts, copy constructor and return the
+/// \brief Ignore parenthesizes, implicit casts, copy constructor and return the
 /// variable (which may be the loop variable) if possible.
 static const VarDecl *GetInitVarDecl(const Expr *E) {
   if (!E)
@@ -1301,7 +1302,7 @@ bool OpenMPIterationSpaceChecker::CheckInc(Expr *S) {
       << S->getSourceRange() << Var;
   return true;
 }
-}
+} // namespace
 
 /// \brief Called on a for stmt to check and extract its iteration space
 /// for further processing (such as collapsing).
@@ -1762,9 +1763,8 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
     Res = ActOnOpenMPSharedClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_reduction:
-    Res =
-        ActOnOpenMPReductionClause(VarList, StartLoc, LParenLoc, ColonLoc,
-                                   EndLoc, ReductionIdScopeSpec, ReductionId);
+    Res = ActOnOpenMPReductionClause(VarList, StartLoc, LParenLoc, ColonLoc,
+                                     EndLoc, ReductionIdScopeSpec, ReductionId);
     break;
   case OMPC_linear:
     Res = ActOnOpenMPLinearClause(VarList, TailExpr, StartLoc, LParenLoc,
@@ -1844,7 +1844,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
 
     // OpenMP [2.9.3.3, Restrictions, C/C++, p.1]
     //  A variable of class type (or array thereof) that appears in a private
-    //  clause requires an accesible, unambiguous default constructor for the
+    //  clause requires an accessible, unambiguous default constructor for the
     //  class type.
     while (Type.getNonReferenceType()->isArrayType()) {
       Type = cast<ArrayType>(Type.getNonReferenceType().getTypePtr())
@@ -1853,6 +1853,8 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     CXXRecordDecl *RD = getLangOpts().CPlusPlus
                             ? Type.getNonReferenceType()->getAsCXXRecordDecl()
                             : nullptr;
+    // FIXME This code must be replaced by actual constructing/destructing of
+    // the private variable.
     if (RD) {
       CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
       PartialDiagnostic PD =
@@ -1979,12 +1981,14 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
 
     // OpenMP [2.9.3.4, Restrictions, C/C++, p.1]
     //  A variable of class type (or array thereof) that appears in a private
-    //  clause requires an accesible, unambiguous copy constructor for the
+    //  clause requires an accessible, unambiguous copy constructor for the
     //  class type.
     Type = Context.getBaseElementType(Type);
     CXXRecordDecl *RD = getLangOpts().CPlusPlus
                             ? Type.getNonReferenceType()->getAsCXXRecordDecl()
                             : nullptr;
+    // FIXME This code must be replaced by actual constructing/destructing of
+    // the firstprivate variable.
     if (RD) {
       CXXConstructorDecl *CD = LookupCopyingConstructor(RD, 0);
       PartialDiagnostic PD =
@@ -2222,6 +2226,8 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     CXXRecordDecl *RD = getLangOpts().CPlusPlus
                             ? Type.getNonReferenceType()->getAsCXXRecordDecl()
                             : nullptr;
+    // FIXME This code must be replaced by actual copying and destructing of the
+    // lastprivate variable.
     if (RD) {
       CXXMethodDecl *MD = LookupCopyingAssignment(RD, 0, false, 0);
       DeclAccessPair FoundDecl = DeclAccessPair::make(MD, MD->getAccess());
@@ -2350,7 +2356,7 @@ public:
       if (DVar.CKind != OMPC_unknown)
         return true;
       DSAStackTy::DSAVarData DVarPrivate =
-          Stack->hasDSA(VD, isOpenMPPrivate, MatchesAlwaysDirective());
+          Stack->hasDSA(VD, isOpenMPPrivate, MatchesAlways());
       if (DVarPrivate.CKind != OMPC_unknown)
         return true;
       return false;
@@ -2364,9 +2370,9 @@ public:
     }
     return false;
   }
-  DSARefChecker(DSAStackTy *S) : Stack(S) {}
+  explicit DSARefChecker(DSAStackTy *S) : Stack(S) {}
 };
-}
+} // namespace
 
 OMPClause *Sema::ActOnOpenMPReductionClause(
     ArrayRef<Expr *> VarList, SourceLocation StartLoc, SourceLocation LParenLoc,
@@ -2548,7 +2554,7 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     getDiagnostics().setSuppressAllDiagnostics(Suppress);
     if (ReductionOp.isInvalid()) {
       Diag(ELoc, diag::err_omp_reduction_id_not_compatible) << Type
-          << ReductionIdRange;
+                                                            << ReductionIdRange;
       bool IsDecl =
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
       Diag(VD->getLocation(),
@@ -2611,13 +2617,16 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     CXXRecordDecl *RD = getLangOpts().CPlusPlus
                             ? Type.getNonReferenceType()->getAsCXXRecordDecl()
                             : nullptr;
+    // FIXME This code must be replaced by actual constructing/destructing of
+    // the reduction variable.
     if (RD) {
       CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
       PartialDiagnostic PD =
           PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
-      if (!CD || CheckConstructorAccess(
-                     ELoc, CD, InitializedEntity::InitializeTemporary(Type),
-                     CD->getAccess(), PD) == AR_inaccessible ||
+      if (!CD ||
+          CheckConstructorAccess(ELoc, CD,
+                                 InitializedEntity::InitializeTemporary(Type),
+                                 CD->getAccess(), PD) == AR_inaccessible ||
           CD->isDeleted()) {
         Diag(ELoc, diag::err_omp_required_method)
             << getOpenMPClauseName(OMPC_reduction) << 0;
@@ -2911,11 +2920,13 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
 
     // OpenMP [2.14.4.1, Restrictions, C/C++, p.2]
     //  A variable of class type (or array thereof) that appears in a
-    //  copyin clause requires an accesible, unambiguous copy assignment
+    //  copyin clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
     Type = Context.getBaseElementType(Type);
     CXXRecordDecl *RD =
         getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
+    // FIXME This code must be replaced by actual assignment of the
+    // threadprivate variable.
     if (RD) {
       CXXMethodDecl *MD = LookupCopyingAssignment(RD, 0, false, 0);
       DeclAccessPair FoundDecl = DeclAccessPair::make(MD, MD->getAccess());

@@ -19,7 +19,7 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/raw_ostream.h"
-#include <assert.h>
+#include <cassert>
 
 using namespace clang;
 using namespace CodeGen;
@@ -31,8 +31,8 @@ CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
       CGM.Int32Ty /* reserved_2 */, CGM.Int32Ty /* reserved_3 */,
       CGM.Int8PtrTy /* psource */, NULL);
   // Build void (*kmpc_micro)(kmp_int32 *global_tid, kmp_int32 *bound_tid,...)
-  llvm::Type *MicroParams[] = { llvm::PointerType::getUnqual(CGM.Int32Ty),
-                                llvm::PointerType::getUnqual(CGM.Int32Ty) };
+  llvm::Type *MicroParams[] = {llvm::PointerType::getUnqual(CGM.Int32Ty),
+                               llvm::PointerType::getUnqual(CGM.Int32Ty)};
   Kmpc_MicroTy = llvm::FunctionType::get(CGM.VoidTy, MicroParams, true);
 }
 
@@ -57,10 +57,9 @@ CGOpenMPRuntime::GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags) {
     DefaultOpenMPLocation->setLinkage(llvm::GlobalValue::PrivateLinkage);
 
     llvm::Constant *Zero = llvm::ConstantInt::get(CGM.Int32Ty, 0, true);
-    llvm::Constant *Values[] = {
-      Zero, llvm::ConstantInt::get(CGM.Int32Ty, Flags), Zero,
-      Zero, DefaultOpenMPPSource
-    };
+    llvm::Constant *Values[] = {Zero,
+                                llvm::ConstantInt::get(CGM.Int32Ty, Flags),
+                                Zero, Zero, DefaultOpenMPPSource};
     llvm::Constant *Init = llvm::ConstantStruct::get(IdentTy, Values);
     DefaultOpenMPLocation->setInitializer(Init);
     return DefaultOpenMPLocation;
@@ -132,7 +131,7 @@ llvm::Value *CGOpenMPRuntime::GetOpenMPGlobalThreadNum(CodeGenFunction &CGF,
     // Generate "int32 .kmpc_global_thread_num.addr;"
     CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
     CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
-    llvm::Value *Args[] = { EmitOpenMPUpdateLocation(CGF, Loc) };
+    llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc)};
     GTid = CGF.EmitRuntimeCall(
         CreateRuntimeFunction(OMPRTL__kmpc_global_thread_num), Args);
     OpenMPGtidMap[CGF.CurFn] = GTid;
@@ -163,8 +162,8 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
   case OMPRTL__kmpc_fork_call: {
     // Build void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro
     // microtask, ...);
-    llvm::Type *TypeParams[] = { getIdentTyPointerTy(), CGM.Int32Ty,
-                                 getKmpc_MicroPointerTy() };
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                getKmpc_MicroPointerTy()};
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.VoidTy, TypeParams, true);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_fork_call");
@@ -172,7 +171,7 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
   }
   case OMPRTL__kmpc_global_thread_num: {
     // Build kmp_int32 __kmpc_global_thread_num(ident_t *loc);
-    llvm::Type *TypeParams[] = { getIdentTyPointerTy() };
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy()};
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.Int32Ty, TypeParams, false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_global_thread_num");

@@ -434,7 +434,7 @@ static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,
     }
     if (OOK != OO_None) {
       SourceLocation OpLoc = P.ConsumeToken();
-      SourceLocation SymbolLocations[] = { OpLoc, OpLoc, SourceLocation() };
+      SourceLocation SymbolLocations[] = {OpLoc, OpLoc, SourceLocation()};
       ReductionId.setOperatorFunctionId(OpLoc, OOK, SymbolLocations);
       return false;
     }
