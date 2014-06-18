@@ -201,8 +201,8 @@ AsmToken AsmLexer::LexLineComment() {
     CurChar = getNextChar();
 
   if (CurChar == EOF)
-    return AsmToken(AsmToken::Eof, StringRef(CurPtr, 0));
-  return AsmToken(AsmToken::EndOfStatement, StringRef(CurPtr, 0));
+    return AsmToken(AsmToken::Eof, StringRef(TokStart, 0));
+  return AsmToken(AsmToken::EndOfStatement, StringRef(TokStart, 0));
 }
 
 static void SkipIgnoredIntegerSuffix(const char *&CurPtr) {
