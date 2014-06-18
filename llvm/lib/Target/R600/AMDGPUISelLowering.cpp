@@ -1636,7 +1636,7 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
                             DAG.getConstant(1023, MVT::i32));
 
   // Extract the sign bit.
-  const SDValue SignBitMask = DAG.getConstant(1ul << 31, MVT::i32);
+  const SDValue SignBitMask = DAG.getConstant(UINT32_C(1) << 31, MVT::i32);
   SDValue SignBit = DAG.getNode(ISD::AND, SL, MVT::i32, Hi, SignBitMask);
 
   // Extend back to to 64-bits.
@@ -1645,7 +1645,8 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   SignBit64 = DAG.getNode(ISD::BITCAST, SL, MVT::i64, SignBit64);
 
   SDValue BcInt = DAG.getNode(ISD::BITCAST, SL, MVT::i64, Src);
-  const SDValue FractMask = DAG.getConstant((1LL << FractBits) - 1, MVT::i64);
+  const SDValue FractMask
+    = DAG.getConstant((UINT64_C(1) << FractBits) - 1, MVT::i64);
 
   SDValue Shr = DAG.getNode(ISD::SRA, SL, MVT::i64, FractMask, Exp);
   SDValue Not = DAG.getNOT(SL, Shr, MVT::i64);
