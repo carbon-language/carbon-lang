@@ -253,12 +253,14 @@ private:
 
   /// PPC64 ELF
   RelocToApply visitELF_PPC64_ADDR32(RelocationRef R, uint64_t Value) {
-    int64_t Addend = getAddend64BE(R);
+    int64_t Addend;
+    getELFRelocationAddend(R, Addend);
     uint32_t Res = (Value + Addend) & 0xFFFFFFFF;
     return RelocToApply(Res, 4);
   }
   RelocToApply visitELF_PPC64_ADDR64(RelocationRef R, uint64_t Value) {
-    int64_t Addend = getAddend64BE(R);
+    int64_t Addend;
+    getELFRelocationAddend(R, Addend);
     return RelocToApply(Value + Addend, 8);
   }
 
