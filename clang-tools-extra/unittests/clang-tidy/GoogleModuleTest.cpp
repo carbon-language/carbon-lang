@@ -1,5 +1,5 @@
 #include "ClangTidyTest.h"
-#include "google/GoogleTidyModule.h"
+#include "google/ExplicitConstructorCheck.h"
 #include "gtest/gtest.h"
 
 namespace clang {

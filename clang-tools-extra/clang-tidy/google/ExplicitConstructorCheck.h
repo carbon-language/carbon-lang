@@ -1,4 +1,4 @@
-//===--- GoogleTidyModule.h - clang-tidy ------------------------*- C++ -*-===//
+//===--- ExplicitConstructorCheck.h - clang-tidy ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_GOOGLE_TIDY_MODULE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_GOOGLE_TIDY_MODULE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_EXPLICIT_CONSTRUCTOR_CHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_EXPLICIT_CONSTRUCTOR_CHECK_H
 
 #include "../ClangTidy.h"
 
@@ -28,4 +28,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_GOOGLE_TIDY_MODULE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_EXPLICIT_CONSTRUCTOR_CHECK_H
