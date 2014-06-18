@@ -1058,7 +1058,6 @@ CHECK_SIZE_AND_OFFSET(shmid_ds, shm_nattch);
 #endif
 
 CHECK_TYPE_SIZE(clock_t);
-CHECK_TYPE_SIZE(clockid_t);
 
 #if !SANITIZER_ANDROID
 CHECK_TYPE_SIZE(ifaddrs);
