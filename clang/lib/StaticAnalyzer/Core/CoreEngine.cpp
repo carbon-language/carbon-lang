@@ -541,7 +541,7 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   CFGStmt CS = (*Block)[Idx].castAs<CFGStmt>();
   PostStmt Loc(CS.getStmt(), N->getLocationContext());
 
-  if (Loc == N->getLocation()) {
+  if (Loc == N->getLocation().withTag(nullptr)) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
     // a member of Deferred.
     WList->enqueue(N, Block, Idx+1);
