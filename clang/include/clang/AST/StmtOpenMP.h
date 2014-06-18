@@ -255,6 +255,74 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp for' directive.
+///
+/// \code
+/// #pragma omp for private(a,b) reduction(+:c,d)
+/// \endcode
+/// In this example directive '#pragma omp for' has clauses 'private' with the
+/// variables 'a' and 'b' and 'reduction' with operator '+' and variables 'c'
+/// and 'd'.
+///
+class OMPForDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Number of collapsed loops as specified by 'collapse' clause.
+  unsigned CollapsedNum;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  OMPForDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                  unsigned CollapsedNum, unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPForDirectiveClass, OMPD_for, StartLoc,
+                               EndLoc, NumClauses, 1),
+        CollapsedNum(CollapsedNum) {}
+
+  /// \brief Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPForDirective(unsigned CollapsedNum, unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPForDirectiveClass, OMPD_for,
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1),
+        CollapsedNum(CollapsedNum) {}
+
+public:
+  /// \brief Creates directive with a list of \a Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPForDirective *Create(const ASTContext &C, SourceLocation StartLoc,
+                                 SourceLocation EndLoc,
+                                 ArrayRef<OMPClause *> Clauses,
+                                 Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPForDirective *CreateEmpty(const ASTContext &C, unsigned NumClauses,
+                                      unsigned CollapsedNum, EmptyShell);
+
+  unsigned getCollapsedNumber() const { return CollapsedNum; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPForDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

@@ -64,6 +64,43 @@ const char *getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind, unsigned Type);
 bool isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
                                  OpenMPClauseKind CKind);
 
+/// \brief Checks if the specified directive is a directive with an associated
+/// loop construct.
+/// \param DKind Specified directive.
+/// \return true - the directive is a loop-associated directive like 'omp simd'
+/// or 'omp for' directive, otherwise - false.
+bool isOpenMPLoopDirective(OpenMPDirectiveKind DKind);
+
+/// \brief Checks if the specified directive is a worksharing directive.
+/// \param DKind Specified directive.
+/// \return true - the directive is a worksharing directive like 'omp for',
+/// otherwise - false.
+bool isOpenMPWorksharingDirective(OpenMPDirectiveKind DKind);
+
+/// \brief Checks if the specified directive is a parallel-kind directive.
+/// \param DKind Specified directive.
+/// \return true - the directive is a parallel-like directive like 'omp
+/// parallel', otherwise - false.
+bool isOpenMPParallelDirective(OpenMPDirectiveKind DKind);
+
+/// \brief Checks if the specified directive is a simd directive.
+/// \param DKind Specified directive.
+/// \return true - the directive is a simd directive like 'omp simd',
+/// otherwise - false.
+bool isOpenMPSimdDirective(OpenMPDirectiveKind DKind);
+
+/// \brief Checks if the specified clause is one of private clauses like
+/// 'private', 'firstprivate', 'reduction' etc..
+/// \param Kind Clause kind.
+/// \return true - the clause is a private clause, otherwise - false.
+bool isOpenMPPrivate(OpenMPClauseKind Kind);
+
+/// \brief Checks if the specified clause is one of threadprivate clauses like
+/// 'threadprivate', 'copyin' or 'copyprivate'.
+/// \param Kind Clause kind.
+/// \return true - the clause is a threadprivate clause, otherwise - false.
+bool isOpenMPThreadPrivate(OpenMPClauseKind Kind);
+
 }
 
 #endif
