@@ -81,15 +81,7 @@ namespace {
                            unsigned char Value = 0) override { return false; }
 
     void EmitFileDirective(StringRef Filename) override {}
-    unsigned EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                    StringRef Filename,
-                                    unsigned CUID = 0) override {
-      return 0;
-    }
-    void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
-                               unsigned Column, unsigned Flags,
-                               unsigned Isa, unsigned Discriminator,
-                               StringRef FileName) override {}
+
     void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo&) override {}
 
     void EmitBundleAlignMode(unsigned AlignPow2) override {}
