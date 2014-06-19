@@ -247,7 +247,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   InitializeAllTargetMCs();
   InitializeAllAsmParsers();
   InitializeAllAsmPrinters();
-  InitializeAllDisassemblers();
   CodeGen = new LTOCodeGenerator();
   if (MAttrs.size()) {
     std::string Attrs;
