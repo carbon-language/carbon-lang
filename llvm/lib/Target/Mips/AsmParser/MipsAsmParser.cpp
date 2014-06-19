@@ -116,14 +116,20 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool needsExpansion(MCInst &Inst);
 
-  void expandInstruction(MCInst &Inst, SMLoc IDLoc,
+  // Expands assembly pseudo instructions.
+  // Returns false on success, true otherwise.
+  bool expandInstruction(MCInst &Inst, SMLoc IDLoc,
                          SmallVectorImpl<MCInst> &Instructions);
-  void expandLoadImm(MCInst &Inst, SMLoc IDLoc,
+
+  bool expandLoadImm(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
-  void expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
+
+  bool expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
-  void expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
+
+  bool expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
+
   void expandMemInst(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions, bool isLoad,
                      bool isImmOpnd);
@@ -965,7 +971,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
   }   // if load/store
 
   if (needsExpansion(Inst))
-    expandInstruction(Inst, IDLoc, Instructions);
+    return expandInstruction(Inst, IDLoc, Instructions);
   else
     Instructions.push_back(Inst);
 
@@ -984,9 +990,11 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   }
 }
 
-void MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
+bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
                                       SmallVectorImpl<MCInst> &Instructions) {
   switch (Inst.getOpcode()) {
+  default: assert(0 && "unimplemented expansion");
+    return true;
   case Mips::LoadImm32Reg:
     return expandLoadImm(Inst, IDLoc, Instructions);
   case Mips::LoadAddr32Imm:
@@ -996,7 +1004,7 @@ void MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   }
 }
 
-void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
+bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
@@ -1038,9 +1046,10 @@ void MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.setLoc(IDLoc);
     Instructions.push_back(tmpInst);
   }
+  return false;
 }
 
-void
+bool
 MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
@@ -1081,9 +1090,10 @@ MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateReg(SrcRegOp.getReg()));
     Instructions.push_back(tmpInst);
   }
+  return false;
 }
 
-void
+bool
 MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
@@ -1115,6 +1125,7 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
     Instructions.push_back(tmpInst);
   }
+  return false;
 }
 
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
