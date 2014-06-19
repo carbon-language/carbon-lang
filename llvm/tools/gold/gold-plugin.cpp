@@ -248,9 +248,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   InitializeAllAsmParsers();
   InitializeAllAsmPrinters();
   InitializeAllDisassemblers();
-  TargetOpts = InitTargetOptionsFromCodeGenFlags();
   CodeGen = new LTOCodeGenerator();
-  CodeGen->setTargetOptions(TargetOpts);
   if (MAttrs.size()) {
     std::string Attrs;
     for (unsigned I = 0; I < MAttrs.size(); ++I) {
@@ -260,6 +258,18 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
     }
     CodeGen->setAttr(Attrs.c_str());
   }
+
+  // Pass through extra options to the code generator.
+  if (!options::extra.empty()) {
+    for (std::vector<std::string>::iterator it = options::extra.begin();
+         it != options::extra.end(); ++it) {
+      CodeGen->setCodeGenDebugOptions((*it).c_str());
+    }
+  }
+
+  CodeGen->parseCodeGenDebugOptions();
+  TargetOpts = InitTargetOptionsFromCodeGenFlags();
+  CodeGen->setTargetOptions(TargetOpts);
 
   return LDPS_OK;
 }
@@ -444,14 +454,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
   if (!options::mcpu.empty())
     CodeGen->setCpu(options::mcpu.c_str());
 
-  // Pass through extra options to the code generator.
-  if (!options::extra.empty()) {
-    for (std::vector<std::string>::iterator it = options::extra.begin();
-         it != options::extra.end(); ++it) {
-      CodeGen->setCodeGenDebugOptions((*it).c_str());
-    }
-  }
-
   if (options::generate_bc_file != options::BC_NO) {
     std::string path;
     if (options::generate_bc_file == options::BC_ONLY)
@@ -460,7 +462,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
       path = options::bc_path;
     else
       path = output_name + ".bc";
-    CodeGen->parseCodeGenDebugOptions();
     std::string Error;
     if (!CodeGen->writeMergedModules(path.c_str(), Error))
       (*message)(LDPL_FATAL, "Failed to write the output file.");
@@ -473,7 +474,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
   std::string ObjPath;
   {
     const char *Temp;
-    CodeGen->parseCodeGenDebugOptions();
     std::string Error;
     if (!CodeGen->compile_to_file(&Temp, /*DisableOpt*/ false, /*DisableInline*/
                                   false, /*DisableGVNLoadPRE*/ false, Error))
