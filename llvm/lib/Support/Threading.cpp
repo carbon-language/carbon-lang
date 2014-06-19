@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements llvm_start_multithreaded() and friends.
+// This file defines helper functions for running LLVM in a multi-threaded
+// environment.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,36 +20,12 @@
 
 using namespace llvm;
 
-static bool multithreaded_mode = false;
-
-bool llvm::llvm_start_multithreaded() {
+bool llvm::llvm_is_multithreaded() {
 #if LLVM_ENABLE_THREADS != 0
-  assert(!multithreaded_mode && "Already multithreaded!");
-  multithreaded_mode = true;
-
-  // We fence here to ensure that all initialization is complete BEFORE we
-  // return from llvm_start_multithreaded().
-  sys::MemoryFence();
   return true;
 #else
   return false;
 #endif
-}
-
-void llvm::llvm_stop_multithreaded() {
-#if LLVM_ENABLE_THREADS != 0
-  assert(multithreaded_mode && "Not currently multithreaded!");
-
-  // We fence here to insure that all threaded operations are complete BEFORE we
-  // return from llvm_stop_multithreaded().
-  sys::MemoryFence();
-
-  multithreaded_mode = false;
-#endif
-}
-
-bool llvm::llvm_is_multithreaded() {
-  return multithreaded_mode;
 }
 
 #if LLVM_ENABLE_THREADS != 0 && defined(HAVE_PTHREAD_H)
