@@ -70,7 +70,7 @@ main_body:
   %55 = fadd float %54, %53
   %56 = fmul float %45, %45
   %57 = fadd float %55, %56
-  %58 = call float @llvm.AMDGPU.rsq(float %57)
+  %58 = call float @llvm.AMDGPU.rsq.f32(float %57)
   %59 = fmul float %43, %58
   %60 = fmul float %44, %58
   %61 = fmul float %45, %58
@@ -212,7 +212,7 @@ declare float @llvm.SI.fs.interp(i32, i32, i32, <2 x i32>) #1
 declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) #1
 
 ; Function Attrs: readnone
-declare float @llvm.AMDGPU.rsq(float) #3
+declare float @llvm.AMDGPU.rsq.f32(float) #3
 
 ; Function Attrs: readnone
 declare float @llvm.AMDIL.exp.(float) #3

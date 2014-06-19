@@ -922,6 +922,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::AMDGPU_rcp: {
+    if (const ConstantFP *C = dyn_cast<ConstantFP>(II->getArgOperand(0))) {
+      const APFloat &ArgVal = C->getValueAPF();
+      APFloat Val(ArgVal.getSemantics(), 1.0);
+      APFloat::opStatus Status = Val.divide(ArgVal,
+                                            APFloat::rmNearestTiesToEven);
+      // Only do this if it was exact and therefore not dependent on the
+      // rounding mode.
+      if (Status == APFloat::opOK)
+        return ReplaceInstUsesWith(CI, ConstantFP::get(II->getContext(), Val));
+    }
+
+    break;
+  }
   case Intrinsic::stackrestore: {
     // If the save is right next to the restore, remove the restore.  This can
     // happen when variable allocas are DCE'd.

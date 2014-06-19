@@ -101,7 +101,7 @@ IF137:                                            ; preds = %main_body
   %88 = insertelement <4 x float> %87, float %32, i32 2
   %89 = insertelement <4 x float> %88, float 0.000000e+00, i32 3
   %90 = call float @llvm.AMDGPU.dp4(<4 x float> %85, <4 x float> %89)
-  %91 = call float @llvm.AMDGPU.rsq(float %90)
+  %91 = call float @llvm.AMDGPU.rsq.f32(float %90)
   %92 = fmul float %30, %91
   %93 = fmul float %31, %91
   %94 = fmul float %32, %91
@@ -344,7 +344,7 @@ ENDIF136:                                         ; preds = %main_body, %ENDIF15
   %325 = insertelement <4 x float> %324, float %318, i32 2
   %326 = insertelement <4 x float> %325, float 0.000000e+00, i32 3
   %327 = call float @llvm.AMDGPU.dp4(<4 x float> %322, <4 x float> %326)
-  %328 = call float @llvm.AMDGPU.rsq(float %327)
+  %328 = call float @llvm.AMDGPU.rsq.f32(float %327)
   %329 = fmul float %314, %328
   %330 = fmul float %316, %328
   %331 = fmul float %318, %328
@@ -377,7 +377,7 @@ ENDIF136:                                         ; preds = %main_body, %ENDIF15
   %358 = insertelement <4 x float> %357, float %45, i32 2
   %359 = insertelement <4 x float> %358, float 0.000000e+00, i32 3
   %360 = call float @llvm.AMDGPU.dp4(<4 x float> %355, <4 x float> %359)
-  %361 = call float @llvm.AMDGPU.rsq(float %360)
+  %361 = call float @llvm.AMDGPU.rsq.f32(float %360)
   %362 = fmul float %45, %361
   %363 = call float @fabs(float %362)
   %364 = fmul float %176, 0x3FECCCCCC0000000
@@ -403,7 +403,7 @@ ENDIF136:                                         ; preds = %main_body, %ENDIF15
   %384 = insertelement <4 x float> %383, float %45, i32 2
   %385 = insertelement <4 x float> %384, float 0.000000e+00, i32 3
   %386 = call float @llvm.AMDGPU.dp4(<4 x float> %381, <4 x float> %385)
-  %387 = call float @llvm.AMDGPU.rsq(float %386)
+  %387 = call float @llvm.AMDGPU.rsq.f32(float %386)
   %388 = fmul float %45, %387
   %389 = call float @fabs(float %388)
   %390 = fmul float %176, 0x3FF51EB860000000
@@ -1041,7 +1041,7 @@ IF179:                                            ; preds = %ENDIF175
   %896 = insertelement <4 x float> %895, float %45, i32 2
   %897 = insertelement <4 x float> %896, float 0.000000e+00, i32 3
   %898 = call float @llvm.AMDGPU.dp4(<4 x float> %893, <4 x float> %897)
-  %899 = call float @llvm.AMDGPU.rsq(float %898)
+  %899 = call float @llvm.AMDGPU.rsq.f32(float %898)
   %900 = fmul float %45, %899
   %901 = call float @fabs(float %900)
   %902 = fmul float %176, 0x3FECCCCCC0000000
@@ -1150,7 +1150,7 @@ ENDIF178:                                         ; preds = %ENDIF175, %IF179
 declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1
 
 ; Function Attrs: readnone
-declare float @llvm.AMDGPU.rsq(float) #1
+declare float @llvm.AMDGPU.rsq.f32(float) #1
 
 ; Function Attrs: readnone
 declare <4 x float> @llvm.AMDGPU.tex(<4 x float>, i32, i32, i32) #1

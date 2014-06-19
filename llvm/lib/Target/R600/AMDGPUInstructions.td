@@ -519,6 +519,16 @@ multiclass Expand24UBitOps<Instruction MulInst, Instruction AddInst> {
   >;
 }
 
+class RcpPat<Instruction RcpInst, ValueType vt> : Pat <
+  (fdiv FP_ONE, vt:$src),
+  (RcpInst $src)
+>;
+
+class RsqPat<Instruction RsqInst, ValueType vt> : Pat <
+  (AMDGPUrcp (fsqrt vt:$src)),
+  (RsqInst $src)
+>;
+
 include "R600Instructions.td"
 include "R700Instructions.td"
 include "EvergreenInstructions.td"

@@ -341,6 +341,8 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
   return Result;
 }
 
+// FIXME: Insert waits listed in Table 4.2 "Required User-Inserted Wait States"
+// around other non-memory instructions.
 bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
   bool Changes = false;
 

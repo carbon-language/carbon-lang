@@ -103,7 +103,7 @@ main_body:
   %95 = insertelement <4 x float> %94, float 0.000000e+00, i32 3
   %96 = call float @llvm.AMDGPU.dp4(<4 x float> %91, <4 x float> %95)
   %97 = call float @fabs(float %96)
-  %98 = call float @llvm.AMDGPU.rsq(float %97)
+  %98 = call float @llvm.AMDGPU.rsq.f32(float %97)
   %99 = fmul float %4, %98
   %100 = fmul float %5, %98
   %101 = fmul float %6, %98
@@ -225,7 +225,7 @@ declare float @llvm.AMDGPU.dp4(<4 x float>, <4 x float>) #1
 declare float @fabs(float) #2
 
 ; Function Attrs: readnone
-declare float @llvm.AMDGPU.rsq(float) #1
+declare float @llvm.AMDGPU.rsq.f32(float) #1
 
 ; Function Attrs: readnone
 declare float @llvm.AMDIL.clamp.(float, float, float) #1

@@ -1116,22 +1116,23 @@ defm V_LOG_CLAMP_F32 : VOP1_32 <0x00000026, "V_LOG_CLAMP_F32", []>;
 defm V_LOG_F32 : VOP1_32 <0x00000027, "V_LOG_F32",
   [(set f32:$dst, (flog2 f32:$src0))]
 >;
+
 defm V_RCP_CLAMP_F32 : VOP1_32 <0x00000028, "V_RCP_CLAMP_F32", []>;
 defm V_RCP_LEGACY_F32 : VOP1_32 <0x00000029, "V_RCP_LEGACY_F32", []>;
 defm V_RCP_F32 : VOP1_32 <0x0000002a, "V_RCP_F32",
-  [(set f32:$dst, (fdiv FP_ONE, f32:$src0))]
+  [(set f32:$dst, (AMDGPUrcp f32:$src0))]
 >;
 defm V_RCP_IFLAG_F32 : VOP1_32 <0x0000002b, "V_RCP_IFLAG_F32", []>;
 defm V_RSQ_CLAMP_F32 : VOP1_32 <0x0000002c, "V_RSQ_CLAMP_F32", []>;
 defm V_RSQ_LEGACY_F32 : VOP1_32 <
   0x0000002d, "V_RSQ_LEGACY_F32",
-  [(set f32:$dst, (int_AMDGPU_rsq f32:$src0))]
+  [(set f32:$dst, (AMDGPUrsq f32:$src0))]
 >;
 defm V_RSQ_F32 : VOP1_32 <0x0000002e, "V_RSQ_F32",
   [(set f32:$dst, (fdiv FP_ONE, (fsqrt f32:$src0)))]
 >;
 defm V_RCP_F64 : VOP1_64 <0x0000002f, "V_RCP_F64",
-  [(set f64:$dst, (fdiv FP_ONE, f64:$src0))]
+  [(set f64:$dst, (AMDGPUrcp f64:$src0))]
 >;
 defm V_RCP_CLAMP_F64 : VOP1_64 <0x00000030, "V_RCP_CLAMP_F64", []>;
 defm V_RSQ_F64 : VOP1_64 <0x00000031, "V_RSQ_F64",
@@ -1417,8 +1418,12 @@ defm V_MULLIT_F32 : VOP3_32 <0x00000150, "V_MULLIT_F32", []>;
 //def V_SAD_U16 : VOP3_U16 <0x0000015c, "V_SAD_U16", []>;
 defm V_SAD_U32 : VOP3_32 <0x0000015d, "V_SAD_U32", []>;
 ////def V_CVT_PK_U8_F32 : VOP3_U8 <0x0000015e, "V_CVT_PK_U8_F32", []>;
-defm V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32", []>;
-def V_DIV_FIXUP_F64 : VOP3_64 <0x00000160, "V_DIV_FIXUP_F64", []>;
+defm V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32",
+  [(set f32:$dst, (AMDGPUdiv_fixup f32:$src0, f32:$src1, f32:$src2))]
+>;
+def V_DIV_FIXUP_F64 : VOP3_64 <0x00000160, "V_DIV_FIXUP_F64",
+  [(set f64:$dst, (AMDGPUdiv_fixup f64:$src0, f64:$src1, f64:$src2))]
+>;
 
 def V_LSHL_B64 : VOP3_64_32 <0x00000161, "V_LSHL_B64",
   [(set i64:$dst, (shl i64:$src0, i32:$src1))]
@@ -1452,12 +1457,19 @@ defm V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 
 defm V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
 def V_DIV_SCALE_F64 : VOP3_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
-defm V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32", []>;
-def V_DIV_FMAS_F64 : VOP3_64 <0x00000170, "V_DIV_FMAS_F64", []>;
+
+defm V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32",
+  [(set f32:$dst, (AMDGPUdiv_fmas f32:$src0, f32:$src1, f32:$src2))]
+>;
+def V_DIV_FMAS_F64 : VOP3_64 <0x00000170, "V_DIV_FMAS_F64",
+  [(set f64:$dst, (AMDGPUdiv_fmas f64:$src0, f64:$src1, f64:$src2))]
+>;
 //def V_MSAD_U8 : VOP3_U8 <0x00000171, "V_MSAD_U8", []>;
 //def V_QSAD_U8 : VOP3_U8 <0x00000172, "V_QSAD_U8", []>;
 //def V_MQSAD_U8 : VOP3_U8 <0x00000173, "V_MQSAD_U8", []>;
-def V_TRIG_PREOP_F64 : VOP3_64 <0x00000174, "V_TRIG_PREOP_F64", []>;
+def V_TRIG_PREOP_F64 : VOP3_64_32 <0x00000174, "V_TRIG_PREOP_F64",
+  [(set f64:$dst, (AMDGPUtrig_preop f64:$src0, i32:$src1))]
+>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo Instructions
@@ -1747,6 +1759,15 @@ def : Pat <
   (int_AMDGPU_barrier_global),
   (S_BARRIER)
 >;
+
+//===----------------------------------------------------------------------===//
+// VOP1 Patterns
+//===----------------------------------------------------------------------===//
+
+def : RcpPat<V_RCP_F32_e32, f32>;
+def : RcpPat<V_RCP_F64_e32, f64>;
+def : RsqPat<V_RSQ_F32_e32, f32>;
+def : RsqPat<V_RSQ_F64_e32, f64>;
 
 //===----------------------------------------------------------------------===//
 // VOP2 Patterns

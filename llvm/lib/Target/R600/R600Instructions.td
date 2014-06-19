@@ -1083,7 +1083,7 @@ class RECIP_UINT_Common <bits<11> inst> : R600_1OP_Helper <
 }
 
 class RECIPSQRT_CLAMPED_Common <bits<11> inst> : R600_1OP_Helper <
-  inst, "RECIPSQRT_CLAMPED", int_AMDGPU_rsq
+  inst, "RECIPSQRT_CLAMPED", AMDGPUrsq
 > {
   let Itinerary = TransALU;
 }
