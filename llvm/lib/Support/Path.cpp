@@ -846,6 +846,40 @@ std::error_code create_directories(const Twine &Path, bool IgnoreExisting) {
   return create_directory(P, IgnoreExisting);
 }
 
+std::error_code copy_file(const Twine &From, const Twine &To) {
+  int ReadFD, WriteFD;
+  if (std::error_code EC = openFileForRead(From, ReadFD))
+    return EC;
+  if (std::error_code EC = openFileForWrite(To, WriteFD, F_None)) {
+    close(ReadFD);
+    return EC;
+  }
+
+  const size_t BufSize = 4096;
+  char *Buf = new char[BufSize];
+  int BytesRead = 0, BytesWritten = 0;
+  for (;;) {
+    BytesRead = read(ReadFD, Buf, BufSize);
+    if (BytesRead <= 0)
+      break;
+    while (BytesRead) {
+      BytesWritten = write(WriteFD, Buf, BytesRead);
+      if (BytesWritten < 0)
+        break;
+      BytesRead -= BytesWritten;
+    }
+    if (BytesWritten < 0)
+      break;
+  }
+  close(ReadFD);
+  close(WriteFD);
+  delete[] Buf;
+
+  if (BytesRead < 0 || BytesWritten < 0)
+    return std::error_code(errno, std::generic_category());
+  return std::error_code();
+}
+
 bool exists(file_status status) {
   return status_known(status) && status.type() != file_type::file_not_found;
 }

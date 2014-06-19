@@ -335,6 +335,12 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting = true);
 /// @param to The path to rename to. This is created.
 std::error_code rename(const Twine &from, const Twine &to);
 
+/// @brief Copy the contents of \a From to \a To.
+///
+/// @param From The path to copy from.
+/// @param To The path to copy to. This is created.
+std::error_code copy_file(const Twine &From, const Twine &To);
+
 /// @brief Resize path to size. File is resized as if by POSIX truncate().
 ///
 /// @param path Input path.
