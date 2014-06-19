@@ -101,9 +101,10 @@ New Pragmas in Clang
 -----------------------
 
 Loop optimization hints can be specified using the new `#pragma clang loop`
-directive just prior to the desired loop. The directive allows vectorization
-and interleaving to be enabled or disabled, and the vector width and interleave
-count to be manually specified. See language extensions for details.
+directive just prior to the desired loop. The directive allows vectorization,
+interleaving, and unrolling to be enabled or disabled. Vector width as well
+as interleave and unrolling count can be manually specified.  See language
+extensions for details.
 
 C Language Changes in Clang
 ---------------------------

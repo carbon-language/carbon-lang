@@ -1016,9 +1016,10 @@ def LoopHintDocs : Documentation {
   let Category = DocCatStmt;
   let Content = [{
 The ``#pragma clang loop'' directive allows loop optimization hints to be
-specified for the subsequent loop. The directive allows vectorization
-and interleaving to be enabled or disabled, and the vector width and interleave
-count to be manually specified. See `language extensions
+specified for the subsequent loop. The directive allows vectorization,
+interleaving, and unrolling to be enabled or disabled. Vector width as well
+as interleave and unrolling count can be manually specified. See
+`language extensions
 <http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>'_
 for details.
   }];
