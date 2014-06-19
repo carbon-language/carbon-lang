@@ -149,6 +149,8 @@ def add_options(parser):
                       help=("Do not do installs"))
     parser.add_option("--keep-going", default=False, action="store_true",
                       help=("Keep going after failures"))
+    parser.add_option("--enable-werror", default=False, action="store_true",
+                      help=("Build with -Werror"))
     return
 
 def check_options(parser, options, valid_builds):
@@ -361,16 +363,13 @@ class Builder(threading.Thread):
 
         configure_flags = dict(
             llvm=dict(debug=["--prefix=" + self.install_prefix,
-                             "--enable-werror",
                              "--enable-assertions",
                              "--disable-optimized",
                              "--with-gcc-toolchain=" + cxxroot],
                       release=["--prefix=" + self.install_prefix,
-                               "--enable-werror",
                                "--enable-optimized",
                                "--with-gcc-toolchain=" + cxxroot],
                       paranoid=["--prefix=" + self.install_prefix,
-                                "--enable-werror",
                                 "--enable-assertions",
                                 "--enable-expensive-checks",
                                 "--disable-optimized",
@@ -378,6 +377,11 @@ class Builder(threading.Thread):
             dragonegg=dict(debug=[],
                            release=[],
                            paranoid=[]))
+
+        if (self.options.enable_werror):
+            configure_flags["llvm"]["debug"].append("--enable-werror")
+            configure_flags["llvm"]["release"].append("--enable-werror")
+            configure_flags["llvm"]["paranoid"].append("--enable-werror")
 
         configure_env = dict(
             llvm=dict(debug=dict(CC=self.cc,
