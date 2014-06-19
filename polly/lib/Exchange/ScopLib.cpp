@@ -56,12 +56,9 @@ void ScopLib::initializeParameters() {
 void ScopLib::initializeArrays() {
   int nb_arrays = 0;
 
-  for (Scop::iterator SI = PollyScop->begin(), SE = PollyScop->end(); SI != SE;
-       ++SI)
-    for (ScopStmt::memacc_iterator MI = (*SI)->memacc_begin(),
-                                   ME = (*SI)->memacc_end();
-         MI != ME; ++MI) {
-      const Value *BaseAddr = (*MI)->getBaseAddr();
+  for (ScopStmt *Stmt : *PollyScop)
+    for (MemoryAccess *MA : *Stmt) {
+      const Value *BaseAddr = MA->getBaseAddr();
       if (ArrayMap.find(BaseAddr) == ArrayMap.end()) {
         ArrayMap.insert(std::make_pair(BaseAddr, nb_arrays));
         ++nb_arrays;
@@ -447,17 +444,16 @@ scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
   unsigned NbColumns = S->getNumIterators() + S->getNumParams() + 2;
   scoplib_matrix_p m = scoplib_matrix_malloc(0, NbColumns);
 
-  for (ScopStmt::memacc_iterator MI = S->memacc_begin(), ME = S->memacc_end();
-       MI != ME; ++MI)
-    if ((*MI)->isRead() == isRead) {
+  for (MemoryAccess *MA : *S)
+    if (MA->isRead() == isRead) {
       // Extract the access function.
-      isl_map *AccessRelation = (*MI)->getAccessRelation();
+      isl_map *AccessRelation = MA->getAccessRelation();
       isl_map_foreach_basic_map(AccessRelation, &accessToMatrix_basic_map, m);
       isl_map_free(AccessRelation);
 
       // Set the index of the memory access base element.
       std::map<const Value *, int>::iterator BA =
-          ArrayMap.find((*MI)->getBaseAddr());
+          ArrayMap.find(MA->getBaseAddr());
       SCOPVAL_set_si(m->p[m->NbRows - 1][0], (*BA).second + 1);
     }
 

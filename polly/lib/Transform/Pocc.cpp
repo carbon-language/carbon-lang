@@ -29,7 +29,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/ADT/SmallString.h"
 
 #include "isl/space.h"
@@ -37,6 +36,7 @@
 #include "isl/constraint.h"
 
 #include <memory>
+#include <system_error>
 
 using namespace llvm;
 using namespace polly;
@@ -253,14 +253,16 @@ void Pocc::printScop(raw_ostream &OS) const {
 
   OS << "\n";
 
-  if (error_code ec = MemoryBuffer::getFile(PlutoStdout.str(), stdoutBuffer))
+  if (std::error_code ec =
+          MemoryBuffer::getFile(PlutoStdout.str(), stdoutBuffer))
     OS << "Could not open pocc stdout file: " + ec.message() << "\n";
   else {
     OS << "pocc stdout: " << stdoutBuffer->getBufferIdentifier() << "\n";
     OS << stdoutBuffer->getBuffer() << "\n";
   }
 
-  if (error_code ec = MemoryBuffer::getFile(PlutoStderr.str(), stderrBuffer))
+  if (std::error_code ec =
+          MemoryBuffer::getFile(PlutoStderr.str(), stderrBuffer))
     OS << "Could not open pocc stderr file: " + ec.message() << "\n";
   else {
     OS << "pocc stderr: " << PlutoStderr << "\n";
