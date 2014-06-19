@@ -141,6 +141,11 @@ void LTOCodeGenerator::setTargetOptions(TargetOptions options) {
   Options.TrapFuncName = options.TrapFuncName;
   Options.PositionIndependentExecutable = options.PositionIndependentExecutable;
   Options.UseInitArray = options.UseInitArray;
+  Options.DataSections = options.DataSections;
+  Options.FunctionSections = options.FunctionSections;
+
+  Options.MCOptions = options.MCOptions;
+  Options.JTType = options.JTType;
 }
 
 void LTOCodeGenerator::setDebugInfo(lto_debug_model debug) {
