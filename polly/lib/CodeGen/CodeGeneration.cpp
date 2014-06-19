@@ -671,18 +671,15 @@ SetVector<Value *> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
   OutputBytes = 0;
 
   // Record the memory reference base addresses.
-  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-    for (SmallVector<MemoryAccess *, 8>::iterator I = Stmt->memacc_begin(),
-                                                  E = Stmt->memacc_end();
-         I != E; ++I) {
-      Value *BaseAddr = const_cast<Value *>((*I)->getBaseAddr());
+  for (ScopStmt *Stmt : *S) {
+    for (MemoryAccess *MA : *Stmt) {
+      Value *BaseAddr = const_cast<Value *>(MA->getBaseAddr());
       Values.insert((BaseAddr));
 
       // FIXME: we assume that there is one and only one array to be written
       // in a SCoP.
       int NumWrites = 0;
-      if ((*I)->isWrite()) {
+      if (MA->isWrite()) {
         ++NumWrites;
         assert(NumWrites <= 1 &&
                "We support at most one array to be written in a SCoP.");
