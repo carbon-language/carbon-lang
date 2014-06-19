@@ -9911,6 +9911,24 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   Expr *Callee = OrigCallee->IgnoreParenCasts();
   bool isPostIncDec = Second && (Op == OO_PlusPlus || Op == OO_MinusMinus);
 
+  if (First->getObjectKind() == OK_ObjCProperty) {
+    BinaryOperatorKind Opc = BinaryOperator::getOverloadedOpcode(Op);
+    if (BinaryOperator::isAssignmentOp(Opc))
+      return SemaRef.checkPseudoObjectAssignment(/*Scope=*/nullptr, OpLoc, Opc,
+                                                 First, Second);
+    ExprResult Result = SemaRef.CheckPlaceholderExpr(First);
+    if (Result.isInvalid())
+      return ExprError();
+    First = Result.get();
+  }
+
+  if (Second && Second->getObjectKind() == OK_ObjCProperty) {
+    ExprResult Result = SemaRef.CheckPlaceholderExpr(Second);
+    if (Result.isInvalid())
+      return ExprError();
+    Second = Result.get();
+  }
+
   // Determine whether this should be a builtin operation.
   if (Op == OO_Subscript) {
     if (!First->getType()->isOverloadableType() &&
