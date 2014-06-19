@@ -35,3 +35,20 @@ void foo(void)
   // Since registerFunc: expects a Derived object as it's second argument, I don't know why this would be legal.
   [Derived registerFunc: ExternFunc];  // expected-warning{{incompatible pointer types sending 'NSObject *(NSObject *, NSObject *)' to parameter of type 'FuncSignature *'}}
 }
+
+// rdar://10751015
+@protocol NSCopying @end
+@interface I
+- (void) Meth : (id <NSCopying>)aKey; // expected-note {{passing argument to parameter 'aKey' here}}
+@end
+
+@class ForwarClass; // expected-note 3 {{conformance of forward class ForwarClass to protocol NSCopying can not be confirmed}}
+
+ForwarClass *Test10751015 (I* pi, ForwarClass *ns_forward) {
+
+  [pi Meth : ns_forward ]; // expected-warning {{sending 'ForwarClass *' to parameter of incompatible type 'id<NSCopying>'}}
+
+  id <NSCopying> id_ns = ns_forward; // expected-warning {{initializing 'id<NSCopying>' with an expression of incompatible type 'ForwarClass *'}}
+
+  return id_ns; // expected-warning {{returning 'id<NSCopying>' from a function with incompatible result type 'ForwarClass *'}}
+}
