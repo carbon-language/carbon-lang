@@ -535,19 +535,6 @@ ConditionValueKindStrings[] = {
   "(not evaluated)", "false", "true"
 };
 
-// We need some operator overloads for string handles.
-bool operator==(const StringHandle &H1, const StringHandle &H2) {
-  const char *S1 = (H1 ? *H1 : "");
-  const char *S2 = (H2 ? *H2 : "");
-  int Diff = strcmp(S1, S2);
-  return Diff == 0;
-}
-bool operator!=(const StringHandle &H1, const StringHandle &H2) {
-  const char *S1 = (H1 ? *H1 : "");
-  const char *S2 = (H2 ? *H2 : "");
-  int Diff = strcmp(S1, S2);
-  return Diff != 0;
-}
 bool operator<(const StringHandle &H1, const StringHandle &H2) {
   const char *S1 = (H1 ? *H1 : "");
   const char *S2 = (H2 ? *H2 : "");
