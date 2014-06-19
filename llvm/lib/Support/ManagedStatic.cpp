@@ -94,6 +94,4 @@ void llvm::llvm_shutdown() {
 
   while (StaticList)
     StaticList->destroy();
-
-  if (llvm_is_multithreaded()) llvm_stop_multithreaded();
 }
