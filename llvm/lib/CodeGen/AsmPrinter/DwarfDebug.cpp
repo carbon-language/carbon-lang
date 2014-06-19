@@ -1038,9 +1038,9 @@ void DwarfDebug::endModule() {
     emitDebugInfoDWO();
     emitDebugAbbrevDWO();
     emitDebugLineDWO();
+    emitDebugLocDWO();
     // Emit DWO addresses.
     AddrPool.emit(*Asm, Asm->getObjFileLowering().getDwarfAddrSection());
-    emitDebugLocDWO();
   } else
     // Emit info into a debug loc section.
     emitDebugLoc();
