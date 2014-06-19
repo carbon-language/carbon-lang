@@ -50,6 +50,7 @@ extern \"C\"                                                                    
 {                                                                                                               \n\
     extern void *class_getMethodImplementation(void *objc_class, void *sel);                                    \n\
     extern void *class_getMethodImplementation_stret(void *objc_class, void *sel);                              \n\
+    extern void * object_getClass (id object);                                                                  \n\
     extern void * sel_getUid(char *name);                                                                       \n\
     extern int printf(const char *format, ...);                                                                 \n\
 }                                                                                                               \n\
@@ -101,20 +102,25 @@ extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object, 
     }                                                                                                           \n\
     else                                                                                                        \n\
     {                                                                                                           \n\
+        // This code seems a little funny, but has its reasons...                                               \n\
+        // The call to [object class] is here because if this is a class, and has not been called into          \n\
+        // yet, we need to do something to force the class to initialize itself.                                \n\
+        // Then the call to object_getClass will actually return the correct class, either the class            \n\
+        // if object is a class instance, or the meta-class if it is a class pointer.                           \n\
         void *class_ptr = (void *) [(id) object class];                                                         \n\
-        if (class_ptr == object)                                                                                \n\
+        return_struct.class_addr = (id)  object_getClass((id) object);                                          \n\
+        if (debug)                                                                                              \n\
         {                                                                                                       \n\
-            struct __lldb_objc_class *class_as_class_struct = (struct __lldb_objc_class *) class_ptr;           \n\
-            if (debug)                                                                                          \n\
-                printf (\"Found a class object, need to return the meta class 0x%p -> 0x%p\\n\",                \n\
-                        class_ptr, class_as_class_struct->isa);                                                 \n\
-            return_struct.class_addr = class_as_class_struct->isa;                                              \n\
-        }                                                                                                       \n\
-        else                                                                                                    \n\
-        {                                                                                                       \n\
-            if (debug)                                                                                          \n\
-                printf (\"[object class] returned: 0x%p.\\n\", class_ptr);                                      \n\
-            return_struct.class_addr = class_ptr;                                                               \n\
+            if (class_ptr == object)                                                                            \n\
+            {                                                                                                   \n\
+                printf (\"Found a class object, need to use the meta class %p -> %p\\n\",                       \n\
+                        class_ptr, return_struct.class_addr);                                                   \n\
+            }                                                                                                   \n\
+            else                                                                                                \n\
+            {                                                                                                   \n\
+                 printf (\"[object class] returned: %p object_getClass: %p.\\n\",                               \n\
+                 class_ptr, return_struct.class_addr);                                                          \n\
+            }                                                                                                   \n\
         }                                                                                                       \n\
     }                                                                                                           \n\
                                                                                                                 \n\
@@ -129,7 +135,7 @@ extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object, 
             char *sel_name = (char *) ((__lldb_msg_ref *) sel)->sel;                                            \n\
             return_struct.sel_addr = sel_getUid (sel_name);                                                     \n\
             if (debug)                                                                                          \n\
-                printf (\"\\n*** Got fixed up selector: 0x%p for name %s.\\n\",                                 \n\
+                printf (\"\\n*** Got fixed up selector: %p for name %s.\\n\",                                   \n\
                         return_struct.sel_addr, sel_name);                                                      \n\
         }                                                                                                       \n\
     }                                                                                                           \n\
@@ -149,7 +155,7 @@ extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object, 
                                                                        return_struct.sel_addr);                 \n\
     }                                                                                                           \n\
     if (debug)                                                                                                  \n\
-        printf (\"\\n*** Returning implementation: 0x%p.\\n\", return_struct.impl_addr);                        \n\
+        printf (\"\\n*** Returning implementation: %p.\\n\", return_struct.impl_addr);                          \n\
                                                                                                                 \n\
     return return_struct.impl_addr;                                                                             \n\
 }                                                                                                               \n\
@@ -158,6 +164,7 @@ const char *AppleObjCTrampolineHandler::g_lookup_implementation_no_stret_functio
 extern \"C\"                                                                                                    \n\
 {                                                                                                               \n\
     extern void *class_getMethodImplementation(void *objc_class, void *sel);                                    \n\
+    extern void * object_getClass (id object);                                                                  \n\
     extern void * sel_getUid(char *name);                                                                       \n\
     extern int printf(const char *format, ...);                                                                 \n\
 }                                                                                                               \n\
@@ -209,20 +216,25 @@ extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object, 
     }                                                                                                           \n\
     else                                                                                                        \n\
     {                                                                                                           \n\
+        // This code seems a little funny, but has its reasons...                                               \n\
+        // The call to [object class] is here because if this is a class, and has not been called into          \n\
+        // yet, we need to do something to force the class to initialize itself.                                \n\
+        // Then the call to object_getClass will actually return the correct class, either the class            \n\
+        // if object is a class instance, or the meta-class if it is a class pointer.                           \n\
         void *class_ptr = (void *) [(id) object class];                                                         \n\
-        if (class_ptr == object)                                                                                \n\
+        return_struct.class_addr = (id)  object_getClass((id) object);                                          \n\
+        if (debug)                                                                                              \n\
         {                                                                                                       \n\
-            struct __lldb_objc_class *class_as_class_struct = (struct __lldb_objc_class *) class_ptr;           \n\
-            if (debug)                                                                                          \n\
-                printf (\"Found a class object, need to return the meta class 0x%p -> 0x%p\\n\",                \n\
-                        class_ptr, class_as_class_struct->isa);                                                 \n\
-            return_struct.class_addr = class_as_class_struct->isa;                                              \n\
-        }                                                                                                       \n\
-        else                                                                                                    \n\
-        {                                                                                                       \n\
-            if (debug)                                                                                          \n\
-                printf (\"[object class] returned: 0x%p.\\n\", class_ptr);                                      \n\
-            return_struct.class_addr = class_ptr;                                                               \n\
+            if (class_ptr == object)                                                                            \n\
+            {                                                                                                   \n\
+                printf (\"Found a class object, need to return the meta class %p -> %p\\n\",                    \n\
+                        class_ptr, return_struct.class_addr);                                                   \n\
+            }                                                                                                   \n\
+            else                                                                                                \n\
+            {                                                                                                   \n\
+                 printf (\"[object class] returned: %p object_getClass: %p.\\n\",                               \n\
+                 class_ptr, return_struct.class_addr);                                                          \n\
+            }                                                                                                   \n\
         }                                                                                                       \n\
     }                                                                                                           \n\
                                                                                                                 \n\
@@ -237,7 +249,7 @@ extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object, 
             char *sel_name = (char *) ((__lldb_msg_ref *) sel)->sel;                                            \n\
             return_struct.sel_addr = sel_getUid (sel_name);                                                     \n\
             if (debug)                                                                                          \n\
-                printf (\"\\n*** Got fixed up selector: 0x%p for name %s.\\n\",                                 \n\
+                printf (\"\\n*** Got fixed up selector: %p for name %s.\\n\",                                   \n\
                         return_struct.sel_addr, sel_name);                                                      \n\
         }                                                                                                       \n\
     }                                                                                                           \n\
