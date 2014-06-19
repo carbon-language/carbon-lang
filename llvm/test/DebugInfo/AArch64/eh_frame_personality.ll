@@ -16,7 +16,7 @@ clean:
 }
 
 ; CHECK: Contents of section .eh_frame:
-; CHECK: 0000 1c000000 00000000 017a504c 5200017c  .........zPLR..|
+; CHECK: 0000 1c000000 00000000 037a504c 5200017c  .........zPLR..|
 ; CHECK: 0010 1e0b0000 00000000 00000000 1b0c1f00  ................
 
 ; Don't really care about the rest:
@@ -33,7 +33,7 @@ clean:
 ; ----------
 ; 1c000000: Length = 0x1c
 ; 00000000: This is a CIE
-; 01: Version 1
+; 03: Version 3
 ; 7a 50 4c 52 00: Augmentation string "zPLR" (personality routine, language-specific data, pointer format)
 ; 01: Code alignment factor 1
 ; 78: Data alignment factor: -8

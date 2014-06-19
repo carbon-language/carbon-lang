@@ -17,7 +17,7 @@ foo:
 // Output is:
 
 // CHECK: Contents of section .eh_frame:
-// CHECK-NEXT: 0000 10000000 00000000 017a5200 017c1e01  .........zR..|..
+// CHECK-NEXT: 0000 10000000 00000000 037a5200 017c1e01  .........zR..|..
 // CHECK-NEXT: 0010 1b0c1f00 10000000 18000000 00000000  ................
 
 
@@ -30,7 +30,7 @@ foo:
 // -------------------
 // 10000000: length of first CIE = 0x10
 // 00000000: This is a CIE
-// 01: version = 0x1
+// 03: version = 0x3
 // 7a 52 00: augmentation string "zR" -- pointer format is specified
 // 01: code alignment factor 1
 // 7c: data alignment factor -4

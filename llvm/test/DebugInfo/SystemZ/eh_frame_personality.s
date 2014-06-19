@@ -37,7 +37,7 @@ DW.ref.__gxx_personality_v0:
 # Contents of the .eh_frame section:
 #
 # 00000000 0000001c 00000000 CIE
-#   Version:               1
+#   Version:               3
 #   Augmentation:          "zPLR"
 #   Code alignment factor: 1
 #   Data alignment factor: -8
@@ -61,7 +61,7 @@ DW.ref.__gxx_personality_v0:
 #   DW_CFA_nop
 #
 # CHECK: Contents of section .eh_frame:
-# CHECK-NEXT: 0000 0000001c 00000000 017a504c 52000178  .........zPLR..x
+# CHECK-NEXT: 0000 0000001c 00000000 037a504c 52000178  .........zPLR..x
 # CHECK-NEXT: 0010 0e079b00 0000001b 1b0c0fa0 01000000  ................
 # CHECK-NEXT: 0020 0000001c 00000024 00000000 00000012  .......$........
 # CHECK-NEXT: 0030 04000000 00468e06 8f05440e c0020000  .....F....D.....

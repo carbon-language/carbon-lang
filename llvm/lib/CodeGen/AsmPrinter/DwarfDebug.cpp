@@ -209,6 +209,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
                                     : MMI->getModule()->getDwarfVersion();
 
+  Asm->OutStreamer.getContext().setDwarfVersion(DwarfVersion);
+
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
     beginModule();

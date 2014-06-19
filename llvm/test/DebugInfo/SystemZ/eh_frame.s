@@ -23,7 +23,7 @@ check_largest_class:
 # Contents of the .eh_frame section:
 #
 # 00000000 0000001c 00000000 CIE
-#   Version:               1
+#   Version:               3
 #   Augmentation:          "zR"
 #   Code alignment factor: 1
 #   Data alignment factor: -8
@@ -48,7 +48,7 @@ check_largest_class:
 #   DW_CFA_nop
 #
 # CHECK: Contents of section .eh_frame:
-# CHECK-NEXT: 0000 00000014 00000000 017a5200 01780e01  .........zR..x..
+# CHECK-NEXT: 0000 00000014 00000000 037a5200 01780e01  .........zR..x..
 # CHECK-NEXT: 0010 1b0c0fa0 01000000 0000001c 0000001c  ................
 # CHECK-NEXT: 0020 00000000 00000012 00468d07 8e068f05  .........F......
 # CHECK-NEXT: 0030 440ec002 00000000                    D.......

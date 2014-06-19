@@ -1270,7 +1270,10 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
 
   // Version
   if (verboseAsm) streamer.AddComment("DW_CIE_VERSION");
-  streamer.EmitIntValue(dwarf::DW_CIE_VERSION, 1);
+  // For DWARF2, we use CIE version 1
+  // For DWARF3+, we use CIE version 3
+  uint8_t CIEVersion = context.getDwarfVersion() <= 2 ? 1 : 3;
+  streamer.EmitIntValue(CIEVersion, 1);
 
   // Augmentation String
   SmallString<8> Augmentation;
@@ -1298,7 +1301,14 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
 
   // Return Address Register
   if (verboseAsm) streamer.AddComment("CIE Return Address Column");
-  streamer.EmitULEB128IntValue(MRI->getDwarfRegNum(MRI->getRARegister(), true));
+  if (CIEVersion == 1) {
+    assert(MRI->getRARegister() <= 255 &&
+           "DWARF 2 encodes return_address_register in one byte");
+    streamer.EmitIntValue(MRI->getDwarfRegNum(MRI->getRARegister(), true), 1);
+  } else {
+    streamer.EmitULEB128IntValue(
+        MRI->getDwarfRegNum(MRI->getRARegister(), true));
+  }
 
   // Augmentation Data Length (optional)
 
