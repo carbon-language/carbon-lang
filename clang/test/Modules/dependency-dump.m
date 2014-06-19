@@ -12,14 +12,4 @@
 // VFS: 'name': "Sub.h"
 // VFS: 'name': "Sub2.h"
 
-// TODO: We need shell to use find here. Is there a simpler way?
-// REQUIRES: shell
-
-// RUN: find %t/vfs -type f | FileCheck %s -check-prefix=DUMP
-// DUMP: Module.framework/Frameworks/SubFramework.framework/Headers/SubFramework.h
-// DUMP: Module.framework/Headers/Buried/Treasure.h
-// DUMP: Module.framework/Headers/Module.h
-// DUMP: Module.framework/Headers/Sub.h
-// DUMP: Module.framework/Headers/Sub2.h
-
 @import Module;
