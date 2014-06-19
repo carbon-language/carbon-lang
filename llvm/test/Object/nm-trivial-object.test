@@ -14,6 +14,8 @@ RUN: llvm-nm %p/Inputs/trivial-object-test.macho-i386 \
 RUN:         | FileCheck %s -check-prefix macho
 RUN: llvm-nm %p/Inputs/trivial-object-test.macho-x86-64 \
 RUN:         | FileCheck %s -check-prefix macho64
+RUN: llvm-nm %p/Inputs/macho-text-data-bss.macho-x86_64 \
+RUN:         | FileCheck %s -check-prefix macho-tdb
 RUN: llvm-nm %p/Inputs/common.coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF-COMMON
 RUN: llvm-nm %p/Inputs/relocatable-with-section-address.elf-x86-64 \
@@ -64,6 +66,11 @@ macho64:                  U _SomeOtherFunction
 macho64: 0000000000000000 T _main
 macho64:                  U _puts
 
+macho-tdb: 0000000000000030 s EH_frame0
+macho-tdb: 0000000000000070 b _b
+macho-tdb: 000000000000000c D _d
+macho-tdb: 0000000000000000 T _t
+macho-tdb: 0000000000000048 S _t.eh
 
 Test that nm uses addresses even with ELF .o files.
 ELF-SEC-ADDR64:      0000000000000058 D a

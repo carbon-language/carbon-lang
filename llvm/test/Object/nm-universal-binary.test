@@ -15,5 +15,5 @@ CHECK-AR: 0000000000000000 T _main
 CHECK-AR: 0000000000000080 S _main.eh
 CHECK-AR:                  U _printf
 CHECK-AR: macho-universal-archive.x86_64.i386(foo.o) (for architecture i386):
-CHECK-AR: 00000008 S _bar
+CHECK-AR: 00000008 D _bar
 CHECK-AR: 00000000 T _foo
