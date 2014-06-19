@@ -7147,7 +7147,7 @@ ARMTargetLowering::EmitLowered__chkstk(MachineInstr *MI,
   // thumb-2 environment, so there is no interworking required.  As a result, we
   // do not expect a veneer to be emitted by the linker, clobbering IP.
   //
-  // Each module recieves its own copy of __chkstk, so no import thunk is
+  // Each module receives its own copy of __chkstk, so no import thunk is
   // required, again, ensuring that IP is not clobbered.
   //
   // Finally, although some linkers may theoretically provide a trampoline for

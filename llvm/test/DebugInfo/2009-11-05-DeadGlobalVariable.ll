@@ -1,5 +1,5 @@
 ; RUN: llc %s -o /dev/null
-; Here variable bar is optimzied away. Do not trip over while trying to generate debug info.
+; Here variable bar is optimized away. Do not trip over while trying to generate debug info.
 
 
 define i32 @foo() nounwind uwtable readnone ssp {

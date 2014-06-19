@@ -1315,7 +1315,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
 
       // Emits an unconditional branch to the FalseBB, obtains the branch
-      // weight, andd adds it to the successor list.
+      // weight, and adds it to the successor list.
       FastEmitBranch(FalseMBB, DbgLoc);
 
       return true;

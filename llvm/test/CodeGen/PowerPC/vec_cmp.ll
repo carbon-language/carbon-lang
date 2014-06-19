@@ -36,7 +36,7 @@ define <8 x i8> @v8si8_cmp(<8 x i8> %x, <8 x i8> %y) nounwind readnone {
 ; CHECK: vcmpequh {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 
 
-; Adicional tests for v16i8 since it is a altivec native type
+; Additional tests for v16i8 since it is a altivec native type
 
 define <16 x i8> @v16si8_cmp_eq(<16 x i8> %x, <16 x i8> %y) nounwind readnone {
   %cmp = icmp eq <16 x i8> %x, %y
@@ -165,7 +165,7 @@ define <4 x i16> @v4si16_cmp(<4 x i16> %x, <4 x i16> %y) nounwind readnone {
 ; CHECK: vcmpequw {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 
 
-; Adicional tests for v8i16 since it is an altivec native type
+; Additional tests for v8i16 since it is an altivec native type
 
 define <8 x i16> @v8si16_cmp_eq(<8 x i16> %x, <8 x i16> %y) nounwind readnone {
 entry:
@@ -298,7 +298,7 @@ define <2 x i32> @v2si32_cmp(<2 x i32> %x, <2 x i32> %y) nounwind readnone {
 ; CHECK: vcmpequw {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 
 
-; Adicional tests for v4si32 since it is an altivec native type
+; Additional tests for v4si32 since it is an altivec native type
 
 define <4 x i32> @v4si32_cmp_eq(<4 x i32> %x, <4 x i32> %y) nounwind readnone {
 entry:
@@ -449,7 +449,7 @@ entry:
 ; CHECK: vcmpeqfp {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 
 
-; Adicional tests for v4f32 since it is a altivec native type
+; Additional tests for v4f32 since it is a altivec native type
 
 define <4 x float> @v4f32_cmp_eq(<4 x float> %x, <4 x float> %y) nounwind readnone {
 entry:
