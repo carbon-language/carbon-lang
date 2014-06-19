@@ -538,10 +538,6 @@ class Builder(threading.Thread):
                 self.logger.info("[" + prefix + "] Configure failed, no configure script " + conf)
                 return -1
 
-            if not os.path.exists(mf):
-                self.logger.info("[" + prefix + "] Configure failed, no makefile " + mf)
-                return -1
-
             if os.path.exists(conf) and os.path.exists(mf):
                 confstat = os.stat(conf)
                 makestat = os.stat(mf)
