@@ -34,6 +34,44 @@ define i16 @zero_sign_bit2(i16 %a, i16 %b) {
   ret i16 %3
 }
 
+declare i16 @bounded(i16 %input);
+declare i32 @__gxx_personality_v0(...);
+!0 = metadata !{i16 0, i16 32768} ; [0, 32767]
+!1 = metadata !{i16 0, i16 32769} ; [0, 32768]
+
+define i16 @add_bounded_values(i16 %a, i16 %b) {
+; CHECK-LABEL: @add_bounded_values(
+entry:
+  %c = call i16 @bounded(i16 %a), !range !0
+  %d = invoke i16 @bounded(i16 %b) to label %cont unwind label %lpad, !range !0
+cont:
+; %c and %d are in [0, 32767]. Therefore, %c + %d doesn't unsigned overflow.
+  %e = add i16 %c, %d
+; CHECK: add nuw i16 %c, %d
+  ret i16 %e
+lpad:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  ret i16 42
+}
+
+define i16 @add_bounded_values_2(i16 %a, i16 %b) {
+; CHECK-LABEL: @add_bounded_values_2(
+entry:
+  %c = call i16 @bounded(i16 %a), !range !1
+  %d = invoke i16 @bounded(i16 %b) to label %cont unwind label %lpad, !range !1
+cont:
+; Similar to add_bounded_values, but %c and %d are in [0, 32768]. Therefore,
+; %c + %d may unsigned overflow and we cannot add NUW.
+  %e = add i16 %c, %d
+; CHECK: add i16 %c, %d
+  ret i16 %e
+lpad:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  ret i16 42
+}
+
 ; CHECK-LABEL: @ripple_nsw1
 ; CHECK: add nsw i16 %a, %b
 define i16 @ripple_nsw1(i16 %x, i16 %y) {

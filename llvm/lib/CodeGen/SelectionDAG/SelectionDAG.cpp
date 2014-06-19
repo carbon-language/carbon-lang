@@ -2084,7 +2084,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
       unsigned MemBits = VT.getScalarType().getSizeInBits();
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
     } else if (const MDNode *Ranges = LD->getRanges()) {
-      computeKnownBitsLoad(*Ranges, KnownZero);
+      computeKnownBitsFromRangeMetadata(*Ranges, KnownZero);
     }
     break;
   }

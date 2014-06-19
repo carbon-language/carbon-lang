@@ -37,7 +37,10 @@ namespace llvm {
   /// for all of the elements in the vector.
   void computeKnownBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
                         const DataLayout *TD = nullptr, unsigned Depth = 0);
-  void computeKnownBitsLoad(const MDNode &Ranges, APInt &KnownZero);
+  /// Compute known bits from the range metadata.
+  /// \p KnownZero the set of bits that are known to be zero
+  void computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
+                                         APInt &KnownZero);
 
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
   /// one.  Convenience wrapper around computeKnownBits.

@@ -2233,7 +2233,8 @@ void Verifier::visitInstruction(Instruction &I) {
   }
 
   MDNode *MD = I.getMetadata(LLVMContext::MD_range);
-  Assert1(!MD || isa<LoadInst>(I), "Ranges are only for loads!", &I);
+  Assert1(!MD || isa<LoadInst>(I) || isa<CallInst>(I) || isa<InvokeInst>(I),
+          "Ranges are only for loads, calls and invokes!", &I);
 
   InstsInThisBlock.insert(&I);
 }

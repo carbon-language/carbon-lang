@@ -217,3 +217,44 @@ define i32 @mul_add_to_mul_6(i32 %x, i32 %y) {
 ; CHECK-NEXT: %add = mul nsw i32 %mul1, 6
 ; CHECK-NEXT: ret i32 %add
 }
+
+; This test and the next test verify that when a range metadata is attached to
+; llvm.cttz, ValueTracking correctly intersects the range specified by the
+; metadata and the range implied by the intrinsic.
+;
+; In this test, the range specified by the metadata is more strict. Therefore,
+; ValueTracking uses that range.
+define i16 @add_cttz(i16 %a) {
+; CHECK-LABEL: @add_cttz(
+  ; llvm.cttz.i16(..., /*is_zero_undefined=*/true) implies the value returned
+  ; is in [0, 16). The range metadata indicates the value returned is in [0, 8).
+  ; Intersecting these ranges, we know the value returned is in [0, 8).
+  ; Therefore, InstCombine will transform
+  ;     add %cttz, 1111 1111 1111 1000 ; decimal -8
+  ; to
+  ;     or  %cttz, 1111 1111 1111 1000
+  %cttz = call i16 @llvm.cttz.i16(i16 %a, i1 true), !range !0
+  %b = add i16 %cttz, -8
+; CHECK: or i16 %cttz, -8
+  ret i16 %b
+}
+declare i16 @llvm.cttz.i16(i16, i1)
+!0 = metadata !{i16 0, i16 8}
+
+; Similar to @add_cttz, but in this test, the range implied by the
+; intrinsic is more strict. Therefore, ValueTracking uses that range.
+define i16 @add_cttz_2(i16 %a) {
+; CHECK-LABEL: @add_cttz_2(
+  ; llvm.cttz.i16(..., /*is_zero_undefined=*/true) implies the value returned
+  ; is in [0, 16). The range metadata indicates the value returned is in
+  ; [0, 32). Intersecting these ranges, we know the value returned is in
+  ; [0, 16). Therefore, InstCombine will transform
+  ;     add %cttz, 1111 1111 1111 0000 ; decimal -16
+  ; to
+  ;     or  %cttz, 1111 1111 1111 0000
+  %cttz = call i16 @llvm.cttz.i16(i16 %a, i1 true), !range !1
+  %b = add i16 %cttz, -16
+; CHECK: or i16 %cttz, -16
+  ret i16 %b
+}
+!1 = metadata !{i16 0, i16 32}

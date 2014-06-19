@@ -6,7 +6,7 @@ entry:
   ret void
 }
 !0 = metadata !{i8 0, i8 1}
-; CHECK: Ranges are only for loads!
+; CHECK: Ranges are only for loads, calls and invokes!
 ; CHECK-NEXT: store i8 0, i8* %x, align 1, !range !0
 
 define i8 @f2(i8* %x) {

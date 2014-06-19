@@ -188,7 +188,8 @@ static void computeKnownBitsMul(Value *Op0, Value *Op1, bool NSW,
     KnownOne.setBit(BitWidth - 1);
 }
 
-void llvm::computeKnownBitsLoad(const MDNode &Ranges, APInt &KnownZero) {
+void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
+                                             APInt &KnownZero) {
   unsigned BitWidth = KnownZero.getBitWidth();
   unsigned NumRanges = Ranges.getNumOperands() / 2;
   assert(NumRanges >= 1);
@@ -338,7 +339,7 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   default: break;
   case Instruction::Load:
     if (MDNode *MD = cast<LoadInst>(I)->getMetadata(LLVMContext::MD_range))
-      computeKnownBitsLoad(*MD, KnownZero);
+      computeKnownBitsFromRangeMetadata(*MD, KnownZero);
     break;
   case Instruction::And: {
     // If either the LHS or the RHS are Zero, the result is zero.
@@ -733,6 +734,12 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     break;
   }
   case Instruction::Call:
+  case Instruction::Invoke:
+    if (MDNode *MD = cast<Instruction>(I)->getMetadata(LLVMContext::MD_range))
+      computeKnownBitsFromRangeMetadata(*MD, KnownZero);
+    // If a range metadata is attached to this IntrinsicInst, intersect the
+    // explicit range specified by the metadata and the implicit range of
+    // the intrinsic.
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
       switch (II->getIntrinsicID()) {
       default: break;
@@ -742,16 +749,16 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
         // If this call is undefined for 0, the result will be less than 2^n.
         if (II->getArgOperand(1) == ConstantInt::getTrue(II->getContext()))
           LowBits -= 1;
-        KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
         break;
       }
       case Intrinsic::ctpop: {
         unsigned LowBits = Log2_32(BitWidth)+1;
-        KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
         break;
       }
       case Intrinsic::x86_sse42_crc32_64_64:
-        KnownZero = APInt::getHighBitsSet(64, 32);
+        KnownZero |= APInt::getHighBitsSet(64, 32);
         break;
       }
     }
