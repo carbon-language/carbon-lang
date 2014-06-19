@@ -865,30 +865,6 @@ Value *FAddCombine::createAddendVal
   return createFMul(OpndVal, Coeff.getValue(Instr->getType()));
 }
 
-// dyn_castFoldableMul - If this value is a multiply that can be folded into
-// other computations (because it has a constant operand), return the
-// non-constant operand of the multiply, and set CST to point to the multiplier.
-// Otherwise, return null.
-//
-static inline Value *dyn_castFoldableMul(Value *V, Constant *&CST) {
-  if (!V->hasOneUse() || !V->getType()->isIntOrIntVectorTy())
-    return nullptr;
-
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return nullptr;
-
-  if (I->getOpcode() == Instruction::Mul)
-    if ((CST = dyn_cast<Constant>(I->getOperand(1))))
-      return I->getOperand(0);
-  if (I->getOpcode() == Instruction::Shl)
-    if ((CST = dyn_cast<Constant>(I->getOperand(1)))) {
-      // The multiplier is really 1 << CST.
-      CST = ConstantExpr::getShl(ConstantInt::get(V->getType(), 1), CST);
-      return I->getOperand(0);
-    }
-  return nullptr;
-}
-
 // If one of the operands only has one non-zero bit, and if the other
 // operand has a known-zero bit in a more significant place than it (not
 // including the sign bit) the ripple may go up to and fill the zero, but
@@ -1088,24 +1064,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (!isa<Constant>(RHS))
     if (Value *V = dyn_castNegVal(RHS))
       return BinaryOperator::CreateSub(LHS, V);
-
-
-  {
-    Constant *C2;
-    if (Value *X = dyn_castFoldableMul(LHS, C2)) {
-      if (X == RHS) // X*C + X --> X * (C+1)
-        return BinaryOperator::CreateMul(RHS, AddOne(C2));
-
-      // X*C1 + X*C2 --> X * (C1+C2)
-      Constant *C1;
-      if (X == dyn_castFoldableMul(RHS, C1))
-        return BinaryOperator::CreateMul(X, ConstantExpr::getAdd(C1, C2));
-    }
-
-    // X + X*C --> X * (C+1)
-    if (dyn_castFoldableMul(RHS, C2) == LHS)
-      return BinaryOperator::CreateMul(LHS, AddOne(C2));
-  }
 
   // A+B --> A|B iff A and B have no bits set in common.
   if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
@@ -1591,16 +1549,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       Value *NewMul = Builder->CreateMul(A, ConstantExpr::getNeg(CI));
       return BinaryOperator::CreateAdd(Op0, NewMul);
     }
-  }
-
-  Constant *C1;
-  if (Value *X = dyn_castFoldableMul(Op0, C1)) {
-    if (X == Op1)  // X*C - X --> X * (C-1)
-      return BinaryOperator::CreateMul(Op1, SubOne(C1));
-
-    Constant *C2;   // X*C1 - X*C2 -> X * (C1-C2)
-    if (X == dyn_castFoldableMul(Op1, C2))
-      return BinaryOperator::CreateMul(X, ConstantExpr::getSub(C1, C2));
   }
 
   // Optimize pointer differences into the same array into a size.  Consider:

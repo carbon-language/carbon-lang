@@ -395,6 +395,127 @@ static bool RightDistributesOverLeft(Instruction::BinaryOps LOp,
   return false;
 }
 
+/// This function returns identity value for given opcode, which can be used to
+/// factor patterns like (X * 2) + X ==> (X * 2) + (X * 1) ==> X * (2 + 1).
+static Value *getIdentityValue(Instruction::BinaryOps OpCode, Value *V) {
+  if (isa<Constant>(V))
+    return nullptr;
+
+  if (OpCode == Instruction::Mul)
+    return ConstantInt::get(V->getType(), 1);
+
+  // TODO: We can handle other cases e.g. Instruction::And, Instruction::Or etc.
+
+  return nullptr;
+}
+
+/// This function factors binary ops which can be combined using distributive
+/// laws. This also factor SHL as MUL e.g. SHL(X, 2) ==> MUL(X, 4).
+Instruction::BinaryOps getBinOpsForFactorization(BinaryOperator *Op,
+                                                 Value *&LHS, Value *&RHS) {
+  if (!Op)
+    return Instruction::BinaryOpsEnd;
+
+  if (Op->getOpcode() == Instruction::Shl) {
+    if (Constant *CST = dyn_cast<Constant>(Op->getOperand(1))) {
+      // The multiplier is really 1 << CST.
+      RHS = ConstantExpr::getShl(ConstantInt::get(Op->getType(), 1), CST);
+      LHS = Op->getOperand(0);
+      return Instruction::Mul;
+    }
+  }
+
+  // TODO: We can add other conversions e.g. shr => div etc.
+
+  LHS = Op->getOperand(0);
+  RHS = Op->getOperand(1);
+  return Op->getOpcode();
+}
+
+/// This tries to simplify binary operations by factorizing out common terms
+/// (e. g. "(A*B)+(A*C)" -> "A*(B+C)").
+static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
+                               const DataLayout *DL, BinaryOperator &I,
+                               Instruction::BinaryOps InnerOpcode, Value *A,
+                               Value *B, Value *C, Value *D) {
+
+  // If any of A, B, C, D are null, we can not factor I, return early.
+  // Checking A and C should be enough.
+  if (!A || !C || !B || !D)
+    return nullptr;
+
+  Value *SimplifiedInst = nullptr;
+  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+  Instruction::BinaryOps TopLevelOpcode = I.getOpcode();
+
+  // Does "X op' Y" always equal "Y op' X"?
+  bool InnerCommutative = Instruction::isCommutative(InnerOpcode);
+
+  // Does "X op' (Y op Z)" always equal "(X op' Y) op (X op' Z)"?
+  if (LeftDistributesOverRight(InnerOpcode, TopLevelOpcode))
+    // Does the instruction have the form "(A op' B) op (A op' D)" or, in the
+    // commutative case, "(A op' B) op (C op' A)"?
+    if (A == C || (InnerCommutative && A == D)) {
+      if (A != C)
+        std::swap(C, D);
+      // Consider forming "A op' (B op D)".
+      // If "B op D" simplifies then it can be formed with no cost.
+      Value *V = SimplifyBinOp(TopLevelOpcode, B, D, DL);
+      // If "B op D" doesn't simplify then only go on if both of the existing
+      // operations "A op' B" and "C op' D" will be zapped as no longer used.
+      if (!V && LHS->hasOneUse() && RHS->hasOneUse())
+        V = Builder->CreateBinOp(TopLevelOpcode, B, D, RHS->getName());
+      if (V) {
+        SimplifiedInst = Builder->CreateBinOp(InnerOpcode, A, V);
+      }
+    }
+
+  // Does "(X op Y) op' Z" always equal "(X op' Z) op (Y op' Z)"?
+  if (!SimplifiedInst && RightDistributesOverLeft(TopLevelOpcode, InnerOpcode))
+    // Does the instruction have the form "(A op' B) op (C op' B)" or, in the
+    // commutative case, "(A op' B) op (B op' D)"?
+    if (B == D || (InnerCommutative && B == C)) {
+      if (B != D)
+        std::swap(C, D);
+      // Consider forming "(A op C) op' B".
+      // If "A op C" simplifies then it can be formed with no cost.
+      Value *V = SimplifyBinOp(TopLevelOpcode, A, C, DL);
+
+      // If "A op C" doesn't simplify then only go on if both of the existing
+      // operations "A op' B" and "C op' D" will be zapped as no longer used.
+      if (!V && LHS->hasOneUse() && RHS->hasOneUse())
+        V = Builder->CreateBinOp(TopLevelOpcode, A, C, LHS->getName());
+      if (V) {
+        SimplifiedInst = Builder->CreateBinOp(InnerOpcode, V, B);
+      }
+    }
+
+  if (SimplifiedInst) {
+    ++NumFactor;
+    SimplifiedInst->takeName(&I);
+
+    // Check if we can add NSW flag to SimplifiedInst. If so, set NSW flag.
+    // TODO: Check for NUW.
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(SimplifiedInst)) {
+      if (isa<OverflowingBinaryOperator>(SimplifiedInst)) {
+        bool HasNSW = false;
+        if (isa<OverflowingBinaryOperator>(&I))
+          HasNSW = I.hasNoSignedWrap();
+
+        if (BinaryOperator *Op0 = dyn_cast<BinaryOperator>(LHS))
+          if (isa<OverflowingBinaryOperator>(Op0))
+            HasNSW &= Op0->hasNoSignedWrap();
+
+        if (BinaryOperator *Op1 = dyn_cast<BinaryOperator>(RHS))
+          if (isa<OverflowingBinaryOperator>(Op1))
+            HasNSW &= Op1->hasNoSignedWrap();
+        BO->setHasNoSignedWrap(HasNSW);
+      }
+    }
+  }
+  return SimplifiedInst;
+}
+
 /// SimplifyUsingDistributiveLaws - This tries to simplify binary operations
 /// which some other binary operation distributes over either by factorizing
 /// out common terms (eg "(A*B)+(A*C)" -> "A*(B+C)") or expanding out if this
@@ -404,65 +525,33 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   BinaryOperator *Op0 = dyn_cast<BinaryOperator>(LHS);
   BinaryOperator *Op1 = dyn_cast<BinaryOperator>(RHS);
-  Instruction::BinaryOps TopLevelOpcode = I.getOpcode(); // op
 
   // Factorization.
-  if (Op0 && Op1 && Op0->getOpcode() == Op1->getOpcode()) {
-    // The instruction has the form "(A op' B) op (C op' D)".  Try to factorize
-    // a common term.
-    Value *A = Op0->getOperand(0), *B = Op0->getOperand(1);
-    Value *C = Op1->getOperand(0), *D = Op1->getOperand(1);
-    Instruction::BinaryOps InnerOpcode = Op0->getOpcode(); // op'
+  Value *A = nullptr, *B = nullptr, *C = nullptr, *D = nullptr;
+  Instruction::BinaryOps LHSOpcode = getBinOpsForFactorization(Op0, A, B);
+  Instruction::BinaryOps RHSOpcode = getBinOpsForFactorization(Op1, C, D);
 
-    // Does "X op' Y" always equal "Y op' X"?
-    bool InnerCommutative = Instruction::isCommutative(InnerOpcode);
-
-    // Does "X op' (Y op Z)" always equal "(X op' Y) op (X op' Z)"?
-    if (LeftDistributesOverRight(InnerOpcode, TopLevelOpcode))
-      // Does the instruction have the form "(A op' B) op (A op' D)" or, in the
-      // commutative case, "(A op' B) op (C op' A)"?
-      if (A == C || (InnerCommutative && A == D)) {
-        if (A != C)
-          std::swap(C, D);
-        // Consider forming "A op' (B op D)".
-        // If "B op D" simplifies then it can be formed with no cost.
-        Value *V = SimplifyBinOp(TopLevelOpcode, B, D, DL);
-        // If "B op D" doesn't simplify then only go on if both of the existing
-        // operations "A op' B" and "C op' D" will be zapped as no longer used.
-        if (!V && Op0->hasOneUse() && Op1->hasOneUse())
-          V = Builder->CreateBinOp(TopLevelOpcode, B, D, Op1->getName());
-        if (V) {
-          ++NumFactor;
-          V = Builder->CreateBinOp(InnerOpcode, A, V);
-          V->takeName(&I);
-          return V;
-        }
-      }
-
-    // Does "(X op Y) op' Z" always equal "(X op' Z) op (Y op' Z)"?
-    if (RightDistributesOverLeft(TopLevelOpcode, InnerOpcode))
-      // Does the instruction have the form "(A op' B) op (C op' B)" or, in the
-      // commutative case, "(A op' B) op (B op' D)"?
-      if (B == D || (InnerCommutative && B == C)) {
-        if (B != D)
-          std::swap(C, D);
-        // Consider forming "(A op C) op' B".
-        // If "A op C" simplifies then it can be formed with no cost.
-        Value *V = SimplifyBinOp(TopLevelOpcode, A, C, DL);
-        // If "A op C" doesn't simplify then only go on if both of the existing
-        // operations "A op' B" and "C op' D" will be zapped as no longer used.
-        if (!V && Op0->hasOneUse() && Op1->hasOneUse())
-          V = Builder->CreateBinOp(TopLevelOpcode, A, C, Op0->getName());
-        if (V) {
-          ++NumFactor;
-          V = Builder->CreateBinOp(InnerOpcode, V, B);
-          V->takeName(&I);
-          return V;
-        }
-      }
+  // The instruction has the form "(A op' B) op (C op' D)".  Try to factorize
+  // a common term.
+  if (LHSOpcode == RHSOpcode) {
+    if (Value *V = tryFactorization(Builder, DL, I, LHSOpcode, A, B, C, D))
+      return V;
   }
 
+  // The instruction has the form "(A op' B) op (C)".  Try to factorize common
+  // term.
+  if (Value *V = tryFactorization(Builder, DL, I, LHSOpcode, A, B, RHS,
+                                  getIdentityValue(LHSOpcode, RHS)))
+    return V;
+
+  // The instruction has the form "(B) op (C op' D)".  Try to factorize common
+  // term.
+  if (Value *V = tryFactorization(Builder, DL, I, RHSOpcode, LHS,
+                                  getIdentityValue(RHSOpcode, LHS), C, D))
+    return V;
+
   // Expansion.
+  Instruction::BinaryOps TopLevelOpcode = I.getOpcode();
   if (Op0 && RightDistributesOverLeft(Op0->getOpcode(), TopLevelOpcode)) {
     // The instruction has the form "(A op' B) op C".  See if expanding it out
     // to "(A op C) op' (B op C)" results in simplifications.
