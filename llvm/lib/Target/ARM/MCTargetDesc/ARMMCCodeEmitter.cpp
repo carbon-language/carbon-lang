@@ -1047,8 +1047,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   // we have a movt or a movw, but that led to misleadingly results.
   // This is now disallowed in the the AsmParser in validateInstruction()
   // so this should never happen.
-  assert(0 && "expression without :upper16: or :lower16:");
-  return 0;
+  llvm_unreachable("expression without :upper16: or :lower16:");
 }
 
 uint32_t ARMMCCodeEmitter::

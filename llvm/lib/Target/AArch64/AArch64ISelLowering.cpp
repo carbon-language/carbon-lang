@@ -823,8 +823,7 @@ AArch64TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 #ifndef NDEBUG
     MI->dump();
 #endif
-    assert(0 && "Unexpected instruction for custom inserter!");
-    break;
+    llvm_unreachable("Unexpected instruction for custom inserter!");
 
   case AArch64::F128CSEL:
     return EmitF128CSEL(MI, BB);
@@ -833,7 +832,6 @@ AArch64TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case TargetOpcode::PATCHPOINT:
     return emitPatchPoint(MI, BB);
   }
-  llvm_unreachable("Unexpected instruction for custom inserter!");
 }
 
 //===----------------------------------------------------------------------===//

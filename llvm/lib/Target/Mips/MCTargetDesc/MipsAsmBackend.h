@@ -65,7 +65,7 @@ public:
                              const MCRelaxableFragment *DF,
                              const MCAsmLayout &Layout) const override {
     // FIXME.
-    assert(0 && "RelaxInstruction() unimplemented");
+    llvm_unreachable("RelaxInstruction() unimplemented");
     return false;
   }
 

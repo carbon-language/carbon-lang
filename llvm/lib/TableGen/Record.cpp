@@ -811,20 +811,14 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   }
   case HEAD: {
     if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      if (LHSl->getSize() == 0) {
-        assert(0 && "Empty list in car");
-        return nullptr;
-      }
+      assert(LHSl->getSize() != 0 && "Empty list in car");
       return LHSl->getElement(0);
     }
     break;
   }
   case TAIL: {
     if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      if (LHSl->getSize() == 0) {
-        assert(0 && "Empty list in cdr");
-        return nullptr;
-      }
+      assert(LHSl->getSize() != 0 && "Empty list in cdr");
       // Note the +1.  We can't just pass the result of getValues()
       // directly.
       ArrayRef<Init *>::iterator begin = LHSl->getValues().begin()+1;

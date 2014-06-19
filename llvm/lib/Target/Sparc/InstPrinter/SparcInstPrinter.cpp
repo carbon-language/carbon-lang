@@ -173,6 +173,6 @@ void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
 bool SparcInstPrinter::printGetPCX(const MCInst *MI, unsigned opNum,
                                   raw_ostream &O)
 {
-  assert(0 && "FIXME: Implement SparcInstPrinter::printGetPCX.");
+  llvm_unreachable("FIXME: Implement SparcInstPrinter::printGetPCX.");
   return true;
 }

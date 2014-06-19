@@ -133,7 +133,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (Expr->EvaluateAsAbsolute(Res))
     return Res;
 
-  assert(0 && "Unhandled expression!");
+  llvm_unreachable("Unhandled expression!");
   return 0;
 }
 

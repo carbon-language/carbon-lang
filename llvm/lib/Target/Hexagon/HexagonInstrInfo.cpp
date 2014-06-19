@@ -1538,14 +1538,13 @@ int HexagonInstrInfo::GetDotOldOp(const int opc) const {
   int NewOp = opc;
   if (isPredicated(NewOp) && isPredicatedNew(NewOp)) { // Get predicate old form
     NewOp = Hexagon::getPredOldOpcode(NewOp);
-    if (NewOp < 0)
-      assert(0 && "Couldn't change predicate new instruction to its old form.");
+    assert(NewOp >= 0 &&
+           "Couldn't change predicate new instruction to its old form.");
   }
 
   if (isNewValueStore(NewOp)) { // Convert into non-new-value format
     NewOp = Hexagon::getNonNVStore(NewOp);
-    if (NewOp < 0)
-      assert(0 && "Couldn't change new-value store to its old form.");
+    assert(NewOp >= 0 && "Couldn't change new-value store to its old form.");
   }
   return NewOp;
 }

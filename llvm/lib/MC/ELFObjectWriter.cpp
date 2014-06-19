@@ -1574,8 +1574,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
     break;
 
   default:
-    assert(0 && "FIXME: sh_type value not supported!");
-    break;
+    llvm_unreachable("FIXME: sh_type value not supported!");
   }
 
   if (TargetObjectWriter->getEMachine() == ELF::EM_ARM &&

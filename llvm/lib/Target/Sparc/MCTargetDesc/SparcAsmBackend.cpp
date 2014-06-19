@@ -196,7 +196,7 @@ namespace {
                               const MCRelaxableFragment *DF,
                               const MCAsmLayout &Layout) const override {
       // FIXME.
-      assert(0 && "fixupNeedsRelaxation() unimplemented");
+      llvm_unreachable("fixupNeedsRelaxation() unimplemented");
       return false;
     }
     void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {

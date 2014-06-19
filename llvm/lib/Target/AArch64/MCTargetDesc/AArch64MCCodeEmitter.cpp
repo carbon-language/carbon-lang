@@ -218,13 +218,9 @@ AArch64MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                                         const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
-  else {
-    assert(MO.isImm() && "did not expect relocated expression");
-    return static_cast<unsigned>(MO.getImm());
-  }
 
-  assert(0 && "Unable to encode MCOperand!");
-  return 0;
+  assert(MO.isImm() && "did not expect relocated expression");
+  return static_cast<unsigned>(MO.getImm());
 }
 
 template<unsigned FixupKind> uint32_t

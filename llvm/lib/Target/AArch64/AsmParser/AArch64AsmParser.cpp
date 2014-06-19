@@ -3447,8 +3447,7 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   case Match_MnemonicFail:
     return Error(Loc, "unrecognized instruction mnemonic");
   default:
-    assert(0 && "unexpected error code!");
-    return Error(Loc, "invalid instruction format");
+    llvm_unreachable("unexpected error code!");
   }
 }
 

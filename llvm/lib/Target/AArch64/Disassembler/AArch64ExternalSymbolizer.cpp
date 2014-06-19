@@ -37,8 +37,7 @@ getVariant(uint64_t LLVMDisassembler_VariantKind) {
   case LLVMDisassembler_VariantKind_ARM64_TLVP:
   case LLVMDisassembler_VariantKind_ARM64_TLVOFF:
   default:
-    assert(0 && "bad LLVMDisassembler_VariantKind");
-    return MCSymbolRefExpr::VK_None;
+    llvm_unreachable("bad LLVMDisassembler_VariantKind");
   }
 }
 

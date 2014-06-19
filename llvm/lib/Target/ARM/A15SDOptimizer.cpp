@@ -321,8 +321,7 @@ unsigned A15SDOptimizer::optimizeSDPattern(MachineInstr *MI) {
       return optimizeAllLanesPattern(MI, MI->getOperand(0).getReg());
   }
 
-  assert(0 && "Unhandled update pattern!");
-  return 0;
+  llvm_unreachable("Unhandled update pattern!");
 }
 
 // Return true if this MachineInstr inserts a scalar (SPR) value into
