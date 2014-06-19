@@ -150,7 +150,7 @@ public:
 
 private:
   bool ParseSectionName(StringRef &SectionName);
-  bool ParseSectionArguments(bool IsPush);
+  bool ParseSectionArguments(bool IsPush, SMLoc loc);
   unsigned parseSunStyleSectionFlags();
 };
 
@@ -382,7 +382,7 @@ unsigned ELFAsmParser::parseSunStyleSectionFlags() {
 bool ELFAsmParser::ParseDirectivePushSection(StringRef s, SMLoc loc) {
   getStreamer().PushSection();
 
-  if (ParseSectionArguments(/*IsPush=*/true)) {
+  if (ParseSectionArguments(/*IsPush=*/true, loc)) {
     getStreamer().PopSection();
     return true;
   }
@@ -397,11 +397,11 @@ bool ELFAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
 }
 
 // FIXME: This is a work in progress.
-bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
-  return ParseSectionArguments(/*IsPush=*/false);
+bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc loc) {
+  return ParseSectionArguments(/*IsPush=*/false, loc);
 }
 
-bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
+bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   StringRef SectionName;
 
   if (ParseSectionName(SectionName))
@@ -545,10 +545,24 @@ EndStmt:
   }
 
   SectionKind Kind = computeSectionKind(Flags, Size);
-  getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
-                                                         Flags, Kind, Size,
-                                                         GroupName),
-                              Subsection);
+  const MCSection *ELFSection = getContext().getELFSection(
+      SectionName, Type, Flags, Kind, Size, GroupName);
+  getStreamer().SwitchSection(ELFSection, Subsection);
+
+  if (getContext().getGenDwarfForAssembly()) {
+    auto &Sections = getContext().getGenDwarfSectionSyms();
+    auto InsertResult = Sections.insert(
+        std::make_pair(ELFSection, std::make_pair(nullptr, nullptr)));
+    if (InsertResult.second) {
+      if (getContext().getDwarfVersion() <= 2)
+        Error(loc, "DWARF2 only supports one section per compilation unit");
+
+      MCSymbol *SectionStartSymbol = getContext().CreateTempSymbol();
+      getStreamer().EmitLabel(SectionStartSymbol);
+      InsertResult.first->second.first = SectionStartSymbol;
+    }
+  }
+
   return false;
 }
 

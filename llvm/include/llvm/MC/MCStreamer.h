@@ -722,6 +722,8 @@ public:
   virtual void FinishImpl() = 0;
   /// Finish - Finish emission of machine code.
   void Finish();
+
+  virtual bool mayHaveInstructions() const { return true; }
 };
 
 /// createNullStreamer - Create a dummy machine code streamer, which does

@@ -340,6 +340,29 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
   return !MCDwarfFiles[FileNumber].Name.empty();
 }
 
+/// finalizeDwarfSections - Emit end symbols for each non-empty code section.
+/// Also remove empty sections from SectionStartEndSyms, to avoid generating
+/// useless debug info for them.
+void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
+  MCContext &context = MCOS.getContext();
+
+  auto sec = SectionStartEndSyms.begin();
+  while (sec != SectionStartEndSyms.end()) {
+    assert(sec->second.first && "Start symbol must be set by now");
+    MCOS.SwitchSection(sec->first);
+    if (MCOS.mayHaveInstructions()) {
+      MCSymbol *SectionEndSym = context.CreateTempSymbol();
+      MCOS.EmitLabel(SectionEndSym);
+      sec->second.second = SectionEndSym;
+      ++sec;
+    } else {
+      MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *> >::iterator
+        to_erase = sec;
+      sec = SectionStartEndSyms.erase(to_erase);
+    }
+  }
+}
+
 void MCContext::FatalError(SMLoc Loc, const Twine &Msg) const {
   // If we have a source manager and a location, use it. Otherwise just
   // use the generic report_fatal_error().

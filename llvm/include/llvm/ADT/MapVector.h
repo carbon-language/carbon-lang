@@ -123,6 +123,15 @@ public:
     Map.erase(Pos);
     Vector.pop_back();
   }
+
+  /// \brief Remove the element given by Iterator.
+  /// Returns an iterator to the element following the one which was removed,
+  /// which may be end().
+  typename VectorType::iterator erase(typename VectorType::iterator Iterator) {
+    typename MapType::iterator MapIterator = Map.find(Iterator->first);
+    Map.erase(MapIterator);
+    return Vector.erase(Iterator);
+  }
 };
 
 }

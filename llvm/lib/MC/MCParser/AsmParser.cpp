@@ -633,10 +633,12 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // If we are generating dwarf for assembly source files save the initial text
   // section and generate a .file directive.
   if (getContext().getGenDwarfForAssembly()) {
-    getContext().setGenDwarfSection(getStreamer().getCurrentSection().first);
     MCSymbol *SectionStartSym = getContext().CreateTempSymbol();
     getStreamer().EmitLabel(SectionStartSym);
-    getContext().setGenDwarfSectionStartSym(SectionStartSym);
+    auto InsertResult = getContext().addGenDwarfSection(
+        getStreamer().getCurrentSection().first);
+    assert(InsertResult.second && ".text section should not have debug info yet");
+    InsertResult.first->second.first = SectionStartSym;
     getContext().setGenDwarfFileNumber(getStreamer().EmitDwarfFileDirective(
         0, StringRef(), getContext().getMainFileName()));
   }
@@ -1592,12 +1594,11 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
     printMessage(IDLoc, SourceMgr::DK_Note, OS.str());
   }
 
-  // If we are generating dwarf for assembly source files and the current
-  // section is the initial text section then generate a .loc directive for
-  // the instruction.
+  // If we are generating dwarf for the current section then generate a .loc
+  // directive for the instruction.
   if (!HadError && getContext().getGenDwarfForAssembly() &&
-      getContext().getGenDwarfSection() ==
-          getStreamer().getCurrentSection().first) {
+      getContext().getGenDwarfSectionSyms().count(
+        getStreamer().getCurrentSection().first)) {
 
     unsigned Line = SrcMgr.FindLineNumber(IDLoc, CurBuffer);
 
@@ -2029,7 +2030,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
           break;
 
       if (FAI >= NParameters) {
-	assert(M && "expected macro to be defined");
+    assert(M && "expected macro to be defined");
         Error(IDLoc,
               "parameter named '" + FA.Name + "' does not exist for macro '" +
               M->Name + "'");

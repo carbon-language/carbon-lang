@@ -126,6 +126,10 @@ public:
   void EmitFill(uint64_t NumBytes, uint8_t FillValue) override;
   void EmitZeros(uint64_t NumBytes) override;
   void FinishImpl() override;
+
+  virtual bool mayHaveInstructions() const {
+    return getCurrentSectionData()->hasInstructions();
+  }
 };
 
 } // end namespace llvm

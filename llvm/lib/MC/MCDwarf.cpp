@@ -19,6 +19,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -518,8 +519,12 @@ static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
   MCOS->EmitULEB128IntValue(dwarf::DW_TAG_compile_unit);
   MCOS->EmitIntValue(dwarf::DW_CHILDREN_yes, 1);
   EmitAbbrev(MCOS, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4);
-  EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
-  EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
+  if (MCOS->getContext().getGenDwarfSectionSyms().size() > 1) {
+    EmitAbbrev(MCOS, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4);
+  } else {
+    EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
+    EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
+  }
   EmitAbbrev(MCOS, dwarf::DW_AT_name, dwarf::DW_FORM_string);
   if (!context.getCompilationDir().empty())
     EmitAbbrev(MCOS, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string);
@@ -552,20 +557,14 @@ static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
 }
 
 // When generating dwarf for assembly source files this emits the data for
-// .debug_aranges section.  Which contains a header and a table of pairs of
-// PointerSize'ed values for the address and size of section(s) with line table
-// entries (just the default .text in our case) and a terminating pair of zeros.
+// .debug_aranges section. This section contains a header and a table of pairs
+// of PointerSize'ed values for the address and size of section(s) with line
+// table entries.
 static void EmitGenDwarfAranges(MCStreamer *MCOS,
                                 const MCSymbol *InfoSectionSymbol) {
   MCContext &context = MCOS->getContext();
 
-  // Create a symbol at the end of the section that we are creating the dwarf
-  // debugging info to use later in here as part of the expression to calculate
-  // the size of the section for the table.
-  MCOS->SwitchSection(context.getGenDwarfSection());
-  MCSymbol *SectionEndSym = context.CreateTempSymbol();
-  MCOS->EmitLabel(SectionEndSym);
-  context.setGenDwarfSectionEndSym(SectionEndSym);
+  auto &Sections = context.getGenDwarfSectionSyms();
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
 
@@ -583,8 +582,8 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
   Length += Pad;
 
   // Add the size of the pair of PointerSize'ed values for the address and size
-  // of the one default .text section we have in the table.
-  Length += 2 * AddrSize;
+  // of each section we have in the table.
+  Length += 2 * AddrSize * Sections.size();
   // And the pair of terminating zeros.
   Length += 2 * AddrSize;
 
@@ -608,14 +607,21 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
   for(int i = 0; i < Pad; i++)
     MCOS->EmitIntValue(0, 1);
 
-  // Now emit the table of pairs of PointerSize'ed values for the section(s)
-  // address and size, in our case just the one default .text section.
-  const MCExpr *Addr = MCSymbolRefExpr::Create(
-    context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
-  const MCExpr *Size = MakeStartMinusEndExpr(*MCOS,
-    *context.getGenDwarfSectionStartSym(), *SectionEndSym, 0);
-  MCOS->EmitValue(Addr, AddrSize);
-  MCOS->EmitAbsValue(Size, AddrSize);
+  // Now emit the table of pairs of PointerSize'ed values for the section
+  // addresses and sizes.
+  for (const auto &sec : Sections) {
+    MCSymbol* StartSymbol = sec.second.first;
+    MCSymbol* EndSymbol = sec.second.second;
+    assert(StartSymbol && "StartSymbol must not be NULL");
+    assert(EndSymbol && "EndSymbol must not be NULL");
+
+    const MCExpr *Addr = MCSymbolRefExpr::Create(
+      StartSymbol, MCSymbolRefExpr::VK_None, context);
+    const MCExpr *Size = MakeStartMinusEndExpr(*MCOS,
+      *StartSymbol, *EndSymbol, 0);
+    MCOS->EmitValue(Addr, AddrSize);
+    MCOS->EmitAbsValue(Size, AddrSize);
+  }
 
   // And finally the pair of terminating zeros.
   MCOS->EmitIntValue(0, AddrSize);
@@ -627,7 +633,8 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
 // DIE and a list of label DIEs.
 static void EmitGenDwarfInfo(MCStreamer *MCOS,
                              const MCSymbol *AbbrevSectionSymbol,
-                             const MCSymbol *LineSectionSymbol) {
+                             const MCSymbol *LineSectionSymbol,
+                             const MCSymbol *RangesSectionSymbol) {
   MCContext &context = MCOS->getContext();
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
@@ -674,15 +681,37 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     MCOS->EmitIntValue(0, 4);
   }
 
-  // AT_low_pc, the first address of the default .text section.
-  const MCExpr *Start = MCSymbolRefExpr::Create(
-    context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
-  MCOS->EmitValue(Start, AddrSize);
+  if (RangesSectionSymbol) {
+    // There are multiple sections containing code, so we must use the
+    // .debug_ranges sections.
 
-  // AT_high_pc, the last address of the default .text section.
-  const MCExpr *End = MCSymbolRefExpr::Create(
-    context.getGenDwarfSectionEndSym(), MCSymbolRefExpr::VK_None, context);
-  MCOS->EmitValue(End, AddrSize);
+    // AT_ranges, the 4 byte offset from the start of the .debug_ranges section
+    // to the address range list for this compilation unit.
+    MCOS->EmitSymbolValue(RangesSectionSymbol, 4);
+  } else {
+    // If we only have one non-empty code section, we can use the simpler
+    // AT_low_pc and AT_high_pc attributes.
+
+    // Find the first (and only) non-empty text section
+    auto &Sections = context.getGenDwarfSectionSyms();
+    const auto TextSection = Sections.begin();
+    assert(TextSection != Sections.end() && "No text section found");
+
+    MCSymbol* StartSymbol = TextSection->second.first;
+    MCSymbol* EndSymbol = TextSection->second.second;
+    assert(StartSymbol && "StartSymbol must not be NULL");
+    assert(EndSymbol && "EndSymbol must not be NULL");
+
+    // AT_low_pc, the first address of the default .text section.
+    const MCExpr *Start = MCSymbolRefExpr::Create(
+        StartSymbol, MCSymbolRefExpr::VK_None, context);
+    MCOS->EmitValue(Start, AddrSize);
+
+    // AT_high_pc, the last address of the default .text section.
+    const MCExpr *End = MCSymbolRefExpr::Create(
+      EndSymbol, MCSymbolRefExpr::VK_None, context);
+    MCOS->EmitValue(End, AddrSize);
+  }
 
   // AT_name, the name of the source file.  Reconstruct from the first directory
   // and file table entries.
@@ -766,13 +795,51 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   MCOS->EmitLabel(InfoEnd);
 }
 
+// When generating dwarf for assembly source files this emits the data for
+// .debug_ranges section. We only emit one range list, which spans all of the
+// executable sections of this file.
+static void EmitGenDwarfRanges(MCStreamer *MCOS) {
+  MCContext &context = MCOS->getContext();
+  auto &Sections = context.getGenDwarfSectionSyms();
+
+  const MCAsmInfo *AsmInfo = context.getAsmInfo();
+  int AddrSize = AsmInfo->getPointerSize();
+
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfRangesSection());
+
+  for (const auto sec : Sections) {
+
+    MCSymbol* StartSymbol = sec.second.first;
+    MCSymbol* EndSymbol = sec.second.second;
+    assert(StartSymbol && "StartSymbol must not be NULL");
+    assert(EndSymbol && "EndSymbol must not be NULL");
+
+    // Emit a base address selection entry for the start of this section
+    const MCExpr *SectionStartAddr = MCSymbolRefExpr::Create(
+      StartSymbol, MCSymbolRefExpr::VK_None, context);
+    MCOS->EmitFill(AddrSize, 0xFF);
+    MCOS->EmitValue(SectionStartAddr, AddrSize);
+
+    // Emit a range list entry spanning this section
+    const MCExpr *SectionSize = MakeStartMinusEndExpr(*MCOS,
+      *StartSymbol, *EndSymbol, 0);
+    MCOS->EmitIntValue(0, AddrSize);
+    MCOS->EmitAbsValue(SectionSize, AddrSize);
+  }
+
+  // Emit end of list entry
+  MCOS->EmitIntValue(0, AddrSize);
+  MCOS->EmitIntValue(0, AddrSize);
+}
+
 //
 // When generating dwarf for assembly source files this emits the Dwarf
 // sections.
 //
 void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
-  // Create the dwarf sections in this order (.debug_line already created).
   MCContext &context = MCOS->getContext();
+
+  // Create the dwarf sections in this order (.debug_line already created).
   const MCAsmInfo *AsmInfo = context.getAsmInfo();
   bool CreateDwarfSectionSymbols =
       AsmInfo->doesDwarfUseRelocationsAcrossSections();
@@ -781,6 +848,22 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
     LineSectionSymbol = MCOS->getDwarfLineTableSymbol(0);
   MCSymbol *AbbrevSectionSymbol = nullptr;
   MCSymbol *InfoSectionSymbol = nullptr;
+  MCSymbol *RangesSectionSymbol = NULL;
+
+  // Create end symbols for each section, and remove empty sections
+  MCOS->getContext().finalizeDwarfSections(*MCOS);
+
+  // If there are no sections to generate debug info for, we don't need
+  // to do anything
+  if (MCOS->getContext().getGenDwarfSectionSyms().empty())
+    return;
+
+  // We only need to use the .debug_ranges section if we have multiple
+  // code sections.
+  const bool UseRangesSection =
+      MCOS->getContext().getGenDwarfSectionSyms().size() > 1;
+  CreateDwarfSectionSymbols |= UseRangesSection;
+
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
   if (CreateDwarfSectionSymbols) {
     InfoSectionSymbol = context.CreateTempSymbol();
@@ -791,20 +874,30 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
     AbbrevSectionSymbol = context.CreateTempSymbol();
     MCOS->EmitLabel(AbbrevSectionSymbol);
   }
-  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
+  if (UseRangesSection) {
+    MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfRangesSection());
+    if (CreateDwarfSectionSymbols) {
+      RangesSectionSymbol = context.CreateTempSymbol();
+      MCOS->EmitLabel(RangesSectionSymbol);
+    }
+  }
 
-  // If there are no line table entries then do not emit any section contents.
-  if (!context.hasMCLineSections())
-    return;
+  assert((RangesSectionSymbol != NULL) || !UseRangesSection);
+
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
 
   // Output the data for .debug_aranges section.
   EmitGenDwarfAranges(MCOS, InfoSectionSymbol);
+
+  if (UseRangesSection)
+    EmitGenDwarfRanges(MCOS);
 
   // Output the data for .debug_abbrev section.
   EmitGenDwarfAbbrev(MCOS);
 
   // Output the data for .debug_info section.
-  EmitGenDwarfInfo(MCOS, AbbrevSectionSymbol, LineSectionSymbol);
+  EmitGenDwarfInfo(MCOS, AbbrevSectionSymbol, LineSectionSymbol,
+                   RangesSectionSymbol);
 }
 
 //
@@ -815,12 +908,13 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
 //
 void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
                                      SourceMgr &SrcMgr, SMLoc &Loc) {
-  // We won't create dwarf labels for temporary symbols or symbols not in
-  // the default text.
+  // We won't create dwarf labels for temporary symbols.
   if (Symbol->isTemporary())
     return;
   MCContext &context = MCOS->getContext();
-  if (context.getGenDwarfSection() != MCOS->getCurrentSection().first)
+  // We won't create dwarf labels for symbols in sections that we are not
+  // generating debug info for.
+  if (!context.getGenDwarfSectionSyms().count(MCOS->getCurrentSection().first))
     return;
 
   // The dwarf label's name does not have the symbol name's leading
