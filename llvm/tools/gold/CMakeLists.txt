@@ -14,13 +14,14 @@ else()
   # ABI compatibility.
   add_definitions( -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 )
 
-  set(LLVM_LINK_COMPONENTS support)
+  set(LLVM_LINK_COMPONENTS
+     ${LLVM_TARGETS_TO_BUILD}
+     LTO
+     )
 
   add_llvm_loadable_module(LLVMgold
     gold-plugin.cpp
     )
-
-  target_link_libraries(LLVMgold ${cmake_2_8_12_PRIVATE} LTO)
 
 endif()
 
