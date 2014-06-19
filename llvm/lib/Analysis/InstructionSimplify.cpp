@@ -2241,6 +2241,25 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
+  // If a bit is known to be zero for A and known to be one for B,
+  // then A and B cannot be equal.
+  if (ICmpInst::isEquality(Pred)) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+      uint32_t BitWidth = CI->getBitWidth();
+      APInt LHSKnownZero(BitWidth, 0);
+      APInt LHSKnownOne(BitWidth, 0);
+      computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
+      APInt RHSKnownZero(BitWidth, 0);
+      APInt RHSKnownOne(BitWidth, 0);
+      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
+      if (((LHSKnownOne & RHSKnownZero) != 0) ||
+          ((LHSKnownZero & RHSKnownOne) != 0))
+        return (Pred == ICmpInst::ICMP_EQ)
+                   ? ConstantInt::getFalse(CI->getContext())
+                   : ConstantInt::getTrue(CI->getContext());
+    }
+  }
+
   // Special logic for binary operators.
   BinaryOperator *LBO = dyn_cast<BinaryOperator>(LHS);
   BinaryOperator *RBO = dyn_cast<BinaryOperator>(RHS);

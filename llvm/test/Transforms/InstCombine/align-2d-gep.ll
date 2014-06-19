@@ -31,7 +31,7 @@ bb1:
   store <2 x double><double 0.0, double 0.0>, <2 x double>* %r, align 8
 
   %indvar.next = add i64 %j, 2
-  %exitcond = icmp eq i64 %indvar.next, 557
+  %exitcond = icmp eq i64 %indvar.next, 556
   br i1 %exitcond, label %bb11, label %bb1
 
 bb11:
