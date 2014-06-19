@@ -29,6 +29,7 @@ public:
   bool ShowMCEncoding : 1;
   bool ShowMCInst : 1;
   bool AsmVerbose : 1;
+  int DwarfVersion;
   MCTargetOptions();
 };
 
@@ -41,7 +42,8 @@ inline bool operator==(const MCTargetOptions &LHS, const MCTargetOptions &RHS) {
           ARE_EQUAL(MCUseDwarfDirectory) &&
           ARE_EQUAL(ShowMCEncoding) &&
           ARE_EQUAL(ShowMCInst) &&
-          ARE_EQUAL(AsmVerbose));
+          ARE_EQUAL(AsmVerbose) &&
+	  ARE_EQUAL(DwarfVersion));
 #undef ARE_EQUAL
 }
 

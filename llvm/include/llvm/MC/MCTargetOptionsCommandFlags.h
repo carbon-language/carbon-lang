@@ -33,11 +33,15 @@ cl::opt<bool> RelaxAll("mc-relax-all",
                        cl::desc("When used with filetype=obj, "
                                 "relax all fixups in the emitted object file"));
 
+cl::opt<int> DwarfVersion("dwarf-version", cl::desc("Dwarf version"),
+                          cl::init(0));
+
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
       (AsmInstrumentation == MCTargetOptions::AsmInstrumentationAddress);
   Options.MCRelaxAll = RelaxAll;
+  Options.DwarfVersion = DwarfVersion;
   return Options;
 }
 

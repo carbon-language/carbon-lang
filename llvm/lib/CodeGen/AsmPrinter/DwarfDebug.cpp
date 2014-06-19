@@ -98,10 +98,6 @@ DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
                             clEnumVal(Disable, "Disabled"), clEnumValEnd),
                  cl::init(Default));
 
-static cl::opt<unsigned>
-DwarfVersionNumber("dwarf-version", cl::Hidden,
-                   cl::desc("Generate DWARF for dwarf version."), cl::init(0));
-
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
@@ -209,6 +205,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
+  unsigned DwarfVersionNumber = Asm->TM.Options.MCOptions.DwarfVersion;
   DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
                                     : MMI->getModule()->getDwarfVersion();
 

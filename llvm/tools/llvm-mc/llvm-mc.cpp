@@ -150,9 +150,6 @@ static cl::opt<bool>
 GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "
                                   "source files"));
 
-static cl::opt<int>
-DwarfVersion("dwarf-version", cl::desc("Dwarf version"), cl::init(4));
-
 static cl::opt<std::string>
 DebugCompilationDir("fdebug-compilation-dir",
                     cl::desc("Specifies the debug info's compilation dir"));
@@ -323,12 +320,12 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
 static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI,
-                         MCInstrInfo &MCII) {
+                         MCInstrInfo &MCII, MCTargetOptions &MCOptions) {
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, Ctx, Str, MAI));
   std::unique_ptr<MCTargetAsmParser> TAP(
-      TheTarget->createMCAsmParser(STI, *Parser, MCII,
-                                   InitMCTargetOptionsFromFlags()));
+      TheTarget->createMCAsmParser(STI, *Parser, MCII, MCOptions));
+
   if (!TAP) {
     errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";
@@ -359,6 +356,7 @@ int main(int argc, char **argv) {
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
+  MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
   TripleName = Triple::normalize(TripleName);
   setDwarfDebugFlags(argc, argv);
 
@@ -411,6 +409,8 @@ int main(int argc, char **argv) {
     Ctx.setAllowTemporaryLabels(false);
 
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
+  // Default to 4 for dwarf version.
+  unsigned DwarfVersion = MCOptions.DwarfVersion ? MCOptions.DwarfVersion : 4;
   if (DwarfVersion < 2 || DwarfVersion > 4) {
     errs() << ProgName << ": Dwarf version " << DwarfVersion
            << " is not supported." << '\n';
@@ -484,7 +484,7 @@ int main(int argc, char **argv) {
     break;
   case AC_Assemble:
     Res = AssembleInput(ProgName, TheTarget, SrcMgr, Ctx, *Str, *MAI, *STI,
-                        *MCII);
+                        *MCII, MCOptions);
     break;
   case AC_MDisassemble:
     assert(IP && "Expected assembly output");
