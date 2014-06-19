@@ -6828,6 +6828,8 @@ def warn_direct_ivar_access : Warning<"instance variable %0 is being "
   "directly accessed">, InGroup<DiagGroup<"direct-ivar-access">>, DefaultIgnore;
 
 // Spell-checking diagnostics
+def err_unknown_typename : Error<
+  "unknown type name %0">;
 def err_unknown_type_or_class_name_suggest : Error<
   "unknown %select{type|class}1 name %0; did you mean %2?">;
 def err_unknown_typename_suggest : Error<

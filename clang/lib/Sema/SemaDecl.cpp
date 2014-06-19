@@ -438,7 +438,7 @@ bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS, Scope *S) {
   return CurContext->isFunctionOrMethod() || S->isFunctionPrototypeScope();
 }
 
-bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
+void Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
                                    SourceLocation IILoc,
                                    Scope *S,
                                    CXXScopeSpec *SS,
@@ -483,7 +483,7 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
                                   /*IsCtorOrDtorName=*/false,
                                   /*NonTrivialTypeSourceInfo=*/true);
     }
-    return true;
+    return;
   }
 
   if (getLangOpts().CPlusPlus) {
@@ -502,7 +502,7 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
         Diag(TplDecl->getLocation(), diag::note_template_decl_here)
           << TplDecl->getTemplateParameters()->getSourceRange();
       }
-      return true;
+      return;
     }
   }
 
@@ -529,8 +529,6 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
     assert(SS && SS->isInvalid() && 
            "Invalid scope specifier has already been diagnosed");
   }
-  
-  return true;
 }
 
 /// \brief Determine whether the given result set contains either a type name

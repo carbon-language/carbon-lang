@@ -333,8 +333,6 @@ def warn_vector_long_decl_spec_combination : Warning<
   "Use of 'long' with '__vector' is deprecated">, InGroup<Deprecated>;
 def err_friend_invalid_in_context : Error<
   "'friend' used outside of class">;
-def err_unknown_typename : Error<
-  "unknown type name %0">;
 def err_use_of_tag_name_without_tag : Error<
   "must use '%1' tag to refer to type %0%select{| in this scope}2">;
 def err_templated_using_directive : Error<

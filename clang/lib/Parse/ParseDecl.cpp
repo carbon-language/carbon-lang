@@ -2170,42 +2170,33 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     }
   }
 
-  // This is almost certainly an invalid type name. Let the action emit a
-  // diagnostic and attempt to recover.
+  // This is almost certainly an invalid type name. Let Sema emit a diagnostic
+  // and attempt to recover.
   ParsedType T;
   IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (Actions.DiagnoseUnknownTypeName(II, Loc, getCurScope(), SS, T,
-                                      getLangOpts().CPlusPlus &&
-                                          NextToken().is(tok::less))) {
-    // The action emitted a diagnostic, so we don't have to.
-    if (T) {
-      // The action has suggested that the type T could be used. Set that as
-      // the type in the declaration specifiers, consume the would-be type
-      // name token, and we're done.
-      const char *PrevSpec;
-      unsigned DiagID;
-      DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID, T,
-                         Actions.getASTContext().getPrintingPolicy());
-      DS.SetRangeEnd(Tok.getLocation());
-      ConsumeToken();
-      // There may be other declaration specifiers after this.
-      return true;
-    } else if (II != Tok.getIdentifierInfo()) {
-      // If no type was suggested, the correction is to a keyword
-      Tok.setKind(II->getTokenID());
-      // There may be other declaration specifiers after this.
-      return true;
-    }
-
-    // Fall through; the action had no suggestion for us.
-  } else {
-    // The action did not emit a diagnostic, so emit one now.
-    SourceRange R;
-    if (SS) R = SS->getRange();
-    Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo() << R;
+  Actions.DiagnoseUnknownTypeName(II, Loc, getCurScope(), SS, T,
+                                  getLangOpts().CPlusPlus &&
+                                      NextToken().is(tok::less));
+  if (T) {
+    // The action has suggested that the type T could be used. Set that as
+    // the type in the declaration specifiers, consume the would-be type
+    // name token, and we're done.
+    const char *PrevSpec;
+    unsigned DiagID;
+    DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID, T,
+                       Actions.getASTContext().getPrintingPolicy());
+    DS.SetRangeEnd(Tok.getLocation());
+    ConsumeToken();
+    // There may be other declaration specifiers after this.
+    return true;
+  } else if (II != Tok.getIdentifierInfo()) {
+    // If no type was suggested, the correction is to a keyword
+    Tok.setKind(II->getTokenID());
+    // There may be other declaration specifiers after this.
+    return true;
   }
 
-  // Mark this as an error.
+  // Otherwise, the action had no suggestion for us.  Mark this as an error.
   DS.SetTypeSpecError();
   DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken();
