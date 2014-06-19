@@ -72,9 +72,7 @@ std::error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
   if (Parent) {
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
-    std::string ObjectName =
-        Parent->getFileName().str() + ":" +
-        Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+    std::string ObjectName = Parent->getFileName().str();
     MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
         ObjectData, ObjectName, false);
     ErrorOr<ObjectFile *> Obj = ObjectFile::createMachOObjectFile(ObjBuffer);
@@ -91,9 +89,7 @@ std::error_code MachOUniversalBinary::ObjectForArch::getAsArchive(
   if (Parent) {
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
-    std::string ObjectName =
-        Parent->getFileName().str() + ":" +
-        Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+    std::string ObjectName = Parent->getFileName().str();
     MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
         ObjectData, ObjectName, false);
     ErrorOr<Archive *> Obj = Archive::create(ObjBuffer);

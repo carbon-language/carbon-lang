@@ -18,6 +18,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MachO.h"
 
@@ -52,6 +53,9 @@ public:
 
     ObjectForArch getNext() const { return ObjectForArch(Parent, Index + 1); }
     uint32_t getCPUType() const { return Header.cputype; }
+    std::string getArchTypeName() const {
+      return Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+    }
 
     std::error_code getAsObjectFile(std::unique_ptr<ObjectFile> &Result) const;
 

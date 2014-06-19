@@ -752,20 +752,28 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       if (ChildOrErr.getError())
         continue;
       if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
-        outs() << O->getFileName() << ":\n";
+        if (isa<MachOObjectFile>(O)) {
+          outs() << Filename << "(" << O->getFileName() << ")";
+        } else
+          outs() << O->getFileName();
+        outs() << ":\n";
         dumpSymbolNamesFromObject(O);
       }
     }
     return;
   }
   if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(Bin.get())) {
+    bool moreThanOneArch = UB->getNumberOfObjects() > 1;
     for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                E = UB->end_objects();
          I != E; ++I) {
       std::unique_ptr<ObjectFile> Obj;
       std::unique_ptr<Archive> A;
       if (!I->getAsObjectFile(Obj)) {
-        outs() << Obj->getFileName() << ":\n";
+        outs() << Obj->getFileName();
+        if (isa<MachOObjectFile>(Obj.get()) && moreThanOneArch)
+          outs() << " (for architecture " << I->getArchTypeName() << ")";
+        outs() << ":\n";
         dumpSymbolNamesFromObject(Obj.get());
       }
       else if (!I->getAsArchive(A)) {
@@ -776,8 +784,14 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
           if (ChildOrErr.getError())
             continue;
           if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
-            outs() << A->getFileName() << ":";
-            outs() << O->getFileName() << ":\n";
+            outs() << A->getFileName();
+            if (isa<MachOObjectFile>(O)) {
+              outs() << "(" << O->getFileName() << ")";
+              if (moreThanOneArch)
+                outs() << " (for architecture " << I->getArchTypeName() << ")";
+            } else
+              outs() << ":" << O->getFileName();
+            outs() << ":\n";
             dumpSymbolNamesFromObject(O);
           }
         }
