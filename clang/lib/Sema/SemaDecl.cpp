@@ -8941,6 +8941,37 @@ void Sema::ActOnCXXForRangeDecl(Decl *D) {
   }
 }
 
+StmtResult
+Sema::ActOnCXXForRangeIdentifier(Scope *S, SourceLocation IdentLoc,
+                                 IdentifierInfo *Ident,
+                                 ParsedAttributes &Attrs,
+                                 SourceLocation AttrEnd) {
+  // C++1y [stmt.iter]p1:
+  //   A range-based for statement of the form
+  //      for ( for-range-identifier : for-range-initializer ) statement
+  //   is equivalent to
+  //      for ( auto&& for-range-identifier : for-range-initializer ) statement
+  DeclSpec DS(Attrs.getPool().getFactory());
+
+  const char *PrevSpec;
+  unsigned DiagID;
+  DS.SetTypeSpecType(DeclSpec::TST_auto, IdentLoc, PrevSpec, DiagID,
+                     getPrintingPolicy());
+
+  Declarator D(DS, Declarator::ForContext);
+  D.SetIdentifier(Ident, IdentLoc);
+  D.takeAttributes(Attrs, AttrEnd);
+
+  ParsedAttributes EmptyAttrs(Attrs.getPool().getFactory());
+  D.AddTypeInfo(DeclaratorChunk::getReference(0, IdentLoc, /*lvalue*/false),
+                EmptyAttrs, IdentLoc);
+  Decl *Var = ActOnDeclarator(S, D);
+  cast<VarDecl>(Var)->setCXXForRangeDecl(true);
+  FinalizeDeclaration(Var);
+  return ActOnDeclStmt(FinalizeDeclaratorGroup(S, DS, Var), IdentLoc,
+                       AttrEnd.isValid() ? AttrEnd : IdentLoc);
+}
+
 void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   if (var->isInvalidDecl()) return;
 

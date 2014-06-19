@@ -1622,6 +1622,10 @@ public:
   void ActOnUninitializedDecl(Decl *dcl, bool TypeMayContainAuto);
   void ActOnInitializerError(Decl *Dcl);
   void ActOnCXXForRangeDecl(Decl *D);
+  StmtResult ActOnCXXForRangeIdentifier(Scope *S, SourceLocation IdentLoc,
+                                        IdentifierInfo *Ident,
+                                        ParsedAttributes &Attrs,
+                                        SourceLocation AttrEnd);
   void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
   void SetDeclDefaulted(Decl *dcl, SourceLocation DefaultLoc);
   void FinalizeDeclaration(Decl *D);

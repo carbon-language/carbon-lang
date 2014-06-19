@@ -176,8 +176,9 @@ namespace test4 {
 
     // Make sure these don't crash. Better diagnostics would be nice.
     for (: {1, 2, 3}) {} // expected-error {{expected expression}} expected-error {{expected ';'}}
-    for (x : {1, 2, 3}) {} // expected-error {{undeclared identifier}} expected-error {{expected ';'}}
-    for (y : {1, 2, 3}) {} // expected-error {{must declare a variable}} expected-warning {{result unused}}
+    for (1 : {1, 2, 3}) {} // expected-error {{must declare a variable}} expected-warning {{result unused}}
+    for (+x : {1, 2, 3}) {} // expected-error {{undeclared identifier}} expected-error {{expected ';'}}
+    for (+y : {1, 2, 3}) {} // expected-error {{must declare a variable}} expected-warning {{result unused}}
   }
 }
 
@@ -207,5 +208,22 @@ namespace test6 {
     // Don't suggest to dereference arr.
     for (auto i : arr) { }
       // expected-error@-1 {{cannot build range expression with array function parameter 'arr' since parameter with array type 'test6::vector []' is treated as pointer type 'test6::vector *'}}
+  }
+}
+
+namespace test7 {
+  void f() {
+    int arr[5], b;
+    for (a : arr) {} // expected-warning {{extension}}
+    // FIXME: Give a -Wshadow for this by default?
+    for (b : arr) {} // expected-warning {{extension}}
+    for (arr : arr) {} // expected-warning {{extension}}
+    for (c alignas(8) : arr) { // expected-warning {{extension}}
+      static_assert(alignof(c) == 8, ""); // expected-warning {{extension}}
+    }
+    // FIXME: We should reject this, but don't, because we only check the
+    // attribute before we deduce the 'auto' type.
+    for (d alignas(1) : arr) {} // expected-warning {{extension}}
+    for (e [[deprecated]] : arr) { e = 0; } // expected-warning {{deprecated}} expected-note {{here}} expected-warning {{extension}}
   }
 }

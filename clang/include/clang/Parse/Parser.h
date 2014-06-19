@@ -1827,6 +1827,9 @@ private:
     return isDeclarationSpecifier(true);
   }
 
+  /// \brief Determine whether this is a C++1z for-range-identifier.
+  bool isForRangeIdentifier();
+
   /// \brief Determine whether we are currently at the start of an Objective-C
   /// class message that appears to be missing the open bracket '['.
   bool isStartOfObjCClassMessageMissingOpenBracket();
@@ -2005,6 +2008,10 @@ private:
   // locations which standard permits but we don't supported yet, 
   // for example, attributes appertain to decl specifiers.
   void ProhibitCXX11Attributes(ParsedAttributesWithRange &attrs);
+
+  /// \brief Skip C++11 attributes and return the end location of the last one.
+  /// \returns SourceLocation() if there are no attributes.
+  SourceLocation SkipCXX11Attributes();
 
   /// \brief Diagnose and skip C++11 attributes that appear in syntactic
   /// locations where attributes are not allowed.
