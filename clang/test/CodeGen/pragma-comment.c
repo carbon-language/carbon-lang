@@ -9,8 +9,8 @@
 #define BAR "2"
 #pragma comment(linker," /bar=" BAR)
 
-// CHECK: !llvm.module.flags = !{!0}
-// CHECK: !0 = metadata !{i32 6, metadata !"Linker Options", metadata ![[link_opts:[0-9]+]]}
+// CHECK: !llvm.module.flags = !{{{.*}}}
+// CHECK: !{{[0-9]+}} = metadata !{i32 6, metadata !"Linker Options", metadata ![[link_opts:[0-9]+]]}
 // CHECK: ![[link_opts]] = metadata !{metadata ![[msvcrt:[0-9]+]], metadata ![[kernel32:[0-9]+]], metadata ![[USER32:[0-9]+]], metadata ![[bar:[0-9]+]]}
 // CHECK: ![[msvcrt]] = metadata !{metadata !"/DEFAULTLIB:msvcrt.lib"}
 // CHECK: ![[kernel32]] = metadata !{metadata !"/DEFAULTLIB:kernel32.lib"}

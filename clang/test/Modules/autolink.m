@@ -36,8 +36,8 @@ int use_autolink_sub3() {
 
 // NOTE: "autolink_sub" is intentionally not linked.
 
-// CHECK: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK: !4 = metadata !{i32 6, metadata !"Linker Options", metadata ![[AUTOLINK_OPTIONS:[0-9]+]]}
+// CHECK: !llvm.module.flags = !{{{.*}}}
+// CHECK: !{{[0-9]+}} = metadata !{i32 6, metadata !"Linker Options", metadata ![[AUTOLINK_OPTIONS:[0-9]+]]}
 // CHECK: ![[AUTOLINK_OPTIONS]] = metadata !{metadata ![[AUTOLINK_PCH:[0-9]+]], metadata ![[AUTOLINK_FRAMEWORK:[0-9]+]], metadata ![[AUTOLINK:[0-9]+]], metadata ![[DEPENDSONMODULE:[0-9]+]], metadata ![[MODULE:[0-9]+]], metadata ![[NOUMBRELLA:[0-9]+]]}
 // CHECK: ![[AUTOLINK_PCH]] = metadata !{metadata !"{{(-l|/DEFAULTLIB:)}}autolink_from_pch{{(\.lib)?}}"}
 // CHECK: ![[AUTOLINK_FRAMEWORK]] = metadata !{metadata !"-framework", metadata !"autolink_framework"}

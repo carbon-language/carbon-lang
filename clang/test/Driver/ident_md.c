@@ -1,6 +1,6 @@
 // RUN: %clang %s -emit-llvm -S -o - | FileCheck %s
 // Verify that clang version appears in the llvm.ident metadata.
 
-// CHECK: !llvm.ident = !{!0}
-// CHECK: !0 = metadata !{metadata !{{.*}}
+// CHECK: !llvm.ident = !{{{.*}}}
+// CHECK: !{{[0-9]+}} = metadata !{metadata !{{.*}}
 
