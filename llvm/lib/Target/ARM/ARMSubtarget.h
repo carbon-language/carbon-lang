@@ -425,6 +425,9 @@ public:
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
                              RegClassVector& CriticalPathRCs) const override;
 
+  // enableAtomicExpandLoadLinked - True if we need to expand our atomics.
+  bool enableAtomicExpandLoadLinked() const override;
+
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }

@@ -417,6 +417,10 @@ bool ARMSubtarget::enablePostMachineScheduler() const {
   return PostRAScheduler;
 }
 
+bool ARMSubtarget::enableAtomicExpandLoadLinked() const {
+  return hasAnyDataBarrier() && !isThumb1Only();
+}
+
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,

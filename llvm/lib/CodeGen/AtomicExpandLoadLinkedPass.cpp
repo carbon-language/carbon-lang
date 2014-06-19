@@ -21,17 +21,19 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "arm-atomic-expand"
 
 namespace {
   class AtomicExpandLoadLinked : public FunctionPass {
-    const TargetLowering *TLI;
+    const TargetMachine *TM;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit AtomicExpandLoadLinked(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), TLI(TM ? TM->getTargetLowering() : nullptr) {
+      : FunctionPass(ID), TM(TM) {
       initializeAtomicExpandLoadLinkedPass(*PassRegistry::getPassRegistry());
     }
 
@@ -59,7 +61,7 @@ FunctionPass *llvm::createAtomicExpandLoadLinkedPass(const TargetMachine *TM) {
 }
 
 bool AtomicExpandLoadLinked::runOnFunction(Function &F) {
-  if (!TLI)
+  if (!TM || !TM->getSubtargetImpl()->enableAtomicExpandLoadLinked())
     return false;
 
   SmallVector<Instruction *, 1> AtomicInsts;
@@ -76,7 +78,7 @@ bool AtomicExpandLoadLinked::runOnFunction(Function &F) {
 
   bool MadeChange = false;
   for (Instruction *Inst : AtomicInsts) {
-    if (!TLI->shouldExpandAtomicInIR(Inst))
+    if (!TM->getTargetLowering()->shouldExpandAtomicInIR(Inst))
       continue;
 
     if (AtomicRMWInst *AI = dyn_cast<AtomicRMWInst>(Inst))
@@ -98,13 +100,14 @@ bool AtomicExpandLoadLinked::expandAtomicLoad(LoadInst *LI) {
   // Load instructions don't actually need a leading fence, even in the
   // SequentiallyConsistent case.
   AtomicOrdering MemOpOrder =
-    TLI->getInsertFencesForAtomic() ? Monotonic : LI->getOrdering();
+      TM->getTargetLowering()->getInsertFencesForAtomic() ? Monotonic
+                                                          : LI->getOrdering();
 
   // The only 64-bit load guaranteed to be single-copy atomic by the ARM ARM is
   // an ldrexd (A3.5.3).
   IRBuilder<> Builder(LI);
-  Value *Val =
-      TLI->emitLoadLinked(Builder, LI->getPointerOperand(), MemOpOrder);
+  Value *Val = TM->getTargetLowering()->emitLoadLinked(
+      Builder, LI->getPointerOperand(), MemOpOrder);
 
   insertTrailingFence(Builder, LI->getOrdering());
 
@@ -165,7 +168,8 @@ bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
 
   // Start the main loop block now that we've taken care of the preliminaries.
   Builder.SetInsertPoint(LoopBB);
-  Value *Loaded = TLI->emitLoadLinked(Builder, Addr, MemOpOrder);
+  Value *Loaded =
+      TM->getTargetLowering()->emitLoadLinked(Builder, Addr, MemOpOrder);
 
   Value *NewVal;
   switch (AI->getOperation()) {
@@ -211,8 +215,8 @@ bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
     llvm_unreachable("Unknown atomic op");
   }
 
-  Value *StoreSuccess =
-      TLI->emitStoreConditional(Builder, NewVal, Addr, MemOpOrder);
+  Value *StoreSuccess = TM->getTargetLowering()->emitStoreConditional(
+      Builder, NewVal, Addr, MemOpOrder);
   Value *TryAgain = Builder.CreateICmpNE(
       StoreSuccess, ConstantInt::get(IntegerType::get(Ctx, 32), 0), "tryagain");
   Builder.CreateCondBr(TryAgain, LoopBB, ExitBB);
@@ -278,7 +282,8 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   // Start the main loop block now that we've taken care of the preliminaries.
   Builder.SetInsertPoint(LoopBB);
-  Value *Loaded = TLI->emitLoadLinked(Builder, Addr, MemOpOrder);
+  Value *Loaded =
+      TM->getTargetLowering()->emitLoadLinked(Builder, Addr, MemOpOrder);
   Value *ShouldStore =
       Builder.CreateICmpEQ(Loaded, CI->getCompareOperand(), "should_store");
 
@@ -287,7 +292,7 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   Builder.CreateCondBr(ShouldStore, TryStoreBB, FailureBB);
 
   Builder.SetInsertPoint(TryStoreBB);
-  Value *StoreSuccess = TLI->emitStoreConditional(
+  Value *StoreSuccess = TM->getTargetLowering()->emitStoreConditional(
       Builder, CI->getNewValOperand(), Addr, MemOpOrder);
   StoreSuccess = Builder.CreateICmpEQ(
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
@@ -352,7 +357,7 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
 AtomicOrdering AtomicExpandLoadLinked::insertLeadingFence(IRBuilder<> &Builder,
                                                        AtomicOrdering Ord) {
-  if (!TLI->getInsertFencesForAtomic())
+  if (!TM->getTargetLowering()->getInsertFencesForAtomic())
     return Ord;
 
   if (Ord == Release || Ord == AcquireRelease || Ord == SequentiallyConsistent)
@@ -365,7 +370,7 @@ AtomicOrdering AtomicExpandLoadLinked::insertLeadingFence(IRBuilder<> &Builder,
 
 void AtomicExpandLoadLinked::insertTrailingFence(IRBuilder<> &Builder,
                                               AtomicOrdering Ord) {
-  if (!TLI->getInsertFencesForAtomic())
+  if (!TM->getTargetLowering()->getInsertFencesForAtomic())
     return;
 
   if (Ord == Acquire || Ord == AcquireRelease)
