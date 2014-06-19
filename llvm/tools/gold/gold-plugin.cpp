@@ -239,26 +239,26 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
     return LDPS_ERR;
   }
 
-  if (RegisteredAllSymbolsRead) {
-    InitializeAllTargetInfos();
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmParsers();
-    InitializeAllAsmPrinters();
-    InitializeAllDisassemblers();
-    TargetOpts = InitTargetOptionsFromCodeGenFlags();
-    CodeGen = new LTOCodeGenerator();
-    CodeGen->setTargetOptions(TargetOpts);
-    if (MAttrs.size()) {
-      std::string Attrs;
-      for (unsigned I = 0; I < MAttrs.size(); ++I) {
-        if (I > 0)
-          Attrs.append(",");
-        Attrs.append(MAttrs[I]);
-      }
+  if (!RegisteredAllSymbolsRead)
+    return LDPS_OK;
 
-      CodeGen->setAttr(Attrs.c_str());
+  InitializeAllTargetInfos();
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmParsers();
+  InitializeAllAsmPrinters();
+  InitializeAllDisassemblers();
+  TargetOpts = InitTargetOptionsFromCodeGenFlags();
+  CodeGen = new LTOCodeGenerator();
+  CodeGen->setTargetOptions(TargetOpts);
+  if (MAttrs.size()) {
+    std::string Attrs;
+    for (unsigned I = 0; I < MAttrs.size(); ++I) {
+      if (I > 0)
+        Attrs.append(",");
+      Attrs.append(MAttrs[I]);
     }
+    CodeGen->setAttr(Attrs.c_str());
   }
 
   return LDPS_OK;
