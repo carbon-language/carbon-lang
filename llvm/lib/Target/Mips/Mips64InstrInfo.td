@@ -23,6 +23,8 @@ def uimm16_64      : Operand<i64> {
 // Signed Operand
 def simm10_64 : Operand<i64>;
 
+def imm64: Operand<i64>;
+
 // Transformation Function - get Imm - 32.
 def Subtract32 : SDNodeXForm<imm, [{
   return getImm(N, (unsigned)N->getZExtValue() - 32);
@@ -485,6 +487,11 @@ def : MipsInstAlias<"dsra $rd, $rt, $rs",
 def : MipsInstAlias<"dsrl $rd, $rt, $rs",
                     (DSRLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>,
                     ISA_MIPS3;
+
+class LoadImm64< string instr_asm, Operand Od, RegisterOperand RO> :
+  MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm64),
+                     !strconcat(instr_asm, "\t$rt, $imm64")> ;
+def LoadImm64Reg : LoadImm64<"dli", imm64, GPR64Opnd>;
 
 /// Move between CPU and coprocessor registers
 let DecoderNamespace = "Mips64", Predicates = [HasMips64] in {
