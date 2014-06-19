@@ -1996,29 +1996,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     C1 = dyn_cast<ConstantInt>(C);
     C2 = dyn_cast<ConstantInt>(D);
     if (C1 && C2) {  // (A & C1)|(B & C2)
-      // If we have: ((V + N) & C1) | (V & C2)
-      // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
-      // replace with V+N.
-      if (C1->getValue() == ~C2->getValue()) {
-        if ((C2->getValue() & (C2->getValue()+1)) == 0 && // C2 == 0+1+
-            match(A, m_Add(m_Value(V1), m_Value(V2)))) {
-          // Add commutes, try both ways.
-          if (V1 == B && MaskedValueIsZero(V2, C2->getValue()))
-            return ReplaceInstUsesWith(I, A);
-          if (V2 == B && MaskedValueIsZero(V1, C2->getValue()))
-            return ReplaceInstUsesWith(I, A);
-        }
-        // Or commutes, try both ways.
-        if ((C1->getValue() & (C1->getValue()+1)) == 0 &&
-            match(B, m_Add(m_Value(V1), m_Value(V2)))) {
-          // Add commutes, try both ways.
-          if (V1 == A && MaskedValueIsZero(V2, C1->getValue()))
-            return ReplaceInstUsesWith(I, B);
-          if (V2 == A && MaskedValueIsZero(V1, C1->getValue()))
-            return ReplaceInstUsesWith(I, B);
-        }
-      }
-
       if ((C1->getValue() & C2->getValue()) == 0) {
         // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
         // iff (C1&C2) == 0 and (N&~C1) == 0
