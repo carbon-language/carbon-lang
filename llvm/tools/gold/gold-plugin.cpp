@@ -322,8 +322,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
     cf.syms.push_back(ld_plugin_symbol());
     ld_plugin_symbol &sym = cf.syms.back();
-    sym.name = const_cast<char *>(M->getSymbolName(i));
-    sym.name = strdup(sym.name);
+    sym.name = strdup(M->getSymbolName(i));
     sym.version = NULL;
 
     int scope = attrs & LTO_SYMBOL_SCOPE_MASK;
