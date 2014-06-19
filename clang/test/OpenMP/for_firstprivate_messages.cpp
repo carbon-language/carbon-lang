@@ -65,7 +65,7 @@ int foomain(int argc, char **argv) {
   I e(4); // expected-note {{'e' defined here}}
   C g(5); // expected-note 2 {{'g' defined here}}
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i; // expected-note {{'j' defined here}}
 #pragma omp parallel
 #pragma omp for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (int k = 0; k < argc; ++k)
@@ -121,7 +121,7 @@ int foomain(int argc, char **argv) {
 #pragma omp parallel
   {
     int v = 0;
-    int i;                      // expected-note {{predetermined as private}}
+    int i;                      // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
 #pragma omp for firstprivate(i) // expected-error {{private variable cannot be firstprivate}}
     for (int k = 0; k < argc; ++k) {
       i = k;
@@ -146,7 +146,7 @@ int foomain(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel reduction(+ : i) // expected-note {{defined as reduction}}
-#pragma omp for firstprivate(i) // expected-error {{firstprivate variable must be shared}}
+#pragma omp for firstprivate(i)       // expected-error {{firstprivate variable must be shared}}
   for (i = 0; i < argc; ++i)
     foo();
   return 0;
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
   S3 m;
   S6 n(2);
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i; // expected-note {{'j' defined here}}
 #pragma omp parallel
 #pragma omp for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (i = 0; i < argc; ++i)
@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel
   {
     int v = 0;
-    int i;                      // expected-note {{predetermined as private}}
+    int i;                      // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
 #pragma omp for firstprivate(i) // expected-error {{private variable cannot be firstprivate}}
     for (int k = 0; k < argc; ++k) {
       i = k;
@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel reduction(+ : i) // expected-note {{defined as reduction}}
-#pragma omp for firstprivate(i) // expected-error {{firstprivate variable must be shared}}
+#pragma omp for firstprivate(i)       // expected-error {{firstprivate variable must be shared}}
   for (i = 0; i < argc; ++i)
     foo();
 

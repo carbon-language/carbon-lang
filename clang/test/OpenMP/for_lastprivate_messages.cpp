@@ -15,10 +15,10 @@ class S2 {
 public:
   S2() : a(0) {}
   S2(S2 &s2) : a(s2.a) {}
-  static float S2s; // expected-note {{predetermined as shared}}
+  static float S2s; // expected-note {{static data member is predetermined as shared}}
   static const float S2sc;
 };
-const float S2::S2sc = 0; // expected-note {{predetermined as shared}}
+const float S2::S2sc = 0; // expected-note {{static data member is predetermined as shared}}
 const S2 b;
 const S2 ba[5];
 class S3 { // expected-note 2 {{'S3' declared here}}
@@ -29,9 +29,9 @@ public:
   S3() : a(0) {}
   S3(S3 &s3) : a(s3.a) {}
 };
-const S3 c;         // expected-note {{predetermined as shared}}
-const S3 ca[5];     // expected-note {{predetermined as shared}}
-extern const int f; // expected-note {{predetermined as shared}}
+const S3 c;         // expected-note {{global variable is predetermined as shared}}
+const S3 ca[5];     // expected-note {{global variable is predetermined as shared}}
+extern const int f; // expected-note {{global variable is predetermined as shared}}
 class S4 {          // expected-note 3 {{'S4' declared here}}
   int a;
   S4();
@@ -121,7 +121,7 @@ int foomain(int argc, char **argv) {
 #pragma omp parallel
   {
     int v = 0;
-    int i;                     // expected-note {{predetermined as private}}
+    int i;                     // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
 #pragma omp for lastprivate(i) // expected-error {{lastprivate variable must be shared}}
     for (int k = 0; k < argc; ++k) {
       i = k;
@@ -141,8 +141,8 @@ int foomain(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  const int d = 5;       // expected-note {{predetermined as shared}}
-  const int da[5] = {0}; // expected-note {{predetermined as shared}}
+  const int d = 5;       // expected-note {{constant variable is predetermined as shared}}
+  const int da[5] = {0}; // expected-note {{constant variable is predetermined as shared}}
   S4 e(4);               // expected-note {{'e' defined here}}
   S5 g(5);               // expected-note {{'g' defined here}}
   S3 m;                  // expected-note 2 {{'m' defined here}}

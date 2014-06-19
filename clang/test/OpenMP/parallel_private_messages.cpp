@@ -13,7 +13,7 @@ class S2 {
   mutable int a;
 public:
   S2():a(0) { }
-  static float S2s; // expected-note {{predetermined as shared}}
+  static float S2s; // expected-note {{static data member is predetermined as shared}}
 };
 const S2 b;
 const S2 ba[5];
@@ -22,9 +22,9 @@ class S3 {
 public:
   S3():a(0) { }
 };
-const S3 c; // expected-note {{predetermined as shared}}
-const S3 ca[5]; // expected-note {{predetermined as shared}}
-extern const int f; // expected-note {{predetermined as shared}}
+const S3 c; // expected-note {{global variable is predetermined as shared}}
+const S3 ca[5]; // expected-note {{global variable is predetermined as shared}}
+extern const int f; // expected-note {{global variable is predetermined as shared}}
 class S4 { // expected-note {{'S4' declared here}}
   int a;
   S4();
@@ -42,8 +42,8 @@ int threadvar;
 #pragma omp threadprivate(threadvar) // expected-note {{defined as threadprivate or thread local}}
 
 int main(int argc, char **argv) {
-  const int d = 5; // expected-note {{predetermined as shared}}
-  const int da[5] = { 0 }; // expected-note {{predetermined as shared}}
+  const int d = 5; // expected-note {{constant variable is predetermined as shared}}
+  const int da[5] = { 0 }; // expected-note {{constant variable is predetermined as shared}}
   S4 e(4); // expected-note {{'e' defined here}}
   S5 g(5); // expected-note {{'g' defined here}}
   int i;

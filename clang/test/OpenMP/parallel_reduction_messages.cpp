@@ -16,7 +16,7 @@ class S2 {
 public:
   S2() : a(0) {}
   S2(S2 &s2) : a(s2.a) {}
-  static float S2s; // expected-note 2 {{predetermined as shared}}
+  static float S2s; // expected-note 2 {{static data member is predetermined as shared}}
   static const float S2sc;
 };
 const float S2::S2sc = 0; // expected-note 2 {{'S2sc' defined here}}

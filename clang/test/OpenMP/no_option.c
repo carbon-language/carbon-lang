@@ -2,5 +2,5 @@
 // expected-no-diagnostics
 
 int a;
-#pragma omp threadprivate(a,b)
+#pragma omp threadprivate(a, b)
 #pragma omp parallel
