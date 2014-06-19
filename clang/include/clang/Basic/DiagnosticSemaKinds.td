@@ -543,9 +543,9 @@ def err_pragma_pop_visibility_mismatch : Error<
 def note_surrounding_namespace_starts_here : Note<
   "surrounding namespace with visibility attribute starts here">;
 def err_pragma_loop_invalid_value : Error<
-  "%select{invalid|missing}0 value%select{ %1|}0; expected a positive integer value">;
+  "invalid argument; expected a positive integer value">;
 def err_pragma_loop_invalid_keyword : Error<
-  "%select{invalid|missing}0 keyword%select{ %1|}0; expected 'enable' or 'disable'">;
+  "invalid argument; expected 'enable' or 'disable'">;
 def err_pragma_loop_compatibility : Error<
   "%select{incompatible|duplicate}0 directives '%1(%2)' and '%3(%4)'">;
 def err_pragma_loop_precedes_nonloop : Error<

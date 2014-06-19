@@ -909,6 +909,8 @@ def err_omp_more_one_clause : Error<
 def err_pragma_loop_invalid_option : Error<
   "%select{invalid|missing}0 option%select{ %1|}0; expected vectorize, "
   "vectorize_width, interleave, interleave_count, unroll, or unroll_count">;
+def err_pragma_loop_missing_argument : Error<
+  "missing argument to loop pragma %0">;
 } // end of Parse Issue category.
 
 let CategoryName = "Modules Issue" in {

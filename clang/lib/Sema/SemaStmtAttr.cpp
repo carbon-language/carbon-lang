@@ -75,18 +75,15 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave ||
       Option == LoopHintAttr::Unroll) {
     if (!ValueInfo) {
-      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword)
-          << /*MissingKeyword=*/true << "";
+      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword);
       return nullptr;
     }
-
     if (ValueInfo->isStr("disable"))
       ValueInt = 0;
     else if (ValueInfo->isStr("enable"))
       ValueInt = 1;
     else {
-      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword)
-          << /*MissingKeyword=*/false << ValueInfo;
+      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword);
       return nullptr;
     }
   } else if (Option == LoopHintAttr::VectorizeWidth ||
@@ -95,15 +92,9 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
     // FIXME: We should support template parameters for the loop hint value.
     // See bug report #19610.
     llvm::APSInt ValueAPS;
-    if (!ValueExpr || !ValueExpr->isIntegerConstantExpr(ValueAPS, S.Context)) {
-      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_value)
-          << /*MissingValue=*/true << "";
-      return nullptr;
-    }
-
-    if ((ValueInt = ValueAPS.getSExtValue()) < 1) {
-      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_value)
-          << /*MissingValue=*/false << ValueInt;
+    if (!ValueExpr || !ValueExpr->isIntegerConstantExpr(ValueAPS, S.Context) ||
+        (ValueInt = ValueAPS.getSExtValue()) < 1) {
+      S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_value);
       return nullptr;
     }
   } else

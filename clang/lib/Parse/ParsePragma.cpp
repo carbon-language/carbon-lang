@@ -1710,9 +1710,13 @@ void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
     // FIXME: All tokens between '(' and ')' should be stored and parsed as a
     // constant expression.
     PP.Lex(Tok);
-    Token Value;
-    if (Tok.is(tok::identifier) || Tok.is(tok::numeric_constant))
-      Value = Tok;
+    if (Tok.is(tok::r_paren)) {
+      // Nothing between the parentheses.
+      PP.Diag(Tok.getLocation(), diag::err_pragma_loop_missing_argument)
+          << OptionInfo;
+      return;
+    }
+    Token Value = Tok;
 
     // Read ')'
     PP.Lex(Tok);
