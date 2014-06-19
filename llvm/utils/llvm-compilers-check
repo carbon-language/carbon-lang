@@ -149,6 +149,8 @@ def add_options(parser):
                       help=("Do not do installs"))
     parser.add_option("--keep-going", default=False, action="store_true",
                       help=("Keep going after failures"))
+    parser.add_option("--no-flavor-prefix", default=False, action="store_true",
+                      help=("Do not append the build flavor to the install path"))
     parser.add_option("--enable-werror", default=False, action="store_true",
                       help=("Build with -Werror"))
     return
@@ -348,7 +350,9 @@ class Builder(threading.Thread):
         ssabbrev = get_short_abbrevs([ab for ab in self.source_abbrev.values()])
 
         prefix = "[" + ssabbrev[self.source_abbrev[source]] + "-" + self.build_abbrev[build] + "]"
-        self.install_prefix += "/" + self.source_abbrev[source] + "/" + build
+        if (not self.options.no_flavor_prefix):
+            self.install_prefix += "/" + self.source_abbrev[source] + "/" + build
+
         build_suffix += "/" + self.source_abbrev[source] + "/" + build
 
         self.logger = logging.getLogger(prefix)
