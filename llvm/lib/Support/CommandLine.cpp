@@ -145,6 +145,7 @@ void OptionCategory::registerCategory() {
 static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
                           SmallVectorImpl<Option*> &SinkOpts,
                           StringMap<Option*> &OptionsMap) {
+  bool HadErrors = false;
   SmallVector<const char*, 16> OptionNames;
   Option *CAOpt = nullptr;  // The ConsumeAfter option if it exists.
   for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
@@ -158,8 +159,9 @@ static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
     for (size_t i = 0, e = OptionNames.size(); i != e; ++i) {
       // Add argument to the argument map!
       if (OptionsMap.GetOrCreateValue(OptionNames[i], O).second != O) {
-        errs() << ProgramName << ": CommandLine Error: Argument '"
-             << OptionNames[i] << "' defined more than once!\n";
+        errs() << ProgramName << ": CommandLine Error: Option '"
+               << OptionNames[i] << "' registered more than once!\n";
+        HadErrors = true;
       }
     }
 
@@ -171,8 +173,10 @@ static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
     else if (O->getMiscFlags() & cl::Sink) // Remember sink options
       SinkOpts.push_back(O);
     else if (O->getNumOccurrencesFlag() == cl::ConsumeAfter) {
-      if (CAOpt)
+      if (CAOpt) {
         O->error("Cannot specify more than one option with cl::ConsumeAfter!");
+        HadErrors = true;
+      }
       CAOpt = O;
     }
   }
@@ -182,6 +186,12 @@ static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
 
   // Make sure that they are in order of registration not backwards.
   std::reverse(PositionalOpts.begin(), PositionalOpts.end());
+
+  // Fail hard if there were errors. These are strictly unrecoverable and
+  // indicate serious issues such as conflicting option names or an incorrectly
+  // linked LLVM distribution.
+  if (HadErrors)
+    report_fatal_error("inconsistency in registered CommandLine options");
 }
 
 
