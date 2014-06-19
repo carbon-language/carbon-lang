@@ -789,11 +789,6 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
     // have a sign-extend idiom.
     Value *X;
     if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1)))) {
-      // If the left shift is just shifting out partial signbits, delete the
-      // extension.
-      if (cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap())
-        return ReplaceInstUsesWith(I, X);
-
       // If the input is an extension from the shifted amount value, e.g.
       //   %x = zext i8 %A to i32
       //   %y = shl i32 %x, 24
