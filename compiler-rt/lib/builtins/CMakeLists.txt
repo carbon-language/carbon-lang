@@ -95,6 +95,7 @@ set(GENERIC_SOURCES
   mulsc3.c
   mulsf3.c
   multi3.c
+  multf3.c
   mulvdi3.c
   mulvsi3.c
   mulvti3.c
