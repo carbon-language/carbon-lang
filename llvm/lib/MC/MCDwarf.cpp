@@ -610,8 +610,8 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
   // Now emit the table of pairs of PointerSize'ed values for the section
   // addresses and sizes.
   for (const auto &sec : Sections) {
-    MCSymbol* StartSymbol = sec.second.first;
-    MCSymbol* EndSymbol = sec.second.second;
+    MCSymbol *StartSymbol = sec.second.first;
+    MCSymbol *EndSymbol = sec.second.second;
     assert(StartSymbol && "StartSymbol must not be NULL");
     assert(EndSymbol && "EndSymbol must not be NULL");
 
@@ -697,8 +697,8 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     const auto TextSection = Sections.begin();
     assert(TextSection != Sections.end() && "No text section found");
 
-    MCSymbol* StartSymbol = TextSection->second.first;
-    MCSymbol* EndSymbol = TextSection->second.second;
+    MCSymbol *StartSymbol = TextSection->second.first;
+    MCSymbol *EndSymbol = TextSection->second.second;
     assert(StartSymbol && "StartSymbol must not be NULL");
     assert(EndSymbol && "EndSymbol must not be NULL");
 
@@ -809,8 +809,8 @@ static void EmitGenDwarfRanges(MCStreamer *MCOS) {
 
   for (const auto sec : Sections) {
 
-    MCSymbol* StartSymbol = sec.second.first;
-    MCSymbol* EndSymbol = sec.second.second;
+    MCSymbol *StartSymbol = sec.second.first;
+    MCSymbol *EndSymbol = sec.second.second;
     assert(StartSymbol && "StartSymbol must not be NULL");
     assert(EndSymbol && "EndSymbol must not be NULL");
 
@@ -1539,13 +1539,12 @@ namespace {
       return CIEKey(nullptr, -1, 0, false, false);
     }
 
-    CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
-           unsigned LsdaEncoding_, bool IsSignalFrame_, bool IsSimple_) :
-      Personality(Personality_), PersonalityEncoding(PersonalityEncoding_),
-      LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_),
-      IsSimple(IsSimple_) {
-    }
-    const MCSymbol* Personality;
+    CIEKey(const MCSymbol *Personality_, unsigned PersonalityEncoding_,
+           unsigned LsdaEncoding_, bool IsSignalFrame_, bool IsSimple_)
+        : Personality(Personality_), PersonalityEncoding(PersonalityEncoding_),
+          LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_),
+          IsSimple(IsSimple_) {}
+    const MCSymbol *Personality;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
     bool IsSignalFrame;
@@ -1620,7 +1619,7 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
   Emitter.setSectionStart(SectionStart);
 
   MCSymbol *FDEEnd = nullptr;
-  DenseMap<CIEKey, const MCSymbol*> CIEStarts;
+  DenseMap<CIEKey, const MCSymbol *> CIEStarts;
 
   const MCSymbol *DummyDebugKey = nullptr;
   NeedsEHFrameSection = !MOFI->getSupportsCompactUnwindWithoutEHFrame();
