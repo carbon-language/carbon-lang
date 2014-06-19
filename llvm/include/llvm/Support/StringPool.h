@@ -128,10 +128,10 @@ namespace llvm {
     }
 
     inline const char *operator*() const { return begin(); }
-    inline operator bool() const { return S != nullptr; }
+    inline explicit operator bool() const { return S != nullptr; }
 
-    inline bool operator==(const PooledStringPtr &That) { return S == That.S; }
-    inline bool operator!=(const PooledStringPtr &That) { return S != That.S; }
+    inline bool operator==(const PooledStringPtr &That) const { return S == That.S; }
+    inline bool operator!=(const PooledStringPtr &That) const { return S != That.S; }
   };
 
 } // End llvm namespace
