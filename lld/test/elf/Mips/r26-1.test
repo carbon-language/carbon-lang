@@ -3,17 +3,17 @@
 # Check handling of R_MIPS_26 relocation.
 
 # Build shared library
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-pic-o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-pic-o
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
 
 # Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-npic-o %s
-# RUN: llvm-readobj -relocations %t-npic-o | \
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
+# RUN: llvm-readobj -relocations %t-o.o | \
 # RUN:   FileCheck -check-prefix=OBJ-REL %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe %t-npic-o %t-so
-# RUN: llvm-objdump -section-headers -disassemble %t-exe | \
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
+# RUN: llvm-objdump -section-headers -disassemble %t.exe | \
 # RUN:   FileCheck -check-prefix=EXE %s
-# RUN: llvm-readobj -relocations %t-exe | FileCheck -check-prefix=EXE-REL %s
+# RUN: llvm-readobj -relocations %t.exe | FileCheck -check-prefix=EXE-REL %s
 
 # Object file has three R_MIPS_26 relocations
 # OBJ-REL: Relocations [
@@ -62,12 +62,71 @@
 # EXE:   6 .plt          00000030 0000000000400170 TEXT DATA
 # EXE:  10 .got.plt      0000000c 0000000000402000 DATA
 
-    .global glob
-    .ent    glob
-glob:
-    jal     $t9
-    jal     loc
-loc:
-    jal     glob
-    jal     T1
-    .end    glob
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x0C
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name:    T1
+      Section: .text
+      Type:    STT_FUNC
+      Value:   0x0
+      Size:    4
+
+# o.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Content:         '09F82003000000000400000C000000000000000C000000000000000C00000000'
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x08
+        Symbol:          .text
+        Type:            R_MIPS_26
+      - Offset:          0x10
+        Symbol:          glob
+        Type:            R_MIPS_26
+      - Offset:          0x18
+        Symbol:          T1
+        Type:            R_MIPS_26
+
+Symbols:
+  Local:
+    - Name:            loc
+      Section:         .text
+      Value:           0x10
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+  Global:
+    - Name:            glob
+      Section:         .text
+    - Name:            T1
+...
