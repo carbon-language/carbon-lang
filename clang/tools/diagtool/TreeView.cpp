@@ -50,11 +50,11 @@ static void resetColor(bool ShowColors, llvm::raw_ostream &out) {
     out << llvm::sys::Process::ResetColor();
 }
 
-static clang::DiagnosticsEngine::Level getLevel(unsigned DiagID) {
+static bool isIgnored(unsigned DiagID) {
   // FIXME: This feels like a hack.
   static clang::DiagnosticsEngine Diags(new DiagnosticIDs,
                                         new DiagnosticOptions);
-  return Diags.getDiagnosticLevel(DiagID, SourceLocation());
+  return Diags.isIgnored(DiagID, SourceLocation());
 }
 
 static void printGroup(llvm::raw_ostream &out, const GroupRecord &Group,
@@ -78,7 +78,7 @@ static void printGroup(llvm::raw_ostream &out, const GroupRecord &Group,
                                            E = Group.diagnostics_end();
          I != E; ++I) {
       if (ShowColors) {
-        if (getLevel(I->DiagID) != DiagnosticsEngine::Ignored) {
+        if (!isIgnored(I->DiagID)) {
           setColor(ShowColors, out, llvm::raw_ostream::GREEN);
         }
       }
