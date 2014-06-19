@@ -158,7 +158,13 @@ bool JumpThreading::runOnFunction(Function &F) {
   TLI = &getAnalysis<TargetLibraryInfo>();
   LVI = &getAnalysis<LazyValueInfo>();
 
-  // Remove unreachable blocks from function as they may result in infinite loop.
+  // Remove unreachable blocks from function as they may result in infinite
+  // loop. We do threading if we found something profitable. Jump threading a
+  // branch can create other opportunities. If these opportunities form a cycle
+  // i.e. if any jump treading is undoing previous threading in the path, then
+  // we will loop forever. We take care of this issue by not jump threading for
+  // back edges. This works for normal cases but not for unreachable blocks as
+  // they may have cycle with no back edge.
   removeUnreachableBlocks(F);
 
   FindLoopHeaders(F);
