@@ -43,7 +43,10 @@ public:
 
   /// \brief The file to write GraphViz-formatted header dependencies to.
   std::string DOTOutputFile;
-  
+
+  /// \brief The directory to copy module dependencies to when collecting them.
+  std::string ModuleDependencyOutputDir;
+
 public:
   DependencyOutputOptions() {
     IncludeSystemHeaders = 0;

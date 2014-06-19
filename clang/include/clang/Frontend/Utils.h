@@ -15,8 +15,10 @@
 #define LLVM_CLANG_FRONTEND_UTILS_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/VirtualFileSystem.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Option/OptSpecifier.h"
 
 namespace llvm {
@@ -78,6 +80,30 @@ public:
   static DependencyFileGenerator *CreateAndAttachToPreprocessor(
     Preprocessor &PP, const DependencyOutputOptions &Opts);
   void AttachToASTReader(ASTReader &R);
+};
+
+/// Collects the dependencies for imported modules into a directory.  Users
+/// should attach to the AST reader whenever a module is loaded.
+class ModuleDependencyCollector {
+  std::string DestDir;
+  bool HasErrors;
+  llvm::StringSet<> Seen;
+  vfs::YAMLVFSWriter VFSWriter;
+
+public:
+  StringRef getDest() { return DestDir; }
+  bool insertSeen(StringRef Filename) { return Seen.insert(Filename); }
+  void setHasErrors() { HasErrors = true; }
+  void addFileMapping(StringRef VPath, StringRef RPath) {
+    VFSWriter.addFileMapping(VPath, RPath);
+  }
+
+  void attachToASTReader(ASTReader &R);
+  void writeFileMap();
+  bool hasErrors() { return HasErrors; }
+  ModuleDependencyCollector(std::string DestDir)
+      : DestDir(DestDir), HasErrors(false) {}
+  ~ModuleDependencyCollector() { writeFileMap(); }
 };
 
 /// AttachDependencyGraphGen - Create a dependency graph generator, and attach

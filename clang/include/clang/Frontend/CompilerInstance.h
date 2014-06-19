@@ -105,6 +105,9 @@ class CompilerInstance : public ModuleLoader {
   /// \brief The ASTReader, if one exists.
   IntrusiveRefCntPtr<ASTReader> ModuleManager;
 
+  /// \brief The module dependency collector for crashdumps
+  std::shared_ptr<ModuleDependencyCollector> ModuleDepCollector;
+
   /// \brief The dependency file generator.
   std::unique_ptr<DependencyFileGenerator> TheDependencyFileGenerator;
 
@@ -463,6 +466,10 @@ public:
 
   IntrusiveRefCntPtr<ASTReader> getModuleManager() const;
   void setModuleManager(IntrusiveRefCntPtr<ASTReader> Reader);
+
+  std::shared_ptr<ModuleDependencyCollector> getModuleDepCollector() const;
+  void setModuleDepCollector(
+      std::shared_ptr<ModuleDependencyCollector> Collector);
 
   /// }
   /// @name Code Completion
