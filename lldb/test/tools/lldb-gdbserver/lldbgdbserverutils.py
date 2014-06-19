@@ -463,7 +463,8 @@ class GdbRemoteEntry(GdbRemoteEntryBase):
     def _assert_regex_match(self, asserter, actual_packet, context):
         # Ensure the actual packet matches from the start of the actual packet.
         match = self.regex.match(actual_packet)
-        asserter.assertIsNotNone(match)
+        if not match:
+            asserter.fail("regex '{}' failed to match against content '{}'".format(self.regex.pattern, actual_packet))
 
         if self.capture:
             # Handle captures.

@@ -7,8 +7,22 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     AUXV_SUPPORT_FEATURE_NAME = "qXfer:auxv:read"
 
-    def has_auxv_support(self, inferior_args=None):
+    def has_auxv_support(self):
+        inferior_args = ["message:main entered", "sleep:5"]
         procs = self.prep_debug_monitor_and_inferior(inferior_args=inferior_args)
+
+        # Don't do anything until we match the launched inferior main entry output.
+        # Then immediately interrupt the process.
+        # This prevents auxv data being asked for before it's ready and leaves
+        # us in a stopped state.
+        self.test_sequence.add_log_lines([
+            # Start the inferior...
+            "read packet: $c#00",
+            # ... match output....
+            { "type":"output_match", "regex":r"^message:main entered\r\n$" },
+            ], True)
+        # ... then interrupt.
+        self.add_interrupt_packets()
         self.add_qSupported_packets()
 
         context = self.expect_gdbremote_sequence()
@@ -17,9 +31,9 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         features = self.parse_qSupported_response(context)
         return self.AUXV_SUPPORT_FEATURE_NAME in features and features[self.AUXV_SUPPORT_FEATURE_NAME] == "+"
 
-    def get_raw_auxv_data(self, inferior_args=None):
+    def get_raw_auxv_data(self):
         # Start up llgs and inferior, and check for auxv support.
-        if not self.has_auxv_support(inferior_args=inferior_args):
+        if not self.has_auxv_support():
             self.skipTest("auxv data not supported")
 
         # Grab pointer size for target.  We'll assume that is equivalent to an unsigned long on the target.
@@ -42,7 +56,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.reset_test_sequence()
         self.test_sequence.add_log_lines([
             "read packet: $qXfer:auxv:read::{:x},{:x}:#00".format(OFFSET, LENGTH),
-            {"direction":"send", "regex":r"^\$([^E])(.*)#[0-9a-fA-F]{2}$", "capture":{1:"response_type", 2:"content_raw"} }
+            {"direction":"send", "regex":re.compile(r"^\$([^E])(.*)#[0-9a-fA-F]{2}$", re.MULTILINE|re.DOTALL), "capture":{1:"response_type", 2:"content_raw"} }
             ], True)
 
         context = self.expect_gdbremote_sequence()
@@ -57,10 +71,10 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(content_raw)
         return (word_size, self.decode_gdbremote_binary(content_raw))
 
-    def supports_auxv(self, inferior_args=None):
+    def supports_auxv(self):
         # When non-auxv platforms support llgs, skip the test on platforms
         # that don't support auxv.
-        self.assertTrue(self.has_auxv_support(inferior_args=inferior_args))
+        self.assertTrue(self.has_auxv_support())
 
     #
     # We skip the "supports_auxv" test on debugserver.  The rest of the tests
@@ -80,7 +94,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.supports_auxv()
 
     def auxv_data_is_correct_size(self):
-        (word_size, auxv_data) = self.get_raw_auxv_data(inferior_args=["sleep:1"])
+        (word_size, auxv_data) = self.get_raw_auxv_data()
         self.assertIsNotNone(auxv_data)
 
         # Ensure auxv data is a multiple of 2*word_size (there should be two unsigned long fields per auxv entry).
@@ -105,7 +119,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.auxv_data_is_correct_size()
 
     def auxv_keys_look_valid(self):
-        (word_size, auxv_data) = self.get_raw_auxv_data(inferior_args=["sleep:1"])
+        (word_size, auxv_data) = self.get_raw_auxv_data()
         self.assertIsNotNone(auxv_data)
 
         # Grab endian.
@@ -150,7 +164,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         # return the same data as a single larger read.
 
         # Grab the auxv data with a single large read here.
-        (word_size, auxv_data) = self.get_raw_auxv_data(inferior_args=["sleep:1"])
+        (word_size, auxv_data) = self.get_raw_auxv_data()
         self.assertIsNotNone(auxv_data)
 
         # Grab endian.

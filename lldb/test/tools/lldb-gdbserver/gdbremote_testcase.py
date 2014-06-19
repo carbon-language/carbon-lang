@@ -642,7 +642,7 @@ class GdbRemoteTestCaseBase(TestBase):
             self.reset_test_sequence()
             self.test_sequence.add_log_lines([
                 "read packet: ${}{:x},{:x}:#00".format(command_prefix, offset, chunk_length),
-                {"direction":"send", "regex":r"^\$([^E])(.*)#[0-9a-fA-F]{2}$", "capture":{1:"response_type", 2:"content_raw"} }
+                {"direction":"send", "regex":re.compile(r"^\$([^E])(.*)#[0-9a-fA-F]{2}$", re.MULTILINE|re.DOTALL), "capture":{1:"response_type", 2:"content_raw"} }
                 ], True)
 
             context = self.expect_gdbremote_sequence()
@@ -664,3 +664,16 @@ class GdbRemoteTestCaseBase(TestBase):
                 self.assertIsNotNone(content_raw)
                 decoded_data += self.decode_gdbremote_binary(content_raw)
         return decoded_data
+
+    def add_interrupt_packets(self):
+        self.test_sequence.add_log_lines([
+            # Send the intterupt.
+            "read packet: {}".format(chr(03)),
+            # And wait for the stop notification.
+            {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})(.*)#[0-9a-fA-F]{2}$", "capture":{1:"stop_signo", 2:"stop_key_val_text" } },
+            ], True)
+
+    def parse_interrupt_packets(self, context):
+        self.assertIsNotNone(context.get("stop_signo"))
+        self.assertIsNotNone(context.get("stop_key_val_text"))
+        return (int(context["stop_signo"], 16), self.parse_key_val_dict(context["stop_key_val_text"]))
