@@ -169,8 +169,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
                        tv->tv_u.tv_val);
             return LDPS_ERR;
         }
-        // TODO: add an option to disable PIC.
-        //output_type = LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC;
         break;
       case LDPT_OPTION:
         options::process_plugin_option(tv->tv_u.tv_string);
