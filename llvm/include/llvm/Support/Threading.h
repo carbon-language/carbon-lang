@@ -15,8 +15,6 @@
 #ifndef LLVM_SUPPORT_THREADING_H
 #define LLVM_SUPPORT_THREADING_H
 
-#include "llvm/Support/Mutex.h"
-
 namespace llvm {
   /// Returns true if LLVM is compiled with support for multi-threading, and
   /// false otherwise.
