@@ -2577,8 +2577,6 @@ static void fatal_error_handler(void *user_data, const std::string& reason,
 }
 
 static void initializeLibClang() {
-  // Install our error handler, and make sure multi-threading is enabled.
-  llvm::llvm_start_multithreaded();
   llvm::install_fatal_error_handler(fatal_error_handler, nullptr);
 }
 
