@@ -1061,7 +1061,8 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     if (SM.getStopOnLBrac() && getLexer().getKind() == AsmToken::LBrac)
       break;
 
-    switch (getLexer().getKind()) {
+    AsmToken::TokenKind TK = getLexer().getKind();
+    switch (TK) {
     default: {
       if (SM.isValidEndState()) {
         Done = true;
@@ -1073,13 +1074,14 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       Done = true;
       break;
     }
+    case AsmToken::String:
     case AsmToken::Identifier: {
       // This could be a register or a symbolic displacement.
       unsigned TmpReg;
       const MCExpr *Val;
       SMLoc IdentLoc = Tok.getLoc();
       StringRef Identifier = Tok.getString();
-      if(!ParseRegister(TmpReg, IdentLoc, End)) {
+      if (TK != AsmToken::String && !ParseRegister(TmpReg, IdentLoc, End)) {
         SM.onRegister(TmpReg);
         UpdateLocLex = false;
         break;

@@ -812,7 +812,19 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     // Parse symbol variant
     std::pair<StringRef, StringRef> Split;
     if (!MAI.useParensForSymbolVariant()) {
-      Split = Identifier.split('@');
+      if (FirstTokenKind == AsmToken::String) {
+        if (Lexer.is(AsmToken::At)) {
+          Lexer.Lex(); // eat @
+          SMLoc AtLoc = getLexer().getLoc();
+          StringRef VName;
+          if (parseIdentifier(VName))
+            return Error(AtLoc, "expected symbol variant after '@'");
+
+          Split = std::make_pair(Identifier, VName);
+        }
+      } else {
+        Split = Identifier.split('@');
+      }
     } else if (Lexer.is(AsmToken::LParen)) {
       Lexer.Lex(); // eat (
       StringRef VName;
