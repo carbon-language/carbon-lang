@@ -2226,11 +2226,6 @@ Note that, because no other threads are allowed to issue LLVM API calls before
 ``llvm_start_multithreaded()`` returns, it is possible to have
 ``ManagedStatic``\ s of ``llvm::sys::Mutex``\ s.
 
-The ``llvm_acquire_global_lock()`` and ``llvm_release_global_lock`` APIs provide
-access to the global lock used to implement the double-checked locking for lazy
-initialization.  These should only be used internally to LLVM, and only if you
-know what you're doing!
-
 .. _llvmcontext:
 
 Achieving Isolation with ``LLVMContext``

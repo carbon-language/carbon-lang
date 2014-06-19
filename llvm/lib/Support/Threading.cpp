@@ -21,13 +21,10 @@ using namespace llvm;
 
 static bool multithreaded_mode = false;
 
-static sys::Mutex* global_lock = nullptr;
-
 bool llvm::llvm_start_multithreaded() {
 #if LLVM_ENABLE_THREADS != 0
   assert(!multithreaded_mode && "Already multithreaded!");
   multithreaded_mode = true;
-  global_lock = new sys::Mutex(true);
 
   // We fence here to ensure that all initialization is complete BEFORE we
   // return from llvm_start_multithreaded().
@@ -47,20 +44,11 @@ void llvm::llvm_stop_multithreaded() {
   sys::MemoryFence();
 
   multithreaded_mode = false;
-  delete global_lock;
 #endif
 }
 
 bool llvm::llvm_is_multithreaded() {
   return multithreaded_mode;
-}
-
-void llvm::llvm_acquire_global_lock() {
-  if (multithreaded_mode) global_lock->acquire();
-}
-
-void llvm::llvm_release_global_lock() {
-  if (multithreaded_mode) global_lock->release();
 }
 
 #if LLVM_ENABLE_THREADS != 0 && defined(HAVE_PTHREAD_H)

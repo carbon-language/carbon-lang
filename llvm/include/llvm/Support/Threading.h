@@ -33,14 +33,6 @@ namespace llvm {
   /// mode or not.
   bool llvm_is_multithreaded();
 
-  /// acquire_global_lock - Acquire the global lock.  This is a no-op if called
-  /// before llvm_start_multithreaded().
-  void llvm_acquire_global_lock();
-
-  /// release_global_lock - Release the global lock.  This is a no-op if called
-  /// before llvm_start_multithreaded().
-  void llvm_release_global_lock();
-
   /// llvm_execute_on_thread - Execute the given \p UserFn on a separate
   /// thread, passing it the provided \p UserData.
   ///
