@@ -440,6 +440,10 @@ namespace __sanitizer {
   typedef long __sanitizer_clock_t;
 #endif
 
+#if SANITIZER_LINUX
+  typedef int __sanitizer_clockid_t;
+#endif
+
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 #if defined(_LP64) || defined(__x86_64__) || defined(__powerpc__)
   typedef unsigned __sanitizer___kernel_uid_t;

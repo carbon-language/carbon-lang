@@ -1059,6 +1059,10 @@ CHECK_SIZE_AND_OFFSET(shmid_ds, shm_nattch);
 
 CHECK_TYPE_SIZE(clock_t);
 
+#if SANITIZER_LINUX
+CHECK_TYPE_SIZE(clockid_t);
+#endif
+
 #if !SANITIZER_ANDROID
 CHECK_TYPE_SIZE(ifaddrs);
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_next);
