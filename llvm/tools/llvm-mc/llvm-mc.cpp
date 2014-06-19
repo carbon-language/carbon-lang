@@ -52,7 +52,8 @@ static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
 static cl::opt<bool>
-CompressDebugSections("compress-debug-sections", cl::desc("Compress DWARF debug sections"));
+CompressDebugSections("compress-debug-sections",
+                      cl::desc("Compress DWARF debug sections"));
 
 static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
@@ -240,7 +241,8 @@ static void setDwarfDebugProducer(void) {
   DwarfDebugProducer += getenv("DEBUG_PRODUCER");
 }
 
-static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) {
+static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
+                      tool_output_file *Out) {
 
   AsmLexer Lexer(MAI);
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(0));
@@ -320,7 +322,8 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) 
 
 static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
-                         MCAsmInfo &MAI, MCSubtargetInfo &STI, MCInstrInfo &MCII) {
+                         MCAsmInfo &MAI, MCSubtargetInfo &STI,
+                         MCInstrInfo &MCII) {
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, Ctx, Str, MAI));
   std::unique_ptr<MCTargetAsmParser> TAP(
@@ -391,7 +394,8 @@ int main(int argc, char **argv) {
 
   if (CompressDebugSections) {
     if (!zlib::isAvailable()) {
-      errs() << ProgName << ": build tools with zlib to enable -compress-debug-sections";
+      errs() << ProgName
+             << ": build tools with zlib to enable -compress-debug-sections";
       return 1;
     }
     MAI->setCompressDebugSections(true);
@@ -479,7 +483,8 @@ int main(int argc, char **argv) {
     Res = AsLexInput(SrcMgr, *MAI, Out.get());
     break;
   case AC_Assemble:
-    Res = AssembleInput(ProgName, TheTarget, SrcMgr, Ctx, *Str, *MAI, *STI, *MCII);
+    Res = AssembleInput(ProgName, TheTarget, SrcMgr, Ctx, *Str, *MAI, *STI,
+                        *MCII);
     break;
   case AC_MDisassemble:
     assert(IP && "Expected assembly output");
