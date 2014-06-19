@@ -23,7 +23,6 @@ set(ADTSources
   MakeUniqueTest.cpp
   MapVectorTest.cpp
   OptionalTest.cpp
-  OwningPtrTest.cpp
   PackedVectorTest.cpp
   PointerIntPairTest.cpp
   PointerUnionTest.cpp

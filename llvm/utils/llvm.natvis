@@ -108,14 +108,6 @@ or create a symbolic link so it updates automatically.
     </Expand>
   </Type>
 
-  <Type Name="llvm::OwningPtr&lt;*&gt;">
-    <DisplayString Condition="Ptr == 0">empty</DisplayString>
-    <DisplayString Condition="Ptr != 0">OwningPtr {*Ptr}</DisplayString>
-    <Expand>
-      <ExpandedItem Condition="Ptr != 0">Ptr</ExpandedItem>
-    </Expand>
-  </Type>
-
   <Type Name="llvm::SmallPtrSet&lt;*,*&gt;">
     <DisplayString Condition="CurArray == SmallArray">{{ [Small Mode] size={NumElements}, capacity={CurArraySize} }}</DisplayString>
     <DisplayString Condition="CurArray != SmallArray">{{ [Big Mode] size={NumElements}, capacity={CurArraySize} }}</DisplayString>
