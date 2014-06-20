@@ -8407,7 +8407,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     return;
   }
 
-  SourceLocation Loc = Constructor->getLocation();
+  SourceLocation Loc = Constructor->getLocEnd().isValid()
+                           ? Constructor->getLocEnd()
+                           : Constructor->getLocation();
   Constructor->setBody(new (Context) CompoundStmt(Loc));
 
   Constructor->markUsed(Context);
@@ -8869,7 +8871,9 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
     return;
   }
 
-  SourceLocation Loc = Destructor->getLocation();
+  SourceLocation Loc = Destructor->getLocEnd().isValid()
+                           ? Destructor->getLocEnd()
+                           : Destructor->getLocation();
   Destructor->setBody(new (Context) CompoundStmt(Loc));
   Destructor->markUsed(Context);
   MarkVTableUsed(CurrentLocation, ClassDecl);
@@ -9569,8 +9573,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   }
   
   // Our location for everything implicitly-generated.
-  SourceLocation Loc = CopyAssignOperator->getLocation();
-  
+  SourceLocation Loc = CopyAssignOperator->getLocEnd().isValid()
+                           ? CopyAssignOperator->getLocEnd()
+                           : CopyAssignOperator->getLocation();
+
   // Builds a DeclRefExpr for the "other" object.
   RefBuilder OtherRef(Other, OtherRefType);
 
@@ -9974,7 +9980,9 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
          "Bad argument type of defaulted move assignment");
 
   // Our location for everything implicitly-generated.
-  SourceLocation Loc = MoveAssignOperator->getLocation();
+  SourceLocation Loc = MoveAssignOperator->getLocEnd().isValid()
+                           ? MoveAssignOperator->getLocEnd()
+                           : MoveAssignOperator->getLocation();
 
   // Builds a reference to the "other" object.
   RefBuilder OtherRef(Other, OtherRefType);
@@ -10111,8 +10119,9 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
 
   if (!Invalid) {
     // Add a "return *this;"
-    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This.build(*this, Loc));
-    
+    ExprResult ThisObj =
+        CreateBuiltinUnaryOp(Loc, UO_Deref, This.build(*this, Loc));
+
     StmtResult Return = BuildReturnStmt(Loc, ThisObj.get());
     if (Return.isInvalid())
       Invalid = true;
@@ -10288,10 +10297,12 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
       << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
     CopyConstructor->setInvalidDecl();
   }  else {
+    SourceLocation Loc = CopyConstructor->getLocEnd().isValid()
+                             ? CopyConstructor->getLocEnd()
+                             : CopyConstructor->getLocation();
     Sema::CompoundScopeRAII CompoundScope(*this);
-    CopyConstructor->setBody(ActOnCompoundStmt(
-        CopyConstructor->getLocation(), CopyConstructor->getLocation(), None,
-        /*isStmtExpr=*/ false).getAs<Stmt>());
+    CopyConstructor->setBody(
+        ActOnCompoundStmt(Loc, Loc, None, /*isStmtExpr=*/false).getAs<Stmt>());
   }
 
   CopyConstructor->markUsed(Context);
@@ -10444,10 +10455,12 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
       << CXXMoveConstructor << Context.getTagDeclType(ClassDecl);
     MoveConstructor->setInvalidDecl();
   }  else {
+    SourceLocation Loc = MoveConstructor->getLocEnd().isValid()
+                             ? MoveConstructor->getLocEnd()
+                             : MoveConstructor->getLocation();
     Sema::CompoundScopeRAII CompoundScope(*this);
     MoveConstructor->setBody(ActOnCompoundStmt(
-        MoveConstructor->getLocation(), MoveConstructor->getLocation(), None,
-        /*isStmtExpr=*/ false).getAs<Stmt>());
+        Loc, Loc, None, /*isStmtExpr=*/ false).getAs<Stmt>());
   }
 
   MoveConstructor->markUsed(Context);
