@@ -12,7 +12,8 @@ CHECK: trivial-object-test.elf-x86-64:
 CHECK-NEXT:                  U SomeOtherFunction
 CHECK-NEXT: 0000000000000000 T main
 CHECK-NEXT:                  U puts
-CHECK-NEXT: trivial-object-test2.elf-x86-64:
+
+CHECK: trivial-object-test2.elf-x86-64:
 CHECK-NEXT: 0000000000000000 t bar
 CHECK-NEXT: 0000000000000006 T foo
 CHECK-NEXT: 0000000000000016 T main
@@ -40,7 +41,8 @@ CORRUPT: trivial-object-test.elf-x86-64:
 CORRUPT-NEXT:                  U SomeOtherFunction
 CORRUPT-NEXT: 0000000000000000 T main
 CORRUPT-NEXT:                  U puts
-CORRUPT-NEXT: trivial-object-test2.elf-x86-64:
+
+CORRUPT: trivial-object-test2.elf-x86-64:
 CORRUPT-NEXT: 0000000000000000 t bar
 CORRUPT-NEXT: 0000000000000006 T foo
 CORRUPT-NEXT: 0000000000000016 T main
