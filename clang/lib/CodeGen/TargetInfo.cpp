@@ -3018,8 +3018,12 @@ llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
   if (CplxBaseSize && CplxBaseSize < 8) {
     llvm::Value *RealAddr = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
     llvm::Value *ImagAddr = RealAddr;
-    RealAddr = Builder.CreateAdd(RealAddr, Builder.getInt64(8 - CplxBaseSize));
-    ImagAddr = Builder.CreateAdd(ImagAddr, Builder.getInt64(16 - CplxBaseSize));
+    if (CGF.CGM.getDataLayout().isBigEndian()) {
+      RealAddr = Builder.CreateAdd(RealAddr, Builder.getInt64(8 - CplxBaseSize));
+      ImagAddr = Builder.CreateAdd(ImagAddr, Builder.getInt64(16 - CplxBaseSize));
+    } else {
+      ImagAddr = Builder.CreateAdd(ImagAddr, Builder.getInt64(8));
+    }
     llvm::Type *PBaseTy = llvm::PointerType::getUnqual(CGF.ConvertType(BaseTy));
     RealAddr = Builder.CreateIntToPtr(RealAddr, PBaseTy);
     ImagAddr = Builder.CreateIntToPtr(ImagAddr, PBaseTy);
@@ -3037,7 +3041,7 @@ llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
   // If the argument is smaller than 8 bytes, it is right-adjusted in
   // its doubleword slot.  Adjust the pointer to pick it up from the
   // correct offset.
-  if (SizeInBytes < 8) {
+  if (SizeInBytes < 8 && CGF.CGM.getDataLayout().isBigEndian()) {
     llvm::Value *AddrAsInt = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
     AddrAsInt = Builder.CreateAdd(AddrAsInt, Builder.getInt64(8 - SizeInBytes));
     Addr = Builder.CreateIntToPtr(AddrAsInt, BP);
