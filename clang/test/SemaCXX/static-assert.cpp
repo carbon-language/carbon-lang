@@ -50,4 +50,4 @@ StaticAssertProtected<int> sap1;
 StaticAssertProtected<X> sap2; // expected-note {{instantiation}}
 
 static_assert(true); // expected-warning {{C++1z extension}}
-static_assert(false); // expected-error-re {{failed$}} expected-warning {{extension}}
+static_assert(false); // expected-error-re {{failed{{$}}}} expected-warning {{extension}}
