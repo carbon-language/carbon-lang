@@ -67,16 +67,6 @@ public:
     return IsNeg ? -int64_t(U) : int64_t(U);
   }
 
-  static int32_t extractLg(const std::pair<int32_t, int> &Lg) {
-    return Lg.first;
-  }
-  static int32_t extractLgFloor(const std::pair<int32_t, int> &Lg) {
-    return Lg.first - (Lg.second > 0);
-  }
-  static int32_t extractLgCeiling(const std::pair<int32_t, int> &Lg) {
-    return Lg.first + (Lg.second < 0);
-  }
-
   static int compare(uint64_t L, uint64_t R, int Shift) {
     assert(Shift >= 0);
     assert(Shift < 64);
@@ -195,17 +185,21 @@ public:
   /// \brief The log base 2, rounded.
   ///
   /// Get the lg of the scalar.  lg 0 is defined to be INT32_MIN.
-  int32_t lg() const { return extractLg(lgImpl()); }
+  int32_t lg() const { return ScaledNumbers::getLg(Digits, Exponent); }
 
   /// \brief The log base 2, rounded towards INT32_MIN.
   ///
   /// Get the lg floor.  lg 0 is defined to be INT32_MIN.
-  int32_t lgFloor() const { return extractLgFloor(lgImpl()); }
+  int32_t lgFloor() const {
+    return ScaledNumbers::getLgFloor(Digits, Exponent);
+  }
 
   /// \brief The log base 2, rounded towards INT32_MAX.
   ///
   /// Get the lg ceiling.  lg 0 is defined to be INT32_MIN.
-  int32_t lgCeiling() const { return extractLgCeiling(lgImpl()); }
+  int32_t lgCeiling() const {
+    return ScaledNumbers::getLgCeiling(Digits, Exponent);
+  }
 
   bool operator==(const UnsignedFloat &X) const { return compare(X) == 0; }
   bool operator<(const UnsignedFloat &X) const { return compare(X) < 0; }
@@ -319,7 +313,6 @@ private:
     return ScaledNumbers::getQuotient(Dividend, Divisor);
   }
 
-  std::pair<int32_t, int> lgImpl() const;
   static int countLeadingZerosWidth(DigitsType Digits) {
     if (Width == 64)
       return countLeadingZeros64(Digits);
@@ -419,25 +412,6 @@ IntT UnsignedFloat<DigitsT>::toInt() const {
     return N >> -Exponent;
   }
   return N;
-}
-
-template <class DigitsT>
-std::pair<int32_t, int> UnsignedFloat<DigitsT>::lgImpl() const {
-  if (isZero())
-    return std::make_pair(INT32_MIN, 0);
-
-  // Get the floor of the lg of Digits.
-  int32_t LocalFloor = Width - countLeadingZerosWidth(Digits) - 1;
-
-  // Get the floor of the lg of this.
-  int32_t Floor = Exponent + LocalFloor;
-  if (Digits == UINT64_C(1) << LocalFloor)
-    return std::make_pair(Floor, 0);
-
-  // Round based on the next digit.
-  assert(LocalFloor >= 1);
-  bool Round = Digits & UINT64_C(1) << (LocalFloor - 1);
-  return std::make_pair(Floor + Round, Round ? 1 : -1);
 }
 
 template <class DigitsT>

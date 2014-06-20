@@ -191,4 +191,98 @@ TEST(PositiveFloatTest, Divide) {
   EXPECT_EQ(SP64(0xd555555555555555, -63), getQuotient64(5, 3));
 }
 
+TEST(ScaledNumbersHelpersTest, getLg) {
+  EXPECT_EQ(0, getLg(UINT32_C(1), 0));
+  EXPECT_EQ(1, getLg(UINT32_C(1), 1));
+  EXPECT_EQ(1, getLg(UINT32_C(2), 0));
+  EXPECT_EQ(3, getLg(UINT32_C(1), 3));
+  EXPECT_EQ(3, getLg(UINT32_C(7), 0));
+  EXPECT_EQ(3, getLg(UINT32_C(8), 0));
+  EXPECT_EQ(3, getLg(UINT32_C(9), 0));
+  EXPECT_EQ(3, getLg(UINT32_C(64), -3));
+  EXPECT_EQ(31, getLg((UINT32_MAX >> 1) + 2, 0));
+  EXPECT_EQ(32, getLg(UINT32_MAX, 0));
+  EXPECT_EQ(-1, getLg(UINT32_C(1), -1));
+  EXPECT_EQ(-1, getLg(UINT32_C(2), -2));
+  EXPECT_EQ(INT32_MIN, getLg(UINT32_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLg(UINT32_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLg(UINT32_C(0), 1));
+
+  EXPECT_EQ(0, getLg(UINT64_C(1), 0));
+  EXPECT_EQ(1, getLg(UINT64_C(1), 1));
+  EXPECT_EQ(1, getLg(UINT64_C(2), 0));
+  EXPECT_EQ(3, getLg(UINT64_C(1), 3));
+  EXPECT_EQ(3, getLg(UINT64_C(7), 0));
+  EXPECT_EQ(3, getLg(UINT64_C(8), 0));
+  EXPECT_EQ(3, getLg(UINT64_C(9), 0));
+  EXPECT_EQ(3, getLg(UINT64_C(64), -3));
+  EXPECT_EQ(63, getLg((UINT64_MAX >> 1) + 2, 0));
+  EXPECT_EQ(64, getLg(UINT64_MAX, 0));
+  EXPECT_EQ(-1, getLg(UINT64_C(1), -1));
+  EXPECT_EQ(-1, getLg(UINT64_C(2), -2));
+  EXPECT_EQ(INT32_MIN, getLg(UINT64_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLg(UINT64_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLg(UINT64_C(0), 1));
+}
+
+TEST(ScaledNumbersHelpersTest, getLgFloor) {
+  EXPECT_EQ(0, getLgFloor(UINT32_C(1), 0));
+  EXPECT_EQ(1, getLgFloor(UINT32_C(1), 1));
+  EXPECT_EQ(1, getLgFloor(UINT32_C(2), 0));
+  EXPECT_EQ(2, getLgFloor(UINT32_C(7), 0));
+  EXPECT_EQ(3, getLgFloor(UINT32_C(1), 3));
+  EXPECT_EQ(3, getLgFloor(UINT32_C(8), 0));
+  EXPECT_EQ(3, getLgFloor(UINT32_C(9), 0));
+  EXPECT_EQ(3, getLgFloor(UINT32_C(64), -3));
+  EXPECT_EQ(31, getLgFloor((UINT32_MAX >> 1) + 2, 0));
+  EXPECT_EQ(31, getLgFloor(UINT32_MAX, 0));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT32_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT32_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT32_C(0), 1));
+
+  EXPECT_EQ(0, getLgFloor(UINT64_C(1), 0));
+  EXPECT_EQ(1, getLgFloor(UINT64_C(1), 1));
+  EXPECT_EQ(1, getLgFloor(UINT64_C(2), 0));
+  EXPECT_EQ(2, getLgFloor(UINT64_C(7), 0));
+  EXPECT_EQ(3, getLgFloor(UINT64_C(1), 3));
+  EXPECT_EQ(3, getLgFloor(UINT64_C(8), 0));
+  EXPECT_EQ(3, getLgFloor(UINT64_C(9), 0));
+  EXPECT_EQ(3, getLgFloor(UINT64_C(64), -3));
+  EXPECT_EQ(63, getLgFloor((UINT64_MAX >> 1) + 2, 0));
+  EXPECT_EQ(63, getLgFloor(UINT64_MAX, 0));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT64_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT64_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLgFloor(UINT64_C(0), 1));
+}
+
+TEST(ScaledNumbersHelpersTest, getLgCeiling) {
+  EXPECT_EQ(0, getLgCeiling(UINT32_C(1), 0));
+  EXPECT_EQ(1, getLgCeiling(UINT32_C(1), 1));
+  EXPECT_EQ(1, getLgCeiling(UINT32_C(2), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT32_C(1), 3));
+  EXPECT_EQ(3, getLgCeiling(UINT32_C(7), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT32_C(8), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT32_C(64), -3));
+  EXPECT_EQ(4, getLgCeiling(UINT32_C(9), 0));
+  EXPECT_EQ(32, getLgCeiling(UINT32_MAX, 0));
+  EXPECT_EQ(32, getLgCeiling((UINT32_MAX >> 1) + 2, 0));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT32_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT32_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT32_C(0), 1));
+
+  EXPECT_EQ(0, getLgCeiling(UINT64_C(1), 0));
+  EXPECT_EQ(1, getLgCeiling(UINT64_C(1), 1));
+  EXPECT_EQ(1, getLgCeiling(UINT64_C(2), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT64_C(1), 3));
+  EXPECT_EQ(3, getLgCeiling(UINT64_C(7), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT64_C(8), 0));
+  EXPECT_EQ(3, getLgCeiling(UINT64_C(64), -3));
+  EXPECT_EQ(4, getLgCeiling(UINT64_C(9), 0));
+  EXPECT_EQ(64, getLgCeiling((UINT64_MAX >> 1) + 2, 0));
+  EXPECT_EQ(64, getLgCeiling(UINT64_MAX, 0));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT64_C(0), -1));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT64_C(0), 0));
+  EXPECT_EQ(INT32_MIN, getLgCeiling(UINT64_C(0), 1));
+}
+
 } // end namespace

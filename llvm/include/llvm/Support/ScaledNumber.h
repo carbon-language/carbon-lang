@@ -171,6 +171,62 @@ inline std::pair<uint64_t, int16_t> getQuotient64(uint64_t Dividend,
   return getQuotient(Dividend, Divisor);
 }
 
+/// \brief Implementation of getLg() and friends.
+///
+/// Returns the rounded lg of \c Digits*2^Scale and an int specifying whether
+/// this was rounded up (1), down (-1), or exact (0).
+///
+/// Returns \c INT32_MIN when \c Digits is zero.
+template <class DigitsT>
+inline std::pair<int32_t, int> getLgImpl(DigitsT Digits, int16_t Scale) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  if (!Digits)
+    return std::make_pair(INT32_MIN, 0);
+
+  // Get the floor of the lg of Digits.
+  int32_t LocalFloor = sizeof(Digits) * 8 - countLeadingZeros(Digits) - 1;
+
+  // Get the actual floor.
+  int32_t Floor = Scale + LocalFloor;
+  if (Digits == UINT64_C(1) << LocalFloor)
+    return std::make_pair(Floor, 0);
+
+  // Round based on the next digit.
+  assert(LocalFloor >= 1);
+  bool Round = Digits & UINT64_C(1) << (LocalFloor - 1);
+  return std::make_pair(Floor + Round, Round ? 1 : -1);
+}
+
+/// \brief Get the lg (rounded) of a scaled number.
+///
+/// Get the lg of \c Digits*2^Scale.
+///
+/// Returns \c INT32_MIN when \c Digits is zero.
+template <class DigitsT> int32_t getLg(DigitsT Digits, int16_t Scale) {
+  return getLgImpl(Digits, Scale).first;
+}
+
+/// \brief Get the lg floor of a scaled number.
+///
+/// Get the floor of the lg of \c Digits*2^Scale.
+///
+/// Returns \c INT32_MIN when \c Digits is zero.
+template <class DigitsT> int32_t getLgFloor(DigitsT Digits, int16_t Scale) {
+  auto Lg = getLgImpl(Digits, Scale);
+  return Lg.first - (Lg.second > 0);
+}
+
+/// \brief Get the lg ceiling of a scaled number.
+///
+/// Get the ceiling of the lg of \c Digits*2^Scale.
+///
+/// Returns \c INT32_MIN when \c Digits is zero.
+template <class DigitsT> int32_t getLgCeiling(DigitsT Digits, int16_t Scale) {
+  auto Lg = getLgImpl(Digits, Scale);
+  return Lg.first + (Lg.second < 0);
+}
+
 } // end namespace ScaledNumbers
 } // end namespace llvm
 
