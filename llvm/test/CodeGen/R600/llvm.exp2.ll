@@ -1,26 +1,79 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG-CHECK
-;RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK
+;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG-CHECK --check-prefix=FUNC
+;RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK --check-prefix=FUNC
+;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
-;EG-CHECK-LABEL: @test
-;EG-CHECK: EXP_IEEE *
-;CM-CHECK-LABEL: @test
-;CM-CHECK: EXP_IEEE T{{[0-9]+}}.X, -|T{{[0-9]+}}.X|
-;CM-CHECK: EXP_IEEE T{{[0-9]+}}.Y (MASKED), -|T{{[0-9]+}}.X|
-;CM-CHECK: EXP_IEEE T{{[0-9]+}}.Z (MASKED), -|T{{[0-9]+}}.X|
-;CM-CHECK: EXP_IEEE * T{{[0-9]+}}.W (MASKED), -|T{{[0-9]+}}.X|
+;FUNC-LABEL: @test
+;EG-CHECK: EXP_IEEE
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;SI-CHECK: V_EXP_F32
 
-define void @test(<4 x float> inreg %reg0) #0 {
-   %r0 = extractelement <4 x float> %reg0, i32 0
-   %r1 = call float @llvm.fabs.f32(float %r0)
-   %r2 = fsub float -0.000000e+00, %r1
-   %r3 = call float @llvm.exp2.f32(float %r2)
-   %vec = insertelement <4 x float> undef, float %r3, i32 0
-   call void @llvm.R600.store.swizzle(<4 x float> %vec, i32 0, i32 0)
+define void @test(float addrspace(1)* %out, float %in) {
+entry:
+   %0 = call float @llvm.exp2.f32(float %in)
+   store float %0, float addrspace(1)* %out
    ret void
 }
 
-declare float @llvm.exp2.f32(float) readnone
-declare float @llvm.fabs.f32(float) readnone
-declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
+;FUNC-LABEL: @testv2
+;EG-CHECK: EXP_IEEE
+;EG-CHECK: EXP_IEEE
+; FIXME: We should be able to merge these packets together on Cayman so we
+; have a maximum of 4 instructions.
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;SI-CHECK: V_EXP_F32
+;SI-CHECK: V_EXP_F32
 
-attributes #0 = { "ShaderType"="0" }
+define void @testv2(<2 x float> addrspace(1)* %out, <2 x float> %in) {
+entry:
+  %0 = call <2 x float> @llvm.exp2.v2f32(<2 x float> %in)
+  store <2 x float> %0, <2 x float> addrspace(1)* %out
+  ret void
+}
+
+;FUNC-LABEL: @testv4
+;EG-CHECK: EXP_IEEE
+;EG-CHECK: EXP_IEEE
+;EG-CHECK: EXP_IEEE
+;EG-CHECK: EXP_IEEE
+; FIXME: We should be able to merge these packets together on Cayman so we
+; have a maximum of 4 instructions.
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}}
+;SI-CHECK: V_EXP_F32
+;SI-CHECK: V_EXP_F32
+;SI-CHECK: V_EXP_F32
+;SI-CHECK: V_EXP_F32
+define void @testv4(<4 x float> addrspace(1)* %out, <4 x float> %in) {
+entry:
+  %0 = call <4 x float> @llvm.exp2.v4f32(<4 x float> %in)
+  store <4 x float> %0, <4 x float> addrspace(1)* %out
+  ret void
+}
+
+declare float @llvm.exp2.f32(float) readnone
+declare <2 x float> @llvm.exp2.v2f32(<2 x float>) readnone
+declare <4 x float> @llvm.exp2.v4f32(<4 x float>) readnone
