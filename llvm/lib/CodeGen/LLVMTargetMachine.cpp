@@ -209,7 +209,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_Null:
     // The Null output is intended for use for performance analysis and testing,
     // not real users.
-    AsmStreamer.reset(createNullStreamer(*Context));
+    AsmStreamer.reset(getTarget().createNullStreamer(*Context));
     break;
   }
 

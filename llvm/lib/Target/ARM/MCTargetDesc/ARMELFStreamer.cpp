@@ -1332,6 +1332,12 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
   return S;
 }
 
+MCStreamer *createARMNullStreamer(MCContext &Ctx) {
+  MCStreamer *S = llvm::createNullStreamer(Ctx);
+  new ARMTargetStreamer(*S);
+  return S;
+}
+
   MCELFStreamer* createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                       raw_ostream &OS, MCCodeEmitter *Emitter,
                                       bool RelaxAll, bool NoExecStack,

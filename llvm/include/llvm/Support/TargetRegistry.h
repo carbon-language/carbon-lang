@@ -51,6 +51,7 @@ namespace llvm {
   class raw_ostream;
   class formatted_raw_ostream;
 
+  MCStreamer *createNullStreamer(MCContext &Ctx);
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool isVerboseAsm, bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
@@ -139,6 +140,7 @@ namespace llvm {
                                              MCCodeEmitter *CE,
                                              MCAsmBackend *TAB,
                                              bool ShowInst);
+    typedef MCStreamer *(*NullStreamerCtorTy)(MCContext &Ctx);
     typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
                                                         MCContext &Ctx);
     typedef MCSymbolizer *(*MCSymbolizerCtorTy)(StringRef TT,
@@ -225,6 +227,10 @@ namespace llvm {
     /// AsmStreamer, if registered (default = llvm::createAsmStreamer).
     AsmStreamerCtorTy AsmStreamerCtorFn;
 
+    /// Construction function for this target's NullStreamer, if registered
+    /// (default = llvm::createNullStreamer).
+    NullStreamerCtorTy NullStreamerCtorFn;
+
     /// MCRelocationInfoCtorFn - Construction function for this target's
     /// MCRelocationInfo, if registered (default = llvm::createMCRelocationInfo)
     MCRelocationInfoCtorTy MCRelocationInfoCtorFn;
@@ -235,8 +241,8 @@ namespace llvm {
 
   public:
     Target()
-        : AsmStreamerCtorFn(nullptr), MCRelocationInfoCtorFn(nullptr),
-          MCSymbolizerCtorFn(nullptr) {}
+        : AsmStreamerCtorFn(nullptr), NullStreamerCtorFn(nullptr),
+          MCRelocationInfoCtorFn(nullptr), MCSymbolizerCtorFn(nullptr) {}
 
     /// @name Target Information
     /// @{
@@ -445,6 +451,12 @@ namespace llvm {
                                  InstPrint, CE, TAB, ShowInst);
       return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useDwarfDirectory,
                                      InstPrint, CE, TAB, ShowInst);
+    }
+
+    MCStreamer *createNullStreamer(MCContext &Ctx) const {
+      if (NullStreamerCtorFn)
+        return NullStreamerCtorFn(Ctx);
+      return llvm::createNullStreamer(Ctx);
     }
 
     /// createMCRelocationInfo - Create a target specific MCRelocationInfo.
@@ -778,6 +790,10 @@ namespace llvm {
     /// @param Fn - A function to construct an MCStreamer for the target.
     static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
       T.AsmStreamerCtorFn = Fn;
+    }
+
+    static void RegisterNullStreamer(Target &T, Target::NullStreamerCtorTy Fn) {
+      T.NullStreamerCtorFn = Fn;
     }
 
     /// RegisterMCRelocationInfo - Register an MCRelocationInfo
