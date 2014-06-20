@@ -352,6 +352,23 @@ void CodeGenModule::Release() {
     getModule().addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                               llvm::DEBUG_METADATA_VERSION);
 
+  // We need to record the widths of enums and wchar_t, so that we can generate
+  // the correct build attributes in the ARM backend.
+	llvm::Triple::ArchType Arch = Context.getTargetInfo().getTriple().getArch();
+  if (   Arch == llvm::Triple::arm
+      || Arch == llvm::Triple::armeb
+      || Arch == llvm::Triple::thumb
+      || Arch == llvm::Triple::thumbeb) {
+    // Width of wchar_t in bytes
+    uint64_t WCharWidth =
+        Context.getTypeSizeInChars(Context.getWideCharType()).getQuantity();
+    getModule().addModuleFlag(llvm::Module::Error, "wchar_size", WCharWidth);
+
+    // The minimum width of an enum in bytes
+    uint64_t EnumWidth = Context.getLangOpts().ShortEnums ? 1 : 4;
+    getModule().addModuleFlag(llvm::Module::Error, "min_enum_size", EnumWidth);
+  }
+
   SimplifyPersonality();
 
   if (getCodeGenOpts().EmitDeclMetadata)
