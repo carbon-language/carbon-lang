@@ -95,6 +95,82 @@ inline std::pair<uint64_t, int16_t> getAdjusted64(uint64_t Digits,
   return getAdjusted<uint64_t>(Digits, Scale);
 }
 
+/// \brief Multiply two 64-bit integers to create a 64-bit scaled number.
+///
+/// Implemented with four 64-bit integer multiplies.
+std::pair<uint64_t, int16_t> multiply64(uint64_t LHS, uint64_t RHS);
+
+/// \brief Multiply two 32-bit integers to create a 32-bit scaled number.
+///
+/// Implemented with one 64-bit integer multiply.
+template <class DigitsT>
+inline std::pair<DigitsT, int16_t> getProduct(DigitsT LHS, DigitsT RHS) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  if (getWidth<DigitsT>() <= 32 || (LHS <= UINT32_MAX && RHS <= UINT32_MAX))
+    return getAdjusted<DigitsT>(uint64_t(LHS) * RHS);
+
+  return multiply64(LHS, RHS);
+}
+
+/// \brief Convenience helper for 32-bit product.
+inline std::pair<uint32_t, int16_t> getProduct32(uint32_t LHS, uint32_t RHS) {
+  return getProduct(LHS, RHS);
+}
+
+/// \brief Convenience helper for 64-bit product.
+inline std::pair<uint64_t, int16_t> getProduct64(uint64_t LHS, uint64_t RHS) {
+  return getProduct(LHS, RHS);
+}
+
+/// \brief Divide two 64-bit integers to create a 64-bit scaled number.
+///
+/// Implemented with long division.
+///
+/// \pre \c Dividend and \c Divisor are non-zero.
+std::pair<uint64_t, int16_t> divide64(uint64_t Dividend, uint64_t Divisor);
+
+/// \brief Divide two 32-bit integers to create a 32-bit scaled number.
+///
+/// Implemented with one 64-bit integer divide/remainder pair.
+///
+/// \pre \c Dividend and \c Divisor are non-zero.
+std::pair<uint32_t, int16_t> divide32(uint32_t Dividend, uint32_t Divisor);
+
+/// \brief Divide two 32-bit numbers to create a 32-bit scaled number.
+///
+/// Implemented with one 64-bit integer divide/remainder pair.
+///
+/// Returns \c (DigitsT_MAX, INT16_MAX) for divide-by-zero (0 for 0/0).
+template <class DigitsT>
+std::pair<DigitsT, int16_t> getQuotient(DigitsT Dividend, DigitsT Divisor) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+  static_assert(sizeof(DigitsT) == 4 || sizeof(DigitsT) == 8,
+                "expected 32-bit or 64-bit digits");
+
+  // Check for zero.
+  if (!Dividend)
+    return std::make_pair(0, 0);
+  if (!Divisor)
+    return std::make_pair(std::numeric_limits<DigitsT>::max(), INT16_MAX);
+
+  if (getWidth<DigitsT>() == 64)
+    return divide64(Dividend, Divisor);
+  return divide32(Dividend, Divisor);
+}
+
+/// \brief Convenience helper for 32-bit quotient.
+inline std::pair<uint32_t, int16_t> getQuotient32(uint32_t Dividend,
+                                                  uint32_t Divisor) {
+  return getQuotient(Dividend, Divisor);
+}
+
+/// \brief Convenience helper for 64-bit quotient.
+inline std::pair<uint64_t, int16_t> getQuotient64(uint64_t Dividend,
+                                                  uint64_t Divisor) {
+  return getQuotient(Dividend, Divisor);
+}
+
 } // end namespace ScaledNumbers
 } // end namespace llvm
 

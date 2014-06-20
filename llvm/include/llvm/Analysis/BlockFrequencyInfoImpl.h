@@ -77,9 +77,6 @@ public:
     return Lg.first + (Lg.second < 0);
   }
 
-  static std::pair<uint64_t, int16_t> divide64(uint64_t L, uint64_t R);
-  static std::pair<uint64_t, int16_t> multiply64(uint64_t L, uint64_t R);
-
   static int compare(uint64_t L, uint64_t R, int Shift) {
     assert(Shift >= 0);
     assert(Shift < 64);
@@ -315,8 +312,12 @@ public:
   UnsignedFloat inverse() const { return UnsignedFloat(*this).invert(); }
 
 private:
-  static UnsignedFloat getProduct(DigitsType L, DigitsType R);
-  static UnsignedFloat getQuotient(DigitsType Dividend, DigitsType Divisor);
+  static UnsignedFloat getProduct(DigitsType LHS, DigitsType RHS) {
+    return ScaledNumbers::getProduct(LHS, RHS);
+  }
+  static UnsignedFloat getQuotient(DigitsType Dividend, DigitsType Divisor) {
+    return ScaledNumbers::getQuotient(Dividend, Divisor);
+  }
 
   std::pair<int32_t, int> lgImpl() const;
   static int countLeadingZerosWidth(DigitsType Digits) {
@@ -397,46 +398,6 @@ uint64_t UnsignedFloat<DigitsT>::scale(uint64_t N) const {
 
   // Defer to the 64-bit version.
   return UnsignedFloat<uint64_t>(Digits, Exponent).scale(N);
-}
-
-template <class DigitsT>
-UnsignedFloat<DigitsT> UnsignedFloat<DigitsT>::getProduct(DigitsType L,
-                                                          DigitsType R) {
-  // Check for zero.
-  if (!L || !R)
-    return getZero();
-
-  // Check for numbers that we can compute with 64-bit math.
-  if (Width <= 32 || (L <= UINT32_MAX && R <= UINT32_MAX))
-    return adjustToWidth(uint64_t(L) * uint64_t(R), 0);
-
-  // Do the full thing.
-  return UnsignedFloat(multiply64(L, R));
-}
-template <class DigitsT>
-UnsignedFloat<DigitsT> UnsignedFloat<DigitsT>::getQuotient(DigitsType Dividend,
-                                                           DigitsType Divisor) {
-  // Check for zero.
-  if (!Dividend)
-    return getZero();
-  if (!Divisor)
-    return getLargest();
-
-  if (Width == 64)
-    return UnsignedFloat(divide64(Dividend, Divisor));
-
-  // We can compute this with 64-bit math.
-  int Shift = countLeadingZeros64(Dividend);
-  uint64_t Shifted = uint64_t(Dividend) << Shift;
-  uint64_t Quotient = Shifted / Divisor;
-
-  // If Quotient needs to be shifted, then adjustToWidth will round.
-  if (Quotient > DigitsLimits::max())
-    return adjustToWidth(Quotient, -Shift);
-
-  // Round based on the value of the next bit.
-  return getRounded(UnsignedFloat(Quotient, -Shift),
-                    Shifted % Divisor >= getHalf(Divisor));
 }
 
 template <class DigitsT>

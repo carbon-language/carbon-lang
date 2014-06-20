@@ -42,6 +42,7 @@ add_llvm_library(LLVMSupport
   PluginLoader.cpp
   PrettyStackTrace.cpp
   Regex.cpp
+  ScaledNumber.cpp
   SmallPtrSet.cpp
   SmallVector.cpp
   SourceMgr.cpp
