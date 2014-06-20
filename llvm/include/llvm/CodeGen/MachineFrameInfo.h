@@ -484,6 +484,9 @@ public:
   ///
   int CreateFixedObject(uint64_t Size, int64_t SPOffset, bool Immutable);
 
+  /// CreateFixedSpillStackObject - Create a spill slot at a fixed location
+  /// on the stack.  Returns an index with a negative value.
+  int CreateFixedSpillStackObject(uint64_t Size, int64_t SPOffset);
 
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a
   /// fixed stack object.

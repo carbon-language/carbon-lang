@@ -526,6 +526,8 @@ void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
     report_fatal_error("Frame register and offset already specified!");
   if (Offset & 0x0F)
     report_fatal_error("Misaligned frame pointer offset!");
+  if (Offset > 240)
+    report_fatal_error("Frame offset must be less than or equal to 240!");
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Label, Register, Offset);
   EmitLabel(Label);

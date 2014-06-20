@@ -142,8 +142,11 @@ getNonexecutableStackSection(MCContext &Ctx) const {
 void X86MCAsmInfoMicrosoft::anchor() { }
 
 X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
-  if (Triple.getArch() == Triple::x86_64)
+  if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
+    PointerSize = 8;
+    ExceptionsType = ExceptionHandling::Win64;
+  }
 
   AssemblerDialect = AsmWriterFlavor;
 
@@ -157,17 +160,18 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
 void X86MCAsmInfoGNUCOFF::anchor() { }
 
 X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
+  assert(Triple.isOSWindows() && "Windows is the only supported COFF target");
   if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
     PointerSize = 8;
+    ExceptionsType = ExceptionHandling::Win64;
+  } else {
+    ExceptionsType = ExceptionHandling::DwarfCFI;
   }
 
   AssemblerDialect = AsmWriterFlavor;
 
   TextAlignFillValue = 0x90;
-
-  // Exceptions handling
-  ExceptionsType = ExceptionHandling::DwarfCFI;
 
   UseIntegratedAssembler = true;
 }
