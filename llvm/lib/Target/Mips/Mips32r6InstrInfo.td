@@ -160,6 +160,8 @@ class LWC2_R6_ENC : COP2LDST_FM<OPCODE5_LWC2>;
 class SDC2_R6_ENC : COP2LDST_FM<OPCODE5_SDC2>;
 class SWC2_R6_ENC : COP2LDST_FM<OPCODE5_SWC2>;
 
+class LSA_R6_ENC : SPECIAL_LSA_FM<OPCODE6_LSA>;
+
 class LL_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_LL>;
 class SC_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_SC>;
 
@@ -574,6 +576,16 @@ class COP2ST_DESC_BASE<string instr_asm, RegisterOperand COPOpnd> {
 class SDC2_R6_DESC : COP2ST_DESC_BASE<"sdc2", COP2Opnd>;
 class SWC2_R6_DESC : COP2ST_DESC_BASE<"swc2", COP2Opnd>;
 
+class LSA_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                       Operand ImmOpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$imm2);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $imm2");
+  list<dag> Pattern = [];
+}
+
+class LSA_R6_DESC : LSA_R6_DESC_BASE<"lsa", GPR32Opnd, uimm2>;
+
 class LL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rt);
   dag InOperandList = (ins mem_simm9:$addr);
@@ -667,7 +679,7 @@ def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
 def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
 def LL_R6 : LL_R6_ENC, LL_R6_DESC, ISA_MIPS32R6;
-// def LSA; // See MSA
+def LSA_R6 : LSA_R6_ENC, LSA_R6_DESC, ISA_MIPS32R6;
 def LWC2_R6 : LWC2_R6_ENC, LWC2_R6_DESC, ISA_MIPS32R6;
 def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;

@@ -95,6 +95,8 @@ def OPCODE6_CLO      : OPCODE6<0b010001>;
 def OPCODE6_CLZ      : OPCODE6<0b010000>;
 def OPCODE6_DCLO     : OPCODE6<0b010011>;
 def OPCODE6_DCLZ     : OPCODE6<0b010010>;
+def OPCODE6_LSA      : OPCODE6<0b000101>;
+def OPCODE6_DLSA     : OPCODE6<0b010101>;
 
 class FIELD_FMT<bits<5> Val> {
   bits<5> Value = Val;
@@ -451,6 +453,23 @@ class SPECIAL3_LL_SC_FM<OPCODE6 Operation> : MipsR6Inst {
   let Inst{5-0} = Operation.Value;
 
   string DecoderMethod = "DecodeSpecial3LlSc";
+}
+
+class SPECIAL_LSA_FM<OPCODE6 Operation> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+  bits<2> imm2;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = OPGROUP_SPECIAL.Value;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-8}  = 0b000;
+  let Inst{7-6}   = imm2;
+  let Inst{5-0}   = Operation.Value;
 }
 
 class REGIMM_FM<OPCODE5 Operation> : MipsR6Inst {

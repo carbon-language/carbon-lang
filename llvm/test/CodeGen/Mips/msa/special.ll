@@ -4,6 +4,10 @@
 ; RUN:   FileCheck %s --check-prefix=MIPS32
 ; RUN: llc -march=mips64 -mcpu=mips64r2 -mattr=+msa,+fp64 < %s | \
 ; RUN:   FileCheck %s --check-prefix=MIPS64
+; RUN: llc -march=mips -mcpu=mips32r6 -mattr=+msa < %s | \
+; RUN:   FileCheck %s --check-prefix=MIPS32
+; RUN: llc -march=mips64 -mcpu=mips64r6 -mattr=+msa < %s | \
+; RUN:   FileCheck %s --check-prefix=MIPS64
 
 define i32 @llvm_mips_lsa_test(i32 %a, i32 %b) nounwind {
 entry:
