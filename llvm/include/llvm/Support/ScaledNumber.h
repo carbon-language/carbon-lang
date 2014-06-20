@@ -67,10 +67,7 @@ inline std::pair<uint64_t, int16_t> getRounded64(uint64_t Digits, int16_t Scale,
 
 /// \brief Adjust a 64-bit scaled number down to the appropriate width.
 ///
-/// Adjust a soft float with 64-bits of digits down, keeping as much
-/// information as possible, and rounding up on half.
-///
-/// \pre Adding 1 to \c Scale will not overflow INT16_MAX.
+/// \pre Adding 64 to \c Scale will not overflow INT16_MAX.
 template <class DigitsT>
 inline std::pair<DigitsT, int16_t> getAdjusted(uint64_t Digits,
                                                int16_t Scale = 0) {
