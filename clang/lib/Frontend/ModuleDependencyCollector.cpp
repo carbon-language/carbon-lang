@@ -57,13 +57,14 @@ void ModuleDependencyCollector::writeFileMap() {
   VFSWriter.write(OS);
 }
 
-/// Append the absolute path in Nested to the path given by Root. This will
-/// remove directory traversal from the resulting nested path.
-static void appendNestedPath(SmallVectorImpl<char> &Root, StringRef Nested) {
+/// Remove traversal (ie, . or ..) from the given absolute path.
+static void removePathTraversal(SmallVectorImpl<char> &Path) {
   using namespace llvm::sys;
   SmallVector<StringRef, 16> ComponentStack;
+  StringRef P(Path.data(), Path.size());
 
-  StringRef Rel = path::relative_path(Nested);
+  // Skip the root path, then look for traversal in the components.
+  StringRef Rel = path::relative_path(P);
   for (StringRef C : llvm::make_range(path::begin(Rel), path::end(Rel))) {
     if (C == ".")
       continue;
@@ -73,9 +74,14 @@ static void appendNestedPath(SmallVectorImpl<char> &Root, StringRef Nested) {
     } else
       ComponentStack.push_back(C);
   }
+
   // The stack is now the path without any directory traversal.
+  SmallString<256> Buffer = path::root_path(P);
   for (StringRef C : ComponentStack)
-    path::append(Root, C);
+    path::append(Buffer, C);
+
+  // Put the result in Path.
+  Path.swap(Buffer);
 }
 
 std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
@@ -84,10 +90,11 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   // We need an absolute path to append to the root.
   SmallString<256> AbsoluteSrc = Src;
   fs::make_absolute(AbsoluteSrc);
+  removePathTraversal(AbsoluteSrc);
+
   // Build the destination path.
   SmallString<256> Dest = Collector.getDest();
-  size_t RootLen = Dest.size();
-  appendNestedPath(Dest, AbsoluteSrc);
+  path::append(Dest, path::relative_path(AbsoluteSrc));
 
   // Copy the file into place.
   if (std::error_code EC = fs::create_directories(path::parent_path(Dest),
@@ -96,7 +103,7 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
   if (std::error_code EC = fs::copy_file(AbsoluteSrc.str(), Dest.str()))
     return EC;
   // Use the absolute path under the root for the file mapping.
-  Collector.addFileMapping(Dest.substr(RootLen), Dest.str());
+  Collector.addFileMapping(AbsoluteSrc.str(), Dest.str());
   return std::error_code();
 }
 
