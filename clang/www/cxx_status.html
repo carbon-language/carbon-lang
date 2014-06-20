@@ -3,7 +3,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>Clang - C++14, C++11 and C++98 Status</title>
+  <title>Clang - C++1z, C++14, C++11 and C++98 Status</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
@@ -23,13 +23,15 @@
 <div id="content">
 
 <!--*************************************************************************-->
-<h1>C++14, C++11 and C++98 Support in Clang</h1>
+<h1>C++ Support in Clang</h1>
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
 <p>Clang fully implements all published ISO C++ standards including <a
 href="#cxx11">C++11</a>, as well as the upcoming standard provisionally named <a
-href="#cxx14">C++14</a>, and is considered a production-quality C++ compiler.
+href="#cxx14">C++14</a>, and some parts of the fledgling <a
+href="#cxx17">C++1z</a> standard,
+and is considered a production-quality C++ compiler.
 
 <p>The Clang community is continually striving to improve C++ standards
 compliance between releases by submitting and tracking <a
@@ -423,7 +425,7 @@ change.</span>
 <h2 id="cxx14">C++1y implementation status</h2>
 
 <p>Clang implements all of the
-<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3797.pdf">current draft</a>
+<a href="https://github.com/cplusplus/draft/blob/master/papers/N3936.pdf?raw=true">Draft International Standard</a>
 of the upcoming C++ language standard, provisionally named C++1y.  The following
 table describes the Clang version in which each feature became available.</p>
 
@@ -501,16 +503,46 @@ table describes the Clang version in which each feature became available.</p>
     </tr>
 </table>
 
-<!--
 <h2 id="cxx17">C++1z implementation status</h2>
 
-<p>Clang implements none of the upcoming C++ language standard,
+<p>Clang has <b>highly experimental<b> support for some proposed features of
+the C++ standard following C++1y,
 provisionally named C++1z.  The following table describes which C++1z features
 have been implemented in Clang and in which Clang version they became
 available.</p>
 
+<p>Note that support for these features may change or be removed without notice,
+as the draft C++1z standard evolves.</p>
+
 <p>You can use Clang in C++1z mode with the <code>-std=c++1z</code> option.</p>
--->
+
+<table width="689" border="1" cellspacing="0">
+ <tr>
+    <th>Language Feature</th>
+    <th>C++1z Proposal</th>
+    <th>Available in Clang?</th>
+ </tr>
+    <tr>
+      <td><tt>static_assert</tt> with no message</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3928.pdf">N3928</a></td>
+      <td class="full" align="center">Clang 3.5</td>
+    </tr>
+    <tr>
+      <td>Disabling trigraph expansion by default</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3981.html">N3981</a></td>
+      <td class="full" align="center">Clang 3.5</td>
+    </tr>
+    <tr>
+      <td>Terse range-based for loops</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3994.htm">N3994</a></td>
+      <td class="full" align="center">Clang 3.5</td>
+    </tr>
+    <tr>
+      <td><tt>typename</tt> in a template template parameter</td>
+      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4051.html">N4051</a></td>
+      <td class="full" align="center">Clang 3.5</td>
+    </tr>
+</table>
 
 <h2 id="ts">Technical specifications and standing documents</h2>
 
