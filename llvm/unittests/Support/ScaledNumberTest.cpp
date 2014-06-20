@@ -57,4 +57,27 @@ TEST(ScaledNumberHelpersTest, getRounded) {
   EXPECT_EQ(getRounded<uint64_t>(UINT64_MAX, 0, true),
             SP64(UINT64_C(1) << 63, 1));
 }
+
+TEST(FloatsTest, getAdjusted) {
+  const uint64_t Max32In64 = UINT32_MAX;
+  EXPECT_EQ(getAdjusted32(0), SP32(0, 0));
+  EXPECT_EQ(getAdjusted32(0, 5), SP32(0, 5));
+  EXPECT_EQ(getAdjusted32(UINT32_MAX), SP32(UINT32_MAX, 0));
+  EXPECT_EQ(getAdjusted32(Max32In64 << 1), SP32(UINT32_MAX, 1));
+  EXPECT_EQ(getAdjusted32(Max32In64 << 1, 1), SP32(UINT32_MAX, 2));
+  EXPECT_EQ(getAdjusted32(Max32In64 << 31), SP32(UINT32_MAX, 31));
+  EXPECT_EQ(getAdjusted32(Max32In64 << 32), SP32(UINT32_MAX, 32));
+  EXPECT_EQ(getAdjusted32(Max32In64 + 1), SP32(1u << 31, 1));
+  EXPECT_EQ(getAdjusted32(UINT64_MAX), SP32(1u << 31, 33));
+
+  EXPECT_EQ(getAdjusted64(0), SP64(0, 0));
+  EXPECT_EQ(getAdjusted64(0, 5), SP64(0, 5));
+  EXPECT_EQ(getAdjusted64(UINT32_MAX), SP64(UINT32_MAX, 0));
+  EXPECT_EQ(getAdjusted64(Max32In64 << 1), SP64(Max32In64 << 1, 0));
+  EXPECT_EQ(getAdjusted64(Max32In64 << 1, 1), SP64(Max32In64 << 1, 1));
+  EXPECT_EQ(getAdjusted64(Max32In64 << 31), SP64(Max32In64 << 31, 0));
+  EXPECT_EQ(getAdjusted64(Max32In64 << 32), SP64(Max32In64 << 32, 0));
+  EXPECT_EQ(getAdjusted64(Max32In64 + 1), SP64(Max32In64 + 1, 0));
+  EXPECT_EQ(getAdjusted64(UINT64_MAX), SP64(UINT64_MAX, 0));
+}
 }

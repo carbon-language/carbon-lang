@@ -22,6 +22,8 @@
 #ifndef LLVM_SUPPORT_SCALEDNUMBER_H
 #define LLVM_SUPPORT_SCALEDNUMBER_H
 
+#include "llvm/Support/MathExtras.h"
+
 #include <cstdint>
 #include <limits>
 #include <utility>
@@ -49,6 +51,39 @@ inline std::pair<DigitsT, int16_t> getRounded(DigitsT Digits, int16_t Scale,
       // Overflow.
       return std::make_pair(DigitsT(1) << (getWidth<DigitsT>() - 1), Scale + 1);
   return std::make_pair(Digits, Scale);
+}
+
+/// \brief Adjust a 64-bit scaled number down to the appropriate width.
+///
+/// Adjust a soft float with 64-bits of digits down, keeping as much
+/// information as possible, and rounding up on half.
+///
+/// \pre Adding 1 to \c Scale will not overflow INT16_MAX.
+template <class DigitsT>
+inline std::pair<DigitsT, int16_t> getAdjusted(uint64_t Digits,
+                                               int16_t Scale = 0) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  const int Width = getWidth<DigitsT>();
+  if (Width == 64 || Digits <= std::numeric_limits<DigitsT>::max())
+    return std::make_pair(Digits, Scale);
+
+  // Shift right and round.
+  int Shift = 64 - Width - countLeadingZeros(Digits);
+  return getRounded<DigitsT>(Digits >> Shift, Scale + Shift,
+                             Digits & (UINT64_C(1) << (Shift - 1)));
+}
+
+/// \brief Convenience helper for adjusting to 32 bits.
+inline std::pair<uint32_t, int16_t> getAdjusted32(uint64_t Digits,
+                                                  int16_t Scale = 0) {
+  return getAdjusted<uint32_t>(Digits, Scale);
+}
+
+/// \brief Convenience helper for adjusting to 64 bits.
+inline std::pair<uint64_t, int16_t> getAdjusted64(uint64_t Digits,
+                                                  int16_t Scale = 0) {
+  return getAdjusted<uint64_t>(Digits, Scale);
 }
 }
 }

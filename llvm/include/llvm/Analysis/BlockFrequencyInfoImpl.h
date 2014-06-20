@@ -327,20 +327,16 @@ private:
     return countLeadingZeros32(Digits) + Width - 32;
   }
 
-  static UnsignedFloat adjustToWidth(uint64_t N, int32_t S) {
-    assert(S >= MinExponent);
-    assert(S <= MaxExponent);
-    if (Width == 64 || N <= DigitsLimits::max())
-      return UnsignedFloat(N, S);
-
-    // Shift right.
-    int Shift = 64 - Width - countLeadingZeros64(N);
-    DigitsType Shifted = N >> Shift;
-
-    // Round.
-    assert(S + Shift <= MaxExponent);
-    return getRounded(UnsignedFloat(Shifted, S + Shift),
-                      N & UINT64_C(1) << (Shift - 1));
+  /// \brief Adjust a number to width, rounding up if necessary.
+  ///
+  /// Should only be called for \c Shift close to zero.
+  ///
+  /// \pre Shift >= MinExponent && Shift + 64 <= MaxExponent.
+  static UnsignedFloat adjustToWidth(uint64_t N, int32_t Shift) {
+    assert(Shift >= MinExponent && "Shift should be close to 0");
+    assert(Shift <= MaxExponent - 64 && "Shift should be close to 0");
+    auto Adjusted = ScaledNumbers::getAdjusted<DigitsT>(N, Shift);
+    return Adjusted;
   }
 
   static UnsignedFloat getRounded(UnsignedFloat P, bool Round) {
