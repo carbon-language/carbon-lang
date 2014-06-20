@@ -231,4 +231,3 @@ template <class DigitsT> int32_t getLgCeiling(DigitsT Digits, int16_t Scale) {
 } // end namespace llvm
 
 #endif
-

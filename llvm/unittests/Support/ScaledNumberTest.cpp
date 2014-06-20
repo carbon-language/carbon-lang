@@ -56,7 +56,7 @@ TEST(ScaledNumberHelpersTest, getRounded) {
   EXPECT_EQ(getRounded64(UINT64_MAX, 0, true), SP64(UINT64_C(1) << 63, 1));
 }
 
-TEST(FloatsTest, getAdjusted) {
+TEST(ScaledNumberHelpersTest, getAdjusted) {
   const uint64_t Max32In64 = UINT32_MAX;
   EXPECT_EQ(getAdjusted32(0), SP32(0, 0));
   EXPECT_EQ(getAdjusted32(0, 5), SP32(0, 5));
@@ -79,7 +79,7 @@ TEST(FloatsTest, getAdjusted) {
   EXPECT_EQ(getAdjusted64(UINT64_MAX), SP64(UINT64_MAX, 0));
 }
 
-TEST(PositiveFloatTest, getProduct) {
+TEST(ScaledNumberHelpersTest, getProduct) {
   // Zero.
   EXPECT_EQ(SP32(0, 0), getProduct32(0, 0));
   EXPECT_EQ(SP32(0, 0), getProduct32(0, 1));
@@ -132,7 +132,7 @@ TEST(PositiveFloatTest, getProduct) {
                          UINT64_C(9223372036854775840)));
 }
 
-TEST(PositiveFloatTest, Divide) {
+TEST(ScaledNumberHelpersTest, getQuotient) {
   // Zero.
   EXPECT_EQ(SP32(0, 0), getQuotient32(0, 0));
   EXPECT_EQ(SP32(0, 0), getQuotient32(0, 1));
@@ -191,7 +191,7 @@ TEST(PositiveFloatTest, Divide) {
   EXPECT_EQ(SP64(0xd555555555555555, -63), getQuotient64(5, 3));
 }
 
-TEST(ScaledNumbersHelpersTest, getLg) {
+TEST(ScaledNumberHelpersTest, getLg) {
   EXPECT_EQ(0, getLg(UINT32_C(1), 0));
   EXPECT_EQ(1, getLg(UINT32_C(1), 1));
   EXPECT_EQ(1, getLg(UINT32_C(2), 0));
@@ -225,7 +225,7 @@ TEST(ScaledNumbersHelpersTest, getLg) {
   EXPECT_EQ(INT32_MIN, getLg(UINT64_C(0), 1));
 }
 
-TEST(ScaledNumbersHelpersTest, getLgFloor) {
+TEST(ScaledNumberHelpersTest, getLgFloor) {
   EXPECT_EQ(0, getLgFloor(UINT32_C(1), 0));
   EXPECT_EQ(1, getLgFloor(UINT32_C(1), 1));
   EXPECT_EQ(1, getLgFloor(UINT32_C(2), 0));
@@ -255,7 +255,7 @@ TEST(ScaledNumbersHelpersTest, getLgFloor) {
   EXPECT_EQ(INT32_MIN, getLgFloor(UINT64_C(0), 1));
 }
 
-TEST(ScaledNumbersHelpersTest, getLgCeiling) {
+TEST(ScaledNumberHelpersTest, getLgCeiling) {
   EXPECT_EQ(0, getLgCeiling(UINT32_C(1), 0));
   EXPECT_EQ(1, getLgCeiling(UINT32_C(1), 1));
   EXPECT_EQ(1, getLgCeiling(UINT32_C(2), 0));
