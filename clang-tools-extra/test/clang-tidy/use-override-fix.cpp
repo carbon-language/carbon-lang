@@ -67,6 +67,12 @@ void SimpleCases::i() {}
 SimpleCases::~SimpleCases() {}
 // CHECK: {{^SimpleCases::~SimpleCases\(\) {}}}
 
+struct DefaultedDestructor : public Base {
+  DefaultedDestructor() {}
+  virtual ~DefaultedDestructor() = default;
+  // CHECK: {{^  ~DefaultedDestructor\(\) override = default;}}
+};
+
 struct FinalSpecified : public Base {
 public:
   virtual ~FinalSpecified() final;
@@ -161,4 +167,4 @@ struct MembersOfSpecializations : public Base {
   // CHECK: {{^  void a\(\) override;}}
 };
 template <> void MembersOfSpecializations<3>::a() {}
-void f() { D<3>().a(); };
+void f() { MembersOfSpecializations<3>().a(); };

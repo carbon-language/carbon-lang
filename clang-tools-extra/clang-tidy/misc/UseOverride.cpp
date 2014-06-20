@@ -77,10 +77,9 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
                ? "Prefer using 'override' or 'final' instead of 'virtual'"
                : "Use exactly one of 'virtual', 'override' and 'final'");
 
-  CharSourceRange FileRange =
-      Lexer::makeFileCharRange(CharSourceRange::getTokenRange(
-                                   Method->getLocStart(), Method->getLocEnd()),
-                               Sources, Result.Context->getLangOpts());
+  CharSourceRange FileRange = Lexer::makeFileCharRange(
+      CharSourceRange::getTokenRange(Method->getSourceRange()), Sources,
+      Result.Context->getLangOpts());
 
   if (!FileRange.isValid())
     return;
@@ -106,9 +105,8 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
     }
 
     if (InsertLoc.isInvalid() && Method->doesThisDeclarationHaveABody() &&
-        Method->getBody()) {
+        Method->getBody() && !Method->isDefaulted())
       InsertLoc = Method->getBody()->getLocStart();
-    }
 
     if (!InsertLoc.isValid()) {
       if (Tokens.size() > 2 && GetText(Tokens.back(), Sources) == "0" &&
