@@ -7366,6 +7366,21 @@ public:
                                        SourceLocation LParenLoc,
                                        SourceLocation EndLoc);
 
+  OMPClause *ActOnOpenMPSingleExprWithArgClause(OpenMPClauseKind Kind,
+                                                unsigned Argument, Expr *Expr,
+                                                SourceLocation StartLoc,
+                                                SourceLocation LParenLoc,
+                                                SourceLocation ArgumentLoc,
+                                                SourceLocation CommaLoc,
+                                                SourceLocation EndLoc);
+  /// \brief Called on well-formed 'schedule' clause.
+  OMPClause *ActOnOpenMPScheduleClause(OpenMPScheduleClauseKind Kind,
+                                       Expr *ChunkSize, SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation KindLoc,
+                                       SourceLocation CommaLoc,
+                                       SourceLocation EndLoc);
+
   OMPClause *
   ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> Vars,
                            Expr *TailExpr, SourceLocation StartLoc,

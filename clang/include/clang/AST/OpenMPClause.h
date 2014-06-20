@@ -502,6 +502,104 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
+/// \brief This represents 'schedule' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp for schedule(static, 3)
+/// \endcode
+/// In this example directive '#pragma omp for' has 'schedule' clause with
+/// arguments 'static' and '3'.
+///
+class OMPScheduleClause : public OMPClause {
+  friend class OMPClauseReader;
+  /// \brief Location of '('.
+  SourceLocation LParenLoc;
+  /// \brief A kind of the 'schedule' clause.
+  OpenMPScheduleClauseKind Kind;
+  /// \brief Start location of the schedule ind in source code.
+  SourceLocation KindLoc;
+  /// \brief Location of ',' (if any).
+  SourceLocation CommaLoc;
+  /// \brief Chunk size.
+  Stmt *ChunkSize;
+
+  /// \brief Set schedule kind.
+  ///
+  /// \param K Schedule kind.
+  ///
+  void setScheduleKind(OpenMPScheduleClauseKind K) { Kind = K; }
+  /// \brief Sets the location of '('.
+  ///
+  /// \param Loc Location of '('.
+  ///
+  void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
+  /// \brief Set schedule kind start location.
+  ///
+  /// \param KLoc Schedule kind location.
+  ///
+  void setScheduleKindLoc(SourceLocation KLoc) { KindLoc = KLoc; }
+  /// \brief Set location of ','.
+  ///
+  /// \param Loc Location of ','.
+  ///
+  void setCommaLoc(SourceLocation Loc) { CommaLoc = Loc; }
+  /// \brief Set chunk size.
+  ///
+  /// \param E Chunk size.
+  ///
+  void setChunkSize(Expr *E) { ChunkSize = E; }
+
+public:
+  /// \brief Build 'schedule' clause with schedule kind \a Kind and chunk size
+  /// expression \a ChunkSize.
+  ///
+  /// \brief StartLoc Starting location of the clause.
+  /// \brief LParenLoc Location of '('.
+  /// \brief KLoc Starting location of the argument.
+  /// \brief CommaLoc Location of ','.
+  /// \brief EndLoc Ending location of the clause.
+  /// \brief Kind Schedule kind.
+  /// \brief ChunkSize Chunk size.
+  ///
+  OMPScheduleClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                    SourceLocation KLoc, SourceLocation CommaLoc,
+                    SourceLocation EndLoc, OpenMPScheduleClauseKind Kind,
+                    Expr *ChunkSize)
+      : OMPClause(OMPC_schedule, StartLoc, EndLoc), LParenLoc(LParenLoc),
+        Kind(Kind), KindLoc(KLoc), CommaLoc(CommaLoc), ChunkSize(ChunkSize) {}
+
+  /// \brief Build an empty clause.
+  ///
+  explicit OMPScheduleClause()
+      : OMPClause(OMPC_schedule, SourceLocation(), SourceLocation()),
+        Kind(OMPC_SCHEDULE_unknown), ChunkSize(nullptr) {}
+
+  /// \brief Get kind of the clause.
+  ///
+  OpenMPScheduleClauseKind getScheduleKind() const { return Kind; }
+  /// \brief Get location of '('.
+  ///
+  SourceLocation getLParenLoc() { return LParenLoc; }
+  /// \brief Get kind location.
+  ///
+  SourceLocation getScheduleKindLoc() { return KindLoc; }
+  /// \brief Get location of ','.
+  ///
+  SourceLocation getCommaLoc() { return CommaLoc; }
+  /// \brief Get chunk size.
+  ///
+  Expr *getChunkSize() { return dyn_cast_or_null<Expr>(ChunkSize); }
+  /// \brief Get chunk size.
+  ///
+  Expr *getChunkSize() const { return dyn_cast_or_null<Expr>(ChunkSize); }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_schedule;
+  }
+
+  StmtRange children() { return StmtRange(&ChunkSize, &ChunkSize + 1); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

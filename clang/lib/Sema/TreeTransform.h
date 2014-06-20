@@ -1377,6 +1377,21 @@ public:
                                                StartLoc, LParenLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'schedule' clause.
+  ///
+  /// By default, performs semantic analysis to build the new OpenMP clause.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPScheduleClause(OpenMPScheduleClauseKind Kind,
+                                      Expr *ChunkSize,
+                                      SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation KindLoc,
+                                      SourceLocation CommaLoc,
+                                      SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPScheduleClause(
+        Kind, ChunkSize, StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'private' clause.
   ///
   /// By default, performs semantic analysis to build the new OpenMP clause.
@@ -6470,6 +6485,17 @@ TreeTransform<Derived>::TransformOMPProcBindClause(OMPProcBindClause *C) {
   return getDerived().RebuildOMPProcBindClause(
       C->getProcBindKind(), C->getProcBindKindKwLoc(), C->getLocStart(),
       C->getLParenLoc(), C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPScheduleClause(OMPScheduleClause *C) {
+  ExprResult E = getDerived().TransformExpr(C->getChunkSize());
+  if (E.isInvalid())
+    return nullptr;
+  return getDerived().RebuildOMPScheduleClause(
+      C->getScheduleKind(), E.get(), C->getLocStart(), C->getLParenLoc(),
+      C->getScheduleKindLoc(), C->getCommaLoc(), C->getLocEnd());
 }
 
 template <typename Derived>

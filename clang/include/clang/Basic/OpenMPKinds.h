@@ -52,6 +52,14 @@ enum OpenMPProcBindClauseKind {
   OMPC_PROC_BIND_unknown
 };
 
+/// \brief OpenMP attributes for 'schedule' clause.
+enum OpenMPScheduleClauseKind {
+#define OPENMP_SCHEDULE_KIND(Name) \
+  OMPC_SCHEDULE_##Name,
+#include "clang/Basic/OpenMPKinds.def"
+  OMPC_SCHEDULE_unknown
+};
+
 OpenMPDirectiveKind getOpenMPDirectiveKind(llvm::StringRef Str);
 const char *getOpenMPDirectiveName(OpenMPDirectiveKind Kind);
 

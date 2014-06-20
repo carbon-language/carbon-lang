@@ -2344,6 +2344,13 @@ RecursiveASTVisitor<Derived>::VisitOMPProcBindClause(OMPProcBindClause *C) {
 }
 
 template <typename Derived>
+bool
+RecursiveASTVisitor<Derived>::VisitOMPScheduleClause(OMPScheduleClause *C) {
+  TraverseStmt(C->getChunkSize());
+  return true;
+}
+
+template <typename Derived>
 template <typename T>
 void RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
   for (auto *I : Node->varlists())

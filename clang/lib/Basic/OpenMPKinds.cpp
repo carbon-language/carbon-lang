@@ -76,6 +76,11 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
 #define OPENMP_PROC_BIND_KIND(Name) .Case(#Name, OMPC_PROC_BIND_##Name)
 #include "clang/Basic/OpenMPKinds.def"
         .Default(OMPC_PROC_BIND_unknown);
+  case OMPC_schedule:
+    return llvm::StringSwitch<OpenMPScheduleClauseKind>(Str)
+#define OPENMP_SCHEDULE_KIND(Name) .Case(#Name, OMPC_SCHEDULE_##Name)
+#include "clang/Basic/OpenMPKinds.def"
+        .Default(OMPC_SCHEDULE_unknown);
   case OMPC_unknown:
   case OMPC_threadprivate:
   case OMPC_if:
@@ -118,6 +123,16 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
 #include "clang/Basic/OpenMPKinds.def"
     }
     llvm_unreachable("Invalid OpenMP 'proc_bind' clause type");
+  case OMPC_schedule:
+    switch (Type) {
+    case OMPC_SCHEDULE_unknown:
+      return "unknown";
+#define OPENMP_SCHEDULE_KIND(Name)                                             \
+  case OMPC_SCHEDULE_##Name:                                                   \
+    return #Name;
+#include "clang/Basic/OpenMPKinds.def"
+    }
+    llvm_unreachable("Invalid OpenMP 'schedule' clause type");
   case OMPC_unknown:
   case OMPC_threadprivate:
   case OMPC_if:

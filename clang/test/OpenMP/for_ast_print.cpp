@@ -13,19 +13,19 @@ T tmain(T argc) {
   T b = argc, c, d, e, f, g;
   static T a;
 // CHECK: static T a;
-#pragma omp for
-  // CHECK-NEXT: #pragma omp for
+#pragma omp for schedule(dynamic)
+  // CHECK-NEXT: #pragma omp for schedule(dynamic)
   for (int i = 0; i < 2; ++i)
     a = 2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp for private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N)
+#pragma omp for private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) schedule(static, N)
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N)
+  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) schedule(static, N)
   // CHECK-NEXT: for (int i = 0; i < 10; ++i)
   // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: foo();
@@ -36,19 +36,19 @@ int main(int argc, char **argv) {
   int b = argc, c, d, e, f, g;
   static int a;
 // CHECK: static int a;
-#pragma omp for
-  // CHECK-NEXT: #pragma omp for
+#pragma omp for schedule(guided, argc)
+  // CHECK-NEXT: #pragma omp for schedule(guided, argc)
   for (int i = 0; i < 2; ++i)
     a = 2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp for private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2)
+#pragma omp for private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2) schedule(auto)
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2)
+  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2) schedule(auto)
   // CHECK-NEXT: for (int i = 0; i < 10; ++i)
   // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: foo();

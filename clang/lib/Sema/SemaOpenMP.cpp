@@ -1513,6 +1513,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
     break;
   case OMPC_default:
   case OMPC_proc_bind:
+  case OMPC_schedule:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_lastprivate:
@@ -1689,6 +1690,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_num_threads:
   case OMPC_safelen:
   case OMPC_collapse:
+  case OMPC_schedule:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_lastprivate:
@@ -1779,6 +1781,95 @@ OMPClause *Sema::ActOnOpenMPProcBindClause(OpenMPProcBindClauseKind Kind,
       OMPProcBindClause(Kind, KindKwLoc, StartLoc, LParenLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
+    OpenMPClauseKind Kind, unsigned Argument, Expr *Expr,
+    SourceLocation StartLoc, SourceLocation LParenLoc,
+    SourceLocation ArgumentLoc, SourceLocation CommaLoc,
+    SourceLocation EndLoc) {
+  OMPClause *Res = nullptr;
+  switch (Kind) {
+  case OMPC_schedule:
+    Res = ActOnOpenMPScheduleClause(
+        static_cast<OpenMPScheduleClauseKind>(Argument), Expr, StartLoc,
+        LParenLoc, ArgumentLoc, CommaLoc, EndLoc);
+    break;
+  case OMPC_if:
+  case OMPC_num_threads:
+  case OMPC_safelen:
+  case OMPC_collapse:
+  case OMPC_default:
+  case OMPC_proc_bind:
+  case OMPC_private:
+  case OMPC_firstprivate:
+  case OMPC_lastprivate:
+  case OMPC_shared:
+  case OMPC_reduction:
+  case OMPC_linear:
+  case OMPC_aligned:
+  case OMPC_copyin:
+  case OMPC_threadprivate:
+  case OMPC_unknown:
+    llvm_unreachable("Clause is not allowed.");
+  }
+  return Res;
+}
+
+OMPClause *Sema::ActOnOpenMPScheduleClause(
+    OpenMPScheduleClauseKind Kind, Expr *ChunkSize, SourceLocation StartLoc,
+    SourceLocation LParenLoc, SourceLocation KindLoc, SourceLocation CommaLoc,
+    SourceLocation EndLoc) {
+  if (Kind == OMPC_SCHEDULE_unknown) {
+    std::string Values;
+    std::string Sep(", ");
+    for (unsigned i = 0; i < OMPC_SCHEDULE_unknown; ++i) {
+      Values += "'";
+      Values += getOpenMPSimpleClauseTypeName(OMPC_schedule, i);
+      Values += "'";
+      switch (i) {
+      case OMPC_SCHEDULE_unknown - 2:
+        Values += " or ";
+        break;
+      case OMPC_SCHEDULE_unknown - 1:
+        break;
+      default:
+        Values += Sep;
+        break;
+      }
+    }
+    Diag(KindLoc, diag::err_omp_unexpected_clause_value)
+        << Values << getOpenMPClauseName(OMPC_schedule);
+    return nullptr;
+  }
+  Expr *ValExpr = ChunkSize;
+  if (ChunkSize) {
+    if (!ChunkSize->isValueDependent() && !ChunkSize->isTypeDependent() &&
+        !ChunkSize->isInstantiationDependent() &&
+        !ChunkSize->containsUnexpandedParameterPack()) {
+      SourceLocation ChunkSizeLoc = ChunkSize->getLocStart();
+      ExprResult Val =
+          PerformOpenMPImplicitIntegerConversion(ChunkSizeLoc, ChunkSize);
+      if (Val.isInvalid())
+        return nullptr;
+
+      ValExpr = Val.get();
+
+      // OpenMP [2.7.1, Restrictions]
+      //  chunk_size must be a loop invariant integer expression with a positive
+      //  value.
+      llvm::APSInt Result;
+      if (ValExpr->isIntegerConstantExpr(Result, Context) &&
+          Result.isSigned() && !Result.isStrictlyPositive()) {
+        Diag(ChunkSizeLoc, diag::err_omp_negative_expression_in_clause)
+            << "schedule" << ChunkSize->getSourceRange();
+        return nullptr;
+      }
+    }
+  }
+
+  return new (Context) OMPScheduleClause(StartLoc, LParenLoc, KindLoc, CommaLoc,
+                                         EndLoc, Kind, ValExpr);
+}
+
 OMPClause *Sema::ActOnOpenMPVarListClause(
     OpenMPClauseKind Kind, ArrayRef<Expr *> VarList, Expr *TailExpr,
     SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation ColonLoc,
@@ -1819,6 +1910,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_collapse:
   case OMPC_default:
   case OMPC_proc_bind:
+  case OMPC_schedule:
   case OMPC_threadprivate:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");

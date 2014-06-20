@@ -262,7 +262,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///       if-clause | num_threads-clause | safelen-clause | default-clause |
 ///       private-clause | firstprivate-clause | shared-clause | linear-clause |
 ///       aligned-clause | collapse-clause | lastprivate-clause |
-///       reduction-clause
+///       reduction-clause | proc_bind-clause | schedule-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -306,6 +306,16 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     }
 
     Clause = ParseOpenMPSimpleClause(CKind);
+    break;
+  case OMPC_schedule:
+    // OpenMP [2.7.1, Restrictions, p. 3]
+    //  Only one schedule clause can appear on a loop directive.
+    if (!FirstClause) {
+      Diag(Tok, diag::err_omp_more_one_clause) << getOpenMPDirectiveName(DKind)
+                                               << getOpenMPClauseName(CKind);
+    }
+
+    Clause = ParseOpenMPSingleExprWithArgClause(CKind);
     break;
   case OMPC_private:
   case OMPC_firstprivate:
@@ -397,6 +407,48 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 
   return Actions.ActOnOpenMPSimpleClause(Kind, Type, TypeLoc, LOpen, Loc,
                                          Tok.getLocation());
+}
+
+/// \brief Parsing of OpenMP clauses with single expressions and some additional
+/// argument like 'schedule' or 'dist_schedule'.
+///
+///    schedule-clause:
+///      'schedule' '(' kind [',' expression ] ')'
+///
+OMPClause *Parser::ParseOpenMPSingleExprWithArgClause(OpenMPClauseKind Kind) {
+  SourceLocation Loc = ConsumeToken();
+  SourceLocation CommaLoc;
+  // Parse '('.
+  BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
+  if (T.expectAndConsume(diag::err_expected_lparen_after,
+                         getOpenMPClauseName(Kind)))
+    return nullptr;
+
+  ExprResult Val;
+  unsigned Type = getOpenMPSimpleClauseType(
+      Kind, Tok.isAnnotation() ? "" : PP.getSpelling(Tok));
+  SourceLocation KLoc = Tok.getLocation();
+  if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
+      Tok.isNot(tok::annot_pragma_openmp_end))
+    ConsumeAnyToken();
+
+  if (Kind == OMPC_schedule &&
+      (Type == OMPC_SCHEDULE_static || Type == OMPC_SCHEDULE_dynamic ||
+       Type == OMPC_SCHEDULE_guided) &&
+      Tok.is(tok::comma)) {
+    CommaLoc = ConsumeAnyToken();
+    ExprResult LHS(ParseCastExpression(false, false, NotTypeCast));
+    Val = ParseRHSOfBinaryExpression(LHS, prec::Conditional);
+    if (Val.isInvalid())
+      return nullptr;
+  }
+
+  // Parse ')'.
+  T.consumeClose();
+
+  return Actions.ActOnOpenMPSingleExprWithArgClause(
+      Kind, Type, Val.get(), Loc, T.getOpenLocation(), KLoc, CommaLoc,
+      T.getCloseLocation());
 }
 
 static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,

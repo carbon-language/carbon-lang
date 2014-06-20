@@ -1691,6 +1691,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_proc_bind:
     C = new (Context) OMPProcBindClause();
     break;
+  case OMPC_schedule:
+    C = new (Context) OMPScheduleClause();
+    break;
   case OMPC_private:
     C = OMPPrivateClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1755,6 +1758,15 @@ void OMPClauseReader::VisitOMPProcBindClause(OMPProcBindClause *C) {
        static_cast<OpenMPProcBindClauseKind>(Record[Idx++]));
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
   C->setProcBindKindKwLoc(Reader->ReadSourceLocation(Record, Idx));
+}
+
+void OMPClauseReader::VisitOMPScheduleClause(OMPScheduleClause *C) {
+  C->setScheduleKind(
+       static_cast<OpenMPScheduleClauseKind>(Record[Idx++]));
+  C->setChunkSize(Reader->Reader.ReadSubExpr());
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setScheduleKindLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setCommaLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 
 void OMPClauseReader::VisitOMPPrivateClause(OMPPrivateClause *C) {
