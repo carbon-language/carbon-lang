@@ -1205,14 +1205,20 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
                              ELF::R_PPC64_ADDR64, Value.Addend);
 
           // Generates the 64-bits address loads as exemplified in section
-          // 4.5.1 in PPC64 ELF ABI.
-          RelocationEntry REhst(SectionID, StubTargetAddr - Section.Address + 2,
+          // 4.5.1 in PPC64 ELF ABI.  Note that the relocations need to
+          // apply to the low part of the instructions, so we have to update
+          // the offset according to the target endianness.
+          uint64_t StubRelocOffset = StubTargetAddr - Section.Address;
+          if (!IsTargetLittleEndian)
+            StubRelocOffset += 2;
+
+          RelocationEntry REhst(SectionID, StubRelocOffset + 0,
                                 ELF::R_PPC64_ADDR16_HIGHEST, Value.Addend);
-          RelocationEntry REhr(SectionID, StubTargetAddr - Section.Address + 6,
+          RelocationEntry REhr(SectionID, StubRelocOffset + 4,
                                ELF::R_PPC64_ADDR16_HIGHER, Value.Addend);
-          RelocationEntry REh(SectionID, StubTargetAddr - Section.Address + 14,
+          RelocationEntry REh(SectionID, StubRelocOffset + 12,
                               ELF::R_PPC64_ADDR16_HI, Value.Addend);
-          RelocationEntry REl(SectionID, StubTargetAddr - Section.Address + 18,
+          RelocationEntry REl(SectionID, StubRelocOffset + 16,
                               ELF::R_PPC64_ADDR16_LO, Value.Addend);
 
           if (Value.SymbolName) {
