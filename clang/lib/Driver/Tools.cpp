@@ -3570,25 +3570,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fmodule-name specifies the module that is currently being built (or
   // used for header checking by -fmodule-maps).
-  if (Arg *A = Args.getLastArg(options::OPT_fmodule_name)) {
-    A->claim();
+  if (Arg *A = Args.getLastArg(options::OPT_fmodule_name))
     A->render(Args, CmdArgs);
-  }
 
   // -fmodule-map-file can be used to specify a file containing module
   // definitions.
-  if (Arg *A = Args.getLastArg(options::OPT_fmodule_map_file)) {
-    A->claim();
+  if (Arg *A = Args.getLastArg(options::OPT_fmodule_map_file))
     A->render(Args, CmdArgs);
-  }
 
   // If a module path was provided, pass it along. Otherwise, use a temporary
   // directory.
   if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path)) {
-    A->claim();
-    if (HaveModules) {
+    if (HaveModules)
       A->render(Args, CmdArgs);
-    }
   } else if (HaveModules) {
     SmallString<128> DefaultModuleCache;
     llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
@@ -3601,12 +3595,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_fmodules_user_build_path)) {
-    A->claim();
-    if (HaveModules) {
+  if (Arg *A = Args.getLastArg(options::OPT_fmodules_user_build_path))
+    if (HaveModules)
       A->render(Args, CmdArgs);
-    }
-  }
 
   // Pass through all -fmodules-ignore-macro arguments.
   Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
