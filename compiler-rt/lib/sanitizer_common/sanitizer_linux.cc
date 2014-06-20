@@ -46,7 +46,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <unwind.h>
 
 #if SANITIZER_FREEBSD
 #include <sys/sysctl.h>
