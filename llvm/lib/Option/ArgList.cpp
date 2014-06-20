@@ -350,30 +350,27 @@ void DerivedArgList::AddSynthesizedArg(Arg *A) {
 }
 
 Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option Opt) const {
-  SynthesizedArgs.push_back(make_unique<Arg>(
-      Opt,
-      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
-      BaseArgs.MakeIndex(Opt.getName()), BaseArg));
+  SynthesizedArgs.push_back(
+      make_unique<Arg>(Opt, MakeArgString(Opt.getPrefix() + Opt.getName()),
+                       BaseArgs.MakeIndex(Opt.getName()), BaseArg));
   return SynthesizedArgs.back().get();
 }
 
 Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option Opt,
                                        StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Value);
-  SynthesizedArgs.push_back(make_unique<Arg>(
-      Opt,
-      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
-      Index, BaseArgs.getArgString(Index), BaseArg));
+  SynthesizedArgs.push_back(
+      make_unique<Arg>(Opt, MakeArgString(Opt.getPrefix() + Opt.getName()),
+                       Index, BaseArgs.getArgString(Index), BaseArg));
   return SynthesizedArgs.back().get();
 }
 
 Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option Opt,
                                      StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt.getName(), Value);
-  SynthesizedArgs.push_back(make_unique<Arg>(
-      Opt,
-      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
-      Index, BaseArgs.getArgString(Index + 1), BaseArg));
+  SynthesizedArgs.push_back(
+      make_unique<Arg>(Opt, MakeArgString(Opt.getPrefix() + Opt.getName()),
+                       Index, BaseArgs.getArgString(Index + 1), BaseArg));
   return SynthesizedArgs.back().get();
 }
 
@@ -381,8 +378,7 @@ Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option Opt,
                                    StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt.getName().str() + Value.str());
   SynthesizedArgs.push_back(make_unique<Arg>(
-      Opt,
-      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
-      Index, BaseArgs.getArgString(Index) + Opt.getName().size(), BaseArg));
+      Opt, MakeArgString(Opt.getPrefix() + Opt.getName()), Index,
+      BaseArgs.getArgString(Index) + Opt.getName().size(), BaseArg));
   return SynthesizedArgs.back().get();
 }

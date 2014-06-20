@@ -328,6 +328,7 @@ public:
   unsigned MakeIndex(StringRef String0) const;
   unsigned MakeIndex(StringRef String0, StringRef String1) const;
 
+  using ArgList::MakeArgString;
   const char *MakeArgString(StringRef Str) const override;
 
   /// @}
@@ -365,6 +366,7 @@ public:
   /// (to be freed).
   void AddSynthesizedArg(Arg *A);
 
+  using ArgList::MakeArgString;
   const char *MakeArgString(StringRef Str) const override;
 
   /// AddFlagArg - Construct a new FlagArg for the given option \p Id and
