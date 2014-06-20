@@ -902,9 +902,29 @@ Debugger::RunIOHandler (const IOHandlerSP& reader_sp)
 {
     Mutex::Locker locker (m_input_reader_stack.GetMutex());
     PushIOHandler (reader_sp);
-    reader_sp->Activate();
-    reader_sp->Run();
-    PopIOHandler (reader_sp);
+    
+    IOHandlerSP top_reader_sp = reader_sp;
+    while (top_reader_sp)
+    {
+        top_reader_sp->Activate();
+        top_reader_sp->Run();
+        top_reader_sp->Deactivate();
+        
+        if (top_reader_sp.get() == reader_sp.get())
+        {
+            if (PopIOHandler (reader_sp))
+                break;
+        }
+        
+        while (1)
+        {
+            top_reader_sp = m_input_reader_stack.Top();
+            if (top_reader_sp && top_reader_sp->GetIsDone())
+                m_input_reader_stack.Pop();
+            else
+                break;
+        }
+    }
 }
 
 void
