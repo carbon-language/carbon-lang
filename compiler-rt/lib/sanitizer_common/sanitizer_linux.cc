@@ -48,6 +48,7 @@
 #include <unistd.h>
 
 #if SANITIZER_FREEBSD
+#include <stdlib.h>  // for getenv
 #include <sys/sysctl.h>
 #include <machine/atomic.h>
 extern "C" {
@@ -314,6 +315,7 @@ u64 NanoTime() {
   return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
 
+#if SANITIZER_LINUX
 // Like getenv, but reads env directly from /proc and does not use libc.
 // This function should be called first inside __asan_init.
 const char *GetEnv(const char *name) {
@@ -341,6 +343,11 @@ const char *GetEnv(const char *name) {
   }
   return 0;  // Not found.
 }
+#else
+const char *GetEnv(const char *name) {
+  return getenv(name);
+}
+#endif
 
 extern "C" {
   SANITIZER_WEAK_ATTRIBUTE extern void *__libc_stack_end;
