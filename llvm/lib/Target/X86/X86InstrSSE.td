@@ -4337,20 +4337,6 @@ defm PCMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
                              SSE_INTALU_ITINS_P, 0>;
 
 //===---------------------------------------------------------------------===//
-// SSE2 - Packed Integer Pack Instructions
-//===---------------------------------------------------------------------===//
-
-defm PACKSSWB : PDI_binop_all_int<0x63, "packsswb", int_x86_sse2_packsswb_128,
-                                  int_x86_avx2_packsswb,
-                                  SSE_INTALU_ITINS_SHUFF_P, 0>;
-defm PACKSSDW : PDI_binop_all_int<0x6B, "packssdw", int_x86_sse2_packssdw_128,
-                                  int_x86_avx2_packssdw,
-                                  SSE_INTALU_ITINS_SHUFF_P, 0>;
-defm PACKUSWB : PDI_binop_all_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
-                                  int_x86_avx2_packuswb,
-                                  SSE_INTALU_ITINS_SHUFF_P, 0>;
-
-//===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Shuffle Instructions
 //===---------------------------------------------------------------------===//
 
@@ -4430,6 +4416,136 @@ let Predicates = [UseSSE2] in {
   def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
             (PSHUFDri VR128:$src1, imm:$imm)>;
 }
+
+//===---------------------------------------------------------------------===//
+// Packed Integer Pack Instructions (SSE & AVX)
+//===---------------------------------------------------------------------===//
+
+let ExeDomain = SSEPackedInt in {
+multiclass sse2_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
+                     ValueType ArgVT, SDNode OpNode, PatFrag bc_frag,
+                     bit Is2Addr = 1> {
+  def rr : PDI<opc, MRMSrcReg,
+               (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+               !if(Is2Addr,
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   !strconcat(OpcodeStr,
+                              "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+               [(set VR128:$dst,
+                     (OutVT (OpNode (ArgVT VR128:$src1), VR128:$src2)))]>,
+               Sched<[WriteShuffle]>;
+  def rm : PDI<opc, MRMSrcMem,
+               (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+               !if(Is2Addr,
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   !strconcat(OpcodeStr,
+                              "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+               [(set VR128:$dst,
+                     (OutVT (OpNode VR128:$src1,
+                                    (bc_frag (memopv2i64 addr:$src2)))))]>,
+               Sched<[WriteShuffleLd, ReadAfterLd]>;
+}
+
+multiclass sse2_pack_y<bits<8> opc, string OpcodeStr, ValueType OutVT,
+                       ValueType ArgVT, SDNode OpNode, PatFrag bc_frag> {
+  def Yrr : PDI<opc, MRMSrcReg,
+                (outs VR256:$dst), (ins VR256:$src1, VR256:$src2),
+                !strconcat(OpcodeStr,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                [(set VR256:$dst,
+                      (OutVT (OpNode (ArgVT VR256:$src1), VR256:$src2)))]>,
+                Sched<[WriteShuffle]>;
+  def Yrm : PDI<opc, MRMSrcMem,
+                (outs VR256:$dst), (ins VR256:$src1, i256mem:$src2),
+                !strconcat(OpcodeStr,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                [(set VR256:$dst,
+                      (OutVT (OpNode VR256:$src1,
+                                     (bc_frag (memopv4i64 addr:$src2)))))]>,
+                Sched<[WriteShuffleLd, ReadAfterLd]>;
+}
+
+multiclass sse4_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
+                     ValueType ArgVT, SDNode OpNode, PatFrag bc_frag,
+                     bit Is2Addr = 1> {
+  def rr : SS48I<opc, MRMSrcReg,
+                 (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                 !if(Is2Addr,
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     !strconcat(OpcodeStr,
+                                "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+                 [(set VR128:$dst,
+                       (OutVT (OpNode (ArgVT VR128:$src1), VR128:$src2)))]>,
+                 Sched<[WriteShuffle]>;
+  def rm : SS48I<opc, MRMSrcMem,
+                 (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+                 !if(Is2Addr,
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     !strconcat(OpcodeStr,
+                                "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+                 [(set VR128:$dst,
+                       (OutVT (OpNode VR128:$src1,
+                                      (bc_frag (memopv2i64 addr:$src2)))))]>,
+                 Sched<[WriteShuffleLd, ReadAfterLd]>;
+}
+
+multiclass sse4_pack_y<bits<8> opc, string OpcodeStr, ValueType OutVT,
+                     ValueType ArgVT, SDNode OpNode, PatFrag bc_frag> {
+  def Yrr : SS48I<opc, MRMSrcReg,
+                  (outs VR256:$dst), (ins VR256:$src1, VR256:$src2),
+                  !strconcat(OpcodeStr,
+                             "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                  [(set VR256:$dst,
+                        (OutVT (OpNode (ArgVT VR256:$src1), VR256:$src2)))]>,
+                  Sched<[WriteShuffle]>;
+  def Yrm : SS48I<opc, MRMSrcMem,
+                  (outs VR256:$dst), (ins VR256:$src1, i256mem:$src2),
+                  !strconcat(OpcodeStr,
+                             "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                  [(set VR256:$dst,
+                        (OutVT (OpNode VR256:$src1,
+                                       (bc_frag (memopv4i64 addr:$src2)))))]>,
+                  Sched<[WriteShuffleLd, ReadAfterLd]>;
+}
+
+let Predicates = [HasAVX] in {
+  defm VPACKSSWB : sse2_pack<0x63, "vpacksswb", v16i8, v8i16, X86Packss,
+                             bc_v8i16, 0>, VEX_4V;
+  defm VPACKSSDW : sse2_pack<0x6B, "vpackssdw", v8i16, v4i32, X86Packss,
+                             bc_v4i32, 0>, VEX_4V;
+
+  defm VPACKUSWB : sse2_pack<0x67, "vpackuswb", v16i8, v8i16, X86Packus,
+                             bc_v8i16, 0>, VEX_4V;
+  defm VPACKUSDW : sse4_pack<0x2B, "vpackusdw", v8i16, v4i32, X86Packus,
+                             bc_v4i32, 0>, VEX_4V;
+}
+
+let Predicates = [HasAVX2] in {
+  defm VPACKSSWB : sse2_pack_y<0x63, "vpacksswb", v32i8, v16i16, X86Packss,
+                               bc_v16i16>, VEX_4V, VEX_L;
+  defm VPACKSSDW : sse2_pack_y<0x6B, "vpackssdw", v16i16, v8i32, X86Packss,
+                               bc_v8i32>, VEX_4V, VEX_L;
+
+  defm VPACKUSWB : sse2_pack_y<0x67, "vpackuswb", v32i8, v16i16, X86Packus,
+                               bc_v16i16>, VEX_4V, VEX_L;
+  defm VPACKUSDW : sse4_pack_y<0x2B, "vpackusdw", v16i16, v8i32, X86Packus,
+                               bc_v8i32>, VEX_4V, VEX_L;
+}
+
+let Constraints = "$src1 = $dst" in {
+  defm PACKSSWB : sse2_pack<0x63, "packsswb", v16i8, v8i16, X86Packss,
+                            bc_v8i16>;
+  defm PACKSSDW : sse2_pack<0x6B, "packssdw", v8i16, v4i32, X86Packss,
+                            bc_v4i32>;
+
+  defm PACKUSWB : sse2_pack<0x67, "packuswb", v16i8, v8i16, X86Packus,
+                            bc_v8i16>;
+
+  let Predicates = [HasSSE41] in
+  defm PACKUSDW : sse4_pack<0x2B, "packusdw", v8i16, v4i32, X86Packus,
+                            bc_v4i32>;
+}
+} // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Unpack Instructions
@@ -7053,8 +7169,6 @@ multiclass SS48I_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
 let Predicates = [HasAVX] in {
   let isCommutable = 0 in
-  defm VPACKUSDW : SS41I_binop_rm_int<0x2B, "vpackusdw", int_x86_sse41_packusdw,
-                                      0, DEFAULT_ITINS_SHUFFLESCHED>, VEX_4V;
   defm VPMINSB   : SS48I_binop_rm<0x38, "vpminsb", X86smin, v16i8, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
@@ -7086,9 +7200,6 @@ let Predicates = [HasAVX] in {
 
 let Predicates = [HasAVX2] in {
   let isCommutable = 0 in
-  defm VPACKUSDW : SS41I_binop_rm_int_y<0x2B, "vpackusdw",
-                                        int_x86_avx2_packusdw, WriteShuffle>,
-                                        VEX_4V, VEX_L;
   defm VPMINSBY  : SS48I_binop_rm<0x38, "vpminsb", X86smin, v32i8, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
@@ -7120,8 +7231,6 @@ let Predicates = [HasAVX2] in {
 
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 0 in
-  defm PACKUSDW : SS41I_binop_rm_int<0x2B, "packusdw", int_x86_sse41_packusdw,
-                                     1, DEFAULT_ITINS_SHUFFLESCHED>;
   defm PMINSB   : SS48I_binop_rm<0x38, "pminsb", X86smin, v16i8, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
   defm PMINSD   : SS48I_binop_rm<0x39, "pminsd", X86smin, v4i32, VR128,

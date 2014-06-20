@@ -315,6 +315,8 @@ namespace llvm {
       KORTEST,
 
       // Several flavors of instructions with vector shuffle behaviors.
+      PACKSS,
+      PACKUS,
       PALIGNR,
       PSHUFD,
       PSHUFHW,
