@@ -1,4 +1,3 @@
-#!/bin/bash
 set -e
 
 SRCS="
@@ -30,7 +29,7 @@ SRCS="
 
 if [ "`uname -a | grep Linux`" != "" ]; then
 	SUFFIX="linux_amd64"
-	OSCFLAGS="-fPIC -ffreestanding -Wno-maybe-uninitialized -Werror"
+	OSCFLAGS="-fPIC -ffreestanding -Wno-maybe-uninitialized -Wno-unused-const-variable -Werror -Wno-unknown-warning-option"
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_linux.cc
@@ -40,9 +39,21 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../../sanitizer_common/sanitizer_linux.cc
 		../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
 	"
+elif [ "`uname -a | grep FreeBSD`" != "" ]; then
+        SUFFIX="freebsd_amd64"
+        OSCFLAGS="-fno-strict-aliasing -fPIC -Werror"
+        OSLDFLAGS="-lpthread -fPIC -fpie"
+        SRCS+="
+                ../rtl/tsan_platform_linux.cc
+                ../../sanitizer_common/sanitizer_posix.cc
+                ../../sanitizer_common/sanitizer_posix_libcdep.cc
+                ../../sanitizer_common/sanitizer_procmaps_linux.cc
+                ../../sanitizer_common/sanitizer_linux.cc
+                ../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
+        "
 elif [ "`uname -a | grep Darwin`" != "" ]; then
 	SUFFIX="darwin_amd64"
-	OSCFLAGS="-fPIC"
+	OSCFLAGS="-fPIC -Wno-unused-const-variable -Wno-unknown-warning-option"
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS+="
 		../rtl/tsan_platform_mac.cc
@@ -53,7 +64,7 @@ elif [ "`uname -a | grep Darwin`" != "" ]; then
 	"
 elif [ "`uname -a | grep MINGW`" != "" ]; then
 	SUFFIX="windows_amd64"
-	OSCFLAGS="-Wno-error=attributes -Wno-attributes"
+	OSCFLAGS="-Wno-error=attributes -Wno-attributes -Wno-unused-const-variable -Wno-unknown-warning-option"
 	OSLDFLAGS=""
 	SRCS+="
 		../rtl/tsan_platform_windows.cc
@@ -71,7 +82,7 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS -Wno-unused-const-variable -Wno-unknown-warning-option"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
 	FLAGS+=" -DTSAN_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
 else
