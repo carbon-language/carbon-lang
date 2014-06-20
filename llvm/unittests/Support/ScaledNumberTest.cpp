@@ -78,4 +78,5 @@ TEST(FloatsTest, getAdjusted) {
   EXPECT_EQ(getAdjusted64(Max32In64 + 1), SP64(Max32In64 + 1, 0));
   EXPECT_EQ(getAdjusted64(UINT64_MAX), SP64(UINT64_MAX, 0));
 }
-}
+
+} // end namespace

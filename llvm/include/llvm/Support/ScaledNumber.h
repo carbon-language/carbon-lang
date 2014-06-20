@@ -97,8 +97,9 @@ inline std::pair<uint64_t, int16_t> getAdjusted64(uint64_t Digits,
                                                   int16_t Scale = 0) {
   return getAdjusted<uint64_t>(Digits, Scale);
 }
-}
-}
+
+} // end namespace ScaledNumbers
+} // end namespace llvm
 
 #endif
 
