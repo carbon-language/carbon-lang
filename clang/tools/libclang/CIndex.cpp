@@ -1951,6 +1951,8 @@ void OMPClauseEnqueue::VisitOMPScheduleClause(const OMPScheduleClause *C) {
 
 void OMPClauseEnqueue::VisitOMPOrderedClause(const OMPOrderedClause *) {}
 
+void OMPClauseEnqueue::VisitOMPNowaitClause(const OMPNowaitClause *) {}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists())

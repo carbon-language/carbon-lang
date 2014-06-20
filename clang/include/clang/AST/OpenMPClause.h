@@ -629,6 +629,35 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
+/// \brief This represents 'nowait' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp for nowait
+/// \endcode
+/// In this example directive '#pragma omp for' has 'nowait' clause.
+///
+class OMPNowaitClause : public OMPClause {
+public:
+  /// \brief Build 'nowait' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPNowaitClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_nowait, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPNowaitClause()
+      : OMPClause(OMPC_nowait, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_nowait;
+  }
+
+  StmtRange children() { return StmtRange(); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

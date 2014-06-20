@@ -7386,6 +7386,9 @@ public:
   /// \brief Called on well-formed 'ordered' clause.
   OMPClause *ActOnOpenMPOrderedClause(SourceLocation StartLoc,
                                       SourceLocation EndLoc);
+  /// \brief Called on well-formed 'nowait' clause.
+  OMPClause *ActOnOpenMPNowaitClause(SourceLocation StartLoc,
+                                     SourceLocation EndLoc);
 
   OMPClause *
   ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> Vars,

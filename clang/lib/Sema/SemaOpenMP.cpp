@@ -1523,6 +1523,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_aligned:
   case OMPC_copyin:
   case OMPC_ordered:
+  case OMPC_nowait:
   case OMPC_threadprivate:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -1701,6 +1702,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_aligned:
   case OMPC_copyin:
   case OMPC_ordered:
+  case OMPC_nowait:
   case OMPC_threadprivate:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -1810,6 +1812,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_aligned:
   case OMPC_copyin:
   case OMPC_ordered:
+  case OMPC_nowait:
   case OMPC_threadprivate:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
@@ -1881,6 +1884,9 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_ordered:
     Res = ActOnOpenMPOrderedClause(StartLoc, EndLoc);
     break;
+  case OMPC_nowait:
+    Res = ActOnOpenMPNowaitClause(StartLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_num_threads:
   case OMPC_safelen:
@@ -1906,6 +1912,11 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
 OMPClause *Sema::ActOnOpenMPOrderedClause(SourceLocation StartLoc,
                                           SourceLocation EndLoc) {
   return new (Context) OMPOrderedClause(StartLoc, EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPNowaitClause(SourceLocation StartLoc,
+                                         SourceLocation EndLoc) {
+  return new (Context) OMPNowaitClause(StartLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPVarListClause(
@@ -1950,6 +1961,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_proc_bind:
   case OMPC_schedule:
   case OMPC_ordered:
+  case OMPC_nowait:
   case OMPC_threadprivate:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");

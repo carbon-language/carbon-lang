@@ -642,6 +642,10 @@ void OMPClausePrinter::VisitOMPOrderedClause(OMPOrderedClause *) {
   OS << "ordered";
 }
 
+void OMPClausePrinter::VisitOMPNowaitClause(OMPNowaitClause *) {
+  OS << "nowait";
+}
+
 template<typename T>
 void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),

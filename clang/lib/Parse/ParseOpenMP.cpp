@@ -318,8 +318,11 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     Clause = ParseOpenMPSingleExprWithArgClause(CKind);
     break;
   case OMPC_ordered:
+  case OMPC_nowait:
     // OpenMP [2.7.1, Restrictions, p. 9]
     //  Only one ordered clause can appear on a loop directive.
+    // OpenMP [2.7.1, Restrictions, C/C++, p. 4]
+    //  Only one nowait clause can appear on a for directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause) << getOpenMPDirectiveName(DKind)
                                                << getOpenMPClauseName(CKind);
@@ -423,6 +426,9 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///
 ///    ordered-clause:
 ///         'ordered'
+///
+///    nowait-clause:
+///         'nowait'
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();

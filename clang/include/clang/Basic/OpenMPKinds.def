@@ -61,6 +61,7 @@ OPENMP_CLAUSE(copyin,  OMPCopyinClause)
 OPENMP_CLAUSE(proc_bind, OMPProcBindClause)
 OPENMP_CLAUSE(schedule, OMPScheduleClause)
 OPENMP_CLAUSE(ordered, OMPOrderedClause)
+OPENMP_CLAUSE(nowait, OMPNowaitClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -89,6 +90,7 @@ OPENMP_FOR_CLAUSE(reduction)
 OPENMP_FOR_CLAUSE(collapse)
 OPENMP_FOR_CLAUSE(schedule)
 OPENMP_FOR_CLAUSE(ordered)
+OPENMP_FOR_CLAUSE(nowait)
 
 // Static attributes for 'default' clause.
 OPENMP_DEFAULT_KIND(none)
