@@ -34,7 +34,7 @@ class BitVector {
   unsigned Capacity;     // Size of allocated memory in BitWord.
 
 public:
-  typedef size_t size_type;
+  typedef unsigned size_type;
   // Encapsulation of a single bit.
   class reference {
     friend class BitVector;
