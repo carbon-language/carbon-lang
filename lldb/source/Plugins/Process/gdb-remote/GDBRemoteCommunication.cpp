@@ -458,7 +458,8 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
             assert (content_length <= m_bytes.size());
             assert (total_length <= m_bytes.size());
             assert (content_length <= total_length);
-            
+            const size_t content_end = content_start + content_length;
+
             bool success = true;
             std::string &packet_str = packet.GetStringRef();
             
@@ -472,7 +473,45 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 if (!m_history.DidDumpToLog ())
                     m_history.Dump (log);
                 
-                log->Printf("<%4" PRIu64 "> read packet: %.*s", (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
+                bool binary = false;
+                // Only detect binary for packets that start with a '$' and have a '#CC' checksum
+                if (m_bytes[0] == '$' && total_length > 4)
+                {
+                    for (size_t i=0; !binary && i<total_length; ++i)
+                    {
+                        if (isprint(m_bytes[i]) == 0)
+                            binary = true;
+                    }
+                }
+                if (binary)
+                {
+                    StreamString strm;
+                    // Packet header...
+                    strm.Printf("<%4" PRIu64 "> read packet: %c", (uint64_t)total_length, m_bytes[0]);
+                    for (size_t i=content_start; i<content_end; ++i)
+                    {
+                        // Remove binary escaped bytes when displaying the packet...
+                        const char ch = m_bytes[i];
+                        if (ch == 0x7d)
+                        {
+                            // 0x7d is the escape character.  The next character is to
+                            // be XOR'd with 0x20.
+                            const char escapee = m_bytes[++i] ^ 0x20;
+                            strm.Printf("%2.2x", escapee);
+                        }
+                        else
+                        {
+                            strm.Printf("%2.2x", (uint8_t)ch);
+                        }
+                    }
+                    // Packet footer...
+                    strm.Printf("%c%c%c", m_bytes[total_length-3], m_bytes[total_length-2], m_bytes[total_length-1]);
+                    log->PutCString(strm.GetString().c_str());
+                }
+                else
+                {
+                    log->Printf("<%4" PRIu64 "> read packet: %.*s", (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
+                }
             }
 
             m_history.AddPacket (m_bytes.c_str(), total_length, History::ePacketTypeRecv, total_length);
@@ -483,7 +522,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
             // run-length encoding in the process.
             // Reserve enough byte for the most common case (no RLE used)
             packet_str.reserve(m_bytes.length());
-            for (std::string::const_iterator c = m_bytes.begin() + content_start; c != m_bytes.begin() + content_start + content_length; ++c)
+            for (std::string::const_iterator c = m_bytes.begin() + content_start; c != m_bytes.begin() + content_end; ++c)
             {
                 if (*c == '*')
                 {
