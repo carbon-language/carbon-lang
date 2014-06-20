@@ -18,6 +18,22 @@
 #include "llvm/MC/MCSectionMachO.h"
 using namespace llvm;
 
+static bool useCompactUnwind(const Triple &T) {
+  // Only on darwin.
+  if (!T.isOSDarwin())
+    return false;
+
+  // aarch64 always has it.
+  if (T.getArch() == Triple::arm64 || T.getArch() == Triple::aarch64)
+    return true;
+
+  // Use it on newer version of OS X.
+  if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6))
+    return true;
+
+  return false;
+}
+
 void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   // MachO
   IsFunctionEHFrameSymbolPrivate = false;
@@ -151,13 +167,10 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
   COFFDebugSymbolsSection = nullptr;
 
-  if ((T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) ||
-      (T.isOSDarwin() &&
-       (T.getArch() == Triple::arm64 || T.getArch() == Triple::aarch64))) {
+  if (useCompactUnwind(T)) {
     CompactUnwindSection =
-      Ctx->getMachOSection("__LD", "__compact_unwind",
-                           MachO::S_ATTR_DEBUG,
-                           SectionKind::getReadOnly());
+        Ctx->getMachOSection("__LD", "__compact_unwind", MachO::S_ATTR_DEBUG,
+                             SectionKind::getReadOnly());
 
     if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
       CompactUnwindDwarfEHFrameOnly = 0x04000000;
