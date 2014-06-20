@@ -161,9 +161,7 @@ public:
   bool isMayWrite() const { return Type == MemoryAccess::MAY_WRITE; }
 
   /// @brief Is this a write memory access?
-  bool isWrite() const {
-    return Type == MemoryAccess::MUST_WRITE || Type == MemoryAccess::MAY_WRITE;
-  }
+  bool isWrite() const { return isMustWrite() || isMayWrite(); }
 
   isl_map *getAccessRelation() const;
 
