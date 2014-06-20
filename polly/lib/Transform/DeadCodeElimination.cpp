@@ -100,7 +100,8 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
     return false;
 
   isl_union_set *Live = this->getLastWrites(S.getWrites(), S.getSchedule());
-  isl_union_map *Dep = D->getDependences(Dependences::TYPE_RAW);
+  isl_union_map *Dep =
+      D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_RED);
   Dep = isl_union_map_reverse(Dep);
 
   if (PreciseSteps == -1)

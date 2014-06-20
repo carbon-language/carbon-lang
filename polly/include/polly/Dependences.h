@@ -46,6 +46,12 @@ public:
   static char ID;
 
   /// @brief The type of the dependences.
+  ///
+  /// Reduction dependences are not included in TYPE_ALL dependences because we
+  /// can ignore them during the scheduling. This is the case since the order in
+  /// which the reduction statements are executed does not matter. However, if
+  /// they are executed in parallel we need to take additional measures (e.g.,
+  /// privatization) to ensure a correct result.
   enum Type {
     // Write after read
     TYPE_WAR = 0x1,
@@ -56,7 +62,10 @@ public:
     // Write after write
     TYPE_WAW = 0x4,
 
-    // All dependences
+    // Reduction dependences
+    TYPE_RED = 0x8,
+
+    // All (validity) dependences
     TYPE_ALL = (TYPE_WAR | TYPE_RAW | TYPE_WAW)
   };
 
@@ -105,9 +114,15 @@ private:
   isl_union_map *WAR;
   isl_union_map *WAW;
 
+  /// @brief The map of reduction dependences
+  isl_union_map *RED = nullptr;
+
   /// @brief Collect information about the SCoP.
   void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
                    isl_union_map **MayWrite, isl_union_map **Schedule);
+
+  /// @brief Calculate and add at the privatization dependences
+  void addPrivatizationDependences();
 
   // @brief Calculate the dependences for a certain SCoP.
   void calculateDependences(Scop &S);

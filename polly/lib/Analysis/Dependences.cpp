@@ -92,6 +92,72 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
   }
 }
 
+/// @brief Compute the privatization dependences for a given dependency @p Map
+///
+/// Privatization dependences are widened original dependences which originate
+/// or end in a reduction access. To compute them we apply the transitive close
+/// of the reduction dependences (which maps each iteration of a reduction
+/// statement to all following ones) on the RAW/WAR/WAW dependences. The
+/// dependences which start or end at a reduction statement will be extended to
+/// depend on all following reduction statement iterations as well.
+/// Note: "Following" here means according to the reduction dependences.
+///
+/// For the input:
+///
+///  S0:   *sum = 0;
+///        for (int i = 0; i < 1024; i++)
+///  S1:     *sum += i;
+///  S2:   *sum = *sum * 3;
+///
+/// we have the following dependences before we add privatization dependences:
+///
+///   RAW:
+///     { S0[] -> S1[0]; S1[1023] -> S2[] }
+///   WAR:
+///     {  }
+///   WAW:
+///     { S0[] -> S1[0]; S1[1024] -> S2[] }
+///   RED:
+///     { S1[i0] -> S1[1 + i0] : i0 >= 0 and i0 <= 1022 }
+///
+/// and afterwards:
+///
+///   RAW:
+///     { S0[] -> S1[i0] : i0 >= 0 and i0 <= 1023;
+///       S1[i0] -> S2[] : i0 >= 0 and i0 <= 1023}
+///   WAR:
+///     {  }
+///   WAW:
+///     { S0[] -> S1[i0] : i0 >= 0 and i0 <= 1023;
+///       S1[i0] -> S2[] : i0 >= 0 and i0 <= 1023}
+///   RED:
+///     { S1[i0] -> S1[1 + i0] : i0 >= 0 and i0 <= 1022 }
+void Dependences::addPrivatizationDependences() {
+  isl_union_map *PrivRAW, *PrivWAW, *PrivWAR, *TransClosure;
+
+  // The transitive closure might be over approximated but we only use it to
+  // compute the privatization dependences. Thus, overapproximation will lead
+  // "only" to more conservative privatization dependences.
+  // FIXME: Take precautions to ensure only forward dependences are created.
+  TransClosure = isl_union_map_transitive_closure(isl_union_map_copy(RED), 0);
+
+  isl_union_map **Maps[] = {&RAW, &WAW, &WAR};
+  isl_union_map **PrivMaps[] = {&PrivRAW, &PrivWAW, &PrivWAR};
+  for (unsigned u = 0; u < 3; u++) {
+    isl_union_map **Map = Maps[u], **PrivMap = PrivMaps[u];
+
+    *PrivMap = isl_union_map_apply_range(isl_union_map_copy(*Map),
+                                         isl_union_map_copy(TransClosure));
+    *PrivMap = isl_union_map_union(
+        *PrivMap, isl_union_map_apply_range(isl_union_map_copy(TransClosure),
+                                            isl_union_map_copy(*Map)));
+
+    *Map = isl_union_map_union(*Map, *PrivMap);
+  }
+
+  isl_union_map_free(TransClosure);
+}
+
 void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *Schedule;
 
@@ -114,7 +180,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   // The pointers below will be set by the subsequent calls to
   // isl_union_map_compute_flow.
-  RAW = WAW = WAR = nullptr;
+  RAW = WAW = WAR = RED = nullptr;
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
@@ -168,6 +234,50 @@ void Dependences::calculateDependences(Scop &S) {
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
   isl_ctx_reset_operations(S.getIslCtx());
   isl_ctx_set_max_operations(S.getIslCtx(), MaxOpsOld);
+
+  // To handle reduction dependences we proceed as follows:
+  // 1) Aggregate all possible reduction dependences, namely all self
+  //    dependences on reduction like statements.
+  // 2) Intersect them with the actual RAW & WAW dependences to the get the
+  //    actual reduction dependences. This will ensure the load/store memory
+  //    addresses were __identical__ in the two iterations of the statement.
+  // 3) Relax the original RAW and WAW dependences by substracting the actual
+  //    reduction dependences. Binary reductions (sum += A[i]) cause both, and
+  //    the same, RAW and WAW dependences.
+  // 4) Add the privatization dependences which are widened versions of
+  //    already present dependences. They model the effect of manual
+  //    privatization at the outermost possible place (namely after the last
+  //    write and before the first access to a reduction location).
+
+  // Step 1)
+  RED = isl_union_map_empty(isl_union_map_get_space(RAW));
+  for (auto *Stmt : S) {
+    if (!Stmt->isReductionLike())
+      continue;
+    isl_set *Domain = Stmt->getDomain();
+    isl_map *Identity =
+        isl_map_from_domain_and_range(isl_set_copy(Domain), Domain);
+    RED = isl_union_map_add_map(RED, Identity);
+  }
+
+  // Step 2)
+  RED = isl_union_map_intersect(RED, isl_union_map_copy(RAW));
+  RED = isl_union_map_intersect(RED, isl_union_map_copy(WAW));
+
+  if (!isl_union_map_is_empty(RED)) {
+
+    // Step 3)
+    RAW = isl_union_map_subtract(RAW, isl_union_map_copy(RED));
+    WAW = isl_union_map_subtract(WAW, isl_union_map_copy(RED));
+
+    // Step 4)
+    addPrivatizationDependences();
+  }
+
+  RAW = isl_union_map_coalesce(RAW);
+  WAW = isl_union_map_coalesce(WAW);
+  WAR = isl_union_map_coalesce(WAR);
+  RED = isl_union_map_coalesce(RED);
 
   DEBUG(printScop(dbgs()));
 }
@@ -256,7 +366,9 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
     return false;
   }
 
-  Deps = getDependences(TYPE_ALL);
+  // FIXME: We can remove ignore reduction dependences in case we privatize the
+  //        memory locations the reduction statements reduce into.
+  Deps = getDependences(TYPE_ALL | TYPE_RED);
 
   if (isl_union_map_is_empty(Deps)) {
     isl_union_map_free(Deps);
@@ -310,14 +422,17 @@ void Dependences::printScop(raw_ostream &OS) const {
   printDependencyMap(OS, WAR);
   OS << "\tWAW dependences:\n\t\t";
   printDependencyMap(OS, WAW);
+  OS << "\tReduction dependences:\n\t\t";
+  printDependencyMap(OS, RED);
 }
 
 void Dependences::releaseMemory() {
   isl_union_map_free(RAW);
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
+  isl_union_map_free(RED);
 
-  RAW = WAR = WAW = nullptr;
+  RED = RAW = WAR = WAW = nullptr;
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {
@@ -333,6 +448,9 @@ isl_union_map *Dependences::getDependences(int Kinds) {
 
   if (Kinds & TYPE_WAW)
     Deps = isl_union_map_union(Deps, isl_union_map_copy(WAW));
+
+  if (Kinds & TYPE_RED)
+    Deps = isl_union_map_union(Deps, isl_union_map_copy(RED));
 
   Deps = isl_union_map_coalesce(Deps);
   Deps = isl_union_map_detect_equalities(Deps);
