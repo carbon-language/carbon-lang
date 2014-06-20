@@ -29,6 +29,7 @@ add_llvm_unittest(SupportTests
   ProcessTest.cpp
   ProgramTest.cpp
   RegexTest.cpp
+  ScaledNumberTest.cpp
   SourceMgrTest.cpp
   StringPool.cpp
   SwapByteOrderTest.cpp

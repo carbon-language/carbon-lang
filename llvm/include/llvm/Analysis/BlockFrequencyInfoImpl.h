@@ -22,6 +22,7 @@
 #include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ScaledNumber.h"
 #include "llvm/Support/raw_ostream.h"
 #include <deque>
 #include <list>
@@ -343,12 +344,11 @@ private:
   }
 
   static UnsignedFloat getRounded(UnsignedFloat P, bool Round) {
-    if (!Round)
+    // Saturate.
+    if (P.isLargest())
       return P;
-    if (P.Digits == DigitsLimits::max())
-      // Careful of overflow in the exponent.
-      return UnsignedFloat(1, P.Exponent) <<= Width;
-    return UnsignedFloat(P.Digits + 1, P.Exponent);
+
+    return ScaledNumbers::getRounded(P.Digits, P.Exponent, Round);
   }
 };
 
