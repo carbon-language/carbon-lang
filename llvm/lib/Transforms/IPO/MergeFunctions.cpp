@@ -325,6 +325,7 @@ private:
   /// 6.1.Load: volatile (as boolean flag)
   /// 6.2.Load: alignment (as integer numbers)
   /// 6.3.Load: synch-scope (as integer numbers)
+  /// 6.4.Load: range metadata (as integer numbers)
   /// On this stage its better to see the code, since its not more than 10-15
   /// strings for particular instruction, and could change sometimes.
   int cmpOperation(const Instruction *L, const Instruction *R) const;
@@ -788,7 +789,11 @@ int FunctionComparator::cmpOperation(const Instruction *L,
     if (int Res =
             cmpNumbers(LI->getOrdering(), cast<LoadInst>(R)->getOrdering()))
       return Res;
-    return cmpNumbers(LI->getSynchScope(), cast<LoadInst>(R)->getSynchScope());
+    if (int Res =
+            cmpNumbers(LI->getSynchScope(), cast<LoadInst>(R)->getSynchScope()))
+      return Res;
+    return cmpNumbers((uint64_t)LI->getMetadata(LLVMContext::MD_range),
+                      (uint64_t)cast<LoadInst>(R)->getMetadata(LLVMContext::MD_range));
   }
   if (const StoreInst *SI = dyn_cast<StoreInst>(L)) {
     if (int Res =
