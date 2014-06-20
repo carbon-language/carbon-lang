@@ -2327,8 +2327,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // The make clang go fast button.
-  CmdArgs.push_back("-disable-free");
+  // We normally speed up the clang process a bit by skipping destructors at
+  // exit, but when we're generating diagnostics we can rely on some of the
+  // cleanup.
+  if (!C.isForDiagnostics())
+    CmdArgs.push_back("-disable-free");
 
   // Disable the verification pass in -asserts builds.
 #ifdef NDEBUG
@@ -3574,21 +3577,37 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_fmodule_map_file))
     A->render(Args, CmdArgs);
 
-  // If a module path was provided, pass it along. Otherwise, use a temporary
-  // directory.
-  if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path)) {
-    if (HaveModules)
-      A->render(Args, CmdArgs);
-  } else if (HaveModules) {
-    SmallString<128> DefaultModuleCache;
-    llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
-                                           DefaultModuleCache);
-    llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang");
-    llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
+  // -fmodule-cache-path specifies where our module files should be written.
+  SmallString<128> ModuleCachePath;
+  if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path))
+    ModuleCachePath = A->getValue();
+  if (HaveModules) {
+    if (C.isForDiagnostics()) {
+      // When generating crash reports, we want to emit the modules along with
+      // the reproduction sources, so we ignore any provided module path.
+      ModuleCachePath = Output.getFilename();
+      llvm::sys::path::replace_extension(ModuleCachePath, ".cache");
+      llvm::sys::path::append(ModuleCachePath, "modules");
+    } else if (ModuleCachePath.empty()) {
+      // No module path was provided: use the default.
+      llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
+                                             ModuleCachePath);
+      llvm::sys::path::append(ModuleCachePath, "org.llvm.clang");
+      llvm::sys::path::append(ModuleCachePath, "ModuleCache");
+    }
     const char Arg[] = "-fmodules-cache-path=";
-    DefaultModuleCache.insert(DefaultModuleCache.begin(),
-                              Arg, Arg + strlen(Arg));
-    CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
+    ModuleCachePath.insert(ModuleCachePath.begin(), Arg, Arg + strlen(Arg));
+    CmdArgs.push_back(Args.MakeArgString(ModuleCachePath));
+  }
+
+  // When building modules and generating crashdumps, we need to dump a module
+  // dependency VFS alongside the output.
+  if (HaveModules && C.isForDiagnostics()) {
+    SmallString<128> VFSDir(Output.getFilename());
+    llvm::sys::path::replace_extension(VFSDir, ".cache");
+    llvm::sys::path::append(VFSDir, "vfs");
+    CmdArgs.push_back("-module-dependency-dir");
+    CmdArgs.push_back(Args.MakeArgString(VFSDir));
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_fmodules_user_build_path))
@@ -4033,9 +4052,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 #endif
 
+  // Enable rewrite includes if the user's asked for it or if we're generating
+  // diagnostics.
+  // TODO: Once -module-dependency-dir works with -frewrite-includes it'd be
+  // nice to enable this when doing a crashdump for modules as well.
   if (Args.hasFlag(options::OPT_frewrite_includes,
                    options::OPT_fno_rewrite_includes, false) ||
-      C.isForDiagnostics())
+      (C.isForDiagnostics() && !HaveModules))
     CmdArgs.push_back("-frewrite-includes");
 
   // Only allow -traditional or -traditional-cpp outside in preprocessing modes.

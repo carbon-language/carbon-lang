@@ -519,9 +519,14 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
          it != ie; ++it) {
       Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
+      std::string Script = StringRef(*it).rsplit('.').first;
+      // In some cases (modules) we'll dump extra data to help with reproducing
+      // the crash into a directory next to the output.
+      if (llvm::sys::fs::exists(Script + ".cache"))
+        Diag(clang::diag::note_drv_command_failed_diag_msg)
+            << Script + ".cache";
 
       std::string Err;
-      std::string Script = StringRef(*it).rsplit('.').first;
       Script += ".sh";
       llvm::raw_fd_ostream ScriptOS(Script.c_str(), Err, llvm::sys::fs::F_Excl);
       if (!Err.empty()) {
