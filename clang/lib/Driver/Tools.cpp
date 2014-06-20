@@ -6917,9 +6917,10 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
   } else if (ToolChain.getArch() == llvm::Triple::ppc)
     return "/lib/ld.so.1";
   else if (ToolChain.getArch() == llvm::Triple::ppc64 ||
-           ToolChain.getArch() == llvm::Triple::ppc64le ||
            ToolChain.getArch() == llvm::Triple::systemz)
     return "/lib64/ld64.so.1";
+  else if (ToolChain.getArch() == llvm::Triple::ppc64le)
+    return "/lib64/ld64.so.2";
   else if (ToolChain.getArch() == llvm::Triple::sparcv9)
     return "/lib64/ld-linux.so.2";
   else
