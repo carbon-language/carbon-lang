@@ -44,7 +44,6 @@ public:
 private:
   std::string DevName;
   bool Is64bit;
-  bool Is32on64bit;
   bool DumpCode;
   bool R600ALUInst;
   bool HasVertexCache;

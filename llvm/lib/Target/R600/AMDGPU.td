@@ -32,30 +32,25 @@ def FeatureIfCvt : SubtargetFeature <"disable-ifcvt",
         "false",
         "Disable the if conversion pass">;
 
-def FeatureFP64     : SubtargetFeature<"fp64",
+def FeatureFP64 : SubtargetFeature<"fp64",
         "FP64",
         "true",
-        "Enable 64bit double precision operations">;
+        "Enable double precision operations">;
 
 def Feature64BitPtr : SubtargetFeature<"64BitPtr",
         "Is64bit",
         "true",
-        "Specify if 64bit addressing should be used.">;
-
-def Feature32on64BitPtr : SubtargetFeature<"64on32BitPtr",
-        "Is32on64bit",
-        "false",
-        "Specify if 64bit sized pointers with 32bit addressing should be used.">;
+        "Specify if 64-bit addressing should be used">;
 
 def FeatureR600ALUInst : SubtargetFeature<"R600ALUInst",
         "R600ALUInst",
         "false",
-        "Older version of ALU instructions encoding.">;
+        "Older version of ALU instructions encoding">;
 
 def FeatureVertexCache : SubtargetFeature<"HasVertexCache",
         "HasVertexCache",
         "true",
-        "Specify use of dedicated vertex cache.">;
+        "Specify use of dedicated vertex cache">;
 
 def FeatureCaymanISA : SubtargetFeature<"caymanISA",
         "CaymanISA",
