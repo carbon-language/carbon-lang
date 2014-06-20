@@ -1384,7 +1384,7 @@ std::error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
         LibrariesShortNames.push_back(StringRef());
         continue;
       }
-      char *P = (char *)(Libraries[i]) + D.dylib.name;
+      const char *P = (const char *)(Libraries[i]) + D.dylib.name;
       StringRef Name = StringRef(P);
       StringRef Suffix;
       bool isFramework;
