@@ -53,6 +53,18 @@ inline std::pair<DigitsT, int16_t> getRounded(DigitsT Digits, int16_t Scale,
   return std::make_pair(Digits, Scale);
 }
 
+/// \brief Convenience helper for 32-bit rounding.
+inline std::pair<uint32_t, int16_t> getRounded32(uint32_t Digits, int16_t Scale,
+                                                 bool ShouldRound) {
+  return getRounded(Digits, Scale, ShouldRound);
+}
+
+/// \brief Convenience helper for 64-bit rounding.
+inline std::pair<uint64_t, int16_t> getRounded64(uint64_t Digits, int16_t Scale,
+                                                 bool ShouldRound) {
+  return getRounded(Digits, Scale, ShouldRound);
+}
+
 /// \brief Adjust a 64-bit scaled number down to the appropriate width.
 ///
 /// Adjust a soft float with 64-bits of digits down, keeping as much

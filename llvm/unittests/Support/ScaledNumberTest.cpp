@@ -41,21 +41,19 @@ typedef ScaledPair<uint32_t> SP32;
 typedef ScaledPair<uint64_t> SP64;
 
 TEST(ScaledNumberHelpersTest, getRounded) {
-  EXPECT_EQ(getRounded<uint32_t>(0, 0, false), SP32(0, 0));
-  EXPECT_EQ(getRounded<uint32_t>(0, 0, true), SP32(1, 0));
-  EXPECT_EQ(getRounded<uint32_t>(20, 21, true), SP32(21, 21));
-  EXPECT_EQ(getRounded<uint32_t>(UINT32_MAX, 0, false), SP32(UINT32_MAX, 0));
-  EXPECT_EQ(getRounded<uint32_t>(UINT32_MAX, 0, true), SP32(1 << 31, 1));
+  EXPECT_EQ(getRounded32(0, 0, false), SP32(0, 0));
+  EXPECT_EQ(getRounded32(0, 0, true), SP32(1, 0));
+  EXPECT_EQ(getRounded32(20, 21, true), SP32(21, 21));
+  EXPECT_EQ(getRounded32(UINT32_MAX, 0, false), SP32(UINT32_MAX, 0));
+  EXPECT_EQ(getRounded32(UINT32_MAX, 0, true), SP32(1 << 31, 1));
 
-  EXPECT_EQ(getRounded<uint64_t>(0, 0, false), SP64(0, 0));
-  EXPECT_EQ(getRounded<uint64_t>(0, 0, true), SP64(1, 0));
-  EXPECT_EQ(getRounded<uint64_t>(20, 21, true), SP64(21, 21));
-  EXPECT_EQ(getRounded<uint64_t>(UINT32_MAX, 0, false), SP64(UINT32_MAX, 0));
-  EXPECT_EQ(getRounded<uint64_t>(UINT32_MAX, 0, true),
-            SP64(UINT64_C(1) << 32, 0));
-  EXPECT_EQ(getRounded<uint64_t>(UINT64_MAX, 0, false), SP64(UINT64_MAX, 0));
-  EXPECT_EQ(getRounded<uint64_t>(UINT64_MAX, 0, true),
-            SP64(UINT64_C(1) << 63, 1));
+  EXPECT_EQ(getRounded64(0, 0, false), SP64(0, 0));
+  EXPECT_EQ(getRounded64(0, 0, true), SP64(1, 0));
+  EXPECT_EQ(getRounded64(20, 21, true), SP64(21, 21));
+  EXPECT_EQ(getRounded64(UINT32_MAX, 0, false), SP64(UINT32_MAX, 0));
+  EXPECT_EQ(getRounded64(UINT32_MAX, 0, true), SP64(UINT64_C(1) << 32, 0));
+  EXPECT_EQ(getRounded64(UINT64_MAX, 0, false), SP64(UINT64_MAX, 0));
+  EXPECT_EQ(getRounded64(UINT64_MAX, 0, true), SP64(UINT64_C(1) << 63, 1));
 }
 
 TEST(FloatsTest, getAdjusted) {
