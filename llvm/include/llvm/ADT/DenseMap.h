@@ -43,7 +43,7 @@ protected:
   typedef std::pair<KeyT, ValueT> BucketT;
 
 public:
-  typedef size_t size_type;
+  typedef unsigned size_type;
   typedef KeyT key_type;
   typedef ValueT mapped_type;
   typedef BucketT value_type;

@@ -185,7 +185,7 @@ public:
   typedef const ValueT &const_reference;
   typedef ValueT *pointer;
   typedef const ValueT *const_pointer;
-  typedef size_t size_type;
+  typedef unsigned size_type;
 
   SparseMultiSet()
     : Sparse(nullptr), Universe(0), FreelistIdx(SMSNode::INVALID), NumFree(0) {}

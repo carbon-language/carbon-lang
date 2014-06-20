@@ -29,7 +29,7 @@ class DenseSet {
 public:
   typedef ValueT key_type;
   typedef ValueT value_type;
-  typedef size_t size_type;
+  typedef unsigned size_type;
 
   explicit DenseSet(unsigned NumInitBuckets = 0) : TheMap(NumInitBuckets) {}
 

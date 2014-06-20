@@ -73,7 +73,7 @@ protected:
   ~SmallPtrSetImplBase();
 
 public:
-  typedef size_t size_type;
+  typedef unsigned size_type;
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const { return size() == 0; }
   size_type size() const { return NumElements; }
 

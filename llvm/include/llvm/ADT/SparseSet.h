@@ -124,7 +124,7 @@ class SparseSet {
 
   typedef typename KeyFunctorT::argument_type KeyT;
   typedef SmallVector<ValueT, 8> DenseT;
-  typedef size_t size_type;
+  typedef unsigned size_type;
   DenseT Dense;
   SparseT *Sparse;
   unsigned Universe;

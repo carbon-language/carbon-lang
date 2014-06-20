@@ -54,7 +54,7 @@ class SmallBitVector {
   };
 
 public:
-  typedef size_t size_type;
+  typedef unsigned size_type;
   // Encapsulation of a single bit.
   class reference {
     SmallBitVector &TheVector;

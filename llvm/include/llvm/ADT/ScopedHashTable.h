@@ -148,7 +148,7 @@ public:
   /// ScopeTy - This is a helpful typedef that allows clients to get easy access
   /// to the name of the scope for this hash table.
   typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
-  typedef size_t size_type;
+  typedef unsigned size_type;
 private:
   typedef ScopedHashTableVal<K, V> ValTy;
   DenseMap<K, ValTy*, KInfo> TopLevelMap;

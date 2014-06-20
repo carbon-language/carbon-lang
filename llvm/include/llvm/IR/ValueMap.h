@@ -87,7 +87,7 @@ public:
   typedef KeyT key_type;
   typedef ValueT mapped_type;
   typedef std::pair<KeyT, ValueT> value_type;
-  typedef size_t size_type;
+  typedef unsigned size_type;
 
   explicit ValueMap(unsigned NumInitBuckets = 64)
     : Map(NumInitBuckets), Data() {}

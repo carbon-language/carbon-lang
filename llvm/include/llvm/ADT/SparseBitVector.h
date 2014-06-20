@@ -45,7 +45,7 @@ struct SparseBitVectorElement
   : public ilist_node<SparseBitVectorElement<ElementSize> > {
 public:
   typedef unsigned long BitWord;
-  typedef size_t size_type;
+  typedef unsigned size_type;
   enum {
     BITWORD_SIZE = sizeof(BitWord) * CHAR_BIT,
     BITWORDS_PER_ELEMENT = (ElementSize + BITWORD_SIZE - 1) / BITWORD_SIZE,
