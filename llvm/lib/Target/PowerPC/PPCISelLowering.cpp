@@ -2433,6 +2433,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
                                       SmallVectorImpl<SDValue> &InVals) const {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
+  bool isLittleEndian = Subtarget.isLittleEndian();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
@@ -2533,7 +2534,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       }
 
       // All aggregates smaller than 8 bytes must be passed right-justified.
-      if (ObjSize < PtrByteSize)
+      if (ObjSize < PtrByteSize && !isLittleEndian)
         CurArgOffset = CurArgOffset + (PtrByteSize - ObjSize);
       // The value of the object is its address.
       int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true);
@@ -2683,9 +2684,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     // We need to load the argument to a virtual register if we determined
     // above that we ran out of physical registers of the appropriate type.
     if (needsLoad) {
-      int FI = MFI->CreateFixedObject(ObjSize,
-                                      CurArgOffset + (ArgSize - ObjSize),
-                                      isImmutable);
+      if (ObjSize < ArgSize && !isLittleEndian)
+        CurArgOffset += ArgSize - ObjSize;
+      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, isImmutable);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, MachinePointerInfo(),
                            false, false, false, 0);
@@ -4034,6 +4035,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                                     SDLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const {
 
+  bool isLittleEndian = Subtarget.isLittleEndian();
   unsigned NumOps = Outs.size();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
@@ -4177,9 +4179,12 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       }
 
       if (GPR_idx == NumGPRs && Size < 8) {
-        SDValue Const = DAG.getConstant(PtrByteSize - Size,
-                                        PtrOff.getValueType());
-        SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        SDValue AddPtr = PtrOff;
+        if (!isLittleEndian) {
+          SDValue Const = DAG.getConstant(PtrByteSize - Size,
+                                          PtrOff.getValueType());
+          AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        }
         Chain = CallSeqStart = createMemcpyOutsideCallSeq(Arg, AddPtr,
                                                           CallSeqStart,
                                                           Flags, DAG, dl);
@@ -4214,8 +4219,11 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         // small aggregates, particularly for packed ones.
         // FIXME: It would be preferable to use the slot in the
         // parameter save area instead of a new local variable.
-        SDValue Const = DAG.getConstant(8 - Size, PtrOff.getValueType());
-        SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        SDValue AddPtr = PtrOff;
+        if (!isLittleEndian) {
+          SDValue Const = DAG.getConstant(8 - Size, PtrOff.getValueType());
+          AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
+        }
         Chain = CallSeqStart = createMemcpyOutsideCallSeq(Arg, AddPtr,
                                                           CallSeqStart,
                                                           Flags, DAG, dl);
@@ -4276,7 +4284,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
           // must be passed right-justified in the stack doubleword, and
           // in the GPR, if one is available.
           SDValue StoreOff;
-          if (Arg.getSimpleValueType().SimpleTy == MVT::f32) {
+          if (Arg.getSimpleValueType().SimpleTy == MVT::f32 &&
+              !isLittleEndian) {
             SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             StoreOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
           } else
@@ -4300,7 +4309,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       } else {
         // Single-precision floating-point values are mapped to the
         // second (rightmost) word of the stack doubleword.
-        if (Arg.getValueType() == MVT::f32) {
+        if (Arg.getValueType() == MVT::f32 && !isLittleEndian) {
           SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
           PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
         }
