@@ -181,7 +181,7 @@ StringMapEntryBase *StringMapImpl::RemoveKey(StringRef Key) {
 
 /// RehashTable - Grow the table, redistributing values into the buckets with
 /// the appropriate mod-of-hashtable-size.
-unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
+void StringMapImpl::RehashTable() {
   unsigned NewSize;
   unsigned *HashTable = (unsigned *)(TheTable + NumBuckets + 1);
 
@@ -193,10 +193,9 @@ unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
   } else if (NumBuckets-(NumItems+NumTombstones) <= NumBuckets/8) {
     NewSize = NumBuckets;
   } else {
-    return BucketNo;
+    return;
   }
 
-  unsigned NewBucketNo = BucketNo;
   // Allocate one extra bucket which will always be non-empty.  This allows the
   // iterators to stop at end.
   StringMapEntryBase **NewTableArray =
@@ -216,8 +215,6 @@ unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
       if (!NewTableArray[NewBucket]) {
         NewTableArray[FullHash & (NewSize-1)] = Bucket;
         NewHashArray[FullHash & (NewSize-1)] = FullHash;
-        if (I == BucketNo)
-          NewBucketNo = NewBucket;
         continue;
       }
       
@@ -230,8 +227,6 @@ unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
       // Finally found a slot.  Fill it in.
       NewTableArray[NewBucket] = Bucket;
       NewHashArray[NewBucket] = FullHash;
-      if (I == BucketNo)
-        NewBucketNo = NewBucket;
     }
   }
   
@@ -240,5 +235,4 @@ unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
   TheTable = NewTableArray;
   NumBuckets = NewSize;
   NumTombstones = 0;
-  return NewBucketNo;
 }

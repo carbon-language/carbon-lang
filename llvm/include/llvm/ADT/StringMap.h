@@ -64,7 +64,7 @@ protected:
   }
 
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
-  unsigned RehashTable(unsigned BucketNo = 0);
+  void RehashTable();
 
   /// LookupBucketFor - Look up the bucket that the specified string should end
   /// up in.  If it already exists as a key in the map, the Item pointer for the
@@ -323,28 +323,6 @@ public:
     return true;
   }
 
-  /// insert - Inserts the specified key/value pair into the map if the key
-  /// isn't already in the map. The bool component of the returned pair is true
-  /// if and only if the insertion takes place, and the iterator component of
-  /// the pair points to the element with key equivalent to the key of the pair.
-  std::pair<iterator, bool> insert(std::pair<StringRef, ValueTy> KV) {
-    unsigned BucketNo = LookupBucketFor(KV.first);
-    StringMapEntryBase *&Bucket = TheTable[BucketNo];
-    if (Bucket && Bucket != getTombstoneVal())
-      return std::make_pair(iterator(TheTable + BucketNo, false),
-                            false); // Already exists in map.
-
-    if (Bucket == getTombstoneVal())
-      --NumTombstones;
-    Bucket =
-        MapEntryTy::Create(KV.first, Allocator, std::move(KV.second));
-    ++NumItems;
-    assert(NumItems + NumTombstones <= NumBuckets);
-
-    BucketNo = RehashTable(BucketNo);
-    return std::make_pair(iterator(TheTable + BucketNo, false), true);
-  }
-
   // clear - Empties out the StringMap
   void clear() {
     if (empty()) return;
@@ -368,7 +346,24 @@ public:
   /// return.
   template <typename InitTy>
   MapEntryTy &GetOrCreateValue(StringRef Key, InitTy Val) {
-    return *insert(std::make_pair(Key, std::move(Val))).first;
+    unsigned BucketNo = LookupBucketFor(Key);
+    StringMapEntryBase *&Bucket = TheTable[BucketNo];
+    if (Bucket && Bucket != getTombstoneVal())
+      return *static_cast<MapEntryTy*>(Bucket);
+
+    MapEntryTy *NewItem = MapEntryTy::Create(Key, Allocator, std::move(Val));
+
+    if (Bucket == getTombstoneVal())
+      --NumTombstones;
+    ++NumItems;
+    assert(NumItems + NumTombstones <= NumBuckets);
+
+    // Fill in the bucket for the hash table.  The FullHashValue was already
+    // filled in by LookupBucketFor.
+    Bucket = NewItem;
+
+    RehashTable();
+    return *NewItem;
   }
 
   MapEntryTy &GetOrCreateValue(StringRef Key) {
