@@ -169,7 +169,7 @@ public:
   }
 
   /// size - Returns the number of bits in this bitvector.
-  size_type size() const {
+  size_t size() const {
     return isSmall() ? getSmallSize() : getPointer()->size();
   }
 
