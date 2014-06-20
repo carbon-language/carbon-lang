@@ -159,12 +159,27 @@ enum {
   AddressDirect = 1, // Address imported data directly
   AddressGOT = 2, // Address imported data indirectly (via GOT)
 
+  // Tag_ABI_PCS_wchar_t, (=18), uleb128
+  WCharProhibited = 0,  // wchar_t is not used
+  WCharWidth2Bytes = 2, // sizeof(wchar_t) == 2
+  WCharWidth4Bytes = 4, // sizeof(wchar_t) == 4
+
   // Tag_ABI_FP_denormal, (=20), uleb128
   PreserveFPSign = 2, // sign when flushed-to-zero is preserved
 
   // Tag_ABI_FP_number_model, (=23), uleb128
   AllowRTABI = 2,  // numbers, infinities, and one quiet NaN (see [RTABI])
   AllowIEE754 = 3, // this code to use all the IEEE 754-defined FP encodings
+
+  // Tag_ABI_enum_size, (=26), uleb128
+  EnumProhibited = 0, // The user prohibited the use of enums when building
+                      // this entity.
+  EnumSmallest = 1,   // Enum is smallest container big enough to hold all
+                      // values.
+  Enum32Bit = 2,      // Enum is at least 32 bits.
+  Enum32BitABI = 3,   // Every enumeration visible across an ABI-complying
+                      // interface contains a value needing 32 bits to encode
+                      // it; other enums can be containerized.
 
   // Tag_ABI_HardFP_use, (=27), uleb128
   HardFPImplied = 0,          // FP use should be implied by Tag_FP_arch
