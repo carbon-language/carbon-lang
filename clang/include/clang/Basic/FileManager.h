@@ -242,7 +242,8 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
                                        std::string *ErrorStr = nullptr,
-                                       bool isVolatile = false);
+                                       bool isVolatile = false,
+                                       bool ShouldCloseOpenFile = true);
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = nullptr);
 

@@ -3464,8 +3464,13 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   case OutOfDate:
   case VersionMismatch:
   case ConfigurationMismatch:
-  case HadErrors:
+  case HadErrors: {
+    llvm::SmallPtrSet<ModuleFile *, 4> LoadedSet;
+    for (const ImportedModule &IM : Loaded)
+      LoadedSet.insert(IM.Mod);
+
     ModuleMgr.removeModules(ModuleMgr.begin() + NumModules, ModuleMgr.end(),
+                            LoadedSet,
                             Context.getLangOpts().Modules
                               ? &PP.getHeaderSearchInfo().getModuleMap()
                               : nullptr);
@@ -3475,7 +3480,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     GlobalIndex.reset();
     ModuleMgr.setGlobalIndex(nullptr);
     return ReadResult;
-
+  }
   case Success:
     break;
   }

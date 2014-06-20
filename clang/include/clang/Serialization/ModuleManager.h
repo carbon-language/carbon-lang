@@ -18,6 +18,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Serialization/Module.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang { 
 
@@ -194,6 +195,7 @@ public:
 
   /// \brief Remove the given set of modules.
   void removeModules(ModuleIterator first, ModuleIterator last,
+                     llvm::SmallPtrSetImpl<ModuleFile *> &LoadedSuccessfully,
                      ModuleMap *modMap);
 
   /// \brief Add an in-memory buffer the list of known buffers

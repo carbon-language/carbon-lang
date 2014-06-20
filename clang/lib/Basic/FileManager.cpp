@@ -388,7 +388,7 @@ void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
-                 bool isVolatile) {
+                 bool isVolatile, bool ShouldCloseOpenFile) {
   std::unique_ptr<llvm::MemoryBuffer> Result;
   std::error_code ec;
 
@@ -405,7 +405,10 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
                                 /*RequiresNullTerminator=*/true, isVolatile);
     if (ErrorStr)
       *ErrorStr = ec.message();
-    Entry->closeFile();
+    // FIXME: we need a set of APIs that can make guarantees about whether a
+    // FileEntry is open or not.
+    if (ShouldCloseOpenFile)
+      Entry->closeFile();
     return Result.release();
   }
 
