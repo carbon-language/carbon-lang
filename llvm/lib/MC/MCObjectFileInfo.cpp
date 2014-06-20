@@ -31,6 +31,11 @@ static bool useCompactUnwind(const Triple &T) {
   if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6))
     return true;
 
+  // And the iOS simulator.
+  if (T.isiOS() &&
+      (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86))
+    return true;
+
   return false;
 }
 
