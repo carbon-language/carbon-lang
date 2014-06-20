@@ -39,6 +39,9 @@ class BasicTTI final : public ImmutablePass, public TargetTransformInfo {
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
+  /// Estimate the cost overhead of SK_Alternate shuffle.
+  unsigned getAltShuffleOverhead(Type *Ty) const;
+
   const TargetLoweringBase *getTLI() const { return TM->getTargetLowering(); }
 
 public:
@@ -327,8 +330,28 @@ unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   return OpCost;
 }
 
+unsigned BasicTTI::getAltShuffleOverhead(Type *Ty) const {
+  assert(Ty->isVectorTy() && "Can only shuffle vectors");
+  unsigned Cost = 0;
+  // Shuffle cost is equal to the cost of extracting element from its argument
+  // plus the cost of inserting them onto the result vector.
+
+  // e.g. <4 x float> has a mask of <0,5,2,7> i.e we need to extract from index
+  // 0 of first vector, index 1 of second vector,index 2 of first vector and
+  // finally index 3 of second vector and insert them at index <0,1,2,3> of
+  // result vector.
+  for (int i = 0, e = Ty->getVectorNumElements(); i < e; ++i) {
+    Cost += TopTTI->getVectorInstrCost(Instruction::InsertElement, Ty, i);
+    Cost += TopTTI->getVectorInstrCost(Instruction::ExtractElement, Ty, i);
+  }
+  return Cost;
+}
+
 unsigned BasicTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
                                   Type *SubTp) const {
+  if (Kind == SK_Alternate) {
+    return getAltShuffleOverhead(Tp);
+  }
   return 1;
 }
 

@@ -443,31 +443,58 @@ unsigned ARMTTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
 
 unsigned ARMTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
                                 Type *SubTp) const {
-  // We only handle costs of reverse shuffles for now.
-  if (Kind != SK_Reverse)
+  // We only handle costs of reverse and alternate shuffles for now.
+  if (Kind != SK_Reverse && Kind != SK_Alternate)
     return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
 
-  static const CostTblEntry<MVT::SimpleValueType> NEONShuffleTbl[] = {
-    // Reverse shuffle cost one instruction if we are shuffling within a double
-    // word (vrev) or two if we shuffle a quad word (vrev, vext).
-    { ISD::VECTOR_SHUFFLE, MVT::v2i32, 1 },
-    { ISD::VECTOR_SHUFFLE, MVT::v2f32, 1 },
-    { ISD::VECTOR_SHUFFLE, MVT::v2i64, 1 },
-    { ISD::VECTOR_SHUFFLE, MVT::v2f64, 1 },
+  if (Kind == SK_Reverse) {
+    static const CostTblEntry<MVT::SimpleValueType> NEONShuffleTbl[] = {
+        // Reverse shuffle cost one instruction if we are shuffling within a
+        // double word (vrev) or two if we shuffle a quad word (vrev, vext).
+        {ISD::VECTOR_SHUFFLE, MVT::v2i32, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2f32, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},
 
-    { ISD::VECTOR_SHUFFLE, MVT::v4i32, 2 },
-    { ISD::VECTOR_SHUFFLE, MVT::v4f32, 2 },
-    { ISD::VECTOR_SHUFFLE, MVT::v8i16, 2 },
-    { ISD::VECTOR_SHUFFLE, MVT::v16i8, 2 }
-  };
+        {ISD::VECTOR_SHUFFLE, MVT::v4i32, 2},
+        {ISD::VECTOR_SHUFFLE, MVT::v4f32, 2},
+        {ISD::VECTOR_SHUFFLE, MVT::v8i16, 2},
+        {ISD::VECTOR_SHUFFLE, MVT::v16i8, 2}};
 
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
+    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
 
-  int Idx = CostTableLookup(NEONShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
-  if (Idx == -1)
-    return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
+    int Idx = CostTableLookup(NEONShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
+    if (Idx == -1)
+      return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
 
-  return LT.first * NEONShuffleTbl[Idx].Cost;
+    return LT.first * NEONShuffleTbl[Idx].Cost;
+  }
+  if (Kind == SK_Alternate) {
+    static const CostTblEntry<MVT::SimpleValueType> NEONAltShuffleTbl[] = {
+        // Alt shuffle cost table for ARM. Cost is the number of instructions
+        // required to create the shuffled vector.
+
+        {ISD::VECTOR_SHUFFLE, MVT::v2f32, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},
+        {ISD::VECTOR_SHUFFLE, MVT::v2i32, 1},
+
+        {ISD::VECTOR_SHUFFLE, MVT::v4i32, 2},
+        {ISD::VECTOR_SHUFFLE, MVT::v4f32, 2},
+        {ISD::VECTOR_SHUFFLE, MVT::v4i16, 2},
+
+        {ISD::VECTOR_SHUFFLE, MVT::v8i16, 16},
+
+        {ISD::VECTOR_SHUFFLE, MVT::v16i8, 32}};
+
+    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
+    int Idx =
+        CostTableLookup(NEONAltShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
+    if (Idx == -1)
+      return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
+    return LT.first * NEONAltShuffleTbl[Idx].Cost;
+  }
+  return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
 }
 
 unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
