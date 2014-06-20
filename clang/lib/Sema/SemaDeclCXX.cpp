@@ -11405,7 +11405,8 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
                                          Expr *AssertExpr,
                                          Expr *AssertMessageExpr,
                                          SourceLocation RParenLoc) {
-  StringLiteral *AssertMessage = cast<StringLiteral>(AssertMessageExpr);
+  StringLiteral *AssertMessage =
+      AssertMessageExpr ? cast<StringLiteral>(AssertMessageExpr) : nullptr;
 
   if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
     return nullptr;
@@ -11419,8 +11420,7 @@ Decl *Sema::BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
                                          StringLiteral *AssertMessage,
                                          SourceLocation RParenLoc,
                                          bool Failed) {
-  assert(AssertExpr != nullptr && AssertMessage != nullptr &&
-         "Expected non-null Expr's");
+  assert(AssertExpr != nullptr && "Expected non-null condition");
   if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent() &&
       !Failed) {
     // In a static_assert-declaration, the constant-expression shall be a
@@ -11438,9 +11438,10 @@ Decl *Sema::BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
     if (!Failed && !Cond) {
       SmallString<256> MsgBuffer;
       llvm::raw_svector_ostream Msg(MsgBuffer);
-      AssertMessage->printPretty(Msg, nullptr, getPrintingPolicy());
+      if (AssertMessage)
+        AssertMessage->printPretty(Msg, nullptr, getPrintingPolicy());
       Diag(StaticAssertLoc, diag::err_static_assert_failed)
-        << Msg.str() << AssertExpr->getSourceRange();
+        << !AssertMessage << Msg.str() << AssertExpr->getSourceRange();
       Failed = true;
     }
   }

@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++98 -Wc++11-compat -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++1y -Wc++11-compat -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++1z -Wc++11-compat -verify %s
 
 #if __cplusplus < 201103L
 
@@ -44,5 +44,6 @@ char c = 'x'_x; // expected-warning {{will be treated as a user-defined literal 
 #else
 
 auto init_capture = [a(0)] {}; // expected-warning {{initialized lambda captures are incompatible with C++ standards before C++1y}}
+static_assert(true); // expected-warning {{incompatible with C++ standards before C++1z}}
 
 #endif

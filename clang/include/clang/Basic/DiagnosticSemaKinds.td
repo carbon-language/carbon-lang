@@ -931,7 +931,12 @@ def warning_multiple_selectors: Warning<
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
-def err_static_assert_failed : Error<"static_assert failed %0">;
+def err_static_assert_failed : Error<"static_assert failed%select{ %1|}0">;
+def ext_static_assert_no_message : ExtWarn<
+  "static_assert with no message is a C++1z extension">, InGroup<CXX1z>;
+def warn_cxx1y_compat_static_assert_no_message : Warning<
+  "static_assert with no message is incompatible with C++ standards before C++1z">,
+  DefaultIgnore, InGroup<CXXPre1zCompat>;
 
 def warn_inline_namespace_reopened_noninline : Warning<
   "inline namespace cannot be reopened as a non-inline namespace">;

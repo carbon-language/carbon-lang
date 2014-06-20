@@ -689,22 +689,32 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
     return nullptr;
   }
 
-  if (ExpectAndConsume(tok::comma)) {
-    SkipUntil(tok::semi);
-    return nullptr;
-  }
+  ExprResult AssertMessage;
+  if (Tok.is(tok::r_paren)) {
+    Diag(Tok, getLangOpts().CPlusPlus1z
+                  ? diag::warn_cxx1y_compat_static_assert_no_message
+                  : diag::ext_static_assert_no_message)
+      << (getLangOpts().CPlusPlus1z
+              ? FixItHint()
+              : FixItHint::CreateInsertion(Tok.getLocation(), ", \"\""));
+  } else {
+    if (ExpectAndConsume(tok::comma)) {
+      SkipUntil(tok::semi);
+      return nullptr;
+    }
 
-  if (!isTokenStringLiteral()) {
-    Diag(Tok, diag::err_expected_string_literal)
-      << /*Source='static_assert'*/1;
-    SkipMalformedDecl();
-    return nullptr;
-  }
+    if (!isTokenStringLiteral()) {
+      Diag(Tok, diag::err_expected_string_literal)
+        << /*Source='static_assert'*/1;
+      SkipMalformedDecl();
+      return nullptr;
+    }
 
-  ExprResult AssertMessage(ParseStringLiteralExpression());
-  if (AssertMessage.isInvalid()) {
-    SkipMalformedDecl();
-    return nullptr;
+    AssertMessage = ParseStringLiteralExpression();
+    if (AssertMessage.isInvalid()) {
+      SkipMalformedDecl();
+      return nullptr;
+    }
   }
 
   T.consumeClose();
