@@ -207,6 +207,28 @@ public:
                                               llvm::Value *ptr,
                                               QualType type) = 0;
 
+  virtual bool shouldTypeidBeNullChecked(bool IsDeref,
+                                         QualType SrcRecordTy) = 0;
+  virtual void EmitBadTypeidCall(CodeGenFunction &CGF) = 0;
+  virtual llvm::Value *EmitTypeid(CodeGenFunction &CGF, QualType SrcRecordTy,
+                                  llvm::Value *ThisPtr,
+                                  llvm::Type *StdTypeInfoPtrTy) = 0;
+
+  virtual bool shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
+                                                  QualType SrcRecordTy) = 0;
+
+  virtual llvm::Value *
+  EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
+                      QualType SrcRecordTy, QualType DestTy,
+                      QualType DestRecordTy, llvm::BasicBlock *CastEnd) = 0;
+
+  virtual llvm::Value *EmitDynamicCastToVoid(CodeGenFunction &CGF,
+                                             llvm::Value *Value,
+                                             QualType SrcRecordTy,
+                                             QualType DestTy) = 0;
+
+  virtual bool EmitBadCastCall(CodeGenFunction &CGF) = 0;
+
   virtual llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                                  llvm::Value *This,
                                                  const CXXRecordDecl *ClassDecl,

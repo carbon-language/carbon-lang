@@ -21,6 +21,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/VTableBuilder.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/IR/CallSite.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -55,6 +56,26 @@ public:
   llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
                                       llvm::Value *ptr,
                                       QualType type) override;
+
+  bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
+  void EmitBadTypeidCall(CodeGenFunction &CGF) override;
+  llvm::Value *EmitTypeid(CodeGenFunction &CGF, QualType SrcRecordTy,
+                          llvm::Value *ThisPtr,
+                          llvm::Type *StdTypeInfoPtrTy) override;
+
+  bool shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
+                                          QualType SrcRecordTy) override;
+
+  llvm::Value *EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
+                                   QualType SrcRecordTy, QualType DestTy,
+                                   QualType DestRecordTy,
+                                   llvm::BasicBlock *CastEnd) override;
+
+  llvm::Value *EmitDynamicCastToVoid(CodeGenFunction &CGF, llvm::Value *Value,
+                                     QualType SrcRecordTy,
+                                     QualType DestTy) override;
+
+  bool EmitBadCastCall(CodeGenFunction &CGF) override;
 
   llvm::Value *
   GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,
@@ -467,6 +488,132 @@ llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
                                                      QualType type) {
   // FIXME: implement
   return ptr;
+}
+
+/// \brief Gets the offset to the virtual base that contains the vfptr for
+/// MS-ABI polymorphic types.
+static llvm::Value *getPolymorphicOffset(CodeGenFunction &CGF,
+                                         const CXXRecordDecl *RD,
+                                         llvm::Value *Value) {
+  const ASTContext &Context = RD->getASTContext();
+  for (const CXXBaseSpecifier &Base : RD->vbases())
+    if (Context.getASTRecordLayout(Base.getType()->getAsCXXRecordDecl())
+            .hasExtendableVFPtr())
+      return CGF.CGM.getCXXABI().GetVirtualBaseClassOffset(
+          CGF, Value, RD, Base.getType()->getAsCXXRecordDecl());
+  llvm_unreachable("One of our vbases should be polymorphic.");
+}
+
+static std::pair<llvm::Value *, llvm::Value *>
+performBaseAdjustment(CodeGenFunction &CGF, llvm::Value *Value,
+                      QualType SrcRecordTy) {
+  Value = CGF.Builder.CreateBitCast(Value, CGF.Int8PtrTy);
+  const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+
+  if (CGF.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr())
+    return std::make_pair(Value, llvm::ConstantInt::get(CGF.Int32Ty, 0));
+
+  // Perform a base adjustment.
+  llvm::Value *Offset = getPolymorphicOffset(CGF, SrcDecl, Value);
+  Value = CGF.Builder.CreateInBoundsGEP(Value, Offset);
+  Offset = CGF.Builder.CreateTrunc(Offset, CGF.Int32Ty);
+  return std::make_pair(Value, Offset);
+}
+
+bool MicrosoftCXXABI::shouldTypeidBeNullChecked(bool IsDeref,
+                                                QualType SrcRecordTy) {
+  const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+  return IsDeref &&
+         !CGM.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr();
+}
+
+static llvm::CallSite emitRTtypeidCall(CodeGenFunction &CGF,
+                                       llvm::Value *Argument) {
+  llvm::Type *ArgTypes[] = {CGF.Int8PtrTy};
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(CGF.Int8PtrTy, ArgTypes, false);
+  llvm::Value *Args[] = {Argument};
+  llvm::Constant *Fn = CGF.CGM.CreateRuntimeFunction(FTy, "__RTtypeid");
+  return CGF.EmitRuntimeCallOrInvoke(Fn, Args);
+}
+
+void MicrosoftCXXABI::EmitBadTypeidCall(CodeGenFunction &CGF) {
+  llvm::CallSite Call =
+      emitRTtypeidCall(CGF, llvm::Constant::getNullValue(CGM.VoidPtrTy));
+  Call.setDoesNotReturn();
+  CGF.Builder.CreateUnreachable();
+}
+
+llvm::Value *MicrosoftCXXABI::EmitTypeid(CodeGenFunction &CGF,
+                                         QualType SrcRecordTy,
+                                         llvm::Value *ThisPtr,
+                                         llvm::Type *StdTypeInfoPtrTy) {
+  const CXXRecordDecl *RD = SrcRecordTy->getAsCXXRecordDecl();
+  llvm::Value *CastPtr = CGF.Builder.CreateBitCast(ThisPtr, CGF.Int8PtrTy);
+  llvm::Value *AdjustedThisPtr = CGF.Builder.CreateInBoundsGEP(
+      CastPtr, getPolymorphicOffset(CGF, RD, CastPtr));
+  return CGF.Builder.CreateBitCast(
+      emitRTtypeidCall(CGF, AdjustedThisPtr).getInstruction(),
+      StdTypeInfoPtrTy);
+}
+
+bool MicrosoftCXXABI::shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
+                                                         QualType SrcRecordTy) {
+  const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+  return SrcIsPtr &&
+         !CGM.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr();
+}
+
+llvm::Value *MicrosoftCXXABI::EmitDynamicCastCall(
+    CodeGenFunction &CGF, llvm::Value *Value, QualType SrcRecordTy,
+    QualType DestTy, QualType DestRecordTy, llvm::BasicBlock *CastEnd) {
+  llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+
+  llvm::Value *SrcRTTI =
+      CGF.CGM.GetAddrOfRTTIDescriptor(SrcRecordTy.getUnqualifiedType());
+  llvm::Value *DestRTTI =
+      CGF.CGM.GetAddrOfRTTIDescriptor(DestRecordTy.getUnqualifiedType());
+
+  llvm::Value *Offset;
+  std::tie(Value, Offset) = performBaseAdjustment(CGF, Value, SrcRecordTy);
+
+  // PVOID __RTDynamicCast(
+  //   PVOID inptr,
+  //   LONG VfDelta,
+  //   PVOID SrcType,
+  //   PVOID TargetType,
+  //   BOOL isReference)
+  llvm::Type *ArgTypes[] = {CGF.Int8PtrTy, CGF.Int32Ty, CGF.Int8PtrTy,
+                            CGF.Int8PtrTy, CGF.Int32Ty};
+  llvm::Constant *Function = CGF.CGM.CreateRuntimeFunction(
+      llvm::FunctionType::get(CGF.Int8PtrTy, ArgTypes, false),
+      "__RTDynamicCast");
+  llvm::Value *Args[] = {
+      Value, Offset, SrcRTTI, DestRTTI,
+      llvm::ConstantInt::get(CGF.Int32Ty, DestTy->isReferenceType())};
+  Value = CGF.EmitRuntimeCallOrInvoke(Function, Args).getInstruction();
+  return CGF.Builder.CreateBitCast(Value, DestLTy);
+}
+
+llvm::Value *
+MicrosoftCXXABI::EmitDynamicCastToVoid(CodeGenFunction &CGF, llvm::Value *Value,
+                                       QualType SrcRecordTy,
+                                       QualType DestTy) {
+  llvm::Value *Offset;
+  std::tie(Value, Offset) = performBaseAdjustment(CGF, Value, SrcRecordTy);
+
+  // PVOID __RTCastToVoid(
+  //   PVOID inptr)
+  llvm::Type *ArgTypes[] = {CGF.Int8PtrTy};
+  llvm::Constant *Function = CGF.CGM.CreateRuntimeFunction(
+      llvm::FunctionType::get(CGF.Int8PtrTy, ArgTypes, false),
+      "__RTCastToVoid");
+  llvm::Value *Args[] = {Value};
+  return CGF.EmitRuntimeCall(Function, Args);
+}
+
+bool MicrosoftCXXABI::EmitBadCastCall(CodeGenFunction &CGF) {
+  return false;
 }
 
 llvm::Value *

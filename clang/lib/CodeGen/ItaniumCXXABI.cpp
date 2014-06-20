@@ -25,6 +25,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Value.h"
@@ -107,6 +108,26 @@ public:
 
   llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF, llvm::Value *ptr,
                                       QualType type) override;
+
+  bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
+  void EmitBadTypeidCall(CodeGenFunction &CGF) override;
+  llvm::Value *EmitTypeid(CodeGenFunction &CGF, QualType SrcRecordTy,
+                          llvm::Value *ThisPtr,
+                          llvm::Type *StdTypeInfoPtrTy) override;
+
+  bool shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
+                                          QualType SrcRecordTy) override;
+
+  llvm::Value *EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
+                                   QualType SrcRecordTy, QualType DestTy,
+                                   QualType DestRecordTy,
+                                   llvm::BasicBlock *CastEnd) override;
+
+  llvm::Value *EmitDynamicCastToVoid(CodeGenFunction &CGF, llvm::Value *Value,
+                                     QualType SrcRecordTy,
+                                     QualType DestTy) override;
+
+  bool EmitBadCastCall(CodeGenFunction &CGF) override;
 
   llvm::Value *
     GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,
@@ -798,6 +819,194 @@ llvm::Value *ItaniumCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
   // Apply the offset.
   ptr = CGF.Builder.CreateBitCast(ptr, CGF.Int8PtrTy);
   return CGF.Builder.CreateInBoundsGEP(ptr, offset);
+}
+
+static llvm::Constant *getItaniumDynamicCastFn(CodeGenFunction &CGF) {
+  // void *__dynamic_cast(const void *sub,
+  //                      const abi::__class_type_info *src,
+  //                      const abi::__class_type_info *dst,
+  //                      std::ptrdiff_t src2dst_offset);
+  
+  llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
+  llvm::Type *PtrDiffTy = 
+    CGF.ConvertType(CGF.getContext().getPointerDiffType());
+
+  llvm::Type *Args[4] = { Int8PtrTy, Int8PtrTy, Int8PtrTy, PtrDiffTy };
+
+  llvm::FunctionType *FTy = llvm::FunctionType::get(Int8PtrTy, Args, false);
+
+  // Mark the function as nounwind readonly.
+  llvm::Attribute::AttrKind FuncAttrs[] = { llvm::Attribute::NoUnwind,
+                                            llvm::Attribute::ReadOnly };
+  llvm::AttributeSet Attrs = llvm::AttributeSet::get(
+      CGF.getLLVMContext(), llvm::AttributeSet::FunctionIndex, FuncAttrs);
+
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__dynamic_cast", Attrs);
+}
+
+static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
+  // void __cxa_bad_cast();
+  llvm::FunctionType *FTy = llvm::FunctionType::get(CGF.VoidTy, false);
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_cast");
+}
+
+/// \brief Compute the src2dst_offset hint as described in the
+/// Itanium C++ ABI [2.9.7]
+static CharUnits computeOffsetHint(ASTContext &Context,
+                                   const CXXRecordDecl *Src,
+                                   const CXXRecordDecl *Dst) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                     /*DetectVirtual=*/false);
+
+  // If Dst is not derived from Src we can skip the whole computation below and
+  // return that Src is not a public base of Dst.  Record all inheritance paths.
+  if (!Dst->isDerivedFrom(Src, Paths))
+    return CharUnits::fromQuantity(-2ULL);
+
+  unsigned NumPublicPaths = 0;
+  CharUnits Offset;
+
+  // Now walk all possible inheritance paths.
+  for (CXXBasePaths::paths_iterator I = Paths.begin(), E = Paths.end(); I != E;
+       ++I) {
+    if (I->Access != AS_public) // Ignore non-public inheritance.
+      continue;
+
+    ++NumPublicPaths;
+
+    for (CXXBasePath::iterator J = I->begin(), JE = I->end(); J != JE; ++J) {
+      // If the path contains a virtual base class we can't give any hint.
+      // -1: no hint.
+      if (J->Base->isVirtual())
+        return CharUnits::fromQuantity(-1ULL);
+
+      if (NumPublicPaths > 1) // Won't use offsets, skip computation.
+        continue;
+
+      // Accumulate the base class offsets.
+      const ASTRecordLayout &L = Context.getASTRecordLayout(J->Class);
+      Offset += L.getBaseClassOffset(J->Base->getType()->getAsCXXRecordDecl());
+    }
+  }
+
+  // -2: Src is not a public base of Dst.
+  if (NumPublicPaths == 0)
+    return CharUnits::fromQuantity(-2ULL);
+
+  // -3: Src is a multiple public base type but never a virtual base type.
+  if (NumPublicPaths > 1)
+    return CharUnits::fromQuantity(-3ULL);
+
+  // Otherwise, the Src type is a unique public nonvirtual base type of Dst.
+  // Return the offset of Src from the origin of Dst.
+  return Offset;
+}
+
+static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
+  // void __cxa_bad_typeid();
+  llvm::FunctionType *FTy = llvm::FunctionType::get(CGF.VoidTy, false);
+
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
+}
+
+bool ItaniumCXXABI::shouldTypeidBeNullChecked(bool IsDeref,
+                                              QualType SrcRecordTy) {
+  return IsDeref;
+}
+
+void ItaniumCXXABI::EmitBadTypeidCall(CodeGenFunction &CGF) {
+  llvm::Value *Fn = getBadTypeidFn(CGF);
+  CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
+  CGF.Builder.CreateUnreachable();
+}
+
+llvm::Value *ItaniumCXXABI::EmitTypeid(CodeGenFunction &CGF,
+                                       QualType SrcRecordTy,
+                                       llvm::Value *ThisPtr,
+                                       llvm::Type *StdTypeInfoPtrTy) {
+  llvm::Value *Value =
+      CGF.GetVTablePtr(ThisPtr, StdTypeInfoPtrTy->getPointerTo());
+
+  // Load the type info.
+  Value = CGF.Builder.CreateConstInBoundsGEP1_64(Value, -1ULL);
+  return CGF.Builder.CreateLoad(Value);
+}
+
+bool ItaniumCXXABI::shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
+                                                       QualType SrcRecordTy) {
+  return SrcIsPtr;
+}
+
+llvm::Value *ItaniumCXXABI::EmitDynamicCastCall(
+    CodeGenFunction &CGF, llvm::Value *Value, QualType SrcRecordTy,
+    QualType DestTy, QualType DestRecordTy, llvm::BasicBlock *CastEnd) {
+  llvm::Type *PtrDiffLTy =
+      CGF.ConvertType(CGF.getContext().getPointerDiffType());
+  llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+
+  llvm::Value *SrcRTTI =
+      CGF.CGM.GetAddrOfRTTIDescriptor(SrcRecordTy.getUnqualifiedType());
+  llvm::Value *DestRTTI =
+      CGF.CGM.GetAddrOfRTTIDescriptor(DestRecordTy.getUnqualifiedType());
+
+  // Compute the offset hint.
+  const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+  const CXXRecordDecl *DestDecl = DestRecordTy->getAsCXXRecordDecl();
+  llvm::Value *OffsetHint = llvm::ConstantInt::get(
+      PtrDiffLTy,
+      computeOffsetHint(CGF.getContext(), SrcDecl, DestDecl).getQuantity());
+
+  // Emit the call to __dynamic_cast.
+  Value = CGF.EmitCastToVoidPtr(Value);
+
+  llvm::Value *args[] = {Value, SrcRTTI, DestRTTI, OffsetHint};
+  Value = CGF.EmitNounwindRuntimeCall(getItaniumDynamicCastFn(CGF), args);
+  Value = CGF.Builder.CreateBitCast(Value, DestLTy);
+
+  /// C++ [expr.dynamic.cast]p9:
+  ///   A failed cast to reference type throws std::bad_cast
+  if (DestTy->isReferenceType()) {
+    llvm::BasicBlock *BadCastBlock =
+        CGF.createBasicBlock("dynamic_cast.bad_cast");
+
+    llvm::Value *IsNull = CGF.Builder.CreateIsNull(Value);
+    CGF.Builder.CreateCondBr(IsNull, BadCastBlock, CastEnd);
+
+    CGF.EmitBlock(BadCastBlock);
+    EmitBadCastCall(CGF);
+  }
+
+  return Value;
+}
+
+llvm::Value *ItaniumCXXABI::EmitDynamicCastToVoid(CodeGenFunction &CGF,
+                                                  llvm::Value *Value,
+                                                  QualType SrcRecordTy,
+                                                  QualType DestTy) {
+  llvm::Type *PtrDiffLTy =
+      CGF.ConvertType(CGF.getContext().getPointerDiffType());
+  llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+
+  // Get the vtable pointer.
+  llvm::Value *VTable = CGF.GetVTablePtr(Value, PtrDiffLTy->getPointerTo());
+
+  // Get the offset-to-top from the vtable.
+  llvm::Value *OffsetToTop =
+      CGF.Builder.CreateConstInBoundsGEP1_64(VTable, -2ULL);
+  OffsetToTop = CGF.Builder.CreateLoad(OffsetToTop, "offset.to.top");
+
+  // Finally, add the offset to the pointer.
+  Value = CGF.EmitCastToVoidPtr(Value);
+  Value = CGF.Builder.CreateInBoundsGEP(Value, OffsetToTop);
+
+  return CGF.Builder.CreateBitCast(Value, DestLTy);
+}
+
+bool ItaniumCXXABI::EmitBadCastCall(CodeGenFunction &CGF) {
+  llvm::Value *Fn = getBadCastFn(CGF);
+  CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
+  CGF.Builder.CreateUnreachable();
+  return true;
 }
 
 llvm::Value *
