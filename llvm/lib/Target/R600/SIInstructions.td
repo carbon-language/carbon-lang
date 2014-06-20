@@ -1773,14 +1773,17 @@ def : RsqPat<V_RSQ_F64_e32, f64>;
 // VOP2 Patterns
 //===----------------------------------------------------------------------===//
 
-def : Pat <
-  (or i64:$src0, i64:$src1),
+class BinOp64Pat <SDNode node, Instruction inst> : Pat <
+  (node i64:$src0, i64:$src1),
   (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (V_OR_B32_e32 (EXTRACT_SUBREG i64:$src0, sub0),
+    (inst  (EXTRACT_SUBREG i64:$src0, sub0),
                   (EXTRACT_SUBREG i64:$src1, sub0)), sub0),
-    (V_OR_B32_e32 (EXTRACT_SUBREG i64:$src0, sub1),
+    (inst (EXTRACT_SUBREG i64:$src0, sub1),
                   (EXTRACT_SUBREG i64:$src1, sub1)), sub1)
 >;
+
+def : BinOp64Pat <or, V_OR_B32_e32>;
+def : BinOp64Pat <xor, V_XOR_B32_e32>;
 
 class SextInReg <ValueType vt, int ShiftAmt> : Pat <
   (sext_inreg i32:$src0, vt),

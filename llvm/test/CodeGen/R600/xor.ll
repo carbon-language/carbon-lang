@@ -130,3 +130,29 @@ define void @vector_not_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 
   store i64 %result, i64 addrspace(1)* %out
   ret void
 }
+
+; Test that we have a pattern to match xor inside a branch.
+; Note that in the future the backend may be smart enough to
+; use an SALU instruction for this.
+
+; SI-CHECK-LABEL: @xor_cf
+; SI-CHECK: V_XOR
+; SI-CHECK: V_XOR
+define void @xor_cf(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %a, i64 %b) {
+entry:
+  %0 = icmp eq i64 %a, 0
+  br i1 %0, label %if, label %else
+
+if:
+  %1 = xor i64 %a, %b
+  br label %endif
+
+else:
+  %2 = load i64 addrspace(1)* %in
+  br label %endif
+
+endif:
+  %3 = phi i64 [%1, %if], [%2, %else]
+  store i64 %3, i64 addrspace(1)* %out
+  ret void
+}
