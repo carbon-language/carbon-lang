@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm -O1 -o - -triple=i386-pc-win32 %s | FileCheck %s
-// REQUIRES: asserts
 
 struct type_info;
 namespace std { using ::type_info; }
@@ -27,12 +26,10 @@ const std::type_info* test3_typeid() { return &typeid(*fn()); }
 // CHECK-LABEL: define %struct.type_info* @"\01?test3_typeid@@YAPBUtype_info@@XZ"()
 // CHECK:        [[CALL:%.*]] = tail call %struct.A* @"\01?fn@@YAPAUA@@XZ"()
 // CHECK-NEXT:   [[CMP:%.*]] = icmp eq %struct.A* [[CALL]], null
-// CHECK-NEXT:   br i1 [[CMP]], label %typeid.bad_typeid, label %typeid.end
-// CHECK-LABEL: typeid.bad_typeid:
-// CHECK-NEXT:   tail call i8* @__RTtypeid(i8* null)
+// CHECK-NEXT:   br i1 [[CMP]]
+// CHECK:        tail call i8* @__RTtypeid(i8* null)
 // CHECK-NEXT:   unreachable
-// CHECK-LABEL: typeid.end:
-// CHECK-NEXT:   [[THIS:%.*]] = bitcast %struct.A* [[CALL]] to i8*
+// CHECK:        [[THIS:%.*]] = bitcast %struct.A* [[CALL]] to i8*
 // CHECK-NEXT:   [[VBTBLP:%.*]] = bitcast %struct.A* [[CALL]] to i8**
 // CHECK-NEXT:   [[VBTBL:%.*]] = load i8** [[VBTBLP]], align 4
 // CHECK-NEXT:   [[VBSLOT:%.*]] = getelementptr inbounds i8* [[VBTBL]], i32 4
