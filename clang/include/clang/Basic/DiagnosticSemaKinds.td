@@ -6729,6 +6729,16 @@ def err_invalid_neon_type_code : Error<
   "incompatible constant for this __builtin_neon function">; 
 def err_argument_invalid_range : Error<
   "argument should be a value from %0 to %1">;
+def warn_neon_vector_initializer_non_portable : Warning<
+  "vector initializers are not compatible with NEON intrinsics in big endian "
+  "mode">, InGroup<DiagGroup<"nonportable-vector-initialization">>;
+def note_neon_vector_initializer_non_portable : Note<
+  "consider using vld1_%0%1() to initialize a vector from memory, or "
+  "vcreate_%0%1() to initialize from an integer constant">;
+def note_neon_vector_initializer_non_portable_q : Note<
+  "consider using vld1q_%0%1() to initialize a vector from memory, or "
+  "vcombine_%0%1(vcreate_%0%1(), vcreate_%0%1()) to initialize from integer "
+  "constants">;
 
 def err_builtin_longjmp_invalid_val : Error<
   "argument to __builtin_longjmp must be a constant 1">;

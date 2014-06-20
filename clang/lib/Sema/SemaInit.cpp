@@ -17,6 +17,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/SemaInternal.h"
@@ -1204,6 +1205,46 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
       CheckSubElementType(ElementEntity, IList, elementType, Index,
                           StructuredList, StructuredIndex);
     }
+
+    if (VerifyOnly)
+      return;
+
+    bool isBigEndian = SemaRef.Context.getTargetInfo().isBigEndian();
+    const VectorType *T = Entity.getType()->getAs<VectorType>();
+    if (isBigEndian && (T->getVectorKind() == VectorType::NeonVector ||
+                        T->getVectorKind() == VectorType::NeonPolyVector)) {
+      // The ability to use vector initializer lists is a GNU vector extension
+      // and is unrelated to the NEON intrinsics in arm_neon.h. On little
+      // endian machines it works fine, however on big endian machines it 
+      // exhibits surprising behaviour:
+      //
+      //   uint32x2_t x = {42, 64};
+      //   return vget_lane_u32(x, 0); // Will return 64.
+      //
+      // Because of this, explicitly call out that it is non-portable.
+      //
+      SemaRef.Diag(IList->getLocStart(),
+                   diag::warn_neon_vector_initializer_non_portable);
+
+      const char *typeCode;
+      unsigned typeSize = SemaRef.Context.getTypeSize(elementType);
+
+      if (elementType->isFloatingType())
+        typeCode = "f";
+      else if (elementType->isSignedIntegerType())
+        typeCode = "s";
+      else if (elementType->isUnsignedIntegerType())
+        typeCode = "u";
+      else
+        llvm_unreachable("Invalid element type!");
+
+      SemaRef.Diag(IList->getLocStart(),
+                   SemaRef.Context.getTypeSize(VT) > 64 ?
+                   diag::note_neon_vector_initializer_non_portable_q :
+                   diag::note_neon_vector_initializer_non_portable)
+        << typeCode << typeSize;
+    }
+
     return;
   }
 
