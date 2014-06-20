@@ -702,22 +702,35 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
   llvm_unreachable("Attempting to get address of ODP entry!");
 }
 
-// Relocation masks following the #lo(value), #hi(value), #higher(value),
-// and #highest(value) macros defined in section 4.5.1. Relocation Types
-// in PPC-elf64abi document.
-//
+// Relocation masks following the #lo(value), #hi(value), #ha(value),
+// #higher(value), #highera(value), #highest(value), and #highesta(value)
+// macros defined in section 4.5.1. Relocation Types of the PPC-elf64abi
+// document.
+
 static inline uint16_t applyPPClo(uint64_t value) { return value & 0xffff; }
 
 static inline uint16_t applyPPChi(uint64_t value) {
   return (value >> 16) & 0xffff;
 }
 
+static inline uint16_t applyPPCha (uint64_t value) {
+  return ((value + 0x8000) >> 16) & 0xffff;
+}
+
 static inline uint16_t applyPPChigher(uint64_t value) {
   return (value >> 32) & 0xffff;
 }
 
+static inline uint16_t applyPPChighera (uint64_t value) {
+  return ((value + 0x8000) >> 32) & 0xffff;
+}
+
 static inline uint16_t applyPPChighest(uint64_t value) {
   return (value >> 48) & 0xffff;
+}
+
+static inline uint16_t applyPPChighesta (uint64_t value) {
+  return ((value + 0x8000) >> 48) & 0xffff;
 }
 
 void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
@@ -728,23 +741,56 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   default:
     llvm_unreachable("Relocation type not implemented yet!");
     break;
+  case ELF::R_PPC64_ADDR16:
+    writeInt16BE(LocalAddress, applyPPClo(Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_DS:
+    writeInt16BE(LocalAddress, applyPPClo(Value + Addend) & ~3);
+    break;
   case ELF::R_PPC64_ADDR16_LO:
     writeInt16BE(LocalAddress, applyPPClo(Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_LO_DS:
+    writeInt16BE(LocalAddress, applyPPClo(Value + Addend) & ~3);
     break;
   case ELF::R_PPC64_ADDR16_HI:
     writeInt16BE(LocalAddress, applyPPChi(Value + Addend));
     break;
+  case ELF::R_PPC64_ADDR16_HA:
+    writeInt16BE(LocalAddress, applyPPCha(Value + Addend));
+    break;
   case ELF::R_PPC64_ADDR16_HIGHER:
     writeInt16BE(LocalAddress, applyPPChigher(Value + Addend));
     break;
+  case ELF::R_PPC64_ADDR16_HIGHERA:
+    writeInt16BE(LocalAddress, applyPPChighera(Value + Addend));
+    break;
   case ELF::R_PPC64_ADDR16_HIGHEST:
     writeInt16BE(LocalAddress, applyPPChighest(Value + Addend));
+    break;
+  case ELF::R_PPC64_ADDR16_HIGHESTA:
+    writeInt16BE(LocalAddress, applyPPChighesta(Value + Addend));
     break;
   case ELF::R_PPC64_ADDR14: {
     assert(((Value + Addend) & 3) == 0);
     // Preserve the AA/LK bits in the branch instruction
     uint8_t aalk = *(LocalAddress + 3);
     writeInt16BE(LocalAddress + 2, (aalk & 3) | ((Value + Addend) & 0xfffc));
+  } break;
+  case ELF::R_PPC64_REL16_LO: {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    uint64_t Delta = Value - FinalAddress + Addend;
+    writeInt16BE(LocalAddress, applyPPClo(Delta));
+  } break;
+  case ELF::R_PPC64_REL16_HI: {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    uint64_t Delta = Value - FinalAddress + Addend;
+    writeInt16BE(LocalAddress, applyPPChi(Delta));
+  } break;
+  case ELF::R_PPC64_REL16_HA: {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    uint64_t Delta = Value - FinalAddress + Addend;
+    writeInt16BE(LocalAddress, applyPPCha(Delta));
   } break;
   case ELF::R_PPC64_ADDR32: {
     int32_t Result = static_cast<int32_t>(Value + Addend);
@@ -786,7 +832,27 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   case ELF::R_PPC64_TOC16_DS: {
     uint64_t TOCStart = findPPC64TOC();
     Value = ((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPClo(Value) & ~3);
+  } break;
+  case ELF::R_PPC64_TOC16_LO: {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = ((Value + Addend) - TOCStart);
     writeInt16BE(LocalAddress, applyPPClo(Value));
+  } break;
+  case ELF::R_PPC64_TOC16_LO_DS: {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = ((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPClo(Value) & ~3);
+  } break;
+  case ELF::R_PPC64_TOC16_HI: {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = ((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPChi(Value));
+  } break;
+  case ELF::R_PPC64_TOC16_HA: {
+    uint64_t TOCStart = findPPC64TOC();
+    Value = ((Value + Addend) - TOCStart);
+    writeInt16BE(LocalAddress, applyPPCha(Value));
   } break;
   }
 }
