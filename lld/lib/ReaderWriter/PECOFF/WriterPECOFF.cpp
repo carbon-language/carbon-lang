@@ -55,10 +55,6 @@ using llvm::support::ulittle64_t;
 namespace lld {
 namespace pecoff {
 
-// Page size of x86 processor. Some data needs to be aligned at page boundary
-// when loaded into memory.
-static const int PAGE_SIZE = 4096;
-
 // Disk sector size. Some data needs to be aligned at disk sector boundary in
 // file.
 static const int SECTOR_SIZE = 512;
@@ -286,9 +282,9 @@ class BaseRelocChunk : public SectionChunk {
   typedef std::map<uint64_t, std::vector<uint16_t> > PageOffsetT;
 
 public:
-  BaseRelocChunk(ChunkVectorT &chunks)
+  BaseRelocChunk(ChunkVectorT &chunks, const PECOFFLinkingContext &ctx)
       : SectionChunk(kindSection, ".reloc", characteristics),
-        _contents(createContents(chunks)) {}
+        _ctx(ctx), _contents(createContents(chunks)) {}
 
   void write(uint8_t *buffer) override {
     std::memcpy(buffer, &_contents[0], _contents.size());
@@ -317,6 +313,7 @@ private:
   createBaseRelocBlock(uint64_t pageAddr,
                        const std::vector<uint16_t> &offsets) const;
 
+  const PECOFFLinkingContext &_ctx;
   std::vector<uint8_t> _contents;
 };
 
@@ -787,7 +784,7 @@ BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
 BaseRelocChunk::PageOffsetT
 BaseRelocChunk::groupByPage(const std::vector<uint64_t> &relocSites) const {
   PageOffsetT blocks;
-  uint64_t mask = static_cast<uint64_t>(PAGE_SIZE) - 1;
+  uint64_t mask = _ctx.getPageSize() - 1;
   for (uint64_t addr : relocSites)
     blocks[addr & ~mask].push_back(addr & mask);
   return blocks;
@@ -815,7 +812,7 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
 
   // The rest of the block consists of offsets in the page.
   for (uint16_t offset : offsets) {
-    assert(offset < PAGE_SIZE);
+    assert(offset < _ctx.getPageSize());
     uint16_t val = (llvm::COFF::IMAGE_REL_BASED_HIGHLOW << 12) | offset;
     *reinterpret_cast<ulittle16_t *>(ptr) = val;
     ptr += sizeof(ulittle16_t);
@@ -828,7 +825,7 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
 class PECOFFWriter : public Writer {
 public:
   explicit PECOFFWriter(const PECOFFLinkingContext &context)
-      : _ctx(context), _numSections(0), _imageSizeInMemory(PAGE_SIZE),
+      : _ctx(context), _numSections(0), _imageSizeInMemory(_ctx.getPageSize()),
         _imageSizeOnDisk(0) {}
 
   template <class PEHeader> void build(const File &linkedFile);
@@ -863,10 +860,10 @@ private:
   const PECOFFLinkingContext &_ctx;
   uint32_t _numSections;
 
-  // The size of the image in memory. This is initialized with PAGE_SIZE, as the
-  // first page starting at ImageBase is usually left unmapped. IIUC there's no
-  // technical reason to do so, but we'll follow that convention so that we
-  // don't produce odd-looking binary.
+  // The size of the image in memory. This is initialized with
+  // _ctx.getPageSize(), as the first page starting at ImageBase is usually left
+  // unmapped. IIUC there's no technical reason to do so, but we'll follow that
+  // convention so that we don't produce odd-looking binary.
   uint32_t _imageSizeInMemory;
 
   // The size of the image on disk. This is basically the sum of all chunks in
@@ -948,7 +945,7 @@ void PECOFFWriter::build(const File &linkedFile) {
   // relocated. So we can create the ".reloc" section which contains all the
   // relocation sites.
   if (_ctx.getBaseRelocationEnabled()) {
-    BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks);
+    BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks, _ctx);
     if (baseReloc->size()) {
       addSectionChunk(baseReloc, sectionTable);
       dataDirectory->setField(DataDirectoryIndex::BASE_RELOCATION_TABLE,
@@ -1132,8 +1129,8 @@ void PECOFFWriter::addSectionChunk(SectionChunk *chunk,
   // memory. They are different from positions on disk because sections need
   // to be sector-aligned on disk but page-aligned in memory.
   chunk->setVirtualAddress(_imageSizeInMemory);
-  _imageSizeInMemory =
-      llvm::RoundUpToAlignment(_imageSizeInMemory + chunk->size(), PAGE_SIZE);
+  _imageSizeInMemory = llvm::RoundUpToAlignment(
+      _imageSizeInMemory + chunk->size(), _ctx.getPageSize());
 }
 
 void PECOFFWriter::setImageSizeOnDisk() {

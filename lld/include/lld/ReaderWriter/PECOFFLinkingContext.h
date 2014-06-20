@@ -88,6 +88,12 @@ public:
     return _machineType == llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   }
 
+  /// Page size of x86 processor. Some data needs to be aligned at page boundary
+  /// when loaded into memory.
+  uint64_t getPageSize() const {
+    return 0x1000;
+  }
+
   void appendInputSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
