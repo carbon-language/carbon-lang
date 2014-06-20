@@ -735,7 +735,8 @@ void ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end,
   ReportErrorSummary("bad-__sanitizer_annotate_contiguous_container", stack);
 }
 
-void ReportODRViolation(const __asan_global *g1, const __asan_global *g2) {
+void ReportODRViolation(const __asan_global *g1, u32 stack_id1,
+                        const __asan_global *g2, u32 stack_id2) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
@@ -743,6 +744,16 @@ void ReportODRViolation(const __asan_global *g1, const __asan_global *g2) {
   Printf("%s", d.EndWarning());
   Printf("  [1] size=%zd %s %s\n", g1->size, g1->name, g1->module_name);
   Printf("  [2] size=%zd %s %s\n", g2->size, g2->name, g2->module_name);
+  if (stack_id1 && stack_id2) {
+    Printf("These globals were registered at these points:\n");
+    Printf("  [1]:\n");
+    uptr stack_size;
+    const uptr *stack_trace = StackDepotGet(stack_id1, &stack_size);
+    StackTrace::PrintStack(stack_trace, stack_size);
+    Printf("  [2]:\n");
+    stack_trace = StackDepotGet(stack_id2, &stack_size);
+    StackTrace::PrintStack(stack_trace, stack_size);
+  }
   Report("HINT: if you don't care about these warnings you may set "
          "ASAN_OPTIONS=detect_odr_violation=0\n");
   ReportErrorSummary("odr-violation", g1->module_name, 0, g1->name);
