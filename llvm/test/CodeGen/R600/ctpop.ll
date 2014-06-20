@@ -252,3 +252,33 @@ define void @v_ctpop_i32_add_vvar_inv(i32 addrspace(1)* noalias %out, i32 addrsp
   store i32 %add, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; FIXME: We currently disallow SALU instructions in all branches,
+; but there are some cases when the should be allowed.
+
+; FUNC-LABEL: @ctpop_i32_in_br
+; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
+; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL]], 0
+; SI: BUFFER_STORE_DWORD [[RESULT]],
+; SI: S_ENDPGM
+; EG: BCNT_INT
+define void @ctpop_i32_in_br(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %cond) {
+entry:
+  %0 = icmp eq i32 %cond, 0
+  br i1 %0, label %if, label %else
+
+if:
+  %1 = load i32 addrspace(1)* %in
+  %2 = call i32 @llvm.ctpop.i32(i32 %1)
+  br label %endif
+
+else:
+  %3 = getelementptr i32 addrspace(1)* %in, i32 1
+  %4 = load i32 addrspace(1)* %3
+  br label %endif
+
+endif:
+  %5 = phi i32 [%2, %if], [%4, %else]
+  store i32 %5, i32 addrspace(1)* %out
+  ret void
+}

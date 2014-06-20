@@ -1742,6 +1742,24 @@ def : Pat <
   (S_BUFFER_LOAD_DWORD_SGPR $sbase, (S_MOV_B32 imm:$offset))
 >;
 
+} // Predicates = [isSI] in {
+
+//===----------------------------------------------------------------------===//
+// SOP1 Patterns
+//===----------------------------------------------------------------------===//
+
+let Predicates = [isSI, isCFDepth0] in {
+
+def : Pat <
+  (i64 (ctpop i64:$src)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_BCNT1_I32_B64 $src), sub0),
+    (S_MOV_B32 0), sub1)
+>;
+
+} // Predicates = [isSI, isCFDepth0]
+
+let  Predicates = [isSI] in {
 //===----------------------------------------------------------------------===//
 // SOP2 Patterns
 //===----------------------------------------------------------------------===//
@@ -1792,6 +1810,26 @@ class SextInReg <ValueType vt, int ShiftAmt> : Pat <
 
 def : SextInReg <i8, 24>;
 def : SextInReg <i16, 16>;
+
+def : Pat <
+  (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
+  (V_BCNT_U32_B32_e32 $popcnt, $val)
+>;
+
+def : Pat <
+   (i32 (ctpop i32:$popcnt)),
+   (V_BCNT_U32_B32_e64 $popcnt, 0, 0, 0)
+>;
+
+def : Pat <
+  (i64 (ctpop i64:$src)),
+  (INSERT_SUBREG
+    (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+      (V_BCNT_U32_B32_e32 (EXTRACT_SUBREG $src, sub1),
+        (V_BCNT_U32_B32_e64 (EXTRACT_SUBREG $src, sub0), 0, 0, 0)),
+      sub0),
+    (V_MOV_B32_e32 0), sub1)
+>;
 
 /********** ======================= **********/
 /********** Image sampling patterns **********/
@@ -2784,18 +2822,6 @@ def : Pat <
 def : Pat <
   (i32 (addc i32:$src0, i32:$src1)),
   (S_ADD_I32 $src0, $src1)
->;
-
-def : Pat <
-  (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
-  (V_BCNT_U32_B32_e32 $popcnt, $val)
->;
-
-def : Pat <
-  (i64 (ctpop i64:$src)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_BCNT1_I32_B64 $src), sub0),
-    (S_MOV_B32 0), sub1)
 >;
 
 //============================================================================//
