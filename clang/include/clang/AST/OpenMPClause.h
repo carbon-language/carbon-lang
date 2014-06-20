@@ -600,6 +600,35 @@ public:
   StmtRange children() { return StmtRange(&ChunkSize, &ChunkSize + 1); }
 };
 
+/// \brief This represents 'ordered' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp for ordered
+/// \endcode
+/// In this example directive '#pragma omp for' has 'ordered' clause.
+///
+class OMPOrderedClause : public OMPClause {
+public:
+  /// \brief Build 'ordered' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPOrderedClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_ordered, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPOrderedClause()
+      : OMPClause(OMPC_ordered, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_ordered;
+  }
+
+  StmtRange children() { return StmtRange(); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

@@ -317,6 +317,16 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 
     Clause = ParseOpenMPSingleExprWithArgClause(CKind);
     break;
+  case OMPC_ordered:
+    // OpenMP [2.7.1, Restrictions, p. 9]
+    //  Only one ordered clause can appear on a loop directive.
+    if (!FirstClause) {
+      Diag(Tok, diag::err_omp_more_one_clause) << getOpenMPDirectiveName(DKind)
+                                               << getOpenMPClauseName(CKind);
+    }
+
+    Clause = ParseOpenMPClause(CKind);
+    break;
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_lastprivate:
@@ -408,6 +418,19 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
   return Actions.ActOnOpenMPSimpleClause(Kind, Type, TypeLoc, LOpen, Loc,
                                          Tok.getLocation());
 }
+
+/// \brief Parsing of OpenMP clauses like 'ordered'.
+///
+///    ordered-clause:
+///         'ordered'
+///
+OMPClause *Parser::ParseOpenMPClause(OpenMPClauseKind Kind) {
+  SourceLocation Loc = Tok.getLocation();
+  ConsumeAnyToken();
+
+  return Actions.ActOnOpenMPClause(Kind, Loc, Tok.getLocation());
+}
+
 
 /// \brief Parsing of OpenMP clauses with single expressions and some additional
 /// argument like 'schedule' or 'dist_schedule'.

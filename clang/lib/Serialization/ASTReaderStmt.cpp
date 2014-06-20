@@ -1694,6 +1694,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_schedule:
     C = new (Context) OMPScheduleClause();
     break;
+  case OMPC_ordered:
+    C = new (Context) OMPOrderedClause();
+    break;
   case OMPC_private:
     C = OMPPrivateClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1768,6 +1771,8 @@ void OMPClauseReader::VisitOMPScheduleClause(OMPScheduleClause *C) {
   C->setScheduleKindLoc(Reader->ReadSourceLocation(Record, Idx));
   C->setCommaLoc(Reader->ReadSourceLocation(Record, Idx));
 }
+
+void OMPClauseReader::VisitOMPOrderedClause(OMPOrderedClause *) {}
 
 void OMPClauseReader::VisitOMPPrivateClause(OMPPrivateClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));

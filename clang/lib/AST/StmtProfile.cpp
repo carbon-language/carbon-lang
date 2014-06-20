@@ -293,6 +293,8 @@ void OMPClauseProfiler::VisitOMPScheduleClause(const OMPScheduleClause *C) {
     Profiler->VisitStmt(C->getChunkSize());
 }
 
+void OMPClauseProfiler::VisitOMPOrderedClause(const OMPOrderedClause *) {}
+
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
   for (auto *I : Node->varlists())

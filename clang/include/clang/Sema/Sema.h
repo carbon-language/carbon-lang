@@ -7381,6 +7381,12 @@ public:
                                        SourceLocation CommaLoc,
                                        SourceLocation EndLoc);
 
+  OMPClause *ActOnOpenMPClause(OpenMPClauseKind Kind, SourceLocation StartLoc,
+                               SourceLocation EndLoc);
+  /// \brief Called on well-formed 'ordered' clause.
+  OMPClause *ActOnOpenMPOrderedClause(SourceLocation StartLoc,
+                                      SourceLocation EndLoc);
+
   OMPClause *
   ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> Vars,
                            Expr *TailExpr, SourceLocation StartLoc,
