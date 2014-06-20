@@ -46,6 +46,7 @@ static cl::opt<OutputFormatTy>
        OutputFormatShort(cl::desc("Specify output format"),
          cl::values(clEnumValN(sysv, "A", "System V format"),
                     clEnumValN(berkeley, "B", "Berkeley format"),
+                    clEnumValN(darwin, "m", "Darwin -m format"),
                     clEnumValEnd),
          cl::init(berkeley));
 

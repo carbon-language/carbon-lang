@@ -8,7 +8,7 @@ RUN: llvm-size %p/Inputs/macho-archive-x86_64.a \
 RUN:         | FileCheck %s -check-prefix AR
 RUN: llvm-size -format darwin %p/Inputs/macho-archive-x86_64.a \
 RUN:         | FileCheck %s -check-prefix mAR
-RUN: llvm-size -format darwin -x -l %p/Inputs/hello-world.macho-x86_64 \
+RUN: llvm-size -m -x -l %p/Inputs/hello-world.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix mxl
 RUN: llvm-size %p/Inputs/macho-universal.x86_64.i386 \
 RUN:         | FileCheck %s -check-prefix u
