@@ -74,7 +74,7 @@ T* test6(B* x) { return dynamic_cast<T*>(x); }
 // CHECK:        [[CHECK:%.*]] = icmp eq %struct.B* %x, null
 // CHECK-NEXT:   br i1 [[CHECK]]
 // CHECK:        [[CAST:%.*]] = getelementptr inbounds %struct.B* %x, i32 0, i32 0, i32 0
-// CHECK-NEXT:   [[VBPTR:%.*]] = getelementptr inbounds i8* %3, i32 4
+// CHECK-NEXT:   [[VBPTR:%.*]] = getelementptr inbounds i8* [[CAST]], i32 4
 // CHECK-NEXT:   [[BITCAST:%.*]] = bitcast i8* [[VBPTR]] to i8**
 // CHECK-NEXT:   [[VBTBL:%.*]] = load i8** [[BITCAST]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i8* [[VBTBL]], i32 4
