@@ -196,3 +196,15 @@ struct s11 {
   } f0;
   int f1;
 };
+
+// Unnamed structures.
+struct s12 {
+  struct {
+    unsigned char aa;
+    unsigned char bb;
+  };
+};
+
+void f11() {
+  struct s12 var = { .aa = 33 };
+}

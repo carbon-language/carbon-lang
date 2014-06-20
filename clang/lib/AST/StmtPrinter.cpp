@@ -1274,10 +1274,12 @@ void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
                       DEnd = Node->designators_end();
        D != DEnd; ++D) {
     if (D->isFieldDesignator()) {
-      if (D->getDotLoc().isInvalid())
-        OS << D->getFieldName()->getName() << ":";
-      else
+      if (D->getDotLoc().isInvalid()) {
+        if (IdentifierInfo *II = D->getFieldName())
+          OS << II->getName() << ":";
+      } else {
         OS << "." << D->getFieldName()->getName();
+      }
     } else {
       OS << "[";
       if (D->isArrayDesignator()) {
