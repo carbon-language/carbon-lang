@@ -1340,12 +1340,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
-  MCSymbol *sectionStart;
-  if (MOFI->isFunctionEHFrameSymbolPrivate() || !IsEH)
-    sectionStart = context.CreateTempSymbol();
-  else
-    sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
-
+  MCSymbol *sectionStart = context.CreateTempSymbol();
   streamer.EmitLabel(sectionStart);
   CIENum++;
 
