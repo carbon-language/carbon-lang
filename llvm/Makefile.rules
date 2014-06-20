@@ -1725,7 +1725,7 @@ $(ObjDir)/%GenDFAPacketizer.inc.tmp : %.td $(ObjDir)/.dir $(LLVM_TBLGEN)
 
 # Dump all the records to <target>.td.expanded.  This is useful for debugging.
 $(TARGET:%=%.td.expanded): \
-%.td.expanded : %.td $(LLVM_TBLGEN)
+%.td.expanded : %.td $(LLVM_TBLGEN) $(TDFiles)
 	$(Echo) "Building a fully expanded version of $(<F)"
 	$(Verb) $(LLVMTableGen) -o $(call SYSPATH, $@) $<
 
