@@ -148,6 +148,7 @@ public:
   /// ScopeTy - This is a helpful typedef that allows clients to get easy access
   /// to the name of the scope for this hash table.
   typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
+  typedef size_t size_type;
 private:
   typedef ScopedHashTableVal<K, V> ValTy;
   DenseMap<K, ValTy*, KInfo> TopLevelMap;
@@ -170,7 +171,8 @@ public:
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
 
-  bool count(const K &Key) const {
+  /// Return 1 if the specified key is in the table, 0 otherwise.
+  size_type count(const K &Key) const {
     return TopLevelMap.count(Key);
   }
 

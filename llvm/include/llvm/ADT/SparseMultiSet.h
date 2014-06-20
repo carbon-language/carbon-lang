@@ -185,6 +185,7 @@ public:
   typedef const ValueT &const_reference;
   typedef ValueT *pointer;
   typedef const ValueT *const_pointer;
+  typedef size_t size_type;
 
   SparseMultiSet()
     : Sparse(nullptr), Universe(0), FreelistIdx(SMSNode::INVALID), NumFree(0) {}
@@ -327,7 +328,7 @@ public:
   /// This is not the same as BitVector::size() which returns the size of the
   /// universe.
   ///
-  unsigned size() const {
+  size_type size() const {
     assert(NumFree <= Dense.size() && "Out-of-bounds free entries");
     return Dense.size() - NumFree;
   }
@@ -378,7 +379,7 @@ public:
 
   /// Returns the number of elements identified by Key. This will be linear in
   /// the number of elements of that key.
-  unsigned count(const KeyT &Key) const {
+  size_type count(const KeyT &Key) const {
     unsigned Ret = 0;
     for (const_iterator It = find(Key); It != end(); ++It)
       ++Ret;

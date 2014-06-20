@@ -29,7 +29,7 @@ template<typename KeyT, typename ValueT,
          typename MapType = llvm::DenseMap<KeyT, unsigned>,
          typename VectorType = std::vector<std::pair<KeyT, ValueT> > >
 class MapVector {
-  typedef typename VectorType::size_type SizeType;
+  typedef typename VectorType::size_type size_type;
 
   MapType Map;
   VectorType Vector;
@@ -38,7 +38,7 @@ public:
   typedef typename VectorType::iterator iterator;
   typedef typename VectorType::const_iterator const_iterator;
 
-  SizeType size() const {
+  size_type size() const {
     return Vector.size();
   }
 
@@ -100,7 +100,7 @@ public:
     return std::make_pair(begin() + I, false);
   }
 
-  unsigned count(const KeyT &Key) const {
+  size_type count(const KeyT &Key) const {
     typename MapType::const_iterator Pos = Map.find(Key);
     return Pos == Map.end()? 0 : 1;
   }

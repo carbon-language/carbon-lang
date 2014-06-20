@@ -124,6 +124,7 @@ class SparseSet {
 
   typedef typename KeyFunctorT::argument_type KeyT;
   typedef SmallVector<ValueT, 8> DenseT;
+  typedef size_t size_type;
   DenseT Dense;
   SparseT *Sparse;
   unsigned Universe;
@@ -186,7 +187,7 @@ public:
   /// This is not the same as BitVector::size() which returns the size of the
   /// universe.
   ///
-  unsigned size() const { return Dense.size(); }
+  size_type size() const { return Dense.size(); }
 
   /// clear - Clears the set.  This is a very fast constant time operation.
   ///
@@ -231,7 +232,7 @@ public:
   /// count - Returns 1 if this set contains an element identified by Key,
   /// 0 otherwise.
   ///
-  unsigned count(const KeyT &Key) const {
+  size_type count(const KeyT &Key) const {
     return find(Key) == end() ? 0 : 1;
   }
 

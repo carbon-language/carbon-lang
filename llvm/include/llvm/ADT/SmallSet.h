@@ -37,18 +37,19 @@ class SmallSet {
   typedef typename SmallVector<T, N>::const_iterator VIterator;
   typedef typename SmallVector<T, N>::iterator mutable_iterator;
 public:
+  typedef size_t size_type;
   SmallSet() {}
 
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
     return Vector.empty() && Set.empty();
   }
 
-  unsigned size() const {
+  size_type size() const {
     return isSmall() ? Vector.size() : Set.size();
   }
 
   /// count - Return 1 if the element is in the set, 0 otherwise.
-  unsigned count(const T &V) const {
+  size_type count(const T &V) const {
     if (isSmall()) {
       // Since the collection is small, just do a linear search.
       return vfind(V) == Vector.end() ? 0 : 1;

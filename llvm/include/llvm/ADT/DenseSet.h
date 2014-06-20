@@ -29,11 +29,12 @@ class DenseSet {
 public:
   typedef ValueT key_type;
   typedef ValueT value_type;
+  typedef size_t size_type;
 
   explicit DenseSet(unsigned NumInitBuckets = 0) : TheMap(NumInitBuckets) {}
 
   bool empty() const { return TheMap.empty(); }
-  unsigned size() const { return TheMap.size(); }
+  size_type size() const { return TheMap.size(); }
   size_t getMemorySize() const { return TheMap.getMemorySize(); }
 
   /// Grow the DenseSet so that it has at least Size buckets. Will not shrink
@@ -44,7 +45,8 @@ public:
     TheMap.clear();
   }
 
-  bool count(const ValueT &V) const {
+  /// Return 1 if the specified key is in the set, 0 otherwise.
+  size_type count(const ValueT &V) const {
     return TheMap.count(V);
   }
 

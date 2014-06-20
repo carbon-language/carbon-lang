@@ -663,7 +663,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
 
   // Otherwise, we're removing metadata from an instruction.
   assert((hasMetadataHashEntry() ==
-          getContext().pImpl->MetadataStore.count(this)) &&
+          (getContext().pImpl->MetadataStore.count(this) > 0)) &&
          "HasMetadata bit out of date!");
   if (!hasMetadataHashEntry())
     return;  // Nothing to remove!

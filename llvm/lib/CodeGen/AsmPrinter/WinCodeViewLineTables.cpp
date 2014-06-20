@@ -308,7 +308,7 @@ void WinCodeViewLineTables::endFunction(const MachineFunction *MF) {
     return;
 
   const Function *GV = MF->getFunction();
-  assert(FnDebugInfo.count(GV) == true);
+  assert(FnDebugInfo.count(GV));
   assert(CurFn == &FnDebugInfo[GV]);
 
   if (CurFn->Instrs.empty()) {

@@ -87,6 +87,7 @@ public:
   typedef KeyT key_type;
   typedef ValueT mapped_type;
   typedef std::pair<KeyT, ValueT> value_type;
+  typedef size_t size_type;
 
   explicit ValueMap(unsigned NumInitBuckets = 64)
     : Map(NumInitBuckets), Data() {}
@@ -103,16 +104,16 @@ public:
   inline const_iterator end() const { return const_iterator(Map.end()); }
 
   bool empty() const { return Map.empty(); }
-  unsigned size() const { return Map.size(); }
+  size_type size() const { return Map.size(); }
 
   /// Grow the map so that it has at least Size buckets. Does not shrink
   void resize(size_t Size) { Map.resize(Size); }
 
   void clear() { Map.clear(); }
 
-  /// count - Return true if the specified key is in the map.
-  bool count(const KeyT &Val) const {
-    return Map.find_as(Val) != Map.end();
+  /// Return 1 if the specified key is in the map, 0 otherwise.
+  size_type count(const KeyT &Val) const {
+    return Map.find_as(Val) == Map.end() ? 0 : 1;
   }
 
   iterator find(const KeyT &Val) {

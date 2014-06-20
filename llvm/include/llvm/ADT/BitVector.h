@@ -34,6 +34,7 @@ class BitVector {
   unsigned Capacity;     // Size of allocated memory in BitWord.
 
 public:
+  typedef size_t size_type;
   // Encapsulation of a single bit.
   class reference {
     friend class BitVector;
@@ -111,10 +112,10 @@ public:
   bool empty() const { return Size == 0; }
 
   /// size - Returns the number of bits in this bitvector.
-  unsigned size() const { return Size; }
+  size_type size() const { return Size; }
 
   /// count - Returns the number of bits which are set.
-  unsigned count() const {
+  size_type count() const {
     unsigned NumBits = 0;
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       if (sizeof(BitWord) == 4)

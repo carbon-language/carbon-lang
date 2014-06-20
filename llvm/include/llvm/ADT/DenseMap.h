@@ -43,6 +43,7 @@ protected:
   typedef std::pair<KeyT, ValueT> BucketT;
 
 public:
+  typedef size_t size_type;
   typedef KeyT key_type;
   typedef ValueT mapped_type;
   typedef BucketT value_type;
@@ -70,7 +71,7 @@ public:
   unsigned size() const { return getNumEntries(); }
 
   /// Grow the densemap so that it has at least Size buckets. Does not shrink
-  void resize(size_t Size) {
+  void resize(size_type Size) {
     if (Size > getNumBuckets())
       grow(Size);
   }
@@ -99,10 +100,10 @@ public:
     setNumTombstones(0);
   }
 
-  /// count - Return true if the specified key is in the map.
-  bool count(const KeyT &Val) const {
+  /// Return 1 if the specified key is in the map, 0 otherwise.
+  size_type count(const KeyT &Val) const {
     const BucketT *TheBucket;
-    return LookupBucketFor(Val, TheBucket);
+    return LookupBucketFor(Val, TheBucket) ? 1 : 0;
   }
 
   iterator find(const KeyT &Val) {
