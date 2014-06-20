@@ -721,13 +721,10 @@ def SETNE_DX10 : R600_2OP <
 >;
 
 def FRACT : R600_1OP_Helper <0x10, "FRACT", AMDGPUfract>;
-def TRUNC : R600_1OP_Helper <0x11, "TRUNC", int_AMDGPU_trunc>;
+def TRUNC : R600_1OP_Helper <0x11, "TRUNC", ftrunc>;
 def CEIL : R600_1OP_Helper <0x12, "CEIL", fceil>;
 def RNDNE : R600_1OP_Helper <0x13, "RNDNE", frint>;
 def FLOOR : R600_1OP_Helper <0x14, "FLOOR", ffloor>;
-
-// Add also ftrunc intrinsic pattern
-def : Pat<(ftrunc f32:$src0), (TRUNC $src0)>;
 
 def MOV : R600_1OP <0x19, "MOV", []>;
 

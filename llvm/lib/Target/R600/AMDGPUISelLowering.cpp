@@ -938,6 +938,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
     case AMDGPUIntrinsic::AMDIL_round_nearest: // Legacy name.
       return DAG.getNode(ISD::FRINT, DL, VT, Op.getOperand(1));
+    case AMDGPUIntrinsic::AMDGPU_trunc:
+      return DAG.getNode(ISD::FTRUNC, DL, VT, Op.getOperand(1));
   }
 }
 
