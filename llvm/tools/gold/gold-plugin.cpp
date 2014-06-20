@@ -50,35 +50,30 @@
 using namespace llvm;
 
 namespace {
-  ld_plugin_status discard_message(int level, const char *format, ...) {
-    // Die loudly. Recent versions of Gold pass ld_plugin_message as the first
-    // callback in the transfer vector. This should never be called.
-    abort();
-  }
-
-  ld_plugin_add_symbols add_symbols = NULL;
-  ld_plugin_get_symbols get_symbols = NULL;
-  ld_plugin_add_input_file add_input_file = NULL;
-  ld_plugin_add_input_library add_input_library = NULL;
-  ld_plugin_set_extra_library_path set_extra_library_path = NULL;
-  ld_plugin_get_view get_view = NULL;
-  ld_plugin_message message = discard_message;
-
-  int api_version = 0;
-  int gold_version = 0;
-
-  struct claimed_file {
-    void *handle;
-    std::vector<ld_plugin_symbol> syms;
-  };
-
-  lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
-  std::string output_name = "";
-  std::list<claimed_file> Modules;
-  std::vector<std::string> Cleanup;
-  LTOCodeGenerator *CodeGen = nullptr;
-  StringSet<> CannotBeHidden;
+struct claimed_file {
+  void *handle;
+  std::vector<ld_plugin_symbol> syms;
+};
 }
+
+static ld_plugin_status discard_message(int level, const char *format, ...) {
+  // Die loudly. Recent versions of Gold pass ld_plugin_message as the first
+  // callback in the transfer vector. This should never be called.
+  abort();
+}
+
+static ld_plugin_add_symbols add_symbols = NULL;
+static ld_plugin_get_symbols get_symbols = NULL;
+static ld_plugin_add_input_file add_input_file = NULL;
+static ld_plugin_set_extra_library_path set_extra_library_path = NULL;
+static ld_plugin_get_view get_view = NULL;
+static ld_plugin_message message = discard_message;
+static lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
+static std::string output_name = "";
+static std::list<claimed_file> Modules;
+static std::vector<std::string> Cleanup;
+static LTOCodeGenerator *CodeGen = nullptr;
+static StringSet<> CannotBeHidden;
 static llvm::TargetOptions TargetOpts;
 
 namespace options {
@@ -151,12 +146,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 
   for (; tv->tv_tag != LDPT_NULL; ++tv) {
     switch (tv->tv_tag) {
-      case LDPT_API_VERSION:
-        api_version = tv->tv_u.tv_val;
-        break;
-      case LDPT_GOLD_VERSION:  // major * 100 + minor
-        gold_version = tv->tv_u.tv_val;
-        break;
       case LDPT_OUTPUT_NAME:
         output_name = tv->tv_u.tv_string;
         break;
@@ -212,9 +201,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         break;
       case LDPT_ADD_INPUT_FILE:
         add_input_file = tv->tv_u.tv_add_input_file;
-        break;
-      case LDPT_ADD_INPUT_LIBRARY:
-        add_input_library = tv->tv_u.tv_add_input_file;
         break;
       case LDPT_SET_EXTRA_LIBRARY_PATH:
         set_extra_library_path = tv->tv_u.tv_set_extra_library_path;
