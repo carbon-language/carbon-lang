@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Host concept.
+//  This file implements the operating system Host concept.
 //
 //===----------------------------------------------------------------------===//
 

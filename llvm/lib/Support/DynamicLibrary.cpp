@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system DynamicLibrary concept.
+//  This file implements the operating system DynamicLibrary concept.
 //
 // FIXME: This file leaks ExplicitSymbols and OpenedHandles!
 //

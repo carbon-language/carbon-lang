@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This header file implements the operating system Process concept.
+//  This file implements the operating system Process concept.
 //
 //===----------------------------------------------------------------------===//
 
