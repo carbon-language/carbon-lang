@@ -97,6 +97,32 @@ private:
   void setBaseName();
   ScopStmt *Statement;
 
+  /// @brief Flag to indicate reduction like accesses
+  ///
+  /// An access is reduction like if it is part of a load-store chain in which
+  /// both access the same memory location (use the same LLVM-IR value
+  /// as pointer reference). Furthermore, between the load and the store there
+  /// is exactly one binary operator which is known to be associative and
+  /// commutative.
+  ///
+  /// TODO:
+  ///
+  /// We can later lift the constraint that the same LLVM-IR value defines the
+  /// memory location to handle scops such as the following:
+  ///
+  ///    for i
+  ///      for j
+  ///        sum[i+j] = sum[i] + 3;
+  ///
+  /// Here not all iterations access the same memory location, but iterations
+  /// for which j = 0 holds do. After lifing the equality check in ScopInfo,
+  /// subsequent transformations do not only need check if a statement is
+  /// reduction like, but they also need to verify that that the reduction
+  /// property is only exploited for statement instances that load from and
+  /// store to the same data location. Doing so at dependence analysis time
+  /// could allow us to handle the above example.
+  bool IsReductionLike = false;
+
   const Instruction *Inst;
 
   /// Updated access relation read from JSCOP file.
@@ -121,6 +147,9 @@ public:
 
   /// @brief Get the type of a memory access.
   enum AccessType getType() { return Type; }
+
+  /// @brief Is this a reduction like access?
+  bool isReductionLike() const { return IsReductionLike; }
 
   /// @brief Is this a read memory access?
   bool isRead() const { return Type == MemoryAccess::READ; }
@@ -180,6 +209,9 @@ public:
 
   /// @brief Set the updated access relation read from JSCOP file.
   void setNewAccessRelation(isl_map *newAccessRelation);
+
+  /// @brief Mark this a reduction like access
+  void markReductionLike() { IsReductionLike = true; }
 
   /// @brief Align the parameters in the access relation to the scop context
   void realignParams();
@@ -270,31 +302,6 @@ class ScopStmt {
   MemoryAccessVec MemAccs;
   std::map<const Instruction *, MemoryAccess *> InstructionToAccess;
 
-  /// @brief Flag to indicate reduction like statements.
-  ///
-  /// A statement is reduction like if it contains exactly one load and one
-  /// store both accessing the same memory location (use the same LLVM-IR value
-  /// as pointer reference). Furthermore, between the load and the store there
-  /// is exactly one binary operator which is known to be associative and
-  /// commutative.
-  ///
-  /// TODO:
-  ///
-  /// We can later lift the constraint that the same LLVM-IR value defines the
-  /// memory location to handle scops such as the following:
-  ///
-  ///    for i
-  ///      for j
-  ///        sum[i+j] = sum[i] + 3;
-  ///
-  /// Here not all iterations access the same memory location, but iterations
-  /// for which j = 0 holds do. After lifing the equality check in ScopInfo,
-  /// subsequent transformations do not only need check if a statement is
-  /// reduction like, but they also need to verify that that the reduction
-  /// property is only exploited for statement instances that load from and
-  /// store to the same data location. Doing so at dependence analysis time
-  /// could allow us to handle the above example.
-  bool IsReductionLike = false;
   //@}
 
   /// The BasicBlock represented by this statement.
@@ -331,9 +338,6 @@ class ScopStmt {
 
 public:
   ~ScopStmt();
-
-  /// @brief Return true iff this statement is a reduction like statement
-  bool isReductionLike() const { return IsReductionLike; }
 
   /// @brief Get an isl_ctx pointer.
   isl_ctx *getIslCtx() const;

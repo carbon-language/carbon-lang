@@ -251,13 +251,16 @@ void Dependences::calculateDependences(Scop &S) {
 
   // Step 1)
   RED = isl_union_map_empty(isl_union_map_get_space(RAW));
-  for (auto *Stmt : S) {
-    if (!Stmt->isReductionLike())
-      continue;
-    isl_set *Domain = Stmt->getDomain();
-    isl_map *Identity =
-        isl_map_from_domain_and_range(isl_set_copy(Domain), Domain);
-    RED = isl_union_map_add_map(RED, Identity);
+  for (ScopStmt *Stmt : S) {
+    for (MemoryAccess *MA : *Stmt) {
+      if (!MA->isReductionLike())
+        continue;
+      isl_set *AccDom = isl_map_domain(MA->getAccessRelation());
+      isl_map *Identity =
+          isl_map_from_domain_and_range(isl_set_copy(AccDom), AccDom);
+      RED = isl_union_map_add_map(RED, Identity);
+      break;
+    }
   }
 
   // Step 2)

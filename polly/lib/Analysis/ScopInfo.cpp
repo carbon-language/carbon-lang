@@ -397,6 +397,7 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement)
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
+  OS.indent(8) << "Reduction like: " << isReductionLike() << "\n";
   switch (Type) {
   case READ:
     OS.indent(12) << "ReadAccess := \n";
@@ -741,8 +742,9 @@ void ScopStmt::checkForReduction() {
        BinOp->getOpcode() == Instruction::FMul))
     return;
 
-  // Valid reduction like statement
-  IsReductionLike = true;
+  // Valid reduction like access
+  MemAccs[0]->markReductionLike();
+  MemAccs[1]->markReductionLike();
 }
 
 std::string ScopStmt::getDomainStr() const { return stringFromIslObj(Domain); }
@@ -798,8 +800,6 @@ ScopStmt::~ScopStmt() {
 
 void ScopStmt::print(raw_ostream &OS) const {
   OS << "\t" << getBaseName() << "\n";
-  OS.indent(8) << "Reduction like: " << isReductionLike() << "\n";
-
   OS.indent(12) << "Domain :=\n";
 
   if (Domain) {
