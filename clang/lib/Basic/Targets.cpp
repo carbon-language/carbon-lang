@@ -587,8 +587,12 @@ protected:
     if (Opts.POSIXThreads)
       Builder.defineMacro("_MT");
 
-    if (Opts.MSCVersion != 0)
-      Builder.defineMacro("_MSC_VER", Twine(Opts.MSCVersion));
+    if (Opts.MSCVersion != 0) {
+      Builder.defineMacro("_MSC_VER", Twine(Opts.MSCVersion / 100000));
+      Builder.defineMacro("_MSC_FULL_VER", Twine(Opts.MSCVersion));
+      // FIXME We cannot encode the revision information into 32-bits
+      Builder.defineMacro("_MSC_BUILD", Twine(1));
+    }
 
     if (Opts.MicrosoftExt) {
       Builder.defineMacro("_MSC_EXTENSIONS");
