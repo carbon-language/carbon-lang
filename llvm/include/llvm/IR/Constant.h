@@ -71,6 +71,9 @@ public:
   /// isThreadDependent - Return true if the value can vary between threads.
   bool isThreadDependent() const;
 
+  /// Return true if the value is dependent on a dllimport variable.
+  bool isDLLImportDependent() const;
+
   /// isConstantUsed - Return true if the constant has users other than constant
   /// exprs and other dangling things.
   bool isConstantUsed() const;

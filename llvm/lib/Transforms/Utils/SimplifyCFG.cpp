@@ -3313,6 +3313,10 @@ static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
 static bool ValidLookupTableConstant(Constant *C) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     return CE->isGEPWithNoNotionalOverIndexing();
+  if (C->isThreadDependent())
+    return false;
+  if (C->isDLLImportDependent())
+    return false;
 
   return isa<ConstantFP>(C) ||
       isa<ConstantInt>(C) ||
