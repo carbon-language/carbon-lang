@@ -48,13 +48,13 @@ TYPED_TEST(ValueMapTest, FollowsValue) {
   ValueMap<TypeParam*, int> VM;
   VM[this->BitcastV.get()] = 7;
   EXPECT_EQ(7, VM.lookup(this->BitcastV.get()));
-  EXPECT_EQ(0, VM.count(this->AddV.get()));
+  EXPECT_EQ(0u, VM.count(this->AddV.get()));
   this->BitcastV->replaceAllUsesWith(this->AddV.get());
   EXPECT_EQ(7, VM.lookup(this->AddV.get()));
-  EXPECT_EQ(0, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0u, VM.count(this->BitcastV.get()));
   this->AddV.reset();
-  EXPECT_EQ(0, VM.count(this->AddV.get()));
-  EXPECT_EQ(0, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0u, VM.count(this->AddV.get()));
+  EXPECT_EQ(0u, VM.count(this->BitcastV.get()));
   EXPECT_EQ(0U, VM.size());
 }
 
@@ -90,7 +90,7 @@ TYPED_TEST(ValueMapTest, OperationsWork) {
   EXPECT_EQ(this->AddV.get(), InsertResult1.first->first);
   EXPECT_EQ(3, InsertResult1.first->second);
   EXPECT_TRUE(InsertResult1.second);
-  EXPECT_EQ(true, VM.count(this->AddV.get()));
+  EXPECT_EQ(1u, VM.count(this->AddV.get()));
   std::pair<typename ValueMap<TypeParam*, int>::iterator, bool> InsertResult2 =
     VM.insert(std::make_pair(this->AddV.get(), 5));
   EXPECT_EQ(this->AddV.get(), InsertResult2.first->first);
@@ -169,7 +169,7 @@ TYPED_TEST(ValueMapTest, DefaultCollisionBehavior) {
   VM[this->BitcastV.get()] = 7;
   VM[this->AddV.get()] = 9;
   this->BitcastV->replaceAllUsesWith(this->AddV.get());
-  EXPECT_EQ(0, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0u, VM.count(this->BitcastV.get()));
   EXPECT_EQ(9, VM.lookup(this->AddV.get()));
 }
 
@@ -218,7 +218,7 @@ TYPED_TEST(ValueMapTest, NoFollowRAUW) {
   ValueMap<TypeParam*, int, NoFollow<TypeParam*> > VM;
   VM[this->BitcastV.get()] = 7;
   EXPECT_EQ(7, VM.lookup(this->BitcastV.get()));
-  EXPECT_EQ(0, VM.count(this->AddV.get()));
+  EXPECT_EQ(0u, VM.count(this->AddV.get()));
   this->BitcastV->replaceAllUsesWith(this->AddV.get());
   EXPECT_EQ(7, VM.lookup(this->BitcastV.get()));
   EXPECT_EQ(0, VM.lookup(this->AddV.get()));
@@ -284,11 +284,11 @@ TYPED_TEST(ValueMapTest, SurvivesModificationByConfig) {
   // Now the ModifyingConfig can modify the Map inside a callback.
   VM[this->BitcastV.get()] = 7;
   this->BitcastV->replaceAllUsesWith(this->AddV.get());
-  EXPECT_FALSE(VM.count(this->BitcastV.get()));
-  EXPECT_FALSE(VM.count(this->AddV.get()));
+  EXPECT_EQ(0u, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0u, VM.count(this->AddV.get()));
   VM[this->AddV.get()] = 7;
   this->AddV.reset();
-  EXPECT_FALSE(VM.count(this->AddV.get()));
+  EXPECT_EQ(0u, VM.count(this->AddV.get()));
 }
 
 }

@@ -24,7 +24,7 @@ TEST_F(DenseSetTest, DoubleEntrySetTest) {
   set.insert(0);
   set.insert(1);
   // Original failure was an infinite loop in this call:
-  EXPECT_EQ(0, set.count(2));
+  EXPECT_EQ(0u, set.count(2));
 }
 
 }

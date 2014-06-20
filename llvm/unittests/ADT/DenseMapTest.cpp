@@ -345,7 +345,7 @@ TEST(DenseMapCustomTest, FindAsTest) {
   EXPECT_EQ(3u, map.size());
 
   // Normal lookup tests
-  EXPECT_EQ(1, map.count(1));
+  EXPECT_EQ(1u, map.count(1));
   EXPECT_EQ(1u, map.find(0)->second);
   EXPECT_EQ(2u, map.find(1)->second);
   EXPECT_EQ(3u, map.find(2)->second);
