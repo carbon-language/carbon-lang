@@ -45,7 +45,6 @@
 #include <dlfcn.h>
 #define __need_res_state
 #include <resolv.h>
-#include <malloc.h>
 
 #ifdef sa_handler
 # undef sa_handler
