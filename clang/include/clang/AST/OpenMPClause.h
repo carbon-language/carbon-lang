@@ -553,13 +553,13 @@ public:
   /// \brief Build 'schedule' clause with schedule kind \a Kind and chunk size
   /// expression \a ChunkSize.
   ///
-  /// \brief StartLoc Starting location of the clause.
-  /// \brief LParenLoc Location of '('.
-  /// \brief KLoc Starting location of the argument.
-  /// \brief CommaLoc Location of ','.
-  /// \brief EndLoc Ending location of the clause.
-  /// \brief Kind Schedule kind.
-  /// \brief ChunkSize Chunk size.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param KLoc Starting location of the argument.
+  /// \param CommaLoc Location of ','.
+  /// \param EndLoc Ending location of the clause.
+  /// \param Kind Schedule kind.
+  /// \param ChunkSize Chunk size.
   ///
   OMPScheduleClause(SourceLocation StartLoc, SourceLocation LParenLoc,
                     SourceLocation KLoc, SourceLocation CommaLoc,
