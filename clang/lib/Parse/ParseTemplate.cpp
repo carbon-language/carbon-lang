@@ -751,7 +751,9 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
 
   // This template-id is terminated by a token which starts with a '>'. Outside
   // C++11, this is now error recovery, and in C++11, this is error recovery if
-  // the token isn't '>>'.
+  // the token isn't '>>' or '>>>'.
+  // '>>>' is for CUDA, where this sequence of characters is parsed into
+  // tok::greatergreatergreater, rather than two separate tokens.
 
   RAngleLoc = Tok.getLocation();
 
@@ -781,7 +783,8 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
     Hint2 = FixItHint::CreateInsertion(Next.getLocation(), " ");
 
   unsigned DiagId = diag::err_two_right_angle_brackets_need_space;
-  if (getLangOpts().CPlusPlus11 && Tok.is(tok::greatergreater))
+  if (getLangOpts().CPlusPlus11 &&
+      (Tok.is(tok::greatergreater) || Tok.is(tok::greatergreatergreater)))
     DiagId = diag::warn_cxx98_compat_two_right_angle_brackets;
   else if (Tok.is(tok::greaterequal))
     DiagId = diag::err_right_angle_bracket_equal_needs_space;
