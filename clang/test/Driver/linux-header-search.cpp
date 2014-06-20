@@ -95,6 +95,22 @@
 // CHECK-UBUNTU-14-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/c++/4.8/backward"
 // CHECK-UBUNTU-14-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/x86_64-linux-gnu/c++/4.8/32"
 //
+// Test Ubuntu/Debian's Ubuntu 14.04 for powerpc64le
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target powerpc64le-unknown-linux-gnu -m32 \
+// RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04-PPC64LE %s
+// CHECK-UBUNTU-14-04-PPC64LE: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-UBUNTU-14-04-PPC64LE: "-triple" "powerpc64le-unknown-linux-gnu"
+// CHECK-UBUNTU-14-04-PPC64LE: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../../../include/c++/4.8"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../../../include/c++/4.8/powerpc64le-linux-gnu"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../../../include/c++/4.8/backward"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../../../include/powerpc64le-linux-gnu/c++/4.8"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/powerpc64le-linux-gnu"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-UBUNTU-14-04-PPC64LE: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
 // Thoroughly exercise the Debian multiarch environment.
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target i686-linux-gnu \
