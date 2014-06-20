@@ -68,7 +68,7 @@ public:
 
   mach_o::KindHandler &kindHandler() const;
 
-  HeaderFileType outputFileType() const { return _outputFileType; }
+  HeaderFileType outputMachOType() const { return _outputMachOType; }
 
   Arch arch() const { return _arch; }
   StringRef archName() const { return nameFromArch(_arch); }
@@ -153,8 +153,8 @@ private:
 
   static ArchInfo _s_archInfos[];
 
-  HeaderFileType _outputFileType;   // e.g MH_EXECUTE
-  bool _outputFileTypeStatic; // Disambiguate static vs dynamic prog
+  HeaderFileType _outputMachOType;   // e.g MH_EXECUTE
+  bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
   Arch _arch;
   OS _os;

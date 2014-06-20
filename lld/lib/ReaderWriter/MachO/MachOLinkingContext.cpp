@@ -119,7 +119,7 @@ uint32_t MachOLinkingContext::cpuSubtypeFromArch(Arch arch) {
 }
 
 MachOLinkingContext::MachOLinkingContext()
-    : _outputFileType(MH_EXECUTE), _outputFileTypeStatic(false),
+    : _outputMachOType(MH_EXECUTE), _outputMachOTypeStatic(false),
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
@@ -129,12 +129,12 @@ MachOLinkingContext::~MachOLinkingContext() {}
 
 void MachOLinkingContext::configure(HeaderFileType type, Arch arch, OS os,
                                     uint32_t minOSVersion) {
-  _outputFileType = type;
+  _outputMachOType = type;
   _arch = arch;
   _os = os;
   _osMinVersion = minOSVersion;
 
-  switch (_outputFileType) {
+  switch (_outputMachOType) {
   case llvm::MachO::MH_EXECUTE:
     // If targeting newer OS, use _main
     if (minOS("10.8", "6.0")) {
@@ -211,7 +211,7 @@ bool MachOLinkingContext::is64Bit() const {
 }
 
 bool MachOLinkingContext::outputTypeHasEntry() const {
-  switch (_outputFileType) {
+  switch (_outputMachOType) {
   case MH_EXECUTE:
   case MH_DYLINKER:
   case MH_PRELOAD:
@@ -240,16 +240,16 @@ bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
 }
 
 bool MachOLinkingContext::addEntryPointLoadCommand() const {
-  if ((_outputFileType == MH_EXECUTE) && !_outputFileTypeStatic) {
+  if ((_outputMachOType == MH_EXECUTE) && !_outputMachOTypeStatic) {
     return minOS("10.8", "6.0");
   }
   return false;
 }
 
 bool MachOLinkingContext::addUnixThreadLoadCommand() const {
-  switch (_outputFileType) {
+  switch (_outputMachOType) {
   case MH_EXECUTE:
-    if (_outputFileTypeStatic)
+    if (_outputMachOTypeStatic)
       return true;
     else
       return !minOS("10.8", "6.0");
@@ -265,24 +265,24 @@ bool MachOLinkingContext::addUnixThreadLoadCommand() const {
 bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
   // TODO: if -arch not specified, look at arch of first .o file.
 
-  if (_currentVersion && _outputFileType != MH_DYLIB) {
+  if (_currentVersion && _outputMachOType != MH_DYLIB) {
     diagnostics << "error: -current_version can only be used with dylibs\n";
     return false;
   }
 
-  if (_compatibilityVersion && _outputFileType != MH_DYLIB) {
+  if (_compatibilityVersion && _outputMachOType != MH_DYLIB) {
     diagnostics
         << "error: -compatibility_version can only be used with dylibs\n";
     return false;
   }
 
-  if (_deadStrippableDylib && _outputFileType != MH_DYLIB) {
+  if (_deadStrippableDylib && _outputMachOType != MH_DYLIB) {
     diagnostics
         << "error: -mark_dead_strippable_dylib can only be used with dylibs.\n";
     return false;
   }
 
-  if (!_bundleLoader.empty() && outputFileType() != MH_BUNDLE) {
+  if (!_bundleLoader.empty() && outputMachOType() != MH_BUNDLE) {
     diagnostics
         << "error: -bundle_loader can only be used with Mach-O bundles\n";
     return false;
@@ -292,7 +292,7 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) {
-  if (outputFileType() != MH_OBJECT) {
+  if (outputMachOType() != MH_OBJECT) {
     pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
     pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
   }
@@ -300,9 +300,8 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
 }
 
 Writer &MachOLinkingContext::writer() const {
-  if (!_writer) {
+  if (!_writer)
     _writer = createWriterMachO(*this);
-  }
   return *_writer;
 }
 

@@ -211,7 +211,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -compatibility_version and -current_version
   if (llvm::opt::Arg *vers =
           parsedArgs->getLastArg(OPT_compatibility_version)) {
-    if (ctx.outputFileType() != llvm::MachO::MH_DYLIB) {
+    if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB) {
       diagnostics
           << "error: -compatibility_version can only be used with -dylib\n";
       return false;
@@ -225,7 +225,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   if (llvm::opt::Arg *vers = parsedArgs->getLastArg(OPT_current_version)) {
-    if (ctx.outputFileType() != llvm::MachO::MH_DYLIB) {
+    if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB) {
       diagnostics << "-current_version can only be used with -dylib\n";
       return false;
     }

@@ -45,27 +45,27 @@ TEST_F(DarwinLdParserTest, Output) {
 
 TEST_F(DarwinLdParserTest, Dylib) {
   EXPECT_TRUE(parse("ld", "-dylib", "foo.o", nullptr));
-  EXPECT_EQ(llvm::MachO::MH_DYLIB, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_DYLIB, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Relocatable) {
   EXPECT_TRUE(parse("ld", "-r", "foo.o", nullptr));
-  EXPECT_EQ(llvm::MachO::MH_OBJECT, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_OBJECT, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Bundle) {
   EXPECT_TRUE(parse("ld", "-bundle", "foo.o", nullptr));
-  EXPECT_EQ(llvm::MachO::MH_BUNDLE, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_BUNDLE, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Preload) {
   EXPECT_TRUE(parse("ld", "-preload", "foo.o", nullptr));
-  EXPECT_EQ(llvm::MachO::MH_PRELOAD, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_PRELOAD, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Static) {
   EXPECT_TRUE(parse("ld", "-static", "foo.o", nullptr));
-  EXPECT_EQ(llvm::MachO::MH_EXECUTE, _context.outputFileType());
+  EXPECT_EQ(llvm::MachO::MH_EXECUTE, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Entry) {

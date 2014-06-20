@@ -263,7 +263,7 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
     auto pos = _sectionMap.find(type);
     if ( pos != _sectionMap.end() )
       return pos->second;
-    bool rMode = (_context.outputFileType() == llvm::MachO::MH_OBJECT);
+    bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
     return rMode ? getRelocatableSection(type) : getFinalSection(type);
   } else {
     // This atom needs to be in a custom section.
@@ -365,7 +365,7 @@ bool Util::TextSectionSorter::operator()(const SectionInfo *left,
 
 
 void Util::organizeSections() {
-  if (_context.outputFileType() == llvm::MachO::MH_OBJECT) {
+  if (_context.outputMachOType() == llvm::MachO::MH_OBJECT) {
     // Leave sections ordered as normalized file specified.
     uint32_t sectionIndex = 1;
     for (SectionInfo *si : _sectionInfos) {
@@ -373,7 +373,7 @@ void Util::organizeSections() {
     }
   } else {
     // Main executables, need a zero-page segment
-    if (_context.outputFileType() == llvm::MachO::MH_EXECUTE)
+    if (_context.outputMachOType() == llvm::MachO::MH_EXECUTE)
       segmentForName("__PAGEZERO");
     // Group sections into segments.
     for (SectionInfo *si : _sectionInfos) {
@@ -442,7 +442,7 @@ void Util::layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr) {
 
 void Util::assignAddressesToSections() {
   uint64_t address = 0;  // FIXME
-  if (_context.outputFileType() != llvm::MachO::MH_OBJECT) {
+  if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
     for (SegmentInfo *seg : _segmentInfos) {
       if (seg->name.equals("__PAGEZERO")) {
         seg->size = _context.pageZeroSize();
@@ -538,7 +538,7 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
 void Util::copySections(NormalizedFile &file) {
   file.sections.reserve(_sectionInfos.size());
   // For final linked images, write sections grouped by segment.
-  if (_context.outputFileType() != llvm::MachO::MH_OBJECT) {
+  if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
     for (SegmentInfo *sgi : _segmentInfos) {
       for (SectionInfo *si : sgi->sections) {
         appendSection(si, file);
@@ -622,7 +622,7 @@ bool Util::AtomSorter::operator()(const AtomAndIndex &left,
 bool Util::belongsInGlobalSymbolsSection(const DefinedAtom* atom) {
   // ScopeLinkageUnit symbols are in globals area of symbol table
   // in object files, but in locals area for final linked images. 
-  if (_context.outputFileType() == llvm::MachO::MH_OBJECT)
+  if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)
     return (atom->scope() != Atom::scopeTranslationUnit);
   else
     return (atom->scope() == Atom::scopeGlobal);
@@ -826,7 +826,7 @@ void Util::appendReloc(const DefinedAtom *atom, const Reference *ref,
 }
 
 void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
-  if (_context.outputFileType() != llvm::MachO::MH_OBJECT)
+  if (_context.outputMachOType() != llvm::MachO::MH_OBJECT)
     return;
 
   for (SectionInfo *si : _sectionInfos) {
@@ -842,7 +842,7 @@ void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
 
 void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
                                                         NormalizedFile &nFile) {
-  if (_context.outputFileType() == llvm::MachO::MH_OBJECT)
+  if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)
     return;
 
   uint8_t segmentIndex;
@@ -918,7 +918,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   std::unique_ptr<NormalizedFile> f(new NormalizedFile());
   NormalizedFile &normFile = *f.get();
   f->arch = context.arch();
-  f->fileType = context.outputFileType();
+  f->fileType = context.outputMachOType();
   f->flags = util.fileFlags();
   util.copySegmentInfo(normFile);
   util.copySections(normFile);

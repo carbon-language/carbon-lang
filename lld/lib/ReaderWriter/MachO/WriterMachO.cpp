@@ -46,7 +46,7 @@ public:
   }
 
   bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) override {
-    if (_context.outputFileType() == llvm::MachO::MH_EXECUTE) {
+    if (_context.outputMachOType() == llvm::MachO::MH_EXECUTE) {
       // When building main executables, add _main as required entry point.
       r.emplace_back(new CRuntimeFile(_context));
     }
