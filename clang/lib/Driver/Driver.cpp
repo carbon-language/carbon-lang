@@ -419,8 +419,6 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Suppress driver output and emit preprocessor output to temp file.
   Mode = CPPMode;
   CCGenDiagnostics = true;
-  C.getArgs().AddFlagArg(nullptr,
-                         Opts->getOption(options::OPT_frewrite_includes));
 
   // Save the original job command(s).
   std::string Cmd;

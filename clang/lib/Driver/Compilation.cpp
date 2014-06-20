@@ -26,9 +26,9 @@ using namespace llvm::opt;
 
 Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
                          InputArgList *_Args, DerivedArgList *_TranslatedArgs)
-  : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
-    TranslatedArgs(_TranslatedArgs), Redirects(nullptr) {
-}
+    : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
+      TranslatedArgs(_TranslatedArgs), Redirects(nullptr),
+      ForDiagnostics(false) {}
 
 Compilation::~Compilation() {
   delete TranslatedArgs;
@@ -211,6 +211,8 @@ void Compilation::ExecuteJob(const Job &J,
 }
 
 void Compilation::initCompilationForDiagnostics() {
+  ForDiagnostics = true;
+
   // Free actions and jobs.
   DeleteContainerPointers(Actions);
   Jobs.clear();

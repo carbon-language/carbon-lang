@@ -69,6 +69,9 @@ class Compilation {
   /// Redirection for stdout, stderr, etc.
   const StringRef **Redirects;
 
+  /// Whether we're compiling for diagnostic purposes.
+  bool ForDiagnostics;
+
 public:
   Compilation(const Driver &D, const ToolChain &DefaultToolChain,
               llvm::opt::InputArgList *Args,
@@ -173,6 +176,9 @@ public:
   /// so compilation can be reexecuted to generate additional diagnostic
   /// information (e.g., preprocessed source(s)).
   void initCompilationForDiagnostics();
+
+  /// Return true if we're compiling for diagnostics.
+  bool isForDiagnostics() { return ForDiagnostics; }
 };
 
 } // end namespace driver
