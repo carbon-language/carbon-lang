@@ -1167,7 +1167,8 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.
-  Opts.Trigraphs = !Opts.GNUMode;
+  // Trigraphs are disabled by default in c++1z onwards.
+  Opts.Trigraphs = !Opts.GNUMode && !Opts.CPlusPlus1z;
 
   Opts.DollarIdents = !Opts.AsmPreprocessor;
 
