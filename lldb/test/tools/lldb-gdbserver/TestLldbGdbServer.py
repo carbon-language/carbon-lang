@@ -1670,99 +1670,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_launch()
         self.written_M_content_reads_back_correctly()
 
-    def flip_all_bits_in_each_register_value(self, reg_infos, endian):
-        self.assertIsNotNone(reg_infos)
-
-        successful_writes = 0
-        failed_writes = 0
-
-        for reg_info in reg_infos:
-            # Use the lldb register index added to the reg info.  We're not necessarily
-            # working off a full set of register infos, so an inferred register index could be wrong. 
-            reg_index = reg_info["lldb_register_index"]
-            self.assertIsNotNone(reg_index)
-
-            reg_byte_size = int(reg_info["bitsize"])/8
-            self.assertTrue(reg_byte_size > 0)
-
-            # Read the existing value.
-            self.reset_test_sequence()
-            self.test_sequence.add_log_lines(
-                ["read packet: $p{0:x}#00".format(reg_index),
-                 { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} }],
-                True)
-            context = self.expect_gdbremote_sequence()
-            self.assertIsNotNone(context)
-
-            # Verify the response length.
-            p_response = context.get("p_response")
-            self.assertIsNotNone(p_response)
-            initial_reg_value = lldbgdbserverutils.unpack_register_hex_unsigned(endian, p_response)
-
-            # Flip the value by xoring with all 1s
-            all_one_bits_raw = "ff" * (int(reg_info["bitsize"]) / 8)
-            flipped_bits_int = initial_reg_value ^ int(all_one_bits_raw, 16)
-            # print "reg (index={}, name={}): val={}, flipped bits (int={}, hex={:x})".format(reg_index, reg_info["name"], initial_reg_value, flipped_bits_int, flipped_bits_int)
-
-            # Write the flipped value to the register.
-            self.reset_test_sequence()
-            self.test_sequence.add_log_lines(
-                ["read packet: $P{0:x}={1}#00".format(reg_index, lldbgdbserverutils.pack_register_hex(endian, flipped_bits_int, byte_size=reg_byte_size)),
-                { "direction":"send", "regex":r"^\$(OK|E[0-9a-fA-F]+)#[0-9a-fA-F]{2}", "capture":{1:"P_response"} },
-                ], True)
-            context = self.expect_gdbremote_sequence()
-            self.assertIsNotNone(context)
-
-            # Determine if the write succeeded.  There are a handful of registers that can fail, or partially fail
-            # (e.g. flags, segment selectors, etc.) due to register value restrictions.  Don't worry about them
-            # all flipping perfectly.
-            P_response = context.get("P_response")
-            self.assertIsNotNone(P_response)
-            if P_response == "OK":
-                successful_writes += 1
-            else:
-                failed_writes += 1
-                # print "reg (index={}, name={}) write FAILED (error: {})".format(reg_index, reg_info["name"], P_response)
-
-            # Read back the register value, ensure it matches the flipped value.
-            if P_response == "OK":
-                self.reset_test_sequence()
-                self.test_sequence.add_log_lines(
-                    ["read packet: $p{0:x}#00".format(reg_index),
-                     { "direction":"send", "regex":r"^\$([0-9a-fA-F]+)#", "capture":{1:"p_response"} }],
-                    True)
-                context = self.expect_gdbremote_sequence()
-                self.assertIsNotNone(context)
-
-                verify_p_response_raw = context.get("p_response")
-                self.assertIsNotNone(verify_p_response_raw)
-                verify_bits = lldbgdbserverutils.unpack_register_hex_unsigned(endian, verify_p_response_raw)
-
-                if verify_bits != flipped_bits_int:
-                    # Some registers, like mxcsrmask and others, will permute what's written.  Adjust succeed/fail counts.
-                    # print "reg (index={}, name={}): read verify FAILED: wrote {:x}, verify read back {:x}".format(reg_index, reg_info["name"], flipped_bits_int, verify_bits)
-                    successful_writes -= 1
-                    failed_writes +=1
-
-        return (successful_writes, failed_writes)
-
-    def is_bit_flippable_register(self, reg_info):
-        if not reg_info:
-            return False
-        if not "set" in reg_info:
-            return False
-        if reg_info["set"] != "General Purpose Registers":
-            return False
-        if ("container-regs" in reg_info) and (len(reg_info["container-regs"]) > 0):
-            # Don't try to bit flip registers contained in another register.
-            return False
-        if re.match("^.s$", reg_info["name"]):
-            # This is a 2-letter register name that ends in "s", like a segment register.
-            # Don't try to bit flip these.
-            return False
-        # Okay, this looks fine-enough.
-        return True
-
     def P_writes_all_gpr_registers(self):
         # Start inferior debug session, grab all register info.
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["sleep:2"])
@@ -1784,7 +1691,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Pull out the register infos that we think we can bit flip successfully,.
         gpr_reg_infos = [reg_info for reg_info in reg_infos if self.is_bit_flippable_register(reg_info)]
-        self.assertIsNotNone(len(gpr_reg_infos) > 0)
+        self.assertTrue(len(gpr_reg_infos) > 0)
 
         # Write flipped bit pattern of existing value to each register.
         (successful_writes, failed_writes) = self.flip_all_bits_in_each_register_value(gpr_reg_infos, endian)
