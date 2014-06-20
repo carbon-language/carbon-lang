@@ -166,7 +166,7 @@ void *ExecutionEngineState::RemoveMapping(const GlobalValue *ToUnmap) {
 }
 
 void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   DEBUG(dbgs() << "JIT: Map \'" << GV->getName()
         << "\' to [" << Addr << "]\n";);
@@ -184,14 +184,14 @@ void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
 }
 
 void ExecutionEngine::clearAllGlobalMappings() {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   EEState.getGlobalAddressMap().clear();
   EEState.getGlobalAddressReverseMap().clear();
 }
 
 void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
     EEState.RemoveMapping(FI);
@@ -201,7 +201,7 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
 }
 
 void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   ExecutionEngineState::GlobalAddressMapTy &Map =
     EEState.getGlobalAddressMap();
@@ -228,7 +228,7 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
 }
 
 void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   ExecutionEngineState::GlobalAddressMapTy::iterator I =
     EEState.getGlobalAddressMap().find(GV);
@@ -236,7 +236,7 @@ void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
 }
 
 const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
 
   // If we haven't computed the reverse mapping yet, do so first.
   if (EEState.getGlobalAddressReverseMap().empty()) {
@@ -555,7 +555,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   if (Function *F = const_cast<Function*>(dyn_cast<Function>(GV)))
     return getPointerToFunction(F);
 
-  std::lock_guard<std::recursive_mutex> locked(lock);
+  MutexGuard locked(lock);
   if (void *P = EEState.getGlobalAddressMap()[GV])
     return P;
 
@@ -1346,7 +1346,7 @@ ExecutionEngineState::ExecutionEngineState(ExecutionEngine &EE)
   : EE(EE), GlobalAddressMap(this) {
 }
 
-std::recursive_mutex *
+sys::Mutex *
 ExecutionEngineState::AddressMapConfig::getMutex(ExecutionEngineState *EES) {
   return &EES->EE.lock;
 }

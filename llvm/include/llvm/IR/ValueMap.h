@@ -28,9 +28,9 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Support/type_traits.h"
 #include <iterator>
-#include <mutex>
 
 namespace llvm {
 
@@ -45,7 +45,7 @@ class ValueMapConstIterator;
 /// This class defines the default behavior for configurable aspects of
 /// ValueMap<>.  User Configs should inherit from this class to be as compatible
 /// as possible with future versions of ValueMap.
-template<typename KeyT, typename MutexT = std::recursive_mutex>
+template<typename KeyT, typename MutexT = sys::Mutex>
 struct ValueMapConfig {
   typedef MutexT mutex_type;
 
@@ -217,11 +217,11 @@ public:
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
-      M->lock();
+      M->acquire();
     Config::onDelete(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
     Copy.Map->Map.erase(Copy);  // Definitely destroys *this.
     if (M)
-      M->unlock();
+      M->release();
   }
   void allUsesReplacedWith(Value *new_key) override {
     assert(isa<KeySansPointerT>(new_key) &&
@@ -230,7 +230,7 @@ public:
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
-      M->lock();
+      M->acquire();
 
     KeyT typed_new_key = cast<KeySansPointerT>(new_key);
     // Can destroy *this:
@@ -246,7 +246,7 @@ public:
       }
     }
     if (M)
-      M->unlock();
+      M->release();
   }
 };
 

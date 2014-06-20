@@ -22,10 +22,10 @@
 #include "llvm/IR/ValueMap.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include <map>
-#include <mutex>
 #include <string>
 #include <vector>
 
@@ -42,6 +42,7 @@ class JITEventListener;
 class JITMemoryManager;
 class MachineCodeInfo;
 class Module;
+class MutexGuard;
 class ObjectCache;
 class RTDyldMemoryManager;
 class Triple;
@@ -58,7 +59,7 @@ class ExecutionEngineState {
 public:
   struct AddressMapConfig : public ValueMapConfig<const GlobalValue*> {
     typedef ExecutionEngineState *ExtraData;
-    static std::recursive_mutex *getMutex(ExecutionEngineState *EES);
+    static sys::Mutex *getMutex(ExecutionEngineState *EES);
     static void onDelete(ExecutionEngineState *EES, const GlobalValue *Old);
     static void onRAUW(ExecutionEngineState *, const GlobalValue *,
                        const GlobalValue *);
@@ -163,7 +164,7 @@ public:
   /// lock - This lock protects the ExecutionEngine, MCJIT, JIT, JITResolver and
   /// JITEmitter classes.  It must be held while changing the internal state of
   /// any of those classes.
-  std::recursive_mutex lock;
+  sys::Mutex lock;
 
   //===--------------------------------------------------------------------===//
   //  ExecutionEngine Startup
