@@ -60,6 +60,7 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -72,6 +73,13 @@ STATISTIC(NumFunctionsMerged, "Number of functions merged");
 STATISTIC(NumThunksWritten, "Number of thunks generated");
 STATISTIC(NumAliasesWritten, "Number of aliases generated");
 STATISTIC(NumDoubleWeak, "Number of new functions created");
+
+static cl::opt<unsigned> NumFunctionsForSanityCheck(
+    "mergefunc-sanity",
+    cl::desc("How many functions in module could be used for "
+             "MergeFunctions pass sanity check. "
+             "'0' disables this check. Works only with '-debug' key."),
+    cl::init(0), cl::Hidden);
 
 /// Returns the type id for a type to be hashed. We turn pointer types into
 /// integers here because the actual compare logic below considers pointers and
@@ -1121,6 +1129,10 @@ private:
   /// analyzed again.
   std::vector<WeakVH> Deferred;
 
+  /// Checks the rules of order relation introduced among functions set.
+  /// Returns true, if sanity check has been passed, and false if failed.
+  bool doSanityCheck(std::vector<WeakVH> &Worklist);
+
   /// Insert a ComparableFunction into the FnSet, or merge it away if it's
   /// equal to one that's already present.
   bool insert(ComparableFunction &NewF);
@@ -1172,6 +1184,80 @@ ModulePass *llvm::createMergeFunctionsPass() {
   return new MergeFunctions();
 }
 
+bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
+  if (const unsigned Max = NumFunctionsForSanityCheck) {
+    unsigned TripleNumber = 0;
+    bool Valid = true;
+
+    dbgs() << "MERGEFUNC-SANITY: Started for first " << Max << " functions.\n";
+
+    unsigned i = 0;
+    for (std::vector<WeakVH>::iterator I = Worklist.begin(), E = Worklist.end();
+         I != E && i < Max; ++I, ++i) {
+      unsigned j = i;
+      for (std::vector<WeakVH>::iterator J = I; J != E && j < Max; ++J, ++j) {
+        Function *F1 = cast<Function>(*I);
+        Function *F2 = cast<Function>(*J);
+        int Res1 = FunctionComparator(DL, F1, F2).compare();
+        int Res2 = FunctionComparator(DL, F2, F1).compare();
+
+        // If F1 <= F2, then F2 >= F1, otherwise report failure.
+        if (Res1 != -Res2) {
+          dbgs() << "MERGEFUNC-SANITY: Non-symmetric; triple: " << TripleNumber
+                 << "\n";
+          F1->dump();
+          F2->dump();
+          Valid = false;
+        }
+
+        if (Res1 == 0)
+          continue;
+
+        unsigned k = j;
+        for (std::vector<WeakVH>::iterator K = J; K != E && k < Max;
+             ++k, ++K, ++TripleNumber) {
+          if (K == J)
+            continue;
+
+          Function *F3 = cast<Function>(*K);
+          int Res3 = FunctionComparator(DL, F1, F3).compare();
+          int Res4 = FunctionComparator(DL, F2, F3).compare();
+
+          bool Transitive = true;
+
+          // F1 > F2, F2 > F3 => F1 > F3
+          if (Res1 != 0 && Res1 == Res4) {
+            Transitive = Res3 == Res1;
+          } else
+              // F1 > F3, F3 > F2 => F1 > F2
+              if (Res3 != 0 && Res3 == -Res4) {
+            Transitive = Res3 == Res1;
+          } else
+              // F2 > F3, F3 > F1 => F2 > F1
+              if (Res4 != 0 && -Res3 == Res4) {
+            Transitive = Res4 == -Res1;
+          }
+
+          if (!Transitive) {
+            dbgs() << "MERGEFUNC-SANITY: Non-transitive; triple: "
+                   << TripleNumber << "\n";
+            dbgs() << "Res1, Res3, Res4: " << Res1 << ", " << Res3 << ", "
+                   << Res4 << "\n";
+            F1->dump();
+            F2->dump();
+            F3->dump();
+            Valid = false;
+          }
+        }
+      }
+    }
+
+    dbgs() << "MERGEFUNC-SANITY: " << (Valid ? "Passed." : "Failed.") << "\n";
+    return Valid;
+  }
+  return true;
+}
+
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
@@ -1186,6 +1272,8 @@ bool MergeFunctions::runOnModule(Module &M) {
   do {
     std::vector<WeakVH> Worklist;
     Deferred.swap(Worklist);
+
+    DEBUG(doSanityCheck(Worklist));
 
     DEBUG(dbgs() << "size of module: " << M.size() << '\n');
     DEBUG(dbgs() << "size of worklist: " << Worklist.size() << '\n');
