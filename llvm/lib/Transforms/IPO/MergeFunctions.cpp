@@ -438,6 +438,18 @@ private:
   DenseMap<const Value*, int> sn_mapL, sn_mapR;
 };
 
+class FunctionPtr {
+  AssertingVH<Function> F;
+  const DataLayout *DL;
+
+public:
+  FunctionPtr(Function *F, const DataLayout *DL) : F(F), DL(DL) {}
+  Function *getFunc() const { return F; }
+  void release() { F = 0; }
+  bool operator<(const FunctionPtr &RHS) const {
+    return (FunctionComparator(DL, F, RHS.getFunc()).compare()) == -1;
+  }
+};
 }
 
 int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
@@ -1102,7 +1114,7 @@ public:
   bool runOnModule(Module &M) override;
 
 private:
-  typedef DenseSet<ComparableFunction> FnSetType;
+  typedef std::set<FunctionPtr> FnTreeType;
 
   /// A work queue of functions that may have been modified and should be
   /// analyzed again.
@@ -1112,15 +1124,15 @@ private:
   /// Returns true, if sanity check has been passed, and false if failed.
   bool doSanityCheck(std::vector<WeakVH> &Worklist);
 
-  /// Insert a ComparableFunction into the FnSet, or merge it away if it's
+  /// Insert a ComparableFunction into the FnTree, or merge it away if it's
   /// equal to one that's already present.
-  bool insert(ComparableFunction &NewF);
+  bool insert(Function *NewFunction);
 
-  /// Remove a Function from the FnSet and queue it up for a second sweep of
+  /// Remove a Function from the FnTree and queue it up for a second sweep of
   /// analysis.
   void remove(Function *F);
 
-  /// Find the functions that use this Value and remove them from FnSet and
+  /// Find the functions that use this Value and remove them from FnTree and
   /// queue the functions.
   void removeUsers(Value *V);
 
@@ -1145,7 +1157,7 @@ private:
 
   /// The set of all distinct functions. Use the insert() and remove() methods
   /// to modify it.
-  FnSetType FnSet;
+  FnTreeType FnTree;
 
   /// DataLayout for more accurate GEP comparisons. May be NULL.
   const DataLayout *DL;
@@ -1244,7 +1256,6 @@ bool MergeFunctions::runOnModule(Module &M) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
       Deferred.push_back(WeakVH(I));
   }
-  FnSet.resize(Deferred.size());
 
   do {
     std::vector<WeakVH> Worklist;
@@ -1263,8 +1274,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = cast<Function>(*I);
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           !F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, DL);
-        Changed |= insert(CF);
+        Changed |= insert(F);
       }
     }
 
@@ -1278,14 +1288,13 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = cast<Function>(*I);
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, DL);
-        Changed |= insert(CF);
+        Changed |= insert(F);
       }
     }
-    DEBUG(dbgs() << "size of FnSet: " << FnSet.size() << '\n');
+    DEBUG(dbgs() << "size of FnTree: " << FnTree.size() << '\n');
   } while (!Deferred.empty());
 
-  FnSet.clear();
+  FnTree.clear();
 
   return Changed;
 }
@@ -1464,54 +1473,57 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
   ++NumFunctionsMerged;
 }
 
-// Insert a ComparableFunction into the FnSet, or merge it away if equal to one
+// Insert a ComparableFunction into the FnTree, or merge it away if equal to one
 // that was already inserted.
-bool MergeFunctions::insert(ComparableFunction &NewF) {
-  std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
+bool MergeFunctions::insert(Function *NewFunction) {
+  std::pair<FnTreeType::iterator, bool> Result =
+      FnTree.insert(FunctionPtr(NewFunction, DL));
+
   if (Result.second) {
-    DEBUG(dbgs() << "Inserting as unique: " << NewF.getFunc()->getName() << '\n');
+    DEBUG(dbgs() << "Inserting as unique: " << NewFunction->getName() << '\n');
     return false;
   }
 
-  const ComparableFunction &OldF = *Result.first;
+  const FunctionPtr &OldF = *Result.first;
 
   // Don't merge tiny functions, since it can just end up making the function
   // larger.
   // FIXME: Should still merge them if they are unnamed_addr and produce an
   // alias.
-  if (NewF.getFunc()->size() == 1) {
-    if (NewF.getFunc()->front().size() <= 2) {
-      DEBUG(dbgs() << NewF.getFunc()->getName()
-            << " is to small to bother merging\n");
+  if (NewFunction->size() == 1) {
+    if (NewFunction->front().size() <= 2) {
+      DEBUG(dbgs() << NewFunction->getName()
+                   << " is to small to bother merging\n");
       return false;
     }
   }
 
   // Never thunk a strong function to a weak function.
-  assert(!OldF.getFunc()->mayBeOverridden() ||
-         NewF.getFunc()->mayBeOverridden());
+  assert(!OldF.getFunc()->mayBeOverridden() || NewFunction->mayBeOverridden());
 
-  DEBUG(dbgs() << "  " << OldF.getFunc()->getName() << " == "
-               << NewF.getFunc()->getName() << '\n');
+  DEBUG(dbgs() << "  " << OldF.getFunc()->getName()
+               << " == " << NewFunction->getName() << '\n');
 
-  Function *DeleteF = NewF.getFunc();
-  NewF.release();
+  Function *DeleteF = NewFunction;
   mergeTwoFunctions(OldF.getFunc(), DeleteF);
   return true;
 }
 
-// Remove a function from FnSet. If it was already in FnSet, add it to Deferred
-// so that we'll look at it in the next round.
+// Remove a function from FnTree. If it was already in FnTree, add
+// it to Deferred so that we'll look at it in the next round.
 void MergeFunctions::remove(Function *F) {
   // We need to make sure we remove F, not a function "equal" to F per the
   // function equality comparator.
-  //
-  // The special "lookup only" ComparableFunction bypasses the expensive
-  // function comparison in favour of a pointer comparison on the underlying
-  // Function*'s.
-  ComparableFunction CF = ComparableFunction(F, ComparableFunction::LookupOnly);
-  if (FnSet.erase(CF)) {
-    DEBUG(dbgs() << "Removed " << F->getName() << " from set and deferred it.\n");
+  FnTreeType::iterator found = FnTree.find(FunctionPtr(F, DL));
+  size_t Erased = 0;
+  if (found != FnTree.end() && found->getFunc() == F) {
+    Erased = 1;
+    FnTree.erase(found);
+  }
+
+  if (Erased) {
+    DEBUG(dbgs() << "Removed " << F->getName()
+                 << " from set and deferred it.\n");
     Deferred.push_back(F);
   }
 }
