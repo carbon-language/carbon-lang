@@ -92,7 +92,7 @@ void MetaMap::FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz) {
         break;
       } else if (idx & kFlagSync) {
         DCHECK(idx & kFlagSync);
-        SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
+        SyncVar *s = sync_alloc_.Map(idx & ~kFlagMask);
         u32 next = s->next;
         s->Reset();
         sync_alloc_.Free(&thr->sync_cache, idx & ~kFlagMask);
