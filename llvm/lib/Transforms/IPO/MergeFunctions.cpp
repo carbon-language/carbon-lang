@@ -1225,16 +1225,14 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
 
           bool Transitive = true;
 
-          // F1 > F2, F2 > F3 => F1 > F3
           if (Res1 != 0 && Res1 == Res4) {
+            // F1 > F2, F2 > F3 => F1 > F3
             Transitive = Res3 == Res1;
-          } else
-              // F1 > F3, F3 > F2 => F1 > F2
-              if (Res3 != 0 && Res3 == -Res4) {
+          } else if (Res3 != 0 && Res3 == -Res4) {
+            // F1 > F3, F3 > F2 => F1 > F2
             Transitive = Res3 == Res1;
-          } else
-              // F2 > F3, F3 > F1 => F2 > F1
-              if (Res4 != 0 && -Res3 == Res4) {
+          } else if (Res4 != 0 && -Res3 == Res4) {
+            // F2 > F3, F3 > F1 => F2 > F1
             Transitive = Res4 == -Res1;
           }
 
