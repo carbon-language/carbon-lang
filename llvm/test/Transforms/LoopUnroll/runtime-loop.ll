@@ -2,6 +2,12 @@
 
 ; Tests for unrolling loops with run-time trip counts
 
+; CHECK: %xtraiter = and i32 %n
+; CHECK: %lcmp.mod = icmp ne i32 %xtraiter, 0
+; CHECK: %lcmp.overflow = icmp eq i32 %n, 0
+; CHECK: %lcmp.or = or i1 %lcmp.overflow, %lcmp.mod
+; CHECK: br i1 %lcmp.or, label %unr.cmp
+
 ; CHECK: unr.cmp{{.*}}:
 ; CHECK: for.body.unr{{.*}}:
 ; CHECK: for.body:

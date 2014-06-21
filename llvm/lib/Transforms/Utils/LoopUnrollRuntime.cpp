@@ -280,17 +280,17 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   SCEVExpander Expander(*SE, "loop-unroll");
   Value *TripCount = Expander.expandCodeFor(TripCountSC, TripCountSC->getType(),
                                             PreHeaderBR);
-  Type *CountTy = TripCount->getType();
-  BinaryOperator *ModVal =
-    BinaryOperator::CreateURem(TripCount,
-                               ConstantInt::get(CountTy, Count),
-                               "xtraiter");
-  ModVal->insertBefore(PreHeaderBR);
 
-  // Check if for no extra iterations, then jump to unrolled loop
-  Value *BranchVal = new ICmpInst(PreHeaderBR,
-                                  ICmpInst::ICMP_NE, ModVal,
-                                  ConstantInt::get(CountTy, 0), "lcmp");
+  IRBuilder<> B(PreHeaderBR);
+  Value *ModVal = B.CreateAnd(TripCount, Count - 1, "xtraiter");
+
+  // Check if for no extra iterations, then jump to unrolled loop.  We have to
+  // check that the trip count computation didn't overflow when adding one to
+  // the backedge taken count.
+  Value *LCmp = B.CreateIsNotNull(ModVal, "lcmp.mod");
+  Value *OverflowCheck = B.CreateIsNull(TripCount, "lcmp.overflow");
+  Value *BranchVal = B.CreateOr(OverflowCheck, LCmp, "lcmp.or");
+
   // Branch to either the extra iterations or the unrolled loop
   // We will fix up the true branch label when adding loop body copies
   BranchInst::Create(PEnd, PEnd, BranchVal, PreHeaderBR);
@@ -344,6 +344,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
       }
 
       // The comparison w/ the extra iteration value and branch
+      Type *CountTy = TripCount->getType();
       Value *BranchVal = new ICmpInst(*NewBB, ICmpInst::ICMP_EQ, ModVal,
                                       ConstantInt::get(CountTy, leftOverIters),
                                       "un.tmp");
