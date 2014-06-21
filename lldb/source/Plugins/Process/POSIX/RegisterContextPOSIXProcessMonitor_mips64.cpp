@@ -196,7 +196,6 @@ RegisterContextPOSIXProcessMonitor_mips64::ReadAllRegisterValues(DataBufferSP &d
         if (success)
         {
             ::memcpy (dst, &m_gpr_mips64, GetGPRSize());
-            dst += GetGPRSize();
         }
     }
     return success;
