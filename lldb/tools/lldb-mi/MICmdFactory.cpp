@@ -158,19 +158,16 @@ bool CMICmdFactory::HaveAlready( const CMIUtilString & vMiCmd ) const
 //--
 bool CMICmdFactory::IsValid( const CMIUtilString & vMiCmd ) const
 {
-	bool bValid = true;
-
 	if( vMiCmd.empty() )
 	{
-		bValid = false;
 		return false;
 	}
 
 	const MIint nPos = vMiCmd.find( " " );
 	if( nPos != (MIint) std::string::npos )
-		bValid = false;
-	
-	return bValid;
+		return false;
+
+	return true;
 }
 
 //++ ------------------------------------------------------------------------------------
