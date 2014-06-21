@@ -18,6 +18,11 @@ E: tobias@grosser.es
 W: http://www.grosser.es
 D: Co-founder, design of the overall architecture
 
+N: Yabin Hu
+E: yabin.hwu@gmail.com
+D: GPGPU code generation
+D: Google Summer of Code student 2012, 2014
+
 N: Andreas Simbuerger
 E: simbuerg@fim.uni-passau.de
 W: http://www.infosun.fim.uni-passau.de/cl/staff/simbuerger/
