@@ -16,6 +16,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -1706,7 +1707,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
 
     // Fold constant phis. They may be congruent to other constant phis and
     // would confuse the logic below that expects proper IVs.
-    if (Value *V = Phi->hasConstantValue()) {
+    if (Value *V = SimplifyInstruction(Phi, SE.DL, SE.TLI, SE.DT)) {
       Phi->replaceAllUsesWith(V);
       DeadInsts.push_back(Phi);
       ++NumElim;
