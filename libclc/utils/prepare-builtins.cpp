@@ -1,4 +1,3 @@
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -13,16 +12,23 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Config/config.h"
 
-using namespace llvm;
-
 #define LLVM_350_AND_NEWER \
   (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5))
 
 #if LLVM_350_AND_NEWER
+#include <system_error>
+
 #define ERROR_CODE std::error_code
+#define UNIQUE_PTR std::unique_ptr
 #else
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/system_error.h"
+
 #define ERROR_CODE error_code
+#define UNIQUE_PTR OwningPtr
 #endif
+
+using namespace llvm;
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
@@ -41,11 +47,7 @@ int main(int argc, char **argv) {
   std::auto_ptr<Module> M;
 
   {
-#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
-    std::unique_ptr<MemoryBuffer> BufferPtr;
-#else
-    OwningPtr<MemoryBuffer> BufferPtr;
-#endif
+    UNIQUE_PTR<MemoryBuffer> BufferPtr;
     if (ERROR_CODE ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
       ErrorMessage = ec.message();
     else {
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
   }
 
   std::string ErrorInfo;
-  OwningPtr<tool_output_file> Out
+  UNIQUE_PTR<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
 #if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 4)
                         sys::fs::F_Binary));
