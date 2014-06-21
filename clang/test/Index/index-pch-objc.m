@@ -1,4 +1,4 @@
-// RUN: c-index-test -write-pch %t.pch %s
+// RUN: c-index-test -write-pch %t.pch -target x86_64-apple-darwin10 %s
 // RUN: env LIBCLANG_NOTHREADS=1 c-index-test -index-tu %t.pch | FileCheck %s
 
 @interface SomeClass
