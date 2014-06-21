@@ -57,10 +57,6 @@ protected:
                          ArrayRef<CharSourceRange> Ranges,
                          const SourceManager &SM) override {}
 
-  void emitBasicNote(StringRef Message) override {
-    Error.Notes.push_back(ClangTidyMessage(Message));
-  }
-
   void emitCodeContext(SourceLocation Loc, DiagnosticsEngine::Level Level,
                        SmallVectorImpl<CharSourceRange> &Ranges,
                        ArrayRef<FixItHint> Hints,
