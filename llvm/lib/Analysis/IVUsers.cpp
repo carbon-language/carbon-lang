@@ -287,8 +287,10 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
       OS << ")";
     }
     OS << " in  ";
-    assert(UI->getUser() != nullptr && "Expected non-null User");
-    UI->getUser()->print(OS);
+    if (UI->getUser())
+      UI->getUser()->print(OS);
+    else
+      OS << "Printing <null> User";
     OS << '\n';
   }
 }

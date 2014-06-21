@@ -603,8 +603,10 @@ namespace {
     bool runOnSCC(CallGraphSCC &SCC) override {
       Out << Banner;
       for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-        assert((*I)->getFunction() && "Expecting non-null Function");
-        (*I)->getFunction()->print(Out);
+        if ((*I)->getFunction())
+          (*I)->getFunction()->print(Out);
+        else
+          Out << "Printing <null> Function";
       }
       return false;
     }
