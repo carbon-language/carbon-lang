@@ -6,7 +6,9 @@ __int16 x2 = 4i16;
 __int32 x3 = 5i32;
 __int64 x5 = 0x42i64;
 __int64 x6 = 0x42I64;
+#ifdef __SIZEOF_INT128__
 __int64 x4 = 70000000i128;
+#endif
 
 __int64 y = 0x42i64u;  // expected-error {{invalid suffix}}
 __int64 w = 0x43ui64; 
