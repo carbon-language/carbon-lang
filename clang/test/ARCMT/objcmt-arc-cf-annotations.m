@@ -528,38 +528,54 @@ void f15() {
   CFRelease(*B);  // no-warning
 }
 
-// Test when we pass NULL to CFRetain/CFRelease/CFMakeCollectable.
+// Test when we pass NULL to CFRetain/CFRelease/CFMakeCollectable/CFAutorelease.
 void f16(int x, CFTypeRef p) {
   if (p)
     return;
 
-  if (x > 0) {
-    CFRelease(p); // expected-warning{{Null pointer argument in call to CFRelease}}
-  }
-  else if (x < 0) {
-    CFRetain(p); // expected-warning{{Null pointer argument in call to CFRetain}}
-  }
-  else {
-    CFMakeCollectable(p); // expected-warning{{Null pointer argument in call to CFMakeCollectable}}
+  switch (x) {
+  case 0:
+    CFRelease(p);
+    break;
+  case 1:
+    CFRetain(p);
+    break;
+  case 2:
+    CFMakeCollectable(p);
+    break;
+  case 3:
+    CFAutorelease(p);
+    break;
+  default:
+    break;
   }
 }
 
-// Test that an object is non-null after being CFRetained/CFReleased.
+// Test that an object is non-null after CFRetain/CFRelease/CFMakeCollectable/CFAutorelease.
 void f17(int x, CFTypeRef p) {
-  if (x > 0) {
+  switch (x) {
+  case 0:
     CFRelease(p);
     if (!p)
       CFRelease(0); // no-warning
-  }
-  else if (x < 0) {
+    break;
+  case 1:
     CFRetain(p);
     if (!p)
       CFRetain(0); // no-warning
-  }
-  else {
+    break;
+  case 2:
     CFMakeCollectable(p);
     if (!p)
       CFMakeCollectable(0); // no-warning
+    break;
+  case 3:
+    CFAutorelease(p);
+    if (!p)
+      CFAutorelease(0); // no-warning
+    break;
+  default:
+    break;
   }
 }
 

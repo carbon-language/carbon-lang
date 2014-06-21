@@ -542,7 +542,7 @@ static void CreateRefUndef(SCDynamicStoreRef *storeRef, unsigned x) {
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Null pointer argument in call to CFRelease</string>
 // CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
-// CHECK-NEXT:    <key>type</key><string>null passed to CFRetain/CFRelease/CFMakeCollectable</string>
+// CHECK-NEXT:    <key>type</key><string>null passed to CF memory management function</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>

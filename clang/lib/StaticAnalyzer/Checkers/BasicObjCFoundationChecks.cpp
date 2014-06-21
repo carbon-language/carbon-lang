@@ -523,16 +523,17 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 }
 
 //===----------------------------------------------------------------------===//
-// CFRetain/CFRelease/CFMakeCollectable checking for null arguments.
+// CFRetain/CFRelease/CFMakeCollectable/CFAutorelease checking for null arguments.
 //===----------------------------------------------------------------------===//
 
 namespace {
 class CFRetainReleaseChecker : public Checker< check::PreStmt<CallExpr> > {
   mutable std::unique_ptr<APIMisuse> BT;
-  mutable IdentifierInfo *Retain, *Release, *MakeCollectable;
+  mutable IdentifierInfo *Retain, *Release, *MakeCollectable, *Autorelease;
 public:
   CFRetainReleaseChecker()
-      : Retain(nullptr), Release(nullptr), MakeCollectable(nullptr) {}
+      : Retain(nullptr), Release(nullptr), MakeCollectable(nullptr),
+        Autorelease(nullptr) {}
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } // end anonymous namespace
@@ -554,13 +555,15 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     Retain = &Ctx.Idents.get("CFRetain");
     Release = &Ctx.Idents.get("CFRelease");
     MakeCollectable = &Ctx.Idents.get("CFMakeCollectable");
+    Autorelease = &Ctx.Idents.get("CFAutorelease");
     BT.reset(new APIMisuse(
-        this, "null passed to CFRetain/CFRelease/CFMakeCollectable"));
+        this, "null passed to CF memory management function"));
   }
 
-  // Check if we called CFRetain/CFRelease/CFMakeCollectable.
+  // Check if we called CFRetain/CFRelease/CFMakeCollectable/CFAutorelease.
   const IdentifierInfo *FuncII = FD->getIdentifier();
-  if (!(FuncII == Retain || FuncII == Release || FuncII == MakeCollectable))
+  if (!(FuncII == Retain || FuncII == Release || FuncII == MakeCollectable ||
+        FuncII == Autorelease))
     return;
 
   // FIXME: The rest of this just checks that the argument is non-null.
@@ -597,6 +600,8 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
       description = "Null pointer argument in call to CFRelease";
     else if (FuncII == MakeCollectable)
       description = "Null pointer argument in call to CFMakeCollectable";
+    else if (FuncII == Autorelease)
+      description = "Null pointer argument in call to CFAutorelease";
     else
       llvm_unreachable("impossible case");
 
