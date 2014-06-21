@@ -545,6 +545,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::BUILD_VECTOR:      SplitVecRes_BUILD_VECTOR(N, Lo, Hi); break;
   case ISD::CONCAT_VECTORS:    SplitVecRes_CONCAT_VECTORS(N, Lo, Hi); break;
   case ISD::EXTRACT_SUBVECTOR: SplitVecRes_EXTRACT_SUBVECTOR(N, Lo, Hi); break;
+  case ISD::INSERT_SUBVECTOR:  SplitVecRes_INSERT_SUBVECTOR(N, Lo, Hi); break;
   case ISD::FP_ROUND_INREG:    SplitVecRes_InregOp(N, Lo, Hi); break;
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
@@ -763,6 +764,43 @@ void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
   Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HiVT, Vec,
                    DAG.getConstant(IdxVal + LoVT.getVectorNumElements(),
                                    TLI.getVectorIdxTy()));
+}
+
+void DAGTypeLegalizer::SplitVecRes_INSERT_SUBVECTOR(SDNode *N, SDValue &Lo,
+                                                    SDValue &Hi) {
+  SDValue Vec = N->getOperand(0);
+  SDValue SubVec = N->getOperand(1);
+  SDValue Idx = N->getOperand(2);
+  SDLoc dl(N);
+  GetSplitVector(Vec, Lo, Hi);
+
+  // Spill the vector to the stack.
+  EVT VecVT = Vec.getValueType();
+  EVT SubVecVT = VecVT.getVectorElementType();
+  SDValue StackPtr = DAG.CreateStackTemporary(VecVT);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr,
+                               MachinePointerInfo(), false, false, 0);
+
+  // Store the new subvector into the specified index.
+  SDValue SubVecPtr = GetVectorElementPointer(StackPtr, SubVecVT, Idx);
+  Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
+  unsigned Alignment = TLI.getDataLayout()->getPrefTypeAlignment(VecType);
+  Store = DAG.getStore(Store, dl, SubVec, SubVecPtr, MachinePointerInfo(),
+                       false, false, 0);
+
+  // Load the Lo part from the stack slot.
+  Lo = DAG.getLoad(Lo.getValueType(), dl, Store, StackPtr, MachinePointerInfo(),
+                   false, false, false, 0);
+
+  // Increment the pointer to the other part.
+  unsigned IncrementSize = Lo.getValueType().getSizeInBits() / 8;
+  StackPtr =
+      DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
+                  DAG.getConstant(IncrementSize, StackPtr.getValueType()));
+
+  // Load the Hi part from the stack slot.
+  Hi = DAG.getLoad(Hi.getValueType(), dl, Store, StackPtr, MachinePointerInfo(),
+                   false, false, false, MinAlign(Alignment, IncrementSize));
 }
 
 void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDValue &Lo,
