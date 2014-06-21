@@ -42,7 +42,7 @@
 #define LOCAL_LABEL(name) .L ## name
 #define SYMBOL_IS_FUNC(name)                                                   \
   .def name SEPARATOR                                                          \
-    .scl 3 SEPARATOR                                                           \
+    .scl 2 SEPARATOR                                                           \
     .type 32 SEPARATOR                                                         \
   .endef
 #define FILE_LEVEL_DIRECTIVE
