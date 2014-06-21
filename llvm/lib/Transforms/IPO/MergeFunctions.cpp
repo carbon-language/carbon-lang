@@ -167,14 +167,14 @@ class FunctionComparator {
 public:
   FunctionComparator(const DataLayout *DL, const Function *F1,
                      const Function *F2)
-    : F1(F1), F2(F2), DL(DL) {}
+      : FnL(F1), FnR(F2), DL(DL) {}
 
   /// Test whether the two functions have equivalent behaviour.
-  bool compare();
+  int compare();
 
 private:
   /// Test whether two basic blocks have equivalent behaviour.
-  bool compare(const BasicBlock *BB1, const BasicBlock *BB2);
+  int compare(const BasicBlock *BBL, const BasicBlock *BBR);
 
   /// Constants comparison.
   /// Its analog to lexicographical comparison between hypothetical numbers
@@ -411,7 +411,7 @@ private:
   int cmpAttrs(const AttributeSet L, const AttributeSet R) const;
 
   // The two functions undergoing comparison.
-  const Function *F1, *F2;
+  const Function *FnL, *FnR;
 
   const DataLayout *DL;
 
@@ -922,13 +922,13 @@ int FunctionComparator::cmpGEP(const GEPOperator *GEPL,
 /// See comments in declaration for more details.
 int FunctionComparator::cmpValues(const Value *L, const Value *R) {
   // Catch self-reference case.
-  if (L == F1) {
-    if (R == F2)
+  if (L == FnL) {
+    if (R == FnR)
       return 0;
     return -1;
   }
-  if (R == F2) {
-    if (L == F1)
+  if (R == FnR) {
+    if (L == FnL)
       return 0;
     return 1;
   }
@@ -962,90 +962,102 @@ int FunctionComparator::cmpValues(const Value *L, const Value *R) {
   return cmpNumbers(LeftSN.first->second, RightSN.first->second);
 }
 // Test whether two basic blocks have equivalent behaviour.
-bool FunctionComparator::compare(const BasicBlock *BB1, const BasicBlock *BB2) {
-  BasicBlock::const_iterator F1I = BB1->begin(), F1E = BB1->end();
-  BasicBlock::const_iterator F2I = BB2->begin(), F2E = BB2->end();
+int FunctionComparator::compare(const BasicBlock *BBL, const BasicBlock *BBR) {
+  BasicBlock::const_iterator InstL = BBL->begin(), InstLE = BBL->end();
+  BasicBlock::const_iterator InstR = BBR->begin(), InstRE = BBR->end();
 
   do {
-    if (!enumerate(F1I, F2I))
-      return false;
+    if (int Res = cmpValues(InstL, InstR))
+      return Res;
 
-    if (const GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(F1I)) {
-      const GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(F2I);
-      if (!GEP2)
-        return false;
+    const GetElementPtrInst *GEPL = dyn_cast<GetElementPtrInst>(InstL);
+    const GetElementPtrInst *GEPR = dyn_cast<GetElementPtrInst>(InstR);
 
-      if (!enumerate(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
-        return false;
+    if (GEPL && !GEPR)
+      return 1;
+    if (GEPR && !GEPL)
+      return -1;
 
-      if (!isEquivalentGEP(GEP1, GEP2))
-        return false;
+    if (GEPL && GEPR) {
+      if (int Res =
+              cmpValues(GEPL->getPointerOperand(), GEPR->getPointerOperand()))
+        return Res;
+      if (int Res = cmpGEP(GEPL, GEPR))
+        return Res;
     } else {
-      if (!isEquivalentOperation(F1I, F2I))
-        return false;
+      if (int Res = cmpOperation(InstL, InstR))
+        return Res;
+      assert(InstL->getNumOperands() == InstR->getNumOperands());
 
-      assert(F1I->getNumOperands() == F2I->getNumOperands());
-      for (unsigned i = 0, e = F1I->getNumOperands(); i != e; ++i) {
-        Value *OpF1 = F1I->getOperand(i);
-        Value *OpF2 = F2I->getOperand(i);
-
-        if (!enumerate(OpF1, OpF2))
-          return false;
-
-        if (OpF1->getValueID() != OpF2->getValueID() ||
-            !isEquivalentType(OpF1->getType(), OpF2->getType()))
-          return false;
+      for (unsigned i = 0, e = InstL->getNumOperands(); i != e; ++i) {
+        Value *OpL = InstL->getOperand(i);
+        Value *OpR = InstR->getOperand(i);
+        if (int Res = cmpValues(OpL, OpR))
+          return Res;
+        if (int Res = cmpNumbers(OpL->getValueID(), OpR->getValueID()))
+          return Res;
+        // TODO: Already checked in cmpOperation
+        if (int Res = cmpType(OpL->getType(), OpR->getType()))
+          return Res;
       }
     }
 
-    ++F1I, ++F2I;
-  } while (F1I != F1E && F2I != F2E);
+    ++InstL, ++InstR;
+  } while (InstL != InstLE && InstR != InstRE);
 
-  return F1I == F1E && F2I == F2E;
+  if (InstL != InstLE && InstR == InstRE)
+    return 1;
+  if (InstL == InstLE && InstR != InstRE)
+    return -1;
+  return 0;
 }
 
 // Test whether the two functions have equivalent behaviour.
-bool FunctionComparator::compare() {
-  // We need to recheck everything, but check the things that weren't included
-  // in the hash first.
+int FunctionComparator::compare() {
 
   sn_mapL.clear();
   sn_mapR.clear();
 
-  if (F1->getAttributes() != F2->getAttributes())
-    return false;
+  if (int Res = cmpAttrs(FnL->getAttributes(), FnR->getAttributes()))
+    return Res;
 
-  if (F1->hasGC() != F2->hasGC())
-    return false;
+  if (int Res = cmpNumbers(FnL->hasGC(), FnR->hasGC()))
+    return Res;
 
-  if (F1->hasGC() && F1->getGC() != F2->getGC())
-    return false;
+  if (FnL->hasGC()) {
+    if (int Res = cmpNumbers((uint64_t)FnL->getGC(), (uint64_t)FnR->getGC()))
+      return Res;
+  }
 
-  if (F1->hasSection() != F2->hasSection())
-    return false;
+  if (int Res = cmpNumbers(FnL->hasSection(), FnR->hasSection()))
+    return Res;
 
-  if (F1->hasSection() && F1->getSection() != F2->getSection())
-    return false;
+  if (FnL->hasSection()) {
+    if (int Res = cmpStrings(FnL->getSection(), FnR->getSection()))
+      return Res;
+  }
 
-  if (F1->isVarArg() != F2->isVarArg())
-    return false;
+  if (int Res = cmpNumbers(FnL->isVarArg(), FnR->isVarArg()))
+    return Res;
 
   // TODO: if it's internal and only used in direct calls, we could handle this
   // case too.
-  if (F1->getCallingConv() != F2->getCallingConv())
-    return false;
+  if (int Res = cmpNumbers(FnL->getCallingConv(), FnR->getCallingConv()))
+    return Res;
 
-  if (!isEquivalentType(F1->getFunctionType(), F2->getFunctionType()))
-    return false;
+  if (int Res = cmpType(FnL->getFunctionType(), FnR->getFunctionType()))
+    return Res;
 
-  assert(F1->arg_size() == F2->arg_size() &&
+  assert(FnL->arg_size() == FnR->arg_size() &&
          "Identically typed functions have different numbers of args!");
 
   // Visit the arguments so that they get enumerated in the order they're
   // passed in.
-  for (Function::const_arg_iterator f1i = F1->arg_begin(),
-         f2i = F2->arg_begin(), f1e = F1->arg_end(); f1i != f1e; ++f1i, ++f2i) {
-    if (!enumerate(f1i, f2i))
+  for (Function::const_arg_iterator ArgLI = FnL->arg_begin(),
+                                    ArgRI = FnR->arg_begin(),
+                                    ArgLE = FnL->arg_end();
+       ArgLI != ArgLE; ++ArgLI, ++ArgRI) {
+    if (cmpValues(ArgLI, ArgRI) != 0)
       llvm_unreachable("Arguments repeat!");
   }
 
@@ -1053,33 +1065,36 @@ bool FunctionComparator::compare() {
   // linked list is immaterial. Our walk starts at the entry block for both
   // functions, then takes each block from each terminator in order. As an
   // artifact, this also means that unreachable blocks are ignored.
-  SmallVector<const BasicBlock *, 8> F1BBs, F2BBs;
+  SmallVector<const BasicBlock *, 8> FnLBBs, FnRBBs;
   SmallSet<const BasicBlock *, 128> VisitedBBs; // in terms of F1.
 
-  F1BBs.push_back(&F1->getEntryBlock());
-  F2BBs.push_back(&F2->getEntryBlock());
+  FnLBBs.push_back(&FnL->getEntryBlock());
+  FnRBBs.push_back(&FnR->getEntryBlock());
 
-  VisitedBBs.insert(F1BBs[0]);
-  while (!F1BBs.empty()) {
-    const BasicBlock *F1BB = F1BBs.pop_back_val();
-    const BasicBlock *F2BB = F2BBs.pop_back_val();
+  VisitedBBs.insert(FnLBBs[0]);
+  while (!FnLBBs.empty()) {
+    const BasicBlock *BBL = FnLBBs.pop_back_val();
+    const BasicBlock *BBR = FnRBBs.pop_back_val();
 
-    if (!enumerate(F1BB, F2BB) || !compare(F1BB, F2BB))
-      return false;
+    if (int Res = cmpValues(BBL, BBR))
+      return Res;
 
-    const TerminatorInst *F1TI = F1BB->getTerminator();
-    const TerminatorInst *F2TI = F2BB->getTerminator();
+    if (int Res = compare(BBL, BBR))
+      return Res;
 
-    assert(F1TI->getNumSuccessors() == F2TI->getNumSuccessors());
-    for (unsigned i = 0, e = F1TI->getNumSuccessors(); i != e; ++i) {
-      if (!VisitedBBs.insert(F1TI->getSuccessor(i)))
+    const TerminatorInst *TermL = BBL->getTerminator();
+    const TerminatorInst *TermR = BBR->getTerminator();
+
+    assert(TermL->getNumSuccessors() == TermR->getNumSuccessors());
+    for (unsigned i = 0, e = TermL->getNumSuccessors(); i != e; ++i) {
+      if (!VisitedBBs.insert(TermL->getSuccessor(i)))
         continue;
 
-      F1BBs.push_back(F1TI->getSuccessor(i));
-      F2BBs.push_back(F2TI->getSuccessor(i));
+      FnLBBs.push_back(TermL->getSuccessor(i));
+      FnRBBs.push_back(TermR->getSuccessor(i));
     }
   }
-  return true;
+  return 0;
 }
 
 namespace {
@@ -1226,8 +1241,8 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
   assert(LHS.getDataLayout() == RHS.getDataLayout() &&
          "Comparing functions for different targets");
 
-  return FunctionComparator(LHS.getDataLayout(), LHS.getFunc(),
-                            RHS.getFunc()).compare();
+  return FunctionComparator(LHS.getDataLayout(), LHS.getFunc(), RHS.getFunc())
+             .compare() == 0;
 }
 
 // Replace direct callers of Old with New.
