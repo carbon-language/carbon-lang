@@ -479,14 +479,7 @@ bool RelocationPass<ELFT>::requireCopy(Reference &ref) {
   if (!_hasStaticRelocations.count(ref.target()))
     return false;
   const auto *sa = dyn_cast<ELFDynamicAtom<ELFT>>(ref.target());
-  if (sa && sa->type() != SharedLibraryAtom::Type::Data)
-    return false;
-  const auto *da = dyn_cast<ELFDefinedAtom<ELFT>>(ref.target());
-  if (da && da->contentType() != DefinedAtom::typeData)
-    return false;
-  if (isLocalCall(ref.target()))
-    return false;
-  return true;
+  return sa && sa->type() == SharedLibraryAtom::Type::Data;
 }
 
 template <typename ELFT>
