@@ -308,10 +308,6 @@ private:
   ///          see comments for sn_mapL and sn_mapR.
   int cmpValues(const Value *L, const Value *R);
 
-  bool enumerate(const Value *V1, const Value *V2) {
-    return cmpValues(V1, V2) == 0;
-  }
-
   /// Compare two Instructions for equivalence, similar to
   /// Instruction::isSameOperationAs but with modifications to the type
   /// comparison.
@@ -338,11 +334,6 @@ private:
   /// strings for particular instruction, and could change sometimes.
   int cmpOperation(const Instruction *L, const Instruction *R) const;
 
-  bool isEquivalentOperation(const Instruction *I1,
-                             const Instruction *I2) const {
-    return cmpOperation(I1, I2) == 0;
-  }
-
   /// Compare two GEPs for equivalent pointer arithmetic.
   /// Parts to be compared for each comparison stage,
   /// most significant stage first:
@@ -355,14 +346,6 @@ private:
   int cmpGEP(const GEPOperator *GEPL, const GEPOperator *GEPR);
   int cmpGEP(const GetElementPtrInst *GEPL, const GetElementPtrInst *GEPR) {
     return cmpGEP(cast<GEPOperator>(GEPL), cast<GEPOperator>(GEPR));
-  }
-
-  bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2) {
-    return cmpGEP(GEP1, GEP2) == 0;
-  }
-  bool isEquivalentGEP(const GetElementPtrInst *GEP1,
-                       const GetElementPtrInst *GEP2) {
-    return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
   }
 
   /// cmpType - compares two types,
@@ -406,10 +389,6 @@ private:
   /// Otherwise return 0.
   /// 6. For all other cases put llvm_unreachable.
   int cmpType(Type *TyL, Type *TyR) const;
-
-  bool isEquivalentType(Type *Ty1, Type *Ty2) const {
-    return cmpType(Ty1, Ty2) == 0;
-  }
 
   int cmpNumbers(uint64_t L, uint64_t R) const;
 
