@@ -1881,7 +1881,9 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false) == PacketResult::Success)
         {
-            if (!response.IsErrorResponse())
+            if (response.IsUnsupportedResponse())
+                m_supports_alloc_dealloc_memory = eLazyBoolNo;
+            else if (!response.IsErrorResponse())
                 return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
         }
         else
@@ -1904,7 +1906,9 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false) == PacketResult::Success)
         {
-            if (response.IsOKResponse())
+            if (response.IsUnsupportedResponse())
+                m_supports_alloc_dealloc_memory = eLazyBoolNo;
+            else if (response.IsOKResponse())
                 return true;
         }
         else
