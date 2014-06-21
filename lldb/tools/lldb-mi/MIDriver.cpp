@@ -590,9 +590,6 @@ bool CMIDriver::ReadStdinLineQueue( void )
 		// Draw prompt if desired
 		if( bOk && m_rStdin.GetEnablePrompt() )
 			m_rStdOut.WriteMIResponse( m_rStdin.GetPrompt() );
-
-		// Input has been processed
-		bHaveInput = false;
 	}
 	else
 	{
