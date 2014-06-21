@@ -3190,7 +3190,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
     // may be wider than [u]intmax_t.
     // FIXME: Actually, they don't. We seem to have accidentally invented the
     //        i128 suffix.
-    if (Literal.MicrosoftInteger && MaxWidth < 128 &&
+    if (Literal.isMicrosoftInteger && MaxWidth < 128 &&
         Context.getTargetInfo().hasInt128Type())
       MaxWidth = 128;
     llvm::APInt ResultVal(MaxWidth, 0);
@@ -3211,18 +3211,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
 
       // Check from smallest to largest, picking the smallest type we can.
       unsigned Width = 0;
-
-      // Microsoft specific integer suffixes are explicitly sized.
-      if (Literal.MicrosoftInteger) {
-        Width = Literal.MicrosoftInteger;
-        if (Width < 128)
-          Ty = Context.getIntTypeForBitwidth(Width,
-                                             /*Signed=*/!Literal.isUnsigned);
-        else
-          Ty = Literal.isUnsigned ? Context.UnsignedInt128Ty : Context.Int128Ty;
-      }
-
-      if (Ty.isNull() && !Literal.isLong && !Literal.isLongLong) {
+      if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
         unsigned IntSize = Context.getTargetInfo().getIntWidth();
 
@@ -3268,6 +3257,17 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
             Ty = Context.UnsignedLongLongTy;
           Width = LongLongSize;
         }
+      }
+        
+      // If it doesn't fit in unsigned long long, and we're using Microsoft
+      // extensions, then its a 128-bit integer literal.
+      if (Ty.isNull() && Literal.isMicrosoftInteger &&
+          Context.getTargetInfo().hasInt128Type()) {
+        if (Literal.isUnsigned)
+          Ty = Context.UnsignedInt128Ty;
+        else
+          Ty = Context.Int128Ty;
+        Width = 128;
       }
 
       // If we still couldn't decide a type, we probably have something that

@@ -947,10 +947,8 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   // FIXME: The Short and UShort cases are to handle cases where a short
   // integeral literal is formed during template instantiation.  They should
   // be removed when template instantiation no longer needs integer literals.
-  case BuiltinType::SChar:     OS << "i8"; break;
-  case BuiltinType::UChar:     OS << "Ui8"; break;
-  case BuiltinType::Short:     OS << "i16"; break;
-  case BuiltinType::UShort:    OS << "Ui16"; break;
+  case BuiltinType::Short:
+  case BuiltinType::UShort:
   case BuiltinType::Int:       break; // no suffix.
   case BuiltinType::UInt:      OS << 'U'; break;
   case BuiltinType::Long:      OS << 'L'; break;

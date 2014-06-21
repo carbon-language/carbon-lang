@@ -134,8 +134,6 @@ PrintedStmtCXX11Matches(StringRef Code, const StatementMatcher &NodeMatch,
                                               StringRef ContainingFunction,
                                               StringRef ExpectedPrinted) {
   std::vector<std::string> Args;
-  Args.push_back("-target");
-  Args.push_back("i686-pc-win32");
   Args.push_back("-std=c++98");
   Args.push_back("-fms-extensions");
   Args.push_back("-Wno-unused-value");
@@ -171,9 +169,9 @@ TEST(StmtPrinter, TestMSIntegerLiteral) {
     "  1i64, -1i64, 1ui64;"
     "}",
     "A",
-    "1i8 , -1i8 , 1Ui8 , "
-    "1i16 , -1i16 , 1Ui16 , "
     "1 , -1 , 1U , "
+    "1 , -1 , 1U , "
+    "1L , -1L , 1UL , "
     "1LL , -1LL , 1ULL"));
     // Should be: with semicolon
 }

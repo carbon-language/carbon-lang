@@ -522,7 +522,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
   isLongLong = false;
   isFloat = false;
   isImaginary = false;
-  MicrosoftInteger = 0;
+  isMicrosoftInteger = false;
   hadError = false;
 
   if (*s == '0') { // parse radix
@@ -606,8 +606,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
     case 'i':
     case 'I':
       if (PP.getLangOpts().MicrosoftExt) {
-        if (isLong || isLongLong || MicrosoftInteger)
-          break;
+        if (isLong || isLongLong) break;
 
         // Allow i8, i16, i32, i64, and i128.
         if (s + 1 != ThisTokEnd) {
@@ -615,20 +614,20 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
             case '8':
               if (isFPConstant) break;
               s += 2; // i8 suffix
-              MicrosoftInteger = 8;
+              isMicrosoftInteger = true;
               break;
             case '1':
               if (isFPConstant) break;
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '6') {
                 s += 3; // i16 suffix
-                MicrosoftInteger = 16;
+                isMicrosoftInteger = true;
               }
               else if (s[2] == '2') {
                 if (s + 3 == ThisTokEnd) break;
                 if (s[3] == '8') {
                   s += 4; // i128 suffix
-                  MicrosoftInteger = 128;
+                  isMicrosoftInteger = true;
                 }
               }
               break;
@@ -637,7 +636,8 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '2') {
                 s += 3; // i32 suffix
-                MicrosoftInteger = 32;
+                isLong = true;
+                isMicrosoftInteger = true;
               }
               break;
             case '6':
@@ -645,13 +645,14 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
               if (s + 2 == ThisTokEnd) break;
               if (s[2] == '4') {
                 s += 3; // i64 suffix
-                MicrosoftInteger = 64;
+                isLongLong = true;
+                isMicrosoftInteger = true;
               }
               break;
             default:
               break;
           }
-          if (MicrosoftInteger)
+          if (isMicrosoftInteger)
             break;
         }
       }
@@ -681,7 +682,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
       isLongLong = false;
       isFloat = false;
       isImaginary = false;
-      MicrosoftInteger = 0;
+      isMicrosoftInteger = false;
 
       saw_ud_suffix = true;
       return;
