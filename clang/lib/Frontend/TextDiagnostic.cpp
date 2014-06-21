@@ -870,12 +870,6 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
   OS << ' ';
 }
 
-void TextDiagnostic::emitBasicNote(StringRef Message) {
-  // FIXME: Emit this as a real note diagnostic.
-  // FIXME: Format an actual diagnostic rather than a hard coded string.
-  OS << "note: " << Message << "\n";
-}
-
 void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
                                          PresumedLoc PLoc,
                                          const SourceManager &SM) {

@@ -83,9 +83,7 @@ protected:
                                  DiagnosticsEngine::Level Level,
                                  ArrayRef<CharSourceRange> Ranges,
                                  const SourceManager &SM) = 0;
-  
-  virtual void emitBasicNote(StringRef Message) = 0;
-  
+
   virtual void emitCodeContext(SourceLocation Loc,
                                DiagnosticsEngine::Level Level,
                                SmallVectorImpl<CharSourceRange>& Ranges,
@@ -108,6 +106,7 @@ protected:
 
   
 private:
+  void emitBasicNote(StringRef Message);
   void emitIncludeStack(SourceLocation Loc, PresumedLoc PLoc,
                         DiagnosticsEngine::Level Level, const SourceManager &SM);
   void emitIncludeStackRecursively(SourceLocation Loc, const SourceManager &SM);
@@ -158,8 +157,6 @@ public:
     : DiagnosticRenderer(LangOpts, DiagOpts) {}
   
   virtual ~DiagnosticNoteRenderer();
-
-  void emitBasicNote(StringRef Message) override;
 
   void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
                            const SourceManager &SM) override;

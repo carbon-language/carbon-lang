@@ -95,8 +95,6 @@ protected:
     emitSnippetAndCaret(Loc, Level, Ranges, Hints, SM);
   }
 
-  void emitBasicNote(StringRef Message) override;
-
   void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
                            const SourceManager &SM) override;
 
