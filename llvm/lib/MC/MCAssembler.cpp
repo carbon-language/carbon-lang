@@ -27,6 +27,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCSectionELF.h"
 #include <tuple>
 using namespace llvm;
 
@@ -782,8 +783,13 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
         assert(DF.fixup_begin() == DF.fixup_end() &&
                "Cannot have fixups in virtual section!");
         for (unsigned i = 0, e = DF.getContents().size(); i != e; ++i)
-          assert(DF.getContents()[i] == 0 &&
-                 "Invalid data value for virtual section!");
+          if (DF.getContents()[i]) {
+            if (auto *ELFSec = dyn_cast<const MCSectionELF>(&SD->getSection()))
+              report_fatal_error("non-zero initializer found in section '" +
+                  ELFSec->getSectionName() + "'");
+            else
+              report_fatal_error("non-zero initializer found in virtual section");
+          }
         break;
       }
       case MCFragment::FT_Align:
