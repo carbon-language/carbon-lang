@@ -1166,10 +1166,6 @@ class Cursor(Structure):
     @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
-        if not self.kind.is_declaration():
-            # FIXME: clang_getCursorSpelling should be fixed to not assert on
-            # this, for consistency with clang_getCursorUSR.
-            return None
         if not hasattr(self, '_spelling'):
             self._spelling = conf.lib.clang_getCursorSpelling(self)
 
