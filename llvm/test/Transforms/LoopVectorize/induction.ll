@@ -135,3 +135,37 @@ define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 ; <label>:5                                       ; preds = %1
   ret i32 %2
 }
+
+; When generating the overflow check we must sure that the induction start value
+; is defined before the branch to the scalar preheader.
+
+; CHECK-LABEL: testoverflowcheck
+; CHECK: entry
+; CHECK: %[[LOAD:.*]] = load i8
+; CHECK: %[[VAL:.*]] =  zext i8 %[[LOAD]] to i32
+; CHECK: br
+
+; CHECK: scalar.ph
+; CHECK: phi i32 [ %{{.*}}, %middle.block ], [ %[[VAL]], %entry ]
+
+@e = global i8 1, align 1
+@d = common global i32 0, align 4
+@c = common global i32 0, align 4
+define i32 @testoverflowcheck() {
+entry:
+  %.pr.i = load i8* @e, align 1
+  %0 = load i32* @d, align 4
+  %c.promoted.i = load i32* @c, align 4
+  br label %cond.end.i
+
+cond.end.i:
+  %inc4.i = phi i8 [ %.pr.i, %entry ], [ %inc.i, %cond.end.i ]
+  %and3.i = phi i32 [ %c.promoted.i, %entry ], [ %and.i, %cond.end.i ]
+  %and.i = and i32 %0, %and3.i
+  %inc.i = add i8 %inc4.i, 1
+  %tobool.i = icmp eq i8 %inc.i, 0
+  br i1 %tobool.i, label %loopexit, label %cond.end.i
+
+loopexit:
+  ret i32 %and.i
+}

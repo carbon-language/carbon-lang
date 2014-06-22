@@ -1987,10 +1987,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
                       Constant::getAllOnesValue(BackedgeCount->getType()),
                       "backedge.overflow", BypassBlock->getTerminator());
 
-  // Count holds the overall loop count (N).
-  Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
-                                   BypassBlock->getTerminator());
-
   // The loop index does not have to start at Zero. Find the original start
   // value from the induction PHI node. If we don't have an induction variable
   // then we know that it starts at zero.
@@ -1999,6 +1995,18 @@ void InnerLoopVectorizer::createEmptyLoop() {
     Builder.CreateZExt(OldInduction->getIncomingValueForBlock(BypassBlock),
                        IdxTy):
     ConstantInt::get(IdxTy, 0);
+
+  // We need an instruction to anchor the overflow check on. StartIdx needs to
+  // be defined before the overflow check branch. Because the scalar preheader
+  // is going to merge the start index and so the overflow branch block needs to
+  // contain a definition of the start index.
+  Instruction *OverflowCheckAnchor = BinaryOperator::CreateAdd(
+      StartIdx, ConstantInt::get(IdxTy, 0), "overflow.check.anchor",
+      BypassBlock->getTerminator());
+
+  // Count holds the overall loop count (N).
+  Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
+                                   BypassBlock->getTerminator());
 
   LoopBypassBlocks.push_back(BypassBlock);
 
@@ -2068,17 +2076,18 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
-  Value *Cmp = BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx,
-                                          "cmp.zero");
+  Value *Cmp =
+      BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
 
   BasicBlock *LastBypassBlock = BypassBlock;
 
   // Generate code to check that the loops trip count that we computed by adding
   // one to the backedge-taken count will not overflow.
   {
-    auto PastOverflowCheck = std::next(BasicBlock::iterator(CheckBCOverflow));
+    auto PastOverflowCheck =
+        std::next(BasicBlock::iterator(OverflowCheckAnchor));
     BasicBlock *CheckBlock =
-        LastBypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
+      LastBypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
     LoopBypassBlocks.push_back(CheckBlock);
