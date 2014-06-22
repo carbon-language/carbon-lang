@@ -54,7 +54,7 @@ DiagnosticsEngine::DiagnosticsEngine(
   PrintTemplateTree = false;
   ShowColors = false;
   ShowOverloads = Ovl_All;
-  ExtBehavior = Ext_Ignore;
+  ExtBehavior = diag::Severity::Ignored;
 
   ErrorLimit = 0;
   TemplateBacktraceLimit = 0;

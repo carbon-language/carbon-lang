@@ -146,13 +146,6 @@ public:
     Fatal = DiagnosticIDs::Fatal
   };
 
-  /// \brief How do we handle otherwise-unmapped extension?
-  ///
-  /// This is controlled by -pedantic and -pedantic-errors.
-  enum ExtensionHandling {
-    Ext_Ignore, Ext_Warn, Ext_Error
-  };
-
   enum ArgumentKind {
     ak_std_string,      ///< std::string
     ak_c_string,        ///< const char *
@@ -190,7 +183,7 @@ private:
                                    // 0 -> no limit.
   unsigned ConstexprBacktraceLimit; // Cap on depth of constexpr evaluation
                                     // backtrace stack, 0 -> no limit.
-  ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
+  diag::Severity ExtBehavior;       // Map extensions to warnings or errors?
   IntrusiveRefCntPtr<DiagnosticIDs> Diags;
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   DiagnosticConsumer *Client;
@@ -523,10 +516,8 @@ public:
   /// mapped onto ignore/warning/error. 
   ///
   /// This corresponds to the GCC -pedantic and -pedantic-errors option.
-  void setExtensionHandlingBehavior(ExtensionHandling H) {
-    ExtBehavior = H;
-  }
-  ExtensionHandling getExtensionHandlingBehavior() const { return ExtBehavior; }
+  void setExtensionHandlingBehavior(diag::Severity H) { ExtBehavior = H; }
+  diag::Severity getExtensionHandlingBehavior() const { return ExtBehavior; }
 
   /// \brief Counter bumped when an __extension__  block is/ encountered.
   ///

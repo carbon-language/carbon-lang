@@ -328,13 +328,11 @@ static bool checkDiagnosticGroupMappings(DiagnosticsEngine &StoredDiags,
   return false;
 }
 
-static DiagnosticsEngine::ExtensionHandling
-isExtHandlingFromDiagsError(DiagnosticsEngine &Diags) {
-  DiagnosticsEngine::ExtensionHandling Ext =
-      Diags.getExtensionHandlingBehavior();
-  if (Ext == DiagnosticsEngine::Ext_Warn && Diags.getWarningsAsErrors())
-    Ext = DiagnosticsEngine::Ext_Error;
-  return Ext;
+static bool isExtHandlingFromDiagsError(DiagnosticsEngine &Diags) {
+  diag::Severity Ext = Diags.getExtensionHandlingBehavior();
+  if (Ext == diag::Severity::Warning && Diags.getWarningsAsErrors())
+    return true;
+  return Ext >= diag::Severity::Error;
 }
 
 static bool checkDiagnosticMappings(DiagnosticsEngine &StoredDiags,

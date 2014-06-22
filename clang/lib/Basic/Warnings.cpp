@@ -67,11 +67,11 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd
   // around with them explicitly.
   if (Opts.PedanticErrors)
-    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Error);
+    Diags.setExtensionHandlingBehavior(diag::Severity::Error);
   else if (Opts.Pedantic)
-    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Warn);
+    Diags.setExtensionHandlingBehavior(diag::Severity::Warning);
   else
-    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Ignore);
+    Diags.setExtensionHandlingBehavior(diag::Severity::Ignored);
 
   SmallVector<diag::kind, 10> _Diags;
   const IntrusiveRefCntPtr< DiagnosticIDs > DiagIDs =
