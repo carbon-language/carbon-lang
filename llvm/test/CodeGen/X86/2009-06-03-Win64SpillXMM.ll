@@ -1,7 +1,7 @@
 ; RUN: llc -mcpu=generic -mtriple=x86_64-mingw32 < %s | FileCheck %s
 ; CHECK: subq    $40, %rsp
-; CHECK: movaps  %xmm8, 16(%rsp)
-; CHECK: movaps  %xmm7, (%rsp)
+; CHECK: movaps  %xmm8, (%rsp)
+; CHECK: movaps  %xmm7, 16(%rsp)
 
 define i32 @a() nounwind {
 entry:

@@ -77,9 +77,9 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality)
     return;
 
-  const MCSymbol *PersHandlerSym =
-      TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
-  Asm->OutStreamer.EmitWin64EHHandler(PersHandlerSym, true, true);
+  MCSymbol *GCCHandlerSym =
+    Asm->GetExternalSymbolSymbol("_GCC_specific_handler");
+  Asm->OutStreamer.EmitWin64EHHandler(GCCHandlerSym, true, true);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                 Asm->getFunctionNumber()));
@@ -98,8 +98,15 @@ void Win64Exception::endFunction(const MachineFunction *) {
   MMI->TidyLandingPads();
 
   if (shouldEmitPersonality) {
+    const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+    const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+    const MCSymbol *Sym =
+        TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
+
     Asm->OutStreamer.PushSection();
     Asm->OutStreamer.EmitWin64EHHandlerData();
+    Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(Sym, Asm->OutContext),
+                               4);
     emitExceptionTable();
     Asm->OutStreamer.PopSection();
   }

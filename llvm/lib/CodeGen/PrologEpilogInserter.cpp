@@ -268,56 +268,51 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
     }
   }
 
-  if (!TFI->assignCalleeSavedSpillSlots(F, RegInfo, CSI)) {
-    // If target doesn't implement this, use generic code.
+  if (CSI.empty())
+    return;   // Early exit if no callee saved registers are modified!
 
-    if (CSI.empty())
-      return; // Early exit if no callee saved registers are modified!
+  unsigned NumFixedSpillSlots;
+  const TargetFrameLowering::SpillSlot *FixedSpillSlots =
+    TFI->getCalleeSavedSpillSlots(NumFixedSpillSlots);
 
-    unsigned NumFixedSpillSlots;
-    const TargetFrameLowering::SpillSlot *FixedSpillSlots =
-        TFI->getCalleeSavedSpillSlots(NumFixedSpillSlots);
+  // Now that we know which registers need to be saved and restored, allocate
+  // stack slots for them.
+  for (std::vector<CalleeSavedInfo>::iterator
+         I = CSI.begin(), E = CSI.end(); I != E; ++I) {
+    unsigned Reg = I->getReg();
+    const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
 
-    // Now that we know which registers need to be saved and restored, allocate
-    // stack slots for them.
-    for (std::vector<CalleeSavedInfo>::iterator I = CSI.begin(), E = CSI.end();
-         I != E; ++I) {
-      unsigned Reg = I->getReg();
-      const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
+    int FrameIdx;
+    if (RegInfo->hasReservedSpillSlot(F, Reg, FrameIdx)) {
+      I->setFrameIdx(FrameIdx);
+      continue;
+    }
 
-      int FrameIdx;
-      if (RegInfo->hasReservedSpillSlot(F, Reg, FrameIdx)) {
-        I->setFrameIdx(FrameIdx);
-        continue;
-      }
+    // Check to see if this physreg must be spilled to a particular stack slot
+    // on this target.
+    const TargetFrameLowering::SpillSlot *FixedSlot = FixedSpillSlots;
+    while (FixedSlot != FixedSpillSlots+NumFixedSpillSlots &&
+           FixedSlot->Reg != Reg)
+      ++FixedSlot;
 
-      // Check to see if this physreg must be spilled to a particular stack slot
-      // on this target.
-      const TargetFrameLowering::SpillSlot *FixedSlot = FixedSpillSlots;
-      while (FixedSlot != FixedSpillSlots + NumFixedSpillSlots &&
-             FixedSlot->Reg != Reg)
-        ++FixedSlot;
+    if (FixedSlot == FixedSpillSlots + NumFixedSpillSlots) {
+      // Nope, just spill it anywhere convenient.
+      unsigned Align = RC->getAlignment();
+      unsigned StackAlign = TFI->getStackAlignment();
 
-      if (FixedSlot == FixedSpillSlots + NumFixedSpillSlots) {
-        // Nope, just spill it anywhere convenient.
-        unsigned Align = RC->getAlignment();
-        unsigned StackAlign = TFI->getStackAlignment();
-
-        // We may not be able to satisfy the desired alignment specification of
-        // the TargetRegisterClass if the stack alignment is smaller. Use the
-        // min.
-        Align = std::min(Align, StackAlign);
-        FrameIdx = MFI->CreateStackObject(RC->getSize(), Align, true);
+      // We may not be able to satisfy the desired alignment specification of
+      // the TargetRegisterClass if the stack alignment is smaller. Use the
+      // min.
+      Align = std::min(Align, StackAlign);
+      FrameIdx = MFI->CreateStackObject(RC->getSize(), Align, true);
       if ((unsigned)FrameIdx < MinCSFrameIndex) MinCSFrameIndex = FrameIdx;
       if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
-      } else {
-        // Spill it to the stack where we must.
-        FrameIdx =
-            MFI->CreateFixedSpillStackObject(RC->getSize(), FixedSlot->Offset);
-      }
-
-      I->setFrameIdx(FrameIdx);
+    } else {
+      // Spill it to the stack where we must.
+      FrameIdx = MFI->CreateFixedObject(RC->getSize(), FixedSlot->Offset, true);
     }
+
+    I->setFrameIdx(FrameIdx);
   }
 
   MFI->setCalleeSavedInfo(CSI);

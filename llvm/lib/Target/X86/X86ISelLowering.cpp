@@ -605,8 +605,9 @@ void X86TargetLowering::resetOperationActions() {
   }
 
   // FIXME - use subtarget debug flags
-  if (!Subtarget->isTargetDarwin() && !Subtarget->isTargetELF() &&
-      !Subtarget->isTargetCygMing() && !Subtarget->isTargetWin64()) {
+  if (!Subtarget->isTargetDarwin() &&
+      !Subtarget->isTargetELF() &&
+      !Subtarget->isTargetCygMing()) {
     setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
   }
 

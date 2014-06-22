@@ -457,7 +457,7 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 /// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
 /// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
 /// normal 'L' label is returned.
-MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
+MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx, 
                                         bool isLinkerPrivate) const {
   const DataLayout *DL = getTarget().getDataLayout();
   assert(JumpTableInfo && "No jump tables");
@@ -530,9 +530,10 @@ int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
 ///
 int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
                                              unsigned Alignment) {
-  Alignment = clampStackAlignment(
-      !getFrameLowering()->isStackRealignable() || !RealignOption, Alignment,
-      getFrameLowering()->getStackAlignment());
+  Alignment =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Alignment, getFrameLowering()->getStackAlignment()); 
   CreateStackObject(Size, Alignment, true);
   int Index = (int)Objects.size() - NumFixedObjects - 1;
   ensureMaxAlignment(Alignment);
@@ -547,9 +548,10 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
 int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
                                                 const AllocaInst *Alloca) {
   HasVarSizedObjects = true;
-  Alignment = clampStackAlignment(
-      !getFrameLowering()->isStackRealignable() || !RealignOption, Alignment,
-      getFrameLowering()->getStackAlignment());
+  Alignment =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Alignment, getFrameLowering()->getStackAlignment()); 
   Objects.push_back(StackObject(0, Alignment, 0, false, false, Alloca));
   ensureMaxAlignment(Alignment);
   return (int)Objects.size()-NumFixedObjects-1;
@@ -569,30 +571,16 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
   // object is 16-byte aligned.
   unsigned StackAlign = getFrameLowering()->getStackAlignment();
   unsigned Align = MinAlign(SPOffset, StackAlign);
-  Align = clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
-                                  !RealignOption,
-                              Align, getFrameLowering()->getStackAlignment());
+  Align =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Align, getFrameLowering()->getStackAlignment()); 
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/   false,
                                               /*Alloca*/ nullptr));
   return -++NumFixedObjects;
 }
 
-/// CreateFixedSpillStackObject - Create a spill slot at a fixed location
-/// on the stack.  Returns an index with a negative value.
-int MachineFrameInfo::CreateFixedSpillStackObject(uint64_t Size,
-                                                  int64_t SPOffset) {
-  unsigned StackAlign = getFrameLowering()->getStackAlignment();
-  unsigned Align = MinAlign(SPOffset, StackAlign);
-  Align = clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
-                                  !RealignOption,
-                              Align, getFrameLowering()->getStackAlignment());
-  Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset,
-                                              /*Immutable*/ true,
-                                              /*isSS*/ true,
-                                              /*Alloca*/ nullptr));
-  return -++NumFixedObjects;
-}
 
 BitVector
 MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
@@ -861,10 +849,11 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
   if (isa<StructType>(A->getType()) || isa<ArrayType>(A->getType()) ||
       isa<StructType>(B->getType()) || isa<ArrayType>(B->getType()))
     return false;
-
+  
   // For now, only support constants with the same size.
   uint64_t StoreSize = TD->getTypeStoreSize(A->getType());
-  if (StoreSize != TD->getTypeStoreSize(B->getType()) || StoreSize > 128)
+  if (StoreSize != TD->getTypeStoreSize(B->getType()) || 
+      StoreSize > 128)
     return false;
 
   Type *IntTy = IntegerType::get(A->getContext(), StoreSize*8);
@@ -893,7 +882,7 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
 /// an existing one.  User must specify the log2 of the minimum required
 /// alignment for the object.
 ///
-unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C,
+unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C, 
                                                    unsigned Alignment) {
   assert(Alignment && "Alignment must be specified!");
   if (Alignment > PoolAlignment) PoolAlignment = Alignment;

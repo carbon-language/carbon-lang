@@ -110,7 +110,7 @@ let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
 
 // When using segmented stacks these are lowered into instructions which first
 // check if the current stacklet has enough free memory. If it does, memory is
-// allocated by bumping the stack pointer. Otherwise memory is allocated from
+// allocated by bumping the stack pointer. Otherwise memory is allocated from 
 // the heap.
 
 let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
@@ -194,26 +194,6 @@ let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
 let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
   def EH_SjLj_Setup : I<0, Pseudo, (outs), (ins brtarget:$dst),
                         "#EH_SjLj_Setup\t$dst", []>;
-}
-
-//===----------------------------------------------------------------------===//
-// Pseudo instructions used by unwind info.
-//
-let isPseudo = 1 in {
-  def SEH_PushReg : I<0, Pseudo, (outs), (ins i32imm:$reg),
-                            "#SEH_PushReg $reg", []>;
-  def SEH_SaveReg : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$dst),
-                            "#SEH_SaveReg $reg, $dst", []>;
-  def SEH_SaveXMM : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$dst),
-                            "#SEH_SaveXMM $reg, $dst", []>;
-  def SEH_StackAlloc : I<0, Pseudo, (outs), (ins i32imm:$size),
-                            "#SEH_StackAlloc $size", []>;
-  def SEH_SetFrame : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$offset),
-                            "#SEH_SetFrame $reg, $offset", []>;
-  def SEH_PushFrame : I<0, Pseudo, (outs), (ins i1imm:$mode),
-                            "#SEH_PushFrame $mode", []>;
-  def SEH_EndPrologue : I<0, Pseudo, (outs), (ins),
-                            "#SEH_EndPrologue", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -391,7 +371,7 @@ let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
   def REP_STOSD_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
                       [(X86rep_stos i32)], IIC_REP_STOS>, REP, OpSize32,
                      Requires<[In64BitMode]>;
-
+ 
   let Uses = [RAX,RCX,RDI] in
   def REP_STOSQ_64 : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
                       [(X86rep_stos i64)], IIC_REP_STOS>, REP,

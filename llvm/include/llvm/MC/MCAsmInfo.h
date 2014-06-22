@@ -481,7 +481,6 @@ public:
   bool isExceptionHandlingDwarf() const {
     return (ExceptionsType == ExceptionHandling::DwarfCFI ||
             ExceptionsType == ExceptionHandling::ARM ||
-            // Win64 handler data still uses DWARF LSDA encoding.
             ExceptionsType == ExceptionHandling::Win64);
   }
   bool doesDwarfUseRelocationsAcrossSections() const {
