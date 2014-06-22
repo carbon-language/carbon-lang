@@ -703,3 +703,14 @@ define <4 x float> @insertps_with_undefs(<4 x float> %a, float* %b) {
   %result = shufflevector <4 x float> %a, <4 x float> %2, <4 x i32> <i32 4, i32 undef, i32 0, i32 7>
   ret <4 x float> %result
 }
+
+; Test for a bug in X86ISelLowering.cpp:getINSERTPS where we were using
+; the destination index to change the load, instead of the source index.
+define <4 x float> @pr20087(<4 x float> %a, <4 x float> *%ptr) {
+; CHECK-LABEL: pr20087:
+; CHECK: insertps  $48
+; CHECK: ret
+  %load = load <4 x float> *%ptr
+  %ret = shufflevector <4 x float> %load, <4 x float> %a, <4 x i32> <i32 4, i32 undef, i32 6, i32 2>
+  ret <4 x float> %ret
+}

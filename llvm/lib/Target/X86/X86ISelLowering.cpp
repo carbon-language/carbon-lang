@@ -7805,12 +7805,13 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
         std::find_if(Mask.begin(), Mask.end(), FromV2Predicate) - Mask.begin();
   }
 
+  unsigned SrcIndex = Mask[DestIndex] % 4;
   if (MayFoldLoad(From)) {
     // Trivial case, when From comes from a load and is only used by the
     // shuffle. Make it use insertps from the vector that we need from that
     // load.
     SDValue NewLoad =
-        NarrowVectorLoadToElement(cast<LoadSDNode>(From), DestIndex, DAG);
+        NarrowVectorLoadToElement(cast<LoadSDNode>(From), SrcIndex, DAG);
     if (!NewLoad.getNode())
       return SDValue();
 
@@ -7831,7 +7832,6 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
   }
 
   // Vector-element-to-vector
-  unsigned SrcIndex = Mask[DestIndex] % 4;
   SDValue InsertpsMask = DAG.getIntPtrConstant(DestIndex << 4 | SrcIndex << 6);
   return DAG.getNode(X86ISD::INSERTPS, dl, VT, To, From, InsertpsMask);
 }
