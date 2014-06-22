@@ -245,7 +245,7 @@ def err_invalid_pth_file : Error<
 // Preprocessor Diagnostics
 //===----------------------------------------------------------------------===//
 
-let CategoryName = "User Defined Issues" in {
+let CategoryName = "User-Defined Issue" in {
 def pp_hash_warning : Warning<"%0">,
   InGroup<PoundWarning>, ShowInSystemHeader;
 def err_pp_hash_error : Error<"%0">;
