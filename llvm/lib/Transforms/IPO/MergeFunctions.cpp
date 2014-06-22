@@ -9,13 +9,24 @@
 //
 // This pass looks for equivalent functions that are mergable and folds them.
 //
-// A hash is computed from the function, based on its type and number of
-// basic blocks.
+// Order relation is defined on set of functions. It was made through
+// special function comparison procedure that returns
+// 0 when functions are equal,
+// -1 when Left function is less than right function, and
+// 1 for opposite case. We need total-ordering, so we need to maintain
+// four properties on the functions set:
+// a <= a (reflexivity)
+// if a <= b and b <= a then a = b (antisymmetry)
+// if a <= b and b <= c then a <= c (transitivity).
+// for all a and b: a <= b or b <= a (totality).
 //
-// Once all hashes are computed, we perform an expensive equality comparison
-// on each function pair. This takes n^2/2 comparisons per bucket, so it's
-// important that the hash function be high quality. The equality comparison
-// iterates through each instruction in each basic block.
+// Comparison iterates through each instruction in each basic block.
+// Functions are kept on binary tree. For each new function F we perform
+// lookup in binary tree.
+// In practice it works the following way:
+// -- We define Function* container class with custom "operator<" (FunctionPtr).
+// -- "FunctionPtr" instances are stored in std::set collection, so every
+//    std::set::insert operation will give you result in log(N) time.
 //
 // When a match is found the functions are folded. If both functions are
 // overridable, we move the functionality into a new internal function and
@@ -31,15 +42,42 @@
 // the object they belong to. However, as long as it's only used for a lookup
 // and call, this is irrelevant, and we'd like to fold such functions.
 //
-// * switch from n^2 pair-wise comparisons to an n-way comparison for each
-// bucket.
-//
 // * be smarter about bitcasts.
 //
 // In order to fold functions, we will sometimes add either bitcast instructions
 // or bitcast constant expressions. Unfortunately, this can confound further
 // analysis since the two functions differ where one has a bitcast and the
 // other doesn't. We should learn to look through bitcasts.
+//
+// * Compare complex types with pointer types inside.
+// * Compare cross-reference cases.
+// * Compare complex expressions.
+//
+// All the three issues above could be described as ability to prove that
+// fA == fB == fC == fE == fF == fG in example below:
+//
+//  void fA() {
+//    fB();
+//  }
+//  void fB() {
+//    fA();
+//  }
+//
+//  void fE() {
+//    fF();
+//  }
+//  void fF() {
+//    fG();
+//  }
+//  void fG() {
+//    fE();
+//  }
+//
+// Simplest cross-reference case (fA <--> fB) was implemented in previous
+// versions of MergeFunctions, though it presented only in two function pairs
+// in test-suite (that counts >50k functions)
+// Though possibility to detect complex cross-referencing (e.g.: A->B->C->D->A)
+// could cover much more cases.
 //
 //===----------------------------------------------------------------------===//
 
