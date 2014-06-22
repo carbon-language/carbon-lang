@@ -119,90 +119,6 @@ static cl::opt<unsigned> NumFunctionsForSanityCheck(
              "'0' disables this check. Works only with '-debug' key."),
     cl::init(0), cl::Hidden);
 
-/// Returns the type id for a type to be hashed. We turn pointer types into
-/// integers here because the actual compare logic below considers pointers and
-/// integers of the same size as equal.
-static Type::TypeID getTypeIDForHash(Type *Ty) {
-  if (Ty->isPointerTy())
-    return Type::IntegerTyID;
-  return Ty->getTypeID();
-}
-
-/// Creates a hash-code for the function which is the same for any two
-/// functions that will compare equal, without looking at the instructions
-/// inside the function.
-static unsigned profileFunction(const Function *F) {
-  FunctionType *FTy = F->getFunctionType();
-
-  FoldingSetNodeID ID;
-  ID.AddInteger(F->size());
-  ID.AddInteger(F->getCallingConv());
-  ID.AddBoolean(F->hasGC());
-  ID.AddBoolean(FTy->isVarArg());
-  ID.AddInteger(getTypeIDForHash(FTy->getReturnType()));
-  for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-    ID.AddInteger(getTypeIDForHash(FTy->getParamType(i)));
-  return ID.ComputeHash();
-}
-
-namespace {
-
-/// ComparableFunction - A struct that pairs together functions with a
-/// DataLayout so that we can keep them together as elements in the DenseSet.
-class ComparableFunction {
-public:
-  static const ComparableFunction EmptyKey;
-  static const ComparableFunction TombstoneKey;
-  static DataLayout * const LookupOnly;
-
-  ComparableFunction(Function *Func, const DataLayout *DL)
-    : Func(Func), Hash(profileFunction(Func)), DL(DL) {}
-
-  Function *getFunc() const { return Func; }
-  unsigned getHash() const { return Hash; }
-  const DataLayout *getDataLayout() const { return DL; }
-
-  // Drops AssertingVH reference to the function. Outside of debug mode, this
-  // does nothing.
-  void release() {
-    assert(Func &&
-           "Attempted to release function twice, or release empty/tombstone!");
-    Func = nullptr;
-  }
-
-private:
-  explicit ComparableFunction(unsigned Hash)
-    : Func(nullptr), Hash(Hash), DL(nullptr) {}
-
-  AssertingVH<Function> Func;
-  unsigned Hash;
-  const DataLayout *DL;
-};
-
-const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
-const ComparableFunction ComparableFunction::TombstoneKey =
-    ComparableFunction(1);
-DataLayout *const ComparableFunction::LookupOnly = (DataLayout*)(-1);
-
-}
-
-namespace llvm {
-  template <>
-  struct DenseMapInfo<ComparableFunction> {
-    static ComparableFunction getEmptyKey() {
-      return ComparableFunction::EmptyKey;
-    }
-    static ComparableFunction getTombstoneKey() {
-      return ComparableFunction::TombstoneKey;
-    }
-    static unsigned getHashValue(const ComparableFunction &CF) {
-      return CF.getHash();
-    }
-    static bool isEqual(const ComparableFunction &LHS,
-                        const ComparableFunction &RHS);
-  };
-}
-
 namespace {
 
 /// FunctionComparator - Compares two functions to determine whether or not
@@ -1335,26 +1251,6 @@ bool MergeFunctions::runOnModule(Module &M) {
   FnTree.clear();
 
   return Changed;
-}
-
-bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
-                                               const ComparableFunction &RHS) {
-  if (LHS.getFunc() == RHS.getFunc() &&
-      LHS.getHash() == RHS.getHash())
-    return true;
-  if (!LHS.getFunc() || !RHS.getFunc())
-    return false;
-
-  // One of these is a special "underlying pointer comparison only" object.
-  if (LHS.getDataLayout() == ComparableFunction::LookupOnly ||
-      RHS.getDataLayout() == ComparableFunction::LookupOnly)
-    return false;
-
-  assert(LHS.getDataLayout() == RHS.getDataLayout() &&
-         "Comparing functions for different targets");
-
-  return FunctionComparator(LHS.getDataLayout(), LHS.getFunc(), RHS.getFunc())
-             .compare() == 0;
 }
 
 // Replace direct callers of Old with New.
