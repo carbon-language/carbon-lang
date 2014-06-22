@@ -1,5 +1,11 @@
 ; RUN: opt -S -loop-unswitch -instcombine -indvars < %s | FileCheck %s
 
+; This used to crash in SCEVExpander when there were congruent phis with and
+; undef incoming value from the loop header. The -loop-unswitch -instcombine is
+; necessary to create just this pattern, which is essentially a nop and gets
+; folded away aggressively if spelled out in IR directly.
+; PR 20093
+
 @c = external global i32**, align 8
 
 define void @test1() {
