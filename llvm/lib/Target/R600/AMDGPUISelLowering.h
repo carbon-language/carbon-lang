@@ -50,7 +50,6 @@ private:
   SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFCEIL(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const;
@@ -83,6 +82,7 @@ protected:
   SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 
