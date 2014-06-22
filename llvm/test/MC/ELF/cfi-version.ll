@@ -2,6 +2,9 @@
 ; RUN: %llc_dwarf %s -o - -dwarf-version 3 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF34
 ; RUN: %llc_dwarf %s -o - -dwarf-version 4 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF34
 
+; .debug_frame is not emitted for targeting Windows x64.
+; REQUIRES: debug_frame
+
 ; Function Attrs: nounwind
 define i32 @foo() #0 {
 entry:
