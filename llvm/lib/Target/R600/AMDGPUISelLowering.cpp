@@ -234,10 +234,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   const MVT ScalarIntVTs[] = { MVT::i32, MVT::i64 };
   for (MVT VT : ScalarIntVTs) {
     setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::SDIV, VT, Custom);
+    setOperationAction(ISD::SDIV, VT, Expand);
 
     // GPU does not have divrem function for signed or unsigned.
-    setOperationAction(ISD::SDIVREM, VT, Expand);
+    setOperationAction(ISD::SDIVREM, VT, Custom);
     setOperationAction(ISD::UDIVREM, VT, Custom);
 
     // GPU does not have [S|U]MUL_LOHI functions as a single instruction.
@@ -291,13 +291,13 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SINT_TO_FP, VT, Expand);
     setOperationAction(ISD::UINT_TO_FP, VT, Expand);
     // TODO: Implement custom UREM / SREM routines.
-    setOperationAction(ISD::SDIV, VT, Custom);
+    setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
-    setOperationAction(ISD::SDIVREM, VT, Expand);
+    setOperationAction(ISD::SDIVREM, VT, Custom);
     setOperationAction(ISD::UDIVREM, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
@@ -504,6 +504,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::SDIV: return LowerSDIV(Op, DAG);
   case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
+  case ISD::SDIVREM: return LowerSDIVREM(Op, DAG);
   case ISD::FCEIL: return LowerFCEIL(Op, DAG);
   case ISD::FTRUNC: return LowerFTRUNC(Op, DAG);
   case ISD::FRINT: return LowerFRINT(Op, DAG);
@@ -1610,6 +1611,44 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
     Rem
   };
   return DAG.getMergeValues(Ops, DL);
+}
+
+SDValue AMDGPUTargetLowering::LowerSDIVREM(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue NegOne = DAG.getConstant(-1, VT);
+
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+
+  SDValue LHSign = DAG.getSelectCC(DL, LHS, Zero, NegOne, Zero, ISD::SETLT);
+  SDValue RHSign = DAG.getSelectCC(DL, RHS, Zero, NegOne, Zero, ISD::SETLT);
+  SDValue DSign = DAG.getNode(ISD::XOR, DL, VT, LHSign, RHSign);
+  SDValue RSign = LHSign; // Remainder sign is the same as LHS
+
+  LHS = DAG.getNode(ISD::ADD, DL, VT, LHS, LHSign);
+  RHS = DAG.getNode(ISD::ADD, DL, VT, RHS, RHSign);
+
+  LHS = DAG.getNode(ISD::XOR, DL, VT, LHS, LHSign);
+  RHS = DAG.getNode(ISD::XOR, DL, VT, RHS, RHSign);
+
+  SDValue Div = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(VT, VT), LHS, RHS);
+  SDValue Rem = Div.getValue(1);
+
+  Div = DAG.getNode(ISD::XOR, DL, VT, Div, DSign);
+  Rem = DAG.getNode(ISD::XOR, DL, VT, Rem, RSign);
+
+  Div = DAG.getNode(ISD::SUB, DL, VT, Div, DSign);
+  Rem = DAG.getNode(ISD::SUB, DL, VT, Rem, RSign);
+
+  SDValue Res[2] = {
+    Div,
+    Rem
+  };
+  return DAG.getMergeValues(Res, DL);
 }
 
 SDValue AMDGPUTargetLowering::LowerFCEIL(SDValue Op, SelectionDAG &DAG) const {
