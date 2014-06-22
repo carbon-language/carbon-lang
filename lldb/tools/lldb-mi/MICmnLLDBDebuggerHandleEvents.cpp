@@ -302,7 +302,6 @@ bool CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointCmn( const lldb::SBE
 	if( !brkPt.IsValid() )
 		return MIstatus::success;
 
-	const size_t nLoc = brkPt.GetNumLocations();
 	lldb::SBBreakpointLocation loc = brkPt.GetLocationAtIndex( 0 );
 	lldb::SBAddress addr = loc.GetAddress();
 	lldb::SBSymbolContext symbolContext = addr.GetSymbolContext( lldb::eSymbolContextEverything );
