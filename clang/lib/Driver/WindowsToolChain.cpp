@@ -253,23 +253,8 @@ static bool getVisualStudioDir(std::string &path) {
 
   const char *vscomntools = nullptr;
 
-  // Try to find the version that we were compiled with
-  if(false) {}
-  #if (_MSC_VER >= 1600)  // VC100
-  else if(vs100comntools) {
-    vscomntools = vs100comntools;
-  }
-  #elif (_MSC_VER == 1500) // VC80
-  else if(vs90comntools) {
-    vscomntools = vs90comntools;
-  }
-  #elif (_MSC_VER == 1400) // VC80
-  else if(vs80comntools) {
-    vscomntools = vs80comntools;
-  }
-  #endif
-  // Otherwise find any version we can
-  else if (vs100comntools)
+  // Find any version we can
+  if (vs100comntools)
     vscomntools = vs100comntools;
   else if (vs90comntools)
     vscomntools = vs90comntools;
