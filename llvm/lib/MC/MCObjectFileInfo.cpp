@@ -792,7 +792,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getDataRel());
 }
 
-void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
+void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
                                             CodeModel::Model cm,
                                             MCContext &ctx) {
   RelocM = relocm;
@@ -817,8 +817,9 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   DwarfAccelNamespaceSection = nullptr; // Used only by selected targets.
   DwarfAccelTypesSection = nullptr;     // Used only by selected targets.
 
-  Triple T(TT);
-  Triple::ArchType Arch = T.getArch();
+  TT = Triple(T);
+
+  Triple::ArchType Arch = TT.getArch();
   // FIXME: Checking for Arch here to filter out bogus triples such as
   // cellspu-apple-darwin. Perhaps we should fix in Triple?
   if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
@@ -826,17 +827,17 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
        Arch == Triple::arm64 || Arch == Triple::aarch64 ||
        Arch == Triple::ppc || Arch == Triple::ppc64 ||
        Arch == Triple::UnknownArch) &&
-      (T.isOSDarwin() || T.isOSBinFormatMachO())) {
+      (TT.isOSDarwin() || TT.isOSBinFormatMachO())) {
     Env = IsMachO;
-    InitMachOMCObjectFileInfo(T);
+    InitMachOMCObjectFileInfo(TT);
   } else if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
               Arch == Triple::arm || Arch == Triple::thumb) &&
-             (T.isOSWindows() && T.getObjectFormat() == Triple::COFF)) {
+             (TT.isOSWindows() && TT.getObjectFormat() == Triple::COFF)) {
     Env = IsCOFF;
-    InitCOFFMCObjectFileInfo(T);
+    InitCOFFMCObjectFileInfo(TT);
   } else {
     Env = IsELF;
-    InitELFMCObjectFileInfo(T);
+    InitELFMCObjectFileInfo(TT);
   }
 }
 

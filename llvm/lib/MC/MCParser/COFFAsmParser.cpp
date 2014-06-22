@@ -13,6 +13,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -378,6 +379,11 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
     return TokError("unexpected token in directive");
 
   SectionKind Kind = computeSectionKind(Flags);
+  if (Kind.isText()) {
+    const Triple &T = getContext().getObjectFileInfo()->getTargetTriple();
+    if (T.getArch() == Triple::arm || T.getArch() == Triple::thumb)
+      Flags |= COFF::IMAGE_SCN_MEM_16BIT;
+  }
   ParseSectionSwitch(SectionName, Flags, Kind, COMDATSymName, Type);
   return false;
 }

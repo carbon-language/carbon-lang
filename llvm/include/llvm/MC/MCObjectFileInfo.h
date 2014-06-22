@@ -14,13 +14,13 @@
 #ifndef LLVM_MC_MCBJECTFILEINFO_H
 #define LLVM_MC_MCBJECTFILEINFO_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CodeGen.h"
 
 namespace llvm {
   class MCContext;
   class MCSection;
   class StringRef;
-  class Triple;
 
 class MCObjectFileInfo {
 protected:
@@ -380,6 +380,7 @@ private:
   Reloc::Model RelocM;
   CodeModel::Model CMModel;
   MCContext *Ctx;
+  Triple TT;
 
   void InitMachOMCObjectFileInfo(Triple T);
   void InitELFMCObjectFileInfo(Triple T);
@@ -388,6 +389,9 @@ private:
   /// InitEHFrameSection - Initialize EHFrameSection on demand.
   ///
   void InitEHFrameSection();
+
+public:
+  const Triple &getTargetTriple() const { return TT; }
 };
 
 } // end namespace llvm
