@@ -14,6 +14,7 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -21,8 +22,7 @@
 
 // Include the necessary headers to interface with the Windows registry and
 // environment.
-// TODO: Investigate enabling this with __MINGW32__.
-#if defined(_MSC_VER)
+#if defined(LLVM_ON_WIN32)
 #define USE_WIN32
 #endif
 
@@ -282,11 +282,6 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
     return;
-
-// TODO: This code path is portable. Conditionalize on LLVM_ON_WIN32 instead?
-#ifndef USE_WIN32
-  return;
-#endif
 
   // Honor %INCLUDE%. It should know essential search paths with vcvarsall.bat.
   if (const char *cl_include_dir = getenv("INCLUDE")) {
