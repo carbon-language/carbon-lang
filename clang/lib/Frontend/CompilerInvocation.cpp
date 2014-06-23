@@ -1223,7 +1223,11 @@ static unsigned parseMSCVersion(ArgList &Args, DiagnosticsEngine &Diags) {
         << Arg->getAsString(Args) << Value;
       return 0;
     }
-    return (Version < 100000) ? Version * 100000 : Version;
+    if (Version < 100)
+      Version = Version * 100;    // major -> major.minor
+    if (Version < 100000)
+      Version = Version * 100000; // major.minor -> major.minor.build
+    return Version;
   }
 
   // parse the dot-delimited component version

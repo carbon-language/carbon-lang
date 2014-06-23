@@ -16,6 +16,12 @@
 // CHECK-MSC-VERSION-EXT: _MSC_FULL_VER 160030319
 // CHECK-MSC-VERSION-EXT: _MSC_VER 1600
 
+// RUN: %clang -target i686-windows -fms-compatibility -fmsc-version=14 -dM -E - </dev/null -o - | FileCheck %s -check-prefix CHECK-MSC-VERSION-MAJOR
+
+// CHECK-MSC-VERSION-MAJOR: _MSC_BUILD 1
+// CHECK-MSC-VERSION-MAJOR: _MSC_FULL_VER 140000000
+// CHECK-MSC-VERSION-MAJOR: _MSC_VER 1400
+
 // RUN: %clang -target i686-windows -fms-compatibility -fmsc-version=17.00 -dM -E - </dev/null -o - | FileCheck %s -check-prefix CHECK-MSC-VERSION-MAJOR-MINOR
 
 // CHECK-MSC-VERSION-MAJOR-MINOR: _MSC_BUILD 1
