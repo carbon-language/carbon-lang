@@ -502,10 +502,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   Clobbers.erase(End, Clobbers.end());
 
   // Build the vector of clobber StringRefs.
-  unsigned NumClobbers = Clobbers.size();
-  ClobberRefs.resize(NumClobbers);
-  for (unsigned i = 0; i != NumClobbers; ++i)
-    ClobberRefs[i] = StringRef(Clobbers[i]);
+  ClobberRefs.insert(ClobberRefs.end(), Clobbers.begin(), Clobbers.end());
 
   // Recast the void pointers and build the vector of constraint StringRefs.
   unsigned NumExprs = NumOutputs + NumInputs;
