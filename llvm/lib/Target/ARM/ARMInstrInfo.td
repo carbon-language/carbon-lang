@@ -3334,8 +3334,8 @@ def SBFX  : I<(outs GPRnopc:$Rd),
   let Inst{3-0}   = Rn;
 }
 
-def UBFX  : I<(outs GPR:$Rd),
-              (ins GPR:$Rn, imm0_31:$lsb, imm1_32:$width),
+def UBFX  : I<(outs GPRnopc:$Rd),
+              (ins GPRnopc:$Rn, imm0_31:$lsb, imm1_32:$width),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "ubfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {

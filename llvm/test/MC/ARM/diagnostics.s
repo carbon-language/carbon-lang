@@ -351,6 +351,24 @@
 @ CHECK-ERRORS:         ubfxgt r4, r5, #16, #17
 @ CHECK-ERRORS:                             ^
 
+        @ Using pc for SBFX/UBFX
+        sbfx pc, r2, #1, #3
+        sbfx sp, pc, #4, #5
+        ubfx pc, r0, #0, #31
+        ubfx r14, pc, #1, #2
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         sbfx pc, r2, #1, #3
+@ CHECK-ERRORS:              ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         sbfx sp, pc, #4, #5
+@ CHECK-ERRORS:                  ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         ubfx pc, r0, #0, #31
+@ CHECK-ERRORS:              ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         ubfx r14, pc, #1, #2
+@ CHECK-ERRORS:                   ^
+
         @ Out of order Rt/Rt2 operands for ldrd
         ldrd  r4, r3, [r8]
         ldrd  r4, r3, [r8, #8]!
