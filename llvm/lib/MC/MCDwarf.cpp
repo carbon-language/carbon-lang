@@ -1459,13 +1459,6 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
-  if (IsEH && frame.Function && !MOFI->isFunctionEHFrameSymbolPrivate()) {
-    MCSymbol *EHSym =
-      context.GetOrCreateSymbol(frame.Function->getName() + Twine(".eh"));
-    streamer.EmitEHSymAttributes(frame.Function, EHSym);
-    streamer.EmitLabel(EHSym);
-  }
-
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
   if (verboseAsm) streamer.AddComment("FDE Length");

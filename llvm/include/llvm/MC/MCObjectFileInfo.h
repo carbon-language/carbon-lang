@@ -33,12 +33,6 @@ protected:
   /// weak_definition of constant 0 for an omitted EH frame.
   bool SupportsWeakOmittedEHFrame;
 
-  /// IsFunctionEHFrameSymbolPrivate - This flag is set to true if the
-  /// "EH_frame" symbol for EH information should be an assembler temporary (aka
-  /// private linkage, aka an L or .L label) or false if it should be a normal
-  /// non-.globl label.  This defaults to true.
-  bool IsFunctionEHFrameSymbolPrivate;
-
   /// SupportsCompactUnwindWithoutEHFrame - True if the target object file
   /// supports emitting a compact unwind section without an associated EH frame
   /// section.
@@ -201,9 +195,6 @@ public:
   void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
                             MCContext &ctx);
 
-  bool isFunctionEHFrameSymbolPrivate() const {
-    return IsFunctionEHFrameSymbolPrivate;
-  }
   bool getSupportsWeakOmittedEHFrame() const {
     return SupportsWeakOmittedEHFrame;
   }

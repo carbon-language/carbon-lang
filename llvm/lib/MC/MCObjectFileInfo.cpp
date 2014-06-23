@@ -41,7 +41,6 @@ static bool useCompactUnwind(const Triple &T) {
 
 void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   // MachO
-  IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
 
   if (T.isOSDarwin() &&
@@ -802,7 +801,6 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
   // Common.
   CommDirectiveSupportsAlignment = true;
   SupportsWeakOmittedEHFrame = true;
-  IsFunctionEHFrameSymbolPrivate = true;
   SupportsCompactUnwindWithoutEHFrame = false;
 
   PersonalityEncoding = LSDAEncoding = FDECFIEncoding = TTypeEncoding =
