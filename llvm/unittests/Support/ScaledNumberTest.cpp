@@ -336,7 +336,7 @@ TEST(ScaledNumberHelpersTest, matchScales) {
     int16_t RSx = RSIn;                                                        \
     int16_t Sy = SOut;                                                         \
                                                                                \
-    matchScales(LDx, LSx, RDx, RSx);                                           \
+    EXPECT_EQ(SOut, matchScales(LDx, LSx, RDx, RSx));                          \
     EXPECT_EQ(LDy, LDx);                                                       \
     EXPECT_EQ(RDy, RDx);                                                       \
     if (LDy)                                                                   \

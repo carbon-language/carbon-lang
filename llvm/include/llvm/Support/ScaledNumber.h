@@ -271,28 +271,30 @@ int compare(DigitsT LDigits, int16_t LScale, DigitsT RDigits, int16_t RScale) {
 /// losing precision only when necessary.
 ///
 /// If the output value of \c LDigits (\c RDigits) is \c 0, the output value of
-/// \c LScale (\c RScale) is unspecified.  If both \c LDigits and \c RDigits
-/// are \c 0, the output value is one of \c LScale and \c RScale; which is
-/// unspecified.
+/// \c LScale (\c RScale) is unspecified.
+///
+/// As a convenience, returns the matching scale.  If the output value of one
+/// number is zero, returns the scale of the other.  If both are zero, which
+/// scale is returned is unspecifed.
 template <class DigitsT>
-void matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
-                 int16_t &RScale) {
+int16_t matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
+                    int16_t &RScale) {
   static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
 
-  if (LScale < RScale) {
+  if (LScale < RScale)
     // Swap arguments.
-    matchScales(RDigits, RScale, LDigits, LScale);
-    return;
-  }
-  if (!LDigits || !RDigits || LScale == RScale)
-    return;
+    return matchScales(RDigits, RScale, LDigits, LScale);
+  if (!LDigits)
+    return RScale;
+  if (!RDigits || LScale == RScale)
+    return LScale;
 
   // Now LScale > RScale.  Get the difference.
   int32_t ScaleDiff = int32_t(LScale) - RScale;
   if (ScaleDiff >= 2 * getWidth<DigitsT>()) {
     // Don't bother shifting.  RDigits will get zero-ed out anyway.
     RDigits = 0;
-    return;
+    return LScale;
   }
 
   // Shift LDigits left as much as possible, then shift RDigits right.
@@ -303,7 +305,7 @@ void matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
   if (ShiftR >= getWidth<DigitsT>()) {
     // Don't bother shifting.  RDigits will get zero-ed out anyway.
     RDigits = 0;
-    return;
+    return LScale;
   }
 
   LDigits <<= ShiftL;
@@ -312,6 +314,7 @@ void matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
   LScale -= ShiftL;
   RScale += ShiftR;
   assert(LScale == RScale && "scales should match");
+  return LScale;
 }
 
 } // end namespace ScaledNumbers
