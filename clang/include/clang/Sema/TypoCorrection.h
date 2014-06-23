@@ -250,8 +250,8 @@ public:
   CorrectionCandidateCallback()
       : WantTypeSpecifiers(true), WantExpressionKeywords(true),
         WantCXXNamedCasts(true), WantRemainingKeywords(true),
-        WantObjCSuper(false),
-        IsObjCIvarLookup(false) {}
+        WantObjCSuper(false), IsObjCIvarLookup(false),
+        IsAddressOfOperand(false) {}
 
   virtual ~CorrectionCandidateCallback() {}
 
@@ -287,6 +287,7 @@ public:
   // Temporary hack for the one case where a CorrectTypoContext enum is used
   // when looking up results.
   bool IsObjCIvarLookup;
+  bool IsAddressOfOperand;
 };
 
 /// @brief Simple template class for restricting typo correction candidates
