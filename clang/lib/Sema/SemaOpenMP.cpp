@@ -229,7 +229,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
     // in a Construct, implicitly determined, p.2]
     //  In a parallel construct, if no default clause is present, these
     //  variables are shared.
-    if (DVar.DKind == OMPD_parallel) {
+    if (isOpenMPParallelDirective(DVar.DKind)) {
       DVar.CKind = OMPC_shared;
       return DVar;
     }
@@ -257,7 +257,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
           DVar.CKind = OMPC_firstprivate;
           return DVar;
         }
-        if (I->Directive == OMPD_parallel)
+        if (isOpenMPParallelDirective(I->Directive))
           break;
       }
       DVar.DKind = OMPD_task;
@@ -303,7 +303,7 @@ bool DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
   if (Stack.size() > 2) {
     reverse_iterator I = Iter, E = std::prev(Stack.rend());
     Scope *TopScope = nullptr;
-    while (I != E && I->Directive != OMPD_parallel) {
+    while (I != E && !isOpenMPParallelDirective(I->Directive)) {
       ++I;
     }
     if (I == E)
@@ -339,7 +339,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
   // Variables with automatic storage duration that are declared in a scope
   // inside the construct are private.
   OpenMPDirectiveKind Kind = getCurrentDirective();
-  if (Kind != OMPD_parallel) {
+  if (!isOpenMPParallelDirective(Kind)) {
     if (isOpenMPLocal(D, std::next(Stack.rbegin())) && D->isLocalVarDecl() &&
         (D->getStorageClass() == SC_Auto || D->getStorageClass() == SC_None)) {
       DVar.CKind = OMPC_private;
@@ -1388,8 +1388,9 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
 
   // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced in
   // a Construct, C/C++].
-  // The loop iteration variable(s) in the associated for-loop(s) of a for or
-  // parallel for construct may be listed in a private or lastprivate clause.
+  // The loop iteration variable in the associated for-loop of a simd construct
+  // with just one associated for-loop may be listed in a linear clause with a
+  // constant-linear-step that is the increment of the associated for-loop.
   // The loop iteration variable(s) in the associated for-loop(s) of a for or
   // parallel for construct may be listed in a private or lastprivate clause.
   DSAStackTy::DSAVarData DVar = DSA.getTopDSA(Var);
@@ -1398,10 +1399,6 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
        (isOpenMPWorksharingDirective(DKind) && DVar.CKind != OMPC_unknown &&
         DVar.CKind != OMPC_private && DVar.CKind != OMPC_lastprivate)) &&
       (DVar.CKind != OMPC_private || DVar.RefExpr != nullptr)) {
-    // The loop iteration variable in the associated for-loop of a simd
-    // construct with just one associated for-loop may be listed in a linear
-    // clause with a constant-linear-step that is the increment of the
-    // associated for-loop.
     SemaRef.Diag(Init->getLocStart(), diag::err_omp_loop_var_dsa)
         << getOpenMPClauseName(DVar.CKind);
     ReportOriginalDSA(SemaRef, &DSA, Var, DVar, true);
