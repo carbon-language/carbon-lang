@@ -2253,9 +2253,8 @@ void ExprEngine::VisitGCCAsmStmt(const GCCAsmStmt *A, ExplodedNode *Pred,
 
   ProgramStateRef state = Pred->getState();
 
-  for (GCCAsmStmt::const_outputs_iterator OI = A->begin_outputs(),
-       OE = A->end_outputs(); OI != OE; ++OI) {
-    SVal X = state->getSVal(*OI, Pred->getLocationContext());
+  for (const Expr *O : A->outputs()) {
+    SVal X = state->getSVal(O, Pred->getLocationContext());
     assert (!X.getAs<NonLoc>());  // Should be an Lval, or unknown, undef.
 
     if (Optional<Loc> LV = X.getAs<Loc>())
