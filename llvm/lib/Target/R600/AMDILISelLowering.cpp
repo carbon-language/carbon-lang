@@ -21,26 +21,7 @@ using namespace llvm;
 // TargetLowering Class Implementation Begins
 //===----------------------------------------------------------------------===//
 void AMDGPUTargetLowering::InitAMDILLowering() {
-  static const MVT::SimpleValueType types[] = {
-    MVT::i32,
-    MVT::i64,
-    MVT::v2i32,
-    MVT::v4i32
-  };
-
-  for (MVT VT : types) {
-    setOperationAction(ISD::SUBE, VT, Expand);
-    setOperationAction(ISD::SUBC, VT, Expand);
-    setOperationAction(ISD::ADDE, VT, Expand);
-    setOperationAction(ISD::ADDC, VT, Expand);
-  }
-
-  setOperationAction(ISD::SUBC, MVT::Other, Expand);
-  setOperationAction(ISD::ADDE, MVT::Other, Expand);
-  setOperationAction(ISD::ADDC, MVT::Other, Expand);
-
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
-
   setSelectIsExpensive(true); // FIXME: This makes no sense at all
 }
 
