@@ -361,6 +361,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setSchedulingPreference(Sched::RegPressure);
   setJumpIsExpensive(true);
 
+  setSelectIsExpensive(false);
+  PredictableSelectIsExpensive = false;
+
   // There are no integer divide instructions, and these expand to a pretty
   // large sequence of instructions.
   setIntDivIsCheap(false);
@@ -381,6 +384,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
 MVT AMDGPUTargetLowering::getVectorIdxTy() const {
   return MVT::i32;
+}
+
+bool AMDGPUTargetLowering::isSelectSupported(SelectSupportKind SelType) const {
+  return true;
 }
 
 // The backend supports 32 and 64 bit floating point immediates.
