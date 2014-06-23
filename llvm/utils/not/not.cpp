@@ -33,10 +33,11 @@ int main(int argc, const char **argv) {
   int Result = sys::ExecuteAndWait(Program, argv, nullptr, nullptr, 0, 0,
                                    &ErrMsg);
 #ifdef _WIN32
-  // Handle abort() in msvcrt -- It has exit code as 3.
-  // abort(), aka unreachable, may be handled as crash.
-  // FIXME: Could we move this into Win32/Program.inc?
-  if (Result == 3)
+  // Handle abort() in msvcrt -- It has exit code as 3.  abort(), aka
+  // unreachable, should be recognized as a crash.  However, some binaries use
+  // exit code 3 on non-crash failure paths, so only do this if we expect a
+  // crash.
+  if (ExpectCrash && Result == 3)
     Result = -3;
 #endif
   if (Result < 0) {
