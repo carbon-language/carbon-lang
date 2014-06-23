@@ -133,6 +133,12 @@ createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
   return S;
 }
 
+static MCStreamer *createMipsNullStreamer(MCContext &Ctx) {
+  MCStreamer *S = llvm::createNullStreamer(Ctx);
+  new MipsTargetStreamer(*S);
+  return S;
+}
+
 extern "C" void LLVMInitializeMipsTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
@@ -186,6 +192,12 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   TargetRegistry::RegisterAsmStreamer(TheMipselTarget, createMCAsmStreamer);
   TargetRegistry::RegisterAsmStreamer(TheMips64Target, createMCAsmStreamer);
   TargetRegistry::RegisterAsmStreamer(TheMips64elTarget, createMCAsmStreamer);
+
+  TargetRegistry::RegisterNullStreamer(TheMipsTarget, createMipsNullStreamer);
+  TargetRegistry::RegisterNullStreamer(TheMipselTarget, createMipsNullStreamer);
+  TargetRegistry::RegisterNullStreamer(TheMips64Target, createMipsNullStreamer);
+  TargetRegistry::RegisterNullStreamer(TheMips64elTarget,
+                                       createMipsNullStreamer);
 
   // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(TheMipsTarget,

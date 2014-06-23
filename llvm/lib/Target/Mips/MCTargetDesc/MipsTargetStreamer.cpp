@@ -27,10 +27,37 @@
 
 using namespace llvm;
 
-// Pin vtable to this file.
-void MipsTargetStreamer::anchor() {}
-
 MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
+void MipsTargetStreamer::emitDirectiveSetMicroMips() {}
+void MipsTargetStreamer::emitDirectiveSetNoMicroMips() {}
+void MipsTargetStreamer::emitDirectiveSetMips16() {}
+void MipsTargetStreamer::emitDirectiveSetNoMips16() {}
+void MipsTargetStreamer::emitDirectiveSetReorder() {}
+void MipsTargetStreamer::emitDirectiveSetNoReorder() {}
+void MipsTargetStreamer::emitDirectiveSetMacro() {}
+void MipsTargetStreamer::emitDirectiveSetNoMacro() {}
+void MipsTargetStreamer::emitDirectiveSetAt() {}
+void MipsTargetStreamer::emitDirectiveSetNoAt() {}
+void MipsTargetStreamer::emitDirectiveEnd(StringRef Name) {}
+void MipsTargetStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {}
+void MipsTargetStreamer::emitDirectiveAbiCalls() {}
+void MipsTargetStreamer::emitDirectiveNaN2008() {}
+void MipsTargetStreamer::emitDirectiveNaNLegacy() {}
+void MipsTargetStreamer::emitDirectiveOptionPic0() {}
+void MipsTargetStreamer::emitDirectiveOptionPic2() {}
+void MipsTargetStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
+                                   unsigned ReturnReg) {}
+void MipsTargetStreamer::emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) {}
+void MipsTargetStreamer::emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) {
+}
+void MipsTargetStreamer::emitDirectiveSetMips32R2() {}
+void MipsTargetStreamer::emitDirectiveSetMips64() {}
+void MipsTargetStreamer::emitDirectiveSetMips64R2() {}
+void MipsTargetStreamer::emitDirectiveSetDsp() {}
+void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
+void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
+                                              const MCSymbol &Sym, bool IsReg) {
+}
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
                                              formatted_raw_ostream &OS)
