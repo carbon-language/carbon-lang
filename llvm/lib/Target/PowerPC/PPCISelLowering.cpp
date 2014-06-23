@@ -2475,7 +2475,6 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   // although the first ones are often in registers.
 
   SmallVector<SDValue, 8> MemOps;
-  unsigned nAltivecParamsAtEnd = 0;
   Function::const_arg_iterator FuncArg = MF.getFunction()->arg_begin();
   unsigned CurArgIdx = 0;
   for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e; ++ArgNo) {
@@ -2490,22 +2489,14 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
     unsigned CurArgOffset = ArgOffset;
 
-    // Varargs or 64 bit Altivec parameters are padded to a 16 byte boundary.
+    // Altivec parameters are padded to a 16 byte boundary.
     if (ObjectVT==MVT::v4f32 || ObjectVT==MVT::v4i32 ||
         ObjectVT==MVT::v8i16 || ObjectVT==MVT::v16i8 ||
-        ObjectVT==MVT::v2f64 || ObjectVT==MVT::v2i64) {
-      if (isVarArg) {
-        MinReservedArea = ((MinReservedArea+15)/16)*16;
-        MinReservedArea += CalculateStackSlotSize(ObjectVT,
-                                                  Flags,
-                                                  PtrByteSize);
-      } else
-        nAltivecParamsAtEnd++;
-    } else
-      // Calculate min reserved area.
-      MinReservedArea += CalculateStackSlotSize(Ins[ArgNo].VT,
-                                                Flags,
-                                                PtrByteSize);
+        ObjectVT==MVT::v2f64 || ObjectVT==MVT::v2i64)
+      MinReservedArea = ((MinReservedArea+15)/16)*16;
+
+    // Calculate min reserved area.
+    MinReservedArea += CalculateStackSlotSize(ObjectVT, Flags, PtrByteSize);
 
     // FIXME the codegen can be much improved in some cases.
     // We do not have to keep everything in memory.
@@ -2654,30 +2645,24 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
-      // Note that vector arguments in registers don't reserve stack space,
-      // except in varargs functions.
+      // Vectors are aligned to a 16-byte boundary in the argument save area.
+      while ((ArgOffset % 16) != 0) {
+        ArgOffset += PtrByteSize;
+        if (GPR_idx != Num_GPR_Regs)
+          GPR_idx++;
+      }
       if (VR_idx != Num_VR_Regs) {
         unsigned VReg = (ObjectVT == MVT::v2f64 || ObjectVT == MVT::v2i64) ?
                         MF.addLiveIn(VSRH[VR_idx], &PPC::VSHRCRegClass) :
                         MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
-        if (isVarArg) {
-          while ((ArgOffset % 16) != 0) {
-            ArgOffset += PtrByteSize;
-            if (GPR_idx != Num_GPR_Regs)
-              GPR_idx++;
-          }
-          ArgOffset += 16;
-          GPR_idx = std::min(GPR_idx+4, Num_GPR_Regs); // FIXME correct for ppc64?
-        }
         ++VR_idx;
       } else {
-        // Vectors are aligned.
-        ArgOffset = ((ArgOffset+15)/16)*16;
         CurArgOffset = ArgOffset;
-        ArgOffset += 16;
         needsLoad = true;
       }
+      ArgOffset += 16;
+      GPR_idx = std::min(GPR_idx + 2, Num_GPR_Regs);
       break;
     }
 
@@ -2699,7 +2684,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   // call optimized functions' reserved stack space needs to be aligned so that
   // taking the difference between two stack areas will result in an aligned
   // stack.
-  setMinReservedArea(MF, DAG, nAltivecParamsAtEnd, MinReservedArea, true);
+  setMinReservedArea(MF, DAG, 0, MinReservedArea, true);
 
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
@@ -4326,17 +4311,18 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
+      // Vectors are aligned to a 16-byte boundary in the argument save area.
+      while (ArgOffset % 16 !=0) {
+        ArgOffset += PtrByteSize;
+        if (GPR_idx != NumGPRs)
+          GPR_idx++;
+      }
+
+      // For a varargs call, named arguments go into VRs or on the stack as
+      // usual; unnamed arguments always go to the stack or the corresponding
+      // GPRs when within range.  For now, we always put the value in both
+      // locations (or even all three).
       if (isVarArg) {
-        // These go aligned on the stack, or in the corresponding R registers
-        // when within range.  The Darwin PPC ABI doc claims they also go in
-        // V registers; in fact gcc does this only for arguments that are
-        // prototyped, not for those that match the ...  We do it for all
-        // arguments, seems to work.
-        while (ArgOffset % 16 !=0) {
-          ArgOffset += PtrByteSize;
-          if (GPR_idx != NumGPRs)
-            GPR_idx++;
-        }
         // We could elide this store in the case where the object fits
         // entirely in R registers.  Maybe later.
         PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr,
@@ -4371,10 +4357,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         break;
       }
 
-      // Non-varargs Altivec params generally go in registers, but have
-      // stack space allocated at the end.
+      // Non-varargs Altivec params go into VRs or on the stack.
       if (VR_idx != NumVRs) {
-        // Doesn't have GPR space allocated.
         unsigned VReg = (Arg.getSimpleValueType() == MVT::v2f64 ||
                          Arg.getSimpleValueType() == MVT::v2i64) ?
                         VSRH[VR_idx] : VR[VR_idx];
@@ -4385,8 +4369,9 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
                          true, isTailCall, true, MemOpChains,
                          TailCallArguments, dl);
-        ArgOffset += 16;
       }
+      ArgOffset += 16;
+      GPR_idx = std::min(GPR_idx + 2, NumGPRs);
       break;
     }
   }
