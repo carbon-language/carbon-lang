@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s -o - | llvm-nm | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple i686-pc-win32 %s -o - | llvm-nm - | FileCheck %s
 
 not_global = 123
 global = 456

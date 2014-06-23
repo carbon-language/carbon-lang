@@ -845,7 +845,7 @@ int main(int argc, char **argv) {
 
   switch (InputFilenames.size()) {
   case 0:
-    InputFilenames.push_back("-");
+    InputFilenames.push_back("a.out");
   case 1:
     break;
   default:

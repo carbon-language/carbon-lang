@@ -1,6 +1,6 @@
-RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm \
+RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm - \
 RUN:         | FileCheck %s -check-prefix COFF
-RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm \
+RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm - \
 RUN:         | FileCheck %s -check-prefix COFF
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
@@ -22,6 +22,10 @@ RUN: llvm-nm %p/Inputs/relocatable-with-section-address.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF-SEC-ADDR64
 RUN: llvm-nm %p/Inputs/thumb-symbols.elf.arm \
 RUN:         | FileCheck %s -check-prefix ELF-THUMB
+RUN: mkdir -p %t
+RUN: cd %t
+RUN: cp %p/Inputs/trivial-object-test.macho-i386 a.out
+RUN: llvm-nm | FileCheck %s -check-prefix A-OUT
 
 
 COFF: 00000000 d .data
@@ -83,3 +87,7 @@ ELF-SEC-ADDR64-NEXT: 0000000000000060 D p
 Test that we drop the thumb bit only from function addresses.
 ELF-THUMB: 00000000 t f
 ELF-THUMB: 00000003 t g
+
+A-OUT:          U _SomeOtherFunction
+A-OUT: 00000000 T _main
+A-OUT:          U _puts
