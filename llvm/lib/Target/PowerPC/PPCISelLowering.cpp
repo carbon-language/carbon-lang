@@ -2420,7 +2420,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
                        (CallConv == CallingConv::Fast));
   unsigned PtrByteSize = 8;
 
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, true);
+  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, false);
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
@@ -2659,7 +2659,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   // Area that is at least reserved in the caller of this function.
   MinReservedArea =
     std::max(MinReservedArea,
-             PPCFrameLowering::getMinCallFrameSize(true, true));
+             PPCFrameLowering::getMinCallFrameSize(true, false));
 
   // Set the size that is at least reserved in caller of this function.  Tail
   // call optimized functions' reserved stack space needs to be aligned so that
@@ -3965,7 +3965,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with at least 48 bytes, which
   // is reserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = PPCFrameLowering::getLinkageSize(true, true);
+  unsigned NumBytes = PPCFrameLowering::getLinkageSize(true, false);
 
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -3987,7 +3987,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
   NumBytes = std::max(NumBytes,
-                      PPCFrameLowering::getMinCallFrameSize(true, true));
+                      PPCFrameLowering::getMinCallFrameSize(true, false));
 
   // Tail call needs the stack to be aligned.
   if (getTargetMachine().Options.GuaranteedTailCallOpt &&
@@ -4024,7 +4024,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, true);
+  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, false);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
   static const MCPhysReg GPR[] = {
