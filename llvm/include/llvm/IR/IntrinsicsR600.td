@@ -37,36 +37,28 @@ defm int_r600_read_tidig : R600ReadPreloadRegisterIntrinsic_xyz <
 } // End TargetPrefix = "r600"
 
 let TargetPrefix = "AMDGPU" in {
-def int_AMDGPU_div_scale :
+def int_AMDGPU_div_scale : GCCBuiltin<"__builtin_amdgpu_div_scale">,
   Intrinsic<[llvm_anyfloat_ty, llvm_i1_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_div_scale">;
+            [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
 
-def int_AMDGPU_div_fmas :
+def int_AMDGPU_div_fmas : GCCBuiltin<"__builtin_amdgpu_div_fmas">,
   Intrinsic<[llvm_anyfloat_ty],
             [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
-            [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_div_fmas">;
+            [IntrNoMem]>;
 
-def int_AMDGPU_div_fixup :
+def int_AMDGPU_div_fixup : GCCBuiltin<"__builtin_amdgpu_div_fixup">,
   Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_div_fixup">;
+            [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
 
-def int_AMDGPU_trig_preop :
-  Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_trig_preop">;
+def int_AMDGPU_trig_preop : GCCBuiltin<"__builtin_amdgpu_trig_preop">,
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty],
+            [IntrNoMem]>;
 
-def int_AMDGPU_rcp :
-  Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>], [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_rcp">;
+def int_AMDGPU_rcp : GCCBuiltin<"__builtin_amdgpu_rcp">,
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-def int_AMDGPU_rsq :
-  Intrinsic<[llvm_anyfloat_ty],
-            [LLVMMatchType<0>], [IntrNoMem]>,
-            GCCBuiltin<"__builtin_amdgpu_rsq">;
-
+def int_AMDGPU_rsq : GCCBuiltin<"__builtin_amdgpu_rsq">,
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
 } // End TargetPrefix = "AMDGPU"
