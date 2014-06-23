@@ -24,12 +24,12 @@ using namespace llvm::bfi_detail;
 
 //===----------------------------------------------------------------------===//
 //
-// UnsignedFloat implementation.
+// ScaledNumber implementation.
 //
 //===----------------------------------------------------------------------===//
 #ifndef _MSC_VER
-const int32_t UnsignedFloatBase::MaxExponent;
-const int32_t UnsignedFloatBase::MinExponent;
+const int32_t ScaledNumberBase::MaxExponent;
+const int32_t ScaledNumberBase::MinExponent;
 #endif
 
 static void appendDigit(std::string &Str, unsigned D) {
@@ -58,22 +58,22 @@ static bool doesRoundUp(char Digit) {
 }
 
 static std::string toStringAPFloat(uint64_t D, int E, unsigned Precision) {
-  assert(E >= UnsignedFloatBase::MinExponent);
-  assert(E <= UnsignedFloatBase::MaxExponent);
+  assert(E >= ScaledNumberBase::MinExponent);
+  assert(E <= ScaledNumberBase::MaxExponent);
 
   // Find a new E, but don't let it increase past MaxExponent.
-  int LeadingZeros = UnsignedFloatBase::countLeadingZeros64(D);
-  int NewE = std::min(UnsignedFloatBase::MaxExponent, E + 63 - LeadingZeros);
+  int LeadingZeros = ScaledNumberBase::countLeadingZeros64(D);
+  int NewE = std::min(ScaledNumberBase::MaxExponent, E + 63 - LeadingZeros);
   int Shift = 63 - (NewE - E);
   assert(Shift <= LeadingZeros);
-  assert(Shift == LeadingZeros || NewE == UnsignedFloatBase::MaxExponent);
+  assert(Shift == LeadingZeros || NewE == ScaledNumberBase::MaxExponent);
   D <<= Shift;
   E = NewE;
 
   // Check for a denormal.
   unsigned AdjustedE = E + 16383;
   if (!(D >> 63)) {
-    assert(E == UnsignedFloatBase::MaxExponent);
+    assert(E == ScaledNumberBase::MaxExponent);
     AdjustedE = 0;
   }
 
@@ -95,8 +95,8 @@ static std::string stripTrailingZeros(const std::string &Float) {
   return Float.substr(0, NonZero + 1);
 }
 
-std::string UnsignedFloatBase::toString(uint64_t D, int16_t E, int Width,
-                                        unsigned Precision) {
+std::string ScaledNumberBase::toString(uint64_t D, int16_t E, int Width,
+                                       unsigned Precision) {
   if (!D)
     return "0.0";
 
@@ -206,12 +206,12 @@ std::string UnsignedFloatBase::toString(uint64_t D, int16_t E, int Width,
   return stripTrailingZeros(std::string(Carry, '1') + Str.substr(0, Truncate));
 }
 
-raw_ostream &UnsignedFloatBase::print(raw_ostream &OS, uint64_t D, int16_t E,
-                                      int Width, unsigned Precision) {
+raw_ostream &ScaledNumberBase::print(raw_ostream &OS, uint64_t D, int16_t E,
+                                     int Width, unsigned Precision) {
   return OS << toString(D, E, Width, Precision);
 }
 
-void UnsignedFloatBase::dump(uint64_t D, int16_t E, int Width) {
+void ScaledNumberBase::dump(uint64_t D, int16_t E, int Width) {
   print(dbgs(), D, E, Width, 0) << "[" << Width << ":" << D << "*2^" << E
                                 << "]";
 }
@@ -221,10 +221,10 @@ void UnsignedFloatBase::dump(uint64_t D, int16_t E, int Width) {
 // BlockMass implementation.
 //
 //===----------------------------------------------------------------------===//
-UnsignedFloat<uint64_t> BlockMass::toFloat() const {
+ScaledNumber<uint64_t> BlockMass::toFloat() const {
   if (isFull())
-    return UnsignedFloat<uint64_t>(1, 0);
-  return UnsignedFloat<uint64_t>(getMass() + 1, -64);
+    return ScaledNumber<uint64_t>(1, 0);
+  return ScaledNumber<uint64_t>(getMass() + 1, -64);
 }
 
 void BlockMass::dump() const { print(dbgs()); }
