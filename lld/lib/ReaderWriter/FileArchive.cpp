@@ -154,7 +154,7 @@ protected:
   // symbol or does not exist, returns a failure.
   std::error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb,
                                StringRef symbol) const {
-    auto objOrErr(ObjectFile::createObjectFile(mb.release()));
+    auto objOrErr(ObjectFile::createObjectFile(mb));
     if (auto ec = objOrErr.getError())
       return ec;
     std::unique_ptr<ObjectFile> obj(objOrErr.get());
