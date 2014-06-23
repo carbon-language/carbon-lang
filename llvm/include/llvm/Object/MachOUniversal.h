@@ -57,7 +57,7 @@ public:
       return Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
     }
 
-    std::error_code getAsObjectFile(std::unique_ptr<ObjectFile> &Result) const;
+    ErrorOr<std::unique_ptr<ObjectFile>> getAsObjectFile() const;
 
     std::error_code getAsArchive(std::unique_ptr<Archive> &Result) const;
   };
@@ -100,8 +100,8 @@ public:
     return V->isMachOUniversalBinary();
   }
 
-  std::error_code getObjectForArch(Triple::ArchType Arch,
-                                   std::unique_ptr<ObjectFile> &Result) const;
+  ErrorOr<std::unique_ptr<ObjectFile>>
+  getObjectForArch(Triple::ArchType Arch) const;
 };
 
 }

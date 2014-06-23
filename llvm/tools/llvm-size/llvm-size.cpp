@@ -466,9 +466,9 @@ static void PrintFileSectionSizes(StringRef file) {
     for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                E = UB->end_objects();
          I != E; ++I) {
-      std::unique_ptr<ObjectFile> UO;
+      ErrorOr<std::unique_ptr<ObjectFile>> UO = I->getAsObjectFile();
       std::unique_ptr<Archive> UA;
-      if (!I->getAsObjectFile(UO)) {
+      if (UO) {
         if (ObjectFile *o = dyn_cast<ObjectFile>(&*UO.get())) {
           MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o);
           if (OutputFormat == sysv)

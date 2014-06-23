@@ -349,10 +349,11 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin, const std::string &ArchName
         std::make_pair(UB, ArchName));
     if (I != ObjectFileForArch.end())
       return I->second;
-    std::unique_ptr<ObjectFile> ParsedObj;
-    if (!UB->getObjectForArch(Triple(ArchName).getArch(), ParsedObj)) {
-      Res = ParsedObj.get();
-      ParsedBinariesAndObjects.push_back(std::move(ParsedObj));
+    ErrorOr<std::unique_ptr<ObjectFile>> ParsedObj =
+        UB->getObjectForArch(Triple(ArchName).getArch());
+    if (ParsedObj) {
+      Res = ParsedObj.get().get();
+      ParsedBinariesAndObjects.push_back(std::move(ParsedObj.get()));
     }
     ObjectFileForArch[std::make_pair(UB, ArchName)] = Res;
   } else if (Bin->isObject()) {

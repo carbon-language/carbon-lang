@@ -773,9 +773,10 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                E = UB->end_objects();
          I != E; ++I) {
-      std::unique_ptr<ObjectFile> Obj;
+      ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
       std::unique_ptr<Archive> A;
-      if (!I->getAsObjectFile(Obj)) {
+      if (ObjOrErr) {
+        std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
         if (moreThanOneArch)
           outs() << "\n";
         outs() << Obj->getFileName();
