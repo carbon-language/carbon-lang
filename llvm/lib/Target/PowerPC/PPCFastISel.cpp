@@ -1199,7 +1199,8 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
   CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, ArgLocs, *Context);
 
   // Reserve space for the linkage area on the stack.
-  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(true, false), 8);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false);
+  CCInfo.AllocateStack(LinkageSize, 8);
 
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_PPC64_ELF_FIS);
 
@@ -1227,8 +1228,7 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  NumBytes = std::max(NumBytes,
-                      PPCFrameLowering::getMinCallFrameSize(true, false));
+  NumBytes = std::max(NumBytes, LinkageSize + 64);
 
   // Issue CALLSEQ_START.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,

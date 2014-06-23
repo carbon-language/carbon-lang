@@ -115,12 +115,8 @@ public:
     return 8;
   }
 
-  /// getMinCallArgumentsSize - Return the size of the minium PowerPC ABI
-  /// argument area.
-  static unsigned getMinCallArgumentsSize(bool isPPC64, bool isDarwinABI);
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
-  static unsigned getMinCallFrameSize(bool isPPC64, bool isDarwinABI);
 };
 } // End llvm namespace
 

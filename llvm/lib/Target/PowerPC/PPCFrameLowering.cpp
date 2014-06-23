@@ -41,30 +41,6 @@ PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
       Subtarget(STI) {}
 
-unsigned PPCFrameLowering::getMinCallArgumentsSize(bool isPPC64,
-                                                   bool isDarwinABI) {
-  // For the Darwin ABI / 64-bit SVR4 ABI:
-  // The prolog code of the callee may store up to 8 GPR argument registers to
-  // the stack, allowing va_start to index over them in memory if its varargs.
-  // Because we cannot tell if this is needed on the caller side, we have to
-  // conservatively assume that it is needed.  As such, make sure we have at
-  // least enough stack space for the caller to store the 8 GPRs.
-  if (isDarwinABI || isPPC64)
-    return 8 * (isPPC64 ? 8 : 4);
-
-  // 32-bit SVR4 ABI:
-  // There is no default stack allocated for the 8 first GPR arguments.
-  return 0;
-}
-
-/// getMinCallFrameSize - Return the minimum size a call frame can be using
-/// the PowerPC ABI.
-unsigned PPCFrameLowering::getMinCallFrameSize(bool isPPC64, bool isDarwinABI) {
-  // The call frame needs to be at least big enough for linkage and 8 args.
-  return PPCFrameLowering::getLinkageSize(isPPC64, isDarwinABI) +
-         PPCFrameLowering::getMinCallArgumentsSize(isPPC64, isDarwinABI);
-}
-
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(
     unsigned &NumEntries) const {

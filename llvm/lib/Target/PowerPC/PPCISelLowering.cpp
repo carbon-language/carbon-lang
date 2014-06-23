@@ -2215,7 +2215,8 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
-  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(false, false), PtrByteSize);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(false, false);
+  CCInfo.AllocateStack(LinkageSize, PtrByteSize);
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_PPC32_SVR4);
 
@@ -2294,9 +2295,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
 
   // Area that is at least reserved in the caller of this function.
   unsigned MinReservedArea = CCByValInfo.getNextStackOffset();
-  MinReservedArea =
-    std::max(MinReservedArea,
-             PPCFrameLowering::getMinCallFrameSize(false, false));
+  MinReservedArea = std::max(MinReservedArea, LinkageSize);
 
   // Set the size that is at least reserved in caller of this function.  Tail
   // call optimized function's reserved stack space needs to be aligned so that
@@ -2420,7 +2419,8 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
                        (CallConv == CallingConv::Fast));
   unsigned PtrByteSize = 8;
 
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, false);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false);
+  unsigned ArgOffset = LinkageSize;
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
@@ -2657,9 +2657,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   }
 
   // Area that is at least reserved in the caller of this function.
-  MinReservedArea =
-    std::max(MinReservedArea,
-             PPCFrameLowering::getMinCallFrameSize(true, false));
+  MinReservedArea = std::max(MinReservedArea, LinkageSize + 8 * PtrByteSize);
 
   // Set the size that is at least reserved in caller of this function.  Tail
   // call optimized functions' reserved stack space needs to be aligned so that
@@ -2719,7 +2717,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
                        (CallConv == CallingConv::Fast));
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned ArgOffset = LinkageSize;
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
@@ -3017,9 +3016,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   }
 
   // Area that is at least reserved in the caller of this function.
-  MinReservedArea =
-    std::max(MinReservedArea,
-             PPCFrameLowering::getMinCallFrameSize(isPPC64, true));
+  MinReservedArea = std::max(MinReservedArea, LinkageSize + 8 * PtrByteSize);
 
   // Set the size that is at least reserved in caller of this function.  Tail
   // call optimized functions' reserved stack space needs to be aligned so that
@@ -3965,7 +3962,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with at least 48 bytes, which
   // is reserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = PPCFrameLowering::getLinkageSize(true, false);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false);
+  unsigned NumBytes = LinkageSize;
 
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -3986,8 +3984,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  NumBytes = std::max(NumBytes,
-                      PPCFrameLowering::getMinCallFrameSize(true, false));
+  NumBytes = std::max(NumBytes, LinkageSize + 8 * PtrByteSize);
 
   // Tail call needs the stack to be aligned.
   if (getTargetMachine().Options.GuaranteedTailCallOpt &&
@@ -4024,7 +4021,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, false);
+  unsigned ArgOffset = LinkageSize;
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
   static const MCPhysReg GPR[] = {
@@ -4389,7 +4386,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned NumBytes = LinkageSize;
 
   // Add up all the space actually used.
   // In 32-bit non-varargs calls, Altivec parameters all go at the end; usually
@@ -4428,8 +4426,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  NumBytes = std::max(NumBytes,
-                      PPCFrameLowering::getMinCallFrameSize(isPPC64, true));
+  NumBytes = std::max(NumBytes, LinkageSize + 8 * PtrByteSize);
 
   // Tail call needs the stack to be aligned.
   if (getTargetMachine().Options.GuaranteedTailCallOpt &&
@@ -4470,7 +4467,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned ArgOffset = LinkageSize;
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
   static const MCPhysReg GPR_32[] = {           // 32-bit registers.
