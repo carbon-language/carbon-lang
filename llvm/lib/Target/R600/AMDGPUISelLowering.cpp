@@ -108,9 +108,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   Subtarget = &TM.getSubtarget<AMDGPUSubtarget>();
 
-  // Initialize target lowering borrowed from AMDIL
-  InitAMDILLowering();
-
   setOperationAction(ISD::Constant, MVT::i32, Legal);
   setOperationAction(ISD::Constant, MVT::i64, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
@@ -518,7 +515,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
     llvm_unreachable("Custom lowering code for this"
                      "instruction is not implemented yet!");
     break;
-  // AMDGPU DAG lowering.
   case ISD::SIGN_EXTEND_INREG: return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
@@ -534,9 +530,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::FNEARBYINT: return LowerFNEARBYINT(Op, DAG);
   case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
-
-  // AMDIL DAG lowering.
-  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   }
   return Op;
 }

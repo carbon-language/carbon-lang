@@ -68,6 +68,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::BR_CC, MVT::i32, Expand);
   setOperationAction(ISD::BR_CC, MVT::f32, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
@@ -578,6 +579,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::LOAD: return LowerLOAD(Op, DAG);
+  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddress(MFI, Op, DAG);
   case ISD::INTRINSIC_VOID: {
     SDValue Chain = Op.getOperand(0);
@@ -1643,6 +1645,15 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   };
 
   return DAG.getMergeValues(Ops, DL);
+}
+
+SDValue R600TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Cond  = Op.getOperand(1);
+  SDValue Jump  = Op.getOperand(2);
+
+  return DAG.getNode(AMDGPUISD::BRANCH_COND, SDLoc(Op), Op.getValueType(),
+                     Chain, Jump, Cond);
 }
 
 /// XXX Only kernel functions are supported, so we can assume for now that

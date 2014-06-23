@@ -13,7 +13,6 @@ add_public_tablegen_target(AMDGPUCommonTableGen)
 
 add_llvm_target(R600CodeGen
   AMDILCFGStructurizer.cpp
-  AMDILISelLowering.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUFrameLowering.cpp
   AMDGPUIntrinsicInfo.cpp
