@@ -285,4 +285,41 @@ TEST(ScaledNumberHelpersTest, getLgCeiling) {
   EXPECT_EQ(INT32_MIN, getLgCeiling(UINT64_C(0), 1));
 }
 
+TEST(ScaledNumberHelpersTest, Compare) {
+  EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), 1));
+  EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), -10));
+  EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), 20));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(64), -3));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(32), -2));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(16), -1));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(8), 0));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(4), 1));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(2), 2));
+  EXPECT_EQ(0, compare(UINT32_C(8), 0, UINT32_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT32_C(0), 0, UINT32_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT32_C(7), 0, UINT32_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT32_C(7), 0, UINT32_C(64), -3));
+  EXPECT_EQ(1, compare(UINT32_C(9), 0, UINT32_C(1), 3));
+  EXPECT_EQ(1, compare(UINT32_C(9), 0, UINT32_C(64), -3));
+  EXPECT_EQ(1, compare(UINT32_C(9), 0, UINT32_C(0), 0));
+
+  EXPECT_EQ(0, compare(UINT64_C(0), 0, UINT64_C(0), 1));
+  EXPECT_EQ(0, compare(UINT64_C(0), 0, UINT64_C(0), -10));
+  EXPECT_EQ(0, compare(UINT64_C(0), 0, UINT64_C(0), 20));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(64), -3));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(32), -2));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(16), -1));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(8), 0));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(4), 1));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(2), 2));
+  EXPECT_EQ(0, compare(UINT64_C(8), 0, UINT64_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT64_C(0), 0, UINT64_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT64_C(7), 0, UINT64_C(1), 3));
+  EXPECT_EQ(-1, compare(UINT64_C(7), 0, UINT64_C(64), -3));
+  EXPECT_EQ(1, compare(UINT64_C(9), 0, UINT64_C(1), 3));
+  EXPECT_EQ(1, compare(UINT64_C(9), 0, UINT64_C(64), -3));
+  EXPECT_EQ(1, compare(UINT64_C(9), 0, UINT64_C(0), 0));
+  EXPECT_EQ(-1, compare(UINT64_MAX, 0, UINT64_C(1), 64));
+}
+
 } // end namespace

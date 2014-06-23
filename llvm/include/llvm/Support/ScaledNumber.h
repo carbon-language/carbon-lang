@@ -227,6 +227,40 @@ template <class DigitsT> int32_t getLgCeiling(DigitsT Digits, int16_t Scale) {
   return Lg.first + (Lg.second < 0);
 }
 
+/// \brief Implementation for comparing scaled numbers.
+///
+/// Compare two 64-bit numbers with different scales.  Given that the scale of
+/// \c L is higher than that of \c R by \c ScaleDiff, compare them.  Return -1,
+/// 1, and 0 for less than, greater than, and equal, respectively.
+///
+/// \pre 0 <= ScaleDiff < 64.
+int compareImpl(uint64_t L, uint64_t R, int ScaleDiff);
+
+/// \brief Compare two scaled numbers.
+///
+/// Compare two scaled numbers.  Returns 0 for equal, -1 for less than, and 1
+/// for greater than.
+template <class DigitsT>
+int compare(DigitsT LDigits, int16_t LScale, DigitsT RDigits, int16_t RScale) {
+  // Check for zero.
+  if (!LDigits)
+    return RDigits ? -1 : 0;
+  if (!RDigits)
+    return 1;
+
+  // Check for the scale.  Use getLgFloor to be sure that the scale difference
+  // is always lower than 64.
+  int32_t lgL = getLgFloor(LDigits, LScale), lgR = getLgFloor(RDigits, RScale);
+  if (lgL != lgR)
+    return lgL < lgR ? -1 : 1;
+
+  // Compare digits.
+  if (LScale < RScale)
+    return compareImpl(LDigits, RDigits, RScale - LScale);
+
+  return -compareImpl(RDigits, LDigits, LScale - RScale);
+}
+
 } // end namespace ScaledNumbers
 } // end namespace llvm
 

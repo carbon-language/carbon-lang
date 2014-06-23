@@ -66,19 +66,6 @@ public:
       return IsNeg ? INT64_MIN : INT64_MAX;
     return IsNeg ? -int64_t(U) : int64_t(U);
   }
-
-  static int compare(uint64_t L, uint64_t R, int Shift) {
-    assert(Shift >= 0);
-    assert(Shift < 64);
-
-    uint64_t L_adjusted = L >> Shift;
-    if (L_adjusted < R)
-      return -1;
-    if (L_adjusted > R)
-      return 1;
-
-    return L > L_adjusted << Shift ? 1 : 0;
-  }
 };
 
 /// \brief Simple representation of an unsigned floating point.
@@ -289,7 +276,9 @@ public:
     return joinSigned(scaleByInverse(Unsigned.first), Unsigned.second);
   }
 
-  int compare(const UnsignedFloat &X) const;
+  int compare(const UnsignedFloat &X) const {
+    return ScaledNumbers::compare(Digits, Exponent, X.Digits, X.Exponent);
+  }
   int compareTo(uint64_t N) const {
     UnsignedFloat Float = getFloat(N);
     int Compare = compare(Float);
@@ -603,27 +592,6 @@ void UnsignedFloat<DigitsT>::shiftRight(int32_t Shift) {
 
   Digits >>= Shift;
   return;
-}
-
-template <class DigitsT>
-int UnsignedFloat<DigitsT>::compare(const UnsignedFloat &X) const {
-  // Check for zero.
-  if (isZero())
-    return X.isZero() ? 0 : -1;
-  if (X.isZero())
-    return 1;
-
-  // Check for the scale.  Use lgFloor to be sure that the exponent difference
-  // is always lower than 64.
-  int32_t lgL = lgFloor(), lgR = X.lgFloor();
-  if (lgL != lgR)
-    return lgL < lgR ? -1 : 1;
-
-  // Compare digits.
-  if (Exponent < X.Exponent)
-    return UnsignedFloatBase::compare(Digits, X.Digits, X.Exponent - Exponent);
-
-  return -UnsignedFloatBase::compare(X.Digits, Digits, Exponent - X.Exponent);
 }
 
 template <class T> struct isPodLike<UnsignedFloat<T>> {

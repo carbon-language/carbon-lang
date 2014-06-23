@@ -117,3 +117,16 @@ std::pair<uint64_t, int16_t> ScaledNumbers::divide64(uint64_t Dividend,
 
   return getRounded(Quotient, Shift, Dividend >= getHalf(Divisor));
 }
+
+int ScaledNumbers::compareImpl(uint64_t L, uint64_t R, int ScaleDiff) {
+  assert(ScaleDiff >= 0 && "wrong argument order");
+  assert(ScaleDiff < 64 && "numbers too far apart");
+
+  uint64_t L_adjusted = L >> ScaleDiff;
+  if (L_adjusted < R)
+    return -1;
+  if (L_adjusted > R)
+    return 1;
+
+  return L > L_adjusted << ScaleDiff ? 1 : 0;
+}
