@@ -524,6 +524,23 @@ bool SIInstrInfo::isLiteralConstant(const MachineOperand &MO) const {
   return (MO.isImm() || MO.isFPImm()) && !isInlineConstant(MO);
 }
 
+static bool compareMachineOp(const MachineOperand &Op0,
+                             const MachineOperand &Op1) {
+  if (Op0.getType() != Op1.getType())
+    return false;
+
+  switch (Op0.getType()) {
+  case MachineOperand::MO_Register:
+    return Op0.getReg() == Op1.getReg();
+  case MachineOperand::MO_Immediate:
+    return Op0.getImm() == Op1.getImm();
+  case MachineOperand::MO_FPImmediate:
+    return Op0.getFPImm() == Op1.getFPImm();
+  default:
+    llvm_unreachable("Didn't expect to be comparing these operand types");
+  }
+}
+
 bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
                                     StringRef &ErrInfo) const {
   uint16_t Opcode = MI->getOpcode();
@@ -630,6 +647,24 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
       return false;
     }
   }
+
+  // Verify misc. restrictions on specific instructions.
+  if (Desc.getOpcode() == AMDGPU::V_DIV_SCALE_F32 ||
+      Desc.getOpcode() == AMDGPU::V_DIV_SCALE_F64) {
+    MI->dump();
+
+    const MachineOperand &Src0 = MI->getOperand(2);
+    const MachineOperand &Src1 = MI->getOperand(3);
+    const MachineOperand &Src2 = MI->getOperand(4);
+    if (Src0.isReg() && Src1.isReg() && Src2.isReg()) {
+      if (!compareMachineOp(Src0, Src1) &&
+          !compareMachineOp(Src0, Src2)) {
+        ErrInfo = "v_div_scale_{f32|f64} require src0 = src1 or src2";
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
