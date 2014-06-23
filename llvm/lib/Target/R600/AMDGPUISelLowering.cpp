@@ -771,9 +771,21 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::CLAMP, DL, VT,
                          Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
 
-    case Intrinsic::AMDGPU_div_scale:
+    case Intrinsic::AMDGPU_div_scale: {
+      // 3rd parameter required to be a constant.
+      const ConstantSDNode *Param = dyn_cast<ConstantSDNode>(Op.getOperand(3));
+      if (!Param)
+        return DAG.getUNDEF(VT);
+
+      // Translate to the operands expected by the machine instruction. The
+      // first parameter must be the same as the first instruction.
+      SDValue Numerator = Op.getOperand(1);
+      SDValue Denominator = Op.getOperand(2);
+      SDValue Src0 = Param->isAllOnesValue() ? Numerator : Denominator;
+
       return DAG.getNode(AMDGPUISD::DIV_SCALE, DL, VT,
-                         Op.getOperand(1), Op.getOperand(2));
+                         Src0, Denominator, Numerator);
+    }
 
     case Intrinsic::AMDGPU_div_fmas:
       return DAG.getNode(AMDGPUISD::DIV_FMAS, DL, VT,

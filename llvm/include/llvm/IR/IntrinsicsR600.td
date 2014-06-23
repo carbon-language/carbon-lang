@@ -38,8 +38,13 @@ defm int_r600_read_tidig : R600ReadPreloadRegisterIntrinsic_xyz <
 
 let TargetPrefix = "AMDGPU" in {
 def int_AMDGPU_div_scale : GCCBuiltin<"__builtin_amdgpu_div_scale">,
+  // 1st parameter: Numerator
+  // 2nd parameter: Denominator
+  // 3rd parameter: Constant to select select between first and
+  //                second. (0 = first, 1 = second).
   Intrinsic<[llvm_anyfloat_ty, llvm_i1_ty],
-            [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+            [LLVMMatchType<0>, LLVMMatchType<0>, llvm_i1_ty],
+            [IntrNoMem]>;
 
 def int_AMDGPU_div_fmas : GCCBuiltin<"__builtin_amdgpu_div_fmas">,
   Intrinsic<[llvm_anyfloat_ty],

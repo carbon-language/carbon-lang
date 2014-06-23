@@ -433,6 +433,22 @@ class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   opName#" $dst, $src0_modifiers, $src1_modifiers, $src2_modifiers, $clamp, $omod", pattern
 >, VOP <opName>;
 
+
+class VOP3b_Helper <bits<9> op, RegisterClass vrc, RegisterClass arc,
+                    string opName, list<dag> pattern> : VOP3 <
+  op, (outs vrc:$dst0, SReg_64:$dst1),
+  (ins arc:$src0, arc:$src1, arc:$src2,
+   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
+  opName#" $dst0, $dst1, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
+>, VOP <opName>;
+
+
+class VOP3b_64 <bits<9> op, string opName, list<dag> pattern> :
+  VOP3b_Helper <op, VReg_64, VSrc_64, opName, pattern>;
+
+class VOP3b_32 <bits<9> op, string opName, list<dag> pattern> :
+  VOP3b_Helper <op, VReg_32, VSrc_32, opName, pattern>;
+
 //===----------------------------------------------------------------------===//
 // Vector I/O classes
 //===----------------------------------------------------------------------===//

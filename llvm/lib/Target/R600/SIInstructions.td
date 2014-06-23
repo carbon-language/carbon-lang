@@ -1455,8 +1455,10 @@ defm V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 
 } // isCommutable = 1
 
-defm V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
-def V_DIV_SCALE_F64 : VOP3_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
+def V_DIV_SCALE_F32 : VOP3b_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
+
+// Double precision division pre-scale.
+def V_DIV_SCALE_F64 : VOP3b_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
 
 defm V_DIV_FMAS_F32 : VOP3_32 <0x0000016f, "V_DIV_FMAS_F32",
   [(set f32:$dst, (AMDGPUdiv_fmas f32:$src0, f32:$src1, f32:$src2))]
