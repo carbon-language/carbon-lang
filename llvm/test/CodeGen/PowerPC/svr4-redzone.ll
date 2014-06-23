@@ -36,4 +36,4 @@ entry:
 ; PPC32: stwu 1, -240(1)
 
 ; PPC64-LABEL: bigstack:
-; PPC64: stdu 1, -352(1)
+; PPC64: stdu 1, -288(1)

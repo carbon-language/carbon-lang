@@ -1197,6 +1197,10 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
                                   bool IsVarArg) {
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, ArgLocs, *Context);
+
+  // Reserve space for the linkage area on the stack.
+  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(true, false), 8);
+
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_PPC64_ELF_FIS);
 
   // Bail out if we can't handle any of the arguments.
@@ -1217,6 +1221,14 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
 
   // Get a count of how many bytes are to be pushed onto the stack.
   NumBytes = CCInfo.getNextStackOffset();
+
+  // The prolog code of the callee may store up to 8 GPR argument registers to
+  // the stack, allowing va_start to index over them in memory if its varargs.
+  // Because we cannot tell if this is needed on the caller side, we have to
+  // conservatively assume that it is needed.  As such, make sure we have at
+  // least enough stack space for the caller to store the 8 GPRs.
+  NumBytes = std::max(NumBytes,
+                      PPCFrameLowering::getMinCallFrameSize(true, false));
 
   // Issue CALLSEQ_START.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,

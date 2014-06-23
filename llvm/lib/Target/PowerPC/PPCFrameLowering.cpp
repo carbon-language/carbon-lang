@@ -422,9 +422,9 @@ unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
   // Get the maximum call frame size of all the calls.
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
 
-  // Maximum call frame needs to be at least big enough for linkage and 8 args.
-  unsigned minCallFrameSize = getMinCallFrameSize(Subtarget.isPPC64(),
-                                                  Subtarget.isDarwinABI());
+  // Maximum call frame needs to be at least big enough for linkage area.
+  unsigned minCallFrameSize = getLinkageSize(Subtarget.isPPC64(),
+                                             Subtarget.isDarwinABI());
   maxCallFrameSize = std::max(maxCallFrameSize, minCallFrameSize);
 
   // If we have dynamic alloca then maxCallFrameSize needs to be aligned so
