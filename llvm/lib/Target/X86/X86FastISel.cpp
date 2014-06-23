@@ -113,6 +113,8 @@ private:
 
   bool X86FastEmitCMoveSelect(const Instruction *I);
 
+  bool X86FastEmitSSESelect(const Instruction *I);
+
   bool X86SelectSelect(const Instruction *I);
 
   bool X86SelectTrunc(const Instruction *I);
@@ -230,6 +232,41 @@ getX86ConditonCode(CmpInst::Predicate Predicate) {
   case CmpInst::ICMP_SGE: CC = X86::COND_GE;      break;
   case CmpInst::ICMP_SLT: CC = X86::COND_L;       break;
   case CmpInst::ICMP_SLE: CC = X86::COND_LE;      break;
+  }
+
+  return std::make_pair(CC, NeedSwap);
+}
+
+static std::pair<unsigned, bool>
+getX86SSECondtionCode(CmpInst::Predicate Predicate) {
+  unsigned CC;
+  bool NeedSwap = false;
+
+  // SSE Condition code mapping:
+  //  0 - EQ
+  //  1 - LT
+  //  2 - LE
+  //  3 - UNORD
+  //  4 - NEQ
+  //  5 - NLT
+  //  6 - NLE
+  //  7 - ORD
+  switch (Predicate) {
+  default: llvm_unreachable("Unexpected predicate");
+  case CmpInst::FCMP_OEQ: CC = 0;          break;
+  case CmpInst::FCMP_OGT: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_OLT: CC = 1;          break;
+  case CmpInst::FCMP_OGE: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_OLE: CC = 2;          break;
+  case CmpInst::FCMP_UNO: CC = 3;          break;
+  case CmpInst::FCMP_UNE: CC = 4;          break;
+  case CmpInst::FCMP_ULE: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_UGE: CC = 5;          break;
+  case CmpInst::FCMP_ULT: NeedSwap = true; // fall-through
+  case CmpInst::FCMP_UGT: CC = 6;          break;
+  case CmpInst::FCMP_ORD: CC = 7;          break;
+  case CmpInst::FCMP_UEQ:
+  case CmpInst::FCMP_ONE: CC = 8;          break;
   }
 
   return std::make_pair(CC, NeedSwap);
@@ -1728,6 +1765,93 @@ bool X86FastISel::X86FastEmitCMoveSelect(const Instruction *I) {
   return true;
 }
 
+/// \brief Emit SSE instructions to lower the select.
+///
+/// Try to use SSE1/SSE2 instructions to simulate a select without branches.
+/// This lowers fp selects into a CMP/AND/ANDN/OR sequence when the necessary
+/// SSE instructions are available.
+bool X86FastISel::X86FastEmitSSESelect(const Instruction *I) {
+  MVT RetVT;
+  if (!isTypeLegal(I->getType(), RetVT))
+    return false;
+
+  const auto *CI = dyn_cast<FCmpInst>(I->getOperand(0));
+  if (!CI)
+    return false;
+
+  if (I->getType() != CI->getOperand(0)->getType() ||
+      !((Subtarget->hasSSE1() && RetVT == MVT::f32) ||
+        (Subtarget->hasSSE2() && RetVT == MVT::f64)    ))
+    return false;
+
+  const Value *CmpLHS = CI->getOperand(0);
+  const Value *CmpRHS = CI->getOperand(1);
+  CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+
+  // The optimizer might have replaced fcmp oeq %x, %x with fcmp ord %x, 0.0.
+  // We don't have to materialize a zero constant for this case and can just use
+  // %x again on the RHS.
+  if (Predicate == CmpInst::FCMP_ORD || Predicate == CmpInst::FCMP_UNO) {
+    const auto *CmpRHSC = dyn_cast<ConstantFP>(CmpRHS);
+    if (CmpRHSC && CmpRHSC->isNullValue())
+      CmpRHS = CmpLHS;
+  }
+
+  unsigned CC;
+  bool NeedSwap;
+  std::tie(CC, NeedSwap) = getX86SSECondtionCode(Predicate);
+  if (CC > 7)
+    return false;
+
+  if (NeedSwap)
+    std::swap(CmpLHS, CmpRHS);
+
+  static unsigned OpcTable[2][2][4] = {
+    { { X86::CMPSSrr,  X86::FsANDPSrr,  X86::FsANDNPSrr,  X86::FsORPSrr  },
+      { X86::VCMPSSrr, X86::VFsANDPSrr, X86::VFsANDNPSrr, X86::VFsORPSrr }  },
+    { { X86::CMPSDrr,  X86::FsANDPDrr,  X86::FsANDNPDrr,  X86::FsORPDrr  },
+      { X86::VCMPSDrr, X86::VFsANDPDrr, X86::VFsANDNPDrr, X86::VFsORPDrr }  }
+  };
+
+  bool HasAVX = Subtarget->hasAVX();
+  unsigned *Opc = nullptr;
+  switch (RetVT.SimpleTy) {
+  default: return false;
+  case MVT::f32: Opc = &OpcTable[0][HasAVX][0]; break;
+  case MVT::f64: Opc = &OpcTable[1][HasAVX][0]; break;
+  }
+
+  const Value *LHS = I->getOperand(1);
+  const Value *RHS = I->getOperand(2);
+
+  unsigned LHSReg = getRegForValue(LHS);
+  bool LHSIsKill = hasTrivialKill(LHS);
+
+  unsigned RHSReg = getRegForValue(RHS);
+  bool RHSIsKill = hasTrivialKill(RHS);
+
+  unsigned CmpLHSReg = getRegForValue(CmpLHS);
+  bool CmpLHSIsKill = hasTrivialKill(CmpLHS);
+
+  unsigned CmpRHSReg = getRegForValue(CmpRHS);
+  bool CmpRHSIsKill = hasTrivialKill(CmpRHS);
+
+  if (!LHSReg || !RHSReg || !CmpLHS || !CmpRHS)
+    return false;
+
+  const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
+  unsigned CmpReg = FastEmitInst_rri(Opc[0], RC, CmpLHSReg, CmpLHSIsKill,
+                                     CmpRHSReg, CmpRHSIsKill, CC);
+  unsigned AndReg = FastEmitInst_rr(Opc[1], RC, CmpReg, /*IsKill=*/false,
+                                    LHSReg, LHSIsKill);
+  unsigned AndNReg = FastEmitInst_rr(Opc[2], RC, CmpReg, /*IsKill=*/true,
+                                     RHSReg, RHSIsKill);
+  unsigned ResultReg = FastEmitInst_rr(Opc[3], RC, AndNReg, /*IsKill=*/true,
+                                       AndReg, /*IsKill=*/true);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool X86FastISel::X86SelectSelect(const Instruction *I) {
   MVT RetVT;
   if (!isTypeLegal(I->getType(), RetVT))
@@ -1760,6 +1884,10 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
 
   // First try to use real conditional move instructions.
   if (X86FastEmitCMoveSelect(I))
+    return true;
+
+  // Try to use a sequence of SSE instructions to simulate a conditonal move.
+  if (X86FastEmitSSESelect(I))
     return true;
 
   return false;
