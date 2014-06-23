@@ -7,6 +7,7 @@ struct V { virtual void f(); };
 struct A : virtual V { A(); };
 
 extern A a;
+extern V v;
 extern int b;
 A* fn();
 
@@ -43,3 +44,9 @@ const std::type_info* test3_typeid() { return &typeid(*fn()); }
 const std::type_info* test4_typeid() { return &typeid(b); }
 // CHECK: define %struct.type_info* @"\01?test4_typeid@@YAPBUtype_info@@XZ"()
 // CHECK:   ret %struct.type_info* bitcast (%"MSRTTITypeDescriptor\02"* @"\01??_R0H@8" to %struct.type_info*)
+
+const std::type_info* test5_typeid() { return &typeid(v); }
+// CHECK: define %struct.type_info* @"\01?test5_typeid@@YAPBUtype_info@@XZ"()
+// CHECK:        [[RT:%.*]] = tail call i8* @__RTtypeid(i8* bitcast (%struct.V* @"\01?v@@3UV@@A" to i8*))
+// CHECK-NEXT:   [[RET:%.*]] = bitcast i8* [[RT]] to %struct.type_info*
+// CHECK-NEXT:   ret %struct.type_info* [[RET]]
