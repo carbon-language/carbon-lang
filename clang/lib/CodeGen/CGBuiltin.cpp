@@ -3762,7 +3762,7 @@ Value *CodeGenFunction::
 emitVectorWrappedScalar8Intrinsic(unsigned Int, SmallVectorImpl<Value*> &Ops,
                                   const char *Name) {
   // i8 is not a legal types for AArch64, so we can't just use
-  // a normal overloaed intrinsic call for these scalar types. Instead
+  // a normal overloaded intrinsic call for these scalar types. Instead
   // we'll build 64-bit vectors w/ lane zero being our input values and
   // perform the operation on that. The back end can pattern match directly
   // to the scalar instruction.
@@ -3778,7 +3778,7 @@ Value *CodeGenFunction::
 emitVectorWrappedScalar16Intrinsic(unsigned Int, SmallVectorImpl<Value*> &Ops,
                                    const char *Name) {
   // i16 is not a legal types for AArch64, so we can't just use
-  // a normal overloaed intrinsic call for these scalar types. Instead
+  // a normal overloaded intrinsic call for these scalar types. Instead
   // we'll build 64-bit vectors w/ lane zero being our input values and
   // perform the operation on that. The back end can pattern match directly
   // to the scalar instruction.
