@@ -86,27 +86,6 @@ public:
   virtual void finish();
 };
 
-class AArch64TargetStreamer : public MCTargetStreamer {
-public:
-  AArch64TargetStreamer(MCStreamer &S);
-  ~AArch64TargetStreamer();
-
-
-  void finish() override;
-
-  /// Callback used to implement the ldr= pseudo.
-  /// Add a new entry to the constant pool for the current section and return an
-  /// MCExpr that can be used to refer to the constant pool location.
-  const MCExpr *addConstantPoolEntry(const MCExpr *);
-
-  /// Callback used to implemnt the .ltorg directive.
-  /// Emit contents of constant pool for the current section.
-  void emitCurrentConstantPool();
-
-private:
-  std::unique_ptr<AssemblerConstantPools> ConstantPools;
-};
-
 // FIXME: declared here because it is used from
 // lib/CodeGen/AsmPrinter/ARMException.cpp.
 class ARMTargetStreamer : public MCTargetStreamer {
