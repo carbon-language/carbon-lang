@@ -42,8 +42,8 @@ namespace llvm {
 
 class ScaledNumberBase {
 public:
-  static const int32_t MaxExponent = 16383;
-  static const int32_t MinExponent = -16382;
+  static const int32_t MaxScale = 16383;
+  static const int32_t MinScale = -16382;
   static const int DefaultPrecision = 10;
 
   static void dump(uint64_t D, int16_t E, int Width);
@@ -78,7 +78,7 @@ public:
 /// metrics.
 ///
 /// The number is split into a signed scale and unsigned digits.  The number
-/// represented is \c getDigits()*2^getExponent().  In this way, the digits are
+/// represented is \c getDigits()*2^getScale().  In this way, the digits are
 /// much like the mantissa in the x87 long double, but there is no canonical
 /// form so the same number can be represented by many bit representations.
 ///
@@ -106,7 +106,7 @@ public:
 /// both implemented, and both interpret negative shifts as positive shifts in
 /// the opposite direction.
 ///
-/// Exponents are limited to the range accepted by x87 long double.  This makes
+/// Scales are limited to the range accepted by x87 long double.  This makes
 /// it trivial to add functionality to convert to APFloat (this is already
 /// relied on for the implementation of printing).
 ///
@@ -130,23 +130,23 @@ private:
 
 private:
   DigitsType Digits;
-  int16_t Exponent;
+  int16_t Scale;
 
 public:
-  ScaledNumber() : Digits(0), Exponent(0) {}
+  ScaledNumber() : Digits(0), Scale(0) {}
 
-  ScaledNumber(DigitsType Digits, int16_t Exponent)
-      : Digits(Digits), Exponent(Exponent) {}
+  ScaledNumber(DigitsType Digits, int16_t Scale)
+      : Digits(Digits), Scale(Scale) {}
 
 private:
   ScaledNumber(const std::pair<uint64_t, int16_t> &X)
-      : Digits(X.first), Exponent(X.second) {}
+      : Digits(X.first), Scale(X.second) {}
 
 public:
   static ScaledNumber getZero() { return ScaledNumber(0, 0); }
   static ScaledNumber getOne() { return ScaledNumber(1, 0); }
   static ScaledNumber getLargest() {
-    return ScaledNumber(DigitsLimits::max(), MaxExponent);
+    return ScaledNumber(DigitsLimits::max(), MaxScale);
   }
   static ScaledNumber getFloat(uint64_t N) { return adjustToWidth(N, 0); }
   static ScaledNumber getInverseFloat(uint64_t N) {
@@ -156,7 +156,7 @@ public:
     return getQuotient(N, D);
   }
 
-  int16_t getExponent() const { return Exponent; }
+  int16_t getScale() const { return Scale; }
   DigitsType getDigits() const { return Digits; }
 
   /// \brief Convert to the given integer type.
@@ -168,28 +168,26 @@ public:
   bool isZero() const { return !Digits; }
   bool isLargest() const { return *this == getLargest(); }
   bool isOne() const {
-    if (Exponent > 0 || Exponent <= -Width)
+    if (Scale > 0 || Scale <= -Width)
       return false;
-    return Digits == DigitsType(1) << -Exponent;
+    return Digits == DigitsType(1) << -Scale;
   }
 
   /// \brief The log base 2, rounded.
   ///
   /// Get the lg of the scalar.  lg 0 is defined to be INT32_MIN.
-  int32_t lg() const { return ScaledNumbers::getLg(Digits, Exponent); }
+  int32_t lg() const { return ScaledNumbers::getLg(Digits, Scale); }
 
   /// \brief The log base 2, rounded towards INT32_MIN.
   ///
   /// Get the lg floor.  lg 0 is defined to be INT32_MIN.
-  int32_t lgFloor() const {
-    return ScaledNumbers::getLgFloor(Digits, Exponent);
-  }
+  int32_t lgFloor() const { return ScaledNumbers::getLgFloor(Digits, Scale); }
 
   /// \brief The log base 2, rounded towards INT32_MAX.
   ///
   /// Get the lg ceiling.  lg 0 is defined to be INT32_MIN.
   int32_t lgCeiling() const {
-    return ScaledNumbers::getLgCeiling(Digits, Exponent);
+    return ScaledNumbers::getLgCeiling(Digits, Scale);
   }
 
   bool operator==(const ScaledNumber &X) const { return compare(X) == 0; }
@@ -221,7 +219,7 @@ public:
   ///        65432198.7654... =>    65432198.77
   ///         5432198.7654... =>     5432198.765
   std::string toString(unsigned Precision = DefaultPrecision) {
-    return ScaledNumberBase::toString(Digits, Exponent, Width, Precision);
+    return ScaledNumberBase::toString(Digits, Scale, Width, Precision);
   }
 
   /// \brief Print a decimal representation.
@@ -229,21 +227,21 @@ public:
   /// Print a string.  See toString for documentation.
   raw_ostream &print(raw_ostream &OS,
                      unsigned Precision = DefaultPrecision) const {
-    return ScaledNumberBase::print(OS, Digits, Exponent, Width, Precision);
+    return ScaledNumberBase::print(OS, Digits, Scale, Width, Precision);
   }
-  void dump() const { return ScaledNumberBase::dump(Digits, Exponent, Width); }
+  void dump() const { return ScaledNumberBase::dump(Digits, Scale, Width); }
 
   ScaledNumber &operator+=(const ScaledNumber &X) {
-    std::tie(Digits, Exponent) =
-        ScaledNumbers::getSum(Digits, Exponent, X.Digits, X.Exponent);
-    // Check for exponent past MaxExponent.
-    if (Exponent > MaxExponent)
+    std::tie(Digits, Scale) =
+        ScaledNumbers::getSum(Digits, Scale, X.Digits, X.Scale);
+    // Check for exponent past MaxScale.
+    if (Scale > MaxScale)
       *this = getLargest();
     return *this;
   }
   ScaledNumber &operator-=(const ScaledNumber &X) {
-    std::tie(Digits, Exponent) =
-        ScaledNumbers::getDifference(Digits, Exponent, X.Digits, X.Exponent);
+    std::tie(Digits, Scale) =
+        ScaledNumbers::getDifference(Digits, Scale, X.Digits, X.Scale);
     return *this;
   }
   ScaledNumber &operator*=(const ScaledNumber &X);
@@ -268,8 +266,8 @@ private:
   ///
   /// The value that compares smaller will lose precision, and possibly become
   /// \a isZero().
-  ScaledNumber matchExponents(ScaledNumber X) {
-    ScaledNumbers::matchScales(Digits, Exponent, X.Digits, X.Exponent);
+  ScaledNumber matchScales(ScaledNumber X) {
+    ScaledNumbers::matchScales(Digits, Scale, X.Digits, X.Scale);
     return X;
   }
 
@@ -294,7 +292,7 @@ public:
   }
 
   int compare(const ScaledNumber &X) const {
-    return ScaledNumbers::compare(Digits, Exponent, X.Digits, X.Exponent);
+    return ScaledNumbers::compare(Digits, Scale, X.Digits, X.Scale);
   }
   int compareTo(uint64_t N) const {
     ScaledNumber Float = getFloat(N);
@@ -331,10 +329,10 @@ private:
   ///
   /// Should only be called for \c Shift close to zero.
   ///
-  /// \pre Shift >= MinExponent && Shift + 64 <= MaxExponent.
+  /// \pre Shift >= MinScale && Shift + 64 <= MaxScale.
   static ScaledNumber adjustToWidth(uint64_t N, int32_t Shift) {
-    assert(Shift >= MinExponent && "Shift should be close to 0");
-    assert(Shift <= MaxExponent - 64 && "Shift should be close to 0");
+    assert(Shift >= MinScale && "Shift should be close to 0");
+    assert(Shift <= MaxScale - 64 && "Shift should be close to 0");
     auto Adjusted = ScaledNumbers::getAdjusted<DigitsT>(N, Shift);
     return Adjusted;
   }
@@ -344,7 +342,7 @@ private:
     if (P.isLargest())
       return P;
 
-    return ScaledNumbers::getRounded(P.Digits, P.Exponent, Round);
+    return ScaledNumbers::getRounded(P.Digits, P.Scale, Round);
   }
 };
 
@@ -396,7 +394,7 @@ uint64_t ScaledNumber<DigitsT>::scale(uint64_t N) const {
     return (getFloat(N) * *this).template toInt<uint64_t>();
 
   // Defer to the 64-bit version.
-  return ScaledNumber<uint64_t>(Digits, Exponent).scale(N);
+  return ScaledNumber<uint64_t>(Digits, Scale).scale(N);
 }
 
 template <class DigitsT>
@@ -409,13 +407,13 @@ IntT ScaledNumber<DigitsT>::toInt() const {
     return Limits::max();
 
   IntT N = Digits;
-  if (Exponent > 0) {
-    assert(size_t(Exponent) < sizeof(IntT) * 8);
-    return N << Exponent;
+  if (Scale > 0) {
+    assert(size_t(Scale) < sizeof(IntT) * 8);
+    return N << Scale;
   }
-  if (Exponent < 0) {
-    assert(size_t(-Exponent) < sizeof(IntT) * 8);
-    return N >> -Exponent;
+  if (Scale < 0) {
+    assert(size_t(-Scale) < sizeof(IntT) * 8);
+    return N >> -Scale;
   }
   return N;
 }
@@ -429,13 +427,13 @@ operator*=(const ScaledNumber &X) {
     return *this = X;
 
   // Save the exponents.
-  int32_t Exponents = int32_t(Exponent) + int32_t(X.Exponent);
+  int32_t Scales = int32_t(Scale) + int32_t(X.Scale);
 
   // Get the raw product.
   *this = getProduct(Digits, X.Digits);
 
   // Combine with exponents.
-  return *this <<= Exponents;
+  return *this <<= Scales;
 }
 template <class DigitsT>
 ScaledNumber<DigitsT> &ScaledNumber<DigitsT>::
@@ -446,13 +444,13 @@ operator/=(const ScaledNumber &X) {
     return *this = getLargest();
 
   // Save the exponents.
-  int32_t Exponents = int32_t(Exponent) - int32_t(X.Exponent);
+  int32_t Scales = int32_t(Scale) - int32_t(X.Scale);
 
   // Get the raw quotient.
   *this = getQuotient(Digits, X.Digits);
 
   // Combine with exponents.
-  return *this <<= Exponents;
+  return *this <<= Scales;
 }
 template <class DigitsT> void ScaledNumber<DigitsT>::shiftLeft(int32_t Shift) {
   if (!Shift || isZero())
@@ -464,9 +462,9 @@ template <class DigitsT> void ScaledNumber<DigitsT>::shiftLeft(int32_t Shift) {
   }
 
   // Shift as much as we can in the exponent.
-  int32_t ExponentShift = std::min(Shift, MaxExponent - Exponent);
-  Exponent += ExponentShift;
-  if (ExponentShift == Shift)
+  int32_t ScaleShift = std::min(Shift, MaxScale - Scale);
+  Scale += ScaleShift;
+  if (ScaleShift == Shift)
     return;
 
   // Check this late, since it's rare.
@@ -474,7 +472,7 @@ template <class DigitsT> void ScaledNumber<DigitsT>::shiftLeft(int32_t Shift) {
     return;
 
   // Shift the digits themselves.
-  Shift -= ExponentShift;
+  Shift -= ScaleShift;
   if (Shift > countLeadingZerosWidth(Digits)) {
     // Saturate.
     *this = getLargest();
@@ -495,13 +493,13 @@ template <class DigitsT> void ScaledNumber<DigitsT>::shiftRight(int32_t Shift) {
   }
 
   // Shift as much as we can in the exponent.
-  int32_t ExponentShift = std::min(Shift, Exponent - MinExponent);
-  Exponent -= ExponentShift;
-  if (ExponentShift == Shift)
+  int32_t ScaleShift = std::min(Shift, Scale - MinScale);
+  Scale -= ScaleShift;
+  if (ScaleShift == Shift)
     return;
 
   // Shift the digits themselves.
-  Shift -= ExponentShift;
+  Shift -= ScaleShift;
   if (Shift >= Width) {
     // Saturate.
     *this = getZero();
