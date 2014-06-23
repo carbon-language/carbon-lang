@@ -8,8 +8,8 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ..
-PARALLEL_DIRS := FileCheck FileUpdate TableGen PerfectShuffle \
-	      count fpcmp llvm-lit not unittest
+PARALLEL_DIRS := FileCheck TableGen PerfectShuffle count fpcmp llvm-lit not \
+                 unittest
 
 EXTRA_DIST := check-each-file codegen-diff countloc.sh \
               DSAclean.py DSAextract.py emacs findsym.pl GenLibDeps.pl \

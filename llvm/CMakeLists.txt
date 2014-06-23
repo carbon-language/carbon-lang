@@ -499,7 +499,6 @@ add_subdirectory(lib)
 
 if( LLVM_INCLUDE_UTILS )
   add_subdirectory(utils/FileCheck)
-  add_subdirectory(utils/FileUpdate)
   add_subdirectory(utils/PerfectShuffle)
   add_subdirectory(utils/count)
   add_subdirectory(utils/not)
