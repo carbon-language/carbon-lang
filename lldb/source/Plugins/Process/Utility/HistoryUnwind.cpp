@@ -66,7 +66,7 @@ HistoryUnwind::DoCreateRegisterContextForFrame (StackFrame *frame)
 bool
 HistoryUnwind::DoGetFrameInfoAtIndex (uint32_t frame_idx, lldb::addr_t& cfa, lldb::addr_t& pc)
 {
-    Mutex::Locker locker(m_unwind_mutex);
+    Mutex::Locker (m_unwind_mutex);   // FIXME do not throw away the lock after we acquire it..
     if (frame_idx < m_pcs.size())
     {
         cfa = frame_idx;

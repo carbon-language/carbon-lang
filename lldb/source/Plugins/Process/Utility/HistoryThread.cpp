@@ -78,7 +78,7 @@ HistoryThread::CreateRegisterContextForFrame (StackFrame *frame)
 lldb::StackFrameListSP
 HistoryThread::GetStackFrameList ()
 {
-    Mutex::Locker locker(m_framelist_mutex);
+    Mutex::Locker (m_framelist_mutex);   // FIXME do not throw away the lock after we acquire it..
     if (m_framelist.get() == NULL)
     {
         m_framelist.reset (new StackFrameList (*this, StackFrameListSP(), true));
