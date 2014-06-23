@@ -33,11 +33,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     MVT::v2i32
   };
 
-  static const MVT::SimpleValueType FloatTypes[] = {
-    MVT::f32,
-    MVT::f64
-  };
-
   static const MVT::SimpleValueType VectorTypes[] = {
     MVT::v4f32,
     MVT::v4i32,
@@ -55,10 +50,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::BRCOND, VT, Custom);
     setOperationAction(ISD::BR_JT, VT, Expand);
     setOperationAction(ISD::BRIND, VT, Expand);
-  }
-
-  for (MVT VT : FloatTypes) {
-    setOperationAction(ISD::FP_ROUND_INREG, VT, Expand);
   }
 
   for (MVT VT : VectorTypes) {
