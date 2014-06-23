@@ -164,8 +164,6 @@ class MCStreamer {
   void setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame);
   void EnsureValidW64UnwindInfo();
 
-  MCSymbol *LastSymbol;
-
   // SymbolOrdering - Tracks an index to represent the order
   // a symbol was emitted in. Zero means we did not emit that symbol.
   DenseMap<const MCSymbol *, unsigned> SymbolOrdering;

@@ -466,14 +466,12 @@ public:
 struct MCDwarfFrameInfo {
   MCDwarfFrameInfo()
       : Begin(nullptr), End(nullptr), Personality(nullptr), Lsda(nullptr),
-        Function(nullptr), Instructions(), PersonalityEncoding(),
-        LsdaEncoding(0), CompactUnwindEncoding(0), IsSignalFrame(false),
-        IsSimple(false) {}
+        Instructions(), PersonalityEncoding(), LsdaEncoding(0),
+        CompactUnwindEncoding(0), IsSignalFrame(false), IsSimple(false) {}
   MCSymbol *Begin;
   MCSymbol *End;
   const MCSymbol *Personality;
   const MCSymbol *Lsda;
-  const MCSymbol *Function;
   std::vector<MCCFIInstruction> Instructions;
   unsigned PersonalityEncoding;
   unsigned LsdaEncoding;

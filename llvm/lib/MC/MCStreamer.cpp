@@ -37,7 +37,7 @@ void MCTargetStreamer::finish() {}
 void MCTargetStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
 
 MCStreamer::MCStreamer(MCContext &Ctx)
-    : Context(Ctx), CurrentW64UnwindInfo(nullptr), LastSymbol(nullptr) {
+    : Context(Ctx), CurrentW64UnwindInfo(nullptr) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
@@ -51,7 +51,6 @@ void MCStreamer::reset() {
     delete W64UnwindInfos[i];
   W64UnwindInfos.clear();
   CurrentW64UnwindInfo = nullptr;
-  LastSymbol = nullptr;
   SectionStack.clear();
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
@@ -234,7 +233,6 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection().first && "Cannot emit before setting section!");
   AssignSection(Symbol, getCurrentSection().first);
-  LastSymbol = Symbol;
 
   MCTargetStreamer *TS = getTargetStreamer();
   if (TS)
@@ -245,7 +243,6 @@ void MCStreamer::EmitDebugLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection().first && "Cannot emit before setting section!");
   AssignSection(Symbol, getCurrentSection().first);
-  LastSymbol = Symbol;
 }
 
 void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
@@ -274,11 +271,6 @@ void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
 void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
-  // Report an error if we haven't seen a symbol yet where we'd bind
-  // .cfi_startproc.
-  if (!LastSymbol)
-    report_fatal_error("No symbol to start a frame");
-  Frame.Function = LastSymbol;
   // We need to create a local symbol to avoid relocations.
   Frame.Begin = getContext().CreateTempSymbol();
   EmitLabel(Frame.Begin);

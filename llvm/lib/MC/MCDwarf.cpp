@@ -1297,7 +1297,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   unsigned FDEEncoding = MOFI->getFDEEncoding();
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
   if (VerboseAsm) Streamer.AddComment("Range Start");
-  Streamer.EmitSymbolValue(Frame.Function, Size);
+  Streamer.EmitSymbolValue(Frame.Begin, Size);
 
   // Range Length
   const MCExpr *Range = MakeStartMinusEndExpr(Streamer, *Frame.Begin,
