@@ -373,6 +373,7 @@ AppleGetPendingItemsHandler::GetPendingItems (Thread &thread, addr_t queue, addr
     if (m_get_pending_items_function == NULL)
     {
         error.SetErrorString ("Unable to compile function to call __introspection_dispatch_queue_get_pending_items");
+        return return_value;
     }
 
 

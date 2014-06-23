@@ -363,6 +363,7 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     if (m_get_queues_function == NULL)
     {
         error.SetErrorString ("Unable to compile function to call __introspection_dispatch_get_queues");
+        return return_value;
     }
 
     StreamString errors;
