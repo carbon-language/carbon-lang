@@ -1,4 +1,4 @@
-//===- AMDILIntrinsicInfo.cpp - AMDGPU Intrinsic Information ------*- C++ -*-===//
+//===- AMDGPUIntrinsicInfo.cpp - AMDGPU Intrinsic Information ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //
 //===-----------------------------------------------------------------------===//
 
-#include "AMDILIntrinsicInfo.h"
+#include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Intrinsics.h"
@@ -24,14 +24,12 @@ using namespace llvm;
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
-AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo(TargetMachine *tm) 
-  : TargetIntrinsicInfo() {
-}
+AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo(TargetMachine *tm)
+    : TargetIntrinsicInfo() {}
 
-std::string 
-AMDGPUIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
-    unsigned int numTys) const  {
-  static const char* const names[] = {
+std::string AMDGPUIntrinsicInfo::getName(unsigned IntrID, Type **Tys,
+                                         unsigned numTys) const {
+  static const char *const names[] = {
 #define GET_INTRINSIC_NAME_TABLE
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_NAME_TABLE
@@ -40,23 +38,23 @@ AMDGPUIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
   if (IntrID < Intrinsic::num_intrinsics) {
     return nullptr;
   }
-  assert(IntrID < AMDGPUIntrinsic::num_AMDGPU_intrinsics
-      && "Invalid intrinsic ID");
+  assert(IntrID < AMDGPUIntrinsic::num_AMDGPU_intrinsics &&
+         "Invalid intrinsic ID");
 
   std::string Result(names[IntrID - Intrinsic::num_intrinsics]);
   return Result;
 }
 
-unsigned int
-AMDGPUIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const  {
+unsigned AMDGPUIntrinsicInfo::lookupName(const char *Name,
+                                         unsigned Len) const {
   if (!StringRef(Name, Len).startswith("llvm."))
     return 0; // All intrinsics start with 'llvm.'
 
 #define GET_FUNCTION_RECOGNIZER
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_FUNCTION_RECOGNIZER
-  AMDGPUIntrinsic::ID IntrinsicID
-    = (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic;
+  AMDGPUIntrinsic::ID IntrinsicID =
+      (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic;
   IntrinsicID = getIntrinsicForGCCBuiltin("AMDGPU", Name);
 
   if (IntrinsicID != (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic) {
@@ -65,17 +63,15 @@ AMDGPUIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const  {
   return 0;
 }
 
-bool 
-AMDGPUIntrinsicInfo::isOverloaded(unsigned id) const  {
-  // Overload Table
+bool AMDGPUIntrinsicInfo::isOverloaded(unsigned id) const {
+// Overload Table
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
 }
 
-Function*
-AMDGPUIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
-    Type **Tys,
-    unsigned numTys) const  {
+Function *AMDGPUIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
+                                              Type **Tys,
+                                              unsigned numTys) const {
   llvm_unreachable("Not implemented");
 }

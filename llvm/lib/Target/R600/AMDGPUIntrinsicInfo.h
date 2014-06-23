@@ -1,4 +1,4 @@
-//===- AMDILIntrinsicInfo.h - AMDGPU Intrinsic Information ------*- C++ -*-===//
+//===- AMDGPUIntrinsicInfo.h - AMDGPU Intrinsic Information ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 /// \brief Interface for the AMDGPU Implementation of the Intrinsic Info class.
 //
 //===-----------------------------------------------------------------------===//
-#ifndef AMDIL_INTRINSICS_H
-#define AMDIL_INTRINSICS_H
+#ifndef AMDGPU_INTRINSICINFO_H
+#define AMDGPU_INTRINSICINFO_H
 
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
@@ -34,16 +34,15 @@ enum ID {
 class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
 public:
   AMDGPUIntrinsicInfo(TargetMachine *tm);
-  std::string getName(unsigned int IntrId, Type **Tys = nullptr,
-                      unsigned int numTys = 0) const override;
-  unsigned int lookupName(const char *Name, unsigned int Len) const override;
-  bool isOverloaded(unsigned int IID) const override;
-  Function *getDeclaration(Module *M, unsigned int ID,
+  std::string getName(unsigned IntrId, Type **Tys = nullptr,
+                      unsigned numTys = 0) const override;
+  unsigned lookupName(const char *Name, unsigned Len) const override;
+  bool isOverloaded(unsigned IID) const override;
+  Function *getDeclaration(Module *M, unsigned ID,
                            Type **Tys = nullptr,
-                           unsigned int numTys = 0) const override;
+                           unsigned numTys = 0) const override;
 };
 
 } // end namespace llvm
 
-#endif // AMDIL_INTRINSICS_H
-
+#endif // AMDGPU_INTRINSICINFO_H

@@ -17,8 +17,8 @@
 
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUInstrInfo.h"
+#include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
-#include "AMDILIntrinsicInfo.h"
 #include "R600ISelLowering.h"
 #include "llvm/IR/DataLayout.h"
 
