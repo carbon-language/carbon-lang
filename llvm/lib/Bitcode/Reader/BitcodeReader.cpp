@@ -39,8 +39,6 @@ void BitcodeReader::materializeForwardReferencedFunctions() {
 }
 
 void BitcodeReader::FreeState() {
-  if (BufferOwned)
-    delete Buffer;
   Buffer = nullptr;
   std::vector<Type*>().swap(TypeList);
   ValueList.clear();
@@ -3150,6 +3148,7 @@ std::error_code BitcodeReader::FindFunctionInStream(
 // GVMaterializer implementation
 //===----------------------------------------------------------------------===//
 
+void BitcodeReader::releaseBuffer() { Buffer.release(); }
 
 bool BitcodeReader::isMaterializable(const GlobalValue *GV) const {
   if (const Function *F = dyn_cast<Function>(GV)) {
@@ -3374,10 +3373,9 @@ const std::error_category &BitcodeReader::BitcodeErrorCategory() {
 /// getLazyBitcodeModule - lazy function-at-a-time loading from a file.
 ///
 ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
-                                             LLVMContext &Context,
-                                             bool BufferOwned) {
+                                             LLVMContext &Context) {
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
-  BitcodeReader *R = new BitcodeReader(Buffer, Context, BufferOwned);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context);
   M->setMaterializer(R);
   if (std::error_code EC = R->ParseBitcodeInto(M)) {
     R->releaseBuffer(); // Never take ownership on error.
@@ -3409,13 +3407,12 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
 
 ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
                                          LLVMContext &Context) {
-  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context, false);
+  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
   if (!ModuleOrErr)
     return ModuleOrErr;
   Module *M = ModuleOrErr.get();
-
   // Read in the entire module, and destroy the BitcodeReader.
-  if (std::error_code EC = M->materializeAllPermanently()) {
+  if (std::error_code EC = M->materializeAllPermanently(true)) {
     delete M;
     return EC;
   }
@@ -3429,13 +3426,14 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
 std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
                                          LLVMContext& Context,
                                          std::string *ErrMsg) {
-  BitcodeReader *R = new BitcodeReader(Buffer, Context, /*BufferOwned*/ false);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context);
 
   std::string Triple("");
   if (std::error_code EC = R->ParseTriple(Triple))
     if (ErrMsg)
       *ErrMsg = EC.message();
 
+  R->releaseBuffer();
   delete R;
   return Triple;
 }

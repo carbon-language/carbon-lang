@@ -13,6 +13,7 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/IRObjectFile.h"
@@ -21,10 +22,9 @@ using namespace llvm;
 using namespace object;
 
 IRObjectFile::IRObjectFile(MemoryBuffer *Object, std::error_code &EC,
-                           LLVMContext &Context, bool BufferOwned)
-    : SymbolicFile(Binary::ID_IR, Object, BufferOwned) {
-  ErrorOr<Module *> MOrErr =
-      getLazyBitcodeModule(Object, Context, /*BufferOwned*/ false);
+                           LLVMContext &Context)
+    : SymbolicFile(Binary::ID_IR, Object) {
+  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Object, Context);
   if ((EC = MOrErr.getError()))
     return;
 
@@ -37,6 +37,8 @@ IRObjectFile::IRObjectFile(MemoryBuffer *Object, std::error_code &EC,
 
   Mang.reset(new Mangler(DL));
 }
+
+IRObjectFile::~IRObjectFile() { M->getMaterializer()->releaseBuffer(); }
 
 static const GlobalValue &getGV(DataRefImpl &Symb) {
   return *reinterpret_cast<GlobalValue*>(Symb.p & ~uintptr_t(3));
@@ -151,11 +153,11 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
-ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
-    MemoryBuffer *Object, LLVMContext &Context, bool BufferOwned) {
+ErrorOr<SymbolicFile *>
+llvm::object::SymbolicFile::createIRObjectFile(MemoryBuffer *Object,
+                                               LLVMContext &Context) {
   std::error_code EC;
-  std::unique_ptr<IRObjectFile> Ret(
-      new IRObjectFile(Object, EC, Context, BufferOwned));
+  std::unique_ptr<IRObjectFile> Ret(new IRObjectFile(Object, EC, Context));
   if (EC)
     return EC;
   return Ret.release();

@@ -27,8 +27,8 @@ class IRObjectFile : public SymbolicFile {
   std::unique_ptr<Mangler> Mang;
 
 public:
-  IRObjectFile(MemoryBuffer *Object, std::error_code &EC, LLVMContext &Context,
-               bool BufferOwned);
+  IRObjectFile(MemoryBuffer *Object, std::error_code &EC, LLVMContext &Context);
+  ~IRObjectFile();
   void moveSymbolNext(DataRefImpl &Symb) const override;
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;

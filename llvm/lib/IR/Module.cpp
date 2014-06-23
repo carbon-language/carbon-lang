@@ -400,9 +400,12 @@ std::error_code Module::materializeAll() {
   return Materializer->MaterializeModule(this);
 }
 
-std::error_code Module::materializeAllPermanently() {
+std::error_code Module::materializeAllPermanently(bool ReleaseBuffer) {
   if (std::error_code EC = materializeAll())
     return EC;
+
+  if (ReleaseBuffer)
+    Materializer->releaseBuffer();
 
   Materializer.reset();
   return std::error_code();

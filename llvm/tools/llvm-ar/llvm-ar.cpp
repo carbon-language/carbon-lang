@@ -699,7 +699,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
     MemoryBuffer *MemberBuffer = Buffers[MemberNum].get();
     ErrorOr<object::SymbolicFile *> ObjOrErr =
         object::SymbolicFile::createSymbolicFile(
-            MemberBuffer, false, sys::fs::file_magic::unknown, &Context);
+            MemberBuffer, sys::fs::file_magic::unknown, &Context);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
     std::unique_ptr<object::SymbolicFile> Obj(ObjOrErr.get());
@@ -724,6 +724,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
       MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
       print32BE(Out, 0);
     }
+    Obj->releaseBuffer();
   }
   Out << NameOS.str();
 

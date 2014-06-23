@@ -30,8 +30,7 @@ namespace llvm {
   /// deserialization of function bodies.  If successful, this takes ownership
   /// of 'buffer. On error, this *does not* take ownership of Buffer.
   ErrorOr<Module *> getLazyBitcodeModule(MemoryBuffer *Buffer,
-                                         LLVMContext &Context,
-                                         bool BufferOwned = true);
+                                         LLVMContext &Context);
 
   /// getStreamedBitcodeModule - Read the header of the specified stream
   /// and prepare for lazy deserialization and streaming of function bodies.

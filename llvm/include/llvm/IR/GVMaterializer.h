@@ -54,6 +54,8 @@ public:
   /// Make sure the entire Module has been completely read.
   ///
   virtual std::error_code MaterializeModule(Module *M) = 0;
+
+  virtual void releaseBuffer() = 0;
 };
 
 } // End llvm namespace

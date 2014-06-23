@@ -125,8 +125,7 @@ public:
 class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
   Module *TheModule;
-  MemoryBuffer *Buffer;
-  bool BufferOwned;
+  std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
   DataStreamer *LazyStreamer;
@@ -223,25 +222,21 @@ public:
     return std::error_code(E, BitcodeErrorCategory());
   }
 
-  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C, bool BufferOwned)
-      : Context(C), TheModule(nullptr), Buffer(buffer),
-        BufferOwned(BufferOwned), LazyStreamer(nullptr), NextUnreadBit(0),
-        SeenValueSymbolTable(false), ValueList(C), MDValueList(C),
-        SeenFirstFunctionBody(false), UseRelativeIDs(false) {}
+  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
+      : Context(C), TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
+        NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
+        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false) {}
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
-      : Context(C), TheModule(nullptr), Buffer(nullptr), BufferOwned(false),
-        LazyStreamer(streamer), NextUnreadBit(0), SeenValueSymbolTable(false),
-        ValueList(C), MDValueList(C), SeenFirstFunctionBody(false),
-        UseRelativeIDs(false) {}
+      : Context(C), TheModule(nullptr), Buffer(nullptr), LazyStreamer(streamer),
+        NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
+        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false) {}
   ~BitcodeReader() { FreeState(); }
 
   void materializeForwardReferencedFunctions();
 
   void FreeState();
 
-  void releaseBuffer() {
-    Buffer = nullptr;
-  }
+  void releaseBuffer() override;
 
   bool isMaterializable(const GlobalValue *GV) const override;
   bool isDematerializable(const GlobalValue *GV) const override;

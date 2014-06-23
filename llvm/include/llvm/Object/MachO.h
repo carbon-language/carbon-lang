@@ -57,7 +57,7 @@ public:
   };
 
   MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian, bool Is64Bits,
-                  std::error_code &EC, bool BufferOwned = true);
+                  std::error_code &EC);
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   std::error_code getSymbolName(DataRefImpl Symb,

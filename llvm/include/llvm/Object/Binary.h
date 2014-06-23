@@ -32,12 +32,11 @@ private:
   Binary(const Binary &other) LLVM_DELETED_FUNCTION;
 
   unsigned int TypeID;
-  bool BufferOwned;
 
 protected:
-  MemoryBuffer *Data;
+  std::unique_ptr<MemoryBuffer> Data;
 
-  Binary(unsigned int Type, MemoryBuffer *Source, bool BufferOwned = true);
+  Binary(unsigned int Type, MemoryBuffer *Source);
 
   enum {
     ID_Archive,
@@ -79,6 +78,7 @@ public:
   virtual ~Binary();
 
   StringRef getData() const;
+  MemoryBuffer *releaseBuffer() { return Data.release(); }
   StringRef getFileName() const;
 
   // Cast methods.
