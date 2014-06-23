@@ -683,10 +683,10 @@ static void writeStringTable(raw_fd_ostream &Out,
   Out.seek(Pos);
 }
 
-static void writeSymbolTable(
-    raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
-    ArrayRef<MemoryBuffer *> Buffers,
-    std::vector<std::pair<unsigned, unsigned> > &MemberOffsetRefs) {
+static void
+writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
+                 ArrayRef<std::unique_ptr<MemoryBuffer>> Buffers,
+                 std::vector<std::pair<unsigned, unsigned>> &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
   std::string NameBuf;
@@ -696,7 +696,7 @@ static void writeSymbolTable(
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
-    MemoryBuffer *MemberBuffer = Buffers[MemberNum];
+    MemoryBuffer *MemberBuffer = Buffers[MemberNum].get();
     ErrorOr<object::SymbolicFile *> ObjOrErr =
         object::SymbolicFile::createSymbolicFile(
             MemberBuffer, false, sys::fs::file_magic::unknown, &Context);
@@ -757,7 +757,7 @@ static void performWriteOperation(ArchiveOperation Operation,
 
   std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
 
-  std::vector<MemoryBuffer *> MemberBuffers;
+  std::vector<std::unique_ptr<MemoryBuffer>> MemberBuffers;
   MemberBuffers.resize(NewMembers.size());
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
@@ -779,7 +779,7 @@ static void performWriteOperation(ArchiveOperation Operation,
       failIfError(MemberBufferOrErr.getError());
       MemberBuffer = std::move(MemberBufferOrErr.get());
     }
-    MemberBuffers[I] = MemberBuffer.release();
+    MemberBuffers[I].reset(MemberBuffer.release());
   }
 
   if (Symtab) {
@@ -807,7 +807,7 @@ static void performWriteOperation(ArchiveOperation Operation,
     }
     Out.seek(Pos);
 
-    const MemoryBuffer *File = MemberBuffers[MemberNum];
+    const MemoryBuffer *File = MemberBuffers[MemberNum].get();
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
       const sys::fs::file_status &Status = I->getStatus();
@@ -841,10 +841,6 @@ static void performWriteOperation(ArchiveOperation Operation,
 
     if (Out.tell() % 2)
       Out << '\n';
-  }
-
-  for (unsigned I = 0, N = MemberBuffers.size(); I < N; ++I) {
-    delete MemberBuffers[I];
   }
 
   Output.keep();
