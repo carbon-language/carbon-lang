@@ -68,25 +68,26 @@ public:
   }
 };
 
-/// \brief Simple representation of an unsigned floating point.
+/// \brief Simple representation of a scaled number.
 ///
-/// ScaledNumber is a unsigned floating point number.  It uses simple
-/// saturation arithmetic, and every operation is well-defined for every value.
+/// ScaledNumber is a number represented by digits and a scale.  It uses simple
+/// saturation arithmetic and every operation is well-defined for every value.
+/// It's somewhat similar in behaviour to a soft-float, but is *not* a
+/// replacement for one.  If you're doing numerics, look at \a APFloat instead.
+/// Nevertheless, we've found these semantics useful for modelling certain cost
+/// metrics.
 ///
-/// The number is split into a signed exponent and unsigned digits.  The number
+/// The number is split into a signed scale and unsigned digits.  The number
 /// represented is \c getDigits()*2^getExponent().  In this way, the digits are
 /// much like the mantissa in the x87 long double, but there is no canonical
-/// form, so the same number can be represented by many bit representations
-/// (it's always in "denormal" mode).
+/// form so the same number can be represented by many bit representations.
 ///
 /// ScaledNumber is templated on the underlying integer type for digits, which
-/// is expected to be one of uint64_t, uint32_t, uint16_t or uint8_t.
-///
-/// Unlike builtin floating point types, ScaledNumber is portable.
+/// is expected to be unsigned.
 ///
 /// Unlike APFloat, ScaledNumber does not model architecture floating point
-/// behaviour (this should make it a little faster), and implements most
-/// operators (this makes it usable).
+/// behaviour -- while this might make it a little faster and easier to reason
+/// about, it certainly makes it more dangerous for general numerics.
 ///
 /// ScaledNumber is totally ordered.  However, there is no canonical form, so
 /// there are multiple representations of most scalars.  E.g.:
@@ -109,8 +110,11 @@ public:
 /// it trivial to add functionality to convert to APFloat (this is already
 /// relied on for the implementation of printing).
 ///
-/// The current plan is to gut this and make the necessary parts of it (even
-/// more) private to BlockFrequencyInfo.
+/// Possible (and conflicting) future directions:
+///
+///  1. Turn this into a wrapper around \a APFloat.
+///  2. Share the algorithm implementations with \a APFloat.
+///  3. Allow \a ScaledNumber to represent a signed number.
 template <class DigitsT> class ScaledNumber : ScaledNumberBase {
 public:
   static_assert(!std::numeric_limits<DigitsT>::is_signed,
