@@ -1811,22 +1811,21 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
   }
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
+ErrorOr<ObjectFile *>
+ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);
   std::error_code EC;
   std::unique_ptr<MachOObjectFile> Ret;
   if (Magic == "\xFE\xED\xFA\xCE")
-    Ret.reset(new MachOObjectFile(Buffer, false, false, EC));
+    Ret.reset(new MachOObjectFile(Buffer.release(), false, false, EC));
   else if (Magic == "\xCE\xFA\xED\xFE")
-    Ret.reset(new MachOObjectFile(Buffer, true, false, EC));
+    Ret.reset(new MachOObjectFile(Buffer.release(), true, false, EC));
   else if (Magic == "\xFE\xED\xFA\xCF")
-    Ret.reset(new MachOObjectFile(Buffer, false, true, EC));
+    Ret.reset(new MachOObjectFile(Buffer.release(), false, true, EC));
   else if (Magic == "\xCF\xFA\xED\xFE")
-    Ret.reset(new MachOObjectFile(Buffer, true, true, EC));
-  else {
-    delete Buffer;
+    Ret.reset(new MachOObjectFile(Buffer.release(), true, true, EC));
+  else
     return object_error::parse_failed;
-  }
 
   if (EC)
     return EC;

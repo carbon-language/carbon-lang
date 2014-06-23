@@ -17,8 +17,9 @@
 namespace llvm {
 using namespace object;
 
-ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj) {
-  std::pair<unsigned char, unsigned char> Ident = getElfArchType(Obj);
+ErrorOr<ObjectFile *>
+ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
+  std::pair<unsigned char, unsigned char> Ident = getElfArchType(Obj.get());
   std::size_t MaxAlignment =
     1ULL << countTrailingZeros(uintptr_t(Obj->getBufferStart()));
 
@@ -27,41 +28,49 @@ ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj) {
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
-      R.reset(new ELFObjectFile<ELFType<support::little, 4, false>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::little, 4, false>>(
+          Obj.release(), EC));
     else
 #endif
     if (MaxAlignment >= 2)
-      R.reset(new ELFObjectFile<ELFType<support::little, 2, false>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::little, 2, false>>(
+          Obj.release(), EC));
     else
       return object_error::parse_failed;
   else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
-      R.reset(new ELFObjectFile<ELFType<support::big, 4, false>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::big, 4, false>>(Obj.release(),
+                                                                 EC));
     else
 #endif
     if (MaxAlignment >= 2)
-      R.reset(new ELFObjectFile<ELFType<support::big, 2, false>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::big, 2, false>>(Obj.release(),
+                                                                 EC));
     else
       return object_error::parse_failed;
   else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 8)
-      R.reset(new ELFObjectFile<ELFType<support::big, 8, true>>(Obj, EC));
+      R.reset(
+          new ELFObjectFile<ELFType<support::big, 8, true>>(Obj.release(), EC));
     else
 #endif
     if (MaxAlignment >= 2)
-      R.reset(new ELFObjectFile<ELFType<support::big, 2, true>>(Obj, EC));
+      R.reset(
+          new ELFObjectFile<ELFType<support::big, 2, true>>(Obj.release(), EC));
     else
       return object_error::parse_failed;
   else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB) {
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 8)
-      R.reset(new ELFObjectFile<ELFType<support::little, 8, true>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::little, 8, true>>(
+          Obj.release(), EC));
     else
 #endif
     if (MaxAlignment >= 2)
-      R.reset(new ELFObjectFile<ELFType<support::little, 2, true>>(Obj, EC));
+      R.reset(new ELFObjectFile<ELFType<support::little, 2, true>>(
+          Obj.release(), EC));
     else
       return object_error::parse_failed;
   }

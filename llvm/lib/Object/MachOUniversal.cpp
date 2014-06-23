@@ -73,8 +73,8 @@ MachOUniversalBinary::ObjectForArch::getAsObjectFile() const {
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
     std::string ObjectName = Parent->getFileName().str();
-    MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
-        ObjectData, ObjectName, false);
+    std::unique_ptr<MemoryBuffer> ObjBuffer(
+        MemoryBuffer::getMemBuffer(ObjectData, ObjectName, false));
     return ObjectFile::createMachOObjectFile(ObjBuffer);
   }
   return object_error::parse_failed;

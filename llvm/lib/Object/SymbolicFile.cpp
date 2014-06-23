@@ -25,7 +25,8 @@ SymbolicFile::SymbolicFile(unsigned int Type, MemoryBuffer *Source)
 SymbolicFile::~SymbolicFile() {}
 
 ErrorOr<SymbolicFile *>
-SymbolicFile::createSymbolicFile(MemoryBuffer *Object, sys::fs::file_magic Type,
+SymbolicFile::createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
+                                 sys::fs::file_magic Type,
                                  LLVMContext *Context) {
   if (Type == sys::fs::file_magic::unknown)
     Type = sys::fs::identify_magic(Object->getBuffer());
@@ -33,7 +34,7 @@ SymbolicFile::createSymbolicFile(MemoryBuffer *Object, sys::fs::file_magic Type,
   switch (Type) {
   case sys::fs::file_magic::bitcode:
     if (Context)
-      return IRObjectFile::createIRObjectFile(Object, *Context);
+      return IRObjectFile::createIRObjectFile(Object.release(), *Context);
   // Fallthrough
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::archive:

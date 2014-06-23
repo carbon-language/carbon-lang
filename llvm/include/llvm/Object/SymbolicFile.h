@@ -145,11 +145,12 @@ public:
   static ErrorOr<SymbolicFile *> createIRObjectFile(MemoryBuffer *Object,
                                                     LLVMContext &Context);
 
-  static ErrorOr<SymbolicFile *> createSymbolicFile(MemoryBuffer *Object,
-                                                    sys::fs::file_magic Type,
-                                                    LLVMContext *Context);
+  static ErrorOr<SymbolicFile *>
+  createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
+                     sys::fs::file_magic Type, LLVMContext *Context);
 
-  static ErrorOr<SymbolicFile *> createSymbolicFile(MemoryBuffer *Object) {
+  static ErrorOr<SymbolicFile *>
+  createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object) {
     return createSymbolicFile(Object, sys::fs::file_magic::unknown, nullptr);
   }
   static ErrorOr<SymbolicFile *> createSymbolicFile(StringRef ObjectPath);

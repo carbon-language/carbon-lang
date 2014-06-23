@@ -73,7 +73,7 @@ static void DumpInput(const StringRef &Filename) {
     return;
   }
 
-  ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(Buff.release()));
+  ErrorOr<ObjectFile *> ObjOrErr(ObjectFile::createObjectFile(Buff));
   if (std::error_code EC = ObjOrErr.getError()) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;

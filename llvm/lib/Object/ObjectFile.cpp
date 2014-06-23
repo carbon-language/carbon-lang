@@ -45,8 +45,9 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
   return section_iterator(SectionRef(Sec, this));
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
-                                                   sys::fs::file_magic Type) {
+ErrorOr<ObjectFile *>
+ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
+                             sys::fs::file_magic Type) {
   if (Type == sys::fs::file_magic::unknown)
     Type = sys::fs::identify_magic(Object->getBuffer());
 
@@ -76,7 +77,7 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
   case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
-    return createCOFFObjectFile(Object);
+    return createCOFFObjectFile(Object.release());
   }
   llvm_unreachable("Unexpected Object File Type");
 }
@@ -85,5 +86,5 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
   std::unique_ptr<MemoryBuffer> File;
   if (std::error_code EC = MemoryBuffer::getFile(ObjectPath, File))
     return EC;
-  return createObjectFile(File.release());
+  return createObjectFile(File);
 }

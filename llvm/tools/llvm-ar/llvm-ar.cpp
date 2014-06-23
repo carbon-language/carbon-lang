@@ -685,7 +685,7 @@ static void writeStringTable(raw_fd_ostream &Out,
 
 static void
 writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
-                 ArrayRef<std::unique_ptr<MemoryBuffer>> Buffers,
+                 MutableArrayRef<std::unique_ptr<MemoryBuffer>> Buffers,
                  std::vector<std::pair<unsigned, unsigned>> &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
@@ -696,7 +696,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
-    MemoryBuffer *MemberBuffer = Buffers[MemberNum].get();
+    std::unique_ptr<MemoryBuffer> &MemberBuffer = Buffers[MemberNum];
     ErrorOr<object::SymbolicFile *> ObjOrErr =
         object::SymbolicFile::createSymbolicFile(
             MemberBuffer, sys::fs::file_magic::unknown, &Context);
@@ -724,7 +724,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
       MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
       print32BE(Out, 0);
     }
-    Obj->releaseBuffer();
+    MemberBuffer.reset(Obj->releaseBuffer());
   }
   Out << NameOS.str();
 

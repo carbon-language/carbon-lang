@@ -38,13 +38,13 @@ StringRef Binary::getFileName() const {
   return Data->getBufferIdentifier();
 }
 
-ErrorOr<Binary *> object::createBinary(MemoryBuffer *Buffer,
+ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> &Buffer,
                                        LLVMContext *Context) {
   sys::fs::file_magic Type = sys::fs::identify_magic(Buffer->getBuffer());
 
   switch (Type) {
     case sys::fs::file_magic::archive:
-      return Archive::create(Buffer);
+      return Archive::create(Buffer.release());
     case sys::fs::file_magic::elf_relocatable:
     case sys::fs::file_magic::elf_executable:
     case sys::fs::file_magic::elf_shared_object:
@@ -65,7 +65,7 @@ ErrorOr<Binary *> object::createBinary(MemoryBuffer *Buffer,
     case sys::fs::file_magic::bitcode:
       return ObjectFile::createSymbolicFile(Buffer, Type, Context);
     case sys::fs::file_magic::macho_universal_binary:
-      return MachOUniversalBinary::create(Buffer);
+      return MachOUniversalBinary::create(Buffer.release());
     case sys::fs::file_magic::unknown:
     case sys::fs::file_magic::windows_resource:
       // Unrecognized object file format.
@@ -78,5 +78,5 @@ ErrorOr<Binary *> object::createBinary(StringRef Path) {
   std::unique_ptr<MemoryBuffer> File;
   if (std::error_code EC = MemoryBuffer::getFileOrSTDIN(Path, File))
     return EC;
-  return createBinary(File.release());
+  return createBinary(File);
 }

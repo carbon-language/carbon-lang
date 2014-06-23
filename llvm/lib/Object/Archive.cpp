@@ -183,10 +183,7 @@ Archive::Child::getAsBinary(LLVMContext *Context) const {
     return EC;
 
   std::unique_ptr<MemoryBuffer> Buff(BuffOrErr.get().release());
-  ErrorOr<std::unique_ptr<Binary>> Ret = createBinary(Buff.get(), Context);
-  if (!Ret.getError())
-    Buff.release();
-  return Ret;
+  return createBinary(Buff, Context);
 }
 
 ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {

@@ -333,9 +333,11 @@ public:
   ///        return true.
   /// @brief Create ObjectFile from path.
   static ErrorOr<ObjectFile *> createObjectFile(StringRef ObjectPath);
-  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object,
-                                                sys::fs::file_magic Type);
-  static ErrorOr<ObjectFile *> createObjectFile(MemoryBuffer *Object) {
+  static ErrorOr<ObjectFile *>
+  createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
+                   sys::fs::file_magic Type);
+  static ErrorOr<ObjectFile *>
+  createObjectFile(std::unique_ptr<MemoryBuffer> &Object) {
     return createObjectFile(Object, sys::fs::file_magic::unknown);
   }
 
@@ -346,8 +348,10 @@ public:
 
 public:
   static ErrorOr<ObjectFile *> createCOFFObjectFile(MemoryBuffer *Object);
-  static ErrorOr<ObjectFile *> createELFObjectFile(MemoryBuffer *Object);
-  static ErrorOr<ObjectFile *> createMachOObjectFile(MemoryBuffer *Object);
+  static ErrorOr<ObjectFile *>
+  createELFObjectFile(std::unique_ptr<MemoryBuffer> &Object);
+  static ErrorOr<ObjectFile *>
+  createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Object);
 };
 
 // Inline function definitions.

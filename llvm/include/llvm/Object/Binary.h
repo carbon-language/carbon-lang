@@ -128,7 +128,7 @@ public:
 /// @param Source The data to create the Binary from. Ownership is transferred
 ///        to the Binary if successful. If an error is returned,
 ///        Source is destroyed by createBinary before returning.
-ErrorOr<Binary *> createBinary(MemoryBuffer *Source,
+ErrorOr<Binary *> createBinary(std::unique_ptr<MemoryBuffer> &Source,
                                LLVMContext *Context = nullptr);
 
 ErrorOr<Binary *> createBinary(StringRef Path);

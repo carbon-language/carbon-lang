@@ -48,7 +48,8 @@ public:
   {
     // FIXME: error checking? createObjectFile returns an ErrorOr<ObjectFile*>
     // and should probably be checked for failure.
-    ObjFile.reset(object::ObjectFile::createObjectFile(Buffer->getMemBuffer()).get());
+    std::unique_ptr<MemoryBuffer> Buf(Buffer->getMemBuffer());
+    ObjFile.reset(object::ObjectFile::createObjectFile(Buf).get());
   }
   ObjectImageCommon(std::unique_ptr<object::ObjectFile> Input)
   : ObjectImage(nullptr), ObjFile(std::move(Input))  {}

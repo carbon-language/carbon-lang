@@ -726,7 +726,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     return;
 
   LLVMContext &Context = getGlobalContext();
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer.get(), &Context);
+  ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer, &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
   Buffer.release();
