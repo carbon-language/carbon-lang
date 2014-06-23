@@ -47,6 +47,9 @@ TEST_F(FormatTestProto, FormatsMessages) {
                "  required int32 field1 = 1;\n"
                "}");
   verifyFormat("message SomeMessage {\n"
+               "  required .absolute.Reference field1 = 1;\n"
+               "}");
+  verifyFormat("message SomeMessage {\n"
                "  required int32 field1 = 1;\n"
                "  optional string field2 = 2 [default = \"2\"]\n"
                "}");
