@@ -610,11 +610,6 @@ namespace llvm {
       extendArgForPPC64(ISD::ArgFlagsTy Flags, EVT ObjectVT, SelectionDAG &DAG,
                         SDValue ArgVal, SDLoc dl) const;
 
-    void
-      setMinReservedArea(MachineFunction &MF, SelectionDAG &DAG,
-                         unsigned nAltivecParamsAtEnd,
-                         unsigned MinReservedArea, bool isPPC64) const;
-
     SDValue
       LowerFormalArguments_Darwin(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
