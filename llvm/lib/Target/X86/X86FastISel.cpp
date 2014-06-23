@@ -111,6 +111,8 @@ private:
 
   bool X86SelectDivRem(const Instruction *I);
 
+  bool X86FastEmitCMoveSelect(const Instruction *I);
+
   bool X86SelectSelect(const Instruction *I);
 
   bool X86SelectTrunc(const Instruction *I);
@@ -1611,48 +1613,156 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
   return true;
 }
 
-bool X86FastISel::X86SelectSelect(const Instruction *I) {
-  MVT VT;
-  if (!isTypeLegal(I->getType(), VT))
+/// \brief Emit a conditional move instruction (if the are supported) to lower
+/// the select.
+bool X86FastISel::X86FastEmitCMoveSelect(const Instruction *I) {
+  MVT RetVT;
+  if (!isTypeLegal(I->getType(), RetVT))
     return false;
 
-  // We only use cmov here, if we don't have a cmov instruction bail.
-  if (!Subtarget->hasCMov()) return false;
-
-  unsigned Opc = 0;
-  const TargetRegisterClass *RC = nullptr;
-  if (VT == MVT::i16) {
-    Opc = X86::CMOVE16rr;
-    RC = &X86::GR16RegClass;
-  } else if (VT == MVT::i32) {
-    Opc = X86::CMOVE32rr;
-    RC = &X86::GR32RegClass;
-  } else if (VT == MVT::i64) {
-    Opc = X86::CMOVE64rr;
-    RC = &X86::GR64RegClass;
-  } else {
+  // Check if the subtarget supports these instructions.
+  if (!Subtarget->hasCMov())
     return false;
+
+  // FIXME: Add support for i8.
+  unsigned Opc;
+  switch (RetVT.SimpleTy) {
+  default: return false;
+  case MVT::i16: Opc = X86::CMOVNE16rr; break;
+  case MVT::i32: Opc = X86::CMOVNE32rr; break;
+  case MVT::i64: Opc = X86::CMOVNE64rr; break;
   }
 
-  unsigned Op0Reg = getRegForValue(I->getOperand(0));
-  if (Op0Reg == 0) return false;
-  unsigned Op1Reg = getRegForValue(I->getOperand(1));
-  if (Op1Reg == 0) return false;
-  unsigned Op2Reg = getRegForValue(I->getOperand(2));
-  if (Op2Reg == 0) return false;
+  const Value *Cond = I->getOperand(0);
+  const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
+  bool NeedTest = true;
 
-  // Selects operate on i1, however, Op0Reg is 8 bits width and may contain
-  // garbage. Indeed, only the less significant bit is supposed to be accurate.
-  // If we read more than the lsb, we may see non-zero values whereas lsb
-  // is zero. Therefore, we have to truncate Op0Reg to i1 for the select.
-  // This is achieved by performing TEST against 1.
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::TEST8ri))
-    .addReg(Op0Reg).addImm(1);
-  unsigned ResultReg = createResultReg(RC);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-    .addReg(Op1Reg).addReg(Op2Reg);
+  // Optimize conditons coming from a compare.
+  if (const auto *CI = dyn_cast<CmpInst>(Cond)) {
+    CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+
+    // FCMP_OEQ and FCMP_UNE cannot be checked with a single instruction.
+    static unsigned SETFOpcTable[2][3] = {
+      { X86::SETNPr, X86::SETEr , X86::TEST8rr },
+      { X86::SETPr,  X86::SETNEr, X86::OR8rr   }
+    };
+    unsigned *SETFOpc = nullptr;
+    switch (Predicate) {
+    default: break;
+    case CmpInst::FCMP_OEQ:
+      SETFOpc = &SETFOpcTable[0][0];
+      Predicate = CmpInst::ICMP_NE;
+      break;
+    case CmpInst::FCMP_UNE:
+      SETFOpc = &SETFOpcTable[1][0];
+      Predicate = CmpInst::ICMP_NE;
+      break;
+    }
+
+    X86::CondCode CC;
+    bool NeedSwap;
+    std::tie(CC, NeedSwap) = getX86ConditonCode(Predicate);
+    assert(CC <= X86::LAST_VALID_COND && "Unexpected condition code.");
+    Opc = X86::getCMovFromCond(CC, RC->getSize());
+
+    const Value *CmpLHS = CI->getOperand(0);
+    const Value *CmpRHS = CI->getOperand(1);
+    if (NeedSwap)
+      std::swap(CmpLHS, CmpRHS);
+
+    EVT CmpVT = TLI.getValueType(CmpLHS->getType());
+    // Emit a compare of the LHS and RHS, setting the flags.
+    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT))
+     return false;
+
+    if (SETFOpc) {
+      unsigned FlagReg1 = createResultReg(&X86::GR8RegClass);
+      unsigned FlagReg2 = createResultReg(&X86::GR8RegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[0]),
+              FlagReg1);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[1]),
+              FlagReg2);
+      auto const &II = TII.get(SETFOpc[2]);
+      if (II.getNumDefs()) {
+        unsigned TmpReg = createResultReg(&X86::GR8RegClass);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, TmpReg)
+          .addReg(FlagReg2).addReg(FlagReg1);
+      } else {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
+          .addReg(FlagReg2).addReg(FlagReg1);
+      }
+    }
+    NeedTest = false;
+  }
+
+  if (NeedTest) {
+    // Selects operate on i1, however, CondReg is 8 bits width and may contain
+    // garbage. Indeed, only the less significant bit is supposed to be
+    // accurate. If we read more than the lsb, we may see non-zero values
+    // whereas lsb is zero. Therefore, we have to truncate Op0Reg to i1 for
+    // the select. This is achieved by performing TEST against 1.
+    unsigned CondReg = getRegForValue(Cond);
+    if (CondReg == 0)
+      return false;
+    bool CondIsKill = hasTrivialKill(Cond);
+
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::TEST8ri))
+      .addReg(CondReg, getKillRegState(CondIsKill)).addImm(1);
+  }
+
+  const Value *LHS = I->getOperand(1);
+  const Value *RHS = I->getOperand(2);
+
+  unsigned RHSReg = getRegForValue(RHS);
+  bool RHSIsKill = hasTrivialKill(RHS);
+
+  unsigned LHSReg = getRegForValue(LHS);
+  bool LHSIsKill = hasTrivialKill(LHS);
+
+  if (!LHSReg || !RHSReg)
+    return false;
+
+  unsigned ResultReg = FastEmitInst_rr(Opc, RC, RHSReg, RHSIsKill,
+                                       LHSReg, LHSIsKill);
   UpdateValueMap(I, ResultReg);
   return true;
+}
+
+bool X86FastISel::X86SelectSelect(const Instruction *I) {
+  MVT RetVT;
+  if (!isTypeLegal(I->getType(), RetVT))
+    return false;
+
+  // Check if we can fold the select.
+  if (const auto *CI = dyn_cast<CmpInst>(I->getOperand(0))) {
+    CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+    const Value *Opnd = nullptr;
+    switch (Predicate) {
+    default:                              break;
+    case CmpInst::FCMP_FALSE: Opnd = I->getOperand(2); break;
+    case CmpInst::FCMP_TRUE:  Opnd = I->getOperand(1); break;
+    }
+    // No need for a select anymore - this is an unconditional move.
+    if (Opnd) {
+      unsigned OpReg = getRegForValue(Opnd);
+      if (OpReg == 0)
+        return false;
+      bool OpIsKill = hasTrivialKill(Opnd);
+      const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
+      unsigned ResultReg = createResultReg(RC);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(OpReg, getKillRegState(OpIsKill));
+      UpdateValueMap(I, ResultReg);
+      return true;
+    }
+  }
+
+  // First try to use real conditional move instructions.
+  if (X86FastEmitCMoveSelect(I))
+    return true;
+
+  return false;
 }
 
 bool X86FastISel::X86SelectFPExt(const Instruction *I) {

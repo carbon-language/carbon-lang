@@ -66,6 +66,11 @@ namespace X86 {
   /// a memory operand.
   unsigned getSETFromCond(CondCode CC, bool HasMemoryOperand = false);
 
+  /// \brief Return a cmov opcode for the given condition, register size in
+  /// bytes, and operand type.
+  unsigned getCMovFromCond(CondCode CC, unsigned RegBytes,
+                           bool HasMemoryOperand = false);
+
   // Turn CMov opcode into condition code.
   CondCode getCondFromCMovOpc(unsigned Opc);
 
