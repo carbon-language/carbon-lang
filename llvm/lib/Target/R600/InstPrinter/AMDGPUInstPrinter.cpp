@@ -99,9 +99,9 @@ void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
     return;
   }
 
-  // The low 8 bits encoding value is the register index, for both VGPRs and
-  // SGPRs.
-  unsigned RegIdx = MRI.getEncodingValue(reg) & ((1 << 8)  - 1);
+  // The low 8 bits of the encoding value is the register index, for both VGPRs
+  // and SGPRs.
+  unsigned RegIdx = MRI.getEncodingValue(reg) & ((1 << 8) - 1);
   if (NumRegs == 1) {
     O << Type << RegIdx;
     return;
