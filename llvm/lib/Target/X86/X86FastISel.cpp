@@ -115,6 +115,8 @@ private:
 
   bool X86FastEmitSSESelect(const Instruction *I);
 
+  bool X86FastEmitPseudoSelect(const Instruction *I);
+
   bool X86SelectSelect(const Instruction *I);
 
   bool X86SelectTrunc(const Instruction *I);
@@ -1852,6 +1854,70 @@ bool X86FastISel::X86FastEmitSSESelect(const Instruction *I) {
   return true;
 }
 
+bool X86FastISel::X86FastEmitPseudoSelect(const Instruction *I) {
+  MVT RetVT;
+  if (!isTypeLegal(I->getType(), RetVT))
+    return false;
+
+  // These are pseudo CMOV instructions and will be later expanded into control-
+  // flow.
+  unsigned Opc;
+  switch (RetVT.SimpleTy) {
+  default: return false;
+  case MVT::i8:  Opc = X86::CMOV_GR8;  break;
+  case MVT::i16: Opc = X86::CMOV_GR16; break;
+  case MVT::i32: Opc = X86::CMOV_GR32; break;
+  case MVT::f32: Opc = X86::CMOV_FR32; break;
+  case MVT::f64: Opc = X86::CMOV_FR64; break;
+  }
+
+  const Value *Cond = I->getOperand(0);
+  X86::CondCode CC = X86::COND_NE;
+  // Don't emit a test if the condition comes from a compare.
+  if (const auto *CI = dyn_cast<CmpInst>(Cond)) {
+    bool NeedSwap;
+    std::tie(CC, NeedSwap) = getX86ConditonCode(CI->getPredicate());
+    if (CC > X86::LAST_VALID_COND)
+      return false;
+
+    const Value *CmpLHS = CI->getOperand(0);
+    const Value *CmpRHS = CI->getOperand(1);
+
+    if (NeedSwap)
+      std::swap(CmpLHS, CmpRHS);
+
+    EVT CmpVT = TLI.getValueType(CmpLHS->getType());
+    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT))
+      return false;
+  } else {
+    unsigned CondReg = getRegForValue(Cond);
+    if (CondReg == 0)
+      return false;
+    bool CondIsKill = hasTrivialKill(Cond);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::TEST8ri))
+      .addReg(CondReg, getKillRegState(CondIsKill)).addImm(1);
+  }
+
+  const Value *LHS = I->getOperand(1);
+  const Value *RHS = I->getOperand(2);
+
+  unsigned LHSReg = getRegForValue(LHS);
+  bool LHSIsKill = hasTrivialKill(LHS);
+
+  unsigned RHSReg = getRegForValue(RHS);
+  bool RHSIsKill = hasTrivialKill(RHS);
+
+  if (!LHSReg || !RHSReg)
+    return false;
+
+  const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
+
+  unsigned ResultReg =
+    FastEmitInst_rri(Opc, RC, RHSReg, RHSIsKill, LHSReg, LHSIsKill, CC);
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool X86FastISel::X86SelectSelect(const Instruction *I) {
   MVT RetVT;
   if (!isTypeLegal(I->getType(), RetVT))
@@ -1888,6 +1954,11 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
 
   // Try to use a sequence of SSE instructions to simulate a conditonal move.
   if (X86FastEmitSSESelect(I))
+    return true;
+
+  // Fall-back to pseudo conditional move instructions, which will be later
+  // converted to control-flow.
+  if (X86FastEmitPseudoSelect(I))
     return true;
 
   return false;
