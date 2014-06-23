@@ -354,7 +354,7 @@ void CodeGenModule::Release() {
 
   // We need to record the widths of enums and wchar_t, so that we can generate
   // the correct build attributes in the ARM backend.
-	llvm::Triple::ArchType Arch = Context.getTargetInfo().getTriple().getArch();
+  llvm::Triple::ArchType Arch = Context.getTargetInfo().getTriple().getArch();
   if (   Arch == llvm::Triple::arm
       || Arch == llvm::Triple::armeb
       || Arch == llvm::Triple::thumb
