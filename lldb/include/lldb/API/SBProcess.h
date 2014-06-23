@@ -221,6 +221,9 @@ public:
     lldb::SBError
     Signal (int signal);
 
+    lldb::SBUnixSignals
+    GetUnixSignals();
+
     void
     SendAsyncInterrupt();
     

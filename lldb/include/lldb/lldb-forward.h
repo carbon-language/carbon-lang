@@ -249,6 +249,7 @@ class   TypeEnumMemberListImpl;
 class   TypeNameSpecifierImpl;
 class   TypePair;
 class   UUID;
+class   UnixSignals;
 class   Unwind;
 class   UnwindAssembly;
 class   UnwindPlan;

@@ -24,6 +24,10 @@
     #define LLDB_API
 #endif
 
+#if !defined(INT32_MAX)
+    #define INT32_MAX 2147483647
+#endif
+
 #if !defined(UINT32_MAX)
     #define UINT32_MAX 4294967295U
 #endif

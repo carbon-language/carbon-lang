@@ -102,6 +102,7 @@ import os
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBValueList.h"
 #include "lldb/API/SBWatchpoint.h"
+#include "lldb/API/SBUnixSignals.h"
 
 #include "../scripts/Python/python-swigsafecast.swig"
 
@@ -109,6 +110,9 @@ import os
 
 /* Various liblldb typedefs that SWIG needs to know about.  */
 #define __extension__ /* Undefine GCC keyword to make Swig happy when processing glibc's stdint.h. */
+/* The ISO C99 standard specifies that in C++ implementations limit macros such
+   as INT32_MAX should only be defined if __STDC_LIMIT_MACROS is. */
+#define __STDC_LIMIT_MACROS
 %include "stdint.i"
 %include "lldb/lldb-defines.h"
 %include "lldb/lldb-enumerations.h"
@@ -169,6 +173,7 @@ import os
 %include "./Python/interface/SBValue.i"
 %include "./Python/interface/SBValueList.i"
 %include "./Python/interface/SBWatchpoint.i"
+%include "./Python/interface/SBUnixSignals.i"
 
 %include "./Python/python-extensions.swig"
 

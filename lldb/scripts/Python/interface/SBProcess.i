@@ -240,6 +240,9 @@ public:
     lldb::SBError
     Signal (int signal);
 
+    lldb::SBUnixSignals
+    GetUnixSignals();
+
     %feature("docstring", "
     Returns a stop id that will increase every time the process executes.  If
     include_expression_stops is true, then stops caused by expression evaluation

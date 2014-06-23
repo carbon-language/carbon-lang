@@ -51,6 +51,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0F1958B319007B8189 /* SBUnixSignals.cpp */; };
+		23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 23059A111958B37B007B8189 /* SBUnixSignals.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		23EFE38B193D1AEC00E54E54 /* SBTypeEnumMember.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EFE38A193D1AEC00E54E54 /* SBTypeEnumMember.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -871,6 +873,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		23059A0F1958B319007B8189 /* SBUnixSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBUnixSignals.cpp; path = source/API/SBUnixSignals.cpp; sourceTree = "<group>"; };
+		23059A111958B37B007B8189 /* SBUnixSignals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBUnixSignals.h; path = include/lldb/API/SBUnixSignals.h; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
 		23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeEnumMember.h; path = include/lldb/API/SBTypeEnumMember.h; sourceTree = "<group>"; };
@@ -2535,6 +2539,8 @@
 				9461568C14E35621003A195C /* SBTypeSummary.cpp */,
 				9461568914E355F2003A195C /* SBTypeSynthetic.h */,
 				9461568D14E35621003A195C /* SBTypeSynthetic.cpp */,
+				23059A111958B37B007B8189 /* SBUnixSignals.h */,
+				23059A0F1958B319007B8189 /* SBUnixSignals.cpp */,
 				9A19A6A51163BB7E00E0D453 /* SBValue.h */,
 				9A19A6AD1163BB9800E0D453 /* SBValue.cpp */,
 				9A357582116CFDEE00E8ED2F /* SBValueList.h */,
@@ -3998,6 +4004,7 @@
 				941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */,
 				9475C18F14E5F858001BFC6D /* SBTypeNameSpecifier.h in Headers */,
 				941BCC8114E48C4000BB969C /* SBTypeSummary.h in Headers */,
+				23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */,
 				941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */,
 				9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */,
 				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
@@ -4477,6 +4484,7 @@
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
+				23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
 				263C4938178B50C40070F12D /* SBModuleSpec.cpp in Sources */,
