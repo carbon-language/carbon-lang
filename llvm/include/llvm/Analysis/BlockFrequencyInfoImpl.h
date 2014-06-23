@@ -247,14 +247,10 @@ private:
   ///
   /// The value that compares smaller will lose precision, and possibly become
   /// \a isZero().
-  UnsignedFloat matchExponents(UnsignedFloat X);
-
-  /// \brief Increase exponent to match another float.
-  ///
-  /// Increases \c this to have an exponent matching \c X.  May decrease the
-  /// exponent of \c X in the process, and \c this may possibly become \a
-  /// isZero().
-  void increaseExponentToMatch(UnsignedFloat &X, int32_t ExponentDiff);
+  UnsignedFloat matchExponents(UnsignedFloat X) {
+    ScaledNumbers::matchScales(Digits, Exponent, X.Digits, X.Exponent);
+    return X;
+  }
 
 public:
   /// \brief Scale a large number accurately.
@@ -401,44 +397,6 @@ IntT UnsignedFloat<DigitsT>::toInt() const {
     return N >> -Exponent;
   }
   return N;
-}
-
-template <class DigitsT>
-UnsignedFloat<DigitsT> UnsignedFloat<DigitsT>::matchExponents(UnsignedFloat X) {
-  if (isZero() || X.isZero() || Exponent == X.Exponent)
-    return X;
-
-  int32_t Diff = int32_t(X.Exponent) - int32_t(Exponent);
-  if (Diff > 0)
-    increaseExponentToMatch(X, Diff);
-  else
-    X.increaseExponentToMatch(*this, -Diff);
-  return X;
-}
-template <class DigitsT>
-void UnsignedFloat<DigitsT>::increaseExponentToMatch(UnsignedFloat &X,
-                                                     int32_t ExponentDiff) {
-  assert(ExponentDiff > 0);
-  if (ExponentDiff >= 2 * Width) {
-    *this = getZero();
-    return;
-  }
-
-  // Use up any leading zeros on X, and then shift this.
-  int32_t ShiftX = std::min(countLeadingZerosWidth(X.Digits), ExponentDiff);
-  assert(ShiftX < Width);
-
-  int32_t ShiftThis = ExponentDiff - ShiftX;
-  if (ShiftThis >= Width) {
-    *this = getZero();
-    return;
-  }
-
-  X.Digits <<= ShiftX;
-  X.Exponent -= ShiftX;
-  Digits >>= ShiftThis;
-  Exponent += ShiftThis;
-  return;
 }
 
 template <class DigitsT>

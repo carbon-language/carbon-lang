@@ -322,4 +322,68 @@ TEST(ScaledNumberHelpersTest, compare) {
   EXPECT_EQ(-1, compare(UINT64_MAX, 0, UINT64_C(1), 64));
 }
 
+TEST(ScaledNumberHelpersTest, matchScales) {
+  typedef std::tuple<uint32_t, int16_t, uint32_t, int16_t> Pair32;
+  typedef std::tuple<uint64_t, int16_t, uint64_t, int16_t> Pair64;
+
+#define MATCH_SCALES(T, LDIn, LSIn, RDIn, RSIn, LDOut, RDOut, SOut)            \
+  do {                                                                         \
+    T LDx = LDIn;                                                              \
+    T RDx = RDIn;                                                              \
+    T LDy = LDOut;                                                             \
+    T RDy = RDOut;                                                             \
+    int16_t LSx = LSIn;                                                        \
+    int16_t RSx = RSIn;                                                        \
+    int16_t Sy = SOut;                                                         \
+                                                                               \
+    matchScales(LDx, LSx, RDx, RSx);                                           \
+    EXPECT_EQ(LDy, LDx);                                                       \
+    EXPECT_EQ(RDy, RDx);                                                       \
+    if (LDy)                                                                   \
+      EXPECT_EQ(Sy, LSx);                                                      \
+    if (RDy)                                                                   \
+      EXPECT_EQ(Sy, RSx);                                                      \
+  } while (false)
+
+  MATCH_SCALES(uint32_t, 0, 0, 0, 0, 0, 0, 0);
+  MATCH_SCALES(uint32_t, 0, 50, 7, 1, 0, 7, 1);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 31, 1, 9, 0, UINT32_C(1) << 31, 4, 1);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 31, 2, 9, 0, UINT32_C(1) << 31, 2, 2);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 31, 3, 9, 0, UINT32_C(1) << 31, 1, 3);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 31, 4, 9, 0, UINT32_C(1) << 31, 0, 4);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 30, 4, 9, 0, UINT32_C(1) << 31, 1, 3);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 29, 4, 9, 0, UINT32_C(1) << 31, 2, 2);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 28, 4, 9, 0, UINT32_C(1) << 31, 4, 1);
+  MATCH_SCALES(uint32_t, UINT32_C(1) << 27, 4, 9, 0, UINT32_C(1) << 31, 9, 0);
+  MATCH_SCALES(uint32_t, 7, 1, 0, 50, 7, 0, 1);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 31, 1, 4, UINT32_C(1) << 31, 1);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 31, 2, 2, UINT32_C(1) << 31, 2);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 31, 3, 1, UINT32_C(1) << 31, 3);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 31, 4, 0, UINT32_C(1) << 31, 4);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 30, 4, 1, UINT32_C(1) << 31, 3);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 29, 4, 2, UINT32_C(1) << 31, 2);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 28, 4, 4, UINT32_C(1) << 31, 1);
+  MATCH_SCALES(uint32_t, 9, 0, UINT32_C(1) << 27, 4, 9, UINT32_C(1) << 31, 0);
+
+  MATCH_SCALES(uint64_t, 0, 0, 0, 0, 0, 0, 0);
+  MATCH_SCALES(uint64_t, 0, 100, 7, 1, 0, 7, 1);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 63, 1, 9, 0, UINT64_C(1) << 63, 4, 1);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 63, 2, 9, 0, UINT64_C(1) << 63, 2, 2);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 63, 3, 9, 0, UINT64_C(1) << 63, 1, 3);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 63, 4, 9, 0, UINT64_C(1) << 63, 0, 4);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 62, 4, 9, 0, UINT64_C(1) << 63, 1, 3);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 61, 4, 9, 0, UINT64_C(1) << 63, 2, 2);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 60, 4, 9, 0, UINT64_C(1) << 63, 4, 1);
+  MATCH_SCALES(uint64_t, UINT64_C(1) << 59, 4, 9, 0, UINT64_C(1) << 63, 9, 0);
+  MATCH_SCALES(uint64_t, 7, 1, 0, 100, 7, 0, 1);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 63, 1, 4, UINT64_C(1) << 63, 1);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 63, 2, 2, UINT64_C(1) << 63, 2);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 63, 3, 1, UINT64_C(1) << 63, 3);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 63, 4, 0, UINT64_C(1) << 63, 4);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 62, 4, 1, UINT64_C(1) << 63, 3);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 61, 4, 2, UINT64_C(1) << 63, 2);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 60, 4, 4, UINT64_C(1) << 63, 1);
+  MATCH_SCALES(uint64_t, 9, 0, UINT64_C(1) << 59, 4, 9, UINT64_C(1) << 63, 0);
+}
+
 } // end namespace

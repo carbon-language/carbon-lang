@@ -24,6 +24,7 @@
 
 #include "llvm/Support/MathExtras.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <utility>
@@ -261,6 +262,56 @@ int compare(DigitsT LDigits, int16_t LScale, DigitsT RDigits, int16_t RScale) {
     return compareImpl(LDigits, RDigits, RScale - LScale);
 
   return -compareImpl(RDigits, LDigits, LScale - RScale);
+}
+
+/// \brief Match scales of two numbers.
+///
+/// Given two scaled numbers, match up their scales.  Change the digits and
+/// scales in place.  Shift the digits as necessary to form equivalent numbers,
+/// losing precision only when necessary.
+///
+/// If the output value of \c LDigits (\c RDigits) is \c 0, the output value of
+/// \c LScale (\c RScale) is unspecified.  If both \c LDigits and \c RDigits
+/// are \c 0, the output value is one of \c LScale and \c RScale; which is
+/// unspecified.
+template <class DigitsT>
+void matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
+                 int16_t &RScale) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  if (LScale < RScale) {
+    // Swap arguments.
+    matchScales(RDigits, RScale, LDigits, LScale);
+    return;
+  }
+  if (!LDigits || !RDigits || LScale == RScale)
+    return;
+
+  // Now LScale > RScale.  Get the difference.
+  int32_t ScaleDiff = int32_t(LScale) - RScale;
+  if (ScaleDiff >= 2 * getWidth<DigitsT>()) {
+    // Don't bother shifting.  RDigits will get zero-ed out anyway.
+    RDigits = 0;
+    return;
+  }
+
+  // Shift LDigits left as much as possible, then shift RDigits right.
+  int32_t ShiftL = std::min<int32_t>(countLeadingZeros(LDigits), ScaleDiff);
+  assert(ShiftL < getWidth<DigitsT>() && "can't shift more than width");
+
+  int32_t ShiftR = ScaleDiff - ShiftL;
+  if (ShiftR >= getWidth<DigitsT>()) {
+    // Don't bother shifting.  RDigits will get zero-ed out anyway.
+    RDigits = 0;
+    return;
+  }
+
+  LDigits <<= ShiftL;
+  RDigits >>= ShiftR;
+
+  LScale -= ShiftL;
+  RScale += ShiftR;
+  assert(LScale == RScale && "scales should match");
 }
 
 } // end namespace ScaledNumbers
