@@ -1089,7 +1089,13 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Configure the various subsystems.
   LangOpts = &Clang->getLangOpts();
   FileSystemOpts = Clang->getFileSystemOpts();
-  // Re-use the existing FileManager
+  IntrusiveRefCntPtr<vfs::FileSystem> VFS =
+      createVFSFromCompilerInvocation(Clang->getInvocation(), getDiagnostics());
+  if (!VFS) {
+    delete OverrideMainBuffer;
+    return true;
+  }
+  FileMgr = new FileManager(FileSystemOpts, VFS);
   SourceMgr = new SourceManager(getDiagnostics(), *FileMgr,
                                 UserFilesAreVolatile);
   TheSema.reset();
