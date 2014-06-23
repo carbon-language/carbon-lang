@@ -918,6 +918,8 @@ private:
 
     if (NextToken->is(tok::l_square) && NextToken->Type != TT_LambdaLSquare)
       return TT_PointerOrReference;
+    if (NextToken->is(tok::kw_operator))
+      return TT_PointerOrReference;
 
     if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&
         PrevToken->MatchingParen->Previous &&

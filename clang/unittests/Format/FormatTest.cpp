@@ -4844,6 +4844,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   // FIXME: Is there a way to make this work?
   // verifyIndependentOfContext("MACRO(A *a);");
 
+  verifyFormat("DatumHandle const *operator->() const { return input_; }");
+
   EXPECT_EQ("#define OP(x)                                    \\\n"
             "  ostream &operator<<(ostream &s, const A &a) {  \\\n"
             "    return s << a.DebugString();                 \\\n"
