@@ -216,13 +216,8 @@ void AMDGPUInstPrinter::printClamp(const MCInst *MI, unsigned OpNo,
 
 void AMDGPUInstPrinter::printLiteral(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
-  union Literal {
-    float f;
-    int32_t i;
-  } L;
-
-  L.i = MI->getOperand(OpNo).getImm();
-  O << L.i << "(" << L.f << ")";
+  int32_t Imm = MI->getOperand(OpNo).getImm();
+  O << Imm << '(' << BitsToFloat(Imm) << ')';
 }
 
 void AMDGPUInstPrinter::printLast(const MCInst *MI, unsigned OpNo,
