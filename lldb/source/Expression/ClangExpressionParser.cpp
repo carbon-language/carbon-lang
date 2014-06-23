@@ -157,8 +157,9 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     }
     
     // Any arm32 iOS environment, but not on arm64
-    if (m_compiler->getTargetOpts().Triple.find("arm64") == std::string::npos
-        && m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
+    if (m_compiler->getTargetOpts().Triple.find("arm64") == std::string::npos &&
+        m_compiler->getTargetOpts().Triple.find("arm") != std::string::npos &&
+        m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
     {
         m_compiler->getTargetOpts().ABI = "apcs-gnu";
     }
