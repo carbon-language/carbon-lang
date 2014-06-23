@@ -242,6 +242,8 @@ int compareImpl(uint64_t L, uint64_t R, int ScaleDiff);
 /// for greater than.
 template <class DigitsT>
 int compare(DigitsT LDigits, int16_t LScale, DigitsT RDigits, int16_t RScale) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
   // Check for zero.
   if (!LDigits)
     return RDigits ? -1 : 0;

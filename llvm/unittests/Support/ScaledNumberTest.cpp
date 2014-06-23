@@ -285,7 +285,7 @@ TEST(ScaledNumberHelpersTest, getLgCeiling) {
   EXPECT_EQ(INT32_MIN, getLgCeiling(UINT64_C(0), 1));
 }
 
-TEST(ScaledNumberHelpersTest, Compare) {
+TEST(ScaledNumberHelpersTest, compare) {
   EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), 1));
   EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), -10));
   EXPECT_EQ(0, compare(UINT32_C(0), 0, UINT32_C(0), 20));
