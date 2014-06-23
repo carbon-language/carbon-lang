@@ -14,9 +14,9 @@
 namespace llvm {
 
 class AMDGPUSubtarget;
-class MCInst;
-class MCContext;
 class MachineInstr;
+class MCContext;
+class MCInst;
 
 class AMDGPUMCInstLower {
 
