@@ -152,6 +152,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
 
+  setOperationAction(ISD::SUB, MVT::i64, Expand);
+
   // These should be replaced by UDVIREM, but it does not happen automatically
   // during Type Legalization
   setOperationAction(ISD::UDIV, MVT::i64, Custom);
