@@ -317,6 +317,93 @@ int16_t matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
   return LScale;
 }
 
+/// \brief Get the sum of two scaled numbers.
+///
+/// Get the sum of two scaled numbers with as much precision as possible.
+///
+/// \pre Adding 1 to \c LScale (or \c RScale) will not overflow INT16_MAX.
+template <class DigitsT>
+std::pair<DigitsT, int16_t> getSum(DigitsT LDigits, int16_t LScale,
+                                   DigitsT RDigits, int16_t RScale) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  // Check inputs up front.  This is only relevent if addition overflows, but
+  // testing here should catch more bugs.
+  assert(LScale < INT16_MAX && "scale too large");
+  assert(RScale < INT16_MAX && "scale too large");
+
+  // Normalize digits to match scales.
+  int16_t Scale = matchScales(LDigits, LScale, RDigits, RScale);
+
+  // Compute sum.
+  DigitsT Sum = LDigits + RDigits;
+  if (Sum >= RDigits)
+    return std::make_pair(Sum, Scale);
+
+  // Adjust sum after arithmetic overflow.
+  DigitsT HighBit = DigitsT(1) << (getWidth<DigitsT>() - 1);
+  return std::make_pair(HighBit | Sum >> 1, Scale + 1);
+}
+
+/// \brief Convenience helper for 32-bit sum.
+inline std::pair<uint32_t, int16_t> getSum32(uint32_t LDigits, int16_t LScale,
+                                             uint32_t RDigits, int16_t RScale) {
+  return getSum(LDigits, LScale, RDigits, RScale);
+}
+
+/// \brief Convenience helper for 64-bit sum.
+inline std::pair<uint64_t, int16_t> getSum64(uint64_t LDigits, int16_t LScale,
+                                             uint64_t RDigits, int16_t RScale) {
+  return getSum(LDigits, LScale, RDigits, RScale);
+}
+
+/// \brief Get the difference of two scaled numbers.
+///
+/// Get LHS minus RHS with as much precision as possible.
+///
+/// Returns \c (0, 0) if the RHS is larger than the LHS.
+template <class DigitsT>
+std::pair<DigitsT, int16_t> getDifference(DigitsT LDigits, int16_t LScale,
+                                          DigitsT RDigits, int16_t RScale) {
+  static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
+
+  // Normalize digits to match scales.
+  const DigitsT SavedRDigits = RDigits;
+  const int16_t SavedRScale = RScale;
+  matchScales(LDigits, LScale, RDigits, RScale);
+
+  // Compute difference.
+  if (LDigits <= RDigits)
+    return std::make_pair(0, 0);
+  if (RDigits || !SavedRDigits)
+    return std::make_pair(LDigits - RDigits, LScale);
+
+  // Check if RDigits just barely lost its last bit.  E.g., for 32-bit:
+  //
+  //   1*2^32 - 1*2^0 == 0xffffffff != 1*2^32
+  const auto RLgFloor = getLgFloor(SavedRDigits, SavedRScale);
+  if (!compare(LDigits, LScale, DigitsT(1), RLgFloor + getWidth<DigitsT>()))
+    return std::make_pair(std::numeric_limits<DigitsT>::max(), RLgFloor);
+
+  return std::make_pair(LDigits, LScale);
+}
+
+/// \brief Convenience helper for 32-bit sum.
+inline std::pair<uint32_t, int16_t> getDifference32(uint32_t LDigits,
+                                                    int16_t LScale,
+                                                    uint32_t RDigits,
+                                                    int16_t RScale) {
+  return getDifference(LDigits, LScale, RDigits, RScale);
+}
+
+/// \brief Convenience helper for 64-bit sum.
+inline std::pair<uint64_t, int16_t> getDifference64(uint64_t LDigits,
+                                                    int16_t LScale,
+                                                    uint64_t RDigits,
+                                                    int16_t RScale) {
+  return getDifference(LDigits, LScale, RDigits, RScale);
+}
+
 } // end namespace ScaledNumbers
 } // end namespace llvm
 

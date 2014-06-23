@@ -229,8 +229,19 @@ public:
   }
   void dump() const { return UnsignedFloatBase::dump(Digits, Exponent, Width); }
 
-  UnsignedFloat &operator+=(const UnsignedFloat &X);
-  UnsignedFloat &operator-=(const UnsignedFloat &X);
+  UnsignedFloat &operator+=(const UnsignedFloat &X) {
+    std::tie(Digits, Exponent) =
+        ScaledNumbers::getSum(Digits, Exponent, X.Digits, X.Exponent);
+    // Check for exponent past MaxExponent.
+    if (Exponent > MaxExponent)
+      *this = getLargest();
+    return *this;
+  }
+  UnsignedFloat &operator-=(const UnsignedFloat &X) {
+    std::tie(Digits, Exponent) =
+        ScaledNumbers::getDifference(Digits, Exponent, X.Digits, X.Exponent);
+    return *this;
+  }
   UnsignedFloat &operator*=(const UnsignedFloat &X);
   UnsignedFloat &operator/=(const UnsignedFloat &X);
   UnsignedFloat &operator<<=(int16_t Shift) { shiftLeft(Shift); return *this; }
@@ -399,65 +410,6 @@ IntT UnsignedFloat<DigitsT>::toInt() const {
   return N;
 }
 
-template <class DigitsT>
-UnsignedFloat<DigitsT> &UnsignedFloat<DigitsT>::
-operator+=(const UnsignedFloat &X) {
-  if (isLargest() || X.isZero())
-    return *this;
-  if (isZero() || X.isLargest())
-    return *this = X;
-
-  // Normalize exponents.
-  UnsignedFloat Scaled = matchExponents(X);
-
-  // Check for zero again.
-  if (isZero())
-    return *this = Scaled;
-  if (Scaled.isZero())
-    return *this;
-
-  // Compute sum.
-  DigitsType Sum = Digits + Scaled.Digits;
-  bool DidOverflow = Sum < Digits;
-  Digits = Sum;
-  if (!DidOverflow)
-    return *this;
-
-  if (Exponent == MaxExponent)
-    return *this = getLargest();
-
-  ++Exponent;
-  Digits = UINT64_C(1) << (Width - 1) | Digits >> 1;
-
-  return *this;
-}
-template <class DigitsT>
-UnsignedFloat<DigitsT> &UnsignedFloat<DigitsT>::
-operator-=(const UnsignedFloat &X) {
-  if (X.isZero())
-    return *this;
-  if (*this <= X)
-    return *this = getZero();
-
-  // Normalize exponents.
-  UnsignedFloat Scaled = matchExponents(X);
-  assert(Digits >= Scaled.Digits);
-
-  // Compute difference.
-  if (!Scaled.isZero()) {
-    Digits -= Scaled.Digits;
-    return *this;
-  }
-
-  // Check if X just barely lost its last bit.  E.g., for 32-bit:
-  //
-  //   1*2^32 - 1*2^0 == 0xffffffff != 1*2^32
-  if (*this == UnsignedFloat(1, X.lgFloor() + Width)) {
-    Digits = DigitsType(0) - 1;
-    --Exponent;
-  }
-  return *this;
-}
 template <class DigitsT>
 UnsignedFloat<DigitsT> &UnsignedFloat<DigitsT>::
 operator*=(const UnsignedFloat &X) {
