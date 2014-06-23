@@ -388,7 +388,7 @@ std::pair<DigitsT, int16_t> getDifference(DigitsT LDigits, int16_t LScale,
   return std::make_pair(LDigits, LScale);
 }
 
-/// \brief Convenience helper for 32-bit sum.
+/// \brief Convenience helper for 32-bit difference.
 inline std::pair<uint32_t, int16_t> getDifference32(uint32_t LDigits,
                                                     int16_t LScale,
                                                     uint32_t RDigits,
@@ -396,7 +396,7 @@ inline std::pair<uint32_t, int16_t> getDifference32(uint32_t LDigits,
   return getDifference(LDigits, LScale, RDigits, RScale);
 }
 
-/// \brief Convenience helper for 64-bit sum.
+/// \brief Convenience helper for 64-bit difference.
 inline std::pair<uint64_t, int16_t> getDifference64(uint64_t LDigits,
                                                     int16_t LScale,
                                                     uint64_t RDigits,
