@@ -2170,13 +2170,46 @@ compiler, consider compiling LLVM and LLVM-GCC in single-threaded mode, and
 using the resultant compiler to build a copy of LLVM with multithreading
 support.
 
+.. _startmultithreaded:
+
+Entering and Exiting Multithreaded Mode
+---------------------------------------
+
+In order to properly protect its internal data structures while avoiding
+excessive locking overhead in the single-threaded case, the LLVM must intialize
+certain data structures necessary to provide guards around its internals.  To do
+so, the client program must invoke ``llvm_start_multithreaded()`` before making
+any concurrent LLVM API calls.  To subsequently tear down these structures, use
+the ``llvm_stop_multithreaded()`` call.  You can also use the
+``llvm_is_multithreaded()`` call to check the status of multithreaded mode.
+
+Note that both of these calls must be made *in isolation*.  That is to say that
+no other LLVM API calls may be executing at any time during the execution of
+``llvm_start_multithreaded()`` or ``llvm_stop_multithreaded``.  It is the
+client's responsibility to enforce this isolation.
+
+The return value of ``llvm_start_multithreaded()`` indicates the success or
+failure of the initialization.  Failure typically indicates that your copy of
+LLVM was built without multithreading support, typically because GCC atomic
+intrinsics were not found in your system compiler.  In this case, the LLVM API
+will not be safe for concurrent calls.  However, it *will* be safe for hosting
+threaded applications in the JIT, though :ref:`care must be taken
+<jitthreading>` to ensure that side exits and the like do not accidentally
+result in concurrent LLVM API calls.
+
 .. _shutdown:
 
 Ending Execution with ``llvm_shutdown()``
 -----------------------------------------
 
 When you are done using the LLVM APIs, you should call ``llvm_shutdown()`` to
-deallocate memory used for internal structures.
+deallocate memory used for internal structures.  This will also invoke
+``llvm_stop_multithreaded()`` if LLVM is operating in multithreaded mode.  As
+such, ``llvm_shutdown()`` requires the same isolation guarantees as
+``llvm_stop_multithreaded()``.
+
+Note that, if you use scope-based shutdown, you can use the
+``llvm_shutdown_obj`` class, which calls ``llvm_shutdown()`` in its destructor.
 
 .. _managedstatic:
 
@@ -2184,10 +2217,14 @@ Lazy Initialization with ``ManagedStatic``
 ------------------------------------------
 
 ``ManagedStatic`` is a utility class in LLVM used to implement static
-initialization of static resources, such as the global type tables.  In a
-single-threaded environment, it implements a simple lazy initialization scheme.
-When LLVM is compiled with support for multi-threading, however, it uses
+initialization of static resources, such as the global type tables.  Before the
+invocation of ``llvm_shutdown()``, it implements a simple lazy initialization
+scheme.  Once ``llvm_start_multithreaded()`` returns, however, it uses
 double-checked locking to implement thread-safe lazy initialization.
+
+Note that, because no other threads are allowed to issue LLVM API calls before
+``llvm_start_multithreaded()`` returns, it is possible to have
+``ManagedStatic``\ s of ``llvm::sys::Mutex``\ s.
 
 .. _llvmcontext:
 

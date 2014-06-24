@@ -2848,13 +2848,16 @@ void LLVMDisposePassManager(LLVMPassManagerRef PM);
  * @{
  */
 
-/** Deprecated: Multi-threading can only be enabled/disabled with the compile
-    time define LLVM_ENABLE_THREADS.  This function always returns
-    LLVMIsMultithreaded(). */
+/** Allocate and initialize structures needed to make LLVM safe for
+    multithreading. The return value indicates whether multithreaded
+    initialization succeeded. Must be executed in isolation from all
+    other LLVM api calls.
+    @see llvm::llvm_start_multithreaded */
 LLVMBool LLVMStartMultithreaded(void);
 
-/** Deprecated: Multi-threading can only be enabled/disabled with the compile
-    time define LLVM_ENABLE_THREADS. */
+/** Deallocate structures necessary to make LLVM safe for multithreading.
+    Must be executed in isolation from all other LLVM api calls.
+    @see llvm::llvm_stop_multithreaded */
 void LLVMStopMultithreaded(void);
 
 /** Check whether LLVM is executing in thread-safe mode or not.
