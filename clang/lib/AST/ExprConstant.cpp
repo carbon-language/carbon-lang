@@ -4373,8 +4373,11 @@ static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info) {
 }
 
 bool LValueExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl()))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
+    if (FD->hasAttr<DLLImportAttr>())
+      return ZeroInitialization(E);
     return Success(FD);
+  }
   if (const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl()))
     return VisitVarDecl(E, VD);
   return Error(E);
