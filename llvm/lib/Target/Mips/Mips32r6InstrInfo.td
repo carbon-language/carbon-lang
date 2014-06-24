@@ -16,7 +16,6 @@ include "Mips32r6InstrFormats.td"
 // Notes about removals/changes from MIPS32r6:
 // Reencoded: jr -> jalr
 // Reencoded: jr.hb -> jalr.hb
-// Reencoded: sdbbp
 
 def brtarget21 : Operand<OtherVT> {
   let EncoderMethod = "getBranchTarget21OpValue";
@@ -168,6 +167,14 @@ class SC_R6_ENC : SPECIAL3_LL_SC_FM<OPCODE6_SC>;
 class CLO_R6_ENC : SPECIAL_2R_FM<OPCODE6_CLO>;
 class CLZ_R6_ENC : SPECIAL_2R_FM<OPCODE6_CLZ>;
 
+class SDBBP_R6_ENC : SPECIAL_SDBBP_FM;
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Multiclasses
+//
+//===----------------------------------------------------------------------===//
+
 class CMP_CONDN_DESC_BASE<string CondStr, string Typestr,
                           RegisterOperand FGROpnd,
                           SDPatternOperator Op = null_frag> {
@@ -176,12 +183,6 @@ class CMP_CONDN_DESC_BASE<string CondStr, string Typestr,
   string AsmString = !strconcat("cmp.", CondStr, ".", Typestr, "\t$fd, $fs, $ft");
   list<dag> Pattern = [(set FGRCCOpnd:$fd, (Op FGROpnd:$fs, FGROpnd:$ft))];
 }
-
-//===----------------------------------------------------------------------===//
-//
-// Instruction Multiclasses
-//
-//===----------------------------------------------------------------------===//
 
 multiclass CMP_CC_M <FIELD_CMP_FORMAT Format, string Typestr,
                      RegisterOperand FGROpnd>{
@@ -626,6 +627,13 @@ class CLZ_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> :
 class CLO_R6_DESC : CLO_R6_DESC_BASE<"clo", GPR32Opnd>;
 class CLZ_R6_DESC : CLZ_R6_DESC_BASE<"clz", GPR32Opnd>;
 
+class SDBBP_R6_DESC {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins uimm20:$code_);
+  string AsmString = "sdbbp\t$code_";
+  list<dag> Pattern = [];
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -706,6 +714,7 @@ def PREF_R6 : PREF_ENC, PREF_DESC, ISA_MIPS32R6;
 def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
 def RINT_S : RINT_S_ENC, RINT_S_DESC, ISA_MIPS32R6;
 def SC_R6 : SC_R6_ENC, SC_R6_DESC, ISA_MIPS32R6;
+def SDBBP_R6 : SDBBP_R6_ENC, SDBBP_R6_DESC, ISA_MIPS32R6;
 def SDC2_R6 : SDC2_R6_ENC, SDC2_R6_DESC, ISA_MIPS32R6;
 def SELEQZ : SELEQZ_ENC, SELEQZ_DESC, ISA_MIPS32R6, GPR_32;
 def SELEQZ_D : SELEQZ_D_ENC, SELEQZ_D_DESC, ISA_MIPS32R6;
@@ -716,6 +725,14 @@ def SELNEZ_S : SELNEZ_S_ENC, SELNEZ_S_DESC, ISA_MIPS32R6;
 def SEL_D : SEL_D_ENC, SEL_D_DESC, ISA_MIPS32R6;
 def SEL_S : SEL_S_ENC, SEL_S_DESC, ISA_MIPS32R6;
 def SWC2_R6 : SWC2_R6_ENC, SWC2_R6_DESC, ISA_MIPS32R6;
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Aliases
+//
+//===----------------------------------------------------------------------===//
+
+def : MipsInstAlias<"sdbbp", (SDBBP_R6 0)>, ISA_MIPS32R6;
 
 //===----------------------------------------------------------------------===//
 //

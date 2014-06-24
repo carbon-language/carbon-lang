@@ -201,6 +201,8 @@
         sb        $s6,-19857($14)
         sc        $15,18904($s3)       # CHECK: sc $15, 18904($19)     # encoding: [0xe2,0x6f,0x49,0xd8]
         scd       $15,-8243($sp)       # CHECK: scd $15, -8243($sp)    # encoding: [0xf3,0xaf,0xdf,0xcd]
+        sdbbp                          # CHECK: sdbbp                  # encoding: [0x70,0x00,0x00,0x3f]
+        sdbbp     34                   # CHECK: sdbbp 34               # encoding: [0x70,0x00,0x08,0xbf]
         sd        $12,5835($10)
         sdc1      $f31,30574($13)
         sdc2      $20,23157($s2)       # CHECK: sdc2 $20, 23157($18)   # encoding: [0xfa,0x54,0x5a,0x75]

@@ -148,5 +148,7 @@
         clz     $sp,$gp          # CHECK: clz $sp, $gp           # encoding: [0x03,0x80,0xe8,0x50]
         ssnop                    # WARNING: [[@LINE]]:9: warning: ssnop is deprecated for MIPS32r6 and is equivalent to a nop instruction
         ssnop                    # CHECK: ssnop                  # encoding: [0x00,0x00,0x00,0x40]
+        sdbbp                    # CHECK: sdbbp                  # encoding: [0x00,0x00,0x00,0x0e]
+        sdbbp     34             # CHECK: sdbbp 34               # encoding: [0x00,0x00,0x08,0x8e]
         sync                     # CHECK: sync                   # encoding: [0x00,0x00,0x00,0x0f]
         sync    1                # CHECK: sync 1                 # encoding: [0x00,0x00,0x00,0x4f]
