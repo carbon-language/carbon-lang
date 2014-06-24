@@ -1458,6 +1458,8 @@ static const char *DescriptionStringSI =
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
 class R600TargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
+
   /// \brief The GPU profiles supported by the R600 target.
   enum GPUKind {
     GK_NONE,
@@ -1504,10 +1506,9 @@ public:
 
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
-    Records = nullptr;
-    NumRecords = 0;
+    Records = BuiltinInfo;
+    NumRecords = clang::R600::LastTSBuiltin - Builtin::FirstTSBuiltin;
   }
-
 
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
@@ -1582,6 +1583,12 @@ public:
 
     return true;
   }
+};
+
+const Builtin::Info R600TargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsR600.def"
 };
 
 } // end anonymous namespace

@@ -36,6 +36,7 @@ module Clang_Basic {
   exclude header "Basic/BuiltinsNEON.def"
   exclude header "Basic/BuiltinsNVPTX.def"
   exclude header "Basic/BuiltinsPPC.def"
+  exclude header "Basic/BuiltinsR600.def"
   exclude header "Basic/BuiltinsX86.def"
   exclude header "Basic/BuiltinsXCore.def"
   exclude header "Basic/DiagnosticOptions.def"
