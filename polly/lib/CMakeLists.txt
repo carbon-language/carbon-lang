@@ -1,7 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
 if (PLUTO_FOUND)
-  set(POLLY_PLUTO_FILES Pluto.cpp)
+  set(POLLY_PLUTO_FILES Transform/Pluto.cpp)
 endif (PLUTO_FOUND)
 
 set(POLLY_JSON_FILES
