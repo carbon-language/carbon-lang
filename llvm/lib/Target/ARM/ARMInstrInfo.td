@@ -5113,9 +5113,11 @@ let usesCustomInserter = 1, Uses = [R4], Defs = [R4, SP] in
 // __aeabi_read_tp preserves the registers r1-r3.
 // This is a pseudo inst so that we can get the encoding right,
 // complete with fixup for the aeabi_read_tp function.
+// TPsoft is valid for ARM mode only, in case of Thumb mode a tTPsoft pattern
+// is defined in "ARMInstrThumb.td".
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
-  def TPsoft : PseudoInst<(outs), (ins), IIC_Br,
+  def TPsoft : ARMPseudoInst<(outs), (ins), 4, IIC_Br,
                [(set R0, ARMthread_pointer)]>, Sched<[WriteBr]>;
 }
 

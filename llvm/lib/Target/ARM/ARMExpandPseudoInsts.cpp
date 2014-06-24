@@ -927,10 +927,16 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     }
     case ARM::tTPsoft:
     case ARM::TPsoft: {
-      MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                TII->get(Opcode == ARM::tTPsoft ? ARM::tBL : ARM::BL))
-        .addExternalSymbol("__aeabi_read_tp", 0);
+      MachineInstrBuilder MIB;
+      if (Opcode == ARM::tTPsoft)
+        MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                      TII->get( ARM::tBL))
+              .addImm((unsigned)ARMCC::AL).addReg(0)
+              .addExternalSymbol("__aeabi_read_tp", 0);
+      else
+        MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                      TII->get( ARM::BL))
+              .addExternalSymbol("__aeabi_read_tp", 0);
 
       MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       TransferImpOps(MI, MIB, MIB);
