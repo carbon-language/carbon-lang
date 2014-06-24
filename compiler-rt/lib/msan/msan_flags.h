@@ -29,6 +29,7 @@ struct Flags {
   bool wrap_signals;
   bool print_stats;
   bool halt_on_error;
+  bool atexit;
 };
 
 Flags *flags();
