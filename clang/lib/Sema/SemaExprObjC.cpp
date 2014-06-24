@@ -976,6 +976,8 @@ ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
 
 static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
                                                SourceLocation AtLoc,
+                                               SourceLocation LParenLoc,
+                                               SourceLocation RParenLoc,
                                                ObjCMethodDecl *Method,
                                                ObjCMethodList &MethList) {
   ObjCMethodList *M = &MethList;
@@ -991,7 +993,8 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
       if (!Warned) {
         Warned = true;
         S.Diag(AtLoc, diag::warning_multiple_selectors)
-          << Method->getSelector();
+          << Method->getSelector() << FixItHint::CreateInsertion(LParenLoc, "(")
+          << FixItHint::CreateInsertion(RParenLoc, ")");
         S.Diag(Method->getLocation(), diag::note_method_declared_at)
           << Method->getDeclName();
       }
@@ -1003,23 +1006,26 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
 }
 
 static void DiagnoseMismatchedSelectors(Sema &S, SourceLocation AtLoc,
-                                        ObjCMethodDecl *Method) {
-  if (S.Diags.isIgnored(diag::warning_multiple_selectors, SourceLocation()))
+                                        ObjCMethodDecl *Method,
+                                        SourceLocation LParenLoc,
+                                        SourceLocation RParenLoc,
+                                        bool WarnMultipleSelectors) {
+  if (!WarnMultipleSelectors ||
+      S.Diags.isIgnored(diag::warning_multiple_selectors, SourceLocation()))
     return;
   bool Warned = false;
   for (Sema::GlobalMethodPool::iterator b = S.MethodPool.begin(),
        e = S.MethodPool.end(); b != e; b++) {
     // first, instance methods
     ObjCMethodList &InstMethList = b->second.first;
-    if (HelperToDiagnoseMismatchedMethodsInGlobalPool(S, AtLoc,
+    if (HelperToDiagnoseMismatchedMethodsInGlobalPool(S, AtLoc, LParenLoc, RParenLoc,
                                                       Method, InstMethList))
       Warned = true;
         
     // second, class methods
     ObjCMethodList &ClsMethList = b->second.second;
-    if (HelperToDiagnoseMismatchedMethodsInGlobalPool(S, AtLoc,
-                                                      Method, ClsMethList) ||
-        Warned)
+    if (HelperToDiagnoseMismatchedMethodsInGlobalPool(S, AtLoc, LParenLoc, RParenLoc,
+                                                      Method, ClsMethList) || Warned)
       return;
   }
 }
@@ -1028,7 +1034,8 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                              SourceLocation AtLoc,
                                              SourceLocation SelLoc,
                                              SourceLocation LParenLoc,
-                                             SourceLocation RParenLoc) {
+                                             SourceLocation RParenLoc,
+                                             bool WarnMultipleSelectors) {
   ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
                              SourceRange(LParenLoc, RParenLoc), false, false);
   if (!Method)
@@ -1046,7 +1053,8 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
     } else
         Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
   } else
-    DiagnoseMismatchedSelectors(*this, AtLoc, Method);
+    DiagnoseMismatchedSelectors(*this, AtLoc, Method, LParenLoc, RParenLoc,
+                                WarnMultipleSelectors);
   
   if (Method &&
       Method->getImplementationControl() != ObjCMethodDecl::Optional &&
