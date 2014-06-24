@@ -1,4 +1,5 @@
 #include <clc/clc.h>
+#include "../clcmacro.h"
 
 _CLC_BINARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, pown, float, int)
 

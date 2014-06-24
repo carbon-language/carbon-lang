@@ -11,9 +11,6 @@
 /* Function Attributes */
 #include <clc/clcfunc.h>
 
-/* Pattern Macro Definitions */
-#include <clc/clcmacro.h>
-
 /* 6.1 Supported Data Types */
 #include <clc/clctypes.h>
 

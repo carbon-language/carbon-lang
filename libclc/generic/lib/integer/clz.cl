@@ -1,4 +1,5 @@
 #include <clc/clc.h>
+#include "../clcmacro.h"
 
 // From clz.ll
 _CLC_DECL char   __clc_clz_s8(char);

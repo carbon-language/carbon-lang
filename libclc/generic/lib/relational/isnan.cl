@@ -1,4 +1,5 @@
 #include <clc/clc.h>
+#include "../clcmacro.h"
 
 _CLC_DEFINE_UNARY_BUILTIN(int, isnan, __builtin_isnan, float)
 

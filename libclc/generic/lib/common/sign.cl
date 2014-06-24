@@ -1,4 +1,5 @@
 #include <clc/clc.h>
+#include "../clcmacro.h"
 
 #define SIGN(TYPE, F) \
 _CLC_DEF _CLC_OVERLOAD TYPE sign(TYPE x) { \

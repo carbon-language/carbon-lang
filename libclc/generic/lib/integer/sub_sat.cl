@@ -1,4 +1,5 @@
 #include <clc/clc.h>
+#include "../clcmacro.h"
 
 // From sub_sat.ll
 _CLC_DECL char   __clc_sub_sat_s8(char, char);
