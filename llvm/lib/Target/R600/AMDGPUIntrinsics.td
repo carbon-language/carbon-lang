@@ -24,6 +24,14 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_div : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], [IntrNoMem]>;
   def int_AMDGPU_fract : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
   def int_AMDGPU_clamp : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+
+  // This is named backwards (instead of rsq_legacy) so we don't have
+  // to define it with the public builtins intrinsics. This is a
+  // workaround for how intrinsic names are parsed. If the name is
+  // llvm.AMDGPU.rsq.legacy, the parser assumes that you meant
+  // llvm.AMDGPU.rsq.{f32 | f64} and incorrectly mangled the name.
+  def int_AMDGPU_legacy_rsq : Intrinsic<[llvm_float_ty], [llvm_float_ty], [IntrNoMem]>;
+
   def int_AMDGPU_dp4 : Intrinsic<[llvm_float_ty], [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
   def int_AMDGPU_kill : Intrinsic<[], [llvm_float_ty], []>;
   def int_AMDGPU_kilp : Intrinsic<[], [], []>;

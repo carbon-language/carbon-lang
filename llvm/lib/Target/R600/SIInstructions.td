@@ -1123,22 +1123,26 @@ defm V_RCP_F32 : VOP1_32 <0x0000002a, "V_RCP_F32",
   [(set f32:$dst, (AMDGPUrcp f32:$src0))]
 >;
 defm V_RCP_IFLAG_F32 : VOP1_32 <0x0000002b, "V_RCP_IFLAG_F32", []>;
-defm V_RSQ_CLAMP_F32 : VOP1_32 <0x0000002c, "V_RSQ_CLAMP_F32", []>;
+defm V_RSQ_CLAMP_F32 : VOP1_32 <0x0000002c, "V_RSQ_CLAMP_F32",
+  [(set f32:$dst, (AMDGPUrsq_clamped f32:$src0))]
+>;
 defm V_RSQ_LEGACY_F32 : VOP1_32 <
   0x0000002d, "V_RSQ_LEGACY_F32",
-  [(set f32:$dst, (AMDGPUrsq f32:$src0))]
+  [(set f32:$dst, (AMDGPUrsq_legacy f32:$src0))]
 >;
 defm V_RSQ_F32 : VOP1_32 <0x0000002e, "V_RSQ_F32",
-  [(set f32:$dst, (fdiv FP_ONE, (fsqrt f32:$src0)))]
+  [(set f32:$dst, (AMDGPUrsq f32:$src0))]
 >;
 defm V_RCP_F64 : VOP1_64 <0x0000002f, "V_RCP_F64",
   [(set f64:$dst, (AMDGPUrcp f64:$src0))]
 >;
 defm V_RCP_CLAMP_F64 : VOP1_64 <0x00000030, "V_RCP_CLAMP_F64", []>;
 defm V_RSQ_F64 : VOP1_64 <0x00000031, "V_RSQ_F64",
-  [(set f64:$dst, (fdiv FP_ONE, (fsqrt f64:$src0)))]
+  [(set f64:$dst, (AMDGPUrsq f64:$src0))]
 >;
-defm V_RSQ_CLAMP_F64 : VOP1_64 <0x00000032, "V_RSQ_CLAMP_F64", []>;
+defm V_RSQ_CLAMP_F64 : VOP1_64 <0x00000032, "V_RSQ_CLAMP_F64",
+  [(set f64:$dst, (AMDGPUrsq_clamped f64:$src0))]
+>;
 defm V_SQRT_F32 : VOP1_32 <0x00000033, "V_SQRT_F32",
   [(set f32:$dst, (fsqrt f32:$src0))]
 >;
@@ -1781,8 +1785,8 @@ def : Pat <
 
 def : RcpPat<V_RCP_F32_e32, f32>;
 def : RcpPat<V_RCP_F64_e32, f64>;
-def : RsqPat<V_RSQ_F32_e32, f32>;
-def : RsqPat<V_RSQ_F64_e32, f64>;
+defm : RsqPat<V_RSQ_F32_e32, f32>;
+defm : RsqPat<V_RSQ_F64_e32, f64>;
 
 //===----------------------------------------------------------------------===//
 // VOP2 Patterns

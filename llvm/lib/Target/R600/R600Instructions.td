@@ -1079,17 +1079,20 @@ class RECIP_UINT_Common <bits<11> inst> : R600_1OP_Helper <
   let Itinerary = TransALU;
 }
 
+// Clamped to maximum.
 class RECIPSQRT_CLAMPED_Common <bits<11> inst> : R600_1OP_Helper <
-  inst, "RECIPSQRT_CLAMPED", AMDGPUrsq
+  inst, "RECIPSQRT_CLAMPED", AMDGPUrsq_clamped
 > {
   let Itinerary = TransALU;
 }
 
-class RECIPSQRT_IEEE_Common <bits<11> inst> : R600_1OP <
-  inst, "RECIPSQRT_IEEE", []
+class RECIPSQRT_IEEE_Common <bits<11> inst> : R600_1OP_Helper <
+  inst, "RECIPSQRT_IEEE", AMDGPUrsq_legacy
 > {
   let Itinerary = TransALU;
 }
+
+// TODO: There is also RECIPSQRT_FF which clamps to zero.
 
 class SIN_Common <bits<11> inst> : R600_1OP <
   inst, "SIN", [(set f32:$dst, (SIN_HW f32:$src0))]>{
