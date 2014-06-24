@@ -29,7 +29,7 @@ ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
       R.reset(new ELFObjectFile<ELFType<support::little, 4, false>>(
-          Obj.release(), EC));
+          std::move(Obj), EC));
     else
 #endif
     if (MaxAlignment >= 2)
@@ -40,7 +40,7 @@ ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
   else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
-      R.reset(new ELFObjectFile<ELFType<support::big, 4, false>>(Obj.release(),
+      R.reset(new ELFObjectFile<ELFType<support::big, 4, false>>(std::move(Obj),
                                                                  EC));
     else
 #endif
