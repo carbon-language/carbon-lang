@@ -197,3 +197,35 @@
 // CHECK-GENTOO-4-6-4: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]\.[0-9]}}{{/|\\\\}}include"
 // CHECK-GENTOO-4-6-4: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-GENTOO-4-6-4: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
+// Check header search on Debian 6 / MIPS64
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target mips64-unknown-linux-gnuabi64 \
+// RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64-GNUABI %s
+// CHECK-MIPS64-GNUABI: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-MIPS64-GNUABI: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-MIPS64-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64-linux-gnuabi64/4.9/../../../../include/c++/4.9"
+// CHECK-MIPS64-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64-linux-gnuabi64/4.9/../../../../include/c++/4.9/mips64-linux-gnuabi64"
+// CHECK-MIPS64-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64-linux-gnuabi64/4.9/../../../../include/c++/4.9/backward"
+// CHECK-MIPS64-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-MIPS64-GNUABI: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]\.[0-9]}}{{/|\\\\}}include"
+// CHECK-MIPS64-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/mips64-linux-gnuabi64"
+// CHECK-MIPS64-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-MIPS64-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
+// Check header search on Debian 6 / MIPS64
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target mips64el-unknown-linux-gnuabi64 \
+// RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL-GNUABI %s
+// CHECK-MIPS64EL-GNUABI: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-MIPS64EL-GNUABI: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-MIPS64EL-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../include/c++/4.9"
+// CHECK-MIPS64EL-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../include/c++/4.9/mips64el-linux-gnuabi64"
+// CHECK-MIPS64EL-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/mips64el-linux-gnuabi64/4.9/../../../../include/c++/4.9/backward"
+// CHECK-MIPS64EL-GNUABI: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-MIPS64EL-GNUABI: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]\.[0-9]}}{{/|\\\\}}include"
+// CHECK-MIPS64EL-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/mips64el-linux-gnuabi64"
+// CHECK-MIPS64EL-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-MIPS64EL-GNUABI: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
