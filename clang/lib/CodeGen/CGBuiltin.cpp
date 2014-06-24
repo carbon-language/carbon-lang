@@ -1786,36 +1786,6 @@ Value *CodeGenFunction::EmitNeonRShiftImm(Value *Vec, Value *Shift,
     return Builder.CreateAShr(Vec, Shift, name);
 }
 
-Value *CodeGenFunction::EmitConcatVectors(Value *Lo, Value *Hi,
-                                          llvm::Type *ArgTy) {
-  unsigned NumElts = ArgTy->getVectorNumElements();
-  SmallVector<Constant *, 16> Indices;
-  for (unsigned i = 0; i < 2 * NumElts; ++i)
-    Indices.push_back(ConstantInt::get(Int32Ty, i));
-
-  Constant *Mask = ConstantVector::get(Indices);
-  Value *LoCast = Builder.CreateBitCast(Lo, ArgTy);
-  Value *HiCast = Builder.CreateBitCast(Hi, ArgTy);
-  return Builder.CreateShuffleVector(LoCast, HiCast, Mask, "concat");
-}
-
-Value *CodeGenFunction::EmitExtractHigh(Value *Vec, llvm::Type *ResTy) {
-  unsigned NumElts = ResTy->getVectorNumElements();
-  SmallVector<Constant *, 8> Indices;
-
-  llvm::Type *InTy = llvm::VectorType::get(ResTy->getVectorElementType(),
-                                           NumElts * 2);
-  Value *VecCast = Builder.CreateBitCast(Vec, InTy);
-
-  // extract_high is a shuffle on the second half of the input indices: E.g. 4,
-  // 5, 6, 7 if we're extracting <4 x i16> from <8 x i16>.
-  for (unsigned i = 0; i < NumElts; ++i)
-    Indices.push_back(ConstantInt::get(Int32Ty, NumElts + i));
-
-  Constant *Mask = ConstantVector::get(Indices);
-  return Builder.CreateShuffleVector(VecCast, VecCast, Mask, "concat");
-}
-
 /// GetPointeeAlignment - Given an expression with a pointer type, find the
 /// alignment of the type referenced by the pointer.  Skip over implicit
 /// casts.

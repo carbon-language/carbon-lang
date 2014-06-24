@@ -2234,9 +2234,6 @@ public:
                                    bool negateForRightShift);
   llvm::Value *EmitNeonRShiftImm(llvm::Value *Vec, llvm::Value *Amt,
                                  llvm::Type *Ty, bool usgn, const char *name);
-  llvm::Value *EmitConcatVectors(llvm::Value *Lo, llvm::Value *Hi,
-                                 llvm::Type *ArgTy);
-  llvm::Value *EmitExtractHigh(llvm::Value *In, llvm::Type *ResTy);
   // Helper functions for EmitAArch64BuiltinExpr.
   llvm::Value *vectorWrapScalar8(llvm::Value *Op);
   llvm::Value *vectorWrapScalar16(llvm::Value *Op);
