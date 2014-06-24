@@ -207,7 +207,7 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
 
 /// getSectionPrefixForGlobal - Return the section prefix name used by options
 /// FunctionsSections and DataSections.
-static const char *getSectionPrefixForGlobal(SectionKind Kind) {
+static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   if (Kind.isText())                 return ".text.";
   if (Kind.isReadOnly())             return ".rodata.";
   if (Kind.isBSS())                  return ".bss.";
@@ -240,16 +240,15 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if ((GV->isWeakForLinker() || EmitUniquedSection) &&
       !Kind.isCommon()) {
-    const char *Prefix;
-    Prefix = getSectionPrefixForGlobal(Kind);
+    StringRef Prefix = getSectionPrefixForGlobal(Kind);
 
-    SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
+    SmallString<128> Name(Prefix);
     TM.getNameWithPrefix(Name, GV, Mang, true);
 
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
     if (GV->isWeakForLinker()) {
-      Group = Name.substr(strlen(Prefix));
+      Group = Name.substr(Prefix.size());
       Flags |= ELF::SHF_GROUP;
     }
 
