@@ -375,9 +375,10 @@ void CGDebugInfo::CreateCompileUnit() {
   TheCU = DBuilder.createCompileUnit(
       LangTag, Filename, getCurrentDirname(), Producer, LO.Optimize,
       CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers, SplitDwarfFilename,
-      DebugKind == CodeGenOptions::DebugLineTablesOnly
+      DebugKind <= CodeGenOptions::DebugLineTablesOnly
           ? llvm::DIBuilder::LineTablesOnly
-          : llvm::DIBuilder::FullDebug);
+          : llvm::DIBuilder::FullDebug,
+      DebugKind != CodeGenOptions::LocTrackingOnly);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
@@ -2341,7 +2342,7 @@ llvm::DIScope CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
 /// getFunctionDeclaration - Return debug info descriptor to describe method
 /// declaration for the given method definition.
 llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
-  if (!D || DebugKind == CodeGenOptions::DebugLineTablesOnly)
+  if (!D || DebugKind <= CodeGenOptions::DebugLineTablesOnly)
     return llvm::DISubprogram();
 
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
@@ -2386,7 +2387,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
                                                            QualType FnType,
                                                            llvm::DIFile F) {
-  if (!D || DebugKind == CodeGenOptions::DebugLineTablesOnly)
+  if (!D || DebugKind <= CodeGenOptions::DebugLineTablesOnly)
     // Create fake but valid subroutine type. Otherwise
     // llvm::DISubprogram::Verify() would return false, and
     // subprogram DIE will miss DW_AT_decl_file and

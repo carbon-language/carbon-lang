@@ -550,18 +550,30 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   }
 
   Opts.DependentLibraries = Args.getAllArgValues(OPT_dependent_lib);
+  bool NeedLocTracking = false;
 
-  if (Arg *A = Args.getLastArg(OPT_Rpass_EQ))
+  if (Arg *A = Args.getLastArg(OPT_Rpass_EQ)) {
     Opts.OptimizationRemarkPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
 
-  if (Arg *A = Args.getLastArg(OPT_Rpass_missed_EQ))
+  if (Arg *A = Args.getLastArg(OPT_Rpass_missed_EQ)) {
     Opts.OptimizationRemarkMissedPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
 
-  if (Arg *A = Args.getLastArg(OPT_Rpass_analysis_EQ))
+  if (Arg *A = Args.getLastArg(OPT_Rpass_analysis_EQ)) {
     Opts.OptimizationRemarkAnalysisPattern =
         GenerateOptimizationRemarkRegex(Diags, Args, A);
+    NeedLocTracking = true;
+  }
+
+  // If the user requested one of the flags in the -Rpass family, make sure
+  // that the backend tracks source location information.
+  if (NeedLocTracking && Opts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
+    Opts.setDebugInfo(CodeGenOptions::LocTrackingOnly);
 
   return Success;
 }

@@ -41,9 +41,6 @@ def remark_fe_backend_optimization_remark_missed : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemarkMissed>, DefaultRemark;
 def remark_fe_backend_optimization_remark_analysis : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemarkAnalysis>, DefaultRemark;
-def note_fe_backend_optimization_remark_missing_loc : Note<"use "
-  "-gline-tables-only -gcolumn-info to track source location information "
-  "for this optimization remark">;
 def note_fe_backend_optimization_remark_invalid_loc : Note<"could "
   "not determine the original source location for %0:%1:%2">;
 

@@ -577,12 +577,10 @@ feature.
 Current limitations
 ^^^^^^^^^^^^^^^^^^^
 
-1. For :option:`-Rpass` to provide source location information, you
-   need to enable debug line tables and column information. That is,
-   you need to add :option:`-gmlt` (or any of the debug-generating
-   flags) and :option:`-gcolumn-info`. If you omit these options,
-   every remark will be accompanied by a note stating that line number
-   information is missing.
+1. For :option:`-Rpass` to provide column information, you
+   need to enable it explicitly. That is, you need to add
+   :option:`-gcolumn-info`. If you omit this, remarks will only show
+   line information.
 
 2. Optimization remarks that refer to function names will display the
    mangled name of the function. Since these remarks are emitted by the

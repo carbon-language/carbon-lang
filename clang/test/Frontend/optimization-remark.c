@@ -3,8 +3,18 @@
 // always trigger the inliner, so it should be independent of the
 // optimization level.
 
-// RUN: %clang_cc1 %s -Rpass=inline -Rpass-analysis=inline -Rpass-missed=inline -O0 -gline-tables-only -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -Rpass=inline -Rpass-analysis=inline -Rpass-missed=inline -O0 -emit-llvm-only -verify
 // RUN: %clang_cc1 %s -DNDEBUG -Rpass=inline -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -Rpass=inline -emit-llvm -o %t 2>/dev/null | FileCheck %s < %t
+
+// -Rpass should produce source location annotations, exclusively (just
+// like -gmlt).
+// CHECK: , !dbg !
+// CHECK-NOT: DW_TAG_base_type
+
+// But llvm.dbg.cu should be missing (to prevent writing debug info to
+// the final output).
+// CHECK-NOT: !llvm.dbg.cu = !{
 
 int foo(int x, int y) __attribute__((always_inline));
 int foo(int x, int y) { return x + y; }
@@ -27,5 +37,5 @@ int bar(int j) {
   return foo(j, j - 2) * foz(j - 2, j);
 }
 #ifdef NDEBUG
-// expected-remark@-2 {{foo inlined into bar}} expected-note@-2 {{use -gline-tables-only -gcolumn-info to track source location information for this optimization remark}}
+// expected-remark@-3 {{foo inlined into bar}}
 #endif

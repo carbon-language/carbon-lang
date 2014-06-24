@@ -53,6 +53,13 @@ public:
   enum DebugInfoKind {
     NoDebugInfo,          /// Don't generate debug info.
 
+    LocTrackingOnly,      /// Emit location information but do not generate
+                          /// debug info in the output. This is useful in
+                          /// cases where the backend wants to track source
+                          /// locations for instructions without actually
+                          /// emitting debug info for them (e.g., when -Rpass
+                          /// is used).
+
     DebugLineTablesOnly,  /// Emit only debug info necessary for generating
                           /// line number tables (-gline-tables-only).
 
