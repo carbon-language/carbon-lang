@@ -2432,6 +2432,27 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  // OpenBSD-specific defaults for PIE
+  if (getToolChain().getTriple().getOS() == llvm::Triple::OpenBSD) {
+    switch (getToolChain().getTriple().getArch()) {
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+    case llvm::Triple::sparc:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      IsPICLevelTwo = false; // "-fpie"
+      break;
+
+    case llvm::Triple::ppc:
+    case llvm::Triple::sparcv9:
+      IsPICLevelTwo = true; // "-fPIE"
+      break;
+
+    default:
+      break;
+    }
+  }
+
   // For the PIC and PIE flag options, this logic is different from the
   // legacy logic in very old versions of GCC, as that logic was just
   // a bug no one had ever fixed. This logic is both more rational and

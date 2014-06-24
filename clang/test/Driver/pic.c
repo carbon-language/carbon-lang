@@ -201,7 +201,17 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 //
 // On OpenBSD, PIE is enabled by default, but can be disabled.
+// RUN: %clang -c %s -target amd64-pc-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
 // RUN: %clang -c %s -target i386-pc-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
+// RUN: %clang -c %s -target mips64-unknown-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
+// RUN: %clang -c %s -target mips64el-unknown-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
+// RUN: %clang -c %s -target powerpc-unknown-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE2
+// RUN: %clang -c %s -target sparc64-unknown-openbsd -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIE2
 // RUN: %clang -c %s -target i386-pc-openbsd -fno-pie -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
