@@ -119,6 +119,7 @@ public:
              lldb::addr_t vm_size,
              lldb::offset_t file_offset,
              lldb::offset_t file_size,
+             uint32_t log2align,
              uint32_t flags);
 
     // Create a section that is a child of parent_section_sp
@@ -132,6 +133,7 @@ public:
              lldb::addr_t vm_size,
              lldb::offset_t file_offset,
              lldb::offset_t file_size,
+             uint32_t log2align,
              uint32_t flags);
 
     ~Section ();
@@ -284,6 +286,17 @@ public:
         return m_obj_file;
     }
 
+    uint32_t GetLog2Align()
+    {
+        return m_log2align;
+    }
+
+    void
+    SetLog2Align(uint32_t align)
+    {
+        m_log2align = align;
+    }
+
 
 protected:
 
@@ -296,6 +309,7 @@ protected:
     lldb::addr_t    m_byte_size;        // Size in bytes that this section will occupy in memory at runtime
     lldb::offset_t  m_file_offset;      // Object file offset (if any)
     lldb::offset_t  m_file_size;        // Object file size (can be smaller than m_byte_size for zero filled sections...)
+    uint32_t        m_log2align;        // log_2(align) of the section (i.e. section has to be aligned to 2^m_log2align)
     SectionList     m_children;         // Child sections
     bool            m_fake:1,           // If true, then this section only can contain the address if one of its
                                         // children contains an address. This allows for gaps between the children

@@ -33,6 +33,8 @@ DIRS += SymbolVendor/MacOSX
 #DIRS += Process/MacOSX-User
 DIRS += Process/mach-core
 DIRS += SystemRuntime/MacOSX
+DIRS += Process/elf-core
+DIRS += JITLoader/GDB
 endif
 
 ifeq ($(HOST_OS),Linux)

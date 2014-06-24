@@ -1346,6 +1346,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                                           load_cmd.vmsize,        // VM size in bytes of this section
                                                           load_cmd.fileoff,       // Offset to the data for this section in the file
                                                           load_cmd.filesize,      // Size in bytes of this section as found in the the file
+                                                          0,                      // Segments have no alignment information
                                                           load_cmd.flags));       // Flags for this section
 
                             segment_sp->SetIsEncrypted (segment_is_encrypted);
@@ -1474,6 +1475,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                                                       sect64.size,           // VM size in bytes of this section
                                                                       sect64.offset,         // Offset to the data for this section in the file
                                                                       sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
+                                                                      sect64.align,
                                                                       load_cmd.flags));      // Flags for this section
                                         segment_sp->SetIsFake(true);
                                         
@@ -1612,6 +1614,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                                                   sect64.size,
                                                                   sect64.offset,
                                                                   sect64.offset == 0 ? 0 : sect64.size,
+                                                                  sect64.align,
                                                                   sect64.flags));
                                 // Set the section to be encrypted to match the segment
 
@@ -2022,7 +2025,7 @@ ObjectFileMachO::ParseSymtab ()
         
         uint32_t memory_module_load_level = eMemoryModuleLoadLevelComplete;
 
-        if (process)
+        if (process && m_header.filetype != llvm::MachO::MH_OBJECT)
         {
             Target &target = process->GetTarget();
             

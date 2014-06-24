@@ -27,6 +27,7 @@ Section::Section (const ModuleSP &module_sp,
                   addr_t byte_size,
                   lldb::offset_t file_offset,
                   lldb::offset_t file_size,
+                  uint32_t log2align,
                   uint32_t flags) :
     ModuleChild     (module_sp),
     UserID          (sect_id),
@@ -39,6 +40,7 @@ Section::Section (const ModuleSP &module_sp,
     m_byte_size     (byte_size),
     m_file_offset   (file_offset),
     m_file_size     (file_size),
+    m_log2align     (log2align),
     m_children      (),
     m_fake          (false),
     m_encrypted     (false),
@@ -58,6 +60,7 @@ Section::Section (const lldb::SectionSP &parent_section_sp,
                   addr_t byte_size,
                   lldb::offset_t file_offset,
                   lldb::offset_t file_size,
+                  uint32_t log2align,
                   uint32_t flags) :
     ModuleChild     (module_sp),
     UserID          (sect_id),
@@ -70,6 +73,7 @@ Section::Section (const lldb::SectionSP &parent_section_sp,
     m_byte_size     (byte_size),
     m_file_offset   (file_offset),
     m_file_size     (file_size),
+    m_log2align     (log2align),
     m_children      (),
     m_fake          (false),
     m_encrypted     (false),
@@ -142,7 +146,7 @@ Section::GetLoadBaseAddress (Target *target) const
         if (load_base_addr != LLDB_INVALID_ADDRESS)
             load_base_addr += GetOffset();
     }
-    else
+    if (load_base_addr == LLDB_INVALID_ADDRESS)
     {
         load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (const_cast<Section *>(this)->shared_from_this());
     }

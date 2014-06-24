@@ -917,6 +917,7 @@ IRExecutionUnit::PopulateSectionList (lldb_private::ObjectFile *obj_file,
                                                                    record.m_size,
                                                                    record.m_host_address,   // file_offset (which is the host address for the data)
                                                                    record.m_size,           // file_size
+                                                                   0,
                                                                    record.m_permissions));  // flags
             section_list.AddSection (section_sp);
         }

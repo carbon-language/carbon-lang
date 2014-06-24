@@ -1236,6 +1236,7 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
                                               vm_size,            // VM size in bytes of this section.
                                               header.sh_offset,   // Offset of this section in the file.
                                               file_size,          // Size of the section as found in the file.
+                                              __builtin_ffs(header.sh_addralign), // Alignment of the section
                                               header.sh_flags));  // Flags for this section.
 
             if (is_thread_specific)

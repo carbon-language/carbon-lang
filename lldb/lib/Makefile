@@ -101,7 +101,9 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginProcessDarwin.a \
               lldbPluginProcessMachCore.a \
-              lldbPluginSystemRuntimeMacOSX.a
+              lldbPluginSystemRuntimeMacOSX.a \
+              lldbPluginProcessElfCore.a \
+              lldbPluginJITLoaderGDB.a
 endif
 
 ifeq ($(HOST_OS),Linux)
