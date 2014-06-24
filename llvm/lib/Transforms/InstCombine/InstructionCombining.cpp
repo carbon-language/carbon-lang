@@ -1227,7 +1227,9 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
   if (isa<ShuffleVectorInst>(RHS)) Shuffle = cast<ShuffleVectorInst>(RHS);
   if (isa<Constant>(LHS)) C1 = cast<Constant>(LHS);
   if (isa<Constant>(RHS)) C1 = cast<Constant>(RHS);
-  if (Shuffle && C1 && isa<UndefValue>(Shuffle->getOperand(1)) &&
+  if (Shuffle && C1 &&
+      (isa<ConstantVector>(C1) || isa<ConstantDataVector>(C1)) &&
+      isa<UndefValue>(Shuffle->getOperand(1)) &&
       Shuffle->getType() == Shuffle->getOperand(0)->getType()) {
     SmallVector<int, 16> ShMask = Shuffle->getShuffleMask();
     // Find constant C2 that has property:

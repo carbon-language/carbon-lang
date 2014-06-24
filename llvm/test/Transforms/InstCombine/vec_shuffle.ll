@@ -405,3 +405,12 @@ define i32 @pr19737(<4 x i32> %in0) {
   %rv = extractelement <4 x i32> %and.i, i32 0
   ret i32 %rv
 }
+
+define <4 x i32> @pr20114(<4 x i32> %__mask) {
+; CHECK-LABEL: @pr20114
+; CHECK: shufflevector
+; CHECK: and
+  %mask01.i = shufflevector <4 x i32> %__mask, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  %masked_new.i.i.i = and <4 x i32> bitcast (<2 x i64> <i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64), i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64)> to <4 x i32>), %mask01.i
+  ret <4 x i32> %masked_new.i.i.i
+}
