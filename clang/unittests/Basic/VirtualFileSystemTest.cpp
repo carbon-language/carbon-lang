@@ -50,6 +50,41 @@ public:
     llvm_unreachable("unimplemented");
   }
 
+  struct DirIterImpl : public clang::vfs::detail::DirIterImpl {
+    std::map<std::string, vfs::Status> &FilesAndDirs;
+    std::map<std::string, vfs::Status>::iterator I;
+    std::string Path;
+    DirIterImpl(std::map<std::string, vfs::Status> &FilesAndDirs,
+                const Twine &_Path)
+        : FilesAndDirs(FilesAndDirs), I(FilesAndDirs.begin()),
+          Path(_Path.str()) {
+      for ( ; I != FilesAndDirs.end(); ++I) {
+        if (Path.size() < I->first.size() && I->first.find(Path) == 0 && I->first.find_last_of('/') <= Path.size()) {
+          CurrentEntry = I->second;
+          break;
+        }
+      }
+    }
+    std::error_code increment() override {
+      ++I;
+      for ( ; I != FilesAndDirs.end(); ++I) {
+        if (Path.size() < I->first.size() && I->first.find(Path) == 0 && I->first.find_last_of('/') <= Path.size()) {
+          CurrentEntry = I->second;
+          break;
+        }
+      }
+      if (I == FilesAndDirs.end())
+        CurrentEntry = vfs::Status();
+      return std::error_code();
+    }
+  };
+
+  vfs::directory_iterator dir_begin(const Twine &Dir,
+                                    std::error_code &EC) override {
+    return vfs::directory_iterator(
+        std::make_shared<DirIterImpl>(FilesAndDirs, Dir));
+  }
+
   void addEntry(StringRef Path, const vfs::Status &Status) {
     FilesAndDirs[Path] = Status;
   }
@@ -219,6 +254,163 @@ TEST(VirtualFileSystemTest, MergedDirPermissions) {
   Status = O->status("/both/bar");
   ASSERT_FALSE(Status.getError());
   EXPECT_EQ(0200, Status->getPermissions());
+}
+
+namespace {
+struct ScopedDir {
+  SmallString<128> Path;
+  ScopedDir(const Twine &Name, bool Unique=false) {
+    std::error_code EC;
+    if (Unique) {
+      EC =  llvm::sys::fs::createUniqueDirectory(Name, Path);
+    } else {
+      Path = Name.str();
+      EC = llvm::sys::fs::create_directory(Twine(Path));
+    }
+    if (EC)
+      Path = "";
+    EXPECT_FALSE(EC);
+  }
+  ~ScopedDir() {
+    if (Path != "")
+      EXPECT_FALSE(llvm::sys::fs::remove(Path.str()));
+  }
+  operator StringRef() { return Path.str(); }
+};
+}
+
+TEST(VirtualFileSystemTest, BasicRealFSIteration) {
+  ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/true);
+  IntrusiveRefCntPtr<vfs::FileSystem> FS = vfs::getRealFileSystem();
+
+  std::error_code EC;
+  vfs::directory_iterator I = FS->dir_begin(Twine(TestDirectory), EC);
+  ASSERT_FALSE(EC);
+  EXPECT_EQ(vfs::directory_iterator(), I); // empty directory is empty
+
+  ScopedDir _a(TestDirectory+"/a");
+  ScopedDir _ab(TestDirectory+"/a/b");
+  ScopedDir _c(TestDirectory+"/c");
+  ScopedDir _cd(TestDirectory+"/c/d");
+
+  I = FS->dir_begin(Twine(TestDirectory), EC);
+  ASSERT_FALSE(EC);
+  ASSERT_NE(vfs::directory_iterator(), I);
+  EXPECT_TRUE(I->getName().endswith("a"));
+  I.increment(EC);
+  ASSERT_FALSE(EC);
+  ASSERT_NE(vfs::directory_iterator(), I);
+  EXPECT_TRUE(I->getName().endswith("c"));
+  I.increment(EC);
+  EXPECT_EQ(vfs::directory_iterator(), I);
+}
+
+static void checkContents(vfs::directory_iterator I,
+                          ArrayRef<std::string> Expected) {
+  std::error_code EC;
+  auto ExpectedIter = Expected.begin(), ExpectedEnd = Expected.end();
+  for (vfs::directory_iterator E;
+       !EC && I != E && ExpectedIter != ExpectedEnd;
+       I.increment(EC), ++ExpectedIter)
+    EXPECT_EQ(*ExpectedIter, I->getName());
+
+  EXPECT_EQ(ExpectedEnd, ExpectedIter);
+  EXPECT_EQ(vfs::directory_iterator(), I);
+}
+
+TEST(VirtualFileSystemTest, OverlayIteration) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
+      new vfs::OverlayFileSystem(Lower));
+  O->pushOverlay(Upper);
+
+  std::error_code EC;
+  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>());
+
+  Lower->addRegularFile("/file1");
+  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>("/file1"));
+
+  Upper->addRegularFile("/file2");
+  {
+    std::vector<std::string> Contents = { "/file2", "/file1" };
+    checkContents(O->dir_begin("/", EC), Contents);
+  }
+
+  Lower->addDirectory("/dir1");
+  Lower->addRegularFile("/dir1/foo");
+  Upper->addDirectory("/dir2");
+  Upper->addRegularFile("/dir2/foo");
+  checkContents(O->dir_begin("/dir2", EC), ArrayRef<std::string>("/dir2/foo"));
+  {
+    std::vector<std::string> Contents = { "/dir2", "/file2", "/dir1", "/file1" };
+    checkContents(O->dir_begin("/", EC), Contents);
+  }
+}
+
+TEST(VirtualFileSystemTest, ThreeLevelIteration) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Middle(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
+      new vfs::OverlayFileSystem(Lower));
+  O->pushOverlay(Middle);
+  O->pushOverlay(Upper);
+
+  std::error_code EC;
+  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>());
+
+  Middle->addRegularFile("/file2");
+  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>("/file2"));
+
+  Lower->addRegularFile("/file1");
+  Upper->addRegularFile("/file3");
+  {
+    std::vector<std::string> Contents = { "/file3", "/file2", "/file1" };
+    checkContents(O->dir_begin("/", EC), Contents);
+  }
+}
+
+TEST(VirtualFileSystemTest, HiddenInIteration) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Middle(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
+      new vfs::OverlayFileSystem(Lower));
+  O->pushOverlay(Middle);
+  O->pushOverlay(Upper);
+
+  std::error_code EC;
+  Lower->addRegularFile("/onlyInLow", sys::fs::owner_read);
+  Lower->addRegularFile("/hiddenByMid", sys::fs::owner_read);
+  Lower->addRegularFile("/hiddenByUp", sys::fs::owner_read);
+  Middle->addRegularFile("/onlyInMid", sys::fs::owner_write);
+  Middle->addRegularFile("/hiddenByMid", sys::fs::owner_write);
+  Middle->addRegularFile("/hiddenByUp", sys::fs::owner_write);
+  Upper->addRegularFile("/onlyInUp", sys::fs::owner_all);
+  Upper->addRegularFile("/hiddenByUp", sys::fs::owner_all);
+  {
+    std::vector<std::string> Contents = { "/hiddenByUp", "/onlyInUp",
+        "/hiddenByMid", "/onlyInMid", "/onlyInLow" };
+    checkContents(O->dir_begin("/", EC), Contents);
+  }
+
+  // Make sure we get the top-most entry
+  vfs::directory_iterator E;
+  {
+    auto I = std::find_if(O->dir_begin("/", EC), E, [](vfs::Status S){
+      return S.getName() == "/hiddenByUp";
+    });
+    ASSERT_NE(E, I);
+    EXPECT_EQ(sys::fs::owner_all, I->getPermissions());
+  }
+  {
+    auto I = std::find_if(O->dir_begin("/", EC), E, [](vfs::Status S){
+      return S.getName() == "/hiddenByMid";
+    });
+    ASSERT_NE(E, I);
+    EXPECT_EQ(sys::fs::owner_write, I->getPermissions());
+  }
 }
 
 // NOTE: in the tests below, we use '//root/' as our root directory, since it is
@@ -583,3 +775,53 @@ TEST_F(VFSFromYAMLTest, TrailingSlashes) {
   EXPECT_FALSE(FS->status("//root/path").getError());
   EXPECT_FALSE(FS->status("//root/").getError());
 }
+
+TEST_F(VFSFromYAMLTest, DirectoryIteration) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  Lower->addDirectory("//root/");
+  Lower->addDirectory("//root/foo");
+  Lower->addDirectory("//root/foo/bar");
+  Lower->addRegularFile("//root/foo/bar/a");
+  Lower->addRegularFile("//root/foo/bar/b");
+  Lower->addRegularFile("//root/file3");
+  IntrusiveRefCntPtr<vfs::FileSystem> FS =
+  getFromYAMLString("{ 'use-external-names': false,\n"
+                    "  'roots': [\n"
+                    "{\n"
+                    "  'type': 'directory',\n"
+                    "  'name': '//root/',\n"
+                    "  'contents': [ {\n"
+                    "                  'type': 'file',\n"
+                    "                  'name': 'file1',\n"
+                    "                  'external-contents': '//root/foo/bar/a'\n"
+                    "                },\n"
+                    "                {\n"
+                    "                  'type': 'file',\n"
+                    "                  'name': 'file2',\n"
+                    "                  'external-contents': '//root/foo/bar/b'\n"
+                    "                }\n"
+                    "              ]\n"
+                    "}\n"
+                    "]\n"
+                    "}",
+                    Lower);
+  ASSERT_TRUE(FS.getPtr() != NULL);
+
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
+      new vfs::OverlayFileSystem(Lower));
+  O->pushOverlay(FS);
+
+  std::error_code EC;
+  {
+    std::vector<std::string> Contents = { "//root/file1", "//root/file2",
+        "//root/file3", "//root/foo" };
+    checkContents(O->dir_begin("//root/", EC), Contents);
+  }
+
+  {
+    std::vector<std::string> Contents = {
+        "//root/foo/bar/a", "//root/foo/bar/b" };
+    checkContents(O->dir_begin("//root/foo/bar", EC), Contents);
+  }
+}
+

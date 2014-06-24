@@ -14,6 +14,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -157,6 +158,7 @@ public:
   ErrorOr<Status> status(const Twine &Path) override;
   std::error_code openFileForRead(const Twine &Path,
                                   std::unique_ptr<File> &Result) override;
+  directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
 };
 } // end anonymous namespace
 
@@ -182,6 +184,46 @@ std::error_code RealFileSystem::openFileForRead(const Twine &Name,
 IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
   static IntrusiveRefCntPtr<FileSystem> FS = new RealFileSystem();
   return FS;
+}
+
+namespace {
+class RealFSDirIter : public clang::vfs::detail::DirIterImpl {
+  std::string Path;
+  llvm::sys::fs::directory_iterator Iter;
+public:
+  RealFSDirIter(const Twine &_Path, std::error_code &EC)
+      : Path(_Path.str()), Iter(Path, EC) {
+    if (!EC && Iter != llvm::sys::fs::directory_iterator()) {
+      llvm::sys::fs::file_status S;
+      EC = Iter->status(S);
+      if (!EC) {
+        CurrentEntry = Status(S);
+        CurrentEntry.setName(Iter->path());
+      }
+    }
+  }
+
+  std::error_code increment() override {
+    std::error_code EC;
+    Iter.increment(EC);
+    if (EC) {
+      return EC;
+    } else if (Iter == llvm::sys::fs::directory_iterator()) {
+      CurrentEntry = Status();
+    } else {
+      llvm::sys::fs::file_status S;
+      EC = Iter->status(S);
+      CurrentEntry = Status(S);
+      CurrentEntry.setName(Iter->path());
+    }
+    return EC;
+  }
+};
+}
+
+directory_iterator RealFileSystem::dir_begin(const Twine &Dir,
+                                             std::error_code &EC) {
+  return directory_iterator(std::make_shared<RealFSDirIter>(Dir, EC));
 }
 
 //===-----------------------------------------------------------------------===/
@@ -215,6 +257,74 @@ OverlayFileSystem::openFileForRead(const llvm::Twine &Path,
       return EC;
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
+}
+
+clang::vfs::detail::DirIterImpl::~DirIterImpl() { }
+
+namespace {
+class OverlayFSDirIterImpl : public clang::vfs::detail::DirIterImpl {
+  OverlayFileSystem &Overlays;
+  std::string Path;
+  OverlayFileSystem::iterator CurrentFS;
+  directory_iterator CurrentDirIter;
+  llvm::StringSet<> SeenNames;
+
+  std::error_code incrementFS() {
+    assert(CurrentFS != Overlays.overlays_end() && "incrementing past end");
+    ++CurrentFS;
+    for (auto E = Overlays.overlays_end(); CurrentFS != E; ++CurrentFS) {
+      std::error_code EC;
+      CurrentDirIter = (*CurrentFS)->dir_begin(Path, EC);
+      if (EC && EC != errc::no_such_file_or_directory)
+        return EC;
+      if (CurrentDirIter != directory_iterator())
+        break; // found
+    }
+    return std::error_code();
+  }
+
+  std::error_code incrementDirIter(bool IsFirstTime) {
+    assert((IsFirstTime || CurrentDirIter != directory_iterator()) &&
+           "incrementing past end");
+    std::error_code EC;
+    if (!IsFirstTime)
+      CurrentDirIter.increment(EC);
+    if (!EC && CurrentDirIter == directory_iterator())
+      EC = incrementFS();
+    return EC;
+  }
+
+  std::error_code incrementImpl(bool IsFirstTime) {
+    while (true) {
+      std::error_code EC = incrementDirIter(IsFirstTime);
+      if (EC || CurrentDirIter == directory_iterator()) {
+        CurrentEntry = Status();
+        return EC;
+      }
+      CurrentEntry = *CurrentDirIter;
+      StringRef Name = llvm::sys::path::filename(CurrentEntry.getName());
+      if (SeenNames.insert(Name))
+        return EC; // name not seen before
+    }
+    llvm_unreachable("returned above");
+  }
+
+public:
+  OverlayFSDirIterImpl(const Twine &Path, OverlayFileSystem &FS,
+                       std::error_code &EC)
+      : Overlays(FS), Path(Path.str()), CurrentFS(Overlays.overlays_begin()) {
+    CurrentDirIter = (*CurrentFS)->dir_begin(Path, EC);
+    EC = incrementImpl(true);
+  }
+
+  std::error_code increment() override { return incrementImpl(false); }
+};
+} // end anonymous namespace
+
+directory_iterator OverlayFileSystem::dir_begin(const Twine &Dir,
+                                                std::error_code &EC) {
+  return directory_iterator(
+      std::make_shared<OverlayFSDirIterImpl>(Dir, *this, EC));
 }
 
 //===-----------------------------------------------------------------------===/
@@ -291,6 +401,19 @@ public:
                                 : (UseName == NK_External);
   }
   static bool classof(const Entry *E) { return E->getKind() == EK_File; }
+};
+
+class VFSFromYAML;
+
+class VFSFromYamlDirIterImpl : public clang::vfs::detail::DirIterImpl {
+  std::string Dir;
+  VFSFromYAML &FS;
+  DirectoryEntry::iterator Current, End;
+public:
+  VFSFromYamlDirIterImpl(const Twine &Path, VFSFromYAML &FS,
+                         DirectoryEntry::iterator Begin,
+                         DirectoryEntry::iterator End, std::error_code &EC);
+  std::error_code increment() override;
 };
 
 /// \brief A virtual file system parsed from a YAML file.
@@ -378,6 +501,9 @@ private:
   ErrorOr<Entry *> lookupPath(sys::path::const_iterator Start,
                               sys::path::const_iterator End, Entry *From);
 
+  /// \brief Get the status of a given an \c Entry.
+  ErrorOr<Status> status(const Twine &Path, Entry *E);
+
 public:
   ~VFSFromYAML();
 
@@ -393,6 +519,28 @@ public:
   ErrorOr<Status> status(const Twine &Path) override;
   std::error_code openFileForRead(const Twine &Path,
                                   std::unique_ptr<File> &Result) override;
+
+  directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override{
+    ErrorOr<Entry *> E = lookupPath(Dir);
+    if (!E) {
+      EC = E.getError();
+      return directory_iterator();
+    }
+    ErrorOr<Status> S = status(Dir, *E);
+    if (!S) {
+      EC = S.getError();
+      return directory_iterator();
+    }
+    if (!S->isDirectory()) {
+      EC = std::error_code(static_cast<int>(errc::not_a_directory),
+                           std::system_category());
+      return directory_iterator();
+    }
+
+    DirectoryEntry *D = cast<DirectoryEntry>(*E);
+    return directory_iterator(std::make_shared<VFSFromYamlDirIterImpl>(Dir,
+        *this, D->contents_begin(), D->contents_end(), EC));
+  }
 };
 
 /// \brief A helper class to hold the common YAML parsing state.
@@ -792,13 +940,10 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
-ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
-  ErrorOr<Entry *> Result = lookupPath(Path);
-  if (!Result)
-    return Result.getError();
-
+ErrorOr<Status> VFSFromYAML::status(const Twine &Path, Entry *E) {
+  assert(E != nullptr);
   std::string PathStr(Path.str());
-  if (FileEntry *F = dyn_cast<FileEntry>(*Result)) {
+  if (FileEntry *F = dyn_cast<FileEntry>(E)) {
     ErrorOr<Status> S = ExternalFS->status(F->getExternalContentsPath());
     assert(!S || S->getName() == F->getExternalContentsPath());
     if (S && !F->useExternalName(UseExternalNames))
@@ -807,11 +952,18 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
       S->IsVFSMapped = true;
     return S;
   } else { // directory
-    DirectoryEntry *DE = cast<DirectoryEntry>(*Result);
+    DirectoryEntry *DE = cast<DirectoryEntry>(E);
     Status S = DE->getStatus();
     S.setName(PathStr);
     return S;
   }
+}
+
+ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
+  ErrorOr<Entry *> Result = lookupPath(Path);
+  if (!Result)
+    return Result.getError();
+  return status(Path, *Result);
 }
 
 std::error_code
@@ -983,4 +1135,36 @@ void YAMLVFSWriter::write(llvm::raw_ostream &OS) {
   });
 
   JSONWriter(OS).write(Mappings, IsCaseSensitive);
+}
+
+VFSFromYamlDirIterImpl::VFSFromYamlDirIterImpl(const Twine &_Path,
+                                               VFSFromYAML &FS,
+                                               DirectoryEntry::iterator Begin,
+                                               DirectoryEntry::iterator End,
+                                               std::error_code &EC)
+    : Dir(_Path.str()), FS(FS), Current(Begin), End(End) {
+  if (Current != End) {
+    SmallString<128> PathStr(Dir);
+    llvm::sys::path::append(PathStr, (*Current)->getName());
+    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr.str());
+    if (S)
+      CurrentEntry = *S;
+    else
+      EC = S.getError();
+  }
+}
+
+std::error_code VFSFromYamlDirIterImpl::increment() {
+  assert(Current != End && "cannot iterate past end");
+  if (++Current != End) {
+    SmallString<128> PathStr(Dir);
+    llvm::sys::path::append(PathStr, (*Current)->getName());
+    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr.str());
+    if (!S)
+      return S.getError();
+    CurrentEntry = *S;
+  } else {
+    CurrentEntry = Status();
+  }
+  return std::error_code();
 }
