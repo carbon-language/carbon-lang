@@ -137,8 +137,8 @@ TEST(ScaledNumberHelpersTest, getQuotient) {
   EXPECT_EQ(SP32(0, 0), getQuotient32(0, 0));
   EXPECT_EQ(SP32(0, 0), getQuotient32(0, 1));
   EXPECT_EQ(SP32(0, 0), getQuotient32(0, 73));
-  EXPECT_EQ(SP32(UINT32_MAX, INT16_MAX), getQuotient32(1, 0));
-  EXPECT_EQ(SP32(UINT32_MAX, INT16_MAX), getQuotient32(6, 0));
+  EXPECT_EQ(SP32(UINT32_MAX, MaxScale), getQuotient32(1, 0));
+  EXPECT_EQ(SP32(UINT32_MAX, MaxScale), getQuotient32(6, 0));
 
   // Powers of two.
   EXPECT_EQ(SP32(1u << 31, -31), getQuotient32(1, 1));
@@ -171,8 +171,8 @@ TEST(ScaledNumberHelpersTest, getQuotient) {
   EXPECT_EQ(SP64(0, 0), getQuotient64(0, 0));
   EXPECT_EQ(SP64(0, 0), getQuotient64(0, 1));
   EXPECT_EQ(SP64(0, 0), getQuotient64(0, 73));
-  EXPECT_EQ(SP64(UINT64_MAX, INT16_MAX), getQuotient64(1, 0));
-  EXPECT_EQ(SP64(UINT64_MAX, INT16_MAX), getQuotient64(6, 0));
+  EXPECT_EQ(SP64(UINT64_MAX, MaxScale), getQuotient64(1, 0));
+  EXPECT_EQ(SP64(UINT64_MAX, MaxScale), getQuotient64(6, 0));
 
   // Powers of two.
   EXPECT_EQ(SP64(1, 0), getQuotient64(1, 1));

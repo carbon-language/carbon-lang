@@ -148,7 +148,7 @@ std::pair<uint32_t, int16_t> divide32(uint32_t Dividend, uint32_t Divisor);
 ///
 /// Implemented with one 64-bit integer divide/remainder pair.
 ///
-/// Returns \c (DigitsT_MAX, INT16_MAX) for divide-by-zero (0 for 0/0).
+/// Returns \c (DigitsT_MAX, MaxScale) for divide-by-zero (0 for 0/0).
 template <class DigitsT>
 std::pair<DigitsT, int16_t> getQuotient(DigitsT Dividend, DigitsT Divisor) {
   static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
@@ -159,7 +159,7 @@ std::pair<DigitsT, int16_t> getQuotient(DigitsT Dividend, DigitsT Divisor) {
   if (!Dividend)
     return std::make_pair(0, 0);
   if (!Divisor)
-    return std::make_pair(std::numeric_limits<DigitsT>::max(), INT16_MAX);
+    return std::make_pair(std::numeric_limits<DigitsT>::max(), MaxScale);
 
   if (getWidth<DigitsT>() == 64)
     return divide64(Dividend, Divisor);
