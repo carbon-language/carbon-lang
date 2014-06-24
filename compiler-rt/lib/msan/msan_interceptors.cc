@@ -1389,7 +1389,7 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
   uptr beg = d & ~3UL;
   // Copy left unaligned origin if that memory is poisoned.
   if (beg < d) {
-    u32 o = GetOriginIfPoisoned(beg, d - beg);
+    u32 o = GetOriginIfPoisoned((uptr)src, d - beg);
     if (o) {
       if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
       *(u32 *)MEM_TO_ORIGIN(beg) = o;
@@ -1397,15 +1397,14 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
     beg += 4;
   }
 
-  uptr end = (d + size + 3) & ~3UL;
+  uptr end = (d + size) & ~3UL;
   // Copy right unaligned origin if that memory is poisoned.
-  if (end > d + size) {
-    u32 o = GetOriginIfPoisoned(d + size, end - d - size);
+  if (end < d + size) {
+    u32 o = GetOriginIfPoisoned((uptr)src + (end - d), (d + size) - end);
     if (o) {
       if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
-      *(u32 *)MEM_TO_ORIGIN(end - 4) = o;
+      *(u32 *)MEM_TO_ORIGIN(end) = o;
     }
-    end -= 4;
   }
 
   if (beg < end) {
