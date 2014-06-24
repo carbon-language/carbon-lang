@@ -42,8 +42,6 @@ namespace llvm {
 
 class ScaledNumberBase {
 public:
-  static const int32_t MaxScale = 16383;
-  static const int32_t MinScale = -16382;
   static const int DefaultPrecision = 10;
 
   static void dump(uint64_t D, int16_t E, int Width);
@@ -146,7 +144,7 @@ public:
   static ScaledNumber getZero() { return ScaledNumber(0, 0); }
   static ScaledNumber getOne() { return ScaledNumber(1, 0); }
   static ScaledNumber getLargest() {
-    return ScaledNumber(DigitsLimits::max(), MaxScale);
+    return ScaledNumber(DigitsLimits::max(), ScaledNumbers::MaxScale);
   }
   static ScaledNumber getFloat(uint64_t N) { return adjustToWidth(N, 0); }
   static ScaledNumber getInverseFloat(uint64_t N) {
@@ -235,7 +233,7 @@ public:
     std::tie(Digits, Scale) =
         ScaledNumbers::getSum(Digits, Scale, X.Digits, X.Scale);
     // Check for exponent past MaxScale.
-    if (Scale > MaxScale)
+    if (Scale > ScaledNumbers::MaxScale)
       *this = getLargest();
     return *this;
   }
@@ -331,8 +329,9 @@ private:
   ///
   /// \pre Shift >= MinScale && Shift + 64 <= MaxScale.
   static ScaledNumber adjustToWidth(uint64_t N, int32_t Shift) {
-    assert(Shift >= MinScale && "Shift should be close to 0");
-    assert(Shift <= MaxScale - 64 && "Shift should be close to 0");
+    assert(Shift >= ScaledNumbers::MinScale && "Shift should be close to 0");
+    assert(Shift <= ScaledNumbers::MaxScale - 64 &&
+           "Shift should be close to 0");
     auto Adjusted = ScaledNumbers::getAdjusted<DigitsT>(N, Shift);
     return Adjusted;
   }
@@ -462,7 +461,7 @@ template <class DigitsT> void ScaledNumber<DigitsT>::shiftLeft(int32_t Shift) {
   }
 
   // Shift as much as we can in the exponent.
-  int32_t ScaleShift = std::min(Shift, MaxScale - Scale);
+  int32_t ScaleShift = std::min(Shift, ScaledNumbers::MaxScale - Scale);
   Scale += ScaleShift;
   if (ScaleShift == Shift)
     return;
@@ -493,7 +492,7 @@ template <class DigitsT> void ScaledNumber<DigitsT>::shiftRight(int32_t Shift) {
   }
 
   // Shift as much as we can in the exponent.
-  int32_t ScaleShift = std::min(Shift, Scale - MinScale);
+  int32_t ScaleShift = std::min(Shift, Scale - ScaledNumbers::MinScale);
   Scale -= ScaleShift;
   if (ScaleShift == Shift)
     return;

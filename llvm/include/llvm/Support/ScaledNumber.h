@@ -32,6 +32,12 @@
 namespace llvm {
 namespace ScaledNumbers {
 
+/// \brief Maximum scale; same as APFloat for easy debug printing.
+const int32_t MaxScale = 16383;
+
+/// \brief Maximum scale; same as APFloat for easy debug printing.
+const int32_t MinScale = -16382;
+
 /// \brief Get the width of a number.
 template <class DigitsT> inline int getWidth() { return sizeof(DigitsT) * 8; }
 

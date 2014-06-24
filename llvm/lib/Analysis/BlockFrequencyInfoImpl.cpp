@@ -27,11 +27,6 @@ using namespace llvm::bfi_detail;
 // ScaledNumber implementation.
 //
 //===----------------------------------------------------------------------===//
-#ifndef _MSC_VER
-const int32_t ScaledNumberBase::MaxScale;
-const int32_t ScaledNumberBase::MinScale;
-#endif
-
 static void appendDigit(std::string &Str, unsigned D) {
   assert(D < 10);
   Str += '0' + D % 10;
@@ -58,22 +53,22 @@ static bool doesRoundUp(char Digit) {
 }
 
 static std::string toStringAPFloat(uint64_t D, int E, unsigned Precision) {
-  assert(E >= ScaledNumberBase::MinScale);
-  assert(E <= ScaledNumberBase::MaxScale);
+  assert(E >= ScaledNumbers::MinScale);
+  assert(E <= ScaledNumbers::MaxScale);
 
   // Find a new E, but don't let it increase past MaxScale.
   int LeadingZeros = ScaledNumberBase::countLeadingZeros64(D);
-  int NewE = std::min(ScaledNumberBase::MaxScale, E + 63 - LeadingZeros);
+  int NewE = std::min(ScaledNumbers::MaxScale, E + 63 - LeadingZeros);
   int Shift = 63 - (NewE - E);
   assert(Shift <= LeadingZeros);
-  assert(Shift == LeadingZeros || NewE == ScaledNumberBase::MaxScale);
+  assert(Shift == LeadingZeros || NewE == ScaledNumbers::MaxScale);
   D <<= Shift;
   E = NewE;
 
   // Check for a denormal.
   unsigned AdjustedE = E + 16383;
   if (!(D >> 63)) {
-    assert(E == ScaledNumberBase::MaxScale);
+    assert(E == ScaledNumbers::MaxScale);
     AdjustedE = 0;
   }
 
