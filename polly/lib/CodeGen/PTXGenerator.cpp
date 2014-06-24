@@ -22,10 +22,12 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -507,44 +509,98 @@ Value *PTXGenerator::getOutputArraySizeInBytes() {
   return ConstantInt::get(getInt64Type(), OutputBytes);
 }
 
+static Module *extractPTXFunctionsFromModule(const Module *M,
+                                             const StringRef &Triple) {
+  llvm::ValueToValueMapTy VMap;
+  Module *New = new Module("TempGPUModule", M->getContext());
+  New->setTargetTriple(Triple::normalize(Triple));
+
+  // Loop over the functions in the module, making external functions as before
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
+    if (!I->isDeclaration() &&
+        (I->getCallingConv() == CallingConv::PTX_Device ||
+         I->getCallingConv() == CallingConv::PTX_Kernel)) {
+      Function *NF =
+          Function::Create(cast<FunctionType>(I->getType()->getElementType()),
+                           I->getLinkage(), I->getName(), New);
+      NF->copyAttributesFrom(I);
+      VMap[I] = NF;
+
+      Function::arg_iterator DestI = NF->arg_begin();
+      for (Function::const_arg_iterator J = I->arg_begin(); J != I->arg_end();
+           ++J) {
+        DestI->setName(J->getName());
+        VMap[J] = DestI++;
+      }
+      SmallVector<ReturnInst *, 8> Returns; // Ignore returns cloned.
+      CloneFunctionInto(NF, I, VMap, /*ModuleLevelChanges=*/true, Returns);
+    }
+  }
+
+  return New;
+}
+
+static bool createASMAsString(Module *New, const StringRef &Triple,
+                              const StringRef &MCPU, const StringRef &Features,
+                              std::string &ASM) {
+  llvm::Triple TheTriple(Triple::normalize(Triple));
+  std::string ErrMsg;
+  const Target *TheTarget =
+      TargetRegistry::lookupTarget(TheTriple.getTriple(), ErrMsg);
+  if (!TheTarget) {
+    errs() << ErrMsg << "\n";
+    return false;
+  }
+
+  TargetOptions Options;
+  std::unique_ptr<TargetMachine> target(TheTarget->createTargetMachine(
+      TheTriple.getTriple(), MCPU, Features, Options));
+  assert(target.get() && "Could not allocate target machine!");
+  TargetMachine &Target = *target.get();
+
+  // Build up all of the passes that we want to do to the module.
+  PassManager PM;
+
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(TheTriple);
+  PM.add(TLI);
+
+  PM.add(new DataLayoutPass(*Target.getDataLayout()));
+  Target.addAnalysisPasses(PM);
+
+  {
+    raw_string_ostream NameROS(ASM);
+    formatted_raw_ostream FOS(NameROS);
+
+    // Ask the target to add backend passes as necessary.
+    int UseVerifier = true;
+    if (Target.addPassesToEmitFile(PM, FOS, TargetMachine::CGFT_AssemblyFile,
+                                   UseVerifier)) {
+      errs() << "The target does not support generation of this file type!\n";
+      return false;
+    }
+
+    PM.run(*New);
+    FOS.flush();
+  }
+
+  return true;
+}
+
 Value *PTXGenerator::createPTXKernelFunction(Function *SubFunction) {
   Module *M = getModule();
+  Module *GPUModule = extractPTXFunctionsFromModule(M, GPUTriple);
   std::string LLVMKernelStr;
-  raw_string_ostream NameROS(LLVMKernelStr);
-  formatted_raw_ostream FOS(NameROS);
-  FOS << "target triple = \"" << GPUTriple << "\"\n";
-  SubFunction->print(FOS);
-
-  // Insert ptx intrinsics into the kernel string.
-  for (Module::iterator I = M->begin(), E = M->end(); I != E;) {
-    Function *F = I++;
-    // Function must be a prototype and unused.
-    if (F->isDeclaration() && F->isIntrinsic()) {
-      switch (F->getIntrinsicID()) {
-      case Intrinsic::ptx_read_nctaid_x:
-      case Intrinsic::ptx_read_nctaid_y:
-      case Intrinsic::ptx_read_ctaid_x:
-      case Intrinsic::ptx_read_ctaid_y:
-      case Intrinsic::ptx_read_ntid_x:
-      case Intrinsic::ptx_read_ntid_y:
-      case Intrinsic::ptx_read_tid_x:
-      case Intrinsic::ptx_read_tid_y:
-        F->print(FOS);
-        break;
-      default:
-        break;
-      }
-    }
+  if (!createASMAsString(GPUModule, GPUTriple, "sm_20" /*MCPU*/,
+                         "" /*Features*/, LLVMKernelStr)) {
+    errs() << "Generate ptx string failed!\n";
+    return NULL;
   }
 
   Value *LLVMKernel =
       Builder.CreateGlobalStringPtr(LLVMKernelStr, "llvm_kernel");
-  Value *MCPU = Builder.CreateGlobalStringPtr("sm_10", "mcpu");
-  Value *Features = Builder.CreateGlobalStringPtr("", "cpu_features");
 
-  Function *GetDeviceKernel = Intrinsic::getDeclaration(M, Intrinsic::codegen);
-
-  return Builder.CreateCall3(GetDeviceKernel, LLVMKernel, MCPU, Features);
+  delete GPUModule;
+  return LLVMKernel;
 }
 
 Value *PTXGenerator::getPTXKernelEntryName(Function *SubFunction) {

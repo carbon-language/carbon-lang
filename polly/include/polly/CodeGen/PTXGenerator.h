@@ -159,13 +159,6 @@ private:
   ///                     will be copied from host to device.
   Function *createSubfunctionDefinition(int NumArgs);
 
-  /// @brief Extract all the ptx related subfunctions into a new module.
-  ///
-  /// @param M            Current module.
-  /// @return             The generated module containing only gpu related
-  ///                     subfunctions.
-  Module *extractPTXFunctionsFromModule(const Module *M);
-
   /// @brief Get the Value of CUDA block width.
   Value *getCUDABlockWidth();
 
