@@ -46,3 +46,18 @@
 #define M_PI            0x1.921fb54442d18p+1
 
 #endif
+
+#ifdef cl_khr_fp16
+
+#if __OPENCL_VERSION__ >= CL_VERSION_1_2
+
+#define HALF_DIG        3
+#define HALF_MANT_DIG   11
+#define HALF_MAX_10_EXP +4
+#define HALF_MAX_EXP    +16
+#define HALF_MIN_10_EXP -4
+#define HALF_MIN_EXP    -13
+
+#endif
+
+#endif
