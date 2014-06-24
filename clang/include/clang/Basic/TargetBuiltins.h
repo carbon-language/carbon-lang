@@ -1,4 +1,4 @@
-//===--- TargetBuiltins.h - Target specific builtin IDs -------------------===//
+//===--- TargetBuiltins.h - Target specific builtin IDs ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
