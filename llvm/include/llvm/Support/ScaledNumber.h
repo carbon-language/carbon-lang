@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace llvm {
