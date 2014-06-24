@@ -208,6 +208,9 @@ endif()
 # Need to export the API in the liblldb.dll for Windows
 # The lldbAPI source files are added directly in liblldb
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+# On Non-Windows, the corresponding file list is maintained in
+# source\API\CMakeLists.txt.  When editing this list, do not forget to make a
+# corresponding change in that file as well (when appropriate).
 add_lldb_library(liblldb
   lldb.cpp
   lldb-log.cpp
@@ -258,6 +261,7 @@ add_lldb_library(liblldb
   API/SBTypeNameSpecifier.cpp
   API/SBTypeSummary.cpp
   API/SBTypeSynthetic.cpp
+  API/SBUnixSignals.cpp
   API/SBValue.cpp
   API/SBValueList.cpp
   API/SBWatchpoint.cpp
