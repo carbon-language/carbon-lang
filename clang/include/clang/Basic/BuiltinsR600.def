@@ -1,0 +1,20 @@
+//==- BuiltinsR600.def - R600 Builtin function database ----------*- C++ -*-==//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the R600-specific builtin function database. Users of this
+// file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+
+BUILTIN(__builtin_amdgpu_div_scale, "dddbb*", "n")
+BUILTIN(__builtin_amdgpu_div_scalef, "fffbb*", "n")
+
+#undef BUILTIN
