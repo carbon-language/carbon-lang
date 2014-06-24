@@ -19188,6 +19188,8 @@ static SDValue PerformINTRINSIC_WO_CHAINCombine(SDNode *N, SelectionDAG &DAG,
       if (C->isAllOnesValue())
         return Op1;
     }
+
+    return SDValue();
   }
 
   // Packed SSE2/AVX2 arithmetic shift immediate intrinsics.
