@@ -147,15 +147,6 @@ public:
   bool operator!=(const directory_iterator &RHS) const {
     return !(*this == RHS);
   }
-
-  /// For testing only. Directory iteration does not always succeed!
-  directory_iterator &operator++() {
-    std::error_code EC;
-    increment(EC);
-    if (EC)
-      llvm::report_fatal_error("directory iteration failed!");
-    return *this;
-  }
 };
 
 /// \brief The virtual file system interface.

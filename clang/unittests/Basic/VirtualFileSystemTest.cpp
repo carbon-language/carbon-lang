@@ -296,11 +296,12 @@ TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   I = FS->dir_begin(Twine(TestDirectory), EC);
   ASSERT_FALSE(EC);
   ASSERT_NE(vfs::directory_iterator(), I);
-  EXPECT_TRUE(I->getName().endswith("a"));
+  // Check either a or c, since we can't rely on the iteration order.
+  EXPECT_TRUE(I->getName().endswith("a") || I->getName().endswith("c"));
   I.increment(EC);
   ASSERT_FALSE(EC);
   ASSERT_NE(vfs::directory_iterator(), I);
-  EXPECT_TRUE(I->getName().endswith("c"));
+  EXPECT_TRUE(I->getName().endswith("a") || I->getName().endswith("c"));
   I.increment(EC);
   EXPECT_EQ(vfs::directory_iterator(), I);
 }
@@ -395,23 +396,25 @@ TEST(VirtualFileSystemTest, HiddenInIteration) {
     checkContents(O->dir_begin("/", EC), Contents);
   }
 
-  // FIXME: broke gcc build
   // Make sure we get the top-most entry
-  // vfs::directory_iterator E;
-  // {
-  //   auto I = std::find_if(O->dir_begin("/", EC), E, [](vfs::Status S){
-  //     return S.getName() == "/hiddenByUp";
-  //   });
-  //   ASSERT_NE(E, I);
-  //   EXPECT_EQ(sys::fs::owner_all, I->getPermissions());
-  // }
-  // {
-  //   auto I = std::find_if(O->dir_begin("/", EC), E, [](vfs::Status S){
-  //     return S.getName() == "/hiddenByMid";
-  //   });
-  //   ASSERT_NE(E, I);
-  //   EXPECT_EQ(sys::fs::owner_write, I->getPermissions());
-  // }
+  {
+    std::error_code EC;
+    vfs::directory_iterator I = O->dir_begin("/", EC), E;
+    for ( ; !EC && I != E; I.increment(EC))
+      if (I->getName() == "/hiddenByUp")
+        break;
+    ASSERT_NE(E, I);
+    EXPECT_EQ(sys::fs::owner_all, I->getPermissions());
+  }
+  {
+    std::error_code EC;
+    vfs::directory_iterator I = O->dir_begin("/", EC), E;
+    for ( ; !EC && I != E; I.increment(EC))
+      if (I->getName() == "/hiddenByMid")
+        break;
+    ASSERT_NE(E, I);
+    EXPECT_EQ(sys::fs::owner_write, I->getPermissions());
+  }
 }
 
 // NOTE: in the tests below, we use '//root/' as our root directory, since it is
