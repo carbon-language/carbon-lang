@@ -33,3 +33,13 @@ define <4 x float>  @foo(float %a, float %b, float %c, float %d) nounwind {
   %4 = insertelement <4 x float> %3, float %d, i32 3
   ret <4 x float> %4
 }
+
+define <8 x i16> @build_all_zero(<8 x i16> %a) #1 {
+; CHECK-LABEL: build_all_zero:
+; CHECK: movn	w[[GREG:[0-9]+]], #0x517f
+; CHECK-NEXT:	fmov	s[[FREG:[0-9]+]], w[[GREG]]
+; CHECK-NEXT:	mul.8h	v0, v0, v[[FREG]]
+  %b = add <8 x i16> %a, <i16 -32768, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>
+  %c = mul <8 x i16> %b, <i16 -20864, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>
+  ret <8 x i16> %c
+  }
