@@ -164,8 +164,8 @@ public:
     }
   };
 
-  Archive(MemoryBuffer *source, std::error_code &ec);
-  static ErrorOr<Archive *> create(MemoryBuffer *Source);
+  Archive(std::unique_ptr<MemoryBuffer> Source, std::error_code &EC);
+  static ErrorOr<Archive *> create(std::unique_ptr<MemoryBuffer> Source);
 
   enum Kind {
     K_GNU,

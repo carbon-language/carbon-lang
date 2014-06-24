@@ -56,8 +56,8 @@ public:
     MachO::load_command C; // The command itself.
   };
 
-  MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian, bool Is64Bits,
-                  std::error_code &EC);
+  MachOObjectFile(std::unique_ptr<MemoryBuffer> Object, bool IsLittleEndian,
+                  bool Is64Bits, std::error_code &EC);
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   std::error_code getSymbolName(DataRefImpl Symb,

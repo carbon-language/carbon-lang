@@ -511,8 +511,9 @@ std::error_code COFFObjectFile::initExportTablePtr() {
   return object_error::success;
 }
 
-COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, std::error_code &EC)
-    : ObjectFile(Binary::ID_COFF, Object), COFFHeader(nullptr),
+COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
+                               std::error_code &EC)
+    : ObjectFile(Binary::ID_COFF, std::move(Object)), COFFHeader(nullptr),
       PE32Header(nullptr), PE32PlusHeader(nullptr), DataDirectory(nullptr),
       SectionTable(nullptr), SymbolTable(nullptr), StringTable(nullptr),
       StringTableSize(0), ImportDirectory(nullptr), NumberOfImportDirectory(0),
@@ -1111,9 +1112,11 @@ ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
   return object_error::success;
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
+ErrorOr<ObjectFile *>
+ObjectFile::createCOFFObjectFile(std::unique_ptr<MemoryBuffer> Object) {
   std::error_code EC;
-  std::unique_ptr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC));
+  std::unique_ptr<COFFObjectFile> Ret(
+      new COFFObjectFile(std::move(Object), EC));
   if (EC)
     return EC;
   return Ret.release();

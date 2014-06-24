@@ -86,9 +86,9 @@ std::error_code MachOUniversalBinary::ObjectForArch::getAsArchive(
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.offset, Header.size);
     std::string ObjectName = Parent->getFileName().str();
-    MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
-        ObjectData, ObjectName, false);
-    ErrorOr<Archive *> Obj = Archive::create(ObjBuffer);
+    std::unique_ptr<MemoryBuffer> ObjBuffer(
+        MemoryBuffer::getMemBuffer(ObjectData, ObjectName, false));
+    ErrorOr<Archive *> Obj = Archive::create(std::move(ObjBuffer));
     if (std::error_code EC = Obj.getError())
       return EC;
     Result.reset(Obj.get());
@@ -100,19 +100,20 @@ std::error_code MachOUniversalBinary::ObjectForArch::getAsArchive(
 void MachOUniversalBinary::anchor() { }
 
 ErrorOr<MachOUniversalBinary *>
-MachOUniversalBinary::create(MemoryBuffer *Source) {
+MachOUniversalBinary::create(std::unique_ptr<MemoryBuffer> Source) {
   std::error_code EC;
   std::unique_ptr<MachOUniversalBinary> Ret(
-      new MachOUniversalBinary(Source, EC));
+      new MachOUniversalBinary(std::move(Source), EC));
   if (EC)
     return EC;
   return Ret.release();
 }
 
-MachOUniversalBinary::MachOUniversalBinary(MemoryBuffer *Source,
+MachOUniversalBinary::MachOUniversalBinary(std::unique_ptr<MemoryBuffer> Source,
                                            std::error_code &ec)
-    : Binary(Binary::ID_MachOUniversalBinary, Source), NumberOfObjects(0) {
-  if (Source->getBufferSize() < sizeof(MachO::fat_header)) {
+    : Binary(Binary::ID_MachOUniversalBinary, std::move(Source)),
+      NumberOfObjects(0) {
+  if (Data->getBufferSize() < sizeof(MachO::fat_header)) {
     ec = object_error::invalid_file_type;
     return;
   }

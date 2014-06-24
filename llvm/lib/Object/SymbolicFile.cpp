@@ -19,8 +19,9 @@
 using namespace llvm;
 using namespace object;
 
-SymbolicFile::SymbolicFile(unsigned int Type, MemoryBuffer *Source)
-    : Binary(Type, Source) {}
+SymbolicFile::SymbolicFile(unsigned int Type,
+                           std::unique_ptr<MemoryBuffer> Source)
+    : Binary(Type, std::move(Source)) {}
 
 SymbolicFile::~SymbolicFile() {}
 
@@ -34,7 +35,7 @@ SymbolicFile::createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
   switch (Type) {
   case sys::fs::file_magic::bitcode:
     if (Context)
-      return IRObjectFile::createIRObjectFile(Object.release(), *Context);
+      return IRObjectFile::createIRObjectFile(std::move(Object), *Context);
   // Fallthrough
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::archive:

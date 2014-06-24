@@ -36,7 +36,7 @@ private:
 protected:
   std::unique_ptr<MemoryBuffer> Data;
 
-  Binary(unsigned int Type, MemoryBuffer *Source);
+  Binary(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
 
   enum {
     ID_Archive,

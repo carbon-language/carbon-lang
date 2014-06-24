@@ -938,7 +938,7 @@ static int performOperation(ArchiveOperation Operation) {
   }
 
   if (!EC) {
-    object::Archive Archive(Buf.release(), EC);
+    object::Archive Archive(std::move(Buf), EC);
 
     if (EC) {
       errs() << ToolName << ": error loading '" << ArchiveName

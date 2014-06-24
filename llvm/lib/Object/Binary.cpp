@@ -27,8 +27,8 @@ using namespace object;
 
 Binary::~Binary() {}
 
-Binary::Binary(unsigned int Type, MemoryBuffer *Source)
-    : TypeID(Type), Data(Source) {}
+Binary::Binary(unsigned int Type, std::unique_ptr<MemoryBuffer> Source)
+    : TypeID(Type), Data(std::move(Source)) {}
 
 StringRef Binary::getData() const {
   return Data->getBuffer();
@@ -44,7 +44,7 @@ ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> &Buffer,
 
   switch (Type) {
     case sys::fs::file_magic::archive:
-      return Archive::create(Buffer.release());
+      return Archive::create(std::move(Buffer));
     case sys::fs::file_magic::elf_relocatable:
     case sys::fs::file_magic::elf_executable:
     case sys::fs::file_magic::elf_shared_object:
@@ -65,7 +65,7 @@ ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> &Buffer,
     case sys::fs::file_magic::bitcode:
       return ObjectFile::createSymbolicFile(Buffer, Type, Context);
     case sys::fs::file_magic::macho_universal_binary:
-      return MachOUniversalBinary::create(Buffer.release());
+      return MachOUniversalBinary::create(std::move(Buffer));
     case sys::fs::file_magic::unknown:
     case sys::fs::file_magic::windows_resource:
       // Unrecognized object file format.

@@ -23,8 +23,8 @@ using namespace object;
 
 void ObjectFile::anchor() { }
 
-ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *Source)
-    : SymbolicFile(Type, Source) {}
+ObjectFile::ObjectFile(unsigned int Type, std::unique_ptr<MemoryBuffer> Source)
+    : SymbolicFile(Type, std::move(Source)) {}
 
 std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
                                             DataRefImpl Symb) const {
@@ -77,7 +77,7 @@ ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
   case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
-    return createCOFFObjectFile(Object.release());
+    return createCOFFObjectFile(std::move(Object));
   }
   llvm_unreachable("Unexpected Object File Type");
 }

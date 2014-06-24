@@ -545,7 +545,7 @@ int main(int argc, char **argv, char * const *envp) {
       Err.print(argv[0], errs());
       return 1;
     }
-    object::Archive *Ar = new object::Archive(ArBuf.release(), ec);
+    object::Archive *Ar = new object::Archive(std::move(ArBuf), ec);
     if (ec || !Ar) {
       Err.print(argv[0], errs());
       return 1;

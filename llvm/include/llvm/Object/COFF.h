@@ -420,7 +420,7 @@ protected:
                                  StringRef &Result) const override;
 
 public:
-  COFFObjectFile(MemoryBuffer *Object, std::error_code &EC);
+  COFFObjectFile(std::unique_ptr<MemoryBuffer> Object, std::error_code &EC);
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
   library_iterator needed_library_begin() const override;

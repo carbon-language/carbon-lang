@@ -17,14 +17,15 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace object;
 
-IRObjectFile::IRObjectFile(MemoryBuffer *Object, std::error_code &EC,
-                           LLVMContext &Context)
-    : SymbolicFile(Binary::ID_IR, Object) {
-  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Object, Context);
+IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
+                           std::error_code &EC, LLVMContext &Context)
+    : SymbolicFile(Binary::ID_IR, std::move(Object)) {
+  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Data.get(), Context);
   if ((EC = MOrErr.getError()))
     return;
 
@@ -153,11 +154,11 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
-ErrorOr<SymbolicFile *>
-llvm::object::SymbolicFile::createIRObjectFile(MemoryBuffer *Object,
-                                               LLVMContext &Context) {
+ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
+    std::unique_ptr<MemoryBuffer> Object, LLVMContext &Context) {
   std::error_code EC;
-  std::unique_ptr<IRObjectFile> Ret(new IRObjectFile(Object, EC, Context));
+  std::unique_ptr<IRObjectFile> Ret(
+      new IRObjectFile(std::move(Object), EC, Context));
   if (EC)
     return EC;
   return Ret.release();
