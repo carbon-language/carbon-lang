@@ -216,7 +216,7 @@ void ScaledNumberBase::dump(uint64_t D, int16_t E, int Width) {
 // BlockMass implementation.
 //
 //===----------------------------------------------------------------------===//
-ScaledNumber<uint64_t> BlockMass::toFloat() const {
+ScaledNumber<uint64_t> BlockMass::toScaled() const {
   if (isFull())
     return ScaledNumber<uint64_t>(1, 0);
   return ScaledNumber<uint64_t>(getMass() + 1, -64);
@@ -246,7 +246,7 @@ namespace {
 typedef BlockFrequencyInfoImplBase::BlockNode BlockNode;
 typedef BlockFrequencyInfoImplBase::Distribution Distribution;
 typedef BlockFrequencyInfoImplBase::Distribution::WeightList WeightList;
-typedef BlockFrequencyInfoImplBase::Float Float;
+typedef BlockFrequencyInfoImplBase::Scaled64 Scaled64;
 typedef BlockFrequencyInfoImplBase::LoopData LoopData;
 typedef BlockFrequencyInfoImplBase::Weight Weight;
 typedef BlockFrequencyInfoImplBase::FrequencyData FrequencyData;
@@ -526,7 +526,7 @@ bool BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
 ///
 /// Gives the maximum number of estimated iterations allowed for a loop.  Very
 /// large numbers cause problems downstream (even within 64-bits).
-static Float getMaxLoopScale() { return Float(1, 12); }
+static Scaled64 getMaxLoopScale() { return Scaled64(1, 12); }
 
 /// \brief Compute the loop scale for a loop.
 void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
@@ -538,7 +538,7 @@ void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
   BlockMass ExitMass = BlockMass::getFull() - Loop.BackedgeMass;
 
   // Block scale stores the inverse of the scale.
-  Loop.Scale = ExitMass.toFloat().inverse();
+  Loop.Scale = ExitMass.toScaled().inverse();
 
   DEBUG(dbgs() << " - exit-mass = " << ExitMass << " (" << BlockMass::getFull()
                << " - " << Loop.BackedgeMass << ")\n"
@@ -612,15 +612,16 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 }
 
 static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
-                                     const Float &Min, const Float &Max) {
+                                     const Scaled64 &Min, const Scaled64 &Max) {
   // Scale the Factor to a size that creates integers.  Ideally, integers would
   // be scaled so that Max == UINT64_MAX so that they can be best
   // differentiated.  However, the register allocator currently deals poorly
   // with large numbers.  Instead, push Min up a little from 1 to give some
   // room to differentiate small, unequal numbers.
   //
-  // TODO: fix issues downstream so that ScalingFactor can be Float(1,64)/Max.
-  Float ScalingFactor = Min.inverse();
+  // TODO: fix issues downstream so that ScalingFactor can be
+  // Scaled64(1,64)/Max.
+  Scaled64 ScalingFactor = Min.inverse();
   if ((Max / Min).lg() < 60)
     ScalingFactor <<= 3;
 
@@ -628,10 +629,10 @@ static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
   DEBUG(dbgs() << "float-to-int: min = " << Min << ", max = " << Max
                << ", factor = " << ScalingFactor << "\n");
   for (size_t Index = 0; Index < BFI.Freqs.size(); ++Index) {
-    Float Scaled = BFI.Freqs[Index].Floating * ScalingFactor;
+    Scaled64 Scaled = BFI.Freqs[Index].Scaled * ScalingFactor;
     BFI.Freqs[Index].Integer = std::max(UINT64_C(1), Scaled.toInt<uint64_t>());
     DEBUG(dbgs() << " - " << BFI.getBlockName(Index) << ": float = "
-                 << BFI.Freqs[Index].Floating << ", scaled = " << Scaled
+                 << BFI.Freqs[Index].Scaled << ", scaled = " << Scaled
                  << ", int = " << BFI.Freqs[Index].Integer << "\n");
   }
 }
@@ -644,7 +645,7 @@ static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
   DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getLoopName(Loop)
                << ": mass = " << Loop.Mass << ", scale = " << Loop.Scale
                << "\n");
-  Loop.Scale *= Loop.Mass.toFloat();
+  Loop.Scale *= Loop.Mass.toScaled();
   Loop.IsPackaged = false;
   DEBUG(dbgs() << "  => combined-scale = " << Loop.Scale << "\n");
 
@@ -653,9 +654,9 @@ static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
   // final head scale will be used for updated the rest of the members.
   for (const BlockNode &N : Loop.Nodes) {
     const auto &Working = BFI.Working[N.Index];
-    Float &F = Working.isAPackage() ? Working.getPackagedLoop()->Scale
-                                    : BFI.Freqs[N.Index].Floating;
-    Float New = Loop.Scale * F;
+    Scaled64 &F = Working.isAPackage() ? Working.getPackagedLoop()->Scale
+                                       : BFI.Freqs[N.Index].Scaled;
+    Scaled64 New = Loop.Scale * F;
     DEBUG(dbgs() << " - " << BFI.getBlockName(N) << ": " << F << " => " << New
                  << "\n");
     F = New;
@@ -665,7 +666,7 @@ static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
 void BlockFrequencyInfoImplBase::unwrapLoops() {
   // Set initial frequencies from loop-local masses.
   for (size_t Index = 0; Index < Working.size(); ++Index)
-    Freqs[Index].Floating = Working[Index].Mass.toFloat();
+    Freqs[Index].Scaled = Working[Index].Mass.toScaled();
 
   for (LoopData &Loop : Loops)
     unwrapLoop(*this, Loop);
@@ -674,12 +675,12 @@ void BlockFrequencyInfoImplBase::unwrapLoops() {
 void BlockFrequencyInfoImplBase::finalizeMetrics() {
   // Unwrap loop packages in reverse post-order, tracking min and max
   // frequencies.
-  auto Min = Float::getLargest();
-  auto Max = Float::getZero();
+  auto Min = Scaled64::getLargest();
+  auto Max = Scaled64::getZero();
   for (size_t Index = 0; Index < Working.size(); ++Index) {
     // Update min/max scale.
-    Min = std::min(Min, Freqs[Index].Floating);
-    Max = std::max(Max, Freqs[Index].Floating);
+    Min = std::min(Min, Freqs[Index].Scaled);
+    Max = std::max(Max, Freqs[Index].Scaled);
   }
 
   // Convert to integers.
@@ -698,11 +699,11 @@ BlockFrequencyInfoImplBase::getBlockFreq(const BlockNode &Node) const {
     return 0;
   return Freqs[Node.Index].Integer;
 }
-Float
+Scaled64
 BlockFrequencyInfoImplBase::getFloatingBlockFreq(const BlockNode &Node) const {
   if (!Node.isValid())
-    return Float::getZero();
-  return Freqs[Node.Index].Floating;
+    return Scaled64::getZero();
+  return Freqs[Node.Index].Scaled;
 }
 
 std::string
@@ -723,8 +724,8 @@ BlockFrequencyInfoImplBase::printBlockFreq(raw_ostream &OS,
 raw_ostream &
 BlockFrequencyInfoImplBase::printBlockFreq(raw_ostream &OS,
                                            const BlockFrequency &Freq) const {
-  Float Block(Freq.getFrequency(), 0);
-  Float Entry(getEntryFreq(), 0);
+  Scaled64 Block(Freq.getFrequency(), 0);
+  Scaled64 Entry(getEntryFreq(), 0);
 
   return OS << Block / Entry;
 }

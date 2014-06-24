@@ -584,11 +584,11 @@ public:
   bool operator<(const BlockMass &X) const { return Mass < X.Mass; }
   bool operator>(const BlockMass &X) const { return Mass > X.Mass; }
 
-  /// \brief Convert to floating point.
+  /// \brief Convert to scaled number.
   ///
-  /// Convert to a float.  \a isFull() gives 1.0, while \a isEmpty() gives
-  /// slightly above 0.0.
-  ScaledNumber<uint64_t> toFloat() const;
+  /// Convert to \a ScaledNumber.  \a isFull() gives 1.0, while \a isEmpty()
+  /// gives slightly above 0.0.
+  ScaledNumber<uint64_t> toScaled() const;
 
   void dump() const;
   raw_ostream &print(raw_ostream &OS) const;
@@ -651,7 +651,7 @@ template <class BT> struct BlockEdgesAdder;
 /// BlockFrequencyInfoImpl.  See there for details.
 class BlockFrequencyInfoImplBase {
 public:
-  typedef ScaledNumber<uint64_t> Float;
+  typedef ScaledNumber<uint64_t> Scaled64;
 
   /// \brief Representative of a block.
   ///
@@ -680,7 +680,7 @@ public:
 
   /// \brief Stats about a block itself.
   struct FrequencyData {
-    Float Floating;
+    Scaled64 Scaled;
     uint64_t Integer;
   };
 
@@ -698,7 +698,7 @@ public:
     NodeList Nodes;         ///< Header and the members of the loop.
     BlockMass BackedgeMass; ///< Mass returned to loop header.
     BlockMass Mass;
-    Float Scale;
+    Scaled64 Scale;
 
     LoopData(LoopData *Parent, const BlockNode &Header)
         : Parent(Parent), IsPackaged(false), NumHeaders(1), Nodes(1, Header) {}
@@ -945,7 +945,7 @@ public:
   virtual raw_ostream &print(raw_ostream &OS) const { return OS; }
   void dump() const { print(dbgs()); }
 
-  Float getFloatingBlockFreq(const BlockNode &Node) const;
+  Scaled64 getFloatingBlockFreq(const BlockNode &Node) const;
 
   BlockFrequency getBlockFreq(const BlockNode &Node) const;
 
@@ -1382,7 +1382,7 @@ public:
   BlockFrequency getBlockFreq(const BlockT *BB) const {
     return BlockFrequencyInfoImplBase::getBlockFreq(getNode(BB));
   }
-  Float getFloatingBlockFreq(const BlockT *BB) const {
+  Scaled64 getFloatingBlockFreq(const BlockT *BB) const {
     return BlockFrequencyInfoImplBase::getFloatingBlockFreq(getNode(BB));
   }
 
