@@ -102,7 +102,8 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                            StringRef Producer, bool isOptimized,
                                            StringRef Flags, unsigned RunTimeVer,
                                            StringRef SplitName,
-                                           DebugEmissionKind Kind) {
+                                           DebugEmissionKind Kind,
+                                           bool EmitDebugInfo) {
 
   assert(((Lang <= dwarf::DW_LANG_OCaml && Lang >= dwarf::DW_LANG_C89) ||
           (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
@@ -140,8 +141,14 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
   MDNode *CUNode = MDNode::get(VMContext, Elts);
 
   // Create a named metadata so that it is easier to find cu in a module.
-  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.cu");
-  NMD->addOperand(CUNode);
+  // Note that we only generate this when the caller wants to actually
+  // emit debug information. When we are only interested in tracking
+  // source line locations throughout the backend, we prevent codegen from
+  // emitting debug info in the final output by not generating llvm.dbg.cu.
+  if (EmitDebugInfo) {
+    NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.cu");
+    NMD->addOperand(CUNode);
+  }
 
   return DICompileUnit(CUNode);
 }
