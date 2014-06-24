@@ -1620,7 +1620,8 @@ static int readVVVV(struct InternalInstruction* insn) {
 
   int vvvv;
   if (insn->vectorExtensionType == TYPE_EVEX)
-    vvvv = vvvvFromEVEX3of4(insn->vectorExtensionPrefix[2]);
+    vvvv = (v2FromEVEX4of4(insn->vectorExtensionPrefix[3]) << 4 |
+            vvvvFromEVEX3of4(insn->vectorExtensionPrefix[2]));
   else if (insn->vectorExtensionType == TYPE_VEX_3B)
     vvvv = vvvvFromVEX3of3(insn->vectorExtensionPrefix[2]);
   else if (insn->vectorExtensionType == TYPE_VEX_2B)

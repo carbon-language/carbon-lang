@@ -39,6 +39,12 @@
 # CHECK: vgatherdpd      (%rsi,%ymm0,4), %zmm1 {%k2}
 0x62 0xf2 0xfd 0x4a 0x92 0x0c 0x86
 
+# CHECK: vpslld $16, %zmm21, %zmm22
+0x62 0xb1 0x4d 0x40 0x72 0xf5 0x10
+
+# CHECK: vpord %zmm22, %zmm21, %zmm23
+0x62 0xa1 0x55 0x40 0xeb 0xfe
+
 #####################################################
 #                MASK INSTRUCTIONS                  #
 #####################################################
