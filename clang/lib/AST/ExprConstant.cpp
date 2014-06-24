@@ -4390,6 +4390,9 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
       Result.set(VD, Frame->Index);
       return true;
     }
+    // The address of __declspec(dllimport) variables aren't constant.
+    if (VD->hasAttr<DLLImportAttr>())
+      return ZeroInitialization(E);
     return Success(VD);
   }
 
