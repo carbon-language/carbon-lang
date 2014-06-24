@@ -1025,6 +1025,9 @@ namespace {
     // methods separately.
     bool TraverseDecl(Decl *D) { return true; }
 
+    // We analyze lambda bodies separately. Skip them here.
+    bool TraverseLambdaBody(LambdaExpr *LE) { return true; }
+
   private:
 
     static const AttributedStmt *asFallThroughAttr(const Stmt *S) {
