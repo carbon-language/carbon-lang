@@ -824,9 +824,6 @@ public:
     bool
     MonitorProcess () const
     {
-        if (GetFlags().Test(lldb::eLaunchFlagsDontMonitorProcess))
-            return true;
-        
         if (m_monitor_callback && ProcessIDIsValid())
         {
             Host::StartMonitoringChildProcess (m_monitor_callback,

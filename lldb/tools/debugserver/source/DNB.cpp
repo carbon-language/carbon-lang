@@ -239,7 +239,7 @@ spawn_kqueue_thread (pid_t pid)
 
     struct kevent reg_event;
     
-    EV_SET(&reg_event, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT|NOTE_EXIT_DETAIL, 0, NULL);
+    EV_SET(&reg_event, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT|NOTE_EXITSTATUS|NOTE_EXIT_DETAIL, 0, NULL);
     // Register the event:
     int result = kevent (kq_id, &reg_event, 1, NULL, 0, NULL);
     if (result != 0)
