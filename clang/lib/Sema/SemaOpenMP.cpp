@@ -152,6 +152,12 @@ public:
   OpenMPDirectiveKind getCurrentDirective() const {
     return Stack.back().Directive;
   }
+  /// \brief Returns parent directive.
+  OpenMPDirectiveKind getParentDirective() const {
+    if (Stack.size() > 2)
+      return Stack[Stack.size() - 2].Directive;
+    return OMPD_unknown;
+  }
 
   /// \brief Set default data sharing attribute to none.
   void setDefaultDSANone() { Stack.back().DefaultAttr = DSA_none; }
@@ -912,6 +918,41 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
   }
 }
 
+bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
+                           OpenMPDirectiveKind CurrentRegion,
+                           SourceLocation StartLoc) {
+  if (Stack->getCurScope()) {
+    auto ParentRegion = Stack->getParentDirective();
+    bool NestingProhibited = false;
+    bool CloseNesting = true;
+    bool ShouldBeInParallelRegion = false;
+    if (isOpenMPSimdDirective(ParentRegion)) {
+      // OpenMP [2.16, Nesting of Regions]
+      // OpenMP constructs may not be nested inside a simd region.
+      SemaRef.Diag(StartLoc, diag::err_omp_prohibited_region_simd);
+      return true;
+    }
+    if (isOpenMPWorksharingDirective(CurrentRegion) &&
+        !isOpenMPParallelDirective(CurrentRegion) &&
+        !isOpenMPSimdDirective(CurrentRegion)) {
+      // OpenMP [2.16, Nesting of Regions]
+      // A worksharing region may not be closely nested inside a worksharing,
+      // explicit task, critical, ordered, atomic, or master region.
+      // TODO
+      NestingProhibited = isOpenMPWorksharingDirective(ParentRegion) &&
+                          !isOpenMPSimdDirective(ParentRegion);
+      ShouldBeInParallelRegion = true;
+    }
+    if (NestingProhibited) {
+      SemaRef.Diag(StartLoc, diag::err_omp_prohibited_region)
+          << CloseNesting << getOpenMPDirectiveName(ParentRegion) << true
+          << getOpenMPDirectiveName(CurrentRegion) << ShouldBeInParallelRegion;
+      return true;
+    }
+  }
+  return false;
+}
+
 StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
                                                 ArrayRef<OMPClause *> Clauses,
                                                 Stmt *AStmt,
@@ -920,6 +961,8 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
   assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
 
   StmtResult Res = StmtError();
+  if (CheckNestingOfRegions(*this, DSAStack, Kind, StartLoc))
+    return StmtError();
 
   // Check default data sharing attributes for referenced variables.
   DSAAttrChecker DSAChecker(DSAStack, *this, cast<CapturedStmt>(AStmt));
@@ -2246,7 +2289,8 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
       //  in a firstprivate clause on a worksharing construct if any of the
       //  worksharing regions arising from the worksharing construct ever bind
       //  to any of the parallel regions arising from the parallel construct.
-      if (isOpenMPWorksharingDirective(CurrDir)) {
+      if (isOpenMPWorksharingDirective(CurrDir) &&
+          !isOpenMPParallelDirective(CurrDir)) {
         DVar = DSAStack->getImplicitDSA(VD);
         if (DVar.CKind != OMPC_shared) {
           Diag(ELoc, diag::err_omp_required_access)
@@ -2357,7 +2401,8 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     // lastprivate clause on a worksharing construct if any of the corresponding
     // worksharing regions ever binds to any of the corresponding parallel
     // regions.
-    if (isOpenMPWorksharingDirective(CurrDir)) {
+    if (isOpenMPWorksharingDirective(CurrDir) &&
+        !isOpenMPParallelDirective(CurrDir)) {
       DVar = DSAStack->getImplicitDSA(VD);
       if (DVar.CKind != OMPC_shared) {
         Diag(ELoc, diag::err_omp_required_access)
@@ -2748,7 +2793,8 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     //  construct must be shared in the parallel regions to which any of the
     //  worksharing regions arising from the worksharing construct bind.
     OpenMPDirectiveKind CurrDir = DSAStack->getCurrentDirective();
-    if (isOpenMPWorksharingDirective(CurrDir)) {
+    if (isOpenMPWorksharingDirective(CurrDir) &&
+        !isOpenMPParallelDirective(CurrDir)) {
       DVar = DSAStack->getImplicitDSA(VD);
       if (DVar.CKind != OMPC_shared) {
         Diag(ELoc, diag::err_omp_required_access)
