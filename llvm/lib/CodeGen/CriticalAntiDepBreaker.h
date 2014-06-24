@@ -55,12 +55,12 @@ class TargetRegisterInfo;
     typedef std::multimap<unsigned, MachineOperand *>::const_iterator
       RegRefIter;
 
-    /// KillIndices - The index of the most recent kill (proceding bottom-up),
+    /// KillIndices - The index of the most recent kill (proceeding bottom-up),
     /// or ~0u if the register is not live.
     std::vector<unsigned> KillIndices;
 
-    /// DefIndices - The index of the most recent complete def (proceding bottom
-    /// up), or ~0u if the register is live.
+    /// DefIndices - The index of the most recent complete def (proceeding
+    /// bottom up), or ~0u if the register is live.
     std::vector<unsigned> DefIndices;
 
     /// KeepRegs - A set of registers which are live and cannot be changed to
