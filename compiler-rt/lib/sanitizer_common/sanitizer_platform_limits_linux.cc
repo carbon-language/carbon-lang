@@ -29,7 +29,7 @@
 // are not defined anywhere in userspace headers. Fake them. This seems to work
 // fine with newer headers, too.
 #include <asm/posix_types.h>
-#if defined(__x86_64__)
+#if defined(__x86_64__) ||  defined(__mips__)
 #include <sys/stat.h>
 #else
 #define ino_t __kernel_ino_t
@@ -64,7 +64,8 @@ namespace __sanitizer {
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
 }  // namespace __sanitizer
 
-#if !defined(__powerpc64__) && !defined(__x86_64__) && !defined(__aarch64__)
+#if !defined(__powerpc64__) && !defined(__x86_64__) && !defined(__aarch64__)\
+                            && !defined(__mips__)
 COMPILER_CHECK(struct___old_kernel_stat_sz == sizeof(struct __old_kernel_stat));
 #endif
 

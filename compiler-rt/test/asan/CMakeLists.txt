@@ -90,6 +90,26 @@ if(CAN_TARGET_i386)
   endif()
 endif()
 
+if(CAN_TARGET_mips)
+  set(ASAN_TEST_CONFIG_SUFFIX "32")
+  set(ASAN_TEST_BITS "32")
+  set(ASAN_TEST_TARGET_CFLAGS ${TARGET_32_BIT_CFLAGS})
+  set(ASAN_TEST_DYNAMIC False)
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig/lit.site.cfg
+    )
+  list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig)
+  if(COMPILER_RT_BUILD_SHARED_ASAN)
+    set(ASAN_TEST_CONFIG_SUFFIX "32-Dynamic")
+    set(ASAN_TEST_DYNAMIC True)
+    configure_lit_site_cfg(
+      ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+      ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic/lit.site.cfg)
+    list(APPEND ASAN_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/32bitConfig-dynamic)
+  endif()
+endif()
+
 if(COMPILER_RT_INCLUDE_TESTS)
   configure_lit_site_cfg(
     ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
