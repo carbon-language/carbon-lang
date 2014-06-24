@@ -32,7 +32,7 @@ else()
 endif()
 
 if (DEFINED LIBCXX_CXX_ABI_DEPS)
-  add_dependencies(cxx ${LIBCXX_CXX_ABI_DEPS})
+  add_dependencies(cxx LIBCXX_CXX_ABI_DEPS)
 endif()
 
 # Generate library list.

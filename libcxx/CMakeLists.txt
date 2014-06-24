@@ -90,16 +90,17 @@ set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
   list(APPEND LIBCXX_CXX_FEATURE_FLAGS ${abidefines})
   set(${abipathvar} "${${abipathvar}}"
-    CACHE STRINGS
-    "Paths to ABI include directories separate by ';'."
+    CACHE PATH
+    "Paths to C++ ABI header directories separated by ';'." FORCE
     )
   set(LIBCXX_CXX_ABI_LIBRARIES ${abilibs})
   set(LIBCXX_ABILIB_FILES ${abifiles})
+
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
   foreach(_d ${abidirs})
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/${_d}")
   endforeach()
-  set(LIBCXX_ABILIB_FILE_PATHS)
+
   foreach(fpath ${LIBCXX_ABILIB_FILES})
     set(found FALSE)
     foreach(incpath ${${abipathvar}})
@@ -107,29 +108,23 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
         set(found TRUE)
         get_filename_component(dstdir ${fpath} PATH)
         get_filename_component(ifile ${fpath} NAME)
-        add_custom_command(
-          OUTPUT "${CMAKE_BINARY_DIR}/include/${dstdir}/${ifile}"
-          COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${incpath}/${fpath}"
-            "${CMAKE_BINARY_DIR}/include/${dstdir}"
-          MAIN_DEPENDENCY "${incpath}/${fpath}"
+        file(COPY "${incpath}/${fpath}"
+          DESTINATION "${CMAKE_BINARY_DIR}/include/${dstdir}"
           )
-        list(APPEND LIBCXX_CXX_ABI_DEPS
-          "${CMAKE_BINARY_DIR}/include/${dstdir}/${ifile}"
-          )
+        list(APPEND abilib_headers "${CMAKE_BINARY_DIR}/include/${fpath}")
       endif()
     endforeach()
     if (NOT found)
       message(FATAL_ERROR "Failed to find ${fpath}")
     endif()
   endforeach()
-  add_custom_target(abilib_headers DEPENDS ${LIBCXX_CXX_ABI_DEPS})
-  set(LIBCXX_CXX_ABI_DEPS abilib_headers)
+
+  add_custom_target(LIBCXX_CXX_ABI_DEPS DEPENDS ${abilib_headers})
   include_directories("${CMAKE_BINARY_DIR}/include")
-  install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+
+  install(FILES ${abilib_headers}
     DESTINATION include/c++/v1
-    FILES_MATCHING
-    PATTERN "*"
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
     )
 endmacro()
 
@@ -181,6 +176,7 @@ if (MSVC)
 else()
   if (LIBCXX_HAS_NOSTDINCXX_FLAG)
     list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -nostdinc++)
+    string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif()
   if (LIBCXX_ENABLE_CXX0X AND LIBCXX_HAS_STDCXX0X_FLAG)
     list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -std=c++0x)
