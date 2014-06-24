@@ -18,6 +18,7 @@
 //				CMICmdCmdVarListChildren			implementation.
 //				CMICmdCmdVarEvaluateExpression		implementation.
 //				CMICmdCmdVarInfoPathExpression		implementation.
+//				CMICmdCmdVarShowAttributes			implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -44,6 +45,7 @@
 #include "MICmdArgValOptionLong.h"
 #include "MICmdArgValOptionShort.h"
 #include "MICmdArgValListOfN.h"
+#include "MICmnLLDBProxySBValue.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdVarCreate constructor.
@@ -59,6 +61,7 @@ CMICmdCmdVarCreate::CMICmdCmdVarCreate( void )
 ,	m_strType( "??" )
 ,	m_bValid( false )
 ,	m_constStrArgThread( "thread" )
+,	m_constStrArgThreadGroup( "thread-group" )
 ,	m_constStrArgFrame( "frame" )
 ,	m_constStrArgName( "name" )
 ,	m_constStrArgFrameAddr( "frame-addr" )
@@ -67,7 +70,7 @@ CMICmdCmdVarCreate::CMICmdCmdVarCreate( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-create";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarCreate::CreateSelf;
 }
 
@@ -93,11 +96,12 @@ CMICmdCmdVarCreate::~CMICmdCmdVarCreate( void )
 //--
 bool CMICmdCmdVarCreate::ParseArgs( void )
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgFrame, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThreadGroup, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgName, false, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgFrameAddr, false, true ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgExpression, true, true ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgExpression, true, true, true, true ) ) );
 	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
 	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
 	{
@@ -178,14 +182,14 @@ bool CMICmdCmdVarCreate::Execute( void )
 	{
 		m_bValid = true;
 		m_nChildren = value.GetNumChildren();
-		const char * pCType = value.GetTypeName();
-		m_strType = (pCType != nullptr) ? pCType : m_strType;		
+		const MIchar * pCType = value.GetTypeName();
+		m_strType = (pCType != nullptr) ? pCType : m_strType;	
 	}
 
 	if( m_bValid )
 	{
 		// This gets added to CMICmnLLDBDebugSessionInfoVarObj static container of varObjs
-		const CMICmnLLDBDebugSessionInfoVarObj varObj( rStrExpression, m_strVarName, value );
+		CMICmnLLDBDebugSessionInfoVarObj varObj( rStrExpression, m_strVarName, value );
 	}
 
 	return MIstatus::success;
@@ -211,7 +215,7 @@ bool CMICmdCmdVarCreate::Acknowledge( void )
 		const CMICmnMIValueConst miValueConst2( strNumChild );
 		miValueResultAll.Add( "numchild", miValueConst2 );
 		CMICmnLLDBDebugSessionInfoVarObj varObj;
-		const bool bOk = CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_strVarName, varObj );
+		const bool bOk = CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_strVarName, varObj ); MIunused( bOk );
 		const CMICmnMIValueConst miValueConst3( varObj.GetValueFormatted() );
 		miValueResultAll.Add( "value", miValueConst3 );
 		const CMICmnMIValueConst miValueConst4( m_strType );
@@ -222,7 +226,7 @@ bool CMICmdCmdVarCreate::Acknowledge( void )
 		const CMICmnMIValueConst miValueConst6( "0" );
 		miValueResultAll.Add( "has_more", miValueConst6 );
 	
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResultAll );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResultAll );
 		m_miResultRecord = miRecordResult;
 
 		return MIstatus::success;
@@ -230,14 +234,14 @@ bool CMICmdCmdVarCreate::Acknowledge( void )
 
 	const CMICmnMIValueConst miValueConst( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_VARIABLE_CREATION_FAILED ), m_strExpression.c_str() ) );
 	CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -263,11 +267,15 @@ CMICmdBase * CMICmdCmdVarCreate::CreateSelf( void )
 CMICmdCmdVarUpdate::CMICmdCmdVarUpdate( void )
 :	m_constStrArgPrintValues( "print-values" )
 ,	m_constStrArgName( "name" )
+,	m_bValueChangedArrayType( false )
+,	m_bValueChangedCompositeType( false )
+,	m_bValueChangedNormalType( false )
+,	m_miValueList( true )
 {
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-update";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarUpdate::CreateSelf;
 }
 
@@ -326,12 +334,64 @@ bool CMICmdCmdVarUpdate::Execute( void )
 		return MIstatus::failure;
 	}
 
+	const CMIUtilString & rVarRealName( varObj.GetNameReal() ); MIunused( rVarRealName );
 	lldb::SBValue & rValue = const_cast< lldb::SBValue & >( varObj.GetValue() );
 	const bool bValid = rValue.IsValid();
-	if( bValid )
+	if( bValid && rValue.GetValueDidChange() )
+	{
+		m_bValueChangedNormalType = true;
 		varObj.UpdateValue();
+		m_strValueName = rVarObjName;
+		return MIstatus::success;
+	}
 
-	m_strValueName = rVarObjName;
+	// Examine an array type variable
+	if( !ExamineSBValueForChange( varObj, false, m_bValueChangedArrayType ) )
+		return MIstatus::failure;
+
+	// Handle composite types i.e. struct or arrays
+	const MIuint nChildren = rValue.GetNumChildren();
+	for( MIuint i = 0; i < nChildren; i++ )
+	{
+		lldb::SBValue member = rValue.GetChildAtIndex( i );
+		if( !member.IsValid() )
+			continue;
+
+		const CMIUtilString varName( CMIUtilString::Format( "%s.%s", rVarObjName.c_str(), member.GetName() ) );
+		if( member.GetValueDidChange() )
+		{
+			// Handle composite
+			const CMIUtilString strValue( CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted( member, CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Natural ) );
+			const CMIUtilString strInScope( member.IsInScope() ? "true" : "false" );
+			MIFormResponse( varName, strValue, strInScope );
+
+			m_bValueChangedCompositeType = true;
+		}
+		else
+		{
+			// Handle array of composites
+			CMICmnLLDBDebugSessionInfoVarObj varObj;
+			if( CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( varName, varObj ) )
+			{
+				bool bValueChanged = false;
+				if( ExamineSBValueForChange( varObj, true, bValueChanged ) )
+				{
+					if( bValueChanged && CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( varName, varObj ) )
+					{
+						lldb::SBValue & rValue = const_cast< lldb::SBValue & >( varObj.GetValue() );
+						const bool bValid = rValue.IsValid();
+						const CMIUtilString strValue( bValid ? varObj.GetValueFormatted() : "<unknown>" );
+						const CMIUtilString strInScope( (bValid && rValue.IsInScope()) ? "true" : "false" );
+						MIFormResponse( varName, strValue, strInScope );
+						
+						m_bValueChangedCompositeType = true;
+					}
+				}
+				else
+					return MIstatus::failure;
+			}
+		}		
+	}
 
 	return MIstatus::success;
 }
@@ -347,40 +407,60 @@ bool CMICmdCmdVarUpdate::Execute( void )
 //--
 bool CMICmdCmdVarUpdate::Acknowledge( void )
 {
-	CMICmnLLDBDebugSessionInfoVarObj varObj;
-	CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_strValueName, varObj );
-	lldb::SBValue & rValue = const_cast< lldb::SBValue & >( varObj.GetValue() );
-	const bool bValid = rValue.IsValid();
-	const CMIUtilString strValue( bValid ? varObj.GetValueFormatted() : "<unknown>" );
-	const CMIUtilString strInScope( (bValid && rValue.IsInScope()) ? "true" : "false" );
+	if( m_bValueChangedArrayType || m_bValueChangedNormalType )
+	{
+		CMICmnLLDBDebugSessionInfoVarObj varObj;
+		CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_strValueName, varObj );
+		lldb::SBValue & rValue = const_cast< lldb::SBValue & >( varObj.GetValue() );
+		const bool bValid = rValue.IsValid();
+		const CMIUtilString strValue( bValid ? varObj.GetValueFormatted() : "<unknown>" );
+		const CMIUtilString strInScope( (bValid && rValue.IsInScope()) ? "true" : "false" );
 	
-	// MI print "%s^done,changelist=[{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"}]"
-	const CMICmnMIValueConst miValueConst( m_strValueName );
-	CMICmnMIValueResult miValueResult( "name", miValueConst );
-	CMICmnMIValueTuple miValueTuple( miValueResult );
-	const CMICmnMIValueConst miValueConst2( strValue );
-	CMICmnMIValueResult miValueResult2( "value", miValueConst2 );
-	miValueTuple.Add( miValueResult2 );
-	const CMICmnMIValueConst miValueConst3( strInScope );
-	CMICmnMIValueResult miValueResult3( "in_scope", miValueConst3 );
-	miValueTuple.Add( miValueResult3 );
-	const CMICmnMIValueConst miValueConst4( "false" );
-	CMICmnMIValueResult miValueResult4( "type_changed", miValueConst4 );
-	miValueTuple.Add( miValueResult4 );
-	const CMICmnMIValueConst miValueConst5( "0" );
-	CMICmnMIValueResult miValueResult5( "has_more", miValueConst5 );
-	miValueTuple.Add( miValueResult5 );
-	const CMICmnMIValueList miValueList( miValueTuple );
+		// MI print "%s^done,changelist=[{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"}]"
+		const CMICmnMIValueConst miValueConst( m_strValueName );
+		CMICmnMIValueResult miValueResult( "name", miValueConst );
+		CMICmnMIValueTuple miValueTuple( miValueResult );
+		const CMICmnMIValueConst miValueConst2( strValue );
+		CMICmnMIValueResult miValueResult2( "value", miValueConst2 );
+		miValueTuple.Add( miValueResult2 );
+		const CMICmnMIValueConst miValueConst3( strInScope );
+		CMICmnMIValueResult miValueResult3( "in_scope", miValueConst3 );
+		miValueTuple.Add( miValueResult3 );
+		const CMICmnMIValueConst miValueConst4( "false" );
+		CMICmnMIValueResult miValueResult4( "type_changed", miValueConst4 );
+		miValueTuple.Add( miValueResult4 );
+		const CMICmnMIValueConst miValueConst5( "0" );
+		CMICmnMIValueResult miValueResult5( "has_more", miValueConst5 );
+		miValueTuple.Add( miValueResult5 );
+		const CMICmnMIValueList miValueList( miValueTuple );
+		CMICmnMIValueResult miValueResult6( "changelist", miValueList );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
+		m_miResultRecord = miRecordResult;
+	
+		return MIstatus::success;
+	}
+	else if( m_bValueChangedCompositeType )
+	{
+		// MI print "%s^done,changelist=[{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"},{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"}]"
+		CMICmnMIValueResult miValueResult6( "changelist", m_miValueList );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
+		m_miResultRecord = miRecordResult;
+	}
+	else
+	{
+		// MI: "%s^done,changelist=[]"
+		const CMICmnMIValueList miValueList( true );
+		CMICmnMIValueResult miValueResult6( "changelist", miValueList );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
+		m_miResultRecord = miRecordResult;
+		return MIstatus::success;
+	}
 
-	CMICmnMIValueResult miValueResult6( "changelist", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
-	m_miResultRecord = miRecordResult;
-	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -390,6 +470,110 @@ bool CMICmdCmdVarUpdate::Acknowledge( void )
 CMICmdBase * CMICmdCmdVarUpdate::CreateSelf( void )
 {
 	return new CMICmdCmdVarUpdate();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Form the MI response for multiple variables.
+// Type:	Method.
+// Args:	vrStrVarName	- (R)	Session var object's name.
+//			vrStrValue		- (R)	Text version of the value held in the variable. 
+//			vrStrScope		- (R)	In scope "yes" or "no".
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdVarUpdate::MIFormResponse( const CMIUtilString & vrStrVarName, const CMIUtilString & vrStrValue, const CMIUtilString & vrStrScope )
+{
+	// MI print "[{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"}]"
+	const CMICmnMIValueConst miValueConst( vrStrVarName );
+	CMICmnMIValueResult miValueResult( "name", miValueConst );
+	CMICmnMIValueTuple miValueTuple( miValueResult );
+	const CMICmnMIValueConst miValueConst2( vrStrValue );
+	CMICmnMIValueResult miValueResult2( "value", miValueConst2 );
+	bool bOk = miValueTuple.Add( miValueResult2 );
+	const CMICmnMIValueConst miValueConst3( vrStrScope );
+	CMICmnMIValueResult miValueResult3( "in_scope", miValueConst3 );
+	bOk = bOk && miValueTuple.Add( miValueResult3 );
+	const CMICmnMIValueConst miValueConst4( "false" );
+	CMICmnMIValueResult miValueResult4( "type_changed", miValueConst4 );
+	bOk = bOk && miValueTuple.Add( miValueResult4 );
+	const CMICmnMIValueConst miValueConst5( "0" );
+	CMICmnMIValueResult miValueResult5( "has_more", miValueConst5 );
+	bOk = bOk && miValueTuple.Add( miValueResult5 );
+	bOk = bOk && m_miValueList.Add( miValueTuple );
+
+	return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Determine if the var object is a array type variable. LLDB does not 'detect'
+//			a value change for some types like elements in an array so have to re-evaluate
+//			the expression again.
+// Type:	Method.
+// Args:	vrVarObj	- (R)	Session var object to examine.
+//			vrwbChanged	- (W)	True = Is an array type and it changed, 
+//								False = Not an array type or not changed.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdVarUpdate::ExamineSBValueForChange( const CMICmnLLDBDebugSessionInfoVarObj & vrVarObj, const bool vbIgnoreVarType, bool & vrwbChanged )
+{
+	vrwbChanged = false;
+
+	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
+	lldb::SBProcess & rProcess = rSessionInfo.m_lldbProcess;
+	lldb::SBThread thread = rProcess.GetSelectedThread();
+	if( thread.GetNumFrames() == 0 )
+	{
+		return MIstatus::success;
+	}
+
+	const CMIUtilString & strVarObjParentName = vrVarObj.GetVarParentName();
+	lldb::SBFrame frame = thread.GetSelectedFrame();
+	const CMIUtilString & rExpression( vrVarObj.GetNameReal() );
+	CMIUtilString varExpression;
+	if( strVarObjParentName.empty() )
+	{
+		varExpression = rExpression;
+	}
+	else
+	{
+		CMICmnLLDBDebugSessionInfoVarObj varObjParent;
+		if( CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( strVarObjParentName, varObjParent ) )
+			varExpression = CMIUtilString::Format( "%s.%s", varObjParent.GetNameReal().c_str(), rExpression.c_str() );
+		else
+		{
+			// The parent is only assigned in the CMICmdCmdVarListChildren command, we have a problem, need to investigate
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_VARIABLE_DOESNOTEXIST ), m_cmdData.strMiCmd.c_str(), strVarObjParentName.c_str() ) );
+			return MIstatus::failure;
+		}
+	}
+
+	lldb::SBValue value = frame.EvaluateExpression( varExpression.c_str() );
+	if( !value.IsValid() )
+		value = frame.FindVariable( rExpression.c_str() );
+	if( value.IsValid() )
+	{
+		lldb::SBType valueType = value.GetType();
+		const lldb::BasicType eValueType = valueType.GetBasicType();
+		if( vbIgnoreVarType || (eValueType != lldb::BasicType::eBasicTypeInvalid) )
+		{
+			MIuint64 nPrevValue = 0;
+			MIuint64 nRevaluateValue = 0;
+			lldb::SBValue & rValue = const_cast< lldb::SBValue & >( vrVarObj.GetValue() );
+			if( CMICmnLLDBProxySBValue::GetValueAsUnsigned( rValue, nPrevValue ) &&
+				CMICmnLLDBProxySBValue::GetValueAsUnsigned( value, nRevaluateValue ) &&
+				(nPrevValue != nRevaluateValue) )
+			{
+				// Have a value change so update the var object
+				vrwbChanged = true;
+				const CMICmnLLDBDebugSessionInfoVarObj varObj( rExpression, vrVarObj.GetName(), value, strVarObjParentName );
+			}
+		}
+	}
+
+	return MIstatus::success;
 }
 
 //---------------------------------------------------------------------------------------
@@ -409,7 +593,7 @@ CMICmdCmdVarDelete::CMICmdCmdVarDelete( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-delete";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarDelete::CreateSelf;
 }
 
@@ -476,14 +660,14 @@ bool CMICmdCmdVarDelete::Execute( void )
 //--
 bool CMICmdCmdVarDelete::Acknowledge( void )
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -514,7 +698,7 @@ CMICmdCmdVarAssign::CMICmdCmdVarAssign( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-assign";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarAssign::CreateSelf;
 }
 
@@ -605,7 +789,7 @@ bool CMICmdCmdVarAssign::Acknowledge( void )
 		CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_varObjName, varObj );
 		const CMICmnMIValueConst miValueConst( varObj.GetValueFormatted() );
 		const CMICmnMIValueResult miValueResult( "value", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 	
 		return MIstatus::success;
@@ -613,14 +797,14 @@ bool CMICmdCmdVarAssign::Acknowledge( void )
 
 	const CMICmnMIValueConst miValueConst( "expression could not be evaluated" );
 	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -650,7 +834,7 @@ CMICmdCmdVarSetFormat::CMICmdCmdVarSetFormat( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-set-format";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarSetFormat::CreateSelf;
 }
 
@@ -756,14 +940,14 @@ bool CMICmdCmdVarSetFormat::Acknowledge( void )
 	const CMICmnMIValueList miValueList( miValueTuple );
 	const CMICmnMIValueResult miValueResult6( "changelist", miValueList );
 	
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -795,7 +979,7 @@ CMICmdCmdVarListChildren::CMICmdCmdVarListChildren( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-list-children";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarListChildren::CreateSelf;
 }
 
@@ -865,40 +1049,34 @@ bool CMICmdCmdVarListChildren::Execute( void )
 	for( MIuint i = 0; i < m_nChildren; i++ )
 	{
 		lldb::SBValue member = rValue.GetChildAtIndex( i );
-		const bool bValid = member.IsValid();
-		const CMIUtilString varName( CMIUtilString::Format( "var%u", CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet() ) );
-		CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc();
-		const MIuint nChildren = bValid ? member.GetNumChildren() : 0;
-		CMIUtilString strType( MIRSRC( IDS_WORD_UNKNOWNTYPE_BRKTS ) );
-		if( bValid )
-		{
-			lldb::SBType type = member.GetType();
-			const char * pTypeName = type.GetName();
-			if( pTypeName != nullptr )
-				strType = pTypeName;
-		}
+		if( !member.IsValid() )
+			continue; 
+
+		const MIchar * pExp = member.GetName();
+		const CMIUtilString strExp = (pExp != nullptr) ? pExp : "??";
+		const CMIUtilString name( CMIUtilString::Format( "%s.%s", rVarObjName.c_str(), strExp.c_str() ) );
+		const MIuint nChildren = member.GetNumChildren();
+		const MIchar * pTypeName = member.GetType().GetName();
+		const CMIUtilString strType = (pTypeName != nullptr) ? pTypeName : MIRSRC( IDS_WORD_UNKNOWNTYPE_BRKTS );
+		const CMIUtilString strThreadId( CMIUtilString::Format( "%u", member.GetThread().GetIndexID() ) );
 
 		// Varobj gets added to CMICmnLLDBDebugSessionInfoVarObj static container of varObjs
-		const CMICmnLLDBDebugSessionInfoVarObj var( (member.GetName() != nullptr) ? member.GetName() : "??", varName, member );
-
+		CMICmnLLDBDebugSessionInfoVarObj var( strExp, name, member, rVarObjName );
+		
 		// MI print "child={name=\"%s\",exp=\"%s\",numchild=\"%d\",value=\"%s\",type=\"%s\",thread-id=\"%u\",has_more=\"%u\"}"
-		const CMICmnMIValueConst miValueConst( varName );
+		const CMICmnMIValueConst miValueConst( name );
 		const CMICmnMIValueResult miValueResult( "name", miValueConst );
 		CMICmnMIValueTuple miValueTuple( miValueResult );
-		const CMICmnMIValueConst miValueConst2( (member.GetName() != nullptr) ? member.GetName() : "??" );
+		const CMICmnMIValueConst miValueConst2( strExp );
 		const CMICmnMIValueResult miValueResult2( "exp", miValueConst2 );
 		miValueTuple.Add( miValueResult2 );
 		const CMIUtilString strNumChild( CMIUtilString::Format( "%d", nChildren ) );
 		const CMICmnMIValueConst miValueConst3( strNumChild );
 		const CMICmnMIValueResult miValueResult3( "numchild", miValueConst3 );
 		miValueTuple.Add( miValueResult3 );
-		const CMICmnMIValueConst miValueConst4( var.GetValueFormatted() );
-		const CMICmnMIValueResult miValueResult4( "value", miValueConst4 );
-		miValueTuple.Add( miValueResult4 );
 		const CMICmnMIValueConst miValueConst5( strType );
 		const CMICmnMIValueResult miValueResult5( "type", miValueConst5 );
 		miValueTuple.Add( miValueResult5 );
-		const CMIUtilString strThreadId( CMIUtilString::Format( "%u", member.GetThread().GetIndexID() ) );
 		const CMICmnMIValueConst miValueConst6( strThreadId );
 		const CMICmnMIValueResult miValueResult6( "thread-id", miValueConst6 );
 		miValueTuple.Add( miValueResult6 );
@@ -951,7 +1129,7 @@ bool CMICmdCmdVarListChildren::Acknowledge( void )
 			miValueResult.Add( "children", miValueList );
 		}
 
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -959,14 +1137,14 @@ bool CMICmdCmdVarListChildren::Acknowledge( void )
 	// MI print "%s^done,numchild=\"0\""
 	const CMICmnMIValueConst miValueConst( "0" );
 	const CMICmnMIValueResult miValueResult( "numchild", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -997,7 +1175,7 @@ CMICmdCmdVarEvaluateExpression::CMICmdCmdVarEvaluateExpression( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-evaluate-expression";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarEvaluateExpression::CreateSelf;
 }
 
@@ -1084,20 +1262,20 @@ bool CMICmdCmdVarEvaluateExpression::Acknowledge( void )
 		CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( m_varObjName, varObj );
 		const CMICmnMIValueConst miValueConst( varObj.GetValueFormatted() );
 		const CMICmnMIValueResult miValueResult( "value", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
 
 	const CMICmnMIValueConst miValueConst( "variable invalid" );
 	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -1127,7 +1305,7 @@ CMICmdCmdVarInfoPathExpression::CMICmdCmdVarInfoPathExpression( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "var-info-path-expression";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdVarInfoPathExpression::CreateSelf;
 }
 
@@ -1197,8 +1375,38 @@ bool CMICmdCmdVarInfoPathExpression::Execute( void )
 		return MIstatus::failure;
 	}
 	
-	m_strPathExpression = (stream.GetData() != nullptr) ? stream.GetData() : "??";
-	
+	const MIchar * pPathExpression = stream.GetData();
+	if( pPathExpression == nullptr )
+	{
+		// Build expression from what we do know
+		m_strPathExpression = varObj.GetNameReal();
+		return MIstatus::success;
+	}
+
+	// Has LLDB returned a var signature of it's own
+	if( pPathExpression[ 0 ] != '$' )
+	{
+		m_strPathExpression = pPathExpression;
+		return MIstatus::success;
+	}
+
+	// Build expression from what we do know
+	const CMIUtilString & rVarParentName( varObj.GetVarParentName() );
+	if( rVarParentName.empty() )
+	{
+		m_strPathExpression = varObj.GetNameReal();
+	}
+	else
+	{
+		CMICmnLLDBDebugSessionInfoVarObj varObjParent;
+		if( !CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( rVarParentName, varObjParent ) )
+		{
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_VARIABLE_DOESNOTEXIST ), m_cmdData.strMiCmd.c_str(), rVarParentName.c_str() ) );
+			return MIstatus::failure;
+		}
+		m_strPathExpression = CMIUtilString::Format( "%s.%s", varObjParent.GetNameReal().c_str(), varObj.GetNameReal().c_str() );
+	}
+		
 	return MIstatus::success;
 }
 
@@ -1217,21 +1425,21 @@ bool CMICmdCmdVarInfoPathExpression::Acknowledge( void )
 	{
 		const CMICmnMIValueConst miValueConst( m_strPathExpression );
 		const CMICmnMIValueResult miValueResult( "path_expr", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
 
 	const CMICmnMIValueConst miValueConst( "variable invalid" );
 	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -1241,4 +1449,115 @@ bool CMICmdCmdVarInfoPathExpression::Acknowledge( void )
 CMICmdBase * CMICmdCmdVarInfoPathExpression::CreateSelf( void )
 {
 	return new CMICmdCmdVarInfoPathExpression();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdVarShowAttributes constructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdVarShowAttributes::CMICmdCmdVarShowAttributes( void )
+:	m_constStrArgName( "name" )
+{
+	// Command factory matches this name with that received from the stdin stream
+	m_strMiCmd = "var-show-attributes";
+	
+	// Required by the CMICmdFactory when registering *this command
+	m_pSelfCreatorFn = &CMICmdCmdVarShowAttributes::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdVarShowAttributes destructor.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdVarShowAttributes::~CMICmdCmdVarShowAttributes( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The parses the command line options 
+//			arguments to extract values for each of those arguments.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdVarShowAttributes::ParseArgs( void )
+{
+	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgName, true, true ) ) );
+	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
+	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
+	{
+		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
+		return MIstatus::failure;
+	}
+
+	return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command does work in this function.
+//			The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdVarShowAttributes::Execute( void )
+{
+	CMICMDBASE_GETOPTION( pArgName, String, m_constStrArgName );
+
+	const CMIUtilString & rVarObjName( pArgName->GetValue() );
+	CMICmnLLDBDebugSessionInfoVarObj varObj;
+	if( CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( rVarObjName, varObj ) )
+	{
+		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_VARIABLE_DOESNOTEXIST ), m_cmdData.strMiCmd.c_str(), rVarObjName.c_str() ) );
+		return MIstatus::failure;
+	}
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command prepares a MI Record Result
+//			for the work carried out in the Execute().
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdVarShowAttributes::Acknowledge( void )
+{
+	// MI output: "%s^done,status=\"editable\"]"
+	const CMICmnMIValueConst miValueConst( "editable" );
+	const CMICmnMIValueResult miValueResult( "status", miValueConst );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	m_miResultRecord = miRecordResult;
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
+//			calls this function to create an instance of *this command.
+// Type:	Static method.
+// Args:	None.
+// Return:	CMICmdBase * - Pointer to a new command.
+// Throws:	None.
+//--
+CMICmdBase * CMICmdCmdVarShowAttributes::CreateSelf( void )
+{
+	return new CMICmdCmdVarShowAttributes();
 }

@@ -64,7 +64,7 @@ public:
 
 // Methods:
 protected:
-	bool	ExtractExpectedOptions( CMICmdArgContext & vrwTxt );
+	bool	ExtractExpectedOptions( CMICmdArgContext & vrwTxt, const MIuint nArgIndex );
 
 // Overrideable:
 protected:
@@ -87,6 +87,8 @@ private:
 //			parsed from the command's options string.
 // Type:	Template method.
 // Args:	vrwValue	- (W) Templated type return value.
+//			T1			- The argument value's class type of the data hold in the list of options.
+//			T2			- The type pf the variable which holds the value wanted.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed. List of object was empty.
 // Throws:	None.

@@ -10,8 +10,7 @@
 //++
 // File:		MICmdCmdThread.cpp
 //
-// Overview:	CMICmdCmdThread					implementation.
-//				CMICmdCmdThreadInfo				implementation.
+// Overview:	CMICmdCmdThreadInfo		implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -41,85 +40,6 @@
 #include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdThread constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdThread::CMICmdCmdThread( void )
-{
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "thread";
-	
-	// Required by the CMICmdFactory when registering *this commmand
-	m_pSelfCreatorFn = &CMICmdCmdThread::CreateSelf;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdThread destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdThread::~CMICmdCmdThread( void )
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdThread::Execute( void )
-{
-	// Do nothing
-	
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdThread::Acknowledge( void )
-{
-	const CMICmnMIValueConst miValueConst( MIRSRC( IDS_WORD_NOT_IMPLEMENTED ) );
-	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
-	m_miResultRecord = miRecordResult;
-
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
-//--
-CMICmdBase * CMICmdCmdThread::CreateSelf( void )
-{
-	return new CMICmdCmdThread();
-}
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-
-//++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdThreadInfo constructor.
 // Type:	Method.
 // Args:	None.
@@ -134,7 +54,7 @@ CMICmdCmdThreadInfo::CMICmdCmdThreadInfo( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "thread-info";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdThreadInfo::CreateSelf;
 }
 
@@ -247,7 +167,7 @@ bool CMICmdCmdThreadInfo::Acknowledge( void )
 		{
 			const CMICmnMIValueConst miValueConst( "invalid thread id" );
 			const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-			const CMICmnMIResultRecord miRecordResult(  m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+			const CMICmnMIResultRecord miRecordResult(  m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 			m_miResultRecord = miRecordResult;
 			return MIstatus::success;
 		}
@@ -255,7 +175,7 @@ bool CMICmdCmdThreadInfo::Acknowledge( void )
 		// MI print "%s^done,threads=[{id=\"%d\",target-id=\"%s\",frame={},state=\"%s\"}]
 		const CMICmnMIValueList miValueList( m_miValueTupleThread );
 		const CMICmnMIValueResult miValueResult( "threads", miValueList );
-		const CMICmnMIResultRecord miRecordResult(  m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult(  m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;	
 	}
@@ -266,7 +186,7 @@ bool CMICmdCmdThreadInfo::Acknowledge( void )
 	{
 		const CMICmnMIValueConst miValueConst( "[]" );
 		const CMICmnMIValueResult miValueResult( "threads", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -282,14 +202,14 @@ bool CMICmdCmdThreadInfo::Acknowledge( void )
 	}
 
 	const CMICmnMIValueResult miValueResult( "threads", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

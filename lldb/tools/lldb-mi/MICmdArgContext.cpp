@@ -150,6 +150,67 @@ bool CMICmdArgContext::RemoveArg( const CMIUtilString & vArg )
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	Remove the argument at the Nth word position along in the context string. 
+//			Any space after the argument is removed if applicable. A search is not 
+//			performed as there may be more than one vArg with the same 'name' in the
+//			context string.
+// Type:	Method.
+// Args:	vArg		- (R) The name of the argument.
+//			nArgIndex	- (R) The word count position to which to remove the vArg word.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdArgContext::RemoveArgAtPos( const CMIUtilString & vArg, const MIuint nArgIndex )
+{
+	MIuint nWordIndex = 0;
+	CMIUtilString strBuildContextUp;
+	const CMIUtilString::VecString_t vecWords( GetArgs() );
+	const bool bSpaceRequired( GetNumberArgsPresent() > 2 );
+
+	CMIUtilString::VecString_t::const_iterator it = vecWords.begin();
+	const CMIUtilString::VecString_t::const_iterator itEnd = vecWords.end();
+	while( it != itEnd )
+	{
+		const CMIUtilString & rWord( *it );
+		if( nWordIndex++ != nArgIndex )
+		{
+			// Single words
+			strBuildContextUp += rWord;
+			if( bSpaceRequired )
+				strBuildContextUp += m_constStrSpace;
+		}
+		else
+		{
+			// If quoted loose quoted text
+			if( ++it != itEnd ) 
+			{
+				CMIUtilString words = rWord;
+				while( vArg != words )
+				{
+					if( bSpaceRequired )
+						words += m_constStrSpace;
+					words += *it;
+					if( ++it == itEnd )
+						break;
+				}
+				if( it != itEnd )
+					--it;
+			}
+		}
+		
+		// Next
+		if( it != itEnd )
+			++it;
+	}
+	
+	m_strCmdArgsAndOptions = strBuildContextUp;
+	m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.Trim();
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	Retrieve number of arguments or options present in the command's option text.
 // Type:	Method.
 // Args:	None.

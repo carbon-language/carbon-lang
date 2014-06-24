@@ -10,8 +10,7 @@
 //++
 // File:		MICmdCmdThread.h
 //
-// Overview:	CMICmdCmdThread					interface.
-//				CMICmdCmdThreadInfo				interface.
+// Overview:	CMICmdCmdThreadInfo	interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class
@@ -38,36 +37,6 @@
 
 //++ ============================================================================
 // Details:	MI command class. MI commands derived from the command base class.
-//			*this class implements MI command "thread".
-// Gotchas:	None.
-// Authors:	Illya Rudkin 25/02/2014.
-// Changes:	None.
-//--
-class CMICmdCmdThread : public CMICmdBase
-{
-// Statics:
-public:
-	// Required by the CMICmdFactory when registering *this commmand
-	static CMICmdBase *	CreateSelf( void );
-
-// Methods:
-public:
-	/* ctor */	CMICmdCmdThread( void );
-
-// Overridden:
-public:
-	// From CMICmdInvoker::ICmd
-	virtual bool	Execute( void );
-	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
-	// From CMICmnBase
-	/* dtor */ virtual ~CMICmdCmdThread( void );
-};
-
-//++ ============================================================================
-// Details:	MI command class. MI commands derived from the command base class.
 //			*this class implements MI command "thread-info".
 // Gotchas:	None.
 // Authors:	Illya Rudkin 07/03/2014.
@@ -77,7 +46,7 @@ class CMICmdCmdThreadInfo : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -90,9 +59,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdThreadInfo( void );
 

@@ -66,6 +66,43 @@ CMIUtilString::CMIUtilString( const MIchar * const * vpData )
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilString assigment operator.
+// Type:	Method.
+// Args:	vpRhs	- Pointer to UTF8 text data.
+// Return:	CMIUtilString &	- *this string.
+// Throws:	None.
+//--
+CMIUtilString & CMIUtilString::operator= ( const MIchar * vpRhs )
+{
+	if( *this == vpRhs )
+		return *this;
+
+	if( vpRhs != nullptr )
+	{
+		assign( vpRhs );
+	}
+
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilString assigment operator.
+// Type:	Method.
+// Args:	vrRhs	- The other string to copy from.
+// Return:	CMIUtilString &	- *this string.
+// Throws:	None.
+//--
+CMIUtilString & CMIUtilString::operator= ( const std::string & vrRhs )
+{
+	if( *this == vrRhs )
+		return *this;
+
+	assign( vrRhs );
+	
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	CMIUtilString destructor.
 // Type:	Method.
 // Args:	None.
@@ -91,32 +128,42 @@ CMIUtilString CMIUtilString::FormatPriv( const CMIUtilString & vrFormat, va_list
 	MIint nFinal = 0;
 	MIint n = vrFormat.size();
 
-	// create a copy va_list to reset when we spin
+	// IOR: mysterious crash in this function on some windows builds not able to duplicate
+	// but found article which may be related. Crash occurs in vsnprintf() or va_copy()
+	// Duplicate vArgs va_list argument pointer to ensure that it can be safely used in 
+	// a new frame
+	// http://julipedia.meroh.net/2011/09/using-vacopy-to-safely-pass-ap.html
+	va_list argsDup;
+	va_copy( argsDup, vArgs );
+
+	// Create a copy va_list to reset when we spin
 	va_list argsCpy;
-	va_copy( argsCpy, vArgs );
+	va_copy( argsCpy, argsDup );
 
 	if( n == 0 )
 		return strResult;
 	
-	n = n * 2; // Reserve 2 times as much the length of the vrFormat
+	n = n << 4; // Reserve 16 times as much the length of the vrFormat
 
 	std::unique_ptr< char[] > pFormatted;
 	while( 1 )
 	{
-		pFormatted.reset( new char[ n ] ); 
-		strncpy( &pFormatted[ 0 ], vrFormat.c_str(), n );
+		pFormatted.reset( new char[ n + 1 ] ); // +1 for safety margin
+		::strncpy( &pFormatted[ 0 ], vrFormat.c_str(), n );
 
-		// AD fix:
 		//	We need to restore the variable argument list pointer to the start again
 		//	before running vsnprintf() more then once 
-		va_copy( vArgs, argsCpy );
+		va_copy( argsDup, argsCpy );
 
-		nFinal = vsnprintf( &pFormatted[ 0 ], n, vrFormat.c_str(), vArgs );
+		nFinal = ::vsnprintf( &pFormatted[ 0 ], n, vrFormat.c_str(), argsDup );
 		if( (nFinal < 0) || (nFinal >= n) )
 			n += abs( nFinal - n + 1 );
 		else
 			break;
 	}
+
+	va_end( argsCpy );
+	va_end( argsDup );
 
 	strResult = pFormatted.get();
 	
@@ -202,6 +249,95 @@ MIuint CMIUtilString::Split( const CMIUtilString & vDelimiter, VecString_t & vwV
 		nPos += len + 1;
 		nPos2 = find( vDelimiter, nPos + 1 );
 		nAdd1 = 0;
+	}
+	const std::string strSection( substr( nPos, strLen - nPos ) );
+	if( (strSection.length() != 0) && (strSection != vDelimiter) )
+		vwVecSplits.push_back( strSection.c_str() );
+		
+	return vwVecSplits.size();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Splits string into array of strings using delimiter. However the string is
+//			also considered for text surrounded by quotes. Text with quotes including the
+//			delimiter is treated as a whole. If multiple delimiter are found in sequence 
+//			then they are not added to the list of splits.
+// Type:	Method.
+// Args:	vData		- (R) String data to be split up.
+//			vDelimiter	- (R) Delimiter char or text.
+//			vwVecSplits	- (W) Container of splits found in string data.
+// Return:	MIuint - Number of splits found in the string data.
+// Throws:	None.
+//--
+MIuint CMIUtilString::SplitConsiderQuotes( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const
+{
+	vwVecSplits.clear();
+
+	if( this->empty() || vDelimiter.empty() )
+		return 0;
+
+	MIint nPos = find( vDelimiter );
+	if( nPos == (MIint) std::string::npos )
+	{
+		vwVecSplits.push_back( *this );
+		return 1;
+	}
+	const MIint strLen( length() );
+	if( nPos == strLen )
+	{
+		vwVecSplits.push_back( *this );
+		return 1;
+	}
+
+	// Look for more quotes
+	bool bHaveQuotes = false;
+	const MIchar cQuote = '"';
+	MIint nPosQ = find( cQuote );
+	MIint nPosQ2 = (MIint) std::string::npos;
+	if( nPosQ != (MIint) std::string::npos )
+	{
+		nPosQ2 = find( cQuote, nPosQ + 1 );
+		bHaveQuotes = (nPosQ2 != (MIint) std::string::npos);
+	}
+
+	MIuint nAdd1( 1 );
+	if( (nPos > 0) && (substr( 0, nPos ) != vDelimiter) )
+	{
+		nPos = 0;
+		nAdd1 = 0;
+	}
+	MIint nPos2 = find( vDelimiter, nPos + 1 );
+	while( nPos2 != (MIint) std::string::npos )
+	{
+		if( !bHaveQuotes || (bHaveQuotes && ((nPos2 > nPosQ2) || (nPos2 < nPosQ))) )
+		{
+			// Extract text or quoted text
+			const MIuint len( nPos2 - nPos - nAdd1 );
+			const std::string strSection( substr( nPos + nAdd1, len ) );
+			if( strSection != vDelimiter )
+				vwVecSplits.push_back( strSection.c_str() );
+			nPos += len + 1;
+			nPos2 = find( vDelimiter, nPos + 1 );
+			nAdd1 = 0;
+
+			if( bHaveQuotes && (nPos2 > nPosQ2) )
+			{
+				// Reset, look for more quotes
+				bHaveQuotes = false;
+				nPosQ = find( cQuote, nPos );
+				nPosQ2 = (MIint) std::string::npos;
+				if( nPosQ != (MIint) std::string::npos )
+				{
+					nPosQ2 = find( cQuote, nPosQ + 1 );
+					bHaveQuotes = (nPosQ2 != (MIint) std::string::npos);
+				}
+			}
+		}
+		else
+		{
+			// Skip passed text in quotes
+			nPos2 = find( vDelimiter, nPosQ2 + 1 );
+		}
 	}
 	const std::string strSection( substr( nPos, strLen - nPos ) );
 	if( (strSection.length() != 0) && (strSection != vDelimiter) )

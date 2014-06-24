@@ -21,6 +21,8 @@
 
 // Third Party Headers:
 #include <lldb/API/SBStream.h>
+#include <lldb/API/SBCommandInterpreter.h>
+#include <lldb/API/SBCommandReturnObject.h>
 
 // In-house headers:
 #include "MICmnConfig.h"
@@ -53,7 +55,7 @@ CMICmdCmdTargetSelect::CMICmdCmdTargetSelect( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "target-select";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdTargetSelect::CreateSelf;
 }
 
@@ -108,12 +110,16 @@ bool CMICmdCmdTargetSelect::Execute( void )
 	CMICMDBASE_GETOPTION( pArgParameters, String, m_constStrArgNamedParameters );
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
+
+	// Check we have a valid target
+	// Note: target created via 'file-exec-and-symbols' command
 	if( !rSessionInfo.m_lldbTarget.IsValid() )
 	{
 		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_INVALID_TARGET_CURRENT ), m_cmdData.strMiCmd.c_str() ) );
 		return MIstatus::failure;
 	}
 
+	// Verify that we are executing remotely
 	const CMIUtilString & rRemoteType( pArgType->GetValue() );
 	if( rRemoteType != "remote" )
 	{
@@ -121,26 +127,16 @@ bool CMICmdCmdTargetSelect::Execute( void )
 		return MIstatus::failure;
 	}
 
+	// Create a URL pointing to the remote gdb stub
 	const CMIUtilString strUrl = CMIUtilString::Format( "connect://%s", pArgParameters->GetValue().c_str() );
-	const char * pPlugin( "gdb-remote" );
+
+	// Ask LLDB to collect to the target port
+	const MIchar * pPlugin( "gdb-remote" );
 	lldb::SBError error;
 	lldb::SBProcess process = rSessionInfo.m_lldbTarget.ConnectRemote( rSessionInfo.m_rLlldbListener, strUrl.c_str(), pPlugin, error );
-	CMIUtilString strWkDir;
-	if(	!rSessionInfo.SharedDataRetrieve( rSessionInfo.m_constStrSharedDataKeyWkDir, strWkDir ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_SHARED_DATA_NOT_FOUND ), m_cmdData.strMiCmd.c_str(), rSessionInfo.m_constStrSharedDataKeyWkDir.c_str() ) );
-		return MIstatus::failure;
-	}
-	lldb::SBDebugger & rDbgr = rSessionInfo.m_rLldbDebugger;
-	if( !rDbgr.SetCurrentPlatformSDKRoot( strWkDir.c_str() ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_FNFAILED ), m_cmdData.strMiCmd.c_str(), "SetCurrentPlatformSDKRoot()" ) );
-		return MIstatus::failure;
-	}
 
+	// Verify that we have managed to connect successfully
 	lldb::SBStream errMsg;
-	if( error.Fail() )
-		const bool bOk = error.GetDescription( errMsg );
 	if( !process.IsValid() )
 	{
 		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_INVALID_TARGET_PLUGIN ), m_cmdData.strMiCmd.c_str(), errMsg.GetData() ) );
@@ -152,7 +148,41 @@ bool CMICmdCmdTargetSelect::Execute( void )
 		return MIstatus::failure;
 	}
 
+	// Save the process in the session info
+	// Note: Order is important here since this process handle may be used by CMICmnLLDBDebugHandleEvents
+	//		 which can fire when interpreting via HandleCommand() below.
 	rSessionInfo.m_lldbProcess = process;
+
+	// Set the environment path if we were given one
+	CMIUtilString strWkDir;
+	if(	rSessionInfo.SharedDataRetrieve< CMIUtilString >( rSessionInfo.m_constStrSharedDataKeyWkDir, strWkDir ) )
+	{
+		lldb::SBDebugger & rDbgr = rSessionInfo.m_rLldbDebugger;
+		if( !rDbgr.SetCurrentPlatformSDKRoot( strWkDir.c_str() ) )
+		{
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_FNFAILED ), m_cmdData.strMiCmd.c_str(), "target-select" ) );
+			return MIstatus::failure;
+		}
+	}
+
+	// Set the shared object path if we were given one
+	CMIUtilString strSolibPath;
+	if(	rSessionInfo.SharedDataRetrieve< CMIUtilString >( rSessionInfo.m_constStrSharedDataSolibPath, strSolibPath ) )
+	{
+		lldb::SBDebugger & rDbgr = rSessionInfo.m_rLldbDebugger;
+		lldb::SBCommandInterpreter cmdIterpreter = rDbgr.GetCommandInterpreter();
+		
+		CMIUtilString strCmdString = CMIUtilString::Format( "target modules search-paths add . %s", strSolibPath.c_str() );
+
+		lldb::SBCommandReturnObject retObj;
+		cmdIterpreter.HandleCommand( strCmdString.c_str(), retObj, false );
+
+		if( !retObj.Succeeded() )
+		{
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_FNFAILED ), m_cmdData.strMiCmd.c_str(), "target-select" ) );
+			return MIstatus::failure;
+		}
+	}
 
 	return MIstatus::success;
 }
@@ -168,7 +198,7 @@ bool CMICmdCmdTargetSelect::Execute( void )
 //--
 bool CMICmdCmdTargetSelect::Acknowledge( void )
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Connected );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Connected );
 	m_miResultRecord = miRecordResult;
 	
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
@@ -189,7 +219,7 @@ bool CMICmdCmdTargetSelect::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

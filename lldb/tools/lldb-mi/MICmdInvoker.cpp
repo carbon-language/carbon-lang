@@ -106,9 +106,9 @@ void CMICmdInvoker::CmdDeleteAll( void )
 	MapCmdIdToCmd_t::const_iterator it = m_mapCmdIdToCmd.begin();
 	while( it != m_mapCmdIdToCmd.end() )
 	{
-		const MIuint cmdId( (*it).first );
+		const MIuint cmdId( (*it).first ); MIunused( cmdId );
 		CMICmdBase * pCmd = (*it).second;
-		const CMIUtilString & rCmdName( pCmd->GetCmdData().strMiCmd );
+		const CMIUtilString & rCmdName( pCmd->GetCmdData().strMiCmd ); MIunused( rCmdName );
 		rMgr.CmdDelete( pCmd->GetCmdData() );
 
 		// Next
@@ -258,8 +258,10 @@ bool CMICmdInvoker::CmdExecuteFinished( CMICmdBase & vCmd )
 		cmdData.strMiCmdResultRecordExtra = rMIExtra;	// Precautionary copy as the command might forget to do this
 	}
 	
-	// Delete the command object as do not require anymore
+	// Send command's MI response to the client
 	bool bOk = CmdStdout( cmdData );
+	
+	// Delete the command object as do not require anymore
 	bOk = bOk && CmdDelete( vCmd.GetCmdData().id );
 		
 	return bOk;
@@ -280,7 +282,7 @@ bool CMICmdInvoker::CmdStdout( const SMICmdData & vCmdData ) const
 	bOk = bOk && bLock && m_rStreamOut.WriteMIResponse( vCmdData.strMiCmdResultRecord );
 	if( bOk && vCmdData.bHasResultRecordExtra )
 	{
-		bOk = bOk && m_rStreamOut.WriteMIResponse( vCmdData.strMiCmdResultRecordExtra );
+		bOk = m_rStreamOut.WriteMIResponse( vCmdData.strMiCmdResultRecordExtra );
 	}
 	bOk = bLock && m_rStreamOut.Unlock();
 	

@@ -53,7 +53,7 @@ CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "file-exec-and-symbols";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdFileExecAndSymbols::CreateSelf;
 }
 
@@ -109,17 +109,17 @@ bool CMICmdCmdFileExecAndSymbols::Execute( void )
 	const CMIUtilString & strExeFilePath( pArgFile->GetValue() );
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
 	lldb::SBDebugger & rDbgr = rSessionInfo.m_rLldbDebugger;
-	lldb::SBError error;                                                            
-	const char * pTargetTriple = nullptr;           // Let LLDB discover the triple required
-	const char * pTargetPlatformName = "";
+	lldb::SBError error;								
+	const MIchar * pTargetTriple = nullptr;		// Let LLDB discover the triple required
+	const MIchar * pTargetPlatformName = "";				
 	const bool bAddDepModules = false;
 	lldb::SBTarget target = rDbgr.CreateTarget( strExeFilePath.c_str(), pTargetTriple, pTargetPlatformName, bAddDepModules, error );
 	CMIUtilString strWkDir;
 	const CMIUtilString & rStrKeyWkDir( rSessionInfo.m_constStrSharedDataKeyWkDir );
-	if(	!rSessionInfo.SharedDataRetrieve( rStrKeyWkDir, strWkDir ) )
+	if(	!rSessionInfo.SharedDataRetrieve< CMIUtilString >( rStrKeyWkDir, strWkDir ) )
 	{
 		strWkDir = CMIUtilFileStd().StripOffFileName( strExeFilePath );
-		if( !rSessionInfo.SharedDataAdd( rStrKeyWkDir, strWkDir ) )
+		if( !rSessionInfo.SharedDataAdd< CMIUtilString >( rStrKeyWkDir, strWkDir ) )
 		{
 			SetError( CMIUtilString::Format( MIRSRC( IDS_DBGSESSION_ERR_SHARED_DATA_ADD ), m_cmdData.strMiCmd.c_str(), rStrKeyWkDir.c_str() ) );
 			return MIstatus::failure;
@@ -133,7 +133,9 @@ bool CMICmdCmdFileExecAndSymbols::Execute( void )
 	}
 	lldb::SBStream err;
 	if( error.Fail() )
-		const bool bOk = error.GetDescription( err );
+	{
+		const bool bOk = error.GetDescription( err ); MIunused( bOk );
+	}
 	if( !target.IsValid() )
 	{
 		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_INVALID_TARGET ), m_cmdData.strMiCmd.c_str(), strExeFilePath.c_str(), err.GetData() ) );
@@ -161,14 +163,14 @@ bool CMICmdCmdFileExecAndSymbols::Execute( void )
 //--
 bool CMICmdCmdFileExecAndSymbols::Acknowledge( void )
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

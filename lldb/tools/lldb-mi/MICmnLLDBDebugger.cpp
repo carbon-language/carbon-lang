@@ -148,10 +148,10 @@ bool CMICmnLLDBDebugger::Shutdown( void )
 	// LLDB debugger may hang in its Destroy() fn waiting on events
 	m_lldbDebugger.DeleteTarget( CMICmnLLDBDebugSessionInfo::Instance().m_lldbTarget );
 
-	// ToDo: Avaluate if we still need this
+	// Debug: May need this but does seem to work without it so commented out the fudge 19/06/2014
 	// It appears we need to wait as hang does not occur when hitting a debug breakpoint here
-	const std::chrono::milliseconds time( 1000 );
-	std::this_thread::sleep_for( time );
+	//const std::chrono::milliseconds time( 1000 );
+	//std::this_thread::sleep_for( time );
 		
 	lldb::SBDebugger::Destroy( m_lldbDebugger );
 	lldb::SBDebugger::Terminate();
@@ -325,7 +325,7 @@ bool CMICmnLLDBDebugger::RegisterForEvent( const CMIUtilString & vClientName, co
 	if( !ClientSaveMask( vClientName, vBroadcasterClass, vEventMask ) )
 		return MIstatus::failure;
 
-	const char * pBroadCasterName = vBroadcasterClass.c_str();
+	const MIchar * pBroadCasterName = vBroadcasterClass.c_str();
 	MIuint eventMask = vEventMask;
 	eventMask += existingMask;
 	const MIuint result = m_lldbListener.StartListeningForEventClass( m_lldbDebugger, pBroadCasterName, eventMask );
@@ -351,7 +351,7 @@ bool CMICmnLLDBDebugger::RegisterForEvent( const CMIUtilString & vClientName, co
 //--
 bool CMICmnLLDBDebugger::RegisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster, const MIuint vEventMask )
 {
-	const char * pBroadcasterName = vBroadcaster.GetName();
+	const MIchar * pBroadcasterName = vBroadcaster.GetName();
 	if( pBroadcasterName == nullptr )
 	{
 		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME ), MIRSRC( IDS_WORD_INVALIDNULLPTR ) ) );
@@ -415,7 +415,7 @@ bool CMICmnLLDBDebugger::UnregisterForEvent( const CMIUtilString & vClientName, 
 		}
 	}
 	
-	const char * pBroadCasterName = vBroadcasterClass.c_str();
+	const MIchar * pBroadCasterName = vBroadcasterClass.c_str();
 	if( !m_lldbListener.StopListeningForEventClass( m_lldbDebugger, pBroadCasterName, newEventMask ) )
 	{
 		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_STOPLISTENER ), vClientName.c_str(), pBroadCasterName ) );
@@ -426,71 +426,17 @@ bool CMICmnLLDBDebugger::UnregisterForEvent( const CMIUtilString & vClientName, 
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Unregister with the debugger, the SBListener, the type of events you are no
-//			longer interested in. Others, like commands, may still remain interested so 
-//			an event may not necessarily be stopped.
-// Type:	Method.
-// Args:	vClientName		- (R) ID of the client who no longer requires these events.
-//			vBroadcaster	- (R) An SBBroadcaster's derived class.
-// Return:	MIstatus::success - Functionality succeeded.
-//			MIstatus::failure - Functionality failed.
-// Throws:	None.
-//--
-bool CMICmnLLDBDebugger::UnregisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster  )
-{
-	const char * pBroadcasterName = vBroadcaster.GetName();
-	if( pBroadcasterName == nullptr )
-	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME ), MIRSRC( IDS_WORD_INVALIDNULLPTR ) ) );
-		return MIstatus::failure;
-	}
-	CMIUtilString broadcasterName( pBroadcasterName );
-	if( broadcasterName.length() == 0 )
-	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME ), MIRSRC( IDS_WORD_INVALIDEMPTY ) ) );
-		return MIstatus::failure;
-	}
-
-	MIuint clientsEventMask = 0;
-	if( !ClientGetTheirMask( vClientName, broadcasterName, clientsEventMask ) )
-		return MIstatus::failure;
-	if( !ClientRemoveTheirMask( vClientName, broadcasterName ) )
-		return MIstatus::failure;
-	
-	const MIuint otherClientsEventMask = ClientGetMaskForAllClients( broadcasterName );
-	MIuint newEventMask = 0;
-	for( MIuint i = 0; i < 32; i++ )
-	{
-		const MIuint bit = 1 << i;
-		const MIuint clientBit = bit & clientsEventMask;
-		const MIuint othersBit = bit & otherClientsEventMask;
-		if( (clientBit != 0) && (othersBit == 0) )
-		{
-			newEventMask += clientBit;
-		}
-	}
-	
-	if( !m_lldbListener.StopListeningForEvents( vBroadcaster, newEventMask ) )
-	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_STOPLISTENER ), vClientName.c_str(), pBroadcasterName ) );
-		return MIstatus::failure;
-	}
-
-	return BroadcasterSaveMask( broadcasterName, otherClientsEventMask );
-}
-
-//++ ------------------------------------------------------------------------------------
 // Details:	Given the SBBroadcaster class name retrieve it's current event mask.
 // Type:	Method.
 // Args:	vBroadcasterClass	- (R) The SBBroadcaster's class name.
-//			vEventMask			- (R) The mask of events to listen for.
+//			vEventMask			- (W) The mask of events to listen for.
 // Return:	MIstatus::success - Functionality succeeded.
 //			MIstatus::failure - Functionality failed.
 // Throws:	None.
 //--
-bool CMICmnLLDBDebugger::BroadcasterGetMask( const CMIUtilString & vBroadcasterClass, MIuint & vEventMask ) const
+bool CMICmnLLDBDebugger::BroadcasterGetMask( const CMIUtilString & vBroadcasterClass, MIuint & vwEventMask ) const
 {
-	vEventMask = 0;
+	vwEventMask = 0;
 
 	if( vBroadcasterClass.empty() )
 	{
@@ -499,13 +445,29 @@ bool CMICmnLLDBDebugger::BroadcasterGetMask( const CMIUtilString & vBroadcasterC
 	}
 
 	const MapBroadcastClassNameToEventMask_t::const_iterator it = m_mapBroadcastClassNameToEventMask.find( vBroadcasterClass );
-	if( it == m_mapBroadcastClassNameToEventMask.end() )
+	if( it != m_mapBroadcastClassNameToEventMask.end() )
 	{
-		vEventMask = 0;
-		return MIstatus::success;
+		vwEventMask = (*it).second;
 	}
 
-	vEventMask = (*it).second;
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Remove the event mask for the specified SBBroadcaster class name.
+// Type:	Method.
+// Args:	vBroadcasterClass	- (R) The SBBroadcaster's class name.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMICmnLLDBDebugger::BroadcasterRemoveMask( const CMIUtilString & vBroadcasterClass )
+{
+	MapBroadcastClassNameToEventMask_t::const_iterator it = m_mapBroadcastClassNameToEventMask.find( vBroadcasterClass );
+	if( it != m_mapBroadcastClassNameToEventMask.end() )
+	{
+		m_mapBroadcastClassNameToEventMask.erase( it );
+	}
 
 	return MIstatus::success;
 }
@@ -527,6 +489,7 @@ bool CMICmnLLDBDebugger::BroadcasterSaveMask( const CMIUtilString & vBroadcaster
 		return MIstatus::failure;
 	}
 
+	BroadcasterRemoveMask( vBroadcasterClass );
 	MapPairBroadcastClassNameToEventMask_t pr( vBroadcasterClass, vEventMask );
 	m_mapBroadcastClassNameToEventMask.insert( pr );
 
@@ -579,9 +542,10 @@ bool CMICmnLLDBDebugger::ClientSaveMask( const CMIUtilString & vClientName, cons
 		return MIstatus::failure;
 	}
 
-	CMIUtilString strId( vBroadcasterClass.c_str() );
+	CMIUtilString strId( vBroadcasterClass );
 	strId += vClientName;
 
+	ClientRemoveTheirMask( vClientName, vBroadcasterClass );
 	MapPairIdToEventMask_t pr( strId, vEventMask );
 	m_mapIdToEventMask.insert( pr );
 
@@ -605,26 +569,14 @@ bool CMICmnLLDBDebugger::ClientRemoveTheirMask( const CMIUtilString & vClientNam
 		return MIstatus::failure;
 	}
 
-	CMIUtilString strId( vBroadcasterClass.c_str() );
+	CMIUtilString strId( vBroadcasterClass );
 	strId += vClientName;
 
-	bool bFound = false;
-	MapIdToEventMask_t::const_iterator it = m_mapIdToEventMask.begin();
-	while( it != m_mapIdToEventMask.end() )
+	const MapIdToEventMask_t::const_iterator it = m_mapIdToEventMask.find( strId );
+	if( it != m_mapIdToEventMask.end() )
 	{
-		const CMIUtilString & rId( (*it).first );
-		if( rId == strId )
-		{
-			bFound = true;
-			break;
-		}
-
-		// Next
-		++it;
-	}
-
-	if( bFound )
 		m_mapIdToEventMask.erase( it );
+	}
 
 	return MIstatus::success;
 }
@@ -634,7 +586,7 @@ bool CMICmnLLDBDebugger::ClientRemoveTheirMask( const CMIUtilString & vClientNam
 // Type:	Method.
 // Args:	vClientName			- (R) The Client's unique ID.
 //			vBroadcasterClass	- (R) The SBBroadcaster's class name.
-//			vwEventMask			- (RW) The client's mask.
+//			vwEventMask			- (W) The client's mask.
 // Return:	MIstatus::success - Functionality succeeded.
 //			MIstatus::failure - Functionality failed.
 // Throws:	None.
@@ -652,22 +604,14 @@ bool CMICmnLLDBDebugger::ClientGetTheirMask( const CMIUtilString & vClientName, 
 	CMIUtilString strId( vBroadcasterClass.c_str() );
 	strId += vClientName;
 
-	bool bFound = false;
-	MapIdToEventMask_t::const_iterator it = m_mapIdToEventMask.begin();
-	while( it != m_mapIdToEventMask.end() )
+	const MapIdToEventMask_t::const_iterator it = m_mapIdToEventMask.find( strId );
+	if( it != m_mapIdToEventMask.end() )
 	{
-		const CMIUtilString & rId( (*it).first );
-		if( rId == strId )
-		{
-			vwEventMask = (*it).second;
-			return MIstatus::success;
-		}
-
-		// Next
-		++it;
+		vwEventMask = (*it).second;
 	}
 
 	SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_LLDBDEBUGGER_ERR_CLIENTNOTREGISTERD ), vClientName.c_str() ) );
+
 	return MIstatus::failure;
 }
 
@@ -717,7 +661,7 @@ bool CMICmnLLDBDebugger::MonitorSBListenerEvents( bool & vrbIsAlive )
 	if( bExitAppEvent )
 	{
 		// Set the application to shutdown
-		m_pClientDriver->SetExitApplicationFlag();
+		m_pClientDriver->SetExitApplicationFlag( true );
 
 		// Kill *this thread
 		vrbIsAlive = false;

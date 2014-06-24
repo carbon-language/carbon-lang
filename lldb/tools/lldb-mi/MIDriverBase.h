@@ -62,7 +62,7 @@ public:
 	virtual bool					SetDriverParent( const CMIDriverBase & vrOtherDriver );
 	virtual const CMIUtilString &	GetDriverName( void ) const = 0;
 	virtual const CMIUtilString &	GetDriverId( void ) const = 0;
-	virtual void					SetExitApplicationFlag( void );
+	virtual void					SetExitApplicationFlag( const bool vbForceExit );
 	
 	// MI provide information for the pass through (child) assigned driver
 	virtual FILE *	GetStdin( void ) const;		

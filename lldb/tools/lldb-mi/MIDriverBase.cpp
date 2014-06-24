@@ -178,14 +178,18 @@ FILE * CMIDriverBase::GetStderr( void ) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Set the exit application flag. The application checks this flag after every
-//			stdin line is read so the exit may not be instantious.
-// Type:	Method.
-// Args:	None.
+// Details:	Set the MI Driver's exit application flag. The application checks this flag 
+//			after every stdin line is read so the exit may not be instantious.
+//			If vbForceExit is false the MI Driver queries its state and determines if is
+//			should exit or continue operating depending on that running state.
+// Type:	Overrideable.
+// Args:	vbForceExit	- (R) True = Do not query, set state to exit, false = query if can/should exit right now.
 // Return:	None.
 // Throws:	None.
 //--
-void CMIDriverBase::SetExitApplicationFlag( void )
+void CMIDriverBase::SetExitApplicationFlag( const bool vbForceExit )
 {
+	MIunused( vbForceExit );
+
 	// Do nothing - override and implement
 }

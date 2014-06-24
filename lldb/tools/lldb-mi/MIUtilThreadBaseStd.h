@@ -27,7 +27,7 @@
 // Third party headers:
 #ifdef _MSC_VER
 #include <eh.h>
-#endif
+#endif // _MSC_VER
 #include <thread>
 #include <mutex>
 

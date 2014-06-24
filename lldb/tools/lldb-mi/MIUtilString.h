@@ -56,6 +56,7 @@ public:
 	/* ctor */	CMIUtilString( const MIchar * const * vpData );
 	//
 	MIuint			Split( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
+	MIuint			SplitConsiderQuotes( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
 	CMIUtilString	Trim( void ) const;
 	CMIUtilString	Trim( const MIchar vChar ) const;
 	CMIUtilString	StripCREndOfLine( void ) const;
@@ -63,7 +64,10 @@ public:
 	CMIUtilString	FindAndReplace( const CMIUtilString & vFind, const CMIUtilString & vReplaceWith ) const;
 	bool			IsNumber( void ) const;
 	bool			ExtractNumber( MIint64 & vwrNumber ) const;
-
+	// 
+	CMIUtilString & operator= ( const MIchar * vpRhs );
+	CMIUtilString & operator= ( const std::string & vrRhs );
+	
 // Overrideable:
 public:
 	/* dtor */ virtual ~CMIUtilString( void );

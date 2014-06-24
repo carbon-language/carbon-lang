@@ -42,7 +42,11 @@ class CMICmnStreamStderr
 {
 	friend class MI::ISingleton< CMICmnStreamStderr >;
 
-// Methods:
+// Statics:
+public:
+	static bool	TextToStderr( const CMIUtilString & vrTxt );
+
+	// Methods:
 public:
 	bool	Initialize( void );
 	bool	Shutdown( void );

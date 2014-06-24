@@ -275,7 +275,7 @@ bool CMICmnLog::Write( const CMIUtilString & vData, const ELogVerbosity veType )
 		while( it != m_mapMediumToName.end() )
 		{
 			IMedium * pMedium = (*it).first;
-			const CMIUtilString & rNameMedium = (*it).second;
+			const CMIUtilString & rNameMedium = (*it).second; MIunused( rNameMedium );
 			if( pMedium->Write( vData, veType ) )
 				cnt++;
 			else

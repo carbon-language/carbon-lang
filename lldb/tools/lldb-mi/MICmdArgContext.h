@@ -44,6 +44,7 @@ public:
 	CMIUtilString::VecString_t		GetArgs( void ) const;
 	bool							IsEmpty( void ) const;
 	bool							RemoveArg( const CMIUtilString & vArg );
+	bool							RemoveArgAtPos( const CMIUtilString & vArg, const MIuint nArgIndex );
 	//
 	CMICmdArgContext & operator= ( const CMICmdArgContext & vOther );
 	

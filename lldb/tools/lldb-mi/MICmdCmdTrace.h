@@ -44,7 +44,7 @@ class CMICmdCmdTraceStatus : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -56,9 +56,6 @@ public:
 	// From CMICmdInvoker::ICmd
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdTraceStatus( void );
 };

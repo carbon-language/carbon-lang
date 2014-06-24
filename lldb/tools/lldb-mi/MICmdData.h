@@ -35,7 +35,6 @@ struct SMICmdData
 {
 	SMICmdData( void )
 	:	id( 0 )
-	,	nMiCmdNumber( -1 )
 	,	bCmdValid( false )
 	,	bCmdExecutedSuccessfully( false )
 	,	bMIOldStyle( false )
@@ -44,7 +43,7 @@ struct SMICmdData
 	};
 
 	MIuint			id;								// A command's unique ID i.e. GUID
-	MIuint			nMiCmdNumber;					// The command's MI response number	
+	CMIUtilString	strMiCmdToken;					// The command's MI token (a number)	
 	CMIUtilString	strMiCmd;						// The command's name 
 	CMIUtilString	strMiCmdOption;					// The command's arguments or options
 	CMIUtilString	strMiCmdAll;					// The text as received from the client
@@ -59,8 +58,8 @@ struct SMICmdData
 	void Clear( void )
 	{
 		id = 0;
-		nMiCmdNumber = 0;		
-		strMiCmd = MIRSRC( IDS_WORD_INVALIDBRKTS );			
+		strMiCmdToken.clear();		
+		strMiCmd = MIRSRC( IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION );			
 		strMiCmdOption.clear();	
 		strMiCmdAll.clear();		
 		strMiCmdResultRecord.clear();

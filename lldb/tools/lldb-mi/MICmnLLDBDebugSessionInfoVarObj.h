@@ -22,7 +22,6 @@
 #pragma once
 
 // Third Party Headers:
-#include <vector>
 #include <map>
 #include <lldb/API/SBValue.h>
 
@@ -30,17 +29,14 @@
 #include "MIUtilString.h"
 
 //++ ============================================================================
-// Details:	MI debug session variable object.
+// Details:	MI debug session variable object. The static functionality in *this
+//			class manages a map container of *these variable objects.
 // Gotchas:	None.
 // Authors:	Illya Rudkin 24/03/2014.
 // Changes:	None.
 //--
 class CMICmnLLDBDebugSessionInfoVarObj
 {
-// Typedefs:
-public:
-	typedef std::vector< CMICmnLLDBDebugSessionInfoVarObj >	VecVarObj_t;
-
 // Enums:
 public:
 	//++ ----------------------------------------------------------------------
@@ -88,6 +84,11 @@ public:
 public:
 	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( void );
 	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( const CMIUtilString & vrStrNameReal, const CMIUtilString & vrStrName, const lldb::SBValue & vrValue );
+	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( const CMIUtilString & vrStrNameReal, const CMIUtilString & vrStrName, const lldb::SBValue & vrValue, const CMIUtilString & vrStrVarObjParentName );
+	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
+	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDebugSessionInfoVarObj & vrOther );
+	//
+	CMICmnLLDBDebugSessionInfoVarObj & operator= ( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
 	//
 	const CMIUtilString &	GetName( void ) const;
 	const CMIUtilString &	GetNameReal( void ) const;
@@ -95,6 +96,7 @@ public:
 	const lldb::SBValue &	GetValue( void ) const;
 	varType_e				GetType( void ) const;
 	bool					SetVarFormat( const varFormat_e veVarFormat );
+	const CMIUtilString &	GetVarParentName( void ) const;
 	void					UpdateValue( void );
 
 // Overridden:
@@ -104,25 +106,31 @@ public:
 
 // Typedefs:
 private:
-	typedef std::map< CMIUtilString, CMICmnLLDBDebugSessionInfoVarObj * >	MapVarRealNameToVarObject_t;		// ToDo: Do I need this?
-	typedef std::pair< CMIUtilString, CMICmnLLDBDebugSessionInfoVarObj * >	MapPairVarRealNameToVarObject_t;	// ToDo: Do I need this?
+	typedef std::map< CMIUtilString, CMICmnLLDBDebugSessionInfoVarObj >		MapKeyToVarObj_t;			
+	typedef std::pair< CMIUtilString, CMICmnLLDBDebugSessionInfoVarObj >	MapPairKeyToVarObj_t;
 
 // Statics:
 private:
-	static bool	MapVarObjAdd( const CMIUtilString & vrVarRealName, const CMICmnLLDBDebugSessionInfoVarObj & vrVarObj );
-	static bool	MapVarObjDelete( const CMIUtilString & vrVarName );
+	static CMIUtilString 	GetStringFormatted( const MIuint64 vnValue, const MIchar * vpStrValueNatural, varFormat_e veVarFormat );
+	
+// Methods:
+private:
+	bool	CopyOther( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
 
 // Attributes:
 private:
 	static const MIchar *	ms_aVarFormatStrings[];
 	static const MIchar *	ms_aVarFormatChars[];
-	static VecVarObj_t		ms_vecVarObj;			// ToDo: Replace this vector container for something more efficient (set will not compile)
+	static MapKeyToVarObj_t	ms_mapVarIdToVarObj;
 	static MIuint			ms_nVarUniqueId;
 	//
+	// *** Upate the copy constructors and assignment operator ***
 	varFormat_e		m_eVarFormat;
 	varType_e		m_eVarType;
 	CMIUtilString	m_strName;
 	lldb::SBValue	m_SBValue;
 	CMIUtilString	m_strNameReal;
 	CMIUtilString	m_strFormattedValue;
+	CMIUtilString	m_strVarObjParentName;
+	// *** Upate the copy constructors and assignment operator ***
 };

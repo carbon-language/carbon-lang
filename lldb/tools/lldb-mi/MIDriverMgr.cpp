@@ -78,7 +78,7 @@ bool CMIDriverMgr::Initialize( void )
 	bool bOk = MIstatus::success;
 	CMIUtilString errMsg;
  
-	// Note initialization order is important here as some resources depend on previous
+	// Note initialisation order is important here as some resources depend on previous
 	MI::ModuleInit< CMICmnLog >      ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
 	MI::ModuleInit< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
 
@@ -124,6 +124,8 @@ bool CMIDriverMgr::Shutdown( void )
 
 	if( vbAppExitOk )	
 	{
+		// The MI Driver's log updating may have been switched off switch back on to say all is ok. 
+		CMICmnLog::Instance().SetEnabled( true );
 #if _DEBUG
 		CMICmnStreamStdout::Instance().Write( MIRSRC( IDE_MI_APP_EXIT_OK ) ); // Both stdout and Log
 #else
@@ -132,8 +134,19 @@ bool CMIDriverMgr::Shutdown( void )
 	}
 	else
 	{
-		const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDE_MI_APP_EXIT_WITH_PROBLEM ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ) );
-		CMICmnStreamStdout::Instance().Write( msg );
+		CMICmnLog & rAppLog = CMICmnLog::Instance();
+		if( rAppLog.GetEnabled()  )
+		{
+			const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDE_MI_APP_EXIT_WITH_PROBLEM ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ) );
+			CMICmnStreamStdout::Instance().Write( msg );
+		}
+		else
+		{
+			// The MI Driver's log updating may have been switched off switch back on to say there has been problem. 
+			rAppLog.SetEnabled( true );
+			const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ) );
+			CMICmnStreamStdout::Instance().Write( msg );
+		}
 	}
 	
 	m_bInitialized = false;
@@ -478,6 +491,7 @@ bool CMIDriverMgr::ParseArgs( const int argc, const char * argv[], bool & vwbExi
 	bool bHaveArgInterpret = false;
 	bool bHaveArgVersion = false;
 	bool bHaveArgVersionLong = false;
+	bool bHaveArgNoLog = false;
 	bool bHaveArgHelp = false;
 
 	// Hardcode the use of the MI driver
@@ -503,11 +517,20 @@ bool CMIDriverMgr::ParseArgs( const int argc, const char * argv[], bool & vwbExi
 			{
 				   bHaveArgVersionLong = true;
 			}
+			if( 0 == strArg.compare( "--noLog" ) ) 
+			{
+				   bHaveArgNoLog = true;
+			}
 			if( (0 == strArg.compare( "--help" )) || (0 == strArg.compare( "-h" )) )
 			{
 				bHaveArgHelp = true;
 			}
 		}
+	}
+
+	if( bHaveArgNoLog )
+	{
+		CMICmnLog::Instance().SetEnabled( false );
 	}
 	
 	// Todo: Remove this output when MI is finished. It is temporary to persuade Ecllipse plugin to work.
@@ -542,7 +565,7 @@ bool CMIDriverMgr::ParseArgs( const int argc, const char * argv[], bool & vwbExi
 	// driver registered and one LLDB driver registerd and the CMIDriver 
 	// is the first one found.
 	// ToDo: Implement a better solution that handle any order, any number
-	// of drivers.
+	// of drivers. Or this 'feature' may be removed if deemed not required.
 	IDriver * pLldbDriver = GetFirstNonMIDriver();
 	IDriver * pMi2Driver = GetFirstMIDriver();
 	if( bHaveArgInterpret && (pMi2Driver != nullptr) )
@@ -595,7 +618,9 @@ CMIUtilString CMIDriverMgr::GetHelpOnCmdLineArgOptions( void ) const
 		MIRSRC( IDE_MI_APP_ARG_VERSION ),
 		MIRSRC( IDE_MI_APP_ARG_VERSION_LONG ),
 		MIRSRC( IDE_MI_APP_ARG_INTERPRETER ),
-		MIRSRC( IDS_CMD_QUIT_HELP )
+		CMIUtilString::Format( MIRSRC( IDE_MI_APP_ARG_NO_APP_LOG ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ),
+		MIRSRC( IDS_CMD_QUIT_HELP ),
+		MIRSRC( IDE_MI_APP_ARG_EXAMPLE )
 	};
 	const MIuint nHelpItems = sizeof pHelp / sizeof pHelp[ 0 ];
 	CMIUtilString strHelp;
@@ -622,7 +647,7 @@ CMIDriverMgr::IDriver * CMIDriverMgr::GetFirstMIDriver( void ) const
 	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
 	while( it != m_mapDriverIdToDriver.end() )
 	{
-		const CMIUtilString & dvrId = (*it).first;
+		const CMIUtilString & rDrvId = (*it).first; MIunused( rDrvId );
 		IDriver * pDvr = (*it).second;
 		if( pDvr->GetDriverIsGDBMICompatibleDriver() )
 		{
@@ -651,7 +676,7 @@ CMIDriverMgr::IDriver * CMIDriverMgr::GetFirstNonMIDriver( void ) const
 	MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
 	while( it != m_mapDriverIdToDriver.end() )
 	{
-		const CMIUtilString & dvrId = (*it).first;
+		const CMIUtilString & rDrvId = (*it).first; MIunused( rDrvId );
 		IDriver * pDvr = (*it).second;
 		if( !pDvr->GetDriverIsGDBMICompatibleDriver() )
 		{

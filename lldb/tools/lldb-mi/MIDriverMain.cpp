@@ -24,8 +24,11 @@
 //					MICmdBase.h / .cpp
 //					MICmdCmd.h / .cpp
 // Versions:	1.0.0.1		First version from scratch 28/1/2014 to 28/3/2014. MI not complete.
-//				1.0.0.2		7/3/2014. MI not complete.
-//				1.0.0.3		7/5/2014. MI not complete.
+//				1.0.0.2		First deliverable to client 7/3/2014. MI not complete.
+//				1.0.0.3		Code refactor tidy. Release to community for evaluation 17/5/2014. MI not complete.
+//				1.0.0.4		Post release to community for evaluation 17/5/2014. MI not complete.
+//				1.0.0.5		Second deliverable to client 16/6/2014.
+//				1.0.0.6		Post release of second deliverable to client 16/6/2014.
 //				See MIreadme.txt for list of MI commands implemented.
 //
 // Environment:	Compilers:	Visual C++ 12.
@@ -116,7 +119,8 @@ void sigint_handler( int vSigno )
 
 	CMICmnLog::Instance().WriteLog( CMIUtilString::Format( MIRSRC( IDS_PROCESS_SIGNAL_RECEIVED ), "SIGINT", vSigno ) );
 
-	// Signal MI to shutdown
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+	// Signal MI to shutdown or halt a running debug session
 	CMICmnStreamStdin::Instance().SetCtrlCHit();
 }
 

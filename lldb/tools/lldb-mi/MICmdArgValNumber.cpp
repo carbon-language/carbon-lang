@@ -126,6 +126,10 @@ bool CMICmdArgValNumber::Validate( CMICmdArgContext & vwArgContext )
 //--
 bool CMICmdArgValNumber::IsArgNumber( const CMIUtilString & vrTxt ) const
 {
+	// Look for --someLongOption
+	if( std::string::npos != vrTxt.find( "--" ) )
+		return false;
+	
 	return vrTxt.IsNumber();
 }
 

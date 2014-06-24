@@ -47,7 +47,7 @@ class CMICmdCmdFileExecAndSymbols : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -60,9 +60,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-		
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdFileExecAndSymbols( void );
 

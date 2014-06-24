@@ -20,7 +20,6 @@
 //--
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmnThreadMgrStd.h"
 #include "MICmnLog.h"
 #include "MICmnResources.h"
@@ -50,7 +49,7 @@ CMICmnThreadMgrStd::~CMICmnThreadMgrStd( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Initialize resources for *this thread manager.
+// Details:	Initialise resources for *this thread manager.
 // Type:	Method.
 // Args:	None.
 // Return:	MIstatus::success - Functional succeeded.
@@ -69,7 +68,7 @@ bool CMICmnThreadMgrStd::Initialize( void )
 	ClrErrorDescription();
 	CMIUtilString errMsg;
 
-	// Note initialization order is important here as some resources depend on previous
+	// Note initialisation order is important here as some resources depend on previous
 	MI::ModuleInit< CMICmnLog >      ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
 	MI::ModuleInit< CMICmnResources >( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
 
@@ -133,16 +132,11 @@ bool CMICmnThreadMgrStd::Shutdown( void )
 //--
 bool CMICmnThreadMgrStd::ThreadAllTerminate( void )
 {
-	// Find an iterator object for the list
 	ThreadList_t::const_iterator it = m_threadList.begin();
-	
-	// Loop over all entries in the list
 	for( ; it != m_threadList.end(); ++it )
 	{
-		// Get the thread object from the list
-		CMIUtilThreadActiveObjBase * pThread = *it;
-		
 		// If the thread is still running
+		CMIUtilThreadActiveObjBase * pThread = *it;
 		if( pThread->ThreadIsActive() )
 		{
 			// Ask this thread to kill itself
@@ -167,7 +161,6 @@ bool CMICmnThreadMgrStd::ThreadAllTerminate( void )
 //--
 bool CMICmnThreadMgrStd::AddThread( const CMIUtilThreadActiveObjBase & vrObj )
 {
-	// Push this thread onto the thread list
 	m_threadList.push_back( const_cast< CMIUtilThreadActiveObjBase * >( &vrObj ) );
 
 	return MIstatus::success;

@@ -57,12 +57,40 @@ class CMIDriver
 {
 	friend class MI::ISingleton< CMIDriver >;
 
+// Enumerations:
+public:
+	//++ ----------------------------------------------------------------------
+	// Details: The MI Driver has a running state which is used to help determin
+	//			which specific action(s) it should take or not allow. 
+	//			The driver when operational and not shutting down alternates
+	//			between eDriverState_RunningNotDebugging and 
+	//			eDriverState_RunningDebugging. eDriverState_RunningNotDebugging
+	//			is normally set when a breakpoint is hit or halted.
+	//			eDriverState_RunningDebugging is normally set when "exec-continue"
+	//			or "exec-run" is issued.
+	//--
+	enum DriverState_e
+	{
+		eDriverState_NotRunning				= 0,	// The MI Driver is not operating
+		eDriverState_Initialising,					// The MI Driver is setting itself up
+		eDriverState_RunningNotDebugging,			// The MI Driver is operational acting on any MI commands sent to it
+		eDriverState_RunningDebugging,				// The MI Driver is currently overseeing an inferior program that is running
+		eDriverState_ShuttingDown,					// The MI Driver is tearing down resources and about exit
+		eDriverState_count							// Always last
+	};
+
 // Methods:
 public:
 	// MI system
-	bool	Initialize( void );
-	bool	Shutdown( void );
+	bool			Initialize( void );
+	bool			Shutdown( void );
 	
+	// MI state
+	bool			GetExitApplicationFlag( void ) const;
+	DriverState_e	GetCurrentDriverState( void ) const;
+	bool			SetDriverStateRunningNotDebugging( void );
+	bool			SetDriverStateRunningDebugging( void );
+
 	// MI information about itself
 	const CMIUtilString &	GetAppNameShort( void ) const;
 	const CMIUtilString &	GetAppNameLong( void ) const;
@@ -72,7 +100,8 @@ public:
 	bool	WriteMessageToLog( const CMIUtilString & vMessage );
 	bool	SetEnableFallThru( const bool vbYes );
 	bool	GetEnableFallThru( void ) const;
-
+	bool	InjectMICommand( const CMIUtilString & vMICmd );
+	
 // Overridden:
 public:
 	// From CMIDriverMgr::IDriver
@@ -88,7 +117,7 @@ public:
 	virtual bool					SetId( const CMIUtilString & vId );
 	virtual const CMIUtilString &	GetId( void ) const;
 	// From CMIDriverBase
-	virtual void					SetExitApplicationFlag( void );
+	virtual void					SetExitApplicationFlag( const bool vbForceExit );
 	virtual bool					DoFallThruToAnotherDriver( const CMIUtilString & vCmd, CMIUtilString & vwErrMsg );
 	virtual bool					SetDriverToFallThruTo( const CMIDriverBase & vrOtherDriver );
 	virtual FILE *					GetStdin( void ) const;		
@@ -112,11 +141,15 @@ private:
 	lldb::SBError	ParseArgs( const int argc, const char * argv[], FILE * vpStdOut, bool & vwbExiting );
 	bool			ReadStdinLineQueue( void );
 	bool			DoAppQuit( void );
-	bool			InterpretCommand( const CMIUtilString & vTextLine, bool & vwbCmdYesValid );
+	bool			InterpretCommand( const CMIUtilString & vTextLine );
+	bool			InterpretCommandThisDriver( const CMIUtilString & vTextLine, bool & vwbCmdYesValid );
 	bool			InterpretCommandFallThruDriver( const CMIUtilString & vTextLine, bool & vwbCmdYesValid );
 	bool			ExecuteCommand( const SMICmdData & vCmdData );
 	bool			StartWorkerThreads( void );
 	bool			StopWorkerThreads( void );
+	bool			InitClientIDEToMIDriver( void ) const;
+	bool			InitClientIDEEclipse( void ) const;
+	bool			QueueMICommand( const CMIUtilString & vMICmd );
 
 // Overridden:
 private:
@@ -137,4 +170,5 @@ private:
 	CMICmnStreamStdin &		m_rStdin;	
 	CMICmnLLDBDebugger &	m_rLldbDebugger;
 	CMICmnStreamStdout &	m_rStdOut;
+	DriverState_e			m_eCurrentDriverState;
 };

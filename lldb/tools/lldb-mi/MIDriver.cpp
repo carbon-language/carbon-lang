@@ -21,6 +21,7 @@
 
 // Third party headers:
 #include <stdarg.h>		// va_list, va_start, var_end
+#include <iostream>
 #include <lldb/API/SBError.h>
 
 // In-house headers:
@@ -61,6 +62,7 @@ CMIDriver::CMIDriver( void )
 ,	m_rStdin( CMICmnStreamStdin::Instance() )
 ,	m_rLldbDebugger( CMICmnLLDBDebugger::Instance() )
 ,	m_rStdOut( CMICmnStreamStdout::Instance() )
+,	m_eCurrentDriverState( eDriverState_NotRunning )
 {
 }
 
@@ -151,6 +153,7 @@ const CMIUtilString & CMIDriver::GetVersionDescription( void ) const
 //--
 bool CMIDriver::Initialize( void )
 {
+	m_eCurrentDriverState = eDriverState_Initialising;
 	m_clientUsageRefCnt++;
 
 	ClrErrorDescription();
@@ -188,9 +191,11 @@ bool CMIDriver::Initialize( void )
 	}
 #endif // MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER
 
-	m_bExitApp     = false;
+	m_bExitApp = false;
+	bOk = bOk && InitClientIDEToMIDriver(); // Init Eclipse IDE
+		
 	m_bInitialized = bOk;
-	
+
 	if( !bOk )
 	{
 		const CMIUtilString msg = CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_DRIVER ), errMsg.c_str() );
@@ -198,6 +203,8 @@ bool CMIDriver::Initialize( void )
 		return MIstatus::failure;
 	}
 
+	m_eCurrentDriverState = eDriverState_RunningNotDebugging;
+	
 	return bOk;
 }
 
@@ -216,6 +223,8 @@ bool CMIDriver::Shutdown( void )
 	
 	if( !m_bInitialized )
 		return MIstatus::success;
+
+	m_eCurrentDriverState = eDriverState_ShuttingDown;
 
 	ClrErrorDescription();
 
@@ -236,6 +245,8 @@ bool CMIDriver::Shutdown( void )
 	{
 		SetErrorDescriptionn( MIRSRC( IDS_MI_SHUTDOWN_ERR ), errMsg.c_str() );
 	}
+
+	m_eCurrentDriverState = eDriverState_NotRunning;
 
 	return bOk;
 }
@@ -423,12 +434,12 @@ bool CMIDriver::GetDriverIsGDBMICompatibleDriver( void ) const
 //			"stdin monitor" thread (ID).
 // Type:	Overridden.
 // Args:	vStdInBuffer	- (R) Copy of the current stdin line data.
-//			vrbYesExit		- (W) True = yes exit stdin monitoring, false = continue monitor.
+//			vrbYesExit		- (RW) True = yes exit stdin monitoring, false = continue monitor.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
-bool CMIDriver::ReadLine( const CMIUtilString & vStdInBuffer, bool & vrbYesExit )
+bool CMIDriver::ReadLine( const CMIUtilString & vStdInBuffer, bool & vrwbYesExit )
 {
 	// For debugging. Update prompt show stdin is working
 	//printf( "%s\n", vStdInBuffer.c_str() );
@@ -437,20 +448,18 @@ bool CMIDriver::ReadLine( const CMIUtilString & vStdInBuffer, bool & vrbYesExit 
 	// Special case look for the quit command here so stop monitoring stdin stream
 	// So we do not go back to fgetc() and wait and hang thread on exit
 	if( vStdInBuffer == "quit" )
-		vrbYesExit = true;
+		vrwbYesExit = true;
 
 	// 1. Put new line in the queue container by stdin monitor thread
-	// 2. Then *this driver ReadStdinLineQueuer() should when ready read the quence
-	{
-		CMIUtilThreadLock lock( m_threadMutex );
-		m_queueStdinLine.push( vStdInBuffer );
+	// 2. Then *this driver calls ReadStdinLineQueue() when ready to read the queue in its
+	// own thread
+	const bool bOk = QueueMICommand( vStdInBuffer );
 
-		// Check to see if the *this driver is shutting down (exit application)
-		if( !vrbYesExit )
-			vrbYesExit = m_bDriverIsExiting;
-	}
-	
-	return MIstatus::success;
+	// Check to see if the *this driver is shutting down (exit application)
+	if( !vrwbYesExit )
+		vrwbYesExit = m_bDriverIsExiting;
+
+	return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -582,14 +591,14 @@ bool CMIDriver::ReadStdinLineQueue( void )
 		}
 
 		// Process the command
-		bool bCmdYesValid = false;
-		bool bOk = InterpretCommand( lineText, bCmdYesValid );
-		if( bOk && !bCmdYesValid )
-			bOk = InterpretCommandFallThruDriver( lineText, bCmdYesValid );
+		const bool bOk = InterpretCommand( lineText );
 
 		// Draw prompt if desired
 		if( bOk && m_rStdin.GetEnablePrompt() )
 			m_rStdOut.WriteMIResponse( m_rStdin.GetPrompt() );
+
+		// Input has been processed
+		bHaveInput = false;
 	}
 	else
 	{
@@ -640,7 +649,7 @@ bool CMIDriver::InterpretCommandFallThruDriver( const CMIUtilString & vTextLine,
 	MIunused( vTextLine );
 	MIunused( vwbCmdYesValid );
 
-	// ToDo: Implement when less urgent work to be done
+	// ToDo: Implement when less urgent work to be done or decide remove as not required
 	//bool bOk = MIstatus::success;
 	//bool bCmdNotUnderstood = true;
 	//if( bCmdNotUnderstood && GetEnableFallThru() )
@@ -803,6 +812,62 @@ const CMIUtilString & CMIDriver::GetId( void ) const
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	Inject a command into the command processing system to be interpreted as a
+//			command read from stdin. The text representing the command is also written
+//			out to stdout as the command did not come from via stdin.
+// Type:	Method.
+// Args:	vMICmd	- (R) Text data representing a possible command.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMIDriver::InjectMICommand( const CMIUtilString & vMICmd )
+{
+	const bool bOk = m_rStdOut.WriteMIResponse( vMICmd );
+
+	return bOk && QueueMICommand( vMICmd );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add a new command candidate to the command queue to be processed by the 
+//			command system.
+// Type:	Method.
+// Args:	vMICmd	- (R) Text data representing a possible command.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMIDriver::QueueMICommand( const CMIUtilString & vMICmd )
+{
+	CMIUtilThreadLock lock( m_threadMutex );
+	m_queueStdinLine.push( vMICmd );
+	
+	return MIstatus::success;
+}
+	
+//++ ------------------------------------------------------------------------------------
+// Details:	Interpret the text data and match against current commands to see if there 
+//			is a match. If a match then the command is issued and actioned on. The 
+//			text data if not understood by *this driver is past on to the Fall Thru
+//			driver.
+//			This function is used by the application's main thread.
+// Type:	Method.
+// Args:	vTextLine	- (R) Text data representing a possible command.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMIDriver::InterpretCommand( const CMIUtilString & vTextLine )
+{
+	bool bCmdYesValid = false;
+	bool bOk = InterpretCommandThisDriver( vTextLine, bCmdYesValid );
+	if( bOk && !bCmdYesValid )
+		bOk = InterpretCommandFallThruDriver( vTextLine, bCmdYesValid );
+
+	return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	Interpret the text data and match against current commands to see if there 
 //			is a match. If a match then the command is issued and actioned on. If a
 //			command cannot be found to match then vwbCmdYesValid is set to false and
@@ -815,7 +880,7 @@ const CMIUtilString & CMIDriver::GetId( void ) const
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
-bool CMIDriver::InterpretCommand( const CMIUtilString & vTextLine, bool & vwbCmdYesValid )
+bool CMIDriver::InterpretCommandThisDriver( const CMIUtilString & vTextLine, bool & vwbCmdYesValid )
 {
 	vwbCmdYesValid = false;
 
@@ -842,7 +907,7 @@ bool CMIDriver::InterpretCommand( const CMIUtilString & vTextLine, bool & vwbCmd
 	const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_CMD_RECEIVED ), vTextLine.c_str(), strNot.c_str(), strNotInCmdFactory.c_str() ) );
 	const CMICmnMIValueConst vconst = CMICmnMIValueConst( msg );
 	const CMICmnMIValueResult valueResult( "msg", vconst );
-	const CMICmnMIResultRecord miResultRecord( cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, valueResult );
+	const CMICmnMIResultRecord miResultRecord( cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, valueResult );
 	m_rStdOut.WriteMIResponse( miResultRecord.GetString() );
 	
 	// Proceed to wait for or execute next command
@@ -866,15 +931,187 @@ bool CMIDriver::ExecuteCommand( const SMICmdData & vCmdData )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Set the exit application flag. The application checks this flag after every
-//			stdin line is read so the exit may not be instantious.
-// Type:	Method.
+// Details:	Set the MI Driver's exit application flag. The application checks this flag 
+//			after every stdin line is read so the exit may not be instantious.
+//			If vbForceExit is false the MI Driver queries its state and determines if is
+//			should exit or continue operating depending on that running state.
+//			This is related to the running state of the MI driver.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.
 //--
-void CMIDriver::SetExitApplicationFlag( void )
+void CMIDriver::SetExitApplicationFlag( const bool vbForceExit )
 {
-	CMIUtilThreadLock lock( m_threadMutex );
+	if( vbForceExit )
+	{
+		CMIUtilThreadLock lock( m_threadMutex );
+		m_bExitApp = true;
+		return;
+	}
+
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+	// Did we receive a SIGINT from the client during a running debug program, if
+	// so then SIGINT is not to be taken as meaning kill the MI driver application
+	// but halt the inferior program being debugged instead
+	if( m_eCurrentDriverState == eDriverState_RunningDebugging )
+	{
+		InjectMICommand( "-exec-interrupt" );
+		return;
+	}
+
 	m_bExitApp = true;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Get the  MI Driver's exit exit application flag. 
+//			This is related to the running state of the MI driver.
+// Type:	Method.
+// Args:	None.
+// Return:	bool	- True = MI Driver is shutting down, false = MI driver is running.
+// Throws:	None.
+//--
+bool CMIDriver::GetExitApplicationFlag( void ) const
+{
+	return m_bExitApp;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Get the current running state of the MI Driver. 
+// Type:	Method.
+// Args:	None.
+// Return:	DriverState_e	- The current running state of the application.
+// Throws:	None.
+//--
+CMIDriver::DriverState_e CMIDriver::GetCurrentDriverState( void ) const
+{
+	return m_eCurrentDriverState;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Set the current running state of the MI Driver to running and currently in
+//			a debug session. The driver's state must in the state running and not in a
+//			debug session to set this new state.
+// Type:	Method.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Return:	DriverState_e	- The current running state of the application.
+// Throws:	None.
+//--
+bool CMIDriver::SetDriverStateRunningNotDebugging( void )
+{
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+		
+	if( m_eCurrentDriverState == eDriverState_RunningNotDebugging )
+		return MIstatus::success;
+
+	// Driver cannot be in the following states to set eDriverState_RunningNotDebugging
+	switch( m_eCurrentDriverState )
+	{
+	case eDriverState_NotRunning:
+	case eDriverState_Initialising:
+	case eDriverState_ShuttingDown:
+	{
+		SetErrorDescription( MIRSRC( IDS_DRIVER_ERR_DRIVER_STATE_ERROR ) );
+		return MIstatus::failure;
+	}
+	case eDriverState_RunningDebugging:
+	case eDriverState_RunningNotDebugging:
+		break;
+	case eDriverState_count:
+	default:
+		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CODE_ERR_INVALID_ENUMERATION_VALUE ), "SetDriverStateRunningNotDebugging()" ) );
+		return MIstatus::failure;
+	}
+
+	// Driver must be in this state to set eDriverState_RunningNotDebugging
+	if( m_eCurrentDriverState != eDriverState_RunningDebugging )
+	{
+		SetErrorDescription( MIRSRC( IDS_DRIVER_ERR_DRIVER_STATE_ERROR ) );
+		return MIstatus::failure;
+	}
+
+	m_eCurrentDriverState = eDriverState_RunningNotDebugging;
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Set the current running state of the MI Driver to running and currently not in
+//			a debug session. The driver's state must in the state running and in a
+//			debug session to set this new state.
+// Type:	Method.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Return:	DriverState_e	- The current running state of the application.
+// Throws:	None.
+//--
+bool CMIDriver::SetDriverStateRunningDebugging( void )
+{
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+		
+	if( m_eCurrentDriverState == eDriverState_RunningDebugging )
+		return MIstatus::success;
+
+	// Driver cannot be in the following states to set eDriverState_RunningDebugging
+	switch( m_eCurrentDriverState )
+	{
+	case eDriverState_NotRunning:
+	case eDriverState_Initialising:
+	case eDriverState_ShuttingDown:
+	{
+		SetErrorDescription( MIRSRC( IDS_DRIVER_ERR_DRIVER_STATE_ERROR ) );
+		return MIstatus::failure;
+	}
+	case eDriverState_RunningDebugging:
+	case eDriverState_RunningNotDebugging:
+		break;
+	case eDriverState_count:
+	default:
+		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CODE_ERR_INVALID_ENUMERATION_VALUE ), "SetDriverStateRunningDebugging()" ) );
+		return MIstatus::failure;
+	}
+
+	// Driver must be in this state to set eDriverState_RunningDebugging
+	if( m_eCurrentDriverState != eDriverState_RunningNotDebugging )
+	{
+		SetErrorDescription( MIRSRC( IDS_DRIVER_ERR_DRIVER_STATE_ERROR ) );
+		return MIstatus::failure;
+	}
+
+	m_eCurrentDriverState = eDriverState_RunningDebugging;
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Prepare the client IDE so it will start working/communicating with *this MI 
+//			driver.
+// Type:	Method.
+// Args:	None.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMIDriver::InitClientIDEToMIDriver( void ) const
+{
+	// Put other IDE init functions here
+	return InitClientIDEEclipse();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The IDE Eclipse when debugging locally expects "(gdb)\n" character
+//			sequence otherwise it refuses to communicate and times out. This should be
+//			sent to Eclipse before anything else.
+// Type:	Method.
+// Args:	None.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMIDriver::InitClientIDEEclipse( void ) const
+{
+	std::cout << "(gdb)" << std::endl;
+
+	return MIstatus::success;
 }

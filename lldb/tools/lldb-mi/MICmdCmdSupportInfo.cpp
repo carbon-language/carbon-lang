@@ -43,7 +43,7 @@ CMICmdCmdSupportInfoMiCmdQuery::CMICmdCmdSupportInfoMiCmdQuery( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "info-gdb-mi-command";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdSupportInfoMiCmdQuery::CreateSelf;
 }
 
@@ -118,14 +118,14 @@ bool CMICmdCmdSupportInfoMiCmdQuery::Acknowledge( void )
 	const CMICmnMIValueResult miValueResult( "exists", miValueConst );
 	const CMICmnMIValueTuple miValueTuple( miValueResult );
 	const CMICmnMIValueResult miValueResult2( "command", miValueTuple );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult2 );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult2 );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

@@ -10,9 +10,9 @@
 //++
 // File:		MICmdCmdMiscellanous.h
 //
-// Overview:	CMICmdCmdGdbSet					interface.
-//				CMICmdCmdGdbExit				interface.
+// Overview:	CMICmdCmdGdbExit				interface.
 //				CMICmdCmdListThreadGroups		interface.
+//				CMICmdCmdInterpreterExec		interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class
@@ -32,41 +32,13 @@
 
 #pragma once
 
+// Third party headers:
+#include <lldb/API/SBCommandReturnObject.h>
+
 // In-house headers:
 #include "MICmdBase.h"
 #include "MICmnMIValueTuple.h"
 #include "MICmnMIValueList.h"
-
-//++ ============================================================================
-// Details:	MI command class. MI commands derived from the command base class.
-//			*this class implements MI command "gdb-set".
-//			This command does not follow the MI documentation exactly.
-// Gotchas:	None.
-// Authors:	Illya Rudkin 03/03/2014.
-// Changes:	None.
-//--
-class CMICmdCmdGdbSet : public CMICmdBase
-{
-// Statics:
-public:
-	// Required by the CMICmdFactory when registering *this commmand
-	static CMICmdBase *	CreateSelf( void );
-
-// Methods:
-public:
-	/* ctor */	CMICmdCmdGdbSet( void );
-
-// Overridden:
-public:
-	// From CMICmdInvoker::ICmd
-	virtual bool	Execute( void );
-	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
-	// From CMICmnBase
-	/* dtor */ virtual ~CMICmdCmdGdbSet( void );
-};
 
 //++ ============================================================================
 // Details:	MI command class. MI commands derived from the command base class.
@@ -79,7 +51,7 @@ class CMICmdCmdGdbExit : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -91,9 +63,6 @@ public:
 	// From CMICmdInvoker::ICmd
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdGdbExit( void );
 };
@@ -111,7 +80,7 @@ class CMICmdCmdListThreadGroups : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -124,9 +93,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdListThreadGroups( void );
 
@@ -144,4 +110,38 @@ private:
 	const CMIUtilString	m_constStrArgNamedRecurse;
 	const CMIUtilString	m_constStrArgNamedGroup;
 	const CMIUtilString	m_constStrArgNamedThreadGroup;
+};
+
+//++ ============================================================================
+// Details:	MI command class. MI commands derived from the command base class.
+//			*this class implements MI command "interpreter-exec".
+// Gotchas:	None.
+// Authors:	Illya Rudkin 16/05/2014.
+// Changes:	None.
+//--
+class CMICmdCmdInterpreterExec : public CMICmdBase
+{
+// Statics:
+public:
+	// Required by the CMICmdFactory when registering *this command
+	static CMICmdBase *	CreateSelf( void );
+
+// Methods:
+public:
+	/* ctor */	CMICmdCmdInterpreterExec( void );
+
+// Overridden:
+public:
+	// From CMICmdInvoker::ICmd
+	virtual bool	Execute( void );
+	virtual bool	Acknowledge( void );
+	virtual bool	ParseArgs( void );
+	// From CMICmnBase
+	/* dtor */ virtual ~CMICmdCmdInterpreterExec( void );
+
+// Attributes:
+private:
+	const CMIUtilString			m_constStrArgNamedInterpreter;
+	const CMIUtilString			m_constStrArgNamedCommand;
+	lldb::SBCommandReturnObject m_lldbResult;
 };

@@ -143,6 +143,7 @@ bool CMICmdArgValOptionLong::Validate( CMICmdArgContext & vwArgContext )
 	}
 	
 	// More than one option...
+	MIuint nArgIndex = 0;
 	const CMIUtilString::VecString_t vecOptions( vwArgContext.GetArgs() );
 	CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
 	while( it != vecOptions.end() )
@@ -157,7 +158,7 @@ bool CMICmdArgValOptionLong::Validate( CMICmdArgContext & vwArgContext )
 			
 			if( m_nExpectingNOptions != 0 )
 			{
-				if( ExtractExpectedOptions( vwArgContext ) )
+				if( ExtractExpectedOptions( vwArgContext, nArgIndex ) )
 				{
 					m_bValid = true;
 					return MIstatus::success;
@@ -175,6 +176,7 @@ bool CMICmdArgValOptionLong::Validate( CMICmdArgContext & vwArgContext )
 		
 		// Next
 		++it;
+		++nArgIndex;
 	}
 
 	return MIstatus::failure;
@@ -185,43 +187,56 @@ bool CMICmdArgValOptionLong::Validate( CMICmdArgContext & vwArgContext )
 //			CMICmdArgValListBase::m_eArgType forming argument objects for each of those
 //			options extracted.
 // Type:	Method.
-// Args:	vrwTxt	- (RW) The command's argument options string.
+// Args:	vrwTxt		- (RW)	The command's argument options string.
+//			nArgIndex	- (R)	The Nth arg position in argument context from the left.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
-bool CMICmdArgValOptionLong::ExtractExpectedOptions( CMICmdArgContext & vrwTxt ) 
+bool CMICmdArgValOptionLong::ExtractExpectedOptions( CMICmdArgContext & vrwTxt, const MIuint nArgIndex ) 
 {
 	CMIUtilString::VecString_t vecOptions;
-	const MIuint nOptionsPresent = vrwTxt.GetArgsLeftToParse().Split( " ", vecOptions );
+	MIuint nOptionsPresent = 0;
+	if( (m_eExpectingOptionType != eArgValType_StringQuoted) && 
+		(m_eExpectingOptionType != eArgValType_StringQuotedNumber) &&
+		(m_eExpectingOptionType != eArgValType_StringQuotedNumberPath) )
+		nOptionsPresent = vrwTxt.GetArgsLeftToParse().Split( " ", vecOptions );
+	else
+		nOptionsPresent = vrwTxt.GetArgsLeftToParse().SplitConsiderQuotes( " ", vecOptions );
 	if( nOptionsPresent == 0 )
 		return MIstatus::failure;
 
+	MIuint nArgIndexCnt = 0;
 	MIuint nTypeCnt = 0;
 	MIuint nTypeCnt2 = 0;
 	MIuint nFoundNOptionsCnt = 0;
 	CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
 	while( it != vecOptions.end() )
 	{
-		nTypeCnt++;
-		const CMIUtilString & rOption( *it ); 
-		if( IsExpectedCorrectType( rOption, m_eExpectingOptionType ) )
+		// Move to the Nth argument position from left before do validation/checking
+		if( nArgIndexCnt++ == nArgIndex )
 		{
-			nTypeCnt2++;
-			CMICmdArgValBase * pOptionObj = CreationObj( rOption, m_eExpectingOptionType );
-			if( (pOptionObj != nullptr) && vrwTxt.RemoveArg( rOption ) )
+			nTypeCnt++;
+			const CMIUtilString & rOption( *it ); 
+			if( IsExpectedCorrectType( rOption, m_eExpectingOptionType ) )
 			{
-				nFoundNOptionsCnt++;
-				m_vecArgsExpected.push_back( pOptionObj );
+				nTypeCnt2++;
+				CMICmdArgValBase * pOptionObj = CreationObj( rOption, m_eExpectingOptionType );
+				if( (pOptionObj != nullptr) && vrwTxt.RemoveArgAtPos( rOption, nArgIndex ) )
+				{
+					nFoundNOptionsCnt++;
+					m_vecArgsExpected.push_back( pOptionObj );
+				}
 			}
-		}
-		// Is the sequence 'options' of same type broken. Expecting the same type until the
-		// next argument.
-		if( nTypeCnt != nTypeCnt2 )
-			return MIstatus::failure;
 
-		if( nFoundNOptionsCnt == m_nExpectingNOptions )
-			return MIstatus::success;
+			// Is the sequence 'options' of same type broken. Expecting the same type until the
+			// next argument.
+			if( nTypeCnt != nTypeCnt2 )
+				return MIstatus::failure;
+
+			if( nFoundNOptionsCnt == m_nExpectingNOptions )
+				return MIstatus::success;
+		}
 
 		// Next
 		++it;

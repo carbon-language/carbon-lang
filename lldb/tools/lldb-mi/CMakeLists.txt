@@ -6,6 +6,7 @@ add_lldb_executable(lldb-mi
   MICmdArgContext.cpp
   MICmdArgSet.cpp
   MICmdArgValBase.cpp
+  MICmdArgValConsume.cpp
   MICmdArgValFile.cpp
   MICmdArgValListBase.cpp
   MICmdArgValListOfN.cpp
@@ -22,6 +23,9 @@ add_lldb_executable(lldb-mi
   MICmdCmdEnviro.cpp
   MICmdCmdExec.cpp
   MICmdCmdFile.cpp
+  MICmdCmdGdbInfo.cpp
+  MICmdCmdGdbSet.cpp
+  MICmdCmdGdbThread.cpp
   MICmdCmdMiscellanous.cpp
   MICmdCmdStack.cpp
   MICmdCmdSupportInfo.cpp
@@ -55,6 +59,8 @@ add_lldb_executable(lldb-mi
   MICmnResources.cpp
   MICmnStreamStderr.cpp
   MICmnStreamStdin.cpp
+  MICmnStreamStdinLinux.cpp
+  MICmnStreamStdinWindows.cpp
   MICmnStreamStdout.cpp
   MICmnThreadMgrStd.cpp
   MIDriver.cpp
@@ -64,13 +70,14 @@ add_lldb_executable(lldb-mi
   MIUtilDateTimeStd.cpp
   MIUtilDebug.cpp
   MIUtilFileStd.cpp
-  MIUtilSetID.cpp
+  MIUtilMapIdToVariant.cpp
   MIUtilString.cpp
   MIUtilSystemLinux.cpp
   MIUtilSystemOsx.cpp
   MIUtilSystemWindows.cpp
   MIUtilTermios.cpp
   MIUtilThreadBaseStd.cpp
+  MIUtilVariant.cpp
   Platform.cpp
   )
 else ()
@@ -79,6 +86,7 @@ add_lldb_executable(lldb-mi
   MICmdArgContext.cpp
   MICmdArgSet.cpp
   MICmdArgValBase.cpp
+  MICmdArgValConsume.cpp
   MICmdArgValFile.cpp
   MICmdArgValListBase.cpp
   MICmdArgValListOfN.cpp
@@ -95,6 +103,9 @@ add_lldb_executable(lldb-mi
   MICmdCmdEnviro.cpp
   MICmdCmdExec.cpp
   MICmdCmdFile.cpp
+  MICmdCmdGdbInfo.cpp
+  MICmdCmdGdbSet.cpp
+  MICmdCmdGdbThread.cpp
   MICmdCmdMiscellanous.cpp
   MICmdCmdStack.cpp
   MICmdCmdSupportInfo.cpp
@@ -128,6 +139,8 @@ add_lldb_executable(lldb-mi
   MICmnResources.cpp
   MICmnStreamStderr.cpp
   MICmnStreamStdin.cpp
+  MICmnStreamStdinLinux.cpp
+  MICmnStreamStdinWindows.cpp
   MICmnStreamStdout.cpp
   MICmnThreadMgrStd.cpp
   MIDriver.cpp
@@ -137,13 +150,14 @@ add_lldb_executable(lldb-mi
   MIUtilDateTimeStd.cpp
   MIUtilDebug.cpp
   MIUtilFileStd.cpp
-  MIUtilSetID.cpp
+  MIUtilMapIdToVariant.cpp
   MIUtilString.cpp
   MIUtilSystemLinux.cpp
   MIUtilSystemOsx.cpp
   MIUtilSystemWindows.cpp
   MIUtilTermios.cpp
   MIUtilThreadBaseStd.cpp
+  MIUtilVariant.cpp
   Platform.cpp
   )
 endif ()

@@ -40,7 +40,7 @@ class CMICmdArgContext;
 //			to this container and will be deleted when *this object goes out of
 //			scope.
 //			To parse arguments like 'thread-id ...' i.e. 1 10 12 13 ...
-//			If vbMandatory argument is true it takes on the (...)+ specfication
+//			If vbMandatory argument is true it takes on the (...)+ specification
 //			otherwise assumed to be (...)* specification.
 //			Based on the Interpreter pattern.
 // Gotchas:	None.
@@ -76,6 +76,8 @@ private:
 //			parsed from the command's options string.
 // Type:	Template method.
 // Args:	vrwValue	- (W) Templated type return value.
+//			T1			- The argument value's class type of the data hold in the list of options.
+//			T2			- The type pf the variable which holds the value wanted.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed. List of object was empty.
 // Throws:	None.

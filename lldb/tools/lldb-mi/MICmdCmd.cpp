@@ -63,7 +63,7 @@ CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "enable-pretty-printing";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdEnablePrettyPrinting::CreateSelf;
 }
 
@@ -106,14 +106,14 @@ bool CMICmdCmdEnablePrettyPrinting::Acknowledge( void )
 {
 	const CMICmnMIValueConst miValueConst( "0" );
 	const CMICmnMIValueResult miValueResult( "supported", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -141,7 +141,7 @@ CMICmdCmdSource::CMICmdCmdSource( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "source";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdSource::CreateSelf;
 }
 
@@ -182,14 +182,14 @@ bool CMICmdCmdSource::Execute( void )
 //--
 bool CMICmdCmdSource::Acknowledge( void )
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

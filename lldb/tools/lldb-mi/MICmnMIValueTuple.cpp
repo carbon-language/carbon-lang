@@ -87,7 +87,7 @@ CMICmnMIValueTuple::~CMICmnMIValueTuple( void )
 //--
 bool CMICmnMIValueTuple::BuildTuple( void )
 {
-	const char * pFormat = "{%s}";
+	const MIchar * pFormat = "{%s}";
 	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str() );
 		
 	return MIstatus::success;
@@ -111,19 +111,16 @@ bool CMICmnMIValueTuple::BuildTuple( const CMICmnMIValueResult & vResult )
 		return BuildTuple();
 	}
 
-	// ToDo: Fix this fudge with std::string cause CMIUtilString does not have a copy constructor
-	std::string str = m_strValue;
-	if( str[ 0 ] == '{' )
+	if( m_strValue[ 0 ] == '{' )
 	{
-		str = str.substr( 1, m_strValue.size() - 1 );
+		m_strValue = m_strValue.substr( 1, m_strValue.size() - 1 );
 	}
-	if( str[ str.size() - 1 ] == '}' )
+	if( m_strValue[ m_strValue.size() - 1 ] == '}' )
 	{
-		str = str.substr( 0, m_strValue.size() - 2 );
+		m_strValue = m_strValue.substr( 0, m_strValue.size() - 1 );
 	}
-	m_strValue = str.c_str();
-
-	const char * pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
+	
+	const MIchar * pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
 	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str(), vResult.GetString().c_str() );
 
 	return MIstatus::success;

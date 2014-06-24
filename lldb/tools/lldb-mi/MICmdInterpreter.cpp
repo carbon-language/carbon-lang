@@ -93,7 +93,7 @@ bool CMICmdInterpreter::Shutdown( void )
 // Type:	Method.
 // Args:	vTextLine				- (R) Text data to interpret.
 //			vwbYesValid				- (W) True = MI type command, false = not recognised.
-//			vwbCmdNotInCmdFactor	- (W) True = MI command not found in the command factor, false = recognised.
+//			vwbCmdNotInCmdFactor	- (W) True = MI command not found in the command factory, false = recognised.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
@@ -115,7 +115,7 @@ bool CMICmdInterpreter::ValidateIsMi( const CMIUtilString & vTextLine, bool & vw
 	m_miCmdData.strMiCmd = vTextLine;
 
 	// The following change m_miCmdData as valid parts are indentified
-	vwbYesValid = (MiHasCmdNumberEndingHypthen( vTextLine ) || MiHasCmdNumberEndingAlpha( vTextLine ));
+	vwbYesValid = (MiHasCmdTokenEndingHypthen( vTextLine ) || MiHasCmdTokenEndingAlpha( vTextLine ));
 	vwbYesValid = vwbYesValid && MiHasCmd( vTextLine );
 	if( vwbYesValid )
 	{
@@ -123,9 +123,9 @@ bool CMICmdInterpreter::ValidateIsMi( const CMIUtilString & vTextLine, bool & vw
 		vwbYesValid = !vwbCmdNotInCmdFactor;
 	}
 
-	// Update command's meta data
+	// Update command's meta data valid state
 	m_miCmdData.bCmdValid = vwbYesValid;
-	
+
 	// Ok to return new updated command information
 	rwCmdData = MiGetCmdData();
 
@@ -149,25 +149,30 @@ bool CMICmdInterpreter::HasCmdFactoryGotMiCmd( const SMICmdData & vCmd ) const
 // Details:	Does the command entered match the criteria for a MI command format.
 //			The format to validate against is 'nn-' where there can be 1 to n digits.
 //			I.e. '2-gdb-exit'.
-//			Is the execution number present? The command number is entered into the
+//			Is the execution token present? The command token is entered into the
 //			command meta data structure whether correct or not for reporting or later
 //			command execution purposes.
 // Type:	Method.
-// Args:	vCmd	- (R) Command information structure.
-// Return:	bool  - True = yes command number present, false = command not recognised.
+// Args:	vTextLine	- (R) Text data to interpret.
+// Return:	bool  - True = yes command token present, false = command not recognised.
 // Throws:	None.
 //--
-bool CMICmdInterpreter::MiHasCmdNumberEndingHypthen( const CMIUtilString & vTextLine )
+bool CMICmdInterpreter::MiHasCmdTokenEndingHypthen( const CMIUtilString & vTextLine )
 {
+	// The hythen is mandatory
 	const MIint nPos = vTextLine.find( "-", 0 );
-	if( (nPos == (MIint) std::string::npos) || (nPos == 0) )
+	if( (nPos == (MIint) std::string::npos) )
 		return false;
 
-	const std::string strNum = vTextLine.substr( 0, nPos );
-	if( !CMIUtilString( strNum.c_str() ).IsNumber() )
-		return false;
+	if( MiHasCmdTokenPresent( vTextLine ) )
+	{
+		const std::string strNum = vTextLine.substr( 0, nPos );
+		if( !CMIUtilString( strNum.c_str() ).IsNumber() )
+			return false;
+	
+		m_miCmdData.strMiCmdToken = strNum.c_str();
+	}
 
-	m_miCmdData.nMiCmdNumber = std::stoi( strNum );
 	m_miCmdData.bMIOldStyle = false;
 
 	return true;
@@ -176,18 +181,18 @@ bool CMICmdInterpreter::MiHasCmdNumberEndingHypthen( const CMIUtilString & vText
 //++ ------------------------------------------------------------------------------------
 // Details:	Does the command entered match the criteria for a MI command format.
 //			The format to validate against is 'nnA' where there can be 1 to n digits.
-//			'A' represents any non numeric number. I.e. '1source .gdbinit'.
-//			Is the execution number present? The command number is entered into the
+//			'A' represents any non numeric token. I.e. '1source .gdbinit'.
+//			Is the execution token present? The command token is entered into the
 //			command meta data structure whether correct or not for reporting or later
 //			command execution purposes.
 // Type:	Method.
-// Args:	vCmd	- (R) Command information structure.
-// Return:	bool  - True = yes command number present, false = command not recognised.
+// Args:	vTextLine	- (R) Text data to interpret.
+// Return:	bool  - True = yes command token present, false = command not recognised.
 // Throws:	None.
 //--
-bool CMICmdInterpreter::MiHasCmdNumberEndingAlpha( const CMIUtilString & vTextLine )
+bool CMICmdInterpreter::MiHasCmdTokenEndingAlpha( const CMIUtilString & vTextLine )
 {
-	char cChar = vTextLine[ 0 ]; 
+	MIchar cChar = vTextLine[ 0 ]; 
 	MIuint i = 0;
 	while( ::isdigit( cChar ) != 0 )
 	{
@@ -199,10 +204,24 @@ bool CMICmdInterpreter::MiHasCmdNumberEndingAlpha( const CMIUtilString & vTextLi
 		return false;
 	
 	const std::string strNum = vTextLine.substr( 0, i );
-	m_miCmdData.nMiCmdNumber = std::stoi( strNum );
+	m_miCmdData.strMiCmdToken = strNum.c_str();
 	m_miCmdData.bMIOldStyle = true;
 
 	return true;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Does the command entered match the criteria for a MI command format.
+//			Is the command token present before the hypen? 
+// Type:	Method.
+// Args:	vTextLine - (R) Text data to interpret.
+// Return:	bool  - True = yes command token present, false = token not present.
+// Throws:	None.
+//--
+bool CMICmdInterpreter::MiHasCmdTokenPresent( const CMIUtilString & vTextLine )
+{
+	const MIint nPos = vTextLine.find( "-", 0 );
+	return (nPos > 0);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -232,8 +251,6 @@ bool CMICmdInterpreter::MiHasCmd( const CMIUtilString & vTextLine )
 	else
 	{
 		nPos = vTextLine.find( "-", 0 );
-		if( (nPos == (MIint) std::string::npos) || (nPos == 0) )
-			return false;
 	}
 
 	bool bFoundCmd = false;

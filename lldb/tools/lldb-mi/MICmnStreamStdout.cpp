@@ -210,3 +210,21 @@ bool CMICmnStreamStdout::Unlock( void )
 	m_mutex.Unlock();
 	return MIstatus::success;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Take a text data and send to the stdout stream. Also output to the MI Log
+//			file.
+// Type:	Static method.
+// Args:	vrTxt	- (R) Text.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMICmnStreamStdout::TextToStdout( const CMIUtilString & vrTxt )
+{
+	const bool bLock = CMICmnStreamStdout::Instance().Lock();
+	const bool bOk = bLock && CMICmnStreamStdout::Instance().WriteMIResponse( vrTxt );
+	bLock && CMICmnStreamStdout::Instance().Unlock();
+	
+	return bOk;
+}

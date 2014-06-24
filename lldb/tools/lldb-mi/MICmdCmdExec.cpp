@@ -12,11 +12,12 @@
 //
 // Overview:	CMICmdCmdExecRun				implementation.
 //				CMICmdCmdExecContinue			implementation.
-// Overview:	CMICmdCmdExecNext				implementation. 
+//				CMICmdCmdExecNext				implementation. 
 //				CMICmdCmdExecStep				implementation.
 //				CMICmdCmdExecNextInstruction	implementation.
 //				CMICmdCmdExecStepInstruction	implementation.
 //				CMICmdCmdExecFinish				implementation.
+//				CMICmdCmdExecInterupt			implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -43,6 +44,8 @@
 #include "MICmdArgValOptionLong.h"
 #include "MICmdArgValOptionShort.h"
 #include "MICmdArgValListOfN.h"
+#include "MICmnStreamStdout.h"
+#include "MICmnMIOutOfBandRecord.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdExecRun constructor.
@@ -56,7 +59,7 @@ CMICmdCmdExecRun::CMICmdCmdExecRun( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-run";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecRun::CreateSelf;
 }
 
@@ -82,8 +85,21 @@ CMICmdCmdExecRun::~CMICmdCmdExecRun( void )
 //--
 bool CMICmdCmdExecRun::Execute( void )
 {
-	// Do nothing
-	return MIstatus::success;
+    const MIchar * pCmd = "run";
+    CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
+    const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( pCmd, m_lldbResult ); MIunused( rtn );
+	
+	if( m_lldbResult.GetErrorSize() == 0 )
+	{
+		if( !CMIDriver::Instance().SetDriverStateRunningDebugging() )
+		{
+			const CMIUtilString & rErrMsg( CMIDriver::Instance().GetErrorDescription() );
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_SET_NEW_DRIVER_STATE ), m_cmdData.strMiCmd.c_str(), rErrMsg.c_str() ) );
+			return MIstatus::failure;
+		}
+	}
+
+	 return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -97,16 +113,24 @@ bool CMICmdCmdExecRun::Execute( void )
 //--
 bool CMICmdCmdExecRun::Acknowledge( void )
 {
-	const CMICmnMIValueConst miValueConst( MIRSRC( IDS_CMD_ERR_NOT_IMPLEMENTED ) );
-	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
-	m_miResultRecord = miRecordResult;
+    if( m_lldbResult.GetErrorSize() > 0 )
+    {
+        const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
+        const CMICmnMIValueResult miValueResult( "message", miValueConst );
+        const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+        m_miResultRecord = miRecordResult;
+    }
+    else
+    {
+        const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
+        m_miResultRecord = miRecordResult;
+    }
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -134,7 +158,7 @@ CMICmdCmdExecContinue::CMICmdCmdExecContinue( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-continue";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecContinue::CreateSelf;
 }
 
@@ -160,11 +184,33 @@ CMICmdCmdExecContinue::~CMICmdCmdExecContinue( void )
 //--
 bool CMICmdCmdExecContinue::Execute( void )
 {
-	// ToDo: Replace using LLDB public API functions instead of running a command 
-	const char * pCmd = "continue";
+	const MIchar * pCmd = "continue";
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( pCmd, m_lldbResult ); 
+	const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( pCmd, m_lldbResult ); MIunused( rtn );
 	
+
+	if( m_lldbResult.GetErrorSize() == 0 )
+	{
+		// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+		if( !CMIDriver::Instance().SetDriverStateRunningDebugging() )
+		{
+			const CMIUtilString & rErrMsg( CMIDriver::Instance().GetErrorDescription() );
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_SET_NEW_DRIVER_STATE ), m_cmdData.strMiCmd.c_str(), rErrMsg.c_str() ) );
+			return MIstatus::failure;
+		}
+	}
+	else
+	{
+		// ToDo: Re-evaluate if this is required when application near finished as this is parsing LLDB error message
+		// which seems a hack and is code brittle
+		const MIchar * pLldbErr = m_lldbResult.GetError();
+		const CMIUtilString strLldbMsg( CMIUtilString( pLldbErr ).StripCREndOfLine() );
+		if( strLldbMsg == "error: Process must be launched." )
+		{
+			CMIDriver::Instance().SetExitApplicationFlag( true );
+		}
+	}
+
 	return MIstatus::success;
 }
 
@@ -181,22 +227,14 @@ bool CMICmdCmdExecContinue::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
-
-		// ToDo: Re-evaluate if this is required when application near finished
-		const CMIUtilString strLldbMsg( CMIUtilString( pLldbErr ).StripCREndOfLine() );
-		if( strLldbMsg == "error: Process must be launched." )
-		{
-			CMIDriver::Instance().SetExitApplicationFlag();
-		}
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 		
@@ -204,7 +242,7 @@ bool CMICmdCmdExecContinue::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -234,7 +272,7 @@ CMICmdCmdExecNext::CMICmdCmdExecNext( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-next";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecNext::CreateSelf;
 }
 
@@ -289,7 +327,7 @@ bool CMICmdCmdExecNext::Execute( void )
 	MIuint64 nThreadId = UINT64_MAX;
 	if( !pArgThread->GetExpectedOption< CMICmdArgValNumber, MIuint64 >( nThreadId ) )
 	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_OPTION_NOT_FOUND ), m_cmdData.strMiCmd.c_str(), m_constStrArgThread.c_str() ) );
+		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_THREAD_INVALID ), m_cmdData.strMiCmd.c_str(), m_constStrArgThread.c_str() ) );
 		return MIstatus::failure;
 	}
 
@@ -316,15 +354,15 @@ bool CMICmdCmdExecNext::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
+		const MIchar * pLldbErr = m_lldbResult.GetError(); MIunused( pLldbErr );
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 
@@ -332,7 +370,7 @@ bool CMICmdCmdExecNext::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -362,7 +400,7 @@ CMICmdCmdExecStep::CMICmdCmdExecStep( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-step";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecStep::CreateSelf;
 }
 
@@ -444,15 +482,15 @@ bool CMICmdCmdExecStep::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
+		const MIchar * pLldbErr = m_lldbResult.GetError(); MIunused( pLldbErr );
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 
@@ -460,7 +498,7 @@ bool CMICmdCmdExecStep::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -485,11 +523,12 @@ CMICmdBase * CMICmdCmdExecStep::CreateSelf( void )
 //--
 CMICmdCmdExecNextInstruction::CMICmdCmdExecNextInstruction( void )
 :	m_constStrArgThread( "thread" )
+,	m_constStrArgNumber( "number" )
 {
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-next-instruction";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecNextInstruction::CreateSelf;
 }
 
@@ -516,6 +555,7 @@ CMICmdCmdExecNextInstruction::~CMICmdCmdExecNextInstruction( void )
 bool CMICmdCmdExecNextInstruction::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNumber, false, false ) ) );
 	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
 	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
 	{
@@ -570,15 +610,15 @@ bool CMICmdCmdExecNextInstruction::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
+		const MIchar * pLldbErr = m_lldbResult.GetError(); MIunused( pLldbErr );
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 
@@ -586,7 +626,7 @@ bool CMICmdCmdExecNextInstruction::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -611,11 +651,12 @@ CMICmdBase * CMICmdCmdExecNextInstruction::CreateSelf( void )
 //--
 CMICmdCmdExecStepInstruction::CMICmdCmdExecStepInstruction( void )
 :	m_constStrArgThread( "thread" )
+,	m_constStrArgNumber( "number" )
 {
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-step-instruction";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecStepInstruction::CreateSelf;
 }
 
@@ -642,6 +683,7 @@ CMICmdCmdExecStepInstruction::~CMICmdCmdExecStepInstruction( void )
 bool CMICmdCmdExecStepInstruction::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNumber, false, false ) ) );
 	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
 	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
 	{
@@ -696,15 +738,15 @@ bool CMICmdCmdExecStepInstruction::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
+		const MIchar * pLldbErr = m_lldbResult.GetError(); MIunused( pLldbErr );
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 
@@ -712,7 +754,7 @@ bool CMICmdCmdExecStepInstruction::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -742,7 +784,7 @@ CMICmdCmdExecFinish::CMICmdCmdExecFinish( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "exec-finish";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdExecFinish::CreateSelf;
 }
 
@@ -824,15 +866,15 @@ bool CMICmdCmdExecFinish::Acknowledge( void )
 {
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
-		const char * pLldbErr = m_lldbResult.GetError();
+		const MIchar * pLldbErr = m_lldbResult.GetError();  MIunused( pLldbErr );
 		const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
 		const CMICmnMIValueResult miValueResult( "message", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 	}
 	else
 	{
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Running );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Running );
 		m_miResultRecord = miRecordResult;
 	}
 
@@ -840,7 +882,7 @@ bool CMICmdCmdExecFinish::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -850,5 +892,103 @@ bool CMICmdCmdExecFinish::Acknowledge( void )
 CMICmdBase * CMICmdCmdExecFinish::CreateSelf( void )
 {
 	return new CMICmdCmdExecFinish();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdExecInterrupt constructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdExecInterrupt::CMICmdCmdExecInterrupt( void )
+{
+	// Command factory matches this name with that received from the stdin stream
+	m_strMiCmd = "exec-interrupt";
+	
+	// Required by the CMICmdFactory when registering *this command
+	m_pSelfCreatorFn = &CMICmdCmdExecInterrupt::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdExecInterrupt destructor.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdExecInterrupt::~CMICmdCmdExecInterrupt( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command does work in this function.
+//			The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdExecInterrupt::Execute( void )
+{
+	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
+	lldb::SBDebugger & rDebugger = rSessionInfo.m_rLldbDebugger;
+	CMIUtilString strCmd( "process interrupt" );
+	const lldb::ReturnStatus status = rDebugger.GetCommandInterpreter().HandleCommand( strCmd.c_str(), m_lldbResult, false ); MIunused( status );
+
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+	if( !CMIDriver::Instance().SetDriverStateRunningNotDebugging() )
+	{
+		const CMIUtilString & rErrMsg( CMIDriver::Instance().GetErrorDescription() );
+		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_SET_NEW_DRIVER_STATE ), strCmd.c_str(), rErrMsg.c_str() ) );
+		return MIstatus::failure;
+	}
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command prepares a MI Record Result
+//			for the work carried out in the Execute().
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdExecInterrupt::Acknowledge( void )
+{
+	if( m_lldbResult.GetErrorSize() > 0 )
+    {
+        const CMICmnMIValueConst miValueConst( m_lldbResult.GetError() );
+        const CMICmnMIValueResult miValueResult( "message", miValueConst );
+        const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+        m_miResultRecord = miRecordResult;
+    }
+    else
+    {
+        const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
+		m_miResultRecord = miRecordResult;
+	}
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
+//			calls this function to create an instance of *this command.
+// Type:	Static method.
+// Args:	None.
+// Return:	CMICmdBase * - Pointer to a new command.
+// Throws:	None.
+//--
+CMICmdBase * CMICmdCmdExecInterrupt::CreateSelf( void )
+{
+	return new CMICmdCmdExecInterrupt();
 }
 

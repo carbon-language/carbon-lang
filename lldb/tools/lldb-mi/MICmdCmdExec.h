@@ -17,6 +17,7 @@
 //				CMICmdCmdExecNextInstruction	interface.
 //				CMICmdCmdExecStepInstruction	interface.
 //				CMICmdCmdExecFinish				interface.
+//				CMICmdCmdExecInterupt			interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class
@@ -53,7 +54,7 @@ class CMICmdCmdExecRun : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -65,11 +66,12 @@ public:
 	// From CMICmdInvoker::ICmd
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecRun( void );
+
+// Attributes:
+private:
+     lldb::SBCommandReturnObject m_lldbResult;
 };
 
 //++ ============================================================================
@@ -83,7 +85,7 @@ class CMICmdCmdExecContinue : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -95,9 +97,6 @@ public:
 	// From CMICmdInvoker::ICmd
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecContinue( void );
 
@@ -117,7 +116,7 @@ class CMICmdCmdExecNext : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -130,9 +129,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecNext( void );
 
@@ -154,7 +150,7 @@ class CMICmdCmdExecStep : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -167,9 +163,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecStep( void );
 
@@ -191,7 +184,7 @@ class CMICmdCmdExecNextInstruction : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -204,9 +197,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecNextInstruction( void );
 
@@ -214,6 +204,7 @@ public:
 private:
 	lldb::SBCommandReturnObject m_lldbResult;
 	const CMIUtilString			m_constStrArgThread;	// Not specified in MI spec but Eclipse gives this option
+	const CMIUtilString			m_constStrArgNumber;	// Not specified in MI spec but Eclipse gives this option
 };
 
 //++ ============================================================================
@@ -227,7 +218,7 @@ class CMICmdCmdExecStepInstruction : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -240,9 +231,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecStepInstruction( void );
 
@@ -250,6 +238,7 @@ public:
 private:
 	lldb::SBCommandReturnObject m_lldbResult;
 	const CMIUtilString			m_constStrArgThread;	// Not specified in MI spec but Eclipse gives this option
+	const CMIUtilString			m_constStrArgNumber;	// Not specified in MI spec but Eclipse gives this option
 };
 
 //++ ============================================================================
@@ -263,7 +252,7 @@ class CMICmdCmdExecFinish : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -276,9 +265,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdExecFinish( void );
 
@@ -287,5 +273,38 @@ private:
 	lldb::SBCommandReturnObject m_lldbResult;
 	const CMIUtilString			m_constStrArgThread;	// Not specified in MI spec but Eclipse gives this option
 	const CMIUtilString			m_constStrArgFrame;		// Not specified in MI spec but Eclipse gives this option
+};
+
+// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
+//++ ============================================================================
+// Details:	MI command class. MI commands derived from the command base class.
+//			*this class implements MI command "exec-interrupt".
+// Gotchas:	Using Eclipse this command is injected into the command system when a 
+//			SIGINT signal is received while running an inferior program.
+// Authors:	Illya Rudkin 03/06/2014.
+// Changes:	None.
+//--
+class CMICmdCmdExecInterrupt : public CMICmdBase
+{
+// Statics:
+public:
+	// Required by the CMICmdFactory when registering *this command
+	static CMICmdBase *	CreateSelf( void );
+
+// Methods:
+public:
+	/* ctor */	CMICmdCmdExecInterrupt( void );
+
+// Overridden:
+public:
+	// From CMICmdInvoker::ICmd
+	virtual bool	Execute( void );
+	virtual bool	Acknowledge( void );
+	// From CMICmnBase
+	/* dtor */ virtual ~CMICmdCmdExecInterrupt( void );
+
+// Attributes:
+private:
+	lldb::SBCommandReturnObject m_lldbResult;
 };
 

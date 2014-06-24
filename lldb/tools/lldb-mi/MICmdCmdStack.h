@@ -48,7 +48,7 @@ class CMICmdCmdStackInfoDepth : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -61,9 +61,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdStackInfoDepth( void );
 
@@ -85,7 +82,7 @@ class CMICmdCmdStackListFrames : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -98,9 +95,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdStackListFrames( void );
 
@@ -128,7 +122,7 @@ class CMICmdCmdStackListArguments : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -141,9 +135,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdStackListArguments( void );
 
@@ -166,7 +157,7 @@ class CMICmdCmdStackListLocals : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -179,9 +170,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdStackListLocals( void );
 

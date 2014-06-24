@@ -82,7 +82,7 @@ private:
 	bool	MiHelpGetCurrentThreadFrame( CMICmnMIValueTuple & vwrMiValueTuple );
 	bool	MiResultRecordToStdout( const CMICmnMIResultRecord & vrMiResultRecord );
 	bool	MiOutOfBandRecordToStdout( const CMICmnMIOutOfBandRecord & vrMiResultRecord );
-	bool	MiStoppedAtBreakPoint( const lldb::SBBreakpoint & vBrkPt );
+	bool	MiStoppedAtBreakPoint( const MIuint64 vBrkPtId, const lldb::SBBreakpoint & vBrkPt );
 	bool	TextToStdout( const CMIUtilString & vrTxt );
 	bool	TextToStderr( const CMIUtilString & vrTxt );
 	bool	UpdateSelectedThread( void );

@@ -109,7 +109,17 @@ bool CMICmdArgValListOfN::Validate( CMICmdArgContext & vwArgContext )
 bool CMICmdArgValListOfN::CreateList( const CMIUtilString & vrTxt )
 {
 	CMIUtilString::VecString_t vecOptions;
-	vrTxt.Split( " ", vecOptions );
+	if( (m_eArgType == eArgValType_StringQuoted) ||
+	    (m_eArgType == eArgValType_StringQuotedNumber) ||
+	    (m_eArgType == eArgValType_StringQuotedNumberPath) )
+	{
+		if( vrTxt.SplitConsiderQuotes( " ", vecOptions ) == 0 )
+			return MIstatus::failure;
+	}
+	else
+		if( vrTxt.Split( " ", vecOptions ) == 0 )
+			return MIstatus::failure;
+
 	CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
 	while( it != vecOptions.end() )
 	{
@@ -137,8 +147,16 @@ bool CMICmdArgValListOfN::CreateList( const CMIUtilString & vrTxt )
 bool CMICmdArgValListOfN::IsListOfN( const CMIUtilString & vrTxt ) const
 {
 	CMIUtilString::VecString_t vecOptions;
-	if( vrTxt.Split( " ", vecOptions ) == 0 )
-		return false;
+	if ( m_eArgType == eArgValType_StringQuoted ||
+	     m_eArgType == eArgValType_StringQuotedNumber ||
+	     m_eArgType == eArgValType_StringQuotedNumberPath )
+	{
+		if( vrTxt.SplitConsiderQuotes( " ", vecOptions ) == 0 )
+			return false;
+	}
+	else
+		if( vrTxt.Split( " ", vecOptions ) == 0 )
+			return false;
 
 	CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
 	while( it != vecOptions.end() )

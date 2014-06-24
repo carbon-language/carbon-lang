@@ -41,7 +41,8 @@ class CMICmnLLDBDebuggerHandleEvents;
 //++ ============================================================================
 // Details:	MI proxy/adapter for the LLDB public SBDebugger API. The CMIDriver
 //			requires *this object. Command classes make calls on *this object
-//			to facilitate their work effort.
+//			to facilitate their work effort. The instance runs in its own worker
+//			thread.
 //			A singleton class.
 // Gotchas:	None.
 // Authors:	Illya Rudkin 26/02/2014.
@@ -67,8 +68,8 @@ public:
 	// MI Commands can use these functions to listen for events they require 
 	bool RegisterForEvent( const CMIUtilString & vClientName, const CMIUtilString & vBroadcasterClass, const MIuint vEventMask );
 	bool UnregisterForEvent( const CMIUtilString & vClientName, const CMIUtilString & vBroadcasterClass );
-	bool RegisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster, const MIuint vEventMask );	// ToDo: Check required
-	bool UnregisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster );							// ToDo: Check required
+	bool RegisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster, const MIuint vEventMask );	
+	bool UnregisterForEvent( const CMIUtilString & vClientName, const lldb::SBBroadcaster & vBroadcaster );							
 	
 // Overridden:
 public:
@@ -100,6 +101,7 @@ private:
 	bool MonitorSBListenerEvents( bool & vrbYesExit );
 	
 	bool BroadcasterGetMask( const CMIUtilString & vBroadcasterClass, MIuint & vEventMask ) const;
+	bool BroadcasterRemoveMask( const CMIUtilString & vBroadcasterClass );
 	bool BroadcasterSaveMask( const CMIUtilString & vBroadcasterClass, const MIuint vEventMask );
 	
 	MIuint	ClientGetMaskForAllClients( const CMIUtilString & vBroadcasterClass ) const;

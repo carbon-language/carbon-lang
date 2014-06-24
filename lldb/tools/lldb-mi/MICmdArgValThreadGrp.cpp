@@ -170,4 +170,3 @@ MIuint CMICmdArgValThreadGrp::GetNumber( void ) const
 {
 	return m_nThreadGrp;
 }
-

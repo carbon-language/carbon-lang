@@ -61,7 +61,7 @@ public:
 	public:
 		virtual const CMIUtilString &	GetMiCmd( void ) const = 0;
 		virtual CmdCreatorFnPtr			GetCmdCreatorFn( void ) const = 0;
-		//virtual CMICmdBase *			CreateSelf( void ) = 0;				// Not possible as require a static creator function in the commmand class, here for awareness
+		//virtual CMICmdBase *			CreateSelf( void ) = 0;				// Not possible as require a static creator function in the command class, here for awareness
 
 		/* dtor */ virtual ~ICmd( void ) {};
 	};

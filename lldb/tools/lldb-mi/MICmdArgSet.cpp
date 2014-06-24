@@ -181,6 +181,7 @@ bool CMICmdArgSet::Validate( const CMIUtilString & vStrMiCmd, CMICmdArgContext &
 	while( it != m_setCmdArgs.end() )
 	{
 		const CMICmdArgValBase * pArg( *it );
+		const CMIUtilString & rArgName( pArg->GetName() ); MIunused( rArgName );
 		if( pArg->GetIsMandatory() )
 			nArgsMandatoryCnt++;
 		if( !const_cast< CMICmdArgValBase * >( pArg )->Validate( vwCmdArgsText ) )

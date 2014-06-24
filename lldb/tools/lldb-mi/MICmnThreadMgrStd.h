@@ -22,13 +22,10 @@
 #pragma once
 
 // Third party headers:
-#include <map>
 #include <vector>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmnBase.h"
-#include "MIUtilSetID.h"
 #include "MIUtilThreadBaseStd.h"
 #include "MICmnResources.h"
 #include "MIUtilSingletonBase.h"
@@ -85,50 +82,50 @@ private:
 // Details:	Given a thread object start its (worker) thread to do work. The object is 
 //			added to the *this manager for housekeeping and deletion of all thread objects.
 // Type:	Template method.
-// Args:	vrThreadObj	- (R) A CMIUtilThreadActiveObjBase derived object.
+// Args:	vrwThreadObj	- (RW) A CMIUtilThreadActiveObjBase derived object.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
 template< typename T >
-bool CMICmnThreadMgrStd::ThreadStart( T & vrThreadObj )
+bool CMICmnThreadMgrStd::ThreadStart( T & vrwThreadObj )
 {
 	bool bOk = MIstatus::success;
 	
 	// Grab a reference to the base object type
-	CMIUtilThreadActiveObjBase & rObj = static_cast< CMIUtilThreadActiveObjBase & >( vrThreadObj );
+	CMIUtilThreadActiveObjBase & rObj = static_cast< CMIUtilThreadActiveObjBase & >( vrwThreadObj );
 
 	// Add to the thread managers internal database
 	bOk &= AddThread( rObj );
 	if( !bOk )
 	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrThreadObj.ThreadGetName().c_str() ) );
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrwThreadObj.ThreadGetName().c_str() ) );
 		SetErrorDescription( errMsg );
 		return MIstatus::failure;
 	}
 	
 	// Grab a reference on behalf of the caller
-	bOk &= vrThreadObj.Acquire();
+	bOk &= vrwThreadObj.Acquire();
 	if( !bOk )
 	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrThreadObj.ThreadGetName().c_str() ) );
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrwThreadObj.ThreadGetName().c_str() ) );
 		SetErrorDescription( errMsg );
 		return MIstatus::failure;
 	}
 	
 	// Thread is already started
-	//AD: this call must come after the reference count increment
-	if( vrThreadObj.ThreadIsActive() )
+	// This call must come after the reference count increment
+	if( vrwThreadObj.ThreadIsActive() )
 	{
 		// Early exit on thread already running condition
 		return MIstatus::success;
 	}
 
 	// Start the thread running
-	bOk &= vrThreadObj.ThreadExecute();
+	bOk &= vrwThreadObj.ThreadExecute();
 	if( !bOk )
 	{
-		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrThreadObj.ThreadGetName().c_str() ) );
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_THREADMGR_ERR_THREAD_FAIL_CREATE ), vrwThreadObj.ThreadGetName().c_str() ) );
 		SetErrorDescription( errMsg );
 		return MIstatus::failure;
 	}

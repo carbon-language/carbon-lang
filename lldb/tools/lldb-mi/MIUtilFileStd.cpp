@@ -25,8 +25,8 @@
 // Third party headers
 #include <stdio.h>
 #include <assert.h>
-#include <errno.h>
-#include <string.h>		// Dor strerror()
+#include <string.h>		// For strerror()
+#include <cerrno>
 
 // In-house headers:
 #include "MIUtilFileStd.h"
@@ -275,3 +275,19 @@ CMIUtilString CMIUtilFileStd::StripOffFileName( const CMIUtilString & vDirectory
 	return strPath;
 }
 
+//++ ------------------------------------------------------------------------------------
+// Details:	Return either backslash or forward slash appropriate to the OS this applilcation
+//			is running on.
+// Type:	Static method.
+// Args:	None.
+// Return:	MIchar - '/' or '\' character.
+// Throws:	None.
+//--
+MIchar CMIUtilFileStd::GetSlash( void )
+{
+#if !defined( _MSC_VER )
+	return '/';
+#else
+	return '\\';
+#endif // !defined( _MSC_VER )
+}

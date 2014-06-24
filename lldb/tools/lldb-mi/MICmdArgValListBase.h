@@ -63,10 +63,14 @@ public:
 	enum ArgValType_e
 	{
 		eArgValType_File	= 0,
+		eArgValType_Consume,
 		eArgValType_Number,
 		eArgValType_OptionLong,
 		eArgValType_OptionShort,
 		eArgValType_String,
+		eArgValType_StringQuoted,
+		eArgValType_StringQuotedNumber,
+		eArgValType_StringQuotedNumberPath,
 		eArgValType_ThreadGrp,
 		eArgValType_count,		// Always the last one
 		eArgValType_invalid

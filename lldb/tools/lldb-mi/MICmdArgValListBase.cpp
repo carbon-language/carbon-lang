@@ -28,6 +28,7 @@
 #include "MICmdArgValOptionShort.h"
 #include "MICmdArgValString.h"
 #include "MICmdArgValThreadGrp.h"
+#include "MICmdArgValConsume.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValListBase constructor.
@@ -125,6 +126,9 @@ CMICmdArgValBase * CMICmdArgValListBase::CreationObj( const CMIUtilString & vrTx
 		case eArgValType_File:
 			pOptionObj = new CMICmdArgValFile();
 			break;
+		case eArgValType_Consume:
+			pOptionObj = new CMICmdArgValConsume();
+			break;
 		case eArgValType_Number:
 			pOptionObj = new CMICmdArgValNumber();
 			break;
@@ -136,6 +140,15 @@ CMICmdArgValBase * CMICmdArgValListBase::CreationObj( const CMIUtilString & vrTx
 			break;
 		case eArgValType_String:
 			pOptionObj = new CMICmdArgValString();
+			break;
+		case eArgValType_StringQuoted:
+			pOptionObj = new CMICmdArgValString( true, false, false );
+			break;
+		case eArgValType_StringQuotedNumber:
+			pOptionObj = new CMICmdArgValString( true, true, false );
+			break;
+		case eArgValType_StringQuotedNumberPath:
+			pOptionObj = new CMICmdArgValString( true, true, true );
 			break;
 		case eArgValType_ThreadGrp:
 			pOptionObj = new CMICmdArgValThreadGrp();
@@ -167,6 +180,9 @@ bool CMICmdArgValListBase::IsExpectedCorrectType( const CMIUtilString & vrTxt, c
 		case eArgValType_File:
 			bValid = CMICmdArgValFile().IsFilePath( vrTxt );
 			break;
+		case eArgValType_Consume:
+			bValid = CMICmdArgValConsume().IsOk();
+			break;
 		case eArgValType_Number:
 			bValid = CMICmdArgValNumber().IsArgNumber( vrTxt );
 			break;
@@ -178,6 +194,15 @@ bool CMICmdArgValListBase::IsExpectedCorrectType( const CMIUtilString & vrTxt, c
 			break;
 		case eArgValType_String:
 			bValid = CMICmdArgValString().IsStringArg( vrTxt );
+			break;
+		case eArgValType_StringQuoted:
+			bValid = CMICmdArgValString( true, false, false ).IsStringArg( vrTxt );
+			break;
+		case eArgValType_StringQuotedNumber:
+			bValid = CMICmdArgValString( true, true, false ).IsStringArg( vrTxt );
+			break;
+		case eArgValType_StringQuotedNumberPath:
+			bValid = CMICmdArgValString( true, true, true ).IsStringArg( vrTxt );
 			break;
 		case eArgValType_ThreadGrp:
 			bValid = CMICmdArgValThreadGrp().IsArgThreadGrp( vrTxt );

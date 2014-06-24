@@ -18,6 +18,7 @@
 //				CMICmdCmdVarListChildren		interface.
 //				CMICmdCmdVarEvaluateExpression	interface.
 //				CMICmdCmdVarInfoPathExpression	interface.
+//				CMICmdCmdVarShowAttributes		interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class
@@ -41,6 +42,10 @@
 #include "MICmdBase.h"
 #include "MICmnMIValueTuple.h"
 #include "MICmnMIValueList.h"
+#include "MICmnLLDBDebugSessionInfoVarObj.h"
+
+// Declarations:
+class CMICmnLLDBDebugSessionInfoVarObj;
 
 //++ ============================================================================
 // Details:	MI command class. MI commands derived from the command base class.
@@ -53,7 +58,7 @@ class CMICmdCmdVarCreate : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -66,9 +71,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarCreate( void );
 
@@ -82,6 +84,7 @@ private:
 	bool				m_bValid;						// True = Variable is valid, false = not valid		
 	CMIUtilString		m_strExpression;
 	const CMIUtilString	m_constStrArgThread;			// Not specified in MI spec but Eclipse gives this option
+	const CMIUtilString	m_constStrArgThreadGroup;		// Not specified in MI spec but Eclipse gives this option
 	const CMIUtilString	m_constStrArgFrame;				// Not specified in MI spec but Eclipse gives this option
 	const CMIUtilString	m_constStrArgName;
 	const CMIUtilString	m_constStrArgFrameAddr;
@@ -99,7 +102,7 @@ class CMICmdCmdVarUpdate : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -118,11 +121,20 @@ public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarUpdate( void );
 
+// Methods:
+private:
+	bool	ExamineSBValueForChange( const CMICmnLLDBDebugSessionInfoVarObj & vrVarObj, const bool vbIgnoreVarType, bool & vrwbChanged );
+	bool	MIFormResponse( const CMIUtilString & vrStrVarName, const CMIUtilString & vrStrValue, const CMIUtilString & vrStrScope );
+
 // Attribute:
 private:
 	CMIUtilString		m_strValueName;
-	const CMIUtilString	m_constStrArgPrintValues;	// Not handled by *this command
+	const CMIUtilString	m_constStrArgPrintValues;		// Not handled by *this command
 	const CMIUtilString	m_constStrArgName;
+	bool				m_bValueChangedArrayType;		// True = yes value changed, false = no change
+	bool				m_bValueChangedCompositeType;	// True = yes value changed, false = no change
+	bool				m_bValueChangedNormalType;		// True = yes value changed, false = no change
+	CMICmnMIValueList	m_miValueList;
 };
 
 //++ ============================================================================
@@ -136,7 +148,7 @@ class CMICmdCmdVarDelete : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -149,9 +161,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarDelete( void );
 
@@ -171,7 +180,7 @@ class CMICmdCmdVarAssign : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -184,9 +193,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarAssign( void );
 
@@ -209,7 +215,7 @@ class CMICmdCmdVarSetFormat : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -222,9 +228,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarSetFormat( void );
 
@@ -246,7 +249,7 @@ class CMICmdCmdVarListChildren : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -259,9 +262,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarListChildren( void );
 
@@ -289,7 +289,7 @@ class CMICmdCmdVarEvaluateExpression : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -302,9 +302,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarEvaluateExpression( void );
 
@@ -327,7 +324,7 @@ class CMICmdCmdVarInfoPathExpression : public CMICmdBase
 {
 // Statics:
 public:
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	static CMICmdBase *	CreateSelf( void );
 
 // Methods:
@@ -340,9 +337,6 @@ public:
 	virtual bool	Execute( void );
 	virtual bool	Acknowledge( void );
 	virtual bool	ParseArgs( void );
-
-// Overridden:
-public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdVarInfoPathExpression( void );
 
@@ -350,6 +344,38 @@ public:
 private:
 	bool				m_bValueValid;			// True = yes SBValue object is valid, false = not valid
 	CMIUtilString		m_strPathExpression;
+	const CMIUtilString	m_constStrArgName;
+};
+
+//++ ============================================================================
+// Details:	MI command class. MI commands derived from the command base class.
+//			*this class implements MI command "var-show-attributes".
+// Gotchas:	None.
+// Authors:	Illya Rudkin 19/05/2014.
+// Changes:	None.
+//--
+class CMICmdCmdVarShowAttributes : public CMICmdBase
+{
+// Statics:
+public:
+	// Required by the CMICmdFactory when registering *this command
+	static CMICmdBase *	CreateSelf( void );
+
+// Methods:
+public:
+	/* ctor */	CMICmdCmdVarShowAttributes( void );
+
+// Overridden:
+public:
+	// From CMICmdInvoker::ICmd
+	virtual bool	Execute( void );
+	virtual bool	Acknowledge( void );
+	virtual bool	ParseArgs( void );
+	// From CMICmnBase
+	/* dtor */ virtual ~CMICmdCmdVarShowAttributes( void );
+
+// Attributes:
+private:
 	const CMIUtilString	m_constStrArgName;
 };
 

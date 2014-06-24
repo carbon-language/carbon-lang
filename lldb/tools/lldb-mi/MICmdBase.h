@@ -46,7 +46,7 @@ class CMICmnLLDBDebugSessionInfo;
 //			does some work then wakes up again when called back, does more work
 //			perhaps, ends, then the Invoker calls the command's Acknowledge 
 //			function. The other type of command is one that just does some work,
-//			ends, then the Invoker calls the commmand's Acknowledge function. No
+//			ends, then the Invoker calls the command's Acknowledge function. No
 //			events set up.
 //			A command's Execute(), Acknowledge() and event callback functions are 
 //			carried out in the main thread.
@@ -100,7 +100,7 @@ protected:
 	CMIUtilString					m_strCurrentErrDescription;			// Reason for Execute or Acknowledge function failure
 	SMICmdData						m_cmdData;							// Holds information/status of *this command. Used by other MI code to report or determine state of a command.
 	bool							m_bWaitForEventFromSBDebugger;		// True = yes event type command wait, false = command calls Acknowledge() straight after Execute() no waiting
-	CMIUtilString					m_strMiCmd;							// The MI text identifying *this commmand i.e. 'break-insert'
+	CMIUtilString					m_strMiCmd;							// The MI text identifying *this command i.e. 'break-insert'
 	CMICmnMIResultRecord			m_miResultRecord;					// This is completed in the Acknowledge() function and returned to the Command Invoker to proceed stdout output. Each command forms 1 response to its input.
 	CMIUtilString					m_miResultRecordExtra;				// This is completed in the Acknowledge() function and returned to the Command Invoker to proceed stdout output. Hack command produce more response text to help the client because of using LLDB
 	CMICmnLLDBDebugSessionInfo &	m_rLLDBDebugSessionInfo;			// Access to command sharing information or data across any and all command based derived classes.

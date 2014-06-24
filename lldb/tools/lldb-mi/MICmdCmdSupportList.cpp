@@ -38,7 +38,7 @@ CMICmdCmdSupportListFeatures::CMICmdCmdSupportListFeatures( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "list-features";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdSupportListFeatures::CreateSelf;
 }
 
@@ -83,14 +83,14 @@ bool CMICmdCmdSupportListFeatures::Acknowledge( void )
 	const CMICmnMIValueConst miValueConst( "data-read-memory-bytes" );
 	const CMICmnMIValueList miValueList( miValueConst );
 	const CMICmnMIValueResult miValueResult( "features", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

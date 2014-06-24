@@ -56,7 +56,7 @@ CMICmdCmdStackInfoDepth::CMICmdCmdStackInfoDepth( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "stack-info-depth";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdStackInfoDepth::CreateSelf;
 }
 
@@ -136,14 +136,14 @@ bool CMICmdCmdStackInfoDepth::Acknowledge( void )
 	const CMIUtilString strDepth( CMIUtilString::Format( "%d", m_nThreadFrames ) );
 	const CMICmnMIValueConst miValueConst( strDepth );
 	const CMICmnMIValueResult miValueResult( "depth", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -175,7 +175,7 @@ CMICmdCmdStackListFrames::CMICmdCmdStackListFrames( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "stack-list-frames";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdStackListFrames::CreateSelf;
 }
 
@@ -289,7 +289,7 @@ bool CMICmdCmdStackListFrames::Acknowledge( void )
 		const CMICmnMIValueTuple miValueTuple;
 		const CMICmnMIValueList miValueList( miValueTuple );
 		const CMICmnMIValueResult miValueResult( "stack", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 
 		return MIstatus::success;
@@ -303,7 +303,7 @@ bool CMICmdCmdStackListFrames::Acknowledge( void )
 		const CMICmnMIValueTuple miValueTuple;
 		const CMICmnMIValueList miValueList( miValueTuple );
 		const CMICmnMIValueResult miValueResult( "stack", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -318,14 +318,14 @@ bool CMICmdCmdStackListFrames::Acknowledge( void )
 		++it;
 	}
 	const CMICmnMIValueResult miValueResult( "stack", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -357,7 +357,7 @@ CMICmdCmdStackListArguments::CMICmdCmdStackListArguments( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "stack-list-arguments";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdStackListArguments::CreateSelf;
 }
 
@@ -465,7 +465,7 @@ bool CMICmdCmdStackListArguments::Acknowledge( void )
 		// MI print "%s^done,stack-args=[]"
 		const CMICmnMIValueList miValueList( true );
 		const CMICmnMIValueResult miValueResult( "stack-args", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -479,14 +479,14 @@ bool CMICmdCmdStackListArguments::Acknowledge( void )
 	const CMICmnMIValueResult miValueResult3( "frame", miValueTuple );
 	const CMICmnMIValueList miValueList( miValueResult3 );
 	const CMICmnMIValueResult miValueResult4( "stack-args", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult4 );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult4 );
 	m_miResultRecord = miRecordResult;
 		
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -519,7 +519,7 @@ CMICmdCmdStackListLocals::CMICmdCmdStackListLocals( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "stack-list-locals";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdStackListLocals::CreateSelf;
 }
 
@@ -628,21 +628,21 @@ bool CMICmdCmdStackListLocals::Acknowledge( void )
 		// MI print "%s^done,locals=[]"
 		const CMICmnMIValueList miValueList( true );
 		const CMICmnMIValueResult miValueResult( "locals", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
 
 	// MI print "%s^done,locals=[%s]"
 	const CMICmnMIValueResult miValueResult( "locals", m_miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

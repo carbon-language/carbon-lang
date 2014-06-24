@@ -194,3 +194,21 @@ bool CMICmnStreamStderr::Unlock( void )
 	m_mutex.Unlock();
 	return MIstatus::success;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Take a text data and send to the stderr stream. Also output to the MI Log
+//			file.
+// Type:	Static method.
+// Args:	vrTxt	- (R) Text.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMICmnStreamStderr::TextToStderr( const CMIUtilString & vrTxt )
+{
+	const bool bLock = CMICmnStreamStderr::Instance().Lock();
+	const bool bOk = bLock && CMICmnStreamStderr::Instance().Write( vrTxt );
+	bLock && CMICmnStreamStderr::Instance().Unlock();
+	
+	return bOk;
+}

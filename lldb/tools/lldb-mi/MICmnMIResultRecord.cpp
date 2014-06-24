@@ -42,22 +42,22 @@ const CMIUtilString CMICmnMIResultRecord::ms_constStrResultRecordHat( "^");
 // Throws:	None.
 //--
 CMICmnMIResultRecord::CMICmnMIResultRecord( void )
-:	m_strResultRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+:	m_strResultRecord( MIRSRC( IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION ) )
 {
 }
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnMIResultRecord constructor.
 // Type:	Method.
-// Args:	vToken	- (R) The command's number.
+// Args:	vrToken	- (R) The command's transaction ID or token.
 //			veType	- (R) A MI result class enumeration.
 // Return:	None.
 // Throws:	None.
 //--
-CMICmnMIResultRecord::CMICmnMIResultRecord( const MIuint vToken, const ResultClass_e veType )
-:	m_nResultRecordToken( vToken )
+CMICmnMIResultRecord::CMICmnMIResultRecord( const CMIUtilString & vrToken, const ResultClass_e veType )
+:	m_strResultRecordToken( vrToken )
 ,	m_eResultRecordResultClass( veType )
-,	m_strResultRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+,	m_strResultRecord( MIRSRC( IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION ) )
 {
 	BuildResultRecord();
 }
@@ -65,16 +65,16 @@ CMICmnMIResultRecord::CMICmnMIResultRecord( const MIuint vToken, const ResultCla
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnMIResultRecord constructor.
 // Type:	Method.
-// Args:	vToken		- (R) The command's number.
+// Args:	vrToken		- (R) The command's transaction ID or token.
 //			veType		- (R) A MI result class enumeration.
 //			vMIResult	- (R) A MI result object.
 // Return:	None.
 // Throws:	None.
 //--
-CMICmnMIResultRecord::CMICmnMIResultRecord( const MIuint vToken, const ResultClass_e veType, const CMICmnMIValueResult & vValue )
-:	m_nResultRecordToken( vToken )
+CMICmnMIResultRecord::CMICmnMIResultRecord( const CMIUtilString & vrToken, const ResultClass_e veType, const CMICmnMIValueResult & vValue )
+:	m_strResultRecordToken( vrToken )
 ,	m_eResultRecordResultClass( veType )
-,	m_strResultRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+,	m_strResultRecord( MIRSRC( IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION ) )
 ,	m_partResult( vValue )	
 {
 	BuildResultRecord();
@@ -118,9 +118,9 @@ const CMIUtilString & CMICmnMIResultRecord::GetString( void ) const
 //--
 bool CMICmnMIResultRecord::BuildResultRecord( void )
 {
-	const char * pFormat = "%d%s%s";
+	const MIchar * pFormat = "%s%s%s";
 	const CMIUtilString & rStrResultRecord( ms_MapResultClassToResultClassText[ m_eResultRecordResultClass ] );
-	m_strResultRecord = CMIUtilString::Format( pFormat, m_nResultRecordToken, ms_constStrResultRecordHat.c_str(), rStrResultRecord.c_str() );
+	m_strResultRecord = CMIUtilString::Format( pFormat, m_strResultRecordToken.c_str(), ms_constStrResultRecordHat.c_str(), rStrResultRecord.c_str() );
 
 	return MIstatus::success;
 }
@@ -140,26 +140,3 @@ bool CMICmnMIResultRecord::Add( const CMICmnMIValue & vMIValue )
 
 	return MIstatus::success;
 }
-
-// Example usage:
-// Forms: 5^done,stack-args=[frame={level="0",args=[{name="argc",value="1"},{name="argv",value="
-//	#include "MICmnMIResultRecord.h"
-//	#include "MICmnMIValueList.h"
-//	#include "MICmnMIValueConst.h"
-//	#include "MICmnMIValueResult.h"
-//	#include "MICmnMIValueTuple.h"
-	//CMICmnMIValueResult miValueResult1( "name", CMICmnMIValueConst( "argc") );
-	//CMICmnMIValueResult miValueResult2( "value", CMICmnMIValueConst( "1") );
-	//CMICmnMIValueTuple miValueTuple1( miValueResult1 );
-	//miValueTuple1.Add( miValueResult2 );
-	//CMICmnMIValueList miValueList1( miValueTuple1 );
-	//miValueList1.Add( miValueTuple1 );
-	//CMICmnMIValueResult miValueResult3( "args", miValueList1 );
-	//CMICmnMIValueResult miValueResult4( "level", CMICmnMIValueConst( "0" ) );
-	//CMICmnMIValueTuple miValueTuple2( miValueResult4 );
-	//miValueTuple2.Add( miValueResult3 );
-	//CMICmnMIValueResult miValueResult5( "frame", miValueTuple2 );
-	//CMICmnMIValueList miValueList2( miValueResult5 );
-	//CMICmnMIValueResult miValueResult6( "stack-args", miValueList2 );
-	//CMICmnMIResultRecord miResultRecord( 5, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
-	//CMIUtilString str( miResultRecord.GetString() );

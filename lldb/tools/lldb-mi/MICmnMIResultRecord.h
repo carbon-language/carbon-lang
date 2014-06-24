@@ -79,8 +79,8 @@ public:
 // Methods:
 public:
 	/* ctor */	CMICmnMIResultRecord( void );
-	/* ctor */	CMICmnMIResultRecord( const MIuint vToken, const ResultClass_e veType );
-	/* ctor */	CMICmnMIResultRecord( const MIuint vToken, const ResultClass_e veType, const CMICmnMIValueResult & vValue );
+	/* ctor */	CMICmnMIResultRecord( const CMIUtilString & vrToken, const ResultClass_e veType );
+	/* ctor */	CMICmnMIResultRecord( const CMIUtilString & vrToken, const ResultClass_e veType, const CMICmnMIValueResult & vValue );
 	//
 	const CMIUtilString &	GetString( void ) const;
 	bool					Add( const CMICmnMIValue & vMIValue );
@@ -99,7 +99,7 @@ private:
 	static const CMIUtilString					ms_constStrResultRecordHat;
 	static MapResultClassToResultClassText_t	ms_constMapResultClassToResultClassText;
 	//
-	MIuint				m_nResultRecordToken;
+	CMIUtilString		m_strResultRecordToken;
 	ResultClass_e		m_eResultRecordResultClass;
 	CMIUtilString		m_strResultRecord;			// Holds the text version of the result record to date
 	CMICmnMIValueResult	m_partResult;

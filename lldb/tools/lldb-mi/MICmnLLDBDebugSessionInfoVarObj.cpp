@@ -46,8 +46,8 @@ const MIchar * CMICmnLLDBDebugSessionInfoVarObj::ms_aVarFormatChars[] =
 	"x",
 	"N"
 };
-CMICmnLLDBDebugSessionInfoVarObj::VecVarObj_t	CMICmnLLDBDebugSessionInfoVarObj::ms_vecVarObj;
-MIuint											CMICmnLLDBDebugSessionInfoVarObj::ms_nVarUniqueId = 0; // Index from 0
+CMICmnLLDBDebugSessionInfoVarObj::MapKeyToVarObj_t	CMICmnLLDBDebugSessionInfoVarObj::ms_mapVarIdToVarObj;
+MIuint												CMICmnLLDBDebugSessionInfoVarObj::ms_nVarUniqueId = 0; // Index from 0
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnLLDBDebugSessionInfoVarObj constructor.
@@ -60,13 +60,15 @@ CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( void )
 :	m_eVarFormat( eVarFormat_Natural )
 ,	m_eVarType( eVarType_Internal )
 {
-	// Do not out UpdateValue() in here as not necessary
+	// Do not call UpdateValue() in here as not necessary
 }
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnLLDBDebugSessionInfoVarObj constructor.
 // Type:	Method.
-// Args:	None.
+// Args:	vrStrNameReal	- (R) The actual name of the variable, the expression.
+//			vrStrName		- (R) The name given for *this var object.
+//			vrValue			- (R) The LLDB SBValue object represented by *this object.
 // Return:	None.
 // Throws:	None.
 //--
@@ -78,6 +80,90 @@ CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( const CMIUti
 ,	m_strNameReal( vrStrNameReal )
 {
 	UpdateValue();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnLLDBDebugSessionInfoVarObj constructor.
+// Type:	Method.
+// Args:	vrStrNameReal			- (R) The actual name of the variable, the expression.
+//			vrStrName				- (R) The name given for *this var object.
+//			vrValue					- (R) The LLDB SBValue object represented by *this object.
+//			vrStrVarObjParentName	- (R) The var object parent to *this var object (LLDB SBValue equivalent).
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( const CMIUtilString & vrStrNameReal, const CMIUtilString & vrStrName, const lldb::SBValue & vrValue, const CMIUtilString & vrStrVarObjParentName )
+:	m_eVarFormat( eVarFormat_Natural )
+,	m_eVarType( eVarType_Internal )
+,	m_strName( vrStrName )
+,	m_SBValue( vrValue )
+,	m_strNameReal( vrStrNameReal )
+,	m_strVarObjParentName( vrStrVarObjParentName )
+{
+	UpdateValue();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnLLDBDebugSessionInfoVarObj copy constructor.
+// Type:	Method.
+// Args:	vrOther	- (R) The object to copy from.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( const CMICmnLLDBDebugSessionInfoVarObj & vrOther )
+{
+	CopyOther( vrOther );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnLLDBDebugSessionInfoVarObj copy constructor.
+// Type:	Method.
+// Args:	vrOther	- (R) The object to copy from.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDebugSessionInfoVarObj & vrOther )
+{
+	CopyOther( vrOther );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnLLDBDebugSessionInfoVarObj assignment opertator.
+// Type:	Method.
+// Args:	vrOther	- (R) The object to copy from.
+// Return:	CMICmnLLDBDebugSessionInfoVarObj & - Updated *this object.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj & CMICmnLLDBDebugSessionInfoVarObj::operator= ( const CMICmnLLDBDebugSessionInfoVarObj & vrOther )
+{
+	CopyOther( vrOther );
+
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Copy the other instance of *this object to *this object.
+// Type:	Method.
+// Args:	vrOther	- (R) The object to copy from.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnLLDBDebugSessionInfoVarObj::CopyOther( const CMICmnLLDBDebugSessionInfoVarObj & vrOther )
+{
+	// Check for self-assignment
+	if( this == &vrOther )
+		return MIstatus::success;
+
+	m_eVarFormat = vrOther.m_eVarFormat;
+	m_eVarType = vrOther.m_eVarType;
+	m_strName = vrOther.m_strName;
+	m_SBValue = vrOther.m_SBValue;
+	m_strNameReal = vrOther.m_strNameReal;
+	m_strFormattedValue = vrOther.m_strFormattedValue;
+	m_strVarObjParentName = vrOther.m_strVarObjParentName;
+
+	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -138,6 +224,10 @@ CMICmnLLDBDebugSessionInfoVarObj::varFormat_e CMICmnLLDBDebugSessionInfoVarObj::
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Return the equivalent var value formatted string for the given value type.
+//			The SBValue vrValue parameter is checked by LLDB private code for valid 
+//			scalar type via MI Driver proxy function as the valued returned can also be
+//			an error condition. The proxy function determines if the check was valid 
+//			otherwise return an error condition state by other means saying so.
 // Type:	Static method.
 // Args:	vrValue		- (R) The var value object.
 //			veVarFormat	- (R) Var format enumeration.
@@ -151,27 +241,8 @@ CMIUtilString CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted( const l
 	MIuint64 nValue = 0;
 	if( CMICmnLLDBProxySBValue::GetValueAsUnsigned( vrValue, nValue ) == MIstatus::success )
 	{
-		switch( veVarFormat )
-		{
-		case eVarFormat_Binary:
-			strFormattedValue = CMIUtilString::FormatBinary( nValue );
-			break;
-		case eVarFormat_Octal:
-			strFormattedValue = CMIUtilString::Format( "0%llo", nValue );
-			break;
-		case eVarFormat_Decimal:
-			strFormattedValue = CMIUtilString::Format( "%lld", nValue );
-			break;
-		case eVarFormat_Hex:
-			strFormattedValue = CMIUtilString::Format( "0x%llx", nValue );
-			break;
-		case eVarFormat_Natural:
-		default:
-		{
-			const char * pTmp = const_cast< lldb::SBValue & >( vrValue ).GetValue();
-			strFormattedValue = (pTmp != nullptr) ? pTmp : "";
-		}
-		}
+		lldb::SBValue & rValue = const_cast< lldb::SBValue & >( vrValue );
+		strFormattedValue = GetStringFormatted( nValue, rValue.GetValue(), veVarFormat );
 	}
 	else
 	{
@@ -179,6 +250,43 @@ CMIUtilString CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted( const l
 		strFormattedValue = "{...}";
 	}
 	
+	return strFormattedValue;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Return nuber formatted string according to the given value type.
+// Type:	Static method.
+// Args:	vnValue				- (R) The number value to get formatted.
+//			vpStrValueNatural	- (R) The natural representation of the number value.
+//			veVarFormat			- (R) Var format enumeration.
+// Returns:	CMIUtilString	- Numerical formatted string.
+// Throws:	None.
+//--
+CMIUtilString CMICmnLLDBDebugSessionInfoVarObj::GetStringFormatted( const MIuint64 vnValue, const MIchar * vpStrValueNatural, const CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat )
+{
+	CMIUtilString strFormattedValue;
+	
+	switch( veVarFormat )
+	{
+	case eVarFormat_Binary:
+		strFormattedValue = CMIUtilString::FormatBinary( vnValue );
+		break;
+	case eVarFormat_Octal:
+		strFormattedValue = CMIUtilString::Format( "0%llo", vnValue );
+		break;
+	case eVarFormat_Decimal:
+		strFormattedValue = CMIUtilString::Format( "%lld", vnValue );
+		break;
+	case eVarFormat_Hex:
+		strFormattedValue = CMIUtilString::Format( "0x%llx", vnValue );
+		break;
+	case eVarFormat_Natural:
+	default:
+	{
+		strFormattedValue = (vpStrValueNatural != nullptr) ? vpStrValueNatural : "";
+	}
+	}
+
 	return strFormattedValue;
 }
 
@@ -191,7 +299,7 @@ CMIUtilString CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted( const l
 //--
 void CMICmnLLDBDebugSessionInfoVarObj::VarObjClear( void )
 {
-	ms_vecVarObj.clear();
+	ms_mapVarIdToVarObj.clear();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -203,8 +311,9 @@ void CMICmnLLDBDebugSessionInfoVarObj::VarObjClear( void )
 //--
 void CMICmnLLDBDebugSessionInfoVarObj::VarObjAdd( const CMICmnLLDBDebugSessionInfoVarObj & vrVarObj )
 {
-	VarObjDelete( vrVarObj.GetName() );	// Be sure do not have duplicates (trouble with set so vector)
-	ms_vecVarObj.push_back( vrVarObj );
+	VarObjDelete( vrVarObj.GetName() );
+	MapPairKeyToVarObj_t pr( vrVarObj.GetName(), vrVarObj );
+	ms_mapVarIdToVarObj.insert( pr );
 }
 	
 //++ ------------------------------------------------------------------------------------
@@ -216,22 +325,10 @@ void CMICmnLLDBDebugSessionInfoVarObj::VarObjAdd( const CMICmnLLDBDebugSessionIn
 //--
 void CMICmnLLDBDebugSessionInfoVarObj::VarObjDelete( const CMIUtilString & vrVarName )
 {
-	if( vrVarName.empty() || (vrVarName == "") )
-		return;
-
-	VecVarObj_t::iterator it = ms_vecVarObj.begin();
-	while( it != ms_vecVarObj.end() )
+	const MapKeyToVarObj_t::const_iterator it = ms_mapVarIdToVarObj.find( vrVarName );
+	if( it != ms_mapVarIdToVarObj.end() )
 	{
-		const CMICmnLLDBDebugSessionInfoVarObj & rVarObj = *it;
-		const CMIUtilString & rVarName = rVarObj.GetName();
-		if( rVarName == vrVarName )
-		{
-			ms_vecVarObj.erase( it );
-			return;
-		}
-
-		// Next
-		++it;
+		ms_mapVarIdToVarObj.erase( it );
 	}
 }
 
@@ -257,19 +354,12 @@ void CMICmnLLDBDebugSessionInfoVarObj::VarObjUpdate( const CMICmnLLDBDebugSessio
 //--
 bool CMICmnLLDBDebugSessionInfoVarObj::VarObjGet( const CMIUtilString & vrVarName, CMICmnLLDBDebugSessionInfoVarObj & vrwVarObj )
 {
-	VecVarObj_t::iterator it = ms_vecVarObj.begin();
-	while( it != ms_vecVarObj.end() )
+	const MapKeyToVarObj_t::const_iterator it = ms_mapVarIdToVarObj.find( vrVarName );
+	if( it != ms_mapVarIdToVarObj.end() )
 	{
-		const CMICmnLLDBDebugSessionInfoVarObj & rVarObj = *it;
-		const CMIUtilString & rVarName = rVarObj.GetName();
-		if( rVarName == vrVarName )
-		{
-			vrwVarObj = rVarObj;
-			return true;
-		}
-
-		// Next
-		++it;
+		const CMICmnLLDBDebugSessionInfoVarObj & rVarObj = (*it).second;
+		vrwVarObj = rVarObj;
+		return true;
 	}
 
 	return false;
@@ -409,5 +499,19 @@ void CMICmnLLDBDebugSessionInfoVarObj::UpdateValue( void )
 CMICmnLLDBDebugSessionInfoVarObj::varType_e CMICmnLLDBDebugSessionInfoVarObj::GetType( void ) const
 {
 	return m_eVarType;
+}
+	
+//++ ------------------------------------------------------------------------------------
+// Details:	Retrieve the parent var object's name, the parent var object  to *this var 
+//			object (if assigned). The parent is equivalent to LLDB SBValue variable's 
+//			parent.
+// Type:	Method.
+// Args:	None.
+// Returns:	CMIUtilString &	- Pointer to var object, NULL = no parent.
+// Throws:	None.
+//--
+const CMIUtilString & CMICmnLLDBDebugSessionInfoVarObj::GetVarParentName( void ) const
+{
+	return m_strVarObjParentName;
 }
 	

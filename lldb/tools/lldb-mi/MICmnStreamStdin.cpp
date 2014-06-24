@@ -19,18 +19,6 @@
 // Copyright:	None.
 //--
 
-// Third Party Headers:
-#if !defined( _MSC_VER )
-#include <sys/select.h>
-#include <termios.h>
-#else
-#include <stdio.h>
-#include <Windows.h>
-#include <io.h>
-#include <conio.h>
-#endif // !defined( _MSC_VER )
-#include <string.h> // For std::strerror()
-
 // In-house headers:
 #include "MICmnStreamStdin.h"
 #include "MICmnStreamStdout.h"
@@ -41,6 +29,9 @@
 #include "MIDriver.h"
 #if defined( _MSC_VER )
 #include "MIUtilSystemWindows.h"
+#include "MICmnStreamStdinWindows.h"
+#else
+#include "MICmnStreamStdinLinux.h"
 #endif // defined( _MSC_VER )
 
 //++ ------------------------------------------------------------------------------------
@@ -52,15 +43,12 @@
 //--
 CMICmnStreamStdin::CMICmnStreamStdin( void )
 :	m_constStrThisThreadname( "MI stdin thread" )
-,	m_constBufferSize( 1024 )
-,	m_pCmdBuffer( nullptr )
 ,	m_pVisitor( nullptr )
 ,	m_strPromptCurrent( "(gdb)" )
 ,	m_bKeyCtrlCHit( false )
-,	m_pStdin( nullptr )
 ,	m_bShowPrompt( false )
 ,	m_bRedrawPrompt( true )
-,	m_pStdinBuffer( nullptr )
+,	m_pStdinReadHandler( nullptr )
 {
 }
 
@@ -93,28 +81,32 @@ bool CMICmnStreamStdin::Initialize( void )
 
 	bool bOk = MIstatus::success;
 	CMIUtilString errMsg;
- 
-	// Note initialization order is important here as some resources depend on previous
-	MI::ModuleInit< CMICmnLog >         ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
-	MI::ModuleInit< CMICmnResources >   ( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
+
+	// Note initialisation order is important here as some resources depend on previous
+	MI::ModuleInit< CMICmnLog >			( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
+	MI::ModuleInit< CMICmnResources >	( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
 	MI::ModuleInit< CMICmnThreadMgrStd >( IDS_MI_INIT_ERR_THREADMGR, bOk, errMsg );
+#ifdef _MSC_VER
+	MI::ModuleInit< CMICmnStreamStdinWindows >( IDS_MI_INIT_ERR_OS_STDIN_HANDLER, bOk, errMsg );
+	bOk = bOk && SetOSStdinHandler( CMICmnStreamStdinWindows::Instance() );
+#else
+	MI::ModuleInit< CMICmnStreamStdinLinux >( IDS_MI_INIT_ERR_OS_STDIN_HANDLER, bOk, errMsg );
+	bOk = bOk && SetOSStdinHandler( CMICmnStreamStdinLinux::Instance() );
+#endif // ( _MSC_VER )
+
+	// The OS specific stdin stream handler must be set before *this class initialises
+	if( bOk && m_pStdinReadHandler == nullptr )
+	{
+		CMIUtilString strInitError( CMIUtilString::Format( MIRSRC( IDS_MI_INIT_ERR_STREAMSTDIN_OSHANDLER ), errMsg.c_str() ) );
+		SetErrorDescription( strInitError );
+		return MIstatus::failure;
+	}
 
 	// Other resources required
 	if( bOk )
 	{
-		m_pCmdBuffer = new MIchar[ m_constBufferSize ];
 		m_bKeyCtrlCHit = false; // Reset
-		m_pStdin = stdin;
-
-#if MICONFIG_CREATE_OWN_STDIN_BUFFER
-		// Give stdinput a user defined buffer
-		m_pStdinBuffer = new char[ 1024 ];
-		::setbuf( stdin, m_pStdinBuffer );
-#endif // MICONFIG_CREATE_OWN_STDIN_BUFFER
 	}
-
-	// Clear error indicators for std input
-	clearerr( stdin );
 
 	m_bInitialized = bOk;
 
@@ -151,29 +143,22 @@ bool CMICmnStreamStdin::Shutdown( void )
 	bool bOk = MIstatus::success;
 	CMIUtilString errMsg;
 
-	if( m_pCmdBuffer != nullptr )
-	{
-		delete [] m_pCmdBuffer;
-		m_pCmdBuffer = nullptr;
-	}
 	m_pVisitor = nullptr;
 	m_bKeyCtrlCHit = false;
-	m_pStdin = nullptr;
-
-#if MICONFIG_CREATE_OWN_STDIN_BUFFER
-	if ( m_pStdinBuffer )
-		delete [] m_pStdinBuffer;
-	m_pStdinBuffer = nullptr;
-#endif // MICONFIG_CREATE_OWN_STDIN_BUFFER
 
 	// Note shutdown order is important here 	
-	MI::ModuleShutdown< CMICmnThreadMgrStd >( IDS_MI_INIT_ERR_THREADMGR, bOk, errMsg );
-	MI::ModuleShutdown< CMICmnResources >   ( IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg );
-	MI::ModuleShutdown< CMICmnLog >         ( IDS_MI_INIT_ERR_LOG      , bOk, errMsg );
+#ifndef _MSC_VER
+	MI::ModuleShutdown< CMICmnStreamStdinLinux >( IDS_MI_SHTDWN_ERR_OS_STDIN_HANDLER, bOk, errMsg );
+#else
+	MI::ModuleShutdown< CMICmnStreamStdinWindows >( IDS_MI_SHTDWN_ERR_OS_STDIN_HANDLER, bOk, errMsg );
+#endif // ( _MSC_VER )
+	MI::ModuleShutdown< CMICmnThreadMgrStd >( IDS_MI_SHTDWN_ERR_THREADMGR, bOk, errMsg );
+	MI::ModuleShutdown< CMICmnResources >   ( IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg );
+	MI::ModuleShutdown< CMICmnLog >         ( IDS_MI_SHTDWN_ERR_LOG      , bOk, errMsg );
 
 	if( !bOk )
 	{
-		SetErrorDescriptionn( MIRSRC( IDS_MI_SHUTDOWN_ERR ), errMsg.c_str() );
+		SetErrorDescriptionn( MIRSRC( IDE_MI_SHTDWN_ERR_STREAMSTDIN ), errMsg.c_str() );
 	}
 
 	return MIstatus::success;
@@ -266,60 +251,9 @@ bool CMICmnStreamStdin::GetEnablePrompt( void ) const
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
-bool CMICmnStreamStdin::InputAvailable( bool & vwbAvail ) const
+bool CMICmnStreamStdin::InputAvailable( bool & vwbAvail )
 {
-// Windows method to check how many bytes are in stdin
-#ifdef _MSC_VER
-	// Get a windows handle to std input stream
-	HANDLE handle = ::GetStdHandle( STD_INPUT_HANDLE );
-	DWORD nBytesWaiting = 0;
-	
-	// If running in a terminal use _kbhit()
-	if( ::_isatty( ::fileno( stdin ) ) )
-		nBytesWaiting = ::_kbhit();
-	else
-	{
-		// Ask how many bytes are available
-		if( ::PeekNamedPipe( handle, nullptr, 0, nullptr, &nBytesWaiting, nullptr ) == FALSE )
-		{
-			// This can occur when the client i.e. Eclipse closes the stdin stream 'cause it deems its work is finished
-			// for that debug session. May be we should be handling SIGKILL somehow?
-			const CMIUtilString osErrMsg( CMIUtilSystemWindows().GetOSLastError().StripCRAll() );
-			SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_STDIN_ERR_CHKING_BYTE_AVAILABLE ), osErrMsg.c_str() ) );
-			return MIstatus::failure;
-		}
-	}
-
-	// Return the number of bytes waiting
-	vwbAvail = (nBytesWaiting > 0);
-
-	return MIstatus::success;
-
-// Unix method to check how many bytes are in stdin
-#else
-/* AD: disable while porting to linux
-	static const int STDIN = 0;
-    static bool bInitialized = false;
-
-    if( !bInitialized )
-	{
-        // Use termios to turn off line buffering
-        ::termios term;
-        ::tcgetattr( STDIN, &term );
-        ::term.c_lflag &= ~ICANON;
-        ::tcsetattr( STDIN, TCSANOW, &term );
-        ::setbuf( stdin, NULL );
-        bInitialized = true;
-    }
-
-    int nBytesWaiting;
-    ::ioctl( STDIN, FIONREAD, &nBytesWaiting );
-    vwbAvail = (nBytesWaiting > 0);
-
-	return MIstatus::success;
-*/
-	return MIstatus::success;
-#endif // _MSC_VER
+	return m_pStdinReadHandler->InputAvailable( vwbAvail );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -328,12 +262,12 @@ bool CMICmnStreamStdin::InputAvailable( bool & vwbAvail ) const
 //			true for bYesExit flag. Errors output to log file.
 //			This function runs in the thread "MI stdin monitor".
 // Type:	Method.
-//			vrbYesExit		- (W) True = yes exit stdin monitoring, false = continue monitor.
+//			vrwbYesAlive	- (W) False = yes exit stdin monitoring, true = continue monitor.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Throws:	None.
 //--
-bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
+bool CMICmnStreamStdin::MonitorStdin( bool & vrwbYesAlive )
 {
 	if( m_bShowPrompt )
 	{
@@ -342,11 +276,19 @@ bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
 		m_bRedrawPrompt = false;
 	}
 
+	// CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
 	if( m_bKeyCtrlCHit )
 	{
-		vrbYesExit = true;
-		CMIDriver::Instance().SetExitApplicationFlag();
-		return MIstatus::failure;
+		CMIDriver & rMIDriver = CMIDriver::Instance();
+		rMIDriver.SetExitApplicationFlag( false );
+		if( rMIDriver.GetExitApplicationFlag() )
+		{
+			vrwbYesAlive = false;
+			return MIstatus::success;
+		}
+
+		// Reset - the MI Driver received SIGINT during a running debug programm session
+		m_bKeyCtrlCHit = false;
 	}
 
 #if MICONFIG_POLL_FOR_STD_IN
@@ -360,8 +302,8 @@ bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
 	}
 	else
 	{
-		vrbYesExit = true;
-		CMIDriver::Instance().SetExitApplicationFlag();
+		vrwbYesAlive = false;
+		CMIDriver::Instance().SetExitApplicationFlag( true );
 		return MIstatus::failure;
 	}
 #endif // MICONFIG_POLL_FOR_STD_IN
@@ -376,7 +318,7 @@ bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
 	{
 		if( bHaveError )
 		{
-			CMICmnStreamStdout::Instance().Write( pText );
+			CMICmnStreamStdout::Instance().Write( stdinErrMsg );
 		}
 		return MIstatus::failure;
 	}
@@ -385,8 +327,10 @@ bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
 	bool bOk = MIstatus::success;
 	if( m_pVisitor != nullptr )
 	{
-		bOk = m_pVisitor->ReadLine( CMIUtilString( pText ), vrbYesExit );
+		bool bYesExit = false;
+		bOk = m_pVisitor->ReadLine( CMIUtilString( pText ), bYesExit );
 		m_bRedrawPrompt = true;
+		vrwbYesAlive = !bYesExit;
 	}
 	
 	return bOk;
@@ -401,28 +345,7 @@ bool CMICmnStreamStdin::MonitorStdin( bool & vrbYesExit )
 //--
 const MIchar * CMICmnStreamStdin::ReadLine( CMIUtilString & vwErrMsg )
 {
-	vwErrMsg.clear();
-	
-	// Read user input
-	const MIchar * pText = ::fgets( &m_pCmdBuffer[ 0 ], m_constBufferSize, stdin );
-	if( pText == nullptr )
-	{
-		if( ::ferror( m_pStdin ) != 0 )
-			vwErrMsg = ::strerror( errno );
-		return nullptr;
-	}
-	
-	// Strip off new line characters
-	for( MIchar * pI = m_pCmdBuffer; *pI != '\0'; pI++ )
-	{
-		if( (*pI == '\n') || (*pI == '\r') )
-		{
-			*pI = '\0';
-			break;
-		}
-	}
-
-	return pText;
+	return m_pStdinReadHandler->ReadLine( vwErrMsg );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -475,7 +398,24 @@ bool CMICmnStreamStdin::ThreadFinish( void )
 // Return:	CMIUtilString & - Text.
 // Throws:	None.
 //--
-const CMIUtilString &CMICmnStreamStdin::ThreadGetName( void ) const
+const CMIUtilString & CMICmnStreamStdin::ThreadGetName( void ) const
 {
 	return m_constStrThisThreadname;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Mandatory set the OS specific stream stdin handler. *this class utilises the
+//			handler to read data from the stdin stream and put into a queue for the 
+//			driver to read when able.
+// Type:	Method.
+// Args:	None.			
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnStreamStdin::SetOSStdinHandler( IOSStdinHandler & vrHandler )
+{
+	m_pStdinReadHandler = &vrHandler;
+
+	return MIstatus::success;
 }

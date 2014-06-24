@@ -35,6 +35,9 @@
 #include "MICmdCmdEnviro.h"
 #include "MICmdCmdExec.h"
 #include "MICmdCmdFile.h"
+#include "MICmdCmdGdbInfo.h"
+#include "MICmdCmdGdbSet.h"
+#include "MICmdCmdGdbThread.h"
 #include "MICmdCmdMiscellanous.h"
 #include "MICmdCmdStack.h"
 #include "MICmdCmdSupportInfo.h"
@@ -53,7 +56,7 @@ namespace MICmnCommands
 //++ ------------------------------------------------------------------------------------
 // Details:	Command to command factory registration function. 
 // Type:	Template function.
-// Args:	None.
+// Args:	typename T	- A command type class.
 // Return:	bool  - True = yes command is registered, false = command failed to register.
 // Throws:	None.
 //--
@@ -79,40 +82,53 @@ bool MICmnCommands::RegisterAll( void )
 	bool bOk = MIstatus::success;
 
 	bOk &= Register< CMICmdCmdSupportInfoMiCmdQuery >();
-	bOk &= Register< CMICmdCmdSupportListFeatures >();
-	bOk &= Register< CMICmdCmdEnvironmentCd >();
-	bOk &= Register< CMICmdCmdGdbSet >();
-	bOk &= Register< CMICmdCmdEnablePrettyPrinting >();
-	bOk &= Register< CMICmdCmdGdbExit >();
-	bOk &= Register< CMICmdCmdSource >();
-	bOk &= Register< CMICmdCmdFileExecAndSymbols >();
-	bOk &= Register< CMICmdCmdTargetSelect >();
-	bOk &= Register< CMICmdCmdListThreadGroups >();
-	bOk &= Register< CMICmdCmdExecRun >();
-	bOk &= Register< CMICmdCmdExecContinue >();
-	bOk &= Register< CMICmdCmdTraceStatus >();
-	bOk &= Register< CMICmdCmdThreadInfo >();
-	bOk &= Register< CMICmdCmdBreakInsert >();
+	bOk &= Register< CMICmdCmdBreakAfter >();
+	bOk &= Register< CMICmdCmdBreakCondition >();
 	bOk &= Register< CMICmdCmdBreakDelete >();
-	bOk &= Register< CMICmdCmdThread >();
+	bOk &= Register< CMICmdCmdBreakDisable >();
+	bOk &= Register< CMICmdCmdBreakEnable >();
+	bOk &= Register< CMICmdCmdBreakInsert >();
+	bOk &= Register< CMICmdCmdDataDisassemble >();
+	bOk &= Register< CMICmdCmdDataEvaluateExpression >();
+	bOk &= Register< CMICmdCmdDataReadMemoryBytes >();
+	bOk &= Register< CMICmdCmdDataReadMemory >();
+	bOk &= Register< CMICmdCmdDataListRegisterNames >();
+	bOk &= Register< CMICmdCmdDataListRegisterValues >();
+	bOk &= Register< CMICmdCmdDataWriteMemory >();
+	bOk &= Register< CMICmdCmdEnablePrettyPrinting >();
+	bOk &= Register< CMICmdCmdEnvironmentCd >();
+	bOk &= Register< CMICmdCmdExecContinue >();
+	bOk &= Register< CMICmdCmdExecInterrupt >();
+	bOk &= Register< CMICmdCmdExecFinish >();
+	bOk &= Register< CMICmdCmdExecNext >();
+	bOk &= Register< CMICmdCmdExecNextInstruction >();
+	bOk &= Register< CMICmdCmdExecRun >();
+	bOk &= Register< CMICmdCmdExecStep >();
+	bOk &= Register< CMICmdCmdExecStepInstruction >();
+	bOk &= Register< CMICmdCmdFileExecAndSymbols >();
+	bOk &= Register< CMICmdCmdGdbExit >();
+	bOk &= Register< CMICmdCmdGdbInfo >();
+	bOk &= Register< CMICmdCmdGdbSet >();
+	bOk &= Register< CMICmdCmdGdbThread >();
+	bOk &= Register< CMICmdCmdInterpreterExec >();
+	bOk &= Register< CMICmdCmdListThreadGroups >();
+	bOk &= Register< CMICmdCmdSource >();
 	bOk &= Register< CMICmdCmdStackInfoDepth >();
 	bOk &= Register< CMICmdCmdStackListFrames >();
 	bOk &= Register< CMICmdCmdStackListArguments >();
 	bOk &= Register< CMICmdCmdStackListLocals >();
-	bOk &= Register< CMICmdCmdVarCreate >();
-	bOk &= Register< CMICmdCmdExecNext >();
-	bOk &= Register< CMICmdCmdExecStep >();
-	bOk &= Register< CMICmdCmdExecNextInstruction >();
-	bOk &= Register< CMICmdCmdExecStepInstruction >();
-	bOk &= Register< CMICmdCmdExecFinish >();
-	bOk &= Register< CMICmdCmdVarUpdate >();
-	bOk &= Register< CMICmdCmdVarDelete >();
+	bOk &= Register< CMICmdCmdSupportListFeatures >();
+	bOk &= Register< CMICmdCmdTargetSelect >();
+	bOk &= Register< CMICmdCmdThreadInfo >();
 	bOk &= Register< CMICmdCmdVarAssign >();
-	bOk &= Register< CMICmdCmdVarSetFormat >();
-	bOk &= Register< CMICmdCmdVarListChildren >();
+	bOk &= Register< CMICmdCmdVarCreate >();
+	bOk &= Register< CMICmdCmdVarDelete >();
 	bOk &= Register< CMICmdCmdVarEvaluateExpression >();
 	bOk &= Register< CMICmdCmdVarInfoPathExpression >();
-	bOk &= Register< CMICmdCmdDataEvaluateExpression >();
+	bOk &= Register< CMICmdCmdVarListChildren >();
+	bOk &= Register< CMICmdCmdVarSetFormat >();
+	bOk &= Register< CMICmdCmdVarShowAttributes >();
+	bOk &= Register< CMICmdCmdVarUpdate >();
 
 	return bOk;
 }

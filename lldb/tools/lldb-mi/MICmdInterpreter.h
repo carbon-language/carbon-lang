@@ -60,11 +60,12 @@ private:
 	void		operator=( const CMICmdInterpreter & );
 	
 	bool				HasCmdFactoryGotMiCmd( const SMICmdData & vCmdData ) const;
-	bool				MiHasCmdNumberEndingHypthen( const CMIUtilString & vTextLine );
-	bool				MiHasCmdNumberEndingAlpha( const CMIUtilString & vTextLine );
+	bool				MiHasCmdTokenEndingHypthen( const CMIUtilString & vTextLine );
+	bool				MiHasCmdTokenEndingAlpha( const CMIUtilString & vTextLine );
 	bool				MiHasCmd( const CMIUtilString & vTextLine );
+	bool				MiHasCmdTokenPresent( const CMIUtilString & vTextLine );
 	const SMICmdData &	MiGetCmdData() const;
-	
+
 // Overridden:
 private:
 	// From CMICmnBase

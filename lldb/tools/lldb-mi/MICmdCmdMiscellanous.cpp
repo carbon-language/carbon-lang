@@ -10,9 +10,9 @@
 //++
 // File:		MICmdCmdMiscellanous.cpp
 //
-// Overview:	CMICmdCmdGdbSet					implementation.
-//				CMICmdCmdGdbExit				implementation.
+// Overview:	CMICmdCmdGdbExit				implementation.
 //				CMICmdCmdListThreadGroups		implementation.
+//				CMICmdCmdInterpreterExec		implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -22,6 +22,7 @@
 //--
 
 // Third Party Headers:
+#include <lldb/API/SBCommandInterpreter.h>
 #include <lldb/API/SBThread.h>
 
 // In-house headers:
@@ -41,82 +42,8 @@
 #include "MICmdArgValOptionLong.h"
 #include "MICmdArgValOptionShort.h"
 #include "MICmdArgValListOfN.h"
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdGdbSet constructor.
-// Type:	Method.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdGdbSet::CMICmdCmdGdbSet( void )
-{
-	// Command factory matches this name with that received from the stdin stream
-	m_strMiCmd = "gdb-set";
-	
-	// Required by the CMICmdFactory when registering *this commmand
-	m_pSelfCreatorFn = &CMICmdCmdGdbSet::CreateSelf;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	CMICmdCmdGdbSet destructor.
-// Type:	Overrideable.
-// Args:	None.
-// Return:	None.
-// Throws:	None.
-//--
-CMICmdCmdGdbSet::~CMICmdCmdGdbSet( void )
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command does work in this function.
-//			The command is likely to communicate with the LLDB SBDebugger in here.
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdGdbSet::Execute( void )
-{
-	// Do nothing
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	The invoker requires this function. The command prepares a MI Record Result
-//			for the work carried out in the Execute().
-// Type:	Overridden.
-// Args:	None.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMICmdCmdGdbSet::Acknowledge( void )
-{
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done );
-	m_miResultRecord = miRecordResult;
-	
-	return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
-//			calls this function to create an instance of *this command.
-// Type:	Static method.
-// Args:	None.
-// Return:	CMICmdBase * - Pointer to a new command.
-// Throws:	None.
-//--
-CMICmdBase * CMICmdCmdGdbSet::CreateSelf( void )
-{
-	return new CMICmdCmdGdbSet();
-}
-
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------
+#include "MICmnStreamStdout.h"
+#include "MICmnStreamStderr.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdGdbExit constructor.
@@ -130,7 +57,7 @@ CMICmdCmdGdbExit::CMICmdCmdGdbExit( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "gdb-exit";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdGdbExit::CreateSelf;
 }
 
@@ -156,7 +83,7 @@ CMICmdCmdGdbExit::~CMICmdCmdGdbExit( void )
 //--
 bool CMICmdCmdGdbExit::Execute( void )
 {
-	CMICmnLLDBDebugger::Instance().GetDriver().SetExitApplicationFlag();
+	CMICmnLLDBDebugger::Instance().GetDriver().SetExitApplicationFlag( true );
 	const lldb::SBError sbErr = m_rLLDBDebugSessionInfo.m_lldbProcess.Detach();
 	// Do not check for sbErr.Fail() here, m_lldbProcess is likely !IsValid()
 		
@@ -174,7 +101,7 @@ bool CMICmdCmdGdbExit::Execute( void )
 //--
 bool CMICmdCmdGdbExit::Acknowledge( void )
 {
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Exit );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Exit );
 	m_miResultRecord = miRecordResult;
 
 	// Prod the client i.e. Eclipse with out-of-band results to help it 'continue' because it is using LLDB debugger
@@ -189,7 +116,7 @@ bool CMICmdCmdGdbExit::Acknowledge( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -224,7 +151,7 @@ CMICmdCmdListThreadGroups::CMICmdCmdListThreadGroups( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "list-thread-groups";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdListThreadGroups::CreateSelf;
 }
 
@@ -251,10 +178,10 @@ CMICmdCmdListThreadGroups::~CMICmdCmdListThreadGroups( void )
 //--
 bool CMICmdCmdListThreadGroups::ParseArgs( void )
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedAvailable, false, true )) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1 )) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number )) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValThreadGrp( m_constStrArgNamedThreadGroup, false, true )) );
+	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedAvailable, false, true ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValThreadGrp( m_constStrArgNamedThreadGroup, false, true ) ) );
 	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
 	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
 	{
@@ -286,26 +213,8 @@ bool CMICmdCmdListThreadGroups::Execute( void )
 
 	CMICMDBASE_GETOPTION( pArgAvailable, OptionLong, m_constStrArgNamedAvailable );
 	CMICMDBASE_GETOPTION( pArgRecurse, OptionLong, m_constStrArgNamedRecurse );
-	CMICMDBASE_GETOPTION( pArgGroup, ListOfN, m_constStrArgNamedGroup );
 	CMICMDBASE_GETOPTION( pArgThreadGroup, ThreadGrp, m_constStrArgNamedThreadGroup );
 	
-	// Demo of how to get the value of long argument --recurse's option of 1 "--recurse 1"
-	const CMICmdArgValOptionLong::VecArgObjPtr_t & rVecOptions( pArgRecurse->GetExpectedOptions() );
-	const CMICmdArgValNumber * pRecurseDepthOption = (rVecOptions.size() > 0) ? static_cast< CMICmdArgValNumber * >( rVecOptions[ 1 ] ) : nullptr;
-	const MIuint nRecurseDepth = (pRecurseDepthOption != nullptr) ? pRecurseDepthOption->GetValue() : 0;
-	
-	// Demo of how to get List of N numbers (the Group argument not implement for this command (yet))
-	const CMICmdArgValListOfN::VecArgObjPtr_t & rVecGroupId( pArgGroup->GetValue() );
-	CMICmdArgValListOfN::VecArgObjPtr_t::const_iterator it = rVecGroupId.begin();
-	while( it != rVecGroupId.end() )
-	{
-		const CMICmdArgValNumber * pOption = static_cast< CMICmdArgValNumber * >( *it );
-		const MIuint nGrpId = pOption->GetValue();
-
-		// Next
-		++it;
-	}
-
 	// Got some options so "threads"
 	if( pArgAvailable->GetFound() )
 	{
@@ -366,7 +275,7 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 		{
 			const CMICmnMIValueConst miValueConst( MIRSRC( IDS_WORD_NOT_IMPLEMENTED_BRKTS ) );
 			const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-			const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+			const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 			m_miResultRecord = miRecordResult;
 			
 			return MIstatus::success;
@@ -397,7 +306,7 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 
 		const CMICmnMIValueList miValueList( miTuple );
 		const CMICmnMIValueResult miValueResult6( "groups", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult6 );
 		m_miResultRecord = miRecordResult;
 		
 		return MIstatus::success;
@@ -421,8 +330,8 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 		miTuple.Add( miValueResult3 );
 
 		lldb::SBTarget & rTrgt = rSessionInfo.m_lldbTarget;
-		const char * pDir = rTrgt.GetExecutable().GetDirectory();
-		const char * pFileName = rTrgt.GetExecutable().GetFilename();
+		const MIchar * pDir = rTrgt.GetExecutable().GetDirectory();
+		const MIchar * pFileName = rTrgt.GetExecutable().GetFilename();
 		const CMIUtilString strFile( CMIUtilString::Format( "%s/%s", pDir, pFileName ) );
 		const CMICmnMIValueConst miValueConst4( strFile );
 		const CMICmnMIValueResult miValueResult4( "executable", miValueConst4 );
@@ -430,7 +339,7 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 		
 		const CMICmnMIValueList miValueList( miTuple );
 		const CMICmnMIValueResult miValueResult5( "groups", miValueList );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult5 );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult5 );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -441,7 +350,7 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 	{
 		const CMICmnMIValueConst miValueConst( "[]" );
 		const CMICmnMIValueResult miValueResult( "threads", miValueConst );
-		const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
@@ -457,14 +366,14 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 	}
 
 	const CMICmnMIValueResult miValueResult( "threads", miValueList );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult );
 	m_miResultRecord = miRecordResult;
 
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.
@@ -474,4 +383,125 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 CMICmdBase * CMICmdCmdListThreadGroups::CreateSelf( void )
 {
 	return new CMICmdCmdListThreadGroups();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdInterpreterExec constructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdInterpreterExec::CMICmdCmdInterpreterExec( void )
+:	m_constStrArgNamedInterpreter( "intepreter" )
+,	m_constStrArgNamedCommand( "command" )
+{
+	// Command factory matches this name with that received from the stdin stream
+	m_strMiCmd = "interpreter-exec";
+	
+	// Required by the CMICmdFactory when registering *this command
+	m_pSelfCreatorFn = &CMICmdCmdInterpreterExec::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdInterpreterExec destructor.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdInterpreterExec::~CMICmdCmdInterpreterExec( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The parses the command line options 
+//			arguments to extract values for each of those arguments.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdInterpreterExec::ParseArgs( void )
+{
+	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedInterpreter, true, true ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedCommand, true, true, true ) ) );
+	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
+	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
+	{
+		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
+		return MIstatus::failure;
+	}
+	
+	return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command does work in this function.
+//			The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdInterpreterExec::Execute( void )
+{
+	CMICMDBASE_GETOPTION( pArgInterpreter, String, m_constStrArgNamedInterpreter );
+	CMICMDBASE_GETOPTION( pArgCommand, String, m_constStrArgNamedCommand );
+	const CMIUtilString & rStrInterpreter( pArgInterpreter->GetValue() );
+	const CMIUtilString & rStrCommand( pArgCommand->GetValue() );
+	const CMIUtilString strCmd( CMIUtilString::Format( "%s %s", rStrInterpreter.c_str(), rStrCommand.c_str() ) );
+	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
+	const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( strCmd.c_str(), m_lldbResult, true ); MIunused( rtn );
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command prepares a MI Record Result
+//			for the work carried out in the Execute().
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdInterpreterExec::Acknowledge( void )
+{
+	if( m_lldbResult.GetOutputSize() > 0 )
+	{
+		CMIUtilString strMsg( m_lldbResult.GetOutput() );
+		strMsg = strMsg.StripCREndOfLine();
+		CMICmnStreamStdout::TextToStdout( strMsg );
+	}
+	if( m_lldbResult.GetErrorSize() > 0 )
+	{
+		CMIUtilString strMsg( m_lldbResult.GetError() );
+		strMsg = strMsg.StripCREndOfLine();
+		CMICmnStreamStderr::TextToStderr( strMsg );
+	}
+
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
+	m_miResultRecord = miRecordResult;
+	
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
+//			calls this function to create an instance of *this command.
+// Type:	Static method.
+// Args:	None.
+// Return:	CMICmdBase * - Pointer to a new command.
+// Throws:	None.
+//--
+CMICmdBase * CMICmdCmdInterpreterExec::CreateSelf( void )
+{
+	return new CMICmdCmdInterpreterExec();
 }

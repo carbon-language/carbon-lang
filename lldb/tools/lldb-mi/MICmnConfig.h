@@ -21,28 +21,27 @@
 //--
 #pragma once
 
-// 1 = Yes compile MI version, 0 = compile original LLDB driver
+// 1 = Yes compile MI Driver version, 0 = compile original LLDB driver code only.
+// 0 was mainly just for testing purposes and so may be removed at a later time.
 #define MICONFIG_COMPILE_MIDRIVER_VERSION 1	
 
-// 1 = Show modal dialog, 0 = do not show
+// 1 = Show debug process attach modal dialog, 0 = do not show
+// For windows only ATM, other OS use an infinite loop which a debug has to change a value to continue
 #define MICONFIG_DEBUG_SHOW_ATTACH_DBG_DLG 0
 
-// 1 = Compile in and init LLDB driver code alongside MI version, 0 = do not use
+// 1 = Compile in and init LLDB driver code alongside MI version, 0 = do not compile in
 // ToDo: This has not been fully implemented as may not be required in the future
-#define MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER 0
+#define MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER 1
 
 // 1 = Give runtime our own custom buffer, 0 = Use runtime managed buffer
 #define MICONFIG_CREATE_OWN_STDIN_BUFFER 0
 
 // 1 = Use the MI driver regardless of --interpreter, 0 = require --interpreter argument
-#define MICONFIG_DEFAULT_TO_MI_DRIVER 1
+// This depends on MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER
+#define MICONFIG_DEFAULT_TO_MI_DRIVER 0
 
 // 1 = Check for stdin before we issue blocking read, 0 = issue blocking call always
 #define MICONFIG_POLL_FOR_STD_IN 1
-
-// Temp workaround while needing different triples
-// ToDo: Temp workaround while needing different triples - not used ATM, may not be required anymore
-//#define MICONFIG_TRIPLE "arm"
 
 // 1 = Write to MI's Log file warnings about commands that did not handle arguments or
 // options present to them by the driver's client, 0 = no warnings given

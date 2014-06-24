@@ -42,6 +42,10 @@ class CMICmnStreamStdout
 {
 	friend class MI::ISingleton< CMICmnStreamStdout >;
 
+// Statics:
+public:
+	static bool	TextToStdout( const CMIUtilString & vrTxt );
+
 // Methods:
 public:
 	bool	Initialize( void );

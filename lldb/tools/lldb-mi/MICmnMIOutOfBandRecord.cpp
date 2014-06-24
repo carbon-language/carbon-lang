@@ -61,20 +61,20 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTex
 // Throws:	None.
 //--
 CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord( void )
-:	m_strAsyncRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+:	m_strAsyncRecord( MIRSRC( IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION ) )
 {
 }
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnMIOutOfBandRecord constructor.
 // Type:	Method.
-// Args:	veType	- (R) A MI result class enumeration.
+// Args:	veType	- (R) A MI Out-of-Bound enumeration.
 // Return:	None.
 // Throws:	None.
 //--
 CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord( const OutOfBand_e veType )
 :	m_eResultAsyncRecordClass( veType )
-,	m_strAsyncRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+,	m_strAsyncRecord( MIRSRC( IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION ) )
 {
 	BuildAsyncRecord();
 }
@@ -82,14 +82,14 @@ CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord( const OutOfBand_e veType )
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnMIOutOfBandRecord constructor.
 // Type:	Method.
-// Args:	veType		- (R) A MI result class enumeration.
+// Args:	veType		- (R) A MI Out-of-Bound enumeration.
 //			vMIResult	- (R) A MI result object.
 // Return:	None.
 // Throws:	None.
 //--
 CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord( const OutOfBand_e veType, const CMICmnMIValueResult & vValue )
 :	m_eResultAsyncRecordClass( veType )
-,	m_strAsyncRecord( MIRSRC( IDS_WORD_INVALIDBRKTS ) )
+,	m_strAsyncRecord( MIRSRC( IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION ) )
 ,	m_partResult( vValue )	
 {
 	BuildAsyncRecord();
@@ -133,7 +133,7 @@ const CMIUtilString & CMICmnMIOutOfBandRecord::GetString( void ) const
 //--
 bool CMICmnMIOutOfBandRecord::BuildAsyncRecord( void )
 {
-	const char * pFormat = "%s%s";
+	const MIchar * pFormat = "%s%s";
 	const CMIUtilString & rStrAsyncRecord( ms_MapOutOfBandToOutOfBandText[ m_eResultAsyncRecordClass ] );
 	const CMIUtilString & rStrToken( ms_constMapAsyncRecordTextToToken[ m_eResultAsyncRecordClass ] );
 	m_strAsyncRecord = CMIUtilString::Format( pFormat, rStrToken.c_str(), rStrAsyncRecord.c_str() );

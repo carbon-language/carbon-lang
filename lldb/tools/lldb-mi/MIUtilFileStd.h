@@ -34,6 +34,10 @@
 //--
 class CMIUtilFileStd : public CMICmnBase
 {
+// Static:
+public:
+	static MIchar	GetSlash( void );
+
 // Methods:
 public:
 	/* ctor */  CMIUtilFileStd( void );

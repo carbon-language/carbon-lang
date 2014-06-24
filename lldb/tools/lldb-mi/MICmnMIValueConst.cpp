@@ -84,13 +84,13 @@ bool CMICmnMIValueConst::BuildConst( void )
 		}
 		else
 		{
-			const char * pFormat = "%s%s%s";
+			const MIchar * pFormat = "%s%s%s";
 			m_strValue = CMIUtilString::Format( pFormat, ms_constStrDblQuote.c_str(), strValue.c_str(), ms_constStrDblQuote.c_str() );
 		}
 	}
 	else
 	{
-		const char * pFormat = "%s%s";
+		const MIchar * pFormat = "%s%s";
 		m_strValue = CMIUtilString::Format( pFormat, ms_constStrDblQuote.c_str(), ms_constStrDblQuote.c_str() );
 	}
 

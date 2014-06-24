@@ -10,7 +10,7 @@
 //++
 // File:		MICmdCmdTrace.cpp
 //
-// Overview:	CMICmdCmdTraceStatus			implementation.
+// Overview:	CMICmdCmdTraceStatus	implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -38,7 +38,7 @@ CMICmdCmdTraceStatus::CMICmdCmdTraceStatus( void )
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "trace-status";
 	
-	// Required by the CMICmdFactory when registering *this commmand
+	// Required by the CMICmdFactory when registering *this command
 	m_pSelfCreatorFn = &CMICmdCmdTraceStatus::CreateSelf;
 }
 
@@ -81,14 +81,14 @@ bool CMICmdCmdTraceStatus::Acknowledge( void )
 {
 	const CMICmnMIValueConst miValueConst( MIRSRC( IDS_CMD_ERR_NOT_IMPLEMENTED ) );
 	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
-	const CMICmnMIResultRecord miRecordResult( m_cmdData.nMiCmdNumber, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
 	
 	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Required by the CMICmdFactory when registering *this commmand. The factory
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
 //			calls this function to create an instance of *this command.
 // Type:	Static method.
 // Args:	None.

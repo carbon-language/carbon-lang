@@ -9,12 +9,24 @@
 
 // In-house headers:
 #include "MICmnConfig.h"
+
 #if MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER
+
+#ifndef _MSC_VER
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <string>
+#endif // _MSC_VER
 
 #include "Platform.h" // CODETAG_IOR_SIGNALS
 #include "Driver.h"
-#include <lldb\Host\windows\getopt\GetOptInc.h>
 
+#ifdef _MSC_VER
+#include <lldb\Host\windows\getopt\GetOptInc.h>
+#endif // _MSC_VER
 #include <lldb/API/SBBreakpoint.h>
 #include <lldb/API/SBCommandInterpreter.h>
 #include <lldb/API/SBCommandReturnObject.h>
@@ -978,10 +990,10 @@ Driver::ResizeWindow (unsigned short col)
 // Details:	Setup *this driver so it works as pass through (child) driver for the MI
 //			driver. Called by the parent (MI driver) driver.
 //			This driver has setup code in two places. The original in MainLoop() and
-//			in int main() (if MICONFIG_COMPILE_MIDRIVER_VERSION == 0) so that code can remain
-//			as much near to the original code as possible. If MI driver is the main 
-//			driver then this function is used to set up the Driver to work with the
-//			MI driver.
+//			in int main() (when MICONFIG_COMPILE_MIDRIVER_VERSION == 0) so that code can 
+//			remain as much near to the original code as possible. If MI driver is the main 
+//			driver (when MICONFIG_COMPILE_MIDRIVER_VERSION == 1) then this function is 
+//			used to set up the Driver to work with the 	MI driver.
 // Type:	Method.
 // Args:	vwErrMsg	- (W) On failure current error discription.
 // Return:	MIstatus::success - Functional succeeded.
@@ -1181,10 +1193,11 @@ bool Driver::DoFallThruToAnotherDriver( const CMIUtilString & vCmd, CMIUtilStrin
 	bool bOk = MIstatus::success;
 	vwErrMsg.empty();
 
-	// ToDo: implement do work on other driver after other driver said "Give up you try"
+	// ToDo: Implement do work on other driver after this driver said "Give up you try"
+	// This may nto be required if the feature to 'fall through' is not required
 	SBCommandReturnObject returnObj = lldb::SBCommandReturnObject();
 	SBCommandInterpreter cmdIntrp = m_debugger.GetCommandInterpreter();
-    const lldb::ReturnStatus cmdResult = cmdIntrp.HandleCommand( vCmd.c_str(), returnObj );
+    const lldb::ReturnStatus cmdResult = cmdIntrp.HandleCommand( vCmd.c_str(), returnObj ); MIunused( cmdResult );
 	if( returnObj.Succeeded() == false )
 	{
 		bOk = MIstatus::failure;
