@@ -146,9 +146,9 @@ public:
   static ScaledNumber getLargest() {
     return ScaledNumber(DigitsLimits::max(), ScaledNumbers::MaxScale);
   }
-  static ScaledNumber getFloat(uint64_t N) { return adjustToWidth(N, 0); }
-  static ScaledNumber getInverseFloat(uint64_t N) {
-    return getFloat(N).invert();
+  static ScaledNumber get(uint64_t N) { return adjustToWidth(N, 0); }
+  static ScaledNumber getInverse(uint64_t N) {
+    return get(N).invert();
   }
   static ScaledNumber getFraction(DigitsType N, DigitsType D) {
     return getQuotient(N, D);
@@ -293,18 +293,18 @@ public:
     return ScaledNumbers::compare(Digits, Scale, X.Digits, X.Scale);
   }
   int compareTo(uint64_t N) const {
-    ScaledNumber Float = getFloat(N);
-    int Compare = compare(Float);
+    ScaledNumber Scaled = get(N);
+    int Compare = compare(Scaled);
     if (Width == 64 || Compare != 0)
       return Compare;
 
     // Check for precision loss.  We know *this == RoundTrip.
-    uint64_t RoundTrip = Float.template toInt<uint64_t>();
+    uint64_t RoundTrip = Scaled.template toInt<uint64_t>();
     return N == RoundTrip ? 0 : RoundTrip < N ? -1 : 1;
   }
   int compareTo(int64_t N) const { return N < 0 ? 1 : compareTo(uint64_t(N)); }
 
-  ScaledNumber &invert() { return *this = ScaledNumber::getFloat(1) / *this; }
+  ScaledNumber &invert() { return *this = ScaledNumber::get(1) / *this; }
   ScaledNumber inverse() const { return ScaledNumber(*this).invert(); }
 
 private:
@@ -390,7 +390,7 @@ SCALED_NUMBER_COMPARE_TO(>= )
 template <class DigitsT>
 uint64_t ScaledNumber<DigitsT>::scale(uint64_t N) const {
   if (Width == 64 || N <= DigitsLimits::max())
-    return (getFloat(N) * *this).template toInt<uint64_t>();
+    return (get(N) * *this).template toInt<uint64_t>();
 
   // Defer to the 64-bit version.
   return ScaledNumber<uint64_t>(Digits, Scale).scale(N);
