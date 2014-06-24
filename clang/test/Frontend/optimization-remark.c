@@ -5,7 +5,7 @@
 
 // RUN: %clang_cc1 %s -Rpass=inline -Rpass-analysis=inline -Rpass-missed=inline -O0 -emit-llvm-only -verify
 // RUN: %clang_cc1 %s -DNDEBUG -Rpass=inline -emit-llvm-only -verify
-// RUN: %clang_cc1 %s -Rpass=inline -emit-llvm -o %t 2>/dev/null | FileCheck %s < %t
+// RUN: %clang_cc1 %s -Rpass=inline -emit-llvm -o - 2>/dev/null | FileCheck %s
 
 // -Rpass should produce source location annotations, exclusively (just
 // like -gmlt).
