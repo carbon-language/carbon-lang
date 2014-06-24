@@ -50,7 +50,31 @@ entry:
   ret void
 }
 
+; PR19955
+
+@dllimportptr = global i32* null, align 4
+; CHECK: @dllimportptr = global i32* null, align 4
+@dllimportvar = external dllimport global i32
+define internal void @test3() {
+entry:
+  store i32* @dllimportvar, i32** @dllimportptr, align 4
+  ret void
+}
+
+@dllexportptr = global i32* null, align 4
+; CHECK: @dllexportptr = global i32* @dllexportvar, align 4
+@dllexportvar = dllexport global i32 0, align 4
+; CHECK: @dllexportvar = dllexport global i32 20, align 4
+define internal void @test4() {
+entry:
+  store i32 20, i32* @dllexportvar, align 4
+  store i32* @dllexportvar, i32** @dllexportptr, align 4
+  ret void
+}
+
 @llvm.global_ctors = appending constant
-  [2 x { i32, void ()* }]
+  [4 x { i32, void ()* }]
   [{ i32, void ()* } { i32 65535, void ()* @test1 },
-   { i32, void ()* } { i32 65535, void ()* @test2 }]
+   { i32, void ()* } { i32 65535, void ()* @test2 },
+   { i32, void ()* } { i32 65535, void ()* @test3 },
+   { i32, void ()* } { i32 65535, void ()* @test4 }]

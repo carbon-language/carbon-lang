@@ -1980,10 +1980,12 @@ isSimpleEnoughValueToCommit(Constant *C,
 static bool isSimpleEnoughValueToCommitHelper(Constant *C,
                                    SmallPtrSet<Constant*, 8> &SimpleConstants,
                                    const DataLayout *DL) {
-  // Simple integer, undef, constant aggregate zero, global addresses, etc are
-  // all supported.
-  if (C->getNumOperands() == 0 || isa<BlockAddress>(C) ||
-      isa<GlobalValue>(C))
+  // Simple global addresses are supported, do not allow dllimport globals.
+  if (auto *GV = dyn_cast<GlobalValue>(C))
+    return !GV->hasDLLImportStorageClass();
+
+  // Simple integer, undef, constant aggregate zero, etc are all supported.
+  if (C->getNumOperands() == 0 || isa<BlockAddress>(C))
     return true;
 
   // Aggregate values are safe if all their elements are.
@@ -2054,8 +2056,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     return false;
 
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
-    // Do not allow weak/*_odr/linkonce/dllimport/dllexport linkage or
-    // external globals.
+    // Do not allow weak/*_odr/linkonce linkage or external globals.
     return GV->hasUniqueInitializer();
 
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
