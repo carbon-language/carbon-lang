@@ -4664,6 +4664,19 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   }
 }
 
+// When correcting from misplaced brackets before the identifier, the location
+// is saved inside the declarator so that other diagnostic messages can use
+// them.  This extracts and returns that location, or returns the provided
+// location if a stored location does not exist.
+static SourceLocation getMissingDeclaratorIdLoc(Declarator &D,
+                                                SourceLocation Loc) {
+  if (D.getName().StartLocation.isInvalid() &&
+      D.getName().EndLocation.isValid())
+    return D.getName().EndLocation;
+
+  return Loc;
+}
+
 /// ParseDirectDeclarator
 ///       direct-declarator: [C99 6.7.5]
 /// [C99]   identifier
@@ -4841,11 +4854,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   } else {
     if (Tok.getKind() == tok::annot_pragma_parser_crash)
       LLVM_BUILTIN_TRAP;
-    if (D.getContext() == Declarator::MemberContext)
-      Diag(Tok, diag::err_expected_member_name_or_semi)
+    if (Tok.is(tok::l_square))
+      return ParseMisplacedBracketDeclarator(D);
+    if (D.getContext() == Declarator::MemberContext) {
+      Diag(getMissingDeclaratorIdLoc(D, Tok.getLocation()),
+           diag::err_expected_member_name_or_semi)
           << (D.getDeclSpec().isEmpty() ? SourceRange()
                                         : D.getDeclSpec().getSourceRange());
-    else if (getLangOpts().CPlusPlus) {
+    } else if (getLangOpts().CPlusPlus) {
       if (Tok.is(tok::period) || Tok.is(tok::arrow))
         Diag(Tok, diag::err_invalid_operator_on_type) << Tok.is(tok::arrow);
       else {
@@ -4854,11 +4870,15 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           Diag(PP.getLocForEndOfToken(Loc), diag::err_expected_unqualified_id)
               << getLangOpts().CPlusPlus;
         else
-          Diag(Tok, diag::err_expected_unqualified_id)
+          Diag(getMissingDeclaratorIdLoc(D, Tok.getLocation()),
+               diag::err_expected_unqualified_id)
               << getLangOpts().CPlusPlus;
       }
-    } else
-      Diag(Tok, diag::err_expected_either) << tok::identifier << tok::l_paren;
+    } else {
+      Diag(getMissingDeclaratorIdLoc(D, Tok.getLocation()),
+           diag::err_expected_either)
+          << tok::identifier << tok::l_paren;
+    }
     D.SetIdentifier(nullptr, Tok.getLocation());
     D.setInvalidType(true);
   }
@@ -5562,6 +5582,96 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
                                           T.getOpenLocation(),
                                           T.getCloseLocation()),
                 attrs, T.getCloseLocation());
+}
+
+/// Diagnose brackets before an identifier.
+void Parser::ParseMisplacedBracketDeclarator(Declarator &D) {
+  assert(Tok.is(tok::l_square) && "Missing opening bracket");
+  assert(!D.mayOmitIdentifier() && "Declarator cannot omit identifier");
+
+  SourceLocation StartBracketLoc = Tok.getLocation();
+  Declarator TempDeclarator(D.getDeclSpec(), D.getContext());
+
+  while (Tok.is(tok::l_square)) {
+    ParseBracketDeclarator(TempDeclarator);
+  }
+
+  // Stuff the location of the start of the brackets into the Declarator.
+  // The diagnostics from ParseDirectDeclarator will make more sense if
+  // they use this location instead.
+  if (Tok.is(tok::semi))
+    D.getName().EndLocation = StartBracketLoc;
+
+  SourceLocation SuggestParenLoc = Tok.getLocation();
+
+  // Now that the brackets are removed, try parsing the declarator again.
+  ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
+
+  // Something went wrong parsing the brackets, in which case,
+  // ParseBracketDeclarator has emitted an error, and we don't need to emit
+  // one here.
+  if (TempDeclarator.getNumTypeObjects() == 0)
+    return;
+
+  // Determine if parens will need to be suggested in the diagnostic.
+  bool NeedParens = false;
+  if (D.getNumTypeObjects() != 0) {
+    switch (D.getTypeObject(D.getNumTypeObjects() - 1).Kind) {
+    case DeclaratorChunk::Pointer:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::MemberPointer:
+      NeedParens = true;
+      break;
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::Function:
+    case DeclaratorChunk::Paren:
+      break;
+    }
+  }
+
+  if (NeedParens) {
+    // Create a DeclaratorChunk for the inserted parens.
+    ParsedAttributes attrs(AttrFactory);
+    SourceLocation EndLoc = PP.getLocForEndOfToken(D.getLocEnd());
+    D.AddTypeInfo(DeclaratorChunk::getParen(SuggestParenLoc, EndLoc), attrs,
+                  SourceLocation());
+  }
+
+  // Adding back the bracket info to the end of the Declarator.
+  for (unsigned i = 0, e = TempDeclarator.getNumTypeObjects(); i < e; ++i) {
+    const DeclaratorChunk &Chunk = TempDeclarator.getTypeObject(i);
+    ParsedAttributes attrs(AttrFactory);
+    attrs.set(Chunk.Common.AttrList);
+    D.AddTypeInfo(Chunk, attrs, SourceLocation());
+  }
+
+  // The missing identifier would have been diagnosed in ParseDirectDeclarator.
+  // If parentheses are required, always suggest them.
+  if (!D.getIdentifier() && !NeedParens)
+    return;
+
+  SourceLocation EndBracketLoc = TempDeclarator.getLocEnd();
+
+  // Generate the move bracket error message.
+  SourceRange BracketRange(StartBracketLoc, EndBracketLoc);
+  SourceLocation EndLoc = PP.getLocForEndOfToken(D.getLocEnd());
+
+  if (NeedParens) {
+    Diag(EndLoc, diag::err_brackets_go_after_unqualified_id)
+        << getLangOpts().CPlusPlus
+        << FixItHint::CreateInsertion(SuggestParenLoc, "(")
+        << FixItHint::CreateInsertion(EndLoc, ")")
+        << FixItHint::CreateInsertionFromRange(
+               EndLoc, CharSourceRange(BracketRange, true))
+        << FixItHint::CreateRemoval(BracketRange);
+  } else {
+    Diag(EndLoc, diag::err_brackets_go_after_unqualified_id)
+        << getLangOpts().CPlusPlus
+        << FixItHint::CreateInsertionFromRange(
+               EndLoc, CharSourceRange(BracketRange, true))
+        << FixItHint::CreateRemoval(BracketRange);
+  }
 }
 
 /// [GNU]   typeof-specifier:

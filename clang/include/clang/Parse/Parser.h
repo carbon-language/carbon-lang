@@ -2214,6 +2214,7 @@ private:
          SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo,
          SourceLocation &EllipsisLoc);
   void ParseBracketDeclarator(Declarator &D);
+  void ParseMisplacedBracketDeclarator(Declarator &D);
 
   //===--------------------------------------------------------------------===//
   // C++ 7: Declarations [dcl.dcl]
