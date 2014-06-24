@@ -7020,7 +7020,10 @@ def note_omp_predetermined_dsa : Note<
 def err_omp_loop_var_dsa : Error<
   "loop iteration variable may not be %0">;
 def err_omp_not_for : Error<
-  "statement after '#pragma omp %0' must be a for loop">;
+  "%select{statement after '#pragma omp %1' must be a for loop|"
+  "expected %2 for loops after '#pragma omp %1'%select{|, but found only %4}3}0">;
+def note_omp_collapse_expr : Note<
+  "as specified in 'collapse' clause">;
 def err_omp_negative_expression_in_clause : Error<
   "argument to '%0' clause must be a positive integer value">;
 def err_omp_not_integral : Error<

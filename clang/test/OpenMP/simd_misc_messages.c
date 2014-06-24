@@ -169,28 +169,28 @@ void test_collapse()
   #pragma omp simd collapse 4)
   for (i = 0; i < 16; ++i) ;
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4,
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4,)
-  for (i = 0; i < 16; ++i) ;
-  // xxpected-error@+1 {{expected expression}}
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
+  // xxpected-error@+1 {{expected expression}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4)
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4 4)
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4,,4)
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   #pragma omp simd collapse(4)
   for (int i1 = 0; i1 < 16; ++i1)
     for (int i2 = 0; i2 < 16; ++i2)
@@ -198,9 +198,9 @@ void test_collapse()
         for (int i4 = 0; i4 < 16; ++i4)
           foo();
   // expected-error@+2 {{expected ')'}}
-  // expected-note@+1 {{to match this '('}}
+  // expected-note@+1 {{to match this '('}} expected-note@+1 {{as specified in 'collapse' clause}}
   #pragma omp simd collapse(4,8)
-  for (i = 0; i < 16; ++i) ;
+  for (i = 0; i < 16; ++i) ; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+1 {{expression is not an integer constant expression}}
   #pragma omp simd collapse(2.5)
   for (i = 0; i < 16; ++i);

@@ -27,8 +27,8 @@ T tmain(T argc, S **argv) { //expected-note 2 {{declared here}}
   for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
   #pragma omp simd collapse (1)) // expected-warning {{extra tokens at the end of '#pragma omp simd' are ignored}}
   for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
-  #pragma omp simd collapse ((ST > 0) ? 1 + ST : 2)
-  for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
+  #pragma omp simd collapse ((ST > 0) ? 1 + ST : 2) // expected-note 2 {{as specified in 'collapse' clause}}
+  for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST]; // expected-error 2 {{expected 2 for loops after '#pragma omp simd', but found only 1}}
   // expected-error@+3 2 {{directive '#pragma omp simd' cannot contain more than one 'collapse' clause}}
   // expected-error@+2 2 {{argument to 'collapse' clause must be a positive integer value}}
   // expected-error@+1 2 {{expression is not an integral constant expression}}
@@ -43,6 +43,8 @@ T tmain(T argc, S **argv) { //expected-note 2 {{declared here}}
   for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
   #pragma omp simd collapse (N) // expected-error {{argument to 'collapse' clause must be a positive integer value}}
   for (T i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
+  #pragma omp simd collapse (2) // expected-note {{as specified in 'collapse' clause}}
+  foo(); // expected-error {{expected 2 for loops after '#pragma omp simd'}}
   return argc;
 }
 
@@ -53,10 +55,10 @@ int main(int argc, char **argv) {
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
   #pragma omp simd collapse () // expected-error {{expected expression}}
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
-  #pragma omp simd collapse (4 // expected-error {{expected ')'}} expected-note {{to match this '('}}
-  for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
-  #pragma omp simd collapse (2+2)) // expected-warning {{extra tokens at the end of '#pragma omp simd' are ignored}}
-  for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
+  #pragma omp simd collapse (4 // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-note {{as specified in 'collapse' clause}}
+  for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4]; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
+  #pragma omp simd collapse (2+2)) // expected-warning {{extra tokens at the end of '#pragma omp simd' are ignored}} expected-note {{as specified in 'collapse' clause}}
+  for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4]; // expected-error {{expected 4 for loops after '#pragma omp simd', but found only 1}}
   #pragma omp simd collapse (foobool(1) > 0 ? 1 : 2) // expected-error {{expression is not an integral constant expression}}
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
   // expected-error@+3 {{expression is not an integral constant expression}}
@@ -69,6 +71,8 @@ int main(int argc, char **argv) {
   // expected-error@+1 {{expression is not an integral constant expression}}
   #pragma omp simd collapse (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
+  #pragma omp simd collapse (2) // expected-note {{as specified in 'collapse' clause}}
+  foo(); // expected-error {{expected 2 for loops after '#pragma omp simd'}}
   // expected-error@+3 {{statement after '#pragma omp simd' must be a for loop}}
   // expected-note@+1 {{in instantiation of function template specialization 'tmain<int, char, -1, -2>' requested here}}
   #pragma omp simd collapse(collapse(tmain<int, char, -1, -2>(argc, argv) // expected-error 2 {{expected ')'}} expected-note 2 {{to match this '('}}

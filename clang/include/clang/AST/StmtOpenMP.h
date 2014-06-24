@@ -67,8 +67,9 @@ protected:
   OMPExecutableDirective(const T *, StmtClass SC, OpenMPDirectiveKind K,
                          SourceLocation StartLoc, SourceLocation EndLoc,
                          unsigned NumClauses, unsigned NumChildren)
-      : Stmt(SC), Kind(K), StartLoc(StartLoc), EndLoc(EndLoc),
-        NumClauses(NumClauses), NumChildren(NumChildren),
+      : Stmt(SC), Kind(K), StartLoc(std::move(StartLoc)),
+        EndLoc(std::move(EndLoc)), NumClauses(NumClauses),
+        NumChildren(NumChildren),
         ClausesOffset(llvm::RoundUpToAlignment(sizeof(T),
                                                llvm::alignOf<OMPClause *>())) {}
 
@@ -85,6 +86,44 @@ protected:
   void setAssociatedStmt(Stmt *S) { *child_begin() = S; }
 
 public:
+  /// \brief Iterates over a filtered subrange of clauses applied to a
+  /// directive.
+  ///
+  /// This iterator visits only those declarations that meet some run-time
+  /// criteria.
+  template <class FilterPredicate> class filtered_clause_iterator {
+    ArrayRef<OMPClause *>::const_iterator Current;
+    ArrayRef<OMPClause *>::const_iterator End;
+    void SkipToNextClause() {
+      while (Current != End && !FilterPredicate()(*Current))
+        ++Current;
+    }
+
+  public:
+    typedef const OMPClause *value_type;
+    filtered_clause_iterator() : Current(), End() {}
+    explicit filtered_clause_iterator(ArrayRef<OMPClause *> Arr)
+        : Current(Arr.begin()), End(Arr.end()) {
+      SkipToNextClause();
+    }
+    value_type operator*() const { return *Current; }
+    value_type operator->() const { return *Current; }
+    filtered_clause_iterator &operator++() {
+      ++Current;
+      SkipToNextClause();
+      return *this;
+    }
+
+    filtered_clause_iterator operator++(int) {
+      filtered_clause_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    bool operator!() { return Current == End; }
+    operator bool() { return Current != End; }
+  };
+
   /// \brief Returns starting location of directive kind.
   SourceLocation getLocStart() const { return StartLoc; }
   /// \brief Returns ending location of directive.

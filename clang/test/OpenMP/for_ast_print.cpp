@@ -23,10 +23,16 @@ T tmain(T argc) {
 #pragma omp for private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) schedule(static, N) ordered nowait
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
-      foo();
+      for (int j = 0; j < 10; ++j)
+        for (int j = 0; j < 10; ++j)
+          for (int j = 0; j < 10; ++j)
+            foo();
   // CHECK-NEXT: #pragma omp parallel
   // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) schedule(static, N) ordered nowait
   // CHECK-NEXT: for (int i = 0; i < 10; ++i)
+  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: foo();
   return T();
