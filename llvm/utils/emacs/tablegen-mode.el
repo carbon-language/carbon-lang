@@ -112,6 +112,7 @@
   (set-syntax-table tablegen-mode-syntax-table)
   (make-local-variable 'comment-start)
   (setq comment-start "//")
+  (setq indent-tabs-mode nil)
   (run-hooks 'tablegen-mode-hook))       ; Finally, this permits the user to
                                          ;   customize the mode with a hook.
 
