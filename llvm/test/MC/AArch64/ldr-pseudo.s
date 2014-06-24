@@ -1,4 +1,4 @@
-//RUN: llvm-mc -arch aarch64    %s | FileCheck %s
+//RUN: llvm-mc  -triple=aarch64-linux-gnu %s | FileCheck %s
 
 //
 // Check that large constants are converted to ldr from constant pool
