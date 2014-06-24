@@ -3754,6 +3754,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         }
       } else if (isa<AccessSpecDecl>(Mem)) {
         // Any access specifier is fine.
+      } else if (isa<StaticAssertDecl>(Mem)) {
+        // In C++1z, static_assert declarations are also fine.
       } else {
         // We have something that isn't a non-static data
         // member. Complain about it.
