@@ -1030,6 +1030,10 @@ bool PPCFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
   if (DstVT != MVT::i32 && DstVT != MVT::i64)
     return false;
 
+  // If we don't have FCTIDUZ and we need it, punt to SelectionDAG.
+  if (DstVT == MVT::i64 && !IsSigned && !PPCSubTarget->hasFPCVT())
+    return false;
+
   Value *Src = I->getOperand(0);
   Type *SrcTy = Src->getType();
   if (!isTypeLegal(SrcTy, SrcVT))
