@@ -1398,6 +1398,84 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         return true;
       }
     }
+  } else if (auto *EV = dyn_cast<ExtractValueInst>(BI->getCondition())) {
+    bool FoldIntrinsic = false;
+    if (const auto *II = dyn_cast<IntrinsicInst>(EV->getAggregateOperand())) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::uadd_with_overflow:
+      case Intrinsic::ssub_with_overflow:
+      case Intrinsic::usub_with_overflow:
+      case Intrinsic::smul_with_overflow:
+      case Intrinsic::umul_with_overflow: FoldIntrinsic = true; break;
+      }
+
+      // Check if both instructions are in the same basic block.
+      if (FoldIntrinsic && (II->getParent() != I->getParent()))
+        FoldIntrinsic = false;
+
+      // Make sure nothing is in the way
+      if (FoldIntrinsic) {
+        BasicBlock::const_iterator Start = I;
+        BasicBlock::const_iterator End = II;
+        for (auto Itr = std::prev(Start); Itr != End; --Itr) {
+          // We only expect extractvalue instructions between the intrinsic and
+          // the branch.
+          if (!isa<ExtractValueInst>(Itr)) {
+            FoldIntrinsic = false;
+            break;
+          }
+
+          // Check that the extractvalue operand comes from the intrinsic.
+          const auto *EVI = cast<ExtractValueInst>(Itr);
+          if (EVI->getAggregateOperand() != II) {
+            FoldIntrinsic = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if (FoldIntrinsic) {
+      MVT RetVT;
+      const IntrinsicInst *II = cast<IntrinsicInst>(EV->getAggregateOperand());
+      const Function *Callee = II->getCalledFunction();
+      Type *RetTy =
+        cast<StructType>(Callee->getReturnType())->getTypeAtIndex(0U);
+      if (!isTypeLegal(RetTy, RetVT))
+        return false;
+
+      if (RetVT != MVT::i32 && RetVT != MVT::i64)
+        return false;
+
+      // Fake request the condition, otherwise the intrinsic might be completely
+      // optimized away.
+      unsigned TmpReg = getRegForValue(EV);
+      if (TmpReg == 0)
+        return false;
+
+      unsigned BranchOpc = 0;
+      switch (II->getIntrinsicID()) {
+      default: llvm_unreachable("Unexpected intrinsic instruction.");
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::ssub_with_overflow:
+      case Intrinsic::smul_with_overflow:
+      case Intrinsic::umul_with_overflow: BranchOpc = X86::JO_4; break;
+      case Intrinsic::uadd_with_overflow:
+      case Intrinsic::usub_with_overflow: BranchOpc = X86::JB_4; break;
+      }
+
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
+        .addMBB(TrueMBB);
+      FastEmitBranch(FalseMBB, DbgLoc);
+      uint32_t BranchWeight = 0;
+      if (FuncInfo.BPI)
+        BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
+                                                   TrueMBB->getBasicBlock());
+      FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+      return true;
+    }
   }
 
   // Otherwise do a clumsy setcc and re-test it.
@@ -1732,6 +1810,78 @@ bool X86FastISel::X86FastEmitCMoveSelect(const Instruction *I) {
       }
     }
     NeedTest = false;
+  } else if (auto *EV = dyn_cast<ExtractValueInst>(Cond)) {
+    bool FoldIntrinsic = false;
+    if (const auto *II = dyn_cast<IntrinsicInst>(EV->getAggregateOperand())) {
+      switch (II->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::sadd_with_overflow:
+        case Intrinsic::uadd_with_overflow:
+        case Intrinsic::ssub_with_overflow:
+        case Intrinsic::usub_with_overflow:
+        case Intrinsic::smul_with_overflow:
+        case Intrinsic::umul_with_overflow: FoldIntrinsic = true; break;
+      }
+
+      // Check if both instructions are in the same basic block.
+      if (FoldIntrinsic && (II->getParent() != I->getParent()))
+        FoldIntrinsic = false;
+
+      // Make sure nothing is in the way
+      if (FoldIntrinsic) {
+        BasicBlock::const_iterator Start = I;
+        BasicBlock::const_iterator End = II;
+        for (auto Itr = std::prev(Start); Itr != End; --Itr) {
+          // We only expect extractvalue instructions between the intrinsic and
+          // the branch.
+          if (!isa<ExtractValueInst>(Itr)) {
+            FoldIntrinsic = false;
+            break;
+          }
+
+          // Check that the extractvalue operand comes from the intrinsic.
+          const auto *EVI = cast<ExtractValueInst>(Itr);
+          if (EVI->getAggregateOperand() != II) {
+            FoldIntrinsic = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if (FoldIntrinsic) {
+      MVT RetVT;
+      const IntrinsicInst *II = cast<IntrinsicInst>(EV->getAggregateOperand());
+      const Function *Callee = II->getCalledFunction();
+      Type *RetTy =
+        cast<StructType>(Callee->getReturnType())->getTypeAtIndex(0U);
+      if (!isTypeLegal(RetTy, RetVT))
+        return false;
+
+      if (RetVT != MVT::i32 && RetVT != MVT::i64)
+        return false;
+
+      // Fake request the condition, otherwise the intrinsic might be completely
+      // optimized away.
+      unsigned TmpReg = getRegForValue(EV);
+      if (TmpReg == 0)
+        return false;
+
+      switch (II->getIntrinsicID()) {
+      default: llvm_unreachable("Unexpected intrinsic instruction.");
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::ssub_with_overflow:
+      case Intrinsic::smul_with_overflow:
+      case Intrinsic::umul_with_overflow:
+        Opc = X86::getCMovFromCond(X86::COND_O, RC->getSize());
+        break;
+      case Intrinsic::uadd_with_overflow:
+      case Intrinsic::usub_with_overflow:
+        Opc = X86::getCMovFromCond(X86::COND_B, RC->getSize());
+        break;
+      }
+      NeedTest = false;
+    }
   }
 
   if (NeedTest) {

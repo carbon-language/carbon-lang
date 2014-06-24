@@ -1,5 +1,7 @@
-; RUN: llc -mtriple=x86_64-unknown-unknown < %s | FileCheck %s -check-prefix=DAG
-; RUN: llc -mtriple=x86_64-unknown-unknown -fast-isel -fast-isel-abort < %s | FileCheck %s --check-prefix=FAST
+; RUN: llc -mtriple=x86_64-darwin-unknown < %s                             | FileCheck %s --check-prefix=DAG
+; RUN: llc -mtriple=x86_64-darwin-unknown -fast-isel -fast-isel-abort < %s | FileCheck %s --check-prefix=FAST
+; RUN: llc -mtriple=x86_64-darwin-unknown < %s                             | FileCheck %s
+; RUN: llc -mtriple=x86_64-darwin-unknown -fast-isel -fast-isel-abort < %s | FileCheck %s
 
 ;
 ; Get the actual value of the overflow bit.
@@ -320,6 +322,349 @@ entry:
   ret i1 %obit
 }
 
+;
+; Check the use of the overflow bit in combination with a select instruction.
+;
+define i32 @saddo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    saddo.select.i32
+; CHECK:          addl   %esi, %eax
+; CHECK-NEXT:     cmovol %edi, %esi
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @saddo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    saddo.select.i64
+; CHECK:          addq   %rsi, %rax
+; CHECK-NEXT:     cmovoq %rdi, %rsi
+  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+define i32 @uaddo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    uaddo.select.i32
+; CHECK:          addl   %esi, %eax
+; CHECK-NEXT:     cmovbl %edi, %esi
+  %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @uaddo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    uaddo.select.i64
+; CHECK:          addq   %rsi, %rax
+; CHECK-NEXT:     cmovbq %rdi, %rsi
+  %t = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+define i32 @ssubo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    ssubo.select.i32
+; CHECK:          cmpl   %esi, %edi
+; CHECK-NEXT:     cmovol %edi, %esi
+  %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @ssubo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    ssubo.select.i64
+; CHECK:          cmpq   %rsi, %rdi
+; CHECK-NEXT:     cmovoq %rdi, %rsi
+  %t = call {i64, i1} @llvm.ssub.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+define i32 @usubo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    usubo.select.i32
+; CHECK:          cmpl   %esi, %edi
+; CHECK-NEXT:     cmovbl %edi, %esi
+  %t = call {i32, i1} @llvm.usub.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @usubo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    usubo.select.i64
+; CHECK:          cmpq   %rsi, %rdi
+; CHECK-NEXT:     cmovbq %rdi, %rsi
+  %t = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+define i32 @smulo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    smulo.select.i32
+; CHECK:          imull  %esi, %eax
+; CHECK-NEXT:     cmovol %edi, %esi
+  %t = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @smulo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    smulo.select.i64
+; CHECK:          imulq  %rsi, %rax
+; CHECK-NEXT:     cmovoq %rdi, %rsi
+  %t = call {i64, i1} @llvm.smul.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+define i32 @umulo.select.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    umulo.select.i32
+; CHECK:          mull   %esi
+; CHECK-NEXT:     cmovol %edi, %esi
+  %t = call {i32, i1} @llvm.umul.with.overflow.i32(i32 %v1, i32 %v2)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  ret i32 %ret
+}
+
+define i64 @umulo.select.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    umulo.select.i64
+; CHECK:          mulq   %rsi
+; CHECK-NEXT:     cmovoq %rdi, %rsi
+  %t = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %v1, i64 %v2)
+  %obit = extractvalue {i64, i1} %t, 1
+  %ret = select i1 %obit, i64 %v1, i64 %v2
+  ret i64 %ret
+}
+
+
+;
+; Check the use of the overflow bit in combination with a branch instruction.
+;
+define zeroext i1 @saddo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    saddo.br.i32
+; CHECK:          addl   %esi, %edi
+; CHECK-NEXT:     jo
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @saddo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    saddo.br.i64
+; CHECK:          addq   %rsi, %rdi
+; CHECK-NEXT:     jo
+  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @uaddo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    uaddo.br.i32
+; CHECK:          addl   %esi, %edi
+; CHECK-NEXT:     jb
+  %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @uaddo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    uaddo.br.i64
+; CHECK:          addq   %rsi, %rdi
+; CHECK-NEXT:     jb
+  %t = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @ssubo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    ssubo.br.i32
+; CHECK:          cmpl   %esi, %edi
+; CHECK-NEXT:     jo
+  %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @ssubo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    ssubo.br.i64
+; CHECK:          cmpq   %rsi, %rdi
+; CHECK-NEXT:     jo
+  %t = call {i64, i1} @llvm.ssub.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @usubo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    usubo.br.i32
+; CHECK:          cmpl   %esi, %edi
+; CHECK-NEXT:     jb
+  %t = call {i32, i1} @llvm.usub.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @usubo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    usubo.br.i64
+; CHECK:          cmpq   %rsi, %rdi
+; CHECK-NEXT:     jb
+  %t = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @smulo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    smulo.br.i32
+; CHECK:          imull  %esi, %edi
+; CHECK-NEXT:     jo
+  %t = call {i32, i1} @llvm.smul.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @smulo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    smulo.br.i64
+; CHECK:          imulq  %rsi, %rdi
+; CHECK-NEXT:     jo
+  %t = call {i64, i1} @llvm.smul.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @umulo.br.i32(i32 %v1, i32 %v2) {
+entry:
+; CHECK-LABEL:    umulo.br.i32
+; CHECK:          mull  %esi
+; CHECK-NEXT:     jo
+  %t = call {i32, i1} @llvm.umul.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @umulo.br.i64(i64 %v1, i64 %v2) {
+entry:
+; CHECK-LABEL:    umulo.br.i64
+; CHECK:          mulq  %rsi
+; CHECK-NEXT:     jo
+  %t = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
 declare {i8, i1} @llvm.sadd.with.overflow.i8(i8, i8) nounwind readnone
 declare {i16, i1} @llvm.sadd.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
@@ -335,3 +680,4 @@ declare {i64, i1} @llvm.smul.with.overflow.i64(i64, i64) nounwind readnone
 declare {i32, i1} @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
 
+!0 = metadata !{metadata !"branch_weights", i32 0, i32 2147483647}
