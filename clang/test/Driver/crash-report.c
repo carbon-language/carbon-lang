@@ -6,11 +6,11 @@
 // RUN:  -Xclang -internal-isystem -Xclang /tmp/                         \
 // RUN:  -Xclang -internal-externc-isystem -Xclang /tmp/                 \
 // RUN:  -DFOO=BAR 2>&1 | FileCheck %s
-// RUN: cat %t/crash-report-*.i | FileCheck --check-prefix=CHECKSRC %s
+// RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
 
-// because of the glob (*.i, *.sh)
+// because of the glob (*.c, *.sh)
 // REQUIRES: shell
 
 // RUN: not env FORCE_CLANG_DIAGNOSTICS_CRASH=1 %clang -fsyntax-only -x c /dev/null -lstdc++ 2>&1 | FileCheck %s
@@ -20,7 +20,7 @@
 
 #pragma clang __debug parser_crash
 // CHECK: Preprocessed source(s) and associated run script(s) are located at:
-// CHECK-NEXT: note: diagnostic msg: {{.*}}.i
+// CHECK-NEXT: note: diagnostic msg: {{.*}}.c
 FOO
 // CHECKSRC: FOO
 // CHECKSH: -cc1

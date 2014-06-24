@@ -1303,7 +1303,8 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     } else {
       OutputTy = Input->getType();
       if (!Args.hasFlag(options::OPT_frewrite_includes,
-                        options::OPT_fno_rewrite_includes, false))
+                        options::OPT_fno_rewrite_includes, false) &&
+          !CCGenDiagnostics)
         OutputTy = types::getPreprocessedType(OutputTy);
       assert(OutputTy != types::TY_INVALID &&
              "Cannot preprocess this input type!");
