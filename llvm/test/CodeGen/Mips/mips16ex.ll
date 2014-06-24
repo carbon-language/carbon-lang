@@ -1,6 +1,8 @@
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=16
 
-;16: $eh_func_begin0=.
+;16: .cfi_personality
+;16-NEXT: [[TMP:.*]]:
+;16-NEXT: $eh_func_begin0 = ([[TMP]])
 @.str = private unnamed_addr constant [7 x i8] c"hello\0A\00", align 1
 @_ZTIi = external constant i8*
 @.str1 = private unnamed_addr constant [15 x i8] c"exception %i \0A\00", align 1

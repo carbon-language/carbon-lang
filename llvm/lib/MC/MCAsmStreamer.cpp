@@ -120,7 +120,6 @@ public:
 
   void EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) override;
   void EmitLabel(MCSymbol *Symbol) override;
-  void EmitDebugLabel(MCSymbol *Symbol) override;
 
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitLinkerOptions(ArrayRef<std::string> Options) override;
@@ -331,14 +330,6 @@ void MCAsmStreamer::EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) {
     IsFirst = false;
     OS << **It;
   }
-  EmitEOL();
-}
-
-void MCAsmStreamer::EmitDebugLabel(MCSymbol *Symbol) {
-  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-  MCStreamer::EmitDebugLabel(Symbol);
-
-  OS << *Symbol << MAI->getDebugLabelSuffix();
   EmitEOL();
 }
 

@@ -33,9 +33,6 @@ namespace {
       assert(getCurrentSection().first &&"Cannot emit before setting section!");
       AssignSection(Symbol, getCurrentSection().first);
     }
-    void EmitDebugLabel(MCSymbol *Symbol) override {
-      EmitLabel(Symbol);
-    }
     void EmitAssemblerFlag(MCAssemblerFlag Flag) override {}
     void EmitThumbFunc(MCSymbol *Func) override {}
 

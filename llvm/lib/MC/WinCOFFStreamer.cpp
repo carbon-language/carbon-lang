@@ -82,10 +82,6 @@ void MCWinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
   MCObjectStreamer::EmitLabel(Symbol);
 }
 
-void MCWinCOFFStreamer::EmitDebugLabel(MCSymbol *Symbol) {
-  EmitLabel(Symbol);
-}
-
 void MCWinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   llvm_unreachable("not implemented");
 }

@@ -158,10 +158,6 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setOffset(F->getContents().size());
 }
 
-void MCObjectStreamer::EmitDebugLabel(MCSymbol *Symbol) {
-  EmitLabel(Symbol);
-}
-
 void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {

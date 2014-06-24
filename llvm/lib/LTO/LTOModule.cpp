@@ -656,9 +656,6 @@ namespace {
       Symbol->setSection(*getCurrentSection().first);
       markDefined(*Symbol);
     }
-    void EmitDebugLabel(MCSymbol *Symbol) override {
-      EmitLabel(Symbol);
-    }
     void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);

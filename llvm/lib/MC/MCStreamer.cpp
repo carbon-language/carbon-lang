@@ -239,12 +239,6 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
     TS->emitLabel(Symbol);
 }
 
-void MCStreamer::EmitDebugLabel(MCSymbol *Symbol) {
-  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(getCurrentSection().first && "Cannot emit before setting section!");
-  AssignSection(Symbol, getCurrentSection().first);
-}
-
 void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();

@@ -39,7 +39,7 @@ MCAsmInfo::MCAsmInfo() {
   SeparatorString = ";";
   CommentString = "#";
   LabelSuffix = ":";
-  DebugLabelSuffix = ":";
+  UseAssignmentForEHBegin = false;
   PrivateGlobalPrefix = "L";
   LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
