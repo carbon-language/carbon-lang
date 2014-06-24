@@ -6,7 +6,8 @@
 ; CHECK: [[BAR_DECL:0x[0-9a-f]*]]: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_specification {{.*}} {[[BAR_DECL]]}
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_specification {{.*}} {[[BAR_DECL]]}
 
 
 @_ZZN3foo3barEvE1x = constant i32 0, align 4
@@ -36,6 +37,6 @@ entry:
 !21 = metadata !{i32 720934, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !22} ; [ DW_TAG_const_type ]
 !22 = metadata !{i32 720932, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !25 = metadata !{i32 6, i32 1, metadata !26, null}
-!26 = metadata !{i32 786443, metadata !5, i32 4, i32 17, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!26 = metadata !{i32 786443, metadata !6, metadata !5, i32 4, i32 17, i32 0} ; [ DW_TAG_lexical_block ]
 !27 = metadata !{metadata !"nsNativeAppSupportBase.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/toolkit/library"}
 !28 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

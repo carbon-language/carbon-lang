@@ -96,14 +96,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !35 = metadata !{i32 786689, metadata !31, metadata !"d", metadata !6, i32 33554451, metadata !23, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [d] [line 19]
 !36 = metadata !{i32 12, i32 0, metadata !5, null}
 !37 = metadata !{i32 13, i32 0, metadata !38, null}
-!38 = metadata !{i32 786443, metadata !5, i32 12, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/foo.cpp]
+!38 = metadata !{i32 786443, metadata !6, metadata !5, i32 12, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/foo.cpp]
 !42 = metadata !{i32 14, i32 0, metadata !38, null}
 !43 = metadata !{i32 15, i32 0, metadata !38, null}
 !44 = metadata !{i32 16, i32 0, metadata !38, null}
 !45 = metadata !{i32 17, i32 0, metadata !38, null}
 !46 = metadata !{i32 19, i32 0, metadata !31, null}
 !47 = metadata !{i32 20, i32 0, metadata !48, null}
-!48 = metadata !{i32 786443, metadata !31, i32 19, i32 0, metadata !6, i32 1} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/foo.cpp]
+!48 = metadata !{i32 786443, metadata !6, metadata !31, i32 19, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/foo.cpp]
 !49 = metadata !{i32 21, i32 0, metadata !48, null}
 !50 = metadata !{i32 22, i32 0, metadata !48, null}
 !51 = metadata !{i32 23, i32 0, metadata !48, null}
