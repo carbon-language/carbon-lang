@@ -147,6 +147,12 @@ def FRAMEri32 : Operand<iPTR> {
 }
 
 //===----------------------------------------------------------------------===//
+// Complex patterns
+//===----------------------------------------------------------------------===//
+
+def MUBUFAddr64 : ComplexPattern<i64, 3, "SelectMUBUFAddr64">;
+
+//===----------------------------------------------------------------------===//
 // SI assembler operands
 //===----------------------------------------------------------------------===//
 
@@ -617,11 +623,12 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> {
   }
 }
 
-class MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass> :
+class MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass,
+                          ValueType store_vt, SDPatternOperator st> :
     MUBUF <op, (outs), (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_64:$vaddr,
                             u16imm:$offset),
           name#" $vdata, $srsrc + $vaddr + $offset",
-         []> {
+          [(st store_vt:$vdata, (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, u16imm:$offset))]> {
 
   let mayLoad = 0;
   let mayStore = 1;

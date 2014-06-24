@@ -84,6 +84,8 @@ private:
                                        SDValue& Offset);
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectADDRIndirect(SDValue Addr, SDValue &Base, SDValue &Offset);
+  bool SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr, SDValue &Offset,
+                        SDValue &ImmOffset) const;
 
   SDNode *SelectADD_SUB_I64(SDNode *N);
   SDNode *SelectDIV_SCALE(SDNode *N);
@@ -721,6 +723,57 @@ SDNode *AMDGPUDAGToDAGISel::SelectDIV_SCALE(SDNode *N) {
   };
 
   return CurDAG->SelectNodeTo(N, Opc, VT, MVT::i1, Ops);
+}
+
+static SDValue wrapAddr64Rsrc(SelectionDAG *DAG, SDLoc DL, SDValue Ptr) {
+  return SDValue(DAG->getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL, MVT::v4i32,
+                                     Ptr), 0);
+}
+
+bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr,
+                                           SDValue &Offset,
+                                           SDValue &ImmOffset) const {
+  SDLoc DL(Addr);
+
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    SDValue N0 = Addr.getOperand(0);
+    SDValue N1 = Addr.getOperand(1);
+    ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
+
+    if (isUInt<12>(C1->getZExtValue())) {
+
+      if (N0.getOpcode() == ISD::ADD) {
+        // (add (add N2, N3), C1)
+        SDValue N2 = N0.getOperand(0);
+        SDValue N3 = N0.getOperand(1);
+        Ptr = wrapAddr64Rsrc(CurDAG, DL, N2);
+        Offset = N3;
+        ImmOffset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
+        return true;
+      }
+
+      // (add N0, C1)
+      Ptr = wrapAddr64Rsrc(CurDAG, DL, CurDAG->getTargetConstant(0, MVT::i64));;
+      Offset = N0;
+      ImmOffset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
+      return true;
+    }
+  }
+  if (Addr.getOpcode() == ISD::ADD) {
+    // (add N0, N1)
+    SDValue N0 = Addr.getOperand(0);
+    SDValue N1 = Addr.getOperand(1);
+    Ptr = wrapAddr64Rsrc(CurDAG, DL, N0);
+    Offset = N1;
+    ImmOffset = CurDAG->getTargetConstant(0, MVT::i16);
+    return true;
+  }
+
+  // default case
+  Ptr = wrapAddr64Rsrc(CurDAG, DL, CurDAG->getConstant(0, MVT::i64));
+  Offset = Addr;
+  ImmOffset = CurDAG->getTargetConstant(0, MVT::i16);
+  return true;
 }
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
