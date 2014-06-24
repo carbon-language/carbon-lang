@@ -11,6 +11,9 @@
 /* Function Attributes */
 #include <clc/clcfunc.h>
 
+/* 6.9 Preprocessor Directives and Macros */
+#include <clc/clcversion.h>
+
 /* 6.1 Supported Data Types */
 #include <clc/clctypes.h>
 
