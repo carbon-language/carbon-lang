@@ -653,7 +653,7 @@ namespace {
           AddValueSymbols(Inst.getOperand(i).getExpr());
     }
     void EmitLabel(MCSymbol *Symbol) override {
-      Symbol->setSection(*getCurrentSection().first);
+      MCStreamer::EmitLabel(Symbol);
       markDefined(*Symbol);
     }
     void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {

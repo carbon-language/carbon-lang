@@ -28,11 +28,6 @@ namespace {
                        const MCExpr *Subsection) override {
     }
 
-    void EmitLabel(MCSymbol *Symbol) override {
-      assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-      assert(getCurrentSection().first &&"Cannot emit before setting section!");
-      AssignSection(Symbol, getCurrentSection().first);
-    }
     void EmitAssemblerFlag(MCAssemblerFlag Flag) override {}
     void EmitThumbFunc(MCSymbol *Func) override {}
 
