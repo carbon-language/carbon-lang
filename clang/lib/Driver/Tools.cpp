@@ -5102,6 +5102,22 @@ bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
   return A && (A->getValue() == StringRef(Value));
 }
 
+bool mips::isNaN2008(const ArgList &Args) {
+  if (Arg *NaNArg = Args.getLastArg(options::OPT_mnan_EQ))
+    return llvm::StringSwitch<bool>(NaNArg->getValue())
+               .Case("2008", true)
+               .Case("legacy", false)
+               .Default(false);
+
+  // NaN2008 is the default for MIPS32r6/MIPS64r6.
+  if (Arg *CPUArg = Args.getLastArg(options::OPT_mcpu_EQ))
+    return llvm::StringSwitch<bool>(CPUArg->getValue())
+               .Cases("mips32r6", "mips64r6", true)
+               .Default(false);
+
+  return false;
+}
+
 llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
   // See arch(3) and llvm-gcc's driver-driver.c. We don't implement support for
   // archs which Darwin doesn't use.
@@ -6921,14 +6937,17 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
     else
       return "/lib/ld-linux.so.3";              /* TODO: check which dynamic linker name.  */
   } else if (ToolChain.getArch() == llvm::Triple::mips ||
-             ToolChain.getArch() == llvm::Triple::mipsel)
+             ToolChain.getArch() == llvm::Triple::mipsel) {
+    if (mips::isNaN2008(Args))
+      return "/lib/ld-linux-mipsn8.so.1";
     return "/lib/ld.so.1";
-  else if (ToolChain.getArch() == llvm::Triple::mips64 ||
+  } else if (ToolChain.getArch() == llvm::Triple::mips64 ||
            ToolChain.getArch() == llvm::Triple::mips64el) {
+    std::string LinkerFile = mips::isNaN2008(Args) ? "ld-linux-mipsn8.so.1"
+                                                   : "ld.so.1";
     if (mips::hasMipsAbiArg(Args, "n32"))
-      return "/lib32/ld.so.1";
-    else
-      return "/lib64/ld.so.1";
+      return "/lib32/" + LinkerFile;
+    return "/lib64/" + LinkerFile;
   } else if (ToolChain.getArch() == llvm::Triple::ppc)
     return "/lib/ld.so.1";
   else if (ToolChain.getArch() == llvm::Triple::ppc64 ||

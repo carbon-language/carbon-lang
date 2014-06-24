@@ -209,6 +209,7 @@ namespace arm {
 
 namespace mips {
   bool hasMipsAbiArg(const llvm::opt::ArgList &Args, const char *Value);
+  bool isNaN2008(const llvm::opt::ArgList &Args);
 }
 
 namespace darwin {
