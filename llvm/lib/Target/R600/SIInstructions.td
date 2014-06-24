@@ -1636,7 +1636,7 @@ def V_SUB_F64 : InstSI <
   (outs VReg_64:$dst),
   (ins VReg_64:$src0, VReg_64:$src1),
   "V_SUB_F64 $dst, $src0, $src1",
-  []
+  [(set f64:$dst, (fsub f64:$src0, f64:$src1))]
 >;
 
 } // end usesCustomInserter
@@ -1691,11 +1691,6 @@ def : Pat <
                  f32:$src0, f32:$src1, f32:$src2, f32:$src3),
   (EXP imm:$en, imm:$tgt, imm:$compr, imm:$done, imm:$vm,
        $src0, $src1, $src2, $src3)
->;
-
-def : Pat <
-  (f64 (fsub f64:$src0, f64:$src1)),
-  (V_SUB_F64 $src0, $src1)
 >;
 
 //===----------------------------------------------------------------------===//
