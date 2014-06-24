@@ -215,21 +215,19 @@ public:
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &reg,
             std::vector<std::unique_ptr<File>> &result) const override {
+    MemoryBuffer &buff = *mb;
     // Make Archive object which will be owned by FileArchive object.
     std::error_code ec;
-    Archive *archive = new Archive(mb.get(), ec);
+    Archive *archive = new Archive(std::move(mb), ec);
     if (ec)
       return ec;
-    StringRef path = mb->getBufferIdentifier();
+    StringRef path = buff.getBufferIdentifier();
     // Construct FileArchive object.
     std::unique_ptr<FileArchive> file(
         new FileArchive(reg, archive, path, false, _logLoading));
     ec = file->buildTableOfContents();
     if (ec)
       return ec;
-
-    // Transfer ownership of memory buffer to Archive object.
-    mb.release();
 
     result.push_back(std::move(file));
     return std::error_code();
