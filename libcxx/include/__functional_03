@@ -1911,7 +1911,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename __mu_return1<true, _Ti, _Uj...>::type
 __mu_expand(_Ti& __ti, tuple<_Uj...>&& __uj, __tuple_indices<_Indx...>)
 {
-    __ti(_VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj))...);
+    __ti(_VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(_VSTD::get<_Indx>(__uj))...);
 }
 
 template <class _Ti, class ..._Uj>
@@ -1947,9 +1947,9 @@ __mu(_Ti&, _Uj& __uj)
 {
     const size_t _Indx = is_placeholder<_Ti>::value - 1;
     // compiler bug workaround
-    typename tuple_element<_Indx, _Uj>::type __t = get<_Indx>(__uj);
+    typename tuple_element<_Indx, _Uj>::type __t = _VSTD::get<_Indx>(__uj);
     return __t;
-//    return _VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
+//    return _VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(_VSTD::get<_Indx>(__uj));
 }
 
 template <class _Ti, class _Uj>
@@ -2040,7 +2040,7 @@ typename __bind_return<_Fp, _BoundArgs, _Args>::type
 __apply_functor(_Fp& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
                 _Args&& __args)
 {
-    return __invoke(__f, __mu(get<_Indx>(__bound_args), __args)...);
+    return __invoke(__f, __mu(_VSTD::get<_Indx>(__bound_args), __args)...);
 }
 
 template<class _Fp, class ..._BoundArgs>

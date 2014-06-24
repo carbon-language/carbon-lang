@@ -345,9 +345,9 @@ struct _LIBCPP_TYPE_VIS_ONLY pair
         _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
         pair(_Tuple&& __p)
             : first(_VSTD::forward<typename tuple_element<0,
-                                  typename __make_tuple_types<_Tuple>::type>::type>(get<0>(__p))),
+                                  typename __make_tuple_types<_Tuple>::type>::type>(_VSTD::get<0>(__p))),
               second(_VSTD::forward<typename tuple_element<1,
-                                   typename __make_tuple_types<_Tuple>::type>::type>(get<1>(__p)))
+                                   typename __make_tuple_types<_Tuple>::type>::type>(_VSTD::get<1>(__p)))
             {}
 
 
