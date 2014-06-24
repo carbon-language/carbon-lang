@@ -991,3 +991,12 @@ template <typename> struct __declspec(dllimport) S {
 };
 S<int> s;
 }
+
+#ifdef MS
+// expected-warning@+3{{'dllimport' attribute ignored}}
+#endif
+template <typename T> struct PartiallySpecializedClassTemplate {};
+template <typename T> struct __declspec(dllimport) PartiallySpecializedClassTemplate<T*> { void f() {} };
+
+template <typename T> struct ExpliciallySpecializedClassTemplate {};
+template <> struct __declspec(dllimport) ExpliciallySpecializedClassTemplate<int> { void f() {} };

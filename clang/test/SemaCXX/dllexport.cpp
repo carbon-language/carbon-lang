@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 %s
-// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y %s
+// RUN: %clang_cc1 -triple i686-win32     -fsyntax-only -verify -std=c++11 -DMS %s
+// RUN: %clang_cc1 -triple x86_64-win32   -fsyntax-only -verify -std=c++1y -DMS %s
 // RUN: %clang_cc1 -triple i686-mingw32   -fsyntax-only -verify -std=c++1y %s
 // RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify -std=c++11 %s
 
@@ -317,6 +317,17 @@ template<> __declspec(dllexport) inline void funcTmpl<ExplicitSpec_InlineDef_Exp
 class __declspec(dllexport) ClassDecl;
 
 class __declspec(dllexport) ClassDef { };
+
+#ifdef MS
+// expected-warning@+3{{'dllexport' attribute ignored}}
+#endif
+template <typename T> struct PartiallySpecializedClassTemplate {};
+template <typename T> struct __declspec(dllexport) PartiallySpecializedClassTemplate<T*> { void f() {} };
+
+template <typename T> struct ExpliciallySpecializedClassTemplate {};
+template <> struct __declspec(dllexport) ExpliciallySpecializedClassTemplate<int> { void f() {} };
+
+
 
 //===----------------------------------------------------------------------===//
 // Precedence

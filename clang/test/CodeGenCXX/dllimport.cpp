@@ -615,7 +615,7 @@ namespace ClassTemplateStaticDef {
     static int x;
   };
   template <typename A> int T<A*>::x;
-  // M32-DAG: @"\01?x@?$T@PAX@ClassTemplateStaticDef@@2HA" = available_externally dllimport global i32 0
+  // GNU-DAG: @_ZN22ClassTemplateStaticDef1TIPvE1xE = available_externally dllimport global i32 0
   int g() { return T<void*>::x; }
 }
 
@@ -649,3 +649,16 @@ namespace PR19933 {
   // MSC-DAG: @"\01?x@?$D@$0CK@@PR19933@@2HA" = available_externally dllimport global i32 43
   // MSC-DAG: @"\01?y@?$D@$0CK@@PR19933@@2HA" = available_externally dllimport global i32 0
 }
+
+// MS ignores DLL attributes on partial specializations.
+template <typename T> struct PartiallySpecializedClassTemplate {};
+template <typename T> struct __declspec(dllimport) PartiallySpecializedClassTemplate<T*> { void f() {} };
+USEMEMFUNC(PartiallySpecializedClassTemplate<void*>, f);
+// M32-DAG: define linkonce_odr x86_thiscallcc void @"\01?f@?$PartiallySpecializedClassTemplate@PAX@@QAEXXZ"
+// G32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @_ZN33PartiallySpecializedClassTemplateIPvE1fEv
+
+template <typename T> struct ExplicitlySpecializedClassTemplate {};
+template <> struct __declspec(dllimport) ExplicitlySpecializedClassTemplate<void*> { void f() {} };
+USEMEMFUNC(ExplicitlySpecializedClassTemplate<void*>, f);
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitlySpecializedClassTemplate@PAX@@QAEXXZ"
+// G32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @_ZN34ExplicitlySpecializedClassTemplateIPvE1fEv

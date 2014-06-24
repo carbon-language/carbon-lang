@@ -20,6 +20,7 @@ struct External { int v; };
 #define UNIQ(name) JOIN(name, __LINE__)
 #define USEVAR(var) int UNIQ(use)() { return var; }
 #define USE(func) void UNIQ(use)() { func(); }
+#define USEMEMFUNC(class, func) void (class::*UNIQ(use)())() { return &class::func; }
 #define INSTVAR(var) template int var;
 #define INST(func) template void func();
 
@@ -568,3 +569,16 @@ namespace ReferencedInlineMethodInNestedClass {
   // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?foo@S@ReferencedInlineMethodInNestedClass@@QAEXXZ"
   // M32-DAG: define linkonce_odr x86_thiscallcc void @"\01?bar@T@S@ReferencedInlineMethodInNestedClass@@QAEXXZ"
 }
+
+// MS ignores DLL attributes on partial specializations.
+template <typename T> struct PartiallySpecializedClassTemplate {};
+template <typename T> struct __declspec(dllexport) PartiallySpecializedClassTemplate<T*> { void f() {} };
+USEMEMFUNC(PartiallySpecializedClassTemplate<void*>, f);
+// M32-DAG: define linkonce_odr x86_thiscallcc void @"\01?f@?$PartiallySpecializedClassTemplate@PAX@@QAEXXZ"
+// G32-DAG: define weak_odr dllexport x86_thiscallcc void @_ZN33PartiallySpecializedClassTemplateIPvE1fEv
+
+template <typename T> struct ExplicitlySpecializedClassTemplate {};
+template <> struct __declspec(dllexport) ExplicitlySpecializedClassTemplate<void*> { void f() {} };
+USEMEMFUNC(ExplicitlySpecializedClassTemplate<void*>, f);
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$ExplicitlySpecializedClassTemplate@PAX@@QAEXXZ"
+// G32-DAG: define weak_odr dllexport x86_thiscallcc void @_ZN34ExplicitlySpecializedClassTemplateIPvE1fEv

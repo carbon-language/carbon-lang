@@ -3858,6 +3858,13 @@ DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
 }
 
 static void handleDLLAttr(Sema &S, Decl *D, const AttributeList &A) {
+  if (isa<ClassTemplatePartialSpecializationDecl>(D) &&
+      S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+    S.Diag(A.getRange().getBegin(), diag::warn_attribute_ignored)
+        << A.getName();
+    return;
+  }
+
   unsigned Index = A.getAttributeSpellingListIndex();
   Attr *NewAttr = A.getKind() == AttributeList::AT_DLLExport
                       ? (Attr *)S.mergeDLLExportAttr(D, A.getRange(), Index)
