@@ -2389,7 +2389,7 @@ multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
 defm : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
 defm : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 defm : DSWritePat <DS_WRITE_B32, i32, local_store>;
-defm : DSWritePat <DS_WRITE_B64, i64, local_store>;
+defm : DSWritePat <DS_WRITE_B64, v2i32, local_store>;
 
 multiclass DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> {
   def : Pat <
@@ -2555,7 +2555,6 @@ multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> {
 defm : MUBUFStore_Pattern <BUFFER_STORE_BYTE, i32, truncstorei8_global>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_SHORT, i32, truncstorei16_global>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32, global_store>;
-defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32, global_store>;
 

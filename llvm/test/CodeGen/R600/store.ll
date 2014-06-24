@@ -263,8 +263,7 @@ entry:
 ; CM-CHECK: LDS_WRITE
 ; CM-CHECK: LDS_WRITE
 ; SI-CHECK-LABEL: @store_local_v2i32
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_WRITE_B32
+; SI-CHECK: DS_WRITE_B64
 define void @store_local_v2i32(<2 x i32> addrspace(3)* %out, <2 x i32> %in) {
 entry:
   store <2 x i32> %in, <2 x i32> addrspace(3)* %out
