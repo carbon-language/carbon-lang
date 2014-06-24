@@ -2042,9 +2042,13 @@ static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
 ///          replacement required.
 static Instruction *ProcessUMulZExtIdiom(ICmpInst &I, Value *MulVal,
                                          Value *OtherVal, InstCombiner &IC) {
+  // Don't bother doing this transformation for pointers, don't do it for
+  // vectors.
+  if (!isa<IntegerType>(MulVal->getType()))
+    return nullptr;
+
   assert(I.getOperand(0) == MulVal || I.getOperand(1) == MulVal);
   assert(I.getOperand(0) == OtherVal || I.getOperand(1) == OtherVal);
-  assert(isa<IntegerType>(MulVal->getType()));
   Instruction *MulInstr = cast<Instruction>(MulVal);
   assert(MulInstr->getOpcode() == Instruction::Mul);
 

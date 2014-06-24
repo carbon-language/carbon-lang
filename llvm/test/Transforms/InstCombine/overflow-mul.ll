@@ -162,3 +162,14 @@ entry:
   ret i32 %retval
 }
 
+define <4 x i32> @pr20113(<4 x i16> %a, <4 x i16> %b) {
+; CHECK-LABEL: @pr20113
+; CHECK-NOT: mul.with.overflow
+; CHECK: ret
+  %vmovl.i.i726 = zext <4 x i16> %a to <4 x i32>
+  %vmovl.i.i712 = zext <4 x i16> %b to <4 x i32>
+  %mul.i703 = mul <4 x i32> %vmovl.i.i712, %vmovl.i.i726
+  %tmp = icmp sge <4 x i32> %mul.i703, zeroinitializer
+  %vcgez.i = sext <4 x i1> %tmp to <4 x i32>
+  ret <4 x i32> %vcgez.i
+}
