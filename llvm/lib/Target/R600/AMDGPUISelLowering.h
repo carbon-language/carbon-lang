@@ -165,7 +165,6 @@ enum {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   CALL,        // Function call based on a single integer
   UMUL,        // 32bit unsigned multiplication
-  DIV_INF,      // Divide with infinity returned on zero divisor
   RET_FLAG,
   BRANCH_COND,
   // End AMDIL ISD Opcodes
