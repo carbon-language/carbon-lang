@@ -1,6 +1,7 @@
-#define INFINITY __builtin_inff()
-#define NAN __builtin_nanf("")
-#define HUGE_VALF __builtin_huge_valf()
+#define MAXFLOAT        0x1.fffffep127f
+#define HUGE_VALF       __builtin_huge_valf()
+#define INFINITY        __builtin_inff()
+#define NAN             __builtin_nanf("")
 
 #define FLT_DIG         6
 #define FLT_MANT_DIG    24
@@ -9,7 +10,7 @@
 #define FLT_MIN_10_EXP  -37
 #define FLT_MIN_EXP     -125
 #define FLT_RADIX       2
-#define FLT_MAX         0x1.fffffep127f
+#define FLT_MAX         MAXFLOAT
 #define FLT_MIN         0x1.0p-126f
 #define FLT_EPSILON     0x1.0p-23f
 
@@ -29,7 +30,7 @@
 
 #ifdef cl_khr_fp64
 
-#define HUGE_VAL __builtin_huge_val()
+#define HUGE_VAL        __builtin_huge_val()
 
 #define DBL_DIG         15
 #define DBL_MANT_DIG    53
