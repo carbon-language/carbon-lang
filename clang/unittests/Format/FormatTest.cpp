@@ -8721,6 +8721,8 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("void f() {\n"
                "  SomeFunction([](decltype(x), A *a) {});\n"
                "}");
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    [](const aaaaaaaaaa &a) { return a; });");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");
@@ -8728,7 +8730,7 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("Foo([]() -> std::vector<int> { return {2}; }());");
   verifyFormat("auto aaaaaaaa = [](int i, // break for some reason\n"
                "                   int j) -> int {\n"
-               "  return fffffffffffffffffffffffffffffffffffffff(i * j);\n"
+               "  return ffffffffffffffffffffffffffffffffffffffffffff(i * j);\n"
                "};");
 
   // Multiple lambdas in the same parentheses change indentation rules.

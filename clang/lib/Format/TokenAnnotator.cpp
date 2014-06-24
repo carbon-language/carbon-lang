@@ -1315,7 +1315,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.is(tok::l_square)) {
     if (Style.Language == FormatStyle::LK_Proto)
       return 1;
-    if (Right.Type != TT_ObjCMethodExpr)
+    if (Right.Type != TT_ObjCMethodExpr && Right.Type != TT_LambdaLSquare)
       return 500;
   }
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
