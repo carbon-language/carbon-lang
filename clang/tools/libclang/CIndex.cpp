@@ -1852,6 +1852,7 @@ public:
   void VisitOMPParallelDirective(const OMPParallelDirective *D);
   void VisitOMPSimdDirective(const OMPSimdDirective *D);
   void VisitOMPForDirective(const OMPForDirective *D);
+  void VisitOMPSectionsDirective(const OMPSectionsDirective *D);
 
 private:
   void AddDeclarationNameInfo(const Stmt *S);
@@ -2284,6 +2285,10 @@ void EnqueueVisitor::VisitOMPSimdDirective(const OMPSimdDirective *D) {
 }
 
 void EnqueueVisitor::VisitOMPForDirective(const OMPForDirective *D) {
+  VisitOMPExecutableDirective(D);
+}
+
+void EnqueueVisitor::VisitOMPSectionsDirective(const OMPSectionsDirective *D) {
   VisitOMPExecutableDirective(D);
 }
 
@@ -3965,6 +3970,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("OMPSimdDirective");
   case CXCursor_OMPForDirective:
     return cxstring::createRef("OMPForDirective");
+  case CXCursor_OMPSectionsDirective:
+    return cxstring::createRef("OMPSectionsDirective");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

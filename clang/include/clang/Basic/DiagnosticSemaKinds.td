@@ -7104,6 +7104,8 @@ def err_omp_prohibited_region : Error<
   "%select{|; perhaps you forget to enclose 'omp %3' directive into a parallel region?}2">;
 def err_omp_prohibited_region_simd : Error<
   "OpenMP constructs may not be nested inside a simd region">;
+def err_omp_sections_not_compound_stmt : Error<
+  "the statement for '#pragma omp sections' must be a compound statement">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

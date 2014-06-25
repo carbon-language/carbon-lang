@@ -7297,7 +7297,7 @@ public:
                                      SourceLocation Loc,
                                      ArrayRef<Expr *> VarList);
 
-  // brief Initialization of captured region for OpenMP parallel region.
+  // brief Initialization of captured region for OpenMP region.
   void ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
                               Scope *CurScope);
   StmtResult ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
@@ -7322,6 +7322,11 @@ public:
   StmtResult ActOnOpenMPForDirective(ArrayRef<OMPClause *> Clauses, Stmt *AStmt,
                                      SourceLocation StartLoc,
                                      SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp sections' after parsing
+  /// of the associated statement.
+  StmtResult ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
+                                          Stmt *AStmt, SourceLocation StartLoc,
+                                          SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,

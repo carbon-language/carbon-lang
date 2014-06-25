@@ -1818,6 +1818,13 @@ void ASTStmtWriter::VisitOMPForDirective(OMPForDirective *D) {
   Code = serialization::STMT_OMP_FOR_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPSectionsDirective(OMPSectionsDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_SECTIONS_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//

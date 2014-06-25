@@ -180,3 +180,4 @@ def OMPExecutableDirective : Stmt<1>;
 def OMPParallelDirective : DStmt<OMPExecutableDirective>;
 def OMPSimdDirective : DStmt<OMPExecutableDirective>;
 def OMPForDirective : DStmt<OMPExecutableDirective>;
+def OMPSectionsDirective : DStmt<OMPExecutableDirective>;

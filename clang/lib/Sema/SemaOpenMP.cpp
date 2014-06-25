@@ -910,6 +910,13 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
     ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
     break;
   }
+  case OMPD_sections: {
+    Sema::CapturedParamNameType Params[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
+    break;
+  }
   case OMPD_threadprivate:
   case OMPD_task:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -996,6 +1003,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
     break;
   case OMPD_for:
     Res = ActOnOpenMPForDirective(ClausesWithImplicit, AStmt, StartLoc, EndLoc);
+    break;
+  case OMPD_sections:
+    Res = ActOnOpenMPSectionsDirective(ClausesWithImplicit, AStmt, StartLoc,
+                                       EndLoc);
     break;
   case OMPD_threadprivate:
   case OMPD_task:
@@ -1565,6 +1576,32 @@ StmtResult Sema::ActOnOpenMPForDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
   return OMPForDirective::Create(Context, StartLoc, EndLoc, NestedLoopCount,
                                  Clauses, AStmt);
+}
+
+StmtResult Sema::ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
+                                              Stmt *AStmt,
+                                              SourceLocation StartLoc,
+                                              SourceLocation EndLoc) {
+  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
+  auto BaseStmt = AStmt;
+  while (CapturedStmt *CS = dyn_cast_or_null<CapturedStmt>(BaseStmt))
+    BaseStmt = CS->getCapturedStmt();
+  if (auto C = dyn_cast_or_null<CompoundStmt>(BaseStmt)) {
+    auto S = C->children();
+    if (!S)
+      return StmtError();
+    // All associated statements must be '#pragma omp section' except for
+    // the first one.
+    // TODO
+  } else {
+    Diag(AStmt->getLocStart(), diag::err_omp_sections_not_compound_stmt);
+    return StmtError();
+  }
+
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return OMPSectionsDirective::Create(Context, StartLoc, EndLoc, Clauses,
+                                      AStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
