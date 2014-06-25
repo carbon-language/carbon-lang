@@ -17,6 +17,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// FIXME: This is also in unwind.h and cxxabi.h, can we consolidate?
+#if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
+    !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
+#define LIBCXXABI_ARM_EHABI 1
+#else
+#define LIBCXXABI_ARM_EHABI 0
+#endif
+
 #if __APPLE__
   #include <Availability.h>
     #if __arm__
@@ -56,8 +64,13 @@ typedef struct unw_cursor_t unw_cursor_t;
 typedef struct unw_addr_space *unw_addr_space_t;
 
 typedef int unw_regnum_t;
+#if LIBCXXABI_ARM_EHABI
+typedef uint32_t unw_word_t;
+typedef uint64_t unw_fpreg_t;
+#else
 typedef uint64_t unw_word_t;
 typedef double unw_fpreg_t;
+#endif
 
 struct unw_proc_info_t {
   unw_word_t  start_ip;         /* start address of function */

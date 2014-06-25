@@ -57,16 +57,24 @@
   #endif
 
 #else
-  // #define _LIBUNWIND_BUILD_ZERO_COST_APIS
-  // #define _LIBUNWIND_BUILD_SJLJ_APIS
-  // #define _LIBUNWIND_SUPPORT_FRAME_APIS
-  // #define _LIBUNWIND_EXPORT
-  // #define _LIBUNWIND_HIDDEN
-  // #define _LIBUNWIND_LOG()
-  // #define _LIBUNWIND_ABORT()
-  // #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND
-  // #define _LIBUNWIND_SUPPORT_DWARF_UNWIND
-  // #define _LIBUNWIND_SUPPORT_DWARF_INDEX
+  // ARM EHABI.
+  static inline void assert_rtn(const char* func, const char* file, int line, const char* msg)  __attribute__ ((noreturn));
+  static inline void assert_rtn(const char* func, const char* file, int line, const char* msg) {
+    fprintf(stderr, "libunwind: %s %s:%d - %s\n",  func, file, line, msg);
+    assert(false);
+    abort();
+  }
+  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (__i386__ || __x86_64__ || __arm64__ || __arm__)
+  #define _LIBUNWIND_BUILD_SJLJ_APIS      0
+  #define _LIBUNWIND_SUPPORT_FRAME_APIS   (__i386__ || __x86_64__)
+  #define _LIBUNWIND_EXPORT               __attribute__((visibility("default")))
+  #define _LIBUNWIND_HIDDEN               __attribute__((visibility("hidden")))
+  #define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libuwind: " msg, __VA_ARGS__)
+  #define _LIBUNWIND_ABORT(msg) assert_rtn(__func__, __FILE__, __LINE__, msg)
+
+  #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 0
+  #define _LIBUNWIND_SUPPORT_DWARF_UNWIND   0
+  #define _LIBUNWIND_SUPPORT_DWARF_INDEX    0
 #endif
 
 

@@ -21,6 +21,14 @@
 #define _LIBCPPABI_VERSION 1001
 #define LIBCXXABI_NORETURN  __attribute__((noreturn))
 
+// FIXME: This is also in unwind.h and libunwind.h, can we consolidate?
+#if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
+    !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
+#define LIBCXXABI_ARM_EHABI 1
+#else
+#define LIBCXXABI_ARM_EHABI 0
+#endif
+
 #ifdef __cplusplus
 
 namespace std {
@@ -44,7 +52,7 @@ extern LIBCXXABI_NORETURN void __cxa_throw(void * thrown_exception,
 extern void * __cxa_get_exception_ptr(void * exceptionObject) throw();
 extern void * __cxa_begin_catch(void * exceptionObject) throw();
 extern void __cxa_end_catch();
-#if __arm__
+#if LIBCXXABI_ARM_EHABI
 extern bool __cxa_begin_cleanup(void * exceptionObject) throw();
 extern void __cxa_end_cleanup();
 #endif
@@ -172,8 +180,8 @@ extern bool __cxa_uncaught_exception() throw();
   } // extern "C"
 } // namespace __cxxabiv1
 
-#endif // __cplusplus
-
 namespace abi = __cxxabiv1;
+
+#endif // __cplusplus
 
 #endif // __CXXABI_H 

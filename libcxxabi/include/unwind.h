@@ -23,6 +23,7 @@
 #define LIBUNWIND_UNAVAIL
 #endif
 
+// FIXME: This is also in cxxabi.h and libunwind.h, can we consolidate?
 #if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
     !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
 #define LIBCXXABI_ARM_EHABI 1
@@ -41,7 +42,9 @@ typedef enum {
   _URC_HANDLER_FOUND = 6,
   _URC_INSTALL_CONTEXT = 7,
   _URC_CONTINUE_UNWIND = 8,
+#if LIBCXXABI_ARM_EHABI
   _URC_FAILURE = 9
+#endif
 } _Unwind_Reason_Code;
 
 typedef enum {

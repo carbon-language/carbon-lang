@@ -31,11 +31,27 @@ namespace libunwind {
 #include "dwarf2.h"
 #include "Registers.hpp"
 
+#if LIBCXXABI_ARM_EHABI
+#if __LINUX__
+ // Emulate the BSD dl_unwind_find_exidx API when on a GNU libdl system.
+ typedef long unsigned int *_Unwind_Ptr;
+ extern "C" _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr targetAddr, int *length);
+ _Unwind_Ptr (*dl_unwind_find_exidx)(_Unwind_Ptr targetAddr, int *length) =
+     __gnu_Unwind_Find_exidx;
+#else
+ #include <link.h>
+#endif
+#endif  // LIBCXXABI_ARM_EHABI
+
 namespace libunwind {
 
 /// Used by findUnwindSections() to return info about needed sections.
 struct UnwindInfoSections {
-  uintptr_t        dso_base;
+#if _LIBUNWIND_SUPPORT_DWARF_UNWIND || _LIBUNWIND_SUPPORT_DWARF_INDEX ||       \
+    _LIBUNWIND_SUPPORT_COMPACT_UNWIND
+  // No dso_base for ARM EHABI.
+  uintptr_t       dso_base;
+#endif
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND
   uintptr_t       dwarf_section;
   uintptr_t       dwarf_section_length;
@@ -47,6 +63,10 @@ struct UnwindInfoSections {
 #if _LIBUNWIND_SUPPORT_COMPACT_UNWIND
   uintptr_t       compact_unwind_section;
   uintptr_t       compact_unwind_section_length;
+#endif
+#if LIBCXXABI_ARM_EHABI
+  uintptr_t       arm_section;
+  uintptr_t       arm_section_length;
 #endif
 };
 
@@ -303,9 +323,15 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
     info.compact_unwind_section_length = dyldInfo.compact_unwind_section_length;
     return true;
   }
-#else
-  // TO DO
-
+#elif LIBCXXABI_ARM_EHABI
+  int length = 0;
+  info.arm_section = (uintptr_t) dl_unwind_find_exidx(
+      (_Unwind_Ptr) targetAddr, &length);
+  info.arm_section_length = length;
+  _LIBUNWIND_TRACE_UNWINDING("findUnwindSections: section %X length %x\n",
+                             info.arm_section, info.arm_section_length);
+  if (info.arm_section && info.arm_section_length)
+    return true;
 #endif
 
   return false;
