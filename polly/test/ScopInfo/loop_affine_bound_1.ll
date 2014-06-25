@@ -1,6 +1,5 @@
-; RUN: opt %loadPolly %defaultOpts  -polly-analyze-ir  -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-analyze-ir  -analyze < %s | FileCheck %s
-; XFAIL: *
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
+
 ;void f(long a[][128], long N, long M) {
 ;  long i, j;
 ;  for (j = 0; j < (4*N + 7*M +3); ++j)
@@ -51,4 +50,15 @@ return:                                           ; preds = %bb3, %entry
   ret void
 }
 
-; CHECK: entry => <Function Return>        Parameters: (%N, %M, )
+; CHECK: p0: %N
+; CHECK: p1: %M
+; CHECK: Statements {
+; CHECK:   Stmt_bb1
+; CHECK:         Domain :=
+; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] : i0 >= 0 and i0 <= 2 + 4N + 7M and i1 >= 0 and i1 <= 1 + 5N - i0 and i0 <= 1 + 5N };
+; CHECK:         Scattering :=
+; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> scattering[0, i0, 0, i1, 0] };
+; CHECK:     Reduction like: 0
+; CHECK:         MustWriteAccess :=
+; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[129i0 + 128i1] };
+; CHECK: }
