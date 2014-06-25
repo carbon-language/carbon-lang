@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 -triple thumbv7s-apple-darwin -target-abi apcs-gnu\
 // RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\
-// RUN:  | FileCheck %s
+// RUN:  | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SWIFT
+// RUN: %clang_cc1 -triple armv8-linux-gnu \
+// RUN:  -target-cpu cortex-a57 -mfloat-abi soft -ffreestanding -Os -S -o - %s\
+// RUN:  | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-A57
 
 // REQUIRES: long_tests
 
@@ -2645,7 +2648,7 @@ uint32x4_t test_vld1q_u32(uint32_t const * a) {
 }
 
 // CHECK: test_vld1q_u64
-// CHECK: vld1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vld1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 uint64x2_t test_vld1q_u64(uint64_t const * a) {
   return vld1q_u64(a);
 }
@@ -2669,7 +2672,7 @@ int32x4_t test_vld1q_s32(int32_t const * a) {
 }
 
 // CHECK: test_vld1q_s64
-// CHECK: vld1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vld1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 int64x2_t test_vld1q_s64(int64_t const * a) {
   return vld1q_s64(a);
 }
@@ -2717,7 +2720,7 @@ uint32x2_t test_vld1_u32(uint32_t const * a) {
 }
 
 // CHECK: test_vld1_u64
-// CHECK: vld1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vld1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 uint64x1_t test_vld1_u64(uint64_t const * a) {
   return vld1_u64(a);
 }
@@ -2741,7 +2744,7 @@ int32x2_t test_vld1_s32(int32_t const * a) {
 }
 
 // CHECK: test_vld1_s64
-// CHECK: vld1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vld1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 int64x1_t test_vld1_s64(int64_t const * a) {
   return vld1_s64(a);
 }
@@ -4177,8 +4180,9 @@ int32x2_t test_vmla_s32(int32x2_t a, int32x2_t b, int32x2_t c) {
 }
 
 // CHECK: test_vmla_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vmla.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
 float32x2_t test_vmla_f32(float32x2_t a, float32x2_t b, float32x2_t c) {
   return vmla_f32(a, b, c);
 }
@@ -4220,8 +4224,9 @@ int32x4_t test_vmlaq_s32(int32x4_t a, int32x4_t b, int32x4_t c) {
 }
 
 // CHECK: test_vmlaq_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vmla.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 float32x4_t test_vmlaq_f32(float32x4_t a, float32x4_t b, float32x4_t c) {
   return vmlaq_f32(a, b, c);
 }
@@ -4357,8 +4362,9 @@ uint32x2_t test_vmla_lane_u32(uint32x2_t a, uint32x2_t b, uint32x2_t c) {
 }
 
 // CHECK: test_vmla_lane_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vmla.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
 float32x2_t test_vmla_lane_f32(float32x2_t a, float32x2_t b, float32x2_t c) {
   return vmla_lane_f32(a, b, c, 1);
 }
@@ -4388,8 +4394,9 @@ uint32x4_t test_vmlaq_lane_u32(uint32x4_t a, uint32x4_t b, uint32x2_t c) {
 }
 
 // CHECK: test_vmlaq_lane_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vmla.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
 float32x4_t test_vmlaq_lane_f32(float32x4_t a, float32x4_t b, float32x2_t c) {
   return vmlaq_lane_f32(a, b, c, 1);
 }
@@ -4420,8 +4427,9 @@ uint32x2_t test_vmla_n_u32(uint32x2_t a, uint32x2_t b, uint32_t c) {
 }
 
 // CHECK: test_vmla_n_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vmla.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
 float32x2_t test_vmla_n_f32(float32x2_t a, float32x2_t b, float32_t c) {
   return vmla_n_f32(a, b, c);
 }
@@ -4451,8 +4459,10 @@ uint32x4_t test_vmlaq_n_u32(uint32x4_t a, uint32x4_t b, uint32_t c) {
 }
 
 // CHECK: test_vmlaq_n_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
-// CHECK: vadd.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
+// CHECK-SWIFT: vadd.f32
+// CHECK-A57: vld1.32 {d{{[0-9]+}}[], d{{[0-9]+}}[]}, 
+// CHECK-A57: vmla.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 float32x4_t test_vmlaq_n_f32(float32x4_t a, float32x4_t b, float32_t c) {
   return vmlaq_n_f32(a, b, c);
 }
@@ -4477,8 +4487,9 @@ int32x2_t test_vmls_s32(int32x2_t a, int32x2_t b, int32x2_t c) {
 }
 
 // CHECK: test_vmls_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
 float32x2_t test_vmls_f32(float32x2_t a, float32x2_t b, float32x2_t c) {
   return vmls_f32(a, b, c);
 }
@@ -4520,8 +4531,9 @@ int32x4_t test_vmlsq_s32(int32x4_t a, int32x4_t b, int32x4_t c) {
 }
 
 // CHECK: test_vmlsq_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 float32x4_t test_vmlsq_f32(float32x4_t a, float32x4_t b, float32x4_t c) {
   return vmlsq_f32(a, b, c);
 }
@@ -4657,8 +4669,9 @@ uint32x2_t test_vmls_lane_u32(uint32x2_t a, uint32x2_t b, uint32x2_t c) {
 }
 
 // CHECK: test_vmls_lane_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
 float32x2_t test_vmls_lane_f32(float32x2_t a, float32x2_t b, float32x2_t c) {
   return vmls_lane_f32(a, b, c, 1);
 }
@@ -4688,8 +4701,9 @@ uint32x4_t test_vmlsq_lane_u32(uint32x4_t a, uint32x4_t b, uint32x2_t c) {
 }
 
 // CHECK: test_vmlsq_lane_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[{{[0-9]}}]
 float32x4_t test_vmlsq_lane_f32(float32x4_t a, float32x4_t b, float32x2_t c) {
   return vmlsq_lane_f32(a, b, c, 1);
 }
@@ -4720,8 +4734,9 @@ uint32x2_t test_vmls_n_u32(uint32x2_t a, uint32x2_t b, uint32_t c) {
 }
 
 // CHECK: test_vmls_n_f32
-// CHECK: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
 float32x2_t test_vmls_n_f32(float32x2_t a, float32x2_t b, float32_t c) {
   return vmls_n_f32(a, b, c);
 }
@@ -4751,8 +4766,9 @@ uint32x4_t test_vmlsq_n_u32(uint32x4_t a, uint32x4_t b, uint32_t c) {
 }
 
 // CHECK: test_vmlsq_n_f32
-// CHECK: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
-// CHECK: vsub.f32
+// CHECK-SWIFT: vmul.f32 q{{[0-9]+}}, q{{[0-9]+}}, d{{[0-9]+}}[0]
+// CHECK-SWIFT: vsub.f32
+// CHECK-A57: vmls.f32 q{{[0-9]+}}, q{{[0-9]+}}, q{{[0-9]+}}
 float32x4_t test_vmlsq_n_f32(float32x4_t a, float32x4_t b, float32_t c) {
   return vmlsq_n_f32(a, b, c);
 }
@@ -9883,7 +9899,7 @@ void test_vst1q_u32(uint32_t * a, uint32x4_t b) {
 }
 
 // CHECK: test_vst1q_u64
-// CHECK: vst1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vst1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 void test_vst1q_u64(uint64_t * a, uint64x2_t b) {
   vst1q_u64(a, b);
 }
@@ -9907,7 +9923,7 @@ void test_vst1q_s32(int32_t * a, int32x4_t b) {
 }
 
 // CHECK: test_vst1q_s64
-// CHECK: vst1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vst1.64 {d{{[0-9]+}}, d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 void test_vst1q_s64(int64_t * a, int64x2_t b) {
   vst1q_s64(a, b);
 }
@@ -9955,7 +9971,7 @@ void test_vst1_u32(uint32_t * a, uint32x2_t b) {
 }
 
 // CHECK: test_vst1_u64
-// CHECK: vst1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vst1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 void test_vst1_u64(uint64_t * a, uint64x1_t b) {
   vst1_u64(a, b);
 }
@@ -9979,7 +9995,7 @@ void test_vst1_s32(int32_t * a, int32x2_t b) {
 }
 
 // CHECK: test_vst1_s64
-// CHECK: vst1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}]
+// CHECK: vst1.64 {d{{[0-9]+}}}, [r{{[0-9]+}}{{(:64)?}}]
 void test_vst1_s64(int64_t * a, int64x1_t b) {
   vst1_s64(a, b);
 }

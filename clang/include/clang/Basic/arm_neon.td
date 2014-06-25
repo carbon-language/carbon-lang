@@ -790,7 +790,7 @@ def VREINTERPRET
   : NoTestOpInst<"vreinterpret", "dd",
          "csilUcUsUiUlhfPcPsQcQsQiQlQUcQUsQUiQUlQhQfQPcQPs", OP_REINT> {
   let CartesianProductOfTypes = 1;
-  let ArchGuard = "__ARM_ARCH < 8";
+  let ArchGuard = "!defined(__aarch64__)";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
