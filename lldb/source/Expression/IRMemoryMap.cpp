@@ -125,31 +125,46 @@ IRMemoryMap::FindAllocation (lldb::addr_t addr, size_t size)
 }
 
 bool
-IRMemoryMap::IntersectsAllocation (lldb::addr_t addr, size_t size)
+IRMemoryMap::IntersectsAllocation (lldb::addr_t addr, size_t size) const
 {
     if (addr == LLDB_INVALID_ADDRESS)
         return false;
     
-    AllocationMap::iterator iter = m_allocations.lower_bound (addr);
+    AllocationMap::const_iterator iter = m_allocations.lower_bound (addr);
     
-    if (iter == m_allocations.end() ||
-        iter->first > addr)
-    {
-        if (iter == m_allocations.begin())
-            return false;
-        
-        iter--;
-    }
-    
-    while (iter != m_allocations.end() && iter->second.m_process_alloc < addr + size)
-    {
-        if (iter->second.m_process_start + iter->second.m_size > addr)
+    // Since we only know that the returned interval begins at a location greater than or
+    // equal to where the given interval begins, it's possible that the given interval
+    // intersects either the returned interval or the previous interval.  Thus, we need to
+    // check both. Note that we only need to check these two intervals.  Since all intervals
+    // are disjoint it is not possible that an adjacent interval does not intersect, but a
+    // non-adjacent interval does intersect.
+    if (iter != m_allocations.end()) {
+        if (IntersectsAllocation(addr, size, iter->second.m_process_start, iter->second.m_size))
             return true;
-        
-        ++iter;
     }
-    
+
+    if (iter != m_allocations.begin()) {
+        --iter;
+        if (IntersectsAllocation(addr, size, iter->second.m_process_start, iter->second.m_size))
+            return true;
+    }
+
     return false;
+}
+
+bool
+IRMemoryMap::AllocationsIntersect(lldb::addr_t addr1, size_t size1, lldb::addr_t addr2, size_t size2) {
+  // Given two half open intervals [A, B) and [X, Y), the only 6 permutations that satisfy
+  // A<B and X<Y are the following:
+  // A B X Y
+  // A X B Y  (intersects)
+  // A X Y B  (intersects)
+  // X A B Y  (intersects)
+  // X A Y B  (intersects)
+  // X Y A B
+  // The first is B <= X, and the last is Y <= A.
+  // So the condition is !(B <= X || Y <= A)), or (X < B && A < Y)
+  return (addr2 < (addr1 + size1)) && (addr1 < (addr2 + size2));
 }
 
 lldb::ByteOrder
