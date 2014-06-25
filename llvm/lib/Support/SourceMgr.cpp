@@ -83,7 +83,7 @@ SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
   if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
   assert(BufferID != -1 && "Invalid Location!");
 
-  MemoryBuffer *Buff = getBufferInfo(BufferID).Buffer;
+  const MemoryBuffer *Buff = getMemoryBuffer(BufferID);
 
   // Count the number of \n's between the start of the file and the specified
   // location.
@@ -152,7 +152,7 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
     int CurBuf = FindBufferContainingLoc(Loc);
     assert(CurBuf != -1 && "Invalid or unspecified location!");
 
-    MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
+    const MemoryBuffer *CurMB = getMemoryBuffer(CurBuf);
     BufferID = CurMB->getBufferIdentifier();
     
     // Scan backward to find the start of the line.

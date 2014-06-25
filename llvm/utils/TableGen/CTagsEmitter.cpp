@@ -38,7 +38,7 @@ public:
   int operator<(const Tag &B) const { return *Id < *B.Id; }
   void emit(raw_ostream &OS) const {
     int BufferID = SrcMgr.FindBufferContainingLoc(Loc);
-    MemoryBuffer *CurMB = SrcMgr.getBufferInfo(BufferID).Buffer;
+    const MemoryBuffer *CurMB = SrcMgr.getMemoryBuffer(BufferID);
     const char *BufferName = CurMB->getBufferIdentifier();
     std::pair<unsigned, unsigned> LineAndColumn = SrcMgr.getLineAndColumn(Loc);
     OS << *Id << "\t" << BufferName << "\t" << LineAndColumn.first << "\n";
