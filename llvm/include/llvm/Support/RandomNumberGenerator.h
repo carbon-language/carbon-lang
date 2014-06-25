@@ -46,8 +46,10 @@ private:
   std::mt19937_64 Generator;
 
   // Noncopyable.
-  RandomNumberGenerator(const RandomNumberGenerator &other) = delete;
-  RandomNumberGenerator &operator=(const RandomNumberGenerator &other) = delete;
+  RandomNumberGenerator(const RandomNumberGenerator &other)
+      LLVM_DELETED_FUNCTION;
+  RandomNumberGenerator &
+  operator=(const RandomNumberGenerator &other) LLVM_DELETED_FUNCTION;
 };
 }
 
