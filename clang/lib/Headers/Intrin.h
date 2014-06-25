@@ -30,7 +30,9 @@
 #define __INTRIN_H
 
 /* First include the standard intrinsics. */
+#if defined(__i386__) || defined(__x86_64__)
 #include <x86intrin.h>
+#endif
 
 /* For the definition of jmp_buf. */
 #include <setjmp.h>
@@ -572,6 +574,7 @@ _bittestandset(long *a, long b) {
   *a = *a | (1 << b);
   return x;
 }
+#if defined(__i386__) || defined(__x86_64__)
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _interlockedbittestandset(long volatile *__BitBase, long __BitPos) {
   unsigned char __Res;
@@ -582,6 +585,7 @@ _interlockedbittestandset(long volatile *__BitBase, long __BitPos) {
            : "Ir"(__BitPos));
   return __Res;
 }
+#endif
 #ifdef __x86_64__
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask) {
@@ -813,6 +817,7 @@ _InterlockedCompareExchange64(__int64 volatile *_Destination,
 /*----------------------------------------------------------------------------*\
 |* Barriers
 \*----------------------------------------------------------------------------*/
+#if defined(__i386__) || defined(__x86_64__)
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
 _ReadWriteBarrier(void) {
@@ -828,6 +833,7 @@ __attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
 _WriteBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
+#endif
 #ifdef __x86_64__
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __faststorefence(void) {
@@ -883,6 +889,7 @@ __readgsword(unsigned long __offset) {
 /*----------------------------------------------------------------------------*\
 |* movs, stos
 \*----------------------------------------------------------------------------*/
+#if defined(__i386__) || defined(__x86_64__)
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __movsb(unsigned char *__dst, unsigned char const *__src, size_t __n) {
   __asm__("rep movsb" : : "D"(__dst), "S"(__src), "c"(__n)
@@ -913,6 +920,7 @@ __stosw(unsigned short *__dst, unsigned short __x, size_t __n) {
   __asm__("rep stosh" : : "D"(__dst), "a"(__x), "c"(__n)
                         : "%edi", "%ecx");
 }
+#endif
 #ifdef __x86_64__
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __movsq(unsigned long long *__dst, unsigned long long const *__src, size_t __n) {
@@ -937,6 +945,7 @@ static __inline__ void * __attribute__((__always_inline__, __nodebug__))
 _ReturnAddress(void) {
   return __builtin_return_address(0);
 }
+#if defined(__i386__) || defined(__x86_64__)
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __cpuid(int __info[4], int __level) {
   __asm__ ("cpuid" : "=a"(__info[0]), "=b" (__info[1]), "=c"(__info[2]), "=d"(__info[3])
@@ -957,10 +966,12 @@ static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __halt(void) {
   __asm__ volatile ("hlt");
 }
+#endif
 
 /*----------------------------------------------------------------------------*\
 |* Privileged intrinsics
 \*----------------------------------------------------------------------------*/
+#if defined(__i386__) || defined(__x86_64__)
 static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
 __readmsr(unsigned long __register) {
   // Loads the contents of a 64-bit model specific register (MSR) specified in
@@ -986,6 +997,7 @@ static __inline__ void __attribute__((always_inline, __nodebug__))
 __writecr3(unsigned int __cr3_val) {
   __asm__ ("mov %0, %%cr3" : : "q"(__cr3_val) : "memory");
 }
+#endif
 
 #ifdef __cplusplus
 }
