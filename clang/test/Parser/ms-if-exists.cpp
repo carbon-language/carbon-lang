@@ -25,6 +25,16 @@ void test_if_exists_stmts() {
   }
 }
 
+int if_exists_creates_no_scope() {
+  __if_exists(MayExist::Type) {
+    int x;  // 'x' is declared in the parent scope.
+  }
+  __if_not_exists(MayExist::Type_not) {
+    x++;
+  }
+  return x;
+}
+
 __if_exists(MayExist::Type) {
   int var23;
 }
