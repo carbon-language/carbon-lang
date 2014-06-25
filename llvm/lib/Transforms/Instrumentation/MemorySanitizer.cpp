@@ -569,7 +569,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
             ConvertedShadow, IRB.getIntNTy(8 * (1 << SizeIndex)));
         IRB.CreateCall3(Fn, ConvertedShadow2,
                         IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
-                        updateOrigin(Origin, IRB));
+                        Origin);
       } else {
         Value *Cmp = IRB.CreateICmpNE(
             ConvertedShadow, getCleanShadow(ConvertedShadow), "_mscmp");

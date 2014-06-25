@@ -6,6 +6,10 @@
 // RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
+// RUN: %clangxx_msan -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t && \
+// RUN:     not %run %t >%t.out 2>&1
+// RUN: FileCheck %s < %t.out
+
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>

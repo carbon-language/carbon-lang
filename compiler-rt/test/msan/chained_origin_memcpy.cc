@@ -6,6 +6,16 @@
 // RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z2 < %t.out
 
+
+// RUN: %clangxx_msan -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -m64 -DOFFSET=0 -O3 %s -o %t && \
+// RUN:     not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z1 < %t.out
+
+// RUN: %clangxx_msan -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -DOFFSET=10 -m64 -O3 %s -o %t && \
+// RUN:     not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z2 < %t.out
+
+
 #include <stdio.h>
 #include <string.h>
 
@@ -37,15 +47,15 @@ int main(int argc, char *argv[]) {
 }
 
 // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
-// CHECK: {{#0 .* in main .*chained_origin_memcpy.cc:36}}
+// CHECK: {{#0 .* in main .*chained_origin_memcpy.cc:46}}
 
 // CHECK: Uninitialized value was stored to memory at
-// CHECK: {{#1 .* in fn_h.*chained_origin_memcpy.cc:28}}
+// CHECK: {{#1 .* in fn_h.*chained_origin_memcpy.cc:38}}
 
 // CHECK: Uninitialized value was stored to memory at
-// CHECK: {{#0 .* in fn_g.*chained_origin_memcpy.cc:18}}
-// CHECK: {{#1 .* in fn_f.*chained_origin_memcpy.cc:23}}
+// CHECK: {{#0 .* in fn_g.*chained_origin_memcpy.cc:28}}
+// CHECK: {{#1 .* in fn_f.*chained_origin_memcpy.cc:33}}
 
 // CHECK-Z1: Uninitialized value was created by an allocation of 'z1' in the stack frame of function 'main'
 // CHECK-Z2: Uninitialized value was created by an allocation of 'z2' in the stack frame of function 'main'
-// CHECK: {{#0 .* in main.*chained_origin_memcpy.cc:31}}
+// CHECK: {{#0 .* in main.*chained_origin_memcpy.cc:41}}
