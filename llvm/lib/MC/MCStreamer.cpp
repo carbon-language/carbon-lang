@@ -607,6 +607,7 @@ void MCStreamer::Finish() {
 }
 
 void MCStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+  visitUsedExpr(*Value);
   Symbol->setVariableValue(Value);
 
   MCTargetStreamer *TS = getTargetStreamer();
@@ -643,6 +644,14 @@ void MCStreamer::visitUsedExpr(const MCExpr &Expr) {
   }
 }
 
+void MCStreamer::EmitInstruction(const MCInst &Inst,
+                                 const MCSubtargetInfo &STI) {
+  // Scan for values.
+  for (unsigned i = Inst.getNumOperands(); i--;)
+    if (Inst.getOperand(i).isExpr())
+      visitUsedExpr(*Inst.getOperand(i).getExpr());
+}
+
 void MCStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {}
 void MCStreamer::EmitThumbFunc(MCSymbol *Func) {}
 void MCStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
@@ -660,7 +669,9 @@ void MCStreamer::ChangeSection(const MCSection *, const MCExpr *) {}
 void MCStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
 void MCStreamer::EmitBytes(StringRef Data) {}
 void MCStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               const SMLoc &Loc) {}
+                               const SMLoc &Loc) {
+  visitUsedExpr(*Value);
+}
 void MCStreamer::EmitULEB128Value(const MCExpr *Value) {}
 void MCStreamer::EmitSLEB128Value(const MCExpr *Value) {}
 void MCStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

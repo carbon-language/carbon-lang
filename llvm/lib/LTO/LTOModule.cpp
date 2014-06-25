@@ -624,19 +624,15 @@ namespace {
 
     void EmitInstruction(const MCInst &Inst,
                          const MCSubtargetInfo &STI) override {
-      // Scan for values.
-      for (unsigned i = Inst.getNumOperands(); i--; )
-        if (Inst.getOperand(i).isExpr())
-          visitUsedExpr(*Inst.getOperand(i).getExpr());
+      MCStreamer::EmitInstruction(Inst, STI);
     }
     void EmitLabel(MCSymbol *Symbol) override {
       MCStreamer::EmitLabel(Symbol);
       markDefined(*Symbol);
     }
     void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
-      // FIXME: should we handle aliases?
       markDefined(*Symbol);
-      visitUsedExpr(*Value);
+      MCStreamer::EmitAssignment(Symbol, Value);
     }
     bool EmitSymbolAttribute(MCSymbol *Symbol,
                              MCSymbolAttr Attribute) override {

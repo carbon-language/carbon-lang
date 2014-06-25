@@ -95,13 +95,13 @@ void MCObjectStreamer::EmitCFISections(bool EH, bool Debug) {
 
 void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                      const SMLoc &Loc) {
+  MCStreamer::EmitValueImpl(Value, Size, Loc);
   MCDataFragment *DF = getOrCreateDataFragment();
 
   MCLineEntry::Make(this, getCurrentSection().first);
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  visitUsedExpr(*Value);
   if (Value->EvaluateAsAbsolute(AbsValue, getAssembler())) {
     EmitIntValue(AbsValue, Size);
     return;
@@ -181,15 +181,12 @@ void MCObjectStreamer::ChangeSection(const MCSection *Section,
 
 void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   getAssembler().getOrCreateSymbolData(*Symbol);
-  visitUsedExpr(*Value);
   MCStreamer::EmitAssignment(Symbol, Value);
 }
 
-void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
-  // Scan for values.
-  for (unsigned i = Inst.getNumOperands(); i--; )
-    if (Inst.getOperand(i).isExpr())
-      visitUsedExpr(*Inst.getOperand(i).getExpr());
+void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
+                                       const MCSubtargetInfo &STI) {
+  MCStreamer::EmitInstruction(Inst, STI);
 
   MCSectionData *SD = getCurrentSectionData();
   SD->setHasInstructions(true);
