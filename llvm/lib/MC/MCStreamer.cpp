@@ -613,3 +613,36 @@ void MCStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   if (TS)
     TS->emitAssignment(Symbol, Value);
 }
+
+void MCStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {}
+void MCStreamer::EmitThumbFunc(MCSymbol *Func) {}
+void MCStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
+void MCStreamer::BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
+void MCStreamer::EndCOFFSymbolDef() {}
+void MCStreamer::EmitFileDirective(StringRef Filename) {}
+void MCStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {}
+void MCStreamer::EmitCOFFSymbolType(int Type) {}
+void MCStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
+void MCStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                       unsigned ByteAlignment) {}
+void MCStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                                uint64_t Size, unsigned ByteAlignment) {}
+void MCStreamer::ChangeSection(const MCSection *, const MCExpr *) {}
+void MCStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
+void MCStreamer::EmitBytes(StringRef Data) {}
+void MCStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
+                               const SMLoc &Loc) {}
+void MCStreamer::EmitULEB128Value(const MCExpr *Value) {}
+void MCStreamer::EmitSLEB128Value(const MCExpr *Value) {}
+void MCStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+                                      unsigned ValueSize,
+                                      unsigned MaxBytesToEmit) {}
+void MCStreamer::EmitCodeAlignment(unsigned ByteAlignment,
+                                   unsigned MaxBytesToEmit) {}
+bool MCStreamer::EmitValueToOffset(const MCExpr *Offset, unsigned char Value) {
+  return false;
+}
+void MCStreamer::EmitBundleAlignMode(unsigned AlignPow2) {}
+void MCStreamer::EmitBundleLock(bool AlignToEnd) {}
+void MCStreamer::FinishImpl() {}
+void MCStreamer::EmitBundleUnlock() {}

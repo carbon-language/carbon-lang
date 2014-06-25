@@ -675,41 +675,6 @@ namespace {
                           unsigned ByteAlignment) override {
       markDefined(*Symbol);
     }
-
-    void EmitBundleAlignMode(unsigned AlignPow2) override {}
-    void EmitBundleLock(bool AlignToEnd) override {}
-    void EmitBundleUnlock() override {}
-
-    // Noop calls.
-    void ChangeSection(const MCSection *Section,
-                       const MCExpr *Subsection) override {}
-    void EmitAssemblerFlag(MCAssemblerFlag Flag) override {}
-    void EmitThumbFunc(MCSymbol *Func) override {}
-    void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override {}
-    void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) override {}
-    void BeginCOFFSymbolDef(const MCSymbol *Symbol) override {}
-    void EmitCOFFSymbolStorageClass(int StorageClass) override {}
-    void EmitCOFFSymbolType(int Type) override {}
-    void EndCOFFSymbolDef() override {}
-    void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) override {}
-    void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                               unsigned ByteAlignment) override {}
-    void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                        uint64_t Size, unsigned ByteAlignment) override {}
-    void EmitBytes(StringRef Data) override {}
-    void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                       const SMLoc &Loc) override {}
-    void EmitULEB128Value(const MCExpr *Value) override {}
-    void EmitSLEB128Value(const MCExpr *Value) override {}
-    void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
-                              unsigned ValueSize,
-                              unsigned MaxBytesToEmit) override {}
-    void EmitCodeAlignment(unsigned ByteAlignment,
-                           unsigned MaxBytesToEmit) override {}
-    bool EmitValueToOffset(const MCExpr *Offset,
-                           unsigned char Value) override { return false; }
-    void EmitFileDirective(StringRef Filename) override {}
-    void FinishImpl() override {}
   };
 } // end anonymous namespace
 

@@ -311,7 +311,7 @@ public:
   ///
   /// This is called by PopSection and SwitchSection, if the current
   /// section changes.
-  virtual void ChangeSection(const MCSection *, const MCExpr *) = 0;
+  virtual void ChangeSection(const MCSection *, const MCExpr *);
 
   /// pushSection - Save the current and previous section on the
   /// section stack.
@@ -394,7 +394,7 @@ public:
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol, MCSymbol *EHSymbol);
 
   /// EmitAssemblerFlag - Note in the output the specified @p Flag.
-  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
+  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
 
   /// EmitLinkerOptions - Emit the given list @p Options of strings as linker
   /// options into the output.
@@ -409,7 +409,7 @@ public:
 
   /// EmitThumbFunc - Note in the output that the specified @p Func is
   /// a Thumb mode function (ARM target only).
-  virtual void EmitThumbFunc(MCSymbol *Func) = 0;
+  virtual void EmitThumbFunc(MCSymbol *Func);
 
   /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
   ///
@@ -431,7 +431,7 @@ public:
   ///
   /// @param Alias - The alias that is being created.
   /// @param Symbol - The symbol being aliased.
-  virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) = 0;
+  virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
 
   /// EmitSymbolAttribute - Add the given @p Attribute to @p Symbol.
   virtual bool EmitSymbolAttribute(MCSymbol *Symbol,
@@ -441,25 +441,25 @@ public:
   ///
   /// @param Symbol - The symbol to have its n_desc field set.
   /// @param DescValue - The value to set into the n_desc field.
-  virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) = 0;
+  virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
   /// BeginCOFFSymbolDef - Start emitting COFF symbol definition
   ///
   /// @param Symbol - The symbol to have its External & Type fields set.
-  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) = 0;
+  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol);
 
   /// EmitCOFFSymbolStorageClass - Emit the storage class of the symbol.
   ///
   /// @param StorageClass - The storage class the symbol should have.
-  virtual void EmitCOFFSymbolStorageClass(int StorageClass) = 0;
+  virtual void EmitCOFFSymbolStorageClass(int StorageClass);
 
   /// EmitCOFFSymbolType - Emit the type of the symbol.
   ///
   /// @param Type - A COFF type identifier (see COFF::SymbolType in X86COFF.h)
-  virtual void EmitCOFFSymbolType(int Type) = 0;
+  virtual void EmitCOFFSymbolType(int Type);
 
   /// EndCOFFSymbolDef - Marks the end of the symbol definition.
-  virtual void EndCOFFSymbolDef() = 0;
+  virtual void EndCOFFSymbolDef();
 
   /// EmitCOFFSectionIndex - Emits a COFF section index.
   ///
@@ -476,7 +476,7 @@ public:
   /// This corresponds to an assembler statement such as:
   ///  .size symbol, expression
   ///
-  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) = 0;
+  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
 
   /// \brief Emit a Linker Optimization Hint (LOH) directive.
   /// \param Args - Arguments of the LOH.
@@ -497,7 +497,7 @@ public:
   /// @param Size - The size of the common symbol.
   /// @param ByteAlignment - The alignment of the common symbol in bytes.
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                     unsigned ByteAlignment) = 0;
+                                     unsigned ByteAlignment);
 
   /// EmitZerofill - Emit the zerofill section and an optional symbol.
   ///
@@ -518,7 +518,7 @@ public:
   /// @param ByteAlignment - The alignment of the thread local common symbol
   /// if non-zero.  This must be a power of 2 on some targets.
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                              uint64_t Size, unsigned ByteAlignment = 0) = 0;
+                              uint64_t Size, unsigned ByteAlignment = 0);
 
   /// @}
   /// @name Generating Data
@@ -528,7 +528,7 @@ public:
   ///
   /// This is used to implement assembler directives such as .byte, .ascii,
   /// etc.
-  virtual void EmitBytes(StringRef Data) = 0;
+  virtual void EmitBytes(StringRef Data);
 
   /// EmitValue - Emit the expression @p Value into the output as a native
   /// integer of the given @p Size bytes.
@@ -541,7 +541,7 @@ public:
   /// match a native machine width.
   /// @param Loc - The location of the expression for error reporting.
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             const SMLoc &Loc = SMLoc()) = 0;
+                             const SMLoc &Loc = SMLoc());
 
   void EmitValue(const MCExpr *Value, unsigned Size,
                  const SMLoc &Loc = SMLoc());
@@ -556,9 +556,9 @@ public:
   /// .long foo
   void EmitAbsValue(const MCExpr *Value, unsigned Size);
 
-  virtual void EmitULEB128Value(const MCExpr *Value) = 0;
+  virtual void EmitULEB128Value(const MCExpr *Value);
 
-  virtual void EmitSLEB128Value(const MCExpr *Value) = 0;
+  virtual void EmitSLEB128Value(const MCExpr *Value);
 
   /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
   /// client having to pass in a MCExpr for constant integers.
@@ -613,7 +613,7 @@ public:
   /// emitted.
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
-                                    unsigned MaxBytesToEmit = 0) = 0;
+                                    unsigned MaxBytesToEmit = 0);
 
   /// EmitCodeAlignment - Emit nops until the byte alignment @p ByteAlignment
   /// is reached.
@@ -627,7 +627,7 @@ public:
   /// the alignment cannot be reached in this many bytes, no bytes are
   /// emitted.
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
-                                 unsigned MaxBytesToEmit = 0) = 0;
+                                 unsigned MaxBytesToEmit = 0);
 
   /// EmitValueToOffset - Emit some number of copies of @p Value until the
   /// byte offset @p Offset is reached.
@@ -639,13 +639,13 @@ public:
   /// @param Value - The value to use when filling bytes.
   /// @return false on success, true if the offset was invalid.
   virtual bool EmitValueToOffset(const MCExpr *Offset,
-                                 unsigned char Value = 0) = 0;
+                                 unsigned char Value = 0);
 
   /// @}
 
   /// EmitFileDirective - Switch to a new logical file.  This is used to
   /// implement the '.file "foo.c"' assembler directive.
-  virtual void EmitFileDirective(StringRef Filename) = 0;
+  virtual void EmitFileDirective(StringRef Filename);
 
   /// Emit the "identifiers" directive.  This implements the
   /// '.ident "version foo"' assembler directive.
@@ -714,16 +714,16 @@ public:
   /// \brief Set the bundle alignment mode from now on in the section.
   /// The argument is the power of 2 to which the alignment is set. The
   /// value 0 means turn the bundle alignment off.
-  virtual void EmitBundleAlignMode(unsigned AlignPow2) = 0;
+  virtual void EmitBundleAlignMode(unsigned AlignPow2);
 
   /// \brief The following instructions are a bundle-locked group.
   ///
   /// \param AlignToEnd - If true, the bundle-locked group will be aligned to
   ///                     the end of a bundle.
-  virtual void EmitBundleLock(bool AlignToEnd) = 0;
+  virtual void EmitBundleLock(bool AlignToEnd);
 
   /// \brief Ends a bundle-locked group.
-  virtual void EmitBundleUnlock() = 0;
+  virtual void EmitBundleUnlock();
 
   /// EmitRawText - If this file is backed by a assembly streamer, this dumps
   /// the specified string in the output .s file.  This capability is
@@ -734,7 +734,7 @@ public:
   virtual void Flush() {}
 
   /// FinishImpl - Streamer specific finalization.
-  virtual void FinishImpl() = 0;
+  virtual void FinishImpl();
   /// Finish - Finish emission of machine code.
   void Finish();
 
