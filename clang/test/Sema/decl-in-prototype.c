@@ -31,3 +31,7 @@ void f6(struct z {int b;} c) { // expected-warning {{declaration of 'struct z' w
     struct z d;
     d.b = 4;
 }
+
+void pr19018_1 (enum e19018 { qq } x); // expected-warning{{declaration of 'enum e19018' will not be visible outside of this function}}
+enum e19018 qq; //expected-error{{tentative definition has type 'enum e19018' that is never completed}} \
+                //expected-note{{forward declaration of 'enum e19018'}}
