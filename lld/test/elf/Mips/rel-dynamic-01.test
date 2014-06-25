@@ -18,24 +18,24 @@
 
 # PLT: Disassembly of section .plt:
 # PLT-NEXT: .plt:
-# PLT-NEXT:   400210:  40 00 1c 3c  lui     $gp, 64
-# PLT-NEXT:   400214:  00 20 99 8f  lw      $25, 8192($gp)
-# PLT-NEXT:   400218:  00 20 9c 27  addiu   $gp, $gp, 8192
-# PLT-NEXT:   40021c:  23 c0 1c 03  subu    $24, $24, $gp
-# PLT-NEXT:   400220:  21 78 e0 03  move    $15, $ra
-# PLT-NEXT:   400224:  82 c0 18 00  srl     $24, $24, 2
-# PLT-NEXT:   400228:  09 f8 20 03  jalr    $25
-# PLT-NEXT:   40022c:  fe ff 18 27  addiu   $24, $24, -2
+# PLT-NEXT:   4001f0:  40 00 1c 3c  lui     $gp, 64
+# PLT-NEXT:   4001f4:  00 20 99 8f  lw      $25, 8192($gp)
+# PLT-NEXT:   4001f8:  00 20 9c 27  addiu   $gp, $gp, 8192
+# PLT-NEXT:   4001fc:  23 c0 1c 03  subu    $24, $24, $gp
+# PLT-NEXT:   400200:  21 78 e0 03  move    $15, $ra
+# PLT-NEXT:   400204:  82 c0 18 00  srl     $24, $24, 2
+# PLT-NEXT:   400208:  09 f8 20 03  jalr    $25
+# PLT-NEXT:   40020c:  fe ff 18 27  addiu   $24, $24, -2
 #
-# PLT-NEXT:   400230:  40 00 0f 3c  lui     $15, 64
-# PLT-NEXT:   400234:  08 20 f9 8d  lw      $25, 8200($15)
-# PLT-NEXT:   400238:  08 00 20 03  jr      $25
-# PLT-NEXT:   40023c:  08 20 f8 25  addiu   $24, $15, 8200
+# PLT-NEXT:   400210:  40 00 0f 3c  lui     $15, 64
+# PLT-NEXT:   400214:  08 20 f9 8d  lw      $25, 8200($15)
+# PLT-NEXT:   400218:  08 00 20 03  jr      $25
+# PLT-NEXT:   40021c:  08 20 f8 25  addiu   $24, $15, 8200
 #
-# PLT-NEXT:   400240:  40 00 0f 3c  lui     $15, 64
-# PLT-NEXT:   400244:  0c 20 f9 8d  lw      $25, 8204($15)
-# PLT-NEXT:   400248:  08 00 20 03  jr      $25
-# PLT-NEXT:   40024c:  0c 20 f8 25  addiu   $24, $15, 8204
+# PLT-NEXT:   400220:  40 00 0f 3c  lui     $15, 64
+# PLT-NEXT:   400224:  0c 20 f9 8d  lw      $25, 8204($15)
+# PLT-NEXT:   400228:  08 00 20 03  jr      $25
+# PLT-NEXT:   40022c:  0c 20 f8 25  addiu   $24, $15, 8204
 
 # PLT-SYM:      Relocations [
 # PLT-SYM-NEXT:   Section (5) .rel.dyn {
@@ -79,20 +79,11 @@
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
 # PLT-SYM-NEXT:     Name: T1@ (7)
-# PLT-SYM-NEXT:     Value: 0x400240
+# PLT-SYM-NEXT:     Value: 0x400220
 # PLT-SYM-NEXT:     Size: 0
 # PLT-SYM-NEXT:     Binding: Global (0x1)
 # PLT-SYM-NEXT:     Type: Function (0x2)
 # PLT-SYM-NEXT:     Other: 8
-# PLT-SYM-NEXT:     Section: Undefined (0x0)
-# PLT-SYM-NEXT:   }
-# PLT-SYM-NEXT:   Symbol {
-# PLT-SYM-NEXT:     Name: D1@ (1)
-# PLT-SYM-NEXT:     Value: 0x0
-# PLT-SYM-NEXT:     Size: 4
-# PLT-SYM-NEXT:     Binding: Global (0x1)
-# PLT-SYM-NEXT:     Type: Object (0x1)
-# PLT-SYM-NEXT:     Other: 0
 # PLT-SYM-NEXT:     Section: Undefined (0x0)
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {

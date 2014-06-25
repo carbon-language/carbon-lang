@@ -108,6 +108,16 @@ protected:
   virtual LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
       createDynamicSymbolTable();
 
+  /// \brief Create entry in the dynamic symbols table for this atom.
+  virtual bool isDynSymEntryRequired(const SharedLibraryAtom *sla) const {
+    return true;
+  }
+
+  /// \brief Create DT_NEEDED dynamic tage for the shared library.
+  virtual bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
+    return true;
+  }
+
   llvm::BumpPtrAllocator _alloc;
 
   const ELFLinkingContext &_context;
@@ -177,8 +187,10 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
                                          atom->_virtualAddr, atom);
       }
   for (const auto &sla : file.sharedLibrary()) {
-    _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
-    _soNeeded.insert(sla->loadName());
+    if (isDynSymEntryRequired(sla))
+      _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
+    if (isNeededTagRequired(sla))
+      _soNeeded.insert(sla->loadName());
   }
   for (const auto &loadName : _soNeeded) {
     Elf_Dyn dyn;

@@ -1,16 +1,19 @@
 # Check R_MIPS_COPY relocation emitting
 # when linking non-shared executable file.
 #
-# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
-# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
-# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so
-# RUN: llvm-readobj -dyn-symbols -relocations %t.exe | FileCheck %s
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so1.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t1.so %t-so1.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-so2.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t2.so %t-so2.o
+# RUN: yaml2obj -format=elf -docnum 3 %s > %t-o.o
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t1.so %t2.so
+# RUN: llvm-readobj -dt -r -dynamic-table %t.exe | FileCheck %s
 
 # CHECK:      Relocations [
 # CHECK-NEXT:   Section (5) .rel.dyn {
 # CHECK-NEXT:     0x402004 R_MIPS_REL32 D2 0x0
-# CHECK-NEXT:     0x402008 R_MIPS_COPY D1 0x0
+# CHECK-NEXT:     0x402010 R_MIPS_COPY D1 0x0
+# CHECK-NEXT:     0x402018 R_MIPS_COPY D3 0x0
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
@@ -26,7 +29,7 @@
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: D1@ (1)
-# CHECK-NEXT:     Value: 0x402008
+# CHECK-NEXT:     Value: 0x402010
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Object (0x1)
@@ -34,16 +37,16 @@
 # CHECK-NEXT:     Section: .bss (0xA)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: D1@ (1)
-# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Name: D3@ (4)
+# CHECK-NEXT:     Value: 0x402018
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Object (0x1)
 # CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:     Section: .bss (0xA)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: D2@ (4)
+# CHECK-NEXT:     Name: D2@ (7)
 # CHECK-NEXT:     Value: 0x0
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
@@ -53,7 +56,13 @@
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
-# so.o
+# CHECK:      DynamicSection [ ({{.*}} entries)
+# CHECK:        0x00000001 NEEDED  SharedLibrary (rel-copy.test.tmp1.so)
+# CHECK:        0x00000001 NEEDED  SharedLibrary (rel-copy.test.tmp2.so)
+# CHECK-NEXT:   0x00000000 NULL    0x0
+# CHECK-NEXT: ]
+
+# so1.o
 ---
 FileHeader:
   Class:   ELFCLASS32
@@ -82,6 +91,30 @@ Symbols:
       Value: 0x4
       Size: 4
 
+# so2.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name:         .data
+  Type:         SHT_PROGBITS
+  Size:         0x04
+  AddressAlign: 16
+  Flags:        [SHF_WRITE, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name: D3
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x0
+      Size: 4
+
 # o.o
 ---
 FileHeader:
@@ -100,7 +133,7 @@ Sections:
 
 - Name:         .data
   Type:         SHT_PROGBITS
-  Size:         0x08
+  Size:         0x0C
   AddressAlign: 16
   Flags:        [SHF_WRITE, SHF_ALLOC]
 
@@ -118,6 +151,12 @@ Sections:
     - Offset: 0x04
       Symbol: D2
       Type: R_MIPS_32
+    - Offset: 0x08
+      Symbol: D3
+      Type: R_MIPS_HI16
+    - Offset: 0x08
+      Symbol: D3
+      Type: R_MIPS_LO16
 
 Symbols:
   Global:
@@ -134,4 +173,5 @@ Symbols:
     - Name: D1
       Type: STT_OBJECT
     - Name: D2
+    - Name: D3
 ...

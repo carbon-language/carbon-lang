@@ -70,6 +70,15 @@ public:
     return file;
   }
 
+  bool isDynSymEntryRequired(const SharedLibraryAtom *sla) const {
+    return _targetLayout.isReferencedByDefinedAtom(sla);
+  }
+
+  bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
+    return _targetLayout.isReferencedByDefinedAtom(sla) ||
+           _targetLayout.isCopied(sla);
+  }
+
 private:
   MipsLinkingContext &_context;
   MipsTargetLayout<ELFT> &_targetLayout;
