@@ -29,11 +29,12 @@ namespace {
       return true;
     }
 
-
+    void EmitCOFFSecRel32(MCSymbol const *Symbol) override {}
     void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                           unsigned ByteAlignment) override {}
     void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
                       uint64_t Size = 0, unsigned ByteAlignment = 0) override {}
+    void EmitGPRel32Value(const MCExpr *Value) override {}
 
     void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo&) override {}
   };
