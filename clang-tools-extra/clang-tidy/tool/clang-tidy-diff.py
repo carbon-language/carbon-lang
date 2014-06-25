@@ -1,0 +1,115 @@
+#!/usr/bin/python
+#
+#===- clang-tidy-diff.py - ClangTidy Diff Checker ------------*- python -*--===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+#
+#===------------------------------------------------------------------------===#
+
+r"""
+ClangTidy Diff Checker
+======================
+
+This script reads input from a unified diff, runs clang-tidy on all changed
+files and outputs clang-tidy warnings in changed lines only. This is useful to
+detect clang-tidy regressions in the lines touched by a specific patch.
+Example usage for git/svn users:
+
+  git diff -U0 HEAD^ | clang-tidy-diff.py -p1
+  svn diff --diff-cmd=diff -x-U0 | \
+      clang-tidy-diff.py -fix -checks=-*,misc-use-override
+
+"""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+
+def main():
+  parser = argparse.ArgumentParser(description=
+                                   'Reformat changed lines in diff. Without -i '
+                                   'option just output the diff that would be '
+                                   'introduced.')
+  parser.add_argument('-clang-tidy-binary', metavar='PATH',
+                      default='clang-tidy',
+                      help='path to clang-tidy binary')
+  parser.add_argument('-p', metavar='NUM', default=0,
+                      help='strip the smallest prefix containing P slashes')
+  parser.add_argument('-regex', metavar='PATTERN', default=None,
+                      help='custom pattern selecting file paths to reformat '
+                      '(case sensitive, overrides -iregex)')
+  parser.add_argument('-iregex', metavar='PATTERN', default=
+                      r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hpp|m|mm|inc)',
+                      help='custom pattern selecting file paths to reformat '
+                      '(case insensitive, overridden by -regex)')
+
+  parser.add_argument('-fix', action='store_true', default=False,
+                      help='apply suggested fixes')
+  parser.add_argument('-checks',
+                      help='checks filter, when not specified, use clang-tidy '
+                      'default',
+                      default='')
+  clang_tidy_args = []
+  argv = sys.argv[1:]
+  if '--' in argv:
+    clang_tidy_args.extend(argv[argv.index('--'):])
+    argv = argv[:argv.index('--')]
+
+  args = parser.parse_args(argv)
+
+  # Extract changed lines for each file.
+  filename = None
+  lines_by_file = {}
+  for line in sys.stdin:
+    match = re.search('^\+\+\+\ (.*?/){%s}(\S*)' % args.p, line)
+    if match:
+      filename = match.group(2)
+    if filename == None:
+      continue
+
+    if args.regex is not None:
+      if not re.match('^%s$' % args.regex, filename):
+        continue
+    else:
+      if not re.match('^%s$' % args.iregex, filename, re.IGNORECASE):
+        continue
+
+    match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
+    if match:
+      start_line = int(match.group(1))
+      line_count = 1
+      if match.group(3):
+        line_count = int(match.group(3))
+      if line_count == 0:
+        continue
+      end_line = start_line + line_count - 1;
+      lines_by_file.setdefault(filename, []).append([start_line, end_line])
+
+  if len(lines_by_file) == 0:
+    print "No relevant changes found."
+    sys.exit(0)
+
+  line_filter_json = json.dumps(
+    [{"name" : name, "lines" : lines_by_file[name]} for name in lines_by_file],
+    separators = (',', ':'))
+
+  # Run clang-tidy on files containing changes.
+  command = [args.clang_tidy_binary]
+  command.append('-line-filter=\'' + line_filter_json + '\'')
+  if args.fix:
+    command.append('-fix')
+  if args.checks != '':
+    command.append('-checks=\'' + args.checks + '\'')
+  command.extend(lines_by_file.keys())
+  command.extend(clang_tidy_args)
+
+  sys.exit(subprocess.call(' '.join(command), shell=True))
+
+if __name__ == '__main__':
+  main()
