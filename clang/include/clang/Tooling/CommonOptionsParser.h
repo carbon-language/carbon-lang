@@ -50,7 +50,7 @@ namespace tooling {
 /// static cl::OptionCategory MyToolCategory("My tool options");
 /// static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 /// static cl::extrahelp MoreHelp("\nMore help text...");
-/// static cl:opt<bool> YourOwnOption(...);
+/// static cl::opt<bool> YourOwnOption(...);
 /// ...
 ///
 /// int main(int argc, const char **argv) {
