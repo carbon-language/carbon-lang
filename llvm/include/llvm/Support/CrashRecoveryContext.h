@@ -87,6 +87,9 @@ public:
   /// requested stack size).
   ///
   /// See RunSafely() and llvm_execute_on_thread().
+  ///
+  /// On Darwin, if PRIO_DARWIN_BG is set on the calling thread, it will be
+  /// propagated to the new thread as well.
   bool RunSafelyOnThread(function_ref<void()>, unsigned RequestedStackSize = 0);
   bool RunSafelyOnThread(void (*Fn)(void*), void *UserData,
                          unsigned RequestedStackSize = 0) {
