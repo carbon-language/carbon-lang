@@ -906,7 +906,7 @@ public:
   }
 
   /// Return the loop vectorizer metadata prefix.
-  static StringRef Prefix() { return "llvm.vectorizer."; }
+  static StringRef Prefix() { return "llvm.loop.vectorize."; }
 
   MDNode *createHint(LLVMContext &Context, StringRef Name, unsigned V) const {
     SmallVector<Value*, 2> Vals;
@@ -5859,4 +5859,3 @@ Value *InnerLoopUnroller::getConsecutiveVector(Value* Val, int StartIdx,
   Constant *C = ConstantInt::get(ITy, StartIdx, Negate);
   return Builder.CreateAdd(Val, C, "induction");
 }
-

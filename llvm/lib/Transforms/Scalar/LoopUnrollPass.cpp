@@ -220,7 +220,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
 }
 
 // Returns the value associated with the given metadata node name (for
-// example, "llvm.loopunroll.count").  If no such named metadata node
+// example, "llvm.loop.unroll.count").  If no such named metadata node
 // exists, then nullptr is returned.
 static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
                                                  StringRef Name) {
@@ -250,24 +250,22 @@ static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
 // Returns true if the loop has an unroll(enable) pragma.
 static bool HasUnrollEnablePragma(const Loop *L) {
   const ConstantInt *EnableValue =
-      GetUnrollMetadataValue(L, "llvm.loopunroll.enable");
+      GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
   return (EnableValue && EnableValue->getZExtValue());
-  return false;
 }
 
 // Returns true if the loop has an unroll(disable) pragma.
 static bool HasUnrollDisablePragma(const Loop *L) {
   const ConstantInt *EnableValue =
-      GetUnrollMetadataValue(L, "llvm.loopunroll.enable");
+      GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
   return (EnableValue && !EnableValue->getZExtValue());
-  return false;
 }
 
 // If loop has an unroll_count pragma return the (necessarily
 // positive) value from the pragma.  Otherwise return 0.
 static unsigned UnrollCountPragmaValue(const Loop *L) {
   const ConstantInt *CountValue =
-      GetUnrollMetadataValue(L, "llvm.loopunroll.count");
+      GetUnrollMetadataValue(L, "llvm.loop.unroll.count");
   if (CountValue) {
     unsigned Count = CountValue->getZExtValue();
     assert(Count >= 1 && "Unroll count must be positive.");

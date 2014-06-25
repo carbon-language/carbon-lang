@@ -2804,7 +2804,7 @@ constructs:
 
 The loop identifier metadata can be used to specify additional per-loop
 metadata. Any operands after the first operand can be treated as user-defined
-metadata. For example the ``llvm.vectorizer.unroll`` metadata is understood
+metadata. For example the ``llvm.loop.vectorize.unroll`` metadata is understood
 by the loop vectorizer to indicate how many times to unroll the loop:
 
 .. code-block:: llvm
@@ -2812,7 +2812,7 @@ by the loop vectorizer to indicate how many times to unroll the loop:
       br i1 %exitcond, label %._crit_edge, label %.lr.ph, !llvm.loop !0
     ...
     !0 = metadata !{ metadata !0, metadata !1 }
-    !1 = metadata !{ metadata !"llvm.vectorizer.unroll", i32 2 }
+    !1 = metadata !{ metadata !"llvm.loop.vectorize.unroll", i32 2 }
 
 '``llvm.mem``'
 ^^^^^^^^^^^^^^^
@@ -2897,54 +2897,54 @@ the loop identifier metadata node directly:
    !1 = metadata !{ metadata !1 } ; an identifier for the inner loop
    !2 = metadata !{ metadata !2 } ; an identifier for the outer loop
 
-'``llvm.vectorizer``'
-^^^^^^^^^^^^^^^^^^^^^
+'``llvm.loop.vectorize``'
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Metadata prefixed with ``llvm.vectorizer`` is used to control per-loop
+Metadata prefixed with ``llvm.loop.vectorize`` is used to control per-loop
 vectorization parameters such as vectorization factor and unroll factor.
 
-``llvm.vectorizer`` metadata should be used in conjunction with ``llvm.loop``
-loop identification metadata.
+``llvm.loop.vectorize`` metadata should be used in conjunction with
+``llvm.loop`` loop identification metadata.
 
-'``llvm.vectorizer.unroll``' Metadata
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'``llvm.loop.vectorize.unroll``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This metadata instructs the loop vectorizer to unroll the specified
 loop exactly ``N`` times.
 
-The first operand is the string ``llvm.vectorizer.unroll`` and the second
+The first operand is the string ``llvm.loop.vectorize.unroll`` and the second
 operand is an integer specifying the unroll factor. For example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.vectorizer.unroll", i32 4 }
+   !0 = metadata !{ metadata !"llvm.loop.vectorize.unroll", i32 4 }
 
-Note that setting ``llvm.vectorizer.unroll`` to 1 disables unrolling of the
-loop.
+Note that setting ``llvm.loop.vectorize.unroll`` to 1 disables
+unrolling of the loop.
 
-If ``llvm.vectorizer.unroll`` is set to 0 then the amount of unrolling will be
-determined automatically.
+If ``llvm.loop.vectorize.unroll`` is set to 0 then the amount of
+unrolling will be determined automatically.
 
-'``llvm.vectorizer.width``' Metadata
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'``llvm.loop.vectorize.width``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This metadata sets the target width of the vectorizer to ``N``. Without
 this metadata, the vectorizer will choose a width automatically.
 Regardless of this metadata, the vectorizer will only vectorize loops if
 it believes it is valid to do so.
 
-The first operand is the string ``llvm.vectorizer.width`` and the second
-operand is an integer specifying the width. For example:
+The first operand is the string ``llvm.loop.vectorize.width`` and the
+second operand is an integer specifying the width. For example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.vectorizer.width", i32 4 }
+   !0 = metadata !{ metadata !"llvm.loop.vectorize.width", i32 4 }
 
-Note that setting ``llvm.vectorizer.width`` to 1 disables vectorization of the
-loop.
+Note that setting ``llvm.loop.vectorize.width`` to 1 disables
+vectorization of the loop.
 
-If ``llvm.vectorizer.width`` is set to 0 then the width will be determined
-automatically.
+If ``llvm.loop.vectorize.width`` is set to 0 then the width will be
+determined automatically.
 
 Module Flags Metadata
 =====================

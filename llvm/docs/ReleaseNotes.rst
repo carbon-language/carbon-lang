@@ -55,6 +55,9 @@ Non-comprehensive list of changes in this release
 * LLVM now always uses cfi directives for producing most stack
   unwinding information.
 
+* The prefix for loop vectorizer hint metadata has been changed from
+  ``llvm.vectorizer`` to ``llvm.loop.vectorize``.
+
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet

@@ -1062,7 +1062,8 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_STRING: {
-      SmallString<8> String(Record.begin(), Record.end());
+      std::string String(Record.begin(), Record.end());
+      llvm::UpgradeMDStringConstant(String);
       Value *V = MDString::get(Context, String);
       MDValueList.AssignValue(V, NextMDValueNo++);
       break;

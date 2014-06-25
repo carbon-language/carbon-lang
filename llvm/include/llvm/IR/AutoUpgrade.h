@@ -14,6 +14,8 @@
 #ifndef LLVM_IR_AUTOUPGRADE_H
 #define LLVM_IR_AUTOUPGRADE_H
 
+#include <string>
+
 namespace llvm {
   class CallInst;
   class Constant;
@@ -61,6 +63,9 @@ namespace llvm {
   /// Check the debug info version number, if it is out-dated, drop the debug
   /// info. Return true if module is modified.
   bool UpgradeDebugInfo(Module &M);
+
+  /// Upgrade a metadata string constant in place.
+  void UpgradeMDStringConstant(std::string &String);
 } // End llvm namespace
 
 #endif

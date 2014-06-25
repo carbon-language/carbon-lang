@@ -11,7 +11,7 @@ while.body.lr.ph:                                 ; preds = %entry
   br i1 undef, label %while.end, label %while.body
 
 while.body:                                       ; preds = %while.body, %while.body.lr.ph
-  br i1 false, label %while.end, label %while.body, !llvm.vectorizer.already_vectorized !0
+  br i1 false, label %while.end, label %while.body, !llvm.loop.vectorize.already_vectorized !0
 
 while.end:                                        ; preds = %while.body, %while.body.lr.ph, %entry
   ret void

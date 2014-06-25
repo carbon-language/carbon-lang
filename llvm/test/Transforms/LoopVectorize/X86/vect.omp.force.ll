@@ -53,7 +53,7 @@ for.end:
 }
 
 !1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.vectorizer.enable", i1 true}
+!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 
 ;
 ; This method will not be vectorized, as scalar cost is lower than any of vector costs.

@@ -51,7 +51,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.loopunroll.enable", i1 false}
+!2 = metadata !{metadata !"llvm.loop.unroll.enable", i1 false}
 
 ; loop64 has a high enough count that it should *not* be unrolled by
 ; the default unrolling heuristic.  It serves as the control for the
@@ -102,7 +102,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !3 = metadata !{metadata !3, metadata !4}
-!4 = metadata !{metadata !"llvm.loopunroll.enable", i1 true}
+!4 = metadata !{metadata !"llvm.loop.unroll.enable", i1 true}
 
 ; #pragma clang loop unroll_count(4)
 ; Loop should be unrolled 4 times.
@@ -132,7 +132,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !5 = metadata !{metadata !5, metadata !6}
-!6 = metadata !{metadata !"llvm.loopunroll.count", i32 4}
+!6 = metadata !{metadata !"llvm.loop.unroll.count", i32 4}
 
 
 ; #pragma clang loop unroll_count(enable) unroll_count(4)
@@ -255,7 +255,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !10 = metadata !{metadata !10, metadata !11}
-!11 = metadata !{metadata !"llvm.loopunroll.count", i32 1}
+!11 = metadata !{metadata !"llvm.loop.unroll.count", i32 1}
 
 ; #pragma clang loop unroll(enable)
 ; Loop has very high loop count (1 million) and full unrolling was requested.

@@ -9,8 +9,9 @@
 ; RUN: opt < %s -mcpu=corei7 -Oz -loop-vectorize -S -unroll-allow-partial=0 | FileCheck %s --check-prefix=OzVEC2
 ; RUN: opt < %s -mcpu=corei7 -O3 -disable-loop-vectorization -S -unroll-allow-partial=0 | FileCheck %s --check-prefix=O3DIS
 
-; This file tests the llvm.vectorizer.pragma forcing vectorization even when
-; optimization levels are too low, or when vectorization is disabled.
+; This file tests the llvm.loop.vectorize.enable metadata forcing
+; vectorization even when optimization levels are too low, or when
+; vectorization is disabled.
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -170,6 +171,6 @@ for.end:                                          ; preds = %for.body
 }
 
 !0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.vectorizer.enable", i1 1}
+!1 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 1}
 !2 = metadata !{metadata !2, metadata !3}
-!3 = metadata !{metadata !"llvm.vectorizer.enable", i1 0}
+!3 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 0}

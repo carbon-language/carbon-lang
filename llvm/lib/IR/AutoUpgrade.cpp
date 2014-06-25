@@ -577,3 +577,10 @@ bool llvm::UpgradeDebugInfo(Module &M) {
   }
   return RetCode;
 }
+
+void llvm::UpgradeMDStringConstant(std::string &String) {
+  const std::string OldPrefix = "llvm.vectorizer.";
+  if (String.find(OldPrefix) == 0) {
+        String.replace(0, OldPrefix.size(), "llvm.loop.vectorize.");
+  }
+}

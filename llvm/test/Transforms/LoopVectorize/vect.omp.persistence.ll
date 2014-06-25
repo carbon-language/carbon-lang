@@ -18,7 +18,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ;
 ; Test #1
 ;
-; Ensure that "llvm.vectorizer.enable" metadata was not lost prior to LoopVectorize pass.
+; Ensure that "llvm.loop.vectorize.enable" metadata was not lost prior to LoopVectorize pass.
 ; In past LoopRotate was clearing that metadata.
 ;
 ; The source C code is:
@@ -62,12 +62,12 @@ for.end:
 }
 
 !1 = metadata !{metadata !1, metadata !2}
-!2 = metadata !{metadata !"llvm.vectorizer.enable", i1 true}
+!2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 
 ;
 ; Test #2
 ;
-; Ensure that "llvm.vectorizer.enable" metadata was not lost even
+; Ensure that "llvm.loop.vectorize.enable" metadata was not lost even
 ; if loop was not rotated (see http://reviews.llvm.org/D3348#comment-4).
 ;
 define i32 @nonrotated(i32 %a) {
@@ -85,4 +85,4 @@ return:
 }
 
 !3 = metadata !{metadata !3, metadata !4}
-!4 = metadata !{metadata !"llvm.vectorizer.enable", i1 true}
+!4 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
