@@ -414,8 +414,8 @@ public:
     return (LargestSize == 0) ? nullptr : Type::getIntNTy(C, LargestSize);
   }
 
-  /// getLargestLegalIntType - Return the size of largest legal integer type
-  /// size, or 0 if none are set.
+  /// getLargestLegalIntTypeSize - Return the size of largest legal integer
+  /// type size, or 0 if none are set.
   unsigned getLargestLegalIntTypeSize() const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
