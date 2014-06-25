@@ -1,7 +1,5 @@
 // RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -Wmicrosoft -verify -fms-extensions
 
-// expected-no-diagnostics
-
 class MayExist {
 private:
   typedef int Type;
@@ -101,3 +99,19 @@ class IfExistsClassScope {
     int var244;
   }
 };
+
+void test_nested_if_exists() {
+  __if_exists(MayExist::Type) {
+    int x = 42;
+    __if_not_exists(MayExist::Type_not) {
+      x++;
+    }
+  }
+}
+
+void test_attribute_on_if_exists() {
+  [[clang::fallthrough]] // expected-error {{an attribute list cannot appear here}}
+  __if_exists(MayExist::Type) {
+    int x;
+  }
+}

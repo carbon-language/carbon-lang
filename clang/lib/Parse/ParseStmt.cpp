@@ -273,6 +273,14 @@ Retry:
     break;
   }
 
+  case tok::kw___if_exists:
+  case tok::kw___if_not_exists:
+    ProhibitAttributes(Attrs);
+    ParseMicrosoftIfExistsStatement(Stmts);
+    // An __if_exists block is like a compound statement, but it doesn't create
+    // a new scope.
+    return StmtEmpty();
+
   case tok::kw_try:                 // C++ 15: try-block
     return ParseCXXTryBlock();
 
@@ -911,12 +919,6 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
     if (Tok.is(tok::annot_pragma_unused)) {
       HandlePragmaUnused();
-      continue;
-    }
-
-    if (getLangOpts().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
-        Tok.is(tok::kw___if_not_exists))) {
-      ParseMicrosoftIfExistsStatement(Stmts);
       continue;
     }
 
