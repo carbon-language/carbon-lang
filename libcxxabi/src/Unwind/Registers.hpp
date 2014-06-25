@@ -1283,38 +1283,50 @@ inline void Registers_arm64::setVectorRegister(int, v128) {
 ///
 /// NOTE: Assumes VFPv3. On ARM processors without a floating point unit,
 /// this uses more memory than required.
-///
-/// FIXME: Support MMX Data Registers, Control registers, and load/stores
-/// for different representations in the VFP registers as listed in
-/// Table 1 of EHABI #7.5.2
 class _LIBUNWIND_HIDDEN Registers_arm {
 public:
   Registers_arm();
   Registers_arm(const void *registers);
 
   bool        validRegister(int num) const;
-  uint32_t    getRegister(int num) const;
+  uint32_t    getRegister(int num);
   void        setRegister(int num, uint32_t value);
-  // FIXME: Due to ARM VRS's support for reading/writing different
-  // representations into the VFP registers this set of accessors seem wrong.
-  // If {get,set}FloatRegister() is the backing store for
-  // _Unwind_VRS_{Get,Set} then it might be best to return a tagged union
-  // with types for each representation in _Unwind_VRS_DataRepresentation.
-  // Similarly, unw_{get,set}_fpreg in the public libunwind API may want to
-  // use a similar tagged union to back the unw_fpreg_t output parameter type.
   bool        validFloatRegister(int num) const;
-  unw_fpreg_t getFloatRegister(int num) const;
+  unw_fpreg_t getFloatRegister(int num);
   void        setFloatRegister(int num, unw_fpreg_t value);
   bool        validVectorRegister(int num) const;
   v128        getVectorRegister(int num) const;
   void        setVectorRegister(int num, v128 value);
   const char *getRegisterName(int num);
-  void        jumpto();
+  void        jumpto() {
+    restoreSavedFloatRegisters();
+    restoreCoreAndJumpTo();
+  }
 
   uint32_t  getSP() const         { return _registers.__sp; }
   void      setSP(uint32_t value) { _registers.__sp = value; }
   uint32_t  getIP() const         { return _registers.__pc; }
   void      setIP(uint32_t value) { _registers.__pc = value; }
+
+  void saveVFPAsX() {
+    assert(_use_X_for_vfp_save || !_saved_vfp_d0_d15);
+    _use_X_for_vfp_save = true;
+  }
+
+  void restoreSavedFloatRegisters() {
+    if (_saved_vfp_d0_d15) {
+      if (_use_X_for_vfp_save)
+        restoreVFPWithFLDMX(_vfp_d0_d15_pad);
+      else
+        restoreVFPWithFLDMD(_vfp_d0_d15_pad);
+    }
+    if (_saved_vfp_d16_d31)
+      restoreVFPv3(_vfp_d16_d31);
+    if (_saved_iwmmx)
+      restoreiWMMX(_iwmmx);
+    if (_saved_iwmmx_control)
+      restoreiWMMXControl(_iwmmx_control);
+  }
 
 private:
   struct GPRs {
@@ -1324,17 +1336,74 @@ private:
     uint32_t __pc;    // Program counter r15
   };
 
-  GPRs    _registers;
+  static void saveVFPWithFSTMD(unw_fpreg_t*);
+  static void saveVFPWithFSTMX(unw_fpreg_t*);
+  static void saveVFPv3(unw_fpreg_t*);
+  static void saveiWMMX(unw_fpreg_t*);
+  static void saveiWMMXControl(uint32_t*);
+  static void restoreVFPWithFLDMD(unw_fpreg_t*);
+  static void restoreVFPWithFLDMX(unw_fpreg_t*);
+  static void restoreVFPv3(unw_fpreg_t*);
+  static void restoreiWMMX(unw_fpreg_t*);
+  static void restoreiWMMXControl(uint32_t*);
+  void restoreCoreAndJumpTo();
+
+  // ARM registers
+  GPRs _registers;
+
+  // We save floating point registers lazily because we can't know ahead of
+  // time which ones are used. See EHABI #4.7.
+
+  // Whether D0-D15 are saved in the FTSMX instead of FSTMD format.
+  //
+  // See EHABI #7.5 that explains how matching instruction sequences for load
+  // and store need to be used to correctly restore the exact register bits.
+  bool _use_X_for_vfp_save;
+  // Whether VFP D0-D15 are saved.
+  bool _saved_vfp_d0_d15;
+  // Whether VFPv3 D16-D31 are saved.
+  bool _saved_vfp_d16_d31;
+  // Whether iWMMX data registers are saved.
+  bool _saved_iwmmx;
+  // Whether iWMMX control registers are saved.
+  bool _saved_iwmmx_control;
+  // VFP registers D0-D15, + padding if saved using FSTMX
+  unw_fpreg_t _vfp_d0_d15_pad[17];
+  // VFPv3 registers D16-D31, always saved using FSTMD
+  unw_fpreg_t _vfp_d16_d31[16];
+  // iWMMX registers
+  unw_fpreg_t _iwmmx[16];
+  // iWMMX control registers
+  uint32_t _iwmmx_control[4];
 };
 
-inline Registers_arm::Registers_arm(const void *registers) {
+inline Registers_arm::Registers_arm(const void *registers)
+  : _use_X_for_vfp_save(false),
+    _saved_vfp_d0_d15(false),
+    _saved_vfp_d16_d31(false),
+    _saved_iwmmx(false),
+    _saved_iwmmx_control(false) {
   static_assert(sizeof(Registers_arm) < sizeof(unw_context_t),
                     "arm registers do not fit into unw_context_t");
+  // See unw_getcontext() note about data.
   memcpy(&_registers, registers, sizeof(_registers));
+  memset(&_vfp_d0_d15_pad, 0, sizeof(_vfp_d0_d15_pad));
+  memset(&_vfp_d16_d31, 0, sizeof(_vfp_d16_d31));
+  memset(&_iwmmx, 0, sizeof(_iwmmx));
+  memset(&_iwmmx_control, 0, sizeof(_iwmmx_control));
 }
 
-inline Registers_arm::Registers_arm() {
+inline Registers_arm::Registers_arm()
+  : _use_X_for_vfp_save(false),
+    _saved_vfp_d0_d15(false),
+    _saved_vfp_d16_d31(false),
+    _saved_iwmmx(false),
+    _saved_iwmmx_control(false) {
   memset(&_registers, 0, sizeof(_registers));
+  memset(&_vfp_d0_d15_pad, 0, sizeof(_vfp_d0_d15_pad));
+  memset(&_vfp_d16_d31, 0, sizeof(_vfp_d16_d31));
+  memset(&_iwmmx, 0, sizeof(_iwmmx));
+  memset(&_iwmmx_control, 0, sizeof(_iwmmx_control));
 }
 
 inline bool Registers_arm::validRegister(int regNum) const {
@@ -1344,20 +1413,29 @@ inline bool Registers_arm::validRegister(int regNum) const {
     return true;
   if (regNum == UNW_REG_SP)
     return true;
-  if ((regNum >= UNW_ARM_R0) && (regNum <= UNW_ARM_R15))
+  if (regNum >= UNW_ARM_R0 && regNum <= UNW_ARM_R15)
+    return true;
+  if (regNum >= UNW_ARM_WC0 && regNum <= UNW_ARM_WC3)
     return true;
   return false;
 }
 
-inline uint32_t Registers_arm::getRegister(int regNum) const {
+inline uint32_t Registers_arm::getRegister(int regNum) {
   if (regNum == UNW_REG_SP || regNum == UNW_ARM_SP)
     return _registers.__sp;
   if (regNum == UNW_ARM_LR)
     return _registers.__lr;
   if (regNum == UNW_REG_IP || regNum == UNW_ARM_IP)
     return _registers.__pc;
-  if ((regNum >= UNW_ARM_R0) && (regNum <= UNW_ARM_R12))
+  if (regNum >= UNW_ARM_R0 && regNum <= UNW_ARM_R12)
     return _registers.__r[regNum];
+  if (regNum >= UNW_ARM_WC0 && regNum <= UNW_ARM_WC3) {
+    if (!_saved_iwmmx_control) {
+      _saved_iwmmx_control = true;
+      saveiWMMXControl(_iwmmx_control);
+    }
+    return _iwmmx_control[regNum - UNW_ARM_WC0];
+  }
   _LIBUNWIND_ABORT("unsupported arm register");
 }
 
@@ -1368,9 +1446,15 @@ inline void Registers_arm::setRegister(int regNum, uint32_t value) {
     _registers.__lr = value;
   else if (regNum == UNW_REG_IP || regNum == UNW_ARM_IP)
     _registers.__pc = value;
-  else if ((regNum >= UNW_ARM_R0) && (regNum <= UNW_ARM_R12))
+  else if (regNum >= UNW_ARM_R0 && regNum <= UNW_ARM_R12)
     _registers.__r[regNum] = value;
-  else
+  else if (regNum >= UNW_ARM_WC0 && regNum <= UNW_ARM_WC3) {
+    if (!_saved_iwmmx_control) {
+      _saved_iwmmx_control = true;
+      saveiWMMXControl(_iwmmx_control);
+    }
+    _iwmmx_control[regNum - UNW_ARM_WC0] = value;
+  } else
     _LIBUNWIND_ABORT("unsupported arm register");
 }
 
@@ -1543,17 +1627,65 @@ inline const char *Registers_arm::getRegisterName(int regNum) {
   }
 }
 
-inline bool Registers_arm::validFloatRegister(int) const {
-  // FIXME: Implement float register support.
-  return false;
+inline bool Registers_arm::validFloatRegister(int regNum) const {
+  // NOTE: Consider the intel MMX registers floating points so the
+  // unw_get_fpreg can be used to transmit the 64-bit data back.
+  return ((regNum >= UNW_ARM_D0) && (regNum <= UNW_ARM_D31))
+      || ((regNum >= UNW_ARM_WR0) && (regNum <= UNW_ARM_WR15));
 }
 
-inline unw_fpreg_t Registers_arm::getFloatRegister(int) const {
-  _LIBUNWIND_ABORT("ARM float register support not yet implemented");
+inline unw_fpreg_t Registers_arm::getFloatRegister(int regNum) {
+  if (regNum >= UNW_ARM_D0 && regNum <= UNW_ARM_D15) {
+    if (!_saved_vfp_d0_d15) {
+      _saved_vfp_d0_d15 = true;
+      if (_use_X_for_vfp_save)
+        saveVFPWithFSTMX(_vfp_d0_d15_pad);
+      else
+        saveVFPWithFSTMD(_vfp_d0_d15_pad);
+    }
+    return _vfp_d0_d15_pad[regNum - UNW_ARM_D0];
+  } else if (regNum >= UNW_ARM_D16 && regNum <= UNW_ARM_D31) {
+    if (!_saved_vfp_d16_d31) {
+      _saved_vfp_d16_d31 = true;
+      saveVFPv3(_vfp_d16_d31);
+    }
+    return _vfp_d16_d31[regNum - UNW_ARM_D16];
+  } else if (regNum >= UNW_ARM_WR0 && regNum <= UNW_ARM_WR15) {
+    if (!_saved_iwmmx) {
+      _saved_iwmmx = true;
+      saveiWMMX(_iwmmx);
+    }
+    return _iwmmx[regNum - UNW_ARM_WR0];
+  } else {
+    _LIBUNWIND_ABORT("Unknown ARM float register");
+  }
 }
 
-inline void Registers_arm::setFloatRegister(int, unw_fpreg_t) {
-  _LIBUNWIND_ABORT("ARM float register support not yet implemented");
+inline void Registers_arm::setFloatRegister(int regNum, unw_fpreg_t value) {
+  if (regNum >= UNW_ARM_D0 && regNum <= UNW_ARM_D15) {
+    if (!_saved_vfp_d0_d15) {
+      _saved_vfp_d0_d15 = true;
+      if (_use_X_for_vfp_save)
+        saveVFPWithFSTMX(_vfp_d0_d15_pad);
+      else
+        saveVFPWithFSTMD(_vfp_d0_d15_pad);
+    }
+    _vfp_d0_d15_pad[regNum - UNW_ARM_D0] = value;
+  } else if (regNum >= UNW_ARM_D16 && regNum <= UNW_ARM_D31) {
+    if (!_saved_vfp_d16_d31) {
+      _saved_vfp_d16_d31 = true;
+      saveVFPv3(_vfp_d16_d31);
+    }
+    _vfp_d16_d31[regNum - UNW_ARM_D0] = value;
+  } else if (regNum >= UNW_ARM_WR0 && regNum <= UNW_ARM_WR15) {
+    if (!_saved_iwmmx) {
+      _saved_iwmmx = true;
+      saveiWMMX(_iwmmx);
+    }
+    _iwmmx[regNum - UNW_ARM_WR0] = value;
+  } else {
+    _LIBUNWIND_ABORT("Unknown ARM float register");
+  }
 }
 
 inline bool Registers_arm::validVectorRegister(int) const {

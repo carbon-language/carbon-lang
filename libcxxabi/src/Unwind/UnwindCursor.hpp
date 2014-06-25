@@ -12,10 +12,12 @@
 #ifndef __UNWINDCURSOR_HPP__
 #define __UNWINDCURSOR_HPP__
 
+#include <algorithm>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unwind.h>
 
 #if __APPLE__
   #include <mach-o/dyld.h>
@@ -370,8 +372,8 @@ public:
   virtual unw_word_t  getReg(int) = 0;
   virtual void        setReg(int, unw_word_t) = 0;
   virtual bool        validFloatReg(int) = 0;
-  virtual double      getFloatReg(int) = 0;
-  virtual void        setFloatReg(int, double) = 0;
+  virtual unw_fpreg_t getFloatReg(int) = 0;
+  virtual void        setFloatReg(int, unw_fpreg_t) = 0;
   virtual int         step() = 0;
   virtual void        getInfo(unw_proc_info_t *) = 0;
   virtual void        jumpto() = 0;
@@ -379,6 +381,9 @@ public:
   virtual bool        getFunctionName(char *bf, size_t ln, unw_word_t *off) = 0;
   virtual void        setInfoBasedOnIPRegister(bool isReturnAddr = false) = 0;
   virtual const char *getRegisterName(int num) = 0;
+#if __arm__
+  virtual void        saveVFPAsX() = 0;
+#endif
 };
 
 
@@ -395,8 +400,8 @@ public:
   virtual unw_word_t  getReg(int);
   virtual void        setReg(int, unw_word_t);
   virtual bool        validFloatReg(int);
-  virtual double      getFloatReg(int);
-  virtual void        setFloatReg(int, double);
+  virtual unw_fpreg_t getFloatReg(int);
+  virtual void        setFloatReg(int, unw_fpreg_t);
   virtual int         step();
   virtual void        getInfo(unw_proc_info_t *);
   virtual void        jumpto();
@@ -404,10 +409,17 @@ public:
   virtual bool        getFunctionName(char *buf, size_t len, unw_word_t *off);
   virtual void        setInfoBasedOnIPRegister(bool isReturnAddress = false);
   virtual const char *getRegisterName(int num);
+#if __arm__
+  virtual void        saveVFPAsX();
+#endif
 
   void            operator delete(void *, size_t) {}
 
 private:
+
+#if LIBCXXABI_ARM_EHABI
+  bool getInfoFromEHABISection(pint_t pc, const UnwindInfoSections &sects);
+#endif
 
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND
   bool getInfoFromDwarfSection(pint_t pc, const UnwindInfoSections &sects,
@@ -486,7 +498,9 @@ private:
     }
     return false;
   }
+#endif // _LIBUNWIND_SUPPORT_COMPACT_UNWIND
 
+#if _LIBUNWIND_SUPPORT_DWARF_UNWIND
   compact_unwind_encoding_t dwarfEncoding() const {
     R dummy;
     return dwarfEncoding(dummy);
@@ -507,7 +521,7 @@ private:
   compact_unwind_encoding_t dwarfEncoding(Registers_arm64 &) const {
     return UNWIND_ARM64_MODE_DWARF;
   }
-#endif // _LIBUNWIND_SUPPORT_COMPACT_UNWIND
+#endif // _LIBUNWIND_SUPPORT_DWARF_UNWIND
 
 
   A               &_addressSpace;
@@ -524,14 +538,13 @@ UnwindCursor<A, R>::UnwindCursor(unw_context_t *context, A &as)
       _isSignalFrame(false) {
   static_assert(sizeof(UnwindCursor<A, R>) < sizeof(unw_cursor_t),
                 "UnwindCursor<> does not fit in unw_cursor_t");
-
-  bzero(&_info, sizeof(_info));
+  memset(&_info, 0, sizeof(_info));
 }
 
 template <typename A, typename R>
 UnwindCursor<A, R>::UnwindCursor(A &as, void *)
     : _addressSpace(as), _unwindInfoMissing(false), _isSignalFrame(false) {
-  bzero(&_info, sizeof(_info));
+  memset(&_info, 0, sizeof(_info));
   // FIXME
   // fill in _registers from thread arg
 }
@@ -558,18 +571,24 @@ bool UnwindCursor<A, R>::validFloatReg(int regNum) {
 }
 
 template <typename A, typename R>
-double UnwindCursor<A, R>::getFloatReg(int regNum) {
+unw_fpreg_t UnwindCursor<A, R>::getFloatReg(int regNum) {
   return _registers.getFloatRegister(regNum);
 }
 
 template <typename A, typename R>
-void UnwindCursor<A, R>::setFloatReg(int regNum, double value) {
+void UnwindCursor<A, R>::setFloatReg(int regNum, unw_fpreg_t value) {
   _registers.setFloatRegister(regNum, value);
 }
 
 template <typename A, typename R> void UnwindCursor<A, R>::jumpto() {
   _registers.jumpto();
 }
+
+#if __arm__
+template <typename A, typename R> void UnwindCursor<A, R>::saveVFPAsX() {
+  _registers.saveVFPAsX();
+}
+#endif
 
 template <typename A, typename R>
 const char *UnwindCursor<A, R>::getRegisterName(int regNum) {
@@ -579,6 +598,212 @@ const char *UnwindCursor<A, R>::getRegisterName(int regNum) {
 template <typename A, typename R> bool UnwindCursor<A, R>::isSignalFrame() {
   return _isSignalFrame;
 }
+
+#if LIBCXXABI_ARM_EHABI
+struct EHABIIndexEntry {
+  uint32_t functionOffset;
+  uint32_t data;
+};
+
+// Unable to unwind in the ARM index table (section 5 EHABI).
+#define UNW_EXIDX_CANTUNWIND 0x1
+
+static inline uint32_t signExtendPrel31(uint32_t data) {
+  return data | ((data & 0x40000000u) << 1);
+}
+
+extern "C" _Unwind_Reason_Code __aeabi_unwind_cpp_pr0(
+    _Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context);
+extern "C" _Unwind_Reason_Code __aeabi_unwind_cpp_pr1(
+    _Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context);
+extern "C" _Unwind_Reason_Code __aeabi_unwind_cpp_pr2(
+    _Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context);
+
+template<typename A>
+struct EHABISectionIterator {
+  typedef EHABISectionIterator _Self;
+
+  typedef std::random_access_iterator_tag iterator_category;
+  typedef typename A::pint_t value_type;
+  typedef typename A::pint_t* pointer;
+  typedef typename A::pint_t& reference;
+  typedef size_t size_type;
+  typedef size_t difference_type;
+
+  static _Self begin(A& addressSpace, const UnwindInfoSections& sects) {
+    return _Self(addressSpace, sects, 0);
+  }
+  static _Self end(A& addressSpace, const UnwindInfoSections& sects) {
+    return _Self(addressSpace, sects, sects.arm_section_length);
+  }
+
+  EHABISectionIterator(A& addressSpace, const UnwindInfoSections& sects, size_t i)
+      : _addressSpace(&addressSpace), _sects(&sects), _i(i) {}
+
+  _Self& operator++() { ++_i; return *this; }
+  _Self& operator+=(size_t a) { _i += a; return *this; }
+  _Self& operator--() { assert(_i > 0); --_i; return *this; }
+  _Self& operator-=(size_t a) { assert(_i >= a); _i -= a; return *this; }
+
+  _Self operator+(size_t a) { _Self out = *this; out._i += a; return out; }
+  _Self operator-(size_t a) { assert(_i >= a); _Self out = *this; out._i -= a; return out; }
+
+  size_t operator-(const _Self& other) { return _i - other._i; }
+
+  bool operator==(const _Self& other) const {
+    assert(_addressSpace == other._addressSpace);
+    assert(_sects == other._sects);
+    return _i == other._i;
+  }
+
+  typename A::pint_t operator*() const { return functionAddress(); }
+
+  typename A::pint_t functionAddress() const {
+    typename A::pint_t indexAddr = _sects->arm_section + arrayoffsetof(
+        EHABIIndexEntry, _i, functionOffset);
+    return indexAddr + signExtendPrel31(_addressSpace->get32(indexAddr));
+  }
+
+  typename A::pint_t dataAddress() {
+    typename A::pint_t indexAddr = _sects->arm_section + arrayoffsetof(
+        EHABIIndexEntry, _i, data);
+    return indexAddr;
+  }
+
+ private:
+  size_t _i;
+  A* _addressSpace;
+  const UnwindInfoSections* _sects;
+};
+
+template <typename A, typename R>
+bool UnwindCursor<A, R>::getInfoFromEHABISection(
+    pint_t pc,
+    const UnwindInfoSections &sects) {
+  EHABISectionIterator<A> begin =
+      EHABISectionIterator<A>::begin(_addressSpace, sects);
+  EHABISectionIterator<A> end =
+      EHABISectionIterator<A>::end(_addressSpace, sects);
+
+  EHABISectionIterator<A> itNextPC = std::upper_bound(begin, end, pc);
+  if (itNextPC == begin || itNextPC == end)
+    return false;
+  EHABISectionIterator<A> itThisPC = itNextPC - 1;
+
+  pint_t thisPC = itThisPC.functionAddress();
+  pint_t nextPC = itNextPC.functionAddress();
+  pint_t indexDataAddr = itThisPC.dataAddress();
+
+  if (indexDataAddr == 0)
+    return false;
+
+  uint32_t indexData = _addressSpace.get32(indexDataAddr);
+  if (indexData == UNW_EXIDX_CANTUNWIND)
+    return false;
+
+  // If the high bit is set, the exception handling table entry is inline inside
+  // the index table entry on the second word (aka |indexDataAddr|). Otherwise,
+  // the table points at an offset in the exception handling table (section 5 EHABI).
+  pint_t exceptionTableAddr;
+  uint32_t exceptionTableData;
+  bool isSingleWordEHT;
+  if (indexData & 0x80000000) {
+    exceptionTableAddr = indexDataAddr;
+    // TODO(ajwong): Should this data be 0?
+    exceptionTableData = indexData;
+    isSingleWordEHT = true;
+  } else {
+    exceptionTableAddr = indexDataAddr + signExtendPrel31(indexData);
+    exceptionTableData = _addressSpace.get32(exceptionTableAddr);
+    isSingleWordEHT = false;
+  }
+
+  // Now we know the 3 things:
+  //   exceptionTableAddr -- exception handler table entry.
+  //   exceptionTableData -- the data inside the first word of the eht entry.
+  //   isSingleWordEHT -- whether the entry is in the index.
+  unw_word_t personalityRoutine = 0xbadf00d;
+  bool scope32 = false;
+  uintptr_t lsda = 0xbadf00d;
+
+  // If the high bit in the exception handling table entry is set, the entry is
+  // in compact form (section 6.3 EHABI).
+  if (exceptionTableData & 0x80000000) {
+    // Grab the index of the personality routine from the compact form.
+    int choice = (exceptionTableData & 0x0f000000) >> 24;
+    int extraWords = 0;
+    switch (choice) {
+      case 0:
+        personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr0;
+        extraWords = 0;
+        scope32 = false;
+        break;
+      case 1:
+        personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr1;
+        extraWords = (exceptionTableData & 0x00ff0000) >> 16;
+        scope32 = false;
+        break;
+      case 2:
+        personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr2;
+        extraWords = (exceptionTableData & 0x00ff0000) >> 16;
+        scope32 = true;
+        break;
+      default:
+        _LIBUNWIND_ABORT("unknown personality routine");
+        return false;
+    }
+
+    if (isSingleWordEHT) {
+      if (extraWords != 0) {
+        _LIBUNWIND_ABORT("index inlined table detected but pr function "
+                         "requires extra words");
+        return false;
+      }
+    }
+  } else {
+    pint_t personalityAddr =
+        exceptionTableAddr + signExtendPrel31(exceptionTableData);
+    personalityRoutine = personalityAddr;
+
+    // ARM EHABI # 6.2, # 9.2
+    //
+    //  +---- ehtp
+    //  v
+    // +--------------------------------------+
+    // | +--------+--------+--------+-------+ |
+    // | |0| prel31 to personalityRoutine   | |
+    // | +--------+--------+--------+-------+ |
+    // | |      N |      unwind opcodes     | |  <-- UnwindData
+    // | +--------+--------+--------+-------+ |
+    // | | Word 2        unwind opcodes     | |
+    // | +--------+--------+--------+-------+ |
+    // | ...                                  |
+    // | +--------+--------+--------+-------+ |
+    // | | Word N        unwind opcodes     | |
+    // | +--------+--------+--------+-------+ |
+    // | | LSDA                             | |  <-- lsda
+    // | | ...                              | |
+    // | +--------+--------+--------+-------+ |
+    // +--------------------------------------+
+
+    uint32_t *UnwindData = reinterpret_cast<uint32_t*>(exceptionTableAddr) + 1;
+    uint32_t FirstDataWord = *UnwindData;
+    size_t N = ((FirstDataWord >> 24) & 0xff);
+    size_t NDataWords = N + 1;
+    lsda = reinterpret_cast<uintptr_t>(UnwindData + NDataWords);
+  }
+
+  _info.start_ip = thisPC;
+  _info.end_ip = nextPC;
+  _info.handler = personalityRoutine;
+  _info.unwind_info = exceptionTableAddr;
+  _info.lsda = lsda;
+  // flags is pr_cache.additional. See EHABI #7.2 for definition of bit 0.
+  _info.flags = isSingleWordEHT ? 1 : 0 | scope32 ? 0x2 : 0;  // Use enum?
+
+  return true;
+}
+#endif
 
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND
 template <typename A, typename R>
@@ -913,6 +1138,11 @@ bool UnwindCursor<A, R>::getInfoFromCompactEncodingSection(pint_t pc,
 template <typename A, typename R>
 void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
   pint_t pc = (pint_t)this->getReg(UNW_REG_IP);
+#if LIBCXXABI_ARM_EHABI
+  // Remove the thumb bit so the IP represents the actual instruction address.
+  // This matches the behaviour of _Unwind_GetIP on arm.
+  pc &= (pint_t)~0x1;
+#endif
 
   // If the last line of a function is a "throw" the compiler sometimes
   // emits no instructions after the call to __cxa_throw.  This means
@@ -956,6 +1186,12 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
         return;
       }
     }
+#endif
+
+#if LIBCXXABI_ARM_EHABI
+    // If there is ARM EHABI unwind info, look there next.
+    if (sects.arm_section != 0 && this->getInfoFromEHABISection(pc, sects))
+      return;
 #endif
   }
 
@@ -1026,7 +1262,7 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
 
 template <typename A, typename R>
 int UnwindCursor<A, R>::step() {
-  // Bottom of stack is defined is when no unwind info cannot be found.
+  // Bottom of stack is defined is when unwind info cannot be found.
   if (_unwindInfoMissing)
     return UNW_STEP_END;
 
@@ -1036,8 +1272,12 @@ int UnwindCursor<A, R>::step() {
   result = this->stepWithCompactEncoding();
 #elif _LIBUNWIND_SUPPORT_DWARF_UNWIND
   result = this->stepWithDwarfFDE();
+#elif LIBCXXABI_ARM_EHABI
+  result = UNW_STEP_SUCCESS;
 #else
-  #error Need _LIBUNWIND_SUPPORT_COMPACT_UNWIND or _LIBUNWIND_SUPPORT_DWARF_UNWIND
+  #error Need _LIBUNWIND_SUPPORT_COMPACT_UNWIND or \
+              _LIBUNWIND_SUPPORT_DWARF_UNWIND or \
+              LIBCXXABI_ARM_EHABI
 #endif
 
   // update info based on new PC

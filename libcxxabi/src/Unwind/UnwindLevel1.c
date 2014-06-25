@@ -22,10 +22,10 @@
 #include "unwind.h"
 #include "config.h"
 
-#if _LIBUNWIND_BUILD_ZERO_COST_APIS
+#if _LIBUNWIND_BUILD_ZERO_COST_APIS && !LIBCXXABI_ARM_EHABI
 
 static _Unwind_Reason_Code
-unwind_phase1(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
+unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
   unw_cursor_t cursor1;
   unw_init_local(&cursor1, uc);
 
@@ -117,7 +117,7 @@ unwind_phase1(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
 
 
 static _Unwind_Reason_Code
-unwind_phase2(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
+unwind_phase2(unw_context_t *uc, _Unwind_Exception *exception_object) {
   unw_cursor_t cursor2;
   unw_init_local(&cursor2, uc);
 
@@ -187,7 +187,7 @@ unwind_phase2(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
         if (sp == exception_object->private_2) {
           // Phase 1 said we would stop at this frame, but we did not...
           _LIBUNWIND_ABORT("during phase1 personality function said it would "
-                           "stop here, but now if phase2 it did not stop here");
+                           "stop here, but now in phase2 it did not stop here");
         }
         break;
       case _URC_INSTALL_CONTEXT:
@@ -202,7 +202,7 @@ unwind_phase2(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
           unw_get_reg(&cursor2, UNW_REG_SP, &sp);
           _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): re-entering  "
                                      "user code with ip=0x%llX, sp=0x%llX\n",
-                                    exception_object, pc, sp);
+                                     exception_object, pc, sp);
         }
         unw_resume(&cursor2);
         // unw_resume() only returns if there was an error.
@@ -223,7 +223,7 @@ unwind_phase2(unw_context_t *uc, struct _Unwind_Exception *exception_object) {
 
 static _Unwind_Reason_Code
 unwind_phase2_forced(unw_context_t *uc,
-                     struct _Unwind_Exception *exception_object,
+                     _Unwind_Exception *exception_object,
                      _Unwind_Stop_Fn stop, void *stop_parameter) {
   unw_cursor_t cursor2;
   unw_init_local(&cursor2, uc);
@@ -237,7 +237,7 @@ unwind_phase2_forced(unw_context_t *uc,
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2_forced(ex_ojb=%p): unw_step "
                                  "failed => _URC_END_OF_STACK\n",
                                  exception_object);
-      return _URC_FATAL_PHASE1_ERROR;
+      return _URC_FATAL_PHASE2_ERROR;
     }
 
     // When tracing, print state information.
@@ -324,7 +324,7 @@ unwind_phase2_forced(unw_context_t *uc,
 
 /// Called by __cxa_throw.  Only returns if there is a fatal error.
 _LIBUNWIND_EXPORT _Unwind_Reason_Code
-_Unwind_RaiseException(struct _Unwind_Exception *exception_object) {
+_Unwind_RaiseException(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_RaiseException(ex_obj=%p)\n",
                              exception_object);
   unw_context_t uc;
@@ -358,7 +358,7 @@ _Unwind_RaiseException(struct _Unwind_Exception *exception_object) {
 /// is implemented by having the code call __cxa_rethrow() which
 /// in turn calls _Unwind_Resume_or_Rethrow().
 _LIBUNWIND_EXPORT void
-_Unwind_Resume(struct _Unwind_Exception *exception_object) {
+_Unwind_Resume(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_Resume(ex_obj=%p)\n", exception_object);
   unw_context_t uc;
   unw_getcontext(&uc);
@@ -380,7 +380,7 @@ _Unwind_Resume(struct _Unwind_Exception *exception_object) {
 /// Unwinds stack, calling "stop" function at each frame.
 /// Could be used to implement longjmp().
 _LIBUNWIND_EXPORT _Unwind_Reason_Code
-_Unwind_ForcedUnwind(struct _Unwind_Exception *exception_object,
+_Unwind_ForcedUnwind(_Unwind_Exception *exception_object,
                      _Unwind_Stop_Fn stop, void *stop_parameter) {
   _LIBUNWIND_TRACE_API("_Unwind_ForcedUnwind(ex_obj=%p, stop=%p)\n",
                   exception_object, stop);
@@ -484,7 +484,7 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
 /// Called by personality handler during phase 2 if a foreign exception
 // is caught.
 _LIBUNWIND_EXPORT void
-_Unwind_DeleteException(struct _Unwind_Exception *exception_object) {
+_Unwind_DeleteException(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_DeleteException(ex_obj=%p)\n",
                               exception_object);
   if (exception_object->exception_cleanup != NULL)
@@ -492,4 +492,4 @@ _Unwind_DeleteException(struct _Unwind_Exception *exception_object) {
                                            exception_object);
 }
 
-#endif // _LIBUNWIND_BUILD_ZERO_COST_APIS
+#endif // _LIBUNWIND_BUILD_ZERO_COST_APIS && !LIBCXXABI_ARM_EHABI

@@ -287,6 +287,12 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @
 @ On entry:
 @  thread_state pointer is in r0
+@ 
+@ Per EHABI #4.7 this only saves the core integer registers.
+@ EHABI #7.4.5 notes that in general all VRS registers should be restored
+@ however this is very hard to do for VFP registers because it is unknown
+@ to the lbirary how many registers are implemented by the architecture.
+@ Instead, VFP registers are demand saved by logic external to unw_getcontext.
 @
   .p2align 2
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
@@ -297,7 +303,91 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   str sp, [r0, #52]
   str lr, [r0, #56]
   str lr, [r0, #60]  @ store return address as pc
-  mov r0, #0      @ return UNW_ESUCCESS
+  mov r0, #0         @ return UNW_ESUCCESS
+#if _ARM_ARCH > 4
+  bx lr
+#else
+  mov pc, lr
+#endif
+
+@
+@ static void libunwind::Registers_arm::saveVFPWithFSTMD(unw_fpreg_t* values)
+@
+@ On entry:
+@  values pointer is in r0
+@
+  .p2align 2
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMDEPy)
+  stc p11, cr0, [r0], {#0x20}  @ fstmiad r0, {d0-d15}
+  mov pc, lr
+
+@
+@ static void libunwind::Registers_arm::saveVFPWithFSTMX(unw_fpreg_t* values)
+@
+@ On entry:
+@  values pointer is in r0
+@
+  .p2align 2
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMXEPy)
+  stc p11, cr0, [r0], {#0x21}  @ fstmiax r0, {d0-d15}
+  mov pc, lr
+
+@
+@ static void libunwind::Registers_arm::saveVFPv3(unw_fpreg_t* values)
+@
+@ On entry:
+@  values pointer is in r0
+@
+  .p2align 2
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
+  @ VFP and iwMMX instructions are only available when compiling with the flags
+  @ that enable them. We don't want to do that in the library (because we don't
+  @ want the compiler to generate instructions that access those) but this is
+  @ only accessed if the personality routine needs these registers. Use of
+  @ these registers implies they are, actually, available on the target, so
+  @ it's ok to execute.
+  @ So, generate the instructions using the corresponding coprocessor mnemonic.
+  stcl p11, cr0, [r0], {#0x20}  @ vldm r0, {d16-d31}
+  mov pc, lr
+
+@
+@ static void libunwind::Registers_arm::saveiWMMX(unw_fpreg_t* values)
+@
+@ On entry:
+@  values pointer is in r0
+@
+  .p2align 2
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveiWMMXEPy)
+  stcl p1, cr0, [r0], #8  @ wstrd wR0, [r0], #8
+  stcl p1, cr1, [r0], #8  @ wstrd wR1, [r0], #8
+  stcl p1, cr2, [r0], #8  @ wstrd wR2, [r0], #8
+  stcl p1, cr3, [r0], #8  @ wstrd wR3, [r0], #8
+  stcl p1, cr4, [r0], #8  @ wstrd wR4, [r0], #8
+  stcl p1, cr5, [r0], #8  @ wstrd wR5, [r0], #8
+  stcl p1, cr6, [r0], #8  @ wstrd wR6, [r0], #8
+  stcl p1, cr7, [r0], #8  @ wstrd wR7, [r0], #8
+  stcl p1, cr8, [r0], #8  @ wstrd wR8, [r0], #8
+  stcl p1, cr9, [r0], #8  @ wstrd wR9, [r0], #8
+  stcl p1, cr10, [r0], #8  @ wstrd wR10, [r0], #8
+  stcl p1, cr11, [r0], #8  @ wstrd wR11, [r0], #8
+  stcl p1, cr12, [r0], #8  @ wstrd wR12, [r0], #8
+  stcl p1, cr13, [r0], #8  @ wstrd wR13, [r0], #8
+  stcl p1, cr14, [r0], #8  @ wstrd wR14, [r0], #8
+  stcl p1, cr15, [r0], #8  @ wstrd wR15, [r0], #8
+  mov pc, lr
+
+@
+@ static void libunwind::Registers_arm::saveiWMMXControl(unw_uint32_t* values)
+@
+@ On entry:
+@  values pointer is in r0
+@
+  .p2align 2
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveiWMMXControlEPj)
+  stc2 p1, cr8, [r0], #4  @ wstrw wCGR0, [r0], #4
+  stc2 p1, cr9, [r0], #4  @ wstrw wCGR1, [r0], #4
+  stc2 p1, cr10, [r0], #4  @ wstrw wCGR2, [r0], #4
+  stc2 p1, cr11, [r0], #4  @ wstrw wCGR3, [r0], #4
   mov pc, lr
 
 #endif

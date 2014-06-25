@@ -12,10 +12,15 @@
 
 #include <libunwind.h>
 
+#ifndef NDEBUG
+#include <cstdlib> // getenv
+#endif
 #include <new>
 
 #include "libunwind_ext.h"
 #include "config.h"
+
+#include <stdlib.h>
 
 
 #if _LIBUNWIND_BUILD_ZERO_COST_APIS
@@ -49,6 +54,9 @@ _LIBUNWIND_EXPORT int unw_init_local(unw_cursor_t *cursor,
                                  context, LocalAddressSpace::sThisAddressSpace);
 #elif __arm64__
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_arm64>(
+                                 context, LocalAddressSpace::sThisAddressSpace);
+#elif LIBCXXABI_ARM_EHABI
+  new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_arm>(
                                  context, LocalAddressSpace::sThisAddressSpace);
 #endif
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
@@ -161,7 +169,7 @@ _LIBUNWIND_EXPORT int unw_get_reg(unw_cursor_t *cursor, unw_regnum_t regNum,
 _LIBUNWIND_EXPORT int unw_set_reg(unw_cursor_t *cursor, unw_regnum_t regNum,
                                   unw_word_t value) {
   _LIBUNWIND_TRACE_API("unw_set_reg(cursor=%p, regNum=%d, value=0x%llX)\n",
-                             cursor, regNum, value);
+                       cursor, regNum, (long long)value);
   typedef LocalAddressSpace::pint_t pint_t;
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   if (co->validReg(regNum)) {
@@ -193,8 +201,13 @@ _LIBUNWIND_EXPORT int unw_get_fpreg(unw_cursor_t *cursor, unw_regnum_t regNum,
 /// Set value of specified float register at cursor position in stack frame.
 _LIBUNWIND_EXPORT int unw_set_fpreg(unw_cursor_t *cursor, unw_regnum_t regNum,
                                     unw_fpreg_t value) {
+#if LIBCXXABI_ARM_EHABI
+  _LIBUNWIND_TRACE_API("unw_set_fpreg(cursor=%p, regNum=%d, value=%llX)\n",
+                       cursor, regNum, value);
+#else
   _LIBUNWIND_TRACE_API("unw_set_fpreg(cursor=%p, regNum=%d, value=%g)\n",
-                             cursor, regNum, value);
+                       cursor, regNum, value);
+#endif
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   if (co->validFloatReg(regNum)) {
     co->setFloatReg(regNum, value);
@@ -239,7 +252,7 @@ _LIBUNWIND_EXPORT int unw_resume(unw_cursor_t *cursor) {
 _LIBUNWIND_EXPORT int unw_get_proc_name(unw_cursor_t *cursor, char *buf,
                                         size_t bufLen, unw_word_t *offset) {
   _LIBUNWIND_TRACE_API("unw_get_proc_name(cursor=%p, &buf=%p,"
-                             "bufLen=%ld)\n", cursor, buf, bufLen);
+                             "bufLen=%zu)\n", cursor, buf, bufLen);
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   if (co->getFunctionName(buf, bufLen, offset))
     return UNW_ESUCCESS;
@@ -273,6 +286,15 @@ _LIBUNWIND_EXPORT int unw_is_signal_frame(unw_cursor_t *cursor) {
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   return co->isSignalFrame();
 }
+
+#if __arm__
+// Save VFP registers d0-d15 using FSTMIADX instead of FSTMIADD
+_LIBUNWIND_EXPORT void unw_save_vfp_as_X(unw_cursor_t *cursor) {
+  _LIBUNWIND_TRACE_API("unw_fpreg_save_vfp_as_X(cursor=%p)\n", cursor);
+  AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
+  return co->saveVFPAsX();
+}
+#endif
 
 
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND

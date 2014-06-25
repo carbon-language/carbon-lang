@@ -55,6 +55,7 @@ typedef enum {
   _UA_END_OF_STACK = 16 // gcc extension to C++ ABI
 } _Unwind_Action;
 
+typedef struct _Unwind_Context _Unwind_Context;   // opaque
 
 #if LIBCXXABI_ARM_EHABI
 typedef uint32_t _Unwind_State;
@@ -73,26 +74,30 @@ struct _Unwind_Control_Block {
   uint64_t exception_class;
   void (*exception_cleanup)(_Unwind_Reason_Code, _Unwind_Control_Block*);
 
+  /* Unwinder cache, private fields for the unwinder's use */
   struct {
-    uint32_t reserved1;
+    uint32_t reserved1; /* init reserved1 to 0, then don't touch */
     uint32_t reserved2;
     uint32_t reserved3;
     uint32_t reserved4;
     uint32_t reserved5;
   } unwinder_cache;
 
+  /* Propagation barrier cache (valid after phase 1): */
   struct {
     uint32_t sp;
     uint32_t bitpattern[5];
   } barrier_cache;
 
+  /* Cleanup cache (preserved over cleanup): */
   struct {
     uint32_t bitpattern[4];
   } cleanup_cache;
 
+  /* Pr cache (for pr's benefit): */
   struct {
-    uint32_t fnstart;
-    _Unwind_EHT_Header* ehtp;
+    uint32_t fnstart; /* function start address */
+    _Unwind_EHT_Header* ehtp; /* pointer to EHT entry header word */
     uint32_t additional;
     uint32_t reserved1;
   } pr_cache;
@@ -165,10 +170,10 @@ extern void _Unwind_DeleteException(_Unwind_Exception *exception_object);
 
 #if LIBCXXABI_ARM_EHABI
 typedef enum {
-  _UVRSC_CORE = 0,
-  _UVRSC_VFP = 1,
-  _UVRSC_WMMXD = 3,
-  _UVRSC_WMMXC = 4
+  _UVRSC_CORE = 0, /* integer register */
+  _UVRSC_VFP = 1, /* vfp */
+  _UVRSC_WMMXD = 3, /* Intel WMMX data register */
+  _UVRSC_WMMXC = 4 /* Intel WMMX control register */
 } _Unwind_VRS_RegClass;
 
 typedef enum {
@@ -185,17 +190,26 @@ typedef enum {
   _UVRSR_FAILED = 2
 } _Unwind_VRS_Result;
 
-extern _Unwind_VRS_Result _Unwind_VRS_Get(_Unwind_Context* context,
-                                          _Unwind_VRS_RegClass regclass,
-                                          uint32_t regno,
-                                          _Unwind_VRS_DataRepresentation representation,
-                                          void *valuep);
+extern void _Unwind_Complete(_Unwind_Exception* exception_object);
 
-extern _Unwind_VRS_Result _Unwind_VRS_Set(_Unwind_Context* context,
-                                          _Unwind_VRS_RegClass regclass,
-                                          uint32_t regno,
-                                          _Unwind_VRS_DataRepresentation representation,
-                                          void *valuep);
+extern _Unwind_VRS_Result
+_Unwind_VRS_Get(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
+                uint32_t regno, _Unwind_VRS_DataRepresentation representation,
+                void *valuep);
+
+extern _Unwind_VRS_Result
+_Unwind_VRS_Set(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
+                uint32_t regno, _Unwind_VRS_DataRepresentation representation,
+                void *valuep);
+
+extern _Unwind_VRS_Result
+_Unwind_VRS_Pop(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
+                uint32_t discriminator,
+                _Unwind_VRS_DataRepresentation representation);
+
+extern _Unwind_Reason_Code _Unwind_VRS_Interpret(_Unwind_Context *context,
+                                                 uint32_t *data, size_t offset,
+                                                 size_t len);
 
 static inline uintptr_t _Unwind_GetGR(struct _Unwind_Context* context,
                                       int index) {
@@ -276,9 +290,9 @@ extern uintptr_t _Unwind_GetCFA(struct _Unwind_Context *);
 
 
 // _Unwind_GetIPInfo is a gcc extension that can be called from within a
-// personality handler.  Similar to _Unwind_GetIP() but also returns in 
-// *ipBefore a non-zero value if the instruction pointer is at or before the 
-// instruction causing the unwind. Normally, in a function call, the IP returned 
+// personality handler.  Similar to _Unwind_GetIP() but also returns in
+// *ipBefore a non-zero value if the instruction pointer is at or before the
+// instruction causing the unwind. Normally, in a function call, the IP returned
 // is the return address which is after the call instruction and may be past the
 // end of the function containing the call instruction.
 extern uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *context,
