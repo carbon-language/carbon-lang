@@ -1275,13 +1275,8 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
       if (Var->getTLSKind())
         return false;
 
-      // Check if this is a dllimport variable.  Fail evaluation if we care
-      // about side effects; a dllimport variable rarely acts like a constant
-      // except in places like template arguments.  It never acts like a
-      // constant in C.
-      if ((!Info.getLangOpts().CPlusPlus ||
-           !Info.keepEvaluatingAfterSideEffect()) &&
-          Var->hasAttr<DLLImportAttr>())
+      // A dllimport variable never acts like a constant.
+      if (Var->hasAttr<DLLImportAttr>())
         return false;
     }
     if (const auto *FD = dyn_cast<const FunctionDecl>(VD)) {
@@ -1295,9 +1290,7 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
       // The C language has no notion of ODR; furthermore, it has no notion of
       // dynamic initialization.  This means that we are permitted to
       // perform initialization with the address of the thunk.
-      if (Info.getLangOpts().CPlusPlus &&
-          !Info.keepEvaluatingAfterSideEffect() &&
-          FD->hasAttr<DLLImportAttr>())
+      if (Info.getLangOpts().CPlusPlus && FD->hasAttr<DLLImportAttr>())
         return false;
     }
   }
