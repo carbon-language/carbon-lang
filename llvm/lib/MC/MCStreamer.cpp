@@ -567,7 +567,6 @@ void MCStreamer::EmitWin64EHEndProlog() {
 }
 
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
-  llvm_unreachable("This file format doesn't support this directive");
 }
 
 void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
