@@ -6963,9 +6963,9 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
       return "/lib/ld-linux-mipsn8.so.1";
     return "/lib/ld.so.1";
   } else if (ToolChain.getArch() == llvm::Triple::mips64 ||
-           ToolChain.getArch() == llvm::Triple::mips64el) {
-    std::string LinkerFile = mips::isNaN2008(Args) ? "ld-linux-mipsn8.so.1"
-                                                   : "ld.so.1";
+             ToolChain.getArch() == llvm::Triple::mips64el) {
+    std::string LinkerFile =
+        mips::isNaN2008(Args) ? "ld-linux-mipsn8.so.1" : "ld.so.1";
     if (mips::hasMipsAbiArg(Args, "n32"))
       return "/lib32/" + LinkerFile;
     return "/lib64/" + LinkerFile;

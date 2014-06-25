@@ -334,7 +334,7 @@ TEST(VirtualFileSystemTest, OverlayIteration) {
 
   Upper->addRegularFile("/file2");
   {
-    std::vector<std::string> Contents = { "/file2", "/file1" };
+    std::vector<std::string> Contents = {"/file2", "/file1"};
     checkContents(O->dir_begin("/", EC), Contents);
   }
 
@@ -344,7 +344,7 @@ TEST(VirtualFileSystemTest, OverlayIteration) {
   Upper->addRegularFile("/dir2/foo");
   checkContents(O->dir_begin("/dir2", EC), ArrayRef<std::string>("/dir2/foo"));
   {
-    std::vector<std::string> Contents = { "/dir2", "/file2", "/dir1", "/file1" };
+    std::vector<std::string> Contents = {"/dir2", "/file2", "/dir1", "/file1"};
     checkContents(O->dir_begin("/", EC), Contents);
   }
 }
@@ -367,7 +367,7 @@ TEST(VirtualFileSystemTest, ThreeLevelIteration) {
   Lower->addRegularFile("/file1");
   Upper->addRegularFile("/file3");
   {
-    std::vector<std::string> Contents = { "/file3", "/file2", "/file1" };
+    std::vector<std::string> Contents = {"/file3", "/file2", "/file1"};
     checkContents(O->dir_begin("/", EC), Contents);
   }
 }
@@ -391,8 +391,8 @@ TEST(VirtualFileSystemTest, HiddenInIteration) {
   Upper->addRegularFile("/onlyInUp", sys::fs::owner_all);
   Upper->addRegularFile("/hiddenByUp", sys::fs::owner_all);
   {
-    std::vector<std::string> Contents = { "/hiddenByUp", "/onlyInUp",
-        "/hiddenByMid", "/onlyInMid", "/onlyInLow" };
+    std::vector<std::string> Contents = {
+        "/hiddenByUp", "/onlyInUp", "/hiddenByMid", "/onlyInMid", "/onlyInLow"};
     checkContents(O->dir_begin("/", EC), Contents);
   }
 
@@ -817,15 +817,14 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
 
   std::error_code EC;
   {
-    std::vector<std::string> Contents = { "//root/file1", "//root/file2",
-        "//root/file3", "//root/foo" };
+    std::vector<std::string> Contents = {"//root/file1", "//root/file2",
+                                         "//root/file3", "//root/foo"};
     checkContents(O->dir_begin("//root/", EC), Contents);
   }
 
   {
-    std::vector<std::string> Contents = {
-        "//root/foo/bar/a", "//root/foo/bar/b" };
+    std::vector<std::string> Contents = {"//root/foo/bar/a",
+                                         "//root/foo/bar/b"};
     checkContents(O->dir_begin("//root/foo/bar", EC), Contents);
   }
 }
-
