@@ -54,12 +54,20 @@ public:
     std::map<std::string, vfs::Status> &FilesAndDirs;
     std::map<std::string, vfs::Status>::iterator I;
     std::string Path;
+    bool isInPath(StringRef S) {
+      if (Path.size() < S.size() && S.find(Path) == 0) {
+        auto LastSep = S.find_last_of('/');
+        if (LastSep == Path.size() || LastSep == Path.size()-1)
+          return true;
+      }
+      return false;
+    }
     DirIterImpl(std::map<std::string, vfs::Status> &FilesAndDirs,
                 const Twine &_Path)
         : FilesAndDirs(FilesAndDirs), I(FilesAndDirs.begin()),
           Path(_Path.str()) {
       for ( ; I != FilesAndDirs.end(); ++I) {
-        if (Path.size() < I->first.size() && I->first.find(Path) == 0 && I->first.find_last_of('/') <= Path.size()) {
+        if (isInPath(I->first)) {
           CurrentEntry = I->second;
           break;
         }
@@ -68,7 +76,7 @@ public:
     std::error_code increment() override {
       ++I;
       for ( ; I != FilesAndDirs.end(); ++I) {
-        if (Path.size() < I->first.size() && I->first.find(Path) == 0 && I->first.find_last_of('/') <= Path.size()) {
+        if (isInPath(I->first)) {
           CurrentEntry = I->second;
           break;
         }
@@ -306,6 +314,46 @@ TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   EXPECT_EQ(vfs::directory_iterator(), I);
 }
 
+TEST(VirtualFileSystemTest, BasicRealFSRecursiveIteration) {
+  ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/true);
+  IntrusiveRefCntPtr<vfs::FileSystem> FS = vfs::getRealFileSystem();
+
+  std::error_code EC;
+  auto I = vfs::recursive_directory_iterator(*FS, Twine(TestDirectory), EC);
+  ASSERT_FALSE(EC);
+  EXPECT_EQ(vfs::recursive_directory_iterator(), I); // empty directory is empty
+
+  ScopedDir _a(TestDirectory+"/a");
+  ScopedDir _ab(TestDirectory+"/a/b");
+  ScopedDir _c(TestDirectory+"/c");
+  ScopedDir _cd(TestDirectory+"/c/d");
+
+  I = vfs::recursive_directory_iterator(*FS, Twine(TestDirectory), EC);
+  ASSERT_FALSE(EC);
+  ASSERT_NE(vfs::recursive_directory_iterator(), I);
+
+
+  std::vector<std::string> Contents;
+  for (auto E = vfs::recursive_directory_iterator(); !EC && I != E;
+       I.increment(EC)) {
+    Contents.push_back(I->getName());
+  }
+
+  // Check contents, which may be in any order
+  EXPECT_EQ(4U, Contents.size());
+  int Counts[4] = { 0, 0, 0, 0 };
+  for (const std::string &Name : Contents) {
+    ASSERT_FALSE(Name.empty());
+    int Index = Name[Name.size()-1] - 'a';
+    ASSERT_TRUE(Index >= 0 && Index < 4);
+    Counts[Index]++;
+  }
+  EXPECT_EQ(1, Counts[0]); // a
+  EXPECT_EQ(1, Counts[1]); // b
+  EXPECT_EQ(1, Counts[2]); // c
+  EXPECT_EQ(1, Counts[3]); // d
+}
+
 template <typename T, size_t N>
 std::vector<StringRef> makeStringRefVector(const T (&Arr)[N]) {
   std::vector<StringRef> Vec;
@@ -314,17 +362,17 @@ std::vector<StringRef> makeStringRefVector(const T (&Arr)[N]) {
   return Vec;
 }
 
-static void checkContents(vfs::directory_iterator I,
-                          ArrayRef<StringRef> Expected) {
+template <typename DirIter>
+static void checkContents(DirIter I, ArrayRef<StringRef> Expected) {
   std::error_code EC;
   auto ExpectedIter = Expected.begin(), ExpectedEnd = Expected.end();
-  for (vfs::directory_iterator E;
+  for (DirIter E;
        !EC && I != E && ExpectedIter != ExpectedEnd;
        I.increment(EC), ++ExpectedIter)
     EXPECT_EQ(*ExpectedIter, I->getName());
 
   EXPECT_EQ(ExpectedEnd, ExpectedIter);
-  EXPECT_EQ(vfs::directory_iterator(), I);
+  EXPECT_EQ(DirIter(), I);
 }
 
 TEST(VirtualFileSystemTest, OverlayIteration) {
@@ -354,6 +402,54 @@ TEST(VirtualFileSystemTest, OverlayIteration) {
   {
     const char *Contents[] = {"/dir2", "/file2", "/dir1", "/file1"};
     checkContents(O->dir_begin("/", EC), makeStringRefVector(Contents));
+  }
+}
+
+TEST(VirtualFileSystemTest, OverlayRecursiveIteration) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Middle(new DummyFileSystem());
+  IntrusiveRefCntPtr<DummyFileSystem> Upper(new DummyFileSystem());
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
+      new vfs::OverlayFileSystem(Lower));
+  O->pushOverlay(Middle);
+  O->pushOverlay(Upper);
+
+  std::error_code EC;
+  checkContents(vfs::recursive_directory_iterator(*O, "/", EC),
+                ArrayRef<StringRef>());
+
+  Lower->addRegularFile("/file1");
+  checkContents(vfs::recursive_directory_iterator(*O, "/", EC),
+                ArrayRef<StringRef>("/file1"));
+
+  Upper->addDirectory("/dir");
+  Upper->addRegularFile("/dir/file2");
+  {
+    const char *Contents[] = {"/dir", "/dir/file2", "/file1"};
+    checkContents(vfs::recursive_directory_iterator(*O, "/", EC),
+                  makeStringRefVector(Contents));
+  }
+
+  Lower->addDirectory("/dir1");
+  Lower->addRegularFile("/dir1/foo");
+  Lower->addDirectory("/dir1/a");
+  Lower->addRegularFile("/dir1/a/b");
+  Middle->addDirectory("/a");
+  Middle->addDirectory("/a/b");
+  Middle->addDirectory("/a/b/c");
+  Middle->addRegularFile("/a/b/c/d");
+  Middle->addRegularFile("/hiddenByUp");
+  Upper->addDirectory("/dir2");
+  Upper->addRegularFile("/dir2/foo");
+  Upper->addRegularFile("/hiddenByUp");
+  checkContents(vfs::recursive_directory_iterator(*O, "/dir2", EC),
+                ArrayRef<StringRef>("/dir2/foo"));
+  {
+    const char *Contents[] = { "/dir", "/dir/file2", "/dir2", "/dir2/foo",
+        "/hiddenByUp", "/a", "/a/b", "/a/b/c", "/a/b/c/d", "/dir1", "/dir1/a",
+        "/dir1/a/b", "/dir1/foo", "/file1" };
+    checkContents(vfs::recursive_directory_iterator(*O, "/", EC),
+                  makeStringRefVector(Contents));
   }
 }
 

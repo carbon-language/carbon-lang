@@ -149,6 +149,37 @@ public:
   }
 };
 
+class FileSystem;
+
+/// \brief An input iterator over the recursive contents of a virtual path,
+/// similar to llvm::sys::fs::recursive_directory_iterator.
+class recursive_directory_iterator {
+  typedef std::stack<directory_iterator, std::vector<directory_iterator>>
+      IterState;
+
+  FileSystem *FS;
+  std::shared_ptr<IterState> State; // Input iterator semantics on copy.
+
+public:
+  recursive_directory_iterator(FileSystem &FS, const Twine &Path,
+                               std::error_code &EC);
+  /// \brief Construct an 'end' iterator.
+  recursive_directory_iterator() { }
+
+  /// \brief Equivalent to operator++, with an error code.
+  recursive_directory_iterator &increment(std::error_code &EC);
+
+  const Status &operator*() const { return *State->top(); }
+  const Status *operator->() const { return &*State->top(); }
+
+  bool operator==(const recursive_directory_iterator &Other) const {
+    return State == Other.State; // identity
+  }
+  bool operator!=(const recursive_directory_iterator &RHS) const {
+    return !(*this == RHS);
+  }
+};
+
 /// \brief The virtual file system interface.
 class FileSystem : public llvm::ThreadSafeRefCountedBase<FileSystem> {
 public:
@@ -172,8 +203,6 @@ public:
   /// \note The 'end' iterator is directory_iterator()
   virtual directory_iterator dir_begin(const Twine &Dir,
                                        std::error_code &EC) = 0;
-
-  // TODO: recursive directory iterators
 };
 
 /// \brief Gets an \p vfs::FileSystem for the 'real' file system, as seen by

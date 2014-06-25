@@ -1168,3 +1168,38 @@ std::error_code VFSFromYamlDirIterImpl::increment() {
   }
   return std::error_code();
 }
+
+vfs::recursive_directory_iterator::recursive_directory_iterator(FileSystem &FS_,
+                                                           const Twine &Path,
+                                                           std::error_code &EC)
+    : FS(&FS_) {
+  directory_iterator I = FS->dir_begin(Path, EC);
+  if (!EC && I != directory_iterator()) {
+    State = std::make_shared<IterState>();
+    State->push(I);
+  }
+}
+
+vfs::recursive_directory_iterator &
+recursive_directory_iterator::increment(std::error_code &EC) {
+  assert(FS && State && !State->empty() && "incrementing past end");
+  assert(State->top()->isStatusKnown() && "non-canonical end iterator");
+  vfs::directory_iterator End;
+  if (State->top()->isDirectory()) {
+    vfs::directory_iterator I = FS->dir_begin(State->top()->getName(), EC);
+    if (EC)
+      return *this;
+    if (I != End) {
+      State->push(I);
+      return *this;
+    }
+  }
+
+  while (!State->empty() && State->top().increment(EC) == End)
+    State->pop();
+
+  if (State->empty())
+    State.reset(); // end iterator
+
+  return *this;
+}
