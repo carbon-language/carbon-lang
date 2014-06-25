@@ -79,8 +79,7 @@ protected:
   MCDataFragment *getOrCreateDataFragment() const;
 
 public:
-  void visitUsedExpr(const MCExpr &Expr);
-  void visitUsedSymbol(const MCSymbol &Sym);
+  void visitUsedSymbol(const MCSymbol &Sym) override;
 
   MCAssembler &getAssembler() { return *Assembler; }
 

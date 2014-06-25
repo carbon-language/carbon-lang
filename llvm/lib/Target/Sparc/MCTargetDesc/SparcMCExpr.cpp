@@ -220,6 +220,6 @@ void SparcMCExpr::fixELFSymbolsInTLSFixups(MCAssembler &Asm) const {
   fixELFSymbolsInTLSFixupsImpl(getSubExpr(), Asm);
 }
 
-void SparcMCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+void SparcMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }

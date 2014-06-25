@@ -128,6 +128,6 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   return true;
 }
 
-void PPCMCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+void PPCMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }

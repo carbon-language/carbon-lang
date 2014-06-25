@@ -16,7 +16,6 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
-#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Object/ELF.h"
@@ -82,7 +81,7 @@ void AArch64MCExpr::PrintImpl(raw_ostream &OS) const {
   OS << *Expr;
 }
 
-void AArch64MCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+void AArch64MCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }
 

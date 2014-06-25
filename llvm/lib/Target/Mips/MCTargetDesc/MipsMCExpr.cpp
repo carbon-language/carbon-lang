@@ -84,6 +84,6 @@ MipsMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
 }
 
-void MipsMCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+void MipsMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }

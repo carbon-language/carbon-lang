@@ -66,7 +66,7 @@ public:
                                  const MCAsmLayout *Layout) const override {
     return false;
   }
-  void visitUsedExpr(MCObjectStreamer &Streamer) const override {};
+  void visitUsedExpr(MCStreamer &Streamer) const override {};
   const MCSection *FindAssociatedSection() const override {
     return nullptr;
   }

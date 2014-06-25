@@ -214,6 +214,9 @@ protected:
 public:
   virtual ~MCStreamer();
 
+  void visitUsedExpr(const MCExpr &Expr);
+  virtual void visitUsedSymbol(const MCSymbol &Sym);
+
   void setTargetStreamer(MCTargetStreamer *TS) {
     TargetStreamer.reset(TS);
   }

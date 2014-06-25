@@ -614,6 +614,35 @@ void MCStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
     TS->emitAssignment(Symbol, Value);
 }
 
+void MCStreamer::visitUsedSymbol(const MCSymbol &Sym) {
+}
+
+void MCStreamer::visitUsedExpr(const MCExpr &Expr) {
+  switch (Expr.getKind()) {
+  case MCExpr::Target:
+    cast<MCTargetExpr>(Expr).visitUsedExpr(*this);
+    break;
+
+  case MCExpr::Constant:
+    break;
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr &BE = cast<MCBinaryExpr>(Expr);
+    visitUsedExpr(*BE.getLHS());
+    visitUsedExpr(*BE.getRHS());
+    break;
+  }
+
+  case MCExpr::SymbolRef:
+    visitUsedSymbol(cast<MCSymbolRefExpr>(Expr).getSymbol());
+    break;
+
+  case MCExpr::Unary:
+    visitUsedExpr(*cast<MCUnaryExpr>(Expr).getSubExpr());
+    break;
+  }
+}
+
 void MCStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {}
 void MCStreamer::EmitThumbFunc(MCSymbol *Func) {}
 void MCStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}

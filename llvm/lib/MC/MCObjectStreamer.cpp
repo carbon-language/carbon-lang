@@ -87,32 +87,6 @@ void MCObjectStreamer::visitUsedSymbol(const MCSymbol &Sym) {
   Assembler->getOrCreateSymbolData(Sym);
 }
 
-void MCObjectStreamer::visitUsedExpr(const MCExpr &Expr) {
-  switch (Expr.getKind()) {
-  case MCExpr::Target:
-    cast<MCTargetExpr>(Expr).visitUsedExpr(*this);
-    break;
-
-  case MCExpr::Constant:
-    break;
-
-  case MCExpr::Binary: {
-    const MCBinaryExpr &BE = cast<MCBinaryExpr>(Expr);
-    visitUsedExpr(*BE.getLHS());
-    visitUsedExpr(*BE.getRHS());
-    break;
-  }
-
-  case MCExpr::SymbolRef:
-    visitUsedSymbol(cast<MCSymbolRefExpr>(Expr).getSymbol());
-    break;
-
-  case MCExpr::Unary:
-    visitUsedExpr(*cast<MCUnaryExpr>(Expr).getSubExpr());
-    break;
-  }
-}
-
 void MCObjectStreamer::EmitCFISections(bool EH, bool Debug) {
   MCStreamer::EmitCFISections(EH, Debug);
   EmitEHFrame = EH;

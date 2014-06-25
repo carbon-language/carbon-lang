@@ -147,7 +147,7 @@ public:
 
   void PrintImpl(raw_ostream &OS) const override;
 
-  void visitUsedExpr(MCObjectStreamer &Streamer) const override;
+  void visitUsedExpr(MCStreamer &Streamer) const override;
 
   const MCSection *FindAssociatedSection() const override;
 

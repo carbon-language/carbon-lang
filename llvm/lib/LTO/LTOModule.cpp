@@ -605,31 +605,8 @@ namespace {
       }
     }
 
-    // FIXME: mostly copied for the obj streamer.
-    void AddValueSymbols(const MCExpr *Value) {
-      switch (Value->getKind()) {
-      case MCExpr::Target:
-        // FIXME: What should we do in here?
-        break;
-
-      case MCExpr::Constant:
-        break;
-
-      case MCExpr::Binary: {
-        const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
-        AddValueSymbols(BE->getLHS());
-        AddValueSymbols(BE->getRHS());
-        break;
-      }
-
-      case MCExpr::SymbolRef:
-        markUsed(cast<MCSymbolRefExpr>(Value)->getSymbol());
-        break;
-
-      case MCExpr::Unary:
-        AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
-        break;
-      }
+    void visitUsedSymbol(const MCSymbol &Sym) override {
+      markUsed(Sym);
     }
 
   public:
@@ -650,7 +627,7 @@ namespace {
       // Scan for values.
       for (unsigned i = Inst.getNumOperands(); i--; )
         if (Inst.getOperand(i).isExpr())
-          AddValueSymbols(Inst.getOperand(i).getExpr());
+          visitUsedExpr(*Inst.getOperand(i).getExpr());
     }
     void EmitLabel(MCSymbol *Symbol) override {
       MCStreamer::EmitLabel(Symbol);
@@ -659,7 +636,7 @@ namespace {
     void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);
-      AddValueSymbols(Value);
+      visitUsedExpr(*Value);
     }
     bool EmitSymbolAttribute(MCSymbol *Symbol,
                              MCSymbolAttr Attribute) override {

@@ -10,7 +10,6 @@
 #include "ARMMCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCObjectStreamer.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "armmcexpr"
@@ -42,6 +41,6 @@ ARMMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   return false;
 }
 
-void ARMMCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+void ARMMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }
