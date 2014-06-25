@@ -79,7 +79,7 @@ public:
   void PrintImpl(raw_ostream &OS) const override;
   bool EvaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAsmLayout *Layout) const override;
-  void AddValueSymbols(MCAssembler *) const override;
+  void visitUsedExpr(MCObjectStreamer &Streamer) const override;
   const MCSection *FindAssociatedSection() const override {
     return getSubExpr()->FindAssociatedSection();
   }

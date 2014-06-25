@@ -11,6 +11,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectStreamer.h"
 
 using namespace llvm;
 
@@ -83,33 +84,6 @@ MipsMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
 }
 
-// FIXME: This basically copies MCObjectStreamer::AddValueSymbols. Perhaps
-// that method should be made public?
-static void AddValueSymbolsImpl(const MCExpr *Value, MCAssembler *Asm) {
-  switch (Value->getKind()) {
-  case MCExpr::Target:
-    llvm_unreachable("Can't handle nested target expr!");
-
-  case MCExpr::Constant:
-    break;
-
-  case MCExpr::Binary: {
-    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
-    AddValueSymbolsImpl(BE->getLHS(), Asm);
-    AddValueSymbolsImpl(BE->getRHS(), Asm);
-    break;
-  }
-
-  case MCExpr::SymbolRef:
-    Asm->getOrCreateSymbolData(cast<MCSymbolRefExpr>(Value)->getSymbol());
-    break;
-
-  case MCExpr::Unary:
-    AddValueSymbolsImpl(cast<MCUnaryExpr>(Value)->getSubExpr(), Asm);
-    break;
-  }
-}
-
-void MipsMCExpr::AddValueSymbols(MCAssembler *Asm) const {
-  AddValueSymbolsImpl(getSubExpr(), Asm);
+void MipsMCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+  Streamer.visitUsedExpr(*getSubExpr());
 }

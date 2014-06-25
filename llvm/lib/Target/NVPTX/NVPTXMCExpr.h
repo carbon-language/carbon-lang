@@ -66,7 +66,7 @@ public:
                                  const MCAsmLayout *Layout) const override {
     return false;
   }
-  void AddValueSymbols(MCAssembler *) const override {};
+  void visitUsedExpr(MCObjectStreamer &Streamer) const override {};
   const MCSection *FindAssociatedSection() const override {
     return nullptr;
   }

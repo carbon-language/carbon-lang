@@ -83,28 +83,32 @@ MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() const {
   return F;
 }
 
-void MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
-  switch (Value->getKind()) {
+void MCObjectStreamer::visitUsedSymbol(const MCSymbol &Sym) {
+  Assembler->getOrCreateSymbolData(Sym);
+}
+
+void MCObjectStreamer::visitUsedExpr(const MCExpr &Expr) {
+  switch (Expr.getKind()) {
   case MCExpr::Target:
-    cast<MCTargetExpr>(Value)->AddValueSymbols(Assembler);
+    cast<MCTargetExpr>(Expr).visitUsedExpr(*this);
     break;
 
   case MCExpr::Constant:
     break;
 
   case MCExpr::Binary: {
-    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
-    AddValueSymbols(BE->getLHS());
-    AddValueSymbols(BE->getRHS());
+    const MCBinaryExpr &BE = cast<MCBinaryExpr>(Expr);
+    visitUsedExpr(*BE.getLHS());
+    visitUsedExpr(*BE.getRHS());
     break;
   }
 
   case MCExpr::SymbolRef:
-    Assembler->getOrCreateSymbolData(cast<MCSymbolRefExpr>(Value)->getSymbol());
+    visitUsedSymbol(cast<MCSymbolRefExpr>(Expr).getSymbol());
     break;
 
   case MCExpr::Unary:
-    AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
+    visitUsedExpr(*cast<MCUnaryExpr>(Expr).getSubExpr());
     break;
   }
 }
@@ -123,7 +127,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  AddValueSymbols(Value);
+  visitUsedExpr(*Value);
   if (Value->EvaluateAsAbsolute(AbsValue, getAssembler())) {
     EmitIntValue(AbsValue, Size);
     return;
@@ -203,7 +207,7 @@ void MCObjectStreamer::ChangeSection(const MCSection *Section,
 
 void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   getAssembler().getOrCreateSymbolData(*Symbol);
-  AddValueSymbols(Value);
+  visitUsedExpr(*Value);
   MCStreamer::EmitAssignment(Symbol, Value);
 }
 
@@ -211,7 +215,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo
   // Scan for values.
   for (unsigned i = Inst.getNumOperands(); i--; )
     if (Inst.getOperand(i).isExpr())
-      AddValueSymbols(Inst.getOperand(i).getExpr());
+      visitUsedExpr(*Inst.getOperand(i).getExpr());
 
   MCSectionData *SD = getCurrentSectionData();
   SD->setHasInstructions(true);

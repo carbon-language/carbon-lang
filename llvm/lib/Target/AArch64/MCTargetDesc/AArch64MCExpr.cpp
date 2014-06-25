@@ -16,6 +16,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Object/ELF.h"
@@ -81,37 +82,8 @@ void AArch64MCExpr::PrintImpl(raw_ostream &OS) const {
   OS << *Expr;
 }
 
-// FIXME: This basically copies MCObjectStreamer::AddValueSymbols. Perhaps
-// that method should be made public?
-// FIXME: really do above: now that two backends are using it.
-static void AddValueSymbolsImpl(const MCExpr *Value, MCAssembler *Asm) {
-  switch (Value->getKind()) {
-  case MCExpr::Target:
-    llvm_unreachable("Can't handle nested target expr!");
-    break;
-
-  case MCExpr::Constant:
-    break;
-
-  case MCExpr::Binary: {
-    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
-    AddValueSymbolsImpl(BE->getLHS(), Asm);
-    AddValueSymbolsImpl(BE->getRHS(), Asm);
-    break;
-  }
-
-  case MCExpr::SymbolRef:
-    Asm->getOrCreateSymbolData(cast<MCSymbolRefExpr>(Value)->getSymbol());
-    break;
-
-  case MCExpr::Unary:
-    AddValueSymbolsImpl(cast<MCUnaryExpr>(Value)->getSubExpr(), Asm);
-    break;
-  }
-}
-
-void AArch64MCExpr::AddValueSymbols(MCAssembler *Asm) const {
-  AddValueSymbolsImpl(getSubExpr(), Asm);
+void AArch64MCExpr::visitUsedExpr(MCObjectStreamer &Streamer) const {
+  Streamer.visitUsedExpr(*getSubExpr());
 }
 
 const MCSection *AArch64MCExpr::FindAssociatedSection() const {

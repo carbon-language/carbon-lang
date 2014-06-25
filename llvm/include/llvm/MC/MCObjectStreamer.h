@@ -78,9 +78,10 @@ protected:
   /// fragment is not a data fragment.
   MCDataFragment *getOrCreateDataFragment() const;
 
-  void AddValueSymbols(const MCExpr *Value);
-
 public:
+  void visitUsedExpr(const MCExpr &Expr);
+  void visitUsedSymbol(const MCSymbol &Sym);
+
   MCAssembler &getAssembler() { return *Assembler; }
 
   /// @name MCStreamer Interface

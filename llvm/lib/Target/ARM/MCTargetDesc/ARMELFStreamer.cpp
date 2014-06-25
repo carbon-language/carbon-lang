@@ -1160,7 +1160,7 @@ void ARMELFStreamer::EmitPersonalityFixup(StringRef Name) {
   const MCSymbolRefExpr *PersonalityRef = MCSymbolRefExpr::Create(
       PersonalitySym, MCSymbolRefExpr::VK_ARM_NONE, getContext());
 
-  AddValueSymbols(PersonalityRef);
+  visitUsedExpr(*PersonalityRef);
   MCDataFragment *DF = getOrCreateDataFragment();
   DF->getFixups().push_back(MCFixup::Create(DF->getContents().size(),
                                             PersonalityRef,

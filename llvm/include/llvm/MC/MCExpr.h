@@ -21,6 +21,7 @@ class MCAssembler;
 class MCContext;
 class MCSection;
 class MCSectionData;
+class MCObjectStreamer;
 class MCSymbol;
 class MCValue;
 class raw_ostream;
@@ -524,7 +525,7 @@ public:
   virtual void PrintImpl(raw_ostream &OS) const = 0;
   virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const = 0;
-  virtual void AddValueSymbols(MCAssembler *) const = 0;
+  virtual void visitUsedExpr(MCObjectStreamer& Streamer) const = 0;
   virtual const MCSection *FindAssociatedSection() const = 0;
 
   virtual void fixELFSymbolsInTLSFixups(MCAssembler &) const = 0;
