@@ -2766,7 +2766,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
   if (SupportedSpellings & Declspec) OS << "X";
   OS << "\",\"";
   if (SupportedSpellings & Keyword) OS << "X";
-  OS << "\"\n\n";
+  OS << "\", \"";
   if (SupportedSpellings & Pragma) OS << "X";
   OS << "\"\n\n";
 
