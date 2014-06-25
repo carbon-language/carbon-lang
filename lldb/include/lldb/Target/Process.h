@@ -866,6 +866,21 @@ public:
         return m_event_data.c_str();
     }
     
+    void
+    SetDetachOnError (bool enable)
+    {
+        if (enable)
+            m_flags.Set(lldb::eLaunchFlagDetachOnError);
+        else
+            m_flags.Clear(lldb::eLaunchFlagDetachOnError);
+    }
+    
+    bool
+    GetDetachOnError () const
+    {
+        return m_flags.Test(lldb::eLaunchFlagDetachOnError);
+    }
+    
 protected:
     std::string m_working_dir;
     std::string m_plugin_name;
@@ -882,9 +897,9 @@ protected:
 };
 
 //----------------------------------------------------------------------
-// ProcessLaunchInfo
+// ProcessAttachInfo
 //
-// Describes any information that is required to launch a process.
+// Describes any information that is required to attach to a process.
 //----------------------------------------------------------------------
     
 class ProcessAttachInfo : public ProcessInstanceInfo
@@ -896,7 +911,8 @@ public:
         m_resume_count (0),
         m_wait_for_launch (false),
         m_ignore_existing (true),
-        m_continue_once_attached (false)
+        m_continue_once_attached (false),
+        m_detach_on_error (true)
     {
     }
 
@@ -906,12 +922,14 @@ public:
         m_resume_count (0),
         m_wait_for_launch (false),
         m_ignore_existing (true),
-        m_continue_once_attached (false)
+        m_continue_once_attached (false),
+        m_detach_on_error(true)
     {
         ProcessInfo::operator= (launch_info);
         SetProcessPluginName (launch_info.GetProcessPluginName());
         SetResumeCount (launch_info.GetResumeCount());
         SetHijackListener(launch_info.GetHijackListener());
+        m_detach_on_error = launch_info.GetDetachOnError();
     }
     
     bool
@@ -1014,7 +1032,18 @@ public:
         m_hijack_listener_sp = listener_sp;
     }
     
-
+    bool
+    GetDetachOnError () const
+    {
+        return m_detach_on_error;
+    }
+    
+    void
+    SetDetachOnError (bool enable)
+    {
+        m_detach_on_error = enable;
+    }
+    
 protected:
     lldb::ListenerSP m_hijack_listener_sp;
     std::string m_plugin_name;
@@ -1022,6 +1051,7 @@ protected:
     bool m_wait_for_launch;
     bool m_ignore_existing;
     bool m_continue_once_attached; // Supports the use-case scenario of immediately continuing the process once attached.
+    bool m_detach_on_error;  // If we are debugging remotely, instruct the stub to detach rather than killing the target on error.
 };
 
 class ProcessLaunchCommandOptions : public Options

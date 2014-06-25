@@ -799,6 +799,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                 m_gdb_comm.SetSTDERR (stderr_path);
 
             m_gdb_comm.SetDisableASLR (launch_flags & eLaunchFlagDisableASLR);
+            m_gdb_comm.SetDetachOnError (launch_flags & eLaunchFlagDetachOnError);
 
             m_gdb_comm.SendLaunchArchPacket (m_target.GetArchitecture().GetArchitectureName());
             
@@ -1071,6 +1072,8 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid, const Process
     
         if (error.Success())
         {
+            m_gdb_comm.SetDetachOnError(attach_info.GetDetachOnError());
+            
             char packet[64];
             const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%" PRIx64, attach_pid);
             SetID (attach_pid);            
@@ -1107,6 +1110,8 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, const Pro
         if (error.Success())
         {
             StreamString packet;
+            
+            m_gdb_comm.SetDetachOnError(attach_info.GetDetachOnError());
             
             if (attach_info.GetWaitForLaunch())
             {

@@ -265,6 +265,9 @@ protected:
     Handle_QSetDisableASLR (StringExtractorGDBRemote &packet);
 
     PacketResult
+    Handle_QSetDetachOnError (StringExtractorGDBRemote &packet);
+
+    PacketResult
     Handle_QSetWorkingDir (StringExtractorGDBRemote &packet);
     
     PacketResult

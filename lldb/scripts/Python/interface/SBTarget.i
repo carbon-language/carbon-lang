@@ -107,6 +107,12 @@ public:
     const char *
     GetLaunchEventData () const;
     
+    bool
+    GetDetachOnError() const;
+    
+    void
+    SetDetachOnError(bool enable);
+    
 };
 
 class SBAttachInfo

@@ -145,6 +145,12 @@ public:
     const char *
     GetLaunchEventData () const;
     
+    bool
+    GetDetachOnError() const;
+    
+    void
+    SetDetachOnError(bool enable);
+    
 protected:
     friend class SBTarget;
     

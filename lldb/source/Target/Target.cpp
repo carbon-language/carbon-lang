@@ -2642,6 +2642,7 @@ g_properties[] =
     { "input-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for reading its standard input." },
     { "output-path"                        , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for writing its standard output." },
     { "error-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for writing its standard error." },
+    { "detach-on-error"                    , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "debugserver will detach (rather than killing) a process if it loses connection with lldb." },
     { "disable-aslr"                       , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Disable Address Space Layout Randomization (ASLR)" },
     { "disable-stdio"                      , OptionValue::eTypeBoolean   , false, false                     , NULL, NULL, "Disable stdin/stdout for process (e.g. for a GUI application)" },
     { "inline-breakpoint-strategy"         , OptionValue::eTypeEnum      , false, eInlineBreakpointsHeaders , NULL, g_inline_breakpoint_enums, "The strategy to use when settings breakpoints by file and line. "
@@ -2688,6 +2689,7 @@ enum
     ePropertyInputPath,
     ePropertyOutputPath,
     ePropertyErrorPath,
+    ePropertyDetachOnError,
     ePropertyDisableASLR,
     ePropertyDisableSTDIO,
     ePropertyInlineStrategy,
@@ -2867,6 +2869,20 @@ void
 TargetProperties::SetDisableASLR (bool b)
 {
     const uint32_t idx = ePropertyDisableASLR;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+bool
+TargetProperties::GetDetachOnError () const
+{
+    const uint32_t idx = ePropertyDetachOnError;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+void
+TargetProperties::SetDetachOnError (bool b)
+{
+    const uint32_t idx = ePropertyDetachOnError;
     m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
 }
 

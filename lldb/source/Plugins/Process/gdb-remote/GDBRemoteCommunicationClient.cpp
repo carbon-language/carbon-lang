@@ -2256,6 +2256,25 @@ GDBRemoteCommunicationClient::SetDisableASLR (bool enable)
     return -1;
 }
 
+int
+GDBRemoteCommunicationClient::SetDetachOnError (bool enable)
+{
+    char packet[32];
+    const int packet_len = ::snprintf (packet, sizeof (packet), "QSetDetachOnError:%i", enable ? 1 : 0);
+    assert (packet_len < (int)sizeof(packet));
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse (packet, packet_len, response, false) == PacketResult::Success)
+    {
+        if (response.IsOKResponse())
+            return 0;
+        uint8_t error = response.GetError();
+        if (error)
+            return error;
+    }
+    return -1;
+}
+
+
 bool
 GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemote &response, ProcessInstanceInfo &process_info)
 {

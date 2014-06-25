@@ -1669,7 +1669,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
             const bool monitor_signals = false;
             Host::MonitorChildProcessCallback callback = nullptr;
             
-            if (!launch_info.GetFlags().Test(lldb::eLaunchFlagsDontSetExitStatus))
+            if (!launch_info.GetFlags().Test(lldb::eLaunchFlagDontSetExitStatus))
                 callback = Process::SetProcessExitStatus;
 
             StartMonitoringChildProcess (callback,

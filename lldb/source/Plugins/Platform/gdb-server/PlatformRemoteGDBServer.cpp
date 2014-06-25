@@ -353,6 +353,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
     m_gdb_client.SetSTDOUT ("/dev/null");
     m_gdb_client.SetSTDERR ("/dev/null");
     m_gdb_client.SetDisableASLR (launch_info.GetFlags().Test (eLaunchFlagDisableASLR));
+    m_gdb_client.SetDetachOnError (launch_info.GetFlags().Test (eLaunchFlagDetachOnError));
     
     const char *working_dir = launch_info.GetWorkingDirectory();
     if (working_dir && working_dir[0])

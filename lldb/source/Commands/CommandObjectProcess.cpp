@@ -208,6 +208,9 @@ protected:
         if (target->GetDisableASLR())
             m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
         
+        if (target->GetDetachOnError())
+            m_options.launch_info.GetFlags().Set (eLaunchFlagDetachOnError);
+        
         if (target->GetDisableSTDIO())
             m_options.launch_info.GetFlags().Set (eLaunchFlagDisableSTDIO);
         

@@ -292,6 +292,18 @@ SBLaunchInfo::GetLaunchEventData () const
     return m_opaque_sp->GetLaunchEventData ();
 }
 
+void
+SBLaunchInfo::SetDetachOnError (bool enable)
+{
+    m_opaque_sp->SetDetachOnError (enable);
+}
+
+bool
+SBLaunchInfo::GetDetachOnError () const
+{
+    return m_opaque_sp->GetDetachOnError ();
+}
+
 SBAttachInfo::SBAttachInfo () :
     m_opaque_sp (new ProcessAttachInfo())
 {

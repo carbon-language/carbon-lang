@@ -202,6 +202,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
             packet_result = Handle_QSetDisableASLR (packet);
             break;
 
+        case StringExtractorGDBRemote::eServerPacketType_QSetDetachOnError:
+            packet_result = Handle_QSetDetachOnError (packet);
+            break;
+
         case StringExtractorGDBRemote::eServerPacketType_QSetSTDIN:
             packet_result = Handle_QSetSTDIN (packet);
             break;
@@ -1136,6 +1140,17 @@ GDBRemoteCommunicationServer::Handle_QSetDisableASLR (StringExtractorGDBRemote &
         m_process_launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
     else
         m_process_launch_info.GetFlags().Clear (eLaunchFlagDisableASLR);
+    return SendOKResponse ();
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServer::Handle_QSetDetachOnError (StringExtractorGDBRemote &packet)
+{
+    packet.SetFilePos(::strlen ("QSetDetachOnError:"));
+    if (packet.GetU32(0))
+        m_process_launch_info.GetFlags().Set (eLaunchFlagDetachOnError);
+    else
+        m_process_launch_info.GetFlags().Clear (eLaunchFlagDetachOnError);
     return SendOKResponse ();
 }
 

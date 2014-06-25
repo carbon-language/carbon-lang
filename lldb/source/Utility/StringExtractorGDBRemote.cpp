@@ -92,6 +92,7 @@ StringExtractorGDBRemote::GetServerPacketType () const
             if (PACKET_MATCHES ("QStartNoAckMode"))               return eServerPacketType_QStartNoAckMode;
             if (PACKET_STARTS_WITH ("QSaveRegisterState"))        return eServerPacketType_QSaveRegisterState;
             if (PACKET_STARTS_WITH ("QSetDisableASLR:"))          return eServerPacketType_QSetDisableASLR;
+            if (PACKET_STARTS_WITH ("QSetDetachOnError:"))        return eServerPacketType_QSetDetachOnError;
             if (PACKET_STARTS_WITH ("QSetSTDIN:"))                return eServerPacketType_QSetSTDIN;
             if (PACKET_STARTS_WITH ("QSetSTDOUT:"))               return eServerPacketType_QSetSTDOUT;
             if (PACKET_STARTS_WITH ("QSetSTDERR:"))               return eServerPacketType_QSetSTDERR;

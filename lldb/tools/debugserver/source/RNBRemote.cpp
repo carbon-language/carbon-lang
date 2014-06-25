@@ -203,6 +203,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
     t.push_back (Packet (set_process_event,             &RNBRemote::HandlePacket_QSetProcessEvent, NULL, "QSetProcessEvent:", "Set a process event, to be passed to the process, can be set before the process is started, or after."));
+    t.push_back (Packet (set_detach_on_error,           &RNBRemote::HandlePacket_QSetDetachOnError, NULL, "QSetDetachOnError:", "Set whether debugserver will detach (1) or kill (0) from the process it is controlling if it loses connection to lldb."));
     t.push_back (Packet (speed_test,                    &RNBRemote::HandlePacket_qSpeedTest, NULL, "qSpeedTest:", "Test the maximum speed at which packet can be sent/received."));
 }
 
@@ -2015,6 +2016,24 @@ RNBRemote::HandlePacket_QSyncThreadState (const char *p)
         return SendPacket("OK");
     else
         return SendPacket ("E61");
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_QSetDetachOnError (const char *p)
+{
+    p += sizeof ("QSetDetachOnError:") - 1;
+    bool should_detach = true;
+    switch (*p)
+    {
+        case '0': should_detach = false; break;
+        case '1': should_detach = true; break;
+        default:
+          return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid value for QSetDetachOnError - should be 0 or 1");
+          break;
+    }
+    
+    m_ctx.SetDetachOnError(should_detach);
+    return SendPacket ("OK");
 }
 
 rnb_err_t

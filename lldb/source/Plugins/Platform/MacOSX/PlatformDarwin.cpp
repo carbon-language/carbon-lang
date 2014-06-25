@@ -788,7 +788,7 @@ PlatformDarwin::DebugProcess (ProcessLaunchInfo &launch_info,
         // We are going to hand this process off to debugserver which will be in charge of setting the exit status.
         // We still need to reap it from lldb but if we let the monitor thread also set the exit status, we set up a
         // race between debugserver & us for who will find out about the debugged process's death.
-        launch_info.GetFlags().Set(eLaunchFlagsDontSetExitStatus);
+        launch_info.GetFlags().Set(eLaunchFlagDontSetExitStatus);
         process_sp = Platform::DebugProcess (launch_info, debugger, target, listener, error);
     }
     else

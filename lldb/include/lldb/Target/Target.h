@@ -82,6 +82,12 @@ public:
     SetDisableASLR (bool b);
     
     bool
+    GetDetachOnError () const;
+    
+    void
+    SetDetachOnError (bool b);
+    
+    bool
     GetDisableSTDIO () const;
     
     void

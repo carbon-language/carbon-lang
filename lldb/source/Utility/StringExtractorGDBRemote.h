@@ -62,6 +62,7 @@ public:
         eServerPacketType_QEnvironment,
         eServerPacketType_QLaunchArch,
         eServerPacketType_QSetDisableASLR,
+        eServerPacketType_QSetDetachOnError,
         eServerPacketType_QSetSTDIN,
         eServerPacketType_QSetSTDOUT,
         eServerPacketType_QSetSTDERR,
