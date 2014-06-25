@@ -264,12 +264,6 @@ void MCStreamer::EmitCFIStartProc(bool IsSimple) {
 void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
-void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
-  // We need to create a local symbol to avoid relocations.
-  Frame.Begin = getContext().CreateTempSymbol();
-  EmitLabel(Frame.Begin);
-}
-
 void MCStreamer::EmitCFIEndProc() {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
@@ -277,11 +271,9 @@ void MCStreamer::EmitCFIEndProc() {
 }
 
 void MCStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
-}
-
-void MCStreamer::RecordProcEnd(MCDwarfFrameInfo &Frame) {
-  Frame.End = getContext().CreateTempSymbol();
-  EmitLabel(Frame.End);
+  // Put a dummy non-null value in Frame.End to mark that this frame has been
+  // closed.
+  Frame.End = (MCSymbol *) 1;
 }
 
 MCSymbol *MCStreamer::EmitCFICommon() {

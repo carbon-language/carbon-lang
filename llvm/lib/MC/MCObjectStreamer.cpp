@@ -136,11 +136,14 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 }
 
 void MCObjectStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
-  RecordProcStart(Frame);
+  // We need to create a local symbol to avoid relocations.
+  Frame.Begin = getContext().CreateTempSymbol();
+  EmitLabel(Frame.Begin);
 }
 
 void MCObjectStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
-  RecordProcEnd(Frame);
+  Frame.End = getContext().CreateTempSymbol();
+  EmitLabel(Frame.End);
 }
 
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {

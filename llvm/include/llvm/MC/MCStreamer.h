@@ -201,9 +201,7 @@ protected:
 
   const MCExpr *ForceExpAbs(const MCExpr *Expr);
 
-  void RecordProcStart(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
-  void RecordProcEnd(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
 
   MCWin64EHUnwindInfo *getCurrentW64UnwindInfo() {

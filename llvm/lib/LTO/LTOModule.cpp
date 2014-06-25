@@ -710,9 +710,6 @@ namespace {
                            unsigned char Value) override { return false; }
     void EmitFileDirective(StringRef Filename) override {}
     void FinishImpl() override {}
-    void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override {
-      RecordProcEnd(Frame);
-    }
   };
 } // end anonymous namespace
 

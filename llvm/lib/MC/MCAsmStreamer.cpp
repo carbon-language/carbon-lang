@@ -935,10 +935,7 @@ void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
 void MCAsmStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
-  // Put a dummy non-null value in Frame.End to mark that this frame has been
-  // closed.
-  Frame.End = (MCSymbol *) 1;
-
+  MCStreamer::EmitCFIEndProcImpl(Frame);
   OS << "\t.cfi_endproc";
   EmitEOL();
 }
