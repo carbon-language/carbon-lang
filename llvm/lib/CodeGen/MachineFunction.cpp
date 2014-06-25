@@ -578,6 +578,21 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
   return -++NumFixedObjects;
 }
 
+/// CreateFixedSpillStackObject - Create a spill slot at a fixed location
+/// on the stack.  Returns an index with a negative value.
+int MachineFrameInfo::CreateFixedSpillStackObject(uint64_t Size,
+                                                  int64_t SPOffset) {
+  unsigned StackAlign = getFrameLowering()->getStackAlignment();
+  unsigned Align = MinAlign(SPOffset, StackAlign);
+  Align = clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                                  !RealignOption,
+                              Align, getFrameLowering()->getStackAlignment());
+  Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset,
+                                              /*Immutable*/ true,
+                                              /*isSS*/ true,
+                                              /*Alloca*/ nullptr));
+  return -++NumFixedObjects;
+}
 
 BitVector
 MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {

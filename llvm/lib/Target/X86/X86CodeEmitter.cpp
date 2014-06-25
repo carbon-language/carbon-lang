@@ -1131,6 +1131,16 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
       break;
+
+    case X86::SEH_PushReg:
+    case X86::SEH_SaveReg:
+    case X86::SEH_SaveXMM:
+    case X86::SEH_StackAlloc:
+    case X86::SEH_SetFrame:
+    case X86::SEH_PushFrame:
+    case X86::SEH_EndPrologue:
+      break;
+
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);

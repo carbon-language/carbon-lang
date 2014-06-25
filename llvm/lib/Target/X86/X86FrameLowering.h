@@ -27,8 +27,8 @@ public:
     : TargetFrameLowering(StackGrowsDown, StackAl, LAO) {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator MBBI, DebugLoc DL,
-                                 unsigned FramePtr) const;
+                                 MachineBasicBlock::iterator MBBI,
+                                 DebugLoc DL) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
@@ -41,6 +41,11 @@ public:
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS = nullptr) const override;
+
+  bool
+  assignCalleeSavedSpillSlots(MachineFunction &MF,
+                              const TargetRegisterInfo *TRI,
+                              std::vector<CalleeSavedInfo> &CSI) const override;
 
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,

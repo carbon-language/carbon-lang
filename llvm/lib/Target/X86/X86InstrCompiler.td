@@ -197,6 +197,26 @@ let isBranch = 1, isTerminator = 1, isCodeGenOnly = 1 in {
 }
 
 //===----------------------------------------------------------------------===//
+// Pseudo instructions used by unwind info.
+//
+let isPseudo = 1 in {
+  def SEH_PushReg : I<0, Pseudo, (outs), (ins i32imm:$reg),
+                            "#SEH_PushReg $reg", []>;
+  def SEH_SaveReg : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$dst),
+                            "#SEH_SaveReg $reg, $dst", []>;
+  def SEH_SaveXMM : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$dst),
+                            "#SEH_SaveXMM $reg, $dst", []>;
+  def SEH_StackAlloc : I<0, Pseudo, (outs), (ins i32imm:$size),
+                            "#SEH_StackAlloc $size", []>;
+  def SEH_SetFrame : I<0, Pseudo, (outs), (ins i32imm:$reg, i32imm:$offset),
+                            "#SEH_SetFrame $reg, $offset", []>;
+  def SEH_PushFrame : I<0, Pseudo, (outs), (ins i1imm:$mode),
+                            "#SEH_PushFrame $mode", []>;
+  def SEH_EndPrologue : I<0, Pseudo, (outs), (ins),
+                            "#SEH_EndPrologue", []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Pseudo instructions used by segmented stacks.
 //
 
