@@ -997,9 +997,9 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   // Push GPRs. It increases frame size.
   unsigned Opc = STI.is64Bit() ? X86::PUSH64r : X86::PUSH32r;
   for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    if (!X86::GR64RegClass.contains(Reg) &&
-        !X86::GR32RegClass.contains(Reg))
+    unsigned Reg = CSI[i - 1].getReg();
+
+    if (!X86::GR64RegClass.contains(Reg) && !X86::GR32RegClass.contains(Reg))
       continue;
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
@@ -1024,8 +1024,9 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    TII.storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(),
-                            RC, TRI);
+
+    TII.storeRegToStackSlot(MBB, MI, Reg, true, CSI[i - 1].getFrameIdx(), RC,
+                            TRI);
   }
 
   return true;
@@ -1050,9 +1051,9 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (X86::GR64RegClass.contains(Reg) ||
         X86::GR32RegClass.contains(Reg))
       continue;
+
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    TII.loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),
-                             RC, TRI);
+    TII.loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RC, TRI);
   }
 
   // POP GPRs.

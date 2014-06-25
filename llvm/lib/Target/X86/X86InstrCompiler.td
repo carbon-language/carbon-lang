@@ -110,7 +110,7 @@ let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
 
 // When using segmented stacks these are lowered into instructions which first
 // check if the current stacklet has enough free memory. If it does, memory is
-// allocated by bumping the stack pointer. Otherwise memory is allocated from 
+// allocated by bumping the stack pointer. Otherwise memory is allocated from
 // the heap.
 
 let Defs = [EAX, ESP, EFLAGS], Uses = [ESP] in
@@ -371,7 +371,7 @@ let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
   def REP_STOSD_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
                       [(X86rep_stos i32)], IIC_REP_STOS>, REP, OpSize32,
                      Requires<[In64BitMode]>;
- 
+
   let Uses = [RAX,RCX,RDI] in
   def REP_STOSQ_64 : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
                       [(X86rep_stos i64)], IIC_REP_STOS>, REP,
