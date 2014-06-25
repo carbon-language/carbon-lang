@@ -112,6 +112,7 @@
 #include <clc/relational/isequal.h>
 #include <clc/relational/isnan.h>
 #include <clc/relational/select.h>
+#include <clc/relational/signbit.h>
 
 /* 6.11.8 Synchronization Functions */
 #include <clc/synchronization/cl_mem_fence_flags.h>

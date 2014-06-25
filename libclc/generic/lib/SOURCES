@@ -42,6 +42,7 @@ relational/all.cl
 relational/any.cl
 relational/isequal.cl
 relational/isnan.cl
+relational/signbit.cl
 shared/clamp.cl
 shared/max.cl
 shared/min.cl
