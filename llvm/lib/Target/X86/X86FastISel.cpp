@@ -1814,13 +1814,13 @@ bool X86FastISel::X86FastEmitCMoveSelect(const Instruction *I) {
     bool FoldIntrinsic = false;
     if (const auto *II = dyn_cast<IntrinsicInst>(EV->getAggregateOperand())) {
       switch (II->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::sadd_with_overflow:
-        case Intrinsic::uadd_with_overflow:
-        case Intrinsic::ssub_with_overflow:
-        case Intrinsic::usub_with_overflow:
-        case Intrinsic::smul_with_overflow:
-        case Intrinsic::umul_with_overflow: FoldIntrinsic = true; break;
+      default: break;
+      case Intrinsic::sadd_with_overflow:
+      case Intrinsic::uadd_with_overflow:
+      case Intrinsic::ssub_with_overflow:
+      case Intrinsic::usub_with_overflow:
+      case Intrinsic::smul_with_overflow:
+      case Intrinsic::umul_with_overflow: FoldIntrinsic = true; break;
       }
 
       // Check if both instructions are in the same basic block.
