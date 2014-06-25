@@ -284,11 +284,13 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
   if (symbols.empty() && section.content.empty())
     return std::error_code();
 
-  const uint64_t firstSymbolAddr = symbols.front()->value;
-  if (firstSymbolAddr != section.address) {
+  uint64_t anonAtomEnd = symbols.empty()
+                             ? section.address + section.content.size()
+                             : (uint64_t)symbols.front()->value;
+  if (anonAtomEnd != section.address) {
     // Section has anonymous content before first symbol.
-    atomFromSymbol(atomType, section, file, section.address, StringRef(),
-                  0, Atom::scopeTranslationUnit, firstSymbolAddr, copyRefs);
+    atomFromSymbol(atomType, section, file, section.address, StringRef(), 0,
+                   Atom::scopeTranslationUnit, anonAtomEnd, copyRefs);
   }
 
   const Symbol *lastSym = nullptr;
