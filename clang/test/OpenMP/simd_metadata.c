@@ -40,8 +40,8 @@ void h3(float *c, float *a, float *b, int size)
 
 // Metadata for h1:
 // CHECK: [[LOOP_H1_HEADER:![0-9]+]] = metadata !{metadata [[LOOP_H1_HEADER]], metadata [[LOOP_WIDTH_16:![0-9]+]], metadata [[LOOP_VEC_ENABLE:![0-9]+]]}
-// CHECK: [[LOOP_WIDTH_16]] = metadata !{metadata !"llvm.vectorizer.width", i32 16}
-// CHECK: [[LOOP_VEC_ENABLE]] = metadata !{metadata !"llvm.vectorizer.enable", i1 true}
+// CHECK: [[LOOP_WIDTH_16]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 16}
+// CHECK: [[LOOP_VEC_ENABLE]] = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 //
 // Metadata for h2:
 // CHECK: [[LOOP_H2_HEADER]] = metadata !{metadata [[LOOP_H2_HEADER]], metadata [[LOOP_VEC_ENABLE]]}
@@ -49,4 +49,3 @@ void h3(float *c, float *a, float *b, int size)
 // Metadata for h3:
 // CHECK: [[LOOP_H3_HEADER:![0-9]+]] = metadata !{metadata [[LOOP_H3_HEADER]], metadata [[LOOP_VEC_ENABLE]]}
 //
-

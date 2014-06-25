@@ -534,7 +534,7 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
   if (Attrs.empty())
     return;
 
-  // Add vectorize hints to the metadata on the conditional branch.
+  // Add vectorize and unroll hints to the metadata on the conditional branch.
   SmallVector<llvm::Value *, 2> Metadata(1);
   for (const auto *Attr : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(Attr);
@@ -550,17 +550,17 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
     switch (Option) {
     case LoopHintAttr::Vectorize:
     case LoopHintAttr::VectorizeWidth:
-      MetadataName = "llvm.vectorizer.width";
+      MetadataName = "llvm.loop.vectorize.width";
       break;
     case LoopHintAttr::Interleave:
     case LoopHintAttr::InterleaveCount:
-      MetadataName = "llvm.vectorizer.unroll";
+      MetadataName = "llvm.loop.vectorize.unroll";
       break;
     case LoopHintAttr::Unroll:
-      MetadataName = "llvm.loopunroll.enable";
+      MetadataName = "llvm.loop.unroll.enable";
       break;
     case LoopHintAttr::UnrollCount:
-      MetadataName = "llvm.loopunroll.count";
+      MetadataName = "llvm.loop.unroll.count";
       break;
     }
 
@@ -572,7 +572,7 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       if (ValueInt == 1) {
         // FIXME: In the future I will modifiy the behavior of the metadata
         // so we can enable/disable vectorization and interleaving separately.
-        Name = llvm::MDString::get(Context, "llvm.vectorizer.enable");
+        Name = llvm::MDString::get(Context, "llvm.loop.vectorize.enable");
         Value = Builder.getTrue();
         break;
       }

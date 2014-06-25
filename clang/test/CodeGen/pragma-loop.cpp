@@ -109,21 +109,21 @@ void template_test(double *List, int Length) {
 }
 
 // CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLLENABLE_1:.*]], metadata ![[WIDTH_4:.*]], metadata ![[INTERLEAVE_4:.*]], metadata ![[INTENABLE_1:.*]]}
-// CHECK: ![[UNROLLENABLE_1]] = metadata !{metadata !"llvm.loopunroll.enable", i1 true}
-// CHECK: ![[WIDTH_4]] = metadata !{metadata !"llvm.vectorizer.width", i32 4}
-// CHECK: ![[INTERLEAVE_4]] = metadata !{metadata !"llvm.vectorizer.unroll", i32 4}
-// CHECK: ![[INTENABLE_1]] = metadata !{metadata !"llvm.vectorizer.enable", i1 true}
+// CHECK: ![[UNROLLENABLE_1]] = metadata !{metadata !"llvm.loop.unroll.enable", i1 true}
+// CHECK: ![[WIDTH_4]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 4}
+// CHECK: ![[INTERLEAVE_4]] = metadata !{metadata !"llvm.loop.vectorize.unroll", i32 4}
+// CHECK: ![[INTENABLE_1]] = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 // CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2:.*]], metadata ![[UNROLLENABLE_0:.*]], metadata ![[INTERLEAVE_4:.*]], metadata ![[WIDTH_8:.*]]}
-// CHECK: ![[UNROLLENABLE_0]] = metadata !{metadata !"llvm.loopunroll.enable", i1 false}
-// CHECK: ![[WIDTH_8]] = metadata !{metadata !"llvm.vectorizer.width", i32 8}
+// CHECK: ![[UNROLLENABLE_0]] = metadata !{metadata !"llvm.loop.unroll.enable", i1 false}
+// CHECK: ![[WIDTH_8]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
 // CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_4:.*]], metadata ![[ENABLE_1:.*]]}
-// CHECK: ![[UNROLL_8]] = metadata !{metadata !"llvm.loopunroll.count", i32 8}
+// CHECK: ![[UNROLL_8]] = metadata !{metadata !"llvm.loop.unroll.count", i32 8}
 // CHECK: ![[LOOP_4]] = metadata !{metadata ![[LOOP_4]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}
-// CHECK: ![[INTERLEAVE_2]] = metadata !{metadata !"llvm.vectorizer.unroll", i32 2}
-// CHECK: ![[WIDTH_2]] = metadata !{metadata !"llvm.vectorizer.width", i32 2}
+// CHECK: ![[INTERLEAVE_2]] = metadata !{metadata !"llvm.loop.vectorize.unroll", i32 2}
+// CHECK: ![[WIDTH_2]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 2}
 // CHECK: ![[LOOP_5]] = metadata !{metadata ![[LOOP_5]], metadata ![[UNROLLENABLE_0:.*]], metadata ![[WIDTH_1:.*]]}
-// CHECK: ![[WIDTH_1]] = metadata !{metadata !"llvm.vectorizer.width", i32 1}
+// CHECK: ![[WIDTH_1]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 1}
 // CHECK: ![[LOOP_6]] = metadata !{metadata ![[LOOP_6]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}
 // CHECK: ![[LOOP_7]] = metadata !{metadata ![[LOOP_7]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_8:.*]], metadata ![[WIDTH_8:.*]]}
-// CHECK: ![[INTERLEAVE_8]] = metadata !{metadata !"llvm.vectorizer.unroll", i32 8}
+// CHECK: ![[INTERLEAVE_8]] = metadata !{metadata !"llvm.loop.vectorize.unroll", i32 8}
 // CHECK: ![[LOOP_8]] = metadata !{metadata ![[LOOP_8]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}

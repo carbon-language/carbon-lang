@@ -31,7 +31,7 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
   // Setting vectorizer.width
   if (Attrs.VectorizerWidth > 0) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.vectorizer.width"),
+    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.width"),
                       ConstantInt::get(Type::getInt32Ty(Ctx),
                                        Attrs.VectorizerWidth) };
     Args.push_back(MDNode::get(Ctx, Vals));
@@ -39,7 +39,7 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
   // Setting vectorizer.unroll
   if (Attrs.VectorizerUnroll > 0) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.vectorizer.unroll"),
+    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.unroll"),
                       ConstantInt::get(Type::getInt32Ty(Ctx),
                                        Attrs.VectorizerUnroll) };
     Args.push_back(MDNode::get(Ctx, Vals));
@@ -47,7 +47,7 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
   // Setting vectorizer.enable
   if (Attrs.VectorizerEnable != LoopAttributes::VecUnspecified) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.vectorizer.enable"),
+    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.enable"),
                       ConstantInt::get(Type::getInt1Ty(Ctx),
                                        (Attrs.VectorizerEnable ==
                                         LoopAttributes::VecEnable)) };

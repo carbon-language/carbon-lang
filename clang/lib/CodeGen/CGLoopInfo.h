@@ -37,16 +37,16 @@ struct LoopAttributes {
   /// \brief Generate llvm.loop.parallel metadata for loads and stores.
   bool IsParallel;
 
-  /// \brief Values of llvm.vectorizer.enable metadata.
+  /// \brief Values of llvm.loop.vectorize.enable metadata.
   enum LVEnableState { VecUnspecified, VecEnable, VecDisable };
 
-  /// \brief llvm.vectorizer.enable
+  /// \brief llvm.loop.vectorize.enable
   LVEnableState VectorizerEnable;
 
-  /// \brief llvm.vectorizer.width
+  /// \brief llvm.loop.vectorize.width
   unsigned VectorizerWidth;
 
-  /// \brief llvm.vectorizer.unroll
+  /// \brief llvm.loop.vectorize.unroll
   unsigned VectorizerUnroll;
 };
 
