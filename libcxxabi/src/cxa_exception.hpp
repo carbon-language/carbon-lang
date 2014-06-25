@@ -67,9 +67,10 @@ struct __cxa_exception {
 };
 
 // http://sourcery.mentor.com/archives/cxx-abi-dev/msg01924.html
-    
+// The layout of this structure MUST match the layout of __cxa_exception, with
+// primaryException instead of referenceCount.
 struct __cxa_dependent_exception {
-#if __LP64__
+#if __LP64__ || LIBCXXABI_ARM_EHABI
     void* primaryException;
 #endif
     
@@ -93,7 +94,7 @@ struct __cxa_dependent_exception {
     void *adjustedPtr;
 #endif
     
-#if !__LP64__
+#if !__LP64__ && !LIBCXXABI_ARM_EHABI
     void* primaryException;
 #endif
 
