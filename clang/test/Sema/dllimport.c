@@ -25,6 +25,9 @@ __declspec(dllimport) int GlobalDecl;
 int **__attribute__((dllimport))* GlobalDeclChunkAttr;
 int GlobalDeclAttr __attribute__((dllimport));
 
+// Address of variables can't be used for initialization in C language modes.
+int *VarForInit = &GlobalDecl; // expected-error{{initializer element is not a compile-time constant}}
+
 // Not allowed on definitions.
 __declspec(dllimport) extern int ExternGlobalInit = 1; // expected-error{{definition of dllimport data}}
 __declspec(dllimport) int GlobalInit1 = 1; // expected-error{{definition of dllimport data}}
@@ -95,6 +98,11 @@ __declspec(dllimport)      void decl1B();
 
 void __attribute__((dllimport)) decl2A();
 void __declspec(dllimport)      decl2B();
+
+// Address of functions can be used for initialization in C language modes.
+// However, the address of the thunk wrapping the function is used instead of
+// the address in the import address table.
+void (*FunForInit)() = &decl2A;
 
 // Not allowed on function definitions.
 __declspec(dllimport) void def() {} // expected-error{{dllimport cannot be applied to non-inline function definition}}

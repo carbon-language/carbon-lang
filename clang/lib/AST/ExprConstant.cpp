@@ -1269,10 +1269,35 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
           LVal.getLValueCallIndex() == 0) &&
          "have call index for global lvalue");
 
-  // Check if this is a thread-local variable.
   if (const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>()) {
     if (const VarDecl *Var = dyn_cast<const VarDecl>(VD)) {
+      // Check if this is a thread-local variable.
       if (Var->getTLSKind())
+        return false;
+
+      // Check if this is a dllimport variable.  Fail evaluation if we care
+      // about side effects; a dllimport variable rarely acts like a constant
+      // except in places like template arguments.  It never acts like a
+      // constant in C.
+      if ((!Info.getLangOpts().CPlusPlus ||
+           !Info.keepEvaluatingAfterSideEffect()) &&
+          Var->hasAttr<DLLImportAttr>())
+        return false;
+    }
+    if (const auto *FD = dyn_cast<const FunctionDecl>(VD)) {
+      // __declspec(dllimport) must be handled very carefully:
+      // We must never initialize an expression with the thunk in C++.
+      // Doing otherwise would allow the same id-expression to yield
+      // different addresses for the same function in different translation
+      // units.  However, this means that we must dynamically initialize the
+      // expression with the contents of the import address table at runtime.
+      //
+      // The C language has no notion of ODR; furthermore, it has no notion of
+      // dynamic initialization.  This means that we are permitted to
+      // perform initialization with the address of the thunk.
+      if (Info.getLangOpts().CPlusPlus &&
+          !Info.keepEvaluatingAfterSideEffect() &&
+          FD->hasAttr<DLLImportAttr>())
         return false;
     }
   }
@@ -4373,11 +4398,8 @@ static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info) {
 }
 
 bool LValueExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
-    if (FD->hasAttr<DLLImportAttr>())
-      return ZeroInitialization(E);
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl()))
     return Success(FD);
-  }
   if (const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl()))
     return VisitVarDecl(E, VD);
   return Error(E);
@@ -4393,9 +4415,6 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
       Result.set(VD, Frame->Index);
       return true;
     }
-    // The address of __declspec(dllimport) variables aren't constant.
-    if (VD->hasAttr<DLLImportAttr>())
-      return ZeroInitialization(E);
     return Success(VD);
   }
 

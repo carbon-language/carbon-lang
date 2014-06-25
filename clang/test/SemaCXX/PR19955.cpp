@@ -5,3 +5,11 @@ constexpr int *varp = &var; // expected-error {{must be initialized by a constan
 
 extern __attribute__((dllimport)) void fun();
 constexpr void (*funp)(void) = &fun; // expected-error {{must be initialized by a constant expression}}
+
+template <void (*)()>
+struct S {};
+S<&fun> x;
+
+template <int *>
+struct U {};
+U<&var> y;

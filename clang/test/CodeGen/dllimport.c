@@ -53,7 +53,10 @@ USEVAR(GlobalRedecl3)
 // Import function declaration.
 // CHECK-DAG: declare dllimport void @decl()
 __declspec(dllimport) void decl(void);
-USE(decl)
+
+// Initialize use_decl with the address of the thunk.
+// CHECK-DAG: @use_decl = global void ()* @decl
+void (*use_decl)(void) = &decl;
 
 // Import inline function.
 // CHECK-DAG: declare dllimport void @inlineFunc()
