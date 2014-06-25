@@ -28,6 +28,7 @@ integer/sub_sat_if.ll
 integer/sub_sat_impl.ll
 integer/upsample.cl
 math/exp.cl
+math/exp10.cl
 math/fmax.cl
 math/fmin.cl
 math/hypot.cl

@@ -35,6 +35,7 @@
 #include <clc/math/cos.h>
 #include <clc/math/ceil.h>
 #include <clc/math/exp.h>
+#include <clc/math/exp10.h>
 #include <clc/math/exp2.h>
 #include <clc/math/fabs.h>
 #include <clc/math/floor.h>
@@ -58,6 +59,7 @@
 #include <clc/math/native_cos.h>
 #include <clc/math/native_divide.h>
 #include <clc/math/native_exp.h>
+#include <clc/math/native_exp10.h>
 #include <clc/math/native_exp2.h>
 #include <clc/math/native_log.h>
 #include <clc/math/native_log2.h>
