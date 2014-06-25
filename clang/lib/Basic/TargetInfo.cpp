@@ -168,6 +168,21 @@ TargetInfo::IntType TargetInfo::getIntTypeByWidth(
   return NoInt;
 }
 
+TargetInfo::IntType TargetInfo::getLeastIntTypeByWidth(unsigned BitWidth,
+                                                       bool IsSigned) const {
+  if (getCharWidth() >= BitWidth)
+    return IsSigned ? SignedChar : UnsignedChar;
+  if (getShortWidth() >= BitWidth)
+    return IsSigned ? SignedShort : UnsignedShort;
+  if (getIntWidth() >= BitWidth)
+    return IsSigned ? SignedInt : UnsignedInt;
+  if (getLongWidth() >= BitWidth)
+    return IsSigned ? SignedLong : UnsignedLong;
+  if (getLongLongWidth() >= BitWidth)
+    return IsSigned ? SignedLongLong : UnsignedLongLong;
+  return NoInt;
+}
+
 TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth) const {
   if (getFloatWidth() == BitWidth)
     return Float;

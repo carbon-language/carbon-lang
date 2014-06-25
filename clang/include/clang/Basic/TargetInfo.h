@@ -214,6 +214,9 @@ public:
     return AddrSpace == 0 ? PtrDiffType : getPtrDiffTypeV(AddrSpace);
   }
   IntType getIntPtrType() const { return IntPtrType; }
+  IntType getUIntPtrType() const {
+    return getIntTypeByWidth(getTypeWidth(IntPtrType), false);
+  }
   IntType getWCharType() const { return WCharType; }
   IntType getWIntType() const { return WIntType; }
   IntType getChar16Type() const { return Char16Type; }
@@ -229,6 +232,9 @@ public:
 
   /// \brief Return integer type with specified width.
   IntType getIntTypeByWidth(unsigned BitWidth, bool IsSigned) const;
+
+  /// \brief Return the smallest integer type with at least the specified width.
+  IntType getLeastIntTypeByWidth(unsigned BitWidth, bool IsSigned) const;
 
   /// \brief Return floating point type with specified width.
   RealType getRealTypeByWidth(unsigned BitWidth) const;
