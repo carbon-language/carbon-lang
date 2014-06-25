@@ -200,7 +200,7 @@ public:
                                    bool IsVolatile = false);
 
   /// \brief Get a directory_iterator for \p Dir.
-  /// \note The 'end' iterator is directory_iterator()
+  /// \note The 'end' iterator is directory_iterator().
   virtual directory_iterator dir_begin(const Twine &Dir,
                                        std::error_code &EC) = 0;
 };

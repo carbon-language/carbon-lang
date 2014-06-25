@@ -455,19 +455,21 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
         typedef llvm::sys::fs::recursive_directory_iterator
           recursive_directory_iterator;
         const DirectoryEntry *Dir = Mod->getUmbrellaDir();
+        vfs::FileSystem &FS = *FileMgr.getVirtualFileSystem();
         std::error_code EC;
-        for (recursive_directory_iterator Entry(Dir->getName(), EC), End;
+        for (vfs::recursive_directory_iterator Entry(FS, Dir->getName(), EC), End;
              Entry != End && !EC; Entry.increment(EC)) {
           using llvm::StringSwitch;
           
           // Check whether this entry has an extension typically associated with
           // headers.
-          if (!StringSwitch<bool>(llvm::sys::path::extension(Entry->path()))
+          if (!StringSwitch<bool>(llvm::sys::path::extension(Entry->getName()))
                  .Cases(".h", ".H", ".hh", ".hpp", true)
                  .Default(false))
             continue;
 
-          if (const FileEntry *Header = getFileManager().getFile(Entry->path()))
+          if (const FileEntry *Header =
+                  getFileManager().getFile(Entry->getName()))
             if (!getSourceManager().hasFileInfo(Header)) {
               if (!ModMap.isHeaderInUnavailableModule(Header)) {
                 // Find the relative path that would access this header.

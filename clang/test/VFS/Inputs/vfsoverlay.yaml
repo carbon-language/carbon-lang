@@ -29,6 +29,23 @@
         },
         { 'name': 'Foo.framework/Headers/Foo.h', 'type': 'file',
           'external-contents': 'INPUT_DIR/Foo.h'
+        },
+        { 'name': 'Incomplete.framework', 'type': 'directory',
+          'contents': [
+            { 'name': 'Headers', 'type': 'directory',
+              'contents': [
+                { 'name': 'Incomplete.h', 'type': 'file',
+                  'external-contents': 'INPUT_DIR/Incomplete.h'
+                },
+                { 'name': 'IncompleteVFS.h', 'type': 'file',
+                  'external-contents': 'INPUT_DIR/IncompleteVFS.h'
+                }
+              ]
+            },
+            { 'name': 'Modules/module.modulemap', 'type': 'file',
+              'external-contents': 'INPUT_DIR/incomplete-umbrella.modulemap'
+            }
+          ]
         }
       ]
     }
