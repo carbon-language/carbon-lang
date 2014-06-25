@@ -1797,7 +1797,7 @@ StringRef MachOObjectFile::getStringTableData() const {
 
 bool MachOObjectFile::is64Bit() const {
   return getType() == getMachOType(false, true) ||
-    getType() == getMachOType(true, true);
+         getType() == getMachOType(true, true);
 }
 
 void MachOObjectFile::ReadULEB128s(uint64_t Index,
@@ -1810,6 +1810,10 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
     data += delta;
     Out.push_back(data);
   }
+}
+
+const char *MachOObjectFile::getSectionPointer(DataRefImpl Rel) const {
+  return Sections[Rel.d.a];
 }
 
 ErrorOr<ObjectFile *>
