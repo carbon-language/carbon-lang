@@ -717,3 +717,30 @@ define void @test_x86_sse2_pause() {
   ret void 
 }
 declare void @llvm.x86.sse2.pause() nounwind
+
+define <4 x i32> @test_x86_sse2_pshuf_d(<4 x i32> %a) {
+; CHECK-LABEL: test_x86_sse2_pshuf_d:
+; CHECK: pshufd $27
+entry:
+   %res = call <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32> %a, i8 27) nounwind readnone
+   ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32>, i8) nounwind readnone
+
+define <8 x i16> @test_x86_sse2_pshufl_w(<8 x i16> %a) {
+; CHECK-LABEL: test_x86_sse2_pshufl_w:
+; CHECK: pshuflw $27
+entry:
+   %res = call <8 x i16> @llvm.x86.sse2.pshufl.w(<8 x i16> %a, i8 27) nounwind readnone
+   ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.sse2.pshufl.w(<8 x i16>, i8) nounwind readnone
+
+define <8 x i16> @test_x86_sse2_pshufh_w(<8 x i16> %a) {
+; CHECK-LABEL: test_x86_sse2_pshufh_w:
+; CHECK: pshufhw $27
+entry:
+   %res = call <8 x i16> @llvm.x86.sse2.pshufh.w(<8 x i16> %a, i8 27) nounwind readnone
+   ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.sse2.pshufh.w(<8 x i16>, i8) nounwind readnone

@@ -12660,6 +12660,18 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::PSHUFB, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
 
+  case Intrinsic::x86_sse2_pshuf_d:
+    return DAG.getNode(X86ISD::PSHUFD, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+
+  case Intrinsic::x86_sse2_pshufl_w:
+    return DAG.getNode(X86ISD::PSHUFLW, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+
+  case Intrinsic::x86_sse2_pshufh_w:
+    return DAG.getNode(X86ISD::PSHUFHW, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+
   case Intrinsic::x86_ssse3_psign_b_128:
   case Intrinsic::x86_ssse3_psign_w_128:
   case Intrinsic::x86_ssse3_psign_d_128:
