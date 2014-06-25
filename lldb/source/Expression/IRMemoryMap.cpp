@@ -139,13 +139,13 @@ IRMemoryMap::IntersectsAllocation (lldb::addr_t addr, size_t size) const
     // are disjoint it is not possible that an adjacent interval does not intersect, but a
     // non-adjacent interval does intersect.
     if (iter != m_allocations.end()) {
-        if (IntersectsAllocation(addr, size, iter->second.m_process_start, iter->second.m_size))
+        if (AllocationsIntersect(addr, size, iter->second.m_process_start, iter->second.m_size))
             return true;
     }
 
     if (iter != m_allocations.begin()) {
         --iter;
-        if (IntersectsAllocation(addr, size, iter->second.m_process_start, iter->second.m_size))
+        if (AllocationsIntersect(addr, size, iter->second.m_process_start, iter->second.m_size))
             return true;
     }
 
