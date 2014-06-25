@@ -927,7 +927,7 @@ void directory_entry::replace_filename(const Twine &filename, file_status st) {
 }
 
 /// @brief Identify the magic in magic.
-  file_magic identify_magic(StringRef Magic) {
+file_magic identify_magic(StringRef Magic) {
   if (Magic.size() < 4)
     return file_magic::unknown;
   switch ((unsigned char)Magic[0]) {
