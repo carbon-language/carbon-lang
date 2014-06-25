@@ -1754,8 +1754,11 @@ bool X86FastISel::X86FastEmitCMoveSelect(const Instruction *I) {
   const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
   bool NeedTest = true;
 
-  // Optimize conditons coming from a compare.
-  if (const auto *CI = dyn_cast<CmpInst>(Cond)) {
+  // Optimize conditons coming from a compare if both instructions are in the
+  // same basic block (values defined in other basic blocks may not have
+  // initialized registers).
+  const auto *CI = dyn_cast<CmpInst>(Cond);
+  if (CI && (CI->getParent() == I->getParent())) {
     CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
 
     // FCMP_OEQ and FCMP_UNE cannot be checked with a single instruction.
@@ -1927,8 +1930,11 @@ bool X86FastISel::X86FastEmitSSESelect(const Instruction *I) {
   if (!isTypeLegal(I->getType(), RetVT))
     return false;
 
+  // Optimize conditons coming from a compare if both instructions are in the
+  // same basic block (values defined in other basic blocks may not have
+  // initialized registers).
   const auto *CI = dyn_cast<FCmpInst>(I->getOperand(0));
-  if (!CI)
+  if (!CI || (CI->getParent() != I->getParent()))
     return false;
 
   if (I->getType() != CI->getOperand(0)->getType() ||
@@ -2023,8 +2029,12 @@ bool X86FastISel::X86FastEmitPseudoSelect(const Instruction *I) {
 
   const Value *Cond = I->getOperand(0);
   X86::CondCode CC = X86::COND_NE;
-  // Don't emit a test if the condition comes from a compare.
-  if (const auto *CI = dyn_cast<CmpInst>(Cond)) {
+
+  // Optimize conditons coming from a compare if both instructions are in the
+  // same basic block (values defined in other basic blocks may not have
+  // initialized registers).
+  const auto *CI = dyn_cast<CmpInst>(Cond);
+  if (CI && (CI->getParent() == I->getParent())) {
     bool NeedSwap;
     std::tie(CC, NeedSwap) = getX86ConditonCode(CI->getPredicate());
     if (CC > X86::LAST_VALID_COND)
