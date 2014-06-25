@@ -358,7 +358,10 @@ public:
   Value *VisitExprWithCleanups(ExprWithCleanups *E) {
     CGF.enterFullExpression(E);
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    return Visit(E->getSubExpr());
+    auto *V = Visit(E->getSubExpr());
+    if (CGDebugInfo *DI = CGF.getDebugInfo())
+      DI->EmitLocation(Builder, E->getLocEnd(), false);
+    return V;
   }
   Value *VisitCXXNewExpr(const CXXNewExpr *E) {
     return CGF.EmitCXXNewExpr(E);
