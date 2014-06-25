@@ -272,8 +272,8 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
               Atom::Scope rScope = atomScope(rhs->scope);
               if (lScope != rScope)
                 return lScope < rScope;
-              // If same address and scope, sort by name.   
-              return (lhs->name.compare(rhs->name) < 1);
+              // If same address and scope, sort by name.
+              return lhs->name < rhs->name;
             });
 
   // Debug logging of symbols.
