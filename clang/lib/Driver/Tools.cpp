@@ -6929,8 +6929,8 @@ static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
     CmdArgs.push_back("-ldl");
 }
 
-static StringRef getLinuxDynamicLinker(const ArgList &Args,
-                                       const toolchains::Linux &ToolChain) {
+static Twine getLinuxDynamicLinker(const ArgList &Args,
+                                   const toolchains::Linux &ToolChain) {
   if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android) {
     if (ToolChain.getTriple().isArch64Bit())
       return "/system/bin/linker64";
@@ -6964,7 +6964,7 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
     return "/lib/ld.so.1";
   } else if (ToolChain.getArch() == llvm::Triple::mips64 ||
              ToolChain.getArch() == llvm::Triple::mips64el) {
-    std::string LinkerFile =
+    Twine LinkerFile =
         mips::isNaN2008(Args) ? "ld-linux-mipsn8.so.1" : "ld.so.1";
     if (mips::hasMipsAbiArg(Args, "n32"))
       return "/lib32/" + LinkerFile;
