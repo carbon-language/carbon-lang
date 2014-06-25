@@ -83,7 +83,7 @@ MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() const {
   return F;
 }
 
-const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
+void MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   switch (Value->getKind()) {
   case MCExpr::Target:
     cast<MCTargetExpr>(Value)->AddValueSymbols(Assembler);
@@ -107,8 +107,6 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
     AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
     break;
   }
-
-  return Value;
 }
 
 void MCObjectStreamer::EmitCFISections(bool EH, bool Debug) {
@@ -125,7 +123,8 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue, getAssembler())) {
+  AddValueSymbols(Value);
+  if (Value->EvaluateAsAbsolute(AbsValue, getAssembler())) {
     EmitIntValue(AbsValue, Size);
     return;
   }

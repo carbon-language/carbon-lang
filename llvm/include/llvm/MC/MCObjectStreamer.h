@@ -78,7 +78,7 @@ protected:
   /// fragment is not a data fragment.
   MCDataFragment *getOrCreateDataFragment() const;
 
-  const MCExpr *AddValueSymbols(const MCExpr *Value);
+  void AddValueSymbols(const MCExpr *Value);
 
 public:
   MCAssembler &getAssembler() { return *Assembler; }
