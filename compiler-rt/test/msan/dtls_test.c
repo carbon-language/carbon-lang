@@ -1,10 +1,10 @@
-/* RUN: %clang_msan -m64 %s -o %t
-   RUN: %clang_msan -m64 %s -DBUILD_SO -fPIC -o %t-so.so -shared
-   RUN: not %run %t 2>&1 | FileCheck %s
-   CHECK: MemorySanitizer: use-of-uninitialized-value
+/* RUN: %clang_msan -g -m64 %s -o %t
+   RUN: %clang_msan -g -m64 %s -DBUILD_SO -fPIC -o %t-so.so -shared
+   RUN: %run %t 2>&1
 
-   This is an actual bug in msan/glibc integration,
+   Regression test for a bug in msan/glibc integration,
    see https://sourceware.org/bugzilla/show_bug.cgi?id=16291
+   and https://code.google.com/p/memory-sanitizer/issues/detail?id=44
 */
 
 #ifndef BUILD_SO

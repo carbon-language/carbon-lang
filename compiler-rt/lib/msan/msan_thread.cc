@@ -3,6 +3,8 @@
 #include "msan_thread.h"
 #include "msan_interface_internal.h"
 
+#include "sanitizer_common/sanitizer_tls_get_addr.h"
+
 namespace __msan {
 
 MsanThread *MsanThread::Create(thread_callback_t start_routine,
@@ -33,6 +35,9 @@ void MsanThread::ClearShadowForThreadStackAndTLS() {
   __msan_unpoison((void *)stack_bottom_, stack_top_ - stack_bottom_);
   if (tls_begin_ != tls_end_)
     __msan_unpoison((void *)tls_begin_, tls_end_ - tls_begin_);
+  DTLS *dtls = DTLS_Get();
+  for (uptr i = 0; i < dtls->dtv_size; ++i)
+    __msan_unpoison((void *)(dtls->dtv[i].beg), dtls->dtv[i].size);
 }
 
 void MsanThread::Init() {
@@ -55,6 +60,7 @@ void MsanThread::Destroy() {
   ClearShadowForThreadStackAndTLS();
   uptr size = RoundUpTo(sizeof(MsanThread), GetPageSizeCached());
   UnmapOrDie(this, size);
+  DTLS_Destroy();
 }
 
 thread_return_t MsanThread::ThreadStart() {

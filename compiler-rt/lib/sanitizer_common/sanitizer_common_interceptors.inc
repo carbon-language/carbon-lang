@@ -3827,7 +3827,11 @@ INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, __tls_get_addr, arg);
   void *res = REAL(__tls_get_addr)(arg);
-  DTLS_on_tls_get_addr(arg, res);
+  DTLS::DTV *dtv = DTLS_on_tls_get_addr(arg, res);
+  if (dtv) {
+    // New DTLS block has been allocated.
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE((void *)dtv->beg, dtv->size);
+  }
   return res;
 }
 #else

@@ -48,7 +48,9 @@ struct DTLS {
   uptr last_memalign_ptr;
 };
 
-void DTLS_on_tls_get_addr(void *arg, void *res);
+// Returns pointer and size of a linker-allocated TLS block.
+// Each block is returned exactly once.
+DTLS::DTV *DTLS_on_tls_get_addr(void *arg, void *res);
 void DTLS_on_libc_memalign(void *ptr, uptr size);
 DTLS *DTLS_Get();
 void DTLS_Destroy();  // Make sure to call this before the thread is destroyed.

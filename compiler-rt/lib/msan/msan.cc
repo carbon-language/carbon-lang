@@ -162,6 +162,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   cf->handle_ioctl = true;
   // FIXME: test and enable.
   cf->check_printf = false;
+  cf->intercept_tls_get_addr = true;
 
   internal_memset(f, 0, sizeof(*f));
   f->poison_heap_with_zeroes = false;

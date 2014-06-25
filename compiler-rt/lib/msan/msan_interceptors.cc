@@ -28,6 +28,7 @@
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_linux.h"
+#include "sanitizer_common/sanitizer_tls_get_addr.h"
 
 #include <stdarg.h>
 // ACHTUNG! No other system header includes in this file.
@@ -161,8 +162,13 @@ INTERCEPTOR(void *, memalign, SIZE_T boundary, SIZE_T size) {
   return ptr;
 }
 
-INTERCEPTOR(void *, __libc_memalign, uptr align, uptr s)
-    ALIAS(WRAPPER_NAME(memalign));
+INTERCEPTOR(void *, __libc_memalign, SIZE_T boundary, SIZE_T size) {
+  GET_MALLOC_STACK_TRACE;
+  CHECK_EQ(boundary & (boundary - 1), 0);
+  void *ptr = MsanReallocate(&stack, 0, size, boundary, false);
+  DTLS_on_libc_memalign(ptr, size * boundary);
+  return ptr;
+}
 
 INTERCEPTOR(void *, valloc, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
@@ -1459,6 +1465,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(mmap64);
   INTERCEPT_FUNCTION(posix_memalign);
   INTERCEPT_FUNCTION(memalign);
+  INTERCEPT_FUNCTION(__libc_memalign);
   INTERCEPT_FUNCTION(valloc);
   INTERCEPT_FUNCTION(pvalloc);
   INTERCEPT_FUNCTION(malloc);
