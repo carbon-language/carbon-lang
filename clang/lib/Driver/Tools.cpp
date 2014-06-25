@@ -1426,9 +1426,13 @@ static void getX86TargetFeatures(const llvm::Triple &Triple,
     Features.push_back("-fsgsbase");
   }
 
+  // Add features to comply with gcc on Android
   if (Triple.getEnvironment() == llvm::Triple::Android) {
-    // Add sse3 feature to comply with gcc on Android
-    Features.push_back("+sse3");
+    if (Triple.getArch() == llvm::Triple::x86_64) {
+      Features.push_back("+sse4.2");
+      Features.push_back("+popcnt");
+    } else
+      Features.push_back("+ssse3");
   }
 
   // Now add any that the user explicitly requested on the command line,
