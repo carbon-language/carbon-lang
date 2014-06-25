@@ -1,4 +1,3 @@
-// REQUIRES: powerpc-registered-target,mips-registered-target
 // RUN: %clang -no-canonical-prefixes \
 // RUN:   -target powerpc-pc-freebsd8 %s    \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd_tree -### 2>&1 \
