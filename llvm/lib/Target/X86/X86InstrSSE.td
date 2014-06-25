@@ -5377,10 +5377,15 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f64 (X86Shufp (v4f64 (fsub VR256:$lhs, VR256:$rhs)),
                              (v4f64 (fadd VR256:$lhs, VR256:$rhs)), (i8 10))),
             (VADDSUBPDYrr VR256:$lhs, VR256:$rhs)>;
+  def : Pat<(v4f64 (X86Blendi (v4f64 (fsub VR256:$lhs, VR256:$rhs)),
+                              (v4f64 (fadd VR256:$lhs, VR256:$rhs)), (i32 10))),
+            (VADDSUBPDYrr VR256:$lhs, VR256:$rhs)>;
   def : Pat<(v4f32 (X86Blendi (v4f32 (fsub VR128:$lhs, VR128:$rhs)),
                               (v4f32 (fadd VR128:$lhs, VR128:$rhs)), (i32 10))),
             (VADDSUBPSrr VR128:$lhs, VR128:$rhs)>;
-
+  def : Pat<(v2f64 (X86Blendi (v2f64 (fsub VR128:$lhs, VR128:$rhs)),
+                              (v2f64 (fadd VR128:$lhs, VR128:$rhs)), (i32 2))), 
+            (VADDSUBPDrr VR128:$lhs, VR128:$rhs)>;
   def : Pat<(v2f64 (X86Movsd (v2f64 (fadd VR128:$lhs, VR128:$rhs)),
                              (v2f64 (fsub VR128:$lhs, VR128:$rhs)))),
             (VADDSUBPDrr VR128:$lhs, VR128:$rhs)>;
@@ -5396,6 +5401,9 @@ let Predicates = [UseSSE3] in {
                               (v4f32 (fadd VR128:$lhs, VR128:$rhs)), (i32 10))),
             (ADDSUBPSrr VR128:$lhs, VR128:$rhs)>;
 
+  def : Pat<(v2f64 (X86Blendi (v2f64 (fsub VR128:$lhs, VR128:$rhs)),
+                              (v2f64 (fadd VR128:$lhs, VR128:$rhs)), (i32 2))), 
+            (ADDSUBPDrr VR128:$lhs, VR128:$rhs)>;
   def : Pat<(v2f64 (X86Movsd (v2f64 (fadd VR128:$lhs, VR128:$rhs)),
                              (v2f64 (fsub VR128:$lhs, VR128:$rhs)))),
             (ADDSUBPDrr VR128:$lhs, VR128:$rhs)>;
