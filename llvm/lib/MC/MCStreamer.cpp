@@ -571,7 +571,6 @@ void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
 }
 
 void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
-  llvm_unreachable("This file format doesn't support this directive");
 }
 
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
