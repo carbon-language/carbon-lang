@@ -955,6 +955,8 @@ class __declspec(dllimport) ClassDecl;
 
 class __declspec(dllimport) ClassDef { };
 
+template <typename T> class ClassTemplate {};
+
 #ifdef MS
 // expected-note@+5{{previous attribute is here}}
 // expected-note@+4{{previous attribute is here}}
@@ -1000,3 +1002,84 @@ template <typename T> struct __declspec(dllimport) PartiallySpecializedClassTemp
 
 template <typename T> struct ExpliciallySpecializedClassTemplate {};
 template <> struct __declspec(dllimport) ExpliciallySpecializedClassTemplate<int> { void f() {} };
+
+
+//===----------------------------------------------------------------------===//
+// Classes with template base classes
+//===----------------------------------------------------------------------===//
+
+template <typename T> class __declspec(dllexport) ExportedClassTemplate {};
+
+template <typename T> class __declspec(dllimport) ImportedClassTemplate {};
+
+// ClassTemplate<int> gets imported.
+class __declspec(dllimport) DerivedFromTemplate : public ClassTemplate<int> {};
+
+// ClassTemplate<int> is already imported.
+class __declspec(dllimport) DerivedFromTemplate2 : public ClassTemplate<int> {};
+
+// ImportedClassTemplate is expliitly imported.
+class __declspec(dllimport) DerivedFromImportedTemplate : public ImportedClassTemplate<int> {};
+
+// ExportedClassTemplate is explicitly exported.
+class __declspec(dllimport) DerivedFromExportedTemplate : public ExportedClassTemplate<int> {};
+
+#ifdef MS
+// expected-note@+4{{class template 'ClassTemplate<double>' was instantiated here}}
+// expected-warning@+4{{propagating dll attribute to already instantiated base class template without dll attribute is unsupported}}
+// expected-note@+3{{attribute is here}}
+#endif
+class DerivedFromTemplateD : public ClassTemplate<double> {};
+class __declspec(dllimport) DerivedFromTemplateD2 : public ClassTemplate<double> {};
+
+#ifdef MS
+// expected-note@+4{{class template 'ClassTemplate<bool>' was instantiated here}}
+// expected-warning@+4{{propagating dll attribute to already instantiated base class template with different dll attribute is unsupported}}
+// expected-note@+3{{attribute is here}}
+#endif
+class __declspec(dllexport) DerivedFromTemplateB : public ClassTemplate<bool> {};
+class __declspec(dllimport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
+
+template <typename T> struct ExplicitlySpecializedTemplate { void func() {} };
+#ifdef MS
+// expected-note@+2{{class template 'ExplicitlySpecializedTemplate<int>' was explicitly specialized here}}
+#endif
+template <> struct ExplicitlySpecializedTemplate<int> { void func() {} };
+template <typename T> struct ExplicitlyExportSpecializedTemplate { void func() {} };
+template <> struct __declspec(dllexport) ExplicitlyExportSpecializedTemplate<int> { void func() {} };
+template <typename T> struct ExplicitlyImportSpecializedTemplate { void func() {} };
+template <> struct __declspec(dllimport) ExplicitlyImportSpecializedTemplate<int> { void func() {} };
+
+template <typename T> struct ExplicitlyInstantiatedTemplate { void func() {} };
+#ifdef MS
+// expected-note@+2{{class template 'ExplicitlyInstantiatedTemplate<int>' was instantiated here}}
+#endif
+template struct ExplicitlyInstantiatedTemplate<int>;
+template <typename T> struct ExplicitlyExportInstantiatedTemplate { void func() {} };
+template struct __declspec(dllexport) ExplicitlyExportInstantiatedTemplate<int>;
+template <typename T> struct ExplicitlyImportInstantiatedTemplate { void func() {} };
+template struct __declspec(dllimport) ExplicitlyImportInstantiatedTemplate<int>;
+
+#ifdef MS
+// expected-warning@+3{{propagating dll attribute to explicitly specialized base class template without dll attribute is unsupported}}
+// expected-note@+2{{attribute is here}}
+#endif
+struct __declspec(dllimport) DerivedFromExplicitlySpecializedTemplate : public ExplicitlySpecializedTemplate<int> {};
+
+// Base class already specialized with export attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyExportSpecializedTemplate : public ExplicitlyExportSpecializedTemplate<int> {};
+
+// Base class already specialized with import attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyImportSpecializedTemplate : public ExplicitlyImportSpecializedTemplate<int> {};
+
+#ifdef MS
+// expected-warning@+3{{propagating dll attribute to already instantiated base class template without dll attribute is unsupported}}
+// expected-note@+2{{attribute is here}}
+#endif
+struct __declspec(dllimport) DerivedFromExplicitlyInstantiatedTemplate : public ExplicitlyInstantiatedTemplate<int> {};
+
+// Base class already instantiated with export attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyExportInstantiatedTemplate : public ExplicitlyExportInstantiatedTemplate<int> {};
+
+// Base class already instantiated with import attribute.
+struct __declspec(dllimport) DerivedFromExplicitlyImportInstantiatedTemplate : public ExplicitlyImportInstantiatedTemplate<int> {};

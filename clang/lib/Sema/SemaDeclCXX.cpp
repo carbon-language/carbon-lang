@@ -1296,6 +1296,57 @@ static bool findCircularInheritance(const CXXRecordDecl *Class,
   return false;
 }
 
+/// \brief Perform propagation of DLL attributes from a derived class to a
+/// templated base class for MS compatibility.
+static void propagateDLLAttrToBaseClassTemplate(
+    Sema &S, CXXRecordDecl *Class, Attr *ClassAttr,
+    ClassTemplateSpecializationDecl *BaseTemplateSpec, SourceLocation BaseLoc) {
+  if (getDLLAttr(
+          BaseTemplateSpec->getSpecializedTemplate()->getTemplatedDecl())) {
+    // If the base class template has a DLL attribute, don't try to change it.
+    return;
+  }
+
+  if (BaseTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
+    // If the base class is not already specialized, we can do the propagation.
+    auto *NewAttr = cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
+    NewAttr->setInherited(true);
+    BaseTemplateSpec->addAttr(NewAttr);
+    return;
+  }
+
+  bool DifferentAttribute = false;
+  if (Attr *SpecializationAttr = getDLLAttr(BaseTemplateSpec)) {
+    if (!SpecializationAttr->isInherited()) {
+      // The template has previously been specialized or instantiated with an
+      // explicit attribute. We should not try to change it.
+      return;
+    }
+    if (SpecializationAttr->getKind() == ClassAttr->getKind()) {
+      // The specialization already has the right attribute.
+      return;
+    }
+    DifferentAttribute = true;
+  }
+
+  // The template was previously instantiated or explicitly specialized without
+  // a dll attribute, or the template was previously instantiated with a
+  // different inherited attribute. It's too late for us to change the
+  // attribute, so warn that this is unsupported.
+  S.Diag(BaseLoc, diag::warn_attribute_dll_instantiated_base_class)
+      << BaseTemplateSpec->isExplicitSpecialization() << DifferentAttribute;
+  S.Diag(ClassAttr->getLocation(), diag::note_attribute);
+  if (BaseTemplateSpec->isExplicitSpecialization()) {
+    S.Diag(BaseTemplateSpec->getLocation(),
+           diag::note_template_class_explicit_specialization_was_here)
+        << BaseTemplateSpec;
+  } else {
+    S.Diag(BaseTemplateSpec->getPointOfInstantiation(),
+           diag::note_template_class_instantiation_was_here)
+        << BaseTemplateSpec;
+  }
+}
+
 /// \brief Check the validity of a C++ base class specifier.
 ///
 /// \returns a new CXXBaseSpecifier if well-formed, emits diagnostics
@@ -1360,6 +1411,17 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   if (BaseType->isUnionType()) {
     Diag(BaseLoc, diag::err_union_as_base_class) << SpecifierRange;
     return nullptr;
+  }
+
+  // For the MS ABI, propagate DLL attributes to base class templates.
+  if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+    if (Attr *ClassAttr = getDLLAttr(Class)) {
+      if (auto *BaseTemplate = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
+              BaseType->getAsCXXRecordDecl())) {
+        propagateDLLAttrToBaseClassTemplate(*this, Class, ClassAttr,
+                                            BaseTemplate, BaseLoc);
+      }
+    }
   }
 
   // C++ [class.derived]p2:
@@ -4361,9 +4423,6 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   // FIXME: MSVC's docs say all bases must be exportable, but this doesn't
   // seem to be true in practice?
 
-  // FIXME: We also need to propagate the attribute upwards to class template
-  // specialization bases.
-
   for (Decl *Member : Class->decls()) {
     VarDecl *VD = dyn_cast<VarDecl>(Member);
     CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
@@ -4385,7 +4444,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
 
     if (InheritableAttr *MemberAttr = getDLLAttr(Member)) {
       if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
-          !MemberAttr->isInherited()) {
+          !MemberAttr->isInherited() && !ClassAttr->isInherited()) {
         S.Diag(MemberAttr->getLocation(),
                diag::err_attribute_dll_member_of_dll_class)
             << MemberAttr << ClassAttr;

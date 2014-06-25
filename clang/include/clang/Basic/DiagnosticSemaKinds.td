@@ -2130,6 +2130,11 @@ def warn_attribute_dllimport_static_field_definition : Warning<
   InGroup<DiagGroup<"dllimport-static-field-def">>;
 def err_attribute_dll_member_of_dll_class : Error<
   "attribute %q0 cannot be applied to member of %q1 class">;
+def warn_attribute_dll_instantiated_base_class : Warning<
+  "propagating dll attribute to %select{already instantiated|explicitly specialized}0 "
+  "base class template "
+  "%select{without dll attribute|with different dll attribute}1 is unsupported">,
+  InGroup<DiagGroup<"unsupported-dll-base-class-template">>;
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<
@@ -3405,6 +3410,10 @@ def err_template_instantiate_undefined : Error<
   "%select{implicit|explicit}0 instantiation of undefined template %1">;
 def err_implicit_instantiate_member_undefined : Error<
   "implicit instantiation of undefined member %0">;
+def note_template_class_instantiation_was_here : Note<
+  "class template %0 was instantiated here">;
+def note_template_class_explicit_specialization_was_here : Note<
+  "class template %0 was explicitly specialized here">;
 def note_template_class_instantiation_here : Note<
   "in instantiation of template class %0 requested here">;
 def note_template_member_class_here : Note<
