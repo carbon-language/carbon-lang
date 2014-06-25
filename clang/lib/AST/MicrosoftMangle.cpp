@@ -418,11 +418,11 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   //                 ::= <type> <pointee-cvr-qualifiers> # pointers, references
   // Pointers and references are odd. The type of 'int * const foo;' gets
   // mangled as 'QAHA' instead of 'PAHB', for example.
-  TypeLoc TL = VD->getTypeSourceInfo()->getTypeLoc();
+  SourceRange SR = VD->getSourceRange();
   QualType Ty = VD->getType();
   if (Ty->isPointerType() || Ty->isReferenceType() ||
       Ty->isMemberPointerType()) {
-    mangleType(Ty, TL.getSourceRange(), QMM_Drop);
+    mangleType(Ty, SR, QMM_Drop);
     manglePointerExtQualifiers(
         Ty.getDesugaredType(getASTContext()).getLocalQualifiers(), nullptr);
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>()) {
@@ -440,7 +440,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     else
       mangleQualifiers(Ty.getQualifiers(), false);
   } else {
-    mangleType(Ty, TL.getSourceRange(), QMM_Drop);
+    mangleType(Ty, SR, QMM_Drop);
     mangleQualifiers(Ty.getLocalQualifiers(), false);
   }
 }
