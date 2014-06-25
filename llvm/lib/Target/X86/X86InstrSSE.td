@@ -5374,8 +5374,8 @@ let Predicates = [HasAVX] in {
   // - the 1st and 3rd element from the first input vector (the 'fsub' node);
   // - the 2nd and 4th element from the second input vector (the 'fadd' node).
 
-  def : Pat<(v4f64 (X86Shufp (v4f64 (fsub VR256:$lhs, VR256:$rhs)),
-                             (v4f64 (fadd VR256:$lhs, VR256:$rhs)), (i8 10))),
+  def : Pat<(v4f64 (X86Blendi (v4f64 (fsub VR256:$lhs, VR256:$rhs)),
+                             (v4f64 (fadd VR256:$lhs, VR256:$rhs)), (i32 10))),
             (VADDSUBPDYrr VR256:$lhs, VR256:$rhs)>;
   def : Pat<(v4f64 (X86Blendi (v4f64 (fsub VR256:$lhs, VR256:$rhs)),
                               (v4f64 (fadd VR256:$lhs, VR256:$rhs)), (i32 10))),

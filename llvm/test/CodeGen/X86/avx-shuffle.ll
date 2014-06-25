@@ -25,7 +25,7 @@ define <4 x i64> @test3(<4 x i64> %a, <4 x i64> %b) nounwind {
   %c = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 4, i32 5, i32 2, i32 undef>
   ret <4 x i64> %c
 ; CHECK-LABEL: test3:
-; CHECK: vperm2f128
+; CHECK: vblendpd
 ; CHECK: ret
 }
 

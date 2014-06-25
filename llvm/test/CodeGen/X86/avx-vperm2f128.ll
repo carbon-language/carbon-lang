@@ -9,7 +9,7 @@ entry:
 }
 
 ; CHECK: _B
-; CHECK: vperm2f128 $48
+; CHECK: vblendps $240
 define <8 x float> @B(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>

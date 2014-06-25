@@ -110,7 +110,7 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 
 ;CHECK-LABEL: vsel_double4:
 ;CHECK-NOT: vinsertf128
-;CHECK: vshufpd $10
+;CHECK: vblendpd $10
 ;CHECK-NEXT: ret
 define <4 x double> @vsel_double4(<4 x double> %v1, <4 x double> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x double> %v1, <4 x double> %v2
