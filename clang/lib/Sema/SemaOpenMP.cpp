@@ -182,7 +182,7 @@ public:
 DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
                                           VarDecl *D) {
   DSAVarData DVar;
-  if (Iter == Stack.rend() - 1) {
+  if (Iter == std::prev(Stack.rend())) {
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a region but not in construct]
     //  File-scope or namespace-scope variables referenced in called routines
@@ -888,7 +888,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
   case OMPD_parallel: {
     QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
     QualType KmpInt32PtrTy = Context.getPointerType(KmpInt32Ty);
-    Sema::CapturedParamNameType Params[3] = {
+    Sema::CapturedParamNameType Params[] = {
         std::make_pair(".global_tid.", KmpInt32PtrTy),
         std::make_pair(".bound_tid.", KmpInt32PtrTy),
         std::make_pair(StringRef(), QualType()) // __context with shared vars
@@ -897,14 +897,14 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
     break;
   }
   case OMPD_simd: {
-    Sema::CapturedParamNameType Params[1] = {
+    Sema::CapturedParamNameType Params[] = {
         std::make_pair(StringRef(), QualType()) // __context with shared vars
     };
     ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
     break;
   }
   case OMPD_for: {
-    Sema::CapturedParamNameType Params[1] = {
+    Sema::CapturedParamNameType Params[] = {
         std::make_pair(StringRef(), QualType()) // __context with shared vars
     };
     ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
@@ -1414,7 +1414,7 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
   OpenMPIterationSpaceChecker ISC(SemaRef, For->getForLoc());
 
   // Check init.
-  Stmt *Init = For->getInit();
+  auto Init = For->getInit();
   if (ISC.CheckInit(Init)) {
     return true;
   }
@@ -1422,14 +1422,14 @@ static bool CheckOpenMPIterationSpace(OpenMPDirectiveKind DKind, Stmt *S,
   bool HasErrors = false;
 
   // Check loop variable's type.
-  VarDecl *Var = ISC.GetLoopVar();
+  auto Var = ISC.GetLoopVar();
 
   // OpenMP [2.6, Canonical Loop Form]
   // Var is one of the following:
   //   A variable of signed or unsigned integer type.
   //   For C++, a variable of a random access iterator type.
   //   For C, a variable of a pointer type.
-  QualType VarType = Var->getType();
+  auto VarType = Var->getType();
   if (!VarType->isDependentType() && !VarType->isIntegerType() &&
       !VarType->isPointerType() &&
       !(SemaRef.getLangOpts().CPlusPlus && VarType->isOverloadableType())) {
@@ -1525,18 +1525,12 @@ static bool CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *NestedLoopCountExpr
   return false;
 }
 
-namespace {
-struct OMPCollapseClauseFilter {
-  OMPCollapseClauseFilter() {}
-  bool operator()(const OMPClause *C) {
-    return C->getClauseKind() == OMPC_collapse;
-  }
-};
-} // namespace
-
 static Expr *GetCollapseNumberExpr(ArrayRef<OMPClause *> Clauses) {
-  OMPExecutableDirective::filtered_clause_iterator<OMPCollapseClauseFilter> I(
-      Clauses);
+  auto CollapseFilter = [](const OMPClause *C) -> bool {
+    return C->getClauseKind() == OMPC_collapse;
+  };
+  OMPExecutableDirective::filtered_clause_iterator<decltype(CollapseFilter)> I(
+      Clauses, CollapseFilter);
   if (I)
     return cast<OMPCollapseClause>(*I)->getNumForLoops();
   return nullptr;

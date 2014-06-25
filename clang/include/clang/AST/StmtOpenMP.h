@@ -94,16 +94,17 @@ public:
   template <class FilterPredicate> class filtered_clause_iterator {
     ArrayRef<OMPClause *>::const_iterator Current;
     ArrayRef<OMPClause *>::const_iterator End;
+    FilterPredicate Pred;
     void SkipToNextClause() {
-      while (Current != End && !FilterPredicate()(*Current))
+      while (Current != End && !Pred(*Current))
         ++Current;
     }
 
   public:
     typedef const OMPClause *value_type;
     filtered_clause_iterator() : Current(), End() {}
-    explicit filtered_clause_iterator(ArrayRef<OMPClause *> Arr)
-        : Current(Arr.begin()), End(Arr.end()) {
+    filtered_clause_iterator(ArrayRef<OMPClause *> Arr, FilterPredicate Pred)
+        : Current(Arr.begin()), End(Arr.end()), Pred(Pred) {
       SkipToNextClause();
     }
     value_type operator*() const { return *Current; }
