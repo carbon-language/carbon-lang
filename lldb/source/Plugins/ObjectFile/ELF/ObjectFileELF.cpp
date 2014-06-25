@@ -30,6 +30,7 @@
 #include "lldb/Host/Host.h"
 
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/MathExtras.h"
 
 #define CASE_AND_STREAM(s, def, width)                  \
     case def: s->Printf("%-*s", width, #def); break;
@@ -1227,6 +1228,9 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
                     break;
             }
 
+            elf::elf_xword log2align = (header.sh_addralign==0)
+                                        ? 0
+                                        : llvm::Log2_64(header.sh_addralign);
             SectionSP section_sp (new Section(GetModule(),        // Module to which this section belongs.
                                               this,               // ObjectFile to which this section belongs and should read section data from.
                                               SectionIndex(I),    // Section ID.
@@ -1236,7 +1240,7 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
                                               vm_size,            // VM size in bytes of this section.
                                               header.sh_offset,   // Offset of this section in the file.
                                               file_size,          // Size of the section as found in the file.
-                                              __builtin_ffs(header.sh_addralign), // Alignment of the section
+                                              log2align,          // Alignment of the section
                                               header.sh_flags));  // Flags for this section.
 
             if (is_thread_specific)
