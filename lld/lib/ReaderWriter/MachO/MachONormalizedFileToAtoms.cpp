@@ -352,9 +352,9 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
       case atomizeUTF8:
         // Break section up into zero terminated c-strings.
         size = 0;
-        for (unsigned int i=0; offset+i < e; ++i) {
+        for (unsigned int i = offset; i < e; ++i) {
           if (section.content[i] == 0) {
-            size = i+1;
+            size = i + 1 - offset;
             break;
           }
         }
@@ -362,9 +362,9 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
       case atomizeUTF16:
         // Break section up into zero terminated UTF16 strings.
         size = 0;
-        for (unsigned int i=0; offset+i < e; i += 2) {
-          if ((section.content[i] == 0) && (section.content[i+1] == 0)) {
-            size = i+2;
+        for (unsigned int i = offset; i < e; i += 2) {
+          if ((section.content[i] == 0) && (section.content[i + 1] == 0)) {
+            size = i + 2 - offset;
             break;
           }
         }
