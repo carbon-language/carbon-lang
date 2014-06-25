@@ -306,8 +306,16 @@ TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   EXPECT_EQ(vfs::directory_iterator(), I);
 }
 
+template <typename T, size_t N>
+std::vector<StringRef> makeStringRefVector(const T (&Arr)[N]) {
+  std::vector<StringRef> Vec;
+  for (size_t i = 0; i != N; ++i)
+    Vec.push_back(Arr[i]);
+  return Vec;
+}
+
 static void checkContents(vfs::directory_iterator I,
-                          ArrayRef<std::string> Expected) {
+                          ArrayRef<StringRef> Expected) {
   std::error_code EC;
   auto ExpectedIter = Expected.begin(), ExpectedEnd = Expected.end();
   for (vfs::directory_iterator E;
@@ -327,25 +335,25 @@ TEST(VirtualFileSystemTest, OverlayIteration) {
   O->pushOverlay(Upper);
 
   std::error_code EC;
-  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>());
+  checkContents(O->dir_begin("/", EC), ArrayRef<StringRef>());
 
   Lower->addRegularFile("/file1");
-  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>("/file1"));
+  checkContents(O->dir_begin("/", EC), ArrayRef<StringRef>("/file1"));
 
   Upper->addRegularFile("/file2");
   {
-    std::vector<std::string> Contents = {"/file2", "/file1"};
-    checkContents(O->dir_begin("/", EC), Contents);
+    const char *Contents[] = {"/file2", "/file1"};
+    checkContents(O->dir_begin("/", EC), makeStringRefVector(Contents));
   }
 
   Lower->addDirectory("/dir1");
   Lower->addRegularFile("/dir1/foo");
   Upper->addDirectory("/dir2");
   Upper->addRegularFile("/dir2/foo");
-  checkContents(O->dir_begin("/dir2", EC), ArrayRef<std::string>("/dir2/foo"));
+  checkContents(O->dir_begin("/dir2", EC), ArrayRef<StringRef>("/dir2/foo"));
   {
-    std::vector<std::string> Contents = {"/dir2", "/file2", "/dir1", "/file1"};
-    checkContents(O->dir_begin("/", EC), Contents);
+    const char *Contents[] = {"/dir2", "/file2", "/dir1", "/file1"};
+    checkContents(O->dir_begin("/", EC), makeStringRefVector(Contents));
   }
 }
 
@@ -359,16 +367,16 @@ TEST(VirtualFileSystemTest, ThreeLevelIteration) {
   O->pushOverlay(Upper);
 
   std::error_code EC;
-  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>());
+  checkContents(O->dir_begin("/", EC), ArrayRef<StringRef>());
 
   Middle->addRegularFile("/file2");
-  checkContents(O->dir_begin("/", EC), ArrayRef<std::string>("/file2"));
+  checkContents(O->dir_begin("/", EC), ArrayRef<StringRef>("/file2"));
 
   Lower->addRegularFile("/file1");
   Upper->addRegularFile("/file3");
   {
-    std::vector<std::string> Contents = {"/file3", "/file2", "/file1"};
-    checkContents(O->dir_begin("/", EC), Contents);
+    const char *Contents[] = {"/file3", "/file2", "/file1"};
+    checkContents(O->dir_begin("/", EC), makeStringRefVector(Contents));
   }
 }
 
@@ -391,9 +399,9 @@ TEST(VirtualFileSystemTest, HiddenInIteration) {
   Upper->addRegularFile("/onlyInUp", sys::fs::owner_all);
   Upper->addRegularFile("/hiddenByUp", sys::fs::owner_all);
   {
-    std::vector<std::string> Contents = {
-        "/hiddenByUp", "/onlyInUp", "/hiddenByMid", "/onlyInMid", "/onlyInLow"};
-    checkContents(O->dir_begin("/", EC), Contents);
+    const char *Contents[] = {"/hiddenByUp", "/onlyInUp", "/hiddenByMid",
+                              "/onlyInMid", "/onlyInLow"};
+    checkContents(O->dir_begin("/", EC), makeStringRefVector(Contents));
   }
 
   // Make sure we get the top-most entry
@@ -817,14 +825,14 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
 
   std::error_code EC;
   {
-    std::vector<std::string> Contents = {"//root/file1", "//root/file2",
-                                         "//root/file3", "//root/foo"};
-    checkContents(O->dir_begin("//root/", EC), Contents);
+    const char *Contents[] = {"//root/file1", "//root/file2", "//root/file3",
+                              "//root/foo"};
+    checkContents(O->dir_begin("//root/", EC), makeStringRefVector(Contents));
   }
 
   {
-    std::vector<std::string> Contents = {"//root/foo/bar/a",
-                                         "//root/foo/bar/b"};
-    checkContents(O->dir_begin("//root/foo/bar", EC), Contents);
+    const char *Contents[] = {"//root/foo/bar/a", "//root/foo/bar/b"};
+    checkContents(O->dir_begin("//root/foo/bar", EC),
+                  makeStringRefVector(Contents));
   }
 }
