@@ -18,38 +18,26 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "~C"
 
-; CHECK: [[D1_ABS:.*]]: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1CD1Ev"
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[D1_THIS_ABS:.*]]:   DW_TAG_formal_parameter
-; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_name {{.*}} "this"
-
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "fun4"
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:   DW_TAG_lexical_block
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:     DW_TAG_inlined_subroutine
-; CHECK-NOT: DW_TAG
-; CHECK:       DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:       DW_TAG_formal_parameter
-; CHECK-NOT: DW_TAG
-; CHECK:         DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
 
-; FIXME: D2 is actually inlined into D1 but doesn't show up here, possibly due
-; to there being no work in D2 (calling another member function from the dtor
-; causes D2 to show up, calling a free function doesn't).
+; FIXME: The dtor is inlined into fun4 and should have an inlined_subroutine
+; entry. (it may be necessary to put some non-trivial instruction, such as an
+; assignment to a global, in the dtor just to ensure its emission/inlining)
 
+; CHECK-NOT: DW_TAG_inlined_subroutine
+
+; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:       NULL
-; CHECK-NOT: DW_TAG
-; CHECK:     NULL
-; CHECK-NOT: DW_TAG
-; CHECK:   NULL
+; CHECK: DW_AT_MIPS_linkage_name {{.*}} "_ZN1CD1Ev"
+
+; FIXME: But I think where the real issue is for PR20038 is that the D1 ctor, ;
+; calling and inlining D2, doesn't end up with an inlined_subroutine. Though this
+; might be more the result of a lack of any actual work in D2 (again, could use
+; an assignment to global, etc)
+
+; CHECK-NOT: DW_TAG_inlined_subroutine
 
 %struct.C = type { i8 }
 
@@ -59,48 +47,48 @@
 define void @_Z4fun4v() #0 {
 entry:
   %this.addr.i.i = alloca %struct.C*, align 8, !dbg !21
-  %this.addr.i = alloca %struct.C*, align 8, !dbg !22
+  %this.addr.i = alloca %struct.C*, align 8
   %agg.tmp.ensured = alloca %struct.C, align 1
   %cleanup.cond = alloca i1
-  %0 = load i8* @b, align 1, !dbg !24
-  %tobool = trunc i8 %0 to i1, !dbg !24
+  %0 = load i8* @b, align 1, !dbg !22
+  %tobool = trunc i8 %0 to i1, !dbg !22
   store i1 false, i1* %cleanup.cond
-  br i1 %tobool, label %land.rhs, label %land.end, !dbg !24
+  br i1 %tobool, label %land.rhs, label %land.end, !dbg !22
 
 land.rhs:                                         ; preds = %entry
-  store i1 true, i1* %cleanup.cond, !dbg !25
+  store i1 true, i1* %cleanup.cond, !dbg !23
   br label %land.end
 
 land.end:                                         ; preds = %land.rhs, %entry
   %1 = phi i1 [ false, %entry ], [ true, %land.rhs ]
-  %cleanup.is_active = load i1* %cleanup.cond, !dbg !27
-  br i1 %cleanup.is_active, label %cleanup.action, label %cleanup.done, !dbg !27
+  %cleanup.is_active = load i1* %cleanup.cond
+  br i1 %cleanup.is_active, label %cleanup.action, label %cleanup.done
 
 cleanup.action:                                   ; preds = %land.end
-  store %struct.C* %agg.tmp.ensured, %struct.C** %this.addr.i, align 8, !dbg !22
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !29), !dbg !31
-  %this1.i = load %struct.C** %this.addr.i, !dbg !22
+  store %struct.C* %agg.tmp.ensured, %struct.C** %this.addr.i, align 8
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !25), !dbg !27
+  %this1.i = load %struct.C** %this.addr.i
   store %struct.C* %this1.i, %struct.C** %this.addr.i.i, align 8, !dbg !21
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i.i}, metadata !32), !dbg !33
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i.i}, metadata !28), !dbg !29
   %this1.i.i = load %struct.C** %this.addr.i.i, !dbg !21
-  br label %cleanup.done, !dbg !22
+  br label %cleanup.done
 
 cleanup.done:                                     ; preds = %cleanup.action, %land.end
-  ret void, !dbg !34
+  ret void, !dbg !22
 }
 
 ; Function Attrs: alwaysinline nounwind
 define void @_ZN1CD1Ev(%struct.C* %this) unnamed_addr #1 align 2 {
 entry:
-  %this.addr.i = alloca %struct.C*, align 8, !dbg !37
+  %this.addr.i = alloca %struct.C*, align 8, !dbg !21
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !29), !dbg !38
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !25), !dbg !27
   %this1 = load %struct.C** %this.addr
-  store %struct.C* %this1, %struct.C** %this.addr.i, align 8, !dbg !37
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !32), !dbg !39
-  %this1.i = load %struct.C** %this.addr.i, !dbg !37
-  ret void, !dbg !37
+  store %struct.C* %this1, %struct.C** %this.addr.i, align 8, !dbg !21
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !28), !dbg !29
+  %this1.i = load %struct.C** %this.addr.i, !dbg !21
+  ret void, !dbg !21
 }
 
 ; Function Attrs: alwaysinline nounwind
@@ -108,9 +96,9 @@ define void @_ZN1CD2Ev(%struct.C* %this) unnamed_addr #1 align 2 {
 entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !32), !dbg !40
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !28), !dbg !30
   %this1 = load %struct.C** %this.addr
-  ret void, !dbg !41
+  ret void, !dbg !31
 }
 
 ; Function Attrs: nounwind readnone
@@ -145,24 +133,14 @@ attributes #2 = { nounwind readnone }
 !18 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !19 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 !20 = metadata !{metadata !"clang version 3.5.0 "}
-!21 = metadata !{i32 6, i32 0, metadata !17, metadata !22}
-!22 = metadata !{i32 5, i32 0, metadata !23, null}
-!23 = metadata !{i32 786443, metadata !5, metadata !12, i32 5, i32 0, i32 3, i32 3} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
-!24 = metadata !{i32 5, i32 0, metadata !12, null}
-!25 = metadata !{i32 5, i32 0, metadata !26, null}
-!26 = metadata !{i32 786443, metadata !5, metadata !12, i32 5, i32 0, i32 1, i32 1} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
-!27 = metadata !{i32 5, i32 0, metadata !28, null}
-!28 = metadata !{i32 786443, metadata !5, metadata !12, i32 5, i32 0, i32 2, i32 2} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
-!29 = metadata !{i32 786689, metadata !17, metadata !"this", null, i32 16777216, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!30 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1C]
-!31 = metadata !{i32 0, i32 0, metadata !17, metadata !22}
-!32 = metadata !{i32 786689, metadata !16, metadata !"this", null, i32 16777216, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!33 = metadata !{i32 0, i32 0, metadata !16, metadata !21}
-!34 = metadata !{i32 5, i32 0, metadata !35, null}
-!35 = metadata !{i32 786443, metadata !5, metadata !36, i32 5, i32 0, i32 5, i32 5} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
-!36 = metadata !{i32 786443, metadata !5, metadata !12, i32 5, i32 0, i32 4, i32 4} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
-!37 = metadata !{i32 6, i32 0, metadata !17, null}
-!38 = metadata !{i32 0, i32 0, metadata !17, null}
-!39 = metadata !{i32 0, i32 0, metadata !16, metadata !37}
-!40 = metadata !{i32 0, i32 0, metadata !16, null}
-!41 = metadata !{i32 6, i32 0, metadata !16, null}
+!21 = metadata !{i32 6, i32 0, metadata !17, null}
+!22 = metadata !{i32 5, i32 0, metadata !12, null}
+!23 = metadata !{i32 5, i32 0, metadata !24, null}
+!24 = metadata !{i32 786443, metadata !5, metadata !12, i32 5, i32 0, i32 1, i32 1} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/PR20038.cpp]
+!25 = metadata !{i32 786689, metadata !17, metadata !"this", null, i32 16777216, metadata !26, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!26 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1C]
+!27 = metadata !{i32 0, i32 0, metadata !17, null}
+!28 = metadata !{i32 786689, metadata !16, metadata !"this", null, i32 16777216, metadata !26, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!29 = metadata !{i32 0, i32 0, metadata !16, metadata !21}
+!30 = metadata !{i32 0, i32 0, metadata !16, null}
+!31 = metadata !{i32 6, i32 0, metadata !16, null}
