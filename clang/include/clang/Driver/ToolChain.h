@@ -158,6 +158,10 @@ public:
   std::string GetFilePath(const char *Name) const;
   std::string GetProgramPath(const char *Name) const;
 
+  /// Returns the linker path, respecting the -fuse-ld= argument to determine
+  /// the linker suffix or name.
+  std::string GetLinkerPath() const;
+
   /// \brief Dispatch to the specific toolchain for verbose printing.
   ///
   /// This is used when handling the verbose option to print detailed,

@@ -15,6 +15,7 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/SanitizerArgs.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -146,6 +147,30 @@ std::string ToolChain::GetFilePath(const char *Name) const {
 std::string ToolChain::GetProgramPath(const char *Name) const {
   return D.GetProgramPath(Name, *this);
 }
+
+std::string ToolChain::GetLinkerPath() const {
+  if (Arg *A = Args.getLastArg(options::OPT_fuse_ld_EQ)) {
+    StringRef Suffix = A->getValue();
+
+    // If we're passed -fuse-ld= with no argument, or with the argument ld,
+    // then use whatever the default system linker is.
+    if (Suffix.empty() || Suffix == "ld")
+      return GetProgramPath("ld");
+
+    llvm::SmallString<8> LinkerName("ld.");
+    LinkerName.append(Suffix);
+
+    std::string LinkerPath(GetProgramPath(LinkerName.c_str()));
+    if (llvm::sys::fs::exists(LinkerPath))
+      return LinkerPath;
+
+    getDriver().Diag(diag::err_drv_invalid_linker_name) << A->getAsString(Args);
+    return "";
+  }
+
+  return GetProgramPath("ld");
+}
+
 
 types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {
   return types::lookupTypeForExtension(Ext);
