@@ -118,10 +118,11 @@ void emitValidRemarks(const llvm::Function &F, const Region *R) {
 
 //===----------------------------------------------------------------------===//
 // RejectReason.
+const DebugLoc RejectReason::Unknown = DebugLoc();
 
 const llvm::DebugLoc &RejectReason::getDebugLoc() const {
   // Allocate an empty DebugLoc and return it a reference to it.
-  return *(std::make_shared<DebugLoc>().get());
+  return Unknown;
 }
 
 //===----------------------------------------------------------------------===//

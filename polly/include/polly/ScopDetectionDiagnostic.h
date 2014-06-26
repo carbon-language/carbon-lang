@@ -126,6 +126,9 @@ class RejectReason {
 private:
   const RejectReasonKind Kind;
 
+protected:
+  static const DebugLoc Unknown;
+
 public:
   RejectReasonKind getKind() const { return Kind; }
 
