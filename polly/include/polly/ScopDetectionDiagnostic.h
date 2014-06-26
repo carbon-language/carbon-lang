@@ -428,6 +428,7 @@ public:
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 

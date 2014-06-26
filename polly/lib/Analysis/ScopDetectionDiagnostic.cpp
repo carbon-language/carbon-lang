@@ -251,6 +251,10 @@ std::string ReportVariantBasePtr::getMessage() const {
   return "Base address not invariant in current region:" + *BaseValue;
 }
 
+std::string ReportVariantBasePtr::getEndUserMessage() const {
+  return "The base address of this array is not invariant inside the loop";
+}
+
 bool ReportVariantBasePtr::classof(const RejectReason *RR) {
   return RR->getKind() == rrkVariantBasePtr;
 }
