@@ -234,15 +234,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   InitializeAllAsmParsers();
   InitializeAllAsmPrinters();
   CodeGen = new LTOCodeGenerator();
-  if (MAttrs.size()) {
-    std::string Attrs;
-    for (unsigned I = 0; I < MAttrs.size(); ++I) {
-      if (I > 0)
-        Attrs.append(",");
-      Attrs.append(MAttrs[I]);
-    }
-    CodeGen->setAttr(Attrs.c_str());
-  }
 
   // Pass through extra options to the code generator.
   if (!options::extra.empty()) {
@@ -253,6 +244,16 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   }
 
   CodeGen->parseCodeGenDebugOptions();
+  if (MAttrs.size()) {
+    std::string Attrs;
+    for (unsigned I = 0; I < MAttrs.size(); ++I) {
+      if (I > 0)
+        Attrs.append(",");
+      Attrs.append(MAttrs[I]);
+    }
+    CodeGen->setAttr(Attrs.c_str());
+  }
+
   TargetOpts = InitTargetOptionsFromCodeGenFlags();
   CodeGen->setTargetOptions(TargetOpts);
 
