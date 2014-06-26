@@ -603,7 +603,7 @@ int Driver::ExecuteCompilation(const Compilation &C,
     // Print extra information about abnormal failures, if possible.
     //
     // This is ad-hoc, but we don't want to be excessively noisy. If the result
-    // status was 1, assume the command failed normally. In particular, if it 
+    // status was 1, assume the command failed normally. In particular, if it
     // was the compiler then assume it gave a reasonable error code. Failures
     // in other tools are less common, and they generally have worse
     // diagnostics, so always print the diagnostic there.
@@ -1610,7 +1610,7 @@ void Driver::BuildJobsForAction(Compilation &C,
 static const char *MakeCLOutputFilename(const ArgList &Args, StringRef ArgValue,
                                         StringRef BaseName, types::ID FileType) {
   SmallString<128> Filename = ArgValue;
-  
+
   if (ArgValue.empty()) {
     // If the argument is empty, output to BaseName in the current dir.
     Filename = BaseName;
