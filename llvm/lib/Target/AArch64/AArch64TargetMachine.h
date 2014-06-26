@@ -15,13 +15,9 @@
 #define AArch64TARGETMACHINE_H
 
 #include "AArch64InstrInfo.h"
-#include "AArch64ISelLowering.h"
 #include "AArch64Subtarget.h"
-#include "AArch64FrameLowering.h"
-#include "AArch64SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
 

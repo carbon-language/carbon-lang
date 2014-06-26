@@ -14,17 +14,9 @@
 #ifndef ARMTARGETMACHINE_H
 #define ARMTARGETMACHINE_H
 
-#include "ARMFrameLowering.h"
-#include "ARMISelLowering.h"
 #include "ARMInstrInfo.h"
-#include "ARMJITInfo.h"
-#include "ARMSelectionDAGInfo.h"
 #include "ARMSubtarget.h"
-#include "Thumb1FrameLowering.h"
-#include "Thumb1InstrInfo.h"
-#include "Thumb2InstrInfo.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {

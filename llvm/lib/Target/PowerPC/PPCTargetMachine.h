@@ -14,11 +14,7 @@
 #ifndef PPC_TARGETMACHINE_H
 #define PPC_TARGETMACHINE_H
 
-#include "PPCFrameLowering.h"
-#include "PPCISelLowering.h"
 #include "PPCInstrInfo.h"
-#include "PPCJITInfo.h"
-#include "PPCSelectionDAGInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"

@@ -13,11 +13,7 @@
 
 #ifndef X86TARGETMACHINE_H
 #define X86TARGETMACHINE_H
-
-#include "X86FrameLowering.h"
-#include "X86ISelLowering.h"
 #include "X86InstrInfo.h"
-#include "X86JITInfo.h"
 #include "X86Subtarget.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
