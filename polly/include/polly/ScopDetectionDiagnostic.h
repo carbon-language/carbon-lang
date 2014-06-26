@@ -173,10 +173,50 @@ public:
 
   iterator begin() const { return ErrorReports.begin(); }
   iterator end() const { return ErrorReports.end(); }
-  size_t size() { return ErrorReports.size(); }
+  size_t size() const { return ErrorReports.size(); }
 
   const Region *region() const { return R; }
   void report(RejectReasonPtr Reject) { ErrorReports.push_back(Reject); }
+};
+
+/// @brief Store reject logs
+class RejectLogsContainer {
+  std::map<const Region *, RejectLog> Logs;
+
+public:
+  typedef std::map<const Region *, RejectLog>::iterator iterator;
+  typedef std::map<const Region *, RejectLog>::const_iterator const_iterator;
+
+  iterator begin() { return Logs.begin(); }
+  iterator end() { return Logs.end(); }
+
+  const_iterator begin() const { return Logs.begin(); }
+  const_iterator end() const { return Logs.end(); }
+
+  void insert(std::pair<const Region *, RejectLog> New) {
+    auto Result = Logs.insert(New);
+    assert(Result.second && "Tried to replace an element in the log!");
+  }
+
+  std::map<const Region *, RejectLog>::mapped_type at(const Region *R) {
+    return Logs.at(R);
+  }
+
+  void clear() { Logs.clear(); }
+
+  size_t count(const Region *R) const { return Logs.count(R); }
+
+  size_t size(const Region *R) const {
+    if (!Logs.count(R))
+      return 0;
+    return Logs.at(R).size();
+  }
+
+  bool hasErrors(const Region *R) const {
+    return (Logs.count(R) && Logs.at(R).size() > 0);
+  }
+
+  bool hasErrors(Region *R) const { return hasErrors((const Region *)R); }
 };
 
 //===----------------------------------------------------------------------===//

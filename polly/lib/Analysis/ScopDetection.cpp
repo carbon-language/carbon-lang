@@ -707,12 +707,8 @@ bool ScopDetection::isValidRegion(Region &R) const {
   bool RegionIsValid = isValidRegion(Context);
   bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
 
-  if (PollyTrackFailures && HasErrors) {
-    // std::map::insert does not replace.
-    std::pair<reject_iterator, bool> InsertedValue =
-        RejectLogs.insert(std::make_pair(&R, Context.Log));
-    assert(InsertedValue.second && "Two logs generated for the same Region.");
-  }
+  if (PollyTrackFailures && HasErrors)
+    RejectLogs.insert(std::make_pair(&R, Context.Log));
 
   return RegionIsValid;
 }

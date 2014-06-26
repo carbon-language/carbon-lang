@@ -144,7 +144,7 @@ class ScopDetection : public FunctionPass {
   RegionSet ValidRegions;
 
   // Remember a list of errors for every region.
-  mutable std::map<const Region *, RejectLog> RejectLogs;
+  mutable RejectLogsContainer RejectLogs;
 
   // Remember the invalid functions producted by backends;
   typedef std::set<const Function *> FunctionSet;
