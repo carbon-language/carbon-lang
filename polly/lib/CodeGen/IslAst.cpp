@@ -168,7 +168,8 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
 
   // FIXME: We can remove ignore reduction dependences in case we privatize the
   //        memory locations the reduction statements reduce into.
-  Deps = D->getDependences(Dependences::TYPE_ALL | Dependences::TYPE_RED);
+  Deps = D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_WAW |
+                           Dependences::TYPE_WAR | Dependences::TYPE_RED);
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
   Deps = isl_union_map_apply_domain(Deps, Schedule);
 

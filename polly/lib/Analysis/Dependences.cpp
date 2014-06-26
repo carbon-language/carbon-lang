@@ -369,7 +369,7 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   if (LegalityCheckDisabled)
     return true;
 
-  isl_union_map *Dependences = getDependences(TYPE_ALL);
+  isl_union_map *Dependences = getDependences(TYPE_RAW | TYPE_WAW | TYPE_WAR);
   isl_space *Space = S.getParamSpace();
   isl_union_map *Scattering = isl_union_map_empty(Space);
 
@@ -442,7 +442,7 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
 
   // FIXME: We can remove ignore reduction dependences in case we privatize the
   //        memory locations the reduction statements reduce into.
-  Deps = getDependences(TYPE_ALL | TYPE_RED);
+  Deps = getDependences(TYPE_RAW | TYPE_WAW | TYPE_WAR | TYPE_RED);
 
   if (isl_union_map_is_empty(Deps)) {
     isl_union_map_free(Deps);

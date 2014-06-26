@@ -47,11 +47,11 @@ public:
 
   /// @brief The type of the dependences.
   ///
-  /// Reduction dependences are not included in TYPE_ALL dependences because we
-  /// can ignore them during the scheduling. This is the case since the order in
-  /// which the reduction statements are executed does not matter. However, if
-  /// they are executed in parallel we need to take additional measures (e.g.,
-  /// privatization) to ensure a correct result.
+  /// Reduction dependences are seperated because they can be ignored during
+  /// the scheduling. This is the case since the order in which the reduction
+  /// statements are executed does not matter. However, if they are executed
+  /// in parallel we need to take additional measures (e.g., privatization)
+  /// to ensure a correct result.
   enum Type {
     // Write after read
     TYPE_WAR = 0x1,
@@ -64,9 +64,6 @@ public:
 
     // Reduction dependences
     TYPE_RED = 0x8,
-
-    // All (validity) dependences
-    TYPE_ALL = (TYPE_WAR | TYPE_RAW | TYPE_WAW)
   };
 
   typedef std::map<ScopStmt *, isl_map *> StatementToIslMapTy;
