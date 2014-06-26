@@ -1798,6 +1798,10 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
       case LLVMContext::MD_fpmath:
         ReplInst->setMetadata(Kind, MDNode::getMostGenericFPMath(IMD, ReplMD));
         break;
+      case LLVMContext::MD_invariant_load:
+        // Only set the !invariant.load if it is present in both instructions.
+        ReplInst->setMetadata(Kind, IMD);
+        break;
       }
     }
   }
