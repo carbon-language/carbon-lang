@@ -61,7 +61,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
     Subtarget(TT, CPU, FS, is64bit),
     DL(computeDataLayout(Subtarget)),
     InstrInfo(Subtarget),
-    TLInfo(*this), TSInfo(*this),
+    TLInfo(*this), TSInfo(DL),
     FrameLowering(Subtarget) {
   initAsmInfo();
 }
