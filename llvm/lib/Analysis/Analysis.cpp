@@ -75,8 +75,7 @@ void LLVMInitializeAnalysis(LLVMPassRegistryRef R) {
 LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
                           char **OutMessages) {
   raw_ostream *DebugOS = Action != LLVMReturnStatusAction ? &errs() : nullptr;
-  std::string Messages;
-  raw_string_ostream MsgsOS(Messages);
+  string_ostream MsgsOS;
 
   LLVMBool Result = verifyModule(*unwrap(M), OutMessages ? &MsgsOS : DebugOS);
 
@@ -88,7 +87,7 @@ LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
     report_fatal_error("Broken module found, compilation aborted!");
 
   if (OutMessages)
-    *OutMessages = strdup(MsgsOS.str().c_str());
+    *OutMessages = strndup(MsgsOS.str().data(), MsgsOS.str().size());
 
   return Result;
 }

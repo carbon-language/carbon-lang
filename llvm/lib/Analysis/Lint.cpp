@@ -105,11 +105,10 @@ namespace {
     const DataLayout *DL;
     TargetLibraryInfo *TLI;
 
-    std::string Messages;
-    raw_string_ostream MessagesStr;
+    string_ostream MessagesStr;
 
     static char ID; // Pass identification, replacement for typeid
-    Lint() : FunctionPass(ID), MessagesStr(Messages) {
+    Lint() : FunctionPass(ID) {
       initializeLintPass(*PassRegistry::getPassRegistry());
     }
 
@@ -181,7 +180,7 @@ bool Lint::runOnFunction(Function &F) {
   TLI = &getAnalysis<TargetLibraryInfo>();
   visit(F);
   dbgs() << MessagesStr.str();
-  Messages.clear();
+  MessagesStr.clear();
   return false;
 }
 

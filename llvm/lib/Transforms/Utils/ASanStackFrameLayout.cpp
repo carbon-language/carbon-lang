@@ -65,8 +65,7 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
     Vars[i].Alignment = std::max(Vars[i].Alignment, kMinAlignment);
 
   std::stable_sort(Vars.begin(), Vars.end(), CompareVars);
-  SmallString<2048> StackDescriptionStorage;
-  raw_svector_ostream StackDescription(StackDescriptionStorage);
+  small_string_ostream<2048> StackDescription;
   StackDescription << NumVars;
   Layout->FrameAlignment = std::max(Granularity, Vars[0].Alignment);
   SmallVector<uint8_t, 64> &SB(Layout->ShadowBytes);

@@ -58,23 +58,18 @@ protected:
 class ObjectBufferStream : public ObjectBuffer {
   void anchor() override;
 public:
-  ObjectBufferStream() : OS(SV) {}
+  ObjectBufferStream() {}
   virtual ~ObjectBufferStream() {}
 
   raw_ostream &getOStream() { return OS; }
   void flush()
   {
-    OS.flush();
-
     // Make the data accessible via the ObjectBuffer::Buffer
-    Buffer.reset(MemoryBuffer::getMemBuffer(StringRef(SV.data(), SV.size()),
-                                            "",
-                                            false));
+    Buffer.reset(MemoryBuffer::getMemBuffer(OS.str(), "", false));
   }
 
 protected:
-  SmallVector<char, 4096> SV; // Working buffer into which we JIT.
-  raw_svector_ostream     OS; // streaming wrapper
+  small_string_ostream<4096> OS; // Working buffer into which we JIT.
 };
 
 } // namespace llvm

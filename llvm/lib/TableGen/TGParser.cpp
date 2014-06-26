@@ -1307,8 +1307,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     if (ItemType) {
       ListRecTy *ListType = dyn_cast<ListRecTy>(ItemType);
       if (!ListType) {
-        std::string s;
-        raw_string_ostream ss(s);
+        string_ostream ss;
         ss << "Type mismatch for list, expected list type, got "
            << ItemType->getAsString();
         TokError(ss.str());

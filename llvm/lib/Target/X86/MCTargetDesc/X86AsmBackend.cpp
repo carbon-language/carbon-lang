@@ -281,8 +281,7 @@ void X86AsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   unsigned RelaxedOp = getRelaxedOpcode(Inst.getOpcode());
 
   if (RelaxedOp == Inst.getOpcode()) {
-    SmallString<256> Tmp;
-    raw_svector_ostream OS(Tmp);
+    small_string_ostream<256> OS;
     Inst.dump_pretty(OS);
     OS << "\n";
     report_fatal_error("unexpected instruction to relax: " + OS.str());

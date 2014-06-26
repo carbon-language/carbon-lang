@@ -166,23 +166,21 @@ static void benchmark( llvm::TimerGroup &Group
 }
 
 static std::string createJSONText(size_t MemoryMB, unsigned ValueSize) {
-  std::string JSONText;
-  llvm::raw_string_ostream Stream(JSONText);
-  Stream << "[\n";
+  llvm::string_ostream OS;
+  OS << "[\n";
   size_t MemoryBytes = MemoryMB * 1024 * 1024;
-  while (JSONText.size() < MemoryBytes) {
-    Stream << " {\n"
-           << "  \"key1\": \"" << std::string(ValueSize, '*') << "\",\n"
-           << "  \"key2\": \"" << std::string(ValueSize, '*') << "\",\n"
-           << "  \"key3\": \"" << std::string(ValueSize, '*') << "\"\n"
-           << " }";
-    Stream.flush();
-    if (JSONText.size() < MemoryBytes) Stream << ",";
-    Stream << "\n";
+  while (OS.tell() < MemoryBytes) {
+    OS << " {\n"
+       << "  \"key1\": \"" << std::string(ValueSize, '*') << "\",\n"
+       << "  \"key2\": \"" << std::string(ValueSize, '*') << "\",\n"
+       << "  \"key3\": \"" << std::string(ValueSize, '*') << "\"\n"
+       << " }";
+    if (OS.tell() < MemoryBytes)
+      OS << ",";
+    OS << "\n";
   }
-  Stream << "]\n";
-  Stream.flush();
-  return JSONText;
+  OS << "]\n";
+  return OS.str();
 }
 
 int main(int argc, char **argv) {

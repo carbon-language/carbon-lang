@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -461,6 +462,14 @@ class raw_svector_ostream : public raw_ostream {
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
   uint64_t current_pos() const override;
+
+protected:
+  // This constructor is specified not to access \p O provided for storage as it
+  // may not yet be initialized at construction time.
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O, std::nullptr_t)
+      : OS(O){};
+  void init();
+
 public:
   /// Construct a new raw_svector_ostream.
   ///
@@ -492,6 +501,25 @@ public:
   explicit raw_null_ostream() {}
   ~raw_null_ostream();
 };
+
+/// string_ostream - A raw_ostream that builds a string.  This is a
+/// raw_svector_ostream with storage.
+template <unsigned InternalLen>
+class small_string_ostream : public raw_svector_ostream {
+  SmallVector<char, InternalLen> Buffer;
+  // There's no need to flush explicitly.
+  using raw_svector_ostream::flush;
+
+public:
+  small_string_ostream() : raw_svector_ostream(Buffer, nullptr) { init(); }
+
+  void clear() {
+    flush();
+    Buffer.clear();
+  }
+};
+
+typedef small_string_ostream<128> string_ostream;
 
 } // end llvm namespace
 

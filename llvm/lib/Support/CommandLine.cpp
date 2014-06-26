@@ -1342,25 +1342,21 @@ printGenericOptionDiff(const Option &O, const GenericOptionValue &Value,
 
 // printOptionDiff - Specializations for printing basic value types.
 //
-#define PRINT_OPT_DIFF(T)                                               \
-  void parser<T>::                                                      \
-  printOptionDiff(const Option &O, T V, OptionValue<T> D,               \
-                  size_t GlobalWidth) const {                           \
-    printOptionName(O, GlobalWidth);                                    \
-    std::string Str;                                                    \
-    {                                                                   \
-      raw_string_ostream SS(Str);                                       \
-      SS << V;                                                          \
-    }                                                                   \
-    outs() << "= " << Str;                                              \
-    size_t NumSpaces = MaxOptWidth > Str.size() ? MaxOptWidth - Str.size() : 0;\
-    outs().indent(NumSpaces) << " (default: ";                          \
-    if (D.hasValue())                                                   \
-      outs() << D.getValue();                                           \
-    else                                                                \
-      outs() << "*no default*";                                         \
-    outs() << ")\n";                                                    \
-  }                                                                     \
+#define PRINT_OPT_DIFF(T)                                                      \
+  void parser<T>::printOptionDiff(const Option &O, T V, OptionValue<T> D,      \
+                                  size_t GlobalWidth) const {                  \
+    printOptionName(O, GlobalWidth);                                           \
+    string_ostream SS;                                                         \
+    SS << V;                                                                   \
+    outs() << "= " << SS.str();                                                \
+    size_t NumSpaces = MaxOptWidth > SS.tell() ? MaxOptWidth - SS.tell() : 0;  \
+    outs().indent(NumSpaces) << " (default: ";                                 \
+    if (D.hasValue())                                                          \
+      outs() << D.getValue();                                                  \
+    else                                                                       \
+      outs() << "*no default*";                                                \
+    outs() << ")\n";                                                           \
+  }
 
 PRINT_OPT_DIFF(bool)
 PRINT_OPT_DIFF(boolOrDefault)

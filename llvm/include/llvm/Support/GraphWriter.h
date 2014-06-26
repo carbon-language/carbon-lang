@@ -184,8 +184,7 @@ public:
         O << "|" << DOT::EscapeString(NodeDesc);
     }
 
-    std::string edgeSourceLabels;
-    raw_string_ostream EdgeSourceLabels(edgeSourceLabels);
+    string_ostream EdgeSourceLabels;
     bool hasEdgeSourceLabels = getEdgeSourceLabels(EdgeSourceLabels, Node);
 
     if (hasEdgeSourceLabels) {

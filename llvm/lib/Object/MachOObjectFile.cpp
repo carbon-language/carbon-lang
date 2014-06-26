@@ -301,7 +301,7 @@ static unsigned getCPUType(const MachOObjectFile *O) {
 
 static void printRelocationTargetName(const MachOObjectFile *O,
                                       const MachO::any_relocation_info &RE,
-                                      raw_string_ostream &fmt) {
+                                      raw_ostream &fmt) {
   bool IsScattered = O->isRelocationScattered(RE);
 
   // Target of a scattered relocation is an address.  In the interest of
@@ -1010,8 +1010,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
 
   unsigned Arch = this->getArch();
 
-  std::string fmtbuf;
-  raw_string_ostream fmt(fmtbuf);
+  string_ostream fmt;
   unsigned Type = this->getAnyRelocationType(RE);
   bool IsPCRel = this->getAnyRelocationPCRel(RE);
 
@@ -1174,7 +1173,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
   } else
     printRelocationTargetName(this, RE, fmt);
 
-  fmt.flush();
+  StringRef fmtbuf = fmt.str();
   Result.append(fmtbuf.begin(), fmtbuf.end());
   return object_error::success;
 }

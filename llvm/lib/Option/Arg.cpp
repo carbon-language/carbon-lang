@@ -62,8 +62,7 @@ void Arg::dump() const {
 }
 
 std::string Arg::getAsString(const ArgList &Args) const {
-  SmallString<256> Res;
-  llvm::raw_svector_ostream OS(Res);
+  small_string_ostream<256> OS;
 
   ArgStringList ASL;
   render(Args, ASL);
@@ -95,8 +94,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
     break;
 
   case Option::RenderCommaJoinedStyle: {
-    SmallString<256> Res;
-    llvm::raw_svector_ostream OS(Res);
+    small_string_ostream<256> OS;
     OS << getSpelling();
     for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
       if (i) OS << ',';

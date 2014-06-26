@@ -1197,8 +1197,7 @@ void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {
 }
 
 std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
-  std::string s;
-  raw_string_ostream oss(s);
+  string_ostream oss;
   if (SU == &EntrySU)
     oss << "<entry>";
   else if (SU == &ExitSU)

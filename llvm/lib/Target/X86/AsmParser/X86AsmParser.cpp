@@ -2412,8 +2412,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     if (Match3 == Match_Success) MatchChars[NumMatches++] = Suffixes[2];
     if (Match4 == Match_Success) MatchChars[NumMatches++] = Suffixes[3];
 
-    SmallString<126> Msg;
-    raw_svector_ostream OS(Msg);
+    small_string_ostream<128> OS;
     OS << "ambiguous instructions require an explicit suffix (could be ";
     for (unsigned i = 0; i != NumMatches; ++i) {
       if (i != 0)

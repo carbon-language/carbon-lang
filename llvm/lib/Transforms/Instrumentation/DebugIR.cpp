@@ -352,14 +352,12 @@ private:
   }
 
   std::string getTypeName(Type *T) {
-    std::string TypeName;
-    raw_string_ostream TypeStream(TypeName);
+    string_ostream OS;
     if (T)
-      T->print(TypeStream);
+      T->print(OS);
     else
-      TypeStream << "Printing <null> Type";
-    TypeStream.flush();
-    return TypeName;
+      OS << "Printing <null> Type";
+    return OS.str();
   }
 
   /// Returns the MDNode that represents type T if it is already created, or 0

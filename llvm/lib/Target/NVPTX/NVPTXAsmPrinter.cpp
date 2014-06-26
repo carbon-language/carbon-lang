@@ -146,8 +146,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
 
     // Otherwise report the problem to the user.
     {
-      std::string S;
-      raw_string_ostream OS(S);
+      string_ostream OS;
       OS << "Unsupported expression in static initializer: ";
       CE->printAsOperand(OS, /*PrintType=*/ false,
                          !AP.MF ? nullptr : AP.MF->getFunction()->getParent());

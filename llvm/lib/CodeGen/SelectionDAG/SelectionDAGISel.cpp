@@ -3245,8 +3245,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
 
 void SelectionDAGISel::CannotYetSelect(SDNode *N) {
-  std::string msg;
-  raw_string_ostream Msg(msg);
+  string_ostream Msg;
   Msg << "Cannot select: ";
 
   if (N->getOpcode() != ISD::INTRINSIC_W_CHAIN &&

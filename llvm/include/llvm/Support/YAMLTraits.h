@@ -612,8 +612,7 @@ template<typename T>
 typename std::enable_if<has_ScalarTraits<T>::value,void>::type
 yamlize(IO &io, T &Val, bool) {
   if ( io.outputting() ) {
-    std::string Storage;
-    llvm::raw_string_ostream Buffer(Storage);
+    llvm::string_ostream Buffer;
     ScalarTraits<T>::output(Val, io.getContext(), Buffer);
     StringRef Str = Buffer.str();
     io.scalarString(Str, ScalarTraits<T>::mustQuote(Str));

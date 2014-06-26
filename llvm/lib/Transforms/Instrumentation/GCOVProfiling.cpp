@@ -316,11 +316,9 @@ namespace {
       }
       ReturnBlock = new GCOVBlock(i++, os);
 
-      std::string FunctionNameAndLine;
-      raw_string_ostream FNLOS(FunctionNameAndLine);
-      FNLOS << getFunctionName(SP) << SP.getLineNumber();
-      FNLOS.flush();
-      FuncChecksum = hash_value(FunctionNameAndLine);
+      string_ostream FnNameLine;
+      FnNameLine << getFunctionName(SP) << SP.getLineNumber();
+      FuncChecksum = hash_value(FnNameLine.str());
     }
 
     ~GCOVFunction() {
@@ -337,15 +335,14 @@ namespace {
     }
 
     std::string getEdgeDestinations() {
-      std::string EdgeDestinations;
-      raw_string_ostream EDOS(EdgeDestinations);
+      string_ostream EdgeDestinations;
       Function *F = Blocks.begin()->first->getParent();
       for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
         GCOVBlock &Block = *Blocks[I];
         for (int i = 0, e = Block.OutEdges.size(); i != e; ++i)
-          EDOS << Block.OutEdges[i]->Number;
+          EdgeDestinations << Block.OutEdges[i]->Number;
       }
-      return EdgeDestinations;
+      return EdgeDestinations.str();
     }
 
     uint32_t getFuncChecksum() {

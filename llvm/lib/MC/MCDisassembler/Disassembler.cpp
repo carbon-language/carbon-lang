@@ -270,8 +270,7 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   const MCDisassembler *DisAsm = DC->getDisAsm();
   MCInstPrinter *IP = DC->getIP();
   MCDisassembler::DecodeStatus S;
-  SmallVector<char, 64> InsnStr;
-  raw_svector_ostream Annotations(InsnStr);
+  small_string_ostream<64> Annotations;
   S = DisAsm->getInstruction(Inst, Size, MemoryObject, PC,
                              /*REMOVE*/ nulls(), Annotations);
   switch (S) {
@@ -281,13 +280,10 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     return 0;
 
   case MCDisassembler::Success: {
-    Annotations.flush();
-    StringRef AnnotationsStr = Annotations.str();
-
     SmallVector<char, 64> InsnStr;
     raw_svector_ostream OS(InsnStr);
     formatted_raw_ostream FormattedOS(OS);
-    IP->printInst(&Inst, FormattedOS, AnnotationsStr);
+    IP->printInst(&Inst, FormattedOS, Annotations.str());
 
     if (DC->getOptions() & LLVMDisassembler_Option_PrintLatency)
       emitLatency(DC, Inst);
