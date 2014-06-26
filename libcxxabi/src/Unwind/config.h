@@ -15,6 +15,7 @@
 #define LIBUNWIND_CONFIG_H
 
 #include <assert.h>
+#include <stdio.h>
 
 // Define static_assert() unless already defined by compiler.
 #ifndef __has_feature
