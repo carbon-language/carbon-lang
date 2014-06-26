@@ -118,7 +118,8 @@ private:
   void computeRegionCounts(const Decl *D);
   void applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
                                llvm::Function *Fn);
-  void loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader);
+  void loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,
+                        bool IsInMainFile);
   void emitCounterVariables();
   llvm::GlobalVariable *buildDataVar();
 

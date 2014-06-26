@@ -837,7 +837,8 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
     emitCounterVariables();
   }
   if (PGOReader) {
-    loadRegionCounts(PGOReader);
+    SourceManager &SM = CGM.getContext().getSourceManager();
+    loadRegionCounts(PGOReader, SM.isInMainFile(D->getLocation()));
     computeRegionCounts(D);
     applyFunctionAttributes(PGOReader, Fn);
   }
@@ -912,16 +913,17 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
   Builder.CreateStore(Count, Addr);
 }
 
-void CodeGenPGO::loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader) {
-  CGM.getPGOStats().Visited++;
+void CodeGenPGO::loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,
+                                  bool IsInMainFile) {
+  CGM.getPGOStats().addVisited(IsInMainFile);
   RegionCounts.reset(new std::vector<uint64_t>);
   uint64_t Hash;
   if (PGOReader->getFunctionCounts(getFuncName(), Hash, *RegionCounts)) {
-    CGM.getPGOStats().Missing++;
+    CGM.getPGOStats().addMissing(IsInMainFile);
     RegionCounts.reset();
   } else if (Hash != FunctionHash ||
              RegionCounts->size() != NumRegionCounters) {
-    CGM.getPGOStats().Mismatched++;
+    CGM.getPGOStats().addMismatched(IsInMainFile);
     RegionCounts.reset();
   }
 }

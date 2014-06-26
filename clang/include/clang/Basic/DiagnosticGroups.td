@@ -707,3 +707,4 @@ def BackendOptimizationRemarkAnalysis : DiagGroup<"pass-analysis">;
 
 // Instrumentation based profiling warnings.
 def ProfileInstrOutOfDate : DiagGroup<"profile-instr-out-of-date">;
+def ProfileInstrUnprofiled : DiagGroup<"profile-instr-unprofiled">;
