@@ -837,7 +837,7 @@ defm VPCMPUQZ : avx512_icmp_cc<0x1E, VK8, VR512, i512mem, memopv8i64,
               "vpcmpuq\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
               VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
-// avx512_cmp_packed - sse 1 & 2 compare packed instructions
+// avx512_cmp_packed - compare packed instructions
 multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
                            X86MemOperand x86memop, ValueType vt,
                            string suffix, Domain d> {
@@ -861,11 +861,11 @@ multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512PIi8<0xC2, MRMSrcReg,
-               (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
               !strconcat("vcmp", suffix,
                         " \t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"), [], d>;
     def rmi_alt : AVX512PIi8<0xC2, MRMSrcMem,
-               (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
               !strconcat("vcmp", suffix,
                         " \t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"), [], d>;
   }
