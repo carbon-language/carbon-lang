@@ -32,14 +32,16 @@ namespace libunwind {
 #include "Registers.hpp"
 
 #if LIBCXXABI_ARM_EHABI
-#if __LINUX__
- // Emulate the BSD dl_unwind_find_exidx API when on a GNU libdl system.
- typedef long unsigned int *_Unwind_Ptr;
- extern "C" _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr targetAddr, int *length);
- _Unwind_Ptr (*dl_unwind_find_exidx)(_Unwind_Ptr targetAddr, int *length) =
-     __gnu_Unwind_Find_exidx;
+#if __linux__
+
+typedef long unsigned int *_Unwind_Ptr;
+extern "C" _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr addr, int *len);
+
+// Emulate the BSD dl_unwind_find_exidx API when on a GNU libdl system.
+#define dl_unwind_find_exidx __gnu_Unwind_Find_exidx
+
 #else
- #include <link.h>
+#include <link.h>
 #endif
 #endif  // LIBCXXABI_ARM_EHABI
 
@@ -353,7 +355,7 @@ inline bool LocalAddressSpace::findFunctionName(pint_t addr, char *buf,
   Dl_info dyldInfo;
   if (dladdr((void *)addr, &dyldInfo)) {
     if (dyldInfo.dli_sname != NULL) {
-      strlcpy(buf, dyldInfo.dli_sname, bufLen);
+      snprintf(buf, bufLen, "%s", dyldInfo.dli_sname);
       *offset = (addr - (pint_t) dyldInfo.dli_saddr);
       return true;
     }
