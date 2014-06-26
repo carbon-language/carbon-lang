@@ -10,8 +10,8 @@ your patches for Clang and LLVM at `LLVM's Phabricator`_ instance.
 
 While Phabricator is a useful tool for some, the relevant -commits mailing list
 is the system of record for all LLVM code review. The mailing list should be
-CC'd on all reviews, and Phabricator users should be prepared to respond to
-free-form comments in mail sent to the commits list.
+added as a subscriber on all reviews, and Phabricator users should be prepared
+to respond to free-form comments in mail sent to the commits list.
 
 Sign up
 -------
@@ -20,7 +20,7 @@ To get started with Phabricator, navigate to `http://reviews.llvm.org`_ and
 click the power icon in the top right. You can register with a GitHub account,
 a Google account, or you can create your own profile.
 
-Make *sure* that the email address registered with Phabricator is be subscribed
+Make *sure* that the email address registered with Phabricator is subscribed
 to the relevant -commits mailing list. If your are not subscribed to the commit
 list, all mail sent by Phabricator on your behalf will be held for moderation.
 
