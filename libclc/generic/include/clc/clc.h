@@ -11,9 +11,6 @@
 /* Function Attributes */
 #include <clc/clcfunc.h>
 
-/* 6.9 Preprocessor Directives and Macros */
-#include <clc/clcversion.h>
-
 /* 6.1 Supported Data Types */
 #include <clc/clctypes.h>
 
@@ -22,6 +19,9 @@
 
 /* 6.2.4.2 Reinterpreting Types Using as_type() and as_typen() */
 #include <clc/as_type.h>
+
+/* 6.9 Preprocessor Directives and Macros */
+#include <clc/clcversion.h>
 
 /* 6.11.1 Work-Item Functions */
 #include <clc/workitem/get_global_size.h>

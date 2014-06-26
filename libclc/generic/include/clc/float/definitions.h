@@ -49,7 +49,7 @@
 
 #ifdef cl_khr_fp16
 
-#if __OPENCL_VERSION__ >= CL_VERSION_1_2
+#if __OPENCL_VERSION__ >= 120
 
 #define HALF_DIG        3
 #define HALF_MANT_DIG   11
