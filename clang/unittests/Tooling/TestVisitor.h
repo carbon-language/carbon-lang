@@ -59,6 +59,7 @@ public:
       case Lang_OBJCXX11:
         Args.push_back("-ObjC++");
         Args.push_back("-std=c++11");
+        Args.push_back("-fblocks");
         break;
     }
     return tooling::runToolOnCodeWithArgs(CreateTestAction(), Code, Args);
