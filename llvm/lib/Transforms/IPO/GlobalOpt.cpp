@@ -1980,9 +1980,10 @@ isSimpleEnoughValueToCommit(Constant *C,
 static bool isSimpleEnoughValueToCommitHelper(Constant *C,
                                    SmallPtrSet<Constant*, 8> &SimpleConstants,
                                    const DataLayout *DL) {
-  // Simple global addresses are supported, do not allow dllimport globals.
+  // Simple global addresses are supported, do not allow dllimport or
+  // thread-local globals.
   if (auto *GV = dyn_cast<GlobalValue>(C))
-    return !GV->hasDLLImportStorageClass();
+    return !GV->hasDLLImportStorageClass() && !GV->isThreadLocal();
 
   // Simple integer, undef, constant aggregate zero, etc are all supported.
   if (C->getNumOperands() == 0 || isa<BlockAddress>(C))

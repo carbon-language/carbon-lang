@@ -72,9 +72,19 @@ entry:
   ret void
 }
 
+@threadlocalptr = global i32* null, align 4
+; CHECK: @threadlocalptr = global i32* null, align 4
+@threadlocalvar = external thread_local global i32
+define internal void @test5() {
+entry:
+  store i32* @threadlocalvar, i32** @threadlocalptr, align 4
+  ret void
+}
+
 @llvm.global_ctors = appending constant
-  [4 x { i32, void ()* }]
+  [5 x { i32, void ()* }]
   [{ i32, void ()* } { i32 65535, void ()* @test1 },
    { i32, void ()* } { i32 65535, void ()* @test2 },
    { i32, void ()* } { i32 65535, void ()* @test3 },
+   { i32, void ()* } { i32 65535, void ()* @test4 },
    { i32, void ()* } { i32 65535, void ()* @test4 }]
