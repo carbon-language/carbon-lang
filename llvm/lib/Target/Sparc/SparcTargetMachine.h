@@ -14,50 +14,40 @@
 #ifndef SPARCTARGETMACHINE_H
 #define SPARCTARGETMACHINE_H
 
-#include "SparcFrameLowering.h"
-#include "SparcISelLowering.h"
 #include "SparcInstrInfo.h"
-#include "SparcJITInfo.h"
-#include "SparcSelectionDAGInfo.h"
 #include "SparcSubtarget.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
 class SparcTargetMachine : public LLVMTargetMachine {
   SparcSubtarget Subtarget;
-  const DataLayout DL;       // Calculates type size & alignment
-  SparcInstrInfo InstrInfo;
-  SparcTargetLowering TLInfo;
-  SparcSelectionDAGInfo TSInfo;
-  SparcFrameLowering FrameLowering;
-  SparcJITInfo JITInfo;
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL, bool is64bit);
 
-  const SparcInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const TargetFrameLowering  *getFrameLowering() const override {
-    return &FrameLowering;
+  const SparcInstrInfo *getInstrInfo() const override {
+    return getSubtargetImpl()->getInstrInfo();
+  }
+  const TargetFrameLowering *getFrameLowering() const override {
+    return getSubtargetImpl()->getFrameLowering();
   }
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const SparcRegisterInfo *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
+    return getSubtargetImpl()->getRegisterInfo();
   }
-  const SparcTargetLowering* getTargetLowering() const override {
-    return &TLInfo;
+  const SparcTargetLowering *getTargetLowering() const override {
+    return getSubtargetImpl()->getTargetLowering();
   }
-  const SparcSelectionDAGInfo* getSelectionDAGInfo() const override {
-    return &TSInfo;
+  const SparcSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
-  SparcJITInfo *getJITInfo() override {
-    return &JITInfo;
+  SparcJITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
   }
-  const DataLayout       *getDataLayout() const override { return &DL; }
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

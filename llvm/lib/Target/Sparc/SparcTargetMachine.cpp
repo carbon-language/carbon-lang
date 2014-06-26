@@ -23,32 +23,6 @@ extern "C" void LLVMInitializeSparcTarget() {
   RegisterTargetMachine<SparcV9TargetMachine> Y(TheSparcV9Target);
 }
 
-static std::string computeDataLayout(const SparcSubtarget &ST) {
-  // Sparc is big endian.
-  std::string Ret = "E-m:e";
-
-  // Some ABIs have 32bit pointers.
-  if (!ST.is64Bit())
-    Ret += "-p:32:32";
-
-  // Alignments for 64 bit integers.
-  Ret += "-i64:64";
-
-  // On SparcV9 128 floats are aligned to 128 bits, on others only to 64.
-  // On SparcV9 registers can hold 64 or 32 bits, on others only 32.
-  if (ST.is64Bit())
-    Ret += "-n32:64";
-  else
-    Ret += "-f128:64-n32";
-
-  if (ST.is64Bit())
-    Ret += "-S128";
-  else
-    Ret += "-S64";
-
-  return Ret;
-}
-
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
 SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
@@ -58,11 +32,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
                                        CodeGenOpt::Level OL,
                                        bool is64bit)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, is64bit),
-    DL(computeDataLayout(Subtarget)),
-    InstrInfo(Subtarget),
-    TLInfo(*this), TSInfo(DL),
-    FrameLowering(Subtarget) {
+    Subtarget(TT, CPU, FS, *this, is64bit) {
   initAsmInfo();
 }
 
