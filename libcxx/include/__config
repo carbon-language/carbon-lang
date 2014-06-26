@@ -339,7 +339,11 @@ typedef __char32_t char32_t;
 #endif
 
 #if __has_feature(underlying_type)
-#  define _LIBCXX_UNDERLYING_TYPE(T) __underlying_type(T)
+#  define _LIBCPP_UNDERLYING_TYPE(T) __underlying_type(T)
+#endif
+
+#if __has_feature(is_literal)
+#  define _LIBCPP_IS_LITERAL(T) __is_literal(T)
 #endif
 
 // Inline namespaces are available in Clang regardless of C++ dialect.
@@ -362,6 +366,11 @@ namespace std {
 #define _ALIGNAS_TYPE(x) __attribute__((__aligned__(__alignof(x))))
 
 #define _LIBCPP_NORETURN __attribute__((noreturn))
+
+#if _GNUC_VER >= 407
+#define _LIBCPP_UNDERLYING_TYPE(T) __underlying_type(T)
+#define _LIBCPP_IS_LITERAL(T) __is_literal_type(T)
+#endif
 
 #if !__EXCEPTIONS
 #define _LIBCPP_NO_EXCEPTIONS

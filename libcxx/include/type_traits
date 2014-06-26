@@ -2971,8 +2971,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_pod
 // is_literal_type;
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_literal_type
-#if __has_feature(is_literal)
-    : public integral_constant<bool, __is_literal(_Tp)>
+#ifdef _LIBCPP_IS_LITERAL
+    : public integral_constant<bool, _LIBCPP_IS_LITERAL(_Tp)>
 #else
     : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value ||
                               is_reference<typename remove_all_extents<_Tp>::type>::value>
@@ -3363,19 +3363,19 @@ struct __is_nothrow_swappable
 
 #endif  // __has_feature(cxx_noexcept)
 
-#ifdef _LIBCXX_UNDERLYING_TYPE
+#ifdef _LIBCPP_UNDERLYING_TYPE
 
 template <class _Tp>
 struct underlying_type
 {
-    typedef _LIBCXX_UNDERLYING_TYPE(_Tp) type;
+    typedef _LIBCPP_UNDERLYING_TYPE(_Tp) type;
 };
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> using underlying_type_t = typename underlying_type<_Tp>::type;
 #endif
 
-#else  // _LIBCXX_UNDERLYING_TYPE
+#else  // _LIBCPP_UNDERLYING_TYPE
 
 template <class _Tp, bool _Support = false>
 struct underlying_type
@@ -3385,7 +3385,7 @@ struct underlying_type
                             "libc++ does not know how to use it.");
 };
 
-#endif // _LIBCXX_UNDERLYING_TYPE
+#endif // _LIBCPP_UNDERLYING_TYPE
 
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
