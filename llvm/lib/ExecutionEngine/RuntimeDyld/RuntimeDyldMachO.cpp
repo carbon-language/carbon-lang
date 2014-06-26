@@ -65,7 +65,10 @@ public:
     initOldAddress();
   }
 
-  virtual ~MachOObjectImage() {}
+  virtual ~MachOObjectImage() {
+    if (Registered)
+      deregisterWithDebugger();
+  }
 
   // Subclasses can override these methods to update the image with loaded
   // addresses for sections and common symbols
