@@ -4184,9 +4184,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT__SLASH_fallback) &&
       Output.getType() == types::TY_Object &&
       (InputType == types::TY_C || InputType == types::TY_CXX)) {
-    tools::visualstudio::Compile CL(getToolChain());
-    Command *CLCommand = CL.GetCommand(C, JA, Output, Inputs, Args,
-                                       LinkingOutput);
+    Command *CLCommand = getCLFallback()->GetCommand(C, JA, Output, Inputs,
+                                                     Args, LinkingOutput);
     // RTTI support in clang-cl is a work in progress.  Fall back to MSVC early
     // if we are using 'clang-cl /fallback /GR'.
     // FIXME: Remove this when RTTI is finished.
@@ -4448,6 +4447,12 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     else
       CmdArgs.push_back("msvc");
   }
+}
+
+visualstudio::Compile *Clang::getCLFallback() const {
+  if (!CLFallback)
+    CLFallback.reset(new visualstudio::Compile(getToolChain()));
+  return CLFallback.get();
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
