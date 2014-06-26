@@ -3840,7 +3840,8 @@ public:
       .Cases("cortex-r4", "cortex-r5", "7R")
       .Case("swift", "7S")
       .Case("cyclone", "8A")
-      .Cases("cortex-m3", "cortex-m4", "7M")
+      .Case("cortex-m3", "7M")
+      .Case("cortex-m4", "7EM")
       .Case("cortex-m0", "6M")
       .Cases("cortex-a53", "cortex-a57", "8A")
       .Default(nullptr);
