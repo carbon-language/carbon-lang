@@ -479,7 +479,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // not proof this without -basicaa we would fail. We disable this check to
   // not cause irrelevant verification failures.
   if (!AS.isMustAlias())
-    return invalid<ReportAlias>(Context, /*Assert=*/true, &Inst, &AS);
+    return invalid<ReportAlias>(Context, /*Assert=*/false, &Inst, AS);
 
   return true;
 }

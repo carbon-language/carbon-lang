@@ -28,6 +28,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Support/Casting.h"
 
 #include <string>
 #include <memory>
@@ -66,6 +67,54 @@ void emitRejectionRemarks(const llvm::Function &F, const RejectLog &Log);
 /// @param F The function we emit remarks for
 /// @param R The region that marks a valid Scop
 void emitValidRemarks(const llvm::Function &F, const Region *R);
+
+// Discriminator for LLVM-style RTTI (dyn_cast<> et al.)
+enum RejectReasonKind {
+  // CFG Category
+  rrkCFG,
+  rrkNonBranchTerminator,
+  rrkCondition,
+  rrkLastCFG,
+
+  // Non-Affinity
+  rrkAffFunc,
+  rrkUndefCond,
+  rrkInvalidCond,
+  rrkUndefOperand,
+  rrkNonAffBranch,
+  rrkNoBasePtr,
+  rrkUndefBasePtr,
+  rrkVariantBasePtr,
+  rrkNonAffineAccess,
+  rrkLastAffFunc,
+
+  // IndVar
+  rrkIndVar,
+  rrkPhiNodeRefInRegion,
+  rrkNonCanonicalPhiNode,
+  rrkLoopHeader,
+  rrkLastIndVar,
+
+  rrkIndEdge,
+
+  rrkLoopBound,
+
+  rrkFuncCall,
+
+  rrkAlias,
+
+  rrkSimpleLoop,
+
+  // Other
+  rrkOther,
+  rrkIntToPtr,
+  rrkAlloca,
+  rrkUnknownInst,
+  rrkPHIinExit,
+  rrkEntry,
+  rrkLastOther
+};
+
 //===----------------------------------------------------------------------===//
 /// @brief Base class of all reject reasons found during Scop detection.
 ///
@@ -74,7 +123,14 @@ void emitValidRemarks(const llvm::Function &F, const Region *R);
 /// went wrong in the Scop detection.
 class RejectReason {
   //===--------------------------------------------------------------------===//
+private:
+  const RejectReasonKind Kind;
+
 public:
+  RejectReasonKind getKind() const { return Kind; }
+
+  RejectReason(RejectReasonKind K) : Kind(K) {}
+
   virtual ~RejectReason() {}
 
   /// @brief Generate a reasonable diagnostic message describing this error.
@@ -128,14 +184,27 @@ public:
 class ReportCFG : public RejectReason {
   //===--------------------------------------------------------------------===//
 public:
-  ReportCFG();
+  ReportCFG(const RejectReasonKind K);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 };
 
+//===----------------------------------------------------------------------===//
+/// @brief Captures a non-branch terminator within a Scop candidate.
 class ReportNonBranchTerminator : public ReportCFG {
   BasicBlock *BB;
 
 public:
-  ReportNonBranchTerminator(BasicBlock *BB) : ReportCFG(), BB(BB) {}
+  ReportNonBranchTerminator(BasicBlock *BB)
+      : ReportCFG(rrkNonBranchTerminator), BB(BB) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -153,7 +222,12 @@ class ReportCondition : public ReportCFG {
   BasicBlock *BB;
 
 public:
-  ReportCondition(BasicBlock *BB) : ReportCFG(), BB(BB) {}
+  ReportCondition(BasicBlock *BB) : ReportCFG(rrkCondition), BB(BB) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -174,11 +248,19 @@ class ReportAffFunc : public RejectReason {
   const Instruction *Inst;
 
 public:
-  ReportAffFunc(const Instruction *Inst);
+  ReportAffFunc(const RejectReasonKind K, const Instruction *Inst);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
+  /// @name RejectReason interface
+  //@{
   virtual const DebugLoc &getDebugLoc() const override {
     return Inst->getDebugLoc();
-  }
+  };
+  //@}
 };
 
 //===----------------------------------------------------------------------===//
@@ -191,7 +273,12 @@ class ReportUndefCond : public ReportAffFunc {
 
 public:
   ReportUndefCond(const Instruction *Inst, BasicBlock *BB)
-      : ReportAffFunc(Inst), BB(BB) {}
+      : ReportAffFunc(rrkUndefCond, Inst), BB(BB) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -211,7 +298,12 @@ class ReportInvalidCond : public ReportAffFunc {
 
 public:
   ReportInvalidCond(const Instruction *Inst, BasicBlock *BB)
-      : ReportAffFunc(Inst), BB(BB) {}
+      : ReportAffFunc(rrkInvalidCond, Inst), BB(BB) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -229,7 +321,12 @@ class ReportUndefOperand : public ReportAffFunc {
 
 public:
   ReportUndefOperand(BasicBlock *BB, const Instruction *Inst)
-      : ReportAffFunc(Inst), BB(BB) {}
+      : ReportAffFunc(rrkUndefOperand, Inst), BB(BB) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -254,10 +351,15 @@ class ReportNonAffBranch : public ReportAffFunc {
 public:
   ReportNonAffBranch(BasicBlock *BB, const SCEV *LHS, const SCEV *RHS,
                      const Instruction *Inst)
-      : ReportAffFunc(Inst), BB(BB), LHS(LHS), RHS(RHS) {}
+      : ReportAffFunc(rrkNonAffBranch, Inst), BB(BB), LHS(LHS), RHS(RHS) {}
 
   const SCEV *lhs() { return LHS; }
   const SCEV *rhs() { return RHS; }
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -270,7 +372,13 @@ public:
 class ReportNoBasePtr : public ReportAffFunc {
   //===--------------------------------------------------------------------===//
 public:
-  ReportNoBasePtr(const Instruction *Inst) : ReportAffFunc(Inst) {}
+  ReportNoBasePtr(const Instruction *Inst)
+      : ReportAffFunc(rrkNoBasePtr, Inst) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -283,7 +391,13 @@ public:
 class ReportUndefBasePtr : public ReportAffFunc {
   //===--------------------------------------------------------------------===//
 public:
-  ReportUndefBasePtr(const Instruction *Inst) : ReportAffFunc(Inst) {}
+  ReportUndefBasePtr(const Instruction *Inst)
+      : ReportAffFunc(rrkUndefBasePtr, Inst) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -301,7 +415,12 @@ class ReportVariantBasePtr : public ReportAffFunc {
 
 public:
   ReportVariantBasePtr(Value *BaseValue, const Instruction *Inst)
-      : ReportAffFunc(Inst), BaseValue(BaseValue) {}
+      : ReportAffFunc(rrkVariantBasePtr, Inst), BaseValue(BaseValue) {}
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -319,9 +438,15 @@ class ReportNonAffineAccess : public ReportAffFunc {
 
 public:
   ReportNonAffineAccess(const SCEV *AccessFunction, const Instruction *Inst)
-      : ReportAffFunc(Inst), AccessFunction(AccessFunction) {}
+      : ReportAffFunc(rrkNonAffineAccess, Inst),
+        AccessFunction(AccessFunction) {}
 
   const SCEV *get() { return AccessFunction; }
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -337,7 +462,7 @@ public:
 class ReportIndVar : public RejectReason {
   //===--------------------------------------------------------------------===//
 public:
-  ReportIndVar();
+  ReportIndVar(const RejectReasonKind K);
 };
 
 //===----------------------------------------------------------------------===//
@@ -350,6 +475,11 @@ class ReportPhiNodeRefInRegion : public ReportIndVar {
 
 public:
   ReportPhiNodeRefInRegion(Instruction *Inst);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -369,6 +499,11 @@ class ReportNonCanonicalPhiNode : public ReportIndVar {
 public:
   ReportNonCanonicalPhiNode(Instruction *Inst);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -387,6 +522,11 @@ class ReportLoopHeader : public ReportIndVar {
 public:
   ReportLoopHeader(Loop *L);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -403,6 +543,11 @@ class ReportIndEdge : public RejectReason {
 
 public:
   ReportIndEdge(BasicBlock *BB);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -427,6 +572,11 @@ public:
 
   const SCEV *loopCount() { return LoopCount; }
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -444,6 +594,11 @@ class ReportFuncCall : public RejectReason {
 
 public:
   ReportFuncCall(Instruction *Inst);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -463,11 +618,18 @@ class ReportAlias : public RejectReason {
   /// @param AS The invalid alias set to format.
   std::string formatInvalidAlias(AliasSet &AS) const;
 
-  AliasSet *AS;
   Instruction *Inst;
+  AliasSet &AS;
 
 public:
-  ReportAlias(Instruction *Inst, AliasSet *AS);
+  ReportAlias(Instruction *Inst, AliasSet &AS);
+
+  AliasSet &getAliasSet() { return AS; }
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -483,6 +645,11 @@ class ReportSimpleLoop : public RejectReason {
 public:
   ReportSimpleLoop();
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -494,7 +661,12 @@ public:
 class ReportOther : public RejectReason {
   //===--------------------------------------------------------------------===//
 public:
-  ReportOther();
+  ReportOther(const RejectReasonKind K);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -513,6 +685,11 @@ class ReportIntToPtr : public ReportOther {
 public:
   ReportIntToPtr(Instruction *BaseValue);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -528,6 +705,11 @@ class ReportAlloca : public ReportOther {
 
 public:
   ReportAlloca(Instruction *Inst);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
@@ -545,6 +727,11 @@ class ReportUnknownInst : public ReportOther {
 public:
   ReportUnknownInst(Instruction *Inst);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -561,6 +748,11 @@ class ReportPHIinExit : public ReportOther {
 public:
   ReportPHIinExit(Instruction *Inst);
 
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
@@ -576,6 +768,11 @@ class ReportEntry : public ReportOther {
 
 public:
   ReportEntry(BasicBlock *BB);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
 
   /// @name RejectReason interface
   //@{
