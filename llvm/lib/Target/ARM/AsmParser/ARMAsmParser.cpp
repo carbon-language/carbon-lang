@@ -3082,17 +3082,25 @@ bool ARMAsmParser::tryParseRegisterWithWriteBack(OperandVector &Operands) {
 }
 
 /// MatchCoprocessorOperandName - Try to parse an coprocessor related
-/// instruction with a symbolic operand name. Example: "p1", "p7", "c3",
-/// "c5", ...
+/// instruction with a symbolic operand name.
+/// We accept "crN" syntax for GAS compatibility.
+/// <operand-name> ::= <prefix><number>
+/// If CoprocOp is 'c', then:
+///   <prefix> ::= c | cr
+/// If CoprocOp is 'p', then :
+///   <prefix> ::= p
+/// <number> ::= integer in range [0, 15]
 static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   // Use the same layout as the tablegen'erated register name matcher. Ugly,
   // but efficient.
+  if (Name.size() < 2 || Name[0] != CoprocOp)
+    return -1;
+  Name = (Name[1] == 'r') ? Name.drop_front(2) : Name.drop_front();
+
   switch (Name.size()) {
   default: return -1;
-  case 2:
-    if (Name[0] != CoprocOp)
-      return -1;
-    switch (Name[1]) {
+  case 1:
+    switch (Name[0]) {
     default:  return -1;
     case '0': return 0;
     case '1': return 1;
@@ -3105,10 +3113,10 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
     case '8': return 8;
     case '9': return 9;
     }
-  case 3:
-    if (Name[0] != CoprocOp || Name[1] != '1')
+  case 2:
+    if (Name[0] != '1')
       return -1;
-    switch (Name[2]) {
+    switch (Name[1]) {
     default:  return -1;
     // p10 and p11 are invalid for coproc instructions (reserved for FP/NEON)
     case '0': return CoprocOp == 'p'? -1: 10;
