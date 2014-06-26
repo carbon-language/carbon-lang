@@ -21,8 +21,6 @@
 
 namespace llvm {
   class format_object_base;
-  template <typename T>
-  class SmallVectorImpl;
 
   namespace sys {
     namespace fs {
