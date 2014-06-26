@@ -52,6 +52,20 @@ namespace polly {
 void getDebugLocation(const Region *R, unsigned &LineBegin, unsigned &LineEnd,
                       std::string &FileName);
 
+class RejectLog;
+/// @brief Emit optimization remarks about the rejected regions to the user.
+///
+/// This emits the content of the reject log as optimization remarks.
+/// Remember to at least track failures (-polly-detect-track-failures).
+/// @param F The function we emit remarks for.
+/// @param Log The error log containing all messages being emitted as remark.
+void emitRejectionRemarks(const llvm::Function &F, const RejectLog &Log);
+
+/// @brief Emit diagnostic remarks for a valid Scop
+///
+/// @param F The function we emit remarks for
+/// @param R The region that marks a valid Scop
+void emitValidRemarks(const llvm::Function &F, const Region *R);
 //===----------------------------------------------------------------------===//
 /// @brief Base class of all reject reasons found during Scop detection.
 ///
@@ -67,6 +81,23 @@ public:
   ///
   /// @return A debug message representing this error.
   virtual std::string getMessage() const = 0;
+
+  /// @brief Generate a message for the end-user describing this error.
+  ///
+  /// The message provided has to be suitable for the end-user. So it should
+  /// not reference any LLVM internal data structures or terminology.
+  /// Ideally, the message helps the end-user to increase the size of the
+  /// regions amenable to Polly.
+  ///
+  /// @return A short message representing this error.
+  virtual std::string getEndUserMessage() const {
+    return "Unspecified error.";
+  };
+
+  /// @brief Get the source location of this error.
+  ///
+  /// @return The debug location for this error.
+  virtual const llvm::DebugLoc &getDebugLoc() const;
 };
 
 typedef std::shared_ptr<RejectReason> RejectReasonPtr;
@@ -79,10 +110,10 @@ class RejectLog {
 public:
   explicit RejectLog(Region *R) : R(R) {}
 
-  typedef llvm::SmallVector<RejectReasonPtr, 1>::iterator iterator;
+  typedef llvm::SmallVector<RejectReasonPtr, 1>::const_iterator iterator;
 
-  iterator begin() { return ErrorReports.begin(); }
-  iterator end() { return ErrorReports.end(); }
+  iterator begin() const { return ErrorReports.begin(); }
+  iterator end() const { return ErrorReports.end(); }
   size_t size() { return ErrorReports.size(); }
 
   const Region *region() const { return R; }
@@ -104,11 +135,12 @@ class ReportNonBranchTerminator : public ReportCFG {
   BasicBlock *BB;
 
 public:
-  ReportNonBranchTerminator(BasicBlock *BB) : BB(BB) {}
+  ReportNonBranchTerminator(BasicBlock *BB) : ReportCFG(), BB(BB) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -121,11 +153,12 @@ class ReportCondition : public ReportCFG {
   BasicBlock *BB;
 
 public:
-  ReportCondition(BasicBlock *BB) : BB(BB) {}
+  ReportCondition(BasicBlock *BB) : ReportCFG(), BB(BB) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -136,8 +169,16 @@ public:
 /// this class.
 class ReportAffFunc : public RejectReason {
   //===--------------------------------------------------------------------===//
+
+  // The instruction that caused non-affinity to occur.
+  const Instruction *Inst;
+
 public:
-  ReportAffFunc();
+  ReportAffFunc(const Instruction *Inst);
+
+  virtual const DebugLoc &getDebugLoc() const override {
+    return Inst->getDebugLoc();
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -149,11 +190,12 @@ class ReportUndefCond : public ReportAffFunc {
   BasicBlock *BB;
 
 public:
-  ReportUndefCond(BasicBlock *BB) : BB(BB) {}
+  ReportUndefCond(const Instruction *Inst, BasicBlock *BB)
+      : ReportAffFunc(Inst), BB(BB) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -168,11 +210,12 @@ class ReportInvalidCond : public ReportAffFunc {
   BasicBlock *BB;
 
 public:
-  ReportInvalidCond(BasicBlock *BB) : BB(BB) {}
+  ReportInvalidCond(const Instruction *Inst, BasicBlock *BB)
+      : ReportAffFunc(Inst), BB(BB) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -185,11 +228,12 @@ class ReportUndefOperand : public ReportAffFunc {
   BasicBlock *BB;
 
 public:
-  ReportUndefOperand(BasicBlock *BB) : BB(BB) {}
+  ReportUndefOperand(BasicBlock *BB, const Instruction *Inst)
+      : ReportAffFunc(Inst), BB(BB) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -208,15 +252,16 @@ class ReportNonAffBranch : public ReportAffFunc {
   //@}
 
 public:
-  ReportNonAffBranch(BasicBlock *BB, const SCEV *LHS, const SCEV *RHS)
-      : BB(BB), LHS(LHS), RHS(RHS) {}
+  ReportNonAffBranch(BasicBlock *BB, const SCEV *LHS, const SCEV *RHS,
+                     const Instruction *Inst)
+      : ReportAffFunc(Inst), BB(BB), LHS(LHS), RHS(RHS) {}
 
   const SCEV *lhs() { return LHS; }
   const SCEV *rhs() { return RHS; }
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -225,9 +270,11 @@ public:
 class ReportNoBasePtr : public ReportAffFunc {
   //===--------------------------------------------------------------------===//
 public:
+  ReportNoBasePtr(const Instruction *Inst) : ReportAffFunc(Inst) {}
+
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -236,9 +283,11 @@ public:
 class ReportUndefBasePtr : public ReportAffFunc {
   //===--------------------------------------------------------------------===//
 public:
+  ReportUndefBasePtr(const Instruction *Inst) : ReportAffFunc(Inst) {}
+
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -251,11 +300,12 @@ class ReportVariantBasePtr : public ReportAffFunc {
   Value *BaseValue;
 
 public:
-  ReportVariantBasePtr(Value *BaseValue) : BaseValue(BaseValue) {}
+  ReportVariantBasePtr(Value *BaseValue, const Instruction *Inst)
+      : ReportAffFunc(Inst), BaseValue(BaseValue) {}
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -268,14 +318,14 @@ class ReportNonAffineAccess : public ReportAffFunc {
   const SCEV *AccessFunction;
 
 public:
-  ReportNonAffineAccess(const SCEV *AccessFunction)
-      : AccessFunction(AccessFunction) {}
+  ReportNonAffineAccess(const SCEV *AccessFunction, const Instruction *Inst)
+      : ReportAffFunc(Inst), AccessFunction(AccessFunction) {}
 
   const SCEV *get() { return AccessFunction; }
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -299,11 +349,12 @@ class ReportPhiNodeRefInRegion : public ReportIndVar {
   Instruction *Inst;
 
 public:
-  ReportPhiNodeRefInRegion(Instruction *Inst) : Inst(Inst) {}
+  ReportPhiNodeRefInRegion(Instruction *Inst);
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -316,11 +367,12 @@ class ReportNonCanonicalPhiNode : public ReportIndVar {
   Instruction *Inst;
 
 public:
-  ReportNonCanonicalPhiNode(Instruction *Inst) : Inst(Inst) {}
+  ReportNonCanonicalPhiNode(Instruction *Inst);
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -333,11 +385,12 @@ class ReportLoopHeader : public ReportIndVar {
   Loop *L;
 
 public:
-  ReportLoopHeader(Loop *L) : L(L) {}
+  ReportLoopHeader(Loop *L);
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -345,12 +398,16 @@ public:
 /// @brief Captures a region with invalid entering edges.
 class ReportIndEdge : public RejectReason {
   //===--------------------------------------------------------------------===//
+
+  BasicBlock *BB;
+
 public:
-  ReportIndEdge();
+  ReportIndEdge(BasicBlock *BB);
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -372,7 +429,8 @@ public:
 
   /// @name RejectReason interface
   //@{
-  virtual std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -389,7 +447,9 @@ public:
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 
@@ -398,20 +458,21 @@ public:
 class ReportAlias : public RejectReason {
   //===--------------------------------------------------------------------===//
 
-  // The offending alias set.
-  AliasSet *AS;
-
   /// @brief Format an invalid alias set.
   ///
   /// @param AS The invalid alias set to format.
   std::string formatInvalidAlias(AliasSet &AS) const;
 
+  AliasSet *AS;
+  Instruction *Inst;
+
 public:
-  ReportAlias(AliasSet *AS);
+  ReportAlias(Instruction *Inst, AliasSet *AS);
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -424,7 +485,7 @@ public:
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -437,7 +498,7 @@ public:
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const { return "Unknown reject reason"; }
+  virtual std::string getMessage() const override;
   //@}
 };
 
@@ -447,14 +508,15 @@ class ReportIntToPtr : public ReportOther {
   //===--------------------------------------------------------------------===//
 
   // The offending base value.
-  Value *BaseValue;
+  Instruction *BaseValue;
 
 public:
-  ReportIntToPtr(Value *BaseValue) : BaseValue(BaseValue) {}
+  ReportIntToPtr(Instruction *BaseValue);
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -465,11 +527,12 @@ class ReportAlloca : public ReportOther {
   Instruction *Inst;
 
 public:
-  ReportAlloca(Instruction *Inst) : Inst(Inst) {}
+  ReportAlloca(Instruction *Inst);
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -480,11 +543,12 @@ class ReportUnknownInst : public ReportOther {
   Instruction *Inst;
 
 public:
-  ReportUnknownInst(Instruction *Inst) : Inst(Inst) {}
+  ReportUnknownInst(Instruction *Inst);
 
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -492,10 +556,15 @@ public:
 /// @brief Captures errors with phi nodes in exit BBs.
 class ReportPHIinExit : public ReportOther {
   //===--------------------------------------------------------------------===//
+  Instruction *Inst;
+
 public:
+  ReportPHIinExit(Instruction *Inst);
+
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 
@@ -503,10 +572,15 @@ public:
 /// @brief Captures errors with regions containing the function entry block.
 class ReportEntry : public ReportOther {
   //===--------------------------------------------------------------------===//
+  BasicBlock *BB;
+
 public:
+  ReportEntry(BasicBlock *BB);
+
   /// @name RejectReason interface
   //@{
-  std::string getMessage() const;
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 

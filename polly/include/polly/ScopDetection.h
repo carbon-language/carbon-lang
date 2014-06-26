@@ -326,6 +326,23 @@ public:
   const_reject_iterator reject_end() const { return RejectLogs.end(); }
   //@}
 
+  /// @brief Emit rejection remarks for all smallest invalid regions.
+  ///
+  /// @param F The function to emit remarks for.
+  /// @param R The region to start the region tree traversal for.
+  void emitMissedRemarksForLeaves(const Function &F, const Region *R);
+
+  /// @brief Emit rejection remarks for the parent regions of all valid regions.
+  ///
+  /// Emitting rejection remarks for the parent regions of all valid regions
+  /// may give the end-user clues about how to increase the size of the
+  /// detected Scops.
+  ///
+  /// @param F The function to emit remarks for.
+  /// @param ValidRegions The set of valid regions to emit remarks for.
+  void emitMissedRemarksForValidRegions(const Function &F,
+                                        const RegionSet &ValidRegions);
+
   /// @brief Mark the function as invalid so we will not extract any scop from
   ///        the function.
   ///

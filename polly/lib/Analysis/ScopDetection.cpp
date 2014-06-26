@@ -250,11 +250,11 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
   // UndefValue is not allowed as condition.
   if (isa<UndefValue>(Condition))
-    return invalid<ReportUndefCond>(Context, /*Assert=*/true, &BB);
+    return invalid<ReportUndefCond>(Context, /*Assert=*/true, Br, &BB);
 
   // Only Constant and ICmpInst are allowed as condition.
   if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
-    return invalid<ReportInvalidCond>(Context, /*Assert=*/true, &BB);
+    return invalid<ReportInvalidCond>(Context, /*Assert=*/true, Br, &BB);
 
   // Allow perfectly nested conditions.
   assert(Br->getNumSuccessors() == 2 && "Unexpected number of successors");
@@ -271,7 +271,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     // Are both operands of the ICmp affine?
     if (isa<UndefValue>(ICmp->getOperand(0)) ||
         isa<UndefValue>(ICmp->getOperand(1)))
-      return invalid<ReportUndefOperand>(Context, /*Assert=*/true, &BB);
+      return invalid<ReportUndefOperand>(Context, /*Assert=*/true, &BB, ICmp);
 
     Loop *L = LI->getLoopFor(ICmp->getParent());
     const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
@@ -280,7 +280,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
         !isAffineExpr(&Context.CurRegion, RHS, *SE))
       return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB, LHS,
-                                         RHS);
+                                         RHS, ICmp);
   }
 
   // Allow loop exit conditions.
@@ -380,8 +380,8 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       const SCEVAddRecExpr *AF = PIAF.second;
       const Instruction *Insn = PIAF.first;
       if (Shape->DelinearizedSizes.empty())
-        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
-                                              PIAF.second);
+        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
+                                              Insn);
 
       MemAcc *Acc = new MemAcc(Insn, Shape);
       InsnToMemAcc.insert({Insn, Acc});
@@ -389,12 +389,14 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
                                  Shape->DelinearizedSizes);
       if (Shape->DelinearizedSizes.empty() ||
           Acc->DelinearizedSubscripts.empty())
-        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
+        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
+                                              Insn);
 
       // Check that the delinearized subscripts are affine.
       for (const SCEV *S : Acc->DelinearizedSubscripts)
         if (!isAffineExpr(&Context.CurRegion, S, *SE, BaseValue))
-          return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
+          return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
+                                                Insn);
     }
   }
   return true;
@@ -411,12 +413,12 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   BasePointer = dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
   if (!BasePointer)
-    return invalid<ReportNoBasePtr>(Context, /*Assert=*/true);
+    return invalid<ReportNoBasePtr>(Context, /*Assert=*/true, &Inst);
 
   BaseValue = BasePointer->getValue();
 
   if (isa<UndefValue>(BaseValue))
-    return invalid<ReportUndefBasePtr>(Context, /*Assert=*/true);
+    return invalid<ReportUndefBasePtr>(Context, /*Assert=*/true, &Inst);
 
   // Check that the base address of the access is invariant in the current
   // region.
@@ -424,7 +426,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     // Verification of this property is difficult as the independent blocks
     // pass may introduce aliasing that we did not have when running the
     // scop detection.
-    return invalid<ReportVariantBasePtr>(Context, /*Assert=*/false, BaseValue);
+    return invalid<ReportVariantBasePtr>(Context, /*Assert=*/false, BaseValue,
+                                         &Inst);
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
@@ -436,7 +439,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
     if (!PollyDelinearize || !AF)
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
-                                            AccessFunction);
+                                            AccessFunction, &Inst);
 
     const SCEV *ElementSize = SE->getElementSize(&Inst);
     Context.ElementSize[BasePointer] = ElementSize;
@@ -456,8 +459,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
-  if (isa<IntToPtrInst>(BaseValue))
-    return invalid<ReportIntToPtr>(Context, /*Assert=*/true, BaseValue);
+  if (IntToPtrInst *Inst = dyn_cast<IntToPtrInst>(BaseValue))
+    return invalid<ReportIntToPtr>(Context, /*Assert=*/true, Inst);
 
   if (IgnoreAliasing)
     return true;
@@ -476,7 +479,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // not proof this without -basicaa we would fail. We disable this check to
   // not cause irrelevant verification failures.
   if (!AS.isMustAlias())
-    return invalid<ReportAlias>(Context, /*Assert=*/true, &AS);
+    return invalid<ReportAlias>(Context, /*Assert=*/true, &Inst, &AS);
 
   return true;
 }
@@ -692,7 +695,7 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
   if (BasicBlock *Exit = R.getExit()) {
     BasicBlock::iterator I = Exit->begin();
     if (I != Exit->end() && isa<PHINode>(*I))
-      return invalid<ReportPHIinExit>(Context, /*Assert=*/true);
+      return invalid<ReportPHIinExit>(Context, /*Assert=*/true, I);
   }
 
   return true;
@@ -745,7 +748,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
         // Region entering edges come from the same loop but outside the region
         // are not allowed.
         if (L->contains(*PI) && !R.contains(*PI))
-          return invalid<ReportIndEdge>(Context, /*Assert=*/true);
+          return invalid<ReportIndEdge>(Context, /*Assert=*/true, *PI);
       }
     }
   }
@@ -753,7 +756,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   // SCoP cannot contain the entry block of the function, because we need
   // to insert alloca instruction there when translate scalar to array.
   if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock()))
-    return invalid<ReportEntry>(Context, /*Assert=*/true);
+    return invalid<ReportEntry>(Context, /*Assert=*/true, R.getEntry());
 
   if (!isValidExit(Context))
     return false;
@@ -780,6 +783,34 @@ void ScopDetection::printLocations(llvm::Function &F) {
   }
 }
 
+void
+ScopDetection::emitMissedRemarksForValidRegions(const Function &F,
+                                                const RegionSet &ValidRegions) {
+  for (const Region *R : ValidRegions) {
+    const Region *Parent = R->getParent();
+    if (Parent && !Parent->isTopLevelRegion() && RejectLogs.count(Parent))
+      emitRejectionRemarks(F, RejectLogs.at(Parent));
+  }
+}
+
+void ScopDetection::emitMissedRemarksForLeaves(const Function &F,
+                                               const Region *R) {
+  for (const std::unique_ptr<Region> &Child : *R) {
+    bool IsValid = ValidRegions.count(Child.get());
+    if (IsValid)
+      continue;
+
+    bool IsLeaf = Child->begin() == Child->end();
+    if (!IsLeaf)
+      emitMissedRemarksForLeaves(F, Child.get());
+    else {
+      if (RejectLogs.count(Child.get())) {
+        emitRejectionRemarks(F, RejectLogs.at(Child.get()));
+      }
+    }
+  }
+}
+
 bool ScopDetection::runOnFunction(llvm::Function &F) {
   LI = &getAnalysis<LoopInfo>();
   RI = &getAnalysis<RegionInfo>();
@@ -799,6 +830,15 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
     return false;
 
   findScops(*TopRegion);
+
+  // Only makes sense when we tracked errors.
+  if (PollyTrackFailures) {
+    emitMissedRemarksForValidRegions(F, ValidRegions);
+    emitMissedRemarksForLeaves(F, TopRegion);
+  }
+
+  for (const Region *R : ValidRegions)
+    emitValidRemarks(F, R);
 
   if (ReportLevel >= 1)
     printLocations(F);
