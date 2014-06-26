@@ -1272,6 +1272,11 @@ DEF_TRAVERSE_DECL(BlockDecl, {
   if (TypeSourceInfo *TInfo = D->getSignatureAsWritten())
     TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
   TRY_TO(TraverseStmt(D->getBody()));
+  for (const auto &I : D->captures()) {
+    if (I.hasCopyExpr()) {
+      TRY_TO(TraverseStmt(I.getCopyExpr()));
+    }
+  }
   // This return statement makes sure the traversal of nodes in
   // decls_begin()/decls_end() (done in the DEF_TRAVERSE_DECL macro)
   // is skipped - don't remove it.

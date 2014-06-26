@@ -561,6 +561,16 @@ TEST(RecursiveASTVisitor, HasCaptureDefaultLoc) {
                               LambdaDefaultCaptureVisitor::Lang_CXX11));
 }
 
+TEST(RecursiveASTVisitor, VisitsCopyExprOfBlockDeclCapture) {
+  DeclRefExprVisitor Visitor;
+  Visitor.ExpectMatch("x", 3, 24);
+  EXPECT_TRUE(Visitor.runOver("void f(int(^)(int)); \n"
+                              "void g() { \n"
+                              "  f([&](int x){ return x; }); \n"
+                              "}",
+                              DeclRefExprVisitor::Lang_OBJCXX11));
+}
+
 // Checks for lambda classes that are not marked as implicitly-generated.
 // (There should be none.)
 class ClassVisitor : public ExpectedLocationVisitor<ClassVisitor> {

@@ -39,7 +39,14 @@ public:
 
   virtual ~TestVisitor() { }
 
-  enum Language { Lang_C, Lang_CXX98, Lang_CXX11, Lang_OBJC, Lang_CXX=Lang_CXX98 };
+  enum Language {
+    Lang_C,
+    Lang_CXX98,
+    Lang_CXX11,
+    Lang_OBJC,
+    Lang_OBJCXX11,
+    Lang_CXX = Lang_CXX98
+  };
 
   /// \brief Runs the current AST visitor over the given code.
   bool runOver(StringRef Code, Language L = Lang_CXX) {
@@ -49,6 +56,10 @@ public:
       case Lang_CXX98: Args.push_back("-std=c++98"); break;
       case Lang_CXX11: Args.push_back("-std=c++11"); break;
       case Lang_OBJC: Args.push_back("-ObjC"); break;
+      case Lang_OBJCXX11:
+        Args.push_back("-ObjC++");
+        Args.push_back("-std=c++11");
+        break;
     }
     return tooling::runToolOnCodeWithArgs(CreateTestAction(), Code, Args);
   }
