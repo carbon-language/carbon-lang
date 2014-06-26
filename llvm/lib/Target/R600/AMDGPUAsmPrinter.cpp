@@ -36,6 +36,24 @@
 
 using namespace llvm;
 
+// TODO: This should get the default rounding mode from the kernel. We just set
+// the default here, but this could change if the OpenCL rounding mode pragmas
+// are used.
+//
+// The denormal mode here should match what is reported by the OpenCL runtime
+// for the CL_FP_DENORM bit from CL_DEVICE_{HALF|SINGLE|DOUBLE}_FP_CONFIG, but
+// can also be override to flush with the -cl-denorms-are-zero compiler flag.
+//
+// AMD OpenCL only sets flush none and reports CL_FP_DENORM for double
+// precision, and leaves single precision to flush all and does not report
+// CL_FP_DENORM for CL_DEVICE_SINGLE_FP_CONFIG. Mesa's OpenCL currently reports
+// CL_FP_DENORM for both.
+static uint32_t getFPMode(MachineFunction &) {
+  return FP_ROUND_MODE_SP(FP_ROUND_ROUND_TO_NEAREST) |
+         FP_ROUND_MODE_DP(FP_ROUND_ROUND_TO_NEAREST) |
+         FP_DENORM_MODE_SP(FP_DENORM_FLUSH_NONE) |
+         FP_DENORM_MODE_DP(FP_DENORM_FLUSH_NONE);
+}
 
 static AsmPrinter *createAMDGPUAsmPrinterPass(TargetMachine &tm,
                                               MCStreamer &Streamer) {
@@ -92,6 +110,10 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       OutStreamer.emitRawComment(" NumSgprs: " + Twine(KernelInfo.NumSGPR),
                                  false);
       OutStreamer.emitRawComment(" NumVgprs: " + Twine(KernelInfo.NumVGPR),
+                                 false);
+      OutStreamer.emitRawComment(" FloatMode: " + Twine(KernelInfo.FloatMode),
+                                 false);
+      OutStreamer.emitRawComment(" IeeeMode: " + Twine(KernelInfo.IEEEMode),
                                  false);
     } else {
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
@@ -280,16 +302,27 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   if (VCCUsed)
     MaxSGPR += 2;
 
-  ProgInfo.CodeLen = CodeSize;
-  ProgInfo.NumSGPR = MaxSGPR;
   ProgInfo.NumVGPR = MaxVGPR;
+  ProgInfo.NumSGPR = MaxSGPR;
+
+  // Set the value to initialize FP_ROUND and FP_DENORM parts of the mode
+  // register.
+  ProgInfo.FloatMode = getFPMode(MF);
+
+  // XXX: Not quite sure what this does, but sc seems to unset this.
+  ProgInfo.IEEEMode = 0;
+
+  // Do not clamp NAN to 0.
+  ProgInfo.DX10Clamp = 0;
+
+  ProgInfo.CodeLen = CodeSize;
 }
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
                                          const SIProgramInfo &KernelInfo) {
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
-
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+
   unsigned RsrcReg;
   switch (MFI->ShaderType) {
   default: // Fall through
@@ -299,25 +332,41 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
   case ShaderType::VERTEX:   RsrcReg = R_00B128_SPI_SHADER_PGM_RSRC1_VS; break;
   }
 
-  OutStreamer.EmitIntValue(RsrcReg, 4);
-  OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |
-                           S_00B028_SGPRS(KernelInfo.NumSGPR / 8), 4);
-
   unsigned LDSAlignShift;
   if (STM.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS) {
-    // LDS is allocated in 64 dword blocks
+    // LDS is allocated in 64 dword blocks.
     LDSAlignShift = 8;
   } else {
-    // LDS is allocated in 128 dword blocks
+    // LDS is allocated in 128 dword blocks.
     LDSAlignShift = 9;
   }
+
   unsigned LDSBlocks =
-          RoundUpToAlignment(MFI->LDSSize, 1 << LDSAlignShift) >> LDSAlignShift;
+    RoundUpToAlignment(MFI->LDSSize, 1 << LDSAlignShift) >> LDSAlignShift;
 
   if (MFI->ShaderType == ShaderType::COMPUTE) {
+    OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
+
+    const uint32_t ComputePGMRSrc1 =
+      S_00B848_VGPRS(KernelInfo.NumVGPR / 4) |
+      S_00B848_SGPRS(KernelInfo.NumSGPR / 8) |
+      S_00B848_PRIORITY(KernelInfo.Priority) |
+      S_00B848_FLOAT_MODE(KernelInfo.FloatMode) |
+      S_00B848_PRIV(KernelInfo.Priv) |
+      S_00B848_DX10_CLAMP(KernelInfo.DX10Clamp) |
+      S_00B848_IEEE_MODE(KernelInfo.DebugMode) |
+      S_00B848_IEEE_MODE(KernelInfo.IEEEMode);
+
+    OutStreamer.EmitIntValue(ComputePGMRSrc1, 4);
+
     OutStreamer.EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
     OutStreamer.EmitIntValue(S_00B84C_LDS_SIZE(LDSBlocks), 4);
+  } else {
+    OutStreamer.EmitIntValue(RsrcReg, 4);
+    OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |
+                             S_00B028_SGPRS(KernelInfo.NumSGPR / 8), 4);
   }
+
   if (MFI->ShaderType == ShaderType::PIXEL) {
     OutStreamer.EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
     OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(LDSBlocks), 4);

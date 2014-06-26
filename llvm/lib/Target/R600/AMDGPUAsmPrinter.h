@@ -25,13 +25,28 @@ class AMDGPUAsmPrinter : public AsmPrinter {
 private:
   struct SIProgramInfo {
     SIProgramInfo() :
-      CodeLen(0),
+      NumVGPR(0),
       NumSGPR(0),
-      NumVGPR(0) {}
+      Priority(0),
+      FloatMode(0),
+      Priv(0),
+      DX10Clamp(0),
+      DebugMode(0),
+      IEEEMode(0),
+      CodeLen(0) {}
 
+    // Fields set in PGM_RSRC1 pm4 packet.
+    uint32_t NumVGPR;
+    uint32_t NumSGPR;
+    uint32_t Priority;
+    uint32_t FloatMode;
+    uint32_t Priv;
+    uint32_t DX10Clamp;
+    uint32_t DebugMode;
+    uint32_t IEEEMode;
+
+    // Bonus information for debugging.
     uint64_t CodeLen;
-    unsigned NumSGPR;
-    unsigned NumVGPR;
   };
 
   void getSIProgramInfo(SIProgramInfo &Out, MachineFunction &MF) const;
