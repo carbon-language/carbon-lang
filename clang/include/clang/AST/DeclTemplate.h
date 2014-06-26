@@ -86,11 +86,11 @@ public:
 
   unsigned size() const { return NumParams; }
 
-  llvm::ArrayRef<NamedDecl*> asArray() {
-    return llvm::ArrayRef<NamedDecl*>(begin(), size());
+  ArrayRef<NamedDecl*> asArray() {
+    return ArrayRef<NamedDecl*>(begin(), size());
   }
-  llvm::ArrayRef<const NamedDecl*> asArray() const {
-    return llvm::ArrayRef<const NamedDecl*>(begin(), size());
+  ArrayRef<const NamedDecl*> asArray() const {
+    return ArrayRef<const NamedDecl*>(begin(), size());
   }
 
   NamedDecl* getParam(unsigned Idx) {
@@ -203,8 +203,8 @@ public:
   const TemplateArgument &operator[](unsigned Idx) const { return get(Idx); }
 
   /// \brief Produce this as an array ref.
-  llvm::ArrayRef<TemplateArgument> asArray() const {
-    return llvm::ArrayRef<TemplateArgument>(data(), size());
+  ArrayRef<TemplateArgument> asArray() const {
+    return ArrayRef<TemplateArgument>(data(), size());
   }
 
   /// \brief Retrieve the number of template arguments in this
@@ -380,16 +380,15 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, TemplateArguments->data(),
-            TemplateArguments->size(),
+    Profile(ID, TemplateArguments->asArray(),
             Function->getASTContext());
   }
 
   static void
-  Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs,
-          unsigned NumTemplateArgs, ASTContext &Context) {
-    ID.AddInteger(NumTemplateArgs);
-    for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
+  Profile(llvm::FoldingSetNodeID &ID, ArrayRef<TemplateArgument> TemplateArgs,
+          ASTContext &Context) {
+    ID.AddInteger(TemplateArgs.size());
+    for (unsigned Arg = 0; Arg != TemplateArgs.size(); ++Arg)
       TemplateArgs[Arg].Profile(ID, Context);
   }
 };
@@ -597,8 +596,7 @@ protected:
 
   template <class EntryType> typename SpecEntryTraits<EntryType>::DeclType*
   findSpecializationImpl(llvm::FoldingSetVector<EntryType> &Specs,
-                         const TemplateArgument *Args, unsigned NumArgs,
-                         void *&InsertPos);
+                         ArrayRef<TemplateArgument> Args, void *&InsertPos);
 
   struct CommonBase {
     CommonBase() : InstantiatedFromMember(nullptr, false) { }
@@ -819,8 +817,8 @@ public:
 
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.
-  FunctionDecl *findSpecialization(const TemplateArgument *Args,
-                                   unsigned NumArgs, void *&InsertPos);
+  FunctionDecl *findSpecialization(ArrayRef<TemplateArgument> Args,
+                                   void *&InsertPos);
 
   FunctionTemplateDecl *getCanonicalDecl() override {
     return cast<FunctionTemplateDecl>(
@@ -1628,14 +1626,14 @@ public:
   SourceRange getSourceRange() const override LLVM_READONLY;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());
+    Profile(ID, TemplateArgs->asArray(), getASTContext());
   }
 
   static void
-  Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs,
-          unsigned NumTemplateArgs, ASTContext &Context) {
-    ID.AddInteger(NumTemplateArgs);
-    for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
+  Profile(llvm::FoldingSetNodeID &ID, ArrayRef<TemplateArgument> TemplateArgs,
+          ASTContext &Context) {
+    ID.AddInteger(TemplateArgs.size());
+    for (unsigned Arg = 0; Arg != TemplateArgs.size(); ++Arg)
       TemplateArgs[Arg].Profile(ID, Context);
   }
 
@@ -1878,8 +1876,7 @@ public:
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.
   ClassTemplateSpecializationDecl *
-  findSpecialization(const TemplateArgument *Args, unsigned NumArgs,
-                     void *&InsertPos);
+  findSpecialization(ArrayRef<TemplateArgument> Args, void *&InsertPos);
 
   /// \brief Insert the specified specialization knowing that it is not already
   /// in. InsertPos must be obtained from findSpecialization.
@@ -1925,8 +1922,7 @@ public:
   /// \brief Return the partial specialization with the provided arguments if it
   /// exists, otherwise return the insertion point.
   ClassTemplatePartialSpecializationDecl *
-  findPartialSpecialization(const TemplateArgument *Args, unsigned NumArgs,
-                            void *&InsertPos);
+  findPartialSpecialization(ArrayRef<TemplateArgument> Args, void *&InsertPos);
 
   /// \brief Insert the specified partial specialization knowing that it is not
   /// already in. InsertPos must be obtained from findPartialSpecialization.
@@ -2487,14 +2483,14 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());
+    Profile(ID, TemplateArgs->asArray(), getASTContext());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      const TemplateArgument *TemplateArgs,
-                      unsigned NumTemplateArgs, ASTContext &Context) {
-    ID.AddInteger(NumTemplateArgs);
-    for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
+                      ArrayRef<TemplateArgument> TemplateArgs,
+                      ASTContext &Context) {
+    ID.AddInteger(TemplateArgs.size());
+    for (unsigned Arg = 0; Arg != TemplateArgs.size(); ++Arg)
       TemplateArgs[Arg].Profile(ID, Context);
   }
 
@@ -2715,8 +2711,7 @@ public:
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.
   VarTemplateSpecializationDecl *
-  findSpecialization(const TemplateArgument *Args, unsigned NumArgs,
-                     void *&InsertPos);
+  findSpecialization(ArrayRef<TemplateArgument> Args, void *&InsertPos);
 
   /// \brief Insert the specified specialization knowing that it is not already
   /// in. InsertPos must be obtained from findSpecialization.
@@ -2752,8 +2747,7 @@ public:
   /// \brief Return the partial specialization with the provided arguments if it
   /// exists, otherwise return the insertion point.
   VarTemplatePartialSpecializationDecl *
-  findPartialSpecialization(const TemplateArgument *Args, unsigned NumArgs,
-                            void *&InsertPos);
+  findPartialSpecialization(ArrayRef<TemplateArgument> Args, void *&InsertPos);
 
   /// \brief Insert the specified partial specialization knowing that it is not
   /// already in. InsertPos must be obtained from findPartialSpecialization.

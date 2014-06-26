@@ -10552,8 +10552,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
     DeducedTemplateArgs = Conv->getTemplateSpecializationArgs();
     void *InsertPos = nullptr;
     FunctionDecl *CallOpSpec = CallOpTemplate->findSpecialization(
-                                                DeducedTemplateArgs->data(), 
-                                                DeducedTemplateArgs->size(), 
+                                                DeducedTemplateArgs->asArray(),
                                                 InsertPos);
     assert(CallOpSpec && 
           "Conversion operator must have a corresponding call operator");
@@ -10579,8 +10578,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
                           Invoker->getDescribedFunctionTemplate();
     void *InsertPos = nullptr;
     FunctionDecl *InvokeSpec = InvokeTemplate->findSpecialization(
-                                                DeducedTemplateArgs->data(), 
-                                                DeducedTemplateArgs->size(), 
+                                                DeducedTemplateArgs->asArray(),
                                                 InsertPos);
     assert(InvokeSpec && 
       "Must have a corresponding static invoker specialization");

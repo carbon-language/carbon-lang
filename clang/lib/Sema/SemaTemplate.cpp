@@ -2119,8 +2119,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     // corresponds to these arguments.
     void *InsertPos = nullptr;
     ClassTemplateSpecializationDecl *Decl
-      = ClassTemplate->findSpecialization(Converted.data(), Converted.size(),
-                                          InsertPos);
+      = ClassTemplate->findSpecialization(Converted, InsertPos);
     if (!Decl) {
       // This is the first time we have referenced this class template
       // specialization. Create the canonical declaration and add it to
@@ -2500,11 +2499,9 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
 
   if (IsPartialSpecialization)
     // FIXME: Template parameter list matters too
-    PrevDecl = VarTemplate->findPartialSpecialization(
-        Converted.data(), Converted.size(), InsertPos);
+    PrevDecl = VarTemplate->findPartialSpecialization(Converted, InsertPos);
   else
-    PrevDecl = VarTemplate->findSpecialization(Converted.data(),
-                                               Converted.size(), InsertPos);
+    PrevDecl = VarTemplate->findSpecialization(Converted, InsertPos);
 
   VarTemplateSpecializationDecl *Specialization = nullptr;
 
@@ -2669,7 +2666,7 @@ Sema::CheckVarTemplateId(VarTemplateDecl *Template, SourceLocation TemplateLoc,
   // corresponds to these arguments.
   void *InsertPos = nullptr;
   if (VarTemplateSpecializationDecl *Spec = Template->findSpecialization(
-          Converted.data(), Converted.size(), InsertPos))
+          Converted, InsertPos))
     // If we already have a variable template specialization, return it.
     return Spec;
 
@@ -6080,14 +6077,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   if (isPartialSpecialization)
     // FIXME: Template parameter list matters, too
-    PrevDecl
-      = ClassTemplate->findPartialSpecialization(Converted.data(),
-                                                 Converted.size(),
-                                                 InsertPos);
+    PrevDecl = ClassTemplate->findPartialSpecialization(Converted, InsertPos);
   else
-    PrevDecl
-      = ClassTemplate->findSpecialization(Converted.data(),
-                                          Converted.size(), InsertPos);
+    PrevDecl = ClassTemplate->findSpecialization(Converted, InsertPos);
 
   ClassTemplateSpecializationDecl *Specialization = nullptr;
 
@@ -7097,8 +7089,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // corresponds to these arguments.
   void *InsertPos = nullptr;
   ClassTemplateSpecializationDecl *PrevDecl
-    = ClassTemplate->findSpecialization(Converted.data(),
-                                        Converted.size(), InsertPos);
+    = ClassTemplate->findSpecialization(Converted, InsertPos);
 
   TemplateSpecializationKind PrevDecl_TSK
     = PrevDecl ? PrevDecl->getTemplateSpecializationKind() : TSK_Undeclared;
