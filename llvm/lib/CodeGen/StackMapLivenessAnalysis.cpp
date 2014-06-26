@@ -29,7 +29,8 @@ using namespace llvm;
 
 namespace llvm {
 cl::opt<bool> EnablePatchPointLiveness("enable-patchpoint-liveness",
-  cl::Hidden, cl::desc("Enable PatchPoint Liveness Analysis Pass"));
+  cl::Hidden, cl::init(true),
+  cl::desc("Enable PatchPoint Liveness Analysis Pass"));
 }
 
 STATISTIC(NumStackMapFuncVisited, "Number of functions visited");
@@ -60,6 +61,9 @@ void StackMapLiveness::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// Calculate the liveness information for the given machine function.
 bool StackMapLiveness::runOnMachineFunction(MachineFunction &_MF) {
+  if (!EnablePatchPointLiveness)
+    return false;
+
   DEBUG(dbgs() << "********** COMPUTING STACKMAP LIVENESS: "
                << _MF.getName() << " **********\n");
   MF = &_MF;
@@ -67,7 +71,7 @@ bool StackMapLiveness::runOnMachineFunction(MachineFunction &_MF) {
   ++NumStackMapFuncVisited;
 
   // Skip this function if there are no patchpoints to process.
-  if (!(MF->getFrameInfo()->hasPatchPoint() && EnablePatchPointLiveness)) {
+  if (!MF->getFrameInfo()->hasPatchPoint()) {
     ++NumStackMapFuncSkipped;
     return false;
   }
@@ -88,8 +92,7 @@ bool StackMapLiveness::calculateLiveness() {
     // set to an instruction if we encounter a patchpoint instruction.
     for (MachineBasicBlock::reverse_iterator I = MBBI->rbegin(),
          E = MBBI->rend(); I != E; ++I) {
-      int Opc = I->getOpcode();
-      if (Opc == TargetOpcode::PATCHPOINT) {
+      if (I->getOpcode() == TargetOpcode::PATCHPOINT) {
         addLiveOutSetToMI(*I);
         HasChanged = true;
         HasStackMap = true;

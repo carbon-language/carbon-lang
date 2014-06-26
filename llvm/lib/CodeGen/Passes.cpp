@@ -30,10 +30,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-extern cl::opt<bool> EnablePatchPointLiveness;
-}
-
 static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
@@ -565,8 +561,7 @@ void TargetPassConfig::addMachinePasses() {
   if (addPreEmitPass())
     printAndVerify("After PreEmit passes");
 
-  if (EnablePatchPointLiveness)
-    addPass(&StackMapLivenessID);
+  addPass(&StackMapLivenessID);
 }
 
 /// Add passes that optimize machine instructions in SSA form.

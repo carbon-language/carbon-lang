@@ -26,10 +26,10 @@ namespace llvm {
 /// a function and attaches the register live-out information to a patchpoint
 /// intrinsic if present.
 ///
-/// This is an optional pass that has to be explicitly enabled via the
-/// -enable-patchpoint-liveness flag. The pass skips functions that don't have
-/// any patchpoint intrinsics. The information provided by this pass is optional
-/// and not required by the aformentioned intrinsic to function.
+/// This pass can be disabled via the -enable-patchpoint-liveness=false flag.
+/// The pass skips functions that don't have any patchpoint intrinsics. The
+/// information provided by this pass is optional and not required by the
+/// aformentioned intrinsic to function.
 class StackMapLiveness : public MachineFunctionPass {
   MachineFunction *MF;
   const TargetRegisterInfo *TRI;

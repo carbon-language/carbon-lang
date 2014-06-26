@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -disable-fp-elim | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -disable-fp-elim -enable-patchpoint-liveness | FileCheck -check-prefix=PATCH %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -disable-fp-elim -enable-patchpoint-liveness=false | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -disable-fp-elim                                   | FileCheck -check-prefix=PATCH %s
 ;
 ; Note: Print verbose stackmaps using -debug-only=stackmaps.
 
