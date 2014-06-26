@@ -533,7 +533,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;
       } else {
-        // Append the new filename with correct preprocessed suffix.
+        // Replace the original filename with the preprocessed one.
         size_t I, E;
         I = Cmd.find("-main-file-name ");
         assert (I != std::string::npos && "Expected to find -main-file-name");

@@ -36,3 +36,4 @@ FOO
 // CHECKSH-NOT: -internal-isystem /tmp/
 // CHECKSH-NOT: -internal-externc-isystem /tmp/
 // CHECKSH-NOT: -dwarf-debug-flags
+// CHECKSH: crash-report-{{[^ ]*}}.c
