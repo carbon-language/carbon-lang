@@ -397,18 +397,18 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement)
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
-  OS.indent(8) << "Reduction like: " << isReductionLike() << "\n";
   switch (Type) {
   case READ:
-    OS.indent(12) << "ReadAccess := \n";
+    OS.indent(12) << "ReadAccess :=\t";
     break;
   case MUST_WRITE:
-    OS.indent(12) << "MustWriteAccess := \n";
+    OS.indent(12) << "MustWriteAccess :=\t";
     break;
   case MAY_WRITE:
-    OS.indent(12) << "MayWriteAccess := \n";
+    OS.indent(12) << "MayWriteAccess :=\t";
     break;
   }
+  OS << "[Reduction like: " << isReductionLike() << "]\n";
   OS.indent(16) << getAccessRelationStr() << ";\n";
 }
 
