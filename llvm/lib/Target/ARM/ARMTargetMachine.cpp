@@ -49,10 +49,9 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
-                                           CodeGenOpt::Level OL,
-                                           bool isLittle)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, isLittle, Options) {
+                                           CodeGenOpt::Level OL, bool isLittle)
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, *this, isLittle, Options) {
 
   // Default to triple-appropriate float ABI
   if (Options.FloatABIType == FloatABI::Default)
@@ -71,16 +70,11 @@ void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 
 void ARMTargetMachine::anchor() { }
 
-ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
-                                   StringRef CPU, StringRef FS,
-                                   const TargetOptions &Options,
+ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT, StringRef CPU,
+                                   StringRef FS, const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
-                                   CodeGenOpt::Level OL,
-                                   bool isLittle)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle),
-    InstrInfo(Subtarget),
-    TLInfo(*this),
-    FrameLowering(Subtarget) {
+                                   CodeGenOpt::Level OL, bool isLittle)
+    : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle) {
   initAsmInfo();
   if (!Subtarget.hasARMOps())
     report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
@@ -89,21 +83,21 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
 
 void ARMLETargetMachine::anchor() { }
 
-ARMLETargetMachine::
-ARMLETargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+ARMLETargetMachine::ARMLETargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
+                                       Reloc::Model RM, CodeModel::Model CM,
+                                       CodeGenOpt::Level OL)
+    : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 void ARMBETargetMachine::anchor() { }
 
-ARMBETargetMachine::
-ARMBETargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+ARMBETargetMachine::ARMBETargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
+                                       Reloc::Model RM, CodeModel::Model CM,
+                                       CodeGenOpt::Level OL)
+    : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 void ThumbTargetMachine::anchor() { }
 
@@ -111,36 +105,29 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
-                                       CodeGenOpt::Level OL,
-                                       bool isLittle)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle),
-    InstrInfo(Subtarget.hasThumb2()
-              ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
-              : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
-    TLInfo(*this),
-    FrameLowering(Subtarget.hasThumb2()
-              ? new ARMFrameLowering(Subtarget)
-              : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {
+                                       CodeGenOpt::Level OL, bool isLittle)
+    : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL,
+                           isLittle) {
   initAsmInfo();
 }
 
 void ThumbLETargetMachine::anchor() { }
 
-ThumbLETargetMachine::
-ThumbLETargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+ThumbLETargetMachine::ThumbLETargetMachine(const Target &T, StringRef TT,
+                                           StringRef CPU, StringRef FS,
+                                           const TargetOptions &Options,
+                                           Reloc::Model RM, CodeModel::Model CM,
+                                           CodeGenOpt::Level OL)
+    : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 void ThumbBETargetMachine::anchor() { }
 
-ThumbBETargetMachine::
-ThumbBETargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+ThumbBETargetMachine::ThumbBETargetMachine(const Target &T, StringRef TT,
+                                           StringRef CPU, StringRef FS,
+                                           const TargetOptions &Options,
+                                           Reloc::Model RM, CodeModel::Model CM,
+                                           CodeGenOpt::Level OL)
+    : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 namespace {
 /// ARM Code Generator Pass Configuration Options.

@@ -12,8 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMSubtarget.h"
-#include "ARMBaseInstrInfo.h"
-#include "ARMBaseRegisterInfo.h"
+#include "ARMFrameLowering.h"
+#include "ARMISelLowering.h"
+#include "ARMInstrInfo.h"
+#include "ARMJITInfo.h"
+#include "ARMSelectionDAGInfo.h"
+#include "ARMSubtarget.h"
+#include "Thumb1FrameLowering.h"
+#include "Thumb1InstrInfo.h"
+#include "Thumb2InstrInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
@@ -142,13 +149,22 @@ ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, bool IsLittle,
-                           const TargetOptions &Options)
+                           const std::string &FS, TargetMachine &TM,
+                           bool IsLittle, const TargetOptions &Options)
     : ARMGenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       ARMProcClass(None), stackAlignment(4), CPUString(CPU), IsLittle(IsLittle),
       TargetTriple(TT), Options(Options), TargetABI(ARM_ABI_UNKNOWN),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS))),
-      TSInfo(DL), JITInfo() {}
+      TSInfo(DL), JITInfo(),
+      InstrInfo(isThumb1Only()
+                    ? (ARMBaseInstrInfo *)new Thumb1InstrInfo(*this)
+                    : !isThumb()
+                          ? (ARMBaseInstrInfo *)new ARMInstrInfo(*this)
+                          : (ARMBaseInstrInfo *)new Thumb2InstrInfo(*this)),
+      TLInfo(TM),
+      FrameLowering(!isThumb1Only()
+                        ? new ARMFrameLowering(*this)
+                        : (ARMFrameLowering *)new Thumb1FrameLowering(*this)) {}
 
 void ARMSubtarget::initializeEnvironment() {
   HasV4TOps = false;

@@ -14,8 +14,17 @@
 #ifndef ARMSUBTARGET_H
 #define ARMSUBTARGET_H
 
+
+#include "ARMFrameLowering.h"
+#include "ARMISelLowering.h"
+#include "ARMInstrInfo.h"
 #include "ARMJITInfo.h"
 #include "ARMSelectionDAGInfo.h"
+#include "ARMSubtarget.h"
+#include "Thumb1FrameLowering.h"
+#include "Thumb1InstrInfo.h"
+#include "Thumb2InstrInfo.h"
+#include "ARMJITInfo.h"
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
@@ -236,7 +245,7 @@ protected:
   /// of the specified triple.
   ///
   ARMSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, bool IsLittle,
+               const std::string &FS, TargetMachine &TM, bool IsLittle,
                const TargetOptions &Options);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
@@ -258,11 +267,22 @@ protected:
   const DataLayout *getDataLayout() const { return &DL; }
   const ARMSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
   ARMJITInfo *getJITInfo() { return &JITInfo; }
+  const ARMBaseInstrInfo *getInstrInfo() const { return InstrInfo.get(); }
+  const ARMTargetLowering *getTargetLowering() const { return &TLInfo; }
+  const ARMFrameLowering *getFrameLowering() const { return FrameLowering.get(); }
+  const ARMBaseRegisterInfo *getRegisterInfo() const {
+    return &InstrInfo->getRegisterInfo();
+  }
 
 private:
   const DataLayout DL;
   ARMSelectionDAGInfo TSInfo;
   ARMJITInfo JITInfo;
+  // Either Thumb1InstrInfo or Thumb2InstrInfo.
+  std::unique_ptr<ARMBaseInstrInfo> InstrInfo;
+  ARMTargetLowering   TLInfo;
+  // Either Thumb1FrameLowering or ARMFrameLowering.
+  std::unique_ptr<ARMFrameLowering> FrameLowering;
 
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
