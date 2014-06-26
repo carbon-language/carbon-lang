@@ -946,10 +946,10 @@ return:
 }
 
 ; Don't build tables for switches with dllimport variables.
-@dllimport_a = external dllimport global i32
-@dllimport_b = external dllimport global i32
-@dllimport_c = external dllimport global i32
-@dllimport_d = external dllimport global i32
+@dllimport_a = external dllimport global [3x i32]
+@dllimport_b = external dllimport global [3x i32]
+@dllimport_c = external dllimport global [3x i32]
+@dllimport_d = external dllimport global [3x i32]
 define i32* @dllimport(i32 %x) {
 entry:
   switch i32 %x, label %sw.default [
@@ -964,7 +964,10 @@ sw.bb2:
 sw.default:
   br label %return
 return:
-  %retval.0 = phi i32* [ @dllimport_d, %sw.default ], [ @dllimport_c, %sw.bb2 ], [ @dllimport_b, %sw.bb1 ], [ @dllimport_a, %entry ]
+  %retval.0 = phi i32* [ getelementptr inbounds ([3 x i32]* @dllimport_d, i32 0, i32 0), %sw.default ],
+                       [ getelementptr inbounds ([3 x i32]* @dllimport_c, i32 0, i32 0), %sw.bb2 ],
+                       [ getelementptr inbounds ([3 x i32]* @dllimport_b, i32 0, i32 0), %sw.bb1 ],
+                       [ getelementptr inbounds ([3 x i32]* @dllimport_a, i32 0, i32 0), %entry ]
   ret i32* %retval.0
 ; CHECK-LABEL: @dllimport(
 ; CHECK: switch i32

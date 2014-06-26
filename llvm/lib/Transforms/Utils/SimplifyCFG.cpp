@@ -3311,12 +3311,13 @@ static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
 /// ValidLookupTableConstant - Return true if the backend will be able to handle
 /// initializing an array of constants like C.
 static bool ValidLookupTableConstant(Constant *C) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    return CE->isGEPWithNoNotionalOverIndexing();
   if (C->isThreadDependent())
     return false;
   if (C->isDLLImportDependent())
     return false;
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    return CE->isGEPWithNoNotionalOverIndexing();
 
   return isa<ConstantFP>(C) ||
       isa<ConstantInt>(C) ||
