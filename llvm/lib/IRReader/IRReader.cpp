@@ -110,7 +110,8 @@ LLVMBool LLVMParseIRInContext(LLVMContextRef ContextRef,
     if (OutMessage) {
       string_ostream os;
       Diag.print(nullptr, os, false);
-      *OutMessage = strndup(os.str().data(), os.str().size());
+      os << '\0';
+      *OutMessage = strdup(os.str().data());
     }
     return 1;
   }

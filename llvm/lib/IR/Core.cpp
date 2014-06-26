@@ -62,9 +62,9 @@ void LLVMShutdown() {
 
 /*===-- Error handling ----------------------------------------------------===*/
 
-static char *LLVMCreateMessage(StringRef Message) {
-  assert(Message.find('\0') == Message.npos);
-  return strndup(Message.data(), Message.size());
+static char *LLVMCreateMessage(string_ostream &OS) {
+  OS << '\0';
+  return strdup(OS.str().data());
 }
 
 char *LLVMCreateMessage(const char *Message) {
@@ -118,7 +118,7 @@ char *LLVMGetDiagInfoDescription(LLVMDiagnosticInfoRef DI) {
   string_ostream Msg;
   DiagnosticPrinterRawOStream DP(Msg);
   unwrap(DI)->print(DP);
-  return LLVMCreateMessage(Msg.str());
+  return LLVMCreateMessage(Msg);
 }
 
 LLVMDiagnosticSeverity LLVMGetDiagInfoSeverity(LLVMDiagnosticInfoRef DI){
@@ -204,7 +204,7 @@ LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const char *Filename,
 char *LLVMPrintModuleToString(LLVMModuleRef M) {
   string_ostream os;
   unwrap(M)->print(os, nullptr);
-  return LLVMCreateMessage(os.str());
+  return LLVMCreateMessage(os);
 }
 
 /*--.. Operations on inline assembler ......................................--*/
@@ -282,7 +282,7 @@ char *LLVMPrintTypeToString(LLVMTypeRef Ty) {
   else
     os << "Printing <null> Type";
 
-  return strndup(os.str().data(), os.str().size());
+  return LLVMCreateMessage(os);
 }
 
 /*--.. Operations on integer types .........................................--*/
@@ -533,7 +533,7 @@ char* LLVMPrintValueToString(LLVMValueRef Val) {
   else
     os << "Printing <null> Value";
 
-  return strndup(os.str().data(), os.str().size());
+  return LLVMCreateMessage(os);
 }
 
 void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal) {

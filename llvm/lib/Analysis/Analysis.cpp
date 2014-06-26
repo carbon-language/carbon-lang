@@ -86,8 +86,10 @@ LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
   if (Action == LLVMAbortProcessAction && Result)
     report_fatal_error("Broken module found, compilation aborted!");
 
-  if (OutMessages)
-    *OutMessages = strndup(MsgsOS.str().data(), MsgsOS.str().size());
+  if (OutMessages) {
+    MsgsOS << '\0';
+    *OutMessages = strdup(MsgsOS.str().data());
+  }
 
   return Result;
 }
