@@ -70,15 +70,13 @@ std::error_code GNULdScript::parse(const LinkingContext &ctx,
 }
 
 static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
-  // TODO: Handle the case when 'sysroot' and/or 'path' are symlinks.
-  if (sysroot.empty() || sysroot.size() >= path.size())
-    return false;
-  if (llvm::sys::path::is_separator(sysroot.back()))
-    sysroot = sysroot.substr(0, sysroot.size() - 1);
-  if (!llvm::sys::path::is_separator(path[sysroot.size()]))
+  if (sysroot.empty())
     return false;
 
-  return llvm::sys::fs::equivalent(sysroot, path.substr(0, sysroot.size()));
+  while (!path.empty() && !llvm::sys::fs::equivalent(sysroot, path))
+    path = llvm::sys::path::parent_path(path);
+
+  return !path.empty();
 }
 
 /// \brief Handle GnuLD script for ELF.
