@@ -6,32 +6,49 @@
 ; CHECK: Write: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
 ; CHECK: Schedule: { Stmt_for_cond[i0] -> scattering[0, i0, 0]; [Stmt_for_cond[i0] -> MemRef_sum[0]] -> scattering[0, i0, 0] : i0 <= 100 and i0 >= 0 }
 ; CHECK: Wrapped Dependences:
-; CHECK:         RAW dependences:
-; CHECK:                 { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
-; CHECK:         WAR dependences:
-; CHECK:                 {  }
-; CHECK:         WAW dependences:
-; CHECK:                 { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
-; CHECK:         Reduction dependences:
-; CHECK:                 n/a
+; CHECK: RAW dependences:
+; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
+; CHECK: Reduction dependences:
+; CHECK:   n/a
+; CHECK: Final Wrapped Dependences:
+; CHECK: RAW dependences:
+; CHECK:   {  }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   {  }
+; CHECK: Reduction dependences:
+; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 <= 99 and i0 >= 0 }
 ; CHECK: Zipped Dependences:
-; CHECK:         RAW dependences:
-; CHECK:                 { [Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0]] -> [MemRef_sum[0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
-; CHECK:         WAR dependences:
-; CHECK:                 {  }
-; CHECK:         WAW dependences:
-; CHECK:                 { [Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0]] -> [MemRef_sum[0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
-; CHECK:         Reduction dependences:
-; CHECK:                 n/a
+; CHECK: RAW dependences:
+; CHECK:   {  }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   {  }
+; CHECK: Reduction dependences:
+; CHECK:   { [Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0]] -> [MemRef_sum[0] -> MemRef_sum[0]] : i0 <= 99 and i0 >= 0 }
 ; CHECK: Unwrapped Dependences:
-; CHECK:         RAW dependences:
-; CHECK:                 { Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0] : i0 >= 0 and i0 <= 99 }
-; CHECK:         WAR dependences:
-; CHECK:                 {  }
-; CHECK:         WAW dependences:
-; CHECK:                 { Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0] : i0 >= 0 and i0 <= 99 }
-; CHECK:         Reduction dependences:
-; CHECK:                 n/a
+; CHECK: RAW dependences:
+; CHECK:   {  }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   {  }
+; CHECK: Reduction dependences:
+; CHECK:   { Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0] : i0 <= 99 and i0 >= 0 }
+; CHECK: RAW dependences:
+; CHECK:   {  }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   {  }
+; CHECK: Reduction dependences:
+; CHECK:   { Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0] : i0 <= 99 and i0 >= 0 }
 ;
 ; void f(int* sum) {
 ;   for (int i = 0; i <= 100; i++)

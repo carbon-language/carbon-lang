@@ -24,7 +24,6 @@
 ;      for (int i = 0; i < 1024; i++)
 ; S2:    sum[i] = sum[i + 1] * 3;
 ;    }
-;
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 define void @f(i32* %sum)  {

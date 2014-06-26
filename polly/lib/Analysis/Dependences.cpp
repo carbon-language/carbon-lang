@@ -284,22 +284,6 @@ void Dependences::calculateDependences(Scop &S) {
                                             isl_union_map_domain(StmtSchedule));
   DEBUG(dbgs() << "Wrapped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
 
-  RAW = isl_union_map_zip(RAW);
-  WAW = isl_union_map_zip(WAW);
-  WAR = isl_union_map_zip(WAR);
-
-  DEBUG(dbgs() << "Zipped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
-
-  RAW = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(RAW)),
-                            STMT_RAW);
-  WAW = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(WAW)),
-                            STMT_WAW);
-  WAR = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(WAR)),
-                            STMT_WAR);
-
-  DEBUG(dbgs() << "Unwrapped Dependences:\n"; printScop(dbgs());
-        dbgs() << "\n");
-
   // To handle reduction dependences we proceed as follows:
   // 1) Aggregate all possible reduction dependences, namely all self
   //    dependences on reduction like statements.
@@ -320,9 +304,9 @@ void Dependences::calculateDependences(Scop &S) {
     for (MemoryAccess *MA : *Stmt) {
       if (!MA->isReductionLike())
         continue;
-      isl_set *AccDom = isl_map_domain(MA->getAccessRelation());
+      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation());
       isl_map *Identity =
-          isl_map_from_domain_and_range(isl_set_copy(AccDom), AccDom);
+          isl_map_from_domain_and_range(isl_set_copy(AccDomW), AccDomW);
       RED = isl_union_map_add_map(RED, Identity);
       break;
     }
@@ -341,6 +325,28 @@ void Dependences::calculateDependences(Scop &S) {
     // Step 4)
     addPrivatizationDependences();
   }
+
+  DEBUG(dbgs() << "Final Wrapped Dependences:\n"; printScop(dbgs());
+        dbgs() << "\n");
+
+  RAW = isl_union_map_zip(RAW);
+  WAW = isl_union_map_zip(WAW);
+  WAR = isl_union_map_zip(WAR);
+  RED = isl_union_map_zip(RED);
+
+  DEBUG(dbgs() << "Zipped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
+
+  RAW = isl_union_set_unwrap(isl_union_map_domain(RAW));
+  WAW = isl_union_set_unwrap(isl_union_map_domain(WAW));
+  WAR = isl_union_set_unwrap(isl_union_map_domain(WAR));
+  RED = isl_union_set_unwrap(isl_union_map_domain(RED));
+
+  DEBUG(dbgs() << "Unwrapped Dependences:\n"; printScop(dbgs());
+        dbgs() << "\n");
+
+  RAW = isl_union_map_union(RAW, STMT_RAW);
+  WAW = isl_union_map_union(WAW, STMT_WAW);
+  WAR = isl_union_map_union(WAR, STMT_WAR);
 
   RAW = isl_union_map_coalesce(RAW);
   WAW = isl_union_map_coalesce(WAW);

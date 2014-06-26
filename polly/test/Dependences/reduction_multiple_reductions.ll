@@ -9,7 +9,8 @@
 ; CHECK: WAW dependences:
 ; CHECK:   {  }
 ; CHECK: Reduction dependences:
-; CHECK:   { Stmt_if_then[i0] -> Stmt_if_then[1 + i0] : i0 <= 510 and i0 >= 0; Stmt_if_else[i0] -> Stmt_if_else[1 + i0] : i0 <= 1022 and i0 >= 512 }
+; CHECK-DAG: Stmt_if_then[i0] -> Stmt_if_then[1 + i0] : i0 <= 510 and i0 >= 0
+; CHECK-DAG: Stmt_if_else[i0] -> Stmt_if_else[1 + i0] : i0 <= 1022 and i0 >= 512
 ;
 ; void f(int *restrict sum, int *restrict prod) {
 ;   for (int i = 0; i < 1024; i++)
