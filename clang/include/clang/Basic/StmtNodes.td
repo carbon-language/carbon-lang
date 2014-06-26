@@ -182,3 +182,4 @@ def OMPSimdDirective : DStmt<OMPExecutableDirective>;
 def OMPForDirective : DStmt<OMPExecutableDirective>;
 def OMPSectionsDirective : DStmt<OMPExecutableDirective>;
 def OMPSectionDirective : DStmt<OMPExecutableDirective>;
+def OMPSingleDirective : DStmt<OMPExecutableDirective>;

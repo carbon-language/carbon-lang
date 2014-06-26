@@ -368,6 +368,10 @@ void StmtProfiler::VisitOMPSectionDirective(const OMPSectionDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPSingleDirective(const OMPSingleDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

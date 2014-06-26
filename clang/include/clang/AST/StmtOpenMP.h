@@ -470,6 +470,63 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp single' directive.
+///
+/// \code
+/// #pragma omp single private(a,b) copyprivate(c,d)
+/// \endcode
+/// In this example directive '#pragma omp single' has clauses 'private' with
+/// the variables 'a' and 'b' and 'copyprivate' with variables 'c' and 'd'.
+///
+class OMPSingleDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param NumClauses Number of clauses.
+  ///
+  OMPSingleDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                     unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPSingleDirectiveClass, OMPD_single,
+                               StartLoc, EndLoc, NumClauses, 1) {}
+
+  /// \brief Build an empty directive.
+  ///
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPSingleDirective(unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPSingleDirectiveClass, OMPD_single,
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1) {}
+
+public:
+  /// \brief Creates directive with a list of \a Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPSingleDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive with the place for \a NumClauses
+  /// clauses.
+  ///
+  /// \param C AST context.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPSingleDirective *CreateEmpty(const ASTContext &C,
+                                         unsigned NumClauses, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPSingleDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

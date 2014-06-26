@@ -2305,6 +2305,11 @@ DEF_TRAVERSE_STMT(OMPSectionDirective, {
     return false;
 })
 
+DEF_TRAVERSE_STMT(OMPSingleDirective, {
+  if (!TraverseOMPExecutableDirective(S))
+    return false;
+})
+
 // OpenMP clauses.
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseOMPClause(OMPClause *C) {

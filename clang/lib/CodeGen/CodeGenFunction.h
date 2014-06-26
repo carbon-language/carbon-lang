@@ -1905,6 +1905,7 @@ public:
   void EmitOMPForDirective(const OMPForDirective &S);
   void EmitOMPSectionsDirective(const OMPSectionsDirective &S);
   void EmitOMPSectionDirective(const OMPSectionDirective &S);
+  void EmitOMPSingleDirective(const OMPSingleDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

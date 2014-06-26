@@ -924,6 +924,13 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
     ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
     break;
   }
+  case OMPD_single: {
+    Sema::CapturedParamNameType Params[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
+    break;
+  }
   case OMPD_threadprivate:
   case OMPD_task:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -1032,6 +1039,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
     assert(ClausesWithImplicit.empty() &&
            "No clauses is allowed for 'omp section' directive");
     Res = ActOnOpenMPSectionDirective(AStmt, StartLoc, EndLoc);
+    break;
+  case OMPD_single:
+    Res = ActOnOpenMPSingleDirective(ClausesWithImplicit, AStmt, StartLoc,
+                                     EndLoc);
     break;
   case OMPD_threadprivate:
   case OMPD_task:
@@ -1645,6 +1656,14 @@ StmtResult Sema::ActOnOpenMPSectionDirective(Stmt *AStmt,
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPSectionDirective::Create(Context, StartLoc, EndLoc, AStmt);
+}
+
+StmtResult Sema::ActOnOpenMPSingleDirective(ArrayRef<OMPClause *> Clauses,
+                                            Stmt *AStmt,
+                                            SourceLocation StartLoc,
+                                            SourceLocation EndLoc) {
+  getCurFunction()->setHasBranchProtectedScope();
+  return OMPSingleDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
