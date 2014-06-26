@@ -58,7 +58,6 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] : i0 >= 0 and i0 <= 2 + 4N + 7M and i1 >= 0 and i1 <= 1 + 5N - i0 and i0 <= 1 + 5N };
 ; CHECK:         Scattering :=
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> scattering[0, i0, 0, i1, 0] };
-; CHECK:     Reduction like: 0
-; CHECK:         MustWriteAccess :=
+; CHECK:         MustWriteAccess := [Reduction like: 0]
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[129i0 + 128i1] };
 ; CHECK: }
