@@ -31,7 +31,6 @@
 using namespace llvm;
 
 namespace llvm {
-extern cl::opt<bool> EnableStackMapLiveness;
 extern cl::opt<bool> EnablePatchPointLiveness;
 }
 
@@ -566,7 +565,7 @@ void TargetPassConfig::addMachinePasses() {
   if (addPreEmitPass())
     printAndVerify("After PreEmit passes");
 
-  if (EnableStackMapLiveness || EnablePatchPointLiveness)
+  if (EnablePatchPointLiveness)
     addPass(&StackMapLivenessID);
 }
 
