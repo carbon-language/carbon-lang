@@ -69,12 +69,20 @@ Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = nullptr; }
 
 void Dependences::collectInfo(Scop &S, isl_union_map **Read,
                               isl_union_map **Write, isl_union_map **MayWrite,
-                              isl_union_map **Schedule) {
+                              isl_union_map **AccessSchedule,
+                              isl_union_map **StmtSchedule) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
   *Write = isl_union_map_empty(isl_space_copy(Space));
   *MayWrite = isl_union_map_empty(isl_space_copy(Space));
-  *Schedule = isl_union_map_empty(Space);
+  *AccessSchedule = isl_union_map_empty(isl_space_copy(Space));
+  *StmtSchedule = isl_union_map_empty(Space);
+
+  SmallPtrSet<const Value *, 8> ReductionBaseValues;
+  for (ScopStmt *Stmt : S)
+    for (MemoryAccess *MA : *Stmt)
+      if (MA->isReductionLike())
+        ReductionBaseValues.insert(MA->getBaseAddr());
 
   for (ScopStmt *Stmt : S) {
     for (MemoryAccess *MA : *Stmt) {
@@ -83,12 +91,38 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
 
       accdom = isl_map_intersect_domain(accdom, domcp);
 
+      if (ReductionBaseValues.count(MA->getBaseAddr())) {
+        // Wrap the access domain and adjust the scattering accordingly.
+        //
+        // An access domain like
+        //   Stmt[i0, i1] -> MemAcc_A[i0 + i1]
+        // will be transformed into
+        //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> MemAcc_A[i0 + i1]
+        //
+        // The original scattering looks like
+        //   Stmt[i0, i1] -> [0, i0, 2, i1, 0]
+        // but as we transformed the access domain we need the scattering
+        // to match the new access domains, thus we need
+        //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> [0, i0, 2, i1, 0]
+        accdom = isl_map_range_map(accdom);
+
+        isl_map *stmt_scatter = Stmt->getScattering();
+        isl_set *scatter_dom = isl_map_domain(isl_map_copy(accdom));
+        isl_set *scatter_ran = isl_map_range(stmt_scatter);
+        isl_map *scatter =
+            isl_map_from_domain_and_range(scatter_dom, scatter_ran);
+        for (unsigned u = 0, e = Stmt->getNumIterators(); u != e; u++)
+          scatter =
+              isl_map_equate(scatter, isl_dim_out, 2 * u + 1, isl_dim_in, u);
+        *AccessSchedule = isl_union_map_add_map(*AccessSchedule, scatter);
+      }
+
       if (MA->isRead())
         *Read = isl_union_map_add_map(*Read, accdom);
       else
         *Write = isl_union_map_add_map(*Write, accdom);
     }
-    *Schedule = isl_union_map_add_map(*Schedule, Stmt->getScattering());
+    *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt->getScattering());
   }
 }
 
@@ -159,11 +193,15 @@ void Dependences::addPrivatizationDependences() {
 }
 
 void Dependences::calculateDependences(Scop &S) {
-  isl_union_map *Read, *Write, *MayWrite, *Schedule;
+  isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule,
+      *Schedule;
 
   DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
-  collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
+  collectInfo(S, &Read, &Write, &MayWrite, &AccessSchedule, &StmtSchedule);
+
+  Schedule =
+      isl_union_map_union(AccessSchedule, isl_union_map_copy(StmtSchedule));
 
   Read = isl_union_map_coalesce(Read);
   Write = isl_union_map_coalesce(Write);
@@ -234,6 +272,33 @@ void Dependences::calculateDependences(Scop &S) {
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
   isl_ctx_reset_operations(S.getIslCtx());
   isl_ctx_set_max_operations(S.getIslCtx(), MaxOpsOld);
+
+  isl_union_map *STMT_RAW, *STMT_WAW, *STMT_WAR;
+  STMT_RAW = isl_union_map_intersect_domain(
+      isl_union_map_copy(RAW),
+      isl_union_map_domain(isl_union_map_copy(StmtSchedule)));
+  STMT_WAW = isl_union_map_intersect_domain(
+      isl_union_map_copy(WAW),
+      isl_union_map_domain(isl_union_map_copy(StmtSchedule)));
+  STMT_WAR = isl_union_map_intersect_domain(isl_union_map_copy(WAR),
+                                            isl_union_map_domain(StmtSchedule));
+  DEBUG(dbgs() << "Wrapped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
+
+  RAW = isl_union_map_zip(RAW);
+  WAW = isl_union_map_zip(WAW);
+  WAR = isl_union_map_zip(WAR);
+
+  DEBUG(dbgs() << "Zipped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
+
+  RAW = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(RAW)),
+                            STMT_RAW);
+  WAW = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(WAW)),
+                            STMT_WAW);
+  WAR = isl_union_map_union(isl_union_set_unwrap(isl_union_map_domain(WAR)),
+                            STMT_WAR);
+
+  DEBUG(dbgs() << "Unwrapped Dependences:\n"; printScop(dbgs());
+        dbgs() << "\n");
 
   // To handle reduction dependences we proceed as follows:
   // 1) Aggregate all possible reduction dependences, namely all self

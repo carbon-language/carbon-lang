@@ -119,7 +119,8 @@ private:
 
   /// @brief Collect information about the SCoP.
   void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
-                   isl_union_map **MayWrite, isl_union_map **Schedule);
+                   isl_union_map **MayWrite, isl_union_map **AccessSchedule,
+                   isl_union_map **StmtSchedule);
 
   /// @brief Calculate and add at the privatization dependences
   void addPrivatizationDependences();

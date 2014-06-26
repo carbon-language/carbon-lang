@@ -9,7 +9,6 @@
 ; CHECK:  Reduction dependences:
 ; CHECK:    { Stmt_for_cond[i0] -> Stmt_for_cond[1 + i0] : i0 <= 99 and i0 >= 0 }
 ;
-;
 ; void f(int* sum) {
 ;   for (int i = 0; i <= 100; i++)
 ;     sum += i * 3;
