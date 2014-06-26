@@ -18046,7 +18046,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     bool CanFold = true;
 
     for (unsigned i = 0, e = NumElts; i != e && CanFold; ++i)
-      CanFold = Mask[i] == (i & 1) ? i + NumElts : i;
+      CanFold = Mask[i] == (int)((i & 1) ? i + NumElts : i);
 
     if (CanFold) {
       SDValue Op0 = N1->getOperand(0);
