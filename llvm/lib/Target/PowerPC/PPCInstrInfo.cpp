@@ -90,7 +90,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   unsigned Directive =
       DAG->TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
-  if (Directive == PPC::DIR_PWR7)
+  if (Directive == PPC::DIR_PWR7 || Directive == PPC::DIR_PWR8)
     return new PPCDispatchGroupSBHazardRecognizer(II, DAG);
 
   // Most subtargets use a PPC970 recognizer.
@@ -146,6 +146,7 @@ int PPCInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     case PPC::DIR_PWR6:
     case PPC::DIR_PWR6X:
     case PPC::DIR_PWR7:
+    case PPC::DIR_PWR8:
       Latency += 2;
       break;
     }
@@ -323,6 +324,7 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
   default:            Opcode = PPC::NOP; break;
   case PPC::DIR_PWR6: Opcode = PPC::NOP_GT_PWR6; break;
   case PPC::DIR_PWR7: Opcode = PPC::NOP_GT_PWR7; break;
+  case PPC::DIR_PWR8: Opcode = PPC::NOP_GT_PWR7; break; /* FIXME: Update when P8 InstrScheduling model is ready */
   }
 
   DebugLoc DL;

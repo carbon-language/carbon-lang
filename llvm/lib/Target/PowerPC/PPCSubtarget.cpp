@@ -247,6 +247,7 @@ static bool needsAggressiveScheduling(unsigned Directive) {
   case PPC::DIR_E500mc:
   case PPC::DIR_E5500:
   case PPC::DIR_PWR7:
+  case PPC::DIR_PWR8:
     return true;
   }
 }

@@ -46,6 +46,7 @@ def DirectivePwr5x: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_PWR5X", ""
 def DirectivePwr6: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_PWR6", "">;
 def DirectivePwr6x: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_PWR6X", "">;
 def DirectivePwr7: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_PWR7", "">;
+def DirectivePwr8: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_PWR8", "">;
 
 def Feature64Bit     : SubtargetFeature<"64bit","Has64BitSupport", "true",
                                         "Enable 64-bit instructions">;
@@ -278,6 +279,15 @@ def : ProcessorModel<"pwr6x", G5Model,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr7", P7Model,
                   [DirectivePwr7, FeatureAltivec,
+                   FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
+                   FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureFPRND, FeatureFPCVT, FeatureISEL,
+                   FeaturePOPCNTD, FeatureLDBRX,
+                   Feature64Bit /*, Feature64BitRegs */,
+                   DeprecatedMFTB, DeprecatedDST]>;
+def : ProcessorModel<"pwr8", P7Model /* FIXME: Update to P8Model when available */,
+                  [DirectivePwr8, FeatureAltivec,
                    FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
