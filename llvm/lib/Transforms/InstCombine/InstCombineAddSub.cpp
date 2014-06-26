@@ -1131,29 +1131,6 @@ bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
     }
   }
 
-  // W*X + Y*Z --> W * (X+Z)  iff W == Y
-  {
-    Value *W, *X, *Y, *Z;
-    if (match(LHS, m_Mul(m_Value(W), m_Value(X))) &&
-        match(RHS, m_Mul(m_Value(Y), m_Value(Z)))) {
-      if (W != Y) {
-        if (W == Z) {
-          std::swap(Y, Z);
-        } else if (Y == X) {
-          std::swap(W, X);
-        } else if (X == Z) {
-          std::swap(Y, Z);
-          std::swap(W, X);
-        }
-      }
-
-      if (W == Y) {
-        Value *NewAdd = Builder->CreateAdd(X, Z, LHS->getName());
-        return BinaryOperator::CreateMul(W, NewAdd);
-      }
-    }
-  }
-
   if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
     Value *X;
     if (match(LHS, m_Not(m_Value(X)))) // ~X + C --> (C-1) - X
@@ -1571,19 +1548,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (match(Op1, m_Shl(m_Value(X), m_Value(Y))) && match(Op0, m_Zero()))
       if (Value *XNeg = dyn_castNegVal(X))
         return BinaryOperator::CreateShl(XNeg, Y);
-
-    // X - X*C --> X * (1-C)
-    if (match(Op1, m_Mul(m_Specific(Op0), m_Constant(CI)))) {
-      Constant *CP1 = ConstantExpr::getSub(ConstantInt::get(I.getType(),1), CI);
-      return BinaryOperator::CreateMul(Op0, CP1);
-    }
-
-    // X - X<<C --> X * (1-(1<<C))
-    if (match(Op1, m_Shl(m_Specific(Op0), m_Constant(CI)))) {
-      Constant *One = ConstantInt::get(I.getType(), 1);
-      C = ConstantExpr::getSub(One, ConstantExpr::getShl(One, CI));
-      return BinaryOperator::CreateMul(Op0, C);
-    }
 
     // X - A*-B -> X + A*B
     // X - -A*B -> X + A*B
