@@ -18,6 +18,13 @@ void test_no_clause() {
 // expected-error@+2 {{the statement for '#pragma omp sections' must be a compound statement}}
 #pragma omp sections
   ++i;
+
+#pragma omp sections
+  {
+    foo();
+    foo(); // expected-error {{statement in 'omp sections' directive must be enclosed into a section region}}
+  }
+
 }
 
 void test_branch_protected_scope() {
@@ -40,12 +47,24 @@ L1:
     L2:
       x[i]++;
     }
+#pragma omp section
+    if (i == 5)
+      goto L1; // expected-error {{use of undeclared label 'L1'}}
+    else if (i == 6)
+      return; // expected-error {{cannot return from OpenMP region}}
+    else if (i == 7)
+      goto L3;
+    else if (i == 8) {
+    L3:
+      x[i]++;
+    }
   }
 
   if (x[0] == 0)
     goto L2; // expected-error {{use of undeclared label 'L2'}}
   else if (x[1] == 1)
     goto L1;
+  goto L3; // expected-error {{use of undeclared label 'L3'}}
 }
 
 void test_invalid_clause() {
@@ -55,6 +74,9 @@ void test_invalid_clause() {
 #pragma omp sections foo bar
   {
     foo();
+// expected-error@+1 {{unexpected OpenMP clause 'nowait' in directive '#pragma omp section'}}
+#pragma omp section nowait
+    ;
   }
 }
 

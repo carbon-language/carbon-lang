@@ -1343,6 +1343,7 @@ namespace clang {
       STMT_OMP_SIMD_DIRECTIVE,
       STMT_OMP_FOR_DIRECTIVE,
       STMT_OMP_SECTIONS_DIRECTIVE,
+      STMT_OMP_SECTION_DIRECTIVE,
 
       // ARC
       EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr

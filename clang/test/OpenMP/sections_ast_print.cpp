@@ -14,9 +14,9 @@ T tmain(T argc) {
   static T a;
 // CHECK: static T a;
 #pragma omp parallel
-#pragma omp sections private(argc, b), firstprivate(c, d), lastprivate(d, f) reduction (-: g) nowait
+#pragma omp sections private(argc, b), firstprivate(c, d), lastprivate(d, f) reduction(- : g) nowait
   {
-            foo();
+    foo();
   }
   // CHECK-NEXT: #pragma omp parallel
   // CHECK-NEXT: #pragma omp sections private(argc,b) firstprivate(c,d) lastprivate(d,f) reduction(-: g) nowait
@@ -31,13 +31,19 @@ int main(int argc, char **argv) {
   static int a;
 // CHECK: static int a;
 #pragma omp parallel
-#pragma omp sections private(argc, b), firstprivate(argv, c), lastprivate(d, f) reduction(+:g) nowait
+#pragma omp sections private(argc, b), firstprivate(argv, c), lastprivate(d, f) reduction(+ : g) nowait
   {
-      foo();
+#pragma omp section
+    foo();
+#pragma omp section
+    foo();
   }
   // CHECK-NEXT: #pragma omp parallel
   // CHECK-NEXT: #pragma omp sections private(argc,b) firstprivate(argv,c) lastprivate(d,f) reduction(+: g) nowait
   // CHECK-NEXT: {
+  // CHECK-NEXT: #pragma omp section
+  // CHECK-NEXT: foo();
+  // CHECK-NEXT: #pragma omp section
   // CHECK-NEXT: foo();
   // CHECK-NEXT: }
   return (tmain<int, 5>(argc) + tmain<char, 1>(argv[0][0]));
