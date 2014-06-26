@@ -570,6 +570,8 @@ StringRef sys::getHostCPUName() {
     .Case("A2", "a2")
     .Case("POWER6", "pwr6")
     .Case("POWER7", "pwr7")
+    .Case("POWER8", "pwr8")
+    .Case("POWER8E", "pwr8")
     .Default(generic);
 }
 #elif defined(__linux__) && defined(__arm__)
