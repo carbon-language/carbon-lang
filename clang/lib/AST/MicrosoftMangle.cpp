@@ -650,6 +650,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     // FIXME: Test alias template mangling with MSVC 2013.
     if (!isa<ClassTemplateDecl>(TD)) {
       mangleTemplateInstantiationName(TD, *TemplateArgs);
+      Out << '@';
       return;
     }
 
@@ -668,22 +669,13 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     // the mangled type name as a key to check the mangling of different types
     // for aliasing.
 
-    std::string TemplateMangling;
-    llvm::raw_string_ostream Stream(TemplateMangling);
+    llvm::SmallString<64> TemplateMangling;
+    llvm::raw_svector_ostream Stream(TemplateMangling);
     MicrosoftCXXNameMangler Extra(Context, Stream);
     Extra.mangleTemplateInstantiationName(TD, *TemplateArgs);
     Stream.flush();
 
-    BackRefMap::iterator Found = NameBackReferences.find(TemplateMangling);
-    if (Found == NameBackReferences.end()) {
-      Out << TemplateMangling;
-      if (NameBackReferences.size() < 10) {
-        size_t Size = NameBackReferences.size();
-        NameBackReferences[TemplateMangling] = Size;
-      }
-    } else {
-      Out << Found->second;
-    }
+    mangleSourceName(TemplateMangling);
     return;
   }
 
@@ -1002,13 +994,20 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(StringRef Name) {
   // <source name> ::= <identifier> @
-  BackRefMap::iterator Found = NameBackReferences.find(Name);
+  BackRefMap::iterator Found;
+  if (NameBackReferences.size() < 10) {
+    size_t Size = NameBackReferences.size();
+    bool Inserted;
+    std::tie(Found, Inserted) =
+        NameBackReferences.insert(std::make_pair(Name, Size));
+    if (Inserted)
+      Found = NameBackReferences.end();
+  } else {
+    Found = NameBackReferences.find(Name);
+  }
+
   if (Found == NameBackReferences.end()) {
     Out << Name << '@';
-    if (NameBackReferences.size() < 10) {
-      size_t Size = NameBackReferences.size();
-      NameBackReferences[Name] = Size;
-    }
   } else {
     Out << Found->second;
   }
@@ -1104,10 +1103,9 @@ void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
 
 void MicrosoftCXXNameMangler::mangleTemplateArgs(
     const TemplateDecl *TD, const TemplateArgumentList &TemplateArgs) {
-  // <template-args> ::= <template-arg>+ @
+  // <template-args> ::= <template-arg>+
   for (const TemplateArgument &TA : TemplateArgs.asArray())
     mangleTemplateArg(TD, TA);
-  Out << '@';
 }
 
 void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
