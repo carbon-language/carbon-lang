@@ -1119,3 +1119,9 @@
 // RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>& 1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PG %s
 // CHECK-PG: gcrt1.o
+
+// GCC forwards -u to the linker.
+// RUN: %clang -u asdf --target=x86_64-unknown-linux -### %s \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>& 1 \
+// RUN:   | FileCheck --check-prefix=CHECK-u %s
+// CHECK-u: "-u" "asdf"
