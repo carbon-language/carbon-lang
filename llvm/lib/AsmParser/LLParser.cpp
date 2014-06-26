@@ -28,9 +28,10 @@
 using namespace llvm;
 
 static std::string getTypeString(Type *T) {
-  string_ostream Result;
-  Result << *T;
-  return Result.str();
+  std::string Result;
+  raw_string_ostream Tmp(Result);
+  Tmp << *T;
+  return Tmp.str();
 }
 
 /// Run: module ::= toplevelentity*

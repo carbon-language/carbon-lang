@@ -3235,7 +3235,8 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getNodeLabel(const SUnit *SU, const ScheduleDAG *G) {
-    string_ostream SS;
+    std::string Str;
+    raw_string_ostream SS(Str);
     const ScheduleDAGMI *DAG = static_cast<const ScheduleDAGMI*>(G);
     const SchedDFSResult *DFS = DAG->hasVRegLiveness() ?
       static_cast<const ScheduleDAGMILive*>(G)->getDFSResult() : nullptr;

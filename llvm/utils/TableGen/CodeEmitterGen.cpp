@@ -319,7 +319,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
   // Default case: unhandled opcode
   o << "  default:\n"
-    << "    string_ostream Msg;\n"
+    << "    std::string msg;\n"
+    << "    raw_string_ostream Msg(msg);\n"
     << "    Msg << \"Not supported instr: \" << MI;\n"
     << "    report_fatal_error(Msg.str());\n"
     << "  }\n"

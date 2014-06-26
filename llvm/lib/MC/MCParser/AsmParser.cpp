@@ -4580,7 +4580,8 @@ bool AsmParser::parseMSInlineAsm(
   }
 
   // Build the IR assembly string.
-  string_ostream OS;
+  std::string AsmStringIR;
+  raw_string_ostream OS(AsmStringIR);
   const char *AsmStart = SrcMgr.getMemoryBuffer(0)->getBufferStart();
   const char *AsmEnd = SrcMgr.getMemoryBuffer(0)->getBufferEnd();
   array_pod_sort(AsmStrRewrites.begin(), AsmStrRewrites.end(), rewritesSort);
@@ -4645,7 +4646,8 @@ bool AsmParser::parseMSInlineAsm(
     }
     case AOK_DotOperator:
       // Insert the dot if the user omitted it.
-      if (OS.str().back() != '.')
+      OS.flush();
+      if (AsmStringIR.back() != '.')
         OS << '.';
       OS << AR.Val;
       break;

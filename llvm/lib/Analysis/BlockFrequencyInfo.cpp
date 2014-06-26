@@ -82,9 +82,10 @@ struct DOTGraphTraits<BlockFrequencyInfo*> : public DefaultDOTGraphTraits {
 
   std::string getNodeLabel(const BasicBlock *Node,
                            const BlockFrequencyInfo *Graph) {
-    string_ostream OS;
+    std::string Result;
+    raw_string_ostream OS(Result);
 
-    OS << Node->getName() << ":";
+    OS << Node->getName().str() << ":";
     switch (ViewBlockFreqPropagationDAG) {
     case GVDT_Fraction:
       Graph->printBlockFreq(OS, Node);
@@ -97,7 +98,7 @@ struct DOTGraphTraits<BlockFrequencyInfo*> : public DefaultDOTGraphTraits {
                        "never reach this point.");
     }
 
-    return OS.str();
+    return Result;
   }
 };
 

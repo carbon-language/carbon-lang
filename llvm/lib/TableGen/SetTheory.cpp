@@ -209,12 +209,13 @@ struct SequenceOp : public SetTheory::Operator {
         break;
       else if (Step < 0 && From < To)
         break;
-      string_ostream Name;
-      Name << format(Format.c_str(), unsigned(From));
-      Record *Rec = Records.getDef(Name.str());
+      std::string Name;
+      raw_string_ostream OS(Name);
+      OS << format(Format.c_str(), unsigned(From));
+      Record *Rec = Records.getDef(OS.str());
       if (!Rec)
-        PrintFatalError(Loc, "No def named '" + Name.str() + "': " +
-                                 Expr->getAsString());
+        PrintFatalError(Loc, "No def named '" + Name + "': " +
+          Expr->getAsString());
       // Try to reevaluate Rec in case it is a set.
       if (const RecVec *Result = ST.expand(Rec))
         Elts.insert(Result->begin(), Result->end());

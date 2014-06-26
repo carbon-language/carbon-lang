@@ -42,8 +42,8 @@ public:
 
   void EmitString(raw_ostream &O) {
     // Escape the string.
-    small_string_ostream<256> Str;
-    Str.write_escaped(AggregateString);
+    SmallString<256> Str;
+    raw_svector_ostream(Str).write_escaped(AggregateString);
     AggregateString = Str.str();
 
     O << "    \"";

@@ -70,9 +70,9 @@ Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
 }
 
 std::string DumpFunction(const Function *F) {
-  string_ostream Result;
-  Result << "" << *F;
-  return Result.str();
+  std::string Result;
+  raw_string_ostream(Result) << "" << *F;
+  return Result;
 }
 
 class RecordingJITMemoryManager : public JITMemoryManager {
@@ -170,9 +170,10 @@ bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
   bool success =
     nullptr != ParseAssemblyString(assembly, M, Error, M->getContext());
-  string_ostream errMsg;
-  Error.print("", errMsg);
-  EXPECT_TRUE(success) << errMsg.str();
+  std::string errMsg;
+  raw_string_ostream os(errMsg);
+  Error.print("", os);
+  EXPECT_TRUE(success) << os.str();
   return success;
 }
 

@@ -62,11 +62,6 @@ void LLVMShutdown() {
 
 /*===-- Error handling ----------------------------------------------------===*/
 
-static char *LLVMCreateMessage(string_ostream &OS) {
-  OS << '\0';
-  return strdup(OS.str().data());
-}
-
 char *LLVMCreateMessage(const char *Message) {
   return strdup(Message);
 }
@@ -115,10 +110,14 @@ unsigned LLVMGetMDKindID(const char* Name, unsigned SLen) {
 }
 
 char *LLVMGetDiagInfoDescription(LLVMDiagnosticInfoRef DI) {
-  string_ostream Msg;
-  DiagnosticPrinterRawOStream DP(Msg);
+  std::string MsgStorage;
+  raw_string_ostream Stream(MsgStorage);
+  DiagnosticPrinterRawOStream DP(Stream);
+
   unwrap(DI)->print(DP);
-  return LLVMCreateMessage(Msg);
+  Stream.flush();
+
+  return LLVMCreateMessage(MsgStorage.c_str());
 }
 
 LLVMDiagnosticSeverity LLVMGetDiagInfoSeverity(LLVMDiagnosticInfoRef DI){
@@ -202,9 +201,13 @@ LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const char *Filename,
 }
 
 char *LLVMPrintModuleToString(LLVMModuleRef M) {
-  string_ostream os;
+  std::string buf;
+  raw_string_ostream os(buf);
+
   unwrap(M)->print(os, nullptr);
-  return LLVMCreateMessage(os);
+  os.flush();
+
+  return strdup(buf.c_str());
 }
 
 /*--.. Operations on inline assembler ......................................--*/
@@ -275,14 +278,17 @@ void LLVMDumpType(LLVMTypeRef Ty) {
 }
 
 char *LLVMPrintTypeToString(LLVMTypeRef Ty) {
-  string_ostream os;
+  std::string buf;
+  raw_string_ostream os(buf);
 
   if (unwrap(Ty))
     unwrap(Ty)->print(os);
   else
     os << "Printing <null> Type";
 
-  return LLVMCreateMessage(os);
+  os.flush();
+
+  return strdup(buf.c_str());
 }
 
 /*--.. Operations on integer types .........................................--*/
@@ -526,14 +532,17 @@ void LLVMDumpValue(LLVMValueRef Val) {
 }
 
 char* LLVMPrintValueToString(LLVMValueRef Val) {
-  string_ostream os;
+  std::string buf;
+  raw_string_ostream os(buf);
 
   if (unwrap(Val))
     unwrap(Val)->print(os);
   else
     os << "Printing <null> Value";
 
-  return LLVMCreateMessage(os);
+  os.flush();
+
+  return strdup(buf.c_str());
 }
 
 void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal) {

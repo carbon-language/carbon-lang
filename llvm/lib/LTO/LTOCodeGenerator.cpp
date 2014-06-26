@@ -549,17 +549,16 @@ void LTOCodeGenerator::DiagnosticHandler2(const DiagnosticInfo &DI) {
     break;
   }
   // Create the string that will be reported to the external diagnostic handler.
-  string_ostream Msg;
-  DiagnosticPrinterRawOStream DP(Msg);
+  std::string MsgStorage;
+  raw_string_ostream Stream(MsgStorage);
+  DiagnosticPrinterRawOStream DP(Stream);
   DI.print(DP);
-
-  // Null-terminate the C string.
-  Msg << '\0';
+  Stream.flush();
 
   // If this method has been called it means someone has set up an external
   // diagnostic handler. Assert on that.
   assert(DiagHandler && "Invalid diagnostic handler");
-  (*DiagHandler)(Severity, Msg.str().data(), DiagContext);
+  (*DiagHandler)(Severity, MsgStorage.c_str(), DiagContext);
 }
 
 void

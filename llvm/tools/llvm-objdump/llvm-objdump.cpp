@@ -222,7 +222,8 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
         Out << "<o>";
 
       // Escape special chars and print the instruction in mnemonic form.
-      string_ostream OS;
+      std::string Str;
+      raw_string_ostream OS(Str);
       IP->printInst(&(*i)->getInsts()->at(ii).Inst, OS, "");
       Out << DOT::EscapeString(OS.str());
     }
@@ -472,7 +473,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     if (Symbols.empty())
       Symbols.push_back(std::make_pair(0, name));
 
-    small_string_ostream<40> Comments;
+
+    SmallString<40> Comments;
+    raw_svector_ostream CommentStream(Comments);
 
     StringRef Bytes;
     if (error(Section.getContents(Bytes)))
@@ -510,14 +513,15 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         MCInst Inst;
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject,
-                                   SectionAddr + Index, DebugOut, Comments)) {
+                                   SectionAddr + Index,
+                                   DebugOut, CommentStream)) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
             DumpBytes(StringRef(Bytes.data() + Index, Size));
           }
           IP->printInst(&Inst, outs(), "");
-          outs() << Comments.str();
+          outs() << CommentStream.str();
           Comments.clear();
           outs() << "\n";
         } else {

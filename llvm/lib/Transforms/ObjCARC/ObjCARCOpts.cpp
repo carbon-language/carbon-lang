@@ -835,7 +835,8 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
       // of line at the module level and to provide a very simple format
       // encoding the information herein. Both of these makes it simpler to
       // parse the annotations by a simple external program.
-      string_ostream os;
+      std::string Str;
+      raw_string_ostream os(Str);
       os << "(" << Inst->getParent()->getParent()->getName() << ",%"
          << Inst->getName() << ")";
 
@@ -848,7 +849,8 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
       Hash = cast<MDString>(Node->getOperand(0));
     }
   } else if (Argument *Arg = dyn_cast<Argument>(Ptr)) {
-    string_ostream os;
+    std::string str;
+    raw_string_ostream os(str);
     os << "(" << Arg->getParent()->getName() << ",%" << Arg->getName()
        << ")";
     Hash = MDString::get(Arg->getContext(), os.str());
@@ -858,7 +860,8 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
 }
 
 static std::string SequenceToString(Sequence A) {
-  string_ostream os;
+  std::string str;
+  raw_string_ostream os(str);
   os << A;
   return os.str();
 }

@@ -95,7 +95,8 @@ raw_ostream &operator<<(raw_ostream &OS, const ARM::WinEH::ReturnType &RT) {
 
 static std::string formatSymbol(StringRef Name, uint64_t Address,
                                 uint64_t Offset = 0) {
-  string_ostream OS;
+  std::string Buffer;
+  raw_string_ostream OS(Buffer);
 
   if (!Name.empty())
     OS << Name << " ";

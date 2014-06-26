@@ -519,7 +519,8 @@ const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {
 }
 
 std::string DataLayout::getStringRepresentation() const {
-  string_ostream OS;
+  std::string Result;
+  raw_string_ostream OS(Result);
 
   OS << (LittleEndian ? "e" : "E");
 

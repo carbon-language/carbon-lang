@@ -550,7 +550,8 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
 }
 
 void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
-  small_string_ostream<128> OS;
+  SmallString<128> Directive;
+  raw_svector_ostream OS(Directive);
   StringRef Name = Sym->getName();
 
   if (Subtarget->isTargetKnownWindowsMSVC())
@@ -571,7 +572,8 @@ void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
       OS << ",data";
   }
 
-  OutStreamer.EmitBytes(OS.str());
+  OS.flush();
+  OutStreamer.EmitBytes(Directive);
 }
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {

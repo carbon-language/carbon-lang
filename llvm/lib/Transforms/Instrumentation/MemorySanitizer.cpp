@@ -2424,7 +2424,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     if (PoisonStack && MS.TrackOrigins) {
       setOrigin(&I, getCleanOrigin());
-      small_string_ostream<2048> StackDescription;
+      SmallString<2048> StackDescriptionStorage;
+      raw_svector_ostream StackDescription(StackDescriptionStorage);
       // We create a string with a description of the stack allocation and
       // pass it into __msan_set_alloca_origin.
       // It will be printed by the run-time if stack-originated UMR is found.

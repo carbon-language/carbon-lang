@@ -353,9 +353,10 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
     Entries.back()->parseInstructions(Data, &Offset, EndStructureOffset);
 
     if (Offset != EndStructureOffset) {
-      string_ostream Str;
-      Str << format("Parsing entry instructions at %lx failed", StartOffset);
-      report_fatal_error(Str.str());
+      std::string Str;
+      raw_string_ostream OS(Str);
+      OS << format("Parsing entry instructions at %lx failed", StartOffset);
+      report_fatal_error(Str);
     }
   }
 }

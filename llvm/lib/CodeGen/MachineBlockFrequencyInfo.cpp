@@ -89,9 +89,10 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo*> :
 
   std::string getNodeLabel(const MachineBasicBlock *Node,
                            const MachineBlockFrequencyInfo *Graph) {
-    string_ostream OS;
+    std::string Result;
+    raw_string_ostream OS(Result);
 
-    OS << Node->getName() << ":";
+    OS << Node->getName().str() << ":";
     switch (ViewMachineBlockFreqPropagationDAG) {
     case GVDT_Fraction:
       Graph->printBlockFreq(OS, Node);
@@ -104,7 +105,7 @@ struct DOTGraphTraits<MachineBlockFrequencyInfo*> :
                        "never reach this point.");
     }
 
-    return OS.str();
+    return Result;
   }
 };
 

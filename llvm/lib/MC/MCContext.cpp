@@ -140,15 +140,17 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 }
 
 MCSymbol *MCContext::CreateLinkerPrivateTempSymbol() {
-  small_string_ostream<128> NameSV;
-  NameSV << MAI->getLinkerPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
-  return CreateSymbol(NameSV.str());
+  SmallString<128> NameSV;
+  raw_svector_ostream(NameSV)
+    << MAI->getLinkerPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
+  return CreateSymbol(NameSV);
 }
 
 MCSymbol *MCContext::CreateTempSymbol() {
-  small_string_ostream<128> NameSV;
-  NameSV << MAI->getPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
-  return CreateSymbol(NameSV.str());
+  SmallString<128> NameSV;
+  raw_svector_ostream(NameSV)
+    << MAI->getPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
+  return CreateSymbol(NameSV);
 }
 
 unsigned MCContext::NextInstance(unsigned LocalLabelVal) {

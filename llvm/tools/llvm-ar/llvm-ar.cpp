@@ -689,7 +689,8 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
                  std::vector<std::pair<unsigned, unsigned>> &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
-  string_ostream NameOS;
+  std::string NameBuf;
+  raw_string_ostream NameOS(NameBuf);
   unsigned NumSyms = 0;
   LLVMContext &Context = getGlobalContext();
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),

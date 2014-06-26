@@ -237,13 +237,15 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
 LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T,
   LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage,
   LLVMMemoryBufferRef *OutMemBuf) {
-  string_ostream Code;
-  formatted_raw_ostream Out(Code);
+  std::string CodeString;
+  raw_string_ostream OStream(CodeString);
+  formatted_raw_ostream Out(OStream);
   bool Result = LLVMTargetMachineEmit(T, M, Out, codegen, ErrorMessage);
+  OStream.flush();
 
-  StringRef Buffer = Code.str();
-  *OutMemBuf = LLVMCreateMemoryBufferWithMemoryRangeCopy(Buffer.data(),
-                                                         Buffer.size(), "");
+  std::string &Data = OStream.str();
+  *OutMemBuf = LLVMCreateMemoryBufferWithMemoryRangeCopy(Data.c_str(),
+                                                     Data.length(), "");
   return Result;
 }
 

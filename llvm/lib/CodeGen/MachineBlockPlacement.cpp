@@ -264,19 +264,23 @@ INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement2",
 ///
 /// Only used by debug logging.
 static std::string getBlockName(MachineBasicBlock *BB) {
-  string_ostream OS;
+  std::string Result;
+  raw_string_ostream OS(Result);
   OS << "BB#" << BB->getNumber()
      << " (derived from LLVM BB '" << BB->getName() << "')";
-  return OS.str();
+  OS.flush();
+  return Result;
 }
 
 /// \brief Helper to print the number of a MBB.
 ///
 /// Only used by debug logging.
 static std::string getBlockNum(MachineBasicBlock *BB) {
-  string_ostream OS;
+  std::string Result;
+  raw_string_ostream OS(Result);
   OS << "BB#" << BB->getNumber();
-  return OS.str();
+  OS.flush();
+  return Result;
 }
 #endif
 

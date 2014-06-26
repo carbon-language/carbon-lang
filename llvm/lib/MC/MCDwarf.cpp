@@ -420,7 +420,8 @@ unsigned MCDwarfLineTableHeader::getFile(StringRef &Directory,
 void MCDwarfLineAddr::Emit(MCStreamer *MCOS, int64_t LineDelta,
                            uint64_t AddrDelta) {
   MCContext &Context = MCOS->getContext();
-  small_string_ostream<256> OS;
+  SmallString<256> Tmp;
+  raw_svector_ostream OS(Tmp);
   MCDwarfLineAddr::Encode(Context, LineDelta, AddrDelta, OS);
   MCOS->EmitBytes(OS.str());
 }
@@ -1646,7 +1647,8 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
 void MCDwarfFrameEmitter::EmitAdvanceLoc(MCObjectStreamer &Streamer,
                                          uint64_t AddrDelta) {
   MCContext &Context = Streamer.getContext();
-  small_string_ostream<256> OS;
+  SmallString<256> Tmp;
+  raw_svector_ostream OS(Tmp);
   MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OS);
   Streamer.EmitBytes(OS.str());
 }

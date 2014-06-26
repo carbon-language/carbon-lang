@@ -267,7 +267,8 @@ PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
 }
 
 void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  small_string_ostream<128> O;
+  SmallString<128> Str;
+  raw_svector_ostream O(Str);
 
   switch (MI->getOpcode()) {
   case XCore::DBG_VALUE:

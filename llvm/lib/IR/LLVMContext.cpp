@@ -164,22 +164,23 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   }
 
   // Otherwise, print the message with a prefix based on the severity.
-  string_ostream Msg;
-  DiagnosticPrinterRawOStream DP(Msg);
+  std::string MsgStorage;
+  raw_string_ostream Stream(MsgStorage);
+  DiagnosticPrinterRawOStream DP(Stream);
   DI.print(DP);
-
+  Stream.flush();
   switch (DI.getSeverity()) {
   case DS_Error:
-    errs() << "error: " << Msg.str() << "\n";
+    errs() << "error: " << MsgStorage << "\n";
     exit(1);
   case DS_Warning:
-    errs() << "warning: " << Msg.str() << "\n";
+    errs() << "warning: " << MsgStorage << "\n";
     break;
   case DS_Remark:
-    errs() << "remark: " << Msg.str() << "\n";
+    errs() << "remark: " << MsgStorage << "\n";
     break;
   case DS_Note:
-    errs() << "note: " << Msg.str() << "\n";
+    errs() << "note: " << MsgStorage << "\n";
     break;
   }
 }

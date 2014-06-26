@@ -212,23 +212,24 @@ class LoopVectorizationCostModel;
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
 class Report {
-  string_ostream Message;
+  std::string Message;
+  raw_string_ostream Out;
   Instruction *Instr;
 
 public:
-  Report(Instruction *I = nullptr) : Instr(I) {
-    Message << "loop not vectorized: ";
+  Report(Instruction *I = nullptr) : Out(Message), Instr(I) {
+    Out << "loop not vectorized: ";
   }
 
   template <typename A> Report &operator<<(const A &Value) {
-    Message << Value;
+    Out << Value;
     return *this;
   }
 
   Instruction *getInstr() { return Instr; }
 
-  StringRef str() { return Message.str(); }
-  operator Twine() { return Message.str(); }
+  std::string &str() { return Out.str(); }
+  operator Twine() { return Out.str(); }
 };
 
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
@@ -502,17 +503,18 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
 #ifndef NDEBUG
 /// \return string containing a file name and a line # for the given loop.
 static std::string getDebugLocString(const Loop *L) {
-  if (!L)
-    return std::string();
-
-  string_ostream OS;
-  const DebugLoc LoopDbgLoc = L->getStartLoc();
-  if (!LoopDbgLoc.isUnknown())
-    LoopDbgLoc.print(L->getHeader()->getContext(), OS);
-  else
-    // Just print the module name.
-    OS << L->getHeader()->getParent()->getParent()->getModuleIdentifier();
-  return OS.str();
+  std::string Result;
+  if (L) {
+    raw_string_ostream OS(Result);
+    const DebugLoc LoopDbgLoc = L->getStartLoc();
+    if (!LoopDbgLoc.isUnknown())
+      LoopDbgLoc.print(L->getHeader()->getContext(), OS);
+    else
+      // Just print the module name.
+      OS << L->getHeader()->getParent()->getParent()->getModuleIdentifier();
+    OS.flush();
+  }
+  return Result;
 }
 #endif
 

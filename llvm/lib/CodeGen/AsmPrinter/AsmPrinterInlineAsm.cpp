@@ -241,7 +241,8 @@ static void EmitMSInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
         }
       }
       if (Error) {
-        string_ostream Msg;
+        std::string msg;
+        raw_string_ostream Msg(msg);
         Msg << "invalid operand in inline asm: '" << AsmStr << "'";
         MMI->getModule()->getContext().emitError(LocCookie, Msg.str());
       }
@@ -412,7 +413,8 @@ static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
           }
         }
         if (Error) {
-          string_ostream Msg;
+          std::string msg;
+          raw_string_ostream Msg(msg);
           Msg << "invalid operand in inline asm: '" << AsmStr << "'";
           MMI->getModule()->getContext().emitError(LocCookie, Msg.str());
         }
@@ -469,7 +471,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
 
   // Emit the inline asm to a temporary string so we can emit it through
   // EmitInlineAsm.
-  small_string_ostream<256> OS;
+  SmallString<256> StringData;
+  raw_svector_ostream OS(StringData);
 
   // The variant of the current asmprinter.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
@@ -514,7 +517,8 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
     }
     OS << Counter;
   } else {
-    string_ostream Msg;
+    std::string msg;
+    raw_string_ostream Msg(msg);
     Msg << "Unknown special formatter '" << Code
          << "' for machine instr: " << *MI;
     report_fatal_error(Msg.str());

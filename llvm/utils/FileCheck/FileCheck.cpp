@@ -458,7 +458,8 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   // variable values.
   if (!VariableUses.empty()) {
     for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
-      small_string_ostream<256> OS;
+      SmallString<256> Msg;
+      raw_svector_ostream OS(Msg);
       StringRef Var = VariableUses[i].first;
       if (Var[0] == '@') {
         std::string Value;

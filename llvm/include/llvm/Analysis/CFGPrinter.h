@@ -36,7 +36,9 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     if (!Node->getName().empty())
       return Node->getName().str();
 
-    string_ostream OS;
+    std::string Str;
+    raw_string_ostream OS(Str);
+
     Node->printAsOperand(OS, false);
     return OS.str();
   }
@@ -44,7 +46,8 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   static std::string getCompleteNodeLabel(const BasicBlock *Node,
                                           const Function *) {
     enum { MaxColumns = 80 };
-    string_ostream OS;
+    std::string Str;
+    raw_string_ostream OS(Str);
 
     if (Node->getName().empty()) {
       Node->printAsOperand(OS, false);
@@ -106,7 +109,8 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
       if (SuccNo == 0) return "def";
 
-      string_ostream OS;
+      std::string Str;
+      raw_string_ostream OS(Str);
       SwitchInst::ConstCaseIt Case =
           SwitchInst::ConstCaseIt::fromSuccessorIndex(SI, SuccNo);
       OS << Case.getCaseValue()->getValue();

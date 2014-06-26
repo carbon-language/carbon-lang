@@ -115,7 +115,8 @@ static unsigned getNumUsedSlots(const UnwindCode &UnwindCode) {
 static std::string formatSymbol(const Dumper::Context &Ctx,
                                 const coff_section *Section, uint64_t Offset,
                                 uint32_t Displacement) {
-  string_ostream OS;
+  std::string Buffer;
+  raw_string_ostream OS(Buffer);
 
   StringRef Name;
   SymbolRef Symbol;
@@ -130,7 +131,6 @@ static std::string formatSymbol(const Dumper::Context &Ctx,
     OS << format(" +0x%X (0x%" PRIX64 ")", Displacement, Offset);
   else
     OS << format(" (0x%" PRIX64 ")", Offset);
-
   return OS.str();
 }
 
