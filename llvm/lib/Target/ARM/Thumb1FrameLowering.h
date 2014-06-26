@@ -15,7 +15,6 @@
 #define LLVM_ARM_THUMB1FRAMELOWERING_H
 
 #include "ARMFrameLowering.h"
-#include "ARMSubtarget.h"
 #include "Thumb1InstrInfo.h"
 #include "Thumb1RegisterInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -24,9 +23,7 @@ namespace llvm {
 
 class Thumb1FrameLowering : public ARMFrameLowering {
 public:
-  explicit Thumb1FrameLowering(const ARMSubtarget &sti)
-    : ARMFrameLowering(sti) {
-  }
+  explicit Thumb1FrameLowering(const ARMSubtarget &sti);
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
