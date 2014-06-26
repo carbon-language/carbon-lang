@@ -5274,7 +5274,9 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
     Diag(LParenLoc, diag::warn_old_style_cast) << CastExpr->getSourceRange();
   
   CheckTollFreeBridgeCast(castType, CastExpr);
-
+  
+  CheckObjCBridgeRelatedCast(castType, CastExpr);
+  
   return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, CastExpr);
 }
 

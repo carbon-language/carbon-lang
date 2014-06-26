@@ -3460,6 +3460,29 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   }
 }
 
+void Sema::CheckObjCBridgeRelatedCast(QualType castType, Expr *castExpr) {
+  QualType SrcType = castExpr->getType();
+  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(castExpr)) {
+    if (PRE->isExplicitProperty()) {
+      if (ObjCPropertyDecl *PDecl = PRE->getExplicitProperty())
+        SrcType = PDecl->getType();
+    }
+    else if (PRE->isImplicitProperty()) {
+      if (ObjCMethodDecl *Getter = PRE->getImplicitPropertyGetter())
+        SrcType = Getter->getReturnType();
+      
+    }
+  }
+  
+  ARCConversionTypeClass srcExprACTC = classifyTypeForARCConversion(SrcType);
+  ARCConversionTypeClass castExprACTC = classifyTypeForARCConversion(castType);
+  if (srcExprACTC != ACTC_retainable || castExprACTC != ACTC_coreFoundation)
+    return;
+  CheckObjCBridgeRelatedConversions(castExpr->getLocStart(),
+                                    castType, SrcType, castExpr);
+  return;
+}
+
 bool Sema::CheckTollFreeBridgeStaticCast(QualType castType, Expr *castExpr,
                                          CastKind &Kind) {
   if (!getLangOpts().ObjC1)
