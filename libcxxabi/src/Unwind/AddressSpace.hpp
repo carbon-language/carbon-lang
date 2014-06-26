@@ -345,6 +345,8 @@ inline bool LocalAddressSpace::findOtherFDE(pint_t targetAddr, pint_t &fde) {
   return checkKeyMgrRegisteredFDEs(targetAddr, *((void**)&fde));
 #else
   // TO DO: if OS has way to dynamically register FDEs, check that.
+  (void)targetAddr;
+  (void)fde;
   return false;
 #endif
 }

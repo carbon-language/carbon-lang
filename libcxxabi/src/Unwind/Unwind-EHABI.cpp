@@ -78,6 +78,10 @@ _Unwind_Reason_Code ProcessDescriptors(
   if (flags & 0x1)
     return _URC_CONTINUE_UNWIND;
 
+  // TODO: We should check the state here, and determine whether we need to
+  // perform phase1 or phase2 unwinding.
+  (void)state;
+
   const char* descriptor = descriptorStart;
   uint32_t descriptorWord;
   getNextWord(descriptor, &descriptorWord);
@@ -126,15 +130,15 @@ _Unwind_Reason_Code ProcessDescriptors(
         if (isInScope) {
           // TODO(ajwong): This is only phase1 compatible logic. Implement
           // phase2.
-          bool is_reference_type = landing_pad & 0x80000000;
           landing_pad = signExtendPrel31(landing_pad & ~0x80000000);
           if (landing_pad == 0xffffffff) {
             return _URC_HANDLER_FOUND;
           } else if (landing_pad == 0xfffffffe ) {
             return _URC_FAILURE;
           } else {
-            void* matched_object;
             /*
+            bool is_reference_type = landing_pad & 0x80000000;
+            void* matched_object;
             if (__cxxabiv1::__cxa_type_match(
                     ucbp, reinterpret_cast<const std::type_info *>(landing_pad),
                     is_reference_type,
@@ -430,7 +434,6 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
 
     // See if frame has code to run (has personality routine).
     unw_proc_info_t frameInfo;
-    unw_word_t sp;
     if (unw_get_proc_info(&cursor1, &frameInfo) != UNW_ESUCCESS) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase1(ex_ojb=%p): unw_get_proc_info "
                             "failed => _URC_FATAL_PHASE1_ERROR\n",
@@ -675,6 +678,7 @@ _Unwind_RaiseException(_Unwind_Exception *exception_object) {
 _LIBUNWIND_EXPORT void _Unwind_Complete(_Unwind_Exception* exception_object) {
   // This is to be called when exception handling completes to give us a chance
   // to perform any housekeeping. EHABI #7.2. But we have nothing to do here.
+  (void)exception_object;
 }
 
 /// When _Unwind_RaiseException() is in phase2, it hands control
