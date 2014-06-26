@@ -8,7 +8,7 @@
 
 static struct PyMethodDef moduleMethods[] =
 {
-    {0, 0}
+    {nullptr, nullptr, 0, nullptr}
 };
 
 PyDoc_STRVAR(
