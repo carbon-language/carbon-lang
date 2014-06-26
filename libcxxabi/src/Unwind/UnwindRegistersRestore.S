@@ -308,7 +308,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldp    x0, x1,  [x0, #0x000]  ; restore x0,x1
   ret    lr            ; jump to pc
 
-#elif __arm__
+#elif __arm__ && !__APPLE__
 
 @
 @ void libunwind::Registers_arm::restoreCoreAndJumpTo()
