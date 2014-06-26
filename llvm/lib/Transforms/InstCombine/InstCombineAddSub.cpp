@@ -957,59 +957,64 @@ bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
  }
 
 // Checks if any operand is negative and we can convert add to sub.
-// This function checks for following negative patterns
-//   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
-//   TODO: ADD(XOR(AND(Z, ~C), ~C), 1) == NEG(OR(Z, C)) if C is even
-//   TODO: XOR(AND(Z, ~C), (~C + 1)) == NEG(OR(Z, C)) if C is odd
-Value *checkForNegativeOperand(BinaryOperator &I,
-                               InstCombiner::BuilderTy *Builder) {
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+ // This function checks for following negative patterns
+ //   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
+ //   ADD(XOR(AND(Z, C), C), 1) == NEG(OR(Z, ~C)) if C is odd
+ //   TODO: XOR(AND(Z, C), (C + 1)) == NEG(OR(Z, ~C)) if C is even
+ Value *checkForNegativeOperand(BinaryOperator &I,
+                                InstCombiner::BuilderTy *Builder) {
+   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  // This function creates 2 instructions to replace ADD, we need at least one 
-  // of LHS or RHS to have one use to ensure benefit in transform.
-  if (!LHS->hasOneUse() && !RHS->hasOneUse())
-    return nullptr;
+   // This function creates 2 instructions to replace ADD, we need at least one
+   // of LHS or RHS to have one use to ensure benefit in transform.
+   if (!LHS->hasOneUse() && !RHS->hasOneUse())
+     return nullptr;
 
-  bool IHasNSW = I.hasNoSignedWrap();
-  bool IHasNUW = I.hasNoUnsignedWrap();
+   Value *X = nullptr, *Y = nullptr, *Z = nullptr;
+   const APInt *C1 = nullptr, *C2 = nullptr;
 
-  Value *X = nullptr, *Y = nullptr, *Z = nullptr;
-  const APInt *C1 = nullptr, *C2 = nullptr;
+   // if ONE is on other side, swap
+   if (match(RHS, m_Add(m_Value(X), m_One())))
+     std::swap(LHS, RHS);
 
-  // if ONE is on other side, swap
-  if (match(RHS, m_Add(m_Value(X), m_One())))
-    std::swap(LHS, RHS);
+   if (match(LHS, m_Add(m_Value(X), m_One()))) {
+     // if XOR on other side, swap
+     if (match(RHS, m_Xor(m_Value(Y), m_APInt(C1))))
+       std::swap(X, RHS);
 
-  if (match(LHS, m_Add(m_Value(X), m_One()))) {
-    // if XOR on other side, swap
-    if (match(RHS, m_Xor(m_Value(Y), m_APInt(C1))))
-      std::swap(X, RHS);
+     if (match(X, m_Xor(m_Value(Y), m_APInt(C1)))) {
+       // X = XOR(Y, C1), Y = OR(Z, C2), C2 = NOT(C1) ==> X == NOT(AND(Z, C1))
+       // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, AND(Z, C1))
+       if (match(Y, m_Or(m_Value(Z), m_APInt(C2))) && (*C2 == ~(*C1))) {
+         Value *NewAnd = Builder->CreateAnd(Z, *C1);
+         return Builder->CreateSub(RHS, NewAnd, "sub");
+       } else if (C1->countTrailingZeros() == 0) {
+         // if C1 is ODD and
+         // X = XOR(Y, C1), Y = AND(Z, C2), C2 == C1 ==> X == NOT(OR(Z, ~C1))
+         // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, OR(Z, ~C1))
+         if (match(Y, m_And(m_Value(Z), m_APInt(C2))) && (*C1 == *C2)) {
+           Value *NewOr = Builder->CreateOr(Z, ~(*C1));
+           return Builder->CreateSub(RHS, NewOr, "sub");
+         }
+       }
+     }
+   }
 
-    // X = XOR(Y, C1), Y = OR(Z, C2), C2 = NOT(C1) ==> X == NOT(AND(Z, C1))
-    // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, AND(Z, C1))
-    if (match(X, m_Xor(m_Value(Y), m_APInt(C1)))) {
-      if (match(Y, m_Or(m_Value(Z), m_APInt(C2))) && (*C2 == ~(*C1))) {
-        Value *NewAnd = Builder->CreateAnd(Z, *C1);
-        return Builder->CreateSub(RHS, NewAnd, "", IHasNUW, IHasNSW);
-      }
-    }
-  }
+   return nullptr;
+ }
 
-  return nullptr;
-}
+ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
+   bool Changed = SimplifyAssociativeOrCommutative(I);
+   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
-  bool Changed = SimplifyAssociativeOrCommutative(I);
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+   if (Value *V = SimplifyVectorOp(I))
+     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyVectorOp(I))
-    return ReplaceInstUsesWith(I, V);
+   if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
+                                  I.hasNoUnsignedWrap(), DL))
+     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
-                                 I.hasNoUnsignedWrap(), DL))
-    return ReplaceInstUsesWith(I, V);
-
-  // (A*B)+(A*C) -> A*(B+C) etc
+   // (A*B)+(A*C) -> A*(B+C) etc
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return ReplaceInstUsesWith(I, V);
 
