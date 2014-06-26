@@ -14,6 +14,7 @@
 #include "SparcFrameLowering.h"
 #include "SparcInstrInfo.h"
 #include "SparcMachineFunctionInfo.h"
+#include "SparcSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -32,6 +33,9 @@ DisableLeafProc("disable-sparc-leaf-proc",
                 cl::desc("Disable Sparc leaf procedure optimization."),
                 cl::Hidden);
 
+SparcFrameLowering::SparcFrameLowering(const SparcSubtarget &ST)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
+                          ST.is64Bit() ? 16 : 8, 0, ST.is64Bit() ? 16 : 8) {}
 
 void SparcFrameLowering::emitSPAdjustment(MachineFunction &MF,
                                           MachineBasicBlock &MBB,
@@ -99,7 +103,9 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
     SAVEri = SP::ADDri;
     SAVErr = SP::ADDrr;
   }
-  NumBytes = - SubTarget.getAdjustedFrameSize(NumBytes);
+  NumBytes =
+      -MF.getTarget().getSubtarget<SparcSubtarget>().getAdjustedFrameSize(
+          NumBytes);
   emitSPAdjustment(MF, MBB, MBBI, NumBytes, SAVErr, SAVEri);
 
   MachineModuleInfo &MMI = MF.getMMI();
@@ -162,7 +168,8 @@ void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
   if (NumBytes == 0)
     return;
 
-  NumBytes = SubTarget.getAdjustedFrameSize(NumBytes);
+  NumBytes = MF.getTarget().getSubtarget<SparcSubtarget>().getAdjustedFrameSize(
+      NumBytes);
   emitSPAdjustment(MF, MBB, MBBI, NumBytes, SP::ADDrr, SP::ADDri);
 }
 
