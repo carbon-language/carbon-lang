@@ -1351,6 +1351,11 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       return;
   }
 
+  // Skip LLVM intrinsic global variables
+  if (GVar->getName().startswith("llvm.") ||
+      GVar->getName().startswith("nvvm."))
+    return;
+
   const DataLayout *TD = TM.getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
