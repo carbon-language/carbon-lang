@@ -267,5 +267,19 @@ entry:
   %load = load i32* %gep2
   store i32 %load, i32 addrspace(1)* %out
   ret void
-
 }
+
+define void @select_private(i32 addrspace(1)* %out, i32 %in) nounwind {
+entry:
+  %tmp = alloca [2 x i32]
+  %tmp1 = getelementptr [2 x i32]* %tmp, i32 0, i32 0
+  %tmp2 = getelementptr [2 x i32]* %tmp, i32 0, i32 1
+  store i32 0, i32* %tmp1
+  store i32 1, i32* %tmp2
+  %cmp = icmp eq i32 %in, 0
+  %sel = select i1 %cmp, i32* %tmp1, i32* %tmp2
+  %load = load i32* %sel
+  store i32 %load, i32 addrspace(1)* %out
+  ret void
+}
+
