@@ -54,8 +54,7 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
                                   SMDiagnostic &Err, LLVMContext &Context) {
   MemoryBuffer *F =
-    MemoryBuffer::getMemBuffer(StringRef(AsmString, strlen(AsmString)),
-                               "<string>");
+      MemoryBuffer::getMemBuffer(StringRef(AsmString), "<string>");
 
   return ParseAssembly(F, M, Err, Context);
 }
