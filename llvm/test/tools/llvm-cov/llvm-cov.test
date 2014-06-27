@@ -102,12 +102,12 @@ RUN: diff -aub test_no_gcda.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_gcda.h.gcov test.h.gcov
 
 # Invalid gcno file.
-RUN: not llvm-cov test.c -gcno=test_read_fail.gcno
+RUN: llvm-cov test.c -gcno=test_read_fail.gcno
 
 # Bad file checksum on gcda.
-RUN: not llvm-cov test.c -gcda=test_file_checksum_fail.gcda
+RUN: llvm-cov test.c -gcda=test_file_checksum_fail.gcda
 
 # Bad function checksum on gcda
-RUN: not llvm-cov test.c -gcda=test_func_checksum_fail.gcda
+RUN: llvm-cov test.c -gcda=test_func_checksum_fail.gcda
 
 XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
