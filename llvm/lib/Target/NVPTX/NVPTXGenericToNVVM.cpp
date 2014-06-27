@@ -84,7 +84,7 @@ bool GenericToNVVM::runOnModule(Module &M) {
     GlobalVariable *GV = I++;
     if (GV->getType()->getAddressSpace() == llvm::ADDRESS_SPACE_GENERIC &&
         !llvm::isTexture(*GV) && !llvm::isSurface(*GV) &&
-        !GV->getName().startswith("llvm.")) {
+        !llvm::isSampler(*GV) && !GV->getName().startswith("llvm.")) {
       GlobalVariable *NewGV = new GlobalVariable(
           M, GV->getType()->getElementType(), GV->isConstant(),
           GV->getLinkage(),
