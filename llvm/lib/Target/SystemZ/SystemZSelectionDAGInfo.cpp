@@ -18,10 +18,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "systemz-selectiondag-info"
 
-SystemZSelectionDAGInfo::
-SystemZSelectionDAGInfo(const SystemZTargetMachine &TM)
-  : TargetSelectionDAGInfo(TM.getDataLayout()) {
-}
+SystemZSelectionDAGInfo::SystemZSelectionDAGInfo(const DataLayout &DL)
+    : TargetSelectionDAGInfo(&DL) {}
 
 SystemZSelectionDAGInfo::~SystemZSelectionDAGInfo() {
 }

@@ -31,7 +31,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
     // so that we can refer to it using LARL.  We don't have any special
     // requirements for stack variables though.
     DL("E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64"),
-    InstrInfo(*this), TLInfo(*this), TSInfo(*this),
+    InstrInfo(*this), TLInfo(*this), TSInfo(DL),
     FrameLowering(*this, Subtarget) {
   initAsmInfo();
 }
