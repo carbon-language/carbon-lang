@@ -92,7 +92,7 @@ def main():
       lines_by_file.setdefault(filename, []).append([start_line, end_line])
 
   if len(lines_by_file) == 0:
-    print "No relevant changes found."
+    print("No relevant changes found.")
     sys.exit(0)
 
   line_filter_json = json.dumps(
