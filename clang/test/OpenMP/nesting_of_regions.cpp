@@ -103,6 +103,23 @@ void foo() {
       bar();
     }
   }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
+    }
+  }
 #pragma omp sections
   {
 #pragma omp for // expected-error {{region cannot be closely nested inside 'sections' region; perhaps you forget to enclose 'omp for' directive into a parallel region?}}
@@ -143,6 +160,23 @@ void foo() {
       bar();
     }
   }
+#pragma omp sections
+  {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
+    }
+  }
 #pragma omp section // expected-error {{orphaned 'omp section' directives are prohibited, it must be closely nested to a sections region}}
   {
     bar();
@@ -177,6 +211,23 @@ void foo() {
 #pragma omp sections // expected-error {{region cannot be closely nested inside 'single' region; perhaps you forget to enclose 'omp sections' directive into a parallel region?}}
     {
       bar();
+    }
+  }
+#pragma omp single
+  {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
     }
   }
 }
@@ -282,6 +333,23 @@ void foo() {
 #pragma omp single // expected-error {{region cannot be closely nested inside 'for' region; perhaps you forget to enclose 'omp single' directive into a parallel region?}}
     bar();
   }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
+    }
+  }
 #pragma omp sections
   {
 #pragma omp for // expected-error {{region cannot be closely nested inside 'sections' region; perhaps you forget to enclose 'omp for' directive into a parallel region?}}
@@ -319,6 +387,23 @@ void foo() {
 #pragma omp single // expected-error {{region cannot be closely nested inside 'sections' region; perhaps you forget to enclose 'omp single' directive into a parallel region?}}
     bar();
   }
+#pragma omp sections
+  {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
+    }
+  }
 #pragma omp section // expected-error {{orphaned 'omp section' directives are prohibited, it must be closely nested to a sections region}}
   {
     bar();
@@ -353,6 +438,23 @@ void foo() {
 #pragma omp sections // expected-error {{region cannot be closely nested inside 'single' region; perhaps you forget to enclose 'omp sections' directive into a parallel region?}}
     {
       bar();
+    }
+  }
+#pragma omp single
+  {
+#pragma omp parallel
+    {
+#pragma omp single // OK
+      {
+        bar();
+      }
+#pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp sections // OK
+      {
+        bar();
+      }
     }
   }
   return foo<int>();
