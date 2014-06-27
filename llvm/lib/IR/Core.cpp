@@ -2708,11 +2708,10 @@ void LLVMDisposePassManager(LLVMPassManagerRef PM) {
 /*===-- Threading ------------------------------------------------------===*/
 
 LLVMBool LLVMStartMultithreaded() {
-  return llvm_start_multithreaded();
+  return LLVMIsMultithreaded();
 }
 
 void LLVMStopMultithreaded() {
-  llvm_stop_multithreaded();
 }
 
 LLVMBool LLVMIsMultithreaded() {

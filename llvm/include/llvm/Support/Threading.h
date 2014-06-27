@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TThis file defines llvm_start_multithreaded() and friends.
+// This file declares helper functions for running LLVM in a multi-threaded
+// environment.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,22 +16,8 @@
 #define LLVM_SUPPORT_THREADING_H
 
 namespace llvm {
-  /// llvm_start_multithreaded - Allocate and initialize structures needed to
-  /// make LLVM safe for multithreading.  The return value indicates whether
-  /// multithreaded initialization succeeded.  LLVM will still be operational
-  /// on "failed" return, and will still be safe for hosting threading
-  /// applications in the JIT, but will not be safe for concurrent calls to the
-  /// LLVM APIs.
-  /// THIS MUST EXECUTE IN ISOLATION FROM ALL OTHER LLVM API CALLS.
-  bool llvm_start_multithreaded();
-
-  /// llvm_stop_multithreaded - Deallocate structures necessary to make LLVM
-  /// safe for multithreading.
-  /// THIS MUST EXECUTE IN ISOLATION FROM ALL OTHER LLVM API CALLS.
-  void llvm_stop_multithreaded();
-
-  /// llvm_is_multithreaded - Check whether LLVM is executing in thread-safe
-  /// mode or not.
+  /// Returns true if LLVM is compiled with support for multi-threading, and
+  /// false otherwise.
   bool llvm_is_multithreaded();
 
   /// llvm_execute_on_thread - Execute the given \p UserFn on a separate
