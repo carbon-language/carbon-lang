@@ -315,7 +315,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
 
 #add_subdirectory(include)
 add_subdirectory(docs)
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT LLDB_DISABLE_PYTHON)
   add_subdirectory(scripts)
 endif()
 add_subdirectory(source)
