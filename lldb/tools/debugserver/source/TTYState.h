@@ -17,8 +17,6 @@
 #include <termios.h>
 #include <stdint.h>
 
-#include "llvm/ADT/STLExtras.h"
-
 class TTYState
 {
 public:
@@ -52,7 +50,7 @@ public:
 
     bool GetState(uint32_t idx, int fd, bool saveProcessGroup);
     bool SetState(uint32_t idx) const;
-    uint32_t NumStates() const { return llvm::array_lengthof(m_ttystates); }
+    uint32_t NumStates() const { return sizeof(m_ttystates)/sizeof(TTYState); }
     bool ValidStateIndex(uint32_t idx) const { return idx < NumStates(); }
 
 protected:

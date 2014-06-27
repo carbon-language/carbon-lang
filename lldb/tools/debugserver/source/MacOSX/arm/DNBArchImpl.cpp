@@ -23,8 +23,6 @@
 #include "ARM_GCC_Registers.h"
 #include "ARM_DWARF_Registers.h"
 
-#include "llvm/ADT/STLExtras.h"
-
 #include <inttypes.h>
 #include <sys/sysctl.h>
 
@@ -1557,9 +1555,9 @@ DNBArchMachARM::g_exc_registers[] =
 };
 
 // Number of registers in each register set
-const size_t DNBArchMachARM::k_num_gpr_registers = llvm::array_lengthof(g_gpr_registers);
-const size_t DNBArchMachARM::k_num_vfp_registers = llvm::array_lengthof(g_vfp_registers);
-const size_t DNBArchMachARM::k_num_exc_registers = llvm::array_lengthof(g_exc_registers);
+const size_t DNBArchMachARM::k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchMachARM::k_num_vfp_registers = sizeof(g_vfp_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchMachARM::k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
 const size_t DNBArchMachARM::k_num_all_registers = k_num_gpr_registers + k_num_vfp_registers + k_num_exc_registers;
 
 //----------------------------------------------------------------------
@@ -1576,7 +1574,7 @@ DNBArchMachARM::g_reg_sets[] =
     { "Exception State Registers",  g_exc_registers,    k_num_exc_registers     }
 };
 // Total number of register sets for this architecture
-const size_t DNBArchMachARM::k_num_register_sets = llvm::array_lengthof(g_reg_sets);
+const size_t DNBArchMachARM::k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
 
 
 const DNBRegisterSetInfo *
