@@ -15,20 +15,15 @@
 #define MSP430_FRAMEINFO_H
 
 #include "MSP430.h"
-#include "MSP430Subtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class MSP430Subtarget;
-
 class MSP430FrameLowering : public TargetFrameLowering {
 protected:
-  const MSP430Subtarget &STI;
 
 public:
-  explicit MSP430FrameLowering(const MSP430Subtarget &sti)
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2, 2),
-      STI(sti) {}
+  explicit MSP430FrameLowering()
+      : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2, 2) {}
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
