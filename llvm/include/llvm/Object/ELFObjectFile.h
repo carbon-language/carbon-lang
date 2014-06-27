@@ -917,6 +917,7 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
 
 template <class ELFT>
 unsigned ELFObjectFile<ELFT>::getArch() const {
+  bool IsLittleEndian = ELFT::TargetEndianness == support::little;
   switch (EF.getHeader()->e_machine) {
   case ELF::EM_386:
     return Triple::x86;
@@ -929,11 +930,16 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
   case ELF::EM_HEXAGON:
     return Triple::hexagon;
   case ELF::EM_MIPS:
-    return (ELFT::TargetEndianness == support::little) ? Triple::mipsel
-                                                       : Triple::mips;
+    switch (EF.getHeader()->e_ident[ELF::EI_CLASS]) {
+    case ELF::ELFCLASS32:
+      return IsLittleEndian ? Triple::mipsel : Triple::mips;
+    case ELF::ELFCLASS64:
+      return IsLittleEndian ? Triple::mips64el : Triple::mips64;
+    default:
+      report_fatal_error("Invalid ELFCLASS!");
+    }
   case ELF::EM_PPC64:
-    return (ELFT::TargetEndianness == support::little) ? Triple::ppc64le
-                                                       : Triple::ppc64;
+    return IsLittleEndian ? Triple::ppc64le : Triple::ppc64;
   case ELF::EM_S390:
     return Triple::systemz;
 
