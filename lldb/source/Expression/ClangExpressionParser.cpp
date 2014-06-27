@@ -129,19 +129,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     if (target_sp && target_sp->GetArchitecture().IsValid())
     {
         std::string triple = target_sp->GetArchitecture().GetTriple().str();
-        
-        int dash_count = 0;
-        for (size_t i = 0; i < triple.size(); ++i)
-        {
-            if (triple[i] == '-')
-                dash_count++;
-            if (dash_count == 3)
-            {
-                triple.resize(i);
-                break;
-            }
-        }
-        
         m_compiler->getTargetOpts().Triple = triple;
     }
     else
