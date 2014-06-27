@@ -1502,13 +1502,24 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
 
     // Ptx allows variable initilization only for constant and global state
     // spaces.
-    if (((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
-         (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST)) &&
-        GVar->hasInitializer()) {
-      const Constant *Initializer = GVar->getInitializer();
-      if (!Initializer->isNullValue()) {
-        O << " = ";
-        printScalarConstant(Initializer, O);
+    if (GVar->hasInitializer()) {
+      if ((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
+          (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST)) {
+        const Constant *Initializer = GVar->getInitializer();
+        // 'undef' is treated as there is no value spefied.
+        if (!Initializer->isNullValue() && !isa<UndefValue>(Initializer)) {
+          O << " = ";
+          printScalarConstant(Initializer, O);
+        }
+      } else {
+        // The frontend adds zero-initializer to variables that don't have an
+        // initial value, so skip warning for this case.
+        if (!GVar->getInitializer()->isNullValue()) {
+          std::string warnMsg = "initial value of '" + GVar->getName().str() +
+              "' is not allowed in addrspace(" +
+              llvm::utostr_32(PTy->getAddressSpace()) + ")";
+          report_fatal_error(warnMsg.c_str());
+        }
       }
     }
   } else {
