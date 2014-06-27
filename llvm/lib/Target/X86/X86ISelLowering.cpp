@@ -19034,6 +19034,95 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// \brief Get the PSHUF-style mask from PSHUF node.
+///
+/// This is a very minor wrapper around getTargetShuffleMask to easy forming v4
+/// PSHUF-style masks that can be reused with such instructions.
+static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
+  SmallVector<int, 4> Mask;
+  bool IsUnary;
+  bool HaveMask = getTargetShuffleMask(N.getNode(), N.getSimpleValueType(), Mask, IsUnary);
+  (void)HaveMask;
+  assert(HaveMask);
+
+  switch (N.getOpcode()) {
+  case X86ISD::PSHUFD:
+    return Mask;
+  case X86ISD::PSHUFLW:
+    Mask.resize(4);
+    return Mask;
+  case X86ISD::PSHUFHW:
+    Mask.erase(Mask.begin(), Mask.begin() + 4);
+    for (int &M : Mask)
+      M -= 4;
+    return Mask;
+  default:
+    llvm_unreachable("No valid shuffle instruction found!");
+  }
+}
+
+/// \brief Try to combine x86 target specific shuffles.
+static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
+                                           TargetLowering::DAGCombinerInfo &DCI,
+                                           const X86Subtarget *Subtarget) {
+  SDLoc DL(N);
+  MVT VT = N.getSimpleValueType();
+  SmallVector<int, 4> Mask;
+
+  switch (N.getOpcode()) {
+  case X86ISD::PSHUFD:
+  case X86ISD::PSHUFLW:
+  case X86ISD::PSHUFHW:
+    Mask = getPSHUFShuffleMask(N);
+    assert(Mask.size() == 4);
+    break;
+  default:
+    return SDValue();
+  }
+
+  SDValue V = N.getOperand(0);
+  switch (N.getOpcode()) {
+  default:
+    break;
+  case X86ISD::PSHUFLW:
+  case X86ISD::PSHUFHW:
+    assert(VT == MVT::v8i16);
+
+    // See if this reduces to a PSHUFD which is no more expensive and can
+    // combine with more operations.
+    if (Mask[0] % 2 == 0 && Mask[2] % 2 == 0 &&
+        areAdjacentMasksSequential(Mask)) {
+      int DMask[] = {-1, -1, -1, -1};
+      int DOffset = N.getOpcode() == X86ISD::PSHUFLW ? 0 : 2;
+      DMask[DOffset + 0] = DOffset + Mask[0] / 2;
+      DMask[DOffset + 1] = DOffset + Mask[2] / 2;
+      V = DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V);
+      DCI.AddToWorklist(V.getNode());
+      V = DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V,
+                      getV4X86ShuffleImm8ForMask(DMask, DAG));
+      DCI.AddToWorklist(V.getNode());
+      return DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
+    }
+
+    // Fallthrough
+  case X86ISD::PSHUFD:
+    if (V.getOpcode() == N.getOpcode()) {
+      // If we have two sequential shuffles of the same kind we can always fold
+      // them. Even if there are multiple uses, this is beneficial because it
+      // breaks a dependency.
+      SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
+      for (int &M : Mask)
+        M = VMask[M];
+      return DAG.getNode(N.getOpcode(), DL, VT, V.getOperand(0),
+                         getV4X86ShuffleImm8ForMask(Mask, DAG));
+    }
+
+    break;
+  }
+
+  return SDValue();
+}
+
 /// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
@@ -19158,7 +19247,18 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
     Elts.push_back(getShuffleScalarElt(N, i, DAG, 0));
 
-  return EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true);
+  SDValue LD = EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true);
+  if (LD.getNode())
+    return LD;
+
+  if (isTargetShuffle(N->getOpcode())) {
+    SDValue Shuffle =
+        PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget);
+    if (Shuffle.getNode())
+      return Shuffle;
+  }
+
+  return SDValue();
 }
 
 /// PerformTruncateCombine - Converts truncate operation to

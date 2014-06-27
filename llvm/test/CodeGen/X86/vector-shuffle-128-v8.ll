@@ -51,7 +51,7 @@ define <8 x i16> @shuffle_v8i16_31206745(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v8i16_31206745
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[3,1,2,0,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,4,5]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,3,2]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 3, i32 1, i32 2, i32 0, i32 6, i32 7, i32 4, i32 5>
   ret <8 x i16> %shuffle
@@ -159,7 +159,7 @@ define <8 x i16> @shuffle_v8i16_26401375(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,7,5,4,6]
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,2,1]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,3,2,0,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,4,5]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,3,2]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 6, i32 4, i32 0, i32 1, i32 3, i32 7, i32 5>
   ret <8 x i16> %shuffle
@@ -273,8 +273,7 @@ define <8 x i16> @shuffle_v8i16_4563XXXX(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[3,1,2,0]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,3,2,3,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[2,3,0,1,4,5,6,7]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[2,0,2,3]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 4, i32 5, i32 6, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x i16> %shuffle
@@ -285,8 +284,7 @@ define <8 x i16> @shuffle_v8i16_01274563(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,1,3]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,5,4,7]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,2,1]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,4,5]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,1,2]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 7, i32 4, i32 5, i32 6, i32 3>
   ret <8 x i16> %shuffle
@@ -297,8 +295,7 @@ define <8 x i16> @shuffle_v8i16_45630127(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[3,1,2,0]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,3,1,2,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,1,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[2,3,0,1,4,5,6,7]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[2,0,1,3]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,5,4]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 4, i32 5, i32 6, i32 3, i32 0, i32 1, i32 2, i32 7>
@@ -359,9 +356,8 @@ define <8 x i16> @shuffle_v8i16_08196e7f(<8 x i16> %a, <8 x i16> %b) {
 define <8 x i16> @shuffle_v8i16_0c1d6879(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v8i16_0c1d6879
 ; CHECK-SSE2:       # BB#0:
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm1 = xmm1[2,0,2,3]
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,2,3]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm1 = xmm1[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm1 = xmm1[2,3,0,1,4,5,6,7]
 ; CHECK-SSE2-NEXT:    punpcklwd %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 0, i32 12, i32 1, i32 13, i32 6, i32 8, i32 7, i32 9>
@@ -458,8 +454,7 @@ define <8 x i16> @shuffle_v8i16_XXXXcde3(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2-NEXT:    punpckhwd %xmm0, %xmm1
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm1[0,2,2,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,7,6,7]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,2,0]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,4,5]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,0,2]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 12, i32 13, i32 14, i32 3>
   ret <8 x i16> %shuffle
