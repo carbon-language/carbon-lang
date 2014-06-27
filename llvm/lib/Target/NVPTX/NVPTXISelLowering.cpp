@@ -33,6 +33,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>
 
@@ -65,17 +66,6 @@ static bool IsPTXVectorType(MVT VT) {
   case MVT::v2f64:
     return true;
   }
-}
-
-static uint64_t GCD( int a, int b)
-{
-  if (a < b) std::swap(a,b);
-  while (b > 0) {
-    uint64_t c = b;
-    b = a % b;
-    a = c;
-  }
-  return a;
 }
 
 /// ComputePTXValueVTs - For the given Type \p Ty, returns the set of primitive
@@ -718,7 +708,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         InFlag = Chain.getValue(1);
         for (unsigned j = 0, je = vtparts.size(); j != je; ++j) {
           EVT elemtype = vtparts[j];
-          unsigned ArgAlign = GCD(align, Offsets[j]);
+          unsigned ArgAlign = GreatestCommonDivisor64(align, Offsets[j]);
           if (elemtype.isInteger() && (sz < 8))
             sz = 8;
           SDValue StVal = OutVals[OIdx];
@@ -943,7 +933,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     for (unsigned j = 0, je = vtparts.size(); j != je; ++j) {
       EVT elemtype = vtparts[j];
       int curOffset = Offsets[j];
-      unsigned PartAlign = GCD(ArgAlign, curOffset);
+      unsigned PartAlign = GreatestCommonDivisor64(ArgAlign, curOffset);
       SDValue srcAddr =
           DAG.getNode(ISD::ADD, dl, getPointerTy(), OutVals[OIdx],
                       DAG.getConstant(curOffset, getPointerTy()));
@@ -1204,7 +1194,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       unsigned RetAlign = getArgumentAlignment(Callee, CS, retTy, 0);
       for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
         unsigned sz = VTs[i].getSizeInBits();
-        unsigned AlignI = GCD(RetAlign, Offsets[i]);
+        unsigned AlignI = GreatestCommonDivisor64(RetAlign, Offsets[i]);
         bool needTruncate = sz < 8 ? true : false;
         if (VTs[i].isInteger() && (sz < 8))
           sz = 8;
