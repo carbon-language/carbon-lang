@@ -1692,8 +1692,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
         assert(vtparts.size() > 0 && "empty aggregate type not expected");
         for (unsigned parti = 0, parte = vtparts.size(); parti != parte;
              ++parti) {
-          EVT partVT = vtparts[parti];
-          InVals.push_back(DAG.getNode(ISD::UNDEF, dl, partVT));
+          InVals.push_back(DAG.getNode(ISD::UNDEF, dl, Ins[InsIdx].VT));
           ++InsIdx;
         }
         if (vtparts.size() > 0)
@@ -2009,7 +2008,7 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
       unsigned Offset = 0;
 
       EVT VecVT =
-          EVT::getVectorVT(F->getContext(), OutVals[0].getValueType(), VecSize);
+          EVT::getVectorVT(F->getContext(), EltVT, VecSize);
       unsigned PerStoreOffset =
           TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
 
@@ -2068,12 +2067,10 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     }
   } else {
     SmallVector<EVT, 16> ValVTs;
-    // const_cast is necessary since we are still using an LLVM version from
-    // before the type system re-write.
-    ComputePTXValueVTs(*this, RetTy, ValVTs);
+    SmallVector<uint64_t, 16> Offsets;
+    ComputePTXValueVTs(*this, RetTy, ValVTs, &Offsets, 0);
     assert(ValVTs.size() == OutVals.size() && "Bad return value decomposition");
 
-    unsigned SizeSoFar = 0;
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
       SDValue theVal = OutVals[i];
       EVT TheValType = theVal.getValueType();
@@ -2097,16 +2094,14 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
         else if (TmpVal.getValueType().getSizeInBits() < 16)
           TmpVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i16, TmpVal);
 
-        SDValue Ops[] = { Chain, DAG.getConstant(SizeSoFar, MVT::i32), TmpVal };
+        SDValue Ops[] = {
+          Chain,
+          DAG.getConstant(Offsets[i], MVT::i32),
+          TmpVal };
         Chain = DAG.getMemIntrinsicNode(NVPTXISD::StoreRetval, dl,
                                         DAG.getVTList(MVT::Other), Ops,
                                         TheStoreType,
                                         MachinePointerInfo());
-        if(TheValType.isVector())
-          SizeSoFar += 
-            TheStoreType.getVectorElementType().getStoreSizeInBits() / 8;
-        else
-          SizeSoFar += TheStoreType.getStoreSizeInBits()/8;
       }
     }
   }
