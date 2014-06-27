@@ -121,7 +121,7 @@ public:
 };
 
 ObjectImage *RuntimeDyldMachO::createObjectImage(ObjectBuffer *Buffer) {
-  uint32_t magic = *((uint32_t *)Buffer->getBufferStart());
+  uint32_t magic = *((const uint32_t *)Buffer->getBufferStart());
   bool is64 = (magic == MachO::MH_MAGIC_64);
   assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
          "Unrecognized Macho Magic");
@@ -136,7 +136,7 @@ ObjectImage *RuntimeDyldMachO::createObjectImageFromFile(
   MemoryBuffer *Buffer =
       MemoryBuffer::getMemBuffer(ObjFile->getData(), "", false);
 
-  uint32_t magic = *((uint32_t *)Buffer->getBufferStart());
+  uint32_t magic = *((const uint32_t *)Buffer->getBufferStart());
   bool is64 = (magic == MachO::MH_MAGIC_64);
   assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
          "Unrecognized Macho Magic");
