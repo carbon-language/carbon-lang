@@ -249,7 +249,6 @@ public:
 
 private:
   const SystemZSubtarget &Subtarget;
-  const SystemZTargetMachine &TM;
 
   // Implement LowerOperation for individual opcodes.
   SDValue lowerSETCC(SDValue Op, SelectionDAG &DAG) const;
