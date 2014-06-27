@@ -734,23 +734,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
         << " func_retval0";
     } else {
       if ((Ty->getTypeID() == Type::StructTyID) || isa<VectorType>(Ty)) {
-        SmallVector<EVT, 16> vtparts;
-        ComputeValueVTs(*TLI, Ty, vtparts);
-        unsigned totalsz = 0;
-        for (unsigned i = 0, e = vtparts.size(); i != e; ++i) {
-          unsigned elems = 1;
-          EVT elemtype = vtparts[i];
-          if (vtparts[i].isVector()) {
-            elems = vtparts[i].getVectorNumElements();
-            elemtype = vtparts[i].getVectorElementType();
-          }
-          for (unsigned j = 0, je = elems; j != je; ++j) {
-            unsigned sz = elemtype.getSizeInBits();
-            if (elemtype.isInteger() && (sz < 8))
-              sz = 8;
-            totalsz += sz / 8;
-          }
-        }
+        unsigned totalsz = TD->getTypeAllocSize(Ty);
         unsigned retAlignment = 0;
         if (!llvm::getAlign(*F, 0, retAlignment))
           retAlignment = TD->getABITypeAlignment(Ty);
