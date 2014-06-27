@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/UniqueVector.h"
 #include "llvm/IR/Attributes.h"
 #include <vector>
 
@@ -25,6 +26,7 @@ class Type;
 class Value;
 class Instruction;
 class BasicBlock;
+class Comdat;
 class Function;
 class Module;
 class MDNode;
@@ -48,6 +50,10 @@ private:
   typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
+
+  typedef UniqueVector<const Comdat *> ComdatSetType;
+  ComdatSetType Comdats;
+
   ValueList MDValues;
   SmallVector<const MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
@@ -138,6 +144,9 @@ public:
   const std::vector<AttributeSet> &getAttributeGroups() const {
     return AttributeGroups;
   }
+
+  const ComdatSetType &getComdats() const { return Comdats; }
+  unsigned getComdatID(const Comdat *C) const;
 
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
   /// specified basic block.  This is relatively expensive information, so it

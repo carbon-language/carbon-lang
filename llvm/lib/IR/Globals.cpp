@@ -59,15 +59,10 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setDLLStorageClass(Src->getDLLStorageClass());
 }
 
-static const GlobalObject *getBaseObject(const Constant &C) {
-  // FIXME: We should probably return a base + offset pair for non-zero GEPs.
-  return dyn_cast<GlobalObject>(C.stripPointerCasts());
-}
-
 unsigned GlobalValue::getAlignment() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this)) {
     // In general we cannot compute this at the IR level, but we try.
-    if (const GlobalObject *GO = getBaseObject(*GA->getAliasee()))
+    if (const GlobalObject *GO = GA->getBaseObject())
       return GO->getAlignment();
 
     // FIXME: we should also be able to handle:
@@ -96,11 +91,21 @@ void GlobalObject::copyAttributesFrom(const GlobalValue *Src) {
 const char *GlobalValue::getSection() const {
   if (auto *GA = dyn_cast<GlobalAlias>(this)) {
     // In general we cannot compute this at the IR level, but we try.
-    if (const GlobalObject *GO = getBaseObject(*GA->getAliasee()))
+    if (const GlobalObject *GO = GA->getBaseObject())
       return GO->getSection();
     return "";
   }
   return cast<GlobalObject>(this)->getSection();
+}
+
+Comdat *GlobalValue::getComdat() {
+  if (auto *GA = dyn_cast<GlobalAlias>(this)) {
+    // In general we cannot compute this at the IR level, but we try.
+    if (const GlobalObject *GO = GA->getBaseObject())
+      return const_cast<GlobalObject *>(GO)->getComdat();
+    return nullptr;
+  }
+  return cast<GlobalObject>(this)->getComdat();
 }
 
 void GlobalObject::setSection(StringRef S) { Section = S; }

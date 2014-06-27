@@ -15,6 +15,8 @@
 
 namespace llvm {
 
+class Comdat;
+class GlobalValue;
 class Module;
 class StringRef;
 class StructType;

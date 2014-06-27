@@ -43,6 +43,7 @@ void BitcodeReader::FreeState() {
   std::vector<Type*>().swap(TypeList);
   ValueList.clear();
   MDValueList.clear();
+  std::vector<Comdat *>().swap(ComdatList);
 
   std::vector<AttributeSet>().swap(MAttributes);
   std::vector<BasicBlock*>().swap(FunctionBBs);
@@ -200,6 +201,22 @@ static SynchronizationScope GetDecodedSynchScope(unsigned Val) {
   case bitc::SYNCHSCOPE_SINGLETHREAD: return SingleThread;
   default: // Map unknown scopes to cross-thread.
   case bitc::SYNCHSCOPE_CROSSTHREAD: return CrossThread;
+  }
+}
+
+static Comdat::SelectionKind getDecodedComdatSelectionKind(unsigned Val) {
+  switch (Val) {
+  default: // Map unknown selection kinds to any.
+  case bitc::COMDAT_SELECTION_KIND_ANY:
+    return Comdat::Any;
+  case bitc::COMDAT_SELECTION_KIND_EXACT_MATCH:
+    return Comdat::ExactMatch;
+  case bitc::COMDAT_SELECTION_KIND_LARGEST:
+    return Comdat::Largest;
+  case bitc::COMDAT_SELECTION_KIND_NO_DUPLICATES:
+    return Comdat::NoDuplicates;
+  case bitc::COMDAT_SELECTION_KIND_SAME_SIZE:
+    return Comdat::SameSize;
   }
 }
 
@@ -1838,6 +1855,20 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
       GCTable.push_back(S);
       break;
     }
+    case bitc::MODULE_CODE_COMDAT: { // COMDAT: [selection_kind, name]
+      if (Record.size() < 2)
+        return Error(InvalidRecord);
+      Comdat::SelectionKind SK = getDecodedComdatSelectionKind(Record[0]);
+      unsigned ComdatNameSize = Record[1];
+      std::string ComdatName;
+      ComdatName.reserve(ComdatNameSize);
+      for (unsigned i = 0; i != ComdatNameSize; ++i)
+        ComdatName += (char)Record[2 + i];
+      Comdat *C = TheModule->getOrInsertComdat(ComdatName);
+      C->setSelectionKind(SK);
+      ComdatList.push_back(C);
+      break;
+    }
     // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal,
     //             unnamed_addr, dllstorageclass]
@@ -1898,6 +1929,12 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
       // Remember which value to use for the global initializer.
       if (unsigned InitID = Record[2])
         GlobalInits.push_back(std::make_pair(NewGV, InitID-1));
+
+      if (Record.size() > 11)
+        if (unsigned ComdatID = Record[11]) {
+          assert(ComdatID <= ComdatList.size());
+          NewGV->setComdat(ComdatList[ComdatID - 1]);
+        }
       break;
     }
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattr,
@@ -1950,6 +1987,12 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
         Func->setDLLStorageClass(GetDecodedDLLStorageClass(Record[11]));
       else
         UpgradeDLLImportExportLinkage(Func, Record[3]);
+
+      if (Record.size() > 12)
+        if (unsigned ComdatID = Record[12]) {
+          assert(ComdatID <= ComdatList.size());
+          Func->setComdat(ComdatList[ComdatID - 1]);
+        }
 
       ValueList.push_back(Func);
 

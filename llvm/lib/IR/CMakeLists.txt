@@ -3,6 +3,7 @@ add_llvm_library(LLVMCore
   Attributes.cpp
   AutoUpgrade.cpp
   BasicBlock.cpp
+  Comdat.cpp
   ConstantFold.cpp
   ConstantRange.cpp
   Constants.cpp

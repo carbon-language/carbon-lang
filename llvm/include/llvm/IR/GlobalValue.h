@@ -23,6 +23,7 @@
 
 namespace llvm {
 
+class Comdat;
 class PointerType;
 class Module;
 
@@ -109,6 +110,12 @@ public:
 
   bool hasUnnamedAddr() const { return UnnamedAddr; }
   void setUnnamedAddr(bool Val) { UnnamedAddr = Val; }
+
+  bool hasComdat() const { return getComdat() != nullptr; }
+  Comdat *getComdat();
+  const Comdat *getComdat() const {
+    return const_cast<GlobalValue *>(this)->getComdat();
+  }
 
   VisibilityTypes getVisibility() const { return VisibilityTypes(Visibility); }
   bool hasDefaultVisibility() const { return Visibility == DefaultVisibility; }

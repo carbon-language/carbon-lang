@@ -209,6 +209,7 @@ lltok::Kind LLLexer::LexToken() {
     return LexToken();
   case '+': return LexPositive();
   case '@': return LexAt();
+  case '$': return LexDollar();
   case '%': return LexPercent();
   case '"': return LexQuote();
   case '.':
@@ -220,13 +221,6 @@ lltok::Kind LLLexer::LexToken() {
     if (CurPtr[0] == '.' && CurPtr[1] == '.') {
       CurPtr += 2;
       return lltok::dotdotdot;
-    }
-    return lltok::Error;
-  case '$':
-    if (const char *Ptr = isLabelTail(CurPtr)) {
-      CurPtr = Ptr;
-      StrVal.assign(TokStart, CurPtr-1);
-      return lltok::LabelStr;
     }
     return lltok::Error;
   case ';':
@@ -303,6 +297,43 @@ lltok::Kind LLLexer::LexAt() {
     UIntVal = unsigned(Val);
     return lltok::GlobalID;
   }
+
+  return lltok::Error;
+}
+
+lltok::Kind LLLexer::LexDollar() {
+  if (const char *Ptr = isLabelTail(TokStart)) {
+    CurPtr = Ptr;
+    StrVal.assign(TokStart, CurPtr - 1);
+    return lltok::LabelStr;
+  }
+
+  // Handle DollarStringConstant: $\"[^\"]*\"
+  if (CurPtr[0] == '"') {
+    ++CurPtr;
+
+    while (1) {
+      int CurChar = getNextChar();
+
+      if (CurChar == EOF) {
+        Error("end of file in COMDAT variable name");
+        return lltok::Error;
+      }
+      if (CurChar == '"') {
+        StrVal.assign(TokStart + 2, CurPtr - 1);
+        UnEscapeLexed(StrVal);
+        if (StringRef(StrVal).find_first_of(0) != StringRef::npos) {
+          Error("Null bytes are not allowed in names");
+          return lltok::Error;
+        }
+        return lltok::ComdatVar;
+      }
+    }
+  }
+
+  // Handle ComdatVarName: $[-a-zA-Z$._][-a-zA-Z$._0-9]*
+  if (ReadVarName())
+    return lltok::ComdatVar;
 
   return lltok::Error;
 }
@@ -617,6 +648,15 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   KEYWORD(type);
   KEYWORD(opaque);
+
+  KEYWORD(comdat);
+
+  // Comdat types
+  KEYWORD(any);
+  KEYWORD(exactmatch);
+  KEYWORD(largest);
+  KEYWORD(noduplicates);
+  KEYWORD(samesize);
 
   KEYWORD(eq); KEYWORD(ne); KEYWORD(slt); KEYWORD(sgt); KEYWORD(sle);
   KEYWORD(sge); KEYWORD(ult); KEYWORD(ugt); KEYWORD(ule); KEYWORD(uge);

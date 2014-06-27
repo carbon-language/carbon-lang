@@ -192,6 +192,18 @@ getELFSectionFlags(SectionKind K) {
   return Flags;
 }
 
+static const Comdat *getELFComdat(const GlobalValue *GV) {
+  const Comdat *C = GV->getComdat();
+  if (!C)
+    return nullptr;
+
+  if (C->getSelectionKind() != Comdat::Any)
+    report_fatal_error("ELF COMDATs only support SelectionKind::Any, '" +
+                       C->getName() + "' cannot be lowered.");
+
+  return C;
+}
+
 const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
     const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM) const {
@@ -200,9 +212,15 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
   // Infer section flags from the section name if we can.
   Kind = getELFKindForNamedSection(SectionName, Kind);
 
+  StringRef Group = "";
+  unsigned Flags = getELFSectionFlags(Kind);
+  if (const Comdat *C = getELFComdat(GV)) {
+    Group = C->getName();
+    Flags |= ELF::SHF_GROUP;
+  }
   return getContext().getELFSection(SectionName,
-                                    getELFSectionType(SectionName, Kind),
-                                    getELFSectionFlags(Kind), Kind);
+                                    getELFSectionType(SectionName, Kind), Flags,
+                                    Kind, /*EntrySize=*/0, Group);
 }
 
 /// getSectionPrefixForGlobal - Return the section prefix name used by options
@@ -224,7 +242,6 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   return ".data.rel.ro.";
 }
 
-
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
@@ -238,7 +255,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if ((GV->isWeakForLinker() || EmitUniquedSection) &&
+  if ((GV->isWeakForLinker() || EmitUniquedSection || GV->hasComdat()) &&
       !Kind.isCommon()) {
     StringRef Prefix = getSectionPrefixForGlobal(Kind);
 
@@ -247,8 +264,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
-    if (GV->isWeakForLinker()) {
-      Group = Name.substr(Prefix.size());
+    if (GV->isWeakForLinker() || GV->hasComdat()) {
+      if (const Comdat *C = getELFComdat(GV))
+        Group = C->getName();
+      else
+        Group = Name.substr(Prefix.size());
       Flags |= ELF::SHF_GROUP;
     }
 
@@ -482,6 +502,15 @@ emitModuleFlags(MCStreamer &Streamer,
   Streamer.AddBlankLine();
 }
 
+static void checkMachOComdat(const GlobalValue *GV) {
+  const Comdat *C = GV->getComdat();
+  if (!C)
+    return;
+
+  report_fatal_error("MachO doesn't support COMDATs, '" + C->getName() +
+                     "' cannot be lowered.");
+}
+
 const MCSection *TargetLoweringObjectFileMachO::getExplicitSectionGlobal(
     const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM) const {
@@ -489,6 +518,9 @@ const MCSection *TargetLoweringObjectFileMachO::getExplicitSectionGlobal(
   StringRef Segment, Section;
   unsigned TAA = 0, StubSize = 0;
   bool TAAParsed;
+
+  checkMachOComdat(GV);
+
   std::string ErrorCode =
     MCSectionMachO::ParseSectionSpecifier(GV->getSection(), Segment, Section,
                                           TAA, TAAParsed, StubSize);
@@ -559,6 +591,7 @@ bool TargetLoweringObjectFileMachO::isSectionAtomizableBySymbols(
 const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
+  checkMachOComdat(GV);
 
   // Handle thread local data.
   if (Kind.isThreadBSS()) return TLSBSSSection;
@@ -727,6 +760,50 @@ getCOFFSectionFlags(SectionKind K) {
   return Flags;
 }
 
+const GlobalValue *getComdatGVForCOFF(const GlobalValue *GV) {
+  const Comdat *C = GV->getComdat();
+  assert(C && "expected GV to have a Comdat!");
+
+  StringRef ComdatGVName = C->getName();
+  const GlobalValue *ComdatGV = GV->getParent()->getNamedValue(ComdatGVName);
+  if (!ComdatGV)
+    report_fatal_error("Associative COMDAT symbol '" + ComdatGVName +
+                       "' does not exist.");
+
+  if (ComdatGV->getComdat() != C)
+    report_fatal_error("Associative COMDAT symbol '" + ComdatGVName +
+                       "' is not a key for it's COMDAT.");
+
+  return ComdatGV;
+}
+
+static int getSelectionForCOFF(const GlobalValue *GV) {
+  if (const Comdat *C = GV->getComdat()) {
+    const GlobalValue *ComdatKey = getComdatGVForCOFF(GV);
+    if (const auto *GA = dyn_cast<GlobalAlias>(ComdatKey))
+      ComdatKey = GA->getBaseObject();
+    if (ComdatKey == GV) {
+      switch (C->getSelectionKind()) {
+      case Comdat::Any:
+        return COFF::IMAGE_COMDAT_SELECT_ANY;
+      case Comdat::ExactMatch:
+        return COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH;
+      case Comdat::Largest:
+        return COFF::IMAGE_COMDAT_SELECT_LARGEST;
+      case Comdat::NoDuplicates:
+        return COFF::IMAGE_COMDAT_SELECT_NODUPLICATES;
+      case Comdat::SameSize:
+        return COFF::IMAGE_COMDAT_SELECT_SAME_SIZE;
+      }
+    } else {
+      return COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE;
+    }
+  } else if (GV->isWeakForLinker()) {
+    return COFF::IMAGE_COMDAT_SELECT_ANY;
+  }
+  return 0;
+}
+
 const MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
     const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM) const {
@@ -734,11 +811,21 @@ const MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
   unsigned Characteristics = getCOFFSectionFlags(Kind);
   StringRef Name = GV->getSection();
   StringRef COMDATSymName = "";
-  if (GV->isWeakForLinker()) {
-    Selection = COFF::IMAGE_COMDAT_SELECT_ANY;
-    Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = TM.getSymbol(GV, Mang);
-    COMDATSymName = Sym->getName();
+  if ((GV->isWeakForLinker() || GV->hasComdat()) && !Kind.isCommon()) {
+    Selection = getSelectionForCOFF(GV);
+    const GlobalValue *ComdatGV;
+    if (Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
+      ComdatGV = getComdatGVForCOFF(GV);
+    else
+      ComdatGV = GV;
+
+    if (!ComdatGV->hasPrivateLinkage()) {
+      MCSymbol *Sym = TM.getSymbol(ComdatGV, Mang);
+      COMDATSymName = Sym->getName();
+      Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
+    } else {
+      Selection = 0;
+    }
   }
   return getContext().getCOFFSection(Name,
                                      Characteristics,
@@ -775,17 +862,27 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   // Section names depend on the name of the symbol which is not feasible if the
   // symbol has private linkage.
-  if ((GV->isWeakForLinker() || EmitUniquedSection) &&
-      !GV->hasPrivateLinkage() && !Kind.isCommon()) {
+  if ((GV->isWeakForLinker() || EmitUniquedSection || GV->hasComdat()) &&
+      !Kind.isCommon()) {
     const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = TM.getSymbol(GV, Mang);
-    return getContext().getCOFFSection(
-        Name, Characteristics, Kind, Sym->getName(),
-        GV->isWeakForLinker() ? COFF::IMAGE_COMDAT_SELECT_ANY
-                              : COFF::IMAGE_COMDAT_SELECT_NODUPLICATES);
+    int Selection = getSelectionForCOFF(GV);
+    if (!Selection)
+      Selection = COFF::IMAGE_COMDAT_SELECT_NODUPLICATES;
+    const GlobalValue *ComdatGV;
+    if (GV->hasComdat())
+      ComdatGV = getComdatGVForCOFF(GV);
+    else
+      ComdatGV = GV;
+
+    if (!ComdatGV->hasPrivateLinkage()) {
+      MCSymbol *Sym = TM.getSymbol(ComdatGV, Mang);
+      StringRef COMDATSymName = Sym->getName();
+      return getContext().getCOFFSection(Name, Characteristics, Kind,
+                                         COMDATSymName, Selection);
+    }
   }
 
   if (Kind.isText())

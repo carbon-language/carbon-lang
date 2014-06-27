@@ -16,6 +16,7 @@
 #define LLVM_IR_MODULE_H
 
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/IR/Comdat.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -123,6 +124,8 @@ public:
   typedef iplist<GlobalAlias> AliasListType;
   /// The type for the list of named metadata.
   typedef ilist<NamedMDNode> NamedMDListType;
+  /// The type of the comdat "symbol" table.
+  typedef StringMap<Comdat> ComdatSymTabType;
 
   /// The Global Variable iterator.
   typedef GlobalListType::iterator                      global_iterator;
@@ -197,6 +200,7 @@ private:
   NamedMDListType NamedMDList;    ///< The named metadata in the module
   std::string GlobalScopeAsm;     ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;    ///< Symbol table for values
+  ComdatSymTabType ComdatSymTab;  ///< Symbol table for COMDATs
   std::unique_ptr<GVMaterializer>
   Materializer;                   ///< Used to materialize GlobalValues
   std::string ModuleID;           ///< Human readable identifier for the module
@@ -404,6 +408,14 @@ public:
   void eraseNamedMetadata(NamedMDNode *NMD);
 
 /// @}
+/// @name Comdat Accessors
+/// @{
+
+  /// Return the Comdat in the module with the specified name. It is created
+  /// if it didn't already exist.
+  Comdat *getOrInsertComdat(StringRef Name);
+
+/// @}
 /// @name Module Flags Accessors
 /// @{
 
@@ -504,6 +516,10 @@ public:
   const ValueSymbolTable &getValueSymbolTable() const { return *ValSymTab; }
   /// Get the Module's symbol table of global variable and function identifiers.
   ValueSymbolTable       &getValueSymbolTable()       { return *ValSymTab; }
+  /// Get the Module's symbol table for COMDATs (constant).
+  const ComdatSymTabType &getComdatSymbolTable() const { return ComdatSymTab; }
+  /// Get the Module's symbol table for COMDATs.
+  ComdatSymTabType &getComdatSymbolTable() { return ComdatSymTab; }
 
 /// @}
 /// @name Global Variable Iteration

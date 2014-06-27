@@ -117,6 +117,12 @@ unsigned ValueEnumerator::getInstructionID(const Instruction *Inst) const {
   return I->second;
 }
 
+unsigned ValueEnumerator::getComdatID(const Comdat *C) const {
+  unsigned ComdatID = Comdats.idFor(C);
+  assert(ComdatID && "Comdat not found!");
+  return ComdatID;
+}
+
 void ValueEnumerator::setInstructionID(const Instruction *I) {
   InstructionMap[I] = InstructionCount++;
 }
@@ -306,6 +312,10 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
     Values[ValueID-1].second++;
     return;
   }
+
+  if (auto *GO = dyn_cast<GlobalObject>(V))
+    if (const Comdat *C = GO->getComdat())
+      Comdats.insert(C);
 
   // Enumerate the type of this value.
   EnumerateType(V->getType());

@@ -34,6 +34,7 @@ namespace llvm {
   class Instruction;
   class Constant;
   class GlobalValue;
+  class Comdat;
   class MDString;
   class MDNode;
   class StructType;
@@ -122,6 +123,9 @@ namespace llvm {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
 
+    // Comdat forward reference information.
+    std::map<std::string, LocTy> ForwardRefComdats;
+
     // References to blockaddress.  The key is the function ValID, the value is
     // a list of references to blocks in that function.
     std::map<ValID, std::vector<std::pair<ValID, GlobalValue*> > >
@@ -153,6 +157,10 @@ namespace llvm {
     /// exists but does not have the right type.
     GlobalValue *GetGlobalVal(const std::string &N, Type *Ty, LocTy Loc);
     GlobalValue *GetGlobalVal(unsigned ID, Type *Ty, LocTy Loc);
+
+    /// Get a Comdat with the specified name, creating a forward reference
+    /// record if needed.
+    Comdat *getComdat(const std::string &N, LocTy Loc);
 
     // Helper Routines.
     bool ParseToken(lltok::Kind T, const char *ErrMsg);
@@ -247,6 +255,7 @@ namespace llvm {
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility,
                     unsigned DLLStorageClass,
                     GlobalVariable::ThreadLocalMode TLM, bool UnnamedAddr);
+    bool parseComdat();
     bool ParseStandaloneMetadata();
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);
@@ -358,6 +367,7 @@ namespace llvm {
     bool ParseGlobalValue(Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
+    bool parseOptionalComdat(Comdat *&C);
     bool ParseMetadataListValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMetadataValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);

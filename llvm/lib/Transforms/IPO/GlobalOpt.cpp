@@ -17,6 +17,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -1699,9 +1700,6 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 /// possible.  If we make a change, return true.
 bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
                               Module::global_iterator &GVI) {
-  if (!GV->isDiscardableIfUnused())
-    return false;
-
   // Do more involved optimizations if the global is internal.
   GV->removeDeadConstantUsers();
 
@@ -1944,6 +1942,13 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
 
 bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   bool Changed = false;
+
+  SmallSet<const Comdat *, 8> NotDiscardableComdats;
+  for (const GlobalVariable &GV : M.globals())
+    if (const Comdat *C = GV.getComdat())
+      if (!GV.isDiscardableIfUnused())
+        NotDiscardableComdats.insert(C);
+
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
@@ -1958,7 +1963,12 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
           GV->setInitializer(New);
       }
 
-    Changed |= ProcessGlobal(GV, GVI);
+    if (GV->isDiscardableIfUnused()) {
+      if (const Comdat *C = GV->getComdat())
+        if (NotDiscardableComdats.count(C))
+          continue;
+      Changed |= ProcessGlobal(GV, GVI);
+    }
   }
   return Changed;
 }

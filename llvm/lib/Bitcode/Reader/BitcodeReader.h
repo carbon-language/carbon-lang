@@ -26,6 +26,7 @@
 #include <vector>
 
 namespace llvm {
+  class Comdat;
   class MemoryBuffer;
   class LLVMContext;
 
@@ -135,6 +136,7 @@ class BitcodeReader : public GVMaterializer {
   std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
   BitcodeReaderMDValueList MDValueList;
+  std::vector<Comdat *> ComdatList;
   SmallVector<Instruction *, 64> InstructionList;
   SmallVector<SmallVector<uint64_t, 64>, 64> UseListRecords;
 

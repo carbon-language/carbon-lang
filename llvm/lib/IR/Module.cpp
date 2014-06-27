@@ -453,3 +453,11 @@ unsigned Module::getDwarfVersion() const {
     return dwarf::DWARF_VERSION;
   return cast<ConstantInt>(Val)->getZExtValue();
 }
+
+Comdat *Module::getOrInsertComdat(StringRef Name) {
+  Comdat C;
+  StringMapEntry<Comdat> &Entry =
+      ComdatSymTab.GetOrCreateValue(Name, std::move(C));
+  Entry.second.Name = &Entry;
+  return &Entry.second;
+}

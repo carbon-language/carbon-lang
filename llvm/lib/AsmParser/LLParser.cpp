@@ -163,6 +163,11 @@ bool LLParser::ValidateEndOfModule() {
       return Error(I->second.second,
                    "use of undefined type named '" + I->getKey() + "'");
 
+  if (!ForwardRefComdats.empty())
+    return Error(ForwardRefComdats.begin()->second,
+                 "use of undefined comdat '$" +
+                     ForwardRefComdats.begin()->first + "'");
+
   if (!ForwardRefVals.empty())
     return Error(ForwardRefVals.begin()->second.second,
                  "use of undefined value '@" + ForwardRefVals.begin()->first +
@@ -238,6 +243,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
+    case lltok::ComdatVar:  if (parseComdat()) return true; break;
     case lltok::exclaim:    if (ParseStandaloneMetadata()) return true; break;
     case lltok::MetadataVar:if (ParseNamedMetadata()) return true; break;
 
@@ -511,6 +517,56 @@ bool LLParser::ParseNamedGlobal() {
                        DLLStorageClass, TLM, UnnamedAddr);
   return ParseAlias(Name, NameLoc, Visibility, DLLStorageClass, TLM,
                     UnnamedAddr);
+}
+
+bool LLParser::parseComdat() {
+  assert(Lex.getKind() == lltok::ComdatVar);
+  std::string Name = Lex.getStrVal();
+  LocTy NameLoc = Lex.getLoc();
+  Lex.Lex();
+
+  if (ParseToken(lltok::equal, "expected '=' here"))
+    return true;
+
+  if (ParseToken(lltok::kw_comdat, "expected comdat keyword"))
+    return TokError("expected comdat type");
+
+  Comdat::SelectionKind SK;
+  switch (Lex.getKind()) {
+  default:
+    return TokError("unknown selection kind");
+  case lltok::kw_any:
+    SK = Comdat::Any;
+    break;
+  case lltok::kw_exactmatch:
+    SK = Comdat::ExactMatch;
+    break;
+  case lltok::kw_largest:
+    SK = Comdat::Largest;
+    break;
+  case lltok::kw_noduplicates:
+    SK = Comdat::NoDuplicates;
+    break;
+  case lltok::kw_samesize:
+    SK = Comdat::SameSize;
+    break;
+  }
+  Lex.Lex();
+
+  // See if the comdat was forward referenced, if so, use the comdat.
+  Module::ComdatSymTabType &ComdatSymTab = M->getComdatSymbolTable();
+  Module::ComdatSymTabType::iterator I = ComdatSymTab.find(Name);
+  if (I != ComdatSymTab.end() && !ForwardRefComdats.erase(Name))
+    return Error(NameLoc, "redefinition of comdat '$" + Name + "'");
+
+  Comdat *C;
+  if (I != ComdatSymTab.end())
+    C = &I->second;
+  else
+    C = M->getOrInsertComdat(Name);
+  C->setSelectionKind(SK);
+
+  return false;
 }
 
 // MDString:
@@ -838,7 +894,13 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
       if (ParseOptionalAlignment(Alignment)) return true;
       GV->setAlignment(Alignment);
     } else {
-      TokError("unknown global variable property!");
+      Comdat *C;
+      if (parseOptionalComdat(C))
+        return true;
+      if (C)
+        GV->setComdat(C);
+      else
+        return TokError("unknown global variable property!");
     }
   }
 
@@ -1093,6 +1155,24 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, Type *Ty, LocTy Loc) {
 
   ForwardRefValIDs[ID] = std::make_pair(FwdVal, Loc);
   return FwdVal;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Comdat Reference/Resolution Routines.
+//===----------------------------------------------------------------------===//
+
+Comdat *LLParser::getComdat(const std::string &Name, LocTy Loc) {
+  // Look this name up in the comdat symbol table.
+  Module::ComdatSymTabType &ComdatSymTab = M->getComdatSymbolTable();
+  Module::ComdatSymTabType::iterator I = ComdatSymTab.find(Name);
+  if (I != ComdatSymTab.end())
+    return &I->second;
+
+  // Otherwise, create a new forward reference for this value and remember it.
+  Comdat *C = M->getOrInsertComdat(Name);
+  ForwardRefComdats[Name] = Loc;
+  return C;
 }
 
 
@@ -2790,6 +2870,19 @@ bool LLParser::ParseGlobalTypeAndValue(Constant *&V) {
          ParseGlobalValue(Ty, V);
 }
 
+bool LLParser::parseOptionalComdat(Comdat *&C) {
+  C = nullptr;
+  if (!EatIfPresent(lltok::kw_comdat))
+    return false;
+  if (Lex.getKind() != lltok::ComdatVar)
+    return TokError("expected comdat variable");
+  LocTy Loc = Lex.getLoc();
+  StringRef Name = Lex.getStrVal();
+  C = getComdat(Name, Loc);
+  Lex.Lex();
+  return false;
+}
+
 /// ParseGlobalValueVector
 ///   ::= /*empty*/
 ///   ::= TypeAndValue (',' TypeAndValue)*
@@ -3090,6 +3183,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   bool UnnamedAddr;
   LocTy UnnamedAddrLoc;
   Constant *Prefix = nullptr;
+  Comdat *C;
 
   if (ParseArgumentList(ArgList, isVarArg) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
@@ -3098,6 +3192,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
                                  BuiltinLoc) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
+      parseOptionalComdat(C) ||
       ParseOptionalAlignment(Alignment) ||
       (EatIfPresent(lltok::kw_gc) &&
        ParseStringConstant(GC)) ||
@@ -3200,6 +3295,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   Fn->setUnnamedAddr(UnnamedAddr);
   Fn->setAlignment(Alignment);
   Fn->setSection(Section);
+  Fn->setComdat(C);
   if (!GC.empty()) Fn->setGC(GC.c_str());
   Fn->setPrefixData(Prefix);
   ForwardRefAttrGroups[Fn] = FwdRefAttrGrps;

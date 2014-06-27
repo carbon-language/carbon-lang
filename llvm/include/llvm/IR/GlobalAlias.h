@@ -87,6 +87,21 @@ public:
     return getOperand(0);
   }
 
+  const GlobalObject *getBaseObject() const {
+    return const_cast<GlobalAlias *>(this)->getBaseObject();
+  }
+  GlobalObject *getBaseObject() {
+    return dyn_cast<GlobalObject>(getAliasee()->stripInBoundsOffsets());
+  }
+
+  const GlobalObject *getBaseObject(const DataLayout &DL, APInt &Offset) const {
+    return const_cast<GlobalAlias *>(this)->getBaseObject(DL, Offset);
+  }
+  GlobalObject *getBaseObject(const DataLayout &DL, APInt &Offset) {
+    return dyn_cast<GlobalObject>(
+        getAliasee()->stripAndAccumulateInBoundsConstantOffsets(DL, Offset));
+  }
+
   static bool isValidLinkage(LinkageTypes L) {
     return isExternalLinkage(L) || isLocalLinkage(L) ||
       isWeakLinkage(L) || isLinkOnceLinkage(L);

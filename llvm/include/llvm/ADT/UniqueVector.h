@@ -22,13 +22,18 @@ namespace llvm {
 /// class should have an implementation of operator== and of operator<.
 /// Entries can be fetched using operator[] with the entry ID.
 template<class T> class UniqueVector {
+public:
+  typedef typename std::vector<T> VectorType;
+  typedef typename VectorType::iterator iterator;
+  typedef typename VectorType::const_iterator const_iterator;
+
 private:
   // Map - Used to handle the correspondence of entry to ID.
   std::map<T, unsigned> Map;
 
   // Vector - ID ordered vector of entries. Entries can be indexed by ID - 1.
   //
-  std::vector<T> Vector;
+  VectorType Vector;
 
 public:
   /// insert - Append entry to the vector if it doesn't already exist.  Returns
@@ -67,6 +72,18 @@ public:
     assert(ID-1 < size() && "ID is 0 or out of range!");
     return Vector[ID - 1];
   }
+
+  /// \brief Return an iterator to the start of the vector.
+  iterator begin() { return Vector.begin(); }
+
+  /// \brief Return an iterator to the start of the vector.
+  const_iterator begin() const { return Vector.begin(); }
+
+  /// \brief Return an iterator to the end of the vector.
+  iterator end() { return Vector.end(); }
+
+  /// \brief Return an iterator to the end of the vector.
+  const_iterator end() const { return Vector.end(); }
 
   /// size - Returns the number of entries in the vector.
   ///

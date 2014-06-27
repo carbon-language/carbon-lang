@@ -107,6 +107,12 @@ struct VerifierSupport {
     OS << ' ' << *T;
   }
 
+  void WriteComdat(const Comdat *C) {
+    if (!C)
+      return;
+    OS << *C;
+  }
+
   // CheckFailed - A check failed, so print out the condition and the message
   // that failed.  This provides a nice place to put a breakpoint if you want
   // to see why something is not correct.
@@ -136,6 +142,12 @@ struct VerifierSupport {
     WriteType(T1);
     WriteType(T2);
     WriteType(T3);
+    Broken = true;
+  }
+
+  void CheckFailed(const Twine &Message, const Comdat *C) {
+    OS << Message.str() << "\n";
+    WriteComdat(C);
     Broken = true;
   }
 };
@@ -230,6 +242,9 @@ public:
          I != E; ++I)
       visitNamedMDNode(*I);
 
+    for (const StringMapEntry<Comdat> &SMEC : M.getComdatSymbolTable())
+      visitComdat(SMEC.getValue());
+
     visitModuleFlags(M);
     visitModuleIdents(M);
 
@@ -246,6 +261,7 @@ private:
                            const GlobalAlias &A, const Constant &C);
   void visitNamedMDNode(const NamedMDNode &NMD);
   void visitMDNode(MDNode &MD, Function *F);
+  void visitComdat(const Comdat &C);
   void visitModuleIdents(const Module &M);
   void visitModuleFlags(const Module &M);
   void visitModuleFlag(const MDNode *Op,
@@ -387,6 +403,7 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
               "'common' global must have a zero initializer!", &GV);
       Assert1(!GV.isConstant(), "'common' global may not be marked constant!",
               &GV);
+      Assert1(!GV.hasComdat(), "'common' global may not be in a Comdat!", &GV);
     }
   } else {
     Assert1(GV.hasExternalLinkage() || GV.hasExternalWeakLinkage(),
@@ -576,6 +593,22 @@ void Verifier::visitMDNode(MDNode &MD, Function *F) {
     Assert2(ActualF == F, "function-local metadata used in wrong function",
             &MD, Op);
   }
+}
+
+void Verifier::visitComdat(const Comdat &C) {
+  // All Comdat::SelectionKind values other than Comdat::Any require a
+  // GlobalValue with the same name as the Comdat.
+  const GlobalValue *GV = M->getNamedValue(C.getName());
+  if (C.getSelectionKind() != Comdat::Any)
+    Assert1(GV,
+            "comdat selection kind requires a global value with the same name",
+            &C);
+  // The Module is invalid if the GlobalValue has local linkage.  Allowing
+  // otherwise opens us up to seeing the underling global value get renamed if
+  // collisions occur.
+  if (GV)
+    Assert1(!GV->hasLocalLinkage(), "comdat global value has local linkage",
+            GV);
 }
 
 void Verifier::visitModuleIdents(const Module &M) {
