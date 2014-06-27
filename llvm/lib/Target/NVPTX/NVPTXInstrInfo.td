@@ -1364,6 +1364,32 @@ def : Pat<(i1 (select Int1Regs:$p, Int1Regs:$a, Int1Regs:$b)),
               (ORb1rr (ANDb1rr Int1Regs:$p, Int1Regs:$a),
               (ANDb1rr (NOT1 Int1Regs:$p), Int1Regs:$b))>;
 
+//
+// Funnnel shift in clamp mode
+//
+// - SDNodes are created so they can be used in the DAG code,
+//   e.g. NVPTXISelLowering (LowerShiftLeftParts and LowerShiftRightParts)
+//
+def SDTIntShiftDOp: SDTypeProfile<1, 3,
+                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                                   SDTCisInt<0>, SDTCisInt<3>]>;
+def FUN_SHFL_CLAMP : SDNode<"NVPTXISD::FUN_SHFL_CLAMP", SDTIntShiftDOp, []>;
+def FUN_SHFR_CLAMP : SDNode<"NVPTXISD::FUN_SHFR_CLAMP", SDTIntShiftDOp, []>;
+
+def FUNSHFLCLAMP : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$lo, Int32Regs:$hi, Int32Regs:$amt),
+                  "shf.l.clamp.b32 \t$dst, $lo, $hi, $amt;",
+                  [(set Int32Regs:$dst,
+                     (FUN_SHFL_CLAMP Int32Regs:$lo,
+                        Int32Regs:$hi, Int32Regs:$amt))]>;
+
+def FUNSHFRCLAMP : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$lo, Int32Regs:$hi, Int32Regs:$amt),
+                  "shf.r.clamp.b32 \t$dst, $lo, $hi, $amt;",
+                  [(set Int32Regs:$dst,
+                     (FUN_SHFR_CLAMP Int32Regs:$lo,
+                        Int32Regs:$hi, Int32Regs:$amt))]>;
+
 //-----------------------------------
 // Data Movement (Load / Store, Move)
 //-----------------------------------

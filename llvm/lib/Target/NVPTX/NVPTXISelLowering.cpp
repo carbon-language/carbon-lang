@@ -152,6 +152,13 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8 , Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
+  setOperationAction(ISD::SHL_PARTS, MVT::i32  , Custom);
+  setOperationAction(ISD::SRA_PARTS, MVT::i32  , Custom);
+  setOperationAction(ISD::SRL_PARTS, MVT::i32  , Custom);
+  setOperationAction(ISD::SHL_PARTS, MVT::i64  , Custom);
+  setOperationAction(ISD::SRA_PARTS, MVT::i64  , Custom);
+  setOperationAction(ISD::SRL_PARTS, MVT::i64  , Custom);
+
   if (nvptxSubtarget.hasROT64()) {
     setOperationAction(ISD::ROTL, MVT::i64, Legal);
     setOperationAction(ISD::ROTR, MVT::i64, Legal);
@@ -345,6 +352,12 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::FUN_SHFL_CLAMP";
   case NVPTXISD::FUN_SHFR_CLAMP:
     return "NVPTXISD::FUN_SHFR_CLAMP";
+  case NVPTXISD::IMAD:
+    return "NVPTXISD::IMAD";
+  case NVPTXISD::MUL_WIDE_SIGNED:
+    return "NVPTXISD::MUL_WIDE_SIGNED";
+  case NVPTXISD::MUL_WIDE_UNSIGNED:
+    return "NVPTXISD::MUL_WIDE_UNSIGNED";
   case NVPTXISD::Tex1DFloatI32:        return "NVPTXISD::Tex1DFloatI32";
   case NVPTXISD::Tex1DFloatFloat:      return "NVPTXISD::Tex1DFloatFloat";
   case NVPTXISD::Tex1DFloatFloatLevel:
@@ -1279,6 +1292,127 @@ NVPTXTargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0), Ops);
 }
 
+/// LowerShiftRightParts - Lower SRL_PARTS, SRA_PARTS, which
+/// 1) returns two i32 values and take a 2 x i32 value to shift plus a shift
+///    amount, or
+/// 2) returns two i64 values and take a 2 x i64 value to shift plus a shift
+///    amount.
+SDValue NVPTXTargetLowering::LowerShiftRightParts(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  assert(Op.getNumOperands() == 3 && "Not a double-shift!");
+  assert(Op.getOpcode() == ISD::SRA_PARTS || Op.getOpcode() == ISD::SRL_PARTS);
+
+  EVT VT = Op.getValueType();
+  unsigned VTBits = VT.getSizeInBits();
+  SDLoc dl(Op);
+  SDValue ShOpLo = Op.getOperand(0);
+  SDValue ShOpHi = Op.getOperand(1);
+  SDValue ShAmt  = Op.getOperand(2);
+  unsigned Opc = (Op.getOpcode() == ISD::SRA_PARTS) ? ISD::SRA : ISD::SRL;
+
+  if (VTBits == 32 && nvptxSubtarget.getSmVersion() >= 35) {
+
+    // For 32bit and sm35, we can use the funnel shift 'shf' instruction.
+    // {dHi, dLo} = {aHi, aLo} >> Amt
+    //   dHi = aHi >> Amt
+    //   dLo = shf.r.clamp aLo, aHi, Amt
+
+    SDValue Hi = DAG.getNode(Opc, dl, VT, ShOpHi, ShAmt);
+    SDValue Lo = DAG.getNode(NVPTXISD::FUN_SHFR_CLAMP, dl, VT, ShOpLo, ShOpHi,
+                             ShAmt);
+
+    SDValue Ops[2] = { Lo, Hi };
+    return DAG.getMergeValues(Ops, dl);
+  }
+  else {
+
+    // {dHi, dLo} = {aHi, aLo} >> Amt
+    // - if (Amt>=size) then
+    //      dLo = aHi >> (Amt-size)
+    //      dHi = aHi >> Amt (this is either all 0 or all 1)
+    //   else
+    //      dLo = (aLo >>logic Amt) | (aHi << (size-Amt))
+    //      dHi = aHi >> Amt
+
+    SDValue RevShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32,
+                                   DAG.getConstant(VTBits, MVT::i32), ShAmt);
+    SDValue Tmp1 = DAG.getNode(ISD::SRL, dl, VT, ShOpLo, ShAmt);
+    SDValue ExtraShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32, ShAmt,
+                                     DAG.getConstant(VTBits, MVT::i32));
+    SDValue Tmp2 = DAG.getNode(ISD::SHL, dl, VT, ShOpHi, RevShAmt);
+    SDValue FalseVal = DAG.getNode(ISD::OR, dl, VT, Tmp1, Tmp2);
+    SDValue TrueVal = DAG.getNode(Opc, dl, VT, ShOpHi, ExtraShAmt);
+
+    SDValue Cmp = DAG.getSetCC(dl, MVT::i1, ShAmt,
+                               DAG.getConstant(VTBits, MVT::i32), ISD::SETGE);
+    SDValue Hi = DAG.getNode(Opc, dl, VT, ShOpHi, ShAmt);
+    SDValue Lo = DAG.getNode(ISD::SELECT, dl, VT, Cmp, TrueVal, FalseVal);
+
+    SDValue Ops[2] = { Lo, Hi };
+    return DAG.getMergeValues(Ops, dl);
+  }
+}
+
+/// LowerShiftLeftParts - Lower SHL_PARTS, which
+/// 1) returns two i32 values and take a 2 x i32 value to shift plus a shift
+///    amount, or
+/// 2) returns two i64 values and take a 2 x i64 value to shift plus a shift
+///    amount.
+SDValue NVPTXTargetLowering::LowerShiftLeftParts(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  assert(Op.getNumOperands() == 3 && "Not a double-shift!");
+  assert(Op.getOpcode() == ISD::SHL_PARTS);
+
+  EVT VT = Op.getValueType();
+  unsigned VTBits = VT.getSizeInBits();
+  SDLoc dl(Op);
+  SDValue ShOpLo = Op.getOperand(0);
+  SDValue ShOpHi = Op.getOperand(1);
+  SDValue ShAmt  = Op.getOperand(2);
+
+  if (VTBits == 32 && nvptxSubtarget.getSmVersion() >= 35) {
+
+    // For 32bit and sm35, we can use the funnel shift 'shf' instruction.
+    // {dHi, dLo} = {aHi, aLo} << Amt
+    //   dHi = shf.l.clamp aLo, aHi, Amt
+    //   dLo = aLo << Amt
+
+    SDValue Hi = DAG.getNode(NVPTXISD::FUN_SHFL_CLAMP, dl, VT, ShOpLo, ShOpHi,
+                             ShAmt);
+    SDValue Lo = DAG.getNode(ISD::SHL, dl, VT, ShOpLo, ShAmt);
+
+    SDValue Ops[2] = { Lo, Hi };
+    return DAG.getMergeValues(Ops, dl);
+  }
+  else {
+
+    // {dHi, dLo} = {aHi, aLo} << Amt
+    // - if (Amt>=size) then
+    //      dLo = aLo << Amt (all 0)
+    //      dLo = aLo << (Amt-size)
+    //   else
+    //      dLo = aLo << Amt
+    //      dHi = (aHi << Amt) | (aLo >> (size-Amt))
+
+    SDValue RevShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32,
+                                   DAG.getConstant(VTBits, MVT::i32), ShAmt);
+    SDValue Tmp1 = DAG.getNode(ISD::SHL, dl, VT, ShOpHi, ShAmt);
+    SDValue ExtraShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32, ShAmt,
+                                     DAG.getConstant(VTBits, MVT::i32));
+    SDValue Tmp2 = DAG.getNode(ISD::SRL, dl, VT, ShOpLo, RevShAmt);
+    SDValue FalseVal = DAG.getNode(ISD::OR, dl, VT, Tmp1, Tmp2);
+    SDValue TrueVal = DAG.getNode(ISD::SHL, dl, VT, ShOpLo, ExtraShAmt);
+
+    SDValue Cmp = DAG.getSetCC(dl, MVT::i1, ShAmt,
+                               DAG.getConstant(VTBits, MVT::i32), ISD::SETGE);
+    SDValue Lo = DAG.getNode(ISD::SHL, dl, VT, ShOpLo, ShAmt);
+    SDValue Hi = DAG.getNode(ISD::SELECT, dl, VT, Cmp, TrueVal, FalseVal);
+
+    SDValue Ops[2] = { Lo, Hi };
+    return DAG.getMergeValues(Ops, dl);
+  }
+}
+
 SDValue
 NVPTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
@@ -1299,6 +1433,11 @@ NVPTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerSTORE(Op, DAG);
   case ISD::LOAD:
     return LowerLOAD(Op, DAG);
+  case ISD::SHL_PARTS:
+    return LowerShiftLeftParts(Op, DAG);
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS:
+    return LowerShiftRightParts(Op, DAG);
   default:
     llvm_unreachable("Custom lowering not defined for operation");
   }
