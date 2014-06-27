@@ -1,6 +1,8 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
 ; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
+declare i32 @llvm.r600.read.tidig.x() nounwind readnone
+
 ; FUNC-LABEL: @mova_same_clause
 
 ; R600-CHECK: LDS_WRITE
@@ -199,6 +201,71 @@ entry:
   ret void
 }
 
+define void @char_array_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %alloca = alloca [2 x [2 x i8]]
+  %gep0 = getelementptr [2 x [2 x i8]]* %alloca, i32 0, i32 0, i32 0
+  %gep1 = getelementptr [2 x [2 x i8]]* %alloca, i32 0, i32 0, i32 1
+  store i8 0, i8* %gep0
+  store i8 1, i8* %gep1
+  %gep2 = getelementptr [2 x [2 x i8]]* %alloca, i32 0, i32 0, i32 %index
+  %load = load i8* %gep2
+  %sext = sext i8 %load to i32
+  store i32 %sext, i32 addrspace(1)* %out
+  ret void
+}
 
+define void @i32_array_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %alloca = alloca [2 x [2 x i32]]
+  %gep0 = getelementptr [2 x [2 x i32]]* %alloca, i32 0, i32 0, i32 0
+  %gep1 = getelementptr [2 x [2 x i32]]* %alloca, i32 0, i32 0, i32 1
+  store i32 0, i32* %gep0
+  store i32 1, i32* %gep1
+  %gep2 = getelementptr [2 x [2 x i32]]* %alloca, i32 0, i32 0, i32 %index
+  %load = load i32* %gep2
+  store i32 %load, i32 addrspace(1)* %out
+  ret void
+}
 
-declare i32 @llvm.r600.read.tidig.x() nounwind readnone
+define void @i64_array_array(i64 addrspace(1)* %out, i32 %index) {
+entry:
+  %alloca = alloca [2 x [2 x i64]]
+  %gep0 = getelementptr [2 x [2 x i64]]* %alloca, i32 0, i32 0, i32 0
+  %gep1 = getelementptr [2 x [2 x i64]]* %alloca, i32 0, i32 0, i32 1
+  store i64 0, i64* %gep0
+  store i64 1, i64* %gep1
+  %gep2 = getelementptr [2 x [2 x i64]]* %alloca, i32 0, i32 0, i32 %index
+  %load = load i64* %gep2
+  store i64 %load, i64 addrspace(1)* %out
+  ret void
+}
+
+%struct.pair32 = type { i32, i32 }
+
+define void @struct_array_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %alloca = alloca [2 x [2 x %struct.pair32]]
+  %gep0 = getelementptr [2 x [2 x %struct.pair32]]* %alloca, i32 0, i32 0, i32 0, i32 1
+  %gep1 = getelementptr [2 x [2 x %struct.pair32]]* %alloca, i32 0, i32 0, i32 1, i32 1
+  store i32 0, i32* %gep0
+  store i32 1, i32* %gep1
+  %gep2 = getelementptr [2 x [2 x %struct.pair32]]* %alloca, i32 0, i32 0, i32 %index, i32 0
+  %load = load i32* %gep2
+  store i32 %load, i32 addrspace(1)* %out
+  ret void
+}
+
+define void @struct_pair32_array(i32 addrspace(1)* %out, i32 %index) {
+entry:
+  %alloca = alloca [2 x %struct.pair32]
+  %gep0 = getelementptr [2 x %struct.pair32]* %alloca, i32 0, i32 0, i32 1
+  %gep1 = getelementptr [2 x %struct.pair32]* %alloca, i32 0, i32 1, i32 0
+  store i32 0, i32* %gep0
+  store i32 1, i32* %gep1
+  %gep2 = getelementptr [2 x %struct.pair32]* %alloca, i32 0, i32 %index, i32 0
+  %load = load i32* %gep2
+  store i32 %load, i32 addrspace(1)* %out
+  ret void
+
+}
