@@ -41,8 +41,7 @@ Module *getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err,
 /// If the given MemoryBuffer holds a bitcode image, return a Module
 /// for it.  Otherwise, attempt to parse it as LLVM Assembly and return
 /// a Module for it. This function *never* takes ownership of Buffer.
-Module *ParseIR(const MemoryBuffer *Buffer, SMDiagnostic &Err,
-                LLVMContext &Context);
+Module *ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err, LLVMContext &Context);
 
 /// If the given file holds a bitcode image, return a Module for it.
 /// Otherwise, attempt to parse it as LLVM Assembly and return a Module

@@ -52,7 +52,7 @@ namespace llvm {
 
   /// Read the specified bitcode file, returning the module.
   /// This method *never* takes ownership of Buffer.
-  ErrorOr<Module *> parseBitcodeFile(const MemoryBuffer *Buffer,
+  ErrorOr<Module *> parseBitcodeFile(MemoryBuffer *Buffer,
                                      LLVMContext &Context);
 
   /// WriteBitcodeToFile - Write the specified module to the specified

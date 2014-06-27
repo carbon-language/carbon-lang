@@ -62,7 +62,7 @@ Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err
   return getLazyIRModule(File.release(), Err, Context);
 }
 
-Module *llvm::ParseIR(const MemoryBuffer *Buffer, SMDiagnostic &Err,
+Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
                       LLVMContext &Context) {
   NamedRegionTimer T(TimeIRParsingName, TimeIRParsingGroupName,
                      TimePassesIsEnabled);
