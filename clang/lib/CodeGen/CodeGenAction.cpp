@@ -644,13 +644,8 @@ void CodeGenAction::ExecuteAction() {
     if (Invalid)
       return;
 
-    // FIXME: This is stupid, IRReader shouldn't take ownership.
-    llvm::MemoryBuffer *MainFileCopy =
-      llvm::MemoryBuffer::getMemBufferCopy(MainFile->getBuffer(),
-                                           getCurrentFile());
-
     llvm::SMDiagnostic Err;
-    TheModule.reset(ParseIR(MainFileCopy, Err, *VMContext));
+    TheModule.reset(ParseIR(MainFile, Err, *VMContext));
     if (!TheModule) {
       // Translate from the diagnostic info to the SourceManager location.
       SourceLocation Loc = SM.translateFileLineCol(
