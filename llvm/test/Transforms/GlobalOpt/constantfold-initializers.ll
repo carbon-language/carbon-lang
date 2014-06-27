@@ -87,4 +87,4 @@ entry:
    { i32, void ()* } { i32 65535, void ()* @test2 },
    { i32, void ()* } { i32 65535, void ()* @test3 },
    { i32, void ()* } { i32 65535, void ()* @test4 },
-   { i32, void ()* } { i32 65535, void ()* @test4 }]
+   { i32, void ()* } { i32 65535, void ()* @test5 }]
