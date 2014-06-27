@@ -40,8 +40,7 @@ public:
     MachODefinedAtom *atom =
         new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
                                           content);
-    addAtom(*atom);
-    _sectionAtoms[inSection].push_back({sectionOffset, atom});
+    addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addDefinedAtomInCustomSection(StringRef name, Atom::Scope scope,
@@ -61,8 +60,7 @@ public:
     MachODefinedCustomSectionAtom *atom =
         new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type, 
                                                   merge, content, sectionName);
-    addAtom(*atom);
-    _sectionAtoms[inSection].push_back({sectionOffset, atom});
+    addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope,
@@ -74,8 +72,7 @@ public:
     }
     MachODefinedAtom *atom =
         new (_allocator) MachODefinedAtom(*this, name, scope, size);
-    addAtom(*atom);
-    _sectionAtoms[inSection].push_back({sectionOffset, atom});
+    addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addUndefinedAtom(StringRef name, bool copyRefs) {
@@ -139,6 +136,17 @@ public:
   
 private:
   struct SectionOffsetAndAtom { uint64_t offset;  MachODefinedAtom *atom; };
+
+  void addAtomForSection(const Section *inSection, MachODefinedAtom* atom, 
+                         uint64_t sectionOffset) {
+    SectionOffsetAndAtom offAndAtom;
+    offAndAtom.offset = sectionOffset;
+    offAndAtom.atom   = atom;
+     _sectionAtoms[inSection].push_back(offAndAtom);
+    addAtom(*atom);
+  }
+
+  
   typedef llvm::DenseMap<const normalized::Section *, 
                          std::vector<SectionOffsetAndAtom>>  SectionToAtoms;
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
