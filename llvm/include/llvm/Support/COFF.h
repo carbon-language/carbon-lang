@@ -562,8 +562,12 @@ namespace COFF {
     IMAGE_DLL_CHARACTERISTICS_NO_SEH = 0x0400,
     /// Do not bind the image.
     IMAGE_DLL_CHARACTERISTICS_NO_BIND = 0x0800,
+    ///< Image should execute in an AppContainer.
+    IMAGE_DLL_CHARACTERISTICS_APPCONTAINER = 0x1000,
     ///< A WDM driver.
     IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER = 0x2000,
+    ///< Image supports Control Flow Guard.
+    IMAGE_DLL_CHARACTERISTICS_GUARD_CF = 0x4000,
     /// Terminal Server aware.
     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
   };
