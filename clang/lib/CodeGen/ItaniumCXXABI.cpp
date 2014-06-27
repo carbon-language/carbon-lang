@@ -1782,7 +1782,7 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
 }
 
 /// Get the appropriate linkage for the wrapper function. This is essentially
-/// the weak form of the variable's linkage; every translation unit which wneeds
+/// the weak form of the variable's linkage; every translation unit which needs
 /// the wrapper emits a copy, and we want the linker to merge them.
 static llvm::GlobalValue::LinkageTypes
 getThreadLocalWrapperLinkage(const VarDecl *VD, CodeGen::CodeGenModule &CGM) {
