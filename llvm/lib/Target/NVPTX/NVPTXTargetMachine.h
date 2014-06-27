@@ -43,9 +43,6 @@ class NVPTXTargetMachine : public LLVMTargetMachine {
   // Hold Strings that can be free'd all together with NVPTXTargetMachine
   ManagedStringPool ManagedStrPool;
 
-  //bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
-  //                            bool DisableVerify, MCContext *&OutCtx);
-
 public:
   NVPTXTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
                      const TargetOptions &Options, Reloc::Model RM,
@@ -69,11 +66,6 @@ public:
   const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-
-  //virtual bool addInstSelector(PassManagerBase &PM,
-  //                             CodeGenOpt::Level OptLevel);
-
-  //virtual bool addPreRegAlloc(PassManagerBase &, CodeGenOpt::Level);
 
   ManagedStringPool *getManagedStrPool() const {
     return const_cast<ManagedStringPool *>(&ManagedStrPool);
