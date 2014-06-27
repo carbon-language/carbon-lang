@@ -19061,6 +19061,88 @@ static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
   }
 }
 
+/// \brief Search for a combinable shuffle across a chain ending in pshuflw or pshufhw.
+///
+/// We walk up the chain, skipping shuffles of the other half and looking
+/// through shuffles which switch halves trying to find a shuffle of the same
+/// pair of dwords.
+static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
+                                        SelectionDAG &DAG,
+                                        TargetLowering::DAGCombinerInfo &DCI) {
+  assert(
+      (N.getOpcode() == X86ISD::PSHUFLW || N.getOpcode() == X86ISD::PSHUFHW) &&
+      "Called with something other than an x86 128-bit half shuffle!");
+  SDLoc DL(N);
+  unsigned CombineOpcode = N.getOpcode();
+
+  // Walk up a single-use chain looking for a combinable shuffle.
+  SDValue V = N.getOperand(0);
+  for (; V.hasOneUse(); V = V.getOperand(0)) {
+    switch (V.getOpcode()) {
+    default:
+      return false; // Nothing combined!
+
+    case ISD::BITCAST:
+      // Skip bitcasts as we always know the type for the target specific
+      // instructions.
+      continue;
+
+    case X86ISD::PSHUFLW:
+    case X86ISD::PSHUFHW:
+      if (V.getOpcode() == CombineOpcode)
+        break;
+
+      // Other-half shuffles are no-ops.
+      continue;
+
+    case X86ISD::PSHUFD: {
+      // We can only handle pshufd if the half we are combining either stays in
+      // its half, or switches to the other half. Bail if one of these isn't
+      // true.
+      SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
+      int DOffset = CombineOpcode == X86ISD::PSHUFLW ? 0 : 2;
+      if (!((VMask[DOffset + 0] < 2 && VMask[DOffset + 1] < 2) ||
+            (VMask[DOffset + 0] >= 2 && VMask[DOffset + 1] >= 2)))
+        return false;
+
+      // Map the mask through the pshufd and keep walking up the chain.
+      for (int i = 0; i < 4; ++i)
+        Mask[i] = 2 * (VMask[DOffset + Mask[i] / 2] % 2) + Mask[i] % 2;
+
+      // Switch halves if the pshufd does.
+      CombineOpcode =
+          VMask[DOffset + Mask[0] / 2] < 2 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW;
+      continue;
+    }
+    }
+    // Break out of the loop if we break out of the switch.
+    break;
+  }
+
+  if (!V.hasOneUse())
+    // We fell out of the loop without finding a viable combining instruction.
+    return false;
+
+  // Record the old value to use in RAUW-ing.
+  SDValue Old = V;
+
+  // Merge this node's mask and our incoming mask (adjusted to account for all
+  // the pshufd instructions encountered).
+  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
+  for (int &M : Mask)
+    M = VMask[M];
+  V = DAG.getNode(V.getOpcode(), DL, MVT::v8i16, V.getOperand(0),
+                  getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+  // Replace N with its operand as we're going to combine that shuffle away.
+  DAG.ReplaceAllUsesWith(N, N.getOperand(0));
+
+  // Replace the combinable shuffle with the combined one, updating all users
+  // so that we re-evaluate the chain here.
+  DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
+  return true;
+}
+
 /// \brief Try to combine x86 target specific shuffles.
 static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
                                            TargetLowering::DAGCombinerInfo &DCI,
@@ -19080,6 +19162,11 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
     return SDValue();
   }
 
+  // Nuke no-op shuffles that show up after combining.
+  if (isNoopShuffleMask(Mask))
+    return DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo*/ true);
+
+  // Look for simplifications involving one or two shuffle instructions.
   SDValue V = N.getOperand(0);
   switch (N.getOpcode()) {
   default:
@@ -19087,6 +19174,9 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
     assert(VT == MVT::v8i16);
+
+    if (combineRedundantHalfShuffle(N, Mask, DAG, DCI))
+      return SDValue(); // We combined away this shuffle, so we're done.
 
     // See if this reduces to a PSHUFD which is no more expensive and can
     // combine with more operations.
