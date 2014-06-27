@@ -77,15 +77,15 @@ static std::string computeDataLayout(const NVPTXSubtarget &ST) {
   return Ret;
 }
 
-NVPTXTargetMachine::NVPTXTargetMachine(
-    const Target &T, StringRef TT, StringRef CPU, StringRef FS,
-    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
-    CodeGenOpt::Level OL, bool is64bit)
+NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
+                                       Reloc::Model RM, CodeModel::Model CM,
+                                       CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, is64bit), DL(computeDataLayout(Subtarget)),
       InstrInfo(*this), TLInfo(*this), TSInfo(&DL),
-      FrameLowering(
-          *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
+      FrameLowering(*this, is64bit) {
   initAsmInfo();
 }
 
