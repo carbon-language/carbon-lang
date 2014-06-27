@@ -229,28 +229,28 @@ namespace llvm {
                               "");
 
       unsigned OpIdx = OpIdxExpr.getValue();
-      if (OpIdx >= Inst.getNumOperands())
-        return std::make_pair(EvalResult(("Invalid operand index '" +
-                                          std::to_string(OpIdx) +
-                                          " for instruction '" + Symbol +
-                                          ". Instruction has only " +
-                                          std::to_string(Inst.getNumOperands())
-                                          + " operands.").str()),
-                              "");
+      if (OpIdx >= Inst.getNumOperands()) {
+        std::string ErrMsg;
+        raw_string_ostream ErrMsgStream(ErrMsg);
+        ErrMsgStream << "Invalid operand index '" << format("%i", OpIdx)
+                     << " for instruction '" << Symbol
+                     << ". Instruction has only "
+                     << format("%i", Inst.getNumOperands()) << " operands.";
+        return std::make_pair(EvalResult(ErrMsgStream.str()), "");
+      }
 
       const MCOperand &Op = Inst.getOperand(OpIdx);
       if (!Op.isImm()) {
-        std::string InstrString;
-        raw_string_ostream InstrStringStream(InstrString);
-        Inst.dump_pretty(InstrStringStream,
+        std::string ErrMsg;
+        raw_string_ostream ErrMsgStream(ErrMsg);
+        ErrMsgStream << "Operand '" << format("%i", OpIdx)
+                     << "' of instruction '" << Symbol
+                     << "' is not an immediate.\nInstruction is:\n  ";
+        Inst.dump_pretty(ErrMsgStream,
                          Checker.Disassembler->getContext().getAsmInfo(),
                          Checker.InstPrinter);
-        return std::make_pair(EvalResult(("Operand '" + std::to_string(OpIdx) +
-                                          "' of instruction '" + Symbol +
-                                          "' is not an immediate.\n"
-                                          "Instruction is:\n  " +
-                                          InstrStringStream.str()).str()),
-                              "");
+
+        return std::make_pair(EvalResult(ErrMsgStream.str()), "");
       }
 
       return std::make_pair(EvalResult(Op.getImm()), RemainingExpr);
