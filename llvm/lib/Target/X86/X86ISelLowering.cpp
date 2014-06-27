@@ -7105,7 +7105,7 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
       // Now we do a normal shuffle of V1 by giving V1 as both operands to
       // a blend.
-      HighV = V1;
+      LowV = HighV = V1;
       NewMask[0] = Mask[0] < 4 ? 0 : 2;
       NewMask[1] = Mask[0] < 4 ? 2 : 0;
       NewMask[2] = Mask[2] < 4 ? 1 : 3;

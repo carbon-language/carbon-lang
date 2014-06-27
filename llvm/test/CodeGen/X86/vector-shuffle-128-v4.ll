@@ -146,10 +146,8 @@ define <4 x i32> @shuffle_v4i32_0145(<4 x i32> %a, <4 x i32> %b) {
 }
 define <4 x i32> @shuffle_v4i32_0451(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v4i32_0451
-; CHECK-SSE2:         movaps %xmm0, %xmm2
-; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm2 = xmm2[0,1],xmm1[0,1]
-; FIXME: This is wrong!!! xmm0 = xmm2[0,2],xmm2[3,1] would be correct....
-; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2],xmm2[3,1]
+; CHECK-SSE2:         shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[0,1]
+; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,3,1]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 4, i32 5, i32 1>
   ret <4 x i32> %shuffle
@@ -164,10 +162,8 @@ define <4 x i32> @shuffle_v4i32_4501(<4 x i32> %a, <4 x i32> %b) {
 }
 define <4 x i32> @shuffle_v4i32_4015(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v4i32_4015
-; CHECK-SSE2:         movaps %xmm0, %xmm2
-; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm2 = xmm2[0,1],xmm1[0,1]
-; FIXME: This is wrong!!! xmm0 = xmm2[0,2],xmm2[3,1] would be correct....
-; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],xmm2[1,3]
+; CHECK-SSE2:         shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[0,1]
+; CHECK-SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0,1,3]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 4, i32 0, i32 1, i32 5>
   ret <4 x i32> %shuffle
