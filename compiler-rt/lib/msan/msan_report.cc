@@ -90,7 +90,7 @@ static void DescribeOrigin(u32 id) {
       // FIXME: copied? modified? passed through? observed?
       Printf("  %sUninitialized value was stored to memory at%s\n", d.Origin(),
              d.End());
-      StackTrace::PrintStack(trace, size - 1);
+      StackTrace::PrintStack(trace, size);
       id = prev_id;
     }
   }
