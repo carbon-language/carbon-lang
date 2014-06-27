@@ -16,6 +16,13 @@
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -23,9 +30,12 @@
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include <system_error>
+
 using namespace llvm;
 using namespace llvm::object;
 
@@ -35,7 +45,8 @@ InputFileList(cl::Positional, cl::ZeroOrMore,
 
 enum ActionType {
   AC_Execute,
-  AC_PrintLineInfo
+  AC_PrintLineInfo,
+  AC_Verify
 };
 
 static cl::opt<ActionType>
@@ -45,6 +56,8 @@ Action(cl::desc("Action to perform:"),
                              "Load, link, and execute the inputs."),
                   clEnumValN(AC_PrintLineInfo, "printline",
                              "Load, link, and print line information for each function."),
+                  clEnumValN(AC_Verify, "verify",
+                             "Load, link and verify the resulting memory image."),
                   clEnumValEnd));
 
 static cl::opt<std::string>
@@ -56,6 +69,14 @@ static cl::list<std::string>
 Dylibs("dylib",
        cl::desc("Add library."),
        cl::ZeroOrMore);
+
+static cl::opt<std::string>
+TripleName("triple", cl::desc("Target triple for disassembler"));
+
+static cl::list<std::string>
+CheckFiles("check",
+           cl::desc("File containing RuntimeDyld verifier checks."),
+           cl::ZeroOrMore);
 
 /* *** */
 
@@ -138,7 +159,6 @@ static void loadDylibs() {
       llvm::errs() << "Dylib not found: '" << Dylib << "'.\n";
   }
 }
-
 
 /* *** */
 
@@ -263,12 +283,105 @@ static int executeInput() {
   return Main(1, Argv);
 }
 
+static int checkAllExpressions(RuntimeDyldChecker &Checker) {
+  for (const auto& CheckerFileName : CheckFiles) {
+    std::unique_ptr<MemoryBuffer> CheckerFileBuf;
+    if (std::error_code EC =
+          MemoryBuffer::getFileOrSTDIN(CheckerFileName, CheckerFileBuf))
+      return Error("unable to read input '" + CheckerFileName + "': " +
+                   EC.message());
+
+    if (!Checker.checkAllRulesInBuffer("# rtdyld-check:", CheckerFileBuf.get()))
+      return Error("some checks in '" + CheckerFileName + "' failed");
+  }
+  return 0;
+}
+
+static int linkAndVerify() {
+
+  // Check for missing triple.
+  if (TripleName == "") {
+    llvm::errs() << "Error: -triple required when running in -verify mode.\n";
+    return 1;
+  }
+
+  // Look up the target and build the disassembler.
+  Triple TheTriple(Triple::normalize(TripleName));
+  std::string ErrorStr;
+  const Target *TheTarget =
+    TargetRegistry::lookupTarget("", TheTriple, ErrorStr);
+  if (!TheTarget) {
+    llvm::errs() << "Error accessing target '" << TripleName << "': "
+                 << ErrorStr << "\n";
+    return 1;
+  }
+  TripleName = TheTriple.getTriple();
+
+  std::unique_ptr<MCSubtargetInfo> STI(
+    TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+  assert(STI && "Unable to create subtarget info!");
+
+  std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  assert(MRI && "Unable to create target register info!");
+
+  std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
+  assert(MAI && "Unable to create target asm info!");
+
+  MCContext Ctx(MAI.get(), MRI.get(), nullptr);
+
+  std::unique_ptr<MCDisassembler> Disassembler(
+    TheTarget->createMCDisassembler(*STI, Ctx));
+  assert(Disassembler && "Unable to create disassembler!");
+
+  std::unique_ptr<MCInstrInfo> MII(TheTarget->createMCInstrInfo());
+
+  std::unique_ptr<MCInstPrinter> InstPrinter(
+    TheTarget->createMCInstPrinter(0, *MAI, *MII, *MRI, *STI));
+
+  // Load any dylibs requested on the command line.
+  loadDylibs();
+
+  // Instantiate a dynamic linker.
+  TrivialMemoryManager MemMgr;
+  RuntimeDyld Dyld(&MemMgr);
+
+  // If we don't have any input files, read from stdin.
+  if (!InputFileList.size())
+    InputFileList.push_back("-");
+  for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
+    // Load the input memory buffer.
+    std::unique_ptr<MemoryBuffer> InputBuffer;
+    std::unique_ptr<ObjectImage> LoadedObject;
+    if (std::error_code ec =
+            MemoryBuffer::getFileOrSTDIN(InputFileList[i], InputBuffer))
+      return Error("unable to read input: '" + ec.message() + "'");
+
+    // Load the object file
+    LoadedObject.reset(
+      Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
+    if (!LoadedObject) {
+      return Error(Dyld.getErrorString());
+    }
+  }
+
+  // Resolve all the relocations we can.
+  Dyld.resolveRelocations();
+
+  RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
+                             llvm::dbgs());
+  return checkAllExpressions(Checker);
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
 
   ProgramName = argv[0];
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllDisassemblers();
 
   cl::ParseCommandLineOptions(argc, argv, "llvm MC-JIT tool\n");
 
@@ -277,5 +390,7 @@ int main(int argc, char **argv) {
     return executeInput();
   case AC_PrintLineInfo:
     return printLineInfoForInput();
+  case AC_Verify:
+    return linkAndVerify();
   }
 }

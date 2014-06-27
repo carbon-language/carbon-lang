@@ -39,7 +39,8 @@ public:
   /// returns a pointer to an object that is owned by the caller. However,
   /// the caller does not take ownership of the underlying memory.
   MemoryBuffer *getMemBuffer() const {
-    return MemoryBuffer::getMemBuffer(Buffer->getBuffer(), "", false);
+    return MemoryBuffer::getMemBuffer(Buffer->getBuffer(),
+                                      Buffer->getBufferIdentifier(), false);
   }
 
   const char *getBufferStart() const { return Buffer->getBufferStart(); }

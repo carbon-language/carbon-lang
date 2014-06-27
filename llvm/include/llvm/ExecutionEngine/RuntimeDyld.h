@@ -29,6 +29,8 @@ class RuntimeDyldImpl;
 class ObjectImage;
 
 class RuntimeDyld {
+  friend class RuntimeDyldChecker;
+
   RuntimeDyld(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
   void operator=(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
 
