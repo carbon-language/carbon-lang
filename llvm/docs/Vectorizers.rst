@@ -51,6 +51,89 @@ Users can control the unroll factor using the command line flag "-force-vector-u
   $ clang  -mllvm -force-vector-unroll=2 ...
   $ opt -loop-vectorize -force-vector-unroll=2 ...
 
+Pragma loop hint directives
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``#pragma clang loop`` directive allows loop vectorization hints to be
+specified for the subsequent for, while, do-while, or c++11 range-based for
+loop. The directive allows vectorization and interleaving to be enabled or
+disabled. Vector width as well as interleave count can also be manually
+specified. The following example explicitly enables vectorization and
+interleaving:
+
+.. code-block:: c++
+
+  #pragma clang loop vectorize(enable) interleave(enable)
+  while(...) {
+    ...
+  }
+
+The following example implicitly enables vectorization and interleaving by
+specifying a vector width and interleaving count:
+
+.. code-block:: c++
+
+  #pragma clang loop vectorize_width(2) interleave_count(2)
+  for(...) {
+    ...
+  }
+
+See the Clang
+`language extensions
+<http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>`_
+for details.
+
+Diagnostics
+-----------
+
+Many loops cannot be vectorized including loops with complicated control flow,
+unvectorizable types, and unvectorizable calls. The loop vectorizer generates
+optimization remarks which can be queried using command line options to identify
+and diagnose loops that are skipped by the loop-vectorizer.
+
+Optimization remarks are enabled using:
+
+``-Rpass=loop-vectorize`` identifies loops that were successfully vectorized.
+
+``-Rpass-missed=loop-vectorize`` identifies loops that failed vectorization and
+indicates if vectorization was specified.
+
+``-Rpass-analysis=loop-vectorize`` identifies the statements that caused
+vectorization to fail.
+
+Consider the following loop:
+
+.. code-block:: c++
+
+  #pragma clang loop vectorize(enable)
+  for (int i = 0; i < Length; i++) {
+    switch(A[i]) {
+    case 0: A[i] = i*2; break;
+    case 1: A[i] = i;   break;
+    default: A[i] = 0;
+    }
+  }
+
+The command line ``-Rpass-missed=loop-vectorized`` prints the remark:
+
+.. code-block:: console
+
+  no_switch.cpp:4:5: remark: loop not vectorized: vectorization is explicitly enabled [-Rpass-missed=loop-vectorize]
+
+And the command line ``-Rpass-analysis=loop-vectorize`` indicates that the
+switch statement cannot be vectorized.
+
+.. code-block:: console
+
+  no_switch.cpp:4:5: remark: loop not vectorized: loop contains a switch statement [-Rpass-analysis=loop-vectorize]
+    switch(A[i]) {
+    ^
+
+To ensure line and column numbers are produced include the command line options
+``-gline-tables-only`` and ``-gcolumn-info``. See the Clang `user manual
+<http://clang.llvm.org/docs/UsersManual.html#options-to-emit-optimization-reports>`_
+for details
+
 Features
 --------
 
