@@ -39,6 +39,11 @@ Symbol6:
 Symbol7:
 .long 1
 
+.section assocSec, "dr", associative, "assocSym"
+.globl Symbol8
+Symbol8:
+.long 1
+
 // CHECK: Sections [
 // CHECK:   Section {
 // CHECK:     Number: 4
@@ -185,7 +190,19 @@ Symbol7:
 // CHECK:     Section: SecName (11)
 // CHECK:   }
 // CHECK:   Symbol {
+// CHECK:     Name: assocSec
+// CHECK:     Section: assocSec (12)
+// CHECK:     AuxSectionDef {
+// CHECK:       Selection: Associative (0x5)
+// CHECK:       AssocSection: assocSec (4)
+// CHECK:     }
+// CHECK:   }
+// CHECK:   Symbol {
 // CHECK:     Name: Symbol5
 // CHECK:     Section: SecName (9)
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: Symbol8
+// CHECK:     Section: assocSec (12)
 // CHECK:   }
 // CHECK: ]

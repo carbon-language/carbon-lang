@@ -292,8 +292,7 @@ bool COFFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
 bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
                                        unsigned Characteristics,
                                        SectionKind Kind) {
-  return ParseSectionSwitch(Section, Characteristics, Kind, "",
-                            COFF::IMAGE_COMDAT_SELECT_ANY);
+  return ParseSectionSwitch(Section, Characteristics, Kind, "", (COFF::COMDATType)0);
 }
 
 bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
@@ -357,9 +356,10 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       return true;
   }
 
-  COFF::COMDATType Type = COFF::IMAGE_COMDAT_SELECT_ANY;
+  COFF::COMDATType Type = (COFF::COMDATType)0;
   StringRef COMDATSymName;
   if (getLexer().is(AsmToken::Comma)) {
+    Type = COFF::IMAGE_COMDAT_SELECT_ANY;;
     Lex();
 
     Flags |= COFF::IMAGE_SCN_LNK_COMDAT;

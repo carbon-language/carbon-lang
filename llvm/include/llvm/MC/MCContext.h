@@ -22,6 +22,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <tuple>
 #include <vector> // FIXME: Shouldn't be needed.
 
 namespace llvm {
@@ -160,10 +161,11 @@ namespace llvm {
     unsigned DwarfCompileUnitID;
 
     typedef std::pair<std::string, std::string> SectionGroupPair;
+    typedef std::tuple<std::string, std::string, int> SectionGroupTriple;
 
     StringMap<const MCSectionMachO*> MachOUniquingMap;
     std::map<SectionGroupPair, const MCSectionELF *> ELFUniquingMap;
-    std::map<SectionGroupPair, const MCSectionCOFF *> COFFUniquingMap;
+    std::map<SectionGroupTriple, const MCSectionCOFF *> COFFUniquingMap;
 
     /// Do automatic reset in destructor
     bool AutoReset;
