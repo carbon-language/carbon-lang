@@ -3631,7 +3631,7 @@ static SDValue getMemsetStringVal(EVT VT, SDLoc dl, SelectionDAG &DAG,
   if (Str.empty()) {
     if (VT.isInteger())
       return DAG.getConstant(0, VT);
-    else if (VT == MVT::f32 || VT == MVT::f64)
+    else if (VT == MVT::f32 || VT == MVT::f64 || VT == MVT::f128)
       return DAG.getConstantFP(0.0, VT);
     else if (VT.isVector()) {
       unsigned NumElts = VT.getVectorNumElements();
