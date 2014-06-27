@@ -193,7 +193,7 @@ inline bool EpilogueFolding(const RuntimeFunction &RF) {
 }
 /// StackAdjustment - calculated stack adjustment in words.  The stack
 /// adjustment should be determined via this function to account for the special
-/// handling the special encoding when the value is ≥ 0x3f4.
+/// handling the special encoding when the value is >= 0x3f4.
 inline uint16_t StackAdjustment(const RuntimeFunction &RF) {
   uint16_t Adjustment = RF.StackAdjust();
   if (Adjustment >= 0x3f4)
