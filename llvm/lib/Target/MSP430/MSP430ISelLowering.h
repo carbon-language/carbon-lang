@@ -66,12 +66,9 @@ namespace llvm {
     };
   }
 
-  class MSP430Subtarget;
-  class MSP430TargetMachine;
-
   class MSP430TargetLowering : public TargetLowering {
   public:
-    explicit MSP430TargetLowering(MSP430TargetMachine &TM);
+    explicit MSP430TargetLowering(const TargetMachine &TM);
 
     MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i8; }
 
@@ -170,9 +167,6 @@ namespace llvm {
                                     SDValue &Offset,
                                     ISD::MemIndexedMode &AM,
                                     SelectionDAG &DAG) const override;
-
-    const MSP430Subtarget &Subtarget;
-    const DataLayout *TD;
   };
 } // namespace llvm
 
