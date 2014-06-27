@@ -1367,6 +1367,10 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       O << ".visible ";
     else
       O << ".extern ";
+  } else if (GVar->hasLinkOnceLinkage() || GVar->hasWeakLinkage() ||
+             GVar->hasAvailableExternallyLinkage() ||
+             GVar->hasCommonLinkage()) {
+    O << ".weak ";
   }
 
   if (llvm::isTexture(*GVar)) {
