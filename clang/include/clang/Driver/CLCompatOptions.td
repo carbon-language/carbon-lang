@@ -140,6 +140,7 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
 
+def _SLASH_EH : CLJoined<"EH">, HelpText<"Exception handling model">;
 def _SLASH_EP : CLFlag<"EP">,
   HelpText<"Disable linemarker output and preprocess to stdout">;
 def _SLASH_FA : CLFlag<"FA">,
@@ -209,7 +210,6 @@ def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_clr : CLJoined<"clr">;
 def _SLASH_d2Zi_PLUS : CLFlag<"d2Zi+">;
 def _SLASH_doc : CLJoined<"doc">;
-def _SLASH_EH : CLJoined<"EH">;
 def _SLASH_FA_joined : CLJoined<"FA">;
 def _SLASH_favor : CLJoined<"favor">;
 def _SLASH_FC : CLFlag<"FC">;

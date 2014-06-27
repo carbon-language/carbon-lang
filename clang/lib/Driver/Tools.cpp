@@ -3846,9 +3846,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // Add exception args.
-  addExceptionArgs(Args, InputType, getToolChain().getTriple(),
-                   KernelOrKext, objcRuntime, CmdArgs);
+  // Handle GCC-style exception args.
+  if (!C.getDriver().IsCLMode())
+    addExceptionArgs(Args, InputType, getToolChain().getTriple(), KernelOrKext,
+                     objcRuntime, CmdArgs);
 
   if (getToolChain().UseSjLjExceptions())
     CmdArgs.push_back("-fsjlj-exceptions");
@@ -4352,6 +4353,45 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
   return runtime;
 }
 
+static bool maybeConsumeDash(const std::string &EH, size_t &I) {
+  bool HaveDash = (I + 1 < EH.size() && EH[I + 1] == '-');
+  I += HaveDash;
+  return !HaveDash;
+};
+
+struct EHFlags {
+  EHFlags() : Synch(false), Asynch(false), NoExceptC(false) {}
+  bool Synch;
+  bool Asynch;
+  bool NoExceptC;
+};
+
+/// /EH controls whether to run destructor cleanups when exceptions are
+/// thrown.  There are three modifiers:
+/// - s: Cleanup after "synchronous" exceptions, aka C++ exceptions.
+/// - a: Cleanup after "asynchronous" exceptions, aka structured exceptions.
+///      The 'a' modifier is unimplemented and fundamentally hard in LLVM IR.
+/// - c: Assume that extern "C" functions are implicitly noexcept.  This
+///      modifier is an optimization, so we ignore it for now.
+/// The default is /EHs-c-, meaning cleanups are disabled.
+static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
+  EHFlags EH;
+  std::vector<std::string> EHArgs = Args.getAllArgValues(options::OPT__SLASH_EH);
+  for (auto EHVal : EHArgs) {
+    for (size_t I = 0, E = EHVal.size(); I != E; ++I) {
+      switch (EHVal[I]) {
+      case 'a': EH.Asynch = maybeConsumeDash(EHVal, I); continue;
+      case 'c': EH.NoExceptC = maybeConsumeDash(EHVal, I); continue;
+      case 's': EH.Synch = maybeConsumeDash(EHVal, I); continue;
+      default: break;
+      }
+      D.Diag(clang::diag::err_drv_invalid_value) << "/EH" << EHVal;
+      break;
+    }
+  }
+  return EH;
+}
+
 void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   unsigned RTOptionID = options::OPT__SLASH_MT;
 
@@ -4404,13 +4444,20 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (!Args.hasArg(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
+  const Driver &D = getToolChain().getDriver();
+  EHFlags EH = parseClangCLEHFlags(D, Args);
+  // FIXME: Do something with NoExceptC.
+  if (EH.Synch || EH.Asynch) {
+    CmdArgs.push_back("-fexceptions");
+    CmdArgs.push_back("-fcxx-exceptions");
+  }
+
   // /EP should expand to -E -P.
   if (Args.hasArg(options::OPT__SLASH_EP)) {
     CmdArgs.push_back("-E");
     CmdArgs.push_back("-P");
   }
 
-  const Driver &D = getToolChain().getDriver();
   Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
   Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
   if (MostGeneralArg && BestCaseArg)
@@ -7692,6 +7739,7 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
   // Flags that can simply be passed through.
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LD);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LDd);
+  Args.AddAllArgs(CmdArgs, options::OPT__SLASH_EH);
 
   // The order of these flags is relevant, so pick the last one.
   if (Arg *A = Args.getLastArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd,
