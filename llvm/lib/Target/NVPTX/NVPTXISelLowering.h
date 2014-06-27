@@ -49,6 +49,9 @@ enum NodeType {
   CallSeqBegin,
   CallSeqEnd,
   CallPrototype,
+  MUL_WIDE_SIGNED,
+  MUL_WIDE_UNSIGNED,
+  IMAD,
   Dummy,
 
   LoadV2 = ISD::FIRST_TARGET_MEMORY_OPCODE,
@@ -258,6 +261,7 @@ private:
 
   void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
                           SelectionDAG &DAG) const override;
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
   unsigned getArgumentAlignment(SDValue Callee, const ImmutableCallSite *CS,
                                 Type *Ty, unsigned Idx) const;

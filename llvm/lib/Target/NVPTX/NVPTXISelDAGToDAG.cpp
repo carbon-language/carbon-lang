@@ -24,11 +24,14 @@ using namespace llvm;
 
 #define DEBUG_TYPE "nvptx-isel"
 
-static cl::opt<int>
-FMAContractLevel("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,
-                 cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
-                          " 1: do it  2: do it aggressively"),
-                 cl::init(2));
+unsigned FMAContractLevel = 0;
+
+static cl::opt<unsigned, true>
+FMAContractLevelOpt("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,
+                    cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
+                             " 1: do it  2: do it aggressively"),
+                    cl::location(FMAContractLevel),
+                    cl::init(2));
 
 static cl::opt<int> UsePrecDivF32(
     "nvptx-prec-divf32", cl::ZeroOrMore, cl::Hidden,

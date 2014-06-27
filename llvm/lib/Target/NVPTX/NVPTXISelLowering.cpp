@@ -243,6 +243,13 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   setOperationAction(ISD::CTPOP, MVT::i32, Legal);
   setOperationAction(ISD::CTPOP, MVT::i64, Legal);
 
+  // We have some custom DAG combine patterns for these nodes
+  setTargetDAGCombine(ISD::ADD);
+  setTargetDAGCombine(ISD::AND);
+  setTargetDAGCombine(ISD::FADD);
+  setTargetDAGCombine(ISD::MUL);
+  setTargetDAGCombine(ISD::SHL);
+
   // Now deduce the information based on the above mentioned
   // actions
   computeRegisterProperties();
@@ -334,6 +341,10 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::StoreV2";
   case NVPTXISD::StoreV4:
     return "NVPTXISD::StoreV4";
+  case NVPTXISD::FUN_SHFL_CLAMP:
+    return "NVPTXISD::FUN_SHFL_CLAMP";
+  case NVPTXISD::FUN_SHFR_CLAMP:
+    return "NVPTXISD::FUN_SHFR_CLAMP";
   case NVPTXISD::Tex1DFloatI32:        return "NVPTXISD::Tex1DFloatI32";
   case NVPTXISD::Tex1DFloatFloat:      return "NVPTXISD::Tex1DFloatFloat";
   case NVPTXISD::Tex1DFloatFloatLevel:
@@ -2473,6 +2484,406 @@ NVPTXTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned NVPTXTargetLowering::getFunctionAlignment(const Function *) const {
   return 4;
+}
+
+//===----------------------------------------------------------------------===//
+//                         NVPTX DAG Combining
+//===----------------------------------------------------------------------===//
+
+extern unsigned FMAContractLevel;
+
+/// PerformADDCombineWithOperands - Try DAG combinations for an ADD with
+/// operands N0 and N1.  This is a helper for PerformADDCombine that is
+/// called with the default operands, and if that fails, with commuted
+/// operands.
+static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
+                                           TargetLowering::DAGCombinerInfo &DCI,
+                                             const NVPTXSubtarget &Subtarget,
+                                             CodeGenOpt::Level OptLevel) {
+  SelectionDAG  &DAG = DCI.DAG;
+  // Skip non-integer, non-scalar case
+  EVT VT=N0.getValueType();
+  if (VT.isVector())
+    return SDValue();
+
+  // fold (add (mul a, b), c) -> (mad a, b, c)
+  //
+  if (N0.getOpcode() == ISD::MUL) {
+    assert (VT.isInteger());
+    // For integer:
+    // Since integer multiply-add costs the same as integer multiply
+    // but is more costly than integer add, do the fusion only when
+    // the mul is only used in the add.
+    if (OptLevel==CodeGenOpt::None || VT != MVT::i32 ||
+        !N0.getNode()->hasOneUse())
+      return SDValue();
+
+    // Do the folding
+    return DAG.getNode(NVPTXISD::IMAD, SDLoc(N), VT,
+                       N0.getOperand(0), N0.getOperand(1), N1);
+  }
+  else if (N0.getOpcode() == ISD::FMUL) {
+    if (VT == MVT::f32 || VT == MVT::f64) {
+      if (FMAContractLevel == 0)
+        return SDValue();
+
+      // For floating point:
+      // Do the fusion only when the mul has less than 5 uses and all
+      // are add.
+      // The heuristic is that if a use is not an add, then that use
+      // cannot be fused into fma, therefore mul is still needed anyway.
+      // If there are more than 4 uses, even if they are all add, fusing
+      // them will increase register pressue.
+      //
+      int numUses = 0;
+      int nonAddCount = 0;
+      for (SDNode::use_iterator UI = N0.getNode()->use_begin(),
+           UE = N0.getNode()->use_end();
+           UI != UE; ++UI) {
+        numUses++;
+        SDNode *User = *UI;
+        if (User->getOpcode() != ISD::FADD)
+          ++nonAddCount;
+      }
+      if (numUses >= 5)
+        return SDValue();
+      if (nonAddCount) {
+        int orderNo = N->getIROrder();
+        int orderNo2 = N0.getNode()->getIROrder();
+        // simple heuristics here for considering potential register
+        // pressure, the logics here is that the differnce are used
+        // to measure the distance between def and use, the longer distance
+        // more likely cause register pressure.
+        if (orderNo - orderNo2 < 500)
+          return SDValue();
+
+        // Now, check if at least one of the FMUL's operands is live beyond the node N,
+        // which guarantees that the FMA will not increase register pressure at node N.
+        bool opIsLive = false;
+        const SDNode *left = N0.getOperand(0).getNode();
+        const SDNode *right = N0.getOperand(1).getNode();
+
+        if (dyn_cast<ConstantSDNode>(left) || dyn_cast<ConstantSDNode>(right))
+          opIsLive = true;
+
+        if (!opIsLive)
+          for (SDNode::use_iterator UI = left->use_begin(), UE = left->use_end(); UI != UE; ++UI) {
+            SDNode *User = *UI;
+            int orderNo3 = User->getIROrder();
+            if (orderNo3 > orderNo) {
+              opIsLive = true;
+              break;
+            }
+          }
+
+        if (!opIsLive)
+          for (SDNode::use_iterator UI = right->use_begin(), UE = right->use_end(); UI != UE; ++UI) {
+            SDNode *User = *UI;
+            int orderNo3 = User->getIROrder();
+            if (orderNo3 > orderNo) {
+              opIsLive = true;
+              break;
+            }
+          }
+
+        if (!opIsLive)
+          return SDValue();
+      }
+
+      return DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                         N0.getOperand(0), N0.getOperand(1), N1);
+    }
+  }
+
+  return SDValue();
+}
+
+/// PerformADDCombine - Target-specific dag combine xforms for ISD::ADD.
+///
+static SDValue PerformADDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const NVPTXSubtarget &Subtarget,
+                                 CodeGenOpt::Level OptLevel) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  // First try with the default operand order.
+  SDValue Result = PerformADDCombineWithOperands(N, N0, N1, DCI, Subtarget,
+                                                 OptLevel);
+  if (Result.getNode())
+    return Result;
+
+  // If that didn't work, try again with the operands commuted.
+  return PerformADDCombineWithOperands(N, N1, N0, DCI, Subtarget, OptLevel);
+}
+
+static SDValue PerformANDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  // The type legalizer turns a vector load of i8 values into a zextload to i16
+  // registers, optionally ANY_EXTENDs it (if target type is integer),
+  // and ANDs off the high 8 bits. Since we turn this load into a
+  // target-specific DAG node, the DAG combiner fails to eliminate these AND
+  // nodes. Do that here.
+  SDValue Val = N->getOperand(0);
+  SDValue Mask = N->getOperand(1);
+
+  if (isa<ConstantSDNode>(Val)) {
+    std::swap(Val, Mask);
+  }
+
+  SDValue AExt;
+  // Generally, we will see zextload -> IMOV16rr -> ANY_EXTEND -> and
+  if (Val.getOpcode() == ISD::ANY_EXTEND) {
+    AExt = Val;
+    Val = Val->getOperand(0);
+  }
+
+  if (Val->isMachineOpcode() && Val->getMachineOpcode() == NVPTX::IMOV16rr) {
+    Val = Val->getOperand(0);
+  }
+
+  if (Val->getOpcode() == NVPTXISD::LoadV2 ||
+      Val->getOpcode() == NVPTXISD::LoadV4) {
+    ConstantSDNode *MaskCnst = dyn_cast<ConstantSDNode>(Mask);
+    if (!MaskCnst) {
+      // Not an AND with a constant
+      return SDValue();
+    }
+
+    uint64_t MaskVal = MaskCnst->getZExtValue();
+    if (MaskVal != 0xff) {
+      // Not an AND that chops off top 8 bits
+      return SDValue();
+    }
+
+    MemSDNode *Mem = dyn_cast<MemSDNode>(Val);
+    if (!Mem) {
+      // Not a MemSDNode?!?
+      return SDValue();
+    }
+
+    EVT MemVT = Mem->getMemoryVT();
+    if (MemVT != MVT::v2i8 && MemVT != MVT::v4i8) {
+      // We only handle the i8 case
+      return SDValue();
+    }
+
+    unsigned ExtType =
+      cast<ConstantSDNode>(Val->getOperand(Val->getNumOperands()-1))->
+        getZExtValue();
+    if (ExtType == ISD::SEXTLOAD) {
+      // If for some reason the load is a sextload, the and is needed to zero
+      // out the high 8 bits
+      return SDValue();
+    }
+
+    bool AddTo = false;
+    if (AExt.getNode() != 0) {
+      // Re-insert the ext as a zext.
+      Val = DCI.DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N),
+                            AExt.getValueType(), Val);
+      AddTo = true;
+    }
+
+    // If we get here, the AND is unnecessary.  Just replace it with the load
+    DCI.CombineTo(N, Val, AddTo);
+  }
+
+  return SDValue();
+}
+
+enum OperandSignedness {
+  Signed = 0,
+  Unsigned,
+  Unknown
+};
+
+/// IsMulWideOperandDemotable - Checks if the provided DAG node is an operand
+/// that can be demoted to \p OptSize bits without loss of information. The
+/// signedness of the operand, if determinable, is placed in \p S.
+static bool IsMulWideOperandDemotable(SDValue Op,
+                                      unsigned OptSize,
+                                      OperandSignedness &S) {
+  S = Unknown;
+
+  if (Op.getOpcode() == ISD::SIGN_EXTEND ||
+      Op.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+    EVT OrigVT = Op.getOperand(0).getValueType();
+    if (OrigVT.getSizeInBits() == OptSize) {
+      S = Signed;
+      return true;
+    }
+  } else if (Op.getOpcode() == ISD::ZERO_EXTEND) {
+    EVT OrigVT = Op.getOperand(0).getValueType();
+    if (OrigVT.getSizeInBits() == OptSize) {
+      S = Unsigned;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/// AreMulWideOperandsDemotable - Checks if the given LHS and RHS operands can
+/// be demoted to \p OptSize bits without loss of information. If the operands
+/// contain a constant, it should appear as the RHS operand. The signedness of
+/// the operands is placed in \p IsSigned.
+static bool AreMulWideOperandsDemotable(SDValue LHS, SDValue RHS,
+                                        unsigned OptSize,
+                                        bool &IsSigned) {
+
+  OperandSignedness LHSSign;
+
+  // The LHS operand must be a demotable op
+  if (!IsMulWideOperandDemotable(LHS, OptSize, LHSSign))
+    return false;
+
+  // We should have been able to determine the signedness from the LHS
+  if (LHSSign == Unknown)
+    return false;
+
+  IsSigned = (LHSSign == Signed);
+
+  // The RHS can be a demotable op or a constant
+  if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(RHS)) {
+    APInt Val = CI->getAPIntValue();
+    if (LHSSign == Unsigned) {
+      if (Val.isIntN(OptSize)) {
+        return true;
+      }
+      return false;
+    } else {
+      if (Val.isSignedIntN(OptSize)) {
+        return true;
+      }
+      return false;
+    }
+  } else {
+    OperandSignedness RHSSign;
+    if (!IsMulWideOperandDemotable(RHS, OptSize, RHSSign))
+      return false;
+
+    if (LHSSign != RHSSign)
+      return false;
+
+    return true;
+  }
+}
+
+/// TryMULWIDECombine - Attempt to replace a multiply of M bits with a multiply
+/// of M/2 bits that produces an M-bit result (i.e. mul.wide). This transform
+/// works on both multiply DAG nodes and SHL DAG nodes with a constant shift
+/// amount.
+static SDValue TryMULWIDECombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  EVT MulType = N->getValueType(0);
+  if (MulType != MVT::i32 && MulType != MVT::i64) {
+    return SDValue();
+  }
+
+  unsigned OptSize = MulType.getSizeInBits() >> 1;
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  // Canonicalize the multiply so the constant (if any) is on the right
+  if (N->getOpcode() == ISD::MUL) {
+    if (isa<ConstantSDNode>(LHS)) {
+      std::swap(LHS, RHS);
+    }
+  }
+
+  // If we have a SHL, determine the actual multiply amount
+  if (N->getOpcode() == ISD::SHL) {
+    ConstantSDNode *ShlRHS = dyn_cast<ConstantSDNode>(RHS);
+    if (!ShlRHS) {
+      return SDValue();
+    }
+
+    APInt ShiftAmt = ShlRHS->getAPIntValue();
+    unsigned BitWidth = MulType.getSizeInBits();
+    if (ShiftAmt.sge(0) && ShiftAmt.slt(BitWidth)) {
+      APInt MulVal = APInt(BitWidth, 1) << ShiftAmt;
+      RHS = DCI.DAG.getConstant(MulVal, MulType);
+    } else {
+      return SDValue();
+    }
+  }
+
+  bool Signed;
+  // Verify that our operands are demotable
+  if (!AreMulWideOperandsDemotable(LHS, RHS, OptSize, Signed)) {
+    return SDValue();
+  }
+
+  EVT DemotedVT;
+  if (MulType == MVT::i32) {
+    DemotedVT = MVT::i16;
+  } else {
+    DemotedVT = MVT::i32;
+  }
+
+  // Truncate the operands to the correct size. Note that these are just for
+  // type consistency and will (likely) be eliminated in later phases.
+  SDValue TruncLHS =
+    DCI.DAG.getNode(ISD::TRUNCATE, SDLoc(N), DemotedVT, LHS);
+  SDValue TruncRHS =
+    DCI.DAG.getNode(ISD::TRUNCATE, SDLoc(N), DemotedVT, RHS);
+
+  unsigned Opc;
+  if (Signed) {
+    Opc = NVPTXISD::MUL_WIDE_SIGNED;
+  } else {
+    Opc = NVPTXISD::MUL_WIDE_UNSIGNED;
+  }
+
+  return DCI.DAG.getNode(Opc, SDLoc(N), MulType, TruncLHS, TruncRHS);
+}
+
+/// PerformMULCombine - Runs PTX-specific DAG combine patterns on MUL nodes.
+static SDValue PerformMULCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 CodeGenOpt::Level OptLevel) {
+  if (OptLevel > 0) {
+    // Try mul.wide combining at OptLevel > 0
+    SDValue Ret = TryMULWIDECombine(N, DCI);
+    if (Ret.getNode())
+      return Ret;
+  }
+
+  return SDValue();
+}
+
+/// PerformSHLCombine - Runs PTX-specific DAG combine patterns on SHL nodes.
+static SDValue PerformSHLCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 CodeGenOpt::Level OptLevel) {
+  if (OptLevel > 0) {
+    // Try mul.wide combining at OptLevel > 0
+    SDValue Ret = TryMULWIDECombine(N, DCI);
+    if (Ret.getNode())
+      return Ret;
+  }
+
+  return SDValue();
+}
+
+SDValue NVPTXTargetLowering::PerformDAGCombine(SDNode *N,
+                                               DAGCombinerInfo &DCI) const {
+  // FIXME: Get this from the DAG somehow
+  CodeGenOpt::Level OptLevel = CodeGenOpt::Aggressive;
+  switch (N->getOpcode()) {
+    default: break;
+    case ISD::ADD:
+    case ISD::FADD:
+      return PerformADDCombine(N, DCI, nvptxSubtarget, OptLevel);
+    case ISD::MUL:
+      return PerformMULCombine(N, DCI, OptLevel);
+    case ISD::SHL:
+      return PerformSHLCombine(N, DCI, OptLevel);
+    case ISD::AND:
+      return PerformANDCombine(N, DCI);
+  }
+  return SDValue();
 }
 
 /// ReplaceVectorLoad - Convert vector loads into multi-output scalar loads.
