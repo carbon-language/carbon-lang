@@ -834,20 +834,6 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
     return;
-  case ISD::LOAD: {
-    SDNode *Node = LowerLOAD(SDValue(N, 0), DAG).getNode();
-    Results.push_back(SDValue(Node, 0));
-    Results.push_back(SDValue(Node, 1));
-    // XXX: LLVM seems not to replace Chain Value inside CustomWidenLowerNode
-    // function
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N,1), SDValue(Node, 1));
-    return;
-  }
-  case ISD::STORE: {
-    SDNode *Node = LowerSTORE(SDValue(N, 0), DAG).getNode();
-    Results.push_back(SDValue(Node, 0));
-    return;
-  }
   case ISD::UDIV: {
     SDValue Op = SDValue(N, 0);
     SDLoc DL(Op);
