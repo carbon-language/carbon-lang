@@ -171,12 +171,27 @@ public:
     _references.push_back(SimpleReference(ns, arch, kindValue, off, target, a));
   }
 
+  /// Sort references in a canonical order (by offset, then by kind).
+  void sortReferences() const {
+    std::sort(_references.begin(), _references.end(),
+        [] (SimpleReference &lhs, SimpleReference &rhs) -> bool {
+          uint64_t lhsOffset = lhs.offsetInAtom();
+          uint64_t rhsOffset = rhs.offsetInAtom();
+          if (rhsOffset != lhsOffset)
+            return (lhsOffset < rhsOffset);
+          if (rhs.kindNamespace() != lhs.kindNamespace())
+            return (lhs.kindNamespace() < rhs.kindNamespace());
+          if (rhs.kindArch() != lhs.kindArch())
+            return (lhs.kindArch() < rhs.kindArch());
+          return (lhs.kindValue() < rhs.kindValue());
+        });
+  }
   void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
 private:
   const File                   &_file;
   uint64_t                      _ordinal;
-  std::vector<SimpleReference>  _references;
+  mutable std::vector<SimpleReference>  _references;
 };
 
 class SimpleUndefinedAtom : public UndefinedAtom {
