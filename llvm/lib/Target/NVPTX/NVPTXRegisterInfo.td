@@ -46,6 +46,10 @@ foreach i = 0-4 in {
   def da#i : NVPTXReg<"%da"#i>;
 }
 
+foreach i = 0-31 in {
+  def ENVREG#i : NVPTXReg<"%envreg"#i>;
+}
+
 //===----------------------------------------------------------------------===//
 //  Register classes
 //===----------------------------------------------------------------------===//
@@ -61,4 +65,5 @@ def Float32ArgRegs : NVPTXRegClass<[f32], 32, (add (sequence "fa%u", 0, 4))>;
 def Float64ArgRegs : NVPTXRegClass<[f64], 64, (add (sequence "da%u", 0, 4))>;
 
 // Read NVPTXRegisterInfo.cpp to see how VRFrame and VRDepot are used.
-def SpecialRegs : NVPTXRegClass<[i32], 32, (add VRFrame, VRDepot)>;
+def SpecialRegs : NVPTXRegClass<[i32], 32, (add VRFrame, VRDepot,
+                                            (sequence "ENVREG%u", 0, 31))>;

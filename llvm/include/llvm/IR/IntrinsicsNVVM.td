@@ -889,6 +889,136 @@ def int_nvvm_compiler_error :
 def int_nvvm_compiler_warn :
     Intrinsic<[], [llvm_anyptr_ty], [], "llvm.nvvm.compiler.warn">;
 
+// Environment register read
+def int_nvvm_read_ptx_sreg_envreg0
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg0">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg0">;
+def int_nvvm_read_ptx_sreg_envreg1
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg1">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg1">;
+def int_nvvm_read_ptx_sreg_envreg2
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg2">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg2">;
+def int_nvvm_read_ptx_sreg_envreg3
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg3">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg3">;
+def int_nvvm_read_ptx_sreg_envreg4
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg4">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg4">;
+def int_nvvm_read_ptx_sreg_envreg5
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg5">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg5">;
+def int_nvvm_read_ptx_sreg_envreg6
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg6">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg6">;
+def int_nvvm_read_ptx_sreg_envreg7
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg7">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg7">;
+def int_nvvm_read_ptx_sreg_envreg8
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg8">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg8">;
+def int_nvvm_read_ptx_sreg_envreg9
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg9">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg9">;
+def int_nvvm_read_ptx_sreg_envreg10
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg10">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg10">;
+def int_nvvm_read_ptx_sreg_envreg11
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg11">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg11">;
+def int_nvvm_read_ptx_sreg_envreg12
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg12">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg12">;
+def int_nvvm_read_ptx_sreg_envreg13
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg13">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg13">;
+def int_nvvm_read_ptx_sreg_envreg14
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg14">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg14">;
+def int_nvvm_read_ptx_sreg_envreg15
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg15">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg15">;
+def int_nvvm_read_ptx_sreg_envreg16
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg16">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg16">;
+def int_nvvm_read_ptx_sreg_envreg17
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg17">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg17">;
+def int_nvvm_read_ptx_sreg_envreg18
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg18">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg18">;
+def int_nvvm_read_ptx_sreg_envreg19
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg19">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg19">;
+def int_nvvm_read_ptx_sreg_envreg20
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg20">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg20">;
+def int_nvvm_read_ptx_sreg_envreg21
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg21">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg21">;
+def int_nvvm_read_ptx_sreg_envreg22
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg22">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg22">;
+def int_nvvm_read_ptx_sreg_envreg23
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg23">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg23">;
+def int_nvvm_read_ptx_sreg_envreg24
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg24">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg24">;
+def int_nvvm_read_ptx_sreg_envreg25
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg25">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg25">;
+def int_nvvm_read_ptx_sreg_envreg26
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg26">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg26">;
+def int_nvvm_read_ptx_sreg_envreg27
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg27">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg27">;
+def int_nvvm_read_ptx_sreg_envreg28
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg28">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg28">;
+def int_nvvm_read_ptx_sreg_envreg29
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg29">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg29">;
+def int_nvvm_read_ptx_sreg_envreg30
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg30">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg30">;
+def int_nvvm_read_ptx_sreg_envreg31
+  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
+              "llvm.nvvm.read.ptx.sreg.envreg31">,
+    GCCBuiltin<"__nvvm_read_ptx_sreg_envreg31">;
+
 
 // Texture Fetch
 def int_nvvm_tex_1d_v4f32_i32
