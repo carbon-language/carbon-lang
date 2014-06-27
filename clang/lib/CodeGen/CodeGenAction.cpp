@@ -647,7 +647,8 @@ void CodeGenAction::ExecuteAction() {
       return;
 
     llvm::SMDiagnostic Err;
-    TheModule.reset(ParseIR(MainFile, Err, *VMContext));
+    TheModule.reset(
+        ParseIR(const_cast<MemoryBuffer *>(MainFile), Err, *VMContext));
     if (!TheModule) {
       // Translate from the diagnostic info to the SourceManager location.
       SourceLocation Loc = SM.translateFileLineCol(
