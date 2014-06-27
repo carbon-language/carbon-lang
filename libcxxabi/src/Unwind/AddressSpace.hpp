@@ -329,7 +329,7 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
   int length = 0;
   info.arm_section = (uintptr_t) dl_unwind_find_exidx(
       (_Unwind_Ptr) targetAddr, &length);
-  info.arm_section_length = length;
+  info.arm_section_length = (uintptr_t)length;
   _LIBUNWIND_TRACE_UNWINDING("findUnwindSections: section %X length %x\n",
                              info.arm_section, info.arm_section_length);
   if (info.arm_section && info.arm_section_length)
