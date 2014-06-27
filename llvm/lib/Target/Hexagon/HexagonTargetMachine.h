@@ -33,7 +33,6 @@ class HexagonTargetMachine : public LLVMTargetMachine {
   HexagonTargetLowering TLInfo;
   HexagonSelectionDAGInfo TSInfo;
   HexagonFrameLowering FrameLowering;
-  const InstrItineraryData* InstrItins;
 
 public:
   HexagonTargetMachine(const Target &T, StringRef TT,StringRef CPU,
@@ -52,7 +51,7 @@ public:
   }
 
   const InstrItineraryData* getInstrItineraryData() const override {
-    return InstrItins;
+    return &getSubtargetImpl()->getInstrItineraryData();
   }
 
 

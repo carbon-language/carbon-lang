@@ -67,15 +67,12 @@ SchedCustomRegistry("hexagon", "Run Hexagon's custom scheduler",
 HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
-                                           Reloc::Model RM,
-                                           CodeModel::Model CM,
+                                           Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    DL("e-m:e-p:32:32-i1:32-i64:64-a:0-n32") ,
-    Subtarget(TT, CPU, FS), InstrInfo(Subtarget), TLInfo(*this),
-    TSInfo(*this),
-    FrameLowering(Subtarget),
-    InstrItins(&Subtarget.getInstrItineraryData()) {
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      DL("e-m:e-p:32:32-i1:32-i64:64-a:0-n32"), Subtarget(TT, CPU, FS),
+      InstrInfo(Subtarget), TLInfo(*this), TSInfo(*this),
+      FrameLowering(Subtarget) {
     initAsmInfo();
 }
 
