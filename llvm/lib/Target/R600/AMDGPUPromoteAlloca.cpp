@@ -158,7 +158,7 @@ static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
     // If we can't compute a vector index from this GEP, then we can't
     // promote this alloca to vector.
     if (!Index) {
-      DEBUG(dbgs() << "  Cannot compute vector index for GEP " << *GEP << "\n");
+      DEBUG(dbgs() << "  Cannot compute vector index for GEP " << *GEP << '\n');
       return false;
     }
 
@@ -170,8 +170,8 @@ static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
 
   VectorType *VectorTy = arrayTypeToVecType(AllocaTy);
 
-  DEBUG(dbgs() << "  Converting alloca to vector "; AllocaTy->dump();
-        dbgs() << " -> "; VectorTy->dump(); dbgs() << "\n");
+  DEBUG(dbgs() << "  Converting alloca to vector "
+        << *AllocaTy << " -> " << *VectorTy << '\n');
 
   for (std::vector<Value*>::iterator I = WorkList.begin(),
                                      E = WorkList.end(); I != E; ++I) {
@@ -206,7 +206,7 @@ static bool tryPromoteAllocaToVector(AllocaInst *Alloca) {
     default:
       Inst->dump();
       llvm_unreachable("Do not know how to replace this instruction "
-                              "with vector op");
+                       "with vector op");
     }
   }
   return true;
@@ -233,7 +233,7 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   // First try to replace the alloca with a vector
   Type *AllocaTy = I.getAllocatedType();
 
-  DEBUG(dbgs() << "Trying to promote " << I);
+  DEBUG(dbgs() << "Trying to promote " << I << '\n');
 
   if (tryPromoteAllocaToVector(&I))
     return;
