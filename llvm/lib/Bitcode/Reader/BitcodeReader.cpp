@@ -3406,9 +3406,10 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
   return M;
 }
 
-ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
+ErrorOr<Module *> llvm::parseBitcodeFile(const MemoryBuffer *Buffer,
                                          LLVMContext &Context) {
-  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModule(const_cast<MemoryBuffer *>(Buffer), Context);
   if (!ModuleOrErr)
     return ModuleOrErr;
   Module *M = ModuleOrErr.get();

@@ -68,8 +68,7 @@ Module *llvm::ParseIR(const MemoryBuffer *Buffer, SMDiagnostic &Err,
                      TimePassesIsEnabled);
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
-    ErrorOr<Module *> ModuleOrErr =
-        parseBitcodeFile(const_cast<MemoryBuffer *>(Buffer), Context);
+    ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buffer, Context);
     Module *M = nullptr;
     if (std::error_code EC = ModuleOrErr.getError())
       Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
