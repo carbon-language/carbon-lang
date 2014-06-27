@@ -17,6 +17,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Core/ArchSpec.h"
 
 #include "ELFHeader.h"
 
@@ -242,6 +243,9 @@ private:
     /// Cached value of the entry point for this module.
     lldb_private::Address  m_entry_point_address;
 
+    /// The architecture detected from parsing elf file contents.
+    lldb_private::ArchSpec m_arch_spec;
+
     /// Returns a 1 based index of the given section header.
     size_t
     SectionIndex(const SectionHeaderCollIter &I);
@@ -273,14 +277,15 @@ private:
     size_t
     ParseSectionHeaders();
 
-    /// Parses the elf section headers and returns the uuid, debug link name, crc.
+    /// Parses the elf section headers and returns the uuid, debug link name, crc, archspec.
     static size_t
     GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                          lldb_private::DataExtractor &data,
                          const elf::ELFHeader &header,
                          lldb_private::UUID &uuid,
                          std::string &gnu_debuglink_file,
-                         uint32_t &gnu_debuglink_crc);
+                         uint32_t &gnu_debuglink_crc,
+                         lldb_private::ArchSpec &arch_spec);
 
     /// Scans the dynamic section and locates all dependent modules (shared
     /// libraries) populating m_filespec_ap.  This method will compute the
@@ -407,6 +412,9 @@ private:
         
     unsigned
     PLTRelocationType();
+
+    static lldb_private::Error
+    RefineModuleDetailsFromNote (lldb_private::DataExtractor &data, lldb_private::ArchSpec &arch_spec, lldb_private::UUID &uuid);
 };
 
 #endif // #ifndef liblldb_ObjectFileELF_h_

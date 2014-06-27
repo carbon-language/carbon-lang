@@ -41,6 +41,29 @@ using namespace elf;
 using namespace llvm::ELF;
 
 namespace {
+
+// ELF note owner definitions
+const char *const LLDB_NT_OWNER_FREEBSD = "FreeBSD";
+const char *const LLDB_NT_OWNER_GNU     = "GNU";
+const char *const LLDB_NT_OWNER_NETBSD  = "NetBSD";
+
+// ELF note type definitions
+const elf_word LLDB_NT_FREEBSD_ABI_TAG  = 0x01;
+const elf_word LLDB_NT_FREEBSD_ABI_SIZE = 4;
+
+const elf_word LLDB_NT_GNU_ABI_TAG      = 0x01;
+const elf_word LLDB_NT_GNU_ABI_SIZE     = 16;
+
+const elf_word LLDB_NT_GNU_BUILD_ID_TAG = 0x03;
+
+const elf_word LLDB_NT_NETBSD_ABI_TAG   = 0x01;
+const elf_word LLDB_NT_NETBSD_ABI_SIZE  = 4;
+
+// GNU ABI note OS constants
+const elf_word LLDB_NT_GNU_ABI_OS_LINUX   = 0x00;
+const elf_word LLDB_NT_GNU_ABI_OS_HURD    = 0x01;
+const elf_word LLDB_NT_GNU_ABI_OS_SOLARIS = 0x02;
+
 //===----------------------------------------------------------------------===//
 /// @class ELFRelocation
 /// @brief Generic wrapper for ELFRel and ELFRela.
@@ -448,6 +471,55 @@ ObjectFileELF::CalculateELFNotesSegmentsCRC32 (const ProgramHeaderColl& program_
     return core_notes_crc;
 }
 
+static const char*
+OSABIAsCString (unsigned char osabi_byte)
+{
+#define _MAKE_OSABI_CASE(x) case x: return #x
+    switch (osabi_byte)
+    {
+        _MAKE_OSABI_CASE(ELFOSABI_NONE);
+        _MAKE_OSABI_CASE(ELFOSABI_HPUX);
+        _MAKE_OSABI_CASE(ELFOSABI_NETBSD);
+        _MAKE_OSABI_CASE(ELFOSABI_GNU);
+        _MAKE_OSABI_CASE(ELFOSABI_HURD);
+        _MAKE_OSABI_CASE(ELFOSABI_SOLARIS);
+        _MAKE_OSABI_CASE(ELFOSABI_AIX);
+        _MAKE_OSABI_CASE(ELFOSABI_IRIX);
+        _MAKE_OSABI_CASE(ELFOSABI_FREEBSD);
+        _MAKE_OSABI_CASE(ELFOSABI_TRU64);
+        _MAKE_OSABI_CASE(ELFOSABI_MODESTO);
+        _MAKE_OSABI_CASE(ELFOSABI_OPENBSD);
+        _MAKE_OSABI_CASE(ELFOSABI_OPENVMS);
+        _MAKE_OSABI_CASE(ELFOSABI_NSK);
+        _MAKE_OSABI_CASE(ELFOSABI_AROS);
+        _MAKE_OSABI_CASE(ELFOSABI_FENIXOS);
+        _MAKE_OSABI_CASE(ELFOSABI_C6000_ELFABI);
+        _MAKE_OSABI_CASE(ELFOSABI_C6000_LINUX);
+        _MAKE_OSABI_CASE(ELFOSABI_ARM);
+        _MAKE_OSABI_CASE(ELFOSABI_STANDALONE);
+        default:
+            return "<unknown-osabi>";
+    }
+#undef _MAKE_OSABI_CASE
+}
+
+static bool
+GetOsFromOSABI (unsigned char osabi_byte, llvm::Triple::OSType &ostype)
+{
+    switch (osabi_byte)
+    {
+        case ELFOSABI_AIX:      ostype = llvm::Triple::OSType::AIX; break;
+        case ELFOSABI_FREEBSD:  ostype = llvm::Triple::OSType::FreeBSD; break;
+        case ELFOSABI_GNU:      ostype = llvm::Triple::OSType::Linux; break;
+        case ELFOSABI_NETBSD:   ostype = llvm::Triple::OSType::NetBSD; break;
+        case ELFOSABI_OPENBSD:  ostype = llvm::Triple::OSType::OpenBSD; break;
+        case ELFOSABI_SOLARIS:  ostype = llvm::Triple::OSType::Solaris; break;
+        default:
+            ostype = llvm::Triple::OSType::UnknownOS;
+    }
+    return ostype != llvm::Triple::OSType::UnknownOS;
+}
+
 size_t
 ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                         lldb::DataBufferSP& data_sp,
@@ -456,6 +528,8 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                         lldb::offset_t length,
                                         lldb_private::ModuleSpecList &specs)
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MODULES));
+
     const size_t initial_count = specs.GetSize();
 
     if (ObjectFileELF::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
@@ -474,13 +548,22 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                                        LLDB_INVALID_CPUTYPE);
                 if (spec.GetArchitecture().IsValid())
                 {
-                    // We could parse the ABI tag information (in .note, .notes, or .note.ABI-tag) to get the
-                    // machine information. However, this info isn't guaranteed to exist or be correct. Details:
-                    //  http://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html
-                    // Instead of passing potentially incorrect information down the pipeline, grab
-                    // the host information and use it.
-                    spec.GetArchitecture().GetTriple().setOSName (Host::GetOSString().GetCString());
-                    spec.GetArchitecture().GetTriple().setVendorName(Host::GetVendorString().GetCString());
+                    llvm::Triple::OSType ostype;
+                    // First try to determine the OS type from the OSABI field in the elf header.
+
+                    if (log)
+                        log->Printf ("ObjectFileELF::%s file '%s' module OSABI: %s", __FUNCTION__, file.GetPath ().c_str (), OSABIAsCString (header.e_ident[EI_OSABI]));
+                    if (GetOsFromOSABI (header.e_ident[EI_OSABI], ostype) && ostype != llvm::Triple::OSType::UnknownOS)
+                    {
+                        spec.GetArchitecture ().GetTriple ().setOS (ostype);
+
+                        // Also clear the vendor so we don't end up with situations like
+                        // x86_64-apple-FreeBSD.
+                        spec.GetArchitecture ().GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+
+                        if (log)
+                            log->Printf ("ObjectFileELF::%s file '%s' set ELF module OS type from ELF header OSABI.", __FUNCTION__, file.GetPath ().c_str ());
+                    }
 
                     // Try to get the UUID from the section list. Usually that's at the end, so
                     // map the file in if we don't have it already.
@@ -495,8 +578,20 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                     std::string gnu_debuglink_file;
                     SectionHeaderColl section_headers;
                     lldb_private::UUID &uuid = spec.GetUUID();
-                    GetSectionHeaderInfo(section_headers, data, header, uuid, gnu_debuglink_file, gnu_debuglink_crc);
 
+                    GetSectionHeaderInfo(section_headers, data, header, uuid, gnu_debuglink_file, gnu_debuglink_crc, spec.GetArchitecture ());
+
+                    // If the module vendor is not set and the module OS matches this host OS, set the module vendor to the host vendor.
+                    llvm::Triple &spec_triple = spec.GetArchitecture ().GetTriple ();
+                    if (spec_triple.getVendor () == llvm::Triple::VendorType::UnknownVendor)
+                    {
+                        const llvm::Triple &host_triple = Host::GetArchitecture ().GetTriple ();
+                        if (spec_triple.getOS () == host_triple.getOS ())
+                            spec_triple.setVendor (host_triple.getVendor ());
+                    }
+
+                    if (log)
+                        log->Printf ("ObjectFileELF::%s file '%s' module set to triple: %s (architecture %s)", __FUNCTION__, file.GetPath ().c_str (), spec_triple.getTriple ().c_str (), spec.GetArchitecture ().GetArchitectureName ());
 
                     if (!uuid.IsValid())
                     {
@@ -596,15 +691,19 @@ ObjectFileELF::ObjectFileELF (const lldb::ModuleSP &module_sp,
                               lldb::offset_t length) : 
     ObjectFile(module_sp, file, file_offset, length, data_sp, data_offset),
     m_header(),
+    m_uuid(),
+    m_gnu_debuglink_file(),
+    m_gnu_debuglink_crc(0),
     m_program_headers(),
     m_section_headers(),
-    m_filespec_ap()
+    m_dynamic_symbols(),
+    m_filespec_ap(),
+    m_entry_point_address(),
+    m_arch_spec()
 {
     if (file)
         m_file = *file;
     ::memset(&m_header, 0, sizeof(m_header));
-    m_gnu_debuglink_crc = 0;
-    m_gnu_debuglink_file.clear();
 }
 
 ObjectFileELF::ObjectFileELF (const lldb::ModuleSP &module_sp,
@@ -613,9 +712,15 @@ ObjectFileELF::ObjectFileELF (const lldb::ModuleSP &module_sp,
                               addr_t header_addr) :
     ObjectFile(module_sp, process_sp, LLDB_INVALID_ADDRESS, data_sp),
     m_header(),
+    m_uuid(),
+    m_gnu_debuglink_file(),
+    m_gnu_debuglink_crc(0),
     m_program_headers(),
     m_section_headers(),
-    m_filespec_ap()
+    m_dynamic_symbols(),
+    m_filespec_ap(),
+    m_entry_point_address(),
+    m_arch_spec()
 {
     ::memset(&m_header, 0, sizeof(m_header));
 }
@@ -963,34 +1068,167 @@ ObjectFileELF::ParseProgramHeaders()
     return GetProgramHeaderInfo(m_program_headers, m_data, m_header);
 }
 
-static bool
-ParseNoteGNUBuildID(DataExtractor &data, lldb_private::UUID &uuid)
+lldb_private::Error
+ObjectFileELF::RefineModuleDetailsFromNote (lldb_private::DataExtractor &data, lldb_private::ArchSpec &arch_spec, lldb_private::UUID &uuid)
 {
-    // Try to parse the note section (ie .note.gnu.build-id|.notes|.note|...) and get the build id.
-    // BuildID documentation: https://fedoraproject.org/wiki/Releases/FeatureBuildId
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MODULES));
+    Error error;
+
     lldb::offset_t offset = 0;
-    static const uint32_t g_gnu_build_id = 3; // NT_GNU_BUILD_ID from elf.h
 
     while (true)
     {
+        // Parse the note header.  If this fails, bail out.
         ELFNote note = ELFNote();
         if (!note.Parse(data, &offset))
-            return false;
-
-        // 16 bytes is UUID|MD5, 20 bytes is SHA1
-        if (note.n_name == "GNU" && (note.n_type == g_gnu_build_id) &&
-            (note.n_descsz == 16 || note.n_descsz == 20))
         {
-            uint8_t uuidbuf[20]; 
-            if (data.GetU8 (&offset, &uuidbuf, note.n_descsz) == NULL)
-                return false;
-            uuid.SetBytes (uuidbuf, note.n_descsz);
-            return true;
+            // We're done.
+            return error;
         }
-        offset += llvm::RoundUpToAlignment(note.n_descsz, 4);
+
+        // If a tag processor handles the tag, it should set processed to true, and
+        // the loop will assume the tag processing has moved entirely past the note's payload.
+        // Otherwise, leave it false and the end of the loop will handle the offset properly.
+        bool processed = false;
+
+        if (log)
+            log->Printf ("ObjectFileELF::%s parsing note name='%s', type=%" PRIu32, __FUNCTION__, note.n_name.c_str (), note.n_type);
+
+        // Process FreeBSD ELF notes.
+        if ((note.n_name == LLDB_NT_OWNER_FREEBSD) &&
+            (note.n_type == LLDB_NT_FREEBSD_ABI_TAG) &&
+            (note.n_descsz == LLDB_NT_FREEBSD_ABI_SIZE))
+        {
+            // We'll consume the payload below.
+            processed = true;
+
+            // Pull out the min version info.
+            uint32_t version_info;
+            if (data.GetU32 (&offset, &version_info, 1) == nullptr)
+            {
+                error.SetErrorString ("failed to read FreeBSD ABI note payload");
+                return error;
+            }
+
+            // Convert the version info into a major/minor number.
+            const uint32_t version_major = version_info / 100000;
+            const uint32_t version_minor = (version_info / 1000) % 100;
+
+            char os_name[32];
+            snprintf (os_name, sizeof (os_name), "freebsd%" PRIu32 ".%" PRIu32, version_major, version_minor);
+
+            // Set the elf OS version to FreeBSD.  Also clear the vendor.
+            arch_spec.GetTriple ().setOSName (os_name);
+            arch_spec.GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+
+            if (log)
+                log->Printf ("ObjectFileELF::%s detected FreeBSD %" PRIu32 ".%" PRIu32 ".%" PRIu32, __FUNCTION__, version_major, version_minor, static_cast<uint32_t> (version_info % 1000));
+        }
+        // Process GNU ELF notes.
+        else if (note.n_name == LLDB_NT_OWNER_GNU)
+        {
+            switch (note.n_type)
+            {
+                case LLDB_NT_GNU_ABI_TAG:
+                    if (note.n_descsz == LLDB_NT_GNU_ABI_SIZE)
+                    {
+                        // We'll consume the payload below.
+                        processed = true;
+
+                        // Pull out the min OS version supporting the ABI.
+                        uint32_t version_info[4];
+                        if (data.GetU32 (&offset, &version_info[0], note.n_descsz / 4) == nullptr)
+                        {
+                            error.SetErrorString ("failed to read GNU ABI note payload");
+                            return error;
+                        }
+
+                        // Set the OS per the OS field.
+                        switch (version_info[0])
+                        {
+                            case LLDB_NT_GNU_ABI_OS_LINUX:
+                                arch_spec.GetTriple ().setOS (llvm::Triple::OSType::Linux);
+                                arch_spec.GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+                                if (log)
+                                    log->Printf ("ObjectFileELF::%s detected Linux, min version %" PRIu32 ".%" PRIu32 ".%" PRIu32, __FUNCTION__, version_info[1], version_info[2], version_info[3]);
+                                // FIXME we have the minimal version number, we could be propagating that.  version_info[1] = OS Major, version_info[2] = OS Minor, version_info[3] = Revision.
+                                break;
+                            case LLDB_NT_GNU_ABI_OS_HURD:
+                                arch_spec.GetTriple ().setOS (llvm::Triple::OSType::UnknownOS);
+                                arch_spec.GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+                                if (log)
+                                    log->Printf ("ObjectFileELF::%s detected Hurd (unsupported), min version %" PRIu32 ".%" PRIu32 ".%" PRIu32, __FUNCTION__, version_info[1], version_info[2], version_info[3]);
+                                break;
+                            case LLDB_NT_GNU_ABI_OS_SOLARIS:
+                                arch_spec.GetTriple ().setOS (llvm::Triple::OSType::Solaris);
+                                arch_spec.GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+                                if (log)
+                                    log->Printf ("ObjectFileELF::%s detected Solaris, min version %" PRIu32 ".%" PRIu32 ".%" PRIu32, __FUNCTION__, version_info[1], version_info[2], version_info[3]);
+                                break;
+                            default:
+                                if (log)
+                                    log->Printf ("ObjectFileELF::%s unrecognized OS in note, id %" PRIu32 ", min version %" PRIu32 ".%" PRIu32 ".%" PRIu32, __FUNCTION__, version_info[0], version_info[1], version_info[2], version_info[3]);
+                                break;
+                        }
+                    }
+                    break;
+
+                case LLDB_NT_GNU_BUILD_ID_TAG:
+                    // Only bother processing this if we don't already have the uuid set.
+                    if (!uuid.IsValid())
+                    {
+                        // We'll consume the payload below.
+                        processed = true;
+
+                        // 16 bytes is UUID|MD5, 20 bytes is SHA1
+                        if ((note.n_descsz == 16 || note.n_descsz == 20))
+                        {
+                            uint8_t uuidbuf[20];
+                            if (data.GetU8 (&offset, &uuidbuf, note.n_descsz) == nullptr)
+                            {
+                                error.SetErrorString ("failed to read GNU_BUILD_ID note payload");
+                                return error;
+                            }
+
+                            // Save the build id as the UUID for the module.
+                            uuid.SetBytes (uuidbuf, note.n_descsz);
+                        }
+                    }
+                    break;
+            }
+        }
+        // Process NetBSD ELF notes.
+        else if ((note.n_name == LLDB_NT_OWNER_NETBSD) &&
+                 (note.n_type == LLDB_NT_NETBSD_ABI_TAG) &&
+                 (note.n_descsz == LLDB_NT_NETBSD_ABI_SIZE))
+        {
+
+            // We'll consume the payload below.
+            processed = true;
+
+            // Pull out the min version info.
+            uint32_t version_info;
+            if (data.GetU32 (&offset, &version_info, 1) == nullptr)
+            {
+                error.SetErrorString ("failed to read NetBSD ABI note payload");
+                return error;
+            }
+
+            // Set the elf OS version to NetBSD.  Also clear the vendor.
+            arch_spec.GetTriple ().setOS (llvm::Triple::OSType::NetBSD);
+            arch_spec.GetTriple ().setVendor (llvm::Triple::VendorType::UnknownVendor);
+
+            if (log)
+                log->Printf ("ObjectFileELF::%s detected NetBSD, min version constant %" PRIu32, __FUNCTION__, version_info);
+        }
+
+        if (!processed)
+            offset += llvm::RoundUpToAlignment(note.n_descsz, 4);
     }
-    return false;
+
+    return error;
 }
+
 
 //----------------------------------------------------------------------
 // GetSectionHeaderInfo
@@ -1001,8 +1239,18 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                                     const elf::ELFHeader &header,
                                     lldb_private::UUID &uuid,
                                     std::string &gnu_debuglink_file,
-                                    uint32_t &gnu_debuglink_crc)
+                                    uint32_t &gnu_debuglink_crc,
+                                    ArchSpec &arch_spec)
 {
+    // Only intialize the arch_spec to okay defaults if they're not already set.
+    // We'll refine this with note data as we parse the notes.
+    if (arch_spec.GetTriple ().getOS () == llvm::Triple::OSType::UnknownOS)
+    {
+        arch_spec.SetArchitecture (eArchTypeELF, header.e_machine, LLDB_INVALID_CPUTYPE);
+        arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
+        arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+    }
+
     // We have already parsed the section headers
     if (!section_headers.empty())
         return section_headers.size();
@@ -1010,6 +1258,8 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
     // If there are no section headers we are done.
     if (header.e_shnum == 0)
         return 0;
+
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MODULES));
 
     section_headers.resize(header.e_shnum);
     if (section_headers.size() != header.e_shnum)
@@ -1063,12 +1313,19 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                     }
                 }
 
-                if (header.sh_type == SHT_NOTE && !uuid.IsValid())
+                // Process ELF note section entries.
+                if (header.sh_type == SHT_NOTE)
                 {
+                    // Allow notes to refine module info.
                     DataExtractor data;
                     if (section_size && (data.SetData (object_data, header.sh_offset, section_size) == section_size))
                     {
-                        ParseNoteGNUBuildID (data, uuid);
+                        Error error = RefineModuleDetailsFromNote (data, arch_spec, uuid);
+                        if (error.Fail ())
+                        {
+                            if (log)
+                                log->Printf ("ObjectFileELF::%s ELF note processing failed: %s", __FUNCTION__, error.AsCString ());
+                        }
                     }
                 }
             }
@@ -1114,7 +1371,7 @@ ObjectFileELF::GetSegmentDataByIndex(lldb::user_id_t id)
 size_t
 ObjectFileELF::ParseSectionHeaders()
 {
-    return GetSectionHeaderInfo(m_section_headers, m_data, m_header, m_uuid, m_gnu_debuglink_file, m_gnu_debuglink_crc);
+    return GetSectionHeaderInfo(m_section_headers, m_data, m_header, m_uuid, m_gnu_debuglink_file, m_gnu_debuglink_crc, m_arch_spec);
 }
 
 const ObjectFileELF::ELFSectionHeaderInfo *
@@ -2312,9 +2569,10 @@ ObjectFileELF::GetArchitecture (ArchSpec &arch)
     if (!ParseHeader())
         return false;
 
-    arch.SetArchitecture (eArchTypeELF, m_header.e_machine, LLDB_INVALID_CPUTYPE);
-    arch.GetTriple().setOSName (Host::GetOSString().GetCString());
-    arch.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+    // Allow elf notes to be parsed which may affect the detected architecture.
+    ParseSectionHeaders();
+
+    arch = m_arch_spec;
     return true;
 }
 
