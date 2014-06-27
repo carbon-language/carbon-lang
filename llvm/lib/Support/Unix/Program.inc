@@ -350,7 +350,11 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
   // Parent process: Wait for the child process to terminate.
   int status;
   ProcessInfo WaitResult;
-  WaitResult.Pid = waitpid(ChildPid, &status, WaitPidOptions);
+
+  do {
+    WaitResult.Pid = waitpid(ChildPid, &status, WaitPidOptions);
+  } while (WaitUntilTerminates && WaitResult.Pid == -1 && errno == EINTR);
+
   if (WaitResult.Pid != PI.Pid) {
     if (WaitResult.Pid == 0) {
       // Non-blocking wait.
