@@ -3983,15 +3983,35 @@ static bool CheckMemorySizeofForComparison(Sema &S, const Expr *E,
   return true;
 }
 
-/// \brief Determine whether the given type is a dynamic class type (e.g.,
-/// whether it has a vtable).
-static bool isDynamicClassType(QualType T) {
-  if (CXXRecordDecl *Record = T->getAsCXXRecordDecl())
-    if (CXXRecordDecl *Definition = Record->getDefinition())
-      if (Definition->isDynamicClass())
-        return true;
-  
-  return false;
+/// \brief Determine whether the given type is or contains a dynamic class type
+/// (e.g., whether it has a vtable).
+static const CXXRecordDecl *getContainedDynamicClass(QualType T,
+                                                     bool &IsContained) {
+  // Look through array types while ignoring qualifiers.
+  const Type *Ty = T->getBaseElementTypeUnsafe();
+  IsContained = false;
+
+  const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  RD = RD ? RD->getDefinition() : nullptr;
+  if (!RD)
+    return nullptr;
+
+  if (RD->isDynamicClass())
+    return RD;
+
+  // Check all the fields.  If any bases were dynamic, the class is dynamic.
+  // It's impossible for a class to transitively contain itself by value, so
+  // infinite recursion is impossible.
+  for (auto *FD : RD->fields()) {
+    bool SubContained;
+    if (const CXXRecordDecl *ContainedRD =
+            getContainedDynamicClass(FD->getType(), SubContained)) {
+      IsContained = true;
+      return ContainedRD;
+    }
+  }
+
+  return nullptr;
 }
 
 /// \brief If E is a sizeof expression, returns its argument expression,
@@ -4135,7 +4155,9 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
       }
 
       // Always complain about dynamic classes.
-      if (isDynamicClassType(PointeeTy)) {
+      bool IsContained;
+      if (const CXXRecordDecl *ContainedRD =
+              getContainedDynamicClass(PointeeTy, IsContained)) {
 
         unsigned OperationType = 0;
         // "overwritten" if we're warning about the destination for any call
@@ -4153,8 +4175,7 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           Dest->getExprLoc(), Dest,
           PDiag(diag::warn_dyn_class_memaccess)
             << (BId == Builtin::BImemcmp ? ArgIdx + 2 : ArgIdx)
-            << FnName << PointeeTy
-            << OperationType
+            << FnName << IsContained << ContainedRD << OperationType
             << Call->getCallee()->getSourceRange());
       } else if (PointeeTy.hasNonTrivialObjCLifetime() &&
                BId != Builtin::BImemset)

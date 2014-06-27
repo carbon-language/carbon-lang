@@ -24,6 +24,11 @@ public:
 struct X1 { virtual void f(); } x1;
 struct X2 : virtual S1 {} x2;
 
+struct ContainsDynamic { X1 dynamic; } contains_dynamic;
+struct DeepContainsDynamic { ContainsDynamic m; } deep_contains_dynamic;
+struct ContainsArrayDynamic { X1 dynamic[1]; } contains_array_dynamic;
+struct ContainsPointerDynamic { X1 *dynamic; } contains_pointer_dynamic;
+
 void test_warn() {
   memset(&x1, 0, sizeof x1); // \
       // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
@@ -33,22 +38,22 @@ void test_warn() {
       // expected-note {{explicitly cast the pointer to silence this warning}}
 
   memmove(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memmove' call is a pointer to dynamic class 'struct X1'; vtable pointer will be overwritten}} \
+      // expected-warning{{destination for this 'memmove' call is a pointer to dynamic class 'X1'; vtable pointer will be overwritten}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memmove(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memmove' call is a pointer to dynamic class 'struct X1'; vtable pointer will be moved}} \
+      // expected-warning{{source of this 'memmove' call is a pointer to dynamic class 'X1'; vtable pointer will be moved}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memcpy' call is a pointer to dynamic class 'struct X1'; vtable pointer will be overwritten}} \
+      // expected-warning{{destination for this 'memcpy' call is a pointer to dynamic class 'X1'; vtable pointer will be overwritten}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class 'struct X1'; vtable pointer will be copied}} \
+      // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class 'X1'; vtable pointer will be copied}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcmp(&x1, 0, sizeof x1); // \
-      // expected-warning{{first operand of this 'memcmp' call is a pointer to dynamic class 'struct X1'; vtable pointer will be compared}} \
+      // expected-warning{{first operand of this 'memcmp' call is a pointer to dynamic class 'X1'; vtable pointer will be compared}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcmp(0, &x1, sizeof x1); // \
-      // expected-warning{{second operand of this 'memcmp' call is a pointer to dynamic class 'struct X1'; vtable pointer will be compared}} \
+      // expected-warning{{second operand of this 'memcmp' call is a pointer to dynamic class 'X1'; vtable pointer will be compared}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
 
   __builtin_memset(&x1, 0, sizeof x1); // \
@@ -90,6 +95,16 @@ void test_warn() {
   __builtin___memcpy_chk(0, &x1, sizeof x1, sizeof x1); //                    \
       // expected-warning{{source of this '__builtin___memcpy_chk' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
+
+  // expected-warning@+2 {{destination for this 'memset' call is a pointer to class containing a dynamic class 'X1'}}
+  // expected-note@+1 {{explicitly cast the pointer to silence this warning}}
+  memset(&contains_dynamic, 0, sizeof(contains_dynamic));
+  // expected-warning@+2 {{destination for this 'memset' call is a pointer to class containing a dynamic class 'X1'}}
+  // expected-note@+1 {{explicitly cast the pointer to silence this warning}}
+  memset(&deep_contains_dynamic, 0, sizeof(deep_contains_dynamic));
+  // expected-warning@+2 {{destination for this 'memset' call is a pointer to class containing a dynamic class 'X1'}}
+  // expected-note@+1 {{explicitly cast the pointer to silence this warning}}
+  memset(&contains_array_dynamic, 0, sizeof(contains_array_dynamic));
 }
 
 void test_nowarn(void *void_ptr) {
@@ -106,6 +121,8 @@ void test_nowarn(void *void_ptr) {
   memset(&s2, 0, sizeof s2);
   memset(&s3, 0, sizeof s3);
   memset(&c1, 0, sizeof c1);
+
+  memset(&contains_pointer_dynamic, 0, sizeof(contains_pointer_dynamic));
 
   // Unevaluated code shouldn't warn.
   (void)sizeof memset(&x1, 0, sizeof x1);

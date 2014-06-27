@@ -411,8 +411,8 @@ def warn_builtin_unknown : Warning<"use of unknown builtin %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultError;
 def warn_dyn_class_memaccess : Warning<
   "%select{destination for|source of|first operand of|second operand of}0 this "
-  "%1 call is a pointer to dynamic class %2; vtable pointer will be "
-  "%select{overwritten|copied|moved|compared}3">,
+  "%1 call is a pointer to %select{|class containing a }2dynamic class %3; "
+  "vtable pointer will be %select{overwritten|copied|moved|compared}4">,
   InGroup<DiagGroup<"dynamic-class-memaccess">>;
 def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
