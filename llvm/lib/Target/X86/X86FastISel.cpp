@@ -205,7 +205,7 @@ static CmpInst::Predicate optimizeCmpPredicate(const CmpInst *CI) {
 }
 
 static std::pair<X86::CondCode, bool>
-getX86ConditonCode(CmpInst::Predicate Predicate) {
+getX86ConditionCode(CmpInst::Predicate Predicate) {
   X86::CondCode CC = X86::COND_INVALID;
   bool NeedSwap = false;
   switch (Predicate) {
@@ -1259,7 +1259,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
 
   X86::CondCode CC;
   bool SwapArgs;
-  std::tie(CC, SwapArgs) = getX86ConditonCode(Predicate);
+  std::tie(CC, SwapArgs) = getX86ConditionCode(Predicate);
   assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
   unsigned Opc = X86::getSETFromCond(CC);
 
@@ -1386,7 +1386,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
       bool SwapArgs;
       unsigned BranchOpc;
-      std::tie(CC, SwapArgs) = getX86ConditonCode(Predicate);
+      std::tie(CC, SwapArgs) = getX86ConditionCode(Predicate);
       assert(CC <= X86::LAST_VALID_COND && "Unexpected conditon code.");
 
       BranchOpc = X86::GetCondBranchFromCond(CC);
@@ -1771,7 +1771,7 @@ bool X86FastISel::X86FastEmitCMoveSelect(MVT RetVT, const Instruction *I) {
     }
 
     bool NeedSwap;
-    std::tie(CC, NeedSwap) = getX86ConditonCode(Predicate);
+    std::tie(CC, NeedSwap) = getX86ConditionCode(Predicate);
     assert(CC <= X86::LAST_VALID_COND && "Unexpected condition code.");
 
     const Value *CmpLHS = CI->getOperand(0);
@@ -1954,7 +1954,7 @@ bool X86FastISel::X86FastEmitPseudoSelect(MVT RetVT, const Instruction *I) {
   const auto *CI = dyn_cast<CmpInst>(Cond);
   if (CI && (CI->getParent() == I->getParent())) {
     bool NeedSwap;
-    std::tie(CC, NeedSwap) = getX86ConditonCode(CI->getPredicate());
+    std::tie(CC, NeedSwap) = getX86ConditionCode(CI->getPredicate());
     if (CC > X86::LAST_VALID_COND)
       return false;
 
