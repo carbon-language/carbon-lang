@@ -7167,9 +7167,6 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   MutableArrayRef<int> LoMask = Mask.slice(0, 4);
   MutableArrayRef<int> HiMask = Mask.slice(4, 4);
 
-  auto isLo = [](int M) { return M >= 0 && M < 4; };
-  auto isHi = [](int M) { return M >= 4; };
-
   SmallVector<int, 4> LoInputs;
   std::copy_if(LoMask.begin(), LoMask.end(), std::back_inserter(LoInputs),
                [](int M) { return M >= 0; });
@@ -7411,9 +7408,11 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
 
   // At this point, each half should contain all its inputs, and we can then
   // just shuffle them into their final position.
-  assert(std::count_if(LoMask.begin(), LoMask.end(), isHi) == 0 &&
+  assert(std::count_if(LoMask.begin(), LoMask.end(),
+                       [](int M) { return M >= 4; }) == 0 &&
          "Failed to lift all the high half inputs to the low mask!");
-  assert(std::count_if(HiMask.begin(), HiMask.end(), isLo) == 0 &&
+  assert(std::count_if(HiMask.begin(), HiMask.end(),
+                       [](int M) { return M >= 0 && M < 4; }) == 0 &&
          "Failed to lift all the low half inputs to the high mask!");
 
   // Do a half shuffle for the low mask.
@@ -7498,7 +7497,8 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
 
   int NumV1Inputs = LoV1Inputs.size() + HiV1Inputs.size();
   int NumV2Inputs = LoV2Inputs.size() + HiV2Inputs.size();
-
+  (void)NumV1Inputs;
+  (void)NumV2Inputs;
   assert(NumV1Inputs > 0 && NumV1Inputs <= 3 && "At most 3 inputs supported");
   assert(NumV2Inputs > 0 && NumV2Inputs <= 3 && "At most 3 inputs supported");
   assert(NumV1Inputs + NumV2Inputs <= 4 && "At most 4 combined inputs");
@@ -7608,9 +7608,6 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   MutableArrayRef<int> Mask(MaskStorage);
 
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
-
-  int Size = Mask.size();
-  assert(Size == 8 && "Unexpected mask size for v8 shuffle!");
 
   auto isV1 = [](int M) { return M >= 0 && M < 8; };
   auto isV2 = [](int M) { return M >= 8; };
