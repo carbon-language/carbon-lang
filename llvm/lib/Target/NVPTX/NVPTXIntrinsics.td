@@ -1689,6 +1689,44 @@ def INT_NVVM_COMPILER_ERROR_64 : NVPTXInst<(outs), (ins Int64Regs:$a),
                 [(int_nvvm_compiler_error Int64Regs:$a)]>;
 
 
+// isspacep
+
+def ISSPACEP_CONST_32
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int32Regs:$a),
+              "isspacep.const \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_const Int32Regs:$a))]>,
+    Requires<[hasPTX31]>;
+def ISSPACEP_CONST_64
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int64Regs:$a),
+              "isspacep.const \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_const Int64Regs:$a))]>,
+    Requires<[hasPTX31]>;
+def ISSPACEP_GLOBAL_32
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int32Regs:$a),
+              "isspacep.global \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_global Int32Regs:$a))]>;
+def ISSPACEP_GLOBAL_64
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int64Regs:$a),
+              "isspacep.global \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_global Int64Regs:$a))]>;
+def ISSPACEP_LOCAL_32
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int32Regs:$a),
+              "isspacep.local \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_local Int32Regs:$a))]>;
+def ISSPACEP_LOCAL_64
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int64Regs:$a),
+              "isspacep.local \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_local Int64Regs:$a))]>;
+def ISSPACEP_SHARED_32
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int32Regs:$a),
+              "isspacep.shared \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_shared Int32Regs:$a))]>;
+def ISSPACEP_SHARED_64
+  : NVPTXInst<(outs Int1Regs:$d), (ins Int64Regs:$a),
+              "isspacep.shared \t$d, $a;",
+              [(set Int1Regs:$d, (int_nvvm_isspacep_shared Int64Regs:$a))]>;
+
+
 // Special register reads
 def MOV_SPECIAL : NVPTXInst<(outs Int32Regs:$d),
                             (ins SpecialRegs:$r),

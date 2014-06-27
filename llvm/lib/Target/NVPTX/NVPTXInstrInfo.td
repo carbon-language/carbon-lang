@@ -161,6 +161,8 @@ def hasHWROT32 : Predicate<"Subtarget.hasHWROT32()">;
 
 def true : Predicate<"1">;
 
+def hasPTX31 : Predicate<"Subtarget.getPTXVersion() >= 31">;
+
 
 //===----------------------------------------------------------------------===//
 // Some Common Instruction Class Templates

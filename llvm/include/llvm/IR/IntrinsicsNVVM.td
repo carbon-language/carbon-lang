@@ -889,6 +889,24 @@ def int_nvvm_compiler_error :
 def int_nvvm_compiler_warn :
     Intrinsic<[], [llvm_anyptr_ty], [], "llvm.nvvm.compiler.warn">;
 
+// isspacep.{const, global, local, shared}
+def int_nvvm_isspacep_const
+  : Intrinsic<[llvm_i1_ty], [llvm_ptr_ty], [IntrNoMem],
+              "llvm.nvvm.isspacep.const">,
+    GCCBuiltin<"__nvvm_isspacep_const">;
+def int_nvvm_isspacep_global
+  : Intrinsic<[llvm_i1_ty], [llvm_ptr_ty], [IntrNoMem],
+              "llvm.nvvm.isspacep.global">,
+    GCCBuiltin<"__nvvm_isspacep_global">;
+def int_nvvm_isspacep_local
+  : Intrinsic<[llvm_i1_ty], [llvm_ptr_ty], [IntrNoMem],
+              "llvm.nvvm.isspacep.local">,
+    GCCBuiltin<"__nvvm_isspacep_local">;
+def int_nvvm_isspacep_shared
+  : Intrinsic<[llvm_i1_ty], [llvm_ptr_ty], [IntrNoMem],
+              "llvm.nvvm.isspacep.shared">,
+    GCCBuiltin<"__nvvm_isspacep_shared">;
+
 // Environment register read
 def int_nvvm_read_ptx_sreg_envreg0
   : Intrinsic<[llvm_i32_ty], [], [IntrNoMem],
