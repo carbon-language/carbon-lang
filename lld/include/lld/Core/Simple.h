@@ -174,7 +174,7 @@ public:
   /// Sort references in a canonical order (by offset, then by kind).
   void sortReferences() const {
     std::sort(_references.begin(), _references.end(),
-        [] (SimpleReference &lhs, SimpleReference &rhs) -> bool {
+        [] (const SimpleReference &lhs, const SimpleReference &rhs) -> bool {
           uint64_t lhsOffset = lhs.offsetInAtom();
           uint64_t rhsOffset = rhs.offsetInAtom();
           if (rhsOffset != lhsOffset)
