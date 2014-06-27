@@ -973,6 +973,14 @@ void PPCRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
   unsigned OffsetOperandNo = getOffsetONFromFION(MI, FIOperandNum);
   Offset += MI.getOperand(OffsetOperandNo).getImm();
   MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
+
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  const MCInstrDesc &MCID = MI.getDesc();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  MRI.constrainRegClass(BaseReg,
+                        TII.getRegClass(MCID, FIOperandNum, this, MF));
 }
 
 bool PPCRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
