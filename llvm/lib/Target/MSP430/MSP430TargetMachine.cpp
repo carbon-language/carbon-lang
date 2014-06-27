@@ -35,7 +35,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
     Subtarget(TT, CPU, FS),
     // FIXME: Check DataLayout string.
     DL("e-m:e-p:16:16-i32:16:32-n8:16"),
-    InstrInfo(*this), TLInfo(*this), TSInfo(*this),
+    InstrInfo(*this), TLInfo(*this), TSInfo(DL),
     FrameLowering(Subtarget) {
   initAsmInfo();
 }
