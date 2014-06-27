@@ -2605,6 +2605,7 @@ NVPTXTargetLowering::getConstraintType(const std::string &Constraint) const {
     switch (Constraint[0]) {
     default:
       break;
+    case 'b':
     case 'r':
     case 'h':
     case 'c':
@@ -2624,6 +2625,8 @@ NVPTXTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                   MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
+    case 'b':
+      return std::make_pair(0U, &NVPTX::Int1RegsRegClass);
     case 'c':
       return std::make_pair(0U, &NVPTX::Int16RegsRegClass);
     case 'h':
