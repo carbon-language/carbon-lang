@@ -32,10 +32,8 @@ using namespace llvm;
 #include "MSP430GenRegisterInfo.inc"
 
 // FIXME: Provide proper call frame setup / destroy opcodes.
-MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm)
-  : MSP430GenRegisterInfo(MSP430::PCW), TM(tm) {
-  StackAlign = TM.getFrameLowering()->getStackAlignment();
-}
+MSP430RegisterInfo::MSP430RegisterInfo()
+  : MSP430GenRegisterInfo(MSP430::PCW) {}
 
 const MCPhysReg*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {

@@ -21,18 +21,9 @@
 
 namespace llvm {
 
-class TargetInstrInfo;
-class MSP430TargetMachine;
-
 struct MSP430RegisterInfo : public MSP430GenRegisterInfo {
-private:
-  MSP430TargetMachine &TM;
-
-  /// StackAlign - Default stack alignment.
-  ///
-  unsigned StackAlign;
 public:
-  MSP430RegisterInfo(MSP430TargetMachine &tm);
+  MSP430RegisterInfo();
 
   /// Code Generation virtual methods...
   const MCPhysReg *

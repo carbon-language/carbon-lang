@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-class MSP430TargetMachine;
+class MSP430Subtarget;
 
 /// MSP430II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -44,7 +44,7 @@ class MSP430InstrInfo : public MSP430GenInstrInfo {
   const MSP430RegisterInfo RI;
   virtual void anchor();
 public:
-  explicit MSP430InstrInfo(MSP430TargetMachine &TM);
+  explicit MSP430InstrInfo(MSP430Subtarget &STI);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
