@@ -741,6 +741,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
+    New->setDebugLoc(Call->getDebugLoc());
     Args.clear();
     AttributesVec.clear();
 
