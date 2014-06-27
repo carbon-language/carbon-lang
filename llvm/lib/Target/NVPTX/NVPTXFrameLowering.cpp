@@ -26,6 +26,10 @@
 
 using namespace llvm;
 
+NVPTXFrameLowering::NVPTXFrameLowering(NVPTXSubtarget &STI)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 8, 0),
+      is64bit(STI.is64Bit()) {}
+
 bool NVPTXFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
 void NVPTXFrameLowering::emitPrologue(MachineFunction &MF) const {
