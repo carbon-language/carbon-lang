@@ -1179,6 +1179,29 @@ def ROTR64reg_sw : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src,
     !strconcat("}}", ""))))))))),
     [(set Int64Regs:$dst, (rotr Int64Regs:$src, Int32Regs:$amt))]>;
 
+// BFE - bit-field extract
+
+multiclass BFE<string TyStr, RegisterClass RC> {
+  // BFE supports both 32-bit and 64-bit values, but the start and length
+  // operands are always 32-bit
+  def rrr
+    : NVPTXInst<(outs RC:$d),
+                (ins RC:$a, Int32Regs:$b, Int32Regs:$c),
+                !strconcat("bfe.", TyStr, " \t$d, $a, $b, $c;"), []>;
+  def rri
+    : NVPTXInst<(outs RC:$d),
+                (ins RC:$a, Int32Regs:$b, i32imm:$c),
+                !strconcat("bfe.", TyStr, " \t$d, $a, $b, $c;"), []>;
+  def rii
+    : NVPTXInst<(outs RC:$d),
+                (ins RC:$a, i32imm:$b, i32imm:$c),
+                !strconcat("bfe.", TyStr, " \t$d, $a, $b, $c;"), []>;
+}
+
+defm BFE_S32 : BFE<"s32", Int32Regs>;
+defm BFE_U32 : BFE<"u32", Int32Regs>;
+defm BFE_S64 : BFE<"s64", Int64Regs>;
+defm BFE_U64 : BFE<"u64", Int64Regs>;
 
 //-----------------------------------
 // General Comparison

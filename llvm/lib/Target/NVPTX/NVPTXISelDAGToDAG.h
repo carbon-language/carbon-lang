@@ -71,6 +71,7 @@ private:
   SDNode *SelectAddrSpaceCast(SDNode *N);
   SDNode *SelectTextureIntrinsic(SDNode *N);
   SDNode *SelectSurfaceIntrinsic(SDNode *N);
+  SDNode *SelectBFE(SDNode *N);
         
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
