@@ -44,17 +44,24 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include <bitset>
+#include <numeric>
 #include <cctype>
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-isel"
 
 STATISTIC(NumTailCalls, "Number of tail calls");
+
+static cl::opt<bool> ExperimentalVectorShuffleLowering(
+    "x86-experimental-vector-shuffle-lowering", cl::init(false),
+    cl::desc("Enable an experimental vector shuffle lowering code path."),
+    cl::Hidden);
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
@@ -6875,6 +6882,1023 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Vector shuffle lowering
+//
+// This is an experimental code path for lowering vector shuffles on x86. It is
+// designed to handle arbitrary vector shuffles and blends, gracefully
+// degrading performance as necessary. It works hard to recognize idiomatic
+// shuffles and lower them to optimal instruction patterns without leaving
+// a framework that allows reasonably efficient handling of all vector shuffle
+// patterns.
+//===----------------------------------------------------------------------===//
+
+/// \brief Tiny helper function to identify a no-op mask.
+///
+/// This is a somewhat boring predicate function. It checks whether the mask
+/// array input, which is assumed to be a single-input shuffle mask of the kind
+/// used by the X86 shuffle instructions (not a fully general
+/// ShuffleVectorSDNode mask) requires any shuffles to occur. Both undef and an
+/// in-place shuffle are 'no-op's.
+static bool isNoopShuffleMask(ArrayRef<int> Mask) {
+  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+    if (Mask[i] != -1 && Mask[i] != i)
+      return false;
+  return true;
+}
+
+/// \brief Helper function to classify a mask as a single-input mask.
+///
+/// This isn't a generic single-input test because in the vector shuffle
+/// lowering we canonicalize single inputs to be the first input operand. This
+/// means we can more quickly test for a single input by only checking whether
+/// an input from the second operand exists. We also assume that the size of
+/// mask corresponds to the size of the input vectors which isn't true in the
+/// fully general case.
+static bool isSingleInputShuffleMask(ArrayRef<int> Mask) {
+  for (int M : Mask)
+    if (M >= (int)Mask.size())
+      return false;
+  return true;
+}
+
+/// \brief Get a 4-lane 8-bit shuffle immediate for a mask.
+///
+/// This helper function produces an 8-bit shuffle immediate corresponding to
+/// the ubiquitous shuffle encoding scheme used in x86 instructions for
+/// shuffling 4 lanes. It can be used with most of the PSHUF instructions for
+/// example.
+///
+/// NB: We rely heavily on "undef" masks preserving the input lane.
+static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask,
+                                          SelectionDAG &DAG) {
+  assert(Mask.size() == 4 && "Only 4-lane shuffle masks");
+  assert(Mask[0] >= -1 && Mask[0] < 4 && "Out of bound mask element!");
+  assert(Mask[1] >= -1 && Mask[1] < 4 && "Out of bound mask element!");
+  assert(Mask[2] >= -1 && Mask[2] < 4 && "Out of bound mask element!");
+  assert(Mask[3] >= -1 && Mask[3] < 4 && "Out of bound mask element!");
+
+  unsigned Imm = 0;
+  Imm |= (Mask[0] == -1 ? 0 : Mask[0]) << 0;
+  Imm |= (Mask[1] == -1 ? 1 : Mask[1]) << 2;
+  Imm |= (Mask[2] == -1 ? 2 : Mask[2]) << 4;
+  Imm |= (Mask[3] == -1 ? 3 : Mask[3]) << 6;
+  return DAG.getConstant(Imm, MVT::i8);
+}
+
+/// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
+///
+/// This is the basis function for the 2-lane 64-bit shuffles as we have full
+/// support for floating point shuffles but not integer shuffles. These
+/// instructions will incur a domain crossing penalty on some chips though so
+/// it is better to avoid lowering through this for integer vectors where
+/// possible.
+static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v2f64 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v2f64 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v2f64 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 2 && "Unexpected mask size for v2 shuffle!");
+
+  if (isSingleInputShuffleMask(Mask)) {
+    // Straight shuffle of a single input vector. Simulate this by using the
+    // single input as both of the "inputs" to this instruction..
+    unsigned SHUFPDMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1);
+    return DAG.getNode(X86ISD::SHUFP, SDLoc(Op), MVT::v2f64, V1, V1,
+                       DAG.getConstant(SHUFPDMask, MVT::i8));
+  }
+  assert(Mask[0] >= 0 && Mask[0] < 2 && "Non-canonicalized blend!");
+  assert(Mask[1] >= 2 && "Non-canonicalized blend!");
+
+  unsigned SHUFPDMask = (Mask[0] == 1) | (((Mask[1] - 2) == 1) << 1);
+  return DAG.getNode(X86ISD::SHUFP, SDLoc(Op), MVT::v2f64, V1, V2,
+                     DAG.getConstant(SHUFPDMask, MVT::i8));
+}
+
+/// \brief Handle lowering of 2-lane 64-bit integer shuffles.
+///
+/// Tries to lower a 2-lane 64-bit shuffle using shuffle operations provided by
+/// the integer unit to minimize domain crossing penalties. However, for blends
+/// it falls back to the floating point shuffle operation with appropriate bit
+/// casting.
+static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v2i64 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v2i64 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v2i64 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 2 && "Unexpected mask size for v2 shuffle!");
+
+  if (isSingleInputShuffleMask(Mask)) {
+    // Straight shuffle of a single input vector. For everything from SSE2
+    // onward this has a single fast instruction with no scary immediates.
+    // We have to map the mask as it is actually a v4i32 shuffle instruction.
+    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V1);
+    int WidenedMask[4] = {
+        std::max(Mask[0], 0) * 2, std::max(Mask[0], 0) * 2 + 1,
+        std::max(Mask[1], 0) * 2, std::max(Mask[1], 0) * 2 + 1};
+    return DAG.getNode(
+        ISD::BITCAST, DL, MVT::v2i64,
+        DAG.getNode(X86ISD::PSHUFD, SDLoc(Op), MVT::v4i32, V1,
+                    getV4X86ShuffleImm8ForMask(WidenedMask, DAG)));
+  }
+
+  // We implement this with SHUFPD which is pretty lame because it will likely
+  // incur 2 cycles of stall for integer vectors on Nehalem and older chips.
+  // However, all the alternatives are still more cycles and newer chips don't
+  // have this problem. It would be really nice if x86 had better shuffles here.
+  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v2f64, V1);
+  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v2f64, V2);
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
+                     DAG.getVectorShuffle(MVT::v2f64, DL, V1, V2, Mask));
+}
+
+/// \brief Lower 4-lane 32-bit floating point shuffles.
+///
+/// Uses instructions exclusively from the floating point unit to minimize
+/// domain crossing penalties, as these are sufficient to implement all v4f32
+/// shuffles.
+static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v4f32 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4f32 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
+
+  SDValue LowV = V1, HighV = V2;
+  int NewMask[4] = {Mask[0], Mask[1], Mask[2], Mask[3]};
+
+  int NumV2Elements =
+      std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
+
+  if (NumV2Elements == 0)
+    // Straight shuffle of a single input vector. We pass the input vector to
+    // both operands to simulate this with a SHUFPS.
+    return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V1, V1,
+                       getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+  if (NumV2Elements == 1) {
+    int V2Index =
+        std::find_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; }) -
+        Mask.begin();
+    // Compute the index adjacent to V2Index and in the same half by toggling
+    // the low bit.
+    int V2AdjIndex = V2Index ^ 1;
+
+    if (Mask[V2AdjIndex] == -1) {
+      // Handles all the cases where we have a single V2 element and an undef.
+      // This will only ever happen in the high lanes because we commute the
+      // vector otherwise.
+      if (V2Index < 2)
+        std::swap(LowV, HighV);
+      NewMask[V2Index] -= 4;
+    } else {
+      // Handle the case where the V2 element ends up adjacent to a V1 element.
+      // To make this work, blend them together as the first step.
+      int V1Index = V2AdjIndex;
+      int BlendMask[4] = {Mask[V2Index] - 4, 0, Mask[V1Index], 0};
+      V2 = DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V2, V1,
+                       getV4X86ShuffleImm8ForMask(BlendMask, DAG));
+
+      // Now proceed to reconstruct the final blend as we have the necessary
+      // high or low half formed.
+      if (V2Index < 2) {
+        LowV = V2;
+        HighV = V1;
+      } else {
+        HighV = V2;
+      }
+      NewMask[V1Index] = 2; // We put the V1 element in V2[2].
+      NewMask[V2Index] = 0; // We shifted the V2 element into V2[0].
+    }
+  } else if (NumV2Elements == 2) {
+    if (Mask[0] < 4 && Mask[1] < 4) {
+      // Handle the easy case where we have V1 in the low lanes and V2 in the
+      // high lanes. We never see this reversed because we sort the shuffle.
+      NewMask[2] -= 4;
+      NewMask[3] -= 4;
+    } else {
+      // We have a mixture of V1 and V2 in both low and high lanes. Rather than
+      // trying to place elements directly, just blend them and set up the final
+      // shuffle to place them.
+
+      // The first two blend mask elements are for V1, the second two are for
+      // V2.
+      int BlendMask[4] = {Mask[0] < 4 ? Mask[0] : Mask[1],
+                          Mask[2] < 4 ? Mask[2] : Mask[3],
+                          (Mask[0] >= 4 ? Mask[0] : Mask[1]) - 4,
+                          (Mask[2] >= 4 ? Mask[2] : Mask[3]) - 4};
+      V1 = DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V1, V2,
+                       getV4X86ShuffleImm8ForMask(BlendMask, DAG));
+
+      // Now we do a normal shuffle of V1 by giving V1 as both operands to
+      // a blend.
+      HighV = V1;
+      NewMask[0] = Mask[0] < 4 ? 0 : 2;
+      NewMask[1] = Mask[0] < 4 ? 2 : 0;
+      NewMask[2] = Mask[2] < 4 ? 1 : 3;
+      NewMask[3] = Mask[2] < 4 ? 3 : 1;
+    }
+  }
+  return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, LowV, HighV,
+                     getV4X86ShuffleImm8ForMask(NewMask, DAG));
+}
+
+/// \brief Lower 4-lane i32 vector shuffles.
+///
+/// We try to handle these with integer-domain shuffles where we can, but for
+/// blends we use the floating point domain blend instructions.
+static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v4i32 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v4i32 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4i32 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
+
+  if (isSingleInputShuffleMask(Mask))
+    // Straight shuffle of a single input vector. For everything from SSE2
+    // onward this has a single fast instruction with no scary immediates.
+    return DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V1,
+                       getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+  // We implement this with SHUFPS because it can blend from two vectors.
+  // Because we're going to eventually use SHUFPS, we use SHUFPS even to build
+  // up the inputs, bypassing domain shift penalties that we would encur if we
+  // directly used PSHUFD on Nehalem and older. For newer chips, this isn't
+  // relevant.
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v4i32,
+                     DAG.getVectorShuffle(
+                         MVT::v4f32, DL,
+                         DAG.getNode(ISD::BITCAST, DL, MVT::v4f32, V1),
+                         DAG.getNode(ISD::BITCAST, DL, MVT::v4f32, V2), Mask));
+}
+
+/// \brief Lowering of single-input v8i16 shuffles is the cornerstone of SSE2
+/// shuffle lowering, and the most complex part.
+///
+/// The lowering strategy is to try to form pairs of input lanes which are
+/// targeted at the same half of the final vector, and then use a dword shuffle
+/// to place them onto the right half, and finally unpack the paired lanes into
+/// their final position.
+///
+/// The exact breakdown of how to form these dword pairs and align them on the
+/// correct sides is really tricky. See the comments within the function for
+/// more of the details.
+static SDValue lowerV8I16SingleInputVectorShuffle(
+    SDLoc DL, SDValue V, MutableArrayRef<int> Mask,
+    const X86Subtarget *Subtarget, SelectionDAG &DAG) {
+  assert(V.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
+  MutableArrayRef<int> LoMask = Mask.slice(0, 4);
+  MutableArrayRef<int> HiMask = Mask.slice(4, 4);
+
+  auto isLo = [](int M) { return M >= 0 && M < 4; };
+  auto isHi = [](int M) { return M >= 4; };
+
+  SmallVector<int, 4> LoInputs;
+  std::copy_if(LoMask.begin(), LoMask.end(), std::back_inserter(LoInputs),
+               [](int M) { return M >= 0; });
+  std::sort(LoInputs.begin(), LoInputs.end());
+  LoInputs.erase(std::unique(LoInputs.begin(), LoInputs.end()), LoInputs.end());
+  SmallVector<int, 4> HiInputs;
+  std::copy_if(HiMask.begin(), HiMask.end(), std::back_inserter(HiInputs),
+               [](int M) { return M >= 0; });
+  std::sort(HiInputs.begin(), HiInputs.end());
+  HiInputs.erase(std::unique(HiInputs.begin(), HiInputs.end()), HiInputs.end());
+  int NumLToL =
+      std::lower_bound(LoInputs.begin(), LoInputs.end(), 4) - LoInputs.begin();
+  int NumHToL = LoInputs.size() - NumLToL;
+  int NumLToH =
+      std::lower_bound(HiInputs.begin(), HiInputs.end(), 4) - HiInputs.begin();
+  int NumHToH = HiInputs.size() - NumLToH;
+  MutableArrayRef<int> LToLInputs(LoInputs.data(), NumLToL);
+  MutableArrayRef<int> LToHInputs(HiInputs.data(), NumLToH);
+  MutableArrayRef<int> HToLInputs(LoInputs.data() + NumLToL, NumHToL);
+  MutableArrayRef<int> HToHInputs(HiInputs.data() + NumLToH, NumHToH);
+
+  // Simplify the 1-into-3 and 3-into-1 cases with a single pshufd. For all
+  // such inputs we can swap two of the dwords across the half mark and end up
+  // with <=2 inputs to each half in each half. Once there, we can fall through
+  // to the generic code below. For example:
+  //
+  // Input: [a, b, c, d, e, f, g, h] -PSHUFD[0,2,1,3]-> [a, b, e, f, c, d, g, h]
+  // Mask:  [0, 1, 2, 7, 4, 5, 6, 3] -----------------> [0, 1, 4, 7, 2, 3, 6, 5]
+  //
+  // Before we had 3-1 in the low half and 3-1 in the high half. Afterward, 2-2
+  // and 2-2.
+  auto balanceSides = [&](ArrayRef<int> ThreeInputs, int OneInput,
+                          int ThreeInputHalfSum, int OneInputHalfOffset) {
+    // Compute the index of dword with only one word among the three inputs in
+    // a half by taking the sum of the half with three inputs and subtracting
+    // the sum of the actual three inputs. The difference is the remaining
+    // slot.
+    int DWordA = (ThreeInputHalfSum -
+                  std::accumulate(ThreeInputs.begin(), ThreeInputs.end(), 0)) /
+                 2;
+    int DWordB = OneInputHalfOffset / 2 + (OneInput / 2 + 1) % 2;
+
+    int PSHUFDMask[] = {0, 1, 2, 3};
+    PSHUFDMask[DWordA] = DWordB;
+    PSHUFDMask[DWordB] = DWordA;
+    V = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                    DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32,
+                                DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V),
+                                getV4X86ShuffleImm8ForMask(PSHUFDMask, DAG)));
+
+    // Adjust the mask to match the new locations of A and B.
+    for (int &M : Mask)
+      if (M != -1 && M/2 == DWordA)
+        M = 2 * DWordB + M % 2;
+      else if (M != -1 && M/2 == DWordB)
+        M = 2 * DWordA + M % 2;
+
+    // Recurse back into this routine to re-compute state now that this isn't
+    // a 3 and 1 problem.
+    return DAG.getVectorShuffle(MVT::v8i16, DL, V, DAG.getUNDEF(MVT::v8i16),
+                                Mask);
+  };
+  if (NumLToL == 3 && NumHToL == 1)
+    return balanceSides(LToLInputs, HToLInputs[0], 0 + 1 + 2 + 3, 4);
+  else if (NumLToL == 1 && NumHToL == 3)
+    return balanceSides(HToLInputs, LToLInputs[0], 4 + 5 + 6 + 7, 0);
+  else if (NumLToH == 1 && NumHToH == 3)
+    return balanceSides(HToHInputs, LToHInputs[0], 4 + 5 + 6 + 7, 0);
+  else if (NumLToH == 3 && NumHToH == 1)
+    return balanceSides(LToHInputs, HToHInputs[0], 0 + 1 + 2 + 3, 4);
+
+  // At this point there are at most two inputs to the low and high halves from
+  // each half. That means the inputs can always be grouped into dwords and
+  // those dwords can then be moved to the correct half with a dword shuffle.
+  // We use at most one low and one high word shuffle to collect these paired
+  // inputs into dwords, and finally a dword shuffle to place them.
+  int PSHUFLMask[4] = {-1, -1, -1, -1};
+  int PSHUFHMask[4] = {-1, -1, -1, -1};
+  int PSHUFDMask[4] = {-1, -1, -1, -1};
+
+  // First fix the masks for all the inputs that are staying in their
+  // original halves. This will then dictate the targets of the cross-half
+  // shuffles.
+  auto fixInPlaceInputs = [&PSHUFDMask](
+      ArrayRef<int> InPlaceInputs, MutableArrayRef<int> SourceHalfMask,
+      MutableArrayRef<int> HalfMask, int HalfOffset) {
+    if (InPlaceInputs.empty())
+      return;
+    if (InPlaceInputs.size() == 1) {
+      SourceHalfMask[InPlaceInputs[0] - HalfOffset] =
+          InPlaceInputs[0] - HalfOffset;
+      PSHUFDMask[InPlaceInputs[0] / 2] = InPlaceInputs[0] / 2;
+      return;
+    }
+
+    assert(InPlaceInputs.size() == 2 && "Cannot handle 3 or 4 inputs!");
+    SourceHalfMask[InPlaceInputs[0] - HalfOffset] =
+        InPlaceInputs[0] - HalfOffset;
+    // Put the second input next to the first so that they are packed into
+    // a dword. We find the adjacent index by toggling the low bit.
+    int AdjIndex = InPlaceInputs[0] ^ 1;
+    SourceHalfMask[AdjIndex - HalfOffset] = InPlaceInputs[1] - HalfOffset;
+    std::replace(HalfMask.begin(), HalfMask.end(), InPlaceInputs[1], AdjIndex);
+    PSHUFDMask[AdjIndex / 2] = AdjIndex / 2;
+  };
+  if (!HToLInputs.empty())
+    fixInPlaceInputs(LToLInputs, PSHUFLMask, LoMask, 0);
+  if (!LToHInputs.empty())
+    fixInPlaceInputs(HToHInputs, PSHUFHMask, HiMask, 4);
+
+  // Now gather the cross-half inputs and place them into a free dword of
+  // their target half.
+  // FIXME: This operation could almost certainly be simplified dramatically to
+  // look more like the 3-1 fixing operation.
+  auto moveInputsToRightHalf = [&PSHUFDMask](
+      MutableArrayRef<int> IncomingInputs, ArrayRef<int> ExistingInputs,
+      MutableArrayRef<int> SourceHalfMask, MutableArrayRef<int> HalfMask,
+      int SourceOffset, int DestOffset) {
+    auto isWordClobbered = [](ArrayRef<int> SourceHalfMask, int Word) {
+      return SourceHalfMask[Word] != -1 && SourceHalfMask[Word] != Word;
+    };
+    auto isDWordClobbered = [&isWordClobbered](ArrayRef<int> SourceHalfMask,
+                                               int Word) {
+      int LowWord = Word & ~1;
+      int HighWord = Word | 1;
+      return isWordClobbered(SourceHalfMask, LowWord) ||
+             isWordClobbered(SourceHalfMask, HighWord);
+    };
+
+    if (IncomingInputs.empty())
+      return;
+
+    if (ExistingInputs.empty()) {
+      // Map any dwords with inputs from them into the right half.
+      for (int Input : IncomingInputs) {
+        // If the source half mask maps over the inputs, turn those into
+        // swaps and use the swapped lane.
+        if (isWordClobbered(SourceHalfMask, Input - SourceOffset)) {
+          if (SourceHalfMask[SourceHalfMask[Input - SourceOffset]] == -1) {
+            SourceHalfMask[SourceHalfMask[Input - SourceOffset]] =
+                Input - SourceOffset;
+            // We have to swap the uses in our half mask in one sweep.
+            for (int &M : HalfMask)
+              if (M == SourceHalfMask[Input - SourceOffset])
+                M = Input;
+              else if (M == Input)
+                M = SourceHalfMask[Input - SourceOffset] + SourceOffset;
+          } else {
+            assert(SourceHalfMask[SourceHalfMask[Input - SourceOffset]] ==
+                       Input - SourceOffset &&
+                   "Previous placement doesn't match!");
+          }
+          // Note that this correctly re-maps both when we do a swap and when
+          // we observe the other side of the swap above. We rely on that to
+          // avoid swapping the members of the input list directly.
+          Input = SourceHalfMask[Input - SourceOffset] + SourceOffset;
+        }
+
+        // Map the input's dword into the correct half.
+        if (PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] == -1)
+          PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] = Input / 2;
+        else
+          assert(PSHUFDMask[(Input - SourceOffset + DestOffset) / 2] ==
+                     Input / 2 &&
+                 "Previous placement doesn't match!");
+      }
+
+      // And just directly shift any other-half mask elements to be same-half
+      // as we will have mirrored the dword containing the element into the
+      // same position within that half.
+      for (int &M : HalfMask)
+        if (M >= SourceOffset && M < SourceOffset + 4) {
+          M = M - SourceOffset + DestOffset;
+          assert(M >= 0 && "This should never wrap below zero!");
+        }
+      return;
+    }
+
+    // Ensure we have the input in a viable dword of its current half. This
+    // is particularly tricky because the original position may be clobbered
+    // by inputs being moved and *staying* in that half.
+    if (IncomingInputs.size() == 1) {
+      if (isWordClobbered(SourceHalfMask, IncomingInputs[0] - SourceOffset)) {
+        int InputFixed = std::find(std::begin(SourceHalfMask),
+                                   std::end(SourceHalfMask), -1) -
+                         std::begin(SourceHalfMask) + SourceOffset;
+        SourceHalfMask[InputFixed - SourceOffset] =
+            IncomingInputs[0] - SourceOffset;
+        std::replace(HalfMask.begin(), HalfMask.end(), IncomingInputs[0],
+                     InputFixed);
+        IncomingInputs[0] = InputFixed;
+      }
+    } else if (IncomingInputs.size() == 2) {
+      if (IncomingInputs[0] / 2 != IncomingInputs[1] / 2 ||
+          isDWordClobbered(SourceHalfMask, IncomingInputs[0] - SourceOffset)) {
+        int SourceDWordBase = !isDWordClobbered(SourceHalfMask, 0) ? 0 : 2;
+        assert(!isDWordClobbered(SourceHalfMask, SourceDWordBase) &&
+               "Not all dwords can be clobbered!");
+        SourceHalfMask[SourceDWordBase] = IncomingInputs[0] - SourceOffset;
+        SourceHalfMask[SourceDWordBase + 1] = IncomingInputs[1] - SourceOffset;
+        for (int &M : HalfMask)
+          if (M == IncomingInputs[0])
+            M = SourceDWordBase + SourceOffset;
+          else if (M == IncomingInputs[1])
+            M = SourceDWordBase + 1 + SourceOffset;
+        IncomingInputs[0] = SourceDWordBase + SourceOffset;
+        IncomingInputs[1] = SourceDWordBase + 1 + SourceOffset;
+      }
+    } else {
+      llvm_unreachable("Unhandled input size!");
+    }
+
+    // Now hoist the DWord down to the right half.
+    int FreeDWord = (PSHUFDMask[DestOffset / 2] == -1 ? 0 : 1) + DestOffset / 2;
+    assert(PSHUFDMask[FreeDWord] == -1 && "DWord not free");
+    PSHUFDMask[FreeDWord] = IncomingInputs[0] / 2;
+    for (int Input : IncomingInputs)
+      std::replace(HalfMask.begin(), HalfMask.end(), Input,
+                   FreeDWord * 2 + Input % 2);
+  };
+  moveInputsToRightHalf(HToLInputs, LToLInputs, PSHUFHMask, LoMask,
+                        /*SourceOffset*/ 4, /*DestOffset*/ 0);
+  moveInputsToRightHalf(LToHInputs, HToHInputs, PSHUFLMask, HiMask,
+                        /*SourceOffset*/ 0, /*DestOffset*/ 4);
+
+  // Now enact all the shuffles we've computed to move the inputs into their
+  // target half.
+  if (!isNoopShuffleMask(PSHUFLMask))
+    V = DAG.getNode(X86ISD::PSHUFLW, DL, MVT::v8i16, V,
+                    getV4X86ShuffleImm8ForMask(PSHUFLMask, DAG));
+  if (!isNoopShuffleMask(PSHUFHMask))
+    V = DAG.getNode(X86ISD::PSHUFHW, DL, MVT::v8i16, V,
+                    getV4X86ShuffleImm8ForMask(PSHUFHMask, DAG));
+  if (!isNoopShuffleMask(PSHUFDMask))
+    V = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                    DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32,
+                                DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V),
+                                getV4X86ShuffleImm8ForMask(PSHUFDMask, DAG)));
+
+  // At this point, each half should contain all its inputs, and we can then
+  // just shuffle them into their final position.
+  assert(std::count_if(LoMask.begin(), LoMask.end(), isHi) == 0 &&
+         "Failed to lift all the high half inputs to the low mask!");
+  assert(std::count_if(HiMask.begin(), HiMask.end(), isLo) == 0 &&
+         "Failed to lift all the low half inputs to the high mask!");
+
+  // Do a half shuffle for the low mask.
+  if (!isNoopShuffleMask(LoMask))
+    V = DAG.getNode(X86ISD::PSHUFLW, DL, MVT::v8i16, V,
+                    getV4X86ShuffleImm8ForMask(LoMask, DAG));
+
+  // Do a half shuffle with the high mask after shifting its values down.
+  for (int &M : HiMask)
+    if (M >= 0)
+      M -= 4;
+  if (!isNoopShuffleMask(HiMask))
+    V = DAG.getNode(X86ISD::PSHUFHW, DL, MVT::v8i16, V,
+                    getV4X86ShuffleImm8ForMask(HiMask, DAG));
+
+  return V;
+}
+
+/// \brief Detect whether the mask pattern should be lowered through
+/// interleaving.
+///
+/// This essentially tests whether viewing the mask as an interleaving of two
+/// sub-sequences reduces the cross-input traffic of a blend operation. If so,
+/// lowering it through interleaving is a significantly better strategy.
+static bool shouldLowerAsInterleaving(ArrayRef<int> Mask) {
+  int NumEvenInputs[2] = {0, 0};
+  int NumOddInputs[2] = {0, 0};
+  int NumLoInputs[2] = {0, 0};
+  int NumHiInputs[2] = {0, 0};
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Mask[i] < 0)
+      continue;
+
+    int InputIdx = Mask[i] >= Size;
+
+    if (i < Size / 2)
+      ++NumLoInputs[InputIdx];
+    else
+      ++NumHiInputs[InputIdx];
+
+    if ((i % 2) == 0)
+      ++NumEvenInputs[InputIdx];
+    else
+      ++NumOddInputs[InputIdx];
+  }
+
+  // The minimum number of cross-input results for both the interleaved and
+  // split cases. If interleaving results in fewer cross-input results, return
+  // true.
+  int InterleavedCrosses = std::min(NumEvenInputs[1] + NumOddInputs[0],
+                                    NumEvenInputs[0] + NumOddInputs[1]);
+  int SplitCrosses = std::min(NumLoInputs[1] + NumHiInputs[0],
+                              NumLoInputs[0] + NumHiInputs[1]);
+  return InterleavedCrosses < SplitCrosses;
+}
+
+/// \brief Blend two v8i16 vectors using a naive unpack strategy.
+///
+/// This strategy only works when the inputs from each vector fit into a single
+/// half of that vector, and generally there are not so many inputs as to leave
+/// the in-place shuffles required highly constrained (and thus expensive). It
+/// shifts all the inputs into a single side of both input vectors and then
+/// uses an unpack to interleave these inputs in a single vector. At that
+/// point, we will fall back on the generic single input shuffle lowering.
+static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
+                                                 SDValue V2,
+                                                 MutableArrayRef<int> Mask,
+                                                 const X86Subtarget *Subtarget,
+                                                 SelectionDAG &DAG) {
+  assert(V1.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
+  assert(V2.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
+  SmallVector<int, 3> LoV1Inputs, HiV1Inputs, LoV2Inputs, HiV2Inputs;
+  for (int i = 0; i < 8; ++i)
+    if (Mask[i] >= 0 && Mask[i] < 4)
+      LoV1Inputs.push_back(i);
+    else if (Mask[i] >= 4 && Mask[i] < 8)
+      HiV1Inputs.push_back(i);
+    else if (Mask[i] >= 8 && Mask[i] < 12)
+      LoV2Inputs.push_back(i);
+    else if (Mask[i] >= 12)
+      HiV2Inputs.push_back(i);
+
+  int NumV1Inputs = LoV1Inputs.size() + HiV1Inputs.size();
+  int NumV2Inputs = LoV2Inputs.size() + HiV2Inputs.size();
+
+  assert(NumV1Inputs > 0 && NumV1Inputs <= 3 && "At most 3 inputs supported");
+  assert(NumV2Inputs > 0 && NumV2Inputs <= 3 && "At most 3 inputs supported");
+  assert(NumV1Inputs + NumV2Inputs <= 4 && "At most 4 combined inputs");
+
+  bool MergeFromLo = LoV1Inputs.size() + LoV2Inputs.size() >=
+                     HiV1Inputs.size() + HiV2Inputs.size();
+
+  auto moveInputsToHalf = [&](SDValue V, ArrayRef<int> LoInputs,
+                              ArrayRef<int> HiInputs, bool MoveToLo,
+                              int MaskOffset) {
+    ArrayRef<int> GoodInputs = MoveToLo ? LoInputs : HiInputs;
+    ArrayRef<int> BadInputs = MoveToLo ? HiInputs : LoInputs;
+    if (BadInputs.empty())
+      return V;
+
+    int MoveMask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+    int MoveOffset = MoveToLo ? 0 : 4;
+
+    if (GoodInputs.empty()) {
+      for (int BadInput : BadInputs) {
+        MoveMask[Mask[BadInput] % 4 + MoveOffset] = Mask[BadInput] - MaskOffset;
+        Mask[BadInput] = Mask[BadInput] % 4 + MoveOffset + MaskOffset;
+      }
+    } else {
+      if (GoodInputs.size() == 2) {
+        // If the low inputs are spread across two dwords, pack them into
+        // a single dword.
+        MoveMask[Mask[GoodInputs[0]] % 2 + MoveOffset] =
+            Mask[GoodInputs[0]] - MaskOffset;
+        MoveMask[Mask[GoodInputs[1]] % 2 + MoveOffset] =
+            Mask[GoodInputs[1]] - MaskOffset;
+        Mask[GoodInputs[0]] = Mask[GoodInputs[0]] % 2 + MoveOffset + MaskOffset;
+        Mask[GoodInputs[1]] = Mask[GoodInputs[0]] % 2 + MoveOffset + MaskOffset;
+      } else {
+        // Otherwise pin the low inputs.
+        for (int GoodInput : GoodInputs)
+          MoveMask[Mask[GoodInput]] = Mask[GoodInput] - MaskOffset;
+      }
+
+      int MoveMaskIdx =
+          std::find(std::begin(MoveMask) + MoveOffset, std::end(MoveMask), -1) -
+          std::begin(MoveMask);
+      assert(MoveMaskIdx >= MoveOffset && "Established above");
+
+      if (BadInputs.size() == 2) {
+        assert(MoveMask[MoveMaskIdx] == -1 && "Expected empty slot");
+        assert(MoveMask[MoveMaskIdx + 1] == -1 && "Expected empty slot");
+        MoveMask[MoveMaskIdx + Mask[BadInputs[0]] % 2] =
+            Mask[BadInputs[0]] - MaskOffset;
+        MoveMask[MoveMaskIdx + Mask[BadInputs[1]] % 2] =
+            Mask[BadInputs[1]] - MaskOffset;
+        Mask[BadInputs[0]] = MoveMaskIdx + Mask[BadInputs[0]] % 2 + MaskOffset;
+        Mask[BadInputs[1]] = MoveMaskIdx + Mask[BadInputs[1]] % 2 + MaskOffset;
+      } else {
+        assert(BadInputs.size() == 1 && "All sizes handled");
+        MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
+        Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
+      }
+    }
+
+    return DAG.getVectorShuffle(MVT::v8i16, DL, V, DAG.getUNDEF(MVT::v8i16),
+                                MoveMask);
+  };
+  V1 = moveInputsToHalf(V1, LoV1Inputs, HiV1Inputs, MergeFromLo,
+                        /*MaskOffset*/ 0);
+  V2 = moveInputsToHalf(V2, LoV2Inputs, HiV2Inputs, MergeFromLo,
+                        /*MaskOffset*/ 8);
+
+  // FIXME: Select an interleaving of the merge of V1 and V2 that minimizes
+  // cross-half traffic in the final shuffle.
+
+  // Munge the mask to be a single-input mask after the unpack merges the
+  // results.
+  for (int &M : Mask)
+    if (M != -1)
+      M = 2 * (M % 4) + (M / 8);
+
+  return DAG.getVectorShuffle(
+      MVT::v8i16, DL, DAG.getNode(MergeFromLo ? X86ISD::UNPCKL : X86ISD::UNPCKH,
+                                  DL, MVT::v8i16, V1, V2),
+      DAG.getUNDEF(MVT::v8i16), Mask);
+}
+
+/// \brief Generic lowering of 8-lane i16 shuffles.
+///
+/// This handles both single-input shuffles and combined shuffle/blends with
+/// two inputs. The single input shuffles are immediately delegated to
+/// a dedicated lowering routine.
+///
+/// The blends are lowered in one of three fundamental ways. If there are few
+/// enough inputs, it delegates to a basic UNPCK-based strategy. If the shuffle
+/// of the input is significantly cheaper when lowered as an interleaving of
+/// the two inputs, try to interleave them. Otherwise, blend the low and high
+/// halves of the inputs separately (making them have relatively few inputs)
+/// and then concatenate them.
+static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v8i16 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v8i16 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v8i16 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> OrigMask = SVOp->getMask();
+  int MaskStorage[8] = {OrigMask[0], OrigMask[1], OrigMask[2], OrigMask[3],
+                        OrigMask[4], OrigMask[5], OrigMask[6], OrigMask[7]};
+  MutableArrayRef<int> Mask(MaskStorage);
+
+  assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
+
+  int Size = Mask.size();
+  assert(Size == 8 && "Unexpected mask size for v8 shuffle!");
+
+  auto isV1 = [](int M) { return M >= 0 && M < 8; };
+  auto isV2 = [](int M) { return M >= 8; };
+
+  int NumV1Inputs = std::count_if(Mask.begin(), Mask.end(), isV1);
+  int NumV2Inputs = std::count_if(Mask.begin(), Mask.end(), isV2);
+
+  if (NumV2Inputs == 0)
+    return lowerV8I16SingleInputVectorShuffle(DL, V1, Mask, Subtarget, DAG);
+
+  assert(NumV1Inputs > 0 && "All single-input shuffles should be canonicalized "
+                            "to be V1-input shuffles.");
+
+  if (NumV1Inputs + NumV2Inputs <= 4)
+    return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);
+
+  // Check whether an interleaving lowering is likely to be more efficient.
+  // This isn't perfect but it is a strong heuristic that tends to work well on
+  // the kinds of shuffles that show up in practice.
+  //
+  // FIXME: Handle 1x, 2x, and 4x interleaving.
+  if (shouldLowerAsInterleaving(Mask)) {
+    // FIXME: Figure out whether we should pack these into the low or high
+    // halves.
+
+    int EMask[8], OMask[8];
+    for (int i = 0; i < 4; ++i) {
+      EMask[i] = Mask[2*i];
+      OMask[i] = Mask[2*i + 1];
+      EMask[i + 4] = -1;
+      OMask[i + 4] = -1;
+    }
+
+    SDValue Evens = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, EMask);
+    SDValue Odds = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, OMask);
+
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, Evens, Odds);
+  }
+
+  int LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+
+  for (int i = 0; i < 4; ++i) {
+    LoBlendMask[i] = Mask[i];
+    HiBlendMask[i] = Mask[i + 4];
+  }
+
+  SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, LoBlendMask);
+  SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, HiBlendMask);
+  LoV = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, LoV);
+  HiV = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, HiV);
+
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                     DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, LoV, HiV));
+}
+
+/// \brief Generic lowering of v16i8 shuffles.
+///
+/// This is a hybrid strategy to lower v16i8 vectors. It first attempts to
+/// detect any complexity reducing interleaving. If that doesn't help, it uses
+/// UNPCK to spread the i8 elements across two i16-element vectors, and uses
+/// the existing lowering for v8i16 blends on each half, finally PACK-ing them
+/// back together.
+static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v16i8 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v16i8 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v16i8 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> OrigMask = SVOp->getMask();
+  assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+  int MaskStorage[16] = {
+      OrigMask[0],  OrigMask[1],  OrigMask[2],  OrigMask[3],
+      OrigMask[4],  OrigMask[5],  OrigMask[6],  OrigMask[7],
+      OrigMask[8],  OrigMask[9],  OrigMask[10], OrigMask[11],
+      OrigMask[12], OrigMask[13], OrigMask[14], OrigMask[15]};
+  MutableArrayRef<int> Mask(MaskStorage);
+  MutableArrayRef<int> LoMask = Mask.slice(0, 8);
+  MutableArrayRef<int> HiMask = Mask.slice(8, 8);
+
+  // Check whether an interleaving lowering is likely to be more efficient.
+  // This isn't perfect but it is a strong heuristic that tends to work well on
+  // the kinds of shuffles that show up in practice.
+  //
+  // FIXME: We need to handle other interleaving widths (i16, i32, ...).
+  if (shouldLowerAsInterleaving(Mask)) {
+    // FIXME: Figure out whether we should pack these into the low or high
+    // halves.
+
+    int EMask[16], OMask[16];
+    for (int i = 0; i < 8; ++i) {
+      EMask[i] = Mask[2*i];
+      OMask[i] = Mask[2*i + 1];
+      EMask[i + 8] = -1;
+      OMask[i + 8] = -1;
+    }
+
+    SDValue Evens = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, EMask);
+    SDValue Odds = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, OMask);
+
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
+  }
+
+  SDValue LoV1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                             DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V1,
+                                         DAG.getUNDEF(MVT::v8i16)));
+  SDValue HiV1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                             DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V1,
+                                         DAG.getUNDEF(MVT::v8i16)));
+  SDValue LoV2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                             DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V2,
+                                         DAG.getUNDEF(MVT::v8i16)));
+  SDValue HiV2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                             DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V2,
+                                         DAG.getUNDEF(MVT::v8i16)));
+
+  int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int V1HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int V2LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int V2HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+
+  auto buildBlendMasks = [](MutableArrayRef<int> HalfMask,
+                            MutableArrayRef<int> V1HalfBlendMask,
+                            MutableArrayRef<int> V2HalfBlendMask) {
+    for (int i = 0; i < 8; ++i)
+      if (HalfMask[i] >= 0 && HalfMask[i] < 16) {
+        V1HalfBlendMask[i] = HalfMask[i];
+        HalfMask[i] = i;
+      } else if (HalfMask[i] >= 16) {
+        V2HalfBlendMask[i] = HalfMask[i] - 16;
+        HalfMask[i] = i + 8;
+      }
+  };
+  buildBlendMasks(LoMask, V1LoBlendMask, V2LoBlendMask);
+  buildBlendMasks(HiMask, V1HiBlendMask, V2HiBlendMask);
+
+  SDValue V1Lo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV1, HiV1, V1LoBlendMask);
+  SDValue V2Lo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV2, HiV2, V2LoBlendMask);
+  SDValue V1Hi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV1, HiV1, V1HiBlendMask);
+  SDValue V2Hi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV2, HiV2, V2HiBlendMask);
+
+  SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Lo, V2Lo, LoMask);
+  SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Hi, V2Hi, HiMask);
+
+  return DAG.getNode(X86ISD::PACKUS, DL, MVT::v16i8, LoV, HiV);
+}
+
+/// \brief Dispatching routine to lower various 128-bit x86 vector shuffles.
+///
+/// This routine breaks down the specific type of 128-bit shuffle and
+/// dispatches to the lowering routines accordingly.
+static SDValue lower128BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                        MVT VT, const X86Subtarget *Subtarget,
+                                        SelectionDAG &DAG) {
+  switch (VT.SimpleTy) {
+  case MVT::v2i64:
+    return lowerV2I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v2f64:
+    return lowerV2F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v4i32:
+    return lowerV4I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v4f32:
+    return lowerV4F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v8i16:
+    return lowerV8I16VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v16i8:
+    return lowerV16I8VectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  default:
+    llvm_unreachable("Unimplemented!");
+  }
+}
+
+/// \brief Tiny helper function to test whether adjacent masks are sequential.
+static bool areAdjacentMasksSequential(ArrayRef<int> Mask) {
+  for (int i = 0, Size = Mask.size(); i < Size; i += 2)
+    if (Mask[i] + 1 != Mask[i+1])
+      return false;
+
+  return true;
+}
+
+/// \brief Top-level lowering for x86 vector shuffles.
+///
+/// This handles decomposition, canonicalization, and lowering of all x86
+/// vector shuffles. Most of the specific lowering strategies are encapsulated
+/// above in helper routines. The canonicalization attempts to widen shuffles
+/// to involve fewer lanes of wider elements, consolidate symmetric patterns
+/// s.t. only one of the two inputs needs to be tested, etc.
+static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
+                                  SelectionDAG &DAG) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  MVT VT = Op.getSimpleValueType();
+  int NumElements = VT.getVectorNumElements();
+  SDLoc dl(Op);
+
+  assert(VT.getSizeInBits() != 64 && "Can't lower MMX shuffles");
+
+  bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
+  bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
+  if (V1IsUndef && V2IsUndef)
+    return DAG.getUNDEF(VT);
+
+  // When we create a shuffle node we put the UNDEF node to second operand,
+  // but in some cases the first operand may be transformed to UNDEF.
+  // In this case we should just commute the node.
+  if (V1IsUndef)
+    return CommuteVectorShuffle(SVOp, DAG);
+
+  // Check for non-undef masks pointing at an undef vector and make the masks
+  // undef as well. This makes it easier to match the shuffle based solely on
+  // the mask.
+  if (V2IsUndef)
+    for (int M : Mask)
+      if (M >= NumElements) {
+        SmallVector<int, 8> NewMask(Mask.begin(), Mask.end());
+        for (int &M : NewMask)
+          if (M >= NumElements)
+            M = -1;
+        return DAG.getVectorShuffle(VT, dl, V1, V2, NewMask);
+      }
+
+  // For integer vector shuffles, try to collapse them into a shuffle of fewer
+  // lanes but wider integers. We cap this to not form integers larger than i64
+  // but it might be interesting to form i128 integers to handle flipping the
+  // low and high halves of AVX 256-bit vectors.
+  if (VT.isInteger() && VT.getScalarSizeInBits() < 64 &&
+      areAdjacentMasksSequential(Mask)) {
+    SmallVector<int, 8> NewMask;
+    for (int i = 0, Size = Mask.size(); i < Size; i += 2)
+      NewMask.push_back(Mask[i] / 2);
+    MVT NewVT =
+        MVT::getVectorVT(MVT::getIntegerVT(VT.getScalarSizeInBits() * 2),
+                         VT.getVectorNumElements() / 2);
+    V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, V1);
+    V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, V2);
+    return DAG.getNode(ISD::BITCAST, dl, VT,
+                       DAG.getVectorShuffle(NewVT, dl, V1, V2, NewMask));
+  }
+
+  int NumV1Elements = 0, NumUndefElements = 0, NumV2Elements = 0;
+  for (int M : SVOp->getMask())
+    if (M < 0)
+      ++NumUndefElements;
+    else if (M < NumElements)
+      ++NumV1Elements;
+    else
+      ++NumV2Elements;
+
+  // Commute the shuffle as needed such that more elements come from V1 than
+  // V2. This allows us to match the shuffle pattern strictly on how many
+  // elements come from V1 without handling the symmetric cases.
+  if (NumV2Elements > NumV1Elements)
+    return CommuteVectorShuffle(SVOp, DAG);
+
+  // When the number of V1 and V2 elements are the same, try to minimize the
+  // number of uses of V2 in the low half of the vector.
+  if (NumV1Elements == NumV2Elements) {
+    int LowV1Elements = 0, LowV2Elements = 0;
+    for (int M : SVOp->getMask().slice(0, NumElements / 2))
+      if (M >= NumElements)
+        ++LowV2Elements;
+      else if (M >= 0)
+        ++LowV1Elements;
+    if (LowV2Elements > LowV1Elements)
+      return CommuteVectorShuffle(SVOp, DAG);
+  }
+
+  // For each vector width, delegate to a specialized lowering routine.
+  if (VT.getSizeInBits() == 128)
+    return lower128BitVectorShuffle(Op, V1, V2, VT, Subtarget, DAG);
+
+  llvm_unreachable("Unimplemented!");
+}
+
+
+//===----------------------------------------------------------------------===//
+// Legacy vector shuffle lowering
+//
+// This code is the legacy code handling vector shuffles until the above
+// replaces its functionality and performance.
+//===----------------------------------------------------------------------===//
+
 static bool isBlendMask(ArrayRef<int> MaskVals, MVT VT, bool hasSSE41,
                         bool hasInt256, unsigned *MaskOut = nullptr) {
   MVT EltVT = VT.getVectorElementType();
@@ -8126,6 +9150,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->getAttributes().
     hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize);
+
+  // Check if we should use the experimental vector shuffle lowering. If so,
+  // delegate completely to that code path.
+  if (ExperimentalVectorShuffleLowering)
+    return lowerVectorShuffle(Op, Subtarget, DAG);
 
   assert(VT.getSizeInBits() != 64 && "Can't lower MMX shuffles");
 
