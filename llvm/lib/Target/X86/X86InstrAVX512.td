@@ -476,6 +476,28 @@ defm VPBROADCASTQZ  : avx512_int_broadcast_rm<0x59, "vpbroadcastq", i64mem,
                       loadi64, VR512, v8i64, v2i64, VK8WM>,  EVEX_V512, VEX_W,
                       EVEX_CD8<64, CD8VT1>;
 
+multiclass avx512_int_subvec_broadcast_rm<bits<8> opc, string OpcodeStr,
+                          X86MemOperand x86memop, PatFrag ld_frag,
+                          RegisterClass KRC> {
+  let mayLoad = 1 in {
+  def rm : AVX5128I<opc, MRMSrcMem, (outs VR512:$dst), (ins x86memop:$src),
+                  !strconcat(OpcodeStr, " \t{$src, $dst|$dst, $src}"),
+                  []>, EVEX;
+  def krm : AVX5128I<opc, MRMSrcMem, (outs VR512:$dst), (ins KRC:$mask,
+                                                         x86memop:$src),
+                  !strconcat(OpcodeStr,
+                      " \t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
+                  []>, EVEX, EVEX_KZ;
+  }
+}
+
+defm VBROADCASTI32X4 : avx512_int_subvec_broadcast_rm<0x5a, "vbroadcasti32x4",
+                       i128mem, loadv2i64, VK16WM>,
+                       EVEX_V512, EVEX_CD8<32, CD8VT4>;
+defm VBROADCASTI64X4 : avx512_int_subvec_broadcast_rm<0x5b, "vbroadcasti64x4",
+                       i256mem, loadv4i64, VK16WM>, VEX_W,
+                       EVEX_V512, EVEX_CD8<64, CD8VT4>;
+
 def : Pat<(v16i32 (int_x86_avx512_pbroadcastd_512 (v4i32 VR128X:$src))),
           (VPBROADCASTDZrr VR128X:$src)>;
 def : Pat<(v8i64 (int_x86_avx512_pbroadcastq_512 (v2i64 VR128X:$src))),
