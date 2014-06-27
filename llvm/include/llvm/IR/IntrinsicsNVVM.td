@@ -1948,6 +1948,25 @@ def int_nvvm_sust_p_3d_v4i32_trap
               "llvm.nvvm.sust.p.3d.v4i32.trap">,
     GCCBuiltin<"__nvvm_sust_p_3d_v4i32_trap">;
 
+def int_nvvm_rotate_b32
+  : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
+              [IntrNoMem], "llvm.nvvm.rotate.b32">,
+              GCCBuiltin<"__nvvm_rotate_b32">;
+
+def int_nvvm_rotate_b64
+  :Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i32_ty],
+             [IntrNoMem], "llvm.nvvm.rotate.b64">,
+             GCCBuiltin<"__nvvm_rotate_b64">;
+
+def int_nvvm_rotate_right_b64
+  : Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i32_ty],
+              [IntrNoMem], "llvm.nvvm.rotate.right.b64">,
+              GCCBuiltin<"__nvvm_rotate_right_b64">;
+
+def int_nvvm_swap_lo_hi_b64
+  : Intrinsic<[llvm_i64_ty], [llvm_i64_ty],
+              [IntrNoMem], "llvm.nvvm.swap.lo.hi.b64">,
+              GCCBuiltin<"__nvvm_swap_lo_hi_b64">;
 
 
 // Old PTX back-end intrinsics retained here for backwards-compatibility

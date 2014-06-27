@@ -158,6 +158,7 @@ def do_SQRTF32_APPROX : Predicate<"!usePrecSqrtF32()">;
 def do_SQRTF32_RN : Predicate<"usePrecSqrtF32()">;
 
 def hasHWROT32 : Predicate<"Subtarget.hasHWROT32()">;
+def noHWROT32 : Predicate<"!Subtarget.hasHWROT32()">;
 
 def true : Predicate<"1">;
 
@@ -1085,6 +1086,43 @@ multiclass RSHIFT_FORMAT<string OpcStr, SDNode OpNode> {
 defm SRA : RSHIFT_FORMAT<"shr.s", sra>;
 defm SRL : RSHIFT_FORMAT<"shr.u", srl>;
 
+//
+// Rotate: use ptx shf instruction if available.
+//
+
+// 32 bit r2 = rotl r1, n
+//    =>
+//        r2 = shf.l r1, r1, n
+def ROTL32imm_hw : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$src, i32imm:$amt),
+              "shf.l.wrap.b32 \t$dst, $src, $src, $amt;",
+    [(set Int32Regs:$dst, (rotl Int32Regs:$src, (i32 imm:$amt)))]>,
+    Requires<[hasHWROT32]> ;
+
+def ROTL32reg_hw : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$src, Int32Regs:$amt),
+              "shf.l.wrap.b32 \t$dst, $src, $src, $amt;",
+    [(set Int32Regs:$dst, (rotl Int32Regs:$src, Int32Regs:$amt))]>,
+    Requires<[hasHWROT32]>;
+
+// 32 bit r2 = rotr r1, n
+//    =>
+//        r2 = shf.r r1, r1, n
+def ROTR32imm_hw : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$src, i32imm:$amt),
+              "shf.r.wrap.b32 \t$dst, $src, $src, $amt;",
+    [(set Int32Regs:$dst, (rotr Int32Regs:$src, (i32 imm:$amt)))]>,
+    Requires<[hasHWROT32]>;
+
+def ROTR32reg_hw : NVPTXInst<(outs Int32Regs:$dst),
+                             (ins Int32Regs:$src, Int32Regs:$amt),
+              "shf.r.wrap.b32 \t$dst, $src, $src, $amt;",
+    [(set Int32Regs:$dst, (rotr Int32Regs:$src, Int32Regs:$amt))]>,
+    Requires<[hasHWROT32]>;
+
+//
+// Rotate: if ptx shf instruction is not available, then use shift+add
+//
 // 32bit
 def ROT32imm_sw : NVPTXInst<(outs Int32Regs:$dst),
   (ins Int32Regs:$src, i32imm:$amt1, i32imm:$amt2),
@@ -1102,9 +1140,11 @@ def SUB_FRM_32 : SDNodeXForm<imm, [{
 }]>;
 
 def : Pat<(rotl Int32Regs:$src, (i32 imm:$amt)),
-          (ROT32imm_sw Int32Regs:$src, imm:$amt, (SUB_FRM_32 node:$amt))>;
+          (ROT32imm_sw Int32Regs:$src, imm:$amt, (SUB_FRM_32 node:$amt))>,
+      Requires<[noHWROT32]>;
 def : Pat<(rotr Int32Regs:$src, (i32 imm:$amt)),
-          (ROT32imm_sw Int32Regs:$src, (SUB_FRM_32 node:$amt), imm:$amt)>;
+          (ROT32imm_sw Int32Regs:$src, (SUB_FRM_32 node:$amt), imm:$amt)>,
+      Requires<[noHWROT32]>;
 
 def ROTL32reg_sw : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src,
     Int32Regs:$amt),
@@ -1117,7 +1157,8 @@ def ROTL32reg_sw : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src,
     !strconcat("shr.b32 \t%rhs, $src, %amt2;\n\t",
     !strconcat("add.u32 \t$dst, %lhs, %rhs;\n\t",
     !strconcat("}}", ""))))))))),
-    [(set Int32Regs:$dst, (rotl Int32Regs:$src, Int32Regs:$amt))]>;
+    [(set Int32Regs:$dst, (rotl Int32Regs:$src, Int32Regs:$amt))]>,
+    Requires<[noHWROT32]>;
 
 def ROTR32reg_sw : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src,
     Int32Regs:$amt),
@@ -1130,7 +1171,8 @@ def ROTR32reg_sw : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src,
     !strconcat("shl.b32 \t%rhs, $src, %amt2;\n\t",
     !strconcat("add.u32 \t$dst, %lhs, %rhs;\n\t",
     !strconcat("}}", ""))))))))),
-    [(set Int32Regs:$dst, (rotr Int32Regs:$src, Int32Regs:$amt))]>;
+    [(set Int32Regs:$dst, (rotr Int32Regs:$src, Int32Regs:$amt))]>,
+    Requires<[noHWROT32]>;
 
 // 64bit
 def ROT64imm_sw : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src,
