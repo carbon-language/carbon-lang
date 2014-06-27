@@ -67,6 +67,7 @@ OPENMP_CLAUSE(reduction,  OMPReductionClause)
 OPENMP_CLAUSE(linear,  OMPLinearClause)
 OPENMP_CLAUSE(aligned, OMPAlignedClause)
 OPENMP_CLAUSE(copyin,  OMPCopyinClause)
+OPENMP_CLAUSE(copyprivate,  OMPCopyprivateClause)
 OPENMP_CLAUSE(proc_bind, OMPProcBindClause)
 OPENMP_CLAUSE(schedule, OMPScheduleClause)
 OPENMP_CLAUSE(ordered, OMPOrderedClause)
@@ -111,6 +112,7 @@ OPENMP_SECTIONS_CLAUSE(nowait)
 // TODO more clauses allowed for directive 'omp single'.
 OPENMP_SINGLE_CLAUSE(private)
 OPENMP_SINGLE_CLAUSE(firstprivate)
+OPENMP_SINGLE_CLAUSE(copyprivate)
 OPENMP_SINGLE_CLAUSE(nowait)
 
 // Static attributes for 'default' clause.

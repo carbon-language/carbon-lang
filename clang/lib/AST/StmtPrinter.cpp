@@ -748,6 +748,14 @@ void OMPClausePrinter::VisitOMPCopyinClause(OMPCopyinClause *Node) {
   }
 }
 
+void OMPClausePrinter::VisitOMPCopyprivateClause(OMPCopyprivateClause *Node) {
+  if (!Node->varlist_empty()) {
+    OS << "copyprivate";
+    VisitOMPClauseList(Node, '(');
+    OS << ")";
+  }
+}
+
 }
 
 //===----------------------------------------------------------------------===//

@@ -13,11 +13,11 @@ T tmain(T argc) {
   T b = argc, c, d, e, f, g;
   static T a;
 // CHECK: static T a;
-#pragma omp parallel
-#pragma omp single private(argc, b), firstprivate(c, d), nowait
+#pragma omp parallel private(g)
+#pragma omp single private(argc, b), firstprivate(c, d), nowait copyprivate(g)
   foo();
-  // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) nowait
+  // CHECK-NEXT: #pragma omp parallel private(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) nowait copyprivate(g)
   // CHECK-NEXT: foo();
   return T();
 }
@@ -26,11 +26,11 @@ int main(int argc, char **argv) {
   int b = argc, c, d, e, f, g;
   static int a;
 // CHECK: static int a;
-#pragma omp parallel
-#pragma omp single private(argc, b), firstprivate(argv, c), nowait
+#pragma omp parallel private(g)
+#pragma omp single private(argc, b), firstprivate(argv, c), nowait copyprivate(g)
   foo();
-  // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(argv,c) nowait
+  // CHECK-NEXT: #pragma omp parallel private(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(argv,c) nowait copyprivate(g)
   // CHECK-NEXT: foo();
   return (tmain<int, 5>(argc) + tmain<char, 1>(argv[0][0]));
 }

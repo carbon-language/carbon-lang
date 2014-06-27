@@ -95,6 +95,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
   case OMPC_linear:
   case OMPC_aligned:
   case OMPC_copyin:
+  case OMPC_copyprivate:
   case OMPC_ordered:
   case OMPC_nowait:
     break;
@@ -149,6 +150,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
   case OMPC_linear:
   case OMPC_aligned:
   case OMPC_copyin:
+  case OMPC_copyprivate:
   case OMPC_ordered:
   case OMPC_nowait:
     break;
@@ -193,7 +195,7 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
     break;
   case OMPD_sections:
     switch (CKind) {
-#define OPENMP_SECTIONS_CLAUSE(Name)                                                \
+#define OPENMP_SECTIONS_CLAUSE(Name)                                           \
   case OMPC_##Name:                                                            \
     return true;
 #include "clang/Basic/OpenMPKinds.def"
@@ -203,7 +205,7 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
     break;
   case OMPD_single:
     switch (CKind) {
-#define OPENMP_SINGLE_CLAUSE(Name)                                                \
+#define OPENMP_SINGLE_CLAUSE(Name)                                             \
   case OMPC_##Name:                                                            \
     return true;
 #include "clang/Basic/OpenMPKinds.def"

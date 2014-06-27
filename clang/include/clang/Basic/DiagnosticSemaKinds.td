@@ -7026,6 +7026,8 @@ def note_omp_predetermined_dsa : Note<
   "global variable is predetermined as shared|"
   "variable with automatic storage duration is predetermined as private}0"
   "%select{|; perhaps you forget to enclose 'omp %2' directive into a parallel or another task region?}1">;
+def note_omp_implicit_dsa : Note<
+  "implicitly determined as %0">;
 def err_omp_loop_var_dsa : Error<
   "loop iteration variable may not be %0">;
 def err_omp_not_for : Error<
