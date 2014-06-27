@@ -103,7 +103,7 @@ static cl::list<std::string> FileNames(cl::Positional, cl::desc("[<file> ...]"),
 namespace clang {
 namespace format {
 
-static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
+static FileID createInMemoryFile(StringRef FileName, MemoryBuffer *Source,
                                  SourceManager &Sources, FileManager &Files) {
   const FileEntry *Entry = Files.getVirtualFile(FileName == "-" ? "<stdin>" :
                                                     FileName,

@@ -47,8 +47,7 @@ public:
   ~SimpleFormatContext() { }
 
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
-    const llvm::MemoryBuffer *Source =
-        llvm::MemoryBuffer::getMemBuffer(Content);
+    llvm::MemoryBuffer *Source = llvm::MemoryBuffer::getMemBuffer(Content);
     const FileEntry *Entry =
         Files.getVirtualFile(Name, Source->getBufferSize(), 0);
     Sources.overrideFileContents(Entry, Source);

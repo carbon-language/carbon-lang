@@ -692,7 +692,7 @@ public:
 
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
-  typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
+  typedef std::pair<std::string, llvm::MemoryBuffer *> RemappedFile;
 
   /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
   static ASTUnit *create(CompilerInvocation *CI,

@@ -2787,8 +2787,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
 
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
-    const llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
+    llvm::MemoryBuffer *Buffer =
+        llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
     RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
                                             Buffer));
   }
@@ -3073,8 +3073,8 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
-    const llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
+    llvm::MemoryBuffer *Buffer =
+        llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
     RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
                                             Buffer));
   }

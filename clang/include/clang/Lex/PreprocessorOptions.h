@@ -102,9 +102,8 @@ public:
   /// \brief The set of file-to-buffer remappings, which take existing files
   /// on the system (the first part of each pair) and gives them the contents
   /// of the specified memory buffer (the second part of each pair).
-  std::vector<std::pair<std::string, const llvm::MemoryBuffer *> > 
-    RemappedFileBuffers;
-  
+  std::vector<std::pair<std::string, llvm::MemoryBuffer *>> RemappedFileBuffers;
+
   /// \brief Whether the compiler instance should retain (i.e., not free)
   /// the buffers associated with remapped files.
   ///
@@ -157,10 +156,11 @@ public:
     return RemappedFiles.end();
   }
 
-  typedef std::vector<std::pair<std::string, const llvm::MemoryBuffer *> >::
-                                  iterator remapped_file_buffer_iterator;
-  typedef std::vector<std::pair<std::string, const llvm::MemoryBuffer *> >::
-                            const_iterator const_remapped_file_buffer_iterator;
+  typedef std::vector<std::pair<std::string, llvm::MemoryBuffer *>>::iterator
+  remapped_file_buffer_iterator;
+  typedef std::vector<
+      std::pair<std::string, llvm::MemoryBuffer *>>::const_iterator
+  const_remapped_file_buffer_iterator;
   remapped_file_buffer_iterator remapped_file_buffer_begin() {
     return RemappedFileBuffers.begin();
   }
@@ -197,8 +197,8 @@ public:
   remapped_file_iterator eraseRemappedFile(remapped_file_iterator Remapped) {
     return RemappedFiles.erase(Remapped);
   }
-  
-  void addRemappedFile(StringRef From, const llvm::MemoryBuffer * To) {
+
+  void addRemappedFile(StringRef From, llvm::MemoryBuffer *To) {
     RemappedFileBuffers.push_back(std::make_pair(From, To));
   }
   

@@ -884,7 +884,7 @@ static void compileModuleImpl(CompilerInstance &ImportingInstance,
     FrontendOpts.Inputs.push_back(
         FrontendInputFile("__inferred_module.map", IK));
 
-    const llvm::MemoryBuffer *ModuleMapBuffer =
+    llvm::MemoryBuffer *ModuleMapBuffer =
         llvm::MemoryBuffer::getMemBuffer(InferredModuleMapContent);
     ModuleMapFile = Instance.getFileManager().getVirtualFile(
         "__inferred_module.map", InferredModuleMapContent.size(), 0);
