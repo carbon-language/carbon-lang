@@ -16,7 +16,6 @@
 #define NVPTXISELLOWERING_H
 
 #include "NVPTX.h"
-#include "NVPTXSubtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 
@@ -166,6 +165,8 @@ enum NodeType {
   Suld3DV4I32Trap
 };
 }
+
+class NVPTXSubtarget;
 
 //===--------------------------------------------------------------------===//
 // TargetLowering Implementation

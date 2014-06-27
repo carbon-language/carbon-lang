@@ -25,19 +25,20 @@ using namespace llvm;
 // Pin the vtable to this file.
 void NVPTXSubtarget::anchor() {}
 
-NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
-                               const std::string &FS, bool is64Bit)
-    : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),
-      SmVersion(20) {
+static std::string computeDataLayout(bool is64Bit) {
+  std::string Ret = "e";
 
-  Triple T(TT);
+  if (!is64Bit)
+    Ret += "-p:32:32";
 
-  if (T.getOS() == Triple::NVCL)
-    drvInterface = NVPTX::NVCL;
-  else
-    drvInterface = NVPTX::CUDA;
+  Ret += "-i64:64-v16:16-v32:32-n16:32:64";
 
-  // Provide the default CPU if we don't have one.
+  return Ret;
+}
+
+NVPTXSubtarget &NVPTXSubtarget::initializeSubtargetDependencies(StringRef CPU,
+                                                                StringRef FS) {
+    // Provide the default CPU if we don't have one.
   if (CPU.empty() && FS.size())
     llvm_unreachable("we are not using FeatureStr");
   TargetName = CPU.empty() ? "sm_20" : CPU;
@@ -49,7 +50,24 @@ NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
   // So if we set ptx31 as the default, the ptx30 attribute would never match.
   // Instead, we use 0 as the default and manually set 31 if the default is
   // used.
-  if (PTXVersion == 0) {
+  if (PTXVersion == 0)
     PTXVersion = 31;
-  }
+
+  return *this;
+}
+
+NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
+                               const std::string &FS, const TargetMachine &TM,
+                               bool is64Bit)
+    : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),
+      SmVersion(20), DL(computeDataLayout(is64Bit)),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)),
+      TLInfo((NVPTXTargetMachine &)TM), TSInfo(&DL), FrameLowering(*this) {
+
+  Triple T(TT);
+
+  if (T.getOS() == Triple::NVCL)
+    drvInterface = NVPTX::NVCL;
+  else
+    drvInterface = NVPTX::CUDA;
 }

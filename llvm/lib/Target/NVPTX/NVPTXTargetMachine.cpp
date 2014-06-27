@@ -66,26 +66,13 @@ extern "C" void LLVMInitializeNVPTXTarget() {
     *PassRegistry::getPassRegistry());
 }
 
-static std::string computeDataLayout(const NVPTXSubtarget &ST) {
-  std::string Ret = "e";
-
-  if (!ST.is64Bit())
-    Ret += "-p:32:32";
-
-  Ret += "-i64:64-v16:16-v32:32-n16:32:64";
-
-  return Ret;
-}
-
 NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, is64bit), DL(computeDataLayout(Subtarget)),
-      InstrInfo(Subtarget), TLInfo(*this), TSInfo(&DL),
-      FrameLowering(Subtarget) {
+      Subtarget(TT, CPU, FS, *this, is64bit) {
   initAsmInfo();
 }
 
