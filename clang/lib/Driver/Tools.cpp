@@ -7264,7 +7264,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     IsLinux ? LinuxToolChain.Linker.c_str()
-            : Args.MakeArgString(ToolChain.GetProgramPath("ld"));
+            : Args.MakeArgString(ToolChain.GetLinkerPath());
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
