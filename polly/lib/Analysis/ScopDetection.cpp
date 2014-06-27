@@ -546,13 +546,17 @@ Region *ScopDetection::expandRegion(Region &R) {
   while (ExpandedRegion) {
     DetectionContext Context(*ExpandedRegion, *AA, false /* verifying */);
     DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
+    // Only expand when we did not collect errors.
 
     // Check the exit first (cheap)
-    if (isValidExit(Context)) {
+    if (isValidExit(Context) && !Context.Log.hasErrors()) {
       // If the exit is valid check all blocks
       //  - if true, a valid region was found => store it + keep expanding
       //  - if false, .tbd. => stop  (should this really end the loop?)
-      if (!allBlocksValid(Context))
+      if (!allBlocksValid(Context) || Context.Log.hasErrors())
+        break;
+
+      if (Context.Log.hasErrors())
         break;
 
       // Delete unnecessary regions (allocated by getExpandedRegion)
@@ -628,10 +632,6 @@ void ScopDetection::findScops(Region &R) {
   for (auto &SubRegion : R)
     findScops(*SubRegion);
 
-  // Do not expand when we had errors. Bad things may happen.
-  if (IsValidRegion && HasErrors)
-    return;
-
   // Try to expand regions.
   //
   // As the region tree normally only contains canonical regions, non canonical
@@ -644,6 +644,11 @@ void ScopDetection::findScops(Region &R) {
     ToExpand.push_back(SubRegion.get());
 
   for (Region *CurrentRegion : ToExpand) {
+    // Skip regions that had errors.
+    bool HadErrors = RejectLogs.hasErrors(CurrentRegion);
+    if (HadErrors)
+      continue;
+
     // Skip invalid regions. Regions may become invalid, if they are element of
     // an already expanded region.
     if (ValidRegions.find(CurrentRegion) == ValidRegions.end())

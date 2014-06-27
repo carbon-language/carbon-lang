@@ -174,6 +174,7 @@ public:
   iterator begin() const { return ErrorReports.begin(); }
   iterator end() const { return ErrorReports.end(); }
   size_t size() const { return ErrorReports.size(); }
+  bool hasErrors() const { return size() > 0; }
 
   const Region *region() const { return R; }
   void report(RejectReasonPtr Reject) { ErrorReports.push_back(Reject); }
