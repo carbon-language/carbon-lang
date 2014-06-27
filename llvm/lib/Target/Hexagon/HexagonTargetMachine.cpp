@@ -71,7 +71,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       DL("e-m:e-p:32:32-i1:32-i64:64-a:0-n32"), Subtarget(TT, CPU, FS),
-      InstrInfo(Subtarget), TLInfo(*this), TSInfo(*this),
+      InstrInfo(Subtarget), TLInfo(*this), TSInfo(DL),
       FrameLowering() {
     initAsmInfo();
 }
