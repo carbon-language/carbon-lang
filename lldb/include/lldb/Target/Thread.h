@@ -549,7 +549,7 @@ public:
     ///
     /// @param[in] step_in_avoids_code_without_debug_info
     ///     If \a true, then avoid stepping into code that doesn't have
-    ///     debug info, else step into any code regardless of wether it
+    ///     debug info, else step into any code regardless of whether it
     ///     has debug info.
     ///
     /// @param[in] step_out_avoids_code_without_debug_info
