@@ -602,7 +602,7 @@ void ELFFile<ELFT>::VerifyStrTab(const Elf_Shdr *sh) const {
 template <class ELFT>
 uint64_t ELFFile<ELFT>::getNumSections() const {
   assert(Header && "Header not initialized!");
-  if (Header->e_shnum == ELF::SHN_UNDEF) {
+  if (Header->e_shnum == ELF::SHN_UNDEF && Header->e_shoff > 0) {
     assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
     return SectionHeaderTable->sh_size;
   }
