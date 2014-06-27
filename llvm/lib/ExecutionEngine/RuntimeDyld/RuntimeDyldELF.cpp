@@ -616,30 +616,38 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
   }
 }
 
-// Return the .TOC. section address to R_PPC64_TOC relocations.
-uint64_t RuntimeDyldELF::findPPC64TOC() const {
+// Return the .TOC. section and offset.
+void RuntimeDyldELF::findPPC64TOCSection(ObjectImage &Obj,
+                                         ObjSectionToIDMap &LocalSections,
+                                         RelocationValueRef &Rel) {
+  // Set a default SectionID in case we do not find a TOC section below.
+  // This may happen for references to TOC base base (sym@toc, .odp
+  // relocation) without a .toc directive.  In this case just use the
+  // first section (which is usually the .odp) since the code won't
+  // reference the .toc base directly.
+  Rel.SymbolName = NULL;
+  Rel.SectionID = 0;
+
   // The TOC consists of sections .got, .toc, .tocbss, .plt in that
   // order. The TOC starts where the first of these sections starts.
-  SectionList::const_iterator it = Sections.begin();
-  SectionList::const_iterator ite = Sections.end();
-  for (; it != ite; ++it) {
-    if (it->Name == ".got" || it->Name == ".toc" || it->Name == ".tocbss" ||
-        it->Name == ".plt")
+  for (section_iterator si = Obj.begin_sections(), se = Obj.end_sections();
+       si != se; ++si) {
+
+    StringRef SectionName;
+    check(si->getName(SectionName));
+
+    if (SectionName == ".got"
+        || SectionName == ".toc"
+        || SectionName == ".tocbss"
+        || SectionName == ".plt") {
+      Rel.SectionID = findOrEmitSection(Obj, *si, false, LocalSections);
       break;
+    }
   }
-  if (it == ite) {
-    // This may happen for
-    // * references to TOC base base (sym@toc, .odp relocation) without
-    // a .toc directive.
-    // In this case just use the first section (which is usually
-    // the .odp) since the code won't reference the .toc base
-    // directly.
-    it = Sections.begin();
-  }
-  assert(it != ite);
+
   // Per the ppc64-elf-linux ABI, The TOC base is TOC value plus 0x8000
   // thus permitting a full 64 Kbytes segment.
-  return it->LoadAddress + 0x8000;
+  Rel.Addend = 0x8000;
 }
 
 // Returns the sections and offset associated with the ODP entry referenced
@@ -825,39 +833,6 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   case ELF::R_PPC64_ADDR64:
     writeInt64BE(LocalAddress, Value + Addend);
     break;
-  case ELF::R_PPC64_TOC:
-    writeInt64BE(LocalAddress, findPPC64TOC());
-    break;
-  case ELF::R_PPC64_TOC16: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = applyPPClo((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPClo(Value));
-  } break;
-  case ELF::R_PPC64_TOC16_DS: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = ((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPClo(Value) & ~3);
-  } break;
-  case ELF::R_PPC64_TOC16_LO: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = ((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPClo(Value));
-  } break;
-  case ELF::R_PPC64_TOC16_LO_DS: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = ((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPClo(Value) & ~3);
-  } break;
-  case ELF::R_PPC64_TOC16_HI: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = ((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPChi(Value));
-  } break;
-  case ELF::R_PPC64_TOC16_HA: {
-    uint64_t TOCStart = findPPC64TOC();
-    Value = ((Value + Addend) - TOCStart);
-    writeInt16BE(LocalAddress, applyPPCha(Value));
-  } break;
   }
 }
 
@@ -1246,12 +1221,52 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
           // Restore the TOC for external calls
           writeInt32BE(Target + 4, 0xE8410028); // ld r2,40(r1)
       }
+    } else if (RelType == ELF::R_PPC64_TOC16 ||
+               RelType == ELF::R_PPC64_TOC16_DS ||
+               RelType == ELF::R_PPC64_TOC16_LO ||
+               RelType == ELF::R_PPC64_TOC16_LO_DS ||
+               RelType == ELF::R_PPC64_TOC16_HI ||
+               RelType == ELF::R_PPC64_TOC16_HA) {
+      // These relocations are supposed to subtract the TOC address from
+      // the final value.  This does not fit cleanly into the RuntimeDyld
+      // scheme, since there may be *two* sections involved in determining
+      // the relocation value (the section of the symbol refered to by the
+      // relocation, and the TOC section associated with the current module).
+      //
+      // Fortunately, these relocations are currently only ever generated
+      // refering to symbols that themselves reside in the TOC, which means
+      // that the two sections are actually the same.  Thus they cancel out
+      // and we can immediately resolve the relocation right now.
+      switch (RelType) {
+      case ELF::R_PPC64_TOC16: RelType = ELF::R_PPC64_ADDR16; break;
+      case ELF::R_PPC64_TOC16_DS: RelType = ELF::R_PPC64_ADDR16_DS; break;
+      case ELF::R_PPC64_TOC16_LO: RelType = ELF::R_PPC64_ADDR16_LO; break;
+      case ELF::R_PPC64_TOC16_LO_DS: RelType = ELF::R_PPC64_ADDR16_LO_DS; break;
+      case ELF::R_PPC64_TOC16_HI: RelType = ELF::R_PPC64_ADDR16_HI; break;
+      case ELF::R_PPC64_TOC16_HA: RelType = ELF::R_PPC64_ADDR16_HA; break;
+      default: llvm_unreachable("Wrong relocation type.");
+      }
+
+      RelocationValueRef TOCValue;
+      findPPC64TOCSection(Obj, ObjSectionToID, TOCValue);
+      if (Value.SymbolName || Value.SectionID != TOCValue.SectionID)
+        llvm_unreachable("Unsupported TOC relocation.");
+      Value.Addend -= TOCValue.Addend;
+      resolveRelocation(Sections[SectionID], Offset, Value.Addend, RelType, 0);
     } else {
+      // There are two ways to refer to the TOC address directly: either
+      // via a ELF::R_PPC64_TOC relocation (where both symbol and addend are
+      // ignored), or via any relocation that refers to the magic ".TOC."
+      // symbols (in which case the addend is respected).
+      if (RelType == ELF::R_PPC64_TOC) {
+        RelType = ELF::R_PPC64_ADDR64;
+        findPPC64TOCSection(Obj, ObjSectionToID, Value);
+      } else if (TargetName == ".TOC.") {
+        findPPC64TOCSection(Obj, ObjSectionToID, Value);
+        Value.Addend += Addend;
+      }
+
       RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
-      // Extra check to avoid relocation againt empty symbols (usually
-      // the R_PPC64_TOC).
-      if (SymType != SymbolRef::ST_Unknown && TargetName.empty())
-        Value.SymbolName = nullptr;
 
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);

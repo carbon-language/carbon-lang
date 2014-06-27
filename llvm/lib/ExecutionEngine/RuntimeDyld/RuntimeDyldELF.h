@@ -82,7 +82,8 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
       return 1;
   }
 
-  uint64_t findPPC64TOC() const;
+  void findPPC64TOCSection(ObjectImage &Obj, ObjSectionToIDMap &LocalSections,
+                           RelocationValueRef &Rel);
   void findOPDEntrySection(ObjectImage &Obj, ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
 
