@@ -13,6 +13,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/StringRefMemoryObject.h"
 #include "RuntimeDyldImpl.h"
+#include <cctype>
 #include <memory>
 
 #define DEBUG_TYPE "rtdyld"
