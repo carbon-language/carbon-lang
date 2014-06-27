@@ -75,7 +75,7 @@ static DebuggerList &
 GetDebuggerList()
 {
     // hide the static debugger list inside a singleton accessor to avoid
-    // global init contructors
+    // global init constructors
     static DebuggerList g_list;
     return g_list;
 }
@@ -475,7 +475,7 @@ LoadPluginCallback
     {
         // Try and recurse into anything that a directory or symbolic link.
         // We must also do this for unknown as sometimes the directory enumeration
-        // might be enurating a file system that doesn't have correct file type
+        // might be enumerating a file system that doesn't have correct file type
         // information.
         return FileSpec::eEnumerateDirectoryResultEnter;
     }
@@ -1007,7 +1007,7 @@ Debugger::PopIOHandler (const IOHandlerSP& pop_reader_sp)
     Mutex::Locker locker (m_input_reader_stack.GetMutex());
 
     // The reader on the stop of the stack is done, so let the next
-    // read on the stack referesh its prompt and if there is one...
+    // read on the stack refresh its prompt and if there is one...
     if (!m_input_reader_stack.IsEmpty())
     {
         IOHandlerSP reader_sp(m_input_reader_stack.Top());

@@ -153,7 +153,7 @@ LoadPluginCallback
     {
         // Try and recurse into anything that a directory or symbolic link. 
         // We must also do this for unknown as sometimes the directory enumeration
-        // might be enurating a file system that doesn't have correct file type
+        // might be enumerating a file system that doesn't have correct file type
         // information.
         return FileSpec::eEnumerateDirectoryResultEnter;
     }

@@ -1182,7 +1182,7 @@
         callback for all logging in libdebugnub.dylib and any code that
         loads it.
         (DNBLogToASL): Removed function as it is deprecated in favor of
-        using DNBLogSetLogCallback to regsiter a callback function that
+        using DNBLogSetLogCallback to register a callback function that
         implements the logging.
         (DNBLogToFile): Ditto.
         (DNBLogCloseLogFile): Ditto.

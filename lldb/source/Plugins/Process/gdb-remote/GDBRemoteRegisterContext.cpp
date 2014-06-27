@@ -200,7 +200,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                 const uint32_t prim_reg = reg_info->value_regs[idx];
                 if (prim_reg == LLDB_INVALID_REGNUM)
                     break;
-                // We have a valid primordial regsiter as our constituent.
+                // We have a valid primordial register as our constituent.
                 // Grab the corresponding register info.
                 const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg);
                 if (prim_reg_info == NULL)
@@ -390,7 +390,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                             const uint32_t reg = reg_info->value_regs[idx];
                             if (reg == LLDB_INVALID_REGNUM)
                                 break;
-                            // We have a valid primordial regsiter as our constituent.
+                            // We have a valid primordial register as our constituent.
                             // Grab the corresponding register info.
                             const RegisterInfo *value_reg_info = GetRegisterInfoAtIndex(reg);
                             if (value_reg_info == NULL)
@@ -653,7 +653,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                         response.GetStringRef().assign (G_packet, G_packet_len);
                         response.SetFilePos(1); // Skip the leading 'G'
 
-                        // G_packet_len is hex-ascii characters plus prefix 'G' plus suffix therad specifier.
+                        // G_packet_len is hex-ascii characters plus prefix 'G' plus suffix thread specifier.
                         // This means buffer will be a little more than 2x larger than necessary but we resize
                         // it down once we've extracted all hex ascii chars from the packet.
                         DataBufferHeap buffer (G_packet_len, 0);
@@ -701,7 +701,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                         }
                         else if (static_cast<size_t>(size_not_including_slice_registers) == restore_data.GetByteSize())
                         {
-                            // The size of the packet is the same as concenating all of the registers sequentially,
+                            // The size of the packet is the same as concatenating all of the registers sequentially,
                             // skipping the slice registers
                             use_byte_offset_into_buffer = true;
                         }

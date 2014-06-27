@@ -609,7 +609,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 
     switch (m_fd_send_type)
     {
-        case eFDTypeFile:       // Other FD requireing read/write
+        case eFDTypeFile:       // Other FD requiring read/write
 #ifndef LLDB_DISABLE_POSIX
             do
             {
@@ -647,7 +647,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
     {
         switch (m_fd_send_type)
         {
-            case eFDTypeFile:       // Other FD requireing read/write
+            case eFDTypeFile:       // Other FD requiring read/write
                 log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %" PRIu64 ") => %" PRIi64 " (error = %s)",
                              static_cast<void*>(this), m_fd_send,
                              static_cast<const void*>(src),
@@ -1443,7 +1443,7 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
     if (m_fd_recv == -1)
         return eConnectionStatusError;
 
-    // At this point we have setup the recieve port, now we need to 
+    // At this point we have setup the receive port, now we need to 
     // setup the UDP send socket
 
     struct addrinfo hints;
@@ -1525,7 +1525,7 @@ ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
 {
     switch (m_fd_recv_type)
     {
-        case eFDTypeFile:       // Other FD requireing read/write
+        case eFDTypeFile:       // Other FD requiring read/write
             break;
             
         case eFDTypeSocket:     // Socket requiring send/recv

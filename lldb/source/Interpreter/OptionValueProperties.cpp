@@ -47,7 +47,7 @@ OptionValueProperties::OptionValueProperties (const OptionValueProperties &globa
     const size_t num_properties = m_properties.size();
     for (size_t i=0; i<num_properties; ++i)
     {
-        // Duplicate any values that are not global when contructing properties from
+        // Duplicate any values that are not global when constructing properties from
         // a global copy
         if (m_properties[i].IsGlobal() == false)
         {
@@ -164,7 +164,7 @@ OptionValueProperties::GetSubValue (const ExecutionContext *exe_ctx,
                 // OptionValueProperties for a lldb_private::Target might implement:
                 // "target.run-args{arch==i386}"   -- only set run args if the arch is i386
                 // "target.run-args{path=/tmp/a/b/c/a.out}" -- only set run args if the path matches
-                // "target.run-args{basename==test&&arch==x86_64}" -- only set run args if exectable basename is "test" and arch is "x86_64"
+                // "target.run-args{basename==test&&arch==x86_64}" -- only set run args if executable basename is "test" and arch is "x86_64"
                 if (sub_name[1])
                 {
                     const char *predicate_start = sub_name + 1;

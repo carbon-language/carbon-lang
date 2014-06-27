@@ -55,7 +55,7 @@ public:
     StopListeningForEvents (const lldb::SBBroadcaster& broadcaster,
                             uint32_t event_mask);
 
-    // Returns true if an event was recieved, false if we timed out.
+    // Returns true if an event was received, false if we timed out.
     bool
     WaitForEvent (uint32_t num_seconds,
                   lldb::SBEvent &event);

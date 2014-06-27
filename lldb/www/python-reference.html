@@ -322,7 +322,7 @@ Enter your Python command(s). Type 'DONE' to end.
                 <p>Python functions can be used to create new LLDB command interpreter commands, which will work
                    like all the natively defined lldb commands. This provides a very flexible and easy way to extend LLDB to meet your
                     debugging requirements. </p>
-                <p>To write a python function that implements a new LDB command define the function to take four arguments as follows:</p>
+                <p>To write a python function that implements a new LLDB command define the function to take four arguments as follows:</p>
                         
         <code><pre><tt>def command_function(<b>debugger</b>, <b>command</b>, <b>result</b>, <b>internal_dict</b>):
           <font color=green># Your code goes here</font>
@@ -414,7 +414,7 @@ Enter your Python command(s). Type 'DONE' to end.
            <lldb> module at the top of the python <b>ls.py</b> module. This test
            must be in code that isn't contained inside of any function or class,
            just like the standard test for <b>__main__</b> like all python modules
-           usally do. Sample code would look like:
+           usually do. Sample code would look like:
 
 <code><pre><tt>if __name__ == '__main__':
     <font color=green># Create a new debugger instance in your module if your module 

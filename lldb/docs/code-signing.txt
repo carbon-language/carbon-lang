@@ -6,7 +6,7 @@ If you have re-installed a new OS, please delete all old lldb_codesign items
 from your keychain. There will be 3: a code signing certification and a public
 and private key. Reboot after deleting them. You will also need to delete and
 build folders that contained old signed items. The darwin kernel will cache 
-code sigining using the executable's file system node, so you will need to 
+code signing using the executable's file system node, so you will need to
 delete the file so the kernel clears its cache.
 
 If you don't have one yet you will need to:

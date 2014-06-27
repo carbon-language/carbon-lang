@@ -11,7 +11,7 @@
 // (breakpoints, watchpoints, crashes, and signal generation/delivery) happen
 // from multiple threads. The test expects the debugger to set a breakpoint on
 // the main thread (before any worker threads are spawned) and modify variables
-// which control the number of therads that are spawned for each action.
+// which control the number of threads that are spawned for each action.
 
 #include <atomic>
 #include <vector>

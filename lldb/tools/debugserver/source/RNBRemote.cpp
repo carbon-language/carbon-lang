@@ -197,7 +197,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
     t.push_back (Packet (save_register_state,           &RNBRemote::HandlePacket_SaveRegisterState, NULL, "QSaveRegisterState", "Save the register state for the current thread and return a decimal save ID."));
-    t.push_back (Packet (restore_register_state,        &RNBRemote::HandlePacket_RestoreRegisterState, NULL, "QRestoreRegisterState:", "Restore the register state given a save ID previosly returned from a call to QSaveRegisterState."));
+    t.push_back (Packet (restore_register_state,        &RNBRemote::HandlePacket_RestoreRegisterState, NULL, "QRestoreRegisterState:", "Restore the register state given a save ID previously returned from a call to QSaveRegisterState."));
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
@@ -985,7 +985,7 @@ RNBRemote::InitializeRegisters (bool force)
             }
         }
         
-        // Now we must find any regsiters whose values are in other registers and fix up
+        // Now we must find any registers whose values are in other registers and fix up
         // the offsets since we removed all gaps...
         for (auto &reg_entry: g_dynamic_register_map)
         {
@@ -2929,7 +2929,7 @@ RNBRemote::HandlePacket_AllocateMemory (const char *p)
 }
 
 // FORMAT: _mXXXXXX   
-//      XXXXXX: address that was previosly allocated
+//      XXXXXX: address that was previously allocated
 //
 // RESPONSE: XXXXXX
 //      OK: address was deallocated

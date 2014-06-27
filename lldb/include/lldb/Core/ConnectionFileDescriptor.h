@@ -87,7 +87,7 @@ protected:
 
     typedef enum
     {
-        eFDTypeFile,        // Other FD requireing read/write
+        eFDTypeFile,        // Other FD requiring read/write
         eFDTypeSocket,      // Socket requiring send/recv
         eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
     } FDType;

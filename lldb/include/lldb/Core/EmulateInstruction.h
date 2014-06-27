@@ -94,7 +94,7 @@ public:
     enum ContextType
     {
         eContextInvalid = 0,
-        // Read an instruciton opcode from memory
+        // Read an instruction opcode from memory
         eContextReadOpcode,
         
         // Usually used for writing a register value whose source value is an 
@@ -223,13 +223,13 @@ public:
             struct ISAAndImmediate 
             {
                 uint32_t isa;           
-                uint32_t unsigned_data32;   // immdiate data
+                uint32_t unsigned_data32;   // immediate data
             } ISAAndImmediate;
             
             struct ISAAndImmediateSigned 
             {
                 uint32_t isa;
-                int32_t signed_data32;      // signed immdiate data
+                int32_t signed_data32;      // signed immediate data
             } ISAAndImmediateSigned;
             
             uint32_t isa;

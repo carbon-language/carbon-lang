@@ -41,7 +41,7 @@ public:
     uint32_t    WaitForResetAck (const uint32_t mask, const struct timespec *timeout_abstime = NULL) const;
 protected:
     //----------------------------------------------------------------------
-    // pthread condition and mutex variable to controll access and allow
+    // pthread condition and mutex variable to control access and allow
     // blocking between the main thread and the spotlight index thread.
     //----------------------------------------------------------------------
     mutable PThreadMutex        m_mutex;
@@ -51,7 +51,7 @@ protected:
     uint32_t            m_validBits;
     uint32_t            m_reset_ack_mask;
 private:
-    PThreadEvent(const PThreadEvent&);  // Outlaw copy contructor
+    PThreadEvent(const PThreadEvent&);  // Outlaw copy constructor
     PThreadEvent& operator=(const PThreadEvent& rhs);
 
 };

@@ -105,7 +105,7 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
 
 #if defined(__APPLE__)
                     // Only accept "unknown" for the vendor if the host is Apple and
-                    // it "unknown" wasn't specified (it was just returned becasue it
+                    // it "unknown" wasn't specified (it was just returned because it
                     // was NOT specified)
                     case llvm::Triple::UnknownArch:
                         create = !arch->TripleVendorWasSpecified();
@@ -125,7 +125,7 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
 
 #if defined(__APPLE__)
                         // Only accept "unknown" for the OS if the host is Apple and
-                        // it "unknown" wasn't specified (it was just returned becasue it
+                        // it "unknown" wasn't specified (it was just returned because it
                         // was NOT specified)
                         case llvm::Triple::UnknownOS:
                             create = !arch->TripleOSWasSpecified();

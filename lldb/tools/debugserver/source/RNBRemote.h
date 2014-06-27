@@ -249,7 +249,7 @@ public:
     RNBSocket&      Comm() { return m_comm; }
 
 private:
-    // Outlaw some contructors
+    // Outlaw some constructors
     RNBRemote (const RNBRemote &);
 
 protected:

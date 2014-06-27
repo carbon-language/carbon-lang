@@ -2169,7 +2169,7 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
         addr_t sp_offset = imm32;
         addr_t addr = sp;
         uint32_t i;
-        uint64_t data; // uint64_t to accomodate 64-bit registers.
+        uint64_t data; // uint64_t to accommodate 64-bit registers.
         
         EmulateInstruction::Context context;
         if (conditional)
@@ -3626,7 +3626,7 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
 }
   
 // LDMDB loads multiple registers from consecutive memory locations using an address from a base register.  The 
-// consecutive memory lcoations end just below this address, and the address of the lowest of those locations can 
+// consecutive memory locations end just below this address, and the address of the lowest of those locations can
 // be optionally written back to the base register.
 bool
 EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding encoding)
@@ -4033,7 +4033,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
 }
 
 // STM (Store Multiple Increment After) stores multiple registers to consecutive memory locations using an address 
-// from a base register.  The consecutive memory locations start at this address, and teh address just above the last
+// from a base register.  The consecutive memory locations start at this address, and the address just above the last
 // of those locations can optionally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding encoding)
@@ -4588,7 +4588,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
     return true;
 }
 
-// STR (store immediate) calcualtes an address from a base register value and an immediate offset, and stores a word
+// STR (store immediate) calculates an address from a base register value and an immediate offset, and stores a word
 // from a register to memory.  It can use offset, post-indexed, or pre-indexed addressing.
 bool
 EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding encoding)
@@ -5076,7 +5076,7 @@ EmulateInstructionARM::EmulateSTRBThumb (const uint32_t opcode, const ARMEncodin
 }
 
 // STRH (register) calculates an address from a base register value and an offset register value, and stores a 
-// halfword from a register to memory.  The offset register alue can be shifted left by 0, 1, 2, or 3 bits.
+// halfword from a register to memory.  The offset register value can be shifted left by 0, 1, 2, or 3 bits.
 bool
 EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
@@ -5941,7 +5941,7 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
 }
                   
 // LDR (register) calculates an address from a base register value and an offset register value, loads a word 
-// from memory, and writes it to a resgister.  The offset register value can optionally be shifted.  
+// from memory, and writes it to a register.  The offset register value can optionally be shifted.
 bool
 EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
@@ -11033,7 +11033,7 @@ EmulateInstructionARM::EmulateVSTM (const uint32_t opcode, const ARMEncoding enc
 }
                                 
 // A8.6.320
-// This instruciton loads a single extension register fronm memory, using an address from an ARM core register, with
+// This instruction loads a single extension register from memory, using an address from an ARM core register, with
 // an optional offset.
 bool
 EmulateInstructionARM::EmulateVLDR (const uint32_t opcode, ARMEncoding encoding)
@@ -11638,7 +11638,7 @@ EmulateInstructionARM::EmulateVLD1Single (const uint32_t opcode, const ARMEncodi
 }
 
 // A8.6.391 VST1 (multiple single elements)
-// Vector Store (multiple single elements) stores elements to memory from one, two, three, or four regsiters, without
+// Vector Store (multiple single elements) stores elements to memory from one, two, three, or four registers, without
 // interleaving.  Every element of each register is stored.
 bool
 EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding encoding)
@@ -13019,7 +13019,7 @@ EmulateInstructionARM::ConditionPassed (const uint32_t opcode, bool *is_conditio
         break;
     case 7: 
         // Always execute (cond == 0b1110, or the special 0b1111 which gives
-        // opcodes different meanings, but always means execution happpens.
+        // opcodes different meanings, but always means execution happens.
         if (is_conditional)
             *is_conditional = false;
         result = true; 

@@ -393,7 +393,7 @@ DataExtractor::GetU8 (offset_t *offset_ptr) const
 //
 // RETURNS the non-NULL buffer pointer upon successful extraction of
 // all the requested bytes, or NULL when the data is not available in
-// the buffer due to being out of bounds, or unsufficient data.
+// the buffer due to being out of bounds, or insufficient data.
 //----------------------------------------------------------------------
 void *
 DataExtractor::GetU8 (offset_t *offset_ptr, void *dst, uint32_t count) const
@@ -474,7 +474,7 @@ DataExtractor::GetU64_unchecked (offset_t *offset_ptr) const
 //
 // RETURNS the non-NULL buffer pointer upon successful extraction of
 // all the requested bytes, or NULL when the data is not available
-// in the buffer due to being out of bounds, or unsufficient data.
+// in the buffer due to being out of bounds, or insufficient data.
 //----------------------------------------------------------------------
 void *
 DataExtractor::GetU16 (offset_t *offset_ptr, void *void_dst, uint32_t count) const
@@ -537,7 +537,7 @@ DataExtractor::GetU32 (offset_t *offset_ptr) const
 //
 // RETURNS the non-NULL buffer pointer upon successful extraction of
 // all the requested bytes, or NULL when the data is not available
-// in the buffer due to being out of bounds, or unsufficient data.
+// in the buffer due to being out of bounds, or insufficient data.
 //----------------------------------------------------------------------
 void *
 DataExtractor::GetU32 (offset_t *offset_ptr, void *void_dst, uint32_t count) const
@@ -1108,7 +1108,7 @@ DataExtractor::CopyByteOrderedData (offset_t src_offset,
 // follows the NULL terminator byte.
 //
 // If the offset pointed to by "offset_ptr" is out of bounds, or if
-// "length" is non-zero and there aren't enough avaialable
+// "length" is non-zero and there aren't enough available
 // bytes, NULL will be returned and "offset_ptr" will not be
 // updated.
 //----------------------------------------------------------------------
@@ -1134,7 +1134,7 @@ DataExtractor::GetCStr (offset_t *offset_ptr) const
         
         // We reached the end of the data without finding a NULL C string
         // terminator. Fall through and return NULL otherwise anyone that
-        // would have used the result as a C string can wonder into
+        // would have used the result as a C string can wander into
         // unknown memory...
     }
     return NULL;
@@ -1827,7 +1827,7 @@ DataExtractor::Dump (Stream *s,
                                 {
                                     case llvm::Triple::x86:
                                     case llvm::Triple::x86_64:
-                                        // clang will assert when contructing the apfloat if we use a 16 byte integer value
+                                        // clang will assert when constructing the apfloat if we use a 16 byte integer value
                                         if (GetAPInt (*this, &offset, 10, apint))
                                         {
                                             llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->LongDoubleTy), apint);

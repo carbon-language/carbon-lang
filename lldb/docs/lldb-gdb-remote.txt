@@ -371,7 +371,7 @@ encoding    The encoding type of the register which must be one of:
                  uint (unsigned integer)
                  sint (signed integer)
                  ieee754 (IEEE 754 float)
-                 vector (vector regsiter)
+                 vector (vector register)
 
 format      The preferred format for display of this register. The value must
             be one of:
@@ -512,7 +512,7 @@ drwxrwxr-x  5 username groupname    4096 Aug 15 21:36 source.cpp
 // PRIORITY TO IMPLEMENT
 //  High. This packet is usually very easy to implement and can help
 //  LLDB select the correct plug-ins for the job based on the target
-//  triple information that is suppied.
+//  triple information that is supplied.
 //----------------------------------------------------------------------
 
 LLDB supports a host info call that gets all sorts of details of the system
