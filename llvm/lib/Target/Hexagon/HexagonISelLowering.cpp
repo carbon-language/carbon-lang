@@ -463,9 +463,10 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
+  const HexagonRegisterInfo *QRI = static_cast<const HexagonRegisterInfo *>(
+      DAG.getTarget().getRegisterInfo());
   SDValue StackPtr =
-    DAG.getCopyFromReg(Chain, dl, TM.getRegisterInfo()->getStackRegister(),
-                       getPointerTy());
+      DAG.getCopyFromReg(Chain, dl, QRI->getStackRegister(), getPointerTy());
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -720,7 +721,10 @@ SDValue HexagonTargetLowering::LowerINLINEASM(SDValue Op,
                 cast<RegisterSDNode>(Node->getOperand(i))->getReg();
 
               // Check it to be lr
-              if (Reg == TM.getRegisterInfo()->getRARegister()) {
+              const HexagonRegisterInfo *QRI =
+                  static_cast<const HexagonRegisterInfo *>(
+                      DAG.getTarget().getRegisterInfo());
+              if (Reg == QRI->getRARegister()) {
                 FuncInfo->setHasClobberLR(true);
                 break;
               }
@@ -812,9 +816,9 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
   // The Sub result contains the new stack start address, so it
   // must be placed in the stack pointer register.
-  SDValue CopyChain = DAG.getCopyToReg(Chain, dl,
-                                       TM.getRegisterInfo()->getStackRegister(),
-                                       Sub);
+  const HexagonRegisterInfo *QRI = static_cast<const HexagonRegisterInfo *>(
+      DAG.getTarget().getRegisterInfo());
+  SDValue CopyChain = DAG.getCopyToReg(Chain, dl, QRI->getStackRegister(), Sub);
 
   SDValue Ops[2] = { ArgAdjust, CopyChain };
   return DAG.getMergeValues(Ops, dl);
@@ -960,7 +964,7 @@ HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
@@ -986,7 +990,8 @@ HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 HexagonTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
-  const HexagonRegisterInfo  *TRI = TM.getRegisterInfo();
+  const HexagonRegisterInfo *TRI =
+      static_cast<const HexagonRegisterInfo *>(DAG.getTarget().getRegisterInfo());
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
 
@@ -1038,18 +1043,17 @@ HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 // TargetLowering Implementation
 //===----------------------------------------------------------------------===//
 
-HexagonTargetLowering::HexagonTargetLowering(
-    HexagonTargetMachine &targetmachine)
+HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
     : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
       TM(targetmachine) {
 
-  const HexagonRegisterInfo *QRI = TM.getRegisterInfo();
+  const HexagonSubtarget &Subtarget = TM.getSubtarget<HexagonSubtarget>();
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &Hexagon::IntRegsRegClass);
   addRegisterClass(MVT::i64, &Hexagon::DoubleRegsRegClass);
 
-  if (QRI->Subtarget.hasV5TOps()) {
+  if (Subtarget.hasV5TOps()) {
     addRegisterClass(MVT::f32, &Hexagon::IntRegsRegClass);
     addRegisterClass(MVT::f64, &Hexagon::DoubleRegsRegClass);
   }
@@ -1111,7 +1115,7 @@ HexagonTargetLowering::HexagonTargetLowering(
   setOperationAction(ISD::FSIN, MVT::f32, Expand);
   setOperationAction(ISD::FSIN, MVT::f64, Expand);
 
-  if (QRI->Subtarget.hasV5TOps()) {
+  if (Subtarget.hasV5TOps()) {
     // Hexagon V5 Support.
     setOperationAction(ISD::FADD, MVT::f32, Legal);
     setOperationAction(ISD::FADD, MVT::f64, Legal);
@@ -1330,7 +1334,7 @@ HexagonTargetLowering::HexagonTargetLowering(
   setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
-  if (QRI->Subtarget.hasV5TOps()) {
+  if (Subtarget.hasV5TOps()) {
 
     // We need to make the operation type of SELECT node to be Custom,
     // such that we don't go into the infinite loop of
@@ -1425,7 +1429,7 @@ HexagonTargetLowering::HexagonTargetLowering(
 
   setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
 
-  if (TM.getSubtargetImpl()->isSubtargetV2()) {
+  if (Subtarget.isSubtargetV2()) {
     setExceptionPointerRegister(Hexagon::R20);
     setExceptionSelectorRegister(Hexagon::R21);
   } else {
@@ -1449,8 +1453,9 @@ HexagonTargetLowering::HexagonTargetLowering(
   setMinFunctionAlignment(2);
 
   // Needed for DYNAMIC_STACKALLOC expansion.
-  unsigned StackRegister = TM.getRegisterInfo()->getStackRegister();
-  setStackPointerRegisterToSaveRestore(StackRegister);
+  const HexagonRegisterInfo *QRI =
+      static_cast<const HexagonRegisterInfo *>(TM.getRegisterInfo());
+  setStackPointerRegisterToSaveRestore(QRI->getStackRegister());
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -1618,8 +1623,7 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(const
 /// specified FP immediate natively. If false, the legalizer will
 /// materialize the FP immediate as a load from a constant pool.
 bool HexagonTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
-  const HexagonRegisterInfo* QRI = TM.getRegisterInfo();
-  return QRI->Subtarget.hasV5TOps();
+  return TM.getSubtarget<HexagonSubtarget>().hasV5TOps();
 }
 
 /// isLegalAddressingMode - Return true if the addressing mode represented by
