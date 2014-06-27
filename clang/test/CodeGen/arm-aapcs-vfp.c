@@ -139,3 +139,9 @@ void test_test_vfp_stack_gpr_split_bitfield(double a, double b, double c, double
 typedef struct { int x; long long y; } struct_int_long_long;
 // CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_4(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [3 x i32], { [2 x i64] } %k.coerce)
 void test_vfp_stack_gpr_split_4(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, struct_int_long_long k) {}
+
+// This very large struct (passed byval) uses up the GPRs, so no padding is needed
+typedef struct { int x[17]; } struct_seventeen_ints;
+typedef struct { int x[4]; } struct_four_ints;
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_5(%struct.struct_seventeen_ints* byval align 4 %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, double %j, { [4 x i32] } %k.coerce)
+void test_vfp_stack_gpr_split_5(struct_seventeen_ints a, double b, double c, double d, double e, double f, double g, double h, double i, double j, struct_four_ints k) {}
