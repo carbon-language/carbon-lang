@@ -2363,22 +2363,62 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
 
   case Intrinsic::nvvm_ldu_global_i:
   case Intrinsic::nvvm_ldu_global_f:
-  case Intrinsic::nvvm_ldu_global_p:
+  case Intrinsic::nvvm_ldu_global_p: {
 
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     if (Intrinsic == Intrinsic::nvvm_ldu_global_i)
       Info.memVT = getValueType(I.getType());
-    else if (Intrinsic == Intrinsic::nvvm_ldu_global_p)
-      Info.memVT = getValueType(I.getType());
+    else if(Intrinsic == Intrinsic::nvvm_ldu_global_p)
+      Info.memVT = getPointerTy();
     else
-      Info.memVT = MVT::f32;
+      Info.memVT = getValueType(I.getType());
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;
     Info.writeMem = false;
-    Info.align = 0;
+
+    // alignment is available as metadata.
+    // Grab it and set the alignment.
+    assert(I.hasMetadataOtherThanDebugLoc() && "Must have alignment metadata");
+    MDNode *AlignMD = I.getMetadata("align");
+    assert(AlignMD && "Must have a non-null MDNode");
+    assert(AlignMD->getNumOperands() == 1 && "Must have a single operand");
+    Value *Align = AlignMD->getOperand(0);
+    int64_t Alignment = cast<ConstantInt>(Align)->getZExtValue();
+    Info.align = Alignment;
+
     return true;
+  }
+  case Intrinsic::nvvm_ldg_global_i:
+  case Intrinsic::nvvm_ldg_global_f:
+  case Intrinsic::nvvm_ldg_global_p: {
+
+    Info.opc = ISD::INTRINSIC_W_CHAIN;
+    if (Intrinsic == Intrinsic::nvvm_ldg_global_i)
+      Info.memVT = getValueType(I.getType());
+    else if(Intrinsic == Intrinsic::nvvm_ldg_global_p)
+      Info.memVT = getPointerTy();
+    else
+      Info.memVT = getValueType(I.getType());
+    Info.ptrVal = I.getArgOperand(0);
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+
+    // alignment is available as metadata.
+    // Grab it and set the alignment.
+    assert(I.hasMetadataOtherThanDebugLoc() && "Must have alignment metadata");
+    MDNode *AlignMD = I.getMetadata("align");
+    assert(AlignMD && "Must have a non-null MDNode");
+    assert(AlignMD->getNumOperands() == 1 && "Must have a single operand");
+    Value *Align = AlignMD->getOperand(0);
+    int64_t Alignment = cast<ConstantInt>(Align)->getZExtValue();
+    Info.align = Alignment;
+
+    return true;
+  }
 
   case Intrinsic::nvvm_tex_1d_v4f32_i32:
   case Intrinsic::nvvm_tex_1d_v4f32_f32:

@@ -1374,67 +1374,33 @@ def INT_PTX_SREG_WARPSIZE : F_SREG<"mov.u32 \t$dst, WARP_SZ;", Int32Regs,
 // Support for ldu on sm_20 or later
 //-----------------------------------
 
-def ldu_i8 : PatFrag<(ops node:$ptr), (int_nvvm_ldu_global_i node:$ptr), [{
-  MemIntrinsicSDNode *M = cast<MemIntrinsicSDNode>(N);
-  return M->getMemoryVT() == MVT::i8;
-}]>;
-
 // Scalar
-// @TODO: Revisit this, Changed imemAny to imem
-multiclass LDU_G<string TyStr, NVPTXRegClass regclass, Intrinsic IntOp> {
+multiclass LDU_G<string TyStr, NVPTXRegClass regclass> {
   def areg: NVPTXInst<(outs regclass:$result), (ins Int32Regs:$src),
                !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp Int32Regs:$src))]>, Requires<[hasLDU]>;
+                      []>, Requires<[hasLDU]>;
   def areg64: NVPTXInst<(outs regclass:$result), (ins Int64Regs:$src),
                !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp Int64Regs:$src))]>, Requires<[hasLDU]>;
- def avar:  NVPTXInst<(outs regclass:$result), (ins imem:$src),
+                        []>, Requires<[hasLDU]>;
+ def avar:  NVPTXInst<(outs regclass:$result), (ins imemAny:$src),
                !strconcat("ldu.global.", TyStr),
-                [(set regclass:$result, (IntOp (Wrapper tglobaladdr:$src)))]>,
-                Requires<[hasLDU]>;
+                      []>, Requires<[hasLDU]>;
  def ari :  NVPTXInst<(outs regclass:$result), (ins MEMri:$src),
                !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri:$src))]>, Requires<[hasLDU]>;
+                      []>, Requires<[hasLDU]>;
  def ari64 :  NVPTXInst<(outs regclass:$result), (ins MEMri64:$src),
                !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDU]>;
+                        []>, Requires<[hasLDU]>;
 }
 
-multiclass LDU_G_NOINTRIN<string TyStr, NVPTXRegClass regclass, PatFrag IntOp> {
-  def areg: NVPTXInst<(outs regclass:$result), (ins Int32Regs:$src),
-               !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp Int32Regs:$src))]>, Requires<[hasLDU]>;
-  def areg64: NVPTXInst<(outs regclass:$result), (ins Int64Regs:$src),
-               !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp Int64Regs:$src))]>, Requires<[hasLDU]>;
- def avar:  NVPTXInst<(outs regclass:$result), (ins imem:$src),
-               !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp (Wrapper tglobaladdr:$src)))]>,
-         Requires<[hasLDU]>;
- def ari :  NVPTXInst<(outs regclass:$result), (ins MEMri:$src),
-               !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri:$src))]>, Requires<[hasLDU]>;
- def ari64 :  NVPTXInst<(outs regclass:$result), (ins MEMri64:$src),
-               !strconcat("ldu.global.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDU]>;
-}
-
-defm INT_PTX_LDU_GLOBAL_i8  : LDU_G_NOINTRIN<"u8 \t$result, [$src];", Int16Regs,
-                                             ldu_i8>;
-defm INT_PTX_LDU_GLOBAL_i16 : LDU_G<"u16 \t$result, [$src];", Int16Regs,
-int_nvvm_ldu_global_i>;
-defm INT_PTX_LDU_GLOBAL_i32 : LDU_G<"u32 \t$result, [$src];", Int32Regs,
-int_nvvm_ldu_global_i>;
-defm INT_PTX_LDU_GLOBAL_i64 : LDU_G<"u64 \t$result, [$src];", Int64Regs,
-int_nvvm_ldu_global_i>;
-defm INT_PTX_LDU_GLOBAL_f32 : LDU_G<"f32 \t$result, [$src];", Float32Regs,
-int_nvvm_ldu_global_f>;
-defm INT_PTX_LDU_GLOBAL_f64 : LDU_G<"f64 \t$result, [$src];", Float64Regs,
-int_nvvm_ldu_global_f>;
-defm INT_PTX_LDU_GLOBAL_p32 : LDU_G<"u32 \t$result, [$src];", Int32Regs,
-int_nvvm_ldu_global_p>;
-defm INT_PTX_LDU_GLOBAL_p64 : LDU_G<"u64 \t$result, [$src];", Int64Regs,
-int_nvvm_ldu_global_p>;
+defm INT_PTX_LDU_GLOBAL_i8  : LDU_G<"u8 \t$result, [$src];", Int16Regs>;
+defm INT_PTX_LDU_GLOBAL_i16 : LDU_G<"u16 \t$result, [$src];", Int16Regs>;
+defm INT_PTX_LDU_GLOBAL_i32 : LDU_G<"u32 \t$result, [$src];", Int32Regs>;
+defm INT_PTX_LDU_GLOBAL_i64 : LDU_G<"u64 \t$result, [$src];", Int64Regs>;
+defm INT_PTX_LDU_GLOBAL_f32 : LDU_G<"f32 \t$result, [$src];", Float32Regs>;
+defm INT_PTX_LDU_GLOBAL_f64 : LDU_G<"f64 \t$result, [$src];", Float64Regs>;
+defm INT_PTX_LDU_GLOBAL_p32 : LDU_G<"u32 \t$result, [$src];", Int32Regs>;
+defm INT_PTX_LDU_GLOBAL_p64 : LDU_G<"u64 \t$result, [$src];", Int64Regs>;
 
 // vector
 
@@ -1504,65 +1470,40 @@ defm INT_PTX_LDU_G_v4f32_ELE
 // Support for ldg on sm_35 or later 
 //-----------------------------------
 
-def ldg_i8 : PatFrag<(ops node:$ptr), (int_nvvm_ldg_global_i node:$ptr), [{
-  MemIntrinsicSDNode *M = cast<MemIntrinsicSDNode>(N);
-  return M->getMemoryVT() == MVT::i8;
-}]>;
-
-multiclass LDG_G<string TyStr, NVPTXRegClass regclass, Intrinsic IntOp> {
+multiclass LDG_G<string TyStr, NVPTXRegClass regclass> {
   def areg: NVPTXInst<(outs regclass:$result), (ins Int32Regs:$src),
                !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp Int32Regs:$src))]>, Requires<[hasLDG]>;
+                      []>, Requires<[hasLDG]>;
   def areg64: NVPTXInst<(outs regclass:$result), (ins Int64Regs:$src),
                !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp Int64Regs:$src))]>, Requires<[hasLDG]>;
- def avar:  NVPTXInst<(outs regclass:$result), (ins imem:$src),
+                        []>, Requires<[hasLDG]>;
+ def avar:  NVPTXInst<(outs regclass:$result), (ins imemAny:$src),
                !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp (Wrapper tglobaladdr:$src)))]>,
-         Requires<[hasLDG]>;
+                      []>, Requires<[hasLDG]>;
  def ari :  NVPTXInst<(outs regclass:$result), (ins MEMri:$src),
                !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri:$src))]>, Requires<[hasLDG]>;
+                      []>, Requires<[hasLDG]>;
  def ari64 :  NVPTXInst<(outs regclass:$result), (ins MEMri64:$src),
                !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDG]>;
-}
-
-multiclass LDG_G_NOINTRIN<string TyStr, NVPTXRegClass regclass, PatFrag IntOp> {
-  def areg: NVPTXInst<(outs regclass:$result), (ins Int32Regs:$src),
-               !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp Int32Regs:$src))]>, Requires<[hasLDG]>;
-  def areg64: NVPTXInst<(outs regclass:$result), (ins Int64Regs:$src),
-               !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp Int64Regs:$src))]>, Requires<[hasLDG]>;
- def avar:  NVPTXInst<(outs regclass:$result), (ins imem:$src),
-               !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp (Wrapper tglobaladdr:$src)))]>,
-        Requires<[hasLDG]>;
- def ari :  NVPTXInst<(outs regclass:$result), (ins MEMri:$src),
-               !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri:$src))]>, Requires<[hasLDG]>;
- def ari64 :  NVPTXInst<(outs regclass:$result), (ins MEMri64:$src),
-               !strconcat("ld.global.nc.", TyStr),
-         [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDG]>;
+                        []>, Requires<[hasLDG]>;
 }
 
 defm INT_PTX_LDG_GLOBAL_i8
-  : LDG_G_NOINTRIN<"u8 \t$result, [$src];",  Int16Regs, ldg_i8>;
+  : LDG_G<"u8 \t$result, [$src];", Int16Regs>;
 defm INT_PTX_LDG_GLOBAL_i16
-  : LDG_G<"u16 \t$result, [$src];", Int16Regs,   int_nvvm_ldg_global_i>;
+  : LDG_G<"u16 \t$result, [$src];", Int16Regs>;
 defm INT_PTX_LDG_GLOBAL_i32
-  : LDG_G<"u32 \t$result, [$src];", Int32Regs,   int_nvvm_ldg_global_i>;
+  : LDG_G<"u32 \t$result, [$src];", Int32Regs>;
 defm INT_PTX_LDG_GLOBAL_i64
-  : LDG_G<"u64 \t$result, [$src];", Int64Regs,   int_nvvm_ldg_global_i>;
+  : LDG_G<"u64 \t$result, [$src];", Int64Regs>;
 defm INT_PTX_LDG_GLOBAL_f32
-  : LDG_G<"f32 \t$result, [$src];", Float32Regs, int_nvvm_ldg_global_f>;
+  : LDG_G<"f32 \t$result, [$src];", Float32Regs>;
 defm INT_PTX_LDG_GLOBAL_f64
-  : LDG_G<"f64 \t$result, [$src];", Float64Regs, int_nvvm_ldg_global_f>;
+  : LDG_G<"f64 \t$result, [$src];", Float64Regs>;
 defm INT_PTX_LDG_GLOBAL_p32
-  : LDG_G<"u32 \t$result, [$src];", Int32Regs,   int_nvvm_ldg_global_p>;
+  : LDG_G<"u32 \t$result, [$src];", Int32Regs>;
 defm INT_PTX_LDG_GLOBAL_p64
-  : LDG_G<"u64 \t$result, [$src];", Int64Regs,   int_nvvm_ldg_global_p>;
+  : LDG_G<"u64 \t$result, [$src];", Int64Regs>;
 
 // vector
 

@@ -2,13 +2,15 @@
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-n16:32:64"
 
-declare i8 @llvm.nvvm.ldu.global.i.i8(i8*)
+declare i8 @llvm.nvvm.ldu.global.i.i8.p0i8(i8*)
 
 define i8 @foo(i8* %a) {
 ; Ensure we properly truncate off the high-order 24 bits
 ; CHECK:        ldu.global.u8
 ; CHECK:        cvt.u32.u16
 ; CHECK:        and.b32         %r{{[0-9]+}}, %r{{[0-9]+}}, 255
-  %val = tail call i8 @llvm.nvvm.ldu.global.i.i8(i8* %a)
+  %val = tail call i8 @llvm.nvvm.ldu.global.i.i8.p0i8(i8* %a), !align !0
   ret i8 %val
 }
+
+!0 = metadata !{i32 4}
