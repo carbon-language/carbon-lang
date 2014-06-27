@@ -19061,6 +19061,79 @@ static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
   }
 }
 
+/// \brief Search for a combinable shuffle across a chain ending in pshufd.
+///
+/// We walk up the chain and look for a combinable shuffle, skipping over
+/// shuffles that we could hoist this shuffle's transformation past without
+/// altering anything.
+static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
+                                         SelectionDAG &DAG,
+                                         TargetLowering::DAGCombinerInfo &DCI) {
+  assert(N.getOpcode() == X86ISD::PSHUFD &&
+         "Called with something other than an x86 128-bit half shuffle!");
+  SDLoc DL(N);
+
+  // Walk up a single-use chain looking for a combinable shuffle.
+  SDValue V = N.getOperand(0);
+  for (; V.hasOneUse(); V = V.getOperand(0)) {
+    switch (V.getOpcode()) {
+    default:
+      return false; // Nothing combined!
+
+    case ISD::BITCAST:
+      // Skip bitcasts as we always know the type for the target specific
+      // instructions.
+      continue;
+
+    case X86ISD::PSHUFD:
+      // Found another dword shuffle.
+      break;
+
+    case X86ISD::PSHUFLW:
+      // Check that the low words (being shuffled) are the identity in the
+      // dword shuffle, and the high words are self-contained.
+      if (Mask[0] != 0 || Mask[1] != 1 ||
+          !(Mask[2] >= 2 && Mask[2] < 4 && Mask[3] >= 2 && Mask[3] < 4))
+        return false;
+
+      continue;
+
+    case X86ISD::PSHUFHW:
+      // Check that the high words (being shuffled) are the identity in the
+      // dword shuffle, and the low words are self-contained.
+      if (Mask[2] != 2 || Mask[3] != 3 ||
+          !(Mask[0] >= 0 && Mask[0] < 2 && Mask[1] >= 0 && Mask[1] < 2))
+        return false;
+
+      continue;
+    }
+    // Break out of the loop if we break out of the switch.
+    break;
+  }
+
+  if (!V.hasOneUse())
+    // We fell out of the loop without finding a viable combining instruction.
+    return false;
+
+  // Record the old value to use in RAUW-ing.
+  SDValue Old = V;
+
+  // Merge this node's mask and our incoming mask.
+  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
+  for (int &M : Mask)
+    M = VMask[M];
+  V = DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V.getOperand(0),
+                  getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+  // Replace N with its operand as we're going to combine that shuffle away.
+  DAG.ReplaceAllUsesWith(N, N.getOperand(0));
+
+  // Replace the combinable shuffle with the combined one, updating all users
+  // so that we re-evaluate the chain here.
+  DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
+  return true;
+}
+
 /// \brief Search for a combinable shuffle across a chain ending in pshuflw or pshufhw.
 ///
 /// We walk up the chain, skipping shuffles of the other half and looking
@@ -19194,18 +19267,11 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
       return DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
     }
 
-    // Fallthrough
+    break;
+
   case X86ISD::PSHUFD:
-    if (V.getOpcode() == N.getOpcode()) {
-      // If we have two sequential shuffles of the same kind we can always fold
-      // them. Even if there are multiple uses, this is beneficial because it
-      // breaks a dependency.
-      SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
-      for (int &M : Mask)
-        M = VMask[M];
-      return DAG.getNode(N.getOpcode(), DL, VT, V.getOperand(0),
-                         getV4X86ShuffleImm8ForMask(Mask, DAG));
-    }
+    if (combineRedundantDWordShuffle(N, Mask, DAG, DCI))
+      return SDValue(); // We combined away this shuffle.
 
     break;
   }

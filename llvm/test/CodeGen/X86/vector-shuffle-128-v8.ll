@@ -157,9 +157,8 @@ define <8 x i16> @shuffle_v8i16_26401375(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,1,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,7,5,4,6]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,2,1]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,3,1,2]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,3,2,0,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,3,2]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 6, i32 4, i32 0, i32 1, i32 3, i32 7, i32 5>
   ret <8 x i16> %shuffle
