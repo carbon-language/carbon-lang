@@ -40,9 +40,9 @@ static bool isHighReg(unsigned int Reg) {
 // Pin the vtable to this file.
 void SystemZInstrInfo::anchor() {}
 
-SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
+SystemZInstrInfo::SystemZInstrInfo(SystemZSubtarget &sti)
   : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKDOWN, SystemZ::ADJCALLSTACKUP),
-    RI(tm), TM(tm) {
+    RI(), STI(sti) {
 }
 
 // MI is a 128-bit load or store.  Split it into two 64-bit loads or stores,
@@ -488,7 +488,7 @@ SystemZInstrInfo::optimizeCompareInstr(MachineInstr *Compare,
   bool IsLogical = (Compare->getDesc().TSFlags & SystemZII::IsLogical) != 0;
   if (Value == 0 &&
       !IsLogical &&
-      removeIPMBasedCompare(Compare, SrcReg, MRI, TM.getRegisterInfo()))
+      removeIPMBasedCompare(Compare, SrcReg, MRI, &RI))
     return true;
   return false;
 }
@@ -505,7 +505,7 @@ static unsigned getConditionalMove(unsigned Opcode) {
 
 bool SystemZInstrInfo::isPredicable(MachineInstr *MI) const {
   unsigned Opcode = MI->getOpcode();
-  if (TM.getSubtargetImpl()->hasLoadStoreOnCond() &&
+  if (STI.hasLoadStoreOnCond() &&
       getConditionalMove(Opcode))
     return true;
   return false;
@@ -537,7 +537,7 @@ PredicateInstruction(MachineInstr *MI,
   unsigned CCMask = Pred[1].getImm();
   assert(CCMask > 0 && CCMask < 15 && "Invalid predicate");
   unsigned Opcode = MI->getOpcode();
-  if (TM.getSubtargetImpl()->hasLoadStoreOnCond()) {
+  if (STI.hasLoadStoreOnCond()) {
     if (unsigned CondOpcode = getConditionalMove(Opcode)) {
       MI->setDesc(get(CondOpcode));
       MachineInstrBuilder(*MI->getParent()->getParent(), MI)
@@ -685,7 +685,7 @@ SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   // We prefer to keep the two-operand form where possible both
   // because it tends to be shorter and because some instructions
   // have memory forms that can be used during spilling.
-  if (TM.getSubtargetImpl()->hasDistinctOps()) {
+  if (STI.hasDistinctOps()) {
     MachineOperand &Dest = MI->getOperand(0);
     MachineOperand &Src = MI->getOperand(1);
     unsigned DestReg = Dest.getReg();

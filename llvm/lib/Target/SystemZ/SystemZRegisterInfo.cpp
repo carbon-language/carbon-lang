@@ -7,18 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SystemZInstrInfo.h"
 #include "SystemZRegisterInfo.h"
-#include "SystemZTargetMachine.h"
+#include "SystemZSubtarget.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 using namespace llvm;
 
 #define GET_REGINFO_TARGET_DESC
 #include "SystemZGenRegisterInfo.inc"
 
-SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm)
-  : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm) {}
+SystemZRegisterInfo::SystemZRegisterInfo()
+    : SystemZGenRegisterInfo(SystemZ::R14D) {}
 
 const MCPhysReg*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -63,7 +65,8 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
-  auto *TII = static_cast<const SystemZInstrInfo*>(TM.getInstrInfo());
+  auto *TII =
+      static_cast<const SystemZInstrInfo *>(MF.getTarget().getInstrInfo());
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc DL = MI->getDebugLoc();
 

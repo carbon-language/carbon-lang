@@ -29,15 +29,9 @@ inline unsigned odd128(bool Is32bit) {
 }
 } // end namespace SystemZ
 
-class SystemZSubtarget;
-class SystemZInstrInfo;
-
 struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
-private:
-  SystemZTargetMachine &TM;
-
 public:
-  SystemZRegisterInfo(SystemZTargetMachine &tm);
+  SystemZRegisterInfo();
 
   // Override TargetRegisterInfo.h.
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
