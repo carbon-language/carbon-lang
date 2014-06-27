@@ -1,4 +1,5 @@
 ; RUN: not llc -verify-machineinstrs -march=r600 -mcpu=SI %s -o /dev/null 2>&1 | FileCheck %s
+; RUN: rm %S/private-memory-broken.s
 
 ; Make sure promote alloca pass doesn't crash
 
