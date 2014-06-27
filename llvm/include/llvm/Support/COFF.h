@@ -553,7 +553,8 @@ namespace COFF {
     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE = 0x0040,
     /// Code integrity checks are enforced.
     IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY = 0x0080,
-    IMAGE_DLL_CHARACTERISTICS_NX_COMPAT = 0x0100, ///< Image is NX compatible.
+    ///< Image is NX compatible.
+    IMAGE_DLL_CHARACTERISTICS_NX_COMPAT = 0x0100,
     /// Isolation aware, but do not isolate the image.
     IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION = 0x0200,
     /// Does not use structured exception handling (SEH). No SEH handler may be
@@ -561,7 +562,8 @@ namespace COFF {
     IMAGE_DLL_CHARACTERISTICS_NO_SEH = 0x0400,
     /// Do not bind the image.
     IMAGE_DLL_CHARACTERISTICS_NO_BIND = 0x0800,
-    IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER = 0x2000, ///< A WDM driver.
+    ///< A WDM driver.
+    IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER = 0x2000,
     /// Terminal Server aware.
     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
   };
