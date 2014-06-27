@@ -1305,6 +1305,10 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
 // external global variable with init     -> .visible
 // external without init                  -> .extern
 // appending                              -> not allowed, assert.
+// for any linkage other than
+// internal, private, linker_private,
+// linker_private_weak, linker_private_weak_def_auto,
+// we emit                                -> .weak.
 
 void NVPTXAsmPrinter::emitLinkageDirective(const GlobalValue *V,
                                            raw_ostream &O) {
@@ -1330,6 +1334,9 @@ void NVPTXAsmPrinter::emitLinkageDirective(const GlobalValue *V,
         msg.append(V->getName().str());
       msg.append("has unsupported appending linkage type");
       llvm_unreachable(msg.c_str());
+    } else if (!V->hasInternalLinkage() &&
+               !V->hasPrivateLinkage()) {
+      O << ".weak ";
     }
   }
 }
