@@ -4,16 +4,16 @@
 // We strip differing '.file' directives before comparing.
 
 // Reference output:
-// RUN: %clang_cc1 -S -o - %s | grep -v '\t\.file' > %t.s
+// RUN: %clang_cc1 -S -o - %s | grep -v '\.file' > %t.s
 
 // LLVM bitcode:
 // RUN: %clang_cc1 -emit-llvm-bc -o %t.bc %s
-// RUN: %clang_cc1 -S -o - %t.bc | grep -v '\t\.file' > %t.bc.s
+// RUN: %clang_cc1 -S -o - %t.bc | grep -v '\.file' > %t.bc.s
 // RUN: diff %t.s %t.bc.s
 
 // LLVM IR source code:
 // RUN: %clang_cc1 -emit-llvm -o %t.ll %s
-// RUN: %clang_cc1 -S -o - %t.ll | grep -v '\t\.file' > %t.ll.s
+// RUN: %clang_cc1 -S -o - %t.ll | grep -v '\.file' > %t.ll.s
 // RUN: diff %t.s %t.ll.s
 
 int f() { return 0; }
