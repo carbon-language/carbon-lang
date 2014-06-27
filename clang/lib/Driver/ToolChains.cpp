@@ -2102,7 +2102,7 @@ Tool *Generic_GCC::buildAssembler() const {
 }
 
 Tool *Generic_GCC::buildLinker() const {
-  return new tools::gcc::Link(*this);
+  return new tools::gnutools::Link(*this);
 }
 
 void Generic_GCC::printVerboseInfo(raw_ostream &OS) const {
