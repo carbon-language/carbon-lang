@@ -7712,19 +7712,19 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
   }
-
-  SDValue LoV1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                             DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V1,
-                                         DAG.getUNDEF(MVT::v8i16)));
-  SDValue HiV1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                             DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V1,
-                                         DAG.getUNDEF(MVT::v8i16)));
-  SDValue LoV2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                             DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V2,
-                                         DAG.getUNDEF(MVT::v8i16)));
-  SDValue HiV2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                             DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V2,
-                                         DAG.getUNDEF(MVT::v8i16)));
+  SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
+  SDValue LoV1 =
+      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                  DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V1, Zero));
+  SDValue HiV1 =
+      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                  DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V1, Zero));
+  SDValue LoV2 =
+      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                  DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V2, Zero));
+  SDValue HiV2 =
+      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                  DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V2, Zero));
 
   int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
   int V1HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
