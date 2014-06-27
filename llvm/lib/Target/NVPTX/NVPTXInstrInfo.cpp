@@ -29,8 +29,8 @@ using namespace llvm;
 void NVPTXInstrInfo::anchor() {}
 
 // FIXME: Add the subtarget support on this constructor.
-NVPTXInstrInfo::NVPTXInstrInfo(NVPTXTargetMachine &tm)
-    : NVPTXGenInstrInfo(), TM(tm), RegInfo(*TM.getSubtargetImpl()) {}
+NVPTXInstrInfo::NVPTXInstrInfo(NVPTXSubtarget &STI)
+    : NVPTXGenInstrInfo(), RegInfo(STI) {}
 
 void NVPTXInstrInfo::copyPhysReg(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator I, DebugLoc DL,

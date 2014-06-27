@@ -24,11 +24,10 @@
 namespace llvm {
 
 class NVPTXInstrInfo : public NVPTXGenInstrInfo {
-  NVPTXTargetMachine &TM;
   const NVPTXRegisterInfo RegInfo;
   virtual void anchor();
 public:
-  explicit NVPTXInstrInfo(NVPTXTargetMachine &TM);
+  explicit NVPTXInstrInfo(NVPTXSubtarget &STI);
 
   const NVPTXRegisterInfo &getRegisterInfo() const { return RegInfo; }
 
