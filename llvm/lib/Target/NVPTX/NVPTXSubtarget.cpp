@@ -37,18 +37,12 @@ NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
   else
     drvInterface = NVPTX::CUDA;
 
-  // Provide the default CPU if none
-  std::string defCPU = "sm_20";
-
-  ParseSubtargetFeatures((CPU.empty() ? defCPU : CPU), FS);
-
-  // Get the TargetName from the FS if available
-  if (FS.empty() && CPU.empty())
-    TargetName = defCPU;
-  else if (!CPU.empty())
-    TargetName = CPU;
-  else
+  // Provide the default CPU if we don't have one.
+  if (CPU.empty() && FS.size())
     llvm_unreachable("we are not using FeatureStr");
+  TargetName = CPU.empty() ? "sm_20" : CPU;
+
+  ParseSubtargetFeatures(TargetName, FS);
 
   // We default to PTX 3.1, but we cannot just default to it in the initializer
   // since the attribute parser checks if the given option is >= the default.
