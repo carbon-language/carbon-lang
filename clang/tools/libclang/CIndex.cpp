@@ -43,6 +43,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/Program.h"
@@ -2591,9 +2592,6 @@ buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
 // Misc. API hooks.
 //===----------------------------------------------------------------------===//               
 
-static llvm::sys::Mutex EnableMultithreadingMutex;
-static bool EnabledMultithreading;
-
 static void fatal_error_handler(void *user_data, const std::string& reason,
                                 bool gen_crash_diag) {
   // Write the result out to stderr avoiding errs() because raw_ostreams can
@@ -2610,15 +2608,7 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   if (!getenv("LIBCLANG_DISABLE_CRASH_RECOVERY"))
     llvm::CrashRecoveryContext::Enable();
 
-  // Enable support for multithreading in LLVM.
-  {
-    llvm::sys::ScopedLock L(EnableMultithreadingMutex);
-    if (!EnabledMultithreading) {
-      llvm::install_fatal_error_handler(fatal_error_handler, nullptr);
-      llvm::llvm_start_multithreaded();
-      EnabledMultithreading = true;
-    }
-  }
+  llvm::install_fatal_error_handler(fatal_error_handler, nullptr);
 
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
@@ -6999,10 +6989,12 @@ Logger &cxindex::Logger::operator<<(const llvm::format_object_base &Fmt) {
   return *this;
 }
 
+static llvm::ManagedStatic<llvm::sys::Mutex> LoggingMutex;
+
 cxindex::Logger::~Logger() {
   LogOS.flush();
 
-  llvm::sys::ScopedLock L(EnableMultithreadingMutex);
+  llvm::sys::ScopedLock L(*LoggingMutex);
 
   static llvm::TimeRecord sBeginTR = llvm::TimeRecord::getCurrentTime();
 
