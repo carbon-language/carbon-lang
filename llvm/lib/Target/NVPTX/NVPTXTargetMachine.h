@@ -59,11 +59,11 @@ public:
   const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   const NVPTXRegisterInfo *getRegisterInfo() const override {
-    return &(InstrInfo.getRegisterInfo());
+    return &InstrInfo.getRegisterInfo();
   }
 
-  NVPTXTargetLowering *getTargetLowering() const override {
-    return const_cast<NVPTXTargetLowering *>(&TLInfo);
+  const NVPTXTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
   }
 
   const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
