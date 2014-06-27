@@ -145,6 +145,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->wrap_signals, "wrap_signals", "");
   ParseFlag(str, &f->print_stats, "print_stats", "");
   ParseFlag(str, &f->atexit, "atexit", "");
+  ParseFlag(str, &f->store_context_size, "store_context_size", "");
+  if (f->store_context_size < 1) f->store_context_size = 1;
 
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
@@ -177,6 +179,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->print_stats = false;
   f->atexit = false;
   f->halt_on_error = !&__msan_keep_going;
+  f->store_context_size = 20;
 
   // Override from user-specified string.
   if (__msan_default_options)

@@ -30,6 +30,7 @@ struct Flags {
   bool print_stats;
   bool halt_on_error;
   bool atexit;
+  int store_context_size; // like malloc_context_size, but for uninit stores
 };
 
 Flags *flags();
