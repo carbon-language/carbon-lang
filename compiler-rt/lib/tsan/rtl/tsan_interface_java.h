@@ -52,6 +52,11 @@ void __tsan_java_free(jptr ptr, jptr size) INTERFACE_ATTRIBUTE;
 // Can be aggregated for several objects (preferably).
 // The ranges must not overlap.
 void __tsan_java_move(jptr src, jptr dst, jptr size) INTERFACE_ATTRIBUTE;
+// This function must be called on the finalizer thread
+// before executing a batch of finalizers.
+// It ensures necessary synchronization between
+// java object creation and finalization.
+void __tsan_java_finalize() INTERFACE_ATTRIBUTE;
 
 // Mutex lock.
 // Addr is any unique address associated with the mutex.

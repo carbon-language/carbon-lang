@@ -142,6 +142,12 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
   }
 }
 
+void __tsan_java_finalize() {
+  SCOPED_JAVA_FUNC(__tsan_java_finalize);
+  DPrintf("#%d: java_mutex_finalize()\n", thr->tid);
+  AcquireGlobal(thr, 0);
+}
+
 void __tsan_java_mutex_lock(jptr addr) {
   SCOPED_JAVA_FUNC(__tsan_java_mutex_lock);
   DPrintf("#%d: java_mutex_lock(%p)\n", thr->tid, addr);
