@@ -25,12 +25,15 @@ using namespace llvm;
 
 void MSP430Subtarget::anchor() { }
 
-MSP430Subtarget::MSP430Subtarget(const std::string &TT,
-                                 const std::string &CPU,
-                                 const std::string &FS) :
-  MSP430GenSubtargetInfo(TT, CPU, FS) {
-  std::string CPUName = "generic";
-
-  // Parse features string.
-  ParseSubtargetFeatures(CPUName, FS);
+MSP430Subtarget &MSP430Subtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
+  ParseSubtargetFeatures("generic", FS);
+  return *this;
 }
+
+MSP430Subtarget::MSP430Subtarget(const std::string &TT, const std::string &CPU,
+                                 const std::string &FS, const TargetMachine &TM)
+    : MSP430GenSubtargetInfo(TT, CPU, FS),
+      // FIXME: Check DataLayout string.
+      DL("e-m:e-p:16:16-i32:16:32-n8:16"), FrameLowering(),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
+      TSInfo(DL) {}

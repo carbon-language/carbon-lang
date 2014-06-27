@@ -24,19 +24,13 @@ extern "C" void LLVMInitializeMSP430Target() {
   RegisterTargetMachine<MSP430TargetMachine> X(TheMSP430Target);
 }
 
-MSP430TargetMachine::MSP430TargetMachine(const Target &T,
-                                         StringRef TT,
-                                         StringRef CPU,
-                                         StringRef FS,
+MSP430TargetMachine::MSP430TargetMachine(const Target &T, StringRef TT,
+                                         StringRef CPU, StringRef FS,
                                          const TargetOptions &Options,
                                          Reloc::Model RM, CodeModel::Model CM,
                                          CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS),
-    // FIXME: Check DataLayout string.
-    DL("e-m:e-p:16:16-i32:16:32-n8:16"),
-    InstrInfo(Subtarget), TLInfo(*this), TSInfo(DL),
-    FrameLowering() {
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 
