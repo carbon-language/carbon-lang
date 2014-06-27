@@ -470,8 +470,8 @@ class GdbRemoteEntry(GdbRemoteEntryBase):
             # Handle captures.
             for group_index, var_name in self.capture.items():
                 capture_text = match.group(group_index)
-                if not capture_text:
-                    raise Exception("No content for group index {}".format(group_index))
+                # It is okay for capture text to be None - which it will be if it is a group that can match nothing.
+                # The user must be okay with it since the regex itself matched above.
                 context[var_name] = capture_text
 
         if self.expect_captures:

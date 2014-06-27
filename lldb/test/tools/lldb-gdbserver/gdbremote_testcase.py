@@ -6,6 +6,7 @@ import errno
 import unittest2
 import pexpect
 import platform
+import re
 import sets
 import signal
 import socket
@@ -852,3 +853,174 @@ class GdbRemoteTestCaseBase(TestBase):
             values[reg_index] = unpack_register_hex_unsigned(endian, p_response)
             
         return values
+
+    def add_vCont_query_packets(self):
+        self.test_sequence.add_log_lines([
+            "read packet: $vCont?#00",
+            {"direction":"send", "regex":r"^\$(vCont)?(.*)#[0-9a-fA-F]{2}$", "capture":{2:"vCont_query_response" } },
+            ], True)
+
+    def parse_vCont_query_response(self, context):
+        self.assertIsNotNone(context)
+        vCont_query_response = context.get("vCont_query_response")
+
+        # Handle case of no vCont support at all - in which case the capture group will be none or zero length.
+        if not vCont_query_response or len(vCont_query_response) == 0:
+            return {}
+
+        return {key:1 for key in vCont_query_response.split(";") if key and len(key) > 0}
+
+    def count_single_steps_until_true(self, thread_id, predicate, args, max_step_count=100, use_Hc_packet=True, step_instruction="s"):
+        """Used by single step test that appears in a few different contexts."""
+        single_step_count = 0
+
+        while single_step_count < max_step_count:
+            self.assertIsNotNone(thread_id)
+
+            # Build the packet for the single step instruction.  We replace {thread}, if present, with the thread_id.
+            step_packet = "read packet: ${}#00".format(re.sub(r"{thread}", "{:x}".format(thread_id), step_instruction))
+            # print "\nstep_packet created: {}\n".format(step_packet)
+
+            # Single step.
+            self.reset_test_sequence()
+            if use_Hc_packet:
+                self.test_sequence.add_log_lines(
+                    [# Set the continue thread.
+                     "read packet: $Hc{0:x}#00".format(thread_id),
+                     "send packet: $OK#00",
+                     ], True)
+            self.test_sequence.add_log_lines([
+                 # Single step.
+                 step_packet,
+                 # "read packet: $vCont;s:{0:x}#00".format(thread_id),
+                 # Expect a breakpoint stop report.
+                 {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} },
+                 ], True)
+            context = self.expect_gdbremote_sequence()
+            self.assertIsNotNone(context)
+            self.assertIsNotNone(context.get("stop_signo"))
+            self.assertEquals(int(context.get("stop_signo"), 16), signal.SIGTRAP)
+
+            single_step_count += 1
+
+            # See if the predicate is true.  If so, we're done.
+            if predicate(args):
+                return (True, single_step_count)
+
+        # The predicate didn't return true within the runaway step count.
+        return (False, single_step_count)
+
+    def g_c1_c2_contents_are(self, args):
+        """Used by single step test that appears in a few different contexts."""
+        g_c1_address = args["g_c1_address"]
+        g_c2_address = args["g_c2_address"]
+        expected_g_c1 = args["expected_g_c1"]
+        expected_g_c2 = args["expected_g_c2"]
+
+        # Read g_c1 and g_c2 contents.
+        self.reset_test_sequence()
+        self.test_sequence.add_log_lines(
+            ["read packet: $m{0:x},{1:x}#00".format(g_c1_address, 1),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"g_c1_contents"} },
+             "read packet: $m{0:x},{1:x}#00".format(g_c2_address, 1),
+             {"direction":"send", "regex":r"^\$(.+)#[0-9a-fA-F]{2}$", "capture":{1:"g_c2_contents"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Check if what we read from inferior memory is what we are expecting.
+        self.assertIsNotNone(context.get("g_c1_contents"))
+        self.assertIsNotNone(context.get("g_c2_contents"))
+
+        return (context.get("g_c1_contents").decode("hex") == expected_g_c1) and (context.get("g_c2_contents").decode("hex") == expected_g_c2)
+
+    def single_step_only_steps_one_instruction(self, use_Hc_packet=True, step_instruction="s"):
+        """Used by single step test that appears in a few different contexts."""
+        # Start up the inferior.
+        procs = self.prep_debug_monitor_and_inferior(
+            inferior_args=["get-code-address-hex:swap_chars", "get-data-address-hex:g_c1", "get-data-address-hex:g_c2", "sleep:1", "call-function:swap_chars", "sleep:5"])
+
+        # Run the process
+        self.test_sequence.add_log_lines(
+            [# Start running after initial stop.
+             "read packet: $c#00",
+             # Match output line that prints the memory address of the function call entry point.
+             # Note we require launch-only testing so we can get inferior otuput.
+             { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\n$", 
+               "capture":{ 1:"function_address", 2:"g_c1_address", 3:"g_c2_address"} },
+             # Now stop the inferior.
+             "read packet: {}".format(chr(03)),
+             # And wait for the stop notification.
+             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
+            True)
+
+        # Run the packet stream.
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Grab the main thread id.
+        self.assertIsNotNone(context.get("stop_thread_id"))
+        main_thread_id = int(context.get("stop_thread_id"), 16)
+
+        # Grab the function address.
+        self.assertIsNotNone(context.get("function_address"))
+        function_address = int(context.get("function_address"), 16)
+
+        # Grab the data addresses.
+        self.assertIsNotNone(context.get("g_c1_address"))
+        g_c1_address = int(context.get("g_c1_address"), 16)
+
+        self.assertIsNotNone(context.get("g_c2_address"))
+        g_c2_address = int(context.get("g_c2_address"), 16)
+
+        # Set a breakpoint at the given address.
+        # Note this might need to be switched per platform (ARM, mips, etc.).
+        BREAKPOINT_KIND = 1
+        self.reset_test_sequence()
+        self.add_set_breakpoint_packets(function_address, do_continue=True, breakpoint_kind=BREAKPOINT_KIND)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Remove the breakpoint.
+        self.reset_test_sequence()
+        self.add_remove_breakpoint_packets(function_address, breakpoint_kind=BREAKPOINT_KIND)
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Verify g_c1 and g_c2 match expected initial state.
+        args = {}
+        args["g_c1_address"] = g_c1_address
+        args["g_c2_address"] = g_c2_address
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "1"
+
+        self.assertTrue(self.g_c1_c2_contents_are(args))
+
+        # Verify we take only a small number of steps to hit the first state.  Might need to work through function entry prologue code.
+        args["expected_g_c1"] = "1"
+        args["expected_g_c2"] = "1"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=25, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
+        self.assertTrue(state_reached)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "1"
+        args["expected_g_c2"] = "0"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "0"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
+
+        # Verify we hit the next state.
+        args["expected_g_c1"] = "0"
+        args["expected_g_c2"] = "1"
+        (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
+        self.assertTrue(state_reached)
+        self.assertEquals(step_count, 1)
