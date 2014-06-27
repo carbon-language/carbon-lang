@@ -1687,8 +1687,14 @@ bool SchedBoundary::checkHazard(SUnit *SU) {
     for (TargetSchedModel::ProcResIter
            PI = SchedModel->getWriteProcResBegin(SC),
            PE = SchedModel->getWriteProcResEnd(SC); PI != PE; ++PI) {
-      if (getNextResourceCycle(PI->ProcResourceIdx, PI->Cycles) > CurrCycle)
+      unsigned NRCycle = getNextResourceCycle(PI->ProcResourceIdx, PI->Cycles);
+      if (NRCycle > CurrCycle) {
+        MaxObservedStall = std::max(NRCycle - CurrCycle, MaxObservedStall);
+        DEBUG(dbgs() << "  SU(" << SU->NodeNum << ") "
+              << SchedModel->getResourceName(PI->ProcResourceIdx)
+              << "=" << NRCycle << "c\n");
         return true;
+      }
     }
   }
   return false;
