@@ -9,6 +9,13 @@
 
 #include "clang-c/Index.h"
 #include "gtest/gtest.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
+#include <fstream>
+#include <set>
+#define DEBUG_TYPE "libclang-test"
 
 TEST(libclang, clang_parseTranslationUnit2_InvalidArgs) {
   EXPECT_EQ(CXError_InvalidArguments,
@@ -330,4 +337,86 @@ TEST(libclang, ModuleMapDescriptor) {
   EXPECT_STREQ(Contents, BufStr.c_str());
   free(BufPtr);
   clang_ModuleMapDescriptor_dispose(MMD);
+}
+
+class LibclangReparseTest : public ::testing::Test {
+  std::string TestDir;
+  std::set<std::string> Files;
+public:
+  CXIndex Index;
+  CXTranslationUnit ClangTU;
+  unsigned TUFlags;
+
+  void SetUp() {
+    llvm::SmallString<256> Dir;
+    ASSERT_FALSE(llvm::sys::fs::createUniqueDirectory("libclang-test", Dir));
+    TestDir = Dir.str();
+    TUFlags = CXTranslationUnit_DetailedPreprocessingRecord |
+              clang_defaultEditingTranslationUnitOptions();
+    Index = clang_createIndex(0, 0);
+  }
+  void TearDown() {
+    clang_disposeTranslationUnit(ClangTU);
+    clang_disposeIndex(Index);
+    for (const std::string &Path : Files)
+      llvm::sys::fs::remove(Path);
+    llvm::sys::fs::remove(TestDir);
+  }
+  void WriteFile(std::string &Filename, const std::string &Contents) {
+    if (!llvm::sys::path::is_absolute(Filename)) {
+      llvm::SmallString<256> Path(TestDir);
+      llvm::sys::path::append(Path, Filename);
+      Filename = Path.str();
+      Files.insert(Filename);
+    }
+    std::ofstream OS(Filename);
+    OS << Contents;
+  }
+  void DisplayDiagnostics() {
+    uint NumDiagnostics = clang_getNumDiagnostics(ClangTU);
+    for (uint i = 0; i < NumDiagnostics; ++i) {
+      auto Diag = clang_getDiagnostic(ClangTU, i);
+      DEBUG(llvm::dbgs() << clang_getCString(clang_formatDiagnostic(
+          Diag, clang_defaultDiagnosticDisplayOptions())) << "\n");
+      clang_disposeDiagnostic(Diag);
+    }
+  }
+  bool ReparseTU(uint num_unsaved_files, CXUnsavedFile* unsaved_files) {
+    if (clang_reparseTranslationUnit(ClangTU, num_unsaved_files, unsaved_files,
+                                     clang_defaultReparseOptions(ClangTU))) {
+      DEBUG(llvm::dbgs() << "Reparse failed\n");
+      return false;
+    }
+    DisplayDiagnostics();
+    return true;
+  }
+};
+
+
+TEST_F(LibclangReparseTest, Reparse) {
+  const char *HeaderTop = "#ifndef H\n#define H\nstruct Foo { int bar;";
+  const char *HeaderBottom = "\n};\n#endif\n";
+  const char *CppFile = "#include \"HeaderFile.h\"\nint main() {"
+                         " Foo foo; foo.bar = 7; foo.baz = 8; }\n";
+  std::string HeaderName = "HeaderFile.h";
+  std::string CppName = "CppFile.cpp";
+  WriteFile(CppName, CppFile);
+  WriteFile(HeaderName, std::string(HeaderTop) + HeaderBottom);
+
+  ClangTU = clang_parseTranslationUnit(Index, CppName.c_str(), nullptr, 0,
+                                       nullptr, 0, TUFlags);
+  EXPECT_EQ(1U, clang_getNumDiagnostics(ClangTU));
+  DisplayDiagnostics();
+
+  // Immedaitely reparse.
+  ASSERT_TRUE(ReparseTU(0, nullptr /* No unsaved files. */));
+  EXPECT_EQ(1U, clang_getNumDiagnostics(ClangTU));
+
+  std::string NewHeaderContents =
+      std::string(HeaderTop) + "int baz;" + HeaderBottom;
+  WriteFile(HeaderName, NewHeaderContents);
+
+  // Reparse after fix.
+  ASSERT_TRUE(ReparseTU(0, nullptr /* No unsaved files. */));
+  EXPECT_EQ(0U, clang_getNumDiagnostics(ClangTU));
 }
