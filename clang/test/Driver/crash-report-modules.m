@@ -28,3 +28,5 @@ const int x = MODULE_MACRO;
 // CHECKSH: -cc1
 // CHECKSH: -D "FOO=BAR"
 // CHECKSH-NOT: -fmodules-cache-path=/tmp/
+// CHECKSH: crash-report-modules-{{[^ ]*}}.m
+// CHECKSH: -ivfsoverlay crash-report-modules-{{[^ ]*}}.cache/vfs/vfs.yaml

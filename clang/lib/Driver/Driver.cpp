@@ -522,9 +522,13 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       std::string Script = StringRef(*it).rsplit('.').first;
       // In some cases (modules) we'll dump extra data to help with reproducing
       // the crash into a directory next to the output.
-      if (llvm::sys::fs::exists(Script + ".cache"))
+      SmallString<128> VFS;
+      if (llvm::sys::fs::exists(Script + ".cache")) {
         Diag(clang::diag::note_drv_command_failed_diag_msg)
             << Script + ".cache";
+        VFS = llvm::sys::path::filename(Script + ".cache");
+        llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
+      }
 
       std::string Err;
       Script += ".sh";
@@ -546,6 +550,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         E = I + OldFilename.size();
         I = Cmd.rfind(" ", I) + 1;
         Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
+        // Add the VFS overlay to the reproduction script.
+        I += NewFilename.size();
+        Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
