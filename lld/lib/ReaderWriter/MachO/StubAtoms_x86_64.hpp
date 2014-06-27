@@ -33,7 +33,8 @@ public:
   X86_64StubAtom(const File &file, const Atom &lazyPointer)
       : SimpleDefinedAtom(file) {
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_SIGNED, 2,
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::ripRel32, 2,
                        &lazyPointer, 0);
   }
 
@@ -66,11 +67,11 @@ public:
                              const Atom &binder)
       : SimpleDefinedAtom(file) {
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_SIGNED, 3,
-                       &cache, 0);
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::ripRel32, 3, &cache, 0);
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_SIGNED, 11,
-                       &binder, 0);
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::ripRel32, 11, &binder, 0);
   }
 
   ContentType contentType() const override {
@@ -105,9 +106,10 @@ public:
       : SimpleDefinedAtom(file) {
     this->addReference(Reference::KindNamespace::mach_o,
                        Reference::KindArch::x86_64,
-                       LLD_X86_64_RELOC_LAZY_IMMEDIATE, 1, this, 0);
+                       KindHandler_x86_64::lazyImmediateLocation, 1, this, 0);
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_SIGNED, 6,
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::ripRel32, 6,
                        &helperCommon, 0);
   }
 
@@ -141,11 +143,11 @@ public:
                         const Atom &shlib)
       : SimpleDefinedAtom(file) {
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_UNSIGNED, 0,
-                       &helper, 0);
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::pointer64, 0, &helper, 0);
     this->addReference(Reference::KindNamespace::mach_o,
                        Reference::KindArch::x86_64,
-                       LLD_X86_64_RELOC_LAZY_TARGET, 0, &shlib, 0);
+                       KindHandler_x86_64::lazyPointer, 0, &shlib, 0);
   }
 
   ContentType contentType() const override {
@@ -182,8 +184,8 @@ public:
   X86_64NonLazyPointerAtom(const File &file, const Atom &shlib)
       : SimpleDefinedAtom(file) {
     this->addReference(Reference::KindNamespace::mach_o,
-                       Reference::KindArch::x86_64, X86_64_RELOC_UNSIGNED, 0,
-                       &shlib, 0);
+                       Reference::KindArch::x86_64, 
+                       KindHandler_x86_64::pointer64, 0, &shlib, 0);
   }
 
   ContentType contentType() const override {

@@ -32,13 +32,13 @@ sections:
         length:          3
         pc-rel:          false
         extern:          true
-        symbol:          1
+        symbol:          0
       - offset:          0x00000008
         type:            X86_64_RELOC_UNSIGNED
         length:          3
         pc-rel:          false
         extern:          true
-        symbol:          2
+        symbol:          1
   - segment:         __DATA
     section:         __mod_term_func
     type:            S_MOD_TERM_FUNC_POINTERS
@@ -52,7 +52,7 @@ sections:
         length:          3
         pc-rel:          false
         extern:          true
-        symbol:          3
+        symbol:          2
 global-symbols:
   - name:            _init
     type:            N_SECT
@@ -76,12 +76,24 @@ global-symbols:
 # CHECK:  - type:            initializer-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
+# CHECK:     references:      
+# CHECK:       - kind:        pointer64
+# CHECK:         offset:      0
+# CHECK:         target:      _init
 # CHECK:  - type:            initializer-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
+# CHECK:     references:      
+# CHECK:       - kind:        pointer64
+# CHECK:         offset:      0
+# CHECK:         target:      _init2
 # CHECK:  - type:            terminator-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
+# CHECK:     references:      
+# CHECK:       - kind:        pointer64
+# CHECK:         offset:      0
+# CHECK:         target:      _term
 # CHECK:  - name:            _init
 # CHECK:    scope:           global
 # CHECK:    content:         [ 55, 48, 89, E5, 5D, C3 ]

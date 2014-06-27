@@ -13,7 +13,7 @@ defined-atoms:
                            00, 00, 00, 31, C0, 5D, C3 ]
       references:
       - offset:          7
-        kind:            X86_64_RELOC_BRANCH
+        kind:            branch32
         target:          _foo
 
 undefined-atoms:

@@ -1,0 +1,223 @@
+# RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t  | FileCheck %s
+#
+# Test parsing of x86_64 data relocations.
+#
+#_foo:
+#  ret
+#
+#_bar:
+#  ret
+#  
+#  .section __DATA,__custom
+#L1:
+#  .quad 0
+#  
+#  .data
+#_d:
+#  .quad   _foo
+#  .quad   _foo+4
+#  .quad   _foo - .
+#  .quad   L1
+#  .quad   L1 + 2
+#  .quad   _foo - .
+#  .quad   _foo + 4 - .
+#  .quad   L1 - .
+#  .long   _foo - .
+#  .long   _foo + 4 - .
+#  .long   L1 - .
+#
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_OBJECT
+flags:           [  ]
+has-UUID:        false
+OS:              unknown
+sections:        
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [ 0xC3, 0xC3 ]
+  - segment:         __DATA
+    section:         __custom
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x0000000000000002
+    content:         [ 0x00, 0x00, 0x00, 0x00 ]
+  - segment:         __DATA
+    section:         __data
+    type:            S_REGULAR
+    attributes:      [  ]
+    alignment:       3
+    address:         0x0000000000000008
+    content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                       0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                       0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                       0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                       0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+                       0xDC, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+                       0xD2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+                       0xC8, 0xFF, 0xFF, 0xFF, 0xC8, 0xFF, 0xFF, 0xFF, 
+                       0xC2, 0xFF, 0xFF, 0xFF ]
+    relocations:     
+      - offset:          0x00000040
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x00000040
+        type:            X86_64_RELOC_UNSIGNED
+        length:          2
+        pc-rel:          false
+        extern:          false
+        symbol:          2
+      - offset:          0x0000003C
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x0000003C
+        type:            X86_64_RELOC_UNSIGNED
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+      - offset:          0x00000038
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x00000038
+        type:            X86_64_RELOC_UNSIGNED
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+      - offset:          0x00000030
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x00000030
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          false
+        symbol:          2
+      - offset:          0x00000028
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x00000028
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+      - offset:          0x00000020
+        type:            X86_64_RELOC_SUBTRACTOR
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x00000020
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+      - offset:          0x00000018
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          false
+        symbol:          2
+      - offset:          0x00000010
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          false
+        symbol:          2
+      - offset:          0x00000008
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+      - offset:          0x00000000
+        type:            X86_64_RELOC_UNSIGNED
+        length:          3
+        pc-rel:          false
+        extern:          true
+        symbol:          0
+local-symbols:   
+  - name:            _foo
+    type:            N_SECT
+    sect:            1
+    value:           0x0000000000000000
+  - name:            _bar
+    type:            N_SECT
+    sect:            1
+    value:           0x0000000000000001
+  - name:            _d
+    type:            N_SECT
+    sect:            3
+    value:           0x0000000000000008
+...
+
+
+# CHECK: defined-atoms:
+# CHECK:  - name:            _d
+# CHECK:    type:            data
+# CHECK:    references:      
+# CHECK:      - kind:            pointer64
+# CHECK:        offset:          0
+# CHECK:        target:          _foo
+# CHECK:      - kind:            pointer64
+# CHECK:        offset:          8
+# CHECK:        target:          _foo
+# CHECK:        addend:          4
+# CHECK:      - kind:            pointer64Anon
+# CHECK:        offset:          16
+# CHECK:        target:          L003
+# CHECK:      - kind:            pointer64Anon
+# CHECK:        offset:          24
+# CHECK:        target:          L003
+# CHECK:        addend:          2
+# CHECK:      - kind:            delta64
+# CHECK:        offset:          32
+# CHECK:        target:          _foo
+# CHECK:      - kind:            delta64
+# CHECK:        offset:          40
+# CHECK:        target:          _foo
+# CHECK:        addend:          4
+# CHECK:      - kind:            delta64Anon
+# CHECK:        offset:          48
+# CHECK:        target:          L003
+# CHECK:      - kind:            delta32
+# CHECK:        offset:          56
+# CHECK:        target:          _foo
+# CHECK:      - kind:            delta32
+# CHECK:        offset:          60
+# CHECK:        target:          _foo
+# CHECK:        addend:          4
+# CHECK:      - kind:            delta32Anon
+# CHECK:        offset:          64
+# CHECK:        target:          L003
+# CHECK:  - name:            _foo
+# CHECK:    content:         [ C3 ]
+# CHECK:  - name:            _bar
+# CHECK:    content:         [ C3 ]
+# CHECK:  - ref-name:        L003
+# CHECK:    type:            unknown
+# CHECK:    content:         [ 00, 00, 00, 00 ]
+# CHECK:    section-choice:  custom-required
+# CHECK:    section-name:    __DATA/__custom

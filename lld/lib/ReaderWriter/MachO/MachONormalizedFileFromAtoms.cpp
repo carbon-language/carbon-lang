@@ -498,6 +498,7 @@ void Util::copySegmentInfo(NormalizedFile &file) {
 }
 
 void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
+  const bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
   // Add new empty section to end of file.sections.
   Section temp;
   file.sections.push_back(std::move(temp));
@@ -528,9 +529,14 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
       if ( ref->target() != nullptr )
         targetAddress = _atomToAddress[ref->target()];
       uint64_t fixupAddress = _atomToAddress[ai.atom] + offset;
-      _context.kindHandler().applyFixup(
+      if ( rMode ) {
+        // FIXME: Need a handler method to update content for .o file
+        // output and any needed section relocations.
+      } else {
+        _context.kindHandler().applyFixup(
           ref->kindNamespace(), ref->kindArch(), ref->kindValue(),
           ref->addend(), &atomContent[offset], fixupAddress, targetAddress);
+      }
     }
   }
 }

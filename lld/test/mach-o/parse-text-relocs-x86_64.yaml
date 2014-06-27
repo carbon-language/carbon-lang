@@ -1,0 +1,138 @@
+# RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t  | FileCheck %s
+#
+# Test parsing of x86_64 text relocations.
+#
+#_test:
+#  call  _foo
+#  call  _foo+4
+#  movq  _foo@GOTPCREL(%rip), %rax
+#  pushq _foo@GOTPCREL(%rip)
+#  movl  _foo(%rip), %eax
+#  movl  _foo+4(%rip), %eax
+#  movb  $0x12, _foo(%rip)
+#  movw  $0x1234, _foo(%rip)
+#  movl  $0x12345678, _foo(%rip)
+#
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_OBJECT
+flags:           [  ]
+has-UUID:        false
+OS:              unknown
+sections:        
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [ 0xE8, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x04, 0x00, 
+                       0x00, 0x00, 0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 
+                       0x00, 0xFF, 0x35, 0x00, 0x00, 0x00, 0x00, 0x8B, 
+                       0x05, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x05, 0x04, 
+                       0x00, 0x00, 0x00, 0xC6, 0x05, 0xFF, 0xFF, 0xFF, 
+                       0xFF, 0x12, 0x66, 0xC7, 0x05, 0xFE, 0xFF, 0xFF, 
+                       0xFF, 0x34, 0x12, 0xC7, 0x05, 0xFC, 0xFF, 0xFF, 
+                       0xFF, 0x78, 0x56, 0x34, 0x12 ]
+    relocations:     
+      - offset:          0x00000035
+        type:            X86_64_RELOC_SIGNED_4
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x0000002D
+        type:            X86_64_RELOC_SIGNED_2
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000025
+        type:            X86_64_RELOC_SIGNED_1
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x0000001F
+        type:            X86_64_RELOC_SIGNED
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000019
+        type:            X86_64_RELOC_SIGNED
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000013
+        type:            X86_64_RELOC_GOT
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x0000000D
+        type:            X86_64_RELOC_GOT_LOAD
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000006
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000001
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+local-symbols:   
+  - name:            _test
+    type:            N_SECT
+    sect:            1
+    value:           0x0000000000000000
+undefined-symbols: 
+  - name:            _foo
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+...
+# CHECK: defined-atoms:
+# CHECK:  - name:            _test
+# CHECK:    references:      
+# CHECK:      - kind:            branch32
+# CHECK:        offset:          1
+# CHECK:        target:          _foo
+# CHECK:      - kind:            branch32
+# CHECK:        offset:          6
+# CHECK:        target:          _foo
+# CHECK:        addend:          4
+# CHECK:      - kind:            ripRel32GotLoad
+# CHECK:        offset:          13
+# CHECK:        target:          _foo
+# CHECK:      - kind:            ripRel32Got
+# CHECK:        offset:          19
+# CHECK:        target:          _foo
+# CHECK:      - kind:            ripRel32
+# CHECK:        offset:          25
+# CHECK:        target:          _foo
+# CHECK:      - kind:            ripRel32
+# CHECK:        offset:          31
+# CHECK:        target:          _foo
+# CHECK:        addend:          4
+# CHECK:      - kind:            ripRel32Minus1
+# CHECK:        offset:          37
+# CHECK:        target:          _foo
+# CHECK-NOT:    addend: 
+# CHECK:      - kind:            ripRel32Minus2
+# CHECK:        offset:          45
+# CHECK:        target:          _foo
+# CHECK-NOT:    addend: 
+# CHECK:      - kind:            ripRel32Minus4
+# CHECK:        offset:          53
+# CHECK:        target:          _foo
+# CHECK-NOT:    addend: 
+

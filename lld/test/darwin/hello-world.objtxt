@@ -14,10 +14,10 @@ defined-atoms:
                            31, C0, 5D, C3 ]
       references:
       - offset:          7
-        kind:            X86_64_RELOC_SIGNED
+        kind:            ripRel32
         target:          LC1
       - offset:          12
-        kind:            X86_64_RELOC_BRANCH
+        kind:            branch32
         target:          _printf
 
     - ref-name:          LC1

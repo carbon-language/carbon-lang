@@ -339,7 +339,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           sout.value = sin->n_value;
           if (sout.type == N_UNDF)
             f->undefinedSymbols.push_back(sout);
-          else if (sout.scope == (SymbolScope)N_EXT)
+          else if (sin->n_type & N_EXT)
             f->globalSymbols.push_back(sout);
           else
             f->localSymbols.push_back(sout);

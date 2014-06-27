@@ -10,6 +10,8 @@
 #ifndef LLD_READER_WRITER_MACHO_FILE_H
 #define LLD_READER_WRITER_MACHO_FILE_H
 
+#include "llvm/ADT/StringMap.h"
+
 #include "Atoms.h"
 
 #include "lld/Core/Simple.h"
@@ -17,13 +19,19 @@
 namespace lld {
 namespace mach_o {
 
+using lld::mach_o::normalized::Section;
+
 class MachOFile : public SimpleFile {
 public:
   MachOFile(StringRef path) : SimpleFile(path) {}
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
-                      ArrayRef<uint8_t> content, bool copyRefs) {
+                      uint64_t sectionOffset, uint64_t contentSize, 
+                      bool copyRefs, const Section *inSection) {
+    assert(sectionOffset+contentSize <= inSection->content.size());
+    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset, 
+                                                        contentSize);
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
@@ -33,13 +41,18 @@ public:
         new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
                                           content);
     addAtom(*atom);
+    _sectionAtoms[inSection].push_back({sectionOffset, atom});
   }
 
   void addDefinedAtomInCustomSection(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
-                      ArrayRef<uint8_t> content, StringRef sectionName,
-                      bool copyRefs) {
-    if (copyRefs) {
+                      uint64_t sectionOffset, uint64_t contentSize, 
+                      StringRef sectionName, bool copyRefs, 
+                      const Section *inSection) {
+    assert(sectionOffset+contentSize <= inSection->content.size());
+    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset, 
+                                                        contentSize);
+   if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
       content = content.copy(_allocator);
@@ -49,10 +62,12 @@ public:
         new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type, 
                                                   merge, content, sectionName);
     addAtom(*atom);
+    _sectionAtoms[inSection].push_back({sectionOffset, atom});
   }
 
-  void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope, uint64_t size,
-                              bool copyRefs) {
+  void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope,
+                              uint64_t sectionOffset, uint64_t size,
+                              bool copyRefs, const Section *inSection) {
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
@@ -60,6 +75,7 @@ public:
     MachODefinedAtom *atom =
         new (_allocator) MachODefinedAtom(*this, name, scope, size);
     addAtom(*atom);
+    _sectionAtoms[inSection].push_back({sectionOffset, atom});
   }
 
   void addUndefinedAtom(StringRef name, bool copyRefs) {
@@ -70,6 +86,7 @@ public:
     SimpleUndefinedAtom *atom =
         new (_allocator) SimpleUndefinedAtom(*this, name);
     addAtom(*atom);
+    _undefAtoms[name] = atom;
   }
 
   void addTentativeDefAtom(StringRef name, Atom::Scope scope, uint64_t size,
@@ -81,12 +98,57 @@ public:
     MachOTentativeDefAtom *atom =
         new (_allocator) MachOTentativeDefAtom(*this, name, scope, size, align);
     addAtom(*atom);
+    _undefAtoms[name] = atom;
   }
-
-
+  
+  /// Search this file for an the atom from 'section' that covers
+  /// 'offsetInSect'.  Returns nullptr is no atom found.
+  MachODefinedAtom *findAtomCoveringAddress(const Section &section,
+                                            uint64_t offsetInSect,
+                                            uint32_t *foundOffsetAtom=nullptr) {
+    auto pos = _sectionAtoms.find(&section);
+    if (pos == _sectionAtoms.end())
+      return nullptr;
+    auto vec = pos->second;
+    assert(offsetInSect < section.content.size());
+    // Vector of atoms for section are already sorted, so do binary search.
+    auto atomPos = std::lower_bound(vec.begin(), vec.end(), offsetInSect, 
+        [offsetInSect](const SectionOffsetAndAtom &ao, 
+                       uint64_t targetAddr) -> bool {
+          // Each atom has a start offset of its slice of the
+          // section's content. This compare function must return true
+          // iff the atom's range is before the offset being searched for.
+          uint64_t atomsEndOffset = ao.offset+ao.atom->rawContent().size();
+          return (atomsEndOffset <= offsetInSect);
+        });
+    if (atomPos == vec.end())
+      return nullptr;
+    if (foundOffsetAtom)
+      *foundOffsetAtom = offsetInSect - atomPos->offset;
+    return atomPos->atom;
+  }
+  
+  /// Searches this file for an UndefinedAtom named 'name'. Returns
+  /// nullptr is no such atom found.
+  const lld::Atom *findUndefAtom(StringRef name) {
+    auto pos = _undefAtoms.find(name);
+    if (pos == _undefAtoms.end())
+      return nullptr;
+    return pos->second;
+  }
+  
 private:
-  llvm::BumpPtrAllocator _allocator;
+  struct SectionOffsetAndAtom { uint64_t offset;  MachODefinedAtom *atom; };
+  typedef llvm::DenseMap<const normalized::Section *, 
+                         std::vector<SectionOffsetAndAtom>>  SectionToAtoms;
+  typedef llvm::StringMap<const lld::Atom *> NameToAtom;
+
+  llvm::BumpPtrAllocator  _allocator;
+  SectionToAtoms          _sectionAtoms;
+  NameToAtom              _undefAtoms;
 };
+
+
 
 } // end namespace mach_o
 } // end namespace lld
