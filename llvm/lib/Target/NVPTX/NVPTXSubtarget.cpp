@@ -45,13 +45,10 @@ NVPTXSubtarget &NVPTXSubtarget::initializeSubtargetDependencies(StringRef CPU,
 
   ParseSubtargetFeatures(TargetName, FS);
 
-  // We default to PTX 3.1, but we cannot just default to it in the initializer
-  // since the attribute parser checks if the given option is >= the default.
-  // So if we set ptx31 as the default, the ptx30 attribute would never match.
-  // Instead, we use 0 as the default and manually set 31 if the default is
-  // used.
-  if (PTXVersion == 0)
-    PTXVersion = 31;
+  // Set default to PTX 3.2 (CUDA 5.5)
+  if (PTXVersion == 0) {
+    PTXVersion = 32;
+  }
 
   return *this;
 }

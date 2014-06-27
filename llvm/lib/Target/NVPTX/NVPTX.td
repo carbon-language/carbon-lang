@@ -34,12 +34,18 @@ def SM30 : SubtargetFeature<"sm_30", "SmVersion", "30",
                             "Target SM 3.0">;
 def SM35 : SubtargetFeature<"sm_35", "SmVersion", "35",
                             "Target SM 3.5">;
+def SM50 : SubtargetFeature<"sm_50", "SmVersion", "50",
+                            "Target SM 5.0">;
 
 // PTX Versions
 def PTX30 : SubtargetFeature<"ptx30", "PTXVersion", "30",
                              "Use PTX version 3.0">;
 def PTX31 : SubtargetFeature<"ptx31", "PTXVersion", "31",
                              "Use PTX version 3.1">;
+def PTX32 : SubtargetFeature<"ptx32", "PTXVersion", "32",
+                             "Use PTX version 3.2">;
+def PTX40 : SubtargetFeature<"ptx40", "PTXVersion", "40",
+                             "Use PTX version 4.0">;
 
 //===----------------------------------------------------------------------===//
 // NVPTX supported processors.
@@ -52,6 +58,7 @@ def : Proc<"sm_20", [SM20]>;
 def : Proc<"sm_21", [SM21]>;
 def : Proc<"sm_30", [SM30]>;
 def : Proc<"sm_35", [SM35]>;
+def : Proc<"sm_50", [SM50]>;
 
 
 def NVPTXInstrInfo : InstrInfo {
