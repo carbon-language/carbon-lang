@@ -3922,6 +3922,9 @@ public:
     if (!CPUProfile.empty())
       Builder.defineMacro("__ARM_ARCH_PROFILE", "'" + CPUProfile + "'");
 
+    // ACLE predefines.
+    Builder.defineMacro("__ARM_ACLE", "200");
+
     // Subtarget options.
 
     // FIXME: It's more complicated than this and we don't really support

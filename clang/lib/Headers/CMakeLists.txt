@@ -1,6 +1,7 @@
 set(files
   altivec.h
   ammintrin.h
+  arm_acle.h
   avxintrin.h
   avx2intrin.h
   bmiintrin.h
