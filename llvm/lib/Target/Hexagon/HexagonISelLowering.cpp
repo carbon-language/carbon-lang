@@ -1038,423 +1038,421 @@ HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 // TargetLowering Implementation
 //===----------------------------------------------------------------------===//
 
-HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
-                                             &targetmachine)
-  : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
-    TM(targetmachine) {
+HexagonTargetLowering::HexagonTargetLowering(
+    HexagonTargetMachine &targetmachine)
+    : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
+      TM(targetmachine) {
 
-    const HexagonRegisterInfo* QRI = TM.getRegisterInfo();
+  const HexagonRegisterInfo *QRI = TM.getRegisterInfo();
 
-    // Set up the register classes.
-    addRegisterClass(MVT::i32, &Hexagon::IntRegsRegClass);
-    addRegisterClass(MVT::i64, &Hexagon::DoubleRegsRegClass);
-
-    if (QRI->Subtarget.hasV5TOps()) {
-      addRegisterClass(MVT::f32, &Hexagon::IntRegsRegClass);
-      addRegisterClass(MVT::f64, &Hexagon::DoubleRegsRegClass);
-    }
-
-    addRegisterClass(MVT::i1, &Hexagon::PredRegsRegClass);
-
-    computeRegisterProperties();
-
-    // Align loop entry
-    setPrefLoopAlignment(4);
-
-    // Limits for inline expansion of memcpy/memmove
-    MaxStoresPerMemcpy = 6;
-    MaxStoresPerMemmove = 6;
-
-    //
-    // Library calls for unsupported operations
-    //
-
-    setLibcallName(RTLIB::SINTTOFP_I128_F64, "__hexagon_floattidf");
-    setLibcallName(RTLIB::SINTTOFP_I128_F32, "__hexagon_floattisf");
-
-    setLibcallName(RTLIB::FPTOUINT_F32_I128, "__hexagon_fixunssfti");
-    setLibcallName(RTLIB::FPTOUINT_F64_I128, "__hexagon_fixunsdfti");
-
-    setLibcallName(RTLIB::FPTOSINT_F32_I128, "__hexagon_fixsfti");
-    setLibcallName(RTLIB::FPTOSINT_F64_I128, "__hexagon_fixdfti");
-
-    setLibcallName(RTLIB::SDIV_I32, "__hexagon_divsi3");
-    setOperationAction(ISD::SDIV,  MVT::i32, Expand);
-    setLibcallName(RTLIB::SREM_I32, "__hexagon_umodsi3");
-    setOperationAction(ISD::SREM,  MVT::i32, Expand);
+  // Set up the register classes.
+  addRegisterClass(MVT::i32, &Hexagon::IntRegsRegClass);
+  addRegisterClass(MVT::i64, &Hexagon::DoubleRegsRegClass);
+
+  if (QRI->Subtarget.hasV5TOps()) {
+    addRegisterClass(MVT::f32, &Hexagon::IntRegsRegClass);
+    addRegisterClass(MVT::f64, &Hexagon::DoubleRegsRegClass);
+  }
+
+  addRegisterClass(MVT::i1, &Hexagon::PredRegsRegClass);
+
+  computeRegisterProperties();
+
+  // Align loop entry
+  setPrefLoopAlignment(4);
+
+  // Limits for inline expansion of memcpy/memmove
+  MaxStoresPerMemcpy = 6;
+  MaxStoresPerMemmove = 6;
+
+  //
+  // Library calls for unsupported operations
+  //
+
+  setLibcallName(RTLIB::SINTTOFP_I128_F64, "__hexagon_floattidf");
+  setLibcallName(RTLIB::SINTTOFP_I128_F32, "__hexagon_floattisf");
+
+  setLibcallName(RTLIB::FPTOUINT_F32_I128, "__hexagon_fixunssfti");
+  setLibcallName(RTLIB::FPTOUINT_F64_I128, "__hexagon_fixunsdfti");
+
+  setLibcallName(RTLIB::FPTOSINT_F32_I128, "__hexagon_fixsfti");
+  setLibcallName(RTLIB::FPTOSINT_F64_I128, "__hexagon_fixdfti");
+
+  setLibcallName(RTLIB::SDIV_I32, "__hexagon_divsi3");
+  setOperationAction(ISD::SDIV, MVT::i32, Expand);
+  setLibcallName(RTLIB::SREM_I32, "__hexagon_umodsi3");
+  setOperationAction(ISD::SREM, MVT::i32, Expand);
 
-    setLibcallName(RTLIB::SDIV_I64, "__hexagon_divdi3");
-    setOperationAction(ISD::SDIV,  MVT::i64, Expand);
-    setLibcallName(RTLIB::SREM_I64, "__hexagon_moddi3");
-    setOperationAction(ISD::SREM,  MVT::i64, Expand);
+  setLibcallName(RTLIB::SDIV_I64, "__hexagon_divdi3");
+  setOperationAction(ISD::SDIV, MVT::i64, Expand);
+  setLibcallName(RTLIB::SREM_I64, "__hexagon_moddi3");
+  setOperationAction(ISD::SREM, MVT::i64, Expand);
 
-    setLibcallName(RTLIB::UDIV_I32, "__hexagon_udivsi3");
-    setOperationAction(ISD::UDIV,  MVT::i32, Expand);
+  setLibcallName(RTLIB::UDIV_I32, "__hexagon_udivsi3");
+  setOperationAction(ISD::UDIV, MVT::i32, Expand);
 
-    setLibcallName(RTLIB::UDIV_I64, "__hexagon_udivdi3");
-    setOperationAction(ISD::UDIV,  MVT::i64, Expand);
+  setLibcallName(RTLIB::UDIV_I64, "__hexagon_udivdi3");
+  setOperationAction(ISD::UDIV, MVT::i64, Expand);
 
-    setLibcallName(RTLIB::UREM_I32, "__hexagon_umodsi3");
-    setOperationAction(ISD::UREM,  MVT::i32, Expand);
+  setLibcallName(RTLIB::UREM_I32, "__hexagon_umodsi3");
+  setOperationAction(ISD::UREM, MVT::i32, Expand);
 
-    setLibcallName(RTLIB::UREM_I64, "__hexagon_umoddi3");
-    setOperationAction(ISD::UREM,  MVT::i64, Expand);
+  setLibcallName(RTLIB::UREM_I64, "__hexagon_umoddi3");
+  setOperationAction(ISD::UREM, MVT::i64, Expand);
 
-    setLibcallName(RTLIB::DIV_F32, "__hexagon_divsf3");
-    setOperationAction(ISD::FDIV,  MVT::f32, Expand);
+  setLibcallName(RTLIB::DIV_F32, "__hexagon_divsf3");
+  setOperationAction(ISD::FDIV, MVT::f32, Expand);
 
-    setLibcallName(RTLIB::DIV_F64, "__hexagon_divdf3");
-    setOperationAction(ISD::FDIV,  MVT::f64, Expand);
+  setLibcallName(RTLIB::DIV_F64, "__hexagon_divdf3");
+  setOperationAction(ISD::FDIV, MVT::f64, Expand);
 
-    setOperationAction(ISD::FSQRT,  MVT::f32, Expand);
-    setOperationAction(ISD::FSQRT,  MVT::f64, Expand);
-    setOperationAction(ISD::FSIN,  MVT::f32, Expand);
-    setOperationAction(ISD::FSIN,  MVT::f64, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+  setOperationAction(ISD::FSIN, MVT::f32, Expand);
+  setOperationAction(ISD::FSIN, MVT::f64, Expand);
 
-    if (QRI->Subtarget.hasV5TOps()) {
-      // Hexagon V5 Support.
-      setOperationAction(ISD::FADD,       MVT::f32, Legal);
-      setOperationAction(ISD::FADD,       MVT::f64, Legal);
-      setOperationAction(ISD::FP_EXTEND,  MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOEQ,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOEQ,      MVT::f64, Legal);
-      setCondCodeAction(ISD::SETUEQ,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETUEQ,      MVT::f64, Legal);
+  if (QRI->Subtarget.hasV5TOps()) {
+    // Hexagon V5 Support.
+    setOperationAction(ISD::FADD, MVT::f32, Legal);
+    setOperationAction(ISD::FADD, MVT::f64, Legal);
+    setOperationAction(ISD::FP_EXTEND, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOEQ, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOEQ, MVT::f64, Legal);
+    setCondCodeAction(ISD::SETUEQ, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETUEQ, MVT::f64, Legal);
 
-      setCondCodeAction(ISD::SETOGE,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOGE,      MVT::f64, Legal);
-      setCondCodeAction(ISD::SETUGE,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETUGE,      MVT::f64, Legal);
+    setCondCodeAction(ISD::SETOGE, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOGE, MVT::f64, Legal);
+    setCondCodeAction(ISD::SETUGE, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETUGE, MVT::f64, Legal);
 
-      setCondCodeAction(ISD::SETOGT,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOGT,      MVT::f64, Legal);
-      setCondCodeAction(ISD::SETUGT,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETUGT,      MVT::f64, Legal);
+    setCondCodeAction(ISD::SETOGT, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOGT, MVT::f64, Legal);
+    setCondCodeAction(ISD::SETUGT, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETUGT, MVT::f64, Legal);
 
-      setCondCodeAction(ISD::SETOLE,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOLE,      MVT::f64, Legal);
-      setCondCodeAction(ISD::SETOLT,      MVT::f32, Legal);
-      setCondCodeAction(ISD::SETOLT,      MVT::f64, Legal);
+    setCondCodeAction(ISD::SETOLE, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOLE, MVT::f64, Legal);
+    setCondCodeAction(ISD::SETOLT, MVT::f32, Legal);
+    setCondCodeAction(ISD::SETOLT, MVT::f64, Legal);
 
-      setOperationAction(ISD::ConstantFP,  MVT::f32, Legal);
-      setOperationAction(ISD::ConstantFP,  MVT::f64, Legal);
+    setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
+    setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
 
-      setOperationAction(ISD::FP_TO_UINT, MVT::i1, Promote);
-      setOperationAction(ISD::FP_TO_SINT, MVT::i1, Promote);
-      setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i1, Promote);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i1, Promote);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i1, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i1, Promote);
 
-      setOperationAction(ISD::FP_TO_UINT, MVT::i8, Promote);
-      setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
-      setOperationAction(ISD::UINT_TO_FP, MVT::i8, Promote);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i8, Promote);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i8, Promote);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i8, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i8, Promote);
 
-      setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
-      setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
-      setOperationAction(ISD::UINT_TO_FP, MVT::i16, Promote);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i16, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
 
-      setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
-      setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
-      setOperationAction(ISD::UINT_TO_FP, MVT::i32, Legal);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Legal);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Legal);
 
-      setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
-      setOperationAction(ISD::FP_TO_SINT, MVT::i64, Legal);
-      setOperationAction(ISD::UINT_TO_FP, MVT::i64, Legal);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i64, Legal);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i64, Legal);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i64, Legal);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i64, Legal);
 
-      setOperationAction(ISD::FABS,  MVT::f32, Legal);
-      setOperationAction(ISD::FABS,  MVT::f64, Expand);
+    setOperationAction(ISD::FABS, MVT::f32, Legal);
+    setOperationAction(ISD::FABS, MVT::f64, Expand);
 
-      setOperationAction(ISD::FNEG,  MVT::f32, Legal);
-      setOperationAction(ISD::FNEG,  MVT::f64, Expand);
-    } else {
+    setOperationAction(ISD::FNEG, MVT::f32, Legal);
+    setOperationAction(ISD::FNEG, MVT::f64, Expand);
+  } else {
 
-      // Expand fp<->uint.
-      setOperationAction(ISD::FP_TO_SINT,  MVT::i32, Expand);
-      setOperationAction(ISD::FP_TO_UINT,  MVT::i32, Expand);
+    // Expand fp<->uint.
+    setOperationAction(ISD::FP_TO_SINT, MVT::i32, Expand);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
 
-      setOperationAction(ISD::SINT_TO_FP,  MVT::i32, Expand);
-      setOperationAction(ISD::UINT_TO_FP,  MVT::i32, Expand);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
-      setLibcallName(RTLIB::SINTTOFP_I64_F32, "__hexagon_floatdisf");
-      setLibcallName(RTLIB::UINTTOFP_I64_F32, "__hexagon_floatundisf");
+    setLibcallName(RTLIB::SINTTOFP_I64_F32, "__hexagon_floatdisf");
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, "__hexagon_floatundisf");
 
-      setLibcallName(RTLIB::UINTTOFP_I32_F32, "__hexagon_floatunsisf");
-      setLibcallName(RTLIB::SINTTOFP_I32_F32, "__hexagon_floatsisf");
+    setLibcallName(RTLIB::UINTTOFP_I32_F32, "__hexagon_floatunsisf");
+    setLibcallName(RTLIB::SINTTOFP_I32_F32, "__hexagon_floatsisf");
 
-      setLibcallName(RTLIB::SINTTOFP_I64_F64, "__hexagon_floatdidf");
-      setLibcallName(RTLIB::UINTTOFP_I64_F64, "__hexagon_floatundidf");
+    setLibcallName(RTLIB::SINTTOFP_I64_F64, "__hexagon_floatdidf");
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, "__hexagon_floatundidf");
 
-      setLibcallName(RTLIB::UINTTOFP_I32_F64, "__hexagon_floatunsidf");
-      setLibcallName(RTLIB::SINTTOFP_I32_F64, "__hexagon_floatsidf");
+    setLibcallName(RTLIB::UINTTOFP_I32_F64, "__hexagon_floatunsidf");
+    setLibcallName(RTLIB::SINTTOFP_I32_F64, "__hexagon_floatsidf");
 
-      setLibcallName(RTLIB::FPTOUINT_F32_I32, "__hexagon_fixunssfsi");
-      setLibcallName(RTLIB::FPTOUINT_F32_I64, "__hexagon_fixunssfdi");
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, "__hexagon_fixunssfsi");
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, "__hexagon_fixunssfdi");
 
-      setLibcallName(RTLIB::FPTOSINT_F64_I64, "__hexagon_fixdfdi");
-      setLibcallName(RTLIB::FPTOSINT_F32_I64, "__hexagon_fixsfdi");
+    setLibcallName(RTLIB::FPTOSINT_F64_I64, "__hexagon_fixdfdi");
+    setLibcallName(RTLIB::FPTOSINT_F32_I64, "__hexagon_fixsfdi");
 
-      setLibcallName(RTLIB::FPTOUINT_F64_I32, "__hexagon_fixunsdfsi");
-      setLibcallName(RTLIB::FPTOUINT_F64_I64, "__hexagon_fixunsdfdi");
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, "__hexagon_fixunsdfsi");
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, "__hexagon_fixunsdfdi");
 
-      setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
-      setOperationAction(ISD::FADD,  MVT::f64, Expand);
+    setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
+    setOperationAction(ISD::FADD, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
-      setOperationAction(ISD::FADD,  MVT::f32, Expand);
+    setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
+    setOperationAction(ISD::FADD, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::FPEXT_F32_F64, "__hexagon_extendsfdf2");
-      setOperationAction(ISD::FP_EXTEND,  MVT::f32, Expand);
+    setLibcallName(RTLIB::FPEXT_F32_F64, "__hexagon_extendsfdf2");
+    setOperationAction(ISD::FP_EXTEND, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OEQ_F32, "__hexagon_eqsf2");
-      setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
+    setLibcallName(RTLIB::OEQ_F32, "__hexagon_eqsf2");
+    setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OEQ_F64, "__hexagon_eqdf2");
-      setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
+    setLibcallName(RTLIB::OEQ_F64, "__hexagon_eqdf2");
+    setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::OGE_F32, "__hexagon_gesf2");
-      setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
+    setLibcallName(RTLIB::OGE_F32, "__hexagon_gesf2");
+    setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OGE_F64, "__hexagon_gedf2");
-      setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
+    setLibcallName(RTLIB::OGE_F64, "__hexagon_gedf2");
+    setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::OGT_F32, "__hexagon_gtsf2");
-      setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);
+    setLibcallName(RTLIB::OGT_F32, "__hexagon_gtsf2");
+    setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
-      setCondCodeAction(ISD::SETOGT, MVT::f64, Expand);
+    setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
+    setCondCodeAction(ISD::SETOGT, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::FPTOSINT_F64_I32, "__hexagon_fixdfsi");
-      setOperationAction(ISD::FP_TO_SINT, MVT::f64, Expand);
+    setLibcallName(RTLIB::FPTOSINT_F64_I32, "__hexagon_fixdfsi");
+    setOperationAction(ISD::FP_TO_SINT, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::FPTOSINT_F32_I32, "__hexagon_fixsfsi");
-      setOperationAction(ISD::FP_TO_SINT, MVT::f32, Expand);
+    setLibcallName(RTLIB::FPTOSINT_F32_I32, "__hexagon_fixsfsi");
+    setOperationAction(ISD::FP_TO_SINT, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OLE_F64, "__hexagon_ledf2");
-      setCondCodeAction(ISD::SETOLE, MVT::f64, Expand);
+    setLibcallName(RTLIB::OLE_F64, "__hexagon_ledf2");
+    setCondCodeAction(ISD::SETOLE, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::OLE_F32, "__hexagon_lesf2");
-      setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+    setLibcallName(RTLIB::OLE_F32, "__hexagon_lesf2");
+    setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::OLT_F64, "__hexagon_ltdf2");
-      setCondCodeAction(ISD::SETOLT, MVT::f64, Expand);
+    setLibcallName(RTLIB::OLT_F64, "__hexagon_ltdf2");
+    setCondCodeAction(ISD::SETOLT, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
-      setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
+    setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
+    setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
-      setOperationAction(ISD::FMUL, MVT::f64, Expand);
+    setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
+    setOperationAction(ISD::FMUL, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
-      setOperationAction(ISD::MUL, MVT::f32, Expand);
+    setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
+    setOperationAction(ISD::MUL, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::UNE_F64, "__hexagon_nedf2");
-      setCondCodeAction(ISD::SETUNE, MVT::f64, Expand);
+    setLibcallName(RTLIB::UNE_F64, "__hexagon_nedf2");
+    setCondCodeAction(ISD::SETUNE, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::UNE_F32, "__hexagon_nesf2");
+    setLibcallName(RTLIB::UNE_F32, "__hexagon_nesf2");
 
-      setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
-      setOperationAction(ISD::SUB, MVT::f64, Expand);
+    setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
+    setOperationAction(ISD::SUB, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::SUB_F32, "__hexagon_subsf3");
-      setOperationAction(ISD::SUB, MVT::f32, Expand);
+    setLibcallName(RTLIB::SUB_F32, "__hexagon_subsf3");
+    setOperationAction(ISD::SUB, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::FPROUND_F64_F32, "__hexagon_truncdfsf2");
-      setOperationAction(ISD::FP_ROUND, MVT::f64, Expand);
+    setLibcallName(RTLIB::FPROUND_F64_F32, "__hexagon_truncdfsf2");
+    setOperationAction(ISD::FP_ROUND, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::UO_F64, "__hexagon_unorddf2");
-      setCondCodeAction(ISD::SETUO, MVT::f64, Expand);
+    setLibcallName(RTLIB::UO_F64, "__hexagon_unorddf2");
+    setCondCodeAction(ISD::SETUO, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::O_F64, "__hexagon_unorddf2");
-      setCondCodeAction(ISD::SETO, MVT::f64, Expand);
+    setLibcallName(RTLIB::O_F64, "__hexagon_unorddf2");
+    setCondCodeAction(ISD::SETO, MVT::f64, Expand);
 
-      setLibcallName(RTLIB::O_F32, "__hexagon_unordsf2");
-      setCondCodeAction(ISD::SETO, MVT::f32, Expand);
+    setLibcallName(RTLIB::O_F32, "__hexagon_unordsf2");
+    setCondCodeAction(ISD::SETO, MVT::f32, Expand);
 
-      setLibcallName(RTLIB::UO_F32, "__hexagon_unordsf2");
-      setCondCodeAction(ISD::SETUO, MVT::f32, Expand);
+    setLibcallName(RTLIB::UO_F32, "__hexagon_unordsf2");
+    setCondCodeAction(ISD::SETUO, MVT::f32, Expand);
 
-      setOperationAction(ISD::FABS,  MVT::f32, Expand);
-      setOperationAction(ISD::FABS,  MVT::f64, Expand);
-      setOperationAction(ISD::FNEG,  MVT::f32, Expand);
-      setOperationAction(ISD::FNEG,  MVT::f64, Expand);
-    }
+    setOperationAction(ISD::FABS, MVT::f32, Expand);
+    setOperationAction(ISD::FABS, MVT::f64, Expand);
+    setOperationAction(ISD::FNEG, MVT::f32, Expand);
+    setOperationAction(ISD::FNEG, MVT::f64, Expand);
+  }
 
-    setLibcallName(RTLIB::SREM_I32, "__hexagon_modsi3");
-    setOperationAction(ISD::SREM, MVT::i32, Expand);
+  setLibcallName(RTLIB::SREM_I32, "__hexagon_modsi3");
+  setOperationAction(ISD::SREM, MVT::i32, Expand);
 
-    setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
-    setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
-    setIndexedLoadAction(ISD::POST_INC, MVT::i32, Legal);
-    setIndexedLoadAction(ISD::POST_INC, MVT::i64, Legal);
+  setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
+  setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
+  setIndexedLoadAction(ISD::POST_INC, MVT::i32, Legal);
+  setIndexedLoadAction(ISD::POST_INC, MVT::i64, Legal);
 
-    setIndexedStoreAction(ISD::POST_INC, MVT::i8, Legal);
-    setIndexedStoreAction(ISD::POST_INC, MVT::i16, Legal);
-    setIndexedStoreAction(ISD::POST_INC, MVT::i32, Legal);
-    setIndexedStoreAction(ISD::POST_INC, MVT::i64, Legal);
-
-    setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
-
-    // Turn FP extload into load/fextend.
-    setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-    // Hexagon has a i1 sign extending load.
-    setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Expand);
-    // Turn FP truncstore into trunc + store.
-    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
-
-    // Custom legalize GlobalAddress nodes into CONST32.
-    setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-    setOperationAction(ISD::GlobalAddress, MVT::i8, Custom);
-    setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
-    // Truncate action?
-    setOperationAction(ISD::TRUNCATE, MVT::i64, Expand);
-
-    // Hexagon doesn't have sext_inreg, replace them with shl/sra.
-    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1 , Expand);
-
-    // Hexagon has no REM or DIVREM operations.
-    setOperationAction(ISD::UREM, MVT::i32, Expand);
-    setOperationAction(ISD::SREM, MVT::i32, Expand);
-    setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
-    setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
-    setOperationAction(ISD::SREM, MVT::i64, Expand);
-    setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
-    setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
-
-    setOperationAction(ISD::BSWAP, MVT::i64, Expand);
-
-    // Lower SELECT_CC to SETCC and SELECT.
-    setOperationAction(ISD::SELECT_CC, MVT::i1,    Expand);
-    setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
-    setOperationAction(ISD::SELECT_CC, MVT::i64,   Expand);
-
-    if (QRI->Subtarget.hasV5TOps()) {
-
-      // We need to make the operation type of SELECT node to be Custom,
-      // such that we don't go into the infinite loop of
-      // select ->  setcc -> select_cc -> select loop.
-      setOperationAction(ISD::SELECT, MVT::f32, Custom);
-      setOperationAction(ISD::SELECT, MVT::f64, Custom);
-
-      setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
-      setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-
-    } else {
-
-      // Hexagon has no select or setcc: expand to SELECT_CC.
-      setOperationAction(ISD::SELECT, MVT::f32, Expand);
-      setOperationAction(ISD::SELECT, MVT::f64, Expand);
-    }
-
-    if (EmitJumpTables) {
-      setOperationAction(ISD::BR_JT, MVT::Other, Custom);
-    } else {
-      setOperationAction(ISD::BR_JT, MVT::Other, Expand);
-    }
-    // Increase jump tables cutover to 5, was 4.
-    setMinimumJumpTableEntries(5);
-
-    setOperationAction(ISD::BR_CC, MVT::f32, Expand);
-    setOperationAction(ISD::BR_CC, MVT::f64, Expand);
-    setOperationAction(ISD::BR_CC, MVT::i1,  Expand);
-    setOperationAction(ISD::BR_CC, MVT::i32, Expand);
-    setOperationAction(ISD::BR_CC, MVT::i64, Expand);
-
-    setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
-
-    setOperationAction(ISD::FSIN , MVT::f64, Expand);
-    setOperationAction(ISD::FCOS , MVT::f64, Expand);
-    setOperationAction(ISD::FREM , MVT::f64, Expand);
-    setOperationAction(ISD::FSIN , MVT::f32, Expand);
-    setOperationAction(ISD::FCOS , MVT::f32, Expand);
-    setOperationAction(ISD::FREM , MVT::f32, Expand);
-    setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
-    setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
-
-    // In V4, we have double word add/sub with carry. The problem with
-    // modelling this instruction is that it produces 2 results - Rdd and Px.
-    // To model update of Px, we will have to use Defs[p0..p3] which will
-    // cause any predicate live range to spill. So, we pretend we dont't
-    // have these instructions.
-    setOperationAction(ISD::ADDE, MVT::i8, Expand);
-    setOperationAction(ISD::ADDE, MVT::i16, Expand);
-    setOperationAction(ISD::ADDE, MVT::i32, Expand);
-    setOperationAction(ISD::ADDE, MVT::i64, Expand);
-    setOperationAction(ISD::SUBE, MVT::i8, Expand);
-    setOperationAction(ISD::SUBE, MVT::i16, Expand);
-    setOperationAction(ISD::SUBE, MVT::i32, Expand);
-    setOperationAction(ISD::SUBE, MVT::i64, Expand);
-    setOperationAction(ISD::ADDC, MVT::i8, Expand);
-    setOperationAction(ISD::ADDC, MVT::i16, Expand);
-    setOperationAction(ISD::ADDC, MVT::i32, Expand);
-    setOperationAction(ISD::ADDC, MVT::i64, Expand);
-    setOperationAction(ISD::SUBC, MVT::i8, Expand);
-    setOperationAction(ISD::SUBC, MVT::i16, Expand);
-    setOperationAction(ISD::SUBC, MVT::i32, Expand);
-    setOperationAction(ISD::SUBC, MVT::i64, Expand);
-
-    setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-    setOperationAction(ISD::CTPOP, MVT::i64, Expand);
-    setOperationAction(ISD::CTTZ , MVT::i32, Expand);
-    setOperationAction(ISD::CTTZ , MVT::i64, Expand);
-    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
-    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
-    setOperationAction(ISD::CTLZ , MVT::i32, Expand);
-    setOperationAction(ISD::CTLZ , MVT::i64, Expand);
-    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
-    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
-    setOperationAction(ISD::ROTL , MVT::i32, Expand);
-    setOperationAction(ISD::ROTR , MVT::i32, Expand);
-    setOperationAction(ISD::BSWAP, MVT::i32, Expand);
-    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
-    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-    setOperationAction(ISD::FPOW , MVT::f64, Expand);
-    setOperationAction(ISD::FPOW , MVT::f32, Expand);
-
-    setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
-
-    setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
-    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-
-    setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
-    setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
-
-    setOperationAction(ISD::EH_RETURN,     MVT::Other, Custom);
-
-    if (TM.getSubtargetImpl()->isSubtargetV2()) {
-      setExceptionPointerRegister(Hexagon::R20);
-      setExceptionSelectorRegister(Hexagon::R21);
-    } else {
-      setExceptionPointerRegister(Hexagon::R0);
-      setExceptionSelectorRegister(Hexagon::R1);
-    }
-
-    // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
-    setOperationAction(ISD::VASTART           , MVT::Other, Custom);
-
-    // Use the default implementation.
-    setOperationAction(ISD::VAARG             , MVT::Other, Expand);
-    setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
-    setOperationAction(ISD::VAEND             , MVT::Other, Expand);
-    setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand);
-    setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
-
-
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
-    setOperationAction(ISD::INLINEASM         , MVT::Other, Custom);
-
-    setMinFunctionAlignment(2);
-
-    // Needed for DYNAMIC_STACKALLOC expansion.
-    unsigned StackRegister = TM.getRegisterInfo()->getStackRegister();
-    setStackPointerRegisterToSaveRestore(StackRegister);
-    setSchedulingPreference(Sched::VLIW);
+  setIndexedStoreAction(ISD::POST_INC, MVT::i8, Legal);
+  setIndexedStoreAction(ISD::POST_INC, MVT::i16, Legal);
+  setIndexedStoreAction(ISD::POST_INC, MVT::i32, Legal);
+  setIndexedStoreAction(ISD::POST_INC, MVT::i64, Legal);
+
+  setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
+
+  // Turn FP extload into load/fextend.
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  // Hexagon has a i1 sign extending load.
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Expand);
+  // Turn FP truncstore into trunc + store.
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
+  // Custom legalize GlobalAddress nodes into CONST32.
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i8, Custom);
+  setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
+  // Truncate action?
+  setOperationAction(ISD::TRUNCATE, MVT::i64, Expand);
+
+  // Hexagon doesn't have sext_inreg, replace them with shl/sra.
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
+  // Hexagon has no REM or DIVREM operations.
+  setOperationAction(ISD::UREM, MVT::i32, Expand);
+  setOperationAction(ISD::SREM, MVT::i32, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::SREM, MVT::i64, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
+
+  setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+
+  // Lower SELECT_CC to SETCC and SELECT.
+  setOperationAction(ISD::SELECT_CC, MVT::i1, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+
+  if (QRI->Subtarget.hasV5TOps()) {
+
+    // We need to make the operation type of SELECT node to be Custom,
+    // such that we don't go into the infinite loop of
+    // select ->  setcc -> select_cc -> select loop.
+    setOperationAction(ISD::SELECT, MVT::f32, Custom);
+    setOperationAction(ISD::SELECT, MVT::f64, Custom);
+
+    setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+
+  } else {
+
+    // Hexagon has no select or setcc: expand to SELECT_CC.
+    setOperationAction(ISD::SELECT, MVT::f32, Expand);
+    setOperationAction(ISD::SELECT, MVT::f64, Expand);
+  }
+
+  if (EmitJumpTables) {
+    setOperationAction(ISD::BR_JT, MVT::Other, Custom);
+  } else {
+    setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+  }
+  // Increase jump tables cutover to 5, was 4.
+  setMinimumJumpTableEntries(5);
+
+  setOperationAction(ISD::BR_CC, MVT::f32, Expand);
+  setOperationAction(ISD::BR_CC, MVT::f64, Expand);
+  setOperationAction(ISD::BR_CC, MVT::i1, Expand);
+  setOperationAction(ISD::BR_CC, MVT::i32, Expand);
+  setOperationAction(ISD::BR_CC, MVT::i64, Expand);
+
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
+
+  setOperationAction(ISD::FSIN, MVT::f64, Expand);
+  setOperationAction(ISD::FCOS, MVT::f64, Expand);
+  setOperationAction(ISD::FREM, MVT::f64, Expand);
+  setOperationAction(ISD::FSIN, MVT::f32, Expand);
+  setOperationAction(ISD::FCOS, MVT::f32, Expand);
+  setOperationAction(ISD::FREM, MVT::f32, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
+
+  // In V4, we have double word add/sub with carry. The problem with
+  // modelling this instruction is that it produces 2 results - Rdd and Px.
+  // To model update of Px, we will have to use Defs[p0..p3] which will
+  // cause any predicate live range to spill. So, we pretend we dont't
+  // have these instructions.
+  setOperationAction(ISD::ADDE, MVT::i8, Expand);
+  setOperationAction(ISD::ADDE, MVT::i16, Expand);
+  setOperationAction(ISD::ADDE, MVT::i32, Expand);
+  setOperationAction(ISD::ADDE, MVT::i64, Expand);
+  setOperationAction(ISD::SUBE, MVT::i8, Expand);
+  setOperationAction(ISD::SUBE, MVT::i16, Expand);
+  setOperationAction(ISD::SUBE, MVT::i32, Expand);
+  setOperationAction(ISD::SUBE, MVT::i64, Expand);
+  setOperationAction(ISD::ADDC, MVT::i8, Expand);
+  setOperationAction(ISD::ADDC, MVT::i16, Expand);
+  setOperationAction(ISD::ADDC, MVT::i32, Expand);
+  setOperationAction(ISD::ADDC, MVT::i64, Expand);
+  setOperationAction(ISD::SUBC, MVT::i8, Expand);
+  setOperationAction(ISD::SUBC, MVT::i16, Expand);
+  setOperationAction(ISD::SUBC, MVT::i32, Expand);
+  setOperationAction(ISD::SUBC, MVT::i64, Expand);
+
+  setOperationAction(ISD::CTPOP, MVT::i32, Expand);
+  setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i32, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i64, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
+  setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+  setOperationAction(ISD::CTLZ, MVT::i64, Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
+  setOperationAction(ISD::ROTL, MVT::i32, Expand);
+  setOperationAction(ISD::ROTR, MVT::i32, Expand);
+  setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  setOperationAction(ISD::FPOW, MVT::f64, Expand);
+  setOperationAction(ISD::FPOW, MVT::f32, Expand);
+
+  setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+
+  setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
+
+  if (TM.getSubtargetImpl()->isSubtargetV2()) {
+    setExceptionPointerRegister(Hexagon::R20);
+    setExceptionSelectorRegister(Hexagon::R21);
+  } else {
+    setExceptionPointerRegister(Hexagon::R0);
+    setExceptionSelectorRegister(Hexagon::R1);
+  }
+
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
+  setOperationAction(ISD::VASTART, MVT::Other, Custom);
+
+  // Use the default implementation.
+  setOperationAction(ISD::VAARG, MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY, MVT::Other, Expand);
+  setOperationAction(ISD::VAEND, MVT::Other, Expand);
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
+  setOperationAction(ISD::INLINEASM, MVT::Other, Custom);
+
+  setMinFunctionAlignment(2);
+
+  // Needed for DYNAMIC_STACKALLOC expansion.
+  unsigned StackRegister = TM.getRegisterInfo()->getStackRegister();
+  setStackPointerRegisterToSaveRestore(StackRegister);
+  setSchedulingPreference(Sched::VLIW);
 }
-
 
 const char*
 HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
