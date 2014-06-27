@@ -1,5 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %run %t
-// FIXME: | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 #include "java.h"
 
 void *Thread(void *p) {
