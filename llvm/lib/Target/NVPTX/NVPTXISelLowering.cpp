@@ -111,6 +111,7 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   MaxStoresPerMemmove = (unsigned) 0xFFFFFFFF;
 
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
   // Jump is Expensive. Don't create extra control flow for 'and', 'or'
   // condition branches.
