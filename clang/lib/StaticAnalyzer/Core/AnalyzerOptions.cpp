@@ -140,8 +140,8 @@ bool AnalyzerOptions::mayInlineCXXAllocator() {
                           /*Default=*/false);
 }
 
-bool AnalyzerOptions::mayInlineCXXContainerCtorsAndDtors() {
-  return getBooleanOption(InlineCXXContainerCtorsAndDtors,
+bool AnalyzerOptions::mayInlineCXXContainerMethods() {
+  return getBooleanOption(InlineCXXContainerMethods,
                           "c++-container-inlining",
                           /*Default=*/false);
 }
