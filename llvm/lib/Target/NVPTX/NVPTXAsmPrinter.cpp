@@ -1480,6 +1480,11 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
 
   O << ".";
   emitPTXAddressSpace(PTy->getAddressSpace(), O);
+
+  if (isManaged(*GVar)) {
+    O << " .attribute(.managed)";
+  }
+
   if (GVar->getAlignment() == 0)
     O << " .align " << (int) TD->getPrefTypeAlignment(ETy);
   else
