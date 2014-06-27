@@ -19244,6 +19244,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
     assert(VT == MVT::v8i16);
+    (void)VT;
 
     if (combineRedundantHalfShuffle(N, Mask, DAG, DCI))
       return SDValue(); // We combined away this shuffle, so we're done.
