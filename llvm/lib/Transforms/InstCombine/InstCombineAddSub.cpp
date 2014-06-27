@@ -954,56 +954,70 @@ bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
     return true;
 
   return false;
- }
+}
 
 // Checks if any operand is negative and we can convert add to sub.
- // This function checks for following negative patterns
- //   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
- //   ADD(XOR(AND(Z, C), C), 1) == NEG(OR(Z, ~C)) if C is odd
- //   TODO: XOR(AND(Z, C), (C + 1)) == NEG(OR(Z, ~C)) if C is even
- Value *checkForNegativeOperand(BinaryOperator &I,
-                                InstCombiner::BuilderTy *Builder) {
-   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+// This function checks for following negative patterns
+//   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
+//   ADD(XOR(AND(Z, C), C), 1) == NEG(OR(Z, ~C))
+//   XOR(AND(Z, C), (C + 1)) == NEG(OR(Z, ~C)) if C is even
+Value *checkForNegativeOperand(BinaryOperator &I,
+                               InstCombiner::BuilderTy *Builder) {
+  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-   // This function creates 2 instructions to replace ADD, we need at least one
-   // of LHS or RHS to have one use to ensure benefit in transform.
-   if (!LHS->hasOneUse() && !RHS->hasOneUse())
-     return nullptr;
+  // This function creates 2 instructions to replace ADD, we need at least one
+  // of LHS or RHS to have one use to ensure benefit in transform.
+  if (!LHS->hasOneUse() && !RHS->hasOneUse())
+    return nullptr;
 
-   Value *X = nullptr, *Y = nullptr, *Z = nullptr;
-   const APInt *C1 = nullptr, *C2 = nullptr;
+  Value *X = nullptr, *Y = nullptr, *Z = nullptr;
+  const APInt *C1 = nullptr, *C2 = nullptr;
 
-   // if ONE is on other side, swap
-   if (match(RHS, m_Add(m_Value(X), m_One())))
-     std::swap(LHS, RHS);
+  // if ONE is on other side, swap
+  if (match(RHS, m_Add(m_Value(X), m_One())))
+    std::swap(LHS, RHS);
 
-   if (match(LHS, m_Add(m_Value(X), m_One()))) {
-     // if XOR on other side, swap
-     if (match(RHS, m_Xor(m_Value(Y), m_APInt(C1))))
-       std::swap(X, RHS);
+  if (match(LHS, m_Add(m_Value(X), m_One()))) {
+    // if XOR on other side, swap
+    if (match(RHS, m_Xor(m_Value(Y), m_APInt(C1))))
+      std::swap(X, RHS);
 
-     if (match(X, m_Xor(m_Value(Y), m_APInt(C1)))) {
-       // X = XOR(Y, C1), Y = OR(Z, C2), C2 = NOT(C1) ==> X == NOT(AND(Z, C1))
-       // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, AND(Z, C1))
-       if (match(Y, m_Or(m_Value(Z), m_APInt(C2))) && (*C2 == ~(*C1))) {
-         Value *NewAnd = Builder->CreateAnd(Z, *C1);
-         return Builder->CreateSub(RHS, NewAnd, "sub");
-       } else if (C1->countTrailingZeros() == 0) {
-         // if C1 is ODD and
-         // X = XOR(Y, C1), Y = AND(Z, C2), C2 == C1 ==> X == NOT(OR(Z, ~C1))
-         // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, OR(Z, ~C1))
-         if (match(Y, m_And(m_Value(Z), m_APInt(C2))) && (*C1 == *C2)) {
-           Value *NewOr = Builder->CreateOr(Z, ~(*C1));
-           return Builder->CreateSub(RHS, NewOr, "sub");
-         }
-       }
-     }
-   }
+    if (match(X, m_Xor(m_Value(Y), m_APInt(C1)))) {
+      // X = XOR(Y, C1), Y = OR(Z, C2), C2 = NOT(C1) ==> X == NOT(AND(Z, C1))
+      // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, AND(Z, C1))
+      if (match(Y, m_Or(m_Value(Z), m_APInt(C2))) && (*C2 == ~(*C1))) {
+        Value *NewAnd = Builder->CreateAnd(Z, *C1);
+        return Builder->CreateSub(RHS, NewAnd, "sub");
+      } else if (match(Y, m_And(m_Value(Z), m_APInt(C2))) && (*C1 == *C2)) {
+        // X = XOR(Y, C1), Y = AND(Z, C2), C2 == C1 ==> X == NOT(OR(Z, ~C1))
+        // ADD(ADD(X, 1), RHS) == ADD(X, ADD(RHS, 1)) == SUB(RHS, OR(Z, ~C1))
+        Value *NewOr = Builder->CreateOr(Z, ~(*C1));
+        return Builder->CreateSub(RHS, NewOr, "sub");
+      }
+    }
+  }
 
-   return nullptr;
- }
+  // Restore LHS and RHS
+  LHS = I.getOperand(0);
+  RHS = I.getOperand(1);
 
- Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
+  // if XOR is on other side, swap
+  if (match(RHS, m_Xor(m_Value(Y), m_APInt(C1))))
+    std::swap(LHS, RHS);
+
+  // C2 is ODD
+  // LHS = XOR(Y, C1), Y = AND(Z, C2), C1 == (C2 + 1) => LHS == NEG(OR(Z, ~C2))
+  // ADD(LHS, RHS) == SUB(RHS, OR(Z, ~C2))
+  if (match(LHS, m_Xor(m_Value(Y), m_APInt(C1))))
+    if (C1->countTrailingZeros() == 0)
+      if (match(Y, m_And(m_Value(Z), m_APInt(C2))) && *C1 == (*C2 + 1)) {
+        Value *NewOr = Builder->CreateOr(Z, ~(*C2));
+        return Builder->CreateSub(RHS, NewOr, "sub");
+      }
+  return nullptr;
+}
+
+Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
    bool Changed = SimplifyAssociativeOrCommutative(I);
    Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
@@ -1579,7 +1593,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
       if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
         return ReplaceInstUsesWith(I, Res);
-  }
+      }
 
   return nullptr;
 }
