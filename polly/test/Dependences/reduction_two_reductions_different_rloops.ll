@@ -1,0 +1,73 @@
+; RUN: opt %loadPolly -basicaa -polly-dependences -analyze < %s | FileCheck %s
+;
+; CHECK: RAW dependences:
+; CHECK:   {  }
+; CHECK: WAR dependences:
+; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   {  }
+; CHECK: Reduction dependences:
+; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[i0, 1 + i1] : i0 <= 1023 and i0 >= 0 and i1 <= 1022 and i1 >= 0
+; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[1 + i0, i1] : i0 <= 1022 and i0 >= 0 and i1 <= 1023 and i1 >= 0
+;
+; void f(int *restrict A, int *restrict B, int *restrict Values) {
+;   for (int i = 0; i < 1024; i++) {
+;     for (int j = 0; j < 1024; j++) {
+;       A[i] += Values[i + j - 1];
+;       B[j] += Values[i + j + 42];
+;     }
+;   }
+; }
+;
+target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
+
+define void @f(i32* noalias %A, i32* noalias %B, i32* noalias %Values)  {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc11, %entry
+  %i.0 = phi i32 [ 0, %entry ], [ %inc12, %for.inc11 ]
+  %exitcond1 = icmp ne i32 %i.0, 1024
+  br i1 %exitcond1, label %for.body, label %for.end13
+
+for.body:                                         ; preds = %for.cond
+  br label %for.cond1
+
+for.cond1:                                        ; preds = %for.inc, %for.body
+  %j.0 = phi i32 [ 0, %for.body ], [ %inc, %for.inc ]
+  %exitcond = icmp ne i32 %j.0, 1024
+  br i1 %exitcond, label %for.body3, label %for.end
+
+for.body3:                                        ; preds = %for.cond1
+  %add = add nsw i32 %i.0, %j.0
+  %sub = add nsw i32 %add, -1
+  %arrayidx = getelementptr inbounds i32* %Values, i32 %sub
+  %tmp = load i32* %arrayidx, align 4
+  %arrayidx4 = getelementptr inbounds i32* %A, i32 %i.0
+  %tmp2 = load i32* %arrayidx4, align 4
+  %add5 = add nsw i32 %tmp2, %tmp
+  store i32 %add5, i32* %arrayidx4, align 4
+  %add6 = add nsw i32 %i.0, %j.0
+  %add7 = add nsw i32 %add6, 42
+  %arrayidx8 = getelementptr inbounds i32* %Values, i32 %add7
+  %tmp3 = load i32* %arrayidx8, align 4
+  %arrayidx9 = getelementptr inbounds i32* %B, i32 %j.0
+  %tmp4 = load i32* %arrayidx9, align 4
+  %add10 = add nsw i32 %tmp4, %tmp3
+  store i32 %add10, i32* %arrayidx9, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body3
+  %inc = add nsw i32 %j.0, 1
+  br label %for.cond1
+
+for.end:                                          ; preds = %for.cond1
+  br label %for.inc11
+
+for.inc11:                                        ; preds = %for.end
+  %inc12 = add nsw i32 %i.0, 1
+  br label %for.cond
+
+for.end13:                                        ; preds = %for.cond
+  ret void
+}

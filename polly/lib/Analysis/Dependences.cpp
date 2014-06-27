@@ -308,7 +308,6 @@ void Dependences::calculateDependences(Scop &S) {
       isl_map *Identity =
           isl_map_from_domain_and_range(isl_set_copy(AccDomW), AccDomW);
       RED = isl_union_map_add_map(RED, Identity);
-      break;
     }
   }
 

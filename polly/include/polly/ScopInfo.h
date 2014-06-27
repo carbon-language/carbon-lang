@@ -324,7 +324,14 @@ class ScopStmt {
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
   void buildAccesses(TempScop &tempScop, const Region &CurRegion);
-  void checkForReduction();
+
+  /// @brief Detect and mark reductions in the ScopStmt
+  void checkForReductions();
+
+  /// @brief Collect loads which might form a reduction chain with @p StoreMA
+  void
+  collectCandiateReductionLoads(MemoryAccess *StoreMA,
+                                llvm::SmallVectorImpl<MemoryAccess *> &Loads);
   //@}
 
   /// Create the ScopStmt from a BasicBlock.
