@@ -22,6 +22,7 @@
 #include "Plugins/Process/Utility/ARMUtils.h"
 #include "Utility/ARM64_DWARF_Registers.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h" // for SignExtend32 template function
                                      // and CountTrailingZeros_32 function
 
@@ -254,7 +255,7 @@ EmulateInstructionARM64::GetOpcodeForInstruction (const uint32_t opcode)
         { 0xffc00000, 0xa9800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
 
     };
-    static const size_t k_num_arm_opcodes = sizeof(g_opcodes)/sizeof(EmulateInstructionARM64::Opcode);
+    static const size_t k_num_arm_opcodes = llvm::array_lengthof(g_opcodes);
                   
     for (size_t i=0; i<k_num_arm_opcodes; ++i)
     {

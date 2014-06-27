@@ -24,6 +24,7 @@
 #include "Plugins/Process/Utility/ARMUtils.h"
 #include "Utility/ARM_DWARF_Registers.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h" // for SignExtend32 template function
                                      // and countTrailingZeros function
 
@@ -12506,7 +12507,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode, uint32
         { 0xfe500000, 0xf8100000, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{<amode>} <Rn>{!}" }
                   
     };
-    static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
+    static const size_t k_num_arm_opcodes = llvm::array_lengthof(g_arm_opcodes);
                   
     for (size_t i=0; i<k_num_arm_opcodes; ++i)
     {
@@ -12832,7 +12833,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode, uint
         { 0xfffff080, 0xfa1ff080, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c>.w <Rd>,<Rm>{,<rotation>}" },
     };
 
-    const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
+    const size_t k_num_thumb_opcodes = llvm::array_lengthof(g_thumb_opcodes);
     for (size_t i=0; i<k_num_thumb_opcodes; ++i)
     {
         if ((g_thumb_opcodes[i].mask & opcode) == g_thumb_opcodes[i].value &&

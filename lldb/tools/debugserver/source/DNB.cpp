@@ -47,6 +47,7 @@
 #include "DNBTimer.h"
 #include "CFBundle.h"
 
+#include "llvm/ADT/STLExtras.h"
 
 typedef std::shared_ptr<MachProcess> MachProcessSP;
 typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
@@ -542,7 +543,7 @@ GetAllInfos (std::vector<struct kinfo_proc>& proc_infos)
 {
     size_t size = 0;
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-    u_int namelen = sizeof(name)/sizeof(int);
+    u_int namelen = llvm::array_lengthof(name);
     int err;
 
     // Try to find out how many processes are around so we can

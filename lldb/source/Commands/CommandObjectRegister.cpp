@@ -31,6 +31,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Thread.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -360,7 +361,7 @@ CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 uint32_t
 CommandObjectRegisterRead::CommandOptions::GetNumDefinitions ()
 {
-    return sizeof(g_option_table)/sizeof(OptionDefinition);
+    return llvm::array_lengthof(g_option_table);
 }
 
 

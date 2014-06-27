@@ -37,6 +37,8 @@
 #include "ARM_GCC_Registers.h"
 #include "ARM_DWARF_Registers.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -399,7 +401,7 @@ g_exc_regnums[] =
     exc_far,
 };
 
-static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
+static size_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
 
 void
 RegisterContextDarwin_arm::InvalidateAllRegisters ()
@@ -438,9 +440,9 @@ RegisterContextDarwin_arm::GetRegisterInfos ()
 
 
 // Number of registers in each register set
-const size_t k_num_gpr_registers = sizeof(g_gpr_regnums) / sizeof(uint32_t);
-const size_t k_num_fpu_registers = sizeof(g_fpu_regnums) / sizeof(uint32_t);
-const size_t k_num_exc_registers = sizeof(g_exc_regnums) / sizeof(uint32_t);
+const size_t k_num_gpr_registers = llvm::array_lengthof(g_gpr_regnums);
+const size_t k_num_fpu_registers = llvm::array_lengthof(g_fpu_regnums);
+const size_t k_num_exc_registers = llvm::array_lengthof(g_exc_regnums);
 
 //----------------------------------------------------------------------
 // Register set definitions. The first definitions at register set index
@@ -454,7 +456,7 @@ static const RegisterSet g_reg_sets[] =
     { "Exception State Registers",  "exc",  k_num_exc_registers,    g_exc_regnums       }
 };
 
-const size_t k_num_regsets = sizeof(g_reg_sets) / sizeof(RegisterSet);
+const size_t k_num_regsets = llvm::array_lengthof(g_reg_sets);
 
 
 size_t

@@ -21,6 +21,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 
 // Support building against older versions of LLVM, this macro was added
@@ -318,7 +319,7 @@ static RegisterInfo g_register_infos[] =
     { DEFINE_EXC(faultvaddr)        , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, exc_faultvaddr },      NULL,              NULL}
 };
 
-static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
+static size_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
 
 
 void
@@ -432,9 +433,9 @@ g_exc_regnums[] =
 };
 
 // Number of registers in each register set
-const size_t k_num_gpr_registers = sizeof(g_gpr_regnums) / sizeof(uint32_t);
-const size_t k_num_fpu_registers = sizeof(g_fpu_regnums) / sizeof(uint32_t);
-const size_t k_num_exc_registers = sizeof(g_exc_regnums) / sizeof(uint32_t);
+const size_t k_num_gpr_registers = llvm::array_lengthof(g_gpr_regnums);
+const size_t k_num_fpu_registers = llvm::array_lengthof(g_fpu_regnums);
+const size_t k_num_exc_registers = llvm::array_lengthof(g_exc_regnums);
 
 //----------------------------------------------------------------------
 // Register set definitions. The first definitions at register set index
@@ -448,7 +449,7 @@ static const RegisterSet g_reg_sets[] =
     { "Exception State Registers",  "exc",  k_num_exc_registers,    g_exc_regnums       }
 };
 
-const size_t k_num_regsets = sizeof(g_reg_sets) / sizeof(RegisterSet);
+const size_t k_num_regsets = llvm::array_lengthof(g_reg_sets);
 
 
 size_t

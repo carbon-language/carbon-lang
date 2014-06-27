@@ -17,6 +17,7 @@
 #include <sstream>
 
 // Other libraries and framework includes
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
@@ -2660,8 +2661,8 @@ GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets)
     {
         static uint32_t g_send_sizes[] = { 0, 64, 128, 512, 1024 };
         static uint32_t g_recv_sizes[] = { 0, 64, 128, 512, 1024 }; //, 4*1024, 8*1024, 16*1024, 32*1024, 48*1024, 64*1024, 96*1024, 128*1024 };
-        const size_t k_num_send_sizes = sizeof(g_send_sizes)/sizeof(uint32_t);
-        const size_t k_num_recv_sizes = sizeof(g_recv_sizes)/sizeof(uint32_t);
+        const size_t k_num_send_sizes = llvm::array_lengthof(g_send_sizes);
+        const size_t k_num_recv_sizes = llvm::array_lengthof(g_recv_sizes);
         const uint64_t k_recv_amount = 4*1024*1024; // Receive 4MB
         for (uint32_t send_idx = 0; send_idx < k_num_send_sizes; ++send_idx)
         {

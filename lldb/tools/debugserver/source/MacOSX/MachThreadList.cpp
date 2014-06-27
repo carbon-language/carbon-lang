@@ -20,6 +20,8 @@
 #include "DNBThreadResumeActions.h"
 #include "MachProcess.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 MachThreadList::MachThreadList() :
     m_threads(),
     m_threads_mutex(PTHREAD_MUTEX_RECURSIVE),
@@ -313,7 +315,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
         int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, process->ProcessID() };
         struct kinfo_proc processInfo;
         size_t bufsize = sizeof(processInfo);
-        if (sysctl(mib, (unsigned)(sizeof(mib)/sizeof(int)), &processInfo, &bufsize, NULL, 0) == 0 && bufsize > 0)
+        if (sysctl(mib, llvm::array_lengthof(mib), &processInfo, &bufsize, NULL, 0) == 0 && bufsize > 0)
         {
             if (processInfo.kp_proc.p_flag & P_LP64)
                 m_is_64_bit = true;

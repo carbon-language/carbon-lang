@@ -28,6 +28,7 @@
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Target.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1327,7 +1328,7 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
     };
 
     FileSpecList bp_modules;
-    for (size_t i = 0; i < sizeof(g_bp_modules)/sizeof(const char *); i++)
+    for (size_t i = 0; i < llvm::array_lengthof(g_bp_modules); i++)
     {
         const char *bp_module = g_bp_modules[i];
         bp_modules.Append(FileSpec(bp_module, false));
@@ -1339,7 +1340,7 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
     bp_sp = target.CreateBreakpoint (&bp_modules,
                                      NULL,
                                      g_bp_names,
-                                     sizeof(g_bp_names)/sizeof(const char *),
+                                     llvm::array_lengthof(g_bp_names),
                                      eFunctionNameTypeFull,
                                      skip_prologue,
                                      internal,

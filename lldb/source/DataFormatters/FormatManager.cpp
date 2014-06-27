@@ -21,6 +21,7 @@
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -76,8 +77,7 @@ g_format_infos[] =
     { eFormatVoid           , 'v'   , "void"                }
 };
 
-static uint32_t 
-g_num_format_infos = sizeof(g_format_infos)/sizeof(FormatInfo);
+static uint32_t g_num_format_infos = llvm::array_lengthof(g_format_infos);
 
 static bool
 GetFormatFromFormatChar (char format_char, Format &format)

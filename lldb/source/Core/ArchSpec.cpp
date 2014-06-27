@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
@@ -227,7 +228,7 @@ static const ArchDefinitionEntry g_macho_arch_entries[] =
 };
 static const ArchDefinition g_macho_arch_def = {
     eArchTypeMachO,
-    sizeof(g_macho_arch_entries)/sizeof(g_macho_arch_entries[0]),
+    llvm::array_lengthof(g_macho_arch_entries),
     g_macho_arch_entries,
     "mach-o"
 };
@@ -253,7 +254,7 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
 
 static const ArchDefinition g_elf_arch_def = {
     eArchTypeELF,
-    sizeof(g_elf_arch_entries)/sizeof(g_elf_arch_entries[0]),
+    llvm::array_lengthof(g_elf_arch_entries),
     g_elf_arch_entries,
     "elf",
 };
@@ -271,7 +272,7 @@ static const ArchDefinitionEntry g_coff_arch_entries[] =
 
 static const ArchDefinition g_coff_arch_def = {
     eArchTypeCOFF,
-    sizeof(g_coff_arch_entries)/sizeof(g_coff_arch_entries[0]),
+    llvm::array_lengthof(g_coff_arch_entries),
     g_coff_arch_entries,
     "pe-coff",
 };
@@ -284,8 +285,7 @@ static const ArchDefinition *g_arch_definitions[] = {
     &g_coff_arch_def
 };
 
-static const size_t k_num_arch_definitions =
-    sizeof(g_arch_definitions) / sizeof(g_arch_definitions[0]);
+static const size_t k_num_arch_definitions = llvm::array_lengthof(g_arch_definitions);
 
 //===----------------------------------------------------------------------===//
 // Static helper functions.

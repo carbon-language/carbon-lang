@@ -13,6 +13,7 @@
 #include "lldb-perf/lib/Results.h"
 #include "lldb-perf/lib/TestCase.h"
 #include "lldb-perf/lib/Xcode.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
@@ -179,7 +180,7 @@ int main (int argc, char const *argv[], char const *envp[])
                         "-x", "c++",
                         NULL,
                         NULL };
-                    clang_argv[sizeof(clang_argv)/sizeof(const char *)-2] = temp_source_path;
+                    clang_argv[llvm::array_lengthof(clang_argv)-2] = temp_source_path;
                     SBLaunchInfo launch_info(clang_argv);
                     Launch (launch_info);
                     next_action.None(); // Don't continue or do anything, just wait for next event...

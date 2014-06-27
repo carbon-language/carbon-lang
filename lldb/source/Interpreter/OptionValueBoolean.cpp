@@ -16,6 +16,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Interpreter/Args.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -110,7 +111,7 @@ OptionValueBoolean::AutoComplete (CommandInterpreter &interpreter,
         { "1"    , 1 },
         { "0"    , 1 },
     };
-    const size_t k_num_autocomplete_entries = sizeof(g_autocomplete_entries)/sizeof(StringEntry);
+    const size_t k_num_autocomplete_entries = llvm::array_lengthof(g_autocomplete_entries);
     
     if (s && s[0])
     {

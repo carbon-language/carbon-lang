@@ -20,6 +20,8 @@
 #include "MachThread.h"
 #include "MachProcess.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 extern "C" bool CPUHasAVX(); // Defined over in DNBArchImplX86_64.cpp
 
 #if defined (LLDB_DEBUGSERVER_RELEASE) || defined (LLDB_DEBUGSERVER_DEBUG)
@@ -1201,10 +1203,10 @@ DNBArchImplI386::g_exc_registers[] =
 };
 
 // Number of registers in each register set
-const size_t DNBArchImplI386::k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
-const size_t DNBArchImplI386::k_num_fpu_registers_no_avx = sizeof(g_fpu_registers_no_avx)/sizeof(DNBRegisterInfo);
-const size_t DNBArchImplI386::k_num_fpu_registers_avx = sizeof(g_fpu_registers_avx)/sizeof(DNBRegisterInfo);
-const size_t DNBArchImplI386::k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchImplI386::k_num_gpr_registers = llvm::array_lengthof(g_gpr_registers);
+const size_t DNBArchImplI386::k_num_fpu_registers_no_avx = llvm::array_lengthof(g_fpu_registers_no_avx);
+const size_t DNBArchImplI386::k_num_fpu_registers_avx = llvm::array_lengthof(g_fpu_registers_avx);
+const size_t DNBArchImplI386::k_num_exc_registers = llvm::array_lengthof(g_exc_registers);
 const size_t DNBArchImplI386::k_num_all_registers_no_avx = k_num_gpr_registers + k_num_fpu_registers_no_avx + k_num_exc_registers;
 const size_t DNBArchImplI386::k_num_all_registers_avx = k_num_gpr_registers + k_num_fpu_registers_avx + k_num_exc_registers;
 
@@ -1232,7 +1234,7 @@ DNBArchImplI386::g_reg_sets_avx[] =
 };
 
 // Total number of register sets for this architecture
-const size_t DNBArchImplI386::k_num_register_sets = sizeof(g_reg_sets_no_avx)/sizeof(DNBRegisterSetInfo);
+const size_t DNBArchImplI386::k_num_register_sets = llvm::array_lengthof(g_reg_sets_no_avx);
 
 DNBArchProtocol *
 DNBArchImplI386::Create (MachThread *thread)

@@ -28,6 +28,7 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 
 using namespace lldb;
@@ -251,7 +252,7 @@ static RegisterInfo g_register_infos[] =
     { "ymm15" , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { gcc_dwarf_ymm15     , gcc_dwarf_ymm15     , LLDB_INVALID_REGNUM       , gdb_ymm15          , LLDB_INVALID_REGNUM },      NULL,              NULL}
 };
 
-static const uint32_t k_num_register_infos = sizeof(g_register_infos)/sizeof(RegisterInfo);
+static const uint32_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
 static bool g_register_info_names_constified = false;
 
 const lldb_private::RegisterInfo *

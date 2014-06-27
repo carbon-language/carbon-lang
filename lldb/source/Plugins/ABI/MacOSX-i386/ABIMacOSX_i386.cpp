@@ -199,7 +199,7 @@ static RegisterInfo g_register_infos[] =
     { "ymm7"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm7          , LLDB_INVALID_REGNUM       , gdb_ymm7           , LLDB_INVALID_REGNUM },      NULL,              NULL}
 };
 
-static const uint32_t k_num_register_infos = sizeof(g_register_infos)/sizeof(RegisterInfo);
+static const uint32_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
 static bool g_register_info_names_constified = false;
 
 const lldb_private::RegisterInfo *

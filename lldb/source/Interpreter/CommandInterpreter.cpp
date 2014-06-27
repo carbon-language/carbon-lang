@@ -67,6 +67,8 @@
 
 #include "lldb/Utility/CleanUp.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -417,7 +419,7 @@ CommandInterpreter::LoadCommandDictionary ()
                                       {"^\\&(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1' --skip-prologue=0"},
                                       {"^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"}};
     
-    size_t num_regexes = sizeof break_regexes/sizeof(char *[2]);
+    size_t num_regexes = llvm::array_lengthof(break_regexes);
         
     std::unique_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,

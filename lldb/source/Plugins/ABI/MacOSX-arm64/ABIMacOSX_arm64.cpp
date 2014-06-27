@@ -26,7 +26,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
-
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 
 #include "Utility/ARM64_DWARF_Registers.h"
@@ -182,7 +182,7 @@ static RegisterInfo g_register_infos[] =
     {   "d31",     NULL,     8, 0, eEncodingIEEE754 , eFormatFloat         , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }, NULL, NULL }
 };
 
-static const uint32_t k_num_register_infos = sizeof(g_register_infos)/sizeof(RegisterInfo);
+static const uint32_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
 static bool g_register_info_names_constified = false;
 
 const lldb_private::RegisterInfo *

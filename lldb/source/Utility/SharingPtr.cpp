@@ -18,6 +18,8 @@
 #include <assert.h>
 #include "lldb/Host/Mutex.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 #include <vector>
 
 class Backtrace
@@ -51,7 +53,7 @@ void
 Backtrace::GetFrames ()
 {
     void *frames[1024];
-    const int count = ::backtrace (frames, sizeof(frames)/sizeof(void*));
+    const int count = ::backtrace (frames, llvm::array_lengthof(frames));
     if (count > 2)
         m_frames.assign (frames + 2, frames + (count - 2));
 }

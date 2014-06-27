@@ -25,6 +25,8 @@
 #include "DNBLog.h"
 #include "DNBRegisterInfo.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 static const uint8_t g_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
 
 const uint8_t * const
@@ -386,10 +388,10 @@ static DNBRegisterInfo g_vec_registers[] =
 };
 
 // Number of registers in each register set
-const size_t k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
-const size_t k_num_fpr_registers = sizeof(g_fpr_registers)/sizeof(DNBRegisterInfo);
-const size_t k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
-const size_t k_num_vec_registers = sizeof(g_vec_registers)/sizeof(DNBRegisterInfo);
+const size_t k_num_gpr_registers = llvm::array_lengthof(g_gpr_registers);
+const size_t k_num_fpr_registers = llvm::array_lengthof(g_fpr_registers);
+const size_t k_num_exc_registers = llvm::array_lengthof(g_exc_registers);
+const size_t k_num_vec_registers = llvm::array_lengthof(g_vec_registers);
 // Total number of registers for this architecture
 const size_t k_num_ppc_registers = k_num_gpr_registers + k_num_fpr_registers + k_num_exc_registers + k_num_vec_registers;
 
@@ -407,7 +409,7 @@ static const DNBRegisterSetInfo g_reg_sets[] =
     { "Altivec Registers",            g_vec_registers, k_num_vec_registers }
 };
 // Total number of register sets for this architecture
-const size_t k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
+const size_t k_num_register_sets = llvm::array_lengthof(g_reg_sets);
 
 
 const DNBRegisterSetInfo *
