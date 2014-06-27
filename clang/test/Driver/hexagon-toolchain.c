@@ -133,7 +133,7 @@
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK011 %s
-// CHECK011: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK011: "-cc1"
 // CHECK011-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK011-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK011-NOT: "-static"
@@ -157,7 +157,7 @@
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK012 %s
-// CHECK012: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK012: "-cc1"
 // CHECK012-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK012-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK012-NOT: "-static"
@@ -183,7 +183,7 @@
 // RUN:   -Lone -L two -L three \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK013 %s
-// CHECK013: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK013: "-cc1"
 // CHECK013-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK013-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK013: "{{.*}}/hexagon/lib/v4/crt0_standalone.o"
@@ -207,7 +207,7 @@
 // RUN:   -static \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK014 %s
-// CHECK014: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK014: "-cc1"
 // CHECK014-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK014-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK014: "-static"
@@ -228,7 +228,7 @@
 // RUN:   -shared \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK015 %s
-// CHECK015: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK015: "-cc1"
 // CHECK015-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK015-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK015: "-shared" "-call_shared"
@@ -258,7 +258,7 @@
 // RUN:   -static \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK016 %s
-// CHECK016: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK016: "-cc1"
 // CHECK016-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK016-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK016: "-shared" "-call_shared" "-static"
@@ -290,7 +290,7 @@
 // RUN:   -nostdlib \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK017 %s
-// CHECK017: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK017: "-cc1"
 // CHECK017-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK017-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK017-NOT: crt0_standalone.o
@@ -316,7 +316,7 @@
 // RUN:   -nostartfiles \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK018 %s
-// CHECK018: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK018: "-cc1"
 // CHECK018-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK018-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK018-NOT: crt0_standalone.o
@@ -342,7 +342,7 @@
 // RUN:   -nodefaultlibs \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK019 %s
-// CHECK019: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK019: "-cc1"
 // CHECK019-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK019-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK019: "{{.*}}/hexagon/lib/v4/crt0_standalone.o"
@@ -371,7 +371,7 @@
 // RUN:   -moslib=first -moslib=second \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK020 %s
-// CHECK020: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK020: "-cc1"
 // CHECK020-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK020-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK020-NOT: "-static"
@@ -396,7 +396,7 @@
 // RUN:   -moslib=first -moslib=second -moslib=standalone\
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK021 %s
-// CHECK021: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK021: "-cc1"
 // CHECK021-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK021-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK021-NOT: "-static"
@@ -428,7 +428,7 @@
 // RUN:   -uFoo -undefined Bar \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK022 %s
-// CHECK022: "{{.*}}clang{{.*}}" "-cc1"
+// CHECK022: "-cc1"
 // CHECK022-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"{{.*}}
 // CHECK022-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK022: "{{.*}}/hexagon/lib/v4/crt0_standalone.o"
@@ -455,7 +455,7 @@
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK023 %s
-// CHECK023:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK023:      "-cc1"
 // CHECK023:        "-mrelocation-model" "static"
 // CHECK023-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
 // CHECK023-NOT:    "-G{{[0-9]+}}"
@@ -478,7 +478,7 @@
 // RUN:   -msmall-data-threshold=8 \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK024 %s
-// CHECK024:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK024:      "-cc1"
 // CHECK024-NOT:    "-mrelocation-model" "static"
 // CHECK024:        "-pic-level" "{{[12]}}"
 // CHECK024:        "-mllvm" "-hexagon-small-data-threshold=0"
@@ -502,7 +502,7 @@
 // RUN:   -msmall-data-threshold=8 \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK025 %s
-// CHECK025:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK025:      "-cc1"
 // CHECK025:        "-mrelocation-model" "static"
 // CHECK025:        "-mllvm" "-hexagon-small-data-threshold=8"
 // CHECK025-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
@@ -518,7 +518,7 @@
 // RUN:   -pie \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK026 %s
-// CHECK026:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK026:      "-cc1"
 // CHECK026-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
 // CHECK026-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK026:        "-pie"
@@ -528,7 +528,7 @@
 // RUN:   -pie -shared \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK027 %s
-// CHECK027:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK027:      "-cc1"
 // CHECK027-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
 // CHECK027-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
 // CHECK027-NOT:    "-pie"
@@ -540,7 +540,7 @@
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK028 %s
-// CHECK028:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK028:      "-cc1"
 // CHECK028:        "-mqdsp6-compat"
 // CHECK028:        "-Wreturn-type"
 // CHECK028-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
@@ -556,7 +556,7 @@
 // RUN:   -Xassembler --keep-locals \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK029 %s
-// CHECK029:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK029:      "-cc1"
 // CHECK029-NEXT: "{{.*}}/bin{{/|\\}}hexagon-as"
 // CHECK029:      "--noexecstack" "--trap" "--keep-locals"
 // CHECK029-NEXT: "{{.*}}/bin{{/|\\}}hexagon-ld"
