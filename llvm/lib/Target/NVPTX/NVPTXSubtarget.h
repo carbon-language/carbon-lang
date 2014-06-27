@@ -81,10 +81,12 @@ public:
   bool hasFMAF32() const { return SmVersion >= 20; }
   bool hasFMAF64() const { return SmVersion >= 13; }
   bool hasLDG() const { return SmVersion >= 32; }
-  bool hasLDU() const { return SmVersion >= 20; }
+  bool hasLDU() const { return ((SmVersion >= 20) && (SmVersion < 30)); }
   bool hasGenericLdSt() const { return SmVersion >= 20; }
-  inline bool hasHWROT32() const { return false; }
-  inline bool hasSWROT32() const { return true; }
+  inline bool hasHWROT32() const { return SmVersion >= 32; }
+  inline bool hasSWROT32() const {
+    return ((SmVersion >= 20) && (SmVersion < 32));
+  }
   inline bool hasROT32() const { return hasHWROT32() || hasSWROT32(); }
   inline bool hasROT64() const { return SmVersion >= 20; }
 
