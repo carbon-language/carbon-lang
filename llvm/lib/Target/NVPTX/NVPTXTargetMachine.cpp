@@ -85,7 +85,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, is64bit), DL(computeDataLayout(Subtarget)),
       InstrInfo(Subtarget), TLInfo(*this), TSInfo(&DL),
-      FrameLowering(*this, is64bit) {
+      FrameLowering(Subtarget) {
   initAsmInfo();
 }
 
