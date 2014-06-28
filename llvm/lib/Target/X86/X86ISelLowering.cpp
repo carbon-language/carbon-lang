@@ -7690,6 +7690,86 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   MutableArrayRef<int> LoMask = Mask.slice(0, 8);
   MutableArrayRef<int> HiMask = Mask.slice(8, 8);
 
+  // For single-input shuffles, there are some nicer lowering tricks we can use.
+  if (isSingleInputShuffleMask(Mask)) {
+    // Check whether we can widen this to an i16 shuffle by duplicating bytes.
+    // Notably, this handles splat and partial-splat shuffles more efficiently.
+    //
+    // FIXME: We should check for other patterns which can be widened into an
+    // i16 shuffle as well.
+    auto canWidenViaDuplication = [](ArrayRef<int> Mask) {
+      for (int i = 0; i < 16; i += 2) {
+        if (Mask[i] != Mask[i + 1])
+          return false;
+      }
+      return true;
+    };
+    if (canWidenViaDuplication(Mask)) {
+      SmallVector<int, 4> LoInputs;
+      std::copy_if(Mask.begin(), Mask.end(), std::back_inserter(LoInputs),
+                   [](int M) { return M >= 0 && M < 8; });
+      std::sort(LoInputs.begin(), LoInputs.end());
+      LoInputs.erase(std::unique(LoInputs.begin(), LoInputs.end()),
+                     LoInputs.end());
+      SmallVector<int, 4> HiInputs;
+      std::copy_if(Mask.begin(), Mask.end(), std::back_inserter(HiInputs),
+                   [](int M) { return M >= 8; });
+      std::sort(HiInputs.begin(), HiInputs.end());
+      HiInputs.erase(std::unique(HiInputs.begin(), HiInputs.end()),
+                     HiInputs.end());
+
+      bool TargetLo = LoInputs.size() >= HiInputs.size();
+      ArrayRef<int> InPlaceInputs = TargetLo ? LoInputs : HiInputs;
+      ArrayRef<int> MovingInputs = TargetLo ? HiInputs : LoInputs;
+
+      int ByteMask[16];
+      SmallDenseMap<int, int, 8> LaneMap;
+      for (int i = 0; i < 16; ++i)
+        ByteMask[i] = -1;
+      for (int I : InPlaceInputs) {
+        ByteMask[I] = I;
+        LaneMap[I] = I;
+      }
+      int FreeByteIdx = 0;
+      int TargetOffset = TargetLo ? 0 : 8;
+      for (int I : MovingInputs) {
+        // Walk the free index into the byte mask until we find an unoccupied
+        // spot. We bound this to 8 steps to catch bugs, the pigeonhole
+        // principle indicates that there *must* be a spot as we can only have
+        // 8 duplicated inputs. We have to walk the index using modular
+        // arithmetic to wrap around as necessary.
+        // FIXME: We could do a much better job of picking an inexpensive slot
+        // so this doesn't go through the worst case for the byte shuffle.
+        for (int j = 0; j < 8 && ByteMask[FreeByteIdx + TargetOffset] != -1;
+             ++j, FreeByteIdx = (FreeByteIdx + 1) % 8)
+          ;
+        assert(ByteMask[FreeByteIdx + TargetOffset] == -1 &&
+               "Failed to find a free byte!");
+        ByteMask[FreeByteIdx + TargetOffset] = I;
+        LaneMap[I] = FreeByteIdx + TargetOffset;
+      }
+      V1 = DAG.getVectorShuffle(MVT::v16i8, DL, V1, DAG.getUNDEF(MVT::v16i8),
+                                ByteMask);
+      for (int &M : Mask)
+        if (M != -1)
+          M = LaneMap[M];
+
+      // Unpack the bytes to form the i16s that will be shuffled into place.
+      V1 = DAG.getNode(TargetLo ? X86ISD::UNPCKL : X86ISD::UNPCKH, DL,
+                       MVT::v16i8, V1, V1);
+
+      int I16Shuffle[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+      for (int i = 0; i < 16; i += 2) {
+        if (Mask[i] != -1)
+          I16Shuffle[i / 2] = Mask[i] - (TargetLo ? 0 : 8);
+        assert(I16Shuffle[i / 2] < 8 && "Invalid v8 shuffle mask!");
+      }
+      return DAG.getVectorShuffle(MVT::v8i16, DL,
+                                  DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1),
+                                  DAG.getUNDEF(MVT::v8i16), I16Shuffle);
+    }
+  }
+
   // Check whether an interleaving lowering is likely to be more efficient.
   // This isn't perfect but it is a strong heuristic that tends to work well on
   // the kinds of shuffles that show up in practice.
