@@ -401,9 +401,9 @@ int main(int argc, char **argv) {
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
-  std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
-  MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
-  MOFI->InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
+  MCObjectFileInfo MOFI;
+  MCContext Ctx(MAI.get(), MRI.get(), &MOFI, &SrcMgr);
+  MOFI.InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
