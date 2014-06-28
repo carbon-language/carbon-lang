@@ -682,10 +682,9 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   if (Parser->Run(false))
     return true;
 
-  for (RecordStreamer::const_iterator i = Streamer->begin(),
-         e = Streamer->end(); i != e; ++i) {
-    StringRef Key = i->first();
-    RecordStreamer::State Value = i->second;
+  for (auto &KV : *Streamer) {
+    StringRef Key = KV.first();
+    RecordStreamer::State Value = KV.second;
     if (Value == RecordStreamer::DefinedGlobal)
       addAsmGlobalSymbol(Key.data(), LTO_SYMBOL_SCOPE_DEFAULT);
     else if (Value == RecordStreamer::Defined)
