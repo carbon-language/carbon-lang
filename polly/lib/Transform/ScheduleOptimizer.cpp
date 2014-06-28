@@ -209,8 +209,7 @@ private:
 char IslScheduleOptimizer::ID = 0;
 
 void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : S) {
     unsigned OldDimensions = Stmt->getNumScattering();
     isl_space *Space;
     isl_map *Map, *New;
@@ -562,8 +561,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   isl_union_map *ScheduleMap = getScheduleMap(Schedule);
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : S) {
     isl_map *StmtSchedule;
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
@@ -585,8 +583,8 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   unsigned MaxScatDims = 0;
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
-    MaxScatDims = std::max((*SI)->getNumScattering(), MaxScatDims);
+  for (ScopStmt *Stmt : S)
+    MaxScatDims = std::max(Stmt->getNumScattering(), MaxScatDims);
 
   extendScattering(S, MaxScatDims);
   return false;

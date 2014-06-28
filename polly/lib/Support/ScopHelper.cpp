@@ -94,9 +94,9 @@ void polly::simplifyRegion(Scop *S, Pass *P) {
     BasicBlock *OldEntry = R->getEntry();
     BasicBlock *NewEntry = SplitBlock(OldEntry, OldEntry->begin(), P);
 
-    for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
-      if ((*SI)->getBasicBlock() == OldEntry) {
-        (*SI)->setBasicBlock(NewEntry);
+    for (ScopStmt *Stmt : *S)
+      if (Stmt->getBasicBlock() == OldEntry) {
+        Stmt->setBasicBlock(NewEntry);
         break;
       }
 
@@ -107,8 +107,8 @@ void polly::simplifyRegion(Scop *S, Pass *P) {
   if (!R->getExitingBlock()) {
     BasicBlock *NewExit = createSingleExitEdge(R, P);
 
-    for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
-      (*RI)->replaceExitRecursive(NewExit);
+    for (auto &&SubRegion : *R)
+      SubRegion->replaceExitRecursive(NewExit);
   }
 }
 

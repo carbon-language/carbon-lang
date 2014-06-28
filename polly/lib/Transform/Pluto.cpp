@@ -147,8 +147,7 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
 }
 
 void PlutoOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : S) {
     unsigned OldDimensions = Stmt->getNumScattering();
     isl_space *Space;
     isl_map *Map, *New;
@@ -183,8 +182,7 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   ToPlutoNames = isl_union_map_empty(S.getParamSpace());
 
   int counter = 0;
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : S) {
     std::string Name = "S_" + convertInt(counter);
     isl_map *Identity = isl_map_identity(isl_space_map_from_domain_and_range(
         Stmt->getDomainSpace(), Stmt->getDomainSpace()));
@@ -230,8 +228,7 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   Schedule =
       isl_union_map_apply_domain(Schedule, isl_union_map_reverse(ToPlutoNames));
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : S) {
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(Schedule),
@@ -246,8 +243,8 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
 
   unsigned MaxScatDims = 0;
 
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
-    MaxScatDims = std::max((*SI)->getNumScattering(), MaxScatDims);
+  for (ScopStmt *Stmt : S)
+    MaxScatDims = std::max(Stmt->getNumScattering(), MaxScatDims);
 
   extendScattering(S, MaxScatDims);
   return false;

@@ -143,11 +143,9 @@ bool Pocc::runTransform(Scop &S) {
   if (!newScoplib.updateScattering()) {
     errs() << "Failure when calculating the optimization with "
               "the following command: ";
-    for (std::vector<const char *>::const_iterator AI = arguments.begin(),
-                                                   AE = arguments.end();
-         AI != AE; ++AI)
-      if (*AI)
-        errs() << " " << *AI;
+    for (const char *Arg : arguments)
+      if (Arg)
+        errs() << " " << Arg;
     errs() << "\n";
     return false;
   } else
@@ -164,8 +162,8 @@ bool Pocc::runTransform(Scop &S) {
   while (lastLoop) {
     bool isSingleValued = true;
 
-    for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-      isl_map *scat = (*SI)->getScattering();
+    for (ScopStmt *Stmt : S) {
+      isl_map *scat = Stmt->getScattering();
       isl_map *projected = isl_map_project_out(scat, isl_dim_out, lastLoop,
                                                scatterDims - lastLoop);
 
@@ -182,9 +180,9 @@ bool Pocc::runTransform(Scop &S) {
   }
 
   // Strip mine the innermost loop.
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    isl_map *scat = (*SI)->getScattering();
-    int scatDims = (*SI)->getNumScattering();
+  for (ScopStmt *Stmt : S) {
+    isl_map *scat = Stmt->getScattering();
+    int scatDims = Stmt->getNumScattering();
     isl_space *Space = isl_space_alloc(S.getIslCtx(), S.getNumParams(),
                                        scatDims, scatDims + 1);
     isl_basic_map *map = isl_basic_map_universe(isl_space_copy(Space));
@@ -227,7 +225,7 @@ bool Pocc::runTransform(Scop &S) {
     transform = isl_map_set_tuple_name(transform, isl_dim_in, "scattering");
 
     scat = isl_map_apply_range(scat, isl_map_copy(transform));
-    (*SI)->setScattering(scat);
+    Stmt->setScattering(scat);
   }
 
   return false;
@@ -245,11 +243,9 @@ void Pocc::printScop(raw_ostream &OS) const {
 
   OS << "Command line: ";
 
-  for (std::vector<const char *>::const_iterator AI = arguments.begin(),
-                                                 AE = arguments.end();
-       AI != AE; ++AI)
-    if (*AI)
-      OS << " " << *AI;
+  for (const char *Arg : arguments)
+    if (Arg)
+      OS << " " << Arg;
 
   OS << "\n";
 

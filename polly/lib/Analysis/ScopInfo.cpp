@@ -556,22 +556,18 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
-  const AccFuncSetType *AccFuncs = tempScop.getAccessFunctions(BB);
-
-  for (AccFuncSetType::const_iterator I = AccFuncs->begin(),
-                                      E = AccFuncs->end();
-       I != E; ++I) {
-    MemAccs.push_back(new MemoryAccess(I->first, I->second, this));
+  for (auto &&Access : *tempScop.getAccessFunctions(BB)) {
+    MemAccs.push_back(new MemoryAccess(Access.first, Access.second, this));
 
     // We do not track locations for scalar memory accesses at the moment.
     //
     // We do not have a use for this information at the moment. If we need this
     // at some point, the "instruction -> access" mapping needs to be enhanced
     // as a single instruction could then possibly perform multiple accesses.
-    if (!I->first.isScalar()) {
-      assert(!InstructionToAccess.count(I->second) &&
+    if (!Access.first.isScalar()) {
+      assert(!InstructionToAccess.count(Access.second) &&
              "Unexpected 1-to-N mapping on instruction to access map!");
-      InstructionToAccess[I->second] = MemAccs.back();
+      InstructionToAccess[Access.second] = MemAccs.back();
     }
   }
 }
@@ -650,10 +646,8 @@ __isl_give isl_set *ScopStmt::addConditionsToDomain(__isl_take isl_set *Domain,
   do {
     if (BranchingBB != CurrentRegion->getEntry()) {
       if (const BBCond *Condition = tempScop.getBBCond(BranchingBB))
-        for (BBCond::const_iterator CI = Condition->begin(),
-                                    CE = Condition->end();
-             CI != CE; ++CI) {
-          isl_set *ConditionSet = buildConditionSet(*CI);
+        for (const auto &C : *Condition) {
+          isl_set *ConditionSet = buildConditionSet(C);
           Domain = isl_set_intersect(Domain, ConditionSet);
         }
     }
@@ -894,9 +888,8 @@ void ScopStmt::print(raw_ostream &OS) const {
   } else
     OS.indent(16) << "n/a\n";
 
-  for (MemoryAccessVec::const_iterator I = MemAccs.begin(), E = MemAccs.end();
-       I != E; ++I)
-    (*I)->print(OS);
+  for (MemoryAccess *Access : MemAccs)
+    Access->print(OS);
 }
 
 void ScopStmt::dump() const { print(dbgs()); }
@@ -911,11 +904,7 @@ void Scop::setContext(__isl_take isl_set *NewContext) {
 }
 
 void Scop::addParams(std::vector<const SCEV *> NewParameters) {
-  for (std::vector<const SCEV *>::iterator PI = NewParameters.begin(),
-                                           PE = NewParameters.end();
-       PI != PE; ++PI) {
-    const SCEV *Parameter = *PI;
-
+  for (const SCEV *Parameter : NewParameters) {
     if (ParameterIds.find(Parameter) != ParameterIds.end())
       continue;
 
@@ -983,18 +972,17 @@ void Scop::realignParams() {
   // Add all parameters into a common model.
   isl_space *Space = isl_space_params_alloc(IslCtx, ParameterIds.size());
 
-  for (ParamIdType::iterator PI = ParameterIds.begin(), PE = ParameterIds.end();
-       PI != PE; ++PI) {
-    const SCEV *Parameter = PI->first;
+  for (const auto &ParamID : ParameterIds) {
+    const SCEV *Parameter = ParamID.first;
     isl_id *id = getIdForParam(Parameter);
-    Space = isl_space_set_dim_id(Space, isl_dim_param, PI->second, id);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, ParamID.second, id);
   }
 
   // Align the parameters of all data structures to the model.
   Context = isl_set_align_params(Context, Space);
 
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    (*I)->realignParams();
+  for (ScopStmt *Stmt : *this)
+    Stmt->realignParams();
 }
 
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
@@ -1024,8 +1012,8 @@ Scop::~Scop() {
   isl_set_free(AssumedContext);
 
   // Free the statements;
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    delete *I;
+  for (ScopStmt *Stmt : *this)
+    delete Stmt;
 }
 
 std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
@@ -1066,12 +1054,8 @@ void Scop::printContext(raw_ostream &OS) const {
 
   OS.indent(4) << getContextStr() << "\n";
 
-  for (ParamVecType::const_iterator PI = Parameters.begin(),
-                                    PE = Parameters.end();
-       PI != PE; ++PI) {
-    const SCEV *Parameter = *PI;
+  for (const SCEV *Parameter : Parameters) {
     int Dim = ParameterIds.find(Parameter)->second;
-
     OS.indent(4) << "p" << Dim << ": " << *Parameter << "\n";
   }
 }
@@ -1079,8 +1063,8 @@ void Scop::printContext(raw_ostream &OS) const {
 void Scop::printStatements(raw_ostream &OS) const {
   OS << "Statements {\n";
 
-  for (const_iterator SI = begin(), SE = end(); SI != SE; ++SI)
-    OS.indent(4) << (**SI);
+  for (ScopStmt *Stmt : *this)
+    OS.indent(4) << *Stmt;
 
   OS.indent(4) << "}\n";
 }

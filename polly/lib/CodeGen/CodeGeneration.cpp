@@ -536,14 +536,8 @@ public:
     const BasicBlock *BB = S->getBasicBlock();
 
     // Check all the operands of instructions in the basic block.
-    for (BasicBlock::const_iterator BI = BB->begin(), BE = BB->end(); BI != BE;
-         ++BI) {
-      const Instruction &Inst = *BI;
-      for (Instruction::const_op_iterator II = Inst.op_begin(),
-                                          IE = Inst.op_end();
-           II != IE; ++II) {
-        Value *SrcVal = *II;
-
+    for (const Instruction &Inst : *BB) {
+      for (Value *SrcVal : Inst.operands()) {
         if (Instruction *OpInst = dyn_cast<Instruction>(SrcVal))
           if (S->getParent()->getRegion().contains(OpInst))
             continue;

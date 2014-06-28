@@ -97,12 +97,11 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
   static std::string escapeString(std::string String) {
     std::string Escaped;
 
-    for (std::string::iterator SI = String.begin(), SE = String.end(); SI != SE;
-         ++SI) {
-      if (*SI == '"')
+    for (const auto &C : String) {
+      if (C == '"')
         Escaped += '\\';
 
-      Escaped += *SI;
+      Escaped += C;
     }
     return Escaped;
   }
