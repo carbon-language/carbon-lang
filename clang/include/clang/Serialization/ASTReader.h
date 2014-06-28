@@ -1839,11 +1839,11 @@ public:
 
   void
   removeOverriddenMacros(IdentifierInfo *II, AmbiguousMacros &Ambig,
-                         llvm::ArrayRef<serialization::SubmoduleID> Overrides);
+                         ArrayRef<serialization::SubmoduleID> Overrides);
 
   AmbiguousMacros *
   removeOverriddenMacros(IdentifierInfo *II,
-                         llvm::ArrayRef<serialization::SubmoduleID> Overrides);
+                         ArrayRef<serialization::SubmoduleID> Overrides);
 
   /// \brief Retrieve the macro with the given ID.
   MacroInfo *getMacro(serialization::MacroID ID);
@@ -2024,7 +2024,7 @@ public:
   void addPendingMacroFromModule(IdentifierInfo *II,
                                  ModuleFile *M,
                                  serialization::GlobalMacroID GMacID,
-                                 llvm::ArrayRef<serialization::SubmoduleID>);
+                                 ArrayRef<serialization::SubmoduleID>);
 
   /// \brief Add a macro to deserialize its macro directive history from a PCH.
   ///

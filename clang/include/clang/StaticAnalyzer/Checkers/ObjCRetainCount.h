@@ -197,7 +197,7 @@ class CallEffects {
 
 public:
   /// Returns the argument effects for a call.
-  llvm::ArrayRef<ArgEffect> getArgs() const { return Args; }
+  ArrayRef<ArgEffect> getArgs() const { return Args; }
 
   /// Returns the effects on the receiver.
   ArgEffect getReceiver() const { return Receiver; }

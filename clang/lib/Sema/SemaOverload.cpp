@@ -5732,8 +5732,8 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
     EnableIfAttr *EIA = cast<EnableIfAttr>(*I);
     if (!EIA->getCond()->EvaluateWithSubstitution(
             Result, Context, Function,
-            llvm::ArrayRef<const Expr*>(ConvertedArgs.data(),
-                                        ConvertedArgs.size())) ||
+            ArrayRef<const Expr*>(ConvertedArgs.data(),
+                                  ConvertedArgs.size())) ||
         !Result.isInt() || !Result.getInt().getBoolValue()) {
       return EIA;
     }

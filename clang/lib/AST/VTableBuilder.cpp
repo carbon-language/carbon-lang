@@ -3120,9 +3120,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
 }
 
 static bool setsIntersect(const llvm::SmallPtrSet<const CXXRecordDecl *, 4> &A,
-                          const llvm::ArrayRef<const CXXRecordDecl *> &B) {
-  for (llvm::ArrayRef<const CXXRecordDecl *>::iterator I = B.begin(),
-                                                       E = B.end();
+                          const ArrayRef<const CXXRecordDecl *> &B) {
+  for (ArrayRef<const CXXRecordDecl *>::iterator I = B.begin(), E = B.end();
        I != E; ++I) {
     if (A.count(*I))
       return true;

@@ -3163,7 +3163,7 @@ public:
   }
 
   static void emitMacroOverrides(raw_ostream &Out,
-                                 llvm::ArrayRef<SubmoduleID> Overridden) {
+                                 ArrayRef<SubmoduleID> Overridden) {
     if (!Overridden.empty()) {
       using namespace llvm::support;
       endian::Writer<little> LE(Out);

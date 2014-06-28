@@ -5135,7 +5135,7 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
 
 /// Note a set of 'operator->' functions that were used for a member access.
 static void noteOperatorArrows(Sema &S,
-                               llvm::ArrayRef<FunctionDecl *> OperatorArrows) {
+                               ArrayRef<FunctionDecl *> OperatorArrows) {
   unsigned SkipStart = OperatorArrows.size(), SkipCount = 0;
   // FIXME: Make this configurable?
   unsigned Limit = 9;

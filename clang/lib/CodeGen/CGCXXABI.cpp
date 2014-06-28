@@ -311,7 +311,7 @@ CGCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
 }
 
 void CGCXXABI::EmitThreadLocalInitFuncs(
-    llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+    ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
     llvm::Function *InitFunc) {
 }
 

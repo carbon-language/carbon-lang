@@ -1170,7 +1170,7 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     mangleExpression(TA.getAsExpr());
     break;
   case TemplateArgument::Pack: {
-    llvm::ArrayRef<TemplateArgument> TemplateArgs = TA.getPackAsArray();
+    ArrayRef<TemplateArgument> TemplateArgs = TA.getPackAsArray();
     if (TemplateArgs.empty()) {
       Out << "$S";
     } else {

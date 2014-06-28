@@ -63,9 +63,9 @@ public:
   const CGFunctionInfo &arrangeCXXMethodType(const CXXRecordDecl *RD,
                                              const FunctionProtoType *FTP);
   const CGFunctionInfo &arrangeFreeFunctionCall(CanQualType returnType,
-                                         llvm::ArrayRef<CanQualType> argTypes,
-                                         FunctionType::ExtInfo info,
-                                         RequiredArgs args);
+                                                ArrayRef<CanQualType> argTypes,
+                                                FunctionType::ExtInfo info,
+                                                RequiredArgs args);
 
 private:
   /// Default CodeGenOptions object used to initialize the

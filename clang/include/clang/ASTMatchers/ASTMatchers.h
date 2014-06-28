@@ -334,7 +334,7 @@ AST_POLYMORPHIC_MATCHER_P(
     AST_POLYMORPHIC_SUPPORTED_TYPES_2(ClassTemplateSpecializationDecl,
                                       TemplateSpecializationType),
     internal::Matcher<TemplateArgument>, InnerMatcher) {
-  llvm::ArrayRef<TemplateArgument> List =
+  ArrayRef<TemplateArgument> List =
       internal::getTemplateSpecializationArgs(Node);
   return matchesFirstInRange(InnerMatcher, List.begin(), List.end(), Finder,
                              Builder);
@@ -434,7 +434,7 @@ AST_POLYMORPHIC_MATCHER_P2(
     AST_POLYMORPHIC_SUPPORTED_TYPES_2(ClassTemplateSpecializationDecl,
                                       TemplateSpecializationType),
     unsigned, N, internal::Matcher<TemplateArgument>, InnerMatcher) {
-  llvm::ArrayRef<TemplateArgument> List =
+  ArrayRef<TemplateArgument> List =
       internal::getTemplateSpecializationArgs(Node);
   if (List.size() <= N)
     return false;

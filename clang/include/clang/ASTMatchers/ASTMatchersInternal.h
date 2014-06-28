@@ -1566,14 +1566,14 @@ TypeTraversePolymorphicMatcher<
 
 // FIXME: unify ClassTemplateSpecializationDecl and TemplateSpecializationType's
 // APIs for accessing the template argument list.
-inline llvm::ArrayRef<TemplateArgument>
+inline ArrayRef<TemplateArgument>
 getTemplateSpecializationArgs(const ClassTemplateSpecializationDecl &D) {
   return D.getTemplateArgs().asArray();
 }
 
-inline llvm::ArrayRef<TemplateArgument>
+inline ArrayRef<TemplateArgument>
 getTemplateSpecializationArgs(const TemplateSpecializationType &T) {
-  return llvm::ArrayRef<TemplateArgument>(T.getArgs(), T.getNumArgs());
+  return ArrayRef<TemplateArgument>(T.getArgs(), T.getNumArgs());
 }
 
 struct NotEqualsBoundNodePredicate {

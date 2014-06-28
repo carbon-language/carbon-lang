@@ -153,7 +153,7 @@ static llvm::StructType *getCompleteObjectLocatorType(CodeGenModule &CGM) {
         CGM, getClassHierarchyDescriptorType(CGM)->getPointerTo()),
     getImageRelativeType(CGM, Type),
   };
-  llvm::ArrayRef<llvm::Type *> FieldTypesRef(
+  ArrayRef<llvm::Type *> FieldTypesRef(
       std::begin(FieldTypes),
       isImageRelative(CGM) ? std::end(FieldTypes) : std::end(FieldTypes) - 1);
   Type->setBody(FieldTypesRef);
@@ -341,7 +341,7 @@ llvm::GlobalVariable *MSRTTIBuilder::getClassHierarchyDescriptor() {
     getImageRelativeConstant(CGM,
                              llvm::ConstantExpr::getInBoundsGetElementPtr(
                                  getBaseClassArray(Classes),
-                                 llvm::ArrayRef<llvm::Value *>(GEPIndices))),
+                                 ArrayRef<llvm::Value *>(GEPIndices))),
   };
   CHD->setInitializer(llvm::ConstantStruct::get(Type, Fields));
   return CHD;
@@ -460,7 +460,7 @@ MSRTTIBuilder::getCompleteObjectLocator(const VPtrInfo *Info) {
     getImageRelativeConstant(CGM, getClassHierarchyDescriptor()),
     getImageRelativeConstant(CGM, COL),
   };
-  llvm::ArrayRef<llvm::Constant *> FieldsRef(Fields);
+  ArrayRef<llvm::Constant *> FieldsRef(Fields);
   if (!isImageRelative(CGM))
     FieldsRef = FieldsRef.slice(0, FieldsRef.size() - 1);
   COL->setInitializer(llvm::ConstantStruct::get(Type, FieldsRef));

@@ -507,7 +507,7 @@ public:
   ///        initialization or non-trivial destruction for thread_local
   ///        variables, a function to perform the initialization. Otherwise, 0.
   virtual void EmitThreadLocalInitFuncs(
-      llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
+      ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
       llvm::Function *InitFunc);
 
   /// Emit a reference to a non-local thread_local variable (including
