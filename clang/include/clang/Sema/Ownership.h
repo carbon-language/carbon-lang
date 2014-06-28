@@ -258,11 +258,11 @@ namespace clang {
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;
 
-  typedef llvm::MutableArrayRef<Expr*> MultiExprArg;
-  typedef llvm::MutableArrayRef<Stmt*> MultiStmtArg;
-  typedef llvm::MutableArrayRef<ParsedTemplateArgument> ASTTemplateArgsPtr;
-  typedef llvm::MutableArrayRef<ParsedType> MultiTypeArg;
-  typedef llvm::MutableArrayRef<TemplateParameterList*> MultiTemplateParamsArg;
+  typedef MutableArrayRef<Expr*> MultiExprArg;
+  typedef MutableArrayRef<Stmt*> MultiStmtArg;
+  typedef MutableArrayRef<ParsedTemplateArgument> ASTTemplateArgsPtr;
+  typedef MutableArrayRef<ParsedType> MultiTypeArg;
+  typedef MutableArrayRef<TemplateParameterList*> MultiTemplateParamsArg;
 
   inline ExprResult ExprError() { return ExprResult(true); }
   inline StmtResult StmtError() { return StmtResult(true); }

@@ -47,10 +47,10 @@ class OMPThreadPrivateDecl : public Decl {
                    NumVars);
   }
 
-  llvm::MutableArrayRef<Expr *> getVars() {
-    return llvm::MutableArrayRef<Expr *>(
-                                 reinterpret_cast<Expr **>(this + 1),
-                                 NumVars);
+  MutableArrayRef<Expr *> getVars() {
+    return MutableArrayRef<Expr *>(
+                           reinterpret_cast<Expr **>(this + 1),
+                           NumVars);
   }
 
   void setVars(ArrayRef<Expr *> VL);
@@ -62,7 +62,7 @@ public:
   static OMPThreadPrivateDecl *CreateDeserialized(ASTContext &C,
                                                   unsigned ID, unsigned N);
 
-  typedef llvm::MutableArrayRef<Expr *>::iterator varlist_iterator;
+  typedef MutableArrayRef<Expr *>::iterator varlist_iterator;
   typedef ArrayRef<const Expr *>::iterator varlist_const_iterator;
   typedef llvm::iterator_range<varlist_iterator> varlist_range;
   typedef llvm::iterator_range<varlist_const_iterator> varlist_const_range;

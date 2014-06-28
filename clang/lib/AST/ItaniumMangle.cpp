@@ -3422,8 +3422,8 @@ void CXXNameMangler::mangleSeqID(unsigned SeqID) {
 
     // <seq-id> is encoded in base-36, using digits and upper case letters.
     char Buffer[7]; // log(2**32) / log(36) ~= 7
-    llvm::MutableArrayRef<char> BufferRef(Buffer);
-    llvm::MutableArrayRef<char>::reverse_iterator I = BufferRef.rbegin();
+    MutableArrayRef<char> BufferRef(Buffer);
+    MutableArrayRef<char>::reverse_iterator I = BufferRef.rbegin();
 
     for (; SeqID != 0; SeqID /= 36) {
       unsigned C = SeqID % 36;

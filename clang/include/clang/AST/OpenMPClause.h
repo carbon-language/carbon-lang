@@ -76,8 +76,8 @@ template <class T> class OMPVarListClause : public OMPClause {
 
 protected:
   /// \brief Fetches list of variables associated with this clause.
-  llvm::MutableArrayRef<Expr *> getVarRefs() {
-    return llvm::MutableArrayRef<Expr *>(
+  MutableArrayRef<Expr *> getVarRefs() {
+    return MutableArrayRef<Expr *>(
         reinterpret_cast<Expr **>(
             reinterpret_cast<char *>(this) +
             llvm::RoundUpToAlignment(sizeof(T), llvm::alignOf<Expr *>())),
@@ -108,7 +108,7 @@ protected:
       : OMPClause(K, StartLoc, EndLoc), LParenLoc(LParenLoc), NumVars(N) {}
 
 public:
-  typedef llvm::MutableArrayRef<Expr *>::iterator varlist_iterator;
+  typedef MutableArrayRef<Expr *>::iterator varlist_iterator;
   typedef ArrayRef<const Expr *>::iterator varlist_const_iterator;
   typedef llvm::iterator_range<varlist_iterator> varlist_range;
   typedef llvm::iterator_range<varlist_const_iterator> varlist_const_range;

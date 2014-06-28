@@ -598,8 +598,8 @@ void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
     // in the range of ASCII characters 'A' to 'P'.
     // The number 0x123450 would be encoded as 'BCDEFA'
     char EncodedNumberBuffer[sizeof(uint64_t) * 2];
-    llvm::MutableArrayRef<char> BufferRef(EncodedNumberBuffer);
-    llvm::MutableArrayRef<char>::reverse_iterator I = BufferRef.rbegin();
+    MutableArrayRef<char> BufferRef(EncodedNumberBuffer);
+    MutableArrayRef<char>::reverse_iterator I = BufferRef.rbegin();
     for (; Value != 0; Value >>= 4)
       *I++ = 'A' + (Value & 0xf);
     Out.write(I.base(), I - BufferRef.rbegin());

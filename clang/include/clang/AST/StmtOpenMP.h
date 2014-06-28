@@ -49,10 +49,10 @@ class OMPExecutableDirective : public Stmt {
   const unsigned ClausesOffset;
 
   /// \brief Get the clauses storage.
-  llvm::MutableArrayRef<OMPClause *> getClauses() {
+  MutableArrayRef<OMPClause *> getClauses() {
     OMPClause **ClauseStorage = reinterpret_cast<OMPClause **>(
         reinterpret_cast<char *>(this) + ClausesOffset);
-    return llvm::MutableArrayRef<OMPClause *>(ClauseStorage, NumClauses);
+    return MutableArrayRef<OMPClause *>(ClauseStorage, NumClauses);
   }
 
 protected:
