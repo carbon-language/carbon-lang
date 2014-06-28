@@ -63,14 +63,15 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_04_04_04_04_08_08_08_08_12_12_12_12(
 ; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm1
 ; CHECK-SSE2-NEXT:    movdqa %xmm0, %xmm2
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm2 = xmm2[2,1,2,3]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm2 = xmm2[0,2,2,3]
+; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm2 = xmm2[0,2,2,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    punpckhbw %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    punpcklwd %xmm2, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,0,3]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,2,1]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,0,2,3,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,5,5,6,7]
+; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,7,5,6,7]
 ; CHECK-SSE2-NEXT:    packuswb %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,0,1]

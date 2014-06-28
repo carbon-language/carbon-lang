@@ -7535,7 +7535,7 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
       } else {
         // Otherwise pin the low inputs.
         for (int GoodInput : GoodInputs)
-          MoveMask[Mask[GoodInput]] = Mask[GoodInput] - MaskOffset;
+          MoveMask[Mask[GoodInput] - MaskOffset] = Mask[GoodInput] - MaskOffset;
       }
 
       int MoveMaskIdx =
