@@ -1,6 +1,6 @@
-# RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %s.o %s
-# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%s %s.o
-# RUN: rm %s.o
+# RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %t.o %s
+# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%s %t.o
+# RUN: rm %t.o
 
         .section	__TEXT,__text,regular,pure_instructions
 	.globl	foo
