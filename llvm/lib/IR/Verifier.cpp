@@ -533,7 +533,9 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
   Assert1(!GA.getName().empty(),
           "Alias name cannot be empty!", &GA);
   Assert1(GlobalAlias::isValidLinkage(GA.getLinkage()),
-          "Alias should have external or external weak linkage!", &GA);
+          "Alias should have private, internal, linkonce, weak, linkonce_odr, "
+          "weak_odr, or external linkage!",
+          &GA);
   const Constant *Aliasee = GA.getAliasee();
   Assert1(Aliasee, "Aliasee cannot be NULL!", &GA);
   Assert1(GA.getType() == Aliasee->getType(),
