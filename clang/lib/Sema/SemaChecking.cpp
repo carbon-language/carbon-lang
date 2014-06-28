@@ -6192,6 +6192,38 @@ enum {
   ArrayPointer
 };
 
+// Helper function for Sema::DiagnoseAlwaysNonNullPointer.
+// Returns true when emitting a warning about taking the address of a reference.
+static bool CheckForReference(Sema &SemaRef, const Expr *E,
+                              PartialDiagnostic PD) {
+  E = E->IgnoreParenImpCasts();
+
+  const FunctionDecl *FD = nullptr;
+
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (!DRE->getDecl()->getType()->isReferenceType())
+      return false;
+  } else if (const MemberExpr *M = dyn_cast<MemberExpr>(E)) {
+    if (!M->getMemberDecl()->getType()->isReferenceType())
+      return false;
+  } else if (const CallExpr *Call = dyn_cast<CallExpr>(E)) {
+    if (!Call->getCallReturnType()->isReferenceType())
+      return false;
+    FD = Call->getDirectCallee();
+  } else {
+    return false;
+  }
+
+  SemaRef.Diag(E->getExprLoc(), PD);
+
+  // If possible, point to location of function.
+  if (FD) {
+    SemaRef.Diag(FD->getLocation(), diag::note_reference_is_return_value) << FD;
+  }
+
+  return true;
+}
+
 /// \brief Diagnose pointers that are always non-null.
 /// \param E the expression containing the pointer
 /// \param NullKind NPCK_NotNull if E is a cast to bool, otherwise, E is
@@ -6227,6 +6259,17 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
     E = UO->getSubExpr();
   }
 
+  if (IsAddressOf) {
+    unsigned DiagID = IsCompare
+                          ? diag::warn_address_of_reference_null_compare
+                          : diag::warn_address_of_reference_bool_conversion;
+    PartialDiagnostic PD = PDiag(DiagID) << E->getSourceRange() << Range
+                                         << IsEqual;
+    if (CheckForReference(*this, E, PD)) {
+      return;
+    }
+  }
+
   // Expect to find a single Decl.  Skip anything more complicated.
   ValueDecl *D = nullptr;
   if (DeclRefExpr *R = dyn_cast<DeclRefExpr>(E)) {
@@ -6243,18 +6286,9 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
   const bool IsArray = T->isArrayType();
   const bool IsFunction = T->isFunctionType();
 
-  if (IsAddressOf) {
-    // Address of function is used to silence the function warning.
-    if (IsFunction)
-      return;
-
-    if (T->isReferenceType()) {
-      unsigned DiagID = IsCompare
-                            ? diag::warn_address_of_reference_null_compare
-                            : diag::warn_address_of_reference_bool_conversion;
-      Diag(E->getExprLoc(), DiagID) << E->getSourceRange() << Range << IsEqual;
-      return;
-    }
+  // Address of function is used to silence the function warning.
+  if (IsAddressOf && IsFunction) {
+    return;
   }
 
   // Found nothing.

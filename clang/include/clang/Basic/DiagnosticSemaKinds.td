@@ -2433,6 +2433,7 @@ def warn_address_of_reference_null_compare : Warning<
   "code; comparison may be assumed to always evaluate to "
   "%select{true|false}0">,
   InGroup<TautologicalUndefinedCompare>;
+def note_reference_is_return_value : Note<"%0 returns a reference">;
 
 def note_function_warning_silence : Note<
     "prefix with the address-of operator to silence this warning">;

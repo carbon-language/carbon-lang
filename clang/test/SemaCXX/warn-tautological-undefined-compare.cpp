@@ -32,3 +32,81 @@ class test2 {
   int &x;
   int y;
 };
+
+namespace function_return_reference {
+  int& get_int();
+  // expected-note@-1 4{{'get_int' returns a reference}}
+  class B {
+  public:
+    static int &stat();
+    // expected-note@-1 4{{'stat' returns a reference}}
+    int &get();
+    // expected-note@-1 8{{'get' returns a reference}}
+  };
+
+  void test() {
+    if (&get_int() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&(get_int()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&get_int() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&(get_int()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+
+    if (&B::stat() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&(B::stat()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&B::stat() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&(B::stat()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+
+    B b;
+    if (&b.get() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&(b.get()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&b.get() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&(b.get()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+
+    B* b_ptr = &b;
+    if (&b_ptr->get() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&(b_ptr->get()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&b_ptr->get() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&(b_ptr->get()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+
+    int& (B::*m_ptr)() = &B::get;
+    if (&(b.*m_ptr)() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&((b.*m_ptr)()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&(b.*m_ptr)() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&((b.*m_ptr)()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+
+    int& (*f_ptr)() = &get_int;
+    if (&(*f_ptr)() == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    if (&((*f_ptr)()) == 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+
+    if (&(*f_ptr)() != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    if (&((*f_ptr)()) != 0) {}
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+  }
+}
