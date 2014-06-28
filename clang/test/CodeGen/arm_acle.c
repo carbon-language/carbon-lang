@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -triple armv8 -target-cpu cortex-a57 -O -S -emit-llvm -o - %s | FileCheck %s -check-prefix=ARM -check-prefix=AArch32
-// RUN: %clang_cc1 -triple aarch64 -target-cpu cortex-a57 -O -S -emit-llvm -o - %s | FileCheck %s -check-prefix=ARM -check-prefix=AArch64
+// RUN: %clang_cc1 -ffreestanding -triple armv8 -target-cpu cortex-a57 -O -S -emit-llvm -o - %s | FileCheck %s -check-prefix=ARM -check-prefix=AArch32
+// RUN: %clang_cc1 -ffreestanding -triple aarch64 -target-cpu cortex-a57 -O -S -emit-llvm -o - %s | FileCheck %s -check-prefix=ARM -check-prefix=AArch64
 
 #include <arm_acle.h>
-#include <stdint.h>
 
 /* Miscellaneous data-processing intrinsics */
 // ARM-LABEL: test_rev

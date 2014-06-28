@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple armv8 -target-cpu cortex-a57 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple armv8 -target-cpu cortex-a57 -fsyntax-only -ffreestanding -verify %s
 
 #include <arm_acle.h>
 
