@@ -3103,9 +3103,6 @@ public:
     WindowsTargetInfo<X86_32TargetInfo>::getTargetDefines(Opts, Builder);
   }
 };
-} // end anonymous namespace
-
-namespace {
 
 // x86-32 Windows Visual Studio target
 class MicrosoftX86_32TargetInfo : public WindowsX86_32TargetInfo {
