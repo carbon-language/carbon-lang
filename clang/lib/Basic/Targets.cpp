@@ -5523,11 +5523,12 @@ public:
     if (Name == "o32" || Name == "eabi") {
       ABI = Name;
       return true;
-    } else if (Name == "32") {
+    }
+    if (Name == "32") {
       ABI = "o32";
       return true;
-    } else
-      return false;
+    }
+    return false;
   }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
@@ -5661,7 +5662,8 @@ public:
       setN32ABITypes();
       ABI = Name;
       return true;
-    } else if (Name == "n64" || Name == "64") {
+    }
+    if (Name == "n64" || Name == "64") {
       setN64ABITypes();
       ABI = "n64";
       return true;
