@@ -5305,7 +5305,6 @@ public:
         DspRev(NoDSP), HasMSA(false), HasFP64(false), ABI(ABIStr) {}
 
   StringRef getABI() const override { return ABI; }
-  bool setABI(const std::string &Name) override = 0;
   bool setCPU(const std::string &Name) override {
     CPU = Name;
     return true;
