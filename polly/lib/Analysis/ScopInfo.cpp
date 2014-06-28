@@ -1098,14 +1098,10 @@ void Scop::dump() const { print(dbgs()); }
 isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
 __isl_give isl_union_set *Scop::getDomains() {
-  isl_union_set *Domain = nullptr;
+  isl_union_set *Domain = isl_union_set_empty(getParamSpace());
 
-  for (Scop::iterator SI = begin(), SE = end(); SI != SE; ++SI)
-    if (!Domain)
-      Domain = isl_union_set_from_set((*SI)->getDomain());
-    else
-      Domain = isl_union_set_union(Domain,
-                                   isl_union_set_from_set((*SI)->getDomain()));
+  for (ScopStmt *Stmt : *this)
+    Domain = isl_union_set_add_set(Domain, Stmt->getDomain());
 
   return Domain;
 }
@@ -1113,16 +1109,13 @@ __isl_give isl_union_set *Scop::getDomains() {
 __isl_give isl_union_map *Scop::getWrites() {
   isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
 
-  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-
+  for (ScopStmt *Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {
       if (!MA->isWrite())
         continue;
 
       isl_set *Domain = Stmt->getDomain();
       isl_map *AccessDomain = MA->getAccessRelation();
-
       AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
       Write = isl_union_map_add_map(Write, AccessDomain);
     }
@@ -1131,11 +1124,9 @@ __isl_give isl_union_map *Scop::getWrites() {
 }
 
 __isl_give isl_union_map *Scop::getReads() {
-  isl_union_map *Read = isl_union_map_empty(this->getParamSpace());
+  isl_union_map *Read = isl_union_map_empty(getParamSpace());
 
-  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-
+  for (ScopStmt *Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {
       if (!MA->isRead())
         continue;
@@ -1151,21 +1142,18 @@ __isl_give isl_union_map *Scop::getReads() {
 }
 
 __isl_give isl_union_map *Scop::getSchedule() {
-  isl_union_map *Schedule = isl_union_map_empty(this->getParamSpace());
+  isl_union_map *Schedule = isl_union_map_empty(getParamSpace());
 
-  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : *this)
     Schedule = isl_union_map_add_map(Schedule, Stmt->getScattering());
-  }
+
   return isl_union_map_coalesce(Schedule);
 }
 
 bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
   bool Changed = false;
-  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
+  for (ScopStmt *Stmt : *this) {
     isl_union_set *StmtDomain = isl_union_set_from_set(Stmt->getDomain());
-
     isl_union_set *NewStmtDomain = isl_union_set_intersect(
         isl_union_set_copy(StmtDomain), isl_union_set_copy(Domain));
 

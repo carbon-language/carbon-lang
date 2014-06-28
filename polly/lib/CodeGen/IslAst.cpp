@@ -69,7 +69,6 @@ private:
   isl_ast_node *Root;
   isl_ast_expr *RunCondition;
 
-  __isl_give isl_union_map *getSchedule();
   void buildRunCondition(__isl_keep isl_ast_build *Context);
 };
 } // End namespace polly.
@@ -366,7 +365,8 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
 
   Context = isl_ast_build_set_at_each_domain(Context, AtEachDomain, nullptr);
 
-  isl_union_map *Schedule = getSchedule();
+  isl_union_map *Schedule =
+      isl_union_map_intersect_domain(S->getSchedule(), S->getDomains());
 
   Function *F = Scop->getRegion().getEntry()->getParent();
   (void)F;
@@ -393,20 +393,6 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   isl_ast_build_free(Context);
 
   DEBUG(pprint(dbgs()));
-}
-
-__isl_give isl_union_map *IslAst::getSchedule() {
-  isl_union_map *Schedule = isl_union_map_empty(S->getParamSpace());
-
-  for (ScopStmt *Stmt : *S) {
-    isl_map *StmtSchedule = Stmt->getScattering();
-
-    StmtSchedule = isl_map_intersect_domain(StmtSchedule, Stmt->getDomain());
-    Schedule =
-        isl_union_map_union(Schedule, isl_union_map_from_map(StmtSchedule));
-  }
-
-  return Schedule;
 }
 
 IslAst::~IslAst() {
