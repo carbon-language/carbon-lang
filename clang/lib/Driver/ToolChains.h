@@ -744,14 +744,6 @@ protected:
   Tool *buildAssembler() const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY Cygwin : public Generic_GCC {
-public:
-  Cygwin(const Driver &D, const llvm::Triple &Triple,
-         const llvm::opt::ArgList &Args);
-
-protected:
-  Tool *buildLinker() const override;
-};
 
 class LLVM_LIBRARY_VISIBILITY XCore : public ToolChain {
 public:

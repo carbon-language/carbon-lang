@@ -457,24 +457,6 @@ namespace gnutools {
                       const char *LinkingOutput) const override;
   };
 }
-
-namespace cygwin {
-class LLVM_LIBRARY_VISIBILITY Link : public Tool {
-public:
-  Link(const ToolChain &TC) : Tool("cygwin::Link", "linker", TC) {}
-
-  bool hasIntegratedCPP() const override { return false; }
-  bool isLinkJob() const override { return true; }
-
-  void ConstructJob(Compilation &C, const JobAction &JA,
-                    const InputInfo &Output, const InputInfoList &Inputs,
-                    const llvm::opt::ArgList &Args,
-                    const char *LinkingOutput) const override;
-private:
-  void AddLibGCC(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs) const;
-};
-}
-
   /// minix -- Directly call GNU Binutils assembler and linker
 namespace minix {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {

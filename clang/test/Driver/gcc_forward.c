@@ -17,14 +17,14 @@
 // CHECK: as{{[^"]*}}"
 // CHECK: "-o" "{{[^"]+}}.o"
 //
-// gnu-ld
-// CHECK: ld{{[^"]*}}"
+// gcc-ld
+// CHECK: gcc{{[^"]*}}"
 // CHECK-NOT: "-mlinker-version=10"
 // CHECK-NOT: "-Xclang"
 // CHECK-NOT: "foo-bar"
 // CHECK-NOT: "-Wall"
 // CHECK-NOT: "-Wdocumentation"
-// CHECK-NOT: "-march"
+// CHECK: -march
 // CHECK-NOT: "-mlinker-version=10"
 // CHECK-NOT: "-Xclang"
 // CHECK-NOT: "foo-bar"

@@ -2102,7 +2102,7 @@ Tool *Generic_GCC::buildAssembler() const {
 }
 
 Tool *Generic_GCC::buildLinker() const {
-  return new tools::gnutools::Link(*this);
+  return new tools::gcc::Link(*this);
 }
 
 void Generic_GCC::printVerboseInfo(raw_ostream &OS) const {
@@ -3476,17 +3476,6 @@ Tool *DragonFly::buildLinker() const {
   return new tools::dragonfly::Link(*this);
 }
 
-/// Cygwin toolchain
-Cygwin::Cygwin(const Driver &D, const llvm::Triple &Triple,
-               const llvm::opt::ArgList &Args)
-    : Generic_GCC(D, Triple, Args) {
-  ToolChain::path_list &LibPaths = getFilePaths();
-  LibPaths.push_back("/usr/lib");
-}
-
-Tool *Cygwin::buildLinker() const {
-  return new tools::cygwin::Link(*this);
-}
 
 /// XCore tool chain
 XCore::XCore(const Driver &D, const llvm::Triple &Triple,
