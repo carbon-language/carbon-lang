@@ -593,6 +593,7 @@ public:
   typedef SDUse* op_iterator;
   op_iterator op_begin() const { return OperandList; }
   op_iterator op_end() const { return OperandList+NumOperands; }
+  ArrayRef<SDUse> ops() const { return makeArrayRef(op_begin(), op_end()); }
 
   SDVTList getVTList() const {
     SDVTList X = { ValueList, NumValues };

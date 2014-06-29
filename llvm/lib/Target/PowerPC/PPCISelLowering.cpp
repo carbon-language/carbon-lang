@@ -7337,10 +7337,9 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
       if (!Visited.count(ChainLD->getChain().getNode()))
         Queue.push_back(ChainLD->getChain().getNode());
     } else if (ChainNext->getOpcode() == ISD::TokenFactor) {
-      for (SDNode::op_iterator O = ChainNext->op_begin(),
-           OE = ChainNext->op_end(); O != OE; ++O)
-        if (!Visited.count(O->getNode()))
-          Queue.push_back(O->getNode());
+      for (const SDUse &O : ChainNext->ops())
+        if (!Visited.count(O.getNode()))
+          Queue.push_back(O.getNode());
     } else
       LoadRoots.insert(ChainNext);
   }
@@ -8236,12 +8235,11 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         ++UI;
 
         SmallVector<SDValue, 8> Ops;
-        for (SDNode::op_iterator O = User->op_begin(),
-             OE = User->op_end(); O != OE; ++O) {
-          if (*O == Use)
+        for (const SDUse &O : User->ops()) {
+          if (O == Use)
             Ops.push_back(To);
           else
-            Ops.push_back(*O);
+            Ops.push_back(O);
         }
 
         DAG.UpdateNodeOperands(User, Ops);

@@ -2178,9 +2178,8 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
   SDValue FakeOp;
 
   std::vector<SDValue> Ops;
-  for(SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
-              I != E; ++I)
-          Ops.push_back(*I);
+  for (const SDUse &I : Node->ops())
+    Ops.push_back(I);
 
   if (Opcode == AMDGPU::DOT_4) {
     int OperandIdx[] = {
