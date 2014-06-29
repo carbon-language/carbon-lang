@@ -373,15 +373,15 @@ public:
     OS << Contents;
   }
   void DisplayDiagnostics() {
-    uint NumDiagnostics = clang_getNumDiagnostics(ClangTU);
-    for (uint i = 0; i < NumDiagnostics; ++i) {
+    unsigned NumDiagnostics = clang_getNumDiagnostics(ClangTU);
+    for (unsigned i = 0; i < NumDiagnostics; ++i) {
       auto Diag = clang_getDiagnostic(ClangTU, i);
       DEBUG(llvm::dbgs() << clang_getCString(clang_formatDiagnostic(
           Diag, clang_defaultDiagnosticDisplayOptions())) << "\n");
       clang_disposeDiagnostic(Diag);
     }
   }
-  bool ReparseTU(uint num_unsaved_files, CXUnsavedFile* unsaved_files) {
+  bool ReparseTU(unsigned num_unsaved_files, CXUnsavedFile* unsaved_files) {
     if (clang_reparseTranslationUnit(ClangTU, num_unsaved_files, unsaved_files,
                                      clang_defaultReparseOptions(ClangTU))) {
       DEBUG(llvm::dbgs() << "Reparse failed\n");
