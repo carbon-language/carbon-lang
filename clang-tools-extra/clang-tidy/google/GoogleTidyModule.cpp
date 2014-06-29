@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
 
 using namespace clang::ast_matchers;
@@ -23,6 +24,9 @@ public:
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());
+    CheckFactories.addCheckFactory(
+        "google-readability-casting",
+        new ClangTidyCheckFactory<readability::AvoidCStyleCastsCheck>());
   }
 };
 
